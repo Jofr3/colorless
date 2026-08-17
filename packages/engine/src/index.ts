@@ -12108,6 +12108,62 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.262.0 → **THE SELF DIRECTION OF A WATCHED MOMENT, AND THE PRONOUN TWIN
+    OF ITS OP.**
+
+    Magearna `sv09-107` "Auto Heal" (`abilities_json`) — *"**As long as this
+    Pokémon is in the Active Spot,** whenever you attach an Energy card from your
+    hand to 1 of your Pokémon, heal 90 damage from that Pokémon."* — backlog row
+    12's ability half, and with it the `ROWS` table's LAST LIVE RESIDUE.
+
+    **THE DIFF IS ONE NEW OP AND ONE SPLIT FUNCTION**:
+      • `healSubject` — `damageSubject`'s pronoun twin. 🛑 **THE SEAT COMES OFF
+        THE PRINTED POSSESSIVE, NOT OFF THE SCAN DIRECTION**, and that is the whole
+        reason it is a second op rather than a `target` field on the first:
+        Gengar ex prints *"1 of **their** Pokémon"* and reads `otherSeat(ctx.seat)`,
+        Magearna prints *"1 of **your** Pokémon"* and reads `ctx.seat`. Both run in
+        a watched sweep where `ctx.seat` is the WATCHER, so no shared helper could
+        keep the two possessives readable from the op.
+      • `triggers.ts` — the sweep body splits into a private `sweepTriggers`;
+        `runWatchedTriggers` keeps its name and signature as the opponent wrapper
+        and `runSelfWatchedTriggers` is the new self one. Two names over one sweep
+        because the two directions carry OPPOSITE doc claims, the shape
+        `runActiveBenchedTriggers` (D320) already has.
+      • `turn.ts` — one call at the §6.2 attach site, BEFORE the opponent sweep.
+        The turn player's own effects resolve first, and with a clamped heal
+        against Gengar ex's counters the order is a NUMBER: a body at 50 damage
+        ends at 20 one way and 0 the other. Driven in `autoHeal.test.ts` §4.
+
+    🛑 **IT IS NOT A NEW TRIGGER POINT, AND TWO SLICES REFUSED IT AS ONE.**
+    `onEnergyAttach` has been a `TriggerTiming` since D319, the moment was already
+    fired at turn.ts §6.2, `triggersOf` had partitioned self/opponent since D319,
+    and `activeOnly` predates all of it — D319's own comment called the self
+    direction *"spelled and unpopulated, exactly like a union member waiting for
+    its first printing."* D354 and D355 refused this row on the ratio *"a whole new
+    trigger point for 1 legal printing"*. **THE RATIO WAS RIGHT AND THE PRICE WAS
+    WRONG, AND THEY ARE DIFFERENT MEASUREMENTS.**
+
+    ⚠️ **AND THE REACH WAS MEASURED RATHER THAN ASSUMED — IT IS ZERO FURTHER
+    LEGAL PRINTINGS.** Beyond `sv09-107` the sweep reaches Minior
+    `sv04-099`/`sv04-201` (rotated) and the op reaches Medical Energy `sv04-182`
+    (rotated); wiring the self sweep at the two OTHER watched moments would reach
+    nothing at all (`'henever you evolve'` = 0, self-side `'moves to the Bench'`
+    = 0). **THAT IS A FINDING, NOT A FAILURE.**
+
+    ONE new op. ZERO new `TriggerTiming` members, prompt kinds, choice kinds,
+    events, error codes, `GameState` fields, `CardFilter` members, regexes,
+    deriver arms, `EffectSlot` members or `programPlayable` arms; ZERO
+    `packages/schema`.
+
+    **`MATCH_RECORD_VERSION` STAYS 21, AND THE QUESTION WAS ASKED RATHER THAN
+    INHERITED.** `healSubject` never returns `{ park }` and the self sweep is
+    non-parking by construction, so nothing this slice adds can ride an
+    `EffectContinuation` into `phase.cont`; an old record contains no
+    `healSubject` op and reads byte-identically under this deploy.
+
+    engineVersion 0.261.0 → **0.262.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.260.0 → 0.261.0 — **THE PRINTED COIN COUNT: A GATE LEARNS THAT "FLIP 2
     COINS. IF BOTH OF THEM ARE HEADS" IS ONE CLAUSE.**
 
@@ -13083,7 +13139,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.261.0";
+export const engineVersion = "0.262.0";
 
 export type {
   ApplyResult,

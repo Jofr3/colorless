@@ -5090,7 +5090,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D355 (0.260.0 → 0.261.0) — the FIFTY-SECOND payment. This
+    // ⚠️ RE-POINTED AT D356 (0.261.0 → 0.262.0) — the FIFTY-THIRD payment. This
+    // row is NOT a version site; it is a mutation ANCHOR that a version site
+    // BREAKS, and it is single-quoted here — a patch searching for the
+    // double-quoted spelling matches zero and aborts a bump half-applied.
     // is NOT a version site; it is a mutation anchor that a version site breaks,
     // and it is the fifth of the five for exactly that reason.
     // ⚠️ RE-POINTED AT D354 (0.259.0 → 0.260.0) — the FIFTY-FIRST payment, and
@@ -5383,7 +5386,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.261.0";',
+    find: 'export const engineVersion = "0.262.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8537,6 +8540,139 @@ export const MUTANTS: Mutant[] = [
       "  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);\n  if (index === -1) return state;",
     replace: "  const index = -1;\n  if (index === -1) return state;",
     expectKilledBy: ["packages/engine/src/opponentActionTrigger.test.ts"],
+  },
+  // ── D356 — MAGEARNA `sv09-107` "AUTO HEAL": THE SELF DIRECTION OF
+  //    `onEnergyAttach`, AND THE ONE OP IT NEEDED. ─────────────────────────────
+  // ⚠️ THE BYTE-RANGE ANCHOR SCAN OVER THIS SLICE'S SURFACE CAME BACK **FULL**
+  // (66 rows over `stepOp`, `damageSubject`, `sweepTriggers` and `attachEnergy`),
+  // but the THREE NEW UNITS — `healSubject`, `runSelfWatchedTriggers` and the
+  // turn.ts call site — carried **ZERO** between them. Full means repairs; zero
+  // on the new units means rows. Both were owed and both are paid here.
+  {
+    id: "D356-heal-reads-the-scan-direction-not-the-possessive",
+    decision: "D356",
+    what: "🛑 THE WHOLE REASON THIS IS A SECOND OP AND NOT A `target` FIELD ON `damageSubject`. `healSubject` resolves the printed pronoun against the OTHER seat — `otherSeat(ctx.seat)` — so Magearna's *\"1 of **your** Pokémon\"* is read as Gengar ex's *\"1 of **their** Pokémon\"* and the heal lands across the table. Both ops run in a watched sweep where `ctx.seat` is the WATCHER, so the scan direction cannot tell them apart; only the printed possessive can, and this is that claim as a mutation",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const uid = ctx.subjectUid;\n  if (amount <= 0 || uid === undefined) return state;\n  const seat = ctx.seat;",
+    replace:
+      "  const uid = ctx.subjectUid;\n  if (amount <= 0 || uid === undefined) return state;\n  const seat = otherSeat(ctx.seat);",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-heal-is-not-clamped-to-the-damage-present",
+    decision: "D356",
+    what: "the bench heal drops `Math.min` and heals the printed 90 flat, so a body with 30 damage goes to -60 and the HEALED row announces 90 where 30 happened. `healSelf`'s clamp rule, stated one op over",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healed = Math.min(amount, benched.damage);",
+    replace: "  const healed = amount;",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-active-heal-is-not-clamped",
+    decision: "D356",
+    what: "the ACTIVE arm's clamp goes the same way as the bench arm's above, and it is a SEPARATE row because the two arms are separate code — a build that clamped only where its suite looked would pass one and fail the other",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const healed = Math.min(amount, active.damage);",
+    replace: "    const healed = amount;",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-a-whiff-announces-a-heal-that-did-not-happen",
+    decision: "D356",
+    what: "the bench arm's zero-guard is removed, so feeding an UNDAMAGED body files a `HEALED` row for 0. A whiff is SILENT — a row saying nothing happened is not the same as no row, and every 'was something healed' assertion passes either way unless the rows are counted",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healed = Math.min(amount, benched.damage);\n  if (healed <= 0) return state;",
+    replace: "  const healed = Math.min(amount, benched.damage);",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-heal-never-searches-the-bench",
+    decision: "D356",
+    what: "`healSubject` resolves the subject against the controller's ACTIVE only, so an attach onto a BENCHED body heals nothing. The pronoun twin of `D319-subject-never-searches-the-bench` — and the reason the op is not `healActive`, given that a bench attach is this card's most common use (Magearna itself has to stand in the Active Spot)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);\n  const benched = side.bench[index];",
+    replace: "  const index = -1;\n  const benched = side.bench[index];",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-heal-runs-without-a-subject",
+    decision: "D356",
+    what: "the missing-subject guard is dropped, so a program reaching this op OUTSIDE a watched action no longer whiffs silently. This is why `subjectUid` is OPTIONAL on `EffectContext` rather than a second required member, stated as a mutation",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (amount <= 0 || uid === undefined) return state;\n  const seat = ctx.seat;",
+    replace: "  if (amount <= 0) return state;\n  const seat = ctx.seat;",
+    survives: {
+      kind: "equivalent",
+      reason:
+        "PROBED INDIVIDUALLY BEFORE THE SWEEP AND CAME BACK AS THE SLICE'S ONE GAP, which is what individual probing is for. It is `equivalent` on every reachable board and the demonstration is exhaustive rather than sampled: with `uid` undefined, `topUid(active) === uid` is false for any real body (a body in play always has a non-empty stack), the bench `findIndex` returns -1, and the function returns `state` — byte-identical to what the guard returns. There is no third path. ⚠️ AND THE STRONGER FACT, MEASURED RATHER THAN ASSERTED: the mutation does not COMPILE. Dropping the guard leaves `uid` as `string | undefined` at both `HEALED` pushes, and `bunx tsc -b` rejects it with TS2322 at interpreter.ts:6089 and :6097. So the optionality of `EffectContext.subjectUid` is enforced by the TYPE SYSTEM, not by any board — which is why no driven case can close this row and why removing the guard could never reach `main` through `bun run check`. 🛑 THE FIRST DRAFT OF THIS DECLARATION INVENTED `kind: \"compile\"`, WHICH IS NOT A MEMBER OF `SurvivalKind` — and `tsc -b` DOES NOT TYPECHECK `scripts/`, so it type-checked green and would have shipped a survivor nobody could read. The union is exactly `equivalent | unreachable-population | unreachable-shape`, and it was read from source rather than recalled.",
+    },
+    expectKilledBy: [],
+  },
+  {
+    id: "D356-self-entry-point-sweeps-the-opponent",
+    decision: "D356",
+    what: "🛑 THE DIRECTION COLLAPSE. `runSelfWatchedTriggers` passes `\"opponent\"` to the shared sweep, so the self direction becomes the direction that already existed and Magearna is only ever found on the seat that did NOT attach. The two named entry points over one sweep exist precisely because they carry opposite direction claims; this is that split as a mutation",
+    file: "packages/engine/src/triggers.ts",
+    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);',
+    replace: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "opponent", events);',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-self-sweep-walks-the-wrong-board",
+    decision: "D356",
+    what: "🛑 THE DIRECTION READ TWO DIFFERENT WAYS IN ONE CALL, and the sharp half of the split. The self entry point sweeps `otherSeat(actorSeat)`'s board while still asking `triggersOf` for the SELF partition — so the bearer is looked for across the table and the heal is then aimed at the watcher's own board. **IT IS TYPE-CORRECT AND IT IS NOT THE SAME MUTATION AS THE ROW ABOVE**: that one keeps the board and flips the partition, this one keeps the partition and flips the board. A single boolean flag on `runWatchedTriggers` would have made both easy to write and impossible to tell apart; two named entry points make them two rows",
+    file: "packages/engine/src/triggers.ts",
+    find: '  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);',
+    replace: '  return sweepTriggers(state, otherSeat(actorSeat), subjectUid, timing, "self", events);',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-the-self-sweep-is-never-called",
+    decision: "D356",
+    what: "the turn.ts §6.2 call to `runSelfWatchedTriggers` is removed, so the moment still fires for the opponent direction and the self direction is spelled, built and unreachable. The whole slice undone at its one wiring point",
+    file: "packages/engine/src/turn.ts",
+    find: '    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-the-two-sweeps-resolve-in-the-wrong-order",
+    decision: "D356",
+    what: "🛑 THE ORDER, AND IT IS A NUMBER RATHER THAN A PREFERENCE. The self sweep moves BELOW the opponent sweep, so on a board with Magearna Active and Gengar ex across the table the 2 counters land BEFORE the clamped heal: a body at 50 damage ends at 0 instead of 20. The turn player's own effects resolve first and the attaching player is the turn player. Driven in `autoHeal.test.ts` §4, which turn.ts cites by name",
+    file: "packages/engine/src/turn.ts",
+    find:
+      '    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
+    replace:
+      '    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);\n    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-the-active-spot-clause-is-dropped",
+    decision: "D356",
+    what: "🛑 THE CLAUSE EVERY PRIOR QUOTE OF THIS CARD IN THIS REPO DROPPED, AS A MUTATION. `activeOnly` goes false, so a BENCHED Magearna heals on every attach. Three test files and the resume point all began the quote at *\"whenever you attach\"*; the card opens *\"As long as this Pokémon is in the Active Spot,\"*, and those words ARE this field — part of why two slices read the price as high",
+    file: "packages/engine/src/registry.ts",
+    find: '      name: "Auto Heal",\n      trigger: "onEnergyAttach",\n      activeOnly: true,',
+    replace: '      name: "Auto Heal",\n      trigger: "onEnergyAttach",\n      activeOnly: false,',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-the-row-watches-the-opponent-instead",
+    decision: "D356",
+    what: "`opponentAction: true` is added to the Magearna row, flipping *\"whenever **you** attach\"* into Gengar ex's sentence. The self direction is the DEFAULT and the whole spelling of it is the ABSENCE of this key — an absence is hard to assert and easy to lose, which is why it is asserted as `toBeUndefined()` in the suite and mutated here",
+    file: "packages/engine/src/registry.ts",
+    find: '      trigger: "onEnergyAttach",\n      activeOnly: true,\n      program: [{ op: "healSubject", amount: 90 }],',
+    replace:
+      '      trigger: "onEnergyAttach",\n      activeOnly: true,\n      opponentAction: true,\n      program: [{ op: "healSubject", amount: 90 }],',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
+  },
+  {
+    id: "D356-the-printed-amount-drifts",
+    decision: "D356",
+    what: "the printed 90 becomes 30 — Medical Energy `sv04-182`'s number, which is the SAME consequent on the rotated Special-Energy rider path. The nearest wrong number a reader could plausibly write, rather than an arbitrary one",
+    file: "packages/engine/src/registry.ts",
+    find: '      program: [{ op: "healSubject", amount: 90 }],',
+    replace: '      program: [{ op: "healSubject", amount: 30 }],',
+    expectKilledBy: ["packages/engine/src/autoHeal.test.ts"],
   },
   {
     id: "D319-impulse-amount-halved",

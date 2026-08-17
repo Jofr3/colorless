@@ -4109,8 +4109,13 @@ export type EffectOp =
       recordAs?: EffectSlot;
       /** ⚠️⚠️ D236 — HEAL THE BODY THIS OP JUST ATTACHED TO: the printed *"…
           to 1 of your Benched Pokémon. **If you do, heal all damage from that
-          Pokémon.**"* (Lilligant `svp-170`/`sv06-011`/`sv08.5-005`, 3 legal
-          attack printings). `"all"` clears the damage; a number heals that much,
+          Pokémon.**"* (**Leafeon** `svp-170`/`sv06-011`/`sv08.5-005` "Leaflet
+          Blessings", 3 legal attack printings — ⚠️ **D356 CORRECTED THE CARD NAME
+          HERE: this comment said "Lilligant", and D1 says all three ids are
+          Leafeon.** `sv09-007` IS a Lilligant ("Sunny Day"), a different card this
+          same file cites correctly elsewhere, which is exactly how the two got
+          crossed. **A CARRIED CARD NAME ROTS EXACTLY LIKE A CARRIED ID** —
+          `testFixtures.ts` had it right the whole time). `"all"` clears the damage; a number heals that much,
           clamped to what is there.
 
           **IT IS `bonusCounters`' EXACT MIRROR AND THAT IS THE WHOLE ARGUMENT

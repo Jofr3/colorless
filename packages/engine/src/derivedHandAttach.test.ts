@@ -534,7 +534,9 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
     expect(withHeal).toHaveLength(2);
     expect(withHeal.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(4);
     // BOTH amounts are printed and legal in THIS column now (D231's falsifiability
-    // test): "all" on the three Lilligant printings and 60 on Snorlax `sv06-136`.
+    // test): "all" on the three **Leafeon** printings and 60 on Snorlax `sv06-136`.
+    // ⚠️ D356 — this line said "Lilligant"; D1 says `svp-170`/`sv06-011`/
+    // `sv08.5-005` are Leafeon "Leaflet Blessings". The same rot as effects.ts's.
     // D236's own doc said only the `"all"` arm had a deriver path; that sentence
     // is EXPIRED by this slice and is corrected there rather than deleted here.
     const healAmounts = CLAUSES.flatMap(({ program }) =>
