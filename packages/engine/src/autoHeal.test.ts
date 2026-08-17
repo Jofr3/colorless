@@ -14,6 +14,7 @@ import {
   handUid,
   setActiveFromDeck,
   setBenchDamage,
+  specialEnergy,
   typedEnergy,
 } from "./testFixtures";
 
@@ -164,6 +165,21 @@ const SMALL = "d356-small"; // HP 60 — the CLAMP's demonstrator
 const PLAIN = "d356-plain"; // no ability at all — §2b's control body
 const METAL = "d356-metal-energy";
 
+/** 🆕🛑 D357 — Jet Energy `sv02-190`, THE THIRD REAL ID AND THE ONE THIS SLICE IS
+    ABOUT. *"When you attach this card from your hand to 1 of your Benched Pokémon,
+    switch that Pokémon with your Active Pokémon."* — §6.1's `switchIfBenched`
+    rider, which is a rider ON THE SAME MOMENT Auto Heal watches.
+
+    ⚠️ IT MUST BE THE REAL ID, for `sv05-104`'s reason one step further: the whole
+    case is that the REGISTRY's `energy.onAttach` program runs, and a synthetic id
+    would make `programFor` return undefined, `switchIfBenched` never fire, and
+    both cases below pass while measuring an ordinary bench attach.
+    ⚠️ AND IT IS THE FIRST ID IN THIS SUITE THAT IS **BOTH** A REGISTRY KEY AND A
+    `FIXTURE_POOL` MEMBER — §7's two guard loops both name it explicitly rather
+    than sweeping it in, which is D354's defect (D) answered in the other
+    direction (D356 answered it for a registry key that is NOT a pool member). */
+const JET = "sv02-190";
+
 const LOCAL_CARDS: Record<string, Card> = {
   [MAGEARNA]: battler(MAGEARNA, {
     name: "Magearna",
@@ -186,6 +202,7 @@ const LOCAL_CARDS: Record<string, Card> = {
   [SMALL]: battler(SMALL, { name: "D356 Small", hp: 60, retreat: 1, types: ["Metal"] }),
   [PLAIN]: battler(PLAIN, { name: "D356 Plain", hp: 200, retreat: 1, types: ["Colorless"] }),
   [METAL]: typedEnergy(METAL, "Metal"),
+  [JET]: specialEnergy(JET, "Jet Energy"),
 };
 
 const POOL: Record<string, Card> = { ...LOCAL_CARDS };
@@ -197,7 +214,8 @@ const DECK = deckOf({
   [TANK]: 8,
   [SMALL]: 8,
   [PLAIN]: 12,
-  [METAL]: 24,
+  [METAL]: 20,
+  [JET]: 4, // 🆕 D357 — {M} 24 → 20 so the total stays 60.
 });
 
 /** Three seeds, so nothing below rests on one shuffle (D270). */
@@ -265,6 +283,11 @@ function board(
   state = clearBench(state, foe);
   state = benchFromDeck(state, foe, PLAIN);
   state = handFromDeck(state, actor, METAL, 1);
+  // 🆕 D357 — and one Jet Energy, so §5b can attach the RIDER instead of the
+  // plain {M}. Dealt on every board rather than on a second builder: the §6.2
+  // allowance is one attach per turn either way, so an unused card in hand
+  // cannot change what any §1–§8 case measures.
+  state = handFromDeck(state, actor, JET, 1);
   return state;
 }
 
@@ -292,6 +315,36 @@ function attach(
     uid: handUid(state, seat, METAL),
     target: spot,
   });
+}
+
+/** 🆕 D357 — attach the seat's JET ENERGY from hand onto `spot`. The twin of
+    `attach` above and deliberately a SECOND function rather than a parameter on
+    it: every §1–§8 case must keep saying "the plain {M}" at its call site, and a
+    defaulted argument is exactly how a rider silently spreads to cases that were
+    never about one. */
+function attachJet(
+  state: GameState,
+  seat: Seat,
+  spot: { spot: "active" } | { spot: "bench"; index: number },
+): ReturnType<typeof applyAction> {
+  return applyAction(deepFreeze(state), {
+    type: "attachEnergy",
+    seat,
+    uid: handUid(state, seat, JET),
+    target: spot,
+  });
+}
+
+/** The CARD ID of whatever body is in `seat`'s Active Spot — the identity read
+    the §5b cases need, because the whole point there is that the Jet rider
+    CHANGES which body that is. */
+function activeCardId(state: GameState, seat: Seat): string | undefined {
+  const uid = state.players[seat].active?.stack.at(-1);
+  return uid === undefined ? undefined : state.cardIdByUid[uid];
+}
+
+function benchCardIds(state: GameState, seat: Seat): (string | undefined)[] {
+  return state.players[seat].bench.map((p) => state.cardIdByUid[p.stack.at(-1) ?? ""]);
 }
 
 function benchDamage(state: GameState, seat: Seat, index: number): number {
@@ -512,6 +565,137 @@ describe("D356 §5 — *'As long as this Pokémon is in the Active Spot'*", () =
   });
 });
 
+// ── 5b. 🆕🛑 D357 — WHICH BOARD THE ACTIVE-SPOT CLAUSE READS ────────────────
+//
+// D356 gated `activeOnly` on the board the sweep walked, which is the board
+// AFTER §6.1's Jet Energy `switchIfBenched` rider has already moved a body into
+// the Active Spot. Jet's switch is a rider on THE SAME MOMENT Auto Heal watches,
+// not a later action, so that board is not the one the print names.
+//
+// 🛑 THE RULES QUESTION, SETTLED FROM THE CATALOG AND NOT FROM `turn.ts`.
+// *"As long as this Pokémon is in the Active Spot"* reads the board AT THE
+// MOMENT OF THE ATTACH. Three lines of catalog evidence, none of them this card:
+//   1. The one other TRIGGERED `activeOnly` family whose moment carries a board
+//      change SAYS SO IN PRINT: *"If this Pokémon **is in the Active Spot** and
+//      is damaged by an attack from your opponent's Pokémon (**even if this
+//      Pokémon is Knocked Out**) …"*. The parenthetical is there precisely to
+//      say that a board change ARRIVING WITH the trigger does not unmake a gate
+//      that held at the moment — and a Knock Out is a larger change than a
+//      switch.
+//   2. The Checkup family names gate and moment in one breath — *"During Pokémon
+//      Checkup, if this Pokémon is in the Active Spot, put 1 damage counter …"*.
+//   3. Every remaining `activeOnly` printing is CONTINUOUS (*"your opponent can't
+//      play any Item cards"*, *"attacks … cost {C} more"*) or ACTIVATED (*"Once
+//      during your turn, if this Pokémon is in the Active Spot, you may …"*), and
+//      neither kind has a second board to be read against at all. **NO PRINTING
+//      IN THE POOL PAIRS AN ACTIVE-SPOT CLAUSE WITH A SWITCH RIDER ON ITS OWN
+//      MOMENT** — which is why the question had never been forced before.
+//
+// 🛑 AND THE DECISIVE ONE IS ALREADY IN THIS REPO. `bodyHoldingEnergy`'s doc
+// (D319) keys the SUBJECT on the Energy rather than on the target spot so that
+// it is *"right in both orders"* — it already recognised Jet's switch and this
+// trigger as TWO EFFECTS ANSWERING ONE MOMENT whose order is the turn player's
+// choice. A gate that depends on that choice cannot be the printed reading, and
+// `target.spot === "active"` was right under exactly one ordering of two.
+//
+// ⚠️ (b) IS THE HALF THAT PROVES IT, BECAUSE IT LOSES A HEAL SILENTLY. Under the
+// old code the printed 90 vanished with ZERO `HEALED` rows under BOTH orderings
+// — there is no ordering of two simultaneous turn-player triggers that produces
+// it, which is the definition of a wrong answer rather than a debatable one.
+
+describe("D357 §5b — the Active-Spot clause reads the board AT THE MOMENT OF THE ATTACH", () => {
+  it.each(SEEDS)(
+    "seed %i — (a) Jet onto a BENCHED damaged Magearna promotes it and heals NOTHING",
+    (seed) => {
+      // Magearna is on the BENCH at the instant the Energy is attached, so the
+      // antecedent is false and the Ability does not fire — even though the rider
+      // then puts it in the Active Spot. D356 fired here: ABILITY_TRIGGERED +
+      // HEALED, 80 → 0, off a bearer that was benched when the Energy landed.
+      // ⚠️ 80 rather than 200: Magearna is HP 90, so it is the largest damage a
+      // 90-heal can fully clear and the loudest possible red if the gate slips.
+      let state = board(seed, "p1", PLAIN, [MAGEARNA, TANK]);
+      state = setBenchDamage(state, "p1", 0, 80);
+      state = turnOf(state, "p1");
+      const result = attachJet(state, "p1", { spot: "bench", index: 0 });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // THE RIDER STILL RAN — this is the control that the fix did not simply
+      // disable Jet Energy, which would make the negative below meaningless.
+      expect(activeCardId(result.state, "p1")).toBe(MAGEARNA);
+      expect(benchCardIds(result.state, "p1")).toContain(PLAIN);
+      // …and the Ability neither announced nor healed.
+      expect(triggeredNames(result.events)).toEqual([]);
+      expect(healedRows(result.events)).toEqual([]);
+      expect(activeDamage(result.state, "p1")).toBe(80);
+    },
+  );
+
+  it.each(SEEDS)(
+    "seed %i — (b) Magearna ACTIVE, Jet onto a damaged BENCHED body: the 90 is NOT lost",
+    (seed) => {
+      // Magearna IS in the Active Spot at the instant of the attach, so the
+      // antecedent holds and the heal is owed — and the rider then DEMOTES it.
+      // D356 read the gate off the post-switch board and produced ZERO HEALED
+      // rows under either ordering of the two triggers.
+      let state = board(seed, "p1", MAGEARNA, [TANK, PLAIN]);
+      state = setBenchDamage(state, "p1", 0, 200);
+      state = turnOf(state, "p1");
+      const before = state.players.p1.bench[0]?.stack.at(-1);
+      const result = attachJet(state, "p1", { spot: "bench", index: 0 });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // The rider ran: the tank is Active, Magearna is on the Bench.
+      expect(activeCardId(result.state, "p1")).toBe(TANK);
+      expect(benchCardIds(result.state, "p1")).toContain(MAGEARNA);
+      // 🛑 THE PRINTED 90, PAID — and paid to the body the ENERGY landed on,
+      // which is the SUBJECT read off the CURRENT board while the GATE was read
+      // off the moment's. The two boards differ here, which is what makes this
+      // one case cover both halves of the repair.
+      expect(triggeredNames(result.events)).toEqual(["Auto Heal"]);
+      expect(healedRows(result.events)).toEqual([{ uid: before as string, amount: 90 }]);
+      expect(activeDamage(result.state, "p1")).toBe(110);
+    },
+  );
+
+  it.each(SEEDS)(
+    "seed %i — (b's control) the SAME board with a plain {M} keeps the heal AND the spots",
+    (seed) => {
+      // D231's falsifiability shape one turn further: identical board, identical
+      // damage, the only difference being that the attached card carries NO
+      // rider. The heal is the same 90 — so (b)'s 90 is not an artefact of the
+      // switch, and the switch is not an artefact of the heal.
+      let state = board(seed, "p1", MAGEARNA, [TANK, PLAIN]);
+      state = setBenchDamage(state, "p1", 0, 200);
+      state = turnOf(state, "p1");
+      const result = attach(state, "p1", { spot: "bench", index: 0 });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(activeCardId(result.state, "p1")).toBe(MAGEARNA);
+      expect(benchDamage(result.state, "p1", 0)).toBe(110);
+      expect(healedRows(result.events).map((r) => r.amount)).toEqual([90]);
+    },
+  );
+
+  it.each(SEEDS)(
+    "seed %i — (a's mirror) Jet onto a damaged body while Magearna is ALSO benched",
+    (seed) => {
+      // Neither board has Magearna Active — not the moment's, not the sweep's —
+      // so there is no reading under which anything heals. The case that would
+      // go red if the fix had inverted the comparison rather than re-pointed it.
+      let state = board(seed, "p1", PLAIN, [TANK, MAGEARNA]);
+      state = setBenchDamage(state, "p1", 0, 200);
+      state = turnOf(state, "p1");
+      const result = attachJet(state, "p1", { spot: "bench", index: 0 });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(activeCardId(result.state, "p1")).toBe(TANK);
+      expect(activeDamage(result.state, "p1")).toBe(200);
+      expect(healedRows(result.events)).toEqual([]);
+      expect(triggeredNames(result.events)).toEqual([]);
+    },
+  );
+});
+
 // ── 6. THE CLAMP, AND THE SILENT WHIFF ──────────────────────────────────────
 
 describe("D356 §6 — clamped to the damage present, and silent when there is none", () => {
@@ -572,21 +756,42 @@ describe("D356 §7 — the pool, the registry keys, and the expiring insertion-o
     // one it is ABOUT. `sv05-104` is a real registry key too and is asserted as
     // one rather than swept in with the synthetics — the sharp case, because it is
     // exactly the id a careless loop would have called a violation.
+    // 🆕 D357 — and `sv02-190` is the THIRD, added by §5b.
     expect(keys.has(GENGAR)).toBe(true);
+    expect(keys.has(JET)).toBe(true);
     for (const id of Object.keys(LOCAL_CARDS)) {
-      if (id === MAGEARNA || id === GENGAR) continue;
+      if (id === MAGEARNA || id === GENGAR || id === JET) continue;
       expect(keys.has(id)).toBe(false);
     }
   });
 
-  it("nothing this suite defines reached `FIXTURE_POOL` — asserted by ID", () => {
+  it("🆕 D357 — Jet Energy is BOTH a registry key AND a `FIXTURE_POOL` member", () => {
     // **A FIXTURE IS A CENSUS POPULATION** (D348). `catalogManifest.test.ts` and
     // `clauseApostrophe.test.ts` sweep `FIXTURE_POOL`, and neither `sv09` nor
     // `sv05` is among `catalogManifest`'s six local sets, so a shared-pool body
     // would have owed a `fix-*` key AND a manifest classification. The local pool
-    // owes neither — including for the two REAL ids, which are registry keys but
-    // not fixture members.
+    // owed neither — until §5b needed the Jet rider.
+    //
+    // 🛑 `sv02-190` IS IN BOTH, AND THAT IS ASSERTED RATHER THAN EXEMPTED. It is
+    // D354's defect (D) arriving from the OTHER side: D356's two real ids were
+    // registry keys and NOT pool members, so a single sweeping loop was honest
+    // then and would be a false negative now. **THE POOL MEMBERSHIP IS NOT A
+    // PROBLEM — IT IS A FACT, AND A FACT GETS AN ASSERTION.** `sv02` IS one of
+    // `catalogManifest`'s six sets, so this id is already classified there; the
+    // suite reads the shared pool for it rather than adding a `fix-*` key.
+    expect(FIXTURE_POOL[JET]).toBeDefined();
+    expect(registryCardIds()).toContain(JET);
+    // …and the LOCAL card this suite defines for it is its own object, not the
+    // pool's — the suite drives `programFor(JET)`, never `FIXTURE_POOL[JET]`.
+    expect(LOCAL_CARDS[JET]).not.toBe(FIXTURE_POOL[JET]);
+    expect(programFor(JET)?.energy?.onAttach).toEqual({ kind: "switchIfBenched" });
+  });
+
+  it("nothing this suite defines reached `FIXTURE_POOL` — asserted by ID", () => {
+    // Every id here but `sv02-190` (see the case above, which asserts that one by
+    // name) is absent from the shared pool.
     for (const id of Object.keys(LOCAL_CARDS)) {
+      if (id === JET) continue;
       expect(FIXTURE_POOL[id]).toBeUndefined();
     }
   });

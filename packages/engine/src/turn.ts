@@ -188,6 +188,20 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     // emitted event must not alias it (see events.ts).
     { type: "ENERGY_ATTACHED", seat: action.seat, uid: action.uid, target: { ...action.target } },
   ];
+  // 🆕🛑 D357 — THE BOARD AT THE INSTANT OF THE ATTACH, CAPTURED BEFORE ANY §6.1
+  // RIDER RUNS. Every watched trigger fired at the bottom of this handler names
+  // THIS moment in its antecedent, and one of them — Magearna's *"As long as this
+  // Pokémon is in the Active Spot"* — is GATED on where a body stood when the
+  // Energy was attached. §6.1's Jet Energy switch is a rider on this same moment,
+  // not a later action, so reading the gate off the post-switch board answers a
+  // question nobody asked.
+  //
+  // ⚠️ IT MUST BE CAPTURED HERE AND NOT AT THE TOP: the Energy has already left
+  // the hand and landed on its target in `next`, which is exactly right — the
+  // moment the clause names is the moment the attach COMPLETED, and the rider is
+  // what happens next. One line earlier would be the board BEFORE the attach, a
+  // third board and the wrong one again.
+  const atAttach = next;
   // §6.1 — a Special Energy's on-attach effect. Jet Energy: attaching from hand
   // to a BENCHED Pokémon switches it to the Active Spot (the energy just landed
   // rides in with it). Nothing fires on an Active attach. Reuses the shared
@@ -267,8 +281,30 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
     // ⚠️ NO KO SWEEP OF ITS OWN. Every self-direction program printed today heals,
     // and a heal cannot Knock Out; the opponent-direction sweep below owns the
     // mid-turn KO because ITS consequent is damage counters.
-    next = runSelfWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);
-    const watched = runWatchedTriggers(next, action.seat, attachedTo, "onEnergyAttach", events);
+    //
+    // 🆕🛑 D357 — AND THE LAST ARGUMENT IS THE POINT OF THE REPAIR: the SUBJECT
+    // (`attachedTo`) is read off the POST-rider board and the `activeOnly` GATE is
+    // read off `atAttach`, the board at the moment. D356 passed only one board and
+    // the gate silently borrowed the subject's. **AN ANTECEDENT AND A PRONOUN DO
+    // NOT READ THE SAME BOARD** — the antecedent is fixed when the moment happens,
+    // the pronoun is resolved when the consequent runs. Both Jet-Energy orderings
+    // are driven in `autoHeal.test.ts` §5b.
+    next = runSelfWatchedTriggers(
+      next,
+      action.seat,
+      attachedTo,
+      "onEnergyAttach",
+      events,
+      atAttach,
+    );
+    const watched = runWatchedTriggers(
+      next,
+      action.seat,
+      attachedTo,
+      "onEnergyAttach",
+      events,
+      atAttach,
+    );
     if (watched !== next) {
       next = watched;
       // The counters can be lethal, and this is the acting seat's own board
@@ -567,7 +603,12 @@ export function placeEvolution(
   // ahead of `runBoardTrigger` is what keeps the two composable at all, since
   // that one returns an ApplyResult that may PARK and nothing can be threaded
   // after it.
-  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events);
+  //
+  // 🆕 D357 — `next` IS the moment board at this site, MEASURED and not assumed:
+  // this is an evolve on `seat`'s board and the watcher is the other seat, whose
+  // Active nothing between the placement and this line touches. The §6.1 rider
+  // that made this parameter necessary rides the ATTACH, not the evolve.
+  const watched = runWatchedTriggers(next, seat, evolutionUid, "onEvolve", events, next);
   const subject =
     target.spot === "active" ? watched.players[seat].active : watched.players[seat].bench[benchIndex];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {

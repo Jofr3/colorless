@@ -174,8 +174,17 @@ export function runWatchedTriggers(
   subjectUid: string,
   timing: TriggerTiming,
   events: GameEvent[],
+  atMoment: GameState,
 ): GameState {
-  return sweepTriggers(state, otherSeat(actorSeat), subjectUid, timing, "opponent", events);
+  return sweepTriggers(
+    state,
+    otherSeat(actorSeat),
+    subjectUid,
+    timing,
+    "opponent",
+    events,
+    atMoment,
+  );
 }
 
 /** 🆕 D356 — THE SELF DIRECTION OF THE SAME SWEEP, AND THE FIRST PRINTING TO
@@ -213,14 +222,58 @@ export function runSelfWatchedTriggers(
   subjectUid: string,
   timing: TriggerTiming,
   events: GameEvent[],
+  atMoment: GameState,
 ): GameState {
-  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events);
+  return sweepTriggers(state, actorSeat, subjectUid, timing, "self", events, atMoment);
 }
 
 /** The shared board sweep both watched directions run — `watcher` is the seat
     whose board BEARS the Ability, and `watch` is the direction `triggersOf`
     partitions on. Split out at D356 when the self direction got its first
-    printing; the body is D319's, unchanged. */
+    printing; the body is D319's, unchanged.
+
+    🆕🛑 D357 — `atMoment` IS THE BOARD AS IT STOOD AT THE INSTANT THE WATCHED
+    ACTION HAPPENED, AND IT IS THE ONLY THING THE `activeOnly` GATE MAY READ.
+    D356 gated on `target.spot === "active"` against the CURRENT board, which is
+    the board AFTER §6.1's Jet Energy `switchIfBenched` rider has already moved a
+    body into the Active Spot. That is a different board from the one the print
+    names, and it was wrong in BOTH directions on real boards:
+
+      • attaching Jet Energy to a BENCHED damaged Magearna promoted it and THEN
+        fired Auto Heal — a heal off a bearer that was on the Bench at the moment
+        the Energy was attached;
+      • with Magearna ACTIVE, attaching Jet Energy to a damaged benched body
+        DEMOTED Magearna first and the printed 90 heal was SILENTLY LOST.
+
+    🛑 THE RULES QUESTION IS SETTLED FROM THE CATALOG, NOT FROM THE CODE, AND THE
+    CATALOG ANSWERS IT IN PRINT. Every `activeOnly` sentence pairs the Active-Spot
+    clause with the moment its consequent answers, and the one other TRIGGERED
+    family that shares a moment with a board change spells the answer out:
+    *"If this Pokémon **is in the Active Spot** and is damaged by an attack from
+    your opponent's Pokémon (**even if this Pokémon is Knocked Out**) …"* — the
+    parenthetical exists precisely to say that a board change ARRIVING WITH the
+    trigger does not unmake a gate that held at the moment. The Checkup family
+    (*"During Pokémon Checkup, if this Pokémon is in the Active Spot"*) names the
+    gate and the moment in one breath for the same reason.
+
+    🛑 AND `bodyHoldingEnergy` (turn.ts) ALREADY SAID SO ABOUT THIS EXACT RIDER,
+    one clause to the left: it is keyed on the ENERGY rather than on the target
+    spot so that it is *"right in both orders"*. Jet's switch and this trigger are
+    two effects answering ONE moment, and which resolves first is the turn
+    player's choice — so no reading that DEPENDS on that choice can be the
+    printed one. `target.spot === "active"` was right under exactly one ordering.
+
+    ⚠️ THE SUBJECT IS STILL READ OFF THE CURRENT BOARD AND MUST BE. *"that
+    Pokémon"* corefers with the body the Energy landed on, and the Energy rides
+    into the Active Spot with it — that is `bodyHoldingEnergy`'s whole design.
+    **THE GATE AND THE REFERENT READ DIFFERENT BOARDS ON PURPOSE**: the gate is
+    an antecedent (evaluated at the moment) and the referent is a pronoun
+    (resolved when the consequent runs). Conflating them is the defect this
+    parameter exists to prevent, in either direction.
+
+    ⚠️ AND IT IS A UID COMPARISON RATHER THAN A SPOT COMPARISON, because a spot
+    is a POSITION and the print names a BODY. Reading `atMoment`'s Active spot by
+    position would still be a second board's opinion about which body is there. */
 function sweepTriggers(
   state: GameState,
   watcher: Seat,
@@ -228,6 +281,7 @@ function sweepTriggers(
   timing: TriggerTiming,
   watch: "self" | "opponent",
   events: GameEvent[],
+  atMoment: GameState,
 ): GameState {
   // Active, then each bench slot. The walk re-reads the CURRENT board each step
   // for `runCheckupTriggers`' reason — and the bench LENGTH cannot change here,
@@ -236,6 +290,11 @@ function sweepTriggers(
   for (let index = 0; index < state.players[watcher].bench.length; index++) {
     targets.push({ spot: "bench", index });
   }
+  // The body that was in the WATCHER's Active Spot at the watched moment, by uid.
+  // `undefined` when that seat had no Active then — and a defined `uid` never
+  // equals it, which is the right answer (nothing was in the Active Spot).
+  const activeAtMoment = atMoment.players[watcher].active;
+  const activeUidAtMoment = activeAtMoment === null ? undefined : topUid(activeAtMoment);
   const stacked = new Set<string>();
   let next = state;
   for (const target of targets) {
@@ -243,7 +302,7 @@ function sweepTriggers(
     if (pokemon === undefined) continue;
     const uid = topUid(pokemon);
     if (uid === undefined) continue;
-    for (const ability of triggersOf(next, pokemon, timing, target.spot === "active", watch)) {
+    for (const ability of triggersOf(next, pokemon, timing, uid === activeUidAtMoment, watch)) {
       if (stacked.has(ability.name)) continue;
       if (ability.doesNotStack === true) stacked.add(ability.name);
       events.push({ type: "ABILITY_TRIGGERED", seat: watcher, uid, ability: ability.name });
@@ -301,7 +360,12 @@ export function runActiveBenchedTriggers(
   events: GameEvent[],
 ): GameState {
   if (phaseViewOf(state, seat).activeSeat !== seat) return state;
-  return runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events);
+  // 🆕 D357 — `state` IS the moment board here, and that is a MEASUREMENT rather
+  // than a shrug: every mover that reaches this line (`switchInto`, `retreat`)
+  // rearranges `seat`'s OWN board, and the watcher is `otherSeat(seat)`, whose
+  // Active is untouched between the move and this sweep. There is no rider on
+  // this moment the way §6.1's Jet switch rides the §6.2 attach.
+  return runWatchedTriggers(state, seat, movedUid, "onActiveMovedToBench", events, state);
 }
 
 /** Run every betweenTurns triggered Ability in play during the Pokémon Checkup
