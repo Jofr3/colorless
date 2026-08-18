@@ -12108,6 +12108,62 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.267.0 → **THE CROSS-SEAT ENERGY DISCARD READS THE PRINTED NOUN PHRASE,
+    AND THE PRICE IS ONE WIDENING PLUS ONE ANCHOR.**
+
+    THREE printed sentences / **8 Standard-legal printings**, bought with **ZERO**
+    new ops, **ZERO** new `CardFilter` kinds, **ZERO** new condition kinds, **ZERO**
+    new op fields and **ZERO** registry keys:
+
+      • *"Discard a Special Energy from your opponent's Active Pokémon."* — 4
+        (Victini `sv05-030`, Farfetch'd `sv06-132`, Cobalion `sv10.5b-066`/`-144`)
+      • *"Discard a {R} Energy from your opponent's Active Pokémon."* — 2
+        (Ducklett `sv10.5w-025`/`-109`), plus Growlithe `sv03.5-058` (`{W}`,
+        `legal_standard = 0`) which the same arm derives — **ROTATION DECIDES WHO
+        MAY PLAY A CARD, NOT WHAT THE CARD SAYS**, applied prospectively this time.
+      • *"Discard all Special Energy from all of your opponent's Pokémon."* — 2
+        (Ceruledge `sv08-035`/`-197`)
+
+    🛑 **THE ONE TYPE CHANGE IS A WIDENING, AND ITS EVIDENCE IS A QUANTIFIER
+    CONTRASTED AGAINST ITS OWN ABSENCE ON THE SAME OP, ZONE AND DESTINATION.**
+    `discardEnergy`'s `opponentEach` member went `count?: never` → `count?: "all"`.
+    The catalog prints BOTH quantifiers on that arm: Giacomo `sv02-182` prints
+    *"a Special Energy from EACH"* (absent count, `{kind:"each"}`, one per body)
+    and Ceruledge prints *"ALL Special Energy from ALL of"* (`count:"all"`, the
+    interpreter branch that fires BEFORE the scope split and strips every match on
+    the whole victim board). The `never`'s own stated reason — *"the field would be
+    SILENTLY IGNORED"* — is true of a NUMBER and false of `"all"`, which is why the
+    widening is to that one literal and not to `"all" | number`. No printed
+    sentence puts a number or an "any amount" on a per-body sweep (queried, all
+    three columns). **A WIDENING IS FREE; A GENERALISATION IS NOT.**
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 22, ASKED RATHER THAN INHERITED, AND THE
+    HAZARD WAS LIVE.** An `EffectOp` IS persisted (`EffectContinuation.pendingOp`
+    AND its `rest` tail, inside `GameState.phase`) and two of these three sentences
+    PARK, so the D335/D352/D359/D360 hazard is genuinely in range. But the test is
+    *"does the old byte string still MEAN what it meant"*: a v22 record holding an
+    `opponentEach` `discardEnergy` carries no `count`, and absence meant *one from
+    each* before and means *one from each* after. The two new op shapes are new
+    COMBINATIONS of vocabulary that is already persistable today —
+    `opponentActive`+`specialEnergy` is Mawile's registry row, `providesEnergy` is
+    Psy Purge's. **NO FIELD ADDED AND NO FIELD'S MEANING RE-POPULATED.**
+
+    ⚠️ **THE ROUND-TRIP SURFACE MOVED ZERO BYTES**, predicted at zero and measured
+    at zero: the two parking sentences use `scope {kind:"total",count:1}`, already
+    on the wire since Mawile; the sweep resolves INLINE, so it never prompts and
+    never crosses at all (`discardNote`'s own doc block already promised
+    *"`count: "all"` never reaches here"*).
+
+    ⚠️ **ONE PRINTING IN THE SAME BLOCK WAS REFUSED, WITH THE REASON MEASURED.**
+    Turtonator `sv08-137` prints *"Discard an Energy from your opponent's Active
+    Pokémon **ex**."* — one Standard-legal printing needing an **ex-ONLY** board
+    narrowing. `{ kind: "opponentActiveIsExOrV" }` is strictly WIDER (`isExOrV`:
+    ex **or** V), so reusing it would make the attack strip a Pokémon V the card
+    does not name. **A BLOCK IS NOT AN ALL-OR-NOTHING PURCHASE.**
+
+    engineVersion 0.266.0 → **0.267.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.266.0 → **THE PRINTED *"up to"* REACHES THE **SPREAD**, AND THE FAMILY
     CLOSES — OVER **BOTH** PRODUCERS, WHICH IS THE ONLY REASON IT CLOSES AT ALL.**
 
@@ -13429,7 +13485,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.266.0";
+export const engineVersion = "0.267.0";
 
 export type {
   ApplyResult,

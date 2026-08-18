@@ -553,7 +553,22 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // ⚠️ AND THIS RUNG IS WHY THE SLICE FOUND OUT AT ALL: adding a fixture is not a
     // figure a slice thinks to grep for, and nothing in this arm's vocabulary
     // reaches this file. The full `check` found it, as the header promises.
-    expect(derivable).toHaveLength(99);
+    // 🆕🆕 D361 MOVES IT 99 → **102**, +3, AND ALL THREE ARE NEW SENTENCES RATHER
+    // THAN A FAILURE TO REUSE — the guard's own standard, applied BEFORE the number
+    // was touched. `fix-crossseatdiscard` prints the cross-seat Energy discard's
+    // three printed strings, and the reuse sweep found no fixture printing any of
+    // them at any magnitude: the nearest existing rows are Pincurchin `sv02-072`'s
+    // *"Discard an Energy from your opponent's Active Pokémon."* (a DIFFERENT noun
+    // phrase — the whole point of the slice is that the phrase varies) and
+    // Giacomo's registry sentence, which no fixture prints at all.
+    // 🛑 **AND THIS RUNG IS THE SLICE'S ONE PREDICTION MISS, WHICH IS WORTH MORE
+    // THAN THE THREE IT GOT RIGHT.** D361 predicted its red surface by running the
+    // PLANNED REGEXES over every string literal in `packages/engine/src` and by
+    // walking the census columns — a method that reaches every guard keyed on a
+    // SENTENCE or on a COUNT, and reaches **nothing** keyed on the FIXTURE POOL.
+    // The header's promise held exactly as written: the full `check` found it, and
+    // no grep of this slice's own vocabulary ever would have.
+    expect(derivable).toHaveLength(102);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

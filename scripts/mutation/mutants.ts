@@ -5459,6 +5459,20 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
+    // ⚠ RE-POINTED AT D361 (0.266.0 → 0.267.0) — the FIFTY-EIGHTH payment, and
+    // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
+    // STAYS 22. The hazard was LIVE and not skippable — an `EffectOp` IS persisted
+    // (`EffectContinuation.pendingOp` AND its `rest` tail), and TWO of D361's three
+    // sentences PARK, so a `discardEnergy` op genuinely enters `GameState.phase`.
+    // But D361 adds no field: it WIDENS a type from `count?: never` to
+    // `count?: "all"` on the `opponentEach` arm, and a v22 record holding an
+    // `opponentEach` discard carries NO `count` — absence meant "one from each"
+    // before and means "one from each" after. Its two new op shapes are new
+    // COMBINATIONS of already-persistable vocabulary (`opponentActive` +
+    // `specialEnergy` is Mawile's registry row; `providesEnergy` is Psy Purge's).
+    // **THE TEST IS "WOULD AN OLD RECORD MEAN SOMETHING ELSE", AND THE ANSWER IS
+    // NO** — so `D326-record-version-not-bumped` is NOT owed and stays anchored at
+    // 22, predicted by id before the diff and measured unmoved after it.
     // ⚠ RE-POINTED AT D360 (0.265.0 → 0.266.0) — the FIFTY-SEVENTH payment, and
     // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
     // STAYS 22. An `EffectOp` IS persisted (`EffectContinuation.pendingOp`), so
@@ -5470,9 +5484,61 @@ export const MUTANTS: Mutant[] = [
     // `D326-record-version-not-bumped` is NOT owed this time and stays anchored at
     // 22, which was predicted by id before the diff and measured after it.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.266.0";',
+    find: 'export const engineVersion = "0.267.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
+  },
+  // ── D361 — THE CROSS-SEAT ENERGY DISCARD. Four rows, ONE PER CLAIM rather than
+  //    one per site: the FILTER is read off the printed noun phrase (C1), the TYPE
+  //    inside it comes from the MAP rather than from a fixed value (C2), the sweep
+  //    takes EVERY match on EVERY body rather than one each (C3), and the sweep's
+  //    anchor refuses Giacomo's printed wording, which the OTHER producer already
+  //    builds at a different count (C4).
+  //
+  //    ⚠️ NO ROW FOR THE TYPE WIDENING (`count?: never` -> `count?: "all"`), SAID
+  //    OUT LOUD RATHER THAN OMITTED: a mutant re-widening it to `"all" | number`
+  //    would COMPILE and change no behaviour on any reachable board — UNKILLABLE,
+  //    and an unkillable row is worse than no row. It is asserted instead as a
+  //    SHAPE RULE over BOTH producers (`crossSeatEnergyDiscard.test.ts` §5), which
+  //    goes red on a numeric count from either side.
+  //    ⚠️ NO ROW FOR THE FLIP-TWIN REFUSAL: a refusal is not a code line. It is
+  //    asserted in §6 and backed by the measurement (ZERO printed flipped Special
+  //    or typed variants, all three columns).
+  {
+    id: "D361-cross-seat-filter-collapses-to-any-energy",
+    decision: "D361",
+    what: "🛑 THE NOUN PHRASE STOPS BEING READ: the widened `OPPONENT_ACTIVE_DISCARD` arm returns `anyEnergy` for the printed *\"a Special Energy\"*, so Victini `sv05-030`, Farfetch'd `sv06-132` and Cobalion `sv10.5b-066`/`-144` offer EVERY Energy on the defender instead of the two Specials the card names — the wrong card coming off a real board, on 4 Standard-legal printings. The bare and typed forms still derive, which is what makes this a SILENT widening rather than a crash",
+    file: "packages/engine/src/effects.ts",
+    find: "    const filter: CardFilter | undefined =\n      match[1] !== undefined\n        ? { kind: \"specialEnergy\" }",
+    replace: "    const filter: CardFilter | undefined =\n      match[1] !== undefined\n        ? { kind: \"anyEnergy\" }",
+    expectKilledBy: ["packages/engine/src/crossSeatEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D361-cross-seat-type-hardcoded-not-mapped",
+    decision: "D361",
+    what: "🛑 THE TYPE STOPS BEING A PARAMETER: the brace-code lookup is replaced by a fixed `\"Fire\"`, so `{R}` still derives correctly — which is exactly the point — and every OTHER code silently becomes Fire. Ducklett's two legal printings are unaffected and Growlithe's rotated `{W}` one strips the wrong Energy, so a test that only drove the printed subset would pass. The map loop in §1 is what notices",
+    file: "packages/engine/src/effects.ts",
+    find: "    const energyType =\n      match[2] === undefined ? ENERGY_TYPE_BY_NAME[match[3] ?? \"\"] : ENERGY_TYPE_BY_CODE[match[2]];\n    const filter: CardFilter | undefined =",
+    replace: "    const energyType =\n      match[2] === undefined ? ENERGY_TYPE_BY_NAME[match[3] ?? \"\"] : \"Fire\";\n    const filter: CardFilter | undefined =",
+    expectKilledBy: ["packages/engine/src/crossSeatEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D361-sweep-loses-its-all-and-becomes-giacomo",
+    decision: "D361",
+    what: "🛑 `count: \"all\"` GOES, so Ceruledge `sv08-035`/`-197` \"Cursed Edge\" collapses onto GIACOMO's semantics: `{kind:\"each\"}` takes exactly ONE Special per body instead of all of them, and an opponent Active holding two Specials makes the attack PARK on a pick the sentence never offers. *\"ALL Special Energy from ALL of your opponent's Pokémon\"* becomes *\"a Special Energy from each\"* — two printed quantifiers reduced to one, which is the whole thing the type widening bought",
+    file: "packages/engine/src/effects.ts",
+    find: "        from: \"opponentEach\",\n        filter: { kind: \"specialEnergy\" },\n        count: \"all\",\n      },",
+    replace: "        from: \"opponentEach\",\n        filter: { kind: \"specialEnergy\" },\n      },",
+    expectKilledBy: ["packages/engine/src/crossSeatEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D361-sweep-anchor-swallows-giacomos-wording",
+    decision: "D361",
+    what: "🛑 THE SWEEP ANCHOR ADMITS *\"each of your opponent's Pokémon\"* as well as *\"all of\"*, so Giacomo `sv02-182`'s printed Supporter sentence — which the REGISTRY already builds, at one-per-body — starts ALSO deriving through the attack reader at `count: \"all\"`. That is not over-derivation in the ordinary sense: it puts ONE printed sentence on TWO producers that disagree about how many Energy come off, which is the failure D360 spent a slice on one op over",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard all Special Energy from all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Discard all Special Energy from (?:all|each) of your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/crossSeatEnergyDiscard.test.ts"],
   },
   // ── D316 - "You may do {N} more damage. If you do, ..." - the EIGHTH attack-text
   //    reader, `optional.otherwise` and `damageDefender`'s flat arm. Every row

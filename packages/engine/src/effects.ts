@@ -5257,14 +5257,46 @@ export type EffectOp =
           still DECLINABLE, so a capped op parks identically to the uncapped one. */
       cap?: number;
     }
-  /** The `opponentEach` sweep, split out so a count cannot ride it: "one from
-      EACH" already fixes how many come off (one per Pokémon with a match), and
-      the field would be silently ignored. Giacomo is the only printed member. */
+  /** The `opponentEach` sweep, split out so a NUMERIC count cannot ride it: "one
+      from EACH" already fixes how many come off (one per Pokémon with a match),
+      and the field would be silently ignored. */
   | {
       op: "discardEnergy";
       from: "opponentEach";
       filter: CardFilter;
-      count?: never;
+      /** 🆕 **D361 — `"all"` AND NOTHING ELSE, AND THE PAIR IS A PRINTED
+          CONTRAST RATHER THAN A GENERALISATION.** The catalog prints this arm
+          with BOTH quantifiers, on the same op, the same `from`, the same filter
+          and the same destination:
+
+          • **absent** — Giacomo `sv02-182` (Supporter): *"Discard **a** Special
+            Energy from **each** of your opponent's Pokémon."* Resolves through
+            `{ kind: "each" }` — exactly ONE uid from every distinct body.
+          • **`"all"`** — Ceruledge `sv08-035`/`-197` "Cursed Edge" (attack, 2
+            Standard-legal): *"Discard **all** Special Energy from **all** of
+            your opponent's Pokémon."* Resolves through the interpreter's
+            `op.count === "all"` branch, which fires BEFORE the scope split and
+            strips every match on the whole victim board.
+
+          🛑 **THE OLD `never` WAS RIGHT ABOUT A NUMBER AND WRONG ABOUT `"all"`,
+          AND ITS OWN REASON SAYS SO.** The barring argument is *"the field would
+          be SILENTLY IGNORED"*. A number would be. `"all"` is not — it takes a
+          different branch and reaches a different board. So this widens to the
+          ONE literal the catalog prints and leaves the numeric form
+          unrepresentable, which is what that paragraph was actually protecting.
+
+          ⚠️ **NOT `"all" | number` AND NOT `"any"`.** Queried across all three
+          columns of the remote catalog: **no** printed sentence puts a NUMBER or
+          a declinable "any amount" on a per-body sweep. Admitting either would be
+          authoring a card, and `"any"` would additionally park a sweep that the
+          `"all"` branch resolves inline. A WIDENING IS FREE; A GENERALISATION IS
+          NOT.
+
+          ⚠️ **NO CAPTION CONSEQUENCE, WHICH `discardNote`'s OWN DOC ALREADY
+          PROMISED**: *"`count: "all"` never reaches here — that arm asks nothing,
+          so it has no prompt to caption."* The sweep resolves inline, so it never
+          parks, never prompts and never crosses the wire. */
+      count?: "all";
       /** D295 — unrepresentable here for `count`'s reason: no printed sweep
           returns Energy to a hand, and the apply's caption would have to invent
           a sentence no card prints. */
@@ -7696,23 +7728,12 @@ const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
 // sv06.5-047, Eiscue sv02-048/-205), each of which prints a second sentence after
 // the discard — see that anchor's census.
 const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
-// The OPPONENT-side twin of the self-discard, printed on attacks rather than
-// Trainers (Pincurchin "Needle Crush", Gumshoos "Crunch", Dragonite V "Hyper
-// Beam") and half the time behind a flip (Dedenne "Energy Munch", Maschiff
-// "Crunch", Tympole "Screw Tail", Yveltal "Destructive Beam"). Same op as
-// Mawile's Ability, one filter wider: an attack takes ANY Energy, not just a
-// Special one.
-//
-// Krookodile (sv01-117) is the trap these two must not fall into: "Flip a coin
-// UNTIL you get tails. For each heads, discard an Energy from your opponent's
-// Active Pokémon." — a repeat count this engine cannot express — ENDS in the
-// bare pattern's exact words, and deriving it would silently discard once.
-// TWO things keep it out, and it takes both: the leading `^`, and the fact that
-// the clause reads lowercase "discard" mid-sentence where the pattern needs a
-// capital. Neither alone is enough (dropping `^` still misses on the capital;
-// adding /i still misses on the anchor) — so a future ingest that normalizes
-// capitalisation would put the whole weight on the anchor. Do not add /i here.
-const OPPONENT_ACTIVE_DISCARD = /^Discard an Energy from your opponent['’]s Active Pokémon\.$/;
+// The OPPONENT-side twin of the self-discard family lives BELOW rather than
+// here, beside `TYPED_SELF_DISCARD`: D361 made both of its anchors MAP-BUILT
+// (`ENERGY_TYPE_BY_CODE` / `ENERGY_TYPE_BY_NAME`), and a `new RegExp` built
+// from a map must be evaluated AFTER that map's own `const`. Same constraint,
+// same neighbourhood, and the reason is stated here so the gap in this
+// family's run of anchors does not read as an oversight.
 // 🆕 D296 — THE "PUT IT BACK IN THEIR HAND" TWIN OF THE LINE ABOVE, DECLINABLE
 // AND OPTIONALLY STAGE-GATED. Four legal printings on three sentences: Octillery
 // `sv09-034` "Aqua Wash" (an), Unfezant `sv05-135` "Opposing Winds" + Slowking
@@ -9335,6 +9356,91 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
   }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
 }
+
+// The OPPONENT-side twin of the self-discard, printed on attacks rather than
+// Trainers (Pincurchin "Needle Crush", Gumshoos "Crunch", Dragonite V "Hyper
+// Beam") and half the time behind a flip (Dedenne "Energy Munch", Maschiff
+// "Crunch", Tympole "Screw Tail", Yveltal "Destructive Beam"). Same op as
+// Mawile's Ability, one filter wider: an attack takes ANY Energy, not just a
+// Special one.
+//
+// Krookodile (sv01-117) is the trap this pattern and its flip twin must not fall
+// into: "Flip a coin
+// UNTIL you get tails. For each heads, discard an Energy from your opponent's
+// Active Pokémon." — a repeat count this engine cannot express — ENDS in the
+// bare pattern's exact words, and deriving it would silently discard once.
+// TWO things keep it out, and it takes both: the leading `^`, and the fact that
+// the clause reads lowercase "discard" mid-sentence where the pattern needs a
+// capital. Neither alone is enough (dropping `^` still misses on the capital;
+// adding /i still misses on the anchor) — so a future ingest that normalizes
+// capitalisation would put the whole weight on the anchor. Do not add /i here.
+//
+// 🆕 **D361 — THE NOUN PHRASE IS NOW A CAPTURE, AND THAT IS THE WHOLE WIDENING.**
+// The tail (`from your opponent's Active Pokémon.`) is byte-identical across all
+// three printed forms, and the only thing that varies is WHAT is taken:
+//
+//   • `an Energy`         → `{ kind: "anyEnergy" }`      — 6 legal printings
+//   • `a Special Energy`  → `{ kind: "specialEnergy" }`  — 4 legal (Victini
+//     `sv05-030`, Farfetch'd `sv06-132`, Cobalion `sv10.5b-066`/`-144`)
+//   • `a {X} Energy`      → `{ kind: "providesEnergy" }` — 2 legal (Ducklett
+//     `sv10.5w-025`/`-109`, `{R}`), plus Growlithe `sv03.5-058` (`{W}`) which is
+//     `legal_standard = 0` and derives ANYWAY. **ROTATION DECIDES WHO MAY PLAY A
+//     CARD, NOT WHAT THE CARD SAYS** (D358's lesson, applied prospectively).
+//
+// ⚠️ **THE BARE ARM'S PROGRAM IS BYTE-IDENTICAL TO WHAT IT WAS**, which is what
+// makes this a widening rather than a rewrite: both capture groups are
+// `undefined` on `an Energy` and the spread emits the same two-key object.
+//
+// ⚠️ **THE SPECIAL FORM IS EXACTLY MAWILE'S ABILITY OP.** The paragraph above
+// says the attack twin is "one filter wider" than Mawile's — that is still true
+// of the BARE form and is no longer true of the family, because the catalog
+// prints the narrow filter on the ATTACK side too. Mawile `sv03-143` builds
+// `{from:"opponentActive", filter:{kind:"specialEnergy"}}` in the registry, and
+// these four printings now derive the identical op: **the two producers agree on
+// one printed sentence by construction rather than by coincidence.**
+//
+// ⚠️ **THE TYPE COMES FROM THE MAP, NOT FROM THE PRINTED SUBSET** — the same
+// convention `TYPED_SELF_DISCARD` follows and `providesEnergy.test.ts` asserts
+// ("every code in the map resolves"). So `{L}` derives here even though no card
+// prints it on this shape; a type is a PARAMETER, and building the alternation
+// from `ENERGY_TYPE_BY_CODE` is what stops a tenth type costing a line.
+//
+// 🛑 **`FLIP_OPPONENT_ACTIVE_DISCARD` (LEFT BEHIND ABOVE, BESIDE THE SELF-DISCARD
+// FAMILY) IS DELIBERATELY *NOT* WIDENED, AND THE REASON IS A MEASUREMENT.** The
+// catalog prints `Flip a coin. If heads, discard an Energy…` (23 printings / 12
+// legal) and prints **ZERO** flipped Special or typed variants — queried across
+// `attacks_json`, `abilities_json` and `effect`. Loosening it would derive a
+// sentence with no printing behind it, i.e. author a card, which is the same
+// refusal `MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND` makes on the mandatory twin
+// of its own sentence. **A QUANTIFIER'S ABSENCE IS EVIDENCE WHEN ITS PRESENCE IS
+// EVIDENCE**, and the two halves of this family are now broken apart in the file
+// precisely because only one of them is map-built.
+const OPPONENT_ACTIVE_DISCARD = new RegExp(
+  `^Discard (?:an|a (Special)|a (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
+    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")}))) Energy from your opponent['’]s Active Pokémon\\.$`,
+);
+// 🆕 D361 — CERULEDGE `sv08-035`/`-197` "Cursed Edge" (2 Standard-legal):
+// *"Discard all Special Energy from all of your opponent's Pokémon."* — the
+// `opponentEach` sweep at `count: "all"`, the printed COMPLEMENT of Giacomo's
+// one-per-body sweep (see the op member's own D361 block for the contrast).
+//
+// 🛑 **A SEPARATE ANCHOR AND NOT A CROSS-PRODUCT WITH THE LINE ABOVE, BECAUSE
+// THE CATALOG DOES NOT PRINT THE CROSS-PRODUCT.** `a` pairs with `Active` and
+// `all` pairs with `all of your opponent's Pokémon`; neither `Discard all
+// Special Energy from your opponent's Active Pokémon.` nor `Discard a Special
+// Energy from all of your opponent's Pokémon.` returns a single row on any
+// column. A `(a|all) × (Active|all of)` matrix would have derived two sentences
+// nobody prints for the same number of characters.
+//
+// ⚠️ **AND IT MUST REFUSE GIACOMO'S PRINTED WORDING**, which is the sharpest
+// near-miss any anchor in this file has: *"Discard a Special Energy from EACH of
+// your opponent's Pokémon."* is a REGISTRY row (`sv02-182`, a Supporter). It is
+// the first time a derived anchor's near-miss is a sentence the engine already
+// builds from the other producer — so a loose `(all|each)` here would not merely
+// over-derive, it would put one printed sentence on TWO producers that disagree
+// about its count.
+const OPPONENT_EACH_SPECIAL_DISCARD =
+  /^Discard all Special Energy from all of your opponent['’]s Pokémon\.$/;
 
 // The TYPED self-discard: "Discard a|all|{N} {type} Energy from this Pokémon."
 // — the same §8 attack cost as its untyped siblings above, narrowed to one
@@ -11808,11 +11914,53 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
-  // 11/12. "Discard an Energy from your opponent's Active Pokémon.", bare and
-  //        behind a coin flip — the hammer family's attack twins, the same op
-  //        Mawile's Ability runs with a wider filter.
-  if (OPPONENT_ACTIVE_DISCARD.test(effect)) {
-    return [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }];
+  // 11/12. "Discard a[n] [Special|{X}] Energy from your opponent's Active
+  //        Pokémon.", bare and behind a coin flip — the hammer family's attack
+  //        twins. 🆕 **D361 WIDENED THE BARE FORM TO THE PRINTED NOUN PHRASE**:
+  //        three spellings, one anchor, one op, and the ONLY thing the capture
+  //        decides is the filter. See the anchor's own D361 block for the census
+  //        (6 legal `an Energy` + 4 legal `a Special Energy` + 2 legal
+  //        `a {R} Energy`, plus a rotated `{W}` the arm derives anyway).
+  match = OPPONENT_ACTIVE_DISCARD.exec(effect);
+  if (match !== null) {
+    // Exactly one branch of the alternation matched, and the two notation groups
+    // are mutually exclusive — the same read `TYPED_SELF_DISCARD` makes, and an
+    // unmapped brace code cannot reach here (the character class is built from
+    // the map's keys). `undefined` on all three is the BARE printed article,
+    // whose program must stay byte-identical to what it was before this widening.
+    const energyType =
+      match[2] === undefined ? ENERGY_TYPE_BY_NAME[match[3] ?? ""] : ENERGY_TYPE_BY_CODE[match[2]];
+    const filter: CardFilter | undefined =
+      match[1] !== undefined
+        ? { kind: "specialEnergy" }
+        : match[2] === undefined && match[3] === undefined
+          ? { kind: "anyEnergy" }
+          : // The map lookup cannot fail for a code the alternation admits; the
+            // guard exists so a future map edit degrades to the LOUD skipped path
+            // rather than to a silently untyped discard, which is the wrong card
+            // coming off a real board.
+            energyType === undefined
+            ? undefined
+            : { kind: "providesEnergy", energyType };
+    if (filter !== undefined) {
+      return [{ op: "discardEnergy", from: "opponentActive", filter }];
+    }
+  }
+  // 🆕 12a (D361). "Discard all Special Energy from all of your opponent's
+  //     Pokémon." — Ceruledge `sv08-035`/`-197` "Cursed Edge", 2 Standard-legal.
+  //     The `opponentEach` sweep at `count: "all"`: EVERY match on EVERY body,
+  //     which is the printed complement of Giacomo's one-per-body sweep and
+  //     resolves INLINE (the interpreter's `count === "all"` branch fires before
+  //     the scope split, so this never parks and never captions).
+  if (OPPONENT_EACH_SPECIAL_DISCARD.test(effect)) {
+    return [
+      {
+        op: "discardEnergy",
+        from: "opponentEach",
+        filter: { kind: "specialEnergy" },
+        count: "all",
+      },
+    ];
   }
   if (FLIP_OPPONENT_ACTIVE_DISCARD.test(effect)) {
     return [

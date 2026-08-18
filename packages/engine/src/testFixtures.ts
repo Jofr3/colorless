@@ -10382,6 +10382,57 @@ export const FIXTURE_POOL: Record<string, Card> = {
     "Supporter",
     "Search your deck for up to 3 in any combination of Ethan's Pokémon and Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
   ),
+  /** 🆕 D361 — THE CROSS-SEAT ENERGY DISCARD, THREE PRINTED SENTENCES ON ONE
+      SYNTHETIC BODY. The strings are the catalog's own, carried VERBATIM:
+
+        [0] "Discard a Special Energy from your opponent's Active Pokémon."
+            — Victini `sv05-030` "Singe Off" (printed at INDEX 1, {R}, 30),
+              Farfetch'd `sv06-132` "Mach Cut", Cobalion `sv10.5b-066`/`-144`
+              "Righteous Edge". **4 Standard-legal printings.**
+        [1] "Discard a {R} Energy from your opponent's Active Pokémon."
+            — Ducklett `sv10.5w-025`/`-109` "Firefighting" ({C}, no damage).
+              **2 Standard-legal printings**, plus Growlithe `sv03.5-058`
+              ("{W}", `legal_standard = 0`) which the same arm derives.
+        [2] "Discard all Special Energy from all of your opponent's Pokémon."
+            — Ceruledge `sv08-035`/`-197` "Cursed Edge" ({C}, no damage, a
+              Stage 1 evolving from Charcadet). **2 Standard-legal printings.**
+
+      ⚠️ SYNTHETIC BY NECESSITY, NOT BY PREFERENCE — `fix-trainerops`' reason
+      verbatim, re-checked rather than copied: **all 222 real ids in this pool sit
+      inside the local D1's six sets** (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`,
+      `swsh10.5`), and every one of these seven printings is in `sv05`, `sv06`,
+      `sv08`, `sv10.5b` or `sv10.5w`. A real fixture id needs a
+      `CATALOG_MANIFEST.printed` row, `NO_CATALOG_ROW` is deliberately EMPTY, and
+      `catalogManifest.test.ts` is total in both directions — so a real-id fixture
+      here would be exactly the defect that file exists to surface. The printed
+      COSTS and damage are therefore not reproduced (a `{C}` cost each, so one
+      Energy fields every case); the SENTENCES are, and they are what the deriver
+      reads.
+
+      ⚠️ THE THIRD INDEX IS THE ONE THAT NEEDS A BENCH. `opponentEach` sweeps the
+      whole victim board, so the case that tells it apart from `opponentActive`
+      needs Special Energy on a BENCHED body too — and the case that tells
+      `count: "all"` apart from Giacomo's one-per-body needs TWO on one body. */
+  "fix-crossseatdiscard": battler("fix-crossseatdiscard", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Singe Off",
+        effect: "Discard a Special Energy from your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Firefighting",
+        effect: "Discard a {R} Energy from your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Cursed Edge",
+        effect: "Discard all Special Energy from all of your opponent's Pokémon.",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -10392,6 +10443,35 @@ export function deckOf(counts: Record<string, number>): string[] {
   }
   return ids;
 }
+
+/** 🆕 D361 — the CROSS-SEAT Energy discard. Both seats run it, because the
+    OPPONENT's board is what every case here dresses.
+
+    The Energy list is the whole point:
+      • `fix-special` / `fix-special-2` — TWO distinct Special prints, so
+        "a Special Energy" can face a real pick on one Active AND so a single
+        body can hold two for the `count: "all"` sweep to strip together;
+      • `fix-fire-energy` / `fix-fire-energy-alt` — two {R} prints, so the typed
+        arm meets interchangeable copies and distinguishable ones;
+      • `fix-water-energy` and `fix-energy` — the NON-matching Energy every one
+        of these three sentences must leave exactly where it is, which is what
+        tells a narrowed filter apart from `anyEnergy`;
+      • `sv02-191` **Luminous** — the wildcard that PROVIDES every type, so the
+        typed arm's answer depends on the HOST rather than on the card, and a
+        `basicEnergy`-shaped reading of "{R} Energy" would miss it. */
+export const CROSS_SEAT_DISCARD_DECK = deckOf({
+  "fix-crossseatdiscard": 4,
+  "fix-bigbody": 4, // 200 HP — survives everything, so no KO tail interferes
+  "fix-basic-1": 4, // a second body for the opponent's Bench
+  "fix-basic-2": 4,
+  "fix-special": 4,
+  "fix-special-2": 4,
+  "fix-fire-energy": 6,
+  "fix-fire-energy-alt": 4,
+  "fix-water-energy": 4,
+  "fix-energy": 18,
+  "sv02-191": 4, // Luminous — provides every type while it is alone
+});
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });
 

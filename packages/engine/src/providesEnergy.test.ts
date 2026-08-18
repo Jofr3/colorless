@@ -167,7 +167,23 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
       "Discard a {L} Energy from this Pokémon. Then, flip a coin.",
       "Discard all Fire Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
       // The type must sit where the pattern puts it, not merely appear.
-      "Discard a {L} Energy from your opponent's Active Pokémon.",
+      // 🆕🛑 **D361 MOVED ONE STRING OUT OF THIS LIST, AND THIS COMMENT IS THE
+      //     RECORD OF WHY.** `"Discard a {L} Energy from your opponent's Active
+      //     Pokémon."` stood here from D191 to D360 as a REFUSAL. It derives now:
+      //     the catalog prints that shape (Ducklett `sv10.5w-025`/`-109`,
+      //     `{R}`, 2 Standard-legal; Growlithe `sv03.5-058`, `{W}`, rotated), so
+      //     `OPPONENT_ACTIVE_DISCARD` widened its noun phrase into a capture and
+      //     the sentence is asserted POSITIVELY in `crossSeatEnergyDiscard.test.ts`
+      //     §1 instead. `{L}` itself has ZERO printings on this shape and derives
+      //     anyway — the same convention the loop above pins for the SELF form
+      //     ("every code in the map resolves"): a type is a PARAMETER and the
+      //     alternation is built FROM `ENERGY_TYPE_BY_CODE`, never from the
+      //     printed subset.
+      //     ⚠️ **THE CLAIM THIS LINE MADE IS NOT ABANDONED, IT IS RE-POINTED** —
+      //     the two strings below still pin "the type must sit where the pattern
+      //     puts it", one on a DESTINATION the family does not print and one on
+      //     word order, and both are real refusals rather than a softened list.
+      "Discard a {L} Energy from 1 of your opponent's Pokémon.",
       "Discard an Energy of type {L} from this Pokémon.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
