@@ -5483,6 +5483,15 @@ export const MUTANTS: Mutant[] = [
     // RECORD MEAN SOMETHING ELSE", AND THE ANSWER IS NO** — so
     // `D326-record-version-not-bumped` is NOT owed this time and stays anchored at
     // 22, which was predicted by id before the diff and measured after it.
+    // ⚠ RE-POINTED AT D365 (0.269.0 → 0.270.0) — the SIXTY-FIRST payment, and it
+    // was PREDICTED BY NAME this time rather than found at 0× by the sweep: the
+    // slice bumps the version, so this anchor is owed before a line of it ships.
+    // `MATCH_RECORD_VERSION` STAYS 22, asked rather than inherited: D365's whole
+    // diff is THREE rows in a private clause `Map`, every one of them mapping to a
+    // `BoardCondition` member that already existed. No op gained a field, no union
+    // gained a member, nothing returns `{ park }` — a persisted record cannot mean
+    // something else, so `D326-record-version-not-bumped` is not owed and stays
+    // anchored at 22.
     // ⚠ RE-POINTED AT D363 (0.268.0 → 0.269.0) — the SIXTIETH payment, and the
     // ANCHOR CHECK is what found it: a whole-corpus exactly-once sweep over all
     // 1,134 `find` strings reported this one at 0×, which is the loud rot the
@@ -5494,7 +5503,7 @@ export const MUTANTS: Mutant[] = [
     // — no record can mean something else, so `D326-record-version-not-bumped` is
     // not owed and stays anchored at 22.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.269.0";',
+    find: 'export const engineVersion = "0.270.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

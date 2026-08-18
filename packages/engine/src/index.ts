@@ -12108,6 +12108,69 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.270.0 → **THE FLOOR THE HANDOFF UNDERSTATED: THREE CLAUSE ROWS AT ZERO
+    NEW VOCABULARY, AND `allOf`'s FIRST DERIVED PRODUCER.**
+
+    D364 handed over a population and a price. The POPULATION reproduces exactly
+    on three surfaces — S1 (`legalAttackCorpus()` + the live requirement reader),
+    S3 (remote D1 `luminous`, `$.effect`, extractor verified against the 1,732-unit
+    total FIRST) and S4 (the producer set: two call sites, both `attack.ts`):
+    **9 sentences / 18 legal units open with the `"If <clause>, this attack does
+    nothing."` skeleton; 2 s / 4 u were carried; 7 s / 14 u reached the table and
+    MISSED.** Its "ZERO anchors refuse them" claim reproduces too — every one of
+    the seven matches `ATTACK_DOES_NOTHING` and misses on the CLAUSE.
+
+    🛑 **THE PRICE DOES NOT, AND IT IS WRONG IN THE UNUSUAL DIRECTION — TOO
+    SMALL.** The handoff put the zero-new-vocabulary floor at **2 rows / 2
+    sentences / 3 legal printings** (`handSizesEqual`, `opponentPrizesRemaining`).
+    Partitioning the seven by WHAT ACTUALLY REFUSES EACH gives **3 rows / 3
+    sentences / 5 legal printings**: it never enumerated Mesprit
+    `sv08-079`/`sv08-204` *"If you don't have Uxie and Azelf on your Bench…"*,
+    which `allOf` (D280) + `yourBenchHasNamed` (D118) already spell between them.
+    **A COUNT CAN REPRODUCE EXACTLY WHILE ITS ATTRIBUTION IS WRONG — and the
+    attribution can be wrong by leaving something OUT.**
+
+    🛑 **AND NEITHER OF THE TWO THINGS THE HANDOFF CALLED "WIDENINGS" IS ONE. 0 OF
+    2.** `yourStadiumInPlay` yours→any is a behaviour change with two live
+    consumers whose OWNERSHIP is load-bearing (registry `FALKNER`, and the positive
+    clause row *"you have a Stadium in play"*), so it is a rename, not a widening;
+    Burned is an ADDITION because no member reads `StatusConditions.burned` at all
+    and narrowing `opponentActiveHasSpecialCondition` would break Sableye. **A
+    WIDENING IS FREE AND A RENAME IS NOT — so the test is whether every existing
+    consumer wants the wider reading, not whether the member's name could stretch.**
+
+    THE PARTITION OF THE SEVEN, published before anything was priced:
+
+    | refused by | s | legal p | built here |
+    |---|---|---|---|
+    | vocabulary that ALREADY EXISTS | **3** | **5** | ✅ |
+    | vocabulary that must be BOUGHT | 4 | 9 | ❌ |
+
+    Three rows ship: `handSizesEqual` (Iron Boulder `sv07-071`/`sv08.5-046`),
+    `opponentPrizesRemaining {counts:[3,4]}` (Hop's Cramorant `sv09-138`) and
+    `allOf([yourBenchHasNamed "Uxie", yourBenchHasNamed "Azelf"])` (Mesprit ×2).
+
+    🛑 **`allOf` GAINS ITS FIRST DERIVED PRODUCER.** From D280 to D364 every
+    `allOf` in the engine was authored by hand in `registry.ts`; a printed sentence
+    now constructs one. Nothing downstream moves — the recursion arm is the same
+    `.every`, and the two exhaustive `switch (cond.kind)` readers gain no arm.
+
+    ZERO new `BoardCondition` members, ops, events, error codes, prompt kinds,
+    `GameState` fields, regexes, registry rows or `EffectSlot` members.
+    **`MATCH_RECORD_VERSION` STAYS 22** (read from source,
+    `apps/api/src/lobby/match.ts`) — a clause-table row persists nothing.
+
+    ⚠️ **AND A GUARD WAS FOUND STALE AT HEAD BY THE STRING-LITERAL ANCHOR.**
+    `clauseApostrophe.test.ts`'s `APOSTROPHE_REQUIREMENT_SENTENCES` held TWO
+    entries while its doc block and its test name both said *"ALL THREE rows"* —
+    D363 edited the prose beside the array instead of the array, and a
+    hand-written list of a table's rows agrees with itself however far behind it
+    falls. Repaired to six, and given a COMPLETENESS GUARD that re-derives the
+    table's reachable size from the live reader.
+
+    engineVersion 0.269.0 → **0.270.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.269.0 → **THE `$` WAS THE WRONG ANCHOR TO PRICE, AND THE RE-MEASUREMENT
     IS THE SLICE.**
 
@@ -13610,7 +13673,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.269.0";
+export const engineVersion = "0.270.0";
 
 export type {
   ApplyResult,

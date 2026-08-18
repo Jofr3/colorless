@@ -125,14 +125,19 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
     // and it is the one §5 below used to assert was unreachable: D363 widened
     // `ATTACK_DOES_NOTHING` past its `$` after re-measuring what that anchor was
     // actually worth. See `sawkRequirementSplit.test.ts` §1 for the partition.
-    expect(resolved).toHaveLength(331);
-    expect(resolvedP).toBe(1198);
+    // 🆕🆕 D365 — 331 / 1,198 -> **334 / 1,203**. THREE sentences / FIVE printings,
+    // all three off `ATTACK_REQUIREMENT_CLAUSES` rows reusing members this union
+    // already had, and NONE of them touches the ex-ONLY predicate this file is
+    // about — which is exactly why this rung is here: it is a whole-corpus total
+    // in a single-family suite, so it moves for other people's work.
+    expect(resolved).toHaveLength(334);
+    expect(resolvedP).toBe(1203);
     // The parts must add up to the whole quoted in the same case. A total that
     // does not sum is not merely wrong, it is impossible — and it is ONE addition.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(resolvedP + residueP).toBe(total);
-    expect(residue).toHaveLength(309);
-    expect(residueP).toBe(534);
+    expect(residue).toHaveLength(306);
+    expect(residueP).toBe(529);
   });
 
   it("the ex-ONLY predicate is 8 s / 13 p and the WIDER sibling is 4 s / 6 p — the ratio that chose the row", () => {

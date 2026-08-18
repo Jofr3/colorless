@@ -1406,6 +1406,19 @@ export type BoardCondition =
       built — but its arity is free here and would have cost a member under a
       PAIR spelling.
 
+      🆕🆕 **D365 — IT GAINS ITS FIRST *DERIVED* PRODUCER, AND THAT IS A CHANGE IN
+      WHO CAN BUILD ONE RATHER THAN IN WHAT ONE MEANS.** From D280 to D364 every
+      `allOf` value in the engine was authored BY HAND in `registry.ts` (5 sites,
+      14 ids). `ATTACK_REQUIREMENT_CLAUSES` now maps Mesprit `sv08-079`/`sv08-204`
+      *"If you don't have Uxie and Azelf on your Bench, this attack does nothing."*
+      onto `allOf([yourBenchHasNamed "Uxie", yourBenchHasNamed "Azelf"])`, so a
+      PRINTED SENTENCE constructs the combinator. **Nothing downstream moves**: the
+      recursion arm in `conditionHolds` is `.every` over the same descent, the two
+      exhaustive switches gain no arm, and the requirement gate reads the result
+      through `conditionHolds` like any other member. It is the cheapest possible
+      demonstration that the arity-open design was right — the derived value is
+      arity 2 and needed no PAIR spelling to be free.
+
       ⚠️ **NESTING IS ALLOWED BY THE TYPE AND ASKED FOR BY NOTHING.** `conditions`
       is `BoardCondition[]`, so an `allOf` may contain an `allOf`; no printed
       sentence in the pool nests, the fold and the note are both correct if one
@@ -8884,9 +8897,12 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // all: nothing is added, the whole attack is CANCELLED when the clause holds.
 //
 // THE POLARITY LIVES HERE, IN THE SKELETON, NOT IN THE VOCABULARY. Every one of
-// the pool's six distinct "does nothing" clauses is a NEGATIVE sentence —
+// the pool's distinct "does nothing" clauses is a NEGATIVE sentence —
 // "didn't move", "has no damage counters", "you can't", "If tails", "you didn't
-// play", "you can't shuffle" — and that is the GRAMMAR OF THE MECHANIC rather
+// play", "you can't shuffle", 🆕 D365's "don't have", "doesn't have" and "isn't
+// Burned", and even the two that spell no negative WORD ("there is no Stadium",
+// "4 or fewer Benched Pokémon") state a SHORTFALL — and that is the GRAMMAR OF
+// THE MECHANIC rather
 // than an accident of this pool: a card prints "does nothing" precisely to state
 // a REQUIREMENT, and English states a requirement by naming its failure. So the
 // table below reads the printed NEGATIVE clause and hands back the POSITIVE
@@ -8935,8 +8951,23 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 //
 // Anchored at `^` with the required trailing period, no /i, exactly like
 // CONDITIONAL_DAMAGE_BONUS — and the anchor is doing the same load-bearing work.
-// It admits the three sentences below and refuses the rest of the family's 19
-// printings on the CLAUSE (they reach the table and miss), never on the shape:
+//
+// 🆕🆕 D365 — RE-MEASURED, AND THE SENTENCE THIS PARAGRAPH REPLACES SAID "the
+// three sentences below … the family's 19 printings". Over `legalAttackCorpus()`
+// with the live reader (surface S1, re-derived rather than inherited, and
+// confirmed pool-wide on the remote D1 `luminous`, `$.effect`, 2026-08-18): the
+// skeleton ADMITS **9 sentences / 18 legal units** and the TABLE now carries
+// **6 rows / 5 admitted sentences / 9 legal units**. Four sentences / nine legal
+// units still reach the table and MISS — Fan Rotom `sv07-118`/`sv08.5-085` (2),
+// Alolan Dugtrio `sv08-123`/`-208` (2), Victini `sv10.5b-012`/`-171`/`sv10.5w-172`/
+// `svp-208` (4), Centiskorch `sv05-037` (1) — and every one of them misses on the
+// CLAUSE, never on the shape. **ZERO anchors refuse any of the seven D364 handed
+// over; what refuses them is VOCABULARY**, and the partition of the seven by
+// vocabulary is 3 sentences / 5 printings answerable with a member that already
+// exists (built here) + 4 sentences / 9 printings needing a new one (not built).
+//
+// The rest of the family — the printings the `^` refuses — are refused on the
+// SHAPE and never reach the table at all:
 //   • "Flip a coin. If tails, this attack does nothing." (11 printings — this said
 //     12 until D144 re-censused the tails face for its own question and counted
 //     them: Tarountula sv01-018, Medicham sv01-111, Lechonk sv01-156, Alolan
@@ -8957,15 +8988,21 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
     reason: arbitrary printed text must not reach `Object.prototype`.
 
-    🆕 D363 — THREE rows, three cards, and all three reuse a `BoardCondition`
-    member that already existed, so neither this slice nor D125 buys any new
-    vocabulary at all. ⚠️ 🆕🆕 D364 — D363 wrote "FIVE printings" here and that
-    counted the five card IDS THE COMMENTS NAME, not printings the pool can play:
-    measured by `legal_standard`, the three rows are worth **0 + 2 + 2 = FOUR**
-    legal printings, and two of the five named ids (`sv03-062`, `sv03-117`) are
-    out of Standard entirely. See each row's own note, and §4 of
-    `splitOrder.test.ts`, which asserts the 0 / 2 / 2 split live off the corpus. Every remaining "does nothing" clause in the
-    pool stays UNMAPPED and therefore LOUD — and being unmapped is now
+    🆕🆕 D365 — **SIX rows, six cards, and all six reuse a `BoardCondition` member
+    that already existed**, so no slice in this family — D125, D363 or this one —
+    has ever bought a union member for it. Priced by `legal_standard` the six rows
+    are worth **0 + 2 + 2 + 2 + 1 + 2 = NINE** legal printings on FIVE admitted
+    sentences, and `requirementFloor.test.ts` §1 asserts that split live off the
+    corpus rather than in prose. 🆕 D363 — THREE rows, three cards, and all three
+    reuse a `BoardCondition` member that already existed, so neither this slice nor
+    D125 buys any new vocabulary at all. ⚠️ 🆕🆕 D364 — D363 wrote "FIVE printings"
+    here and that counted the five card IDS THE COMMENTS NAME, not printings the
+    pool can play: measured by `legal_standard`, the three rows are worth
+    **0 + 2 + 2 = FOUR** legal printings, and two of the five named ids
+    (`sv03-062`, `sv03-117`) are out of Standard entirely. See each row's own note,
+    and §4 of `splitOrder.test.ts`, which asserted the 0 / 2 / 2 split live off the
+    corpus and now asserts the six-row one. Every remaining "does nothing" clause
+    in the pool stays UNMAPPED and therefore LOUD — and being unmapped is now
     LOAD-BEARING TWICE OVER, because `splitAttackRequirementClause` refuses to
     strip a leading sentence whose clause this table does not carry.
 
@@ -8973,10 +9010,15 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     "the Bench", NOT "your Bench" (no possessive — its positive twin one table up
     DOES carry it), and "didn't" with an ASCII apostrophe (the whole 978-card
     pool holds zero U+2019, re-verified at D137). `Pokémon` carries a real U+00E9.
-    BOTH rows carry an apostrophe — the contraction in one, the possessive in the
-    other — so both are read through `literalClauseRow`, which retries a miss with
-    U+2019 folded to U+0027 (D137). The keys themselves stay ASCII: they record
-    what the catalog prints, not what the lookup will tolerate. */
+    🆕🆕 D365 — **ALL SIX keys carry an apostrophe now** ("didn't", "opponent's",
+    "isn't", "don't" ×2, "doesn't"), so every one is read through
+    `literalClauseRow`, which retries a miss with U+2019 folded to U+0027 (D137).
+    ⚠️ **AND `clauseApostrophe.test.ts`'s list of them was STALE AT HEAD** — its
+    doc and its test name both said "ALL THREE rows" while the array held TWO,
+    because D363 added a row and updated the prose around the array instead of the
+    array. It is repaired and re-pointed to all six there. The keys themselves stay
+    ASCII: they record what the catalog prints, not what the lookup will
+    tolerate. */
 const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // Palafin sv03-062/-200 "Justice Kick" ({W}{W}, 210) — the exact NEGATIVE twin
   // of D124's promoted-this-turn row, reading the same `InPlayPokemon.promotedTurn`
@@ -9041,6 +9083,88 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   [
     "your opponent's Active Pokémon isn't a Pokémon ex",
     { kind: "opponentActiveIsEx" },
+  ],
+  // 🆕🆕 D365 — Iron Boulder `sv07-071`/`sv08.5-046` "Adjusted Horn" ({P}{C}, 170),
+  // the printed NEGATION of Bronzong's bonus clause. ZERO NEW VOCABULARY:
+  // `handSizesEqual` is D118's member, spelled POSITIVE one table up as "you have
+  // the same number of cards in your hand as your opponent" — the SAME
+  // byte-for-byte reuse D363's Sawk row made, one member over.
+  //
+  // ⚠️ THE KEY'S TRAP IS THAT ITS POSITIVE TWIN IS A SUBSTRING OF IT. Deleting
+  // the two words "don't " from this key yields the other table's key exactly, so
+  // a reader built on `includes` rather than on whole-clause equality would score
+  // a DAMAGE BONUS off a sentence that means CANCEL, in the one direction D125's
+  // disjointness rule exists to forbid. `literalClauseRow` is keyed on the whole
+  // clause and the two tables are never merged, so the trap is closed by
+  // construction — and it is DRIVEN in `requirementFloor.test.ts` §2 rather than
+  // left to the comment.
+  [
+    "you don't have the same number of cards in your hand as your opponent",
+    { kind: "handSizesEqual" },
+  ],
+  // 🆕🆕 D365 — Hop's Cramorant `sv09-138` "Fickle Spitting" ({C}, 120), ONE legal
+  // printing and the family's first PARAMETERISED row. ZERO NEW VOCABULARY:
+  // `opponentPrizesRemaining { counts }` is D118's member and the parameter is the
+  // printed list read literally — `[3, 4]`, in printed order.
+  //
+  // ⚠️ "EXACTLY 3 OR 4" IS SET MEMBERSHIP, NOT A RANGE, AND THE MEMBER ALREADY
+  // SAYS SO. `conditionHolds` runs `cond.counts.includes(...)`, so a 2-Prize board
+  // is FALSE and a 5-Prize board is FALSE — which is the same reading the positive
+  // row "your opponent has exactly 2 or 4 Prize cards remaining" gets, and there
+  // the non-contiguity makes it unmistakable. Here 3 and 4 ARE contiguous, so a
+  // "between 3 and 4" reading answers every board identically and would be
+  // undetectable on this card alone; it is wrong the day a printing spells a
+  // non-contiguous own list, and the member being shared is what stops it.
+  //
+  // ⚠️ AND THE PRINTED WORD IS "remaining", WHICH IS §3.8's face-down count and
+  // NOT prizes TAKEN. The complement is a different number on every board where
+  // the two players are not level, and `opponentPrizesRemaining` reads the count
+  // the sentence names.
+  [
+    "your opponent doesn't have exactly 3 or 4 Prize cards remaining",
+    { kind: "opponentPrizesRemaining", counts: [3, 4] },
+  ],
+  // 🆕🆕 D365 — Mesprit `sv08-079`/`sv08-204` "Guardian Burst" ({P}{P}, 160), and
+  // the row that makes `allOf` a DERIVED value for the first time. ZERO NEW
+  // VOCABULARY, and it is worth being exact about why: `allOf` (D280) and
+  // `yourBenchHasNamed` (D118) both already exist, so a printed conjunction of two
+  // bench-name facts is spellable today with nothing bought.
+  //
+  // 🛑 **`allOf` HAS HAD EXACTLY ONE PRODUCER SINCE D280 — `registry.ts`, WHICH
+  // AUTHORS ITS VALUES BY HAND — AND THIS IS ITS FIRST DERIVED ONE.** That is a
+  // real widening of who can construct the combinator and it costs nothing at the
+  // consumers: `conditionHolds`'s `allOf` arm is `.every` over the same recursion
+  // it has always run, and the requirement gate in `attack.ts` reads the result
+  // through `conditionHolds` like any other member. NO reader gains an arm, and
+  // the exhaustive-switch count (2, both interpreter.ts) is unchanged.
+  //
+  // ⚠️ **ARITY 2, AND THE POOL'S ONLY OTHER CONJUNCTION IS ARITY 3 AND UNBUILT.**
+  // `allOf`'s own doc block names the Simisage / Simisear / Simipour triple
+  // `sv04-005`/`-021`/`-042` as arity-3 with **0 legal printings**; this row does
+  // not change that and does not reach it — a THIRD name in a printed clause is a
+  // different key and would need its own row.
+  //
+  // ⚠️ **THE ENGLISH IS "don't have A and B", AND IT MEANS "not (A and B)", NOT
+  // "(not A) and (not B)".** The skeleton owns the negation (see the polarity rule
+  // at the head of this block), so the POSITIVE fact handed back is the
+  // conjunction and `attack.ts` cancels when the conjunction FAILS — i.e. when
+  // EITHER body is missing. A per-conjunct negation would cancel only when BOTH
+  // are missing and would let a one-body board attack for 160.
+  //
+  // ⚠️ THE NAMES ARE READ OFF THE STACK TOP (§1.2), which is `yourBenchHasNamed`'s
+  // own reading: a Uxie that has evolved is no longer a Uxie and stops satisfying
+  // this. Both bodies are real and Standard-legal at HEAD (remote D1 `luminous`,
+  // 2026-08-18: Uxie 1 printing, Azelf 1 printing, both `legal_standard = 1`), so
+  // unlike Palafin's row this one is reachable from a legal deck.
+  [
+    "you don't have Uxie and Azelf on your Bench",
+    {
+      kind: "allOf",
+      conditions: [
+        { kind: "yourBenchHasNamed", name: "Uxie" },
+        { kind: "yourBenchHasNamed", name: "Azelf" },
+      ],
+    },
   ],
 ]);
 

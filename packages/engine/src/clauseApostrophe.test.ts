@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
@@ -602,7 +603,16 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // UNMAPPED clause and is correctly absent, which is the accounting guard
     // showing through a census that knows nothing about it. Predicted 105 from
     // "one fixture, one sentence"; measured 106.
-    expect(derivable).toHaveLength(106);
+    //
+    // 🆕🆕 D365 — **106 → 109, MEASURED AND NOT GUESSED.** This slice adds three
+    // attacker fixtures and all three print an apostrophe ("don't", "doesn't",
+    // "don't"), so all three enter this census — 3 fixtures, 3 sentences, +3, a
+    // 1:1:1 step where D363's was 1:2. ⚠️ **AND THE FIVE OTHER FIXTURES THIS SLICE
+    // ADDS MOVE IT BY ZERO**: `fix-uxie`, `fix-azelf` and `fix-lakebystander` are
+    // bench bodies with NO attacks at all, so they carry no sentence for any
+    // reader to resolve. **A FIXTURE COUNT IS NOT A SENTENCE COUNT** — eight
+    // fixtures, three census entries.
+    expect(derivable).toHaveLength(109);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -647,17 +657,46 @@ const APOSTROPHE_BONUS_SENTENCES = [
   "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
 ] as const;
 
-/** All THREE `ATTACK_REQUIREMENT_CLAUSES` rows — the whole table, and every key
-    carries an apostrophe (a CONTRACTION in one, a POSSESSIVE in another, and 🆕
-    D363's row carries BOTH in one key, so the fold is exercised on both
-    grammatical uses the pool prints and on their co-occurrence). */
+/** All SIX `ATTACK_REQUIREMENT_CLAUSES` rows — the whole table, and every key
+    carries an apostrophe (a CONTRACTION, a POSSESSIVE, and rows carrying BOTH in
+    one key, so the fold is exercised on both grammatical uses the pool prints and
+    on their co-occurrence).
+
+    🛑 🆕🆕 **D365 — THIS ARRAY WAS STALE AT HEAD AND ITS OWN DOC AND TEST NAME
+    BOTH SAID SO WITHOUT NOTICING.** D363 added the Sawk row and edited the prose
+    right here to claim *"🆕 D363's row carries BOTH in one key"* — while the array
+    below still held TWO entries and the test was still named *"folds ALL THREE
+    rows"*. Nothing went red, because a hand-written list of a table's rows agrees
+    with itself no matter how far behind the table it falls. **A PROSE COUNT
+    EDITED IN THE SAME COMMIT AS THE ROW IT DESCRIBES IS NOT THEREBY A LIST THAT
+    CONTAINS IT.** The repair is the COMPLETENESS GUARD below the array, which
+    re-derives the table's reachable size from the live reader instead of from this
+    comment; the list stays hand-written on purpose (it names the CARDS), but it
+    can no longer be short without going red. */
 const APOSTROPHE_REQUIREMENT_SENTENCES = [
   // Palafin sv03-062/-200 "Justice Kick" — "didn't", the contraction. Note "the
   // Bench", NOT "your Bench": the trap D125's doc block flags, untouched by this.
   "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
-  // Lycanroc sv03-117 "Finishing Fang" — the possessive, and the pool's longest
-  // clause key.
+  // Basculin sv10.5w-024/-108 "Bared Fangs" — the possessive, and the pool's
+  // longest clause key. (D364: `sv03-117` Lycanroc, which this comment named
+  // through D363, is `legal_standard = 0`; the SENTENCE is unchanged.)
   "If your opponent's Active Pokémon has no damage counters on it before this attack does damage, this attack does nothing.",
+  // 🆕 D363 — Sawk sv10.5w-049/-130 "Rising Chop", the row this list was CLAIMED
+  // to hold and did not: BOTH uses in one key, "opponent's" and "isn't". Printed
+  // WITHOUT its trailing companion sentence here — the fold is a property of the
+  // clause lookup, and the companion is `splitAttackRequirementClause`'s subject.
+  "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.",
+  // 🆕🆕 D365 — Iron Boulder sv07-071/sv08.5-046 "Adjusted Horn": "don't", and the
+  // key whose positive twin is its own substring.
+  "If you don't have the same number of cards in your hand as your opponent, this attack does nothing.",
+  // 🆕🆕 D365 — Hop's Cramorant sv09-138 "Fickle Spitting": "doesn't", the THIRD
+  // distinct contraction spelling in the table and the family's one parameterised
+  // row.
+  "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing.",
+  // 🆕🆕 D365 — Mesprit sv08-079/sv08-204 "Guardian Burst": "don't" again, on the
+  // row that derives an `allOf`. The fold has to survive a RECURSIVE value, which
+  // it does for free — `literalClauseRow` returns the stored value untouched.
+  "If you don't have Uxie and Azelf on your Bench, this attack does nothing.",
 ] as const;
 
 describe("the literal clause tables — the rows the fold was built for", () => {
@@ -673,11 +712,49 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     }
   });
 
-  it("folds ALL THREE rows of ATTACK_REQUIREMENT_CLAUSES — contraction, possessive, and both at once", () => {
+  it("folds ALL SIX rows of ATTACK_REQUIREMENT_CLAUSES — contraction, possessive, and both at once", () => {
     for (const sentence of APOSTROPHE_REQUIREMENT_SENTENCES) {
       const straight = deriveAttackRequirement(sentence);
-      expect(straight).not.toBeNull();
-      expect(deriveAttackRequirement(curly(sentence))).toEqual(straight);
+      expect(straight, sentence).not.toBeNull();
+      expect(deriveAttackRequirement(curly(sentence)), sentence).toEqual(straight);
+    }
+  });
+
+  it("🛑 D365 — the list is COMPLETE, re-derived from the live reader and not from the comment", () => {
+    // 🛑 THE REPAIR FOR THE DEFECT THE ARRAY'S DOC BLOCK DESCRIBES. The table is
+    // module-private, so its SIZE is recovered the only way a test can recover it:
+    // by walking the printed corpus and counting the sentences the live reader
+    // carries. Every one of them must appear in the list above, BY SENTENCE — so a
+    // seventh row added by a later slice reddens HERE, naming the sentence it
+    // added, rather than silently leaving this suite measuring an old table.
+    //
+    // ⚠️ Sawk's printed string carries a trailing companion, so the comparison is
+    // on the CLAUSE SENTENCE rather than on the printed unit: the reader tolerates
+    // the companion and the list deliberately does not spell it (the fold is a
+    // property of the lookup, not of the split).
+    const HEAD = /^(If .+?, this attack does nothing\.)/;
+    const carried = new Set<string>();
+    for (const [, printed] of legalAttackCorpus()) {
+      if (deriveAttackRequirement(printed) === null) continue;
+      carried.add(HEAD.exec(printed.trim())?.[1] ?? printed.trim());
+    }
+    // Five of the six rows are reachable from the legal corpus; Palafin's is not
+    // (D364: all five of its printings are `legal_standard = 0`), so the corpus
+    // walk finds FIVE and the list holds SIX. That asymmetry is the reason the
+    // assertion is a SUBSET check plus an explicit dead-row count, not equality.
+    expect(carried.size).toBe(5);
+    for (const sentence of carried) {
+      expect(APOSTROPHE_REQUIREMENT_SENTENCES).toContain(sentence);
+    }
+    const dead = APOSTROPHE_REQUIREMENT_SENTENCES.filter((s) => !carried.has(s));
+    expect(dead).toEqual([
+      "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
+    ]);
+    expect(APOSTROPHE_REQUIREMENT_SENTENCES).toHaveLength(6);
+    // And every listed sentence really resolves — a list that had drifted onto a
+    // clause the table dropped would otherwise pass the subset check vacuously.
+    for (const sentence of APOSTROPHE_REQUIREMENT_SENTENCES) {
+      expect(deriveAttackRequirement(sentence), sentence).not.toBeNull();
     }
   });
 

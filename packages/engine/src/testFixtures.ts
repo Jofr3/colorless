@@ -10523,6 +10523,58 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D365 — THE THREE ZERO-NEW-VOCABULARY REQUIREMENT ROWS, one attacker each.
+      All three print a SINGLE does-nothing sentence (unlike Sawk one block up), so
+      `splitAttackRequirementClause` returns null on every one of them and the
+      split term is untouched — which is asserted rather than assumed in
+      `requirementFloor.test.ts` §3. Costs and damage are the PRINTED ones. */
+  "fix-ironboulder": battler("fix-ironboulder", {
+    hp: 120,
+    types: ["Psychic"],
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Adjusted Horn",
+        damage: 170,
+        effect:
+          "If you don't have the same number of cards in your hand as your opponent, this attack does nothing.",
+      },
+    ],
+  }),
+  "fix-cramorant": battler("fix-cramorant", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Fickle Spitting",
+        damage: 120,
+        effect:
+          "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing.",
+      },
+    ],
+  }),
+  "fix-mesprit": battler("fix-mesprit", {
+    hp: 120,
+    types: ["Psychic"],
+    attacks: [
+      {
+        cost: ["Psychic", "Psychic"],
+        name: "Guardian Burst",
+        damage: 160,
+        effect: "If you don't have Uxie and Azelf on your Bench, this attack does nothing.",
+      },
+    ],
+  }),
+  /** The two BENCH BODIES the `allOf` row names. Synthetic ids with PRINTED
+      names, because `yourBenchHasNamed` reads `topCardOf(...).name` and the name
+      is the whole key — an id-keyed fixture would test nothing about the row.
+      ⚠️ `fix-lakebystander` is the CONTROL: same shape, a name neither conjunct
+      matches, so a bench full of it fails the requirement and an `allOf` collapsed
+      to `.some` would still cancel (which is why the suite also drives ONE of the
+      two present). */
+  "fix-uxie": battler("fix-uxie", { name: "Uxie", hp: 70, types: ["Psychic"] }),
+  "fix-azelf": battler("fix-azelf", { name: "Azelf", hp: 70, types: ["Psychic"] }),
+  "fix-lakebystander": battler("fix-lakebystander", { name: "Lake Bystander", hp: 70 }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10632,6 +10684,31 @@ export const SAWK_SPLIT_DECK = deckOf({
   "sv06.5-036": 4,
   "fix-fighting-energy": 8,
   "fix-energy": 32,
+});
+
+/** 🆕🆕 D365 — the requirement FLOOR: three attackers, three clause rows, ZERO new
+    vocabulary. A DEDICATED 60 (D270's rule) rather than a widened `SAWK_SPLIT_DECK`,
+    so D363's seeded boards keep the shuffles they were measured on.
+
+      • `fix-ironboulder` {P}{C} 170 — `handSizesEqual`;
+      • `fix-cramorant` {C} 120 — `opponentPrizesRemaining {counts:[3,4]}`;
+      • `fix-mesprit` {P}{P} 160 — the `allOf` row;
+      • `fix-uxie` / `fix-azelf` — the two named bench bodies the `allOf` needs,
+        and `fix-lakebystander` the same-shaped body neither conjunct matches;
+      • `fix-bigbody` — 200 HP, survives all three prints, so "nothing happened"
+        is never confused with a knockout tail.
+
+    `fix-psychic-energy` pays both {P} costs; `fix-energy` pays the {C}. */
+export const REQUIREMENT_FLOOR_DECK = deckOf({
+  "fix-ironboulder": 3,
+  "fix-cramorant": 3,
+  "fix-mesprit": 3,
+  "fix-uxie": 2,
+  "fix-azelf": 2,
+  "fix-lakebystander": 3,
+  "fix-bigbody": 8,
+  "fix-psychic-energy": 12,
+  "fix-energy": 24,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });
