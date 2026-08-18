@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
+import { applyChoice } from "./interpreter";
 import { redactGame } from "./redact";
 import { programFor, registryCardIds } from "./registry";
 import {
@@ -524,6 +525,25 @@ describe("D359 §3 — the validator is the only place the printed ceiling is en
         choice: { kind: "pokemon", ref: benchRef(0) },
       }).ok,
     ).toBe(true);
+  });
+
+  it("🛑 the APPLY clamps to the printed count too — the belt behind the validator", () => {
+    // `applyChoice` is reachable with a wire-supplied number, and the validator is
+    // what refuses an over-take. This drives the BELT directly, because a guard
+    // only the validator can reach is a guard nothing tests: the clamp is what
+    // keeps a frame that somehow got past the barrier from emptying the pile.
+    const parked = attackWith(ready(11, { pile: 4 })).state;
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const events: GameEvent[] = [];
+    const after = applyChoice(
+      parked,
+      parked.phase.cont.pendingOp,
+      { kind: "pokemon", ref: benchRef(0), take: 4 },
+      parked.phase.cont.ctx,
+      events,
+    );
+    expect(energyOn(after, benchRef(0))).toEqual([WATER, WATER]);
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(2);
   });
 
   it("a ref that is not a candidate is still refused, quantity or no quantity", () => {
