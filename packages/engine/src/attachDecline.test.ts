@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import { applyAction, createGame } from "./index";
 import { redactGame } from "./redact";
+import { legalAttackCorpus } from "./censusAttackCorpus";
+import { deriveAttackEffect } from "./effects";
 import { programFor, registryCardIds } from "./registry";
 import { battler, deckOf, typedEnergy } from "./testFixtures";
 
@@ -399,6 +401,30 @@ function decline(state: GameState) {
 /** Every `attachEnergyFrom` op the REGISTRY authors, paired with the id that owns
     it — walked rather than listed, which is what makes the partition in §1 a
     census and not a hand-written pool (the vacuous-guard defect). */
+/** 🆕 D360 — EXTRACTED SO THE **DERIVER** CAN BE WALKED BY THE SAME CODE. The
+    walk was inlined below and reached `programFor` alone, which is the shape of
+    the bug D359 diagnosed: a registry walk sees ONE of this op's TWO producers.
+    Recursive on purpose — Kilowattrel ex's attach sits inside a `recordGate`, and
+    a top-level filter misses it (15 sentences flat vs 16 recursive). */
+function attachOpsIn(node: unknown): Extract<EffectOp, { op: "attachEnergyFrom" }>[] {
+  const into: Extract<EffectOp, { op: "attachEnergyFrom" }>[] = [];
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      for (const x of n) walk(x);
+      return;
+    }
+    if (n !== null && typeof n === "object") {
+      const rec = n as Record<string, unknown>;
+      if (rec.op === "attachEnergyFrom") {
+        into.push(rec as unknown as Extract<EffectOp, { op: "attachEnergyFrom" }>);
+      }
+      for (const value of Object.values(rec)) walk(value);
+    }
+  };
+  walk(node);
+  return into;
+}
+
 function attachOpsByCardId(): Map<string, Extract<EffectOp, { op: "attachEnergyFrom" }>[]> {
   const found = new Map<string, Extract<EffectOp, { op: "attachEnergyFrom" }>[]>();
   const walk = (node: unknown, into: Extract<EffectOp, { op: "attachEnergyFrom" }>[]): void => {
@@ -853,6 +879,122 @@ describe("D358 §6 — the ids this slice rests on are real, and the registry ho
     // Every `fix-*` id here is declared in THIS file (D275's idiom).
     for (const id of Object.keys(POOL)) {
       if (id.startsWith("fix-")) expect(id.startsWith("fix-d358-"), id).toBe(true);
+    }
+  });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕 7. D360 — THE FAMILY CLOSES, ASSERTED OVER **BOTH** PRODUCERS
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 🛑🛑 **§1 ABOVE WALKS THE REGISTRY, AND THE REGISTRY IS NOT THE BUILD.** That
+// is not a criticism of §1 — it is a claim about hand-authored rows and it is
+// exactly right about them. It is the reason D358's population figure was short
+// by five printings and the reason its own successor had to re-derive it:
+// `attachEnergyFrom` has TWO producers, and `deriveAttackEffect` emits ops for
+// sentences that carry NO registry row at all. This section is the missing half,
+// and it is deliberately placed in THIS file so the two walks sit together and a
+// later slice cannot repeat the omission by reading only the one above it.
+//
+// THE POPULATION, re-derived at D360 over both producers and joined to remote D1
+// `luminous` on `$.effect` (extractor verified against nine known-present rows
+// across all three text columns FIRST):
+//   • `LIKE '%ttach up to%'` — **23 sentences / 53 printings / 24 Standard-legal**
+//   • and the 24 account for themselves exactly:
+//       13 bought at D359 (the `count` BATCH, six sentences)
+//      + 6 bought at D358 (Archaludon ex ×3, Magneton ×3 — the registry SPREAD)
+//      + 4 bought at D360 (the derived SPREAD — Morpeko, Lycanroc, Mesprit ×2)
+//      + 1 refused      (Grafaiai `sv08-121`, cross-seat, derives to null)
+//      = 24.
+//   • plus KORAIDON_EX ×4, which is `legal_standard = 0` and therefore in NONE of
+//     those figures, and which is the whole reason §1's set moved. See §0.
+
+describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N", () => {
+  /** Every op the DERIVER emits for a Standard-legal attack sentence, with the
+      sentence that produced it — the surface `registryCardIds()` cannot see. */
+  function derivedSpreads(): { text: string; ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] }[] {
+    const out: { text: string; ops: Extract<EffectOp, { op: "attachEnergyFrom" }>[] }[] = [];
+    for (const [, text] of legalAttackCorpus()) {
+      const ops = attachOpsIn(deriveAttackEffect(text));
+      if (ops.length > 1) out.push({ text, ops });
+    }
+    return out;
+  }
+
+  it("🛑 the DERIVER's spreads are EXACTLY three sentences, and all three are hedged", () => {
+    // ⚠️ THE CONTROL THAT KEEPS THIS FROM BEING VACUOUS: the corpus is the whole
+    // Standard-legal attack column (640 sentences) and the readers run LIVE
+    // against it, so a broken deriver returns an empty list — which this asserts
+    // against by NAME and by COUNT, in both directions.
+    const spreads = derivedSpreads();
+    expect(spreads.map((s) => s.text).sort()).toEqual(
+      [
+        "Attach up to 2 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
+        "Attach up to 2 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like.",
+        "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like.",
+      ].sort(),
+    );
+    // 4 Standard-legal printings over those 3 sentences (2 of them Mesprit's).
+    const printings = legalAttackCorpus()
+      .filter(([, text]) => spreads.some((s) => s.text === text))
+      .reduce((n, [count]) => n + count, 0);
+    expect(printings).toBe(4);
+  });
+
+  it("🛑 EVERY hedged spread op carries the flag, in BOTH producers, and no other op does", () => {
+    // ⚠️ **THE CLOSURE CLAIM, AND IT IS STATED AS A BICONDITIONAL** so neither
+    // direction can drift: an op is `declinable` IF AND ONLY IF it is one of N > 1
+    // ops built from a printed "up to". A future arm that emits a spread without
+    // the flag reddens this; so does a row that flags something that is not one.
+    for (const { text, ops } of derivedSpreads()) {
+      expect(text, text).toContain("up to");
+      for (const op of ops) expect(op.declinable, text).toBe(true);
+    }
+    // …AND THE OTHER DIRECTION, over the same corpus: **every SINGLE-op attach
+    // program the deriver builds is flagless**, and the disjunction below says
+    // WHY for each one rather than just asserting the absence — a print that did
+    // not hedge at all, or a print that hedged onto ONE NAMED BODY, where the
+    // hedge became `count` and D359's `??` spends it there instead. Written as a
+    // pair of live categories with both proved non-empty, so neither arm can
+    // silently become unreachable and make the row vacuous.
+    // ⚠️ **AND THIS ASSERTION WAS TAUTOLOGICAL IN THIS SLICE'S FIRST DRAFT** —
+    // `toBe(cond ? undefined : undefined)` — which is green, unfalsifiable and
+    // exactly the "prose that nothing checks" defect one directory over. Caught
+    // and corrected before shipping.
+    let unhedged = 0;
+    let hedgedOntoOneBody = 0;
+    for (const [, text] of legalAttackCorpus()) {
+      const ops = attachOpsIn(deriveAttackEffect(text));
+      if (ops.length !== 1) continue;
+      const op = ops[0];
+      expect(op?.declinable, text).toBeUndefined();
+      if (text.includes("up to")) {
+        expect(op?.count, text).toBeGreaterThan(1); // the hedge became the ceiling
+        hedgedOntoOneBody++;
+      } else {
+        expect(op?.count, text).toBeUndefined();
+        unhedged++;
+      }
+    }
+    expect(hedgedOntoOneBody).toBeGreaterThan(0);
+    expect(unhedged).toBeGreaterThan(0);
+  });
+
+  it("🛑 the REGISTRY half: every multi-op `anyWay` program is flagged, Infernape excepted", () => {
+    // The registry's spreads are the four programs §1 names plus Infernape's,
+    // which is the ONE deliberate refusal — it prints no "up to" and no empty arm
+    // (§9.1), so its printed answer set is {R}, {F}, {R,F} and a declinable pair
+    // would legalise an empty answer the sentence does not print.
+    const INFERNAPE = ["svp-116", "sv06-033", "sv06-173"];
+    for (const [id, ops] of attachOpsByCardId()) {
+      if (ops.length <= 1) continue;
+      expect(ops.every((op) => op.declinable === true), id).toBe(!INFERNAPE.includes(id));
+    }
+    // Both halves of the biconditional over the registry too: a flagged op is
+    // always part of a multi-op program, never a lone one.
+    for (const [id, ops] of attachOpsByCardId()) {
+      if (ops.some((op) => op.declinable === true)) expect(ops.length, id).toBeGreaterThan(1);
     }
   });
 });

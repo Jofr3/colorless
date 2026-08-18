@@ -1151,3 +1151,181 @@ describe("D248 — the distribution axis has THREE members and a print is exactl
     expect(programPlayable(empty, program, "p1")).toBe(false);
   });
 });
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. 🆕 D360 — THE PRINTED "up to" REACHES THE SPREAD
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// D358 bought `attachEnergyFrom.declinable` for two HAND-AUTHORED spreads;
+// D359 bought `count`'s ceiling for the BATCH and taught the park to read both
+// through ONE prompt key (`upTo = op.count ?? (op.declinable === true ? 1 :
+// undefined)`). Neither reached the spread THIS FILE's arm builds, so
+// *"attach up to 2 … in any way you like"* was still an EXACT 2 on every
+// printing the deriver owns: 3 sentences / 4 Standard-legal printings —
+// Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`
+// (remote D1 `luminous`, 2026-08-18, `$.effect` over all three text columns;
+// the family's `LIKE '%ttach up to%'` census is 23 sentences / 53 printings /
+// 24 legal and partitions 13 + 6 + 4 + 1).
+//
+// 🛑 **THE ENGINE PRICE IS ONE EXPRESSION AND ZERO NEW VOCABULARY.** No op
+// field, no prompt field, no choice field, no wire byte, no schema, no new arm.
+// `MATCH_RECORD_VERSION` STAYS 22: an `EffectOp` IS persisted
+// (`EffectContinuation.pendingOp`), so the question is live — but a v22 record
+// holding a flagless `attachEnergyFrom` reads back MANDATORY, which is exactly
+// what it meant when it was written. Absence meant mandatory before and means
+// mandatory after: D358's WIDENING case, not D352/D359's RENAME case.
+
+describe("D360 §6 — the discriminator is the PRINTED word, not the derived count", () => {
+  it("🛑 'up to 1' and the unhedged singular derive to the SAME op count and DIFFERENT flags", () => {
+    // ⚠️ THE FALSIFIABILITY PAIR, AND IT IS A LIVE NEAR-MISS RATHER THAN A
+    // CONSTRUCTED ONE. `count` is the DERIVED value and defaults to 1 when the
+    // hedge is absent, so `count > 1` reads the hedge off the NUMBER instead of
+    // off the PRINT — and on these two sentences the two readings disagree while
+    // every other observable is identical: same arm, same op, same source, same
+    // destination, same ONE op emitted. §9.1 rules that "up to N" makes every k
+    // in 0..N a printed answer, so "up to 1" is {0, 1} — declinable — and the
+    // article form is a mandatory 1. Both spellings of the gate compile; only
+    // `match[3]` reads the print.
+    const hedged = deriveAttackEffect(
+      "Attach up to 1 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
+    );
+    const bare = deriveAttackEffect(
+      "Attach a Basic Energy card from your discard pile to your Pokémon in any way you like.",
+    );
+    expect(hedged).toEqual([{ op: "attachEnergyFrom", source: "discard", declinable: true }]);
+    expect(bare).toEqual([{ op: "attachEnergyFrom", source: "discard" }]);
+    // The two are ONE op each — so a build that inferred the hedge from the
+    // PROGRAM'S LENGTH, or from `count`, cannot tell them apart at all.
+    expect(hedged).toHaveLength(1);
+    expect(bare).toHaveLength(1);
+  });
+
+  it("the flag is scoped to the SPREAD — it never lands beside `count`", () => {
+    // ⚠️ MEASURED, NOT TIDY. Hoisted into the shared `base` the flag would ride
+    // the BATCH branch too, where D359's `??` already spends the same printed
+    // word through `count` — so it would be behaviourally dead AND would put two
+    // keys on one axis, which `attachDecline.test.ts` §1 pins across the whole
+    // registry. Asserted here over every sentence this arm reads so the scoping
+    // cannot rot into a comment.
+    for (const { text, program } of CLAUSES) {
+      const derived = (deriveAttackEffect(text) ?? []) as Record<string, unknown>[];
+      expect(derived, text).toEqual(program);
+      for (const op of derived) {
+        expect(op.declinable === true && op.count !== undefined, text).toBe(false);
+        // …and every op of a hedged SPREAD carries it, never just the first: a
+        // player who could stop before the first card but not between the others
+        // has not been given what "up to" says.
+        if (derived.length > 1) expect(op.declinable, text).toBe(true);
+      }
+    }
+  });
+
+  it("🛑 the CROSS-SEAT hedge is still refused, and that is measured rather than assumed", () => {
+    // Grafaiai `sv08-121` — "Attach up to 3 Energy cards from your **opponent's**
+    // discard pile to **their** Pokémon in any way you like." — 1 Standard-legal
+    // printing, and the one member of the family no op in this vocabulary can
+    // express. It is the 24th of the 24 and it stays null: this slice widened the
+    // flag, not the arm.
+    expect(
+      deriveAttackEffect(
+        "Attach up to 3 Energy cards from your opponent's discard pile to their Pokémon in any way you like.",
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("D360 §7 — Morpeko's printed {0, 1, 2}, driven on a board", () => {
+  /** The spread's three answers over the same board: two eligible Bench bodies
+      plus the un-narrowed attacker, and three {C} in the pile so AVAILABILITY is
+      never what bounds the result. */
+  const stocked = (seed: number): GameState => ready(seed, { discard: { "fix-energy": 3 } });
+
+  it("TWO — the pre-D360 behaviour, still reachable and still the default", () => {
+    const parked = mustApply(stocked(21), {
+      type: "attack",
+      seat: "p1",
+      index: PICK_AND_STICK,
+    }).state;
+    const first = pick(parked, benchRef(0));
+    const second = pick(first.state, benchRef(1));
+    expect(all([...first.events, ...second.events], "ENERGY_ATTACHED")).toHaveLength(2);
+    expect(second.state.phase.kind).not.toBe("effect:choose");
+  });
+
+  it("🛑 ONE — the printed MIDDLE answer, UNREACHABLE on this sentence before D360", () => {
+    // 🛑 THE DEFECT, NAMED: the engine spent the printed "up to" against
+    // AVAILABILITY (a second op with nothing left to move no-ops) and NEVER
+    // against the player's WILL. On a stocked pile the second op had a candidate
+    // and a source, so it resolved, and a controller who wanted ONE got two — out
+    // of their own discard pile, onto their own bodies.
+    const parked = mustApply(stocked(22), {
+      type: "attack",
+      seat: "p1",
+      index: PICK_AND_STICK,
+    }).state;
+    const first = pick(parked, benchRef(0));
+    expect(first.state.phase.kind).toBe("effect:choose"); // the second decision
+    const declined = mustApply(first.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon" }, // no `ref` — the decline
+    });
+    expect(all(declined.events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(declined.state.players.p1.bench[0]?.energy).toHaveLength(1);
+    expect(declined.state.players.p1.bench[1]?.energy).toHaveLength(0);
+    expect(declined.state.phase.kind).not.toBe("effect:choose");
+    // 🛑 THE DECLINE IS NOT A WHIFF, and this is the assertion that says so: the
+    // pile still holds two legal {C} and the board still holds three eligible
+    // bodies. The op could have resolved and the PLAYER said no.
+    expect(declined.state.players.p1.discard).toHaveLength(2);
+  });
+
+  it("🛑 ZERO — and on an ATTACK it has no other route, which is why this half broke differently", () => {
+    // ⚠️ THE HALVES OF THIS FAMILY ARE BROKEN DIFFERENTLY, WHICH D359 FOUND ONE
+    // AXIS OVER AND WHICH REPEATS HERE. Koraidon ex's spread is an ABILITY with a
+    // printed "you may", so declining the ABILITY already bought the zero and the
+    // engine reached {0, 2}. These four printings are ATTACKS — declared and
+    // resolved, with no `optional` anywhere in the program — so the zero was
+    // unreachable too and the engine reached **{2} ALONE**. Same sentence shape,
+    // same op, same missing flag, two different broken answer sets.
+    const parked = mustApply(stocked(23), {
+      type: "attack",
+      seat: "p1",
+      index: PICK_AND_STICK,
+    }).state;
+    let cur = parked;
+    for (let i = 0; i < 2; i++) {
+      expect(cur.phase.kind, `park ${i + 1}`).toBe("effect:choose");
+      cur = mustApply(cur, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "pokemon" },
+      }).state;
+    }
+    expect(cur.phase.kind).not.toBe("effect:choose");
+    expect(cur.players.p1.bench[0]?.energy).toHaveLength(0);
+    expect(cur.players.p1.bench[1]?.energy).toHaveLength(0);
+    expect(cur.players.p1.active?.energy).toHaveLength(1); // the {C} attack cost, untouched
+    expect(cur.players.p1.discard).toHaveLength(3); // nothing left the pile
+  });
+
+  it("the ceiling reaches the PROMPT as `upTo: 1`, which is the whole wire cost", () => {
+    // D359's key, unchanged and un-widened: at this prompt `declinable` IS
+    // `upTo: 1` — take the one on offer, or take none. **A SPREAD OP CARRIES NO
+    // `count`**, so the `??` falls through to the flag, and the caption stays the
+    // singular one ("the Energy", not "up to N Energy") because the printed count
+    // sizes the PROGRAM here rather than the batch.
+    const parked = mustApply(stocked(24), {
+      type: "attack",
+      seat: "p1",
+      index: PICK_AND_STICK,
+    }).state;
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = parked.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.upTo).toBe(1);
+    expect(prompt.note).toContain("the Energy");
+    expect(prompt.candidates).toHaveLength(3);
+  });
+});
