@@ -13261,4 +13261,73 @@ export const MUTANTS: Mutant[] = [
     replace: "  /^Discard (?:an|a Special|a \\{[A-Z]\\}) Energy from your opponent['’]s Active Pokémon ex\\.$/;",
     expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
   },
+  // ── D363 — THE `$` WIDENING AND ITS ACCOUNTING SEAM. SIX ROWS, ONE PER CLAIM.
+  //    ⚠️ D362's block above ends "NO ROW FOR THE SAWK REFUSAL: a refusal is not a
+  //    code line". That refusal is now a code line — three of them — so it gets
+  //    rows. The claims are DISTINCT and each has its own assertion: the anchor's
+  //    `$`, the anchor's LAZINESS, the split's empty-body guard, the split's TABLE
+  //    guard, the site's REBIND, and `effectSimulated`'s SPLIT GATE. Four of the
+  //    six are "the sentence half-reads and NOTHING SAYS SO", which is the exact
+  //    failure class this family has refused twice (D278/D279) — and a row count
+  //    is not a coverage map, so each is budgeted against one claim and no other.
+  {
+    id: "D363-does-nothing-anchor-restores-the-dollar",
+    decision: "D363",
+    what: "🛑 THE WIDENING IS REVERTED: `ATTACK_DOES_NOTHING` gets its `$` back, so `deriveAttackRequirement` cannot see a sentence with a trailing companion and Sawk sv10.5w-049/-130 falls straight back into the unread residue. This is the ENTIRE purchase — 1 sentence / 2 legal printings — and it is the row D362 measured, priced at the wrong number and refused",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\\.(?: (.+))?$/;",
+    replace: "const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/sawkRequirementSplit.test.ts",
+      "packages/engine/src/exOnlyActive.test.ts",
+    ],
+  },
+  {
+    id: "D363-does-nothing-clause-group-turns-greedy",
+    decision: "D363",
+    what: "🛑 A DIFFERENT LOSS FROM THE ROW ABOVE, ON THE SAME PATTERN: the clause group goes GREEDY, so on a compound printing TWO does-nothing sentences the reader captures the LAST clause and the split strips the wrong sentence. The `$` row cannot see this — the anchor still admits a companion — and only the laziness decides WHICH half is spent",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\\.(?: (.+))?$/;",
+    replace: "const ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\\.(?: (.+))?$/;",
+    expectKilledBy: ["packages/engine/src/attackRequirement.test.ts"],
+  },
+  {
+    id: "D363-split-drops-the-table-accounting-guard",
+    decision: "D363",
+    what: "🛑 THE SPLIT STOPS ASKING WHETHER THE CLAUSE IS ANSWERED, so it strips a leading `If <clause>, this attack does nothing.` whose clause NO table row carries — and the site then reports only the REMAINDER. A printed requirement is silently deleted and the attack it should gate resolves in full. This is D282's one safety property, and it is the whole reason a widened anchor is not the D278/D279 build",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? \"\") === undefined) return null;",
+    replace: "  if (false) return null;",
+    expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
+  },
+  {
+    id: "D363-split-returns-an-empty-body",
+    decision: "D363",
+    what: "🛑 THE EMPTY-BODY GUARD GOES, so every single-sentence requirement printing in the pool (Palafin, Lycanroc, and Sawk's own leading sentence) becomes a SPLIT with a zero-length body — `effect` is rebound to \"\" at the site, `effectSimulated`'s requirement term is gated off by the split, and the cards that have cancelled correctly since D125 stop being simulated at all",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (body === \"\") return null;",
+    replace: "  if (false) return null;",
+    expectKilledBy: [
+      "packages/engine/src/sawkRequirementSplit.test.ts",
+      "packages/engine/src/attackRequirement.test.ts",
+    ],
+  },
+  {
+    id: "D363-site-keeps-the-compound-instead-of-the-body",
+    decision: "D363",
+    what: "🛑 THE REBIND IS UNDONE: every reader below the split is handed the WHOLE printed string again, so Sawk's trailing `This attack's damage isn't affected by Weakness or Resistance.` never reaches `deriveAttackDamageSuppression` (which is fully anchored and refuses the compound) and the 90 lands DOUBLED by the defender's printed Fighting Weakness. The requirement still gates, so the attack looks built — the half-read shape with nothing saying so",
+    file: "packages/engine/src/attack.ts",
+    find: "  const effect = requirementSplit === null ? gated : requirementSplit.body;",
+    replace: "  const effect = gated;",
+    expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
+  },
+  {
+    id: "D363-effect-simulated-drops-the-split-gate",
+    decision: "D363",
+    what: "🛑 THE SILENCER. `effectSimulated`'s requirement term stops being gated on `requirementSplit === null`, so a printed requirement marks the WHOLE compound simulated and the ATTACK_EFFECT_SKIPPED report for an unread companion sentence disappears. Nothing else changes — the attack still gates, still deals its damage, still passes every board assertion — and the engine goes quiet about text it cannot read. The failure D278/D279 cost two slices to learn, one boolean wide",
+    file: "packages/engine/src/attack.ts",
+    find: "    (requirement !== null && requirementSplit === null) ||",
+    replace: "    requirement !== null ||",
+    expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
+  },
 ];
