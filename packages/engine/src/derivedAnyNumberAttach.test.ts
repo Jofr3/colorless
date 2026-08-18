@@ -311,13 +311,28 @@ describe("the anchor — one printed sentence, one new op", () => {
     //
     // This is the assertion that makes the call falsifiable rather than a comment:
     // the day the two are unified, this test fails and says which reading changed.
+    //
+    // 🆕🛑 **D360 — IT FIRED, AND THE READING IT NAMES DID NOT CHANGE.** The op
+    // is still `attachEnergyFrom` and the model is still D205's SEQUENTIAL one:
+    // N ops, each parking on its own target, NOT this slice's compound
+    // `attachFromHand` park. What moved is a flag on those same N ops — the
+    // printed "up to" now buys the player the right to stop, which the sequential
+    // model expresses per op and the compound one would express as a `min`. **A
+    // CONTROL THAT FIRES ON A CHANGE IT DOES NOT MEAN IS STILL DOING ITS JOB**;
+    // the fix is to re-state the literal, not to loosen the assertion, so the day
+    // the two really ARE unified this line still fails and still says so.
+    // ⚠️ AND THIS SUITE WAS THIS SLICE'S ONE UNPREDICTED RED FILE: D360 predicted
+    // its red surface by grepping the printed IDS and SENTENCES, and this file
+    // names neither — it asserts what the DERIVER DOES for a neighbouring
+    // sentence, as a control. **ENUMERATE WHAT A THING DOES, NOT WHAT MENTIONS
+    // IT** (D359's defect (a), at its third instance).
     expect(
       deriveAttackEffect(
         "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like.",
       ),
     ).toEqual([
-      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic" },
-      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic" },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic", declinable: true },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic", declinable: true },
     ]);
   });
 

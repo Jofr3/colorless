@@ -5889,9 +5889,38 @@ const FIX_ATTACHER: CardProgram = {
 /** Koraidon ex — "Dino Cry": "Once during your turn, you may attach up to 2 Basic
     {F} Energy cards from your discard pile to your Basic {F} Pokémon in any way
     you like. If you use this Ability, your turn ends." — MULTI-attach (up to 2) is
-    two attachEnergyFrom ops in a row (each parks on its own Basic {F} target; the
-    second no-ops if a single {F} was in the discard), and `endsTurn` folds the
-    turn end. once/turn, not Active-only. */
+    two attachEnergyFrom ops in a row (each parks on its own Basic {F} target), and
+    `endsTurn` folds the turn end. once/turn, not Active-only.
+
+    🆕🛑 **D360 — `declinable` ON BOTH OPS, AND THIS ROW IS WHY THE FAMILY DID NOT
+    CLOSE WHEN THREE SLICES SAID IT WOULD.** This doc used to end *"the second
+    no-ops if a single {F} was in the discard"*, which is the whole defect written
+    down as if it were the design: the engine spent the printed *"up to"* against
+    what was AVAILABLE and never against what the player WANTED. On a full discard
+    pile the second op forced, so *"up to 2"* resolved as an exact 2 and the
+    printed middle answer — attach ONE, keep the other {F} in the pile for
+    Gardevoir ex — was unreachable.
+
+    🛑 **AND IT IS THE SECOND PRODUCER OF ONE SENTENCE, WHICH IS THE ONLY REASON
+    IT SURVIVED D358 AND D359 BOTH.** `attachFromZoneProgram` builds the identical
+    spread for three DERIVED sentences and cites THIS ROW by name as the shape it
+    copies (*"Koraidon ex 'Dino Cry''s authored shape, verbatim"*), so flagging the
+    deriver and not this row would leave the engine's two producers DISAGREEING
+    about what one printed sentence means. D358 measured this row and excluded it
+    for `legal_standard = 0` (`attachDecline.test.ts` §0's population note says so
+    in as many words) — **a defensible filter for a POPULATION figure and the wrong
+    one for a CONSISTENCY invariant.** Rotation decides who may play a card; it
+    does not decide what the card says, and `programFor` is not legality-gated.
+
+    ⚠️ **THE FLAG IS PER OP** (`attachDecline.test.ts` §1): a row flagging only its
+    first op would let the player stop BEFORE the first card and never BETWEEN the
+    two, which is not what *"up to"* says.
+    ⚠️ **AND IT BREAKS THE OTHER WAY FROM THE DERIVED THREE.** This is an ABILITY
+    with `oncePerTurn` and a printed *"you may"*, so declining the Ability already
+    bought the zero: it reached {0, 2} against a printed {0, 1, 2}. The three
+    derived printings are ATTACKS — declared and resolved, no `optional` anywhere —
+    so they reached **{2} alone**. D359 found the same split one axis over; the
+    halves of this family have now been broken differently TWICE. */
 const KORAIDON_EX: CardProgram = {
   abilities: [
     {
@@ -5906,6 +5935,7 @@ const KORAIDON_EX: CardProgram = {
           energyType: "Fighting",
           targetType: "Fighting",
           basicOnly: true,
+          declinable: true,
         },
         {
           op: "attachEnergyFrom",
@@ -5913,6 +5943,7 @@ const KORAIDON_EX: CardProgram = {
           energyType: "Fighting",
           targetType: "Fighting",
           basicOnly: true,
+          declinable: true,
         },
       ],
     },

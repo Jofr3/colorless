@@ -80,9 +80,13 @@ const CLAUSES = [
   },
   {
     text: "Attach up to 2 Basic {P} Energy cards from your hand to your Pokémon in any way you like.",
+    // 🆕 D360 — `declinable` on BOTH ops. The HAND source changes nothing about
+    // the decline: the printed "up to" is a ceiling over a floor of zero whichever
+    // zone the cards come from, which is why the flag rides the shared reader
+    // `attachFromZoneProgram` and not either anchor.
     program: [
-      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic" },
-      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic" },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic", declinable: true },
+      { op: "attachEnergyFrom", source: "hand", energyType: "Psychic", declinable: true },
     ] as EffectOp[],
     printings: 2,
     legalPrintings: 2,
@@ -519,6 +523,12 @@ describe("the anchor — four printed sentences, ONE arm, ONE word from the disc
       "toSelf",
       "healTarget",
       "anyEnergy",
+      // 🆕 D360 — `declinable`, arriving from the REGISTRY side (D358's Archaludon
+      // ex / Magneton) rather than from either zone, exactly as the discard side
+      // records it. No new op, and no field this arm paid for: the flag is one
+      // capture-group test inside the shared reader `attachFromZoneProgram`, so
+      // both zones and all three anchors get it in the same expression.
+      "declinable",
     ]);
     for (const { program } of CLAUSES) {
       for (const op of program) {

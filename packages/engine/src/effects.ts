@@ -10976,8 +10976,45 @@ function attachFromZoneProgram(
   // "Dino Cry"'s authored shape, verbatim); otherwise ONE op whose `count`
   // pins the whole batch to the single body the print names. A print is one or
   // the other, never both (D205).
+  //
+  // 🆕🛑 D360 — THE PRINTED *"up to"* REACHES THE **SPREAD**, WHICH IS THE ONE
+  // HALF OF THIS FAMILY D358 AND D359 EACH LEFT TO THE OTHER. D358 bought
+  // `declinable` for the SPREAD and its registry walk reached 6 printings;
+  // D359 bought `count`'s ceiling for the BATCH and its two-producer walk
+  // reached 13. Neither reached the spread THIS FUNCTION builds, so
+  // *"attach up to 2 … in any way you like"* stayed an EXACT 2 on every
+  // printing the deriver owns — 3 sentences / 4 Standard-legal printings
+  // (Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`).
+  //
+  // ⚠️ **THE DISCRIMINATOR IS `match[3]` — THE PRINTED WORD — AND NOT `count`,
+  // AND THE TWO COME APART ON A SENTENCE THIS ARM ACCEPTS.** `count` is the
+  // DERIVED value and defaults to 1 when the hedge is absent, so `count > 1`
+  // would read the hedge off the number instead of off the print:
+  // *"Attach up to 1 Basic Energy cards … in any way you like."* derives here
+  // with `match[3] === "1"` and `count === 1`, and §9.1 makes its printed
+  // answer set {0, 1} — declinable. Both spellings compile and only one reads
+  // the print, so the difference is driven on a live near-miss rather than
+  // asserted (`derivedDiscardAttach.test.ts` §6).
+  //
+  // ⚠️ **SCOPED TO THE `anyWay` BRANCH, AND THAT IS MEASURED RATHER THAN
+  // TIDY.** Hoisted into `base` it would ride the BATCH too, where D359's
+  // `upTo = op.count ?? (op.declinable === true ? 1 : undefined)` already
+  // spends the same printed word through `count` — so it would be
+  // behaviourally dead AND would put two keys on one axis, which is exactly
+  // what `attachDecline.test.ts` §1's *"`declinable` and `count` never
+  // co-occur on any authored op"* pins.
+  //
+  // ⚠️ ZERO NEW VOCABULARY, and the flag is not even new: the op field is
+  // D358's and `interpreter.ts` has read it into the park's ceiling since
+  // D359. This expression changes WHICH PRINTINGS CARRY an existing field —
+  // a POPULATION, not a widening and not a rename — which is why
+  // `MATCH_RECORD_VERSION` stays 22 (a persisted flagless op read mandatory
+  // before and reads mandatory now).
   return destination.anyWay
-    ? Array.from({ length: count }, () => ({ ...base }))
+    ? Array.from({ length: count }, () => ({
+        ...base,
+        ...(match[3] === undefined ? {} : { declinable: true as const }),
+      }))
     : [count === 1 ? base : { ...base, count }];
 }
 

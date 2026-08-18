@@ -99,9 +99,11 @@ const CLAUSES = [
   },
   {
     text: "Attach up to 2 Basic Energy cards from your discard pile to your Pokémon in any way you like.",
+    // 🆕 D360 — `declinable` on BOTH ops: the printed "up to" is a ceiling over a
+    // floor of ZERO, so each of the two decisions may be answered "none".
     program: [
-      { op: "attachEnergyFrom", source: "discard" },
-      { op: "attachEnergyFrom", source: "discard" },
+      { op: "attachEnergyFrom", source: "discard", declinable: true },
+      { op: "attachEnergyFrom", source: "discard", declinable: true },
     ] as EffectOp[],
     printings: 2,
     legalPrintings: 1,
@@ -132,9 +134,22 @@ const CLAUSES = [
   },
   {
     text: "Attach up to 2 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like.",
+    // 🆕 D360 — see the row above; the riders are orthogonal to the decline.
     program: [
-      { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", benchOnly: true },
-      { op: "attachEnergyFrom", source: "discard", energyType: "Fighting", benchOnly: true },
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: "Fighting",
+        benchOnly: true,
+        declinable: true,
+      },
+      {
+        op: "attachEnergyFrom",
+        source: "discard",
+        energyType: "Fighting",
+        benchOnly: true,
+        declinable: true,
+      },
     ] as EffectOp[],
     printings: 1,
     legalPrintings: 1,
@@ -551,6 +566,17 @@ describe("the anchor — twelve printed sentences, ONE arm", () => {
       // the spread has no sibling zone to inherit from. It is still not an ARM:
       // the anchor is byte-identical and the field rides a MAP ROW.
       "toEach",
+      // 🆕🛑 D360 ADDS `declinable`, AND IT IS THE SECOND KEY TO ARRIVE HERE FOR
+      // FREE — but from the REGISTRY rather than from a sibling zone, which is a
+      // direction this set has never recorded before. D358 designed, drove and
+      // paid for the field on two HAND-AUTHORED programs (Archaludon ex,
+      // Magneton); D359 taught `interpreter.ts` to read it as the park's ceiling.
+      // This arm sets it by testing ONE capture group it had already parsed, so
+      // the whole engine price of reaching four more printings is that one
+      // expression. **THE ROW'S ORIGINAL CLAIM — "carries NO new op" — IS STILL
+      // TRUE AT ITS FIFTH SLICE**, and the count of fields this arm actually paid
+      // for is still ONE (`toEach`).
+      "declinable",
     ]);
     for (const { program } of CLAUSES) {
       for (const op of program) {

@@ -79,6 +79,18 @@ import { battler, deckOf, typedEnergy } from "./testFixtures";
 // -254) prints the identical "up to 2" sentence and is `legal_standard = 0`;
 // excluded because it was MEASURED, not because it was forgotten.
 //
+// 🆕🛑🛑 **D360 TOOK KORAIDON, AND THE EXCLUSION ABOVE IS WHY IT HAD TO.** The
+// note is honest and the filter is still right FOR A POPULATION FIGURE — a legal
+// printing count must not quote a rotated card. It is the WRONG filter for a
+// CONSISTENCY invariant, and this row is one: `attachFromZoneProgram` builds the
+// identical two-op spread for three DERIVED sentences and names KORAIDON_EX in
+// its own source comment as the shape it copies. Flag the deriver and leave the
+// row rotated-and-flagless and the engine's TWO PRODUCERS DISAGREE about what one
+// printed sentence means — and `programFor` is not legality-gated, so the rotated
+// row is live in every match that seats it. **ROTATION DECIDES WHO MAY PLAY A
+// CARD; IT DOES NOT DECIDE WHAT THE CARD SAYS.** The declinable set below moves
+// from 6 ids to 10 and the legal-printing figure does NOT move: still 6.
+//
 // ── 🛑 THE TWO REFUSALS, AND BOTH ARE RULES CALLS RATHER THAN BUDGET ONES ────
 //   • **INFERNAPE ×3.** *"a Basic {R} Energy card, a Basic {F} Energy card, or 1
 //     of each"* is a DISJUNCTION with three arms and **no empty one**, and §9.1
@@ -128,6 +140,10 @@ const ARCHALUDON_IDS = ["sv08-130", "sv08-224", "sv08-241"] as const;
 const DURALUDON = "sv08-129";
 const MAGNETON = "sv08-059";
 const MAGNETON_IDS = ["svp-153", "svp-159", "sv08-059"] as const;
+/** 🆕 D360 — the fourth printed sentence in this family, and the one BOTH earlier
+    slices measured and neither took: an `anyWay` spread whose four printings are
+    `legal_standard = 0`. See the §0 note on why rotation is the wrong filter here. */
+const KORAIDON_IDS = ["sv01-125", "sv01-231", "sv01-247", "sv01-254"] as const;
 
 const ASSEMBLE_ALLOY_TEXT =
   "When you play this Pokémon from your hand to evolve 1 of your Pokémon during " +
@@ -409,10 +425,18 @@ function attachOpsByCardId(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, AS A CENSUS OVER THE LIVE REGISTRY ────────────────────
 
 describe("D358 §1 — which printings carry the decline, walked off the registry", () => {
-  it("🛑 the declinable set is EXACTLY Archaludon ex ×3 and Magneton ×3, by id", () => {
+  it("🛑 the declinable set is EXACTLY Archaludon ex ×3, Magneton ×3 and Koraidon ex ×4, by id", () => {
     // ⚠️ BOTH DIRECTIONS, and over the WHOLE registry rather than a list this file
-    // wrote: a seventh printing authored with `declinable` reddens here, and one of
-    // these six losing it reddens here too. A count alone would pass under a swap.
+    // wrote: a printing authored with `declinable` that is not named here reddens
+    // this line, and one of these losing it reddens it too. A count alone would
+    // pass under a swap.
+    // 🆕🛑 **D360 — AND IT DID EXACTLY THAT.** D358 wrote *"a seventh printing
+    // authored with `declinable` reddens here"* as the falsification condition,
+    // and D360's Koraidon ex row fired it BY NAME. The guard worked; this is the
+    // slice coming here and saying why (see the §0 note above). **Six of the ten
+    // are Standard-legal and four are not** — the split is asserted below rather
+    // than smuggled into one list, so a future reader cannot mistake the set for a
+    // legal-printing count.
     // ⚠️ CATALOG IDS ONLY. `registryCardIds()` also holds `fix-*` DEMONSTRATOR
     // keys — aliases pointed at the SAME program object so a fixture board can
     // reach a real row — and one of them (`fix-assemblealloy`) necessarily carries
@@ -423,17 +447,23 @@ describe("D358 §1 — which printings carry the decline, walked off the registr
       .filter(([id, ops]) => !id.startsWith("fix-") && ops.some((op) => op.declinable === true))
       .map(([id]) => id)
       .sort();
-    expect(declinable).toEqual([...ARCHALUDON_IDS, ...MAGNETON_IDS].sort());
+    expect(declinable).toEqual([...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS].sort());
+    // The two halves of the set, kept apart on purpose: the printed-legal six this
+    // engine can be played with today, and the four rotated ones that print the
+    // same sentence and are reachable through `programFor` all the same.
+    expect([...ARCHALUDON_IDS, ...MAGNETON_IDS]).toHaveLength(6);
+    expect(KORAIDON_IDS).toHaveLength(4);
     // The demonstrator is the SAME OBJECT and not a second transcription, which is
     // why it did not need its own edit and could not drift out of step (D183).
     expect(programFor("fix-assemblealloy")).toBe(programFor(ARCHALUDON));
   });
 
   it("EVERY op of a declinable row carries it — the flag is per OP, not per card", () => {
-    // Archaludon prints "up to 2" over TWO ops and Magneton "up to 3" over THREE.
+    // Archaludon prints "up to 2" over TWO ops, Magneton "up to 3" over THREE and
+    // Koraidon ex "up to 2" over TWO (D360).
     // A row that flagged only its first op would let the player stop before the
     // first card and never between the others, which is not what "up to" says.
-    for (const id of [...ARCHALUDON_IDS, ...MAGNETON_IDS]) {
+    for (const id of [...ARCHALUDON_IDS, ...MAGNETON_IDS, ...KORAIDON_IDS]) {
       const ops = attachOpsByCardId().get(id) ?? [];
       expect(ops.length, id).toBeGreaterThan(1);
       expect(
