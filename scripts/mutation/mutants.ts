@@ -12923,7 +12923,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "      const upTo = op.count ?? (op.declinable === true ? 1 : undefined);",
     replace: "      const upTo = op.count;",
-    expectKilledBy: ["packages/engine/src/attachQuantity.test.ts"],
+    expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
   {
     id: "D359-ceiling-drops-the-count-half",
@@ -12950,7 +12950,7 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/interpreter.ts",
     find: "        `Attach ${op.count === undefined ? \"the Energy\" : `up to ${op.count} Energy`} to ${\n          op.toSelf === true ? \"this Pokémon\" : `which of your ${attachTargetNoun(op)}`\n        }?`,",
     replace: "        `Attach ${op.count === undefined ? \"the Energy\" : `up to ${op.count} Energy`} to which of your ${attachTargetNoun(op)}?`,",
-    expectKilledBy: ["packages/engine/src/attachQuantity.test.ts"],
+    expectKilledBy: ["packages/engine/src/spikeClad.test.ts", "packages/engine/src/battleHardened.test.ts"],
   },
   {
     id: "D359-apply-ignores-the-answered-quantity",
