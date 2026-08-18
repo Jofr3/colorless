@@ -526,6 +526,21 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
       //    would have derived two sentences nobody prints.
       "Discard all Special Energy from your opponent's Active Pokémon.",
       "Discard a Special Energy from all of your opponent's Pokémon.",
+      // 🆕🛑 **THE STRING THE SWEEP ANCHOR'S *SECOND* WORD DEFENDS, AND ITS
+      //     ABSENCE HERE WAS A REAL GAP THE `--decision D361` PROBE FOUND.**
+      //     `D361-sweep-anchor-swallows-giacomos-wording` loosens `all of` to
+      //     `(all|each) of` and SURVIVED the first probe — because Giacomo prints
+      //     *"Discard **a** Special Energy from each of…"* and the mutated anchor
+      //     still requires *"all"*, so it never reached the sentence the row's
+      //     `what` names. **THE ANCHOR IS DEFENDED BY TWO INDEPENDENT PRINTED
+      //     WORDS**, and only a string that loosens the SECOND one can prove the
+      //     second one is load-bearing. This sentence is printed by nobody — the
+      //     catalog has `a … each of` (Giacomo, Trainer) and `all … all of`
+      //     (Ceruledge, attack) and NEITHER crossing — so refusing it is refusing
+      //     to author a card, and asserting it kills the mutant honestly.
+      //     ⚠️ A ROW COUNT IS NOT A COVERAGE MAP: the row existed, the claim was
+      //     true, and nothing checked the half of it the mutation actually moved.
+      "Discard all Special Energy from each of your opponent's Pokémon.",
       // ── THE FLIP TWINS, AND THEIR ABSENCE IS THE EVIDENCE. The catalog prints
       //    the flipped form for `an Energy` (23 printings / 12 legal) and prints
       //    ZERO flipped Special or typed variants. Widening

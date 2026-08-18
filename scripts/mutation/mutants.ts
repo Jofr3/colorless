@@ -5534,7 +5534,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D361-sweep-anchor-swallows-giacomos-wording",
     decision: "D361",
-    what: "🛑 THE SWEEP ANCHOR ADMITS *\"each of your opponent's Pokémon\"* as well as *\"all of\"*, so Giacomo `sv02-182`'s printed Supporter sentence — which the REGISTRY already builds, at one-per-body — starts ALSO deriving through the attack reader at `count: \"all\"`. That is not over-derivation in the ordinary sense: it puts ONE printed sentence on TWO producers that disagree about how many Energy come off, which is the failure D360 spent a slice on one op over",
+    what: "🛑 THE SWEEP ANCHOR ADMITS *\"each of your opponent's Pokémon\"* as well as *\"all of\"*, so `Discard all Special Energy from EACH of your opponent's Pokémon.` starts deriving — a sentence NOBODY PRINTS. ⚠️ AND THE INTERESTING HALF, WHICH THE `--decision D361` PROBE FOUND BY MAKING THIS ROW SURVIVE ITS FIRST RUN: this mutation does NOT reach Giacomo `sv02-182`, whose printed Supporter sentence is *\"Discard **a** Special Energy from each of…\"* — the mutated anchor still requires *\"all\"*. **THE ANCHOR IS DEFENDED BY TWO INDEPENDENT PRINTED WORDS**, and the suite was asserting only the first one. The gap was in `crossSeatEnergyDiscard.test.ts` §6, not in the row: A ROW COUNT IS NOT A COVERAGE MAP",
     file: "packages/engine/src/effects.ts",
     find: "  /^Discard all Special Energy from all of your opponent['’]s Pokémon\\.$/;",
     replace: "  /^Discard all Special Energy from (?:all|each) of your opponent['’]s Pokémon\\.$/;",
