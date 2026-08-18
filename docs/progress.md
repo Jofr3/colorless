@@ -2804,7 +2804,47 @@ its first probe for exactly that reason. The `--decision D362` probe on a quiet
 tree returned **5 killed · 0 known survivors · 0 GAPs · 0 stale · 0
 skipped(dirty) · 0 clobbers · 0 errors** on the first run.
 
-<!-- D362-SWEEP-SLOT -->
+**Sweep, MEASURED — and its parts add up to the corpus.** The full-corpus run over
+all **1128** rows returned **1105 killed · 23 known survivor(s) · 0 GAP(s) · 0
+stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** in **5,210.4 s** (86.8 min,
+4.62 s/mutant). **1105 + 23 = 1128 ✅** — D361's one-addition check, run BEFORE the
+figure was written anywhere rather than after an impossible one had shipped to three
+places.
+
+**THE UNION WAS VERIFIED BY ID, INDEPENDENTLY OF THE RUNNER'S OWN TALLY.** The
+per-mutant progress lines parse to **1128 unique ids == 1128 in `mutants.ts`**, **0
+duplicate / 0 missing / 0 extra**, asserted in BOTH directions. The parser reads
+PROGRESS lines only and rejects the truncated recap rows, because **the runner prints
+every finished mutant TWICE** and any naive occurrence count reads ~2× the truth; and
+the verdict enum is cross-asserted against `scripts/mutation/run.ts` both ways, so a
+parser that forgot `SURVIVES(known)` could not silently drop 23 declared survivors and
+report a clean sweep. The same parser was re-validated on all three prior logs first,
+reproducing **D361 1100+23=1123**, **D360 1095+23+1=1119** and **D359 1091+23=1114**.
+
+**AND THE KILL DELTA WAS RECONCILED BY ID, NOT BY SUBTRACTION.** Against D361's sweep
+(**1100 killed · 23 known survivor(s)** over 1123): **+5 and only +5** — the five new
+rows, each KILLED on its first whole-corpus run (`…-ex-predicate-widens-to-ex-or-v`,
+`…-ex-clause-row-key-grows-the-v-disjunct`, `…-ex-condition-note-drops-the-round-trip`,
+`…-turtonator-anchor-drops-the-ex-adjective`, `…-turtonator-anchor-drops-the-article`).
+**ZERO verdict changes across all 1,123 carried rows**, zero rows removed, and the
+declared-survivor set unchanged at 23 — no new survivor, no row coming back to life,
+and no `STALE-SURVIVOR` to re-read an anchor for. 🛑 **A KILL COUNT THAT MOVES BY THE
+RIGHT AMOUNT CAN STILL HIDE A SWAP — one row dying as another stops dying nets to
+zero, and only the BY-ID diff rules it out.** The runner's own summary line agrees
+with this independent count exactly, which is the cross-check and not the source.
+
+🛑 **AND A SECOND, CRUDER COUNT OF THE SAME LOG CAME BACK TEN SHORT — 1118 — WHICH
+WAS RESOLVED BY ID RATHER THAN BY ARITHMETIC, AND WAS AN ARTIFACT OF THE PARSE AND
+NOT OF THE RUN.** Named exactly: a counter anchored as `^  .*\bVERDICT\b` drops
+**all 23** declared survivors, because a trailing `\b` cannot follow the `)` in
+`SURVIVES(known)` when the next character is a space — the one verdict spelled with
+punctuation is the one a word-boundary silently deletes — and it then picks up **13**
+INDENTED PROSE lines from the survivor-reason block that merely NAME a verdict word.
+**1128 − 23 + 13 = 1118**, reproduced to the line. Every corpus id printed a real
+verdict: **0 in flight, 0 never printed, 0 extra**, and the sentinel reads
+`exit=0`. **THE LESSON IS THE COUNT'S, NOT THE RUN'S — AN OCCURRENCE COUNT IS NOT A
+VERDICT COUNT**, and the only way to tell the two apart is to diff the ID SETS both
+directions and name what is missing, which is what closed this.
 
 **Order kept, and one reason to keep it.** The docs were closed and the
 whole-corpus anchor check run **before** the sweep, and the check was re-run after
