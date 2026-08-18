@@ -626,6 +626,32 @@ describe("constructed near-misses stay LOUD", () => {
       ),
     ).toBeNull();
   });
+
+  it("🆕 D363 — the clause group is LAZY, so TWO does-nothing sentences spend the FIRST", () => {
+    // 🛑 THE ONLY CASE THAT TELLS `(.+?)` FROM `(.+)` APART, and it is a
+    // DIFFERENT loss from the `$` itself: with a trailing group behind it a
+    // GREEDY clause runs to the LAST `", this attack does nothing."` in the
+    // string, capturing "…this turn, this attack does nothing. If your
+    // opponent's Active Pokémon has no damage counters…" as one clause — which
+    // no table row carries, so BOTH readers go null and the printing falls back
+    // into the residue with its first requirement unspent.
+    //
+    // ⚠️ CONSTRUCTED, AND SAID SO. No catalog printing spells two does-nothing
+    // sentences (measured pool-wide: 2 rows carry a leading one with ANY trailing
+    // text and both are Sawk). That is exactly why the guard lives in the PATTERN
+    // and needs a constructed case to prove it — a survivor here would mean the
+    // laziness is untested, not that it is unneeded.
+    const two = `${JUSTICE_KICK} ${FINISHING_FANG}`;
+    expect(deriveAttackRequirement(two)).toEqual({ kind: "yourActivePromotedThisTurn" });
+    expect(splitAttackRequirementClause(two)).toEqual({
+      clause: JUSTICE_KICK,
+      body: FINISHING_FANG,
+    });
+    // …and the SECOND clause is the one that would have been read under a greedy
+    // group, so the two answers are a whole board fact apart rather than a
+    // formatting difference.
+    expect(deriveAttackRequirement(FINISHING_FANG)).toEqual({ kind: "opponentActiveDamaged" });
+  });
 });
 
 describe("ZERO registry rows — the cards cancel straight off their printed text", () => {
