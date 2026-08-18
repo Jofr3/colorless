@@ -2606,7 +2606,36 @@ NAME**. No census rung moved: `splitHead` 13, `BUILT.attack`,
 the arithmetic-keyed forms (`1,164 raw + 15 registry + 13 split`) with them.
 `MATCH_RECORD_VERSION` **22**, read from source.
 
-<!-- D364-SWEEP-SLOT -->
+**The sweep.** **1111 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0
+skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1134**, sentinel `exit=0`.
+`1111 + 23 = 1134` — **added before it was written**. Run detached under `nohup`
+on a quiet tree; the driver outlived a container restart that killed the agent,
+and completion was detected by the sentinel **in the log**, never by `pgrep` on
+the sentinel string (which over-matches shell wrappers and runner children) and
+never by `pgrep -fc` (which self-matches).
+
+**Verified by id, both directions, independently of the runner's own tally.** The
+1,134 declared ids read off `mutants.ts` against the 1,134 progress rows parsed
+from the log: **0 missing · 0 extra · 0 duplicate · 0 printed-without-a-verdict**.
+⚠️ The parser's verdict alternation is read FROM SOURCE and spelled out — never
+`\bVERDICT\b`, which cannot follow the `)` of `SURVIVES(known)` and silently drops
+every declared survivor. This slice found a SECOND defect of that family in the
+same list: **`"SURVIVED"` — the true-GAP literal at `scripts/mutation/run.ts:340`
+— was MISSING from the alternation**, so a real gap would have matched neither the
+row shape nor the in-flight shape and would have vanished as "missing" rather than
+being reported. Every prior log carries 0 GAP, so pre-validation on real logs
+could not have caught it; only reading the union from source did. Fixed before the
+log was parsed, then **pre-validated on three real prior logs** (D361 1123, D362
+1128, D363 1134), each summing exactly to its OWN corpus and agreeing with its own
+runner tally.
+
+**Reconciled against D363 by id** (1111 killed · 23 known · 0 GAP · 1134): **0 ids
+added, 0 ids removed, 0 verdict changes in either direction**, and the survivor set
+cross-asserted both ways is **identical at 23** — nothing entered it, nothing left
+it. That is the correct answer for a slice that ships a test, a comment and docs
+and no runtime behaviour: the corpus did not move because no mutable line was
+added, and no declared survivor was newly killed because the new suite asserts on
+catalog text and split composition, which already carried mutants.
 
 
 ### 2026-08-18 — build session #303 (P3-M5 — D363, the `$` was the wrong anchor to price, and the re-measurement is the slice)
