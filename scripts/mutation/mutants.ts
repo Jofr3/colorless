@@ -13349,4 +13349,77 @@ export const MUTANTS: Mutant[] = [
     replace: "    requirement !== null ||",
     expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
   },
+  // ── D365 — THE FLOOR THE HANDOFF UNDERSTATED. SIX rows, ONE PER CLAIM rather
+  //    than one per line: the two literal rows are each keyed on their OWN member
+  //    (C1, C2), the combinator row is keyed on carrying TWO DISTINCT names (C3),
+  //    the fold behind it is keyed on being CONJUNCTIVE now that printed text can
+  //    build one (C4), the parameterised row is keyed on set MEMBERSHIP rather
+  //    than a threshold (C5, load-bearing only because 3 and 4 are CONTIGUOUS and
+  //    a range reading answers this card identically), and the last is keyed on
+  //    what this slice REFUSED (C6) — the widening it declined, installed as its
+  //    own counter-reading.
+  //
+  //    ⚠️ NO ROW FOR THE VERSION BUMP, THE CENSUS RUNGS OR THE APOSTROPHE-LIST
+  //    REPAIR, SAID OUT LOUD RATHER THAN OMITTED: the version anchor is the
+  //    re-pointed `engineVersion` row above; a census constant is a TEST literal
+  //    and a mutant that moved it would be mutating the assertion, not the engine;
+  //    and the apostrophe list is a test array with the same objection. **A ROW
+  //    THAT MUTATES AN ASSERTION MEASURES NOTHING.**
+  {
+    id: "D365-hand-sizes-row-repointed",
+    decision: "D365",
+    what: "🛑 C1 — IRON BOULDER'S ROW IS RE-POINTED at a NEIGHBOURING member that reads the same ZONE and a different FACT. `handSizesEqual` compares both hands; `opponentHandAtMost {count:0}` reads one hand against a constant, so the requirement holds on an empty opponent hand and fails on every board where the two hands are level. sv07-071/sv08.5-046 then cancel exactly when the printed card says they resolve",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"you don't have the same number of cards in your hand as your opponent\",\n    { kind: \"handSizesEqual\" },",
+    replace: "    \"you don't have the same number of cards in your hand as your opponent\",\n    { kind: \"opponentHandAtMost\", count: 0 },",
+    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
+  {
+    id: "D365-prize-list-loses-the-four",
+    decision: "D365",
+    what: "🛑 C2 — HOP'S CRAMORANT'S PRINTED LIST IS HALVED: `[3, 4]` becomes `[3]`, so a board with FOUR Prizes remaining — half of what the sentence admits — cancels an attack the card resolves. The parameter is the whole row; the member and the key are untouched, so nothing about the SHAPE of the build moves and only the printed number is wrong",
+    file: "packages/engine/src/effects.ts",
+    find: "    { kind: \"opponentPrizesRemaining\", counts: [3, 4] },",
+    replace: "    { kind: \"opponentPrizesRemaining\", counts: [3] },",
+    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
+  {
+    id: "D365-allof-names-one-body-twice",
+    decision: "D365",
+    what: "🛑 C3 — THE COMBINATOR KEEPS ITS ARITY AND LOSES A NAME: both conjuncts become `Uxie`, so a Bench holding Uxie alone satisfies a sentence that prints TWO bodies and Mesprit sv08-079/-204 attacks for 160 off half its requirement. The tuple type still holds (arity 2), `conditionHolds` still runs `.every`, and every structural claim about the row survives — only the printed conjunction is wrong",
+    file: "packages/engine/src/effects.ts",
+    find: "        { kind: \"yourBenchHasNamed\", name: \"Uxie\" },\n        { kind: \"yourBenchHasNamed\", name: \"Azelf\" },",
+    replace: "        { kind: \"yourBenchHasNamed\", name: \"Uxie\" },\n        { kind: \"yourBenchHasNamed\", name: \"Uxie\" },",
+    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
+  {
+    id: "D365-allof-fold-turns-disjunctive",
+    decision: "D365",
+    what: "🛑 C4 — `allOf` IS FOLDED WITH `.some`, and this slice is what makes that a PRINTED-CARD bug rather than a registry-authoring one: until D365 every `allOf` value came from a hand-written registry row, and the disjunctive fold is now reachable from a sentence the deriver reads. A Bench holding EITHER Uxie or Azelf satisfies a requirement that prints both. The row above cannot see this and this row cannot see that one — a wrong VALUE and a wrong FOLD are two claims",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.conditions.every((inner) => conditionHolds(state, seat, inner));",
+    replace: "      return cond.conditions.some((inner) => conditionHolds(state, seat, inner));",
+    expectKilledBy: [
+      "packages/engine/src/requirementFloor.test.ts",
+      "packages/engine/src/callBell.test.ts",
+    ],
+  },
+  {
+    id: "D365-prize-membership-becomes-a-threshold",
+    decision: "D365",
+    what: "🛑 C5 — SET MEMBERSHIP BECOMES A THRESHOLD: `counts.includes(remaining)` becomes `remaining >= counts[0]`, which answers Hop's Cramorant IDENTICALLY on every board where the opponent holds 3 or 4 and differs only OUTSIDE the printed list — 5 and 6 Prizes now satisfy a sentence that admits neither. ⚠️ THIS IS THE ROW THE CONTIGUITY MAKES NECESSARY: with `[2, 4]` the gap in the list refutes a range reading by itself, and with `[3, 4]` nothing inside the interval can, so the claim is only testable by driving the values on BOTH sides of it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.counts.includes(state.players[otherSeat(seat)].prizes.length);",
+    replace: "      return state.players[otherSeat(seat)].prizes.length >= (cond.counts[0] ?? 0);",
+    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
+  {
+    id: "D365-stadium-row-ships-the-refused-rename",
+    decision: "D365",
+    what: "🛑 C6 — THE WIDENING THIS SLICE REFUSED, INSTALLED AS ITS OWN COUNTER-READING: a row mapping Fan Rotom's *\"there is no Stadium in play\"* onto `yourStadiumInPlay`, which reads OWNERSHIP. The sentence carries no possessive, so the mutant answers FALSE on a board where the OPPONENT's Stadium is in the zone — cancelling an attack the printed card resolves — and it silently commits the engine to a member two other consumers (FALKNER, and the positive clause row) depend on meaning something narrower. **A ROW THAT LOOKS FREE BECAUSE A MEMBER'S NAME COULD STRETCH IS THE FAILURE THIS SLICE MEASURED AND DECLINED**",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"you don't have Uxie and Azelf on your Bench\",",
+    replace: "  [\"there is no Stadium in play\", { kind: \"yourStadiumInPlay\" }],\n  [\n    \"you don't have Uxie and Azelf on your Bench\",",
+    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
 ];
