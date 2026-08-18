@@ -446,10 +446,8 @@ function takeOptions(upTo: number | undefined): (number | undefined)[] {
 
     🆕🆕 D359 — **AND ABOVE `upTo: 1`, THE QUANTITY RIDES THE SAME ROW**, so a
     body is offered once per legal answer. `upTo` is the PRINTED ceiling and never
-    a count of what the controller holds, which is what makes it safe to redact to
-    this component at all — a ceiling cut down to "what is actually in hand" would
-    tell this dialog's opponent-side twin how many Energy the other player is
-    holding. */
+    a count of what the controller holds, which is why the row labels can name it
+    without the dialog knowing anything about the zone the Energy comes out of. */
 function ChoosePokemonDialog({
   prompt,
   board,

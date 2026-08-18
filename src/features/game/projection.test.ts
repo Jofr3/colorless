@@ -980,6 +980,23 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         candidates: [active("p1"), active("p2")],
         note: "Choose a Pokémon.",
       },
+      // 🆕🆕 D359 — **THE SAME KIND CARRYING `upTo`, AND IT IS HERE BECAUSE THIS
+      // FILE IS THE SITE D358's PRICE DID NOT NAME.** That slice bought the
+      // decline and counted the engine and the wire; `projection.ts` rebuilds this
+      // prompt field by field on the way BACK and would have silently rebuilt a
+      // park with a printed ceiling as a MANDATORY one — the dialog on the far
+      // side offering neither the decline nor any middle quantity. Both shapes are
+      // here on purpose, exactly as the `moveEnergy` pair below: the arm above
+      // pins that a prompt WITHOUT the field round-trips to a byte-identical
+      // object (no `upTo: undefined` on either side), and this one pins that a
+      // prompt WITH it does not lose it. `toEqual` is what makes both directions
+      // load-bearing.
+      {
+        kind: "choosePokemon",
+        candidates: [active("p1"), active("p2")],
+        upTo: 2,
+        note: "Attach up to 2 Energy to which of your Pokémon?",
+      },
       {
         kind: "choosePokemonMulti",
         candidates: [active("p2"), bench0],

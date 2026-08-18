@@ -617,6 +617,111 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     });
   });
 
+  it("🆕 D359 choosePokemon: a printed ceiling offers a row PER QUANTITY, plus Take none", () => {
+    // The quantity is part of the SAME whole decision as the body (the op's `count`
+    // pins the batch to the one body the print names), so it stays inside the row
+    // rather than becoming a second dialog. `upTo: 2` therefore offers each body
+    // TWICE — the middle answer and the full one — and each click dispatches a
+    // single frame carrying both halves.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemon",
+              candidates: [YOU_BENCH0],
+              upTo: 2,
+              note: "Attach up to 2 Energy to which of your Benched Pokémon?",
+            },
+          },
+          you: { bench: [inPlay("b0", "My Bench")] },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /My Bench — attach 1/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: YOU_BENCH0, take: 1 },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /My Bench — attach 2/ }));
+    expect(onAction).toHaveBeenLastCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: YOU_BENCH0, take: 2 },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^Take none$/ }));
+    expect(onAction).toHaveBeenLastCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon" },
+    });
+  });
+
+  it("🆕 D359 choosePokemon: `upTo: 1` renders the SINGLE row it always did", () => {
+    // 🛑 THE LINE THAT KEEPS EVERY PRE-D359 DIALOG BYTE-IDENTICAL. A take-1-or-none
+    // pick has exactly ONE non-empty answer, and spelling it `take: 1` on the wire
+    // would be a second way to say what a bare ref already says. So `takeOptions`
+    // collapses at one, the row carries no quantity suffix, and the dispatched
+    // frame is the one D358 shipped.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemon",
+              candidates: [YOU_BENCH0],
+              upTo: 1,
+              note: "Attach the Energy to which of your Metal Pokémon?",
+            },
+          },
+          you: { bench: [inPlay("b0", "My Bench")] },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /attach 1/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /My Bench/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon", ref: YOU_BENCH0 },
+    });
+  });
+
+  it("🆕 D359 choosePokemon: a MANDATORY prompt offers one row and NO Take none", () => {
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "choosePokemon",
+              candidates: [YOU_BENCH0],
+              note: "Switch in which Pokémon?",
+            },
+          },
+          you: { bench: [inPlay("b0", "My Bench")] },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /^Take none$/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /attach/ })).toBeNull();
+  });
+
   it("choosePokemonMulti: a declinable snipe offers Take none at zero picks", () => {
     const onAction = vi.fn();
     render(

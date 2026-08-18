@@ -727,6 +727,67 @@ describe("effect:choose — the target dialog (choosePokemon)", () => {
   });
 });
 
+describe("🆕 D359 effect:choose — the printed CEILING on the target dialog", () => {
+  /** The heal board above, re-parked with a ceiling on the prompt. Hand-built
+      rather than driven from a card: every printing that produces a `upTo > 1`
+      park lives in `sv08`/`sv09`/`sv10`, none of which the local HUD pool holds,
+      and the claim here is about the DIALOG rather than about a card. The engine
+      side is driven end to end on real ids in `attachQuantity.test.ts`. */
+  function parkedWith(upTo: number | undefined): GameState {
+    let state = p1Turn2(2, both);
+    state = handFromDeck(state, "p1", "fix-basic-1", 1);
+    const benchUid = handUid(state, "p1", "fix-basic-1");
+    state = mustApply(state, { type: "playBasicToBench", seat: "p1", uid: benchUid }).state;
+    return {
+      ...state,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "choosePokemon",
+          candidates: [{ seat: "p1", spot: { spot: "bench", index: 0 } }],
+          ...(upTo === undefined ? {} : { upTo }),
+          note: "Attach up to 2 Energy to which of your Pokémon?",
+        },
+        cont: { pendingOp: { op: "drawCards", count: 1 }, rest: [], ctx: { seat: "p1" } },
+      },
+    } as GameState;
+  }
+
+  it("offers a row PER QUANTITY above one, each dispatching body AND quantity", () => {
+    const dispatch = vi.fn();
+    renderHud(parkedWith(2), dispatch);
+    const rows = screen
+      .getAllByRole("button")
+      .filter((b) => (b.textContent ?? "").includes("attach"));
+    expect(rows).toHaveLength(2);
+    fireEvent.click(rows[0] as HTMLElement);
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect") throw new Error("expected resolveEffect");
+    expect(call.choice).toEqual({
+      kind: "pokemon",
+      ref: { seat: "p1", spot: { spot: "bench", index: 0 } },
+      take: 1,
+    });
+  });
+
+  it("🛑 `upTo: 1` renders the SINGLE row it always did — the pre-D359 frame", () => {
+    const dispatch = vi.fn();
+    renderHud(parkedWith(1), dispatch);
+    expect(screen.getAllByRole("button").filter((b) => (b.textContent ?? "").includes("attach")))
+      .toHaveLength(0);
+    expect(screen.getByRole("button", { name: /^Take none$/ })).toBeTruthy();
+  });
+
+  it("a MANDATORY prompt offers neither a quantity nor a Take none", () => {
+    const dispatch = vi.fn();
+    renderHud(parkedWith(undefined), dispatch);
+    expect(screen.queryByRole("button", { name: /^Take none$/ })).toBeNull();
+    expect(screen.getAllByRole("button").filter((b) => (b.textContent ?? "").includes("attach")))
+      .toHaveLength(0);
+  });
+});
+
 describe("effect:choose — the snipe multi-target dialog (choosePokemonMulti)", () => {
   const snipeDecks = { p1: SNIPE_DECK, p2: SNIPE_DECK };
 

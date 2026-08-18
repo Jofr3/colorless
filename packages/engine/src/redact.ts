@@ -285,10 +285,11 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
       // always did.
       // 🛑 **IT HIDES NOTHING, AND THAT IS A PROPERTY OF THE NUMBER RATHER THAN
       // OF THIS ARM.** `upTo` is the PRINTED ceiling, never a count of what the
-      // controller actually holds — the printed sentence in `note` already says
-      // "up to N", and both are public. Had the interpreter clamped the ceiling
-      // to the matching Energy in hand, this spread would be leaking hand
-      // contents to the opponent through a field that looks like a rule.
+      // controller actually holds, and the `note` beside it already says "up to
+      // N". (⚠️ It would not leak even if it were: `redactPhase` sends this whole
+      // prompt only to the seat that must ANSWER it. The reason the ceiling is
+      // unclamped is that `note` quotes the printed number, so a clamped one would
+      // contradict its own caption — see the field's doc in `interpreter.ts`.)
       return {
         kind: "choosePokemon",
         candidates: prompt.candidates.map(redactedRefOf),

@@ -3387,11 +3387,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
           axis it exists to discriminate:
             29 "Regi Charge" — Regirock ex `sv10-101`/`-214` (2 legal). The
                `toSelf` axis AND the `count` axis at once.
-            30 "Sand Gift" — Sandaconda `sv06.5-051` / Krokorok `sv07-098` (2
-               legal). The CHOSEN benched target at the singular count — the
+            30 "Sand Gift" — 🆕🛑 **D359 CORRECTED THIS LINE: the two printings
+               are Furfrou `sv06.5-051` "Energy Assist" and Jirachi `sv07-098`
+               "Swelling Wish" (2 legal), NOT "Sandaconda / Krokorok", and no
+               attack named "Sand Gift" exists anywhere in the catalog.** They do
+               not even share an attack NAME — the row is one SENTENCE over two
+               cards. The CHOSEN benched target at the singular count — the
                `toSelf` row's discriminator.
-            31 "Fault Line" — Gligar `sv08-026`/`-089` (2 legal). "up to 2 … to
-               **1 of** your Benched Pokémon": the whole batch onto ONE body.
+            31 "Fault Line" — 🆕🛑 **D359 CORRECTED THIS LINE TOO: `sv08-026`/
+               `sv08-089` are Oricorio "Energy Assist" (2 legal), NOT "Gligar",
+               and no attack named "Fault Line" exists anywhere in the catalog.**
+               (Gligar `sv04-091` is a real card, is not Standard-legal, and prints
+               "Toxic".) "up to 2 … to **1 of** your Benched Pokémon": the whole
+               batch onto ONE body.
+          🛑🛑 **THE `name:` FIELDS BELOW ARE LOCAL LABELS AND NOT PRINTED NAMES,
+          WHICH IS THE DIVERGENCE D359 FOUND BY RE-DERIVING THIS BLOCK AGAINST
+          D1 (2026-08-18).** Four of the six check out to the card AND the attack
+          (Regi Charge / Regirock ex, Pick and Stick / Morpeko, Dragon's Fury /
+          Druddigon, Mud Stock / Mudsdale); two named cards that do not carry them
+          and attacks the catalog does not print. **THE CROSSING IS VISIBLE**: the
+          real name of BOTH mis-attributed attacks is "Energy Assist", which row
+          35 below re-uses 24 lines down for Wugtrio's deck-search sentence — so
+          one real name was spent on a different row and the two orphans were given
+          invented ones. ⚠️ **THE SENTENCES — the load-bearing half, and the only
+          half this block ever claimed was character-for-character off D1 — ARE
+          CORRECT ON ALL SIX**, and so are the ids. Repaired as PROSE rather than
+          by renaming the fixture entries: row 35 already owns "Energy Assist" in
+          this pool, and two entries sharing a name is a hazard the repair would
+          create rather than remove. **D356's "a carried card name rots like a
+          carried id" at its third and fourth site, and the first time the ATTACK
+          name rotted too.**
             32 "Pick and Stick" — Morpeko `sv06-072` (1 legal). The SAME two cards
                "**in any way you like**", i.e. two ops that may land on two
                different bodies. ⚠️ 31 and 32 are the slice's falsifiability pair:

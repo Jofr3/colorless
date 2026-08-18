@@ -340,11 +340,14 @@ export type EffectPrompt =
       HOLDS.** `lookAtTopN` clamps its FLOOR to the candidate count because a
       short deck can make a floor unanswerable; a ceiling above what is available
       simply never binds, and the apply has resolved `min(count, available)` since
-      D205. **And a clamp here would LEAK**: the quantity counts cards in the
-      controller's HAND or discard pile, not rows in `candidates`, so a ceiling
-      cut down to "what you actually hold" would tell the opponent how many {R}
-      Energy are in a hand they cannot see, through `redactPrompt`. The printed
-      number is public; the zone is not.
+      D205. ⚠️ **THE FIRST REASON WRITTEN HERE WAS THAT A CLAMP WOULD LEAK THE
+      HAND, AND THAT WAS MEASURED FALSE**: `redactPhase` sends an `effect:choose`
+      prompt ONLY to the seat that must answer it, so no field on this prompt
+      reaches the other side at all. The reason that survives is internal
+      consistency — the park's `note` quotes the PRINTED count verbatim (D205,
+      because the count is the one thing a player cannot read off the offered
+      rows), so a ceiling cut to "what you actually hold" would offer one button
+      under a caption promising two: **one prompt contradicting itself**.
 
       🛑 **AND IT CHANGES WHAT `parkOrForce` DOES AT **ONE** CANDIDATE**, which
       is the half a reader will not guess from the field alone — D358's finding,
