@@ -8583,15 +8583,19 @@ const SNACK_SEEK: CardProgram = {
       only ever returns a member of `BASIC_ENERGY_TYPES`. A silent whiff plus a
       `programPlayable` refusal, which is the loudest-quiet failure this engine has.
 
-    ⚠️ **THIS ROW MAKES THE DECLINABLE-POKÉMON-PARK FINDING WORSE, AND SAYING SO IS
-    THE POINT.** The printed *"up to 2"* is over-resolved here as it is on
-    Archaludon ex ×3 and Infernape ×3 — but WORSE, because `toSelf` never parks at
-    all (`parkOrForce` always forces on a one-candidate set), so there is not even a
-    prompt in the way: the controller is never asked whether to take 1 instead of 2.
-    The `optional: true` decline is all-or-nothing. That takes the finding's
-    population from 5 legal printings to **7**, and it is recorded here rather than
-    bought — the missing capability is still a prompt member, a choice member, a
-    wire-schema field and a `validateChoice` arm.
+    🆕🆕 **D358 BOUGHT THE DECLINABLE PARK AND THIS ROW IS STILL OVER-RESOLVED —
+    FOR A DIFFERENT REASON THAN THIS NOTE USED TO GIVE.** The old text said the
+    obstacle was `toSelf` never parking; `parkOrForce` now parks a DECLINABLE pick
+    even over one candidate, so that half is spent. The live obstacle is `count: 2`:
+    ONE op, ONE named body, ONE batch, so a decline buys {0, 2} where the printed
+    *"up to 2"* means {0, 1, 2} (`ptcg-rules.md` §9.1). **THE MISSING CAPABILITY IS
+    A QUANTITY AXIS, NOT A DECLINE AXIS**, and it cannot be respelled as two ops
+    because `count` exists to pin a batch to the one body a print NAMES (D205).
+    ⚠️ **AND THE POPULATION FIGURE HERE WAS WRONG** — "5 legal printings to 7" over
+    a list of 6, carried by five handoffs. Re-derived at D358: **17 legal printings**
+    over-resolved, 6 bought (Archaludon ex ×3, Magneton ×3) and 11 refused, of which
+    this card is one of EIGHT `count: 2` printings alongside Bloodmoon Ursaluna ×2
+    and Ethan's Ho-Oh ex ×4 — neither previously counted.
 
     ⚠️ **NO `fix-*` DEMONSTRATOR.** `catalogManifest.ts` is generated off a local
     sqlite this clone does not have and measures a 978-row / 6-set catalog holding

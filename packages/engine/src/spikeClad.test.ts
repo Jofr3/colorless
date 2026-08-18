@@ -539,17 +539,23 @@ describe("D353 §5 — the attach lands on the EVOLVED body and never parks", ()
   });
 
   it("🛑 THE PRINTED *'up to 2'* IS OVER-RESOLVED, AND IT IS PINNED AS A MEASUREMENT", () => {
-    // The DECLINABLE POKÉMON PARK finding (open since D351, unbought at D353).
-    // `parkOrForce` has three arms and none is a decline; a `toSelf` attach offers
-    // AT MOST ONE target, so it always FORCES and there is not even a prompt in
-    // the way. The controller who wants ONE Spiky Energy on this body cannot have
-    // it — the `optional: true` decline is all-or-nothing.
-    // ⚠️ **THIS ROW TAKES THE FINDING'S POPULATION FROM 5 LEGAL PRINTINGS TO 7**
-    // (Archaludon ex ×3, Infernape ×3 — see `pyroDance.test.ts` §5 — and now
-    // Lycanroc ×2). It is WORSE here than on either of those, because those two at
-    // least park a prompt the capability could hang a decline on. Buying the
-    // capability reddens this test BY NAME, which is what a pinned measurement is
-    // for.
+    // 🆕🆕 **D358 BOUGHT THE DECLINABLE POKÉMON PARK AND THIS ROW STILL DOES NOT
+    // GET IT — WHICH IS THE MEASUREMENT, NOT A DEFERRAL.** `parkOrForce` now parks a
+    // declinable pick even over ONE candidate, so the `toSelf` shape is no longer
+    // the obstacle. The obstacle is `count: 2`: ONE op, ONE named body, ONE batch.
+    // A declinable park would buy this card {0, 2}; the printed *"up to 2"* means
+    // {0, 1, 2} (§9.1: *"one, two, or none, all legal"*). **WHAT IS MISSING IS A
+    // QUANTITY AXIS, NOT A DECLINE AXIS** — and it cannot be respelled as two ops,
+    // because `count` exists precisely to pin a batch to the one body a print NAMES
+    // (D205).
+    // ⚠️ **AND THE POPULATION FIGURE THIS ROW USED TO CARRY WAS WRONG.** It said
+    // the finding went "from 5 legal printings to 7" over a list of 6, and the
+    // handoff carried "7" for five slices. D358 re-derived it off the registry and
+    // D1: **17 legal printings**, of which 6 were bought and 11 refused. This card
+    // is one of EIGHT `count: 2` printings — with Bloodmoon Ursaluna ×2 and Ethan's
+    // Ho-Oh ex ×4, neither of which had ever been counted. `attachDecline.test.ts`
+    // §1/§5 pin that refusal BY ID in both directions, so buying the quantity axis
+    // reddens there and here together.
     const { state, evolveUid } = board([SPIKY, SPIKY]);
     const after = evolveActive(state, evolveUid);
     expect(after.state.phase.kind).not.toBe("effect:choose");

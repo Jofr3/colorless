@@ -86,15 +86,29 @@ import { FIXTURE_POOL, battler, deckOf, typedEnergy } from "./testFixtures";
 // holding one {R} and one {F} attaches BOTH, where the print offers three outcomes
 // and lets them take one.
 //
-// It is shipped that way anyway, and the reason is a price rather than a shrug:
-// the missing capability is a DECLINABLE PARK — a prompt member, a choice member,
-// a wire-schema field and a validator arm — and the pool's only other driver for it
-// is `ASSEMBLE_ALLOY`'s own *"up to 2"*, which has been resolving the same way
-// since D263. Two printings' worth of fidelity for four new vocabulary items, on a
-// divergence that can only ever attach MORE than the player chose, out of their own
-// hand, onto their own bodies. **The claim is corrected where it was made rather
-// than repeated here**, and the behaviour is pinned in §5 so the day someone buys
-// the declinable park, this file goes red and says why.
+// It is shipped that way anyway, and 🆕🆕 **D358 CHANGED THE REASON FROM A PRICE
+// TO A RULE.** The declinable park was BOUGHT at D358 (`attachEnergyFrom.declinable`,
+// a widened `choosePokemon` prompt, an optional `EffectChoice.pokemon.ref`, a wire
+// field, a `validateChoice` arm and a `parkOrForce` flag) — and it was deliberately
+// NOT applied to this card.
+//
+// 🛑 **`ptcg-rules.md` §9.1 IS WHY.** Archaludon ex and Magneton print *"up to N"*,
+// which §9.1 says makes every count from 0 to N legal. **THIS CARD PRINTS NO SUCH
+// THING.** *"a Basic {R} Energy card, a Basic {F} Energy card, **or 1 of each**"* is
+// a DISJUNCTION with three arms and no empty one, and §9.1 also settles the *"you
+// may"*: on an ACTIVATED Ability it *"is spent by choosing to use the Ability at
+// all, so it adds nothing to the choice that follows"*. So the printed answer set
+// here is exactly {R}, {F}, {R,F} — and two independent declinable parks would also
+// reach the EMPTY answer, which this sentence does not offer. **Flagging these two
+// ops would legalise something unprinted**, which is the one thing a new prompt
+// member must never do.
+//
+// What this card actually owes is *"at least one of the two"*, a coupling BETWEEN
+// two ops that no prompt can express — cross-op state (an `EffectRecord` gate, §9.2
+// machinery). Refused at D358 ON PRICE, with the rules half settled; 3 legal
+// printings. §5 below still pins the behaviour, and `attachDecline.test.ts` §5
+// pins the REFUSAL by id so a slice that flags these ops has to come here and
+// say why.
 //
 // ── THE ENGINE DIFF, AND WHY IT IS NOT ZERO ─────────────────────────────────
 // The no-new-vocabulary refutation was RUN FROM SOURCE and four spellings were

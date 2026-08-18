@@ -2794,9 +2794,14 @@ function stepOp(
         // 🆕 D358 — no `decider`: the printed *"up to N"* moves WHETHER, never
         // WHO, so the fifth argument stays absent exactly as it was and the
         // sixth is spelled positionally rather than folded into it. The flag
-        // rides the OP because only the print knows: `attachEnergyFrom` serves
-        // eleven Standard-legal sentences and only two of them print a ceiling
-        // the player may come in under (Archaludon ex ×3, Magneton ×3). Deriving
+        // rides the OP because only the print knows. **MEASURED against D1 over the
+        // 52 catalog ids whose program carries this op: 14 distinct Standard-legal
+        // sentences / 42 legal printings, of which 5 sentences / 14 printings print
+        // "up to" and 9 / 28 do not.** This slice buys TWO of those five sentences
+        // (Archaludon ex ×3, Magneton ×3); the other three are `count: 2` and want a
+        // quantity axis. ⚠️ 14 + Infernape's 3-printing disjunction = the 17
+        // over-resolved printings D358 re-derived — the two counts RECONCILE rather
+        // than agree by luck, which is the only reason either is quotable. Deriving
         // it here — from `count`, from the program's op count, from anything the
         // interpreter can see — would make Eelektrik's *"attach a Basic {L}
         // Energy card … to 1 of your Benched Pokémon"* declinable too, and that
