@@ -819,6 +819,44 @@ export type BoardCondition =
       — the class is derived from the card NAME's suffix, tcgdex's structured
       markers being dropped at ingest. False with no Active. */
   | { kind: "opponentActiveIsExOrV" }
+  /** 🆕 D362 — your opponent's Active Pokémon is a Pokémon **ex**, and NOTHING
+      else: not a V, not a VMAX/VSTAR/GX, not a plain body. The strictly NARROWER
+      half of the pair whose wider half sits one member up.
+
+      🛑 **AND IT IS THE MISSING HALF OF A PAIR RATHER THAN A BESPOKE NARROWING,
+      WHICH IS A MEASUREMENT AND NOT A PREFERENCE.** Over the legal attack corpus
+      (640 sentences / 1,732 printings) the ex-ONLY Active board predicate is
+      **8 sentences / 13 printings**, every one of them unbuilt before this
+      slice; the **WIDER** `opponentActiveIsExOrV` spelling of the SAME clause
+      template — *"…is a Pokémon ex **or Pokémon V**, this attack does N more
+      damage."* — is **4 sentences / 6 printings** and has been built since D107.
+      **THE NARROWER PREDICATE HAS MORE THAN TWICE THE PRINTINGS OF THE WIDER ONE
+      THE ENGINE ALREADY READS**, and the two spellings sit side by side in the
+      same clause table on the same sentence template. D361 refused this member on
+      the ratio *"one new union member for ONE printing"*, then measured it and
+      inverted its own recommendation; re-derived here over all four surfaces
+      rather than inherited.
+
+      ⚠️ **REUSING `opponentActiveIsExOrV` WOULD BE AUTHORING A CARD**, and that
+      is the whole reason this member exists: it is strictly WIDER, so an attack
+      printed *"is a Pokémon ex"* would fire into a Pokémon V the sentence does
+      not name. The refutation is driven on a real BOARD in `exOnlyActive.test.ts`
+      §2 rather than argued — the V body is the one board on which the two members
+      disagree, and it is asserted from both seats.
+
+      ⚠️ **AND WIDENING THE EXISTING MEMBER WAS PRICED BEFORE IT WAS REFUSED.**
+      A parameterised `suffixes` field would cover both spellings, but the
+      member's NAME *is* its specification, so widening it honestly costs a
+      RENAME — 31 sites across 7 files, measured — where the addition costs 4.
+      **A WIDENING IS FREE; A RENAME IS NOT.**
+
+      No new predicate in `cards.ts`: the arm inlines
+      `pokemonSuffixOf(card) === "ex"`, which is the very read `isExOrV` is built
+      out of and `PreventedAttackerClass` already compares against, so the two
+      members cannot drift. It inherits that predicate's one limitation — the
+      class comes from the card NAME's suffix, tcgdex's structured markers being
+      dropped at ingest. False with no Active. */
+  | { kind: "opponentActiveIsEx" }
   /** §6.3 — YOUR Active Pokémon has at least one attached Energy of `energy`:
       Scovillain sv01-029/-202 "Super Spicy Breath" (+90, `{R}`), Galvantula
       sv06.5-002 "Shocking Web" (+80, `{L}`), Cetitan sv02-055 "Special Horn"
@@ -8420,6 +8458,26 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "your opponent's Active Pokémon is a Pokémon ex or Pokémon V",
     { kind: "opponentActiveIsExOrV" },
   ],
+  // 🆕 D362 — the SAME clause template one printed disjunct shorter, and the row
+  // that makes this table's pair complete: SIX printed amounts across SIX
+  // Standard-legal sentences / TEN printings — `svp-179` + `sv10.5w-077`/`-162`/
+  // `-170` (+100), `sv07-090` + `sv10-131` (+70), `sv10-130` (+40), `sv08.5-089`
+  // (+50), `sv08-141` (+80), `sv09-018` (+90). Measured on remote D1 `luminous`
+  // across all three text columns keyed on `$.effect` (2026-08-18); the one
+  // `effect`-column printing of this clause is `legal_standard = 0`.
+  //
+  // 🛑 **ONE LITERAL ROW AND NOT SIX, FOR KROKOROK'S REASON INVERTED.** The
+  // amount is NOT part of this key — it is captured by `CONDITIONAL_DAMAGE_BONUS`
+  // one layer up, exactly as it is for the `ex or Pokémon V` row directly above,
+  // which also serves four printed amounts off one row. Only ONE thing varies
+  // across these six sentences, and this table is not the layer that reads it.
+  //
+  // ⚠️ **AND THE ROW ABOVE IS THIS ROW PLUS FOUR PRINTED WORDS**, which is the
+  // sharpest near-miss in this table after the two Poison rows: ` or Pokémon V`
+  // is the entire difference, the keys are whole printed clauses and never
+  // substrings, and a lookup that reached this row from that sentence would boost
+  // against a Pokémon V nothing prints. Driven both ways in `exOnlyActive.test.ts`.
+  ["your opponent's Active Pokémon is a Pokémon ex", { kind: "opponentActiveIsEx" }],
   // Krokorok sv01-116 "Payback" (+90) and Houndstone sv03-101 "Two Four-ocious"
   // (+120) — ONE member at two values, and still two LITERAL rows rather than a
   // D118 template. Two things vary between these sentences, not one: the count
@@ -9415,6 +9473,34 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
 // of its own sentence. **A QUANTIFIER'S ABSENCE IS EVIDENCE WHEN ITS PRESENCE IS
 // EVIDENCE**, and the two halves of this family are now broken apart in the file
 // precisely because only one of them is map-built.
+// 🆕 D362 — TURTONATOR `sv08-137` "Fully Singe" (1 Standard-legal): *"Discard an
+// Energy from your opponent's Active Pokémon **ex**."* — the line above's sentence
+// plus one printed adjective, and the adjective changes the SHAPE rather than the
+// filter: the op comes back wrapped in a `conditionGate` on the new
+// `opponentActiveIsEx` member, so an Active that is not an ex loses nothing.
+//
+// 🛑 **A SEPARATE ANCHOR AND NOT AN OPTIONAL `(?: ex)?` ON THE MAP-BUILT LINE
+// BELOW, AND THE REASON IS A MEASUREMENT.** That anchor is built over THREE
+// printed articles (`an` / `a Special` / `a {X}`); an optional suffix would
+// therefore also derive *"Discard a Special Energy from your opponent's Active
+// Pokémon ex."* and its typed twin. Queried across `attacks_json`,
+// `abilities_json` and `effect` on remote D1 `luminous` (2026-08-18), the catalog
+// holds **exactly ONE** `Active Pokémon ex` sentence in `attacks_json` — this one,
+// on the BARE article — and **ZERO** of the cross-product. Deriving them would be
+// authoring two cards, which is D361's own refusal on `(a|all) × (Active|all of)`
+// one line down, re-derived rather than copied.
+//
+// ⚠️ **TESTED BEFORE THE BARE ANCHOR, WHICH IS BOTH THE CORRECT ORDER AND THE
+// OBSERVABLE ONE.** The more specific sentence must win, and placing it first is
+// what gives its `ex` a mutant with a real board behind it: an anchor that stopped
+// requiring the adjective would swallow all six bare printings and gate them on an
+// ex-only board. **THE ANCHOR IS DEFENDED BY TWO INDEPENDENT PRINTED WORDS** — the
+// adjective `ex` AND the article `an` — and §5 asserts BOTH, because a row count is
+// not a coverage map (D361's own anchor survived its first probe for exactly this).
+//
+// `['’]` for D137's fold, and no /i for the standing reason (see TYPED_SELF_DISCARD).
+const OPPONENT_ACTIVE_EX_DISCARD =
+  /^Discard an Energy from your opponent['’]s Active Pokémon ex\.$/;
 const OPPONENT_ACTIVE_DISCARD = new RegExp(
   `^Discard (?:an|a (Special)|a (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")}))) Energy from your opponent['’]s Active Pokémon\\.$`,
@@ -11921,6 +12007,26 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //        decides is the filter. See the anchor's own D361 block for the census
   //        (6 legal `an Energy` + 4 legal `a Special Energy` + 2 legal
   //        `a {R} Energy`, plus a rotated `{W}` the arm derives anyway).
+  // 🆕 10a (D362). "Discard an Energy from your opponent's Active Pokémon ex." —
+  //     Turtonator `sv08-137` "Fully Singe", 1 Standard-legal. Tested BEFORE the
+  //     bare family below because it is the more specific sentence; see the
+  //     anchor's own D362 block for why the adjective is a separate anchor rather
+  //     than an optional group on the map-built one.
+  //
+  //     The gate is the whole diff: the INNER op is byte-identical to what the
+  //     bare article already produces (`opponentActive` + `anyEnergy`), so nothing
+  //     new reaches the interpreter, the prompt layer or the wire. A
+  //     `conditionGate` is spliced by `runProgram`'s queue loop, so the condition
+  //     never enters `GameState.phase` and `MATCH_RECORD_VERSION` is untouched.
+  if (OPPONENT_ACTIVE_EX_DISCARD.test(effect)) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveIsEx" },
+        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      },
+    ];
+  }
   match = OPPONENT_ACTIVE_DISCARD.exec(effect);
   if (match !== null) {
     // Exactly one branch of the alternation matched, and the two notation groups

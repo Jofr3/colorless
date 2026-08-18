@@ -12108,6 +12108,65 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.268.0 → **THE ex-ONLY ACTIVE BOARD PREDICATE — THE MISSING HALF OF
+    A PAIR, NOT A BESPOKE NARROWING, AND THE DIFFERENCE IS A COUNT.**
+
+    D361 refused Turtonator `sv08-137` on the ratio *"ONE new union member for ONE
+    printing"*, then measured the thing it had asserted and inverted its own
+    recommendation. Re-derived here over all four surfaces rather than inherited,
+    and it holds exactly: over the legal attack corpus (**640 sentences / 1,732
+    printings**, nine readers resolving **323 / 1,185** at the previous head) the
+    ex-ONLY Active board predicate is **8 sentences / 13 printings, every one
+    unbuilt** — while the strictly **WIDER** *"ex **or Pokémon V**"* spelling of
+    the SAME clause-table template has been built since D107 at **4 sentences / 6
+    printings**. **THE NARROWER PREDICATE HAS MORE THAN TWICE THE PRINTINGS OF THE
+    WIDER ONE THE ENGINE ALREADY READS.**
+
+    **WHAT WAS BOUGHT — 7 sentences / 11 Standard-legal printings**, through TWO
+    readers off ONE new union member:
+
+    | sentence | s | p |
+    |---|---|---|
+    | *"If your opponent's Active Pokémon is a Pokémon ex, this attack does {40,50,70,80,90,100} more damage."* | 6 | 10 |
+    | *"Discard an Energy from your opponent's Active Pokémon **ex**."* | 1 | 1 |
+
+    THE WHOLE ENGINE DIFF is ONE `BoardCondition` member, TWO `interpreter.ts`
+    arms (`conditionHolds` + `conditionNote` — the consumer set was measured, and
+    `redact.ts`/`cardplay.ts` read the union OPAQUELY and owe nothing), ONE clause
+    table row and ONE anchored regex with its arm. **ZERO** new ops, op fields,
+    `CardFilter` kinds, prompt kinds, registry keys, `cards.ts` predicates and
+    **ZERO** `packages/schema`.
+
+    🛑 **THE NO-NEW-VOCABULARY REFUTATION IS DRIVEN ON A BOARD, NOT ARGUED.**
+    Reusing `opponentActiveIsExOrV` is strictly WIDER, and a Pokémon V Active is
+    the ONE board on which the two members disagree — asserted from both seats in
+    `exOnlyActive.test.ts` §2. Widening that member HONESTLY would cost a RENAME
+    (its name IS its specification), measured at **31 sites across 7 files**
+    against **4** for the addition. **A WIDENING IS FREE; A RENAME IS NOT**, and
+    that is exactly why this one is an addition.
+
+    ⚠️ **AND THE ONE LINE D361 LEFT EXPLICITLY UNPRICED WAS MEASURED AND THEN
+    REFUSED.** The *"isn't a Pokémon ex, this attack does nothing"* negation
+    (Sawk `sv10.5w-049`/`-130`, 2 legal) is `deriveAttackRequirement`'s SHAPE —
+    its table maps a printed NEGATIVE clause to the POSITIVE board fact, so it
+    would have been one row and no `{kind:"not"}` member. **But that reader cannot
+    reach the sentence**: `ATTACK_DOES_NOTHING` is anchored `^…$` and Sawk prints
+    TWO sentences. Measured with a CONTROL rather than reasoned about — Palafin's
+    existing row reads today and stops reading the instant the identical trailing
+    sentence is bolted onto it, and the readers receive the WHOLE effect string.
+    Admitting it means widening that anchor across **9 sentences / 27 printings**
+    of unrelated surface, which is its own purchase. **A BLOCK IS NOT AN
+    ALL-OR-NOTHING PURCHASE**, applied to the half a predecessor flagged.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited, on two
+    independent lines: a `conditionGate` is SPLICED by `runProgram`'s queue loop
+    and never enters `GameState.phase`, so the condition is not persisted at all;
+    and a new union MEMBER is D125's widening — no record can contain a member no
+    deploy could author.
+
+    engineVersion 0.267.0 → **0.268.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.267.0 → **THE CROSS-SEAT ENERGY DISCARD READS THE PRINTED NOUN PHRASE,
     AND THE PRICE IS ONE WIDENING PLUS ONE ANCHOR.**
 
@@ -13485,7 +13544,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.267.0";
+export const engineVersion = "0.268.0";
 
 export type {
   ApplyResult,

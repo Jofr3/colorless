@@ -10433,6 +10433,45 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  /** 🆕 D362 — THE ex-ONLY ACTIVE BOARD PREDICATE, both halves on one body.
+
+      ⚠️ SYNTHETIC BY NECESSITY, NOT BY PREFERENCE — `fix-crossseatdiscard`'s
+      reason re-checked rather than copied: all 222 real ids in this pool sit
+      inside the local D1's six sets (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`,
+      `swsh10.5`), and every one of this row's eleven printings is in `sv07`,
+      `sv08`, `sv08.5`, `sv09`, `sv10`, `sv10.5w` or `svp`. A real fixture id
+      needs a `CATALOG_MANIFEST.printed` row, `NO_CATALOG_ROW` is deliberately
+      EMPTY, and `catalogManifest.test.ts` is total in both directions — so a
+      real-id fixture here would be exactly the defect that file exists to
+      surface. The printed costs and damage are therefore not reproduced; the
+      SENTENCES are, verbatim, and they are what the derivers read.
+
+      🛑 ONE BODY FOR BOTH SENTENCES BECAUSE THEY ARE ONE PREDICATE READ FROM TWO
+      ENDS — a damage BONUS through the clause table and a `conditionGate` through
+      `deriveAttackEffect`. Index 0 is the bonus (`sv09-018`'s printed +90 stands
+      in for all six amounts, which vary only in the capture one layer up); index
+      1 is Turtonator `sv08-137`'s discard. NO new body is needed for the BOARD
+      side: the cast already holds `sv06.5-036` (a real Pokémon ex),
+      `fix-pokemon-v`, `fix-pokemon-vmax` and the suffix-free `fix-bigbody`, which
+      are exactly the four boards this member has to be told apart on. */
+  "fix-exonly": battler("fix-exonly", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Ex Crusher",
+        damage: 10,
+        effect:
+          "If your opponent's Active Pokémon is a Pokémon ex, this attack does 90 more damage.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Fully Singe",
+        effect: "Discard an Energy from your opponent's Active Pokémon ex.",
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -10471,6 +10510,35 @@ export const CROSS_SEAT_DISCARD_DECK = deckOf({
   "fix-water-energy": 4,
   "fix-energy": 18,
   "sv02-191": 4, // Luminous — provides every type while it is alone
+});
+
+/** 🆕 D362 — the ex-ONLY Active board predicate. A DEDICATED 60, because the four
+    bodies this member must be told apart on are exactly the four the deck carries
+    as the OPPONENT's Active, and every one of them is pulled post-setup by id:
+
+      • `sv06.5-036` Okidogi **ex** — the real Pokémon ex, the only body on which
+        the new member is TRUE. A real catalog id rather than a synthetic one, so
+        the predicate is proven against a printed name suffix and not a fixture's;
+      • `fix-pokemon-v` "Fixmon V" — **THE ONE BOARD ON WHICH THIS MEMBER AND
+        `opponentActiveIsExOrV` DISAGREE**, which is the whole no-new-vocabulary
+        refutation and the reason it is driven rather than argued;
+      • `fix-pokemon-vmax` "Fixmon VMAX" — false under BOTH members, so the pair
+        cannot be mistaken for a `hasRuleBox` read;
+      • `fix-bigbody` — 200 HP and NO suffix at all, so it both survives the +90
+        and reads false, and no KO tail interferes with the damage assertion.
+
+    `fix-energy` pays the `{C}` costs and is the Energy index 1's discard takes off
+    the opponent's Active; `fix-special` is the NON-matching second print that
+    `anyEnergy` must be free to take too, so the bare filter is not silently read
+    as a narrowed one. */
+export const EX_ONLY_DECK = deckOf({
+  "fix-exonly": 4,
+  "fix-bigbody": 4,
+  "fix-pokemon-v": 4,
+  "fix-pokemon-vmax": 2,
+  "sv06.5-036": 4,
+  "fix-special": 4,
+  "fix-energy": 18,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });

@@ -3006,6 +3006,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && isExOrV(spot.card);
     }
+    case "opponentActiveIsEx": {
+      // 🆕 D362 — the NARROWER half of the pair directly above, and the ONE board
+      // on which the two disagree is a Pokémon V: this member is false there and
+      // `opponentActiveIsExOrV` is true. Read through `pokemonSuffixOf` — the same
+      // function `isExOrV` is built out of — so the two can never drift, and a
+      // VMAX/VSTAR/GX is false here exactly as it is one arm up ("Fixmon VMAX" is
+      // read as VMAX, never as a space-then-V). An empty Active Spot is FALSE, as
+      // with every sibling in this family.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && pokemonSuffixOf(spot.card) === "ex";
+    }
     case "yourActiveHasEnergyAttached": {
       // D116's pronoun rule again — the printed "this Pokémon" was resolved to
       // your Active by the clause table, not here. The predicate itself is
@@ -3480,6 +3491,14 @@ export function conditionNote(cond: BoardCondition): string {
       return "your Active Pokémon is Poisoned";
     case "opponentActiveIsExOrV":
       return "your opponent's Active Pokémon is a Pokémon ex or Pokémon V";
+    case "opponentActiveIsEx":
+      // 🆕 D362 — byte-identical to the clause table's KEY, which is what makes
+      // the round trip exact: `If ${conditionNote(cond)}, this attack does N more
+      // damage.` re-derives to the same member in one step. The sibling one line
+      // up is this string plus " or Pokémon V", and that four-word tail is the
+      // only thing between them — asserted in BOTH directions in
+      // `exOnlyActive.test.ts` §3.
+      return "your opponent's Active Pokémon is a Pokémon ex";
     case "yourActiveHasEnergyAttached":
       // The family's first note built from a PARAMETER rather than returned as a
       // literal. The pronoun is dropped exactly as its siblings drop it, and the

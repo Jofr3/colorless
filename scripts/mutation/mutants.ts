@@ -5459,7 +5459,7 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    // ⚠ RE-POINTED AT D361 (0.266.0 → 0.267.0) — the FIFTY-EIGHTH payment, and
+    // ⚠ RE-POINTED AT D362 (0.267.0 → 0.268.0) — the FIFTY-NINTH payment, and
     // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
     // STAYS 22. The hazard was LIVE and not skippable — an `EffectOp` IS persisted
     // (`EffectContinuation.pendingOp` AND its `rest` tail), and TWO of D361's three
@@ -5484,7 +5484,7 @@ export const MUTANTS: Mutant[] = [
     // `D326-record-version-not-bumped` is NOT owed this time and stays anchored at
     // 22, which was predicted by id before the diff and measured after it.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.267.0";',
+    find: 'export const engineVersion = "0.268.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
