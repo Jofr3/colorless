@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-18 — build session #299 (**P3-M5 — D359, *`attachEnergyFrom`'s QUANTITY AXIS: THE PRINTED "up to N" TO ONE NAMED BODY.*** Engine **0.264.0 → 0.265.0** over FIVE sites; `MATCH_RECORD_VERSION` **21 → 22** — asked rather than inherited, and it MOVES: D358's one-slice-old `declinable?: true` on the persisted `choosePokemon` prompt becomes `upTo?: number`, so a v21 record's `declinable: true` parses away and the park reads back MANDATORY, refusing a decline the player was already offered. **D358 ADDED that field to that prompt and correctly left this constant alone; one slice later the same field is RENAMED and it must move. A WIDENING IS FREE AND A RENAME IS NOT, AND THEY ARE ONE EDIT APART ON ONE FIELD** (D352's rename case, a third time). 🛑🛑 **THE HEADLINE: A RESIDUE MEASURED ONE SLICE AGO, OFF THE LIVE REGISTRY, WAS SHORT BY FIVE PRINTINGS — BECAUSE THE REGISTRY IS NOT THE BUILD.** D358 handed on *"8 legal printings / 3 sentences / 3 objects"*. `attachEnergyFrom` has TWO producers and a registry walk sees one: `deriveAttackEffect` emits `count: 2` for three more Standard-legal sentences carrying **no registry row at all** (asserted by `programFor(id) === undefined`) — Oricorio "Energy Assist" `sv08-026`/`sv08-089`, Regirock ex "Regi Charge" `sv10-101`/`sv10-214`, Kilowattrel ex "Return Charge" `sv08-068`. Re-derived over both producers against remote D1 on `$.effect`: **6 sentences / 13 Standard-legal printings**, printed {0, 1, 2} on all 13. ⚠️ **AND THE TWO HALVES WERE BROKEN DIFFERENTLY, WHICH IS WHY A DECLINE AXIS COULD NEVER HAVE REPAIRED EITHER**: the 8 ABILITY printings reached {0, 2} (an activated or triggered *"you may"* buys the empty answer); the 5 ATTACK printings reached **{2} ALONE** — an attack is declared and resolves, no `optional` exists anywhere in the program, and even the zero was unreachable. 🛑 **ZERO NEW OP FIELDS, MEASURED RATHER THAN ARGUED: `count` WAS ALREADY THE CEILING.** `attachFromZoneClause` admits `count > 1` through its literal `up to (\d+)` alternative ALONE, so no catalog sentence can produce a count above one without printing the word — driven from the deriver (the unhedged *"Attach 2 Basic Energy cards…"* returns **null**). The engine had been spending the printed *"up to"* against AVAILABILITY and never against the player's WILL. 🛑 **THE PROMPT FIELD IS A WIDENING**: `choosePokemon.declinable?: true` → `upTo?: number`, NET ZERO prompt fields, because at this prompt `declinable` IS `upTo: 1` and two keys on one axis is the exact refusal D358 made at the OP. **THE OP-LEVEL FIELDS ARE UNTOUCHED AND STILL NEVER CO-OCCUR — `attachDecline.test.ts` §1 STANDS UNEDITED**, which the handoff had named as the line a pairing slice would have to change. 🛑 **A CLAIM THIS SLICE MADE ABOUT ITSELF AND MEASURED FALSE, CORRECTED AT ALL FOUR SITES IT HAD REACHED**: the argument for leaving the ceiling unclamped was that a clamp would leak the hand through `redactPrompt`. It would not — `redactPhase` sends the prompt only to the seat that must ANSWER it. The argument that survives is sharper: `note` quotes the PRINTED count verbatim (D205), so a clamped ceiling would offer one button under a caption promising two. 🛑 **A ROW COUNT IS NOT A COVERAGE MAP, THIRD INSTANCE — NINE OF TEN CHANGED SITES CARRIED ZERO MUTATION ROWS**, and the tenth was covered only in its `count` half. Nine anchors predicted BY ID before the diff and measured exactly nine; six red test files predicted and six measured, none unpredicted. 🛑 **A FIXTURE IS A CENSUS POPULATION**: `testFixtures.ts` rows 30 and 31 attributed their sentences to *"Sand Gift — Sandaconda/Krokorok"* and *"Fault Line — Gligar"*, and **NEITHER ATTACK EXISTS ANYWHERE IN THE CATALOG** — D1 says Furfrou "Energy Assist" / Jirachi "Swelling Wish" and Oricorio "Energy Assist". The sentences and ids were right on all six; the names were not, and the crossing is visible (row 35 re-uses the real name 24 lines later). D356's lesson at its third and fourth site, and the first time the ATTACK name rotted too. Census MEASURED UNMOVED (no registry byte authored); the last-N baton did NOT expire. Close-out span re-measured **324**, against the TWO different figures the handoff carried (320 and 291). `bun run check` **367 files / 7,591 tests**; corpus 1097 → **1114**, sweep **1091 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**)
+**Last updated:** 2026-08-18 — build session #300 (**P3-M5 — D360, *the printed "up to" reaches the SPREAD, and the family CLOSES — over BOTH producers.*** Engine **0.265.0 → 0.266.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited and the ask recorded on the `D275` mutation row: an `EffectOp` IS persisted (`EffectContinuation.pendingOp`) and this op PARKS, so the D335/D352 hazard is genuinely in range — but **this slice adds no field, it changes which printings CARRY one**, and a v22 record holding a flagless `attachEnergyFrom` reads back MANDATORY, which is exactly what it meant when written. **A WIDENING IS FREE, A RENAME IS NOT, AND A POPULATION IS NEITHER.** 🛑🛑 **THE HEADLINE: THE HANDOFF SAID FOUR LIVE PRINTINGS AND THERE WERE FIVE GROUPS — BECAUSE A LEGALITY FILTER IS RIGHT FOR A POPULATION FIGURE AND WRONG FOR A CONSISTENCY INVARIANT.** Walking BOTH producers before a line moved — `deriveAttackEffect` over the 640-sentence `legalAttackCorpus()` with a **recursive** op flatten (a top-level filter misses Kilowattrel ex's `recordGate`-nested attach: 15 sentences flat, **16** recursive), and `programFor` over all **708** `registryCardIds()`, with the producer set CLOSED by grep — the four derived printings the handoff named (Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`) were joined by a fifth group nobody named: **`KORAIDON_EX` ×4**, the identical hedged sentence, the identical two-op `anyWay` spread, no flag. D358 *measured* it and excluded it for `legal_standard = 0` — and `attachFromZoneProgram` cites that very row **by name** as the shape its own spread copies, so flagging one producer and not the other would leave the engine's two producers disagreeing about one printed sentence. `attachDecline.test.ts` §1 reddened **BY NAME**, which is D358's own written falsification condition firing as designed. ⚠️ **THE DISCRIMINATOR IS THE PRINTED WORD, NOT THE DERIVED COUNT, AND THE TWO COME APART ON A SENTENCE THE ARM ACCEPTS**: *"Attach up to 1 Basic Energy cards … in any way you like."* derives with `match[3] === "1"` and `count === 1`, and §9.1 makes its answer set {0, 1}. ✅ **THE FAMILY ACCOUNTS FOR ITSELF: 13 + 6 + 4 + 1 refused = the catalog's 24.** `bun run check` **367 files / 7,603 tests**; corpus **1114 → 1119**.)
 
 **Last updated (was):** 2026-08-18 — build session #298 (**P3-M5 — D358, *THE DECLINABLE POKÉMON PARK: "UP TO N" STOPS BEING AN EXACT COUNT.*** Engine **0.263.0 → 0.264.0** over FIVE sites; `MATCH_RECORD_VERSION` **STAYS 21** — asked rather than inherited: the prompt rides the persisted `effect:choose` phase, but `declinable` is absent-when-false so a v21 record reads `undefined` = mandatory = what those parks already meant, and the CHOICE widening is on an action INPUT that is never persisted. 🛑 **THE DEFECT.** `choosePokemon` was the ONE prompt kind in `EffectPrompt` with no way to say no — `chooseCards` has carried *"`min: 0` — the printed 'up to' … Taking none is a legal answer"* since it was written, `choosePokemonMulti` carries `declinable`, and `moveEnergy` and `attachCards` both document an empty answer as a decline — so every printed *"attach **up to** N"* that `attachEnergyFrom` serves was resolved as an EXACT N. **Declinability was never a property of PARKING; it is a property of the PROMPT KIND.** 🛑🛑 **THE INHERITED PRICE'S POPULATION, CARRIED FIVE TIMES, DOES NOT CLOSE UNDER ANY PARTITION**: *"7 legal printings — Archaludon ex ×3, Infernape ×3, Lycanroc ×2"* lists 8, and D353 wrote the same claim as *"5 → 7"* over a list of 6. Re-derived by walking the registry (113 ids carry a `parkOrForce`-family op) against remote D1 on `$.effect`: **17 legal printings are over-resolved**, and Magneton ×3, Bloodmoon Ursaluna ×2 and Ethan's Ho-Oh ex ×4 — NINE — had never been counted at all. **BOUGHT for 6** (Archaludon ex ×3 → {0,1,2}, Magneton ×3 → {0,1,2,3}); **REFUSED for 11, and both refusals are RULES calls from the catalog**: Infernape's disjunction prints no empty arm, and the three `count: 2` families want a QUANTITY axis rather than a decline axis. 🛑 **THE RULES QUESTION WAS SETTLED FROM `ptcg-rules.md` §9.1**, which already said *"up to 2 … one, two, or none, all legal"* and that an activated *"you may"* is spent on the activation. 🛑 **IT MOVED THE FORCED ARM** — a declinable pick has two answers over ONE candidate, D47's call for `choosePokemonMulti` verbatim. 🛑 **A ROW COUNT IS NOT A COVERAGE MAP, SECOND INSTANCE**: `parkOrForce` carried one mutation row and it mutates the `decider` spread, not the forced arm. 🛑 **BOTH PINNED MEASUREMENTS THE HANDOFF NAMED STAYED GREEN** — four rungs in two files nobody named went red instead. Ten mutation anchors re-pointed, predicted by ID before the diff and measured exactly ten. Census MEASURED UNMOVED; the last-N baton did NOT expire. `bun run check` **366 files / 7,553 tests**; corpus 1089 → **1097**, sweep **1074 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**)
 
@@ -351,228 +351,195 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D359)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D360)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** —
 > the branch `claude/backend-loop-subagents-q2wz9f` AND `main`, fast-forwarded at
 > the user's explicit instruction. **NO PULL REQUEST WAS OPENED, BY INSTRUCTION.**
-> `bun run check` **367 files / 7,591 tests, exit 0**. Sweep
-> ******1091 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)****** over **1114**.
+> `bun run check` **367 files / 7,603 tests, exit 0**. Sweep
+> ******1096 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)****** over **1119**.
 >
-> ### ▶ ⭐ THE ONE THING TO READ FIRST — **A RESIDUE MEASURED ONE SLICE AGO WAS
-> ### SHORT BY FIVE PRINTINGS, AND THE REASON IS STRUCTURAL: THE REGISTRY IS NOT
-> ### THE BUILD.**
+> ### ▶ ⭐ THE ONE THING TO READ FIRST — **A LEGALITY FILTER IS RIGHT FOR A
+> ### POPULATION FIGURE AND WRONG FOR A CONSISTENCY INVARIANT, AND THAT IS HOW
+> ### THE FIFTH GROUP STAYED HIDDEN THROUGH THREE SLICES.**
 >
-> D359 bought **`attachEnergyFrom`'s QUANTITY AXIS** — the printed *"attach up to
-> N … to ONE named body"*. D358 produced and priced this residue in its own
-> close-out as **"8 legal printings / 3 sentences / 3 objects"**, and that figure
-> was derived carefully, off the live registry, one slice earlier.
+> D360 bought the last of the *"attach up to N"* family: the printed hedge on the
+> **SPREAD**. The handoff said *"the four live ones are `anyWay` spreads built by
+> the DERIVER"*, and about the derived half that is exactly right —
+> **3 sentences / 4 Standard-legal printings**, Morpeko `sv06-072`, Lycanroc
+> `sv05-090`, Mesprit `sv08-079`/`sv08-204`.
 >
-> 🛑 **IT WAS STILL WRONG, BECAUSE `attachEnergyFrom` HAS TWO PRODUCERS AND A
-> REGISTRY WALK SEES ONE.** `deriveAttackEffect` emits `count: 2` for three more
-> Standard-legal sentences that carry no registry row at all — asserted here by
-> `programFor(id) === undefined` on all five ids. Re-derived over BOTH producers
-> and joined to remote D1 on `$.effect` (extractor verified against the eight
-> known-present rows first):
+> 🛑 **IT WAS STILL INCOMPLETE, AND NOT BECAUSE ANYONE MIS-COUNTED.**
+> `KORAIDON_EX` prints the identical hedged sentence, builds the identical two-op
+> `anyWay` spread, and carried no flag. **D358 MEASURED IT AND EXCLUDED IT**
+> because all four printings are `legal_standard = 0`, and wrote the exclusion
+> into its own suite in as many words (*"excluded because it was MEASURED, not
+> because it was forgotten"*). That is a defensible filter for a PRINTING COUNT.
+> It is the wrong filter for a CONSISTENCY invariant, and the reason is checkable
+> rather than aesthetic: **`attachFromZoneProgram` cites `KORAIDON_EX` BY NAME as
+> the shape its own spread copies**, so flagging one producer and not the other
+> leaves the engine's TWO PRODUCERS DISAGREEING ABOUT ONE PRINTED SENTENCE — and
+> `programFor` is not legality-gated, so the rotated row is live in any match that
+> seats it. **ROTATION DECIDES WHO MAY PLAY A CARD; IT DOES NOT DECIDE WHAT THE
+> CARD SAYS.**
 >
-> | sentence | ids | legal | spelling | parked? | answers BEFORE |
-> |---|---|---|---|---|---|
-> | Ethan's Ho-Oh ex "Golden Flame" | sv10-039/-209/-230/-239 | 4 | count 2 + owner + bench | yes (≥2 bodies) | {0, 2} |
-> | Bloodmoon Ursaluna "Battle-Hardened" | sv06.5-025, sv08.5-054 | 2 | count 2 + toSelf | **no** | {0, 2} |
-> | Lycanroc "Spike-Clad" | sv09-085/-166 | 2 | count 2 + toSelf | **no** | {0, 2} |
-> | 🆕 Oricorio "Energy Assist" (**attack**) | sv08-026, sv08-089 | 2 | count 2 + benchOnly | yes | **{2}** |
-> | 🆕 Regirock ex "Regi Charge" (**attack**) | sv10-101, sv10-214 | 2 | count 2 + toSelf | **no** | **{2}** |
-> | 🆕 Kilowattrel ex "Return Charge" (**attack**) | sv08-068 | 1 | count 2 + toSelf, §9.2-gated | **no** | **{2}** |
+> ✅ **AND THE GUARD CAUGHT IT BY NAME, WHICH IS THE HALF WORTH KEEPING.**
+> `attachDecline.test.ts` §1 walks the declinable set both directions over the
+> whole registry, and D358 wrote its own falsification condition into the comment:
+> *"a seventh printing authored with `declinable` reddens here"*. It fired. The
+> slice came to that line and said why rather than widening the assertion.
 >
-> **6 sentences / 13 Standard-legal printings, printed {0, 1, 2} on all 13.**
-> ⚠️ **AND THE TWO HALVES WERE BROKEN DIFFERENTLY, WHICH IS WHY D358's DECLINE
-> AXIS COULD NEVER HAVE REPAIRED EITHER.** The 8 ABILITY printings reached {0, 2}:
-> an activated or triggered *"you may"* buys the empty answer. The 5 ATTACK
-> printings reached **{2} ALONE** — an attack is declared and resolves, there is no
-> `optional` anywhere in the program, and even the zero was unreachable.
-> ⚠️ Koraidon "Dino Cry" is **6** printings (`svp-029`, `sv01-125`/`-231`/`-247`/
-> `-254`, `sv04.5-245`), not the 4 the handoff carried; all six `legal_standard =
-> 0`, and it is an *"in any way you like"* spread anyway.
+> ### ▶ ⚠️ THE SURFACES WALKED — NAME THEM, BECAUSE THE FAILURE IS METHOD-SHAPED
 >
-> ### ▶ 🛑 THE FIRST QUESTION WAS **WHICH PROMPT**, AND IT WAS SETTLED FROM THE
-> ### CATALOG — FOUR LINES, NONE OF THEM THESE CARDS
+> | # | surface | figure |
+> |---|---|---|
+> | S1 | `deriveAttackEffect` over `legalAttackCorpus()`, **recursive** op flatten | 16 sentences / 26 legal printings emit `attachEnergyFrom` |
+> | S2 | `programFor` over ALL **708** `registryCardIds()`, same walker | 81 op instances over 64 ids |
+> | S3 | remote D1 `luminous`, all THREE columns keyed on **`$.effect`** | 23 sentences / 53 printings / **24 legal** |
+> | S4 | `grep 'op: "attachEnergyFrom"'` over non-test source | **1** construction site outside `registry.ts` — the producer set CLOSED |
 >
-> 1. **`ptcg-rules.md` §9.1, verbatim:** *"'Search your deck for **up to 2** Basic
->    Energy cards' (Earthen Vessel) — **one, two, or none, all legal**."*
-> 2. **`count`'s OWN DOC SAYS THE BATCH IS ONE DECISION** — it exists to pin the
->    batch to the ONE body a print NAMES. So the print asks ONE compound question
->    (how many, and onto which body) and the answer rides ONE prompt. A second
->    prompt would contradict a documented reading.
-> 3. **THE SIBLING OP ALREADY RULED ON THE IDENTICAL QUANTIFIER.**
->    `attachFromDeck` reads *"Search your deck for **up to 2** … and attach them"*
->    as `max: N` over a park with a floor of ZERO. `attachEnergyFrom` is the one
->    attach route where the printed ceiling collapsed into an exact count.
-> 4. **THE CATALOG CONTRASTS THE QUANTIFIER AGAINST ITS OWN ABSENCE — SAME OP,
->    SAME ZONE, SAME DESTINATION CLAUSE.** Furfrou `sv06.5-051`: *"Attach **a**
->    Basic Energy card from your discard pile to 1 of your Benched Pokémon."*
->    Oricorio `sv08-026`: *"Attach **up to 2** Basic Energy cards from your discard
->    pile to 1 of your Benched Pokémon."* Two words apart.
+> ⚠️ **THE RECURSION IS NOT A DETAIL**: a TOP-LEVEL filter reports 15 sentences /
+> 25 printings and misses Kilowattrel ex's `recordGate`-NESTED attach. A flat walk
+> is the same class of error as a one-producer walk, one level down.
+> ⚠️ **AND S4 IS THE STEP D358 AND D359 BOTH SKIPPED.** Neither *proved* the
+> producer set was closed; both discovered its size by being wrong. One grep does
+> it, and it is now the first step rather than the postmortem.
 >
-> ### ▶ 🛑🛑 **ZERO NEW OP FIELDS, AND THE REFUSAL IS MEASURED RATHER THAN
-> ### ARGUED: `count` WAS ALREADY THE CEILING.**
+> ### ▶ ✅ **THE FAMILY CLOSES, AND THE CLOSURE IS ASSERTED RATHER THAN CLAIMED**
 >
-> `effects.ts`'s `attachFromZoneClause` offers three alternatives and only one
-> carries a number — the literal **`up to (\d+)`**. So **no sentence in the catalog
-> can produce `count > 1` without printing the word**, and `count`'s own doc has
-> said since D205 that *"`min(count, available)` is what actually lands … because
-> the print says UP TO"*. The engine had been spending the printed *"up to"*
-> against **AVAILABILITY** and never against the player's **WILL**. Driven from the
-> deriver in `attachQuantity.test.ts` §5(a): the unhedged `"Attach 2 Basic Energy
-> cards…"` returns **null**, the hedged form returns `count: 2`, and the unhedged
-> singular returns an op with no `count` at all.
+> `LIKE '%ttach up to%'` = **23 sentences / 53 printings / 24 Standard-legal**, and
+> the 24 account for themselves exactly:
 >
-> ### ▶ 🛑 THE PROMPT FIELD IS A **WIDENING**, NOT AN ADDITION — AND
-> ### `attachDecline.test.ts` §1 DID **NOT** CHANGE
+> | bought | what | printings |
+> |---|---|---|
+> | D359 | the `count` BATCH — *"up to N to ONE named body"* | 13 |
+> | D358 | the registry SPREAD — Archaludon ex ×3, Magneton ×3 | 6 |
+> | 🆕 D360 | the derived SPREAD — Morpeko, Lycanroc, Mesprit ×2 | 4 |
+> | refused | Grafaiai `sv08-121` — cross-seat, derives to **null** | 1 |
+> | | | **24** |
 >
-> `EffectPrompt.choosePokemon.declinable?: true` → **`upTo?: number`**, NET ZERO
-> prompt fields. At this prompt `declinable` **IS** `upTo: 1` (take the one, or
-> take none), and keeping both would put two keys on one axis — the exact refusal
-> D358 made at the OP when it declined `upTo` beside `count`. `interpreter.ts` had
-> already written the rule down one member below: *"A prompt with `min: 0` is
-> declinable by construction and does not set it."*
+> plus **`KORAIDON_EX` ×4**, which is in NONE of those figures (`legal_standard =
+> 0`) and is the whole reason §1's set moved from 6 ids to 10.
+> **Infernape ×3 stays refused** on §9.1's grounds — it prints no *"up to"* and no
+> empty arm, so its answer set is {R}, {F}, {R,F} and a declinable pair would
+> legalise an empty answer the sentence does not print. Re-verified rather than
+> inherited: `match[3]` is `undefined` on it, so the gate cannot reach it even by
+> accident.
 >
-> 🛑 **THE OP-LEVEL FIELDS ARE UNTOUCHED AND STILL NEVER CO-OCCUR.** The handoff
-> warned that a slice pairing `declinable` and `count` must come and change
-> `attachDecline.test.ts` §1 and say why. **It did not have to**: this slice
-> authors no registry byte and no op field, so §1's *"the REFUSED families carry no
-> flag"* and *"`declinable` and `count` never co-occur on any authored op"* are
-> both still true and both **unedited**. The two fold into one key only where they
-> become one question, which is the PROMPT. §5(b) re-drives the same partition from
-> the other file so the two cannot drift into one shared assumption.
+> `attachDecline.test.ts` **§7 is new** and walks BOTH producers *in the file whose
+> registry-only §1 caused D358's short count*, stated as a **BICONDITIONAL** — an
+> op is `declinable` iff it is one of N > 1 ops built from a printed *"up to"* — so
+> neither direction can drift.
 >
-> `EffectChoice.pokemon` gains **`take?: number`**, absent = the whole batch — so
-> every pre-D359 answer means exactly what it always meant and the only new answers
-> are §9.1's middle ones. **`{ ref, take: 0 }` is REFUSED**: a named body with
-> nothing on it is the decline, which the union already spells as the absent ref,
-> and two spellings of one answer is how a §9.2 `recordGate` gets handed a body
-> with no uids.
+> ### ▶ 🛑 THE DISCRIMINATOR IS THE PRINTED WORD, AND THE TWO READINGS COME APART
+> ### ON A SENTENCE THE ARM ACCEPTS
 >
-> ### ▶ ⚠️ **A CLAIM THIS SLICE MADE ABOUT ITSELF AND THEN MEASURED FALSE**
+> `count` defaults to 1 when the hedge is absent, so a gate spelled `count > 1`
+> reads the hedge off the NUMBER instead of off the PRINT. Measured:
+> *"Attach up to 1 Basic Energy cards … in any way you like."* derives with
+> `match[3] === "1"` and `count === 1`, and §9.1 makes its printed answer set
+> {0, 1}; *"Attach a Basic Energy card … in any way you like."* is a mandatory 1.
+> **Both emit ONE op and are identical in every other observable** — same arm,
+> same source, same destination, same program length — so a build that inferred
+> the hedge from the program's LENGTH or from `count` cannot tell them apart.
+> **A LIVE NEAR-MISS, NOT A CONSTRUCTED ONE**, which is what turns
+> `D360-hedge-read-off-the-number-not-the-print` from an unkillable mutant into a
+> killed one (D228's finding, answered rather than acknowledged).
 >
-> The first argument for leaving the ceiling unclamped — written into the
-> prediction and into four source comments — was that clamping `upTo` to the
-> matching Energy available would **LEAK the controller's hand through
-> `redactPrompt`**. **IT WOULD NOT.** `redactPhase` sends an `effect:choose` prompt
-> ONLY to the seat that must answer it and `null` to every other viewer; no field
-> on this prompt can leak to anyone. Corrected at all four sites (the prompt doc,
-> `redact.ts`, `OnlineHud.tsx`, the suite header) before shipping, and the
-> measurement kept as an assertion.
-> **THE ARGUMENT THAT SURVIVES IS SHARPER**: the park's `note` quotes the PRINTED
-> count verbatim (D205, because the count is the one thing a player cannot read off
-> the offered rows), so a clamped ceiling would offer one button under a caption
-> promising two — **one prompt contradicting itself**. Driven over three zone sizes
-> with both halves asserted together.
+> ### ▶ 🛑 ZERO NEW VOCABULARY — AND IT IS **NEITHER A WIDENING NOR A RENAME**
 >
-> ### ▶ THE PRICE, SITE BY SITE (ten, and the prediction named all ten)
+> The whole engine diff is
+> `...(match[3] === undefined ? {} : { declinable: true as const })` inside the one
+> `Array.from({ length: count }, …)`, plus two words in `KORAIDON_EX`. No op field,
+> no prompt field, no choice field, no wire byte, no `packages/schema`, no new arm,
+> no new anchor, no registry KEY. The op field is D358's; `interpreter.ts` has read
+> it as the park's ceiling since D359 (`upTo = op.count ?? (op.declinable === true
+> ? 1 : undefined)`).
+> **THE ROUND-TRIP SURFACE MOVED ZERO BYTES** — predicted at zero and measured at
+> zero, which is the check on the no-new-vocabulary claim: `redact.ts`,
+> `packages/schema`, `projection.ts` and both HUD dialogs already carry `upTo`.
 >
-> 1. `EffectPrompt.choosePokemon` — `declinable?: true` → `upTo?: number`.
-> 2. `EffectChoice.pokemon` — `take?: number`.
-> 3. `parkOrForce(..., upTo?: number)` — the force test and the prompt spread.
->    **The `apply` CALLBACK IS UNCHANGED**: `upTo` present ⇒ never forces ⇒ never
->    called, so none of the eight other callers moved a byte.
-> 4. The attach park site — `op.count ?? (op.declinable === true ? 1 : undefined)`.
-> 5. **The CAPTION** — `toSelf` now PARKS, so the branch D205 removed as
->    unreachable is reachable and had to be worded.
-> 6. `attachEnergyFrom(...)` — the answered quantity, clamped to the printed count.
-> 7. `validateChoice` — four refusals with four sentences.
-> 8. `redact.ts` + `packages/schema` — the wire field.
-> 9. `src/features/game/projection.ts` — **the round trip back**, the site D358's
->    own price did not name, now with a mutation row on it.
-> 10. Both HUD dialogs — `takeOptions`, one copy each.
+> ⚠️ **SCOPED TO THE `anyWay` BRANCH, MEASURED RATHER THAN TIDY.** Hoisted into the
+> shared `base` the flag rides the BATCH too, where D359's `??` already spends the
+> same printed word through `count` — **behaviourally dead there**, and two keys on
+> one axis, which `attachDecline.test.ts` §1's *"never co-occur"* pins across the
+> registry. That mutant (`D360-flag-hoisted-onto-the-batch-as-well`) is killed by a
+> SHAPE rule and by no board at all, and it is in the corpus for that reason.
 >
-> ### ▶ 🛑 `MATCH_RECORD_VERSION` **21 → 22**, AND THE DISCRIMINATOR IS NOT "DID A
-> ### FIELD CHANGE"
+> ### ▶ 🛑 `MATCH_RECORD_VERSION` **STAYS 22**, AND THE QUESTION WAS LIVE
 >
-> A v21 record's `effect:choose` phase carries `{kind:"choosePokemon", declinable:
-> true}`. This schema no longer names that key, so it parses away and the park
-> reads back as `upTo === undefined` — MANDATORY — and a resumed match would refuse
-> a decline the player had already been offered. **D358 ADDED that same field to
-> that same prompt one slice earlier and correctly left the constant alone**,
-> because a v20 record's MISSING key meant mandatory before and after. **A WIDENING
-> IS FREE AND A RENAME IS NOT, AND THEY ARE ONE EDIT APART ON ONE FIELD.** D352's
-> rename case (`attachFromTop.discardRest` → `restTo`), a third time.
+> An `EffectOp` **IS** persisted (`EffectContinuation.pendingOp` inside
+> `GameState.phase`) and this op PARKS, so the D335/D352/D359 hazard is genuinely
+> in range and not skippable. But the test is *"does the old byte string still MEAN
+> what it meant"*: a v22 record holding a flagless `attachEnergyFrom` reads back
+> MANDATORY, which is exactly what it meant when written. **THIS SLICE ADDS NO
+> FIELD — IT CHANGES WHICH PRINTINGS CARRY ONE.** Absence meant mandatory before
+> and means mandatory after. **A WIDENING IS FREE, A RENAME IS NOT, AND A
+> POPULATION IS NEITHER** — a third category the last three slices have now walked
+> end to end (D358 widened, D359 renamed, D360 re-populated).
+> The ask is recorded on the `D275` mutation row, and
+> `D326-record-version-not-bumped` was **predicted UNMOVED by id and measured
+> unmoved** — its `find` still quotes `= 22`.
 >
-> ### ▶ ⚠️ THE ANCHOR SURFACE — **NINE, PREDICTED BY ID BEFORE THE DIFF, MEASURED
-> ### EXACTLY NINE**
+> ### ▶ ⚠️ THE TWO HALVES ARE BROKEN DIFFERENTLY — SECOND TIME ON ONE FAMILY
 >
-> `D205-caption-count`, `D205-count-le-1` (the caption gained its now-reachable
-> `toSelf` branch), `D358-declinable-park-forces-at-one-candidate`,
-> `D358-park-drops-the-decline-on-the-way-to-the-prompt`,
-> `D358-validator-admits-the-decline-everywhere`,
-> `D358-validator-refuses-every-decline`, `D358-wire-drops-the-decline`, plus
-> `D326-record-version-not-bumped` and `D275-engine-version-drifts-again` moved
-> with the version bumps. **BOTH HALVES EDITED, NOT ONLY `find`** — each row's
-> `replace` was rewritten so it still expresses its own claim.
-> PREDICTED UNMOVED AND ALL HELD: `D315-park-loses-the-decline` (a different prompt
-> kind), `D228`/`D309` (`pickedPokemon` is KEPT), `D226-projection-drops-rider`
-> (a different arm), the `D328-*` pair, and **every one of `registry.ts`'s 270
-> rows** — this slice authors no registry byte.
+> Koraidon's spread is an ABILITY with a printed *"you may"*, so declining the
+> Ability already bought the empty answer and it reached **{0, 2}**. The four
+> derived printings are ATTACKS — declared and resolved, no `optional` anywhere in
+> the program — so even the zero was unreachable and they reached **{2} ALONE**.
+> Same sentence shape, same op, same missing flag, two different broken answer
+> sets, and only the flag reaches both. All three answers are now driven on real
+> boards (`dinoCry.test.ts`, `derivedDiscardAttach.test.ts` §7), including that
+> **a decline is NOT a whiff**: the pile still holds the Energy it refused and the
+> board still holds eligible bodies.
 >
-> ### ▶ ⚠️ A ROW COUNT IS NOT A COVERAGE MAP — **NINE OF TEN CHANGED SITES WERE
-> ### UNMUTATED**
+> ### ▶ ⚠️ PREDICTION GRADE — **ONE MISS, AND IT IS D359's DEFECT (a) AGAIN**
 >
-> Measured before the rows were written: the `upTo` derivation, the park argument,
-> the apply's clamp, the resumed arm's hand-off of `choice.take`, all three new
-> validator sentences, the projection spread and both `takeOptions` copies carried
-> **ZERO** mutation rows. The tenth (the caption) was covered only in its `count`
-> half, by the two D205 rows this slice had to re-anchor anyway. **17 new rows,
-> corpus 1097 → 1114**, separating the claims rather than bundling them.
-> 🆕 **AND `expectKilledBy` IS A CLAIM ABOUT WHICH SUITE PINS THE LINE, NOT ABOUT
-> WHICH SUITE OWNS THE FEATURE.** The `--decision D359` probe returned **2 GAPs**,
-> both mine: the row that repeals D358's decline is caught by `attachDecline`'s
-> boards, and the row that removes the `toSelf` caption is read only by
-> `spikeClad`/`battleHardened` — **this slice's own board is Oricorio, which is
-> `benchOnly` and never reaches that branch.** Re-pointed; **17/17 killed, 0
-> skipped(dirty)**.
+> * ✅ population re-derived over both producers **before** a line moved; the
+>   handoff's 4 confirmed and a fifth group found.
+> * ✅ corpus **1114 → 1119** against a budget of **5, one per claim** — exact, and
+>   the first slice in three to hit its mutation budget.
+> * ✅ all five `expectKilledBy` correct: `--decision D360` returned
+>   **5 killed · 0 GAPs · 0 skipped(dirty)** on a quiet tree, and the three
+>   re-anchored `D234` rows plus `D275`/`D326` all probed clean.
+> * ✅ round-trip surface predicted at ZERO bytes, measured at zero.
+> * ✅ `MATCH_RECORD_VERSION` answer predicted and held.
+> * 🛑 **RED FILES: PREDICTED 4, MEASURED 5.** The miss is
+>   `derivedAnyNumberAttach.test.ts`, which names none of this slice's ids or
+>   sentences — it asserts what the DERIVER DOES for a NEIGHBOURING sentence, as a
+>   control. The red surface was predicted by grepping ids and sentence text, and a
+>   control names neither. **ENUMERATE WHAT A THING DOES, NOT WHAT MENTIONS IT** —
+>   D359's defect (a) at its third instance, now on the red surface instead of the
+>   anchor surface.
+> * 🛑 **AND THE FIRST RED LIST WAS NOT THE WHOLE LIST**, as the handoff warns:
+>   fixing five files surfaced **two more failures in files already predicted red**
+>   (both op-field census guards). vitest stops at the first failing assertion.
 >
-> ### ▶ ⚠️ THE RED SURFACE — **SIX FILES PREDICTED, SIX MEASURED, NONE UNPREDICTED**
+> ### ▶ ⚠️ A CLAIM THIS SLICE MADE ABOUT ITSELF AND MEASURED FALSE
 >
-> `battleHardened`, `spikeClad`, `derivedDiscardAttach`, `derivedGatedAttach`,
-> `ownerTargetOps` and `apps/api/src/lobby/match.test.ts`. Every one of them
-> asserted the OLD behaviour in so many words — *"attaches TWO … with no park"*,
-> *"the SELF target forces: no park"*, *"a `toSelf` attach can offer AT MOST ONE
-> target, so `parkOrForce` always forces"*. **The premise was about CANDIDATES and
-> the rule is about ANSWERS**, so each of those discriminators moved to where it is
-> still sharp — the CANDIDATE LIST — rather than being deleted.
-> 🛑 **AND `attachDecline.test.ts` §5's TITLE WAS FALSE WHILE ITS ASSERTIONS STAYED
-> TRUE**: *"the three `count: 2` families are UNTOUCHED — the quantity axis was not
-> bought"* still passes every expectation in it, because the OP shape really is
-> untouched. Retitled without editing a single assertion. **PROSE THAT NOTHING
-> CHECKS DECAYS EVEN WHEN THE CODE UNDER IT IS RIGHT.**
+> `attachDecline.test.ts` §7's first draft asserted
+> `expect(op.declinable).toBe(cond ? undefined : undefined)` — **green,
+> unfalsifiable, and exactly the "prose that nothing checks" defect one directory
+> over**, written while asserting a biconditional about drift. Caught before
+> shipping and replaced with a two-category partition (*hedged-onto-one-body* vs
+> *unhedged*) that asserts the REASON for each absence and proves both arms
+> non-empty. **A TAUTOLOGY IS THE ONE ASSERTION SHAPE A GREEN SUITE CANNOT
+> DISTINGUISH FROM A GUARD.**
 >
-> ### ▶ 🛑 A FIXTURE IS A CENSUS POPULATION — **TWO ATTRIBUTIONS WRONG IN BOTH
-> ### NOUNS, AND NEITHER ATTACK EXISTS IN THE CATALOG**
+> ### ▶ ⚠️ AND THE HANDOFF'S "TWO REPAIRS LEFT ON THE FLOOR" WERE ALREADY DONE
 >
-> `testFixtures.ts` rows 29-34 attribute six discard-attach sentences. Re-derived
-> against D1 (2026-08-18) on the way to seating Oricorio, **four check out** (Regi
-> Charge/Regirock ex, Pick and Stick/Morpeko, Dragon's Fury/Druddigon, Mud
-> Stock/Mudsdale) and **two do not**:
-> * row 31 *"Fault Line — Gligar `sv08-026`/`-089`"* → really **Oricorio "Energy
->   Assist"**. No attack named "Fault Line" exists anywhere; Gligar `sv04-091` is a
->   real card, is not Standard-legal, and prints "Toxic".
-> * row 30 *"Sand Gift — Sandaconda `sv06.5-051` / Krokorok `sv07-098`"* → really
->   **Furfrou "Energy Assist"** and **Jirachi "Swelling Wish"** — two different real
->   attacks, neither named "Sand Gift", and the two printings do not share an attack
->   name at all.
+> It said `testFixtures.ts` still carried two attributions naming cards and attacks
+> that do not exist. **D359 had already repaired both** (rows 30 and 31 carry its
+> 🆕🛑 correction blocks). Re-verified against D1 rather than taking either claim:
+> `sv06.5-051` = Furfrou "Energy Assist", `sv07-098` = Jirachi "Swelling Wish",
+> `sv08-026`/`-089` = Oricorio "Energy Assist", plus Regirock ex, Morpeko,
+> Druddigon and Mudsdale. **All six sentences and all six ids check out.** Nothing
+> to take. *A handoff's account of the PREVIOUS slice rots exactly like its
+> account of the catalog.*
 >
-> ⚠️ **THE CROSSING IS VISIBLE**: the real name of BOTH is *"Energy Assist"*, which
-> the same fixture block re-uses **24 lines later** for Wugtrio's deck-search
-> sentence. One real name was spent on a different row and the two orphans were
-> given invented ones. **The SENTENCES — the load-bearing half, and the only half
-> the block ever claimed was character-for-character off D1 — are correct on all
-> six, and so are the ids.** Repaired as PROSE rather than by renaming the fixture
-> entries, because row 35 already owns "Energy Assist" in that pool. **D356's *"a
-> carried card name rots like a carried id"* at its third and fourth site, and the
-> first time the ATTACK name rotted too.**
+> ### ▶ ⚠️ CENSUS: **MEASURED UNMOVED**
 >
-> ### ▶ ⚠️ CENSUS: **MEASURED UNMOVED, AND THE MEASUREMENT IS THE FILE ITSELF**
->
-> ZERO registry keys added — this slice authors no registry byte at all — so
+> ZERO registry KEYS added — one registry program BODY changed and no key — so
 > `censusAtHead.test.ts`, `testFixtures.ts`'s data and `catalogManifest.ts` carry
 > no moved figure. `BUILT.attack` **1206**, `.ability` **280**, `.trainer` **113**,
 > `.specialEnergy` **8**, `built` **1607**, residue **776**, `raw.length` **708**,
@@ -580,28 +547,26 @@
 > three-column sum **401**, `groups.length` **116**, `pairs.size` **129**,
 > `TRAINER_TERMS` **60**, `byObject` **59** — all stand, verified by a green
 > `censusAtHead` rather than by assertion.
-> 🛑 **THE LIVE LAST-N BATON (`autoHeal.test.ts` §7) DID NOT EXPIRE FOR THE THIRD
+> 🛑 **THE LIVE LAST-N BATON (`autoHeal.test.ts` §7) DID NOT EXPIRE, FOR THE FOURTH
 > SLICE RUNNING.** `raw.slice(-1)` is still `[MAGEARNA]` at width 1. **DO NOT
-> RE-POINT IT** — re-pointing a pin that did not expire is how a width starts
-> asserting a neighbour's row. It expires on the next slice that adds a registry
-> key.
+> RE-POINT IT.** It expires on the next slice that adds a registry KEY, and a
+> program-body edit is not one.
 >
-> ### ▶ 🛑 THE CLOSE-OUT SPAN WAS WRONG AGAIN — **SIXTH SLICE RUNNING, AND THIS
-> ### TIME BOTH INHERITED FIGURES WERE WRONG**
+> ### ▶ 🛑 THE CLOSE-OUT SPAN — **MEASURED, AND IT MOVED AGAIN**
 >
-> | invariant | inherited | MEASURED at D359's start (`560ef8b`) |
+> | invariant | inherited | MEASURED at D360's start (`957399e`) |
 > |---|---|---|
-> | resume span | 320 *and* 291 (the handoff carried both) | **324** |
-> | `### Prior resume point` archives | 38 | 38 ✅ |
-> | naive span to `## Status by workstream` | — | 2,339 |
+> | resume span | 320 / 291 / D359's **324** | **344** |
+> | `### Prior resume point` archives | 38 | **38** ✅ |
 >
-> The boundary is **the `## NEXT (resume point)` heading line inclusive to the line
+> The boundary is **the `## NEXT (resume point)` heading line INCLUSIVE to the line
 > immediately before the first `### Prior resume point`** — the same slice
-> `progressLog.test.ts` takes. **A SPAN NUMBER IS NOISE UNLESS ITS BOUNDARY IS
-> NAMED, AND A HANDOFF THAT CARRIES TWO DIFFERENT NUMBERS FOR ONE INVARIANT HAS
-> ALREADY TOLD YOU TO RE-MEASURE.**
+> `progressLog.test.ts` takes. The span is re-measured on BOTH sides of the write
+> by `scratchpad/D360_close_out.py`, which asserts the archive count before AND
+> after. **A SPAN NUMBER IS NOISE UNLESS ITS BOUNDARY IS NAMED**, and the number
+> itself is worth nothing except as a tripwire — re-measure, never carry.
 >
-> ### ▶ 🛑 THE FIVE VERSION SITES — engine **0.265.0**
+> ### ▶ 🛑 THE FIVE VERSION SITES — engine **0.266.0**
 >
 > 1. `packages/engine/package.json` — `"version"`.
 > 2. `packages/engine/src/index.ts` — `export const engineVersion`.
@@ -609,89 +574,93 @@
 > 4. `packages/engine/src/legacyEnergy.test.ts` — the two `toBe("X.Y.Z")` pins.
 > 5. `scripts/mutation/mutants.ts` `D275-engine-version-drifts-again`, whose `find`
 >    QUOTES the constant. **Not a version site — a mutation anchor a version site
->    breaks.** (D359 was the FIFTY-SIXTH payment.) `D326-record-version-not-bumped`
->    is the same tax on `MATCH_RECORD_VERSION` and was paid in the same commit.
+>    breaks.** (D360 was the FIFTY-SEVENTH payment.) `D326-record-version-not-bumped`
+>    is the same tax on `MATCH_RECORD_VERSION` and was **NOT owed this time** —
+>    asked, answered, and the answer recorded on the D275 row.
 >
-> ### ▶ ⚠️ THE SWEEP PROCEDURE — DETACHED, ISOLATED, AND PARSED INDEPENDENTLY
+> ### ▶ ⚠️ THE SWEEP PROCEDURE — AND ONE DELIBERATE DEPARTURE
 >
-> `scratchpad/D359_sweep_driver.sh` (kept), sentinel `D359SWEEPMARK`, log
-> `scratchpad/D359-sweep.log`. **`pgrep -xf "sh scratchpad/D359_sweep_driver.sh"`
-> matched ONE pid where plain `pgrep -f` matched TWO** — measured, not assumed.
-> ONE wake source, exiting on EITHER the sentinel OR the driver pid vanishing.
-> `scratchpad/D359_parse_sweep.py` parses PROGRESS lines only (the runner prints
-> each mutant twice and the recap row truncates the id with an ellipsis), reads the
-> verdict enum FROM `run.ts` and cross-asserts it both directions, and was
-> **pre-validated on a REAL prior log before the sweep started**:
-> `scratchpad/D358-sweep.log` → 1097 unique ids, 1074 KILLED + 23 SURVIVES(known),
-> matching that run's own tally exactly.
+> `scratchpad/D360_sweep_driver.sh` (kept), sentinel `D360SWEEPMARK`, log
+> `scratchpad/D360-sweep.log`. `scratchpad/D360_parse_sweep.py` parses PROGRESS
+> lines only, reads the verdict enum FROM `run.ts` and cross-asserts it both
+> directions, and was **pre-validated on TWO real prior logs before the sweep
+> started**: `D359-sweep.log` → 1114 ids (1091 + 23) and `D358-sweep.log` → 1097
+> ids (1074 + 23), each matching that run's own tally exactly.
 >
-> ### ▶ ⚠️ `docs/progress.md` IS ITSELF A MUTANT TARGET — 8 ROWS POINT AT IT
->
-> **Never edit it while a sweep is running** or those 8 rows silently report
-> SKIPPED-DIRTY. Close the docs out AFTER the sweep; never commit mid-sweep.
-> **AND A `--only` PROBE CAN REPORT SKIPPED-DIRTY UNDER A GREEN-LOOKING SUMMARY**
-> — read the skip counters, not just the kill count. Both of this slice's probes
-> ran on a committed, quiet tree and both read **0 skipped(dirty)**.
+> 🆕 **THE DEPARTURE, AND IT IS AN IMPROVEMENT WORTH KEEPING: THE DOCS WERE CLOSED
+> OUT *BEFORE* THE SWEEP, NOT AFTER.** The standing rule is *"close the docs out
+> AFTER the sweep"*, whose real content is **never edit `docs/progress.md` while a
+> sweep is running** — 8 mutation rows point at that file and they report
+> SKIPPED-DIRTY. Closing the docs first and COMMITTING satisfies that rule and is
+> strictly stronger: the sweep then verifies the FINAL tree, including the 8 docs
+> rows against the bytes that actually ship, instead of against bytes about to be
+> replaced. (Checked first that none of the 8 `find` strings quotes resume-point
+> BODY text — all eight anchor on structural markers: `## Session log`,
+> `**Last updated:** `, the #219/#220 gap declaration, session #213's heading, the
+> `| simulator | P3 | ` status row, the first archive heading and the
+> `## NEXT (resume point)` heading itself.)
 >
 > ### ▶ 🛑 DO NOT RUN `bunx biome format --write` ON THIS REPO
 >
 > `bun run check` runs **`biome lint . --error-on-warnings`**, which is clean.
 > `bunx biome format .` reports pre-existing differences across hundreds of files.
-> Run biome READ-ONLY. **AND THE LINT GATE RUNS BEFORE `vitest`** — this slice lost
-> one check cycle to a single `noThenProperty` with vitest never executing, which
-> is D355's finding at its second instance.
+> Run biome READ-ONLY, and note it also refuses `docs/progress.md` outright on its
+> file-size limit — that is expected, not a failure.
 >
 > ### ▶ ▶ **THE LOOP'S NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT**
 >
 > 🛑 **`ROWS`' live residue is still ZERO** (non-attack total 5, every one refused
-> on grounds no engine slice can reach: Reboot Pod `sv05-158` and Glass Trumpet
-> `sv07-135`/`sv08.5-110` — no catalog column classifies the Ancient/Future banner
-> — and Powerglass `sv06.5-063`/`sv06.5-097`, a whole new end-of-turn Tool trigger
-> point for 2 printings). **The backlog has not been the source for four slices.**
+> on grounds no engine slice can reach: Reboot Pod `sv05-158`, Glass Trumpet
+> `sv07-135`/`sv08.5-110`, Powerglass `sv06.5-063`/`sv06.5-097`). **The backlog has
+> not been the source for five slices, and the *"attach up to"* family that
+> replaced it is now CLOSED.** So the next slice needs a new source, and it is
+> named here **with the measurement that produced it** rather than picked.
 >
-> ### ▶ ▶ 🛑🛑 **AND THE METHOD THAT REPLACED IT HAS NOW FAILED TWICE IN A ROW ON
-> ### ▶ ▶ THE SAME AXIS — SO THE NEXT ACTION IS TO FIX THE METHOD, NOT TO PICK A
-> ### ▶ ▶ CARD. RE-CENSUS `attachEnergyFrom` OVER **BOTH** PRODUCERS.**
+> **THE MEASUREMENT, TAKEN HERE (`scratchpad/D360_residue.ts`, re-runnable):** the
+> attack corpus is **640 sentences / 1,732 legal printings**; the **NINE** readers
+> together resolve **320 sentences / 1,177 printings**; so the TRUE attack residue
+> is **320 sentences / 555 legal printings**.
+> ⚠️ **1,177 IS `BUILT.attack`'s OWN COMMITTED RAW FIGURE, AND THAT IS THE CHECK
+> THAT MAKES THE REST BELIEVABLE** — the sweep reproduces a number this page
+> already asserts from an independent direction.
+> ⚠️ **AND IT MUST BE ALL NINE READERS.** `deriveAttackEffect` alone reports
+> 437 sentences / 877 printings, which is **noise** — a one-reader residue is the
+> same class of error as a one-producer population, which is the mistake this very
+> slice was written to stop repeating.
 >
-> D358 walked the registry and reported 8; the true figure was 13. That is not a
-> counting slip — **`interpreter.ts` and `effects.ts` are two independent
-> producers of every op in this engine, and every population figure this loop has
-> quoted for a non-attack op family was derived from ONE of them.** The residue
-> D358 handed on was wrong for a reason that applies to every such figure on this
-> page.
+> The residue by leading word (printings / sentences): `This …` 123/65,
+> `If …` 109/71, `Discard …` **71/39**, `You …` 48/21, `Flip …` 37/24,
+> `Your …` 30/18, `During …` 27/16, `Put …` 20/12, `Search …` 18/13,
+> `Choose …` 16/7, `Heal …` 14/6. The two biggest blocks are the CONDITIONAL and
+> SELF-REFERENTIAL shapes other readers own; **the biggest BARE-IMPERATIVE block —
+> the grammatical shape every arm of the last twelve slices has read — is
+> `Discard …` at 39 sentences / 71 printings.**
 >
-> **THE MEASUREMENT THAT JUSTIFIES THE NEXT SLICE, TAKEN HERE:** the registry
-> carries **81 `attachEnergyFrom` op instances over 64 ids** (`registryCardIds()`
-> = 708). The deriver's contribution to that same op has **never been counted at
-> all** — this slice measured only the `count`-bearing slice of it (5 printings on
-> 3 sentences) because that is what its own axis needed. The catalog's
-> `LIKE '%ttach up to%'` census over all three columns is **23 distinct sentences /
-> 53 printings / 24 legal** (remote D1, 2026-08-18), and it CLOSES: **13 bought
-> here + 6 bought at D358 (Archaludon ex ×3, Magneton ×3) + 4 live + 1 refused =
-> 24.** The four live ones are all *"in any way you like"* spreads — Morpeko
-> `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204` — which build as N
-> independent ops and therefore want **D358's `declinable`, not D359's `upTo`**.
-> The one refusal is Grafaiai `sv08-121` (*"up to 3 Energy from your **opponent's**
-> discard pile to **their** Pokémon"*), which `deriveAttackEffect` returns **null**
-> for today: a cross-seat attach no op in this vocabulary can express.
+> 🛑 **SO THE NEXT CONCRETE ACTION IS THE CROSS-SEAT ENERGY DISCARD, AND ITS PRICE
+> IS PRE-MEASURED AT SOURCE RATHER THAN ESTIMATED.** Inside that block:
 >
-> 🛑 **SO THE NEXT CONCRETE ACTION IS THE SMALLEST ONE THAT CLOSES THE FAMILY:
-> give the four remaining `anyWay` printings the decline D358 bought and D358's own
-> population never reached, and RE-DERIVE the figure over both producers before
-> touching a line.** D358 bought `declinable` for 6 registry printings; the deriver
-> produces the identical shape for **4 more legal printings on 3 sentences** and
-> none of them has it — `deriveAttackEffect` emits N bare `attachEnergyFrom` ops
-> with no `declinable` anywhere, so *"Attach up to 2 … in any way you like"* is
-> still an exact 2 on every attack that prints it. **THE ENGINE COST IS ONE FLAG ON ONE DERIVER ARM, AND
-> THAT IS MEASURED RATHER THAN ESTIMATED**: `attachFromZoneProgram` (effects.ts)
-> already holds the discriminator in a local — **`match[3]` is the `up to (\d+)`
-> capture group**, `undefined` on every unhedged printing — and its `anyWay` branch
-> is the single `Array.from({length: count}, …)` that builds the N ops. So the flag
-> is `...(match[3] === undefined ? {} : { declinable: true })` inside that one
-> expression, and **nothing else in the file can be reached by it**. Re-verify it
-> at source anyway (that line moves), and verify the 4 against D1 — this page has now been wrong about this
-> family's population in three consecutive slices, and the only figure in it that
-> was ever right was the one derived over both producers.
+> | sentence | legal printings |
+> |---|---|
+> | "Discard a Special Energy from your opponent's Active Pokémon." | 4 |
+> | "Discard a {R} Energy from your opponent's Active Pokémon." | 2 |
+> | "Discard all Special Energy from all of your opponent's Pokémon." | 2 |
+> | "Discard an Energy from your opponent's Active Pokémon **ex**." | 1 |
+>
+> **4 sentences / 9 Standard-legal printings**, and `discardEnergy` (effects.ts)
+> ALREADY carries every field the first three need: `from: "opponentActive"` and
+> `from: "opponentEach"`, `filter` including `{ kind: "specialEnergy" }` and the
+> typed forms, and `count`. So the first three sentences (**8 printings**) look
+> like **ONE deriver anchor and ZERO new vocabulary** — and the fourth needs an
+> `ex`-only narrowing the op may not have, which is why it is listed apart rather
+> than folded into the total.
+>
+> ⚠️ **RE-DERIVE ALL OF IT BEFORE TOUCHING A LINE, AND DO S4 FIRST.** Do not
+> inherit these four figures, this partition, or the claim that the fields exist —
+> three consecutive slices have now been wrong about a population on this page, and
+> each was wrong in a *different* way: a one-producer walk (D358), an inherited
+> count (D359's predecessor), and a legality filter (D360). **The first step is the
+> grep that CLOSES THE PRODUCER SET**, then the recursive both-producers walk, then
+> D1 on `$.effect` with the extractor verified against known-present rows first.
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2713,7 +2682,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D359, `attachEnergyFrom`'s QUANTITY AXIS: THE PRINTED "up to N" TO ONE NAMED BODY.** Engine **0.264.0 → 0.265.0** over FIVE sites; `MATCH_RECORD_VERSION` **21 → 22** — the RENAME case a third time: D358's `choosePokemon.declinable?: true` becomes `upTo?: number`, so a v21 record's `declinable: true` parses away and the park reads back MANDATORY. 🛑🛑 **A RESIDUE MEASURED ONE SLICE AGO OFF THE LIVE REGISTRY WAS SHORT BY FIVE PRINTINGS, BECAUSE THE REGISTRY IS NOT THE BUILD**: `deriveAttackEffect` is this op's second producer and emits `count: 2` for three more legal sentences with no registry row at all (Oricorio ×2, Regirock ex ×2, Kilowattrel ex ×1). Re-derived over BOTH producers: **6 sentences / 13 legal printings**, printed {0, 1, 2} on all 13 — where the 8 ability printings reached {0, 2} and the **5 attack printings reached {2} ALONE**, an attack having no `optional` to decline. 🛑 **ZERO NEW OP FIELDS**: `count` was already the ceiling, and it is measured — `attachFromZoneClause` admits `count > 1` through its literal `up to (\d+)` alternative alone. The prompt field is a WIDENING (`declinable` IS `upTo: 1`), the OP-level fields are untouched, and **`attachDecline.test.ts` §1 stands unedited**. 🛑 **A CLAIM THIS SLICE MADE AND MEASURED FALSE**: a clamped ceiling would NOT leak the hand (`redactPhase` gates the prompt to the answerer); it would contradict its own `note`. 🛑 **A ROW COUNT IS NOT A COVERAGE MAP, third instance** — nine of ten changed sites were unmutated. Nine anchors predicted by ID and measured exactly nine; six red files predicted and six measured. 🛑 **A FIXTURE IS A CENSUS POPULATION**: two `testFixtures.ts` attributions named cards and attacks that do not exist in the catalog. Census MEASURED UNMOVED. Suite **367 files / 7,591 tests**; corpus 1097 → **1114**, sweep **1091 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D360, THE PRINTED "up to" REACHES THE **SPREAD**, AND THE FAMILY CLOSES — OVER BOTH PRODUCERS.** Engine **0.265.0 → 0.266.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked and the ask recorded on the D275 row: an `EffectOp` IS persisted and this op PARKS, so the hazard is live — but the slice adds no field, it changes WHICH PRINTINGS CARRY one, and a flagless op read mandatory before and reads mandatory now. **A WIDENING IS FREE, A RENAME IS NOT, AND A POPULATION IS NEITHER.** 🛑🛑 **A LEGALITY FILTER IS RIGHT FOR A POPULATION FIGURE AND WRONG FOR A CONSISTENCY INVARIANT**: the handoff named 4 live derived printings (Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`) and a both-producers walk found a FIFTH group — `KORAIDON_EX` ×4, the identical hedged sentence and the identical two-op `anyWay` spread, which D358 MEASURED and excluded for `legal_standard = 0` while `attachFromZoneProgram` cites that very row BY NAME as the shape its spread copies. Rotation decides who may PLAY a card, not what the card SAYS. `attachDecline.test.ts` §1 reddened BY NAME — D358's own written falsification condition firing as designed. 🛑 **ZERO NEW VOCABULARY**: one expression, `...(match[3] === undefined ? {} : { declinable: true })`, and the round-trip surface moved ZERO bytes as predicted. 🛑 **THE DISCRIMINATOR IS THE PRINTED WORD, NOT THE DERIVED COUNT, AND THEY COME APART ON A SENTENCE THE ARM ACCEPTS** — "up to 1 … cards" derives with `count === 1`, so the near-miss is LIVE rather than constructed. ✅ **THE FAMILY ACCOUNTS FOR ITSELF: 13 + 6 + 4 + 1 refused = the catalog's 24**, asserted as a BICONDITIONAL over both producers in the file whose registry-only walk caused D358's short count. 🛑 **A CLAIM THIS SLICE MADE AND MEASURED FALSE**: its own first-draft assertion was a TAUTOLOGY (`toBe(cond ? undefined : undefined)`) — green and unfalsifiable — corrected before shipping. Red files predicted 4, measured 5: the miss names none of this slice's ids or sentences because it is a CONTROL. Census MEASURED UNMOVED (zero registry keys). Suite **367 files / 7,603 tests**; corpus 1114 → **1119**, sweep **1096 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D357)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D357, AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.** Engine **0.262.0 → 0.263.0**; `MATCH_RECORD_VERSION` stays 21. A **CODE-REVIEW REPAIR of D356 — four findings, four fixed, zero refused** — whose first finding was a **correctness defect already on `main`**: the `activeOnly` gate read the board AFTER §6.1's Jet Energy switch rider, so a BENCHED Magearna healed and an ACTIVE one silently lost its printed 90. The clause reads the board AT THE MOMENT OF THE ATTACH — settled from the catalog, driven both ways in `autoHeal.test.ts` §5b, and verified RED against the old gate first. **A ROW COUNT IS NOT A COVERAGE MAP**: `sweepTriggers` already had two mutation rows and neither touched the gate. Census UNMOVED (measured — the census file is byte-unchanged). Suite 365 files / 7,532 tests; corpus 1089, sweep **1066 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D351)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D351, A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE PLAY GATE THAT COULD NOT SEE IT.** Engine **0.256.0 → 0.257.0** over FIVE sites (the fifth is D275's mutation anchor, not a version site); `MATCH_RECORD_VERSION` **STAYS 20** — the diff writes no new bytes at all, and a predicate is not a format. **BUILT: Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance"**, 3 legal printings on ONE sentence, the whole population. The engine diff is ONE predicate: `programPlayable`'s `attachEnergyFrom` gate becomes PROGRAM-scoped, refusing only when EVERY attach a program spells can only whiff. ZERO new vocabulary of any kind. Found by censusing **row 12, the one `ROWS` entry never censused**, whose clause spans TWO rows of the table. Second finding: `ASSEMBLE_ALLOY`'s "a park is declinable by construction" is FALSE, driven and struck. `bun run check` **360 files / 7,382 tests**; sweep **1015 killed · 22 known survivors · 0 GAPs · 0 stale · 0 errors** over a corpus of **1037**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D350)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D350, "ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT.** Engine **0.255.0 → 0.256.0**; `MATCH_RECORD_VERSION` **STAYS 20** (a parked `bottomFromOpponentHand` DOES ride `phase.cont`, so the argument is made rather than waved through: a v20 continuation carries `upTo` absent or a NUMBER, both read by this build exactly as by the last). **BUILT: Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink" — 3 legal printings on ONE sentence, the whole population — for ONE union member on ONE existing optional field (`upTo?: number \| "any"`).** The refutation from source FAILED on the CAPTION and not on behaviour (`upTo: BENCH_MAX` is behaviourally identical and captions the card with a number it does not print), and both halves are DRIVEN. Closes `bottomFromOpponentHand`'s bench arm at **3 of 3 legal sentences / 7 of 7 legal printings**; D294's own doc had priced that population at 4 because its query carried a POSSESSIVE this card does not print. REFUSED: D349's unpriced heal-then-discard family (~6 vocabulary items for 6 printings). `BUILT.ability` 267 → **270**, `built` 1593 → **1596**, residue 790 → **787**, `LANDED` 57/119 → **58/122**; `BUILT.attack` stands still on all three summands, measured. `bun run check` **359 files / 7,354 tests**; sweep **1011 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** over a **1033**-row corpus (3,335.3 s). `killed + survivors + GAPs = 1011 + 22 + 0 = 1033 = corpus` ✅, and **the kill delta reconciles exactly**: D349 was 1008/22 over 1030, so +3 corpus and +3 KILLED with the declared-survivor residue **UNCHANGED at 22** — the three new rows and nothing else, each probed individually (5 / 5 / 2 of 7,354, all in `invitingWink.test.ts`) rather than read off the batch.) |
@@ -2774,6 +2743,100 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-18 — build session #300 (P3-M5 — D360, the printed "up to" on the SPREAD, and the fifth group a legality filter hid)
+
+**Slice.** The last four printings of the *"attach up to N"* family — and it
+turned out to be four printings **plus a fifth group nobody had named**. FOUR
+code commits plus the docs; the tree was CLEAN on arrival at `957399e` and both
+refs were level.
+
+**🛑🛑 THE HEADLINE — A LEGALITY FILTER IS RIGHT FOR A POPULATION FIGURE AND
+WRONG FOR A CONSISTENCY INVARIANT.** The handoff said the four live ones were all
+`anyWay` spreads built by the DERIVER. Re-derived over both producers before a
+line moved, that is exactly right about the derived half — 3 sentences / 4
+Standard-legal printings, Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit
+`sv08-079`/`sv08-204` — and **incomplete**, because `KORAIDON_EX` prints the same
+hedged sentence, builds the same two-op `anyWay` spread and carried no flag.
+D358 **measured** it and excluded it because all four printings are
+`legal_standard = 0`, writing the exclusion into its own suite in as many words.
+That is a defensible filter for a printing count. It is the wrong filter here,
+for a reason that is checkable rather than aesthetic: **`attachFromZoneProgram`
+cites `KORAIDON_EX` BY NAME as the shape its own spread copies**, so flagging one
+producer and not the other leaves the engine's two producers disagreeing about
+one printed sentence — and `programFor` is not legality-gated, so the rotated row
+is live in any match that seats it. Rotation decides who may play a card; it does
+not decide what the card says.
+
+**✅ AND THE GUARD CAUGHT IT, BY NAME, WHICH IS THE PART WORTH KEEPING.**
+`attachDecline.test.ts` §1 asserts the declinable set both directions over the
+whole registry, and D358 wrote its own falsification condition into the comment:
+*"a seventh printing authored with `declinable` reddens here"*. It did. The slice
+came to that line and said why, rather than widening the assertion.
+
+**THE PRICE — ONE EXPRESSION, AND ZERO NEW VOCABULARY.** The `anyWay` branch
+already held the discriminator in a local, so the whole engine diff is
+`...(match[3] === undefined ? {} : { declinable: true as const })` inside the
+single `Array.from({ length: count }, …)`, plus two words in `KORAIDON_EX`. No op
+field, no prompt field, no choice field, no wire byte, no schema, no new arm, no
+new anchor: the op field is D358's and `interpreter.ts` has read it as the park's
+ceiling since D359. **It is not a widening and not a rename — it is a
+POPULATION**, which is why `MATCH_RECORD_VERSION` stays 22.
+
+**🛑 THE DISCRIMINATOR IS THE PRINTED WORD, AND THE TWO READINGS COME APART ON A
+SENTENCE THIS ARM ACCEPTS.** `count` defaults to 1 when the hedge is absent, so a
+gate spelled `count > 1` reads the hedge off the NUMBER instead of off the PRINT.
+*"Attach up to 1 Basic Energy cards … in any way you like."* derives with
+`match[3] === "1"` and `count === 1`, and §9.1 makes its printed answer set
+{0, 1}; the article form *"Attach a Basic Energy card …"* is a mandatory 1. Both
+emit **one** op and are identical in every other observable, so a build that
+inferred the hedge from the program's LENGTH or from `count` cannot tell them
+apart. **A live near-miss, not a constructed one** — which is what turns
+`D360-hedge-read-off-the-number-not-the-print` from an unkillable mutant into a
+killed one.
+
+**⚠️ THE TWO HALVES ARE BROKEN DIFFERENTLY, FOR THE SECOND TIME ON ONE FAMILY.**
+Koraidon's spread is an ABILITY with a printed *"you may"*, so declining the
+Ability already bought the empty answer and it reached **{0, 2}**. The four
+derived printings are ATTACKS — declared and resolved, no `optional` anywhere —
+so even the zero was unreachable and they reached **{2} ALONE**. Same sentence
+shape, same op, same missing flag, two different broken answer sets. All three
+answers now driven on real boards in `dinoCry.test.ts` and
+`derivedDiscardAttach.test.ts` §7, including the assertion that a decline is **not
+a whiff**: the pile still holds the Energy it refused.
+
+**✅ THE FAMILY ACCOUNTS FOR ITSELF, AND THE CLOSURE IS ASSERTED RATHER THAN
+CLAIMED.** `LIKE '%ttach up to%'` over all three text columns on `$.effect`
+(remote D1 `luminous`, extractor verified against nine known-present rows FIRST)
+is **23 sentences / 53 printings / 24 Standard-legal**, and 13 (D359) + 6 (D358)
++ 4 (D360) + 1 refused (Grafaiai `sv08-121`, cross-seat, derives to null) = 24.
+`attachDecline.test.ts` §7 is new and walks **both** producers in the file whose
+registry-only §1 caused D358's short count — stated as a **biconditional** so
+neither direction can drift.
+
+**⚠️ THE PREDICTION'S ONE MISS, AND IT IS D359's DEFECT (a) AT ITS THIRD
+INSTANCE.** Five red files predicted-and-measured four; the fifth was
+`derivedAnyNumberAttach.test.ts`, which names none of this slice's ids or
+sentences — it asserts what the DERIVER DOES for a neighbouring sentence, as a
+control. **Enumerate what a thing DOES, not what mentions it.** Everything else
+graded: nine anchors and the red-file set otherwise exact, corpus 1114 → **1119**
+against a predicted 5, the round-trip surface predicted at **zero bytes** and
+measured at zero.
+
+**⚠️ AND ONE ASSERTION THIS SLICE WROTE ABOUT ITSELF WAS MEASURED FALSE AND
+CORRECTED BEFORE SHIPPING**: `attachDecline.test.ts` §7's first draft carried
+`toBe(cond ? undefined : undefined)` — green, unfalsifiable, and exactly the
+"prose that nothing checks" defect one directory over. Replaced with a
+two-category partition that proves both arms non-empty.
+
+**Cost.** ZERO new ops, op fields, prompt kinds, choice kinds, events, error
+codes, `GameState` fields, `CardFilter` members, deriver arms, anchors or
+`packages/schema` bytes; **ZERO registry KEYS** (one registry program body).
+Engine **0.265.0 → 0.266.0** with all five sites in ONE commit;
+**`MATCH_RECORD_VERSION` STAYS 22**. `bun run check` GREEN exit 0, **367 files /
+7,603 tests** (+12); corpus **1114 → 1119**; sweep **1096 killed · 23 known
+survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**
+over **1119**.
 
 ### 2026-08-18 — build session #299 (P3-M5 — D359, `attachEnergyFrom`'s quantity axis, and a residue measured one slice ago off the wrong half of the build)
 
