@@ -571,26 +571,40 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
     }
   });
 
-  it("🛑 TURTONATOR `sv08-137` IS REFUSED, AND THE REASON IS THAT A WIDER MEMBER IS NOT THE SAME MEMBER", () => {
-    // *"Discard an Energy from your opponent's Active Pokémon **ex**."* — one
-    // Standard-legal printing, and the fourth sentence of the block this slice
-    // bought three of. It needs an **ex-ONLY** board narrowing. The nearest
-    // existing condition is `{ kind: "opponentActiveIsExOrV" }`, which reads
-    // `isExOrV` — ex **or V** — so reusing it would make this attack strip a
-    // Pokémon V, which the card does not print. That is authoring a card, and the
-    // honest price is a NEW condition kind for ONE printing.
+  it("🆕 TURTONATOR `sv08-137` — D361's REFUSAL WAS PAID AT D362, AND THE ADJECTIVE STILL DOES ALL THE WORK", () => {
+    // 🛑 THIS CASE WAS A REFUSAL AND IS NOW A PURCHASE, WHICH IS WHY IT IS
+    // REWRITTEN RATHER THAN DELETED. D361 asserted this sentence derived to
+    // `null` and priced the reason: *"Discard an Energy from your opponent's
+    // Active Pokémon **ex**."* needs an ex-ONLY board narrowing, and the nearest
+    // existing condition `{ kind: "opponentActiveIsExOrV" }` is strictly WIDER
+    // (ex **or V**), so reusing it would strip a Pokémon V the card does not
+    // print. That reasoning was right and the ratio was wrong: D361 called it
+    // "ONE new union member for ONE printing", then measured the predicate at
+    // **8 sentences / 13 printings** against the wider member's **4 / 6** and
+    // inverted its own recommendation. D362 bought `opponentActiveIsEx`.
     //
-    // ⚠️ EXCLUDED BECAUSE IT WAS MEASURED, NOT BECAUSE IT WAS FORGOTTEN — and the
-    // measurement is that the sentence is REAL and still in the residue, which
-    // `censusAtHead`'s unbuilt remainder counts.
+    // ⚠️ AND A GUARD KEYED ON A PREDECESSOR'S REFUSAL IS EXACTLY WHAT A
+    // RED-SURFACE PREDICTION BUILT FROM CENSUS FIGURES AND POOL-KEYED COUNTS DOES
+    // NOT REACH. This file went red unpredicted at D362; running the PLANNED
+    // ANCHOR over every string literal in `packages/engine/src` would have found
+    // it, and that step was skipped. Recorded here so the next slice runs it.
     expect(
       deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon ex."),
-    ).toBeNull();
-    // The bare sentence one word shorter DOES derive, so it is the adjective and
-    // nothing else that refuses it.
+    ).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveIsEx" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      },
+    ]);
+    // The bare sentence one word shorter STILL derives, and now the claim is
+    // sharper than "it is not null": it derives to a DIFFERENT program — no gate
+    // at all — so the printed adjective is the whole behavioural difference,
+    // exactly as it was the whole refusal before.
     expect(
       deriveAttackEffect("Discard an Energy from your opponent's Active Pokémon."),
-    ).not.toBeNull();
+    ).toEqual([{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }]);
   });
 
   it("the ROTATED typed printing derives anyway — rotation decides who may PLAY a card, not what it SAYS", () => {

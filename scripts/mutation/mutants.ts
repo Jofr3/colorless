@@ -13205,4 +13205,60 @@ export const MUTANTS: Mutant[] = [
     replace: "function takeOptions(_upTo: number | undefined): (number | undefined)[] {\n  return [undefined];\n}",
     expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
+  // ── D362 — THE ex-ONLY ACTIVE BOARD PREDICATE. FIVE ROWS, ONE PER CLAIM.
+  //    ⚠️ TWO OF THE FIVE ARE THE SAME ANCHOR'S TWO DEFENDING WORDS, AND THAT IS
+  //    D361's OWN FINDING SPENT: `D361-sweep-anchor-swallows-giacomos-wording`
+  //    SURVIVED its first probe because the anchor was defended by TWO independent
+  //    printed words and the suite asserted only the first. Turtonator's anchor is
+  //    defended by the ADJECTIVE `ex` and the ARTICLE `an`, so each gets a row and
+  //    each gets its own assertion. **A ROW COUNT IS NOT A COVERAGE MAP.**
+  //    ⚠️ NO ROW FOR THE SAWK REFUSAL: a refusal is not a code line. It is asserted
+  //    in `exOnlyActive.test.ts` §5 with a CONTROL (Palafin's existing row reads
+  //    today and stops the instant the same trailing sentence is bolted on), and
+  //    backed by the corpus measurement (8 s / 16 p admissible, 9 s / 27 p refused).
+  {
+    id: "D362-ex-predicate-widens-to-ex-or-v",
+    decision: "D362",
+    what: "🛑 THE NARROWER MEMBER STOPS BEING NARROWER: `conditionHolds`'s `opponentActiveIsEx` arm reads `isExOrV` instead of the `ex` suffix, so the new member becomes a byte-for-byte duplicate of the one beside it — and every one of the SIX printed `is a Pokémon ex` bonus sentences (10 Standard-legal printings) starts firing into a Pokémon V the card does not name, plus Turtonator's discard stripping one. THE ONE BOARD THAT SEES IT IS A POKÉMON V ACTIVE, which is the entire no-new-vocabulary refutation: an ex board and a VMAX board both answer identically under either reading, so a suite that drove only the printed subset would pass. This is the row the member exists for",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && pokemonSuffixOf(spot.card) === \"ex\";",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && isExOrV(spot.card);",
+    expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
+  },
+  {
+    id: "D362-ex-clause-row-key-grows-the-v-disjunct",
+    decision: "D362",
+    what: "🛑 THE CLAUSE TABLE'S NEW KEY GROWS THE FOUR WORDS THAT SEPARATE IT FROM ITS SIBLING, so `your opponent's Active Pokémon is a Pokémon ex` no longer has a row and all SIX printed amounts (10 legal printings) fall back to the LOUD unmapped path — while the wider `ex or Pokémon V` sentence now has TWO rows racing for it. The keys are whole printed clauses and never substrings; this row is what makes that a measurement rather than a comment, and it goes red from the ex side rather than the V side",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"your opponent's Active Pokémon is a Pokémon ex\", { kind: \"opponentActiveIsEx\" }],",
+    replace: "  [\"your opponent's Active Pokémon is a Pokémon ex or Pokémon V\", { kind: \"opponentActiveIsEx\" }],",
+    expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
+  },
+  {
+    id: "D362-ex-condition-note-drops-the-round-trip",
+    decision: "D362",
+    what: "🛑 THE NOTE STOPS BEING THE PRINTED CLAUSE: `conditionNote` returns the WIDER sibling's wording for the narrower member, so the reject/tooltip fragment tells a player the attack cares about a Pokémon V when it does not, AND the one-step round trip breaks — `If ${conditionNote(cond)}, this attack does N more damage.` no longer re-derives to the member it came from. A note is rendered text a player acts on, so a note that lies is a live defect and not a cosmetic one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    case \"opponentActiveIsEx\":\n      // 🆕 D362 — byte-identical to the clause table's KEY, which is what makes",
+    replace: "    case \"opponentActiveIsEx\":\n      return \"your opponent's Active Pokémon is a Pokémon ex or Pokémon V\";\n      // 🆕 D362 — byte-identical to the clause table's KEY, which is what makes",
+    expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
+  },
+  {
+    id: "D362-turtonator-anchor-drops-the-ex-adjective",
+    decision: "D362",
+    what: "🛑 DEFENDING WORD ONE — THE ADJECTIVE. The new anchor makes ` ex` OPTIONAL, so it stops being the more specific sentence and (sitting FIRST, as it must) swallows the BARE printed sentence too: `Discard an Energy from your opponent's Active Pokémon.` — six Standard-legal printings built since D361 — starts coming back GATED on an ex-only board, so those six attacks silently do nothing against any Active that is not a Pokémon ex. Turtonator itself still derives correctly, which is what makes this a silent widening rather than a crash",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPPONENT_ACTIVE_EX_DISCARD =\n  /^Discard an Energy from your opponent['’]s Active Pokémon ex\\.$/;",
+    replace: "const OPPONENT_ACTIVE_EX_DISCARD =\n  /^Discard an Energy from your opponent['’]s Active Pokémon( ex)?\\.$/;",
+    expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts", "packages/engine/src/crossSeatEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D362-turtonator-anchor-drops-the-article",
+    decision: "D362",
+    what: "🛑 DEFENDING WORD TWO — THE ARTICLE, and it is a DIFFERENT loss from the row above. The anchor's `an` becomes the map-built line's three-way article alternation, so the CROSS-PRODUCT the catalog does not print starts deriving: `Discard a Special Energy from your opponent's Active Pokémon ex.` and its typed twin come back as an `anyEnergy` gated discard — the wrong Energy coming off, on two sentences with ZERO printings behind them across all three text columns. Turtonator and the whole bare family are UNAFFECTED, so nothing driving only the printed population can see it. **THE ANCHOR IS DEFENDED BY TWO INDEPENDENT PRINTED WORDS AND THIS IS THE HALF D361's OWN PROBE MISSED ONE OP OVER**",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard an Energy from your opponent['’]s Active Pokémon ex\\.$/;",
+    replace: "  /^Discard (?:an|a Special|a \\{[A-Z]\\}) Energy from your opponent['’]s Active Pokémon ex\\.$/;",
+    expectKilledBy: ["packages/engine/src/exOnlyActive.test.ts"],
+  },
 ];

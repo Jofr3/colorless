@@ -10533,12 +10533,12 @@ export const CROSS_SEAT_DISCARD_DECK = deckOf({
     as a narrowed one. */
 export const EX_ONLY_DECK = deckOf({
   "fix-exonly": 4,
-  "fix-bigbody": 4,
+  "fix-bigbody": 8,
   "fix-pokemon-v": 4,
   "fix-pokemon-vmax": 2,
   "sv06.5-036": 4,
   "fix-special": 4,
-  "fix-energy": 18,
+  "fix-energy": 34,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });

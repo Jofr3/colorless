@@ -568,7 +568,20 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // SENTENCE or on a COUNT, and reaches **nothing** keyed on the FIXTURE POOL.
     // The header's promise held exactly as written: the full `check` found it, and
     // no grep of this slice's own vocabulary ever would have.
-    expect(derivable).toHaveLength(102);
+    // 🆕 D362 — 102 -> **104**, and the +2 is a FIXTURE landing rather than a
+    // reader widening on an existing body: `fix-exonly` prints TWO sentences and
+    // both carry the possessive `opponent's` AND become reader-resolved in the
+    // same commit — *"If your opponent's Active Pokémon is a Pokémon ex, this
+    // attack does 90 more damage."* (the clause table's new row) and *"Discard an
+    // Energy from your opponent's Active Pokémon ex."* (the new anchor).
+    // ⚠️ **THIS FILE WAS D361's ONE MISS AND IT WAS PREDICTED AT D362**, by asking
+    // what adding a FIXTURE moves rather than only what adding a SENTENCE moves —
+    // this header's own promise, collected. The exposed slots are a POSSESSIVE on
+    // a literal clause-table KEY (read through `literalClauseRow`, which folds
+    // U+2019) and a POSSESSIVE inside an anchored regex (which spells `['’]`
+    // itself), so the pair proves the fold across BOTH mechanisms at once — the
+    // first time this sweep has covered a table row and a regex on one fixture.
+    expect(derivable).toHaveLength(104);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
