@@ -1388,11 +1388,35 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "choosePokemon": {
-      // Exactly one of the offered refs.
-      if (choice.kind !== "pokemon" || !isPokemonRef(choice.ref)) {
+      // Exactly one of the offered refs — or, on a `declinable` prompt, NONE.
+      //
+      // 🆕🆕 **D358 — THIS IS THE ONLY PLACE THE PRINTED *"up to N"* CAN BE
+      // ENFORCED, AND IT IS ALSO THE ONLY PLACE THE ABSENCE OF ONE CAN BE.** The
+      // answer shape is the same either way (`{kind:"pokemon"}` with the ref left
+      // off), so what separates a legal decline from a crafted frame refusing a
+      // mandatory effect is entirely this arm reading the PROMPT — the
+      // architecture every other arm here is built on, and what a P4 client is
+      // checked by. Boss's Orders prints *"Switch in 1 of your opponent's Benched
+      // Pokémon"* with no *"up to"* and no *"you may"*; without the second half of
+      // this test, a frame that simply omitted `ref` would walk past it.
+      if (choice.kind !== "pokemon") {
         return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
       }
-      if (!prompt.candidates.some((c) => refEquals(c, choice.ref))) {
+      if (choice.ref === undefined) {
+        // The DECLINE. Spelled as its own arm rather than folded into the guard
+        // above so the two rejections carry different sentences: "you cannot
+        // decline this" is a rules fact about the card, and a reader looking at
+        // the Pokémon in front of them should not be told their message was
+        // malformed.
+        return prompt.declinable === true
+          ? null
+          : err("BAD_EFFECT_CHOICE", "this choice cannot be declined");
+      }
+      if (!isPokemonRef(choice.ref)) {
+        return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
+      }
+      const picked = choice.ref;
+      if (!prompt.candidates.some((c) => refEquals(c, picked))) {
         return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
       }
       return null;

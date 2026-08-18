@@ -12108,6 +12108,91 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.264.0 → **THE DECLINABLE POKÉMON PARK — "UP TO N" STOPS BEING AN EXACT
+    COUNT, AND THE PRICE WAS RE-DERIVED BEFORE IT WAS PAID.**
+
+    `choosePokemon` was the ONE prompt kind in the union with no way to say no.
+    `chooseCards` has carried the distinction since it was written (*"`min: 0` —
+    the printed 'up to' … Taking none is a legal answer"* against *"`min === max`
+    — a MANDATORY exact pick"*), `choosePokemonMulti` carries `declinable` for the
+    printed *"you may"*, and `moveEnergy` and `attachCards` both document an empty
+    answer as a legal decline. `attachEnergyFrom` is the one attach route that
+    takes a prompt kind without it, so every printed *"attach **up to** N"* it
+    serves was resolved as an EXACT N.
+
+    🛑 **THE INHERITED POPULATION WAS WRONG IN BOTH DIRECTIONS AND ITS ARITHMETIC
+    DID NOT CLOSE.** Five slices carried *"7 legal printings — Archaludon ex ×3,
+    Infernape ×3, Lycanroc ×2"*; that is 8, and the note beside it said *"8
+    printings are 7 live ones"*. D353 wrote the same claim as *"from 5 legal
+    printings to 7"* over a parenthesis listing 3+3. Re-derived from the registry
+    (113 ids carry a `parkOrForce`-family op) joined to D1 on `$.effect`, the
+    printings whose printed PARTIAL choice is over-resolved are **17**, not 7:
+    Archaludon ex ×3 and Magneton ×3 (*"up to N … in any way you like"*, N ops),
+    Infernape ×3 (*"a {R}, a {F}, **or 1 of each**"*), and Lycanroc ×2, Bloodmoon
+    Ursaluna ×2 and Ethan's Ho-Oh ex ×4 (*"up to 2"* to ONE named body,
+    `count: 2`). **Magneton, Ursaluna and Ethan's Ho-Oh — 9 printings — had never
+    been counted at all.** Koraidon ex ×4 prints the identical sentence and is
+    `legal_standard = 0`; excluded, measured rather than assumed.
+
+    **BOUGHT FOR 6 OF THE 17**, where the capability lands the printed answer set
+    EXACTLY: Archaludon ex ×3 ({0,1,2}) and Magneton ×3 ({0,1,2,3}).
+
+    ⚠️ **THE RULES QUESTION WAS SETTLED FROM THE CATALOG AND FROM THIS REPO'S OWN
+    §9.1, NOT FROM `interpreter.ts`** — *"the prompt has no decline"* is an engine
+    fact, not a rules one. `ptcg-rules.md` §9.1 already says it in print:
+    *"'Search your deck for **up to 2** Basic Energy cards' (Earthen Vessel) —
+    **one, two, or none, all legal**"*, and *"the 'may' of an activated Ability is
+    spent by choosing to use the Ability at all, so it adds nothing to the choice
+    that follows"*. Three further lines, none of them these cards: the catalog
+    CONTRASTS the quantifier against its own absence on the same op and the same
+    zone (N's PP Up `sv09-153` prints a bare *"Attach"*, Ethan's Ho-Oh *"up to
+    2"*); *"in any way you like"* names the SPLIT axis and is printed and omitted
+    independently of the count; and `chooseCards`' own doc had already classified
+    the pair at the FIRST park kind this engine built.
+
+    🛑 **AND §9.1 IS ALSO WHY THREE FAMILIES ARE REFUSED RATHER THAN OVERLOOKED.**
+    Infernape's *"a Basic {R} Energy card, a Basic {F} Energy card, or 1 of each"*
+    prints NO empty arm and no *"up to"*, and the activated *"you may"* is already
+    spent — its printed answer set is {R}, {F}, {R,F}, so two declinable parks
+    would legalise an EMPTY answer the sentence does not print. Lycanroc, Bloodmoon
+    Ursaluna and Ethan's Ho-Oh are `count: 2` — ONE op, ONE named body — where a
+    declinable park buys {0, 2} against a printed {0, 1, 2}: **what they are
+    missing is a QUANTITY axis, not a decline axis**, and they cannot be respelled
+    as two ops because `count` exists precisely to pin the batch to the one body
+    the print NAMES (D205).
+
+    **THE PRICE, AND IT IS SIX SITES RATHER THAN THE INHERITED ~4** — the old
+    estimate counted neither the OP field nor the `parkOrForce` parameter:
+    `attachEnergyFrom.declinable`, `EffectPrompt.choosePokemon.declinable`,
+    `EffectChoice.pokemon.ref` widened to optional, the wire schema's optional
+    field, `validateChoice`'s decline arm, and `parkOrForce`'s flag.
+
+    🛑 **THE HALF A READER WILL NOT GUESS: IT MOVED THE FORCED ARM.** `parkOrForce`
+    auto-applies a LONE candidate under the M1 no-choice rule — true of a mandatory
+    pick and FALSE of a declinable one, which still has two answers over one body.
+    So a declinable park asks at every non-empty candidate set. **D47 decided this
+    exact question for `choosePokemonMulti` and its review reversed the first
+    draft on it**: honouring the decline only above the auto-resolve threshold
+    honours it *"exactly where declining matters least"*. Two pinned measurements
+    in `overvoltDischarge.test.ts` §4/§5 said in so many words *"the op does NOT
+    park at all"* and went red BY NAME — **and neither of the two the handoff
+    named (`pyroDance` §5, `spikeClad` §5) did**, because both are refusals.
+
+    **NO NEW CHOICE `kind`**, deliberately: a `{ kind: "declinePokemon" }` member
+    would fall silently through the eight `: state` arms that have nothing to do
+    with this slice. The absent `ref` makes each site state in code that a decline
+    moves nothing, through one narrowing predicate (`pickedPokemon`).
+
+    **`MATCH_RECORD_VERSION` STAYS 21**, asked rather than inherited: the prompt
+    rides the persisted `effect:choose` phase, but `declinable` is
+    absent-when-false, so a version-21 record reads `undefined` = mandatory =
+    exactly what those parks meant when they were written. The CHOICE widening is
+    on an ACTION INPUT and is never persisted. A widening, not a missing field
+    (`caps` D332, `anySource` D226, `gust.basicOnly` D331).
+
+    engineVersion 0.263.0 → **0.264.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.263.0 → **AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.**
 
     A CODE-REVIEW REPAIR OF D356, AND A CORRECTNESS DEFECT THAT HAD ALREADY
@@ -13202,7 +13287,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.263.0";
+export const engineVersion = "0.264.0";
 
 export type {
   ApplyResult,

@@ -425,7 +425,13 @@ function spotLabel(ref: RedactedPokemonRef): string {
 
 /** choosePokemon (§9 — switch / gust / heal): pick exactly one in-play Pokémon.
     Picking is the whole decision, so each row dispatches directly (the local
-    ChoosePokemonDialog over the wire refs). */
+    ChoosePokemonDialog over the wire refs).
+
+    🆕 D358 — **AND ON A `declinable` PROMPT, `{ kind: "pokemon" }` WITH NO `ref`
+    IS THE PRINTED *"up to N"* DECLINE**, offered as its own trailing row for the
+    reason the local twin gives. The flag reaches this component because it is on
+    the WIRE prompt: the op is server-side and the dialog can only read what was
+    redacted to it, which is why the schema carries the field at all. */
 function ChoosePokemonDialog({
   prompt,
   board,
@@ -459,6 +465,17 @@ function ChoosePokemonDialog({
             </button>
           </li>
         ))}
+        {prompt.declinable === true && (
+          <li className="mt-1.5 border-t border-white/10 pt-1.5">
+            <button
+              type="button"
+              onClick={() => onAction({ type: "resolveEffect", seat, choice: { kind: "pokemon" } })}
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">Take none</span>
+            </button>
+          </li>
+        )}
       </ul>
     </Dialog>
   );

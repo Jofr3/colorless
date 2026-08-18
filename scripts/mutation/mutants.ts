@@ -1249,9 +1249,9 @@ export const MUTANTS: Mutant[] = [
     // occurs twice and the harness reports ERROR — the wrong-row failure the
     // exactly-once rule exists to catch, arriving here as a direct consequence of
     // the slice's own "the three switch ops now file identically" claim.
-    find: '      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === "pokemon"\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;',
+    find: '      // gate reading an empty slot. Driven on a two-body Bench.\n      return pickedPokemon(choice)\n        ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)\n        : state;',
     replace:
-      '      // gate reading an empty slot. Driven on a two-body Bench.\n      return choice.kind === "pokemon" ? gust(state, choice.ref, ctx, events) : state;',
+      '      // gate reading an empty slot. Driven on a two-body Bench.\n      return pickedPokemon(choice) ? gust(state, choice.ref, ctx, events) : state;',
     expectKilledBy: ["packages/engine/src/derivedNewActiveDamage.test.ts"],
   },
   {
@@ -4211,9 +4211,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D263",
     what: "🛑 Assemble Alloy's TWO ops collapse into ONE carrying `count: 2` — the exact defect a reader who priced 'up to 2' and skipped 'in any way you like' ships (D205's distinction). Both readings move TWO Energy out of the pile and both ask a question, so every count-the-pile assertion agrees; they differ only in WHERE the second one lands, because `count` pins the batch to the ONE chosen body",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+    find: '        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n        },',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal", count: 2 },',
+      '        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n          count: 2,\n        },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
   {
@@ -4221,9 +4221,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D263",
     what: "🛑 Assemble Alloy's FIRST op drops `targetType`, so 'to your {M} Pokémon' widens to every own body — the brace code narrows the CARD out of the pile but no longer narrows who may receive it. The attach still lands, still moves a Basic {M}, and still parks; the only observable is the CANDIDATE SET, which is why the suite asserts its length and its members rather than the outcome",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+    find: '        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n        },',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard", energyType: "Metal" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },',
+      '        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Metal",\n          targetType: "Metal",\n          declinable: true,\n        },',
     expectKilledBy: ["packages/engine/src/legalNonAttackPrograms.test.ts"],
   },
 
@@ -5391,7 +5391,8 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    find: 'export const engineVersion = "0.263.0";',
+    // ⚠ RE-POINTED AT D358 (0.263.0 → 0.264.0) — the FIFTY-FIFTH payment.
+    find: 'export const engineVersion = "0.264.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -7438,7 +7439,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D309",
     what: "🛑 `continuationOps` no longer recognises the asker, so the body answer buys NOTHING: the park resolves, `applyChoice` returns the state untouched (correctly — it moves nothing by design), the program falls through to the shuffle and the printed evolution never happens. THE CHANNEL BETWEEN THE TWO QUESTIONS, cut — and the reason `applyChoice`'s do-nothing arm is not on its own a defect",
     file: "packages/engine/src/interpreter.ts",
-    find: '  if (op.op === "evolveFromDeckChosen") {\n    return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];\n  }',
+    find: '  if (op.op === "evolveFromDeckChosen") {\n    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref) : [];\n  }',
     replace: '  if (op.op === "evolveFromDeckChosen") {\n    return [];\n  }',
     expectKilledBy: ["packages/engine/src/evolveBodyChoice.test.ts"],
   },
@@ -12144,9 +12145,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: "one of the three `attachEnergyFrom` ops is deleted, so the printed *up to 3* becomes *up to 2*. **THE BOARD STAYS COMPLETELY LEGAL** — the Ability still parks, still distributes across several bodies, still kills its host and still gives up a Prize; only the third card never leaves the discard pile. This is the failure a `count`-shaped reading would ALSO produce, which is why the suite drives three parks and counts the Energy on the far side rather than asserting that a park happened",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
   {
@@ -12154,9 +12155,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: "🛑 THE ROW BECOMES `count: 3` ON ONE OP — exactly the reading D345's residue note claimed this card needed a new prompt to avoid, and exactly the one D205 and D263 refuse. The whole batch is pinned to ONE picked body, so the printed *in any way you like* becomes *all three on the Pokémon you choose*. It attaches the same NUMBER of cards, spends the same Ability, pays the same Prize and reads identically in the log; the only observable is that a split across two bodies has become unreachable. **THIS MUTANT IS THE MISREADING THE WHOLE SLICE IS ABOUT**, which is why it is written out rather than left in a comment",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", count: 3 },\n',
+      '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true, count: 3 },\n',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
   {
@@ -12164,9 +12165,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: "the printed destination noun *your {L} Pokémon* widens to every own body, so a {F} or {C} Pokémon becomes a legal place to put the Energy. The card still attaches three, still kills its host, still costs a Prize — it simply becomes a strictly better card, which is the direction a dropped narrowing always fails in. ⚠️ `energyType` and `targetType` are the SAME brace code on two different nouns and only ONE of them is printed here, so this row and the one below are each other's control",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard" },\n        { op: "attachEnergyFrom", source: "discard" },\n        { op: "attachEnergyFrom", source: "discard" },\n        { op: "knockOutSelf" },',
+      '        { op: "attachEnergyFrom", source: "discard", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", declinable: true },\n        { op: "knockOutSelf" },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
   {
@@ -12174,9 +12175,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: 'the row grows an `energyType: "Lightning"` the sentence does not print — the ONE brace code on the card read onto the WRONG noun. The printed noun is the bare *Basic Energy cards*, so a discard pile of Basic {F} and Basic {W} is fully in reach and this mutant puts it out of reach; on a mono-{L} board nothing changes at all, which is exactly why the suite drives a pile holding NO {L} Energy whatever. ⚠️ THE ABSENCE OF A FIELD IS A READING OF THE PRINT (D135), and this row is what makes that absence assertable',
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     replace:
-      '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+      '        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", energyType: "Lightning", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
   {
@@ -12184,7 +12185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: "🛑 `knockOutSelf` is deleted from the program, so the card attaches up to three Energy out of the discard pile every turn FOREVER and never pays. This is the registry-side twin of D345's `self-ko-never-fires` arriving on a second card, and it is the most valuable mutant in the set: the resulting card is legal, playable, logged identically, and strictly and enormously better than the one printed. Nothing but an assertion about WHOSE uid left play can see it",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     replace: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
@@ -12193,9 +12194,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D346",
     what: "🛑 THE PRINTED ORDER IS REVERSED: `knockOutSelf` runs FIRST, so the host is marked lethal while its own Ability is still mid-decision. Two things break and only one is obvious — §8.1 collects a body whose program has not finished, AND the Magneton is itself a legal {L} destination, so the mutant destroys a target the prompt is about to offer. On a board where the host is the ONLY {L} body the attach becomes unreachable entirely. ⚠️ THIS IS `CURSED_BLAST`'s ORDER CLAUSE ARRIVING WHERE IT BITES HARDER, because there the parked op only ever picked an OPPONENT's body",
     file: "packages/engine/src/registry.ts",
-    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "knockOutSelf" },',
+    find: '        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "knockOutSelf" },',
     replace:
-      '        { op: "knockOutSelf" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },',
+      '        { op: "knockOutSelf" },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },\n        { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },',
     expectKilledBy: ["packages/engine/src/overvoltDischarge.test.ts"],
   },
   // ── D347 — YANMEGA ex "BUZZING BOOST": a GATE that is a CONJUNCTION, and a batch

@@ -278,9 +278,16 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),
       };
     case "choosePokemon":
+      // 🆕 D358 — `declinable` RIDES THROUGH AS A CONDITIONAL SPREAD, this file's
+      // ABSENT-KEY rule (D135, and `alt` two arms up): `declinable: undefined` is
+      // not the same wire value as no key at all, and every park authored before
+      // this slice must redact to the byte-identical two-field object it always
+      // did. It hides nothing — the printed sentence in `note` already says "up
+      // to" — so unlike `candidates` it needs no answerer gate.
       return {
         kind: "choosePokemon",
         candidates: prompt.candidates.map(redactedRefOf),
+        ...(prompt.declinable === undefined ? {} : { declinable: prompt.declinable }),
         note: prompt.note,
       };
     case "choosePokemonMulti":

@@ -343,10 +343,15 @@ describe("D346 §1 — the registry row, read off the LIVE registry", () => {
     const program = programFor(MAGNETON)?.abilities?.[0]?.program;
     expect(program).toHaveLength(4);
     const attaches = program?.slice(0, 3) ?? [];
+    // 🆕 D358 — each op now carries `declinable: true`, the printed *"up to 3"*.
+    // The three are still spelled apart and still carry no `count`, which is what
+    // this assertion is for: `declinable` says the player may come in UNDER the
+    // ceiling, and `count` would say all three land on ONE body — orthogonal
+    // fields, and the second claim below still proves the second is absent.
     expect(attaches).toEqual([
-      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
-      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
-      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning" },
+      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
+      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
+      { op: "attachEnergyFrom", source: "discard", targetType: "Lightning", declinable: true },
     ]);
     // …and no `count` anywhere in the program, which is the same claim from the
     // other side and survives a re-ordering of the fields above.
@@ -530,11 +535,17 @@ describe("D346 §4 — the printed \"UP TO\", and the KO that is not conditional
     let state = board({ p1: [WALL, MAGNETON], p2: [WALL] });
     state = discardFromDeck(state, "p1", ENERGY_L, 1);
     const host = benchTopUid(state, "p1", 0);
-    // ⚠️ The host is the ONLY {L} body, so the attach has ONE candidate and the op
-    // does NOT park at all — the whole program (attach, two whiffs, the KO) settles
-    // inside the `useAbility`. That forced-target auto-resolve is `attachEnergyFrom`'s
-    // own behaviour and it is why this case answers no prompt.
-    const { state: after } = discharge(state, { spot: "bench", index: 0 });
+    // 🆕🆕 **D358 REDDENED THIS LINE BY NAME, AND THE REPAIR IS THE WHOLE POINT.**
+    // It used to read: *"the host is the ONLY {L} body, so the attach has ONE
+    // candidate and the op does NOT park at all"*. That was the M1 no-choice rule
+    // applied to a print that says *"up to 3"* — and over a lone candidate a
+    // declinable pick still has TWO answers, so the op now ASKS. One card is in the
+    // pile, so op 1 parks, op 2 and op 3 whiff on an empty pile, and the KO runs on
+    // the resume. The claim the case was written to make is untouched: a card routed
+    // to the host reaches the DISCARD, because `knockOutSelf` is authored last.
+    const parked = discharge(state, { spot: "bench", index: 0 }).state;
+    expect(parked.phase.kind).toBe("effect:choose");
+    const { state: after } = attachTo(parked, benchRef(0));
     expect(after.players.p1.discard).toContain(host);
     expect(after.players.p1.bench).toHaveLength(0);
   });
@@ -580,10 +591,18 @@ describe("D346 §5 — the GATE, and the design call it makes", () => {
     let state = board({ p1: [WALL, MAGNETON, FIGHTING], p2: [WALL] });
     state = discardFromDeck(state, "p1", ENERGY_L, 3);
     const host = benchTopUid(state, "p1", 0);
-    // The host is the ONLY {L} body, so the gate PASSES, every attach is forced onto
-    // it with no park at all, and the whole program settles inside `useAbility` —
-    // three cards land on a body that is dead by the end of the same resolution.
-    const { state: after, events } = discharge(state, { spot: "bench", index: 0 });
+    // 🆕 D358 — the host is the ONLY {L} body, so the gate PASSES; but the printed
+    // *"up to 3"* is declinable, so each of the three attaches now ASKS rather than
+    // being forced onto the lone candidate (the sibling case in §4 carries the full
+    // note). Answering all three routes three cards onto a body that is dead by the
+    // end of the same resolution, which is the claim this case makes.
+    let after = discharge(state, { spot: "bench", index: 0 }).state;
+    let events: GameEvent[] = [];
+    for (const _ of [0, 1, 2]) {
+      const answered = attachTo(after, benchRef(0));
+      after = answered.state;
+      events = [...events, ...answered.events];
+    }
     expect(find(events, "KNOCKED_OUT")?.uid).toBe(host);
     // Nothing reached the {F} body: it was never a candidate.
     expect(after.players.p1.bench.every((b) => b.energy.length === 0)).toBe(true);

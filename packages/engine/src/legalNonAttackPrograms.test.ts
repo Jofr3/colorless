@@ -2020,14 +2020,31 @@ describe("D199 — the registry map", () => {
     ]);
     // ⚠️ TWO ops, not `count: 2` — the printed "in any way you like" (D205), and
     // the one claim about this program a reader is most likely to get wrong.
+    // 🆕 D358 — and each op carries `declinable: true`, the printed "up to 2".
+    // The two fields answer different questions and both are spelled here: `count`
+    // (absent) would pin the pair to ONE body, `declinable` lets the player stop
+    // after the first. `optional: true` above is a THIRD thing again — the
+    // trigger's own "you may", which buys only the empty answer (§9.1).
     expect(programFor("sv08-130")?.triggered).toEqual([
       {
         name: "Assemble Alloy",
         trigger: "onEvolve",
         optional: true,
         program: [
-          { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
-          { op: "attachEnergyFrom", source: "discard", energyType: "Metal", targetType: "Metal" },
+          {
+            op: "attachEnergyFrom",
+            source: "discard",
+            energyType: "Metal",
+            targetType: "Metal",
+            declinable: true,
+          },
+          {
+            op: "attachEnergyFrom",
+            source: "discard",
+            energyType: "Metal",
+            targetType: "Metal",
+            declinable: true,
+          },
         ],
       },
     ]);

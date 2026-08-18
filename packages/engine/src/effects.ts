@@ -3923,6 +3923,55 @@ export type EffectOp =
           `min(count, available)` is what actually lands: a hand holding one {R}
           attaches one, silently, because the print says "UP TO". */
       count?: number;
+      /** 🆕🆕 **D358 — THE PRINTED *"up to N"* SPREAD OVER N OPS, WHERE THE
+          PLAYER MAY TAKE FEWER.** Archaludon ex *"attach **up to 2** Basic {M}
+          Energy cards … in any way you like"* (×3) and Magneton *"attach **up
+          to 3** Basic Energy cards … in any way you like"* (×3) are authored as
+          N INDEPENDENT one-card ops (`count` absent — D205's rule: `count` pins
+          a batch to the ONE body a print NAMES, and *"in any way you like"*
+          denies that). Each op then asks its own question, and until this field
+          existed **every one of those questions was mandatory**: `parkOrForce`
+          has three arms and none of them was a decline, so the printed ceiling
+          was resolved as an exact count and a controller who wanted ONE of two
+          got two.
+
+          Absent = the pick is MANDATORY, which is what every program authored
+          before this slice meant and is why the field is OMITTED rather than
+          written as `false` (D104's minimal-shape rule).
+
+          🛑 **IT IS A FIRST KEY ON THE DECLINE AXIS, NOT A SECOND KEY ON THE
+          QUANTITY AXIS.** Naming it `upTo` would put it beside `count`, where it
+          would read as "how many" and would have to say something about a field
+          it is orthogonal to. `declinable` is the name `choosePokemonMulti`
+          already carries for exactly this printed right, so the op, the prompt,
+          the wire shape and the validator all spell it once.
+
+          ⚠️ **THE RULE IT ENCODES IS `ptcg-rules.md` §9.1, NOT THIS CARD.**
+          *"Search your deck for **up to 2** Basic Energy cards" — one, two, or
+          none, all legal"*, and *"the 'may' of an activated Ability is spent by
+          choosing to use the Ability at all, so it adds nothing to the choice
+          that follows"*. So on Magneton the partial right is carried by *"up to
+          3"* ALONE, and on Archaludon the trigger's `optional` buys only the
+          empty answer while *"up to 2"* independently buys the middle one.
+
+          ⚠️ **AND IT IS DELIBERATELY *NOT* ON THREE FAMILIES THAT LOOK LIKE
+          THESE TWO** — the whole point of re-deriving the population:
+          • **Infernape "Pyro Dance" ×3** prints a DISJUNCTION, *"a Basic {R}
+            Energy card, a Basic {F} Energy card, **or 1 of each**"* — no *"up
+            to"*, and §9.1 has already spent the activated *"you may"*. Its
+            printed answer set is {R}, {F}, {R,F}; two declinable parks would
+            also reach the EMPTY answer, which the sentence does not print.
+            A decline flag on those ops would legalise something unprinted.
+          • **Lycanroc `sv09-085`/`sv09-166`, Bloodmoon Ursaluna
+            `sv06.5-025`/`sv08.5-054`, Ethan's Ho-Oh ex ×4** print *"up to 2"*
+            to ONE named body and are spelled `count: 2`. A declinable park buys
+            them {0, 2}; the print says {0, 1, 2}. **What they are missing is a
+            QUANTITY axis, not a decline axis**, and they cannot be re-spelled as
+            two ops: `count` exists precisely to pin the batch to the one body
+            the print names, so two ops would legalise splitting Ho-Oh's two
+            Energy across two benched bodies against *"to **1 of** your Benched
+            Ethan's Pokémon"*. Recorded, priced and refused — not overlooked. */
+      declinable?: true;
       /** ⚠️⚠️ D246 — THE PRINTED BARE NOUN, *"attach **an Energy card** from your
           hand/discard pile to this Pokémon"* (Snorlax `sv06-136` "But First,
           Food"; Landorus `sv08-110` "Fist of Focus" — **2 legal attack printings,

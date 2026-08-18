@@ -309,8 +309,40 @@ export type EffectPrompt =
       caps?: readonly { uids: readonly string[]; max: number }[];
       note: string;
     }
-  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; note: string }
+  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — or,
+      where `declinable` says the print allows it, pick NONE.
+
+      🆕🆕 **D358 — `declinable` IS THE PRINTED *"up to N"*, AND ITS ABSENCE IS
+      THE MANDATORY PICK EVERY PARK HERE USED TO BE.** This was the ONE prompt
+      kind in the union with no way to say no. `chooseCards` has carried the
+      distinction since it was written (*"`min: 0` — the printed 'up to' … Taking
+      none is a legal answer"* vs *"`min === max` — a MANDATORY exact pick, where
+      the only decision is WHICH cards and never whether"*), `choosePokemonMulti`
+      carries `declinable` for the printed *"you may"*, and `moveEnergy` and
+      `attachCards` both document an empty answer as a legal decline. So a
+      controller answering *"attach **up to 2** … in any way you like"* was being
+      told the ceiling was exact, on the only park kind that could not say
+      otherwise. **Declinability was never a property of PARKING; it is a
+      property of the PROMPT KIND**, and this one was the hole.
+
+      Spelled as an absent-when-false optional rather than a required boolean,
+      unlike `choosePokemonMulti.declinable`, and the reason is persistence: this
+      prompt rides the `effect:choose` phase, which is serialized into a
+      `MatchRecord`. A record written before this slice carries no key, this
+      build reads `undefined`, and `undefined` means exactly what those parks
+      meant when they were written — mandatory. **A widening, not a missing
+      field, so `MATCH_RECORD_VERSION` does not move** (`caps` D332,
+      `anySource` D226 and `gust.basicOnly` D331 made the same argument).
+
+      🛑 **AND IT CHANGES WHAT `parkOrForce` DOES AT **ONE** CANDIDATE**, which
+      is the half a reader will not guess from the field alone. The M1 no-choice
+      rule forces a lone candidate because a question with one answer is not a
+      question — but a DECLINABLE pick has TWO answers over one candidate (take
+      it, or don't), so it parks at every non-empty candidate set. **This is D47's
+      call, verbatim**, made for `choosePokemonMulti` and reversed there in
+      review: the first draft honoured the decline only at 3+ bodies, i.e.
+      *"exactly where declining matters least"*. */
+  | { kind: "choosePokemon"; candidates: PokemonRef[]; declinable?: true; note: string }
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
       Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
@@ -579,7 +611,25 @@ export type DiscardScope =
 /** The controller's answer, off the resolveEffect action (wire-checked there). */
 export type EffectChoice =
   | { kind: "cards"; uids: string[] }
-  | { kind: "pokemon"; ref: PokemonRef }
+  /** The `choosePokemon` answer: the picked ref — **or, since D358, NO ref at
+      all, which is the decline** of a park whose prompt carries `declinable`.
+
+      🛑 **A WIDENED MEMBER AND NOT A NEW `kind`, AND THE CHOICE IS DELIBERATE.**
+      A `{ kind: "declinePokemon" }` member would be answered by NONE of the nine
+      arms that read this shape (`applyChoice`'s switch, `continuationOps`'), so
+      every one of them would fall through its existing `: state` / `: []` default
+      **silently** — the right board by accident, and unreadable as an intention.
+      Absent-`ref` makes each of those nine sites state, in code, that a decline
+      moves nothing. It also keeps the union at ten members and the wire frame of
+      a decline strictly SMALLER than any existing answer, so no client that
+      predates this slice can produce one by accident: they all attach a ref.
+
+      ⚠️ **THE VALIDATOR IS WHERE THE WIDENING EARNS ITS KEEP** (D341's rule for
+      `orderCards`, one member over). An absent `ref` is accepted against a
+      `declinable` prompt and REFUSED with `BAD_EFFECT_CHOICE` against every
+      other one — so a crafted frame cannot decline Boss's Orders' gust, which
+      prints no *"up to"* and no *"you may"* and must resolve. */
+  | { kind: "pokemon"; ref?: PokemonRef }
   | { kind: "pokemonMulti"; refs: PokemonRef[] }
   /** The moveEnergy answer: up to `max` movable Energy uids (all sharing one
       source) moved onto `dest` — the compound decision validateChoice checks
@@ -1228,14 +1278,14 @@ function continuationOps(cont: EffectContinuation, choice: EffectChoice): Effect
       : [];
   }
   if (op.op === "moveCountersChosen" && op.fromBench === undefined) {
-    return choice.kind === "pokemon" ? counterSourceAnswered(op, choice.ref) : [];
+    return pickedPokemon(choice) ? counterSourceAnswered(op, choice.ref) : [];
   }
   // 🆕 D309 — THE THIRD MEMBER, and the first whose answer buys an op of a
   // DIFFERENT KIND. `evolveFromDeckChosen` carries no field to be "still unknown",
   // so there is no `=== undefined` guard to write: the op exists only to ask, and
   // reaching this line at all means it has been answered.
   if (op.op === "evolveFromDeckChosen") {
-    return choice.kind === "pokemon" ? evolveBodyAnswered(choice.ref) : [];
+    return pickedPokemon(choice) ? evolveBodyAnswered(choice.ref) : [];
   }
   // 🆕 D315 — THE FOURTH MEMBER, and the FIRST whose answer buys **N** ops rather
   // than one: *"Choose up to 2 … For each of those Pokémon, …"* is D308's
@@ -2741,6 +2791,19 @@ function stepOp(
         `Attach ${
           op.count === undefined ? "the Energy" : `up to ${op.count} Energy`
         } to which of your ${attachTargetNoun(op)}?`,
+        // 🆕 D358 — no `decider`: the printed *"up to N"* moves WHETHER, never
+        // WHO, so the fifth argument stays absent exactly as it was and the
+        // sixth is spelled positionally rather than folded into it. The flag
+        // rides the OP because only the print knows: `attachEnergyFrom` serves
+        // eleven Standard-legal sentences and only two of them print a ceiling
+        // the player may come in under (Archaludon ex ×3, Magneton ×3). Deriving
+        // it here — from `count`, from the program's op count, from anything the
+        // interpreter can see — would make Eelektrik's *"attach a Basic {L}
+        // Energy card … to 1 of your Benched Pokémon"* declinable too, and that
+        // sentence prints neither *"up to"* nor a hidden zone to fail a search
+        // in (§9.1's one other decline, which rides the ZONE and not the number).
+        undefined,
+        op.declinable,
       );
     }
     // All three gates are spliced by runProgram's queue loop (never reach here).
@@ -3526,8 +3589,40 @@ export function attackerPreWRBonus(
   return bonus + seatPreWRDamageBonus(state, seat, topCardOf(state, pokemon), defenderCard);
 }
 
-/** A mandatory targeting op: no candidate = no-op, one = forced (auto-resolve),
-    ≥2 = park on a choosePokemon prompt. */
+/** 🆕 D358 — **DID THE ANSWER NAME A POKÉMON?** The `pokemon` choice carries an
+    OPTIONAL ref since this slice, because an absent one is the printed decline of
+    an *"up to N"* park (see `EffectChoice`), so every site that used to read
+    `choice.kind === "pokemon"` now has a second question to ask. It is asked ONCE,
+    here, rather than as nine copies of the same conjunction — and as a narrowing
+    predicate rather than a bare boolean, so each call site keeps reading
+    `choice.ref` with no non-null assertion and no re-check.
+
+    ⚠️ **EIGHT OF THE NINE CALL SITES CANNOT SEE A DECLINE TODAY, AND THAT IS A
+    VALIDATOR GUARANTEE RATHER THAN A TYPE ONE.** `attachEnergyFrom` is the only op
+    that sets `declinable`, and `validateChoice` refuses a ref-less answer to every
+    prompt without it — so switch / gust / returnBenched / healChosen / the two
+    counter moves / both evolve-body continuations reach their `: state` ending on
+    this predicate only through a path the wire cannot open. They are written
+    anyway, and NOT as unreachable branches (D205's rule): this predicate is the
+    same shape as the `choice.kind` test it replaces, which is itself a
+    validator-unreachable belt at all nine sites. What is refused is a NEW arm
+    saying something different per op — a decline moves nothing, everywhere, and
+    the one ending they already share says exactly that. */
+function pickedPokemon(choice: EffectChoice): choice is { kind: "pokemon"; ref: PokemonRef } {
+  return choice.kind === "pokemon" && choice.ref !== undefined;
+}
+
+/** A targeting op: no candidate = no-op, one = forced (auto-resolve), ≥2 = park
+    on a choosePokemon prompt — **unless the print says the pick may be refused,
+    in which case ONE candidate parks too.**
+
+    🆕🆕 D358 — the three arms below were, until this slice, the whole reason
+    the printed *"attach **up to** N"* was over-resolved: none of them is a
+    decline. The zero arm is a silent no-op (there was nothing to ask), the one
+    arm is the M1 no-choice rule, and the ≥2 arm parked a prompt whose only
+    legal answer was a ref. `declinable` does not add a fourth arm — it moves
+    the BOUNDARY between the second and the third, because that boundary is the
+    only thing the M1 rule was ever about. */
 function parkOrForce(
   state: GameState,
   candidates: PokemonRef[],
@@ -3546,11 +3641,36 @@ function parkOrForce(
       `settleProgram` applies one level up when it decides whether to file
       `phase.answerer`. */
   decider?: Seat,
+  /** 🆕 D358 — the printed *"up to N"*: this pick may be answered with NOTHING.
+
+      ⚠️ **IT MOVES THE FORCED ARM, AND THAT IS THE WHOLE OF WHAT IT DOES HERE.**
+      The M1 no-choice rule auto-applies a lone candidate because a question with
+      one answer is not a question — true of a MANDATORY pick and false of this
+      one, where a single offered body still leaves two answers (take it, or
+      don't). So a declinable park asks at EVERY non-empty candidate set.
+      **D47 decided this exact question for `choosePokemonMulti` and its review
+      REVERSED the first draft on it**: honouring the decline only above the
+      auto-resolve threshold honours it *"exactly where declining matters
+      least"*, since that is the board where the player has the most other
+      outs. The zero arm is untouched — a decline and a whiff produce the same
+      board, and asking a question with no candidates is not a decision either.
+
+      ⚠️ ABSENT-WHEN-UNDEFINED, like `decider` above it, so all eight existing
+      callers produce a byte-identical result to the pre-D358 one: no argument,
+      no key on the prompt, the same forced arm at one candidate. */
+  declinable?: true,
 ): { done: GameState } | { park: EffectPrompt; decider?: Seat } {
   if (candidates.length === 0) return { done: state };
-  if (candidates.length === 1) return { done: apply(candidates[0] as PokemonRef) };
+  if (candidates.length === 1 && declinable !== true) {
+    return { done: apply(candidates[0] as PokemonRef) };
+  }
   return {
-    park: { kind: "choosePokemon", candidates, note },
+    park: {
+      kind: "choosePokemon",
+      candidates,
+      ...(declinable === undefined ? {} : { declinable }),
+      note,
+    },
     ...(decider === undefined ? {} : { decider }),
   };
 }
@@ -3689,11 +3809,11 @@ export function applyChoice(
       // `attachFromDeck`'s stated reason: what MOVED, never what was offered or
       // picked. A wire answer that named a body `switchInto` then refused would
       // otherwise file a switch that did not happen.
-      return choice.kind === "pokemon"
+      return pickedPokemon(choice)
         ? switchRecording(op, (into) => switchOwn(state, choice.ref, ctx, into), events, record)
         : state;
     case "gust":
-      return choice.kind === "pokemon"
+      return pickedPokemon(choice)
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
         : state;
     case "returnBenched":
@@ -3703,7 +3823,7 @@ export function applyChoice(
       // that, not for the record. The ref is trusted exactly as far as the two
       // arms above trust theirs — `returnBenched` re-reads the bench slot and
       // no-ops on a wire answer whose body has since left play.
-      return choice.kind === "pokemon" ? returnBenched(state, choice.ref, op, ctx, events) : state;
+      return pickedPokemon(choice) ? returnBenched(state, choice.ref, op, ctx, events) : state;
     case "opponentSwitchOut":
       // D227 — the resumed half of the case above, and at D228 it is that case
       // VERBATIM: `ctx.seat` is still the CONTROLLER here (the program's owner;
@@ -3717,7 +3837,7 @@ export function applyChoice(
       // omission here would file nothing on precisely the boards the printed
       // "If you do" is interesting on, and the 160 would silently vanish behind a
       // gate reading an empty slot. Driven on a two-body Bench.
-      return choice.kind === "pokemon"
+      return pickedPokemon(choice)
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
         : state;
     case "healChosen":
@@ -3732,7 +3852,7 @@ export function applyChoice(
           state,
         );
       }
-      return choice.kind === "pokemon"
+      return pickedPokemon(choice)
         ? healChosen(state, choice.ref, op.amount, ctx, events)
         : state;
     case "moveCountersToDefender":
@@ -3740,7 +3860,7 @@ export function applyChoice(
       // single-pick arm above and for the same reason: `validateChoice` matches
       // the answer against the PARKED prompt, so the wrong choice kind is the
       // wire belt rather than a case that can fire in a real match.
-      return choice.kind === "pokemon"
+      return pickedPokemon(choice)
         ? moveCountersToDefender(state, choice.ref, ctx, events)
         : state;
     case "moveCountersChosen": {
@@ -3750,7 +3870,7 @@ export function applyChoice(
       // from here (`optional`'s arm above states the reason) — `continuationOps`
       // owns that half. The DESTINATION answer is the whole move.
       const chosen = op.fromBench;
-      if (choice.kind !== "pokemon" || chosen === undefined) return state;
+      if (!pickedPokemon(choice) || chosen === undefined) return state;
       return moveCountersFromBench(state, chosen, choice.ref, ctx, events);
     }
     case "damageChosen":
@@ -3772,7 +3892,14 @@ export function applyChoice(
           )
         : state;
     case "attachEnergyFrom":
-      return choice.kind === "pokemon"
+      // 🆕 D358 — **THE DECLINE IS THE ABSENT REF, AND IT MOVES NOTHING.** This is
+      // the one arm in this switch that can actually receive one: `validateChoice`
+      // refuses a ref-less answer to every prompt that did not carry `declinable`,
+      // and `op.declinable` is the only thing that sets it. The board is returned
+      // untouched — same ending as the op's whiff, which is what *"attach up to 2"*
+      // with a player answering "none" means. No event: nothing moved, and a row
+      // saying so would claim an attach that did not happen.
+      return choice.kind === "pokemon" && choice.ref !== undefined
         ? attachEnergyFrom(state, op, choice.ref, ctx, events, record)
         : state;
     case "attachFromTop":

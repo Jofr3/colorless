@@ -492,6 +492,13 @@ function effectDecisionFromPrompt(
         prompt: {
           kind: "choosePokemon",
           candidates: prompt.candidates.map(refFromWire),
+          // 🆕 D358 — carried, and by a CONDITIONAL SPREAD like every optional
+          // field in this file. Dropping it here would rebuild a declinable park
+          // as a mandatory one and the dialog on the far side of this projection
+          // would silently stop offering the printed "up to N" decline — the
+          // round-trip is the identity or it is a lie, which is what every other
+          // arm here is asserting by rebuilding field for field.
+          ...(prompt.declinable === undefined ? {} : { declinable: prompt.declinable }),
           note: prompt.note,
         },
       };

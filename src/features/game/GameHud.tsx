@@ -1858,7 +1858,16 @@ function OrderCardsDialog({
 }
 
 /** Choose exactly one Pokémon (switch / gust / heal). Picking is the whole
-    decision, so each row dispatches directly. */
+    decision, so each row dispatches directly.
+
+    🆕 D358 — **AND ON A `declinable` PROMPT, NOT PICKING IS ALSO A WHOLE
+    DECISION**, so it gets a row of its own rather than a modifier on the others:
+    the printed *"attach **up to** 2"* (Archaludon ex, Magneton) means the empty
+    answer is one of the offered outcomes, not an escape from the dialog. Absent
+    on every other producer, where the pick is mandatory and a "Take none" would
+    offer a dispatch the engine rejects — the house rule this file applies to
+    every dialog (see `ChoosePokemonMultiDialog` below). Kept LAST and separated,
+    because the eye reads a list of bodies and this row is not one of them. */
 function ChoosePokemonDialog({
   game,
   viewerSeat,
@@ -1893,6 +1902,19 @@ function ChoosePokemonDialog({
             </button>
           </li>
         ))}
+        {prompt.declinable === true && (
+          <li className="mt-1.5 border-t border-white/10 pt-1.5">
+            <button
+              type="button"
+              onClick={() =>
+                dispatch({ type: "resolveEffect", seat: viewerSeat, choice: { kind: "pokemon" } })
+              }
+              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+            >
+              <span className="truncate">Take none</span>
+            </button>
+          </li>
+        )}
       </ul>
     </HudDialog>
   );

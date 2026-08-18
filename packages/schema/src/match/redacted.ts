@@ -471,11 +471,27 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     note: z.string(),
     alt: z.string().optional(),
   }),
-  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen). The
-      candidates are public in-play refs. */
+  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — or,
+      where `declinable` says the print allows it, pick NONE. The candidates are
+      public in-play refs.
+
+      🆕🆕 **D358 — `declinable` IS THE PRINTED *"attach up to N"*** (Archaludon
+      ex ×3, Magneton ×3), and it has to CROSS: the dialog decides whether to
+      offer a "Take none" at all, and `validateChoice` decides whether a ref-less
+      answer is a decline or a crafted frame refusing a mandatory effect. Neither
+      of them can see the engine op, which is the same argument `moveEnergy`'s
+      `anySource` makes three arms down.
+
+      **OPTIONAL, and absent means MANDATORY** — the reading every park in this
+      arm carried before the field existed — unlike `choosePokemonMulti`'s
+      required boolean below. That is not a style difference: this prompt rides
+      the persisted `effect:choose` phase, so a snapshot written by an earlier
+      deploy must round-trip through this schema unchanged, and a required field
+      would reject it. `MATCH_RECORD_VERSION` does not move. */
   z.object({
     kind: z.literal("choosePokemon"),
     candidates: z.array(redactedPokemonRefSchema),
+    declinable: z.literal(true).optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`
