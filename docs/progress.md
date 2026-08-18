@@ -597,8 +597,39 @@
 > replaced. (Checked first that none of the 8 `find` strings quotes resume-point
 > BODY text — all eight anchor on structural markers: `## Session log`,
 > `**Last updated:** `, the #219/#220 gap declaration, session #213's heading, the
-> `| simulator | P3 | ` status row, the first archive heading and the
+> `| simulator | P3 |` status row, the first archive heading and the
 > `## NEXT (resume point)` heading itself.)
+>
+> ### ▶ 🛑🛑 **AND THE SWEEP CAUGHT THIS PARAGRAPH BREAKING A MUTATION ROW — WHICH
+> ### IS THE DEPARTURE ABOVE PAYING FOR ITSELF ON ITS FIRST RUN.**
+>
+> **`docs/progress.md` IS A MUTANT TARGET, SO PROSE THAT QUOTES A ROW'S `find`
+> VERBATIM CAN MAKE THAT ROW AMBIGUOUS.** The list above originally wrote the
+> status-row anchor WITH its trailing space — `|`, space, `simulator`, space, `P3`,
+> space, `|`, space — which is `D318-status-row-renamed`'s `find` character for
+> character. The string then matched TWICE on the page, the harness cannot pick,
+> and the row returned **ERROR (0.0s)** in the full sweep: not killed, not
+> survived, *not run at all*.
+>
+> ⚠️ **THE PAGE HAD ALREADY LEARNED THIS TWICE AND THE FIX IS ITS OWN
+> CONVENTION**: every older mention of that row writes it **without** the trailing
+> space, which is why none of them ever collided. Matched here.
+> ⚠️ **AND THE OTHER THREE QUOTES IN THAT SAME SENTENCE DID *NOT* COLLIDE, WHICH
+> IS THE DISCRIMINATOR WORTH CARRYING**: `## Session log`, `**Last updated:** ` and
+> `## NEXT (resume point)` are all quoted verbatim above and all three rows were
+> KILLED, because each of those `find` strings carries a LINE-ANCHORED or
+> multi-line prefix (`\n## `, `the next concrete action.\n\n`, `\n\n### `) that
+> quoted prose inside a `>` blockquote cannot reproduce. **A BARE MID-LINE `find`
+> IS THE ONLY SHAPE THIS HAZARD HAS**, so quoting one needs the space broken and
+> quoting the others does not.
+>
+> 🛑 **AND THIS IS THE ARGUMENT FOR CLOSING THE DOCS *BEFORE* THE SWEEP, MADE BY
+> MEASUREMENT RATHER THAN BY PREFERENCE.** Under the standing "close the docs out
+> AFTER the sweep" order this ERROR SHIPS INVISIBLY: the sweep would have been
+> green against the PREVIOUS slice's resume point, the breaking prose would land
+> after it, and the row would sit dead until some later slice happened to notice a
+> 0.0s ERROR in its own tally. **A SWEEP THAT DOES NOT INCLUDE THE BYTES YOU ARE
+> ABOUT TO SHIP HAS NOT SWEPT WHAT YOU SHIPPED.** Keep the order.
 >
 > ### ▶ 🛑 DO NOT RUN `bunx biome format --write` ON THIS REPO
 >
