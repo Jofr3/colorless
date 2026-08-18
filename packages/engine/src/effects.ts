@@ -8957,9 +8957,14 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
     reason: arbitrary printed text must not reach `Object.prototype`.
 
-    🆕 D363 — THREE rows, three cards, FIVE printings, and all three reuse a
-    `BoardCondition` member that already existed, so neither this slice nor D125
-    buys any new vocabulary at all. Every remaining "does nothing" clause in the
+    🆕 D363 — THREE rows, three cards, and all three reuse a `BoardCondition`
+    member that already existed, so neither this slice nor D125 buys any new
+    vocabulary at all. ⚠️ 🆕🆕 D364 — D363 wrote "FIVE printings" here and that
+    counted the five card IDS THE COMMENTS NAME, not printings the pool can play:
+    measured by `legal_standard`, the three rows are worth **0 + 2 + 2 = FOUR**
+    legal printings, and two of the five named ids (`sv03-062`, `sv03-117`) are
+    out of Standard entirely. See each row's own note, and §4 of
+    `splitOrder.test.ts`, which asserts the 0 / 2 / 2 split live off the corpus. Every remaining "does nothing" clause in the
     pool stays UNMAPPED and therefore LOUD — and being unmapped is now
     LOAD-BEARING TWICE OVER, because `splitAttackRequirementClause` refuses to
     strip a leading sentence whose clause this table does not carry.
@@ -8977,11 +8982,21 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // of D124's promoted-this-turn row, reading the same `InPlayPokemon.promotedTurn`
   // stamp that slice bought. D116's pronoun rule: "this Pokémon" on an attack is
   // the attacking Active, so the member is `yourActivePromotedThisTurn`.
+  //
+  // ⚠️ 🆕🆕 D364 — **THIS ROW HAS ZERO STANDARD-LEGAL PRINTINGS AT HEAD.** All
+  // five printings of the sentence (`sv03-062`/`-200`, `sv04.5-124`/`-225`,
+  // `svp-036`) are `legal_standard = 0` (remote D1 `luminous`, `$.effect`,
+  // 2026-08-18). The row is KEPT, not deleted — it is keyed on printed text, the
+  // reading is still correct, and a reprint restores it for free — but it is
+  // UNREACHABLE from `legalAttackCorpus()`, so nothing in the legal pool can
+  // exercise it and no board can. `splitOrder.test.ts` §4 prices all three rows
+  // by LEGAL printings (0 / 2 / 2) rather than by rows, because a row count is
+  // not a coverage map even inside one table.
   [
     "this Pokémon didn't move from the Bench to the Active Spot this turn",
     { kind: "yourActivePromotedThisTurn" },
   ],
-  // Lycanroc sv03-117 "Finishing Fang" ({F}, 90) — a HAPAX, and the row where the
+  // Lycanroc sv03-117 "Finishing Fang" ({F}, 90) — the row where the
   // requirement reading pays for itself: the printed trailing qualifier "before
   // this attack does damage" is DISCHARGED BY THE SITE, not by the predicate.
   // `opponentActiveDamaged`'s own doc block already commits it to being read at
@@ -8990,11 +9005,20 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // §8.5 pipeline — so the qualifier is true by where the check runs, and there
   // is nothing extra to model. An undamaged defender cannot be bootstrapped into
   // satisfying the clause by the very hit the clause gates.
+  //
+  // ⚠️ 🆕🆕 D364 — **THE COUNT WAS RIGHT AND THE CARD IS WRONG, AND IT IS NOT A
+  // HAPAX.** `sv03-117` Lycanroc is `legal_standard = 0` at HEAD; the sentence's
+  // TWO Standard-legal printings are **Basculin `sv10.5w-024`/`-108` "Bared
+  // Fangs" ({W}, 50, attack index 1)** (remote D1 `luminous`, `$.effect`,
+  // 2026-08-18). The row's 2-legal-printing price has been correct throughout —
+  // only the id and the "HAPAX" claim rotted, one set rotation at a time, which
+  // is D363's own lesson (a count reproduces while its attribution is wrong)
+  // landing on the table D363 was editing.
   [
     "your opponent's Active Pokémon has no damage counters on it before this attack does damage",
     { kind: "opponentActiveDamaged" },
   ],
-  // 🆕🆕 D363 — Sawk sv10.5w-049/-130 "Rising Chop" ({F}{C}, 90), the printed
+  // 🆕🆕 D363 — Sawk sv10.5w-049/-130 "Rising Chop" ({F}, 90), the printed
   // NEGATION of D362's bonus clause and the row D362 measured, priced and then
   // refused. ZERO NEW VOCABULARY: `opponentActiveIsEx` is D362's member, spelled
   // POSITIVE one table up as "your opponent's Active Pokémon is a Pokémon ex" —
@@ -15049,15 +15073,35 @@ const ATTACK_GATE_CLAUSES: readonly string[] = [
 
     ⚠️ **THE POPULATION IS 13 AND THAT IS SMALLER THAN THE CASE FOR A GENERIC
     SENTENCE-LIST COMPOSER, WHICH IS WHY THIS IS NOT ONE.** Re-queried before a
-    line shipped (remote D1, 2026-08-08): 1,732 legal attack units, 613
-    multi-sentence, and of those only 16 open with `If ` at all — 10 of the 16 are
-    this gate family, 3 more are its `You can use this attack only if…` spelling,
-    and the remaining 6 are sentences whose leading `If` IS the substance (Chi-Yu
-    `sv06-039`, Sandy Shocks `sv05-098`, Sawk `sv10.5w-049`/`-130`, Ting-Lu
-    `sv06-110`, Wo-Chien `sv08-015`), 5 of which attack.ts already pins as deferred
-    riders on a DIFFERENT mechanism. So the leading-clause population a split can
-    serve is **exactly the 13 gates and not one printing more**, and a generic
-    composer would be scaffolding for a family of one. Build the narrow thing.
+    line shipped (remote D1, 2026-08-08; re-run unchanged 2026-08-18): 1,732 legal
+    attack units, 613 multi-sentence, and of those only 16 open with `If ` at all.
+
+    🆕🆕 D364 — **THE 16 PARTITION AS 10 + 6, AND THE SENTENCE ABOVE USED TO SAY
+    SOMETHING THAT READS AS 10 + 3 + 6.** The three arms are NOT three slices of
+    the 16:
+      • **10 of the 16** are this gate family's two `If `-spellings (7 BAN + 3 GATE);
+      • the LICENCE spelling's **3 printings are NOT in the 16 at all** — they open
+        `You can use this attack only if…`, so they cannot be in a population
+        defined as "opens with `If `". They are the third arm of the **13**, which
+        is 10 + 3;
+      • the **remaining 6 of the 16** are sentences whose leading `If` IS the
+        substance (Chi-Yu `sv06-039`, Sandy Shocks `sv05-098`, Sawk
+        `sv10.5w-049`/`-130`, Ting-Lu `sv06-110`, Wo-Chien `sv08-015`), 4 of which
+        attack.ts still pins as deferred riders on a DIFFERENT mechanism and 2 of
+        which are D363's requirement family.
+    D363's handoff read the old wording as *"13 timing gates plus 3 licence"*,
+    which sums to 16 by double-counting the LICENCE arm and dropping the six. The
+    counts were never wrong; the attribution was. `splitOrder.test.ts` §1 asserts
+    the partition so the prose cannot rot again.
+
+    So the leading-clause population a split can serve is **exactly the 13 gates
+    and not one printing more**, and a generic composer would be scaffolding for a
+    family of one. Build the narrow thing. ⚠️ AND THE SECOND STRIPPER DID NOT
+    CHANGE THAT: D364 measured `splitAttackGateClause` and
+    `splitAttackRequirementClause` **DISJOINT over all 1,732 legal units** — 0 are
+    claimed by both — so a `splitHead` that loops would still answer no printed
+    string differently. See `splitOrder.test.ts` §2/§3, which pin the disjointness
+    as a tripwire and the site's ORDER as the commitment it is.
 
     Returns the clause and the body separately rather than the body alone, so a
     caller that wants to assert WHICH clause it accounted for can. */

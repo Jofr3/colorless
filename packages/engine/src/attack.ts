@@ -697,6 +697,25 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `deriveAttackDamageSuppression` has read since D192 and could never be given.
   // Measured pool-wide: 2 rows in 978 cards / 6 sets carry a leading does-nothing sentence
   // with any trailing text at all, and both are that card.
+  //
+  // 🆕🆕 D364 — **THE ORDER OF THESE TWO SPLITS IS A COMMITMENT, AND NOTHING
+  // PRINTED CAN CURRENTLY REVEAL IT.** Re-measured over all 1,732 legal attack
+  // units: `splitAttackGateClause` claims 13, `splitAttackRequirementClause`
+  // claims 2, and **0 units are claimed by both** — the two strippers are DISJOINT
+  // on the catalog, so running them in either order answers every printed string
+  // identically. That is exactly why a `splitHead` that loops over a sentence list
+  // stays refused: it would be scaffolding for a population of zero (D282's
+  // refusal, re-derived rather than inherited).
+  //
+  // ⚠️ The order below is still the RIGHT one and is asserted rather than assumed.
+  // On a compound carrying both clauses the two orders DISAGREE: gate-then-
+  // requirement resolves it completely, requirement-then-gate resolves neither,
+  // because the requirement split's LAZY clause group runs past the gate sentence
+  // and its accounting guard then refuses the unmapped result. Both orders fail
+  // in the SAFE direction — the residue is a superstring either way, so no
+  // printed sentence can be silently deleted by getting this wrong.
+  // `splitOrder.test.ts` §2/§3 drive all of it, including the disjointness as a
+  // TRIPWIRE that reddens by name the day a printing carries both.
   const requirementSplit =
     gated === null || gated === "" ? null : splitAttackRequirementClause(gated);
   // D125 — the printed "If <clause>, this attack does nothing." REQUIREMENT: the

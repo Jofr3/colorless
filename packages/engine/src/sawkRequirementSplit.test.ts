@@ -64,7 +64,9 @@ import {
 // with `effectSimulated`'s requirement term gated on "no split fired". §4 and §5
 // drive both, on boards, in both directions.
 
-/** Sawk `sv10.5w-049`/`-130` "Rising Chop" ({F}{C}, 90), as PRINTED. */
+/** Sawk `sv10.5w-049`/`-130` "Rising Chop" ({F}, 90 — D364 re-read the cost off
+    `attacks_json`: it is ONE Fighting, not `{F}{C}`; the `fix-sawk` FIXTURE costs
+    `{F}{C}` and that is a fixture choice, not the printing), as PRINTED. */
 const SAWK =
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.";
 /** The leading sentence alone — anchor-admissible before D363 and after it. */
