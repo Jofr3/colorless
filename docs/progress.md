@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-18 — build session #301 (**P3-M5 — D361, *the cross-seat Energy discard: three printed sentences off ONE widening plus ONE anchor.*** Engine **0.266.0 → 0.267.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited and the ask recorded on the `D275` row — an `EffectOp` IS persisted (`EffectContinuation.pendingOp` **and its `rest` tail**) and **two of the three sentences PARK**, so the hazard is genuinely live; but a v22 record holding an `opponentEach` discard carries **no** `count`, and absence meant *one from each* before and means *one from each* after. **THE ONE TYPE CHANGE IS A WIDENING AND ITS EVIDENCE IS A QUANTIFIER CONTRASTED AGAINST ITS OWN ABSENCE ON THE SAME OP, ZONE AND DESTINATION**: `discardEnergy`'s `opponentEach` arm went `count?: never` → `count?: "all"` because the catalog prints BOTH quantifiers on it — Giacomo `sv02-182` *"a Special Energy from **each**"* (absent, one per body) and Ceruledge `sv08-035`/`-197` *"**all** Special Energy from **all** of"* (the inline `count === "all"` branch) — and the `never`'s own stated reason (*"the field would be SILENTLY IGNORED"*) is true of a NUMBER and false of `"all"`. Not `"all" | number`: no printed sentence puts a number or an "any amount" on a per-body sweep, queried across all three columns. **A WIDENING IS FREE; A GENERALISATION IS NOT.** 🛑 **S4 WAS DONE FIRST AND IT IS NOW CHEAP** — `grep 'op: "discardEnergy"'` over non-test source returns object literals in exactly TWO files (`effects.ts`, `registry.ts`); `interpreter.ts`'s five hits are `Extract<EffectOp, …>` TYPE positions, i.e. consumers. Producer set CLOSED before a line moved. The nine-reader residue reproduced 640/1,732 · 320/1,177 · 320/555, and 1,177 is `BUILT.attack`'s own committed RAW summand; a RECURSIVE `discardEnergy` flatten over the deriver reports 12 s / 92 p where a top-level filter reports 8 s / 76 p. **BOUGHT: 3 sentences / 8 Standard-legal printings** (Victini `sv05-030`, Farfetch'd `sv06-132`, Cobalion `sv10.5b-066`/`-144`; Ducklett `sv10.5w-025`/`-109`; Ceruledge ×2) with **ZERO** new ops, `CardFilter` kinds, condition kinds, op fields, prompt kinds or registry keys, and the round-trip surface predicted at ZERO bytes and measured at zero. **REFUSED WITH A MEASURED REASON: Turtonator `sv08-137`** (*"…Active Pokémon **ex**."*) needs an ex-ONLY narrowing and `opponentActiveIsExOrV` is strictly WIDER, so reusing it would strip a Pokémon V the card does not name — **a block is not an all-or-nothing purchase**. **THE ROTATED `{W}` PRINTING (Growlithe `sv03.5-058`) DERIVES ANYWAY AND THE SLICE SAYS SO** — rotation decides who may PLAY a card, not what the card SAYS, applied prospectively. 🛑🛑 **THE `--decision D361` PROBE MADE A ROW SURVIVE AND THAT WAS THE SLICE'S BEST FINDING**: `D361-sweep-anchor-swallows-giacomos-wording` came back **3 killed · 1 GAP** because loosening `all of` → `(all|each) of` still requires the leading *"all"* and Giacomo prints *"a Special Energy from each of"* — **the anchor is defended by TWO independent printed words and the suite asserted only the first**; §6 now also refuses the unprinted `all … each of` crossing and the re-probe on a quiet tree returned **4 killed · 0 GAPs · 0 errors**. **A ROW COUNT IS NOT A COVERAGE MAP; BOTH RUNS ARE RECORDED BECAUSE BOTH RUNS HAPPENED.** Red files predicted **3**, measured **4** — the three predicted were exact (including the CONTROL at `providesEnergy.test.ts:170`, caught in prediction by running the PLANNED REGEXES over every string literal), and the miss is a NEW variant: `clauseApostrophe.test.ts` is keyed on the **FIXTURE POOL** rather than on a sentence, an id or a census column. Census MOVED, all through the RAW summand: `BUILT.attack` **1206 → 1214**, raw **1177 → 1185**, resolved **320 → 323**, `built` **1607 → 1615**, residue **776 → 768**, `unbuiltAttack` **526 → 518**; `raw.length` **708**, `nonAttackRegistryIds` **564**, `units` **2383** MEASURED UNMOVED and the last-N baton does NOT expire (zero registry keys). Suite **368 files / 7,624 tests**; corpus **1119 → 1123** against a budget of 4, one per claim; sweep **1100 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1123**; `bun run check` GREEN exit 0. **AND THE HANDOFF ASKED ITS OWN QUESTION RATHER THAN LEAVING IT AS HOMEWORK**: the ex-ONLY board predicate is **8 sentences / 13 legal printings, ALL UNBUILT**, against the WIDER *"ex or Pokémon V"* spelling which is **already built at 4 / 6** — so the refused member is the missing half of a pair, not a bespoke narrowing, and the recommendation INVERTED on the measurement.)
+**Last updated:** 2026-08-18 — build session #302 (**P3-M5 — D362, *the ex-ONLY Active board predicate: the missing half of a pair, not a bespoke narrowing.*** Engine **0.267.0 → 0.268.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited on TWO independent lines — a `conditionGate` is SPLICED by `runProgram`'s queue loop and never enters `GameState.phase`, so the condition is not persisted at all; and `match.ts` already settles the class (*"a new `BoardCondition` member is a UNION WIDENING (D125) … no record can contain a member no deploy could author"*). **THE HEADLINE: D361 REFUSED THIS MEMBER ON THE RATIO "ONE UNION MEMBER FOR ONE PRINTING", THEN MEASURED IT AND INVERTED ITS OWN RECOMMENDATION — AND THE RE-DERIVATION HOLDS EXACTLY.** The ex-ONLY Active board predicate is **8 sentences / 13 legal printings, all unbuilt**, against the strictly **WIDER** *"ex **or Pokémon V**"* spelling of the SAME clause-table template, **built since D107 at 4 / 6**. The narrower predicate has **more than twice** the printings of the wider one the engine already reads. **A RATIO ARGUED FROM ONE PRINTING AND A RATIO MEASURED OVER THE CLAUSE ARE DIFFERENT NUMBERS.** 🛑 **S4 WAS DONE FIRST AND THE PRODUCER SET IS NOT `discardEnergy`'s TWO FILES** — all 29 union members grepped as `kind: "<name>"` over non-test source closes it at **THREE** (`effects.ts` 55 hits, of which 28 are the union DECLARATION; `registry.ts` 35; `continuous.ts` 1), with `index.ts`'s 2 doc PROSE and `mutants.ts`' 26 anchors; the CONSUMER set is `interpreter.ts` **alone**, because `redact.ts` and `cardplay.ts` read the union OPAQUELY. S1 nine readers: **640 s / 1,732 p** corpus, **323/1,185 → 330/1,196** resolved, **317/547 → 310/536** residue, both sides SUM-CHECKED. S3 remote D1 on `$.effect`, extractor verified against known-present rows FIRST, **== S1 exactly**. **BOUGHT: 7 sentences / 11 Standard-legal printings** with **ZERO** new ops, op fields, `CardFilter` kinds, prompt kinds, registry keys, `cards.ts` predicates or `packages/schema`. **REFUSED, AND THIS IS THE LINE D361 LEFT EXPLICITLY UNPRICED: the *"isn't a Pokémon ex, this attack does nothing"* negation (Sawk `sv10.5w-049`/`-130`, 2 legal). `deriveAttackRequirement` OWNS THE SHAPE AND DOES NOT OWN THE PRINTING** — its table maps a printed NEGATIVE clause to the POSITIVE board fact, so it would have been one row and no `{kind:"not"}` member, but `ATTACK_DOES_NOTHING` is anchored `^…$` and Sawk prints TWO sentences. **MEASURED WITH A CONTROL**: Palafin's existing row reads today and stops the instant the identical trailing sentence is bolted on. 🛑 **A WIDENING WAS PRICED BEFORE IT WAS REFUSED** — widening `opponentActiveIsExOrV` honestly needs a RENAME (its name IS its specification), measured at **31 sites / 7 files** against **4** for the addition: **a widening is free; a rename is not**, which is why this one is an addition, and the no-new-vocabulary refutation is driven on a BOARD (a Pokémon V Active is the ONE board the two members disagree on, asserted from both seats). 🛑🛑 **S2 EARNED ITS KEEP AND KILLED A NON-SEQUITUR THE LAST FIVE CLOSE-OUTS SHIPPED**: "this slice authored zero registry keys, so the registry summand cannot move" is not the reason — **FOUR of the eleven printings DO carry a `programFor` entry** (`sv10.5w-077`/`-162`/`-170` a `passive`, `sv09-018` an `abilities`), and what actually holds `REGISTRY_ATTACK_UNITS` at 16 is that **none of the four carries an `attack` key**. Red files predicted **4**, measured **5**. **MISS ONE is D361's defect (c) REPRODUCED** — 12 census rungs predicted by file, line and value; there were **13**, the extra one spelling `547` inside a rung named for something else (*the fix is to grep the OLD VALUE as a literal, not to list harder*). **MISS TWO is a NEW VARIANT: a guard keyed on a PREDECESSOR'S REFUSAL** — `crossSeatEnergyDiscard.test.ts` §6 asserted Turtonator derived to `null` and D362 paid the price that case named, so it is SPENT and rewritten; running the PLANNED ANCHOR over every string literal would have caught it and that step was skipped. ✅ **`clauseApostrophe.test.ts` 102 → 104 WAS PREDICTED** — D361's one miss, collected by asking what adding a FIXTURE moves. Census MOVED, all through the RAW summand: `BUILT.attack` **1214 → 1225**, raw **1185 → 1196**, resolved **323 → 330**, `built` **1615 → 1626**, residue **768 → 757**, `unbuiltAttack` **518 → 507**, re-added from the parts rather than incremented; `raw.length` **708**, `nonAttackRegistryIds` **564**, `units` **2383**, `splitHead` **13** MEASURED UNMOVED and the last-N baton does NOT expire (zero registry keys, sixth slice). Suite **369 files / 7,641 tests**; corpus **1123 → 1128** against a budget of 5, one per claim, of which **two cover ONE anchor's two independent defending words** (D361's own probe finding spent); `--decision D362` probe **5 killed · 0 GAPs · 0 errors** first run; `bun run check` GREEN exit 0. 🛑 **AND THIS PAGE WAS CLOSED WITH NO SWEEP NUMBER IN IT** — D361 wrote its page before its sweep (the correct order) and quoted an ANTICIPATED `1120 killed · 23` over a corpus of `1123`, and **1120 + 23 = 1143**: impossible, and one addition catches it. The measured totals are in the session-log entry below, written afterwards.)
+
+**Last updated (was):** 2026-08-18 — build session #301 (**P3-M5 — D361, *the cross-seat Energy discard: three printed sentences off ONE widening plus ONE anchor.*** Engine **0.266.0 → 0.267.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited and the ask recorded on the `D275` row — an `EffectOp` IS persisted (`EffectContinuation.pendingOp` **and its `rest` tail**) and **two of the three sentences PARK**, so the hazard is genuinely live; but a v22 record holding an `opponentEach` discard carries **no** `count`, and absence meant *one from each* before and means *one from each* after. **THE ONE TYPE CHANGE IS A WIDENING AND ITS EVIDENCE IS A QUANTIFIER CONTRASTED AGAINST ITS OWN ABSENCE ON THE SAME OP, ZONE AND DESTINATION**: `discardEnergy`'s `opponentEach` arm went `count?: never` → `count?: "all"` because the catalog prints BOTH quantifiers on it — Giacomo `sv02-182` *"a Special Energy from **each**"* (absent, one per body) and Ceruledge `sv08-035`/`-197` *"**all** Special Energy from **all** of"* (the inline `count === "all"` branch) — and the `never`'s own stated reason (*"the field would be SILENTLY IGNORED"*) is true of a NUMBER and false of `"all"`. Not `"all" | number`: no printed sentence puts a number or an "any amount" on a per-body sweep, queried across all three columns. **A WIDENING IS FREE; A GENERALISATION IS NOT.** 🛑 **S4 WAS DONE FIRST AND IT IS NOW CHEAP** — `grep 'op: "discardEnergy"'` over non-test source returns object literals in exactly TWO files (`effects.ts`, `registry.ts`); `interpreter.ts`'s five hits are `Extract<EffectOp, …>` TYPE positions, i.e. consumers. Producer set CLOSED before a line moved. The nine-reader residue reproduced 640/1,732 · 320/1,177 · 320/555, and 1,177 is `BUILT.attack`'s own committed RAW summand; a RECURSIVE `discardEnergy` flatten over the deriver reports 12 s / 92 p where a top-level filter reports 8 s / 76 p. **BOUGHT: 3 sentences / 8 Standard-legal printings** (Victini `sv05-030`, Farfetch'd `sv06-132`, Cobalion `sv10.5b-066`/`-144`; Ducklett `sv10.5w-025`/`-109`; Ceruledge ×2) with **ZERO** new ops, `CardFilter` kinds, condition kinds, op fields, prompt kinds or registry keys, and the round-trip surface predicted at ZERO bytes and measured at zero. **REFUSED WITH A MEASURED REASON: Turtonator `sv08-137`** (*"…Active Pokémon **ex**."*) needs an ex-ONLY narrowing and `opponentActiveIsExOrV` is strictly WIDER, so reusing it would strip a Pokémon V the card does not name — **a block is not an all-or-nothing purchase**. **THE ROTATED `{W}` PRINTING (Growlithe `sv03.5-058`) DERIVES ANYWAY AND THE SLICE SAYS SO** — rotation decides who may PLAY a card, not what the card SAYS, applied prospectively. 🛑🛑 **THE `--decision D361` PROBE MADE A ROW SURVIVE AND THAT WAS THE SLICE'S BEST FINDING**: `D361-sweep-anchor-swallows-giacomos-wording` came back **3 killed · 1 GAP** because loosening `all of` → `(all|each) of` still requires the leading *"all"* and Giacomo prints *"a Special Energy from each of"* — **the anchor is defended by TWO independent printed words and the suite asserted only the first**; §6 now also refuses the unprinted `all … each of` crossing and the re-probe on a quiet tree returned **4 killed · 0 GAPs · 0 errors**. **A ROW COUNT IS NOT A COVERAGE MAP; BOTH RUNS ARE RECORDED BECAUSE BOTH RUNS HAPPENED.** Red files predicted **3**, measured **4** — the three predicted were exact (including the CONTROL at `providesEnergy.test.ts:170`, caught in prediction by running the PLANNED REGEXES over every string literal), and the miss is a NEW variant: `clauseApostrophe.test.ts` is keyed on the **FIXTURE POOL** rather than on a sentence, an id or a census column. Census MOVED, all through the RAW summand: `BUILT.attack` **1206 → 1214**, raw **1177 → 1185**, resolved **320 → 323**, `built` **1607 → 1615**, residue **776 → 768**, `unbuiltAttack` **526 → 518**; `raw.length` **708**, `nonAttackRegistryIds` **564**, `units` **2383** MEASURED UNMOVED and the last-N baton does NOT expire (zero registry keys). Suite **368 files / 7,624 tests**; corpus **1119 → 1123** against a budget of 4, one per claim; sweep **1100 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1123**; `bun run check` GREEN exit 0. **AND THE HANDOFF ASKED ITS OWN QUESTION RATHER THAN LEAVING IT AS HOMEWORK**: the ex-ONLY board predicate is **8 sentences / 13 legal printings, ALL UNBUILT**, against the WIDER *"ex or Pokémon V"* spelling which is **already built at 4 / 6** — so the refused member is the missing half of a pair, not a bespoke narrowing, and the recommendation INVERTED on the measurement.)
 
 **Last updated (was):** 2026-08-18 — build session #300 (**P3-M5 — D360, *the printed "up to" reaches the SPREAD, and the family CLOSES — over BOTH producers.*** Engine **0.265.0 → 0.266.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited and the ask recorded on the `D275` mutation row: an `EffectOp` IS persisted (`EffectContinuation.pendingOp`) and this op PARKS, so the D335/D352 hazard is genuinely in range — but **this slice adds no field, it changes which printings CARRY one**, and a v22 record holding a flagless `attachEnergyFrom` reads back MANDATORY, which is exactly what it meant when written. **A WIDENING IS FREE, A RENAME IS NOT, AND A POPULATION IS NEITHER.** 🛑🛑 **THE HEADLINE: THE HANDOFF SAID FOUR LIVE PRINTINGS AND THERE WERE FIVE GROUPS — BECAUSE A LEGALITY FILTER IS RIGHT FOR A POPULATION FIGURE AND WRONG FOR A CONSISTENCY INVARIANT.** Walking BOTH producers before a line moved — `deriveAttackEffect` over the 640-sentence `legalAttackCorpus()` with a **recursive** op flatten (a top-level filter misses Kilowattrel ex's `recordGate`-nested attach: 15 sentences flat, **16** recursive), and `programFor` over all **708** `registryCardIds()`, with the producer set CLOSED by grep — the four derived printings the handoff named (Morpeko `sv06-072`, Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`) were joined by a fifth group nobody named: **`KORAIDON_EX` ×4**, the identical hedged sentence, the identical two-op `anyWay` spread, no flag. D358 *measured* it and excluded it for `legal_standard = 0` — and `attachFromZoneProgram` cites that very row **by name** as the shape its own spread copies, so flagging one producer and not the other would leave the engine's two producers disagreeing about one printed sentence. `attachDecline.test.ts` §1 reddened **BY NAME**, which is D358's own written falsification condition firing as designed. ⚠️ **THE DISCRIMINATOR IS THE PRINTED WORD, NOT THE DERIVED COUNT, AND THE TWO COME APART ON A SENTENCE THE ARM ACCEPTS**: *"Attach up to 1 Basic Energy cards … in any way you like."* derives with `match[3] === "1"` and `count === 1`, and §9.1 makes its answer set {0, 1}. ✅ **THE FAMILY ACCOUNTS FOR ITSELF: 13 + 6 + 4 + 1 refused = the catalog's 24.** `bun run check` **367 files / 7,603 tests**; corpus **1114 → 1119**.)
 
@@ -353,207 +355,207 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D361)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D362)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** —
 > the branch `claude/backend-loop-subagents-q2wz9f` AND `main`, fast-forwarded at
 > the user's explicit instruction. **NO PULL REQUEST WAS OPENED, BY INSTRUCTION.**
-> `bun run check` **368 files / 7,624 tests, exit 0** (baseline 367 / 7,603 — the
-> whole delta is this slice's one new suite).
+> `bun run check` **369 files / 7,641 tests, exit 0** (baseline 368 / 7,624 — the
+> whole delta is this slice's one new suite of 17 cases).
 >
-> **THE BASELINE THE NEXT SLICE INHERITS, ALL OF IT MEASURED ON A QUIET TREE:**
-> corpus **1123**; full sweep **1100 killed · 23 known survivor(s) · 0 GAP(s) ·
-> 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** in **6,118.0 s**
-> (5.45 s/mutant), union-verified BY ID independently of the runner's tally —
-> 1123 parsed == 1123 corpus, 0 duplicate / 0 missing / 0 extra, survivor set
-> empty in BOTH directions.
+> 🛑 **THE SWEEP FIGURES ARE IN THE SESSION-LOG ENTRY AND NOWHERE ELSE, AND THE
+> REASON IS D361's OWN CLOSE-OUT.** D361 wrote this page BEFORE its sweep ran (the
+> correct order) and then quoted an **ANTICIPATED** result at all three sites:
+> `1120 killed · 23 known survivor(s)` over a corpus of **1123** — and
+> **1120 + 23 = 1143**, twenty rows *more* than the corpus in the same sentence.
+> Not merely wrong: **impossible, and ONE addition would have caught it.** D362
+> therefore closed this page with **no sweep number in it at all** and wrote the
+> measured totals in a second pass afterwards. **DO NOT WRITE A NUMBER YOU HAVE
+> NOT MEASURED; ADD YOUR OWN TOTALS BEFORE YOU WRITE THEM.**
 >
-> ⚠️ **AND THE FIRST DRAFT OF THIS PAGE QUOTED A SWEEP THAT COULD NOT HAVE
-> HAPPENED.** D361's run died to a container restart between closing the docs and
-> running the sweep, so all three sites shipped an ANTICIPATED **`1120 killed · 23
-> known survivor(s)`** over a corpus of **1123** — and **1120 + 23 = 1143**. The
-> parts did not sum to the corpus quoted in the same sentence. **CHECK THAT THEY
-> SUM. IT IS ONE ADDITION AND IT CATCHES A NUMBER NO RUN COULD PRODUCE.**
+> ### ▶ ⭐ THE ONE THING TO READ FIRST — **THE NARROWER OF TWO SPELLINGS CAN HAVE
+> ### MORE PRINTINGS THAN THE WIDER ONE THE ENGINE ALREADY READS, AND UNTIL YOU
+> ### COUNT BOTH YOU CANNOT TELL A NARROWING FROM THE MISSING HALF OF A PAIR.**
 >
-> ⚠️ **THE KILL DELTA IS +5 ON +4 NEW ROWS AND THE FIFTH IS A REPAIR, RECONCILED
-> BY ID**: `D318-status-row-renamed` was **ERROR (0.0s) at D360** — broken by
-> D360's own prose quoting its bare mid-line `find` — and is **KILLED (1.8s)**
-> here. Exactly one id changed verdict; none was removed.
+> D361 refused Turtonator `sv08-137` on the ratio *"ONE new union member for ONE
+> printing"*, then measured the predicate it had just refused and **inverted its
+> own recommendation**. D362 re-derived that measurement over all four surfaces
+> before a line moved, and it holds exactly:
 >
-> ### ▶ ⭐ THE ONE THING TO READ FIRST — **A QUANTIFIER CONTRASTED AGAINST ITS OWN
-> ### ABSENCE ON THE SAME OP IS WHAT TURNS A `never` INTO A `"all"`, AND THE
-> ### `never`'s OWN STATED REASON IS WHAT SAYS WHICH.**
->
-> `discardEnergy`'s `opponentEach` member has carried `count?: never` since
-> Giacomo landed, and the doc block gives the reason in as many words: *"'one from
-> EACH' already fixes how many come off, and the field would be **SILENTLY
-> IGNORED**"*. That argument is **true of a NUMBER and false of `"all"`** — the
-> interpreter's `op.count === "all"` branch fires **BEFORE** the scope split and
-> strips every match on the whole victim board, so `"all"` is not ignored at all,
-> it reaches a different board.
->
-> And the catalog prints **BOTH** quantifiers on that one arm, same op, same
-> `from`, same filter, same destination:
->
-> | count | printed | producer | resolves as |
-> |---|---|---|---|
-> | **absent** | Giacomo `sv02-182` — *"Discard **a** Special Energy from **each** of your opponent's Pokémon."* | REGISTRY | `{kind:"each"}` — one uid per body |
-> | 🆕 **`"all"`** | Ceruledge `sv08-035`/`-197` "Cursed Edge" — *"Discard **all** Special Energy from **all** of your opponent's Pokémon."* | DERIVER | the inline `count === "all"` branch — everything |
->
-> So the widening is to **that one literal** and not to `"all" | number`: queried
-> across all three columns, **no printed sentence puts a number or an "any amount"
-> on a per-body sweep**, and admitting either would be authoring a card.
-> **A WIDENING IS FREE; A GENERALISATION IS NOT.**
->
-> ### ▶ ⚠️ THE FOUR SURFACES, WALKED WITH **S4 FIRST** — AND S4 IS NOW CHEAP
->
-> | # | surface | figure MEASURED |
+> | the ex-ONLY Active board predicate, over the LEGAL attack corpus | s | p |
 > |---|---|---|
-> | **S4** | `grep 'op: "discardEnergy"'` over non-test source | object literals in exactly **TWO** files — `effects.ts`, `registry.ts`. `interpreter.ts`'s FIVE hits are all `Extract<EffectOp, …>` **TYPE** positions, i.e. CONSUMERS. **PRODUCER SET CLOSED AT 2** before a line moved. |
-> | S1 | nine readers over `legalAttackCorpus()` | corpus **640 s / 1,732 p**; resolved **320 s / 1,177 p**; residue **320 s / 555 p**. |
-> | S1r | `deriveAttackEffect` over the corpus, **RECURSIVE** flatten | **12 s / 92 p** emit `discardEnergy`; a TOP-LEVEL filter reports **8 s / 76 p**. |
-> | S2 | `programFor` over all **708** `registryCardIds()` | **23** instances / **23** ids / **9** distinct shapes. |
-> | S3 | remote D1, all THREE columns on **`$.effect`** | extractor verified against known-present rows FIRST; the block is **4 sentences / 9 legal printings**. |
+> | *"…is a Pokémon ex, this attack does {40,50,70,80,90,100} more damage."* | 6 | 10 |
+> | *"Discard an Energy from your opponent's Active Pokémon **ex**."* | 1 | 1 |
+> | *"…**isn't** a Pokémon ex, this attack does nothing. …"* | 1 | 2 |
+> | **TOTAL — all EIGHT unbuilt at D361's head** | **8** | **13** |
 >
-> ⚠️ **THE 1,177 CROSS-CHECK IS WHAT MAKES THE REST BELIEVABLE** — it reproduces
-> `BUILT.attack`'s own committed RAW summand from an independent direction.
-> ⚠️ **AND THE ONE-READER FIGURE IS STILL NOISE, RE-MEASURED**: `deriveAttackEffect`
-> alone leaves **437 s / 877 p**, against the nine-reader truth of 320 / 555.
-> ⚠️ **THE RECURSION MATTERS AGAIN, ONE OP OVER FROM D360's.** The 4-sentence
-> difference is `coinFlipGate`-, `optional`- and `conditionGate`-nested instances.
-> **A FLAT WALK IS THE SAME CLASS OF ERROR AS A ONE-PRODUCER WALK, ONE LEVEL DOWN.**
+> against the strictly **WIDER** *"ex **or Pokémon V**"* spelling of the SAME
+> clause-table template, **built since D107 at 4 sentences / 6 printings**. The
+> narrower predicate has **more than twice** the printings of the wider one, and
+> the two sit side by side in one table on one sentence template. **A RATIO
+> ARGUED FROM ONE PRINTING AND A RATIO MEASURED OVER THE CLAUSE ARE DIFFERENT
+> NUMBERS**, and only the second one decides anything.
 >
-> ### ▶ ✅ WHAT WAS BOUGHT — 3 sentences / **8 Standard-legal printings**
+> ### ▶ ✅ WHAT WAS BOUGHT — **7 sentences / 11 Standard-legal printings**
 >
 > | sentence | legal | ids |
 > |---|---|---|
-> | *"Discard a Special Energy from your opponent's Active Pokémon."* | 4 | Victini `sv05-030`, Farfetch'd `sv06-132`, Cobalion `sv10.5b-066`/`-144` |
-> | *"Discard a {R} Energy from your opponent's Active Pokémon."* | 2 | Ducklett `sv10.5w-025`/`-109` |
-> | *"Discard all Special Energy from all of your opponent's Pokémon."* | 2 | Ceruledge `sv08-035`/`-197` |
+> | *"…is a Pokémon ex, this attack does 100 more damage."* | 4 | `svp-179`, `sv10.5w-077`/`-162`/`-170` |
+> | *"…70 more damage."* | 2 | `sv07-090`, `sv10-131` |
+> | *"…40 / 50 / 80 / 90 more damage."* | 4 | `sv10-130`, `sv08.5-089`, `sv08-141`, `sv09-018` |
+> | *"Discard an Energy from your opponent's Active Pokémon ex."* | 1 | Turtonator `sv08-137` |
 >
-> **THE WHOLE ENGINE DIFF** is: one regex whose noun phrase became a CAPTURE, one
-> new whole-sentence anchor, one filter ternary, one four-key op literal, and
-> `count?: never` → `count?: "all"`. **ZERO** new ops, **ZERO** new `CardFilter`
-> kinds, **ZERO** new condition kinds, **ZERO** new op fields, **ZERO** new prompt
-> kinds, **ZERO** registry keys, **ZERO** `packages/schema`.
-> **THE ROUND-TRIP SURFACE MOVED ZERO BYTES**, predicted at zero and measured at
-> zero: the two parking sentences use `scope {kind:"total",count:1}`, on the wire
-> since Mawile; the sweep resolves **INLINE**, so it never prompts and never
-> crosses at all — which `discardNote`'s own doc block had already promised
-> (*"`count: "all"` never reaches here"*).
+> **THE WHOLE ENGINE DIFF** is: ONE `BoardCondition` member, TWO `interpreter.ts`
+> arms, ONE clause-table row and ONE anchored regex with its arm. **ZERO** new
+> ops, op fields, `CardFilter` kinds, prompt kinds, registry keys, `cards.ts`
+> predicates and **ZERO** `packages/schema`. The member's arm inlines
+> `pokemonSuffixOf(spot.card) === "ex"` — the read `isExOrV` is itself built out
+> of — so an `isEx()` helper was refused as +1 vocabulary for one call site.
 >
-> ### ▶ 🛑 THE ROTATED PRINTING DERIVES, AND SAYING SO IS THE POINT
+> ### ▶ 🛑 THE ONE LINE D361 LEFT UNPRICED WAS MEASURED, AND IT IS REFUSED
 >
-> Growlithe `sv03.5-058` prints the identical typed shape with `{W}` and is
-> `legal_standard = 0`. It is **not** in the 8 (the corpus is legal-only) and the
-> arm reaches it anyway. **ROTATION DECIDES WHO MAY PLAY A CARD, NOT WHAT THE CARD
-> SAYS** — D358's lesson applied **PROSPECTIVELY** rather than discovered two
-> slices later, and asserted in `crossSeatEnergyDiscard.test.ts` §6 in both
-> directions (it derives; it is absent from the legal corpus).
+> **`deriveAttackRequirement` OWNS THE SHAPE AND DOES NOT OWN THE PRINTING**, and
+> that distinction is the whole answer. Its table maps a printed NEGATIVE clause
+> to the POSITIVE board fact — so *"isn't a Pokémon ex"* → `opponentActiveIsEx`
+> would be **one row and no `{kind:"not"}` member**. The reader simply cannot
+> reach the sentence: `ATTACK_DOES_NOTHING` is anchored `^…$` and Sawk
+> `sv10.5w-049`/`-130` prints **TWO** sentences (the Weakness/Resistance tail).
 >
-> ### ▶ 🛑 ONE PRINTING IN THE SAME BLOCK WAS REFUSED, WITH A MEASURED REASON
+> ⚠️ **MEASURED WITH A CONTROL RATHER THAN REASONED ABOUT.** Palafin's existing
+> row reads TODAY, and stops reading the instant the *identical* trailing sentence
+> is bolted onto it — and the readers receive the WHOLE `effect` string
+> (`attack.ts:779`), never a split. Over the corpus, the `does nothing.` family is
+> **17 sentences / 43 printings**, of which **8 s / 16 p** are anchor-admissible
+> and **9 s / 27 p** are refused. `8 + 9 = 17` ✅, `16 + 27 = 43` ✅. **So admitting
+> Sawk means widening that anchor across 27 printings of unrelated surface — its
+> own purchase, not this row's tail.** The buy is **7 / 11**, not 8 / 13.
 >
-> Turtonator `sv08-137` "Fully Singe": *"Discard an Energy from your opponent's
-> Active Pokémon **ex**."* — **1 Standard-legal printing**, needing an **ex-ONLY**
-> board narrowing. The nearest existing member is `{ kind: "opponentActiveIsExOrV" }`,
-> which reads `isExOrV` — **ex OR V** — so reusing it would make the attack strip a
-> Pokémon V the card does not name. That is authoring a card; the honest price is a
-> NEW condition kind for ONE printing. **A BLOCK IS NOT AN ALL-OR-NOTHING
-> PURCHASE**, and the refusal is driven (§6 asserts the `ex` sentence is null AND
-> that the sentence one word shorter is not, so it is the adjective and nothing
-> else that refuses it).
+> ### ▶ ⚠️ THE FOUR SURFACES, WALKED WITH **S4 FIRST**
 >
-> ### ▶ 🛑 `MATCH_RECORD_VERSION` **STAYS 22**, AND THE HAZARD WAS LIVE
+> | # | surface | figure MEASURED |
+> |---|---|---|
+> | **S4** | all 29 union members as `kind: "<name>"` over non-test source | **PRODUCER SET CLOSED AT 3** — `effects.ts` (55 hits: 28 in the union DECLARATION, 27 below it), `registry.ts` (35), `continuous.ts` (1). `index.ts`'s 2 are doc PROSE; `mutants.ts`' 26 are anchors. **CONSUMER set is `interpreter.ts` ALONE** (56 hits ≈ 2/kind) — `redact.ts` and `cardplay.ts` read the union OPAQUELY through `conditionNote`/`conditionHolds` and owe a flat tag nothing. |
+> | S1 | nine readers over `legalAttackCorpus()` | corpus **640 s / 1,732 p**; resolved **323 / 1,185** before, **330 / 1,196** after; residue **317 / 547** → **310 / 536**. Both sides SUM-CHECKED to the corpus. |
+> | S2 | `programFor` over all **708** `registryCardIds()`, RECURSIVE flatten | **89** BoardCondition literals / **61** ids / **12** distinct kinds. |
+> | S3 | remote D1 `luminous`, all THREE columns on **`$.effect`** | extractor verified against known-present rows FIRST (the built `ex or V` sentence: `attacks_json` **18**, `effect` **0**, `abilities_json` **0**). Then the predicate: **8 s / 13 p, ALL on `attacks_json`**. **S3 == S1 EXACTLY.** |
 >
-> An `EffectOp` **IS** persisted — `EffectContinuation.pendingOp` **and its `rest`
-> tail** — and **two of these three sentences PARK**, so a `discardEnergy` op
-> genuinely enters `GameState.phase`. Not skippable. But the test is *"does the old
-> byte string still MEAN what it meant"*: a v22 record holding an `opponentEach`
-> discard carries **no** `count`, and absence meant *one from each* before and means
-> *one from each* after; the two new op shapes are new **COMBINATIONS** of
-> already-persistable vocabulary (`opponentActive`+`specialEnergy` is Mawile's
-> registry row, `providesEnergy` is Psy Purge's). **NO FIELD ADDED, NO FIELD'S
-> MEANING RE-POPULATED.** Recorded on the `D275` row; `D326-record-version-not-bumped`
-> was **predicted UNMOVED by id and measured unmoved** — its `find` still quotes 22
-> and it probed **KILLED**.
+> 🛑🛑 **AND S2 IS THE ONE THAT EARNED ITS KEEP, BECAUSE "THIS SLICE AUTHORED ZERO
+> REGISTRY KEYS, SO THE REGISTRY SUMMAND CANNOT MOVE" IS A NON-SEQUITUR.** FOUR of
+> the eleven printings **DO** carry a `programFor` entry — `sv10.5w-077`/`-162`/
+> `-170` a `passive`, `sv09-018` an `abilities`. What actually keeps
+> `REGISTRY_ATTACK_UNITS` at 16 is that **none of the four carries an `attack`
+> key**, and that is a different fact from the one five prior close-outs asserted.
+> **A STANDING-STILL IS A MEASUREMENT, AND THE MEASUREMENT IS NOT THE ONE THE
+> SENTENCE USUALLY NAMES.**
 >
-> ### ▶ 🛑🛑 THE FINDING THE `--decision D361` PROBE PRODUCED, AND IT COST A SECOND RUN
+> ### ▶ 🛑 A WIDENING WAS PRICED BEFORE IT WAS REFUSED
 >
-> `D361-sweep-anchor-swallows-giacomos-wording` **SURVIVED its first probe** —
-> **3 killed · 0 known survivors · 1 GAP · 0 stale · 0 skipped(dirty)**. The row's
-> claim was true and *the mutation did not reach it*: loosening `all of` to
-> `(all|each) of` still requires the leading **"all"**, and Giacomo prints
-> *"Discard **a** Special Energy from each of…"*. **THE ANCHOR IS DEFENDED BY TWO
-> INDEPENDENT PRINTED WORDS AND THE SUITE ASSERTED ONLY THE FIRST.**
-> The fix was the one the corpus was asking for: §6 now also refuses
-> *"Discard all Special Energy from **each** of your opponent's Pokémon."* — a
-> crossing **nobody prints** (`a … each of` on the Trainer side, `all … all of` on
-> the attack side, and neither pairing), so refusing it is refusing to author a
-> card. Re-probed on a quiet tree: **4 killed · 0 GAPs · 0 errors**.
-> **A ROW COUNT IS NOT A COVERAGE MAP** — the row existed, the claim was true, and
-> nothing checked the half the mutation actually moved. **BOTH RUNS ARE RECORDED
-> BECAUSE BOTH RUNS HAPPENED.**
+> `opponentActiveIsExOrV` is strictly WIDER; reusing it would strip/boost against
+> a Pokémon V the card does not name. Widening it **honestly** (a `suffixes`
+> parameter) needs a **RENAME**, because the member's NAME *is* its specification
+> and would otherwise lie. Rename blast radius MEASURED: **31 sites across 7
+> files** (`clauseTable.test.ts` 20, `censusAtHead` 2, `effects.ts` 2, `index.ts`
+> 2, `interpreter.ts` 2, `testFixtures.ts` 2, `crossSeatEnergyDiscard` 1; **0
+> mutation anchors**) against **4 sites** for the addition. **A WIDENING IS FREE;
+> A RENAME IS NOT — which is exactly why this one is an ADDITION**, and the
+> refutation is driven on a BOARD (`exOnlyActive.test.ts` §2: a Pokémon V Active
+> is the ONE board the two members disagree on, asserted from both seats and again
+> through the DAMAGE).
 >
-> ### ▶ ⚠️ PREDICTION GRADE — **ONE MISS, AND IT IS A NEW DEFECT VARIANT**
+> ### ▶ 🛑 A SEPARATE DISCARD ANCHOR, AND THE REASON IS A MEASUREMENT
 >
-> * ✅ the residue re-derived over all four surfaces **before** a line moved; every
->   inherited figure held exact (640/1,732, 320/1,177, 39 s / 71 p, 4 s / 9 p).
-> * ✅ corpus **1119 → 1123** against a budget of **4, one per claim** — exact, and
->   the second slice running to hit its mutation budget.
-> * ✅ census deltas predicted to the unit BEFORE the red run and measured exact.
-> * ✅ round-trip surface predicted at ZERO bytes, measured at zero.
-> * ✅ `MATCH_RECORD_VERSION` answer predicted and held.
-> * 🛑 **RED FILES: PREDICTED 3, MEASURED 4.** The three predicted
->   (`providesEnergy.test.ts`, `censusAtHead.test.ts`, `precociousEvolution.test.ts`)
->   were exactly right — including the CONTROL in `providesEnergy.test.ts:170`,
->   which names none of this slice's ids or sentences and was caught **in
->   prediction** by running the PLANNED REGEXES over every string literal in
->   `packages/engine/src`. **THE MISS IS `clauseApostrophe.test.ts`, AND IT IS A
->   NEW VARIANT RATHER THAN D359's/D360's**: it is keyed on neither a sentence nor
->   an id nor a census column but on the **FIXTURE POOL** — adding
->   `fix-crossseatdiscard` moved its apostrophe-bearing-sentence count 99 → 102.
->   That file's own header predicts exactly this (*"adding a fixture is not a
->   figure a slice thinks to grep for"*), and the full `check` found it, as
->   promised. **THE NEXT SLICE'S RED-SURFACE PREDICTION MUST ASK WHAT ADDING A
->   FIXTURE MOVES, NOT ONLY WHAT ADDING A SENTENCE MOVES.**
-> * 🛑 **AND THE FIRST RED LIST WAS NOT THE WHOLE LIST**, for the second slice
->   running: fixing the first assertion in each file surfaced **three more** in
->   files already predicted red (`BUILT.attack - 922`, the `555 -` rung, and
->   `head - rawDelta - splitDelta`). vitest stops at the first failing assertion.
+> `OPPONENT_ACTIVE_DISCARD` is map-built over THREE printed articles, so an
+> optional `(?: ex)?` would also derive *"Discard a Special Energy from your
+> opponent's Active Pokémon ex."* and its typed twin. Across all three columns the
+> catalog holds **exactly ONE** `Active Pokémon ex` sentence in `attacks_json` —
+> Turtonator's, on the BARE article — and **ZERO** of the cross-product. D361's
+> own refusal on `(a|all) × (Active|all of)`, re-derived one op over.
+>
+> ### ▶ 🛑 `MATCH_RECORD_VERSION` **STAYS 22**, ASKED ON TWO INDEPENDENT LINES
+>
+> (i) A `conditionGate` is **SPLICED by `runProgram`'s queue loop** and never
+> reaches the op interpreter, so the condition never enters `GameState.phase` —
+> it is not persisted at all. (ii) `apps/api/src/lobby/match.ts` already settles
+> the class in as many words: *"The new `BoardCondition` member is a UNION WIDENING
+> (D125) … no record can contain a member no deploy could author."* No field
+> added, no field's meaning re-populated. Recorded on the `D275` row;
+> `D326-record-version-not-bumped` predicted UNMOVED by id.
+>
+> ### ▶ ⚠️ PREDICTION GRADE — **TWO MISSES, AND THEY GROUP AS TWO DEFECTS**
+>
+> * ✅ the population re-derived over all four surfaces **before** a line moved;
+>   every inherited figure held exact (640/1,732, 323/1,185, 8 s / 13 p, 4 s / 6 p).
+> * ✅ census predicted to the unit and measured exact — **+11, single-summand**.
+> * ✅ `MATCH_RECORD_VERSION` predicted and held.
+> * ✅ round-trip surface predicted at ZERO wire bytes and measured at zero.
+> * ✅ **`clauseApostrophe.test.ts` 102 → 104 PREDICTED** — D361's one miss,
+>   collected by asking what adding a **FIXTURE** moves rather than only what
+>   adding a SENTENCE moves. Predicted to the unit and measured 104.
+> * 🛑 **MISS (c) REPRODUCED — UNDER-ENUMERATION INSIDE A CORRECTLY-PREDICTED
+>   FILE.** 12 census rungs were predicted by file, line and value; there were
+>   **13**. The thirteenth is `censusAtHead.test.ts`'s
+>   `expect(547 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS)` — the parallel
+>   residue figure, hard-coded in a rung whose *name* is about something else.
+>   D361 flagged this exact defect and it still landed. **THE FIX IS NOT "LIST
+>   HARDER": GREP THE OLD VALUE AS A LITERAL ACROSS THE WHOLE SUITE**, which
+>   catches a rung that spells the number without naming the quantity.
+> * 🛑 **MISS — A NEW VARIANT: A GUARD KEYED ON A PREDECESSOR'S REFUSAL.**
+>   `crossSeatEnergyDiscard.test.ts` §6 went red unpredicted. D361 wrote it to
+>   assert Turtonator's sentence derives to `null`, and D362 **paid the price that
+>   case named**, so the guard is SPENT — rewritten, not deleted. A red-surface
+>   prediction built from census figures and pool-keyed counts reaches guards keyed
+>   on a sentence, a count and the pool, and reaches **nothing keyed on a refusal a
+>   previous slice recorded**. ⚠️ **AND IT WAS CHEAPLY CATCHABLE**: D361's own
+>   method — running the PLANNED ANCHOR over every string literal in
+>   `packages/engine/src` — would have found it, and that step was skipped.
+>   **RED FILES PREDICTED 4, MEASURED 5.**
 >
 > ### ▶ ⚠️ CENSUS: **MOVED**, and every summand's standing-still MEASURED
 >
 > A **READER-keyed** move, so it lands entirely in the RAW summand:
-> `BUILT.attack` **1206 → 1214**, raw **1177 → 1185**, resolved sentences
-> **320 → 323**, `built` **1607 → 1615**, `units − built` **776 → 768**,
-> `unbuiltAttack` **526 → 518**, the raw remainder **555 → 547**,
-> `BUILT.attack − 922 − 252` **32 → 40**, `BUILT.attack − 922` **284 → 292**,
-> `head − rawDelta − splitDelta` **1200 → 1208**.
-> **MEASURED UNMOVED**: `BUILT.ability` **280**, `.trainer` **113**,
-> `.specialEnergy` **8**, `REGISTRY_ATTACK_UNITS` **16**, `splitHead` **13**,
-> `raw.length` **708**, `nonAttackRegistryIds` **564**, `units` **2383**,
-> `groups.length` **116**, `pairs.size` **129**, `TRAINER_TERMS` **60**,
-> `byObject` **59** — all verified by a green `censusAtHead` rather than asserted.
-> 🛑 **THE LIVE LAST-N BATON (`autoHeal.test.ts` §7) DID NOT EXPIRE, FOR THE FIFTH
+> `BUILT.attack` **1214 → 1225**, raw **1185 → 1196**, resolved sentences
+> **323 → 330**, `built` **1615 → 1626**, `units − built` **768 → 757**,
+> `unbuiltAttack` **518 → 507**, the raw remainder **547 → 536**,
+> `BUILT.attack − 922` **292 → 303**, `BUILT.attack − 922 − 252` **40 → 51**,
+> `head − rawDelta − splitDelta` **1208 → 1219**.
+> ARITHMETIC CHECKED FROM THE PARTS: `1196 + 16 + 13 = 1225`; `1225 + 280 + 113 +
+> 8 = 1626`; `2383 − 1626 = 757`.
+> **MEASURED UNMOVED**: `REGISTRY_ATTACK_UNITS` **16** (see S2 above — the reason
+> is not the usual one), `splitHead` **13**, `BUILT.ability` **280**, `.trainer`
+> **113** (the one `effect`-column printing of this clause, `sv04-168`/`-237`, is
+> `legal_standard = 0`), `.specialEnergy` **8**, `raw.length` **708**,
+> `nonAttackRegistryIds` **564**, `units` **2383**.
+> 🛑 **THE LIVE LAST-N BATON (`autoHeal.test.ts` §7) DID NOT EXPIRE, FOR THE SIXTH
 > SLICE RUNNING.** `raw.slice(-1)` is still `[MAGEARNA]` at width 1. **DO NOT
 > RE-POINT IT.** It expires on the next slice that adds a registry KEY, and this
 > slice added **zero**.
-> ⚠️ **AND ONE STALE TITLE WAS REPAIRED IN PASSING**: `censusAtHead.test.ts`'s
-> nine-reader case was NAMED *"resolve 314 sentences / 1,164 printings"* while
-> ASSERTING 320 / 1,177 — drift from an earlier slice, now 323 / 1,185. Checked
-> against `mutants.ts` for an anchor quoting it (zero) before touching it.
 >
-> ### ▶ 🛑 A FIXTURE COULD NOT NAME A REAL PRINTING, AND THE REASON WAS RE-CHECKED
+> ### ▶ 🛑 THE FIXTURE, AND WHAT ADDING ONE MOVES
 >
-> All **222** real ids in `FIXTURE_POOL` sit inside the local D1's six sets
-> (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`); all seven of this slice's
-> printings are in `sv05`/`sv06`/`sv08`/`sv10.5b`/`sv10.5w`. `NO_CATALOG_ROW` is
-> deliberately **EMPTY** and `catalogManifest.test.ts` is total in both directions,
-> so a real-id fixture here would be the very defect that file exists to surface.
-> Hence `fix-crossseatdiscard` — `fix-trainerops`' documented precedent, re-checked
-> rather than copied. The SENTENCES are the catalog's own, verbatim.
+> **+1 fixture** (`fix-exonly`, a `battler()` carrying BOTH sentences on one body)
+> **+1 deck constant** (`EX_ONLY_DECK`). Synthetic by necessity and re-checked
+> rather than copied: all 222 real pool ids sit in the local D1's six sets, and all
+> eleven of this row's printings are in `sv07`/`sv08`/`sv08.5`/`sv09`/`sv10`/
+> `sv10.5w`/`svp`. **NO new body was needed for the BOARD side** — the cast already
+> holds `sv06.5-036` (a real Pokémon ex), `fix-pokemon-v`, `fix-pokemon-vmax` and
+> the suffix-free `fix-bigbody`, which are exactly the four boards this member has
+> to be told apart on. ⚠️ **A DECK MUST BE EXACTLY 60** and the first draft was 40;
+> `BAD_DECK_SIZE` is the only thing that says so.
 >
-> ### ▶ 🛑 THE FIVE VERSION SITES — engine **0.267.0**
+> ### ▶ 🛑 FIVE MUTATION ROWS, ONE PER CLAIM — AND **TWO OF THEM ARE ONE ANCHOR**
+>
+> Corpus **1123 → 1128**. Two rows cover the SAME anchor's **two independent
+> defending words** — the adjective `ex` and the article `an` — which is D361's own
+> probe finding spent: `D361-sweep-anchor-swallows-giacomos-wording` SURVIVED its
+> first probe because its anchor was defended by two printed words and the suite
+> asserted only one. **A ROW COUNT IS NOT A COVERAGE MAP.** The `--decision D362`
+> probe on a quiet tree returned **5 killed · 0 known survivors · 0 GAPs · 0 stale
+> · 0 skipped(dirty) · 0 clobbers · 0 errors**, first run, and the adjective row is
+> killed by **two** suites. **NO ROW FOR THE SAWK REFUSAL** — a refusal is not a
+> code line; it is asserted in §5 with a control and backed by the 8/16 vs 9/27
+> corpus split.
+>
+> ### ▶ 🛑 THE FIVE VERSION SITES — engine **0.268.0**
 >
 > 1. `packages/engine/package.json` — `"version"`.
 > 2. `packages/engine/src/index.ts` — `export const engineVersion`.
@@ -561,121 +563,91 @@
 > 4. `packages/engine/src/legacyEnergy.test.ts` — the two `toBe("X.Y.Z")` pins.
 > 5. `scripts/mutation/mutants.ts` `D275-engine-version-drifts-again`, whose `find`
 >    QUOTES the constant. **Not a version site — a mutation anchor a version site
->    breaks.** (D361 was the FIFTY-EIGHTH payment.) `D326-record-version-not-bumped`
+>    breaks.** (D362 was the FIFTY-NINTH payment.) `D326-record-version-not-bumped`
 >    was **NOT owed** — asked, answered, and the answer recorded on the D275 row.
 >
-> ### ▶ ⚠️ ONE LINT TRAP WORTH KNOWING BEFORE YOU WRITE A MAP-BUILT REGEX
+> ### ▶ ⚠️ ONE LINT TRAP, AND IT COSTS A WHOLE `check` TO FIND
 >
-> `biome`'s `lint/style/useTemplate` fires when a concatenated template chain has a
-> segment with **no interpolation**. `TYPED_SELF_DISCARD` gets away with two
-> segments because BOTH carry a `${}`; a three-segment split whose tail is plain
-> text does not. Merge the tail into the interpolated segment.
-> ⚠️ **AND A MAP-BUILT `new RegExp` MUST BE DECLARED AFTER THE MAP'S OWN `const`**
-> — `ENERGY_TYPE_BY_CODE` sits ~1,600 lines below where this family used to live,
-> so `OPPONENT_ACTIVE_DISCARD` was MOVED down beside `TYPED_SELF_DISCARD` and a
-> pointer left in its place. A module-init TDZ throw is not a lint error and not a
-> type error; only running the code finds it.
->
-> ### ▶ 🛑 DO NOT RUN `bunx biome format --write` ON THIS REPO
->
-> `bun run check` runs **`biome lint . --error-on-warnings`**, which is clean.
-> `bunx biome format .` reports pre-existing differences across hundreds of files.
-> Run biome READ-ONLY, and note it also refuses `docs/progress.md` outright on its
-> file-size limit — that is expected, not a failure.
-> ⚠️ **AND `scripts/mutation/mutants.ts` HAS BEEN OVER BIOME's 1.0 MiB FILE CAP
-> SINCE BEFORE THIS SLICE** (1,051,835 bytes at `5c7bc45`, 1,058,xxx now). It emits
-> a size diagnostic, **not** a lint error, and `check` stays exit 0. Measured at
-> HEAD before assuming this slice caused it.
+> `biome`'s `lint/suspicious/noThenProperty` fires on **every** inline
+> `then:` in a `conditionGate`/`coinFlipGate` literal. The repo's own convention is
+> a `biome-ignore` line directly above it, and `effects.ts` already carried two.
+> ⚠️ **AND `bun run check` RUNS LINT BEFORE VITEST**, so a lint error means the
+> suite never executes at all and the run tells you nothing about the tests.
+> ⚠️ **`scripts/mutation/mutants.ts` IS STILL OVER BIOME's 1.0 MiB FILE CAP** — it
+> emits a size diagnostic, **not** a lint error, and `check` stays exit 0.
 >
 > ### ▶ ⚠️ THE CLOSE-OUT SPAN — **MEASURED, AND IT MOVED AGAIN**
 >
-> | invariant | inherited | MEASURED at D361's start (`5c7bc45`) |
+> | invariant | inherited from D361 | MEASURED at D362's start (`7fe5189`) |
 > |---|---|---|
-> | resume span | D360's **344** | **350** |
+> | resume span | D361's **350** | **326** |
 > | `### Prior resume point` archives | 38 | **38** ✅ |
 >
 > The boundary is **the `## NEXT (resume point)` heading line INCLUSIVE to the line
 > immediately before the first `### Prior resume point`** — the same slice
-> `progressLog.test.ts` takes. Re-measured on BOTH sides of the write by
-> `scratchpad/D361_close_out.py`, which asserts the archive count before AND after.
-> **A SPAN NUMBER IS NOISE UNLESS ITS BOUNDARY IS NAMED** — re-measure, never carry.
+> `progressLog.test.ts` takes. **A SPAN NUMBER IS NOISE UNLESS ITS BOUNDARY IS
+> NAMED** — re-measure, never carry. Two consecutive slices have now inherited a
+> span figure that was false of the page in front of them.
 >
 > ### ▶ 🛑 THE DOCS WERE CLOSED OUT **BEFORE** THE SWEEP AGAIN — KEEP THIS ORDER
 >
-> D360 established it by measurement (its own resume-point prose broke a mutation
-> row, and only a pre-sweep close-out could have caught it). Kept here.
-> ⚠️ **AND THE HAZARD IS NARROW, WHICH IS WHY THE ORDER IS CHEAP**: only a **BARE
-> MID-LINE `find`** can be reproduced by prose in a `>` blockquote. Line-anchored
-> and multi-line `find`s (`\n## `, `**Last updated:** `, `\n\n### `) cannot be.
-> This page therefore writes `| simulator | P3 |` **without** its trailing space,
-> as every mention before D360's did. The whole-corpus anchor check
-> (`scratchpad/D361_anchor_check.py`, every row's `find` exactly-once, ids unique)
-> was run **on the rewritten page** before the sweep started.
+> D360 established it by measurement and D361 kept it. ⚠️ **THE HAZARD IS NARROW,
+> WHICH IS WHY THE ORDER IS CHEAP**: only a **BARE MID-LINE `find`** can be
+> reproduced by prose in a `>` blockquote. Of the **eight** rows targeting this
+> file, **five** are that shape and each was checked BY NAME rather than by
+> aggregate: `D318-gap-declaration-deleted` and `D318-declared-gap-is-not-a-gap`
+> (which SHARE one `find`), `D318-log-numbering-duplicated`,
+> `D318-status-row-renamed` and `D318-archive-heading-demoted`. This page therefore
+> writes `| simulator | P3 |` **without** its trailing space — D361's own prose
+> about this hazard quoted that `find` WITH the trailing space and the anchor check
+> returned `2 matches`, caught only because it re-ran the check after **every**
+> write. D362 re-ran it after every write too.
 >
 > ### ▶ ▶ **THE LOOP'S NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT**
 >
-> 🛑 **`ROWS`' live residue is still ZERO**, for the sixth slice running (non-attack
-> total 5, every one refused on grounds no engine slice can reach). The attack
-> residue remains the source, and it is now **317 sentences / 547 legal printings**
-> — re-derived by `scratchpad/D361_S1_residue.ts`, which is re-runnable and whose
-> resolved figure (**323 / 1,185**) is cross-checked against `BUILT.attack`'s RAW
-> summand in two files.
+> 🛑 **`ROWS`' live residue is still ZERO**, for the seventh slice running. The
+> attack residue remains the source, and it is now **310 sentences / 536 legal
+> printings** — re-derived by `scratchpad/D362_S1.ts`, which is re-runnable and
+> whose resolved figure (**330 / 1,196**) is cross-checked against `BUILT.attack`'s
+> RAW summand in two files.
 >
-> **THE RESIDUE BY LEADING WORD, RE-MEASURED AFTER THIS SLICE** (printings /
-> sentences): `This …` 123/65, `If …` 109/71, `Discard …` **63/36**, `You …`
-> 48/21, `Flip …` 37/24, `Your …` 30/18, `During …` 27/16, `Put …` 20/12,
-> `Search …` 18/13, `Choose …` 16/7, `Heal …` 14/6, `Before …` 8/4.
+> 🛑🛑 **THE NEXT CONCRETE ACTION IS THE `does nothing.` ANCHOR'S TRAILING
+> SENTENCE, AND IT IS PRICED HERE RATHER THAN LEFT AS HOMEWORK — BECAUSE THIS
+> SLICE MEASURED IT WHILE REFUSING IT.**
 >
-> 🛑🛑 **THE NEXT CONCRETE ACTION IS THE ex-ONLY BOARD PREDICATE, AND THIS SLICE
-> ASKED ITS OWN HANDOFF QUESTION RATHER THAN LEAVING IT AS HOMEWORK — THE ANSWER
-> INVERTED THE RECOMMENDATION.**
+> `ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\.$/` refuses **9
+> sentences / 27 legal printings** on the `$` alone, against the **8 s / 16 p** it
+> admits. **THE REFUSED HALF IS LARGER THAN THE ADMITTED ONE**, and it is refused
+> by an anchor rather than by a vocabulary gap — which is a different and cheaper
+> class of blocker than anything the residue's leading-word table shows.
 >
-> D361 refused Turtonator `sv08-137` because *"ONE new union member for ONE
-> printing"* is a bad ratio. The draft of this page said so, and then **measured
-> the thing it had just asserted** (`scratchpad/D361_ex_census.ts`, re-runnable).
-> **IT IS NOT ONE PRINTING. IT IS THIRTEEN.**
+> ⚠️ **BUT THE 27 IS A CEILING AND NOT A PRICE, AND THE NEXT SLICE MUST SPLIT IT
+> BEFORE PROMISING IT.** The 9 refused sentences are not one family: some carry a
+> Weakness/Resistance tail (Sawk `sv10.5w-049`/`-130` — whose clause is ALREADY a
+> one-row purchase now that `opponentActiveIsEx` exists), some are ANAPHORIC
+> (*"If you can't, this attack does nothing."*, 3 printings, pointing back at a
+> cost sentence this reader cannot see), and some lead with a coin flip (*"Flip a
+> coin. If tails, …"*, 11 printings — a different mechanism entirely, and
+> `deriveAttackCoinFlip` already owns it). **THE FIRST STEP IS TO PARTITION THOSE
+> 9 BY WHAT ACTUALLY REFUSES THEM**, because a count that mixes "needs a trailing
+> sentence tolerated" with "needs an anaphor resolved" with "already built by
+> another reader" prices none of the three. Sawk alone is **2 printings for one
+> table row and one anchor relaxation**, and it is the only one of the nine whose
+> board vocabulary is already paid for.
 >
-> | the ex-ONLY Active board predicate, over the LEGAL attack corpus | s | p |
-> |---|---|---|
-> | *"…is a Pokémon ex, this attack does 100 more damage."* | 1 | 4 |
-> | *"…is a Pokémon ex, this attack does 70 more damage."* | 1 | 2 |
-> | *"…**isn't** a Pokémon ex, this attack does nothing. …"* | 1 | 2 |
-> | *"…does 40 / 50 / 80 / 90 more damage."* | 4 | 4 |
-> | *"Discard an Energy from your opponent's Active Pokémon **ex**."* | 1 | 1 |
-> | **TOTAL — and ALL EIGHT ARE UNBUILT (0 s / 0 p resolve today)** | **8** | **13** |
->
-> 🛑 **AND THE DISCRIMINATOR IS A QUANTIFIER CONTRASTED AGAINST ITS OWN ABSENCE,
-> WHICH IS THE SAME EVIDENCE SHAPE THIS SLICE USED ON `count`.** The **WIDER**
-> spelling is **ALREADY BUILT**: *"…is a Pokémon ex **or Pokémon V**, this attack
-> does N more damage."* = **4 sentences / 6 legal printings**, all resolving today
-> through `{ kind: "opponentActiveIsExOrV" }` in `deriveAttackDamageBonus`'s CLAUSE
-> TABLE. **THE NARROWER PREDICATE HAS MORE THAN TWICE THE PRINTINGS OF THE WIDER
-> ONE THE ENGINE ALREADY READS**, and the two spellings sit side by side in the
-> same clause table on the same sentence template. So the member is not a bespoke
-> narrowing bought for one card — it is **the missing half of a pair**, and
-> Turtonator is the one printing of the eight that needs it somewhere other than
-> the clause table.
->
-> **THE SHAPE OF THE BUY, PRICED**: ONE new `ConditionKind`
-> (`opponentActiveIsEx`, reusing `cards.ts`' own `ex` predicate the way
-> `opponentActiveIsExOrV` reuses `isExOrV`), ONE `interpreter.ts` arm, ONE clause
-> table row for the six `+N more damage` printings, ONE `conditionGate` wrap for
-> Turtonator, and ONE more for the *"isn't a Pokémon ex, this attack does
-> nothing"* negation — which is `deriveAttackRequirement`'s shape, not the bonus
-> reader's, and is therefore the one line of this row that has NOT been priced and
-> **must be measured before it is promised**.
->
-> ⚠️ **RE-DERIVE ALL OF IT BEFORE TOUCHING A LINE, AND DO S4 FIRST** — including
-> these thirteen. The producer set for a `ConditionKind` is NOT the same two files
-> as `discardEnergy`'s: `cond:` literals are built by the clause table, by
-> individual deriver arms AND by `registry.ts`, so the grep is wider and closing it
-> is worth more. Do not inherit this table. Four consecutive slices have now been
-> wrong about a population on this page, each in a different way: a one-producer
-> walk (D358), an inherited count (D359's predecessor), a legality filter (D360),
-> and — smallest but real — a red-surface prediction that reached every guard keyed
-> on a SENTENCE and none keyed on the FIXTURE POOL (D361). **THE FIRST STEP IS THE
-> GREP THAT CLOSES THE PRODUCER SET**, then the recursive both-producers walk, then
-> D1 on `$.effect` with the extractor verified against known-present rows first.
+> ⚠️ **RE-DERIVE ALL OF IT BEFORE TOUCHING A LINE, AND DO S4 FIRST.** The producer
+> set for an `ATTACK_REQUIREMENT_CLAUSES` row is not the same as a
+> `BoardCondition`'s: the table is read through `literalClauseRow` and there is
+> exactly ONE reader, so the grep is NARROWER and closing it is quick — but the
+> CONSUMER side (`attack.ts`'s cancel path) is where a relaxed anchor can do real
+> damage, because a sentence that reaches the table wrongly cancels a whole attack
+> rather than mis-scoring a bonus. **Five consecutive slices have now been wrong
+> about a population on this page, each in a different way**: a one-producer walk
+> (D358), an inherited count (D359's predecessor), a legality filter (D360), a
+> red-surface prediction keyed only on sentences (D361), and — smallest but real —
+> a rung that spelled a number without naming the quantity, plus a guard keyed on a
+> predecessor's REFUSAL (D362). **RUN THE PLANNED ANCHOR OVER EVERY STRING LITERAL
+> IN `packages/engine/src` BEFORE YOU PREDICT THE RED SURFACE.**
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2697,7 +2669,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D361, THE CROSS-SEAT ENERGY DISCARD: THREE PRINTED SENTENCES OFF ONE WIDENING PLUS ONE ANCHOR.** Engine **0.266.0 → 0.267.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked and recorded on the D275 row — an `EffectOp` IS persisted and two of the three sentences PARK, so the hazard is live, but a v22 record holding an `opponentEach` discard carries no `count` and absence meant *one from each* before and after. 🛑 **THE ONE TYPE CHANGE IS A WIDENING AND ITS EVIDENCE IS A QUANTIFIER CONTRASTED AGAINST ITS OWN ABSENCE ON THE SAME OP, ZONE AND DESTINATION**: `count?: never` → `count?: "all"` on `opponentEach`, because the catalog prints BOTH — Giacomo `sv02-182` *"a Special Energy from **each**"* and Ceruledge `sv08-035`/`-197` *"**all** Special Energy from **all** of"* — and the `never`'s own reason (*"silently ignored"*) is true of a NUMBER and false of `"all"`. Not `"all" | number`: no printed sentence puts a number on a per-body sweep. 🛑 **S4 FIRST AND IT CLOSED THE PRODUCER SET IN ONE GREP** — `discardEnergy` object literals live in exactly TWO files; `interpreter.ts`'s five hits are TYPE positions. The nine-reader residue reproduced 640/1,732 · 320/1,177 · 320/555 with 1,177 cross-checking `BUILT.attack`'s own RAW summand, and a RECURSIVE flatten reported 12 s / 92 p where a top-level filter reported 8 s / 76 p. **BOUGHT 3 sentences / 8 legal printings with ZERO new ops, filter kinds, condition kinds, op fields, prompt kinds or registry keys**, round-trip surface predicted at ZERO bytes and measured at zero. **REFUSED Turtonator `sv08-137`** — an ex-ONLY narrowing, where `opponentActiveIsExOrV` is strictly WIDER and would strip a Pokémon V the card does not name. **Growlithe's rotated `{W}` printing derives anyway and the slice says so.** 🛑🛑 **THE PROBE MADE ONE OF THE SLICE'S OWN ROWS SURVIVE, WHICH WAS THE BEST FINDING IN IT**: loosening `all of` → `(all|each) of` never reaches Giacomo, who prints *"**a** Special Energy from each of"* — the anchor is defended by TWO independent printed words and the suite asserted only the first; fixed, re-probed on a quiet tree to **4 killed · 0 GAPs**. **A ROW COUNT IS NOT A COVERAGE MAP.** Red files predicted 3, measured 4 — the three were exact including a CONTROL caught in prediction, and the miss is keyed on the **FIXTURE POOL** rather than on any sentence or id. Census MOVED through the RAW summand only: `BUILT.attack` **1206 → 1214**, raw **1177 → 1185**, `built` **1607 → 1615**, residue **776 → 768**; `raw.length` 708 / `nonAttackRegistryIds` 564 / `units` 2383 MEASURED UNMOVED, last-N baton NOT expired. Suite **368 files / 7,624 tests**; corpus 1119 → **1123** on a budget of 4, one per claim; sweep **1100 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over 1123; `check` GREEN exit 0. **AND THE HANDOFF MEASURED ITS OWN NEXT ROW RATHER THAN ASSIGNING IT**: the ex-ONLY board predicate is **8 sentences / 13 legal printings, ALL UNBUILT**, against the WIDER *"ex or Pokémon V"* spelling already built at 4 / 6 — the recommendation INVERTED on the measurement) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D362, THE ex-ONLY ACTIVE BOARD PREDICATE: THE MISSING HALF OF A PAIR, NOT A BESPOKE NARROWING.** Engine **0.267.0 → 0.268.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked on two independent lines — a `conditionGate` is spliced by `runProgram` and never enters `GameState.phase`, and a new union member is D125's widening. D361 refused this member on the ratio *"one union member for ONE printing"*, then measured it and inverted its own recommendation; D362 re-derived it over all four surfaces and it holds: the predicate is **8 sentences / 13 legal printings, all unbuilt**, against the strictly WIDER *"ex or Pokémon V"* spelling of the same clause-table template, **built since D107 at 4 / 6**. **BOUGHT: 7 sentences / 11 Standard-legal printings** — six printed amounts of *"If your opponent's Active Pokémon is a Pokémon ex, this attack does N more damage."* plus Turtonator `sv08-137`'s *"Discard an Energy from your opponent's Active Pokémon ex."* — for ONE `BoardCondition` member, TWO `interpreter.ts` arms, ONE clause-table row and ONE anchor, with **ZERO** new ops, op fields, `CardFilter` kinds, prompt kinds, registry keys, `cards.ts` predicates or `packages/schema`. **REFUSED WITH A MEASURED REASON — the line D361 left unpriced**: the Sawk negation is `deriveAttackRequirement`'s SHAPE but not its PRINTING, because `ATTACK_DOES_NOTHING` is anchored `^…$` and the card prints two sentences; controlled against Palafin's existing row, which stops reading the instant the same tail is bolted on. Census +11, ALL of it `BUILT.attack`'s RAW summand (**1,185 → 1,196**); `REGISTRY_ATTACK_UNITS` **16** and `splitHead` **13** stand still, and the reason is MEASURED rather than assumed — four of the eleven printings DO carry a registry program, and none of the four carries an `attack` key. Suite **369 files / 7,641 tests**, `bun run check` exit 0; corpus **1123 → 1128**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D357)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D357, AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.** Engine **0.262.0 → 0.263.0**; `MATCH_RECORD_VERSION` stays 21. A **CODE-REVIEW REPAIR of D356 — four findings, four fixed, zero refused** — whose first finding was a **correctness defect already on `main`**: the `activeOnly` gate read the board AFTER §6.1's Jet Energy switch rider, so a BENCHED Magearna healed and an ACTIVE one silently lost its printed 90. The clause reads the board AT THE MOMENT OF THE ATTACH — settled from the catalog, driven both ways in `autoHeal.test.ts` §5b, and verified RED against the old gate first. **A ROW COUNT IS NOT A COVERAGE MAP**: `sweepTriggers` already had two mutation rows and neither touched the gate. Census UNMOVED (measured — the census file is byte-unchanged). Suite 365 files / 7,532 tests; corpus 1089, sweep **1066 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D351)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D351, A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE PLAY GATE THAT COULD NOT SEE IT.** Engine **0.256.0 → 0.257.0** over FIVE sites (the fifth is D275's mutation anchor, not a version site); `MATCH_RECORD_VERSION` **STAYS 20** — the diff writes no new bytes at all, and a predicate is not a format. **BUILT: Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance"**, 3 legal printings on ONE sentence, the whole population. The engine diff is ONE predicate: `programPlayable`'s `attachEnergyFrom` gate becomes PROGRAM-scoped, refusing only when EVERY attach a program spells can only whiff. ZERO new vocabulary of any kind. Found by censusing **row 12, the one `ROWS` entry never censused**, whose clause spans TWO rows of the table. Second finding: `ASSEMBLE_ALLOY`'s "a park is declinable by construction" is FALSE, driven and struck. `bun run check` **360 files / 7,382 tests**; sweep **1015 killed · 22 known survivors · 0 GAPs · 0 stale · 0 errors** over a corpus of **1037**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D350)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D350, "ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT.** Engine **0.255.0 → 0.256.0**; `MATCH_RECORD_VERSION` **STAYS 20** (a parked `bottomFromOpponentHand` DOES ride `phase.cont`, so the argument is made rather than waved through: a v20 continuation carries `upTo` absent or a NUMBER, both read by this build exactly as by the last). **BUILT: Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink" — 3 legal printings on ONE sentence, the whole population — for ONE union member on ONE existing optional field (`upTo?: number \| "any"`).** The refutation from source FAILED on the CAPTION and not on behaviour (`upTo: BENCH_MAX` is behaviourally identical and captions the card with a number it does not print), and both halves are DRIVEN. Closes `bottomFromOpponentHand`'s bench arm at **3 of 3 legal sentences / 7 of 7 legal printings**; D294's own doc had priced that population at 4 because its query carried a POSSESSIVE this card does not print. REFUSED: D349's unpriced heal-then-discard family (~6 vocabulary items for 6 printings). `BUILT.ability` 267 → **270**, `built` 1593 → **1596**, residue 790 → **787**, `LANDED` 57/119 → **58/122**; `BUILT.attack` stands still on all three summands, measured. `bun run check` **359 files / 7,354 tests**; sweep **1011 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** over a **1033**-row corpus (3,335.3 s). `killed + survivors + GAPs = 1011 + 22 + 0 = 1033 = corpus` ✅, and **the kill delta reconciles exactly**: D349 was 1008/22 over 1030, so +3 corpus and +3 KILLED with the declared-survivor residue **UNCHANGED at 22** — the three new rows and nothing else, each probed individually (5 / 5 / 2 of 7,354, all in `invitingWink.test.ts`) rather than read off the batch.) |
@@ -2758,6 +2730,87 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-18 — build session #302 (P3-M5 — D362, the ex-ONLY Active board predicate, and a ratio that inverted when it was finally counted)
+
+**Slice.** Seven printed sentences / **11 Standard-legal printings** of the
+ex-ONLY Active board predicate, bought with ONE new `BoardCondition` member. TWO
+code commits plus the docs; the tree was CLEAN on arrival at `7fe5189`, both refs
+level, and every piece was pushed as it landed.
+
+**The row, and why it is a row.** D361 refused Turtonator `sv08-137` on the ratio
+*"ONE new union member for ONE printing"*, then measured the predicate it had
+just refused and **inverted its own recommendation**. D362 re-derived that
+measurement over all four surfaces before a line moved, and it holds exactly: the
+ex-ONLY Active board predicate is **8 sentences / 13 legal printings**, every one
+unbuilt, while the strictly **WIDER** *"ex **or Pokémon V**"* spelling of the
+**same clause-table template** has been built since D107 at **4 sentences / 6
+printings**. The narrower predicate has more than twice the printings of the
+wider one the engine already reads, and the two spellings sit side by side in one
+table on one sentence template. **A RATIO ARGUED FROM ONE PRINTING AND A RATIO
+MEASURED OVER THE CLAUSE ARE DIFFERENT NUMBERS**, and only the second decides.
+
+**The four surfaces, S4 first.** The producer set for a `BoardCondition` literal
+is **not** `discardEnergy`'s two files: grepping all 29 union members as
+`kind: "<name>"` over non-test source closes it at **three** (`effects.ts`,
+`registry.ts`, `continuous.ts`), with `index.ts`'s two hits doc PROSE and
+`mutants.ts`' 26 anchors quoting source. The CONSUMER set is `interpreter.ts`
+alone — `conditionHolds` and `conditionNote` — because `redact.ts` and
+`cardplay.ts` read the union OPAQUELY through those two, so a flat tag costs two
+arms and nothing else. S1 over `legalAttackCorpus()`: **640 s / 1,732 p** corpus,
+resolved **323 / 1,185 → 330 / 1,196**, residue **317 / 547 → 310 / 536**, both
+sides asserted to SUM to the corpus. S2 over all **708** `registryCardIds()` with
+a recursive flatten: **89** literals / **61** ids / **12** kinds. S3 on remote D1
+`luminous`, all three columns on `$.effect`, extractor verified against
+known-present rows FIRST — **identical to S1, 8 s / 13 p, all on `attacks_json`**.
+
+**The line a predecessor left unpriced, measured and then refused.**
+`deriveAttackRequirement` **owns the SHAPE and does not own the PRINTING**. Its
+table maps a printed NEGATIVE clause to the POSITIVE board fact, so *"isn't a
+Pokémon ex"* would have been ONE row and no `{kind:"not"}` member — but
+`ATTACK_DOES_NOTHING` is anchored `^…$` and Sawk `sv10.5w-049`/`-130` prints TWO
+sentences. Measured with a **control** rather than reasoned about: Palafin's
+existing row reads today and stops reading the instant the *identical* trailing
+sentence is bolted onto it, and the readers receive the whole `effect` string.
+Over the corpus the family splits **8 s / 16 p admissible** against **9 s / 27 p
+refused** (`8 + 9 = 17`, `16 + 27 = 43`). So the buy is **7 / 11**, not 8 / 13.
+
+**S2 killed a non-sequitur five close-outs have shipped.** *"This slice authored
+zero registry keys, so the registry summand cannot move"* is not the reason:
+**four of the eleven printings DO carry a `programFor` entry** — `sv10.5w-077`,
+`-162`, `-170` a `passive` and `sv09-018` an `abilities`. What actually holds
+`REGISTRY_ATTACK_UNITS` at 16 is that **none of the four carries an `attack`
+key**, and that is a different fact from the one the usual sentence names.
+
+**Prediction — two misses, and they group as two defects.** The population, the
+census (predicted to the unit, by file, line and value), the round-trip surface
+(zero wire bytes) and the `MATCH_RECORD_VERSION` answer all held.
+`clauseApostrophe.test.ts` **102 → 104 was PREDICTED** — D361's one miss,
+collected by asking what adding a FIXTURE moves rather than only what adding a
+SENTENCE moves. **MISS ONE reproduces D361's defect (c)**: 12 census rungs were
+predicted and there were **13**, the extra spelling `547` inside a rung named for
+something else — the fix is to grep the OLD VALUE as a literal across the suite,
+not to list harder. **MISS TWO is a new variant — a guard keyed on a
+PREDECESSOR'S REFUSAL**: `crossSeatEnergyDiscard.test.ts` §6 asserted Turtonator
+derived to `null`, D362 paid the price that case named, and it went red
+unpredicted. Running the planned anchor over every string literal in
+`packages/engine/src` would have caught it, and that step was skipped. **Red
+files predicted 4, measured 5.**
+
+**Mutation.** Corpus **1123 → 1128**, one row per claim, of which **two cover the
+same anchor's two independent defending words** (the adjective `ex` and the
+article `an`) — D361's own probe finding spent, since its sweep anchor survived
+its first probe for exactly that reason. The `--decision D362` probe on a quiet
+tree returned **5 killed · 0 known survivors · 0 GAPs · 0 stale · 0
+skipped(dirty) · 0 clobbers · 0 errors** on the first run.
+
+<!-- D362-SWEEP-SLOT -->
+
+**Order kept, and one reason to keep it.** The docs were closed and the
+whole-corpus anchor check run **before** the sweep, and the check was re-run after
+**every** write to this page. Of the eight mutation rows targeting
+`docs/progress.md`, **five** are the bare mid-line shape a `>` blockquote can
+reproduce, and each was checked by name rather than by aggregate.
 
 ### 2026-08-18 — build session #301 (P3-M5 — D361, the cross-seat Energy discard, and a `never` that was right about a number and wrong about "all")
 
