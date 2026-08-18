@@ -600,7 +600,18 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // with Tri Howl's printed discard silently gone. Two bumps, two ops, one field
     // name, and the second was NOT predicted by the pre-price that bought the
     // field: **a price that names a field has not thereby named what persists it.**
-    expect(MATCH_RECORD_VERSION).toBe(21);
+    // 🆕🆕 D359 — 21 → 22, the RENAME case a THIRD time, and the first on a PROMPT
+    // rather than an op: `EffectPrompt.choosePokemon.declinable?: true` became
+    // `upTo?: number` when the printed *"attach up to N"* gained its quantity. A
+    // v21 record parking that prompt carries `declinable: true`, which this build
+    // parses away and reads as `upTo === undefined` — MANDATORY — so a resumed
+    // match would refuse a decline the player had already been offered.
+    // 🛑 **AND THE DISCRIMINATOR IS THE ONE D358 DEMONSTRATED FROM THE OTHER
+    // SIDE**: D358 ADDED that same field to that same prompt and correctly left
+    // this constant alone, because a v20 record's MISSING key meant mandatory
+    // before and after. One slice later the key is renamed and the constant must
+    // move. A widening is free; a rename is not; they are one edit apart.
+    expect(MATCH_RECORD_VERSION).toBe(22);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

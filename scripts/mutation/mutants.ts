@@ -5391,8 +5391,8 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
-    // ⚠ RE-POINTED AT D358 (0.263.0 → 0.264.0) — the FIFTY-FIFTH payment.
-    find: 'export const engineVersion = "0.264.0";',
+    // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
+    find: 'export const engineVersion = "0.265.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10017,7 +10017,7 @@ export const MUTANTS: Mutant[] = [
     //    itself the argument for one row rather than one per bump, made twice.
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 21;",
+    find: "export const MATCH_RECORD_VERSION = 22;",
     replace: "export const MATCH_RECORD_VERSION = 20;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },

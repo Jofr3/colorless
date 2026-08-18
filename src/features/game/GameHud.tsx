@@ -1857,17 +1857,42 @@ function OrderCardsDialog({
   );
 }
 
+/** The quantities a `choosePokemon` row offers, in printed order.
+
+    🆕🆕 D359 — `[undefined]` on a MANDATORY prompt AND on a `upTo: 1` one, which
+    is the one line that keeps every dialog written before this slice rendering
+    the same DOM: a take-1-or-none pick has exactly one non-empty answer, and
+    spelling it `take: 1` on the wire would be a second way to say what a bare
+    ref already says (`validateChoice` accepts both, and one spelling is the
+    point). Above one, the row is repeated per quantity, LOW TO HIGH, because the
+    print reads "up to N" and a player scanning for the cheap answer should find
+    it first. Shared in shape with `OnlineHud`'s copy — the two dialogs answer the
+    same wire prompt and must offer the same answers. */
+function takeOptions(upTo: number | undefined): (number | undefined)[] {
+  if (upTo === undefined || upTo <= 1) return [undefined];
+  return Array.from({ length: upTo }, (_, i) => i + 1);
+}
+
 /** Choose exactly one Pokémon (switch / gust / heal). Picking is the whole
     decision, so each row dispatches directly.
 
-    🆕 D358 — **AND ON A `declinable` PROMPT, NOT PICKING IS ALSO A WHOLE
+    🆕 D358 — **AND ON A PROMPT CARRYING A CEILING, NOT PICKING IS ALSO A WHOLE
     DECISION**, so it gets a row of its own rather than a modifier on the others:
     the printed *"attach **up to** 2"* (Archaludon ex, Magneton) means the empty
     answer is one of the offered outcomes, not an escape from the dialog. Absent
     on every other producer, where the pick is mandatory and a "Take none" would
     offer a dispatch the engine rejects — the house rule this file applies to
     every dialog (see `ChoosePokemonMultiDialog` below). Kept LAST and separated,
-    because the eye reads a list of bodies and this row is not one of them. */
+    because the eye reads a list of bodies and this row is not one of them.
+
+    🆕🆕 D359 — **AND ABOVE `upTo: 1` THE QUANTITY IS PART OF THE SAME WHOLE
+    DECISION**, so it stays inside the row rather than becoming a second dialog:
+    the print asks *"how many, and onto which body"* as ONE question (the op's
+    `count` pins the batch to the ONE body the sentence names), and a dialog that
+    asked them separately would be spelling a decision the card does not print.
+    So a `upTo: 2` prompt offers each body TWICE — the middle answer and the full
+    one — and `upTo: 1` renders exactly the single row it always did, which is
+    what keeps every pre-D359 dialog byte-identical. */
 function ChoosePokemonDialog({
   game,
   viewerSeat,
@@ -1878,31 +1903,36 @@ function ChoosePokemonDialog({
     <HudDialog label="Choose a Pokémon">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <ul className="mt-3 flex flex-col gap-1.5">
-        {prompt.candidates.map((ref) => (
-          <li
-            key={`${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "a"}`}
-          >
-            <button
-              type="button"
-              onClick={() =>
-                dispatch({
-                  type: "resolveEffect",
-                  seat: viewerSeat,
-                  choice: { kind: "pokemon", ref },
-                })
-              }
-              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+        {prompt.candidates.flatMap((ref) =>
+          takeOptions(prompt.upTo).map((take) => (
+            <li
+              key={`${ref.seat}-${ref.spot.spot}-${ref.spot.spot === "bench" ? ref.spot.index : "a"}-${take ?? "all"}`}
             >
-              <span className="truncate">{refName(game, ref)}</span>
-              {ref.seat !== viewerSeat && (
-                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
-                  opponent
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch({
+                    type: "resolveEffect",
+                    seat: viewerSeat,
+                    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+                  })
+                }
+                className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+              >
+                <span className="truncate">
+                  {refName(game, ref)}
+                  {take === undefined ? "" : ` — attach ${take}`}
                 </span>
-              )}
-            </button>
-          </li>
-        ))}
-        {prompt.declinable === true && (
+                {ref.seat !== viewerSeat && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    opponent
+                  </span>
+                )}
+              </button>
+            </li>
+          )),
+        )}
+        {prompt.upTo !== undefined && (
           <li className="mt-1.5 border-t border-white/10 pt-1.5">
             <button
               type="button"

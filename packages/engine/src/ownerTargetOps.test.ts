@@ -355,14 +355,43 @@ function refNames(state: GameState, refs: readonly PokemonRef[]): string[] {
 
 /** The parked `choosePokemon` prompt, narrowed — a state that did NOT park fails
     here with the reason rather than three lines later on an undefined. */
-function choosePrompt(state: GameState): { candidates: PokemonRef[]; note: string } {
+function choosePrompt(state: GameState): {
+  candidates: PokemonRef[];
+  note: string;
+  upTo?: number;
+} {
   if (state.phase.kind !== "effect:choose") {
     throw new Error(`expected effect:choose, got ${state.phase.kind}`);
   }
   if (state.phase.prompt.kind !== "choosePokemon") {
     throw new Error(`expected choosePokemon, got ${state.phase.prompt.kind}`);
   }
-  return { candidates: state.phase.prompt.candidates, note: state.phase.prompt.note };
+  const prompt = state.phase.prompt;
+  return {
+    candidates: prompt.candidates,
+    note: prompt.note,
+    ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
+  };
+}
+
+/** 🆕🆕 D359 — **A ONE-BODY BOARD NOW PARKS TOO.** *"attach up to 2 … to 1 of
+    your Benched Ethan's Pokémon"* has THREE answers over one candidate, so the M1
+    no-choice rule no longer forces it: three cases below used to resolve inline
+    and now answer a park. Uses the Ability, then answers with `take` (absent =
+    the whole printed batch); a board that whiffs never parks and comes back as
+    it is. */
+function useAndTake(state: GameState, take?: number): GameState {
+  const used = mustApply(state, useGoldenFlame);
+  if (used.state.phase.kind !== "effect:choose") return used.state;
+  const prompt = used.state.phase.prompt;
+  if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+  const ref = prompt.candidates[0];
+  if (ref === undefined) throw new Error("expected a candidate");
+  return mustApply(used.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  }).state;
 }
 
 const BENCH_0: PokemonRef = { seat: "p1", spot: { spot: "bench", index: 0 } };
@@ -432,8 +461,13 @@ describe("`attachEnergyFrom.count` — ONE decision, N Energy, ONE body", () => 
 
   it("⚠️ 'UP TO' — one matching Energy in hand attaches ONE, silently", () => {
     const state = ohoBoard(34, ["fix-ethan-cyndaquil"], 1);
-    // Forced (one Benched Ethan's Pokémon), so this resolves inline.
-    const { state: done, events } = mustApply(state, useGoldenFlame);
+    // 🆕 D359 — ONE Benched Ethan's Pokémon no longer FORCES: the printed ceiling
+    // makes {0, 1, 2} three answers over one body. And the ceiling stays 2 with a
+    // single {R} in hand — a prompt clamped to what the hand holds would leak it.
+    const parked = mustApply(state, useGoldenFlame).state;
+    expect(choosePrompt(parked).upTo).toBe(2);
+    const done = useAndTake(state);
+    const events = mustApply(parked, pick(BENCH_0)).events;
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
@@ -526,7 +560,7 @@ describe("Ethan's Ho-Oh ex 'Golden Flame' — the 4 legal printings", () => {
 
   it("is ONCE per turn — the second use is refused, and the board is unchanged", () => {
     const state = ohoBoard(44, ["fix-ethan-cyndaquil"]);
-    const { state: once } = mustApply(state, useGoldenFlame);
+    const once = useAndTake(state);
     expect(once.players.p1.bench[0]?.energy).toHaveLength(2);
     const again = applyAction(once, useGoldenFlame);
     expect(again.ok).toBe(false);
@@ -542,7 +576,7 @@ describe("Ethan's Ho-Oh ex 'Golden Flame' — the 4 legal printings", () => {
     // `programPlayable` refuses an attach that could only whiff. "Up to 2" with
     // one {R} in hand is NOT a whiff — it attaches one, exactly as printed — so a
     // gate written against `count` would refuse the card on a board it works on.
-    const { state: done } = mustApply(state, useGoldenFlame);
+    const done = useAndTake(state);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
   });
 

@@ -172,6 +172,31 @@ function promptOf(state: GameState): { note: string; candidates: readonly Pokemo
 
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
 
+/** 🆕🆕 D359 — **RETURN CHARGE NOW PARKS TWICE, AND THE SECOND PARK IS THE
+    SLICE.** The program is `switchActive` (a mandatory `choosePokemon` over the
+    Bench) then a `recordGate` whose `then` is the `toSelf` attach — and that
+    attach prints *"attach **up to 2** Basic {L} … to this Pokémon"*, which is
+    three answers over one body, so `parkOrForce` no longer forces it. Answers the
+    attach park with `take` (absent = the whole printed batch) and folds both event
+    batches together, so every assertion below still reads one list. A board where
+    the gate holds nothing back never parks a second time and comes back as it is. */
+function takeAttach(
+  from: { state: GameState; events: GameEvent[] },
+  take?: number,
+): { state: GameState; events: GameEvent[] } {
+  if (from.state.phase.kind !== "effect:choose") return from;
+  const prompt = from.state.phase.prompt;
+  if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+  const ref = prompt.candidates[0];
+  if (ref === undefined) throw new Error("expected a candidate");
+  const answered = mustApply(from.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  });
+  return { state: answered.state, events: [...from.events, ...answered.events] };
+}
+
 function pick(state: GameState, ref: PokemonRef): { state: GameState; events: GameEvent[] } {
   return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
 }
@@ -324,7 +349,7 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
       seat: "p1",
       index: RETURN_CHARGE_IDX,
     });
-    const { state: done, events } = pick(parked, benchRef(0));
+    const { state: done, events } = takeAttach(pick(parked, benchRef(0)));
 
     // The switch happened: a Benched body is Active and the attacker is benched.
     expect(done.players.p1.active?.stack[0]).not.toBe(attackerUid);
@@ -391,7 +416,7 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
       seat: "p1",
       index: RETURN_CHARGE_IDX,
     });
-    const { events: mixedEvents } = pick(mixedParked, benchRef(0));
+    const { events: mixedEvents } = takeAttach(pick(mixedParked, benchRef(0)));
     expect(all(mixedEvents, "ENERGY_ATTACHED")).toHaveLength(1);
   });
 
@@ -405,8 +430,32 @@ describe("🛑 Return Charge — the §9.2 gate, and the body that MOVED", () =>
       seat: "p1",
       index: RETURN_CHARGE_IDX,
     });
-    const { events } = pick(parked, benchRef(0));
+    const { events } = takeAttach(pick(parked, benchRef(0)));
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
+  });
+
+  it("🆕🛑 D359 — the printed MIDDLE answer behind the §9.2 gate: ONE of two", () => {
+    // The quantity axis at its hardest reachable site: the attach is not the
+    // program's first op, it is the `then` of a `recordGate`, and it targets the
+    // body the FIRST park moved. Two {L} in hand, the controller takes ONE.
+    const state = ready(7, { hand: { "fix-lightning-energy": 2 } });
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: RETURN_CHARGE_IDX,
+    });
+    const switched = pick(parked, benchRef(0));
+    // The second park carries the printed ceiling and names ONE body.
+    if (switched.state.phase.kind !== "effect:choose") throw new Error("expected a second park");
+    const prompt = switched.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.candidates).toHaveLength(1);
+    expect(prompt.upTo).toBe(2);
+    const { state: done, events } = takeAttach(switched, 1);
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(
+      done.players.p1.hand.filter((u) => done.cardIdByUid[u] === "fix-lightning-energy"),
+    ).toHaveLength(1);
   });
 });
 

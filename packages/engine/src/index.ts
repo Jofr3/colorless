@@ -12108,6 +12108,59 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.265.0 → **THE QUANTITY AXIS — `attachEnergyFrom`'s PRINTED *"up to N"*
+    TO ONE NAMED BODY, AND A POPULATION THE REGISTRY COULD NOT SEE.**
+
+    D358 bought the DECLINE and wrote down, in the same commit, that three
+    `count: 2` families were left offering `{0, 2}` against a printed `{0, 1, 2}`
+    and wanted a QUANTITY axis rather than a decline one. That was the right call
+    and the wrong census. **Re-derived here, the population is 6 sentences and 13
+    Standard-legal printings, not 3 and 8** — because D358 walked the REGISTRY and
+    the registry is not the build. `deriveAttackEffect` is this op's second
+    producer, and it emits `count: 2` for three more legal sentences no registry
+    walk can reach: Oricorio "Energy Assist" `sv08-026`/`sv08-089`, Regirock ex
+    "Regi Charge" `sv10-101`/`sv10-214`, Kilowattrel ex "Return Charge"
+    `sv08-068`. ⚠️ **AND THE TWO HALVES WERE BROKEN DIFFERENTLY**: the 8 ABILITY
+    printings reached `{0, 2}` because an activated or triggered *"you may"* buys
+    the empty answer; the 5 ATTACK printings reached **`{2}` alone**, because an
+    attack is declared and resolves and there is no `optional` anywhere in the
+    program. A decline axis could never have repaired either half.
+
+    **ZERO NEW OP FIELDS.** `count` IS the ceiling already, and that is proved at
+    source rather than argued: `attachFromZoneClause` admits `count > 1` through
+    its literal `up to (\d+)` alternative ALONE, so every `count > 1` op in the
+    build is a sentence that printed the word — and `count`'s own doc has said
+    since D205 that *"`min(count, available)` is what actually lands … because the
+    print says UP TO"*. The engine had been spending the printed "up to" against
+    AVAILABILITY and never against the player's WILL.
+
+    **AND THE PROMPT FIELD IS A WIDENING, NOT AN ADDITION.**
+    `EffectPrompt.choosePokemon.declinable?: true` becomes `upTo?: number`: at
+    this prompt `declinable` IS `upTo: 1`, and keeping both would put two keys on
+    one axis — the exact refusal D358 made at the OP when it declined `upTo`
+    beside `count`. `interpreter.ts` had already written the rule down one member
+    below: *"A prompt with `min: 0` is declinable by construction and does not set
+    it."* **OP-level `declinable` and `count` are UNCHANGED AND STILL NEVER
+    CO-OCCUR** (`attachDecline.test.ts` §1 stands, unedited) — the two fold into
+    one key only where they become one question, which is the prompt.
+
+    `EffectChoice.pokemon` gains `take?: number`, absent = the whole batch, so
+    every pre-D359 answer means exactly what it always meant and the only new
+    answers are §9.1's middle ones. `{ref, take: 0}` is REFUSED: a named body with
+    nothing on it is the decline, which the union already spells as the absent
+    ref. And the ceiling is the PRINTED number, never clamped to the zone —
+    a clamp would leak hand contents through `redactPrompt`.
+
+    🛑 **`MATCH_RECORD_VERSION` MOVES 21 → 22**, asked rather than inherited, and
+    the discriminator is not "did a field change" but "does the old byte string
+    still mean what it meant". D358 ADDED `declinable` to this prompt and rightly
+    left the constant alone. One slice later the same field is RENAMED, a v21
+    record's `declinable: true` parses away to nothing, and the park reads back as
+    mandatory. D352's rename case, a third time.
+
+    engineVersion 0.264.0 → **0.265.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.264.0 → **THE DECLINABLE POKÉMON PARK — "UP TO N" STOPS BEING AN EXACT
     COUNT, AND THE PRICE WAS RE-DERIVED BEFORE IT WAS PAID.**
 
@@ -13287,7 +13340,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.264.0";
+export const engineVersion = "0.265.0";
 
 export type {
   ApplyResult,

@@ -157,6 +157,42 @@ function benchEnergyIds(state: GameState, index: number): string[] {
   return pokemon.energy.map((uid) => state.cardIdByUid[uid] as string);
 }
 
+/** 🆕🆕 D359 — **THE BENCH PLAY NOW PARKS, AND THAT IS THE SLICE.** *"you may
+    attach **up to 2** … to this Pokémon"* offers `{0, 1, 2}`; before D359 the
+    `toSelf` ref made `parkOrForce` force its lone candidate and the controller
+    attached two without being asked. Plays the Ursaluna, answers the park with
+    `take` (absent = the whole printed batch), and returns BOTH batches of events
+    so every assertion below still sees the bench play and the attach together.
+    A whiff never parks, so it is returned as it comes. */
+function answerPark(state: GameState, take?: number): GameState {
+  if (state.phase.kind !== "effect:choose") throw new Error("expected a park");
+  const prompt = state.phase.prompt;
+  if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+  const ref = prompt.candidates[0];
+  if (ref === undefined) throw new Error("expected a candidate");
+  return mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  }).state;
+}
+
+function benchAndAnswer(state: GameState, take?: number): { state: GameState; events: GameEvent[] } {
+  const uid = handUid(state, "p1", "sv06.5-025");
+  const played = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+  if (played.state.phase.kind !== "effect:choose") return played;
+  const prompt = played.state.phase.prompt;
+  if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+  const ref = prompt.candidates[0];
+  if (ref === undefined) throw new Error("expected a candidate");
+  const answered = mustApply(played.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  });
+  return { state: answered.state, events: [...played.events, ...answered.events] };
+}
+
 const SEED = 7;
 
 /** ⚠️ A SEED MUST BE SEARCHED, NOT GUESSED — `driveSetup` throws when the opening
@@ -237,22 +273,40 @@ describe("D250 — the registry rows", () => {
 // ── The trigger ──────────────────────────────────────────────────────────────
 
 describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
-  it("attaches TWO Basic {F} to the body just benched, with no park", () => {
+  it("🆕 D359 — it PARKS, and the park names ONE body and the printed ceiling", () => {
+    // 🛑 THE ASSERTION THIS FILE USED TO MAKE WAS `not.toContain("EFFECT_PENDING")`,
+    // under the comment *"`toSelf` resolves to AT MOST ONE ref, so `parkOrForce`
+    // forces"*. That was true of a MANDATORY pick and false of a pick with a
+    // printed ceiling: one body and "up to 2" is THREE answers, and the M1
+    // no-choice rule is about answers rather than about candidates.
     const state = ready(SEED, 2);
-    const uid = handUid(state, "p1", "sv06.5-025");
     const benchBefore = state.players.p1.bench.length;
-    const { state: done, events } = mustApply(state, {
+    const played = mustApply(state, {
       type: "playBasicToBench",
       seat: "p1",
-      uid,
+      uid: handUid(state, "p1", "sv06.5-025"),
     });
+    expect(types(played.events)).toContain("EFFECT_PENDING");
+    if (played.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = played.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    // ONE candidate — the body just benched — and the printed ceiling beside it.
+    expect(prompt.candidates).toHaveLength(1);
+    expect(prompt.candidates[0]?.spot).toEqual({ spot: "bench", index: benchBefore });
+    expect(prompt.upTo).toBe(2);
+    // 🆕 AND THE CAPTION IS WORDED FOR `toSelf`, a branch D205 removed as
+    // unreachable and this slice made reachable. "which of your Pokémon?" over a
+    // list of one would read as a bug.
+    expect(prompt.note).toBe("Attach up to 2 Energy to this Pokémon?");
+  });
+
+  it("attaches TWO Basic {F} to the body just benched when the FULL take is answered", () => {
+    const state = ready(SEED, 2);
+    const benchBefore = state.players.p1.bench.length;
+    const { state: done, events } = benchAndAnswer(state);
     // The bench play AND the trigger landed in the one batch.
     expect(types(events)).toContain("POKEMON_BENCHED");
     expect(find(events, "ABILITY_TRIGGERED")?.ability).toBe("Battle-Hardened");
-    // ⚠️ IT DOES NOT PARK, AND THAT IS `toSelf` + `count` MEETING. `toSelf`
-    // resolves to AT MOST ONE ref, so `parkOrForce` forces — which is why D205's
-    // count-naming caption is unreachable here and its own comment says so.
-    expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(done.phase.kind).toBe("turn:action");
     const index = benchBefore;
     expect(done.players.p1.bench[index]?.stack.map((u) => done.cardIdByUid[u])).toEqual([
@@ -274,17 +328,15 @@ describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
     // the field would make `sourceRef` return `[]` and the card would whiff GREEN
     // — which is exactly why the Active's Energy count is asserted beside it.
     const state = ready(SEED, 2);
-    const uid = handUid(state, "p1", "sv06.5-025");
     const activeBefore = state.players.p1.active?.energy.length ?? 0;
-    const { state: done } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+    const { state: done } = benchAndAnswer(state);
     expect(done.players.p1.active?.energy).toHaveLength(activeBefore);
     expect(benchEnergyIds(done, done.players.p1.bench.length - 1)).toHaveLength(2);
   });
 
   it("`count: 2` is a CAP — a hand with three {F} keeps one", () => {
     const state = ready(SEED, 3);
-    const uid = handUid(state, "p1", "sv06.5-025");
-    const { state: done } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
+    const { state: done } = benchAndAnswer(state);
     expect(benchEnergyIds(done, done.players.p1.bench.length - 1)).toEqual([
       "fix-fighting-energy",
       "fix-fighting-energy",
@@ -297,15 +349,58 @@ describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
 
   it("`count: 2` is `min(count, available)` — the printed 'UP TO', silently", () => {
     const state = ready(SEED, 1);
-    const uid = handUid(state, "p1", "sv06.5-025");
-    const { state: done, events } = mustApply(state, {
-      type: "playBasicToBench",
-      seat: "p1",
-      uid,
-    });
+    const { state: done, events } = benchAndAnswer(state);
     expect(benchEnergyIds(done, done.players.p1.bench.length - 1)).toEqual(["fix-fighting-energy"]);
     expect(events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(1);
     expect(done.phase.kind).toBe("turn:action");
+    // 🆕 D359 — AND THE CEILING IS STILL 2 ON A ONE-CARD HAND. The printed number
+    // is public and the hand is not: a ceiling clamped to what the controller
+    // actually holds would leak the hand through `redactPrompt`, so `min(count,
+    // available)` stays a fact about the APPLY and never about the prompt.
+    const played = mustApply(ready(SEED, 1), {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(ready(SEED, 1), "p1", "sv06.5-025"),
+    });
+    if (played.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = played.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.upTo).toBe(2);
+  });
+
+  it("🆕🛑 D359 — the printed MIDDLE answer: ONE of two, with the second kept in hand", () => {
+    // The whole slice on one board. A hand holding TWO {F} and a controller who
+    // wants ONE was, before this slice, given two — the printed ceiling spent
+    // against availability and never against their will.
+    const state = ready(SEED, 2);
+    const { state: done, events } = benchAndAnswer(state, 1);
+    expect(benchEnergyIds(done, done.players.p1.bench.length - 1)).toEqual(["fix-fighting-energy"]);
+    expect(events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(
+      done.players.p1.hand.filter((u) => done.cardIdByUid[u] === "fix-fighting-energy"),
+    ).toHaveLength(1);
+    expect(done.phase.kind).toBe("turn:action");
+  });
+
+  it("🆕 D359 — the ZERO answer moves nothing and announces nothing", () => {
+    const state = ready(SEED, 2);
+    const played = mustApply(state, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(state, "p1", "sv06.5-025"),
+    });
+    if (played.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const done = mustApply(played.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon" },
+    });
+    expect(benchEnergyIds(done.state, done.state.players.p1.bench.length - 1)).toEqual([]);
+    expect(done.events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(
+      done.state.players.p1.hand.filter((u) => done.state.cardIdByUid[u] === "fix-fighting-energy"),
+    ).toHaveLength(2);
+    expect(done.state.phase.kind).toBe("turn:action");
   });
 
   it("whiffs green on an empty {F} hand — the printed 'you may', already honoured", () => {
@@ -355,18 +450,16 @@ describe("D250 — Battle-Hardened fires on the bench play (§9)", () => {
     let state = handFromDeck(board(SEED), "p1", "sv06.5-025", 2);
     state = fightingInHand(state, 4);
     const [first, second] = handUids(state, "p1", "sv06.5-025", 2) as [string, string];
-    const afterFirst = mustApply(state, {
-      type: "playBasicToBench",
-      seat: "p1",
-      uid: first,
-    }).state;
+    // 🆕 D359 — each firing now PARKS, so each is answered in turn; the claim is
+    // unchanged (two independent firings, two bodies) and only the route to it is.
+    const afterFirst = answerPark(
+      mustApply(state, { type: "playBasicToBench", seat: "p1", uid: first }).state,
+    );
     const firstIndex = afterFirst.players.p1.bench.length - 1;
     expect(benchEnergyIds(afterFirst, firstIndex)).toHaveLength(2);
-    const done = mustApply(afterFirst, {
-      type: "playBasicToBench",
-      seat: "p1",
-      uid: second,
-    }).state;
+    const done = answerPark(
+      mustApply(afterFirst, { type: "playBasicToBench", seat: "p1", uid: second }).state,
+    );
     const secondIndex = done.players.p1.bench.length - 1;
     expect(secondIndex).toBe(firstIndex + 1);
     // TWO each, not FOUR and ZERO.

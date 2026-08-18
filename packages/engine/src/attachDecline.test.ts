@@ -359,7 +359,7 @@ function asMandatory(state: GameState): GameState {
   if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
   const phase = state.phase;
   if (phase.prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
-  const { declinable: _dropped, ...mandatory } = phase.prompt;
+  const { upTo: _dropped, ...mandatory } = phase.prompt;
   return { ...state, phase: { ...phase, prompt: mandatory } };
 }
 
@@ -566,7 +566,9 @@ describe("D358 §2 — Archaludon ex's printed {0, 1, 2}, all three reachable", 
     const prompt = first.state.phase.prompt;
     if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
     expect(prompt.candidates).toHaveLength(2);
-    expect(prompt.declinable).toBe(true);
+    // 🆕 D359 — the flag became the CEILING, and Archaludon's one-card ops carry
+    // it at width ONE. Same right, same park, one number.
+    expect(prompt.upTo).toBe(1);
   });
 });
 
@@ -703,7 +705,7 @@ describe("D358 §4 — the validator, the redaction, and the refuted map-prompt 
     if (view.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const wire = view.phase.prompt;
     if (wire === null || wire.kind !== "choosePokemon") throw new Error("expected choosePokemon");
-    expect(wire.declinable).toBe(true);
+    expect(wire.upTo).toBe(1);
 
     const plainView = redactGame(asMandatory(evolved.state), "p1");
     if (plainView.phase.kind !== "effect:choose") throw new Error("expected effect:choose");

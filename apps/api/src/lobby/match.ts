@@ -845,8 +845,26 @@ export interface MatchRecord {
     diff, and it stayed true. What it missed is that the field is PERSISTED. **A
     PRICE THAT NAMES A FIELD HAS NOT THEREBY NAMED WHAT PERSISTS IT**, which is
     the D352 lesson and the reason this paragraph sits beside D335's rather than
-    replacing it. Driven both directions in `metalMaker.test.ts` §7. */
-export const MATCH_RECORD_VERSION = 21;
+    replacing it. Driven both directions in `metalMaker.test.ts` §7.
+
+    🆕🆕 **21 → 22 AT D359, AND IT IS THE RENAME CASE A THIRD TIME — THIS TIME ON
+    A PROMPT RATHER THAN AN OP.** D359 gave `choosePokemon` the printed QUANTITY
+    the *"attach up to N"* sentences ask for, and D358's one-slice-old
+    `declinable?: true` became `upTo?: number` — the same right at every width
+    instead of at width one. This prompt rides the persisted `effect:choose`
+    phase, so a v21 record can hold `{kind:"choosePokemon", declinable: true}`,
+    which under this deploy reads as `upTo === undefined`, i.e. MANDATORY. A
+    resumed match would refuse the decline the player was promised and force an
+    Archaludon ex attach they had already been offered the right to refuse.
+
+    🛑 **AND THE DISCRIMINATOR IS NOT "DID A FIELD CHANGE" BUT "DOES THE OLD BYTE
+    STRING STILL MEAN WHAT IT MEANT".** D358 added `declinable` to this very
+    prompt and correctly did NOT move this constant: a v20 record carried no key,
+    and no key meant mandatory both before and after. One slice later the same
+    field is renamed and the constant MUST move, because now the old key's
+    ABSENCE-after-parsing means something the writer never said. A WIDENING is
+    free and a RENAME is not, and the two are one edit apart on one field. */
+export const MATCH_RECORD_VERSION = 22;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

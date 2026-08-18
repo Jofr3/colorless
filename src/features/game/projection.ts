@@ -492,13 +492,15 @@ function effectDecisionFromPrompt(
         prompt: {
           kind: "choosePokemon",
           candidates: prompt.candidates.map(refFromWire),
-          // 🆕 D358 — carried, and by a CONDITIONAL SPREAD like every optional
-          // field in this file. Dropping it here would rebuild a declinable park
-          // as a mandatory one and the dialog on the far side of this projection
-          // would silently stop offering the printed "up to N" decline — the
-          // round-trip is the identity or it is a lie, which is what every other
-          // arm here is asserting by rebuilding field for field.
-          ...(prompt.declinable === undefined ? {} : { declinable: prompt.declinable }),
+          // 🆕 D358/D359 — carried, and by a CONDITIONAL SPREAD like every optional
+          // field in this file. Dropping it here would rebuild a park with a
+          // printed ceiling as a MANDATORY one, and the dialog on the far side of
+          // this projection would silently stop offering both the decline and
+          // every middle quantity — the round-trip is the identity or it is a
+          // lie, which is what every other arm here is asserting by rebuilding
+          // field for field. **THIS IS THE SITE D358's OWN PRICE DID NOT NAME**:
+          // it counted the engine and the wire and forgot the way back.
+          ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
           note: prompt.note,
         },
       };

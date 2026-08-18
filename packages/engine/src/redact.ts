@@ -278,16 +278,21 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         ...(prompt.alt === undefined ? {} : { alt: prompt.alt }),
       };
     case "choosePokemon":
-      // 🆕 D358 — `declinable` RIDES THROUGH AS A CONDITIONAL SPREAD, this file's
-      // ABSENT-KEY rule (D135, and `alt` two arms up): `declinable: undefined` is
-      // not the same wire value as no key at all, and every park authored before
-      // this slice must redact to the byte-identical two-field object it always
-      // did. It hides nothing — the printed sentence in `note` already says "up
-      // to" — so unlike `candidates` it needs no answerer gate.
+      // 🆕 D358/D359 — the printed CEILING rides through as a conditional spread,
+      // this file's ABSENT-KEY rule (D135, and `alt` two arms up): `upTo:
+      // undefined` is not the same wire value as no key at all, and every
+      // MANDATORY park must redact to the byte-identical two-field object it
+      // always did.
+      // 🛑 **IT HIDES NOTHING, AND THAT IS A PROPERTY OF THE NUMBER RATHER THAN
+      // OF THIS ARM.** `upTo` is the PRINTED ceiling, never a count of what the
+      // controller actually holds — the printed sentence in `note` already says
+      // "up to N", and both are public. Had the interpreter clamped the ceiling
+      // to the matching Energy in hand, this spread would be leaking hand
+      // contents to the opponent through a field that looks like a rule.
       return {
         kind: "choosePokemon",
         candidates: prompt.candidates.map(redactedRefOf),
-        ...(prompt.declinable === undefined ? {} : { declinable: prompt.declinable }),
+        ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),
         note: prompt.note,
       };
     case "choosePokemonMulti":

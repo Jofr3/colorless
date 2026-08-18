@@ -471,27 +471,38 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     note: z.string(),
     alt: z.string().optional(),
   }),
-  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — or,
-      where `declinable` says the print allows it, pick NONE. The candidates are
-      public in-play refs.
+  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — and,
+      where `upTo` carries a printed ceiling, say how many of the moved thing the
+      pick takes, down to NONE. The candidates are public in-play refs.
 
-      🆕🆕 **D358 — `declinable` IS THE PRINTED *"attach up to N"*** (Archaludon
-      ex ×3, Magneton ×3), and it has to CROSS: the dialog decides whether to
-      offer a "Take none" at all, and `validateChoice` decides whether a ref-less
-      answer is a decline or a crafted frame refusing a mandatory effect. Neither
-      of them can see the engine op, which is the same argument `moveEnergy`'s
-      `anySource` makes three arms down.
+      🆕🆕 **D359 — `upTo` IS THE PRINTED *"attach up to N"* AND IT REPLACES
+      D358's `declinable`**, which was the same right at width one. Six sentences
+      and 13 Standard-legal printings spell a ceiling above one (Ethan's Ho-Oh ex
+      ×4, Bloodmoon Ursaluna ×2, Lycanroc ×2, Oricorio ×2, Regirock ex ×2,
+      Kilowattrel ex ×1), and Archaludon ex ×3 / Magneton ×3 spell it at one. It
+      has to CROSS: the dialog decides which quantities to offer at all, and
+      `validateChoice` decides whether a ref-less or short answer is a printed
+      right or a crafted frame refusing a mandatory effect. Neither of them can
+      see the engine op, which is the same argument `moveEnergy`'s `anySource`
+      makes three arms down.
 
-      **OPTIONAL, and absent means MANDATORY** — the reading every park in this
-      arm carried before the field existed — unlike `choosePokemonMulti`'s
-      required boolean below. That is not a style difference: this prompt rides
-      the persisted `effect:choose` phase, so a snapshot written by an earlier
-      deploy must round-trip through this schema unchanged, and a required field
-      would reject it. `MATCH_RECORD_VERSION` does not move. */
+      **OPTIONAL, and absent means MANDATORY EXACTLY-ONE** — the reading every
+      park in this arm carried before the field existed — unlike
+      `choosePokemonMulti`'s required boolean below. That is not a style
+      difference: this prompt rides the persisted `effect:choose` phase, so a
+      snapshot written by an earlier deploy must parse.
+
+      🛑 **BUT PARSING IS NOT READING, AND THIS IS WHY `MATCH_RECORD_VERSION`
+      MOVES 21 → 22 WHERE D358's WIDENING LEFT IT ALONE.** A v21 snapshot carries
+      `declinable: true`, which this schema no longer names; it parses (the key is
+      simply dropped) and then reads as `upTo === undefined`, i.e. MANDATORY — so
+      a resumed match would refuse a decline the player was promised. A widening
+      is safe because the old bytes still mean what they meant; a RENAME is not.
+      D352 made exactly this call for `attachFromTop.discardRest` → `restTo`. */
   z.object({
     kind: z.literal("choosePokemon"),
     candidates: z.array(redactedPokemonRefSchema),
-    declinable: z.literal(true).optional(),
+    upTo: z.number().int().positive().optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`

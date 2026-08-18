@@ -1388,7 +1388,8 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "choosePokemon": {
-      // Exactly one of the offered refs — or, on a `declinable` prompt, NONE.
+      // Exactly one of the offered refs — or, on a prompt carrying a printed
+      // ceiling, NONE, and with a quantity in 1..upTo when it names one.
       //
       // 🆕🆕 **D358 — THIS IS THE ONLY PLACE THE PRINTED *"up to N"* CAN BE
       // ENFORCED, AND IT IS ALSO THE ONLY PLACE THE ABSENCE OF ONE CAN BE.** The
@@ -1408,9 +1409,18 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         // decline this" is a rules fact about the card, and a reader looking at
         // the Pokémon in front of them should not be told their message was
         // malformed.
-        return prompt.declinable === true
+        //
+        // 🆕 D359 — the test is now the CEILING's presence rather than a decline
+        // flag's, and it admits exactly what it used to: a prompt carrying
+        // `upTo: N` legalises every k in 0..N (§9.1), and the k = 0 answer is
+        // this one. A `take` beside a missing ref is refused below, because a
+        // decline that also names a quantity is two answers in one frame.
+        if (prompt.upTo === undefined) {
+          return err("BAD_EFFECT_CHOICE", "this choice cannot be declined");
+        }
+        return choice.take === undefined
           ? null
-          : err("BAD_EFFECT_CHOICE", "this choice cannot be declined");
+          : err("BAD_EFFECT_CHOICE", "a declined choice takes nothing");
       }
       if (!isPokemonRef(choice.ref)) {
         return err("BAD_EFFECT_CHOICE", "expected a Pokémon choice");
@@ -1418,6 +1428,27 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       const picked = choice.ref;
       if (!prompt.candidates.some((c) => refEquals(c, picked))) {
         return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal target");
+      }
+      // 🆕🆕 **D359 — THE ANSWERED QUANTITY, AND THIS IS THE ONLY PLACE THE
+      // PRINTED CEILING CAN BE ENFORCED.** `applyChoice` clamps to `op.count` as
+      // a belt, but a clamp SILENTLY accepts a frame the print never allowed;
+      // this arm is what a P4 client is checked by, so the three ways a quantity
+      // can be wrong are three refusals with their own sentences:
+      //   • a quantity against a prompt that offered no ceiling — the mandatory
+      //     parks (switchActive, gust, healChosen's single arm, both evolve-body
+      //     continuations), where "how many" has no referent at all;
+      //   • a quantity above the printed ceiling, or not a whole number — the
+      //     over-take, which is the one a crafted frame actually wants;
+      //   • ZERO beside a named body. That is the DECLINE, and the union already
+      //     spells it as the absent ref. Refusing the second spelling is what
+      //     keeps a §9.2 `recordGate` from being handed a body with no uids and
+      //     the log from carrying a row naming a Pokémon nothing happened to.
+      if (choice.take === undefined) return null;
+      if (prompt.upTo === undefined) {
+        return err("BAD_EFFECT_CHOICE", "this choice takes no quantity");
+      }
+      if (!Number.isInteger(choice.take) || choice.take < 1 || choice.take > prompt.upTo) {
+        return err("BAD_EFFECT_CHOICE", "that is not a legal quantity");
       }
       return null;
     }

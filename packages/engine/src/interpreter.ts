@@ -309,40 +309,65 @@ export type EffectPrompt =
       caps?: readonly { uids: readonly string[]; max: number }[];
       note: string;
     }
-  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — or,
-      where `declinable` says the print allows it, pick NONE.
+  /** Pick exactly one in-play Pokémon (switchActive / gust / healChosen) — and,
+      where `upTo` says the print allows it, say HOW MANY of the moved thing the
+      pick takes, down to and including NONE.
 
-      🆕🆕 **D358 — `declinable` IS THE PRINTED *"up to N"*, AND ITS ABSENCE IS
-      THE MANDATORY PICK EVERY PARK HERE USED TO BE.** This was the ONE prompt
-      kind in the union with no way to say no. `chooseCards` has carried the
-      distinction since it was written (*"`min: 0` — the printed 'up to' … Taking
-      none is a legal answer"* vs *"`min === max` — a MANDATORY exact pick, where
-      the only decision is WHICH cards and never whether"*), `choosePokemonMulti`
-      carries `declinable` for the printed *"you may"*, and `moveEnergy` and
-      `attachCards` both document an empty answer as a legal decline. So a
-      controller answering *"attach **up to 2** … in any way you like"* was being
-      told the ceiling was exact, on the only park kind that could not say
-      otherwise. **Declinability was never a property of PARKING; it is a
-      property of the PROMPT KIND**, and this one was the hole.
+      🆕🆕 **D359 — `upTo` IS THE PRINTED CEILING, AND IT REPLACES D358's
+      `declinable` RATHER THAN SITTING BESIDE IT.** One slice ago this member
+      carried `declinable?: true`, bought for *"attach **up to** N … in any way
+      you like"* spread over N one-card ops. It was the right field for the wrong
+      width: at this prompt `declinable` IS `upTo: 1` — take the one on offer, or
+      take none — and the printed sentences that were still over-resolved differ
+      from it by a NUMBER and nothing else. Keeping both would have put two keys
+      on one axis, which is the exact refusal D358 made at the OP when it declined
+      `upTo` beside `count`. **This file had already written the rule down one
+      member below**: *"A prompt with `min: 0` is declinable by construction and
+      does not set it."* A floor of zero subsumes a decline flag; so does a
+      ceiling that admits zero.
 
-      Spelled as an absent-when-false optional rather than a required boolean,
-      unlike `choosePokemonMulti.declinable`, and the reason is persistence: this
-      prompt rides the `effect:choose` phase, which is serialized into a
-      `MatchRecord`. A record written before this slice carries no key, this
-      build reads `undefined`, and `undefined` means exactly what those parks
-      meant when they were written — mandatory. **A widening, not a missing
-      field, so `MATCH_RECORD_VERSION` does not move** (`caps` D332,
-      `anySource` D226 and `gust.basicOnly` D331 made the same argument).
+      • **absent** — the MANDATORY exactly-one every park here meant before D358:
+        switchActive, gust, returnBenched, healChosen's single arm, the two
+        counter moves and both evolve-body continuations. Forced at one candidate
+        (the M1 no-choice rule), and a ref-less answer is refused by the validator.
+      • **`upTo: 1`** — D358's decline, respelled. `attachEnergyFrom.declinable`
+        (Archaludon ex ×3, Magneton ×3) is its only producer.
+      • **`upTo: N`, N ≥ 2** — 🆕 the printed *"attach up to N … to ONE named
+        body"*, `attachEnergyFrom.count`'s six sentences and 13 legal printings.
+        The answer names a body AND a quantity in `0..N`.
+
+      🛑 **IT IS THE PRINTED CEILING AND IT IS NOT CLAMPED TO WHAT THE ZONE
+      HOLDS.** `lookAtTopN` clamps its FLOOR to the candidate count because a
+      short deck can make a floor unanswerable; a ceiling above what is available
+      simply never binds, and the apply has resolved `min(count, available)` since
+      D205. **And a clamp here would LEAK**: the quantity counts cards in the
+      controller's HAND or discard pile, not rows in `candidates`, so a ceiling
+      cut down to "what you actually hold" would tell the opponent how many {R}
+      Energy are in a hand they cannot see, through `redactPrompt`. The printed
+      number is public; the zone is not.
 
       🛑 **AND IT CHANGES WHAT `parkOrForce` DOES AT **ONE** CANDIDATE**, which
-      is the half a reader will not guess from the field alone. The M1 no-choice
-      rule forces a lone candidate because a question with one answer is not a
-      question — but a DECLINABLE pick has TWO answers over one candidate (take
-      it, or don't), so it parks at every non-empty candidate set. **This is D47's
-      call, verbatim**, made for `choosePokemonMulti` and reversed there in
-      review: the first draft honoured the decline only at 3+ bodies, i.e.
-      *"exactly where declining matters least"*. */
-  | { kind: "choosePokemon"; candidates: PokemonRef[]; declinable?: true; note: string }
+      is the half a reader will not guess from the field alone — D358's finding,
+      inherited verbatim and now reaching further. The M1 no-choice rule forces a
+      lone candidate because a question with one answer is not a question. A pick
+      with a ceiling has `upTo + 1` answers over one candidate, so it parks at
+      every non-empty candidate set. **This is D47's call, verbatim**, made for
+      `choosePokemonMulti` and reversed there in review: honouring the right only
+      above the auto-resolve threshold honours it *"exactly where declining
+      matters least"*. ⚠️ **THIS IS WHAT FINALLY REACHES THE `toSelf` FAMILIES.**
+      Bloodmoon Ursaluna, Lycanroc, Regirock ex and Kilowattrel ex all print
+      *"up to 2 … to **this Pokémon**"*: one candidate by construction, so before
+      this slice the controller was never asked at all and always attached two.
+
+      🛑 **`MATCH_RECORD_VERSION` MOVES 21 → 22 AND THAT IS THE COST OF THE
+      RENAME**, asked rather than assumed. This prompt rides the persisted
+      `effect:choose` phase. D358's `declinable` was a WIDENING — absent read as
+      mandatory, which is what older records meant — and cost no bump. A RENAME is
+      not a widening: a v21 record carries `declinable: true` over a park this
+      build would read as `upTo === undefined`, i.e. MANDATORY, and a resumed
+      match would refuse a decline the player was promised. D352 made exactly this
+      call one op over (`attachFromTop.discardRest` → `restTo`). */
+  | { kind: "choosePokemon"; candidates: PokemonRef[]; upTo?: number; note: string }
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe (damageChosen:
       Hawlucha's "choose 2", Meowscarada ex / Radiant Blastoise's "on 1 of your
       opponent's Benched Pokémon"). Distinct from choosePokemon (exactly one) in
@@ -626,10 +651,32 @@ export type EffectChoice =
 
       ⚠️ **THE VALIDATOR IS WHERE THE WIDENING EARNS ITS KEEP** (D341's rule for
       `orderCards`, one member over). An absent `ref` is accepted against a
-      `declinable` prompt and REFUSED with `BAD_EFFECT_CHOICE` against every
+      `upTo` prompt and REFUSED with `BAD_EFFECT_CHOICE` against every
       other one — so a crafted frame cannot decline Boss's Orders' gust, which
-      prints no *"up to"* and no *"you may"* and must resolve. */
-  | { kind: "pokemon"; ref?: PokemonRef }
+      prints no *"up to"* and no *"you may"* and must resolve.
+
+      🆕🆕 **D359 — `take` IS THE ANSWERED QUANTITY, AND ITS ABSENCE IS THE WHOLE
+      BATCH.** The printed *"attach **up to 2** … to 1 of your Benched Ethan's
+      Pokémon"* asks ONE compound question — which body, and how many onto it —
+      because `count` pins the batch to the one body the print NAMES. So the
+      quantity rides the SAME answer as the body rather than a second prompt:
+      a second prompt would contradict `count`'s own documented reading, and the
+      map prompt (`attachCards`) that could ask both re-opens the distribution
+      `count` exists to close.
+
+      **ABSENT = the prompt's `upTo`**, which is why this widening breaks no
+      client: every pre-D359 answer to this prompt was a bare ref, every bare ref
+      still means "all of it", and the ONLY answers that are new are the middle
+      ones §9.1 has always printed. Present, it must be an integer in `1..upTo`
+      against a prompt that carries a ceiling.
+
+      🛑 **`{ ref, take: 0 }` IS REFUSED, AND THAT IS A RULE RATHER THAN A
+      TYPO-CATCHER.** A named body with nothing attached to it is the DECLINE,
+      which this union already spells as the absent ref. Two spellings of one
+      answer is how a log ends up with a row that names a Pokémon nothing
+      happened to, and how a §9.2 `recordGate` reading "if you attached Energy in
+      this way" ends up with a body and no uids. One answer, one spelling. */
+  | { kind: "pokemon"; ref?: PokemonRef; take?: number }
   | { kind: "pokemonMulti"; refs: PokemonRef[] }
   /** The moveEnergy answer: up to `max` movable Energy uids (all sharing one
       source) moved onto `dest` — the compound decision validateChoice checks
@@ -2736,9 +2783,12 @@ function stepOp(
       // is a UID question, so it reads `sourceRef` rather than the class riders,
       // and it is the SAME reader `attachFromDeck.toSelf` uses (Pawmot
       // "Electrogenesis"): one spelling of "this Pokémon" for both attach routes.
-      // At most one ref comes back, so this park never parks under `toSelf` — the
-      // caption below is unreachable there and deliberately carries no wording
-      // for it.
+      // At most one ref comes back. 🆕🆕 **D359 CORRECTED THE SENTENCE THAT USED
+      // TO FOLLOW THIS ONE**: it read *"so this park never parks under `toSelf`
+      // — the caption below is unreachable there"*, which was true only while
+      // every park here was mandatory. A `toSelf` row that prints *"up to 2"*
+      // has TWO answers over its one body, so it parks, and the caption is
+      // reachable and worded.
       //
       // ⚠️⚠️ D248 — THE PRINTED "**each of**" IS HANDLED BEFORE THE PARK AND NOT
       // INSIDE IT, BECAUSE IT IS THE ABSENCE OF A QUESTION. Mudsdale
@@ -2776,6 +2826,16 @@ function stepOp(
           ),
         };
       }
+      // 🆕🆕 D359 — THE PRINTED CEILING REACHES THE PARK. `count` is already the
+      // printed *"up to N"* and nothing else: `attachFromZoneClause` (effects.ts)
+      // admits a count above 1 through its literal `up to (\d+)` alternative
+      // ALONE, so every `count > 1` op in this build — six sentences, 13 legal
+      // printings — is a sentence that printed the word. D358's `declinable` is
+      // the same right at width one, so the two fold into ONE argument here and
+      // the prompt carries ONE key. They never co-occur on an op
+      // (`attachDecline.test.ts` §1), so the `??` refereeing nothing is a
+      // statement about the catalog rather than a precedence rule.
+      const upTo = op.count ?? (op.declinable === true ? 1 : undefined);
       return parkOrForce(
         state,
         op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),
@@ -2788,27 +2848,45 @@ function stepOp(
         // difference no test can see and no card can produce. Removing the
         // comparison removes the unkillable mutant with it: the absent field is
         // the singular caption, and any count a card DOES spell is quoted.
-        `Attach ${
-          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`
-        } to which of your ${attachTargetNoun(op)}?`,
-        // 🆕 D358 — no `decider`: the printed *"up to N"* moves WHETHER, never
-        // WHO, so the fifth argument stays absent exactly as it was and the
-        // sixth is spelled positionally rather than folded into it. The flag
-        // rides the OP because only the print knows. **MEASURED against D1 over the
-        // 52 catalog ids whose program carries this op: 14 distinct Standard-legal
-        // sentences / 42 legal printings, of which 5 sentences / 14 printings print
-        // "up to" and 9 / 28 do not.** This slice buys TWO of those five sentences
-        // (Archaludon ex ×3, Magneton ×3); the other three are `count: 2` and want a
-        // quantity axis. ⚠️ 14 + Infernape's 3-printing disjunction = the 17
-        // over-resolved printings D358 re-derived — the two counts RECONCILE rather
-        // than agree by luck, which is the only reason either is quotable. Deriving
-        // it here — from `count`, from the program's op count, from anything the
-        // interpreter can see — would make Eelektrik's *"attach a Basic {L}
-        // Energy card … to 1 of your Benched Pokémon"* declinable too, and that
-        // sentence prints neither *"up to"* nor a hidden zone to fail a search
-        // in (§9.1's one other decline, which rides the ZONE and not the number).
+        // 🆕 D359 — AND THE DESTINATION HALF IS NOW WORDED FOR `toSelf`, WHICH
+        // D205 REMOVED AS UNREACHABLE AND THIS SLICE MADE REACHABLE. A ceiling
+        // parks at one candidate, and *"attach up to 2 … to **this Pokémon**"*
+        // offers exactly one — so the caption that "deliberately carries no
+        // wording for it" is now the caption seven legal printings read.
+        // `attachTargetNoun` is NOT consulted there: a `toSelf` row carries no
+        // class rider (the field is authored alone), so the noun it would return
+        // is the un-narrowed "Pokémon" and the sentence would say "which of your
+        // Pokémon?" over a list of one.
+        `Attach ${op.count === undefined ? "the Energy" : `up to ${op.count} Energy`} to ${
+          op.toSelf === true ? "this Pokémon" : `which of your ${attachTargetNoun(op)}`
+        }?`,
+        // 🆕 D358 — no `decider`: the printed *"up to N"* moves WHETHER and now
+        // HOW MANY, never WHO, so the fifth argument stays absent exactly as it
+        // was and the sixth is spelled positionally rather than folded into it.
+        // The ceiling rides the OP because only the print knows. Deriving it here
+        // — from the program's op count, from anything the interpreter can see —
+        // would make Eelektrik's *"attach a Basic {L} Energy card … to 1 of your
+        // Benched Pokémon"* declinable too, and that sentence prints neither
+        // *"up to"* nor a hidden zone to fail a search in (§9.1's one other
+        // decline, which rides the ZONE and not the number).
+        //
+        // 🛑🛑 **D359 RE-DERIVED D358's POPULATION AND IT WAS SHORT BY FIVE, FOR
+        // A STRUCTURAL REASON: D358 WALKED THE REGISTRY, AND THE REGISTRY IS NOT
+        // THE BUILD.** `deriveAttackEffect` is this op's second producer, and it
+        // emits `count: 2` for three more Standard-legal sentences no registry
+        // walk can see — Oricorio "Energy Assist" `sv08-026`/`sv08-089`, Regirock
+        // ex "Regi Charge" `sv10-101`/`sv10-214` and Kilowattrel ex "Return
+        // Charge" `sv08-068`. With the registry's three (Ethan's Ho-Oh ex ×4,
+        // Bloodmoon Ursaluna ×2, Lycanroc ×2) the quantity-axis population is
+        // **6 sentences / 13 legal printings**, all printed {0, 1, 2}.
+        // ⚠️ **AND THE TWO HALVES WERE BROKEN DIFFERENTLY.** The eight ABILITY
+        // printings reach {0, 2} because an activated or triggered *"you may"*
+        // buys the empty answer. The five ATTACK printings reach **{2} alone**:
+        // an attack is declared and resolves, so there is no optional anywhere in
+        // the program and even the zero was unreachable. A decline axis could
+        // never have fixed either half; only the quantity axis reaches both.
         undefined,
-        op.declinable,
+        upTo,
       );
     }
     // All three gates are spliced by runProgram's queue loop (never reach here).
@@ -3613,7 +3691,9 @@ export function attackerPreWRBonus(
     validator-unreachable belt at all nine sites. What is refused is a NEW arm
     saying something different per op — a decline moves nothing, everywhere, and
     the one ending they already share says exactly that. */
-function pickedPokemon(choice: EffectChoice): choice is { kind: "pokemon"; ref: PokemonRef } {
+function pickedPokemon(
+  choice: EffectChoice,
+): choice is { kind: "pokemon"; ref: PokemonRef; take?: number } {
   return choice.kind === "pokemon" && choice.ref !== undefined;
 }
 
@@ -3621,11 +3701,11 @@ function pickedPokemon(choice: EffectChoice): choice is { kind: "pokemon"; ref: 
     on a choosePokemon prompt — **unless the print says the pick may be refused,
     in which case ONE candidate parks too.**
 
-    🆕🆕 D358 — the three arms below were, until this slice, the whole reason
+    🆕🆕 D358/D359 — the three arms below were, until D358, the whole reason
     the printed *"attach **up to** N"* was over-resolved: none of them is a
     decline. The zero arm is a silent no-op (there was nothing to ask), the one
     arm is the M1 no-choice rule, and the ≥2 arm parked a prompt whose only
-    legal answer was a ref. `declinable` does not add a fourth arm — it moves
+    legal answer was a ref. `upTo` does not add a fourth arm — it moves
     the BOUNDARY between the second and the third, because that boundary is the
     only thing the M1 rule was ever about. */
 function parkOrForce(
@@ -3646,34 +3726,41 @@ function parkOrForce(
       `settleProgram` applies one level up when it decides whether to file
       `phase.answerer`. */
   decider?: Seat,
-  /** 🆕 D358 — the printed *"up to N"*: this pick may be answered with NOTHING.
+  /** 🆕🆕 D359 — the printed CEILING: this pick may take `0..upTo` of whatever the
+      op moves. `1` is D358's decline (take the one, or take none); `N ≥ 2` is
+      `attachEnergyFrom.count`'s *"attach up to N … to ONE named body"*.
 
       ⚠️ **IT MOVES THE FORCED ARM, AND THAT IS THE WHOLE OF WHAT IT DOES HERE.**
       The M1 no-choice rule auto-applies a lone candidate because a question with
       one answer is not a question — true of a MANDATORY pick and false of this
-      one, where a single offered body still leaves two answers (take it, or
-      don't). So a declinable park asks at EVERY non-empty candidate set.
+      one, where a single offered body still leaves `upTo + 1` answers.
+      So a park with a ceiling asks at EVERY non-empty candidate set.
       **D47 decided this exact question for `choosePokemonMulti` and its review
-      REVERSED the first draft on it**: honouring the decline only above the
+      REVERSED the first draft on it**: honouring the right only above the
       auto-resolve threshold honours it *"exactly where declining matters
       least"*, since that is the board where the player has the most other
       outs. The zero arm is untouched — a decline and a whiff produce the same
       board, and asking a question with no candidates is not a decision either.
 
-      ⚠️ ABSENT-WHEN-UNDEFINED, like `decider` above it, so all eight existing
+      🆕 **AND THIS IS THE ARM THAT REACHES THE `toSelf` PRINTINGS AT ALL.**
+      *"attach up to 2 … to **this Pokémon**"* offers ONE candidate by
+      construction, so before D359 seven legal printings resolved their printed
+      ceiling without ever asking the controller anything.
+
+      ⚠️ ABSENT-WHEN-UNDEFINED, like `decider` above it, so all eight mandatory
       callers produce a byte-identical result to the pre-D358 one: no argument,
       no key on the prompt, the same forced arm at one candidate. */
-  declinable?: true,
+  upTo?: number,
 ): { done: GameState } | { park: EffectPrompt; decider?: Seat } {
   if (candidates.length === 0) return { done: state };
-  if (candidates.length === 1 && declinable !== true) {
+  if (candidates.length === 1 && upTo === undefined) {
     return { done: apply(candidates[0] as PokemonRef) };
   }
   return {
     park: {
       kind: "choosePokemon",
       candidates,
-      ...(declinable === undefined ? {} : { declinable }),
+      ...(upTo === undefined ? {} : { upTo }),
       note,
     },
     ...(decider === undefined ? {} : { decider }),
@@ -3899,13 +3986,18 @@ export function applyChoice(
     case "attachEnergyFrom":
       // 🆕 D358 — **THE DECLINE IS THE ABSENT REF, AND IT MOVES NOTHING.** This is
       // the one arm in this switch that can actually receive one: `validateChoice`
-      // refuses a ref-less answer to every prompt that did not carry `declinable`,
-      // and `op.declinable` is the only thing that sets it. The board is returned
-      // untouched — same ending as the op's whiff, which is what *"attach up to 2"*
-      // with a player answering "none" means. No event: nothing moved, and a row
-      // saying so would claim an attach that did not happen.
+      // refuses a ref-less answer to every prompt that did not carry a ceiling,
+      // and `op.count`/`op.declinable` are the only things that set one. The board
+      // is returned untouched — same ending as the op's whiff, which is what
+      // *"attach up to 2"* with a player answering "none" means. No event: nothing
+      // moved, and a row saying so would claim an attach that did not happen.
+      // 🆕🆕 D359 — **AND THE MIDDLE ANSWERS RIDE THE SAME REF**, as `choice.take`.
+      // This is the ONLY arm in this switch that reads it: the other eight parks
+      // move a Pokémon rather than a countable batch onto one, so a quantity on
+      // their answers would have no referent. Absent = the whole batch, which is
+      // why the pre-D359 wire frame still means what it always meant.
       return pickedPokemon(choice)
-        ? attachEnergyFrom(state, op, choice.ref, ctx, events, record)
+        ? attachEnergyFrom(state, op, choice.ref, ctx, events, record, choice.take)
         : state;
     case "attachFromTop":
       return choice.kind === "attachCards"
@@ -8493,14 +8585,23 @@ function attachEnergyFrom(
       would be four lines that cannot change an outcome — D205's precedent, and
       the same argument `switchActive`'s zero-candidate path already carries. */
   record: EffectRecord = {},
+  /** 🆕🆕 D359 — HOW MANY the controller actually asked for, off the answer.
+      Absent = the whole printed batch, which is what every call site meant before
+      this slice and what the FORCED path still means: `parkOrForce` only forces
+      when no ceiling was offered, so a forced attach is always the mandatory one.
+      Clamped to the printed ceiling here rather than trusted, because this
+      function is reachable from `applyChoice` with a wire-supplied number — the
+      validator refuses an over-take first, and this is the belt behind it. */
+  take?: number,
 ): GameState {
   if (ref.seat !== ctx.seat) return state;
+  const printed = op.count ?? 1; // absent = the single attach every pre-D205 program meant
   const energyUids = attachableEnergies(
     state,
     ctx.seat,
     op.source,
     op.energyType,
-    op.count ?? 1, // absent = the single attach every pre-D205 program meant
+    take === undefined ? printed : Math.min(take, printed),
     op.anyEnergy, // D246 — absent = the printed "a BASIC Energy card"
     op.energyName, // D353 — absent = the printed noun is a CATEGORY, not a NAME
   );

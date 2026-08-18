@@ -313,9 +313,19 @@ function parkedTargets(state: GameState): readonly PokemonRef[] {
 const benchRef = (index: number): PokemonRef => ({ seat: "p1", spot: { spot: "bench", index } });
 const ACTIVE_REF: PokemonRef = { seat: "p1", spot: { spot: "active" } };
 
-/** Answer a parked `choosePokemon` with `ref`. */
-function pick(state: GameState, ref: PokemonRef): { state: GameState; events: GameEvent[] } {
-  return mustApply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "pokemon", ref } });
+/** Answer a parked `choosePokemon` with `ref`, and — 🆕 D359 — optionally with the
+    printed QUANTITY. Absent `take` is the whole batch, which is what every answer
+    to this prompt meant before the ceiling existed. */
+function pick(
+  state: GameState,
+  ref: PokemonRef,
+  take?: number,
+): { state: GameState; events: GameEvent[] } {
+  return mustApply(state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -662,26 +672,32 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
       index: REGI_CHARGE,
     });
 
-    // ⚠️ A `toSelf` attach can offer AT MOST ONE target, so `parkOrForce` always
-    // forces — the attack finishes in one action. That is the discriminator
-    // against a build that dropped `toSelf` and let a class rider stand in: with
-    // two Benched bodies here, THAT build parks.
-    expect(done.phase.kind).not.toBe("effect:choose");
-    const attached = all(events, "ENERGY_ATTACHED");
+    // 🆕🆕 D359 — **THIS CASE USED TO ASSERT `not.toBe("effect:choose")`** under
+    // the reasoning *"a `toSelf` attach can offer AT MOST ONE target, so
+    // `parkOrForce` always forces"*. The premise was about CANDIDATES and the rule
+    // is about ANSWERS: Regi Charge prints *"attach **up to 2** Basic {F} … to this
+    // Pokémon"*, which is three answers over one body, so it now parks. The
+    // discriminator against a build that dropped `toSelf` therefore moves to where
+    // it is still sharp — the CANDIDATE LIST, which must be the Active alone even
+    // though two Benched bodies are on the board.
+    expect(parkedTargets(done)).toEqual([ACTIVE_REF]);
+    const answered = pick(done, ACTIVE_REF);
+    const attached = all([...events, ...answered.events], "ENERGY_ATTACHED");
     expect(attached).toHaveLength(2);
     for (const e of attached) expect(e.target).toEqual({ spot: "active" });
     // 🛑 AND THE TYPE FILTER BIT: the pile holds two {F} and two {W}, and only the
     // {F} moved. A build that dropped `energyType` takes the first two cards in
     // the pile whatever they are.
-    expect(done.players.p1.active?.energy).toHaveLength(3); // the {C} cost + two {F}
-    const moved = attached.map((e) => done.cardIdByUid[e.uid]);
+    const after = answered.state;
+    expect(after.players.p1.active?.energy).toHaveLength(3); // the {C} cost + two {F}
+    const moved = attached.map((e) => after.cardIdByUid[e.uid]);
     expect(moved).toEqual(["fix-fighting-energy", "fix-fighting-energy"]);
-    expect(done.players.p1.discard).toHaveLength(before - 2);
-    expect(done.players.p1.discard.map((u) => done.cardIdByUid[u])).toEqual([
+    expect(after.players.p1.discard).toHaveLength(before - 2);
+    expect(after.players.p1.discard.map((u) => after.cardIdByUid[u])).toEqual([
       "fix-water-energy",
       "fix-water-energy",
     ]);
-    expect(activeUid(done, "p1")).toBe(attacker);
+    expect(activeUid(after, "p1")).toBe(attacker);
   });
 
   it("the BENCH-ONLY target parks on the Bench alone — the Active is not offered", () => {
@@ -812,14 +828,34 @@ describe("end to end — an ATTACK pulling Energy out of the discard pile", () =
   it("takes FEWER than `count` when the pile holds fewer, silently — the printed 'up to'", () => {
     const state = ready(13, { discard: { "fix-fighting-energy": 1 } });
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, {
-      type: "attack",
-      seat: "p1",
-      index: REGI_CHARGE,
-    });
+    const parked = mustApply(state, { type: "attack", seat: "p1", index: REGI_CHARGE });
+    // 🆕 D359 — and the offered CEILING is still the printed 2 on a one-card pile.
+    // The discard pile is public, so no clamp would leak here; the ceiling is
+    // unclamped on principle instead, because the same field is redacted over a
+    // HAND-sourced park one card over (Battle-Hardened) where it would.
+    if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = parked.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.upTo).toBe(2);
+    const { state: done, events } = pick(parked.state, ACTIVE_REF);
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
     expect(done.players.p1.active?.energy).toHaveLength(2); // the {C} cost + one {F}
     expect(done.players.p1.discard).toHaveLength(0);
+  });
+
+  it("🆕🛑 D359 — Regi Charge's printed MIDDLE answer: ONE of two, the rest left", () => {
+    // The `toSelf` half of the quantity axis, driven on a real board. Two {F} sit
+    // in the pile and the controller takes ONE — an answer no route on this card
+    // could reach before D359, because the lone `toSelf` candidate was FORCED.
+    const state = ready(13, { discard: { "fix-fighting-energy": 2 } });
+    const parked = mustApply(state, { type: "attack", seat: "p1", index: REGI_CHARGE });
+    if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const { state: done, events } = pick(parked.state, ACTIVE_REF, 1);
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(done.players.p1.active?.energy).toHaveLength(2); // the {C} cost + one {F}
+    // The second {F} is still in the pile — the whole point of the middle answer.
+    expect(done.players.p1.discard.filter((u) => done.cardIdByUid[u] === "fix-fighting-energy"))
+      .toHaveLength(1);
   });
 
   it("✅ D248 — the SPREAD feeds every Benched body at once and asks NOTHING", () => {

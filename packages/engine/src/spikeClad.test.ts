@@ -277,6 +277,32 @@ function evolveActive(state: GameState, uid: string): { state: GameState; events
   return apply(state, { type: "evolve", seat: "p1", uid, target: { spot: "active" } });
 }
 
+/** 🆕🆕 D359 — **THE EVOLVE NOW PARKS, AND ANSWERING IT IS THE WHOLE SLICE.**
+    *"you may attach **up to 2** Spiky Energy … to this Pokémon"* offers
+    `{0, 1, 2}`; until D359 the `toSelf` ref made `parkOrForce` force its lone
+    candidate and the controller got two without being asked. Evolves, then
+    answers with `take` (absent = the whole printed batch). A whiff never parks
+    and is returned as it comes, which is what keeps the empty-pile cases below
+    reading exactly as they did. */
+function evolveAndTake(
+  state: GameState,
+  uid: string,
+  take?: number,
+): { state: GameState; events: GameEvent[] } {
+  const evolved = evolveActive(state, uid);
+  if (evolved.state.phase.kind !== "effect:choose") return evolved;
+  const prompt = evolved.state.phase.prompt;
+  if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+  const ref = prompt.candidates[0];
+  if (ref === undefined) throw new Error("expected a candidate");
+  const answered = apply(evolved.state, {
+    type: "resolveEffect",
+    seat: "p1",
+    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+  });
+  return { state: answered.state, events: [...evolved.events, ...answered.events] };
+}
+
 function energyIdsOn(state: GameState, ref: PokemonRef): string[] {
   const side = state.players[ref.seat];
   const pokemon = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
@@ -338,7 +364,7 @@ describe("D353 §1 — the authored row is ONE object over TWO printings", () =>
 describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing else", () => {
   it("a pile of 3 Spiky attaches exactly 2, and the third stays in the discard", () => {
     const { state, evolveUid } = board([SPIKY, SPIKY, SPIKY]);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
     // `count: 2` and not 3 — the printed "up to 2" is a CAP, and the remainder is
     // what a raised count would eat.
@@ -357,7 +383,7 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     // attaches NOTHING and the card does not work at all.
     const { state, evolveUid } = board([SPIKY]);
     expect(POOL[SPIKY]?.energyType).toBe("Special");
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY]);
   });
 
@@ -366,7 +392,7 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     // an `anyEnergy`-only widening AND an `energyType: "Colorless"` spelling, both
     // of which reach Mist Energy. Nothing attaches and nothing leaves the pile.
     const { state, evolveUid } = board([FIGHTING, FIGHTING, MIST, MIST]);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([]);
     expect(after.state.players.p1.discard.length).toBe(state.players.p1.discard.length);
   });
@@ -376,7 +402,7 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     // EARLIER in zone order than the Spiky cards, so a narrowing that merely
     // widened the category would take the leading matches and be visibly wrong.
     const { state, evolveUid } = board([FIGHTING, MIST, SPIKY, FIGHTING, SPIKY_ALT, MIST]);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY_ALT]);
   });
 
@@ -387,20 +413,20 @@ describe("D353 §2 — Spike-Clad attaches exactly 2 SPIKY Energy and nothing el
     const { state, evolveUid } = board([SPIKY_ALT, SPIKY_ALT]);
     expect(POOL[SPIKY_ALT]?.name).toBe(POOL[SPIKY]?.name);
     expect(SPIKY_ALT).not.toBe(SPIKY);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY_ALT, SPIKY_ALT]);
   });
 
   it("an EMPTY pile is a silent no-op — the printed 'up to' shortfall", () => {
     const { state, evolveUid } = board([]);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([]);
     expect(after.state.phase.kind).not.toBe("effect:choose");
   });
 
   it("ONE Spiky in the pile attaches ONE — `min(count, available)`, silently", () => {
     const { state, evolveUid } = board([SPIKY, FIGHTING]);
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY]);
   });
 });
@@ -526,40 +552,75 @@ describe("D353 §4 — `energyName` is orthogonal to `source` and to the riders"
 
 // ── 5. `toSelf` — the evolved body, and the second body that must stay empty ──
 
-describe("D353 §5 — the attach lands on the EVOLVED body and never parks", () => {
-  it("a board with a SECOND own Pokémon still forces, and feeds only the evolved one", () => {
+describe("D353/D359 §5 — the attach lands on the EVOLVED body, and now it ASKS", () => {
+  it("a board with a SECOND own Pokémon still feeds ONLY the evolved one", () => {
     // Dropping `toSelf` reddens this twice: the op would see two eligible own
-    // bodies, park a `choosePokemon`, and could land on the Bench. Both halves are
-    // asserted — no `effect:choose`, and the Bench ends with ZERO Energy.
+    // bodies and could land on the Bench. 🆕 D359 — the park is no longer the
+    // discriminator (a printed ceiling parks even over one candidate), so the
+    // claim is now made where it is actually load-bearing: the offered CANDIDATE
+    // LIST is one long and names the Active, and the Bench ends empty.
     const { state, evolveUid } = board([SPIKY, SPIKY], { bench: [BUDDY] });
-    const after = evolveActive(state, evolveUid);
-    expect(after.state.phase.kind).not.toBe("effect:choose");
+    const parked = evolveActive(state, evolveUid);
+    if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = parked.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.candidates).toEqual([ACTIVE_REF]);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
     expect(energyIdsOn(after.state, { seat: "p1", spot: { spot: "bench", index: 0 } })).toEqual([]);
   });
 
-  it("🛑 THE PRINTED *'up to 2'* IS OVER-RESOLVED, AND IT IS PINNED AS A MEASUREMENT", () => {
-    // 🆕🆕 **D358 BOUGHT THE DECLINABLE POKÉMON PARK AND THIS ROW STILL DOES NOT
-    // GET IT — WHICH IS THE MEASUREMENT, NOT A DEFERRAL.** `parkOrForce` now parks a
-    // declinable pick even over ONE candidate, so the `toSelf` shape is no longer
-    // the obstacle. The obstacle is `count: 2`: ONE op, ONE named body, ONE batch.
-    // A declinable park would buy this card {0, 2}; the printed *"up to 2"* means
-    // {0, 1, 2} (§9.1: *"one, two, or none, all legal"*). **WHAT IS MISSING IS A
-    // QUANTITY AXIS, NOT A DECLINE AXIS** — and it cannot be respelled as two ops,
-    // because `count` exists precisely to pin a batch to the one body a print NAMES
-    // (D205).
-    // ⚠️ **AND THE POPULATION FIGURE THIS ROW USED TO CARRY WAS WRONG.** It said
-    // the finding went "from 5 legal printings to 7" over a list of 6, and the
-    // handoff carried "7" for five slices. D358 re-derived it off the registry and
-    // D1: **17 legal printings**, of which 6 were bought and 11 refused. This card
-    // is one of EIGHT `count: 2` printings — with Bloodmoon Ursaluna ×2 and Ethan's
-    // Ho-Oh ex ×4, neither of which had ever been counted. `attachDecline.test.ts`
-    // §1/§5 pin that refusal BY ID in both directions, so buying the quantity axis
-    // reddens there and here together.
+  it("🛑🛑 D359 — THE PRINTED *'up to 2'* IS NO LONGER OVER-RESOLVED: {0, 1, 2}", () => {
+    // 🆕🆕 **THIS ROW USED TO PIN THE DEFECT AND NOW PINS THE REPAIR.** D358 bought
+    // the DECLINE and wrote here, correctly, that this card still would not get it:
+    // a declinable park buys {0, 2} and the print says {0, 1, 2} (§9.1 — *"one,
+    // two, or none, all legal"*). **WHAT WAS MISSING WAS A QUANTITY AXIS**, and
+    // D359 bought it — with NO new op field, because `count` was already the
+    // printed ceiling (`attachFromZoneClause` admits `count > 1` through its
+    // literal `up to (\d+)` alternative alone) and only the PROMPT and the ANSWER
+    // were missing it.
+    // ⚠️ **AND THE POPULATION FIGURE THIS ROW CARRIED WAS WRONG TWICE.** D353 wrote
+    // "from 5 legal printings to 7" over a list of 6; D358 re-derived 17 off the
+    // registry and named this card as one of EIGHT `count: 2` printings. D359
+    // re-derived THAT and found **13**, because a registry walk cannot see
+    // `deriveAttackEffect`'s three further `count: 2` sentences (Oricorio ×2,
+    // Regirock ex ×2, Kilowattrel ex ×1). Three slices, three different figures,
+    // and only the last one was measured over BOTH producers.
     const { state, evolveUid } = board([SPIKY, SPIKY]);
-    const after = evolveActive(state, evolveUid);
-    expect(after.state.phase.kind).not.toBe("effect:choose");
-    expect(energyIdsOn(after.state, ACTIVE_REF).length).toBe(2);
+    // TWO — the pre-D359 behaviour, still reachable and still the default answer.
+    expect(energyIdsOn(evolveAndTake(state, evolveUid).state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
+    // ONE — the printed middle answer, UNREACHABLE before this slice on this card.
+    const one = evolveAndTake(state, evolveUid, 1);
+    expect(energyIdsOn(one.state, ACTIVE_REF)).toEqual([SPIKY]);
+    // …and the second Spiky is still in the discard pile, not consumed.
+    expect(one.state.players.p1.discard.filter((u) => idOf(one.state, u) === SPIKY)).toHaveLength(1);
+    // ZERO — the decline, which no route on this card could reach before either:
+    // the trigger is a *"you may"*, but a board trigger auto-fires and the pick
+    // beneath it was mandatory.
+    const parked = evolveActive(state, evolveUid);
+    if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const none = apply(parked.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "pokemon" },
+    });
+    expect(energyIdsOn(none.state, ACTIVE_REF)).toEqual([]);
+    expect(none.events.filter((e) => e.type === "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(none.state.players.p1.discard.filter((u) => idOf(none.state, u) === SPIKY)).toHaveLength(
+      2,
+    );
+  });
+
+  it("🆕 D359 — the park carries the printed CEILING and the `toSelf` caption", () => {
+    const { state, evolveUid } = board([SPIKY, SPIKY]);
+    const parked = evolveActive(state, evolveUid);
+    if (parked.state.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const prompt = parked.state.phase.prompt;
+    if (prompt.kind !== "choosePokemon") throw new Error("expected choosePokemon");
+    expect(prompt.upTo).toBe(2);
+    // The caption D205 removed as unreachable, now reachable and worded: a list of
+    // one body must not be introduced as "which of your Pokémon?".
+    expect(prompt.note).toBe("Attach up to 2 Energy to this Pokémon?");
   });
 });
 
@@ -591,7 +652,7 @@ describe("D353 §6 — `onEvolve` and not `onPlayToBench`", () => {
 
   it("the OTHER printing fires identically — one object, two ids", () => {
     const { state, evolveUid } = board([SPIKY, SPIKY], { lycanroc: LYCANROC_IDS[1] });
-    const after = evolveActive(state, evolveUid);
+    const after = evolveAndTake(state, evolveUid);
     expect(energyIdsOn(after.state, ACTIVE_REF)).toEqual([SPIKY, SPIKY]);
   });
 });

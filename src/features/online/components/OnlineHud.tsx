@@ -423,15 +423,33 @@ function spotLabel(ref: RedactedPokemonRef): string {
   return ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
 }
 
+/** The quantities a `choosePokemon` row offers, in printed order — `GameHud`'s
+    twin, and the same shape for the same reason: the two dialogs answer the SAME
+    wire prompt, so an answer one of them can produce and the other cannot is a
+    seat-dependent card. `[undefined]` on a mandatory prompt and on `upTo: 1`,
+    which is what keeps every dialog written before D359 rendering the same DOM. */
+function takeOptions(upTo: number | undefined): (number | undefined)[] {
+  if (upTo === undefined || upTo <= 1) return [undefined];
+  return Array.from({ length: upTo }, (_, i) => i + 1);
+}
+
 /** choosePokemon (§9 — switch / gust / heal): pick exactly one in-play Pokémon.
     Picking is the whole decision, so each row dispatches directly (the local
     ChoosePokemonDialog over the wire refs).
 
-    🆕 D358 — **AND ON A `declinable` PROMPT, `{ kind: "pokemon" }` WITH NO `ref`
-    IS THE PRINTED *"up to N"* DECLINE**, offered as its own trailing row for the
-    reason the local twin gives. The flag reaches this component because it is on
-    the WIRE prompt: the op is server-side and the dialog can only read what was
-    redacted to it, which is why the schema carries the field at all. */
+    🆕 D358 — **AND ON A PROMPT CARRYING A CEILING, `{ kind: "pokemon" }` WITH NO
+    `ref` IS THE PRINTED *"up to N"* DECLINE**, offered as its own trailing row
+    for the reason the local twin gives. The ceiling reaches this component
+    because it is on the WIRE prompt: the op is server-side and the dialog can
+    only read what was redacted to it, which is why the schema carries the field
+    at all.
+
+    🆕🆕 D359 — **AND ABOVE `upTo: 1`, THE QUANTITY RIDES THE SAME ROW**, so a
+    body is offered once per legal answer. `upTo` is the PRINTED ceiling and never
+    a count of what the controller holds, which is what makes it safe to redact to
+    this component at all — a ceiling cut down to "what is actually in hand" would
+    tell this dialog's opponent-side twin how many Energy the other player is
+    holding. */
 function ChoosePokemonDialog({
   prompt,
   board,
@@ -447,25 +465,34 @@ function ChoosePokemonDialog({
     <Dialog label="Choose a Pokémon">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       <ul className="mt-3 flex flex-col gap-1.5">
-        {prompt.candidates.map((ref) => (
-          <li key={refKey(ref)}>
-            <button
-              type="button"
-              onClick={() =>
-                onAction({ type: "resolveEffect", seat, choice: { kind: "pokemon", ref } })
-              }
-              className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
-            >
-              <span className="truncate">{refName(board, seat, ref)}</span>
-              {ref.seat !== seat && (
-                <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
-                  opponent
+        {prompt.candidates.flatMap((ref) =>
+          takeOptions(prompt.upTo).map((take) => (
+            <li key={`${refKey(ref)}-${take ?? "all"}`}>
+              <button
+                type="button"
+                onClick={() =>
+                  onAction({
+                    type: "resolveEffect",
+                    seat,
+                    choice: { kind: "pokemon", ref, ...(take === undefined ? {} : { take }) },
+                  })
+                }
+                className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+              >
+                <span className="truncate">
+                  {refName(board, seat, ref)}
+                  {take === undefined ? "" : ` — attach ${take}`}
                 </span>
-              )}
-            </button>
-          </li>
-        ))}
-        {prompt.declinable === true && (
+                {ref.seat !== seat && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    opponent
+                  </span>
+                )}
+              </button>
+            </li>
+          )),
+        )}
+        {prompt.upTo !== undefined && (
           <li className="mt-1.5 border-t border-white/10 pt-1.5">
             <button
               type="button"
