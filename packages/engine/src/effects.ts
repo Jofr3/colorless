@@ -8902,7 +8902,38 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // still without touching the union (D121: a shape being spellable never warrants
 // spelling it; a second printing does).
 //
-// Anchored whole-sentence with the required trailing period, no /i, exactly like
+// 🆕🆕 D363 — THE `$` IS GONE AND THE `^` IS NOT, AND THE ASYMMETRY IS THE WHOLE
+// MEASUREMENT. D362 priced this widening at "9 sentences / 27 printings of
+// unrelated surface" and refused it on that price. THE PRICE WAS THE WRONG
+// NUMBER, and the two anchors are why: of the 9 refused sentences / 27 printings,
+// the `$` is the SOLE blocker for **1 sentence / 2 printings** (Sawk
+// `sv10.5w-049`/`-130`), the `^` is the sole blocker for **7 sentences / 23
+// printings** (a LEADING companion — "Flip a coin. ", "Discard …. ", "Before
+// doing damage, …. ", "Switch in …. "), and 1 sentence / 2 printings is blocked
+// by BOTH. Re-measured over `legalAttackCorpus()` and confirmed pool-wide on the
+// remote D1 (`$.effect`, 2026-08-18): `GLOB 'If *, this attack does nothing.*'`
+// minus `GLOB 'If *, this attack does nothing.'` returns **2 rows in 978 cards**,
+// both Sawk, both `legal_standard = 1`. So this widening opens TWO printings and
+// not twenty-seven, and the `^` — which is what keeps the coin family's already-
+// read "Flip a coin. If tails, …" off this reader — is UNTOUCHED.
+//
+// ⚠️ THE TRAILING GROUP IS NOT A LOOSENING, BECAUSE NOTHING CONSUMES IT HERE.
+// `deriveAttackRequirement` reads group 1 and ignores group 2 — a sentence with a
+// companion resolves to the same condition it would alone. What ACCOUNTS for the
+// companion is `splitAttackRequirementClause` below plus its one call site: the
+// site rebinds every other reader onto the BODY, exactly as D282 does for the
+// timing gate, so an unread companion is still reported loudly and named. A
+// widened anchor with no split behind it would be the D278/D279 "too loose" build
+// — half a sentence silently claimed — and the guard that makes that structural
+// is that the split refuses a clause the TABLE does not carry.
+//
+// ⚠️ THE CLAUSE GROUP IS LAZY (`.+?`) AND THAT IS BEHAVIOUR. With an optional
+// trailing group behind it a GREEDY clause would swallow the first break on a
+// two-"does nothing" compound and read the LAST sentence's clause; lazy takes the
+// FIRST, which is the one the site then strips. No printing spells that shape
+// today, which is exactly why the guard is in the pattern rather than in a test.
+//
+// Anchored at `^` with the required trailing period, no /i, exactly like
 // CONDITIONAL_DAMAGE_BONUS — and the anchor is doing the same load-bearing work.
 // It admits the three sentences below and refuses the rest of the family's 19
 // printings on the CLAUSE (they reach the table and miss), never on the shape:
@@ -8915,18 +8946,23 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 //   • "If you can't, this attack does nothing." (3 printings) — ANAPHORIC, its
 //     "can't" pointing back at a cost sentence this reader cannot see;
 //   • Malamar sv06.5-034's "If you didn't play Xerosic's Machinations from your
-//     hand during this turn, …" — a specific NAMED card, and multi-sentence, so
-//     the anchor refuses it twice over.
-const ATTACK_DOES_NOTHING = /^If (.+), this attack does nothing\.$/;
+//     hand during this turn, …" — a specific NAMED card, and its does-nothing
+//     sentence is the THIRD of three, so the `^` refuses it. ⚠️ D362's doc said
+//     "the anchor refuses it twice over"; after D363 that is precisely half true
+//     and the surviving half is the `^`, which is why the two anchors are now
+//     priced separately above rather than as one "fully anchored".
+const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
 /** The printed NEGATIVE clauses this family understands → the POSITIVE board
     fact the attack REQUIRES. Keyed char-for-char on the text between the leading
     "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
     reason: arbitrary printed text must not reach `Object.prototype`.
 
-    Two rows, two cards, three printings — and note that BOTH reuse a
-    `BoardCondition` member that already existed, so this slice buys no new
-    vocabulary at all. Every remaining "does nothing" clause in the pool stays
-    UNMAPPED and therefore LOUD.
+    🆕 D363 — THREE rows, three cards, FIVE printings, and all three reuse a
+    `BoardCondition` member that already existed, so neither this slice nor D125
+    buys any new vocabulary at all. Every remaining "does nothing" clause in the
+    pool stays UNMAPPED and therefore LOUD — and being unmapped is now
+    LOAD-BEARING TWICE OVER, because `splitAttackRequirementClause` refuses to
+    strip a leading sentence whose clause this table does not carry.
 
     ⚠️ The keys are the printed negatives and their traps are real: Palafin says
     "the Bench", NOT "your Bench" (no possessive — its positive twin one table up
@@ -8958,6 +8994,30 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
     "your opponent's Active Pokémon has no damage counters on it before this attack does damage",
     { kind: "opponentActiveDamaged" },
   ],
+  // 🆕🆕 D363 — Sawk sv10.5w-049/-130 "Rising Chop" ({F}{C}, 90), the printed
+  // NEGATION of D362's bonus clause and the row D362 measured, priced and then
+  // refused. ZERO NEW VOCABULARY: `opponentActiveIsEx` is D362's member, spelled
+  // POSITIVE one table up as "your opponent's Active Pokémon is a Pokémon ex" —
+  // so the same board fact is now read from BOTH consequents, a +N bonus and a
+  // cancel, off one member and two keys. The polarity rule at the head of this
+  // block is what makes that free: the skeleton owns the negation, so a printed
+  // "isn't" needs no `{ kind: "not" }`.
+  //
+  // ⚠️ THE KEY'S TRAP IS THE CONTRACTION, and it is a DIFFERENT one from the two
+  // rows above. Those carry an apostrophe in "didn't" and in "opponent's"; this
+  // key carries BOTH, in "opponent's" and in "isn't", and the whole 978-card pool
+  // still holds zero U+2019 (re-verified at D137, unchanged). `Pokémon` carries a
+  // real U+00E9 twice. Read through `literalClauseRow` like every other row.
+  //
+  // ⚠️ AND THIS ROW IS THE FIRST ONE THE ANCHOR ALONE COULD NOT REACH. Sawk
+  // prints a SECOND sentence — "This attack's damage isn't affected by Weakness
+  // or Resistance." — which `deriveAttackDamageSuppression` has read since D192
+  // and which the site now hands it off `splitAttackRequirementClause`. The row
+  // and the widening are one purchase: either alone would drop half the card.
+  [
+    "your opponent's Active Pokémon isn't a Pokémon ex",
+    { kind: "opponentActiveIsEx" },
+  ],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the
@@ -8981,6 +9041,61 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
   const nothing = ATTACK_DOES_NOTHING.exec(text.trim());
   if (nothing === null) return null;
   return literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? "") ?? null;
+}
+
+/** 🆕🆕 D363 — THE SPLIT ANCHOR FOR THE REQUIREMENT FAMILY: take a printed
+    *"If <clause>, this attack does nothing."* sentence off the FRONT of an
+    attack's effect text and hand back the sentence behind it, or `null` when the
+    text does not open with one this engine can account for.
+
+    🛑 **THIS IS D282's `splitAttackGateClause` SHAPE, DELIBERATELY, AND THE ONE
+    PROPERTY THAT MAKES EITHER OF THEM SAFE IS THE SAME**: the caller must have
+    ACCOUNTED FOR THE CLAUSE ALREADY. There the clause was spent at the §8
+    declaration seam; here it is spent by `deriveAttackRequirement`, which the one
+    call site reads off the UNSPLIT string on the very next line. Dropping a
+    printed sentence a reader has not answered is the D278/D279 "too loose"
+    failure, and this function is built so that it cannot: **it refuses any clause
+    `ATTACK_REQUIREMENT_CLAUSES` does not carry.** An unmapped `"If <clause>, this
+    attack does nothing. <anything>"` therefore keeps its WHOLE printed string and
+    stays on the loud ATTACK_EFFECT_SKIPPED path — the pre-D363 behaviour byte for
+    byte, and the direction a wrong build fails in.
+
+    ⚠️ **AND IT DOES NOT WIDEN ANY READER.** Every deriver in this file stays
+    `^…$` anchored on the string it is given; this produces a DIFFERENT STRING and
+    the readers run over that whole, so a body they refuse is refused LOUDLY and
+    named. `ATTACK_DOES_NOTHING`'s own `$` is the one that moved, and it moved for
+    a group NOTHING reads — see that pattern's block.
+
+    ⚠️ **THE POPULATION IS TWO PRINTINGS, WHICH IS WHY THIS IS NOT A GENERIC
+    SENTENCE-LIST COMPOSER.** Re-queried before a line shipped (remote D1
+    `luminous`, `$.effect`, 2026-08-18): across all 978 cards exactly TWO rows
+    print a leading does-nothing sentence with ANY trailing text, and they are the
+    two Sawk printings of one sentence. Seven more sentences / 23 legal printings
+    carry a does-nothing sentence with a LEADING companion instead — those are the
+    `^`'s, they are a different build, and this function must never grow to reach
+    them: one of them is "Flip a coin. If tails, this attack does nothing.", which
+    `deriveAttackCoinFlip` ALREADY resolves, and reaching it here would flip the
+    same attack twice.
+
+    Returns the clause sentence and the body separately rather than the body
+    alone, so a caller that wants to assert WHICH sentence it accounted for can —
+    D282's reason, unchanged. */
+export function splitAttackRequirementClause(
+  text: string,
+): { clause: string; body: string } | null {
+  const trimmed = text.trim();
+  const nothing = ATTACK_DOES_NOTHING.exec(trimmed);
+  if (nothing === null) return null;
+  const body = (nothing[2] ?? "").trim();
+  // A leading sentence with nothing behind it is not a split — the whole string
+  // already IS the clause and `deriveAttackRequirement` reads it unchanged. This
+  // is the branch every single-sentence printing in the pool takes.
+  if (body === "") return null;
+  // 🛑 THE ACCOUNTING GUARD. Without this line the function would strip a leading
+  // sentence whose clause NOTHING answers, and the site would report only the
+  // remainder — a printed requirement silently deleted.
+  if (literalClauseRow(ATTACK_REQUIREMENT_CLAUSES, nothing[1] ?? "") === undefined) return null;
+  return { clause: `If ${nothing[1] ?? ""}, this attack does nothing.`, body };
 }
 
 // The PRINTED COIN FLIP (D126) — "Flip a coin. If heads, this attack does N more

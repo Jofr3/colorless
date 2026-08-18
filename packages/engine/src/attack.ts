@@ -61,6 +61,7 @@ import {
   deriveAttackRequirement,
   optionalBoostProgram,
   splitAttackGateClause,
+  splitAttackRequirementClause,
 } from "./effects";
 import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
@@ -678,7 +679,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     printedEffect === null || attackGateOf(state, active, index) === undefined
       ? null
       : splitAttackGateClause(printedEffect);
-  const effect = gateSplit === null ? printedEffect : gateSplit.body;
+  const gated = gateSplit === null ? printedEffect : gateSplit.body;
+  // 🆕🆕 D363 — THE SECOND SPLIT, AND IT IS READ BEFORE IT IS SPENT rather than
+  // after. D282's gate clause was already discharged at the declaration seam when
+  // the rebind happened; this one is discharged HERE, by the very next line — so
+  // the requirement is read off the UNSPLIT string and only the readers BELOW see
+  // the body. Getting that order backwards would read the requirement off the
+  // companion sentence and cancel nothing.
+  //
+  // ⚠️ `splitAttackRequirementClause` fires only when the leading clause resolves
+  // to an `ATTACK_REQUIREMENT_CLAUSES` row, so what it removes is always
+  // something `requirement` below has just answered. An unmapped does-nothing
+  // sentence keeps its whole string and stays loud, exactly as before D363.
+  //
+  // ONE printing family reaches this today — Sawk `sv10.5w-049`/`-130`, whose
+  // trailing "This attack's damage isn't affected by Weakness or Resistance."
+  // `deriveAttackDamageSuppression` has read since D192 and could never be given.
+  // Measured pool-wide: 2 rows in 978 cards carry a leading does-nothing sentence
+  // with any trailing text at all, and both are that card.
+  const requirementSplit =
+    gated === null || gated === "" ? null : splitAttackRequirementClause(gated);
+  // D125 — the printed "If <clause>, this attack does nothing." REQUIREMENT: the
+  // board fact the attack needs, or null when the text is not that sentence. It
+  // is a third reader of the same effect string, disjoint from the two scaling
+  // ones by CONSEQUENT ("nothing" versus "N more damage" / "for each"), so at
+  // most one of the three ever fires on a given attack. 🆕 D363 — read off
+  // `gated`, NOT off `effect`: the reader's own anchor tolerates a trailing
+  // companion now, and `effect` is that companion once a split has fired.
+  const requirement = gated === null || gated === "" ? null : deriveAttackRequirement(gated);
+  const effect = requirementSplit === null ? gated : requirementSplit.body;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
   // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
   // INDEX — a card authors only the attacks whose sentence the deriver refuses,
@@ -744,17 +773,25 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // a scaling clause (see the deferred riders below). Reading it unconditionally
   // keeps the door open for that; short-circuiting it would have to be undone.
   //
-  // ⚠️ +5 LEGAL RIDER-ON-COMPOUND PRINTINGS ARE DEFERRED AND PINNED, NOT MISSED.
-  // "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does
-  // nothing. This attack's damage isn't affected by Weakness or Resistance." (2),
+  // ⚠️ 🆕 D363 — FOUR OF THE FIVE RIDER-ON-COMPOUND PRINTINGS ARE STILL DEFERRED
+  // AND PINNED; THE FIFTH IS BUILT, AND NOT BY LOOSENING THIS READER. Sawk's "If
+  // your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.
+  // This attack's damage isn't affected by Weakness or Resistance." (2 legal) now
+  // reaches this line because `requirementSplit` above hands it the SECOND
+  // sentence alone — `DAMAGE_SUPPRESSION` is byte-unchanged and still refuses the
+  // compound whole, which `damageSuppression.test.ts` asserts on all five. The
+  // block below is the standing list with that one struck through:
   // "…this attack does 70 more damage. …isn't affected by Weakness." (1), "…for
   // each damage counter on all of your Benched Cynthia's Pokémon. …isn't affected
   // by Weakness." (1) and "…80 damage … for each tails. …Weakness or Resistance."
-  // (1). Every deriver in this engine is FULLY ANCHORED — leading and trailing
-  // text falls to the loud ATTACK_EFFECT_SKIPPED path — so admitting them means a
-  // COMPOSITION seam (parse a sentence list, run each reader per sentence), not a
-  // looser regex, and 4 of the 5 are additionally blocked on their own leading
-  // clause. A search-style pattern would silently claim the whole compound.
+  // (1). Every deriver in this engine is anchored on the string it is GIVEN —
+  // leading and trailing text falls to the loud ATTACK_EFFECT_SKIPPED path — so
+  // admitting them means a COMPOSITION seam, not a looser regex. 🆕 D363 built
+  // the narrowest possible one: a SPLIT that produces a different string for a
+  // clause the requirement table already answers, which is the shape D282 proved
+  // and NOT a sentence-list parser. The remaining 4 are each blocked on their own
+  // LEADING half, which no split of this family removes, so they stay deferred.
+  // A search-style pattern would still silently claim the whole compound.
   // The absence is measured, asserted in damageSuppression.test.ts, and is also
   // the reason `weakness` below is its OWN boolean: two of those five print
   // "…isn't affected by Weakness." with no Resistance beside it.
@@ -771,12 +808,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     damagePenalty === null
       ? 0
       : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat);
-  // D125 — the printed "If <clause>, this attack does nothing." REQUIREMENT: the
-  // board fact the attack needs, or null when the text is not that sentence. It
-  // is a third reader of the same effect string, disjoint from the two scaling
-  // ones by CONSEQUENT ("nothing" versus "N more damage" / "for each"), so at
-  // most one of the three ever fires on a given attack.
-  const requirement = effect === null || effect === "" ? null : deriveAttackRequirement(effect);
+  // D125's REQUIREMENT is read at the split above, not here — see `requirement`.
   // D126/D127 — the printed coin flip the attack itself calls for: a `bonusOnHeads`
   // that adds its printed N to this attack's own damage, a `cancelOnTails` that
   // cancels the attack outright, a `perHeads` that folds N flips into `per × heads`,
@@ -948,7 +980,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     program !== null ||
     scaling !== null ||
     damagePenalty !== null ||
-    requirement !== null ||
+    // 🆕🆕 D363 — GATED ON `requirementSplit === null`, AND THE GATE IS THE WHOLE
+    // SAFETY OF THE WIDENING. When no split fired, `effect` IS the requirement
+    // sentence and a non-null requirement simulates it, exactly as since D125.
+    // When a split DID fire, `effect` is the COMPANION sentence and the
+    // requirement says nothing about it — leaving the bare term here would let a
+    // printed requirement SILENCE a trailing sentence no reader resolved, which
+    // is precisely the D278/D279 "too loose" failure this family keeps refusing.
+    (requirement !== null && requirementSplit === null) ||
     coinFlip !== null ||
     optionalBoost !== null ||
     bonusConsequent !== null ||

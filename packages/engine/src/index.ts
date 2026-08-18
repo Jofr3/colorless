@@ -12108,6 +12108,72 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.269.0 → **THE `$` WAS THE WRONG ANCHOR TO PRICE, AND THE RE-MEASUREMENT
+    IS THE SLICE.**
+
+    D362 measured this widening at *"9 sentences / 27 printings of unrelated
+    surface"* and refused it on that price. **THE COUNTS REPRODUCE AND THE
+    ATTRIBUTION DOES NOT.** Re-run at this head over `legalAttackCorpus()` with
+    all nine readers: 17 sentences / 43 printings say *"this attack does
+    nothing."*, 8 s / 16 p are anchor-admissible and 9 s / 27 p are refused —
+    D362's figures to the printing. Partition those 9 by WHICH anchor refuses
+    them and the price collapses:
+
+    | blocked by | s | p |
+    |---|---|---|
+    | `$` alone — a LEADING does-nothing sentence with a trailing companion | **1** | **2** |
+    | `^` alone — a LEADING companion, the does-nothing sentence last | 7 | 23 |
+    | both | 1 | 2 |
+
+    Confirmed pool-wide on the remote D1 (`luminous`, `$.effect`, 2026-08-18, the
+    extractor verified against known-present rows first): `GLOB 'If *, this attack
+    does nothing.*'` minus `GLOB 'If *, this attack does nothing.'` returns **2
+    rows in 978 cards**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard =
+    1`. **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN**, and the 25 that
+    are not behind it are behind the `^` — which stays exactly where it is,
+    because one of them is *"Flip a coin. If tails, this attack does nothing."*
+    (16 legal) and `deriveAttackCoinFlip` already reads it. Reaching that from
+    here would flip one attack twice.
+
+    **WHAT WAS BOUGHT — 1 sentence / 2 Standard-legal printings**, and it is the
+    exact line D362 flagged and left unspent:
+
+      • *"If your opponent's Active Pokémon isn't a Pokémon ex, this attack does
+        nothing. This attack's damage isn't affected by Weakness or Resistance."*
+
+    THE WHOLE ENGINE DIFF is ONE `$` moved into an optional group nothing reads,
+    ONE clause-table row, ONE split function and ONE rebind at the attack site.
+    **ZERO** new `BoardCondition` members (`opponentActiveIsEx` is D362's, spelled
+    POSITIVE one table up — the same board fact now read from BOTH consequents),
+    zero new ops, op fields, `CardFilter` kinds, prompt kinds, registry keys,
+    `cards.ts` predicates and **ZERO** `packages/schema`.
+
+    🛑 **A WIDENED ANCHOR WITH NO SPLIT BEHIND IT WOULD HAVE BEEN THE D278/D279
+    BUILD.** Sawk prints TWO rules, and the second one is real: without an
+    accounting seam the requirement alone would have made `effectSimulated` true
+    and SILENCED a printed *"isn't affected by Weakness or Resistance"* the engine
+    was not applying. So the widening ships with `splitAttackRequirementClause`,
+    which is D282's shape and inherits D282's one safety property — **it refuses
+    to strip a clause `ATTACK_REQUIREMENT_CLAUSES` does not carry**, so an
+    unmapped does-nothing sentence keeps its whole string and stays loud — and
+    with `effectSimulated`'s requirement term GATED on "no split fired". Both are
+    driven on a board, in both directions, in `sawkRequirementSplit.test.ts`.
+
+    🛑 **THE NO-NEW-VOCABULARY REFUTATION IS DRIVEN, NOT ARGUED.** `DAMAGE_SUPPRESSION`
+    is byte-unchanged and still refuses all five rider-on-compound printings whole
+    (`damageSuppression.test.ts`); what changed is the STRING it is handed. Four
+    of the five stay deferred, each blocked on its own LEADING half, which no
+    split of this family removes.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited: no new op,
+    no new union member, no new event and no new `phase`. `ATTACK_FAILED` with
+    `reason: "requirement"` has been in the record vocabulary since D125, and a
+    widening is D125's own rule — no record can contain a shape no deploy could
+    author.
+
+    engineVersion 0.268.0 → **0.269.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.268.0 → **THE ex-ONLY ACTIVE BOARD PREDICATE — THE MISSING HALF OF
     A PAIR, NOT A BESPOKE NARROWING, AND THE DIFFERENCE IS A COUNT.**
 
@@ -13544,7 +13610,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.268.0";
+export const engineVersion = "0.269.0";
 
 export type {
   ApplyResult,
@@ -13629,6 +13695,7 @@ export {
   deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
+  splitAttackRequirementClause,
 } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";
