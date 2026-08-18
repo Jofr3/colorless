@@ -1770,10 +1770,15 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     // \u26a0\ufe0f WIDENED AT D236 for the same reason as the two rows above — the
     // hand arm ends in the byte-identical return.
+    // ⚠️ RE-ANCHORED AT D360, which put the printed hedge onto the spread's ops:
+    // the `anyWay` arm is now a multi-line object spread. **BOTH HALVES REWRITTEN,
+    // NOT ONLY `find`** — a `replace` that still quoted the old one-line body would
+    // ALSO delete this slice's flag, so the row would be testing two claims at once
+    // and could be killed by either.
     // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
     // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
     // unique again for the first time since D236 had to widen it twice.
-    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
     replace: "  return [count === 1 ? base : { ...base, count }];",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
@@ -1785,11 +1790,17 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ WIDENED AT D236, whose hand-side arm ends in the byte-identical return:
     // the find carries the discard arm's own closing comment line so it stays
     // unique. Widen the OLDER find; never narrow the new code.
+    // ⚠️ RE-ANCHORED AT D360, which put the printed hedge onto the spread's ops:
+    // the `anyWay` arm is now a multi-line object spread. **BOTH HALVES REWRITTEN,
+    // NOT ONLY `find`** — a `replace` that still quoted the old one-line body would
+    // ALSO delete this slice's flag, so the row would be testing two claims at once
+    // and could be killed by either.
     // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
     // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
     // unique again for the first time since D236 had to widen it twice.
-    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
-    replace: "  return Array.from({ length: count }, () => ({ ...base }));",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
+    replace:
+      "  return Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }));",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
   },
   {
@@ -1799,13 +1810,71 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     // ⚠️ WIDENED AT D236 for the row above's reason — the same expression now
     // closes both attach arms.
+    // ⚠️ RE-ANCHORED AT D360, which put the printed hedge onto the spread's ops:
+    // the `anyWay` arm is now a multi-line object spread. **BOTH HALVES REWRITTEN,
+    // NOT ONLY `find`** — a `replace` that still quoted the old one-line body would
+    // ALSO delete this slice's flag, so the row would be testing two claims at once
+    // and could be killed by either.
     // ⚠️ RE-ANCHORED AT D246, which moved this expression into the shared
     // reader `attachFromZoneProgram` — one copy for three anchors, so the row is
     // unique again for the first time since D236 had to widen it twice.
-    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
     replace:
-      "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [{ ...base, count }];",
+      "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [{ ...base, count }];",
     expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+  },
+  // ── 🆕 D360 — THE PRINTED "up to" ON THE SPREAD ───────────────────────────
+  // ⚠️ A ROW COUNT IS NOT A COVERAGE MAP, MEASURED BEFORE THESE WERE WRITTEN.
+  // THREE rows above already mutate this exact expression, and two of them are
+  // controls of DIFFERENT shape (collapse-to-batch, explode-to-spread). **NONE
+  // OF THEM CAN SEE THE FLAG** — every one of their replacements still emits
+  // flagless ops, so all three stay green under a build that drops it. The five
+  // below are budgeted PER CLAIM rather than per site: one expression, five
+  // separable things it asserts.
+  {
+    id: "D360-spread-loses-the-printed-decline",
+    decision: "D360",
+    what: '🛑 THE ROW THIS SLICE EXISTS TO KILL. The flag goes, so "attach up to 2 … in any way you like" is an EXACT 2 again on all four derived printings: the second park still ASKS and still has candidates, so the controller who wanted ONE is handed two — out of their own discard pile, onto their own bodies. **INVISIBLE TO EVERY "how many landed" AND EVERY "the two may land APART" ASSERTION IN THIS REPO**, because the mutant changes no op count, no event count and no candidate list. It is readable only by an answer nobody could give before: the DECLINE',
+    file: "packages/engine/src/effects.ts",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
+    replace: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count }];",
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+  },
+  {
+    id: "D360-hedge-read-off-the-number-not-the-print",
+    decision: "D360",
+    what: '🛑 THE DISCRIMINATOR CROSSES FROM THE PRINTED WORD TO THE DERIVED VALUE: `match[3] === undefined` becomes `count === 1`. **BEHAVIOURALLY IDENTICAL ON ALL FOUR PRINTED SENTENCES**, because no card prints "up to 1" — so a harness fed only real rows cannot see it, and it is exactly the mutant D228 says such a harness survives. It is killed by a LIVE NEAR-MISS rather than a constructed one: `"Attach up to 1 Basic Energy cards … in any way you like."` is a sentence this arm ACCEPTS, deriving to one op with `match[3] === "1"` and `count === 1`, and §9.1 makes its printed answer set {0, 1}. The mutant reads it as a mandatory 1',
+    file: "packages/engine/src/effects.ts",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
+    replace: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(count === 1 ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+  },
+  {
+    id: "D360-flag-hoisted-onto-the-batch-as-well",
+    decision: "D360",
+    what: '🛑 THE SCOPING GOES: the flag is hoisted out of the `anyWay` arm into the shared `base`, so the BATCH carries it too and Oricorio/Regirock/Ethan\'s Ho-Oh emit `{ count: 2, declinable: true }`. **BEHAVIOURALLY DEAD AND STILL WRONG**, which is the whole point of the row: D359\'s `upTo = op.count ?? (op.declinable === true ? 1 : undefined)` lets `count` win, so no board can see it — but it puts TWO KEYS ON ONE AXIS, which `attachDecline.test.ts` §1 pins across the entire registry as a claim about the CATALOG ("a print names one body or names none"). A mutant no board can kill and a shape rule can',
+    file: "packages/engine/src/effects.ts",
+    find: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({\n        ...base,\n        ...(match[3] === undefined ? {} : { declinable: true as const }),\n      }))\n    : [count === 1 ? base : { ...base, count }];",
+    replace: "  return destination.anyWay\n    ? Array.from({ length: count }, () => ({ ...base }))\n    : [count === 1 ? base : { ...base, count, declinable: true as const }];",
+    expectKilledBy: ["packages/engine/src/derivedDiscardAttach.test.ts"],
+  },
+  {
+    id: "D360-koraidon-keeps-the-exact-two",
+    decision: "D360",
+    what: '🛑 THE REGISTRY HALF OF THE SAME SENTENCE REVERTS: Koraidon ex "Dino Cry" goes back to two flagless ops, so *"attach up to 2 … in any way you like"* is an exact 2 on the printing `attachFromZoneProgram` cites BY NAME as the shape its own spread copies. **THIS IS THE STATE THE TREE WAS ACTUALLY IN**, for 155 decisions and through two slices that each bought half of this family — the row is the proof that the two producers are held in step by something other than a comment. D358 measured this row and excluded it for `legal_standard = 0`; rotation decides who may play a card, not what the card says',
+    file: "packages/engine/src/registry.ts",
+    find: '          targetType: "Fighting",\n          basicOnly: true,\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Fighting",\n          targetType: "Fighting",\n          basicOnly: true,\n          declinable: true,\n        },',
+    replace: '          targetType: "Fighting",\n          basicOnly: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Fighting",\n          targetType: "Fighting",\n          basicOnly: true,\n        },',
+    expectKilledBy: ["packages/engine/src/dinoCry.test.ts"],
+  },
+  {
+    id: "D360-koraidon-flags-only-its-first-op",
+    decision: "D360",
+    what: '🛑 THE FLAG IS PER OP, AND HALF A DECLINE IS THE WORST OF THE THREE STATES. Only Koraidon\'s FIRST attach keeps it, so the player may stop BEFORE the first card and never BETWEEN the two — which is not what "up to" says, and is a shape no print produces. **THE FULL REVERT ABOVE IS VISIBLE ON THE FIRST PARK AND THIS ONE IS NOT**: a board that declines immediately behaves identically under both, so only a run that TAKES the first and then declines the second can tell them apart. That is the {0, 1, 2} middle answer, and it is the reason the row is separate from its neighbour rather than folded into it',
+    file: "packages/engine/src/registry.ts",
+    find: '          basicOnly: true,\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Fighting",\n          targetType: "Fighting",\n          basicOnly: true,\n          declinable: true,\n        },',
+    replace: '          basicOnly: true,\n          declinable: true,\n        },\n        {\n          op: "attachEnergyFrom",\n          source: "discard",\n          energyType: "Fighting",\n          targetType: "Fighting",\n          basicOnly: true,\n        },',
+    expectKilledBy: ["packages/engine/src/dinoCry.test.ts"],
   },
   {
     id: "D234-anchor-drops-its-trailing-anchor",
