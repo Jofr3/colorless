@@ -5390,8 +5390,18 @@ export const MUTANTS: Mutant[] = [
     // ⚠ RE-POINTED AT D329 (0.234.0 → 0.235.0) — the TWENTY-SIXTH payment, and
     // `precheck` named this row and one other (a row whose QUOTED LINE this session
     // rewrote, which is the other half of the same discipline).
+    // ⚠ RE-POINTED AT D360 (0.265.0 → 0.266.0) — the FIFTY-SEVENTH payment, and
+    // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
+    // STAYS 22. An `EffectOp` IS persisted (`EffectContinuation.pendingOp`), so
+    // the question is live and not skippable — but D360 adds NO field to that op.
+    // It changes WHICH PRINTINGS CARRY a field D358 already added, and a v22
+    // record holding a flagless `attachEnergyFrom` reads back MANDATORY, which is
+    // exactly what it meant when it was written. **THE TEST IS "WOULD AN OLD
+    // RECORD MEAN SOMETHING ELSE", AND THE ANSWER IS NO** — so
+    // `D326-record-version-not-bumped` is NOT owed this time and stays anchored at
+    // 22, which was predicted by id before the diff and measured after it.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.265.0";',
+    find: 'export const engineVersion = "0.266.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

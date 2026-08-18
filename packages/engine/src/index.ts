@@ -12108,6 +12108,95 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.266.0 → **THE PRINTED *"up to"* REACHES THE **SPREAD**, AND THE FAMILY
+    CLOSES — OVER **BOTH** PRODUCERS, WHICH IS THE ONLY REASON IT CLOSES AT ALL.**
+
+    D358 bought `attachEnergyFrom.declinable` for the SPREAD (N ops, each parking
+    on its own body) and reached 6 printings by walking the registry. D359 bought
+    the BATCH's ceiling (`count` → the prompt's `upTo`) and reached 13 by walking
+    BOTH producers. **NEITHER REACHED THE SPREAD THE DERIVER BUILDS**, so
+    *"attach up to 2 … in any way you like"* was still an EXACT 2 on every
+    printing `deriveAttackEffect` owns: `attachFromZoneProgram`'s `anyWay` branch
+    emitted N bare ops with no flag anywhere.
+
+    **THE PRICE IS ONE EXPRESSION AND ZERO NEW VOCABULARY.** The branch already
+    held the discriminator in a local — `match[3]` is the literal `up to (\d+)`
+    capture, `undefined` on every unhedged printing — so the whole engine diff is
+    `...(match[3] === undefined ? {} : { declinable: true })` inside the single
+    `Array.from({ length: count }, …)`. No op field, no prompt field, no choice
+    field, no wire byte, no schema, no new arm, no new anchor.
+
+    🛑 **AND THE DISCRIMINATOR IS THE PRINTED WORD, NOT THE DERIVED COUNT — THE
+    TWO COME APART ON A SENTENCE THIS ARM ACCEPTS.** `count` defaults to 1 when
+    the hedge is absent, so a gate spelled `count > 1` reads the hedge off the
+    NUMBER instead of off the PRINT. *"Attach up to 1 Basic Energy cards … in any
+    way you like."* derives here with `match[3] === "1"` and `count === 1`, and
+    §9.1 makes its printed answer set {0, 1} — declinable — while the article form
+    *"Attach a Basic Energy card … in any way you like."* is a mandatory 1. **Both
+    emit ONE op and are identical in every other observable**, so a build that
+    inferred the hedge from the program's LENGTH or from `count` cannot tell them
+    apart. Driven as a live near-miss in `derivedDiscardAttach.test.ts` §6.
+
+    ⚠️ **SCOPED TO THE `anyWay` BRANCH, MEASURED RATHER THAN TIDY.** Hoisted into
+    the shared `base` the flag would ride the BATCH too, where D359's
+    `upTo = op.count ?? (op.declinable === true ? 1 : undefined)` already spends
+    the same printed word — behaviourally dead there, and two keys on one axis,
+    which `attachDecline.test.ts` §1's *"never co-occur"* pins across the registry.
+
+    🛑🛑 **THE POPULATION, AND THE FIFTH GROUP THE HANDOFF DID NOT NAME.** Walked
+    over BOTH producers before a line moved — `deriveAttackEffect` over the
+    640-sentence `legalAttackCorpus()` with a RECURSIVE op flatten (a top-level
+    filter misses Kilowattrel ex's `recordGate`-nested attach: 15 sentences flat,
+    **16** recursive), and `programFor` over all **708** `registryCardIds()` — with
+    the producer set CLOSED by grep: `op: "attachEnergyFrom"` has exactly one
+    construction site outside `registry.ts`.
+      • DERIVER: **3 sentences / 4 Standard-legal printings** — Morpeko `sv06-072`,
+        Lycanroc `sv05-090`, Mesprit `sv08-079`/`sv08-204`.
+      • 🆕 REGISTRY: **`KORAIDON_EX` ×4** (`sv01-125`/`-231`/`-247`/`-254`) — the
+        identical hedged sentence, the identical two-op `anyWay` spread, no flag.
+        **D358 MEASURED IT AND EXCLUDED IT FOR `legal_standard = 0`**, and said so
+        in its own suite. That is the right filter for a POPULATION FIGURE and the
+        WRONG ONE FOR A CONSISTENCY INVARIANT: `attachFromZoneProgram` cites this
+        very row BY NAME as the shape its spread copies, so flagging one producer
+        and not the other leaves the engine's two producers DISAGREEING about one
+        printed sentence — and `programFor` is not legality-gated. **ROTATION
+        DECIDES WHO MAY PLAY A CARD; IT DOES NOT DECIDE WHAT THE CARD SAYS.**
+        `attachDecline.test.ts` §1 reddened BY NAME, which is D358's own written
+        falsification condition (*"a seventh printing authored with `declinable`
+        reddens here"*) firing exactly as designed.
+
+    ✅ **THE FAMILY ACCOUNTS FOR ITSELF.** `LIKE '%ttach up to%'` over all three
+    text columns keyed on `$.effect` (remote D1 `luminous`, 2026-08-18; extractor
+    verified against nine known-present rows FIRST) is **23 sentences / 53
+    printings / 24 Standard-legal**, and 13 (D359) + 6 (D358) + 4 (D360) + 1
+    refused (Grafaiai `sv08-121`, a cross-seat attach `deriveAttackEffect` returns
+    null for, re-verified at source) = **24**. Infernape ×3 stays refused on §9.1's
+    grounds — it prints no *"up to"* and no empty arm — and `match[3]` is
+    `undefined` on it, so the gate cannot reach it even by accident.
+
+    ⚠️ **AND THE TWO HALVES ARE BROKEN DIFFERENTLY, WHICH IS D359's FINDING AT ITS
+    SECOND INSTANCE ON THE SAME FAMILY.** Koraidon's spread is an ABILITY with a
+    printed *"you may"*, so declining the Ability already bought the empty answer
+    and the engine reached **{0, 2}**. The four derived printings are ATTACKS —
+    declared and resolved, no `optional` anywhere in the program — so even the zero
+    was unreachable and they reached **{2} ALONE**. Same sentence shape, same op,
+    same missing flag, two different broken answer sets, and only the flag reaches
+    both. All three answers driven on real boards in `dinoCry.test.ts` and
+    `derivedDiscardAttach.test.ts` §7.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 22, ASKED RATHER THAN INHERITED, AND THE
+    QUESTION IS LIVE.** An `EffectOp` IS persisted (`EffectContinuation.pendingOp`
+    inside `GameState.phase`) and this op PARKS, so the D335/D352 hazard is in
+    range. But the test is *"does the old byte string still MEAN what it meant"*,
+    and it does: a v22 record holding a flagless `attachEnergyFrom` reads back
+    MANDATORY, which is exactly what it meant when written. **THIS SLICE ADDS NO
+    FIELD — IT CHANGES WHICH PRINTINGS CARRY ONE.** Absence meant mandatory before
+    and means mandatory after: D358's WIDENING case, not D352/D359's RENAME case.
+    A population is neither.
+
+    engineVersion 0.265.0 → **0.266.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.265.0 → **THE QUANTITY AXIS — `attachEnergyFrom`'s PRINTED *"up to N"*
     TO ONE NAMED BODY, AND A POPULATION THE REGISTRY COULD NOT SEE.**
 
@@ -13340,7 +13429,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.265.0";
+export const engineVersion = "0.266.0";
 
 export type {
   ApplyResult,
