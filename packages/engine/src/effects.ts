@@ -8912,7 +8912,7 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // doing damage, …. ", "Switch in …. "), and 1 sentence / 2 printings is blocked
 // by BOTH. Re-measured over `legalAttackCorpus()` and confirmed pool-wide on the
 // remote D1 (`$.effect`, 2026-08-18): `GLOB 'If *, this attack does nothing.*'`
-// minus `GLOB 'If *, this attack does nothing.'` returns **2 rows in 978 cards**,
+// minus `GLOB 'If *, this attack does nothing.'` returns **2 rows in 978 cards / 6 sets**,
 // both Sawk, both `legal_standard = 1`. So this widening opens TWO printings and
 // not twenty-seven, and the `^` — which is what keeps the coin family's already-
 // read "Flip a coin. If tails, …" off this reader — is UNTOUCHED.
@@ -9068,7 +9068,7 @@ export function deriveAttackRequirement(text: string): BoardCondition | null {
 
     ⚠️ **THE POPULATION IS TWO PRINTINGS, WHICH IS WHY THIS IS NOT A GENERIC
     SENTENCE-LIST COMPOSER.** Re-queried before a line shipped (remote D1
-    `luminous`, `$.effect`, 2026-08-18): across all 978 cards exactly TWO rows
+    `luminous`, `$.effect`, 2026-08-18): across all 978 cards / 6 sets exactly TWO rows
     print a leading does-nothing sentence with ANY trailing text, and they are the
     two Sawk printings of one sentence. Seven more sentences / 23 legal printings
     carry a does-nothing sentence with a LEADING companion instead — those are the

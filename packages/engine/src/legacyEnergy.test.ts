@@ -879,8 +879,13 @@ describe("the engine version", () => {
     // `check --write` over a file it had added two fixtures to. The line was over the
     // width limit and had been one edit from breaking for seventy-two decisions.
     // **The post-biome anchor pass is what caught it; the post-bump pass was clean.**
-    expect(engineVersion).toBe("0.268.0");
-    expect(manifest.version).toBe("0.268.0");
+    // 🆕 D363 — 0.268.0 → **0.269.0**, and this rung caught the bump BY BEING THE
+    // ONLY THING IN THE REPO THAT NAMES BOTH FILES. A slice whose whole diff is
+    // one regex, one table row and one split has no reason to grep this file, and
+    // the version pair is not derivable from any of them — which is exactly the
+    // hole this rung was cut for. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.269.0");
+    expect(manifest.version).toBe("0.269.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

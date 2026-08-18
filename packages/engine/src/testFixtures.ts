@@ -10455,6 +10455,74 @@ export const FIXTURE_POOL: Record<string, Card> = {
       side: the cast already holds `sv06.5-036` (a real Pokémon ex),
       `fix-pokemon-v`, `fix-pokemon-vmax` and the suffix-free `fix-bigbody`, which
       are exactly the four boards this member has to be told apart on. */
+  /** 🆕🆕 D363 — SAWK's "Rising Chop" ({F}{C}, 90), the printed NEGATION of
+      `fix-exonly`'s index-0 bonus and the FIRST fixture in this file whose text
+      needs a SPLIT to be read at all.
+
+      🛑 **IT IS `Fighting`, AND THE TYPE IS THE WHOLE SUPPRESSION HALF OF THE
+      ROW.** Sawk's second printed sentence is *"This attack's damage isn't
+      affected by Weakness or Resistance."* — a rule with NO observable effect
+      unless the defender actually carries a Weakness the attacker's type
+      triggers. `sv06.5-036` Okidogi ex prints **Weakness Fighting ×2**, so on the
+      one board where the requirement is satisfied the printed 90 either lands as
+      90 (suppressed) or as 180 (not), and the two answers are a `toBe` apart. A
+      `Colorless` body here would have made every suppression assertion in the
+      suite VACUOUS while still passing.
+
+      ⚠️ **A SEPARATE BODY, NOT A THIRD ATTACK ON `fix-exonly`.** That body is
+      `Colorless` and D362's damage assertions are written against a Weakness
+      that does not fire; retyping it to make this row observable would have
+      silently doubled numbers one file over. A new body costs one pool id and
+      changes nothing that already runs.
+
+      ⚠️ **IT LANDS IN `FIXTURE_POOL` DELIBERATELY, AND THE POOL-KEYED GUARD WAS
+      ENUMERATED BY NAME FIRST.** `clauseApostrophe.test.ts` sweeps THIS pool for
+      apostrophe-bearing attack text that any reader resolves and asserts the
+      count; this sentence carries THREE apostrophes ("opponent's", "isn't",
+      "attack's") against a clause key that carries two, so the U+2019 fold gets
+      swept for free the day the fixture lands — which is exactly what that
+      census is for. The count moves 104 → **106** there, by name — TWO, not one:
+      the sweep picks up index 1's control as well, since its leading clause is
+      the same mapped one. Index 2's is unmapped and is correctly absent. The
+      other
+      pool-keyed sweeps do not move: `catalogManifest.test.ts` and
+      `reprintAlias.test.ts` are REAL-id only, `alwaysOnReduction.test.ts` reads
+      passives and `legacyEnergy.test.ts` Energy carriers, and this body has
+      neither. */
+  "fix-sawk": battler("fix-sawk", {
+    hp: 120,
+    types: ["Fighting"],
+    attacks: [
+      {
+        cost: ["Fighting", "Colorless"],
+        name: "Rising Chop",
+        damage: 90,
+        effect:
+          "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
+      },
+      // The SAME leading sentence with a companion NO reader resolves — the
+      // control that says the split reports the remainder instead of eating it.
+      // Not a printing: constructed, and labelled as such, because the catalog
+      // holds exactly two rows of this shape and both are index 0 above.
+      {
+        cost: ["Colorless"],
+        name: "Unread Rider",
+        damage: 20,
+        effect:
+          "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. Then, spin the wheel of fate.",
+      },
+      // The UNMAPPED clause with a companion — the split's accounting guard, from
+      // the other side: no table row, so nothing may be stripped and the WHOLE
+      // string stays loud.
+      {
+        cost: ["Colorless"],
+        name: "Unmapped Rider",
+        damage: 20,
+        effect:
+          "If there is no Stadium in play, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
+      },
+    ],
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10539,6 +10607,31 @@ export const EX_ONLY_DECK = deckOf({
   "sv06.5-036": 4,
   "fix-special": 4,
   "fix-energy": 34,
+});
+
+/** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a
+    widened `EX_ONLY_DECK`, so D362's seeded boards keep the shuffles they were
+    measured on.
+
+      • `fix-sawk` — the attacker, `Fighting`, three attacks (see its block);
+      • `sv06.5-036` Okidogi **ex** — the ONE body on which the requirement holds,
+        and it prints Weakness **Fighting ×2**, so the suppression half is
+        observable rather than asserted;
+      • `fix-bigbody` — 200 HP, NO suffix: the requirement FAILS, and it survives
+        anything so no KO tail interferes with "nothing happened";
+      • `fix-pokemon-v` — the requirement fails here too, which is what tells this
+        member apart from `opponentActiveIsExOrV` under the NEGATIVE consequent —
+        D362 drove that disagreement under the positive one.
+
+    `fix-fighting-energy` pays the `{F}`; `fix-energy` pays the `{C}` and the two
+    all-Colorless control attacks. */
+export const SAWK_SPLIT_DECK = deckOf({
+  "fix-sawk": 4,
+  "fix-bigbody": 8,
+  "fix-pokemon-v": 4,
+  "sv06.5-036": 4,
+  "fix-fighting-energy": 8,
+  "fix-energy": 32,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });

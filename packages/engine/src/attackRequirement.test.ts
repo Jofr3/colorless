@@ -6,6 +6,7 @@ import {
   deriveAttackEffect,
   deriveAttackRequirement,
   programFor,
+  splitAttackRequirementClause,
 } from "./index";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
@@ -576,7 +577,13 @@ describe("constructed near-misses stay LOUD", () => {
     }
   });
 
-  it("keeps the OUTER ANCHOR guards on both sentences", () => {
+  it("keeps the OUTER ANCHOR guards on both sentences — the `^` half, and the punctuation", () => {
+    // 🆕🆕 D363 — ONE ROW LEFT THIS LIST AND IT IS THE ROW THIS SLICE BOUGHT.
+    // The list carried *"A real trailing clause pins `$`"* — Palafin plus "Then,
+    // discard an Energy from this Pokémon." — which was a guard keyed on a
+    // predecessor's REFUSAL, and paying the refusal inverts it. It moves to the
+    // case below rather than being deleted, because the guarantee it stood for is
+    // still owed: a trailing clause no reader resolves must still be REPORTED.
     for (const text of [
       // Lowercase leading "if" — the skeleton has no /i.
       "if this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
@@ -587,8 +594,6 @@ describe("constructed near-misses stay LOUD", () => {
       // The CONSEQUENT ALONE, with no leading "If" and no clause — the degenerate
       // string a substring matcher would happily claim.
       "this attack does nothing.",
-      // A real trailing clause pins `$`.
-      "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing. Then, discard an Energy from this Pokémon.",
       // Leading text pins `^` — the coin-flip family's shape, on this clause.
       "Flip a coin. If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
       // The same six guards would be owed by Lycanroc's sentence; two suffice to
@@ -598,6 +603,28 @@ describe("constructed near-misses stay LOUD", () => {
     ]) {
       expect(deriveAttackRequirement(text)).toBeNull();
     }
+  });
+
+  it("🆕 D363 — a trailing clause no longer pins `$`, and what pins it INSTEAD is the SPLIT", () => {
+    // The guarantee the deleted row stood for, re-made where it now lives. The
+    // reader resolves the leading sentence…
+    const compound = `${JUSTICE_KICK} Then, discard an Energy from this Pokémon.`;
+    expect(deriveAttackRequirement(compound)).toEqual({ kind: "yourActivePromotedThisTurn" });
+    // …and the SPLIT hands the companion back rather than eating it, which is the
+    // only reason the widening is safe: the site rebinds every other reader onto
+    // that body, so an unread companion is still named on the loud path. Driven
+    // on a board in `sawkRequirementSplit.test.ts` §5.
+    expect(splitAttackRequirementClause(compound)).toEqual({
+      clause: JUSTICE_KICK,
+      body: "Then, discard an Energy from this Pokémon.",
+    });
+    // 🛑 AND THE SPLIT REFUSES A CLAUSE THE TABLE DOES NOT CARRY, which is what
+    // stops the widened anchor from stripping a requirement nothing answered.
+    expect(
+      splitAttackRequirementClause(
+        "If you have 4 or fewer Benched Pokémon, this attack does nothing. Then, discard an Energy from this Pokémon.",
+      ),
+    ).toBeNull();
   });
 });
 

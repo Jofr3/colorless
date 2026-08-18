@@ -12128,7 +12128,7 @@ import type { GameState, Seat } from "./types";
     Confirmed pool-wide on the remote D1 (`luminous`, `$.effect`, 2026-08-18, the
     extractor verified against known-present rows first): `GLOB 'If *, this attack
     does nothing.*'` minus `GLOB 'If *, this attack does nothing.'` returns **2
-    rows in 978 cards**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard =
+    rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard =
     1`. **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN**, and the 25 that
     are not behind it are behind the `^` — which stays exactly where it is,
     because one of them is *"Flip a coin. If tails, this attack does nothing."*

@@ -695,7 +695,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // ONE printing family reaches this today — Sawk `sv10.5w-049`/`-130`, whose
   // trailing "This attack's damage isn't affected by Weakness or Resistance."
   // `deriveAttackDamageSuppression` has read since D192 and could never be given.
-  // Measured pool-wide: 2 rows in 978 cards carry a leading does-nothing sentence
+  // Measured pool-wide: 2 rows in 978 cards / 6 sets carry a leading does-nothing sentence
   // with any trailing text at all, and both are that card.
   const requirementSplit =
     gated === null || gated === "" ? null : splitAttackRequirementClause(gated);

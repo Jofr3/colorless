@@ -581,7 +581,28 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // U+2019) and a POSSESSIVE inside an anchored regex (which spells `['’]`
     // itself), so the pair proves the fold across BOTH mechanisms at once — the
     // first time this sweep has covered a table row and a regex on one fixture.
-    expect(derivable).toHaveLength(104);
+    // 🆕🆕 D363 — 104 → **105**, ONE sentence, and it was PREDICTED HERE BY NAME
+    // before the fixture landed rather than discovered by running the suite: the
+    // question D362 left standing ("what does adding a FIXTURE move?") was asked
+    // against this file first, and `fix-sawk`'s own block in `testFixtures.ts`
+    // names this count and this line. Sawk's *"If your opponent's Active Pokémon
+    // isn't a Pokémon ex, this attack does nothing. This attack's damage isn't
+    // affected by Weakness or Resistance."* carries THREE apostrophes — a
+    // POSSESSIVE inside a clause-table KEY and TWO CONTRACTIONS, one of them in
+    // the key too. ⚠️ **AND IT IS THE FIRST SENTENCE THIS SWEEP HAS COVERED THAT
+    // NO READER RESOLVES WHOLE WITHOUT A SPLIT**: what folds is the CLAUSE inside
+    // a two-sentence string, so the fold is proven through the widened anchor's
+    // capture group and not only through a whole-sentence one.
+    //
+    // ⚠️ **TWO, NOT ONE — AND THE SECOND IS WHY THIS COUNT IS ASSERTED RATHER
+    // THAN REASONED.** `fix-sawk` carries THREE attacks and this sweep picks up
+    // the two whose LEADING clause the requirement table carries: the printed
+    // Sawk sentence and the constructed "Unread Rider" control beside it (same
+    // mapped clause, a companion no reader resolves). Its third attack prints an
+    // UNMAPPED clause and is correctly absent, which is the accounting guard
+    // showing through a census that knows nothing about it. Predicted 105 from
+    // "one fixture, one sentence"; measured 106.
+    expect(derivable).toHaveLength(106);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -626,9 +647,10 @@ const APOSTROPHE_BONUS_SENTENCES = [
   "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
 ] as const;
 
-/** Both `ATTACK_REQUIREMENT_CLAUSES` rows — the whole table, and both keys carry
-    an apostrophe (a CONTRACTION in one, a POSSESSIVE in the other, so the fold is
-    exercised on both grammatical uses the pool prints). */
+/** All THREE `ATTACK_REQUIREMENT_CLAUSES` rows — the whole table, and every key
+    carries an apostrophe (a CONTRACTION in one, a POSSESSIVE in another, and 🆕
+    D363's row carries BOTH in one key, so the fold is exercised on both
+    grammatical uses the pool prints and on their co-occurrence). */
 const APOSTROPHE_REQUIREMENT_SENTENCES = [
   // Palafin sv03-062/-200 "Justice Kick" — "didn't", the contraction. Note "the
   // Bench", NOT "your Bench": the trap D125's doc block flags, untouched by this.
@@ -651,7 +673,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     }
   });
 
-  it("folds BOTH rows of ATTACK_REQUIREMENT_CLAUSES — contraction and possessive", () => {
+  it("folds ALL THREE rows of ATTACK_REQUIREMENT_CLAUSES — contraction, possessive, and both at once", () => {
     for (const sentence of APOSTROPHE_REQUIREMENT_SENTENCES) {
       const straight = deriveAttackRequirement(sentence);
       expect(straight).not.toBeNull();

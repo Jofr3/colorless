@@ -121,14 +121,18 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
 
     expect(rows).toHaveLength(640);
     expect(total).toBe(1732);
-    expect(resolved).toHaveLength(330);
-    expect(resolvedP).toBe(1196);
+    // 🆕🆕 D363 — 330 / 1,196 -> **331 / 1,198**. ONE sentence / TWO printings,
+    // and it is the one §5 below used to assert was unreachable: D363 widened
+    // `ATTACK_DOES_NOTHING` past its `$` after re-measuring what that anchor was
+    // actually worth. See `sawkRequirementSplit.test.ts` §1 for the partition.
+    expect(resolved).toHaveLength(331);
+    expect(resolvedP).toBe(1198);
     // The parts must add up to the whole quoted in the same case. A total that
     // does not sum is not merely wrong, it is impossible — and it is ONE addition.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(resolvedP + residueP).toBe(total);
-    expect(residue).toHaveLength(310);
-    expect(residueP).toBe(536);
+    expect(residue).toHaveLength(309);
+    expect(residueP).toBe(534);
   });
 
   it("the ex-ONLY predicate is 8 s / 13 p and the WIDER sibling is 4 s / 6 p — the ratio that chose the row", () => {
@@ -155,11 +159,15 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
     );
     // …and the wider one was ALREADY built, which is what makes it a pair.
     for (const [, s] of exOrV) expect(readByAny(s), s).toBe(true);
-    // Of the eight, exactly the two Sawk printings stay unread — §5.
+    // 🆕🆕 D363 — AND NOW ALL EIGHT ARE READ. This rung asserted a residue of
+    // exactly the two Sawk printings for one slice; D363 spent it, so the claim
+    // INVERTS rather than relaxes: the ex-ONLY predicate's whole 8 s / 13 p is
+    // inside the census, and the emptiness is asserted with the count beside it
+    // so an accidental 0 from a broken import cannot pass as this answer.
     const stillUnread = exOnly.filter(([, s]) => !readByAny(s));
-    expect(stillUnread).toHaveLength(1);
-    expect(stillUnread.reduce((sum, [units]) => sum + units, 0)).toBe(2);
-    expect(stillUnread[0]?.[1]).toBe(SAWK);
+    expect(stillUnread).toHaveLength(0);
+    expect(exOnly.filter(([, s]) => readByAny(s))).toHaveLength(8);
+    expect(readByAny(SAWK)).toBe(true);
   });
 
   it("every one of the six printed amounts derives, and the amount is NOT part of the key", () => {
@@ -348,55 +356,89 @@ describe("§4 — the discard anchor is defended by TWO independent printed word
   });
 });
 
-describe("§5 — the negation is REFUSED, and the reason is measured with a CONTROL", () => {
-  it("Sawk's printed text reaches NO reader, and the CONTROL says why", () => {
-    // The clause is `deriveAttackRequirement`'s SHAPE — its table maps a printed
-    // NEGATIVE clause to the POSITIVE board fact, so this would have been ONE row
-    // and no `{kind:"not"}` member. The reader simply cannot reach the sentence:
-    // `ATTACK_DOES_NOTHING` is anchored `^…$` and Sawk prints TWO sentences.
-    for (const read of READERS) expect(read(SAWK)).toBeNull();
+describe("§5 — the negation was REFUSED for one slice, and D363 spent it", () => {
+  it("Sawk's printed text now reaches ONE reader, and the CONTROL still says why", () => {
+    // 🆕🆕 D363 — THIS CASE IS INVERTED, NOT RELAXED. D362 asserted every reader
+    // returned null on Sawk and attributed the refusal to `ATTACK_DOES_NOTHING`'s
+    // `^…$`. The attribution was HALF right and the half that mattered was the
+    // `$`: re-measured, the `$` alone blocks 1 sentence / 2 printings and the `^`
+    // blocks 7 s / 23 p. D363 moved the `$` into an optional group nothing reads
+    // and paid for the companion sentence with a SPLIT, so the sentence resolves.
+    expect(deriveAttackRequirement(SAWK)).toEqual({ kind: "opponentActiveIsEx" });
+    // EXACTLY ONE reader, which is the property that kept the census a sum: a
+    // second claimant would double-count the printing.
+    const claimants = READERS.filter((read) => read(SAWK) !== null);
+    expect(claimants).toHaveLength(1);
 
-    // THE CONTROL. Without it, "no reader resolves Sawk" passes on a broken
-    // import. Palafin's row reads TODAY…
+    // THE CONTROL, KEPT AND INVERTED. Without it, "the reader resolves Sawk"
+    // passes on a reader that resolves everything. Palafin's row reads TODAY…
     expect(deriveAttackRequirement(PALAFIN)).toEqual({ kind: "yourActivePromotedThisTurn" });
-    // …and stops the instant the IDENTICAL trailing sentence is bolted on. So it
-    // is the second sentence that refuses Sawk, and nothing else.
+    // …and KEEPS reading with the identical trailing sentence bolted on, where
+    // D362 measured it stopping. The one byte that changed is the anchor.
     expect(
       deriveAttackRequirement(
         `${PALAFIN} This attack's damage isn't affected by Weakness or Resistance.`,
       ),
-    ).toBeNull();
+    ).toEqual({ kind: "yourActivePromotedThisTurn" });
   });
 
-  it("the FIRST sentence alone would be one table row — so the anchor, not the vocabulary, is the blocker", () => {
-    // Said in both directions: the clause is spellable and the member exists, and
-    // the sentence STILL does not derive, because the blocker is the anchor's `$`.
-    // The day a printing spells this clause as a whole sentence, THAT is the
-    // warrant for a row — a shape being spellable never warrants spelling it.
+  it("the FIRST sentence alone IS one table row now — and the table, not the anchor, is the remaining blocker", () => {
+    // 🆕🆕 D363 — INVERTED. D362 said "a shape being spellable never warrants
+    // spelling it; the day a printing spells this clause as a whole sentence,
+    // THAT is the warrant for a row". The printing was always there — Sawk — and
+    // what hid it was the `$`, not the absence of a printing. The row exists now
+    // and it reuses D362's member, so the whole purchase was ONE regex character
+    // class and ONE table row.
     const first = "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.";
-    expect(deriveAttackRequirement(first)).toBeNull();
+    expect(deriveAttackRequirement(first)).toEqual({ kind: "opponentActiveIsEx" });
     expect(conditionNote({ kind: "opponentActiveIsEx" })).toBe(
       "your opponent's Active Pokémon is a Pokémon ex",
     );
+    // …and the TABLE is still the blocker for every clause it does not carry,
+    // which is what stops the widened anchor from claiming anything else.
+    expect(
+      deriveAttackRequirement("If there is no Stadium in play, this attack does nothing."),
+    ).toBeNull();
   });
 
-  it("the anchor's reach over the corpus is 8 s / 16 p of 17 s / 43 p, and the parts SUM", () => {
+  it("the anchor's reach over the corpus is 9 s / 18 p of 17 s / 43 p, and the parts SUM", () => {
+    // 🛑 🆕🆕 D363 — THIS RUNG STAYED GREEN THROUGH THE WIDENING AND WAS STALE,
+    // WHICH IS WHY IT IS CALLED OUT. It spelled the OLD anchor as a BARE REGEX
+    // LITERAL, so it went on measuring a pattern the engine no longer runs and
+    // agreeing with itself. **GREP THE OLD VALUE AS A BARE LITERAL, NOT ONLY THE
+    // NAMES YOU ARE CHANGING** — a copied regex rots exactly like a copied count.
+    // Re-pointed at the LIVE reader below, which cannot rot at all.
+    // The anchor is module-private, so this is a COPY and it is labelled one —
+    // and it is TIED to the live reader below in both directions, which is what
+    // the stale version had no way to be.
+    const ANCHOR = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     const nothing = legalAttackCorpus().filter(([, s]) => /this attack does nothing\./.test(s));
-    const admissible = nothing.filter(([, s]) => /^If (.+), this attack does nothing\.$/.test(s.trim()));
-    const refused = nothing.filter(([, s]) => !/^If (.+), this attack does nothing\.$/.test(s.trim()));
+    const admissible = nothing.filter(([, s]) => ANCHOR.test(s.trim()));
+    const refused = nothing.filter(([, s]) => !ANCHOR.test(s.trim()));
+    // THE TIE: every sentence the live reader resolves must be one this copy
+    // admits, and no sentence this copy refuses may resolve. A copy that drifts
+    // from the pattern it quotes goes red here rather than agreeing with itself.
+    for (const [, s] of nothing) {
+      if (deriveAttackRequirement(s) !== null) expect(ANCHOR.test(s.trim()), s).toBe(true);
+    }
+    for (const [, s] of refused) expect(deriveAttackRequirement(s), s).toBeNull();
     expect(nothing).toHaveLength(17);
-    expect(admissible).toHaveLength(8);
-    expect(refused).toHaveLength(9);
+    expect(admissible).toHaveLength(9);
+    expect(refused).toHaveLength(8);
     expect(admissible.length + refused.length).toBe(nothing.length);
     const p = (rows: readonly (readonly [number, string])[]): number =>
       rows.reduce((sum, [units]) => sum + units, 0);
     expect(p(nothing)).toBe(43);
-    expect(p(admissible)).toBe(16);
-    expect(p(refused)).toBe(27);
+    expect(p(admissible)).toBe(18);
+    expect(p(refused)).toBe(25);
     expect(p(admissible) + p(refused)).toBe(p(nothing));
-    // Widening the anchor to admit Sawk opens 9 s / 27 p of unrelated surface —
-    // which is what makes it a separate purchase rather than this row's tail.
-    expect(refused.some(([, s]) => s === SAWK)).toBe(true);
+    // The 8 that remain are the `^`'s, not the `$`'s — D362 priced this widening
+    // at all 9 / 27 and the correction is asserted where the wrong price lived.
+    expect(refused.some(([, s]) => s === SAWK)).toBe(false);
+    expect(admissible.some(([, s]) => s === SAWK)).toBe(true);
+    expect(refused.some(([, s]) => s === "Flip a coin. If tails, this attack does nothing.")).toBe(
+      true,
+    );
   });
 });
 
