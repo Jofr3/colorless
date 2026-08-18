@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-18 — build session #304 (**P3-M5 — D364, *two leading-sentence strippers at one site, and the order where they meet is now asserted.*** Engine **0.269.0** — **NO runtime behaviour changed**; **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`), no new op, union member, event, `phase`, registry row or clause row. D363's handoff census was RE-QUERIED, not inherited, on four surfaces: **1,732 legal attack units / 640 sentences, 613 multi-sentence, 16 opening `If ` — all three REPRODUCE EXACTLY**, and so does **13 of 708 registry ids carrying an `attackGate`** (7 `barredIf` + 3 `onlyIf` + 3 `firstTurnExempt`). **THE COUNTS REPRODUCED AND THREE ATTRIBUTIONS DID NOT**: the 16 partition as **10 GATE + 6 SUBSTANTIVE**, never "13 timing gates + 3 licence" — a sentence opening *"You can use this attack only if…"* cannot be in a population defined as "opens with `If `", so that phrasing double-counts the LICENCE arm of the 13 and drops the six, **two of which are the requirement family itself**; `ATTACK_REQUIREMENT_CLAUSES`' Palafin row has **ZERO** Standard-legal printings and the "Lycanroc HAPAX" row's live printings are **Basculin `sv10.5w-024`/`-108`** (`sv03-117` is `legal_standard = 0`), so three rows are worth **0 + 2 + 2 = FOUR** legal printings and not "five"; and Sawk "Rising Chop" costs **{F}**, not the documented `{F}{C}`. **THE TWO SPLITS ARE DISJOINT — 0 of 1,732 legal units are claimed by both** — so both orders answer every printed string identically and a looping `splitHead` would be scaffolding for a population of zero. What shipped is the ASSERTION and not the rename: disjointness as a TRIPWIRE, and the order pinned on a labelled constructed counterexample where the two orders provably disagree, both failing in the SAFE direction. `bun run check` **371 files / 7,677 tests, exit 0**.)
+**Last updated:** 2026-08-18 — build session #305 (**P3-M5 — D365, *the floor the handoff understated: three clause rows at ZERO new vocabulary, and `allOf`'s first DERIVED producer.*** Engine **0.269.0 → 0.270.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new `BoardCondition` member, op, event, error code, regex, registry row, state field or reader arm. D364's handoff was RE-MEASURED on four surfaces and its **POPULATION REPRODUCES EXACTLY**: **9 sentences / 18 legal units open with the `"If <clause>, this attack does nothing."` skeleton, 2 s / 4 u were carried, 7 s / 14 u reached the table and MISSED**, and so does its **"ZERO anchors"** claim — every one of the seven matches the skeleton and misses on the CLAUSE, so what refuses them is **VOCABULARY**. 🛑 **THE PRICE DID NOT REPRODUCE, AND IT WAS TOO SMALL**: the zero-new-vocabulary floor is **3 rows / 3 sentences / 5 legal printings**, not the handoff's 2 / 2 / 3 — it never enumerated **Mesprit `sv08-079`/`sv08-204`** *"If you don't have Uxie and Azelf on your Bench…"*, which `allOf` (D280) and `yourBenchHasNamed` (D118) already spell between them. *A count can reproduce exactly while its attribution is wrong* — third consecutive slice — **and an attribution can be wrong by leaving something OUT, which reads as conservatism rather than as an error.** 🛑 **AND NEITHER "WIDENING" THE HANDOFF NAMED IS ONE — 0 OF 2, DRIVEN ON BOARDS**: `yourStadiumInPlay` yours→any is a RENAME (its arm reads OWNERSHIP and `FALKNER` plus the positive clause row depend on it), and Burned is an ADDITION (no member reads `StatusConditions.burned`, and narrowing `opponentActiveHasSpecialCondition` breaks Sableye). **A WIDENING IS FREE EXACTLY WHEN EVERY EXISTING CONSUMER WANTS THE WIDER READING.** 🛑 **`allOf` GAINS ITS FIRST DERIVED PRODUCER** — from D280 to D364 all 14 ids' values were hand-authored in `registry.ts` — **and nothing downstream moves**: same `.every` recursion, no new arm in either of the two exhaustive `switch (cond.kind)` readers. ⚠️ **A GUARD WAS FOUND STALE AT HEAD BY THE STRING-LITERAL ANCHOR**: `clauseApostrophe.test.ts`'s `APOSTROPHE_REQUIREMENT_SENTENCES` held TWO entries while its doc and its test name both said *"ALL THREE rows"* — repaired to six and given a COMPLETENESS GUARD off the live reader. ⚠️ **AND THREE DIFFERENCE-KEYED CENSUS RUNGS WERE DRIVEN RED FOR THE FIRST TIME** — `BUILT.attack` **1227 → 1232** (raw 1198 → 1203; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still), moving `BUILT.attack - 922` 305 → 310, `BUILT.attack - 922 - 252` 53 → 58 and `precociousEvolution`'s `head - rawDelta - splitDelta` 1221 → 1226; the first two share one `it`, so the second was unreachable until the first was green. `bun run check` **372 files / 7,696 tests, exit 0** on the CLOSED tree. `requirementFloor.test.ts` — **18 cases in six sections**, probed on a quiet tree. **SIX mutation rows, one PER CLAIM**; corpus **1134 → 1140**.)
+
+**Last updated (was):** 2026-08-18 — build session #304 (**P3-M5 — D364, *two leading-sentence strippers at one site, and the order where they meet is now asserted.*** Engine **0.269.0** — **NO runtime behaviour changed**; **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`), no new op, union member, event, `phase`, registry row or clause row. D363's handoff census was RE-QUERIED, not inherited, on four surfaces: **1,732 legal attack units / 640 sentences, 613 multi-sentence, 16 opening `If ` — all three REPRODUCE EXACTLY**, and so does **13 of 708 registry ids carrying an `attackGate`** (7 `barredIf` + 3 `onlyIf` + 3 `firstTurnExempt`). **THE COUNTS REPRODUCED AND THREE ATTRIBUTIONS DID NOT**: the 16 partition as **10 GATE + 6 SUBSTANTIVE**, never "13 timing gates + 3 licence" — a sentence opening *"You can use this attack only if…"* cannot be in a population defined as "opens with `If `", so that phrasing double-counts the LICENCE arm of the 13 and drops the six, **two of which are the requirement family itself**; `ATTACK_REQUIREMENT_CLAUSES`' Palafin row has **ZERO** Standard-legal printings and the "Lycanroc HAPAX" row's live printings are **Basculin `sv10.5w-024`/`-108`** (`sv03-117` is `legal_standard = 0`), so three rows are worth **0 + 2 + 2 = FOUR** legal printings and not "five"; and Sawk "Rising Chop" costs **{F}**, not the documented `{F}{C}`. **THE TWO SPLITS ARE DISJOINT — 0 of 1,732 legal units are claimed by both** — so both orders answer every printed string identically and a looping `splitHead` would be scaffolding for a population of zero. What shipped is the ASSERTION and not the rename: disjointness as a TRIPWIRE, and the order pinned on a labelled constructed counterexample where the two orders provably disagree, both failing in the SAFE direction. `bun run check` **371 files / 7,677 tests, exit 0**.)
 
 **Last updated (was):** 2026-08-18 — build session #303 (**P3-M5 — D363, *the `$` was the wrong anchor to price, and the re-measurement is the slice.*** Engine **0.268.0 → 0.269.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited — no new op, no new union member, no new event, no new `phase`. D362 refused this widening at *"9 sentences / 27 printings of unrelated surface"*. **THE COUNTS REPRODUCED AND THE ATTRIBUTION DID NOT**: `/^If (.+), this attack does nothing\.$/` has TWO anchors, and partitioning D362's 9 refused sentences by which one refuses them gives **1 s / 2 p behind the `$`**, 7 s / 23 p behind the `^` and 1 s / 2 p behind both — confirmed pool-wide on the remote D1 at **2 rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both legal. **THE `$` WAS WORTH TWO PRINTINGS, NOT TWENTY-SEVEN.** BOUGHT: **1 sentence / 2 Standard-legal printings**, for ONE `$` moved into a group nothing reads, ONE clause-table row on D362's EXISTING `opponentActiveIsEx`, ONE split (`splitAttackRequirementClause`, D282's shape and D282's one safety property) and ONE gated boolean at the attack site — **ZERO** new ops, op fields, `BoardCondition` members, `CardFilter` kinds, prompt kinds, registry keys or `packages/schema`. A widened anchor with no split behind it would have SILENCED Sawk's second printed rule, which is the D278/D279 failure this family has refused twice. `bun run check` **370 files / 7,663 tests, exit 0**.)
 
@@ -359,91 +361,111 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D364)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-18, after D365)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** —
 > the branch `claude/backend-loop-subagents-q2wz9f` AND `main`, fast-forwarded at
 > the user's explicit instruction. **NO PULL REQUEST WAS OPENED, BY INSTRUCTION.**
-> `bun run check` **371 files / 7,677 tests, exit 0** (baseline 370 / 7,663 — the
-> delta is **+1 file and +14 cases**, the whole of `splitOrder.test.ts`, MEASURED
-> on the CLOSED tree rather than guessed. **Zero existing cases moved**, because
-> D364 changed no runtime behaviour: the diff is one new suite, five comment
-> corrections in `effects.ts`, one ordering note in `attack.ts` and one cost
-> correction in `sawkRequirementSplit.test.ts`.)
+> `bun run check` **372 files / 7,696 tests, exit 0** (baseline 371 / 7,677 — the
+> delta is **+1 file and +19 cases**: 18 of them the whole of
+> `requirementFloor.test.ts` and **1 in `clauseApostrophe.test.ts`**, the
+> completeness guard that repairs a list found stale at head. MEASURED on the
+> CLOSED tree, and **zero existing cases moved**.)
 >
-> 🛑 **WHAT D364 SETTLED, AND IT SETTLED IT BY RE-QUERYING RATHER THAN
-> INHERITING.** D363 handed off a census — *613 of 1,732 multi-sentence, 16
-> opening `If `* — and an attribution for it. **The counts reproduce to the
-> unit on two independent surfaces** (S3 remote D1 `luminous` `$.effect`, and S1
-> `legalAttackCorpus()` + the live splits). **The attribution does not, and it
-> cannot**: the LICENCE spelling *"You can use this attack only if…"* does not
-> open with `If `, so its 3 printings were never in the 16. The true partition is
-> **10 + 6** — 10 gate units on the family's two `If `-spellings, 6 sentences
-> whose leading `If` IS the substance, **of which 2 are the requirement family**.
-> The `13` is the whole gate family (10 + 3). *A count can reproduce exactly
-> while its attribution is wrong* — for the second consecutive slice, and this
-> time the wrong attribution was one slice old.
+> 🛑 **WHAT D365 SETTLED. THE POPULATION REPRODUCED AND THE PRICE DID NOT — AND
+> THE PRICE WAS TOO SMALL, WHICH IS THE HARD DIRECTION TO NOTICE.** D364 handed
+> over *9 sentences / 18 legal units behind the does-nothing skeleton, 2 s / 4 u
+> carried, 7 s / 14 u missing behind ZERO anchors*. All of that reproduces to the
+> unit on S1 and on S3, and so does the "zero anchors" claim: every one of the
+> seven matches `ATTACK_DOES_NOTHING` and misses at the TABLE, so what refuses
+> them is **vocabulary**. But the handoff priced the zero-new-vocabulary floor at
+> *2 rows / 2 sentences / 3 legal printings* and it is **3 rows / 3 sentences / 5
+> legal printings** — it never enumerated **Mesprit `sv08-079`/`sv08-204`**
+> *"If you don't have Uxie and Azelf on your Bench…"*, which `allOf` (D280) and
+> `yourBenchHasNamed` (D118) already spell between them. *A count can reproduce
+> exactly while its attribution is wrong* — third consecutive slice — **and this
+> time the attribution was wrong by leaving something OUT. An understated price
+> reads as conservatism rather than as an error.**
 >
-> 🛑 **THE TWO SPLITS ARE DISJOINT AND THAT IS WHY THERE IS NO COMPOSER.** Over
-> all 1,732 legal units `splitAttackGateClause` claims 13, `splitAttackRequirementClause`
-> claims 2, and **0 are claimed by both**. So the site's order is unobservable on
-> the catalog, a looping `splitHead` would answer no printed string differently,
-> and D282's refusal stands on a measurement rather than on a memory.
-> `splitOrder.test.ts` §2 pins the disjointness as a **TRIPWIRE that reddens by
-> name** the day a printing carries both, and §3 pins the order on a labelled
-> CONSTRUCTED counterexample where the two orders provably disagree:
-> gate-then-requirement resolves the compound completely, the reverse resolves
-> neither (the requirement split's LAZY clause group runs past the gate sentence
-> and the accounting guard then refuses the unmapped result), and **both fail in
-> the SAFE direction** — the residue is a superstring either way, so no printed
-> sentence can be silently deleted by getting the order wrong.
+> 🛑 **AND NEITHER OF THE TWO THINGS THE HANDOFF CALLED "WIDENINGS" IS ONE. 0 OF
+> 2, DRIVEN ON BOARDS.** `yourStadiumInPlay` yours→any is a **RENAME**: its arm is
+> `state.stadium.owner === seat` and two live consumers depend on the ownership
+> (the registry `FALKNER` row and the positive clause row *"you have a Stadium in
+> play"*), so the wider reading changes what Falkner draws. Burned is an
+> **ADDITION**: `StatusConditions.burned` exists on the model but **no**
+> `BoardCondition` reads it, and narrowing `opponentActiveHasSpecialCondition` to
+> Burn alone would break Sableye's +70. **A WIDENING IS FREE EXACTLY WHEN EVERY
+> EXISTING CONSUMER WANTS THE WIDER READING — that is a question about the
+> consumers, not about whether the member's NAME could stretch to cover the new
+> sentence.**
 >
-> ⚠️ **AND A ROW COUNT IS NOT A COVERAGE MAP EVEN INSIDE ONE TABLE.**
-> `ATTACK_REQUIREMENT_CLAUSES` has THREE rows; priced by `legal_standard` they
-> are worth **0 + 2 + 2**. The Palafin row (`sv03-062`/`-200`, `sv04.5-124`/`-225`,
-> `svp-036`) is DEAD in Standard — kept, because it is keyed on printed text and a
-> reprint restores it, but unreachable from `legalAttackCorpus()` and from every
-> board. The "Lycanroc HAPAX" row is neither Lycanroc's nor a hapax: `sv03-117` is
-> out of Standard and the two live printings are **Basculin `sv10.5w-024`/`-108`
-> "Bared Fangs" ({W}, 50, index 1)**. Both corrections are now DRIVEN in
-> `splitOrder.test.ts` §4 rather than asserted in prose.
+> 🛑 **`allOf` GAINED ITS FIRST DERIVED PRODUCER AND NOTHING DOWNSTREAM MOVED.**
+> From D280 to D364 every `allOf` value came from a hand-authored `registry.ts`
+> row (14 ids, asserted live). A printed sentence now builds one. The recursion
+> arm is the same `.every`, the two exhaustive `switch (cond.kind)` readers gain
+> no arm, and the requirement gate reads the result through `conditionHolds` like
+> any other member — the cheapest possible demonstration that D280's arity-open
+> design was right.
 >
-> ▶ **D365 — THE NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT.**
-> Surface **S1** (`legalAttackCorpus()` walked with the live requirement reader)
-> produced it: **9 sentences / 18 legal units OPEN with the `"If <clause>, this
-> attack does nothing."` skeleton, and only 2 sentences / 4 units are CARRIED by
-> `ATTACK_REQUIREMENT_CLAUSES`.** The other **7 sentences / 14 legal units** reach
-> the table and MISS, and stay on the loud `ATTACK_EFFECT_SKIPPED` path:
-> *"If there is no Stadium in play…"* (2), *"If you don't have Uxie and Azelf on
-> your Bench…"* (2), *"If you don't have exactly 3 cards in your hand…"* (2),
-> *"If you don't have the same number of cards in your hand as your opponent…"*
-> (2), *"If you have 4 or fewer Benched Pokémon…"* (4), *"If your opponent
-> doesn't have exactly 3 or 4 Prize cards remaining…"* (1), *"If your opponent's
-> Active Pokémon isn't Burned…"* (1). **That is 14 legal printings behind ONE
-> table and ZERO anchors** — the skeleton already admits every one of them, so
-> nothing regex-shaped is in the way; what each costs is a `BoardCondition`
-> member, and the whole slice's price is **how many of the seven can be answered
-> by a member that ALREADY EXISTS.**
+> ⚠️ **A GUARD WAS FOUND STALE AT HEAD BY THE STRING-LITERAL ANCHOR.**
+> `clauseApostrophe.test.ts`'s `APOSTROPHE_REQUIREMENT_SENTENCES` held **TWO**
+> entries while its doc block and its test name both said *"ALL THREE rows"* —
+> D363 added a row and edited the prose *beside* the array instead of the array.
+> Nothing went red, because a hand-written list of a table's rows agrees with
+> itself however far behind it falls. **A PROSE COUNT EDITED IN THE SAME COMMIT AS
+> THE ROW IT DESCRIBES IS NOT THEREBY A LIST THAT CONTAINS IT.** Repaired to six
+> and given a COMPLETENESS GUARD that re-derives the table's reachable size from
+> the live reader.
 >
-> ⚠️ **SO ASK THE WIDENING QUESTION BEFORE THE ADDITION QUESTION, ROW BY ROW.**
-> D363's Sawk row cost **zero** new vocabulary because `opponentActiveIsEx` was
-> already spelled POSITIVE one table up. **Re-derive that for each of the seven
-> against the live `BoardCondition` union rather than guessing** — the polarity
-> rule at the head of the block means a printed *"isn't"/"don't"/"no"* needs no
-> `{ kind: "not" }`, so a row is free exactly when the POSITIVE fact it requires
-> is already a member. Start with *"If your opponent's Active Pokémon isn't
-> Burned"* (a status predicate) and *"If there is no Stadium in play"* (a stadium
-> predicate), because those are the two most likely to already exist; price
-> *"4 or fewer Benched Pokémon"* and *"exactly 3 or 4 Prize cards"* LAST, because
-> a numeric comparison is a new member and **a widening is free where an addition
-> is not**.
+> ⚠️ **AND THREE DIFFERENCE-KEYED CENSUS RUNGS WERE ACTUALLY DRIVEN RED FOR THE
+> FIRST TIME.** D364 re-pointed that pair and moved no census value, so neither
+> was ever evaluated against a changed `BUILT.attack`. This slice moved it
+> (**1227 → 1232**; raw 1198 → 1203, `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13
+> both standing still with stated reasons) and watched them fail one at a time:
+> `BUILT.attack - 922` **305 → 310**, `BUILT.attack - 922 - 252` **53 → 58**, and
+> `precociousEvolution`'s `head - rawDelta - splitDelta` **1221 → 1226**. The first
+> two sit in ONE `it`, so the second was unreachable until the first was green —
+> **AN ASSERTION AFTER A FAILING ONE IN THE SAME TEST IS NOT AN EXERCISED
+> ASSERTION.** The pool-keyed apostrophe census moved **106 → 109** and was
+> MEASURED, not guessed: three attacker fixtures print an apostrophe, three bench
+> fixtures print no sentence at all — **a fixture count is not a sentence count.**
 >
-> ⚠️ **AND WALK S2 FIRST AGAIN, FOR THE REASON THAT DID NOT CHANGE**: 13 of the
-> 708 registry ids carry an `attackGate`, and D364 moved neither number. A D365
-> that answers clause rows moves **`BUILT.attack` and nothing else** — `splitHead`
-> stays 13 unless a gate is authored, and `REGISTRY_ATTACK_UNITS` stays put unless
-> a registry row ships. Predict those three independently; two of them standing
-> still is the normal case, not the null result.
+> ▶ **D366 — THE NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT.**
+> Surface **S1** (`legalAttackCorpus()` walked with the live requirement reader,
+> asserted by name in `splitOrder.test.ts` §4 and `requirementFloor.test.ts` §1)
+> produced it: of the 9 sentences / 18 legal units behind the skeleton, **5 s / 9 u
+> are now carried and 4 sentences / 9 legal printings are NOT**, every one of them
+> refused by VOCABULARY and by nothing structural:
+>
+> | printed sentence | legal p | what it costs |
+> |---|---|---|
+> | *"If you have 4 or fewer Benched Pokémon…"* (Victini `sv10.5b-012`/`-171`, `sv10.5w-172`, `svp-208`) | **4** | an own-BENCH-COUNT member — nothing in the union counts your own bodies |
+> | *"If there is no Stadium in play…"* (Fan Rotom `sv07-118`/`sv08.5-085`) | 2 | an ANY-OWNER stadium member; `yourStadiumInPlay` **cannot** be re-pointed (above) |
+> | *"If you don't have exactly 3 cards in your hand…"* (Alolan Dugtrio `sv08-123`/`-208`) | 2 | an OWN-hand exact-size member — `opponentHandAtMost` is the wrong SEAT *and* the wrong COMPARATOR |
+> | *"If your opponent's Active Pokémon isn't Burned…"* (Centiskorch `sv05-037`) | 1 | a BURNED member — the state field exists, no condition reads it |
+>
+> **TAKE VICTINI.** It is the LARGEST of the four at 4 legal printings — twice any
+> other — and its member is the narrowest thing on the list: a count of your own
+> Bench, which `conditionHolds` can answer off `side.bench.filter(p => p !== null)`
+> with no new state, no new op and no reader arm. One union member, two switch
+> arms, one clause row. ⚠️ **AND ASK THE COMPARATOR QUESTION FROM THE CATALOG
+> BEFORE SPELLING IT**: the printed clause is *"4 or fewer"* under a NEGATIVE
+> consequent, so the positive fact required is *"5 or more"*, which on a §3.3
+> five-slot Bench means FULL — and whether the member should be
+> `yourBenchAtLeast { count }` or a full-bench predicate is a question about what
+> ELSE the pool prints, not about this one sentence. Census `%Benched Pokémon%` on
+> all three columns before choosing.
+>
+> ⚠️ **AND RE-DERIVE THE FLOOR RATHER THAN INHERITING THIS TABLE.** D365 exists
+> because D364's equivalent table was short by one row. Walk all four surfaces:
+> S1 over `legalAttackCorpus()` with the live reader, S2 `programFor` over the 708
+> `registryCardIds()` (none of D365's five ids was a registry row — assert the same
+> for D366's before predicting the summands), S3 the remote D1 on `$.effect` with
+> the extractor verified against a known total FIRST, and S4 the grep that closes
+> the producer set. **A D366 that answers clause rows moves `BUILT.attack` and
+> nothing else** — `splitHead` stays 13 unless a gate is authored and
+> `REGISTRY_ATTACK_UNITS` stays 16 unless a registry row ships. Predict the three
+> independently; two standing still is the normal case, not the null result.
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2465,7 +2487,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D364, TWO LEADING-SENTENCE STRIPPERS AT ONE SITE, AND THE ORDER WHERE THEY MEET IS NOW ASSERTED.** Engine **0.269.0**, NO runtime behaviour changed; **`MATCH_RECORD_VERSION` STAYS 22**, read from source. The census D282 priced its composer refusal against was RE-QUERIED on four surfaces and **every count reproduced** (1,732 units / 640 sentences, 613 multi-sentence, 16 opening `If `, 13 of 708 registry ids with an `attackGate`) while **three attributions did not**: the 16 partition as **10 GATE + 6 SUBSTANTIVE** and not "13 + 3" (the LICENCE spelling does not open with `If `, so it was never in the 16 — and 2 of the 6 ARE the requirement family); the clause table's three rows are worth **0 + 2 + 2 = four** legal printings with the Palafin row DEAD in Standard and the "Lycanroc HAPAX" row actually **Basculin `sv10.5w-024`/`-108`**; and Sawk "Rising Chop" costs **{F}**, not `{F}{C}`. The two splits are **DISJOINT over all 1,732 legal units (0 claimed by both)**, so a looping `splitHead` would be scaffolding for a population of zero — D282's refusal re-derived, not inherited. Shipped: `splitOrder.test.ts` (14 cases) pinning the disjointness as a TRIPWIRE, the ORDER on a labelled constructed counterexample where the two orders provably disagree and both fail in the SAFE direction, the table's LIVE legality, and a board driving the read-before-split order. `bun run check` **371 files / 7,677 tests, exit 0**.**P3-M5 — D363, THE `$` WAS THE WRONG ANCHOR TO PRICE, AND THE RE-MEASUREMENT IS THE SLICE.** Engine **0.268.0 → 0.269.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited — no new op, no op field, no union member, no event, no `phase` shape, so no old record can mean something else. D362 refused this widening at *"9 sentences / 27 printings of unrelated surface"* and left it unspent. **ITS COUNTS REPRODUCED EXACTLY AND ITS ATTRIBUTION DID NOT**: `ATTACK_DOES_NOTHING` has TWO anchors, and partitioning those 9 refused sentences by WHICH one refuses them gives **1 s / 2 p behind the `$`**, 7 s / 23 p behind the `^` and 1 s / 2 p behind both — confirmed pool-wide on the remote D1 (`$.effect`, extractor verified against known-present rows first) at **2 rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard = 1`. **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN.** **BOUGHT: 1 sentence / 2 Standard-legal printings** for ONE `$` moved into an optional group nothing reads, ONE `ATTACK_REQUIREMENT_CLAUSES` row on the `opponentActiveIsEx` member D362 already bought (the same board fact now read from BOTH consequents), ONE split (`splitAttackRequirementClause` — D282's shape and D282's one safety property: it refuses to strip a clause the table does not carry) and ONE boolean at the attack site gated on "no split fired". **ZERO** new `BoardCondition` members, ops, op fields, `CardFilter` kinds, prompt kinds, registry keys or `packages/schema`. 🛑 **A WIDENED ANCHOR WITH NO SPLIT BEHIND IT WOULD HAVE SILENCED SAWK'S SECOND PRINTED RULE** — the attack would gate correctly, deal damage, pass every board assertion and quietly ignore half its card, which is the D278/D279 failure this family has refused twice. Census **1225 → 1227** (RAW summand 1196 → 1198), `built` 1626 → **1628**; **17** rungs moved where 13 were predicted, the four extra all keyed on a DIFFERENCE rather than on a value. SEVEN files went red where FOUR were predicted — the three extra are guards on side effects of SHIPPING (a version bump, a fixture, a comment quoting a row count without its set count). Mutation corpus **1128 → 1134**, six rows one per claim, one of which SURVIVED its first probe and was closed. `bun run check` **370 files / 7,663 tests, exit 0**; sweep **1111 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1134**, sentinel `exit=0`, verified BY ID in both directions and reconciled against D362 with **0 verdict changes** and a survivor set identical at 23.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D365, THE FLOOR THE HANDOFF UNDERSTATED: THREE CLAUSE ROWS AT ZERO NEW VOCABULARY, AND `allOf`'s FIRST DERIVED PRODUCER.** Engine **0.269.0 → 0.270.0**, `MATCH_RECORD_VERSION` **22 unchanged** — **3 sentences / 5 legal printings** bought with ZERO new `BoardCondition` members, ops, events, error codes, regexes, registry rows or reader arms. D364's population reproduced exactly (9 s / 18 u behind the skeleton, 7 s / 14 u missing behind ZERO anchors) and its PRICE did not: the zero-new-vocabulary floor is **3 rows / 5 printings**, not 2 / 3 — Mesprit `sv08-079`/`sv08-204` was never enumerated. **NEITHER "WIDENING" IS ONE, 0 of 2**: `yourStadiumInPlay` yours→any is a RENAME and Burned is an ADDITION. `BUILT.attack` **1227 → 1232**, and the three DIFFERENCE-KEYED rungs behind it were driven RED for the first time.)
+| ~~simulator~~ | ~~P3~~ | ~~(was D364)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D364, TWO LEADING-SENTENCE STRIPPERS AT ONE SITE, AND THE ORDER WHERE THEY MEET IS NOW ASSERTED.** Engine **0.269.0**, NO runtime behaviour changed; **`MATCH_RECORD_VERSION` STAYS 22**, read from source. The census D282 priced its composer refusal against was RE-QUERIED on four surfaces and **every count reproduced** (1,732 units / 640 sentences, 613 multi-sentence, 16 opening `If `, 13 of 708 registry ids with an `attackGate`) while **three attributions did not**: the 16 partition as **10 GATE + 6 SUBSTANTIVE** and not "13 + 3" (the LICENCE spelling does not open with `If `, so it was never in the 16 — and 2 of the 6 ARE the requirement family); the clause table's three rows are worth **0 + 2 + 2 = four** legal printings with the Palafin row DEAD in Standard and the "Lycanroc HAPAX" row actually **Basculin `sv10.5w-024`/`-108`**; and Sawk "Rising Chop" costs **{F}**, not `{F}{C}`. The two splits are **DISJOINT over all 1,732 legal units (0 claimed by both)**, so a looping `splitHead` would be scaffolding for a population of zero — D282's refusal re-derived, not inherited. Shipped: `splitOrder.test.ts` (14 cases) pinning the disjointness as a TRIPWIRE, the ORDER on a labelled constructed counterexample where the two orders provably disagree and both fail in the SAFE direction, the table's LIVE legality, and a board driving the read-before-split order. `bun run check` **371 files / 7,677 tests, exit 0**.**P3-M5 — D363, THE `$` WAS THE WRONG ANCHOR TO PRICE, AND THE RE-MEASUREMENT IS THE SLICE.** Engine **0.268.0 → 0.269.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited — no new op, no op field, no union member, no event, no `phase` shape, so no old record can mean something else. D362 refused this widening at *"9 sentences / 27 printings of unrelated surface"* and left it unspent. **ITS COUNTS REPRODUCED EXACTLY AND ITS ATTRIBUTION DID NOT**: `ATTACK_DOES_NOTHING` has TWO anchors, and partitioning those 9 refused sentences by WHICH one refuses them gives **1 s / 2 p behind the `$`**, 7 s / 23 p behind the `^` and 1 s / 2 p behind both — confirmed pool-wide on the remote D1 (`$.effect`, extractor verified against known-present rows first) at **2 rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard = 1`. **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN.** **BOUGHT: 1 sentence / 2 Standard-legal printings** for ONE `$` moved into an optional group nothing reads, ONE `ATTACK_REQUIREMENT_CLAUSES` row on the `opponentActiveIsEx` member D362 already bought (the same board fact now read from BOTH consequents), ONE split (`splitAttackRequirementClause` — D282's shape and D282's one safety property: it refuses to strip a clause the table does not carry) and ONE boolean at the attack site gated on "no split fired". **ZERO** new `BoardCondition` members, ops, op fields, `CardFilter` kinds, prompt kinds, registry keys or `packages/schema`. 🛑 **A WIDENED ANCHOR WITH NO SPLIT BEHIND IT WOULD HAVE SILENCED SAWK'S SECOND PRINTED RULE** — the attack would gate correctly, deal damage, pass every board assertion and quietly ignore half its card, which is the D278/D279 failure this family has refused twice. Census **1225 → 1227** (RAW summand 1196 → 1198), `built` 1626 → **1628**; **17** rungs moved where 13 were predicted, the four extra all keyed on a DIFFERENCE rather than on a value. SEVEN files went red where FOUR were predicted — the three extra are guards on side effects of SHIPPING (a version bump, a fixture, a comment quoting a row count without its set count). Mutation corpus **1128 → 1134**, six rows one per claim, one of which SURVIVED its first probe and was closed. `bun run check` **370 files / 7,663 tests, exit 0**; sweep **1111 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1134**, sentinel `exit=0`, verified BY ID in both directions and reconciled against D362 with **0 verdict changes** and a survivor set identical at 23.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D357)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D357, AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.** Engine **0.262.0 → 0.263.0**; `MATCH_RECORD_VERSION` stays 21. A **CODE-REVIEW REPAIR of D356 — four findings, four fixed, zero refused** — whose first finding was a **correctness defect already on `main`**: the `activeOnly` gate read the board AFTER §6.1's Jet Energy switch rider, so a BENCHED Magearna healed and an ACTIVE one silently lost its printed 90. The clause reads the board AT THE MOMENT OF THE ATTACH — settled from the catalog, driven both ways in `autoHeal.test.ts` §5b, and verified RED against the old gate first. **A ROW COUNT IS NOT A COVERAGE MAP**: `sweepTriggers` already had two mutation rows and neither touched the gate. Census UNMOVED (measured — the census file is byte-unchanged). Suite 365 files / 7,532 tests; corpus 1089, sweep **1066 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D351)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D351, A PRINTED DISJUNCTION THAT IS TWO OPS, AND THE PLAY GATE THAT COULD NOT SEE IT.** Engine **0.256.0 → 0.257.0** over FIVE sites (the fifth is D275's mutation anchor, not a version site); `MATCH_RECORD_VERSION` **STAYS 20** — the diff writes no new bytes at all, and a predicate is not a format. **BUILT: Infernape `svp-116`/`sv06-033`/`sv06-173` "Pyro Dance"**, 3 legal printings on ONE sentence, the whole population. The engine diff is ONE predicate: `programPlayable`'s `attachEnergyFrom` gate becomes PROGRAM-scoped, refusing only when EVERY attach a program spells can only whiff. ZERO new vocabulary of any kind. Found by censusing **row 12, the one `ROWS` entry never censused**, whose clause spans TWO rows of the table. Second finding: `ASSEMBLE_ALLOY`'s "a park is declinable by construction" is FALSE, driven and struck. `bun run check` **360 files / 7,382 tests**; sweep **1015 killed · 22 known survivors · 0 GAPs · 0 stale · 0 errors** over a corpus of **1037**) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D350)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D350, "ANY NUMBER OF", THE THIRD AND LAST PRINTED FORM OF ONE OP'S COUNT.** Engine **0.255.0 → 0.256.0**; `MATCH_RECORD_VERSION` **STAYS 20** (a parked `bottomFromOpponentHand` DOES ride `phase.cont`, so the argument is made rather than waved through: a v20 continuation carries `upTo` absent or a NUMBER, both read by this build exactly as by the last). **BUILT: Lillie's Ribombee `sv09-067`/`sv09-164`/`svp-183` "Inviting Wink" — 3 legal printings on ONE sentence, the whole population — for ONE union member on ONE existing optional field (`upTo?: number \| "any"`).** The refutation from source FAILED on the CAPTION and not on behaviour (`upTo: BENCH_MAX` is behaviourally identical and captions the card with a number it does not print), and both halves are DRIVEN. Closes `bottomFromOpponentHand`'s bench arm at **3 of 3 legal sentences / 7 of 7 legal printings**; D294's own doc had priced that population at 4 because its query carried a POSSESSIVE this card does not print. REFUSED: D349's unpriced heal-then-discard family (~6 vocabulary items for 6 printings). `BUILT.ability` 267 → **270**, `built` 1593 → **1596**, residue 790 → **787**, `LANDED` 57/119 → **58/122**; `BUILT.attack` stands still on all three summands, measured. `bun run check` **359 files / 7,354 tests**; sweep **1011 killed · 22 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors** over a **1033**-row corpus (3,335.3 s). `killed + survivors + GAPs = 1011 + 22 + 0 = 1033 = corpus` ✅, and **the kill delta reconciles exactly**: D349 was 1008/22 over 1030, so +3 corpus and +3 KILLED with the declared-survivor residue **UNCHANGED at 22** — the three new rows and nothing else, each probed individually (5 / 5 / 2 of 7,354, all in `invitingWink.test.ts`) rather than read off the batch.) |
@@ -2526,6 +2549,120 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-18 — build session #305 (P3-M5 — D365, the floor the handoff understated, and `allOf`'s first derived producer)
+
+**Slice.** THREE printed sentences / **5 Standard-legal printings** (Iron Boulder
+`sv07-071`/`sv08.5-046`, Hop's Cramorant `sv09-138`, Mesprit `sv08-079`/`sv08-204`),
+bought by adding three rows to `ATTACK_REQUIREMENT_CLAUSES` — every one of them
+mapping to a `BoardCondition` member that already existed. ONE new suite
+(`requirementFloor.test.ts`, 18 cases), one repaired guard, six mutation rows, and
+the census. The tree was CLEAN on arrival at `1e602f3`, both refs level, and every
+piece was pushed as it landed. Engine **0.269.0 → 0.270.0**.
+
+**Four surfaces, and the population reproduced on three of them.**
+S1 (`legalAttackCorpus()` walked with the live `deriveAttackRequirement`):
+**9 sentences / 18 legal units** open with the `"If <clause>, this attack does
+nothing."` skeleton, **2 s / 4 u** were carried, **7 s / 14 u** reached the table
+and MISSED. S3 (remote D1 `luminous`, `$.effect`, db `735f0fb5…`, extractor
+verified FIRST against the 1,732-unit total the committed corpus records): the
+same **9 / 18**, with all eighteen card ids. S2 (`programFor` over the 708
+`registryCardIds()`): **2 of the 18 printings are registry ids** (Fan Rotom
+`sv07-118`/`sv08.5-085`) and **both carry an `abilities` program with NO `attack`
+key**, so the registry summand could not move for any of them. S4 closes the
+producer set at **two call sites, both `attack.ts`**. D364's *"ZERO anchors"*
+claim reproduces too: every one of the seven matches `ATTACK_DOES_NOTHING` and
+misses on the CLAUSE, so nothing regex-shaped is in the way.
+
+**🛑 The price did not reproduce, and it was TOO SMALL.** D364 put the
+zero-new-vocabulary floor at *"2 rows / 2 sentences / 3 legal printings"*.
+Partitioned by WHAT ACTUALLY REFUSES EACH, against the live `BoardCondition`
+union, it is **3 rows / 3 sentences / 5 legal printings**: Mesprit's
+*"If you don't have Uxie and Azelf on your Bench…"* is answerable TODAY, because
+`allOf` (D280) and `yourBenchHasNamed` (D118) already exist and a printed
+conjunction of two bench-name facts needs neither widened. The handoff never
+enumerated it. **An attribution can be wrong by leaving something OUT** — the hard
+direction, because an understated price reads as conservatism.
+
+**🛑 Neither "widening" is one. 0 of 2, driven on boards (§4).**
+`yourStadiumInPlay` yours→any is a **RENAME**: the arm is
+`state.stadium.owner === seat`, and with the OPPONENT's Stadium in the zone the
+member answers FALSE for one seat and TRUE for the other — an any-owner predicate
+answers TRUE for both — while `FALKNER` and the positive clause row both depend on
+the narrow reading. Burned is an **ADDITION**: `StatusConditions.burned` exists but
+no `BoardCondition` reads it, and `opponentActiveHasSpecialCondition` is TRUE on a
+Burned board *and* on an Asleep one, so narrowing it breaks Sableye. **A widening
+is free exactly when every existing consumer wants the wider reading — that is a
+question about the consumers, not about whether a member's NAME could stretch.**
+
+**🛑 `allOf` gained its first DERIVED producer, and nothing downstream moved.**
+From D280 to D364 every `allOf` value was hand-authored in `registry.ts` (14 ids,
+asserted live in §6). A printed sentence now constructs one. The recursion arm is
+the same `.every`, the two exhaustive `switch (cond.kind)` readers gain no arm, and
+the note renders through `allOf`'s own documented `" and "` join. The derived value
+is arity 2 — the cheapest possible evidence that D280's arity-open design (rather
+than a PAIR spelling) was right.
+
+**⚠️ A guard was found STALE AT HEAD by the string-literal anchor.**
+`clauseApostrophe.test.ts`'s `APOSTROPHE_REQUIREMENT_SENTENCES` held **two**
+entries while its doc block and its test name both said *"ALL THREE rows"* — D363
+added the Sawk row and edited the prose *beside* the array instead of the array.
+Nothing went red: a hand-written list of a table's rows agrees with itself however
+far behind it falls. **A PROSE COUNT EDITED IN THE SAME COMMIT AS THE ROW IT
+DESCRIBES IS NOT THEREBY A LIST THAT CONTAINS IT.** Repaired to six, and given a
+COMPLETENESS GUARD that re-derives the table's REACHABLE size from the live reader
+(five, because Palafin's row has zero Standard-legal printings) and asserts the one
+dead row by name.
+
+**The census, and three difference-keyed rungs driven RED for the first time.**
+`BUILT.attack` **1227 → 1232**; the raw summand **1198 → 1203**;
+`REGISTRY_ATTACK_UNITS` **16** and `splitHead` **13** both stand still, the latter
+for a third reason worth naming — all three new sentences are SINGLE sentences, so
+`splitAttackRequirementClause` returns null on the empty-body branch. `built`
+**1628 → 1633**, `units - built` **755 → 750**, `unbuiltAttack` **505 → 500**,
+`unbuilt` **534 → 529**. D364 re-pointed the difference-keyed pair while moving no
+census value, so neither had ever been evaluated against a changed `BUILT.attack`;
+this slice moved it and watched them fail one at a time — `BUILT.attack - 922`
+**305 → 310** and `BUILT.attack - 922 - 252` **53 → 58**, which sit in ONE `it`, so
+the second was unreachable until the first was green (**an assertion after a
+failing one in the same test is not an exercised assertion**), plus
+`precociousEvolution`'s `head - rawDelta - splitDelta` **1221 → 1226**, the third
+and the only one outside `censusAtHead.test.ts`. All three new sentences were run
+against ALL EIGHT tabulated row patterns BEFORE the residue moved and match NONE,
+so `inRows` stands still and no row's own line fell.
+
+**A pool-keyed sweep moved, and it was MEASURED rather than guessed.**
+`clauseApostrophe`'s fixture census **106 → 109**: the three attacker fixtures each
+print an apostrophe, and the three bench fixtures (`fix-uxie`, `fix-azelf`,
+`fix-lakebystander`) print no sentence at all. **A fixture count is not a sentence
+count** — eight fixtures, three census entries.
+
+**The suite.** `requirementFloor.test.ts`, 18 cases in six sections: §1 the
+population and the partition, PUBLISHED before anything was priced, with the parts
+summing; §2 the no-new-vocabulary refutation by VALUE plus the substring trap
+(Bronzong's positive key is a literal substring of Iron Boulder's negative one, so
+an `includes`-based reader would score a +90 off a sentence meaning CANCEL); §3 the
+split term standing still, with its branch shown LIVE on constructed compounds so
+the case cannot pass on a reader that stopped splitting; §4 the two non-widenings
+on boards; §5 all three rows driven on boards — including prize counts on BOTH
+sides of the printed interval, because 3 and 4 are CONTIGUOUS and a range reading
+answers this card identically inside it — plus the S2 id walk; §6 `allOf`'s new
+producer and the unchanged exhaustive-switch count. **Probed on a quiet tree**:
+`.every`→`.some`, `[3,4]`→`[3]`, the Mesprit row deleted and the requirement gate
+disabled redden **2, 2, 7 and 3** cases respectively.
+
+**Gates.** `bun run check` **372 files / 7,696 tests, exit 0** on the CLOSED tree
+(baseline 371 / 7,677; delta **+1 file / +19 cases** — 18 the new suite and 1 the
+completeness guard — and zero existing cases moved). Whole-corpus anchor check
+**1140 anchors / 0 bad**, re-run after EVERY write to `docs/progress.md`, and the
+five bare mid-line `find` rows re-checked **BY NAME** each time (an aggregate check
+is not the by-name check: it passes on a page where one of the five has moved to a
+different line, as long as the string still exists somewhere).
+`MATCH_RECORD_VERSION` **22**, read from source — three rows in a private clause
+`Map` persist nothing.
+
+<!-- D365-SWEEP-SLOT -->
+
 
 ### 2026-08-18 — build session #304 (P3-M5 — D364, two leading-sentence strippers at one site, and the order where they meet)
 
