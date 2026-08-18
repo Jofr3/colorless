@@ -253,8 +253,8 @@ export const MUTANTS: Mutant[] = [
     // IT: `describeBranch`'s new `attachEnergyFrom` arm spells the same words for
     // the same op, deliberately. A `find` can break because of a line added
     // SOMEWHERE ELSE, so this one now carries the park caption's own frame.
-    find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
-    replace: "`Attach the Energy to which of your ${attachTargetNoun(op)}?`,",
+    find: "        `Attach ${op.count === undefined ? \"the Energy\" : `up to ${op.count} Energy`} to ${\n          op.toSelf === true ? \"this Pokémon\" : `which of your ${attachTargetNoun(op)}`\n        }?`,",
+    replace: "        `Attach the Energy to ${\n          op.toSelf === true ? \"this Pokémon\" : `which of your ${attachTargetNoun(op)}`\n        }?`,",
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
   },
   {
@@ -263,9 +263,8 @@ export const MUTANTS: Mutant[] = [
     what: "the caption branch reinstated as a COMPARISON (`count <= 1`) rather than the field's presence — D205's removed unkillable mutant, re-declared as data",
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ WIDENED AT D246 for the row above's reason.
-    find: '`Attach ${\n          op.count === undefined ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
-    replace:
-      '`Attach ${\n          op.count === undefined || op.count <= 1 ? "the Energy" : `up to ${op.count} Energy`\n        } to which of your ${attachTargetNoun(op)}?`,',
+    find: "        `Attach ${op.count === undefined ? \"the Energy\" : `up to ${op.count} Energy`} to ${\n          op.toSelf === true ? \"this Pokémon\" : `which of your ${attachTargetNoun(op)}`\n        }?`,",
+    replace: "        `Attach ${op.count === undefined || op.count <= 1 ? \"the Energy\" : `up to ${op.count} Energy`} to ${\n          op.toSelf === true ? \"this Pokémon\" : `which of your ${attachTargetNoun(op)}`\n        }?`,",
     expectKilledBy: ["packages/engine/src/ownerTargetOps.test.ts"],
     survives: {
       kind: "unreachable-shape",
@@ -12841,7 +12840,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D358",
     what: "🛑🛑 THE M1 NO-CHOICE RULE SWALLOWS THE DECLINE AT ONE CANDIDATE — `parkOrForce` forces a lone candidate even when the print says 'up to N'. THE HALF OF THIS SLICE A READER WOULD NOT GUESS FROM THE FIELD, and D47's review reversed exactly this draft for `choosePokemonMulti`: honouring a decline only above the auto-resolve threshold honours it 'exactly where declining matters least'. Every ≥2-candidate board still behaves perfectly, so §2 CANNOT kill it — only §3's one-{M}-body board can, and that separation is why §3 exists",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (candidates.length === 1 && declinable !== true) {\n    return { done: apply(candidates[0] as PokemonRef) };\n  }",
+    find: "  if (candidates.length === 1 && upTo === undefined) {\n    return { done: apply(candidates[0] as PokemonRef) };\n  }",
     replace: "  if (candidates.length === 1) {\n    return { done: apply(candidates[0] as PokemonRef) };\n  }",
     expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
@@ -12850,7 +12849,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D358",
     what: "🛑 THE OP SAYS `declinable` AND THE PROMPT NEVER HEARS IT. `parkOrForce` builds the `choosePokemon` prompt without the key, so the registry row is right, the forced arm is right, and the ANSWER is refused — the player is offered the printed choice by the caption and then told they cannot take it. The failure is at the wire validator rather than at the board, which is why a case asserting attached Energy alone would miss it",
     file: "packages/engine/src/interpreter.ts",
-    find: "      candidates,\n      ...(declinable === undefined ? {} : { declinable }),\n      note,",
+    find: "      candidates,\n      ...(upTo === undefined ? {} : { upTo }),\n      note,",
     replace: "      candidates,\n      note,",
     expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
@@ -12859,8 +12858,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D358",
     what: "🛑🛑 EVERY `choosePokemon` BECOMES DECLINABLE — `validateChoice` stops reading the prompt and accepts a ref-less answer at every park of this kind. A crafted frame then declines Boss's Orders' gust, Switch, Prime Catcher and every heal: the effect resolves as a no-op and the card is spent. **THE WIDENED CHOICE MEMBER EARNS ITS KEEP HERE OR NOWHERE**, and the six bought printings all still work, so only the mandatory-park case in §4 reaches it",
     file: "packages/engine/src/cardplay.ts",
-    find: "        return prompt.declinable === true\n          ? null\n          : err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");",
-    replace: "        return null;",
+    find: "        if (prompt.upTo === undefined) {\n          return err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");\n        }\n        return choice.take === undefined",
+    replace: "        return choice.take === undefined",
     expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
   {
@@ -12868,8 +12867,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D358",
     what: "🛑 THE MIRROR, AND IT IS NOT THE SAME ROW. The validator refuses a ref-less answer unconditionally, so the capability is bought, wired, prompted and unusable — the dialog offers 'Take none' and the engine rejects it. Row 3 breaks the GATE OPEN and this breaks it SHUT; a fix for either leaves the other live, and only a case that DRIVES a decline to a board (§2) can see this one",
     file: "packages/engine/src/cardplay.ts",
-    find: "        return prompt.declinable === true\n          ? null\n          : err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");",
-    replace: "        return err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");",
+    find: "        if (prompt.upTo === undefined) {\n          return err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");\n        }\n        return choice.take === undefined",
+    replace: "        return err(\"BAD_EFFECT_CHOICE\", \"this choice cannot be declined\");\n        return choice.take === undefined",
     expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
   {
@@ -12886,7 +12885,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D358",
     what: "🛑 THE REDACTED PROMPT LOSES `declinable`, so the ENGINE accepts the decline and no ONLINE client can ever offer it: `ChoosePokemonDialog` renders its 'Take none' row from this field alone. Invisible to every local-HUD and every engine case — the whole online half of the printed 'up to N' disappears with the local half green, which is why §4 asserts the wire shape directly and asserts the ABSENT-KEY half beside it",
     file: "packages/engine/src/redact.ts",
-    find: "        ...(prompt.declinable === undefined ? {} : { declinable: prompt.declinable }),\n        note: prompt.note,",
+    find: "        ...(prompt.upTo === undefined ? {} : { upTo: prompt.upTo }),\n        note: prompt.note,",
     replace: "        note: prompt.note,",
     expectKilledBy: ["packages/engine/src/attachDecline.test.ts"],
   },
