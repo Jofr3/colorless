@@ -3899,7 +3899,7 @@ export function applyChoice(
       // untouched — same ending as the op's whiff, which is what *"attach up to 2"*
       // with a player answering "none" means. No event: nothing moved, and a row
       // saying so would claim an attach that did not happen.
-      return choice.kind === "pokemon" && choice.ref !== undefined
+      return pickedPokemon(choice)
         ? attachEnergyFrom(state, op, choice.ref, ctx, events, record)
         : state;
     case "attachFromTop":
