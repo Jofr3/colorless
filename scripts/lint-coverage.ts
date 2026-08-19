@@ -33,6 +33,21 @@
  * `checked < passed` IS the uncovered set. On a mismatch it re-runs per
  * directory, then per file inside the short ones, and names them.
  *
+ * ⚠️ 🆕🆕 AND "PROCESSED" IS NOT THE SAME QUESTION AS "COUNTED" — the second way
+ * a file goes unlinted, found by review at D368. Biome REFUSES any file over
+ * `files.maxSize` (1 MiB by default) with an `internalError/io` diagnostic, and
+ * it still reports that file in `Checked N files`. `scripts/mutation/mutants.ts`
+ * crossed the cap at D360 and was linted by nothing for eight slices while THIS
+ * GUARD reported full coverage — the file-count observation above, which was
+ * built precisely to replace a claim with a command, had become a claim again.
+ * Worse, `--max-diagnostics=0` (the flag that keeps this script's own output
+ * quiet) SUPPRESSES the refusal, so no invocation here could ever have seen it.
+ *
+ * So the size limit is read straight out of `biome.json` and checked against
+ * `statSync` BEFORE the count, with no Biome invocation involved at all. The cap
+ * is a number in a config file and a file size is a number on disk; comparing
+ * them needs no tool and cannot be fooled by how the tool reports.
+ *
  * ⚠️ WHAT IT DOES NOT COVER, STATED. Only script extensions (see EXTENSIONS) —
  * the repo's JSON (`package.json`, `tsconfig*.json`, drizzle's snapshots) is
  * NOT required to be lint-covered, because pulling committed generated JSON
@@ -44,7 +59,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 
 /** Extensions Biome lints that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
@@ -53,6 +68,20 @@ const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
 const MAX_NAMED = 25;
 
 const BIOME = existsSync("node_modules/.bin/biome") ? "node_modules/.bin/biome" : "biome";
+
+/** Biome's own default for `files.maxSize` when the config does not set one. */
+const BIOME_DEFAULT_MAX_SIZE = 1024 * 1024;
+
+/**
+ * The byte cap above which Biome refuses a file outright — read from the config
+ * rather than hard-coded, so raising `files.maxSize` raises this in the same
+ * edit and the two can never disagree.
+ */
+function maxFileSize(): number {
+  const raw = readFileSync("biome.json", "utf8");
+  const cfg = JSON.parse(raw) as { files?: { maxSize?: number } };
+  return cfg.files?.maxSize ?? BIOME_DEFAULT_MAX_SIZE;
+}
 
 function fail(message: string): never {
   console.error(message);
@@ -98,6 +127,24 @@ function dirOf(file: string): string {
 
 const files = sourceFiles();
 if (files.length === 0) fail("lint-coverage: found no source files at all — that cannot be right.");
+
+// Size first: a refused file is still COUNTED below, so the count can never
+// catch this one.
+const limit = maxFileSize();
+const oversize = files.filter((f) => statSync(f).size > limit).sort();
+if (oversize.length > 0) {
+  const named = oversize.map((f) => `  ${f} — ${statSync(f).size} bytes`).join("\n");
+  fail(
+    [
+      `lint-coverage: FAIL — ${oversize.length} source file(s) exceed Biome's `,
+      `\`files.maxSize\` of ${limit} bytes:\n${named}\n\n`,
+      "Biome REFUSES these files and still counts them as checked, so they are\n",
+      "linted by NOTHING while every lint step exits 0.\n\n",
+      "Fix by raising `files.maxSize` in biome.json, or by splitting the file\n",
+      "(NOT by deleting this check).",
+    ].join(""),
+  );
+}
 
 const checked = checkedCount(files);
 if (checked === files.length) {

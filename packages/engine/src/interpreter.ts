@@ -3505,8 +3505,6 @@ export function conditionNote(cond: BoardCondition): string {
       // reject/tooltip fragment is read off the BOARD, where "this Pokémon" has
       // no referent (D116).
       return "your Active Pokémon has damage counters on it";
-    case "yourBenchDamaged":
-      return "1 of your Benched Pokémon has damage counters on it";
     case "yourActiveUndamaged":
       // 🆕 D368 — the printed pronoun is dropped exactly as the arm above drops it
       // (D116), and the phrasing is POSITIVE English rather than a negation of the
@@ -3514,6 +3512,8 @@ export function conditionNote(cond: BoardCondition): string {
       // not supply generically: it exists here because the member is a NAMED board
       // fact, not an operator over an arbitrary one.
       return "your Active Pokémon has no damage counters on it";
+    case "yourBenchDamaged":
+      return "1 of your Benched Pokémon has damage counters on it";
     case "opponentActivePoisoned":
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":

@@ -8474,11 +8474,24 @@ const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.
     "toString", …) and hand back something that is not a `BoardCondition` at all.
     A Map has no inherited keys.
 
-    NINETEEN entries which, with the two patterns below them, cover 23 of the
-    pool's 26 distinct clauses / 41 of its 43 printings (the count moves with the
-    table — it was 17/21/37 at D122 and is re-stated by each slice that adds a
-    row, most recently D124's promoted-this-turn clause, which is the only row
-    here carrying THREE printings). The first two reuse
+    THIRTY entries which, with the two patterns below them, cover 29 of the
+    pool's 60 distinct clauses / 85 of its 129 printings.
+
+    ⚠️ 🆕🆕 **D368 — THE COUNT MOVES WITH THE TABLE *AND WITH THE CATALOG*, AND
+    ONLY THE FIRST HALF OF THAT WAS EVER BEING RE-STATED.** It read 17 rows / 21 of
+    26 clauses / 37 of 43 printings at D122 and 19 / 23 of 26 / 41 of 43 at D124,
+    then stood still while ELEVEN more rows landed — so every number here was
+    wrong, not just the row count. The POOL had moved underneath it on new sets
+    alone: 26 → 60 distinct clauses and 43 → 129 printings, against 23 → 29
+    covered clauses and 41 → 85 covered printings. A re-statement that bumps only
+    the entry count leaves three stale figures behind and prices the remaining gap
+    off a catalog that no longer exists. All four are measured off
+    `legalAttackCorpus()` — the same population `clauseApostrophe.test.ts` walks
+    to assert `carried.size === 29`, which is this block's coverage figure held up
+    by a TEST rather than by prose — and all four are re-stated by each slice that
+    adds a row, most recently D368's no-damage-counters clause.
+
+    The first two reuse
     `BoardCondition` members that ALREADY existed — built in the 2026-07-21
     board-condition slice (D40) for Falkner's `conditionGate` and Fighting Au
     Lait's play gate — which makes this family the vocabulary's FOURTH consumer
