@@ -10615,6 +10615,64 @@ export const FIXTURE_POOL: Record<string, Card> = {
       filler is what stops the count from being confusable with
       `yourBenchHasNamed`'s reading. */
   "fix-benchfiller": battler("fix-benchfiller", { hp: 60 }),
+  /** 🆕🆕 D367 — THE FOUR NAMED BENCH BODIES, and the two ATTACKERS among them are
+      the same cards as the names their own clauses ask about.
+
+      🛑 **THAT SELF-NAMING IS THE WHOLE REASON THESE ARE FIXTURES AND NOT A
+      COMMENT.** Durant `sv10.5w-070`/`-150` "Bite Together" prints *"If Durant is
+      on your Bench, this attack does 20 more damage."* and Mightyena `sv06-114`
+      "Hunting Pack" prints the same shape naming Mightyena — so an engine that
+      read `yourBenchHasNamed` as "in play" instead of "Bench" would let each
+      clause satisfy itself off the ATTACKER, and the conditional bonus would be
+      unconditional on every board with no second body. D279 refused exactly that
+      widening for Falinks; these two bodies let it be REFUTED ON A BOARD rather
+      than argued, on two more cards, in `benchNamedBonus.test.ts` §3.
+
+      ⚠️ `fix-illumise` carries no attack: it is the CONTROL for the opposite
+      reading. Volbeat `sv06-009` names ILLUMISE — a DIFFERENT card — which is what
+      stops the member being read as "another copy of me", and the bench body is
+      all that reading needs.
+
+      ⚠️ `fix-beldum` / `fix-metang` are the two conjuncts of Metagross
+      `sv09-063`'s `allOf` row. Two bodies, because the printed clause names two
+      and an `allOf` that could be satisfied by one is the failure the arity-2
+      tuple exists to prevent.
+
+      ⚠️ **ALL FOUR CARRY `hp: 60` AND NO ABILITY**, so nothing here can move a
+      damage, prize or ability census; the only thing that distinguishes them from
+      `fix-benchfiller` one line up is the `name`, which is precisely the field
+      under test. And they are `fix-*` ids rather than the real ones because
+      `catalogManifest.test.ts` classifies real-looking ids against a generated
+      manifest of six sets, and `sv06`/`sv09`/`sv10.5w` are not among them. */
+  "fix-durant": battler("fix-durant", {
+    name: "Durant",
+    hp: 60,
+    types: ["Metal"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Bite Together",
+        damage: 20,
+        effect: "If Durant is on your Bench, this attack does 20 more damage.",
+      },
+    ],
+  }),
+  "fix-mightyena": battler("fix-mightyena", {
+    name: "Mightyena",
+    hp: 60,
+    types: ["Darkness"],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Hunting Pack",
+        damage: 30,
+        effect: "If Mightyena is on your Bench, this attack does 90 more damage.",
+      },
+    ],
+  }),
+  "fix-illumise": battler("fix-illumise", { name: "Illumise", hp: 60, types: ["Grass"] }),
+  "fix-beldum": battler("fix-beldum", { name: "Beldum", hp: 60, types: ["Metal"] }),
+  "fix-metang": battler("fix-metang", { name: "Metang", hp: 60, types: ["Metal"] }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10760,6 +10818,24 @@ export const BENCH_COUNT_DECK = deckOf({
   "fix-bigbody": 8,
   "fix-fire-energy": 12,
   "fix-energy": 29,
+});
+
+/** 🆕🆕 D367 — a DEDICATED deck (D270) for the named-Bench bonus rows, so no other
+    suite's seeded shuffles move. Both self-naming attackers are in it at 3 so a
+    board can hold one in the Active Spot AND a second of the same name on the
+    Bench — the pair of boards that separates "on your Bench" from "in play". */
+export const BENCH_NAMED_DECK = deckOf({
+  "fix-durant": 3,
+  "fix-mightyena": 3,
+  "fix-illumise": 3,
+  "fix-beldum": 3,
+  "fix-metang": 3,
+  "fix-benchfiller": 4,
+  "fix-bigbody": 8,
+  "fix-stage1": 2,
+  "fix-stage2": 2,
+  "fix-dark-energy": 12,
+  "fix-energy": 17,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });

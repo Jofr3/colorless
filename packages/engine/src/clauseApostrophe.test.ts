@@ -637,11 +637,28 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
   });
 });
 
-/** The five `CONDITIONAL_DAMAGE_CLAUSES` rows whose key holds an apostrophe,
-    written as the whole printed sentence D115's skeleton reads. Listed as well as
-    swept: the sweep proves the fixtures survive a re-ingest, this proves the
-    specific rows the fold was built for do — and it keeps saying so if a fixture
-    is ever renumbered out of the pool. Amounts are the printed ones. */
+/** The `CONDITIONAL_DAMAGE_CLAUSES` rows whose key holds an apostrophe, written as
+    the whole printed sentence D115's skeleton reads. Listed as well as swept: the
+    sweep proves the fixtures survive a re-ingest, this proves the specific rows the
+    fold was built for do — and it keeps saying so if a fixture is ever renumbered
+    out of the pool. Amounts are the printed ones.
+
+    🛑 ⚠️ 🆕🆕 **D367 — THIS HALF OF THE FILE HAD NO COMPLETENESS GUARD AT ALL, AND
+    IT WAS SHORT BY THREE BEFORE THIS SLICE ADDED ANYTHING.** D365 found the
+    REQUIREMENT list stale and re-derived its size from the live reader; D366 found
+    that repair keyed on the wrong population and narrowed it with a filter. **Both
+    slices worked on the requirement half and neither looked at this one.** Walked
+    off the live bonus reader at D366's head, the legal corpus carries **EIGHT**
+    distinct apostrophe-bearing clauses through `deriveAttackDamageBonus` and this
+    array named **FIVE** — the three it never learned being the two Knocked-Out
+    revenge rows (D326/D327) and the bare `is a Pokémon ex` row (D362), every one
+    of them added by a slice that edited the table and not this list.
+
+    **A GUARD THAT EXISTS ON ONE HALF OF A SYMMETRIC PAIR IS NOT A GUARD ON THE
+    PAIR** — and the missing half is invisible precisely because the half that
+    exists is green. The completeness guard below is now keyed on the LIVE BONUS
+    READER, exactly as its requirement twin is, so the next slice that adds an
+    apostrophe row to this table reddens HERE naming the sentence it added. */
 const APOSTROPHE_BONUS_SENTENCES = [
   // Gyarados ex sv01-045/-225 "Tyrannical Tail" — the "already" row.
   "If your opponent's Active Pokémon already has any damage counters on it, this attack does 180 more damage.",
@@ -655,7 +672,36 @@ const APOSTROPHE_BONUS_SENTENCES = [
   "If your opponent's Active Pokémon is affected by a Special Condition, this attack does 70 more damage.",
   // Ceruledge sv02-098 "Fighting Sword" — the ex-or-V row, NOT a `hasRuleBox` read.
   "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
+  // 🆕🆕 D367 — THE THREE THIS LIST WAS ALREADY MISSING, added by the slice that
+  // built the guard rather than by the slices that built the rows.
+  // D326 — the revenge clause, FIVE printings on one row.
+  "If any of your Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 60 more damage.",
+  // D327 — the same clause with an OWNER prefix, Ethan's Pinsir sv10-001.
+  "If any of your Ethan's Pokémon were Knocked Out by damage from an attack during your opponent's last turn, this attack does 100 more damage.",
+  // D362 — the ex-or-V row above, one printed disjunct shorter. SIX amounts / TEN
+  // printings off one row, and the sharpest near-miss in the table.
+  "If your opponent's Active Pokémon is a Pokémon ex, this attack does 90 more damage.",
+  // 🆕🆕 D367's OWN row — the only one of this slice's seven whose key spells an
+  // apostrophe. Regirock ex sv10-101/-214 "Giant Rock".
+  "If your opponent's Active Pokémon is a Stage 2 Pokémon, this attack does 140 more damage.",
 ] as const;
+
+/** 🆕🆕 D367 — the live BONUS reader's CARRIED CLAUSES, walked off the printed
+    corpus. The mirror of `carriedClauseSentences()` below, and the population the
+    completeness guard this half never had is keyed on. Clauses rather than whole
+    sentences, because one row serves every printed AMOUNT (the skeleton captures
+    it) — so a sentence-keyed walk would count the same row up to six times. */
+function carriedBonusClauses(): ReadonlySet<string> {
+  const BONUS = /^If (.+), this attack does \d+ more damage\.$/;
+  const carried = new Set<string>();
+  for (const [, printed] of legalAttackCorpus()) {
+    const clause = BONUS.exec(printed.trim())?.[1];
+    if (clause === undefined) continue;
+    if (deriveAttackDamageBonus(printed) === null) continue;
+    carried.add(clause);
+  }
+  return carried;
+}
 
 /** The SIX APOSTROPHE rows of `ATTACK_REQUIREMENT_CLAUSES` — a CONTRACTION, a
     POSSESSIVE, and rows carrying BOTH in one key, so the fold is exercised on both
@@ -720,7 +766,7 @@ function carriedClauseSentences(): ReadonlySet<string> {
 }
 
 describe("the literal clause tables — the rows the fold was built for", () => {
-  it("folds all FIVE apostrophe rows of CONDITIONAL_DAMAGE_CLAUSES", () => {
+  it("folds all NINE apostrophe rows of CONDITIONAL_DAMAGE_CLAUSES", () => {
     for (const sentence of APOSTROPHE_BONUS_SENTENCES) {
       const straight = deriveAttackDamageBonus(sentence);
       // The straight form is the baseline and must still resolve — the fold is a
@@ -730,6 +776,118 @@ describe("the literal clause tables — the rows the fold was built for", () => 
       expect(straight?.count.kind).toBe("boardCondition");
       expect(deriveAttackDamageBonus(curly(sentence))).toEqual(straight);
     }
+  });
+
+  it("🛑🆕🆕 D367 — the BONUS list is COMPLETE, re-derived from the live bonus reader", () => {
+    // 🛑 **THE GUARD THIS HALF NEVER HAD, AND IT WAS SHORT BY THREE BEFORE THIS
+    // SLICE TOUCHED ANYTHING.** Its requirement twin below has existed since D365
+    // and was re-pointed at the right population by D366; this table went through
+    // D326, D327 and D362 with no guard at all, and each of those slices added an
+    // apostrophe row without adding it here. **A COMPLETENESS GUARD ON ONE HALF OF
+    // A SYMMETRIC PAIR IS NOT A GUARD ON THE PAIR.**
+    //
+    // 🛑 ⚠️ **AND WRITING IT REPRODUCED D366's OWN MISTAKE ONE TABLE OVER, WHICH IS
+    // WHY THE PARTITION IS EXPLICIT.** "Carried clauses that spell an apostrophe"
+    // is NOT "apostrophe ROWS of `CONDITIONAL_DAMAGE_CLAUSES`": D367's own token-map
+    // widening made `{P}` and `{D}` resolve, and those two clauses are owned by the
+    // parameterised TYPE TEMPLATE, which carries `['’]` in its own regex source
+    // (D136) and needs no literal row and no fold. They must NOT be in the list —
+    // adding them would assert that a Map key exists where a pattern does. So the
+    // walk's apostrophe half is partitioned into ROWS and TEMPLATE, both named.
+    //
+    // ⚠️ Clause-keyed and not sentence-keyed, because the amount lives in the
+    // skeleton and one row serves up to six printed amounts.
+    const carried = carriedBonusClauses();
+    const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
+    expect(carried.size).toBe(28);
+    expect(withApostrophe).toHaveLength(11);
+    // The TWO the parameterised template owns — named, so the day the template
+    // stops owning one it lands in the row half and this guard says which.
+    const TEMPLATE_OWNED = [
+      "your opponent's Active Pokémon is a {D} Pokémon",
+      "your opponent's Active Pokémon is a {P} Pokémon",
+    ];
+    const rowClauses = withApostrophe.filter((clause) => !TEMPLATE_OWNED.includes(clause));
+    expect(rowClauses).toHaveLength(9);
+    expect(APOSTROPHE_BONUS_SENTENCES).toHaveLength(9);
+    // 9 + 2 = 11 — parts that do not add to the population are not a partition.
+    expect(rowClauses.length + TEMPLATE_OWNED.length).toBe(withApostrophe.length);
+    const listedClauses = APOSTROPHE_BONUS_SENTENCES.map(
+      (sentence) => /^If (.+), this attack does \d+ more damage\.$/.exec(sentence)?.[1] ?? sentence,
+    );
+    expect([...rowClauses].sort()).toEqual([...listedClauses].sort());
+    // And every listed sentence really resolves — a list that had drifted onto a
+    // clause the table dropped would otherwise pass the set check vacuously.
+    for (const sentence of APOSTROPHE_BONUS_SENTENCES) {
+      expect(deriveAttackDamageBonus(sentence), sentence).not.toBeNull();
+    }
+    // The template half really is a TEMPLATE and not a row, driven rather than
+    // claimed: the SAME board fact resolves from the OTHER printed notation, which
+    // no literal row spells anywhere in the table.
+    for (const clause of TEMPLATE_OWNED) {
+      expect(deriveAttackDamageBonus(`If ${clause}, this attack does 30 more damage.`)).not.toBeNull();
+    }
+    expect(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is a Psychic Pokémon, this attack does 30 more damage.",
+      ),
+    ).toEqual(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is a {P} Pokémon, this attack does 30 more damage.",
+      ),
+    );
+  });
+
+  it("🆕🆕 D367 — and the APOSTROPHE-FREE bonus clauses are accounted for too", () => {
+    // The other half of the filter above, for the reason D366 gave when it
+    // narrowed the requirement guard: once a completeness guard is scoped to the
+    // fold's population, every clause the filter DROPS has to land somewhere or the
+    // narrowing is just a way of not looking.
+    const carried = carriedBonusClauses();
+    const without = [...carried].filter((clause) => !clause.includes(APOS)).sort();
+    expect(without).toHaveLength(17);
+    // Pinned BY NAME, so a row added on an apostrophe-free key reddens here.
+    expect(without).toEqual(
+      [
+        "Beldum and Metang are on your Bench",
+        "Durant is on your Bench",
+        "Illumise is on your Bench",
+        "Mightyena is on your Bench",
+        "this Pokémon has a Pokémon Tool attached",
+        "this Pokémon has any Special Energy attached",
+        "this Pokémon has any {F} Energy attached",
+        "this Pokémon has any {L} Energy attached",
+        "this Pokémon is Poisoned",
+        "this Pokémon moved from your Bench to the Active Spot this turn",
+        "you have at least 3 {D} Energy in play",
+        "you have more Prize cards remaining than your opponent",
+        "you have the same number of cards in your hand as your opponent",
+        "your Benched Pokémon have any damage counters on them",
+        "your opponent has 3 or fewer cards in their hand",
+        "your opponent has 4 or fewer Prize cards remaining",
+        "your opponent has 5 or fewer cards in their hand",
+      ].sort(),
+    );
+    // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
+    // a partition, however carefully each half is measured.
+    expect(without.length + 11).toBe(carried.size);
+    // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
+    // fold — which is the measurement that says this slice's rows and this slice's
+    // guard are about different things. Named rather than pattern-matched: a
+    // `includes("or fewer")` filter answers SEVEN here, because Absol ex's D115 row
+    // spells those words too. **The near-miss is inside the filter, which is the
+    // shape this file exists to catch.**
+    const D367_APOSTROPHE_FREE = [
+      "Beldum and Metang are on your Bench",
+      "Durant is on your Bench",
+      "Illumise is on your Bench",
+      "Mightyena is on your Bench",
+      "your opponent has 4 or fewer Prize cards remaining",
+      "your opponent has 5 or fewer cards in their hand",
+    ];
+    expect(D367_APOSTROPHE_FREE).toHaveLength(6);
+    for (const clause of D367_APOSTROPHE_FREE) expect(without, clause).toContain(clause);
+    expect(without.filter((c) => c.includes("or fewer"))).toHaveLength(3);
   });
 
   it("folds ALL SIX rows of ATTACK_REQUIREMENT_CLAUSES — contraction, possessive, and both at once", () => {
