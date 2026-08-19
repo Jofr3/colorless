@@ -888,8 +888,12 @@ describe("the engine version", () => {
     // one regex, one table row and one split has no reason to grep this file, and
     // the version pair is not derivable from any of them — which is exactly the
     // hole this rung was cut for. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.270.0");
-    expect(manifest.version).toBe("0.270.0");
+    // 🆕🆕 D366 — 0.270.0 → **0.271.0**, ONE new `BoardCondition` member
+    // (`yourBenchAtLeast`), TWO reader arms and ONE clause-table row. A new union
+    // member is a bump for the same reason a widened one is: the reader answers a
+    // printed sentence it used to refuse. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.271.0");
+    expect(manifest.version).toBe("0.271.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

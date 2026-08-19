@@ -12108,7 +12108,54 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
-/** 🆕🆕 0.270.0 → **THE FLOOR THE HANDOFF UNDERSTATED: THREE CLAUSE ROWS AT ZERO
+/** 🆕🆕 0.271.0 → **THE OWN-BENCH COUNT, AND A COMPARATOR SETTLED FROM THE
+    CATALOG BEFORE IT WAS SPELLED.**
+
+    D365 handed over four sentences / nine legal printings still behind the
+    `"If <clause>, this attack does nothing."` skeleton. **THE POPULATION
+    REPRODUCES EXACTLY** on S1 (`legalAttackCorpus()` + the live requirement
+    reader), S3 (remote D1 `luminous`, `$.effect`, extractor verified against the
+    640 / 1,732 / 60,467 total FIRST, 2026-08-19) and S4: 9 sentences / 18 legal
+    units open with the skeleton, 5 s / 9 u carried, 4 s / 9 u missed. **AND SO
+    DOES THE PRICE — the first slice in four where it did.**
+
+    🛑 **THE FLOOR OVER THAT RESIDUE IS ZERO ROWS / ZERO SENTENCES / ZERO
+    PRINTINGS.** Partitioned by what actually refuses each, against the live
+    `BoardCondition` union, NONE of D365's four is answerable with existing
+    vocabulary: Fan Rotom needs an any-owner Stadium member (D365 drove the rename
+    and refused it), Alolan Dugtrio needs an own-hand exact-size member, Centiskorch
+    needs a Burn member, and Victini needs a count of your own Bench. **A FLOOR OF
+    ZERO IS A MEASUREMENT, NOT AN ABSENCE OF ONE** — and it is what makes this the
+    first slice in the family (D125, D363, D365) that had to BUY a union member.
+
+    🛑 **THE COMPARATOR WAS A CATALOG QUESTION AND IT WAS ASKED FIRST.** Victini
+    `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" prints *"If you
+    have 4 or fewer Benched Pokémon, this attack does nothing."* — 4 legal
+    printings, twice any other candidate, and ALL of the sentence's printings
+    anywhere in the catalog. The skeleton owns the negation, so the positive fact
+    is *"5 or more"*, which on a five-slot Bench is FULL — and a `yourBenchIsFull`
+    predicate would answer this card identically forever while being the wrong
+    shape. The whole-pool `%Benched Pokémon%` census on all three text columns
+    returns exactly TWO bench-count board facts: this one, and *"If your opponent
+    has 3 or more Benched Pokémon, this attack does 80 more damage."* — the OTHER
+    seat at a threshold that is NOT the cap. **THE PARAMETER IS LOAD-BEARING
+    BECAUSE THE CATALOG VARIES IT.**
+
+    ⚠️ **AND A COMPLETENESS GUARD WAS FOUND KEYED ON THE WRONG POPULATION.**
+    D365's repair to `clauseApostrophe.test.ts` re-derived "every carried row" and
+    compared it against a list of "every APOSTROPHE row" — the same set only while
+    every row happened to spell one. Victini's key is the table's first
+    apostrophe-free one, so the guard reddened and could NOT be satisfied by adding
+    the sentence to the list. Narrowed with a filter, and the rows it drops now
+    have a completeness guard of their own.
+
+    ONE new `BoardCondition` member (`yourBenchAtLeast`), TWO reader arms, ONE
+    clause row. `MATCH_RECORD_VERSION` **STAYS 22** — no persisted byte moves.
+
+    engineVersion 0.270.0 → **0.271.0**
+    (`packages/engine/package.json` in the same commit). */
+
+/** 🆕 0.270.0 → **THE FLOOR THE HANDOFF UNDERSTATED: THREE CLAUSE ROWS AT ZERO
     NEW VOCABULARY, AND `allOf`'s FIRST DERIVED PRODUCER.**
 
     D364 handed over a population and a price. The POPULATION reproduces exactly
@@ -13673,7 +13720,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.270.0";
+export const engineVersion = "0.271.0";
 
 export type {
   ApplyResult,

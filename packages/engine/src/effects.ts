@@ -1369,6 +1369,47 @@ export type BoardCondition =
       invariant holds. Unlike `yourStadiumInPlay` this does not widen the P4 gap:
       the going-order assignment is on the wire already. */
   | { kind: "youGoSecond" }
+  /** 🆕🆕 **D366 — you have AT LEAST `count` Pokémon on your Bench.** Victini
+      `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" ({R}{R}, 120):
+      *"If you have 4 or fewer Benched Pokémon, this attack does nothing."* — FOUR
+      legal printings, the largest single sentence left behind the does-nothing
+      skeleton and twice any other candidate on that list.
+
+      🛑 **THE FIRST MEMBER IN THIS UNION THAT COUNTS YOUR OWN BODIES, AND THE
+      PARAMETER IS SETTLED BY THE POOL RATHER THAN BY THIS PRINTING.** The printed
+      clause sits under a NEGATIVE consequent, so the positive fact required is
+      *"5 or more"*, which on a §3.3 five-slot Bench (`BENCH_MAX`) means FULL — and
+      a `yourBenchIsFull` predicate would answer this one card identically forever
+      while being the wrong shape. The whole-pool `%Benched Pokémon%` census on all
+      three text columns (remote D1 `luminous`, `$.effect`, extractor verified
+      against the 640 / 1,732 / 60,467 total FIRST, 2026-08-19) returns exactly TWO
+      bench-COUNT board facts in the legal catalog: this one, and *"If your
+      opponent has 3 or more Benched Pokémon, this attack does 80 more damage."*
+      (1 printing) — a DIFFERENT seat at a DIFFERENT threshold, and 3 is not full.
+      **A THRESHOLD THAT HAPPENS TO EQUAL THE CAP ON THE ONE CARD YOU ARE LOOKING
+      AT IS NOT A FULL-BENCH PREDICATE**; the census is what tells the two apart,
+      and it was run BEFORE the member was spelled.
+
+      ⚠️ **`>=`, A FLOOR — `yourEnergyInPlayAtLeast`'s and
+      `yourOwnerPokemonInPlayAtLeast`'s reading, and NOT
+      `opponentPrizesRemaining`'s set membership.** "Or more" is the printed word
+      once the skeleton's negation is discharged.
+
+      ⚠️ **BENCH ONLY. THE ACTIVE SPOT IS NOT COUNTED**, exactly as
+      `yourBenchDamaged` and `yourBenchHasNamed` exclude it and for the same
+      printed word. This is also why `yourOwnerPokemonInPlayAtLeast` cannot be
+      widened into it by dropping its `owner`: that member spreads
+      `[side.active, ...side.bench]`, so on every board Victini can attack from it
+      answers about a set one body larger. Driven in
+      `benchCountRequirement.test.ts` §3 rather than argued.
+
+      ⚠️ SEAT-RELATIVE AND SELF-SIDE, like the four other `yourBench*`/`your*`
+      counters. The opponent's Bench is a different member and this slice does not
+      buy it — see the census note above for the one printing that would want it.
+
+      Public: every Benched Pokémon is face-up on the table, so the union's
+      public-state invariant holds. */
+  | { kind: "yourBenchAtLeast"; count: number }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -8952,19 +8993,27 @@ function boardConditionForClause(clause: string): BoardCondition | null {
 // Anchored at `^` with the required trailing period, no /i, exactly like
 // CONDITIONAL_DAMAGE_BONUS — and the anchor is doing the same load-bearing work.
 //
-// 🆕🆕 D365 — RE-MEASURED, AND THE SENTENCE THIS PARAGRAPH REPLACES SAID "the
-// three sentences below … the family's 19 printings". Over `legalAttackCorpus()`
-// with the live reader (surface S1, re-derived rather than inherited, and
-// confirmed pool-wide on the remote D1 `luminous`, `$.effect`, 2026-08-18): the
-// skeleton ADMITS **9 sentences / 18 legal units** and the TABLE now carries
-// **6 rows / 5 admitted sentences / 9 legal units**. Four sentences / nine legal
-// units still reach the table and MISS — Fan Rotom `sv07-118`/`sv08.5-085` (2),
-// Alolan Dugtrio `sv08-123`/`-208` (2), Victini `sv10.5b-012`/`-171`/`sv10.5w-172`/
-// `svp-208` (4), Centiskorch `sv05-037` (1) — and every one of them misses on the
-// CLAUSE, never on the shape. **ZERO anchors refuse any of the seven D364 handed
-// over; what refuses them is VOCABULARY**, and the partition of the seven by
-// vocabulary is 3 sentences / 5 printings answerable with a member that already
-// exists (built here) + 4 sentences / 9 printings needing a new one (not built).
+// 🆕🆕 D366 — RE-MEASURED AGAIN, on the same four surfaces and inheriting nothing.
+// Over `legalAttackCorpus()` with the live reader (surface S1, and confirmed
+// pool-wide on the remote D1 `luminous`, `$.effect`, extractor verified against
+// the 640 / 1,732 / 60,467 total FIRST, 2026-08-19): the skeleton ADMITS
+// **9 sentences / 18 legal units** — UNMOVED, and it is the invariant this
+// paragraph exists to hold — and the TABLE now carries **7 rows / 6 admitted
+// sentences / 13 legal units**. THREE sentences / FIVE legal units still reach
+// the table and MISS — Fan Rotom `sv07-118`/`sv08.5-085` (2), Alolan Dugtrio
+// `sv08-123`/`-208` (2), Centiskorch `sv05-037` (1) — and every one of them misses
+// on the CLAUSE, never on the shape.
+//
+// 🛑 **AND D366's OWN FLOOR WAS ZERO, WHICH IS WHY THIS SLICE BOUGHT A MEMBER.**
+// D365 recorded a partition of its seven into "answerable with existing
+// vocabulary" (3 s / 5 p, built) and "needing a new member" (4 s / 9 p, not
+// built). Re-partitioning THAT residue the same way gives **0 sentences / 0
+// printings** on the free side: every one of the four needed an addition. Victini
+// `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` (4 legal printings, the
+// largest of the four and twice any other) is the one D366 took, and it cost the
+// union its first own-Bench COUNT member. **THE PRICE REPRODUCED EXACTLY THIS
+// TIME — the first slice in four where it did — and a floor of zero is a
+// measurement, not an absence of one.**
 //
 // The rest of the family — the printings the `^` refuses — are refused on the
 // SHAPE and never reach the table at all:
@@ -8988,12 +9037,15 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     "If " and the ", this attack does", and a Map for CONDITIONAL_DAMAGE_CLAUSES'
     reason: arbitrary printed text must not reach `Object.prototype`.
 
-    🆕🆕 D365 — **SIX rows, six cards, and all six reuse a `BoardCondition` member
-    that already existed**, so no slice in this family — D125, D363 or this one —
-    has ever bought a union member for it. Priced by `legal_standard` the six rows
-    are worth **0 + 2 + 2 + 2 + 1 + 2 = NINE** legal printings on FIVE admitted
-    sentences, and `requirementFloor.test.ts` §1 asserts that split live off the
-    corpus rather than in prose. 🆕 D363 — THREE rows, three cards, and all three
+    🆕🆕 D366 — **SEVEN rows, and the seventh is the FIRST in this family's history
+    to buy a `BoardCondition` member.** D125, D363 and D365 all reused existing
+    vocabulary; D366 could not, because the floor over D365's residue was measured
+    at ZERO. Priced by `legal_standard` the seven rows are worth
+    **0 + 2 + 2 + 2 + 1 + 2 + 4 = THIRTEEN** legal printings on SIX admitted
+    sentences, and `splitOrder.test.ts` §4 asserts that split live off the corpus
+    rather than in prose. 🆕 D365 — SIX rows, six cards, and all six reused a member
+    that already existed; **0 + 2 + 2 + 2 + 1 + 2 = NINE** legal printings on FIVE
+    admitted sentences. 🆕 D363 — THREE rows, three cards, and all three
     reuse a `BoardCondition` member that already existed, so neither this slice nor
     D125 buys any new vocabulary at all. ⚠️ 🆕🆕 D364 — D363 wrote "FIVE printings"
     here and that counted the five card IDS THE COMMENTS NAME, not printings the
@@ -9010,9 +9062,17 @@ const ATTACK_DOES_NOTHING = /^If (.+?), this attack does nothing\.(?: (.+))?$/;
     "the Bench", NOT "your Bench" (no possessive — its positive twin one table up
     DOES carry it), and "didn't" with an ASCII apostrophe (the whole 978-card
     pool holds zero U+2019, re-verified at D137). `Pokémon` carries a real U+00E9.
-    🆕🆕 D365 — **ALL SIX keys carry an apostrophe now** ("didn't", "opponent's",
-    "isn't", "don't" ×2, "doesn't"), so every one is read through
-    `literalClauseRow`, which retries a miss with U+2019 folded to U+0027 (D137).
+    🆕🆕 D366 — **AND THE SEVENTH KEY CARRIES NO APOSTROPHE AT ALL** ("you have 4
+    or fewer Benched Pokémon"), which ended a coincidence D365 had leaned on
+    without noticing: `clauseApostrophe.test.ts`'s completeness guard re-derived
+    "every carried row" and compared it against a list of "every APOSTROPHE row",
+    and those were the same set only while every row happened to spell one. This
+    row separates them, so the guard now filters and the apostrophe-free rows get a
+    completeness guard of their own. **A POPULATION THAT COINCIDES WITH THE ONE YOU
+    WANTED IS NOT THE ONE YOU WROTE.** 🆕 D365 — the six keys BEFORE it all carry an
+    apostrophe ("didn't", "opponent's", "isn't", "don't" ×2, "doesn't"), so each is
+    read through `literalClauseRow`, which retries a miss with U+2019 folded to
+    U+0027 (D137).
     ⚠️ **AND `clauseApostrophe.test.ts`'s list of them was STALE AT HEAD** — its
     doc and its test name both said "ALL THREE rows" while the array held TWO,
     because D363 added a row and updated the prose around the array instead of the
@@ -9166,6 +9226,28 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
       ],
     },
   ],
+  // 🆕🆕 D366 — Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208`
+  // "V-Force" ({R}{R}, 120), FOUR legal printings and the single largest sentence
+  // left behind this skeleton — twice any other candidate D365 handed over. It is
+  // the ONE row in this table that buys a `BoardCondition` member, and the family
+  // is now 7 rows / 6 members / THIRTEEN legal printings.
+  //
+  // 🛑 **THE POLARITY FLIP IS ARITHMETIC AND IT IS THE WHOLE ROW.** The skeleton
+  // owns the negation, so a printed *"4 or fewer"* becomes the positive floor
+  // *"5 or more"* — `count: 5`, not `count: 4`. Off by one in either direction and
+  // the card is wrong on exactly one board apiece: at 4 it attacks off a Bench the
+  // printed text cancels on, at 6 it can never attack at all (`BENCH_MAX` is 5).
+  //
+  // ⚠️ **AND THE 5 IS NOT A FULL-BENCH PREDICATE WEARING A NUMBER.** See the
+  // member's own doc block: the pool's other bench-count sentence is
+  // *"3 or more"*, on the opponent's Bench, under a bonus consequent — so the
+  // threshold is a parameter the catalog actually varies and the coincidence with
+  // `BENCH_MAX` is this printing's, not the family's.
+  //
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE — the FIRST row in this table that does not,
+  // which is why `clauseApostrophe.test.ts`'s D365 completeness guard had to learn
+  // the difference between "every row" and "every row the FOLD is about".
+  ["you have 4 or fewer Benched Pokémon", { kind: "yourBenchAtLeast", count: 5 }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the

@@ -657,10 +657,16 @@ const APOSTROPHE_BONUS_SENTENCES = [
   "If your opponent's Active Pokémon is a Pokémon ex or Pokémon V, this attack does 100 more damage.",
 ] as const;
 
-/** All SIX `ATTACK_REQUIREMENT_CLAUSES` rows — the whole table, and every key
-    carries an apostrophe (a CONTRACTION, a POSSESSIVE, and rows carrying BOTH in
-    one key, so the fold is exercised on both grammatical uses the pool prints and
-    on their co-occurrence).
+/** The SIX APOSTROPHE rows of `ATTACK_REQUIREMENT_CLAUSES` — a CONTRACTION, a
+    POSSESSIVE, and rows carrying BOTH in one key, so the fold is exercised on both
+    grammatical uses the pool prints and on their co-occurrence.
+
+    ⚠️ 🆕🆕 **D366 — "ALL SIX ROWS" AND "THE WHOLE TABLE" STOPPED BEING THE SAME
+    SENTENCE.** The table is SEVEN rows now and the seventh (Victini's *"you have 4
+    or fewer Benched Pokémon"*) spells no apostrophe at all, so this list is the
+    fold's population and NOT the table's. It must not gain that row — see the
+    completeness guard below, which is where the distinction is enforced rather
+    than described.
 
     🛑 🆕🆕 **D365 — THIS ARRAY WAS STALE AT HEAD AND ITS OWN DOC AND TEST NAME
     BOTH SAID SO WITHOUT NOTICING.** D363 added the Sawk row and edited the prose
@@ -699,6 +705,20 @@ const APOSTROPHE_REQUIREMENT_SENTENCES = [
   "If you don't have Uxie and Azelf on your Bench, this attack does nothing.",
 ] as const;
 
+/** 🆕🆕 D366 — the live reader's CARRIED CLAUSE SENTENCES, walked off the printed
+    corpus. Shared by the two completeness guards below so they cannot disagree
+    about the population they are each naming half of. Sawk's printed string
+    carries a trailing companion, so the head is taken rather than the whole unit. */
+function carriedClauseSentences(): ReadonlySet<string> {
+  const HEAD = /^(If .+?, this attack does nothing\.)/;
+  const carried = new Set<string>();
+  for (const [, printed] of legalAttackCorpus()) {
+    if (deriveAttackRequirement(printed) === null) continue;
+    carried.add(HEAD.exec(printed.trim())?.[1] ?? printed.trim());
+  }
+  return carried;
+}
+
 describe("the literal clause tables — the rows the fold was built for", () => {
   it("folds all FIVE apostrophe rows of CONDITIONAL_DAMAGE_CLAUSES", () => {
     for (const sentence of APOSTROPHE_BONUS_SENTENCES) {
@@ -725,25 +745,39 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // module-private, so its SIZE is recovered the only way a test can recover it:
     // by walking the printed corpus and counting the sentences the live reader
     // carries. Every one of them must appear in the list above, BY SENTENCE — so a
-    // seventh row added by a later slice reddens HERE, naming the sentence it
-    // added, rather than silently leaving this suite measuring an old table.
+    // new APOSTROPHE row added by a later slice reddens HERE, naming the sentence
+    // it added, rather than silently leaving this suite measuring an old table.
+    //
+    // 🛑 ⚠️ 🆕🆕 **D366 — THE GUARD WAS RIGHT AND ITS POPULATION WAS WRONG, AND
+    // THIS IS THE SLICE THAT COULD PROVE IT.** As D365 wrote it, `carried` was
+    // EVERY sentence the live reader carries, and the file's premise is that every
+    // row of `ATTACK_REQUIREMENT_CLAUSES` spells an apostrophe — true of all six
+    // rows that existed, so the two populations were the same set and the
+    // conflation was invisible. D366's Victini row is the table's FIRST
+    // apostrophe-free key, so the walk found SIX where the list holds six
+    // apostrophe rows of which five are reachable, and the case went red. **It
+    // could NOT be repaired by adding the sentence to the list above** — that
+    // would assert a false thing about a sentence with no `'` in it, and the two
+    // cases above would then fold a string the fold cannot change. The fix is the
+    // FILTER: this guard is about the rows THE FOLD IS ABOUT, and the rows it is
+    // not about get their own guard below. **A COMPLETENESS GUARD IS ONLY AS GOOD
+    // AS THE POPULATION IT RE-DERIVES, AND A POPULATION THAT HAPPENS TO COINCIDE
+    // WITH THE ONE YOU WANT IS NOT THE ONE YOU WROTE.**
     //
     // ⚠️ Sawk's printed string carries a trailing companion, so the comparison is
     // on the CLAUSE SENTENCE rather than on the printed unit: the reader tolerates
     // the companion and the list deliberately does not spell it (the fold is a
     // property of the lookup, not of the split).
-    const HEAD = /^(If .+?, this attack does nothing\.)/;
-    const carried = new Set<string>();
-    for (const [, printed] of legalAttackCorpus()) {
-      if (deriveAttackRequirement(printed) === null) continue;
-      carried.add(HEAD.exec(printed.trim())?.[1] ?? printed.trim());
-    }
-    // Five of the six rows are reachable from the legal corpus; Palafin's is not
-    // (D364: all five of its printings are `legal_standard = 0`), so the corpus
-    // walk finds FIVE and the list holds SIX. That asymmetry is the reason the
+    const carried = carriedClauseSentences();
+    const withApostrophe = [...carried].filter((s) => s.includes(APOS));
+    // Six clause sentences are reachable from the legal corpus and FIVE of them
+    // carry an apostrophe. Of the six APOSTROPHE rows, Palafin's is unreachable
+    // (D364: all five of its printings are `legal_standard = 0`), so the walk
+    // finds five and the list holds six. That asymmetry is the reason the
     // assertion is a SUBSET check plus an explicit dead-row count, not equality.
-    expect(carried.size).toBe(5);
-    for (const sentence of carried) {
+    expect(carried.size).toBe(6);
+    expect(withApostrophe).toHaveLength(5);
+    for (const sentence of withApostrophe) {
       expect(APOSTROPHE_REQUIREMENT_SENTENCES).toContain(sentence);
     }
     const dead = APOSTROPHE_REQUIREMENT_SENTENCES.filter((s) => !carried.has(s));
@@ -754,6 +788,33 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // And every listed sentence really resolves — a list that had drifted onto a
     // clause the table dropped would otherwise pass the subset check vacuously.
     for (const sentence of APOSTROPHE_REQUIREMENT_SENTENCES) {
+      expect(deriveAttackRequirement(sentence), sentence).not.toBeNull();
+    }
+  });
+
+  it("🆕🆕 D366 — and the APOSTROPHE-FREE rows are accounted for too, off the same live reader", () => {
+    // 🛑 THE OTHER HALF OF THE FILTER ABOVE, AND THE REASON IT IS NOT A HOLE. Once
+    // the completeness guard is narrowed to the fold's population, every row the
+    // filter DROPS has to land somewhere or the narrowing is just a way of not
+    // looking. This case is that somewhere: it re-derives the apostrophe-free
+    // carried sentences from the live reader and pins the whole set BY NAME, so a
+    // second apostrophe-free row added later reddens here exactly as an apostrophe
+    // one reddens above. Neither list can go stale in silence again.
+    const carried = carriedClauseSentences();
+    const withoutApostrophe = [...carried].filter((s) => !s.includes(APOS)).sort();
+    expect(withoutApostrophe).toEqual([
+      "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
+    ]);
+    // The two halves PARTITION the carried set — parts that do not add up are not
+    // a partition, however carefully each half is named.
+    expect([...carried].filter((s) => s.includes(APOS)).length + withoutApostrophe.length).toBe(
+      carried.size,
+    );
+    // …and the fold really is a NO-OP on this key, which is the property that made
+    // it wrong to list it above: rewriting an apostrophe it does not contain
+    // changes nothing, so the "folds identically" claim would have been vacuous.
+    for (const sentence of withoutApostrophe) {
+      expect(curly(sentence), sentence).toBe(sentence);
       expect(deriveAttackRequirement(sentence), sentence).not.toBeNull();
     }
   });

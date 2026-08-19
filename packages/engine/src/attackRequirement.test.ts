@@ -620,9 +620,20 @@ describe("constructed near-misses stay LOUD", () => {
     });
     // 🛑 AND THE SPLIT REFUSES A CLAUSE THE TABLE DOES NOT CARRY, which is what
     // stops the widened anchor from stripping a requirement nothing answered.
+    //
+    // ⚠️ 🆕🆕 **D366 — THIS CONTROL WAS RE-POINTED, AND THE RE-POINTING IS THE
+    // WHOLE HAZARD OF WRITING A GUARD ON A REFUSAL.** It used to name Victini's
+    // *"If you have 4 or fewer Benched Pokémon…"*, which D366 BOUGHT — so the
+    // assertion INVERTED: the split started firing on it and the case went red
+    // naming a sentence the engine had just learned to read. The guard is correct
+    // and its SUBJECT rotted, exactly as `sawkRequirementSplit`'s Lycanroc id did.
+    // Re-aimed at Fan Rotom's clause, which is still unmapped at this head (and
+    // whose refusal `benchCountRequirement.test.ts` §1 prices at 2 printings). A
+    // guard keyed on something NOT being built has to be re-read every time
+    // something is.
     expect(
       splitAttackRequirementClause(
-        "If you have 4 or fewer Benched Pokémon, this attack does nothing. Then, discard an Energy from this Pokémon.",
+        "If there is no Stadium in play, this attack does nothing. Then, discard an Energy from this Pokémon.",
       ),
     ).toBeNull();
   });

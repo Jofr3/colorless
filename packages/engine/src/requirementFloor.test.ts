@@ -92,8 +92,12 @@ const BOUGHT: readonly (readonly [string, number, string])[] = [
   ],
 ];
 
-/** The four sentences this slice REFUSES, with their legal printing counts and
-    the vocabulary each would cost. D366's population, named rather than counted. */
+/** The sentences this slice REFUSES, with their legal printing counts and the
+    vocabulary each would cost. Written as D366's population and **CORRECTED BY
+    D366 IN PLACE**: Victini's *"If you have 4 or fewer Benched Pokémon…"* (4
+    printings) was the largest entry and D366 BOUGHT it, so the row is deleted
+    here rather than left to go quietly wrong. Three sentences / 5 printings
+    remain, and they are D367's population. */
 const REFUSED: readonly (readonly [string, number, string])[] = [
   [
     "If there is no Stadium in play, this attack does nothing.",
@@ -104,11 +108,6 @@ const REFUSED: readonly (readonly [string, number, string])[] = [
     "If you don't have exactly 3 cards in your hand, this attack does nothing.",
     2,
     "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
-  ],
-  [
-    "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
-    4,
-    "an own-BENCH-COUNT member — nothing in the union counts your own bodies",
   ],
   [
     "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
@@ -178,13 +177,17 @@ function attackOutcome(state: GameState): { cancelled: boolean; kinds: string[] 
 }
 
 describe("§1 — the population reproduces, and the PARTITION is published before the price", () => {
-  it("re-derives 9 s / 18 u behind the skeleton, and 5 s / 9 u now carried", () => {
+  it("re-derives 9 s / 18 u behind the skeleton, and 6 s / 13 u now carried", () => {
+    // 🆕🆕 D366 — 5 s / 9 u one commit ago. The POPULATION (9 / 18) is unmoved and
+    // is the invariant this case exists to hold; the carried/missing split is what
+    // each slice in this family moves, and re-stating it here is what stops a
+    // later slice inheriting a number instead of measuring one.
     const openers = corpus().filter(([, s]) => SKELETON.test(s.trim()));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([5, 9]);
+    expect([carried.length, units(carried)]).toEqual([6, 13]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([4, 9]);
+    expect([missing.length, units(missing)]).toEqual([3, 5]);
     // THE PARTITION SUMS. Parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -197,9 +200,13 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // refused by the pattern, the price would have been an anchor and not a row,
     // and D363's whole lesson is that those two prices differ by an order of
     // magnitude.
-    const seven = [...BOUGHT, ...REFUSED].map(([s]) => s);
-    expect(seven).toHaveLength(7);
-    for (const sentence of seven) {
+    // 🆕🆕 D366 — SIX, not seven: `REFUSED` lost Victini's row when D366 bought it.
+    // The claim is unchanged — everything this list holds is refused by VOCABULARY
+    // and not by an anchor — and the number is re-derived from the two arrays so it
+    // cannot drift from them.
+    const carried = [...BOUGHT, ...REFUSED].map(([s]) => s);
+    expect(carried).toHaveLength(6);
+    for (const sentence of carried) {
       expect(SKELETON.test(sentence.trim()), sentence).toBe(true);
       // …and the clause the anchor captures is the whole printed negative, so the
       // table lookup is the only thing that can have failed.
@@ -225,16 +232,18 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
       const printed = corpus().filter(([, s]) => s === sentence);
       expect(units(printed), who).toBe(expected);
     }
-    // And the residue this slice leaves, priced the same way — 4 / 9.
-    expect(REFUSED).toHaveLength(4);
-    expect(REFUSED.reduce((sum, [, n]) => sum + n, 0)).toBe(9);
+    // And the residue, priced the same way — 🆕🆕 D366: 3 / 5, was 4 / 9.
+    expect(REFUSED).toHaveLength(3);
+    expect(REFUSED.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
     for (const [sentence, expected, cost] of REFUSED) {
       const printed = corpus().filter(([, s]) => s === sentence);
       expect(units(printed), cost).toBe(expected);
     }
-    // 5 + 9 = 14, which is D364's own missing population to the unit.
+    // 🆕🆕 D366 — 5 + 5 = 10, which is D364's missing 14 less the FOUR Victini
+    // printings D366 bought. The identity is restated rather than deleted, so the
+    // two arrays still have to account for the same population between them.
     expect(
-      BOUGHT.reduce((sum, [, n]) => sum + n, 0) + REFUSED.reduce((sum, [, n]) => sum + n, 0),
+      BOUGHT.reduce((sum, [, n]) => sum + n, 0) + REFUSED.reduce((sum, [, n]) => sum + n, 0) + 4,
     ).toBe(14);
   });
 });

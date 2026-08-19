@@ -188,10 +188,10 @@ describe("§1 — D362's counts reproduce and its ATTRIBUTION does not", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => readByAny(s));
     const residue = rows.filter(([, s]) => !readByAny(s));
-    expect(resolved).toHaveLength(334); // 330 at D362, 331 at D363, 🆕🆕 334 at D365 (+3 sentences / +5 printings, three more rows in the SAME table this file is about — the census this case pins is whole-corpus, so it moves whenever the table does)
-    expect(p(resolved)).toBe(1203); // 1,196 at D362, 1,198 at D363
-    expect(residue).toHaveLength(306);
-    expect(p(residue)).toBe(529);
+    expect(resolved).toHaveLength(335); // 🆕🆕 D366 +1 sentence (Victini, 4 printings). // 330 at D362, 331 at D363, 🆕🆕 334 at D365 (+3 sentences / +5 printings, three more rows in the SAME table this file is about — the census this case pins is whole-corpus, so it moves whenever the table does)
+    expect(p(resolved)).toBe(1207); // 🆕🆕 D366 +4. // 1,196 at D362, 1,198 at D363
+    expect(residue).toHaveLength(305); // 🆕🆕 D366 -1 sentence
+    expect(p(residue)).toBe(525); // 🆕🆕 D366 -4.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(p(resolved) + p(residue)).toBe(p(rows));
     // The one sentence that moved, named — a delta of 2 could otherwise be any

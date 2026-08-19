@@ -290,6 +290,12 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // 🆕🆕 D365 — 2 legal printings, Mesprit `sv08-079`/`sv08-204`, the row that
     // makes `allOf` a DERIVED value.
     ["If you don't have Uxie and Azelf on your Bench", 2],
+    // 🆕🆕 D366 — **4 legal printings, the family's LARGEST row by printings and
+    // the ONLY one that bought a `BoardCondition` member.** Victini
+    // `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" ({R}{R}, 120).
+    // ⚠️ It is also the first key in this list with NO apostrophe in it, which is
+    // what `clauseApostrophe.test.ts`'s completeness guard had to learn.
+    ["If you have 4 or fewer Benched Pokémon", 4],
   ];
 
   it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2", () => {
@@ -308,32 +314,31 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     }
   });
 
-  it("🛑 SIX rows, FIVE of them reachable in Standard, and 9 legal printings", () => {
-    // 🆕🆕 D365 — this case read "three rows / TWO reachable / 4 legal printings"
-    // one commit ago and every one of those three numbers moved. The rung is
+  it("🛑 SEVEN rows, SIX of them reachable in Standard, and 13 legal printings", () => {
+    // 🆕🆕 D366 — "six / five / 9" one commit ago, "three / two / 4" the commit
+    // before that; every one of the three numbers has now moved twice. The rung is
     // unchanged in SHAPE, which is the point: it prices the table by
     // `legal_standard` rather than by row count, so a slice that adds rows has to
     // restate what the pool can actually play.
     const reachable = KEYS.filter(([, n]) => n > 0);
-    expect(KEYS.length).toBe(6);
-    expect(reachable.length).toBe(5);
-    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(9);
+    expect(KEYS.length).toBe(7);
+    expect(reachable.length).toBe(6);
+    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(13);
     // The whole does-nothing OPENER population, and how much of it is mapped:
-    // 9 sentences / 18 units open with the skeleton, 5 sentences / 9 units are
-    // carried. The other 4 stay UNMAPPED and therefore LOUD, which is what keeps
+    // 9 sentences / 18 units open with the skeleton, 6 sentences / 13 units are
+    // carried. The other 3 stay UNMAPPED and therefore LOUD, which is what keeps
     // the accounting guard load-bearing.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([mapped.length, units(mapped)]).toEqual([5, 9]);
-    // 🛑 AND THE UNMAPPED FOUR ARE NAMED, so this rung says which sentences are
-    // still owed rather than only how many. D366's population, verbatim.
+    expect([mapped.length, units(mapped)]).toEqual([6, 13]);
+    // 🛑 AND THE UNMAPPED THREE ARE NAMED, so this rung says which sentences are
+    // still owed rather than only how many. D367's population, verbatim.
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([unmapped.length, units(unmapped)]).toEqual([4, 9]);
+    expect([unmapped.length, units(unmapped)]).toEqual([3, 5]);
     expect(unmapped.map(([, s]) => s).sort()).toEqual([
       "If there is no Stadium in play, this attack does nothing.",
       "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-      "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
       "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     ]);
     // The parts sum, which is what makes a partition a partition.

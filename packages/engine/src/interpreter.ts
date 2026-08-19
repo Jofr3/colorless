@@ -3145,6 +3145,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.promotedTurn === state.turn;
     }
+    case "yourBenchAtLeast":
+      // 🆕🆕 D366 — Victini "V-Force": the printed *"4 or fewer Benched Pokémon"*
+      // under a cancel, so what is stored is the POSITIVE floor 5 and the test is
+      // `>=`, `yourEnergyInPlayAtLeast`'s reading of "or more".
+      //
+      // 🛑 BENCH ONLY, and `bench` is a DENSE array (`InPlayPokemon[]`, types.ts),
+      // so its `length` IS the number of Benched Pokémon — no `!== null` filter,
+      // because there are no holes to skip. The Active Spot is deliberately not
+      // spread in: the arm one family up (`yourNamedPokemonInPlay`) is what "in
+      // play" looks like here, and the printed word on this card is "Benched".
+      return state.players[seat].bench.length >= cond.count;
     case "yourOwnerPokemonInPlayAtLeast":
       // D242 — "you have 4 or more Team Rocket's Pokémon in play". Active + Bench,
       // TOP cards only (an evolved stack is ONE Pokémon in play, §4), counted
@@ -3561,6 +3572,11 @@ export function conditionNote(cond: BoardCondition): string {
       // "your Active Pokémon". Everything after it is the printed sentence, the
       // possessive on "your Bench" included.
       return "your Active Pokémon moved from your Bench to the Active Spot this turn";
+    case "yourBenchAtLeast":
+      // The POSITIVE fact, in the printed noun — a note is read off the board by a
+      // person, so it says what the player must HAVE and never repeats the
+      // sentence's "4 or fewer". Reads as a floor because it is one.
+      return `you have ${String(cond.count)} or more Benched Pokémon`;
     case "yourOwnerPokemonInPlayAtLeast":
       // The printed sentence verbatim, prefix and all — the family's second FULL
       // round-trip (`youPlayedSupporterThisTurn`'s), because the clause names no

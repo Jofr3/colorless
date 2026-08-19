@@ -10575,6 +10575,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-uxie": battler("fix-uxie", { name: "Uxie", hp: 70, types: ["Psychic"] }),
   "fix-azelf": battler("fix-azelf", { name: "Azelf", hp: 70, types: ["Psychic"] }),
   "fix-lakebystander": battler("fix-lakebystander", { name: "Lake Bystander", hp: 70 }),
+  /** 🆕🆕 D366 — Victini `sv10.5b-012`/`-171`/`sv10.5w-172`/`svp-208` "V-Force",
+      the printed card at its printed cost and damage. FOUR legal printings, the
+      largest sentence left behind the does-nothing skeleton at D365's head.
+
+      ⚠️ TWO ATTACKS, AND THE SECOND IS THE CONTROL rather than a printing (said
+      so, D205): "Bench Rider" prints the SAME mapped clause with a companion no
+      reader resolves, so `splitAttackRequirementClause` has something to strip
+      here and the printed attack at index 0 still has nothing — which is what
+      keeps the census `splitHead` term standing still and says so on a board.
+
+      ⚠️ **THIS FIXTURE MOVES `clauseApostrophe.test.ts`'s pool census BY ZERO**,
+      and that is measured rather than assumed: its sentence carries no `'` at all,
+      the sweep there filters on `includes(APOS)`, so 109 stays 109. It is the
+      first requirement-family fixture since D363 with a zero pool delta. */
+  "fix-victini": battler("fix-victini", {
+    name: "Victini",
+    hp: 80,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Fire", "Fire"],
+        name: "V-Force",
+        damage: 120,
+        effect: "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Bench Rider",
+        damage: 20,
+        effect:
+          "If you have 4 or fewer Benched Pokémon, this attack does nothing. Then, spin the wheel of fate.",
+      },
+    ],
+  }),
+  /** The BENCH FILLER for D366's count. A body with no attacks, no ability and no
+      name of any consequence — `yourBenchAtLeast` counts BODIES, so anything that
+      makes a Bench slot non-empty is the whole requirement, and using a nameless
+      filler is what stops the count from being confusable with
+      `yourBenchHasNamed`'s reading. */
+  "fix-benchfiller": battler("fix-benchfiller", { hp: 60 }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10709,6 +10749,17 @@ export const REQUIREMENT_FLOOR_DECK = deckOf({
   "fix-bigbody": 8,
   "fix-psychic-energy": 12,
   "fix-energy": 24,
+});
+
+/** 🆕🆕 D366 — a DEDICATED deck (D270) for the bench-count requirement, so no
+    other suite's seeded shuffles move. Five `fix-benchfiller` is exactly a full
+    Bench, and the count cases fill it one body at a time from 0 to 5. */
+export const BENCH_COUNT_DECK = deckOf({
+  "fix-victini": 3,
+  "fix-benchfiller": 8,
+  "fix-bigbody": 8,
+  "fix-fire-energy": 12,
+  "fix-energy": 29,
 });
 
 export const ALL_BASIC_DECK = deckOf({ "fix-basic-1": 60 });

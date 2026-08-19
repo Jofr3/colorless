@@ -130,14 +130,14 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
     // already had, and NONE of them touches the ex-ONLY predicate this file is
     // about — which is exactly why this rung is here: it is a whole-corpus total
     // in a single-family suite, so it moves for other people's work.
-    expect(resolved).toHaveLength(334);
-    expect(resolvedP).toBe(1203);
+    expect(resolved).toHaveLength(335); // 🆕🆕 D366 +1 sentence (Victini, 4 printings).
+    expect(resolvedP).toBe(1207); // 🆕🆕 D366 +4
     // The parts must add up to the whole quoted in the same case. A total that
     // does not sum is not merely wrong, it is impossible — and it is ONE addition.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(resolvedP + residueP).toBe(total);
-    expect(residue).toHaveLength(306);
-    expect(residueP).toBe(529);
+    expect(residue).toHaveLength(305); // 🆕🆕 D366 -1 sentence
+    expect(residueP).toBe(525); // 🆕🆕 D366 -4
   });
 
   it("the ex-ONLY predicate is 8 s / 13 p and the WIDER sibling is 4 s / 6 p — the ratio that chose the row", () => {
