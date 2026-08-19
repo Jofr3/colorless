@@ -2686,7 +2686,14 @@ The two structural calls both landed: **P0** predicted the disqualification on s
 and named the two-costs-one-clause instrument that proves it; **P1** predicted D125's
 refusal was scoped and out of reach, and predicted the price at 1 member / 2 arms /
 1 row / 0 combinators — **exact on all four**. **P4** named the mutation-corpus
-version site by line number and paid it in round one. The miss is **P3's test count**:
+version site by line number and paid it in round one. **P5 called the sweep in every
+field and every field landed** — corpus **1161**, **1138 killed · 23 known · 0 GAP ·
+0 stale · 0 skipped · 0 clobber · 0 ERROR**, sentinel **`exit=0`**, survivor set
+identical to D367's 23 both directions, all six D368 rows KILLED. It also showed its
+arithmetic in advance — *"D367's corrected 1132 killed + my 6 new rows = 1138"* — and
+that is exactly how it resolved, the raw delta of **+7** being those six rows plus
+the `D275` repair. **A PREDICTION THAT PUBLISHES ITS ARITHMETIC CAN BE CHECKED AT THE
+STEP RATHER THAN AT THE TOTAL.** The miss is **P3's test count**:
 it predicted **7,755** on a commitment to write exactly 15 `it` blocks, and wrote
 **18**, landing at 7,758. The prediction file had pre-committed to grading that wrong
 rather than restating it, and it is graded wrong. **P6** is the shape worth keeping —
