@@ -12108,6 +12108,69 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.273.0 → **A HANDED CANDIDATE DISQUALIFIED ON *SHAPE* RATHER THAN ON
+    PRICE — "IN ADDITION TO THIS ATTACK'S COST" IS A FACT ABOUT THE DECLARATION,
+    NOT ABOUT THE BOARD — AND THE `not` REFUSAL FOUND SCOPED.**
+
+    D367 handed over the largest item left behind the `CONDITIONAL_DAMAGE_BONUS`
+    skeleton: *"this Pokémon has at least 2 extra Energy attached (in addition to
+    this attack's cost)"*, **3 printings on one sentence and 5 across two** — three
+    to five times the 1-printing candidate D367 itself refused — and told its
+    successor to settle FIRST whether that clause is a BOARD fact or a DECLARATION
+    fact, because if it is the latter it is not a `BoardCondition` at all.
+
+    🛑 **IT IS A DECLARATION FACT, AND THE CATALOG SETTLES IT WITHOUT AN ARGUMENT.**
+    The identical clause is printed on TWO attacks with TWO DIFFERENT COSTS —
+    Electivire ex `sv10-069`/`-212` "High-Voltage Press" ({L}{L}{C}, 3) and Jellicent
+    ex `sv10.5w-045`/`-160`/`-168` "Power Press" ({P}{C}, 2). **Four Energy on the
+    board satisfies Jellicent's clause and fails Electivire's with the board
+    IDENTICAL.** `conditionHolds(state, seat, cond)` takes a state and a seat and no
+    attack; `attackerPreWRBonus` never passes an index or a cost. The predicate is
+    structurally unanswerable in this union — and doubly so, because
+    `effectiveAttackCost` (D169) makes the cost itself board-dependent, so the
+    quantity is not even constant for ONE attack. **A CANDIDATE CAN BE THE LARGEST
+    THING ON THE TABLE AND STILL BE THE WRONG SHAPE FOR THE TABLE**, and that is a
+    different refusal from D367's, which was on price.
+
+    🛑 **AND THE 3-PRINTING TIE-BREAK'S STATED PRICE WAS A STALE REFUSAL.** The
+    handoff said *"this Pokémon has no damage counters on it"* needs the `not`
+    combinator D125 refused. It does not. D125's refusal is SCOPED and says so in
+    its own words: it refuses `{ kind: "not", cond }` because that member makes the
+    vocabulary **RECURSIVE** — five consumers each owing a recursion arm, and
+    `conditionNote` owing a negated phrasing English does not supply. A **FLAT**
+    member owes neither, costs the two exhaustive `switch (cond.kind)` arms every
+    member costs, and **this union already ships exactly that shape**:
+    `opponentActiveIsBasic` is documented as *"the exact COMPLEMENT"* of
+    `opponentActiveIsEvolution`. **A COMPLEMENT IS A BOARD FACT; ONLY A NEGATION
+    OPERATOR IS A COMBINATOR.**
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`yourActiveUndamaged`), its **2**
+    reader arms — and exactly two, because S4's grep over non-test source closes the
+    producer set at `conditionHolds` and `conditionNote` — and **1 literal
+    `CONDITIONAL_DAMAGE_CLAUSES` row**. Arven's Mabosstiff ex
+    `sv10-139`/`-218`/`-235` "Vigorous Tackle" ({C}, 30+, **+120**), **3 legal
+    printings**, all of that sentence's printings anywhere. **ZERO new ops, events,
+    error codes, regexes, registry rows, state fields, prompt kinds, choice kinds or
+    `packages/schema` bytes**, and `MATCH_RECORD_VERSION` **STAYS 22**.
+
+    ⚠️ **THE ZERO-VOCABULARY FLOOR IS NOW 0 / 0 — D367 DRAINED IT**, which is why
+    this slice had to buy a member or buy nothing. Of the 34 refused sentences,
+    exactly 3 sentences / 4 printings reach a live anchored template and miss at the
+    token map, and **all three are traps rather than floor**: `Team Rocket's` is a
+    SPECIAL Energy whose `energy: "special"` reading would also match Reversal
+    Energy, `Stage 1` was refused by D367 by name, and `Tera` is not a `Card.types`
+    value.
+
+    ⚠️ **THE CENSUS MOVES IN EXACTLY ONE SUMMAND**: raw 1,220 → **1,223**,
+    `BUILT.attack` 1,249 → **1,252**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead`
+    (13) both STAND STILL — measured, not assumed: S2 walks all 708
+    `registryCardIds()` programs and finds **7** distinct condition kinds authored,
+    neither `yourActiveDamaged` nor `yourActiveUndamaged` among them, and none of the
+    three ids is in `REGISTRY_ATTACKS`.
+
+    engineVersion 0.272.0 → **0.273.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.272.0 → **THE BONUS CONSEQUENT'S ZERO-VOCABULARY FLOOR — NINE PRINTED
     SENTENCES / THIRTEEN LEGAL PRINTINGS ANSWERED WITH NOTHING BOUGHT, AND THE
     HANDED CANDIDATE REFUSED ON A MEASUREMENT.**
@@ -13765,7 +13828,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.272.0";
+export const engineVersion = "0.273.0";
 
 export type {
   ApplyResult,

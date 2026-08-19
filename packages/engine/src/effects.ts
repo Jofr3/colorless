@@ -783,6 +783,49 @@ export type BoardCondition =
       sentence came off an attack, and an attack is declared by the Active by
       definition (§8). False with an empty Active Spot. */
   | { kind: "yourActiveDamaged" }
+  /** 🆕 **D368 — YOUR Active Pokémon has NO damage counters on it.** Arven's
+      Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle" ({C}, 30+, **+120**),
+      THREE legal printings byte-identical in rules text: *"If this Pokémon has no
+      damage counters on it, this attack does 120 more damage."*
+
+      🛑 **THE EXACT COMPLEMENT OF THE MEMBER ONE LINE UP, AND A FLAT MEMBER RATHER
+      THAN THE `not` COMBINATOR D125 REFUSED — WHICH IS A DIFFERENT PURCHASE, NOT A
+      CHEAPER SPELLING OF THE SAME ONE.** D125's refusal (see
+      `ATTACK_REQUIREMENT_CLAUSES` below) is SCOPED and says so in its own words: it
+      refuses `{ kind: "not", cond }` because that member would make the vocabulary
+      **RECURSIVE** — "five consumers each owing a recursion arm, and `conditionNote`
+      owing a readable negated phrasing English does not supply". A flat member owes
+      NEITHER. It costs the two exhaustive `switch (cond.kind)` arms every member in
+      this union costs, and no consumer gains a descent.
+
+      ⚠️ **AND THE SHAPE IS ALREADY IN THIS UNION**: `opponentActiveIsBasic` is
+      documented eight members up as *"the exact COMPLEMENT"* of
+      `opponentActiveIsEvolution` and ships as its own flat member for exactly this
+      reason. A complement is a board fact; only a NEGATION OPERATOR is a
+      combinator, and the two are not the same thing.
+
+      🛑 **THE POLARITY LIVES IN THE SKELETON — EXCEPT UNDER THIS ONE.** D125's
+      requirement reader can read a printed NEGATIVE clause and hand back the
+      POSITIVE fact the attack requires, because "does nothing" supplies the flip.
+      `CONDITIONAL_DAMAGE_BONUS` supplies NO flip: its clause must be TRUE-valued as
+      printed. So a negative clause under a POSITIVE consequent is the one place in
+      this family where the board fact itself has to carry the negation — and D125
+      named that case in advance ("If a card ever prints a POSITIVE clause under
+      this consequent, THAT is the warrant"), one consequent over.
+
+      ⚠️ **THE NEAR-MISS IS LIVE AND IS ONE SEAT APART.** Basculin
+      `sv10.5w-024`/`-108` prints *"If **your opponent's Active Pokémon** has no
+      damage counters on it **before this attack does damage**, this attack does
+      nothing."* — the same six words "has no damage counters on it" under the OTHER
+      consequent and on the OTHER seat, already carried by `opponentActiveDamaged`
+      through the requirement table. The two must never cross; driven both ways in
+      `undamagedBonus.test.ts` §3.
+
+      Read at DECLARATION like its complement, off `active.damage > 0` negated, and
+      **FALSE with an empty Active Spot** — which is the deliberate asymmetry: an
+      absent Active is not an undamaged one, so this member is NOT `!yourActiveDamaged`
+      on every board, and that difference is driven rather than described. */
+  | { kind: "yourActiveUndamaged" }
   /** Any ONE of your BENCHED Pokémon has damage counters on it — Tyranitar ex
       sv03-066/-211 "Lightning Rampage" (+100), printed in the plural ("If your
       Benched Pokémon have any damage counters on them"). The plural is the
@@ -8492,6 +8535,22 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // word appears ONLY on the opponent-facing twin two rows up, and is the sole
   // lexical discriminator between the two damage-counter clauses.
   ["this Pokémon has any damage counters on it", { kind: "yourActiveDamaged" }],
+  // 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle"
+  // ({C}, 30+, **+120**), THREE legal printings byte-identical in rules text, and
+  // the largest single item left behind this skeleton at D367's head that is a
+  // BOARD fact at all. THE ROW DIRECTLY ABOVE IS THIS ROW'S COMPLEMENT and the two
+  // keys differ by ONE PRINTED WORD — "any" against "no" — which makes this the
+  // sharpest near-miss in this table after the two Poison rows and the
+  // `ex or Pokémon V` pair. Keys are whole printed clauses and never substrings, so
+  // neither can reach the other; driven both ways in `undamagedBonus.test.ts` §2.
+  //
+  // 🛑 **AND THE OTHER NEAR-MISS IS NOT IN THIS TABLE AT ALL.** Basculin
+  // `sv10.5w-024`/`-108` prints the same six words on the OPPONENT's seat under the
+  // "does nothing" consequent, and that sentence is `ATTACK_REQUIREMENT_CLAUSES`'
+  // (mapping to `opponentActiveDamaged`, D125's polarity flip). One clause family,
+  // two tables, two seats, two consequents — and the whole-sentence anchors are
+  // what keep them apart.
+  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],
   // Tyranitar ex sv03-066/-211 "Lightning Rampage" (+100) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids.
   ["your Benched Pokémon have any damage counters on them", { kind: "yourBenchDamaged" }],

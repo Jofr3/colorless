@@ -2971,6 +2971,21 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.damage > 0;
     }
+    case "yourActiveUndamaged": {
+      // 🆕 D368 — "this Pokémon has no damage counters on it" (Arven's Mabosstiff
+      // ex). The COMPLEMENT of the arm directly above, and deliberately NOT written
+      // as `!conditionHolds(state, seat, { kind: "yourActiveDamaged" })`: that
+      // spelling would make an EMPTY Active Spot satisfy this member, because the
+      // arm above is false there and its negation is true. An empty spot is not an
+      // undamaged Pokémon — there is no Pokémon — so the null guard is POSITIVE on
+      // both arms and the two are complements only where an Active exists.
+      //
+      // ⚠️ Read at DECLARATION, exactly as its complement is: `state` is the board
+      // as of declaration and the attacker IS this Active, so the counters read are
+      // the ones it walked in with, not any it takes later in the same attack.
+      const active = state.players[seat].active;
+      return active !== null && active.damage === 0;
+    }
     case "yourBenchDamaged":
       // "your Benched Pokémon have any damage counters on them" — the plural is
       // collective, so ANY one damaged benched Pokémon satisfies it. The Active is
@@ -3492,6 +3507,13 @@ export function conditionNote(cond: BoardCondition): string {
       return "your Active Pokémon has damage counters on it";
     case "yourBenchDamaged":
       return "1 of your Benched Pokémon has damage counters on it";
+    case "yourActiveUndamaged":
+      // 🆕 D368 — the printed pronoun is dropped exactly as the arm above drops it
+      // (D116), and the phrasing is POSITIVE English rather than a negation of the
+      // note above. This is the readable phrasing D125 said a `not` combinator could
+      // not supply generically: it exists here because the member is a NAMED board
+      // fact, not an operator over an arbitrary one.
+      return "your Active Pokémon has no damage counters on it";
     case "opponentActivePoisoned":
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":
