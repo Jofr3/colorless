@@ -915,7 +915,16 @@ export type BoardCondition =
       `yourStadiumInPlay` — this member does not widen the P4 gap. */
   | { kind: "opponentPrizesRemaining"; counts: readonly number[] }
   /** Your opponent is holding AT MOST `count` cards — Absol ex sv03-135/-214
-      "Cursed Slug" (+120, `3`), the pool's only "or fewer" clause of any kind.
+      "Cursed Slug" (+120, `3`).
+
+      ⚠️ 🆕🆕 **D367 — THIS BLOCK USED TO CALL THAT PRINTING *"the pool's only
+      'or fewer' clause of any kind"*, AND IT IS NOW THREE.** Measured over
+      `legalAttackCorpus()` with the live bonus reader: this clause, Mienshao
+      `sv07-084`'s *"5 or fewer cards in their hand"* (which is THIS member at a
+      second threshold — see the row) and Gouging Fire `svp-151`/`sv08-038`'s
+      *"4 or fewer Prize cards remaining"* (`opponentPrizesRemaining`). **A
+      uniqueness claim is the most perishable thing a doc block can carry, and it
+      perishes silently — nothing in the suite was keyed on this sentence.**
 
       **The sharpest test of the union's public-state invariant so far, and it
       passes:** a hand's SIZE is public (both players watched every draw, play and
@@ -8532,6 +8541,27 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // substrings, and a lookup that reached this row from that sentence would boost
   // against a Pokémon V nothing prints. Driven both ways in `exOnlyActive.test.ts`.
   ["your opponent's Active Pokémon is a Pokémon ex", { kind: "opponentActiveIsEx" }],
+  // 🆕🆕 D367 — Regirock ex `sv10-101`/`-214` "Giant Rock" ({F}{C}{C}{C}, 140+,
+  // **+140**), TWO legal printings byte-identical in rules text. ZERO NEW
+  // VOCABULARY: `opponentActiveIsStage2` is D296's member, bought for a
+  // `conditionGate` on an ENTIRELY different sentence (Paldean Tauros `sv08-039`
+  // "Upthrusting Horns", a put-Energy `optional`) — so this row is the member's
+  // FIRST clause-table appearance and its first use under a damage consequent.
+  //
+  // 🛑 **IT IS NOT `opponentActiveIsEvolution` NARROWED, AND THE MEMBER'S OWN DOC
+  // BLOCK ALREADY SAYS WHY**: that member reads `evolveFromOf(...) !== null`, which
+  // a Stage 1 satisfies exactly as a Stage 2 does, so the pool's Evolution rows
+  // three above would score this +140 off a Stage 1 defender the card does not
+  // print for. The printed adjective is "Stage 2" and `isStage2Pokemon` (cards.ts,
+  // D262) reads the printed `stage` string — so a VSTAR, which sits two evolutions
+  // deep, is NOT a Stage 2. Driven both ways in `benchNamedBonus.test.ts` §4.
+  //
+  // ⚠️ AND THE SIBLING THE POOL PRINTS ONE ROW SHORT OF THIS ONE IS **UNBUILT**:
+  // *"your opponent's Active Pokémon is a Stage 1 Pokémon"* (`1` legal printing) has
+  // no member and this slice does not buy one — `opponentActiveIsBasic` is the
+  // complement of Evolution and neither it nor Stage 2 can be narrowed into it.
+  // Asserted refused, by sentence, in `benchNamedBonus.test.ts` §6.
+  ["your opponent's Active Pokémon is a Stage 2 Pokémon", { kind: "opponentActiveIsStage2" }],
   // Krokorok sv01-116 "Payback" (+90) and Houndstone sv03-101 "Two Four-ocious"
   // (+120) — ONE member at two values, and still two LITERAL rows rather than a
   // D118 template. Two things vary between these sentences, not one: the count
@@ -8550,11 +8580,55 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "your opponent has exactly 2 or 4 Prize cards remaining",
     { kind: "opponentPrizesRemaining", counts: [2, 4] },
   ],
+  // 🆕🆕 D367 — Gouging Fire `svp-151`/`sv08-038` "Blazing Charge" ({R}{R}{C}, 100+,
+  // **+70**), TWO legal printings byte-identical in rules text, and the family's
+  // FIRST prize clause that is not spelled "exactly". ZERO NEW VOCABULARY.
+  //
+  // 🛑 **A PRINTED RANGE ENUMERATED AS A SET, AND THE REPO HAD ALREADY DECIDED
+  // THIS — IT WAS NOT ARGUED HERE.** `registry.ts` authors
+  // `{ kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3] }` TWICE for the
+  // printed *"3 or fewer Prize cards remaining"* on the two Professor Turo /
+  // Night Stretcher-class draw Supporters, **the 0 included**. So "N or fewer" has
+  // one spelling in this engine already, this row uses it, and the two producers
+  // cannot drift apart. (S4, the construction-site grep over non-test source, is
+  // what found the precedent.)
+  //
+  // ⚠️ **THE ENUMERATION IS COMPLETE OVER THE REPRESENTABLE DOMAIN, WHICH IS WHY
+  // A SET IS EXACT HERE AND NOT MERELY CONVENIENT.** `prizes.length` is 0-6 by §3.8
+  // (six at setup, never added to), so `[0, 1, 2, 3, 4]` and a `<= 4` comparison
+  // answer identically on EVERY board this engine can build — driven at all seven
+  // values in `benchNamedBonus.test.ts` §5, which is what turns "behaviourally
+  // exact" into a measurement. D365's warning runs the other way and still holds:
+  // a member whose fold is `counts.includes(…)` cannot be handed a threshold, so a
+  // caller must enumerate, and `[2, 4]` one row up stays unrepresentable as one.
+  //
+  // ⚠️ AND "remaining" IS §3.8's FACE-DOWN COUNT, NOT PRIZES TAKEN — the same
+  // reading `morePrizesThanOpponent` makes. The complement is a different number
+  // on every board where the two seats are not level.
+  //
+  // ⚠️ THE NEAR MISS IS ON ANOTHER COLUMN AND ANOTHER CONSEQUENT: the catalog
+  // prints *"If your opponent has 3 or fewer Prize cards remaining, draw …"* on
+  // SEVEN legal Trainer `effect` rows, and *"if your opponent has 4 or fewer Prize
+  // cards remaining"* — this row's clause, byte for byte — on FIVE `abilities_json`
+  // rows, ALL `legal_standard = 0` (remote D1 `luminous`, 2026-08-19). The
+  // whole-sentence anchor is what keeps every one of them off this path.
+  [
+    "your opponent has 4 or fewer Prize cards remaining",
+    { kind: "opponentPrizesRemaining", counts: [0, 1, 2, 3, 4] },
+  ],
   // Absol ex sv03-135/-214 "Cursed Slug" (+120) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids. "their hand",
   // possessive, is the cross-board half of the pair; the own-hand clause below
   // reads BOTH hands and neither reads a hand's contents.
   ["your opponent has 3 or fewer cards in their hand", { kind: "opponentHandAtMost", count: 3 }],
+  // 🆕🆕 D367 — Mienshao `sv07-084` "Gale Roundhouse" ({F}, 30+, **+60**), ONE legal
+  // printing, and the row that makes `opponentHandAtMost`'s `count` a parameter the
+  // POOL varies rather than one member's private constant. ZERO NEW VOCABULARY: the
+  // member is D118's and the only thing that moves between the two rows is the
+  // threshold, which is exactly the axis its own doc block says it is parameterised
+  // on ("burying the 3 in the member's NAME would make the second printing a second
+  // member"). **That second printing has now arrived, and the member was right.**
+  ["your opponent has 5 or fewer cards in their hand", { kind: "opponentHandAtMost", count: 5 }],
   // Bronzong sv03-145 "Extrasensory" (+90). Bronzor sv03-144 "Mirror Draw"
   // prints this clause's exact words ("Draw cards until you have the same number
   // of cards in your hand as your opponent.") as a DRAW effect — a substring
@@ -8570,9 +8644,74 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // against — it would read "a Pokémon with an Ability is on your Bench" as a
   // card called "a Pokémon with an Ability" and answer FALSE forever, silently.
   // Wrong-with-no-failure is the one outcome this family refuses. So: one row per
-  // printing, and the pool prints one (Flamigo sv03-185 prints the same clause
-  // under a different CONSEQUENT, which the leading-If skeleton never reaches).
+  // printing (Flamigo sv03-185 prints the same clause under a different
+  // CONSEQUENT, which the leading-If skeleton never reaches).
+  //
+  // ⚠️ 🆕🆕 **D367 — THE RULE WAS RIGHT AND ITS COUNT WAS WRONG IN BOTH
+  // DIRECTIONS, AND A ROTATION IS WHY.** This comment used to end *"and the pool
+  // prints one"*. At HEAD `sv02-119` is `legal_standard = 0` — the one printing it
+  // names is UNREACHABLE from `legalAttackCorpus()`, Palafin's and Lycanroc's
+  // situation a third time — while the legal pool prints **FOUR MORE** of exactly
+  // this shape that the sentence said do not exist. Measured end to end: remote D1
+  // `luminous`, `$.effect`, `GLOB 'If * on your Bench, this attack does * more
+  // damage.'` returns **12 printings, 8 of them `legal_standard = 1`**, and
+  // Falinks is in the other four. **A COUNT IN A COMMENT IS A MEASUREMENT WITH NO
+  // INSTRUMENT BEHIND IT; THIS FAMILY IS NOW DERIVED FROM THE CORPUS IN
+  // `benchNamedBonus.test.ts` §1 SO THE NEXT ROTATION REDDENS INSTEAD OF LYING.**
+  //
+  // 🛑 **AND THE ROW IS KEPT, NOT DELETED** — D364's decision for Palafin's row,
+  // for the same reason: it is keyed on printed text, the reading is still
+  // correct, and a reprint restores it for free.
   ["Falinks is on your Bench", { kind: "yourBenchHasNamed", name: "Falinks" }],
+  // 🆕🆕 D367 — the FOUR legal printings of the row above's own shape, ZERO NEW
+  // VOCABULARY: `yourBenchHasNamed` is D118's member and the only thing missing
+  // was a key per printed name, which is what the block above commits this family
+  // to. Durant `sv10.5w-070`/`-150` "Bite Together" ({C}, 20+, **+20**, TWO
+  // printings byte-identical in rules text), Volbeat `sv06-009` "Coordinated
+  // Strike" ({C}{C}, 20+, **+60**) and Mightyena `sv06-114` "Hunting Pack" ({D},
+  // 30+, **+90**).
+  //
+  // 🛑 **THREE OF THE FOUR NAME THE ATTACKER'S OWN CARD, AND THAT IS WHY THE
+  // MEMBER'S BENCH-ONLY READING IS LOAD-BEARING RATHER THAN TIDY.** Durant's
+  // clause names Durant and Mightyena's names Mightyena — so a member that read
+  // "in play" instead of "Bench" would let each clause satisfy itself off the
+  // ATTACKER standing in the Active Spot, turning a conditional +20 / +90 into an
+  // unconditional one on every board with no second body. That is exactly the
+  // widening D279 refused for Falinks, now refused on three more cards at once,
+  // and it is DRIVEN on a board in `benchNamedBonus.test.ts` §3 rather than
+  // argued. Volbeat is the control: it names ILLUMISE, a different card, which is
+  // what stops the member being read as "another copy of me".
+  ["Durant is on your Bench", { kind: "yourBenchHasNamed", name: "Durant" }],
+  ["Illumise is on your Bench", { kind: "yourBenchHasNamed", name: "Illumise" }],
+  ["Mightyena is on your Bench", { kind: "yourBenchHasNamed", name: "Mightyena" }],
+  // 🆕🆕 D367 — Metagross `sv09-063` "Conjoined Beams" ({P}{P}, 130+, **+150**),
+  // ONE legal printing, and the SECOND derived `allOf` in the engine — D365's
+  // Mesprit row was the first, and it sits under the OTHER consequent. ZERO NEW
+  // VOCABULARY: `allOf` (D280) and `yourBenchHasNamed` (D118) both already exist,
+  // so a printed conjunction of two bench-name facts is spellable today.
+  //
+  // 🛑 **AND THE POLARITY IS THE OPPOSITE OF MESPRIT'S, WHICH IS THE WHOLE
+  // DIFFERENCE BETWEEN THE TWO ROWS.** Mesprit prints *"If you DON'T have Uxie and
+  // Azelf on your Bench, this attack does nothing"* under a CANCEL, where the
+  // skeleton owns the negation. This one prints the bare conjunction under a
+  // BONUS, so nothing is inverted: both bodies must be there for the +150, and a
+  // board holding only Beldum scores nothing extra. The two rows are the same
+  // value read from two consequents — which is the pair `opponentActiveIsEx`
+  // already forms across these two tables since D363.
+  //
+  // ⚠️ THE PRINTED VERB IS "are", NOT "is" — a plural agreeing with two names, and
+  // the whole-clause key is what makes that a different key rather than a near
+  // miss of the three singular rows above.
+  [
+    "Beldum and Metang are on your Bench",
+    {
+      kind: "allOf",
+      conditions: [
+        { kind: "yourBenchHasNamed", name: "Beldum" },
+        { kind: "yourBenchHasNamed", name: "Metang" },
+      ],
+    },
+  ],
   // Absol sv06.5-030 "Darkfall" (+50) — a LITERAL row although the member is
   // parameterised, which is D119's corollary rather than a departure from D118:
   // TWO tokens vary here in principle, the threshold and the energy, so there is
@@ -8807,9 +8946,45 @@ const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special"> = n
     CONDITION at all — the 17 brace-coded type sentences are all selectors and
     counters on other skeletons. When one is printed, it is a row in this map. */
 const OPPONENT_ACTIVE_TYPE_CLAUSE = /^your opponent['’]s Active Pokémon is a (.+) Pokémon$/;
-const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map(
-  POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
-);
+/** 🆕🆕 D367 — BOTH NOTATIONS, WHICH CLOSES AN ASYMMETRY BETWEEN TWO SIBLING
+    TEMPLATES RATHER THAN ADDING VOCABULARY.
+
+    🛑 **THE TWO PARAMETERISED CLAUSES IN THIS FAMILY DISAGREED ABOUT HOW MANY
+    NOTATIONS THE CATALOG PRINTS, AND ONE OF THEM WAS RIGHT.**
+    `CLAUSE_ENERGY_TOKENS`, twenty lines up, is built from the CODE map AND the
+    NAME map and says why in its own doc block: *"Both notations are carried
+    because the pool prints both and they are split cleanly by SET … a code-only
+    parser would silently skip a whole set the moment one of its cards prints the
+    shape."* This map was built from `POKEMON_TYPES` alone — the spelled-out names
+    and nothing else — so it was the NAME-only mirror image of the parser that
+    paragraph warns about, and the pool had already printed the shape it cannot
+    see: **`{P}` on Bronzor `sv05-068`/`-170` "Mirror Attack" (+30) and `{D}` on
+    Arcanine `sv10-028` "Punishing Fang" (+100), 3 legal printings, refused by ALL
+    NINE readers at D366's head.**
+
+    ⚠️ **ZERO NEW VOCABULARY, AND ZERO NEW MAP.** `POKEMON_TYPE_BY_CODE` already
+    exists forty lines up, is already TOTAL over `POKEMON_TYPES` (the nine energy
+    codes plus `N` → Dragon and `C` → Colorless) and is already pinned against it
+    by `pokemonTypeCodesAreCanonical`. Spreading it here is the same construction
+    `CLAUSE_ENERGY_TOKENS` uses, so the three maps cannot drift and a type added to
+    `BASIC_ENERGY_TYPES` is admitted in BOTH notations by construction.
+
+    ⚠️ **`{C}` AND `{N}` ARE CARRIED THOUGH NO PRINTING SPELLS THEM IN THIS CLAUSE**,
+    for the reason `POKEMON_TYPE_BY_CODE`'s own block gives: `{C}` as a printed
+    TYPE ON A BODY is unambiguous (only `{C}` as an ENERGY is the provision
+    fallback that must stay out), and a notation map total over its vocabulary
+    cannot rot the way a hand-kept alternation does.
+
+    ⚠️ THE CLAUSE PATTERN IS UNCHANGED AND STILL LOOSE (`(.+)`), so "Stage 1",
+    "Tera" and "Evolution" still reach this lookup and still MISS it — they are not
+    types, they fall through to null, and they stay LOUD. That is what makes the
+    map, and not the regex, the vocabulary. */
+const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
+  ...POKEMON_TYPES.map((type) => [type, type] as [string, PokemonType]),
+  ...Object.entries(POKEMON_TYPE_BY_CODE).map(
+    ([code, type]) => [`{${code}}`, type] as [string, PokemonType],
+  ),
+]);
 
 /** THE APOSTROPHE FOLD (D137) — the LITERAL-TABLE half of the hardening D136 gave
     the regexes, and the ONE site every exact lookup on printed text goes through.

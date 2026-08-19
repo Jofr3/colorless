@@ -12108,6 +12108,51 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.272.0 → **THE BONUS CONSEQUENT'S ZERO-VOCABULARY FLOOR — NINE PRINTED
+    SENTENCES / THIRTEEN LEGAL PRINTINGS ANSWERED WITH NOTHING BOUGHT, AND THE
+    HANDED CANDIDATE REFUSED ON A MEASUREMENT.**
+
+    D366 handed over one sentence — *"If your opponent has 3 or more Benched
+    Pokémon, this attack does 80 more damage."*, **1 legal printing** needing **one
+    new `BoardCondition` member** — and told its successor to PRICE it rather than
+    take it because it is the seat-mirror of what D366 shipped. Priced, and
+    refused.
+
+    🛑 **S1 SAYS THE CANDIDATE SITS INSIDE A RESIDUE OF 43 SENTENCES / 60
+    PRINTINGS, AND THE ZERO-VOCABULARY FLOOR OVER THAT RESIDUE IS 9 SENTENCES /
+    13 PRINTINGS.** Running the nine live readers over the whole
+    `legalAttackCorpus()` under the `CONDITIONAL_DAMAGE_BONUS` anchor and then
+    partitioning what is left BY WHAT ACTUALLY REFUSES EACH — against the live
+    31-member union rather than against a handoff — finds nine sentences that are
+    an EXISTING member at an EXISTING parameter, refused only because no row or
+    token spells them. **Thirteen printings for zero members bought, against one
+    printing for one member bought.** D363 found an inherited price too high, D365
+    found one too low, D366 found the floor was zero; D367 is the first slice in
+    this family where the floor is the LARGEST thing on the table.
+
+    WHAT SHIPS: **7 literal rows** in `CONDITIONAL_DAMAGE_CLAUSES` and **one token
+    map widened** (`CLAUSE_POKEMON_TYPES` learns the brace notation its sibling
+    `CLAUSE_ENERGY_TOKENS` has carried since D118, off the already-canonical
+    `POKEMON_TYPE_BY_CODE`). **ZERO new union members, zero new ops, events, error
+    codes, regexes, registry rows, state fields, prompt kinds, choice kinds or
+    `packages/schema` bytes**, and `MATCH_RECORD_VERSION` **STAYS 22**.
+
+    🛑 **AND TWO DOC BLOCKS WERE MEASURABLY WRONG, BOTH IN THE SAME CLASS — A
+    UNIQUENESS CLAIM NOTHING WAS KEYED ON.** The Falinks row said *"the pool prints
+    one"*: at head `sv02-119` is `legal_standard = 0` and the legal pool prints
+    FOUR MORE of that shape. `opponentHandAtMost` said *"the pool's only 'or fewer'
+    clause of any kind"*: there are three. Both corrected, and the named-Bench
+    family is now DERIVED from the corpus so the next rotation reddens.
+
+    ⚠️ **THE CENSUS MOVES IN EXACTLY ONE SUMMAND**: raw 1,207 → **1,220**,
+    `BUILT.attack` 1,236 → **1,249**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead`
+    (13) both STAND STILL — measured, not assumed: none of the 13 ids is in
+    `REGISTRY_ATTACKS`, and the one that IS in `registryCardIds()` (`sv06-009`
+    Volbeat) carries an ABILITY program.
+
+    engineVersion 0.271.0 → **0.272.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.271.0 → **THE OWN-BENCH COUNT, AND A COMPARATOR SETTLED FROM THE
     CATALOG BEFORE IT WAS SPELLED.**
 
@@ -13720,7 +13765,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.271.0";
+export const engineVersion = "0.272.0";
 
 export type {
   ApplyResult,
