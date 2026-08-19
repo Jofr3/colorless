@@ -5483,6 +5483,14 @@ export const MUTANTS: Mutant[] = [
     // RECORD MEAN SOMETHING ELSE", AND THE ANSWER IS NO** — so
     // `D326-record-version-not-bumped` is NOT owed this time and stays anchored at
     // 22, which was predicted by id before the diff and measured after it.
+    // ⚠ RE-POINTED AT D366 (0.270.0 → 0.271.0) — the SIXTY-SECOND payment, and
+    // PREDICTED BY NAME again rather than found at 0× by the sweep: a slice that
+    // bumps the version owes this anchor before a line of it ships.
+    // `MATCH_RECORD_VERSION` STAYS 22, asked from `apps/api/src/lobby/match.ts`
+    // rather than inherited: D366's whole diff is ONE `BoardCondition` member,
+    // TWO reader arms and ONE row in a private clause `Map`. No op gained a field,
+    // nothing returns `{ park }`, and no persisted record can mean something else
+    // — so `D326-record-version-not-bumped` is not owed and stays anchored at 22.
     // ⚠ RE-POINTED AT D365 (0.269.0 → 0.270.0) — the SIXTY-FIRST payment, and it
     // was PREDICTED BY NAME this time rather than found at 0× by the sweep: the
     // slice bumps the version, so this anchor is owed before a line of it ships.
@@ -5503,7 +5511,7 @@ export const MUTANTS: Mutant[] = [
     // — no record can mean something else, so `D326-record-version-not-bumped` is
     // not owed and stays anchored at 22.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.270.0";',
+    find: 'export const engineVersion = "0.271.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -13421,5 +13429,67 @@ export const MUTANTS: Mutant[] = [
     find: "  [\n    \"you don't have Uxie and Azelf on your Bench\",",
     replace: "  [\"there is no Stadium in play\", { kind: \"yourStadiumInPlay\" }],\n  [\n    \"you don't have Uxie and Azelf on your Bench\",",
     expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+  },
+  // ── D366 — THE OWN-BENCH COUNT. Six rows, ONE PER CLAIM rather than one per
+  //    site: the COMPARATOR is a floor (C1), the THRESHOLD is the printed 4 flipped
+  //    to 5 and not the printed 4 (C2), the SEAT is your own (C3), the ZONE is the
+  //    Bench and not "in play" — the widening this slice measured and refused,
+  //    installed as its own counter-reading (C4), the NOTE is built from the
+  //    parameter rather than from this card's value (C5), and the completeness
+  //    guard's POPULATION is the fold's rows and not every row (C6).
+  {
+    id: "D366-bench-floor-becomes-strict",
+    decision: "D366",
+    what: "🛑 C1 — THE FLOOR BECOMES A STRICT INEQUALITY: `bench.length >= cond.count` becomes `>`, so a FULL five-body Bench no longer satisfies a requirement stored as 5 and Victini sv10.5b-012/-171/sv10.5w-172/svp-208 can never attack at all. ⚠️ IT IS INVISIBLE ON EVERY BOARD BELOW THE THRESHOLD — 0 through 4 Benched cancel under both readings — so only a board AT the boundary can tell the two apart, which is why the suite drives 5 and not just 'enough'",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.length >= cond.count;",
+    replace: "      return state.players[seat].bench.length > cond.count;",
+    expectKilledBy: ["packages/engine/src/benchCountRequirement.test.ts"],
+  },
+  {
+    id: "D366-bench-threshold-keeps-the-printed-four",
+    decision: "D366",
+    what: "🛑 C2 — THE POLARITY FLIP IS LOST AND THE PRINTED NUMBER IS STORED VERBATIM: `count: 5` becomes `count: 4`, which is exactly the mistake a reader makes who transcribes *\"4 or fewer\"* without discharging the skeleton's negation. The card then attacks for 120 off a FOUR-body Bench, which the printed text cancels on — a real board, reachable in every game, and the ONLY board the two values disagree about",
+    file: "packages/engine/src/effects.ts",
+    find: '["you have 4 or fewer Benched Pokémon", { kind: "yourBenchAtLeast", count: 5 }],',
+    replace: '["you have 4 or fewer Benched Pokémon", { kind: "yourBenchAtLeast", count: 4 }],',
+    expectKilledBy: ["packages/engine/src/benchCountRequirement.test.ts"],
+  },
+  {
+    id: "D366-bench-count-reads-the-other-seat",
+    decision: "D366",
+    what: "🛑 C3 — THE MEMBER READS THE OPPONENT'S BENCH: `state.players[seat]` becomes `state.players[otherSeat(seat)]`. Every `your*` member in this union is seat-relative and self-side, and the printed clause says *\"you have\"* — so this reading cancels an attack whose own Bench is full and resolves one whose own Bench is empty, off the board across the table. ⚠️ AND IT IS THE MUTANT THE POOL'S OTHER BENCH-COUNT SENTENCE MAKES URGENT: *\"If your opponent has 3 or more Benched Pokémon…\"* is a real printing, so the wrong seat is not a nonsense reading — it is a DIFFERENT card's reading",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.length >= cond.count;",
+    replace: "      return state.players[otherSeat(seat)].bench.length >= cond.count;",
+    expectKilledBy: ["packages/engine/src/benchCountRequirement.test.ts"],
+  },
+  {
+    id: "D366-bench-count-becomes-in-play",
+    decision: "D366",
+    what: "🛑 C4 — THE WIDENING THIS SLICE MEASURED AND REFUSED, INSTALLED AS ITS OWN COUNTER-READING: the Bench count becomes an IN-PLAY count (`[active, ...bench]`), which is `yourOwnerPokemonInPlayAtLeast`'s zone and the shape a slice reaching for an existing member would land on. It is one body larger on every board Victini can attack from — an Active is always present when an attack resolves — so a FOUR-body Bench satisfies a threshold of 5 and the printed cancel never fires. **A MEMBER WHOSE NAME COULD STRETCH TO COVER THE SENTENCE IS NOT THEREBY A MEMBER THAT ANSWERS IT**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.length >= cond.count;",
+    replace:
+      "      return [state.players[seat].active, ...state.players[seat].bench].filter((p) => p !== null).length >= cond.count;",
+    expectKilledBy: ["packages/engine/src/benchCountRequirement.test.ts"],
+  },
+  {
+    id: "D366-bench-note-hard-codes-the-threshold",
+    decision: "D366",
+    what: "🛑 C5 — THE NOTE STOPS READING ITS PARAMETER: the interpolated `cond.count` becomes the literal 5, which is correct for the one card in the pool that uses this member and wrong for every other threshold the member can hold. ⚠️ THIS IS THE ROW THE CENSUS MAKES NECESSARY: the pool already prints a bench count at THREE, so a note hard-coded to this printing's value is a defect with a named future victim rather than a hypothetical one — and a reject message read off the board by a person is the one place the parameter has to survive",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `you have ${String(cond.count)} or more Benched Pokémon`;",
+    replace: "      return `you have 5 or more Benched Pokémon`;",
+    expectKilledBy: ["packages/engine/src/benchCountRequirement.test.ts"],
+  },
+  {
+    id: "D366-apostrophe-guard-forgets-its-population",
+    decision: "D366",
+    what: "🛑 C6 — D365's COMPLETENESS GUARD REVERTED TO THE POPULATION IT WAS WRITTEN WITH: the apostrophe filter is dropped, so the guard once again compares EVERY carried clause sentence against a list of every APOSTROPHE row. Those were the same set until D366 added the table's first apostrophe-free key, and the whole point of the narrowing is that they are now two sets. ⚠️ **THE TARGET IS A TEST FILE ON PURPOSE** (D318's precedent): a guard whose population is wrong cannot be caught by the code it guards, only by a case that knows the two populations differ — so this row is the only thing standing between the repair and a silent relapse the day a seventh apostrophe row lands",
+    file: "packages/engine/src/clauseApostrophe.test.ts",
+    find: "    const withApostrophe = [...carried].filter((s) => s.includes(APOS));",
+    replace: "    const withApostrophe = [...carried];",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
   },
 ];
