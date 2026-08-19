@@ -10673,6 +10673,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-illumise": battler("fix-illumise", { name: "Illumise", hp: 60, types: ["Grass"] }),
   "fix-beldum": battler("fix-beldum", { name: "Beldum", hp: 60, types: ["Metal"] }),
   "fix-metang": battler("fix-metang", { name: "Metang", hp: 60, types: ["Metal"] }),
+  /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
+      the THREE legal printings of *"If this Pokémon has no damage counters on it,
+      this attack does 120 more damage."*
+
+      ⚠️ **THE BODY IS THE TEST HERE, NOT A BACKDROP.** `hp: 60` on purpose: this
+      Pokémon must be able to TAKE damage and still be alive to attack, because the
+      whole member turns on whether it is carrying counters, and every board in
+      `undamagedBonus.test.ts` puts damage on it and attacks again. A 200 HP body
+      would work too but would hide a KO tail that the damaged case genuinely runs
+      near.
+
+      ⚠️ Costed `{C}` exactly as the printing is, so the attacker can pay with any
+      Energy the deck holds and no case is really testing a cost. A `fix-*` id
+      rather than the real one for `fix-durant`'s reason: `catalogManifest.test.ts`
+      classifies real-looking ids against a generated six-set manifest. */
+  "fix-mabosstiff": battler("fix-mabosstiff", {
+    name: "Mabosstiff",
+    hp: 60,
+    types: ["Darkness"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Vigorous Tackle",
+        damage: 30,
+        effect: "If this Pokémon has no damage counters on it, this attack does 120 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D368 — the COMPLEMENT's body, so one board can run both members and the
+      pair can be shown to disagree where an Active exists and AGREE (both false)
+      where one does not. Talonflame's printed sentence at Talonflame's amount. */
+  "fix-damagedbonus": battler("fix-damagedbonus", {
+    name: "Talonflame",
+    hp: 60,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Fiery Breeze",
+        damage: 30,
+        effect: "If this Pokémon has any damage counters on it, this attack does 90 more damage.",
+      },
+    ],
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -17038,4 +17082,21 @@ export const MULTI_NOUN_SEARCH_DECK = deckOf({
   "fix-stadium": 4, // the Stadium — Secret Box's fourth noun
   "fix-energy": 12, // Basic Energy #1 — Larry's third noun, plus attack costs and retreat
   "fix-fire-energy": 4, // Basic Energy #2 — the second admissible Energy Larry's cap must refuse
+});
+
+/** 🆕 D368 — the UNDAMAGED bonus board. Both halves of the complement pair are in
+    it (`fix-mabosstiff` prints "has no damage counters", `fix-damagedbonus` prints
+    "has any damage counters"), so a single deck can drive the member, its
+    complement and the ONE board where they agree — an empty Active Spot, where BOTH
+    are false and a `!yourActiveDamaged` spelling would have made this member true.
+
+    `fix-bigbody` is the 200 HP defender every case attacks into, so 150 damage
+    (30 + 120) never KOs and no prize/KO tail interferes with the reading. */
+export const UNDAMAGED_BONUS_DECK = deckOf({
+  "fix-mabosstiff": 4,
+  "fix-damagedbonus": 4,
+  "fix-benchfiller": 4,
+  "fix-bigbody": 8,
+  "fix-dark-energy": 12,
+  "fix-energy": 28,
 });

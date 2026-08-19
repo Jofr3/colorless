@@ -164,12 +164,14 @@ const LEFT: readonly (readonly [string, number, string])[] = [
   [
     "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
     3,
-    "a member reading energy attached ABOVE the declared cost — no member reads a cost at all",
-  ],
-  [
-    "If this Pokémon has no damage counters on it, this attack does 120 more damage.",
-    3,
-    "the NEGATION of `yourActiveDamaged` under a POSITIVE consequent — no skeleton owns this polarity, so it needs a member or a `not` combinator D125 refused",
+    // 🛑🆕🆕 D368 — THIS COST DESCRIPTION WAS WRONG, AND THE CORRECTION IS THE
+    // FINDING. It is not "a member no one has written yet": it is NOT A BOARD FACT
+    // AT ALL. The identical clause is printed on Electivire ex `sv10-069`/`-212`
+    // ({L}{L}{C}) and Jellicent ex `sv10.5w-045`/`-160`/`-168` ({P}{C}), so the
+    // SAME board answers it differently depending on which attack was declared —
+    // and `conditionHolds(state, seat, cond)` is handed no attack. Priced and
+    // disqualified on SHAPE in `undamagedBonus.test.ts` §1.
+    "NOT A `BoardCondition` AT ALL — the clause reads THIS ATTACK'S COST, which two printings set to two different values, so no state+seat predicate can answer it",
   ],
   [
     "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
@@ -223,9 +225,13 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // partition, however carefully each half is measured.
     expect(carried.length + refused.length).toBe(openers.length);
     expect(units(carried) + units(refused)).toBe(units(openers));
-    // At HEAD the residue is 34 / 47; before this slice it was 34 + 9 and 47 + 13.
-    expect([refused.length, units(refused)]).toEqual([34, 47]);
-    expect([refused.length + TAKEN.length, units(refused) + 13]).toEqual([43, 60]);
+    // 🆕🆕 D368 — the residue is 33 / 44; at D367's head it was 34 / 47, and before
+    // D367 it was 34 + 9 and 47 + 13. D368 took ONE sentence / THREE printings
+    // (Arven's Mabosstiff ex, `undamagedBonus.test.ts`), so BOTH numbers step and
+    // the D367 arithmetic below is re-derived from them rather than left frozen.
+    expect([refused.length, units(refused)]).toEqual([33, 44]);
+    expect([refused.length + 1, units(refused) + 3]).toEqual([34, 47]);
+    expect([refused.length + 1 + TAKEN.length, units(refused) + 3 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -263,9 +269,16 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
       // the table.
       expect(BONUS.test(sentence.trim()), sentence).toBe(true);
     }
-    // The largest single item left is 3 printings, three times the handed
-    // candidate — stated as a comparison so a successor inherits a measurement.
+    // 🆕🆕 D368 — the largest single item left is STILL 3 printings, but it is now
+    // the DISQUALIFIED one: D368 took the other 3-printing entry (the undamaged
+    // complement) and the declaration-fact clause cannot be taken at any price.
+    // ⚠️ **SO THE LARGEST REMAINING *PURCHASABLE* ITEM IS 2**, which is the number
+    // a successor should actually inherit — stated separately from the raw maximum
+    // so the two cannot be confused for each other.
     expect(Math.max(...LEFT.map(([, n]) => n))).toBe(3);
+    const purchasable = LEFT.filter(([, , cost]) => !cost.startsWith("NOT A `BoardCondition`"));
+    expect(Math.max(...purchasable.map(([, n]) => n))).toBe(2);
+    expect(LEFT).toHaveLength(3);
   });
 });
 
@@ -527,14 +540,14 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 });
 
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
-  it("🛑 raw 1,207 → 1,220 and resolving sentences 335 → 344", () => {
+  it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(344);
-    expect(units(resolved)).toBe(1220);
+    expect(resolved).toHaveLength(345); // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1223); // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
-    expect(resolved.length - TAKEN.length).toBe(335);
-    expect(units(resolved) - 13).toBe(1207);
+    expect(resolved.length - TAKEN.length - 1).toBe(335);
+    expect(units(resolved) - 13 - 3).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {

@@ -799,8 +799,8 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(28);
-    expect(withApostrophe).toHaveLength(11);
+    expect(carried.size).toBe(29); // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(withApostrophe).toHaveLength(11); // 🆕🆕 D368 — STANDS STILL, measured
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
     const TEMPLATE_OWNED = [
@@ -845,7 +845,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // narrowing is just a way of not looking.
     const carried = carriedBonusClauses();
     const without = [...carried].filter((clause) => !clause.includes(APOS)).sort();
-    expect(without).toHaveLength(17);
+    expect(without).toHaveLength(18); // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
     // Pinned BY NAME, so a row added on an apostrophe-free key reddens here.
     expect(without).toEqual(
       [
@@ -857,6 +857,11 @@ describe("the literal clause tables — the rows the fold was built for", () => 
         "this Pokémon has any Special Energy attached",
         "this Pokémon has any {F} Energy attached",
         "this Pokémon has any {L} Energy attached",
+        // 🆕🆕 D368 — `yourActiveUndamaged`, the ONE row this slice adds. It carries
+        // no apostrophe, so it lands in THIS half of the partition and the fold's
+        // own population (11) stands still — which is the measurement that says this
+        // slice's row and this file's mechanism are about different things.
+        "this Pokémon has no damage counters on it",
         "this Pokémon is Poisoned",
         "this Pokémon moved from your Bench to the Active Spot this turn",
         "you have at least 3 {D} Energy in play",
@@ -871,6 +876,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
     expect(without.length + 11).toBe(carried.size);
+    expect(carried.size).toBe(29); // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a
