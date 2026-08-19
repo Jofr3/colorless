@@ -2661,7 +2661,47 @@ different line, as long as the string still exists somewhere).
 `MATCH_RECORD_VERSION` **22**, read from source — three rows in a private clause
 `Map` persist nothing.
 
-<!-- D365-SWEEP-SLOT -->
+**The sweep.** **1117 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0
+skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1140**, sentinel `exit=0`,
+5,032.0s. `1117 + 23 = 1140` — **added before it was written.** Run detached under
+`setsid nohup` on a quiet tree, with ONE wake source armed on *either* the sentinel
+**in the log file** *or* the driver PID disappearing. ⚠️ `pgrep -af "bun
+scripts/mutation/run.ts"` OVER-MATCHED during the run — it returned this agent's own
+shell wrapper alongside the runner, because the wrapper's command line contains the
+string it was grepping for. Only `pgrep -xf "sh scratchpad/D365_sweep_driver.sh"`
+isolated the driver, and completion was taken from the sentinel in the log, never
+from a process scan and never from `pgrep -fc` (which self-matches).
+
+**Verified by id, both directions, independently of the runner's own tally.** The
+1,140 declared ids read off `mutants.ts` against the 1,140 rows parsed from the
+log: **0 missing · 0 extra · 0 duplicate · 0 printed-without-a-verdict.** ⚠️ The
+parser's verdict alternation is read FROM SOURCE (`scripts/mutation/run.ts`, `type
+Verdict`) and spelled out — never `\bVERDICT\b`, which cannot follow the `)` of
+`SURVIVES(known)`, and never `grep -c`, because every mutant prints its verdict
+TWICE (in flight, then in the table). D364 found that `"SURVIVED"` — the true-GAP
+literal — had been missing from that alternation, and since every log carries 0
+GAP, pre-validation alone could never have caught it. **So this slice did BOTH**:
+pre-validated on three real prior logs (D362 **1128**, D363 **1134**, D364
+**1134**, each summing exactly to its OWN corpus and agreeing with its own runner
+tally), *and* probed the parser POSITIVELY by injecting a synthetic `SURVIVED` row
+and a synthetic in-flight row into a copy of D364's log — both were caught, and both
+broke the parts-sum and the runner agreement, which is what a green pre-validation
+cannot demonstrate.
+
+**Reconciled against D364 by id** (1111 killed · 23 known · 0 GAP · 1134 corpus):
+**6 ids added, 0 removed, 0 verdict changes in either direction**, and the survivor
+set cross-asserted both ways is **identical at 23** — nothing entered it, nothing
+left it. The kill delta is **1117 − 1111 = 6**, exactly this slice's six rows, each
+`KILLED`: `D365-hand-sizes-row-repointed`, `D365-prize-list-loses-the-four`,
+`D365-allof-names-one-body-twice`, `D365-allof-fold-turns-disjunctive`,
+`D365-prize-membership-becomes-a-threshold` and
+`D365-stadium-row-ships-the-refused-rename`. **No declared survivor was newly
+killed and no killed row newly survived**, which is the right answer for a slice
+whose runtime diff is three rows in a private clause `Map`: nothing else's
+behaviour moved, so nothing else's mutants could change verdict. ⚠️ The
+`engineVersion` anchor was re-pointed 0.269.0 → 0.270.0 **by prediction, before the
+sweep** rather than being found at 0× by the anchor check — the sixty-first payment
+of that debt and the first one that was owed in advance rather than discovered.
 
 
 ### 2026-08-18 — build session #304 (P3-M5 — D364, two leading-sentence strippers at one site, and the order where they meet)
