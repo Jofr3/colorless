@@ -13589,4 +13589,67 @@ export const MUTANTS: Mutant[] = [
     replace: "    const rowClauses = withApostrophe;",
     expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
   },
+  // ── D368 — THE COMPLEMENT THAT IS NOT A NEGATION. Six rows, ONE PER CLAIM
+  //    rather than one per site: the NULL GUARD is positive on both arms so an
+  //    empty Active Spot is FALSE (C1 — the claim that makes this a MEMBER rather
+  //    than the `not` combinator D125 refused), the comparator is `=== 0` and not
+  //    its complement (C2), the boundary sits between 0 and ONE counter (C3), the
+  //    clause row's key is the printed "no" and not its one-word near-miss (C4),
+  //    the NOTE is positive English rather than the complement's (C5), and the
+  //    DECLARATION-fact tripwire fires the day a row is added for a clause this
+  //    union structurally cannot evaluate (C6).
+  {
+    id: "D368-undamaged-satisfied-by-an-empty-spot",
+    decision: "D368",
+    what: "🛑 C1 — THE NULL GUARD INVERTS AND AN EMPTY ACTIVE SPOT SATISFIES THE MEMBER: `active !== null && active.damage === 0` becomes `active === null || active.damage === 0`, which is EXACTLY what `!conditionHolds(state, seat, { kind: \"yourActiveDamaged\" })` would compute — the refused spelling, installed. ⚠️ **THIS IS THE ROW THE WHOLE SLICE TURNS ON.** A complement and a negation agree on every board where an Active exists and disagree on exactly one board where none does, so no damage case can tell them apart and only the empty-spot board can. **AN ABSENT POKÉMON IS NOT AN UNDAMAGED ONE**, and the day this member is rewritten as a negation of its neighbour this row is the only thing that says so",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.damage === 0;",
+    replace: "      return active === null || active.damage === 0;",
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D368-undamaged-becomes-its-own-complement",
+    decision: "D368",
+    what: "🛑 C2 — THE COMPARATOR FLIPS AND THE MEMBER BECOMES `yourActiveDamaged`: `=== 0` becomes `> 0`. Arven's Mabosstiff ex sv10-139/-218/-235 then scores its +120 on precisely the boards the printed text withholds it from and withholds it on precisely the boards that earn it — a total inversion that is invisible to any test which only ever attacks from ONE damage state. ⚠️ AND IT IS THE MUTANT THE NEIGHBOURING ROW MAKES URGENT: the complement is a real member on a real card one line up in the same switch, so this is not a nonsense reading — it is the OTHER card's reading",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.damage === 0;",
+    replace: "      return active !== null && active.damage > 0;",
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D368-undamaged-tolerates-one-counter",
+    decision: "D368",
+    what: "🛑 C3 — THE BOUNDARY MOVES OFF ZERO: `=== 0` becomes `<= 10`, so a body carrying ONE damage counter still counts as having none. ⚠️ **IT IS INVISIBLE ON EVERY BOARD EXCEPT ONE** — 0 scores under both readings and 20+ withholds under both — so only a board at exactly one counter can tell the two apart, which is why the suite drives 0/10/20/50 rather than 'damaged' and 'undamaged'. The printed word is *\"no\"*, and no is zero",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.damage === 0;",
+    replace: "      return active !== null && active.damage <= 10;",
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D368-undamaged-row-keys-on-the-near-miss",
+    decision: "D368",
+    what: "🛑 C4 — THE ROW'S KEY GAINS THE COMPLEMENT'S PRINTED WORD: `\"has no damage counters\"` becomes `\"has any damage counters\"`, which is a DUPLICATE of the `yourActiveDamaged` row eleven lines up. The later entry wins in a `Map`, so Talonflame sv02-030 and Darmanitan sv03-035 silently start reading the UNDAMAGED member and score their +90 / +60 on an undamaged body — while Mabosstiff's own sentence stops resolving entirely. ⚠️ **ONE PRINTED WORD IS THE ENTIRE DIFFERENCE BETWEEN THESE TWO KEYS**, which makes this the sharpest near-miss in the table after the two Poison rows; keys are whole printed clauses and never substrings, and that is what keeps them apart",
+    file: "packages/engine/src/effects.ts",
+    find: '  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],',
+    replace: '  ["this Pokémon has any damage counters on it", { kind: "yourActiveUndamaged" }],',
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D368-undamaged-note-becomes-the-complements",
+    decision: "D368",
+    what: "🛑 C5 — THE NOTE LOSES ITS NEGATION AND BECOMES THE COMPLEMENT'S: *\"has no damage counters on it\"* becomes *\"has damage counters on it\"*, so a reject/tooltip fragment read off the board by a PERSON states the exact opposite of the condition that failed. ⚠️ **THIS IS THE HALF D125 SAID A GENERIC `not` COULD NOT SUPPLY** — a readable negated phrasing English does not hand you — and the reason it exists here at all is that this member is a NAMED board fact rather than an operator over an arbitrary one. A row for it is therefore a row for the argument, not merely for a string",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      return "your Active Pokémon has no damage counters on it";',
+    replace: '      return "your Active Pokémon has damage counters on it";',
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D368-declaration-clause-gets-a-board-row",
+    decision: "D368",
+    what: "🛑 C6 — THE TRIPWIRE FOR THIS SLICE'S CENTRAL FINDING: a clause row is added for *\"this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost)\"*, mapping it to a board fact. That clause is a DECLARATION fact, not a board fact — it is printed on Electivire ex sv10-069/-212 at cost 3 and Jellicent ex sv10.5w-045/-160/-168 at cost 2, so FOUR Energy satisfies one and fails the other with the board IDENTICAL, and `conditionHolds(state, seat, cond)` is handed no attack. ⚠️ **THE MUTANT COMPILES AND LOOKS LIKE PROGRESS** — the census raw summand would rise by 5, the largest single step available behind this skeleton — which is precisely why the refusal has to be a driven assertion rather than a doc block. **A CANDIDATE CAN BE THE LARGEST THING ON THE TABLE AND STILL BE THE WRONG SHAPE FOR THE TABLE**",
+    file: "packages/engine/src/effects.ts",
+    find: '  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],',
+    replace: '  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],\n  ["this Pokémon has at least 2 extra Energy attached (in addition to this attack\'s cost)", { kind: "yourActiveUndamaged" }],',
+    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+  },
 ];
