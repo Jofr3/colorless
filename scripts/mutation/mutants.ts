@@ -13497,8 +13497,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D367",
     what: "🛑 C1 — THE WIDENING THIS SLICE REFUTED ON THREE MORE CARDS, INSTALLED: `yourBenchHasNamed`'s arm stops excluding the Active Spot and spreads `[active, ...bench]`. THREE of the four named-Bench printings this slice builds name their OWN card (Durant sv10.5w-070/-150, Mightyena sv06-114 — and Falinks sv02-119 before them), so the clause then satisfies itself off the ATTACKER and a conditional +20 / +90 becomes UNCONDITIONAL on every board with no second body. ⚠️ D279 priced and refused exactly this widening on ONE card; it is now wrong on FOUR, which is why the refusal is driven on a board rather than left in a doc block",
     file: "packages/engine/src/interpreter.ts",
-    find: "    case \"yourBenchHasNamed\":",
-    replace: "    case \"yourBenchHasNamed__disabled\":",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
+    replace: "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );",
     expectKilledBy: ["packages/engine/src/benchNamedBonus.test.ts"],
   },
   {
