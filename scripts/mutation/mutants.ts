@@ -5511,7 +5511,23 @@ export const MUTANTS: Mutant[] = [
     // — no record can mean something else, so `D326-record-version-not-bumped` is
     // not owed and stays anchored at 22.
     // ⚠ RE-POINTED AT D359 (0.264.0 → 0.265.0) — the FIFTY-SIXTH payment.
-    find: 'export const engineVersion = "0.271.0";',
+    // ⚠️ RE-POINTED AT D367 (0.271.0 → 0.272.0) — the FIFTY-FIFTH payment, and the
+    // question was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS
+    // 22 because D367's whole diff is seven rows in one private clause `Map` and
+    // eleven keys in another — no op, no state field, no wire byte, so no record
+    // can gain, lose or re-read one, and `D326-record-version-not-bumped` is NOT
+    // owed and was not touched.
+    //
+    // 🛑 **AND D367 PAID THIS ONE LATE, WHICH IS THE FINDING**: the debt was
+    // discovered by the FULL 87-minute sweep returning `ERROR` on this row and
+    // sentinel `exit=1`, not by the pre-build enumeration. D367 grepped the
+    // shipping side effect on the TEST side (`legacyEnergy.test.ts`'s version pair,
+    // predicted and fixed in round 1) and never asked the same question of the
+    // MUTANT corpus, although the two are the same class of guard keyed on the same
+    // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
+    // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
+    // patch searching for the double-quoted spelling matches zero.
+    find: 'export const engineVersion = "0.272.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
