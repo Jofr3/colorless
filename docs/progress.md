@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-19 — build session #306 (**P3-M5 — D366, *the own-bench count, and a comparator settled from the catalog before it was spelled.*** Engine **0.270.0 → 0.271.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new op, event, error code, regex, registry row, state field, prompt kind, choice kind or `packages/schema` byte. D365's handoff was RE-MEASURED on four surfaces and its **POPULATION REPRODUCES EXACTLY**: **9 sentences / 18 legal units open with the `"If <clause>, this attack does nothing."` skeleton, 5 s / 9 u were carried, 4 s / 9 u reached the table and MISSED**, every one refused by VOCABULARY. 🛑 **AND SO DOES THE PRICE — THE FIRST TIME IN FOUR SLICES — BECAUSE THE FLOOR IS ZERO**: partitioned by what actually refuses each, **0 rows / 0 sentences / 0 printings** of that residue are answerable with existing vocabulary, so D366 is the first slice in this family (D125, D363, D365) to BUY a `BoardCondition` member. *A floor of zero is a measurement, not an absence of one.* 🛑 **THE COMPARATOR WAS SETTLED FROM A CENSUS, NOT FROM THE CARD**: Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" prints *"4 or fewer Benched Pokémon"* under a cancel, so the positive fact is *"5 or more"* = a FULL five-slot Bench — but the whole-pool `%Benched Pokémon%` census on all three columns returns a SECOND bench-count fact at *"3 or more"* on the OPPONENT's Bench, so the threshold is a PARAMETER the catalog varies and `yourBenchIsFull` would have been the wrong shape. 🛑 **0 OF 2 WIDENINGS AGAIN, DRIVEN ON BOARDS**: dropping `yourOwnerPokemonInPlayAtLeast`'s `owner` counts Active + Bench (one body more on every board Victini can attack from), and `yourBenchHasNamed` reads a NAME a five-body nameless Bench never satisfies. ⚠️ **AND D365's OWN COMPLETENESS GUARD WAS KEYED ON THE WRONG POPULATION** — it counted every carried row against a list of every APOSTROPHE row, the same set only while every row spelled one; Victini's key is the table's first apostrophe-free one, and the guard could NOT be repaired by adding the sentence to the list. Ships: 1 union member, 2 reader arms, 1 clause row. Census `BUILT.attack` **1232 → 1236** (raw 1203 → 1207; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still, measured); `built` **1637**; `units − built` **746**; `unbuiltAttack` **496**; **21 assertion sites keyed on whole-corpus totals moved across 4 files, over 3 rounds, for only 14 red cases** — and one of them was reachable only by grepping the old value as a BARE LITERAL inside an arithmetic expression. Suite **7,716**, **373 files**; corpus **1140 → 1146**; sweep **1146 · 1123 killed · 23 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**; `bun run check` GREEN exit 0.)
+**Last updated:** 2026-08-19 — build session #307 (**P3-M5 — D367, *the bonus consequent's zero-vocabulary floor, and a handed candidate refused on a measurement.*** Engine **0.271.0 → 0.272.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); **ZERO new `BoardCondition` members**, ops, events, error codes, regexes, registry rows, state fields, prompt kinds, choice kinds or `packages/schema` bytes. 🛑 **D366 HANDED OVER A 1-PRINTING CANDIDATE AND TOLD ITS SUCCESSOR TO PRICE IT RATHER THAN TAKE IT FOR BEING ADJACENT. PRICED, AND REFUSED.** S1 — the nine live readers over the whole `legalAttackCorpus()` under the `CONDITIONAL_DAMAGE_BONUS` anchor — puts *"If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage."* inside a residue of **43 sentences / 60 printings**, and partitioning that residue **by what actually refuses each** against the live 31-member union gives a **ZERO-NEW-VOCABULARY FLOOR of 9 sentences / 13 legal printings**. **THIRTEEN PRINTINGS FOR ZERO MEMBERS BOUGHT, AGAINST ONE PRINTING FOR ONE MEMBER BOUGHT** — D363 found an inherited price too high, D365 too low, D366 found the floor was zero; this is the first slice in the family where the floor is the LARGEST thing on the table. SHIPS **7 literal `CONDITIONAL_DAMAGE_CLAUSES` rows** on members that already existed (`yourBenchHasNamed` ×3, a derived `allOf`, `opponentActiveIsStage2`, `opponentHandAtMost {5}`, `opponentPrizesRemaining {[0,1,2,3,4]}`) **plus ONE token map widened** — `CLAUSE_POKEMON_TYPES` learns the brace notation its sibling `CLAUSE_ENERGY_TOKENS` has carried since D118, off the already-canonical `POKEMON_TYPE_BY_CODE`. 🛑 **THREE OF THE FOUR NAMED-BENCH PRINTINGS NAME THE ATTACKER'S OWN CARD**, so D279's refusal of an "in play" widening is now wrong on FOUR cards instead of one — **refuted on a board**, with Volbeat/Illumise as the control that the member is not "another copy of me". 🛑 **TWO DOC BLOCKS WERE MEASURABLY WRONG, BOTH THE SAME CLASS — A UNIQUENESS CLAIM NOTHING WAS KEYED ON**: the Falinks row said *"the pool prints one"* (`sv02-119` is `legal_standard = 0` at head and the legal pool prints FOUR more of that shape), and `opponentHandAtMost` said *"the pool's only 'or fewer' clause of any kind"* (there are three). 🛑 **AND THE BONUS HALF OF `clauseApostrophe.test.ts` HAD NO COMPLETENESS GUARD AT ALL — SHORT BY THREE BEFORE THIS SLICE ADDED ANYTHING.** D365 repaired the requirement half, D366 re-pointed its population, and neither looked at the twin; D326, D327 and D362 each added an apostrophe row without adding it to the list. ⚠️ **AND WRITING THE NEW GUARD REPRODUCED D366's OWN MISTAKE ONE TABLE OVER** — the walk's apostrophe half holds two clauses the parameterised TYPE template owns, which are not rows and need no fold, so the guard partitions ROWS from TEMPLATE explicitly. `BUILT.attack` **1236 → 1249** (raw 1207 → 1220; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still, measured — of the 13 ids exactly ONE is in the registry, `sv06-009` Volbeat, on an `attackGate` program); `built` **1650**; `units − built` **733**; `unbuiltAttack` **483**; **18 whole-corpus assertion sites moved across 4 files plus the version rung in a 5th, over 3 rounds for only 7 red cases**. Suite **7,740**, **374 files**; corpus **1146 → 1155**; <!-- D367-SWEEP-SLOT --> `bun run check` GREEN exit 0.)
+
+**Last updated (was):** 2026-08-19 — build session #306 (**P3-M5 — D366, *the own-bench count, and a comparator settled from the catalog before it was spelled.*** Engine **0.270.0 → 0.271.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new op, event, error code, regex, registry row, state field, prompt kind, choice kind or `packages/schema` byte. D365's handoff was RE-MEASURED on four surfaces and its **POPULATION REPRODUCES EXACTLY**: **9 sentences / 18 legal units open with the `"If <clause>, this attack does nothing."` skeleton, 5 s / 9 u were carried, 4 s / 9 u reached the table and MISSED**, every one refused by VOCABULARY. 🛑 **AND SO DOES THE PRICE — THE FIRST TIME IN FOUR SLICES — BECAUSE THE FLOOR IS ZERO**: partitioned by what actually refuses each, **0 rows / 0 sentences / 0 printings** of that residue are answerable with existing vocabulary, so D366 is the first slice in this family (D125, D363, D365) to BUY a `BoardCondition` member. *A floor of zero is a measurement, not an absence of one.* 🛑 **THE COMPARATOR WAS SETTLED FROM A CENSUS, NOT FROM THE CARD**: Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force" prints *"4 or fewer Benched Pokémon"* under a cancel, so the positive fact is *"5 or more"* = a FULL five-slot Bench — but the whole-pool `%Benched Pokémon%` census on all three columns returns a SECOND bench-count fact at *"3 or more"* on the OPPONENT's Bench, so the threshold is a PARAMETER the catalog varies and `yourBenchIsFull` would have been the wrong shape. 🛑 **0 OF 2 WIDENINGS AGAIN, DRIVEN ON BOARDS**: dropping `yourOwnerPokemonInPlayAtLeast`'s `owner` counts Active + Bench (one body more on every board Victini can attack from), and `yourBenchHasNamed` reads a NAME a five-body nameless Bench never satisfies. ⚠️ **AND D365's OWN COMPLETENESS GUARD WAS KEYED ON THE WRONG POPULATION** — it counted every carried row against a list of every APOSTROPHE row, the same set only while every row spelled one; Victini's key is the table's first apostrophe-free one, and the guard could NOT be repaired by adding the sentence to the list. Ships: 1 union member, 2 reader arms, 1 clause row. Census `BUILT.attack` **1232 → 1236** (raw 1203 → 1207; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still, measured); `built` **1637**; `units − built` **746**; `unbuiltAttack` **496**; **21 assertion sites keyed on whole-corpus totals moved across 4 files, over 3 rounds, for only 14 red cases** — and one of them was reachable only by grepping the old value as a BARE LITERAL inside an arithmetic expression. Suite **7,716**, **373 files**; corpus **1140 → 1146**; sweep **1146 · 1123 killed · 23 known survivors · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**; `bun run check` GREEN exit 0.)
 
 **Last updated (was):** 2026-08-18 — build session #305 (**P3-M5 — D365, *the floor the handoff understated: three clause rows at ZERO new vocabulary, and `allOf`'s first DERIVED producer.*** Engine **0.269.0 → 0.270.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new `BoardCondition` member, op, event, error code, regex, registry row, state field or reader arm. D364's handoff was RE-MEASURED on four surfaces and its **POPULATION REPRODUCES EXACTLY**: **9 sentences / 18 legal units open with the `"If <clause>, this attack does nothing."` skeleton, 2 s / 4 u were carried, 7 s / 14 u reached the table and MISSED**, and so does its **"ZERO anchors"** claim — every one of the seven matches the skeleton and misses on the CLAUSE, so what refuses them is **VOCABULARY**. 🛑 **THE PRICE DID NOT REPRODUCE, AND IT WAS TOO SMALL**: the zero-new-vocabulary floor is **3 rows / 3 sentences / 5 legal printings**, not the handoff's 2 / 2 / 3 — it never enumerated **Mesprit `sv08-079`/`sv08-204`** *"If you don't have Uxie and Azelf on your Bench…"*, which `allOf` (D280) and `yourBenchHasNamed` (D118) already spell between them. *A count can reproduce exactly while its attribution is wrong* — third consecutive slice — **and an attribution can be wrong by leaving something OUT, which reads as conservatism rather than as an error.** 🛑 **AND NEITHER "WIDENING" THE HANDOFF NAMED IS ONE — 0 OF 2, DRIVEN ON BOARDS**: `yourStadiumInPlay` yours→any is a RENAME (its arm reads OWNERSHIP and `FALKNER` plus the positive clause row depend on it), and Burned is an ADDITION (no member reads `StatusConditions.burned`, and narrowing `opponentActiveHasSpecialCondition` breaks Sableye). **A WIDENING IS FREE EXACTLY WHEN EVERY EXISTING CONSUMER WANTS THE WIDER READING.** 🛑 **`allOf` GAINS ITS FIRST DERIVED PRODUCER** — from D280 to D364 all 14 ids' values were hand-authored in `registry.ts` — **and nothing downstream moves**: same `.every` recursion, no new arm in either of the two exhaustive `switch (cond.kind)` readers. ⚠️ **A GUARD WAS FOUND STALE AT HEAD BY THE STRING-LITERAL ANCHOR**: `clauseApostrophe.test.ts`'s `APOSTROPHE_REQUIREMENT_SENTENCES` held TWO entries while its doc and its test name both said *"ALL THREE rows"* — repaired to six and given a COMPLETENESS GUARD off the live reader. ⚠️ **AND THREE DIFFERENCE-KEYED CENSUS RUNGS WERE DRIVEN RED FOR THE FIRST TIME** — `BUILT.attack` **1227 → 1232** (raw 1198 → 1203; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still), moving `BUILT.attack - 922` 305 → 310, `BUILT.attack - 922 - 252` 53 → 58 and `precociousEvolution`'s `head - rawDelta - splitDelta` 1221 → 1226; the first two share one `it`, so the second was unreachable until the first was green. `bun run check` **372 files / 7,696 tests, exit 0** on the CLOSED tree. `requirementFloor.test.ts` — **18 cases in six sections**, probed on a quiet tree. **SIX mutation rows, one PER CLAIM**; corpus **1134 → 1140**.)
 
@@ -363,120 +365,131 @@
 
 ## NEXT (resume point)
 
-> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-19, after D366)
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-19, after D367)
 >
 > ✅ **NO DEBTS ARE OUTSTANDING, THE TREE IS CLEAN AND EVERYTHING IS PUSHED** —
 > the branch `claude/backend-loop-subagents-q2wz9f` AND `main`, fast-forwarded at
 > the user's explicit instruction. **NO PULL REQUEST WAS OPENED, BY INSTRUCTION.**
-> `bun run check` **373 files / 7,716 tests, exit 0** (baseline 372 / 7,696 — the
-> delta is **+1 file and +20 cases**: 19 of them the whole of
-> `benchCountRequirement.test.ts` and **1 in `clauseApostrophe.test.ts`**, the
-> second completeness guard the first one's repair turned out to owe. MEASURED on
-> the CLOSED tree, and **zero existing cases moved**.)
+> `bun run check` **374 files / 7,740 tests, exit 0** (baseline 373 / 7,716 — the
+> delta is **+1 file and +24 cases**: 22 of them the whole of
+> `benchNamedBonus.test.ts` and **2 in `clauseApostrophe.test.ts`**, the
+> completeness guard the BONUS half of that file never had. MEASURED on the CLOSED
+> tree, and **zero existing cases moved**.)
 >
-> 🛑 **WHAT D366 SETTLED. THE POPULATION REPRODUCED AND SO DID THE PRICE — THE
-> FIRST TIME IN FOUR SLICES, AND A FLOOR OF ZERO IS WHAT MADE IT SO.** D365 handed
-> over *4 sentences / 9 legal printings behind the does-nothing skeleton, every one
-> refused by VOCABULARY*. All of it reproduces to the unit on S1 and on S3. Then
-> the partition that D363 and D365 both got wrong in opposite directions was run
-> again — **by WHAT ACTUALLY REFUSES EACH, against the live `BoardCondition`
-> union** — and the zero-new-vocabulary floor over that residue is **0 rows / 0
-> sentences / 0 printings**: Fan Rotom needs an any-owner Stadium member, Alolan
-> Dugtrio an own-hand exact-size member, Centiskorch a Burned member, Victini a
-> count of your own Bench. **A FLOOR OF ZERO IS A MEASUREMENT AND NOT AN ABSENCE OF
-> ONE**, and it is what makes D366 the first slice in this family (D125, D363,
-> D365) that had to BUY a union member rather than reuse one.
+> 🛑 **WHAT D367 SETTLED, AND IT IS A REFUSAL BEFORE IT IS A BUILD.** D366 handed
+> over one sentence — *"If your opponent has 3 or more Benched Pokémon, this attack
+> does 80 more damage."*, **1 legal printing**, needing **one new `BoardCondition`
+> member** — and warned in its own handoff that it must be PRICED and not taken for
+> being the seat-mirror of what D366 shipped. **Priced on four surfaces, and
+> refused.** S1 (the nine live readers over the whole `legalAttackCorpus()` under
+> the `CONDITIONAL_DAMAGE_BONUS` anchor) puts that candidate inside a residue of
+> **43 sentences / 60 printings**, and partitioning that residue **BY WHAT ACTUALLY
+> REFUSES EACH** — against the live 31-member union, which is the partition D363
+> and D365 both got wrong in opposite directions — gives a **ZERO-NEW-VOCABULARY
+> FLOOR of 9 sentences / 13 legal printings**. **THIRTEEN PRINTINGS FOR ZERO
+> MEMBERS BOUGHT, AGAINST ONE PRINTING FOR ONE MEMBER BOUGHT.** D363 found an
+> inherited price too HIGH, D365 found one too LOW, D366 found the floor was ZERO;
+> **D367 is the first slice in this family where the floor is the LARGEST THING ON
+> THE TABLE**, and naming that is the finding rather than the build that followed.
 >
-> 🛑 **AND THE COMPARATOR WAS A CATALOG QUESTION, ASKED BEFORE THE MEMBER WAS
-> SPELLED.** Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force"
-> ({R}{R}, 120) prints *"If you have 4 or fewer Benched Pokémon, this attack does
-> nothing."* — **4 legal printings, twice any other candidate, and ALL of the
-> sentence's printings anywhere in the catalog** (there is no `legal_standard = 0`
-> copy, so unlike Palafin's and Lycanroc's rows nothing here can rot with a
-> rotation). The skeleton owns the negation, so the positive fact is *"5 or more"*,
-> which on a five-slot Bench is FULL — and a `yourBenchIsFull` predicate would
-> answer this card identically on every board it can ever reach. The whole-pool
-> `%Benched Pokémon%` census on **all three text columns** returns exactly **TWO**
-> bench-count board facts in the legal catalog: this one, and *"If your opponent
-> has 3 or more Benched Pokémon, this attack does 80 more damage."* — the OTHER
-> seat at a threshold that is **not** the cap. **THE PARAMETER IS LOAD-BEARING
-> BECAUSE THE CATALOG VARIES IT, NOT BECAUSE A NUMBER READS BETTER THAN A
-> PREDICATE.**
+> 🛑 **THE NINE, WITH THE MEMBER EACH ALREADY HAD.** `yourBenchHasNamed` — Durant
+> `sv10.5w-070`/`-150` (2), Volbeat `sv06-009` (1), Mightyena `sv06-114` (1);
+> `allOf` of two of the same — Metagross `sv09-063` (1), the engine's SECOND derived
+> `allOf` and the first under a BONUS consequent; `opponentActiveIsStage2` —
+> Regirock ex `sv10-101`/`-214` (2), D296's member's first clause-table appearance;
+> `opponentHandAtMost {5}` — Mienshao `sv07-084` (1), the second threshold the
+> member was parameterised for; `opponentPrizesRemaining {[0,1,2,3,4]}` — Gouging
+> Fire `svp-151`/`sv08-038` (2); and `opponentActiveHasType` at `{P}` (2) and `{D}`
+> (1) through a **token map**, not a row. All 13 are `legal_standard = 1`,
+> `category = 'Pokemon'`, and **none of the nine sentences has a
+> `legal_standard = 0` copy anywhere**, so unlike Falinks's row nothing here can rot
+> with a rotation.
 >
-> ⚠️ **0 OF 2 WIDENINGS AGAIN, AND BOTH DRIVEN ON BOARDS RATHER THAN ARGUED.**
-> `yourOwnerPokemonInPlayAtLeast` with its `owner` dropped spreads
-> `[active, ...bench]`, so it is one body larger on **every** board Victini can
-> attack from — a four-body Bench is five in play, and that is the exact board the
-> printed card cancels on. `yourBenchHasNamed` reads a NAME through `topCardOf`,
-> and a Bench of five nameless bodies satisfies the COUNT while satisfying no NAME
-> at all. Two slices running, **2 of 4** claimed widenings have been real: zero.
+> 🛑 **THE TOKEN MAP WAS AN ASYMMETRY BETWEEN TWO SIBLING TEMPLATES, NOT NEW
+> VOCABULARY.** `CLAUSE_ENERGY_TOKENS` has carried BOTH printed notations since D118
+> and its doc block says why — *"a code-only parser would silently skip a whole set
+> the moment one of its cards prints the shape"*. `CLAUSE_POKEMON_TYPES` was built
+> from the spelled-out names ALONE, i.e. the NAME-only mirror image of the parser
+> that paragraph warns about, and the pool had already printed the shape it could
+> not see. Fixed by spreading `POKEMON_TYPE_BY_CODE`, which already existed, was
+> already total over `POKEMON_TYPES` and was already pinned against it.
 >
-> ⚠️ **AND D365's OWN COMPLETENESS GUARD WAS KEYED ON THE WRONG POPULATION — FOUND
-> BY THE FIRST ROW THAT COULD SEPARATE THEM.** D365 repaired a stale hand-written
-> list by re-deriving the table's reachable size FROM THE LIVE READER. The repair
-> was right and its population was not: it counted **every carried row** and
-> compared that against a list of **every APOSTROPHE row**, and those were the same
-> set only while every row in the table happened to spell an apostrophe. Victini's
-> key spells none, so the guard reddened at 6-vs-5 — **and it could not be repaired
-> by adding the sentence to the list**, because that would assert a false thing
-> about a string the fold cannot change. Narrowed with a filter, and the rows the
-> filter drops now have a completeness guard of their own, so neither half can go
-> stale in silence. **A POPULATION THAT COINCIDES WITH THE ONE YOU WANTED IS NOT
-> THE ONE YOU WROTE.**
+> 🛑 **THREE OF THE FOUR NAMED-BENCH PRINTINGS NAME THE ATTACKER'S OWN CARD.** Durant
+> names Durant, Mightyena names Mightyena (and Falinks named Falinks before them), so
+> an "in play" reading of `yourBenchHasNamed` lets each clause satisfy itself off the
+> body in the Active Spot and turns a conditional +20 / +90 into an unconditional
+> one. D279 priced and refused that widening on ONE card; it is now wrong on FOUR —
+> **driven on a board, not argued**, with Volbeat (which names ILLUMISE) as the
+> control that stops the member being read as "another copy of me".
 >
-> ⚠️ **TWENTY-ONE ASSERTION SITES KEYED ON WHOLE-CORPUS TOTALS MOVED, IN FOUR
-> FILES, AND THEY CAME OUT OVER THREE ROUNDS RATHER THAN ONE.** `censusAtHead`
-> (10), `exOnlyActive` (4), `sawkRequirementSplit` (4), `precociousEvolution` (3).
-> Only **14 test cases** ever went red for them, because several sites share an
-> `it` and an assertion behind a failing one is never reached — D365's lesson,
-> reproduced at a third shape. ⚠️ **AND ONE SITE WAS REACHABLE ONLY BY GREPPING THE
-> OLD VALUE AS A BARE LITERAL**: `censusAtHead`'s `expect(529 - REGISTRY_ATTACKS.length
-> - SPLIT_ATTACK_UNITS)` carries the figure as an OPERAND, so every `toBe(529)`
-> grep misses it. **GREP THE OLD VALUE BARE, AND GREP ARITHMETIC ON IT.**
-> ⚠️ The pool-keyed apostrophe census was **MEASURED AT +0** and stayed **109**:
-> `fix-victini` prints no apostrophe and that sweep filters on one. *A fixture count
-> is not a sentence count, and a sentence count is not a census delta.*
+> ⚠️ **TWO DOC BLOCKS WERE MEASURABLY WRONG, AND BOTH ARE THE SAME CLASS: A
+> UNIQUENESS CLAIM NOTHING WAS KEYED ON.** The Falinks row said *"the pool prints
+> one"* — at head `sv02-119` is `legal_standard = 0`, so the one printing it names is
+> UNREACHABLE, while the legal pool prints FOUR MORE of exactly that shape.
+> `opponentHandAtMost` said *"the pool's only 'or fewer' clause of any kind"* —
+> there are three. **A UNIQUENESS CLAIM IS THE MOST PERISHABLE THING A DOC BLOCK CAN
+> CARRY AND IT PERISHES SILENTLY**; the named-Bench family is now DERIVED from the
+> corpus so the next rotation reddens instead of lying.
 >
-> ▶ **D367 — THE NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT.**
-> Surface **S3** produced it — the `%Benched Pokémon%` comparator census this slice
-> ran on the remote D1 `luminous` (`$.effect`, all three text columns, extractor
-> verified against the 640 / 1,732 / 60,467 total FIRST) **before** spelling
-> `yourBenchAtLeast`. That census returned TWO bench-count board facts and D366
-> bought ONE of them. The other is
-> **`"If your opponent has 3 or more Benched Pokémon, this attack does 80 more
-> damage."` — 1 legal printing, UNBUILT on both readers at this head** (asserted
-> live in `benchCountRequirement.test.ts` §2, which fails the day either reader
-> starts carrying it). It is the **cross-seat sibling** of the member D366 just
-> shipped: same zone, same `>=` fold, a different seat and a threshold of 3, under
-> the POSITIVE consequent — so it lands in `CONDITIONAL_DAMAGE_CLAUSES` and not in
-> `ATTACK_REQUIREMENT_CLAUSES`, and it is the first row that would prove the
-> threshold parameter is not `BENCH_MAX` wearing a number.
+> ⚠️ **AND THE BONUS HALF OF `clauseApostrophe.test.ts` HAD NO COMPLETENESS GUARD AT
+> ALL — SHORT BY THREE BEFORE THIS SLICE ADDED ANYTHING.** D365 found the REQUIREMENT
+> list stale and re-derived its size from the live reader; D366 found that repair
+> keyed on the wrong population and narrowed it. **Both slices worked on one half of
+> a symmetric pair and neither looked at the other**: walked off the live bonus
+> reader, the legal corpus carried EIGHT apostrophe clauses and the list named FIVE,
+> the three missing ones added by D326, D327 and D362 — each a slice that edited the
+> table and not the list. **A GUARD THAT EXISTS ON ONE HALF OF A SYMMETRIC PAIR IS
+> NOT A GUARD ON THE PAIR, AND THE MISSING HALF IS INVISIBLE PRECISELY BECAUSE THE
+> HALF THAT EXISTS IS GREEN.** ⚠️ And writing the new guard **reproduced D366's own
+> mistake one table over**: the walk's apostrophe half holds two clauses the
+> parameterised TYPE template owns, which are not rows and need no fold, so the guard
+> partitions ROWS from TEMPLATE explicitly instead of filtering once.
 >
-> ⚠️ **AND PRICE IT BEFORE TAKING IT, BECAUSE 1 PRINTING IS SMALL AND THE
-> ALTERNATIVES ON THE TABLE ARE NOT.** The does-nothing residue is still **3
-> sentences / 5 legal printings** (Fan Rotom `sv07-118`/`sv08.5-085` 2, Alolan
-> Dugtrio `sv08-123`/`-208` 2, Centiskorch `sv05-037` 1), each needing exactly one
-> addition, and each of those additions is the same size as this one. **The
-> question D367 must answer with a number is which of the four is worth most per
-> member bought** — and 1 printing for a member that is a near-copy of an existing
-> arm is not obviously worse than 2 printings for a member that is not. Re-derive
-> all of it: S1 over `legalAttackCorpus()` with the live readers, S2 `programFor`
-> over the 708 `registryCardIds()` (none of D366's four ids was a registry row —
-> assert the same for D367's before predicting the summands), S3 on `$.effect` with
-> the extractor verified against a known total FIRST, S4 the grep that closes the
-> producer set. **A D367 that answers clause rows moves `BUILT.attack` and nothing
-> else** — `splitHead` stays 13 unless a gate is authored and `REGISTRY_ATTACK_UNITS`
-> stays 16 unless a registry row ships. Predict the three independently.
+> ⚠️ **EIGHTEEN WHOLE-CORPUS ASSERTION SITES MOVED IN FOUR FILES, PLUS THE ENGINE-
+> VERSION RUNG IN A FIFTH — OVER THREE ROUNDS, FOR ONLY SEVEN RED CASES.** Three of
+> them share ONE `it` in `censusAtHead.test.ts` (`units - built`, then
+> `BUILT.attack - 922`, then `BUILT.attack - 922 - 252`) and each is unreachable
+> until the one before it is green — D365's lesson, D366's lesson, and now D367's, at
+> the same site three slices running. ⚠️ One site was reachable only as an arithmetic
+> OPERAND (`512 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS`) and **this time it
+> was grepped for BEFORE the build** rather than found by a red run.
 >
-> ⚠️ **AND ASK WHETHER A SEAT-PARAMETERISED MEMBER IS THE RIGHT SHAPE BEFORE
-> ADDING A SECOND SEAT-NAMED ONE.** All 31 members of this union are seat-NAMED
-> (`your*` / `opponent*`), which is why D366 spelled `yourBenchAtLeast` rather than
-> `benchAtLeast { seat }`. A second bench-count member makes that convention a
-> DECISION rather than an inheritance, and the honest way to settle it is the same
-> way D366 settled the comparator: count what the pool prints, not what reads
-> better. **DO NOT re-point `yourBenchAtLeast` at a seat parameter without driving
-> every existing consumer on a board first — that is a RENAME until proven
-> otherwise, which is the finding D365 recorded and D366 reproduced.**
+> ▶ **D368 — THE NEXT SOURCE OF WORK, AND THE MEASUREMENT THAT JUSTIFIES IT.**
+> Surface **S1** produced it, from the same instrument that priced this slice: with
+> D367's nine taken, the `CONDITIONAL_DAMAGE_BONUS` residue is **34 sentences / 47
+> printings**, re-derived live in `benchNamedBonus.test.ts` §1 and asserted with both
+> halves summing to the 81 / 129 population. The **largest single item left is
+> `"this Pokémon has at least 2 extra Energy attached (in addition to this attack's
+> cost)"` at 3 printings on one sentence and 5 across two** (Standard-legal, refused
+> by all nine readers, asserted by name in §1) — **three times the bench candidate
+> D367 declined and five times it across the pair.** It needs ONE new member and the
+> member is not cheap: no `BoardCondition` reads an attack's declared COST at all, so
+> the honest question to settle FIRST — from the catalog, before the member is
+> spelled, which is what turned D366's predicate into a parameter — is whether
+> *"extra … in addition to this attack's cost"* is a fact about the BOARD or a fact
+> about the DECLARATION, because the second is not a `BoardCondition` at all.
+>
+> ⚠️ **AND THE THREE-PRINTING TIE-BREAK IS ALREADY MEASURED, SO D368 NEED NOT
+> RE-OPEN IT BLIND.** `"this Pokémon has no damage counters on it"` is also 3
+> printings and looks cheaper — it is the NEGATION of `yourActiveDamaged`, which
+> already exists. **IT IS NOT CHEAPER, AND THE REASON IS POLARITY**: the requirement
+> skeleton owns its negation and the BONUS skeleton does not, so a printed "no
+> damage counters" under a +N consequent needs either a new member or the `not`
+> combinator **D125 refused and D280 deliberately did not revive**. Price that
+> refusal before assuming it still holds — D363 and D365 both found an inherited
+> price wrong, in opposite directions, and neither was re-measured until a slice did.
+>
+> ⚠️ **THE BENCH CANDIDATE IS NOT DEAD, IT IS RANKED.** It is still 1 legal printing
+> and still refused by all nine readers, asserted by name in `benchNamedBonus.test.ts`
+> §1 so the rung fires the day a row is added for it. Take it when it is the largest
+> thing on the table, not when it is the nearest.
+>
+> ⚠️ **AND THE SEAT-PARAMETER QUESTION D366 LEFT OPEN IS STILL OPEN AND STILL
+> UNPRICED.** All 31 union members are seat-NAMED. **DO NOT re-point
+> `yourBenchAtLeast` at a seat parameter without driving every existing consumer on a
+> board first — that is a RENAME until proven otherwise**, which is the finding D365
+> recorded, D366 reproduced, and D367 had no occasion to test.
+
 
 ### Prior resume point (P5-3 — deck cover art, kept for continuity)
 **P5-3 is DONE (polish.md, D83) — deck covers are real card art.** A pure `pickCoverCardId` picks the deck's
@@ -2498,7 +2511,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D366, THE OWN-BENCH COUNT, AND A COMPARATOR SETTLED FROM THE CATALOG BEFORE IT WAS SPELLED.** Engine **0.270.0 → 0.271.0**, `MATCH_RECORD_VERSION` **22 UNCHANGED**. D365's residue RE-MEASURED on four surfaces: the population reproduces to the unit (**9 s / 18 u** behind the does-nothing skeleton, **5 s / 9 u** carried, **4 s / 9 u** refused by VOCABULARY) **AND SO DOES THE PRICE**, because the zero-new-vocabulary floor over that residue is **0 / 0 / 0** — the first slice in this family to BUY a `BoardCondition` member. Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force", **4 legal printings** and all of the sentence's printings anywhere. THE COMPARATOR CAME FROM A `%Benched Pokémon%` CENSUS ON ALL THREE COLUMNS, run BEFORE the member was spelled: a second bench-count fact at *"3 or more"* on the OPPONENT's Bench means the threshold is a PARAMETER and `yourBenchIsFull` would have been the wrong shape. **0 of 2 widenings, driven on boards.** **D365's completeness guard was keyed on the wrong population** and this row is the first that could separate them. Ships 1 union member + 2 reader arms + 1 clause row; **21 whole-corpus rungs moved in 4 files over 3 rounds for 14 red cases**. Suite **7,716** / **373 files**; corpus **1140 → 1146**; sweep **1146 · 1123 killed · 23 known · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**; `bun run check` GREEN exit 0.)
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D367, THE BONUS CONSEQUENT'S ZERO-VOCABULARY FLOOR, AND A HANDED CANDIDATE REFUSED ON A MEASUREMENT.** Engine **0.271.0 → 0.272.0**, `MATCH_RECORD_VERSION` **22 UNCHANGED**, **ZERO new `BoardCondition` members**. D366's handed candidate (*"3 or more Benched Pokémon"*, **1 legal printing**, one new member) was PRICED on four surfaces and REFUSED: S1 puts it inside a `CONDITIONAL_DAMAGE_BONUS` residue of **43 s / 60 p**, and partitioning that residue BY WHAT REFUSES EACH gives a **zero-new-vocabulary floor of 9 sentences / 13 legal printings** — **13 printings for zero members bought against 1 printing for one member bought.** Ships **7 literal clause rows** on existing members plus **one token map widened** (`CLAUSE_POKEMON_TYPES` learns the brace notation its sibling has carried since D118). **Three of the four named-Bench printings name the attacker's own card**, so D279's refusal of an "in play" widening is now wrong on FOUR cards — refuted on a board. **Two doc blocks were measurably wrong, both a uniqueness claim nothing was keyed on.** **The BONUS half of `clauseApostrophe.test.ts` had no completeness guard at all and was short by three before this slice added anything.** `BUILT.attack` **1236 → 1249** (raw 1207 → 1220; `REGISTRY_ATTACK_UNITS` 16 and `splitHead` 13 both stand still, measured); **18 whole-corpus rungs moved in 4 files plus the version rung in a 5th, over 3 rounds for 7 red cases.** Suite **7,740** / **374 files**; corpus **1146 → 1155**; <!-- D367-STATUS-SWEEP --> `bun run check` GREEN exit 0. PREVIOUS: **P3-M5 — D366, THE OWN-BENCH COUNT, AND A COMPARATOR SETTLED FROM THE CATALOG BEFORE IT WAS SPELLED.** Engine **0.270.0 → 0.271.0**, `MATCH_RECORD_VERSION` **22 UNCHANGED**. D365's residue RE-MEASURED on four surfaces: the population reproduces to the unit (**9 s / 18 u** behind the does-nothing skeleton, **5 s / 9 u** carried, **4 s / 9 u** refused by VOCABULARY) **AND SO DOES THE PRICE**, because the zero-new-vocabulary floor over that residue is **0 / 0 / 0** — the first slice in this family to BUY a `BoardCondition` member. Victini `sv10.5b-012`/`sv10.5b-171`/`sv10.5w-172`/`svp-208` "V-Force", **4 legal printings** and all of the sentence's printings anywhere. THE COMPARATOR CAME FROM A `%Benched Pokémon%` CENSUS ON ALL THREE COLUMNS, run BEFORE the member was spelled: a second bench-count fact at *"3 or more"* on the OPPONENT's Bench means the threshold is a PARAMETER and `yourBenchIsFull` would have been the wrong shape. **0 of 2 widenings, driven on boards.** **D365's completeness guard was keyed on the wrong population** and this row is the first that could separate them. Ships 1 union member + 2 reader arms + 1 clause row; **21 whole-corpus rungs moved in 4 files over 3 rounds for 14 red cases**. Suite **7,716** / **373 files**; corpus **1140 → 1146**; sweep **1146 · 1123 killed · 23 known · 0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors**; `bun run check` GREEN exit 0.)
 | ~~simulator~~ | ~~P3~~ | ~~(was D365)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D365, THE FLOOR THE HANDOFF UNDERSTATED: THREE CLAUSE ROWS AT ZERO NEW VOCABULARY, AND `allOf`'s FIRST DERIVED PRODUCER.** Engine **0.269.0 → 0.270.0**, `MATCH_RECORD_VERSION` **22 unchanged** — **3 sentences / 5 legal printings** bought with ZERO new `BoardCondition` members, ops, events, error codes, regexes, registry rows or reader arms. D364's population reproduced exactly (9 s / 18 u behind the skeleton, 7 s / 14 u missing behind ZERO anchors) and its PRICE did not: the zero-new-vocabulary floor is **3 rows / 5 printings**, not 2 / 3 — Mesprit `sv08-079`/`sv08-204` was never enumerated. **NEITHER "WIDENING" IS ONE, 0 of 2**: `yourStadiumInPlay` yours→any is a RENAME and Burned is an ADDITION. `BUILT.attack` **1227 → 1232**, and the three DIFFERENCE-KEYED rungs behind it were driven RED for the first time.)
 | ~~simulator~~ | ~~P3~~ | ~~(was D364)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D364, TWO LEADING-SENTENCE STRIPPERS AT ONE SITE, AND THE ORDER WHERE THEY MEET IS NOW ASSERTED.** Engine **0.269.0**, NO runtime behaviour changed; **`MATCH_RECORD_VERSION` STAYS 22**, read from source. The census D282 priced its composer refusal against was RE-QUERIED on four surfaces and **every count reproduced** (1,732 units / 640 sentences, 613 multi-sentence, 16 opening `If `, 13 of 708 registry ids with an `attackGate`) while **three attributions did not**: the 16 partition as **10 GATE + 6 SUBSTANTIVE** and not "13 + 3" (the LICENCE spelling does not open with `If `, so it was never in the 16 — and 2 of the 6 ARE the requirement family); the clause table's three rows are worth **0 + 2 + 2 = four** legal printings with the Palafin row DEAD in Standard and the "Lycanroc HAPAX" row actually **Basculin `sv10.5w-024`/`-108`**; and Sawk "Rising Chop" costs **{F}**, not `{F}{C}`. The two splits are **DISJOINT over all 1,732 legal units (0 claimed by both)**, so a looping `splitHead` would be scaffolding for a population of zero — D282's refusal re-derived, not inherited. Shipped: `splitOrder.test.ts` (14 cases) pinning the disjointness as a TRIPWIRE, the ORDER on a labelled constructed counterexample where the two orders provably disagree and both fail in the SAFE direction, the table's LIVE legality, and a board driving the read-before-split order. `bun run check` **371 files / 7,677 tests, exit 0**.**P3-M5 — D363, THE `$` WAS THE WRONG ANCHOR TO PRICE, AND THE RE-MEASUREMENT IS THE SLICE.** Engine **0.268.0 → 0.269.0** over FIVE sites; **`MATCH_RECORD_VERSION` STAYS 22**, asked rather than inherited — no new op, no op field, no union member, no event, no `phase` shape, so no old record can mean something else. D362 refused this widening at *"9 sentences / 27 printings of unrelated surface"* and left it unspent. **ITS COUNTS REPRODUCED EXACTLY AND ITS ATTRIBUTION DID NOT**: `ATTACK_DOES_NOTHING` has TWO anchors, and partitioning those 9 refused sentences by WHICH one refuses them gives **1 s / 2 p behind the `$`**, 7 s / 23 p behind the `^` and 1 s / 2 p behind both — confirmed pool-wide on the remote D1 (`$.effect`, extractor verified against known-present rows first) at **2 rows in 978 cards / 6 sets**, both Sawk `sv10.5w-049`/`-130`, both `legal_standard = 1`. **A `$` WIDENING BUYS TWO PRINTINGS, NOT TWENTY-SEVEN.** **BOUGHT: 1 sentence / 2 Standard-legal printings** for ONE `$` moved into an optional group nothing reads, ONE `ATTACK_REQUIREMENT_CLAUSES` row on the `opponentActiveIsEx` member D362 already bought (the same board fact now read from BOTH consequents), ONE split (`splitAttackRequirementClause` — D282's shape and D282's one safety property: it refuses to strip a clause the table does not carry) and ONE boolean at the attack site gated on "no split fired". **ZERO** new `BoardCondition` members, ops, op fields, `CardFilter` kinds, prompt kinds, registry keys or `packages/schema`. 🛑 **A WIDENED ANCHOR WITH NO SPLIT BEHIND IT WOULD HAVE SILENCED SAWK'S SECOND PRINTED RULE** — the attack would gate correctly, deal damage, pass every board assertion and quietly ignore half its card, which is the D278/D279 failure this family has refused twice. Census **1225 → 1227** (RAW summand 1196 → 1198), `built` 1626 → **1628**; **17** rungs moved where 13 were predicted, the four extra all keyed on a DIFFERENCE rather than on a value. SEVEN files went red where FOUR were predicted — the three extra are guards on side effects of SHIPPING (a version bump, a fixture, a comment quoting a row count without its set count). Mutation corpus **1128 → 1134**, six rows one per claim, one of which SURVIVED its first probe and was closed. `bun run check` **370 files / 7,663 tests, exit 0**; sweep **1111 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1134**, sentinel `exit=0`, verified BY ID in both directions and reconciled against D362 with **0 verdict changes** and a survivor set identical at 23.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D357)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D357, AN ANTECEDENT AND A PRONOUN DO NOT READ THE SAME BOARD.** Engine **0.262.0 → 0.263.0**; `MATCH_RECORD_VERSION` stays 21. A **CODE-REVIEW REPAIR of D356 — four findings, four fixed, zero refused** — whose first finding was a **correctness defect already on `main`**: the `activeOnly` gate read the board AFTER §6.1's Jet Energy switch rider, so a BENCHED Magearna healed and an ACTIVE one silently lost its printed 90. The clause reads the board AT THE MOMENT OF THE ATTACH — settled from the catalog, driven both ways in `autoHeal.test.ts` §5b, and verified RED against the old gate first. **A ROW COUNT IS NOT A COVERAGE MAP**: `sweepTriggers` already had two mutation rows and neither touched the gate. Census UNMOVED (measured — the census file is byte-unchanged). Suite 365 files / 7,532 tests; corpus 1089, sweep **1066 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)**) |
@@ -2561,6 +2574,161 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-19 — build session #307 (P3-M5 — D367, the bonus consequent's zero-vocabulary floor, and a handed candidate refused on a measurement)
+
+**Slice.** NINE printed sentences / **13 Standard-legal printings**, bought with
+**ZERO new `BoardCondition` members**: **7 literal `CONDITIONAL_DAMAGE_CLAUSES` rows**
+on members that already existed, plus **one token map widened**. ONE new suite
+(`benchNamedBonus.test.ts`, 22 cases), one completeness guard built for a half of a
+file that never had one, nine mutation rows, and the census. The tree was CLEAN on
+arrival at `e470e84`, both refs level, and every piece was pushed as it landed.
+Engine **0.271.0 → 0.272.0**; `MATCH_RECORD_VERSION` **22**, read from source —
+seven rows in a private clause `Map` and nine keys in another persist nothing.
+
+**🛑 THE SLICE IS A REFUSAL BEFORE IT IS A BUILD.** D366 handed over one sentence —
+*"If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage."*,
+**1 legal printing**, needing **one new union member** — and warned in its own
+handoff that it must be PRICED and not taken for being the seat-mirror of what D366
+had just shipped. **Priced on four surfaces, and refused.**
+
+**Four surfaces, and which produced what.** **S1** — `deriveAttackEffect` and its
+eight siblings run LIVE over the whole 640-sentence / 1,732-printing
+`legalAttackCorpus()`, with a recursive op flatten — is the surface that produced
+this slice: under the `CONDITIONAL_DAMAGE_BONUS` anchor the corpus holds **81
+sentences / 129 printings**, of which **38 s / 69 p** were carried and **43 s / 60 p**
+were refused by ALL NINE readers. The handed candidate is one printing inside that
+43. **S3** — remote D1 `luminous` (`735f0fb5…`) on `$.effect`, **extractor verified
+against the 640 / 1,732 / 60,467 triple FIRST** — confirmed every printing count to
+the unit, that all 13 ids are `legal_standard = 1` and `category = 'Pokemon'`, that
+none of the nine sentences appears on `effect` or `abilities_json`, and that **none
+has a `legal_standard = 0` copy anywhere**, so nothing here can rot with a rotation.
+**S2** — `programFor` over all **708** `registryCardIds()` — priced the registry
+summand. **S4** — the construction-site grep over non-test source — closed the
+producer set and, as it turned out, settled a rules question outright.
+
+**🛑 THE FLOOR IS 9 SENTENCES / 13 PRINTINGS, AND IT IS THE LARGEST THING ON THE
+TABLE.** Partitioning the 43-sentence residue **BY WHAT ACTUALLY REFUSES EACH**,
+against the live 31-member `BoardCondition` union — the partition D363 and D365 both
+got wrong in opposite directions and D366 got right — leaves nine sentences that are
+an EXISTING member at an EXISTING parameter, refused only because no row or token
+spells them. **THIRTEEN PRINTINGS FOR ZERO MEMBERS BOUGHT, AGAINST ONE PRINTING FOR
+ONE MEMBER BOUGHT.** D363 found an inherited price too HIGH, D365 found one too LOW,
+D366 found the floor was ZERO. **D367 is the first slice in this family where the
+floor is the biggest thing available**, and naming that is the finding rather than
+the seven rows that followed from it.
+
+**The nine, with the member each already had.** `yourBenchHasNamed` — Durant
+`sv10.5w-070`/`-150` "Bite Together" (2), Volbeat `sv06-009` "Coordinated Strike" (1),
+Mightyena `sv06-114` "Hunting Pack" (1). `allOf` of two of the same — Metagross
+`sv09-063` "Conjoined Beams" (1), the engine's SECOND derived `allOf` after D365's
+Mesprit row and the first under a BONUS consequent, where nothing is inverted.
+`opponentActiveIsStage2` — Regirock ex `sv10-101`/`-214` "Giant Rock" (2), D296's
+member's first clause-table appearance. `opponentHandAtMost {5}` — Mienshao
+`sv07-084` "Gale Roundhouse" (1), **the second threshold the member's own doc block
+was parameterised in anticipation of**. `opponentPrizesRemaining {[0,1,2,3,4]}` —
+Gouging Fire `svp-151`/`sv08-038` "Blazing Charge" (2). And `opponentActiveHasType`
+at `{P}` (Bronzor `sv05-068`/`-170`, 2) and `{D}` (Arcanine `sv10-028`, 1), through
+a **token map** rather than a row.
+
+**🛑 THE TOKEN MAP WAS AN ASYMMETRY BETWEEN TWO SIBLING TEMPLATES, NOT NEW
+VOCABULARY.** `CLAUSE_ENERGY_TOKENS` has carried BOTH printed notations since D118
+and its doc block says exactly why — *"a code-only parser would silently skip a whole
+set the moment one of its cards prints the shape"*. `CLAUSE_POKEMON_TYPES` was built
+from `POKEMON_TYPES` alone: the NAME-only mirror image of the parser that paragraph
+warns about, and the pool had already printed the shape it could not see. Repaired by
+spreading `POKEMON_TYPE_BY_CODE`, which **already existed, was already total over
+`POKEMON_TYPES` and was already pinned against it** — so the three maps cannot drift
+and a type added to the schema is admitted in BOTH notations by construction.
+⚠️ **AND THE PREDICTION FOR THIS PIECE WAS THE ONE THIS SLICE GOT WRONG IN D366's
+OWN LOSING SHAPE**: the class was named correctly and the cardinality guessed (+9
+entries, map 11 → 20) before the existing code map was found; it is +11 → 22. **A
+CLASS NAMED IS NOT A CLASS COUNTED**, third slice running.
+
+**🛑 THREE OF THE FOUR NAMED-BENCH PRINTINGS NAME THE ATTACKER'S OWN CARD.** Durant's
+clause names Durant, Mightyena's names Mightyena, and Falinks's named Falinks before
+them — so an "in play" reading of `yourBenchHasNamed` would let each clause satisfy
+itself off the body standing in the Active Spot, and a conditional +20 / +90 becomes
+UNCONDITIONAL on every board with no second copy. D279 priced and refused that
+widening on ONE card; **it is now wrong on FOUR**, and §3 refutes it on a board at
+each of them rather than in a comment. Volbeat is the control the three self-naming
+printings cannot supply on their own: it names ILLUMISE, a different card, which is
+what stops the member being read as "another copy of me".
+
+**🛑 S4 SETTLED A RULES QUESTION THAT WOULD OTHERWISE HAVE BEEN ARGUED.** Spelling a
+printed *"4 or fewer"* as the enumerated set `[0, 1, 2, 3, 4]` looks like a judgement
+call. It is not: the construction-site grep found `registry.ts` **already authoring
+`opponentPrizesRemaining {counts:[0,1,2,3]}` TWICE** for a printed *"3 or fewer"*,
+the 0 included. One spelling, two producers, no drift — and §5 drives the
+equivalence at **all seven representable prize counts** rather than at the boundary,
+because a set is exact only when it is complete over its domain.
+
+**⚠️ TWO DOC BLOCKS WERE MEASURABLY WRONG, AND BOTH ARE THE SAME CLASS.** The Falinks
+row said *"the pool prints one"*: at head `sv02-119` is `legal_standard = 0`, so the
+one printing it names is UNREACHABLE from the corpus (Palafin's and Lycanroc's
+situation a third time) **while the legal pool prints FOUR MORE of exactly that
+shape**. `opponentHandAtMost` said *"the pool's only 'or fewer' clause of any kind"*:
+there are three. **A UNIQUENESS CLAIM IS THE MOST PERISHABLE THING A DOC BLOCK CAN
+CARRY, AND IT PERISHES SILENTLY** — nothing in the suite was keyed on either
+sentence. Both corrected, and the named-Bench family is now DERIVED from the corpus
+so the next rotation reddens instead of lying.
+
+**⚠️ AND THE BONUS HALF OF `clauseApostrophe.test.ts` HAD NO COMPLETENESS GUARD AT
+ALL — SHORT BY THREE BEFORE THIS SLICE ADDED ANYTHING.** D365 found the REQUIREMENT
+list stale and re-derived its size from the live reader; D366 found that repair keyed
+on the wrong population and narrowed it with a filter. **Both slices worked on one
+half of a symmetric pair and neither looked at the other.** Walked off the live bonus
+reader, the legal corpus carried **EIGHT** distinct apostrophe-bearing clauses and
+the list named **FIVE** — the three missing ones added by D326, D327 and D362, each a
+slice that edited the table and not the list. **A GUARD THAT EXISTS ON ONE HALF OF A
+SYMMETRIC PAIR IS NOT A GUARD ON THE PAIR, AND THE MISSING HALF IS INVISIBLE
+PRECISELY BECAUSE THE HALF THAT EXISTS IS GREEN.** ⚠️ And writing the replacement
+**reproduced D366's own mistake one table over, inside this slice**: the walk's
+apostrophe half also holds the two clauses the parameterised TYPE template owns,
+which are not rows, need no fold, and carry `['’]` in their own regex — so the guard
+partitions ROWS from TEMPLATE explicitly and names both halves, instead of filtering
+once and being right by coincidence.
+
+**⚠️ EIGHTEEN WHOLE-CORPUS ASSERTION SITES MOVED IN FOUR FILES, PLUS THE ENGINE-
+VERSION RUNG IN A FIFTH, OVER THREE ROUNDS FOR ONLY SEVEN RED CASES.** Three of them
+share ONE `it` in `censusAtHead.test.ts` — `units - built`, then `BUILT.attack - 922`,
+then `BUILT.attack - 922 - 252` — and each is unreachable until the one before it is
+green: D365's lesson, D366's lesson, and now D367's, **at the same site three slices
+running**. ⚠️ One site was reachable only as an arithmetic OPERAND
+(`512 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS`), and this time it was **grepped
+for before the build** rather than found by a red run — the sixth visit to that line.
+⚠️ The census-total walk bounded the population at the **16 test files that import
+`legalAttackCorpus`**, and the twelve outside the four named assert FAMILY-scoped
+counts (`corpus.get(SENTENCE)`), which is why none of them moved: predicted 0, measured 0.
+
+**The census.** `BUILT.attack` **1236 → 1249**, all of it the RAW summand
+(1,207 → 1,220); resolving sentences **335 → 344**; `built` **1637 → 1650**;
+`unbuiltAttack` **496 → 483**; `units − built` **746 → 733**; the residue
+**305 s / 525 p → 296 s / 512 p**. Every figure re-added from its parts rather than
+incremented. **`REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) BOTH STAND STILL,
+AND THAT IS MEASURED RATHER THAN ASSERTED FROM "THIS SLICE AUTHORED NO REGISTRY
+ROW"** — which D362 showed is a non-sequitur. Of the 13 ids, **exactly ONE is in the
+708** (`sv06-009` Volbeat), and what holds the registry summand is that its program's
+only key is `attackGate`, not that it is absent. **The count you did not think you
+were checking.**
+
+**Fixtures.** Five (`fix-durant`, `fix-mightyena`, `fix-illumise`, `fix-beldum`,
+`fix-metang`) plus a dedicated `BENCH_NAMED_DECK`, so no other suite's seeded shuffles
+move. `revealClause.test.ts`'s pool-keyed sweep was **measured at +0 and stayed 104**:
+its filter is `searchOps(id).length > 0` and none of the five carries a program at all.
+*Read the filter, then the population* — D351's lesson, applied in advance.
+
+**Mutants.** NINE rows, one per claim; corpus **1146 → 1155**. ⚠️ **The probe caught
+one row before the sweep did, and it was an ERROR rather than a survivor**: C1's
+`find` was the bare `case "yourBenchHasNamed":`, which occurs **2×** in
+`interpreter.ts` because `conditionHolds` and `conditionNote` are both exhaustive
+switches over the same union — **a case label can never be a unique anchor for a
+member with two reader arms.** Re-pointed onto the arm BODY, which also made it a
+better mutant: it now installs the actual in-play widening §3 refutes rather than
+disabling the arm. `--decision D367` on a quiet tree: **9 killed · 0 known survivors ·
+0 GAPs · 0 stale · 0 skipped(dirty) · 0 clobbers · 0 errors · 40.9s.**
+
+<!-- D367-LOG-SWEEP -->
 
 ### 2026-08-19 — build session #306 (P3-M5 — D366, the own-bench count, and a comparator settled from the catalog before it was spelled)
 
