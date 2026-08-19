@@ -2689,7 +2689,53 @@ five bare mid-line `find` rows re-checked **BY NAME** each time.
 `MATCH_RECORD_VERSION` **22**, read from source — one union member, two reader arms
 and one row in a private clause `Map` persist nothing.
 
-<!-- D366-SWEEP-SLOT -->
+**The sweep.** **1123 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0
+skipped(dirty) · 0 clobber(s) · 0 error(s)** over **1146**, sentinel `exit=0`,
+5,203.8s. `1123 + 23 = 1146` — **added before it was written.** Run detached under
+`setsid nohup` on a quiet tree, with ONE wake source armed on *either* the sentinel
+**in the log file** *or* the driver PID disappearing. ⚠️ **THE WAITER HAS A
+THIRTY-MINUTE CEILING AND THE RUN IS 87 MINUTES**, so it was re-armed twice — the
+old one STOPPED first each time, so the count stayed at one. Completion was taken
+from the sentinel in the log, never from a process scan; only
+`pgrep -xf "sh scratchpad/D366_sweep_driver.sh"` was used to test liveness, and
+never `pgrep -fc`, which self-matches.
+
+⚠️ **AND AN IDEMPOTENCY GUARD WAS INSTALLED BEFORE THE SENTINEL LANDED**
+(`scratchpad/D366_wake_guard.sh`, run FIRST on every wake): it reports whether
+the slice's sweep-slot marker is still present, and whether `origin/main` already
+equals the tip. **A LATE WAKE IS PROCESSED AFTER THE TURN IT ARRIVED DURING**, so
+without that check a queued wake re-enters with the close-out already done and
+fills the slot twice, appends the figures twice, or re-pushes `main`. The guard
+makes every wake a no-op once the marker is gone. ⚠️ **AND THE FIRST DRAFT OF THIS
+PARAGRAPH QUOTED THE MARKER LITERALLY, WHICH WOULD HAVE PINNED THE GUARD AT
+"STILL OWED" FOREVER** — prose describing a signal, written into the file the
+signal is read from, IS that signal as far as a `grep` is concerned. Caught by
+re-running the check after the write, which is the rule that exists for it.
+
+**Verified by id, both directions, independently of the runner's own tally.** The
+1,146 declared ids read off `mutants.ts` against the 1,146 rows parsed from the
+log: **0 missing · 0 extra · 0 duplicate · 0 printed-without-a-verdict.** ⚠️ The
+parser's verdict alternation is read FROM SOURCE (`scripts/mutation/run.ts`, `type
+Verdict`) and **asserted identical to it as a set** before the sweep ran — never
+`\bVERDICT\b`, which cannot follow the `)` of `SURVIVES(known)`, and never
+`grep -c`, because every mutant prints its verdict TWICE (in flight, then in the
+table). `SURVIVED` — the true-GAP literal — is in the alternation, and since every
+prior log carries 0 GAP its absence could never be caught by pre-validation alone.
+**So this slice did BOTH**: pre-validated on the REAL D365, D364 and D363 logs
+(each summing to its own corpus and agreeing with its own runner tally), and
+probed POSITIVELY — an injected `SURVIVED` was detected as 1 GAP with the runner
+tally disagreeing (which is the signal), and an id printed with no verdict was
+reported as printed-without-a-verdict with the row count falling to 1,139, i.e.
+**an id in flight is MISSING and must be RE-RUN**.
+
+**Reconciled to D365 BY ID (1117 killed · 23 known · 0 GAP · 1140 corpus).** SIX
+new ids, all six this slice's own rows, all six **KILLED**; **0 ids gone**; **0
+verdict changes in either direction**; kill delta **1123 − 1117 = +6**, which is
+exactly the six added. The declared-survivor set is cross-asserted both ways:
+**23 · 23**, nothing in D366 that was not in D365 and nothing in D365 that is not
+in D366. The six had also been probed on a quiet tree BEFORE the sweep
+(`--decision D366`: 6 killed, 0 survivors, 28.3s), so the sweep confirms a result
+rather than discovering it.
 
 
 ### 2026-08-18 — build session #305 (P3-M5 — D365, the floor the handoff understated, and `allOf`'s first derived producer)
