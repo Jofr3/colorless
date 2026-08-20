@@ -83,10 +83,21 @@ const REFUSED: readonly (readonly [string, number, string])[] = [
     2,
     "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
   ],
+];
+
+/** 🆕🆕 D377 — THE THIRD ROW OF D365's LIST, MOVED OUT OF `REFUSED` RATHER THAN
+    DELETED FROM IT (D178: provenance is annotated, never overwritten). The entry
+    below is D365's own words and its own price, and its last clause has STOPPED
+    BEING TRUE: `opponentActiveBurned` now reads exactly that state field, bought by
+    D377 for a BONUS clause one table over and reaching this consequent through
+    `ATTACK_REQUIREMENT_CLAUSES`' polarity rule at no extra cost. Kept here so the
+    partition below still sums to D365's 4 / 9 and so a successor can see WHICH item
+    left the list and when. */
+const TAKEN_SINCE: readonly (readonly [string, number, string])[] = [
   [
     "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     1,
-    "a BURNED member — the state field exists, no condition reads it (D365, driven)",
+    "a BURNED member — the state field exists, no condition reads it (D365, driven; TAKEN at D377)",
   ],
 ];
 
@@ -128,10 +139,13 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
   it("re-derives 9 s / 18 u behind the skeleton, and 6 s / 13 u now carried", () => {
     const openers = corpus().filter(([, s]) => SKELETON.test(s.trim()));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
+    // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the missing 3 / 5 -> 2 / 4: the CROSS-BOARD
+    // STATUS PAIR took the third item on `REFUSED` below, off a member it bought for
+    // a BONUS row in the same commit. The population (9 / 18) is unmoved.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([6, 13]);
+    expect([carried.length, units(carried)]).toEqual([7, 14]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([3, 5]);
+    expect([missing.length, units(missing)]).toEqual([2, 4]);
     // THE PARTITION SUMS — parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -151,9 +165,15 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     }
     // The residue this slice leaves, priced the same way — 3 sentences / 5
     // printings, which with Victini's 4 is D365's own 4 / 9 to the unit.
-    expect(REFUSED).toHaveLength(3);
-    expect(REFUSED.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
-    expect(REFUSED.reduce((sum, [, n]) => sum + n, 0) + 4).toBe(9);
+    // 🆕🆕 D377 — the list is now TWO rows plus `TAKEN_SINCE`'s one, and the sum is
+    // still D366's 3 / 5, which is what keeps this an accounting of D365's handoff
+    // rather than a snapshot of today.
+    expect(REFUSED).toHaveLength(2);
+    expect(TAKEN_SINCE).toHaveLength(1);
+    const handed = [...REFUSED, ...TAKEN_SINCE];
+    expect(handed).toHaveLength(3);
+    expect(handed.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
+    expect(handed.reduce((sum, [, n]) => sum + n, 0) + 4).toBe(9);
   });
 
   it("🛑 the FLOOR was 0 / 0 / 0 — every one of D365's four needed an ADDITION", () => {
@@ -163,14 +183,19 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     // that already existed? ZERO. Victini is the proof by construction — this
     // slice had to buy a member to answer it — and the other three are named with
     // what each still costs, both of the driven refutations D365 recorded.
-    expect(REFUSED).toHaveLength(3);
+    expect([...REFUSED, ...TAKEN_SINCE]).toHaveLength(3);
     for (const [sentence, , cost] of REFUSED) {
       expect(deriveAttackRequirement(sentence), cost).toBeNull();
+    }
+    // 🆕🆕 D377 — and the one that LEFT the list is asserted from the other side, so
+    // the record says "this was refused and is not any more" rather than going quiet.
+    for (const [sentence, , cost] of TAKEN_SINCE) {
+      expect(deriveAttackRequirement(sentence), cost).toEqual({ kind: "opponentActiveBurned" });
     }
     // …and NONE of the three is refused by the ANCHOR: each matches the skeleton
     // and misses at the TABLE, so what refuses them is still VOCABULARY. (D363's
     // lesson: an anchor and a row differ in price by an order of magnitude.)
-    for (const [sentence] of REFUSED) {
+    for (const [sentence] of [...REFUSED, ...TAKEN_SINCE]) {
       expect(SKELETON.test(sentence.trim()), sentence).toBe(true);
       expect(SKELETON.exec(sentence.trim())?.[1], sentence).toBeTruthy();
     }
@@ -395,10 +420,12 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     const nowCarried = corpus().filter(
       ([, s]) => SKELETON.test(s.trim()) && deriveAttackRequirement(s) !== null,
     );
-    expect(nowCarried).toHaveLength(6);
+    expect(nowCarried).toHaveLength(7); // 🆕🆕 D377 +1 — the "isn't Burned" row.
     const victini = nowCarried.filter(([, s]) => s === V_FORCE);
     expect(units(victini)).toBe(4);
-    expect(units(nowCarried) - units(victini)).toBe(9); // D365's head, unmoved.
+    // 🆕🆕 D377 — a `- 1` term, so D365's head is still RE-DERIVED from the live
+    // total rather than frozen at the head that measured it.
+    expect(units(nowCarried) - units(victini) - 1).toBe(9); // D365's head, unmoved.
   });
 });
 
@@ -446,8 +473,11 @@ describe("§6 — the exhaustive readers, and the guard D365 keyed on the wrong 
     const carried = corpus()
       .filter(([, s]) => deriveAttackRequirement(s) !== null && SKELETON.test(s.trim()))
       .map(([, s]) => /^(If .+?, this attack does nothing\.)/.exec(s.trim())?.[1] ?? s.trim());
-    expect(carried).toHaveLength(6);
-    expect(carried.filter((s) => s.includes("'"))).toHaveLength(5);
+    // 🆕🆕 D377 — 6 -> 7 and the apostrophe half 5 -> 6: the new key spells BOTH
+    // "opponent's" and "isn't", so it lands squarely in the fold's population and
+    // the apostrophe-FREE half stands still at Victini alone.
+    expect(carried).toHaveLength(7);
+    expect(carried.filter((s) => s.includes("'"))).toHaveLength(6);
     // A guard that had not learned the difference would demand this sentence be
     // listed among the apostrophe rows, which would be a false claim about it.
     expect(carried.filter((s) => !s.includes("'"))).toEqual([V_FORCE]);

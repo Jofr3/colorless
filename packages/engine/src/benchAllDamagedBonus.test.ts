@@ -193,8 +193,14 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // 1:2 step, and this file's own band named it FIRST of the three it left behind.
     // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
     // residue (1 sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(24);
-    expect(units(refused)).toBe(28);
+    // 🆕🆕 D377 — 24 / 28 -> 22 / 26: the CROSS-BOARD STATUS PAIR left this residue —
+    // TWO sentences at ONE printing each (*"…is Burned"* +40, *"…is Confused"* +90) —
+    // so the step is 2:2 rather than the 1:2 the six slices before it took. Re-derived
+    // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
+    // NUMBER: the same board fact is printed once more under the "does nothing"
+    // consequent, which is a different skeleton and a different residue.
+    expect(refused.length).toBe(22);
+    expect(units(refused)).toBe(26);
     // 🛑 AND THE STEP IS 1:2, NOT D372's 2:2. Every earlier head is re-derived from
     // THIS one rather than frozen: 🆕 D375's 26/32, D374's 27/34, D372's 28/36,
     // D371's 30/38, D370's 31/40.
@@ -202,12 +208,13 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 1, units(refused) + 2]).toEqual([25, 30]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([26, 32]);
-    expect([refused.length + 3, units(refused) + 6]).toEqual([27, 34]);
-    expect([refused.length + 4, units(refused) + 8]).toEqual([28, 36]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([30, 38]);
-    expect([refused.length + 7, units(refused) + 12]).toEqual([31, 40]);
+    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([28, 36]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([30, 38]);
+    expect([refused.length + 9, units(refused) + 14]).toEqual([31, 40]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

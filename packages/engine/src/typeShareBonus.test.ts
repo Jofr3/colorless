@@ -243,8 +243,14 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
     // residue (1 sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(24);
-    expect(units(refused)).toBe(28);
+    // 🆕🆕 D377 — 24 / 28 -> 22 / 26: the CROSS-BOARD STATUS PAIR left this residue —
+    // TWO sentences at ONE printing each (*"…is Burned"* +40, *"…is Confused"* +90) —
+    // so the step is 2:2 rather than the 1:2 the six slices before it took. Re-derived
+    // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
+    // NUMBER: the same board fact is printed once more under the "does nothing"
+    // consequent, which is a different skeleton and a different residue.
+    expect(refused.length).toBe(22);
+    expect(units(refused)).toBe(26);
     // The recorded residues of D374, D373, D372, D371, D370 and D369, re-derived
     // from THIS head: add the sentences back rather than freezing the pair that
     // measured them. The step here is 1 sentence / 2 printings — the 1:2 shape for
@@ -253,16 +259,18 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 1).toBe(25);
-    expect(units(refused) + 2).toBe(30);
-    expect(refused.length + 2).toBe(26);
-    expect(units(refused) + 4).toBe(32);
-    expect(refused.length + 3).toBe(27);
-    expect(units(refused) + 6).toBe(34);
-    expect(refused.length + 4).toBe(28);
-    expect(units(refused) + 8).toBe(36);
-    expect(refused.length + 6).toBe(30);
-    expect(units(refused) + 10).toBe(38);
+    expect(refused.length + 2).toBe(24);
+    expect(units(refused) + 2).toBe(28);
+    expect(refused.length + 3).toBe(25);
+    expect(units(refused) + 4).toBe(30);
+    expect(refused.length + 4).toBe(26);
+    expect(units(refused) + 6).toBe(32);
+    expect(refused.length + 5).toBe(27);
+    expect(units(refused) + 8).toBe(34);
+    expect(refused.length + 6).toBe(28);
+    expect(units(refused) + 10).toBe(36);
+    expect(refused.length + 8).toBe(30);
+    expect(units(refused) + 12).toBe(38);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

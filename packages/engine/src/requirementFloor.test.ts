@@ -109,10 +109,20 @@ const REFUSED: readonly (readonly [string, number, string])[] = [
     2,
     "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
   ],
+];
+
+/** 🆕🆕 D377 — MOVED OUT OF `REFUSED`, NOT DELETED FROM IT (D178: provenance is
+    annotated, never overwritten). D365's entry is reproduced verbatim below and its
+    reason has STOPPED BEING TRUE: `opponentActiveBurned` now reads that state field.
+    ⚠️ AND D365's PRICE WAS RIGHT AND ITS TIMING WAS THE ONLY THING WRONG — the member
+    still had to be BOUGHT, but D377 bought it for a BONUS clause one table over and
+    this consequent came along for one row and no vocabulary, which is the pattern
+    D363's Sawk row established and this is its second instance. */
+const TAKEN_SINCE: readonly (readonly [string, number, string])[] = [
   [
     "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     1,
-    "a BURNED member — the state field exists, no condition reads it",
+    "a BURNED member — the state field exists, no condition reads it (TAKEN at D377)",
   ],
 ];
 
@@ -184,10 +194,12 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // later slice inheriting a number instead of measuring one.
     const openers = corpus().filter(([, s]) => SKELETON.test(s.trim()));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
+    // 🆕🆕 D377 — 6 / 13 -> 7 / 14, missing 3 / 5 -> 2 / 4. The POPULATION is still
+    // 9 / 18 and still the invariant; what moved is the third row of `REFUSED`.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([6, 13]);
+    expect([carried.length, units(carried)]).toEqual([7, 14]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([3, 5]);
+    expect([missing.length, units(missing)]).toEqual([2, 4]);
     // THE PARTITION SUMS. Parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -204,7 +216,9 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // The claim is unchanged — everything this list holds is refused by VOCABULARY
     // and not by an anchor — and the number is re-derived from the two arrays so it
     // cannot drift from them.
-    const carried = [...BOUGHT, ...REFUSED].map(([s]) => s);
+    // 🆕🆕 D377 — the list is re-assembled from THREE arrays now, and still SIX: the
+    // Burned row moved from `REFUSED` to `TAKEN_SINCE` rather than out of the record.
+    const carried = [...BOUGHT, ...REFUSED, ...TAKEN_SINCE].map(([s]) => s);
     expect(carried).toHaveLength(6);
     for (const sentence of carried) {
       expect(SKELETON.test(sentence.trim()), sentence).toBe(true);
@@ -220,6 +234,11 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     for (const [sentence, , cost] of REFUSED) {
       expect(deriveAttackRequirement(sentence), cost).toBeNull();
     }
+    // 🆕🆕 D377 — and the row that LEFT is asserted from the other side, so this
+    // record says "was refused, is not any more" instead of going quiet.
+    for (const [sentence, , cost] of TAKEN_SINCE) {
+      expect(deriveAttackRequirement(sentence), cost).toEqual({ kind: "opponentActiveBurned" });
+    }
   });
 
   it("🛑 the FLOOR is 3 sentences / 5 printings, not the handoff's 2 / 3", () => {
@@ -233,9 +252,15 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
       expect(units(printed), who).toBe(expected);
     }
     // And the residue, priced the same way — 🆕🆕 D366: 3 / 5, was 4 / 9.
-    expect(REFUSED).toHaveLength(3);
-    expect(REFUSED.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
-    for (const [sentence, expected, cost] of REFUSED) {
+    // 🆕🆕 D377 — still 3 / 5 as a RESIDUE OF D365's HANDOFF, but now spread over two
+    // arrays: two rows still refused (4 printings) and one TAKEN (1 printing). The
+    // sum is what this case is about, so it is re-assembled rather than re-stated.
+    const residue = [...REFUSED, ...TAKEN_SINCE];
+    expect(REFUSED).toHaveLength(2);
+    expect(TAKEN_SINCE).toHaveLength(1);
+    expect(residue).toHaveLength(3);
+    expect(residue.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
+    for (const [sentence, expected, cost] of residue) {
       const printed = corpus().filter(([, s]) => s === sentence);
       expect(units(printed), cost).toBe(expected);
     }
@@ -243,7 +268,7 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // printings D366 bought. The identity is restated rather than deleted, so the
     // two arrays still have to account for the same population between them.
     expect(
-      BOUGHT.reduce((sum, [, n]) => sum + n, 0) + REFUSED.reduce((sum, [, n]) => sum + n, 0) + 4,
+      BOUGHT.reduce((sum, [, n]) => sum + n, 0) + residue.reduce((sum, [, n]) => sum + n, 0) + 4,
     ).toBe(14);
   });
 });
@@ -381,9 +406,22 @@ describe("§4 — the two 'widenings' are not widenings, and that is DRIVEN", ()
     // Two DIFFERENT boards, one answer — which is exactly why narrowing this
     // member would be wrong and adding a sibling is what the sentence costs.
     state = withSleep;
-    expect(
-      deriveAttackRequirement("If your opponent's Active Pokémon isn't Burned, this attack does nothing."),
-    ).toBeNull();
+    // 🆕🆕 D377 — **D365's REFUSAL WAS RIGHT AND IT HAS BEEN PAID.** The sentence now
+    // resolves, and it resolves to a NARROW member and not to the wide one this case
+    // is about: `opponentActiveBurned`, bought by D377 for a BONUS clause one table
+    // over and reached here through the polarity rule. The paragraph above is kept
+    // verbatim because it is still the reason the wide member was NOT reused, and the
+    // two boards it builds are still the proof — so the assertion is inverted rather
+    // than deleted, and the DISAGREEMENT is what it now pins.
+    const burnedRequirement = deriveAttackRequirement(
+      "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
+    );
+    expect(burnedRequirement).toEqual({ kind: "opponentActiveBurned" });
+    expect(burnedRequirement).not.toEqual({ kind: "opponentActiveHasSpecialCondition" });
+    // …and on the ASLEEP board the wide member says TRUE while the one the row
+    // actually carries says FALSE, which is the board the reuse would have got wrong.
+    expect(conditionHolds(state, "p1", { kind: "opponentActiveBurned" })).toBe(false);
+    expect(conditionHolds(withBurn, "p1", { kind: "opponentActiveBurned" })).toBe(true);
   });
 });
 

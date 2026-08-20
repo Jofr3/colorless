@@ -208,16 +208,23 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 24 / 28 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(24);
-    expect(units(refused)).toBe(28);
-    // 🛑 AND THE STEP IS 1:2, the shape D369/D370/D371/D373/D374/D375 all kept. Every
-    // earlier head is re-derived from THIS one rather than frozen: D375's 25/30,
-    // D374's 26/32, D373's 27/34, D372's 28/36, D371's 30/38.
-    expect([refused.length + 1, units(refused) + 2]).toEqual([25, 30]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([26, 32]);
-    expect([refused.length + 3, units(refused) + 6]).toEqual([27, 34]);
-    expect([refused.length + 4, units(refused) + 8]).toEqual([28, 36]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([30, 38]);
+    // 🆕🆕 D377 — 24 / 28 -> 22 / 26: the CROSS-BOARD STATUS PAIR left this residue
+    // (TWO sentences, ONE printing each — *"…is Burned"* +40 and *"…is Confused"* +90),
+    // re-derived live rather than edited down. That slice's THIRD printing moved a
+    // DIFFERENT residue: its cancel-consequent sibling lives behind the "does nothing"
+    // skeleton, not this one.
+    expect(refused.length).toBe(22);
+    expect(units(refused)).toBe(26);
+    // 🛑 AND THE STEP IS 1:2 HERE, the shape D369/D370/D371/D373/D374/D375 all kept —
+    // D377's was 2:2. Every earlier head is re-derived from THIS one rather than
+    // frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34, D372's 28/36,
+    // D371's 30/38.
+    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([28, 36]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

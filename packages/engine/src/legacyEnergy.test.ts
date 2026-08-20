@@ -956,8 +956,21 @@ describe("the engine version", () => {
     // `CardFilter`'s existing `basicEnergy` arm. The version moves because the readers
     // answer a printed sentence they used to refuse. The post-bump anchor pass was
     // clean.
-    expect(engineVersion).toBe("0.281.0");
-    expect(manifest.version).toBe("0.281.0");
+    // 🆕🆕 D377 — 0.281.0 -> **0.282.0**: TWO new `BoardCondition` members
+    // (`opponentActiveBurned`, `opponentActiveConfused`, both NULLARY), FOUR reader
+    // arms, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows, ONE
+    // `ATTACK_REQUIREMENT_CLAUSES` row and ZERO new imports. ⚠️ The behavioural half
+    // is one closed printed vocabulary over three MODEL SHAPES — Poison is a counter,
+    // Burn a boolean and Confusion one value of a rotation enum — resolved by reading
+    // `presentStatuses`, the projection `opponentActiveHasSpecialCondition` has
+    // consumed since D116, so both members are provable NARROWINGS of that one.
+    // ⚠️ AND `MATCH_RECORD_VERSION` STAYS 22, asked rather than assumed: both members
+    // are nullary (nothing to store) and `SpecialConditions` has been in the persisted
+    // record since M3 with its SHAPE untouched. The version moves because the readers
+    // answer three printed sentences they used to refuse. The post-bump anchor pass
+    // was clean.
+    expect(engineVersion).toBe("0.282.0");
+    expect(manifest.version).toBe("0.282.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

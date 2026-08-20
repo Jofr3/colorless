@@ -200,8 +200,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // (1 sentence / 2 printings), re-derived live rather than decremented.
     // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
     // residue (1 sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(24);
-    expect(units(refused)).toBe(28);
+    // 🆕🆕 D377 — 24 / 28 -> 22 / 26: the CROSS-BOARD STATUS PAIR left this residue —
+    // TWO sentences at ONE printing each (*"…is Burned"* +40, *"…is Confused"* +90) —
+    // so the step is 2:2 rather than the 1:2 the six slices before it took. Re-derived
+    // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
+    // NUMBER: the same board fact is printed once more under the "does nothing"
+    // consequent, which is a different skeleton and a different residue.
+    expect(refused.length).toBe(22);
+    expect(units(refused)).toBe(26);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -213,18 +219,20 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 1).toBe(25);
-    expect(units(refused) + 2).toBe(30);
-    expect(refused.length + 2).toBe(26);
-    expect(units(refused) + 4).toBe(32);
-    expect(refused.length + 3).toBe(27);
-    expect(units(refused) + 6).toBe(34);
-    expect(refused.length + 4).toBe(28);
-    expect(units(refused) + 8).toBe(36);
-    expect(refused.length + 6).toBe(30);
-    expect(units(refused) + 10).toBe(38);
-    expect(refused.length + 7).toBe(31);
-    expect(units(refused) + 12).toBe(40);
+    expect(refused.length + 2).toBe(24);
+    expect(units(refused) + 2).toBe(28);
+    expect(refused.length + 3).toBe(25);
+    expect(units(refused) + 4).toBe(30);
+    expect(refused.length + 4).toBe(26);
+    expect(units(refused) + 6).toBe(32);
+    expect(refused.length + 5).toBe(27);
+    expect(units(refused) + 8).toBe(34);
+    expect(refused.length + 6).toBe(28);
+    expect(units(refused) + 10).toBe(36);
+    expect(refused.length + 8).toBe(30);
+    expect(units(refused) + 12).toBe(38);
+    expect(refused.length + 9).toBe(31);
+    expect(units(refused) + 14).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -351,7 +359,11 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // D376 adds ONE body (`fix-emberpillar`) and no Energy at all — the four Energy
     // cards its boards need were already in the pool — and that one body prints no
     // Resistance, because the column this slice reads is the DISCARD PILE.
-    expect(ids).toHaveLength(460);
+    // 🆕🆕 D377 — 460 -> **463**, and the other two columns stand still a SIXTH time.
+    // D377 adds THREE bodies (`fix-roastheat`, `fix-mindcrush`, `fix-charbreath`) and
+    // no Energy at all, and none of the three prints a Resistance — the column that
+    // slice reads is `SpecialConditions` on the opponent's Active.
+    expect(ids).toHaveLength(463);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -363,12 +375,16 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // 🆕🆕 D375 — and one more: +2 bodies / +0 / +0.
     // 🆕🆕 D376 — and one more again: +1 body / +0 / +0 (`fix-emberpillar`, which
     // prints no Resistance because the column D376 reads is the discard pile).
-    expect(ids.length - 1).toBe(459);
-    expect(ids.length - 1 - 2).toBe(457);
-    expect(ids.length - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D377 — and one more again: +3 bodies / +0 / +0 (`fix-roastheat`,
+    // `fix-mindcrush`, `fix-charbreath`, none of which prints a Resistance because the
+    // column D377 reads is the opponent Active's `SpecialConditions`).
+    expect(ids.length - 3).toBe(460);
+    expect(ids.length - 3 - 1).toBe(459);
+    expect(ids.length - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

@@ -296,9 +296,15 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // ⚠️ It is also the first key in this list with NO apostrophe in it, which is
     // what `clauseApostrophe.test.ts`'s completeness guard had to learn.
     ["If you have 4 or fewer Benched Pokémon", 4],
+    // 🆕🆕 D377 — Centiskorch `sv05-037` "Charring Breath" ({R}{R}, 180), 1 legal
+    // printing, on `opponentActiveBurned` — a member bought by the SAME slice for a
+    // BONUS row one table over. The third row in this table to spell a member the
+    // bonus table already reads (D363's Sawk, D365's Iron Boulder, now this), and the
+    // first whose two consequents were purchased together.
+    ["If your opponent's Active Pokémon isn't Burned", 1],
   ];
 
-  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2", () => {
+  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1", () => {
     for (const [key, expected] of KEYS) {
       const sentence = `${key}, this attack does nothing.`;
       // The copy is tied to the live reader: a key that stopped being carried
@@ -314,32 +320,38 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     }
   });
 
-  it("🛑 SEVEN rows, SIX of them reachable in Standard, and 13 legal printings", () => {
+  it("🛑 EIGHT rows, SEVEN of them reachable in Standard, and 14 legal printings", () => {
     // 🆕🆕 D366 — "six / five / 9" one commit ago, "three / two / 4" the commit
     // before that; every one of the three numbers has now moved twice. The rung is
     // unchanged in SHAPE, which is the point: it prices the table by
     // `legal_standard` rather than by row count, so a slice that adds rows has to
     // restate what the pool can actually play.
+    // 🆕🆕 D377 — "seven / six / 13" one commit ago. The three numbers have now moved
+    // four times, and this step is the first that adds a row whose member ALREADY
+    // EXISTED IN THE SAME COMMIT for a different consequent.
     const reachable = KEYS.filter(([, n]) => n > 0);
-    expect(KEYS.length).toBe(7);
-    expect(reachable.length).toBe(6);
-    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(13);
+    expect(KEYS.length).toBe(8);
+    expect(reachable.length).toBe(7);
+    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(14);
     // The whole does-nothing OPENER population, and how much of it is mapped:
-    // 9 sentences / 18 units open with the skeleton, 6 sentences / 13 units are
-    // carried. The other 3 stay UNMAPPED and therefore LOUD, which is what keeps
+    // 9 sentences / 18 units open with the skeleton, 7 sentences / 14 units are
+    // carried. The other 2 stay UNMAPPED and therefore LOUD, which is what keeps
     // the accounting guard load-bearing.
+    // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the unmapped 3 / 5 -> 2 / 4, and the sentence
+    // that moved is the one this list NAMED as owed: *"…isn't Burned"*. The remaining
+    // two are a Stadium-PRESENCE read (which `yourStadiumInPlay` cannot answer — it
+    // reads §7.3 OWNERSHIP) and an exact hand-size read.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([mapped.length, units(mapped)]).toEqual([6, 13]);
+    expect([mapped.length, units(mapped)]).toEqual([7, 14]);
     // 🛑 AND THE UNMAPPED THREE ARE NAMED, so this rung says which sentences are
     // still owed rather than only how many. D367's population, verbatim.
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([unmapped.length, units(unmapped)]).toEqual([3, 5]);
+    expect([unmapped.length, units(unmapped)]).toEqual([2, 4]);
     expect(unmapped.map(([, s]) => s).sort()).toEqual([
       "If there is no Stadium in play, this attack does nothing.",
       "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-      "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     ]);
     // The parts sum, which is what makes a partition a partition.
     expect(mapped.length + unmapped.length).toBe(openers.length);

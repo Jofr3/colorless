@@ -11042,6 +11042,83 @@ export const FIXTURE_POOL: Record<string, Card> = {
       `types: ["Fire"]` because the real printing is Fire and nothing in this file
       reads the attacker's type — stated so a successor does not go looking for a
       reason it is load-bearing, as it is on `fix-typeshare` two blocks up. */
+  /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR, half one: Slugma `sv05-028`
+      "Roasting Heat"'s printed sentence, verbatim, on a body of this pool's own
+      making. `fix-*` and not `sv05-028` for `fix-emberpillar`'s reason unchanged —
+      a fixture id naming a real printing needs a `CATALOG_MANIFEST.printed` row and
+      the generator cannot write one without the local D1 (D369's standing
+      constraint).
+
+      The printed BASE is kept at **10**, which is unusual for this pool and is the
+      point: the real card deals 10 and the bonus is 40, so the dealt number reads
+      10 or 50 with nothing to confuse it. Costed `{R}` as printed. `hp: 150` so the
+      attacker survives the 180 the suite's other attacker throws. */
+  "fix-roastheat": battler("fix-roastheat", {
+    hp: 150,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Roasting Heat",
+        damage: "10+",
+        effect: "If your opponent's Active Pokémon is Burned, this attack does 40 more damage.",
+      },
+    ],
+  }),
+  /** 🆕🆕 D377 — half two: Tapu Lele `sv08-092`, BOTH printed attacks, because the
+      pair is what makes the board self-arming. Index 0 "Perplex" ({C}{C}, 20)
+      Confuses the opponent's Active — a built `applyStatus` — and index 1 "Mental
+      Crush" ({P}{C}{C}, 90+) reads the very condition index 0 set, exactly as
+      Seviper `sv01-128` does for Poison two hundred blocks up. The costs are the
+      printed ones, so the {P} slot and the {C} slots are paid from different piles
+      and neither can stand in for the other. */
+  "fix-mindcrush": battler("fix-mindcrush", {
+    hp: 150,
+    types: ["Psychic"],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Perplex",
+        damage: 20,
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Psychic", "Colorless", "Colorless"],
+        name: "Mental Crush",
+        damage: "90+",
+        effect: "If your opponent's Active Pokémon is Confused, this attack does 90 more damage.",
+      },
+    ],
+  }),
+  /** 🆕🆕 D377 — the THIRD printing, and it is the same board fact under the OTHER
+      consequent: Centiskorch `sv05-037`, both printed attacks. Index 0 "Singe"
+      ({R}, no damage at all — no `damage` key, like Seviper's "Spit Poison") Burns
+      the opponent's Active; index 1 "Charring Breath" ({R}{R}, 180) prints *"If your
+      opponent's Active Pokémon isn't Burned, this attack does nothing."*, which
+      `ATTACK_REQUIREMENT_CLAUSES` reads onto the SAME `opponentActiveBurned` member
+      the bonus row above uses.
+
+      So this one fixture is simultaneously the suite's only in-game Burn SOURCE and
+      the cancel-consequent's whole cast — and the 180 is deliberately below
+      `fix-bigbody`'s 200, so a successful Charring Breath is loud without ending the
+      board. */
+  "fix-charbreath": battler("fix-charbreath", {
+    hp: 150,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Singe",
+        effect: "Your opponent's Active Pokémon is now Burned.",
+      },
+      {
+        cost: ["Fire", "Fire"],
+        name: "Charring Breath",
+        damage: 180,
+        effect: "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
+      },
+    ],
+  }),
   "fix-emberpillar": battler("fix-emberpillar", {
     hp: 150,
     types: ["Fire"],
@@ -11381,6 +11458,55 @@ export const TYPE_SHARE_DECK = deckOf({
         board needs a Fire Energy in play to attack.
 
     4 + 4 + 8 + 18 + 6 + 6 + 4 + 4 + 6 = **60**. */
+/** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR (`opponentActiveBurned`,
+    `opponentActiveConfused`). A DEDICATED deck for the house reason — every clause
+    deck before it is seed-pinned by its own suite — and for one specific to this
+    slice: the cast has to arm §12 conditions BY THE GAME on BOTH statuses, and no
+    existing deck fields a Burn setter and a Confusion setter at once.
+
+    THE CAST IS THREE ATTACKERS AND EVERY ONE OF THEM IS ALSO A SETTER OR A READER
+    OF THE OTHER'S CONDITION:
+
+      • `fix-charbreath` — Centiskorch's pair. Index 0 "Singe" is the suite's ONLY
+        in-game Burn source; index 1 "Charring Breath" is the CANCEL consequent on
+        the same member the bonus row reads. It is the reason there is no
+        surgery-only Burn board in the file;
+      • `fix-roastheat` — Slugma's "Roasting Heat", the +40 BONUS consequent on the
+        condition `fix-charbreath` sets. Two cards, one board fact, two consequents;
+      • `fix-mindcrush` — Tapu Lele's pair, self-arming: index 0 Confuses and index 1
+        reads it.
+
+    ⚠️ **BOTH SEATS RUN THE WHOLE CAST**, because every member here is CROSS-BOARD
+    and a P1-only suite cannot tell "reads the opponent's Active" apart from "reads
+    p2's Active". Every §6 case is driven from P2 as well.
+
+    Energy pays the printed symbols: `{R}` for Singe, Charring Breath and Roasting
+    Heat, `{P}` for Mental Crush's typed slot, plain `{C}` for every Colorless one —
+    kept separate so no board can pay a typed symbol with an untyped card by
+    accident. `fix-bigbody` is the DOMINANT mulligan-free starter, the body both
+    Actives pin to, and — 200 HP, no Weakness, no Resistance — the arithmetically
+    clean defender every damage number is measured against. All three attackers are
+    Basics, which is exactly why the pinning matters: any of them could otherwise be
+    the dealt starter.
+
+    ⚠️ **FOUR COPIES OF EACH ATTACKER AND NOT THREE, WHICH IS D376's MARGIN LESSON
+    PAID FORWARD.** Setup takes 7 cards to hand and 6 to prizes before a single
+    surgery runs, so a three-copy printing can be entirely gone from the deck on a
+    seed that looks like every other seed — measured here, not guessed: at three
+    copies, seed 60 threw *"p1 deck has no fix-charbreath"*. The fix is a MARGIN,
+    not a seed.
+
+    4 + 4 + 4 + 8 + 6 + 8 + 26 = **60**. */
+export const CROSS_BOARD_STATUS_DECK = deckOf({
+  "fix-charbreath": 4, // Centiskorch — "Singe" (the Burn source) + "Charring Breath" (the cancel)
+  "fix-roastheat": 4, // Slugma — "Roasting Heat" (10+): opponentActiveBurned, +40
+  "fix-mindcrush": 4, // Tapu Lele — "Perplex" (the Confusion source) + "Mental Crush" (90+), +90
+  "fix-fire-energy": 8, // Basic {R} — pays Singe, Charring Breath and Roasting Heat
+  "fix-psychic-energy": 6, // Basic {P} — pays Mental Crush's typed slot
+  "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
+  "fix-bigbody": 26, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the clean defender
+});
+
 export const BASIC_ENERGY_DISCARD_DECK = deckOf({
   "fix-emberpillar": 4,
   "fix-bigbody": 4,
