@@ -304,9 +304,21 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // FIRST and re-emitted after the new one rather than overwritten, and the seam was
   // re-read after the edit with D374's body confirmed present, which is the check D372's
   // own comment above asks for by name.
-  const ARCHIVES = 45;
+  // 🆕🆕 D376 — 45 → **46**, RAISED DELIBERATELY, the UP branch again. D376 demoted
+  // D375's live resume point under `### Prior resume point (P3-M5 — D375, …)` and the
+  // demoted BODY was carried across with it; the seam was re-read after the edit with
+  // D375's body confirmed present.
+  // 🛑 AND THIS RAISE WAS OWED BY D376's OWN DOCS COMMIT AND WAS NOT MADE THERE, WHICH
+  // IS THE FIRST TIME THIS LOOP SHIPPED A RED `HEAD`. The slice reported `bun run check`
+  // GREEN — 383 files / 7,950 tests — but this suite reddens only AFTER the docs commit
+  // lands, and the second run that would have caught it was reported rather than made.
+  // The whole-corpus sweep is what surfaced it: the 8 D318 rows anchored on this page
+  // came back **ERROR — baseline is RED before mutating**, which is the harness refusing
+  // to score a mutant whose control is already failing. A GREEN FIGURE THAT WAS NOT
+  // MEASURED IS A CLAIM, AND THIS ONE WAS WRONG.
+  const ARCHIVES = 46;
 
-  it("the page still holds all 45 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 46 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
