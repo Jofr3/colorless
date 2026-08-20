@@ -5158,6 +5158,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D373 (0.277.0 → 0.278.0), in the SAME COMMIT as the bump.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D373's whole diff is ONE new `BoardCondition` member, its two reader arms and
+    // one literal clause-table row — and ZERO new imports, which is one fewer moving
+    // part than D372 had. A union member is derived from the card id at read time and
+    // never persisted, so `D326-record-version-not-bumped` is NOT owed and was not
+    // touched. ⚠️ AND THE BEHAVIOUR CHANGE IS A NEW *ANSWER*, NOT A NEW FIELD: the
+    // empty-Bench reading is a semantics choice on a board the engine could already
+    // build, which is a bump for the ordinary reason and not a persisted-shape change.
     // ⚠️ RE-POINTED AT D372 (0.276.0 → 0.277.0), in the SAME COMMIT as the bump.
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
     // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
@@ -5551,7 +5561,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.277.0";',
+    find: 'export const engineVersion = "0.278.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
