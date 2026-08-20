@@ -10743,6 +10743,55 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕 D370 — the BENCH-SCOPED TYPE clause: *"If you have any {M} Pokémon on your
+      Bench, this attack does 80 more damage."*, **2 legal printings** in the
+      committed corpus.
+
+      🛑 **`types: ["Metal"]` ON THE ATTACKER IS THE POINT OF THIS FIXTURE, NOT ITS
+      BACKDROP.** Both printings of this sentence are Metal Pokémon, so a member
+      that read "in play" instead of "Bench" would satisfy the clause off the
+      ATTACKER'S OWN TYPE and make the +80 unconditional on every board. That is
+      D279's Falinks refutation with a type where that one had a name, and a
+      Colorless attacker could not have exposed it — the board would answer the
+      same under both readings. `benchTypeBonus.test.ts` §5 drives it.
+
+      ⚠️ A `fix-*` id and NOT the real one, D369's reason verbatim: this container
+      has no D1 credentials, so the two printings' ids could not be read
+      (`bunx wrangler d1 execute` returns `CLOUDFLARE_API_TOKEN` unset) and are not
+      guessed. The SENTENCE is the wiring on this path.
+
+      Costed `{C}` and based at 10 so the +80 is unmistakable in the dealt number,
+      and `hp: 120` so the attacker survives anything the boards hand back. */
+  "fix-benchtype": battler("fix-benchtype", {
+    hp: 120,
+    types: ["Metal"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Alloy Rally",
+        damage: 10,
+        effect: "If you have any {M} Pokémon on your Bench, this attack does 80 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D370 — the three BENCH BODIES the type predicate is told apart on, and each
+      one is a different reading it must get right:
+
+      * `fix-metalbody` — single-typed `Metal`, the plain TRUE case;
+      * `fix-dualbody` — `["Water", "Metal"]`, **the one board that separates
+        `types.includes(t)` from an equality on `types[0]`**. Dual types are a real
+        printing and the union member says so; without this body a `[0] ===`
+        reading passes every other case in the file;
+      * `fix-fairybody` — single-typed `Fairy`, a body that is a REAL type and the
+        WRONG one, which `fix-benchfiller`'s defaulted Colorless cannot be.
+
+      All three are `hp: 60` with no attack and no Ability, so nothing here can
+      move a damage, prize or ability census, and their NAMES are their ids —
+      deliberately not catalog names, so the type is unmistakably the field under
+      test rather than `yourBenchHasNamed`'s. */
+  "fix-metalbody": battler("fix-metalbody", { hp: 60, types: ["Metal"] }),
+  "fix-dualbody": battler("fix-dualbody", { hp: 60, types: ["Water", "Metal"] }),
+  "fix-fairybody": battler("fix-fairybody", { hp: 60, types: ["Fairy"] }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10857,6 +10906,31 @@ export const OPPONENT_TOOL_DECK = deckOf({
   "sv01-152": 4,
   "fix-tool": 4,
   "sv01-197": 4,
+  "fix-benchfiller": 4,
+  "fix-bigbody": 12,
+  "fix-energy": 28,
+});
+
+/** 🆕 D370 — the BENCH-SCOPED TYPE board. A DEDICATED 60 (D270's rule) rather than
+    a widened `BENCH_NAMED_DECK`, so D367's seeded boards keep the shuffles they
+    were measured on.
+
+      • `fix-benchtype` — the attacker, itself `Metal`, which is what makes the
+        "Bench, not in play" rung refutable rather than arguable;
+      • `fix-metalbody` — the single-typed `Metal` body that arms the clause;
+      • `fix-dualbody` — `["Water", "Metal"]`, the `.includes` board;
+      • `fix-fairybody` — a real type and the wrong one;
+      • `fix-benchfiller` — the DEFAULTED Colorless body, so "no type written" and
+        "a type written that does not match" are two distinct false cases;
+      • `fix-bigbody` — 200 HP, so 10 + 80 never KOs and no prize/KO tail
+        interferes with the reading.
+
+    `fix-energy` pays every `{C}` in the file. 4 + 4 + 4 + 4 + 4 + 12 + 28 = **60**. */
+export const BENCH_TYPE_DECK = deckOf({
+  "fix-benchtype": 4,
+  "fix-metalbody": 4,
+  "fix-dualbody": 4,
+  "fix-fairybody": 4,
   "fix-benchfiller": 4,
   "fix-bigbody": 12,
   "fix-energy": 28,

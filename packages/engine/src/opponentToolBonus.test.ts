@@ -153,21 +153,29 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // printings. Both facts are asserted rather than one: the departure and the
     // size, so a reader that broke and a row that landed cannot look alike.
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(32);
-    expect(units(refused)).toBe(42);
-    // D368's recorded residue, re-derived from THIS head rather than quoted: add the
-    // sentence back and the handoff's 33 / 44 reappears. A guard that only checked
-    // 32 / 42 could not tell "the row landed" from "a reader broke".
-    expect(refused.length + 1).toBe(33);
-    expect(units(refused) + 2).toBe(44);
+    // 🆕🆕 D370 — 32 / 42 -> **31 / 40**: D370 took one more sentence out of this
+    // residue (the bench-scoped {M} TYPE clause, `benchTypeBonus.test.ts`), so this
+    // file's own head is re-derived from the live corpus and D369's figure comes
+    // back off it one term later rather than being left frozen.
+    expect(refused.length).toBe(31);
+    expect(units(refused)).toBe(40);
+    // D369's recorded residue and then D368's, re-derived from THIS head rather than
+    // quoted. A guard that only checked the current pair could not tell "a row
+    // landed" from "a reader broke".
+    expect(refused.length + 1).toBe(32);
+    expect(units(refused) + 2).toBe(42);
+    expect(refused.length + 2).toBe(33);
+    expect(units(refused) + 4).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // EIGHT at 2 printings once this slice's own clause has left the band, and the
-    // list is spelled out so a successor inherits the tie-break MEASURED rather than
+    // 🆕🆕 D370 — SEVEN at 2 printings now: D370 bought this file's own successor
+    // out of the band (*"you have any {M} Pokémon on your Bench"*, the one this list
+    // named as the cheapest), so the list loses that entry and keeps the rest. It is
+    // spelled out so a successor inherits the tie-break MEASURED rather than
     // re-running it. Every one of them is a different mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
@@ -177,12 +185,12 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
-      "you have any {M} Pokémon on your Bench",
       "your opponent's Active Pokémon has {F} Resistance",
     ]);
-    // …and with the taken clause counted back in, the band is NINE — the number the
-    // handoff put at two.
-    expect(band.length + 1).toBe(9);
+    // …with D370's clause counted back in the band is EIGHT, and with this slice's
+    // own counted back in as well it is NINE — the number D368's handoff put at two.
+    expect(band.length + 1).toBe(8);
+    expect(band.length + 2).toBe(9);
     // The 5-printing declaration clause D368 disqualified on shape is STILL the
     // largest thing in the residue and is STILL refused, so nothing here has quietly
     // re-priced it.

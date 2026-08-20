@@ -811,7 +811,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(30); // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(carried.size).toBe(31); // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
     expect(withApostrophe).toHaveLength(12); // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
@@ -857,7 +857,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // narrowing is just a way of not looking.
     const carried = carriedBonusClauses();
     const without = [...carried].filter((clause) => !clause.includes(APOS)).sort();
-    expect(without).toHaveLength(18); // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
+    expect(without).toHaveLength(19); // 🆕🆕 D370 +1 — the bench-scoped TYPE clause, apostrophe-free and TEMPLATE-owned rather than a row // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
     // Pinned BY NAME, so a row added on an apostrophe-free key reddens here.
     expect(without).toEqual(
       [
@@ -876,6 +876,13 @@ describe("the literal clause tables — the rows the fold was built for", () => 
         "this Pokémon has no damage counters on it",
         "this Pokémon is Poisoned",
         "this Pokémon moved from your Bench to the Active Spot this turn",
+        // 🆕🆕 D370 — `yourBenchHasType`, the ONE clause this slice adds, and it is
+        // the SECOND kind of thing in this half: a TEMPLATE clause, not a row. The
+        // two `{F}`/`{L}` entries above are D118's template too, so this half has
+        // always mixed the two — the apostrophe half partitions them explicitly and
+        // this one does not, which is a gap named here rather than closed, since
+        // closing it is a re-scoping of a guard that is not this slice's subject.
+        "you have any {M} Pokémon on your Bench",
         "you have at least 3 {D} Energy in play",
         "you have more Prize cards remaining than your opponent",
         "you have the same number of cards in your hand as your opponent",
@@ -888,7 +895,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
     expect(without.length + 12).toBe(carried.size);
-    expect(carried.size).toBe(30); // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
+    expect(carried.size).toBe(31); // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a
