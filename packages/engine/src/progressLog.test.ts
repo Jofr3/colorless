@@ -255,9 +255,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // that is never re-tightened re-opens. Archiving a 39th resume point is a
   // deliberate act and must be a two-site edit a reviewer sees; deleting one is
   // the failure this exists for.
-  const ARCHIVES = 38;
+  // 🆕🆕 D369 — **38 → 39, AND THIS IS THE "SAY SO AND RAISE THE NUMBER" BRANCH OF
+  // THE MESSAGE BELOW, EXERCISED FOR THE FIRST TIME.** D369 demoted D368's live
+  // resume point under `### Prior resume point (P3-M5 — D368, …)` rather than
+  // overwriting it, which is what `docs/README.md`'s resume protocol asks for and
+  // what the sixty slices between D308 and D368 had quietly stopped doing — every
+  // one of them replaced the live section in place, which is why this count sat at
+  // 38 for so long. The guard fired on the very first slice to archive again, which
+  // is the ratchet working in the UP direction rather than the DOWN one.
+  const ARCHIVES = 39;
 
-  it("the page still holds all 38 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 39 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

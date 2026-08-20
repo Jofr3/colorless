@@ -21224,3 +21224,112 @@ vitest **253 files / 4705 tests** (from 252 / 4681: +1 file, +24 tests). engine
 `interpreter.ts` / `registry.ts` / `attack.ts` / `log.ts` / `redact.ts` /
 `continuous.ts` / `flow.ts` diff, **no web-app diff and no `apps/api` diff at
 all**.
+
+
+## D369 — the CROSS-BOARD Pokémon Tool clause, and the EMPTY-SET BOUNDARY that is neither a shape nor a price (engine 0.273.0 → **0.274.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+⚠️ **THIS FILE HAS BEEN STALE SINCE D230**, and D369 is the first section added to
+it in well over a hundred decisions. Everything between lives in
+`docs/progress.md`'s session log (see the note at the foot of `decisions.md`). This
+section exists because what it records is a **rule about the vocabulary**, which is
+this file's subject rather than that one's.
+
+### The member
+
+`opponentActiveHasToolAttached` — *"If your opponent's Active Pokémon has a Pokémon
+Tool attached, this attack does 80 more damage."*, **2 legal printings** in the
+committed `legal_standard = 1` attack column. The cross-board twin of D122's
+`yourActiveHasToolAttached`: the same `tools.length > 0` read on
+`otherSeat(seat)`'s Active, `> 0` and never `=== 1` (§7.4's cap is an ATTACH gate
+and Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4), FALSE with an empty Active
+Spot.
+
+**A second flat member, not a `seat` field on the first.** The union is seat-NAMED
+throughout — `yourActiveDamaged`/`opponentActiveDamaged`,
+`yourActivePoisoned`/`opponentActivePoisoned`, and now this pair — and
+parameterising a shipped member is a **RENAME**, priced by D362 at 31 sites across
+7 files against 4 for the addition. **A WIDENING IS FREE; A RENAME IS NOT.**
+
+**Its `conditionNote` is byte-identical to its clause KEY**, which the twin cannot
+manage: the twin's printed subject is *"this Pokémon"* and D116 makes resolving that
+pronoun the clause table's job. So the round trip
+`If ${conditionNote(cond)}, this attack does N more damage.` re-derives to the same
+member in ONE step — a property of this row, not of the family, and asserted as such.
+
+### THE RULE THIS SLICE ADDS — three questions, not two
+
+D368 established that a **SHAPE** question (*can this table hold it at all?*) is
+cheaper than a **PRICE** question (*is it worth buying?*) and must go first. D369
+adds a third, and it sits after both:
+
+> **A SHAPE ASKS WHETHER THE TABLE CAN HOLD IT.
+> A PRICE ASKS WHETHER IT IS WORTH BUYING.
+> A BOUNDARY ASKS WHAT THE ROW WOULD *MEAN*.
+> THE THIRD CAN FAIL WITH THE FIRST TWO BOTH GREEN.**
+
+The candidate that produced it: *"all of your Benched Pokémon have at least 1 damage
+counter on them"* (2 printings). Its shape is **fine** — a universal over the Bench
+is a `(state, seat)` fact, and `noEnergyOnYourPokemon` has been a universal over the
+in-play set since D111. Its price is the same 2.0 as everything else in the band. It
+is blocked on what an **EMPTY BENCH** means, and that is worth **120 damage on a
+board reached every game**.
+
+**Both instruments that could settle it were run, and both came back empty:**
+
+1. **The catalog.** The whole 640-sentence legal attack column prints **exactly ONE**
+   universally-quantified antecedent. D368 settled its shape question by finding the
+   same clause printed on two costs; there is no second printing here to compare
+   against — no rider, no sibling amount, nothing.
+2. **The union's own precedent** — and the reason it does not transfer is sharper
+   than "the precedent is split". **Every empty-population member that reads FALSE is
+   an EXISTENTIAL**, where falsity is FORCED by logic and no convention was ever
+   chosen. The one prior **UNIVERSAL** (`noEnergyOnYourPokemon`) reads vacuously TRUE
+   — on a board **§4 makes unreachable**, because a player always has an Active.
+   **THE ONE PRECEDENT WITH THE RIGHT SHAPE WAS SET WHERE IT COULD NOT BE WRONG**, so
+   it is a habit rather than a warrant.
+
+So the row is **deferred with the question named**, per D190b/D199 — *a
+wrong-but-plausible program is strictly worse than an unbuilt one* — and pinned two
+ways: a tripwire in `opponentToolBonus.test.ts` §2 that fires the day a row is added
+for it, and a mutant (`D369-deferred-universal-gets-the-existential-row`) that
+installs the row a hurried slice would actually write, mapping the universal onto the
+**existential** member whose printed nouns nearly match.
+
+### Two corrections to inherited claims
+
+- **A near-miss guard had asserted the wrong side.** `toolClause.test.ts` carried
+  the cross-board rewrite in its list of CONSTRUCTED near-misses, annotated *"The
+  pool does not print it, and if it ever does it is a different member reading the
+  other board — not this row."* The pool prints it **twice**, and has since the
+  corpus was committed at D274. The first half was false the day it was written; the
+  second half was this slice's specification. **D136's finding a third time: a suite
+  written by the session that wrote the code inherits its blind spot.**
+- **The twin's own printing is not Standard-legal.** Greedent `sv01-152` "Enhanced
+  Fang" — the card D122 was built for — has **zero** legal printings today. D122's
+  row survives on a **different AMOUNT of the same clause** (*"40 more damage"*, 2
+  legal printings), which it serves for free because the amount is captured by the
+  **skeleton** and never by the row. **A ROW KEYED ON THE CLAUSE OUTLIVES THE
+  PRINTING THAT MOTIVATED IT; A ROW KEYED ON THE SENTENCE WOULD NOT HAVE**, and this
+  is the practical cash value of D187's "an arm transfers across sets".
+
+### The tie-break set, re-derived
+
+D368's handoff named *"the two largest remaining candidates"* at 2 printings each.
+Measured over the same instrument, the residue's 2-printing band holds **NINE**
+distinct clauses. After D369 the residue is **32 sentences / 42 printings** and the
+band is **eight**, named and pinned in `opponentToolBonus.test.ts` §1 so the next
+slice inherits the tie-break measured rather than re-running it. **THE QUESTION WAS
+NEVER "2.0 VERSUS 2.0" — IT WAS WHICH OF NINE 2.0s COSTS LEAST TO GET RIGHT.**
+
+### An environment constraint, recorded
+
+This session's container had **no D1 credentials** (`wrangler d1 execute` reports
+`CLOUDFLARE_API_TOKEN` unset) and no local sqlite copy of the catalog. Every
+id-level measurement the recent slices made off remote D1 was therefore
+**unavailable**, and none was guessed. `censusAttackCorpus.ts` (the committed
+`legal_standard = 1` attack column: 640 sentences / 1,732 printings / 60,467
+characters) plus the live derivations in `censusAtHead.test.ts` carried the whole
+measurement instead. **A READER IS KEYED ON THE PRINTED SENTENCE, so this slice was
+buildable without the database — a REGISTRY ROW, keyed by card id, would not have
+been.** That asymmetry is worth remembering the next time the database is
+unreachable: it decides what kind of slice is available, not whether any is.
