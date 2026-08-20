@@ -368,14 +368,38 @@ describe("§6 — the census this row moves, and the three summands it does not"
       const token = SELF_ENERGY.exec(clause)?.[1] ?? ACTIVE_TYPE.exec(clause)?.[1];
       if (token !== undefined) anchored.push(token);
     }
-    expect(anchored.sort()).toEqual(["Stage 1", "Team Rocket's", "Tera"]);
-    // Each is a trap and not floor:
-    //  • "Team Rocket's" is a SPECIAL Energy (`sv10-182`), so `energy: "special"`
-    //    would also match Reversal Energy — a widening the printing does not ask for;
+    // 🆕 D374 — **TWO, WHERE THIS ROW MEASURED THREE, AND THE ONE THAT LEFT IS THE
+    // ONE THIS COMMENT CALLED A TRAP.** The list is a live derivation, so it steps on
+    // its own the day a token stops being refused.
+    expect(anchored.sort()).toEqual(["Stage 1", "Tera"]);
+    // Each remaining one is a trap and not floor:
     //  • "Stage 1" was refused BY NAME by D367 (`opponentActiveIsStage1` is unbuilt);
     //  • "Tera" is not a `Card.types` value at all.
-    // So the floor over this residue is ZERO, which is the measurement that says a
-    // member had to be bought or nothing taken.
-    expect(anchored.filter((t) => t === "Tera" || t === "Stage 1" || t === "Team Rocket's")).toHaveLength(3);
+    // So the floor over this residue is STILL ZERO, which is the measurement that says
+    // a member had to be bought or nothing taken.
+    expect(anchored.filter((t) => t === "Tera" || t === "Stage 1")).toHaveLength(2);
+    // 🛑 **AND "Team Rocket's" LEFT THE WAY THIS ROW SAID IT WOULD HAVE TO.** D368
+    // wrote it down as a trap because `energy: "special"` would ALSO match Reversal
+    // Energy — a widening the printing does not ask for. D374 did not widen that
+    // token map: it bought `yourActiveHasNamedEnergyAttached`, a LITERAL row keyed on
+    // the whole printed clause, and the sentence now resolves to a member that reads
+    // a printed card NAME rather than the Special class. Asserted here rather than in
+    // the new suite alone, because the CLAIM being graded is this file's.
+    const rocket =
+      "If this Pokémon has any Team Rocket's Energy attached, this attack does 60 more damage.";
+    expect(corpus().some(([, s]) => s === rocket)).toBe(true);
+    expect(resolvedByAnyReader(rocket)).toBe(true);
+    expect(deriveAttackDamageBonus(rocket)).toEqual({
+      per: 60,
+      count: {
+        kind: "boardCondition",
+        cond: { kind: "yourActiveHasNamedEnergyAttached", name: "Team Rocket's Energy" },
+      },
+    });
+    // …and the token map it did NOT learn: the trap's own widening stays unbought, so
+    // the anchored template still refuses the string outright.
+    expect(SELF_ENERGY.exec("this Pokémon has any Team Rocket's Energy attached")?.[1]).toBe(
+      "Team Rocket's",
+    );
   });
 });

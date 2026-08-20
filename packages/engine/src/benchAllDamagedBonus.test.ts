@@ -187,30 +187,33 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 27 / 34 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(27);
-    expect(units(refused)).toBe(34);
+    // 🆕🆕 D374 — 27 / 34 -> 26 / 32: the NAMED-ENERGY clause left the residue (1
+    // sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(26);
+    expect(units(refused)).toBe(32);
     // 🛑 AND THE STEP IS 1:2, NOT D372's 2:2. Every earlier head is re-derived from
-    // THIS one rather than frozen: D372's 28/36, D371's 30/38, D370's 31/40.
-    expect([refused.length + 1, units(refused) + 2]).toEqual([28, 36]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([30, 38]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([31, 40]);
+    // THIS one rather than frozen: 🆕 D374's 27/34, D372's 28/36, D371's 30/38,
+    // D370's 31/40.
+    expect([refused.length + 1, units(refused) + 2]).toEqual([27, 34]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([28, 36]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([30, 38]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([31, 40]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // FOUR at 2 printings once this slice's clause has left the band — D372's five
-    // minus the one taken, spelled out so a successor inherits the tie-break MEASURED
-    // rather than re-running it.
+    // 🆕🆕 D374 — THREE at 2 printings, where this row measured four: D374 took the
+    // `Team Rocket's Energy` clause this page named FIRST in its own handoff, so the
+    // band is re-derived live and the row it left is gone from this list.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
-      "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 1).toBe(5);
+    expect(band.length + 2).toBe(5);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

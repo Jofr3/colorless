@@ -1190,6 +1190,19 @@ describe("FIXTURE_POOL, swept as its own population", () => {
         "fix-ethans-cyndaquil",
         "fix-ethans-typhlosion",
         "fix-ethans-pichu",
+        // ⚠️ **AND A SIXTH EXPIRY, AT D374** — the enumeration earning its keep a
+        // FIFTH time, and the first from a slice whose prefixed fixtures are ENERGY
+        // cards rather than bodies. `yourActiveHasNamedEnergyAttached` reads the
+        // printed NAME of an attached Energy, and the choice it makes is NAME
+        // EQUALITY over the `Team Rocket's ` PREFIX — so the suite needs a prefixed
+        // Energy the member must REFUSE (`fix-tr-other-energy`, invented, since no
+        // second family member is printed) and one whose name merely CONTAINS the
+        // noun (`fix-not-tr-energy`). Neither is reachable from this file's ops; the
+        // list edit is the whole cost. 🛑 **AND THIS IS THE FOURTH SLICE IN A ROW
+        // WHOSE PRICE DID NOT ENUMERATE THIS READER** — an owner-prefixed FIXTURE is
+        // a census subject wherever the pool is swept, whatever category it is.
+        "fix-tr-other-energy",
+        "fix-not-tr-energy",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

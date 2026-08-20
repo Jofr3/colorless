@@ -930,8 +930,15 @@ describe("the engine version", () => {
     // because the readers answer TWO printed sentences they used to refuse, not
     // because anything about counting Energy changed. The post-bump anchor pass was
     // clean.
-    expect(engineVersion).toBe("0.278.0");
-    expect(manifest.version).toBe("0.278.0");
+    // 🆕🆕 D374 — 0.278.0 -> **0.279.0**: ONE new `BoardCondition` member
+    // (`yourActiveHasNamedEnergyAttached`), TWO reader arms, ONE literal clause-table
+    // row and ONE new import. ⚠️ The behavioural half is the family's FIRST read of a
+    // printed CARD NAME off an ATTACHED card — a reading with no provision twin, so
+    // it is deliberately NOT a widening of `yourActiveHasEnergyAttached`. The version
+    // moves because the readers answer a printed sentence they used to refuse. The
+    // post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.279.0");
+    expect(manifest.version).toBe("0.279.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

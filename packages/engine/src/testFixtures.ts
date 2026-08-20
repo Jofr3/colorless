@@ -8784,6 +8784,26 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Rival of Team Rocket's Meowth",
     attacks: [{ cost: ["Colorless"], name: "Tackle", damage: 10 }],
   }),
+  /** 🆕🆕 D374 — **THE SHAPE CONTROL FOR THE NAME/PREFIX CHOICE, AND IT IS AN
+      INVENTED CARD ON PURPOSE.** `Team Rocket's Energy` `sv10-182` is the ONLY
+      Energy card in the game carrying the owner prefix, so nothing real can tell a
+      NAME EQUALITY apart from a `Team Rocket's ` PREFIX reading — the two are
+      extensionally identical on the whole pool. This body is the board on which they
+      DIFFER: the prefix reading counts it, `yourActiveHasNamedEnergyAttached` does
+      not, and `trEnergyBonus.test.ts` §2 computes both beside each other.
+
+      ⚠️ **`Fix` IS IN THE NAME BECAUSE THE CARD IS NOT REAL** (`Team Rocket's
+      Fixicuno`'s convention, D260). A plausible-looking *"Team Rocket's Dark Energy"*
+      would read to a successor as a second family member the catalog holds, which is
+      exactly the fact this fixture exists to say is FALSE. Programless, so it
+      provides `{C}` like every unauthored Special (`energyProvidesOf`). */
+  "fix-tr-other-energy": specialEnergy("fix-tr-other-energy", "Team Rocket's Fix Energy"),
+  /** 🆕 D374 — the OTHER near miss, `fix-not-tr-body`'s shape one category over: this
+      name CONTAINS `Team Rocket's Energy` and is not EQUAL to it, so an `includes`
+      or an `endsWith` admits it and the equality does not. Together with the row
+      above, the three refutable predicates — equality, `startsWith`, `includes` —
+      are separated by real boards rather than by a comment. */
+  "fix-not-tr-energy": specialEnergy("fix-not-tr-energy", "Rival of Team Rocket's Energy"),
   /** The DISCOUNT holder — Bloodmoon Ursaluna ex "Seasoned Skill". ⚠️ TWO ATTACKS
       ON PURPOSE, and every real printing has ONE: this fixture is the pin under
       D242's flagged assumption that an UNSCOPED
@@ -10953,6 +10973,33 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D374 — the NAMED-ENERGY clause: *"If this Pokémon has any Team Rocket's
+      Energy attached, this attack does 60 more damage."* — Team Rocket's Zapdos
+      `sv10-070` "Wicked Thunder", whose two legal printings are byte-identical in
+      rules text, so ONE fixture serves both.
+
+      Costed `{C}` and based at **10** rather than the printed 60, so the +60 is
+      unmistakable in the dealt number and cannot be confused with the base; `hp: 150`
+      so the attacker survives whatever the boards hand back. The `types` are
+      `battler`'s default: nothing in this clause reads a type on any body.
+
+      ⚠️ **NOT NAMED `Team Rocket's Zapdos`, AND THAT IS THE POINT OF THE FIXTURE.**
+      The real printing carries the owner prefix on the ATTACKER as well as on the
+      Energy, and a suite whose attacker also matched the prefix could not tell "reads
+      the ATTACHED card's name" from "reads the HOLDER's name". This body's name shares
+      nothing with the clause. */
+  "fix-trbonus": battler("fix-trbonus", {
+    hp: 150,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Wicked Thunder",
+        damage: 10,
+        effect:
+          "If this Pokémon has any Team Rocket's Energy attached, this attack does 60 more damage.",
+      },
+    ],
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -11171,6 +11218,37 @@ export const BENCH_ALL_DAMAGED_DECK = deckOf({
   "fix-basic-1": 24,
   "fix-bigbody": 8,
   "fix-energy": 24,
+});
+
+/** 🆕🆕 D374 — the NAMED-ENERGY board. A DEDICATED 60 (D270's rule) rather than a
+    widened `BENCH_ALL_DAMAGED_DECK`, so D373's seeded boards keep the shuffles they
+    were measured on.
+
+      • `fix-trbonus` — the attacker, the one printed sentence, and a body whose own
+        name shares nothing with the clause it prints;
+      • `fix-tr-energy` — the REAL `Team Rocket's Energy` `sv10-182`, in the pool
+        since D242 as `ownerPokemon`'s near miss and cashed in here rather than
+        re-authored;
+      • `fix-tr-other-energy` / `fix-not-tr-energy` — the two SHAPE controls (prefix,
+        and contains-but-not-equal);
+      • `fix-special` — a Special Energy with no prefix at all, which is what
+        separates the CARD-CLASS reading (`energy: "special"`) from the NAME reading;
+      • `fix-basic-1` — a body to BENCH, for the rung that keeps the clause on the
+        ACTIVE (`attachBenchFromDeck` puts Energy where this member must not see it);
+      • `fix-bigbody` — 200 HP across the table, so the +60 lands without a KO tail
+        rewriting the board the assertions are read off.
+
+    `fix-energy` pays the `{C}` on every board that must attack WITHOUT a Special
+    attached. 4 + 8 + 8 + 8 + 4 + 8 + 8 + 12 = **60**. */
+export const TR_ENERGY_DECK = deckOf({
+  "fix-trbonus": 4,
+  "fix-tr-energy": 8,
+  "fix-tr-other-energy": 8,
+  "fix-not-tr-energy": 8,
+  "fix-special": 4,
+  "fix-basic-1": 8,
+  "fix-bigbody": 8,
+  "fix-energy": 12,
 });
 
 /** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a
