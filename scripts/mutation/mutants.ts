@@ -13724,15 +13724,18 @@ export const MUTANTS: Mutant[] = [
     replace: "      return \"your Active Pokémon has a Pokémon Tool attached\";",
     expectKilledBy: ["packages/engine/src/opponentToolBonus.test.ts"],
   },
-  {
-    id: "D369-deferred-universal-gets-the-existential-row",
-    decision: "D369",
-    what: "🛑 C6 — THE TRIPWIRE FOR THIS SLICE'S REFUSAL: a clause row is added for *\"all of your Benched Pokémon have at least 1 damage counter on them\"* mapping it onto `yourBenchDamaged` — the EXISTENTIAL member, which is the row a hurried slice reaches for because the printed nouns match almost exactly. ⚠️ **THE MUTANT COMPILES, LOOKS LIKE PROGRESS AND IS WRONG ON EVERY BOARD WHERE SOME BUT NOT ALL BENCHED BODIES ARE DAMAGED** — and it is wrong at the boundary this slice actually deferred on, the EMPTY Bench, where the existential reads false and the universal's reading is unsettled. The census raw summand would rise by 2 either way, which is why the refusal has to be a driven assertion rather than a doc block. **A SHAPE CAN BE FINE AND A MEANING STILL UNSETTLED**",
-    file: "packages/engine/src/effects.ts",
-    find: "  [\"your Benched Pokémon have any damage counters on them\", { kind: \"yourBenchDamaged\" }],",
-    replace: "  [\"your Benched Pokémon have any damage counters on them\", { kind: \"yourBenchDamaged\" }],\n  [\"all of your Benched Pokémon have at least 1 damage counter on them\", { kind: \"yourBenchDamaged\" }],",
-    expectKilledBy: ["packages/engine/src/opponentToolBonus.test.ts"],
-  },
+  // 🛑🆕🆕 D373 — **D369's C6 IS RETIRED HERE, AND THIS COMMENT IS ITS RECEIPT.**
+  //    The row was `D369-deferred-universal-gets-the-existential-row`: a tripwire on
+  //    D369's REFUSAL to build *"all of your Benched Pokémon have at least 1 damage
+  //    counter on them"*, mutating the clause table to map that sentence onto the
+  //    EXISTENTIAL member. D373 settled the empty-Bench boundary and built the
+  //    universal, so the mutant's edit is now a DUPLICATE Map key inserted ABOVE the
+  //    real row — the real row wins, the mutant is a no-op, and it would have reported
+  //    a PHANTOM SURVIVOR rather than an error. **A MUTANT THAT CANNOT CHANGE THE
+  //    PROGRAM IS REMOVED, NOT TESTED AROUND** (D205/D206/D208's rule). Its CLAIM is
+  //    not lost: `D373-universal-bench-row-points-at-the-existential` below makes the
+  //    same one against the row that now exists.
+
   // ── D370 — THE BENCH-SCOPED TYPE CLAUSE. Six rows, ONE PER CLAIM: the ZONE is
   //    the Bench and not "in play" (C1), the SEAT is yours and not theirs (C2),
   //    the read is `.includes` over an ARRAY and not an equality on `types[0]`
@@ -13953,5 +13956,71 @@ export const MUTANTS: Mutant[] = [
     find: "  [\n    \"this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],",
     replace: "  [\n    \"this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],\n  [\n    \"this Pokémon has more Energy attached than your opponent's Active Pokémon\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],",
     expectKilledBy: ["packages/engine/src/sameEnergyBonus.test.ts"],
+  },
+  // ── D373 — THE UNIVERSAL OVER THE BENCH. Six rows, ONE PER CLAIM: the EMPTY
+  //    BENCH is FALSE and not vacuously true (C1), the quantifier is `.every` and
+  //    not the neighbouring `.some` (C2), the printed row resolves to the UNIVERSAL
+  //    and not to the EXISTENTIAL (C3), the SEAT is yours (C4), the ZONE is the Bench
+  //    and not "in play" (C5), and the NOTE keeps the quantifier (C6).
+  //
+  // 🛑 C1 IS THE SLICE. Every other row here is the ordinary discipline this family
+  //    has paid five times; C1 is the one that pins a SEMANTIC CHOICE, and it is the
+  //    only mutant in the corpus whose "wrong" answer is the one classical logic
+  //    gives. That is exactly why it needs a row: an argument in a doc block is not
+  //    a guard, and the code that implements the other reading is SHORTER than the
+  //    code that implements this one.
+  {
+    id: "D373-empty-bench-reads-vacuously-true",
+    decision: "D373",
+    what: "🛑 C1 — THE WHOLE SLICE, AS ONE DELETED CLAUSE: `bench.length > 0 &&` is removed, so `.every` over an EMPTY Bench answers TRUE and the clause pays **+120 on a board that occurs in every game**. ⚠️ **THIS IS NOT A TYPO, IT IS THE OTHER READING** — classical vacuous truth, the shorter code, and what an author who did not stop to ask would write first. It is invisible on every non-empty board (the guard is inert there, swept and asserted), so ONLY the empty-Bench board can find it. D369 refused to build this member rather than guess the answer; `benchAllDamagedBonus.test.ts` §2 drives the choice on a real declared attack (10, not 130) from BOTH seats, with the vacuous predicate computed beside it as an attribution control",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const bench = state.players[seat].bench;\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    replace: "      const bench = state.players[seat].bench;\n      return bench.every((p) => p !== null && p.damage > 0);",
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
+  },
+  {
+    id: "D373-universal-becomes-the-existential",
+    decision: "D373",
+    what: "🛑 C2 — THE QUANTIFIER FLIPS: `.every` becomes `.some`, which is the arm DIRECTLY ABOVE this one in the same `switch`, copied verbatim. The two members read the same array on the same seat for the same field and differ by one method call; the printed keys differ by five words. ⚠️ **A BENCH THAT IS ENTIRELY DAMAGED AND A BENCH THAT IS ENTIRELY UNDAMAGED BOTH ANSWER THE SAME UNDER EITHER READING**, so a suite that only fields those two cannot see it — the separating board is the PARTLY damaged one, which `benchAllDamagedBonus.test.ts` §3 fields with two benched bodies and one damaged",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const bench = state.players[seat].bench;\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    replace: "      const bench = state.players[seat].bench;\n      return bench.length > 0 && bench.some((p) => p !== null && p.damage > 0);",
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
+  },
+  {
+    id: "D373-universal-bench-row-points-at-the-existential",
+    decision: "D373",
+    what: "🛑 C3 — **D369's C6, RE-POINTED AT THE ROW THAT NOW EXISTS**: the clause-table row for *\"all of your Benched Pokémon have at least 1 damage counter on them\"* resolves to `yourBenchDamaged` — the EXISTENTIAL member, which is the row a hurried slice reaches for because the printed nouns match almost exactly and the member is already there. **THE MUTANT COMPILES, LOOKS LIKE PROGRESS AND IS WRONG ON EVERY BOARD WHERE SOME BUT NOT ALL BENCHED BODIES ARE DAMAGED** — and the census summand moves by 2 either way, so no counting rung can see it. **A ROW HAS NO DERIVER BEHIND IT TO REFUSE WHAT IT CANNOT PARSE** (D190b/D199). `benchAllDamagedBonus.test.ts` §4 pins the round trip to the UNIVERSAL member and drives the existential sentence to the existential member on the same page",
+    file: "packages/engine/src/effects.ts",
+    find: '  [\n    "all of your Benched Pokémon have at least 1 damage counter on them",\n    { kind: "yourBenchAllDamaged" },\n  ],',
+    replace: '  [\n    "all of your Benched Pokémon have at least 1 damage counter on them",\n    { kind: "yourBenchDamaged" },\n  ],',
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
+  },
+  {
+    id: "D373-universal-bench-reads-the-far-seat",
+    decision: "D373",
+    what: "🛑 C4 — THE SEAT FLIPS: `state.players[seat].bench` becomes `state.players[otherSeat(seat)].bench`, which is the spelling half this `switch`'s arms legitimately use and is one identifier away. The printed clause says *\"YOUR Benched Pokémon\"*. ⚠️ **IT IS INVISIBLE ON EVERY MIRRORED BOARD** — a fixture deck that damages both benches the same way answers identically under both readings — so the separating board has to damage exactly one side, which `benchAllDamagedBonus.test.ts` §3 does in both directions",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const bench = state.players[seat].bench;\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    replace: "      const bench = state.players[otherSeat(seat)].bench;\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
+  },
+  {
+    id: "D373-universal-bench-widens-to-the-whole-side",
+    decision: "D373",
+    what: "🛑 C5 — THE ZONE WIDENS FROM THE BENCH TO THE SIDE: the array becomes `[side.active, ...side.bench]`, which is **`noEnergyOnYourPokemon`'s own line copied verbatim** from seventy lines up in this same `switch` — the one other universal in the file, and the natural thing to reach for. The printed word is *\"Benched\"*. ⚠️ **IT IS RIGHT ON EVERY BOARD WHERE THE ACTIVE HAPPENS TO BE DAMAGED**, which is most boards a damage-spread fixture builds; the separating board is an all-damaged Bench under an UNDAMAGED Active, which `benchAllDamagedBonus.test.ts` §3 fields together with its converse",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const bench = state.players[seat].bench;\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    replace: "      const side = state.players[seat];\n      const bench = [side.active, ...side.bench];\n      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);",
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
+  },
+  {
+    id: "D373-universal-bench-note-loses-the-quantifier",
+    decision: "D373",
+    what: "🛑 C6 — THE NOTE DROPS *\"all of\"*: the reject pill becomes *\"your Benched Pokémon have damage counters on them\"*, which is the SIBLING member's sentence and reads perfectly. **A PILL THAT DESCRIBES THE WRONG MEMBER IS WORSE THAN NO PILL**: it is exactly right on every board the two members agree about and misleading on precisely the boards a player would be querying — a partly damaged Bench, where the pill says the condition is met and the engine says it is not. This member's note is byte-identical to its clause-table key, so `benchAllDamagedBonus.test.ts` §4 kills it through a ROUND TRIP (note → reader → member) rather than through a string compare",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      return "all of your Benched Pokémon have at least 1 damage counter on them";',
+    replace: '      return "your Benched Pokémon have damage counters on them";',
+    expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
   },
 ];
