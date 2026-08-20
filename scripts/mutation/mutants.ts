@@ -14128,4 +14128,89 @@ export const MUTANTS: Mutant[] = [
     replace: "      return \"this Pokémon has any Team Rocket's Energy attached\";",
     expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
   },
+  // ── D375 — THE CROSS-BOARD TYPE INTERSECTION. Eight rows, ONE PER CLAIM: the
+  //    ZONE is "in play" on YOUR side (C1) and on THEIRS (C2), the comparison is an
+  //    INTERSECTION and not an array equality (C3) nor a first-element read (C4), the
+  //    identity is the stack TOP (C5), the two sides are DIFFERENT seats (C6), the row
+  //    key is the printed bytes and not a paraphrase (C7), and the note is verbatim (C8).
+  //
+  // 🛑 C3 IS THE ROW THIS SLICE EXISTS FOR, AND IT IS D374's C1 SHAPE AGAIN FROM A
+  //    DIFFERENT DIRECTION: its wrong answer is INDISTINGUISHABLE FROM THE RIGHT ONE
+  //    ON THE ENTIRE PRINTED CATALOG, because **no Standard-legal Pokémon is
+  //    dual-typed** (D238). There, the only separating board held a card nobody
+  //    printed; here it holds a body nobody printed. ⚠️ AND C4 IS NOT A DUPLICATE OF
+  //    IT — the board that kills C3 leaves C4 alive, because `["Water", "Metal"]`
+  //    against `["Water"]` still meets at index 0. Two wrong readings, two boards.
+  {
+    id: "D375-type-intersection-narrows-your-side-to-the-active",
+    decision: "D375",
+    what: "🛑 C1 — HALF THE ZONE, YOUR HALF: the left-hand set collapses from `[side.active, ...side.bench]` to the ATTACKER'S OWN BODY. ⚠️ **THIS IS THE DANGEROUS KIND OF WRONG, NOT THE VACUOUS KIND** — D370's Bench clause broke LOUDLY under the opposite edit (an in-play reading would have satisfied itself off the attacker and gone unconditionally true), but here the attacker's type IS a legitimate term: the printing is a PSYCHIC Enamorus and means it. So this mutant pays correctly on most boards and silently under-pays only when the shared type sits on YOUR Bench. `typeShareBonus.test.ts` §4 fields exactly that board — a Colorless body benched against a Colorless defender behind a FAIRY attacker — and §4's second rung is the attribution control showing the narrowed reading is not merely always-false",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    replace: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      const own = state.players[seat].active;\n      return own !== null && (topCardOf(state, own)?.types ?? []).some((type) => theirs.has(type));",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-narrows-their-side-to-the-active",
+    decision: "D375",
+    what: "🛑 C2 — HALF THE ZONE, THE OTHER HALF: the right-hand set collapses to the DEFENDER'S ACTIVE, spelled with `activeTop` — which is the line `opponentActiveHasType` legitimately uses fifty lines up in this same `switch`, copied verbatim. The printed words say *\"your opponent's Pokémon **in play**\"* and the clause has two of them. ⚠️ **IT IS RIGHT WHENEVER THE OPPONENT'S BENCH IS EMPTY**, which is most boards this family builds, so the separating board has to bench a matching body across the table and leave their Active a non-match — `typeShareBonus.test.ts` §4 does that, and §4's BENCH-against-BENCH rung kills BOTH narrowings at once",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    replace: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };\n      const spot = activeTop(state, otherSeat(seat));\n      const theirs = new Set(spot === null ? [] : (spot.card.types ?? []));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-compares-arrays-instead",
+    decision: "D375",
+    what: "🛑 C3 — **THE SLICE'S OTHER WHOLE POINT**: the INTERSECTION becomes an ARRAY EQUALITY. *\"The same type\"* reads to an author as *\"the same `types`\"*, and `Card.types` is an array, so this is the code that gets written. ⚠️ **IT IS INDISTINGUISHABLE FROM THE RIGHT ANSWER ON THE ENTIRE PRINTED CATALOG** — no Standard-legal Pokémon is dual-typed (measured on the remote D1 at D238: `json_array_length(types_json) > 1` returns zero rows) — so every board built out of real cards makes the two readings agree and only `fix-dualbody` (`[\"Water\", \"Metal\"]`, D370) can separate them. `typeShareBonus.test.ts` §5 fields it against a single `[\"Water\"]`, computes the equality reading beside the member, and carries two CONTROL boards where all three readings agree",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };\n      const theirs = new Set(typesInPlay(otherSeat(seat)));\n      return typesInPlay(seat).some((type) => theirs.has(type));",
+    replace: "      const typesOf = (s: Seat): string[][] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : [topCardOf(state, p)?.types ?? []],\n        );\n      };\n      const theirs = typesOf(otherSeat(seat));\n      return typesOf(seat).some((mine) =>\n        theirs.some((t) => t.length === mine.length && t.every((v, i) => v === mine[i])),\n      );",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-reads-only-the-first-type",
+    decision: "D375",
+    what: "🛑 C4 — `types[0]` INSTEAD OF THE WHOLE ARRAY, which is the OTHER wrong read of an array column and the one D238's `fix-dual-basic` was built for one filter over. It differs from C3: an equality misses a dual body against any single body, while this one misses only when the shared type sits SECOND. **SO THE BOARD THAT KILLS C3 DOES NOT KILL THIS ONE** — `[\"Water\", \"Metal\"]` against `[\"Water\"]` still meets at index 0 — and `typeShareBonus.test.ts` §5 therefore fields a SECOND dual-type board, the same fixture against a single `[\"Metal\"]`, where the shared member is at index 1. Two wrong readings, two boards, and the difference between them is the whole reason both rungs exist",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) =>\n          p === null ? [] : (topCardOf(state, p)?.types ?? []),\n        );\n      };",
+    replace: "      const typesInPlay = (s: Seat): string[] => {\n        const side = state.players[s];\n        return [side.active, ...side.bench].flatMap((p) => {\n          const type = p === null ? undefined : topCardOf(state, p)?.types?.[0];\n          return type === undefined ? [] : [type];\n        });\n      };",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-reads-the-stack-base",
+    decision: "D375",
+    what: "🛑 C5 — THE IDENTITY BECOMES THE STACK BASE: `topCardOf(state, p)` becomes `cardOfUid(state, p.stack[0])`, the card a body EVOLVED FROM rather than the Pokémon that is in play. §1.2 says a stack's TOP is the Pokémon, and every sibling arm in this `switch` reads it that way. ⚠️ **IT IS IDENTICAL ON EVERY UNEVOLVED BOARD**, which is every board in this file except two: `typeShareBonus.test.ts` §6 pushes a card onto a benched stack in each direction — one that DISARMS the clause and one that ARMS it — because a rung in only one direction cannot tell \"reads the top\" from \"reads whichever is false\"",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          p === null ? [] : (topCardOf(state, p)?.types ?? []),",
+    replace: "          p === null ? [] : (cardOfUid(state, p.stack[0] ?? \"\")?.types ?? []),",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-collapses-the-two-seats",
+    decision: "D375",
+    what: "🛑 C6 — `otherSeat` IS DROPPED and both sets are read off the SAME side, which is the copy-paste an author makes when the two halves of an expression differ by one call. ⚠️ **IT IS TRUE ON EVERY BOARD THAT HAS A Pokémon AT ALL** — a body always shares a type with itself — so the +120 becomes unconditional and NOT ONE NEGATIVE-ONLY ASSERTION CAN SEE IT; only a board asserted FALSE can. `typeShareBonus.test.ts` §4's base board is that board (a Fairy attacker against a Colorless defender, both benches empty), and it is the first rung in the file for exactly this reason",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const theirs = new Set(typesInPlay(otherSeat(seat)));",
+    replace: "      const theirs = new Set(typesInPlay(seat));",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-row-key-is-a-paraphrase",
+    decision: "D375",
+    what: "🛑 C7 — D183's DEFECT, TRANSCRIBED: the clause-table KEY drops both *\"in play\"* phrases. **IT READS AS THE SAME SENTENCE** — that is the whole failure mode — and an author writing the row from memory rather than from the printed bytes produces exactly this. The member, the arm and every board rung stay correct and the clause simply stops resolving, so the bonus silently never pays and the sentence falls back onto the LOUD `ATTACK_EFFECT_SKIPPED` path. `typeShareBonus.test.ts` §2 pins the key by BYTE COUNT (125 / 87 code points), asserts the paraphrase is refused, and drives the printed sentence to the member at 120",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"any of your Pokémon in play are the same type as any of your opponent's Pokémon in play\",\n    { kind: \"inPlayTypesIntersect\" },\n  ],",
+    replace: "  [\n    \"any of your Pokémon are the same type as any of your opponent's Pokémon\",\n    { kind: \"inPlayTypesIntersect\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
+  {
+    id: "D375-type-intersection-note-drifts-off-the-clause",
+    decision: "D375",
+    what: "🛑 C8 — THE NOTE IS REWRITTEN INTO PROSE THAT MEANS THE SAME THING. ⚠️ **AND IT LOOKS LIKE AN IMPROVEMENT**, which is why it needs a row: the replacement is shorter and reads better on a HUD pill. What it destroys is the property this member is the family's FIRST cross-board one to have — the note is VERBATIM the printed clause, so it round-trips BOTH to the bytes and, through `CONDITIONAL_DAMAGE_CLAUSES`, back to this member. Its two cross-board neighbours deliberately do NOT (D116 drops a pronoun, D118 spells a glyph out), and `typeShareBonus.test.ts` §3 asserts the difference in both directions so a successor cannot \"fix\" one into the other",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return \"any of your Pokémon in play are the same type as any of your opponent's Pokémon in play\";",
+    replace: "      return \"you have a Pokémon in play sharing a type with one of your opponent's\";",
+    expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
+  },
 ];
