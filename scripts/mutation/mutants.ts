@@ -14322,4 +14322,92 @@ export const MUTANTS: Mutant[] = [
     replace: "      return `your discard pile holds ${cond.count}+ Basic ${cond.energy} Energy`;",
     expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
   },
+  // ── D377 — THE CROSS-BOARD STATUS PAIR. Eight rows, ONE PER CLAIM: Confusion is
+  //    NOT the rotation helper (C1) and NOT the whole rotation slot (C2); Burn is not
+  //    the Poison counter (C3) and is read across the table (C4); the two bonus rows
+  //    keep their own members (C5); the CANCEL row keeps the narrow member (C6) and the
+  //    printed contraction (C7); and the note keeps the possessive (C8).
+  //
+  // 🛑 C1 IS THE ROW THIS SLICE EXISTS FOR AND IT IS THE HANDOFF'S OWN PREDICTION.
+  //    `isImmobilized` is the nearest existing rotation predicate and it deliberately
+  //    EXCLUDES Confused, so an arm that reaches for it is false on every board the
+  //    clause is about — which is exactly why §5 tables the whole condition space
+  //    rather than asserting the happy path.
+  //
+  // ⚠️ C5 / C7 ARE THE TWO EDITS THAT LEAVE EVERY SENTENCE STILL RESOLVING. A swapped
+  //    member and a positive-spelled cancel key both keep the readers answering; only
+  //    the AMOUNT on a real board, or the SIDE of the table, can tell. Both need a
+  //    board carrying exactly ONE status, which is why §5 fields three.
+  {
+    id: "D377-confused-reaches-for-isImmobilized",
+    decision: "D377",
+    what: "🛑 C1 — **THE VACUITY MODE THE HANDOFF NAMED BEFORE THE BUILD**, and it is the nearest rotation predicate rather than a straw: `isImmobilized` (types.ts) is `rotation === “asleep” || rotation === “paralyzed”` and is what an author reaching for an existing helper finds. **Confused is DELIBERATELY NOT IN IT** — §12 lets a Confused Pokémon attack and retreat — so this arm is FALSE on every board the clause is about and TRUE on the two it is not. `crossBoardStatus.test.ts` §5 tables all ten condition sets at once, so the mutant is caught THREE ways in one assertion: `confused` flips false, `asleep` and `paralyzed` flip true",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && presentStatuses(active.conditions).includes(\"confused\");",
+    replace: "      return active !== null && isImmobilized(active.conditions);",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-confused-widens-to-any-rotation",
+    decision: "D377",
+    what: "🛑 C2 — THE WIDE MEMBER'S ARM COPIED VERBATIM: `opponentActiveHasSpecialCondition` two arms up is `presentStatuses(active.conditions).length > 0`, and this is that line with nothing changed. It is the most tempting wrong edit in the file because the two members share a projection and an import, and **it is TRUE on every board this member is true on** — the disagreement only shows on the four condition sets that carry a status the clause does not name. §5's ten-row table asserts `asleep`, `paralyzed`, `poisoned` and `burned` all leave `confused` FALSE while `anyStatus` is TRUE, which is the same rung that proves the NESTING is real",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && presentStatuses(active.conditions).includes(\"confused\");",
+    replace: "      return active !== null && presentStatuses(active.conditions).length > 0;",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-burned-reads-the-poison-counter",
+    decision: "D377",
+    what: "🛑 C3 — THE NEIGHBOURING ARM'S REAL CODE, COPIED: `opponentActivePoisoned` sits two cases up in the same `switch` and its body is `active.conditions.poisonDamage > 0`. D190b's shape exactly (Scorching Armor's status onto Poison Point), and the two clauses are ONE PRINTED WORD apart with keys of the SAME code-point length. `crossBoardStatus.test.ts` §3 drives Roasting Heat at 10 and 50 on a Burned board where `poisonDamage` is 0, and §5's table separates `burned` from `poisoned` on six of its ten rows",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && presentStatuses(active.conditions).includes(\"burned\");",
+    replace: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && active.conditions.poisonDamage > 0;",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-burned-reads-its-own-seat",
+    decision: "D377",
+    what: "🛑 C4 — THE SEAT: `otherSeat(seat)` drops out and the member reads the ATTACKER's own Active. It is `yourActivePoisoned`'s spelling — the SELF twin four arms down — and the union carries seat-NAMED pairs precisely because these two lines differ by one call. ⚠️ **A P1-ONLY SUITE CANNOT SEE IT** if every board it builds happens to be symmetric, which is why §6 mirrors each reading (P2 burned → true from p1, false from p2; p1 burned → the reverse) and declares both printings from the FAR seat on real boards",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && presentStatuses(active.conditions).includes(\"burned\");",
+    replace: "      const active = state.players[seat].active;\n      return active !== null && presentStatuses(active.conditions).includes(\"burned\");",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-bonus-rows-swap-their-members",
+    decision: "D377",
+    what: "🛑 C5 — THE TWO NEW CLAUSE ROWS SWAP MEMBERS: the Burned key returns `opponentActiveConfused`. Adjacent rows added in one commit, one printed word apart, and **both still resolve** — so nothing about “the sentence is read” goes red and only the AMOUNT paid on a real board can tell. `crossBoardStatus.test.ts` §5 fields one board carrying BOTH statuses (where the swap is invisible) and then two boards carrying exactly ONE each, where a Burned defender must NOT pay the +90 and a Confused one must NOT pay the +40",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"your opponent's Active Pokémon is Burned\", { kind: \"opponentActiveBurned\" }],",
+    replace: "  [\"your opponent's Active Pokémon is Burned\", { kind: \"opponentActiveConfused\" }],",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-cancel-row-widens-to-any-condition",
+    decision: "D377",
+    what: "🛑 C6 — THE REQUIREMENT ROW REACHES FOR THE WIDER MEMBER: Centiskorch's *“isn't Burned”* maps onto `opponentActiveHasSpecialCondition`, which is the mistake with this table's name on it — the row is a NEGATION and the wide member reads *“affected by a Special Condition”*, so the sentence and the member are one abstraction step apart and the mutant is correct on every board whose defender is Burned and nothing else. §3's last rung is the separating board: a CONFUSED defender, where the wide reading unlocks a 180-damage attack the printed sentence cancels",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"your opponent's Active Pokémon isn't Burned\", { kind: \"opponentActiveBurned\" }],",
+    replace: "  [\"your opponent's Active Pokémon isn't Burned\", { kind: \"opponentActiveHasSpecialCondition\" }],",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-cancel-row-key-loses-the-contraction",
+    decision: "D377",
+    what: "🛑 C7 — THE CANCEL KEY IS SPELLED POSITIVE: `isn't` becomes `is`, which is the SAME STRING as this slice's bonus-table key. D365's Iron Boulder row records the trap in the abstract (*“its positive twin is a substring of it”*); here the two keys become literally equal across two tables. The polarity rule makes the positive spelling look right — the row hands back a POSITIVE member either way — so nothing in the row reads wrong. Centiskorch simply stops matching and “Charring Breath” resolves to nothing, which §2 catches by asserting the requirement reader on the printed bytes and by refusing all four constructed table crossings",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"your opponent's Active Pokémon isn't Burned\", { kind: \"opponentActiveBurned\" }],",
+    replace: "  [\"your opponent's Active Pokémon is Burned\", { kind: \"opponentActiveBurned\" }],",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  {
+    id: "D377-confused-note-drops-the-possessive",
+    decision: "D377",
+    what: "🛑 C8 — THE NOTE LOSES THE CROSS-BOARD POSSESSIVE and becomes *“your Active Pokémon is Confused”* — which is `yourActivePoisoned`'s note wording one status over, i.e. a real neighbour copy rather than invented prose. On a HUD pill it reads fine; what it destroys is the ROUND-TRIP, because this note IS the `CONDITIONAL_DAMAGE_CLAUSES` key byte for byte and a reject message would now describe the wrong side of the table. §2 asserts the round-trip in both directions and that all four §12 notes are DISTINCT",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return \"your opponent's Active Pokémon is Confused\";",
+    replace: "      return \"your Active Pokémon is Confused\";",
+    expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
 ];
