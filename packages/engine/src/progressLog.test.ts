@@ -316,9 +316,19 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // came back **ERROR — baseline is RED before mutating**, which is the harness refusing
   // to score a mutant whose control is already failing. A GREEN FIGURE THAT WAS NOT
   // MEASURED IS A CLAIM, AND THIS ONE WAS WRONG.
-  const ARCHIVES = 46;
+  // 🆕🆕 D377 — 46 → **47**, RAISED DELIBERATELY, the UP branch again, AND RAISED IN THE
+  // SAME COMMIT THAT DEMOTED THE RESUME POINT — which is the half D376 left owed and paid
+  // for with a red `HEAD`. D377 demoted D376's live resume point under `### Prior resume
+  // point (P3-M5 — D376, …)` and the demoted BODY was carried across with it: the section
+  // was captured FIRST and re-emitted after the new one rather than overwritten, and the
+  // seam was re-read after the edit with D376's body confirmed present.
+  // ✅ AND `bun run check` WAS RUN AGAIN AFTER THE DOCS COMMIT AND THE EXIT CODE READ, which
+  // is the other half of the same discipline. This suite reddens ONLY after that commit
+  // lands, so the pre-docs run cannot see it and a figure quoted from the pre-docs run is a
+  // claim about a tree that no longer exists.
+  const ARCHIVES = 47;
 
-  it("the page still holds all 46 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 47 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

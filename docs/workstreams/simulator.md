@@ -22026,3 +22026,156 @@ at `count: 9`.
   id on `https://api.tcgdex.net/v2/en/cards/<id>`, which returns the printed effect text and
   is how the corpus line was checked byte-for-byte. `api.pokemontcg.io` still returns **403**
   to WebFetch, and the web still cannot give a LEGAL-PRINTING count.
+
+---
+
+## D377 — the CROSS-BOARD STATUS PAIR: one closed printed vocabulary over THREE model shapes, and the token priced and DECLINED (engine 0.281.0 → **0.282.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+Serves **THREE** printed sentences at **1 legal printing each**:
+
+* *"If your opponent's Active Pokémon is Burned, this attack does 40 more damage."* —
+  Slugma `sv05-028` "Roasting Heat" ({R}, **10+**);
+* *"If your opponent's Active Pokémon is Confused, this attack does 90 more damage."* —
+  Tapu Lele `sv08-092` "Mental Crush" ({P}{C}{C}, **90+**);
+* *"If your opponent's Active Pokémon **isn't** Burned, this attack does nothing."* —
+  Centiskorch `sv05-037` "Charring Breath" ({R}{R}, **180**).
+
+TWO **NULLARY** `BoardCondition` members (`opponentActiveBurned`, `opponentActiveConfused`),
+FOUR reader arms, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows, ONE
+`ATTACK_REQUIREMENT_CLAUSES` row. **ZERO new imports, maps, templates, patterns, ops,
+events or `packages/schema` bytes.**
+
+### The handoff said TWO printings. It came out at THREE, and that is a CENSUS lesson
+
+D376 handed this over as a PAIR at 1 printing each — *"2 printings for one purchase"*. It
+is three, and the third was found by applying D310/D311's standing rule to the handoff's
+own sweep: **a census is as narrow as the literal it matches.** Asking for `is Burned`
+returns one sentence; asking for **every conditional sentence carrying a status word at
+all** returns the printed NEGATION under a different consequent. `ATTACK_REQUIREMENT_CLAUSES`'
+polarity rule (*the skeleton owns the negation*) means that row hands back the POSITIVE
+member and `attack.ts` cancels when it fails — so the third printing costs ONE row and ZERO
+vocabulary. **D363's Sawk arrangement, one member over, and the first time both consequents
+of a member were purchased in the same commit.**
+
+### The SHAPE question, part A: the three model shapes are a RED HERRING
+
+`SpecialConditions` (`types.ts`) is `{ rotation: "none" | "asleep" | "paralyzed" |
+"confused"; poisonDamage: number; burned: boolean }` — **Poison is a COUNTER, Burn is a
+BOOLEAN and Confusion is ONE VALUE OF AN ENUM**, one closed printed vocabulary of five
+words over three different model shapes. That is real, and it is not the slice's problem,
+because the three already meet in exactly one place: **`presentStatuses` projects all three
+onto one closed `StatusName` list**, and `opponentActiveHasSpecialCondition` has consumed
+that projection since D116 as `.length > 0`.
+
+So both new arms are `presentStatuses(active.conditions).includes("burned" | "confused")`
+and neither picks a field. What that buys is not brevity — it is that **both members are
+provable NARROWINGS of the wide one on every board**, rather than agreeing readings of the
+same three fields, which is D222's two-readers-of-one-fact defect closed by construction.
+`crossBoardStatus.test.ts` §5 SWEEPS the implication over all ten condition sets the model
+can hold, and counts the two boards (Asleep, Paralyzed) where the wide member is TRUE and
+all three named ones are FALSE — which is what stops the sweep being vacuous.
+
+### The SHAPE question, part B: the `status` TOKEN, priced from the catalog and declined
+
+D118's rule — *a template is safe only when the varying token has a CLOSED vocabulary to
+fail against* — **PASSES here for the first time in this corner**: §12 prints exactly five
+status words. **It is the COUNT that refuses the token, not the safety.** Swept over
+`legalAttackCorpus()` (640 sentences / 1,732 legal printings) for every `is` / `isn't`
+status clause on BOTH seats:
+
+| status | sentences | printings | state |
+|---|---|---|---|
+| Poisoned | 4 | 8 | **already built**, as TWO NULLARY seat-named members (`opponentActivePoisoned` 3 s / 5 p, `yourActivePoisoned` 1 s / 3 p) |
+| Burned | 2 | 2 | this slice, BOTH consequents |
+| Confused | 1 | 1 | this slice |
+| Asleep | 0 | 0 | — |
+| Paralyzed | 0 | 0 | — |
+
+Three of five values are READ at all; two of those three are already two nullary members,
+and re-pointing a seat-named member at a token is a **RENAME until proven otherwise** (D365
+recorded it, D366 reproduced it, D362 priced the analogous one at **31 sites across 7
+files**). So a token serves **exactly the 3 printings two rows serve** and buys reachability
+for two values nothing prints. ⚠️ **WHAT WOULD FLIP IT**, so a successor can: a printed
+SAME-SEAT *"this Pokémon is Burned/Confused"* read, or any `is Asleep` / `is Paralyzed` read
+at all. At that point the conversion is one deliberate rename slice, never a drive-by.
+
+⚠️ **AND THE SETTER SIDE IS ENORMOUS BY COMPARISON**, which is why the vocabulary FEELS
+bigger than the read population is: *"…is now Burned"* alone is 14 printings on one
+sentence, *"…is now Confused"* is 31. That half is `applyStatus`'s and has been built since
+M3. **A vocabulary's size is not its READ population.**
+
+### The vacuity modes, named before the build and each driven on a board
+
+1. **`isImmobilized` is the trap with Confusion's name on it.** It is `rotation ===
+   "asleep" || rotation === "paralyzed"` and **deliberately excludes Confused** (§12 lets a
+   Confused Pokémon attack and retreat), so an arm that reached for the nearest rotation
+   predicate is FALSE on every board the clause is about and TRUE on two it is not. §5's
+   ten-row table catches it three ways in one assertion.
+2. **Both statuses clear on the same events**, so a board that never moves the Active
+   cannot tell "reads the field" from "reads a constant". §3 and §4 drive an ARM and a
+   DISARM apiece, both through the GAME.
+3. **The two clauses must not reach each other.** §5 fields one board carrying BOTH statuses
+   (where a swapped member is invisible) and two carrying exactly one each.
+
+### 🛑 BURN IS CURED BY A COIN, AND CONFUSION IS NOT — so the two boards cost different things
+
+§13.2: at every Checkup a Burned Pokémon takes 20 **and then flips a cure coin**. So an
+in-game Burn read a turn later survives only on **two tails**, and the board is
+**seed-dependent**. This is not worked around — the seed is pinned and the flips are
+**ASSERTED off `CHECKUP_COIN_FLIP`**, so a moved RNG fails loudly instead of silently
+turning the rung into the clean-Active case wearing a Burn's name. The HEADS seed beside it
+is then the **game-driven DISARM**, for free.
+
+Confusion has no cure flip and survives indefinitely; its disarm is §11's **retreat**, which
+clears the whole status row — a real `retreat` action taken by the seat that owns the
+condition, on that seat's own turn. **Two statuses, two clearing rules, four boards.**
+
+### The cast, and why every member of it is also a setter
+
+`CROSS_BOARD_STATUS_DECK` fields three attackers and each is a setter or a reader of
+another's condition: `fix-charbreath` (Centiskorch — index-0 "Singe" is the suite's only
+in-game Burn source, index-1 "Charring Breath" is the CANCEL consequent), `fix-roastheat`
+(Slugma — the +40 BONUS consequent on the condition `fix-charbreath` sets), `fix-mindcrush`
+(Tapu Lele — self-arming, index-0 Confuses and index-1 reads it). `fix-*` and not the real
+ids, for D376's reason unchanged: a fixture id naming a real printing needs a
+`CATALOG_MANIFEST.printed` row and this container has no D1.
+
+⚠️ **FOUR COPIES OF EACH ATTACKER AND NOT THREE — D376's MARGIN LESSON, PAID FORWARD AND
+MEASURED.** At three copies, seed 60 threw *"p1 deck has no fix-charbreath"*: setup takes 7
+to hand and 6 to prizes before a single surgery runs. **The fix is a MARGIN, not a seed.**
+
+### What the census actually cost — and it was EIGHTEEN files, not fourteen
+
+Residue (bonus skeleton) **24 / 28 → 22 / 26** (a **2:2** step); the "does nothing"
+skeleton's own residue **3 s / 5 p → 2 s / 4 p**; resolving sentences **354 → 357**; raw
+**1,239 → 1,242**; `BUILT.attack` **1,268 → 1,271**; unbuilt remainder **493 → 490**; the
+requirement table **7 rows / 6 reachable / 13 printings → 8 / 7 / 14**; the apostrophe-BEARING
+bonus half **16 → 18** (both new keys spell a possessive, so the apostrophe-free half stands
+still at 21); the apostrophe requirement list **6 → 7**; the fixture-census `derivable`
+**115 → 118**; the `FIXTURE_POOL` floor **460 → 463**.
+
+🛑 **THE MOVING SET WAS EIGHTEEN FILES AND THE HANDOFF PREDICTED FOURTEEN.** The four extra
+are the REQUIREMENT family — `benchCountRequirement`, `requirementFloor`, `splitOrder`,
+`sawkRequirementSplit` — and they moved because **this is the first slice in the run to touch
+BOTH consequents**. **THE PREDICTED SET IS A PROPERTY OF WHICH TABLES A SLICE EDITS, NOT A
+CONSTANT.** Five full `vitest` passes to green (18 files → 3 → 3 → 2 → 0), the wave shape
+D375 and D376 both recorded.
+
+⚠️ **AND TWO OF THOSE FILES HELD A RECORD THAT THIS SLICE FALSIFIED.** D365's `REFUSED` list
+carried *"a BURNED member — the state field exists, no condition reads it"* in both
+`requirementFloor.test.ts` and `benchCountRequirement.test.ts`. The rows were **MOVED into a
+new `TAKEN_SINCE` array, not deleted** (D178: provenance is annotated, never overwritten),
+the partitions are re-assembled from both arrays so they still sum to D365's 4 / 9, and the
+assertion is **INVERTED rather than removed** — the sentence is now asserted to resolve, and
+to resolve to the NARROW member rather than the wide one that case exists to refuse. **D365's
+refusal was right and only its timing was wrong.**
+
+### The IDs — a web measurement, the fifth slice running, with two false positives refuted
+
+limitlesstcg's `text:` search tokenises and `AND`s the tokens, so *"Active Pokemon is
+Burned, this attack does 40 more damage"* returns **8 cards** and only one of them prints the
+sentence. All three ids were confirmed against `https://api.tcgdex.net/v2/en/cards/<id>`,
+which returns the printed effect byte for byte, and the two SV-era false positives — Magcargo
+ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is now Burned"* —
+were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
+`legalAttackCorpus()`'s alone.
