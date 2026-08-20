@@ -980,6 +980,71 @@ export type BoardCondition =
       Energy sits face up, so the union's public-state invariant holds. False with
       an empty Active Spot. */
   | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
+  /** 🆕🆕 D374 — §6.3, and the family's FIRST read of a printed CARD NAME on an
+      ATTACHED card: YOUR Active Pokémon has at least one attached Energy whose
+      printed name is `name`. Team Rocket's Zapdos `sv10-070` (and its second legal
+      printing) "Wicked Thunder" (60+, **+60**), printed *"If this Pokémon has any
+      Team Rocket's Energy attached, this attack does 60 more damage."* — **1
+      sentence / 2 legal printings**.
+
+      🛑 **THE SUPPLY QUESTION (D207) WAS ASKED FIRST AND IT PASSES — WHICH IS NOT
+      WHAT THE HANDOFF EXPECTED.** D207's failure mode is a predicate over a banner
+      no column CLASSIFIES (`Tera`, `Ancient`, `Future`: 22 rows of DEMAND and zero
+      SUPPLY), and the handoff named this candidate as the first in the run that
+      could actually fail it. It does not: `InPlayPokemon.energy` holds uids,
+      `state.cardIdByUid` resolves each to a catalog id and `cardOfUid` to the
+      `Card`, whose `name` is an ingested column that `matchesFilter`'s `byName`
+      member has read since M4. The supply is a FIELD, not a banner.
+
+      🛑 **THE SHAPE QUESTION: ONE CARD NAME, NOT THE `Team Rocket's ` PREFIX
+      FAMILY — AND THE TWO READINGS ARE EXTENSIONALLY IDENTICAL TODAY, WHICH IS WHY
+      THE CHOICE IS RECORDED RATHER THAN ASSUMED.** *"Team Rocket's Pokémon"* really
+      is a prefix family — `CardFilter.ownerPokemon` (D242) exists for it — so
+      *"Team Rocket's Energy"* reads as a family at first glance. It is not one:
+      **exactly one** Energy card carries the prefix, `Team Rocket's Energy`
+      `sv10-182`, reprinted as `me2pt5-217`, and no `Team Rocket's ⟨X⟩ Energy` has
+      ever been printed. `cards.ts`'s `ownerPokemon` arm already records that card by
+      id as the near miss its `category === "Pokemon"` conjunct exists to refuse.
+
+      **SO THE CHOICE COSTS NOTHING TODAY AND IS A COMMITMENT ABOUT TOMORROW**, and
+      it goes the same way D373's did: a NAME EQUALITY never over-serves, while a
+      prefix reading would silently pay +60 for a future card the sentence may not
+      name. An engine that must guess guesses toward not paying. ⚠️ **WHAT WOULD
+      FALSIFY IT**: a printed `Team Rocket's ⟨X⟩ Energy`, or a ruling that reads the
+      clause as the family. The remedy is one member field and one arm — and the
+      suite drives the difference on a board TODAY (`trEnergyBonus.test.ts` §2), with
+      the prefix reading computed beside the member as an attribution control.
+
+      ⚠️ **IT IS A LITERAL CLAUSE ROW AND NEVER A TEMPLATE (D118).** The pattern
+      `SELF_ENERGY_ATTACHED_CLAUSE` (`^this Pokémon has any (.+) Energy attached$`)
+      already matches this printed clause and captures `Team Rocket's`; it is only
+      `CLAUSE_ENERGY_TOKENS` missing that keeps it null. A card NAME has no closed
+      vocabulary to fail against, so a template over it would answer an unknown
+      energy name with this member — D118's rule read from the wrong end. The
+      literal table is consulted FIRST, so the row wins outright.
+
+      ⚠️ **THE NAME IS FOLDED (D154), AND THE FOLD IS ON BOTH SIDES.** This is the
+      union's first member whose PARAMETER is printed text that carries an
+      apostrophe. `literalClauseRow` already retries a clause-table miss with U+2019
+      folded, so a re-ingest that curled the punctuation would still find this row —
+      but it would curl `Card.name` too, and an ASCII parameter compared against a
+      curled name is exactly the half-fix D137 warned about wearing a proper noun.
+      The arm folds the card side (`interpreter.ts`), the parameter is stored ASCII,
+      and the pair is driven on a curled board.
+
+      D116's pronoun rule, as with every sibling: the member is named for what it
+      READS (your Active) and the CLAUSE TABLE resolves the printed "this Pokémon".
+      Attached Energy sits face up, so the union's public-state invariant holds.
+      False with an empty Active Spot.
+
+      ⚠️ **DELIBERATELY NOT `yourActiveHasEnergyAttached` WIDENED.** That member
+      reads by PROVISION (continuous.ts `hasAttachedEnergy`): a wildcard Luminous is
+      a `{R}` Energy while it provides every type. A NAME is the opposite reading —
+      it does not move with the board and has nothing to do with what pays a cost —
+      so folding the two into one field would make one member mean two things on the
+      same card. They disagree on a real board: a plain Special satisfies
+      `energy: "special"` and not this, and `Team Rocket's Energy` satisfies BOTH. */
+  | { kind: "yourActiveHasNamedEnergyAttached"; name: string }
   /** §3.8 — your opponent's REMAINING Prize count is one of `counts`: Krokorok
       sv01-116 "Payback" (+90, `[1]`) and Houndstone sv03-101 "Two Four-ocious"
       (+120, `[2, 4]`). The member is set MEMBERSHIP and NOT a threshold ENCODING
@@ -9096,6 +9161,35 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "you have at least 3 {D} Energy in play",
     { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 },
+  ],
+  // 🆕🆕 D374 — Team Rocket's Zapdos sv10-070 "Wicked Thunder" (60+, **+60**), 2
+  // legal printings byte-identical in rules text, so one row and one fixture serve
+  // both. It sits in the ENERGY neighbourhood rather than beside the Tool rows below
+  // because its near miss is not another ROW at all.
+  //
+  // 🛑 **THE NEAR MISS IS THE PATTERN, NOT A SIBLING KEY.**
+  // `SELF_ENERGY_ATTACHED_CLAUSE` (`^this Pokémon has any (.+) Energy attached$`,
+  // D118) matches this printed clause exactly and captures `Team Rocket's`; the only
+  // thing that stops it answering is `CLAUSE_ENERGY_TOKENS` having no such token.
+  // `boardConditionForClause` consults THIS table first, so the row wins outright and
+  // would keep winning even if that map ever learned the string — which is the whole
+  // reason literals are pass one (see this table's own doc block).
+  //
+  // 🛑 **AND IT IS A ROW BECAUSE A CARD NAME HAS NO CLOSED VOCABULARY.** D118's rule
+  // is that a template needs a token set the lookup can FAIL against; the energy
+  // codes have one, the Pokémon types have one, and a printed card name has none.
+  // `has any (.+) Energy attached` parameterised over the name would answer
+  // "Fixmon's Energy" with this member and score +60 off a card nobody printed.
+  //
+  // ⚠️ THE APOSTROPHE IS ASCII on both the KEY and the VALUE, as everything the
+  // catalog prints is (D137's re-verified claim: zero U+2019 across `effect`,
+  // `attacks_json`, `abilities_json` and `name`). `literalClauseRow` folds U+2019 →
+  // U+0027 on a MISS so the KEY survives a punctuation-normalising re-ingest; the
+  // VALUE survives it because the arm in `interpreter.ts` folds the CARD side before
+  // comparing (D154). Two spellings, one member, one answer.
+  [
+    "this Pokémon has any Team Rocket's Energy attached",
+    { kind: "yourActiveHasNamedEnergyAttached", name: "Team Rocket's Energy" },
   ],
   // Greedent sv01-152 "Enhanced Fang" (+80) — the pool's only printing, with no
   // reprint, and the last clause in this family that reads a field the model

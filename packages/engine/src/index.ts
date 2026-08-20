@@ -12108,6 +12108,98 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.279.0 → **THE FIRST PRINTED CARD NAME READ OFF AN ATTACHED CARD — AND
+    D207's SUPPLY QUESTION ASKED OF A CANDIDATE THAT WAS EXPECTED TO FAIL IT.**
+
+    D373 handed over *"If this Pokémon has any Team Rocket's Energy attached, this
+    attack does 60 more damage."* (Team Rocket's Zapdos `sv10-070` "Wicked Thunder",
+    **1 sentence / 2 legal printings**) with TWO questions in front of the build, in
+    D368's order: a SUPPLY question that could disqualify it outright, then a SHAPE
+    question. Both are settled here, and the build is five edits.
+
+    ✅ **THE SUPPLY QUESTION PASSES, AND THAT WAS THE ONE IN DOUBT.** D207's failure
+    mode is a predicate over a banner no column CLASSIFIES — `Tera` is on 22 rows and
+    **every occurrence is DEMAND**; `Ancient` / `Future` likewise (D204, D205) — and
+    the handoff named this candidate as the first in the run that could actually fail
+    it, because the engine must be able to SEE a `Card.name` on an ATTACHED Energy.
+    It can: `InPlayPokemon.energy` holds uids, `state.cardIdByUid` resolves each to a
+    catalog id, `cardOfUid` to the `Card`, and `name` is an ingested column
+    `matchesFilter`'s `byName` member has read since M4. `FIXTURE_POOL` has held a
+    real one since D242 — `fix-tr-energy`, named `Team Rocket's Energy` — put there
+    as the NEAR MISS `ownerPokemon`'s `category === "Pokemon"` conjunct exists to
+    refuse. **The supply is a FIELD, not a banner. A refusal was budgeted and is not
+    owed.**
+
+    🛑 **THE SHAPE QUESTION: ONE CARD NAME, NOT THE `Team Rocket's ` PREFIX FAMILY.**
+    *"Team Rocket's Pokémon"* genuinely IS a prefix family — `CardFilter.ownerPokemon`
+    (D242) and `yourPokemonKoedOnOpponentsLastTurn.owner` (D326's Ethan's row, in
+    this very table) both
+    exist for owner prefixes — so the same three words in front of *Energy* read as a
+    family at first glance. **They are not one: exactly ONE Energy card carries the
+    prefix** (`Team Rocket's Energy` `sv10-182`, reprinted `me2pt5-217`), and no
+    `Team Rocket's ⟨X⟩ Energy` has ever been printed. ⚠️ **The catalog could not
+    answer this — no D1 credentials in this container — so it was answered on the
+    WEB**, D373's instrument: the official card database, Bulbapedia and the set
+    lists all return the one card. The engine's own source already recorded it, by
+    id, in `cards.ts`'s `ownerPokemon` arm.
+
+    **SO THE TWO READINGS ARE EXTENSIONALLY IDENTICAL ON TODAY'S POOL, AND THE CHOICE
+    IS ABOUT TOMORROW.** It goes the way D373's did, on the same tie-break: a NAME
+    EQUALITY never over-serves, a prefix reading would silently pay +60 for a card
+    the sentence may not name, and an engine that must guess guesses toward not
+    paying. ⚠️ **THE FALSIFIER IS NAMED** — a printed `Team Rocket's ⟨X⟩ Energy`, or a
+    ruling reading the clause as the family — and the remedy is one member field and
+    one arm. ✅ **AND IT CARRIES AN ATTRIBUTION CONTROL** (D214's rule): the PREFIX
+    reading is computed beside the member in the suite, on a board holding an invented
+    `Team Rocket's Fix Energy`. The two differ on exactly that board and agree on
+    every other shape swept — so the choice is SHOWN to be doing something rather than
+    asserted to be harmless.
+
+    ⚠️ **AND THE ROW IS A LITERAL BECAUSE A CARD NAME HAS NO CLOSED VOCABULARY
+    (D118).** `SELF_ENERGY_ATTACHED_CLAUSE` — `^this Pokémon has any (.+) Energy
+    attached$` — ALREADY MATCHES this printed clause and captures `Team Rocket's`;
+    only `CLAUSE_ENERGY_TOKENS` missing that token keeps it null. Parameterising over
+    the name would answer *"Fixmon's Energy"* with this member. Literals are pass one
+    in `boardConditionForClause`, so the row wins outright.
+
+    ⚠️ **THE UNION'S FIRST PARAMETER THAT IS PRINTED TEXT WITH AN APOSTROPHE, WHICH
+    MAKES D154's FOLD LOAD-BEARING ON A NEW SITE.** `literalClauseRow` already retries
+    a clause-table miss with U+2019 → U+0027, so the KEY survives a
+    punctuation-normalising re-ingest — but such a re-ingest curls `Card.name` too,
+    and an ASCII parameter compared against a curled name is exactly the half-fix D137
+    warned about wearing a proper noun. The arm folds the CARD side
+    (`foldApostrophes`, whose other consumer is `attackIndexByName` in the same file),
+    the parameter is stored ASCII, and the pair is driven on a curled board rather
+    than argued.
+
+    ⚠️ **DELIBERATELY NOT `yourActiveHasEnergyAttached` WIDENED.** That member reads
+    by PROVISION (`hasAttachedEnergy`, continuous.ts): a wildcard Luminous IS a `{R}`
+    Energy while it provides every type, and stops being one when a second Special
+    demotes it. A NAME is the opposite reading — it does not move with the board and
+    has nothing to do with what pays a cost — so one field meaning both would make one
+    member mean two things on the same card. They disagree on real boards, driven both
+    ways: a plain Special satisfies `energy: "special"` and NOT this; `Team Rocket's
+    Energy` satisfies BOTH, and is `{C}` to the cost check either way.
+
+    WHAT SHIPS: **1 new `BoardCondition` member**
+    (`yourActiveHasNamedEnergyAttached`, carrying `name: string`), its **2** reader
+    arms — and exactly two, because `grep "switch (cond.kind)"` over non-test source
+    still closes the producer set at `conditionHolds` and `conditionNote` — **1
+    literal `CONDITIONAL_DAMAGE_CLAUSES` row** and **1 new import** (`cardOfUid` into
+    interpreter.ts, this file's first uid→`Card` resolution: every other name read
+    here goes through `topCardOf`, and an attached Energy has no stack). **ZERO new
+    maps, templates, patterns, ops, events, error codes, regexes, registry rows, state
+    fields, prompt kinds, choice kinds or `packages/schema` bytes**, and
+    `MATCH_RECORD_VERSION` **STAYS 22**.
+
+    ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS** — the 1:2 shape again
+    (D369/D370/D371/D373; D372 was the 2:2). raw 1,233 → **1,235**, `BUILT.attack`
+    1,262 → **1,264**, resolving sentences 351 → **352**, the unbuilt attack remainder
+    499 → **497**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both stand still.
+
+    engineVersion 0.278.0 → **0.279.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.278.0 → **THE UNIVERSAL OVER THE BENCH — AND AN EMPTY-SET BOUNDARY THAT
     HAD TO BE *CHOSEN*, BECAUSE THE TWO PRECEDENTS TURNED OUT TO BE EACH OTHER'S
     NEGATION.**
@@ -14247,7 +14339,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.278.0";
+export const engineVersion = "0.279.0";
 
 export type {
   ApplyResult,

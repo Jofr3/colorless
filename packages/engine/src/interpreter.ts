@@ -3,6 +3,11 @@ import {
   activeTop,
   applyDamageModifier,
   attacksOf,
+  // 🆕 D374 — the FIRST uid→Card resolution in this file. Every other name read here
+  // goes through `topCardOf` (a Pokémon's identity is its stack TOP, §1.2); an
+  // ATTACHED Energy is a bare uid with no stack, so it resolves through the same
+  // function continuous.ts uses for the provision reading.
+  cardOfUid,
   energyProvidesOf,
   evolveFromOf,
   hasPrintedAbility,
@@ -3067,6 +3072,41 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && hasAttachedEnergy(state, active, cond.energy);
     }
+    case "yourActiveHasNamedEnergyAttached": {
+      // 🆕 D374 — "this Pokémon has any Team Rocket's Energy attached" (Team Rocket's
+      // Zapdos sv10-070, +60). D116's pronoun rule again: the clause table resolved
+      // the printed "this Pokémon" to your Active, not this arm.
+      //
+      // 🛑 THE ZONE IS THE CATEGORY TEST. `pokemon.energy` holds attached ENERGY uids
+      // and `pokemon.tools` holds the Tools, so a name equality scanned over this
+      // array cannot reach a Trainer the way `matchesFilter`'s `ownerPokemon` arm can
+      // — which is why THAT one needs an explicit `category === "Pokemon"` conjunct
+      // and this one does not.
+      //
+      // 🛑 BY PRINTED NAME AND NOT BY PROVISION, which is the whole difference from
+      // the arm two cases up. `hasAttachedEnergy` lives in continuous.ts precisely so
+      // a type reading cannot drift from what pays a cost; a NAME has no such twin —
+      // it does not move when a second Special demotes a wildcard — so this reads the
+      // card directly, here, beside `yourBenchHasNamed` and `yourNamedPokemonInPlay`,
+      // which resolve a printed name the same way one screen up.
+      //
+      // ⚠️ THE CARD SIDE IS FOLDED (D154, and `attackIndexByName` 1,500 lines down in
+      // this same file does it for the same reason). The member's `name` is stored
+      // ASCII because that is what the catalog prints; a re-ingest that normalised
+      // punctuation would curl `Card.name` and the printed sentence TOGETHER, and
+      // `literalClauseRow` already folds the clause key on a miss. Folding one side
+      // and not the other is the half-fix D137 warned about.
+      //
+      // `cardOfUid` returns undefined for a uid the catalog cannot resolve, and that
+      // is FALSE rather than a throw — matchesFilter's conservative direction, and
+      // here it means an unreadable attachment never PAYS the bonus.
+      const active = state.players[seat].active;
+      if (active === null) return false;
+      return active.energy.some((uid) => {
+        const card = cardOfUid(state, uid);
+        return card !== undefined && foldApostrophes(card.name) === cond.name;
+      });
+    }
     case "opponentPrizesRemaining":
       // §3.8 — what is still face down on their side, the same read
       // `morePrizesThanOpponent` makes and the complement of `takenPrizes`. The
@@ -3669,6 +3709,16 @@ export function conditionNote(cond: BoardCondition): string {
       return cond.energy === "special"
         ? "your Active Pokémon has a Special Energy attached"
         : `your Active Pokémon has ${cond.energy} Energy attached`;
+    case "yourActiveHasNamedEnergyAttached":
+      // 🆕 D374 — built from the parameter, and the pronoun is dropped exactly as the
+      // arm above drops it (D116), so the pill names the body a player can see rather
+      // than the one the card's own text points at. The name is printed WHOLE — it
+      // already ends in "Energy", so appending the word would read "Team Rocket's
+      // Energy Energy". It therefore does NOT round-trip to the printed bytes, and it
+      // round-trips to the same MEMBER through nothing at all: this clause is a
+      // literal ROW keyed on the printed spelling. Two audiences, two strings —
+      // D372's note says the same, and it is still not a defect to be "fixed".
+      return `your Active Pokémon has a ${cond.name} attached`;
     case "opponentPrizesRemaining":
       // Built from the parameter, agreement and all: the printed sentences read
       // "exactly 1 Prize card" and "exactly 2 or 4 Prize cards", so the noun is
