@@ -176,39 +176,42 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 31 / 40 could not tell "the template landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    // 🆕🆕 D371 — 31 / 40 -> **30 / 38**: D371 took the sentence this file's own band
-    // named as the cheapest of the seven (*"your opponent's Active Pokémon has {F}
-    // Resistance"*, `opponentResistanceBonus.test.ts`), so this head is re-derived
-    // from the live corpus and each earlier figure comes back off it one term later.
-    expect(refused.length).toBe(30);
-    expect(units(refused)).toBe(38);
-    // D370's recorded residue, then D369's, re-derived from THIS head: add the
-    // sentences back rather than freezing the pair that measured them.
-    expect(refused.length + 1).toBe(31);
-    expect(units(refused) + 2).toBe(40);
-    expect(refused.length + 2).toBe(32);
-    expect(units(refused) + 4).toBe(42);
+    // 🆕🆕 D372 — 30 / 38 -> **28 / 36**: D372 took the CROSS-BOARD EQUAL-ENERGY
+    // clause this file's own band named among the six (`sameEnergyBonus.test.ts`),
+    // and it is printed under TWO sentences at 1 printing each — so this head falls
+    // by 2 in BOTH terms where the three slices before it fell by 1 and 2. Each
+    // earlier figure still comes back off the live head rather than being frozen.
+    expect(refused.length).toBe(28);
+    expect(units(refused)).toBe(36);
+    // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
+    // add the sentences back rather than freezing the pair that measured them.
+    expect(refused.length + 2).toBe(30);
+    expect(units(refused) + 2).toBe(38);
+    expect(refused.length + 3).toBe(31);
+    expect(units(refused) + 4).toBe(40);
+    expect(refused.length + 4).toBe(32);
+    expect(units(refused) + 6).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // 🆕🆕 D371 — SIX at 2 printings now: this file left SEVEN and named the
-    // Resistance clause as the cheapest of them, and D371 bought exactly that one.
-    // The list is spelled out so a successor inherits the tie-break MEASURED.
-    // Every one of them is a different mechanism.
+    // 🆕🆕 D372 — FIVE at 2 printings now: this file left SIX and D372 bought the
+    // CROSS-BOARD EQUAL-ENERGY one out of them. The list is spelled out so a
+    // successor inherits the tie-break MEASURED. Every one of them is a different
+    // mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
       "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
-      "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 1).toBe(7);
-    expect(band.length + 2).toBe(8);
+    expect(band.length + 1).toBe(6);
+    expect(band.length + 2).toBe(7);
+    expect(band.length + 3).toBe(8);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

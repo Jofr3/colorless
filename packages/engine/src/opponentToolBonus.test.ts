@@ -153,50 +153,52 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // printings. Both facts are asserted rather than one: the departure and the
     // size, so a reader that broke and a row that landed cannot look alike.
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    // 🆕🆕 D371 — 31 / 40 -> **30 / 38**: D371 took one more sentence out of this
-    // residue (the OPPONENT-RESISTANCE clause this file's own §1 named as the
-    // cheapest of the seven, `opponentResistanceBonus.test.ts`), after D370 took the
-    // bench-scoped {M} TYPE clause. This file's head is re-derived from the live
-    // corpus and each earlier figure comes back off it one term later rather than
-    // being left frozen.
-    expect(refused.length).toBe(30);
-    expect(units(refused)).toBe(38);
-    // D370's recorded residue, then D369's, then D368's — all re-derived from THIS
-    // head rather than quoted. A guard that only checked the current pair could not
-    // tell "a row landed" from "a reader broke".
-    expect(refused.length + 1).toBe(31);
-    expect(units(refused) + 2).toBe(40);
-    expect(refused.length + 2).toBe(32);
-    expect(units(refused) + 4).toBe(42);
-    expect(refused.length + 3).toBe(33);
-    expect(units(refused) + 6).toBe(44);
+    // 🆕🆕 D372 — 30 / 38 -> **28 / 36**, AND THE TWO TERMS STOP MOVING IN STEP.
+    // D372 took the CROSS-BOARD EQUAL-ENERGY clause (`sameEnergyBonus.test.ts`) this
+    // file's own band named among the six, and that clause is printed under **TWO**
+    // sentences at 1 printing each — so the SENTENCE term falls by 2 where the
+    // PRINTING term falls by 2, the first time on this chain that the two are not
+    // 1-and-2. **A CLAUSE-KEYED BAND ENTRY IS NOT A SENTENCE COUNT.** Every earlier
+    // figure still comes back off the live head rather than being left frozen.
+    expect(refused.length).toBe(28);
+    expect(units(refused)).toBe(36);
+    // D371's recorded residue, then D370's, then D369's, then D368's — all
+    // re-derived from THIS head rather than quoted. A guard that only checked the
+    // current pair could not tell "a row landed" from "a reader broke".
+    expect(refused.length + 2).toBe(30);
+    expect(units(refused) + 2).toBe(38);
+    expect(refused.length + 3).toBe(31);
+    expect(units(refused) + 4).toBe(40);
+    expect(refused.length + 4).toBe(32);
+    expect(units(refused) + 6).toBe(42);
+    expect(refused.length + 5).toBe(33);
+    expect(units(refused) + 8).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // 🆕🆕 D371 — SIX at 2 printings now: D371 bought the entry this list named as
-    // the cheapest of the seven (*"your opponent's Active Pokémon has {F}
-    // Resistance"*), after D370 bought the one before it (*"you have any {M}
-    // Pokémon on your Bench"*). The list keeps the rest, spelled out so a successor
-    // inherits the tie-break MEASURED rather than re-running it. Every one of them
-    // is a different mechanism.
+    // 🆕🆕 D372 — FIVE at 2 printings now: D372 bought the CROSS-BOARD EQUAL-ENERGY
+    // clause, after D371 bought the Resistance one and D370 the bench-scoped {M}
+    // TYPE one. The list keeps the rest, spelled out so a successor inherits the
+    // tie-break MEASURED rather than re-running it. Every one of them is a different
+    // mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
       "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
-      "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    // …with D371's clause counted back in the band is SEVEN, with D370's as well it
-    // is EIGHT, and with this file's own it is NINE — the number D368's handoff put
-    // at two.
-    expect(band.length + 1).toBe(7);
-    expect(band.length + 2).toBe(8);
-    expect(band.length + 3).toBe(9);
+    // …with D372's clause counted back in the band is SIX, with D371's as well SEVEN,
+    // with D370's EIGHT, and with this file's own NINE — the number D368's handoff
+    // put at two.
+    expect(band.length + 1).toBe(6);
+    expect(band.length + 2).toBe(7);
+    expect(band.length + 3).toBe(8);
+    expect(band.length + 4).toBe(9);
     // The 5-printing declaration clause D368 disqualified on shape is STILL the
     // largest thing in the residue and is STILL refused, so nothing here has quietly
     // re-priced it.

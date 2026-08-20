@@ -187,31 +187,38 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 30 / 38 could not tell "the template landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(30);
-    expect(units(refused)).toBe(38);
-    // D370's recorded residue, re-derived from THIS head: add the sentence back.
-    expect(refused.length + 1).toBe(31);
-    expect(units(refused) + 2).toBe(40);
+    // 🆕🆕 D372 — 30 / 38 -> **28 / 36**: D372 took the CROSS-BOARD EQUAL-ENERGY
+    // clause this file's own band below named among the six, and that clause is
+    // printed under TWO sentences at 1 printing each — so the SENTENCE term falls by
+    // 2 where the PRINTING term falls by 2, and this file's head is re-derived from
+    // the live corpus with each earlier figure coming back off it one term later.
+    expect(refused.length).toBe(28);
+    expect(units(refused)).toBe(36);
+    // D371's recorded residue, then D370's, re-derived from THIS head: add the
+    // sentences back rather than freezing the pair that measured them.
+    expect(refused.length + 2).toBe(30);
+    expect(units(refused) + 2).toBe(38);
+    expect(refused.length + 3).toBe(31);
+    expect(units(refused) + 4).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
       byClause.set(clause, (byClause.get(clause) ?? 0) + n);
     }
-    // SIX at 2 printings once this slice's clause has left the band — D370's seven
-    // minus the one taken, spelled out so a successor inherits the tie-break
-    // MEASURED. Every one of them is a different mechanism, and the shortest of
-    // them is now the largest remaining question in this family.
+    // 🆕🆕 D372 — FIVE at 2 printings now: this file left SIX and D372 bought the
+    // CROSS-BOARD EQUAL-ENERGY one out of them. Spelled out so a successor inherits
+    // the tie-break MEASURED. Every one of them is a different mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
       "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
-      "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 1).toBe(7);
+    expect(band.length + 1).toBe(6);
+    expect(band.length + 2).toBe(7);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -291,14 +298,22 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     const fighting = ids.filter((id) =>
       (FIXTURE_POOL[id]?.resistances ?? []).some((r) => r.type === "Fighting"),
     );
-    expect(ids).toHaveLength(450);
+    // 🆕🆕 D372 — 450 -> **453**, and the OTHER TWO COLUMNS STAND STILL. D372 adds
+    // three bodies (`fix-sameenergy`, `fix-sameenergy-120`, `fix-energyholder`) and
+    // none of them prints a Resistance, so the pool grows and the sample this rung
+    // is actually about does not. **THAT IS THE FLOOR BEHAVING LIKE A FLOOR**: a
+    // denominator that moved every time an unrelated fixture landed would be worth
+    // even less than this one, and the two unmoved columns are what say so.
+    expect(ids).toHaveLength(453);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
-    // D370 measured this floor at 24 of 444 with 16 Fighting, BEFORE this slice's
-    // six fixtures landed. The arithmetic is spelled out so the inherited figure
-    // and the live one cannot silently disagree: +6 bodies, +3 with a Resistance
-    // (`fix-fightweak` has none by design), +2 of them Fighting.
-    expect(ids.length - 6).toBe(444);
+    // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
+    // fixtures landed. The arithmetic is spelled out so the inherited figures and
+    // the live ones cannot silently disagree: D372 is +3 bodies / +0 / +0, and
+    // D371 was +6 bodies, +3 with a Resistance (`fix-fightweak` has none by
+    // design), +2 of them Fighting.
+    expect(ids.length - 3).toBe(450);
+    expect(ids.length - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

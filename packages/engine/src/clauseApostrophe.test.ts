@@ -621,13 +621,20 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // 🆕🆕 D370 — **110 → 110, MOVED BY NOTHING.** `fix-benchtype` prints a real new
     // sentence and it spells NO apostrophe at all, so the fixture lands and this
     // census does not move. **A NEW ATTACKER FIXTURE IS NOT A NEW CENSUS ENTRY.**
+    // 🆕🆕 D372 — **111 → 113, +2, AND IT IS THE MIRROR OF D371's ARITHMETIC.**
+    // THREE new fixtures and exactly TWO census entries: `fix-sameenergy` and
+    // `fix-sameenergy-120` print DIFFERENT sentences (the same clause at 100 and at
+    // 120, both spelling the possessive "your opponent's"), so a sentence-keyed
+    // census takes both. D371 had two fixtures under ONE sentence and moved this by
+    // one; this slice has two fixtures under TWO sentences and moves it by two.
+    // `fix-energyholder` carries no attack at all. **THREE FIXTURES, TWO ENTRIES.**
     // 🆕🆕 D371 — **110 → 111.** SIX new fixtures and exactly ONE census entry:
     // `fix-oppresist` and `fix-oppresist-f` print the SAME sentence (*"If your
     // opponent's Active Pokémon has {F} Resistance…"*, a possessive, so it enters),
     // and this census is SENTENCE-keyed with the ids collected under it — so a
     // second holder of one sentence is a second id, not a second entry. The four
     // defender bodies carry no attack at all. **SIX FIXTURES, ONE ENTRY, TWO IDS.**
-    expect(derivable).toHaveLength(111);
+    expect(derivable).toHaveLength(113);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -699,6 +706,12 @@ const APOSTROPHE_BONUS_SENTENCES = [
   // 🆕🆕 D367's OWN row — the only one of this slice's seven whose key spells an
   // apostrophe. Regirock ex sv10-101/-214 "Giant Rock".
   "If your opponent's Active Pokémon is a Stage 2 Pokémon, this attack does 140 more damage.",
+  // 🆕🆕 D372's OWN row — the CROSS-BOARD EQUAL-ENERGY clause. Listed at its +100
+  // spelling; the pool prints the SAME clause at +120 as well, and one row serves
+  // both because the amount lives in the skeleton's capture. It is the first entry
+  // in this list whose clause names BOTH Active bodies, and the possessive is on the
+  // far one.
+  "If this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached, this attack does 100 more damage.",
   // 🆕🆕 D369's OWN row — the CROSS-BOARD Pokémon Tool clause, whose SELF twin
   // ("If this Pokémon has a Pokémon Tool attached") sits in the apostrophe-FREE
   // half of this partition two rows apart in the same table. One possessive is the
@@ -820,8 +833,8 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(32); // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
-    expect(withApostrophe).toHaveLength(13); // 🆕🆕 D371 — 12 -> 13, the OPPONENT-RESISTANCE clause, and it is TEMPLATE-owned rather than a row: the third entry in `TEMPLATE_OWNED` below, so `rowClauses` stands still at 10 while this half moves // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
+    expect(carried.size).toBe(33); // 🆕🆕 D372 — 32 -> 33, and the new clause is a literal ROW that DOES spell a possessive, so it lands in the apostrophe half (13 -> 14) and in the ROW partition of it — the combination D371's did not have. ⚠️ ONE row and not two: this census is CLAUSE-keyed, and D372's two printed sentences share one clause // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(withApostrophe).toHaveLength(14); // 🆕🆕 D372 — 13 -> 14, the CROSS-BOARD EQUAL-ENERGY clause, and it is a ROW rather than TEMPLATE-owned: `rowClauses` moves 10 -> 11 with it while `TEMPLATE_OWNED` stands still at 3 // 🆕🆕 D371 — 12 -> 13, the OPPONENT-RESISTANCE clause, and it is TEMPLATE-owned rather than a row: the third entry in `TEMPLATE_OWNED` below, so `rowClauses` stands still at 10 while this half moves // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
     const TEMPLATE_OWNED = [
@@ -834,9 +847,9 @@ describe("the literal clause tables — the rows the fold was built for", () => 
       "your opponent's Active Pokémon is a {P} Pokémon",
     ];
     const rowClauses = withApostrophe.filter((clause) => !TEMPLATE_OWNED.includes(clause));
-    expect(rowClauses).toHaveLength(10); // 🆕🆕 D369 — 9 -> 10
-    expect(APOSTROPHE_BONUS_SENTENCES).toHaveLength(10); // 🆕🆕 D369 — 9 -> 10
-    // 10 + 2 = 12 — parts that do not add to the population are not a partition.
+    expect(rowClauses).toHaveLength(11); // 🆕🆕 D372 — 10 -> 11 // 🆕🆕 D369 — 9 -> 10
+    expect(APOSTROPHE_BONUS_SENTENCES).toHaveLength(11); // 🆕🆕 D372 — 10 -> 11 // 🆕🆕 D369 — 9 -> 10
+    // 11 + 3 = 14 — parts that do not add to the population are not a partition.
     expect(rowClauses.length + TEMPLATE_OWNED.length).toBe(withApostrophe.length);
     const listedClauses = APOSTROPHE_BONUS_SENTENCES.map(
       (sentence) => /^If (.+), this attack does \d+ more damage\.$/.exec(sentence)?.[1] ?? sentence,
@@ -908,8 +921,8 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     );
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
-    expect(without.length + 13).toBe(carried.size);
-    expect(carried.size).toBe(32); // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
+    expect(without.length + 14).toBe(carried.size);
+    expect(carried.size).toBe(33); // 🆕🆕 D372 — 32 -> 33, and the apostrophe half moves again (13 -> 14) while THIS one stands still at 19 for the second slice running — but through the OTHER partition of that half: D371's clause was TEMPLATE-owned and D372's is a ROW // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a

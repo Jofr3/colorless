@@ -10880,6 +10880,55 @@ export const FIXTURE_POOL: Record<string, Card> = {
     weaknesses: [{ type: "Fighting", value: "×2" }],
     resistances: null,
   }),
+  /** 🆕 D372 — the CROSS-BOARD EQUAL-ENERGY clause: *"If this Pokémon and your
+      opponent's Active Pokémon have the same amount of Energy attached, this attack
+      does 100 more damage."*, and the same clause at **120** — **1 legal printing
+      each**, TWO printed sentences, ONE clause-table row.
+
+      BOTH sentences are printed as fixtures on purpose. The amount lives in
+      `CONDITIONAL_DAMAGE_BONUS`'s capture, so one row serves both — and the way to
+      show that is to derive both off real fixture bodies rather than off two
+      constructed strings. It is also what makes this slice's step through
+      `clauseApostrophe.test.ts`'s fixture sweep **+2 rather than +1**: that census
+      is SENTENCE-keyed, and these are two sentences.
+
+      Costed `{C}` and based at 10 so the +100 / +120 is unmistakable in the dealt
+      number, and `hp: 150` so the attacker survives whatever the boards hand back.
+      The `types` are left to `battler`'s default — unlike D370's and D371's
+      attackers, nothing in this clause reads a TYPE on either body, so choosing one
+      would be decoration. */
+  "fix-sameenergy": battler("fix-sameenergy", {
+    hp: 150,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Even Match",
+        damage: 10,
+        effect:
+          "If this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached, this attack does 100 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D372 — the SECOND printed sentence of the same clause, at the other
+      amount. One row, two sentences, two bodies. */
+  "fix-sameenergy-120": battler("fix-sameenergy-120", {
+    hp: 150,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Even Match",
+        damage: 10,
+        effect:
+          "If this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached, this attack does 120 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D372 — a 200 HP defender with an attack this file never declares, so the
+      opposing Active can hold Energy without the boards being about it. `fix-bigbody`
+      would have served, but it is on eight other decks and this file attaches to it
+      in counts none of them use; a dedicated body keeps those suites' seeded shuffles
+      exactly where they were measured (D270's rule, one zone over). */
+  "fix-energyholder": battler("fix-energyholder", { hp: 200 }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -11049,6 +11098,35 @@ export const OPPONENT_RESISTANCE_DECK = deckOf({
   "fix-fightweak": 4,
   "fix-bigbody": 8,
   "fix-energy": 24,
+});
+
+/** 🆕🆕 D372 — the CROSS-BOARD EQUAL-ENERGY board. A DEDICATED 60 (D270's rule)
+    rather than a widened `OPPONENT_RESISTANCE_DECK`, so D371's seeded boards keep the
+    shuffles they were measured on.
+
+      • `fix-sameenergy` / `fix-sameenergy-120` — the two attackers, one printed
+        sentence each and one clause-table row between them;
+      • `fix-energyholder` — the 200 HP body across the table, which exists to HOLD
+        Energy rather than to be told apart from anything;
+      • `fix-basic-1` — a plain body to BENCH, for the rung that separates "the two
+        Active bodies" from "the two SIDES" (`countEnergyInPlay` is one identifier
+        away in `interpreter.ts`'s own import block);
+      • `fix-blend` — the FIXTURE Special that provides TWO distinct types from ONE
+        card. **IT IS THE WHOLE CARDS-VS-UNITS RUNG**: one `fix-blend` against two
+        basics is 1 ≠ 2 by CARD and 2 = 2 by UNIT, so the two readings of the printed
+        noun disagree on a board this engine can build.
+
+    `fix-energy` pays every `{C}` and is the counted card everywhere else — the
+    counts here are deliberately generous, because every board in
+    `sameEnergyBonus.test.ts` moves Energy from the deck onto a body and several
+    move four or five at once. 4 + 4 + 8 + 8 + 8 + 28 = **60**. */
+export const SAME_ENERGY_DECK = deckOf({
+  "fix-sameenergy": 4,
+  "fix-sameenergy-120": 4,
+  "fix-energyholder": 8,
+  "fix-basic-1": 8,
+  "fix-blend": 8,
+  "fix-energy": 28,
 });
 
 /** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a

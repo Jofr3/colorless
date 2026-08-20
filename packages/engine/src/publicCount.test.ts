@@ -61,7 +61,9 @@ import {
 // 4. TWO HAND CLAUSES ARE TWO MEMBERS. A threshold against a printed constant and
 //    an equality between the two hands are different comparisons over different
 //    operands. They share a noun and nothing else — and the equality one is the
-//    vocabulary's first SEAT-SYMMETRIC member, asserted from both seats.
+//    vocabulary's first SEAT-SYMMETRIC member, asserted from both seats. (🆕🆕 D372 —
+//    "first" and no longer "only": `activeEnergyCountsEqual` is the second, and this
+//    file's own test name had to be corrected for it.)
 
 /** The four printed clauses' full sentences, pinned here and asserted
     char-for-char against FIXTURE_POOL below. These cards derive off text — none
@@ -628,7 +630,21 @@ describe("Bronzong 'Extrasensory' — the two hands, equal", () => {
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(160);
   });
 
-  it("is the vocabulary's one SEAT-SYMMETRIC member — same answer from both seats", () => {
+  it("🆕🆕 D372 — is the vocabulary's FIRST seat-symmetric member, and no longer its only one", () => {
+    // 🛑 THIS TEST'S NAME SAID "the vocabulary's ONE SEAT-SYMMETRIC member" AND D372
+    // FALSIFIED IT. `activeEnergyCountsEqual` — the two Active bodies' attached-Energy
+    // counts, equal — commutes for exactly the reason this one does, and it is driven
+    // from both seats in `sameEnergyBonus.test.ts` §6. The claim was true when D119
+    // wrote it, nothing in the suite was keyed on it, and it went stale in a file the
+    // new member does not touch. **A NEW MEMBER CAN FALSIFY A COMMENT IN A FILE IT
+    // DOES NOT TOUCH** (D370's lesson, collected here on purpose). Corrected to
+    // FIRST, which is a fact that cannot rot — the same repair `effects.ts` and
+    // `interpreter.ts` take in the same commit.
+    //
+    // ⚠️ AND D372 IS THE MEMBER WHERE THE WORD SPLITS IN TWO: its printed sentence is
+    // ASYMMETRIC (a pronoun on one side, the full noun phrase on the other) while its
+    // truth value commutes. This one is symmetric in both senses, which is why the
+    // distinction never had to be drawn before.
     const equal = board(15);
     const uneven = setHandSize(equal, "p2", 5);
     for (const seat of ["p1", "p2"] as const) {

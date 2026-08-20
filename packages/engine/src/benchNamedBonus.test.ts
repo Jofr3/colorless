@@ -231,7 +231,12 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // partition, however carefully each half is measured.
     expect(carried.length + refused.length).toBe(openers.length);
     expect(units(carried) + units(refused)).toBe(units(openers));
-    // 🆕🆕 D371 — the residue is 30 / 38. D371 took ONE sentence / TWO printings
+    // 🆕🆕 D372 — the residue is 28 / 36. D372 took **TWO sentences / TWO
+    // printings** (ONE clause, the CROSS-BOARD EQUAL-ENERGY one, printed at two
+    // amounts — `sameEnergyBonus.test.ts`), so the two terms of this chain stop
+    // stepping in the 1-and-2 pattern the four slices before it kept, and every
+    // earlier head is still re-derived from the measured one rather than quoted.
+    // 🆕🆕 D371 — the residue was 30 / 38. D371 took ONE sentence / TWO printings
     // (the OPPONENT-RESISTANCE clause, `opponentResistanceBonus.test.ts`), so the
     // whole chain below gains one more term and every earlier head is still
     // re-derived from the measured one rather than quoted.
@@ -244,12 +249,13 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // printings (the cross-board Pokémon Tool clause, `opponentToolBonus.test.ts`),
     // so BOTH numbers step again and every figure below is re-derived from the
     // measured head rather than left frozen at the head that measured it.
-    expect([refused.length, units(refused)]).toEqual([30, 38]);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([31, 40]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([32, 42]);
-    expect([refused.length + 3, units(refused) + 6]).toEqual([33, 44]);
-    expect([refused.length + 4, units(refused) + 6 + 3]).toEqual([34, 47]);
-    expect([refused.length + 4 + TAKEN.length, units(refused) + 9 + 13]).toEqual([43, 60]);
+    expect([refused.length, units(refused)]).toEqual([28, 36]);
+    expect([refused.length + 2, units(refused) + 2]).toEqual([30, 38]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([31, 40]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([32, 42]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([33, 44]);
+    expect([refused.length + 6, units(refused) + 8 + 3]).toEqual([34, 47]);
+    expect([refused.length + 6 + TAKEN.length, units(refused) + 11 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -560,8 +566,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(348); // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1229); // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(350); // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1231); // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -571,8 +577,13 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // 1 sentence / 2 printings, so D366's head is still re-derived from the live
     // total rather than frozen at the head that measured it.
     // 🆕🆕 D371 — a FOURTH, and the same 1 / 2 step (the OPPONENT-RESISTANCE clause).
-    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1).toBe(335);
-    expect(units(resolved) - 13 - 3 - 2 - 2 - 2).toBe(1207);
+    // 🆕🆕 D372 — a FIFTH, and the FIRST that is not a 1 / 2 step: TWO sentences and
+    // TWO printings, because one clause is printed at two amounts. The sentence term
+    // therefore takes a `- 2` where the four before it each took a `- 1`, while the
+    // printing term takes the same `- 2` they did — which is the whole arithmetic of
+    // "a clause-keyed band entry is not a sentence count", written as a subtraction.
+    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1 - 2).toBe(335);
+    expect(units(resolved) - 13 - 3 - 2 - 2 - 2 - 2).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {
