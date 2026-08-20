@@ -10792,6 +10792,94 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-metalbody": battler("fix-metalbody", { hp: 60, types: ["Metal"] }),
   "fix-dualbody": battler("fix-dualbody", { hp: 60, types: ["Water", "Metal"] }),
   "fix-fairybody": battler("fix-fairybody", { hp: 60, types: ["Fairy"] }),
+  /** 🆕 D371 — the OPPONENT-RESISTANCE clause: *"If your opponent's Active Pokémon
+      has {F} Resistance, this attack does 50 more damage."*, **2 legal printings**
+      in the committed corpus.
+
+      🛑 **`types: ["Metal"]` ON THIS ATTACKER IS THE POINT OF THE FIXTURE PAIR,
+      NOT ITS BACKDROP.** `resistanceOf` (cards.ts §8.5) only returns a modifier
+      when the defender's Resistance names one of the ATTACKER's types, and the
+      printed clause asks whether the defender HAS `{F}` Resistance whoever is
+      attacking. A Metal attacker facing a Fighting-resistant body is the ONE board
+      where those two readings disagree — clause TRUE, §8.5 modifier NULL — so a
+      member wrongly routed through the helper answers 10 where this one answers
+      60. `opponentResistanceBonus.test.ts` §5 drives it.
+
+      ⚠️ **THE ATTACKER'S TYPE IS CHOSEN FOR THE READING IT SEPARATES, NOT FROM THE
+      PRINT.** D370's `fix-benchtype` is Metal because both of ITS printings are
+      Metal Pokémon — that was measurable off the sentence. This one is not: the
+      two printings' ids and types could not be read (no D1 credentials in this
+      container) and are NOT guessed, so the type here is an ENGINE choice with an
+      engine reason, and it is stated as one.
+
+      Costed `{C}` and based at 10 so the +50 is unmistakable in the dealt number,
+      and `hp: 120` so the attacker survives anything the boards hand back. */
+  "fix-oppresist": battler("fix-oppresist", {
+    hp: 120,
+    types: ["Metal"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Counter Read",
+        damage: 10,
+        effect:
+          "If your opponent's Active Pokémon has {F} Resistance, this attack does 50 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D371 — THE SAME ATTACK ON A FIGHTING BODY, and it exists to drive the board
+      where the two readings AGREE. Against a Fighting-resistant defender this
+      attacker's own type IS the one the Resistance names, so `resistanceOf`
+      returns −30 and fires for real: 10 + 50 − 30 = 30. Without it, "the clause
+      does not go through `resistanceOf`" would be shown only where the helper is
+      null, and a member that always answered TRUE would pass that board too. */
+  "fix-oppresist-f": battler("fix-oppresist-f", {
+    hp: 120,
+    types: ["Fighting"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Counter Read",
+        damage: 10,
+        effect:
+          "If your opponent's Active Pokémon has {F} Resistance, this attack does 50 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D371 — the four DEFENDING bodies the Resistance predicate is told apart on,
+      all 200 HP so 10 + 50 never KOs and no prize/KO tail interferes:
+
+      * `fix-fightresist` — the plain TRUE case, `-30` against Fighting;
+      * `fix-grassresist` — a REAL printed Resistance and the WRONG type, which
+        `fix-bigbody`'s absent column cannot be: "no Resistance at all" and "a
+        Resistance that does not match" are two distinct false boards;
+      * `fix-dualresist` — TWO entries, and the Fighting one is SECOND and carries
+        **no `value` at all**. It is the one body that separates `.some(…)` from
+        `resistances[0]`, and simultaneously the one that separates a predicate on
+        the entry's `type` from a predicate that also reads `value` — `WeakRes.value`
+        is optional in the schema and §8.5 honours an entry it cannot price;
+      * `fix-fightweak` — Fighting **WEAKNESS** and NO Resistance. The
+        transcription-one-field-over board: `weaknesses` and `resistances` are the
+        same shape in the same schema, and D173/D175 both caught a fixture whose
+        `types` had been copied out of the weakness column. An arm reading the
+        wrong one flips here and nowhere else in this file. */
+  "fix-fightresist": battler("fix-fightresist", {
+    hp: 200,
+    resistances: [{ type: "Fighting", value: "-30" }],
+  }),
+  "fix-grassresist": battler("fix-grassresist", {
+    hp: 200,
+    resistances: [{ type: "Grass", value: "-30" }],
+  }),
+  "fix-dualresist": battler("fix-dualresist", {
+    hp: 200,
+    resistances: [{ type: "Grass", value: "-30" }, { type: "Fighting" }],
+  }),
+  "fix-fightweak": battler("fix-fightweak", {
+    hp: 200,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    resistances: null,
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10934,6 +11022,33 @@ export const BENCH_TYPE_DECK = deckOf({
   "fix-benchfiller": 4,
   "fix-bigbody": 12,
   "fix-energy": 28,
+});
+
+/** 🆕 D371 — the OPPONENT-RESISTANCE board. A DEDICATED 60 (D270's rule) rather
+    than a widened `BENCH_TYPE_DECK`, so D370's seeded boards keep the shuffles
+    they were measured on.
+
+      • `fix-oppresist` — the attacker, itself `Metal`, which is what makes the
+        "not `resistanceOf`" rung refutable rather than arguable;
+      • `fix-oppresist-f` — the SAME attack on a `Fighting` body, the board where
+        the clause and the §8.5 modifier agree and both fire;
+      • `fix-fightresist` — the defender that arms the clause;
+      • `fix-grassresist` — a real Resistance and the wrong type;
+      • `fix-dualresist` — two entries, the matching one SECOND and value-less;
+      • `fix-fightweak` — Fighting WEAKNESS and no Resistance, the one-field-over
+        board;
+      • `fix-bigbody` — 200 HP and NO Resistance column at all.
+
+    `fix-energy` pays every `{C}`. 4 + 4 + 8 + 4 + 4 + 4 + 8 + 24 = **60**. */
+export const OPPONENT_RESISTANCE_DECK = deckOf({
+  "fix-oppresist": 4,
+  "fix-oppresist-f": 4,
+  "fix-fightresist": 8,
+  "fix-grassresist": 4,
+  "fix-dualresist": 4,
+  "fix-fightweak": 4,
+  "fix-bigbody": 8,
+  "fix-energy": 24,
 });
 
 /** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a

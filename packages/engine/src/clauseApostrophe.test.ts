@@ -618,7 +618,16 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // this file was built for. The slice's OTHER new deck entries move it by zero:
     // `sv01-152`, `sv01-197`, `fix-tool`, `fix-benchfiller` and `fix-bigbody` were
     // all already in the pool.
-    expect(derivable).toHaveLength(110);
+    // 🆕🆕 D370 — **110 → 110, MOVED BY NOTHING.** `fix-benchtype` prints a real new
+    // sentence and it spells NO apostrophe at all, so the fixture lands and this
+    // census does not move. **A NEW ATTACKER FIXTURE IS NOT A NEW CENSUS ENTRY.**
+    // 🆕🆕 D371 — **110 → 111.** SIX new fixtures and exactly ONE census entry:
+    // `fix-oppresist` and `fix-oppresist-f` print the SAME sentence (*"If your
+    // opponent's Active Pokémon has {F} Resistance…"*, a possessive, so it enters),
+    // and this census is SENTENCE-keyed with the ids collected under it — so a
+    // second holder of one sentence is a second id, not a second entry. The four
+    // defender bodies carry no attack at all. **SIX FIXTURES, ONE ENTRY, TWO IDS.**
+    expect(derivable).toHaveLength(111);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -811,11 +820,16 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(31); // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
-    expect(withApostrophe).toHaveLength(12); // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
+    expect(carried.size).toBe(32); // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(withApostrophe).toHaveLength(13); // 🆕🆕 D371 — 12 -> 13, the OPPONENT-RESISTANCE clause, and it is TEMPLATE-owned rather than a row: the third entry in `TEMPLATE_OWNED` below, so `rowClauses` stands still at 10 while this half moves // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
     const TEMPLATE_OWNED = [
+      // 🆕🆕 D371 — the THIRD entry, and the first from a template OTHER than
+      // `OPPONENT_ACTIVE_TYPE_CLAUSE`: `OPPONENT_ACTIVE_RESISTANCE_CLAUSE` carries
+      // its own `['’]` in its own source (D136) and needs no row and no fold, so it
+      // belongs on this side of the partition exactly as the two below do.
+      "your opponent's Active Pokémon has {F} Resistance",
       "your opponent's Active Pokémon is a {D} Pokémon",
       "your opponent's Active Pokémon is a {P} Pokémon",
     ];
@@ -894,8 +908,8 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     );
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
-    expect(without.length + 12).toBe(carried.size);
-    expect(carried.size).toBe(31); // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
+    expect(without.length + 13).toBe(carried.size);
+    expect(carried.size).toBe(32); // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a
