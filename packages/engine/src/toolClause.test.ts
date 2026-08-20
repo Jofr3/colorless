@@ -268,9 +268,6 @@ describe("the near-misses stay LOUD", () => {
       "this Pokémon has any Pokémon Tool attached",
       // De-accented: the exact silent failure the byte guard above exists for.
       "this Pokemon has a Pokemon Tool attached",
-      // The OPPONENT-scoped rewrite. The pool does not print it, and if it ever
-      // does it is a different member reading the other board — not this row.
-      "your opponent's Active Pokémon has a Pokémon Tool attached",
       // The BENCH-scoped rewrite, likewise a different board.
       "your Benched Pokémon have a Pokémon Tool attached",
       // A Tool by NAME, which would be `yourBenchHasNamed`'s open-vocabulary trap
@@ -279,6 +276,38 @@ describe("the near-misses stay LOUD", () => {
     ]) {
       expect(deriveAttackDamageBonus(`If ${clause}, this attack does 80 more damage.`)).toBeNull();
     }
+  });
+
+  it("🛑🆕🆕 D369 — the OPPONENT-scoped rewrite is a REAL PRINTING, and it was refused HERE", () => {
+    // 🛑 THIS RUNG USED TO ASSERT THE WRONG SIDE, AND THE COMMENT BESIDE IT SAID SO
+    // OUT LOUD. The list above carried `"your opponent's Active Pokémon has a
+    // Pokémon Tool attached"` as a CONSTRUCTED near-miss annotated *"The pool does
+    // not print it, and if it ever does it is a different member reading the other
+    // board — not this row."* The pool DOES print it — **2 legal printings**, in the
+    // committed corpus this repo has shipped since D274 — so half of that sentence
+    // was false the day it was written and the other half was the specification for
+    // D369. The rewrite is now a real member, and the assertion is POSITIVE.
+    //
+    // ⚠️ THE BYTE-PIN STAYS AND THE POLARITY MOVES — D136's shape. What this rung
+    // asserts is that the two clauses land on TWO DIFFERENT members: the row under
+    // test here is unmoved, and the cross-board sentence resolves elsewhere.
+    const CROSS_BOARD =
+      "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.";
+    expect(deriveAttackDamageBonus(CROSS_BOARD)).toEqual({
+      per: 80,
+      count: { kind: "boardCondition", cond: { kind: "opponentActiveHasToolAttached" } },
+    });
+    // …and THIS row is untouched by that: the self clause still resolves to the self
+    // member, which is the only thing this suite ever claimed about it.
+    expect(deriveAttackDamageBonus(ENHANCED_FANG)).toEqual({
+      per: 80,
+      count: { kind: "boardCondition", cond: { kind: "yourActiveHasToolAttached" } },
+    });
+    // The two clauses differ ONLY in the noun phrase naming the body — everything
+    // else is byte-identical — which is why conflating them was the live hazard.
+    expect(CROSS_BOARD.replace("your opponent's Active Pokémon", "this Pokémon")).toBe(
+      ENHANCED_FANG,
+    );
   });
 
   it("keeps the outer anchor guards on this sentence too", () => {

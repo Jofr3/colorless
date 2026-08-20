@@ -10717,6 +10717,32 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕 D369 — the CROSS-BOARD Pokémon Tool clause: *"If your opponent's Active
+      Pokémon has a Pokémon Tool attached, this attack does 80 more damage."*,
+      **2 legal printings** in the committed corpus.
+
+      ⚠️ A `fix-*` id and NOT the real one, and here that is forced rather than
+      preferred: this container has no D1 credentials, so the two printings' ids
+      could not be read this session (`bunx wrangler d1 execute` returns
+      `CLOUDFLARE_API_TOKEN` unset). The SENTENCE is the wiring on this path —
+      Greedent's twin row carries no authored program either — so a fixture keyed on
+      the printed bytes proves everything a real id would, and `catalogManifest.test.ts`
+      would have had nothing to check against a name nobody measured.
+
+      Costed `{C}` and based at 10 so the +80 is unmistakable in the dealt number,
+      and `hp: 120` so the attacker survives anything the boards below hand back. */
+  "fix-oppotool": battler("fix-oppotool", {
+    hp: 120,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Tool Reader",
+        damage: 10,
+        effect:
+          "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
+      },
+    ],
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -10801,6 +10827,39 @@ export const EX_ONLY_DECK = deckOf({
   "sv06.5-036": 4,
   "fix-special": 4,
   "fix-energy": 34,
+});
+
+/** 🆕 D369 — the CROSS-BOARD Pokémon Tool board. A DEDICATED 60 (D270's rule)
+    rather than a widened `TOOL_CLAUSE_DECK`, so D122's seeded boards keep the
+    shuffles they were measured on.
+
+      • `fix-oppotool` — the attacker, whose printed clause reads the OPPONENT's
+        Active;
+      • `sv01-152` Greedent — the SELF twin's real printing ("Enhanced Fang"), so
+        ONE board can run both members and show them disagreeing across the table.
+        It is a Stage 1 and reaches the Active Spot by surgery, exactly as it does
+        in `toolClause.test.ts`;
+      • `fix-tool` — a Tool with NO passive of its own: the attribution control,
+        because a Tool that changed the damage would make "+80" unreadable;
+      • `sv01-197` Vitality Band — a SECOND Tool id, and one with a real passive
+        that is INERT across the table (it adds +10 to the attacks of the Pokémon
+        it is attached to, and here that Pokémon is the defender). So the predicate
+        is proven to read "a Tool" rather than "fix-tool", and the +80 is proven to
+        be the clause's rather than the Tool's;
+      • `fix-benchfiller` — a Basic for the Bench cases, where a Tool must arm
+        NOTHING;
+      • `fix-bigbody` — 200 HP, so 10 + 80 never KOs and no prize/KO tail
+        interferes with the reading.
+
+    `fix-energy` pays every `{C}` in the file. 4 + 4 + 4 + 4 + 4 + 12 + 28 = **60**. */
+export const OPPONENT_TOOL_DECK = deckOf({
+  "fix-oppotool": 4,
+  "sv01-152": 4,
+  "fix-tool": 4,
+  "sv01-197": 4,
+  "fix-benchfiller": 4,
+  "fix-bigbody": 12,
+  "fix-energy": 28,
 });
 
 /** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a

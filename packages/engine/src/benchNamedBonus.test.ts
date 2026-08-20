@@ -174,9 +174,15 @@ const LEFT: readonly (readonly [string, number, string])[] = [
     "NOT A `BoardCondition` AT ALL — the clause reads THIS ATTACK'S COST, which two printings set to two different values, so no state+seat predicate can answer it",
   ],
   [
-    "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.",
+    // 🛑🆕🆕 D369 — THIS ROW'S PREDECESSOR IS NOW BUILT, AND ITS REPLACEMENT IS THE
+    // OTHER 2-PRINTING CANDIDATE D368 HANDED OVER. The cross-board Pokémon Tool
+    // clause that sat here — *"…your opponent's Active Pokémon has a Pokémon Tool
+    // attached…"*, 2 printings, priced here as "a second member" — was exactly that,
+    // and D369 bought it (`opponentToolBonus.test.ts`). What takes its place is the
+    // candidate D369 DEFERRED, so this list keeps naming the head of the residue.
+    "If all of your Benched Pokémon have at least 1 damage counter on them, this attack does 120 more damage.",
     2,
-    "`yourActiveHasToolAttached` is SELF-seat; the cross-board twin is a second member",
+    "EXPRESSIBLE — a universal over the Bench is a `(state, seat)` fact and `noEnergyOnYourPokemon` is already one — but its EMPTY-BENCH reading is a SEMANTIC BOUNDARY no catalog evidence settles: the whole legal attack column prints ONE universally-quantified antecedent, so there is no sibling to triangulate against",
   ],
   [HANDED_CANDIDATE, 1, "an opponent-seat bench COUNT — D366's own handoff, and the reason this slice measured instead of inheriting"],
 ];
@@ -225,13 +231,15 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // partition, however carefully each half is measured.
     expect(carried.length + refused.length).toBe(openers.length);
     expect(units(carried) + units(refused)).toBe(units(openers));
-    // 🆕🆕 D368 — the residue is 33 / 44; at D367's head it was 34 / 47, and before
-    // D367 it was 34 + 9 and 47 + 13. D368 took ONE sentence / THREE printings
-    // (Arven's Mabosstiff ex, `undamagedBonus.test.ts`), so BOTH numbers step and
-    // the D367 arithmetic below is re-derived from them rather than left frozen.
-    expect([refused.length, units(refused)]).toEqual([33, 44]);
-    expect([refused.length + 1, units(refused) + 3]).toEqual([34, 47]);
-    expect([refused.length + 1 + TAKEN.length, units(refused) + 3 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D369 — the residue is 32 / 42; at D368's head it was 33 / 44, at D367's
+    // 34 / 47, and before D367 34 + 9 and 47 + 13. D369 took ONE sentence / TWO
+    // printings (the cross-board Pokémon Tool clause, `opponentToolBonus.test.ts`),
+    // so BOTH numbers step again and every figure below is re-derived from the
+    // measured head rather than left frozen at the head that measured it.
+    expect([refused.length, units(refused)]).toEqual([32, 42]);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([33, 44]);
+    expect([refused.length + 2, units(refused) + 2 + 3]).toEqual([34, 47]);
+    expect([refused.length + 2 + TAKEN.length, units(refused) + 5 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -542,12 +550,15 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(345); // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1223); // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(346); // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1225); // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
-    expect(resolved.length - TAKEN.length - 1).toBe(335);
-    expect(units(resolved) - 13 - 3).toBe(1207);
+    // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
+    // 2 printings), so both figures below are still D366's head, re-derived from
+    // the live total rather than frozen at the head that measured them.
+    expect(resolved.length - TAKEN.length - 1 - 1).toBe(335);
+    expect(units(resolved) - 13 - 3 - 2).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {

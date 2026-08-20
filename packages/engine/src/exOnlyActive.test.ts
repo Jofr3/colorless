@@ -130,14 +130,14 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
     // already had, and NONE of them touches the ex-ONLY predicate this file is
     // about — which is exactly why this rung is here: it is a whole-corpus total
     // in a single-family suite, so it moves for other people's work.
-    expect(resolved).toHaveLength(345); // 🆕🆕 D368 +1 sentence (Arven's Mabosstiff ex, 3 printings, ONE new member). // 🆕🆕 D367 +9 sentences (13 printings, ZERO new members). // 🆕🆕 D366 +1 sentence (Victini, 4 printings).
-    expect(resolvedP).toBe(1223); // 🆕🆕 D368 +3 // 🆕🆕 D367 +13 // 🆕🆕 D366 +4
+    expect(resolved).toHaveLength(346); // 🆕🆕 D369 +1 sentence (the cross-board Pokémon Tool clause, 2 printings) // 🆕🆕 D368 +1 sentence (Arven's Mabosstiff ex, 3 printings, ONE new member). // 🆕🆕 D367 +9 sentences (13 printings, ZERO new members). // 🆕🆕 D366 +1 sentence (Victini, 4 printings).
+    expect(resolvedP).toBe(1225); // 🆕🆕 D369 +2 // 🆕🆕 D368 +3 // 🆕🆕 D367 +13 // 🆕🆕 D366 +4
     // The parts must add up to the whole quoted in the same case. A total that
     // does not sum is not merely wrong, it is impossible — and it is ONE addition.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(resolvedP + residueP).toBe(total);
-    expect(residue).toHaveLength(295); // 🆕🆕 D368 -1 sentence // 🆕🆕 D367 -9 sentences // 🆕🆕 D366 -1 sentence
-    expect(residueP).toBe(509); // 🆕🆕 D368 -3 // 🆕🆕 D367 -13 // 🆕🆕 D366 -4
+    expect(residue).toHaveLength(294); // 🆕🆕 D369 -1 sentence // 🆕🆕 D368 -1 sentence // 🆕🆕 D367 -9 sentences // 🆕🆕 D366 -1 sentence
+    expect(residueP).toBe(507); // 🆕🆕 D369 -2 // 🆕🆕 D368 -3 // 🆕🆕 D367 -13 // 🆕🆕 D366 -4
   });
 
   it("the ex-ONLY predicate is 8 s / 13 p and the WIDER sibling is 4 s / 6 p — the ratio that chose the row", () => {
