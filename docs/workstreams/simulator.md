@@ -21908,3 +21908,121 @@ the other.**
   trick — and `https://api.tcgdex.net/v2/en/cards/<id>` confirmed each id. `api.pokemontcg.io`
   returns **403** to WebFetch. **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that
   is `legalAttackCorpus()`'s and nowhere else's.
+
+---
+
+## D376 — the FILTERED DISCARD-PILE THRESHOLD: the sibling one zone over, read the other way round
+
+Serves *"If you have 10 or more Basic {R} Energy cards in your discard pile, this attack
+does 100 more damage."* — Chandelure `sv10.5w-018` "Incendiary Pillar" ({R}, 50+, **+100**)
+and its Illustration-rare reprint `sv10.5w-103`, whose rules text is byte-identical, **1
+sentence / 2 legal printings**. ONE `BoardCondition` member
+(`yourBasicEnergyInDiscardAtLeast`, carrying an `energy` and a `count`), ONE literal
+`CONDITIONAL_DAMAGE_CLAUSES` row, TWO reader arms, **ZERO new imports**.
+
+Engine **0.280.0 → 0.281.0**; `MATCH_RECORD_VERSION` **22 unchanged**.
+
+### D207's supply question, asked first — and it was never close on either half
+
+`PlayerState.discard` is a `string[]` of uids the model has carried since M1 with a dozen
+readers, and **`CardFilter` already spells the printed noun**: `{ kind: "basicEnergy",
+energyType }`, authored for the *"Basic {L} Energy card"* SEARCH sentences. Neither the
+zone nor the filter is new. **So the whole price was the SHAPE — the second slice running
+for which that is literally true** (D375 was the first).
+
+### The shape: an INVERSION of the member it sits beside, not a relocation of it
+
+🛑 `yourEnergyInPlayAtLeast { energy, count }` is the same three words one zone over, and
+**its own doc block says it reads PROVISION** (`countEnergyInPlay`, continuous.ts). That is
+*correct there*: an Energy card **in play** pays for whatever it provides, so a wildcard
+Luminous Energy `sv02-191` counts as `{D}` while it is alone on a Pokémon.
+
+**A DISCARD PILE PROVIDES NOTHING.** A card in a pile is attached to nothing;
+`energyProvidesOf` is a reading of an ATTACHED card; and the printed words name a card
+**CLASS** (*Basic*) plus a printed **TYPE**. So the member reads the PRINTED CARD through
+`matchesFilter` and never through the in-play counter — **§6.5's standing rule, already
+stated twice in `effects.ts` for the pile-scanning ops** (*"it is about the PRINT
+(`basicEnergy` + `energyType`), never `providesEnergy`"*), applied to a `BoardCondition`
+for the first time.
+
+⚠️ **The parameter is narrower than the sibling's, and that is the same inversion again.**
+`energy` is `BasicEnergyType`, not `BasicEnergyType | "special"`. The sibling admits
+`"special"` because provision folds the card class in as one more countable thing; here the
+class is FIXED by the printed noun, so `"special"` would spell *"Basic Special Energy"* — a
+card that cannot exist. The compiler is what keeps it narrow.
+
+### 🛑 THE TRANSFERABLE FINDING: the pile a suite writes by accident separates NOTHING
+
+A discard pile holding **ten Basic Fire Energy and nothing else** makes the member agree
+with **all four** wrong readings at once:
+
+| widening | what it drops | separating board |
+|---|---|---|
+| the **ZONE** | the pile; `countEnergyInPlay` instead | ten Basic {R} **attached**, empty pile |
+| the **CARD CLASS** | the printed *Basic*; `anyEnergy` | 9 Fire + 1 Special |
+| the **TYPE** | the printed `{R}`; `energyType` dropped | 9 Fire + 1 Basic {W} |
+| the **FILTER** | everything; `discard.length` | 9 Fire + 1 Pokémon |
+
+Three of the four separating boards are the **same shape** — nine Fire plus ONE tenth card —
+and only the tenth card differs, which is what makes the three widenings visibly *nested*
+rather than three unrelated mistakes. `basicEnergyDiscard.test.ts` computes all four
+readings BESIDE the member on every board and reports them as one object, so a rung says
+*which* reading it separates instead of merely that something differs.
+
+✅ **And the agreeing board is asserted FIRST, as D214's attribution control** (all five
+readings TRUE), with the empty pile beside it (all five FALSE). Without that pair, "the
+member disagrees with the widening here" would be a claim about a predicate that might
+simply be always-false.
+
+⚠️ **The sharpest rung is the wildcard.** `sv02-191` Luminous Energy makes
+`yourEnergyInPlayAtLeast` TRUE at `count: 1` when it is **in play**, and contributes nothing
+to this member from the **pile**. One card, two zones, two answers — which is the whole
+difference between the two members, driven rather than argued.
+
+✅ **The zone is driven in BOTH directions**, deliberately: ten attached with an empty pile
+(member FALSE, sibling TRUE) *and* ten in the pile with none in play (member TRUE, sibling
+FALSE). A member that was simply always false would satisfy the first rung and fail the
+second.
+
+### The threshold
+
+`>=`, because the printed words are *"10 or more"* — a FLOOR, the sibling's reading of *"at
+least"*. Driven at **exactly 9** (false, 10 damage dealt) and **exactly 10** (true, 110
+dealt) through the attack path, then over the whole ramp **0..11 in one loop**, so `>`,
+`>=` and `===` are separated by a property of the predicate rather than by three counts a
+case happened to pick. The `count` and `energy` PARAMETERS are pinned separately: the
+catalog prints one threshold and one type, so a hard-coded pair would be green on every
+board in the file — that is mutant C6, and it is killed by asking the same nine-card pile
+at `count: 9`.
+
+### Housekeeping a successor inherits
+
+* ⚠️ **THE FIXTURE DECK IS THE SLICE'S REAL RISK WHEN THE PRINTED NUMBER IS BIG.**
+  `count: 10` means ten matching cards must come OUT of a 60-card deck **after** setup has
+  taken 7 to hand and 6 to prizes. A first cut of `BASIC_ENERGY_DISCARD_DECK` ran the second
+  Fire print at 4 and one seed put a copy in a prize. `discardFromDeck` throws with the
+  count it found, so the failure is LOUD — but **the fix is a MARGIN, not a seed**. Budget
+  roughly 1.8× what the deepest board needs; the committed deck carries 18 + 6 Fire prints
+  for a deepest board of eleven.
+* ✅ **THE OWNER-PREFIX TOLL WAS NOT PAID AGAIN, WHICH CONFIRMS D375's RULE.**
+  `fix-emberpillar` carries no possessive, so `switchSeam` / `inPlayTarget` /
+  `ownerTargetOps` all stood still. Second slice running.
+* ⚠️ **THE RED CENSUS RUN COMES IN WAVES — D376 NEEDED FOUR PASSES** (14 files → 5 → 3 → 2
+  → 0). Every wave surfaced rungs the previous one hid, because an `expect` throws and the
+  later assertions in an already-failing `it` never run. FOUR of the fourteen are keyed on a
+  DIFFERENCE or a bare literal OPERAND and no grep of the figures reaches them.
+* ⚠️ **THE APOSTROPHE PARTITION SWAPPED HALVES.** `clauseApostrophe.test.ts` splits the
+  carried bonus clauses into apostrophe-bearing and apostrophe-free. D375's clause carried a
+  possessive and moved the first half (15 → 16); **this one carries neither a possessive nor
+  a contraction nor a `Pokémon`, so it is PURE ASCII and moves the second (20 → 21)** while
+  the first stands still at 16. The suite asserts the sentence's ASCII-ness directly, so a
+  successor reaching for `foldApostrophes` on this row learns it would be guarding nothing.
+* ⚠️ **THE WEB IS STILL THE INSTRUMENT FOR IDS — AND `limitlesstcg` TOKENISES.** D375
+  recorded that the `text:` operator is what makes `q=` a card-text search. **D376 adds the
+  next trap: `text:` splits the phrase into words and `AND`s them, and there is no token for
+  a brace code.** `text:"…Basic {R} Energy cards in your discard pile"` returns **0 cards**
+  and says so in words (*"…includes ("basic" and "{r}" and …)"*); the same phrase with the
+  glyph DROPPED returns 10. **DROP EVERY `{X}` FROM A LIMITLESS QUERY**, then confirm each
+  id on `https://api.tcgdex.net/v2/en/cards/<id>`, which returns the printed effect text and
+  is how the corpus line was checked byte-for-byte. `api.pokemontcg.io` still returns **403**
+  to WebFetch, and the web still cannot give a LEGAL-PRINTING count.
