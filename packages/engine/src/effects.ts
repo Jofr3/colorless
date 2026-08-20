@@ -1131,6 +1131,46 @@ export type BoardCondition =
       attached to, so the union's public-state invariant holds; redact.ts already
       ships the tool list to both seats. False with an empty Active Spot. */
   | { kind: "yourActiveHasToolAttached" }
+  /** 🆕 **D369 — YOUR OPPONENT'S Active Pokémon is wearing a Pokémon Tool.** The
+      cross-board twin of the member one line up: *"If your opponent's Active
+      Pokémon has a Pokémon Tool attached, this attack does 80 more damage."*,
+      **2 legal printings** — measured off `legalAttackCorpus()`, the committed
+      `legal_standard = 1` attack column, and the largest BOARD-fact clause left
+      behind the `CONDITIONAL_DAMAGE_BONUS` skeleton once D368 struck out the
+      5-printing declaration candidate.
+
+      🛑 **A SECOND FLAT MEMBER, NOT A `seat` FIELD ON THE FIRST — AND THIS UNION
+      HAS ALREADY MADE THAT CHOICE THREE TIMES.** `yourActiveDamaged` /
+      `opponentActiveDamaged` and `yourActivePoisoned` /
+      `opponentActivePoisoned` are each two seat-NAMED members reading ONE field
+      on two bodies, and `yourActiveUndamaged` (D368) is a third flat member where
+      a combinator would have done. Parameterising instead — `{ kind:
+      "activeHasToolAttached"; seat: "you" | "opponent" }` — is not a widening but
+      a **RENAME** of a shipped member, which D362 priced at 31 sites across 7
+      files against 4 for the addition. **A WIDENING IS FREE; A RENAME IS NOT**,
+      and every member in this union is seat-named for that reason.
+
+      ⚠️ **THE PREDICATE IS THE TWIN'S, VERBATIM, ON THE OTHER SEAT'S ACTIVE** —
+      `tools.length > 0`, with the same two readings behind it: every uid in that
+      array reached it through `attachTool` (cardplay.ts), which has already
+      refused anything whose `trainerType` is not "Tool", so there is no provision
+      question of the kind the Energy clauses answer; and it is `> 0` rather than
+      `=== 1` because §7.4's one-Tool cap lives at the attach gate and Revavroom ex
+      sv03-156's "Tune-Up" raises it to 4.
+
+      ⚠️ **NO PRONOUN TO RESOLVE, WHICH IS WHAT MAKES THIS ROW CHEAPER THAN ITS
+      TWIN'S.** D116's rule is about a printed *"this Pokémon"* that a Trainer play
+      gate cannot resolve; this sentence names the seat and the spot outright, so
+      the clause KEY, the member's reading and `conditionNote`'s fragment are one
+      string of bytes and the round trip through `CONDITIONAL_DAMAGE_CLAUSES` is
+      exact (asserted both directions in `opponentToolBonus.test.ts` §3).
+
+      A Tool sits FACE UP on the Pokémon it is attached to, and `redactedInPlayOf`
+      (redact.ts) ships `attached.tools` for BOTH seats through one function — so
+      this, the union's first read of the OPPONENT's tool list, keeps the public-
+      state invariant for the same reason its twin does. False with an empty Active
+      Spot, exactly as every cross-board sibling above. */
+  | { kind: "opponentActiveHasToolAttached" }
   /** §7.2 — YOU have already played a Supporter card from your hand THIS TURN:
       Pikachu swsh10.5-027 "Buddy Bolt" (+30), whose printed clause is "If you
       played a Supporter card from your hand during this turn". A HAPAX in the
@@ -8809,6 +8849,28 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // a middle conjunct — so a substring matcher would score a damage bonus off two
   // Abilities. The whole-sentence anchor is what keeps them off this path.
   ["this Pokémon has a Pokémon Tool attached", { kind: "yourActiveHasToolAttached" }],
+  // 🆕 D369 — the CROSS-BOARD twin, at **2 legal printings** against the row
+  // above's one: *"If your opponent's Active Pokémon has a Pokémon Tool attached,
+  // this attack does 80 more damage."* The two rows sit together because the only
+  // thing between them is the noun phrase naming the body, and a reader comparing
+  // them is exactly the reader who must not conflate them — a Tool across the
+  // table arms neither the row above nor the seat it names.
+  //
+  // ⚠️ THE KEY IS BYTE-IDENTICAL TO `conditionNote`'s FRAGMENT for this member,
+  // which the row above cannot manage: its printed subject is "this Pokémon" and
+  // the note has to resolve the pronoun (D116). Here the sentence names the seat
+  // and the spot, so the round trip `If ${conditionNote(cond)}, this attack does N
+  // more damage.` re-derives to the same member in one step.
+  //
+  // ⚠️ AND IT CARRIES A STRAIGHT APOSTROPHE, as every printing in the pool does
+  // (D137's re-verified claim: ZERO U+2019 across `effect`, `attacks_json`,
+  // `abilities_json` and `name`). The key records what the catalog PRINTS;
+  // `literalClauseRow` folds U+2019 → U+0027 on a MISS, so a re-ingest that
+  // normalised the punctuation would still land here.
+  [
+    "your opponent's Active Pokémon has a Pokémon Tool attached",
+    { kind: "opponentActiveHasToolAttached" },
+  ],
   // Pikachu swsh10.5-027 "Buddy Bolt" (+30) — the pool's only printing, with no
   // reprint, and the family's first clause that reads a TURN EVENT rather than a
   // board. It costs no new state: §7.2's one-Supporter-per-turn cap already

@@ -12108,6 +12108,86 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.274.0 → **THE CROSS-BOARD POKÉMON TOOL CLAUSE — AND A SHAPE QUESTION
+    WHOSE ANSWER WAS *YES*, WITH THE BLOCKER A THIRD KIND OF QUESTION ENTIRELY.**
+
+    D368 handed over two candidates at the head of the `CONDITIONAL_DAMAGE_BONUS`
+    residue, called them *"the two largest remaining"*, priced both at **2 legal
+    printings for 1 new member**, and ordered the work: ask whether 2.0 is worth
+    buying at all, and settle the SHAPE of *"all of your Benched Pokémon have at
+    least 1 damage counter on them"* BEFORE pricing it, because a universal over a
+    variable-size set is a shape no member of this union has.
+
+    🛑 **THE SHAPE QUESTION'S ANSWER IS YES — AND THE SHAPE IS NOT WHAT BLOCKS IT.**
+    A universal over the Bench is a function of `(state, seat)` and nothing else, so
+    `conditionHolds` can evaluate it exactly; D368's candidate could not be
+    evaluated because it needed the DECLARED ATTACK, which is a different kind of
+    failure. And the union already ships a universal over a variable-size in-play
+    set — `noEnergyOnYourPokemon` ("none of your Pokémon have any Energy attached").
+    What blocks the candidate is an **EMPTY-SET SEMANTIC BOUNDARY**: an empty Bench
+    satisfies "all of" vacuously or does not, and the two readings differ by **120
+    damage on a board reached every game**. **A SHAPE ASKS WHETHER THE TABLE CAN
+    HOLD IT; A PRICE ASKS WHETHER IT IS WORTH BUYING; A BOUNDARY ASKS WHAT THE ROW
+    WOULD *MEAN* — AND THE THIRD CAN FAIL WITH THE FIRST TWO BOTH GREEN.**
+
+    🛑 **AND THE CATALOG IS *MEASURED* UNABLE TO SETTLE IT.** D368 settled its shape
+    question by finding one clause on two costs; that move is unavailable here,
+    because the whole 640-sentence legal attack column prints **exactly ONE**
+    universally-quantified antecedent — no sibling, no rider, no second amount. The
+    union's own precedent does not decide it either, and the reason is sharper than
+    a split: every empty-population member that reads FALSE is an EXISTENTIAL, where
+    falsity is FORCED rather than chosen, and the one prior UNIVERSAL took vacuous
+    truth on a board **§4 makes unreachable** (you always have an Active). **THE ONE
+    PRECEDENT WITH THE RIGHT SHAPE WAS SET WHERE IT COULD NOT BE WRONG.** So the row
+    is DEFERRED with the question named, not guessed — "a wrong-but-plausible
+    program is strictly worse than an unbuilt one" (D190b/D199).
+
+    🛑 **AND THE HANDOFF'S TIE-BREAK SET WAS TWO ITEMS WHERE THE MEASUREMENT SAYS
+    NINE.** Re-derived rather than inherited: the residue's 2-printing band holds
+    **9 distinct clauses**, not the 2 the resume point named. The decision was never
+    "2.0 versus 2.0" — it was which of nine 2.0s costs least to get RIGHT, and that
+    is the one whose predicate the engine has already been running since 0.73.0.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`opponentActiveHasToolAttached`),
+    its **2** reader arms — and exactly two, because `grep "switch (cond.kind)"` over
+    non-test source closes the producer set at `conditionHolds` (interpreter.ts) and
+    `conditionNote` — and **1 literal `CONDITIONAL_DAMAGE_CLAUSES` row**, the
+    cross-board twin of D122's `yourActiveHasToolAttached` sitting directly beside
+    it. **ZERO new ops, events, error codes, regexes, registry rows, state fields,
+    prompt kinds, choice kinds or `packages/schema` bytes**; `MATCH_RECORD_VERSION`
+    **STAYS 22**, read from source.
+
+    ⚠️ **A NEAR-MISS GUARD HAD PINNED THE WRONG SIDE, AND ITS OWN COMMENT SAID SO.**
+    `toolClause.test.ts` carried the cross-board rewrite in its CONSTRUCTED near-miss
+    list, annotated *"The pool does not print it, and if it ever does it is a
+    different member reading the other board — not this row."* **The pool DOES print
+    it — 2 legal printings, in the committed corpus since D274** — so the first half
+    was false the day it was written and the second half was this slice's
+    specification. The assertion is now POSITIVE. D136's finding, a third time: **a
+    suite written by the session that wrote the code inherits its blind spot.**
+
+    ⚠️ **AND THE TWIN'S OWN PRINTING IS NOT STANDARD-LEGAL.** Greedent `sv01-152`
+    "Enhanced Fang" — the card D122 was built for — has **zero** legal printings
+    today; the twin row survives on a different AMOUNT of the same clause ("40 more
+    damage", 2 legal printings), which it serves for free because the amount is
+    captured by the SKELETON and never by the row. **A ROW KEYED ON THE CLAUSE
+    OUTLIVES THE PRINTING THAT MOTIVATED IT.**
+
+    ⚠️ **NO CARD IDS ARE RECORDED FOR THE TWO PRINTINGS, DELIBERATELY.** This
+    container has no D1 credentials (`bunx wrangler d1 execute` reports
+    `CLOUDFLARE_API_TOKEN` unset), so the ids could not be read and are NOT guessed.
+    Nothing on this path needs them — the reader is keyed on the printed sentence,
+    so it serves every printing in every set.
+
+    ⚠️ **THE CENSUS MOVES IN EXACTLY ONE SUMMAND**: raw 1,223 → **1,225**,
+    `BUILT.attack` 1,252 → **1,254**, resolving sentences 345 → **346**;
+    `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both STAND STILL, and the
+    unbuilt remainder falls 509 → **507** through the SWEEP rather than through a
+    subtraction.
+
+    engineVersion 0.273.0 → **0.274.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.273.0 → **A HANDED CANDIDATE DISQUALIFIED ON *SHAPE* RATHER THAN ON
     PRICE — "IN ADDITION TO THIS ATTACK'S COST" IS A FACT ABOUT THE DECLARATION,
     NOT ABOUT THE BOARD — AND THE `not` REFUSAL FOUND SCOPED.**
@@ -13828,7 +13908,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.273.0";
+export const engineVersion = "0.274.0";
 
 export type {
   ApplyResult,

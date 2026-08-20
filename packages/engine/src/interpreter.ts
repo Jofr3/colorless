@@ -3114,6 +3114,24 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.tools.length > 0;
     }
+    case "opponentActiveHasToolAttached": {
+      // 🆕 D369 — the CROSS-BOARD twin of the arm directly above, and the same
+      // `tools.length > 0` read on `otherSeat(seat)`'s Active. NOT written as a
+      // recursive call on the twin with the seat flipped: `conditionHolds` is
+      // seat-RELATIVE, so "the other seat's own Active" is exactly what the twin
+      // would answer for a caller that passed the other seat — and there is no
+      // caller that does, because the sentence is printed on an ATTACK declared by
+      // this seat. Two arms, two bodies, and the only board that separates them is
+      // one with a Tool on exactly one side of the table.
+      //
+      // `> 0` rather than `=== 1` for the twin's reason (§7.4's cap is an attach
+      // gate, Revavroom ex raises it to 4), and FALSE with an empty Active Spot,
+      // as with every cross-board sibling: the attack gate guarantees a Defending
+      // Pokémon at the live read site, so the null arm covers a directly-invoked
+      // edge only.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && active.tools.length > 0;
+    }
     case "youPlayedSupporterThisTurn":
       // §7.2 — the one-Supporter-per-turn flag `playTrainer` already sets, read
       // back as a printed clause. No new state, and no new clock: the allowances
@@ -3582,6 +3600,14 @@ export function conditionNote(cond: BoardCondition): string {
       // glyph, so only the pronoun is dropped (D116) and the rest is the printed
       // sentence.
       return "your Active Pokémon has a Pokémon Tool attached";
+    case "opponentActiveHasToolAttached":
+      // 🆕 D369 — a FULL round trip, and the family's cleanest after
+      // `youPlayedSupporterThisTurn`: this clause names no pronoun to resolve, no
+      // timing word to drop and no card-face glyph to spell out, so the fragment is
+      // the printed clause verbatim AND is byte-identical to the
+      // `CONDITIONAL_DAMAGE_CLAUSES` key. The arm one line up cannot do that — its
+      // printed subject is "this Pokémon", which D116 makes the table's job.
+      return "your opponent's Active Pokémon has a Pokémon Tool attached";
     case "youPlayedSupporterThisTurn":
       // A full ROUND-TRIP, the family's cleanest: this clause names no pronoun to
       // resolve (the printed subject is already "you", which is what a

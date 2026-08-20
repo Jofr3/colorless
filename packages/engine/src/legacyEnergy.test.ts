@@ -901,8 +901,8 @@ describe("the engine version", () => {
     // (`yourBenchAtLeast`), TWO reader arms and ONE clause-table row. A new union
     // member is a bump for the same reason a widened one is: the reader answers a
     // printed sentence it used to refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.273.0");
-    expect(manifest.version).toBe("0.273.0");
+    expect(engineVersion).toBe("0.274.0");
+    expect(manifest.version).toBe("0.274.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
