@@ -14043,4 +14043,79 @@ export const MUTANTS: Mutant[] = [
     replace: '      return "your Benched Pokémon have damage counters on them";',
     expectKilledBy: ["packages/engine/src/benchAllDamagedBonus.test.ts"],
   },
+  // ── D374 — THE FIRST PRINTED CARD NAME READ OFF AN ATTACHED CARD. Seven rows,
+  //    ONE PER CLAIM: the read is a NAME EQUALITY and not the owner PREFIX (C1), the
+  //    card side is FOLDED (C2), the row buys a member rather than taking D368's
+  //    recorded trap (C3), the ZONE is the Active (C4), the ARRAY is `energy` and not
+  //    `tools` (C5), the SEAT is yours (C6), and the NOTE resolves the pronoun (C7).
+  //
+  // 🛑 C1 IS THE SLICE, AND IT IS THE HARDEST KIND OF MUTANT THIS CORPUS HOLDS: its
+  //    "wrong" answer is INDISTINGUISHABLE FROM THE RIGHT ONE ON THE ENTIRE PRINTED
+  //    CATALOG, because exactly one Energy card carries the `Team Rocket's ` prefix.
+  //    The only board that separates them holds a card nobody printed. A corpus row
+  //    that can only be killed by an invented fixture is precisely what a SHAPE CHOICE
+  //    about tomorrow needs — an argument in a doc block is not a guard.
+  {
+    id: "D374-named-energy-reads-the-owner-prefix",
+    decision: "D374",
+    what: "🛑 C1 — THE WHOLE SLICE, AS ONE OPERATOR: the NAME EQUALITY becomes the `Team Rocket's ` PREFIX reading. ⚠️ **THIS IS NOT A TYPO, IT IS THE OTHER READING** — *\"Team Rocket's Pokémon\"* genuinely IS a prefix family (`CardFilter.ownerPokemon`, D242), so the same three words in front of *Energy* invite exactly this code, and an author who did not stop to count the printings would write it. **IT IS INVISIBLE ON EVERY BOARD THE REAL POOL CAN BUILD**: exactly ONE Energy card carries the prefix (`sv10-182`), so the two readings are EXTENSIONALLY IDENTICAL on the catalog and the only separating board holds an INVENTED `Team Rocket's Fix Energy`. `trEnergyBonus.test.ts` §3 fields that board, computes the prefix reading beside the member as an attribution control, and sweeps seven real-pool attachments where the two must AGREE",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    replace: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name).startsWith(\"Team Rocket's \");\n      });",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-drops-the-apostrophe-fold",
+    decision: "D374",
+    what: "🛑 C2 — D137's HALF-FIX, WEARING A PROPER NOUN: `foldApostrophes` is removed from the CARD side, so the parameter is compared against a raw `Card.name`. **THE CLAUSE-TABLE KEY STILL FOLDS** (`literalClauseRow`), which is what makes this the dangerous shape rather than an obvious one: a punctuation-normalising re-ingest would curl the printed sentence AND the card name together, the sentence would still resolve to the member, and the member would then be false on every board — a bonus that silently stops paying with no reader anywhere going null. ⚠️ **IT IS GREEN ON TODAY'S CATALOG**, which prints zero U+2019 across `effect`, `attacks_json`, `abilities_json` and `name` (D137, re-verified at D154), so only a deliberately curled board can find it. `trEnergyBonus.test.ts` §6 curls the fixture's name in the state's own `cardPool` and re-drives the +60",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    replace: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && card.name === cond.name;\n      });",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-row-takes-D368s-trap",
+    decision: "D374",
+    what: "🛑 C3 — **THE TRAP D368 WROTE DOWN, TAKEN**: the clause row resolves to `yourActiveHasEnergyAttached` with `energy: \"special\"`. `undamagedBonus.test.ts` §6 has recorded this sentence as a TRAP since D368 — *\"'Team Rocket's' is a SPECIAL Energy (`sv10-182`), so `energy: \\\"special\\\"` would also match Reversal Energy\"* — and the mutant is what taking it looks like: it COMPILES, it needs no new member at all, it is right on every board holding the named card, and it pays +60 for **any** Special Energy. **A ROW HAS NO DERIVER BEHIND IT TO REFUSE WHAT IT CANNOT PARSE** (D190b/D199), and the census summand moves by 2 either way so no counting rung can see it. `trEnergyBonus.test.ts` §4 drives a plain `fix-special` on the board and asserts the two members DISAGREE on it",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"this Pokémon has any Team Rocket's Energy attached\",\n    { kind: \"yourActiveHasNamedEnergyAttached\", name: \"Team Rocket's Energy\" },\n  ],",
+    replace: "  [\n    \"this Pokémon has any Team Rocket's Energy attached\",\n    { kind: \"yourActiveHasEnergyAttached\", energy: \"special\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts", "packages/engine/src/undamagedBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-widens-to-the-whole-side",
+    decision: "D374",
+    what: "🛑 C4 — THE ZONE WIDENS FROM THE ACTIVE TO THE SIDE: `[side.active, ...side.bench]`, which is `yourNamedPokemonInPlay`'s own line copied verbatim from thirty lines up in this same `switch` — the arm whose printed clause says *\"in play\"* where this one's says *\"this Pokémon\"* (D116's pronoun, resolved by the clause table). ⚠️ **IT IS RIGHT ON EVERY BOARD WITH AN EMPTY BENCH**, which is most boards this family builds, so the separating board has to bench a body AND attach the named Energy to it — which `trEnergyBonus.test.ts` §5 does through `attachBenchFromDeck`, then moves the same card to the Active to show the rung is about the zone and not about the attachment",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    replace: "      const side = state.players[seat];\n      return [side.active, ...side.bench].some(\n        (p) =>\n          p !== null &&\n          p.energy.some((uid) => {\n            const card = cardOfUid(state, uid);\n            return card !== undefined && foldApostrophes(card.name) === cond.name;\n          }),\n      );",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-reads-the-tool-slot",
+    decision: "D374",
+    what: "🛑 C5 — THE ARRAY SLIPS ONE FIELD: `active.energy` becomes `active.tools`, which is the field `yourActiveHasToolAttached` reads five arms down in this same `switch` and the other uid array on the same object. **THE MUTANT COMPILES** — both are `string[]` — and the printed noun is *Energy*. ⚠️ **IT IS FALSE ON EVERY BOARD RATHER THAN WRONG ON SOME**, which sounds easy to catch and is exactly what makes it worth a row: a member that is never true passes every negative assertion in the file, and only a POSITIVE drive can find it. `trEnergyBonus.test.ts` §5 moves the very same uid from `energy` to `tools` on one board and asserts the answer flips",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    replace: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.tools.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-reads-the-far-seat",
+    decision: "D374",
+    what: "🛑 C6 — THE SEAT FLIPS: `state.players[seat].active` becomes `state.players[otherSeat(seat)].active`, which is the spelling half this `switch`'s arms legitimately use and is one identifier away. The printed pronoun *\"this Pokémon\"* was resolved to YOUR Active by the clause table. ⚠️ **IT IS INVISIBLE ON EVERY MIRRORED BOARD** — both seats deal from the same fixture deck here — so the separating board has to attach the named Energy on exactly one side, which `trEnergyBonus.test.ts` §5 does and then asserts from BOTH seats on that one board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[seat].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    replace: "      const active = state.players[otherSeat(seat)].active;\n      if (active === null) return false;\n      return active.energy.some((uid) => {\n        const card = cardOfUid(state, uid);\n        return card !== undefined && foldApostrophes(card.name) === cond.name;\n      });",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
+  {
+    id: "D374-named-energy-note-becomes-the-table-key",
+    decision: "D374",
+    what: "🛑 C7 — THE NOTE BECOMES THE CLAUSE-TABLE KEY: the reject pill returns the printed clause verbatim, unresolved pronoun and all. **IT READS PERFECTLY AND IT IS A DIFFERENT AUDIENCE'S STRING** — three siblings in this family DO round-trip to their key, so \"make it match the key\" looks like tidying rather than a change; but a pill saying *\"this Pokémon\"* on a HUD points at nothing a player can see, which is D116's whole reason for resolving the pronoun in the table instead of the arm. ⚠️ **AND IT DESTROYS THE PARAMETER**: the mutant hard-codes one card's clause into a note built from `cond.name`, so a second named-Energy row would silently describe the first. `trEnergyBonus.test.ts` §6 asserts the prose, asserts the NEGATIVE against the key, and re-derives the note from a second, invented name",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `your Active Pokémon has a ${cond.name} attached`;",
+    replace: "      return \"this Pokémon has any Team Rocket's Energy attached\";",
+    expectKilledBy: ["packages/engine/src/trEnergyBonus.test.ts"],
+  },
 ];
