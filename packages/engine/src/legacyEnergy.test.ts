@@ -901,8 +901,14 @@ describe("the engine version", () => {
     // (`yourBenchAtLeast`), TWO reader arms and ONE clause-table row. A new union
     // member is a bump for the same reason a widened one is: the reader answers a
     // printed sentence it used to refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.274.0");
-    expect(manifest.version).toBe("0.274.0");
+    // 🆕🆕 D370 — 0.274.0 → **0.275.0**, ONE new `BoardCondition` member
+    // (`yourBenchHasType`), TWO reader arms and ONE new anchored PATTERN — the
+    // family's third parameterised clause, and the first bump in this run whose
+    // purchase is a regex rather than a table row. The rule is unchanged: the
+    // version tracks whether the readers answer a printed sentence they used to
+    // refuse. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.275.0");
+    expect(manifest.version).toBe("0.275.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

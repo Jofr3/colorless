@@ -12108,6 +12108,88 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.275.0 → **THE BENCH-SCOPED TYPE CLAUSE — THE FAMILY'S THIRD
+    PARAMETERISED TEMPLATE, AND THE FIRST WHOSE TRAP IS THE SAME SENTENCE ONE
+    TOKEN OVER.**
+
+    D369 handed over *"you have any {M} Pokémon on your Bench"* — **2 legal
+    printings**, the cheapest of the **8** clauses still sitting in the residue's
+    2-printing band — and ordered two checks before anything was spelled: run the
+    VOCABULARY question first (*"is the captured token a real `Card.types`
+    value?"*, the question that killed three candidates at D368), and RE-DERIVE the
+    `needs` column against the union's existing members rather than pricing "one
+    new member" from the handoff (D199's rule, which D207 paid for).
+
+    ✅ **VOCABULARY: PASSES, AND ITS NEIGHBOUR FAILS.** `POKEMON_TYPE_BY_CODE["M"]`
+    is `"Metal"`, a real `Card.types` value, and `CLAUSE_POKEMON_TYPES` has carried
+    the brace notation since D367 — so `{M}` resolves through vocabulary that
+    already exists. **`Tera` does not**: *"you have any Tera Pokémon on your
+    Bench"* is the identical sentence one token over, at 1 legal printing, and
+    D207 measured every occurrence of that banner as DEMAND with the SUPPLY side
+    absent. **THE SAME TEMPLATE THAT BUYS THE ONE MUST REFUSE THE OTHER**, and the
+    refusal is a driven rung rather than a comment (`benchTypeBonus.test.ts` §4).
+
+    ✅ **`needs` RE-DERIVED, AND BOTH WIDENINGS PRICED AND DECLINED.** The union's
+    33 members at this head were walked for one that answers "a Pokémon of type T
+    on YOUR Bench". Two come close and neither can be widened into it:
+
+    * `opponentActiveHasType` reads the same FIELD on the wrong body. Widening it
+      is a **RENAME**, not a widening — two required fields added to a shipped
+      member with live authors, which D362 priced at 31 sites across 7 files — and
+      the second axis changes the PREDICATE, not the subject: an Active Spot holds
+      one body and a Bench holds a variable-size set, so a lookup becomes a
+      quantifier. **A WIDENING IS FREE; A RENAME IS NOT.**
+    * `yourBenchHasNamed` reads the same ZONE on the wrong FIELD, and the two
+      fields have opposite vocabularies — `name` is OPEN and matched exactly,
+      `types` is CLOSED at eleven values pinned to the schema. A member taking
+      either would have to decide which field an arbitrary string means, and the
+      free rejection above (`Tera`) would become a name lookup that succeeds
+      against nothing.
+
+    🛑 **AND THE NARROW ZONE IS LOAD-BEARING IN A WAY IT IS NOT FOR THE COUNT
+    MEMBERS.** Both printings of this sentence are on **Metal attackers**, so an
+    `[side.active, ...side.bench]` reading — the legitimate spread
+    `yourNamedPokemonInPlay` uses for a clause printed *"in play"* — would let the
+    attacker satisfy its own clause off its own type and turn a conditional +80
+    into an unconditional one on every board. **It is D279's Falinks refutation
+    with a TYPE where that one had a NAME**, and it is refuted on a board rather
+    than argued: the fixture attacker is deliberately `types: ["Metal"]`.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`yourBenchHasType { type }`),
+    its **2** reader arms — and exactly two, because `grep "switch (cond.kind)"`
+    over non-test source closes the producer set at `conditionHolds`
+    (interpreter.ts) and `conditionNote` — and **1 new anchored PATTERN**
+    (`YOUR_BENCH_TYPE_CLAUSE`) reusing `CLAUSE_POKEMON_TYPES` whole. **ZERO new
+    vocabulary, ZERO new maps, ZERO new clause-table rows**, and zero new ops,
+    events, error codes, registry rows, state fields, prompt kinds, choice kinds or
+    `packages/schema` bytes; `MATCH_RECORD_VERSION` **STAYS 22**, read from source.
+
+    ⚠️ **THE NOTE DOES NOT ROUND-TRIP TO THE PRINTED BYTES, AND ROUND-TRIPS TO THE
+    MEMBER ANYWAY — WHICH IS THE STRONGER PROPERTY AND ONE THIS FAMILY ONLY GAINED
+    AT D367.** `conditionNote` spells `Metal`, not `{M}` (D118's rule: a brace code
+    is a card-face glyph and a tooltip is read by a person), so the re-derived
+    sentence is not the catalog's — and it lands on the same member all the same,
+    through the map's spelled-out half. Asserted both directions.
+
+    ⚠️ **A COMMENT ONE MEMBER OVER WAS FOUND STALE BY THIS SLICE, AND ITS AUTHOR IS
+    THE SLICE THAT MADE IT STALE.** `conditionNote`'s `opponentActiveHasType` arm
+    says the note *"round-trips to the printed clause … the type word is the same
+    token the sentence carried in"*. That was true when D120 wrote it and D367
+    falsified it three slices ago by teaching the map brace codes: `{P}` and `{D}`
+    are printed on 3 legal printings and the note answers "Psychic" / "Darkness".
+    The claim is corrected to the one that survives the widening. **A WIDENING CAN
+    FALSIFY A COMMENT IN A FILE IT DOES NOT TOUCH.**
+
+    ⚠️ **NO CARD IDS ARE RECORDED FOR THE TWO PRINTINGS, DELIBERATELY.** This
+    container has no D1 credentials (`bunx wrangler d1 execute` reports
+    `CLOUDFLARE_API_TOKEN` unset), so the ids could not be read and are NOT
+    guessed — D369's finding, unchanged. Nothing on this path needs them: a
+    template is keyed on the printed sentence and serves every printing in every
+    set, and it serves the other ten types the day one is printed.
+
+    engineVersion 0.274.0 → **0.275.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.274.0 → **THE CROSS-BOARD POKÉMON TOOL CLAUSE — AND A SHAPE QUESTION
     WHOSE ANSWER WAS *YES*, WITH THE BLOCKER A THIRD KIND OF QUESTION ENTIRELY.**
 
@@ -13908,7 +13990,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.274.0";
+export const engineVersion = "0.275.0";
 
 export type {
   ApplyResult,

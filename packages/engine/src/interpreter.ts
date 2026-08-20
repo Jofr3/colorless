@@ -3065,6 +3065,27 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && (spot.card.types ?? []).includes(cond.type);
     }
+    case "yourBenchHasType":
+      // 🆕 D370 — the FIELD of the arm directly above (`Card.types`, the same read
+      // Weakness and Resistance make in §8.5) over the ZONE of the arm directly
+      // below (your Bench, Active Spot excluded). `.includes` and never
+      // `types[0] ===`: the field is an array and dual types are a real printing.
+      // `types` is null on Trainers and Energy, hence the `?? []`.
+      //
+      // 🛑 THE ACTIVE SPOT IS EXCLUDED AND THAT IS THE MEMBER. Both printings of
+      // this sentence are on Metal attackers, so a spread of `[side.active,
+      // ...side.bench]` — which is what the arm two below legitimately uses for a
+      // clause printed "in play" — would let the attacker satisfy its own clause
+      // and make the +80 unconditional. D279 refused that widening for a NAME;
+      // this is the same refusal on a TYPE, and it is driven on a board rather
+      // than argued (`benchTypeBonus.test.ts` §5).
+      //
+      // Read through `topCardOf` for the arm below's §1.2 reason verbatim: the
+      // stack TOP is the Pokémon's identity, so evolving a benched {M} Basic into
+      // a body of another type stops satisfying the clause mid-turn.
+      return state.players[seat].bench.some(
+        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),
+      );
     case "yourBenchHasNamed":
       // Bench only — the printed word is "Bench", and the Active Spot is excluded
       // exactly as `yourBenchDamaged` excludes it. Bench slots are nullable and a
@@ -3572,9 +3593,33 @@ export function conditionNote(cond: BoardCondition): string {
     case "handSizesEqual":
       return "you have the same number of cards in your hand as your opponent";
     case "opponentActiveHasType":
-      // Round-trips to the printed clause: the note is built from the parameter
-      // and the type word is the same token the sentence carried in.
+      // Built from the parameter, and it round-trips to the same MEMBER.
+      //
+      // ⚠️ 🆕 D370 — IT NO LONGER ROUND-TRIPS TO THE PRINTED BYTES, AND THIS
+      // COMMENT SAID IT DID. The claim was true when it was written (the pool's
+      // only printing spelled `Dragon` out) and D367 falsified it by teaching
+      // `CLAUSE_POKEMON_TYPES` the brace notation: `{P}` and `{D}` are printed on
+      // **3 legal printings** and this note answers "Psychic" / "Darkness". That
+      // is the RIGHT answer — a card-face glyph is not a tooltip (D118) — and the
+      // sentence rebuilt from it still re-derives to this member, through the
+      // map's other half. **A WIDENING CAN FALSIFY A COMMENT IN A FILE IT DOES NOT
+      // TOUCH**, which is why the surviving claim is the one about the member and
+      // not the one about the bytes.
       return `your opponent's Active Pokémon is a ${cond.type} Pokémon`;
+    case "yourBenchHasType":
+      // 🆕 D370 — built from the parameter, and the type reads as the printed NAME
+      // rather than the brace code — `yourEnergyInPlayAtLeast`'s rule (D118), for
+      // the same reason: a reject message and a HUD tooltip are read off the board
+      // by a person, and "{M}" is a card-face glyph. So this note does NOT
+      // round-trip to the printed clause byte for byte…
+      //
+      // ⚠️ …and it DOES round-trip to the same MEMBER, which is a stronger property
+      // and one this family only gained at D367: `CLAUSE_POKEMON_TYPES` carries
+      // BOTH notations, so `If ${conditionNote(cond)}, this attack does N more
+      // damage.` re-derives to `{ kind: "yourBenchHasType", type }` through the
+      // map's spelled-out half. Asserted both directions in
+      // `benchTypeBonus.test.ts` §3.
+      return `you have any ${cond.type} Pokémon on your Bench`;
     case "yourBenchHasNamed":
       // Also verbatim — this clause names no pronoun and no timing word, so
       // nothing has to be dropped on the way out (D119's whole cluster).

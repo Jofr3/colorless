@@ -5158,6 +5158,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D370 (0.274.0 → 0.275.0), in the SAME COMMIT as the bump.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE AND THAT IS DELIBERATE: the numbered stack below
+    // stops at D357 while the anchor has been re-pointed by slices since, so the
+    // count is UNMEASURED and a guessed one would be exactly the kind of figure
+    // this repo keeps finding stale. The question was ASKED again rather than
+    // inherited: `MATCH_RECORD_VERSION` STAYS 22 because D370's whole diff is ONE
+    // new `BoardCondition` member, its two reader arms and one anchored PATTERN.
+    // A union member is derived from the card id at read time and never persisted
+    // — the persisted key list `legacyEnergy.test.ts` anchors is untouched — so
+    // `D326-record-version-not-bumped` is NOT owed and was not touched.
     // ⚠️ RE-POINTED AT D357 (0.262.0 → 0.263.0) — the FIFTY-FOURTH payment, and
     // the question was ASKED again rather than inherited: `MATCH_RECORD_VERSION`
     // STAYS 21 because D357's whole diff is a GATE READ inside a NON-PARKING
@@ -5527,7 +5537,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.274.0";',
+    find: 'export const engineVersion = "0.275.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -13708,5 +13718,73 @@ export const MUTANTS: Mutant[] = [
     find: "  [\"your Benched Pokémon have any damage counters on them\", { kind: \"yourBenchDamaged\" }],",
     replace: "  [\"your Benched Pokémon have any damage counters on them\", { kind: \"yourBenchDamaged\" }],\n  [\"all of your Benched Pokémon have at least 1 damage counter on them\", { kind: \"yourBenchDamaged\" }],",
     expectKilledBy: ["packages/engine/src/opponentToolBonus.test.ts"],
+  },
+  // ── D370 — THE BENCH-SCOPED TYPE CLAUSE. Six rows, ONE PER CLAIM: the ZONE is
+  //    the Bench and not "in play" (C1), the SEAT is yours and not theirs (C2),
+  //    the read is `.includes` over an ARRAY and not an equality on `types[0]`
+  //    (C3), the vocabulary is the POKÉMON-TYPE map and not the neighbouring
+  //    ENERGY-token one (C4), the NOTE round-trips to the member (C5), and the
+  //    sentence one token over stays REFUSED (C6).
+  //
+  // ⚠️ A SEVENTH CLAIM IS DRIVEN AND DELIBERATELY HAS NO ROW: "the identity is the
+  //    stack TOP (§1.2)", pinned by `benchTypeBonus.test.ts` §5's `pushOnBench`
+  //    rung. The realistic wrong code — reading `cardOfUid(state, p.stack[0])` —
+  //    needs an import `interpreter.ts` does not carry, so it is not a slip this
+  //    file's author could make in ONE edit, and a mutant that added the import
+  //    would be testing the harness rather than the guard. **A CLAIM WITHOUT A
+  //    PLAUSIBLE MUTANT IS DECLARED, NOT FAKED.**
+  {
+    id: "D370-bench-type-reads-the-active-spot-too",
+    decision: "D370",
+    what: "🛑 C1 — THE ZONE WIDENS AND THE CLAUSE SATISFIES ITSELF: `state.players[seat].bench` becomes `[side.active, ...side.bench]`, the in-play spread `yourNamedPokemonInPlay` two arms down legitimately uses — a neighbouring arm's REAL code copied verbatim, which is the likeliest mistake when a Bench member is written beside an in-play one. ⚠️ **BOTH LEGAL PRINTINGS OF THIS SENTENCE ARE ON METAL ATTACKERS**, so the mutant makes the conditional +80 UNCONDITIONAL on every board the card ever reaches, and every case with a matching body already on the Bench answers identically under both readings. Only a board with the attacker Active and an EMPTY Bench can tell them apart. It is D279's Falinks refusal one field over, and the reason `fix-benchtype` is deliberately typed",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    replace: "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  {
+    id: "D370-bench-type-reads-the-other-seat",
+    decision: "D370",
+    what: "🛑 C2 — THE SEAT FLIPS: `state.players[seat]` becomes `state.players[otherSeat(seat)]`, so a member whose printed subject is \"you\" reads the OPPONENT's Bench. The slip is one identifier and the file is full of cross-board arms that legitimately spell it — `opponentActiveHasType` eleven lines up is one. Every board with the SAME types benched on both sides answers identically under both readings, so the kill comes from the asymmetric boards alone",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    replace: "      return state.players[otherSeat(seat)].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  {
+    id: "D370-bench-type-reads-only-the-first-type",
+    decision: "D370",
+    what: "🛑 C3 — THE ARRAY BECOMES A SCALAR: `(topCardOf(state, p)?.types ?? []).includes(cond.type)` becomes an equality on `types[0]`. **THE MUTANT IS RIGHT ON EVERY SINGLE-TYPED BODY**, which is every fixture in the file except one and the overwhelming majority of the catalog — so nothing but a DUAL-TYPED benched body can see it. `Card.types` is an array because dual types are a real printing, and §8.5's Weakness read makes the same `.includes` two lines later; a scalar read here would disagree with the multiplier on the same card. `fix-dualbody` (`[\"Water\", \"Metal\"]`) exists for this row and nothing else",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),\n      );",
+    replace: "      return state.players[seat].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.types ?? [])[0] === cond.type,\n      );",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  {
+    id: "D370-bench-type-uses-the-energy-token-map",
+    decision: "D370",
+    what: "🛑 C4 — THE VOCABULARY SLIPS ONE BRANCH UP: `literalClauseRow(CLAUSE_POKEMON_TYPES, …)` becomes `literalClauseRow(CLAUSE_ENERGY_TOKENS, …)`, which is the REAL code of the branch two above it in the same function — copied verbatim, which is exactly how this branch was written. ⚠️ **IT LOOKS RIGHT AND IS RIGHT ON THE PRINTED SENTENCE**: both maps resolve `{M}` to \"Metal\", so the only card the catalog prints today is unaffected. The two maps DIFFER on `{C}` and `{N}` (absent from the energy map by design — Colorless is the provision fallback and Dragon has no Basic Energy) and on the string `\"Special\"` (present there, and not a Pokémon type at all). **A VOCABULARY THAT AGREES ON YOUR ONE PRINTING IS NOT THE SAME VOCABULARY**, and the guard that sees it is the loop over ALL ELEVEN types in BOTH notations rather than the assertion about the card",
+    file: "packages/engine/src/effects.ts",
+    find: "    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, benchType[1] ?? \"\");\n    if (type !== undefined) return { kind: \"yourBenchHasType\", type };",
+    replace: "    const type = literalClauseRow(CLAUSE_ENERGY_TOKENS, benchType[1] ?? \"\");\n    if (type !== undefined) return { kind: \"yourBenchHasType\", type };",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  {
+    id: "D370-bench-type-note-says-in-play",
+    decision: "D370",
+    what: "🛑 C5 — THE NOTE'S ZONE WIDENS TO MATCH THE MEMBER TWO ARMS DOWN: `you have any ${cond.type} Pokémon on your Bench` becomes `… in play`. A reject pill and a HUD tooltip then tell a PERSON that a board fact holds anywhere on their side when the engine is reading the Bench alone — and the round trip this member is documented to have (the note re-derived through the map's spelled-out half landing on the SAME member) silently stops holding, because no template reads the in-play phrasing at all. ⚠️ THE MUTANT IS INVISIBLE TO EVERY BOARD ASSERTION IN THE FILE: `conditionNote` is not on the damage path",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `you have any ${cond.type} Pokémon on your Bench`;",
+    replace: "      return `you have any ${cond.type} Pokémon in play`;",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  {
+    id: "D370-tera-gets-a-clause-row",
+    decision: "D370",
+    what: "🛑 C6 — THE TRIPWIRE FOR THE VOCABULARY CHECK: a literal `CONDITIONAL_DAMAGE_CLAUSES` row is added for *\"you have any Tera Pokémon on your Bench\"* mapping it onto `yourBenchHasType` at a real type. **THE MUTANT COMPILES, LOOKS LIKE ONE MORE PRINTING FOR FREE, AND IS A CARD THAT CAN NEVER PAY** — `Tera` is not a `Card.types` value anywhere in the catalog (D207: every occurrence of the banner is DEMAND and the SUPPLY side is absent), so the clause would resolve, the census raw summand would rise by 1, and the +100 would be dead on every board. It is the literal-row escape hatch a hurried successor reaches for precisely BECAUSE the template refuses the token, and the literal table is consulted FIRST so the row would win. **A ROW THAT CANNOT REFUSE WHAT IT CANNOT PARSE IS WHAT MAKES A WRONG-BUT-PLAUSIBLE PROGRAM WORSE THAN AN UNBUILT ONE** (D190b/D199)",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Falinks is on your Bench\", { kind: \"yourBenchHasNamed\", name: \"Falinks\" }],",
+    replace: "  [\"Falinks is on your Bench\", { kind: \"yourBenchHasNamed\", name: \"Falinks\" }],\n  [\"you have any Tera Pokémon on your Bench\", { kind: \"yourBenchHasType\", type: \"Metal\" }],",
+    expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
   },
 ];

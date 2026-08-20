@@ -1013,6 +1013,68 @@ export type BoardCondition =
       same, since the field is an array and dual types are a real printing. False
       with an empty Active Spot. */
   | { kind: "opponentActiveHasType"; type: PokemonType }
+  /** 🆕 **D370 — YOU HAVE AT LEAST ONE Pokémon OF TYPE `type` ON YOUR BENCH.**
+      *"If you have any {M} Pokémon on your Bench, this attack does 80 more
+      damage."*, **2 legal printings** — measured off `legalAttackCorpus()`, the
+      committed `legal_standard = 1` attack column.
+
+      🛑 **IT SITS BETWEEN ITS TWO NEIGHBOURS BECAUSE IT IS EXACTLY THE PRODUCT OF
+      THEM, AND NEITHER ONE COULD BE WIDENED INTO IT.** The member directly above
+      reads the same FIELD (`Card.types`) on the wrong body; the member directly
+      below reads the same ZONE (your Bench) on the wrong field (`Card.name`).
+      D131 says widen before you add, so both were priced that way first:
+
+      * **Widening `opponentActiveHasType` with a seat and a zone is a RENAME**, not
+        a widening — a shipped member with live consumers gains two required fields
+        every author of the vocabulary must then supply, which D362 priced at 31
+        sites across 7 files. **A WIDENING IS FREE; A RENAME IS NOT**, and the
+        seat-parameter question this union has left open since D365 is still open
+        and still unpriced. It is also not one axis but two, and the SECOND one
+        changes the PREDICATE rather than the subject: an Active Spot holds one
+        body and a Bench holds a variable-size set, so "is a {M} Pokémon" becomes
+        "SOME benched body is", which is a quantifier and not a lookup.
+      * **Widening `yourBenchHasNamed` is a category error**: `name` is an OPEN
+        vocabulary (the catalog's `name` IS the printed name, matched exactly) and
+        `types` is CLOSED at eleven values pinned to the schema. A member that took
+        either would have to answer which field an arbitrary string means, and the
+        rejection this member does for free — `Tera` is not a type — would become
+        a name lookup that silently succeeds against nothing.
+
+      PARAMETERISED, and this is the family's THIRD parameterised clause (D118's
+      rule, `opponentActiveHasType`'s argument one member up applied verbatim): the
+      sentence varies on exactly ONE token, that token resolves through the SAME
+      closed vocabulary the member above uses (`CLAUSE_POKEMON_TYPES`, both
+      notations since D367), and a literal row would cost a row per type per
+      notation forever — twenty-two of them to serve one printed sentence.
+
+      ⚠️ **THE PRINTED TOKEN IS A BRACE CODE AND THE ONE BESIDE IT IS A TRAP.**
+      *"you have any **Tera** Pokémon on your Bench"* is the SAME sentence one
+      token over, at 1 legal printing, and `Tera` is **not a `Card.types` value at
+      all** — D207 measured every occurrence of that banner as DEMAND with the
+      SUPPLY side absent. So this template captures it, the vocabulary refuses it,
+      and the sentence stays on the LOUD `ATTACK_EFFECT_SKIPPED` path rather than
+      deriving a bonus that can never pay. **THE MAP IS THE VOCABULARY, NOT THE
+      REGEX** — the reason the capture is `(.+)`.
+
+      YOUR BENCH ALONE, and the Active Spot is deliberately excluded exactly as
+      `yourBenchDamaged` and `yourBenchHasNamed` exclude it, because the printed
+      word is "Bench". 🛑 **THAT NARROWNESS IS LOAD-BEARING HERE IN A WAY IT IS NOT
+      FOR A COUNT**: the printings this serves are Metal attackers, so a member
+      that read "in play" would satisfy the clause off the ATTACKER'S OWN TYPE and
+      turn a conditional +80 into an unconditional one on every board. It is
+      D279's Falinks refutation with a type where that one had a name, and
+      `benchTypeBonus.test.ts` §5 refutes it on a board rather than arguing it.
+
+      EXISTENTIAL over the Bench ("any"), so an EMPTY Bench is FALSE — forced by
+      logic rather than chosen, which is the distinction D369 drew when it deferred
+      the union's second universal. `Card.types` is read through the stack TOP
+      (§1.2, `yourBenchHasNamed`'s rule): evolving a benched Metal Basic into
+      something else stops satisfying the clause, which is the right answer. The
+      read is `.includes` and not an equality on `types[0]`, because the field is
+      an array and dual types are a real printing — the same reading Weakness and
+      Resistance make in §8.5. Types are public the moment a Pokémon is in play, so
+      the union's public-state invariant holds. */
+  | { kind: "yourBenchHasType"; type: PokemonType }
   /** A card NAMED `name` is on YOUR Bench — Falinks sv02-119 "Reckless Charge
       Together" (+90, `Falinks`), the pool's only printing in this skeleton.
 
@@ -9120,6 +9182,32 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
   ),
 ]);
 
+/** 🆕 D370 — the family's THIRD parameterised clause, and the FIRST that reads a
+    type on a variable-size set: "If you have any <type> Pokémon on your Bench,
+    this attack does N more damage." — **2 legal printings**, printed `{M}`.
+
+    ⚠️ **ZERO NEW VOCABULARY.** It shares `CLAUSE_POKEMON_TYPES` with the pattern
+    directly above rather than carrying its own map, for the reason
+    `deriveAttackBonusConsequent` shares `CONDITIONAL_DAMAGE_CLAUSES`: a token
+    meaning "Metal" in one clause of this family must mean Metal in every other
+    one. That sharing is also what makes the round trip work across NOTATIONS —
+    `conditionNote` spells the prose name (D118's rule: a brace code is a card-face
+    glyph and a tooltip is read by a person), and the re-derived sentence lands on
+    the same member through the map's OTHER half, which D367 added.
+
+    ⚠️ **THE TRAP IS THE SAME SENTENCE ONE TOKEN OVER.** *"you have any Tera
+    Pokémon on your Bench"* is in the corpus at 1 legal printing and `Tera` is not
+    a `Card.types` value (D207). The capture is deliberately loose so the refusal
+    happens at the MAP: `Tera` misses, the clause falls through to null, and the
+    sentence stays LOUD. A `(Grass|Fire|…)` alternation here would refuse it at the
+    anchor instead — the same answer today, and a hand-kept list that rots the day
+    a type is added to the schema.
+
+    The printed word is "any", so the predicate is EXISTENTIAL: an empty Bench is
+    false because an existential over an empty set cannot be true, not because a
+    convention was chosen (D369's distinction). */
+const YOUR_BENCH_TYPE_CLAUSE = /^you have any (.+) Pokémon on your Bench$/;
+
 /** THE APOSTROPHE FOLD (D137) — the LITERAL-TABLE half of the hardening D136 gave
     the regexes, and the ONE site every exact lookup on printed text goes through.
 
@@ -9238,6 +9326,16 @@ function boardConditionForClause(clause: string): BoardCondition | null {
   if (activeType !== null) {
     const type = literalClauseRow(CLAUSE_POKEMON_TYPES, activeType[1] ?? "");
     if (type !== undefined) return { kind: "opponentActiveHasType", type };
+  }
+  // 🆕 D370 — the same lookup on the same map, one zone and one seat over. It is
+  // LAST because the three patterns are mutually exclusive at their anchors and
+  // order therefore decides nothing here; adding it at the end keeps that true by
+  // construction, since a pattern that could claim a clause an earlier one owns
+  // would have to share its anchor and none of these do.
+  const benchType = YOUR_BENCH_TYPE_CLAUSE.exec(clause);
+  if (benchType !== null) {
+    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, benchType[1] ?? "");
+    if (type !== undefined) return { kind: "yourBenchHasType", type };
   }
   return null;
 }
