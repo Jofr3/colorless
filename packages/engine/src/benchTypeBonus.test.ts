@@ -187,8 +187,10 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // (1 sentence / 2 printings), re-derived live rather than decremented.
     // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION left it,
     // the same 1:2 step, re-derived live rather than decremented.
-    expect(refused.length).toBe(25);
-    expect(units(refused)).toBe(30);
+    // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
+    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(24);
+    expect(units(refused)).toBe(28);
     // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
     // add the sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -196,18 +198,24 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // 🆕🆕 D374 — one more term on each chain, and the step is 1 sentence /
     // 2 printings (the NAMED-ENERGY clause).
     // 🆕🆕 D375 — one more term again, same 1:2 step (the TYPE INTERSECTION).
-    expect(refused.length + 1).toBe(26);
-    expect(units(refused) + 2).toBe(32);
-    expect(refused.length + 2).toBe(27);
-    expect(units(refused) + 4).toBe(34);
-    expect(refused.length + 3).toBe(28);
-    expect(units(refused) + 6).toBe(36);
-    expect(refused.length + 5).toBe(30);
-    expect(units(refused) + 8).toBe(38);
-    expect(refused.length + 6).toBe(31);
-    expect(units(refused) + 10).toBe(40);
-    expect(refused.length + 7).toBe(32);
-    expect(units(refused) + 12).toBe(42);
+    // 🆕🆕 D376 — one more term on every chain below, same 1:2 step (the FILTERED
+    // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
+    // by one sentence and two printings while the expected values stayed put — which
+    // is the point of writing them as offsets off the live head at all.
+    expect(refused.length + 1).toBe(25);
+    expect(units(refused) + 2).toBe(30);
+    expect(refused.length + 2).toBe(26);
+    expect(units(refused) + 4).toBe(32);
+    expect(refused.length + 3).toBe(27);
+    expect(units(refused) + 6).toBe(34);
+    expect(refused.length + 4).toBe(28);
+    expect(units(refused) + 8).toBe(36);
+    expect(refused.length + 6).toBe(30);
+    expect(units(refused) + 10).toBe(38);
+    expect(refused.length + 7).toBe(31);
+    expect(units(refused) + 12).toBe(40);
+    expect(refused.length + 8).toBe(32);
+    expect(units(refused) + 14).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -223,16 +231,19 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // 🆕🆕 D375 — THREE -> TWO: the CROSS-BOARD TYPE INTERSECTION was bought out of
     // it, and this file's §5 is where its dual-type refutation lives.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
-    expect(band.sort()).toEqual([
-      "this Pokémon was healed during this turn",
-      "you have 10 or more Basic {R} Energy cards in your discard pile",
-    ]);
-    expect(band.length + 1).toBe(3);
-    expect(band.length + 2).toBe(4);
-    expect(band.length + 3).toBe(5);
-    expect(band.length + 4).toBe(6);
-    expect(band.length + 5).toBe(7);
-    expect(band.length + 6).toBe(8);
+    // 🆕🆕 D376 — TWO -> ONE: the FILTERED DISCARD-PILE THRESHOLD was bought out of
+    // the band (`basicEnergyDiscard.test.ts`), and the ONE survivor is the expensive
+    // one D374's handoff already priced — *"this Pokémon was healed during this turn"*
+    // needs a per-turn HEALED flag on the state, which is a persisted-shape change and
+    // therefore a `MATCH_RECORD_VERSION` bump on top of the engine bump.
+    expect(band.sort()).toEqual(["this Pokémon was healed during this turn"]);
+    expect(band.length + 1).toBe(2);
+    expect(band.length + 2).toBe(3);
+    expect(band.length + 3).toBe(4);
+    expect(band.length + 4).toBe(5);
+    expect(band.length + 5).toBe(6);
+    expect(band.length + 6).toBe(7);
+    expect(band.length + 7).toBe(8);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

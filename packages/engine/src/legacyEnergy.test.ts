@@ -946,8 +946,18 @@ describe("the engine version", () => {
     // cross-board members compare scalars on named bodies. The version moves because
     // the readers answer a printed sentence they used to refuse. The post-bump anchor
     // pass was clean.
-    expect(engineVersion).toBe("0.280.0");
-    expect(manifest.version).toBe("0.280.0");
+    // 🆕🆕 D376 — 0.280.0 -> **0.281.0**: ONE new `BoardCondition` member
+    // (`yourBasicEnergyInDiscardAtLeast`, carrying an `energy` and a `count`), TWO
+    // reader arms, ONE literal clause-table row and ZERO new imports. ⚠️ The
+    // behavioural half is the union's first FILTERED COUNT OVER A PILE, and it is the
+    // INVERSE of the member it sits beside: `yourEnergyInPlayAtLeast` reads PROVISION,
+    // correctly, because an Energy in play pays for what it provides — and a discard
+    // pile provides nothing, so this one reads the PRINTED CARD through
+    // `CardFilter`'s existing `basicEnergy` arm. The version moves because the readers
+    // answer a printed sentence they used to refuse. The post-bump anchor pass was
+    // clean.
+    expect(engineVersion).toBe("0.281.0");
+    expect(manifest.version).toBe("0.281.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

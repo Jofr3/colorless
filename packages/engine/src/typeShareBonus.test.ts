@@ -241,20 +241,28 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 25 / 30 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(25);
-    expect(units(refused)).toBe(30);
+    // 🆕🆕 D376 — 25 / 30 -> 24 / 28: the FILTERED DISCARD-PILE THRESHOLD left the
+    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(24);
+    expect(units(refused)).toBe(28);
     // The recorded residues of D374, D373, D372, D371, D370 and D369, re-derived
     // from THIS head: add the sentences back rather than freezing the pair that
     // measured them. The step here is 1 sentence / 2 printings — the 1:2 shape for
     // the sixth time in seven slices.
-    expect(refused.length + 1).toBe(26);
-    expect(units(refused) + 2).toBe(32);
-    expect(refused.length + 2).toBe(27);
-    expect(units(refused) + 4).toBe(34);
-    expect(refused.length + 3).toBe(28);
-    expect(units(refused) + 6).toBe(36);
-    expect(refused.length + 5).toBe(30);
-    expect(units(refused) + 8).toBe(38);
+    // 🆕🆕 D376 — one more term on every chain below, same 1:2 step (the FILTERED
+    // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
+    // by one sentence and two printings while the expected values stayed put — which
+    // is the point of writing them as offsets off the live head at all.
+    expect(refused.length + 1).toBe(25);
+    expect(units(refused) + 2).toBe(30);
+    expect(refused.length + 2).toBe(26);
+    expect(units(refused) + 4).toBe(32);
+    expect(refused.length + 3).toBe(27);
+    expect(units(refused) + 6).toBe(34);
+    expect(refused.length + 4).toBe(28);
+    expect(units(refused) + 8).toBe(36);
+    expect(refused.length + 6).toBe(30);
+    expect(units(refused) + 10).toBe(38);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -268,13 +276,16 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // `MATCH_RECORD_VERSION` bump on top of the engine bump) and the discard-pile
     // one is a THRESHOLD over a filtered zone count.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
-    expect(band.sort()).toEqual([
-      "this Pokémon was healed during this turn",
-      "you have 10 or more Basic {R} Energy cards in your discard pile",
-    ]);
-    expect(band.length + 1).toBe(3);
-    expect(band.length + 2).toBe(4);
-    expect(band.length + 3).toBe(5);
+    // 🆕🆕 D376 — TWO -> ONE: the FILTERED DISCARD-PILE THRESHOLD was bought out of
+    // the band (`basicEnergyDiscard.test.ts`), and the ONE survivor is the expensive
+    // one D374's handoff already priced — *"this Pokémon was healed during this turn"*
+    // needs a per-turn HEALED flag on the state, which is a persisted-shape change and
+    // therefore a `MATCH_RECORD_VERSION` bump on top of the engine bump.
+    expect(band.sort()).toEqual(["this Pokémon was healed during this turn"]);
+    expect(band.length + 1).toBe(2);
+    expect(band.length + 2).toBe(3);
+    expect(band.length + 3).toBe(4);
+    expect(band.length + 4).toBe(5);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

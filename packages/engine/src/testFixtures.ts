@@ -11027,6 +11027,34 @@ export const FIXTURE_POOL: Record<string, Card> = {
       directions by `catalogManifest.test.ts`' sweep — and this id names no printing,
       so it makes no claim about one. */
   "fix-bigfairy": battler("fix-bigfairy", { hp: 200, types: ["Fairy"] }),
+  /** 🆕🆕 D376 — the FILTERED DISCARD-PILE THRESHOLD: Chandelure `sv10.5w-018`
+      "Incendiary Pillar"'s printed sentence, verbatim, on a body of this pool's own
+      making. The two legal printings (`sv10.5w-018` and its Illustration-rare reprint
+      `sv10.5w-103`) are byte-identical in rules text, so one fixture serves both.
+
+      Costed `{C}` and based at **10** rather than the printed 50, so the +100 is
+      unmistakable in the dealt number and the `{C}` can be paid by a COLORLESS
+      `fix-energy` — which matters more here than usual: every board in
+      `basicEnergyDiscard.test.ts` §4 has to be able to say "there is Fire Energy IN
+      PLAY and the clause is still false", and a cost paid in Fire would make that
+      sentence ambiguous. `hp: 150` so the attacker survives whatever comes back.
+
+      `types: ["Fire"]` because the real printing is Fire and nothing in this file
+      reads the attacker's type — stated so a successor does not go looking for a
+      reason it is load-bearing, as it is on `fix-typeshare` two blocks up. */
+  "fix-emberpillar": battler("fix-emberpillar", {
+    hp: 150,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Incendiary Pillar",
+        damage: 10,
+        effect:
+          "If you have 10 or more Basic {R} Energy cards in your discard pile, this attack does 100 more damage.",
+      },
+    ],
+  }),
   "fix-trbonus": battler("fix-trbonus", {
     hp: 150,
     attacks: [
@@ -11317,6 +11345,54 @@ export const TYPE_SHARE_DECK = deckOf({
 
     `fix-energy` pays the `{C}` on every board that must attack WITHOUT a Special
     attached. 4 + 8 + 8 + 8 + 4 + 8 + 8 + 12 = **60**. */
+/** 🆕🆕 D376 — the FILTERED DISCARD-PILE THRESHOLD. A DEDICATED 60 (D270's rule)
+    rather than a widened `TR_ENERGY_DECK`, so D374's seeded boards keep the shuffles
+    they were measured on. **THE ENERGY COUNTS ARE THE WHOLE POINT OF THIS DECK**, and
+    they are set by a number no other deck in this file has to reach: the printed
+    threshold is **10**, and every card that ends up in a pile has to come OUT of this
+    list through `discardFromDeck`.
+
+      • `fix-emberpillar` — the attacker, the one printed sentence, `{C}`-costed;
+      • `fix-fire-energy` ×18 — the Basic {R} the clause counts. **EIGHTEEN AND NOT
+        TEN, AND THAT IS A MEASUREMENT**: setup takes 7 to hand and 6 to prizes before a
+        case can touch the deck, so a 10-count leaves the boards at the mercy of the
+        shuffle, and the deepest board here wants ELEVEN. A first cut of this deck ran
+        `fix-fire-energy-alt` at 4 and one seed put a copy in a prize — the failure is
+        loud (`discardFromDeck` throws with the count it found), but the fix is a
+        MARGIN and not a seed;
+      • `fix-fire-energy-alt` ×6 — the SECOND catalog print of Fire Energy (the real
+        catalog carries three: `sve-002`/`-010`/`-018`), so "10 or more Basic {R}
+        Energy cards" is driven across two ids rather than ten copies of one;
+      • `fix-water-energy` — a Basic of the WRONG type, the card that separates the
+        `energyType` conjunct: a pile of 9 Fire + 1 Water must answer FALSE;
+      • `sv02-191` **Luminous** — the wildcard Special that PROVIDES every type while
+        it is alone in play. It is here to be put IN THE PILE, where it provides
+        nothing and is not a *"Basic {R} Energy card"*, beside the same card put IN
+        PLAY, where `countEnergyInPlay` counts it as {R}. One card, two zones, two
+        answers — which is the whole difference between this member and
+        `yourEnergyInPlayAtLeast`;
+      • `fix-special` — an UNAUTHORED Special (the Colorless fallback), so the CLASS
+        conjunct is refused by a second, differently-shaped card;
+      • `fix-basic-1` — a body to BENCH, and the non-Energy card §4 discards into the
+        pile to show the count does not move;
+      • `fix-bigbody` — 200 HP across the table, so the +100 lands without a KO tail
+        rewriting the board the assertions are read off;
+      • `fix-energy` — the COLORLESS Basic that pays the `{C}` on every board, so no
+        board needs a Fire Energy in play to attack.
+
+    4 + 4 + 8 + 18 + 6 + 6 + 4 + 4 + 6 = **60**. */
+export const BASIC_ENERGY_DISCARD_DECK = deckOf({
+  "fix-emberpillar": 4,
+  "fix-bigbody": 4,
+  "fix-basic-1": 8,
+  "fix-fire-energy": 18,
+  "fix-fire-energy-alt": 6,
+  "fix-water-energy": 6,
+  "sv02-191": 4, // Luminous — provides every type IN PLAY, and nothing at all in a pile
+  "fix-special": 4,
+  "fix-energy": 6,
+});
+
 export const TR_ENERGY_DECK = deckOf({
   "fix-trbonus": 4,
   "fix-tr-energy": 8,
