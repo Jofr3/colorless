@@ -530,11 +530,17 @@
 > skipped(dirty) · 0 clobber(s) · 0 error(s)**, reconciling to D371 at **+7 new ids
 > ALL KILLED, 0 gone, 0 verdict changes**. ⚠️ `nohup` DISCARDS THE EXIT CODE, so exit
 > 0 is INFERRED from the seven zeros in the summary line rather than read from a
-> status — **D369's caveat, unchanged across three slices, and it is now the oldest
-> open debt on this path. IT IS CHEAP TO CLOSE**: run the sweep under
-> `sh -c '…; echo "EXIT=$?" >> <log>'` (or `setsid` with a status file) so the log
-> carries a READ exit code instead of an inferred one, and say in the commit that the
-> harness's reporting was changed rather than changing it silently.
+> status — **D369's caveat, and D371 CLOSED IT WITHOUT TOUCHING THE HARNESS.** The
+> sweep is launched as
+> `nohup sh -c 'bun scripts/mutation/run.ts; echo "SWEEP_EXIT=$?"' > <log> 2>&1 &`,
+> so the log's LAST LINE is a `SWEEP_EXIT=<n>` the shell READ from the process rather
+> than a status a reader infers from seven zeros. ⚠️ **`scripts/mutation/run.ts` IS
+> UNCHANGED** — the fix is in how the process is launched, not in what it reports, so
+> nothing about the harness's own contract moved and no mutant row is owed. **READ
+> `SWEEP_EXIT` FROM THE LOG AND QUOTE IT IN THE CLOSE-OUT**; if it is absent the shell
+> died before the echo, which is itself information the old form could not give.
+> ⚠️ The inference from the summary line is still worth doing as a CROSS-CHECK — two
+> independent signals agreeing is the point, and D369/D370 only ever had one.
 >
 > ⚠️ **THE PAGE WAS WRITTEN BEFORE THE SWEEP FINISHED, ON PURPOSE** — that is what puts
 > this page inside the corpus the sweep checks (D369's pattern), and all **8** of
