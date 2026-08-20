@@ -1459,6 +1459,60 @@ export type BoardCondition =
       An empty board is 0, so a printed `count` of 0 would be trivially true;
       the pool prints 3. */
   | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special"; count: number }
+  /** 🆕🆕 **D376 — AT LEAST `count` Basic Energy CARDS of `energy` IN YOUR
+      DISCARD PILE.** *"If you have 10 or more Basic {R} Energy cards in your discard
+      pile, this attack does 100 more damage."* — Chandelure `sv10.5w-018`
+      "Incendiary Pillar" ({R}, 50+, **+100**) and its Illustration-rare reprint
+      `sv10.5w-103`, whose rules text is byte-identical, **1 sentence / 2 legal
+      printings** off `legalAttackCorpus()`. ⚠️ The IDS are a WEB measurement, the
+      fourth slice running: this container has no D1 credentials, the committed corpus
+      is sentences-with-counts and carries no ids, and the printing was found on
+      limitlesstcg (WHT 18 / WHT 103) and confirmed against tcgdex — White Flare,
+      Fire, 150 HP, Stage 2 from Lampent. ⚠️ AND THE SEARCH IS ONLY FINDABLE WITH THE
+      GLYPH DROPPED: limitless tokenises the query and has no `{r}` token, so
+      `text:"…Basic {R} Energy cards in your discard pile"` returns ZERO and
+      `text:"10 or more Basic Energy cards in your discard pile"` returns the card.
+
+      🛑 **THE MEMBER LOOKS LIKE ITS SIBLING ONE LINE UP AND IS ITS INVERSE.**
+      `yourEnergyInPlayAtLeast` reads **PROVISION** — its own block above says so, and
+      `countEnergyInPlay` (continuous.ts) is where it says it — because an Energy card
+      IN PLAY pays for whatever it provides, so a wildcard Luminous Energy counts as
+      {R} while it is alone. **A DISCARD PILE PROVIDES NOTHING.** `energyProvidesOf` is
+      a board reading of an ATTACHED card; a Special sitting in a pile is attached to
+      nothing, and the printed words here name a CARD CLASS (**Basic**) and a printed
+      TYPE, not a payment. So this member reads the PRINTED CARD and must never
+      delegate to the in-play counter — §6.5's standing rule, already written twice in
+      this file (`attachFromTop`'s neighbour, and the hand-paid discard cost): *"it
+      is about the PRINT (`basicEnergy` + `energyType`), never `providesEnergy`"*.
+      ⚠️ **A BUILD THAT REUSED THE SIBLING WOULD BE GREEN ON EVERY DISCARD PILE
+      HOLDING ONLY BASICS**, which is nearly every pile a test writes by accident, so
+      the separating board is a Special that provides {R} sitting in the pile beside a
+      Basic {W} (`basicEnergyDiscard.test.ts` §3).
+
+      **THE PREDICATE IS `matchesFilter`'s AND NOT A FRESH ONE.** `CardFilter`
+      already spells the printed noun — `{ kind: "basicEnergy", energyType }`,
+      authored for the *"Basic {L} Energy card"* SEARCH sentences — and this clause
+      asks that same question of a different zone. Re-spelling it here would be D222's
+      defect in miniature: two readers of one noun, free to disagree.
+
+      **`energy` IS `BasicEnergyType` AND NOT D118's `BasicEnergyType | "special"`,
+      WHICH IS THE SIBLING'S OTHER HALF INVERTED.** That member admits `"special"`
+      because provision folds the card CLASS in as one more countable thing; here the
+      class is FIXED by the printed noun, so a `"special"` value would spell "Basic
+      Special Energy" — a card that cannot exist. Narrower on purpose, and the
+      compiler is what keeps it narrow.
+
+      PARAMETERISED but a LITERAL row (D119's corollary, third use, and the sibling's
+      verbatim): TWO tokens vary in principle — the threshold and the energy code — so
+      D118's one-token test fails and the clause table takes the sentence whole.
+
+      A discard pile is ORDERED AND PUBLIC (§2, and redact.ts ships it face up to both
+      seats), so the union's public-state invariant holds — this is as
+      online-evaluable as `yourStadiumInPlay`. An empty pile is 0, so a printed
+      `count` of 0 would be trivially true; the pool prints 10. `discard` is a uid
+      list, so an unresolvable uid contributes nothing rather than throwing —
+      `matchesFilter`'s own conservative direction on `undefined`. */
+  | { kind: "yourBasicEnergyInDiscardAtLeast"; energy: BasicEnergyType; count: number }
   /** §7.4 — YOUR Active Pokémon is wearing a Pokémon Tool: Greedent sv01-152
       "Enhanced Fang" (+80), whose printed clause is "If **this Pokémon** has a
       Pokémon Tool attached". The pool's only printing, and no reprint.
@@ -9256,6 +9310,33 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "you have at least 3 {D} Energy in play",
     { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 },
+  ],
+  // 🆕🆕 D376 — Chandelure sv10.5w-018 "Incendiary Pillar" (50+, **+100**) and its
+  // Illustration-rare reprint sv10.5w-103, byte-identical in rules text, so one row
+  // and one fixture serve both. It sits directly under the row above because the two
+  // clauses read as the same question one zone apart — and they are not the same
+  // question at all.
+  //
+  // 🛑 **THE ROW ABOVE COUNTS PROVISION; THIS ONE COUNTS PRINTED CARDS.** An Energy
+  // card in play pays for whatever it provides, so a wildcard Luminous Energy
+  // satisfies "3 {D} Energy in play". Nothing in a DISCARD PILE provides anything,
+  // and the printed noun here is a card CLASS plus a printed TYPE — "Basic {R} Energy
+  // cards" — which is `CardFilter`'s `basicEnergy` + `energyType` and §6.5's standing
+  // rule for every pile-scanning consumer in this file. Two adjacent rows, two
+  // members, and the adjacency is the warning.
+  //
+  // ⚠️ A LITERAL ROW, D119's corollary a third time: the THRESHOLD and the ENERGY
+  // CODE both vary in principle, so D118's one-token test fails and the key takes the
+  // sentence whole. The `100` is not part of this key — `CONDITIONAL_DAMAGE_BONUS`
+  // captures it — so a reprint that moved the number would still land here.
+  //
+  // ⚠️ AND THE BRACE CODE IS PART OF THE KEY. `{R}` is the printed glyph; the note
+  // this member returns spells it "Fire" (D118), so this row does NOT round-trip from
+  // `conditionNote` the way the two Tool rows below do. Driven both ways in
+  // `basicEnergyDiscard.test.ts` §2.
+  [
+    "you have 10 or more Basic {R} Energy cards in your discard pile",
+    { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Fire", count: 10 },
   ],
   // 🆕🆕 D374 — Team Rocket's Zapdos sv10-070 "Wicked Thunder" (60+, **+60**), 2
   // legal printings byte-identical in rules text, so one row and one fixture serve

@@ -5158,6 +5158,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D376 (0.280.0 → 0.281.0), in the SAME COMMIT as the bump —
+    // the THIRD slice running to do it that way, and D374/D375 both proved it closes
+    // the ERROR window this row had opened on each of the four bumps before them.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D376's whole diff is ONE new `BoardCondition` member, its two reader arms and
+    // one literal clause-table row. The member's TWO parameters are a `BasicEnergyType`
+    // and a `number`, and both are derived from the printed sentence at read time
+    // through the clause table — the same route `yourEnergyInPlayAtLeast`'s identical
+    // pair has taken since D119 without ever reaching storage.
     // ⚠️ RE-POINTED AT D375 (0.279.0 → 0.280.0), in the SAME COMMIT as the bump —
     // the SECOND slice running to do it that way, and D374 proved it closes the ERROR
     // window this row had opened on each of the four bumps before it.
@@ -5581,7 +5591,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.280.0";',
+    find: 'export const engineVersion = "0.281.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

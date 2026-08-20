@@ -3285,6 +3285,36 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // Active + Bench, cards rather than units, `>=` because the printed word is
       // "at least" (a threshold, unlike the sibling above's "exactly").
       return countEnergyInPlay(state, seat, cond.energy) >= cond.count;
+    case "yourBasicEnergyInDiscardAtLeast": {
+      // 🆕 D376 — "you have 10 or more Basic {R} Energy cards in your discard pile"
+      // (Chandelure sv10.5w-018 "Incendiary Pillar", +100). The arm directly above is
+      // this one's NEAR MISS and not its template.
+      //
+      // 🛑 THE AMOUNT IS PRINTED CARDS, AND THE ZONE IS WHY. `countEnergyInPlay` reads
+      // PROVISION, which is the right reading for an Energy in play because that is
+      // what it pays with — a wildcard Luminous Energy counts as {D} while it is
+      // alone. A card in a DISCARD PILE is attached to nothing and provides nothing,
+      // so the printed "Basic {R} Energy card" is a card CLASS and a printed TYPE.
+      // §6.5's rule for every pile-scanning consumer, stated in effects.ts twice
+      // already: about the PRINT, never `providesEnergy`.
+      //
+      // 🛑 SO THE PREDICATE IS `matchesFilter`'s AND IS NOT RE-SPELLED HERE. The
+      // `basicEnergy` arm is `energyType === "Normal"` (which excludes every Special,
+      // wildcard or not) AND `energyProvidesOf(card) === filter.energyType` (which on
+      // a Basic is a NAME parse and nothing else). Re-implementing it inline is D222's
+      // defect in miniature — two readers of one printed noun, free to drift apart.
+      //
+      // `>=` because the printed words are "or more" — a FLOOR, the arm above's
+      // reading of "at least". `cardOfUid` returns undefined for a uid the catalog
+      // cannot resolve and `matchesFilter` answers false for it, so an unreadable card
+      // in the pile never pays the bonus. An empty pile is 0.
+      const filter: CardFilter = { kind: "basicEnergy", energyType: cond.energy };
+      let matched = 0;
+      for (const uid of state.players[seat].discard) {
+        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;
+      }
+      return matched >= cond.count;
+    }
     case "yourActiveHasToolAttached": {
       // D116's pronoun rule again — "this Pokémon" was resolved to your Active by
       // the clause table, not here. `tools` is a uid array on the model and every
@@ -3849,6 +3879,24 @@ export function conditionNote(cond: BoardCondition): string {
       return cond.energy === "special"
         ? `you have at least ${cond.count} Special Energy in play`
         : `you have at least ${cond.count} ${cond.energy} Energy in play`;
+    case "yourBasicEnergyInDiscardAtLeast":
+      // 🆕 D376 — built from BOTH parameters, like the arm one line up, and it spells
+      // the energy as the printed NAME rather than the brace code for D118's reason
+      // verbatim: a reject message and a HUD tooltip are read off the board by a
+      // person, and "{R}" is a card-face glyph.
+      //
+      // ⚠️ SO IT DOES NOT ROUND-TRIP TO THE PRINTED BYTES, AND IT DOES NOT ROUND-TRIP
+      // TO THE MEMBER EITHER — TWO DIFFERENCES, NOT ONE. "10 or more" becomes "at
+      // least 10" (the sibling's phrasing, kept so the two pills read alike) and "{R}"
+      // becomes "Fire". `CONDITIONAL_DAMAGE_CLAUSES` is keyed on the printed sentence
+      // whole, so unlike `yourBenchHasType` there is no spelled-out half of a token
+      // map to land on. Asserted in the negative in `basicEnergyDiscard.test.ts` §2,
+      // beside the two neighbours that DO round-trip, so a successor cannot "fix" one
+      // into the other.
+      //
+      // The printed noun is plural on the card and stays plural here: the pool prints
+      // 10 and a threshold of 1 is unprinted, so there is no singular to agree with.
+      return `you have at least ${cond.count} Basic ${cond.energy} Energy cards in your discard pile`;
     case "yourActiveHasToolAttached":
       // Back to a round-trip: this clause names no timing word and no energy
       // glyph, so only the pronoun is dropped (D116) and the rest is the printed

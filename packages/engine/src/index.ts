@@ -12108,6 +12108,90 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.281.0 → **A FILTERED COUNT OVER THE DISCARD PILE — THE SIBLING ONE ZONE
+    OVER, READ THE OTHER WAY ROUND.**
+
+    D375 handed over *"If you have 10 or more Basic {R} Energy cards in your discard
+    pile, this attack does 100 more damage."* — Chandelure `sv10.5w-018` "Incendiary
+    Pillar" ({R}, 50+, **+100**) and its Illustration-rare reprint `sv10.5w-103`,
+    **1 sentence / 2 legal printings** — with D207's SUPPLY question already answered
+    YES on both halves (the zone and the filter) and the whole price named as SHAPE.
+    That is how it came out.
+
+    ✅ **THE IDS ARE A WEB MEASUREMENT, THE FOURTH SLICE RUNNING**, and this one adds
+    an instrument note worth inheriting. The committed corpus is
+    sentences-with-counts and carries no ids; this container still has no D1
+    credentials. ⚠️ **limitlesstcg's `text:` SEARCH TOKENISES, AND IT HAS NO `{r}`
+    TOKEN**: `text:"…Basic {R} Energy cards in your discard pile"` returns **0 cards**
+    and the same phrase with the GLYPH DROPPED — `text:"10 or more Basic Energy cards
+    in your discard pile"` — returns 10, of which the two Standard-era ones are
+    WHT 18 / WHT 103. Confirmed by id against tcgdex as `sv10.5w-018` / `sv10.5w-103`,
+    White Flare, **Fire**, 150 HP, Stage 2 from Lampent, attack 1 of 2 at `R` for
+    `50+`, with the printed effect matching the corpus BYTE FOR BYTE. ⚠️ **IT STILL
+    CANNOT GIVE A LEGAL-PRINTING COUNT** — that is `legalAttackCorpus()`'s alone.
+
+    ✅ **D207's SUPPLY QUESTION WAS ASKED FIRST AND WAS NEVER CLOSE, ON BOTH HALVES.**
+    `PlayerState.discard` is a uid list the model has carried since M1 with a dozen
+    readers, and `CardFilter` ALREADY SPELLS THE PRINTED NOUN — `{ kind: "basicEnergy",
+    energyType }`, authored for the *"Basic {L} Energy card"* search sentences. Neither
+    the zone nor the filter is new. **THE WHOLE PRICE WAS THE SHAPE**, for the second
+    slice running.
+
+    🛑 **AND THE SHAPE IS THE INVERSE OF THE MEMBER IT SITS BESIDE, WHICH IS THE TRAP.**
+    `yourEnergyInPlayAtLeast { energy, count }` is the same three words one zone over
+    and its own doc block says it *"reads provision rather than the printed name"* —
+    correctly, because an Energy card IN PLAY pays for whatever it provides, so a
+    wildcard Luminous Energy counts as {D} while it is alone. **A DISCARD PILE PROVIDES
+    NOTHING.** A card in a pile is attached to nothing, `energyProvidesOf` is a reading
+    of an ATTACHED card, and the printed words name a card CLASS (**Basic**) plus a
+    printed TYPE. So this member reads the PRINTED CARD through `matchesFilter` and
+    never through `countEnergyInPlay` — §6.5's standing rule, already stated twice in
+    `effects.ts` for the pile-scanning ops.
+
+    ⚠️ **THE REUSE WOULD HAVE BEEN GREEN ON ALMOST EVERY BOARD A SUITE WRITES.** A
+    discard pile holding ten Fire Energy and nothing else cannot tell the two readings
+    apart; the separating board puts a Luminous Energy (`sv02-191`, the wildcard
+    Special that provides every type) INTO the pile beside a Basic Water, and the two
+    readings differ by two. Driven in `basicEnergyDiscard.test.ts` §3, with the
+    provision reading computed BESIDE the member on every board in the file.
+
+    ⚠️ **AND THE SECOND VACUITY MODE IS THE ZONE, WHICH IS SEPARATELY DRIVEN.** A
+    member that counted the whole pile, or that counted Energy IN PLAY, is green on
+    that same all-Fire pile. §4 discards a non-matching card into the same pile and
+    asserts the count does not move, then attaches ten Basic {R} IN PLAY with an empty
+    pile and asserts the answer is FALSE.
+
+    🛑 **THE THRESHOLD IS `>=` AND THE BOUNDARY IS DRIVEN AT 9 AND 10.** The printed
+    words are "or more" — a FLOOR, `yourEnergyInPlayAtLeast`'s reading of "at least"
+    — and a `>` for a `>=` is the mistake this member owes a mutant. Ten Basic {R} in
+    one discard pile is most of a fixture deck, so `BASIC_ENERGY_DISCARD_DECK` carries
+    **14** of them on purpose (`fix-fire-energy` ×10 plus `fix-fire-energy-alt` ×4),
+    which also makes the two-print interchangeability real rather than assumed.
+
+    **`energy` IS `BasicEnergyType` AND NOT THE SIBLING'S `BasicEnergyType |
+    "special"`.** That member admits `"special"` because provision folds the card CLASS
+    in as one more countable thing; here the class is FIXED by the printed noun, so
+    `"special"` would spell "Basic Special Energy" — a card that cannot exist. Narrower
+    on purpose, and the compiler keeps it narrow.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`yourBasicEnergyInDiscardAtLeast`,
+    carrying `energy` and `count`), its **2** reader arms and **1 literal
+    `CONDITIONAL_DAMAGE_CLAUSES` row**. **ZERO new imports** (`matchesFilter` and
+    `cardOfUid` were both already in `interpreter.ts`), **zero** new maps, templates,
+    patterns, ops, events, error codes, regexes, registry rows, state fields, prompt
+    kinds, choice kinds or `packages/schema` bytes, and `MATCH_RECORD_VERSION`
+    **STAYS 22**. One new FIXTURE body (`fix-emberpillar`) and one dedicated 60-card
+    deck, tests only.
+
+    ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS** — the 1:2 shape for the
+    seventh time in eight slices (D369/D370/D371/D373/D374/D375; D372 was the 2:2).
+    raw 1,237 → **1,239**, `BUILT.attack` 1,266 → **1,268**, resolving sentences
+    353 → **354**, the unbuilt attack remainder 495 → **493**;
+    `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both stand still.
+
+    engineVersion 0.280.0 → **0.281.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.280.0 → **THE CROSS-BOARD TYPE INTERSECTION — THE UNION'S FIRST
     PREDICATE OVER TWO VARIABLE-SIZE SETS, AND A SHAPE-ONLY PRICE.**
 
@@ -14422,7 +14506,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.280.0";
+export const engineVersion = "0.281.0";
 
 export type {
   ApplyResult,
