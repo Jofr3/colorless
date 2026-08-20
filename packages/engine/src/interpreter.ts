@@ -2997,6 +2997,27 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // deliberately not consulted, and an empty Bench is false rather than
       // vacuously true (nothing there is carrying counters).
       return state.players[seat].bench.some((p) => p !== null && p.damage > 0);
+    case "yourBenchAllDamaged": {
+      // 🆕 D373 — "all of your Benched Pokémon have at least 1 damage counter on
+      // them" (Drampa sv05-138/-184, +120). The `.every` twin of the arm directly
+      // above, over the same array on the same seat.
+      //
+      // 🛑 THE `length > 0` IS THE WHOLE SLICE, AND IT IS A CHOICE. `.every` alone
+      // answers TRUE on an empty Bench — classical vacuous truth — and this member
+      // answers FALSE, because the printed "all of your Benched Pokémon" presupposes
+      // that you have some (JP: 「ベンチポケモン全員に」). No rule, glossary entry,
+      // Compendium ruling or official Q&A settles it — all four were checked and all
+      // four are silent — so the tie-break is that a wrong TRUE silently PAYS +120 on
+      // a board that occurs every game while a wrong FALSE only withholds it. The
+      // argument, its falsifier and the measurement that dissolved D369's supposed
+      // precedent are in this member's doc block in effects.ts.
+      //
+      // ⚠️ NOT SPELLED AS `!bench.some((p) => p === null || p.damage === 0)`: that is
+      // the same predicate with the guard silently the OTHER way round, and it is the
+      // mistake this arm's mutant makes.
+      const bench = state.players[seat].bench;
+      return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);
+    }
     case "opponentActivePoisoned": {
       // §12 — Poison is stored as the counter amount an effect may raise, so
       // "is Poisoned" is `> 0`, exactly as the Checkup reads it (flow.ts).
@@ -3613,6 +3634,14 @@ export function conditionNote(cond: BoardCondition): string {
       return "your Active Pokémon has no damage counters on it";
     case "yourBenchDamaged":
       return "1 of your Benched Pokémon has damage counters on it";
+    case "yourBenchAllDamaged":
+      // 🆕 D373 — "all" is kept where the arm above turns the collective plural into
+      // "1 of", because here the quantifier IS the content: a reject pill reading
+      // "your Benched Pokémon have damage counters" would describe the sibling member
+      // and mislead on exactly the boards the two disagree about. The empty-Bench
+      // reading is NOT spelled into the note — a note is a fragment about the board a
+      // player is looking at, and a player with no Bench is not reading it.
+      return "all of your Benched Pokémon have at least 1 damage counter on them";
     case "opponentActivePoisoned":
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":

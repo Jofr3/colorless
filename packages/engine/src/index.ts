@@ -12108,6 +12108,85 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.278.0 → **THE UNIVERSAL OVER THE BENCH — AND AN EMPTY-SET BOUNDARY THAT
+    HAD TO BE *CHOSEN*, BECAUSE THE TWO PRECEDENTS TURNED OUT TO BE EACH OTHER'S
+    NEGATION.**
+
+    D369 measured *"all of your Benched Pokémon have at least 1 damage counter on
+    them"* (Drampa `sv05-138`/`-184` "Raging Cannon", **2 legal printings**), priced
+    it at the cheapest shape this family has, and then **REFUSED TO BUILD IT** — not
+    on shape and not on price, but on a third question: what would the row MEAN on an
+    empty Bench? The clause is worth **+120**, an empty Bench happens in every game,
+    and the catalog cannot triangulate the answer — the whole 640-sentence legal
+    attack column prints **exactly one** `/^If all of /` record, so the population is
+    one. **THE BUILD IS FOUR EDITS. THE SLICE IS THE BOUNDARY.**
+
+    🛑 **THE RULES DO NOT SETTLE IT, AND THAT IS A MEASUREMENT RATHER THAN A SHRUG.**
+    Four instruments were asked and all four are silent: `docs/reference/ptcg-rules.md`
+    states no quantifier rule; the official Pokémon TCG glossary defines neither
+    *"all"* nor *"each"*; the Rulings Compendium publishes nothing on a universal
+    antecedent over an empty Bench; and the **official Japanese card page for this
+    exact printing (ジジーロン, SV5M 060, 「げきこうほう」) carries NO Q&A entry at
+    all**. A real-game ruling would have beaten any engine convention. There is none,
+    and an ABSENCE recorded beats a ruling invented (D183's rule, one domain over).
+
+    🛑 **AND THE PRECEDENT D369 THOUGHT IT HAD IS NOT A PRECEDENT — THIS IS THE
+    FINDING.** D369 read two prior data points as one convention and one necessity:
+    `noEnergyOnYourPokemon`, TRUE with nothing in play, *"chosen"*; `yourBenchDamaged`,
+    FALSE on an empty Bench, *"forced"*. **THE FIRST HALF IS WRONG.**
+    `noEnergyOnYourPokemon` prints *"none of your Pokémon have any Energy attached"* —
+    a NEGATED EXISTENTIAL, `¬∃p. hasEnergy(p)` — and `¬∃` over the empty set is TRUE by
+    exactly the same forcing that makes `∃` over the empty set FALSE. **THE TWO DATA
+    POINTS ARE EACH OTHER'S NEGATION. NEITHER IS A CONVENTION, AND TOGETHER THEY CARRY
+    NO INFORMATION ABOUT A POSITIVE UNIVERSAL.** So `yourBenchAllDamaged` is the first
+    empty-set semantics this vocabulary has ever actually chosen — which is why it is
+    argued in the member's doc block instead of copied from a neighbour, and driven in
+    `benchAllDamagedBonus.test.ts` §2 instead of described.
+
+    **THE CHOICE IS FALSE, ON TWO TIE-BREAKS THAT AGREE.** (1) The pay-out is
+    asymmetric: a wrong TRUE silently ADDS 120 to an attack that earned nothing; a
+    wrong FALSE withholds a bonus a player can see is missing and dispute. An engine
+    that must guess should guess toward not paying. (2) Under the vacuous reading the
+    cheapest way to satisfy a clause about your Bench is to have no Bench — the printed
+    condition would be satisfied by ignoring it, and a conditional bonus whose easiest
+    satisfaction is the null action is not a condition.
+
+    ⚠️ **WHAT WOULD FALSIFY IT**, named so a successor can flip it in one edit: an
+    official Q&A on the printing, a Compendium ruling, or PTCG Live observed paying the
+    +120 with an empty Bench. The remedy is deleting the `length > 0` guard in
+    `conditionHolds` and inverting ONE expectation in §2. **A CHOICE WITH NO STATED
+    FALSIFIER IS A FACT NOBODY CHECKED.**
+
+    ✅ **AND THE GUARD BUYS AN INVARIANT, WHICH IS WHAT MAKES IT MORE THAN A
+    PREFERENCE.** With the non-empty clause, this member IMPLIES `yourBenchDamaged` on
+    every board; under the vacuous reading it would not, the empty Bench being the one
+    board where a TRUE universal sits above a FALSE existential. Swept over eight bench
+    shapes on both seats, together with an ATTRIBUTION CONTROL — the same predicate
+    with the guard removed, computed in the suite — which differs from the member on
+    **exactly one** board in the whole game and agrees everywhere else.
+
+    ⚠️ **THE NEAR MISS IS ONE METHOD CALL.** `yourBenchDamaged` is `.some` and this is
+    `.every`, over the same array, on the same seat, reading the same field; the printed
+    keys differ by five words and the whole-sentence anchor is all that keeps them
+    apart. Driven on ONE board with two benched bodies and one of them damaged, where
+    the existential is TRUE and the universal FALSE.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`yourBenchAllDamaged`), its **2**
+    reader arms — and exactly two, because `grep "switch (cond.kind)"` over non-test
+    source still closes the producer set at `conditionHolds` and `conditionNote` — and
+    **1 literal `CONDITIONAL_DAMAGE_CLAUSES` row**. **ZERO new vocabulary, maps,
+    templates, patterns, imports, ops, events, error codes, regexes, registry rows,
+    state fields, prompt kinds, choice kinds or `packages/schema` bytes**, and
+    `MATCH_RECORD_VERSION` **STAYS 22**.
+
+    ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS** — back to the 1:2 shape
+    D369/D370/D371 kept, after D372's 2:2. raw 1,231 → **1,233**, `BUILT.attack`
+    1,260 → **1,262**, resolving sentences 350 → **351**, the unbuilt attack remainder
+    501 → **499**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both stand still.
+
+    engineVersion 0.277.0 → **0.278.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.277.0 → **THE CROSS-BOARD EQUAL-ENERGY CLAUSE — A SHAPE QUESTION THE
     ENGINE HAD ALREADY ANSWERED IN A DOC BLOCK, AND A COMMENT IN A THIRD FILE THAT
     THE MEMBER FALSIFIED ON THE DAY IT LANDED.**
@@ -14168,7 +14247,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.277.0";
+export const engineVersion = "0.278.0";
 
 export type {
   ApplyResult,

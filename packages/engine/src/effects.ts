@@ -834,6 +834,58 @@ export type BoardCondition =
       excludes the Active — the printed word is "Benched", and the sibling
       `yourActiveDamaged` covers the other spot. */
   | { kind: "yourBenchDamaged" }
+  /** 🆕🆕 D373 — EVERY one of your BENCHED Pokémon has at least 1 damage counter
+      on it — Drampa `sv05-138`/`-184` (JP SV5M 060) "Raging Cannon" (100+, **+120**),
+      printed *"If all of your Benched Pokémon have at least 1 damage counter on
+      them"*. The `.every` twin of the `.some` directly above: same seat, same array,
+      same field, one method call apart. The Active is excluded for the same reason —
+      the printed word is "Benched".
+
+      🛑 **AN EMPTY BENCH IS FALSE, AND THAT IS A CHOICE — THE FIRST EMPTY-SET
+      CONVENTION THIS VOCABULARY HAS EVER ACTUALLY MADE.** Classical logic says a
+      universal over the empty set is TRUE; ordinary English says *"all of your
+      Benched Pokémon"* presupposes that you have some, and the Japanese printing says
+      it harder still (「自分のベンチポケモン全員に」 — 全員, *"all members"*). The two
+      readings differ by **+120 damage on a board that occurs in every game**, so the
+      member commits and says which.
+
+      ⚠️ **THE RULES DO NOT SETTLE IT — MEASURED, NOT ASSUMED.** Four instruments,
+      all empty: `docs/reference/ptcg-rules.md` has no quantifier rule; the official
+      Pokémon TCG glossary defines neither "all" nor "each"; the Rulings Compendium
+      publishes nothing on a universal antecedent over an empty Bench; and the
+      **official Japanese card page for this exact printing carries NO Q&A entry at
+      all**. The catalog cannot triangulate it either — D369 measured `/^If all of /`
+      at **exactly one** record in all 640 legal attack sentences, so the population
+      is one and there is no sibling to compare against.
+
+      🛑 **AND THE PRECEDENT D369 THOUGHT IT HAD IS NOT ONE.** D369 read
+      `noEnergyOnYourPokemon` (TRUE on an empty board) as a prior universal whose
+      vacuous TRUE was *chosen*. It was not chosen: its printed sentence is *"none of
+      your Pokémon have any Energy attached"* — a NEGATED EXISTENTIAL, `¬∃p. hasEnergy(p)`
+      — and `¬∃` over the empty set is TRUE by exactly the same logical forcing that
+      makes `∃` over the empty set FALSE in `yourBenchDamaged`. **The two data points
+      are each other's negation; neither is a convention, and together they carry no
+      information about this one.** Driven rather than argued, in
+      `benchAllDamagedBonus.test.ts` §2.
+
+      **THE TWO TIE-BREAKS, AND THEY AGREE.** (1) The pay-out is asymmetric: a wrong
+      TRUE silently ADDS 120 to an attack that earned nothing, a wrong FALSE withholds
+      a bonus a player can see is missing and dispute. An engine that must guess should
+      guess toward not paying. (2) Under the vacuous reading the cheapest way to
+      satisfy a clause about your Bench is to have no Bench — the printed condition
+      would be satisfied by ignoring it, and a conditional bonus whose easiest
+      satisfaction is the null action is not a condition.
+
+      **WHAT WOULD FALSIFY IT**, stated so a successor can flip it in one edit: an
+      official Q&A on the printing, a Compendium ruling, or PTCG Live observed paying
+      the +120 with an empty Bench. The remedy is deleting the `length > 0` guard in
+      `conditionHolds` and inverting one expectation in §2.
+
+      **THE INVARIANT THE GUARD BUYS**: with the non-empty clause, this member IMPLIES
+      `yourBenchDamaged` on every board. Under the vacuous reading it would not — the
+      empty Bench is the one board where a universal that is TRUE sits above an
+      existential that is FALSE. Swept over every board that suite builds. */
+  | { kind: "yourBenchAllDamaged" }
   /** §12 — your opponent's Active Pokémon is Poisoned: Seviper sv01-128 and
       Paldean Clodsire sv03-129, both printing "Venoshock" (+120). Poison is a
       COUNTER amount on the model rather than a flag (`poisonDamage`, which
@@ -8774,6 +8826,23 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // Tyranitar ex sv03-066/-211 "Lightning Rampage" (+100) — the two printings are
   // byte-identical in rules text, so one fixture serves both ids.
   ["your Benched Pokémon have any damage counters on them", { kind: "yourBenchDamaged" }],
+  // 🆕🆕 D373 — Drampa sv05-138/-184 "Raging Cannon" (+120), the UNIVERSAL over the
+  // same array the row directly above quantifies EXISTENTIALLY. **THE SHARPEST
+  // NEAR-MISS IN THIS TABLE**: one seat, one zone, one field, `.every` against
+  // `.some`, and the printed keys differ by five words. Keys are whole printed
+  // clauses and never substrings, so neither row can reach the other — driven both
+  // ways on ONE board with two benched bodies and one of them damaged, where the
+  // existential is TRUE and this one is FALSE (`benchAllDamagedBonus.test.ts` §3).
+  //
+  // 🛑 A LITERAL ROW AND NOT A TEMPLATE, although the printed "at least 1" LOOKS
+  // like a varying token. It does not vary: the corpus prints this clause at exactly
+  // one threshold, and D118's rule needs a CLOSED vocabulary for the token to fail
+  // against. A number has none, so `at least (\d+) damage counters?` would silently
+  // accept a threshold no card prints and answer it with this member.
+  [
+    "all of your Benched Pokémon have at least 1 damage counter on them",
+    { kind: "yourBenchAllDamaged" },
+  ],
   // Seviper sv01-128 "Venoshock" (+120) and Paldean Clodsire sv03-129, same
   // attack NAME and same clause on two different cards. NOT the same clause as
   // Okidogi ex sv06.5-036/-082/-090's "If THIS Pokémon is Poisoned" (+130), which
