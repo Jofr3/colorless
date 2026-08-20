@@ -12108,6 +12108,91 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.277.0 → **THE CROSS-BOARD EQUAL-ENERGY CLAUSE — A SHAPE QUESTION THE
+    ENGINE HAD ALREADY ANSWERED IN A DOC BLOCK, AND A COMMENT IN A THIRD FILE THAT
+    THE MEMBER FALSIFIED ON THE DAY IT LANDED.**
+
+    D371 handed over *"this Pokémon and your opponent's Active Pokémon have the same
+    amount of Energy attached"* — **2 legal printings across TWO printed sentences**
+    (+100 and +120, 1 each) — with three things measured ahead of the build and a
+    named instruction to FIND the shape answer rather than re-decide it.
+
+    🛑 **CARDS OR UNITS? THE ANSWER WAS ALREADY WRITTEN DOWN, IN THE HELPER'S OWN
+    DOC BLOCK.** *"The same amount of Energy attached"* reads as Energy CARDS or as
+    the units they PROVIDE, and the two disagree on any board holding a multi-unit
+    Special. `countAttachedEnergy(state, pokemon, null)` (continuous.ts) is exactly
+    the unfiltered CARD count and argues the case in its own words — *"one Energy
+    card is one Energy however many units it provides"*, the identical rule
+    `countEnergyInPlay` gives one function down. **SO THE MEMBER DELEGATES AND ADDS
+    NO COUNTING CODE**, and the printed noun cannot mean one thing to this clause and
+    another to the §6.3 readings beside it. Driven rather than inherited: on a board
+    where the attacker holds ONE `fix-blend` (a Special providing TWO types) and the
+    defender holds TWO basics, the CARD reading is 1 ≠ 2 and the UNIT reading is
+    2 = 2. **THE TWO READINGS DISAGREE ON A BOARD THIS ENGINE CAN BUILD**, so the
+    question was real and the answer is refutable.
+
+    ⚠️ **AND THE CROSS-BOARD FORM WAS ALREADY SHIPPED, ONE OPERATOR OVER.**
+    `attack.ts` sums `countAttachedEnergy(state, attacker, null)` and the same call on
+    the defender's Active for *"…for each Energy attached to both Active Pokémon."*
+    (8 legal printings). **THE SAME TWO OPERANDS, A SUM INSTEAD OF AN EQUALITY** —
+    which is why this slice costs zero new helpers, and D371's lesson run forward:
+    grep for what already reads the field and ask what question that reader is asking.
+    Here the answer came back *"the same one, folded differently"*, which is the case
+    where the answer is cheap rather than the case where it is a trap.
+
+    🛑 **THE ZONE IS THE BODY AND NOT THE SIDE, AND THE WRONG CODE WAS ALREADY
+    IMPORTED.** `countEnergyInPlay(state, seat, null)` has been in `interpreter.ts`'s
+    import block since D193 and answers Active **plus Bench**. The printed subjects
+    are two ACTIVE bodies, so benched Energy is invisible to this clause — D279's
+    Falinks refutation at a third shape, and it is a mutant rather than a sentence
+    because reaching for the helper already in scope is what an author actually does.
+
+    🛑 **THE MEMBER FALSIFIED A COMMENT IN A FILE IT DOES NOT TOUCH — D370's LESSON,
+    COLLECTED ON PURPOSE THIS TIME.** `handSizesEqual`'s doc block has said since D119
+    that it is *"the ONE member of this whole vocabulary that is SEAT-SYMMETRIC"*.
+    This member is the second: its printed sentence is **asymmetric** (the pronoun on
+    one side, the full noun phrase on the other) while its **truth value commutes**,
+    because equality commutes over the two Actives. Corrected to **FIRST** at three
+    sites (`effects.ts`, `interpreter.ts`, `publicCount.test.ts`'s test name), which
+    is a fact that cannot rot. **AND THE SPELLING/VALUE DISTINCTION IS THE FINDING**:
+    this is the first member where those two come apart, so "is it seat-symmetric"
+    had to be answered twice before it could be answered at all.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`activeEnergyCountsEqual`), its
+    **2** reader arms — and exactly two, because `grep "switch (cond.kind)"` over
+    non-test source still closes the producer set at `conditionHolds` and
+    `conditionNote` — **1 literal `CONDITIONAL_DAMAGE_CLAUSES` row**, and **1 new
+    import** in `interpreter.ts`. **ZERO new vocabulary, maps, templates, ops, events,
+    error codes, regexes, registry rows, state fields, prompt kinds, choice kinds or
+    `packages/schema` bytes**, and `MATCH_RECORD_VERSION` **STAYS 22**.
+
+    ⚠️ **THE CENSUS STEP IS +2 SENTENCES AND +2 PRINTINGS — THE FIRST 2:2 STEP IN
+    THIS RUN.** D368 moved it 1:3, D369/D370/D371 each 1:2. The clause is printed
+    under TWO distinct sentences at 1 printing each, and the fourteen census rungs are
+    keyed on BOTH counts, so a slice that wrote the sentence delta as 1 would redden
+    nine files for the wrong reason. **A CLAUSE-KEYED BAND ENTRY IS NOT A SENTENCE
+    COUNT**: the 2-printing band that named this candidate counts CLAUSES.
+    raw 1,229 → **1,231**, `BUILT.attack` 1,258 → **1,260**, resolving sentences
+    348 → **350**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both stand still.
+
+    ⚠️ **THE NEAR MISS IS PRINTED, IS ONE OPERATOR AWAY, AND IS LEFT REFUSED ON
+    PURPOSE.** The legal pool prints *"If this Pokémon has more Energy attached than
+    your opponent's Active Pokémon, this attack does 160 more damage."* — **1 legal
+    printing**, the SAME two operands under a STRICT inequality — and no reader
+    resolves it at this head. Building it would have made the `===` → `>` mutant green
+    for the wrong reason; it is measured, pinned in `sameEnergyBonus.test.ts` §3 and
+    handed on as a priced candidate instead.
+
+    ✅ **D207's SUPPLY QUESTION DOES NOT ARISE HERE, AND THAT IS A RESULT RATHER THAN
+    A SKIP.** Every member this family has bought since D368 reads an INGESTED CARD
+    COLUMN, so "does a column classify this?" had to be asked each time. This one
+    reads `InPlayPokemon.energy` — a GAME-STATE array the engine writes itself, on
+    every attach the rules allow. There is no catalog column to be empty, so the
+    permanently-empty-candidate-set failure is unreachable by construction.
+
+    engineVersion 0.276.0 → **0.277.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.276.0 → **THE OPPONENT-RESISTANCE CLAUSE — AND A SHAPE QUESTION WHOSE
     ANSWER WAS *"THE ENGINE ALREADY READS THIS FIELD, AND ASKS A DIFFERENT
     QUESTION OF IT"*.**
@@ -14083,7 +14168,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.276.0";
+export const engineVersion = "0.277.0";
 
 export type {
   ApplyResult,

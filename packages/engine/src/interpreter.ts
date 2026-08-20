@@ -25,6 +25,11 @@ import {
   benchShieldedFromDamage,
   benchShieldedFromEffects,
   coinFlipShieldPrevents,
+  // 🆕 D372 — the FIRST value this file takes from continuous.ts's per-BODY Energy
+  // counters. `countEnergyInPlay` (the line below) is the SEAT-wide one and has been
+  // here since D193; the printed clause D372 buys names two BODIES, so the narrow
+  // counter has to arrive rather than the wide one be reused.
+  countAttachedEnergy,
   countEnergyInPlay,
   effectiveMaxHp,
   groupShieldedFromAttackEffects,
@@ -3053,9 +3058,39 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // (the wire ships face-down backs with a real length).
       return state.players[otherSeat(seat)].hand.length <= cond.count;
     case "handSizesEqual":
-      // The vocabulary's one SEAT-SYMMETRIC member: equality commutes, so this
+      // The vocabulary's FIRST SEAT-SYMMETRIC member: equality commutes, so this
       // reads the same for p1 and p2 on any board. Sizes only, as above.
+      // 🆕 D372 — and no longer its ONLY one; the arm below is the second, and its
+      // own doc block in effects.ts records what that correction cost.
       return state.players[seat].hand.length === state.players[otherSeat(seat)].hand.length;
+    case "activeEnergyCountsEqual": {
+      // 🆕 D372 — "this Pokémon and your opponent's Active Pokémon have the same
+      // amount of Energy attached". D116's pronoun rule again: the printed "this
+      // Pokémon" was resolved to YOUR Active by the clause table, not here.
+      //
+      // 🛑 CARDS AND NOT UNITS, AND THAT IS `countAttachedEnergy`'s DECISION RATHER
+      // THAN THIS ARM'S. `energy: null` is its UNFILTERED reading — every attached
+      // card, whatever it provides — so a multi-unit Special counts ONE here, the
+      // same answer `countEnergyInPlay` gives the board-scoped noun. Delegated for
+      // the reason those two sit together: the reading must not drift from what
+      // pays a cost.
+      //
+      // 🛑 AND THE ZONE IS THE BODY, NOT THE SIDE. `countEnergyInPlay(state, seat,
+      // null)` is one identifier away in this file's own import block and answers a
+      // DIFFERENT question — Active plus Bench — while the printed subjects are two
+      // Active Pokémon. Benched Energy is invisible to this clause.
+      //
+      // FALSE when EITHER Active Spot is empty: an absent Pokémon is not a Pokémon
+      // with zero Energy, and reading a missing side as 0 would arm the clause for
+      // an attacker holding nothing at all.
+      const own = state.players[seat].active;
+      const theirs = state.players[otherSeat(seat)].active;
+      return (
+        own !== null &&
+        theirs !== null &&
+        countAttachedEnergy(state, own, null) === countAttachedEnergy(state, theirs, null)
+      );
+    }
     case "opponentActiveHasType": {
       // The same read Weakness and Resistance make two lines later in the §8.5
       // pipeline (`cards.ts` `weaknessOf`), so a printed type cannot mean one
@@ -3617,6 +3652,16 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent has ${cond.count} or fewer cards in their hand`;
     case "handSizesEqual":
       return "you have the same number of cards in your hand as your opponent";
+    case "activeEnergyCountsEqual":
+      // 🆕 D372 — the printed pronoun is dropped exactly as its siblings drop it
+      // (D116), so the note names the body a reader can see on the board rather than
+      // the one the card's own text points at. It therefore does NOT round-trip to
+      // the printed bytes — and it round-trips to the same MEMBER through nothing at
+      // all, because this clause is a literal ROW keyed on the printed spelling. The
+      // note is a reject pill and a HUD tooltip; the row is the parser's key. Two
+      // audiences, two strings, stated so a successor does not "fix" one into the
+      // other.
+      return "your Active Pokémon and your opponent's Active Pokémon have the same amount of Energy attached";
     case "opponentActiveHasType":
       // Built from the parameter, and it round-trips to the same MEMBER.
       //

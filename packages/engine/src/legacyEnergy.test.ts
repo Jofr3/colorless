@@ -915,8 +915,17 @@ describe("the engine version", () => {
     // `resistanceOf`, asking a DIFFERENT question (does it apply to THIS attacker);
     // the member deliberately does not route through it. The post-bump anchor pass
     // was clean.
-    expect(engineVersion).toBe("0.276.0");
-    expect(manifest.version).toBe("0.276.0");
+    // 🆕🆕 D372 — 0.276.0 → **0.277.0**, ONE new `BoardCondition` member
+    // (`activeEnergyCountsEqual`), TWO reader arms and ONE literal clause-table row
+    // — back to a ROW after two consecutive PATTERN bumps, because this sentence
+    // varies on no token at all. ⚠️ The behavioural half is a DELEGATION rather than
+    // a new reading: `countAttachedEnergy(…, null)` already decided CARDS over units
+    // and `attack.ts` already summed the same two operands, so the version moves
+    // because the readers answer TWO printed sentences they used to refuse, not
+    // because anything about counting Energy changed. The post-bump anchor pass was
+    // clean.
+    expect(engineVersion).toBe("0.277.0");
+    expect(manifest.version).toBe("0.277.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

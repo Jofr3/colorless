@@ -991,10 +991,66 @@ export type BoardCondition =
       TOKEN varying", not "these look similar". The two clauses share a noun and
       nothing else.
 
-      The one member of this whole vocabulary that is SEAT-SYMMETRIC — equality
+      The FIRST member of this whole vocabulary that is SEAT-SYMMETRIC — equality
       commutes, so it reads the same from either seat, and that is asserted rather
-      than assumed. Sizes only, contents never (see the sibling above). */
+      than assumed. Sizes only, contents never (see the sibling above).
+
+      ⚠️ 🆕🆕 **D372 — THIS BLOCK SAID *"THE ONE MEMBER"* AND THERE ARE NOW TWO.**
+      `activeEnergyCountsEqual` below is an equality over the two ACTIVE bodies'
+      attached-Energy counts and commutes for the same reason this one does. The
+      claim was true when D119 wrote it and nothing in the suite was keyed on it —
+      **the same perishable-uniqueness shape the sibling one block up records**,
+      caught this time by the slice that falsified it rather than by a later
+      reader. Corrected to FIRST, which is a fact that cannot rot. */
   | { kind: "handSizesEqual" }
+  /** 🆕🆕 **D372 — THE TWO ACTIVE BODIES CARRY THE SAME NUMBER OF ENERGY CARDS.**
+      *"If this Pokémon and your opponent's Active Pokémon have the same amount of
+      Energy attached, this attack does 100 more damage."* and the same clause at
+      **120**, **1 legal printing each / 2 together** — the family's first clause
+      whose printed sentence names BOTH Active bodies in one breath.
+
+      🛑 **CARDS, NOT UNITS — AND THE ENGINE HAD ALREADY DECIDED THAT.** *"The same
+      amount of Energy attached"* could read as Energy CARDS or as the units they
+      PROVIDE, and the two disagree on any board holding a multi-unit Special. The
+      answer is not re-decided here: `countAttachedEnergy(state, pokemon, null)`
+      (continuous.ts) IS the unfiltered CARD count and its own doc block argues the
+      case — *"one Energy card is one Energy however many units it provides"*, the
+      identical rule `countEnergyInPlay` gives one function down. So this member
+      delegates and adds no counting code, which is what keeps the printed noun from
+      meaning one thing here and another to the §6.3 readings beside it.
+
+      ⚠️ **AND THE CROSS-BOARD FORM WAS ALREADY SHIPPED, ONE OPERATOR OVER.**
+      `attack.ts` sums `countAttachedEnergy(state, attacker, null)` and the same call
+      on the defender's Active for *"…for each Energy attached to both Active
+      Pokémon."*. THE SAME TWO OPERANDS, A SUM INSTEAD OF AN EQUALITY — which is why
+      this member costs zero new helpers and why the reading cannot drift from that
+      one.
+
+      **THE ZONE IS THE BODY AND NOT THE SIDE.** `countEnergyInPlay(state, seat, null)`
+      is the seat-wide count and is the member this could most easily have been
+      written as; the printed subjects are *"this Pokémon"* and *"your opponent's
+      Active Pokémon"*, two BODIES, so benched Energy is invisible to it. Driven on a
+      board rather than described.
+
+      **SEAT-SYMMETRIC IN VALUE, ASYMMETRIC IN SPELLING** — the second member of the
+      vocabulary that is, and the first where those two come apart. The printed
+      sentence is not symmetric (*"this Pokémon"* is the attacker's Active, resolved
+      by D116's pronoun rule; the other side is named in full), but the TRUTH VALUE
+      is, because equality commutes over the two Actives. Asserted from both seats
+      like `handSizesEqual`, and the distinction is stated because a reader who took
+      the spelling for the property would expect the two seats to disagree.
+
+      **FALSE when EITHER Active Spot is empty**, as with every card-reading sibling:
+      an absent Pokémon is not a Pokémon with zero Energy, and a `?? 0` on the
+      opposing side would silently arm the clause for an attacker holding nothing.
+
+      ⚠️ **THE NEAR MISS IS PRINTED AND IS ONE OPERATOR AWAY.** The catalog prints
+      *"If this Pokémon has more Energy attached than your opponent's Active Pokémon,
+      this attack does 160 more damage."* — **1 legal printing**, the same two
+      operands under a STRICT inequality — and it is refused by every reader at this
+      head. A `>=` or `>` here would answer that card's question with this card's row,
+      which is why the comparison has a mutant of its own. */
+  | { kind: "activeEnergyCountsEqual" }
   /** Your opponent's Active Pokémon is a `type` Pokémon — Sylveon swsh10.5-035
       "Wonder Flash" (+90, `Dragon`), the pool's only printing of a TYPE clause
       and the only sentence in 978 cards / 6 sets that contains the word "Dragon" at all.
@@ -8858,6 +8914,29 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // matcher would score a damage bonus off the pre-evolution; the whole-sentence
   // anchor is what keeps it off this path.
   ["you have the same number of cards in your hand as your opponent", { kind: "handSizesEqual" }],
+  // 🆕🆕 D372 — the two ACTIVE bodies' Energy counts, equal. TWO printed sentences
+  // at 1 legal printing each (+100 and +120) and ONE row, because the amount is
+  // captured by `CONDITIONAL_DAMAGE_BONUS` and is not part of this key — the same
+  // arithmetic the "or fewer" rows two up carry. **A LITERAL ROW AND NOT A
+  // TEMPLATE**: the sentence varies on no token at all, so there is nothing to
+  // parameterise and D118's rule does not apply in either direction.
+  //
+  // 🛑 **THE NEAR MISS IS PRINTED, IS ONE OPERATOR AWAY, AND IS STILL REFUSED.**
+  // The legal pool prints *"If this Pokémon has more Energy attached than your
+  // opponent's Active Pokémon, this attack does 160 more damage."* — 1 printing,
+  // the SAME two operands under a STRICT inequality, and no reader resolves it at
+  // this head. Keys are whole printed clauses and never substrings, so this row
+  // cannot reach it; `sameEnergyBonus.test.ts` §3 drives that refusal rather than
+  // asserting it, and the comparison carries a mutant of its own.
+  //
+  // ⚠️ AND THE OTHER NEIGHBOUR IS NOT IN THIS TABLE AT ALL: *"This attack does 30
+  // more damage for each Energy attached to both Active Pokémon."* (8 legal
+  // printings) reads the SAME two bodies through the SAME counter and SUMS them.
+  // One pair of operands, three different questions, three different mechanisms.
+  [
+    "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
+    { kind: "activeEnergyCountsEqual" },
+  ],
   // Falinks sv02-119 "Reckless Charge Together" (+90) — a LITERAL row although
   // exactly one token varies, which is the one place this family departs from
   // D118. A template is safe only when the varying token has a CLOSED vocabulary
