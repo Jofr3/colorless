@@ -21333,3 +21333,115 @@ measurement instead. **A READER IS KEYED ON THE PRINTED SENTENCE, so this slice 
 buildable without the database — a REGISTRY ROW, keyed by card id, would not have
 been.** That asymmetry is worth remembering the next time the database is
 unreachable: it decides what kind of slice is available, not whether any is.
+
+
+## D370 — the BENCH-SCOPED TYPE clause, and the check that must run before the price (engine 0.274.0 → **0.275.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+`yourBenchHasType { type }` — **1** new `BoardCondition` member, **2** reader arms,
+**1** new anchored pattern (`YOUR_BENCH_TYPE_CLAUSE`), and **zero** new vocabulary,
+maps, clause-table rows, ops, events, error codes, registry rows, state fields,
+prompt kinds, choice kinds or `packages/schema` bytes. It serves *"If you have any
+{M} Pokémon on your Bench, this attack does 80 more damage."*, **2 legal
+printings**, and the other ten types the day one is printed.
+
+### 1. The VOCABULARY check is cheap, and it is the one that decides whether a clause is buildable at all
+
+D369 ordered it ahead of the build and it takes one line:
+`POKEMON_TYPE_BY_CODE["M"]` is `"Metal"`, a real `Card.types` value. **The sentence
+one token over fails the same check.** *"You have any **Tera** Pokémon on your
+Bench"* is in the corpus at 1 legal printing, and `Tera` is not a `Card.types` value
+anywhere — D207 measured every occurrence of that banner as DEMAND with the SUPPLY
+side absent.
+
+🛑 **SO THE SAME TEMPLATE MUST BUY THE ONE AND REFUSE THE OTHER, AND WHERE IT
+REFUSES IS A DESIGN DECISION.** The capture is deliberately loose (`(.+)`), so the
+pattern MATCHES the trap sentence and the lookup misses — the clause falls through
+to null and stays on the loud `ATTACK_EFFECT_SKIPPED` path. A
+`(Grass|Fire|Water|…)` alternation would refuse it at the anchor instead: the same
+answer today, and a hand-kept list that rots the day a type is added to the schema.
+**THE MAP IS THE VOCABULARY, NOT THE REGEX** — which is `CLAUSE_ENERGY_TOKENS`'
+rule from D118, and now the third clause in the family to follow it.
+
+### 2. Two members can be adjacent to a third without either being widenable into it
+
+D199 says re-derive the `needs` column. Two of the union's 33 members come close:
+
+* `opponentActiveHasType` reads the same **FIELD** on the wrong body.
+* `yourBenchHasNamed` reads the same **ZONE** on the wrong **FIELD**.
+
+Neither widens. The first is a **RENAME** — two required fields added to a shipped
+member with live authors, priced by D362 at 31 sites across 7 files — and its second
+axis does not merely change the subject: **an Active Spot holds ONE body and a Bench
+holds a VARIABLE-SIZE SET, so the predicate stops being a lookup and becomes a
+quantifier.** The second is a category error: `name` is an OPEN vocabulary matched
+exactly against the catalog, `types` is CLOSED at eleven schema-pinned values, and a
+member taking either would have to decide which field an arbitrary string means —
+turning the free `Tera` rejection into a name lookup that silently succeeds against
+nothing.
+
+**A MEMBER THAT IS THE PRODUCT OF TWO EXISTING ONES IS NOT A WIDENING OF EITHER.**
+
+### 3. The narrow ZONE is worth the whole bonus, and the fixture is what proves it
+
+Both legal printings of this sentence are on **METAL attackers**. So an
+`[side.active, ...side.bench]` reading — the spread `yourNamedPokemonInPlay`
+legitimately uses for a clause printed *"in play"* — would let the attacker satisfy
+its own clause off its own type and turn a conditional **+80** into an
+**unconditional** one on every board the card ever reaches. It is D279's Falinks
+refutation with a TYPE where that one had a NAME.
+
+⚠️ **AND IT IS ONLY REFUTABLE ON A BOARD IF THE FIXTURE IS BUILT FOR IT.**
+`fix-benchtype` is deliberately `types: ["Metal"]`; a Colorless attacker would
+answer identically under both readings and the whole file would have proved nothing.
+Same principle one axis over: `fix-dualbody` is `["Water", "Metal"]`, because
+**every single-typed body in the catalog scores identically under `.includes` and
+under an equality on `types[0]`** — one board separates them and it has to be built.
+
+### 4. A WIDENING can falsify a comment in a file it does not touch
+
+`conditionNote`'s `opponentActiveHasType` arm said the note *"round-trips to the
+printed clause … the type word is the same token the sentence carried in"*. That was
+true when it was written. **D367's token-map widening falsified it three slices
+later**, from a different file: `{P}` and `{D}` are printed on 3 legal printings and
+the note answers "Psychic" / "Darkness". The right answer — a brace code is a
+card-face glyph and a tooltip is prose (D118) — with a claim about it that had
+quietly stopped being true.
+
+🛑 **WHEN YOU WIDEN A VOCABULARY, GREP THE SITES THAT *DESCRIBE* IT, NOT ONLY THE
+ONES THAT USE IT.** The using sites are found by the compiler; the describing ones
+are found by nobody.
+
+D370's own note has the corrected form of the property: it does **not** round-trip
+to the printed bytes (it spells `Metal`, not `{M}`) and it **does** round-trip to
+the same **MEMBER**, through the map's spelled-out half. That is the stronger claim
+and it is the one this family only gained at D367.
+
+### 5. Two guessed figures went red before they were trusted, and one of them found a slice
+
+The suite was written with two numbers nobody measured: the sentence's byte length
+(**78 guessed, 75 measured**) and the count of brace-coded printings under the
+sibling template (**3 guessed, 5 measured**). Both reddened on the first run.
+
+The second is the interesting one. The extra two printings are *"If your opponent's
+Active Pokémon is a {N} Pokémon, it is now Paralyzed."* — **2 legal printings**,
+refused by all nine readers, whose **ANTECEDENT** costs zero new vocabulary
+(`OPPONENT_ACTIVE_TYPE_CLAUSE` has read it since D120; `{N}` → `Dragon` since D234)
+and whose **CONSEQUENT** no skeleton in this family spells. **THE CONSEQUENT WAS NOT
+PRICED**, and that is recorded rather than implied.
+
+**A GUESS THAT GOES RED IS CHEAPER THAN A GUESS THAT GOES GREEN, AND A WIDENED
+QUERY IS THE CHEAPEST PLACE TO FIND THE NEXT SLICE.**
+
+### 6. A claim without a plausible mutant is DECLARED, not faked
+
+Six mutation rows, one per claim: the ZONE (C1), the SEAT (C2), `.includes` over an
+array (C3), the vocabulary map (C4 — the neighbouring branch's REAL code, which
+agrees with the right one on `{M}` and disagrees on `{C}`, `{N}` and `"Special"`),
+the NOTE (C5), and the `Tera` tripwire (C6). All six killed.
+
+⚠️ A **SEVENTH** claim is driven and has **no row**: "the identity is the stack TOP
+(§1.2)". The realistic wrong code — `cardOfUid(state, p.stack[0])` — needs an import
+`interpreter.ts` does not carry, so it is **not a slip this file's author could make
+in one edit**, and a mutant that added the import would be testing the harness
+rather than the guard. Recorded in `mutants.ts` beside the six, so the absence is a
+statement rather than an oversight.

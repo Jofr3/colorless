@@ -263,9 +263,15 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // one of them replaced the live section in place, which is why this count sat at
   // 38 for so long. The guard fired on the very first slice to archive again, which
   // is the ratchet working in the UP direction rather than the DOWN one.
-  const ARCHIVES = 39;
+  // 🆕🆕 D370 — **39 → 40**, the SECOND consecutive slice to take the "say so and
+  // raise the number" branch, and the first time it has been taken twice running.
+  // D370 demoted D369's live resume point under `### Prior resume point (P3-M5 —
+  // D369, …)` rather than overwriting it, which is what `docs/README.md`'s resume
+  // protocol asks for. **THE RATCHET IS ONLY A RATCHET IF THE UP DIRECTION IS ALSO
+  // A DELIBERATE TWO-SITE EDIT**, and this is the second slice to prove it is.
+  const ARCHIVES = 40;
 
-  it("the page still holds all 39 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 40 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
