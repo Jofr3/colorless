@@ -21556,6 +21556,109 @@ same reason, because `activeTop` is the only accessor the arm has.
 **THE TEST FOR WHETHER A CLAIM DESERVES A ROW IS WHETHER THE WRONG CODE IS ONE EDIT
 AWAY, AND THAT TEST IS ANSWERED BY THE FILE'S IMPORT BLOCK.**
 
+## D374 — the FIRST printed CARD NAME read off an ATTACHED card, and D207's supply question asked of a candidate that was expected to FAIL it (engine 0.278.0 → **0.279.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+**Clause:** *"If this Pokémon has any Team Rocket's Energy attached, this attack does 60
+more damage."* — Team Rocket's Zapdos `sv10-070` "Wicked Thunder", **1 sentence / 2 legal
+printings**. D373's handoff, taken.
+
+**Ships:** `yourActiveHasNamedEnergyAttached` (`name: string`), 1 LITERAL
+`CONDITIONAL_DAMAGE_CLAUSES` row, 2 reader arms, 1 new import (`cardOfUid` into
+`interpreter.ts`). Zero new maps, templates, patterns, ops or events.
+
+### D207's SUPPLY question — asked FIRST, and it PASSES
+
+D373 flagged this candidate as **the first in the run that could actually fail D207's
+supply question**, and budgeted a refusal for it. It does not fail. The chain is
+`InPlayPokemon.energy` (uids) → `state.cardIdByUid` → `state.cardPool` → `Card.name`, an
+INGESTED column `matchesFilter`'s `byName` member has read since M4. `FIXTURE_POOL` has
+held a real `Team Rocket's Energy` since **D242** (`fix-tr-energy`), put there as the near
+miss `ownerPokemon`'s `category === "Pokemon"` conjunct exists to refuse — so the fixture
+cost of the supply half was **zero**, and `trEnergyBonus.test.ts` §2 reads the name back
+off a live board rather than off the fixture table.
+
+**The rule to carry forward:** D207's failure mode is a predicate over a **banner no
+column CLASSIFIES** (`Tera` — 22 rows, every occurrence DEMAND; `Ancient`/`Future` the
+same). A predicate over a **FIELD** is a different animal, however exotic the value looks.
+Ask which one you have before pricing anything.
+
+### The SHAPE question: ONE CARD NAME, not the `Team Rocket's ` prefix family
+
+*"Team Rocket's Pokémon"* genuinely is a prefix family — `CardFilter.ownerPokemon` (D242)
+and `yourPokemonKoedOnOpponentsLastTurn.owner` (D326) both exist for owner prefixes — so
+the same three words in front of *Energy* read as a family at first glance.
+
+**They are not one.** Exactly ONE Energy card carries the prefix: `Team Rocket's Energy`
+`sv10-182`, reprinted `me2pt5-217`. ⚠️ The catalog could not answer this (no D1
+credentials); it was answered on the **WEB**, D373's instrument — official card database,
+Bulbapedia, the set lists — and the engine's own `cards.ts` already recorded the card by
+id as `ownerPokemon`'s near miss.
+
+**So the two readings are EXTENSIONALLY IDENTICAL on today's pool, and the choice is
+about tomorrow.** It goes D373's way on D373's tie-break: a name equality never
+over-serves, a prefix reading would silently pay +60 for a card the sentence may not name,
+and an engine that must guess guesses toward not paying. **The falsifier is named** — a
+printed `Team Rocket's ⟨X⟩ Energy`, or a ruling reading the clause as the family — and the
+remedy is one member field and one arm.
+
+✅ **AND IT CARRIES AN ATTRIBUTION CONTROL** (D214): the prefix reading is computed BESIDE
+the member on every board the suite builds. They agree on seven real-pool attachments and
+differ on exactly one — an **invented** `Team Rocket's Fix Energy`. A shape choice whose
+only separating board holds a card nobody printed still has to be SHOWN.
+
+### Why it is a LITERAL row and not a template (D118, read from the wrong end)
+
+`SELF_ENERGY_ATTACHED_CLAUSE` — `^this Pokémon has any (.+) Energy attached$` — **already
+matches this printed clause** and captures `Team Rocket's`; the only thing that keeps it
+null is `CLAUSE_ENERGY_TOKENS` having no such token. D118's rule is that a template needs a
+**closed vocabulary the lookup can FAIL against**. The energy codes have one, the Pokémon
+types have one, **a printed card NAME has none** — so a template over it would answer
+*"Fixmon's Energy"* with this member. Literals are pass one in `boardConditionForClause`,
+so the row wins outright.
+
+### D368's recorded TRAP, taken the way the trap said it had to be
+
+`undamagedBonus.test.ts` §6 has carried this sentence as a **trap** since D368: *"'Team
+Rocket's' is a SPECIAL Energy (`sv10-182`), so `energy: "special"` would also match
+Reversal Energy — a widening the printing does not ask for."* D374 did not widen that
+token map. It bought a member that reads a printed NAME, and the trap rung is updated in
+place to say so rather than deleted. **A trap that is later taken correctly is a receipt,
+not a stale note.**
+
+### D154's fold, on a NEW kind of site
+
+This is the union's **first parameter that is printed text carrying an apostrophe**.
+`literalClauseRow` already folds U+2019 → U+0027 on a clause-table miss, so the KEY
+survives a punctuation-normalising re-ingest — but such a re-ingest curls `Card.name` too,
+and an ASCII parameter compared against a curled name is exactly D137's half-fix wearing a
+proper noun. **The arm folds the CARD side** (`foldApostrophes`, whose other consumer is
+`attackIndexByName` in the same file), the parameter is stored ASCII, and both halves are
+driven on a curled board (`trEnergyBonus.test.ts` §6) rather than argued.
+
+### Why it is NOT `yourActiveHasEnergyAttached` widened
+
+That member reads by **PROVISION** (`hasAttachedEnergy`, continuous.ts): a wildcard
+Luminous IS a `{R}` Energy while it provides every type, and stops being one when a second
+Special demotes it. A **NAME** is the opposite reading — it does not move with the board
+and has nothing to do with what pays a cost. One field meaning both would make one member
+mean two things on the same card. They disagree on a real board (a plain Special satisfies
+`energy: "special"` and not this) and agree on another (`Team Rocket's Energy` satisfies
+both), and both are driven.
+
+### Housekeeping a successor inherits
+
+* The census moved in **fourteen** files this time (D373's page said eleven, D372's nine).
+  **THE RUNG COUNT IS STILL NOT INHERITABLE.** The three grep-proof rungs are the same
+  three: `BUILT.attack - 922`, `BUILT.attack - 922 - 252`, and a bare-literal OPERAND
+  (`expect(497 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS)`) — **eight slices running**.
+* ⚠️ **AN OWNER-PREFIXED FIXTURE IS A CENSUS SUBJECT IN FOUR FILES, WHATEVER CATEGORY IT
+  IS.** `switchSeam` / `inPlayTarget` / `ownerTargetOps` each enumerate every
+  `/^[A-Z][A-Za-z' ]*'s /` name in `FIXTURE_POOL`, and this slice's two prefixed cards are
+  **Energy**, not bodies. The list edit is the whole cost — but it is not in any price a
+  slice writes for itself, and this is the fifth time it has been paid.
+* The residue behind the bonus skeleton is now **26 sentences / 32 printings**, with
+  **THREE** clauses left in the 2-printing band.
+
 ## D373 — the UNIVERSAL over the Bench: an EMPTY-SET boundary that had to be CHOSEN, because the two precedents turned out to be each other's negation (engine 0.277.0 → 0.278.0)
 
 **Clause:** *"If all of your Benched Pokémon have at least 1 damage counter on them, this
