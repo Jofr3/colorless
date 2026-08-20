@@ -530,8 +530,20 @@ function flagValue(argv: string[], name: string): string | undefined {
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
 
-  if (recoverFromJournal()) process.exit(2);
-
+  // 🛑 D369 — `--list` IS READ-ONLY AND IT IS ANSWERED *BEFORE* THE JOURNAL
+  // RECOVERY, WHICH IS NOT WHERE IT USED TO SIT. `recoverFromJournal()` ran first
+  // for EVERY invocation, so `bun run mutants --list` — documented above as
+  // "print the corpus, run nothing" — would find the journal a *live* run had
+  // written before its own file write, RESTORE that run's target file out from
+  // under it, clear the journal and exit 2. The in-flight mutant then found bytes
+  // it had not written and reported **CLOBBER**, naming a phantom "another
+  // process".
+  //
+  // ⚠️ MEASURED, NOT REASONED: this cost a real `--decision D275` run in the D369
+  // session, whose preserved "clobbered" file turned out to be byte-identical to
+  // HEAD — which is the signature of a RESTORE rather than of an edit, and the
+  // only reason the cause was findable. **THE RECOVERY PATH IS A WRITE, SO THE
+  // ONLY COMMAND THAT MAY PRECEDE IT IS ONE THAT NEVER WRITES.**
   if (argv.includes("--list")) {
     for (const mutant of MUTANTS) {
       const tag =
@@ -541,6 +553,8 @@ async function main(): Promise<void> {
     }
     return;
   }
+
+  if (recoverFromJournal()) process.exit(2);
 
   const only = flagValue(argv, "--only")?.split(",");
   const decision = flagValue(argv, "--decision");
