@@ -230,8 +230,10 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // residue (1 sentence / 2 printings), re-derived live rather than decremented.
     // 🆕🆕 D374 — 27 / 34 -> 26 / 32: the NAMED-ENERGY clause left the residue
     // (1 sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(26);
-    expect(units(refused)).toBe(32);
+    // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION left it, the
+    // same 1:2 step, re-derived live rather than decremented.
+    expect(refused.length).toBe(25);
+    expect(units(refused)).toBe(30);
     // 🛑 AND THE STEP IS 2 AND 2, WHICH IS THE FIRST 2:2 STEP IN THIS RUN. D368 moved
     // it 1:3 and D369/D370/D371 each 1:2. Every earlier head is re-derived from THIS
     // one rather than frozen, and the sentence term moves by TWO where the printing
@@ -241,12 +243,14 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
     // 🆕🆕 D374 — one more term on each chain, and the step is 1 sentence /
     // 2 printings (the NAMED-ENERGY clause).
-    expect([refused.length + 1, units(refused) + 2]).toEqual([27, 34]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([28, 36]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([30, 38]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([31, 40]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([32, 42]);
-    expect([refused.length + 7, units(refused) + 12]).toEqual([33, 44]);
+    // 🆕🆕 D375 — one more term again, same 1:2 step (the TYPE INTERSECTION).
+    expect([refused.length + 1, units(refused) + 2]).toEqual([26, 32]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 6]).toEqual([28, 36]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([30, 38]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([31, 40]);
+    expect([refused.length + 7, units(refused) + 12]).toEqual([32, 42]);
+    expect([refused.length + 8, units(refused) + 14]).toEqual([33, 44]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -259,19 +263,21 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // mechanism, and the shape of each is named in the resume point.
     // 🆕🆕 D374 — FOUR -> THREE: D374 bought the NAMED-ENERGY clause out of the band,
     // and the list is re-derived live rather than edited down.
+    // 🆕🆕 D375 — THREE -> TWO: the CROSS-BOARD TYPE INTERSECTION was bought out of
+    // it, and the two survivors are the two D374's handoff had already PRICED.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
     // …with this slice's clause counted back in the band it is SIX, with D371's as
     // well SEVEN, and with D370's as well EIGHT — the chain D368's handoff opened.
-    expect(band.length + 1).toBe(4);
-    expect(band.length + 2).toBe(5);
-    expect(band.length + 3).toBe(6);
-    expect(band.length + 4).toBe(7);
-    expect(band.length + 5).toBe(8);
+    expect(band.length + 1).toBe(3);
+    expect(band.length + 2).toBe(4);
+    expect(band.length + 3).toBe(5);
+    expect(band.length + 4).toBe(6);
+    expect(band.length + 5).toBe(7);
+    expect(band.length + 6).toBe(8);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -616,16 +622,18 @@ describe("§6 — SEAT SYMMETRY: which KIND, and the comment it falsified", () =
 describe("§7 — the census moves in exactly ONE summand, and the step is 2 and 2", () => {
   it("the resolving corpus gains TWO sentences and TWO printings", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(352); // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
-    expect(units(resolved)).toBe(1235); // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
+    expect(resolved).toHaveLength(353); // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
+    expect(units(resolved)).toBe(1237); // 🆕🆕 D375 +2 printings // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
     // The FOUR slices before this one each moved the sentence term by exactly 1;
     // this one moves it by 2 while moving the printing term by the same 2 as three
     // of them. Re-derived from the live head both ways rather than quoted.
     // 🆕🆕 D373 — one more term on each: this slice's step is 1 sentence / 2 printings.
     // 🆕🆕 D374 — and one more again, the NAMED-ENERGY clause, also 1 sentence /
     // 2 printings.
-    expect(resolved.length - 1 - 1 - 2).toBe(348);
-    expect(units(resolved) - 2 - 2 - 2).toBe(1229);
+    // 🆕🆕 D375 — and one more again, the TYPE INTERSECTION, also 1 sentence /
+    // 2 printings.
+    expect(resolved.length - 1 - 1 - 1 - 2).toBe(348);
+    expect(units(resolved) - 2 - 2 - 2 - 2).toBe(1229);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {

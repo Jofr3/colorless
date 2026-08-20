@@ -937,8 +937,17 @@ describe("the engine version", () => {
     // it is deliberately NOT a widening of `yourActiveHasEnergyAttached`. The version
     // moves because the readers answer a printed sentence they used to refuse. The
     // post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.279.0");
-    expect(manifest.version).toBe("0.279.0");
+    // 🆕🆕 D375 — 0.279.0 -> **0.280.0**: ONE new `BoardCondition` member
+    // (`inPlayTypesIntersect`, and it is NULLARY — the first member this family has
+    // bought that carries no parameter at all since D368's `yourActiveUndamaged`),
+    // TWO reader arms, ONE literal clause-table row and ZERO new imports. ⚠️ The
+    // behavioural half is the union's FIRST predicate over two VARIABLE-SIZE SETS:
+    // an intersection of the two seats' in-play type sets, where the only other
+    // cross-board members compare scalars on named bodies. The version moves because
+    // the readers answer a printed sentence they used to refuse. The post-bump anchor
+    // pass was clean.
+    expect(engineVersion).toBe("0.280.0");
+    expect(manifest.version).toBe("0.280.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

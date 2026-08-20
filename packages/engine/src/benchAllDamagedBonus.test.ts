@@ -189,15 +189,18 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     // 🆕🆕 D374 — 27 / 34 -> 26 / 32: the NAMED-ENERGY clause left the residue (1
     // sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(26);
-    expect(units(refused)).toBe(32);
+    // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION left it, same
+    // 1:2 step, and this file's own band named it FIRST of the three it left behind.
+    expect(refused.length).toBe(25);
+    expect(units(refused)).toBe(30);
     // 🛑 AND THE STEP IS 1:2, NOT D372's 2:2. Every earlier head is re-derived from
-    // THIS one rather than frozen: 🆕 D374's 27/34, D372's 28/36, D371's 30/38,
-    // D370's 31/40.
-    expect([refused.length + 1, units(refused) + 2]).toEqual([27, 34]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([28, 36]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([30, 38]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([31, 40]);
+    // THIS one rather than frozen: 🆕 D375's 26/32, D374's 27/34, D372's 28/36,
+    // D371's 30/38, D370's 31/40.
+    expect([refused.length + 1, units(refused) + 2]).toEqual([26, 32]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 6]).toEqual([28, 36]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([30, 38]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([31, 40]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -207,13 +210,16 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // 🆕🆕 D374 — THREE at 2 printings, where this row measured four: D374 took the
     // `Team Rocket's Energy` clause this page named FIRST in its own handoff, so the
     // band is re-derived live and the row it left is gone from this list.
+    // 🆕🆕 D375 — THREE -> TWO: D375 took the CROSS-BOARD TYPE INTERSECTION, which
+    // this list named first. The two survivors are the two D374's handoff had already
+    // PRICED — one needs a persisted per-turn HEALED flag (a `MATCH_RECORD_VERSION`
+    // bump on top of the engine bump), the other is a threshold over a filtered zone.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 2).toBe(5);
+    expect(band.length + 3).toBe(5);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

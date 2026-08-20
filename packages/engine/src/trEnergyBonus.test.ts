@@ -187,14 +187,18 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 26 / 32 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(26);
-    expect(units(refused)).toBe(32);
+    // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION — this
+    // file's own named fallback, taken by the very next slice — left the residue at
+    // the same 1:2 step, re-derived live rather than decremented.
+    expect(refused.length).toBe(25);
+    expect(units(refused)).toBe(30);
     // 🛑 AND THE STEP IS 1:2, the shape D369/D370/D371/D373 kept. Every earlier head
-    // is re-derived from THIS one rather than frozen: D373's 27/34, D372's 28/36,
-    // D371's 30/38.
-    expect([refused.length + 1, units(refused) + 2]).toEqual([27, 34]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([28, 36]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([30, 38]);
+    // is re-derived from THIS one rather than frozen: 🆕 D374's 26/32, D373's 27/34,
+    // D372's 28/36, D371's 30/38.
+    expect([refused.length + 1, units(refused) + 2]).toEqual([26, 32]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 6]).toEqual([28, 36]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -206,13 +210,16 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // rather than re-running it. The cross-board type INTERSECTION is D373's named
     // fallback and is now the head of the queue; the healed-this-turn clause is the
     // expensive one (a per-turn flag on the state, hence a MATCH_RECORD_VERSION bump).
+    // 🆕🆕 D375 — THREE -> TWO, AND THE PREDICTION THIS BLOCK MADE WAS RIGHT: D375
+    // took the named fallback, which was indeed the head of the queue, and the two
+    // survivors are the two this comment already priced.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 1).toBe(4);
+    expect(band.length + 1).toBe(3);
+    expect(band.length + 2).toBe(4);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);

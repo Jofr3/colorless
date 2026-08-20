@@ -164,8 +164,10 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // residue (1 sentence / 2 printings), re-derived live rather than decremented.
     // 🆕🆕 D374 — 27 / 34 -> 26 / 32: the NAMED-ENERGY clause left the residue
     // (1 sentence / 2 printings), re-derived live rather than decremented.
-    expect(refused.length).toBe(26);
-    expect(units(refused)).toBe(32);
+    // 🆕🆕 D375 — 26 / 32 -> 25 / 30: the CROSS-BOARD TYPE INTERSECTION left it, the
+    // same 1:2 step, re-derived live rather than decremented.
+    expect(refused.length).toBe(25);
+    expect(units(refused)).toBe(30);
     // D371's recorded residue, then D370's, then D369's, then D368's — all
     // re-derived from THIS head rather than quoted. A guard that only checked the
     // current pair could not tell "a row landed" from "a reader broke".
@@ -173,18 +175,21 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
     // 🆕🆕 D374 — one more term on each chain, and the step is 1 sentence /
     // 2 printings (the NAMED-ENERGY clause).
-    expect(refused.length + 1).toBe(27);
-    expect(units(refused) + 2).toBe(34);
-    expect(refused.length + 2).toBe(28);
-    expect(units(refused) + 4).toBe(36);
-    expect(refused.length + 4).toBe(30);
-    expect(units(refused) + 6).toBe(38);
-    expect(refused.length + 5).toBe(31);
-    expect(units(refused) + 8).toBe(40);
-    expect(refused.length + 6).toBe(32);
-    expect(units(refused) + 10).toBe(42);
-    expect(refused.length + 7).toBe(33);
-    expect(units(refused) + 12).toBe(44);
+    // 🆕🆕 D375 — one more term again, same 1:2 step (the TYPE INTERSECTION).
+    expect(refused.length + 1).toBe(26);
+    expect(units(refused) + 2).toBe(32);
+    expect(refused.length + 2).toBe(27);
+    expect(units(refused) + 4).toBe(34);
+    expect(refused.length + 3).toBe(28);
+    expect(units(refused) + 6).toBe(36);
+    expect(refused.length + 5).toBe(30);
+    expect(units(refused) + 8).toBe(38);
+    expect(refused.length + 6).toBe(31);
+    expect(units(refused) + 10).toBe(40);
+    expect(refused.length + 7).toBe(32);
+    expect(units(refused) + 12).toBe(42);
+    expect(refused.length + 8).toBe(33);
+    expect(units(refused) + 14).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -198,21 +203,24 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // mechanism.
     // 🆕🆕 D374 — FOUR -> THREE: D374 bought the NAMED-ENERGY clause out of the band,
     // and the list is re-derived live rather than edited down.
+    // 🆕🆕 D375 — THREE -> TWO: the CROSS-BOARD TYPE INTERSECTION was bought out of
+    // the band (`typeShareBonus.test.ts`), and the two survivors are the two D374's
+    // handoff had already PRICED.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
     // …with D372's clause counted back in the band is SIX, with D371's as well SEVEN,
     // with D370's EIGHT, and with this file's own NINE — the number D368's handoff
     // put at two.
-    expect(band.length + 1).toBe(4);
-    expect(band.length + 2).toBe(5);
-    expect(band.length + 3).toBe(6);
-    expect(band.length + 4).toBe(7);
-    expect(band.length + 5).toBe(8);
-    expect(band.length + 6).toBe(9);
+    expect(band.length + 1).toBe(3);
+    expect(band.length + 2).toBe(4);
+    expect(band.length + 3).toBe(5);
+    expect(band.length + 4).toBe(6);
+    expect(band.length + 5).toBe(7);
+    expect(band.length + 6).toBe(8);
+    expect(band.length + 7).toBe(9);
     // The 5-printing declaration clause D368 disqualified on shape is STILL the
     // largest thing in the residue and is STILL refused, so nothing here has quietly
     // re-priced it.

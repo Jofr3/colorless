@@ -10988,6 +10988,45 @@ export const FIXTURE_POOL: Record<string, Card> = {
       Energy, and a suite whose attacker also matched the prefix could not tell "reads
       the ATTACHED card's name" from "reads the HOLDER's name". This body's name shares
       nothing with the clause. */
+  /** 🆕🆕 D375 — the CROSS-BOARD TYPE INTERSECTION: *"If any of your Pokémon in
+      play are the same type as any of your opponent's Pokémon in play, this attack
+      does 120 more damage."* — Enamorus `sv06-093` "Love Resonance", whose
+      Illustration-rare reprint `sv06-180` is byte-identical in rules text, so ONE
+      fixture serves both.
+
+      Costed `{C}` and based at **10** rather than the printed 80, so the +120 is
+      unmistakable in the dealt number; `hp: 150` so the attacker survives whatever
+      the boards hand back.
+
+      🛑 **`types: ["Fairy"]` IS THE POINT OF THIS FIXTURE, NOT ITS BACKDROP.** The
+      attacker is itself one of *"your Pokémon in play"*, so its own type is a live
+      term of the left-hand set — which is what the real Psychic printing means and
+      what `fix-bigfairy` below exists to drive. It must therefore be a type NOTHING
+      on the default opposing board carries: `fix-bigbody` and `fix-benchfiller` are
+      Colorless, so a Fairy attacker makes the base board FALSE and every TRUE below
+      is something a case put there. A Colorless attacker would have made this whole
+      file green before it started. */
+  "fix-typeshare": battler("fix-typeshare", {
+    hp: 150,
+    types: ["Fairy"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Love Resonance",
+        damage: 10,
+        effect:
+          "If any of your Pokémon in play are the same type as any of your opponent's Pokémon in play, this attack does 120 more damage.",
+      },
+    ],
+  }),
+  /** 🆕 D375 — a **Fairy** body with `fix-bigbody`'s 200 HP, and it exists for one
+      board: the ACTIVE-against-ACTIVE match, which is the one the real printing
+      leans on. `fix-fairybody` (D370) is 60 HP and would be Knocked Out by the +120,
+      and a KO tail rewrites the board the later assertions are read off. The type is
+      declared rather than defaulted, so it is checked against the print in both
+      directions by `catalogManifest.test.ts`' sweep — and this id names no printing,
+      so it makes no claim about one. */
+  "fix-bigfairy": battler("fix-bigfairy", { hp: 200, types: ["Fairy"] }),
   "fix-trbonus": battler("fix-trbonus", {
     hp: 150,
     attacks: [
@@ -11218,6 +11257,44 @@ export const BENCH_ALL_DAMAGED_DECK = deckOf({
   "fix-basic-1": 24,
   "fix-bigbody": 8,
   "fix-energy": 24,
+});
+
+/** 🆕🆕 D375 — the CROSS-BOARD TYPE-INTERSECTION board. A DEDICATED 60 (D270's
+    rule) rather than a widened `BENCH_TYPE_DECK`, so D370's seeded boards keep the
+    shuffles they were measured on.
+
+    THE TYPES ARE THE DECK. Every body here is in it for a type it carries, and the
+    two dual-typed ones are the only reason any rung in this file can go red:
+
+      • `fix-typeshare` — the attacker, the one printed sentence, **Fairy**, so the
+        base board (Fairy against a Colorless `fix-bigbody`) is FALSE;
+      • `fix-bigfairy` — **Fairy** at 200 HP, the opposing ACTIVE that matches the
+        attacker's own type without being Knocked Out by the +120;
+      • `fix-fairybody` — **Fairy** at 60 HP (D370), the BENCH body that matches the
+        attacker's type from either side of the table;
+      • `fix-dualbody` — **`["Water", "Metal"]`** (D370), and the whole file turns on
+        it: against a single `["Water"]` an ARRAY EQUALITY answers FALSE where an
+        intersection answers TRUE, and against a single `["Metal"]` a `types[0]`-only
+        reading answers FALSE. No Standard-legal Pokémon is dual-typed (D238), so
+        nothing real can separate those readings;
+      • `fix-water-basic` — single **Water** (D238), the equality separator's partner;
+      • `fix-metalbody` — single **Metal** (D370), the `types[0]` separator's partner;
+      • `fix-benchfiller` — Colorless by `printedTypesOf`'s default (D175), the body
+        that matches `fix-bigbody` and nothing else here;
+      • `fix-bigbody` — 200 HP **Colorless** across the table, the default opposing
+        Active on every board that must not share a type with a Fairy attacker.
+
+    `fix-energy` pays the `{C}`. 4 + 8 + 8 + 8 + 4 + 4 + 4 + 8 + 12 = **60**. */
+export const TYPE_SHARE_DECK = deckOf({
+  "fix-typeshare": 4,
+  "fix-bigfairy": 8,
+  "fix-fairybody": 8,
+  "fix-dualbody": 8,
+  "fix-water-basic": 4,
+  "fix-metalbody": 4,
+  "fix-benchfiller": 4,
+  "fix-bigbody": 8,
+  "fix-energy": 12,
 });
 
 /** 🆕🆕 D374 — the NAMED-ENERGY board. A DEDICATED 60 (D270's rule) rather than a

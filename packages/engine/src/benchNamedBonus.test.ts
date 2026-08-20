@@ -174,7 +174,19 @@ const LEFT: readonly (readonly [string, number, string])[] = [
     "NOT A `BoardCondition` AT ALL — the clause reads THIS ATTACK'S COST, which two printings set to two different values, so no state+seat predicate can answer it",
   ],
   [
-    // 🛑🆕🆕 D374 — THIS ROW'S PREDECESSOR IS NOW BUILT, FOR THE THIRD SLICE RUNNING,
+    // 🛑🆕🆕 D375 — AND AGAIN, FOR THE FOURTH SLICE RUNNING. The CROSS-BOARD TYPE
+    // INTERSECTION that sat here — whose cost string called the whole price the SHAPE
+    // — was settled by D375 and built (`typeShareBonus.test.ts`): one NULLARY member
+    // (`inPlayTypesIntersect`) on a LITERAL row, with BOTH ways it could have gone
+    // vacuous refuted on boards. ⚠️ **AND THE COST STRING WAS RIGHT FOR ONCE** — the
+    // supply WAS certain and the shape WAS the whole price. What takes its place is
+    // the cheaper of the two survivors in the 2-printing band: a THRESHOLD over a
+    // filtered DISCARD-PILE count, which is `yourEnergyInPlayAtLeast` one zone over.
+    // The other survivor (*"this Pokémon was healed during this turn"*) is NOT listed
+    // as the head because it is priced above a 2-printing slice: it needs a per-turn
+    // HEALED flag on the state, hence a `MATCH_RECORD_VERSION` bump as well.
+    //
+    // 🛑 D374 — THIS ROW'S PREDECESSOR IS NOW BUILT, FOR THE THIRD SLICE RUNNING,
     // AND THIS TIME WHAT WAS BOUGHT WAS A *SUPPLY ANSWER*. The named-card read that
     // sat here — whose cost string asked whether the member keys on ONE CARD NAME or
     // on the `Team Rocket's ` PREFIX FAMILY, and warned that D118 forbids a template
@@ -186,9 +198,9 @@ const LEFT: readonly (readonly [string, number, string])[] = [
     // asked and which D374 had budgeted a REFUSAL for. It passes. What takes its place
     // is the next head of the 2-printing band, so this list keeps naming the head of
     // the residue.
-    "If any of your Pokémon in play are the same type as any of your opponent's Pokémon in play, this attack does 120 more damage.",
+    "If you have 10 or more Basic {R} Energy cards in your discard pile, this attack does 100 more damage.",
     2,
-    "a CROSS-BOARD TYPE INTERSECTION — two existentials over two variable-size sets, a shape the union does not hold; the SUPPLY is certain (`Card.types`, read by four members already) so the whole price is the shape",
+    "a THRESHOLD over a FILTERED ZONE COUNT — `yourEnergyInPlayAtLeast` one zone over; the discard pile is a zone the model already carries, so the supply is certain and the open question is whether `Basic {R} Energy cards` is the card CLASS or the provision",
   ],
   [HANDED_CANDIDATE, 1, "an opponent-seat bench COUNT — D366's own handoff, and the reason this slice measured instead of inheriting"],
 ];
@@ -263,15 +275,19 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // NAMED-ENERGY clause, `trEnergyBonus.test.ts`) — the candidate this file's own
     // `LEFT` table has carried since D367 — so the chain gains one more term and
     // every earlier head is still re-derived from the measured one rather than quoted.
-    expect([refused.length, units(refused)]).toEqual([26, 32]);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([27, 34]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([28, 36]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([30, 38]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([31, 40]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([32, 42]);
-    expect([refused.length + 7, units(refused) + 12]).toEqual([33, 44]);
-    expect([refused.length + 8, units(refused) + 12 + 3]).toEqual([34, 47]);
-    expect([refused.length + 8 + TAKEN.length, units(refused) + 15 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D375 — the residue is 25 / 30. D375 took ONE sentence / TWO printings (the
+    // CROSS-BOARD TYPE INTERSECTION, `typeShareBonus.test.ts`) — the candidate this
+    // file's own `LEFT` table promoted at D374 — so the chain gains one more term.
+    expect([refused.length, units(refused)]).toEqual([25, 30]);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([26, 32]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 6]).toEqual([28, 36]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([30, 38]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([31, 40]);
+    expect([refused.length + 7, units(refused) + 12]).toEqual([32, 42]);
+    expect([refused.length + 8, units(refused) + 14]).toEqual([33, 44]);
+    expect([refused.length + 9, units(refused) + 14 + 3]).toEqual([34, 47]);
+    expect([refused.length + 9 + TAKEN.length, units(refused) + 17 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -582,8 +598,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(352); // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1235); // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(353); // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1237); // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -602,8 +618,9 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // sentence term takes a `- 1` where D372's took a `- 2`.
     // 🆕🆕 D374 — a SEVENTH subtrahend on each line, and another 1 / 2 step (the
     // NAMED-ENERGY clause), so the sentence term takes one more `- 1`.
-    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1 - 2 - 1 - 1).toBe(335);
-    expect(units(resolved) - 13 - 3 - 2 - 2 - 2 - 2 - 2 - 2).toBe(1207);
+    // 🆕🆕 D375 — an EIGHTH, and a 1 / 2 step again (the TYPE INTERSECTION).
+    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1).toBe(335);
+    expect(units(resolved) - 13 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {
