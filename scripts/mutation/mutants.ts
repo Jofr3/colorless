@@ -5158,6 +5158,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D375 (0.279.0 → 0.280.0), in the SAME COMMIT as the bump —
+    // the SECOND slice running to do it that way, and D374 proved it closes the ERROR
+    // window this row had opened on each of the four bumps before it.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D375's whole diff is ONE new `BoardCondition` member, its two reader arms and
+    // one literal clause-table row. The member is NULLARY — it carries no parameter
+    // at all, so there is not even a string to reach storage — and it is derived from
+    // the card id at read time like every sibling. `D326-record-version-not-bumped`
+    // is NOT owed and was not touched.
     // ⚠️ RE-POINTED AT D374 (0.278.0 → 0.279.0), in the SAME COMMIT as the bump.
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
     // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
@@ -5571,7 +5581,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.279.0";',
+    find: 'export const engineVersion = "0.280.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },

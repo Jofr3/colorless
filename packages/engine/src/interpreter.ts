@@ -3207,6 +3207,46 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[seat].bench.some(
         (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),
       );
+    case "inPlayTypesIntersect": {
+      // 🆕 D375 — "any of your Pokémon in play are the same type as any of your
+      // opponent's Pokémon in play" (Enamorus sv06-093 "Love Resonance", +120). The
+      // union's THIRD seat-symmetric member and its FIRST predicate over two
+      // variable-size sets: `∃x∈yours. ∃y∈theirs. types(x) ∩ types(y) ≠ ∅`.
+      //
+      // 🛑 THE ZONE IS "in play" ON BOTH SIDES, AND THAT IS TWO CLAIMS. The printed
+      // words name each side's whole board, so this is `yourNamedPokemonInPlay`'s
+      // `[side.active, ...side.bench]` spread run TWICE — once per seat. Narrowing
+      // either half to the Active Spot is D279's refutation with a TYPE, and it is
+      // the dangerous kind of wrong: the real printing is a PSYCHIC body, so an
+      // Active-only reading still pays on most boards and only silently under-pays
+      // on the ones where the shared type sits on a Bench. Both narrowings are
+      // driven red in `typeShareBonus.test.ts` §4.
+      //
+      // 🛑 AND IT IS AN INTERSECTION, NEVER AN ARRAY COMPARISON. `Card.types` is an
+      // ARRAY; "the same type" is satisfied by ANY shared member. Flattening both
+      // sides and asking whether they MEET is the reading; comparing `types` arrays
+      // — or comparing `types[0]` — agrees with it on every single-type board, which
+      // is every board the catalog can build (no Standard-legal Pokémon is
+      // dual-typed, measured at D238). `fix-dualbody` is the fixture that separates
+      // them, and §5 drives both wrong readings red.
+      //
+      // AN EMPTY SIDE IS FALSE and that is FORCED, not chosen — a positive
+      // existential over the empty set, §15b of ptcg-rules.md. `.some` over an empty
+      // array gives it for free, which is exactly why the boundary needs a rung
+      // rather than a comment. `types` is null on Trainers and Energy, hence `?? []`.
+      //
+      // Read through `topCardOf` for `yourBenchHasType`'s §1.2 reason verbatim: the
+      // stack TOP is the Pokémon's identity, so evolving a body ARMS or DISARMS this
+      // clause mid-turn.
+      const typesInPlay = (s: Seat): string[] => {
+        const side = state.players[s];
+        return [side.active, ...side.bench].flatMap((p) =>
+          p === null ? [] : (topCardOf(state, p)?.types ?? []),
+        );
+      };
+      const theirs = new Set(typesInPlay(otherSeat(seat)));
+      return typesInPlay(seat).some((type) => theirs.has(type));
+    }
     case "yourBenchHasNamed":
       // Bench only — the printed word is "Bench", and the Active Spot is excluded
       // exactly as `yourBenchDamaged` excludes it. Bench slots are nullable and a
@@ -3780,6 +3820,15 @@ export function conditionNote(cond: BoardCondition): string {
       // map's spelled-out half. Asserted both directions in
       // `benchTypeBonus.test.ts` §3.
       return `you have any ${cond.type} Pokémon on your Bench`;
+    case "inPlayTypesIntersect":
+      // 🆕 D375 — VERBATIM, and this is the family's first CROSS-BOARD note that is.
+      // The printed clause names no pronoun for D116 to resolve and no card-face
+      // glyph for D118 to spell out: it is already written in the second person the
+      // pill is read in. So it round-trips BOTH ways — to the printed bytes and to
+      // this member through `CONDITIONAL_DAMAGE_CLAUSES` — which the two notes above
+      // deliberately do not, and `typeShareBonus.test.ts` §3 asserts the difference
+      // rather than leaving a successor to "fix" one into the other.
+      return "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play";
     case "yourBenchHasNamed":
       // Also verbatim — this clause names no pronoun and no timing word, so
       // nothing has to be dropped on the way out (D119's whole cluster).

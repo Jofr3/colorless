@@ -12108,6 +12108,89 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.280.0 → **THE CROSS-BOARD TYPE INTERSECTION — THE UNION'S FIRST
+    PREDICATE OVER TWO VARIABLE-SIZE SETS, AND A SHAPE-ONLY PRICE.**
+
+    D374 handed over *"If any of your Pokémon in play are the same type as any of
+    your opponent's Pokémon in play, this attack does 120 more damage."* — Enamorus
+    `sv06-093` "Love Resonance" (80+, **+120**) and its Illustration-rare reprint
+    `sv06-180`, **1 sentence / 2 legal printings** — with the SUPPLY question
+    (D207) already answered YES and the whole price named as SHAPE. That is how it
+    came out.
+
+    ✅ **THE IDS ARE A WEB MEASUREMENT, AND THAT IS THE THIRD SLICE RUNNING.** The
+    committed corpus is sentences-with-counts and carries no ids; this container
+    still has no D1 credentials. limitlesstcg's `text:` search returns 8 cards for
+    *"same type as any of your opponent"* and exactly two are Standard-era
+    (TWM 93 / TWM 180), confirmed by id against tcgdex as `sv06-093` / `sv06-180`,
+    Twilight Masquerade, **Psychic**, 120 HP, attack 2 of 2 at `PCC` for `80+`.
+    D373 used the web for a RULING and D374 for an EXISTENCE count; this one used
+    it for the IDS the catalog cannot hold. ⚠️ **IT STILL CANNOT GIVE A
+    LEGAL-PRINTING COUNT** — that is `legalAttackCorpus()`'s and nowhere else's,
+    and the 2 above is measured there.
+
+    ✅ **D207's SUPPLY QUESTION WAS ASKED FIRST AND IS NOT CLOSE.** `Card.types` is
+    an ingested column with four existing readers in this union alone. Nothing here
+    resembles the `Tera` shape (22 rows of DEMAND, the SUPPLY side absent).
+
+    🛑 **THE SHAPE, WHICH IS THE ENTIRE PRICE: AN INTERSECTION OVER TWO
+    VARIABLE-SIZE SETS.** `handSizesEqual` and `activeEnergyCountsEqual` are the
+    union's only other cross-board members and both compare two SCALARS on two
+    NAMED bodies. This one quantifies over Active + Bench on BOTH seats and asks
+    whether the two type sets MEET — `∃x∈yours. ∃y∈theirs. types(x) ∩ types(y) ≠ ∅`.
+    Two readings could have shipped green, and **both are refuted on boards rather
+    than argued**:
+
+    * **"in play" READ AS "Active"** (D279's refutation, one narrowing per side).
+      ⚠️ **AND IT IS THE DANGEROUS KIND OF WRONG, NOT THE VACUOUS KIND.** D370's
+      Bench clause broke LOUDLY under a widening because the attacker's own type
+      would satisfy it on every board. Here the attacker's type is a legitimate term
+      of the left-hand set — the printing is Psychic and means it — so an
+      Active-only reading pays correctly on most boards and silently under-pays
+      only when the shared type sits on a Bench. A reading that is right most of the
+      time is the one a suite has to go looking for, and §4 goes looking on four
+      boards.
+    * **`types` ARRAYS COMPARED INSTEAD OF INTERSECTED.** "The same type" is
+      satisfied by ANY shared member. ⚠️ **NO Standard-legal Pokémon IS DUAL-TYPED**
+      (measured on the remote D1 at D238: `json_array_length(types_json) > 1`
+      returns zero rows), so **the catalog itself cannot separate an array equality
+      from an intersection** and every real board makes them agree. `fix-dualbody`
+      (`["Water", "Metal"]`) is the separator: against a single `["Water"]` an
+      equality answers FALSE and this member TRUE, and against a single `["Metal"]`
+      a `types[0]`-only reading answers FALSE and this member TRUE. **WITHOUT THE
+      DUAL-TYPE FIXTURE EVERY RUNG IN §5 WOULD HAVE BEEN VACUOUS.**
+
+    ✅ **THE EMPTY-SET BOUNDARY WAS READ BEFORE IT WAS ARGUED, AND IT IS FORCED.**
+    §15b of `docs/reference/ptcg-rules.md` (D373) separates the two FORCED cases
+    from the one CHOSEN case: this clause is a positive existential — two of them
+    nested — so an empty side is FALSE by logic, not by convention. Calling it a
+    choice would have been the mirror of the error D373 corrected in D369, and §6
+    drives it on a hand-emptied Active Spot from both seats.
+
+    **SEAT-SYMMETRIC, THE THIRD SUCH MEMBER** (`handSizesEqual`,
+    `activeEnergyCountsEqual`, this) — and the first whose printed SPELLING is
+    symmetric too, so D116 has no pronoun to resolve and `conditionNote` returns the
+    printed clause VERBATIM. That makes it the family's first cross-board note that
+    round-trips BOTH ways, to the bytes and to the member, which §3 asserts against
+    the two neighbours that deliberately do not.
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`inPlayTypesIntersect`, and it is
+    **NULLARY** — no parameter at all), its **2** reader arms, and **1 literal
+    `CONDITIONAL_DAMAGE_CLAUSES` row**. **ZERO new imports, maps, templates,
+    patterns, ops, events, error codes, regexes, registry rows, state fields, prompt
+    kinds, choice kinds or `packages/schema` bytes**, and `MATCH_RECORD_VERSION`
+    **STAYS 22**. Two new FIXTURE bodies (`fix-typeshare`, `fix-bigfairy`) and one
+    dedicated 60-card deck, tests only.
+
+    ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS** — the 1:2 shape for the
+    sixth time in seven slices (D369/D370/D371/D373/D374; D372 was the 2:2). raw
+    1,235 → **1,237**, `BUILT.attack` 1,264 → **1,266**, resolving sentences 352 →
+    **353**, the unbuilt attack remainder 497 → **495**;
+    `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both stand still.
+
+    engineVersion 0.279.0 → **0.280.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.279.0 → **THE FIRST PRINTED CARD NAME READ OFF AN ATTACHED CARD — AND
     D207's SUPPLY QUESTION ASKED OF A CANDIDATE THAT WAS EXPECTED TO FAIL IT.**
 
@@ -14339,7 +14422,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.279.0";
+export const engineVersion = "0.280.0";
 
 export type {
   ApplyResult,

@@ -1297,6 +1297,74 @@ export type BoardCondition =
       Resistance make in §8.5. Types are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasType"; type: PokemonType }
+  /** 🆕🆕 **D375 — YOUR SIDE AND YOUR OPPONENT'S SIDE SHARE A Pokémon TYPE.**
+      *"If any of your Pokémon in play are the same type as any of your opponent's
+      Pokémon in play, this attack does 120 more damage."* — Enamorus `sv06-093`
+      "Love Resonance" (80+, **+120**) and its Illustration-rare reprint `sv06-180`,
+      **1 sentence / 2 legal printings** off `legalAttackCorpus()`. ⚠️ The IDS are a
+      WEB measurement, not a catalog one: this container has no D1 credentials, the
+      committed corpus is sentences-with-counts and carries no ids, and the printing
+      was identified on limitlesstcg (TWM 93 / TWM 180) and confirmed against
+      tcgdex's `sv06-093` / `sv06-180` — the third slice running where the web
+      answered what the catalog could not (D373 a ruling, D374 an existence count).
+
+      🛑 **THE SUPPLY QUESTION (D207) IS THE ONE THING THAT IS NOT IN DOUBT HERE, AND
+      IT WAS STILL ASKED FIRST.** `Card.types` is an ingested column with **four**
+      existing readers in this union alone (`opponentActiveHasType`,
+      `opponentActiveHasResistance`'s neighbour one field over, `yourBenchHasType`,
+      and the two aura filters outside it), so this is nowhere near the `Tera` shape.
+      **THE WHOLE PRICE IS THE SHAPE.**
+
+      🛑 **THE FORM IS AN INTERSECTION OVER TWO VARIABLE-SIZE SETS, AND THE UNION
+      HOLDS NOTHING ELSE OF THAT FORM.** `handSizesEqual` and `activeEnergyCountsEqual`
+      are the only other cross-board members and both compare two SCALARS read off two
+      NAMED bodies; this one quantifies over Active + Bench on BOTH sides and asks
+      whether the two type sets MEET. Written out: `∃x∈yours. ∃y∈theirs.
+      types(x) ∩ types(y) ≠ ∅`.
+
+      🛑 **THE ZONE IS "in play" ON BOTH HALVES, AND EACH HALF IS A SEPARATE
+      REFUTATION.** The printed words say *"your Pokémon in play"* and *"your
+      opponent's Pokémon in play"*, so it is `[side.active, ...side.bench]` on EACH
+      seat — `yourNamedPokemonInPlay`'s spread, twice. Narrowing either half to the
+      Active Spot is D279's refutation with a TYPE, and unlike D370's Bench clause the
+      narrowing here is not vacuous but merely WRONG: the printing is a **Psychic**
+      body, so the attacker's own type is a live term of the left-hand set and an
+      Active-only reading still pays on plenty of boards. **A WRONG READING THAT IS
+      RIGHT MOST OF THE TIME IS THE ONE A SUITE HAS TO GO LOOKING FOR**, so both
+      narrowings are driven on boards (`typeShareBonus.test.ts` §4) rather than argued.
+
+      🛑 **IT IS AN INTERSECTION AND NEVER AN ARRAY COMPARISON.** `Card.types` is an
+      ARRAY and the printed words are *"the same type"* — satisfied by ANY shared
+      member, not by the two arrays being equal. Every single-type board on earth
+      makes those two readings agree, and **no Standard-legal Pokémon is dual-typed**
+      (measured on the remote D1 at D238: `json_array_length(types_json) > 1` returns
+      zero rows), so the catalog itself cannot separate them. `fix-dualbody`
+      (`["Water", "Metal"]`) against a single-typed `["Water"]` is the board where an
+      array equality answers FALSE and this member answers TRUE, and the same fixture
+      against `["Metal"]` is the board where a `types[0]`-only reading answers FALSE.
+      **WITHOUT A DUAL-TYPE FIXTURE THIS MEMBER'S TESTS WOULD ALL BE VACUOUS.**
+
+      **SEAT-SYMMETRIC — the THIRD member of this vocabulary that is**, after
+      `handSizesEqual` (the first) and `activeEnergyCountsEqual` (D372's second, which
+      corrected this block's own "the one member" claim). Set intersection commutes,
+      so the truth value reads the same from either seat, and — unlike D372's — the
+      printed SPELLING is symmetric too: *"any of your Pokémon"* / *"any of your
+      opponent's Pokémon"* names no pronoun for D116 to resolve. Asserted from both
+      seats rather than assumed.
+
+      **AN EMPTY SIDE IS FALSE, AND THAT IS FORCED RATHER THAN CHOSEN** — §15b of
+      `docs/reference/ptcg-rules.md` (D373), read before it was argued. The clause is
+      a POSITIVE EXISTENTIAL (two of them nested), so the empty set makes it false by
+      the same force that makes `yourBenchDamaged` false; it is NOT the positive
+      universal §15b had to choose about. Claiming a choice here would be the mirror
+      of the error D373 corrected in D369. `types` is null on Trainers and Energy,
+      hence the `?? []`, and a null Active Spot contributes nothing.
+
+      Read through `topCardOf` (§1.2) on every body, the rule `yourBenchHasType` and
+      `yourNamedPokemonInPlay` already carry: a stack's TOP is the Pokémon, so an
+      evolution can ARM or DISARM this clause mid-turn. Types are public the moment a
+      Pokémon is in play, so the union's public-state invariant holds. */
+  | { kind: "inPlayTypesIntersect" }
   /** A card NAMED `name` is on YOUR Bench — Falinks sv02-119 "Reckless Charge
       Together" (+90, `Falinks`), the pool's only printing in this skeleton.
 
@@ -9070,6 +9138,33 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
     { kind: "activeEnergyCountsEqual" },
+  ],
+  // 🆕🆕 D375 — the CROSS-BOARD TYPE INTERSECTION. Enamorus sv06-093 "Love
+  // Resonance" (80+, **+120**) and its Illustration-rare reprint sv06-180, whose
+  // rules text is byte-identical, so one row and one fixture serve both. It sits
+  // beside the row above because the two share a SHAPE — a predicate over both
+  // seats at once — and this table has exactly three of those.
+  //
+  // 🛑 **A LITERAL ROW, AND D118 DOES NOT EVEN APPLY**: the sentence varies on NO
+  // token. There is nothing to parameterise, no capture to make and no vocabulary
+  // to fail against — the same reading `activeEnergyCountsEqual` gets one row up.
+  // The `120` is not part of this key; `CONDITIONAL_DAMAGE_BONUS` captures it, so a
+  // reprint that moved the number would still land on this member.
+  //
+  // ⚠️ THE APOSTROPHE IN "opponent's" IS ASCII, as everything the catalog prints is
+  // (D137's re-verified claim). `literalClauseRow` folds U+2019 → U+0027 on a MISS,
+  // so this key survives a punctuation-normalising re-ingest — and unlike D374's row
+  // the VALUE carries no text at all, so there is no second side to fold.
+  //
+  // ⚠️ AND THE NEIGHBOURING SENTENCE IS A DIFFERENT MECHANISM, NOT A NEAR MISS OF
+  // THIS ROW: *"…for each of your Pokémon in play that has the same type…"* is not
+  // printed anywhere in the legal pool, and the thing that IS printed beside this —
+  // the {N}/type ANTECEDENTS `opponentActiveHasType` reads — narrows to ONE body on
+  // ONE side. Keys are whole printed clauses and never substrings, so nothing
+  // reaches this row but its own sentence.
+  [
+    "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
+    { kind: "inPlayTypesIntersect" },
   ],
   // Falinks sv02-119 "Reckless Charge Together" (+90) — a LITERAL row although
   // exactly one token varies, which is the one place this family departs from
