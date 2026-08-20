@@ -12108,6 +12108,99 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.276.0 → **THE OPPONENT-RESISTANCE CLAUSE — AND A SHAPE QUESTION WHOSE
+    ANSWER WAS *"THE ENGINE ALREADY READS THIS FIELD, AND ASKS A DIFFERENT
+    QUESTION OF IT"*.**
+
+    D370 handed over *"your opponent's Active Pokémon has {F} Resistance"* — **2
+    legal printings**, the cheapest of the **7** clauses its own §1 left pinned in
+    the residue's 2-printing band — with two checks ordered ahead of the build: run
+    the **SUPPLY** check first (D207's rule, the half D370 did not owe because it
+    had already run the vocabulary one), and settle a named SHAPE question before
+    spelling anything (D368's ordering: shape before price).
+
+    ✅ **SUPPLY: THE FIELD EXISTS AND IS INGESTED — THIS IS NOT THE `Tera` SHAPE.**
+    D207's failure mode is a predicate over a banner **no column CLASSIFIES**,
+    which yields a permanently empty candidate set and a card that can never be
+    played. `Card.resistances` is a real ingested column (`{type, value?}[] | null`,
+    `packages/schema/src/catalog/card.ts`) that the §8.5 pipeline has read since
+    0.1.x. ⚠️ **AND THE ONLY POPULATION THIS CONTAINER CAN MEASURE IS A FLOOR, SAID
+    SO RATHER THAN PROMOTED:** `FIXTURE_POOL` carries **24 of 444** bodies with a
+    Resistance, **16** of them `Fighting` — a biased sample of real printings, not
+    a census. There are no D1 credentials here (D369's finding, unchanged), so the
+    Standard-legal count is UNMEASURED and is not guessed.
+
+    🛑 **THE SHAPE QUESTION, AND IT IS THE MEMBER.** `resistanceOf(attacker,
+    defender)` (cards.ts) already reads this column, and it answers a DIFFERENT
+    question: `weakResModifier` skips every entry whose `type` is not one of the
+    **ATTACKER's** types, because §8.5 asks *"does this Resistance apply to THIS
+    attack"*. The printed clause asks whether the defender **HAS** `{F}`
+    Resistance, **whoever is attacking**. So the member reads `Card.resistances`
+    directly and is deliberately NOT routed through the helper — and the two
+    readings are separated **on a board** rather than argued: a **Metal** attacker
+    against a **Fighting-resistant** defender makes the clause TRUE and the §8.5
+    modifier NULL (10 + 50 = **60**, where the wrong routing pays **10**). The
+    fixture pair exists for exactly that: `fix-oppresist` is Metal and
+    `fix-oppresist-f` is the same attack on a Fighting body, where both fire and
+    the dealt number is 10 + 50 − 30 = **30**.
+
+    ⚠️ **AND THE PREDICATE IS ON THE ENTRY'S `type` AND NOTHING ELSE.**
+    `WeakRes.value` is OPTIONAL in the schema, and `weakResModifier` matches on
+    `type` first and only then parses `value` — falling back to the modern-era −30
+    when the parse fails, so an entry §8.5 cannot PRICE is an entry it still
+    HONOURS. Reading `value` here would make a card with a garbled Resistance stop
+    *having* one, which no printed sentence says. `fix-dualresist` drives it: two
+    entries, the matching one SECOND and carrying no `value` at all — the single
+    body that separates `.some(…)` from `resistances[0]` **and** a `type`-only
+    predicate from one that also reads `value`.
+
+    ✅ **`needs` RE-DERIVED (D199's rule), AND THE ONE NEAR MEMBER DECLINED.** The
+    union's 34 members at this head were walked for one that reads a printed
+    DEFENSIVE column: **none does** — every card-reading member reads `types`,
+    `name`, a stage/suffix class, an attachment or a damage count.
+    `opponentActiveHasType` is the near one and reads the same BODY through the
+    same `activeTop`; widening it to take a FIELD is a **RENAME** (D362: 31 sites
+    across 7 files) and, worse, the two fields do not answer the same question
+    shape — `types` is `string[]` and `resistances` is `{type, value?}[]`, so a
+    single "field" parameter would have to carry its own accessor. **A WIDENING IS
+    FREE; A RENAME IS NOT.**
+
+    WHAT SHIPS: **1 new `BoardCondition` member** (`opponentActiveHasResistance
+    { type }`), its **2** reader arms — and exactly two, because `grep "switch
+    (cond.kind)"` over non-test source still closes the producer set at
+    `conditionHolds` (interpreter.ts) and `conditionNote` — and **1 new anchored
+    PATTERN** (`OPPONENT_ACTIVE_RESISTANCE_CLAUSE`) reusing `CLAUSE_POKEMON_TYPES`
+    whole. **ZERO new vocabulary, ZERO new maps, ZERO new clause-table rows**, and
+    zero new ops, events, error codes, registry rows, state fields, prompt kinds,
+    choice kinds or `packages/schema` bytes; `MATCH_RECORD_VERSION` **STAYS 22**,
+    read from source.
+
+    ⚠️ **THE PATTERN CARRIES `['’]` AND THE TWO SIBLING TEMPLATES DID NOT ALL NEED
+    TO.** This is the family's FOURTH parameterised clause and the SECOND whose
+    printed sentence spells a possessive, so D136's apostrophe class is
+    load-bearing in its own source — the template pass is handed the RAW clause and
+    `literalClauseRow`'s fold never sees it. `YOUR_BENCH_TYPE_CLAUSE` needed no
+    class because its sentence has no apostrophe at all; this one does.
+
+    ⚠️ **THE NOTE DOES NOT ROUND-TRIP TO THE PRINTED BYTES, AND ROUND-TRIPS TO THE
+    MEMBER ANYWAY** — D370's property, inherited whole: the card prints `{F}` and
+    `conditionNote` answers `Fighting` (D118), and the re-derived sentence lands on
+    the same member through `CLAUSE_POKEMON_TYPES`'s spelled-out half. Asserted
+    both directions, for all eleven types and all eleven codes.
+
+    ⚠️ **NO CARD IDS ARE RECORDED FOR THE TWO PRINTINGS, DELIBERATELY** — D369's
+    finding, unchanged: `bunx wrangler d1 execute … --remote` reports
+    `CLOUDFLARE_API_TOKEN` unset and there is no local sqlite catalog, so the ids
+    could not be read and are NOT guessed. Nothing on this path needs them: a
+    template is keyed on the printed sentence and serves every printing in every
+    set, and the other ten types the day one is printed. ⚠️ It also means the
+    ATTACKER'S TYPE on the fixture is an engine choice rather than a transcription
+    — D370 could measure that both of its printings were Metal; this slice could
+    not, and says so instead of implying it did.
+
+    engineVersion 0.275.0 → **0.276.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.275.0 → **THE BENCH-SCOPED TYPE CLAUSE — THE FAMILY'S THIRD
     PARAMETERISED TEMPLATE, AND THE FIRST WHOSE TRAP IS THE SAME SENTENCE ONE
     TOKEN OVER.**
@@ -13990,7 +14083,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.275.0";
+export const engineVersion = "0.276.0";
 
 export type {
   ApplyResult,

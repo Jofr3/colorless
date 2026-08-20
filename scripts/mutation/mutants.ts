@@ -5158,6 +5158,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D371 (0.275.0 → 0.276.0), in the SAME COMMIT as the bump.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D371's whole diff is ONE new `BoardCondition` member, its two reader arms and
+    // one anchored PATTERN. A union member is derived from the card id at read time
+    // and never persisted, so `D326-record-version-not-bumped` is NOT owed and was
+    // not touched.
     // ⚠️ RE-POINTED AT D370 (0.274.0 → 0.275.0), in the SAME COMMIT as the bump.
     // ⚠️ NO ORDINAL IS CLAIMED HERE AND THAT IS DELIBERATE: the numbered stack below
     // stops at D357 while the anchor has been re-pointed by slices since, so the
@@ -5537,7 +5544,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.275.0";',
+    find: 'export const engineVersion = "0.276.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -13786,5 +13793,90 @@ export const MUTANTS: Mutant[] = [
     find: "  [\"Falinks is on your Bench\", { kind: \"yourBenchHasNamed\", name: \"Falinks\" }],",
     replace: "  [\"Falinks is on your Bench\", { kind: \"yourBenchHasNamed\", name: \"Falinks\" }],\n  [\"you have any Tera Pokémon on your Bench\", { kind: \"yourBenchHasType\", type: \"Metal\" }],",
     expectKilledBy: ["packages/engine/src/benchTypeBonus.test.ts"],
+  },
+  // ── D371 — THE OPPONENT-RESISTANCE CLAUSE. Seven rows, ONE PER CLAIM: the read
+  //    is the printed COLUMN and not §8.5's `resistanceOf` (C1), the column is
+  //    `resistances` and not `weaknesses` one field over (C2), the SEAT is theirs
+  //    and not yours (C3), the read is `.some` over an ARRAY and not `[0]` (C4),
+  //    the predicate is on `type` ALONE and does not also require a printed `value`
+  //    (C5), the vocabulary is the POKÉMON-TYPE map and not the neighbouring
+  //    ENERGY-token one (C6), and the pattern's APOSTROPHE CLASS is load-bearing
+  //    (C7).
+  //
+  // ⚠️ C1 IS THE ONE THIS SLICE EXISTS FOR, AND IT IS A ONE-EDIT SLIP HERE IN A WAY
+  //    D370's seventh claim was not: `resistanceOf` and `weaknessOf` are ALREADY
+  //    imported by `interpreter.ts` (line 16 of its import block), so "reuse the
+  //    helper we already have" costs an author nothing and needs no new import. It
+  //    is the mutant the handoff predicted before the code was written.
+  //
+  // ⚠️ ONE CLAIM IS DRIVEN AND DELIBERATELY HAS NO ROW: "the identity is the stack
+  //    TOP", pinned by `opponentResistanceBonus.test.ts` §5's `pushOnActive` rung.
+  //    The realistic wrong code reads `cardOfUid(state, spot.uid ?? …)` off the
+  //    BOTTOM of the stack, and `activeTop` is the ONLY accessor this arm has —
+  //    reaching the bottom card needs a different helper and a different shape, so
+  //    it is not a slip made in one edit. **A CLAIM WITHOUT A PLAUSIBLE MUTANT IS
+  //    DECLARED, NOT FAKED** (D370's rule, second use).
+  {
+    id: "D371-resistance-clause-routes-through-resistanceOf",
+    decision: "D371",
+    what: "🛑 C1 — THE MEMBER IS ROUTED THROUGH §8.5's HELPER: the direct `resistances` read becomes `resistanceOf(own.card, spot.card) !== null`, which is the engine's EXISTING lookup on the EXISTING import — the single likeliest way this member gets written, and the one the handoff named before a line of it existed. ⚠️ **IT IS RIGHT ON EVERY BOARD WHERE THE ATTACKER'S TYPE IS THE RESISTED ONE**, which is the natural way to write the fixture and the way §8.5's own suites drive it. `weakResModifier` SKIPS every entry whose `type` is not one of the ATTACKER's types, so the mutant silently narrows the printed clause from *\"the defender HAS {F} Resistance\"* to *\"…and it applies to ME\"*. Only a NON-Fighting attacker against a Fighting-resistant defender separates them — 60 against 10 — which is why `fix-oppresist` is deliberately Metal and `fix-oppresist-f` exists beside it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      const own = activeTop(state, seat);\n      return spot !== null && own !== null && resistanceOf(own.card, spot.card) !== null;",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-clause-reads-the-weakness-column",
+    decision: "D371",
+    what: "🛑 C2 — THE COLUMN SLIPS ONE FIELD OVER: `spot.card.resistances` becomes `spot.card.weaknesses`. **THE TWO FIELDS ARE THE SAME SHAPE IN THE SAME SCHEMA** (`{type, value?}[] | null`), they sit on ADJACENT LINES of `card.ts`, and the engine reads both through one shared helper — so nothing but a board tells them apart, and the mutant type-checks perfectly. This is a mistake this repo has ALREADY MADE TWICE on real fixtures: D173's Klefki and D175's Spiritomb both had their `types` transcribed out of the WEAKNESS column. `fix-fightweak` (Fighting Weakness, NO Resistance) exists for this row, and the attribution control beside it proves that fixture's weakness column is live rather than inert",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.weaknesses ?? []).some((r) => r.type === cond.type);",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-clause-reads-the-other-seat",
+    decision: "D371",
+    what: "🛑 C3 — THE SEAT FLIPS: `activeTop(state, otherSeat(seat))` becomes `activeTop(state, seat)`, so a member whose printed subject is *\"your opponent's Active Pokémon\"* reads the attacker's OWN body. The slip is one call and the file is full of own-board arms that legitimately spell it — `yourActiveDamaged` and `yourActiveHasEnergyAttached` are two. Every board with the same Resistance printed on both Active bodies answers identically under both readings, so the kill comes from the asymmetric boards alone",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    replace: "      const spot = activeTop(state, seat);\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-clause-reads-only-the-first-entry",
+    decision: "D371",
+    what: "🛑 C4 — THE ARRAY BECOMES A SCALAR: `.some((r) => r.type === cond.type)` becomes an equality on `resistances[0]?.type`. **THE MUTANT IS RIGHT ON EVERY SINGLE-ENTRY BODY**, which is every real printing this container can see and every other fixture in the file — so nothing but a body printing TWO Resistances with the match SECOND can find it. `Card.resistances` is an array because the schema says a card may print more than one, and §8.5's own `weakResModifier` LOOPS the entries rather than indexing the first. `fix-dualresist` exists for this row and for C5",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? [])[0]?.type === cond.type;",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-clause-also-requires-a-printed-value",
+    decision: "D371",
+    what: "🛑 C5 — THE PREDICATE GAINS THE `value` HALF: `r.type === cond.type` becomes `r.type === cond.type && r.value !== undefined`. ⚠️ **IT LOOKS LIKE A HARDENING AND IT IS A NARROWING** — the author's reasoning would be \"a Resistance without a printed value is not really a Resistance\", and §8.5 says the opposite in its own code: `weakResModifier` matches on `type` FIRST and only then parses `value`, falling back to the modern-era −30 when the parse fails, so an entry it cannot PRICE is an entry it still HONOURS. `WeakRes.value` is `z.string().optional()`. The mutant is invisible on every fixture whose entry carries a value, which is all of them but one — `fix-dualresist`'s second entry is deliberately value-less",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      return (\n        spot !== null &&\n        (spot.card.resistances ?? []).some((r) => r.type === cond.type && r.value !== undefined)\n      );",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-clause-uses-the-energy-token-map",
+    decision: "D371",
+    what: "🛑 C6 — THE VOCABULARY SLIPS ONE BRANCH UP: `literalClauseRow(CLAUSE_POKEMON_TYPES, …)` becomes `literalClauseRow(CLAUSE_ENERGY_TOKENS, …)`, the REAL code of the first branch in the same function, copied verbatim — which is exactly how this branch was written. ⚠️ **IT LOOKS RIGHT AND IS RIGHT ON THE PRINTED SENTENCE**: both maps resolve `{F}` to \"Fighting\", so the only card the catalog prints today is unaffected. The two maps DIFFER on `{C}` and `{N}` (absent from the energy map by design) and on the string `\"Special\"` (present there and not a Pokémon type at all). **A VOCABULARY THAT AGREES ON YOUR ONE PRINTING IS NOT THE SAME VOCABULARY**, and the guard that sees it is the loop over ALL ELEVEN types in BOTH notations rather than the assertion about the card",
+    file: "packages/engine/src/effects.ts",
+    find: "    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, activeResistance[1] ?? \"\");\n    if (type !== undefined) return { kind: \"opponentActiveHasResistance\", type };",
+    replace: "    const type = literalClauseRow(CLAUSE_ENERGY_TOKENS, activeResistance[1] ?? \"\");\n    if (type !== undefined) return { kind: \"opponentActiveHasResistance\", type };",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
+  },
+  {
+    id: "D371-resistance-pattern-drops-the-apostrophe-class",
+    decision: "D371",
+    what: "🛑 C7 — THE APOSTROPHE CLASS COLLAPSES TO ONE SPELLING: `your opponent['’]s` becomes `your opponent's` in the pattern's own source. **THE MUTANT IS GREEN AGAINST THE CATALOG AS IT STANDS TODAY** — the pool holds ZERO U+2019 (re-verified at D137 and again at D154, 0 of 978 rows across `effect`, `attacks_json`, `abilities_json` and `name`), so nothing printed can tell the difference. It is standing insurance against a re-ingest that normalises punctuation, and D136 gave three patterns this class for exactly that reason. ⚠️ AND THE FOLD IN `literalClauseRow` DOES NOT COVER IT: the template pass is handed the RAW clause on purpose, so a template's class is the only mechanism on this path. This is the family's SECOND parameterised clause spelling a possessive — the first (`OPPONENT_ACTIVE_TYPE_CLAUSE`) carries the class and D370's carries none because its sentence has no apostrophe at all",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^your opponent['’]s Active Pokémon has (.+) Resistance$/;",
+    replace: "  /^your opponent's Active Pokémon has (.+) Resistance$/;",
+    expectKilledBy: ["packages/engine/src/opponentResistanceBonus.test.ts"],
   },
 ];

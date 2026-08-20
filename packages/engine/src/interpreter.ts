@@ -3065,6 +3065,31 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && (spot.card.types ?? []).includes(cond.type);
     }
+    case "opponentActiveHasResistance": {
+      // 🆕 D371 — the BODY of the arm directly above and a different COLUMN of it:
+      // the printed Resistance rather than the printed type.
+      //
+      // 🛑 IT DOES NOT GO THROUGH `resistanceOf`, AND THAT IS THE MEMBER. §8.5's
+      // lookup (`cards.ts` `weakResModifier`) skips every entry whose `type` is not
+      // one of the ATTACKER's types, because it answers "does this Resistance apply
+      // to THIS attack". The printed clause asks whether the defender HAS `{F}`
+      // Resistance at all, and those two questions disagree on the board this
+      // member is for: a Metal attacker against a Fighting-resistant body makes the
+      // clause TRUE and `resistanceOf` NULL. Routing this through the §8.5 helper
+      // would silently narrow the clause to "…and it applies to me".
+      // `opponentResistanceBonus.test.ts` §5 drives exactly that board.
+      //
+      // The match is on the entry's `type` alone: `WeakRes.value` is OPTIONAL in
+      // the schema and `weakResModifier` itself honours an entry whose value it
+      // cannot parse (it falls back to −30), so a card with a value-less or
+      // garbled Resistance still HAS one. `.some` and never `resistances[0]` — the
+      // field is an array. `resistances` is null on Trainers and Energy, hence the
+      // `?? []`. Empty Active Spot is FALSE, as with every other card-reading
+      // member, and the read is through the stack TOP so an evolved body answers
+      // with the Resistance printed on the card that is actually in play.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);
+    }
     case "yourBenchHasType":
       // 🆕 D370 — the FIELD of the arm directly above (`Card.types`, the same read
       // Weakness and Resistance make in §8.5) over the ZONE of the arm directly
@@ -3606,6 +3631,17 @@ export function conditionNote(cond: BoardCondition): string {
       // TOUCH**, which is why the surviving claim is the one about the member and
       // not the one about the bytes.
       return `your opponent's Active Pokémon is a ${cond.type} Pokémon`;
+    case "opponentActiveHasResistance":
+      // 🆕 D371 — built from the parameter, and the type reads as the printed NAME
+      // rather than the brace code (D118, the rule the arm above now states in the
+      // form that survives D367's widening): the card prints `{F}` and this note
+      // answers "Fighting", because a reject pill and a HUD tooltip are read off
+      // the board by a person and a brace code is a card-face glyph.
+      //
+      // ⚠️ So it does NOT round-trip to the printed bytes, and it DOES round-trip
+      // to the same MEMBER — through `CLAUSE_POKEMON_TYPES`'s spelled-out half.
+      // Asserted both directions in `opponentResistanceBonus.test.ts` §3.
+      return `your opponent's Active Pokémon has ${cond.type} Resistance`;
     case "yourBenchHasType":
       // 🆕 D370 — built from the parameter, and the type reads as the printed NAME
       // rather than the brace code — `yourEnergyInPlayAtLeast`'s rule (D118), for

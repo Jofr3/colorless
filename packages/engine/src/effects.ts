@@ -1013,6 +1013,55 @@ export type BoardCondition =
       same, since the field is an array and dual types are a real printing. False
       with an empty Active Spot. */
   | { kind: "opponentActiveHasType"; type: PokemonType }
+  /** 🆕 **D371 — YOUR OPPONENT'S ACTIVE Pokémon PRINTS A RESISTANCE TO `type`.**
+      *"If your opponent's Active Pokémon has {F} Resistance, this attack does 50
+      more damage."*, **2 legal printings** — measured off `legalAttackCorpus()`,
+      the committed `legal_standard = 1` attack column.
+
+      🛑 **THE ENGINE ALREADY READS THIS FIELD AND ASKS A DIFFERENT QUESTION OF IT,
+      AND THAT IS THE WHOLE MEMBER.** `resistanceOf(attacker, defender)` (cards.ts)
+      is §8.5's lookup and it answers *"does the defender's Resistance apply to
+      THIS attacker"* — `weakResModifier` skips every entry whose `type` is not one
+      of the ATTACKER's types, so it returns null for a Metal attacker facing a
+      Fighting-resistant body. The printed clause asks whether the defender **HAS**
+      `{F}` Resistance, **independently of who is attacking**. So this member reads
+      `Card.resistances` DIRECTLY and must NOT be routed through `resistanceOf`;
+      the board that separates the two readings is a non-Fighting attacker against
+      a Fighting-resistant defender, where this clause is TRUE and the §8.5
+      modifier is null, and `opponentResistanceBonus.test.ts` §5 drives it rather
+      than arguing it.
+
+      ⚠️ **THE PREDICATE IS ON THE ENTRY'S `type` AND ON NOTHING ELSE.** A
+      `WeakRes` is `{ type, value? }` and `value` is OPTIONAL in the schema, so an
+      entry carrying no printed value — or a garbled one — is still a printed
+      Resistance. §8.5 reads it the same way: `weakResModifier` matches on `type`
+      first and only then parses `value`, falling back to the modern-era −30 when
+      the parse fails, so an entry it cannot price is an entry it still HONOURS.
+      Reading `value` here would make a card with an unparseable Resistance stop
+      *having* one, which no printed sentence says.
+
+      PARAMETERISED, the family's FOURTH parameterised clause and the SECOND
+      resolved through `CLAUSE_POKEMON_TYPES` (D118's rule, `opponentActiveHasType`'s
+      argument one field over): the sentence varies on exactly ONE token, that token
+      is a type code the shared map already holds in BOTH notations, and a literal
+      row would cost a row per type per notation forever.
+
+      ⚠️ **THE FIELD IS PRESENT IN THE CATALOG, WHICH IS THE CHECK D207 ORDERS
+      BEFORE THE PREDICATE IS SPELLED.** `Card.resistances` is a real ingested
+      column (`packages/schema/src/catalog/card.ts`, `{type, value?}[] | null`) and
+      the §8.5 pipeline has read it since 0.1.x — this is not the `Tera` shape,
+      where the banner is DEMAND with no column CLASSIFYING it. ⚠️ The only
+      population this container can measure is `FIXTURE_POOL` (**24 of 444** bodies
+      carry a Resistance, **16** of them `Fighting`), and that is a FLOOR on a
+      biased sample, **not a census**: there are no D1 credentials here, so the
+      Standard-legal count is unmeasured and is not guessed.
+
+      Read through the stack TOP like every other Active-Spot member, `.some` and
+      never `resistances[0]` because the field is an array and a body may print
+      more than one. `resistances` is null on Trainers and Energy, hence the `?? []`.
+      A printed Resistance is on the card face, so the union's public-state
+      invariant holds. False with an empty Active Spot. */
+  | { kind: "opponentActiveHasResistance"; type: PokemonType }
   /** 🆕 **D370 — YOU HAVE AT LEAST ONE Pokémon OF TYPE `type` ON YOUR BENCH.**
       *"If you have any {M} Pokémon on your Bench, this attack does 80 more
       damage."*, **2 legal printings** — measured off `legalAttackCorpus()`, the
@@ -9208,6 +9257,33 @@ const CLAUSE_POKEMON_TYPES: ReadonlyMap<string, PokemonType> = new Map([
     convention was chosen (D369's distinction). */
 const YOUR_BENCH_TYPE_CLAUSE = /^you have any (.+) Pokémon on your Bench$/;
 
+/** 🆕 D371 — the family's FOURTH parameterised clause, and the first that reads a
+    printed DEFENSIVE column rather than an identity one: "If your opponent's
+    Active Pokémon has <type> Resistance, this attack does N more damage." —
+    **2 legal printings**, printed `{F}`.
+
+    ⚠️ **ZERO NEW VOCABULARY.** It shares `CLAUSE_POKEMON_TYPES` with the two
+    patterns above for their reason verbatim: a token meaning "Fighting" in one
+    clause of this family must mean Fighting in every other one, and the sharing is
+    what makes the note's round trip work ACROSS NOTATIONS — the card prints `{F}`,
+    `conditionNote` answers `Fighting` (D118), and the re-derived sentence lands on
+    the same member through the map's spelled-out half.
+
+    ⚠️ **THE APOSTROPHE CLASS IS `['’]`, NOT `'`** — D136's hardening, carried in
+    this pattern's own source exactly as `OPPONENT_ACTIVE_TYPE_CLAUSE` carries it
+    six lines up. The clause spells a possessive, the pool holds zero U+2019 today,
+    and a catalog re-ingest that normalised the punctuation would otherwise
+    un-derive both printings silently. The template pass is handed the RAW clause
+    (see `literalClauseRow`), so the class is the only thing standing here.
+
+    ⚠️ THE CAPTURE IS LOOSE (`(.+)`) for the reason the two patterns above are:
+    the MAP is the vocabulary and not the regex. "Fighting-type", "Colorless" as a
+    printed Resistance token that no schema value spells, or any future banner
+    reach this lookup and MISS it, so the sentence falls through to null and stays
+    on the loud `ATTACK_EFFECT_SKIPPED` path. */
+const OPPONENT_ACTIVE_RESISTANCE_CLAUSE =
+  /^your opponent['’]s Active Pokémon has (.+) Resistance$/;
+
 /** THE APOSTROPHE FOLD (D137) — the LITERAL-TABLE half of the hardening D136 gave
     the regexes, and the ONE site every exact lookup on printed text goes through.
 
@@ -9336,6 +9412,17 @@ function boardConditionForClause(clause: string): BoardCondition | null {
   if (benchType !== null) {
     const type = literalClauseRow(CLAUSE_POKEMON_TYPES, benchType[1] ?? "");
     if (type !== undefined) return { kind: "yourBenchHasType", type };
+  }
+  // 🆕 D371 — the same lookup on the same map, one COLUMN over: this one reads the
+  // opponent's Active Pokémon's printed Resistance rather than its type. Appended
+  // LAST for D370's reason, still true at four patterns: they are mutually
+  // exclusive at their anchors — this one's tail is " Resistance" and no other
+  // pattern or literal row can end there — so order decides nothing, and appending
+  // keeps that true by construction.
+  const activeResistance = OPPONENT_ACTIVE_RESISTANCE_CLAUSE.exec(clause);
+  if (activeResistance !== null) {
+    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, activeResistance[1] ?? "");
+    if (type !== undefined) return { kind: "opponentActiveHasResistance", type };
   }
   return null;
 }

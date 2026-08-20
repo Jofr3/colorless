@@ -907,8 +907,16 @@ describe("the engine version", () => {
     // purchase is a regex rather than a table row. The rule is unchanged: the
     // version tracks whether the readers answer a printed sentence they used to
     // refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.275.0");
-    expect(manifest.version).toBe("0.275.0");
+    // 🆕🆕 D371 — 0.275.0 → **0.276.0**, ONE new `BoardCondition` member
+    // (`opponentActiveHasResistance`), TWO reader arms and ONE new anchored
+    // PATTERN — the family's fourth parameterised clause, and the first that reads
+    // a printed DEFENSIVE column (`Card.resistances`) rather than an identity one.
+    // ⚠️ The interesting half is that the column was ALREADY READ, by §8.5's
+    // `resistanceOf`, asking a DIFFERENT question (does it apply to THIS attacker);
+    // the member deliberately does not route through it. The post-bump anchor pass
+    // was clean.
+    expect(engineVersion).toBe("0.276.0");
+    expect(manifest.version).toBe("0.276.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
