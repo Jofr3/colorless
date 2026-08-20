@@ -21555,3 +21555,114 @@ same reason, because `activeTop` is the only accessor the arm has.
 
 **THE TEST FOR WHETHER A CLAIM DESERVES A ROW IS WHETHER THE WRONG CODE IS ONE EDIT
 AWAY, AND THAT TEST IS ANSWERED BY THE FILE'S IMPORT BLOCK.**
+
+## D372 — the CROSS-BOARD EQUAL-ENERGY clause: the shape answer was already written down, in the helper's own doc block (engine 0.276.0 → **0.277.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+`activeEnergyCountsEqual` — **1** new `BoardCondition` member, **2** reader arms, **1**
+LITERAL `CONDITIONAL_DAMAGE_CLAUSES` row, **1** new import, and **zero** new vocabulary,
+maps, templates, patterns, ops, events, error codes, registry rows, state fields, prompt
+kinds, choice kinds or `packages/schema` bytes. It serves *"If this Pokémon and your
+opponent's Active Pokémon have the same amount of Energy attached, this attack does 100
+more damage."* **and the same clause at 120** — **1 legal printing each**, two printed
+sentences, one row.
+
+### 1. 🛑 THE SHAPE QUESTION WAS ANSWERED BY *FINDING* THE ANSWER, NOT BY CHOOSING ONE
+
+*"The same amount of Energy attached"* reads as Energy **CARDS** or as the **UNITS** they
+provide, and those disagree on any board holding a multi-unit Special. The handoff named
+the question and forbade re-deciding it. The answer is in
+`countAttachedEnergy(state, pokemon, null)`'s own doc block:
+
+> *"CARDS not units, for the same reason `countEnergyInPlay` gives below: one Energy card
+> is one Energy however many units it provides."*
+
+So the member **delegates** and adds no counting code. That is what keeps the printed
+noun from meaning one thing to this clause and another to the §6.3 readings beside it.
+
+⚠️ **AND THE QUESTION WAS REAL RATHER THAN RHETORICAL — DRIVEN IN BOTH DIRECTIONS:**
+
+| board | by CARD | by UNIT | member |
+|---|---|---|---|
+| 2 basics vs **one** `fix-blend` | 2 ≠ 1 | 2 = 2 | **FALSE** (dealt 10) |
+| 2 basics vs **two** `fix-blend` | 2 = 2 | 2 ≠ 4 | **TRUE** (dealt 110) |
+
+The second row is the attribution control: without it, "the member reads cards" would be
+shown only where the unit reading answers TRUE, and anything that refused a `fix-blend`
+board for any reason at all would pass.
+
+### 2. "THE ENGINE ALREADY READS THIS FIELD" — and this time it also already ASKED THIS QUESTION
+
+D371's lesson run forward. `attack.ts` sums `countAttachedEnergy(state, attacker, null)`
+and the same call on the defender's Active for *"…for each Energy attached to both Active
+Pokémon."* (**8 legal printings**). **THE SAME TWO OPERANDS, A SUM INSTEAD OF AN
+EQUALITY.** So the grep D371 ordered came back cheap rather than dangerous — which is the
+other outcome of that check, and worth recording beside the case where it found a trap.
+
+### 3. 🛑 THE ZONE IS THE BODY, AND THE WRONG CODE WAS ALREADY IMPORTED
+
+`countEnergyInPlay(state, seat, null)` has been in `interpreter.ts`'s import block since
+D193 and reads **Active plus Bench**. The printed subjects are *"this Pokémon"* and
+*"your opponent's Active Pokémon"* — two BODIES. D279's Falinks refutation at a third
+shape.
+
+**THE IMPORT BLOCK IS WHY THIS IS A MUTANT RATHER THAN A SENTENCE.** Reaching for the
+helper already in scope costs an author nothing; reaching for a UNIT count does not,
+because `providedEnergy` and `unitsProvidedBy` have never been imported here. Same rule,
+opposite verdicts, one line of evidence — D371's test, applied a third time.
+
+### 4. 🛑 SEAT-SYMMETRIC IN VALUE, ASYMMETRIC IN SPELLING — and the word had to be split before it could be used
+
+`handSizesEqual` has said since D119 that it is *"the ONE member of this whole vocabulary
+that is SEAT-SYMMETRIC"*. This is the second, and the first where the two senses part:
+
+- the printed **SENTENCE** is asymmetric — D116's pronoun on one side, the full noun
+  phrase on the other;
+- the **TRUTH VALUE** commutes, because equality commutes over the two Active bodies.
+
+Both are driven (`sameEnergyBonus.test.ts` §6), and the claim is corrected to **FIRST**
+at three sites — `effects.ts`, `interpreter.ts`, and `publicCount.test.ts`'s **test
+name**, a file the new member never touches. **A NEW MEMBER CAN FALSIFY A COMMENT IN A
+FILE IT DOES NOT TOUCH** (D370, in the other direction) — and this time the falsification
+was predicted in the handoff and collected in the same commit rather than found later.
+
+### 5. ⚠️ THE CENSUS STEP IS 2 SENTENCES AND 2 PRINTINGS — the first 2:2 step in this run
+
+D368 moved 1:3; D369, D370 and D371 each moved 1:2. One clause printed under **two**
+sentences moves 2:2. The fifteen census rungs are keyed on **both** columns, so every
+chain that re-derives an earlier head gains a `- 2` on the sentence side **and** a `- 2`
+on the printing side. **A CLAUSE-KEYED BAND ENTRY IS NOT A SENTENCE COUNT** — the
+2-printing band that named this candidate counts CLAUSES, and this clause is two
+sentences at one printing each.
+
+### 6. ✅ D207's SUPPLY question does not ARISE here, and saying so is the result
+
+Every member this family has bought since D368 reads an **ingested card column**
+(`tools`, `types`, `resistances`), so *"does a column CLASSIFY this?"* had to be asked
+each time — `Tera` is what happens when the answer is no. This one reads
+`InPlayPokemon.energy`: a **game-state** array the engine writes itself on every legal
+attach. There is no catalog column to be empty, so the permanently-empty-candidate-set
+failure is unreachable **by construction** rather than merely unobserved.
+
+### 7. ⚠️ THE PRINTED NEAR MISS IS ONE OPERATOR AWAY AND IS LEFT REFUSED
+
+*"If this Pokémon has more Energy attached than your opponent's Active Pokémon, this
+attack does 160 more damage."* — **1 legal printing**, the same two operands under a
+**strict inequality**, refused by all nine readers at this head.
+
+Building it in the same slice would have made the `===` → `>` mutant green for the wrong
+reason. It is measured, pinned as a tripwire (`sameEnergyBonus.test.ts` §3), given a
+literal-row mutant of its own (C5 — the "one more printing for free" escape hatch), and
+handed on **priced**: 1 member + 1 row + 2 arms, zero new vocabulary, for 1 printing.
+
+### 8. Five mutation rows, one per claim, and one claim DECLARED without a row
+
+C1 the ZONE, C2 the far SEAT, C3 the empty Active Spot read as zero, C4 the comparison,
+C5 the literal-row escape hatch onto the strict-inequality sentence. **5 KILLED / 0 GAPs
+/ 0 ERRORS.**
+
+⚠️ **C3 IS THE ONE WHOSE KILLING BOARD HAD TO BE BUILT ON PURPOSE.** A `theirs === null ?
+0 : count(…)` reading is invisible on every board where the attacker holds at least one
+Energy — 1 ≠ 0 is FALSE under both readings. Only the ZERO-energy board separates them,
+and that board is reachable only *before* the printed `{C}` is paid, so no attack can be
+declared from it and the member has to be read directly. **A COMMITMENT NOTHING DRIVES IS
+A COMMENT**, and the board that drives this one is not one a suite produces by accident.

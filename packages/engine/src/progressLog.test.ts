@@ -276,9 +276,20 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // the habit the protocol asks for — and the guard still costs a deliberate
   // two-site edit each time, which is exactly what keeps it a ratchet rather than a
   // number that drifts.
-  const ARCHIVES = 41;
+  // 🆕🆕 D372 — **41 → 42**, the FOURTH consecutive slice to take the "say so and
+  // raise the number" branch. D372 demoted D371's live resume point under
+  // `### Prior resume point (P3-M5 — D371, …)` rather than overwriting it.
+  // ⚠️ AND THIS SLICE IS THE ONE THAT NEARLY DIDN'T: the archive heading was written
+  // and the demoted BODY was not, because the rewrite replaced everything between
+  // `## NEXT (resume point)` and the first `### Prior resume point (` — which is
+  // exactly the range-replace shape this guard's DOWN direction exists for. The
+  // count above did not catch it (the heading was there, so 42 was correct); the
+  // LINE-COUNT floor below is what would have, and in the event the seam was spotted
+  // by reading the file. **A COUNT OF HEADINGS IS NOT A COUNT OF ARCHIVES**, which is
+  // why the span-size assertion sits underneath it and is not decoration.
+  const ARCHIVES = 42;
 
-  it("the page still holds all 41 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 42 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
