@@ -3045,6 +3045,41 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.conditions.poisonDamage > 0;
     }
+    case "opponentActiveBurned": {
+      // 🆕 D377 — "your opponent's Active Pokémon is Burned" (Slugma sv05-028
+      // "Roasting Heat", +40) and, through `ATTACK_REQUIREMENT_CLAUSES`, the printed
+      // NEGATION on Centiskorch sv05-037 "Charring Breath".
+      //
+      // 🛑 `presentStatuses`, NOT `conditions.burned`, AND THE REASON IS THE MEMBER
+      // TWO ARMS UP. `opponentActiveHasSpecialCondition` is
+      // `presentStatuses(...).length > 0` over the SAME projection; spelling this one
+      // off the raw field would give the §12 vocabulary two readers free to drift
+      // apart, which is D222's defect exactly. Asking the projection makes
+      // "Burned ⟹ affected by a Special Condition" true BY CONSTRUCTION rather than
+      // by agreement, and `crossBoardStatus.test.ts` §5 sweeps that implication over
+      // every board in the file.
+      //
+      // The projection is also what makes the three model shapes stop mattering:
+      // Poison is a counter, Burn a boolean and Confusion an enum value, and
+      // `presentStatuses` is the one place all three become `StatusName`.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && presentStatuses(active.conditions).includes("burned");
+    }
+    case "opponentActiveConfused": {
+      // 🆕 D377 — "your opponent's Active Pokémon is Confused" (Tapu Lele sv08-092
+      // "Mental Crush", +90). Same projection as the arm directly above, for the
+      // same reason.
+      //
+      // 🛑 NOT `isImmobilized`, WHICH IS THE MISTAKE WITH THIS ARM'S NAME ON IT.
+      // That helper is `rotation === "asleep" || rotation === "paralyzed"` and
+      // deliberately EXCLUDES Confused (§12 lets a Confused Pokémon attack and
+      // retreat), so a reader that reached for the nearest rotation predicate would
+      // be false on every board this clause is about. Nor `rotation !== "none"`,
+      // which is `opponentActiveHasSpecialCondition` minus its two flags and would
+      // fire on an Asleep defender.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && presentStatuses(active.conditions).includes("confused");
+    }
     case "opponentActiveIsExOrV": {
       // D107's `isExOrV` verbatim — ex or V, NOT VMAX/VSTAR/GX, which is exactly
       // what the sentence names. An empty Active Spot is FALSE, as with the
@@ -3760,6 +3795,16 @@ export function conditionNote(cond: BoardCondition): string {
       // The printed pronoun is dropped exactly as `yourActiveDamaged` drops it —
       // a reject/tooltip fragment is read off the BOARD (D116).
       return "your Active Pokémon is Poisoned";
+    case "opponentActiveBurned":
+      // 🆕 D377 — a full round-trip, like the two Poison notes and unlike D376's
+      // neighbour: the clause names no pronoun, no timing word and no energy glyph,
+      // so the note IS the `CONDITIONAL_DAMAGE_CLAUSES` key byte for byte. It is NOT
+      // the `ATTACK_REQUIREMENT_CLAUSES` key, which spells the same fact negated —
+      // the note describes the board, and the board is either Burned or it is not.
+      return "your opponent's Active Pokémon is Burned";
+    case "opponentActiveConfused":
+      // 🆕 D377 — the same round-trip one status over.
+      return "your opponent's Active Pokémon is Confused";
     case "opponentActiveIsExOrV":
       return "your opponent's Active Pokémon is a Pokémon ex or Pokémon V";
     case "opponentActiveIsEx":

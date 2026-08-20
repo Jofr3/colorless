@@ -906,6 +906,72 @@ export type BoardCondition =
       of `opponentActivePoisoned` and read the same way (`poisonDamage > 0`, as
       the Checkup reads it). False with an empty Active Spot. */
   | { kind: "yourActivePoisoned" }
+  /** 🆕 D377 — §12, your opponent's Active Pokémon is **BURNED**: Slugma
+      `sv05-028` "Roasting Heat" ({R}, 10+, **+40**), 1 legal printing, and — read
+      from the OTHER consequent — Centiskorch `sv05-037` "Charring Breath"
+      ({R}{R}, 180), whose printed *"If your opponent's Active Pokémon **isn't**
+      Burned, this attack does nothing."* is a second legal printing on the SAME
+      member. D363's two-consequent reuse, one member over.
+
+      🛑 **THE SHAPE QUESTION THIS MEMBER OWES IS "ONE TOKEN OR TWO ROWS", AND THE
+      THREE MODEL SHAPES ARE A RED HERRING.** `SpecialConditions` (types.ts) stores
+      Poison as a COUNTER (`poisonDamage`), Burn as a BOOLEAN (`burned`) and
+      Confusion as ONE VALUE of a ROTATION ENUM (`rotation`), so the printed
+      vocabulary of five words sits over three different fields. It sits over
+      exactly ONE closed vocabulary too: `presentStatuses` projects all three onto
+      `StatusName`, and `opponentActiveHasSpecialCondition` has consumed that
+      projection since D116. So the arm never has to pick a field — it asks the
+      projection — and **this member is a provable NARROWING of that one on every
+      board**, which `crossBoardStatus.test.ts` §5 sweeps rather than asserts once.
+
+      🛑 **AND THE `status` TOKEN WAS PRICED FROM THE CATALOG AND DECLINED.** Swept
+      over `legalAttackCorpus()` (640 sentences / 1,732 legal printings) for every
+      `is Asleep` / `is Burned` / `is Confused` / `is Paralyzed` / `is Poisoned`
+      clause on BOTH seats:
+
+        Poisoned    4 sentences /  8 printings — ALL BUILT (3 s / 5 p cross-board on
+                    `opponentActivePoisoned`, 1 s / 3 p same-seat on `yourActivePoisoned`)
+        Burned      2 sentences /  2 printings — this member, both consequents
+        Confused    1 sentence  /  1 printing  — the member below
+        Asleep      0 sentences /  0 printings
+        Paralyzed   0 sentences /  0 printings
+
+      D118's test (a template is safe only when the varying token has a CLOSED
+      vocabulary to fail against) PASSES here — the statuses are five printed
+      words and nothing else. **It is the COUNT that refuses the token, not the
+      safety.** The three read statuses are Poisoned, Burned and Confused; Poisoned
+      is already two nullary seat-named members, and re-pointing a seat-named member
+      at a token is a RENAME until proven otherwise (D365 recorded it, D366
+      reproduced it, D362 priced the analogous one at 31 sites across 7 files). So
+      a token would serve **exactly the 3 printings these two rows serve** and buy
+      reachability for **two values no legal printing reads**. **WHAT WOULD FLIP
+      IT**, stated so a successor can: a printed same-seat *"this Pokémon is
+      Burned/Confused"* read, or any `is Asleep` / `is Paralyzed` read at all. At
+      that point the conversion is one deliberate rename slice, not a drive-by.
+
+      Burn is CURED BY A COIN at every Checkup (§13.2, `flow.ts`), so a board that
+      arms this in-game and reads it a turn later is seed-dependent — pinned and
+      ASSERTED off `CHECKUP_COIN_FLIP` in the suite, never assumed. False with no
+      Active. */
+  | { kind: "opponentActiveBurned" }
+  /** 🆕 D377 — §12, your opponent's Active Pokémon is **CONFUSED**: Tapu Lele
+      `sv08-092` "Mental Crush" ({P}{C}{C}, 90+, **+90**), the pool's only printing
+      of this clause and one of the rare cards that arms its own antecedent (its
+      index-0 "Perplex" Confuses the same spot).
+
+      🛑 **THE VACUITY MODE WITH THIS ONE'S NAME ON IT IS `isImmobilized`.** That
+      helper (types.ts) is `rotation === "asleep" || rotation === "paralyzed"` and
+      **Confused is deliberately NOT in it** — §12 lets a Confused Pokémon attack
+      and retreat — so a member that reached for the nearest rotation predicate
+      would be FALSE on every board this clause is about, and green everywhere
+      else. It reads `presentStatuses` for the same reason the member above does:
+      the rotation slot is an enum with four values and only ONE of them is this
+      clause.
+
+      The `status` token was priced across BOTH members at once — see the sibling
+      above — and this is the half that makes the count what it is: one printing,
+      one sentence, one consequent. False with no Active. */
+  | { kind: "opponentActiveConfused" }
   /** Your opponent's Active Pokémon is a Pokémon **ex** or a Pokémon **V** —
       Ceruledge sv02-098 "Fighting Sword" (+100), the pool's only printing.
       D107's `isExOrV` reused verbatim, so the reading can never drift from
@@ -9049,6 +9115,25 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // as Talonflame's does four rows up; the CROSS-BOARD twin two rows up is one
   // possessive apart, and the pool prints no third reading of "is Poisoned".
   ["this Pokémon is Poisoned", { kind: "yourActivePoisoned" }],
+  // 🆕🆕 D377 — Slugma `sv05-028` "Roasting Heat" ({R}, 10+, **+40**), 1 legal
+  // printing. THE SAME MEMBER IS READ FROM THE OTHER CONSEQUENT: Centiskorch
+  // `sv05-037` "Charring Breath" prints the NEGATION under "does nothing", and that
+  // key lives in `ATTACK_REQUIREMENT_CLAUSES` — D363's Sawk arrangement, one member
+  // over. Two consequents, two tables, one board fact, and the whole-sentence
+  // anchors are what keep them apart.
+  ["your opponent's Active Pokémon is Burned", { kind: "opponentActiveBurned" }],
+  // 🆕🆕 D377 — Tapu Lele `sv08-092` "Mental Crush" ({P}{C}{C}, 90+, **+90**), 1
+  // legal printing.
+  //
+  // 🛑 **THE FOUR §12 ROWS IN THIS TABLE ARE THE TIGHTEST NEAR-MISS CLUSTER IT
+  // HOLDS.** "…is Poisoned" (two rows up), "…is Burned" (one row up), "…is
+  // Confused" (this one) and "…is affected by a Special Condition" (below) differ
+  // by ONE printed word each, read ONE board, and are NESTED: each of the three
+  // named statuses implies the fourth and none implies another. Keys are whole
+  // printed clauses and never substrings, so no row can reach another — driven on
+  // one board carrying Burn AND Confusion at once, and on each alone, in
+  // `crossBoardStatus.test.ts` §5.
+  ["your opponent's Active Pokémon is Confused", { kind: "opponentActiveConfused" }],
   // Ceruledge sv02-098 "Fighting Sword" (+100) — the pool's only printing of the
   // rule-box clause, and NOT a `hasRuleBox` read: the sentence names ex and V and
   // nothing else, so a VMAX/VSTAR Active does not satisfy it.
@@ -10160,6 +10245,28 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // which is why `clauseApostrophe.test.ts`'s D365 completeness guard had to learn
   // the difference between "every row" and "every row the FOLD is about".
   ["you have 4 or fewer Benched Pokémon", { kind: "yourBenchAtLeast", count: 5 }],
+  // 🆕🆕 D377 — Centiskorch `sv05-037` "Charring Breath" ({R}{R}, 180), ONE legal
+  // printing, and the THIRD row in this table to spell a member the bonus table
+  // already reads (D363's Sawk, D365's Iron Boulder, now this). The member is
+  // `opponentActiveBurned`, bought by this same slice for Slugma `sv05-028`
+  // "Roasting Heat" one table up — so of the member's TWO legal printings, one
+  // arrives through each consequent, and neither row would have been worth a union
+  // member alone.
+  //
+  // The polarity rule at the head of this block does the work: the skeleton owns
+  // the negation, so the printed "isn't" needs no `{ kind: "not" }` and the
+  // POSITIVE fact handed back is "is Burned". `attack.ts` cancels when it does not
+  // hold.
+  //
+  // ⚠️ THE KEY CARRIES TWO CONTRACTIONS' WORTH OF APOSTROPHE — "opponent's" and
+  // "isn't" — exactly as Sawk's does, and `Pokémon` carries a real U+00E9. Read
+  // through `literalClauseRow`, so a U+2019 printing folds (D137).
+  //
+  // ⚠️ AND THE CARD IS SELF-ARMING, WHICH IS WHY IT IS ALSO THE SUITE'S BURN
+  // SOURCE: its index-0 "Singe" ({R}, no damage) prints "Your opponent's Active
+  // Pokémon is now Burned." — a built `applyStatus` — so the one board that can
+  // legally use "Charring Breath" is a board the engine set up for itself.
+  ["your opponent's Active Pokémon isn't Burned", { kind: "opponentActiveBurned" }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the

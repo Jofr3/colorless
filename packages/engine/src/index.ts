@@ -12108,6 +12108,99 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.282.0 → **THE CROSS-BOARD STATUS PAIR — ONE CLOSED PRINTED VOCABULARY
+    OVER THREE MODEL SHAPES, AND THE TOKEN PRICED AND DECLINED.**
+
+    D376 handed over a PAIR rather than a singleton, because the 2-printing band had
+    emptied of cheap work: *"If your opponent's Active Pokémon is Burned, this attack
+    does 40 more damage."* and *"…is Confused, this attack does 90 more damage."*,
+    **1 legal printing each**, with a real SHAPE question stated in advance —
+    `SpecialConditions` stores Poison as a COUNTER, Burn as a BOOLEAN and Confusion
+    as ONE VALUE of a ROTATION ENUM, so one closed printed vocabulary of five words
+    sits over three different model shapes.
+
+    ✅ **AND THE SLICE CAME OUT AT THREE PRINTINGS, NOT TWO, BECAUSE THE CENSUS FOUND
+    A THIRD SENTENCE THE HANDOFF DID NOT NAME.** Widening the literal from *"is
+    Burned"* to any CONDITIONAL sentence carrying a status word turned up
+    *"If your opponent's Active Pokémon **isn't** Burned, this attack does
+    nothing."* — Centiskorch `sv05-037` "Charring Breath" ({R}{R}, 180), 1 legal
+    printing, a DIFFERENT consequent on the SAME board fact. That is D363's Sawk
+    arrangement one member over, and it is free: `ATTACK_REQUIREMENT_CLAUSES`'
+    polarity rule means the skeleton owns the negation, so the row hands back the
+    POSITIVE member and `attack.ts` cancels when it fails. **THE CENSUS LESSON IS
+    THE STANDING ONE (D310/D311): a census is as narrow as the literal it matches,
+    and this one was widened from a phrase to a WORD.**
+
+    ✅ **THE THREE IDS ARE A WEB MEASUREMENT, THE FIFTH SLICE RUNNING.** Slugma
+    `sv05-028` "Roasting Heat" ({R}, **10+**), Tapu Lele `sv08-092` "Mental Crush"
+    ({P}{C}{C}, **90+**) and Centiskorch `sv05-037` "Charring Breath" ({R}{R},
+    **180**) — all three confirmed by id against tcgdex with the printed effect
+    matching the corpus BYTE FOR BYTE, and the two false positives limitless's
+    tokenising `text:` search returns (Magcargo ex `sv06-029`/`-191` and Ninetales
+    ex `sv03.5-038`/`-186`, both of which print *"is now Burned"*) refuted the same
+    way. The legal-printing count is still `legalAttackCorpus()`'s.
+
+    🛑 **THE SHAPE ANSWER, PART A: THE THREE MODEL SHAPES ARE A RED HERRING.** They
+    already meet in exactly one place — `presentStatuses` (types.ts) projects the
+    rotation enum, the poison counter and the burn boolean onto one closed
+    `StatusName` list, and `opponentActiveHasSpecialCondition` has consumed that
+    projection since D116 as `.length > 0`. So neither new arm picks a field; both
+    ask the projection, which makes them **provable NARROWINGS of that member on
+    every board** rather than agreeing readings of the same three fields (D222's
+    two-readers-of-one-fact defect, closed by construction). The implication
+    `Burned ⟹ affected by a Special Condition` is SWEPT over every board the suite
+    builds, not asserted once.
+
+    🛑 **THE SHAPE ANSWER, PART B: THE `status` TOKEN WAS PRICED FROM THE CATALOG
+    AND DECLINED, AND D118's TEST IS NOT WHAT DECIDED IT.** D118's rule (a template
+    is safe only when the varying token has a CLOSED vocabulary to fail against)
+    PASSES here for the first time in this corner — the statuses are five printed
+    words and nothing else. **It is the COUNT that refuses the token.** Swept over
+    `legalAttackCorpus()` for every `is Asleep` / `is Burned` / `is Confused` /
+    `is Paralyzed` / `is Poisoned` clause on BOTH seats:
+
+      Poisoned    4 sentences / 8 printings — ALL BUILT, as TWO NULLARY members
+      Burned      2 sentences / 2 printings — this slice, two consequents
+      Confused    1 sentence  / 1 printing  — this slice
+      Asleep      0 sentences / 0 printings
+      Paralyzed   0 sentences / 0 printings
+
+    Three of five vocabulary values are read at all; two of those three are already
+    `opponentActivePoisoned` / `yourActivePoisoned`, and re-pointing a seat-named
+    member at a token is a RENAME until proven otherwise (D365 recorded it, D366
+    reproduced it, D362 priced the analogous one at **31 sites across 7 files**). So
+    the token serves **exactly the 3 printings two nullary rows serve**, and buys
+    reachability for two values nothing prints. ⚠️ **WHAT WOULD FLIP IT**, stated so
+    a successor can: a printed SAME-SEAT *"this Pokémon is Burned/Confused"* read,
+    or any `is Asleep` / `is Paralyzed` read at all.
+
+    🛑 **THE VACUITY MODE WITH CONFUSION'S NAME ON IT IS `isImmobilized`**, which is
+    `rotation === "asleep" || rotation === "paralyzed"` and deliberately EXCLUDES
+    Confused (§12 lets a Confused Pokémon attack and retreat). A member that reached
+    for the nearest rotation predicate would be FALSE on every board this clause is
+    about and green everywhere else — which is why the arm asks the projection and
+    why the suite drives an ARM and a DISARM in both directions.
+
+    ⚠️ **AND THE TWO STATUSES CLEAR DIFFERENTLY, WHICH THE SUITE PAYS FOR.** Burn is
+    CURED BY A COIN at every Checkup (§13.2, `flow.ts` — 20 damage then a cure flip),
+    so a board that arms it in-game and reads it a turn later is **seed-dependent**:
+    the seed is pinned and the flips are ASSERTED off `CHECKUP_COIN_FLIP` rather
+    than assumed, and the HEADS board is the game-driven DISARM. Confusion has no
+    cure flip and survives indefinitely; its disarm is §11's retreat, which clears
+    the whole status row. Two statuses, two clearing rules, four boards.
+
+    ⚠️ **THE CENSUS STEP IS +3 SENTENCES AND +3 PRINTINGS** — a 3:3 shape this run
+    has not taken (D372 was 2:2; the rest were 1:2 or 1:3), because the pair is
+    three sentences at one printing apiece. raw 1,239 → **1,242**, `BUILT.attack`
+    1,268 → **1,271**, resolving sentences 354 → **357**, the unbuilt attack
+    remainder 493 → **490**; `REGISTRY_ATTACK_UNITS` (16) and `splitHead` (13) both
+    stand still.
+
+    engineVersion 0.281.0 → **0.282.0**; `MATCH_RECORD_VERSION` **STAYS 22** — both
+    members are NULLARY (no parameter to store) and both read `SpecialConditions`,
+    a field the persisted record has carried since M3 with its shape untouched.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.281.0 → **A FILTERED COUNT OVER THE DISCARD PILE — THE SIBLING ONE ZONE
     OVER, READ THE OTHER WAY ROUND.**
 
@@ -14506,7 +14599,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.281.0";
+export const engineVersion = "0.282.0";
 
 export type {
   ApplyResult,
