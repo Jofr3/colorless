@@ -148,10 +148,10 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // among seven, and the one taken is the only one whose predicate ALREADY EXISTS
     // in this file's sibling member.
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
-    // The residue INCLUDES the taken sentence at this head only because these two
-    // rungs run before the row lands… which they do not: the row is shipped. So the
-    // taken sentence is OUT of the refused set and the residue is one smaller than
-    // the handoff's figure by exactly its printings — asserted below, both ways.
+    // The row is SHIPPED at this head, so the taken sentence has left the refused
+    // set and the residue is smaller than the handoff's figure by exactly its
+    // printings. Both facts are asserted rather than one: the departure and the
+    // size, so a reader that broke and a row that landed cannot look alike.
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(refused.length).toBe(32);
     expect(units(refused)).toBe(42);
