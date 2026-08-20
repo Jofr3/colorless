@@ -21445,3 +21445,113 @@ the NOTE (C5), and the `Tera` tripwire (C6). All six killed.
 in one edit**, and a mutant that added the import would be testing the harness
 rather than the guard. Recorded in `mutants.ts` beside the six, so the absence is a
 statement rather than an oversight.
+
+## D371 — the OPPONENT-RESISTANCE clause: the same COLUMN the engine already read, asked a different question (engine 0.275.0 → **0.276.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+`opponentActiveHasResistance { type }` — **1** new `BoardCondition` member, **2**
+reader arms, **1** new anchored pattern (`OPPONENT_ACTIVE_RESISTANCE_CLAUSE`), and
+**zero** new vocabulary, maps, clause-table rows, ops, events, error codes, registry
+rows, state fields, prompt kinds, choice kinds or `packages/schema` bytes. It serves
+*"If your opponent's Active Pokémon has {F} Resistance, this attack does 50 more
+damage."*, **2 legal printings**, and the other ten types the day one is printed.
+
+### 1. THE SUPPLY CHECK IS A DIFFERENT QUESTION FROM THE VOCABULARY CHECK, AND THIS SLICE OWED THE FIRST
+
+D370 owed the vocabulary question (*"is the captured token a real `Card.types`
+value?"*) and answered it. D371 owed D207's other one: **name the FIELD before you
+design the predicate.** A predicate over a banner no column CLASSIFIES yields a
+permanently empty candidate set and a card that can never be played — `Tera`'s
+shape, where every occurrence is DEMAND and the SUPPLY side is absent.
+
+✅ `Card.resistances` is a real ingested column (`{type, value?}[] | null`,
+`packages/schema/src/catalog/card.ts`), populated, and read by the §8.5 pipeline
+since 0.1.x. So this is **not** that shape.
+
+⚠️ **AND THE ONLY POPULATION THIS CONTAINER CAN MEASURE IS A FLOOR ON A BIASED
+SAMPLE.** `FIXTURE_POOL` held **24 of 444** bodies with a Resistance, **16** of them
+Fighting, before this slice's fixtures landed. That is evidence the field is
+populated; it is **not a denominator**. There are no D1 credentials here, so the
+Standard-legal count is **UNMEASURED**, and a guessed figure would be worth less
+than the absence (D183: a count with no population is a floor). Said, not promoted.
+
+### 2. 🛑 THE SAME FIELD CAN ALREADY BE READ BY THE ENGINE AND STILL NEED A NEW MEMBER — BECAUSE THE QUESTION IS DIFFERENT
+
+This is the slice's finding, and it is the one to carry forward.
+
+`resistanceOf(attacker, defender)` (cards.ts) has read `Card.resistances` since the
+engine's first weeks. It delegates to `weakResModifier`, which **skips every entry
+whose `type` is not one of the ATTACKER's types**, because §8.5 asks *"does this
+Resistance apply to THIS attack"*. The printed clause asks whether the defender
+**HAS** `{F}` Resistance, **whoever is attacking**.
+
+**THE SAME FIELD, TWO QUESTIONS.** So the member reads the column directly and is
+deliberately NOT routed through the helper — and the difference is not arguable, it
+is a board:
+
+| board | clause | `resistanceOf` | dealt |
+|---|---|---|---|
+| **Metal** attacker vs Fighting-resistant defender | TRUE | **null** | 10 + 50 = **60** |
+| **Fighting** attacker vs the same defender | TRUE | −30 | 10 + 50 − 30 = **30** |
+
+The first row is the whole separation: a member routed through the helper pays
+**10** there. `fix-oppresist` is Metal for exactly that reason and `fix-oppresist-f`
+is the same attack on a Fighting body so the agreement case is driven too — without
+it, "does not go through `resistanceOf`" would only ever be shown where the helper
+is null, and a member that answered TRUE unconditionally would pass.
+
+🛑 **BEFORE ADDING A MEMBER THAT READS A FIELD, GREP FOR WHAT ALREADY READS IT AND
+ASK WHAT QUESTION THAT READER IS ASKING.** "The engine already reads this" is not
+the same as "the engine already answers this", and the gap between them is where a
+silent narrowing lives.
+
+### 3. A predicate on `{type, value?}` reads `type` ALONE, and §8.5 says so in its own code
+
+`WeakRes.value` is `z.string().optional()`. `weakResModifier` matches on `type`
+**first** and only then parses `value` — falling back to the modern-era −30 when the
+parse fails. **An entry the pipeline cannot PRICE is an entry it still HONOURS.** So
+a predicate that also required a printed `value` would make a card with a garbled or
+absent Resistance value stop *having* one, which no printed sentence says.
+
+`fix-dualresist` is built for this and for the array reading at once:
+`[{ type: "Grass", value: "-30" }, { type: "Fighting" }]` — the match is **SECOND**
+(so `resistances[0]` misses it) and carries **no value** (so a `value`-requiring
+predicate misses it too). One body, two readings separated.
+
+### 4. The WEAKNESS column is one field over, and this repo has already made that mistake twice
+
+`weaknesses` and `resistances` are the same shape in the same schema on adjacent
+lines, and D173's Klefki and D175's Spiritomb both had their `types` transcribed out
+of the wrong one. So `fix-fightweak` prints **Fighting Weakness and NO Resistance**:
+an arm reading the wrong column flips there and nowhere else in the file.
+
+⚠️ **AND THAT FALSE NEEDED AN ATTRIBUTION CONTROL** (D214). "The clause is false on
+`fix-fightweak`" proves nothing if that fixture's weakness column were unreadable —
+the board would answer the same under a broken schema. So a **Fighting** attacker
+into the same body is driven: 10 × 2 = **20**, clause still false. Same body, same
+column, opposite answer.
+
+### 5. The apostrophe class is load-bearing on THIS template and was not on the last one
+
+D136 gave the anchored patterns a `['’]` class so a catalog re-ingest normalising
+punctuation could not silently un-derive their sentences. `YOUR_BENCH_TYPE_CLAUSE`
+(D370) needed none — its sentence spells no apostrophe at all. This one does, and
+the template pass is handed the **RAW** clause on purpose (`literalClauseRow`'s fold
+is for TABLE keys), so the class in the pattern's own source is the **only**
+mechanism on this path. It has a mutant row of its own, and that row is **green
+against today's catalog** (0 of 978 rows carry U+2019) — which is what standing
+insurance looks like.
+
+### 6. Seven mutation rows, one per claim, and one claim DECLARED without a row
+
+C1 the §8.5 routing, C2 the weakness column, C3 the seat, C4 `.some` over the array,
+C5 the `value` half, C6 the vocabulary map, C7 the apostrophe class.
+
+⚠️ **C1 IS A ONE-EDIT SLIP HERE IN A WAY D370's SEVENTH CLAIM WAS NOT.**
+`resistanceOf` and `weaknessOf` are **already imported** by `interpreter.ts`, so
+"reuse the helper we already have" costs an author nothing. D370's stack-top mutant
+needed an import the file did not carry and was therefore declared rather than
+written; this slice's equivalent — reading the stack BOTTOM — is declared for the
+same reason, because `activeTop` is the only accessor the arm has.
+
+**THE TEST FOR WHETHER A CLAIM DESERVES A ROW IS WHETHER THE WRONG CODE IS ONE EDIT
+AWAY, AND THAT TEST IS ANSWERED BY THE FILE'S IMPORT BLOCK.**
