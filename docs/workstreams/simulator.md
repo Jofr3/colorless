@@ -21827,3 +21827,84 @@ Energy — 1 ≠ 0 is FALSE under both readings. Only the ZERO-energy board sepa
 and that board is reachable only *before* the printed `{C}` is paid, so no attack can be
 declared from it and the member has to be read directly. **A COMMITMENT NOTHING DRIVES IS
 A COMMENT**, and the board that drives this one is not one a suite produces by accident.
+
+---
+
+## D375 — the CROSS-BOARD TYPE INTERSECTION: the union's first predicate over two VARIABLE-SIZE SETS, and a slice whose entire price was the SHAPE (engine 0.279.0 → **0.280.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+Serves *"If any of your Pokémon in play are the same type as any of your opponent's
+Pokémon in play, this attack does 120 more damage."* — Enamorus `sv06-093` "Love
+Resonance" (80+, **+120**) and its Illustration-rare reprint `sv06-180`, **1 sentence /
+2 legal printings**. ONE `BoardCondition` member (`inPlayTypesIntersect`, **NULLARY**),
+ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO reader arms, ZERO new imports.
+
+### The transferable parts
+
+**1. A SLICE WHOSE PRICE IS *ONLY* THE SHAPE IS RARE, AND IT IS WORTH RECOGNISING.**
+D207's supply question has been the first question of every slice in this run, and here it
+was never close: `Card.types` already has four readers in this union. When the answer is
+that obvious the temptation is to skip straight to code — and this is exactly the slice
+where that would have cost most, because **two different builds would have compiled, been
+green, and been wrong.**
+
+**2. THE *DANGEROUS* KIND OF WRONG IS NOT THE *VACUOUS* KIND, AND THEY NEED DIFFERENT
+BOARDS.** D370's bench-scoped type clause could not be widened to *"in play"* without
+going unconditionally TRUE — the attacker was a Metal body reading a Metal clause — so the
+wrong build broke LOUDLY and any board would have found it. **This clause is the opposite
+case.** The printing is a **Psychic** Enamorus, and *"any of your Pokémon in play"*
+genuinely includes the attacker, so narrowing either half to the Active Spot **still pays
+correctly on most boards** and under-pays silently only when the shared type sits on a
+Bench. A reading that is right most of the time cannot be found by a suite that writes
+ordinary boards; it has to be hunted. `typeShareBonus.test.ts` §4 computes both narrowed
+readings **beside** the member on five boards — they AGREE on two and DISAGREE on three,
+and the two agreements are the attribution control (D214): *a wrong reading that is always
+false proves nothing about the boards where it differs.*
+
+**3. 🛑 THE CATALOG CANNOT ALWAYS SEPARATE TWO READINGS, AND WHEN IT CANNOT, THE FIXTURE
+IS THE ONLY GUARD.** `Card.types` is an ARRAY, and *"the same type"* is satisfied by any
+shared member — but **no Standard-legal Pokémon is dual-typed** (measured on the remote D1
+at D238: `json_array_length(types_json) > 1` returns zero rows). So an ARRAY EQUALITY and
+an INTERSECTION agree on **every board that can be built out of real cards**, and a suite
+authored from real shapes is green on either. `fix-dualbody` (`["Water", "Metal"]`, D370)
+is the separator. ⚠️ **AND ONE DUAL-TYPE BOARD IS NOT ENOUGH**: `["Water","Metal"]` against
+a single `["Water"]` kills the equality reading and **leaves a `types[0]`-only reading
+alive**, because they still meet at index 0. The second board is the same fixture against
+a single `["Metal"]`, where the shared member sits second. **TWO WRONG READINGS, TWO
+BOARDS** — this is D374's *"the only killing board holds a card nobody printed"* one field
+over, and the general rule is: **when the printed population is degenerate on the axis you
+are reading, the fixture pool is the only place a guard can go red.**
+
+**4. THE EMPTY-SET BOUNDARY WAS *READ*, NOT ARGUED.** §15b of `reference/ptcg-rules.md`
+(D373) already partitions these: `∃` FALSE and `¬∃` TRUE are **forced by logic**, and only
+the positive universal is a **choice**. This clause is a positive existential — two of them
+nested — so an empty side is FALSE by force. **Re-arguing a settled boundary is how D369's
+error happened in the first place**, and D373 wrote §15b precisely so a successor would
+look it up instead. This one did.
+
+**5. THE NOTE IS VERBATIM, AND THAT IS A FACT ABOUT THIS SENTENCE RATHER THAN A RULE.**
+The printed clause names no pronoun for D116 to resolve and no card-face glyph for D118 to
+spell out, so `conditionNote` returns the clause exactly and round-trips **both** to the
+printed bytes and — through `CONDITIONAL_DAMAGE_CLAUSES` — back to the member. It is the
+family's first cross-board note that does. Its two neighbours deliberately do NOT
+(`activeEnergyCountsEqual` drops a pronoun, `yourBenchHasType` spells `{M}` as `Metal`),
+and §3 asserts the difference in both directions **so a successor does not "fix" one into
+the other.**
+
+### Housekeeping a successor inherits
+
+* ✅ **THE OWNER-PREFIX TOLL IS KEYED ON THE FIXTURE'S *NAME*, NOT ON ADDING A FIXTURE.**
+  `switchSeam.test.ts`, `inPlayTarget.test.ts` and `ownerTargetOps.test.ts` each enumerate
+  every `/^[A-Z][A-Za-z' ]*'s /` name in `FIXTURE_POOL`. Five slices running paid that toll
+  and every one of them happened to add a possessive-named card, so nobody could tell the
+  two rules apart. **D375 added two fixtures and paid nothing**, which settles it.
+* ⚠️ **THE RED CENSUS RUN COMES IN WAVES.** An `expect` throws, so later assertions in the
+  same `it` never execute — D375 needed **four** full `vitest` passes to reach green,
+  because each pass revealed the next assertion inside an already-failing block. **Budget
+  the passes, not the run.** Four of the thirteen reddened rungs are keyed on a DIFFERENCE
+  or a bare literal OPERAND and no grep of the figures reaches them.
+* ⚠️ **THE WEB IS THE INSTRUMENT FOR IDS, AND THE QUERY MATTERS.** A bare WebSearch on the
+  printed sentence returned nothing, twice. `https://limitlesstcg.com/cards?q=text:"…"`
+  answered instantly — the default `q=` is name-only, and the `text:` operator is the whole
+  trick — and `https://api.tcgdex.net/v2/en/cards/<id>` confirmed each id. `api.pokemontcg.io`
+  returns **403** to WebFetch. **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that
+  is `legalAttackCorpus()`'s and nowhere else's.

@@ -298,9 +298,15 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // FIRST and re-emitted after the new section rather than overwritten, and the seam was
   // re-read after the edit with D373's body confirmed present, which is the check D372's
   // own comment above asks for by name.
-  const ARCHIVES = 44;
+  // 🆕🆕 D375 — 44 → **45**, RAISED DELIBERATELY, which is the UP branch of the message
+  // below. D375 demoted D374's live resume point under `### Prior resume point (P3-M5 —
+  // D374, …)` and the demoted BODY was carried across with it — the section was captured
+  // FIRST and re-emitted after the new one rather than overwritten, and the seam was
+  // re-read after the edit with D374's body confirmed present, which is the check D372's
+  // own comment above asks for by name.
+  const ARCHIVES = 45;
 
-  it("the page still holds all 44 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 45 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
