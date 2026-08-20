@@ -14223,4 +14223,93 @@ export const MUTANTS: Mutant[] = [
     replace: "      return \"you have a Pokémon in play sharing a type with one of your opponent's\";",
     expectKilledBy: ["packages/engine/src/typeShareBonus.test.ts"],
   },
+  // ── D376 — THE FILTERED DISCARD-PILE THRESHOLD. Eight rows, ONE PER CLAIM: the
+  //    ZONE is the discard pile and not the board (C1), the noun is a card CLASS (C2)
+  //    AND a printed TYPE (C3) AND a filter at all (C4), the threshold is a FLOOR (C5)
+  //    read off the row's PARAMETER (C6), the row key is the printed bytes (C7), and
+  //    the note is built from both parameters (C8).
+  //
+  // 🛑 C1 IS THE ROW THIS SLICE EXISTS FOR, AND IT IS NOT A STRAW: it is the arm of the
+  //    member ONE LINE UP in the same `switch`, copied verbatim. `yourEnergyInPlayAtLeast`
+  //    reads PROVISION over the board, which is correct there and wrong here, because a
+  //    card in a discard pile is attached to nothing and provides nothing.
+  //
+  // ⚠️ C2 / C3 / C4 ARE THREE NESTED WIDENINGS AND EACH NEEDS ITS OWN BOARD. Every one
+  //    of them agrees with the member on a pile of ten Basic Fire Energy — the pile a
+  //    suite writes by accident — so all three separating boards are NINE Fire plus ONE
+  //    tenth card, and the tenth card is what differs: a Special (C2), a Basic of the
+  //    wrong type (C3), a Pokémon (C4). The nesting is asserted in the rungs themselves,
+  //    which report all four readings together rather than one at a time.
+  {
+    id: "D376-discard-threshold-reads-energy-in-play",
+    decision: "D376",
+    what: "🛑 C1 — **THE SLICE'S WHOLE POINT**: the arm becomes the SIBLING's arm, verbatim. `yourEnergyInPlayAtLeast` is the same three words one zone over and its body is a single line (`countEnergyInPlay(state, seat, cond.energy) >= cond.count`), so this is not a straw mutant — it is the neighbouring arm copied, which is the mistake the resume point predicted before the build started. ⚠️ **IT IS WRONG ON TWO AXES AT ONCE AND INDISTINGUISHABLE FROM THE RIGHT ANSWER ON THE PILE A SUITE WRITES BY ACCIDENT**: the ZONE (in play, not the discard pile) and the READING (provision, not the printed card). `basicEnergyDiscard.test.ts` §4 fields both directions on one pair of boards — ten Basic {R} attached with an EMPTY pile, where this mutant says TRUE and the member says FALSE, and ten in the pile with none in play, where they swap",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const filter: CardFilter = { kind: \"basicEnergy\", energyType: cond.energy };\n      let matched = 0;\n      for (const uid of state.players[seat].discard) {\n        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;\n      }\n      return matched >= cond.count;",
+    replace: "      return countEnergyInPlay(state, seat, cond.energy) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-drops-the-printed-basic",
+    decision: "D376",
+    what: "🛑 C2 — THE CARD CLASS: `basicEnergy` widens to `anyEnergy`, i.e. the printed word **Basic** is dropped. It is the one-word edit an author makes reading *\"Energy cards in your discard pile\"* off the middle of the sentence. ⚠️ **A PILE OF TEN BASIC FIRE ENERGY CANNOT SEE IT**, and neither can any board whose pile holds only Basics — so the separating board is nine Fire plus ONE Special, and `basicEnergyDiscard.test.ts` §3 fields it twice with two differently-shaped Specials: `sv02-191` **Luminous**, the wildcard that PROVIDES every type in play, and `fix-special`, an unauthored one that provides Colorless. The Luminous rung is the sharp one — the SAME CARD makes `yourEnergyInPlayAtLeast` true at 1 when it is IN PLAY and contributes nothing from the pile",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const filter: CardFilter = { kind: \"basicEnergy\", energyType: cond.energy };",
+    replace: "      const filter: CardFilter = { kind: \"anyEnergy\" };",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-drops-the-printed-type",
+    decision: "D376",
+    what: "🛑 C3 — THE TYPE: `energyType` is dropped from the filter, so every Basic Energy counts and the printed `{R}` means nothing. NOT a duplicate of C2 — that one admits Specials and this one admits Basics of the wrong type, and **the board that kills C2 leaves this one alive**: a Luminous Energy in the pile is not a Basic, so an untyped `basicEnergy` filter still answers nine there. `basicEnergyDiscard.test.ts` §3 therefore fields a SECOND nine-plus-one board with `fix-water-energy` as the tenth card, where the untyped reading is TRUE and the class reading is FALSE — the two widenings crossed, on two boards",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const filter: CardFilter = { kind: \"basicEnergy\", energyType: cond.energy };",
+    replace: "      const filter: CardFilter = { kind: \"basicEnergy\" };",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-counts-the-whole-pile",
+    decision: "D376",
+    what: "🛑 C4 — THE FILTER DISAPPEARS and the predicate becomes the pile's LENGTH. The crudest of the three widenings and the easiest to write, because `discard.length >= count` is the shape the sentence reads like if the noun phrase is skipped. ⚠️ **IT IS TRUE ON EVERY BOARD C2 AND C3 ARE TRUE ON**, so it needs a board where the tenth card is not an Energy at all: `basicEnergyDiscard.test.ts` §3 discards `fix-basic-1`, a POKÉMON, into a pile of nine Fire and asserts that BOTH energy readings stay false while the length reading goes true. Ordered widenings, one board each",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;",
+    replace: "        matched += 1;",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-is-strict",
+    decision: "D376",
+    what: "🛑 C5 — `>=` BECOMES `>`, the off-by-one this member owes. The printed words are *\"10 or more\"* — a FLOOR, `yourEnergyInPlayAtLeast`'s reading of *\"at least\"* — and the edit is invisible at every count except the boundary itself, which is why the resume point named 9-and-10 before the build. `basicEnergyDiscard.test.ts` §5 drives EXACTLY 9 (false, 10 damage dealt) and EXACTLY 10 (true, 110 dealt) through the attack path, and then walks the whole ramp 0..11 in one loop so the step is a property of the predicate rather than of three counts a case happened to pick",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return matched >= cond.count;",
+    replace: "      return matched > cond.count;",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-hardcodes-the-printed-ten",
+    decision: "D376",
+    what: "🛑 C6 — THE `count` PARAMETER IS IGNORED and the printed 10 is written into the arm. ⚠️ **THE CLAUSE ROW STAYS CORRECT AND EVERY BOARD IN THE FILE STAYS GREEN**, because the only producer in the catalog prints 10 — which is exactly what makes this the survivor a suite written around the real card would ship. It is D119's corollary read from the other end: the row is a LITERAL because two tokens vary IN PRINCIPLE, and a parameter nothing exercises is a parameter that will be wrong the day a second threshold prints. `basicEnergyDiscard.test.ts` §5 asks the SAME nine-card pile at `count: 9` and requires TRUE",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return matched >= cond.count;",
+    replace: "      return matched >= 10;",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-row-key-is-a-paraphrase",
+    decision: "D376",
+    what: "🛑 C7 — D183's DEFECT, TRANSCRIBED: the clause-table KEY drops the printed word **Basic**. **IT READS AS THE SAME SENTENCE** — that is the failure mode — and an author writing the row from memory rather than from the printed bytes produces exactly this, the more so here because the member's own name carries the word and the key looks redundant. The member, the arm and every board rung stay correct and the clause simply stops resolving, so the bonus silently never pays and the sentence falls back onto the LOUD `ATTACK_EFFECT_SKIPPED` path. `basicEnergyDiscard.test.ts` §2 pins the key by CODE-POINT COUNT (101 / 63), asserts this very paraphrase is refused among eight, and drives the printed sentence to the member at 100",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"you have 10 or more Basic {R} Energy cards in your discard pile\",\n    { kind: \"yourBasicEnergyInDiscardAtLeast\", energy: \"Fire\", count: 10 },\n  ],",
+    replace: "  [\n    \"you have 10 or more {R} Energy cards in your discard pile\",\n    { kind: \"yourBasicEnergyInDiscardAtLeast\", energy: \"Fire\", count: 10 },\n  ],",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D376-discard-threshold-note-drifts-off-the-clause",
+    decision: "D376",
+    what: "🛑 C8 — THE NOTE IS REWRITTEN INTO SHORTER PROSE THAT MEANS THE SAME THING, and it LOOKS like an improvement on a HUD pill. What it destroys is the property the note is built for: it is assembled from BOTH parameters in the sibling's own phrasing, so the two adjacent members read alike in a reject message and a second threshold or a second type costs no arm. `basicEnergyDiscard.test.ts` §2 pins the string, pins a SECOND spelling built from different parameters (`Water` × 3), and asserts in the NEGATIVE that it round-trips neither to the printed bytes nor back through `CONDITIONAL_DAMAGE_CLAUSES` — beside two neighbours that DO round-trip, so a successor cannot \"fix\" one into the other",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `you have at least ${cond.count} Basic ${cond.energy} Energy cards in your discard pile`;",
+    replace: "      return `your discard pile holds ${cond.count}+ Basic ${cond.energy} Energy`;",
+    expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
 ];
