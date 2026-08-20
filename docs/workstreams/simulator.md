@@ -21556,6 +21556,64 @@ same reason, because `activeTop` is the only accessor the arm has.
 **THE TEST FOR WHETHER A CLAIM DESERVES A ROW IS WHETHER THE WRONG CODE IS ONE EDIT
 AWAY, AND THAT TEST IS ANSWERED BY THE FILE'S IMPORT BLOCK.**
 
+## D373 — the UNIVERSAL over the Bench: an EMPTY-SET boundary that had to be CHOSEN, because the two precedents turned out to be each other's negation (engine 0.277.0 → 0.278.0)
+
+**Clause:** *"If all of your Benched Pokémon have at least 1 damage counter on them, this
+attack does 120 more damage."* — Drampa `sv05-138`/`-184` "Raging Cannon" (JP SV5M 060),
+**1 sentence / 2 legal printings**. D369's deferral, taken.
+
+**Ships:** `yourBenchAllDamaged` (bare-tag `BoardCondition`), 1 LITERAL
+`CONDITIONAL_DAMAGE_CLAUSES` row, 2 reader arms. Zero new vocabulary, zero new imports.
+
+### The build was four edits. The slice was the boundary.
+
+`conditionHolds` reads `bench.length > 0 && bench.every((p) => p !== null && p.damage > 0)`.
+**The `length > 0` is the slice.** An empty Bench is **FALSE** — a CHOICE, and the whole
+argument, the four silent rules instruments and the falsifier live in
+`docs/reference/ptcg-rules.md` **§15b**, which D373 wrote for exactly this reason. Read
+that section before touching any quantified clause; do not re-derive it here.
+
+### The finding that made it decidable
+
+D369 named `noEnergyOnYourPokemon` (TRUE on an empty board) as a prior *chosen*
+vacuous-universal convention. **It is not chosen.** Its printed sentence is *"none of your
+Pokémon have any Energy attached"* — a NEGATED EXISTENTIAL — so its TRUE is forced by
+exactly the logic that forces `yourBenchDamaged`'s FALSE. **The two are each other's
+negation; neither is a convention, and together they say nothing about a positive
+universal.** `yourBenchAllDamaged` is the first empty-set semantics this vocabulary has
+ever actually chosen.
+
+### The near miss, and how the two are kept apart
+
+`yourBenchDamaged` (D116, `.some`) and `yourBenchAllDamaged` (`.every`) read the SAME
+array on the SAME seat for the SAME field. The printed keys differ by five words and the
+whole-sentence anchor is all that separates them. **The separating board is a PARTLY
+damaged Bench** — two benched bodies, one damaged: the existential TRUE, the universal
+FALSE. A suite that only fields an all-damaged and an all-undamaged Bench cannot tell the
+two members apart, and that is what D373's C2 mutant exists to prove.
+
+### The invariant, and the attribution control
+
+With the guard, `yourBenchAllDamaged ⟹ yourBenchDamaged` on **every** board; without it,
+the empty Bench is the one board where a TRUE universal sits above a FALSE existential.
+`benchAllDamagedBonus.test.ts` §2 computes the member's own predicate **with the guard
+removed** and compares it board for board: it differs on **exactly one board in the whole
+game** and agrees on the other seven shapes swept. **That is what makes the guard shown
+rather than asserted** (D214).
+
+### Housekeeping a successor inherits
+
+* `D369-deferred-universal-gets-the-existential-row` is **RETIRED**, not re-pointed: after
+  the row landed its edit became a duplicate Map key above the real row, i.e. a no-op that
+  would have reported a phantom SURVIVOR. Its claim is C3's now.
+* The census moved in **ELEVEN** files (D372's page said nine). Three rungs are unreachable
+  by grep. Run the suite.
+* **The web is reachable in this container** (WebSearch/WebFetch) and it is the right
+  instrument for a RULES question — it is how the printing was identified and how §15b's
+  four instruments were checked. It is **not** a substitute for the catalog and cannot
+  give a legal-printing count.
+
+
 ## D372 — the CROSS-BOARD EQUAL-ENERGY clause: the shape answer was already written down, in the helper's own doc block (engine 0.276.0 → **0.277.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 `activeEnergyCountsEqual` — **1** new `BoardCondition` member, **2** reader arms, **1**

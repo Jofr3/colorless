@@ -758,6 +758,66 @@ card, targets, the game state, RNG for coin flips):
 
 ---
 
+## 15b. Quantifiers over an EMPTY set — what the rules say (nothing) and what this engine does (D373)
+
+**⚠️ THIS SECTION EXISTS BECAUSE THE ANSWER IS AN ABSENCE.** A printed condition that
+quantifies over a set the player may have none of — *"if **all** of your Benched Pokémon
+…"*, *"if **none** of your Pokémon …"*, *"if **any** of your Benched Pokémon …"* — has to
+be answered on an empty set, and **no published rule settles the positive universal.**
+Four instruments were checked at D373 and all four are silent:
+
+| Instrument | Answer |
+|---|---|
+| This file's own ruleset (§1–§16) | no quantifier rule at all |
+| Official **Pokémon TCG glossary** (pokemon.com) | defines neither *"all"* nor *"each"* |
+| **Pokémon Rulings Compendium** | nothing on a universal antecedent over an empty Bench — its Bench/Attacks rulings cover *"do as much as you can"* for **EFFECTS**, which is a different question |
+| **Official Japanese card page** for the one printing that raises it (ジジーロン / Drampa, SV5M 060) | **no Q&A entry at all** |
+
+So the engine has to **choose**, and a choice must be written down as a choice.
+
+### The three cases, and only ONE of them is a choice
+
+* **`∃` (existential — *"any of your Benched Pokémon …"*)** → **FALSE** on an empty set.
+  **Forced by logic**, not chosen. `yourBenchDamaged`.
+* **`¬∃` (negated existential — *"none of your Pokémon have any Energy attached"*)** →
+  **TRUE** on an empty set. **Also forced by logic** — it is the negation of the line
+  above. `noEnergyOnYourPokemon`.
+* **`∀` (positive universal — *"all of your Benched Pokémon have at least 1 damage
+  counter on them"*)** → **THE ONLY REAL QUESTION.** Classical logic says TRUE
+  (vacuously); ordinary English says the phrase *presupposes* that you have some, and the
+  Japanese printing says it harder (「ベンチポケモン**全員**に」 — *all members*).
+
+🛑 **DO NOT READ THE FIRST TWO AS PRECEDENTS FOR THE THIRD.** They are each other's
+negation and carry no information about a positive universal. D369 read
+`noEnergyOnYourPokemon`'s vacuous TRUE as a chosen convention and deferred a slice on
+that basis; D373 corrected it.
+
+### THE ENGINE'S CHOICE: a positive universal is FALSE on an empty set
+
+`yourBenchAllDamaged` is `bench.length > 0 && bench.every(…)`. Two tie-breaks, and they
+agree:
+
+1. **The pay-out is asymmetric.** A wrong TRUE silently ADDS damage on a board the
+   attacker did nothing to earn; a wrong FALSE withholds a bonus a player can see is
+   missing and dispute. An engine that must guess should guess toward **not paying**.
+2. **The printed clause has to do work.** Under the vacuous reading the cheapest way to
+   satisfy a condition about your Bench is **to have no Bench** — the condition would be
+   satisfied by *ignoring* it.
+
+**It also buys an invariant:** with the guard, `∀ ⟹ ∃` holds on **every** board. Without
+it, the empty set is the one board where a TRUE universal sits above a FALSE existential.
+
+**WHAT WOULD FALSIFY THIS AND FLIP IT:** an official Q&A on the printing, a Rulings
+Compendium entry, or PTCG Live observed paying the bonus with an empty Bench. The remedy
+is one deleted clause in `conditionHolds` and one inverted expectation in
+`benchAllDamagedBonus.test.ts` §2.
+
+⚠️ **AND THIS IS ABOUT *CONDITIONS*, NOT *EFFECTS*.** An EFFECT over an empty set is
+already settled by the game's *"do as much as you can"* rule and does nothing — that is
+not in dispute and is not what this section is about.
+
+---
+
 ## 16. Suggested state-machine phases
 
 A minimal phase enumeration for the engine loop:
@@ -808,6 +868,13 @@ networked play.
   <https://compendium.pokegym.net/category/5-trainers/rare-candy-trainer/>
 - TheGamer — Weakness & Resistance explained —
   <https://www.thegamer.com/pokemon-tcg-weakness-resistance-faq-explained/>
+- §15b (D373) — Drampa, Temporal Forces #138/#184, "Raging Cannon" —
+  <https://limitlesstcg.com/cards/TEF/138>
+- §15b (D373) — the same printing on the OFFICIAL Japanese site, ジジーロン SV5M 060,
+  checked for a card Q&A and carrying NONE —
+  <https://www.pokemon-card.com/card-search/details.php/card/45277>
+- §15b (D373) — official Pokémon TCG glossary, checked for "all"/"each" and defining
+  neither — <https://www.pokemon.com/us/play-pokemon/about/pokemon-tcg-glossary>
 
 <!-- Rules current as of the Scarlet & Violet Standard era (verified 2026-07). Values
 flagged [current] (first-player no-Supporter/no-attack, Weakness ×2, Resistance −30,

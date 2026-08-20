@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-20 — build session #312 (**P3-M5 — D372, *the cross-board equal-Energy clause: the shape answer was already written down, in the helper's own doc block.*** Engine **0.276.0 → 0.277.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new op, event, error code, regex, registry row, state field, prompt kind, choice kind or `packages/schema` byte. 🛑 **CARDS, NOT UNITS — AND THE ENGINE HAD ALREADY DECIDED IT**: `countAttachedEnergy(…, null)` IS the unfiltered CARD count and argues the case in its own doc block, so `activeEnergyCountsEqual` DELEGATES and writes no counting code — and the two readings are separated on a real board (`fix-blend`, one card / two units) in BOTH directions rather than argued. **1 union member, 2 reader arms, 1 LITERAL clause-table row, 1 new import; ZERO new vocabulary / maps / templates / patterns.** ⚠️ **THE CENSUS STEP IS 2 SENTENCES AND 2 PRINTINGS — the first 2:2 step in this run**, because ONE clause is printed under TWO sentences. 🛑 **AND THE MEMBER FALSIFIED A COMMENT IN A FILE IT DOES NOT TOUCH**: `handSizesEqual`'s *"the ONE member that is SEAT-SYMMETRIC"* is corrected to **FIRST** at three sites, and this is the first member where SPELLING-symmetry and VALUE-symmetry come apart. **5 mutants, 5 KILLED / 0 GAPs**; corpus **1180 → 1185**. `bun run check` **379 files / 7,864 tests, exit 0**. **WHOLE-CORPUS SWEEP: 1185 · 1162 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 3,944.0s**, run detached. ✅ **`SWEEP_EXIT=0`, READ from the log's last line** — D371's launch-side form, second run, and the summary line's seven zeros agree. **VERIFIED BY ID IN BOTH DIRECTIONS** against `--list`: 1185 swept, **0 missing / 0 extra / 0 duplicate**, and 1162 + 23 = 1185 closes on the corpus. Reconciled to D371 (1180 · 1157 · 23) at **+5 new ids ALL KILLED, 0 gone, 0 verdict changes**; the declared-survivor set diffed id-by-id against D371's is **IDENTICAL at 23**. 🛑 **THE PREDICTION THIS PAGE WROTE BEFORE THE RUN WAS EXACT IN EVERY FIELD** — third slice running. ⚠️ **AND A SEPARATE SCARE WAS RESOLVED AS AN ARTIFACT, NOT A DEFECT**: the editor's diagnostics flagged two type errors in `sameEnergyBonus.test.ts` (a `"Colorless"` assignment and a `yourEnergyInPlayAtLeast` missing its `energy` field) while the sweep was mid-mutant on `cards.ts`. The cited line holds a COMMENT in the committed file, and `bun run check` re-run on the CLOSED tree is **GREEN — 379 files / 7,864 tests, exit 0**, with `tsc -b` first in that chain. **A TYPE ERROR REPORTED AGAINST A TREE A MUTATION RUN IS WRITING TO IS A READING OF THE MUTANT, NOT OF THE COMMIT** — and it is settled by re-measuring on the closed tree, not by arguing from the diff.)
+**Last updated:** 2026-08-20 — build session #313 (**P3-M5 — D373, *the universal over the Bench: an empty-set boundary that had to be CHOSEN, because the two precedents turned out to be each other's negation.*** Engine **0.277.0 → 0.278.0** — **`MATCH_RECORD_VERSION` STAYS 22**. `bun run check`: **380 files / 7,878 tests, exit 0**. **MUTANTS: 6 rows, ONE PER CLAIM — 6 KILLED / 0 GAPs**; corpus **1185 → 1190** (−1 retired, +6 new). Whole-corpus sweep **LAUNCHED DETACHED, not read here**.)
+
+**Last updated (was):** 2026-08-20 — build session #312 (**P3-M5 — D372, *the cross-board equal-Energy clause: the shape answer was already written down, in the helper's own doc block.*** Engine **0.276.0 → 0.277.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new op, event, error code, regex, registry row, state field, prompt kind, choice kind or `packages/schema` byte. 🛑 **CARDS, NOT UNITS — AND THE ENGINE HAD ALREADY DECIDED IT**: `countAttachedEnergy(…, null)` IS the unfiltered CARD count and argues the case in its own doc block, so `activeEnergyCountsEqual` DELEGATES and writes no counting code — and the two readings are separated on a real board (`fix-blend`, one card / two units) in BOTH directions rather than argued. **1 union member, 2 reader arms, 1 LITERAL clause-table row, 1 new import; ZERO new vocabulary / maps / templates / patterns.** ⚠️ **THE CENSUS STEP IS 2 SENTENCES AND 2 PRINTINGS — the first 2:2 step in this run**, because ONE clause is printed under TWO sentences. 🛑 **AND THE MEMBER FALSIFIED A COMMENT IN A FILE IT DOES NOT TOUCH**: `handSizesEqual`'s *"the ONE member that is SEAT-SYMMETRIC"* is corrected to **FIRST** at three sites, and this is the first member where SPELLING-symmetry and VALUE-symmetry come apart. **5 mutants, 5 KILLED / 0 GAPs**; corpus **1180 → 1185**. `bun run check` **379 files / 7,864 tests, exit 0**. **WHOLE-CORPUS SWEEP: 1185 · 1162 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 3,944.0s**, run detached. ✅ **`SWEEP_EXIT=0`, READ from the log's last line** — D371's launch-side form, second run, and the summary line's seven zeros agree. **VERIFIED BY ID IN BOTH DIRECTIONS** against `--list`: 1185 swept, **0 missing / 0 extra / 0 duplicate**, and 1162 + 23 = 1185 closes on the corpus. Reconciled to D371 (1180 · 1157 · 23) at **+5 new ids ALL KILLED, 0 gone, 0 verdict changes**; the declared-survivor set diffed id-by-id against D371's is **IDENTICAL at 23**. 🛑 **THE PREDICTION THIS PAGE WROTE BEFORE THE RUN WAS EXACT IN EVERY FIELD** — third slice running. ⚠️ **AND A SEPARATE SCARE WAS RESOLVED AS AN ARTIFACT, NOT A DEFECT**: the editor's diagnostics flagged two type errors in `sameEnergyBonus.test.ts` (a `"Colorless"` assignment and a `yourEnergyInPlayAtLeast` missing its `energy` field) while the sweep was mid-mutant on `cards.ts`. The cited line holds a COMMENT in the committed file, and `bun run check` re-run on the CLOSED tree is **GREEN — 379 files / 7,864 tests, exit 0**, with `tsc -b` first in that chain. **A TYPE ERROR REPORTED AGAINST A TREE A MUTATION RUN IS WRITING TO IS A READING OF THE MUTANT, NOT OF THE COMMIT** — and it is settled by re-measuring on the closed tree, not by arguing from the diff.)
 
 **Last updated (was):** 2026-08-20 — build session #311 (**P3-M5 — D371, *the opponent-Resistance clause: the same column the engine already read, asked a different question.*** Engine **0.275.0 → 0.276.0** — **`MATCH_RECORD_VERSION` STAYS 22**, read from source (`apps/api/src/lobby/match.ts`); no new op, event, error code, registry row, state field, prompt kind, choice kind or `packages/schema` byte. 🛑 **D370 ORDERED THE *SUPPLY* CHECK THIS TIME, NOT THE VOCABULARY ONE, AND IT PASSES.** D207's rule is *name the FIELD before you design the predicate* — a predicate over a banner no column CLASSIFIES yields a permanently empty candidate set. `Card.resistances` is a real ingested column (`{type, value?}[] | null`) the §8.5 pipeline has read since 0.1.x, so this is **not** the `Tera` shape. ⚠️ **AND THE ONLY POPULATION THIS CONTAINER CAN MEASURE IS A FLOOR ON A BIASED SAMPLE**: `FIXTURE_POOL` held **24 of 444** bodies with a Resistance, **16** Fighting, before this slice (450 / 27 / 18 after). Evidence the field is populated, **not a denominator** — the Standard-legal count is UNMEASURED here and is not guessed. 🛑 **THE SHAPE QUESTION IS THE WHOLE MEMBER: THE SAME FIELD, TWO QUESTIONS.** `resistanceOf(attacker, defender)` already reads this column and answers *"does this Resistance apply to THIS attack"* — `weakResModifier` skips every entry whose `type` is not one of the ATTACKER's types. The printed clause asks whether the defender **HAS** `{F}` Resistance, whoever is attacking. So the member reads the column **directly** and is deliberately **NOT** routed through the helper, and the difference is **a board, not an argument**: a **METAL** attacker against a **FIGHTING-resistant** defender makes the clause TRUE and the §8.5 modifier NULL — 10 + 50 = **60**, where the wrong routing pays **10**. Its partner is the same attack on a **FIGHTING** body, where both fire and stack to **30**. ⚠️ **THE PREDICATE IS ON THE ENTRY'S `type` AND NOTHING ELSE** — `WeakRes.value` is optional and §8.5 HONOURS an entry it cannot price, so `fix-dualresist` carries the match SECOND and value-less. ⚠️ **AND THE WEAKNESS COLUMN IS ONE FIELD OVER, A MISTAKE THIS REPO HAS MADE TWICE** (D173, D175) — `fix-fightweak` flips there and nowhere else, with an ATTRIBUTION CONTROL (D214) beside it so the false is the COLUMN and not an inert fixture. 🛑 **`needs` RE-DERIVED (D199): NONE of the union's 34 members reads a printed DEFENSIVE column**, and widening `opponentActiveHasType` to take a FIELD is a RENAME (D362: 31 sites / 7 files) over two columns that are not even the same shape. **WHAT SHIPPED: `opponentActiveHasResistance { type }`** — **1** new `BoardCondition` member, **2** reader arms, **1** new anchored PATTERN reusing `CLAUSE_POKEMON_TYPES` whole, **0** new vocabulary, maps or clause-table rows. ⚠️ **THE PATTERN'S APOSTROPHE CLASS IS LOAD-BEARING HERE AND WAS NOT ON D370's** — this sentence spells a possessive and the template pass is handed the RAW clause, so D136's `['’]` is the only mechanism on the path. `bun run check` **GREEN exit 0 — 378 files / 7,840 tests** (was 377 / 7,812). **SEVEN mutation rows, one PER CLAIM, 7 killed / 0 gaps / 0 errors**; corpus **1173 → 1180**; `--decision D275` re-run after the bump: **8 killed / 0 errors**. An EIGHTH claim declared with NO row and why — **the test for whether a claim deserves a row is whether the wrong code is ONE EDIT away, and that test is answered by the file's IMPORT BLOCK**. **WHOLE-CORPUS SWEEP: 1180 · 1157 killed · 23 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 3,915.9s**, run detached. ✅ **`SWEEP_EXIT=0`, READ FROM THE LOG'S LAST LINE RATHER THAN INFERRED** — D371's launch-side fix working on its first run, and the summary line's seven zeros agree, so two independent signals concur where D369 and D370 each had one. **VERIFIED BY ID IN BOTH DIRECTIONS** against `--list`: 1180 swept, **0 missing / 0 extra / 0 duplicate**, and 1157 + 23 = 1180 closes on the corpus. Reconciled to D370 (1173 · 1150 · 23) at **+7 new ids ALL KILLED, 0 gone, 0 verdict changes**, and the declared-survivor set was diffed id-by-id against D370's and is **IDENTICAL at 23** — a stronger check than the count matching, which it also does.).
 
@@ -374,6 +376,179 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-20, after D373)
+>
+> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 380 files / 7,878 tests,
+> exit 0** (baseline 379 / 7,864; the delta is **+1 file and +14 cases**, all of them
+> `benchAllDamagedBonus.test.ts`). **NOTHING IS PUSHED** — this branch is
+> `claude/slice-loop-2026-08-20` and no push was made, by instruction.
+>
+> ✅ **D373's SIX MUTANTS: 6 KILLED / 0 GAPs / 0 ERRORS**, one PER CLAIM; corpus
+> **1185 → 1190** (**−1 retired, +6 new**). `--decision D275` after the bump reported
+> **ERROR** first — the version anchor is not a version site, it is an anchor a version
+> site BREAKS — was re-pointed at `0.278.0` in a commit of its own, and then came back
+> **8 killed / 0 errors**. 🛑 **AND ONE MUTANT WAS *RETIRED* RATHER THAN RE-POINTED**:
+> `D369-deferred-universal-gets-the-existential-row` inserted a DUPLICATE Map key ABOVE
+> the row D373 landed, so the real row wins and the mutant could no longer change the
+> program — it would have reported a **PHANTOM SURVIVOR**, not an error. **A MUTANT THAT
+> CANNOT CHANGE THE PROGRAM IS REMOVED, NOT TESTED AROUND**; its claim is carried by C3
+> against the row that now exists.
+>
+> 🛑 **THE SAME CONSTRAINT D369 RECORDED IS STILL TRUE: THIS CONTAINER HAS NO D1
+> CREDENTIALS.** `bunx wrangler d1 execute … --remote` returns *"necessary to set a
+> CLOUDFLARE_API_TOKEN"*, and there is no local sqlite copy of the catalog. **Any
+> slice needing card IDS is blocked; any slice keyed on PRINTED SENTENCES is not.**
+> What stands in: `packages/engine/src/censusAttackCorpus.ts` (the committed
+> `legal_standard = 1` attack column — 640 sentences / 1,732 printings), the live
+> derivations in `censusAtHead.test.ts`, and `CATALOG_MANIFEST` plus `FIXTURE_POOL` as a
+> **FLOOR ON A BIASED SAMPLE** on card FIELDS the corpus does not carry. **DO NOT GUESS
+> AN ID.** ⚠️ **THE WEB, HOWEVER, IS REACHABLE, AND D373 USED IT** — WebSearch and
+> WebFetch both work in this container. That is how the printing was identified
+> (`sv05-138`/`-184`, JP SV5M 060) and how four rules instruments were checked. **IT IS
+> NOT A SUBSTITUTE FOR THE CATALOG** — it cannot give you a legal-printing COUNT — but
+> for a RULES question it is the right instrument and it had never been tried.
+>
+> ### ▶ WHAT D373 SETTLED
+>
+> `yourBenchAllDamaged` — a **BARE-TAG** member reached by **1 LITERAL**
+> `CONDITIONAL_DAMAGE_CLAUSES` row and **2 reader arms**, ZERO new vocabulary and ZERO
+> new imports. It serves **1 printed sentence at 2 legal printings** (+120). The build
+> was four edits.
+>
+> 🛑 **THE SLICE WAS THE EMPTY-BENCH BOUNDARY, AND THE ANSWER IS *FALSE* — A CHOICE,
+> NOT A FACT.** An empty Bench does **not** satisfy *"all of your Benched Pokémon have
+> at least 1 damage counter on them"*.
+>
+> * **THE RULES DO NOT SETTLE IT, MEASURED.** Four instruments, all silent:
+>   `docs/reference/ptcg-rules.md` states no quantifier rule; the official TCG glossary
+>   defines neither *"all"* nor *"each"*; the Rulings Compendium publishes nothing on a
+>   universal antecedent over an empty Bench; and the **official Japanese card page for
+>   this exact printing carries NO Q&A entry at all**. Written up in
+>   `docs/reference/ptcg-rules.md` §16 so the next quantifier question starts there.
+> * 🛑 **AND D369's PRECEDENT WAS NOT A PRECEDENT — THAT IS THE FINDING.**
+>   `noEnergyOnYourPokemon` prints *"none … any"*, a **NEGATED EXISTENTIAL**, so its TRUE
+>   on an empty board is forced by the same logic that forces `yourBenchDamaged` FALSE.
+>   **THE TWO ARE EACH OTHER'S NEGATION; NEITHER IS A CONVENTION.** This member is the
+>   first empty-set semantics the vocabulary has ever actually chosen.
+> * **TWO TIE-BREAKS, AND THEY AGREE.** A wrong TRUE silently PAYS +120 on a board that
+>   occurs every game; and under the vacuous reading the cheapest way to satisfy a clause
+>   about your Bench is to have no Bench, i.e. the condition is satisfied by ignoring it.
+> * **THE FALSIFIER IS NAMED** (an official Q&A, a Compendium ruling, or PTCG Live
+>   observed paying the +120 on an empty Bench). **A CHOICE WITH NO STATED FALSIFIER IS A
+>   FACT NOBODY CHECKED.**
+> * ✅ **AND IT CARRIES AN ATTRIBUTION CONTROL** (D214's rule): the member's own predicate
+>   with the `length > 0` clause REMOVED is computed in the suite and compared board for
+>   board. It differs on **exactly one board in the whole game** and agrees on the other
+>   seven shapes swept — so the guard is *shown* to be doing something.
+>
+> ### ▶ WHAT TO DO NEXT — TAKE *"this Pokémon has any Team Rocket's Energy attached"*,
+> ### AND SETTLE ONE CARD NAME vs A PREFIX FAMILY **FROM THE CATALOG** BEFORE YOU BUILD
+>
+> The residue after D373 is **27 sentences / 34 printings** (the nine live readers over
+> `legalAttackCorpus()`, re-derived at this head). The **4 clauses still at 2 printings**
+> are pinned in `benchAllDamagedBonus.test.ts` §1, `sameEnergyBonus.test.ts` §1,
+> `opponentResistanceBonus.test.ts` §1, `benchTypeBonus.test.ts` §1 and
+> `opponentToolBonus.test.ts` §1, so they are inherited **MEASURED**:
+>
+> 1. **`this Pokémon has any Team Rocket's Energy attached`** ← TAKE THIS
+> 2. `any of your Pokémon in play are the same type as any of your opponent's Pokémon in play`
+> 3. `this Pokémon was healed during this turn`
+> 4. `you have 10 or more Basic {R} Energy cards in your discard pile`
+>
+> ▶ **TAKE THE TEAM ROCKET'S ENERGY CLAUSE.** Printed sentence, byte-for-byte from the
+> corpus: **`If this Pokémon has any Team Rocket's Energy attached, this attack does 60
+> more damage.`** — **1 sentence / 2 legal printings**, refused by all nine readers at
+> this head. **THE SHAPE IS ALREADY IN THE UNION AND THAT IS WHY IT IS FIRST**:
+> `yourActiveHasEnergyAttached` (effects.ts, `energy: BasicEnergyType | "special"`) reads
+> exactly this field on exactly this body and already serves *"this Pokémon has any {F}
+> Energy attached"* and *"this Pokémon has any Special Energy attached"*.
+>
+> 🛑 **BUT THE SHAPE QUESTION IS REAL, AND IT IS D368's ORDER — ASK IT BEFORE YOU PRICE
+> IT.** *Team Rocket's Energy* is neither a basic energy type nor the whole Special
+> class. So the member must key on a **CARD NAME**, and the question is **ONE NAME or a
+> PREFIX FAMILY**:
+> * If the Destined Rivals block prints exactly one card named *"Team Rocket's Energy"*,
+>   the read is a NAME EQUALITY and the member is bare-tag — the cheapest thing this
+>   family buys.
+> * If it prints several *"Team Rocket's ⟨X⟩ Energy"* cards, the printed clause may mean
+>   the FAMILY, and a name equality would silently under-serve it.
+> * ⚠️ **AND D118 FORBIDS THE OBVIOUS TEMPLATE EITHER WAY**: a card NAME is open-ended,
+>   so `^this Pokémon has any (.+) Energy attached$` has nothing to reject and would
+>   answer an unknown energy name with this member. Whatever you decide, it is a
+>   **LITERAL ROW** (or a closed enumerated set), never an open capture.
+> * 🛑 **AND ASK D207's SUPPLY QUESTION FIRST, BECAUSE THIS ONE CAN FAIL IT.** The member
+>   would read the NAME of an attached Energy card. Confirm that the ingested `Card.name`
+>   is what the engine actually has on an attached card in `InPlayPokemon.energy` (uids →
+>   `cardIdByUid` → the pool), and confirm a fixture can be built that HOLDS one. If the
+>   answer is *"the engine only ever sees a type code"*, this is the `Tera` shape and the
+>   candidate is disqualified — **record that and take item 2**, which reads `Card.types`
+>   on both sides and is known-populated.
+> * ⚠️ **THE CATALOG CANNOT TELL YOU HOW MANY *"Team Rocket's"* ENERGY CARDS EXIST** (no
+>   D1). The web CAN, and D373 proved WebSearch/WebFetch work here. **Use it for the
+>   NAME question and NOT for a printing count**; the printing count comes from
+>   `legalAttackCorpus()` and nowhere else.
+>
+> ▶ **IF YOU REFUSE IT, TAKE ITEM 2** — *"any of your Pokémon in play are the same type
+> as any of your opponent's Pokémon in play"*, 2 printings. Its supply is certain
+> (`Card.types`, read by four members already) and its SHAPE question is different and
+> also real: it is a **cross-board existential over two variable-size sets** — an
+> intersection — which is a shape the union does not hold. It is not cheaper; it is
+> better-supplied.
+>
+> ⚠️ **AND ITEM 3 IS THE EXPENSIVE ONE, PRICED HERE SO NOBODY RE-PRICES IT.** *"this
+> Pokémon was healed during this turn"* needs a **per-turn HEALED flag on the state**,
+> which is a persisted-shape change and therefore a `MATCH_RECORD_VERSION` bump on top of
+> the engine bump. It is not a 2-printing slice.
+>
+> ⚠️ **THE CENSUS ARITHMETIC A SUCCESSOR MUST GET RIGHT.** D373 was a **1:2** step (D372
+> was 2:2; D369/D370/D371 each 1:2). **BEFORE YOU TOUCH A NUMBER, MEASURE BOTH COLUMNS**:
+> `corpus().filter(([, s]) => s === YOUR_SENTENCE)` gives the records and `units(...)`
+> gives the printings, and the rungs are keyed on **both**.
+>
+> 🛑 **AND THE RUNG COUNT IS NOT INHERITABLE — DO NOT TRY.** D372's page said *"fifteen
+> rungs across nine files"*; D373 moved a number in **ELEVEN** files. Budget one full
+> `bunx vitest run --pool=forks --maxWorkers=2` (~95–125 s) and let the red run name them.
+> Three are unreachable by any grep of the current figures: two are difference-keyed
+> (`BUILT.attack - 922` and `BUILT.attack - 922 - 252`) and one is a bare-literal OPERAND
+> (`expect(499 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS)`). **SEVEN SLICES RUNNING
+> HAVE FOUND THAT OPERAND BY RUNNING THE SUITE. IT IS A PROPERTY OF THE RUNG, NOT A
+> LAPSE.** The eleven files at this head: `benchAllDamagedBonus`, `benchNamedBonus`,
+> `benchTypeBonus`, `censusAtHead`, `clauseApostrophe`, `exOnlyActive`, `legacyEnergy`,
+> `opponentResistanceBonus`, `opponentToolBonus`, `precociousEvolution`,
+> `sameEnergyBonus`, `sawkRequirementSplit`.
+>
+> ⚠️ **THE SEAT-PARAMETER QUESTION D366 LEFT OPEN IS STILL OPEN AND STILL UNPRICED.**
+> **DO NOT re-point any seat-named member at a seat parameter without driving every
+> existing consumer on a board first — that is a RENAME until proven otherwise** (D365
+> recorded it, D366 reproduced it, D362 priced it at 31 sites across 7 files).
+>
+> ⚠️ **AND THE TOOLING NOTE D369 LEFT IS STILL UNPINNED: `bun run mutants --list` IS
+> READ-ONLY BY ORDERING ALONE.** It is answered before `recoverFromJournal()`, and **no
+> suite pins that** — the harness has no test file. If you touch
+> `scripts/mutation/run.ts`, that ordering is load-bearing.
+>
+> ⏳ **WHOLE-CORPUS SWEEP: LAUNCHED DETACHED AND DELIBERATELY NOT READ ON THIS PAGE.**
+> The coordinating session owns the close-out commit and writes the result from the log.
+> **PREDICTION, written before the run: 1190 · 1167 killed · 23 known survivor(s) ·
+> 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s), `SWEEP_EXIT=0`.**
+> The arithmetic behind it: 1185 − 1 retired + 6 new = 1190; 1162 − 1 + 6 = 1167 killed;
+> the declared-survivor set is untouched at 23. 🛑 **IF THE RUN COMES BACK WITH A
+> SURVIVOR ON A `D373-` ROW, THE `--decision D373` PROBE ALREADY SAID KILLED FOR ALL SIX
+> ON THIS EXACT TREE** — reconcile by id before assuming a regression.
+>
+> ⚠️ **THE PAGE WAS WRITTEN BEFORE THE SWEEP FINISHED, ON PURPOSE** — that is what puts
+> this page inside the corpus the sweep checks (D369's pattern), and all of
+> `progress.md`'s own mutant `find` anchors were re-verified to match exactly once
+> against the rewritten page before the run started, along with the whole 1190-row corpus.
+>
+> 🛑 **AND THE ONE THING A TYPE ERROR MID-SWEEP MEANS.** A type error reported while a
+> mutation run is writing to the tree is a reading of the **MUTANT**, not of your commit.
+> Settle it by re-measuring `bun run check` on the closed tree — never by editing from
+> the diff. (D372 paid this; it cost nothing because it was already written down.)
+
+### Prior resume point (P3-M5 — D372, the universal-over-the-Bench candidate handed over, kept for continuity)
+
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-20, after D372)
 >
@@ -3079,7 +3254,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D372, *the cross-board equal-Energy clause: the SHAPE ANSWER WAS ALREADY WRITTEN DOWN, in the helper's own doc block.*** Engine **0.276.0 → 0.277.0**; `MATCH_RECORD_VERSION` **STAYS 22**. **BUILT: `activeEnergyCountsEqual`** — 1 union member, 2 reader arms, **1 LITERAL** `CONDITIONAL_DAMAGE_CLAUSES` row and 1 new import, ZERO new vocabulary / maps / templates / patterns, serving *"If this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached, this attack does 100 more damage."* **and the same clause at 120** — 1 legal printing each. 🛑 **CARDS, NOT UNITS, AND THE ENGINE DECIDED IT FIRST**: `countAttachedEnergy(state, pokemon, null)` IS the unfiltered CARD count and says so in its own words, so the member DELEGATES; the two readings are separated on a `fix-blend` board in BOTH directions (1 ≠ 2 by card / 2 = 2 by unit, and 2 = 2 by card / 2 ≠ 4 by unit). ⚠️ **THE CROSS-BOARD FORM WAS ALREADY SHIPPED ONE OPERATOR OVER** — `attack.ts` SUMS the same two calls on the same two bodies (8 legal printings) — so D371's grep-what-already-reads-it lesson came back CHEAP this time instead of dangerous. 🛑 **THE ZONE IS THE BODY AND THE WRONG CODE WAS ALREADY IMPORTED**: `countEnergyInPlay(state, seat, null)` has been in `interpreter.ts`'s import block since D193 and reads Active PLUS Bench — a mutant, driven both ways. 🛑 **AND IT FALSIFIED A COMMENT IN A FILE IT DOES NOT TOUCH**: `handSizesEqual`'s D119 claim of being *"the ONE SEAT-SYMMETRIC member"* is corrected to **FIRST** in `effects.ts`, `interpreter.ts` and `publicCount.test.ts`'s TEST NAME — and this is the first member where SPELLING-symmetry (asymmetric) and VALUE-symmetry (commutes) come apart. ✅ **D207's SUPPLY question does not ARISE**: the field is `InPlayPokemon.energy`, game state the engine writes itself, so the empty-candidate-set failure is unreachable by construction. ⚠️ **THE PRINTED NEAR MISS IS LEFT REFUSED ON PURPOSE** — *"…has MORE Energy attached than your opponent's Active Pokémon"*, 1 legal printing, the same two operands under a STRICT inequality; building it would have made the `===` → `>` mutant green for the wrong reason, so it is pinned as a tripwire and handed on priced. Census raw 1,229 → **1,231**, `BUILT.attack` 1,258 → **1,260**, resolving SENTENCES 348 → **350** (**+2, the first 2:2 step in this run**). **5 mutants, one per claim: 5 KILLED / 0 GAPs / 0 ERRORS**; corpus **1180 → 1185**; a SIXTH claim (cards-not-units) DECLARED with no row, because the unit readings need an import `interpreter.ts` has never taken. `bun run check` **379 files / 7,864 tests, exit 0**.; **whole-corpus sweep 1185 · 1162 killed · 23 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 errors, `SWEEP_EXIT=0` read**, verified by id both directions and the survivor set diffed identical to D371's.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D373, *the universal over the Bench: an EMPTY-SET BOUNDARY that had to be CHOSEN, because the two precedents turned out to be EACH OTHER'S NEGATION.*** Engine **0.277.0 → 0.278.0**; `MATCH_RECORD_VERSION` **22 UNCHANGED**. D369's deferral taken: an empty Bench does **NOT** satisfy *"all of your Benched Pokémon have at least 1 damage counter on them"* — a CHOICE, with its warrant, its falsifier and an attribution control that differs from the member on exactly ONE board in the whole game. 1 union member + 1 literal clause row + 2 reader arms; ZERO new vocabulary. `bun run check` **380 files / 7,878 tests, exit 0**; **6 mutants, 6 KILLED / 0 GAPs**, corpus **1185 → 1190**.) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D372)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D372, *the cross-board equal-Energy clause: the SHAPE ANSWER WAS ALREADY WRITTEN DOWN, in the helper's own doc block.*** Engine **0.276.0 → 0.277.0**; `MATCH_RECORD_VERSION` **STAYS 22**. **BUILT: `activeEnergyCountsEqual`** — 1 union member, 2 reader arms, **1 LITERAL** `CONDITIONAL_DAMAGE_CLAUSES` row and 1 new import, ZERO new vocabulary / maps / templates / patterns, serving *"If this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached, this attack does 100 more damage."* **and the same clause at 120** — 1 legal printing each. 🛑 **CARDS, NOT UNITS, AND THE ENGINE DECIDED IT FIRST**: `countAttachedEnergy(state, pokemon, null)` IS the unfiltered CARD count and says so in its own words, so the member DELEGATES; the two readings are separated on a `fix-blend` board in BOTH directions (1 ≠ 2 by card / 2 = 2 by unit, and 2 = 2 by card / 2 ≠ 4 by unit). ⚠️ **THE CROSS-BOARD FORM WAS ALREADY SHIPPED ONE OPERATOR OVER** — `attack.ts` SUMS the same two calls on the same two bodies (8 legal printings) — so D371's grep-what-already-reads-it lesson came back CHEAP this time instead of dangerous. 🛑 **THE ZONE IS THE BODY AND THE WRONG CODE WAS ALREADY IMPORTED**: `countEnergyInPlay(state, seat, null)` has been in `interpreter.ts`'s import block since D193 and reads Active PLUS Bench — a mutant, driven both ways. 🛑 **AND IT FALSIFIED A COMMENT IN A FILE IT DOES NOT TOUCH**: `handSizesEqual`'s D119 claim of being *"the ONE SEAT-SYMMETRIC member"* is corrected to **FIRST** in `effects.ts`, `interpreter.ts` and `publicCount.test.ts`'s TEST NAME — and this is the first member where SPELLING-symmetry (asymmetric) and VALUE-symmetry (commutes) come apart. ✅ **D207's SUPPLY question does not ARISE**: the field is `InPlayPokemon.energy`, game state the engine writes itself, so the empty-candidate-set failure is unreachable by construction. ⚠️ **THE PRINTED NEAR MISS IS LEFT REFUSED ON PURPOSE** — *"…has MORE Energy attached than your opponent's Active Pokémon"*, 1 legal printing, the same two operands under a STRICT inequality; building it would have made the `===` → `>` mutant green for the wrong reason, so it is pinned as a tripwire and handed on priced. Census raw 1,229 → **1,231**, `BUILT.attack` 1,258 → **1,260**, resolving SENTENCES 348 → **350** (**+2, the first 2:2 step in this run**). **5 mutants, one per claim: 5 KILLED / 0 GAPs / 0 ERRORS**; corpus **1180 → 1185**; a SIXTH claim (cards-not-units) DECLARED with no row, because the unit readings need an import `interpreter.ts` has never taken. `bun run check` **379 files / 7,864 tests, exit 0**.; **whole-corpus sweep 1185 · 1162 killed · 23 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 errors, `SWEEP_EXIT=0` read**, verified by id both directions and the survivor set diffed identical to D371's.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D371)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D371, *the opponent-Resistance clause: the SAME COLUMN the engine already read, asked a DIFFERENT question.*** Engine **0.275.0 → 0.276.0**; `MATCH_RECORD_VERSION` **STAYS 22**. **BUILT: `opponentActiveHasResistance { type }`** — 1 union member, 2 reader arms, 1 new anchored PATTERN over the existing `CLAUSE_POKEMON_TYPES`, ZERO new vocabulary / maps / clause-table rows, serving *"If your opponent's Active Pokémon has {F} Resistance, this attack does 50 more damage."* (**2 legal printings**). 🛑 **THE SUPPLY CHECK RAN FIRST (D207) AND PASSED** — `Card.resistances` is a real ingested column, so not the `Tera` shape; the `FIXTURE_POOL` figure (24 of 444, 16 Fighting) is recorded as a **FLOOR ON A BIASED SAMPLE**, not a census. 🛑 **AND THE SHAPE QUESTION IS THE MEMBER: `resistanceOf` asks whether the Resistance applies to THIS attacker and the clause asks whether the defender HAS one** — separated on a board (Metal attacker, Fighting-resistant defender: clause TRUE, modifier NULL, **60** against **10**). Census raw 1,227 → 1,229, `BUILT.attack` 1,256 → 1,258, unbuilt 505 → 503. `bun run check` GREEN **378 files / 7,840 tests**; **7 mutants / 7 killed / 0 GAPs**, corpus 1173 → 1180; **whole-corpus sweep 1180 · 1157 killed · 23 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 errors, `SWEEP_EXIT=0` read**, verified by id both directions and the survivor set diffed identical to D370's.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D370)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D370, *the bench-scoped type clause: the VOCABULARY CHECK run first, both widenings priced and DECLINED, and a comment falsified by a widening three slices away.*** Engine **0.274.0 → 0.275.0**; `MATCH_RECORD_VERSION` **22 unchanged**. **1 new `BoardCondition` member (`yourBenchHasType { type }`), 2 reader arms and 1 new anchored PATTERN reusing `CLAUSE_POKEMON_TYPES` whole — ZERO new vocabulary, ZERO new maps, ZERO new clause-table rows.** `{M}` → **Metal** passes the vocabulary check; **`Tera`, the identical sentence one token over, fails it and must stay LOUD**. `opponentActiveHasType` could not be widened (a RENAME, and a lookup would become a quantifier) and neither could `yourBenchHasNamed` (OPEN vocabulary vs CLOSED). **Both printings are on METAL attackers, so "Bench" vs "in play" is worth the whole +80** — D279's Falinks refutation with a type. `bun run check` **GREEN 377 files / 7,812 tests**; **6 mutants / 6 killed / 0 gaps**, corpus 1167 → 1173; **whole-corpus sweep 1173 · 1150 killed · 23 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 errors**, verified by id both directions.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D369)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D369, *the cross-board Pokémon Tool clause, a shape question whose answer was YES, and a safety tool that was eating runs.*** Engine **0.273.0 → 0.274.0**; `MATCH_RECORD_VERSION` **STAYS 22**, read from source. `opponentActiveHasToolAttached` — **1** union member, **2** reader arms, **1** literal clause row, **2 legal printings**, the cross-board twin of D122's `yourActiveHasToolAttached`. The handed *"all of your Benched Pokémon"* candidate is **DEFERRED ON A SEMANTIC BOUNDARY, NOT ON SHAPE OR PRICE** — the shape is fine and the catalog holds exactly ONE universally-quantified antecedent, so the empty-Bench reading has nothing to triangulate against. Also: `bun run mutants --list` no longer performs the journal recovery, which had been silently restoring a live run's file. `bun run check` **376 files / 7,786 tests, exit 0**; **6 mutants, 6 killed**, corpus **1161 → 1167**; **whole-corpus sweep 1144 killed / 23 known / 0 GAPs / 0 errors**.) |
@@ -3146,6 +3322,137 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-20 — build session #313 (P3-M5 — D373, the universal over the Bench: an empty-set boundary that had to be CHOSEN, because the two precedents turned out to be each other's negation)
+
+Engine **0.277.0 → 0.278.0**; `MATCH_RECORD_VERSION` **22**, read from source — one
+bare-tag union member and one literal clause-table row persist nothing.
+
+**🛑 THE SLICE WAS NOT THE BUILD.** D369 measured *"all of your Benched Pokémon have at
+least 1 damage counter on them"* — Drampa `sv05-138`/`-184` "Raging Cannon", **2 legal
+printings** — priced it at the cheapest shape this family has (1 bare-tag member, 1
+literal row, 2 arms), and then **REFUSED TO BUILD IT**. Not on shape, and not on price:
+on a third question. *What would the row MEAN on an empty Bench?* The clause is worth
+**+120**, an empty Bench happens in every game, and the catalog cannot answer it — the
+whole 640-sentence legal attack column prints **exactly one** `/^If all of /` record, so
+the population is one and there is no sibling to triangulate against. D373 took the
+deferral and settled the boundary. **THE ANSWER IS FALSE, AND IT IS RECORDED AS A CHOICE
+RATHER THAN AS A FACT.**
+
+**🛑 THE RULES DO NOT SETTLE IT — MEASURED, NOT ASSUMED.** Four instruments were asked
+and **all four are silent**:
+
+* `docs/reference/ptcg-rules.md` states no quantifier rule at all;
+* the official Pokémon TCG **glossary** defines neither *"all"* nor *"each"*;
+* the **Rulings Compendium** publishes nothing on a universal antecedent over an empty
+  Bench (its Bench and Attacks categories carry the *"do as much as you can"* rulings
+  for EFFECTS, which is a different question);
+* the **official Japanese card page for this exact printing** — ジジーロン, SV5M 060,
+  「げきこうほう」, *"自分のベンチポケモン全員にダメカンがのっているなら、120ダメージ追加。"* —
+  **carries NO Q&A entry at all**.
+
+A real-game ruling would have beaten any engine convention outright. **THERE IS NONE,
+AND AN ABSENCE RECORDED BEATS A RULING INVENTED** (D183's rule, one domain over).
+
+**🛑 AND THE PRECEDENT D369 THOUGHT IT HAD IS NOT A PRECEDENT — THIS IS THE FINDING THAT
+MADE THE QUESTION DECIDABLE.** D369 recorded two prior empty-set data points and read
+them as one *convention* and one *necessity*: `noEnergyOnYourPokemon`, TRUE with nothing
+in play, **"chosen on a board the game cannot reach"**; `yourBenchDamaged`, FALSE on an
+empty Bench, **"forced by logic"**. The first half is wrong.
+`noEnergyOnYourPokemon`'s printed sentence is *"none of your Pokémon have any Energy
+attached"* — a **NEGATED EXISTENTIAL**, `¬∃p. hasEnergy(p)` — and `¬∃` over the empty
+set is TRUE by **exactly the same forcing** that makes `∃` over the empty set FALSE.
+**THE TWO DATA POINTS ARE EACH OTHER'S NEGATION. NEITHER IS A CONVENTION, AND TOGETHER
+THEY CARRY NO INFORMATION ABOUT A POSITIVE UNIVERSAL.** Driven on one board in
+`benchAllDamagedBonus.test.ts` §2, both notes read back, so the correction is to the
+INTERPRETATION of the two facts and not to the facts.
+
+So `yourBenchAllDamaged` is **the first empty-set semantics this vocabulary has ever
+actually chosen**, which is why it is argued in the member's doc block instead of copied
+from a neighbour.
+
+**THE CHOICE IS FALSE, ON TWO TIE-BREAKS THAT AGREE.**
+
+1. **The pay-out is asymmetric.** A wrong TRUE **silently ADDS 120** to an attack that
+   earned nothing, on a board that occurs in every game. A wrong FALSE withholds a bonus
+   a player can see is missing and dispute. An engine that must guess should guess
+   toward **not paying**.
+2. **The printed clause has to do work.** Under the vacuous reading the cheapest way to
+   satisfy a condition about your Bench is **to have no Bench** — the condition would be
+   satisfied by *ignoring* it, and a conditional bonus whose easiest satisfaction is the
+   null action is not a condition.
+
+⚠️ **AND THE FALSIFIER IS NAMED**, in the member's doc block and in §2: an official Q&A
+on the printing, a Compendium ruling, or PTCG Live observed paying the +120 with an
+empty Bench. The remedy is deleting the `length > 0` guard and inverting ONE expectation.
+**A CHOICE WITH NO STATED FALSIFIER IS A FACT NOBODY CHECKED.**
+
+**✅ THE GUARD BUYS AN INVARIANT, WHICH IS WHAT MAKES IT MORE THAN A PREFERENCE.** With
+the non-empty clause, this member **IMPLIES** `yourBenchDamaged` on every board; under
+the vacuous reading it would not — the empty Bench is the one board in the game where a
+TRUE universal sits above a FALSE existential. Swept over eight bench shapes on both
+seats, with a witness board where the two disagree. **AND IT CARRIES AN ATTRIBUTION
+CONTROL** (D214's rule): the member's own predicate with the guard removed is computed
+in the suite and compared board for board — it differs from the member on **exactly one
+board in the whole game** and agrees on the other seven shapes. So the guard is *shown*
+to be doing something rather than asserted to be.
+
+**⚠️ THE NEAR MISS IS ONE METHOD CALL.** `yourBenchDamaged` is `.some` and this is
+`.every`, over the same array, on the same seat, reading the same field; the printed keys
+differ by five words and the whole-sentence anchor is all that keeps them apart. Driven
+on ONE board with two benched bodies and one damaged (existential TRUE, universal FALSE),
+plus the ZONE both ways (a damaged Active must not *rescue* an undamaged Bench) and the
+SEAT both ways.
+
+**🛑 D369's TRIPWIRE FIRED, AS DESIGNED, AND WAS REWRITTEN IN PLACE RATHER THAN DELETED.**
+`opponentToolBonus.test.ts` §2's last rung asserted `resolvedByAnyReader(UNIVERSAL) ===
+false` and said in its own comment *"a row added for it without the boundary being
+settled turns this green rung red"*. It went red on the first run after the row landed.
+It is now the **receipt for its own lifting** — the inversion, the member it resolves to,
+and the empty-Bench answer, kept beside the argument that made the deferral.
+
+**⚠️ AND THE MUTANT POINTED AT THAT REFUSAL WAS *RETIRED*, NOT RE-POINTED IN PLACE.**
+`D369-deferred-universal-gets-the-existential-row` mutated the clause table by inserting
+the universal sentence mapped onto the EXISTENTIAL member. After D373 that insertion is a
+**duplicate Map key ABOVE the real row**, so the real row wins, the mutant cannot change
+the program, and it would have reported a **PHANTOM SURVIVOR** rather than an error —
+which no rung would have caught. **A MUTANT THAT CANNOT CHANGE THE PROGRAM IS REMOVED,
+NOT TESTED AROUND** (D205/D206/D208). Its claim is carried by D373's C3 against the row
+that now exists, and the retirement sits in `mutants.ts` as a comment.
+
+**THE CENSUS STEP IS +1 SENTENCE / +2 PRINTINGS** — back to the 1:2 shape after D372's
+2:2. raw 1,231 → **1,233**, `BUILT.attack` 1,260 → **1,262**, resolving sentences 350 →
+**351**, unbuilt remainder 501 → **499**, the residue 28 / 36 → **27 / 34**, the
+2-printing band 5 → **4**, `FIXTURE_POOL` 453 → **454**; `REGISTRY_ATTACK_UNITS` (16) and
+`splitHead` (13) stand still. ⚠️ **ELEVEN FILES CARRIED A NUMBER THAT MOVED** — two more
+than D372's nine — and three of the rungs are unreachable by any grep of the current
+figures (`BUILT.attack - 922`, `BUILT.attack - 922 - 252`, and a bare-literal OPERAND
+`501 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS`). All three were found by running
+the suite, for the seventh consecutive slice.
+
+**SHIPS:** 1 `BoardCondition` member (`yourBenchAllDamaged`), 2 reader arms, 1 **LITERAL**
+clause-table row. The printed *"at least 1"* looks like a varying token and is not: the
+corpus prints one threshold, and a number has no closed vocabulary to fail against, so
+D118 forbids the template. **ZERO new vocabulary, maps, templates, patterns, imports,
+ops, events, error codes, registry rows, state fields, prompt kinds, choice kinds or
+`packages/schema` bytes.**
+
+**VERIFICATION.** `bun run check`: **380 files / 7,878 tests, exit 0** (from 379 / 7,864
+— the delta is +1 file and +14 cases, all of them `benchAllDamagedBonus.test.ts`).
+**MUTANTS: 6 rows, ONE PER CLAIM — 6 KILLED / 0 GAPs / 0 ERRORS**; corpus **1185 → 1190**
+(−1 retired, +6 new). `--decision D275` after the bump reported **ERROR** first — the
+version anchor is not a version site, it is an anchor a version site BREAKS — was
+re-pointed at `0.278.0` in a commit of its own, and then came back **8 killed / 0 errors**.
+
+⚠️ **NO CARD IDS WERE READ FROM THE CATALOG AND NONE ARE GUESSED.** D369's finding is
+unchanged: no D1 credentials in this container and no local sqlite copy. `sv05-138`/`-184`
+and the JP `SV5M 060` are recorded from the PRINTED CARD, and a literal row needs no id.
+
+**WHOLE-CORPUS SWEEP: LAUNCHED DETACHED AND NOT READ HERE** — the coordinating session
+owns that close-out. **PREDICTION, written before the run: 1190 · 1167 killed · 23 known
+survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s),
+`SWEEP_EXIT=0`.** (1185 → 1190 is −1 retired +6 new; 1162 − 1 + 6 = 1167 killed; the
+declared-survivor set is untouched at 23.)
 
 ### 2026-08-20 — build session #312 (P3-M5 — D372, the cross-board equal-Energy clause: the shape answer was already written down, in the helper's own doc block)
 

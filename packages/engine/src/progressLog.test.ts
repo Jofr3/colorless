@@ -287,9 +287,14 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // LINE-COUNT floor below is what would have, and in the event the seam was spotted
   // by reading the file. **A COUNT OF HEADINGS IS NOT A COUNT OF ARCHIVES**, which is
   // why the span-size assertion sits underneath it and is not decoration.
-  const ARCHIVES = 42;
+  // 🆕🆕 D373 — 42 → **43**, RAISED DELIBERATELY, which is the UP branch of the message
+  // below. D373 demoted D372's live resume point under `### Prior resume point (P3-M5 —
+  // D372, …)` and the demoted BODY was carried across with it — the seam was re-read
+  // after the edit and the D372 body confirmed present, which is the check D372's own
+  // comment above asks for by name.
+  const ARCHIVES = 43;
 
-  it("the page still holds all 42 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 43 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
