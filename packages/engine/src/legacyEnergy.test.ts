@@ -915,6 +915,12 @@ describe("the engine version", () => {
     // `resistanceOf`, asking a DIFFERENT question (does it apply to THIS attacker);
     // the member deliberately does not route through it. The post-bump anchor pass
     // was clean.
+    // 🆕🆕 D373 — 0.277.0 → **0.278.0**, ONE new `BoardCondition` member
+    // (`yourBenchAllDamaged`, the UNIVERSAL over the Bench) reached by ONE literal
+    // clause-table row and TWO reader arms. The behaviour change is a NEW ANSWER on a
+    // board the engine could already build — an empty Bench is FALSE, chosen rather
+    // than inherited — so it is a bump for the ordinary reason and NOT a persisted
+    // shape change: `MATCH_RECORD_VERSION` stays 22.
     // 🆕🆕 D372 — 0.276.0 → **0.277.0**, ONE new `BoardCondition` member
     // (`activeEnergyCountsEqual`), TWO reader arms and ONE literal clause-table row
     // — back to a ROW after two consecutive PATTERN bumps, because this sentence
@@ -924,8 +930,8 @@ describe("the engine version", () => {
     // because the readers answer TWO printed sentences they used to refuse, not
     // because anything about counting Energy changed. The post-bump anchor pass was
     // clean.
-    expect(engineVersion).toBe("0.277.0");
-    expect(manifest.version).toBe("0.277.0");
+    expect(engineVersion).toBe("0.278.0");
+    expect(manifest.version).toBe("0.278.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

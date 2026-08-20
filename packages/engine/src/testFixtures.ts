@@ -10929,6 +10929,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
       in counts none of them use; a dedicated body keeps those suites' seeded shuffles
       exactly where they were measured (D270's rule, one zone over). */
   "fix-energyholder": battler("fix-energyholder", { hp: 200 }),
+  /** 🆕 D373 — the UNIVERSAL-OVER-THE-BENCH clause: *"If all of your Benched Pokémon
+      have at least 1 damage counter on them, this attack does 120 more damage."* —
+      Drampa `sv05-138`/`-184`, whose two printings are byte-identical in rules text,
+      so ONE fixture serves both.
+
+      Costed `{C}` and based at **10** so the +120 is unmistakable in the dealt number,
+      and `hp: 150` so the attacker survives whatever the boards hand back. The `types`
+      are `battler`'s default: nothing in this clause reads a type on any body.
+
+      ⚠️ **THE ATTACKER IS DELIBERATELY NOT A BODY THIS FILE EVER BENCHES.** The clause
+      quantifies over the BENCH and the attacker is the ACTIVE, so a fixture that could
+      appear in both spots would let a board pass for the wrong reason. */
+  "fix-benchall": battler("fix-benchall", {
+    hp: 150,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Raging Cannon",
+        damage: 10,
+        effect:
+          "If all of your Benched Pokémon have at least 1 damage counter on them, this attack does 120 more damage.",
+      },
+    ],
+  }),
   "fix-exonly": battler("fix-exonly", {
     hp: 120,
     attacks: [
@@ -11127,6 +11151,26 @@ export const SAME_ENERGY_DECK = deckOf({
   "fix-basic-1": 8,
   "fix-blend": 8,
   "fix-energy": 28,
+});
+
+/** 🆕🆕 D373 — the UNIVERSAL-OVER-THE-BENCH board. A DEDICATED 60 (D270's rule)
+    rather than a widened `SAME_ENERGY_DECK`, so D372's seeded boards keep the
+    shuffles they were measured on.
+
+      • `fix-benchall` — the attacker, the one printed sentence, and a body this
+        file never benches;
+      • `fix-basic-1` — the BENCHED cast. Plural on purpose and generous in count:
+        every board that separates `.every` from `.some` needs at least TWO benched
+        bodies with different damage, and the widest one needs the full Bench of 5;
+      • `fix-bigbody` — 200 HP across the table, so the +120 lands without a KO tail
+        rewriting the board the assertions are read off.
+
+    `fix-energy` pays the `{C}`. 4 + 24 + 8 + 24 = **60**. */
+export const BENCH_ALL_DAMAGED_DECK = deckOf({
+  "fix-benchall": 4,
+  "fix-basic-1": 24,
+  "fix-bigbody": 8,
+  "fix-energy": 24,
 });
 
 /** 🆕🆕 D363 — the requirement SPLIT. A DEDICATED 60 (D270's rule) rather than a

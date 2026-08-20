@@ -174,15 +174,16 @@ const LEFT: readonly (readonly [string, number, string])[] = [
     "NOT A `BoardCondition` AT ALL — the clause reads THIS ATTACK'S COST, which two printings set to two different values, so no state+seat predicate can answer it",
   ],
   [
-    // 🛑🆕🆕 D369 — THIS ROW'S PREDECESSOR IS NOW BUILT, AND ITS REPLACEMENT IS THE
-    // OTHER 2-PRINTING CANDIDATE D368 HANDED OVER. The cross-board Pokémon Tool
-    // clause that sat here — *"…your opponent's Active Pokémon has a Pokémon Tool
-    // attached…"*, 2 printings, priced here as "a second member" — was exactly that,
-    // and D369 bought it (`opponentToolBonus.test.ts`). What takes its place is the
-    // candidate D369 DEFERRED, so this list keeps naming the head of the residue.
-    "If all of your Benched Pokémon have at least 1 damage counter on them, this attack does 120 more damage.",
+    // 🛑🆕🆕 D373 — THIS ROW'S PREDECESSOR IS NOW BUILT, FOR THE SECOND SLICE RUNNING,
+    // AND THIS TIME THE THING THAT WAS BOUGHT WAS A *MEANING* RATHER THAN A MEMBER.
+    // The universal-over-the-Bench clause that sat here — deferred by D369 on an
+    // EMPTY-SET SEMANTIC BOUNDARY the catalog could not settle — was settled by D373
+    // and built (`benchAllDamagedBonus.test.ts`): an empty Bench is FALSE, chosen and
+    // argued rather than inherited. What takes its place is the next head of the
+    // 2-printing band, so this list keeps naming the head of the residue.
+    "If this Pokémon has any Team Rocket's Energy attached, this attack does 60 more damage.",
     2,
-    "EXPRESSIBLE — a universal over the Bench is a `(state, seat)` fact and `noEnergyOnYourPokemon` is already one — but its EMPTY-BENCH reading is a SEMANTIC BOUNDARY no catalog evidence settles: the whole legal attack column prints ONE universally-quantified antecedent, so there is no sibling to triangulate against",
+    "a NAMED-CARD read on an ATTACHED Energy — the shape exists (`yourActiveHasEnergyAttached` carries `energy: BasicEnergyType | \"special\"`), but *Team Rocket\u2019s Energy* is neither a basic type nor the whole Special class, so the SHAPE question is whether the member keys on ONE card name or on the `Team Rocket\u2019s ` PREFIX FAMILY — and D118 forbids a template over an open-ended card NAME",
   ],
   [HANDED_CANDIDATE, 1, "an opponent-seat bench COUNT — D366's own handoff, and the reason this slice measured instead of inheriting"],
 ];
@@ -249,13 +250,18 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // printings (the cross-board Pokémon Tool clause, `opponentToolBonus.test.ts`),
     // so BOTH numbers step again and every figure below is re-derived from the
     // measured head rather than left frozen at the head that measured it.
-    expect([refused.length, units(refused)]).toEqual([28, 36]);
-    expect([refused.length + 2, units(refused) + 2]).toEqual([30, 38]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([31, 40]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([32, 42]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([33, 44]);
-    expect([refused.length + 6, units(refused) + 8 + 3]).toEqual([34, 47]);
-    expect([refused.length + 6 + TAKEN.length, units(refused) + 11 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D373 — the residue is 27 / 34. D373 took ONE sentence / TWO printings (the
+    // UNIVERSAL-OVER-THE-BENCH clause, `benchAllDamagedBonus.test.ts`), so the chain
+    // gains one more term and every earlier head is still re-derived from the
+    // measured one rather than quoted.
+    expect([refused.length, units(refused)]).toEqual([27, 34]);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([28, 36]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([30, 38]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([31, 40]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([32, 42]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([33, 44]);
+    expect([refused.length + 7, units(refused) + 10 + 3]).toEqual([34, 47]);
+    expect([refused.length + 7 + TAKEN.length, units(refused) + 13 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -566,8 +572,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(350); // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1231); // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(351); // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1233); // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -582,8 +588,10 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // therefore takes a `- 2` where the four before it each took a `- 1`, while the
     // printing term takes the same `- 2` they did — which is the whole arithmetic of
     // "a clause-keyed band entry is not a sentence count", written as a subtraction.
-    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1 - 2).toBe(335);
-    expect(units(resolved) - 13 - 3 - 2 - 2 - 2 - 2).toBe(1207);
+    // 🆕🆕 D373 — a SIXTH subtrahend on each line, and a 1 / 2 step again: the
+    // sentence term takes a `- 1` where D372's took a `- 2`.
+    expect(resolved.length - TAKEN.length - 1 - 1 - 1 - 1 - 2 - 1).toBe(335);
+    expect(units(resolved) - 13 - 3 - 2 - 2 - 2 - 2 - 2).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {

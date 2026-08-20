@@ -833,7 +833,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(33); // 🆕🆕 D372 — 32 -> 33, and the new clause is a literal ROW that DOES spell a possessive, so it lands in the apostrophe half (13 -> 14) and in the ROW partition of it — the combination D371's did not have. ⚠️ ONE row and not two: this census is CLAUSE-keyed, and D372's two printed sentences share one clause // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(carried.size).toBe(34); // 🆕🆕 D373 — 33 -> 34, ONE row and an apostrophe-FREE one, so THIS half stands still at 14 while the apostrophe-free half moves (19 -> 20) // 🆕🆕 D372 — 32 -> 33, and the new clause is a literal ROW that DOES spell a possessive, so it lands in the apostrophe half (13 -> 14) and in the ROW partition of it — the combination D371's did not have. ⚠️ ONE row and not two: this census is CLAUSE-keyed, and D372's two printed sentences share one clause // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
     expect(withApostrophe).toHaveLength(14); // 🆕🆕 D372 — 13 -> 14, the CROSS-BOARD EQUAL-ENERGY clause, and it is a ROW rather than TEMPLATE-owned: `rowClauses` moves 10 -> 11 with it while `TEMPLATE_OWNED` stands still at 3 // 🆕🆕 D371 — 12 -> 13, the OPPONENT-RESISTANCE clause, and it is TEMPLATE-owned rather than a row: the third entry in `TEMPLATE_OWNED` below, so `rowClauses` stands still at 10 while this half moves // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
@@ -884,10 +884,15 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // narrowing is just a way of not looking.
     const carried = carriedBonusClauses();
     const without = [...carried].filter((clause) => !clause.includes(APOS)).sort();
-    expect(without).toHaveLength(19); // 🆕🆕 D370 +1 — the bench-scoped TYPE clause, apostrophe-free and TEMPLATE-owned rather than a row // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
+    expect(without).toHaveLength(20); // 🆕🆕 D373 +1 — the UNIVERSAL-OVER-THE-BENCH clause, apostrophe-free and a ROW rather than a template // 🆕🆕 D370 +1 — the bench-scoped TYPE clause, apostrophe-free and TEMPLATE-owned rather than a row // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
     // Pinned BY NAME, so a row added on an apostrophe-free key reddens here.
     expect(without).toEqual(
       [
+        // 🆕🆕 D373 — `yourBenchAllDamaged`, the ONE row this slice adds. It carries no
+        // apostrophe, so it lands in THIS half of the partition, and it sorts directly
+        // above the EXISTENTIAL key it is one method call away from — which is the
+        // clearest place in the repo to see that the two are different strings.
+        "all of your Benched Pokémon have at least 1 damage counter on them",
         "Beldum and Metang are on your Bench",
         "Durant is on your Bench",
         "Illumise is on your Bench",
@@ -922,7 +927,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
     expect(without.length + 14).toBe(carried.size);
-    expect(carried.size).toBe(33); // 🆕🆕 D372 — 32 -> 33, and the apostrophe half moves again (13 -> 14) while THIS one stands still at 19 for the second slice running — but through the OTHER partition of that half: D371's clause was TEMPLATE-owned and D372's is a ROW // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
+    expect(carried.size).toBe(34); // 🆕🆕 D373 — 33 -> 34, and THIS half moves (19 -> 20) while the apostrophe half stands still at 14 — a literal ROW on an apostrophe-free key, the same partition D368's row landed in // 🆕🆕 D372 — 32 -> 33, and the apostrophe half moves again (13 -> 14) while THIS one stands still at 19 for the second slice running — but through the OTHER partition of that half: D371's clause was TEMPLATE-owned and D372's is a ROW // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a

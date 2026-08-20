@@ -192,14 +192,20 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // printed under TWO sentences at 1 printing each — so the SENTENCE term falls by
     // 2 where the PRINTING term falls by 2, and this file's head is re-derived from
     // the live corpus with each earlier figure coming back off it one term later.
-    expect(refused.length).toBe(28);
-    expect(units(refused)).toBe(36);
+    // 🆕🆕 D373 — 28 / 36 -> 27 / 34: the UNIVERSAL-OVER-THE-BENCH clause left the
+    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(27);
+    expect(units(refused)).toBe(34);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
-    expect(refused.length + 2).toBe(30);
-    expect(units(refused) + 2).toBe(38);
-    expect(refused.length + 3).toBe(31);
-    expect(units(refused) + 4).toBe(40);
+    // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
+    // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
+    expect(refused.length + 1).toBe(28);
+    expect(units(refused) + 2).toBe(36);
+    expect(refused.length + 3).toBe(30);
+    expect(units(refused) + 4).toBe(38);
+    expect(refused.length + 4).toBe(31);
+    expect(units(refused) + 6).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -211,14 +217,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // the tie-break MEASURED. Every one of them is a different mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
       "you have 10 or more Basic {R} Energy cards in your discard pile",
     ]);
-    expect(band.length + 1).toBe(6);
-    expect(band.length + 2).toBe(7);
+    expect(band.length + 1).toBe(5);
+    expect(band.length + 2).toBe(6);
+    expect(band.length + 3).toBe(7);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -304,7 +310,9 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // is actually about does not. **THAT IS THE FLOOR BEHAVING LIKE A FLOOR**: a
     // denominator that moved every time an unrelated fixture landed would be worth
     // even less than this one, and the two unmoved columns are what say so.
-    expect(ids).toHaveLength(453);
+    // 🆕🆕 D373 — 453 -> **454**, and the other two columns stand still AGAIN: the
+    // one body this slice adds (`fix-benchall`) prints no Resistance either.
+    expect(ids).toHaveLength(454);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -312,8 +320,9 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // the live ones cannot silently disagree: D372 is +3 bodies / +0 / +0, and
     // D371 was +6 bodies, +3 with a Resistance (`fix-fightweak` has none by
     // design), +2 of them Fighting.
-    expect(ids.length - 3).toBe(450);
-    expect(ids.length - 3 - 6).toBe(444);
+    expect(ids.length - 1).toBe(453);
+    expect(ids.length - 1 - 3).toBe(450);
+    expect(ids.length - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

@@ -160,19 +160,25 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // PRINTING term falls by 2, the first time on this chain that the two are not
     // 1-and-2. **A CLAUSE-KEYED BAND ENTRY IS NOT A SENTENCE COUNT.** Every earlier
     // figure still comes back off the live head rather than being left frozen.
-    expect(refused.length).toBe(28);
-    expect(units(refused)).toBe(36);
+    // 🆕🆕 D373 — 28 / 36 -> 27 / 34: the UNIVERSAL-OVER-THE-BENCH clause left the
+    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(27);
+    expect(units(refused)).toBe(34);
     // D371's recorded residue, then D370's, then D369's, then D368's — all
     // re-derived from THIS head rather than quoted. A guard that only checked the
     // current pair could not tell "a row landed" from "a reader broke".
-    expect(refused.length + 2).toBe(30);
-    expect(units(refused) + 2).toBe(38);
-    expect(refused.length + 3).toBe(31);
-    expect(units(refused) + 4).toBe(40);
-    expect(refused.length + 4).toBe(32);
-    expect(units(refused) + 6).toBe(42);
-    expect(refused.length + 5).toBe(33);
-    expect(units(refused) + 8).toBe(44);
+    // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
+    // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
+    expect(refused.length + 1).toBe(28);
+    expect(units(refused) + 2).toBe(36);
+    expect(refused.length + 3).toBe(30);
+    expect(units(refused) + 4).toBe(38);
+    expect(refused.length + 4).toBe(31);
+    expect(units(refused) + 6).toBe(40);
+    expect(refused.length + 5).toBe(32);
+    expect(units(refused) + 8).toBe(42);
+    expect(refused.length + 6).toBe(33);
+    expect(units(refused) + 10).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -186,7 +192,6 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // mechanism.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
@@ -195,10 +200,11 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // …with D372's clause counted back in the band is SIX, with D371's as well SEVEN,
     // with D370's EIGHT, and with this file's own NINE — the number D368's handoff
     // put at two.
-    expect(band.length + 1).toBe(6);
-    expect(band.length + 2).toBe(7);
-    expect(band.length + 3).toBe(8);
-    expect(band.length + 4).toBe(9);
+    expect(band.length + 1).toBe(5);
+    expect(band.length + 2).toBe(6);
+    expect(band.length + 3).toBe(7);
+    expect(band.length + 4).toBe(8);
+    expect(band.length + 5).toBe(9);
     // The 5-printing declaration clause D368 disqualified on shape is STILL the
     // largest thing in the residue and is STILL refused, so nothing here has quietly
     // re-priced it.
@@ -305,16 +311,29 @@ describe("§2 — the SHAPE question D368 ordered first, settled: YES, and it is
     expect(units(universals)).toBe(2);
   });
 
-  it("🛑 …so NO row was added for it, and this rung fires the day one is", () => {
-    // The tripwire, in D368's shape: the sentence is real, is in the corpus at 2,
-    // matches the skeleton — so it is refused by VOCABULARY, not by the anchor — and
-    // is still refused by all nine readers at this head. A row added for it without
-    // the boundary being settled turns this green rung red.
+  it("🛑🆕🆕 D373 — THE TRIPWIRE FIRED, AND THE BOUNDARY WAS SETTLED BEFORE THE ROW LANDED", () => {
+    // 🛑 **THIS RUNG WAS D369's REFUSAL, AND IT IS NOW D369's REFUSAL BEING LIFTED.**
+    // It read `resolvedByAnyReader(UNIVERSAL) === false` and said "a row added for it
+    // without the boundary being settled turns this green rung red". D373 added the
+    // row, this rung went red, and the inversion below is the receipt — kept HERE,
+    // beside the argument that made the deferral, rather than deleted with it.
     expect(units(corpus().filter(([, s]) => s === UNIVERSAL))).toBe(2);
     expect(BONUS.test(UNIVERSAL.trim())).toBe(true);
-    expect(resolvedByAnyReader(UNIVERSAL)).toBe(false);
-    expect(deriveAttackDamageBonus(UNIVERSAL)).toBeNull();
-    // And the taken sentence has NONE of that problem: it is a threshold on ONE
+    expect(resolvedByAnyReader(UNIVERSAL)).toBe(true);
+    // …and it resolves to a member of its OWN, not to the existential twin the rung
+    // above documents. That distinction is what D369 was protecting, and it is the
+    // one thing a lifted refusal must still assert.
+    expect(deriveAttackDamageBonus(UNIVERSAL)).toEqual({
+      per: 120,
+      count: { kind: "boardCondition", cond: { kind: "yourBenchAllDamaged" } },
+    });
+    // 🛑 THE BOUNDARY, IN ONE LINE: an empty Bench is FALSE. Chosen, not inherited —
+    // the whole argument, its four silent instruments and its falsifier are in
+    // `benchAllDamagedBonus.test.ts` §2 and in the member's doc block.
+    const empty = ready(6103, "p1", "fix-oppotool");
+    expect(empty.players.p1.bench).toHaveLength(0);
+    expect(conditionHolds(empty, "p1", { kind: "yourBenchAllDamaged" })).toBe(false);
+    // And the taken sentence still has NONE of that problem: it is a threshold on ONE
     // body, which is what "the cheapest of the seven to get RIGHT" means.
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
   });

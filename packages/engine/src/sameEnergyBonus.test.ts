@@ -226,17 +226,22 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // 28 / 36 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === TAKEN_100)).toBe(false);
     expect(refused.some(([, s]) => s === TAKEN_120)).toBe(false);
-    expect(refused.length).toBe(28);
-    expect(units(refused)).toBe(36);
+    // 🆕🆕 D373 — 28 / 36 -> 27 / 34: the UNIVERSAL-OVER-THE-BENCH clause left the
+    // residue (1 sentence / 2 printings), re-derived live rather than decremented.
+    expect(refused.length).toBe(27);
+    expect(units(refused)).toBe(34);
     // 🛑 AND THE STEP IS 2 AND 2, WHICH IS THE FIRST 2:2 STEP IN THIS RUN. D368 moved
     // it 1:3 and D369/D370/D371 each 1:2. Every earlier head is re-derived from THIS
     // one rather than frozen, and the sentence term moves by TWO where the printing
     // term moves by two — the arithmetic that says a CLAUSE-keyed band entry is not
     // a sentence count.
-    expect([refused.length + 2, units(refused) + 2]).toEqual([30, 38]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([31, 40]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([32, 42]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([33, 44]);
+    // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
+    // 2 printings (the UNIVERSAL-OVER-THE-BENCH clause).
+    expect([refused.length + 1, units(refused) + 2]).toEqual([28, 36]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([30, 38]);
+    expect([refused.length + 4, units(refused) + 6]).toEqual([31, 40]);
+    expect([refused.length + 5, units(refused) + 8]).toEqual([32, 42]);
+    expect([refused.length + 6, units(refused) + 10]).toEqual([33, 44]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -249,7 +254,6 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // mechanism, and the shape of each is named in the resume point.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
     expect(band.sort()).toEqual([
-      "all of your Benched Pokémon have at least 1 damage counter on them",
       "any of your Pokémon in play are the same type as any of your opponent's Pokémon in play",
       "this Pokémon has any Team Rocket's Energy attached",
       "this Pokémon was healed during this turn",
@@ -257,9 +261,10 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     ]);
     // …with this slice's clause counted back in the band it is SIX, with D371's as
     // well SEVEN, and with D370's as well EIGHT — the chain D368's handoff opened.
-    expect(band.length + 1).toBe(6);
-    expect(band.length + 2).toBe(7);
-    expect(band.length + 3).toBe(8);
+    expect(band.length + 1).toBe(5);
+    expect(band.length + 2).toBe(6);
+    expect(band.length + 3).toBe(7);
+    expect(band.length + 4).toBe(8);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -604,13 +609,14 @@ describe("§6 — SEAT SYMMETRY: which KIND, and the comment it falsified", () =
 describe("§7 — the census moves in exactly ONE summand, and the step is 2 and 2", () => {
   it("the resolving corpus gains TWO sentences and TWO printings", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(350); // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
-    expect(units(resolved)).toBe(1231); // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
+    expect(resolved).toHaveLength(351); // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
+    expect(units(resolved)).toBe(1233); // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
     // The FOUR slices before this one each moved the sentence term by exactly 1;
     // this one moves it by 2 while moving the printing term by the same 2 as three
     // of them. Re-derived from the live head both ways rather than quoted.
-    expect(resolved.length - 2).toBe(348);
-    expect(units(resolved) - 2).toBe(1229);
+    // 🆕🆕 D373 — one more term on each: this slice's step is 1 sentence / 2 printings.
+    expect(resolved.length - 1 - 2).toBe(348);
+    expect(units(resolved) - 2 - 2).toBe(1229);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {
