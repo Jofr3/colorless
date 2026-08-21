@@ -10,6 +10,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
@@ -108,7 +109,9 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-/** The nine live readers, run as one — the same set `censusAtHead.test.ts` uses. */
+/** The live readers, run as one — the same set `censusAtHead.test.ts` uses.
+    🆕🆕 D381 raised it from NINE to TEN (`deriveAttackOptionalCostBoost`), and that
+    is exactly why one row left `STILL_OWED` below. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -119,6 +122,7 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
+  deriveAttackOptionalCostBoost,
 ];
 const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
@@ -126,16 +130,18 @@ const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => re
 const BARE = "Discard a Stadium in play.";
 const MAY = "You may discard a Stadium in play.";
 
-/** …and the FOUR this slice leaves, each named with the mechanism it is waiting on.
+/** …and the THREE this slice leaves, each named with the mechanism it is waiting on.
+    🆕🆕 **D381 TOOK THE FOURTH.** *"You may discard a Stadium in play. If you do, this
+    attack does 140 more damage."* (Cetitan ex `sv10-065`/`sv10-210`, 2 printings) was
+    on this list at D380 with the note *"a tenth reader"*; that reader now exists
+    (`deriveAttackOptionalCostBoost`) and the row moved to `taken` below on ZERO new
+    ops — it spends this slice's `discardStadium` and D378's `stadiumInPlay`.
     Kept as a list rather than as prose because §6 drives them: a successor who widens
     an anchor to swallow one of these reddens here by name. */
 const STILL_OWED = [
   // The TRAILING ANAPHORIC cancel — Eternatus `sv08-141` "World Ender" ({R}{D}{D},
   // 230). One of the TWO legal printings of that shape (§6 measures the other).
   "Discard a Stadium in play. If you can't, this attack does nothing.",
-  // `OPTIONAL_DAMAGE_BOOST` with its antecedent and consequent SWAPPED — Cetitan ex
-  // `sv10-065`/`sv10-210` "Crushing Press" ({W}{W}{W}{C}, 140+). A tenth reader.
-  "You may discard a Stadium in play. If you do, this attack does 140 more damage.",
   // The two `discard that Stadium` TAILS — Chi-Yu `sv06-039` "Ground Melter" and
   // Ting-Lu `sv06-110` "Ground Crasher". `AttackBonusConsequent` (D317) reads
   // *"…more damage, and {consequent}"*; these print *". Then, "* and *", and "*.
@@ -214,15 +220,17 @@ function find<T extends GameEvent["type"]>(
 const SEEDS = [9001, 9013, 9029] as const;
 
 describe("§1 — the price, MEASURED: six printings on one op, against ONE for the best clause row", () => {
-  it("🛑 the family is 6 sentences / 11 printings, and this slice takes 2 / 6 of them", () => {
+  it("🛑 the family is 6 sentences / 11 printings, and 3 / 8 of them now resolve", () => {
     // Both columns, off the same instrument, exactly as the resume point demands:
     // `corpus().filter(...)` gives the RECORDS and `units(...)` gives the PRINTINGS.
     const family = corpus().filter(([, s]) => s.includes("Stadium") && s.includes("iscard"));
     expect([family.length, units(family)]).toEqual([6, 11]);
-    const taken = family.filter(([, s]) => s === BARE || s === MAY);
-    expect([taken.length, units(taken)]).toEqual([2, 6]);
+    // 🆕🆕 D381 — `taken` is 2 → 3 and 6 → 8 printings, and the third row cost NO new
+    // op: the reversed optional boost is a READING over this slice's own op.
+    const taken = family.filter(([, s]) => s === BARE || s === MAY || resolvedByAnyReader(s));
+    expect([taken.length, units(taken)]).toEqual([3, 8]);
     const left = family.filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect([left.length, units(left)]).toEqual([4, 5]);
+    expect([left.length, units(left)]).toEqual([3, 3]);
     // The parts sum, which is what makes a partition a partition — and what stops a
     // successor quietly moving a sentence from one list to the other.
     expect(taken.length + left.length).toBe(family.length);
@@ -495,14 +503,15 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the four COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
+  it("🛑 the three COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
     for (const sentence of STILL_OWED) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
-    // …and they are worth FIVE printings between them, which is the number the next
-    // slice is choosing against.
+    // 🆕🆕 D381 — FIVE printings became THREE, and the two that left did so through a
+    // READER rather than through an op. Three singletons is the number the next slice
+    // is choosing against.
     const left = corpus().filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect(units(left)).toBe(5);
+    expect(units(left)).toBe(3);
   });
 
   it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card", () => {

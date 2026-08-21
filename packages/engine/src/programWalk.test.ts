@@ -6,7 +6,9 @@ import {
   deriveAttackCoinFlip,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   optionalBoostProgram,
+  optionalCostBoostProgram,
 } from "./effects";
 import type { EffectOp } from "./effects";
 import { programFor } from "./index";
@@ -123,6 +125,25 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
           where: `${id} attack ${index} optionalBoost`,
           ops: optionalBoostProgram(
             boost,
+            parseAttackDamage(attack.damage).base,
+            attack.effect ?? "",
+          ),
+        });
+      }
+      // 🆕🆕 D381 — THE FOURTH, FED IN FROM THE SLICE THAT BUILT IT RATHER THAN TWO
+      // SLICES LATER. `deriveAttackOptionalCostBoost` is D316's sentence with its two
+      // halves swapped, and its assembler was exported on its first line for exactly
+      // the reason the three feeds above record: a program a sweep cannot BUILD is a
+      // program the sweep cannot audit. `fix-crushpress` (Cetitan ex's printed
+      // "Crushing Press") is the pool card it is called on — the other half, without
+      // which the export changes no answer here.
+      const costBoost =
+        attack.effect === undefined ? null : deriveAttackOptionalCostBoost(attack.effect);
+      if (costBoost !== null) {
+        out.push({
+          where: `${id} attack ${index} optionalCostBoost`,
+          ops: optionalCostBoostProgram(
+            costBoost,
             parseAttackDamage(attack.damage).base,
             attack.effect ?? "",
           ),
@@ -289,6 +310,22 @@ describe("the pool sweep, structurally", () => {
       // theoretical one.
       "fix-bitingspree authored attack 0 :: returnSelf",
       "fix-bonusconsequent attack 1 bonusConsequent :: damageDefender",
+      // 🆕🆕 **D381 — THREE ROWS FROM ONE PROGRAM, AND THIS FILE IS WHAT DECIDED THE
+      // ASSEMBLER'S SHAPE.** `fix-crushpress`'s derived program is
+      // `conditionGate → optional → [discardStadium, damageDefender(280)]` with a
+      // `damageDefender(140)` decline arm on EACH gate. The enumerated walk descends
+      // `conditionGate.then`/`.otherwise` and stops — it knows four op NAMES and
+      // `optional` is not one of them — so everything inside the confirm is invisible
+      // to it: the cost, the boosted hit and the confirm's own decline.
+      // ⚠️ **THE FIRST DRAFT HANDED ONE ARRAY TO BOTH GATES AND THIS ROW WAS *TWO*,
+      // WITH `structural - enumerated` ONE HIGHER THAN `missed.length`.** This list is
+      // built by object IDENTITY, so a shared arm is "already seen" down the outer
+      // path and the invariant below fails by exactly one. **A PROGRAM THAT SHARES A
+      // BRANCH IS A DAG, AND EVERY AUDITOR HERE ASSUMES A TREE** — so the assembler
+      // builds the two arms separately and says why.
+      "fix-crushpress attack 0 optionalCostBoost :: damageDefender",
+      "fix-crushpress attack 0 optionalCostBoost :: damageDefender",
+      "fix-crushpress attack 0 optionalCostBoost :: discardStadium",
       "fix-drasna trainer :: handRefresh",
       "fix-harlequin trainer :: handRefresh",
       // 🆕🛑 **D380 — THE FIRST `optional.then` MISS ON THIS LIST, AND IT ARRIVES

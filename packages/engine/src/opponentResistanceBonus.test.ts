@@ -383,7 +383,14 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // `state.stadium`, which is not on a card at all. ⚠️ **AND THIS FLOOR MOVES ON
     // THE FIXTURE COUNT, NOT ON THE PRINTED TEXT** — the mirror of the apostrophe
     // census one file over, which moves on the CHARACTER and not on the count.
-    expect(ids).toHaveLength(468);
+    // 🆕🆕 D381 — 468 -> **469**, and the other two columns stand still a TENTH time.
+    // D381 adds ONE body (`fix-crushpress`, Cetitan ex's "Crushing Press") and no
+    // Energy at all, and it prints no Resistance — the column that slice reads is
+    // `state.stadium` again, which is not on a card at all. ⚠️ **AND THE ONE THING
+    // THAT FIXTURE'S CARD DATA *IS* READ FOR IS ITS NAME**: `Fixceti ex` carries the
+    // ex suffix so `isExOrV` sees it, which is a claim about `Card.name` and still
+    // not about `Card.resistances`.
+    expect(ids).toHaveLength(469);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -405,16 +412,20 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // 🆕🆕 D380 — a `- 2` term at the head: TWO bodies (`fix-blazedestruct`,
     // `fix-knockover`), ZERO Energy, ZERO Resistances — the column D380 reads is
     // `state.stadium`, which is not on a card at all.
-    expect(ids.length - 2).toBe(466);
-    expect(ids.length - 2 - 1).toBe(465);
-    expect(ids.length - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D381 — a `- 1` term at the head of the chain: ONE body (`fix-crushpress`),
+    // ZERO Energy, ZERO Resistances — the column D381 reads is `state.stadium` again,
+    // and the only card datum its fixture is read for is its NAME.
+    expect(ids.length - 1).toBe(468);
+    expect(ids.length - 1 - 2).toBe(466);
+    expect(ids.length - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });
