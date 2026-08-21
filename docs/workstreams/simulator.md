@@ -2063,6 +2063,7 @@ A tiny predicate union evaluated for ONE seat, with a single evaluator
 |---|---|---|
 | `morePrizesThanOpponent` | strict `>` on the two prize counts | "you have more Prize cards remaining than your opponent" |
 | `yourStadiumInPlay` | `state.stadium.owner === seat` | "you have a Stadium in play" |
+| `stadiumInPlay` (🆕 D378) | `state.stadium !== null` — **`seat` unread** | "a Stadium is in play" |
 | `noEnergyOnYourPokemon` | Active **and** Bench, Basic or Special | "none of your Pokémon have any Energy attached" |
 
 **The invariant that makes the whole design work: every member reads only PUBLIC
@@ -22179,3 +22180,124 @@ which returns the printed effect byte for byte, and the two SV-era false positiv
 ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is now Burned"* —
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
+
+## D378 — STADIUM PRESENCE: the half of §7.3 that survives redaction, and the rename next door refused a second time (engine 0.282.0 → **0.283.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+D377 handed this over with the shape question already stated, and the answer held: **ONE new
+NULLARY `BoardCondition` member, `stadiumInPlay`, serving BOTH consequents and THREE legal
+printings.**
+
+| printed sentence | consequent | `BoardCondition` | card | printings |
+|---|---|---|---|---|
+| `If a Stadium is in play, this attack does 70 more damage.` | BONUS | `stadiumInPlay` | Probopass `sv10-098` "Mountain Drop" ({C}{C}{C}, 70+) | 1 |
+| `If there is no Stadium in play, this attack does nothing.` | CANCEL | `stadiumInPlay` | Fan Rotom `sv07-118` / `sv08.5-085` "Assault Landing" ({C}, 70) | 2 |
+
+✅ **THE CANCEL HALF IS THE BIGGER HALF, WHICH IS A FIRST.** D363 (Sawk), D365 (Iron Boulder)
+and D377 (Centiskorch) each put one member in both clause tables with the BONUS consequent
+carrying the weight. Here it is **1 printing under the bonus and 2 under the cancel** — and the
+purchase empties all but ONE sentence from behind the *"…this attack does nothing."* skeleton.
+
+### The shape question: `yourStadiumInPlay` was NOT widened, and the printed bytes settle it
+
+`yourStadiumInPlay` reads §7.3 **OWNERSHIP** and has **two live consumers whose ownership is
+load-bearing** — registry `FALKNER` and the positive `CONDITIONAL_DAMAGE_CLAUSES` row *"you have
+a Stadium in play"* (Palossand `sv02-096` "Earthen Power", +80). **A widening is free exactly
+when every existing consumer wants the wider reading** (D362); neither of these does, so
+yours→any is a **RENAME**. This is the SECOND time that exact widening has been priced — D364
+declined it in prose and shipped nothing; D378 declines it by **building the member it would
+have been mistaken for**.
+
+🛑 **AND IT IS SETTLED WITHOUT A JUDGEMENT CALL, BECAUSE THE POSSESSIVE IS PRINTED.** Palossand
+says *"**you have** a Stadium in play"*; Probopass says *"**a** Stadium is in play"* and Fan
+Rotom says *"there is **no** Stadium in play"*. Neither new sentence carries a possessive at all.
+`stadiumPresence.test.ts` §4 fields Probopass and Palossand on **ONE state** with the Stadium
+played by P2 and reports both numbers side by side: **+70 PRESENT, +80 ABSENT.**
+
+> **Reusable form:** when a new sentence looks like an existing member with the qualifier
+> removed, the question is never whether the member's NAME could stretch. It is whether every
+> consumer of that member wants the wider answer — and the printed possessive usually decides it
+> before you have to ask.
+
+### ✅ The first Stadium member that does NOT widen the P4 gap
+
+`BoardCondition`'s own invariant paragraph says the online projection *"does NOT carry the
+Stadium's owner"*, which is what makes `yourStadiumInPlay` unevaluable on a remote client.
+`RedactedBoard.stadium` (packages/schema) is a `redactedCardSchema.nullable()` — the CARD, public
+to both viewers, with **no owner field anywhere on it** — so `stadiumInPlay` is literally
+`board.stadium !== null` on the wire. **Presence is the half that survives redaction; ownership
+is the half that does not.** Two members already carry that note the other way round
+(`opponentPrizesRemaining`, `youGoSecond`); this is the third and the first in the §7.3 corner.
+
+### The arm is the ownership arm with the owner test deleted — and `seat` is unread
+
+It is the **first member in the union whose answer is seat-INDEPENDENT**, because §7.3's zone is
+a shared singleton: two seats can disagree about whose Stadium it is and never about whether one
+is there. §3 sweeps all three zone states, requires the two seats to AGREE on presence, and
+**counts the two boards where ownership disagrees** — which is what stops the sweep being a fact
+about a suite that never filled the zone.
+
+### The ceiling was priced and left — and the op is NINE printings, not eight
+
+Two more legal sentences read this board fact and both carry a tail: *"…does 60 more damage.
+Then, discard that Stadium."* (1) and *"…also does 30 damage to each of your opponent's Benched
+Pokémon, and discard that Stadium."* (1). Discarding a Stadium is a **whole op that does not
+exist**, and the handoff priced it at 8 printings. **It is 9**: `Discard a Stadium in play.` (4),
+`You may discard a Stadium in play.` (2), the *"If you do, …140 more damage"* spelling (2) **and
+`Discard a Stadium in play. If you can't, this attack does nothing.`** (Eternatus `sv08-141`
+"World Ender", 1) — the same op under the CANCEL consequent, invisible to a sweep that asked one
+consequent. **D377's lesson, one family over: a census run for one consequent is a FLOOR for the
+other.**
+
+### A guard's SUBJECT rotted in FOUR files, and one of them was a fixture
+
+*"If there is no Stadium in play, this attack does nothing."* was the corpus sentence four suites
+used as their UNMAPPED example — `sawkRequirementSplit.test.ts` (a derivation rung **and** a real
+board, through `fix-sawk`'s index-2 printed effect), `exOnlyActive.test.ts`,
+`attackRequirement.test.ts`, and the `REFUSED` arrays in `requirementFloor.test.ts` and
+`benchCountRequirement.test.ts`. Every one is **re-pointed at the sentence that is still
+unmapped** rather than deleted; the two `REFUSED` rows are **MOVED into `TAKEN_SINCE`** (D178:
+provenance is annotated, never overwritten) and their assertions **INVERTED** — the sentence now
+resolves, and resolves to the NEW member and not to the ownership one re-pointed, which is the
+exact distinction those cases exist to make. **D365's refusal was right on both halves; only its
+timing was wrong.**
+
+🛑 **AND THE SUBJECT IS NOW THE LAST ONE.** After D378 the does-nothing skeleton has exactly ONE
+unmapped sentence left (*"If you don't have exactly 3 cards in your hand…"*). **The day it is
+built, the accounting guard needs a CONSTRUCTED near-miss and must say so** — `splitOrder`'s §4
+is where that will surface, because its `unmapped` array will be EMPTY. `attackRequirement.test.ts`
+has now re-aimed the same guard **three times in three slices**, and its comment carries the end
+date rather than the habit.
+
+### The census — and the moving set was TWENTY files, from a 14-file prediction
+
+Residue (bonus skeleton) **22 / 26 → 21 / 25** (a 1:1 step); the "does nothing" residue
+**2 s / 4 p → 1 s / 2 p**; resolving sentences **357 → 359**; raw **1,242 → 1,245**;
+`BUILT.attack` **1,271 → 1,274**; unbuilt remainder **490 → 487**; the requirement table
+**8 rows / 7 reachable / 14 printings → 9 / 8 / 16**; the apostrophe-BEARING bonus half stands
+still at **18** while the FREE half goes **21 → 22** (the exact mirror of D377, whose two keys
+both carried a possessive); the apostrophe requirement list stands still at **7**; the
+fixture-census `derivable` stands still at **118**; the `FIXTURE_POOL` floor **463 → 465**.
+
+⚠️ **TWO OF THOSE ZEROES ARE MEASUREMENTS, NOT OMISSIONS.** Both new keys carry **neither an
+apostrophe nor a é**, so D137's U+2019 fold and D154's é check are INERT on this pair — the
+second such key in each table after D366's. And the fixture census moved in BOTH directions and
+cancelled: `fix-sawk`'s rider was re-pointed between two spellings that both carry the rider's own
+*"attack's"*. **A CENSUS KEYED ON A CHARACTER MOVES WHEN A FIXTURE'S TEXT CHANGES, NOT ONLY WHEN
+A FIXTURE IS ADDED.**
+
+🛑 **GREEN IN TWO PASSES (20 files → 0), NOT FIVE.** D377 needed five and predicted the wave
+shape would repeat; it did not, because every red rung this time was either a figure or a named
+list rather than a chain of assertions inside one `it`. **THE WAVE COUNT IS A PROPERTY OF HOW THE
+RED RUNGS ARE PACKED, NOT OF HOW MANY FILES MOVE.**
+
+### The IDs — a web measurement, the sixth slice running, with one false positive refuted
+
+limitlesstcg's `text:` search tokenises and `AND`s, and its default view returns thumbnails with
+no names — **`&display=list` is what makes the result readable**, and it is worth writing down
+because two calls were spent discovering it. *"no Stadium in play this attack does nothing"*
+returns 12 cards across a decade of sets; *"Stadium is in play this attack does 70 more damage"*
+returns 5. All ids were confirmed against `https://api.tcgdex.net/v2/en/cards/<id>`, which returns
+the printed effect byte for byte — and **Eternatus `sv08-141` was refuted that way**: it prints
+*"Discard a Stadium in play. If you can't, this attack does nothing."*, a different family, and it
+is the printing that corrected the ceiling's price from 8 to 9. ⚠️ **THE WEB STILL CANNOT GIVE A
+LEGAL-PRINTING COUNT**; that is `legalAttackCorpus()`'s alone.

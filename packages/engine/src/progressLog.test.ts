@@ -326,9 +326,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // is the other half of the same discipline. This suite reddens ONLY after that commit
   // lands, so the pre-docs run cannot see it and a figure quoted from the pre-docs run is a
   // claim about a tree that no longer exists.
-  const ARCHIVES = 47;
+  // 🆕🆕 D378 — 47 → **48**, RAISED DELIBERATELY, which is the UP branch of the message
+  // below. D378 demoted D377's live resume point under `### Prior resume point (P3-M5 —
+  // D377, …)` and the demoted BODY was carried across with it — the range was captured
+  // FIRST and re-emitted after the new section rather than overwritten, and the seam was
+  // re-read after the edit with D377's body confirmed present (17,625 characters, its
+  // opening line quoted back), which is the check D372's own comment above asks for by
+  // name. ⚠️ AND THE RAISE IS IN THE SAME COMMIT AS THE DEMOTION, which is the half D376
+  // forgot and paid for with a RED `HEAD` under a green claim.
+  const ARCHIVES = 48;
 
-  it("the page still holds all 47 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 48 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
