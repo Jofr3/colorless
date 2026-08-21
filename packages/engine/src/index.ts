@@ -12108,6 +12108,82 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.290.0 → **THE SECOND CONNECTIVE — THE SENTENCE D381 NAMED, REFUSED AND
+    PRICED, TAKEN FOUR SLICES LATER AT LESS THAN HALF THE QUOTED PRICE.**
+
+    `optionalCostBoost.test.ts` §1 has carried a rung since D381 saying *"the family
+    is EIGHT when the connective is shortened, not seven"*: `/^You may .*\. If /`
+    finds a record `/^You may .*If you do,/` cannot see, and D381 named it, refused it
+    and said what for.
+
+      Veluza ex `sv09-043` "Purging Strike" ({W}{W}{C}, **120+**, index 1 of two —
+      confirmed by id against tcgdex, which returns "Razor Fin" ({W}, 30, no effect
+      text) at index 0)
+        *"You may discard your hand. If you discarded any cards in this way, this
+         attack does 120 more damage."*
+        **1 legal printing**
+
+    🛑 **THE PRICE WAS WRONG IN BOTH DIRECTIONS, WHICH IS D199's RULE ARRIVING FROM
+    THE RARER SIDE FOR THE SECOND TIME IN THREE SLICES.** D381 priced it at *"a HAND
+    discard as an attack step AND a consequent conditioned on the COST's own effect —
+    a RECORD of what the cost did"*. The discard was **already built**: `discardHand`
+    has been an `EffectOp` since Professor's Research, automatic and park-free, and
+    what was missing was only an ATTACK program that reaches it. And the record is
+    **not needed at all** — `AttackOptionalCostBoost.cond` is not optional, and the
+    cost's payability is the SAME predicate the printed *"if you discarded any cards
+    in this way"* states one clause later. A `recordAs` on `discardHand` would have
+    been a one-line widening and would have fed a `recordGate` that **could not
+    fail**, which is a field with no observable meaning (D205).
+
+    🛑 **THE TWO CONNECTIVES ARE NOT SYNONYMS IN ENGLISH AND ARE SYNONYMS HERE, AND
+    THAT IS A PROOF OBLIGATION RATHER THAN A CONVENIENCE.** *"If you do"* asks whether
+    the offer was ACCEPTED; *"if you discarded any cards in this way"* asks whether the
+    accepted cost MOVED anything. They come apart exactly when a "yes" can whiff —
+    which this reading makes unreachable, because every row of `optionalCostOps`
+    supplies its cost's **EXACT** payability (a Stadium in play is discarded, `count`
+    Energy on the body is shuffled, a non-empty hand is discarded). **SO EVERY FUTURE
+    COST ROW INHERITS THE OBLIGATION THAT ITS `cond` BE NECESSARY *AND* SUFFICIENT**;
+    `purgingStrike.test.ts` §3 drives that over all three rows rather than asserting
+    it, and an alternation was chosen over a fourth dispatch table precisely because
+    the connective carries no data — the claim it makes lives on `cond`.
+
+    🛑 **ONE NULLARY `BoardCondition` MEMBER, AND THE ABSENT DIGIT IS THE ARGUMENT.**
+    `yourHandExactly` and `opponentHandAtMost` are parameterised because the catalog
+    prints *"exactly 3"*, *"3 or fewer"*, *"5 or fewer"*. This cost names the whole
+    hand and prints no number, so a `count: 1` would be INVENTED where
+    `yourActiveEnergyAtLeast`'s arity is CAPTURED — D383's own guard read from the
+    other side. Measured: no own-hand THRESHOLD is printed anywhere in the legal
+    attack column, at any value.
+
+    🛑 **AND IT IS THE FIRST GATE IN THIS FAMILY WHOSE FALSE ARM THE REAL PRINTING CAN
+    REACH.** D381's needs an empty Stadium zone; D383's cannot be reached from its own
+    printing at all and its suite drives a synthetic 4-Energy cost. A player who has
+    played their hand out and then attacks reaches this one by legal play alone — so
+    §6 drives the refusal from the REAL card, and without the gate a "yes" would
+    discard NOTHING and still collect the printed +120.
+
+    ⚠️ **THE READING'S DENOMINATOR MOVED, WHICH NO EARLIER SLICE IN THIS FAMILY DID.**
+    D381 and D383 each claimed one more of a FIXED seven; this one claims a sentence
+    that was never in the seven, so `/^You may .*If you do,/` has stopped describing
+    the reader's domain and is a FLOOR on it. The reading is **8 sentences / 15
+    printings with 1 / 2 refused** — the face-up Prize alone, still behind a
+    `PlayerState` field.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the family's second 1:1 step.
+    raw 1,262 → **1,263**, `BUILT.attack` 1,291 → **1,292**, resolving sentences
+    366 → **367**, and the BONUS RESIDUE **STANDS STILL at 20 / 24** — this sentence
+    is an optional-cost compound, not a `^If …, this attack does N more damage\.$`
+    one, so none of the thirteen residue-carrying files moves for it.
+
+    engineVersion 0.289.0 → **0.290.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited. The member is NULLARY — nothing to store — and a
+    `conditionGate` resolves inline and never parks, so it cannot reach
+    `EffectContinuation.pendingOp`. `discardHand` is an existing op with no new field
+    and it never parks either, so no continuation shape moves; no v22 record can carry
+    a member that did not exist and no v22 byte string means anything different under
+    this head (D335's discriminator). ZERO `packages/schema` bytes.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.289.0 → **THE STRICT-INEQUALITY TWIN — TWELVE SLICES AFTER
     D372 NAMED IT, AT EXACTLY THE PRICE D372 QUOTED.**
 
@@ -12403,7 +12479,12 @@ import type { GameState, Seat } from "./types";
     more damage."* (1 printing) is the same reversed shape with its consequent
     conditioned on the COST's own effect rather than on the answer. Refused, named,
     and driven — D310/D311's rule (*"ask it once with the literal shortened to the part
-    a pronoun cannot change"*) reaching a CONNECTIVE.
+    a pronoun cannot change"*) reaching a CONNECTIVE. ✅ 🆕🆕 **D385 BUILT IT**, four
+    slices on, at less than half the price this block quoted for it: `discardHand` was
+    already an op and the *"in this way"* record was never needed, because this
+    family's `cond` reads the same fact one clause earlier. The paragraph is kept as
+    written (D178) — what it says about the CENSUS is still exactly true, and it is the
+    rung that made the sentence findable.
 
     ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS.** raw 1,253 → **1,255**,
     `BUILT.attack` 1,282 → **1,284**, resolving sentences 362 → **363**, the unbuilt
@@ -15177,7 +15258,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.289.0";
+export const engineVersion = "0.290.0";
 
 export type {
   ApplyResult,

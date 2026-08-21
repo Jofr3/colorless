@@ -1263,6 +1263,55 @@ export type BoardCondition =
       `hiddenHand(side.hand.length)` and the near hand in full, so a LENGTH is
       readable from either viewer. Sizes only, contents never. */
   | { kind: "yourHandExactly"; count: number }
+  /** 🆕🆕 **D385 — YOUR OWN hand holds AT LEAST ONE CARD.** The payability of
+      Veluza ex `sv09-043` "Purging Strike"'s printed cost — *"**You may discard your
+      hand.** If you discarded any cards in this way, this attack does 120 more
+      damage."*, **1 legal printing** — read at the gate rather than inside the
+      confirm (`deriveAttackOptionalCostBoost`'s `cond`).
+
+      🛑 **THE SECOND MEMBER REACHED BY A READER'S COST TABLE RATHER THAN BY A CLAUSE
+      TABLE, AND THE FIRST WHOSE PRINTED SENTENCE STATES IT AS A CONSEQUENT.**
+      `yourActiveEnergyAtLeast` (D383) was authored from a printed cost's ARITY and
+      round-trips to no printed clause at all. This one is different and better
+      evidenced: the card prints the fact out loud one clause later, as *"if you
+      discarded any cards in this way"*. The engine reads it BEFORE the cost instead
+      of after it, and the two readings coincide because this member is the cost's
+      EXACT payability — `discardHand` moves a card if and only if the hand is
+      non-empty. **THAT EQUIVALENCE IS THE WHOLE LICENCE FOR THE CONNECTOR WIDENING**
+      (see `OPTIONAL_COST_CONNECTOR`), and it is driven on a board rather than
+      argued.
+
+      🛑 **NULLARY, AND THE ABSENT DIGIT IS THE ARGUMENT.** `yourHandExactly` two
+      blocks up and `opponentHandAtMost` above it both carry a `count` because the
+      catalog prints one (*"exactly 3"*, *"3 or fewer"*, *"5 or fewer"*). This cost
+      prints NO number — it names the whole hand — so a `count` fixed at 1 would be
+      INVENTED rather than captured, which is the trap D383's own block names when it
+      says the guard on `yourActiveEnergyAtLeast` is that its arity comes off the
+      printed digit. Measured over `legalAttackCorpus()` at this head: there is no
+      own-hand THRESHOLD printed anywhere in the legal attack column, at any value.
+      **WHAT WOULD FLIP IT is a printed own-hand floor** (*"if you have 3 or more
+      cards in your hand"*); a second sentence discarding the whole hand flips
+      nothing, because that is not an axis anything varies on.
+
+      ⚠️ **NOT `yourHandExactly` NEGATED, AND THERE IS NOWHERE TO PUT THE NEGATION.**
+      *"Not exactly 0"* is the truth condition, but this union has no `not`
+      combinator and `ATTACK_REQUIREMENT_CLAUSES`' polarity trick is the SKELETON's,
+      not the member's — a `cond` on `conditionGate` is read positively and nothing
+      inverts it. Adding a combinator to answer one printed cost would be a
+      generalisation of the whole union; a nullary member is a widening. D362's
+      arithmetic, one union over.
+
+      ✅ **IT DOES NOT WIDEN THE P4 GAP**, for `yourHandExactly`'s reason unchanged: a
+      hand's SIZE is public and its CONTENTS are not, and redact.ts ships the far hand
+      as `hiddenHand(side.hand.length)`. A LENGTH is readable from either viewer, so
+      this member answers the same on the redacted board as on the real one.
+
+      **FALSE on an empty hand, and that board is ORDINARY** — unlike every
+      body-reading sibling's empty-Active case, a player who has played their hand out
+      and then attacks reaches it by legal play alone. It is the rung that separates
+      this gate from a vacuous one, and `purgingStrike.test.ts` §6 drives it from the
+      REAL printing rather than from a synthetic one. */
+  | { kind: "yourHandNotEmpty" }
   /** 🆕🆕 **D372 — THE TWO ACTIVE BODIES CARRY THE SAME NUMBER OF ENERGY CARDS.**
       *"If this Pokémon and your opponent's Active Pokémon have the same amount of
       Energy attached, this attack does 100 more damage."* and the same clause at
@@ -16790,6 +16839,19 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     The reading is now **7 sentences / 14 printings with 1 / 2 refused** — the
     face-up Prize alone, and its refusal is still the `PlayerState` field.
 
+    ✅ 🆕🆕 **D385 WIDENED THE CONNECTIVE AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH
+    ITS DENOMINATOR NOW A FLOOR** (D178 again). `/^You may .*If you do,/` is still 7
+    sentences / 14 printings and this reader still leaves exactly one of them refused;
+    what changed is that the reader's DOMAIN is no longer that regex. Veluza ex
+    `sv09-043` "Purging Strike" prints the same reversed skeleton with the connective
+    conditioned on the cost's own effect (*"If you discarded any cards in this way,"*),
+    which `optionalCostBoost.test.ts` §1 has named and refused since D381 — so the
+    reading is **8 sentences / 15 printings with 1 / 2 refused**, and the refusal is
+    the face-up Prize and nothing else. **THE COST'S THIRD ROW BOUGHT NO OP**:
+    `discardHand` shipped with Professor's Research and this is simply the first
+    ATTACK program to reach it. See `OPTIONAL_COST_CONNECTIVE` for why two
+    connectives are one reading here and what that obliges every future cost row to.
+
     ⚠️ **THE COST VERB IS SPELLED LOWERCASE AT ITS OWN ANCHOR** — D246's rule and
     D316's precedent: the printed sentence lowercases the verb behind *"You may "*,
     and a `[Dd]` class would give up the whole-sentence discipline in both
@@ -16866,8 +16928,47 @@ export type AttackOptionalCostPayoff =
       changes no field, exactly as it changes none for the sibling anchor. */
   | { kind: "benchSnipe"; amount: number };
 
-const OPTIONAL_COST_BOOST = /^You may (.+)\. If you do, (.+)$/;
+/** 🆕🆕 **D385 — THE CONNECTIVE, WIDENED FROM ONE LITERAL TO A CLOSED ALTERNATION
+    OF TWO, AND THE LICENCE IS `cond`.**
+
+    D381's anchor spelled *". If you do, "* because four of the five reversed
+    printings it could see spelled it. `optionalCostBoost.test.ts` §1 has said since
+    that slice that **the family is EIGHT when the connective is shortened**, and
+    named the eighth: Veluza ex `sv09-043` "Purging Strike" prints *"You may discard
+    your hand. **If you discarded any cards in this way,** this attack does 120 more
+    damage."* — the same reversed skeleton with the connective conditioned on the
+    COST's own effect rather than on the ANSWER.
+
+    🛑 **THE TWO CONNECTIVES ARE NOT SYNONYMS IN ENGLISH, AND THEY ARE SYNONYMS
+    *HERE* — WHICH IS A PROOF OBLIGATION THIS READING ALREADY DISCHARGES.** *"If you
+    do"* asks whether the offer was ACCEPTED; *"if you discarded any cards in this
+    way"* asks whether the accepted cost actually MOVED something. They come apart
+    exactly when a player may say yes to a cost that does nothing — and this reading
+    makes that unreachable, because `AttackOptionalCostBoost.cond` is not optional and
+    every row of `optionalCostOps` supplies the cost's **EXACT** payability: a Stadium
+    in play is discarded, `count` Energy on the body is shuffled, a non-empty hand is
+    discarded. **SO THE OBLIGATION EACH FUTURE COST ROW INHERITS IS THAT ITS `cond` BE
+    NECESSARY *AND* SUFFICIENT** — a merely necessary one would let the second
+    connective pay out on a cost that whiffed. `purgingStrike.test.ts` §3 drives that
+    equivalence on a board for all three rows rather than asserting it here.
+
+    ⚠️ **AN ALTERNATION AND NOT A FOURTH DISPATCH TABLE**, which is the one place this
+    slice does NOT follow D383's symmetry. The cost half and the payoff half are
+    tables because each row carries DATA (ops and a gate; a payoff shape). A
+    connective carries none — both spellings produce the identical reading — so a
+    table over it would be a dispatch whose every arm returns the same thing, and the
+    row would be a shape with nothing in it. The claim it makes is on `cond`, and that
+    is where it is stated and where it is driven. */
+const OPTIONAL_COST_CONNECTIVE = "(?:If you do|If you discarded any cards in this way)";
+const OPTIONAL_COST_BOOST = new RegExp(`^You may (.+)\\. ${OPTIONAL_COST_CONNECTIVE}, (.+)$`);
 const OPTIONAL_COST_DISCARD_STADIUM = /^discard a Stadium in play$/;
+/** 🆕🆕 D385 — the THIRD cost row, and the first whose noun is a WHOLE ZONE rather
+    than a counted set. *"your hand"* — no digit, no filter, no upper bound — which is
+    why the gate it pairs with is NULLARY where the row above it is parameterised: an
+    arity captured from a printed digit is evidence, and an arity of 1 invented for a
+    sentence that prints no number is not (D383's own guard, read from the other
+    side). Lower-case at its own anchor, D246's rule and D316's precedent. */
+const OPTIONAL_COST_DISCARD_HAND = /^discard your hand$/;
 /** 🆕🆕 D383 — the SECOND cost row, and the reason the list was written as a table.
     The printed digit is CAPTURED rather than fixed at 3: the arity is what the gate
     reads, so burying it in the anchor would make the second printing a second row
@@ -16902,6 +17003,24 @@ const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_
 function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] } | null {
   if (OPTIONAL_COST_DISCARD_STADIUM.test(cost)) {
     return { cond: { kind: "stadiumInPlay" }, ops: [{ op: "discardStadium" }] };
+  }
+  // 🆕🆕 D385 — THE THIRD ROW, AND IT BUYS NO OP AT ALL. `discardHand` has been an
+  // `EffectOp` since Professor's Research (registry.ts), fully automatic and
+  // park-free; what this slice adds is the first ATTACK program that reaches it. The
+  // gate is the printed connective read one clause early: `discardHand` returns the
+  // state untouched on an empty hand, so `yourHandNotEmpty` is that op's payability
+  // exactly, and the *"if you discarded any cards in this way"* the card prints
+  // afterwards can never be false once this gate has passed.
+  //
+  // ⚠️ NO `recordAs`, AND IT WAS PRICED RATHER THAN SKIPPED. Adding one to
+  // `discardHand` is a WIDENING and would cost a single line — the op already builds
+  // `[...side.hand]` for `HAND_DISCARDED`, and every recording op's arm is one
+  // `recordMoved` call. It is not built because the `recordGate` it would feed
+  // could not fail: the gate above has already decided the same question, so the
+  // second reading would be a branch no board can take and a field with no
+  // observable meaning (`switchActive`'s own note, one op over, and D205's rule).
+  if (OPTIONAL_COST_DISCARD_HAND.test(cost)) {
+    return { cond: { kind: "yourHandNotEmpty" }, ops: [{ op: "discardHand" }] };
   }
   const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
   if (shuffle !== null) {

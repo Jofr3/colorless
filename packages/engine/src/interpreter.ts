@@ -3188,6 +3188,25 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 3-card hand and wrong one card away — `exactHandSize.test.ts` drives 2, 3
       // and 4 rather than describing them. Sizes only, contents never.
       return state.players[seat].hand.length === cond.count;
+    case "yourHandNotEmpty":
+      // 🆕🆕 D385 — the payability of Veluza ex `sv09-043` "Purging Strike"'s printed
+      // cost ("You may discard your hand"), resolved to the ATTACKER's own hand by
+      // the reader's cost table exactly as the arm below resolves "this Pokémon"
+      // (D116's rule, reached from a cost anchor rather than a clause table).
+      //
+      // 🛑 `> 0` AND NOT `>= 0`, WHICH IS THE ONLY MISTAKE THIS ONE LINE CAN MAKE —
+      // and unlike every body-reading sibling's empty-Active board, the board that
+      // catches it is ORDINARY: a player who has played their hand out and then
+      // attacks. `>= 0` is TRUE on every hand there is, which would put the confirm
+      // in front of a player with nothing to discard and pay the printed +120 for
+      // discarding it. Sizes only, contents never — the union's public-state
+      // invariant, unchanged.
+      //
+      // ⚠️ AND IT IS THE COST'S EXACT PAYABILITY, WHICH IS WHAT LICENSES THE SECOND
+      // CONNECTIVE. `discardHand` (below, §9) returns the state untouched when the
+      // hand is empty and moves every card when it is not, so this predicate and
+      // "you discarded any cards in this way" have the same extension on every board.
+      return state.players[seat].hand.length > 0;
     case "yourActiveEnergyAtLeast": {
       // 🆕🆕 D383 — the payability of Wellspring Mask Ogerpon ex's printed cost
       // ("You may shuffle 3 Energy attached to this Pokémon into your deck"),
@@ -3938,6 +3957,15 @@ export function conditionNote(cond: BoardCondition): string {
       // pool prints this clause at ONE value, 3, so a singular branch would be a
       // shape no printing can reach (D205's rule about never-spelled counts).
       return `you have exactly ${cond.count} cards in your hand`;
+    case "yourHandNotEmpty":
+      // 🆕🆕 D385 — NULLARY, so there is no parameter to build from and the string is
+      // a literal. It does NOT round-trip to any printed clause and cannot: the
+      // catalog states this fact as a CONSEQUENT ("if you discarded any cards in this
+      // way") and never as an antecedent, so a reject pill has to say what the board
+      // must look like BEFORE the offer. "At least 1 card" rather than "not empty",
+      // because a pill is read by a player and the sibling above spells its threshold
+      // out too.
+      return "you have at least 1 card in your hand";
     case "yourActiveEnergyAtLeast":
       // 🆕🆕 D383 — built from the parameter, and the pronoun is dropped exactly as
       // every sibling drops it (D116). It does NOT round-trip to any printed clause

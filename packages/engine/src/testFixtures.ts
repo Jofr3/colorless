@@ -11279,6 +11279,53 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D385 — the reversed optional boost's SECOND CONNECTIVE: Veluza ex
+      `sv09-043` "Purging Strike" ({W}{W}{C}, `120+`, index 1 of two — confirmed by
+      id against tcgdex, which returns "Razor Fin" ({W}, 30, no effect) at index 0),
+      **1 legal printing**.
+
+      🛑 **IT IS THE CARD `optionalCostBoost.test.ts` §1 HAS NAMED AND REFUSED SINCE
+      D381** — *"the family is EIGHT when the connective is shortened"* — and what it
+      was refused for was priced wrong in both directions, which is D199's rule
+      arriving from the rarer side twice in three slices. The handoff called it *"a
+      HAND discard as an attack step"* plus *"a RECORD of what the cost did"*:
+      `discardHand` had been an `EffectOp` since Professor's Research and needed
+      nothing, and the record is not needed AT ALL, because this family's `cond` reads
+      the same fact one clause earlier.
+
+      **A `fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the 978-row / 6-set manifest, and `sv09`
+      is not among the six.
+
+      ONE attack rather than the printed two, and the index moves to 0 with it —
+      "Razor Fin" is a bare 30 with no effect text, so it would be an UNREAD attack
+      beside a read one and `fix-bonusconsequent` already owns that control.
+      `hp: 210` and `types: ["Water"]` as printed, and the printed 210 is why the
+      attacker survives this pool's return fire without a stand-in number. **THE
+      `120+` MARKER IS LOAD-BEARING**: the payoff RE-HOMES the printed base inside the
+      gate (D381's arm, not D383's), so a decline and a refused gate must each still
+      deal 120 and a flat `120` would exercise the wrong half of the assembler.
+
+      ⚠️ **THE `ex` IN THE NAME IS FAITHFUL RATHER THAN LOAD-BEARING, AND THAT IS THE
+      DIFFERENCE FROM `Fixceti ex`.** D381 needed the suffix because `isExOrV` reads
+      the NAME and Neutralization Zone was the one board its order claim was visible
+      on. Nothing this slice reads touches a Rule Box and no Stadium is in this deck,
+      so the name is here because the card is an ex and for no other reason — named
+      rather than driven (D205). */
+  "fix-purging": battler("fix-purging", {
+    name: "Fixluza ex",
+    hp: 210,
+    types: ["Water"],
+    attacks: [
+      {
+        cost: ["Water", "Water", "Colorless"],
+        name: "Purging Strike",
+        damage: "120+",
+        effect:
+          "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.",
+      },
+    ],
+  }),
   /** 🆕🆕 D382 — THE `. Then, ` DEMONSTRATOR, and it is `fix-bonusconsequent`'s
       twin for the OTHER decider. Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`,
       index 1 of two — confirmed by id against tcgdex), transcribed and not
@@ -11915,6 +11962,37 @@ export const OPTIONAL_COST_BOOST_DECK = deckOf({
   "fix-energy": 4, // the one {C} of it
   "fix-titan": 4, // 340 HP, no attacks, no Rule Box — the defender that survives 280
   "fix-bigbody": 30, // 200 HP neutral Basic — mulligan-free starter and bench filler
+});
+
+/** 🆕🆕 D385 — the reversed optional boost's SECOND CONNECTIVE
+    (`purgingStrike.test.ts`). Its own 60 rather than a widened
+    `OPTIONAL_COST_BOOST_DECK`, and this deck has a second reason of its own beyond
+    D270's: **every board in this file is about the size of P1's HAND**, and the two
+    Stadiums that make D381's suite work are six cards each that this file would have
+    to keep track of on every hand-size assertion.
+
+    THE CAST IS ONE ATTACKER AND NOTHING ELSE:
+      • `fix-purging` — Veluza ex's printed "Purging Strike" ({W}{W}{C}, `120+`);
+      • `fix-titan` (340 HP, retreat 4, NO attacks) — the defender, and the 340 is
+        load-bearing: the boosted hit is **240** and a KO would end the case before
+        the number could be read;
+      • `fix-bigbody` — the mulligan-free starter and bench filler.
+
+    Energy pays the printed symbols and nothing else: {W}{W} from `fix-water-energy`
+    and the one {C} from `fix-energy`.
+
+    ⚠️ **NO STADIUM AND NO SECOND ATTACKER, WHICH IS WHAT KEEPS THE HAND READABLE.**
+    Setup deals 7 to hand and 6 to Prizes before a case can touch the deck, so a hand
+    this suite has not shrunk is 7 cards of `fix-bigbody`-dominated filler — a number
+    the file can state rather than compute.
+
+    4 + 4 + 6 + 4 + 42 = **60**. */
+export const PURGING_STRIKE_DECK = deckOf({
+  "fix-purging": 4, // Veluza ex — "Purging Strike" ({W}{W}{C}, 120+)
+  "fix-titan": 4, // 340 HP, no attacks — the defender that survives the boosted 240
+  "fix-water-energy": 6, // {W}{W} of Purging Strike's cost
+  "fix-energy": 4, // the one {C} of it
+  "fix-bigbody": 42, // 200 HP neutral Basic — mulligan-free starter and bench filler
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({
