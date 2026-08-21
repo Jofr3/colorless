@@ -5158,10 +5158,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D385 (0.289.0 → 0.290.0), at D384 (0.288.0 → 0.289.0), at D383 (0.287.0 → 0.288.0),
+    // ⚠️ RE-POINTED AT D386 (0.290.0 → 0.291.0), at D385 (0.289.0 → 0.290.0), at D384 (0.288.0 → 0.289.0), at D383 (0.287.0 → 0.288.0),
     //    each in the SAME COMMIT as the bump —
-    // the NINTH slice running to do it that way, and the practice is now the one
+    // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
+    // 🆕🆕 AND AT D386 THE ORDINAL QUESTION FINALLY CAME OUT THE OTHER WAY.
+    // `MATCH_RECORD_VERSION` MOVES 22 -> 23 for the first time in eighteen slices,
+    // because D386 adds a REQUIRED field (`healedTurn`) to `InPlayPokemon`, which is
+    // persisted inside `MatchRecord.state`. Every v22 record's in-play Pokémon lacks a
+    // key this deploy's type says is always there - a MISSING REQUIRED FIELD, the one
+    // case D335's discriminator does not cover, and D124's own bump (1 -> 2) at this
+    // exact address. **THE QUESTION WAS ASKED EVERY SLICE AND ANSWERED "NO" TWELVE
+    // TIMES; ASKING IT IS WHY THE THIRTEENTH ANSWER IS TRUSTWORTHY.**
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
     // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
     // D383's only persisted-shape move is `discardEnergy.to?: "hand"` ->
@@ -5649,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.290.0";',
+    find: 'export const engineVersion = "0.291.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10351,10 +10359,19 @@ export const MUTANTS: Mutant[] = [
     //    now accepts is a v20 one whose parked `attachFromTop` carries the old
     //    `discardRest` key. Same axis, same failure mode, one op over - which is
     //    itself the argument for one row rather than one per bump, made twice.
+    // ⚠️ RE-POINTED AGAIN AT D386 (22 -> 23), IN THE SAME COMMIT AS THE BUMP, and
+    //    the `replace` is TIGHTENED to 22 rather than left at 20: the row's meaning is
+    //    "revert the NEWEST bump", and a replace two versions behind was testing a
+    //    weaker claim than the one the `what` makes. The record this row now accepts is
+    //    a v22 one whose in-play Pokémon carry no `healedTurn` at all - a MISSING
+    //    REQUIRED FIELD, which resumes with `undefined === state.turn` reading FALSE on
+    //    every board, so a player who healed and attacked silently loses the printed
+    //    +100. That is the QUIETEST failure this row has ever guarded, and the same
+    //    guard catches it - which is the argument for ONE row here, made a third time.
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 22;",
-    replace: "export const MATCH_RECORD_VERSION = 20;",
+    find: "export const MATCH_RECORD_VERSION = 23;",
+    replace: "export const MATCH_RECORD_VERSION = 22;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -15252,5 +15269,93 @@ export const MUTANTS: Mutant[] = [
     find: "    return { cond: { kind: \"yourHandNotEmpty\" }, ops: [{ op: \"discardHand\" }] };",
     replace: "    return { cond: { kind: \"yourHandNotEmpty\" }, ops: [{ op: \"discardStadium\" }] };",
     expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
+  },
+  // == D386 - THE HEALED-THIS-TURN CLAUSE, and the first persisted-shape move in
+  //    eighteen slices. Every row below strikes one of the three joints the slice
+  //    actually has: the STAMP (is it written, and at every site), the CLOCK (does it
+  //    expire by arithmetic), and the SUBJECT (whose body, whose seat). The clause row
+  //    and the note are the fourth, and both mutate to the REAL code of the member one
+  //    row up - `yourActivePromotedThisTurn`, the per-turn cluster's other per-body
+  //    stamp, which is the copy an author would actually make here.
+  {
+    id: "D386-condition-reads-the-promotion-stamp",
+    decision: "D386",
+    what: "\u{1F6D1} the arm reads `promotedTurn` instead of `healedTurn` - the REAL code of the arm three lines up, on the same body, in the same shape, differing by one field name. A Maractus that was Potioned this turn collects nothing and one that merely retreated in collects +100, so the sentence is answered by the wrong per-turn fact. ⚠️ AND §5's RETREAT BOARD IS WHERE THE TWO ARE BOTH TRUE, which is why the +100 cases are driven on a body that never moved",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.healedTurn === state.turn;",
+    replace: "      return active !== null && active.promotedTurn === state.turn;",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-heal-window-never-expires",
+    decision: "D386",
+    what: "\u{1F6D1} the STAMP is read as a FLAG: `!== null` instead of `=== state.turn`, which is D271's `window-never-expires` shape at a new address. A Pokémon healed on ANY earlier turn keeps collecting +100 forever, and every board in this file that heals-then-attacks stays green - only the round trip to the seat's NEXT turn (§6) can see it. **THIS IS THE MUTANT THAT SAYS WHY THE FIELD IS A TURN NUMBER AND NOT A BOOLEAN**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.healedTurn === state.turn;",
+    replace: "      return active !== null && active.healedTurn !== null;",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-condition-reads-the-other-seat",
+    decision: "D386",
+    what: "the arm reads the OPPONENT's Active rather than the asker's - the seat defect every member in this family owes a board for. It is invisible on any p1-only fixture and on any SYMMETRIC one (D380), so §7 drives P2's own Maractus on P2's turn and the cross-board Picnic Basket case from the far side",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && active.healedTurn === state.turn;",
+    replace: "      return state.players[otherSeat(seat)].active?.healedTurn === state.turn;",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-stamp-never-written",
+    decision: "D386",
+    what: "\u{1F6D1} `healedBody` writes the damage and drops the stamp - which is BYTE-FOR-BYTE the line every one of its seven callers carried before this slice, so it is the omission an author makes by moving code and not by inventing any. Nothing is ever healed-this-turn, the clause is dead, and the printed +100 can never be collected. Killed twice over: by the board in §3 and by the field-write census in §8",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { ...pokemon, damage: pokemon.damage - healed, healedTurn: turn };",
+    replace: "  return { ...pokemon, damage: pokemon.damage - healed };",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-chosen-heal-skips-the-helper",
+    decision: "D386",
+    what: "\u{1F6D1} ONE of the seven sites goes back to writing its own body literal - `healChosen`, which is Potion's op and the route the printed card is actually played with. **THIS IS THE ROW THAT ARGUES FOR THE HELPER AT ALL**: six sites keep stamping, the log is unchanged, and only the one heal a Maractus deck ever uses stops arming the clause. Killed by §3's board AND by §8's call-site count, which is the point of asserting both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const updated = healedBody(pokemon, healed, state.turn);",
+    replace: "  const updated = { ...pokemon, damage: pokemon.damage - healed };",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-counter-move-skips-the-stamp",
+    decision: "D386",
+    what: "the counter-MOVE site keeps its old `damage: 0` literal and writes no stamp. ⚠️ **THIS IS THE ONE SITE WHOSE MEMBERSHIP IS A JUDGEMENT CALL** - the engine has filed a HEALED row for a moved-from body since D138, and a reading on which that is not healing is defensible - so the row exists to make the decision VISIBLE rather than to call the alternative wrong: whichever way it goes, the event and the stamp move together, and this mutant is what separates them. Killed by §8's count, which is the only instrument that can see a site no deck in this suite reaches",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    i === index ? healedBody(pokemon, moved, state.turn) : pokemon,",
+    replace: "    i === index ? { ...pokemon, damage: 0 } : pokemon,",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-whiff-stamps-a-heal-that-did-not-happen",
+    decision: "D386",
+    what: "`healChosen`'s clamp is dropped, so a Potion aimed at an UNDAMAGED body reports a 30-point heal, drives the body's damage NEGATIVE and writes the stamp - and the printed +100 is then collectable by playing a Potion on a full-HP Active. D356 carries the identical mistake one function over, which is what makes this the copy rather than the invention. §4 is the board: the printed sentence asks whether this Pokémon WAS healed, not whether one was attempted",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healed = amount === \"all\" ? pokemon.damage : Math.min(amount, pokemon.damage);",
+    replace: "  const healed = amount === \"all\" ? pokemon.damage : amount;",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-clause-row-maps-the-promotion-member",
+    decision: "D386",
+    what: "the literal clause row maps the printed sentence onto `yourActivePromotedThisTurn` - the member the row DIRECTLY ABOVE it carries, copied verbatim. The reader still answers, the census still moves, `BUILT.attack` still lands on 1,294, and the card pays +100 for having retreated. **A CENSUS COUNTS WHETHER A READER ANSWERED, NEVER WHAT IT ANSWERED WITH** (D380's note), so every count rung in the repo stays green and only §2's byte-for-byte reading fails",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"this Pokémon was healed during this turn\", { kind: \"yourActiveHealedThisTurn\" }],",
+    replace: "  [\"this Pokémon was healed during this turn\", { kind: \"yourActivePromotedThisTurn\" }],",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  {
+    id: "D386-note-drifts-off-the-clause",
+    decision: "D386",
+    what: "the note returns the PROMOTION note - the arm's real neighbour, again. A note is the only part of this vocabulary a human reads off the board, so a drifted one tells the player the wrong reason their attack was worth 120; nothing else in the engine consults it, which is exactly why it needs its own round-trip assertion (§2) rather than a damage number",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return \"your Active Pokémon was healed during this turn\";",
+    replace: "      return \"your Active Pokémon moved from your Bench to the Active Spot this turn\";",
+    expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
   },
 ];
