@@ -611,7 +611,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // this constant alone, because a v20 record's MISSING key meant mandatory
     // before and after. One slice later the key is renamed and the constant must
     // move. A widening is free; a rename is not; they are one edit apart.
-    expect(MATCH_RECORD_VERSION).toBe(22);
+    expect(MATCH_RECORD_VERSION).toBe(23);
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

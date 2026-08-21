@@ -255,14 +255,19 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -361,7 +366,15 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // which is a persisted-shape change and therefore a `MATCH_RECORD_VERSION` bump on
     // top of the engine bump. Five slices have deferred it on that ground.
     const band2 = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
-    expect(band2).toEqual(["this Pokémon was healed during this turn"]);
+    // 🆕🆕 D386 — ONE -> ZERO: the healed-this-turn clause was bought out of the band
+    // (`healedThisTurn.test.ts`), and THE 2-PRINTING BAND IS NOW EMPTY. 🛑 D379's
+    // SATURATION SHAPE — an emptied population cannot go red for the reason that
+    // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
+    // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
+    // and the 1-printing band is SEVENTEEN deep.
+    expect(band2).toEqual([]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect(byClause.size).toBe(18);
     // …and the 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused.
     expect(Math.max(...byClause.values())).toBe(5);

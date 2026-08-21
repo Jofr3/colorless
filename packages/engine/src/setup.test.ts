@@ -298,6 +298,10 @@ describe("placement", () => {
       // Placed Active from the HAND, which is not a move from the Bench — the
       // one in-play Pokémon that never gets a `promotedTurn` stamp (D124).
       promotedTurn: null,
+      // …and nothing has healed it either (D386): a card arriving from the hand
+      // carries no damage, so there is nothing for a heal to remove. The stamp's
+      // absence is `null` and not `0`, because turn 0 is a real turn number here.
+      healedTurn: null,
     });
   });
 

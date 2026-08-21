@@ -259,8 +259,13 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // 🛑 AND THE STEP IS 2 AND 2, WHICH IS THE FIRST 2:2 STEP IN THIS RUN. D368 moved
     // it 1:3 and D369/D370/D371 each 1:2. Every earlier head is re-derived from THIS
     // one rather than frozen, and the sentence term moves by TWO where the printing
@@ -275,15 +280,15 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([28, 36]);
-    expect([refused.length + 10, units(refused) + 14]).toEqual([30, 38]);
-    expect([refused.length + 11, units(refused) + 16]).toEqual([31, 40]);
-    expect([refused.length + 12, units(refused) + 18]).toEqual([32, 42]);
-    expect([refused.length + 13, units(refused) + 20]).toEqual([33, 44]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
+    expect([refused.length + 9, units(refused) + 14]).toEqual([28, 36]);
+    expect([refused.length + 11, units(refused) + 16]).toEqual([30, 38]);
+    expect([refused.length + 12, units(refused) + 18]).toEqual([31, 40]);
+    expect([refused.length + 13, units(refused) + 20]).toEqual([32, 42]);
+    expect([refused.length + 14, units(refused) + 22]).toEqual([33, 44]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -304,16 +309,24 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // one D374's handoff already priced — *"this Pokémon was healed during this turn"*
     // needs a per-turn HEALED flag on the state, which is a persisted-shape change and
     // therefore a `MATCH_RECORD_VERSION` bump on top of the engine bump.
-    expect(band.sort()).toEqual(["this Pokémon was healed during this turn"]);
-    expect(band.length + 1).toBe(2);
+    // 🆕🆕 D386 — ONE -> ZERO: the healed-this-turn clause was bought out of the band
+    // (`healedThisTurn.test.ts`), and THE 2-PRINTING BAND IS NOW EMPTY. 🛑 D379's
+    // SATURATION SHAPE — an emptied population cannot go red for the reason that
+    // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
+    // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
+    // and the 1-printing band is SEVENTEEN deep.
+    expect(band).toEqual([]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect(byClause.size).toBe(18);
+    expect(band.length + 2).toBe(2);
     // …with this slice's clause counted back in the band it is SIX, with D371's as
     // well SEVEN, and with D370's as well EIGHT — the chain D368's handoff opened.
-    expect(band.length + 2).toBe(3);
-    expect(band.length + 3).toBe(4);
-    expect(band.length + 4).toBe(5);
-    expect(band.length + 5).toBe(6);
-    expect(band.length + 6).toBe(7);
-    expect(band.length + 7).toBe(8);
+    expect(band.length + 3).toBe(3);
+    expect(band.length + 4).toBe(4);
+    expect(band.length + 5).toBe(5);
+    expect(band.length + 6).toBe(6);
+    expect(band.length + 7).toBe(7);
+    expect(band.length + 8).toBe(8);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -681,8 +694,8 @@ describe("§6 — SEAT SYMMETRY: which KIND, and the comment it falsified", () =
 describe("§7 — the census moves in exactly ONE summand, and the step is 2 and 2", () => {
   it("the resolving corpus gains TWO sentences and TWO printings", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(364); // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin) // 🆕🆕 D378 +2 sentences (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
-    expect(units(resolved)).toBe(1255); // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 printings (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 printings (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings // 🆕🆕 D375 +2 printings // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
+    expect(resolved).toHaveLength(365); // 🆕🆕 D386 +1 sentence (THE HEALED-THIS-TURN CLAUSE — Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, **+100**) at 2 legal printings: ONE `BoardCondition` member (`yourActiveHealedThisTurn`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO exhaustive-switch arms and ONE new REQUIRED `InPlayPokemon` field (`healedTurn`) — the FIRST entry on this chain to move `MATCH_RECORD_VERSION`, 22 -> 23. ⚠️ AND THE FIRST IN FOUR SLICES THAT THIS NINE-READER INSTRUMENT CAN SEE AT ALL: D385's sentence resolved through the TENTH reader and left this figure standing) // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin) // 🆕🆕 D378 +2 sentences (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
+    expect(units(resolved)).toBe(1257); // 🆕🆕 D386 +2 printings (THE HEALED-THIS-TURN CLAUSE — one sentence, two legal printings, a 1:2 step) // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 printings (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 printings (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings // 🆕🆕 D375 +2 printings // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
     // The FOUR slices before this one each moved the sentence term by exactly 1;
     // this one moves it by 2 while moving the printing term by the same 2 as three
     // of them. Re-derived from the live head both ways rather than quoted.
@@ -713,8 +726,12 @@ describe("§7 — the census moves in exactly ONE summand, and the step is 2 and
     // STRICT-INEQUALITY TWIN resolved ONE sentence worth ONE printing, the family's
     // first 1:1 step through THIS instrument as well. ⚠️ **BOTH CHAINS ARE EDITED AT
     // THE FRONT, NEVER AT THE END.**
-    expect(resolved.length - 1 - 1 - 1 - 2 - 3 - 1 - 1 - 1 - 1 - 2 - 2).toBe(348);
-    expect(units(resolved) - 1 - 1 - 2 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 6).toBe(1229);
+    // 🆕🆕 D386 — a `- 1` / `- 2` pair at the FRONT of both chains: the HEALED-THIS-TURN
+    // clause resolved ONE sentence worth TWO printings, so the two chains take
+    // DIFFERENT leading subtrahends again. ⚠️ **BOTH CHAINS ARE EDITED AT THE FRONT,
+    // NEVER AT THE END.**
+    expect(resolved.length - 1 - 1 - 1 - 1 - 2 - 3 - 1 - 1 - 1 - 1 - 2 - 2).toBe(348);
+    expect(units(resolved) - 2 - 1 - 1 - 2 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 6).toBe(1229);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {

@@ -185,8 +185,13 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // D371's recorded residue, then D370's, then D369's, then D368's — all
     // re-derived from THIS head rather than quoted. A guard that only checked the
     // current pair could not tell "a row landed" from "a reader broke".
@@ -199,24 +204,24 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 4).toBe(24);
-    expect(units(refused) + 4).toBe(28);
-    expect(refused.length + 5).toBe(25);
-    expect(units(refused) + 6).toBe(30);
-    expect(refused.length + 6).toBe(26);
-    expect(units(refused) + 8).toBe(32);
-    expect(refused.length + 7).toBe(27);
-    expect(units(refused) + 10).toBe(34);
-    expect(refused.length + 8).toBe(28);
-    expect(units(refused) + 12).toBe(36);
-    expect(refused.length + 10).toBe(30);
-    expect(units(refused) + 14).toBe(38);
-    expect(refused.length + 11).toBe(31);
-    expect(units(refused) + 16).toBe(40);
-    expect(refused.length + 12).toBe(32);
-    expect(units(refused) + 18).toBe(42);
-    expect(refused.length + 13).toBe(33);
-    expect(units(refused) + 20).toBe(44);
+    expect(refused.length + 5).toBe(24);
+    expect(units(refused) + 6).toBe(28);
+    expect(refused.length + 6).toBe(25);
+    expect(units(refused) + 8).toBe(30);
+    expect(refused.length + 7).toBe(26);
+    expect(units(refused) + 10).toBe(32);
+    expect(refused.length + 8).toBe(27);
+    expect(units(refused) + 12).toBe(34);
+    expect(refused.length + 9).toBe(28);
+    expect(units(refused) + 14).toBe(36);
+    expect(refused.length + 11).toBe(30);
+    expect(units(refused) + 16).toBe(38);
+    expect(refused.length + 12).toBe(31);
+    expect(units(refused) + 18).toBe(40);
+    expect(refused.length + 13).toBe(32);
+    expect(units(refused) + 20).toBe(42);
+    expect(refused.length + 14).toBe(33);
+    expect(units(refused) + 22).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -239,18 +244,26 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // one D374's handoff already priced — *"this Pokémon was healed during this turn"*
     // needs a per-turn HEALED flag on the state, which is a persisted-shape change and
     // therefore a `MATCH_RECORD_VERSION` bump on top of the engine bump.
-    expect(band.sort()).toEqual(["this Pokémon was healed during this turn"]);
-    expect(band.length + 1).toBe(2);
+    // 🆕🆕 D386 — ONE -> ZERO: the healed-this-turn clause was bought out of the band
+    // (`healedThisTurn.test.ts`), and THE 2-PRINTING BAND IS NOW EMPTY. 🛑 D379's
+    // SATURATION SHAPE — an emptied population cannot go red for the reason that
+    // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
+    // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
+    // and the 1-printing band is SEVENTEEN deep.
+    expect(band).toEqual([]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect(byClause.size).toBe(18);
+    expect(band.length + 2).toBe(2);
     // …with D372's clause counted back in the band is SIX, with D371's as well SEVEN,
     // with D370's EIGHT, and with this file's own NINE — the number D368's handoff
     // put at two.
-    expect(band.length + 2).toBe(3);
-    expect(band.length + 3).toBe(4);
-    expect(band.length + 4).toBe(5);
-    expect(band.length + 5).toBe(6);
-    expect(band.length + 6).toBe(7);
-    expect(band.length + 7).toBe(8);
-    expect(band.length + 8).toBe(9);
+    expect(band.length + 3).toBe(3);
+    expect(band.length + 4).toBe(4);
+    expect(band.length + 5).toBe(5);
+    expect(band.length + 6).toBe(6);
+    expect(band.length + 7).toBe(7);
+    expect(band.length + 8).toBe(8);
+    expect(band.length + 9).toBe(9);
     // The 5-printing declaration clause D368 disqualified on shape is STILL the
     // largest thing in the residue and is STILL refused, so nothing here has quietly
     // re-priced it.

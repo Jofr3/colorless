@@ -284,7 +284,11 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect([refused.length, units(refused)]).toEqual([20, 24]);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100), a 1:2 step — and it was NOT a singleton, so unlike D384's step this one
+    // falls on the NON-singleton side and the arithmetic below moves with it.
+    expect([refused.length, units(refused)]).toEqual([19, 22]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -295,8 +299,16 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // untouched: 3 / 7 stands. ⚠️ **THAT IS THE ARITHMETIC THIS RUNG EXISTS FOR** — the
     // comparison it makes (six printings for one op against one for the best clause
     // row) is unchanged by a slice that takes another one out of the singleton band.
-    expect(refused.length - singletons.length).toBe(3);
-    expect(units(refused) - units(singletons)).toBe(7);
+    // 🆕🆕 D386 — 3 / 7 -> **2 / 5**, and the singleton band STANDS STILL at 17 / 17.
+    // The deferred HEALED row this paragraph counted was taken, so the non-singleton
+    // side loses one record and two printings while the band below it is untouched —
+    // the exact mirror of D384's step, and the reason both halves are asserted.
+    // 🛑 WHAT IS LEFT ABOVE THE SINGLETONS IS ONE CLAUSE PRINTED AT TWO AMOUNTS, and
+    // it is the row D368 disqualified on SHAPE: the comparison this rung makes (six
+    // printings for one op against one for the best clause row) is now made against a
+    // band with no purchasable member above 1 at all.
+    expect(refused.length - singletons.length).toBe(2);
+    expect(units(refused) - units(singletons)).toBe(5);
     expect([singletons.length, units(singletons)]).toEqual([17, 17]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.

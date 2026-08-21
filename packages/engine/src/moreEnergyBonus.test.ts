@@ -248,11 +248,16 @@ describe("§1 — the price, RE-DERIVED, and BOTH consequents asked", () => {
     // totals could not tell "the row landed" from "a reader broke".
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // …and the step is 1 and 1, the NARROWEST this chain has taken. Written as an
     // offset off the live head, which is what makes it re-derive rather than freeze.
-    expect([refused.length + 1, units(refused) + 1]).toEqual([21, 25]);
+    expect([refused.length + 2, units(refused) + 3]).toEqual([21, 25]);
   });
 
   it("🛑 D207's SUPPLY question does not ARISE, and that is a result rather than a skip", () => {
@@ -516,12 +521,16 @@ describe("§6 — the census moves in exactly ONE summand, and the step is 1 and
     // `sv09-043` "Purging Strike", 1 legal printing). The head moved and the OFFSET
     // below is what this rung is about, so it is re-derived rather than frozen — the
     // rule D384 wrote into `exactHandSize.test.ts` one file over, paid here.
-    expect(resolved).toHaveLength(367);
-    expect(units(resolved)).toBe(1263);
+    // 🆕🆕 D386 — 367 -> **368** / 1,263 -> **1,265**, THE HEALED-THIS-TURN CLAUSE
+    // (Maractus `sv10.5b-008`/`-093` "Lively Needles", 2 legal printings). A 1:2 step,
+    // so the two subtrahends below diverge again — which is the whole reason this rung
+    // is written as an offset off the live head rather than as a frozen pair.
+    expect(resolved).toHaveLength(368);
+    expect(units(resolved)).toBe(1265);
     // The step, as an offset off the live head rather than a frozen pair. It is the
     // family's first 1:1 step: D368 moved 1:3, D369-D376 1:2 each, D377 3:3, D378 2:3,
     // D379 1:2, D380 2:6, D382 1:1 on the OTHER instrument and D383 1:5.
-    expect([resolved.length - 2, units(resolved) - 2]).toEqual([365, 1261]);
+    expect([resolved.length - 3, units(resolved) - 4]).toEqual([365, 1261]);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {

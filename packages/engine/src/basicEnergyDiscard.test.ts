@@ -224,18 +224,23 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // 🛑 AND THE STEP IS 1:2 HERE, the shape D369/D370/D371/D373/D374/D375 all kept —
     // D377's was 2:2. Every earlier head is re-derived from THIS one rather than
     // frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34, D372's 28/36,
     // D371's 30/38.
-    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([28, 36]);
-    expect([refused.length + 10, units(refused) + 14]).toEqual([30, 38]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
+    expect([refused.length + 9, units(refused) + 14]).toEqual([28, 36]);
+    expect([refused.length + 11, units(refused) + 16]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -249,9 +254,17 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // top of the engine bump. Pinned here MEASURED, so the successor inherits the
     // tie-break rather than re-running it.
     const band = [...byClause].filter(([, n]) => n === 2).map(([clause]) => clause);
-    expect(band).toEqual(["this Pokémon was healed during this turn"]);
-    expect(band.length + 1).toBe(2);
-    expect(band.length + 2).toBe(3);
+    // 🆕🆕 D386 — ONE -> ZERO: the healed-this-turn clause was bought out of the band
+    // (`healedThisTurn.test.ts`), and THE 2-PRINTING BAND IS NOW EMPTY. 🛑 D379's
+    // SATURATION SHAPE — an emptied population cannot go red for the reason that
+    // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
+    // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
+    // and the 1-printing band is SEVENTEEN deep.
+    expect(band).toEqual([]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect(byClause.size).toBe(18);
+    expect(band.length + 2).toBe(2);
+    expect(band.length + 3).toBe(3);
     // The 5-printing declaration clause D368 disqualified on SHAPE ("in addition to
     // this attack's cost" — it reads THIS ATTACK'S COST, which two printings set
     // differently, so no `state+seat` predicate can answer it) is still the largest

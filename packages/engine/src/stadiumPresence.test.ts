@@ -264,15 +264,20 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
     // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
     // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
-    expect(refused.length).toBe(20);
-    expect(units(refused)).toBe(24);
+    // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
+    // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
+    // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
+    // BAND: it was the last clause in it, so every band rung below is re-aimed off the
+    // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
+    expect(refused.length).toBe(19);
+    expect(units(refused)).toBe(22);
     // 🛑 EVERY EARLIER HEAD IS RE-DERIVED FROM THIS ONE rather than frozen: D377's
     // 22/26, D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 2, units(refused) + 2]).toEqual([22, 26]);
-    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([22, 26]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {

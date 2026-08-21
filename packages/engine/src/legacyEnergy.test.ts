@@ -992,8 +992,15 @@ describe("the engine version", () => {
     // under this head (D335's discriminator). The version moves because a reader
     // answers one printed sentence it used to refuse. The post-bump anchor pass was
     // clean.
-    expect(engineVersion).toBe("0.290.0");
-    expect(manifest.version).toBe("0.290.0");
+    // 🆕🆕 D386 — 0.290.0 -> **0.291.0**, THE HEALED-THIS-TURN CLAUSE, and the FIRST
+    // entry on this list that moves `MATCH_RECORD_VERSION` with it: **22 -> 23**. It is
+    // OWED rather than argued — `InPlayPokemon` gains a REQUIRED `healedTurn: number |
+    // null`, so every in-play Pokémon in a v22 record lacks a key this deploy's type
+    // says is always there. A MISSING REQUIRED FIELD is the one case D335's
+    // discriminator does not cover, and D124's own bump (1 -> 2) was this exact case at
+    // this exact address. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.291.0");
+    expect(manifest.version).toBe("0.291.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
