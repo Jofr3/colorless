@@ -22181,6 +22181,194 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D383 — THE PAYOFF UNION: D381's reading widened at its CONSEQUENT, a price that was wrong in BOTH directions, and an adjacency rot that fired on a NARROWING (engine 0.287.0 → **0.288.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+D381 read *"You may {cost}. If you do, {payoff}"* with the payoff fixed at *"this attack does {N}
+more damage."*. The catalog prints a SECOND payoff on the same skeleton, and it is not a bigger hit
+but an ADDITIONAL one:
+
+> **Wellspring Mask Ogerpon ex** `sv06-064` / `sv06-194` / `sv06-213` / `sv08.5-027` / `sv08.5-152`
+> "Torrential Pump" ({W}{C}{C}, flat `100`, index 1 of two)
+> *"You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also
+> does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for
+> Benched Pokémon.)"* — **5 legal printings**, one byte-identical record, and **the biggest single
+> sentence left on the attack backlog at D382's head.**
+
+### A WIDENED PAYOFF AND NOT AN ELEVENTH READER — AND THE ANCHOR DECIDED IT, NOT TASTE
+
+D382 handed this over as an open shape question. The catalog answers it in one measurement:
+`OPTIONAL_COST_BOOST` is `/^You may (.+)\. If you do, (.+)$/` and it **already matched this sentence
+WHOLE** — only `optionalCostOps` and the payoff regex refused it.
+
+🛑 **TWO READERS CANNOT SHARE AN ANCHOR.** Every reader in `effects.ts` is held to a disjointness
+proof drawn from its LEADING WORDS, which is what lets `attack.ts` SUM its terms instead of choosing
+between them. An eleventh reader of this sentence would have carried a byte-identical top-level
+anchor to the tenth, so no leading word could ever have separated them and the sum would have had to
+become a precedence. Both HALVES of the reading were already dispatch tables (D381's `retrieveNoun`
+note), so the payoff becoming one is symmetry rather than generalisation.
+
+⚠️ **AND THE PRICE DIFFERENCE IS MEASURED RATHER THAN ARGUED.** A new reader costs a read site in
+`attack.ts` plus a disjunct in each of `scaledBase`, `effectSimulated` and `modifierSimulated` — three
+insertions into chains that six mutation rows are anchored on. Widening inherits D381's wiring
+instead. What it DOES owe is the narrowing of two of those three terms, and that toll is paid rather
+than pretended away (see below).
+
+### THE PRICE WAS WRONG IN BOTH DIRECTIONS AT ONCE — D199's LESSON, IN ONE ROW
+
+D382 priced this row at three mechanisms. Two of them were the wrong size:
+
+| D382 said | it actually is |
+|---|---|
+| *"a `to: "deck"` destination on `discardEnergy`"* | **ONE OPTIONAL VALUE** on a field D295 shipped |
+| *"a Bench-snipe consequent"* | **ALREADY BUILT** — `damageChosen {target:"opponentBench", count:1, source:"attack", deals:true}` since 0.38.0 |
+| *"a NEW `BoardCondition` for ≥3 Energy on this Pokémon"* | **exactly right, and the whole cost** |
+
+🛑 **THE VICTIM IS THE ACTOR FOR THE FIRST TIME, AND D295's RULE HELD WITH NO BRANCH.** That field's
+doc block says *"the destination is the VICTIM's zone, not the actor's, and that is why it is one
+field and not a seat"* — written when every producer aimed at the OPPONENT, so victim and actor were
+always opposite. Here `from: "yourActive"` makes them the SAME seat and the printed possessive is
+*"your deck"*; `discardVictimSeat` returns the controller for that arm, so the rule needed no branch.
+**A RULE WRITTEN WHERE IT COULD NOT BE WRONG HAS NOW BEEN TESTED ON THE CASE THAT COULD HAVE BROKEN
+IT** — which is the mirror of D373's finding about `noEnergyOnYourPokemon`, one field over.
+
+🛑 **AND THE PAYOFF ANCHOR SHARES A REGEX BODY WITH `ALSO_BENCHED_SNIPE`.** The printed clause is the
+same clause `deriveAttackEffect` has read since 0.38.0, differing only in the CASE of the leading word
+— because behind *"If you do, "* the sentence lowercases it (D246/D316's rule). So the body is a named
+fragment now and the two anchors splice it with `^This ` and `^this `. That is D222's rule applied to
+a printed clause: ONE reading of one sentence, so the two cannot drift, and widening the fragment
+widens BOTH readers — which is the coupling both callers want.
+
+### WHAT IT COST: ONE `BoardCondition` MEMBER, AND THE COMPARAND IS WHAT MAKES IT A NEW ONE
+
+`yourActiveEnergyAtLeast { count }` — at least `count` Energy **CARDS**, **UNTYPED**, on the
+**ACTOR'S OWN BODY**. All three siblings were priced first and each is wrong on exactly one axis:
+
+* `yourActiveHasEnergyAttached` — right BODY, **TYPED and UNQUANTIFIED**;
+* `yourEnergyInPlayAtLeast` — right QUANTIFIER, **whole SIDE and a type**; and its `energy` field is
+  `BasicEnergyType | "special"`, which has **no `"Colorless"` member at all**, so it could not spell
+  an untyped noun even with the zone narrowed;
+* `yourBasicEnergyInDiscardAtLeast` — right quantifier, **wrong ZONE** and on the printed card class.
+
+Adding a `count` to the first or narrowing the zone of the second is a RENAME of a shipped member with
+live consumers, which D362 priced at 31 sites across 7 files and D365/D366 refused twice. **A WIDENING
+IS FREE; A RENAME IS NOT.**
+
+🛑 **AND IT IS SEPARATE FROM `activeEnergyCountsEqual` (D372), WHICH IS THE SECOND QUESTION THE RESUME
+POINT ASKED.** Both count Energy on ONE body through the SAME call —
+`countAttachedEnergy(state, pokemon, null)`, the unfiltered CARD count — so they share an
+implementation and can never drift. What they do not share is the **COMPARAND**: this one measures a
+body against a printed CONSTANT, that one against ANOTHER BODY. Folding them needs a member carrying
+an operator and a comparand union — a GENERALISATION rather than a widening — and it would swallow a
+shipped nullary member on the way. **ONE COUNTER, TWO COMPARANDS, TWO MEMBERS.** The catalog's third
+reading of those same two operands (*"…has MORE Energy attached than your opponent's Active
+Pokémon"*, 1 legal printing, still refused at this head) belongs with `activeEnergyCountsEqual` and
+NOT here: it is that member with `===` replaced by `>`, which is one more argument for two members
+rather than one — and it is now the cheapest row on the backlog.
+
+### THE PRINTED BASE DOES NOT MOVE INSIDE THE GATE — AND THAT IS THE WHOLE STRUCTURAL DIFFERENCE
+
+*"ALSO"* names a SECOND hit on a BENCHED body the main §8.5 hit never touches, so the flat `100` lands
+in the pre-program pipeline whatever the player answers and the program carries only `[cost…, snipe]`.
+Two consequences, and both invert D381:
+
+1. **BOTH GATES CARRY NO `otherwise` AT ALL.** D381's two decline arms exist precisely because ITS
+   payoff re-homes a printed base a decline must still deal (`140+`, not `+140`); here a decline and
+   an unpayable cost genuinely buy nothing, so D135 makes the field ABSENT rather than `[]`.
+2. **`scaledBase` AND `modifierSimulated` ARE NARROWED THROUGH ONE NAMED LOCAL**,
+   `costBoostOwnsTheBase` — `coinExplainsModifier`'s idiom two blocks down, and for its reason: the
+   reversed reading's two payoffs answer that question differently. Dropping the base for this payoff
+   would silently delete a 100-damage attack on EVERY board including the declined one, which is
+   D228's asymmetry reached through a reader instead of an op. `effectSimulated` needs no narrowing
+   and gets none — the sentence is the whole printed effect under both payoffs, VERIFIED rather than
+   copied.
+
+⚠️ The `modifierSimulated` narrowing is **correctness in principle and not a live bug**: all five
+printings carry a FLAT `100`, so no board in the catalog can tell the two answers apart. It is written
+from D130's rule rather than from what a test would notice, exactly as D130 and D192 were, and it is
+recorded in `mutants.ts` as a row deliberately NOT written.
+
+### 🛑 THE ADJACENCY ROT FIRED A FOURTH TIME, ON A SHAPE IT HAD NOT FIRED ON BEFORE
+
+D316, D317 and D381 were each broken by a slice **ADDING** a disjunct to one of those three chains.
+D383 added nothing — it **NARROWED** an existing term to a named local — and **six multi-line `find`
+strings died in exactly the same way, without a character of theirs being edited.**
+
+**A MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY, AND A NARROWING FALSIFIES IT AS COMPLETELY AS AN
+INSERTION DOES.** All six were re-transcribed in the same commit as the code and verified one decision
+at a time (the flags do not accumulate — D382): D316 **15 killed / 0 errors**, D317 **16 killed + 1
+declared survivor / 0 errors**, D381 **8 / 0**, D295 **4 / 0** (two rows now kill in two files), D275
+**8 / 0** with the version anchor re-pointed at `0.288.0`.
+
+### 🛑 AN UNREACHABLE-FALSE GATE IS A MEASUREMENT, AND THE MEASUREMENT IS WHAT BELONGS IN THE RECORD
+
+`yourActiveEnergyAtLeast`'s gate **cannot be FALSE on any board the REAL printing can build in this
+pool**. Torrential Pump costs {W}{C}{C} — three UNITS — and `countAttachedEnergy` counts **CARDS**, so
+the two come apart only on a body holding a multi-unit Special. The two in this pool are Neo Upper
+Energy (Stage 2 holders only) and Reversal Energy (Evolution, no Rule Box), and Wellspring Mask
+Ogerpon ex is a **Basic WITH a Rule Box**.
+
+The gate is kept anyway, for three reasons stated rather than assumed: D381's reading makes `cond`
+**REQUIRED** because that is what the swap MEANS (inventing an always-true member would be strictly
+worse); the anchor CAPTURES the digit, so the arity is not fixed at 3; and without the gate,
+`discardEnergy`'s *"do as much as you can"* rule for a MANDATORY discard would shuffle whatever is
+there and collect the whole printed 120.
+
+Its false arm is therefore **DRIVEN FROM OUTSIDE THE POPULATION** — D379's own technique, applied to a
+**BOARD** rather than to a reader: `torrentialPump.test.ts` §6 fields a LOCAL synthetic printing
+differing on the ONE token the cost anchor captures (four instead of three), so the attack is declared
+legally on three Energy cards and the offer cannot be paid. **WHEN A GATE LOOKS VACUOUS ON THE REAL
+CARD, MEASURE WHY, SAY SO, AND DRIVE ITS FALSE ARM FROM OUTSIDE THE POPULATION.**
+
+### The refusal list one file over had to move — D382's finding as a routine cost
+
+`optionalCostBoost.test.ts`'s `STILL_OWED.energy` asserted this exact sentence REFUSED. The row is
+moved into a `TAKEN_SINCE` that **ASSERTS IT RESOLVES**, so neither rung can go green by a successor
+quietly shortening a refusal list — the repair D382 made to `stadiumPresence.test.ts`, arriving one
+slice later as a cost that was expected rather than as a surprise. **A GUARD KEYED ON A REFUSAL HAS AN
+EXPIRY DATE, AND WHOEVER EXPIRES IT OWNS THE REWRITE.**
+
+### What shipped, and what it moved
+
+**1** `BoardCondition` member, **1** optional VALUE on `discardEnergy.to` and on
+`ENERGY_DISCARDED.to`, **1** cost row, **1** payoff row, **1** shared regex fragment, **1** assembler
+arm (`costSnipeProgram`), **1** `FIXTURE_POOL` demonstrator (`fix-torrent`) and **1** 32-case suite.
+**ZERO** new readers, ops, events, prompts, choice kinds, error codes, `GameState` fields, registry
+rows or `packages/schema` bytes.
+
+`MATCH_RECORD_VERSION` **stays 22**, asked rather than inherited and NOT trivially: `discardEnergy`
+PARKS, so its op really does ride `EffectContinuation.pendingOp` in a persisted record — but
+`to?: "hand"` → `to?: "hand" | "deck"` is a **WIDENING**, and a v22 record carries that key absent or
+`"hand"`, both of which still mean exactly what they meant (D335's discriminator; D352 and D359 are
+the RENAME counter-examples).
+
+Census, **+1 sentence / +5 printings — the biggest single-sentence step this summand has taken since
+D348**: resolving sentences 364 → **365**, raw 1,256 → **1,261**, `BUILT.attack` 1,285 → **1,290**,
+unbuilt attack remainder 476 → **471**, whole-census `built` 1,686 → **1,691** and its residue 697 →
+**692**, `FIXTURE_POOL` floor 470 → **471**.
+
+⚠️ **THE MOVING SET WAS TEN FILES, AND A READER *WIDENING* MOVES A DIFFERENT SET THAN A READER
+*ADDITION*.** D383 did NOT move `precociousEvolution`'s §2 reader-surface tripwire BY COUNT (no new
+`deriveAttack*` export) — that file moved only for its census rungs. It DID move `programWalk`
+without exporting a new assembler, because it added a pool FIXTURE that reaches an existing
+assembler's **new ARM**: `costSnipeProgram` was unreachable from `FIXTURE_POOL` and the sweep was
+structurally blind to it. **ADD `programWalk` THE MOMENT YOU EXPORT AN ASSEMBLER *OR* ADD A FIXTURE
+THAT REACHES A NEW BRANCH OF ONE** — D318's rule, third payment.
+
+🆕 **AND A SEVENTH RUNG JOINED THE SET NO GREP REACHES**: the named-fraction ROUNDING in
+`censusAtHead.test.ts` (`Math.round((inRows / unbuiltAttack) * 100)`) crossed a boundary for only the
+**SECOND TIME EVER**, 6% → 7%, on an UNMOVED numerator. A rounded ratio has no site of its own and
+goes red because the OTHER term moved.
+
+### The ids are a WEB measurement, the eleventh slice running
+
+limitlesstcg's `text:"shuffle 3 Energy attached to this Pokémon into your deck"` with
+`&display=list` returned Wellspring Mask Ogerpon ex at exactly **five** Standard printings (TWM
+64/194/213, PRE 27/152) — matching `legalAttackCorpus()`'s 5 on the nose — and
+`https://api.tcgdex.net/v2/en/cards/sv06-064` then returned both attacks, the printed cost, the flat
+`100` and the effect text byte for byte in ONE call. ⚠️ limitless tokenises and ANDs, so it is a
+CANDIDATE GENERATOR and tcgdex-by-id is the MEASUREMENT; **the web still cannot give a legal-printing
+count**, which is `legalAttackCorpus()`'s alone.
+
 ## D382 — THE `. Then, ` JOIN: D317's shape with the printed comma changed, and a refusal guard whose instrument could not see the reader that expired it (engine 0.286.0 → **0.287.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 ### The slice was CHOSEN by pricing three candidates against each other
