@@ -12108,6 +12108,75 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.287.0 → **THE `. Then, ` JOIN — D317's SHAPE WITH THE PRINTED COMMA
+    CHANGED, ON *ZERO* NEW READERS AND *ZERO* NEW OPS.**
+
+    D317 read *"If {clause}, this attack does {N} more damage, and {consequent}"*.
+    ONE legal printing spells the same shape with a sentence break where that
+    reader demands a comma, and it was on the loud `ATTACK_EFFECT_SKIPPED` path at
+    D381's head — measured, not assumed: all TEN readers returned null for it.
+
+      Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`, index 1 of two —
+      confirmed by id against tcgdex, which returns "Allure" at index 0)
+        *"If a Stadium is in play, this attack does 60 more damage. Then, discard
+         that Stadium."*
+        **1 legal printing**
+
+    🛑 **A SPELLING, AND THE CATALOG SAID SO THREE WAYS BEFORE A LINE WAS WRITTEN.**
+    (1) BOTH halves are already owned separately — the bare antecedent reads through
+    `deriveAttackDamageBonus` into `{per, boardCondition stadiumInPlay}` (D378) and
+    the bare consequent's op is D380's `discardStadium`, so the JOIN is the only
+    thing bought. (2) *"Then,"* is a SEQUEL where *", and"* is a rider, and neither
+    is reachable when the antecedent is false, so both fold into the same
+    `boostedArms` pair with nothing to choose between them. (3) A THIRD reader for a
+    changed comma would be exactly the design D317 refused (*"a design under which
+    two printings of one printed shape need two mechanisms is a design that has not
+    found the shape"*).
+
+    ⚠️ **TWO NAMED ANCHORS AND NOT ONE ALTERNATION**, because the disjointness is
+    worth keeping assertable: the `. Then, ` anchor demands a literal `. ` where the
+    `, and ` anchor demands a literal `, ` at the same offset, so no sentence can
+    match both — measured over the whole legal attack column — and the `??` between
+    them is an ORDER-FREE fold rather than a precedence. A mutant swapping its two
+    operands is therefore a DECLARED EQUIVALENT SURVIVOR.
+
+    ⚠️ **THE COIN FORM IS NOT WIDENED.** `/^Flip a coin\. If heads, …more damage\.
+    Then, /` returns **ZERO** sentences, so that arm would be authoring a card rather
+    than reading one (D190b: exact map or flag). The zero is measured in
+    `bonusConsequentThen.test.ts` §3, not asserted.
+
+    🛑 **AND THE CATALOG'S OWN NEAR MISS IS THE CONTROL, WHICH IS WHY NOBODY HAD TO
+    INVENT ONE.** Ting-Lu `sv06-110` "Ground Crasher" prints the SAME antecedent, the
+    SAME *"discard that Stadium"* consequent AND the `, and ` join — and is still
+    refused, because its middle clause is a SECOND HIT (*"also does 30 damage to
+    each…"*) rather than a bonus. A reader widened at the JOIN instead of at the
+    ANCHOR would have swallowed it. The `discard that Stadium` family is **2
+    sentences / 2 printings**; this slice claims **1 / 1** and leaves **1 / 1**,
+    named and driven.
+
+    🛑 **THE ORDER OF THE HIT AND THE DISCARD IS UNOBSERVABLE ON THIS PRINTING, AND
+    THAT IS STATED RATHER THAN GLOSSED.** D381's rule says to go looking for the one
+    card that observes an "obviously unobservable" order; this slice looked, and the
+    only Stadium in the pool whose presence moves a damage number is Neutralization
+    Zone `sv06.5-060`, which prevents damage only **from an attacking Pokémon ex** —
+    Chi-Yu is a Basic with no Rule Box, and unlike D381 this suite drives the REAL
+    printing, so `isExOrV` cannot be talked into it by a fixture NAME. The order is
+    therefore claimed from the PRINT and pinned in the ASSEMBLED program (D130/D228's
+    precedent), not from a board.
+
+    ⚠️ **AND THE `conditionGate` ARM OF `bonusConsequentProgram` HAD NEVER BEEN
+    REACHABLE FROM `FIXTURE_POOL`.** `grep -c 'more damage, and ' testFixtures.ts`
+    returned **1** at D381's head, and that hit is `fix-bonusconsequent`'s COIN
+    sentence — so for five slices every sweep that walks the shared pool was blind to
+    the board-fact arm. `fix-groundmelter` is the demonstrator that closes it; D318's
+    rule, paid one arm over.
+
+    engineVersion 0.286.0 → **0.287.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited: this slice adds **no `EffectOp` member at all**, so every
+    step the widened reading emits could already appear in a v22 record and no v22
+    byte string means anything different under this one. D335's discriminator applied.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.286.0 → **THE REVERSED OPTIONAL BOOST — D316's SENTENCE WITH ITS TWO
     HALVES SWAPPED, ON *ZERO* NEW OPS.**
 
@@ -14956,7 +15025,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.286.0";
+export const engineVersion = "0.287.0";
 
 export type {
   ApplyResult,

@@ -11209,6 +11209,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D382 — THE `. Then, ` DEMONSTRATOR, and it is `fix-bonusconsequent`'s
+      twin for the OTHER decider. Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`,
+      index 1 of two — confirmed by id against tcgdex), transcribed and not
+      interpolated (D306).
+
+      🛑 **WHY IT WAS OWED, AND THE MEASUREMENT THAT SAYS SO RATHER THAN THE
+      ARGUMENT.** `bonusConsequentProgram` has TWO arms — a `coinFlipGate` for the
+      coin decider and a `conditionGate` for the board-fact one — and at D381's HEAD
+      `grep -c 'more damage, and ' testFixtures.ts` returned **1**, the one hit being
+      `fix-bonusconsequent`'s COIN sentence. So for five slices the CONDITION arm of
+      that assembler was reachable only from `bonusConsequent.test.ts`'s LOCAL pool,
+      and every sweep that walks `FIXTURE_POOL` — `programWalk.test.ts` above all —
+      was structurally blind to it. This card is the sufficient half; D318's rule,
+      paid one arm over.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest and
+      `sv06` is in none of the six, which is exactly why the real Chi-Yu lives in
+      that suite's local pool and a demonstrator has to live here.
+
+      ONE attack rather than the printed two — the "read attack beside an unread
+      one" control is already `fix-bonusconsequent`'s job, and Chi-Yu's index-0
+      *"Draw 2 cards."* is read by `deriveAttackEffect` anyway, so it would be a
+      second read attack and not a control. `hp: 150` rather than the printed 110 so
+      the body survives this pool's return fire; the `60+` marker is REAL and
+      load-bearing (the reader consumes the "+" and attack.ts drops the base into the
+      gate, so a flat number would exercise the wrong half of the assembly). */
+  "fix-groundmelter": battler("fix-groundmelter", {
+    hp: 150,
+    types: ["Fire"],
+    attacks: [
+      {
+        cost: ["Fire", "Colorless"],
+        name: "Ground Melter",
+        damage: "60+",
+        effect:
+          "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.",
+      },
+    ],
+  }),
   /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR, half one: Slugma `sv05-028`
       "Roasting Heat"'s printed sentence, verbatim, on a body of this pool's own
       making. `fix-*` and not `sv05-028` for `fix-emberpillar`'s reason unchanged —

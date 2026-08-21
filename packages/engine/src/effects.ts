@@ -16398,30 +16398,63 @@ export interface AttackBonusConsequent {
   decider: { kind: "boardCondition"; cond: BoardCondition } | { kind: "coinFlip" };
   /** The printed extra damage the YES arm adds to the attack's own printed base. */
   bonus: number;
-  /** What the printed ", and …" buys on the YES arm, in printed order. Named
-      `ops` for `AttackOptionalBoost.ops`'s reason: it is a program reached through
-      a READING, not a branch hanging off an `EffectOp` a walk can find. */
+  /** What the printed join — ", and …" or (D382) ". Then, …" — buys on the YES
+      arm, in printed order. Named `ops` for `AttackOptionalBoost.ops`'s reason: it
+      is a program reached through a READING, not a branch hanging off an
+      `EffectOp` a walk can find. */
   ops: EffectOp[];
 }
 
 const BONUS_CONSEQUENT_CONDITION = /^If (.+), this attack does (\d+) more damage, and (.+)$/;
+/** 🆕🆕 D382 — the SAME condition form with the printed join spelled `. Then, `
+    rather than `, and `: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`, index 1
+    — confirmed by id against tcgdex) prints *"If a Stadium is in play, this attack
+    does 60 more damage. Then, discard that Stadium."*
+
+    🛑 **A SECOND ANCHOR AND NOT A WIDENED ONE, BECAUSE THE TWO JOINS ARE PROVABLY
+    DISJOINT AND THE PROOF IS WORTH KEEPING.** Measured over `legalAttackCorpus()`:
+    the `, and ` anchor matches ONE sentence (5 printings) and the `. Then, ` anchor
+    matches ONE (1 printing), and neither matches the other's. An alternation
+    `(?:, and |\. Then, )` would have collapsed that into a regex whose greed nobody
+    can read off the page; two named constants keep the claim assertable, which
+    `bonusConsequent.test.ts` §8 does in both directions.
+
+    ⚠️ **AND THE `. Then, ` JOIN IS NOT WIDENED TO THE COIN FORM**, deliberately:
+    `/^Flip a coin\. If heads, this attack does (\d+) more damage\. Then, /` returns
+    **ZERO** sentences in the whole legal attack column, so a coin arm for it would
+    be authoring a card rather than reading one (D190b's "exact map or flag"). */
+const BONUS_CONSEQUENT_CONDITION_THEN =
+  /^If (.+), this attack does (\d+) more damage\. Then, (.+)$/;
 const BONUS_CONSEQUENT_COIN =
   /^Flip a coin\. If heads, this attack does (\d+) more damage, and (.+)$/;
 const CONSEQUENT_DISCARD_ALL_SELF_ENERGY = /^discard all Energy from this Pokémon\.$/;
 const CONSEQUENT_HEAL_SELF = /^heal (\d+) damage from this Pokémon\.$/;
+/** 🆕🆕 D382 — Ground Melter's consequent. LOWERCASE `discard` and the ANAPHORIC
+    *"that Stadium"*, both load-bearing: `deriveAttackEffect`'s `DISCARD_STADIUM`
+    reads the capitalised standalone imperative *"Discard a Stadium in play."*
+    (D380) and returns null for this string, which is exactly why the consequent has
+    to be dispatched here rather than delegated to that reader. */
+const CONSEQUENT_DISCARD_STADIUM = /^discard that Stadium\.$/;
 
 /** The consequent half, dispatched over its closed anchor list — the ops the
-    printed ", and …" buys, or null for a consequent this engine does not read.
-    Both ops already shipped: `discardEnergy {from:"yourActive", count:"all"}` is
-    `FLIP_TAILS_SELF_DISCARD_ALL`'s own op and `heal {target:"self"}` has run since
-    0.x, so what this slice actually buys is a NUMBER — which of two amounts the
-    single §8.5 hit uses — exactly as D316's did. */
+    printed join buys, or null for a consequent this engine does not read. All
+    THREE ops already shipped: `discardEnergy {from:"yourActive", count:"all"}` is
+    `FLIP_TAILS_SELF_DISCARD_ALL`'s own op, `heal {target:"self"}` has run since
+    0.x and `discardStadium` is D380's, so what this slice actually buys is a
+    NUMBER — which of two amounts the single §8.5 hit uses — exactly as D316's
+    did. */
 function bonusConsequentOps(consequent: string): EffectOp[] | null {
   if (CONSEQUENT_DISCARD_ALL_SELF_ENERGY.test(consequent)) {
     return [
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ];
   }
+  // 🆕🆕 D382 — the op ALONE, with no gate around it and no `optional`: the
+  // antecedent this consequent hangs off is ALREADY `stadiumInPlay`, so the yes arm
+  // is only ever reached on a board that has a Stadium to discard, and the printed
+  // sentence carries no "you may". Wrapping it would be D380's stakeless dialog
+  // with the stake removed twice over.
+  if (CONSEQUENT_DISCARD_STADIUM.test(consequent)) return [{ op: "discardStadium" }];
   const heal = CONSEQUENT_HEAL_SELF.exec(consequent);
   if (heal !== null) {
     const amount = Number(heal[1]);
@@ -16451,7 +16484,17 @@ function bonusConsequentOps(consequent: string): EffectOp[] | null {
     return null and REFUSE the whole thing — a silent loss of Floragato rather than
     a wrong answer, but a loss. Anchoring the coin form at `^Flip a coin\.` is what
     makes the two mutually exclusive; testing it first is what makes that
-    independent of the condition anchor's greed. */
+    independent of the condition anchor's greed.
+
+    🆕🆕 **D382 — THE CONDITION FORM NOW HAS TWO PRINTED JOINS, AND THE `??` BELOW
+    IS AN ORDER-INDEPENDENT FOLD RATHER THAN A PRECEDENCE.** Unlike the coin/condition
+    pair above — where the order IS load-bearing — `, and ` and `. Then, ` are
+    mutually exclusive by construction: the second anchor requires a literal `. `
+    where the first requires a literal `, `, at the same offset in the same
+    sentence. So no sentence can match both, the `??` can be read in either
+    direction, and `bonusConsequent.test.ts` §8 asserts that rather than trusting
+    it. ⚠️ **Which is why a mutant SWAPPING the two operands is a DECLARED
+    EQUIVALENT SURVIVOR and not a gap** — see `scripts/mutation/mutants.ts`. */
 export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent | null {
   const effect = text.trim();
   const coin = BONUS_CONSEQUENT_COIN.exec(effect);
@@ -16463,7 +16506,8 @@ export function deriveAttackBonusConsequent(text: string): AttackBonusConsequent
     const ops = bonusConsequentOps(coin[2] ?? "");
     return ops === null ? null : { decider: { kind: "coinFlip" }, bonus, ops };
   }
-  const condition = BONUS_CONSEQUENT_CONDITION.exec(effect);
+  const condition =
+    BONUS_CONSEQUENT_CONDITION.exec(effect) ?? BONUS_CONSEQUENT_CONDITION_THEN.exec(effect);
   if (condition === null) return null;
   // An UNMAPPED clause falls through to null and stays LOUD — `CONDITIONAL_DAMAGE_
   // BONUS`'s own rule, and the reason this reader shares that table rather than
