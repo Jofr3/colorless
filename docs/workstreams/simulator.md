@@ -22181,6 +22181,129 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D381 — THE REVERSED OPTIONAL BOOST: D316's sentence with its two halves swapped, on *zero* new ops, and an order that exactly one Stadium in the pool can see (engine 0.285.0 → **0.286.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+D316 read *"You may do {N} more damage. If you do, {drawback}"* — the antecedent is the PAYOFF and
+the consequent is the cost. This slice reads the same sentence the other way round: the antecedent is
+the COST and the consequent is the extra damage it buys. **Cetitan ex `sv10-065`/`sv10-210` "Crushing
+Press"** ({W}{W}{W}{C}, `140+`, the card's only attack, confirmed by id against tcgdex for both
+printings) prints *"You may discard a Stadium in play. If you do, this attack does 140 more damage."*
+
+### A READER SLICE IS PRICED IN REFUSED SENTENCES CLAIMED — MEASURE BOTH ENDS
+
+Off `legalAttackCorpus()` with `/^You may .*If you do,/` the family is **7 sentences / 14 printings**,
+of which **3 sentences / 9 printings were REFUSED at D380's head**. This reader claims **1 / 2** and
+leaves **2 / 7**. That is the whole value of the slice and it is asserted at both ends in
+`optionalCostBoost.test.ts` §1 — the "before" figure is re-derived by dropping this reader out of the
+set rather than quoted from prose.
+
+**Every mechanism the claimed sentence needs already shipped**: `discardStadium` is D380's,
+`stadiumInPlay` is D378's, `optional` is D186's, `conditionGate` is older than all three. What the
+slice buys is a READING, one exported assembler and one cost-table row.
+
+### THE CATALOG DECIDED THAT IT IS A SEPARATE READER
+
+The two shapes look like each other and are not. The family partitions by **which half is the cost**,
+and the partition is TOTAL:
+
+* all **four** forward sentences buy their bonus with a consequent that can ALWAYS be paid — shuffle
+  yourself away, hurt yourself, forgo next turn's attack — so their reading needs no precondition and
+  their `optional` needs no gate;
+* all **three** reversed ones lead with a cost that can be **UNPAYABLE** — a Stadium to discard, three
+  Energy to shuffle away, a face-down Prize to turn up.
+
+**THE PRECONDITION IS NOT A FIELD ONE FAMILY HAPPENS TO WANT; IT IS WHAT THE SWAP MEANS.** So
+`AttackOptionalCostBoost` carries a `cond` the forward reading would never populate, and the reversed
+reading is the TENTH reader rather than a second anchor on the eighth.
+
+### THE SATURATION TRAP, ARMED AND REFUSED
+
+Both remaining printings carry a **trailing reminder parenthetical**, so a `\.$` anchor on the payoff
+half would have refused them **BY ACCIDENT** — the suite would have read green while claiming nothing
+about the mechanism, which is D379's saturation trap with the polarity flipped. The repair is to
+**RE-PAIR EACH REFUSED HALF WITH A HALF THE READER DOES READ**, on synthetic sentences no card prints:
+
+* `You may turn 1 of your face-down Prize cards face up. If you do, this attack does 140 more damage.`
+  → null, so the refusal is the COST's (there is no face-up-Prize state on `PlayerState`);
+* `You may discard a Stadium in play. If you do, this attack also does 120 damage to 1 of your
+  opponent's Benched Pokémon.` → null, so the refusal is the PAYOFF's;
+* …with a control that resolves, so a broken import cannot fake either.
+
+### THE PRINTED ORDER IS OBSERVABLE, AND ONLY ONE STADIUM IN THE POOL CAN SEE IT
+
+`boostedArms` emits `[damageDefender(base + bonus), ...ops]` — the hit first — because that is the
+printed order for D316's sentence. This one prints discard-then-damage, and the difference is **not
+cosmetic**: **Neutralization Zone `sv06.5-060`** (`preventDamageToNoRuleBoxFromExV`) prevents damage
+to a Pokémon WITHOUT a Rule Box from an attacking Pokémon **ex** — and Cetitan ex is one. So on that
+board the printed order deals **280** and the swapped order deals **0** and then discards the Stadium
+that stopped it. **EVERY OTHER BOARD IN THE SUITE IS GREEN EITHER WAY.**
+
+That is why the fixture is named **`Fixceti ex`** rather than defaulting to its id: `isExOrV` reads
+the `Card.name`, and a fixture called `fix-crushpress` would have made the one discriminating board
+unreachable and the order claim untestable. **WHEN AN ORDER LOOKS "OBVIOUSLY UNOBSERVABLE", GO LOOK
+FOR THE ONE CARD THAT OBSERVES IT.**
+
+⚠️ A vacated `hpDelta` Stadium moves a MAXIMUM between the two hits as well, but all three of those
+printings are `sv08`/`sv10` and outside the six sets `CATALOG_MANIFEST` covers — so that half is
+NAMED rather than driven (D205: a mutant for an unkillable claim is worse than no mutant).
+
+### BOTH GATES CARRY AN `otherwise`, WHICH IS THE DIFFERENCE FROM D380
+
+`optionalCostBoostProgram` builds `conditionGate(stadiumInPlay) → optional → [discardStadium,
+damageDefender(base + 140)]`, with `damageDefender(base)` on the confirm's decline arm **and** on the
+gate's empty-zone arm. D380's bare *"You may discard a Stadium in play."* has neither, correctly: its
+whole printed content is the discard, so its field is ABSENT (D135). Crushing Press is `140+` and not
+`+140`, so an absent arm on either gate silently deletes a 140-damage attack.
+
+The `conditionGate` is also doing more work here than it did at D380: with no Stadium in play a bare
+confirm offers a "yes" that discards NOTHING and still pays the printed **+140** — **a free 140**,
+which is the stakeless-dialog defect with damage at stake.
+
+### A PROGRAM THAT SHARES A BRANCH IS A DAG, AND EVERY AUDITOR HERE ASSUMES A TREE
+
+The first draft handed **one** decline-arm array to both gates. Equal in value, correct at runtime,
+green on every board in the new suite — and `programWalk.test.ts` went red by **exactly one**, because
+that file accounts for the ops it reaches BY IDENTITY and a shared arm is *"already seen"* down the
+outer path, so `structural − enumerated === missed.length` fails. The assembler now calls
+`boostedArms` twice (spelled differently, so neither line is a mutation-`find` duplicate of the other)
+and says why in its doc block. **AN INVARIANT THAT COUNTS OBJECTS IS AN INVARIANT ABOUT SHAPE, NOT
+ABOUT VALUE.**
+
+### ASK THE CENSUS TWICE — AND SHORTEN THE CONNECTIVE, NOT ONLY THE NOUN
+
+D310/D311's rule is to re-run a census with the literal shortened to the part a PRONOUN cannot change.
+The same rule applies to the JOINING WORDS. `/^You may .*If you do,/` returns **7 sentences / 14
+printings**; `/^You may .*\. If /` returns **8 / 15**. The eighth is *"You may discard your hand. If
+you discarded any cards in this way, this attack does 120 more damage."* (**1** printing) — the same
+reversed shape with its consequent conditioned on the **COST's own effect** rather than on the answer,
+which is a RECORD of what the cost did and not a board fact read before it. Refused, named and driven.
+
+### THE TENTH READER IS GUARDED BY EXACTLY ONE RUNG, AND IT LIVES IN ANOTHER FILE
+
+`censusAtHead.test.ts`'s `READERS` list is **hand-kept**, and nothing in that file notices a new
+reader: a tenth reader that resolves printings would leave `BUILT.attack` undercounted and the whole
+census green. The only thing between that and rot is `precociousEvolution.test.ts` §2, which builds
+`EXPORTED_ATTACK_READERS` from the MODULE (`Object.entries(effects)`, `deriveAttack` prefix) and diffs
+its own copy against it, then pins the COUNT. It fired at D316, D317 and now D381, and was re-pointed
+rather than relaxed each time. Its stated limit is still real: **a reader added under a different name
+is invisible to it.**
+
+### WHAT SHIPPED, AND WHAT MOVED
+
+1 new reader, 1 exported assembler, 1 cost-table row, 1 fixture (`fix-crushpress` / `Fixceti ex`), 1
+dedicated 60-card deck (`OPTIONAL_COST_BOOST_DECK`, six of EACH Stadium — a MARGIN, not a seed), 33
+cases in `optionalCostBoost.test.ts`. **Zero** new `EffectOp` members, ops, events, prompts, choice
+kinds, `BoardCondition` members, error codes or `packages/schema` bytes.
+
+Census: raw 1,253 → **1,255**; `BUILT.attack` 1,282 → **1,284**; resolving sentences 362 → **363**;
+unbuilt attack remainder 479 → **477**; whole-census `built` 1,683 → **1,685** and its residue 700 →
+**698**; `FIXTURE_POOL` floor 468 → **469**. **Both damage-clause residues UNMOVED.** Seven files
+moved — four fewer than D380's ten, and `preventBlock.test.ts` was NOT among them, because a
+reader-only slice adds no op for its classifier to enumerate.
+
+`bun run check`: **388 files / 8,098 tests, `CHECK_EXIT=0`**, measured twice. `--decision D381`:
+**8 KILLED / 0 GAPs / 0 errors, 30.9s on the first run**; corpus **1245 → 1253**.
+
 ## D380 — THE STADIUM-DISCARD OP: the first slice in this run that buys an `EffectOp` rather than a `BoardCondition`, and it is smaller than its name (engine 0.284.0 → **0.285.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 D379 saturated the *"…this attack does nothing."* skeleton and measured what was left. The
