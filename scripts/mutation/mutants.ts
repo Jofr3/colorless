@@ -5158,7 +5158,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D386 (0.290.0 → 0.291.0), at D385 (0.289.0 → 0.290.0), at D384 (0.288.0 → 0.289.0), at D383 (0.287.0 → 0.288.0),
+    // ⚠️ RE-POINTED AT D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0), at D385 (0.289.0 → 0.290.0), at D384 (0.288.0 → 0.289.0), at D383 (0.287.0 → 0.288.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.291.0";',
+    find: 'export const engineVersion = "0.292.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -15357,5 +15357,69 @@ export const MUTANTS: Mutant[] = [
     find: "      return \"your Active Pokémon was healed during this turn\";",
     replace: "      return \"your Active Pokémon moved from your Bench to the Active Spot this turn\";",
     expectKilledBy: ["packages/engine/src/healedThisTurn.test.ts"],
+  },
+  // 🆕🆕 D387 — THE STAGE 1 CLAUSE. Paldean Tauros `sv08-018` "Spirited Tackle"
+  //    ({R}{C}{C}, `90+`, **+90**, index 1 of two), ONE legal printing, bought as the
+  //    FOURTH sibling of a shape this union has built three times.
+  //
+  //    🛑 EVERY ROW BELOW IS A NEIGHBOUR'S REAL CODE, and the neighbours are the point:
+  //    this member sits between `opponentActiveIsBasic`, `opponentActiveIsEvolution`
+  //    and `opponentActiveIsStage2`, and the ONLY way to get it wrong is to reach for
+  //    one of them. The set relation makes that reach look safe — every Stage 1 IS an
+  //    Evolution — and it is exactly what D296's doc block, D367's clause-row comment
+  //    and this slice's §3 ladder all exist to refuse.
+  {
+    id: "D387-predicate-reads-the-stage-2-word",
+    decision: "D387",
+    what: "\u{1F6D1} `isStage1Pokemon` compares against `\"Stage2\"` \u2014 BYTE-FOR-BYTE the body of the function DIRECTLY BELOW it, which is the copy an author makes by duplicating a row and forgetting one character. Paldean Tauros then pays +90 against a Stage 2 and nothing against the Stage 1 it prints for, i.e. the card is wrong on BOTH arms at once. \u26a0\ufe0f AND THE CENSUS DOES NOT MOVE \u2014 the sentence still resolves, `BUILT.attack` still lands on 1,295 \u2014 so every count rung in the repo stays green and only a board can see it",
+    file: "packages/engine/src/cards.ts",
+    find: '  return card.category === "Pokemon" && card.stage === "Stage1";',
+    replace: '  return card.category === "Pokemon" && card.stage === "Stage2";',
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
+  },
+  {
+    id: "D387-condition-reads-the-wide-member",
+    decision: "D387",
+    what: "\u{1F6D1} THE ARM READS `evolveFromOf(spot.card) !== null` INSTEAD OF THE PRINTED STAGE WORD \u2014 i.e. it becomes `opponentActiveIsEvolution`, the sibling three arms up, whose return line this is verbatim. **THIS IS THE MISTAKE D296's DOC BLOCK NAMED THREE SLICES BEFORE ANY MEMBER NEEDED IT AND D367's CLAUSE ROW QUOTED FORWARD**, and it is the one the handoff's own words invite (*\"a Stage 1 ALSO satisfies it\"*). Paldean Tauros then scores +90 against a Stage 2, a VSTAR and a VMAX. \u26a0\ufe0f Every STAGE 1 board stays GREEN under it (a Stage 1 is an Evolution), so only the DENIED boards reach it \u2014 D279's rule verbatim, which is why \u00a73 is a LADDER and not a pair",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return spot !== null && isStage1Pokemon(spot.card);",
+    replace: "      return spot !== null && evolveFromOf(spot.card) !== null;",
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
+  },
+  {
+    id: "D387-condition-reads-not-basic",
+    decision: "D387",
+    what: "the arm becomes `!isBasicPokemon(spot.card)` \u2014 the OTHER wrong reading of \"Stage 1\", and a different one from the row above: \"evolved\" spelled as the complement of Basic rather than as a non-null chain datum. It is `opponentActiveIsBasic`'s own predicate with a `!` in front, which is the copy an author makes from the arm TWO up rather than three. \u26a0\ufe0f It differs from the row above on exactly one body in the pool (`fix-exstage1`, a Stage 1 with a NULL `evolveFrom`), and from the truth on the Stage 2 and VSTAR rungs \u2014 so the ladder kills both and a two-rung board would kill neither cleanly",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return spot !== null && isStage1Pokemon(spot.card);",
+    replace: "      return spot !== null && !isBasicPokemon(spot.card);",
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
+  },
+  {
+    id: "D387-condition-reads-the-asker-seat",
+    decision: "D387",
+    what: "the arm reads the ASKER's own Active rather than the opponent's \u2014 the seat defect every member in this family owes a board for, and the one D365/D366 left open as a standing question. It is invisible on any board whose two Actives happen to share a stage word (D380's symmetric-board defect), so \u00a73 asks the SAME board from BOTH seats and requires them to disagree",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && isStage1Pokemon(spot.card);",
+    replace: "      const spot = activeTop(state, seat);\n      return spot !== null && isStage1Pokemon(spot.card);",
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
+  },
+  {
+    id: "D387-clause-row-maps-the-stage-2-member",
+    decision: "D387",
+    what: "\u{1F6D1} the literal clause row maps the printed sentence onto `opponentActiveIsStage2` \u2014 the member the row DIRECTLY BELOW it carries, copied verbatim, and the mirror image of D367's own C5 row one line down. The reader still answers, the census still moves, `BUILT.attack` still lands on 1,295, and the card pays +90 for facing a Stage 2. **A CENSUS COUNTS WHETHER A READER ANSWERED, NEVER WHAT IT ANSWERED WITH** (D380's note), so every count rung in the repo stays green and only \u00a72's byte-for-byte reading and \u00a75's boards fail",
+    file: "packages/engine/src/effects.ts",
+    find: '  ["your opponent\'s Active Pokémon is a Stage 1 Pokémon", { kind: "opponentActiveIsStage1" }],',
+    replace: '  ["your opponent\'s Active Pokémon is a Stage 1 Pokémon", { kind: "opponentActiveIsStage2" }],',
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
+  },
+  {
+    id: "D387-note-drifts-onto-the-stage-2-fragment",
+    decision: "D387",
+    what: "the note returns the STAGE 2 fragment \u2014 the arm's real neighbour, one line down, differing by one printed digit. A note is the only part of this vocabulary a human reads off the board, so a drifted one tells the player the wrong reason their attack was worth 180; nothing else in the engine consults it, which is exactly why it needs its own round-trip assertion (\u00a72) against the PRINTED sentence rather than a damage number",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      return "your opponent\'s Active Pokémon is a Stage 1 Pokémon";',
+    replace: '      return "your opponent\'s Active Pokémon is a Stage 2 Pokémon";',
+    expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
   },
 ];
