@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackOptionalCostBoost,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -88,7 +89,16 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 const NOTHING = /^If (.+), this attack does nothing\.$/;
 
-/** The nine live readers, run as one — the same set `censusAtHead.test.ts` uses. */
+/** The TEN live readers, run as one — the same set `censusAtHead.test.ts` uses.
+
+    🛑 **D382 ADDED THE TENTH, AND THE OMISSION WAS A REFUSAL CLAIM THAT HAD
+    STOPPED BEING TRUE.** `deriveAttackOptionalCostBoost` shipped at D381 and
+    claimed Cetitan ex's *"You may discard a Stadium in play. If you do, …"* — a
+    sentence this file's `DISCARD_OP` list asserts is REFUSED. With the reader
+    missing from this array the assertion stayed green while being false, which is
+    the exact shape D211/D379 name: **a refusal guard whose instrument cannot see
+    the reader that expired it reads green for the wrong reason.** The list below is
+    re-partitioned in the same commit. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -99,6 +109,7 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
+  deriveAttackOptionalCostBoost,
 ];
 const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
@@ -119,7 +130,6 @@ const OWNED: BoardCondition = { kind: "yourStadiumInPlay" };
 /** THE CEILING, PRICED FROM THE CORPUS AND LEFT. Both read the same board fact and
     both carry a TAIL that needs a Stadium-DISCARD op this engine does not have. */
 const CEILING = [
-  "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.",
   "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
 ] as const;
 /** …and the op itself, which is a BIGGER slice than the floor this one took.
@@ -147,7 +157,25 @@ const TAKEN_BY_D380 = [
 ] as const;
 const DISCARD_OP = [
   "Discard a Stadium in play. If you can't, this attack does nothing.",
+] as const;
+
+/** 🆕🆕 D382 — THE ROWS THAT LEFT THE TWO LISTS ABOVE, kept rather than deleted
+    (D178: annotate provenance, never overwrite it) and ASSERTED RESOLVED below, so
+    neither rung can go green by a successor quietly shortening a refusal list.
+
+    * Cetitan ex `sv10-065`/`sv10-210` (**2** printings) left `DISCARD_OP` at **D381**
+      — `deriveAttackOptionalCostBoost`, the tenth reader. ⚠️ **THIS FILE DID NOT
+      NOTICE FOR A WHOLE SLICE**, because its `READERS` array had nine entries; that
+      is the omission the doc block above records.
+    * Chi-Yu `sv06-039` (**1** printing) left `CEILING` at **D382** — D317's
+      assembler reached through a widened JOIN, on zero new readers and zero new ops.
+
+    Both spend D378's `stadiumInPlay` and D380's `discardStadium`, which is the whole
+    point of the ceiling this file priced: **it was climbed in FOUR steps, and every
+    step after the first cost no new mechanism at all.** */
+const TAKEN_SINCE = [
   "You may discard a Stadium in play. If you do, this attack does 140 more damage.",
+  "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.",
 ] as const;
 
 // ── boards ─────────────────────────────────────────────────────────────────────
@@ -325,10 +353,19 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     expect([builtRows.length, units(builtRows)]).toEqual([2, 6]);
     for (const [, s] of builtRows) expect(resolvedByAnyReader(s), s).toBe(true);
     const opRows = corpus().filter(([, s]) => (DISCARD_OP as readonly string[]).includes(s));
-    expect(opRows).toHaveLength(2);
-    expect(units(opRows)).toBe(3);
-    expect([builtRows.length + opRows.length, units(builtRows) + units(opRows)]).toEqual([4, 9]);
+    // 🆕🆕 D381/D382 — 2 sentences / 3 printings became **1 / 1**: Cetitan ex's two
+    // printings left through the tenth reader. The family total is unchanged, which
+    // is what keeps this a measured step rather than a deletion.
+    expect(opRows).toHaveLength(1);
+    expect(units(opRows)).toBe(1);
+    const sinceRows = corpus().filter(([, s]) => (TAKEN_SINCE as readonly string[]).includes(s));
+    expect([sinceRows.length, units(sinceRows)]).toEqual([2, 3]);
+    expect([
+      builtRows.length + opRows.length + 1,
+      units(builtRows) + units(opRows) + 2,
+    ]).toEqual([4, 9]);
     for (const [, s] of opRows) expect(resolvedByAnyReader(s), s).toBe(false);
+    for (const [, s] of sinceRows) expect(resolvedByAnyReader(s), s).toBe(true);
     // 🛑 AND THE CENSUS WAS ASKED FOR THE WORD, NOT THE PHRASE (D310/D311, D377).
     // Every legal attack sentence carrying "Stadium" at all is exactly nine, and the
     // partition below accounts for all of them — so nothing in this family is hiding
@@ -346,7 +383,8 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
         searchRow.length +
         CEILING.length +
         DISCARD_OP.length +
-        TAKEN_BY_D380.length,
+        TAKEN_BY_D380.length +
+        TAKEN_SINCE.length,
     ).toBe(anyStadium.length);
     // …and there is no lower-case spelling to have missed: the catalog capitalises the
     // noun everywhere, so a case-insensitive census would return the identical nine.
@@ -639,7 +677,7 @@ describe("§6 — what this slice did NOT buy", () => {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
     // …and the positive half, so this rung cannot go green by refusing everything.
-    for (const sentence of TAKEN_BY_D380) {
+    for (const sentence of [...TAKEN_BY_D380, ...TAKEN_SINCE]) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(true);
     }
   });

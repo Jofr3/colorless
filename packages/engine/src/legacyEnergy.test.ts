@@ -969,8 +969,15 @@ describe("the engine version", () => {
     // record since M3 with its SHAPE untouched. The version moves because the readers
     // answer three printed sentences they used to refuse. The post-bump anchor pass
     // was clean.
-    expect(engineVersion).toBe("0.286.0");
-    expect(manifest.version).toBe("0.286.0");
+    // 🆕🆕 D382 — 0.286.0 -> **0.287.0**, THE `. Then, ` JOIN. `MATCH_RECORD_VERSION`
+    // STAYS 22, asked rather than assumed: the whole diff is ONE anchor constant and
+    // ONE consequent row inside `deriveAttackBonusConsequent`, with NO new `EffectOp`
+    // member at all — so every step the widened reading emits could already appear in
+    // a v22 record and no v22 byte string means anything different under this one
+    // (D335's discriminator). The version moves because the reader answers one printed
+    // sentence it used to refuse. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.287.0");
+    expect(manifest.version).toBe("0.287.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

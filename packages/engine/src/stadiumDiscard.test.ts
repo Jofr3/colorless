@@ -142,12 +142,24 @@ const STILL_OWED = [
   // The TRAILING ANAPHORIC cancel — Eternatus `sv08-141` "World Ender" ({R}{D}{D},
   // 230). One of the TWO legal printings of that shape (§6 measures the other).
   "Discard a Stadium in play. If you can't, this attack does nothing.",
-  // The two `discard that Stadium` TAILS — Chi-Yu `sv06-039` "Ground Melter" and
-  // Ting-Lu `sv06-110` "Ground Crasher". `AttackBonusConsequent` (D317) reads
-  // *"…more damage, and {consequent}"*; these print *". Then, "* and *", and "*.
-  "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.",
+  // The remaining `discard that Stadium` TAIL — Ting-Lu `sv06-110` "Ground Crasher".
+  // 🆕🆕 **D382 TOOK ITS TWIN AND LEFT THIS ONE**, and the reason is in the MIDDLE
+  // clause rather than in the join: `AttackBonusConsequent` (D317) reads *"…this
+  // attack does {N} more damage{join}{consequent}"*, and D382 widened `{join}` from
+  // `, and ` to also admit `. Then, `. Chi-Yu's middle clause IS a bonus and left
+  // through that widening; this one's is a SECOND HIT (*"also does 30 damage to
+  // each…"*), which no bonus anchor can read at any join. **A reader widened at the
+  // JOIN rather than at the ANCHOR would have swallowed it**, which is exactly why
+  // `bonusConsequentThen.test.ts` §2 keeps it as its sharpest control.
   "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
 ] as const;
+
+/** 🆕🆕 D382 — the row that LEFT `STILL_OWED`, kept rather than deleted (D178:
+    annotate provenance, never overwrite it). Chi-Yu `sv06-039` "Ground Melter"
+    ({R}{C}, `60+`) spent this slice's `discardStadium` and D378's `stadiumInPlay`
+    through D317's assembler, on ZERO new readers and ZERO new ops — the SECOND row
+    to leave this list that way, after D381's. */
+const TAKEN_BY_D382 = "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.";
 
 const BEACH_COURT = "sv01-167";
 
@@ -227,10 +239,13 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     expect([family.length, units(family)]).toEqual([6, 11]);
     // 🆕🆕 D381 — `taken` is 2 → 3 and 6 → 8 printings, and the third row cost NO new
     // op: the reversed optional boost is a READING over this slice's own op.
+    // 🆕🆕 D382 — 3 → **4** and 8 → **9**, and the FOURTH row cost no new op either:
+    // Chi-Yu's tail is D317's assembler reached through a widened JOIN.
     const taken = family.filter(([, s]) => s === BARE || s === MAY || resolvedByAnyReader(s));
-    expect([taken.length, units(taken)]).toEqual([3, 8]);
+    expect([taken.length, units(taken)]).toEqual([4, 9]);
+    expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D382);
     const left = family.filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect([left.length, units(left)]).toEqual([3, 3]);
+    expect([left.length, units(left)]).toEqual([2, 2]);
     // The parts sum, which is what makes a partition a partition — and what stops a
     // successor quietly moving a sentence from one list to the other.
     expect(taken.length + left.length).toBe(family.length);
@@ -316,7 +331,7 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
   });
 
   it("🛑 the anchors are WHOLE-SENTENCE, so every compound printing of the family is refused", () => {
-    for (const sentence of STILL_OWED) {
+    for (const sentence of [...STILL_OWED, TAKEN_BY_D382]) {
       expect(deriveAttackEffect(sentence), sentence).toBeNull();
     }
     // …and the near misses a floating match would have swallowed. Neither is a printed
@@ -503,15 +518,20 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the three COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
+  it("🛑 the two COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
     for (const sentence of STILL_OWED) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
     // 🆕🆕 D381 — FIVE printings became THREE, and the two that left did so through a
-    // READER rather than through an op. Three singletons is the number the next slice
-    // is choosing against.
+    // READER rather than through an op.
+    // 🆕🆕 D382 — THREE became **TWO**, the same way a third time. Two singletons is
+    // the number the next slice is choosing against, and both are named above with
+    // the mechanism each is waiting on.
     const left = corpus().filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect(units(left)).toBe(3);
+    expect(units(left)).toBe(2);
+    // 🛑 …and the row that LEFT is asserted to have left, so this rung cannot go
+    // green by a successor quietly shortening the list (D379's saturation trap).
+    expect(resolvedByAnyReader(TAKEN_BY_D382)).toBe(true);
   });
 
   it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card", () => {
