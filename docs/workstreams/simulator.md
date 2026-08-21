@@ -22181,6 +22181,155 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D382 — THE `. Then, ` JOIN: D317's shape with the printed comma changed, and a refusal guard whose instrument could not see the reader that expired it (engine 0.286.0 → **0.287.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+### The slice was CHOSEN by pricing three candidates against each other
+
+D381's resume point named three and asked for a comparison rather than a pick. All three were
+measured off `legalAttackCorpus()` before a line was written, and **the price moved in BOTH
+directions**, which is the reason to write both halves down (D199: a `needs` column overstates as
+easily as it understates).
+
+| candidate | printings | verdict |
+|---|---|---|
+| the face-up Prize | 2 | **LOST.** Its payoff half already reads, and everything else about it is expensive: `PlayerState.prizes` is `string[]` with **no face-up notion at all**, so a new persisted field plus `MATCH_RECORD_VERSION` 22 → 23, plus the redaction question — `redact.ts` emits `prizesRemaining: side.prizes.length` and **nothing else**, so a PUBLIC Prize needs a member on `RedactedBoard` and a UI that renders it. **Three surfaces D381 did not touch.** 🛑 And its `cond` (*"you have a face-down Prize"*) is TRUE on essentially every board a player can attack from, so the precondition gate D381 bought would be **VACUOUS** there. Two printings for a persisted-shape bump and a dead gate is the worst ratio on the page |
+| the 5-printing Energy row | 5 | **LOST, and it got BIGGER on inspection.** It needs **THREE** mechanisms, not the two the handoff priced: a `to: "deck"` destination on `discardEnergy` (whose own doc block says the destination is the VICTIM's zone — here the victim IS the actor) carrying the SHUFFLE the sentence prints; a **NEW `BoardCondition`** for *"this Pokémon has ≥ 3 Energy attached"*, because **no member counts UNTYPED Energy on ONE body** (`yourEnergyInPlayAtLeast` is whole-board AND typed); and a payoff-union decision on a reader ONE SLICE OLD. **Three mechanisms in one slice is what D193 reverted for** |
+| Chi-Yu `sv06-039` "Ground Melter" | 1 | **TAKEN.** Every mechanism it needs already ships |
+
+✅ **AND THE 5-PRINTING ROW GOT CHEAPER IN ONE PLACE AT THE SAME TIME, WHICH IS RECORDED RATHER
+THAN LOST.** Its payoff op — `damageChosen {target:"opponentBench", amount:120, count:1,
+source:"attack", deals:true}` — **already ships**. And because the payoff is a **SECOND HIT**
+rather than a bigger one, the printed base need **NOT** move inside the gate at all: the extra
+damage lands on a BENCHED body the main §8.5 hit never touches, so `boostedArms`, the `scaledBase`
+claim and D316's whole "the whole hit moves inside the gate" argument are **irrelevant to it**.
+The program is `optional{then:[cost…, damageChosen], otherwise:[]}` behind a payability gate.
+**PRICE A PAYOFF BY WHAT IT HITS, NOT BY HOW BIG THE SENTENCE LOOKS.**
+
+### The shape question: is `. Then, ` the same shape as `, and `?
+
+Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`, index 1 of two — confirmed by id against tcgdex,
+which returns "Allure" ({C}, *"Draw 2 cards."*) at index 0) prints:
+
+> *"If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium."*
+
+**ONE legal printing**, and **all TEN readers returned null for it** at D381's head — measured, not
+assumed. The catalog answered the shape question three ways:
+
+1. **BOTH HALVES ARE ALREADY OWNED SEPARATELY.** The bare antecedent — *"If a Stadium is in play,
+   this attack does 70 more damage."* — reads through `deriveAttackDamageBonus` into
+   `{per, count: {boardCondition stadiumInPlay}}` and has since D378; the bare consequent's op is
+   D380's `discardStadium`. **The JOIN is the only thing bought.**
+2. **THE CONSEQUENT ATTACHES TO THE YES ARM UNDER EITHER JOIN.** *"Then,"* is a SEQUEL where
+   *", and"* is a rider, and neither is reachable when the antecedent is false — so both fold into
+   `boostedArms`'s `[damageDefender(base + bonus), ...ops]` with nothing to choose between them.
+3. **A THIRD READER FOR A CHANGED COMMA IS THE DESIGN D317 REFUSED OUT LOUD** — *"a design under
+   which two printings of one printed shape need two mechanisms is a design that has not found the
+   shape."*
+
+⚠️ **TWO NAMED ANCHORS AND NOT ONE ALTERNATION.** `(?:, and |\. Then, )` would have collapsed the
+disjointness into a regex whose greed nobody can read off the page. Two constants keep the claim
+**assertable**: one demands a literal `. ` where the other demands a literal `, ` at the same offset
+in the same sentence, so no sentence can match both — asserted in BYTES and over the whole corpus —
+and the `??` between them is an **ORDER-FREE FOLD** rather than a precedence. That is **DECLARED as
+an equivalent mutant survivor rather than tested around**, and it is a live tripwire: widen either
+anchor into the other's territory and the run reports `STALE-SURVIVOR`. Contrast the COIN/CONDITION
+pair one line up, where the order IS load-bearing and D317 has a row saying so.
+
+⚠️ **THE COIN FORM WAS NOT WIDENED**, and the catalog is why:
+`/^Flip a coin\. If heads, this attack does (\d+) more damage\. Then, /` returns **ZERO** sentences
+in the whole legal attack column. Writing that arm would be authoring a card (D190b: exact map or
+flag). The zero is measured in the suite, not asserted in prose.
+
+### The near miss is the CATALOG'S OWN, which is why nobody had to invent one
+
+Ting-Lu `sv06-110` "Ground Crasher" prints the **SAME** antecedent, the **SAME** *"discard that
+Stadium"* consequent **AND** the `, and ` join:
+
+> *"If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched
+> Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+
+It is still **REFUSED**, because its middle clause is a **SECOND HIT** rather than a bonus. **A
+reader widened at the JOIN rather than at the ANCHOR would have swallowed it.** The `discard that
+Stadium` family is **2 sentences / 2 printings**; D382 claims **1 / 1** and leaves **1 / 1**, named
+and driven (D381's rule: a reader slice is priced in refused sentences claimed, measured at BOTH
+ends). **THE BEST ATTRIBUTION CONTROL IS THE ONE THE CATALOG ALREADY PRINTS.**
+
+### The order was looked for and NOT found — and the failed search is the result
+
+D381's rule says: when an order is *"obviously unobservable"*, go and look for the one card that
+observes it. D382 looked. The only Stadium in `FIXTURE_POOL` whose presence moves a damage number is
+Neutralization Zone `sv06.5-060`, which prevents damage only **from an attacking Pokémon ex** — and
+Chi-Yu is a **Basic with no Rule Box**. Unlike D381, this suite drives the **REAL** printing, so
+`isExOrV` cannot be talked into it by a fixture NAME the way `Fixceti ex` was. Beach Court moves a
+retreat cost and Pokémon League Headquarters an attack COST, both settled before the program runs.
+
+So the order (`[damageDefender(120), discardStadium]`, matching the printed *"does 60 more damage.
+Then, discard"*) is claimed from the **PRINT** and pinned in the **ASSEMBLED PROGRAM** rather than
+on a board — D130/D228's precedent, verbatim. **A LOOK THAT FINDS NOTHING IS STILL A RESULT:
+RECORD IT, SO A PRINTING THAT *CAN* REACH IT IS A KNOWN COST RATHER THAN A SURPRISE.**
+
+### 🛑 A refusal guard whose INSTRUMENT could not see the reader that expired it
+
+This was not part of the slice; it was found by the slice reddening.
+
+`stadiumPresence.test.ts` keeps a local `READERS` array and describes it as *"the nine live readers,
+run as one — the same set `censusAtHead.test.ts` uses"*. It had **NINE** entries.
+`deriveAttackOptionalCostBoost` shipped at **D381** and claims Cetitan ex's *"You may discard a
+Stadium in play. If you do, this attack does 140 more damage."* — a sentence that file's
+`DISCARD_OP` list **asserts is REFUSED**. For a whole slice the rung ran, passed, and was false.
+
+The repair is three parts, all in one commit: the tenth reader is added; both residue lists are
+re-partitioned; and a **`TAKEN_SINCE`** list holds the departed rows and **asserts them RESOLVED**,
+so neither rung can go green by a successor quietly shortening a refusal list (D379's saturation
+trap). The defect is re-installed as mutant `D382-refusal-instrument-loses-the-tenth-reader`.
+
+**THE TRANSFERABLE RULE: WHEN YOU SHIP A READER, GREP FOR EVERY HAND-KEPT READER ARRAY IN THE SUITE,
+NOT ONLY FOR THE CENSUS FIGURES.** `grep -rn "deriveAttackDamageSuppression," packages/engine/src/*.test.ts`
+finds them all in one call, because every such array carries that entry. **A GUARD KEYED ON A
+REFUSAL HAS AN EXPIRY DATE, AND WHOEVER EXPIRES IT OWNS THE REWRITE — INCLUDING THE INSTRUMENT THAT
+MEASURES IT.**
+
+### The `conditionGate` arm had never been reachable from `FIXTURE_POOL`
+
+`grep -c "more damage, and " testFixtures.ts` returned **1** at D381's head, and that one hit is
+`fix-bonusconsequent`'s **COIN** sentence. So `bonusConsequentProgram` has TWO arms — a
+`coinFlipGate` for the coin decider and a `conditionGate` for the board-fact one — and for five
+slices the second was reachable only from `bonusConsequent.test.ts`'s LOCAL pool, invisible to every
+sweep that walks the shared pool. `fix-groundmelter` closes it: **D318's rule, paid one arm over.**
+The suite measures the gap rather than asserting it, so it goes RED the day a second such card lands
+— which is the correct moment for a successor to re-read the claim.
+
+⚠️ **AND THE REAL ID CANNOT LIVE IN `FIXTURE_POOL`**: `catalogManifest.test.ts` diffs the `sv*` ids
+in that pool against the 978-row / 6-set manifest, and `sv06` is in none of `sv01`, `sv02`, `sv03`,
+`sv06.5`, `sve`, `swsh10.5`. **A real id outside those six belongs in a suite-LOCAL pool** (D275's
+idiom) **and a demonstrator pays for the blind spot that buys.**
+
+### What shipped, and what it cost
+
+ONE anchor constant, ONE consequent row, ONE `FIXTURE_POOL` demonstrator, ONE 35-case suite.
+**ZERO** new readers, `EffectOp` members, ops, events, prompt kinds, choice kinds, `BoardCondition`
+members, `GameState` fields, error codes, registry rows or `packages/schema` bytes.
+`MATCH_RECORD_VERSION` **stays 22**, asked rather than inherited (D335's discriminator: no
+`EffectOp` member at all, so every step the widened reading emits could already appear in a v22
+record and no v22 byte string means anything different under this one).
+
+Census step **+1 sentence / +1 printing**: raw 1,255 → **1,256**, `BUILT.attack` 1,284 → **1,285**,
+resolving sentences 362 → **363**, unbuilt attack remainder 477 → **476**, whole-census `built`
+1,685 → **1,686** and its residue 698 → **697**, `FIXTURE_POOL` floor 469 → **470**. Both
+damage-clause residues stand still.
+
+⚠️ **THE MOVING SET WAS ELEVEN FILES — THE BIGGEST SINCE D380's TEN — AND A READER *WIDENING* MOVES
+A DIFFERENT SET THAN A READER *ADDITION*.** D382 did NOT move `programWalk` (no new exported
+assembler), `preventBlock` (no new `EffectOp` member) or `precociousEvolution`'s §2 reader-surface
+tripwire *by count* (no new `deriveAttack*` export) — that file moved only for its census rungs.
+**SIX rungs were unreachable by any grep of the current figures**, being keyed on a DIFFERENCE or on
+a bare literal operand, and the three subtraction CHAINS all gain their new term at the **FRONT**.
+
+✅ **AND NO MUTANT ROW ON `attack.ts`, WHICH IS A FACT ABOUT THE SLICE RATHER THAN AN OMISSION.**
+This reading is D317's, already wired into `scaledBase`, `effectSimulated` and `modifierSimulated`,
+so widening the reader cost zero bytes in that file — and the adjacency rot that cost D317 and D381
+six mutant rows each **cannot fire on a slice that widens an existing reader.**
+
 ## D381 — THE REVERSED OPTIONAL BOOST: D316's sentence with its two halves swapped, on *zero* new ops, and an order that exactly one Stadium in the pool can see (engine 0.285.0 → **0.286.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 D316 read *"You may do {N} more damage. If you do, {drawback}"* — the antecedent is the PAYOFF and
