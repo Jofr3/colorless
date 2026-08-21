@@ -3234,6 +3234,37 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
         countAttachedEnergy(state, own, null) === countAttachedEnergy(state, theirs, null)
       );
     }
+    case "moreActiveEnergyThanOpponent": {
+      // 🆕🆕 D384 — "this Pokémon has more Energy attached than your opponent's
+      // Active Pokémon" (Swalot `sv07-092`, +160). The arm directly above with `===`
+      // replaced by `>`, on the SAME two bodies read through the SAME call — written
+      // out in full rather than delegated to it, because the two are nullary members
+      // of one union and a shared helper would be the operator-union generalisation
+      // both doc blocks refuse.
+      //
+      // 🛑 STRICTLY MORE, AND `>=` IS THE MISTAKE THE PRINTED WORD FORBIDS. "More
+      // than" is not "at least"; an EQUAL board is the defender's, and it is the only
+      // board that separates this member from `>=`. That equal board is also exactly
+      // where `activeEnergyCountsEqual` answers TRUE, so the two members are jointly
+      // exhaustive over nothing and disjoint on every board — driven from both.
+      //
+      // 🛑 AND THE ORDER OF THE OPERANDS IS THE OTHER HALF. `>` does not commute, so
+      // reading the far body on the left inverts the answer on every unequal board
+      // and is invisible on every equal one — `morePrizesThanOpponent`'s polarity
+      // warning, one field over.
+      //
+      // FALSE when EITHER Active Spot is empty. Reading a missing DEFENDER as zero
+      // is the slip that looks like defensive code, and on THIS operator it arms the
+      // clause for any attacker holding a single card (1 > 0) rather than only for
+      // one holding none.
+      const own = state.players[seat].active;
+      const theirs = state.players[otherSeat(seat)].active;
+      return (
+        own !== null &&
+        theirs !== null &&
+        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)
+      );
+    }
     case "opponentActiveHasType": {
       // The same read Weakness and Resistance make two lines later in the §8.5
       // pipeline (`cards.ts` `weaknessOf`), so a printed type cannot mean one
@@ -3927,6 +3958,17 @@ export function conditionNote(cond: BoardCondition): string {
       // audiences, two strings, stated so a successor does not "fix" one into the
       // other.
       return "your Active Pokémon and your opponent's Active Pokémon have the same amount of Energy attached";
+    case "moreActiveEnergyThanOpponent":
+      // 🆕🆕 D384 — the printed pronoun is dropped exactly as the arm above drops it
+      // (D116), so the note names a body a reader can SEE rather than the one the
+      // card's text points at, and it therefore does NOT round-trip to the printed
+      // bytes. It does not round-trip to the MEMBER either, and for the same reason
+      // the arm above does not: this clause is a literal ROW keyed on the printed
+      // spelling, so the parser's key and the reject pill are two different strings
+      // with two different audiences. Stated so a successor does not "fix" one into
+      // the other — and note that the two notes differ in their VERB, which is the
+      // one place a copy-paste of the line above would go undetected.
+      return "your Active Pokémon has more Energy attached than your opponent's Active Pokémon";
     case "opponentActiveHasType":
       // Built from the parameter, and it round-trips to the same MEMBER.
       //

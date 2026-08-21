@@ -1307,10 +1307,54 @@ export type BoardCondition =
       ⚠️ **THE NEAR MISS IS PRINTED AND IS ONE OPERATOR AWAY.** The catalog prints
       *"If this Pokémon has more Energy attached than your opponent's Active Pokémon,
       this attack does 160 more damage."* — **1 legal printing**, the same two
-      operands under a STRICT inequality — and it is refused by every reader at this
-      head. A `>=` or `>` here would answer that card's question with this card's row,
-      which is why the comparison has a mutant of its own. */
+      operands under a STRICT inequality. A `>=` or `>` here would answer that card's
+      question with this card's row, which is why the comparison has a mutant of its
+      own. 🆕🆕 **D384 BUILT IT, AS THE SEPARATE MEMBER DIRECTLY BELOW** — this block
+      said *"refused by every reader at this head"* for twelve slices and that clause
+      is now false, so it is struck rather than left to rot. The mutant survives the
+      change and gets SHARPER: `===` → `>` no longer merely invents a reading, it
+      hands this row the OTHER member's card. */
   | { kind: "activeEnergyCountsEqual" }
+  /** 🆕🆕 **D384 — YOUR Active Pokémon holds STRICTLY MORE Energy CARDS than your
+      opponent's Active Pokémon.** Swalot `sv07-092` "Devouring Mouth" ({D}, 10+,
+      **+160**) — *"If this Pokémon has more Energy attached than your opponent's
+      Active Pokémon, this attack does 160 more damage."*, **1 legal printing** —
+      the sentence the block directly above has carried as its named near miss since
+      D372.
+
+      🛑 **THE SAME TWO OPERANDS AND THE SAME CALL AS `activeEnergyCountsEqual`, AND
+      THAT IS THE ARGUMENT FOR TWO MEMBERS RATHER THAN AGAINST IT.** Both read
+      `countAttachedEnergy(state, active, null)` on the two ACTIVE bodies — the
+      unfiltered CARD count, so a multi-unit Special counts ONE on both paths and the
+      two readings can never drift. What differs is the OPERATOR, and an operator is
+      not a parameter here: folding the pair would need a member carrying an operator
+      union, which is the GENERALISATION D383 refused one member down (and it would
+      swallow a shipped nullary member on the way). Two nullary members share an
+      implementation for free; one parameterised member costs a rename.
+
+      🛑 **SEAT-ASYMMETRIC IN VALUE — THE FIRST CROSS-BODY MEMBER THAT IS, AND THE
+      DISTINCTION THE BLOCK ABOVE HAD TO INVENT IS WHAT NAMES IT.** `handSizesEqual`,
+      `activeEnergyCountsEqual` and `inPlayTypesIntersect` all commute, so a suite
+      that drove them from one seat only would still have been right. `>` does NOT
+      commute: on a board where the attacker leads, the member is TRUE from that seat
+      and FALSE from the other, and the two answers are DIFFERENT rather than merely
+      re-derived. D380's rule therefore bites for real here — a p1-only suite cannot
+      tell this member from `activeEnergyCountsEqual` OR from its own inverse, and
+      `moreEnergyBonus.test.ts` §4 drives the same board from both seats.
+
+      **FALSE when EITHER Active Spot is empty**, exactly as its equal-twin is and
+      for the same reason: an absent Pokémon is not a Pokémon holding zero. ⚠️ **AND
+      THE `?? 0` SLIP IS WORSE ON THIS OPERATOR THAN ON THAT ONE.** Reading a missing
+      DEFENDER as zero arms the clause for any attacker holding one card at all
+      (1 > 0), where the equality member needed the attacker at exactly zero to be
+      fooled — so the mutant that looks like defensive code pays off on nearly every
+      board here instead of on one.
+
+      **`morePrizesThanOpponent` IS THE NAMING PRECEDENT AND THE SHAPE PRECEDENT**:
+      a nullary, cross-board, strictly-greater member whose own doc block says the
+      polarity is the thing that goes silently wrong. This one reads two BODIES where
+      that one reads two SIDES. */
+  | { kind: "moreActiveEnergyThanOpponent" }
   /** 🆕🆕 **D383 — YOUR Active Pokémon holds AT LEAST `count` Energy CARDS, of any
       type at all.** The payability of Wellspring Mask Ogerpon ex `sv06-064`'s
       printed cost — *"You may **shuffle 3 Energy attached to this Pokémon** into
@@ -1346,9 +1390,12 @@ export type BoardCondition =
       GENERALISATION rather than a widening — and it would swallow a shipped nullary
       member on the way. ⚠️ The catalog's third reading of these same two operands
       (*"…has MORE Energy attached than your opponent's Active Pokémon"*, 1 legal
-      printing, still refused at this head) belongs with `activeEnergyCountsEqual`
-      and NOT here: it is that member with `===` replaced by `>`, and it is one more
-      argument for two members rather than one.
+      printing) belongs with `activeEnergyCountsEqual` and NOT here: it is that member
+      with `===` replaced by `>`, and it is one more argument for two members rather
+      than one. 🆕🆕 **D384 SHIPPED IT ON EXACTLY THAT ARGUMENT** —
+      `moreActiveEnergyThanOpponent`, a THIRD nullary member over the SAME pair of
+      operands — so this paragraph's *"still refused at this head"* is struck and its
+      prediction is now a measurement.
 
       **CARDS, NOT UNITS — DELEGATED, NOT RE-DECIDED.** A multi-unit Special counts
       ONE, because `countAttachedEnergy`'s own doc block settled that noun for the
@@ -1513,10 +1560,15 @@ export type BoardCondition =
       **THE WHOLE PRICE IS THE SHAPE.**
 
       🛑 **THE FORM IS AN INTERSECTION OVER TWO VARIABLE-SIZE SETS, AND THE UNION
-      HOLDS NOTHING ELSE OF THAT FORM.** `handSizesEqual` and `activeEnergyCountsEqual`
-      are the only other cross-board members and both compare two SCALARS read off two
-      NAMED bodies; this one quantifies over Active + Bench on BOTH sides and asks
-      whether the two type sets MEET. Written out: `∃x∈yours. ∃y∈theirs.
+      HOLDS NOTHING ELSE OF THAT FORM.** The other cross-board members all compare two
+      SCALARS: `handSizesEqual` and `morePrizesThanOpponent` read a count off each
+      SIDE, `activeEnergyCountsEqual` and (🆕🆕 D384) `moreActiveEnergyThanOpponent`
+      read one off each of two NAMED bodies. ⚠️ **THIS SENTENCE SAID *"`handSizesEqual`
+      and `activeEnergyCountsEqual` are the only other cross-board members"* AND IT WAS
+      ALREADY FALSE WHEN IT WAS WRITTEN** — `morePrizesThanOpponent` has been in this
+      union since the D40 vocabulary — so D384 corrects the enumeration rather than
+      merely appending to it. This one quantifies over Active + Bench on BOTH sides and
+      asks whether the two type sets MEET. Written out: `∃x∈yours. ∃y∈theirs.
       types(x) ∩ types(y) ≠ ∅`.
 
       🛑 **THE ZONE IS "in play" ON BOTH HALVES, AND EACH HALF IS A SEPARATE
@@ -9499,13 +9551,14 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // TEMPLATE**: the sentence varies on no token at all, so there is nothing to
   // parameterise and D118's rule does not apply in either direction.
   //
-  // 🛑 **THE NEAR MISS IS PRINTED, IS ONE OPERATOR AWAY, AND IS STILL REFUSED.**
-  // The legal pool prints *"If this Pokémon has more Energy attached than your
-  // opponent's Active Pokémon, this attack does 160 more damage."* — 1 printing,
-  // the SAME two operands under a STRICT inequality, and no reader resolves it at
-  // this head. Keys are whole printed clauses and never substrings, so this row
-  // cannot reach it; `sameEnergyBonus.test.ts` §3 drives that refusal rather than
-  // asserting it, and the comparison carries a mutant of its own.
+  // 🛑 **THE NEAR MISS IS PRINTED AND IS ONE OPERATOR AWAY.** 🆕🆕 **D384 BOUGHT
+  // IT, AND IT IS THE ROW DIRECTLY BELOW** — this paragraph read *"AND IS STILL
+  // REFUSED … no reader resolves it at this head"* for twelve slices and that half
+  // is struck. What has NOT changed is the reason the two are separate rows: keys
+  // are whole printed clauses and never substrings, so THIS row could never have
+  // reached that sentence and the row below can never reach this one. The comparison
+  // still carries a mutant of its own, and it is sharper now that the wrong answer
+  // is a member the union really holds.
   //
   // ⚠️ AND THE OTHER NEIGHBOUR IS NOT IN THIS TABLE AT ALL: *"This attack does 30
   // more damage for each Energy attached to both Active Pokémon."* (8 legal
@@ -9514,6 +9567,29 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached",
     { kind: "activeEnergyCountsEqual" },
+  ],
+  // 🆕🆕 D384 — the SAME two ACTIVE bodies under a STRICT inequality. Swalot
+  // `sv07-092` "Devouring Mouth" ({D}, 10+, **+160**), **1 legal printing** — the
+  // sentence the row above has named as its near miss since D372, and the reason
+  // that row's mutant exists.
+  //
+  // 🛑 **A SECOND LITERAL ROW AND NOT A WIDENED FIRST ONE.** The two printed clauses
+  // share no token order at all — *"this Pokémon AND your opponent's Active Pokémon
+  // HAVE THE SAME AMOUNT OF"* against *"this Pokémon HAS MORE … THAN your opponent's
+  // Active Pokémon"* — so there is nothing to parameterise and D118's rule does not
+  // apply in either direction. The MEMBERS are separate for the reason spelled in
+  // `effects.ts`'s union; the ROWS are separate because whole-clause keys leave no
+  // other option.
+  //
+  // ⚠️ THE `160` IS NOT PART OF THIS KEY, exactly as the `100`/`120` are not part of
+  // the row above's: `CONDITIONAL_DAMAGE_BONUS` captures the amount, so a reprint at
+  // a new number lands on this member for free.
+  //
+  // ⚠️ THE APOSTROPHE IN "opponent's" IS ASCII and `literalClauseRow` folds U+2019 on
+  // a MISS, as everywhere else in this table.
+  [
+    "this Pokémon has more Energy attached than your opponent's Active Pokémon",
+    { kind: "moreActiveEnergyThanOpponent" },
   ],
   // 🆕🆕 D375 — the CROSS-BOARD TYPE INTERSECTION. Enamorus sv06-093 "Love
   // Resonance" (80+, **+120**) and its Illustration-rare reprint sv06-180, whose

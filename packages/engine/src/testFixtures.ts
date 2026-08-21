@@ -10963,6 +10963,35 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D384 — the STRICT-INEQUALITY twin of the two bodies above: Swalot
+      `sv07-092` "Devouring Mouth" ({D}, 10+, **+160**), *"If this Pokémon has more
+      Energy attached than your opponent's Active Pokémon, this attack does 160 more
+      damage."* — **1 legal printing**, so ONE fixture and ONE clause row.
+
+      ⚠️ **THE COST IS `{C}` AND THE PRINTING'S IS `{D}`, WHICH IS DELIBERATE AND IS
+      THE ONE PLACE THIS FIXTURE DEPARTS FROM THE CARD.** The clause counts Energy
+      CARDS of ANY type on two bodies, so a typed cost would make the card that PAYS
+      also the card that is COUNTED under a second constraint, and every board below
+      that moves the attacker's count by one would have to move a {D} rather than the
+      pool's `fix-energy`. The printed EFFECT is byte-for-byte; the cost is fixture
+      plumbing, exactly as `fix-sameenergy`'s is.
+
+      Based at **10** like the two bodies above — the printed base, as it happens —
+      so the +160 is unmistakable in the dealt number, and `hp: 150` so the attacker
+      survives whatever the boards hand back. The `types` are `battler`'s default:
+      nothing in this clause reads a type on either body. */
+  "fix-moreenergy": battler("fix-moreenergy", {
+    hp: 150,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Devouring Mouth",
+        damage: 10,
+        effect:
+          "If this Pokémon has more Energy attached than your opponent's Active Pokémon, this attack does 160 more damage.",
+      },
+    ],
+  }),
   /** 🆕 D372 — a 200 HP defender with an attack this file never declares, so the
       opposing Active can hold Energy without the boards being about it. `fix-bigbody`
       would have served, but it is on eight other decks and this file attaches to it
@@ -11590,6 +11619,36 @@ export const SAME_ENERGY_DECK = deckOf({
   "fix-basic-1": 8,
   "fix-blend": 8,
   "fix-energy": 28,
+});
+
+/** 🆕🆕 D384 — the STRICT-INEQUALITY board. A DEDICATED 60 (D270's rule) rather
+    than a widened `SAME_ENERGY_DECK`, so D372's seeded boards keep the shuffles they
+    were measured on — and this one has a second reason: every board here is ABOUT the
+    two Active counts being UNEQUAL, which is the shape D372's boards were built to
+    avoid.
+
+      • `fix-moreenergy` — the attacker, the one printed sentence, one clause row;
+      • `fix-energyholder` — the 200 HP body across the table, which exists to HOLD
+        Energy rather than to be told apart from anything. **THE 200 HP MATTERS HERE
+        AS IT DID NOT THERE**: the paying board deals 170, so a 150 HP defender would
+        be Knocked Out and the KO tail would rewrite the board the assertions read;
+      • `fix-basic-1` — a plain body to BENCH, for the rung that separates "the two
+        Active BODIES" from "the two SIDES";
+      • `fix-blend` — the FIXTURE Special providing TWO distinct types from ONE card,
+        the whole CARDS-vs-UNITS rung. ⚠️ **AND IT SEPARATES MORE READINGS UNDER `>`
+        THAN IT DID UNDER `===`**: one `fix-blend` against one basic is 1 = 1 by CARD
+        (FALSE) and 2 > 1 by UNIT (TRUE), so a unit reading is not merely wrong on the
+        equal board, it INVERTS the answer.
+
+    `fix-energy` pays every `{C}` and is the counted card everywhere else; the counts
+    are generous because several boards move four or five at once.
+    4 + 8 + 8 + 8 + 32 = **60**. */
+export const MORE_ENERGY_DECK = deckOf({
+  "fix-moreenergy": 4,
+  "fix-energyholder": 8,
+  "fix-basic-1": 8,
+  "fix-blend": 8,
+  "fix-energy": 32,
 });
 
 /** 🆕🆕 D373 — the UNIVERSAL-OVER-THE-BENCH board. A DEDICATED 60 (D270's rule)

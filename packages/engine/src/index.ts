@@ -12108,6 +12108,67 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.289.0 → **THE STRICT-INEQUALITY TWIN — TWELVE SLICES AFTER
+    D372 NAMED IT, AT EXACTLY THE PRICE D372 QUOTED.**
+
+    D372 built *"this Pokémon and your opponent's Active Pokémon have the same amount
+    of Energy attached"* and wrote its own near miss into four files: the SAME two
+    operands, the SAME field, the SAME `countAttachedEnergy` call, and `>` where that
+    row spells `=`. It priced it, refused it (*"building it would have made the
+    `===` → `>` mutant green for the wrong reason"*) and pinned the refusal.
+
+      Swalot `sv07-092` "Devouring Mouth" ({D}, **10+**, index 0 of two — confirmed
+      by id against tcgdex, which returns "Venomous Hit" at index 1)
+        *"If this Pokémon has more Energy attached than your opponent's Active
+         Pokémon, this attack does 160 more damage."*
+        **1 legal printing**
+
+    🛑 **TWO NULLARY MEMBERS, NOT ONE PARAMETERISED MEMBER — AND THE OPERATOR IS THE
+    WHOLE ARGUMENT.** `moreActiveEnergyThanOpponent` shares its two operands, its zone
+    (the BODY, not the side) and its counting call with `activeEnergyCountsEqual`, so
+    the two can never drift on the CARDS-vs-UNITS question D372 settled. Folding them
+    would need a member carrying an operator union — a GENERALISATION that renames a
+    shipped nullary member, which D362 priced at 31 sites across 7 files and D383
+    refused one member over. **A SECOND NULLARY MEMBER IS FREE; A RENAME IS NOT.**
+
+    🛑 **AND IT IS THE FIRST CROSS-BODY MEMBER THAT IS SEAT-ASYMMETRIC IN VALUE.**
+    `handSizesEqual`, `activeEnergyCountsEqual` and `inPlayTypesIntersect` all commute
+    — a one-seat suite could not tell a correct implementation from a seat-blind one.
+    `>` does not commute, so on a board where the attacker leads this member is TRUE
+    from that seat and FALSE from the other, and those are two DIFFERENT answers
+    rather than one re-derived twice. D372's own block had to split *"symmetric in
+    value"* from *"symmetric in spelling"* to describe itself; this is the member the
+    split was for, and `moreEnergyBonus.test.ts` §4 drives one board from both seats.
+
+    ⚠️ **A MUTANT WAS RETIRED BY THIS SLICE, WHICH HAS NOT HAPPENED BEFORE.** D372's
+    C5 (*"the equal row claims the strict-inequality sentence"*) inserted a SECOND
+    `CONDITIONAL_DAMAGE_CLAUSES` entry for that sentence mapping onto the EQUAL
+    member. `CONDITIONAL_DAMAGE_CLAUSES` is a `Map` built from an entry array, so the
+    LAST duplicate key wins — and D384's genuine row sits after the insertion point,
+    which would have made C5 a silent false SURVIVOR rather than an ERROR. It is
+    retired and replaced by D384's own row carrying the identical defect at the new
+    head. **A `find` THAT STILL MATCHES EXACTLY ONCE IS NOT PROOF THE MUTANT STILL
+    MEANS ANYTHING** — the exactly-once rule catches code that MOVED, not a premise
+    that a later slice made false.
+
+    ⚠️ **BOTH CONSEQUENTS WERE ASKED (D379's rule) AND THE CANCEL SIDE IS EMPTY.**
+    `legalAttackCorpus()` holds exactly ONE sentence containing *"Energy attached
+    than"* — this one — so there is no *"…this attack does nothing."* twin and no
+    `ATTACK_REQUIREMENT_CLAUSES` row is owed. Measured, not assumed.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the family's first 1:1 step:
+    every slice since D368 has moved the printing term by 2 or 3. raw 1,261 →
+    **1,262**, `BUILT.attack` 1,290 → **1,291**, resolving sentences 365 → **366**,
+    bonus residue 21 / 25 → **20 / 24**.
+
+    engineVersion 0.288.0 → **0.289.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited. The member is NULLARY — nothing to store — and a
+    `conditionGate` resolves inline and never parks, so it cannot reach
+    `EffectContinuation.pendingOp`; no v22 record can carry a member that did not
+    exist, and no v22 byte string means anything different under this head (D335's
+    discriminator). ZERO `packages/schema` bytes. (`packages/engine/package.json` in
+    the same commit). */
+
 /** 🆕🆕 0.288.0 → **THE PAYOFF UNION — D381's READING WIDENED AT ITS CONSEQUENT,
     AND THE LARGEST SINGLE SENTENCE LEFT ON THE ATTACK BACKLOG CLAIMED WITH IT.**
 
@@ -13125,7 +13186,11 @@ import type { GameState, Seat } from "./types";
     printing**, the SAME two operands under a STRICT inequality — and no reader
     resolves it at this head. Building it would have made the `===` → `>` mutant green
     for the wrong reason; it is measured, pinned in `sameEnergyBonus.test.ts` §3 and
-    handed on as a priced candidate instead.
+    handed on as a priced candidate instead. 🆕🆕 **D384 TOOK THAT CANDIDATE AT THE
+    PRICE THIS PARAGRAPH QUOTED** — one nullary member, one literal row, two arms —
+    and the `===` → `>` mutant did not go green, because the two members are separate
+    and the suite that pins them drives both. **THE DEFERRAL WAS THE RIGHT CALL AND
+    THE PRICE WAS RIGHT TO THE LINE.**
 
     ✅ **D207's SUPPLY QUESTION DOES NOT ARISE HERE, AND THAT IS A RESULT RATHER THAN
     A SKIP.** Every member this family has bought since D368 reads an INGESTED CARD
@@ -15112,7 +15177,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.288.0";
+export const engineVersion = "0.289.0";
 
 export type {
   ApplyResult,
