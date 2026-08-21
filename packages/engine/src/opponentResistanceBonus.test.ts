@@ -394,7 +394,13 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // time. D382 adds ONE body (`fix-groundmelter`, Chi-Yu's "Ground Melter") and no
     // Energy at all, and it prints no Resistance — the column that slice reads is
     // `state.stadium` for a THIRD consecutive slice, which is not on a card at all.
-    expect(ids).toHaveLength(470);
+    // 🆕🆕 D383 — 470 -> **471**, and the other two columns stand still a TWELFTH
+    // time. D383 adds ONE body (`fix-torrent`, Wellspring Mask Ogerpon ex's
+    // "Torrential Pump") and no Energy at all, and it prints no Resistance — what
+    // that slice reads off a card is the ATTACHED Energy COUNT (`InPlayPokemon.energy`,
+    // a board array) rather than any printed column, so `Card.resistances` is
+    // untouched for a FOURTH consecutive slice.
+    expect(ids).toHaveLength(471);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -424,17 +430,23 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // column D382 reads is `state.stadium` for a THIRD consecutive slice, and unlike
     // D381's fixture this one's NAME is read by nothing either. ⚠️ **THE CHAIN IS
     // EDITED AT THE FRONT, NEVER AT THE END** — every later operand would shift.
-    expect(ids.length - 1 - 1).toBe(468);
-    expect(ids.length - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D383 — a `- 1` term at the FRONT of the chain: ONE body (`fix-torrent`,
+    // Wellspring Mask Ogerpon ex's "Torrential Pump" demonstrator), ZERO Energy,
+    // ZERO Resistances — and what D383 reads off a card is nothing at all: its
+    // instrument is `InPlayPokemon.energy`, a BOARD array, so this is the first
+    // slice in four whose fixture's card data is read by neither this column nor a
+    // NAME. ⚠️ **THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.**
+    expect(ids.length - 1 - 1 - 1).toBe(468);
+    expect(ids.length - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

@@ -976,8 +976,8 @@ describe("the engine version", () => {
     // a v22 record and no v22 byte string means anything different under this one
     // (D335's discriminator). The version moves because the reader answers one printed
     // sentence it used to refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.287.0");
-    expect(manifest.version).toBe("0.287.0");
+    expect(engineVersion).toBe("0.288.0");
+    expect(manifest.version).toBe("0.288.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

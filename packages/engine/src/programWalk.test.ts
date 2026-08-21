@@ -344,6 +344,17 @@ describe("the pool sweep, structurally", () => {
       "fix-rapidvernier trigger :: moveEnergy",
       "fix-rapidvernier trigger :: recordGate",
       "fix-rapidvernier trigger :: switchActive",
+      // 🆕🆕 **D383 — THREE ROWS FROM ONE FIXTURE, AND THEY ARE THE SECOND ARM OF
+      // `optionalCostBoostProgram`.** `fix-torrent` (Wellspring Mask Ogerpon ex's
+      // printed "Torrential Pump") assembles through `costSnipeProgram`, whose whole
+      // payload sits inside an `optional.then` NESTED IN a `conditionGate.then` — the
+      // branch the enumerated walk reproduced above cannot descend. **THE POOL COULD
+      // NOT REACH THIS ARM AT ALL BEFORE THE FIXTURE**, which is D318's rule paid a
+      // third time: `fix-crushpress` prints the OTHER payoff and exercises the other
+      // half of the same exported assembler.
+      "fix-torrent attack 0 optionalCostBoost :: damageChosen",
+      "fix-torrent attack 0 optionalCostBoost :: discardEnergy",
+      "fix-torrent attack 0 optionalCostBoost :: shuffleDeck",
       "fix-trainerops attack 10 :: opponentSwitchOut",
       "sv05-025 trigger :: moveEnergy",
       "sv05-025 trigger :: recordGate",

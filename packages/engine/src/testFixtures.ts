@@ -11209,6 +11209,47 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D383 — the reversed optional boost's SECOND PAYOFF: Wellspring Mask
+      Ogerpon ex `sv06-064` "Torrential Pump" ({W}{C}{C}, flat `100`, index 1 of
+      two — confirmed by id against tcgdex, which returns "Sob" at index 0), and
+      **5 legal printings** on one byte-identical sentence (TWM 64/194/213,
+      PRE 27/152).
+
+      🛑 **IT IS HERE FOR D318's RULE AND NOTHING ELSE.** `optionalCostBoostProgram`
+      gained a whole second arm (`costSnipeProgram`) whose shape nothing in
+      `FIXTURE_POOL` could reach — `fix-crushpress` prints the `moreDamage` payoff —
+      so `programWalk.test.ts`'s sweep would have been structurally blind to the new
+      branch. **AN EXPORTED ASSEMBLER WITH NOTHING IN THE POOL TO CALL IT ON IS A
+      REPAIR THAT CHANGES NO ANSWER**, which is the finding D318 paid two slices for
+      and D381 pre-paid; this is the third payment.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest, and
+      neither `sv06` nor `sv08.5` is among the six.
+
+      ONE attack rather than the printed two, and the index moves to 0 with it —
+      the "read attack beside an unread one" control is `fix-bonusconsequent`'s job,
+      and Sob's *"During your opponent's next turn, the Defending Pokémon can't
+      retreat."* is read by `deriveAttackEffect` anyway, so it would be a second READ
+      attack and not a control. `hp: 210` and `types: ["Water"]` as printed; the
+      printed 210 is why the attacker survives this pool's return fire without a
+      stand-in number. **THE `100` IS FLAT AND THAT IS LOAD-BEARING** — the payoff is
+      a SECOND hit, so `attack.ts` must NOT drop the base, and a `100+` marker would
+      exercise the wrong half of the assembly. */
+  "fix-torrent": battler("fix-torrent", {
+    name: "Fixgerpon ex",
+    hp: 210,
+    types: ["Water"],
+    attacks: [
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Torrential Pump",
+        damage: 100,
+        effect:
+          "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
   /** 🆕🆕 D382 — THE `. Then, ` DEMONSTRATOR, and it is `fix-bonusconsequent`'s
       twin for the OTHER decider. Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`,
       index 1 of two — confirmed by id against tcgdex), transcribed and not

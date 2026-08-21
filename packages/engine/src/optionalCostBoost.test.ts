@@ -117,17 +117,37 @@ const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => re
 /** THE SENTENCE THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const CETITAN = "You may discard a Stadium in play. If you do, this attack does 140 more damage.";
 
-/** …and the TWO it leaves, each with the mechanism it is waiting on. Kept as data
-    because §6 drives them: a successor who widens either anchor to swallow one of
-    these reddens here by name. */
+/** …and the ONE it leaves, with the mechanism it is waiting on. Kept as data because
+    §6 drives it: a successor who widens either anchor to swallow it reddens here by
+    name.
+
+    🆕🆕 **D383 EMPTIED HALF OF THIS AND THE ENTRY MOVED TO `TAKEN_SINCE` RATHER THAN
+    BEING DELETED** (D178: provenance is annotated, never overwritten). It read *"an
+    Energy→OWN-DECK op AND a Bench-snipe consequent"* — and BOTH halves of that price
+    were the wrong size. See `TAKEN_SINCE`. */
 const STILL_OWED = {
-  /** Iron Hands ex-shaped — an Energy→OWN-DECK op AND a Bench-snipe consequent. */
-  energy:
-    "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
   /** A FACE-UP PRIZE on `PlayerState` — a persisted-shape change, so
       `MATCH_RECORD_VERSION` on top of the engine bump. */
   prize:
     "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage. (That Prize card remains face up for the rest of the game.)",
+} as const;
+
+/** 🆕🆕 D383 — THE ROW THAT LEFT `STILL_OWED`, ASSERTED RESOLVED rather than merely
+    removed. `stadiumPresence.test.ts` grew the same list at D382 for the same reason:
+    a refusal list can be made green by SHORTENING it, so every departed row owes a
+    positive claim in its place.
+
+    Wellspring Mask Ogerpon ex `sv06-064`/`-194`/`-213`/`sv08.5-027`/`-152`
+    "Torrential Pump" ({W}{C}{C}, flat **100**), **5 legal printings** — D381's own
+    reading widened at its CONSEQUENT, on ZERO new readers. **THE PRICE D381 WROTE
+    DOWN WAS WRONG IN BOTH DIRECTIONS**: the "Energy→own-deck op" is one optional
+    VALUE on `discardEnergy.to`, the "Bench-snipe consequent" was already built (the
+    payoff anchor shares its regex BODY with `deriveAttackEffect`'s `ALSO_BENCHED_SNIPE`
+    and differs only in the case of the leading word), and what it actually cost is a
+    `BoardCondition` member D381 never named. */
+const TAKEN_SINCE = {
+  energy:
+    "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
 } as const;
 
 const FAMILY = /^You may .*If you do,/;
@@ -196,9 +216,11 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     // D316's four, which were already resolving at D380's head.
     const forward = family.filter(([, s]) => deriveAttackOptionalBoost(s) !== null);
     expect([forward.length, units(forward)]).toEqual([4, 5]);
-    // …and this slice's one.
+    // …and the reversed half. 🆕🆕 D383 — **1 / 2 -> 2 / 7**, because the PAYOFF half
+    // became a table. The reader is unchanged and so is its anchor: what moved is that
+    // `optionalCostPayoff` now has a second row.
     const reversed = family.filter(([, s]) => deriveAttackOptionalCostBoost(s) !== null);
-    expect([reversed.length, units(reversed)]).toEqual([1, 2]);
+    expect([reversed.length, units(reversed)]).toEqual([2, 7]);
     // 🛑 THE TWO READERS ARE MUTUALLY EXCLUSIVE ON EVERY PRINTED MEMBER, which is the
     // property that lets attack.ts SUM its terms instead of choosing between them.
     for (const [, s] of family) {
@@ -211,12 +233,12 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     }
   });
 
-  it("🛑 …the refused half went 3 sentences / 9 printings → 2 / 7, and that IS the slice", () => {
+  it("🛑 …the refused half went 3 sentences / 9 printings → 1 / 2, in TWO slices", () => {
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
-    // AFTER. The two survivors are the two `STILL_OWED` rows and nothing else.
-    expect([refused.length, units(refused)]).toEqual([2, 7]);
-    expect(refused.map(([, s]) => s).sort()).toEqual([STILL_OWED.energy, STILL_OWED.prize].sort());
+    // AFTER. 🆕🆕 D383 — the sole survivor is the one `STILL_OWED` row and nothing else.
+    expect([refused.length, units(refused)]).toEqual([1, 2]);
+    expect(refused.map(([, s]) => s)).toEqual([STILL_OWED.prize]);
     // BEFORE, re-derived rather than quoted: drop this reader from the set and the
     // refused half is the head D380 handed over — 3 sentences / 9 printings.
     const withoutThisReader = (text: string): boolean =>
@@ -225,10 +247,16 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
       );
     const before = family.filter(([, s]) => !withoutThisReader(s));
     expect([before.length, units(before)]).toEqual([3, 9]);
-    // …and the delta is exactly the sentence this slice claims.
-    expect(before.filter(([, s]) => !refused.some(([, r]) => r === s)).map(([, s]) => s)).toEqual([
-      CETITAN,
-    ]);
+    // …and the delta is exactly the TWO sentences this reader claims — D381's, and
+    // 🆕🆕 D383's, which is the second row of the payoff table rather than a second
+    // reader. **THE READER IS THE UNIT OF THIS SUBTRACTION, NOT THE SLICE**, which is
+    // why the arithmetic here is 3 -> 1 across two commits and not 3 -> 2 -> 1.
+    expect(
+      before
+        .filter(([, s]) => !refused.some(([, r]) => r === s))
+        .map(([, s]) => s)
+        .sort(),
+    ).toEqual([CETITAN, TAKEN_SINCE.energy].sort());
   });
 
   it("the sentence carries TWO printings, and no near spelling hides behind it", () => {
@@ -277,11 +305,26 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
 });
 
 describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE the population", () => {
-  it("the printed sentence reads as a precondition, a cost and a bonus", () => {
+  it("the printed sentence reads as a precondition, a cost and a DISPATCHED payoff", () => {
     expect(deriveAttackOptionalCostBoost(CETITAN)).toEqual({
       cond: { kind: "stadiumInPlay" },
       ops: [{ op: "discardStadium" }],
-      bonus: 140,
+      // 🆕🆕 D383 — `bonus: 140` became `payoff: {kind, bonus}`. The KIND is what
+      // `attack.ts` reads to decide whether the printed base is re-homed, so a payoff
+      // that silently defaulted would delete a hit rather than mis-report a number.
+      payoff: { kind: "moreDamage", bonus: 140 },
+    });
+  });
+
+  it("🆕🆕 D383 — and the SECOND printed payoff reads as the SAME shape, one row over", () => {
+    expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.energy)).toEqual({
+      // The one new `BoardCondition` member, carrying the digit the anchor CAPTURED.
+      cond: { kind: "yourActiveEnergyAtLeast", count: 3 },
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 3, to: "deck" },
+        { op: "shuffleDeck" },
+      ],
+      payoff: { kind: "benchSnipe", amount: 120 },
     });
   });
 
@@ -297,29 +340,71 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
         "You may turn 1 of your face-down Prize cards face up. If you do, this attack does 80 more damage.",
       ),
     ).toBeNull();
+    // 🆕🆕 D383 — THE ENERGY COST IS NO LONGER A REFUSAL AND THE ROW WAS REPLACED
+    // RATHER THAN DELETED. Its two NEAREST misses take its place, and both are the
+    // mistakes this row's anchor is actually protecting against: the wrong BODY and
+    // the wrong ZONE. Synthetic on purpose — no card prints either.
     expect(
       deriveAttackOptionalCostBoost(
-        "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack does 120 more damage.",
+        "You may shuffle 3 Energy attached to your opponent's Active Pokémon into your deck. If you do, this attack does 120 more damage.",
       ),
     ).toBeNull();
-    // …and the control that makes those two mean something: the SAME payoff behind a
-    // cost the table does read.
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may shuffle 3 Energy attached to this Pokémon into your discard pile. If you do, this attack does 120 more damage.",
+      ),
+    ).toBeNull();
+    // …and the control that makes those refusals mean something: the SAME payoff
+    // behind the cost the table DOES read, at a captured count of 2.
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may shuffle 2 Energy attached to this Pokémon into your deck. If you do, this attack does 120 more damage.",
+      ),
+    ).toEqual({
+      cond: { kind: "yourActiveEnergyAtLeast", count: 2 },
+      ops: [
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 2, to: "deck" },
+        { op: "shuffleDeck" },
+      ],
+      payoff: { kind: "moreDamage", bonus: 120 },
+    });
+    // …and the other control, unchanged: the SAME payoff behind D381's own cost.
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard a Stadium in play. If you do, this attack does 80 more damage.",
       ),
-    ).toEqual({ cond: { kind: "stadiumInPlay" }, ops: [{ op: "discardStadium" }], bonus: 80 });
+    ).toEqual({
+      cond: { kind: "stadiumInPlay" },
+      ops: [{ op: "discardStadium" }],
+      payoff: { kind: "moreDamage", bonus: 80 },
+    });
   });
 
   it("🛑 the PAYOFF half's refusal is the PAYOFF's, on a cost the table reads", () => {
+    // 🆕🆕 D383 — the benched snipe is now a ROW, so the refusals move to ITS nearest
+    // misses: the zone word dropped (`opponentAny`, a different op) and the count
+    // moved off 1. Both are shapes `deriveAttackEffect` reads under OTHER anchors, so
+    // a payoff table that claimed them would be answering another arm's question.
     expect(
       deriveAttackOptionalCostBoost(
-        "You may discard a Stadium in play. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon.",
+        "You may discard a Stadium in play. If you do, this attack also does 120 damage to 1 of your opponent's Pokémon.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may discard a Stadium in play. If you do, this attack also does 120 damage to each of your opponent's Benched Pokémon.",
       ),
     ).toBeNull();
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard a Stadium in play. If you do, draw 3 cards.",
+      ),
+    ).toBeNull();
+    // …and the printed 0 guard on the SECOND payoff too, which has its own captured
+    // amount and therefore its own `>= 1`.
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may discard a Stadium in play. If you do, this attack also does 0 damage to 1 of your opponent's Benched Pokémon.",
       ),
     ).toBeNull();
     // A printed 0 buys nothing — the guard every captured amount in effects.ts carries,
@@ -335,6 +420,9 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
     for (const sentence of Object.values(STILL_OWED)) {
       expect(deriveAttackOptionalCostBoost(sentence), sentence).toBeNull();
     }
+    // 🆕🆕 D383 — and the ATTRIBUTION CONTROL that stops this rung passing because the
+    // list got shorter: the row that LEFT it is asserted to resolve.
+    expect(deriveAttackOptionalCostBoost(TAKEN_SINCE.energy)).not.toBeNull();
     // A leading or trailing sentence denies it, exactly as it denies D316's reader.
     expect(deriveAttackOptionalCostBoost(`Draw a card. ${CETITAN}`)).toBeNull();
     expect(deriveAttackOptionalCostBoost(`${CETITAN} Draw a card.`)).toBeNull();
@@ -527,19 +615,20 @@ describe("§5 — the confirm: a decline still deals the base, and an empty zone
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the TWO remaining printings stay LOUD, each waiting on a named mechanism", () => {
+  it("🛑 the ONE remaining printing stays LOUD, waiting on a named mechanism", () => {
     for (const sentence of Object.values(STILL_OWED)) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
     const left = corpus().filter(([, s]) =>
       (Object.values(STILL_OWED) as readonly string[]).includes(s),
     );
-    expect([left.length, units(left)]).toEqual([2, 7]);
-    // The bigger of the two is worth FIVE printings and needs TWO mechanisms — an
-    // Energy→own-deck op and a Bench-snipe consequent — which is the next slice's
-    // price rather than this one's omission.
-    expect(corpus().filter(([, s]) => s === STILL_OWED.energy).map(([n]) => n)).toEqual([5]);
+    // 🆕🆕 D383 — 2 / 7 -> 1 / 2.
+    expect([left.length, units(left)]).toEqual([1, 2]);
     expect(corpus().filter(([, s]) => s === STILL_OWED.prize).map(([n]) => n)).toEqual([2]);
+    // 🛑 AND THE DEPARTED ROW IS ASSERTED RESOLVED, WHICH IS WHAT KEEPS THE RUNG ABOVE
+    // FROM GOING GREEN BY BEING SHORTENED (D382's repair, one file over).
+    expect(resolvedByAnyReader(TAKEN_SINCE.energy)).toBe(true);
+    expect(corpus().filter(([, s]) => s === TAKEN_SINCE.energy).map(([n]) => n)).toEqual([5]);
   });
 
   it("bought no new op and no new BoardCondition member — every step already existed", () => {
