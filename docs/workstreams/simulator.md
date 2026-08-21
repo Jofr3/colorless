@@ -22181,6 +22181,121 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D386 — THE HEALED-THIS-TURN CLAUSE: a compiler measurement that came back a DEAD HEAT, and the first persisted-shape move in eighteen slices
+
+Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, index 0 of two): *"If this Pokémon was
+healed during this turn, this attack does 100 more damage."* — **1 sentence / 2 legal printings**,
+the LAST 2-printing clause in the bonus residue, deferred **seven** times.
+
+### The pricing: the loser lost on mechanisms, not on the bump they share
+
+| candidate | printings | mechanisms | ratio |
+|---|---|---|---|
+| the face-up PRIZE row | 2 | **9** | **0.22** |
+| the HEALED-THIS-TURN row | 2 | **5** | **0.40** |
+
+The healed row's five are: the field plus its initialiser, the stamp, the member plus its two arms,
+the clause row, and `MATCH_RECORD_VERSION`. **BOTH CANDIDATES OWE THE RECORD BUMP**, which is the
+whole point — the ground seven slices deferred this row on had stopped separating anything by the
+time D385 measured the Prize row's `needs` column. The four mechanisms the Prize row buys and this
+one does not are the difference: a player CHOICE of Prize index (a park, a prompt, a choice kind,
+the `preventBlock` pair, `programWalk` rows), an INDEX REMAP when a Prize is taken, a THIRD payoff
+anchor for the trailing reminder parenthetical, and a WIRE shape plus a UI.
+
+⚠️ **AND ON REACHABILITY, WHICH THE ARITHMETIC DOES NOT SHOW.** D385 measured the Prize gate's false
+arm as needing the attack used six times. Both arms of this one are ordinary play: heal with a
+Potion and attack (true), or just attack (false).
+
+### 🛑 D385's compiler method has a DOMAIN, and this is its edge
+
+The handoff ordered the shape question first and named D385's `prizes` measurement as the way to
+settle it — that one separated **1 file / 1 site** from **17 / 22** and ended a four-slice argument
+in four minutes. Run here on all three candidate spellings it separates **nothing**:
+
+| spelling | files with errors | error sites |
+|---|---|---|
+| per-BODY turn stamp — `InPlayPokemon.healedTurn: number \| null` | **1** | **1** |
+| per-SEAT boolean — `PlayerSide.healedThisTurn: boolean` | **1** | **1** |
+| per-BODY uid set — `GameState.healedThisTurn: string[]` | **1** | **1** |
+
+**A DEAD HEAT, AND THE REASON IS STRUCTURAL RATHER THAN ACCIDENTAL.** `tsc -b --force` prices the
+CONSTRUCTION SITES a required field creates. `InPlayPokemon` has exactly one constructor
+(`makeInPlay`), `PlayerSide` one (`setup.ts`) and `GameState` one — so every widening of any of them
+costs one site. D385's measurement worked because it compared a WIDENING against a SHAPE CHANGE, and
+a shape change reprices every READ. **THE METHOD ANSWERS "widen or reshape", NOT "which widening".**
+
+What settled it instead, both of them things the compiler cannot see:
+
+1. **THE PRINTED SUBJECT IS "this Pokémon".** A per-seat boolean answers *"did this SEAT heal
+   anything this turn"*, and the two come apart on a board a player reaches by playing a Potion on
+   their Bench and then attacking with an untouched Active. `healedThisTurn.test.ts` §5 drives that
+   board and computes the per-seat reading BESIDE the member, asserting they DISAGREE (D214).
+2. **THE CLOCK.** A boolean and a uid set both need a turn-boundary clear; a turn STAMP expires by
+   arithmetic. That is D124's argument for `promotedTurn` verbatim, and this field sits beside it.
+
+### The seven stamp sites, and one helper instead of seven edits
+
+Seven sites in `interpreter.ts` file a `HEALED` event. All seven now write their body through
+**`healedBody(pokemon, healed, turn)`**, called on the line after the push — so "was healed" has one
+definition in this engine and the log and the clause cannot drift apart (D222's rule, pointed at a
+WRITER pair rather than a reader pair).
+
+⚠️ **THE SEVENTH IS A JUDGEMENT CALL, NAMED RATHER THAN HIDDEN.** `moveCountersFromBench` files a
+`HEALED` row for its SOURCE body and has since D138. A reading on which moving counters is not
+healing is defensible — but it would have to move the EVENT too, and the helper is exactly what
+forces those two to move together. A mutant (`D386-counter-move-skips-the-stamp`) exists to make the
+decision visible rather than to call the alternative wrong.
+
+⚠️ **A WHIFF IS NOT A HEAL.** Every caller clamps to the body's own damage and returns early at
+zero, so a Potion on an undamaged Active files no event and writes no stamp. §4 drives it from the
+real card.
+
+### 🛑 The 2-printing band is now EMPTY — D379's saturation shape, paid across twelve files
+
+The bonus residue steps **20 / 24 → 19 / 22**, and the clause it removes was the last one in the
+2-printing band. Twelve suites carried a rung of the form
+`expect(band.sort()).toEqual([<this sentence>])`, and rewriting them to `toEqual([])` would have left
+twelve guards that cannot go red for the reason that matters. Each now:
+
+- asserts the band is empty (the DEPARTURE), **and**
+- drives its refusal from **OUTSIDE** the emptied band — `[...byClause.values()].filter(n => n > 1)`
+  is `[5]`, the declaration clause D368 disqualified on SHAPE, still refused — **and**
+- pins the 1-printing band's depth at **17**, so the distribution `{1: 17, 5: 1}` is the whole
+  statement rather than an absence.
+
+`benchNamedBonus.test.ts`'s `LEFT` table names what takes its place — *"If your opponent's Active
+Pokémon is a Stage 1 Pokémon, this attack does 90 more damage."* at 1 printing, the FOURTH sibling of
+a shape already built three times — and records the finding the old row's cost string produced:
+**A COST THAT NEVER CHANGES CAN STOP BEING A REASON, BECAUSE WHAT IT IS COMPARED AGAINST MOVES.**
+⚠️ And it flags D262's question for whoever takes it: `opponentActiveIsEvolution` is
+`evolveFromOf(top) !== null`, which a Stage 1 also satisfies, so that row is a **NARROWING** of a
+live member and not a widening of it.
+
+### The moving set was thirty, and it split into two populations nobody has had to move at once
+
+D385 moved fifteen, D384 eighteen. This slice moved **thirty**, and the reason is that it is the
+first in this run to be BOTH a residue-clause slice and a persisted-shape slice:
+
+- **TEN `InPlayPokemon` KEY-SET PINS** (`alwaysOnReduction`, `benchCounterMultiply`, `ohNoYouDont`,
+  `opponentCounterScaling`, `prismEnergy`, `selfCounterMultiply`, `selfScalingPenalty`,
+  `stimulatedEvolution`, `setup`, `legacyEnergy`) — a population no slice since D326 has touched.
+  🛑 **THEIR TEST TITLES SAY "NOTHING was written to `InPlayPokemon`, so MATCH_RECORD_VERSION stays
+  N"**, which is a claim about THAT slice and not about the head; the pin is on the head's key set.
+  Each is annotated rather than silently updated, because deleting the claim would lose why the pin
+  exists.
+- **TWELVE BONUS-RESIDUE RUNGS**, the population D385's optional-cost compound could not reach.
+- **THE NINE-READER INSTRUMENT MOVED FOR THE FIRST TIME IN FOUR SLICES** — 364 / 1,255 →
+  **365 / 1,257** — because this sentence resolves through `deriveAttackDamageBonus`, which IS one
+  of the nine. D385's resolved through the tenth reader alone and left it standing.
+
+⚠️ **FOUR RUNGS WERE MASKED behind an earlier throw in the same `it`** and it took **five** full
+suite runs to converge, the same as D385: `BUILT.attack - 922`, `- 922 - 252`, the leading literal
+`469` and `head - rawDelta - splitDelta` — the third slice running for the first three.
+
+✅ `clauseApostrophe` DID move this time (41 → 42), and the APOSTROPHE-FREE half took the whole step
+(22 → 23) while the apostrophe half stood still at 19 — the mirror of D384. The clause names no
+possessive and no contraction.
+
 ## D385 — THE SECOND CONNECTIVE: a price wrong in both directions, a proof obligation on `cond`, and a guard whose premise died while it stayed green
 
 `optionalCostBoost.test.ts` §1 has carried a rung since D381 saying **the family is EIGHT when the
