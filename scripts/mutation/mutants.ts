@@ -14954,4 +14954,142 @@ export const MUTANTS: Mutant[] = [
     replace: "  deriveAttackBonusConsequent,\n];",
     expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
   },
+  // ── 🆕🆕 D383 — THE PAYOFF UNION (Wellspring Mask Ogerpon ex "Torrential Pump",
+  //    5 legal printings). ELEVEN rows, ONE PER CLAIM: the Energy lands in the DECK
+  //    (C1) and the printed VERB's other half fires (C2); the offer is GATED on a
+  //    cost this body can actually pay (C3), the gate is a FLOOR (C4) and reads the
+  //    BODY rather than the SIDE (C5) and refuses an empty Active Spot (C6); the
+  //    printed base stays OUT of the program (C7); the cost is paid BEFORE the
+  //    snipe (C8); the payoff anchor is whole-sentence (C9) and case-anchored (C10);
+  //    the caption names the printed verb (C11); and the snipe hits ONE body (C12).
+  //
+  //    ⚠️ **NO ROW FOR THE `modifierSimulated` NARROWING, AND THE REASON IS THE
+  //    CATALOG.** Reverting it (`costBoostOwnsTheBase` -> `optionalCostBoost !== null`
+  //    in that chain alone) would claim a `+`/`×` marker for the bench-snipe payoff —
+  //    and all five printings carry a FLAT `100`, so no board in the catalog can tell
+  //    the two answers apart. It is D130's "correctness in principle, not a live bug"
+  //    written down rather than tested around (conventions: an unreachable mutant is
+  //    worse than no mutant).
+  //
+  //    ⚠️ **AND NO ROW FOR THE CARDS-VERSUS-UNITS DEFECT AT THE ARM ITSELF**: the
+  //    substitution a careless author would make is `providedEnergy(state, own).length`,
+  //    and that identifier is NOT in interpreter.ts's import block — a mutant is ONE
+  //    contiguous string and cannot add an import. C5 below is the mistake the import
+  //    block DOES make available (the SEAT-wide counter, one identifier away, which
+  //    D372's own doc block names as its near miss), and `torrentialPump.test.ts` §3
+  //    guards the units reading on a Neo Upper Energy board.
+  {
+    id: "D383-shuffled-energy-lands-in-the-discard-pile",
+    decision: "D383",
+    what: "\u{1F6D1} C1 — **THE DESTINATION DROPPED FROM THE DERIVER, so the printed *shuffle into your deck* becomes a DISCARD.** The card gets strictly worse (three Energy gone for good instead of recycled) and **EVERY \"the Energy left the body\" ASSERTION STAYS GREEN** — the Active ends empty either way, the snipe still lands, the confirm still parks. Only a read of BOTH zones reaches it, which is why `torrentialPump.test.ts` §5 asserts the deck GREW BY THREE and the pile did NOT. ⚠️ It is the SECOND PRODUCER of this field and owes its own row: `D296-the-derived-destination-falls-back-to-the-pile` mutates a different arm for a different value, and each is green under the other's kill",
+    file: "packages/engine/src/effects.ts",
+    find: '        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count, to: "deck" },',
+    replace: '        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count },',
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-the-printed-verb-loses-its-shuffle",
+    decision: "D383",
+    what: "⚠️ C2 — THE TRAILING `shuffleDeck` GOES, so three cards are appended to the BOTTOM of a deck whose order the player has just read, and nothing randomises them. **THE BOARD IS OTHERWISE IDENTICAL** — the same zone, the same uids, the same damage — so no state assertion in the suite can see it and only the `SHUFFLE` event row can. `D230-search-drops-the-trailing-shuffle`'s claim, one op family over, and the reason the shuffle is a SEPARATE op rather than a property of the destination (D342)",
+    file: "packages/engine/src/effects.ts",
+    find: '        { op: "shuffleDeck" },\n      ],\n    };\n  }\n  return null;\n}',
+    replace: "      ],\n    };\n  }\n  return null;\n}",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-snipe-payoff-loses-its-payability-gate",
+    decision: "D383",
+    what: "\u{1F6D1} C3 — **THE GATE DROPPED, AND THE PROGRAM BECOMES THE BARE CONFIRM.** On every board where the cost IS payable the two are byte-for-byte identical, which is every board the REAL printing can build in this pool ({W}{C}{C} is three units and `countAttachedEnergy` counts CARDS). What it costs is the board where the cost is NOT payable: `optional` parks unconditionally, a \"yes\" shuffles as many as are there (`discardEnergy`'s *do as much as you can* rule for a MANDATORY discard) and the whole printed 120 is collected anyway. **DRIVEN FROM OUTSIDE THE POPULATION** (D379) — `torrentialPump.test.ts` §6 fields a LOCAL synthetic printing differing on the ONE token the cost anchor captures, and asserts the ABSENCE of the park",
+    file: "packages/engine/src/effects.ts",
+    find: '      op: "conditionGate",\n      // The cost\'s own payability, read BEFORE the confirm is parked: an attacker',
+    replace: "      ...offer,\n      // The cost's own payability, read BEFORE the confirm is parked: an attacker",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-energy-threshold-is-strict",
+    decision: "D383",
+    what: "⚠️ C4 — `>=` BECOMES `>`, so the member is a CEILING-PLUS-ONE instead of a FLOOR and the printed cost is refused on the exact board it is written for: three Energy attached, three Energy charged, offer withheld. **OFF BY ONE AND GREEN ON EVERY OTHER COUNT**, which is why §3 sweeps 0..4 cards against 1..5 thresholds rather than asserting the printed 3 once (D379's `exactHandSize` rule: drive the value and its two neighbours)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
+    replace: "      return own !== null && countAttachedEnergy(state, own, null) > cond.count;",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-energy-threshold-reads-the-side",
+    decision: "D383",
+    what: "\u{1F6D1} C5 — **THE ZONE WIDENED FROM THE BODY TO THE SIDE**, and it is the mistake the import block makes available: `countEnergyInPlay` is one identifier away in interpreter.ts's own import list, and D372's doc block names it as this counter's near miss in exactly these words. The printed cost is *Energy attached to THIS Pokémon*, so a benched Energy would arm an offer the attacker cannot pay — and **EVERY BOARD WITH AN EMPTY BENCH IS GREEN EITHER WAY**, which is nearly every board a suite writes. §3's near-miss board puts one {W} on the Bench for this row and this row alone",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
+    replace: "      return own !== null && countEnergyInPlay(state, seat, null) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-empty-active-spot-holds-zero-energy",
+    decision: "D383",
+    what: "⚠️ C6 — THE NULL GUARD GOES POSITIVE-BY-DEFAULT: an EMPTY Active Spot reads as a Pokémon holding zero, so the member answers TRUE at a printed count of 0. **AN ABSENT POKÉMON IS NOT A POKÉMON HOLDING NOTHING** — the standing rule for every body-reading member in this union, and the one `yourActiveUndamaged` states at length. Unreachable from the attack path (§8 guarantees an Active), so only a direct `conditionHolds` probe can see it, which is what §3's empty-spot rung is",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
+    replace: "      return (own?.energy.length ?? 0) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-printed-base-is-re-homed-into-the-gate",
+    decision: "D383",
+    what: "\u{1F6D1} C7 — **D381's TERM RESTORED VERBATIM, WHICH IS EXACTLY THE EDIT THIS SLICE HAD TO NOT MAKE** (D190b's neighbour-copy shape: the previous line, unchanged). `costBoostOwnsTheBase` becomes the bare `optionalCostBoost !== null`, so the printed base is dropped for BOTH payoffs — and the bench-snipe payoff never re-homes it, so Torrential Pump's flat **100 is silently deleted** on every board including the declined one and the refused-gate one. **EVERY \"the Bench took 120\" ASSERTION STAYS GREEN.** §5 asserts the Defender's 100 on the YES and the NO, §6 on the refused gate, and the DAMAGE_DEALT rows are counted per action so a moved hit is visible as well as a missing one",
+    file: "packages/engine/src/attack.ts",
+    find: "  const costBoostOwnsTheBase = optionalCostBoost?.payoff.kind === \"moreDamage\";",
+    replace: "  const costBoostOwnsTheBase = optionalCostBoost !== null;",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-snipe-is-paid-before-the-cost",
+    decision: "D383",
+    what: "⚠️ C8 — **THE PRINTED ORDER REVERSED, AND IT IS `boostedArms`' OWN ORDER COPIED ONE ARM OVER** (D381's C1, one payoff along). The accepted arm becomes `[snipe, ...reading.ops]` — the hit first, the Energy after. **EVERY DAMAGE AND ZONE ASSERTION IS GREEN EITHER WAY**: the same 120 lands on the same body and the same three Energy reach the same deck. What moves is the ORDER OF THE TWO PARKS, and §6 is the only rung that reads it — the discard prompt must come first, and it names the Energy the player is about to give up before it asks which body to hit",
+    file: "packages/engine/src/effects.ts",
+    find: "  const then: EffectOp[] = [\n    ...reading.ops,",
+    replace: '  const then: EffectOp[] = [\n    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },\n    ...reading.ops,',
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-bench-snipe-anchor-loses-its-terminator",
+    decision: "D383",
+    what: "\u{1F6D1} C9 — **THE SATURATION TRAP, ARMED ON THE SECOND PAYOFF ROW.** Dropping the `$` makes the bench-snipe anchor a PREFIX match, so it swallows any consequent that merely BEGINS with the clause — and it LOOKS LIKE A COVERAGE WIN, because a swallowed sentence leaves the unbuilt remainder and `BUILT.attack` rises. ⚠️ Its bite is on the shared FRAGMENT rather than on this anchor alone, which is what makes it worth a row: `ALSO_BENCHED_SNIPE_BODY` is spliced into `deriveAttackEffect`'s anchor too, so a careless `$` here is a lesson about the coupling. §2 drives the refusals from SYNTHETIC re-pairings and §1 pins the family's refused half at 1 sentence / 2 printings",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    replace: "const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}`);",
+    expectKilledBy: [
+      "packages/engine/src/torrentialPump.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D383-bench-snipe-anchor-takes-the-capital",
+    decision: "D383",
+    what: "⚠️ C10 — THE LEADING WORD IS CAPITALISED, i.e. the payoff anchor becomes a byte-identical COPY of `ALSO_BENCHED_SNIPE` and the printed compound — whose consequent is lower-case, because it sits behind *If you do,* — goes straight back to the loud `ATTACK_EFFECT_SKIPPED` path. **A SILENT REFUSAL: every other case in this family stays green and the only thing that moves is the census.** It is D246/D316's lower-case rule stated as a defect, and the row exists because sharing the regex BODY between two anchors makes exactly this substitution look harmless",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    replace: "const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    expectKilledBy: [
+      "packages/engine/src/torrentialPump.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D383-shuffle-caption-still-says-discard",
+    decision: "D383",
+    what: "⚠️ C11 — THE PARK'S CAPTION REVERTS TO \"Discard 3 Energy from this Pokémon.\" while the apply still puts the cards in the DECK — so the one screen that tells a player what their pick is about to do says the opposite of what happens, and says it about a cost they are PAYING rather than one being taken from them. **THE BOARD IS IDENTICAL UNDER THIS MUTANT**, so only an assertion on the prompt's own string reaches it: `D295-caption-still-says-discard`'s claim one destination over, and it needs its own row for that row's own reason (a second VALUE of a field owes a second row exactly as a second producer does)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return shuffleBack\n        ? `Shuffle ${what} attached to this Pokémon into your deck.`\n        : `Discard ${what} from this Pokémon.`;",
+    replace: "      return `Discard ${what} from this Pokémon.`;",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D383-snipe-hits-two-benched-bodies",
+    decision: "D383",
+    what: "⚠️ C12 — THE SNIPE'S `count` GOES TO 2, so the printed *1 of your opponent's Benched Pokémon* hits two — and `count` IS EXACT on this op (a floor as well as a ceiling), so on a Bench of one it is FORCED to one and the mutant is invisible. **ONLY A BENCH OF TWO OR MORE REACHES IT**, which is the fixture a natural \"the snipe works\" suite never writes (D279's rule), and §6 is the only board here that has one: it asserts the SECOND benched body took nothing",
+    file: "packages/engine/src/effects.ts",
+    find: '    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
+    replace: '    { op: "damageChosen", target: "opponentBench", amount, count: 2, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
 ];
