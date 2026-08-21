@@ -334,9 +334,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // opening line quoted back), which is the check D372's own comment above asks for by
   // name. ⚠️ AND THE RAISE IS IN THE SAME COMMIT AS THE DEMOTION, which is the half D376
   // forgot and paid for with a RED `HEAD` under a green claim.
-  const ARCHIVES = 48;
+  //
+  // 🆕🆕 D379 — 48 -> 49, ARCHIVED DELIBERATELY AND SAID SO, exactly as the failure
+  // message asks. D379 demoted D378's live resume point under `### Prior resume point
+  // (P3-M5 — D378, …)`, carried the demoted BODY across with it (the range was captured
+  // FIRST and re-emitted after the new section rather than overwritten), and re-read the
+  // seam after the edit with D378's body confirmed present — its opening line quoted
+  // back. **THE RAISE IS IN THE SAME COMMIT AS THE DEMOTION**, for the fourth slice
+  // running.
+  const ARCHIVES = 49;
 
-  it("the page still holds all 48 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 49 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

@@ -22181,6 +22181,158 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D379 — THE EXACT HAND-SIZE READ: the last sentence behind the does-nothing skeleton, and the first member the bonus consequent did not pay for (engine 0.283.0 → **0.284.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+D378 handed this over as the ONE printed does-nothing opener no `ATTACK_REQUIREMENT_CLAUSES` row
+carried, with the shape question already half-measured. The answer held: **ONE new PARAMETERISED
+`BoardCondition` member, `yourHandExactly { count }`, ONE clause row, TWO reader arms, ZERO new
+imports.**
+
+| printed sentence | consequent | `BoardCondition` | card | printings |
+|---|---|---|---|---|
+| `If you don't have exactly 3 cards in your hand, this attack does nothing.` | CANCEL | `yourHandExactly { count: 3 }` | Alolan Dugtrio `sv08-123` / `sv08-208` "Trio-Cheehoo" (**no Energy cost**, 120) | 2 |
+
+✅ **THE SKELETON IS EMPTY.** The requirement table goes 9 rows / 8 reachable / 16 printings →
+**10 / 9 / 18**, and the unmapped remainder 1 sentence / 2 printings → **0 / 0**. Every
+*"If <clause>, this attack does nothing."* opener the legal attack column prints is now read, so
+the next move on that rung has to come from a **set rotation** rather than from a slice.
+
+### Both consequents were asked again — and the bonus side is EMPTY, which is a first
+
+D363 (Sawk), D365 (Iron Boulder), D377 (Centiskorch) and D378 (Fan Rotom) each bought a member
+that BOTH clause tables read, and the last two turned on that. Measured over
+`legalAttackCorpus()`: the column prints **no own-hand exact read under a "+N more damage"
+consequent at all**, so all 2 printings arrive through the cancel table and `yourHandExactly` has
+no `CONDITIONAL_DAMAGE_CLAUSES` twin.
+
+> **Reusable form:** asking both consequents is still right. The answer is sometimes ZERO, and a
+> measured zero is a result — it is what says the member was bought by the half that pays for it,
+> rather than that nobody looked at the other half.
+
+### The shape question: a single `count`, and the CATALOG chose it
+
+Both shapes were already in the union one family over — `opponentPrizesRemaining { counts }` is
+**set membership** because the pool prints *"exactly 3 or 4 Prize cards"*; `opponentHandAtMost
+{ count }` is a **threshold**. Asked of the hand column at this head:
+
+* *"exactly 3"* is the **only** own-hand exact read in the whole legal attack column;
+* there is **no own-hand disjunction** — every `exactly N or M` in the column is the Prize one;
+* there is **no own-hand threshold** — every *"or fewer cards in …"* clause reads *their* hand.
+
+So a single `count` is what the pool warrants, and a `counts` list would be reachability nobody
+prints (D377's arithmetic). ⚠️ **WHAT WOULD FLIP IT IS A PRINTED OWN-HAND DISJUNCTION, NOT A
+SECOND VALUE** — a second printing at *"exactly 5"* flips nothing, because that is the axis
+`count` already varies on. That is D119's own reason for `opponentHandAtMost`'s parameter, and
+the catalog vindicated it when Mienshao printed a second threshold.
+
+### An ADDITION, not a widening, because the near miss is wrong TWICE
+
+D365 recorded that `opponentHandAtMost` is the wrong **SEAT** *and* the wrong **COMPARATOR**, and
+both halves are real: `players[otherSeat(seat)]` against `<=` where this needs `players[seat]`
+against `===`. **No parameterisation of a threshold yields an equality, and no seat argument
+makes one member answer both printed sentences** — so this is an addition and D366's open
+seat-parameter question is not even reachable from here.
+
+`exactHandSize.test.ts` §4 fields Trio-Cheehoo and Absol ex `sv03-135` "Cursed Slug" on **one
+state** — P1 holding four cards, P2 holding three. Trio-Cheehoo **cancels**; Cursed Slug pays its
+**+120** (100 → 220). Two printed sentences about a hand, two seats, two answers, one board.
+
+### Strict equality is not the usual polarity in this corner — the boundary is a CURVE
+
+The skeleton owns the printed *"don't"*, so the stored fact is *"you have exactly 3"*. `>=` is
+green on a 3-card hand and wrong on a 4-card one; `<=` is green on a 3-card hand and wrong on a
+2-card one. **Both are green on the only board a suite asked for "exactly 3" tends to build.**
+§4 attacks with 2, 3 and 4 in hand and lands 120 on exactly one; §3 sweeps 0…7 and requires the
+true set to be `[3]`.
+
+> **Reusable form:** when a member's comparator is an equality, assert the WHOLE curve, not the
+> true point. A suite that only drives the satisfying board cannot tell `===` from `>=` or `<=`.
+
+### 🛑 The guard expiry D378 wrote down arrived one slice later — four subjects became CONSTRUCTED
+
+D378 predicted that building this sentence would empty `splitOrder.test.ts` §4's `unmapped`
+array and cost `sawkRequirementSplit.test.ts`, `attackRequirement.test.ts`,
+`exOnlyActive.test.ts` and `fix-sawk`'s index-2 printed effect their real printed subject. It
+did, exactly. All four are re-aimed at the printed clause with its **parameter moved by one**
+(*"exactly 4"*), and each says so in its own block.
+
+**THE TRADE IS STATED RATHER THAN GLOSSED.** It costs the guards their catalog provenance — one
+assertion literally inverts from *"the corpus prints this"* to *"the corpus does not"* — and it
+buys a defect no printed sentence could express: `ATTACK_REQUIREMENT_CLAUSES` is keyed on a
+**literal**, so a table "simplified" into a `\d+` pattern would MAP the near-miss and strip a
+companion sentence nothing had answered. `attackRequirement.test.ts` has now been re-aimed **four
+times in four slices**, and this is the last one: **a constructed near-miss has no expiry date,
+which is the one thing a printed refusal can never offer.**
+
+Both `REFUSED` arrays (`requirementFloor.test.ts`, `benchCountRequirement.test.ts`) are now
+**empty**, their rows MOVED into `TAKEN_SINCE` with the member each resolves to (D178), and both
+partitions still sum to D365's **4 / 9** — which is the whole reason rows are moved rather than
+deleted.
+
+### 🛑 Saturation is the one state that looks exactly like vacuity
+
+With `unmapped` empty, a `deriveAttackRequirement` that answered **everything** would satisfy
+both halves of the partition and both rungs would stay green. So `splitOrder` §4 and
+`exactHandSize` §1 each drive a sentence OUTSIDE the opener population and require a refusal.
+
+> **Reusable form:** when a coverage rung reaches 100%, add the refusal in the same commit.
+> Otherwise the rung stops discriminating on the day it succeeds, and nothing announces it.
+
+### The printed cost is ZERO, and that is load-bearing
+
+"Trio-Cheehoo" takes no Energy at all — confirmed by id on tcgdex and on limitless's card page.
+The requirement is therefore the **only** thing between a fielded Alolan Dugtrio and 120 damage,
+so a dropped gate is a free 120 rather than a rounding error, and every board in the suite varies
+ONE quantity with nothing else that could explain the outcome.
+
+### The moving set was THIRTEEN files — and the bonus-residue nine did NOT all move
+
+Only three of them did (`benchNamedBonus`, `sameEnergyBonus`, `opponentResistanceBonus`), because
+this slice's step is entirely in the **cancel** column and the bonus residue **stands still at
+21 / 25**. D378 moved twenty files with a step in both columns.
+
+> **Reusable form:** the moving set is a property of **which COLUMN you move**, not only of which
+> tables you edit. A cancel-only slice leaves the whole bonus-residue chorus alone.
+
+Three vitest waves. Six rungs keyed on a DIFFERENCE or a bare literal OPERAND were found by
+running the suite, for the thirteenth slice running.
+
+### ✅ The next slice is priced, and it is a WHOLE OP rather than another clause row
+
+The bonus residue is **21 sentences / 25 printings** and it is now flat: one 5-printing band
+(D368's refused SHAPE — *"in addition to this attack's cost"*, a declaration fact), one
+2-printing band (the HEALED clause, which needs a per-turn state flag and therefore a
+`MATCH_RECORD_VERSION` bump on top of the engine one — deferred seven times), and **eighteen
+clauses at ONE printing each**. So the best clause-row slice left is worth **1 printing**.
+
+**`Discard a Stadium in play.` IS WORTH ELEVEN**, re-measured at this head:
+
+| printed sentence | printings |
+|---|---|
+| `Discard a Stadium in play.` | 4 |
+| `You may discard a Stadium in play.` | 2 |
+| `You may discard a Stadium in play. If you do, this attack does 140 more damage.` | 2 |
+| `Discard a Stadium in play. If you can't, this attack does nothing.` | 1 |
+| `If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.` | 1 |
+| `If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (…)` | 1 |
+
+✅ **AND THE OP IS CHEAPER THAN ITS PRICE SUGGESTS, BECAUSE THE ENGINE ALREADY WRITES THIS
+TRANSITION.** `cardplay.ts`'s Stadium-play site already discards the **replaced** Stadium to its
+**OWNER's** pile and already emits a `STADIUM_DISCARDED` event — the event type exists, the
+owner-routing rule exists, and the §8.1 mid-turn Knock-Out sweep that a vacated `hpDelta` Stadium
+owes is already called from that same site. A new `EffectOp` reusing all three is a much smaller
+diff than "a whole op" reads like. **PRICE THE OP AGAINST WHAT THE ZONE ALREADY DOES, NOT AGAINST
+ITS NAME.**
+
+### The IDs — a web measurement, the seventh slice running, and D378's instrument note paid off
+
+limitlesstcg's `text:` search with **`&display=list`** returned the two Alolan Dugtrio printings
+(SSP 123 / SSP 208 → `sv08-123` / `sv08-208`) plus three rotated-out members of the same family
+in ONE call — D378 spent two calls discovering that parameter and this slice spent none. Both ids
+were confirmed against `https://api.tcgdex.net/v2/en/cards/<id>`, which returns the printed effect
+byte for byte and is also where the ZERO printed cost came from (tcgdex omits `cost` entirely).
+⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is `legalAttackCorpus()`'s alone.
+
 ## D378 — STADIUM PRESENCE: the half of §7.3 that survives redaction, and the rename next door refused a second time (engine 0.282.0 → **0.283.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 D377 handed this over with the shape question already stated, and the answer held: **ONE new
