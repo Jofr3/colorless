@@ -22181,6 +22181,128 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D380 — THE STADIUM-DISCARD OP: the first slice in this run that buys an `EffectOp` rather than a `BoardCondition`, and it is smaller than its name (engine 0.284.0 → **0.285.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
+
+D379 saturated the *"…this attack does nothing."* skeleton and measured what was left. The
+arithmetic — not a mood — ended the clause-row era in this corner: the bonus residue is **21
+sentences / 25 printings** and FLAT, and it decomposes as **three non-singleton records carrying 7
+printings** (D368's standing SHAPE refusal, printed at 100 and at 80 — *two* rows, which the handoff
+prose did not say — plus the deferred HEALED flag) and **eighteen records carrying eighteen**. So
+the best clause row still available is worth **ONE** printing. The Stadium-DISCARD family is worth
+**ELEVEN**, and this slice takes **SIX** of them:
+
+| printed sentence | printings | card |
+|---|---|---|
+| `Discard a Stadium in play.` | **4** | Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing Destruction" (no cost, no damage), Skarmory `sv06-119` "Big Storm" ({C}{C}{C}, 90), Mow Rotom `sv10-009` "Trimming Mower" ({G}, 20) |
+| `You may discard a Stadium in play.` | **2** | Wooloo `sv07-124` / Dubwool `sv07-125` "Knock Over" ({C}{C}, 30 and 70) |
+
+### 🛑 An op priced against what the zone already does, not against its name
+
+`playStadium` (cardplay.ts, §7.3) has written this whole transition since M4: the replaced Stadium
+goes to its **OWNER's** discard pile, `STADIUM_DISCARDED` is emitted, and §8.1's mid-turn Knock-Out
+sweep runs from the same site. `discardStadium` is that same move reached from the other direction,
+so it adds **no event, no zone, no state key and no prompt** — `state.stadium` was already
+`{uid, owner} | null` and the op writes the `null`. **THE TRANSFERABLE HALF: "a whole OP" read like
+a milestone and cost less than D378's predicate. Read the zone's existing writer before you price
+the reader.**
+
+### The four SHAPE questions, answered from the catalog before anything was spelled
+
+1. **`You may discard…` is neither a second op nor a flag — it is D186's `optional`, which already
+   exists.** The printed sentence is the bare one with `You may ` in front and the verb lowercased.
+   A field on the new op would have been a second confirm mechanism beside one that already owns a
+   prompt kind, a choice kind and a dialog on both surfaces; and `optional`'s own doc names the test
+   it passes — the wrapper is for an inner op with **no empty answer**, which a nullary discard is.
+2. **An empty zone is THREE different things and the printed text says which.** Bare imperative → a
+   silent no-op (§8.6). *"You may"* → a question that must **not be asked**, because `optional`
+   parks unconditionally and a confirm whose two answers leave the identical board is a decision
+   with no stake — hence a `conditionGate` on D378's `stadiumInPlay`, which costs a `cond` and
+   nothing else. 🛑 *"…If you can't, this attack does nothing."* → a CANCEL, and **`stadiumInPlay`
+   answers it on the BOARD FACT while the SKELETON still refuses it**: §7.3's zone is a singleton
+   and nothing in this engine can make an occupied zone undiscardable, so *"you can't discard a
+   Stadium in play"* IS *"the zone is empty"* — but `ATTACK_DOES_NOTHING` is anchored `^If` and
+   Eternatus `sv08-141` "World Ender" prints its clause **TRAILING and ANAPHORIC**. **THE MEMBER WAS
+   RIGHT AND THE READER WAS MISSING, WHICH IS A DIFFERENT REFUSAL FROM "NO VOCABULARY".**
+3. **`discard that Stadium` needs no referent** — the singleton again: the antecedent tests the one
+   Stadium and the tail discards the one Stadium, so the two remaining tail sentences will REUSE
+   this op unchanged rather than widen it.
+4. **The pile is the Stadium's OWNER's, not the actor's** — the same PRESENCE/OWNERSHIP line D378
+   drew one union over, and the one that would have shipped green. An actor-routed op is correct on
+   every board where the attacker played the Stadium and silently wrong on the boards this family is
+   printed for. `stadiumDiscard.test.ts` §3 drives it with **P2** as owner and asserts P1's pile
+   UNCHANGED, then drives the same op on a P1-owned Stadium so no hard-coded seat is green on both.
+
+### ⚠️ The zone's departure is observed through a CONTINUOUS effect, not through a pile
+
+An op that appended the uid and left the zone occupied — or nulled the zone and forgot the pile —
+passes every uid assertion. Both halves are separate mutants (C2 and C3) because **neither claim
+implies the other**. §3 therefore reads Beach Court's printed *"Basic Pokémon retreat cost {C}
+less"* off a body that was already on the board: `effectiveRetreatCost` is 0 before the attack and
+1 after.
+
+### ⚠️ §8.1 is owed and is already paid by the caller — and it is NOT driven, which is said rather than skipped
+
+Vacating the zone can LOWER a maximum (Lively Stadium `sv08-180`, +30 to every Basic in play), and
+§8.1's Knock Out is a state check on `damage ≥ maximum` rather than an event of the thing that moved
+the number — exactly why `playStadium` ends in `resolveMidTurnKnockOuts`. This op needs no sweep of
+its own: an ATTACK is swept by `finishAttack`'s `collectKnockOuts` over BOTH seats, and every other
+program folds through `settleProgram` → `resolveMidTurnKnockOuts`. **THE SWEEP IS A PROPERTY OF
+PROGRAM COMPLETION, NOT OF AN OP** (D176's rule, one op over). ⚠️ **No board this pool can build
+makes a vacated zone lethal**: all three `hpDelta` Stadiums are `sv08`/`sv10` and outside the six
+sets `CATALOG_MANIFEST` covers, so `FIXTURE_POOL` cannot hold one and `hpAura.test.ts` reaches them
+only through a LOCAL `cardPool`. A mutant row for that claim would be unkillable, which is worse
+than no row (D205), so none was written.
+
+### The census step — +2 sentences / +6 printings, and TEN files moved
+
+raw 1,247 → **1,253**, `BUILT.attack` 1,276 → **1,282**, resolving sentences 360 → **362**, the
+unbuilt attack remainder 485 → **479**, the whole-census `built` 1,677 → **1,683** and its residue
+706 → **700**, the `FIXTURE_POOL` floor 466 → **468**. **Both residues stand still** — this slice
+prints neither consequent — which is a shape the moving-set rule had not seen: D379 recorded *"a
+bonus-column slice moves all nine, a cancel-column slice moves three"*, and an **OP-column** slice
+moves the four always-movers plus the two op-enumeration guards no clause slice ever touches:
+
+* `preventBlock.test.ts` — the CLASSIFIED/PROBES pair, which is TOTAL over every op an attack in the
+  pool can produce. `discardStadium` is its twenty-first op and the first whose subject is not in a
+  player's zone at all; the probe is a **surgery** on `state.stadium` (said so, `benchBlockedBoard`'s
+  rule) because the probe deck holds no Stadium and adding one would reshuffle every board in the file.
+* `programWalk.test.ts` — whose pin gains its **first `optional.then` miss**, nested two gates deep
+  (`conditionGate → optional → discardStadium`). Every earlier `optional` in the pool wrapped an op
+  the enumerated walk reached by another route.
+
+⚠️ **AND SIX DIFFERENCE-KEYED RUNGS WERE FOUND BY RUNNING THE SUITE FOR THE FOURTEENTH SLICE
+RUNNING** — `BUILT.attack - 922`, `BUILT.attack - 922 - 252`, `units - built`, `head - rawDelta -
+splitDelta`, `485 - REGISTRY_ATTACKS.length - …` and two subtraction chains. **THE FULL `check` IS
+STILL THE ONLY INSTRUMENT THAT FINDS A SUM OVER EVERYTHING.**
+
+### The IDs — a web measurement, the eighth slice running
+
+No D1 credentials, so `https://limitlesstcg.com/cards?q=text:"…"&display=list` named the candidates
+and `https://api.tcgdex.net/v2/en/cards/<id>` confirmed every printed sentence byte for byte —
+including that **tcgdex omits `cost` entirely** for Blazing Destruction, which is how its free cost
+was established (D379's instrument note, reused). ⚠️ Limitless's `text:` operator TOKENISES and
+`AND`s, so the query returned **183** cards for a six-printing family and every candidate had to be
+confirmed by id. **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is `legalAttackCorpus()`'s
+alone, and it is what says 4 + 2.
+
+### What is left, priced
+
+Five printings on four sentences, each waiting on a **reader** rather than on the op:
+
+* *"Discard a Stadium in play. If you can't, this attack does nothing."* (Eternatus `sv08-141`, **1**)
+  — a TRAILING ANAPHORIC requirement split. ⚠️ **It is a FAMILY of 2 in this population, not the 3
+  effects.ts prints beside `ATTACK_DOES_NOTHING`** — that older figure is not a `legal_standard = 1`
+  one, so it is a FLOOR against this one rather than wrong (D183/D187). The second member is a
+  Basic {G} hand cost whose *"can't"* points at a different mechanism entirely, which is exactly why
+  the split has to be general over its BODY.
+* *"You may discard a Stadium in play. If you do, this attack does 140 more damage."* (Cetitan ex
+  `sv10-065`/`sv10-210`, **2**) — `OPTIONAL_DAMAGE_BOOST` with its antecedent and consequent
+  SWAPPED, i.e. a tenth reader over `deriveAttackOptionalBoost`'s existing `AttackOptionalBoost`
+  shape. `boostedArms` already builds both arms; what is new is the parse and an empty-zone gate.
+* the two *"…discard that Stadium"* TAILS (Chi-Yu `sv06-039`, Ting-Lu `sv06-110`, **1** each) —
+  `AttackBonusConsequent` (D317) reads *"…more damage, and {consequent}"*; these print *". Then, "*
+  and *", and "*, and Ting-Lu's consequent is a Bench spread rather than a rider.
+
 ## D379 — THE EXACT HAND-SIZE READ: the last sentence behind the does-nothing skeleton, and the first member the bonus consequent did not pay for (engine 0.283.0 → **0.284.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 D378 handed this over as the ONE printed does-nothing opener no `ATTACK_REQUIREMENT_CLAUSES` row
