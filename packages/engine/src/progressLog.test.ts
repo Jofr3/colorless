@@ -374,9 +374,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // headings in order, D382's at the new boundary with its own opening line quoted back and
   // D381's still beneath it. **THE RAISE IS IN THE SAME COMMIT AS THE DEMOTION**, for the
   // EIGHTH slice running.
-  const ARCHIVES = 53;
+  // 🆕🆕 D384 — 53 -> 54, ARCHIVED DELIBERATELY AND SAID SO. D384 demoted D383's live
+  // resume point under `### Prior resume point (P3-M5 — D383, …)` and carried the demoted
+  // BODY across with it — the live body was captured FIRST, by index (the span from the
+  // `## NEXT (resume point)` heading to D382's archive heading, 201 lines), and re-emitted
+  // after the new section rather than overwritten — then re-read the seam and confirmed
+  // BOTH archive headings in order, D383's at the new boundary with its own opening line
+  // quoted back and D382's still beneath it. **THE RAISE IS IN THE SAME COMMIT AS THE
+  // DEMOTION**, for the NINTH slice running.
+  const ARCHIVES = 54;
 
-  it("the page still holds all 53 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 54 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

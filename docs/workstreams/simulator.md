@@ -22181,6 +22181,147 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D384 — THE STRICT-INEQUALITY TWIN: a price that survived twelve slices, a seat-asymmetric member, and the first mutant retired for a dead PREMISE
+
+D372 built *"this Pokémon and your opponent's Active Pokémon have the same amount of Energy
+attached"* and, in the same commit, wrote its own near miss into four files: the SAME two operands,
+the SAME field, the SAME `countAttachedEnergy` call, and `>` where that row spells `=`.
+
+> **Swalot** `sv07-092` "Devouring Mouth" ({D}, `10+`, index 0 of two — confirmed by id against
+> tcgdex, which returns "Venomous Hit" at index 1)
+> *"If this Pokémon has more Energy attached than your opponent's Active Pokémon, this attack does
+> 160 more damage."*
+> **1 legal printing**
+
+### The price the handoff quoted was right to the line, and that is the result
+
+D372 priced it at *"one nullary member, one literal row, two arms"*, **refused to build it** — the
+stated reason being that building it in the same slice *"would have made the `===` → `>` mutant
+green for the wrong reason"* — and pinned the refusal in `sameEnergyBonus.test.ts` §3 with a comment
+saying *"the day a reader claims that sentence, it reddens here naming the clause"*.
+
+Twelve slices later every term held: **ONE nullary `BoardCondition` member
+(`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO
+exhaustive-switch arms in `interpreter.ts`**, plus ONE fixture, ONE dedicated deck and ONE suite.
+ZERO new readers, ops, events, prompts, choice kinds, registry rows or `packages/schema` bytes. The
+mutant did not go green, because the two members are separate and the suite drives both boards.
+
+🛑 **D199's RULE IS NEARLY ALWAYS INVOKED WHEN A `needs` COLUMN WAS WRONG. THIS IS THE RARER HALF,
+AND IT IS WORTH RECORDING**: a price that survives twelve slices is evidence the pricing practice
+works, and the only way anyone finds that out is if somebody writes it down when it happens.
+
+### Two nullary members, not one parameterised member — the OPERATOR is the whole argument
+
+The pair shares its two operands, its ZONE (the BODY, not the SIDE) and its
+`countAttachedEnergy(state, active, null)` call — the unfiltered CARD count. So the
+cards-versus-units question D372 settled **cannot drift between them**: there is one call and two
+callers.
+
+What they do not share is the operator, and **an operator is not a parameter here**. Folding the
+pair needs a member carrying an operator UNION — a GENERALISATION that renames a shipped nullary
+member on the way. D362 priced the analogous rename at **31 sites across 7 files**, D365 and D366
+each refused it, and D383 refused it one member over. **A SECOND NULLARY MEMBER IS FREE; A RENAME IS
+NOT.**
+
+### The first cross-body member that is SEAT-ASYMMETRIC IN VALUE
+
+| member | commutes? | can a one-seat suite tell it from a seat-blind build? |
+|---|---|---|
+| `handSizesEqual` (D118) | yes | no |
+| `activeEnergyCountsEqual` (D372) | yes | no |
+| `inPlayTypesIntersect` (D375) | yes | no |
+| `moreActiveEnergyThanOpponent` (D384) | **NO** | **yes — one board, two DIFFERENT answers** |
+
+`>` does not commute, so on a board where the attacker leads the member is TRUE from that seat and
+FALSE from the other. Those are two DIFFERENT answers rather than one re-derived twice, and that
+rung — `moreEnergyBonus.test.ts` §4 — is **the only thing that separates the member from its own
+inverse**. D372's doc block had to split *"symmetric in value"* from *"symmetric in spelling"* to
+describe itself; this is the member the split was for.
+
+It also buys a mutant an equality member **cannot have**: swapping the operands of `===` is a no-op,
+so D372's arm was immune to that edit by construction. C2 swaps them here and inverts the answer on
+every unequal board while staying invisible on every equal one — `morePrizesThanOpponent`'s own
+polarity warning, reached through two BODIES instead of two SIDES.
+
+⚠️ **AND THE `?? 0` SLIP IS WORSE ON THIS OPERATOR THAN ON THE EQUALITY, WHICH CUTS BOTH WAYS.**
+Reading a missing DEFENDER as zero arms this clause for an attacker holding a single card (1 > 0);
+D372's member had to be fooled at exactly zero, which needed an unpaid board no legal action
+reaches. **A LARGER BLAST RADIUS AND AN ORDINARY PAYING BOARD TO FIND IT ON.**
+
+### 🛑 A MUTANT CAN ROT WITHOUT ITS `find` MOVING A CHARACTER
+
+D372's C5 read: *"a second `CONDITIONAL_DAMAGE_CLAUSES` row maps 'this Pokémon has more Energy
+attached than your opponent's Active Pokémon' onto `activeEnergyCountsEqual`"*. It was killed by
+`sameEnergyBonus.test.ts` §3, which pinned that sentence as REFUSED.
+
+D384 built the sentence. C5's `find` still matched **exactly once** and still applied cleanly — but:
+
+- `CONDITIONAL_DAMAGE_CLAUSES` is a `Map` built from an entry array, so the **LAST duplicate key
+  wins**;
+- D384's genuine row sits **AFTER** C5's insertion point.
+
+So the mutation would have changed **nothing**, and reported a **false SURVIVOR** — not an ERROR,
+not a `find` miss, just a green row asserting a guard that no longer exists.
+
+🛑 **THE EXACTLY-ONCE RULE IS AN EXPIRY DATE ON THE *CODE* A ROW IS ANCHORED TO. IT SAYS NOTHING
+ABOUT THE ROW'S *PREMISE*.** C5 is **RETIRED** — the corpus's first retirement for that reason — and
+D384's C6 carries the identical defect by mutating D384's OWN row instead of adding a second one.
+
+**THE STANDING RULE THIS ADDS: when your slice builds something an earlier slice deliberately left
+unbuilt, `grep scripts/mutation/mutants.ts` for the PRINTED SENTENCE — not for the file, and not for
+the line.** The adjacency rot is caught by the anchors; this one is not caught by anything
+mechanical at all.
+
+### The moving set was EIGHTEEN files, and it is structural
+
+D381 moved six, D382 eleven, D383 ten, D384 **eighteen**. The reason is not that this slice was
+bigger — it is the smallest reader-keyed step in the run (1 sentence / 1 printing, the family's
+first 1:1). It is that **a slice which takes a sentence out of the BONUS RESIDUE touches every file
+carrying the residue chain**, and thirteen do: `basicEnergyDiscard`, `benchAllDamagedBonus`,
+`benchNamedBonus`, `benchTypeBonus`, `crossBoardStatus`, `exactHandSize`, `opponentResistanceBonus`,
+`opponentToolBonus`, `sameEnergyBonus`, `stadiumDiscard`, `stadiumPresence`, `trEnergyBonus`,
+`typeShareBonus`. D383's sentence was an optional-cost sentence and never entered that residue.
+
+**BUDGET BY WHICH RESIDUE YOUR SENTENCE LEAVES, NOT BY THE LAST SLICE'S FILE COUNT.**
+
+⚠️ **AND TWO DIFFERENCE-KEYED RUNGS WERE *MASKED*.** `censusAtHead.test.ts`'s `BUILT.attack - 922`
+and `BUILT.attack - 922 - 252` sit in `it`s whose earlier assertions also moved, and vitest stops an
+`it` at its first failure — so they stayed invisible until two rounds of fixes later. **FOUR full
+suite runs to converge, and the last two each surfaced exactly one new rung. A CLEAN RUN AFTER A
+ROUND OF FIXES IS NOT EVIDENCE THAT THE ROUND WAS COMPLETE; ONLY A GREEN RUN IS.**
+
+### The two census instruments read different numbers, and neither is wrong
+
+`sameEnergyBonus`, `exOnlyActive`, `sawkRequirementSplit` and `benchNamedBonus` run a **NINE**-entry
+`READERS` array and read **364 / 1,255** resolving; `censusAtHead`, `torrentialPump` and
+`moreEnergyBonus` run **TEN** (with `deriveAttackOptionalCostBoost`) and read **366 / 1,262**. A
+slice that widens one of the nine moves both; a slice that widens only the tenth moves one. D384
+widened `deriveAttackDamageBonus`, which is in both.
+
+### Three stale claims corrected, and one was false the day it was written
+
+Two were D384's own doing — the *"still refused at this head"* paragraphs in `effects.ts`, which
+were predictions this slice turned into measurements. The third is D375's *"`handSizesEqual` and
+`activeEnergyCountsEqual` are the only other cross-board members"*, which forgot
+`morePrizesThanOpponent` — in the union since the D40 vocabulary. **A NEW MEMBER IS THE MOMENT
+SOMEBODY FINALLY RE-READS THE ENUMERATION**, and the enumeration is what rots, not the count.
+
+### The candidate that lost, re-priced for the successor
+
+The face-up Prize row (**2 printings**) is the last member of the `You may … If you do,` family and
+the only slice on the page that moves `MATCH_RECORD_VERSION`. It needs FOUR mechanisms: a persisted
+face-up notion on `PlayerState`, the 22 → 23 bump, a `RedactedBoard` member (`redact.ts` emits
+`prizesRemaining: side.prizes.length` and nothing else), and a UI surface. **And its gate would be
+VACUOUS** — *"you have a face-down Prize"* is true on essentially every board a player can attack
+from, and D383's unreachable-FALSE precedent does not transfer to a gate true on EVERY board.
+
+⚠️ **ONE TERM D382 NEVER MEASURED, ADDED HERE**: `prizes` is *named* in 113 files, but the files that
+would have to CHANGE are the ones that CONSTRUCT a side — `flow.ts`'s §14 speculation
+(`prizes: side.prizes.slice(stage.count)`), `testFixtures.ts`'s equivalent, `attack.ts`'s index
+guard. A PARALLEL field (`prizesFaceUp: number[]`) touches those three and is a **WIDENING** (a v22
+record with the key absent means "none face up", which is what it meant); a SHAPE change to `prizes`
+touches all of them and is a **RENAME** (D335's discriminator). **THAT CHOICE IS THE SLICE.**
+
 ## D383 — THE PAYOFF UNION: D381's reading widened at its CONSEQUENT, a price that was wrong in BOTH directions, and an adjacency rot that fired on a NARROWING (engine 0.287.0 → **0.288.0**, `MATCH_RECORD_VERSION` **unchanged at 22**)
 
 D381 read *"You may {cost}. If you do, {payoff}"* with the payoff fixed at *"this attack does {N}
