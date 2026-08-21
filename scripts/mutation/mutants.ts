@@ -15422,4 +15422,64 @@ export const MUTANTS: Mutant[] = [
     replace: '      return "your opponent\'s Active Pokémon is a Stage 2 Pokémon";',
     expectKilledBy: ["packages/engine/src/stage1Bonus.test.ts"],
   },
+  // ── 🆕🆕 D388 — THE RETREAT-COST THRESHOLD. Six rows, and the FIRST one is the whole
+  //    slice: this clause's shape question was "which of TWO LIVE READINGS does the
+  //    printed noun phrase name", and C1 is the answer the build rejected, spelled
+  //    exactly as a neighbouring arm spells its own. The other five are the mistakes
+  //    around it — the comparator (twice), the arity, the seat, and the key's word
+  //    order, which the SIBLING sentence prints the other way round.
+  {
+    id: "D388-condition-reads-the-printed-column",
+    decision: "D388",
+    what: "\u{1F6D1} **THIS MUTANT IS THE SHAPE QUESTION, AND IT IS THE WHOLE SLICE.** The arm reads `retreatCostOf(spot.card)` \u2014 the PRINTED {C} column \u2014 instead of `effectiveRetreatCost(state, active)`, the board fold. **IT IS NOT A STRAW MUTANT: IT IS THE OTHER LIVE READING**, it is what the arm ONE LINE UP (`opponentActiveHasResistance`) does with its own printed column, and it is what an author who did not stop to ask would write first. It compiles, it is green on every bare board, and the census cannot see it at all \u2014 the sentence still resolves, `BUILT.attack` still lands on 1,296 and every residue figure stands still, because a census asks whether a reader ANSWERED and never what it answered. Only a board where a Stadium or an aura moves the cost can tell, which is why \u00a73 and \u00a74 drive the disagreement in BOTH directions and assert the two readings differ BEFORE reading any damage. \u26a0\ufe0f **SPELLED INLINE AS `spot.card.retreat ?? 0` RATHER THAN AS `retreatCostOf(spot.card)`, ON PURPOSE**: that is `retreatCostOf`'s exact body (cards.ts), and interpreter.ts does not import it \u2014 so the call spelling would die on a ReferenceError before it ever reached a board, and a KILLED verdict reads the EXIT CODE and not the failure message. **A MUTANT THAT CANNOT RUN IS NOT A MUTANT THAT WAS CAUGHT**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && effectiveRetreatCost(state, active) >= cond.count;",
+    replace: "      const spot = activeTop(state, otherSeat(seat));\n      return spot !== null && (spot.card.retreat ?? 0) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
+  {
+    id: "D388-condition-uses-strict-inequality",
+    decision: "D388",
+    what: "\"or more\" read as strictly more: `>=` becomes `>`. The commonest off-by-one in this whole family and the one the printed word is easiest to skim past \u2014 it is invisible everywhere except AT the threshold, where the clause is supposed to HOLD. \u00a74's bare printed-{C}{C} defender and \u00a75's four-rung ladder both land on exactly 2, which is what makes the boundary a rung rather than a hope",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && effectiveRetreatCost(state, active) >= cond.count;",
+    replace: "      return active !== null && effectiveRetreatCost(state, active) > cond.count;",
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
+  {
+    id: "D388-condition-uses-equality",
+    decision: "D388",
+    what: "the FLOOR becomes an EXACT match: `>=` becomes `===`, which is `yourHandExactly`'s reading (D379) borrowed by a member whose printed word is \"or more\" \u2014 a real neighbour copy, and one that is green on every board where the fold happens to land on the threshold. It needs a folded cost of THREE to die, which no bare defender in this pool has: \u00a73's summed board (printed {C} + Stadium + aura) and \u00a75's top rung are the only two that reach it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return active !== null && effectiveRetreatCost(state, active) >= cond.count;",
+    replace: "      return active !== null && effectiveRetreatCost(state, active) === cond.count;",
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
+  {
+    id: "D388-clause-row-counts-one-brace-token",
+    decision: "D388",
+    what: "the printed `{C}{C}` is transcribed as ONE Colorless rather than two \u2014 `count: 1` \u2014 which is the cheapest possible mis-reading of a doubled brace glyph and the exact class of defect the sibling readers escape by capturing a DIGIT instead. The sentence still resolves, so no census rung, no residue figure and no readership assertion moves; only a board with a folded cost of exactly 1 can tell, and \u00a73's bare printed-{C} defender is it",
+    file: "packages/engine/src/effects.ts",
+    find: '    { kind: "opponentActiveRetreatCostAtLeast", count: 2 },',
+    replace: '    { kind: "opponentActiveRetreatCostAtLeast", count: 1 },',
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
+  {
+    id: "D388-condition-reads-the-asker-seat",
+    decision: "D388",
+    what: "the arm reads the ASKER's own Active rather than the opponent's \u2014 the seat defect every member in this family owes a board for, and the one D365/D366 left open as a standing question. It is invisible on any board whose two Actives happen to share a retreat cost (D380's symmetric-board defect), so \u00a75 asks the SAME board from BOTH seats and requires them to disagree, then benches a Spidops ex to make the two seats' folds disagree for a SECOND reason",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && effectiveRetreatCost(state, active) >= cond.count;",
+    replace: "      const active = state.players[seat].active;\n      return active !== null && effectiveRetreatCost(state, active) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
+  {
+    id: "D388-clause-key-takes-the-sibling-word-order",
+    decision: "D388",
+    what: "\u{1F6D1} the literal key is re-spelled in the SIBLING sentence's word order \u2014 \"your opponent's Active Pok\u00e9mon's Retreat Cost\" instead of the printed \"the Retreat Cost of your opponent's Active Pok\u00e9mon\". **THE SAME NOUN PHRASE IS PRINTED BOTH WAYS ROUND IN THIS CATALOG**, on five other legal printings under the \"for each {C}\" skeleton, which is exactly what makes this the paraphrase an author would reach for (D183's defect: an arm written from a remembered sentence rather than from the printed bytes). Keys are whole printed clauses and never substrings, so the mutant does not merely mis-file the row \u2014 the printed sentence stops resolving entirely, which the residue, the band, both reader instruments, `BUILT.attack` and the apostrophe census all see at once",
+    file: "packages/engine/src/effects.ts",
+    find: '    "the Retreat Cost of your opponent\'s Active Pokémon is {C}{C} or more",',
+    replace: '    "your opponent\'s Active Pokémon\'s Retreat Cost is {C}{C} or more",',
+    expectKilledBy: ["packages/engine/src/retreatCostBonus.test.ts"],
+  },
 ];
