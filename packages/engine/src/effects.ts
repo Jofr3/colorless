@@ -782,6 +782,38 @@ export type BoardCondition =
       Same predicate, opposite resolution site, and the thing that decides it is
       WHICH BODY the sentence asks about. False with no Active. */
   | { kind: "opponentActiveIsBasic" }
+  /** 🆕 **D387 — your opponent's Active Pokémon is a **STAGE 1** Pokémon.** Paldean
+      Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**, index 1 of
+      two), the ONE legal printing: *"If your opponent's Active Pokémon is a
+      **Stage 1** Pokémon, this attack does 90 more damage."*
+
+      🛑 **THE FOURTH SIBLING OF A SHAPE THIS UNION HAS BUILT THREE TIMES, AND — THE
+      QUESTION THE HANDOFF ORDERED ASKED FIRST — IT IS *NOT* A NARROWING OF
+      `opponentActiveIsEvolution`.** The set relation runs that way (every Stage 1
+      IS an Evolution), and that is exactly why the BUILD does not: a member is
+      narrowed by changing what its own arms read, and D362 prices that against
+      every existing consumer. Nothing here changes. `opponentActiveIsEvolution`
+      keeps `evolveFromOf(...) !== null` and keeps all THREE of its consumers — its
+      clause row (Seviper `sv02-137`, Houndoom `sv03-133`, Toxicroak `sv06.5-024`,
+      each of which prints the word *"Evolution"* and wants the wide reading) plus
+      the two exhaustive-switch arms. **A SUBSET IS NOT A NARROWING; A SUBSET IS A
+      SECOND MEMBER.** D296 wrote the same paragraph one stage up and D367 quoted it
+      forward; this is its third outing and its first as an answer rather than a
+      warning.
+
+      ⚠️ **`isStage1Pokemon` (cards.ts, D387) IS NEW AND IS NOT A REUSE**, checked
+      before it was written for D262's reason: the only live predicate that could
+      have served is `evolveFromOf(...) !== null`, which a Stage 2, a VSTAR and a
+      VMAX satisfy too, so a build that reached for it would score +90 against every
+      evolved defender the card does not print for. Driven both ways — a Stage 2
+      defender and a VSTAR defender are each an Evolution and each FALSE here — in
+      `stage1Bonus.test.ts` §3.
+
+      Read off the TOP card (§1.2, its current identity) and FALSE with an empty
+      Active Spot, exactly as the three members around it: the attack gate
+      guarantees a Defending Pokémon at the live read site, so the null arm covers a
+      directly-invoked edge only. */
+  | { kind: "opponentActiveIsStage1" }
   /** 🆕 **D296 — your opponent's Active Pokémon is a **STAGE 2** Pokémon.** The
       restricting adjective in Paldean Tauros `sv08-039` "Upthrusting Horns":
       *"You may put 2 Energy attached to your opponent's Active **Stage 2**
@@ -9535,6 +9567,35 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // substrings, and a lookup that reached this row from that sentence would boost
   // against a Pokémon V nothing prints. Driven both ways in `exOnlyActive.test.ts`.
   ["your opponent's Active Pokémon is a Pokémon ex", { kind: "opponentActiveIsEx" }],
+  // 🆕🆕 D387 — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`,
+  // **+90**, index 1 of two — "Rear Kick" ({R}, 30, no effect text) is index 0),
+  // ONE legal printing, and the FOURTH sibling of the shape the three rows above
+  // and below it share.
+  //
+  // 🛑 **IT IS NOT `opponentActiveIsEvolution` NARROWED EITHER, AND THAT IS THE
+  // QUESTION THE SLICE WAS ORDERED TO SETTLE FIRST.** Every Stage 1 IS an Evolution,
+  // so the SET relation is a subset — but the member is not narrowed by that, because
+  // nothing about `opponentActiveIsEvolution` changes: it keeps `evolveFromOf(...)
+  // !== null`, it keeps its own clause row three above (whose three printings all
+  // print the word *"Evolution"* and all want the wide reading), and it keeps both
+  // exhaustive-switch arms. **A SUBSET IS A SECOND MEMBER, NOT A NARROWING** — so
+  // D362's 31-sites-across-7-files price for a narrowing is not owed here.
+  //
+  // ⚠️ AND THE ROW BELOW IS THIS ROW WITH ONE PRINTED DIGIT CHANGED, which makes it
+  // the sharpest near-miss in this table after the two damage-counter rows: keys are
+  // whole printed clauses and never substrings, so neither can reach the other, and
+  // the ONE board that separates the two readings is an evolved defender of the other
+  // stage. Driven both ways in `stage1Bonus.test.ts` §3.
+  //
+  // ⚠️ AND THE LOOSE TYPE TEMPLATE BELOW MATCHES THIS CLAUSE AND MUST NOT WIN IT.
+  // `OPPONENT_ACTIVE_TYPE_CLAUSE` is `^your opponent's Active Pokémon is a (.+)
+  // Pokémon$`, so "Stage 1" reaches `CLAUSE_POKEMON_TYPES` and MISSES it — which is
+  // why the pattern is still loud about it. `boardConditionForClause` consults THIS
+  // table first, so the literal row wins outright and the token map learns nothing:
+  // the same token handed to the BENCH template (`you have any Stage 1 Pokémon on
+  // your Bench`) still returns null, which is the control `stage1Bonus.test.ts` §4
+  // drives.
+  ["your opponent's Active Pokémon is a Stage 1 Pokémon", { kind: "opponentActiveIsStage1" }],
   // 🆕🆕 D367 — Regirock ex `sv10-101`/`-214` "Giant Rock" ({F}{C}{C}{C}, 140+,
   // **+140**), TWO legal printings byte-identical in rules text. ZERO NEW
   // VOCABULARY: `opponentActiveIsStage2` is D296's member, bought for a
@@ -9550,11 +9611,11 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // D262) reads the printed `stage` string — so a VSTAR, which sits two evolutions
   // deep, is NOT a Stage 2. Driven both ways in `benchNamedBonus.test.ts` §4.
   //
-  // ⚠️ AND THE SIBLING THE POOL PRINTS ONE ROW SHORT OF THIS ONE IS **UNBUILT**:
-  // *"your opponent's Active Pokémon is a Stage 1 Pokémon"* (`1` legal printing) has
-  // no member and this slice does not buy one — `opponentActiveIsBasic` is the
-  // complement of Evolution and neither it nor Stage 2 can be narrowed into it.
-  // Asserted refused, by sentence, in `benchNamedBonus.test.ts` §6.
+  // ⚠️ AND THE SIBLING THE POOL PRINTS ONE ROW SHORT OF THIS ONE IS THE ROW
+  // DIRECTLY ABOVE, AS OF D387. This paragraph used to record it as UNBUILT and to
+  // say why it could not be reached by narrowing anything; D387 bought it as a
+  // FOURTH member on that same reasoning, and the two rows now sit adjacent so the
+  // ladder is readable in one screen. Driven apart in `stage1Bonus.test.ts` §3.
   ["your opponent's Active Pokémon is a Stage 2 Pokémon", { kind: "opponentActiveIsStage2" }],
   // Krokorok sv01-116 "Payback" (+90) and Houndstone sv03-101 "Two Four-ocious"
   // (+120) — ONE member at two values, and still two LITERAL rows rather than a

@@ -25,6 +25,32 @@ export function isBasicPokemon(card: Card): boolean {
   return card.category === "Pokemon" && card.stage === "Basic";
 }
 
+/** 🆕 D387 — is `card` a **Stage 1** Pokémon (§10)? The predicate behind Paldean
+    Tauros `sv08-018` "Spirited Tackle"'s antecedent: *"If your opponent's Active
+    Pokémon is a **Stage 1** Pokémon, this attack does 90 more damage."*
+
+    🛑 IT IS THE ROW BELOW WITH ONE PRINTED WORD CHANGED, AND THE ARGUMENT FOR
+    WRITING IT AT ALL IS D262's OWN, ONE STAGE DOWN. `isEvolutionPokemon` two rows
+    below is `evolveFromOf(card) !== null` — "any Evolution" — which a Stage 2, a
+    VSTAR and a VMAX satisfy exactly as a Stage 1 does, so it cannot be NARROWED
+    into this by a rider and reaching for it would score Paldean Tauros's +90
+    against every evolved defender in the game. The printed adjective names ONE
+    word, and one word is what this reads.
+
+    ⚠️ IT READS THE PRINTED `stage` STRING FOR `isStage2Pokemon`'s REASON, and the
+    same VSTAR case decides it: the catalog's `stage` vocabulary is
+    `Basic | Stage1 | Stage2 | VSTAR | VMAX`, so a body that a CHAIN COUNT would
+    call "one evolution deep" is not necessarily a Stage 1 and the printed word is
+    the only datum that answers the sentence.
+
+    ⚠️ AND IT IS A **CARD** READ, WHICH IS WHY IT LIVES HERE beside its sibling.
+    The board read (whose Active, which seat) stays in `interpreter.ts`, which
+    resolves the TOP card (§1.2 — a Basic that has evolved IS a Stage 1 now) and
+    hands it here. */
+export function isStage1Pokemon(card: Card): boolean {
+  return card.category === "Pokemon" && card.stage === "Stage1";
+}
+
 /** D262 — is `card` a **Stage 2** Pokémon (§10)? The predicate behind Neo Upper
     Energy `sv05-162`'s antecedent: *"If this card is attached to a Stage 2
     Pokémon, this card provides every type of Energy but provides only 2 Energy at

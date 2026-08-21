@@ -14,6 +14,7 @@ import {
   isBasicPokemon,
   isEnergyCard,
   isExOrV,
+  isStage1Pokemon,
   isStage2Pokemon,
   matchesFilter,
   pokemonSuffixOf,
@@ -2982,6 +2983,26 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && isBasicPokemon(spot.card);
     }
+    case "opponentActiveIsStage1": {
+      // 🆕 D387 — Paldean Tauros sv08-018 "Spirited Tackle"'s restricting adjective
+      // ("your opponent's Active Pokémon is a Stage 1 Pokémon"). `isStage1Pokemon`
+      // (cards.ts, D387) is reused rather than re-spelled as `card.stage ===
+      // "Stage1"`, which is the arm below's rule applied to a third printed word:
+      // one reading of "Stage 1", one implementation.
+      //
+      // 🛑 IT IS **NOT** `evolveFromOf(...) !== null` NARROWED BY A RIDER, and the
+      // arm three above is the one it must not be confused with: that reading is
+      // satisfied by a Stage 2, a VSTAR and a VMAX as well, so writing it here
+      // would score Paldean Tauros's +90 against every evolved defender in the
+      // game. The printed word is the datum.
+      //
+      // Read off the TOP card (§1.2) — a Basic that has EVOLVED is a Stage 1 now,
+      // which is what makes the §10 evolve a real line of play here rather than a
+      // rule written for symmetry — and FALSE with an empty Active Spot, exactly as
+      // the three arms around it.
+      const spot = activeTop(state, otherSeat(seat));
+      return spot !== null && isStage1Pokemon(spot.card);
+    }
     case "opponentActiveIsStage2": {
       // 🆕 D296 — Paldean Tauros sv08-039's restricting adjective ("your
       // opponent's Active Stage 2 Pokémon"). `isStage2Pokemon` (cards.ts, D262)
@@ -3878,6 +3899,11 @@ export function conditionNote(cond: BoardCondition): string {
       // `yourActiveDamaged`'s reason (D116): a reject/tooltip fragment is read off
       // the BOARD, where no attack is resolving and nothing is "Defending".
       return "your opponent's Active Pokémon is a Basic Pokémon";
+    case "opponentActiveIsStage1":
+      // D387 — the printed clause verbatim; unlike its Stage 2 sibling one line
+      // down, this card prints the adjective as a WHOLE CLAUSE already, so there is
+      // no noun phrase to re-voice and the fragment is the sentence's own words.
+      return "your opponent's Active Pokémon is a Stage 1 Pokémon";
     case "opponentActiveIsStage2":
       // D296 — the printed adjective as a standalone clause. The card prints it
       // INSIDE a noun phrase ("your opponent's Active Stage 2 Pokémon"), which a

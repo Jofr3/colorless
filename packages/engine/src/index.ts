@@ -12108,6 +12108,62 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.292.0 → **THE STAGE 1 CLAUSE — THE FOURTH SIBLING OF A SHAPE THIS UNION
+    HAS BUILT THREE TIMES, AND A SUBSET THAT IS NOT A NARROWING.**
+
+      Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, **90+**, index 1 of
+      two — confirmed by id against tcgdex, which returns "Rear Kick" ({R}, 30, no
+      effect text) at index 0)
+        *"If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does
+         90 more damage."*
+        **1 legal printing**
+
+    🛑 **THE SHAPE QUESTION WAS ORDERED FIRST AND IT IS THE WHOLE SLICE.** D362 prices
+    a NARROWING at 31 sites across 7 files, and the handoff flagged this candidate as
+    one: *"`opponentActiveIsEvolution` is `evolveFromOf(top) !== null`, which a Stage 1
+    ALSO satisfies."* **THE SET RELATION IS A SUBSET AND THE BUILD IS NOT A NARROWING,
+    AND THOSE ARE DIFFERENT CLAIMS.** A member is narrowed by changing what its own
+    arms read; nothing here changes. `opponentActiveIsEvolution` keeps its predicate
+    and keeps all THREE of its consumers — its clause row (Seviper `sv02-137`,
+    Houndoom `sv03-133`, Toxicroak `sv06.5-024`, every one of which prints the word
+    *"Evolution"* and wants the wide reading) and the two exhaustive-switch arms. **SO
+    THE THIRD MECHANISM IS FREE, AND THE PRICE THE HANDOFF QUOTED STANDS.** D296 wrote
+    this paragraph one stage up as a warning; this is the first slice to need it as an
+    answer.
+
+    🛑 **AND THE HEAD-TO-HEAD, IN D382's UNITS.** The face-up PRIZE row is **2
+    printings / 9 mechanisms = 0.22**; this row is **1 / 3 = 0.33** — ONE `cards.ts`
+    predicate (`isStage1Pokemon`), ONE union member plus its two arms, ONE
+    `CONDITIONAL_DAMAGE_CLAUSES` row. **1.5×, the narrowest margin this chain has
+    recorded, and the FIRST time the winner is worth a single printing.** ⚠️ The Prize
+    row lost for the third consecutive slice and on the SAME four mechanisms it needs
+    and its rival does not — a player CHOICE of Prize index (park, prompt, choice kind,
+    `preventBlock` pair, `programWalk` rows), an INDEX REMAP when a Prize is taken, a
+    THIRD payoff anchor for the trailing reminder parenthetical, and a WIRE shape plus
+    a UI — plus `MATCH_RECORD_VERSION` 23 → 24, which this row does NOT owe at all.
+    ⚠️ **AND ON REACHABILITY, WHICH THE ARITHMETIC DOES NOT SHOW**: the Prize gate's
+    false arm needs the attack used six times (D385's measurement, D383's
+    `unreachable-population` shape), while both arms of this one are the ordinary
+    board — a Basic defender and an evolved one.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape D382 and D384
+    took. raw 1,265 → **1,266**, `BUILT.attack` 1,294 → **1,295**, resolving sentences
+    368 → **369**, and the BONUS RESIDUE **19 / 22 → 18 / 21**. 🛑 **THE 2-PRINTING
+    BAND STAYS EMPTY AND EVERY BAND RUNG IS STILL DRIVEN FROM OUTSIDE IT** — the
+    distribution moves `{1: 17, 5: 1}` → `{1: 16, 5: 1}`, and the refusal each rung
+    drives still comes from the 5-printing declaration clause D368 disqualified on
+    SHAPE, which is outside the band by construction.
+
+    engineVersion 0.291.0 → **0.292.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed. The one new member is NULLARY, so there is nothing to store;
+    a `conditionGate` resolves inline and never parks; `isStage1Pokemon` is a pure
+    CARD read and writes nothing; and NO field is added to `InPlayPokemon`,
+    `PlayerSide` or `GameState`. No v23 byte string can contain a member that did not
+    exist, and none means anything different under this head (D335's discriminator).
+    **THE VERSION MOVES BECAUSE A READER ANSWERS ONE PRINTED SENTENCE IT USED TO
+    REFUSE.**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.291.0 → **THE HEALED-THIS-TURN CLAUSE — THE LAST 2-PRINTING ROW IN THE
     BONUS RESIDUE, DEFERRED SEVEN TIMES ON A PRICE THAT HAD STOPPED BEING A
     DIFFERENTIATOR; AND THE FIRST PERSISTED-SHAPE MOVE IN EIGHTEEN SLICES.**
@@ -15335,7 +15391,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.291.0";
+export const engineVersion = "0.292.0";
 
 export type {
   ApplyResult,

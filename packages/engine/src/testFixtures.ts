@@ -11349,6 +11349,73 @@ export const FIXTURE_POOL: Record<string, Card> = {
       bonus arm re-homes the printed base inside a `conditionGate`, so an unhealed
       hit must still deal exactly 20 and a flat `20` would exercise the wrong half of
       the assembler. */
+  /** 🆕🆕 D387 — THE STAGE 1 DEMONSTRATOR. Paldean Tauros `sv08-018` "Spirited
+      Tackle" ({R}{C}{C}, `90+`, **+90**), transcribed and not interpolated (D306):
+      BOTH printed attacks at their PRINTED indices, so index 1 is the one under
+      test and index 0 is a real attack rather than a hole.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest and
+      `sv08` is in none of the six. The NAME spells no possessive, so the three
+      `/^[A-Z][A-Za-z' ]*'s /` sweeps stand still (D386's toll, unpaid again).
+
+      130 HP is the real card's, and nothing on any board in `stage1Bonus.test.ts`
+      attacks back — the defenders are chosen to survive instead. */
+  "fix-spirited": battler("fix-spirited", {
+    name: "Fixaldean Tauros",
+    hp: 130,
+    types: ["Fire"],
+    attacks: [
+      { cost: ["Fire"], name: "Rear Kick", damage: 30 },
+      {
+        cost: ["Fire", "Colorless", "Colorless"],
+        name: "Spirited Tackle",
+        damage: "90+",
+        effect:
+          "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.",
+      },
+    ],
+  }),
+  /** 🆕🆕 D387 — a **STAGE 1** defender big enough to survive `90 + 90`, which the
+      pool's `fix-stage1` (90 HP) is not: the whole point of the board is to read the
+      damage the bonus produced, and a KO would put a prize tail across it.
+
+      🛑 **IT EVOLVES FROM `fix-bigbody`, AND THAT IS THE ONE THING ABOUT IT THAT IS
+      NOT ARBITRARY.** `fix-bigbody` is the FALSE arm of this clause (a 200 HP
+      BASIC), so a single legal §10 evolve turns the very same body from FALSE to
+      TRUE — which is how `stage1Bonus.test.ts` §5 drives "the top card is the
+      CURRENT identity" as a line of play instead of as surgery. */
+  "fix-stage1-big": {
+    ...blank,
+    id: "fix-stage1-big",
+    name: "fix-stage1-big",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 220,
+    types: ["Colorless"],
+    retreat: 2,
+    evolveFrom: "fix-bigbody",
+  },
+  /** 🆕🆕 D387 — a **VSTAR** defender, and the sharpest board this clause has: its
+      `evolveFrom` is NON-NULL, so `evolveFromOf(...) !== null` calls it an
+      Evolution, while its printed `stage` word is neither `Stage1` nor `Stage2` nor
+      `Basic`. It therefore separates the printed-word reading from BOTH wrong
+      spellings at once — "any Evolution" and "not Basic and not Stage 2" — on ONE
+      body. D262's VSTAR clause, one stage down and pointed the other way.
+
+      260 HP for `fix-stage1-big`'s reason: the FALSE arm still deals 90 and must
+      not KO. */
+  "fix-vstar-big": {
+    ...blank,
+    id: "fix-vstar-big",
+    name: "fix-vstar-big",
+    category: "Pokemon",
+    stage: "VSTAR",
+    hp: 260,
+    types: ["Colorless"],
+    retreat: 2,
+    evolveFrom: "fix-bigbody",
+  },
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -12061,6 +12128,39 @@ export const HEALED_THIS_TURN_DECK = deckOf({
   "sv01-184": 4, // Picnic Basket — heal 30 from EVERY Pokémon, both boards (`healEachAll`)
   "fix-grass-energy": 6, // the one {G} of Lively Needles
   "fix-bigbody": 40, // 200 HP neutral Basic — starter, bench filler, and the defender
+});
+
+/** 🆕🆕 D387 — the STAGE 1 bonus (`stage1Bonus.test.ts`). Its own 60 on D270's
+    rule, and with a reason of its own: this is the first clause deck whose whole
+    cast is a STAGE LADDER, because the clause reads one printed word off the
+    defender and every wrong reading of that word is a different rung.
+
+    THE CAST IS THE TRUTH TABLE OF ONE PRINTED WORD:
+      • `fix-spirited` — Paldean Tauros's printed "Spirited Tackle" ({R}{C}{C},
+        `90+`) at its printed index 1;
+      • `fix-bigbody` (200 HP **Basic**) — the mulligan-free starter, the bench
+        filler, AND the FALSE arm: it takes the unboosted 90 with room to spare;
+      • `fix-stage1-big` (220 HP **Stage 1**) — the TRUE arm, and it evolves FROM
+        `fix-bigbody`, so one legal §10 play turns the same body from FALSE to TRUE;
+      • `fix-stage2` (140 HP **Stage 2**) — an Evolution that is NOT a Stage 1, the
+        board that refuses `evolveFromOf(...) !== null`;
+      • `fix-vstar-big` (260 HP **VSTAR**, `evolveFrom` non-null) — an Evolution that
+        is neither Basic, Stage 1 nor Stage 2, the board that ALSO refuses
+        "not Basic and not Stage 2".
+
+    🛑 **NO SECOND ATTACKER AND NO STADIUM.** Every board here is about which stage
+    word the defender carries, so a card that could add or remove damage is a card
+    every assertion would have to account for.
+
+    4 + 8 + 4 + 4 + 4 + 12 + 24 = **60**. */
+export const STAGE1_BONUS_DECK = deckOf({
+  "fix-spirited": 4, // Paldean Tauros — "Spirited Tackle" ({R}{C}{C}, 90+): the +90
+  "fix-bigbody": 8, // 200 HP neutral BASIC — starter, bench filler, the FALSE arm, the evolve base
+  "fix-stage1-big": 4, // 220 HP STAGE 1 — the TRUE arm, and it evolves from fix-bigbody
+  "fix-stage2": 4, // 140 HP STAGE 2 — an Evolution that is not a Stage 1
+  "fix-vstar-big": 4, // 260 HP VSTAR — an Evolution that is neither Basic, Stage 1 nor Stage 2
+  "fix-fire-energy": 12, // Basic {R} — the one typed symbol of Spirited Tackle
+  "fix-energy": 24, // Basic {C} — the two Colorless symbols
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({
