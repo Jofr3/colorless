@@ -22181,6 +22181,190 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D385 — THE SECOND CONNECTIVE: a price wrong in both directions, a proof obligation on `cond`, and a guard whose premise died while it stayed green
+
+`optionalCostBoost.test.ts` §1 has carried a rung since D381 saying **the family is EIGHT when the
+connective is shortened, not seven** — `/^You may .*\. If /` finds a record `/^You may .*If you do,/`
+cannot see — and D381 named that record, refused it, and said what for.
+
+> **Veluza ex** `sv09-043` "Purging Strike" ({W}{W}{C}, `120+`, index 1 of two — confirmed by id
+> against tcgdex, which returns "Razor Fin" ({W}, 30, no effect text) at index 0)
+> *"You may discard your hand. If you discarded any cards in this way, this attack does 120 more
+> damage."*
+> **1 legal printing**
+
+### The slice was a pricing question, and the face-up Prize row lost
+
+| candidate | printings | mechanisms | ratio |
+|---|---|---|---|
+| the FACE-UP PRIZE row | 2 | **9** | 0.22 |
+| the HAND-DISCARD row | 1 | **3** | **0.33** |
+
+The Prize row's `needs` column **GREW** on contact rather than shrinking, which is the direction D199
+warns is harder to see. Beyond the field, the record bump and the redaction the handoff named, it
+also needs:
+
+1. **A THIRD payoff anchor row.** The printed consequent is `this attack does 80 more damage. (That
+   Prize card remains face up for the rest of the game.)`, and
+   `OPTIONAL_COST_PAYOFF_MORE_DAMAGE` is `/^this attack does (\d+) more damage\.$/` — `$`-terminated.
+   **The reader refuses that card at the PAYOFF as well as at the cost**, and nobody had said so.
+   D381's C5 mutant is the standing proof: dropping that `$` is exactly what would silently claim
+   this card at +80 with the Prize never turned over.
+2. **A player CHOICE of which Prize.** *"turn **1 of** your face-down Prize cards face up"* is a
+   pick over INDICES of cards the player cannot see — a park, a prompt and a choice kind, not a
+   field-free op like `discardStadium`.
+3. **An index REMAP when a Prize is taken.** `flow.ts` filters the prize array **by index**
+   (`side.prizes.filter((_, index) => !picked.has(index))`), so every face-up index above a taken
+   one shifts. Nothing else in this engine carries an index set beside an array it filters.
+
+### The shape question, settled by MEASUREMENT — recorded so nobody re-derives it
+
+D384 ordered *"price `prizesFaceUp: number[]` as a WIDENING against a shape change to `prizes` as a
+RENAME **first**"*. Both spellings were applied to `packages/engine/src/types.ts` in turn and
+`bunx tsc -b --force` was READ:
+
+| spelling | files with errors | error sites | non-test files |
+|---|---|---|---|
+| `prizesFaceUp: number[]` beside `prizes`, **REQUIRED** | **1** | **1** | `setup.ts` |
+| `prizes: { uid: string; faceUp: boolean }[]` | **17** | **22** | `flow.ts`, `setup.ts` |
+
+**THE WIDENING WINS BY SEVENTEEN FILES TO ONE.** ⚠️ **And the handoff's own figure was a red herring
+in BOTH directions.** `prizes` is *named* in 113 files, but only **six** sites anywhere read an
+ELEMENT of the array and only **two** of those are element-TYPED (`flow.ts`'s
+`const uid = side.prizes[index]` and `testFixtures.ts`'s spread of the tail into the deck) —
+everything else is `.length`, `.slice` or a bare index. So the shape change is far cheaper than
+*"113 files"* suggests **and** still seventeen times the widening. **A NAME COUNT IS NOT A COST;
+RUN THE COMPILER.** The whole measurement took four minutes and closed a question four slices old.
+
+### The price D381 quoted was wrong in BOTH directions
+
+D381 wrote: *"a HAND discard as an attack step **and** a consequent conditioned on the COST's own
+effect (*if you discarded any*), which is a RECORD of what the cost did rather than a board fact read
+before it… the price is whether `discardHand` can RECORD"*.
+
+* **The discard was already built.** `discardHand` has been an `EffectOp` since Professor's Research
+  — automatic, park-free, no fields. What was missing was only an ATTACK program that reaches it.
+* **The record is not needed at all.** The handoff's question was answered both ways: **yes**, a
+  `recordAs` on `discardHand` is a widening and costs ONE line (the op already builds
+  `[...side.hand]` for `HAND_DISCARDED`, and every recording op's arm is one `recordMoved(record,
+  op.recordAs, uids)` call) — **and no, it must not be built**, because the `recordGate` it would
+  feed **could not fail**. `AttackOptionalCostBoost.cond` is not optional, and the cost's payability
+  is the SAME predicate the printed *"if you discarded any cards in this way"* states one clause
+  later. **A FIELD WHOSE ONLY CONSUMER IS A BRANCH NO BOARD CAN TAKE IS A FIELD WITH NO OBSERVABLE
+  MEANING** (D205; `switchActive`'s own note, one op over).
+
+### The two connectives are synonyms HERE and not in English — which is a proof obligation
+
+*"If you do"* asks whether the offer was **ACCEPTED**. *"If you discarded any cards in this way"*
+asks whether the accepted cost **MOVED** anything. They come apart exactly when a player can say yes
+to a cost that whiffs — and this reading makes that unreachable, because every row of
+`optionalCostOps` supplies its cost's **EXACT** payability:
+
+| cost row | `cond` | exact? |
+|---|---|---|
+| `discard a Stadium in play` (D381) | `stadiumInPlay` | a Stadium in play is always discarded |
+| `shuffle N Energy attached to this Pokémon into your deck` (D383) | `yourActiveEnergyAtLeast {count}` | N on the body are always shuffled |
+| `discard your hand` (D385) | `yourHandNotEmpty` | a non-empty hand is always discarded |
+
+**SO EVERY FUTURE COST ROW INHERITS THE OBLIGATION THAT ITS `cond` BE NECESSARY *AND* SUFFICIENT.**
+A merely NECESSARY gate would pay the bonus out on a whiff. `purgingStrike.test.ts` §3 drives that
+over all three rows rather than asserting it here, and D385's C5 mutant (the row keeping its ops and
+taking the neighbour's `stadiumInPlay` gate) is the defect stated as data.
+
+⚠️ **AN ALTERNATION, NOT A FOURTH DISPATCH TABLE**, and this is the one place D385 does not follow
+D383's symmetry. The cost half and the payoff half are tables because each row carries **DATA** (ops
+and a gate; a payoff shape). A connective carries none — both spellings produce the identical
+reading — so a table over it would be a dispatch whose every arm returns the same thing. The claim
+the widening makes lives on `cond`, and that is where it is stated and driven.
+
+### The member is NULLARY, and the absent digit is the argument
+
+`yourHandExactly` and `opponentHandAtMost` carry a `count` because the catalog prints one
+(*"exactly 3"*, *"3 or fewer"*, *"5 or fewer"*). This cost names the **whole hand** and prints no
+number, so a `count: 1` would be **INVENTED** where `yourActiveEnergyAtLeast`'s arity is **CAPTURED**
+— D383's own guard read from the other side. Measured off `legalAttackCorpus()`: **no own-hand
+THRESHOLD is printed anywhere in the legal attack column, at any value.** What would flip it is a
+printed own-hand floor, not a second sentence discarding a hand.
+
+⚠️ **AND IT IS NOT `yourHandExactly` NEGATED.** *"Not exactly 0"* is the truth condition, but this
+union has no `not` combinator and `ATTACK_REQUIREMENT_CLAUSES`' polarity trick belongs to the
+SKELETON, not the member — a `cond` on `conditionGate` is read positively and nothing inverts it.
+
+### The first gate in this family whose FALSE arm the real printing can reach
+
+| slice | gate | how its FALSE arm is reached |
+|---|---|---|
+| D381 | `stadiumInPlay` | an empty Stadium zone |
+| D383 | `yourActiveEnergyAtLeast {3}` | **not reachable from its own printing at all** — the suite drives a SYNTHETIC 4-Energy cost |
+| D385 | `yourHandNotEmpty` | **a player who has played their hand out and then attacks** |
+
+That is ordinary play, not a corner case, so §6 drives the refusal from the **REAL** card. It is
+also exactly the property the face-up Prize row's gate does **not** have: *"you have a face-down
+Prize"* is true on every board a player can legally attack from unless all remaining Prizes are
+already face up, which needs the attack used six times.
+
+### 🛑 A GUARD CAN ROT THE WAY A MUTANT CAN — AND THE SUITE HAS NO `ERROR` VERDICT FOR IT
+
+D384 found a **mutant** whose premise had died. D385 found a **guard** whose premise had died, and it
+stayed **GREEN WHILE BEING FALSE**.
+
+`exactHandSize.test.ts` (D379) kept a `SIZE_CEILING` list — *"every legal attack sentence that reads
+a hand's SIZE and is still refused"* — with this sentence in it, and its §1 loop asserted
+`resolvedByAnyReader(sentence) === false` for every entry. That file's hand-kept `READERS` array is
+the **NINE**-reader instrument. It does not contain `deriveAttackOptionalCostBoost`. So when D385
+built the sentence through the tenth reader, the rung went on claiming a refusal that had stopped
+existing, and **nothing reddened**.
+
+**THE MUTANT CORPUS HAS AN `ERROR` VERDICT FOR A DEAD ANCHOR. THE SUITE HAS NOTHING.** The rule is
+therefore now two greps rather than one: when your slice builds something an earlier slice
+deliberately left unbuilt, grep **`scripts/mutation/mutants.ts` AND `packages/engine/src/*.test.ts`
+for the printed SENTENCE**, not for the key and not for the file.
+
+⚠️ **THE FIX IS NOT TO WIDEN THE NINE-READER ARRAY.** Four suites share it and its figures
+(**364 / 1,255**) correctly did **not** move for this slice, because this sentence resolves through
+the tenth reader alone. What was wrong is that a **REFUSAL** claim was drawn from a **CENSUS**
+instrument. **A CENSUS INSTRUMENT AND A REFUSAL ORACLE ARE NOT THE SAME OBJECT**: the sentence left
+the list, and the rung now reads BOTH oracles side by side and asserts that they disagree, which is
+what stops the next slice repeating it.
+
+### `programWalk` moved though the assembler arm did not
+
+D318's rule says to add a fixture to `FIXTURE_POOL` the moment you export an assembler or reach a
+new branch of one. `fix-purging` reaches the **same** `moreDamage` branch of
+`optionalCostBoostProgram` that `fix-crushpress` has reached since D381 — no new arm, no new export.
+`programWalk.test.ts` gained **three rows anyway**, and the reason is the **OP**: `discardHand` had
+only ever appeared in a FLAT `trainer` list, which the enumerated walk that file measures against
+can see, and this is the first time it sits inside an `optional.then` NESTED IN a
+`conditionGate.then`. **AN EXISTING OP AT A NEW *DEPTH* MOVES THAT FILE TOO.**
+
+### 🛑 A `find` rots as easily by being WRITTEN A SECOND TIME as by being deleted
+
+Found while writing D385's own resume point. That page names the eight mutant anchors it carries
+(the corpus's only non-source rows, D318's), and the first draft **quoted four of them verbatim**
+so a successor could see them. The post-docs `find` pass came back **`4 bad, distribution
+{1: 1280, 2: 4}`**: each quoted anchor matched **TWICE**, which the harness reports as **`ERROR`**
+— and the sweep would have come back with four errored rows for a page that says exactly the right
+thing.
+
+**THE EXACTLY-ONCE RULE HAS TWO FAILURE DIRECTIONS AND ONLY ONE OF THEM IS EVER DISCUSSED.** Zero
+matches means the code moved; **two matches means somebody wrote the line again**, and the page most
+likely to do that is the one that documents the anchors. D318 hit the same shape inside `effects.ts`
+(a doc block that reproduced two de-duplicated lines at their own indentation took a row from `1×`
+to `1×`-in-a-comment); this is that finding one file set over. **DESCRIBE AN ANCHOR, NEVER QUOTE
+IT** — and if you need to enumerate them, read them out of `mutants.ts` with a script rather than
+pasting them into prose.
+
+### The moving set was fifteen, and the bonus-residue predictor held
+
+D384 moved eighteen because its sentence left the `^If …, this attack does N more damage\.$` residue
+and thirteen files carry that chain. D385's sentence is an optional-cost compound — the residue held
+at **20 / 24** and not one of the thirteen moved. What did move: `censusAtHead` (**eight** rungs),
+`precociousEvolution` (**three**), `legacyEnergy`, `opponentResistanceBonus` (the `FIXTURE_POOL`
+floor **and** the front-edited `ids.length - 1 - …` chain), `moreEnergyBonus`, `optionalCostBoost`,
+`exactHandSize`, `programWalk`. **FIVE of the eleven moved rungs were MASKED by an earlier failure
+in the same `it`** and it took **five** full suite runs to converge — one more than D384.
+`clauseApostrophe` stood still, because the fixture's sentence spells no `'`.
+
 ## D384 — THE STRICT-INEQUALITY TWIN: a price that survived twelve slices, a seat-asymmetric member, and the first mutant retired for a dead PREMISE
 
 D372 built *"this Pokémon and your opponent's Active Pokémon have the same amount of Energy
