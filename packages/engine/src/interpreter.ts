@@ -3522,6 +3522,22 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.promotedTurn === state.turn;
     }
+    case "yourActiveHealedThisTurn": {
+      // 🆕🆕 D386 — the arm one line up, at a second stamp on the same body, and
+      // it takes NO seat guard for the identical reason: `healedTurn` is written on
+      // the Pokémon, `state.turn` is a global counter, so the comparison is total
+      // over seats, consumers and phases.
+      //
+      // The cross-board case is the one worth naming, because this stamp has a
+      // writer the promotion stamp does not: Picnic Basket heals EVERY in-play body
+      // on BOTH boards, so the opponent's Active can be stamped with the
+      // controller's turn number. It reads TRUE only while that turn is still in
+      // progress — and the opponent cannot attack inside it — so by the time they
+      // could ask, `state.turn` has advanced and the answer is FALSE. "During this
+      // turn" means the turn now in progress, for whoever is asking.
+      const active = state.players[seat].active;
+      return active !== null && active.healedTurn === state.turn;
+    }
     case "yourBenchAtLeast":
       // 🆕🆕 D366 — Victini "V-Force": the printed *"4 or fewer Benched Pokémon"*
       // under a cancel, so what is stored is the POSITIVE floor 5 and the test is
@@ -4108,6 +4124,12 @@ export function conditionNote(cond: BoardCondition): string {
       // "your Active Pokémon". Everything after it is the printed sentence, the
       // possessive on "your Bench" included.
       return "your Active Pokémon moved from your Bench to the Active Spot this turn";
+    case "yourActiveHealedThisTurn":
+      // The same resolved pronoun as the arm above (D116): the printed subject is
+      // "this Pokémon", which a note read off the board by a person has to spell as
+      // "your Active Pokémon". Everything after it is the printed clause verbatim,
+      // the "during" included — the family's timing word is dropped by nobody here.
+      return "your Active Pokémon was healed during this turn";
     case "yourBenchAtLeast":
       // The POSITIVE fact, in the printed noun — a note is read off the board by a
       // person, so it says what the player must HAVE and never repeats the
@@ -6626,6 +6648,27 @@ function healUpToNote(amount: number | "all", max: number, zoneWord: string): st
   return `Choose up to ${max} of your ${zoneWord}Pokémon and heal ${what} from each of them.`;
 }
 
+/** 🆕🆕 **D386 — the one place a healed body is written, and therefore the one
+    place `InPlayPokemon.healedTurn` is stamped.** Every caller below files a
+    `HEALED` event on the line above its call, so the event and the stamp are
+    written together and cannot drift apart — D222's rule (two readers of one fact
+    become one helper) applied to a WRITER pair.
+
+    `healed` is always the amount already clamped to `pokemon.damage` by the
+    caller, so the subtraction here cannot go negative and the caller keeps its own
+    zero-guard: a whiff never reaches this function, which is exactly why a stamp
+    written here means *"damage was actually removed"* rather than *"a heal was
+    attempted"*. That distinction is the printed one — Maractus asks whether this
+    Pokémon **was healed**, not whether somebody aimed a Potion at it.
+
+    ⚠️ **`turn` IS PASSED RATHER THAN READ OFF A `GameState`**, because two of the
+    seven callers are inner `healOne` closures over a body and have no state in
+    scope at the point of the write. Passing the number also keeps the helper
+    total: there is no board it can be wrong about. */
+function healedBody(pokemon: InPlayPokemon, healed: number, turn: number): InPlayPokemon {
+  return { ...pokemon, damage: pokemon.damage - healed, healedTurn: turn };
+}
+
 /** Heal `amount` HP from EACH of the controller's own in-play Pokémon
     (Garganacl "Blessed Salt", between turns). Each heal is clamped to the
     Pokémon's damage and emits its own HEALED (an undamaged Pokémon heals 0 and
@@ -6662,7 +6705,7 @@ function healEach(
     const healed = Math.min(amount, pokemon.damage);
     if (uid === undefined || healed <= 0) return pokemon;
     events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
-    return { ...pokemon, damage: pokemon.damage - healed };
+    return healedBody(pokemon, healed, state.turn);
   };
   const active = side.active === null ? null : healOne(side.active);
   const bench = side.bench.map(healOne);
@@ -6683,7 +6726,7 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
       const healed = Math.min(amount, pokemon.damage);
       if (uid === undefined || healed <= 0) return pokemon;
       events.push({ type: "HEALED", seat, uid, amount: healed });
-      return { ...pokemon, damage: pokemon.damage - healed };
+      return healedBody(pokemon, healed, state.turn);
     };
     const active = side.active === null ? null : healOne(side.active);
     const bench = side.bench.map(healOne);
@@ -6885,7 +6928,7 @@ function healSubject(
     const healed = Math.min(amount, active.damage);
     if (healed <= 0) return state;
     events.push({ type: "HEALED", seat, uid, amount: healed });
-    return withActive(state, seat, { ...active, damage: active.damage - healed });
+    return withActive(state, seat, healedBody(active, healed, state.turn));
   }
   const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
   const benched = side.bench[index];
@@ -6896,7 +6939,7 @@ function healSubject(
   return withSide(state, seat, {
     ...side,
     bench: side.bench.map((pokemon, i) =>
-      i === index ? { ...pokemon, damage: pokemon.damage - healed } : pokemon,
+      i === index ? healedBody(pokemon, healed, state.turn) : pokemon,
     ),
   });
 }
@@ -7001,7 +7044,12 @@ function moveCountersFromBench(
     return state;
   }
   events.push({ type: "HEALED", seat: ctx.seat, uid: sourceUid, amount: moved });
-  const bench = side.bench.map((pokemon, i) => (i === index ? { ...pokemon, damage: 0 } : pokemon));
+  // `moved` IS `source.damage`, so `healedBody` writes the same 0 this line has
+  // always written — and writes the D386 stamp with it, which is the whole point
+  // of routing every HEALED-filing write through one helper rather than seven.
+  const bench = side.bench.map((pokemon, i) =>
+    i === index ? healedBody(pokemon, moved, state.turn) : pokemon,
+  );
   const cleared = withSide(state, ctx.seat, { ...side, bench });
   events.push({
     type: "COUNTERS_PLACED",
@@ -7067,7 +7115,7 @@ function healSelf(
   const healed = Math.min(amount, active.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
-  return withActive(state, ctx.seat, { ...active, damage: active.damage - healed });
+  return withActive(state, ctx.seat, healedBody(active, healed, state.turn));
 }
 
 function discardHand(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
@@ -8700,7 +8748,7 @@ function healChosen(
   const healed = amount === "all" ? pokemon.damage : Math.min(amount, pokemon.damage);
   if (healed <= 0) return state;
   events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
-  const updated = { ...pokemon, damage: pokemon.damage - healed };
+  const updated = healedBody(pokemon, healed, state.turn);
   if (ref.spot.spot === "active") return withActive(state, ctx.seat, updated);
   const bench = side.bench.map((p, i) =>
     i === (ref.spot as { index: number }).index ? updated : p,

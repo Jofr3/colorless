@@ -863,8 +863,27 @@ export interface MatchRecord {
     and no key meant mandatory both before and after. One slice later the same
     field is renamed and the constant MUST move, because now the old key's
     ABSENCE-after-parsing means something the writer never said. A WIDENING is
-    free and a RENAME is not, and the two are one edit apart on one field. */
-export const MATCH_RECORD_VERSION = 22;
+    free and a RENAME is not, and the two are one edit apart on one field.
+
+    🆕🆕 **22 → 23 AT D386, AND IT IS THE *FIRST* CASE AGAIN — A MISSING REQUIRED
+    FIELD, WHICH IS THE ONE SHAPE THIS BLOCK HAS NOT SEEN SINCE D326.** D386 gave
+    `InPlayPokemon` a second per-turn stamp, `healedTurn: number | null`, so the
+    printed *"If this Pokémon was healed during this turn"* has somewhere to read.
+    It is **REQUIRED**, not optional, for `promotedTurn`'s reason: a nullable-but-
+    present field is a fact the model always knows, while an absent one is a fact
+    it merely has not been told, and `conditionHolds` must never confuse the two.
+    Every in-play Pokémon in a v22 record therefore lacks a key this deploy's type
+    says is always there — the record is refused rather than resumed with
+    `undefined === state.turn` quietly reading false on a board where the player
+    had in fact healed. **D124's bump (1 → 2) was this exact case at this exact
+    address**, which is why no argument is offered here beyond the precedent.
+
+    ⚠️ **AND THE DISCRIMINATOR ABOVE IS WHY THE THREE SLICES BEFORE THIS ONE DID
+    NOT MOVE IT.** D383 widened a persisted op field's union, D384 added a nullary
+    `BoardCondition` member and D385 added another: a v22 byte string means exactly
+    what it meant under all three. Adding a FIELD to a persisted structure is the
+    case none of that covers. */
+export const MATCH_RECORD_VERSION = 23;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

@@ -944,6 +944,44 @@ export interface InPlayPokemon {
       `placeEvolution` spreads it through, because evolving does not un-move a
       Pokémon (§10 sheds the effects of ATTACKS, and this is neither). */
   promotedTurn: number | null;
+  /** 🆕🆕 **D386 — the turn this Pokémon was last HEALED, or `null` if it never
+      has been.** Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`):
+      *"If this Pokémon was healed during this turn, this attack does 100 more
+      damage."* — the last 2-printing clause in the bonus residue, deferred seven
+      times on exactly the cost this field is.
+
+      🛑 **A TURN STAMP AT `promotedTurn`'s ADDRESS, AND FOR D124's THREE REASONS
+      UNCHANGED.** (1) NO TURN-BOUNDARY CLEAR: *"during this turn"* is
+      `healedTurn === state.turn`, so the fact expires by arithmetic and no
+      `startTurn` walk can forget it. (2) NO SEAT GUARD: the stamp is on the
+      Pokémon, which already knows whose it is, and `state.turn` is global — so a
+      heal made during the OPPONENT's turn (Picnic Basket heals both boards) reads
+      FALSE once the controller's own turn begins, which is what the printed
+      sentence means. (3) It SURVIVES EVOLUTION and every zone move for the same
+      reason `promotedTurn` does: `placeEvolution`, `retreat` and `switchInto` all
+      spread the whole body, and §10 sheds the effects of ATTACKS — having been
+      healed is a fact about the turn, not an effect on the card.
+
+      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A
+      PER-SEAT FLAG.** A `PlayerSide.healedThisTurn` boolean answers *"did this
+      SEAT heal anything this turn"*, and the two come apart on an ordinary board:
+      heal a BENCHED body with a Potion, then attack with an untouched Active. It
+      is also not a `GameState` uid SET — that spelling is correct about the
+      subject and wrong about the clock, because a set carries no turn number and
+      so needs the very boundary clear this shape does without. ⚠️ **AND THE
+      COMPILER DID NOT SEPARATE THE THREE**: all three cost exactly 1 file / 1 site
+      under `tsc -b --force` (measured, D386) — D385's `prizes` measurement
+      separates a WIDENING from a SHAPE CHANGE, not three widenings from each
+      other, so this one is settled by the printed subject and by the clock.
+
+      🛑 **WRITTEN AT EVERY SITE THAT FILES A `HEALED` EVENT, THROUGH THE ONE
+      HELPER `healedBody` (interpreter.ts), SO THE EVENT AND THE STAMP CANNOT
+      DISAGREE** (D222's rule: two readers of one fact become one helper). That
+      includes `moveCountersFromBench`, whose source body the engine has filed as
+      HEALED since D138 — the alternative reading (a counter MOVE is not a heal)
+      would have to move the EVENT too, and changing one without the other is what
+      this helper exists to prevent. */
+  healedTurn: number | null;
 }
 
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
@@ -986,6 +1024,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // Never moved: a card entering play arrives from the HAND (or a deck
     // search), never from the Bench. The three bench→Active routes stamp it.
     promotedTurn: null,
+    // …and nothing has healed it either: a card entering play carries no damage,
+    // so there is nothing to remove. The seven `HEALED` sites stamp it (D386).
+    healedTurn: null,
   };
 }
 

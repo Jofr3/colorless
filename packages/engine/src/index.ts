@@ -12108,6 +12108,83 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.291.0 → **THE HEALED-THIS-TURN CLAUSE — THE LAST 2-PRINTING ROW IN THE
+    BONUS RESIDUE, DEFERRED SEVEN TIMES ON A PRICE THAT HAD STOPPED BEING A
+    DIFFERENTIATOR; AND THE FIRST PERSISTED-SHAPE MOVE IN EIGHTEEN SLICES.**
+
+      Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, **20+**, index 0 of two —
+      confirmed by id against tcgdex, which returns "Pierce" ({G}{C}, 50, no effect
+      text) at index 1, and both printings byte-identical in rules text)
+        *"If this Pokémon was healed during this turn, this attack does 100 more
+         damage."*
+        **2 legal printings**
+
+    🛑 **THE SLICE WAS A PRICING DECISION AND THE FACE-UP PRIZE ROW LOST AGAIN, ON A
+    DIFFERENT ARGUMENT THAN LAST TIME.** D385 refused it at 0.22 printings-per-mechanism
+    against a 0.33 rival. Both survivors owe a `MATCH_RECORD_VERSION` bump, so the
+    record bump — the exact ground seven slices deferred THIS row on — separates
+    nothing. Re-priced in D382's units: the Prize row is **2 printings / 9 mechanisms
+    = 0.22**; this row is **2 / 5 = 0.40**, and it is 5 rather than 9 because of the
+    FOUR mechanisms it does not buy at all — no player CHOICE (so no park, no prompt,
+    no choice kind, no `preventBlock` pair, no `programWalk` rows), no INDEX REMAP when
+    a Prize is taken, no THIRD payoff anchor for a trailing reminder parenthetical, and
+    no WIRE shape plus UI. **1.8×, and the loser lost on mechanisms it needs and this
+    one does not — not on the bump they share.** ⚠️ And on reachability, which the
+    arithmetic does not show: D385 measured the Prize gate's false arm as needing the
+    attack used six times, while both arms of this one are ordinary play.
+
+    🛑 **THE SHAPE QUESTION WAS ORDERED FIRST AND THE COMPILER REFUSED TO ANSWER IT.**
+    All THREE spellings were applied to `types.ts` and `bunx tsc -b --force` was read:
+
+      | spelling                                         | files | sites |
+      |--------------------------------------------------|-------|-------|
+      | per-BODY turn stamp — `InPlayPokemon.healedTurn`  |   1   |   1   |
+      | per-SEAT boolean — `PlayerSide.healedThisTurn`    |   1   |   1   |
+      | per-BODY uid set — `GameState.healedThisTurn`     |   1   |   1   |
+
+    **A DEAD HEAT.** D385's `prizes` measurement separated 1 file from 17 and settled a
+    four-slice argument in four minutes; run here it separates nothing, because it
+    tells a WIDENING from a SHAPE CHANGE and all three of these are widenings. **SO THE
+    METHOD HAS A DOMAIN, AND THIS IS ITS EDGE.** The question was settled instead by the
+    two things the compiler cannot see: the printed SUBJECT is *"this Pokémon"*, which
+    the per-seat boolean gets wrong on a board reached by playing a Potion on the Bench;
+    and the CLOCK, because a boolean and a uid set both need a turn-boundary clear that
+    a turn STAMP expires without. D124's three payoffs, at D124's address, on D124's
+    argument — `InPlayPokemon` gains `healedTurn: number | null` beside `promotedTurn`.
+
+    🛑 **WHAT "HEALED" MEANS IS THE `HEALED` EVENT, AND ONE HELPER MAKES THAT TRUE
+    RATHER THAN CLAIMED.** Seven sites in interpreter.ts file that event; all seven now
+    write their body through `healedBody`, called on the line after the push, so the
+    log and the clause cannot drift apart (D222 — two readers of one fact become one
+    helper, pointed at a WRITER pair). Six are unambiguous heals; the seventh is
+    `moveCountersFromBench`, whose SOURCE body the engine has filed as HEALED since
+    D138. A reading on which moving counters is not healing is defensible — and it
+    would have to move the event too, which is exactly what the helper forces.
+
+    ⚠️ **A WHIFF IS NOT A HEAL, AND THE BOARD IS ORDINARY.** Every caller clamps to the
+    body's own damage and returns early at zero, so a Potion played on an undamaged
+    Active files no event and writes no stamp. `healedThisTurn.test.ts` §4 drives that
+    from the real card rather than asserting it.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 2 PRINTINGS**, the 1:2 shape seven earlier
+    slices in this family took. raw 1,263 → **1,265**, `BUILT.attack` 1,292 → **1,294**,
+    resolving sentences 367 → **368**, and the BONUS RESIDUE **20 / 24 → 19 / 22**.
+    🛑 **AND THE 2-PRINTING BAND IS NOW EMPTY** — D379's saturation shape, so every
+    residue file's band rung is re-aimed at the WHOLE distribution ({1: 17, 5: 1}) and
+    the refusal it drives comes from OUTSIDE the emptied band: the 5-printing
+    declaration clause D368 disqualified on shape is still there and still refused.
+
+    engineVersion 0.290.0 → **0.291.0**; **`MATCH_RECORD_VERSION` 22 → 23**, and this
+    one is OWED rather than argued. `InPlayPokemon` is persisted inside
+    `MatchRecord.state`, and `healedTurn` is a **REQUIRED** field: a record written by
+    the previous deploy has in-play Pokémon with no `healedTurn` at all, which is a
+    MISSING REQUIRED FIELD and not a widening — D124's own bump (1 → 2) was this exact
+    case at this exact address. *"Widening an enum is not a bump"* does not cover
+    adding a field. ZERO `packages/schema` bytes and ZERO wire shape: `redact.ts`
+    allow-lists what crosses to a client, so the field is invisible there by
+    construction, exactly as `promotedTurn` is.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.290.0 → **THE SECOND CONNECTIVE — THE SENTENCE D381 NAMED, REFUSED AND
     PRICED, TAKEN FOUR SLICES LATER AT LESS THAN HALF THE QUOTED PRICE.**
 
@@ -15258,7 +15335,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.290.0";
+export const engineVersion = "0.291.0";
 
 export type {
   ApplyResult,

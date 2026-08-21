@@ -1963,6 +1963,42 @@ export type BoardCondition =
       (RETREATED / POKEMON_SWITCHED / POKEMON_PROMOTED) and happens face-up on the
       table — so the union's public-state invariant holds. */
   | { kind: "yourActivePromotedThisTurn" }
+  /** 🆕🆕 **D386 — §8/§11, YOUR Active Pokémon was HEALED during the current
+      turn.** Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, index 0
+      of two): *"If this Pokémon was healed during this turn, this attack does 100
+      more damage."* — **1 sentence / 2 legal printings**, the LAST 2-printing
+      clause in the bonus residue and the clause seven slices deferred on the price
+      of the state it needs.
+
+      🛑 **THE THIRD MEMBER TO READ A TURN EVENT AND THE SECOND TO BUY NEW STATE,
+      AT THE SAME ADDRESS AND ON THE SAME ARGUMENT AS THE MEMBER ONE LINE UP.**
+      `InPlayPokemon` gained `healedTurn: number | null` (types.ts), a turn STAMP
+      rather than a flag, so the fact expires by arithmetic, needs no seat guard
+      and survives evolution — D124's three payoffs, verbatim, because it is
+      D124's shape. The printed subject is *"this Pokémon"*, which D116's pronoun
+      rule resolves to the reader's Active for a damage bonus, so the member is
+      named for the board fact and not for the pronoun.
+
+      ⚠️ **WHAT "HEALED" MEANS HERE IS THE `HEALED` EVENT, AND THAT IS A CHOICE
+      WITH A NAMED ALTERNATIVE.** The stamp is written by `healedBody`
+      (interpreter.ts), called on the line after every one of the SEVEN
+      `events.push({ type: "HEALED" … })` sites, so the log and the clause can
+      never disagree about what happened. Six of the seven are unambiguous heals;
+      the seventh is `moveCountersFromBench`, which the engine has filed as HEALED
+      for its SOURCE body since D138. A reading on which moving counters is not
+      healing is defensible — but it would have to move the EVENT as well, and the
+      helper is what forces those two to move together (D222).
+
+      ⚠️ **A WHIFF IS NOT A HEAL.** Every caller clamps to the body's own damage
+      and returns early at zero, so an undamaged Pokémon aimed at by a Potion files
+      no event and takes no stamp. The printed sentence asks whether this Pokémon
+      **was healed**, not whether one was attempted — and the two come apart on a
+      board a player reaches by playing a Potion on a full-HP Active.
+
+      Whether a Pokémon was healed is PUBLIC — damage counters come off face-up on
+      the table and the engine announces it — so the union's public-state invariant
+      holds. */
+  | { kind: "yourActiveHealedThisTurn" }
   /** D242 — "you have **4 or more Team Rocket's Pokémon** in play" (Team Rocket's
       Mewtwo ex `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver",
       six legal printings, the biggest reprint group in the ABILITY column that
@@ -9885,6 +9921,22 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "this Pokémon moved from your Bench to the Active Spot this turn",
     { kind: "yourActivePromotedThisTurn" },
   ],
+  // 🆕🆕 D386 — the HEALED-THIS-TURN clause, and the per-turn cluster's third
+  // entry: Maractus `sv10.5b-008`/`-093` "Lively Needles" (20+, +100) — ONE
+  // sentence, TWO printings, and the last item in the bonus residue's 2-printing
+  // band. D116's pronoun rule again: "this Pokémon" is the attacker, which for a
+  // damage bonus is the reader's Active.
+  //
+  // ONE ROW AND NOT A TEMPLATE, for the reason the row above it carries: the
+  // amount lives in the OUTER skeleton ("this attack does (\d+) more damage"), so
+  // the clause is byte-identical across both printings and there is nothing inside
+  // it to parameterise (D118).
+  //
+  // ⚠️ AND NOTHING IN THE LEGAL COLUMN PRINTS ITS NEGATIVE. `promotedTurn`'s row
+  // has Palafin's "didn't move …" twin one table over (ATTACK_REQUIREMENT_CLAUSES);
+  // a swept "was healed"/"wasn't healed" pair does not exist, so this row has no
+  // polarity partner to keep apart from — measured, not assumed.
+  ["this Pokémon was healed during this turn", { kind: "yourActiveHealedThisTurn" }],
   // 🆕 D326 — the "revenge" clause, and the family's first that reads a window
   // which has CLOSED rather than the board in front of the attacker: Iron Leaves
   // sv06-019 "Avenging Edge" (100+, +60), Revavroom sv06-125 "Rally Back"

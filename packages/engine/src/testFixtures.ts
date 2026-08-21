@@ -11326,6 +11326,42 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D386 — THE HEALED-THIS-TURN BONUS, and the last 2-printing clause in the
+      bonus residue. Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`,
+      index 0 of two — confirmed by id against tcgdex, both printings byte-identical
+      in rules text), transcribed and not interpolated (D306).
+
+      **A `fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the 978-row / 6-set manifest, and
+      `sv10.5b` is not among the six.
+
+      ONE attack rather than the printed two, and the index moves to 0 with it —
+      which is where the printed one already sits. "Pierce" ({G}{C}, a bare 50 with
+      no effect text) is dropped for `fix-purging`'s reason: an UNREAD attack beside
+      a read one is a control `fix-bonusconsequent` already owns.
+
+      `hp: 100` and `types: ["Grass"]` as printed. 🛑 **THE PRINTED 100 IS
+      LOAD-BEARING AND IS THE OPPOSITE OF THE USUAL WORRY**: this suite has to DAMAGE
+      its own attacker before anything can heal it, so the attacker's HP is the
+      ceiling on the damage a case may set — 100 HP means 50 is a comfortable
+      non-lethal wound and 100 is a Knock Out, which is a distinction the file states
+      rather than discovers. 🛑 **AND THE `20+` MARKER IS LOAD-BEARING TOO**: the
+      bonus arm re-homes the printed base inside a `conditionGate`, so an unhealed
+      hit must still deal exactly 20 and a flat `20` would exercise the wrong half of
+      the assembler. */
+  "fix-lively": battler("fix-lively", {
+    name: "Fixactus",
+    hp: 100,
+    types: ["Grass"],
+    attacks: [
+      {
+        cost: ["Grass"],
+        name: "Lively Needles",
+        damage: "20+",
+        effect: "If this Pokémon was healed during this turn, this attack does 100 more damage.",
+      },
+    ],
+  }),
   /** 🆕🆕 D382 — THE `. Then, ` DEMONSTRATOR, and it is `fix-bonusconsequent`'s
       twin for the OTHER decider. Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`,
       index 1 of two — confirmed by id against tcgdex), transcribed and not
@@ -11993,6 +12029,38 @@ export const PURGING_STRIKE_DECK = deckOf({
   "fix-water-energy": 6, // {W}{W} of Purging Strike's cost
   "fix-energy": 4, // the one {C} of it
   "fix-bigbody": 42, // 200 HP neutral Basic — mulligan-free starter and bench filler
+});
+
+/** 🆕🆕 D386 — the HEALED-THIS-TURN bonus (`healedThisTurn.test.ts`). Its own 60
+    rather than a widened neighbour, on D270's rule, and with a second reason of its
+    own: **this is the first clause deck whose boards have to WOUND the attacker
+    before the clause can be armed**, so the cast is chosen around what may heal it
+    and how much.
+
+    THE CAST, AND EVERY ENTRY IS A HEAL ROUTE OR A BODY:
+      • `fix-lively` — Maractus's printed "Lively Needles" ({G}, `20+`);
+      • `sv01-188` **Potion** — the printed Item behind `healChosen`, and the heal
+        the real card is played with. Six copies because nearly every board here
+        spends one, and two spend two;
+      • `sv01-184` **Picnic Basket** — `healEachAll`, the ONLY route in the pool that
+        writes a stamp onto the OPPONENT's board, which is what makes the
+        cross-board case reachable from a card rather than from a poke at the state;
+      • `fix-grass-energy` — the one {G} of Lively Needles, and nothing else pays it;
+      • `fix-bigbody` (200 HP, no attacks) — the mulligan-free starter, the bench
+        filler, and the defender: 200 survives the boosted **120** with room, so no
+        case can end on a Knock Out before its number is read.
+
+    🛑 **NO SECOND ATTACKER AND NO STADIUM.** Every board in this file is about
+    which BODY carries the stamp, so a second card that could be healed by accident
+    is a card the file would have to account for on every assertion.
+
+    4 + 6 + 4 + 6 + 40 = **60**. */
+export const HEALED_THIS_TURN_DECK = deckOf({
+  "fix-lively": 4, // Maractus — "Lively Needles" ({G}, 20+): the healed-this-turn bonus
+  "sv01-188": 6, // Potion — heal 30 from 1 of your Pokémon (`healChosen`)
+  "sv01-184": 4, // Picnic Basket — heal 30 from EVERY Pokémon, both boards (`healEachAll`)
+  "fix-grass-energy": 6, // the one {G} of Lively Needles
+  "fix-bigbody": 40, // 200 HP neutral Basic — starter, bench filler, and the defender
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({
