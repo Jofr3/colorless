@@ -287,18 +287,23 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
     // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
     // different residue — and there it is the BIGGER half.
-    expect([refused.length, units(refused)]).toEqual([21, 25]);
-    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
-    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
-    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
-    expect([refused.length + 7, units(refused) + 11]).toEqual([28, 36]);
-    expect([refused.length + 9, units(refused) + 13]).toEqual([30, 38]);
-    expect([refused.length + 10, units(refused) + 15]).toEqual([31, 40]);
-    expect([refused.length + 11, units(refused) + 17]).toEqual([32, 42]);
-    expect([refused.length + 12, units(refused) + 19]).toEqual([33, 44]);
-    expect([refused.length + 13, units(refused) + 19 + 3]).toEqual([34, 47]);
-    expect([refused.length + 13 + TAKEN.length, units(refused) + 22 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect([refused.length, units(refused)]).toEqual([20, 24]);
+    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([28, 36]);
+    expect([refused.length + 10, units(refused) + 14]).toEqual([30, 38]);
+    expect([refused.length + 11, units(refused) + 16]).toEqual([31, 40]);
+    expect([refused.length + 12, units(refused) + 18]).toEqual([32, 42]);
+    expect([refused.length + 13, units(refused) + 20]).toEqual([33, 44]);
+    expect([refused.length + 14, units(refused) + 20 + 3]).toEqual([34, 47]);
+    expect([refused.length + 14 + TAKEN.length, units(refused) + 23 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -609,8 +614,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(363); // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1254); // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(364); // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1255); // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -646,10 +651,14 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // JOIN resolved ONE sentence worth ONE printing, on zero new readers and zero
     // new ops. ⚠️ **BOTH CHAINS ARE EDITED AT THE FRONT, NEVER AT THE END.**
     expect(
-      resolved.length - 1 - 2 - 1 - 2 - TAKEN.length - 3 - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1 - 1,
+    // 🆕🆕 D384 — a `- 1` / `- 1` pair at the FRONT of both chains again: the
+    // STRICT-INEQUALITY TWIN resolved ONE sentence worth ONE printing, the family's
+    // first 1:1 step through THIS instrument as well. ⚠️ **BOTH CHAINS ARE EDITED AT
+    // THE FRONT, NEVER AT THE END.**
+      resolved.length - 1 - 1 - 2 - 1 - 2 - TAKEN.length - 3 - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1 - 1,
     ).toBe(335);
     expect(
-      units(resolved) - 1 - 6 - 2 - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2,
+      units(resolved) - 1 - 1 - 6 - 2 - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2,
     ).toBe(1207);
   });
 

@@ -259,15 +259,20 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
     // 21 / 25 could not tell "the row landed" from "a reader broke".
     expect(refused.some(([, s]) => s === MOUNTAIN_DROP)).toBe(false);
-    expect(refused.length).toBe(21);
-    expect(units(refused)).toBe(25);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect(refused.length).toBe(20);
+    expect(units(refused)).toBe(24);
     // 🛑 EVERY EARLIER HEAD IS RE-DERIVED FROM THIS ONE rather than frozen: D377's
     // 22/26, D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 1, units(refused) + 1]).toEqual([22, 26]);
-    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
-    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
-    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
+    expect([refused.length + 2, units(refused) + 2]).toEqual([22, 26]);
+    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {

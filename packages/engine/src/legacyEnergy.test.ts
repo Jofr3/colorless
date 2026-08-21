@@ -976,8 +976,15 @@ describe("the engine version", () => {
     // a v22 record and no v22 byte string means anything different under this one
     // (D335's discriminator). The version moves because the reader answers one printed
     // sentence it used to refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.288.0");
-    expect(manifest.version).toBe("0.288.0");
+    // 🆕🆕 D384 — 0.288.0 -> **0.289.0**, THE STRICT-INEQUALITY TWIN.
+    // `MATCH_RECORD_VERSION` STAYS 22, asked rather than assumed: the member
+    // (`moreActiveEnergyThanOpponent`) is NULLARY, so there is nothing to store, and a
+    // `conditionGate` resolves inline and never parks — no v22 byte string can contain
+    // a member that did not exist, and none means anything different under this head
+    // (D335's discriminator). The version moves because a reader answers one printed
+    // sentence it used to refuse. The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.289.0");
+    expect(manifest.version).toBe("0.289.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

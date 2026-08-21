@@ -219,18 +219,23 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
     // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
     // different residue — and there it is the BIGGER half.
-    expect(refused.length).toBe(21);
-    expect(units(refused)).toBe(25);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect(refused.length).toBe(20);
+    expect(units(refused)).toBe(24);
     // 🛑 AND THE STEP IS 1:2 HERE, the shape D369/D370/D371/D373/D374/D375 all kept —
     // D377's was 2:2. Every earlier head is re-derived from THIS one rather than
     // frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34, D372's 28/36,
     // D371's 30/38.
-    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
-    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
-    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
-    expect([refused.length + 7, units(refused) + 11]).toEqual([28, 36]);
-    expect([refused.length + 9, units(refused) + 13]).toEqual([30, 38]);
+    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
+    expect([refused.length + 8, units(refused) + 12]).toEqual([28, 36]);
+    expect([refused.length + 10, units(refused) + 14]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

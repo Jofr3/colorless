@@ -201,8 +201,13 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
     // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
     // different residue — and there it is the BIGGER half.
-    expect(refused.length).toBe(21);
-    expect(units(refused)).toBe(25);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect(refused.length).toBe(20);
+    expect(units(refused)).toBe(24);
     // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
     // add the sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -214,22 +219,22 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 3).toBe(24);
-    expect(units(refused) + 3).toBe(28);
-    expect(refused.length + 4).toBe(25);
-    expect(units(refused) + 5).toBe(30);
-    expect(refused.length + 5).toBe(26);
-    expect(units(refused) + 7).toBe(32);
-    expect(refused.length + 6).toBe(27);
-    expect(units(refused) + 9).toBe(34);
-    expect(refused.length + 7).toBe(28);
-    expect(units(refused) + 11).toBe(36);
-    expect(refused.length + 9).toBe(30);
-    expect(units(refused) + 13).toBe(38);
-    expect(refused.length + 10).toBe(31);
-    expect(units(refused) + 15).toBe(40);
-    expect(refused.length + 11).toBe(32);
-    expect(units(refused) + 17).toBe(42);
+    expect(refused.length + 4).toBe(24);
+    expect(units(refused) + 4).toBe(28);
+    expect(refused.length + 5).toBe(25);
+    expect(units(refused) + 6).toBe(30);
+    expect(refused.length + 6).toBe(26);
+    expect(units(refused) + 8).toBe(32);
+    expect(refused.length + 7).toBe(27);
+    expect(units(refused) + 10).toBe(34);
+    expect(refused.length + 8).toBe(28);
+    expect(units(refused) + 12).toBe(36);
+    expect(refused.length + 10).toBe(30);
+    expect(units(refused) + 14).toBe(38);
+    expect(refused.length + 11).toBe(31);
+    expect(units(refused) + 16).toBe(40);
+    expect(refused.length + 12).toBe(32);
+    expect(units(refused) + 18).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

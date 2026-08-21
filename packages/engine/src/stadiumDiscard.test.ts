@@ -279,15 +279,25 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // 1-printing row. Re-derived here rather than quoted.
     const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
-    expect([refused.length, units(refused)]).toEqual([21, 25]);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect([refused.length, units(refused)]).toEqual([20, 24]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
     // at 80 (3). With the deferred HEALED row that is THREE non-singleton records
     // carrying SEVEN printings, and the 1-printing band is the remaining EIGHTEEN.
+    // 🆕🆕 D384 — EIGHTEEN -> SEVENTEEN. The STRICT-INEQUALITY TWIN was a SINGLETON, so
+    // the whole step falls on this band and the three non-singleton records are
+    // untouched: 3 / 7 stands. ⚠️ **THAT IS THE ARITHMETIC THIS RUNG EXISTS FOR** — the
+    // comparison it makes (six printings for one op against one for the best clause
+    // row) is unchanged by a slice that takes another one out of the singleton band.
     expect(refused.length - singletons.length).toBe(3);
     expect(units(refused) - units(singletons)).toBe(7);
-    expect([singletons.length, units(singletons)]).toEqual([18, 18]);
+    expect([singletons.length, units(singletons)]).toEqual([17, 17]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);

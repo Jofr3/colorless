@@ -240,13 +240,26 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     expect([refused.length + 3, units(refused) + 5]).toEqual([3, 5]);
   });
 
-  it("🛑 the BONUS residue STANDS STILL at 21 / 25 — this slice prints no bonus row", () => {
+  it("🛑 the BONUS residue STOOD STILL for D379 — asserted as an OFFSET, not as a head", () => {
     // The half that makes this the first reader-keyed slice since D366 whose bonus
     // column does not move. Asserted rather than omitted: a rung that only checked
     // the cancel side could not tell "the bonus half is empty" from "nobody looked".
+    //
+    // 🆕🆕 **D384 — AND THE FROZEN PAIR IS WHAT WENT STALE, NOT THE CLAIM.** This rung
+    // read `toBe(21)` / `toBe(25)` and D384 took a bonus sentence out of that residue
+    // (the STRICT-INEQUALITY TWIN, Swalot `sv07-092`, 1 sentence / 1 printing), so the
+    // literal pair reddened while what the rung is ABOUT — that D379's own slice moved
+    // this column by ZERO — was never in doubt. **A STANDING-STILL IS A DIFFERENCE AND
+    // MUST BE WRITTEN AS ONE**: the head is re-derived live below and D379's head is
+    // reached by adding back exactly what left it since, which is a figure this rung
+    // can keep being right about.
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
-    expect(refused.length).toBe(21);
-    expect(units(refused)).toBe(25);
+    expect(refused.length).toBe(20);
+    expect(units(refused)).toBe(24);
+    // D379's head (which is also D378's, because D379 moved this column by zero — the
+    // whole point of the rung) and D377's before it, re-derived from THIS one.
+    expect([refused.length + 1, units(refused) + 1]).toEqual([21, 25]);
+    expect([refused.length + 2, units(refused) + 2]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

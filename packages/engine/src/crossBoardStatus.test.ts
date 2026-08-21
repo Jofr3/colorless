@@ -250,14 +250,19 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
     // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
     // different residue — and there it is the BIGGER half.
-    expect(refused.length).toBe(21);
-    expect(units(refused)).toBe(25);
+    // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
+    // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
+    // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
+    // ⚠️ AND IT IS THE SENTENCE D372 PRICED AND REFUSED: the same two Active bodies as
+    // `activeEnergyCountsEqual`, under `>` instead of `===`, on a SECOND nullary member.
+    expect(refused.length).toBe(20);
+    expect(units(refused)).toBe(24);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
-    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
-    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
+    expect([refused.length + 4, units(refused) + 4]).toEqual([24, 28]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([25, 30]);
+    expect([refused.length + 6, units(refused) + 8]).toEqual([26, 32]);
+    expect([refused.length + 7, units(refused) + 10]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -365,7 +370,13 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // was worth taking because ONE purchase served THREE printings, not because the
     // band was thin.
     // 🆕🆕 D378 — 19 -> 18: the Stadium-PRESENCE bonus clause left the band.
-    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(18);
+    // 🆕🆕 D384 — 18 -> 17: the STRICT-INEQUALITY TWIN left the band, and it is the
+    // whole of that slice — a 1-printing clause bought for ONE nullary member, which
+    // is the trade this paragraph called "not worth taking" when TWO printings were
+    // available for one purchase. It was taken because the band above it is EMPTY of
+    // anything cheaper: the only 2-printing clause left needs a persisted per-turn
+    // HEALED flag and a `MATCH_RECORD_VERSION` bump.
+    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(17);
   });
 });
 
