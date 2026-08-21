@@ -230,19 +230,22 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
   });
 
-  it("🛑 the CANCEL residue steps TWICE as far — and ONE sentence is left behind it", () => {
-    // The half that makes this slice worth more than its bonus row. D377 left the
-    // does-nothing remainder at 2 sentences / 4 printings; this takes the bigger of
-    // the two, and the LAST one is NAMED so the rung says what is still owed rather
-    // than only how much.
+  it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {
+    // The half that makes D378 worth more than its bonus row. D377 left the
+    // does-nothing remainder at 2 sentences / 4 printings; D378 took the bigger of the
+    // two and NAMED the last one as still owed.
+    //
+    // ⚠️ 🆕🆕 **D379 TOOK IT, SO THIS RUNG IS RE-AIMED AT THE STEP RATHER THAN THE
+    // REMAINDER.** The residue is now ZERO and there is no sentence to name; what this
+    // file still owns is that `ASSAULT_LANDING` is not in it and that D378's own step
+    // was 2 s / 4 p -> 1 s / 2 p. Both are re-derived from the live head below rather
+    // than frozen — D379's own `exactHandSize.test.ts` §1 is where the zero is
+    // asserted as a figure.
     const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === ASSAULT_LANDING)).toBe(false);
-    expect(refused.length).toBe(1);
-    expect(units(refused)).toBe(2);
-    expect(refused.map(([, s]) => s)).toEqual([
-      "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-    ]);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([2, 4]);
+    expect(refused).toEqual([]);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([1, 2]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([2, 4]);
   });
 
   it("🛑 TWO sentences, THREE legal printings — 1 under the bonus and 2 under the cancel", () => {
@@ -272,15 +275,18 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // an id: a literal row is keyed on the printed clause and serves every printing.
   });
 
-  it("🛑 the requirement table's reach goes 7 s / 14 p → 8 s / 16 p of a 9 s / 18 p opener set", () => {
+  it("🛑 the requirement table's reach goes 7 s / 14 p → 8 s / 16 p, and D379 SATURATED it", () => {
     // The accounting `splitOrder.test.ts` §4 keeps. The whole does-nothing OPENER
     // population is unmoved — this slice mapped one of them, it did not print one.
+    // ⚠️ 🆕🆕 D379 mapped the LAST one, so the reach is now 9 / 18 and what this file
+    // still owns is that `ASSAULT_LANDING` is inside the mapped set.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([mapped.length, units(mapped)]).toEqual([8, 16]);
+    expect([mapped.length, units(mapped)]).toEqual([9, 18]);
+    expect(mapped.some(([, s]) => s === ASSAULT_LANDING)).toBe(true);
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([unmapped.length, units(unmapped)]).toEqual([1, 2]);
+    expect([unmapped.length, units(unmapped)]).toEqual([0, 0]);
     // The parts sum, which is what makes a partition a partition.
     expect(mapped.length + unmapped.length).toBe(openers.length);
     expect(units(mapped) + units(unmapped)).toBe(units(openers));

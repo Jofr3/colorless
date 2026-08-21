@@ -72,13 +72,7 @@ const VICTINI_IDS = ["sv10.5b-012", "sv10.5b-171", "sv10.5w-172", "svp-208"] as 
 /** The THREE sentences this slice leaves behind, with their legal printing counts
     and the vocabulary each still costs. D367's population, named rather than
     counted. */
-const REFUSED: readonly (readonly [string, number, string])[] = [
-  [
-    "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-    2,
-    "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
-  ],
-];
+const REFUSED: readonly (readonly [string, number, string])[] = [];
 
 /** 🆕🆕 D377 — THE THIRD ROW OF D365's LIST, MOVED OUT OF `REFUSED` RATHER THAN
     DELETED FROM IT (D178: provenance is annotated, never overwritten). The entry
@@ -106,6 +100,19 @@ const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[
     1,
     "a BURNED member — the state field exists, no condition reads it (D365, driven; TAKEN at D377)",
     { kind: "opponentActiveBurned" },
+  ],
+  // 🛑 🆕🆕 D379 — THE LAST ROW OF D365's LIST, MOVED THE SAME WAY, WHICH EMPTIES
+  // `REFUSED` OUTRIGHT. D365's reason is reproduced verbatim and was right on BOTH
+  // halves: the sentence needed an OWN-hand exact-size member, and `opponentHandAtMost`
+  // was the wrong seat AND the wrong comparator — two independent defects, so no
+  // widening could have reached it. D379 added `yourHandExactly { count }` beside that
+  // member. **THE REFUSAL WAS PAID, NOT OVERTURNED**, and the partition below still
+  // sums to D365's 4 / 9 because nothing left the record.
+  [
+    "If you don't have exactly 3 cards in your hand, this attack does nothing.",
+    2,
+    "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator (D365, driven; TAKEN at D379)",
+    { kind: "yourHandExactly", count: 3 },
   ],
 ];
 
@@ -153,10 +160,14 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     // 🆕🆕 D378 — 7 / 14 -> 8 / 16 and the missing 2 / 4 -> 1 / 2: STADIUM PRESENCE
     // took the FIRST item on `REFUSED`, again off a member bought for a BONUS row in
     // the same commit. The population (9 / 18) is still unmoved, and ONE row is left.
+    // 🛑 🆕🆕 D379 — 8 / 16 -> **9 / 18** and the missing 1 / 2 -> **0 / 0**: THE EXACT
+    // HAND-SIZE READ took the LAST item on `REFUSED`, and it is the FIRST of these
+    // steps whose member has no BONUS row beside it. The population (9 / 18) is STILL
+    // unmoved, which is the invariant this case exists to hold.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([8, 16]);
+    expect([carried.length, units(carried)]).toEqual([9, 18]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([1, 2]);
+    expect([missing.length, units(missing)]).toEqual([0, 0]);
     // THE PARTITION SUMS — parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -180,8 +191,11 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     // still D366's 3 / 5, which is what keeps this an accounting of D365's handoff
     // rather than a snapshot of today.
     // 🆕🆕 D378 — ONE row plus `TAKEN_SINCE`'s TWO, and the sum is STILL D366's 3 / 5.
-    expect(REFUSED).toHaveLength(1);
-    expect(TAKEN_SINCE).toHaveLength(2);
+    // 🛑 🆕🆕 D379 — ZERO rows plus `TAKEN_SINCE`'s THREE, and the sum is STILL 3 / 5.
+    // Every row moved and the accounting did not, which is the whole reason rows are
+    // moved rather than deleted (D178).
+    expect(REFUSED).toHaveLength(0);
+    expect(TAKEN_SINCE).toHaveLength(3);
     const handed: readonly (readonly [string, number, string])[] = [
       ...REFUSED,
       ...TAKEN_SINCE.map(([sentence, n, cost]) => [sentence, n, cost] as const),
@@ -437,14 +451,16 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     const nowCarried = corpus().filter(
       ([, s]) => SKELETON.test(s.trim()) && deriveAttackRequirement(s) !== null,
     );
-    expect(nowCarried).toHaveLength(8); // 🆕🆕 D378 +1 — the Stadium-PRESENCE row. // 🆕🆕 D377 +1 — the "isn't Burned" row.
+    expect(nowCarried).toHaveLength(9); // 🆕🆕 D379 +1 — the EXACT HAND-SIZE row. // 🆕🆕 D378 +1 — the Stadium-PRESENCE row. // 🆕🆕 D377 +1 — the "isn't Burned" row.
     const victini = nowCarried.filter(([, s]) => s === V_FORCE);
     expect(units(victini)).toBe(4);
     // 🆕🆕 D377 — a `- 1` term, so D365's head is still RE-DERIVED from the live
     // total rather than frozen at the head that measured it.
     // 🆕🆕 D378 — a `- 2` term beside it: the Stadium-PRESENCE row is worth TWO
     // printings, so the two subtrahends differ and the head is still D365's 9.
-    expect(units(nowCarried) - units(victini) - 2 - 1).toBe(9); // D365's head, unmoved.
+    // 🆕🆕 D379 — a THIRD term, another `- 2`: the EXACT HAND-SIZE row is worth two
+    // printings as well, and D365's head is still 9.
+    expect(units(nowCarried) - units(victini) - 2 - 2 - 1).toBe(9); // D365's head, unmoved.
   });
 });
 
@@ -500,8 +516,11 @@ describe("§6 — the exhaustive readers, and the guard D365 keyed on the wrong 
     // play"* carries neither an apostrophe nor a é, which is the SECOND such key in
     // this table and the exact case D365's guard could not see. **THE POPULATION
     // DISTINCTION THIS RUNG EXISTS FOR IS NOW MADE BY TWO ROWS RATHER THAN ONE.**
-    expect(carried).toHaveLength(8);
-    expect(carried.filter((s) => s.includes("'"))).toHaveLength(6);
+    // 🆕🆕 D379 — 8 -> 9 and the apostrophe half 6 -> **7**: *"If you don't have exactly
+    // 3 cards in your hand"* carries "don't" and no é at all, so it lands in the fold's
+    // population while the apostrophe-FREE half stands still at TWO.
+    expect(carried).toHaveLength(9);
+    expect(carried.filter((s) => s.includes("'"))).toHaveLength(7);
     expect(carried.filter((s) => !s.includes("'"))).toHaveLength(2);
     // A guard that had not learned the difference would demand this sentence be
     // listed among the apostrophe rows, which would be a false claim about it.

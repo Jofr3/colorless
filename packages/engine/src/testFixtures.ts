@@ -10535,27 +10535,31 @@ export const FIXTURE_POOL: Record<string, Card> = {
       // the other side: no table row, so nothing may be stripped and the WHOLE
       // string stays loud.
       //
-      // ⚠️ 🆕🆕 **D378 RE-POINTED THIS SENTENCE, AND THE MOVE IS THE RECORD RATHER
-      // THAN A REPAIR.** It printed *"If there is no Stadium in play, this attack
-      // does nothing."* from D363 until D378 BUILT that clause (`stadiumInPlay`),
-      // at which point the guard's subject stopped being unmapped and this attack
-      // started gating instead of reporting. The clause below is the sentence that
-      // is STILL unmapped at this head — the exact hand-size read, which needs an
-      // OWN-hand EXACT-SIZE member (`opponentHandAtMost` is the wrong seat AND the
-      // wrong comparator, D365). It is a REAL printed corpus sentence, which is
-      // what keeps the guard driven on the catalog rather than on a straw string.
+      // 🛑 🆕🆕 **D379 — THE EXPIRY D378 WROTE DOWN, ARRIVING ONE SLICE LATER. THIS
+      // CLAUSE IS NOW CONSTRUCTED, AND IT IS THE FIRST TIME THIS RIDER HAS NOT BEEN
+      // A REAL PRINTED SENTENCE.** The history is the record, not a repair: it
+      // printed *"If there is no Stadium in play, this attack does nothing."* from
+      // D363 until D378 built that clause (`stadiumInPlay`), then D378 re-pointed it
+      // at *"If you don't have exactly 3 cards in your hand…"* — and D379 built THAT
+      // one (`yourHandExactly`). **THE LEGAL ATTACK COLUMN NOW HAS NO UNMAPPED
+      // does-nothing OPENER LEFT**, so there is no printed sentence to re-point to
+      // and the guard has to construct its own subject or stop being a guard.
       //
-      // 🛑 **AND IT IS THE LAST ONE.** After D378 the does-nothing skeleton has
-      // exactly ONE unmapped sentence left. The day that one is built, this rider
-      // has to become a CONSTRUCTED near-miss and the block must say so — a guard
-      // whose subject has quietly become buildable is the vacuity mode two files
-      // hit at D377.
+      // ⚠️ **THE CONSTRUCTION IS THE PARAMETER, ONE VALUE OVER**, which is the
+      // cheapest near-miss that is genuinely near: `ATTACK_REQUIREMENT_CLAUSES` is
+      // keyed on the printed LITERAL *"you don't have exactly 3 cards in your hand"*,
+      // so *"exactly 4"* misses it — and it misses in the direction that matters,
+      // because a table that had been "simplified" into a `\d+` pattern would MAP
+      // this and silently strip the companion sentence. **A CONSTRUCTED subject
+      // costs the guard its catalog provenance and buys back a defect a real
+      // sentence could not express.** It is annotated here and in
+      // `sawkRequirementSplit.test.ts` §4 rather than left to be inferred.
       {
         cost: ["Colorless"],
         name: "Unmapped Rider",
         damage: 20,
         effect:
-          "If you don't have exactly 3 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
+          "If you don't have exactly 4 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
       },
     ],
   }),
@@ -11058,6 +11062,33 @@ export const FIXTURE_POOL: Record<string, Card> = {
       `types: ["Fire"]` because the real printing is Fire and nothing in this file
       reads the attacker's type — stated so a successor does not go looking for a
       reason it is load-bearing, as it is on `fix-typeshare` two blocks up. */
+  /** 🆕🆕 D379 — THE EXACT HAND-SIZE READ: Alolan Dugtrio `sv08-123`/`sv08-208`
+      "Trio-Cheehoo"'s printed sentence, verbatim, on a body of this pool's own
+      making. `fix-*` and not `sv08-123` for the standing reason (D369) — a fixture
+      id naming a real printing needs a `CATALOG_MANIFEST.printed` row and the
+      generator cannot write one without the local D1.
+
+      🛑 **THE PRINTED COST IS ZERO AND THAT IS LOAD-BEARING, NOT A SHORTCUT.**
+      "Trio-Cheehoo" takes no Energy at all (confirmed by id against tcgdex and on
+      limitless's card page), so `cost` is ABSENT here exactly as it is on the card.
+      The requirement is then the ONLY thing standing between a fielded body and 120
+      damage — which is what makes a dropped gate a free 120 rather than a rounding
+      error, and what lets every board in `exactHandSize.test.ts` vary ONE quantity
+      (the hand) with nothing else to explain the outcome.
+
+      `hp: 110` and `types: ["Metal"]` as printed. Neither is read by anything in
+      this file — stated so a successor does not go looking for a reason. */
+  "fix-triocheehoo": battler("fix-triocheehoo", {
+    hp: 110,
+    types: ["Metal"],
+    attacks: [
+      {
+        name: "Trio-Cheehoo",
+        damage: 120,
+        effect: "If you don't have exactly 3 cards in your hand, this attack does nothing.",
+      },
+    ],
+  }),
   /** 🆕🆕 D378 — the STADIUM-PRESENCE family, the BONUS consequent: Probopass
       `sv10-098` "Mountain Drop"'s printed sentence, verbatim, on a body of this
       pool's own making. `fix-*` and not `sv10-098` for the standing reason (D369) —
@@ -11518,6 +11549,44 @@ export const TYPE_SHARE_DECK = deckOf({
         board needs a Fire Energy in play to attack.
 
     4 + 4 + 8 + 18 + 6 + 6 + 4 + 4 + 6 = **60**. */
+/** 🆕🆕 D379 — THE EXACT HAND-SIZE READ (`yourHandExactly`). A DEDICATED deck for
+    the house reason — every clause deck before it is seed-pinned by its own suite —
+    and for one specific to this slice: the quantity under test is THE ATTACKER'S OWN
+    HAND SIZE, so every card in the deck is a card that could end up in it. A deck
+    borrowed from another clause would make the hand's CONTENTS an uncontrolled
+    variable in a suite whose whole subject is its LENGTH.
+
+    THE CAST IS TWO ATTACKERS AND THE SECOND IS THE NEAR MISS:
+
+      • `fix-triocheehoo` — Alolan Dugtrio's "Trio-Cheehoo" (**no cost**, 120), the
+        CANCEL consequent on the new member. It is the only printing of this clause
+        and it has no bonus twin anywhere in the legal attack column;
+      • `sv03-135` (Absol ex) — "Cursed Slug" ({D}{D}{D}, 100+), the shipped
+        `opponentHandAtMost { count: 3 }` reading. It is in this deck for one
+        purpose: on the board where P1 holds FOUR cards and P2 holds THREE,
+        Trio-Cheehoo must CANCEL and Cursed Slug's +120 must FIRE, measured on the
+        same state. **THE SEAT DISAGREEMENT IS DRIVEN, NOT ARGUED** — which is what
+        makes "this is an addition and not a widening" a result rather than a
+        preference. ⚠️ It is a 2-PRIZE body; nothing here knocks it out.
+
+    `fix-energy` ({C}) and `fix-dark-energy` ({D}) are kept separate so no board can
+    pay a typed symbol with an untyped card by accident — Cursed Slug's three {D}
+    symbols are the only printed cost in the cast, and Trio-Cheehoo's is empty.
+    `fix-bigbody` is the DOMINANT mulligan-free starter, the body both Actives pin
+    to, the arithmetically clean defender (200 HP, no Weakness, no Resistance) every
+    damage number is measured against, and — because it is a Basic — the card the
+    ORGANIC case in §5 sheds from hand onto the Bench to reach three without any
+    surgery at all. Forty copies, so that shed is not a fact about the shuffle.
+
+    4 + 4 + 6 + 6 + 40 = **60**. */
+export const EXACT_HAND_SIZE_DECK = deckOf({
+  "fix-triocheehoo": 4, // Alolan Dugtrio — "Trio-Cheehoo" (120, no cost): yourHandExactly 3, the CANCEL
+  "sv03-135": 4, // Absol ex — "Cursed Slug" (100+): opponentHandAtMost 3, the WRONG-SEAT near miss
+  "fix-energy": 6, // Basic {C} — the ordinary attachment the organic case spends
+  "fix-dark-energy": 6, // Basic {D} — pays Cursed Slug's three typed symbols
+  "fix-bigbody": 40, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the clean defender, the shed
+});
+
 /** 🆕🆕 D378 — STADIUM PRESENCE (`stadiumInPlay`). A DEDICATED deck for the house
     reason — every clause deck before it is seed-pinned by its own suite — and for
     one specific to this slice: the cast has to field, on ONE board, the new

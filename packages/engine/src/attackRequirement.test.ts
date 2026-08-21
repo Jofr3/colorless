@@ -638,11 +638,31 @@ describe("constructed near-misses stay LOUD", () => {
     // must replace this subject with a CONSTRUCTED near-miss and say so. **THREE
     // SUBJECTS IN THREE SLICES IS NOT BAD LUCK; IT IS WHAT A GUARD KEYED ON A
     // REFUSAL COSTS, AND THE COST IS NOW NAMED WITH ITS END DATE.**
+    // 🛑 🆕🆕 **D379 — THE END DATE ARRIVED, AND THIS IS THE FOURTH SUBJECT IN FOUR
+    // SLICES.** D379 bought the hand-size read (`yourHandExactly`), and with it the
+    // does-nothing skeleton SATURATED: there is no printed sentence left that this
+    // table refuses, so the subject cannot be a printed one any more. It is now
+    // CONSTRUCTED — the printed clause with its PARAMETER moved by one — and that is
+    // strictly sharper than what it replaced: the row is keyed on a LITERAL, so this
+    // string is exactly what a table "simplified" into a `\d+` pattern would wrongly
+    // claim. **THE GUARD IS UNCHANGED; ITS SUBJECT STOPPED BEING SOMETHING THE POOL
+    // COULD SUPPLY.** No further re-aiming is owed — a constructed near-miss has no
+    // expiry date, which is the one thing a printed refusal could never offer.
+    expect(
+      splitAttackRequirementClause(
+        "If you don't have exactly 4 cards in your hand, this attack does nothing. Then, discard an Energy from this Pokémon.",
+      ),
+    ).toBeNull();
+    // …and the printed sentence one value over IS stripped, which is what keeps the
+    // line above from passing because the splitter is broken.
     expect(
       splitAttackRequirementClause(
         "If you don't have exactly 3 cards in your hand, this attack does nothing. Then, discard an Energy from this Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual({
+      clause: "If you don't have exactly 3 cards in your hand, this attack does nothing.",
+      body: "Then, discard an Energy from this Pokémon.",
+    });
   });
 
   it("🆕 D363 — the clause group is LAZY, so TWO does-nothing sentences spend the FIRST", () => {

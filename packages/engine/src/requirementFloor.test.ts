@@ -98,13 +98,7 @@ const BOUGHT: readonly (readonly [string, number, string])[] = [
     printings) was the largest entry and D366 BOUGHT it, so the row is deleted
     here rather than left to go quietly wrong. Three sentences / 5 printings
     remain, and they are D367's population. */
-const REFUSED: readonly (readonly [string, number, string])[] = [
-  [
-    "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-    2,
-    "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
-  ],
-];
+const REFUSED: readonly (readonly [string, number, string])[] = [];
 
 /** 🆕🆕 D377 — MOVED OUT OF `REFUSED`, NOT DELETED FROM IT (D178: provenance is
     annotated, never overwritten). D365's entry is reproduced verbatim below and its
@@ -132,6 +126,23 @@ const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[
     2,
     "an ANY-OWNER stadium member — `yourStadiumInPlay` cannot be widened without changing Falkner (TAKEN at D378)",
     { kind: "stadiumInPlay" },
+  ],
+  // 🛑 🆕🆕 D379 — THE THIRD AND LAST ROW TO MOVE, WHICH EMPTIES `REFUSED` OUTRIGHT.
+  // D365's reason is reproduced verbatim and it was right on BOTH halves: the sentence
+  // needed an OWN-hand exact-size member, and `opponentHandAtMost` was the wrong seat
+  // AND the wrong comparator. D379 added `yourHandExactly { count }` BESIDE that
+  // member rather than re-pointing it — no parameterisation of a threshold yields an
+  // equality — so the refusal was PAID, not overturned (D178).
+  //
+  // ⚠️ **`REFUSED` IS NOW EMPTY, AND THAT IS AN ACCOUNTING FACT RATHER THAN A DELETED
+  // ARRAY.** D365 handed over four sentences / nine printings; all four are in
+  // `TAKEN_SINCE` or `BOUGHT`, and the partition below still sums to D365's figures
+  // because nothing was removed from the record.
+  [
+    "If you don't have exactly 3 cards in your hand, this attack does nothing.",
+    2,
+    "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator (TAKEN at D379)",
+    { kind: "yourHandExactly", count: 3 },
   ],
 ];
 
@@ -207,10 +218,14 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // 9 / 18 and still the invariant; what moved is the third row of `REFUSED`.
     // 🆕🆕 D378 — 7 / 14 -> 8 / 16, missing 2 / 4 -> 1 / 2, and what moved is the row
     // of `REFUSED` that this file has carried since D365. ONE sentence is left.
+    // 🛑 🆕🆕 D379 — 8 / 16 -> **9 / 18**, missing 1 / 2 -> **0 / 0**: the LAST row of
+    // `REFUSED` moved, the table SATURATED, and the population (9 / 18) is STILL
+    // unmoved — which is what makes "carried" and "population" two facts rather than
+    // one. `splitOrder.test.ts` §4 carries the anti-vacuity half.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([8, 16]);
+    expect([carried.length, units(carried)]).toEqual([9, 18]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([1, 2]);
+    expect([missing.length, units(missing)]).toEqual([0, 0]);
     // THE PARTITION SUMS. Parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -229,6 +244,11 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // cannot drift from them.
     // 🆕🆕 D377 — the list is re-assembled from THREE arrays now, and still SIX: the
     // Burned row moved from `REFUSED` to `TAKEN_SINCE` rather than out of the record.
+    // 🆕🆕 D379 — `REFUSED` is EMPTY and the list is still SIX, which is the point of
+    // moving rows rather than deleting them: the record of what was refused survives
+    // the refusal being paid.
+    expect(REFUSED).toEqual([]);
+    expect(TAKEN_SINCE).toHaveLength(3);
     const carried = [...BOUGHT, ...REFUSED, ...TAKEN_SINCE].map(([s]) => s);
     expect(carried).toHaveLength(6);
     for (const sentence of carried) {
@@ -270,12 +290,15 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // sum is what this case is about, so it is re-assembled rather than re-stated.
     // 🆕🆕 D378 — still 3 / 5 as a RESIDUE OF D365's HANDOFF, and the split across the
     // two arrays moves again: ONE row still refused (2 printings) and TWO taken (3).
+    // 🛑 🆕🆕 D379 — STILL 3 / 5, and `REFUSED` is now EMPTY: all THREE are taken. The
+    // sum is the whole point of this case, and it is unchanged by every row moving —
+    // which is exactly what a record that annotates rather than deletes buys.
     const residue: readonly (readonly [string, number, string])[] = [
       ...REFUSED,
       ...TAKEN_SINCE.map(([sentence, n, cost]) => [sentence, n, cost] as const),
     ];
-    expect(REFUSED).toHaveLength(1);
-    expect(TAKEN_SINCE).toHaveLength(2);
+    expect(REFUSED).toHaveLength(0);
+    expect(TAKEN_SINCE).toHaveLength(3);
     expect(residue).toHaveLength(3);
     expect(residue.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
     for (const [sentence, expected, cost] of residue) {

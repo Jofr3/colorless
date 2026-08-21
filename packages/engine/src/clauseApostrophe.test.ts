@@ -661,7 +661,16 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // spellings carry the rider's own *"attack's"*, so the entry neither entered nor
     // left. **A CENSUS KEYED ON A CHARACTER MOVES WHEN A FIXTURE'S TEXT CHANGES, NOT
     // ONLY WHEN A FIXTURE IS ADDED — and this slice checked that both ways.**
-    expect(derivable).toHaveLength(118);
+    // 🆕🆕 D379 — **118 → 119, AND THE ONE IS THE MEASUREMENT.** ONE new fixture and
+    // ONE new census entry: `fix-triocheehoo` prints *"If you don't have exactly 3
+    // cards in your hand, …"*, which carries "don't" and therefore DOES enter a sweep
+    // keyed on `'` — the opposite of D378's pair, and the reason the two slices move
+    // this figure differently is the character and not the fixture count. ⚠️ **AND
+    // `fix-sawk`'s index-2 rider MOVED AGAIN AND CANCELLED AGAIN**: it was re-pointed
+    // from the printed hand-size sentence to a CONSTRUCTED one ("exactly 4"), and both
+    // spellings carry "don't" as well as the rider's own *"attack's"*, so the entry
+    // neither entered nor left. Both directions measured, as at D378.
+    expect(derivable).toHaveLength(119);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -843,6 +852,12 @@ const APOSTROPHE_REQUIREMENT_SENTENCES = [
   // table whose member was bought by a BONUS row in the same commit
   // (`opponentActiveBurned`, for Slugma sv05-028 "Roasting Heat").
   "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
+  // 🆕🆕 D379 — Alolan Dugtrio sv08-123/sv08-208 "Trio-Cheehoo": "don't" again, and
+  // the FIRST row in this table whose member has NO bonus twin at all — both of its
+  // legal printings arrive through the cancel consequent. It is also the row that
+  // SATURATES the table: with it, every does-nothing opener the legal attack column
+  // prints is carried, so this list can no longer grow from the current pool.
+  "If you don't have exactly 3 cards in your hand, this attack does nothing.",
 ] as const;
 
 /** 🆕🆕 D366 — the live reader's CARRIED CLAUSE SENTENCES, walked off the printed
@@ -1071,8 +1086,13 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // (*"If there is no Stadium in play"*) carries neither an apostrophe nor a é, so it
     // is the SECOND row this filter drops and the case below now names two. **THE
     // FILTER D365 PAID FOR IS EARNING ITS KEEP A SECOND TIME.**
-    expect(carried.size).toBe(8);
-    expect(withApostrophe).toHaveLength(6);
+    // 🆕🆕 D379 — 8 -> 9 carried and the apostrophe half 6 -> 7: the new key
+    // (*"If you don't have exactly 3 cards in your hand"*) carries a contraction and no
+    // é, so it lands squarely in the fold's population and the apostrophe-FREE half
+    // stands still at TWO. ⚠️ AND THE TABLE IS NOW SATURATED against the legal attack
+    // column, so this figure cannot move again without a set rotation.
+    expect(carried.size).toBe(9);
+    expect(withApostrophe).toHaveLength(7);
     for (const sentence of withApostrophe) {
       expect(APOSTROPHE_REQUIREMENT_SENTENCES).toContain(sentence);
     }
@@ -1080,7 +1100,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     expect(dead).toEqual([
       "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing.",
     ]);
-    expect(APOSTROPHE_REQUIREMENT_SENTENCES).toHaveLength(7); // 🆕🆕 D377 — 6 -> 7
+    expect(APOSTROPHE_REQUIREMENT_SENTENCES).toHaveLength(8); // 🆕🆕 D379 — 7 -> 8 // 🆕🆕 D377 — 6 -> 7
     // And every listed sentence really resolves — a list that had drifted onto a
     // clause the table dropped would otherwise pass the subset check vacuously.
     for (const sentence of APOSTROPHE_REQUIREMENT_SENTENCES) {

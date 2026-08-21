@@ -269,10 +269,14 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 🆕🆕 D378 — 2 / 4 -> 1 / 2: STADIUM PRESENCE took the bigger of the two
     // sentences this rung had left (Fan Rotom `sv07-118`/`sv08.5-085`, 2 printings),
     // so the cancel residue is now a SINGLE sentence — the exact hand-size read.
-    expect(refused.length).toBe(1);
-    expect(units(refused)).toBe(2);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([2, 4]);
-    expect([refused.length + 2, units(refused) + 3]).toEqual([3, 5]);
+    // 🛑 🆕🆕 D379 — 1 / 2 -> **0 / 0**: THE EXACT HAND-SIZE READ took the last one
+    // (`yourHandExactly`), and the does-nothing skeleton is SATURATED. Every earlier
+    // head is still re-derived from this one rather than frozen, which is what keeps
+    // this rung an accounting of the run rather than a snapshot of today.
+    expect(refused).toEqual([]);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([1, 2]);
+    expect([refused.length + 2, units(refused) + 4]).toEqual([2, 4]);
+    expect([refused.length + 3, units(refused) + 5]).toEqual([3, 5]);
   });
 
   it("🛑 THREE sentences, ONE legal printing each — a 3:3 step, which this run has not taken", () => {

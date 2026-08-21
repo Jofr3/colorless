@@ -308,9 +308,18 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // this table to spell a member the bonus table already reads, and the FIRST whose
     // cancel half is the BIGGER half: 2 printings here against 1 there.
     ["If there is no Stadium in play", 2],
+    // 🆕🆕 D379 — Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo" (NO Energy
+    // cost, 120), TWO legal printings, on `yourHandExactly` — and the FIRST row in
+    // this table whose member has NO bonus twin at all. D363's Sawk, D365's Iron
+    // Boulder, D377's Centiskorch and D378's Fan Rotom each spelled a member
+    // `CONDITIONAL_DAMAGE_CLAUSES` also reads; both consequents were asked again here
+    // and the bonus side is EMPTY, so all 2 printings arrive through this table.
+    // ⚠️ It is also the LAST row this table can gain from the current pool — see the
+    // rung below, where `unmapped` is now empty.
+    ["If you don't have exactly 3 cards in your hand", 2],
   ];
 
-  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1, 2", () => {
+  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1, 2, 2", () => {
     for (const [key, expected] of KEYS) {
       const sentence = `${key}, this attack does nothing.`;
       // The copy is tied to the live reader: a key that stopped being carried
@@ -326,7 +335,7 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     }
   });
 
-  it("🛑 NINE rows, EIGHT of them reachable in Standard, and 16 legal printings", () => {
+  it("🛑 TEN rows, NINE of them reachable in Standard, and 18 legal printings — the table SATURATES", () => {
     // 🆕🆕 D366 — "six / five / 9" one commit ago, "three / two / 4" the commit
     // before that; every one of the three numbers has now moved twice. The rung is
     // unchanged in SHAPE, which is the point: it prices the table by
@@ -339,14 +348,18 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // step this rung has taken on the PRINTINGS column since D366's four: +1 row and
     // +2 printings, because the row's sentence is the only one in this table with two
     // legal printings behind a member the same commit bought.
+    // 🆕🆕 D379 — "nine / eight / 16" one commit ago, the SIXTH move, and the LAST
+    // one this pool can produce: the table now carries every does-nothing opener the
+    // legal attack column prints, so the next move on this rung has to come from a
+    // set rotation rather than from a slice.
     const reachable = KEYS.filter(([, n]) => n > 0);
-    expect(KEYS.length).toBe(9);
-    expect(reachable.length).toBe(8);
-    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(16);
+    expect(KEYS.length).toBe(10);
+    expect(reachable.length).toBe(9);
+    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(18);
     // The whole does-nothing OPENER population, and how much of it is mapped:
-    // 9 sentences / 18 units open with the skeleton, 8 sentences / 16 units are
-    // carried. The other 1 stays UNMAPPED and therefore LOUD, which is what keeps
-    // the accounting guard load-bearing.
+    // 9 sentences / 18 units open with the skeleton, and 9 sentences / 18 units are
+    // carried. NOTHING is left unmapped — which is what expires the accounting
+    // guard's printed subject, not what makes the guard vacuous (see below).
     // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the unmapped 3 / 5 -> 2 / 4, and the sentence
     // that moved is the one this list NAMED as owed: *"…isn't Burned"*. The remaining
     // two are a Stadium-PRESENCE read (which `yourStadiumInPlay` cannot answer — it
@@ -356,21 +369,28 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // built as `stadiumInPlay` — a NEW member beside `yourStadiumInPlay` rather than a
     // widening of it, because that one has two consumers whose OWNERSHIP is
     // load-bearing (D362: a widening is free, a rename is not).
-    // 🛑 **ONE SENTENCE IS LEFT AND THE ACCOUNTING GUARD DEPENDS ON IT.** When the
-    // hand-size read is built, `sawkRequirementSplit.test.ts`'s unmapped rider has no
-    // real printed subject left and has to become a CONSTRUCTED near-miss — which
-    // this rung is the place to notice, because `unmapped` will be EMPTY here.
+    // 🛑 🆕🆕 **D379 — `unmapped` IS EMPTY, AND THAT IS THE EXPIRY D378 WROTE DOWN
+    // ARRIVING ON SCHEDULE.** 8 / 16 -> 9 / 18 and the unmapped 1 / 2 -> **0 / 0**:
+    // the hand-size read was built as `yourHandExactly`, and every does-nothing
+    // OPENER the legal attack column prints is now carried. `sawkRequirementSplit`'s
+    // unmapped rider therefore has NO real printed subject left and has become a
+    // CONSTRUCTED near-miss ("exactly 4"), which that file and `fix-sawk`'s block both
+    // say in their own words. ⚠️ **SATURATION IS THE ONE STATE THIS RUNG CANNOT SEE
+    // THE DIFFERENCE FROM VACUITY IN**, so the line after the partition drives a
+    // sentence OUTSIDE the opener population and requires a refusal.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([mapped.length, units(mapped)]).toEqual([8, 16]);
-    // 🛑 AND THE UNMAPPED ONE IS NAMED, so this rung says which sentence is still
-    // owed rather than only how many. D367's population, narrowed twice.
+    expect([mapped.length, units(mapped)]).toEqual([9, 18]);
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([unmapped.length, units(unmapped)]).toEqual([1, 2]);
-    expect(unmapped.map(([, s]) => s).sort()).toEqual([
-      "If you don't have exactly 3 cards in your hand, this attack does nothing.",
-    ]);
+    expect([unmapped.length, units(unmapped)]).toEqual([0, 0]);
+    // 🛑 THE ANTI-VACUITY HALF: a reader that answered everything would satisfy both
+    // lines above. It does not — the constructed near-miss one parameter value over is
+    // refused, and so is a sentence with no skeleton at all.
+    expect(
+      deriveAttackRequirement("If you don't have exactly 4 cards in your hand, this attack does nothing."),
+    ).toBeNull();
+    expect(deriveAttackRequirement("Discard your hand and draw 6 cards.")).toBeNull();
     // The parts sum, which is what makes a partition a partition.
     expect(mapped.length + unmapped.length).toBe(openers.length);
     expect(units(mapped) + units(unmapped)).toBe(units(openers));
