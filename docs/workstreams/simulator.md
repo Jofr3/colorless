@@ -22181,6 +22181,112 @@ ex `sv06-029`/`-191` and Ninetales ex `sv03.5-038`/`-186`, both printing *"is no
 were refuted the same way. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
 
+## D387 — THE STAGE 1 CLAUSE: a SUBSET that is not a NARROWING, and a guard written to record the obvious that went red
+
+Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**, index 1 of two — "Rear Kick"
+({R}, 30, no effect text) is index 0): *"If your opponent's Active Pokémon is a Stage 1 Pokémon, this
+attack does 90 more damage."* — **1 sentence / 1 legal printing**, the FOURTH sibling of a shape this
+union has built three times (`opponentActiveIsBasic`, `opponentActiveIsEvolution`,
+`opponentActiveIsStage2`).
+
+### 🛑 A SUBSET IS NOT A NARROWING — the distinction the whole slice turns on
+
+D386's handoff flagged this candidate as *"a NARROWING of a live member"*, because every Stage 1
+satisfies `opponentActiveIsEvolution`'s `evolveFromOf(top) !== null`. D362 prices that class of change
+at **31 sites across 7 files**, so if the flag were right the row would cost ten times what its
+handoff quoted.
+
+**The set relation IS a subset. The build is NOT a narrowing. Those are different claims.**
+
+A member is narrowed by changing what **its own arms read**. Nothing here changed:
+
+* `opponentActiveIsEvolution` keeps `evolveFromOf(...) !== null`;
+* it keeps its `CONDITIONAL_DAMAGE_CLAUSES` row — **four printed sentences worth nine legal
+  printings**, every one of which spells the word *"Evolution"* and wants the wide reading;
+* it keeps both of its exhaustive-`switch` arms.
+
+So the third mechanism is free and the handed price stands: **1 printing / 3 mechanisms = 0.33**
+(one `cards.ts` predicate, the member plus its two arms, the clause row). **ASK "WHAT DO I HAVE TO
+EDIT", NOT "WHAT IS A SUBSET OF WHAT".** D296 wrote this paragraph one stage up as a warning and
+D367's clause-row comment quoted it forward; D387 is the first slice to need it as an ANSWER.
+
+### 🛑 …and the subset itself is a CATALOG COINCIDENCE, which the rung written to record it found
+
+§1 was written to assert *"every Stage 1 in the pool is also an Evolution"* — a sentence that reads
+like a rule of the game. **It went RED.** The two readings are facts about **two independent
+columns**: `stage` is a printed word and `evolveFrom` is a chain datum, and nothing in the ingest or
+the engine makes them agree. Swept over `FIXTURE_POOL`:
+
+* **67** bodies carry `stage: "Stage1"`;
+* **one of them has a NULL `evolveFrom`** — `fix-exstage1` ("Fixgrown ex"), written for another suite;
+* **24** bodies are an Evolution by the chain datum and NOT a Stage 1 by the printed word.
+
+So on this engine's own data the two readings disagree in **both** directions, and a build that had
+reached for "any Evolution" would have been leaning on a coincidence rather than on a rule.
+`fix-exstage1` is now a fifth ladder rung, driven on the predicate rather than on a board.
+**WHEN A GUARD IS WRITTEN TO RECORD SOMETHING OBVIOUS, RUN IT BEFORE YOU BELIEVE IT.**
+
+### The pricing, and the handoff's own ranking overturned
+
+| candidate | printings | mechanisms | ratio |
+|---|---|---|---|
+| the face-up PRIZE row | 2 | **9** | **0.22** |
+| the STAGE 1 row | 1 | **3** | **0.33** |
+| 🆕 the RETREAT-COST row (**not taken**) | 1 | **2** | **0.50** |
+
+**1.5× between the two that were handed over — the narrowest margin this chain has recorded, and the
+first time the winner is worth a single printing**, so the comparison had to be made on mechanisms
+alone. The Prize row lost on the four it needs and this one does not: a player CHOICE of Prize index
+(park, prompt, choice kind, the `preventBlock` pair, `programWalk` rows), an INDEX REMAP when a Prize
+is taken, a THIRD payoff anchor for the trailing reminder parenthetical, and a WIRE shape plus a UI —
+**plus `MATCH_RECORD_VERSION` 23 → 24, which this row does not owe at all**, so unlike at D386 the
+record bump is a differentiator again. On reachability, which the arithmetic does not show: the Prize
+gate's false arm needs the attack used six times (D383's `unreachable-population` shape), while all
+five rungs of this ladder are the ordinary board.
+
+🛑 **BUT RE-MEASURED OVER THE WHOLE RESIDUE, NEITHER WAS THE CHEAPEST.** *"If the Retreat Cost of your
+opponent's Active Pokémon is {C}{C} or more, this attack does 110 more damage."* prices at **1 / 2 =
+0.50**: ONE parameterised member with two arms, ONE literal clause row, and **zero new card
+predicates**, because `effectiveRetreatCost(state, pokemon)` (continuous.ts, D322) is already live and
+already folds the printed column, `stadiumRetreatDelta`, `opposingRetreatSurcharge` and
+`alliedRetreatDiscount` under one `Math.max(0, …)`. Nothing about it changed in the sixty-five slices
+since — **a "cheapest" claim is a measurement over the WHOLE residue, and D386's was a measurement
+over the rows it had already been thinking about.** D387 did not switch to it on D368's rule rather
+than on price: that row's SHAPE question is open (the printed noun phrase has **two live readings** in
+this engine, `retreatCostOf` and `effectiveRetreatCost`, which disagree on any board with a Stadium or
+a retreat aura), and this slice's was not.
+
+### The deck is the truth table of one printed word — a LADDER, not a pair
+
+There are **two** wrong readings of "Stage 1" and a pair of boards can only refuse one:
+
+| body | printed `stage` | member | refuses |
+|---|---|---|---|
+| `fix-bigbody` (200 HP) | `Basic` | FALSE | — the FALSE arm |
+| `fix-stage1-big` (220 HP) | `Stage1` | TRUE | — the TRUE arm |
+| `fix-stage2` (140 HP) | `Stage2` | FALSE | *"any Evolution"* (`evolveFromOf(...) !== null`) |
+| `fix-vstar-big` (260 HP) | `VSTAR` | FALSE | *"not Basic and not Stage 2"* |
+| `fix-exstage1` (predicate only) | `Stage1` | TRUE | *"Stage 1 ⊂ Evolution"* — it is a Stage 1 that is **not** an Evolution |
+
+The defenders are big on purpose: 90 + 90 = 180 and the pool's `fix-stage1` is 90 HP, so the printed
+bonus would knock it out and put a prize tail across every reading.
+
+⚠️ **`fix-stage1-big` EVOLVES FROM `fix-bigbody`, AND THAT IS THE ONE THING ABOUT IT THAT IS NOT
+ARBITRARY.** §5 drives a real §10 evolve on P2's **second** turn — §4 forbids evolving on your own
+first turn, so the board costs three `endTurn`s — and the SAME body goes FALSE → TRUE and 90 → 180.
+**This is the evolution case D386 declared it could not drive**, and it is the only rung where *"the
+TOP card is the current identity"* (§1.2) is a line of play rather than surgery.
+
+### The literal row won, and the token map learned nothing
+
+`OPPONENT_ACTIVE_TYPE_CLAUSE` is `^your opponent's Active Pokémon is a (.+) Pokémon$`, so this
+slice's clause reaches `CLAUSE_POKEMON_TYPES` and **misses** it; `boardConditionForClause` consults
+the LITERAL table first, so the row wins outright. **That is driven rather than asserted**: the same
+token handed to `YOUR_BENCH_TYPE_CLAUSE` — a template that shares the map and owns no literal row —
+is still `null`, and the control is asserted in three separate files (`stage1Bonus.test.ts` §4,
+`benchNamedBonus.test.ts` §6, `undamagedBonus.test.ts` §6). Two of those files previously pinned this
+sentence as REFUSED BY NAME; both are re-aimed at the stronger claim rather than deleted.
+
 ## D386 — THE HEALED-THIS-TURN CLAUSE: a compiler measurement that came back a DEAD HEAT, and the first persisted-shape move in eighteen slices
 
 Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, index 0 of two): *"If this Pokémon was
