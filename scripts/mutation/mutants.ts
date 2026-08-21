@@ -13523,11 +13523,14 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D365-stadium-row-ships-the-refused-rename",
     decision: "D365",
-    what: "🛑 C6 — THE WIDENING THIS SLICE REFUSED, INSTALLED AS ITS OWN COUNTER-READING: a row mapping Fan Rotom's *\"there is no Stadium in play\"* onto `yourStadiumInPlay`, which reads OWNERSHIP. The sentence carries no possessive, so the mutant answers FALSE on a board where the OPPONENT's Stadium is in the zone — cancelling an attack the printed card resolves — and it silently commits the engine to a member two other consumers (FALKNER, and the positive clause row) depend on meaning something narrower. **A ROW THAT LOOKS FREE BECAUSE A MEMBER'S NAME COULD STRETCH IS THE FAILURE THIS SLICE MEASURED AND DECLINED**",
+    what: "🛑 C6 — THE WIDENING THIS SLICE REFUSED, INSTALLED AS ITS OWN COUNTER-READING: Fan Rotom's *\"there is no Stadium in play\"* mapped onto `yourStadiumInPlay`, which reads OWNERSHIP. The sentence carries no possessive, so the mutant answers FALSE on a board where the OPPONENT's Stadium is in the zone — cancelling an attack the printed card resolves — and it silently commits the engine to a member two other consumers (FALKNER, and the positive clause row) depend on meaning something narrower. **A ROW THAT LOOKS FREE BECAUSE A MEMBER'S NAME COULD STRETCH IS THE FAILURE THIS SLICE MEASURED AND DECLINED**. ⚠️ **RE-POINTED AT D378, WHICH BUILT THE ROW THIS MUTANT USED TO INSERT.** Until D378 the clause had no row at all and the mutant ADDED one; a `new Map([...])` lets the LAST entry win, so the same insertion against D378's real row would have been a silent NO-OP and this mutant would have SURVIVED as a phantom. It now REPLACES the real row's member instead, which is the same claim against a tree where the correct answer exists — and D378's own `stadiumPresence.test.ts` §5 drives the separating board (P2 owns the Stadium; the printed card RESOLVES and the mutant cancels). **A MUTANT THAT INSERTS A ROW ROTS THE DAY THAT ROW IS BUILT, AND IT ROTS SILENTLY BY SURVIVING**",
     file: "packages/engine/src/effects.ts",
-    find: "  [\n    \"you don't have Uxie and Azelf on your Bench\",",
-    replace: "  [\"there is no Stadium in play\", { kind: \"yourStadiumInPlay\" }],\n  [\n    \"you don't have Uxie and Azelf on your Bench\",",
-    expectKilledBy: ["packages/engine/src/requirementFloor.test.ts"],
+    find: "  [\"there is no Stadium in play\", { kind: \"stadiumInPlay\" }],",
+    replace: "  [\"there is no Stadium in play\", { kind: \"yourStadiumInPlay\" }],",
+    expectKilledBy: [
+      "packages/engine/src/stadiumPresence.test.ts",
+      "packages/engine/src/requirementFloor.test.ts",
+    ],
   },
   // ── D366 — THE OWN-BENCH COUNT. Six rows, ONE PER CLAIM rather than one per
   //    site: the COMPARATOR is a floor (C1), the THRESHOLD is the printed 4 flipped
@@ -14418,5 +14421,97 @@ export const MUTANTS: Mutant[] = [
     find: "      return \"your opponent's Active Pokémon is Confused\";",
     replace: "      return \"your Active Pokémon is Confused\";",
     expectKilledBy: ["packages/engine/src/crossBoardStatus.test.ts"],
+  },
+  // ── D378 — STADIUM PRESENCE. Eight rows, ONE PER CLAIM: the arm drops the OWNER
+  //    test (C1) and does not pick the other seat instead (C2), and its polarity is
+  //    presence and not absence (C3); the BONUS row keeps the new member (C4) and the
+  //    printed bytes (C5); the CANCEL row keeps the printed "no" (C6); the OWNERSHIP
+  //    row one line up is NOT widened (C7); and the note keeps the presence voice (C8).
+  //
+  // 🛑 C1 AND C7 ARE THE SAME REFUSED RENAME, INSTALLED FROM BOTH ENDS, and that is
+  //    the point of running them as two rows: C1 narrows the NEW member into the old
+  //    one, C7 widens the OLD member into the new one. Every existing suite stays green
+  //    for C7 except `conditionalDamage.test.ts`, which has driven Palossand against
+  //    the opponent's Stadium since D115 — so the pair also measures whether the
+  //    protection D378 relies on was already there or is this slice's own.
+  //
+  // ⚠️ C4 IS THE EDIT THAT LEAVES EVERY SENTENCE STILL RESOLVING. A swapped member
+  //    keeps both readers answering; only the DAMAGE paid on a board where the
+  //    opponent owns the Stadium can tell, which is why §4 fields Probopass and
+  //    Palossand on ONE state and reports both numbers.
+  {
+    id: "D378-presence-keeps-the-owner-test",
+    decision: "D378",
+    what: "🛑 C1 — **THE REFUSED RENAME, INSTALLED AT THE ARM**: the new member's body becomes `yourStadiumInPlay`'s, which sits ONE CASE UP in the same `switch` and is the real code an author reaching for the nearest existing arm copies (D190b's shape). It is CORRECT on every board where the attacker played the Stadium — which is most boards a suite writes by accident — and wrong only when the OPPONENT owns it. `stadiumPresence.test.ts` §3 asserts presence agrees across seats on all three zone states while ownership disagrees on two of them, §4 lands Mountain Drop for 140 off P2's Stadium, and §5 resolves Assault Landing on the same board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.stadium !== null;",
+    replace: "      return state.stadium !== null && state.stadium.owner === seat;",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-presence-reads-the-opponents-stadium",
+    decision: "D378",
+    what: "🛑 C2 — THE OTHER HALF OF THE SAME MISTAKE: the arm reads the OPPONENT's ownership. ⚠️ **A SUITE THAT ONLY EVER PLAYS THE STADIUM FROM P2 — the board this slice was told to build — IS GREEN ON THIS ONE**, which is exactly why §3 and §4 also drive the P1-owned board and the EMPTY zone. It is the mutant that punishes over-fitting to the interesting case, and the union has a real precedent for the spelling: every cross-board member in the switch reads `otherSeat(seat)`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.stadium !== null;",
+    replace: "      return state.stadium !== null && state.stadium.owner !== seat;",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-presence-inverts-to-absence",
+    decision: "D378",
+    what: "🛑 C3 — THE POLARITY, AND IT IS THE MISTAKE THE PRINTED TEXT INVITES: two of this member's three printings spell *\"If there is **no** Stadium in play\"*, so an author writing the arm from the sentence that pays for it inverts the test. `ATTACK_REQUIREMENT_CLAUSES`' polarity rule puts the negation in the SKELETON, and this row is what says the arm did not take it too. Both consequents flip at once: §4's empty-zone case pays the +70 it must not, and §5's empty-zone case RESOLVES an attack the card cancels",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.stadium !== null;",
+    replace: "      return state.stadium === null;",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-bonus-row-ships-the-refused-rename",
+    decision: "D378",
+    what: "🛑 C4 — THE BONUS ROW REACHES ONE LINE UP: Probopass's *\"a Stadium is in play\"* maps onto `yourStadiumInPlay`. The two rows are adjacent, added to the same table, and the member's name could stretch to cover the sentence — which is D362's trap verbatim, and the reason this slice added a member instead of re-pointing one. **THE SENTENCE STILL RESOLVES**, so nothing about readership goes red and only the damage paid on a board where the opponent owns the Stadium can tell: §4 measures 140 there, and a swapped member pays 70",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"a Stadium is in play\", { kind: \"stadiumInPlay\" }],",
+    replace: "  [\"a Stadium is in play\", { kind: \"yourStadiumInPlay\" }],",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-bonus-row-key-is-a-paraphrase",
+    decision: "D378",
+    what: "🛑 C5 — D183's DEFECT, TRANSCRIBED: the key gains the word **card**. The catalog says *\"Stadium card\"* all over the Trainer surface (*\"Search your deck for a Stadium card\"*), so this is the spelling an author writing from memory produces, and it reads as the same sentence. The member, the arm and every board rung stay correct; the clause simply stops resolving, the bonus silently never pays, and the printing falls back onto the LOUD `ATTACK_EFFECT_SKIPPED` path. `stadiumPresence.test.ts` §2 pins the key by CODE-POINT COUNT (57 / 20) and refuses this very paraphrase among five",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"a Stadium is in play\", { kind: \"stadiumInPlay\" }],",
+    replace: "  [\"a Stadium card is in play\", { kind: \"stadiumInPlay\" }],",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-cancel-row-key-loses-the-no",
+    decision: "D378",
+    what: "🛑 C6 — THE CANCEL KEY IS SPELLED POSITIVE: *\"there is no Stadium in play\"* becomes *\"there is a Stadium in play\"*. The polarity rule makes the positive spelling LOOK right — every other key in this table hands back a POSITIVE member — so nothing in the row reads wrong, and D377's own C7 recorded the identical trap one member over. Fan Rotom simply stops matching and \"Assault Landing\" gates on nothing, which §2 catches on the printed bytes and §5 catches on an EMPTY zone, where the attack must FAIL with `reason: \"requirement\"` and instead deals 70",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"there is no Stadium in play\", { kind: \"stadiumInPlay\" }],",
+    replace: "  [\"there is a Stadium in play\", { kind: \"stadiumInPlay\" }],",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
+  {
+    id: "D378-ownership-row-widened-into-presence",
+    decision: "D378",
+    what: "🛑 C7 — **THE REFUSED RENAME INSTALLED FROM THE OTHER END**: the SHIPPED Palossand row *\"you have a Stadium in play\"* is re-pointed at the NEW member, which is precisely the \"simplification\" a successor reaches for on seeing two adjacent Stadium rows on two members. It is the change D364 priced in prose and D378 refused by measurement, and its whole cost is one board: Palossand `sv02-096` \"Earthen Power\" starts paying +80 off the OPPONENT's Stadium. ⚠️ **AND THIS ROW MEASURES WHETHER THE PROTECTION IS THIS SLICE'S OR WAS ALREADY THERE** — `conditionalDamage.test.ts` has driven that exact board since D115, and `stadiumPresence.test.ts` §2 drives it again from the table side",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you have a Stadium in play\", { kind: \"yourStadiumInPlay\" }],",
+    replace: "  [\"you have a Stadium in play\", { kind: \"stadiumInPlay\" }],",
+    expectKilledBy: [
+      "packages/engine/src/conditionalDamage.test.ts",
+      "packages/engine/src/stadiumPresence.test.ts",
+    ],
+  },
+  {
+    id: "D378-presence-note-borrows-the-ownership-voice",
+    decision: "D378",
+    what: "🛑 C8 — THE NOTE BECOMES THE OWNERSHIP FRAGMENT, which is the neighbouring arm's real return value copied verbatim (D190b's shape) and reads perfectly well on a HUD pill. What it destroys is the ROUND-TRIP: this note IS the `CONDITIONAL_DAMAGE_CLAUSES` key byte for byte, so a reject message would describe the wrong side of the §7.3 distinction and the two members would return the SAME string — the one thing a note-based disambiguation cannot survive. `stadiumPresence.test.ts` §2 pins the string and asserts the two notes DIFFER",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return \"a Stadium is in play\";",
+    replace: "      return \"you have a Stadium in play\";",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
   },
 ];
