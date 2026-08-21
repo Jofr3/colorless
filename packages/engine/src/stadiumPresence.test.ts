@@ -269,15 +269,21 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
     // BAND: it was the last clause in it, so every band rung below is re-aimed off the
     // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    expect(refused.length).toBe(19);
-    expect(units(refused)).toBe(22);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
+    // the emptied band (D379).
+    expect(refused.length).toBe(18);
+    expect(units(refused)).toBe(21);
     // 🛑 EVERY EARLIER HEAD IS RE-DERIVED FROM THIS ONE rather than frozen: D377's
     // 22/26, D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 3, units(refused) + 4]).toEqual([22, 26]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([22, 26]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([24, 28]);
+    expect([refused.length + 7, units(refused) + 9]).toEqual([25, 30]);
+    expect([refused.length + 8, units(refused) + 11]).toEqual([26, 32]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {

@@ -214,8 +214,14 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
     // BAND: it was the last clause in it, so every band rung below is re-aimed off the
     // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    expect(refused.length).toBe(19);
-    expect(units(refused)).toBe(22);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
+    // the emptied band (D379).
+    expect(refused.length).toBe(18);
+    expect(units(refused)).toBe(21);
     // 🛑 AND THE STEP IS 1:2, the shape D369/D370/D371/D373 kept. Every earlier head
     // is re-derived from THIS one rather than frozen: 🆕 D374's 26/32, D373's 27/34,
     // D372's 28/36, D371's 30/38.
@@ -223,12 +229,12 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
-    expect([refused.length + 9, units(refused) + 14]).toEqual([28, 36]);
-    expect([refused.length + 11, units(refused) + 16]).toEqual([30, 38]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([24, 28]);
+    expect([refused.length + 7, units(refused) + 9]).toEqual([25, 30]);
+    expect([refused.length + 8, units(refused) + 11]).toEqual([26, 32]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([27, 34]);
+    expect([refused.length + 10, units(refused) + 15]).toEqual([28, 36]);
+    expect([refused.length + 12, units(refused) + 17]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -254,10 +260,13 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // SATURATION SHAPE — an emptied population cannot go red for the reason that
     // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
-    // and the 1-printing band is SEVENTEEN deep.
+    // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect(byClause.size).toBe(18);
+    // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
+    // the ONLY band that moved. The 2-printing band was already empty and stays empty,
+    // and the refusal is still driven from OUTSIDE it.
+    expect(byClause.size).toBe(17);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);

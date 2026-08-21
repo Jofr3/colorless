@@ -281,12 +281,18 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
     // BAND: it was the last clause in it, so every band rung below is re-aimed off the
     // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    expect(refused.length).toBe(19);
-    expect(units(refused)).toBe(22);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
+    // the emptied band (D379).
+    expect(refused.length).toBe(18);
+    expect(units(refused)).toBe(21);
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
-    expect([refused.length + 2, units(refused) + 3]).toEqual([21, 25]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([22, 26]);
+    expect([refused.length + 3, units(refused) + 4]).toEqual([21, 25]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

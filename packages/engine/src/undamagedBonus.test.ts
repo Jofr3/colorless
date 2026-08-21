@@ -371,13 +371,24 @@ describe("§6 — the census this row moves, and the three summands it does not"
     // 🆕 D374 — **TWO, WHERE THIS ROW MEASURED THREE, AND THE ONE THAT LEFT IS THE
     // ONE THIS COMMENT CALLED A TRAP.** The list is a live derivation, so it steps on
     // its own the day a token stops being refused.
-    expect(anchored.sort()).toEqual(["Stage 1", "Tera"]);
-    // Each remaining one is a trap and not floor:
-    //  • "Stage 1" was refused BY NAME by D367 (`opponentActiveIsStage1` is unbuilt);
-    //  • "Tera" is not a `Card.types` value at all.
-    // So the floor over this residue is STILL ZERO, which is the measurement that says
-    // a member had to be bought or nothing taken.
-    expect(anchored.filter((t) => t === "Tera" || t === "Stage 1")).toHaveLength(2);
+    // 🆕🆕 D387 — **TWO -> ONE, AND IT STEPPED ON ITS OWN EXACTLY AS PROMISED.** "Stage
+    // 1" left because D387 bought `opponentActiveIsStage1` — and it left through the
+    // LITERAL table, not through the token map: the loose pattern still reaches
+    // `CLAUSE_POKEMON_TYPES` with that token and still misses it, so the map's
+    // vocabulary is unchanged and the anchored-template floor is unchanged with it.
+    expect(anchored.sort()).toEqual(["Tera"]);
+    // The one that remains is a trap and not floor: "Tera" is not a `Card.types` value
+    // at all — it is DEMAND with no supply column (D207), so no predicate over the
+    // catalog can answer it. So the floor over this residue is STILL ZERO, which is
+    // the measurement that says a member has to be bought or nothing taken.
+    expect(anchored.filter((t) => t === "Tera")).toHaveLength(1);
+    // 🛑 …and the token that LEFT is proved to have left through the ROW rather than
+    // through the MAP, on the template that shares the map and owns no literal row.
+    expect(
+      deriveAttackDamageBonus(
+        "If you have any Stage 1 Pokémon on your Bench, this attack does 30 more damage.",
+      ),
+    ).toBeNull();
     // 🛑 **AND "Team Rocket's" LEFT THE WAY THIS ROW SAID IT WOULD HAVE TO.** D368
     // wrote it down as a trap because `energy: "special"` would ALSO match Reversal
     // Energy — a widening the printing does not ask for. D374 did not widen that

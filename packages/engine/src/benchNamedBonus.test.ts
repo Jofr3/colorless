@@ -174,30 +174,26 @@ const LEFT: readonly (readonly [string, number, string])[] = [
     "NOT A `BoardCondition` AT ALL — the clause reads THIS ATTACK'S COST, which two printings set to two different values, so no state+seat predicate can answer it",
   ],
   [
-    // 🛑🆕🆕 D386 — AND AGAIN, FOR THE SEVENTH SLICE RUNNING, AND THIS TIME THE ROW
-    // HANDED OVER AN *EMPTY BAND*. The HEALED-THIS-TURN clause that sat here — the last
-    // 2-printing entry in the residue, deferred seven times on the `MATCH_RECORD_VERSION`
-    // bump its state costs — was taken by D386 (`healedThisTurn.test.ts`) and the bump
-    // was paid: `InPlayPokemon` gained a REQUIRED `healedTurn: number | null`, a second
-    // per-turn stamp beside `promotedTurn`, and the record version moved 22 -> 23.
-    // ⚠️ **AND THE COST STRING WAS RIGHT ABOUT THE PRICE AND WRONG ABOUT THE VERDICT.**
-    // It priced the row correctly at "a persisted-shape change plus an engine bump" and
-    // concluded that put it "above a 2-printing purchase" — which held only while a
-    // CHEAPER 2-printing rival existed. By D385 the only other candidate left (the
-    // face-up Prize row) owed the same bump PLUS a wire shape and a UI, so the ground
-    // this row was deferred on had stopped separating anything. **A COST THAT NEVER
-    // CHANGES CAN STOP BEING A REASON, BECAUSE WHAT IT IS COMPARED AGAINST MOVES.**
+    // 🛑🆕🆕 D387 — AND AGAIN, FOR THE EIGHTH SLICE RUNNING. The STAGE 1 clause that
+    // sat here — named by D386 as the cheapest thing left, and refused BY NAME by D367
+    // one row before that — was taken by D387 (`stage1Bonus.test.ts`) for ONE
+    // `cards.ts` predicate, ONE `BoardCondition` member with its two arms and ONE
+    // literal clause row. `MATCH_RECORD_VERSION` stayed 23.
     //
-    // 🛑 **WHAT TAKES ITS PLACE IS BELOW THE BAND ENTIRELY: THE 2-PRINTING BAND IS NOW
-    // EMPTY.** Everything left in this residue is ONE printing apiece (seventeen of
-    // them) except the 5-printing entry above, which is disqualified on SHAPE. The row
-    // named here is the cheapest of the seventeen and is named rather than ranked: the
-    // three sibling members it copies (`opponentActiveIsBasic`,
-    // `opponentActiveIsEvolution`, `opponentActiveIsStage2`) already exist, so it is a
-    // fourth of a shape this union has built three times.
-    "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.",
+    // 🛑 **AND THE HANDOFF'S RANKING WAS WRONG AT ITS OWN HEAD, WHICH IS THIS ROW'S
+    // FINDING.** D386 called the Stage 1 clause "THE CHEAPEST THING LEFT" at
+    // 1 printing / 3 mechanisms = **0.33**. The row named below is 1 / **2** = **0.50**
+    // — cheaper — and nothing about it changed in the meantime: `effectiveRetreatCost`
+    // (continuous.ts, D322) has been live for sixty-five slices, so the read this
+    // clause needs was ALREADY BUILT and the purchase is a member and a row. **A
+    // "cheapest" claim is a measurement over the WHOLE residue, and D386's was a
+    // measurement over the rows it had already been thinking about.**
+    //
+    // ⚠️ **AND D387 DID NOT SWITCH TO IT, ON D368's RULE RATHER THAN ON PRICE**: this
+    // row's SHAPE question is open and the Stage 1 row's was not. Settle it first.
+    "If the Retreat Cost of your opponent's Active Pokémon is {C}{C} or more, this attack does 110 more damage.",
     1,
-    "ONE member, TWO arms and ONE clause row — the FOURTH sibling of a shape already built three times, needing only an `isStage1Pokemon` beside `isStage2Pokemon` (cards.ts, D262). ⚠️ ASK D262's QUESTION FIRST: `opponentActiveIsEvolution` is `evolveFromOf(top) !== null`, which a Stage 1 ALSO satisfies, so this is a NARROWING of a live member and not a widening of it — D362's rule says a narrowing has to be proved against every existing consumer",
+    "ONE PARAMETERISED member, TWO arms and ONE clause row — and ZERO new card predicates, because `effectiveRetreatCost` (continuous.ts, D322) is already live and already folds the printed column, Stadium deltas, opposing surcharges and allied discounts under one `Math.max(0, …)`. 1 / 2 = **0.50**, the cheapest thing in this residue. 🛑 SETTLE THE SHAPE QUESTION FIRST (D368): the printed noun phrase is \"the Retreat Cost of your opponent's Active Pokémon\", and this engine has TWO readings of it — `retreatCostOf` (the printed card column) and `effectiveRetreatCost` (the board fold). They disagree on every board carrying a Stadium or a retreat aura, so a build that picks one without asking the catalog is a coin toss",
   ],
   [HANDED_CANDIDATE, 1, "an opponent-seat bench COUNT — D366's own handoff, and the reason this slice measured instead of inheriting"],
 ];
@@ -300,18 +296,21 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
     // +100) — re-derived live rather than decremented, and it EMPTIES the 2-printing
     // band that the `LEFT` table above has tracked since D376.
-    expect([refused.length, units(refused)]).toEqual([19, 22]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
-    expect([refused.length + 9, units(refused) + 14]).toEqual([28, 36]);
-    expect([refused.length + 11, units(refused) + 16]).toEqual([30, 38]);
-    expect([refused.length + 12, units(refused) + 18]).toEqual([31, 40]);
-    expect([refused.length + 13, units(refused) + 20]).toEqual([32, 42]);
-    expect([refused.length + 14, units(refused) + 22]).toEqual([33, 44]);
-    expect([refused.length + 15, units(refused) + 22 + 3]).toEqual([34, 47]);
-    expect([refused.length + 15 + TAKEN.length, units(refused) + 25 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90), a
+    // 1:1 step and a SINGLETON, so the whole step falls on the 1-printing band.
+    expect([refused.length, units(refused)]).toEqual([18, 21]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([24, 28]);
+    expect([refused.length + 7, units(refused) + 9]).toEqual([25, 30]);
+    expect([refused.length + 8, units(refused) + 11]).toEqual([26, 32]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([27, 34]);
+    expect([refused.length + 10, units(refused) + 15]).toEqual([28, 36]);
+    expect([refused.length + 12, units(refused) + 17]).toEqual([30, 38]);
+    expect([refused.length + 13, units(refused) + 19]).toEqual([31, 40]);
+    expect([refused.length + 14, units(refused) + 21]).toEqual([32, 42]);
+    expect([refused.length + 15, units(refused) + 23]).toEqual([33, 44]);
+    expect([refused.length + 16, units(refused) + 23 + 3]).toEqual([34, 47]);
+    expect([refused.length + 16 + TAKEN.length, units(refused) + 26 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -509,13 +508,21 @@ describe("§4 — the Stage 2 row is not the Evolution row narrowed", () => {
       kind: "boardCondition",
       cond: { kind: "opponentActiveIsStage2" },
     });
-    // The Stage 1 sibling the pool prints ONE legal printing of is deliberately
-    // NOT bought — it stays refused, by name, so a successor inherits a measured
-    // gap rather than a silent one.
+    // 🆕🆕 D387 — THE STAGE 1 SIBLING THIS RUNG PINNED AS UNBOUGHT WAS BOUGHT, so the
+    // rung is re-aimed at what it was really about: the two rows are DIFFERENT KEYS
+    // and neither reaches the other. It used to say "still refused"; it now says
+    // "resolved, and to its OWN member" — which is the stronger claim and the one a
+    // wrong build would fail. Driven on boards in `stage1Bonus.test.ts` §3.
     const stage1Sentence =
       "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.";
     expect(units(corpus().filter(([, s]) => s === stage1Sentence))).toBe(1);
-    expect(resolvedByAnyReader(stage1Sentence)).toBe(false);
+    expect(deriveAttackDamageBonus(stage1Sentence)?.count).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "opponentActiveIsStage1" },
+    });
+    // …and the two keys differ by ONE PRINTED DIGIT, which is what makes the
+    // whole-clause key the thing keeping them apart.
+    expect(stage1Sentence.replace("Stage 1", "Stage 2")).not.toBe(stage2);
   });
 });
 
@@ -610,11 +617,33 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
     }
   });
 
+  it("🛑 D387's literal row won its clause, and the TYPE MAP learned nothing from it", () => {
+    // The control the rung below used to be able to make with "Stage 1" in its list.
+    // `YOUR_BENCH_TYPE_CLAUSE` shares `CLAUSE_POKEMON_TYPES` with the Active-type
+    // pattern and has NO literal row behind it, so the same token through that
+    // template is the measurement that separates "the row won" from "the map grew".
+    expect(
+      deriveAttackDamageBonus(
+        "If you have any Stage 1 Pokémon on your Bench, this attack does 30 more damage.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 30 more damage.",
+      )?.count,
+    ).toEqual({ kind: "boardCondition", cond: { kind: "opponentActiveIsStage1" } });
+  });
+
   it("🛑 the pattern is still LOOSE and the MAP is still the vocabulary — non-types stay LOUD", () => {
     // The regex captures `(.+)`, so every one of these reaches the lookup and
     // MISSES it. If the map ever became the regex, these would silently resolve to
     // a type that does not exist.
-    for (const notAType of ["Stage 1", "Stage 3", "Tera", "Evolution", "{Z}", "{}", "constructor"]) {
+    // 🆕🆕 D387 — "Stage 1" LEFT THIS LIST, and it left through the LITERAL table
+    // rather than through the map: D387 added a whole-clause row for it, and
+    // `boardConditionForClause` consults that table first. The map itself learned
+    // NOTHING — the rung directly below drives the same token through a template that
+    // shares the map and has no literal row behind it, and it is still null.
+    for (const notAType of ["Stage 3", "Tera", "Evolution", "{Z}", "{}", "constructor"]) {
       expect(
         deriveAttackDamageBonus(
           `If your opponent's Active Pokémon is a ${notAType} Pokémon, this attack does 30 more damage.`,
@@ -628,8 +657,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(365); // 🆕🆕 D386 +1 sentence (THE HEALED-THIS-TURN CLAUSE — Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, **+100**) at 2 legal printings: ONE `BoardCondition` member (`yourActiveHealedThisTurn`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO exhaustive-switch arms and ONE new REQUIRED `InPlayPokemon` field — the FIRST entry on this chain to move `MATCH_RECORD_VERSION`, 22 -> 23) // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1257); // 🆕🆕 D386 +2 printings (THE HEALED-THIS-TURN CLAUSE — one sentence, two legal printings, a 1:2 step) // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(366); // 🆕🆕 D387 +1 sentence (THE STAGE 1 CLAUSE — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**) at 1 legal printing: ONE `cards.ts` predicate (`isStage1Pokemon`), ONE `BoardCondition` member (`opponentActiveIsStage1`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — a SUBSET of `opponentActiveIsEvolution` that is NOT a narrowing of it, so that member and all NINE of its printings stand still) // 🆕🆕 D386 +1 sentence (THE HEALED-THIS-TURN CLAUSE — Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, **+100**) at 2 legal printings: ONE `BoardCondition` member (`yourActiveHealedThisTurn`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO exhaustive-switch arms and ONE new REQUIRED `InPlayPokemon` field — the FIRST entry on this chain to move `MATCH_RECORD_VERSION`, 22 -> 23) // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1258); // 🆕🆕 D387 +1 printing (THE STAGE 1 CLAUSE — one sentence, one legal printing; the family's third 1:1 step) // 🆕🆕 D386 +2 printings (THE HEALED-THIS-TURN CLAUSE — one sentence, two legal printings, a 1:2 step) // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -669,10 +698,31 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // STRICT-INEQUALITY TWIN resolved ONE sentence worth ONE printing, the family's
     // first 1:1 step through THIS instrument as well. ⚠️ **BOTH CHAINS ARE EDITED AT
     // THE FRONT, NEVER AT THE END.**
-      resolved.length - 1 - 1 - 1 - 2 - 1 - 2 - TAKEN.length - 3 - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1 - 1,
+    // 🆕🆕 D387 — a `- 1` / `- 1` pair at the FRONT of both chains for the third time:
+    // the STAGE 1 CLAUSE resolved ONE sentence worth ONE printing. ⚠️ **BOTH CHAINS
+    // ARE EDITED AT THE FRONT, NEVER AT THE END.**
+      resolved.length -
+        1 -
+        1 -
+        1 -
+        1 -
+        2 -
+        1 -
+        2 -
+        TAKEN.length -
+        3 -
+        1 -
+        1 -
+        1 -
+        1 -
+        2 -
+        1 -
+        1 -
+        1 -
+        1,
     ).toBe(335);
     expect(
-      units(resolved) - 2 - 1 - 1 - 6 - 2 - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2,
+      units(resolved) - 1 - 2 - 1 - 1 - 6 - 2 - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2,
     ).toBe(1207);
   });
 

@@ -260,14 +260,20 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
     // BAND: it was the last clause in it, so every band rung below is re-aimed off the
     // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    expect(refused.length).toBe(19);
-    expect(units(refused)).toBe(22);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
+    // the emptied band (D379).
+    expect(refused.length).toBe(18);
+    expect(units(refused)).toBe(21);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 5, units(refused) + 6]).toEqual([24, 28]);
-    expect([refused.length + 6, units(refused) + 8]).toEqual([25, 30]);
-    expect([refused.length + 7, units(refused) + 10]).toEqual([26, 32]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([27, 34]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([24, 28]);
+    expect([refused.length + 7, units(refused) + 9]).toEqual([25, 30]);
+    expect([refused.length + 8, units(refused) + 11]).toEqual([26, 32]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -371,10 +377,13 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // SATURATION SHAPE — an emptied population cannot go red for the reason that
     // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
-    // and the 1-printing band is SEVENTEEN deep.
+    // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band2).toEqual([]);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect(byClause.size).toBe(18);
+    // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
+    // the ONLY band that moved. The 2-printing band was already empty and stays empty,
+    // and the refusal is still driven from OUTSIDE it.
+    expect(byClause.size).toBe(17);
     // …and the 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -389,7 +398,11 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // available for one purchase. It was taken because the band above it is EMPTY of
     // anything cheaper: the only 2-printing clause left needs a persisted per-turn
     // HEALED flag and a `MATCH_RECORD_VERSION` bump.
-    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(17);
+    // 🆕🆕 D387 — 17 -> **16**: the STAGE 1 clause left the singleton band, the same
+    // trade one slice on — a 1-printing clause bought for ONE nullary member plus one
+    // `cards.ts` predicate. The band above is STILL empty, and the only clause left
+    // above one printing is the 5-printing declaration one, disqualified on SHAPE.
+    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(16);
   });
 });
 

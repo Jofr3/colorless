@@ -222,8 +222,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
     // BAND: it was the last clause in it, so every band rung below is re-aimed off the
     // WHOLE distribution rather than off a list that can no longer be non-empty (D379).
-    expect(refused.length).toBe(19);
-    expect(units(refused)).toBe(22);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
+    // the emptied band (D379).
+    expect(refused.length).toBe(18);
+    expect(units(refused)).toBe(21);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -235,20 +241,20 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 5).toBe(24);
-    expect(units(refused) + 6).toBe(28);
-    expect(refused.length + 6).toBe(25);
-    expect(units(refused) + 8).toBe(30);
-    expect(refused.length + 7).toBe(26);
-    expect(units(refused) + 10).toBe(32);
-    expect(refused.length + 8).toBe(27);
-    expect(units(refused) + 12).toBe(34);
-    expect(refused.length + 9).toBe(28);
-    expect(units(refused) + 14).toBe(36);
-    expect(refused.length + 11).toBe(30);
-    expect(units(refused) + 16).toBe(38);
-    expect(refused.length + 12).toBe(31);
-    expect(units(refused) + 18).toBe(40);
+    expect(refused.length + 6).toBe(24);
+    expect(units(refused) + 7).toBe(28);
+    expect(refused.length + 7).toBe(25);
+    expect(units(refused) + 9).toBe(30);
+    expect(refused.length + 8).toBe(26);
+    expect(units(refused) + 11).toBe(32);
+    expect(refused.length + 9).toBe(27);
+    expect(units(refused) + 13).toBe(34);
+    expect(refused.length + 10).toBe(28);
+    expect(units(refused) + 15).toBe(36);
+    expect(refused.length + 12).toBe(30);
+    expect(units(refused) + 17).toBe(38);
+    expect(refused.length + 13).toBe(31);
+    expect(units(refused) + 19).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -273,10 +279,13 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // SATURATION SHAPE — an emptied population cannot go red for the reason that
     // matters — so the refusal is driven from OUTSIDE it: the ONLY clause left above
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
-    // and the 1-printing band is SEVENTEEN deep.
+    // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect(byClause.size).toBe(18);
+    // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
+    // the ONLY band that moved. The 2-printing band was already empty and stays empty,
+    // and the refusal is still driven from OUTSIDE it.
+    expect(byClause.size).toBe(17);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
@@ -433,7 +442,17 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // Energy at all, and it prints no Resistance — what that slice reads off a board is
     // a per-turn STAMP on `InPlayPokemon` (`healedTurn`), which is not a printed column
     // at all, so `Card.resistances` is untouched for a SEVENTH consecutive slice.
-    expect(ids).toHaveLength(474);
+    // 🆕🆕 D387 — 474 -> **477**, and the other two columns stand still a SIXTEENTH
+    // time. 🛑 **AND IT IS THE FIRST STEP BIGGER THAN ONE SINCE D377**: D387 adds THREE
+    // bodies (`fix-spirited`, the printed attacker; `fix-stage1-big` and
+    // `fix-vstar-big`, two DEFENDERS that exist only to carry a printed `stage` word),
+    // and none of the three prints a Resistance — what that slice reads off a card is
+    // `Card.stage`, a printed column that is NOT this one, so `Card.resistances` is
+    // untouched for an EIGHTH consecutive slice. ⚠️ **A COUNT THAT MOVES BY THREE IS
+    // NOT A DIFFERENT KIND OF MOVE FROM ONE THAT MOVES BY ONE** — what makes the other
+    // two columns stand still is WHICH COLUMN the slice reads, never how many bodies
+    // it adds.
+    expect(ids).toHaveLength(477);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -484,17 +503,21 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // (`fix-lively`, Maractus's "Lively Needles" demonstrator), ZERO Energy, ZERO
     // Resistances, and an instrument that is a per-turn STAMP on `InPlayPokemon` —
     // not on a card at all. ⚠️ **THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.**
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D387 — a `- 3` term at the FRONT of the chain, the first term bigger than
+    // one since D377: THREE bodies (`fix-spirited`, `fix-stage1-big`, `fix-vstar-big`),
+    // ZERO Energy, ZERO Resistances, and an instrument that is `Card.stage` — a printed
+    // column, but not this one. ⚠️ **THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.**
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

@@ -288,7 +288,10 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
     // +100), a 1:2 step — and it was NOT a singleton, so unlike D384's step this one
     // falls on the NON-singleton side and the arithmetic below moves with it.
-    expect([refused.length, units(refused)]).toEqual([19, 22]);
+    // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
+    // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90), a
+    // 1:1 step and a SINGLETON, so the whole step falls on the 1-printing band.
+    expect([refused.length, units(refused)]).toEqual([18, 21]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -309,7 +312,11 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // band with no purchasable member above 1 at all.
     expect(refused.length - singletons.length).toBe(2);
     expect(units(refused) - units(singletons)).toBe(5);
-    expect([singletons.length, units(singletons)]).toEqual([17, 17]);
+    // 🆕🆕 D387 — the singleton band 17 / 17 -> **16 / 16** and the non-singleton side
+    // STANDS STILL at 2 / 5: the STAGE 1 clause was a SINGLETON, so this is D384's
+    // step repeated and the comparison this rung makes (six printings for one op
+    // against ONE for the best clause row) is unchanged by it.
+    expect([singletons.length, units(singletons)]).toEqual([16, 16]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);
