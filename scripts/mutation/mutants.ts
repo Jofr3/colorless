@@ -5709,8 +5709,8 @@ export const MUTANTS: Mutant[] = [
     // them. The quoted line was never edited — a `git grep` for it still finds it —
     // and the row broke anyway. **A MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY,
     // AND AN ADDITION CAN FALSIFY IT WITHOUT TOUCHING A CHARACTER.**
-    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
+    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5746,8 +5746,8 @@ export const MUTANTS: Mutant[] = [
     what: 'the printed "+" is left unexplained, so all five printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader over)',
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
-    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    coinExplainsModifier;",
-    replace: "    bonusConsequent !== null ||\n    coinExplainsModifier;",
+    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
+    replace: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5756,9 +5756,9 @@ export const MUTANTS: Mutant[] = [
     what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
-    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
+    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
     replace:
-      "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    damageSuppression !== null;",
+      "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -8491,8 +8491,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the reader stops claiming the printed base, so it lands pre-program AND again inside the gate - the double hit effects.ts refuses, on both arms",
     file: "packages/engine/src/attack.ts",
-    find: '    bonusConsequent !== null ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    coinFlip?.kind === "perHeads"',
+    find: '    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8500,8 +8500,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: 'the printed "+" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader further on)',
     file: "packages/engine/src/attack.ts",
-    find: "    bonusConsequent !== null ||\n    coinExplainsModifier;",
-    replace: "    coinExplainsModifier;",
+    find: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
+    replace: "    optionalCostBoost !== null ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8509,8 +8509,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
     file: "packages/engine/src/attack.ts",
-    find: "    bonusConsequent !== null ||\n    damageSuppression !== null;",
-    replace: "    damageSuppression !== null;",
+    find: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
+    replace: "    optionalCostBoost !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
