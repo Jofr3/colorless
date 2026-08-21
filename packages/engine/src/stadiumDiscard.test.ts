@@ -320,15 +320,15 @@ describe("§2 — the two readings, pinned byte-for-byte", () => {
 
 describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vacated", () => {
   it.each(SEEDS)("seed %i — P2's Stadium goes to P2's discard, not the attacker's", (seed) => {
-    let state = blazingDestruction(board(seed, "p2"));
-    const stadium = state.stadium;
+    const before = blazingDestruction(board(seed, "p2"));
+    const stadium = before.stadium;
     if (stadium === null) throw new Error("expected P2's Stadium in the zone");
     expect(stadium.owner).toBe("p2");
-    const p1Discard = state.players.p1.discard.length;
-    const p2Discard = state.players.p2.discard.length;
+    const p1Discard = before.players.p1.discard.length;
+    const p2Discard = before.players.p2.discard.length;
 
-    const result = attack(state);
-    state = result.state;
+    const result = attack(before);
+    const state = result.state;
 
     // The zone is EMPTY…
     expect(state.stadium).toBeNull();
@@ -339,6 +339,24 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
     // REDDENS ON, and it is the whole reason the board is built with P2 as owner.
     expect(state.players.p1.discard).toHaveLength(p1Discard);
     expect(state.players.p1.discard).not.toContain(stadium.uid);
+    // 🛑🛑 **AND THE PILE IS THE *ONLY* THING THAT MOVED — A RUNG THE MUTATION HARNESS
+    // ASKED FOR AND THE FIRST DRAFT OF THIS FILE DID NOT HAVE.**
+    // `D380-stadium-discard-routes-to-the-other-seat` SURVIVED the four assertions
+    // above. It reads `players[otherSeat(owner)]` and writes the result back under
+    // `owner`, so P2's whole side is replaced by P1's with the uid appended — and on
+    // a board where both piles are EMPTY and both decks come from one list, *"contains
+    // the uid"* and *"grew by one"* are BOTH STILL TRUE. **A SEAT DEFECT CAN HIDE
+    // INSIDE A SYMMETRIC BOARD**, which is D202's unreachable-population finding one
+    // mechanism over. The repair is not a bigger pile: it is asserting the pile's
+    // CONTENTS as an extension of its own former contents, and pinning the zones a
+    // cross-seat read would overwrite. ⚠️ **A WHOLE-SIDE COMPARISON WAS TRIED FIRST
+    // AND IS WRONG**: the attack ends P1's turn, so P2 legitimately DRAWS before this
+    // line runs, and the guard would have been red on a correct engine.
+    expect(state.players.p2.discard).toEqual([...before.players.p2.discard, stadium.uid]);
+    expect(state.players.p2.active).toEqual(before.players.p2.active);
+    expect(state.players.p2.bench).toEqual(before.players.p2.bench);
+    expect(state.players.p1.discard).toEqual(before.players.p1.discard);
+    expect(state.players.p1.active).toEqual(before.players.p1.active);
     // The EXISTING event, under the OWNER's seat — `playStadium`'s row verbatim.
     expect(find(result.events, "STADIUM_DISCARDED")).toEqual({
       type: "STADIUM_DISCARDED",
