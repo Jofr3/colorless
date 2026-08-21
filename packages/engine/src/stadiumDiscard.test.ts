@@ -1,0 +1,536 @@
+import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
+import { effectiveRetreatCost } from "./continuous";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackCoinFlip,
+  deriveAttackDamageBonus,
+  deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageSuppression,
+  deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackRequirement,
+} from "./effects";
+import type { EffectOp, GameEvent, GameState, Seat } from "./index";
+import {
+  STADIUM_DISCARD_DECK,
+  attachFromDeck,
+  driveSetup,
+  handFromDeck,
+  handUid,
+  mustApply,
+  setActiveFromDeck,
+  types,
+} from "./testFixtures";
+
+// 🆕🆕 D380 — THE STADIUM-DISCARD OP: THE FIRST SLICE IN THIS CORNER THAT BUYS AN
+// OP RATHER THAN A PREDICATE, AND IT IS SMALLER THAN ITS NAME.
+//
+// Nine consecutive slices bought `BoardCondition` members worth one to three
+// printings each. D379 measured the remainder and the arithmetic ended the era: the
+// best clause row still on the table is worth ONE printing, and this family is worth
+// ELEVEN. This slice takes SIX of them on ONE field-free op:
+//
+//   Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing Destruction" (no cost, no damage)  ┐
+//   Skarmory          `sv06-119`            "Big Storm"           ({C}{C}{C}, 90)       ├ "Discard a Stadium in play."          4
+//   Mow Rotom         `sv10-009`            "Trimming Mower"      ({G}, 20)             ┘
+//   Wooloo            `sv07-124`            "Knock Over"          ({C}{C}, 30)          ┐ "You may discard a Stadium in play."  2
+//   Dubwool           `sv07-125`            "Knock Over"          ({C}{C}, 70)          ┘
+//
+// 🛑 **THE OP IS THREE LINES BECAUSE `playStadium` ALREADY WROTE THE TRANSITION.**
+// cardplay.ts's §7.3 replace path has discarded the OUTGOING Stadium to its OWNER's
+// pile and announced `STADIUM_DISCARDED` since M4. This op is that same move reached
+// from the other direction — no new event, no new zone, no new state key, and
+// `state.stadium` was already `{uid, owner} | null`. **PRICE AN OP AGAINST WHAT THE
+// ZONE ALREADY DOES, NOT AGAINST ITS NAME.**
+//
+// ### THE FOUR SHAPE QUESTIONS, ANSWERED FROM THE CATALOG BEFORE ANYTHING WAS SPELLED
+//
+// 1. **`You may discard…` IS NEITHER A SECOND OP NOR A FLAG — IT IS D186's `optional`
+//    OP, WHICH ALREADY EXISTS.** The printed sentence is the bare one with `You may `
+//    in front of it and the verb lowercased; nothing else differs, so a field on
+//    `discardStadium` would have been a second confirm mechanism beside a confirm op
+//    that already has a prompt kind, a choice kind and a dialog on both surfaces.
+//    ⚠️ And `optional`'s own doc block names the test this passes: the wrapper is for
+//    an inner op with **no empty answer**, which a nullary discard is.
+// 2. **AN EMPTY ZONE IS THREE DIFFERENT THINGS, AND THE CATALOG SAYS WHICH IS WHICH.**
+//    The bare imperative makes it a silent NO-OP (§8.6, "do as much as you can" — the
+//    printed sentence carries no "if you can't"); the *"You may"* spelling makes it a
+//    question that must NOT BE ASKED, because `optional` parks unconditionally and a
+//    confirm whose two answers leave the identical board is a decision with no stake —
+//    hence the `conditionGate` on D378's `stadiumInPlay`; and *"…If you can't, this
+//    attack does nothing."* makes it a CANCEL. 🛑 **`stadiumInPlay` ANSWERS THE THIRD
+//    ONE TOO — ON THE BOARD FACT — AND THE SKELETON STILL REFUSES IT.** §7.3's zone is
+//    a singleton and nothing in this engine can make an occupied zone undiscardable,
+//    so *"you can't discard a Stadium in play"* is exactly *"the zone is empty"*. What
+//    blocks it is the READER: `ATTACK_DOES_NOTHING` is anchored `^If`, and Eternatus
+//    `sv08-141` "World Ender" prints its clause TRAILING and ANAPHORIC. effects.ts has
+//    named that family beside `ATTACK_DOES_NOTHING` since D125 — and §6 RE-MEASURES it
+//    in THIS population: **2 sentences / 2 printings** of the legal attack column, the
+//    Stadium discard and a Basic {G} hand cost. So the mechanism is worth building for
+//    the family, not for one card, and §6 leaves both of them named and loud.
+// 3. **`discard that Stadium` NEEDS NO REFERENT, AND §7.3's SINGLETON IS THE REASON.**
+//    D378 made `stadiumInPlay` nullary because the zone holds at most one Stadium;
+//    the same fact makes *"a Stadium in play"* and *"that Stadium"* denote the same
+//    card on every legal board — the antecedent tests the singleton and the tail
+//    discards the singleton. The two tail sentences will therefore REUSE this op
+//    unchanged rather than widen it.
+// 4. **THE PILE IS THE STADIUM'S OWNER'S, NOT THE ACTOR'S** — the same
+//    PRESENCE/OWNERSHIP line D378 drew one union over. §3 drives every reading on a
+//    board where **P2** played the Stadium, because an op routing to `ctx.seat` is
+//    green on every board where the attacker owns it and silently wrong on the boards
+//    this family is actually printed for.
+//
+// ⚠️ **THE VACUITY MODES, NAMED BEFORE THE BUILD AND EACH DRIVEN ON A BOARD:**
+//   • the op could write the PILE and leave the ZONE occupied (or the reverse), and
+//     both halves are green against a uid-in-discard assertion alone — §3 therefore
+//     reads Beach Court's CONTINUOUS retreat discount off a body already on the board,
+//     which only stops applying when the zone is genuinely vacated;
+//   • the op could route to the ACTOR's pile — §3's Stadium belongs to P2 and P1's
+//     pile is asserted UNCHANGED, so an actor-routed op reddens by name;
+//   • the `conditionGate` could be dropped and everything below §5's empty-zone rung
+//     would still pass — that rung asserts the ABSENCE of a park, which is the only
+//     observation a missing gate can move;
+//   • the whole op could be dropped and the two sentences would go back to the
+//     skipped-effect path — §2 pins both programs byte-for-byte and §4 asserts the
+//     attack does NOT emit `ATTACK_EFFECT_SKIPPED`.
+//
+// WHAT SHIPS: **1 new FIELD-FREE `EffectOp`**, its **1** interpreter arm, **2**
+// `deriveAttackEffect` arms and **2** whole-sentence anchors. Zero new events, zero
+// new prompts, zero new `BoardCondition` members, zero new `packages/schema` bytes.
+// `MATCH_RECORD_VERSION` stays **22**: adding a member to `EffectOp` is a WIDENING
+// (D125) — no v22 deploy could have written `{op:"discardStadium"}`, so no v22 byte
+// string means anything different under this one, and the op never parks, so
+// `EffectContinuation.pendingOp` gains no inhabitant either (D335's test).
+
+const units = (rows: readonly (readonly [number, string])[]): number =>
+  rows.reduce((sum, [n]) => sum + n, 0);
+const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
+
+/** The nine live readers, run as one — the same set `censusAtHead.test.ts` uses. */
+const READERS: readonly ((text: string) => unknown)[] = [
+  deriveAttackEffect,
+  deriveAttackDamageBonus,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageMultiplier,
+  deriveAttackCoinFlip,
+  deriveAttackRequirement,
+  deriveAttackDamageSuppression,
+  deriveAttackOptionalBoost,
+  deriveAttackBonusConsequent,
+];
+const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
+
+/** THE TWO SENTENCES THIS SLICE BUYS, byte-for-byte from the committed corpus. */
+const BARE = "Discard a Stadium in play.";
+const MAY = "You may discard a Stadium in play.";
+
+/** …and the FOUR this slice leaves, each named with the mechanism it is waiting on.
+    Kept as a list rather than as prose because §6 drives them: a successor who widens
+    an anchor to swallow one of these reddens here by name. */
+const STILL_OWED = [
+  // The TRAILING ANAPHORIC cancel — Eternatus `sv08-141` "World Ender" ({R}{D}{D},
+  // 230). One of the TWO legal printings of that shape (§6 measures the other).
+  "Discard a Stadium in play. If you can't, this attack does nothing.",
+  // `OPTIONAL_DAMAGE_BOOST` with its antecedent and consequent SWAPPED — Cetitan ex
+  // `sv10-065`/`sv10-210` "Crushing Press" ({W}{W}{W}{C}, 140+). A tenth reader.
+  "You may discard a Stadium in play. If you do, this attack does 140 more damage.",
+  // The two `discard that Stadium` TAILS — Chi-Yu `sv06-039` "Ground Melter" and
+  // Ting-Lu `sv06-110` "Ground Crasher". `AttackBonusConsequent` (D317) reads
+  // *"…more damage, and {consequent}"*; these print *". Then, "* and *", and "*.
+  "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.",
+  "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+] as const;
+
+const BEACH_COURT = "sv01-167";
+
+// ── boards ─────────────────────────────────────────────────────────────────────
+
+/** Put a Beach Court (`sv01-167`) into `seat`'s hand and play it — the shared §7.3
+    zone then carries `owner: seat`, which is the ONLY thing the discard's
+    DESTINATION reads. ⚠️ **A CONSTRUCTED `state.stadium` WOULD HAVE BEEN GREEN AND
+    DEAD** (D310/D314/D318's rule): what is under test is that the Stadium the RULES
+    put in the zone is the one this op takes out of it. */
+function playStadium(state: GameState, seat: Seat): GameState {
+  const withCard = handFromDeck(state, seat, BEACH_COURT, 1);
+  const uid = handUid(withCard, seat, BEACH_COURT);
+  return mustApply(withCard, { type: "playTrainer", seat, uid }).state;
+}
+
+/** Setup, then P1's turn 2 (P2 went first and passed) — P1's first unrestricted turn,
+    so the attack step is legal (§4) — with BOTH Active spots pinned to a neutral
+    200 HP `fix-bigbody`. `owner` says who, if anyone, played the one Stadium: P2 has
+    to play it on its OWN turn, which is why the choice is made here rather than by a
+    caller reaching in afterwards. */
+function board(seed: number, owner: Seat | null = null): GameState {
+  let state = driveSetup(
+    seed,
+    { p1: STADIUM_DISCARD_DECK, p2: STADIUM_DISCARD_DECK },
+    { first: "p2" },
+  );
+  if (owner === "p2") state = playStadium(state, "p2");
+  state = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+  if (owner === "p1") state = playStadium(state, "p1");
+  state = setActiveFromDeck(state, "p1", "fix-bigbody");
+  state = setActiveFromDeck(state, "p2", "fix-bigbody");
+  return state;
+}
+
+/** Field `cardId` in `seat`'s Active Spot and pay `spec` onto it symbol-for-symbol.
+    Must run in that order: `attachFromDeck` attaches to whatever is Active. */
+function fielded(
+  state: GameState,
+  seat: Seat,
+  cardId: string,
+  spec: readonly (readonly [string, number])[] = [],
+): GameState {
+  let next = setActiveFromDeck(state, seat, cardId);
+  for (const [id, count] of spec) next = attachFromDeck(next, seat, id, count);
+  return next;
+}
+
+/** Hisuian Growlithe's body. NO Energy is attached, because the printed attack takes
+    none — which is what makes the discard the only thing on the board that moved. */
+const blazingDestruction = (state: GameState, seat: Seat = "p1"): GameState =>
+  fielded(state, seat, "fix-blazedestruct");
+
+/** Wooloo's body, paid `{C}{C}`. */
+const knockOver = (state: GameState, seat: Seat = "p1"): GameState =>
+  fielded(state, seat, "fix-knockover", [["fix-energy", 2]]);
+
+const attack = (state: GameState, seat: Seat = "p1") =>
+  mustApply(state, { type: "attack", seat, index: 0 });
+
+function find<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
+  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
+}
+
+/** THREE SEEDS (D270's rule). No coin is flipped anywhere on this seam — the op is a
+    deterministic zone move — so three is the family's default rather than five. */
+const SEEDS = [9001, 9013, 9029] as const;
+
+describe("§1 — the price, MEASURED: six printings on one op, against ONE for the best clause row", () => {
+  it("🛑 the family is 6 sentences / 11 printings, and this slice takes 2 / 6 of them", () => {
+    // Both columns, off the same instrument, exactly as the resume point demands:
+    // `corpus().filter(...)` gives the RECORDS and `units(...)` gives the PRINTINGS.
+    const family = corpus().filter(([, s]) => s.includes("Stadium") && s.includes("iscard"));
+    expect([family.length, units(family)]).toEqual([6, 11]);
+    const taken = family.filter(([, s]) => s === BARE || s === MAY);
+    expect([taken.length, units(taken)]).toEqual([2, 6]);
+    const left = family.filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
+    expect([left.length, units(left)]).toEqual([4, 5]);
+    // The parts sum, which is what makes a partition a partition — and what stops a
+    // successor quietly moving a sentence from one list to the other.
+    expect(taken.length + left.length).toBe(family.length);
+    expect(units(taken) + units(left)).toBe(units(family));
+  });
+
+  it("🛑 the two sentences carry 4 and 2 printings, and no third spelling hides behind them", () => {
+    const bare = corpus().filter(([, s]) => s === BARE);
+    expect([bare.length, units(bare)]).toEqual([1, 4]);
+    const may = corpus().filter(([, s]) => s === MAY);
+    expect([may.length, units(may)]).toEqual([1, 2]);
+    // 🛑 THE CENSUS WAS ASKED FOR THE WORD, NOT THE PHRASE (D310/D311, D377). Every
+    // legal attack sentence carrying "Stadium" at all is nine, and the six that also
+    // carry "discard" in either case are exactly the family above — so nothing here is
+    // hiding behind a spelling this slice did not think to try.
+    const anyStadium = corpus().filter(([, s]) => s.includes("Stadium"));
+    expect(anyStadium).toHaveLength(9);
+    expect(corpus().filter(([, s]) => /stadium/i.test(s))).toHaveLength(anyStadium.length);
+    // …and no printing spells the discard with a lower-case noun or a possessive,
+    // which is the pair of variants a `GLOB` census would have had to rule out.
+    expect(corpus().filter(([, s]) => /discard .{0,12}stadium/i.test(s))).toHaveLength(6);
+    expect(
+      corpus().some(([, s]) => /discard (your|their|your opponent's) Stadium/.test(s)),
+    ).toBe(false);
+  });
+
+  it("🛑 it is worth SIX times the best remaining clause row, which is why the era ended", () => {
+    // D379 left the bonus residue at 21 sentences / 25 printings, and FLAT: the
+    // 5-printing band is D368's standing SHAPE refusal and the 2-printing band is the
+    // deferred HEALED flag, so everything a clause row could still take is a
+    // 1-printing row. Re-derived here rather than quoted.
+    const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
+    const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
+    expect([refused.length, units(refused)]).toEqual([21, 25]);
+    const singletons = refused.filter(([n]) => n === 1);
+    // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
+    // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
+    // at 80 (3). With the deferred HEALED row that is THREE non-singleton records
+    // carrying SEVEN printings, and the 1-printing band is the remaining EIGHTEEN.
+    expect(refused.length - singletons.length).toBe(3);
+    expect(units(refused) - units(singletons)).toBe(7);
+    expect([singletons.length, units(singletons)]).toEqual([18, 18]);
+    // SIX printings against ONE. The comparison is the slice's whole argument, so it
+    // is asserted rather than written down.
+    expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);
+  });
+});
+
+describe("§2 — the two readings, pinned byte-for-byte", () => {
+  it("the BARE imperative derives the op ALONE — no gate, because an empty zone is a no-op", () => {
+    expect(deriveAttackEffect(BARE)).toEqual([{ op: "discardStadium" }]);
+  });
+
+  it("the printed 'You may' derives the gate, the confirm and the op, in that order", () => {
+    const expected: EffectOp[] = [
+      {
+        op: "conditionGate",
+        cond: { kind: "stadiumInPlay" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "optional",
+            note: MAY,
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: [{ op: "discardStadium" }],
+          },
+        ],
+      },
+    ];
+    expect(deriveAttackEffect(MAY)).toEqual(expected);
+    // The confirm's note is the WHOLE printed sentence and not a re-voicing — the op's
+    // own contract, and what the dialog shows.
+    const gate = deriveAttackEffect(MAY)?.[0];
+    if (gate === undefined || gate.op !== "conditionGate") throw new Error("expected the gate");
+    const inner = gate.then[0];
+    if (inner === undefined || inner.op !== "optional") throw new Error("expected the confirm");
+    expect(inner.note).toBe(MAY);
+    // …and NO `otherwise` on either gate: the printed sentence buys nothing on a
+    // decline and nothing on an empty zone, and D316's field is ABSENT rather than
+    // empty (D135 — absent is the unmarked printing).
+    expect(gate.otherwise).toBeUndefined();
+    expect(inner.otherwise).toBeUndefined();
+  });
+
+  it("🛑 the anchors are WHOLE-SENTENCE, so every compound printing of the family is refused", () => {
+    for (const sentence of STILL_OWED) {
+      expect(deriveAttackEffect(sentence), sentence).toBeNull();
+    }
+    // …and the near misses a floating match would have swallowed. Neither is a printed
+    // sentence; both are the fragments the four compounds are built out of.
+    expect(deriveAttackEffect("discard that Stadium.")).toBeNull();
+    expect(deriveAttackEffect("You may discard a Stadium in play. If you do, this attack does 10 more damage.")).toBeNull();
+  });
+});
+
+describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vacated", () => {
+  it.each(SEEDS)("seed %i — P2's Stadium goes to P2's discard, not the attacker's", (seed) => {
+    let state = blazingDestruction(board(seed, "p2"));
+    const stadium = state.stadium;
+    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+    expect(stadium.owner).toBe("p2");
+    const p1Discard = state.players.p1.discard.length;
+    const p2Discard = state.players.p2.discard.length;
+
+    const result = attack(state);
+    state = result.state;
+
+    // The zone is EMPTY…
+    expect(state.stadium).toBeNull();
+    // …the card is in the OWNER's pile…
+    expect(state.players.p2.discard).toContain(stadium.uid);
+    expect(state.players.p2.discard).toHaveLength(p2Discard + 1);
+    // …and the ACTOR's pile did not move. 🛑 THIS IS THE RUNG AN ACTOR-ROUTED OP
+    // REDDENS ON, and it is the whole reason the board is built with P2 as owner.
+    expect(state.players.p1.discard).toHaveLength(p1Discard);
+    expect(state.players.p1.discard).not.toContain(stadium.uid);
+    // The EXISTING event, under the OWNER's seat — `playStadium`'s row verbatim.
+    expect(find(result.events, "STADIUM_DISCARDED")).toEqual({
+      type: "STADIUM_DISCARDED",
+      seat: "p2",
+      uid: stadium.uid,
+    });
+    // …and the attack was not skipped, which is what a dropped op would look like.
+    expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it.each(SEEDS)("seed %i — the zone's CONTINUOUS effect stops applying, which a pile write cannot fake", (seed) => {
+    // 🛑 THE ANTI-VACUITY RUNG. An op that appended the uid to a pile and left
+    // `state.stadium` occupied passes every assertion above about the pile; an op that
+    // nulled the zone and forgot the pile passes every assertion about the zone. Beach
+    // Court prints *"Basic Pokémon retreat cost {C} less"*, so its departure is
+    // readable off a body that was already on the board before the attack.
+    let state = blazingDestruction(board(seed, "p2"));
+    const defender = state.players.p2.active;
+    if (defender === null) throw new Error("expected P2's Active");
+    // `fix-bigbody` is a Basic with retreat 1, discounted to 0 while the zone holds it.
+    expect(effectiveRetreatCost(state, defender)).toBe(0);
+    state = attack(state).state;
+    const after = state.players.p2.active;
+    if (after === null) throw new Error("expected P2's Active");
+    expect(effectiveRetreatCost(state, after)).toBe(1);
+  });
+
+  it.each(SEEDS)("seed %i — the same op on the attacker's OWN Stadium routes to the attacker", (seed) => {
+    // The other half of the ownership read: `stadium.owner` is not a constant, and a
+    // hard-coded `otherSeat(ctx.seat)` would be green on the case above and red here.
+    let state = blazingDestruction(board(seed, "p1"));
+    const stadium = state.stadium;
+    if (stadium === null) throw new Error("expected P1's Stadium in the zone");
+    const p2Discard = state.players.p2.discard.length;
+    const result = attack(state);
+    state = result.state;
+    expect(state.stadium).toBeNull();
+    expect(state.players.p1.discard).toContain(stadium.uid);
+    expect(state.players.p2.discard).toHaveLength(p2Discard);
+    expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+  });
+
+  it.each(SEEDS)("seed %i — it works from the FAR SEAT too: the op reads the zone, not p1", (seed) => {
+    // The op is seat-INDEPENDENT on its face (it never looks at `ctx.seat`), and a
+    // P1-only suite cannot tell "reads the zone" apart from "reads p1's Stadium".
+    let state = mustApply(board(seed, "p1"), { type: "endTurn", seat: "p1" }).state;
+    state = blazingDestruction(state, "p2");
+    const stadium = state.stadium;
+    if (stadium === null) throw new Error("expected P1's Stadium in the zone");
+    const result = attack(state, "p2");
+    expect(result.state.stadium).toBeNull();
+    // P2 attacked; the Stadium is P1's; it goes to P1's pile.
+    expect(result.state.players.p1.discard).toContain(stadium.uid);
+    expect(find(result.events, "STADIUM_DISCARDED")?.seat).toBe("p1");
+  });
+});
+
+describe("§4 — the EMPTY zone: a silent no-op, and not a skipped effect", () => {
+  it.each(SEEDS)("seed %i — the bare imperative resolves with nothing to discard", (seed) => {
+    const state = blazingDestruction(board(seed, null));
+    expect(state.stadium).toBeNull();
+    const p1Discard = state.players.p1.discard.length;
+    const p2Discard = state.players.p2.discard.length;
+    const result = attack(state);
+    // §8.6's "do as much as you can" — the attack RESOLVES, both piles stand still…
+    expect(types(result.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(types(result.events)).not.toContain("ATTACK_FAILED");
+    expect(result.state.players.p1.discard).toHaveLength(p1Discard);
+    expect(result.state.players.p2.discard).toHaveLength(p2Discard);
+    // …and NO event is emitted for a discard that did not happen. A row here would
+    // announce a card that does not exist.
+    expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
+    // The turn is handed back to the actor, not parked on anything.
+    expect(result.state.phase.kind).not.toBe("effect:choose");
+  });
+});
+
+describe("§5 — the printed 'You may': a confirm that is asked ONLY when it has a stake", () => {
+  it.each(SEEDS)("seed %i — an OCCUPIED zone parks a confirm, and YES discards to the owner", (seed) => {
+    let state = knockOver(board(seed, "p2"));
+    const stadium = state.stadium;
+    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+    const parked = attack(state);
+    expect(parked.state.phase.kind).toBe("effect:choose");
+    expect(find(parked.events, "EFFECT_PENDING")).toEqual({
+      type: "EFFECT_PENDING",
+      seat: "p1",
+      note: MAY,
+    });
+    // …and the printed 30 has already landed: the confirm is about the discard, not
+    // about the attack.
+    expect(find(parked.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+
+    const done = mustApply(parked.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: true },
+    });
+    state = done.state;
+    expect(state.stadium).toBeNull();
+    expect(state.players.p2.discard).toContain(stadium.uid);
+    expect(find(done.events, "STADIUM_DISCARDED")?.seat).toBe("p2");
+  });
+
+  it.each(SEEDS)("seed %i — and NO leaves the zone exactly as it was", (seed) => {
+    const state = knockOver(board(seed, "p2"));
+    const stadium = state.stadium;
+    if (stadium === null) throw new Error("expected P2's Stadium in the zone");
+    const parked = attack(state);
+    const done = mustApply(parked.state, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: false },
+    });
+    // 🛑 THE DEFECT THIS OP CAN HAVE, per `optional`'s own doc: a confirm that
+    // silently applies on "no".
+    expect(done.state.stadium).toEqual(stadium);
+    expect(done.state.players.p2.discard).not.toContain(stadium.uid);
+    expect(types(done.events)).not.toContain("STADIUM_DISCARDED");
+  });
+
+  it.each(SEEDS)("seed %i — 🛑 an EMPTY zone is not asked at all, which is the gate's whole job", (seed) => {
+    // The rung a dropped `conditionGate` reddens on, and the ONLY one it can: without
+    // the gate the program parks a confirm whose "yes" and "no" leave the identical
+    // board — a decision with no stake, and a dialog the player cannot answer usefully.
+    const state = knockOver(board(seed, null));
+    expect(state.stadium).toBeNull();
+    const result = attack(state);
+    expect(result.state.phase.kind).not.toBe("effect:choose");
+    expect(types(result.events)).not.toContain("EFFECT_PENDING");
+    expect(types(result.events)).not.toContain("STADIUM_DISCARDED");
+    // The attack still resolves its printed 30 — the gate refuses the question, not
+    // the attack.
+    expect(find(result.events, "DAMAGE_DEALT")).toMatchObject({ base: 30, dealt: 30 });
+  });
+});
+
+describe("§6 — what this slice did NOT buy", () => {
+  it("🛑 the four COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
+    for (const sentence of STILL_OWED) {
+      expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+    }
+    // …and they are worth FIVE printings between them, which is the number the next
+    // slice is choosing against.
+    const left = corpus().filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
+    expect(units(left)).toBe(5);
+  });
+
+  it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card", () => {
+    // Why Eternatus is not half-built here: `ATTACK_DOES_NOTHING`'s `^If` refuses every
+    // one of them, and effects.ts has carried that count since D125. The member the
+    // sentence needs (`stadiumInPlay`) already exists — what is missing is a SPLIT that
+    // reads a clause printed BEHIND its body.
+    const anaphoric = corpus().filter(([, s]) =>
+      s.includes("If you can't, this attack does nothing."),
+    );
+    // ⚠️ **AND THE COUNT IS TWO IN *THIS* POPULATION, NOT THE THREE effects.ts PRINTS
+    // BESIDE `ATTACK_DOES_NOTHING`.** That figure is not a `legal_standard = 1` one —
+    // this is the legal attack column and it holds two: the Stadium discard and Ogerpon
+    // `sv06-025`-shaped *"Discard a Basic {G} Energy card from your hand."* **A COUNT
+    // WITHOUT ITS POPULATION IS A FLOOR** (D183/D187), and the older comment is a floor
+    // against this one rather than wrong.
+    expect([anaphoric.length, units(anaphoric)]).toEqual([2, 2]);
+    for (const [, s] of anaphoric) {
+      expect(deriveAttackRequirement(s), s).toBeNull();
+      expect(resolvedByAnyReader(s), s).toBe(false);
+    }
+    // 🛑 AND THE SECOND ONE IS WHY THIS IS A FAMILY AND NOT A CARD: it is a HAND COST
+    // whose "can't" points at a different mechanism entirely, so the split that reads
+    // the trailing clause has to be general over its body, exactly as
+    // `splitAttackRequirementClause` is general over its leading one.
+    expect(anaphoric.some(([, s]) => s.startsWith("Discard a Basic"))).toBe(true);
+  });
+
+  it("bought no new event, no new prompt and no second Stadium zone", () => {
+    // The op reuses `STADIUM_DISCARDED`, which `playStadium` has emitted since M4 —
+    // asserted by driving the OTHER producer on the same board shape and comparing the
+    // row's SHAPE, so a new event type would redden here rather than in a grep.
+    const attacked = attack(blazingDestruction(board(SEEDS[0], "p2")));
+    const row = find(attacked.events, "STADIUM_DISCARDED");
+    if (row === undefined) throw new Error("expected the discard row");
+    expect(Object.keys(row).sort()).toEqual(["seat", "type", "uid"]);
+  });
+
+  it("bought no play GATE and no registry row — the op reaches the board through attack text only", () => {
+    // No printed Trainer or Ability spells this sentence, so `programPlayable` gains
+    // nothing: an unknown op falls through its loop as playable, which is correct for
+    // an op whose empty answer is a legal resolution.
+    const abilityOrEffect = corpus().filter(([, s]) => s === BARE || s === MAY);
+    expect(abilityOrEffect).toHaveLength(2);
+    // …and every one of the six printings is an ATTACK, which is what makes
+    // `deriveAttackEffect` the whole read site.
+    expect(units(abilityOrEffect)).toBe(6);
+  });
+});

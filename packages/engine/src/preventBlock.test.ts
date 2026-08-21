@@ -1302,6 +1302,20 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // than inherited — and a build that crossed it would keep this probe green.
     // `assassinsReturn.test.ts` drives which zone each destination wrote to.
     returnSelf: "untouched",
+    // 🆕🆕 **D380 — THE TWENTY-FIRST OP, AND THE FIRST WHOSE SUBJECT IS NOT IN A
+    // PLAYER'S ZONE AT ALL.** `discardStadium` moves the card out of §7.3's SHARED
+    // slot and into its OWNER's pile.
+    //
+    // UNTOUCHED, and it is `bottomFromOpponentHand`'s verdict with the zone changed:
+    // **a Stadium is not a Pokémon**, so there is no body for a §11 block to
+    // protect and no damage for it to null. A block that stopped this would let the
+    // Defending Pokémon veto a move between two zones neither of them is in.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER: the op reads `stadium.owner` to
+    // pick the destination pile, so the day a printing routes it somewhere else
+    // this verdict is unchanged but the DESTINATION is not — `stadiumDiscard.test.ts`
+    // §3 drives which pile received it, on a board where the two seats disagree.
+    discardStadium: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -1671,6 +1685,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       op: { op: "bottomFromOpponentHand", filter: { kind: "supporter" } },
       board: () => handFromDeck(probeBoard(), "p1", "sv02-172", 1),
       landed: (r) => r.parked || r.after.players.p1.hand.length < r.before.players.p1.hand.length,
+    },
+    discardStadium: {
+      op: { op: "discardStadium" },
+      // 🆕🆕 D380 — A SURGERY, AND SAID SO RATHER THAN SKIPPED (`benchBlockedBoard`'s
+      // rule). The probe deck holds no Stadium and adding one would reshuffle every
+      // board in this file; the op reads `state.stadium` and NOTHING else — it never
+      // resolves the card — so a zone written directly is the same input a played
+      // Beach Court gives it. The uid is lifted OUT of P1's deck so the board stays
+      // consistent: a Stadium in play is in no other zone.
+      board: () => {
+        const state = probeBoard();
+        const [uid, ...rest] = state.players.p1.deck;
+        if (uid === undefined) throw new Error("p1's deck is empty");
+        return {
+          ...state,
+          players: { ...state.players, p1: { ...state.players.p1, deck: rest } },
+          stadium: { uid, owner: "p1" as const },
+        };
+      },
+      landed: (r) => r.before.stadium !== null && r.after.stadium === null,
     },
     coinFlipGate: {
       // A procedure: the evidence it ran is that the COIN WAS TAKEN. Its body is

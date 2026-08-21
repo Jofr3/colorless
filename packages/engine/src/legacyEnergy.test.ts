@@ -969,8 +969,8 @@ describe("the engine version", () => {
     // record since M3 with its SHAPE untouched. The version moves because the readers
     // answer three printed sentences they used to refuse. The post-bump anchor pass
     // was clean.
-    expect(engineVersion).toBe("0.284.0");
-    expect(manifest.version).toBe("0.284.0");
+    expect(engineVersion).toBe("0.285.0");
+    expect(manifest.version).toBe("0.285.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

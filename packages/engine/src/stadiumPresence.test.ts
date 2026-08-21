@@ -130,11 +130,23 @@ const CEILING = [
     sentence — *"Discard a Stadium in play. If you can't, this attack does nothing."*
     (Eternatus `sv08-141` "World Ender", 1 printing), which is the same op under the
     CANCEL consequent. **THE SAME MISS D377 RECORDED, ONE FAMILY OVER: A CENSUS RUN
-    FOR ONE CONSEQUENT IS A FLOOR FOR THE OTHER.** */
-const DISCARD_OP = [
+    FOR ONE CONSEQUENT IS A FLOOR FOR THE OTHER.**
+
+    ⚠️⚠️ 🆕🆕 **D380 BUILT THE OP AND THIS LIST HAS BEEN SPLIT IN TWO, NOT DELETED.**
+    The prediction above was exactly right about the mechanism and exactly right
+    about the count; what it could not know is that the four sentences would be
+    taken in TWO pieces. `TAKEN_BY_D380` holds the two BARE spellings — 6 of the 9
+    printings, on one field-free `EffectOp` — and `DISCARD_OP` keeps the two the op
+    alone cannot reach: each needs a READER this file's slice did not buy either (a
+    trailing anaphoric requirement split, and `OPTIONAL_DAMAGE_BOOST` with its two
+    halves swapped). **THE CEILING WAS PRICED RIGHT AND CLIMBED IN TWO STEPS, WHICH
+    IS WHAT A PRICE IS FOR** (D178: annotate provenance, never overwrite it). */
+const TAKEN_BY_D380 = [
   "Discard a Stadium in play.",
-  "Discard a Stadium in play. If you can't, this attack does nothing.",
   "You may discard a Stadium in play.",
+] as const;
+const DISCARD_OP = [
+  "Discard a Stadium in play. If you can't, this attack does nothing.",
   "You may discard a Stadium in play. If you do, this attack does 140 more damage.",
 ] as const;
 
@@ -303,12 +315,19 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
       // separate slice rather than a thing this one half-did.
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
-    // The op they need does not exist, and it is worth more on its own than this
-    // whole slice: four sentences, NINE legal printings, none of them read — and the
-    // handoff said eight, having counted the family under one consequent only.
+    // The op they need was worth more on its own than this whole slice: four
+    // sentences, NINE legal printings, none of them read at D378 — and the handoff
+    // said eight, having counted the family under one consequent only.
+    // 🆕🆕 **D380 TOOK 6 OF THE 9.** The two BARE spellings now RESOLVE, and the
+    // partition below is what keeps that a measured step rather than a deletion:
+    // the family is still 4 sentences / 9 printings and the two lists still sum to it.
+    const builtRows = corpus().filter(([, s]) => (TAKEN_BY_D380 as readonly string[]).includes(s));
+    expect([builtRows.length, units(builtRows)]).toEqual([2, 6]);
+    for (const [, s] of builtRows) expect(resolvedByAnyReader(s), s).toBe(true);
     const opRows = corpus().filter(([, s]) => (DISCARD_OP as readonly string[]).includes(s));
-    expect(opRows).toHaveLength(4);
-    expect(units(opRows)).toBe(9);
+    expect(opRows).toHaveLength(2);
+    expect(units(opRows)).toBe(3);
+    expect([builtRows.length + opRows.length, units(builtRows) + units(opRows)]).toEqual([4, 9]);
     for (const [, s] of opRows) expect(resolvedByAnyReader(s), s).toBe(false);
     // 🛑 AND THE CENSUS WAS ASKED FOR THE WORD, NOT THE PHRASE (D310/D311, D377).
     // Every legal attack sentence carrying "Stadium" at all is exactly nine, and the
@@ -322,9 +341,13 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     );
     expect(taken).toHaveLength(2);
     expect(searchRow).toHaveLength(1);
-    expect(taken.length + searchRow.length + CEILING.length + DISCARD_OP.length).toBe(
-      anyStadium.length,
-    );
+    expect(
+      taken.length +
+        searchRow.length +
+        CEILING.length +
+        DISCARD_OP.length +
+        TAKEN_BY_D380.length,
+    ).toBe(anyStadium.length);
     // …and there is no lower-case spelling to have missed: the catalog capitalises the
     // noun everywhere, so a case-insensitive census would return the identical nine.
     expect(corpus().filter(([, s]) => /stadium/i.test(s))).toHaveLength(anyStadium.length);
@@ -603,8 +626,21 @@ describe("§5 — the CANCEL consequent on a board: the zone is the gate", () =>
 
 describe("§6 — what this slice did NOT buy", () => {
   it("bought no Stadium-DISCARD op, and the sentences that need one stay LOUD", () => {
+    // ⚠️ 🆕🆕 **RE-AIMED AT D380, AND THE EXPIRY WAS PREDICTED BY THIS FILE'S OWN
+    // CEILING BLOCK.** D380 built `discardStadium`, so the two BARE spellings this
+    // rung used to name now resolve — they are asserted RESOLVED in §1 and dropped
+    // from here rather than kept as a refusal that has stopped being true. What
+    // D378 did not buy is unchanged: the two `discard that Stadium` TAILS (which
+    // need a bonus-consequent reader as well as the op) and the two COMPOUND
+    // discard sentences (which need a requirement split and a tenth reader). **A
+    // GUARD KEYED ON A REFUSAL HAS AN EXPIRY DATE, AND THE SLICE THAT EXPIRES IT
+    // OWNS THE REWRITE.**
     for (const sentence of [...CEILING, ...DISCARD_OP]) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+    }
+    // …and the positive half, so this rung cannot go green by refusing everything.
+    for (const sentence of TAKEN_BY_D380) {
+      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
     }
   });
 

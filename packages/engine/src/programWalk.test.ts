@@ -291,6 +291,15 @@ describe("the pool sweep, structurally", () => {
       "fix-bonusconsequent attack 1 bonusConsequent :: damageDefender",
       "fix-drasna trainer :: handRefresh",
       "fix-harlequin trainer :: handRefresh",
+      // 🆕🛑 **D380 — THE FIRST `optional.then` MISS ON THIS LIST, AND IT ARRIVES
+      // NESTED TWO GATES DEEP.** `fix-knockover`'s derived program is
+      // `conditionGate → optional → discardStadium` (the printed *"You may discard a
+      // Stadium in play."*), and the enumerated walk reproduced above descends
+      // neither branch — so the op inside is exactly what it cannot see. Every
+      // earlier `optional` in the pool wrapped an op the walk reached by another
+      // route; this one does not, which is why the row is new rather than a
+      // duplicate.
+      "fix-knockover attack 0 :: discardStadium",
       "fix-optionalboost attack 1 optionalBoost :: damageDefender",
       "fix-optionalboost attack 1 optionalBoost :: damageDefender",
       "fix-optionalboost attack 1 optionalBoost :: damageSelf",

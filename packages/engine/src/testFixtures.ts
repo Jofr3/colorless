@@ -11133,6 +11133,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D380 — the STADIUM-DISCARD OP, the BARE imperative: Hisuian Growlithe
+      `sv06-099`/`sv06-181` "Blazing Destruction"'s printed sentence, verbatim, on a
+      body of this pool's own making. `fix-*` and not `sv06-099` for the standing
+      reason (D369) — a fixture id naming a real printing needs a
+      `CATALOG_MANIFEST.printed` row and the generator cannot write one without the
+      local D1.
+
+      🛑 **THE PRINTED COST IS ZERO AND THE PRINTED DAMAGE IS ABSENT, AND BOTH ARE
+      LOAD-BEARING.** "Blazing Destruction" takes no Energy at all and deals none
+      (confirmed by id against tcgdex, which OMITS `cost` for a free attack — D379's
+      instrument note), so the op is the ONLY thing this attack does: every board in
+      `stadiumDiscard.test.ts` varies the ZONE and has nothing else to explain the
+      delta with. A costed or damaging stand-in would have let a dropped op hide
+      behind a number that moved anyway.
+
+      `hp: 150` rather than the printed 80, so the attacker survives the cast's
+      return fire; `types: ["Fighting"]` as printed, read by nothing here. */
+  "fix-blazedestruct": battler("fix-blazedestruct", {
+    hp: 150,
+    types: ["Fighting"],
+    attacks: [{ name: "Blazing Destruction", effect: "Discard a Stadium in play." }],
+  }),
+  /** 🆕🆕 D380 — the same op behind the printed *"You may"*: Wooloo `sv07-124` /
+      Dubwool `sv07-125` "Knock Over", the family's two-printing half. The two cards
+      print ONE sentence at two bases (30 and 70) and two stages, so one fixture
+      serves both — what differs between them is nothing this op reads.
+
+      Costed `{C}{C}` and based at Wooloo's **30** as printed. The damage is what
+      separates "the attack resolved and the player declined" from "the attack was
+      skipped": a decline still deals 30, and a `null` program deals 30 too, which is
+      exactly why §5 asserts the ZONE and the PARK rather than the number.
+      `hp: 150` so the attacker survives; `types: ["Colorless"]` as printed. */
+  "fix-knockover": battler("fix-knockover", {
+    hp: 150,
+    types: ["Colorless"],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Knock Over",
+        damage: 30,
+        effect: "You may discard a Stadium in play.",
+      },
+    ],
+  }),
   /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR, half one: Slugma `sv05-028`
       "Roasting Heat"'s printed sentence, verbatim, on a body of this pool's own
       making. `fix-*` and not `sv05-028` for `fix-emberpillar`'s reason unchanged —
@@ -11621,6 +11665,48 @@ export const EXACT_HAND_SIZE_DECK = deckOf({
     without ending the board.
 
     4 + 4 + 4 + 4 + 6 + 8 + 30 = **60**. */
+/** 🆕🆕 D380 — THE STADIUM-DISCARD OP (`discardStadium`). A DEDICATED 60 (D270's
+    rule) rather than a widened `STADIUM_PRESENCE_DECK`, so D378's seeded boards keep
+    the shuffles they were measured on — and for one reason specific to this slice:
+    the quantity under test is THE SHARED ZONE, and this deck has to put a Stadium
+    there from EITHER seat and then take it away inside an attack, twice per case.
+
+    THE CAST IS TWO ATTACKERS, ONE PER PRINTED SPELLING:
+
+      • `fix-blazedestruct` — Hisuian Growlithe's "Blazing Destruction" (**no cost,
+        no damage**), the BARE imperative. Four of the family's six printings;
+      • `fix-knockover` — Wooloo/Dubwool's "Knock Over" ({C}{C}, 30), the printed
+        *"You may"* behind D186's `optional`. The other two.
+
+    `sv01-167` (Beach Court) is the Stadium, and it is here for THREE jobs at once:
+    it is the only Stadium in `FIXTURE_POOL` with a registered program (§7.3 refuses
+    to play an unauthored one), the zone is SHARED so the same card played by the
+    opponent sits in the very same slot with a different `owner` — the only thing
+    the discard's DESTINATION reads — and its printed *"Basic Pokémon retreat cost
+    {C} less"* is a CONTINUOUS effect, which is what lets a board observe that the
+    zone was genuinely vacated rather than merely that a uid reached a pile.
+
+    ⚠️ **SIX COPIES AND NOT FOUR**, D376's margin lesson carried one deck further:
+    setup takes 7 cards to hand and 6 to prizes before a case can reach the deck, and
+    the boards here play a Stadium from BOTH seats and then discard it, so a
+    four-copy printing is one unlucky prize away from a throw.
+
+    `fix-energy` pays Knock Over's two Colorless symbols — the only printed cost in
+    the cast, since Blazing Destruction has none. `fix-bigbody` is the DOMINANT
+    mulligan-free starter, the body both Actives pin to, the arithmetically clean
+    defender (200 HP, no Weakness, no Resistance) Knock Over's 30 is measured
+    against, and — a Basic with retreat 1 — the body Beach Court's discount is read
+    off, so the zone's departure is visible on a card that is already on the board.
+
+    4 + 4 + 6 + 8 + 38 = **60**. */
+export const STADIUM_DISCARD_DECK = deckOf({
+  "fix-blazedestruct": 4, // Hisuian Growlithe — "Blazing Destruction" (free, no damage): the bare op
+  "fix-knockover": 4, // Wooloo/Dubwool — "Knock Over" (30): the same op behind "You may"
+  "sv01-167": 6, // Beach Court — the Stadium, played from EITHER seat and then discarded
+  "fix-energy": 8, // Basic {C} — pays Knock Over's two Colorless symbols
+  "fix-bigbody": 38, // 200 HP neutral Basic, retreat 1 — starter, both Actives, the clean defender
+});
+
 export const STADIUM_PRESENCE_DECK = deckOf({
   "fix-mountaindrop": 4, // Probopass — "Mountain Drop" (70+): stadiumInPlay, +70
   "fix-assaultland": 4, // Fan Rotom — "Assault Landing" (70): stadiumInPlay, the CANCEL
