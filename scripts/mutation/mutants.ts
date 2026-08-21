@@ -14724,4 +14724,98 @@ export const MUTANTS: Mutant[] = [
     replace: "        cond: { kind: \"yourStadiumInPlay\" },",
     expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
   },
+  // ── D381 — THE REVERSED OPTIONAL BOOST. Eight rows, ONE PER CLAIM: the cost is
+  //    paid BEFORE the hit (C1), the offer is GATED on the cost being payable (C2),
+  //    a decline still deals the printed base (C3) and so does an empty zone (C4),
+  //    the PAYOFF half is dispatched whole so the two remaining printings stay
+  //    refused (C5), the BONUS must be worth taking (C6), the printed base is
+  //    dropped from the pre-program pipeline so §8.5 runs ONCE (C7), and the two
+  //    decline arms are DISTINCT OBJECTS so the program is a tree (C8).
+  //
+  //    ⚠️ NO ROW FOR "THE READER IS READ AT ALL" IN attack.ts, said out loud: the
+  //    `const optionalCostBoost = …` line and the `if (optionalCostBoost !== null)`
+  //    append are covered from the other side by C7, which keeps the reader and
+  //    changes what the caller does with it. A row that simply deleted the append
+  //    would be indistinguishable from C5 at the census and is not a mistake an
+  //    author makes twice.
+  //
+  //    ⚠️ AND NO ROW FOR "THE COST ANCHOR LOSES ITS `$`": `optionalCostOps` matches
+  //    the ANTECEDENT, which the split has already terminated at the sentence break,
+  //    so a prefix match there claims exactly the same set on every printed sentence
+  //    in the catalog. It would be unkillable, which is worse than no row (D205).
+  {
+    id: "D381-cost-is-paid-after-the-hit",
+    decision: "D381",
+    what: "\u{1F6D1} C1 — **THE PRINTED ORDER REVERSED, AND IT IS `boostedArms`' OWN ORDER COPIED VERBATIM** (D190b's neighbour-copy shape, and the exact line the forward reader one screen up emits). The accepted arm becomes `[damageDefender(base + bonus), ...ops]` — the hit first, the discard after — which is right for D316's sentence and wrong for this one. **EVERY BOARD IN THE SUITE THAT CARRIES BEACH COURT IS GREEN EITHER WAY**: the discard happens, the pile grows, the zone empties and 280 is dealt. The ONE board that separates them is Neutralization Zone `sv06.5-060`, which prevents damage to a no-Rule-Box Pokemon from an attacking Pokemon ex — so with the hit first Cetitan ex deals 0 and THEN discards the Stadium that stopped it. `optionalCostBoost.test.ts` §4 drives that board and §3 pins the arm",
+    file: "packages/engine/src/effects.ts",
+    find: "  const then = [...reading.ops, ...boosted];",
+    replace: "  const then = [...boosted, ...reading.ops];",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-cost-boost-loses-its-payability-gate",
+    decision: "D381",
+    what: "\u{1F6D1} C2 — **THE GATE DROPPED, AND IT IS STRICTLY WORSE HERE THAN AT D380 BECAUSE THE PAYOFF IS DAMAGE.** The program becomes the bare confirm, and on every board where the Stadium zone is OCCUPIED the two are byte-for-byte identical. What it costs is the EMPTY board: `optional` parks unconditionally, so the attacker is offered a \"yes\" that discards NOTHING and still pays the printed +140 — **a free 140**. §5's empty-zone rung asserts the ABSENCE of a park AND requires the dealt damage to be 140 rather than 280, which is the pair of observations a missing gate moves",
+    file: "packages/engine/src/effects.ts",
+    find: "      op: \"conditionGate\",\n      cond: reading.cond,\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      then: [ask],",
+    replace: "      ...ask,",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-decline-deals-nothing",
+    decision: "D381",
+    what: "\u{1F6D1} C3 — THE CONFIRM'S DECLINE ARM DELETED, which is D380's program copied one sentence over: THAT sentence's whole printed content is the discard, so its `otherwise` is rightly ABSENT (D135). Here the attack is printed `140+`, so a player who says no deals NOTHING instead of 140 — a 140-damage attack silently deleted by answering the question the card asks. The census cannot see it (the sentence still resolves and `BUILT.attack` is unmoved), and neither can any zone or pile assertion; §5's decline rung reads `DAMAGE_DEALT`",
+    file: "packages/engine/src/effects.ts",
+    find: "    note,\n    then,\n    otherwise,\n  };",
+    replace: "    note,\n    then,\n  };",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-empty-zone-deals-nothing",
+    decision: "D381",
+    what: "\u{1F6D1} C4 — THE MIRROR OF C3 ON THE OUTER GATE, and the reason both rows exist: the gate refuses the QUESTION and now also refuses the ATTACK, so Crushing Press does NOTHING whenever no Stadium is in play. **THAT IS THE COMMONEST BOARD THIS CARD SEES**, and neither claim implies the other — C3 is green on an empty zone and C4 is green on an occupied one, so neither is allowed to stand for both. §5's empty-zone rung requires the printed 140",
+    file: "packages/engine/src/effects.ts",
+    find: "      otherwise: vacantZone,",
+    replace: "      otherwise: [],",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-payoff-anchor-loses-its-terminator",
+    decision: "D381",
+    what: "\u{1F6D1} C5 — **THE SATURATION TRAP, ARMED.** Dropping the `$` makes the payoff anchor a PREFIX match, so it swallows the two printings this slice deliberately leaves refused — both of which carry a trailing reminder parenthetical. The face-up-Prize card (`sv10`-era, 2 printings) would then resolve to +80 with **the Prize never turned over**, and it LOOKS LIKE A COVERAGE WIN: the sentence leaves the unbuilt remainder and `BUILT.attack` RISES. §1 pins the refused half at 2 sentences / 7 printings and §2 drives each refusal from a SYNTHETIC re-pairing, so the claim is attributable to one half",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\\d+) more damage\\.$/;",
+    replace: "const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\\d+) more damage\\./;",
+    expectKilledBy: [
+      "packages/engine/src/optionalCostBoost.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D381-zero-bonus-is-a-real-offer",
+    decision: "D381",
+    what: "\u{1F6D1} C6 — THE `>= 1` GUARD RELAXED TO `>= 0`, the guard every captured amount in effects.ts carries and the one this sentence needs most: a printed 0 makes the confirm an offer to discard a Stadium for NO extra damage — a decision with no upside, which is `AttackOptionalBoost`'s own refusal of a decision with no downside read from the other side. No printing spells it today, so nothing about the CENSUS moves; §2 asks the reader directly",
+    file: "packages/engine/src/effects.ts",
+    find: "  return bonus < 1 ? null : { cond: cost.cond, ops: cost.ops, bonus };",
+    replace: "  return bonus < 0 ? null : { cond: cost.cond, ops: cost.ops, bonus };",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-printed-base-lands-twice",
+    decision: "D381",
+    what: "\u{1F6D1} C7 — **THE `scaledBase` CLAIMANT DROPPED, AND IT IS THE TERM D316 AND D317 EACH HAD TO ADD BY HAND.** `programDamage`'s `some` walks the TOP LEVEL only, and this reading's `damageDefender`s are nested two gates deep — so without this term the printed 140 lands in the pre-program pipeline AND again inside the gate. Weakness DISTRIBUTES over a split hit, but Resistance and the defender's reduction are SUBTRACTIONS paid once per hit and the §8.1 survival clamp is asked twice, so one printed number becomes TWO `DAMAGE_DEALT` rows. §5 counts the rows on all three answers (yes, no, empty zone)",
+    file: "packages/engine/src/attack.ts",
+    find: "    optionalCostBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    replace: "    coinFlip?.kind === \"perHeads\"",
+    expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
+  },
+  {
+    id: "D381-both-gates-share-one-decline-arm",
+    decision: "D381",
+    what: "\u{1F6D1} C8 — **THE FIRST DRAFT OF THIS ASSEMBLER, RESTORED.** One array handed to both gates: equal in VALUE, correct at runtime, and every board in `optionalCostBoost.test.ts` is green on it. What it breaks is SHAPE — a shared branch makes the program a DAG, and `programWalk.test.ts` accounts for the ops it reaches BY IDENTITY, so the confirm's decline hit is \"already seen\" down the outer path and that file's `structural - enumerated === missed.length` invariant fails by exactly one. **AN INVARIANT THAT COUNTS OBJECTS IS AN INVARIANT ABOUT SHAPE, NOT ABOUT VALUE**, and this row is the only thing in the corpus that says so",
+    file: "packages/engine/src/effects.ts",
+    find: "  const [, vacantZone] = boostedArms(base, reading.bonus, []);",
+    replace: "  const vacantZone = otherwise;",
+    expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
+  },
 ];
