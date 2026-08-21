@@ -1560,6 +1560,87 @@ export type BoardCondition =
       A printed Resistance is on the card face, so the union's public-state
       invariant holds. False with an empty Active Spot. */
   | { kind: "opponentActiveHasResistance"; type: PokemonType }
+  /** 🆕 **D388 — YOUR OPPONENT'S ACTIVE Pokémon HAS A RETREAT COST OF `count` OR
+      MORE — AND IT IS THE *EFFECTIVE* COST, NOT THE PRINTED COLUMN.** Talonflame
+      `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**, index 0 of ONE — confirmed
+      by id against tcgdex, which returns a single attack): *"If the Retreat Cost of
+      your opponent's Active Pokémon is {C}{C} or more, this attack does 110 more
+      damage."* — the ONE legal printing.
+
+      🛑 **THE SHAPE QUESTION WAS ORDERED FIRST AND IT IS THE WHOLE SLICE: THE
+      PRINTED NOUN PHRASE HAS *TWO* LIVE READINGS IN THIS ENGINE, AND THEY DISAGREE
+      ON REAL BOARDS.** `retreatCostOf(card)` (cards.ts) is the printed {C} column;
+      `effectiveRetreatCost(state, pokemon)` (continuous.ts, D322) is the board fold
+      — printed **+** `stadiumRetreatDelta` **+** `opposingRetreatSurcharge` **−**
+      `alliedRetreatDiscount`, under one `Math.max(0, …)`, with the two free-retreat
+      auras short-circuiting to 0. **THIS MEMBER TAKES THE FOLD**, on three grounds
+      and not on taste:
+
+      ⑴ **THE ENGINE HAD ALREADY ANSWERED THIS EXACT NOUN PHRASE, AND D159 FORBIDS A
+      SECOND ANSWER TO IT.** `DamageCountSource`'s `opponentActiveRetreatCost` (D110,
+      this file) reads *"for each {C} in your opponent's Active Pokémon's Retreat
+      Cost"* — the family D110 landed on Heracross `sv01-002`, Spidops ex
+      `sv01-019`/`-223`/`-243`, Sharpedo `sv03-047` and Stoutland `sv03-172` — and
+      attack.ts resolves it through `effectiveRetreatCost`, in as many
+      words: *"a Stadium that changes what it costs to retreat changes what these
+      attacks hit for"*. Reading `retreatCostOf` here would make **one printed noun
+      phrase mean two different things in two readers of this one file**, and the
+      board that exposes it is the board Spidops ex builds on its own: its "Trap
+      Territory" Ability surcharges the opponent's Retreat Cost and its "Wire Hang"
+      scales off it, and the engine already makes the two meet.
+
+      ⑵ **THE RULES MAKE RETREAT COST A CURRENT VALUE, NOT A CONSTANT.**
+      `reference/ptcg-rules.md` §11 defines the cost off the printed symbols and then
+      says card effects reduce it, but is silent on what a card TEXT naming "the
+      Retreat Cost" reads — so this was taken to the web, as D373 was. The official
+      account states the arithmetic of MODIFICATION (increases first, then reductions;
+      a Pokémon with no Retreat Cost by an effect overrides every increase), which is
+      an order of operations over a value that CHANGES, and `effectiveRetreatCost`
+      already implements both halves. A printed constant would need no order of
+      operations at all.
+
+      ⑶ **AND IT IS THE READING WITH A FALSIFIER, WHICH THE OTHER ONE DOES NOT HAVE
+      HERE.** ⚠️ **THE DISAGREEMENT IS DRIVEN AND NOT ARGUED, IN BOTH DIRECTIONS**
+      (`retreatCostBonus.test.ts` §3 and §4), because a guard that only exercises
+      boards where the two readings AGREE is the vacuous guard this repo keeps
+      rediscovering: a printed-{C} defender under Calamitous Wasteland `sv02-175` or
+      under a benched Spidops ex `sv01-019` folds to {C}{C} and this clause is
+      **TRUE** where the printed column says false; a printed-{C}{C} defender under
+      Beach Court `sv01-167` folds to {C} and it is **FALSE** where the printed column
+      says true. Each rung asserts `retreatCostOf` and `effectiveRetreatCost` are
+      DIFFERENT NUMBERS on that board before it reads the damage — the attribution
+      control D214 orders — so a board where they happen to agree cannot pose as a
+      driven disagreement.
+
+      ⚠️ **`>=`, A FLOOR — `yourBenchAtLeast`'s and `yourEnergyInPlayAtLeast`'s
+      reading of "or more", and NOT `opponentPrizesRemaining`'s set membership.** That
+      member enumerates because `prizes.length` is 0-6 and CLOSED (§3.8), so a set is
+      exact over the representable domain; a Retreat Cost has no such bound — printed
+      values run to 5, the Stadium and aura terms are unbounded sums, and D365's
+      warning runs the usual way round: a member whose fold is `counts.includes(…)`
+      cannot be handed a threshold. **THE FIRST MEMBER IN THIS FAMILY THAT READS A
+      DERIVED BOARD VALUE RATHER THAN A FIELD OR A PRINTED COLUMN**, which is also
+      what separates it from its neighbour one line up: this engine has no
+      Resistance-modifying effect at all (measured — continuous.ts holds
+      `seatRemovesWeakness` and no sibling for Resistance), so `opponentActiveHasResistance`
+      reading the printed column is not a precedent for reading this one printed.
+
+      ⚠️ **PARAMETERISED ON THE THRESHOLD, `opponentHandAtMost`'s argument (D118):**
+      the sentence varies on exactly ONE token, the `{C}` arity, and burying the 2 in
+      the member's NAME would make a second printed threshold a second member. The
+      count is stored as a NUMBER and never as the printed `{C}{C}` glyph — that is
+      the arity the fold returns, and `attack.ts`'s retreat-cost arm has counted it
+      that way since 0.61.0.
+
+      Read off the in-play body (not the top CARD): `effectiveRetreatCost` takes an
+      `InPlayPokemon` because the aura scans key on its uid. FALSE with an empty
+      Active Spot, exactly as every other body-reading member — an absent Pokémon is
+      not a Pokémon with a Retreat Cost of zero.
+
+      PUBLIC: the printed cost is on the card face and every term of the fold is a
+      face-up Stadium or a face-up Ability, so the union's public-state invariant
+      holds and redact.ts needs no byte. */
+  | { kind: "opponentActiveRetreatCostAtLeast"; count: number }
   /** 🆕 **D370 — YOU HAVE AT LEAST ONE Pokémon OF TYPE `type` ON YOUR BENCH.**
       *"If you have any {M} Pokémon on your Bench, this attack does 80 more
       damage."*, **2 legal printings** — measured off `legalAttackCorpus()`, the
@@ -9617,6 +9698,42 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // FOURTH member on that same reasoning, and the two rows now sit adjacent so the
   // ladder is readable in one screen. Driven apart in `stage1Bonus.test.ts` §3.
   ["your opponent's Active Pokémon is a Stage 2 Pokémon", { kind: "opponentActiveIsStage2" }],
+  // 🆕🆕 D388 — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**, index
+  // 0 of ONE attack), ONE legal printing, and the FIRST key in this table whose
+  // grammatical SUBJECT is a card COLUMN rather than a Pokémon: every other row
+  // opens "your opponent's …" or "you …", this one opens "the Retreat Cost of …".
+  // That inversion is the reason it can share no anchor with anything here.
+  //
+  // 🛑 **THE VALUE READS THE *EFFECTIVE* COST, WHICH IS THE QUESTION THE SLICE WAS
+  // ORDERED TO SETTLE FIRST.** `retreatCostOf` (the printed {C} column) and
+  // `effectiveRetreatCost` (continuous.ts's fold, D322) are BOTH live and BOTH have
+  // consumers, so this was never "which do I build" but "which does the sentence
+  // name". The member's own block above carries the three grounds; the operative one
+  // for THIS table is that `DamageCountSource`'s `opponentActiveRetreatCost` (D110)
+  // already reads the SAME printed noun phrase — *"for each {C} in your opponent's
+  // Active Pokémon's Retreat Cost"*, TWO legal printings at this head (`legalAttackCorpus()`;
+  // three MORE printings of the same noun phrase sit unresolved in the SUBTRACTIVE
+  // residue, so the phrase is worth SIX legal printings in the attack column counting
+  // this one) — through the fold, so a
+  // printed reading here would make one noun phrase mean two things in one file
+  // (D159). Driven, not argued: `retreatCostBonus.test.ts` §3 and §4 put the two
+  // readings on opposite sides of the threshold in BOTH directions.
+  //
+  // ⚠️ THE `{C}{C}` IS A LITERAL BRACE PAIR IN THE PRINTED TEXT and is carried here
+  // as one, exactly as `RETREAT_COST_SCALE` carries its escaped `\{C\}` — the key is
+  // a whole printed clause and is never a pattern, so nothing is escaped and nothing
+  // is folded. The clause carries ONE apostrophe ("opponent's"), ASCII in the
+  // catalog, and `literalClauseRow`'s U+2019 retry stands behind it like every other
+  // possessive key in this table.
+  //
+  // ⚠️ AND THE ARITY IS STORED AS THE NUMBER 2, NOT AS THE GLYPH. `{C}{C}` is two
+  // Colorless symbols and `effectiveRetreatCost` returns their COUNT; storing the
+  // glyph would mean a second parse at every read site, and the threshold is the one
+  // token a second printing could vary (D118).
+  [
+    "the Retreat Cost of your opponent's Active Pokémon is {C}{C} or more",
+    { kind: "opponentActiveRetreatCostAtLeast", count: 2 },
+  ],
   // Krokorok sv01-116 "Payback" (+90) and Houndstone sv03-101 "Two Four-ocious"
   // (+120) — ONE member at two values, and still two LITERAL rows rather than a
   // D118 template. Two things vary between these sentences, not one: the count

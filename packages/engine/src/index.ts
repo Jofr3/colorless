@@ -12108,6 +12108,115 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.293.0 → **THE RETREAT-COST THRESHOLD — ONE PRINTED NOUN PHRASE, TWO LIVE
+    READINGS, AND THE SHAPE QUESTION SETTLED BEFORE A LINE WAS WRITTEN.**
+
+      Talonflame `sv07-123` "Aero Chase" ({C}{C}, **110+**, index 0 of ONE attack —
+      confirmed by id against tcgdex, which returns a single attack, and by a
+      whole-sentence limitlesstcg `text:` search that returns Talonflame SCR 123 as
+      the only Standard printing)
+        *"If the Retreat Cost of your opponent's Active Pokémon is {C}{C} or more,
+         this attack does 110 more damage."*
+        **1 legal printing**
+
+    🛑 **THE SHAPE QUESTION WAS ORDERED FIRST AND IT IS THE WHOLE SLICE.** The printed
+    noun phrase *"the Retreat Cost of your opponent's Active Pokémon"* has **TWO live
+    readings in this engine, both already implemented and both already with
+    consumers**: `retreatCostOf(card)` (cards.ts, the printed {C} column) and
+    `effectiveRetreatCost(state, pokemon)` (continuous.ts, D322 — printed **+**
+    `stadiumRetreatDelta` **+** `opposingRetreatSurcharge` **−** `alliedRetreatDiscount`
+    under one `Math.max(0, …)`, with the two free-retreat auras short-circuiting to 0).
+    **They disagree on every board carrying a retreat Stadium or a retreat aura, and
+    this pool has four of them.** So the question was never "which do I build" but
+    "which does the sentence NAME", and picking without asking would have been a coin
+    toss with a 50 % chance of a silently wrong card.
+
+    **THE FOLD IS TAKEN, ON THREE GROUNDS AND NOT ON TASTE:**
+
+    ⑴ 🛑 **THE ENGINE HAD ALREADY ANSWERED THIS EXACT NOUN PHRASE, AND D159 FORBIDS A
+    SECOND ANSWER TO IT.** `DamageCountSource`'s `opponentActiveRetreatCost` (D110)
+    reads *"for each {C} in your opponent's Active Pokémon's Retreat Cost"* — the
+    family D110 landed on Heracross `sv01-002`, Spidops ex `sv01-019`/`-223`/`-243`,
+    Sharpedo `sv03-047` and Stoutland `sv03-172` — and attack.ts resolves it through
+    `effectiveRetreatCost`, saying so in as many words. ⚠️ **THE PRINTING COUNT IS
+    MEASURED, NOT INHERITED FROM THAT COMMENT**: `legalAttackCorpus()` at this head
+    holds **SIX** legal printings of the noun phrase *"…Active Pokémon's Retreat
+    Cost"* across four sentences plus this slice's fifth — **2 of them resolve, both
+    through the fold**, and the other three are the SUBTRACTIVE twins, which sit in a
+    different residue. Spidops ex has rotated (`legal_standard = 0`), which is why
+    the card list and the printing count are different numbers. A printed reading here
+    would make **one printed noun phrase mean two different things in two readers of
+    one file**, and Spidops ex is the board that exposes it single-handed: its "Trap
+    Territory" Ability RAISES the opponent's Retreat Cost and its "Wire Hang" SCALES
+    off it, and the engine has made those two meet since 0.61.0.
+
+    ⑵ **THE RULES MAKE RETREAT COST A CURRENT VALUE, NOT A CONSTANT.**
+    `reference/ptcg-rules.md` §11 defines the cost off the printed symbols and records
+    that effects reduce it, but is SILENT on what a card TEXT naming "the Retreat
+    Cost" reads — so this went to the web, as D373's did when the local doc was silent.
+    The official account states an ORDER OF OPERATIONS over the value (increases first,
+    then reductions; a Pokémon left with no Retreat Cost by an effect overrides every
+    increase), which is arithmetic over something that CHANGES — and both halves are
+    already inside `effectiveRetreatCost`. A printed constant would need no order of
+    operations at all.
+
+    ⑶ **AND IT IS THE READING WITH A FALSIFIER.** ⚠️ **THE DISAGREEMENT IS DRIVEN IN
+    BOTH DIRECTIONS AND NOT ARGUED** — a guard that only exercises boards where the two
+    readings AGREE is exactly the vacuous guard this repo keeps rediscovering (D200 →
+    D214). `retreatCostBonus.test.ts` §3 puts a printed-{C} defender under Calamitous
+    Wasteland `sv02-175` and under a benched Spidops ex `sv01-019` (a Stadium term and
+    an aura term, two different summands): the fold reads {C}{C}, the clause is **TRUE**
+    and the attack deals **220** where the printed column says false and 110. §4 is the
+    MIRROR — a printed-{C}{C} defender under Beach Court `sv01-167` folds to {C}, the
+    clause is **FALSE** and the attack deals **110** where the printed column says true
+    and 220. **EVERY RUNG ASSERTS THE TWO NUMBERS ACTUALLY DIFFER ON THAT BOARD BEFORE
+    IT READS THE DAMAGE** (D214's attribution control), so a board where they happen to
+    agree cannot pose as a driven disagreement.
+
+    ⚠️ **`>=`, A FLOOR, AND THE FIRST MEMBER IN THIS FAMILY WHOSE FOLD IS A DERIVED
+    BOARD VALUE** rather than a field or a printed column. `yourBenchAtLeast`'s and
+    `yourEnergyInPlayAtLeast`'s reading of "or more", NOT `opponentPrizesRemaining`'s
+    set membership: that member may enumerate because `prizes.length` is 0-6 and CLOSED
+    (§3.8), and a Retreat Cost has no such bound — printed values run to 5 and the
+    Stadium/aura terms are unbounded sums. D365's warning runs the usual way round here:
+    a member whose fold is `counts.includes(…)` cannot be handed a threshold.
+
+    ⚠️ **AND THE NEIGHBOUR ONE LINE UP IS NOT A PRECEDENT FOR READING IT PRINTED.**
+    `opponentActiveHasResistance` (D371) reads `Card.resistances` directly — but this
+    engine holds NO Resistance-modifying continuous effect at all (measured:
+    continuous.ts carries `seatRemovesWeakness` and no sibling for Resistance), so there
+    is no fold there to decline. Here there is one, it has four consumers, and it is the
+    one the printed phrase names.
+
+    ⚠️ **THE PRICE, IN D382's UNITS: 1 printing / 2 mechanisms = 0.50** — ONE
+    parameterised `BoardCondition` member with its TWO exhaustive-switch arms, and ONE
+    literal `CONDITIONAL_DAMAGE_CLAUSES` row. **ZERO new card predicates, ZERO new
+    fixtures for the modifiers** (all four retreat levers were already in
+    `FIXTURE_POOL`), zero new readers, ops, events, prompts, choice kinds, payoff rows,
+    registry rows, `redact.ts` bytes or `packages/schema` bytes. Against the face-up
+    PRIZE row's **2 / 9 = 0.22** that is a **2.3× margin, the widest since D380** — and
+    the Prize row loses for the FOURTH consecutive slice on the same four mechanisms
+    (a player CHOICE of Prize index with park/prompt/choice-kind, an INDEX REMAP, a
+    THIRD payoff anchor, a WIRE shape plus UI) plus `MATCH_RECORD_VERSION` 23 → 24,
+    which this row does not owe.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape D382, D384 and
+    D387 took. raw 1,266 → **1,267**, `BUILT.attack` 1,295 → **1,296**, resolving
+    sentences 369 → **370**, and the BONUS RESIDUE **18 / 21 → 17 / 20**. 🛑 **THE
+    2-PRINTING BAND STAYS EMPTY AND EVERY BAND RUNG IS STILL DRIVEN FROM OUTSIDE IT** —
+    the distribution moves `{1: 16, 5: 1}` → `{1: 15, 5: 1}`.
+
+    engineVersion 0.292.0 → **0.293.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed. The one new member carries a `count: number` and is stored
+    only inside a derived `CardProgram`, never in a `MatchRecord`; a `conditionGate`
+    resolves inline and never parks; `effectiveRetreatCost` is a pure READ over
+    `GameState` that writes nothing; and NO field is added to `InPlayPokemon`,
+    `PlayerSide` or `GameState`. No v23 byte string can contain a member that did not
+    exist, and none means anything different under this head (D335's discriminator).
+    **THE VERSION MOVES BECAUSE A READER ANSWERS ONE PRINTED SENTENCE IT USED TO
+    REFUSE.**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.292.0 → **THE STAGE 1 CLAUSE — THE FOURTH SIBLING OF A SHAPE THIS UNION
     HAS BUILT THREE TIMES, AND A SUBSET THAT IS NOT A NARROWING.**
 
@@ -15391,7 +15500,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.292.0";
+export const engineVersion = "0.293.0";
 
 export type {
   ApplyResult,

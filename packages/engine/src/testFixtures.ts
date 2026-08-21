@@ -11416,6 +11416,74 @@ export const FIXTURE_POOL: Record<string, Card> = {
     retreat: 2,
     evolveFrom: "fix-bigbody",
   },
+  /** 🆕🆕 D388 — THE RETREAT-COST THRESHOLD DEMONSTRATOR. Talonflame `sv07-123`
+      "Aero Chase" ({C}{C}, `110+`, **+110**), transcribed and not interpolated
+      (D306): the real card prints ONE attack and so does this, at index 0, and the
+      `110+` marker is REAL and load-bearing — the reader consumes the "+" and
+      attack.ts drops the printed base into the gate, so a flat `110` would exercise
+      the wrong half of the assembly.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest and
+      `sv07` is in none of the six. The NAME spells no possessive, so the three
+      `/^[A-Z][A-Za-z' ]*'s /` sweeps stand still (the fixture-name toll, unpaid for
+      the fourteenth slice running).
+
+      A **Stage 2** with a NAMED `evolveFrom`, which is Stoutland `sv03-172`'s shape
+      in this pool for the identical reason: the four printings of the SIBLING
+      retreat-cost sentence include two Stage 2s, and a suite that reads damage puts
+      the attacker on the Active by surgery rather than by climbing a chain. 140 HP
+      and retreat 0 are the printed card's; nothing on any board in
+      `retreatCostBonus.test.ts` attacks back, and the attacker's OWN retreat cost is
+      never read — the clause names the far Active. */
+  "fix-aerochase": {
+    ...blank,
+    id: "fix-aerochase",
+    name: "Fixalonflame",
+    category: "Pokemon",
+    stage: "Stage2",
+    evolveFrom: "Fletchinder",
+    hp: 140,
+    types: ["Colorless"],
+    retreat: 0,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Aero Chase",
+        damage: "110+",
+        effect:
+          "If the Retreat Cost of your opponent's Active Pokémon is {C}{C} or more, this attack does 110 more damage.",
+      },
+    ],
+  },
+  /** 🆕🆕 D388 — the printed-{C} defender, and the body on which the two readings of
+      *"the Retreat Cost of your opponent's Active Pokémon"* are DRIVEN APART in the
+      direction the fold is LARGER. Bare it is FALSE under both readings (110); under
+      Calamitous Wasteland `sv02-175` (a Stadium term) or a benched Spidops ex
+      `sv01-019` (an aura term) the fold reads {C}{C} and the clause is TRUE (220)
+      while `retreatCostOf` still says {C}.
+
+      ⚠️ **340 HP, AND THAT IS NOT DECORATION**: the boosted total is 110 + 110 = 220
+      and the pool's next-biggest neutral Basic is `fix-bigbody` at 200, which the
+      bonus would KO — putting a §8.1 Prize tail across every assertion in a suite
+      whose whole subject is the number on the damage event.
+
+      ⚠️ **COLORLESS ON PURPOSE.** Calamitous Wasteland's surcharge carries
+      `excludesType: "Fighting"`, so a {F} body would be EXEMPT and the Stadium rung
+      would silently test nothing. `battler`'s default types for a `fix-*` id are
+      `["Colorless"]` (`printedTypesOf`), and this is one of the places that default
+      is load-bearing rather than incidental. */
+  "fix-retreat1-titan": battler("fix-retreat1-titan", { hp: 340, retreat: 1 }),
+  /** 🆕🆕 D388 — the printed-{C}{C} defender, and the MIRROR of the body above: bare
+      it is TRUE under both readings (220); under Beach Court `sv01-167` the fold
+      reads {C} and the clause is FALSE (110) while `retreatCostOf` still says
+      {C}{C}. **A LADDER NEEDS BOTH DIRECTIONS** — a suite that only ever showed the
+      fold LARGER than the printed column would be green under a build that read
+      `printed + 1`, and this body is what refuses that.
+
+      340 HP and Colorless for the sibling's two reasons, unchanged. Its printed 2 is
+      also the threshold EXACTLY, which is the rung that refuses a strict `>`. */
+  "fix-retreat2-titan": battler("fix-retreat2-titan", { hp: 340, retreat: 2 }),
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -12161,6 +12229,55 @@ export const STAGE1_BONUS_DECK = deckOf({
   "fix-vstar-big": 4, // 260 HP VSTAR — an Evolution that is neither Basic, Stage 1 nor Stage 2
   "fix-fire-energy": 12, // Basic {R} — the one typed symbol of Spirited Tackle
   "fix-energy": 24, // Basic {C} — the two Colorless symbols
+});
+
+/** 🆕🆕 D388 — the RETREAT-COST THRESHOLD (`retreatCostBonus.test.ts`). Its own 60
+    on D270's rule, and with a reason of its own: this is the first clause deck whose
+    cast is a LADDER OF RETREAT-COST MODIFIERS rather than of bodies, because the
+    clause reads a DERIVED number and every term of that derivation is a different
+    card.
+
+    🛑 **THE THREE MODIFIERS ARE THE POINT OF THE 60, NOT DECORATION.** The printed
+    noun phrase has two live readings in this engine — `retreatCostOf` (the printed
+    column) and `effectiveRetreatCost` (the fold) — and a suite that fielded only
+    bare defenders would exercise ONLY boards where the two AGREE, which is the
+    vacuous guard this repo keeps rediscovering (D200 → D214). Every modifier here
+    exists to make them DISAGREE, and in both directions:
+
+      • `fix-aerochase` — Talonflame's printed "Aero Chase" ({C}{C}, `110+`) at its
+        printed index 0, the ONE legal printing of the sentence;
+      • `fix-retreat1-titan` (340 HP, printed **{C}**) — FALSE bare (110), and the
+        body the two ADDITIVE modifiers push over the threshold;
+      • `fix-retreat2-titan` (340 HP, printed **{C}{C}**) — TRUE bare (220) and the
+        threshold EXACTLY, so it also refuses a strict `>`;
+      • `sv02-175` **Calamitous Wasteland** — the Stadium term (`+1` on each Basic
+        non-{F}): printed {C} folds to {C}{C} and the clause flips TRUE;
+      • `sv01-019` **Spidops ex** — the AURA term (`opponentActiveRetreatSurcharge`,
+        `+1` across the table from the ATTACKER's own Bench). A SECOND summand of the
+        same fold, reached without a Stadium at all, so the disagreement is not a
+        fact about the shared zone;
+      • `sv01-167` **Beach Court** — the SUBTRACTIVE term (`-1` on each Basic), and
+        the MIRROR: printed {C}{C} folds to {C} and the clause flips FALSE. Only one
+        Stadium is ever in play, so it and Calamitous Wasteland are driven by
+        REPLACING each other, never by stacking;
+      • `fix-titan` (340 HP, no attacks) — the DOMINANT mulligan-free starter and the
+        bench filler on both sides. Its own printed retreat is 4, which is why every
+        rung surgeries the defender it means to read rather than trusting the setup.
+
+    🛑 **NO SECOND ATTACKER.** Every board here is about the number the fold returns,
+    so a card that could add or remove damage is a card every assertion would have to
+    account for.
+
+    4 + 6 + 6 + 4 + 4 + 4 + 12 + 20 = **60**. */
+export const RETREAT_COST_BONUS_DECK = deckOf({
+  "fix-aerochase": 4, // Talonflame — "Aero Chase" ({C}{C}, 110+): the +110
+  "fix-retreat1-titan": 6, // 340 HP, printed {C} — FALSE bare, TRUE under either ADDITIVE term
+  "fix-retreat2-titan": 6, // 340 HP, printed {C}{C} — TRUE bare (the threshold exactly), FALSE under Beach Court
+  "sv02-175": 4, // Calamitous Wasteland — the Stadium term (+1 on Basic non-{F})
+  "sv01-019": 4, // Spidops ex — the AURA term (+1 across the table, from the Bench)
+  "sv01-167": 4, // Beach Court — the SUBTRACTIVE term (-1 on Basic), the mirror
+  "fix-energy": 12, // Basic {C} — the two Colorless symbols of Aero Chase
+  "fix-titan": 20, // 340 HP neutral Basic, NO attacks — DOMINANT starter and bench filler
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

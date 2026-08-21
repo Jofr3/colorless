@@ -999,17 +999,17 @@ describe("the engine version", () => {
     // says is always there. A MISSING REQUIRED FIELD is the one case D335's
     // discriminator does not cover, and D124's own bump (1 -> 2) was this exact case at
     // this exact address. The post-bump anchor pass was clean.
-    // 🆕🆕 D387 — 0.291.0 -> **0.292.0**, THE STAGE 1 CLAUSE.
-    // `MATCH_RECORD_VERSION` **STAYS 23**, asked rather than assumed and asked one
-    // slice after the answer came out "yes": the one new member
-    // (`opponentActiveIsStage1`) is NULLARY, so there is nothing to store; a
-    // `conditionGate` resolves inline and never parks; `isStage1Pokemon` is a pure
-    // CARD read that writes nothing; and NO field is added to `InPlayPokemon`,
-    // `PlayerSide` or `GameState`. No v23 byte string can contain a member that did
-    // not exist and none means anything different under this head (D335's
-    // discriminator). The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.292.0");
-    expect(manifest.version).toBe("0.292.0");
+    // 🆕🆕 D388 — 0.292.0 -> **0.293.0**, THE RETREAT-COST THRESHOLD.
+    // `MATCH_RECORD_VERSION` **STAYS 23**, asked rather than assumed. The one new
+    // member (`opponentActiveRetreatCostAtLeast`) carries a `count: number` and is
+    // stored only inside a DERIVED `CardProgram`, never in a `MatchRecord`; a
+    // `conditionGate` resolves inline and never parks; `effectiveRetreatCost` is a
+    // pure READ over `GameState` that writes nothing; and NO field is added to
+    // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
+    // member that did not exist and none means anything different under this head
+    // (D335's discriminator). The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.293.0");
+    expect(manifest.version).toBe("0.293.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

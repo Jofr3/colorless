@@ -38,6 +38,12 @@ import {
   countAttachedEnergy,
   countEnergyInPlay,
   effectiveMaxHp,
+  // 🆕 D388 — the SECOND value this file takes from the retreat-cost seam's single
+  // derivation point (D108/D322). `opponentActiveRetreatCostAtLeast` reads the
+  // printed noun phrase "the Retreat Cost of your opponent's Active Pokémon", and
+  // attack.ts has resolved that same phrase through this fold since 0.61.0 — so the
+  // import is what keeps one noun phrase meaning one thing (D159).
+  effectiveRetreatCost,
   groupShieldedFromAttackEffects,
   hasAttachedEnergy,
   installedAttackDebuffOf,
@@ -3339,6 +3345,44 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const spot = activeTop(state, otherSeat(seat));
       return spot !== null && (spot.card.resistances ?? []).some((r) => r.type === cond.type);
     }
+    case "opponentActiveRetreatCostAtLeast": {
+      // 🆕 D388 — Talonflame sv07-123 "Aero Chase" ({C}{C}, 110+): "If the Retreat
+      // Cost of your opponent's Active Pokémon is {C}{C} or more, this attack does
+      // 110 more damage."
+      //
+      // 🛑 `effectiveRetreatCost`, NOT `retreatCostOf`, AND THAT CHOICE *IS* THE
+      // MEMBER. The arm directly above reads a PRINTED column on purpose; this one
+      // must not, and the two are not the same call for two different reasons.
+      // The engine has answered this exact printed noun phrase since 0.61.0:
+      // attack.ts's `opponentActiveRetreatCost` count source resolves "for each {C}
+      // in your opponent's Active Pokémon's Retreat Cost" (the family D110 landed:
+      // Heracross sv01-002, Spidops ex sv01-019, Sharpedo sv03-047, Stoutland
+      // sv03-172; TWO of those sentences are legal at this head) through this
+      // very fold, so spelling `retreatCostOf(spot.card)` here would make ONE
+      // printed phrase mean two things in one engine (D159). And the game agrees:
+      // Retreat Cost is a value effects MODIFY — increases first, then reductions,
+      // with a set-to-zero overriding every increase — which is the order of
+      // operations `effectiveRetreatCost` already implements and a printed constant
+      // would not need.
+      //
+      // ⚠️ THE TWO READINGS DISAGREE ON REAL BOARDS IN BOTH DIRECTIONS, and
+      // `retreatCostBonus.test.ts` §3/§4 drive them rather than asserting them: a
+      // printed-{C} defender under Calamitous Wasteland sv02-175 or a benched
+      // Spidops ex sv01-019 folds to {C}{C} and is TRUE here while the printed
+      // column says false; a printed-{C}{C} defender under Beach Court sv01-167
+      // folds to {C} and is FALSE here while the printed column says true.
+      //
+      // `>=` because the printed word is "or more" — a FLOOR, `yourBenchAtLeast`'s
+      // reading and NOT `opponentPrizesRemaining`'s set membership; a Retreat Cost
+      // has no closed domain to enumerate.
+      //
+      // The IN-PLAY body, not the top card: the fold's aura scans key on the body's
+      // uid to find whose side it is on. FALSE with an empty Active Spot, exactly as
+      // every body-reading sibling — an absent Pokémon is not a Pokémon retreating
+      // for free.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && effectiveRetreatCost(state, active) >= cond.count;
+    }
     case "yourBenchHasType":
       // 🆕 D370 — the FIELD of the arm directly above (`Card.types`, the same read
       // Weakness and Resistance make in §8.5) over the ZONE of the arm directly
@@ -4064,6 +4108,19 @@ export function conditionNote(cond: BoardCondition): string {
       // to the same MEMBER — through `CLAUSE_POKEMON_TYPES`'s spelled-out half.
       // Asserted both directions in `opponentResistanceBonus.test.ts` §3.
       return `your opponent's Active Pokémon has ${cond.type} Resistance`;
+    case "opponentActiveRetreatCostAtLeast":
+      // 🆕 D388 — built from the parameter, and the `{C}{C}` glyph is resolved to its
+      // ARITY for the reason the arm above resolves `{F}` to "Fighting" (D118): a
+      // reject pill and a HUD tooltip are read off the board by a person, and a brace
+      // code is a card-face glyph. So this note does NOT round-trip to the printed
+      // bytes and DOES round-trip to the same member, which is the family's standing
+      // trade.
+      //
+      // The printed sentence's own word order is kept — subject "the Retreat Cost",
+      // not "your opponent's Active Pokémon" — because unlike the Stage 2 sibling
+      // this card prints the fact as a WHOLE CLAUSE and there is no noun phrase to
+      // re-voice. "or more" is the printed word and reads as the floor it is.
+      return `the Retreat Cost of your opponent's Active Pokémon is ${String(cond.count)} or more`;
     case "yourBenchHasType":
       // 🆕 D370 — built from the parameter, and the type reads as the printed NAME
       // rather than the brace code — `yourEnergyInPlayAtLeast`'s rule (D118), for
