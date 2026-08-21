@@ -5158,6 +5158,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
+    // ⚠️ RE-POINTED AT D383 (0.287.0 → 0.288.0), in the SAME COMMIT as the bump —
+    // the NINTH slice running to do it that way, and the practice is now the one
+    // thing about this row that has never cost an ERROR since it started.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D383's only persisted-shape move is `discardEnergy.to?: "hand"` ->
+    // `to?: "hand" | "deck"`. That op PARKS, so it really does ride
+    // `EffectContinuation.pendingOp` in a v22 record — but the change is a WIDENING:
+    // an old record carries the key absent or `"hand"`, and both still mean exactly
+    // what they meant (D335's discriminator). D352 and D359 are the counter-examples
+    // and both are RENAMES.
     // ⚠️ RE-POINTED AT D382 (0.286.0 → 0.287.0), in the SAME COMMIT as the bump —
     // the EIGHTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5637,7 +5648,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.287.0";',
+    find: 'export const engineVersion = "0.288.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5717,8 +5728,14 @@ export const MUTANTS: Mutant[] = [
     // them. The quoted line was never edited — a `git grep` for it still finds it —
     // and the row broke anyway. **A MULTI-LINE `find` IS A CLAIM ABOUT ADJACENCY,
     // AND AN ADDITION CAN FALSIFY IT WITHOUT TOUCHING A CHARACTER.**
-    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    // 🆕🆕 RE-TRANSCRIBED AT D383 — THE ADJACENCY RULE, FOURTH FIRING. This slice
+    // did not ADD a disjunct; it NARROWED one (`optionalCostBoost !== null` ->
+    // `costBoostOwnsTheBase`, a named local, because the reversed reading's two
+    // payoffs answer `scaledBase` differently). A narrowing falsifies a multi-line
+    // `find` exactly as an insertion does, and `git grep` for the quoted line still
+    // finds most of it — which is why this is done in the same commit.
+    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5754,8 +5771,9 @@ export const MUTANTS: Mutant[] = [
     what: 'the printed "+" is left unexplained, so all five printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader over)',
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
-    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
-    replace: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
+    // 🆕🆕 RE-TRANSCRIBED AT D383 for the `scaledBase` row's reason, one chain over.
+    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
+    replace: "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -6937,9 +6955,21 @@ export const MUTANTS: Mutant[] = [
     decision: "D295",
     what: "🛑 `discardEnergy`'s destination branch collapses to the DISCARD PILE, so Chill Teaser Toy discards the opponent's Energy instead of handing it back — a strictly BETTER card than the one printed, and the failure mode the whole slice is about. ⚠️ **EVERY \"the Energy left the Pokémon\" ASSERTION STAYS GREEN**, which is why `chillTeaserToy.test.ts` §3 keeps `fix-hammer` on the same board as an ATTRIBUTION CONTROL: without a paired discard board the pile-versus-hand question is not asked anywhere. **MEASURED: 7 of 6,038 repo-wide, all 7 in `chillTeaserToy.test.ts`, and ZERO in `discardEnergy.test.ts` — the zero is the finding**, because the hammer family's own suite cannot see this at all",
     file: "packages/engine/src/interpreter.ts",
-    find: "      ...(toHand\n        ? { hand: [...side.hand, ...discarded] }\n        : { discard: [...side.discard, ...discarded] }),",
+    // 🆕🆕 RE-POINTED AT D383 — THE ANCHOR MOVED AND IS RE-POINTED, NOT REWRITTEN
+    // (D297/D350's practice). The conditional gained a THIRD zone (`"deck"`,
+    // Wellspring Mask Ogerpon ex's printed Energy shuffle), so the two-arm string is
+    // gone while the CLAIM is unchanged: every destination collapses to the pile.
+    // ⚠️ **THE `what` ABOVE IS A DATED MEASUREMENT AND ITS LAST CLAUSE IS NOW
+    // WIDER**: this row is reachable from `torrentialPump.test.ts` §5 as well, which
+    // reads the DECK and the PILE on the same board for exactly this reason. The
+    // "7 of 6,038, all 7 in `chillTeaserToy.test.ts`" figure is kept as the
+    // measurement it was at D295's head (D178).
+    find: "      ...(toHand\n        ? { hand: [...side.hand, ...discarded] }\n        : toDeck\n          ? { deck: [...side.deck, ...discarded] }\n          : { discard: [...side.discard, ...discarded] }),",
     replace: "      discard: [...side.discard, ...discarded],",
-    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/chillTeaserToy.test.ts",
+      "packages/engine/src/torrentialPump.test.ts",
+    ],
   },
   {
     id: "D295-caption-still-says-discard",
@@ -6955,9 +6985,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D295",
     what: "⚠️ `ENERGY_DISCARDED` stops carrying `to`, so the LOG says the Energy was \"discarded\" on a board where it went back to its owner's hand — a wrong sentence about a public fact both players watched, and the one place a player can reconstruct the turn afterwards. **MEASURED: 2 of 6,038.** The STATE is untouched, so this is an information defect in D294's `POKEMON_BENCHED` class; it is filed as its own row rather than folded into the pile row above because the two fail in opposite directions — that one moves the cards and lies to nobody, this one moves nothing and lies to everybody",
     file: "packages/engine/src/interpreter.ts",
-    find: '      ...(toHand ? { to: "hand" as const } : {}),',
-    replace: '      ...({} as { to?: "hand" }),',
-    expectKilledBy: ["packages/engine/src/chillTeaserToy.test.ts"],
+    // 🆕🆕 RE-POINTED AT D383 for the row above's reason — the ternary gained the
+    // `"deck"` arm. The claim is unchanged and now bites on two producers.
+    find: '      ...(toHand ? { to: "hand" as const } : toDeck ? { to: "deck" as const } : {}),',
+    replace: '      ...({} as { to?: "hand" | "deck" }),',
+    expectKilledBy: [
+      "packages/engine/src/chillTeaserToy.test.ts",
+      "packages/engine/src/torrentialPump.test.ts",
+    ],
   },
   {
     id: "D295-chill-teaser-gate-drops-the-going-order-conjunct",
@@ -8499,8 +8534,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the reader stops claiming the printed base, so it lands pre-program AND again inside the gate - the double hit effects.ts refuses, on both arms",
     file: "packages/engine/src/attack.ts",
-    find: '    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    optionalCostBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    // 🆕🆕 RE-TRANSCRIBED AT D383 — the narrowing one chain up moved this row's
+    // second line too. Same claim, same file, same commit.
+    find: '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8508,8 +8545,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: 'the printed "+" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader further on)',
     file: "packages/engine/src/attack.ts",
-    find: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    coinExplainsModifier;",
-    replace: "    optionalCostBoost !== null ||\n    coinExplainsModifier;",
+    // 🆕🆕 RE-TRANSCRIBED AT D383 for the row above's reason.
+    find: "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
+    replace: "    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -14804,8 +14842,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D381",
     what: "\u{1F6D1} C6 — THE `>= 1` GUARD RELAXED TO `>= 0`, the guard every captured amount in effects.ts carries and the one this sentence needs most: a printed 0 makes the confirm an offer to discard a Stadium for NO extra damage — a decision with no upside, which is `AttackOptionalBoost`'s own refusal of a decision with no downside read from the other side. No printing spells it today, so nothing about the CENSUS moves; §2 asks the reader directly",
     file: "packages/engine/src/effects.ts",
-    find: "  return bonus < 1 ? null : { cond: cost.cond, ops: cost.ops, bonus };",
-    replace: "  return bonus < 0 ? null : { cond: cost.cond, ops: cost.ops, bonus };",
+    // 🆕🆕 RE-POINTED AT D383 — the guard moved into `optionalCostPayoff` when the
+    // payoff half became a dispatch table, and it kept its `>= 1`. The claim is
+    // untouched; only the site moved.
+    find: '    return bonus < 1 ? null : { kind: "moreDamage", bonus };',
+    replace: '    return bonus < 0 ? null : { kind: "moreDamage", bonus };',
     expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
   },
   {
@@ -14813,7 +14854,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D381",
     what: "\u{1F6D1} C7 — **THE `scaledBase` CLAIMANT DROPPED, AND IT IS THE TERM D316 AND D317 EACH HAD TO ADD BY HAND.** `programDamage`'s `some` walks the TOP LEVEL only, and this reading's `damageDefender`s are nested two gates deep — so without this term the printed 140 lands in the pre-program pipeline AND again inside the gate. Weakness DISTRIBUTES over a split hit, but Resistance and the defender's reduction are SUBTRACTIONS paid once per hit and the §8.1 survival clamp is asked twice, so one printed number becomes TWO `DAMAGE_DEALT` rows. §5 counts the rows on all three answers (yes, no, empty zone)",
     file: "packages/engine/src/attack.ts",
-    find: "    optionalCostBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    // 🆕🆕 RE-TRANSCRIBED AT D383, and the CLAIM GREW WITH THE ANCHOR. The term is
+    // now `costBoostOwnsTheBase`, a named local reading `payoff.kind ===
+    // "moreDamage"` — so deleting it drops the base for D381's payoff (the defect
+    // this row was written for) AND leaves D383's alone, which is why the kill list
+    // stays a single file rather than gaining `torrentialPump.test.ts`. **THE ROW
+    // ONE DOWN IS THE OTHER HALF**, and the pair is the point.
+    find: "    costBoostOwnsTheBase ||\n    coinFlip?.kind === \"perHeads\"",
     replace: "    coinFlip?.kind === \"perHeads\"",
     expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
   },
@@ -14822,7 +14869,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D381",
     what: "\u{1F6D1} C8 — **THE FIRST DRAFT OF THIS ASSEMBLER, RESTORED.** One array handed to both gates: equal in VALUE, correct at runtime, and every board in `optionalCostBoost.test.ts` is green on it. What it breaks is SHAPE — a shared branch makes the program a DAG, and `programWalk.test.ts` accounts for the ops it reaches BY IDENTITY, so the confirm's decline hit is \"already seen\" down the outer path and that file's `structural - enumerated === missed.length` invariant fails by exactly one. **AN INVARIANT THAT COUNTS OBJECTS IS AN INVARIANT ABOUT SHAPE, NOT ABOUT VALUE**, and this row is the only thing in the corpus that says so",
     file: "packages/engine/src/effects.ts",
-    find: "  const [, vacantZone] = boostedArms(base, reading.bonus, []);",
+    // 🆕🆕 RE-POINTED AT D383 — `reading.bonus` became `reading.payoff.bonus`. The
+    // claim, the replacement and the killing file are all unchanged.
+    find: "  const [, vacantZone] = boostedArms(base, reading.payoff.bonus, []);",
     replace: "  const vacantZone = otherwise;",
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },

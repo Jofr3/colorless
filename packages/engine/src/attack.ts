@@ -934,12 +934,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // HERE, off the reading, which is again the honest place: the reader is what
   // knows the printed number has been re-homed. Leaving it out would deal the base
   // pre-program AND again inside the gate, on BOTH arms.
+  // 🆕🆕 D383 — THE EXCEPTION NAMED RATHER THAN INLINED, `coinExplainsModifier`'s
+  // idiom two blocks down and for its reason: the reversed reading's TWO payoffs
+  // answer this question DIFFERENTLY, so a bare `optionalCostBoost !== null` would
+  // claim the base for both.
+  //
+  // 🛑 THE DISCRIMINATOR IS WHETHER THE PAYOFF RE-HOMES THE PRINTED NUMBER, WHICH IS
+  // D228's ASYMMETRY WITH A READER IN FRONT OF IT. `moreDamage` (Cetitan ex, `140+`)
+  // is the SAME §8.5 hit at two amounts and is dealt from inside the gate, so the
+  // base must be dropped here or one printed number becomes two `DAMAGE_DEALT` rows.
+  // `benchSnipe` (Wellspring Mask Ogerpon ex, a flat `100`) is an ADDITIONAL hit on a
+  // benched body the main hit never touches — the printed 100 lands in this pipeline
+  // whatever the player answers — so dropping the base would silently delete a
+  // 100-damage attack on every board, including the ones where the offer is declined.
+  const costBoostOwnsTheBase = optionalCostBoost?.payoff.kind === "moreDamage";
   const scaledBase =
     damageMultiplier !== null ||
     programDamage ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
-    optionalCostBoost !== null ||
+    costBoostOwnsTheBase ||
     coinFlip?.kind === "perHeads"
       ? 0
       : base;
@@ -1032,13 +1046,26 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `coinFlip !== null` here would claim the modifier for all four.
   const coinExplainsModifier =
     coinFlip !== null && coinFlip.kind !== "cancelOnTails" && coinFlip.kind !== "programPerHeads";
+  // 🆕🆕 D383 adds NO term and NARROWS one, which is D130's rule applied to a
+  // widened reading rather than to a new reader. The `moreDamage` payoff consumes a
+  // printed "+" marker (`140+`) and is exactly what explains it; the `benchSnipe`
+  // payoff explains NO `+`/`×` at all — its printing is a FLAT `100` and its extra
+  // damage is a second hit rather than a bigger one — so a card that ever paired
+  // that clause with a marker would carry a number nothing in the derived shape
+  // accounts for, and claiming it would suppress a loud row the engine has not
+  // earned. No printing in the pool reaches the difference (all 5 are flat), so this
+  // is correctness in principle and NOT a live bug — written from the rule rather
+  // than from what a test would notice, exactly as D130 and D192 were.
+  // ⚠️ `effectSimulated` above needs no such narrowing and gets none: the sentence
+  // is the WHOLE printed effect under BOTH payoffs, so the bare term is right for
+  // both. Verified rather than copied.
   const modifierSimulated =
     scaling !== null ||
     damagePenalty !== null ||
     programDamage ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
-    optionalCostBoost !== null ||
+    costBoostOwnsTheBase ||
     coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||

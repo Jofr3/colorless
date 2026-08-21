@@ -3188,6 +3188,24 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 3-card hand and wrong one card away — `exactHandSize.test.ts` drives 2, 3
       // and 4 rather than describing them. Sizes only, contents never.
       return state.players[seat].hand.length === cond.count;
+    case "yourActiveEnergyAtLeast": {
+      // 🆕🆕 D383 — the payability of Wellspring Mask Ogerpon ex's printed cost
+      // ("You may shuffle 3 Energy attached to this Pokémon into your deck"),
+      // resolved to YOUR Active by §8 rather than here: the reader's cost table is
+      // what knows the sentence came off an attack (D116's rule, reached from a cost
+      // anchor instead of a clause table).
+      //
+      // 🛑 THE SAME CALL THE ARM BELOW MAKES, AND THAT IS THE WHOLE OF "CARDS, NOT
+      // UNITS". `countAttachedEnergy(state, pokemon, null)` is the UNFILTERED card
+      // count, so a multi-unit Special counts ONE here exactly as it does there —
+      // which is also what makes this gate bite: an attacker paying {W}{C}{C} with
+      // two cards can declare the attack and still not hold three Energy.
+      //
+      // FALSE with an empty Active Spot, like every body-reading sibling: an absent
+      // Pokémon is not a Pokémon holding zero.
+      const own = state.players[seat].active;
+      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;
+    }
     case "activeEnergyCountsEqual": {
       // 🆕 D372 — "this Pokémon and your opponent's Active Pokémon have the same
       // amount of Energy attached". D116's pronoun rule again: the printed "this
@@ -3889,6 +3907,16 @@ export function conditionNote(cond: BoardCondition): string {
       // pool prints this clause at ONE value, 3, so a singular branch would be a
       // shape no printing can reach (D205's rule about never-spelled counts).
       return `you have exactly ${cond.count} cards in your hand`;
+    case "yourActiveEnergyAtLeast":
+      // 🆕🆕 D383 — built from the parameter, and the pronoun is dropped exactly as
+      // every sibling drops it (D116). It does NOT round-trip to any printed clause
+      // and CANNOT: nothing in the legal attack column prints this fact as a
+      // condition at all — it is read off the arity of a printed COST — so a reject
+      // pill is the only audience this string has ever had. The plural is
+      // unconditional for `yourHandExactly`'s reason inverted: the anchor captures
+      // the digit, so a count of 1 is representable, but no printing spells one and a
+      // singular branch would be a shape nothing can reach (D205).
+      return `your Active Pokémon has ${cond.count} or more Energy attached`;
     case "activeEnergyCountsEqual":
       // 🆕 D372 — the printed pronoun is dropped exactly as its siblings drop it
       // (D116), so the note names the body a reader can see on the board rather than
@@ -9428,6 +9456,15 @@ function discardEnergyApply(
   // Toy `sv08-166`. Both zones belong to `victim` — the seat resolved one line
   // above — so this is a ZONE branch and not a seat one.
   const toHand = op.to === "hand";
+  // 🆕🆕 D383 — THE THIRD ZONE, READ AS ITS OWN LOCAL RATHER THAN BY WIDENING THE
+  // ONE ABOVE. Wellspring Mask Ogerpon ex `sv06-064`'s printed *"shuffle 3 Energy
+  // attached to this Pokémon into your deck"* — and it is the first destination on
+  // this op whose VICTIM IS THE ACTOR, which the seat line above resolves without a
+  // branch (`discardVictimSeat` returns the controller for `yourActive`). The
+  // SHUFFLE is not here: it is the trailing `shuffleDeck` op the reader emits
+  // beside this one, so the cards are appended and the deck is randomised in the
+  // open (D342's split, one op over).
+  const toDeck = op.to === "deck";
   const pulled: { target: PokemonTarget; host: string; uids: string[] }[] = [];
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
     const taken: string[] = [];
@@ -9455,7 +9492,9 @@ function discardEnergyApply(
       host: entry.host,
       // D295 — omitted entirely for the pile, so every row written before this
       // slice is byte-identical and no consumer has to learn a default.
-      ...(toHand ? { to: "hand" as const } : {}),
+      // 🆕🆕 D383 — and the same for the deck, spelled as a second ternary rather
+      // than a lookup so the ABSENT case stays the literal `{}` D295's row asserts.
+      ...(toHand ? { to: "hand" as const } : toDeck ? { to: "deck" as const } : {}),
     });
   }
   return {
@@ -9467,9 +9506,16 @@ function discardEnergyApply(
       // spread through UNCHANGED rather than rebuilt: a `hand` write that also
       // appended to `discard` would duplicate the uid across two zones, which no
       // later reader could untangle (a uid is the game's identity, types.ts).
+      // 🆕🆕 D383 — THREE zones now, and the invariant is unchanged: exactly one
+      // key is written, so a uid can still never sit in two zones at once. The deck
+      // is APPENDED to, never prepended — the position is meaningless under the
+      // trailing shuffle, and the append keeps this arm the same shape as the two
+      // beside it.
       ...(toHand
         ? { hand: [...side.hand, ...discarded] }
-        : { discard: [...side.discard, ...discarded] }),
+        : toDeck
+          ? { deck: [...side.deck, ...discarded] }
+          : { discard: [...side.discard, ...discarded] }),
     }),
     discarded,
   };
@@ -10572,6 +10618,13 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
   // arms below are unreachable with `to` set and are left exactly as they were
   // rather than growing a branch no card can take.
   const putBack = op.to === "hand";
+  // 🆕🆕 D383 — the deck destination's own caption flag, added BESIDE the line above
+  // rather than folded into it: `putBack` is read by the two OPPONENT-side arms and
+  // this one is read by the own-board arm the sentence actually reaches, so a single
+  // tri-state local would have made every arm ask a question only one of them has.
+  // The paragraph above said the own-board arms "are unreachable with `to` set" —
+  // kept verbatim, and now false for exactly one value (D178).
+  const shuffleBack = op.to === "deck";
   switch (op.from) {
     case "opponentActive":
       return putBack
@@ -10585,7 +10638,15 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       return `Discard ${what} from each of your opponent's Pokémon.`;
     case "yourActive":
       // The printed attack sentence verbatim — "this Pokémon" is the Active (§8).
-      return `Discard ${what} from this Pokémon.`;
+      // 🆕🆕 D383 — and the DECK arm is the printed sentence verbatim too, down to
+      // the verb: Wellspring Mask Ogerpon ex prints *"shuffle 3 Energy attached to
+      // this Pokémon into your deck"*, not "discard". A caption that still said
+      // "Discard" over a pick that shuffles is D295's own caption defect one
+      // destination over — the board would be right and the one screen telling the
+      // player what their pick does would be wrong.
+      return shuffleBack
+        ? `Shuffle ${what} attached to this Pokémon into your deck.`
+        : `Discard ${what} from this Pokémon.`;
     case "self":
       // The SAME printed words for the same printed subject — the two members
       // differ in how they RESOLVE it (a spot versus a uid), not in what the

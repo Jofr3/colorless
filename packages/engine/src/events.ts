@@ -1055,8 +1055,18 @@ export type GameEvent =
           the opponent did not already see. That is RANDOM_CARD_TAKEN's rule
           (log.ts) read in the opposite direction: that row may name a card
           because it is no longer hidden; this one may because it was not hidden
-          when it moved. */
-      to?: "hand";
+          when it moved.
+
+          🆕🆕 **D383 — `"deck"` IS THE THIRD VALUE**: `seat`'s OWN DECK, which for
+          this destination is the ACTOR's deck as well (Wellspring Mask Ogerpon ex
+          `sv06-064` "Torrential Pump" — *"shuffle 3 Energy attached to this Pokémon
+          into your deck"*, the `discardEnergy` `to` field's own third member). The
+          naming argument above carries over unchanged and is if anything stronger:
+          the cards were face up on the table an instant earlier, and the SHUFFLE
+          that follows (its own `SHUFFLE` row, from the trailing `shuffleDeck` op)
+          is what makes their POSITION unknowable — which is the only thing a deck
+          hides that a discard pile does not. */
+      to?: "hand" | "deck";
     }
   /** `seat` shuffled its whole hand (`count` cards) into its deck, then drew (a
       separate CARDS_DRAWN) — the hand-refresh Supporter family (Youngster, Judge,

@@ -1311,6 +1311,60 @@ export type BoardCondition =
       head. A `>=` or `>` here would answer that card's question with this card's row,
       which is why the comparison has a mutant of its own. */
   | { kind: "activeEnergyCountsEqual" }
+  /** 🆕🆕 **D383 — YOUR Active Pokémon holds AT LEAST `count` Energy CARDS, of any
+      type at all.** The payability of Wellspring Mask Ogerpon ex `sv06-064`'s
+      printed cost — *"You may **shuffle 3 Energy attached to this Pokémon** into
+      your deck. If you do, …"*, **5 legal printings** — read at the gate rather
+      than inside the confirm (`deriveAttackOptionalCostBoost`'s `cond`).
+
+      🛑 **THE FIRST MEMBER OF THIS UNION REACHED BY A READER'S COST TABLE RATHER
+      THAN BY A CLAUSE TABLE, AND THAT IS WHY IT IS NOT A PRINTED CLAUSE.** Nothing
+      in the legal attack column prints *"if this Pokémon has 3 or more Energy
+      attached"*; what the catalog prints is an OFFER whose acceptance costs three
+      Energy, and D381's reading is the shape that says a reversed *"You may"* owes
+      its own precondition. So this member is authored from the COST's arity, and
+      the guard against inventing it is that the arity is captured from the printed
+      digit rather than fixed at 3.
+
+      🛑 **NO EXISTING MEMBER COULD BE NARROWED INTO IT, MEASURED RATHER THAN
+      ASSERTED — the union counts Energy three ways and all three are wrong here.**
+      `yourActiveHasEnergyAttached` is the right BODY and is TYPED and UNQUANTIFIED
+      (it answers *"any {W} at all"*); `yourEnergyInPlayAtLeast` is the right
+      QUANTIFIER and reads the whole SIDE and a type; `yourBasicEnergyInDiscardAtLeast`
+      is the right quantifier in the wrong ZONE and on the printed card class. Adding
+      a `count` to the first or narrowing the zone of the second is a RENAME of a
+      shipped member with live consumers, which D362 priced at 31 sites across 7
+      files and D365/D366 refused twice. **A WIDENING IS FREE; A RENAME IS NOT.**
+
+      🛑 **AND IT IS A SEPARATE MEMBER FROM `activeEnergyCountsEqual` DIRECTLY
+      ABOVE, WHICH IS THE QUESTION THE HANDOFF ASKED.** Both count Energy on ONE
+      body through the SAME call — `countAttachedEnergy(state, pokemon, null)`, the
+      unfiltered CARD count — so they share an implementation and can never drift.
+      What they do not share is the COMPARAND: this one measures a body against a
+      printed CONSTANT, that one measures a body against ANOTHER BODY. Folding them
+      would need a member carrying an operator and a comparand union — a
+      GENERALISATION rather than a widening — and it would swallow a shipped nullary
+      member on the way. ⚠️ The catalog's third reading of these same two operands
+      (*"…has MORE Energy attached than your opponent's Active Pokémon"*, 1 legal
+      printing, still refused at this head) belongs with `activeEnergyCountsEqual`
+      and NOT here: it is that member with `===` replaced by `>`, and it is one more
+      argument for two members rather than one.
+
+      **CARDS, NOT UNITS — DELEGATED, NOT RE-DECIDED.** A multi-unit Special counts
+      ONE, because `countAttachedEnergy`'s own doc block settled that noun for the
+      whole engine (*"one Energy card is one Energy however many units it
+      provides"*). It is also what makes the gate NON-VACUOUS on the one printing
+      that reaches it: Torrential Pump costs {W}{C}{C}, so an attacker paying with
+      TWO cards where one provides two units can legally declare the attack and
+      still cannot pay the cost.
+
+      **`>=`, A FLOOR**, like every other `AtLeast` member here. Read at the gate's
+      own point in the program (the `conditionGate` evaluates against the board as
+      of that step), which for this reading is before any cost is paid. Attached
+      Energy sits face up, so the union's public-state invariant holds. **FALSE with
+      an empty Active Spot** — an absent Pokémon is not a Pokémon holding zero, the
+      standing rule for every body-reading member in this union. */
+  | { kind: "yourActiveEnergyAtLeast"; count: number }
   /** Your opponent's Active Pokémon is a `type` Pokémon — Sylveon swsh10.5-035
       "Wonder Flash" (+90, `Dragon`), the pool's only printing of a TYPE clause
       and the only sentence in 978 cards / 6 sets that contains the word "Dragon" at all.
@@ -6024,8 +6078,36 @@ export type EffectOp =
           never` shape exists to make an unrepresentable combination
           unrepresentable rather than merely undocumented; no printed sweep puts
           Energy back into a hand, and inventing the pairing would be authoring a
-          card. */
-      to?: "hand";
+          card.
+
+          🆕🆕 **D383 — `"deck"` IS THE THIRD ZONE, AND IT IS THE FIRST TIME THE
+          VICTIM IS THE ACTOR.** Wellspring Mask Ogerpon ex `sv06-064` (and its four
+          reprints) "Torrential Pump" ({W}{C}{C}, 100): *"You may **shuffle 3 Energy
+          attached to this Pokémon into your deck**. If you do, …"* — **5 legal
+          printings**, reached through `deriveAttackOptionalCostBoost`'s cost table.
+
+          🛑 **THE PARAGRAPH ABOVE ALREADY ANSWERED THE SEAT QUESTION AND THIS
+          PRINTING IS THE CASE THAT TESTS IT.** *"The destination is the VICTIM's
+          zone"* was written when every producer aimed at the OPPONENT, so victim
+          and actor were always opposite; here `from: "yourActive"` makes them the
+          SAME seat and the printed possessive is *"your deck"*. `discardVictimSeat`
+          returns the controller for that arm, so the rule holds without a branch —
+          which is the evidence that it was a rule and not a coincidence.
+
+          🛑 **AND THE SHUFFLE IS *NOT* IN HERE, WHICH IS D342's DECISION ONE OP
+          OVER.** The printed verb is *"shuffle … into your deck"*, and this field
+          only says WHERE the cards land: the randomisation is the trailing
+          `{ op: "shuffleDeck" }` every deck-returning program in this file already
+          emits. Folding it in would buy the identical board and cost the day a card
+          prints a deck return with no shuffle — a destination that also shuffles
+          cannot spell it — and would additionally make the op advance `rngState`
+          from inside a park, where `searchDeck`'s tail does it in the open.
+
+          ⚠️ **APPENDED TO THE END OF THE DECK, NEVER THE TOP**, for the same
+          reason: the position is meaningless under the shuffle that follows, and
+          spelling it as an append keeps this arm byte-identical in shape to the two
+          zones above (`side.discard` / `side.hand` both append). */
+      to?: "hand" | "deck";
       /** How many Energy the op takes in total: absent = one (the printed "an
           Energy"), a number = exactly that many, `"all"` = every match — which
           leaves no decision, so the op never parks under it — and `"any"` = the
@@ -8476,10 +8558,20 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // "1 of" separates it from SPREAD_EACH_BENCH's "each of". Refuses Flamigo's "If
 // Flamigo is on your Bench, …" (a board-condition gate, off the `^This` anchor),
 // "2 of" (count ≠ 1), and "1 of YOUR Benched" (self-target) by the exact phrase.
-const ALSO_BENCHED_SNIPE = new RegExp(
-  `^This attack also does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon\\.` +
-    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
-);
+// 🆕🆕 D383 — THE BODY IS A NAMED FRAGMENT NOW, AND THE *ONLY* REASON IS THAT A
+// SECOND READER SPELLS THE SAME CLAUSE WITH A LOWER-CASE LEADING WORD.
+// `deriveAttackOptionalCostBoost`'s payoff table reads this clause as the
+// consequent of *"You may {cost}. If you do, …"*, where the printed sentence
+// lowercases it — D246's rule and D316's precedent, and a `[Tt]` class here would
+// give up the whole-sentence discipline in BOTH directions at once (a mid-sentence
+// clause would reach the derived path, which is the standing reason this family
+// carries no `/i`). Sharing the body is D222's rule applied to a printed clause:
+// ONE reading of one sentence, so the two anchors cannot drift apart — widen this
+// fragment and BOTH readers widen, which is the coupling the two callers want.
+const ALSO_BENCHED_SNIPE_BODY =
+  `attack also does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon\\.` +
+  `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
+const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
 // The ANY-target snipe: "This attack does N damage to 1 of your opponent's Pokémon."
 // — the WHOLE attack (no `damage` field), a chosen hit on the Active OR a Benched
 // Pokémon (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack", Paldean Tauros
@@ -16609,6 +16701,19 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     written as a dispatch over closed anchors from the first printing, so the next
     cost is a row rather than a rewrite.
 
+    ✅ 🆕🆕 **D383 SPENT THAT ROW, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS
+    ENERGY CLAUSE NOW FALSE** (D178: provenance is annotated, never overwritten).
+    The Energy shuffle's *"Energy→own-deck op"* turned out to be **one optional value
+    on `discardEnergy.to`** rather than an op, and its *"Bench-snipe consequent"* was
+    **already built** — `damageChosen {target:"opponentBench", deals:true}` has been
+    the flat rider's op since 0.38.0. What the row actually cost is ONE
+    `BoardCondition` member (`yourActiveEnergyAtLeast`), because no member counted
+    UNTYPED Energy on ONE body. **THE PREDICTION NAMED TWO MECHANISMS AND BOTH WERE
+    THE WRONG SIZE IN OPPOSITE DIRECTIONS**, which is D199's lesson: a `needs` column
+    overstates as easily as it understates, so it is re-derived and not inherited.
+    The reading is now **7 sentences / 14 printings with 1 / 2 refused** — the
+    face-up Prize alone, and its refusal is still the `PlayerState` field.
+
     ⚠️ **THE COST VERB IS SPELLED LOWERCASE AT ITS OWN ANCHOR** — D246's rule and
     D316's precedent: the printed sentence lowercases the verb behind *"You may "*,
     and a `[Dd]` class would give up the whole-sentence discipline in both
@@ -16623,22 +16728,150 @@ export interface AttackOptionalCostBoost {
       `ops` for `AttackOptionalBoost.ops`'s reason: it is a program reached through
       a READING, not a branch hanging off an `EffectOp` a walk can find. */
   ops: EffectOp[];
-  /** The printed extra damage the paid cost buys. */
-  bonus: number;
+  /** 🆕🆕 **D383 — WHAT THE PAID COST BUYS, DISPATCHED RATHER THAN ASSUMED TO BE A
+      NUMBER.** This was a bare `bonus: number` at D381, when every reversed printing
+      the reader claimed paid off in *"this attack does {N} more damage."*. The
+      catalog prints a second payoff on the SAME skeleton and it is not a bigger
+      hit but a SECOND one, on a body the main hit never touches — so the field is a
+      union and the assembler switches on it. See `AttackOptionalCostPayoff`. */
+  payoff: AttackOptionalCostPayoff;
 }
+
+/** 🆕🆕 **D383 — THE PAYOFF HALF AS A CLOSED UNION, WHICH IS THE SHAPE QUESTION
+    THIS SLICE WAS HANDED AND THE CATALOG ANSWERED OUTRIGHT.**
+
+    🛑 **A WIDENED PAYOFF, NOT AN ELEVENTH READER — AND THE DECIDING FACT IS THAT
+    `OPTIONAL_COST_BOOST` ALREADY MATCHES THE NEW SENTENCE WHOLE.** Every reader in
+    this file is held to one discipline: at most one of them fires on a given
+    attack, and the separation is proved from the LEADING WORDS. A second reader of
+    *"You may {cost}. If you do, {payoff}"* would carry a byte-identical top-level
+    anchor to this one, so no leading word could ever separate them and the
+    disjointness proof `attack.ts` sums its terms on would have to become a
+    precedence. **TWO READERS CANNOT SHARE AN ANCHOR.** The two HALVES, by contrast,
+    are already dispatch tables — the cost list is a table from its first row
+    (D381's `retrieveNoun` note) — so making the payoff a table too is symmetry, and
+    the sentence stops being refused for a reason that was never about the reader.
+
+    ⚠️ **AND THE PRICE DIFFERENCE IS MEASURED, NOT ARGUED.** A new reader costs a
+    read site in attack.ts plus a disjunct in each of `scaledBase`,
+    `effectSimulated` and `modifierSimulated` — three insertions into boolean chains
+    whose adjacency six mutation rows are anchored on (D316/D317, and the toll has
+    been paid three times). Widening this reading inherits D381's wiring instead;
+    what it DOES owe is the narrowing of two of those three terms, because the two
+    payoffs answer `scaledBase` differently, and that is the honest price of the
+    union rather than a saving pretended away. */
+export type AttackOptionalCostPayoff =
+  /** *"this attack does {N} more damage."* — Cetitan ex `sv10-065`/`sv10-210`
+      "Crushing Press" (D381), **2 legal printings**. The printed base is re-homed
+      INSIDE the gate, because the boosted hit and the declined hit are the same
+      §8.5 hit at two amounts and only one of them may land. */
+  | { kind: "moreDamage"; bonus: number }
+  /** 🆕🆕 *"this attack also does {N} damage to 1 of your opponent's Benched
+      Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"* —
+      Wellspring Mask Ogerpon ex `sv06-064` "Torrential Pump" ({W}{C}{C}, **100**,
+      index 1 of two), **5 legal printings**: the largest single sentence left
+      behind this family at D382's head.
+
+      🛑 **THE PRINTED BASE DOES NOT MOVE, AND THAT IS THE WHOLE STRUCTURAL
+      DIFFERENCE FROM THE MEMBER ABOVE.** *"ALSO"* names a SECOND hit on a BENCHED
+      body the main §8.5 hit never touches, so the 100 is an ordinary pre-program
+      hit on the Defender whatever the player answers, and the program carries only
+      `[cost…, snipe]`. Re-homing it here would be D228's asymmetry read from the
+      wrong side: an additional printed number aimed at another body must NOT claim
+      the base, or one of the two hits is silently deleted.
+
+      ⚠️ **THE OP ALREADY SHIPPED AND SO DID THE CLAUSE'S READING.**
+      `damageChosen {target:"opponentBench", count:1, source:"attack", deals:true}`
+      is the flat benched-snipe rider `deriveAttackEffect` has built since 0.38.0,
+      and the anchor here shares its regex BODY with that one
+      (`ALSO_BENCHED_SNIPE_BODY`) — differing only in the case of the leading word,
+      which is what the printed sentence differs by. The parenthetical reminder is
+      §8.5 true regardless (a benched target takes no Weakness or Resistance) and
+      changes no field, exactly as it changes none for the sibling anchor. */
+  | { kind: "benchSnipe"; amount: number };
 
 const OPTIONAL_COST_BOOST = /^You may (.+)\. If you do, (.+)$/;
 const OPTIONAL_COST_DISCARD_STADIUM = /^discard a Stadium in play$/;
+/** 🆕🆕 D383 — the SECOND cost row, and the reason the list was written as a table.
+    The printed digit is CAPTURED rather than fixed at 3: the arity is what the gate
+    reads, so burying it in the anchor would make the second printing a second row
+    for no gain — `yourEnergyInPlayAtLeast`'s parameterisation argument, one table
+    over. The noun is untyped (*"3 Energy"*, not *"3 {W} Energy"*), which is exactly
+    what `filter: anyEnergy` spells and exactly why the gate could not reuse a typed
+    member. */
+const OPTIONAL_COST_SHUFFLE_SELF_ENERGY =
+  /^shuffle (\d+) Energy attached to this Pokémon into your deck$/;
 const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
+/** 🆕🆕 D383 — the SECOND payoff row. Lower-case `this`, sharing its body with
+    `ALSO_BENCHED_SNIPE` so the two spellings of one printed clause cannot drift. */
+const OPTIONAL_COST_PAYOFF_BENCH_SNIPE = new RegExp(`^this ${ALSO_BENCHED_SNIPE_BODY}$`);
 
 /** The COST half, dispatched over its closed anchor list — the ops the printed
     *"You may …"* charges and the board fact that makes charging them possible, or
     null for a cost this engine cannot pay. The op already shipped:
     `discardStadium` is D380's, and `stadiumInPlay` is D378's, so what this slice
-    actually buys is a READING — which is the whole of its price. */
+    actually buys is a READING — which is the whole of its price.
+
+    🆕🆕 **D383 — THE SECOND ROW, AND IT IS THE FIRST WHOSE `cond` IS ABOUT THE
+    ACTOR'S OWN BODY.** *"shuffle 3 Energy attached to this Pokémon into your deck"*
+    charges THREE Energy cards off the attacker and puts them back in its
+    controller's deck, so the payability question is *"does this body hold three"* —
+    `yourActiveEnergyAtLeast`, this slice's one new `BoardCondition` member — and
+    the ops are the `to: "deck"` discard plus the trailing `shuffleDeck` the printed
+    verb names. **THE GATE IS NOT COSMETIC HERE EITHER**: Torrential Pump costs
+    {W}{C}{C}, and an attacker paying with two cards where one provides two units
+    can declare it legally and still not hold three Energy — so without the gate the
+    confirm would offer a "yes" that shuffles TWO ("do as much as you can") and
+    collects the full printed snipe. */
 function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] } | null {
   if (OPTIONAL_COST_DISCARD_STADIUM.test(cost)) {
     return { cond: { kind: "stadiumInPlay" }, ops: [{ op: "discardStadium" }] };
+  }
+  const shuffle = OPTIONAL_COST_SHUFFLE_SELF_ENERGY.exec(cost);
+  if (shuffle !== null) {
+    const count = Number(shuffle[1]);
+    // A printed 0 charges nothing — the guard every captured amount in this file
+    // carries, and here it would make the gate vacuously true and the confirm a
+    // free question. No card prints it; the row refuses it rather than relying on
+    // that.
+    if (count < 1) return null;
+    return {
+      cond: { kind: "yourActiveEnergyAtLeast", count },
+      ops: [
+        // `yourActive` and NOT `self`: the printed subject is *"this Pokémon"* and
+        // §8 makes the actor the Active, which is the exact division of labour that
+        // member's own doc block draws (`self` exists for an ABILITY on a benched
+        // host, where §8 supplies no such clause).
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count, to: "deck" },
+        // The printed verb's other half. A separate op for D342's reason, stated on
+        // the `to` field: a destination that also shuffles cannot spell a deck
+        // return without one.
+        { op: "shuffleDeck" },
+      ],
+    };
+  }
+  return null;
+}
+
+/** The PAYOFF half, dispatched over its own closed anchor list — what the accepted
+    offer buys, or null for a consequent this engine cannot pay out. 🆕🆕 D383: a
+    table for the cost table's reason, and the reading that keeps a THIRD reader of
+    this sentence off the table (see `AttackOptionalCostPayoff`). */
+function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
+  const more = OPTIONAL_COST_PAYOFF_MORE_DAMAGE.exec(payoff);
+  if (more !== null) {
+    const bonus = Number(more[1]);
+    // A printed 0 buys nothing, and here the guard is the whole stake: an offer that
+    // charges a Stadium for no extra damage is a decision with no upside, exactly as
+    // `AttackOptionalBoost`'s own `>= 1` refuses one with no downside.
+    return bonus < 1 ? null : { kind: "moreDamage", bonus };
+  }
+  const snipe = OPTIONAL_COST_PAYOFF_BENCH_SNIPE.exec(payoff);
+  if (snipe !== null) {
+    const amount = Number(snipe[1]);
+    // The same guard on the same reason — and it is the guard `deriveAttackEffect`'s
+    // own benched-snipe arm carries on this clause's other spelling.
+    return amount < 1 ? null : { kind: "benchSnipe", amount };
   }
   return null;
 }
@@ -16663,13 +16896,12 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
   if (match === null) return null;
   const cost = optionalCostOps(match[1] ?? "");
   if (cost === null) return null;
-  const payoff = OPTIONAL_COST_PAYOFF_MORE_DAMAGE.exec(match[2] ?? "");
-  if (payoff === null) return null;
-  const bonus = Number(payoff[1]);
-  // A printed 0 buys nothing, and here the guard is the whole stake: an offer that
-  // charges a Stadium for no extra damage is a decision with no upside, exactly as
-  // `AttackOptionalBoost`'s own `>= 1` refuses one with no downside.
-  return bonus < 1 ? null : { cond: cost.cond, ops: cost.ops, bonus };
+  // 🆕🆕 D383 — BOTH HALVES ARE TABLES NOW, and the symmetry is the point: an
+  // unrecognised COST and an unrecognised PAYOFF each return null from their own
+  // dispatcher, so the whole sentence stays on the loud `ATTACK_EFFECT_SKIPPED`
+  // path and neither refusal can be mistaken for the other's.
+  const payoff = optionalCostPayoff(match[2] ?? "");
+  return payoff === null ? null : { cond: cost.cond, ops: cost.ops, payoff };
 }
 
 /** 🆕🆕 D381 — assemble the reversed reading into the gate, the confirm and the
@@ -16708,13 +16940,21 @@ export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostB
     called with an EMPTY consequent: what this sentence changes is WHERE its own
     ops are spliced, not what the two hits are. That keeps the six D316/D317
     mutation rows re-pointed into that helper at one occurrence each — and makes
-    them owe a kill from a THIRD printed sentence. */
+    them owe a kill from a THIRD printed sentence.
+
+    🆕🆕 **D383 — THE SECOND PAYOFF BRANCHES OFF THE FRONT AND THE BODY BELOW IS
+    UNTOUCHED**, which is deliberate twice over: the `moreDamage` assembly is what
+    all eight D381 mutation rows are anchored on, and a bench snipe shares NOTHING
+    with it below the gate. See `costSnipeProgram`. */
 export function optionalCostBoostProgram(
   reading: AttackOptionalCostBoost,
   base: number,
   note: string,
 ): EffectOp[] {
-  const [boosted, otherwise] = boostedArms(base, reading.bonus, []);
+  if (reading.payoff.kind === "benchSnipe") {
+    return costSnipeProgram(reading, reading.payoff.amount, note);
+  }
+  const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];
   // The confirm, named as a local so both of its arms splice by SHORTHAND — D317's
   // measured trick, which is what keeps this literal free of a suppression.
@@ -16735,7 +16975,7 @@ export function optionalCostBoostProgram(
   // running it both ways; the first draft shared the array and the auditor said so.
   // The destructuring is spelled differently on purpose, so neither line is a
   // duplicate of the other for a mutation `find` to trip over (D317's rule).
-  const [, vacantZone] = boostedArms(base, reading.bonus, []);
+  const [, vacantZone] = boostedArms(base, reading.payoff.bonus, []);
   // ⚠️ THE OUTER GATE KEEPS THE SUPPRESSION AND THE INNER CONFIRM DOES NOT, AND
   // THE ASYMMETRY IS D317's TRICK REACHING ITS LIMIT RATHER THAN AN OVERSIGHT.
   // `noThenProperty` fires on an explicit `then:` KEY and not on a SHORTHAND, so a
@@ -16751,6 +16991,64 @@ export function optionalCostBoostProgram(
       // The empty board's arm, and it is the printed base rather than nothing: the
       // gate refuses the QUESTION, never the attack.
       otherwise: vacantZone,
+    },
+  ];
+}
+
+/** 🆕🆕 D383 — the BENCH-SNIPE payoff's assembly: ONE gate, ONE confirm, and NO
+    decline arm on either — which is the exact opposite of the sibling above and is
+    right for the same reason that one is right.
+
+    🛑 **THE PRINTED BASE NEVER ENTERS THIS PROGRAM, SO THERE IS NOTHING FOR A
+    DECLINE ARM TO CARRY.** Crushing Press is `140+` and its two answers are the SAME
+    §8.5 hit at two amounts, so an absent `otherwise` there would delete a
+    140-damage attack (D381's finding, and its two mutation rows). Torrential Pump is
+    a flat `100` and its payoff is an ADDITIONAL hit on a benched body: the 100 lands
+    in the pre-program pipeline whatever the player answers, so *nothing* is what a
+    decline and an unpayable cost genuinely buy, and D135's rule makes the field
+    ABSENT rather than `[]`. **THE TWO ARMS DIFFER BECAUSE THE SENTENCES DIFFER, AND
+    THE THING THAT DECIDES IT IS WHETHER THE PAYOFF RE-HOMES THE BASE.**
+
+    ⚠️ **THE COST STILL GOES IN FRONT OF THE HIT** — D381's order claim, and here it
+    is the printed order too (*"shuffle 3 Energy … If you do, this attack also
+    does …"*). It is ALSO observable, on a different board than Cetitan's: the
+    shuffled Energy leaves the attacker before the snipe lands, so an attacker whose
+    own pre-W/R bonus or attack cost depended on that Energy would read differently
+    under a swap.
+
+    ⚠️ **AND `damageChosen` PARKS ON A BENCH OF TWO OR MORE, BEHIND A
+    `discardEnergy` THAT PARKS FIRST** — two consecutive parks inside one confirm's
+    `then`. `runProgram` splices a gate's branch into the SAME work queue it walks,
+    so the second park's `rest` is simply what is left of that queue; nothing here
+    needs to know the first one happened. Driven on a two-Bench board rather than
+    argued. */
+function costSnipeProgram(
+  reading: AttackOptionalCostBoost,
+  amount: number,
+  note: string,
+): EffectOp[] {
+  // Named `then` so the confirm below splices it by SHORTHAND — D317's measured
+  // trick, which is what keeps that literal free of a `noThenProperty` suppression.
+  const then: EffectOp[] = [
+    ...reading.ops,
+    // The flat benched-snipe rider, byte-identical to the op `deriveAttackEffect`
+    // builds for this clause's `This attack also does …` spelling. `deals: true` is
+    // what makes it ATTACK DAMAGE rather than placed counters, so a benched
+    // reduction passive still applies; Weakness and Resistance never do on a benched
+    // target (§8.5), which is what the printed parenthetical reminds the player of.
+    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },
+  ];
+  const offer: EffectOp = { op: "optional", note, then };
+  return [
+    {
+      op: "conditionGate",
+      // The cost's own payability, read BEFORE the confirm is parked: an attacker
+      // holding two Energy must not be offered a "yes" that shuffles two and
+      // collects the whole printed snipe ("do as much as you can" is the op's rule
+      // for a MANDATORY discard, and this one is a purchase).
+      cond: reading.cond,
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [offer],
     },
   ];
 }

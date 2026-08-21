@@ -12108,6 +12108,93 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.288.0 → **THE PAYOFF UNION — D381's READING WIDENED AT ITS CONSEQUENT,
+    AND THE LARGEST SINGLE SENTENCE LEFT ON THE ATTACK BACKLOG CLAIMED WITH IT.**
+
+    D381 read *"You may {cost}. If you do, {payoff}"* with the payoff fixed at
+    *"this attack does {N} more damage."*. The catalog prints a SECOND payoff on the
+    same skeleton, and it is not a bigger hit but an additional one:
+
+      Wellspring Mask Ogerpon ex `sv06-064` / `sv06-194` / `sv06-213` /
+      `sv08.5-027` / `sv08.5-152` "Torrential Pump" ({W}{C}{C}, **100**, index 1 of
+      two — confirmed by id against tcgdex, which returns "Sob" at index 0)
+        *"You may shuffle 3 Energy attached to this Pokémon into your deck. If you
+         do, this attack also does 120 damage to 1 of your opponent's Benched
+         Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+        **5 legal printings**
+
+    🛑 **A WIDENED PAYOFF AND NOT AN ELEVENTH READER, AND THE ANCHOR DECIDED IT
+    RATHER THAN TASTE.** `OPTIONAL_COST_BOOST` (`^You may (.+)\. If you do, (.+)$`)
+    ALREADY matches this sentence whole; only the two half-tables refuse it. A second
+    reader would therefore carry a byte-identical top-level anchor to the tenth, and
+    every reader in this engine is held to a disjointness proof drawn from its
+    LEADING WORDS — so the sums `attack.ts` folds would have had to become a
+    precedence. **TWO READERS CANNOT SHARE AN ANCHOR.** Both halves were already
+    dispatch tables (D381's `retrieveNoun` note), so the payoff becoming one is
+    symmetry rather than generalisation.
+
+    🛑 **THE PRICE MOVED IN BOTH DIRECTIONS AND BOTH HALVES ARE WRITTEN DOWN**
+    (D199's rule: a `needs` column overstates as easily as it understates). D381
+    predicted *"an Energy→own-deck OP and a Bench-snipe consequent"*. The op is
+    **one optional value on `discardEnergy.to`** — the field D295 built, whose own
+    doc block says the destination is the VICTIM's zone, and this is the first
+    printing where the victim IS the actor (`from: "yourActive"`, so
+    `discardVictimSeat` answers the controller and no branch is owed). The Bench
+    snipe was **already built**: `damageChosen {target:"opponentBench", count:1,
+    source:"attack", deals:true}` is the flat rider's op from 0.38.0, and the payoff
+    anchor SHARES its regex body with that one, differing only in the case of the
+    leading word — which is exactly what the printed sentences differ by.
+
+    🛑 **WHAT IT ACTUALLY COST IS ONE `BoardCondition` MEMBER, AND THAT WAS THE HARD
+    HALF ALL ALONG.** `yourActiveEnergyAtLeast { count }` — at least `count` Energy
+    CARDS, untyped, on the ACTOR'S OWN BODY. Measured against all three ways this
+    union already counts Energy and none can be narrowed into it without a RENAME:
+    `yourActiveHasEnergyAttached` is the right body, TYPED and unquantified;
+    `yourEnergyInPlayAtLeast` is the right quantifier over the whole SIDE and a type;
+    `yourBasicEnergyInDiscardAtLeast` is the right quantifier in the wrong ZONE. A
+    widening is free and a rename is not (D362, priced at 31 sites across 7 files).
+    **AND IT IS SEPARATE FROM `activeEnergyCountsEqual` DELIBERATELY**: both count
+    Energy on ONE body through the same `countAttachedEnergy` call, but one measures
+    a body against a printed CONSTANT and the other against ANOTHER BODY — folding
+    them needs an operator-and-comparand member, which is a generalisation that would
+    swallow a shipped nullary member on the way.
+
+    🛑 **THE GATE IS NOT COSMETIC, WHICH IS THE THING A PAYABILITY GATE USUALLY
+    IS.** Torrential Pump costs {W}{C}{C} — THREE units — and `countAttachedEnergy`
+    counts CARDS, so an attacker paying with two cards where one provides two units
+    declares the attack legally and cannot pay the cost. Without the gate `optional`
+    would park unconditionally and a "yes" would shuffle TWO Energy ("do as much as
+    you can" is `discardEnergy`'s rule for a MANDATORY discard) and collect the whole
+    printed 120 anyway.
+
+    🛑 **AND THE PRINTED BASE DOES *NOT* MOVE INSIDE THE GATE, WHICH IS WHERE THE
+    WIDENING PAID ITS REAL TOLL.** `scaledBase` and `modifierSimulated` each carried
+    a bare `optionalCostBoost !== null` term; both are now narrowed through ONE named
+    local (`costBoostOwnsTheBase`), because *"also"* names a SECOND hit on a benched
+    body the main §8.5 hit never touches. Dropping the base for this payoff would
+    silently delete a 100-damage attack on every board including the declined one —
+    D228's asymmetry, reached through a reader instead of an op. `effectSimulated`
+    needs no narrowing and gets none: the sentence is the whole printed effect under
+    both payoffs. The six D316/D317 rows and D381's C7 anchored on those two chains
+    are re-transcribed in the same commit (the adjacency rule, fourth firing).
+
+    ⚠️ **THE SHUFFLE IS A SEPARATE OP AND NOT A PROPERTY OF THE DESTINATION** —
+    D342's split, one op over: a destination that also shuffles cannot spell a deck
+    return with no shuffle, and folding it in would advance `rngState` from inside a
+    park where `searchDeck`'s tail does it in the open.
+
+    engineVersion 0.287.0 → **0.288.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited. `discardEnergy` PARKS, so its op rides
+    `EffectContinuation.pendingOp` in a persisted record — but `to?: "hand"` →
+    `to?: "hand" | "deck"` is a WIDENING and not a rename: a v22 record carries the
+    key absent or `"hand"`, and both still mean exactly what they meant. D335's
+    discriminator ("would an old record MEAN something else"), and D352/D359's
+    counter-examples are renames rather than widenings. The `BoardCondition` member
+    and the reading's `bonus` → `payoff` rename are unreachable from a record at all:
+    a `conditionGate` resolves inline and never parks, and no v22 byte string can
+    contain a member that did not exist. (`packages/engine/package.json` in the same
+    commit). */
+
 /** 🆕🆕 0.287.0 → **THE `. Then, ` JOIN — D317's SHAPE WITH THE PRINTED COMMA
     CHANGED, ON *ZERO* NEW READERS AND *ZERO* NEW OPS.**
 
@@ -15025,7 +15112,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.287.0";
+export const engineVersion = "0.288.0";
 
 export type {
   ApplyResult,
