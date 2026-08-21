@@ -14524,4 +14524,102 @@ export const MUTANTS: Mutant[] = [
     replace: "      return \"you have a Stadium in play\";",
     expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
   },
+  // ── D379 — THE EXACT HAND-SIZE READ. Eight rows, ONE PER CLAIM: the comparator is
+  //    an EQUALITY and not a floor (C1) or a ceiling (C2); the seat is the ATTACKER's
+  //    own (C3); the clause row keeps the NEW member (C4) and the printed count (C5)
+  //    and the printed bytes (C6); the note is the POSITIVE reading (C7); and the
+  //    accounting guard's subject stays CONSTRUCTED (C8).
+  //
+  // 🛑 C1 AND C2 ARE THE WHOLE POINT OF DRIVING THREE HAND SIZES. Each is green on the
+  //    3-card board this slice was told to build, and each is wrong exactly one card
+  //    away — C1 on the 4-card board, C2 on the 2-card one. A suite that had only
+  //    asserted "three resolves" would report both as survivors.
+  //
+  // ⚠️ C3 AND C4 ARE THE SAME NEAR MISS FROM TWO ENDS, and it is the near miss D365
+  //    NAMED: `opponentHandAtMost` is the wrong SEAT and the wrong COMPARATOR. C3
+  //    installs the wrong seat at the ARM (the neighbouring case's real code copied
+  //    verbatim, D190b's shape); C4 installs the whole wrong member at the ROW, where
+  //    the sentence still resolves and only a board can tell.
+  //
+  // 🛑 C8 IS THE MUTANT THIS SLICE'S OWN CLOSE-OUT CREATED. D379 re-aimed `fix-sawk`'s
+  //    index-2 rider from a printed sentence to a CONSTRUCTED one, because the printed
+  //    one became mapped. Restoring the printed spelling is exactly what a successor
+  //    tidying "use real catalog text" would do — and it silently turns the accounting
+  //    guard's subject into something the table CARRIES, so the split fires, the
+  //    residue disappears and the guard stops guarding anything.
+  {
+    id: "D379-hand-size-comparator-is-a-floor",
+    decision: "D379",
+    what: "🛑 C1 — THE COMPARATOR BECOMES A FLOOR: `===` becomes `>=`, which is how every other counting member in this union spells its test (`yourBenchAtLeast`, `yourEnergyInPlayAtLeast`, `yourBasicEnergyInDiscardAtLeast`) and therefore the arm an author reaching for the nearest precedent writes. **IT IS GREEN ON THE 3-CARD BOARD**, which is the only board a suite asked for \"exactly 3\" tends to build, and wrong on every hand of 4 or more — where Alolan Dugtrio starts landing 120 the printed card refuses. `exactHandSize.test.ts` §3 sweeps 0…7 and requires the true set to be exactly `[3]`; §4 attacks with FOUR in hand and requires `ATTACK_FAILED`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].hand.length === cond.count;",
+    replace: "      return state.players[seat].hand.length >= cond.count;",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-hand-size-comparator-is-a-ceiling",
+    decision: "D379",
+    what: "🛑 C2 — THE OTHER HALF OF THE SAME MISTAKE: `===` becomes `<=`, which is the sibling `opponentHandAtMost` arm's real comparator two cases up — the printed catalog's other hand test, and the one D365 measured as the wrong half of this very near miss. It too is GREEN ON THE 3-CARD BOARD and wrong on every hand of 2 or fewer, where the attack resolves and the printed card does nothing. §3's 0…7 sweep and §4's TWO-card board are the discriminators, and running C1 and C2 as separate rows is what says the suite drove the boundary from BOTH sides rather than from the interesting one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].hand.length === cond.count;",
+    replace: "      return state.players[seat].hand.length <= cond.count;",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-hand-size-reads-the-far-hand",
+    decision: "D379",
+    what: "🛑 C3 — THE SEAT, INSTALLED AT THE ARM, and it is the neighbouring case's real code copied verbatim (D190b's shape): `players[seat]` becomes `players[otherSeat(seat)]`, which is what `opponentHandAtMost` reads two cases up and what every cross-board member in this switch reads. D365 recorded that this member is the wrong SEAT as well as the wrong COMPARATOR; this row is the seat half on its own, so a suite that only refuted the comparator cannot claim the seat. **IT IS GREEN ON EVERY BOARD WHERE THE TWO HANDS HAPPEN TO BE LEVEL**, which is what the untouched opening deal produces — so §3 drives P1 at 4 against P2 at 3, and §4 attacks on that same state and requires the cancel",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].hand.length === cond.count;",
+    replace: "      return state.players[otherSeat(seat)].hand.length === cond.count;",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-hand-row-ships-the-refused-near-miss",
+    decision: "D379",
+    what: "🛑 C4 — THE ROW REACHES THE MEMBER D365 NAMED AND REFUSED: Alolan Dugtrio's clause maps onto `opponentHandAtMost { count: 3 }`, which is the same noun, a plausible-looking threshold, and a member that already exists — the \"why buy a new one\" edit in its purest form. **THE SENTENCE STILL RESOLVES**, so no census rung, no residue figure and no readership assertion goes red; only a board where the two hands differ can tell. §4 fields Trio-Cheehoo on P1=4 / P2=3 and requires the cancel — the mutant resolves there and deals 120 — and fields Absol ex on the SAME state to show what the borrowed member is actually for",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you don't have exactly 3 cards in your hand\", { kind: \"yourHandExactly\", count: 3 }],",
+    replace: "  [\"you don't have exactly 3 cards in your hand\", { kind: \"opponentHandAtMost\", count: 3 }],",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-hand-row-count-is-off-by-one",
+    decision: "D379",
+    what: "🛑 C5 — THE PARAMETER, TRANSCRIBED WRONG: the row stores `count: 4` against a key that says **3**. The member, the arm, the polarity and the printed key are all untouched and correct, and every census rung stays green because the sentence still resolves — this is the defect that hides behind an otherwise perfect slice. It inverts the card on TWO boards at once: a 3-card hand cancels where the print resolves, and a 4-card hand resolves where the print cancels. §2 pins the derived value by equality including its `count`, and §4's three boards each disagree with the mutant",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you don't have exactly 3 cards in your hand\", { kind: \"yourHandExactly\", count: 3 }],",
+    replace: "  [\"you don't have exactly 3 cards in your hand\", { kind: \"yourHandExactly\", count: 4 }],",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-hand-row-key-is-a-paraphrase",
+    decision: "D379",
+    what: "🛑 C6 — D183's DEFECT, TRANSCRIBED: the key loses the word **your** (*\"exactly 3 cards in hand\"*), which is how a player says it out loud and how an author writing from memory types it. The member, the arm and every board rung stay correct; the clause simply stops resolving, \"Trio-Cheehoo\" gates on nothing, and the printing falls back onto the LOUD `ATTACK_EFFECT_SKIPPED` path — a free 120 on a card whose printed cost is ZERO. `exactHandSize.test.ts` §2 pins the key by CODE-POINT COUNT (73 / 43) and refuses this very paraphrase among six; §1's saturation rung falls from 9 / 18 back to 8 / 16",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you don't have exactly 3 cards in your hand\", { kind: \"yourHandExactly\", count: 3 }],",
+    replace: "  [\"you don't have exactly 3 cards in hand\", { kind: \"yourHandExactly\", count: 3 }],",
+    expectKilledBy: [
+      "packages/engine/src/exactHandSize.test.ts",
+      "packages/engine/src/splitOrder.test.ts",
+    ],
+  },
+  {
+    id: "D379-hand-note-borrows-the-printed-negative",
+    decision: "D379",
+    what: "🛑 C7 — THE NOTE BECOMES THE PRINTED SENTENCE'S CLAUSE, which is the most defensible-looking edit in this whole set: *\"author and assert against the printed bytes\"* is a rule this repo enforces everywhere, and here it is WRONG. The printed clause is the NEGATIVE, because `ATTACK_REQUIREMENT_CLAUSES`' skeleton owns the negation; a reject pill and a HUD tooltip have to say what the board must look like, so the note is the POSITIVE reading and does not round-trip on purpose. The mutant makes the engine tell a player *\"you don't have exactly 3 cards in your hand\"* as the condition they need to MEET. §2 pins the string and asserts it is NOT the clause key",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `you have exactly ${cond.count} cards in your hand`;",
+    replace: "      return `you don't have exactly ${cond.count} cards in your hand`;",
+    expectKilledBy: ["packages/engine/src/exactHandSize.test.ts"],
+  },
+  {
+    id: "D379-sawk-rider-restored-to-a-printed-sentence",
+    decision: "D379",
+    what: "🛑 C8 — **THE TIDY-UP THAT SILENTLY DISARMS THE ACCOUNTING GUARD.** `fix-sawk`'s index-2 rider is restored from D379's CONSTRUCTED clause (*\"exactly 4\"*) to the printed one (*\"exactly 3\"*), which is exactly what a successor applying this repo's own *\"drive guards on real catalog text\"* rule would do. It is a no-op on every figure and reads like an improvement — and it destroys the fixture's purpose: the table now CARRIES that clause, so `splitAttackRequirementClause` strips the leading sentence, `ATTACK_EFFECT_SKIPPED` reports only the companion instead of the WHOLE string, and the attack starts gating where the fixture exists to prove nothing is stripped. **A GUARD KEYED ON A REFUSAL CANNOT BE POINTED AT A SENTENCE THAT IS NO LONGER REFUSED**, which is the lesson four files paid for across D377–D379. `sawkRequirementSplit.test.ts` §5 reads the skipped effect byte for byte",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "          \"If you don't have exactly 4 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.\",",
+    replace: "          \"If you don't have exactly 3 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.\",",
+    expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
+  },
 ];
