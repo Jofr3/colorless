@@ -175,7 +175,12 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // Evolution by the chain datum and NOT a Stage 1 by the printed word, so the
     // wide member is TRUE on a whole population this member must refuse.
     const evolutions = pokemon.filter((c) => (c.evolveFrom ?? null) !== null);
-    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(24);
+    // 🆕🆕 D388 — 24 -> **25**, and the mover is a SLICE THAT IS NOT ABOUT STAGES AT
+    // ALL: `fix-aerochase` is a Stage 2 with a named `evolveFrom`, so the RETREAT-COST
+    // slice's demonstrator lands squarely in this population. **THE NUMBER THIS RUNG
+    // CARRIES IS A FACT ABOUT THE WHOLE POOL, NOT ABOUT THIS FILE'S DECK** — which is
+    // exactly why it is derived live and re-measured rather than frozen.
+    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(25);
   });
 
   it("🛑 …and the BUILD is not a narrowing: the wide member keeps all NINE printings", () => {
@@ -476,7 +481,12 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     const openers = corpus().filter(([, s]) => BONUS.test(s.trim()));
     expect([openers.length, units(openers)]).toEqual([81, 129]);
     const refused = openers.filter(([, s]) => !resolvedByAnyReader(s));
-    expect([refused.length, units(refused)]).toEqual([18, 21]);
+    // 🆕🆕 D388 — 18 / 21 -> **17 / 20**: the RETREAT-COST THRESHOLD left this residue
+    // — ONE sentence at ONE printing (Talonflame `sv07-123` "Aero Chase", +110) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([17, 20]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -488,8 +498,11 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // for the reason that matters: a reader narrowing so any clause returns to 2
     // fails it, as does that clause being claimed.
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(16);
-    expect(byClause.size).toBe(17);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(15);
+    // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
+    // which is the ONLY band that moved. The 2-printing band was already empty and stays
+    // empty, and the refusal is still driven from OUTSIDE it.
+    expect(byClause.size).toBe(16);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

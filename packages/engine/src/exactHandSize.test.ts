@@ -287,12 +287,17 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // the distribution goes `{1: 17, 5: 1}` -> `{1: 16, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution and its refusal still comes from OUTSIDE
     // the emptied band (D379).
-    expect(refused.length).toBe(18);
-    expect(units(refused)).toBe(21);
+    // 🆕🆕 D388 — 18 / 21 -> **17 / 20**: the RETREAT-COST THRESHOLD left this residue
+    // — ONE sentence at ONE printing (Talonflame `sv07-123` "Aero Chase", +110) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(17);
+    expect(units(refused)).toBe(20);
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
-    expect([refused.length + 3, units(refused) + 4]).toEqual([21, 25]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([22, 26]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([21, 25]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

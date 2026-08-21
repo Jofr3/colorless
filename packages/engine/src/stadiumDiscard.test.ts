@@ -291,7 +291,12 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // 🆕🆕 D387 — 19 / 22 -> **18 / 21**: the STAGE 1 clause left this residue — ONE
     // sentence at ONE printing (Paldean Tauros `sv08-018` "Spirited Tackle", +90), a
     // 1:1 step and a SINGLETON, so the whole step falls on the 1-printing band.
-    expect([refused.length, units(refused)]).toEqual([18, 21]);
+    // 🆕🆕 D388 — 18 / 21 -> **17 / 20**: the RETREAT-COST THRESHOLD left this residue
+    // — ONE sentence at ONE printing (Talonflame `sv07-123` "Aero Chase", +110) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
+    // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
+    // still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([17, 20]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -316,7 +321,11 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // STANDS STILL at 2 / 5: the STAGE 1 clause was a SINGLETON, so this is D384's
     // step repeated and the comparison this rung makes (six printings for one op
     // against ONE for the best clause row) is unchanged by it.
-    expect([singletons.length, units(singletons)]).toEqual([16, 16]);
+    // 🆕🆕 D388 — the singleton band 16 / 16 -> **15 / 15** and the non-singleton side
+    // STANDS STILL at 2 / 5 for the THIRD consecutive slice: the RETREAT-COST
+    // THRESHOLD was a SINGLETON too, so the comparison this rung makes (six printings
+    // for one op against ONE for the best clause row) is again unchanged by it.
+    expect([singletons.length, units(singletons)]).toEqual([15, 15]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);
