@@ -14826,4 +14826,83 @@ export const MUTANTS: Mutant[] = [
     replace: "  const vacantZone = otherwise;",
     expectKilledBy: ["packages/engine/src/programWalk.test.ts"],
   },
+  // ── 🆕🆕 D382 — THE `. Then, ` JOIN. Every row below is either A SILENT REFUSAL of
+  //    a sentence this slice claims (the kind a green suite hides best, because the
+  //    printing simply goes back to the loud path and nothing SAYS so) or A WRONG OP
+  //    ON A HIT THAT STILL HAPPENS — D317's own failure surface, inherited whole.
+  //    ⚠️ **NO ROW ON `attack.ts`, AND THAT IS A FACT ABOUT THE SLICE**: this reading
+  //    is D317's, already wired into all three disjunction chains, so nothing in that
+  //    file moved and the adjacency rot that cost D317 and D381 six rows each cannot
+  //    fire here.
+  {
+    id: "D382-then-anchor-is-a-copy-of-the-comma-one",
+    decision: "D382",
+    what: "\u{1F6D1} THE COPY-PASTE THIS SHAPE INVITES: the new anchor is written from its neighbour and still demands `, and `, so it matches exactly what the old one already matched and Chi-Yu goes straight back to the loud `ATTACK_EFFECT_SKIPPED` path. A SILENT REFUSAL — every other case in the family stays green",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If (.+), this attack does (\\d+) more damage\\. Then, (.+)$/;",
+    replace: "  /^If (.+), this attack does (\\d+) more damage, and (.+)$/;",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+  },
+  {
+    id: "D382-then-anchor-declared-and-never-consulted",
+    decision: "D382",
+    what: "the anchor is defined and the fold never reaches it — D318's shape (a thing built correctly and then not wired in), and the one a reader-unit test that only exercises the CONSTANT would miss entirely. The printing refuses again",
+    file: "packages/engine/src/effects.ts",
+    find: "    BONUS_CONSEQUENT_CONDITION.exec(effect) ?? BONUS_CONSEQUENT_CONDITION_THEN.exec(effect);",
+    replace: "    BONUS_CONSEQUENT_CONDITION.exec(effect);",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+  },
+  {
+    id: "D382-join-operands-swapped",
+    decision: "D382",
+    what: "⚠️ THE ORDER CLAIM, STATED AS A MUTANT: the two anchors' operands are exchanged. It is CORRECT — the two joins are mutually exclusive by construction (one demands a literal `. ` where the other demands a literal `, ` at the same offset in the same sentence), so no sentence can match both and the fold reads the same in either direction. Declared rather than tested around, and it goes STALE-SURVIVOR the day someone widens either anchor into the other's territory",
+    file: "packages/engine/src/effects.ts",
+    find: "    BONUS_CONSEQUENT_CONDITION.exec(effect) ?? BONUS_CONSEQUENT_CONDITION_THEN.exec(effect);",
+    replace: "    BONUS_CONSEQUENT_CONDITION_THEN.exec(effect) ?? BONUS_CONSEQUENT_CONDITION.exec(effect);",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "the two condition anchors are disjoint over the whole legal attack column (asserted in `bonusConsequentThen.test.ts` §3, in bytes and over the corpus), so the `??` is a fold and not a precedence — unlike the COIN/CONDITION pair one line up, where the order IS load-bearing and D317 has a row saying so",
+    },
+  },
+  {
+    id: "D382-consequent-anchor-wants-the-standalone-spelling",
+    decision: "D382",
+    what: "\u{1F6D1} THE DELEGATION MISTAKE MADE CONCRETE: the consequent row is written with `deriveAttackEffect`'s printed imperative (`Discard a Stadium in play.`) instead of the LOWERCASE ANAPHORIC tail the sentence actually prints. That reader's own anchor is copied verbatim, so the row looks right beside the op it dispatches to and reads NOTHING",
+    file: "packages/engine/src/effects.ts",
+    find: "const CONSEQUENT_DISCARD_STADIUM = /^discard that Stadium\\.$/;",
+    replace: "const CONSEQUENT_DISCARD_STADIUM = /^Discard a Stadium in play\\.$/;",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+  },
+  {
+    id: "D382-consequent-dispatches-the-neighbours-op",
+    decision: "D382",
+    what: "the consequent returns the op of the row DIRECTLY ABOVE IT in the same dispatch — `discardEnergy {from:\"yourActive\", count:\"all\"}`, D317's own code copied verbatim. A WRONG OP ON A HIT THAT STILL HAPPENS: the boosted 120 lands, the Stadium stays standing and Chi-Yu loses every Energy it is holding",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (CONSEQUENT_DISCARD_STADIUM.test(consequent)) return [{ op: \"discardStadium\" }];",
+    replace:
+      "  if (CONSEQUENT_DISCARD_STADIUM.test(consequent))\n    return [\n      { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\" },\n    ];",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+  },
+  {
+    id: "D382-demonstrator-tidied-into-the-coin-twin",
+    decision: "D382",
+    what: "⚠️ THE FIXTURE \"TIDIED\" INTO ITS NEIGHBOUR: `fix-groundmelter` is given `fix-bonusconsequent`'s COIN sentence, which is exactly the state the pool was in for five slices — the assembler's `conditionGate` arm reachable only from a LOCAL pool and invisible to every sweep that walks `FIXTURE_POOL`. Nothing about the READER changes, so every reader-unit case stays green; what falls is the structural claim D318's rule exists for",
+    file: "packages/engine/src/testFixtures.ts",
+    find:
+      "          \"If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.\",",
+    replace:
+      "          \"Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.\",",
+    expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
+  },
+  {
+    id: "D382-refusal-instrument-loses-the-tenth-reader",
+    decision: "D382",
+    what: "\u{1F6D1} **THE DEFECT THIS SLICE FOUND, RE-INSTALLED.** `stadiumPresence.test.ts`'s `READERS` array loses `deriveAttackOptionalCostBoost` — the state it was actually in from D381 until D382, during which its `DISCARD_OP` list asserted a sentence was REFUSED while the tenth reader had been claiming it for a whole slice. **A REFUSAL GUARD WHOSE INSTRUMENT CANNOT SEE THE READER THAT EXPIRED IT READS GREEN FOR THE WRONG REASON**, and the `TAKEN_SINCE` list added in the same commit is what makes that detectable rather than silent",
+    file: "packages/engine/src/stadiumPresence.test.ts",
+    find: "  deriveAttackBonusConsequent,\n  deriveAttackOptionalCostBoost,\n];",
+    replace: "  deriveAttackBonusConsequent,\n];",
+    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
+  },
 ];
