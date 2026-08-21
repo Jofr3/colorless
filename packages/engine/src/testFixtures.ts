@@ -11177,6 +11177,38 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D381 — the REVERSED optional boost: Cetitan ex `sv10-065`/`sv10-210`
+      "Crushing Press" ({W}{W}{W}{C}, `140+`), the card's ONLY attack — confirmed by
+      id against tcgdex for BOTH printings, which return one attack each and the
+      same printed sentence byte for byte.
+
+      🛑 **AN `ex` NAME, AND IT IS LOAD-BEARING RATHER THAN DECORATIVE.** `isExOrV`
+      reads the NAME, and Neutralization Zone `sv06.5-060` prevents damage to a
+      no-Rule-Box Pokémon *from an attacking Pokémon ex* — which is the one board in
+      this pool on which the ORDER of the discard and the hit is observable. A
+      fixture named `fix-crushpress` would have made that board silently
+      unreachable and the order claim untestable. `Fixceti ex` follows
+      `fix-attacker-ex`'s `Fixmon ex`: a synthetic name that carries the suffix and
+      claims no printed card.
+
+      A **BASIC** where the print is a Stage 1 (`fix-knockover` stands in for a
+      Stage 1 the same way), because every board here fields it by
+      `setActiveFromDeck` surgery and nothing this slice reads is a stage. `hp: 300`
+      as printed — and the printed 300 is why the ATTACKER survives the cast's
+      return fire without a stand-in number. */
+  "fix-crushpress": battler("fix-crushpress", {
+    name: "Fixceti ex",
+    hp: 300,
+    types: ["Water"],
+    attacks: [
+      {
+        cost: ["Water", "Water", "Water", "Colorless"],
+        name: "Crushing Press",
+        damage: "140+",
+        effect: "You may discard a Stadium in play. If you do, this attack does 140 more damage.",
+      },
+    ],
+  }),
   /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR, half one: Slugma `sv05-028`
       "Roasting Heat"'s printed sentence, verbatim, on a body of this pool's own
       making. `fix-*` and not `sv05-028` for `fix-emberpillar`'s reason unchanged —
@@ -11705,6 +11737,44 @@ export const STADIUM_DISCARD_DECK = deckOf({
   "sv01-167": 6, // Beach Court — the Stadium, played from EITHER seat and then discarded
   "fix-energy": 8, // Basic {C} — pays Knock Over's two Colorless symbols
   "fix-bigbody": 38, // 200 HP neutral Basic, retreat 1 — starter, both Actives, the clean defender
+});
+
+/** 🆕🆕 D381 — the REVERSED optional boost's deck (`optionalCostBoost.test.ts`).
+    Its own 60 rather than a widened `STADIUM_DISCARD_DECK`, for that deck's own
+    stated reason inverted: every board in D380's suite is seeded, and adding four
+    cards would reshuffle all of them.
+
+    THE CAST IS ONE ATTACKER AND **TWO** STADIUMS, AND THE SECOND STADIUM IS THE
+    WHOLE POINT:
+      • `fix-crushpress` — Cetitan ex's printed "Crushing Press" ({W}{W}{W}{C},
+        `140+`), the sentence this slice reads;
+      • `sv01-167` **Beach Court** — the NEUTRAL Stadium: it changes a retreat cost
+        and nothing else, so a board carrying it separates "the discard happened"
+        from "the damage moved";
+      • `sv06.5-060` **Neutralization Zone** — the Stadium that PREVENTS the
+        attacker's damage (no Rule Box on the defender, an ex attacking). It is the
+        board on which the printed ORDER is observable: discard-then-hit deals 280,
+        hit-then-discard deals 0 and then discards the Stadium that stopped it.
+
+    ⚠️ **SIX OF EACH STADIUM, WHICH IS A MARGIN AND NOT A SEED** (D376, and D380's
+    payment of the same rule): setup takes 7 cards to hand and 6 to Prizes before a
+    case can reach the deck, and these boards play a Stadium from EITHER seat.
+
+    `fix-titan` (340 HP, retreat 4, NO attacks, no Rule Box) is the defender on every
+    damage board, because 340 is the only body in this pool that survives the boosted
+    **280** — a KO would end the case before the number could be read — and because
+    the Zone only protects a Pokémon WITHOUT a Rule Box. `fix-bigbody` is the
+    mulligan-free starter and bench filler. Energy pays the printed symbols and
+    nothing else: {W}{W}{W} from `fix-water-energy` and the one {C} from
+    `fix-energy`. */
+export const OPTIONAL_COST_BOOST_DECK = deckOf({
+  "fix-crushpress": 4, // Cetitan ex — "Crushing Press" ({W}{W}{W}{C}, 140+)
+  "sv01-167": 6, // Beach Court — the NEUTRAL Stadium, played from EITHER seat
+  "sv06.5-060": 6, // Neutralization Zone — the Stadium that makes the ORDER observable
+  "fix-water-energy": 6, // {W}{W}{W} of Crushing Press's cost
+  "fix-energy": 4, // the one {C} of it
+  "fix-titan": 4, // 340 HP, no attacks, no Rule Box — the defender that survives 280
+  "fix-bigbody": 30, // 200 HP neutral Basic — mulligan-free starter and bench filler
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

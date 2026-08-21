@@ -58,8 +58,10 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
   optionalBoostProgram,
+  optionalCostBoostProgram,
   splitAttackGateClause,
   splitAttackRequirementClause,
 } from "./effects";
@@ -861,6 +863,18 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // assembled at the coin block's site further down, where `base` is in scope.
   const bonusConsequent =
     effect === null || effect === "" ? null : deriveAttackBonusConsequent(effect);
+  // 🆕🆕 D381 — the printed "You may {cost}. If you do, {payoff}": the SEVENTH
+  // reader read at this site and the TENTH overall, and it is the reader two above
+  // with its two halves SWAPPED — the antecedent is the COST and the consequent is
+  // the extra damage it buys. Disjoint from all nine, and the ONE it does not
+  // separate from by its leading words is `deriveAttackOptionalBoost`, which shares
+  // "You may " with it: `OPTIONAL_DAMAGE_BOOST` reads "You may do {N} more damage."
+  // and no printed cost in this family spells that, so at most one of the seven
+  // read here ever fires — the property that keeps the terms below SUMS rather than
+  // choices. The PROGRAM is assembled at the coin block's site further down, where
+  // `base` is in scope.
+  const optionalCostBoost =
+    effect === null || effect === "" ? null : deriveAttackOptionalCostBoost(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -925,6 +939,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     programDamage ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
+    optionalCostBoost !== null ||
     coinFlip?.kind === "perHeads"
       ? 0
       : base;
@@ -1010,6 +1025,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     coinFlip !== null ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
+    optionalCostBoost !== null ||
     damageSuppression !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
@@ -1022,6 +1038,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     programDamage ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
+    optionalCostBoost !== null ||
     coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
@@ -1292,6 +1309,30 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // which makes the append behaviour-identical today and honest tomorrow.
   if (bonusConsequent !== null) {
     program = [...(program ?? []), ...bonusConsequentProgram(bonusConsequent, base)];
+  }
+  // 🆕🆕 D381 — THE SAME ASSEMBLY WITH THE SENTENCE'S TWO HALVES SWAPPED, and the
+  // assembler lives in effects.ts from its first line rather than after two slices
+  // of a green, dead carrier pin (D318's finding, inherited rather than repeated).
+  // `deriveAttackOptionalCostBoost` read the precondition, the cost's ops and the
+  // bonus out of the text; the printed BASE is a field on the attack and lives only
+  // in this function, so the value that crosses the gap is again the PROGRAM
+  // (D130's rule, fourth payment).
+  //
+  // TWO NESTED GATES, AND BOTH CARRY A DECLINE ARM — the empty §7.3 zone and the
+  // answered "no" each still deal the printed base, because Crushing Press is
+  // `140+` and not `+140`. That is the difference from D380's bare "You may", whose
+  // whole content was the discard and whose `otherwise` is rightly ABSENT.
+  //
+  // APPENDED, NEVER ASSIGNED — D130's rule, verbatim and for its reason. For these
+  // two printings `program` is always null (the derivers are whole-sentence
+  // anchored, so a sentence this reader claims is one `deriveAttackEffect` refused,
+  // and `programFor` is undefined for both ids — checked, not assumed), which makes
+  // the append behaviour-identical today and honest tomorrow.
+  if (optionalCostBoost !== null) {
+    program = [
+      ...(program ?? []),
+      ...optionalCostBoostProgram(optionalCostBoost, base, effect ?? ""),
+    ];
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness

@@ -16516,6 +16516,201 @@ export function bonusConsequentProgram(reading: AttackBonusConsequent, base: num
     : [{ op: "conditionGate", cond: reading.decider.cond, then, otherwise }];
 }
 
+/** 🆕🆕 D381 — *"You may {cost}. If you do, {payoff}"*: D316's SENTENCE WITH ITS
+    TWO HALVES SWAPPED. There the antecedent is the PAYOFF (*"You may do 120 more
+    damage"*) and the consequent is the drawback; here the antecedent is the COST
+    and the consequent is the extra damage it buys.
+
+    TWO legal printings on ONE sentence, and the op it needs already shipped:
+    Cetitan ex `sv10-065`/`sv10-210` "Crushing Press" ({W}{W}{W}{C}, `140+`, the
+    card's only attack — confirmed by id against tcgdex, both printings) —
+    *"You may discard a Stadium in play. If you do, this attack does 140 more
+    damage."*
+
+    🛑 **A SEPARATE READER RATHER THAN A SECOND ANCHOR ON `deriveAttackOptional
+    Boost`, AND THE CATALOG IS WHAT DECIDED IT.** The shapes look like each other
+    and are not: measured off `legalAttackCorpus()` with `/^You may .*If you do,/`,
+    the family is SEVEN sentences / FOURTEEN printings, and it partitions by which
+    half is the cost. All FOUR of the forward sentences buy their bonus with a
+    consequent that can ALWAYS be paid — shuffle yourself away, hurt yourself,
+    forgo next turn's attack — so their reading needs no precondition and their
+    `optional` needs no gate. All THREE of the reversed ones lead with a cost that
+    can be UNPAYABLE: a Stadium to discard, three Energy to shuffle away, a
+    face-down Prize to turn up. **THE PRECONDITION IS NOT A FIELD ONE FAMILY
+    HAPPENS TO WANT; IT IS WHAT THE SWAP MEANS**, so it belongs in the reading and
+    not in an optional field the forward reader would never populate.
+
+    🛑 **AND THE EMPTY BOARD IS WHY THAT MATTERS HERE MORE THAN IT DID AT D380.**
+    With no Stadium in play, a confirm assembled without the gate would offer a
+    "yes" that discards NOTHING and still pays the printed **+140** — a free 140 on
+    an empty board, which is strictly worse than D380's stakeless dialog because
+    the payoff is damage. `stadiumInPlay` (D378) is the member that answers it and
+    the gate costs a `cond` and nothing else.
+
+    🛑 **BOTH HALVES ARE DISPATCHED, NEVER INTERPRETED** — D316's rule and D317's,
+    now paid on the antecedent as well as the consequent. The cost is matched whole
+    against `OPTIONAL_COST_DISCARD_STADIUM` and the payoff whole against
+    `OPTIONAL_COST_PAYOFF_MORE_DAMAGE`, so an unrecognised HALF returns null and the
+    ENTIRE sentence stays on the loud `ATTACK_EFFECT_SKIPPED` path. That is what
+    keeps the other two printed members of this family refused **for their own
+    missing mechanism** rather than by accident: the Energy shuffle needs an
+    Energy→own-deck op AND a Bench-snipe consequent, and the face-up Prize needs a
+    `PlayerState` field (a persisted-shape change, `MATCH_RECORD_VERSION` on top of
+    the engine bump). Both refusals are driven from OUTSIDE this population in
+    `optionalCostBoost.test.ts` §2, by re-pairing each half with a half this reader
+    DOES read — because a reader that claims everything looks exactly like a reader
+    that works (D379's saturation trap).
+
+    ⚠️ **ONE ROW IS A TABLE, AND IT IS THE `retrieveNoun` RULE**: the cost list is
+    written as a dispatch over closed anchors from the first printing, so the next
+    cost is a row rather than a rewrite.
+
+    ⚠️ **THE COST VERB IS SPELLED LOWERCASE AT ITS OWN ANCHOR** — D246's rule and
+    D316's precedent: the printed sentence lowercases the verb behind *"You may "*,
+    and a `[Dd]` class would give up the whole-sentence discipline in both
+    directions at once. */
+export interface AttackOptionalCostBoost {
+  /** The board fact that gives the offer a STAKE — the cost's own payability, read
+      at the gate rather than inside the confirm. Never optional: every reversed
+      printing in this family leads with a cost that can be unpayable, which is
+      what makes this reading a different reading and not a wider one. */
+  cond: BoardCondition;
+  /** What saying "yes" COSTS, in printed order, paid BEFORE the boosted hit. Named
+      `ops` for `AttackOptionalBoost.ops`'s reason: it is a program reached through
+      a READING, not a branch hanging off an `EffectOp` a walk can find. */
+  ops: EffectOp[];
+  /** The printed extra damage the paid cost buys. */
+  bonus: number;
+}
+
+const OPTIONAL_COST_BOOST = /^You may (.+)\. If you do, (.+)$/;
+const OPTIONAL_COST_DISCARD_STADIUM = /^discard a Stadium in play$/;
+const OPTIONAL_COST_PAYOFF_MORE_DAMAGE = /^this attack does (\d+) more damage\.$/;
+
+/** The COST half, dispatched over its closed anchor list — the ops the printed
+    *"You may …"* charges and the board fact that makes charging them possible, or
+    null for a cost this engine cannot pay. The op already shipped:
+    `discardStadium` is D380's, and `stadiumInPlay` is D378's, so what this slice
+    actually buys is a READING — which is the whole of its price. */
+function optionalCostOps(cost: string): { cond: BoardCondition; ops: EffectOp[] } | null {
+  if (OPTIONAL_COST_DISCARD_STADIUM.test(cost)) {
+    return { cond: { kind: "stadiumInPlay" }, ops: [{ op: "discardStadium" }] };
+  }
+  return null;
+}
+
+/** Parse the reversed optional boost into its precondition, its cost's ops and its
+    bonus, or null for anything else.
+
+    THE TENTH READER of the same effect text, and disjoint from all nine. Its
+    leading words deny it `deriveAttackEffect`'s whole-sentence anchors (including
+    `MAY_DISCARD_STADIUM`, whose `\.$` ends at the first period), both scaling
+    readers' `^This attack does` / `^If`, the coin family's `^Flip a coin`, the
+    requirement family's `^If` and the suppression family's `^This attack's damage`.
+    ⚠️ **AND THE ONE IT IS *NOT* DISJOINT FROM BY ITS LEADING WORDS IS
+    `deriveAttackOptionalBoost`**, which shares `^You may ` with it — the two are
+    separated by the WORD AFTER IT (`OPTIONAL_DAMAGE_BOOST` reads `^You may do
+    (\d+) more damage\.`, which no printed cost in this family spells) and by their
+    payoffs, and §2 runs both readers over all seven printed sentences of the family
+    and requires exactly one non-null each. attack.ts owns the read site, beside its
+    two siblings'. */
+export function deriveAttackOptionalCostBoost(text: string): AttackOptionalCostBoost | null {
+  const match = OPTIONAL_COST_BOOST.exec(text.trim());
+  if (match === null) return null;
+  const cost = optionalCostOps(match[1] ?? "");
+  if (cost === null) return null;
+  const payoff = OPTIONAL_COST_PAYOFF_MORE_DAMAGE.exec(match[2] ?? "");
+  if (payoff === null) return null;
+  const bonus = Number(payoff[1]);
+  // A printed 0 buys nothing, and here the guard is the whole stake: an offer that
+  // charges a Stadium for no extra damage is a decision with no upside, exactly as
+  // `AttackOptionalBoost`'s own `>= 1` refuses one with no downside.
+  return bonus < 1 ? null : { cond: cost.cond, ops: cost.ops, bonus };
+}
+
+/** 🆕🆕 D381 — assemble the reversed reading into the gate, the confirm and the
+    two hits, given the attack's PRINTED BASE.
+
+    🛑 **EXPORTED FOR D318's REASON, WHICH IS NOW A HOUSE RULE RATHER THAN A
+    FINDING.** `base` lives on the attack and is in scope only inside attack.ts;
+    a program assembled at that call site is invisible to `programWalk.test.ts`,
+    whose corpus is built from `deriveAttackEffect` over `FIXTURE_POOL` plus the
+    registry plus the readings FED to it. D316 paid two slices of a green, dead
+    carrier pin for exactly this, so the assembler is a pure exported function of
+    the base from its first line, and `fix-crushpress` is in the pool to call it on.
+
+    🛑 **THE SHAPE IS TWO NESTED GATES AND *BOTH* CARRY AN `otherwise`, WHICH IS
+    THE DIFFERENCE FROM D380.** That sentence's whole content was the discard, so
+    a decline and an empty zone both bought nothing and the field was rightly
+    ABSENT (D135). This sentence's decline and empty zone both still deal the
+    PRINTED BASE — Crushing Press is `140+`, not `+140` — so an absent arm on
+    either gate would silently delete a 140-damage attack. `boostedArms` states
+    that rule for the forward reader; here it is paid twice.
+
+    🛑 **THE COST GOES IN FRONT OF THE HIT, AND THAT ORDER IS OBSERVABLE ON A BOARD
+    THIS POOL CAN BUILD.** `boostedArms` emits `[damageDefender(base + bonus),
+    ...ops]` because for the FORWARD sentence the printed order is payoff-then-
+    drawback; the reversed sentence prints discard-then-damage, and the difference
+    is not cosmetic. Neutralization Zone `sv06.5-060` is a Stadium that PREVENTS
+    damage to a no-Rule-Box Pokémon from an attacking Pokémon ex — and Cetitan ex
+    is one — so on that board the printed order deals **280** and the swapped order
+    deals **0** and then discards the Stadium that stopped it.
+    `optionalCostBoost.test.ts` §4 drives both numbers. (A vacated `hpDelta`
+    Stadium moves a MAXIMUM between the two hits as well, but all three of those
+    printings are `sv08`/`sv10` and outside the six sets `CATALOG_MANIFEST` covers,
+    so that half is named rather than driven — D205's rule.)
+
+    ⚠️ `boostedArms` IS STILL THE SOURCE OF BOTH AMOUNTS AND OF THE DECLINE ARM,
+    called with an EMPTY consequent: what this sentence changes is WHERE its own
+    ops are spliced, not what the two hits are. That keeps the six D316/D317
+    mutation rows re-pointed into that helper at one occurrence each — and makes
+    them owe a kill from a THIRD printed sentence. */
+export function optionalCostBoostProgram(
+  reading: AttackOptionalCostBoost,
+  base: number,
+  note: string,
+): EffectOp[] {
+  const [boosted, otherwise] = boostedArms(base, reading.bonus, []);
+  const then = [...reading.ops, ...boosted];
+  // The confirm, named as a local so both of its arms splice by SHORTHAND — D317's
+  // measured trick, which is what keeps this literal free of a suppression.
+  const ask: EffectOp = {
+    op: "optional",
+    // The WHOLE printed sentence, the op's own contract — it is what the confirm
+    // dialog shows, and the player is agreeing to the COST as much as to the damage.
+    note,
+    then,
+    otherwise,
+  };
+  // 🛑 A SECOND CALL FOR THE OUTER GATE'S ARM, AND THE DUPLICATION IS DELIBERATE:
+  // TWO ARMS THAT ARE EQUAL IN VALUE MUST NOT BE THE SAME OBJECT. Handing one array
+  // to both gates makes the program a DAG rather than a tree, and
+  // `programWalk.test.ts` accounts for the ops it reaches BY IDENTITY — so a shared
+  // decline arm reports as "already seen" down one path and breaks that file's
+  // `structural - enumerated === missed` invariant by exactly one. Measured by
+  // running it both ways; the first draft shared the array and the auditor said so.
+  // The destructuring is spelled differently on purpose, so neither line is a
+  // duplicate of the other for a mutation `find` to trip over (D317's rule).
+  const [, vacantZone] = boostedArms(base, reading.bonus, []);
+  // ⚠️ THE OUTER GATE KEEPS THE SUPPRESSION AND THE INNER CONFIRM DOES NOT, AND
+  // THE ASYMMETRY IS D317's TRICK REACHING ITS LIMIT RATHER THAN AN OVERSIGHT.
+  // `noThenProperty` fires on an explicit `then:` KEY and not on a SHORTHAND, so a
+  // local named `then` buys silence for exactly ONE of the two arms this shape
+  // nests — and the local is spent on the confirm, where the arm is actually
+  // built. Measured by running the linter both ways, not assumed.
+  return [
+    {
+      op: "conditionGate",
+      cond: reading.cond,
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      then: [ask],
+      // The empty board's arm, and it is the printed base rather than nothing: the
+      // gate refuses the QUESTION, never the attack.
+      otherwise: vacantZone,
+    },
+  ];
+}
+
 /** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING
     clause. Anchored at `^` and at the sentence break (`. `), never floating: the
     clause is the FIRST sentence or this is not a split.
