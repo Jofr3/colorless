@@ -74,11 +74,6 @@ const VICTINI_IDS = ["sv10.5b-012", "sv10.5b-171", "sv10.5w-172", "svp-208"] as 
     counted. */
 const REFUSED: readonly (readonly [string, number, string])[] = [
   [
-    "If there is no Stadium in play, this attack does nothing.",
-    2,
-    "an ANY-OWNER stadium member — `yourStadiumInPlay` reads ownership (D365, driven)",
-  ],
-  [
     "If you don't have exactly 3 cards in your hand, this attack does nothing.",
     2,
     "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
@@ -93,11 +88,24 @@ const REFUSED: readonly (readonly [string, number, string])[] = [
     `ATTACK_REQUIREMENT_CLAUSES`' polarity rule at no extra cost. Kept here so the
     partition below still sums to D365's 4 / 9 and so a successor can see WHICH item
     left the list and when. */
-const TAKEN_SINCE: readonly (readonly [string, number, string])[] = [
+const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[] = [
+  // 🆕🆕 D378 — THE FIRST ROW OF D365's LIST, MOVED THE SAME WAY, AND D365's PRICE WAS
+  // RIGHT ON BOTH HALVES: it said the sentence needed *"an ANY-OWNER stadium member"*
+  // and that `yourStadiumInPlay` reads OWNERSHIP, and D378 added `stadiumInPlay`
+  // BESIDE that member rather than re-pointing it. **THE REFUSAL WAS NOT OVERTURNED —
+  // IT WAS PAID** (D178: annotate provenance, never overwrite it). One row of D365's
+  // four is now the whole of what is left.
+  [
+    "If there is no Stadium in play, this attack does nothing.",
+    2,
+    "an ANY-OWNER stadium member — `yourStadiumInPlay` reads ownership (D365, driven; TAKEN at D378)",
+    { kind: "stadiumInPlay" },
+  ],
   [
     "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     1,
     "a BURNED member — the state field exists, no condition reads it (D365, driven; TAKEN at D377)",
+    { kind: "opponentActiveBurned" },
   ],
 ];
 
@@ -142,10 +150,13 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the missing 3 / 5 -> 2 / 4: the CROSS-BOARD
     // STATUS PAIR took the third item on `REFUSED` below, off a member it bought for
     // a BONUS row in the same commit. The population (9 / 18) is unmoved.
+    // 🆕🆕 D378 — 7 / 14 -> 8 / 16 and the missing 2 / 4 -> 1 / 2: STADIUM PRESENCE
+    // took the FIRST item on `REFUSED`, again off a member bought for a BONUS row in
+    // the same commit. The population (9 / 18) is still unmoved, and ONE row is left.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([7, 14]);
+    expect([carried.length, units(carried)]).toEqual([8, 16]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([2, 4]);
+    expect([missing.length, units(missing)]).toEqual([1, 2]);
     // THE PARTITION SUMS — parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -168,9 +179,13 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     // 🆕🆕 D377 — the list is now TWO rows plus `TAKEN_SINCE`'s one, and the sum is
     // still D366's 3 / 5, which is what keeps this an accounting of D365's handoff
     // rather than a snapshot of today.
-    expect(REFUSED).toHaveLength(2);
-    expect(TAKEN_SINCE).toHaveLength(1);
-    const handed = [...REFUSED, ...TAKEN_SINCE];
+    // 🆕🆕 D378 — ONE row plus `TAKEN_SINCE`'s TWO, and the sum is STILL D366's 3 / 5.
+    expect(REFUSED).toHaveLength(1);
+    expect(TAKEN_SINCE).toHaveLength(2);
+    const handed: readonly (readonly [string, number, string])[] = [
+      ...REFUSED,
+      ...TAKEN_SINCE.map(([sentence, n, cost]) => [sentence, n, cost] as const),
+    ];
     expect(handed).toHaveLength(3);
     expect(handed.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
     expect(handed.reduce((sum, [, n]) => sum + n, 0) + 4).toBe(9);
@@ -189,8 +204,10 @@ describe("§1 — the population reproduces, and this time SO DOES THE PRICE", (
     }
     // 🆕🆕 D377 — and the one that LEFT the list is asserted from the other side, so
     // the record says "this was refused and is not any more" rather than going quiet.
-    for (const [sentence, , cost] of TAKEN_SINCE) {
-      expect(deriveAttackRequirement(sentence), cost).toEqual({ kind: "opponentActiveBurned" });
+    // 🆕🆕 D378 — the array carries the MEMBER each row now resolves to, so this pins
+    // WHICH vocabulary paid the refusal and not merely that one did.
+    for (const [sentence, , cost, member] of TAKEN_SINCE) {
+      expect(deriveAttackRequirement(sentence), cost).toEqual(member);
     }
     // …and NONE of the three is refused by the ANCHOR: each matches the skeleton
     // and misses at the TABLE, so what refuses them is still VOCABULARY. (D363's
@@ -420,12 +437,14 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     const nowCarried = corpus().filter(
       ([, s]) => SKELETON.test(s.trim()) && deriveAttackRequirement(s) !== null,
     );
-    expect(nowCarried).toHaveLength(7); // 🆕🆕 D377 +1 — the "isn't Burned" row.
+    expect(nowCarried).toHaveLength(8); // 🆕🆕 D378 +1 — the Stadium-PRESENCE row. // 🆕🆕 D377 +1 — the "isn't Burned" row.
     const victini = nowCarried.filter(([, s]) => s === V_FORCE);
     expect(units(victini)).toBe(4);
     // 🆕🆕 D377 — a `- 1` term, so D365's head is still RE-DERIVED from the live
     // total rather than frozen at the head that measured it.
-    expect(units(nowCarried) - units(victini) - 1).toBe(9); // D365's head, unmoved.
+    // 🆕🆕 D378 — a `- 2` term beside it: the Stadium-PRESENCE row is worth TWO
+    // printings, so the two subtrahends differ and the head is still D365's 9.
+    expect(units(nowCarried) - units(victini) - 2 - 1).toBe(9); // D365's head, unmoved.
   });
 });
 
@@ -476,10 +495,20 @@ describe("§6 — the exhaustive readers, and the guard D365 keyed on the wrong 
     // 🆕🆕 D377 — 6 -> 7 and the apostrophe half 5 -> 6: the new key spells BOTH
     // "opponent's" and "isn't", so it lands squarely in the fold's population and
     // the apostrophe-FREE half stands still at Victini alone.
-    expect(carried).toHaveLength(7);
+    // 🆕🆕 D378 — 7 -> 8 and the apostrophe half STANDS STILL at 6, so the
+    // apostrophe-FREE half is 2 for the first time: *"If there is no Stadium in
+    // play"* carries neither an apostrophe nor a é, which is the SECOND such key in
+    // this table and the exact case D365's guard could not see. **THE POPULATION
+    // DISTINCTION THIS RUNG EXISTS FOR IS NOW MADE BY TWO ROWS RATHER THAN ONE.**
+    expect(carried).toHaveLength(8);
     expect(carried.filter((s) => s.includes("'"))).toHaveLength(6);
+    expect(carried.filter((s) => !s.includes("'"))).toHaveLength(2);
     // A guard that had not learned the difference would demand this sentence be
     // listed among the apostrophe rows, which would be a false claim about it.
-    expect(carried.filter((s) => !s.includes("'"))).toEqual([V_FORCE]);
+    // 🆕🆕 D378 — the apostrophe-free set is NAMED rather than counted, and it is now
+    // TWO. Sorted, so the assertion does not depend on corpus order.
+    expect(carried.filter((s) => !s.includes("'")).sort()).toEqual(
+      [V_FORCE, "If there is no Stadium in play, this attack does nothing."].sort(),
+    );
   });
 });

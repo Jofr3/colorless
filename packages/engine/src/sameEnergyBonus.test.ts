@@ -240,8 +240,14 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-    expect(refused.length).toBe(22);
-    expect(units(refused)).toBe(26);
+        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
+    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
+    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
+    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
+    // different residue — and there it is the BIGGER half.
+    expect(refused.length).toBe(21);
+    expect(units(refused)).toBe(25);
     // 🛑 AND THE STEP IS 2 AND 2, WHICH IS THE FIRST 2:2 STEP IN THIS RUN. D368 moved
     // it 1:3 and D369/D370/D371 each 1:2. Every earlier head is re-derived from THIS
     // one rather than frozen, and the sentence term moves by TWO where the printing
@@ -256,15 +262,15 @@ describe("§1 — the price, RE-DERIVED: the residue, the band, and a step of TW
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([28, 36]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([30, 38]);
-    expect([refused.length + 9, units(refused) + 14]).toEqual([31, 40]);
-    expect([refused.length + 10, units(refused) + 16]).toEqual([32, 42]);
-    expect([refused.length + 11, units(refused) + 18]).toEqual([33, 44]);
+    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
+    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
+    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
+    expect([refused.length + 7, units(refused) + 11]).toEqual([28, 36]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([30, 38]);
+    expect([refused.length + 10, units(refused) + 15]).toEqual([31, 40]);
+    expect([refused.length + 11, units(refused) + 17]).toEqual([32, 42]);
+    expect([refused.length + 12, units(refused) + 19]).toEqual([33, 44]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -639,8 +645,8 @@ describe("§6 — SEAT SYMMETRY: which KIND, and the comment it falsified", () =
 describe("§7 — the census moves in exactly ONE summand, and the step is 2 and 2", () => {
   it("the resolving corpus gains TWO sentences and TWO printings", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(357); // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
-    expect(units(resolved)).toBe(1242); // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings // 🆕🆕 D375 +2 printings // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
+    expect(resolved).toHaveLength(359); // 🆕🆕 D378 +2 sentences (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause, two amounts) // 🆕🆕 D371 +1 // 🆕🆕 D370 +1 // 🆕🆕 D369 +1 // 🆕🆕 D368 +1
+    expect(units(resolved)).toBe(1245); // 🆕🆕 D378 +3 printings (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings // 🆕🆕 D375 +2 printings // 🆕🆕 D374 +2 printings // 🆕🆕 D373 +2 printings // 🆕🆕 D372 +2 printings // 🆕🆕 D371 +2 // 🆕🆕 D370 +2 // 🆕🆕 D369 +2 // 🆕🆕 D368 +3
     // The FOUR slices before this one each moved the sentence term by exactly 1;
     // this one moves it by 2 while moving the printing term by the same 2 as three
     // of them. Re-derived from the live head both ways rather than quoted.
@@ -652,8 +658,11 @@ describe("§7 — the census moves in exactly ONE summand, and the step is 2 and
     // 🆕🆕 D376 — a FIFTH subtrahend on each line, and a 1 / 2 step again (the FILTERED
     // DISCARD-PILE THRESHOLD).
     // 🆕🆕 D377 — a `- 3` term: the CROSS-BOARD STATUS PAIR resolved THREE sentences at once.
-    expect(resolved.length - 3 - 1 - 1 - 1 - 1 - 2).toBe(348);
-    expect(units(resolved) - 3 - 2 - 2 - 2 - 2 - 2).toBe(1229);
+    // 🆕🆕 D378 — a `- 2` / `- 3` pair: STADIUM PRESENCE resolved TWO sentences worth THREE
+    // printings, so the two lines take DIFFERENT subtrahends — one clause under two
+    // consequents is two sentences and three printings, not a 1:1 step.
+    expect(resolved.length - 2 - 3 - 1 - 1 - 1 - 1 - 2).toBe(348);
+    expect(units(resolved) - 3 - 3 - 2 - 2 - 2 - 2 - 2).toBe(1229);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {

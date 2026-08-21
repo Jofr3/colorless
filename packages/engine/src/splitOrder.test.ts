@@ -302,9 +302,15 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // bonus table already reads (D363's Sawk, D365's Iron Boulder, now this), and the
     // first whose two consequents were purchased together.
     ["If your opponent's Active Pokémon isn't Burned", 1],
+    // 🆕🆕 D378 — Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing", TWO legal
+    // printings, on `stadiumInPlay` — a member bought by the SAME slice for a BONUS
+    // row one table over (Probopass `sv10-098` "Mountain Drop"). The FOURTH row in
+    // this table to spell a member the bonus table already reads, and the FIRST whose
+    // cancel half is the BIGGER half: 2 printings here against 1 there.
+    ["If there is no Stadium in play", 2],
   ];
 
-  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1", () => {
+  it("🛑 prices each mapped clause by LEGAL printings — 0, 2, 2, 2, 1, 2, 4, 1, 2", () => {
     for (const [key, expected] of KEYS) {
       const sentence = `${key}, this attack does nothing.`;
       // The copy is tied to the live reader: a key that stopped being carried
@@ -320,7 +326,7 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     }
   });
 
-  it("🛑 EIGHT rows, SEVEN of them reachable in Standard, and 14 legal printings", () => {
+  it("🛑 NINE rows, EIGHT of them reachable in Standard, and 16 legal printings", () => {
     // 🆕🆕 D366 — "six / five / 9" one commit ago, "three / two / 4" the commit
     // before that; every one of the three numbers has now moved twice. The rung is
     // unchanged in SHAPE, which is the point: it prices the table by
@@ -329,28 +335,40 @@ describe("§4 — the requirement table's LIVE legality (a row count is not a co
     // 🆕🆕 D377 — "seven / six / 13" one commit ago. The three numbers have now moved
     // four times, and this step is the first that adds a row whose member ALREADY
     // EXISTED IN THE SAME COMMIT for a different consequent.
+    // 🆕🆕 D378 — "eight / seven / 14" one commit ago, the FIFTH move, and the biggest
+    // step this rung has taken on the PRINTINGS column since D366's four: +1 row and
+    // +2 printings, because the row's sentence is the only one in this table with two
+    // legal printings behind a member the same commit bought.
     const reachable = KEYS.filter(([, n]) => n > 0);
-    expect(KEYS.length).toBe(8);
-    expect(reachable.length).toBe(7);
-    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(14);
+    expect(KEYS.length).toBe(9);
+    expect(reachable.length).toBe(8);
+    expect(KEYS.reduce((sum, [, n]) => sum + n, 0)).toBe(16);
     // The whole does-nothing OPENER population, and how much of it is mapped:
-    // 9 sentences / 18 units open with the skeleton, 7 sentences / 14 units are
-    // carried. The other 2 stay UNMAPPED and therefore LOUD, which is what keeps
+    // 9 sentences / 18 units open with the skeleton, 8 sentences / 16 units are
+    // carried. The other 1 stays UNMAPPED and therefore LOUD, which is what keeps
     // the accounting guard load-bearing.
     // 🆕🆕 D377 — 6 / 13 -> 7 / 14 and the unmapped 3 / 5 -> 2 / 4, and the sentence
     // that moved is the one this list NAMED as owed: *"…isn't Burned"*. The remaining
     // two are a Stadium-PRESENCE read (which `yourStadiumInPlay` cannot answer — it
     // reads §7.3 OWNERSHIP) and an exact hand-size read.
+    // 🆕🆕 D378 — 7 / 14 -> 8 / 16 and the unmapped 2 / 4 -> 1 / 2, and the sentence
+    // that moved is again the one this list NAMED as owed: the Stadium-PRESENCE read,
+    // built as `stadiumInPlay` — a NEW member beside `yourStadiumInPlay` rather than a
+    // widening of it, because that one has two consumers whose OWNERSHIP is
+    // load-bearing (D362: a widening is free, a rename is not).
+    // 🛑 **ONE SENTENCE IS LEFT AND THE ACCOUNTING GUARD DEPENDS ON IT.** When the
+    // hand-size read is built, `sawkRequirementSplit.test.ts`'s unmapped rider has no
+    // real printed subject left and has to become a CONSTRUCTED near-miss — which
+    // this rung is the place to notice, because `unmapped` will be EMPTY here.
     const openers = corpus().filter(([, s]) => /^If .+?, this attack does nothing\./.test(s));
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     const mapped = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([mapped.length, units(mapped)]).toEqual([7, 14]);
-    // 🛑 AND THE UNMAPPED THREE ARE NAMED, so this rung says which sentences are
-    // still owed rather than only how many. D367's population, verbatim.
+    expect([mapped.length, units(mapped)]).toEqual([8, 16]);
+    // 🛑 AND THE UNMAPPED ONE IS NAMED, so this rung says which sentence is still
+    // owed rather than only how many. D367's population, narrowed twice.
     const unmapped = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([unmapped.length, units(unmapped)]).toEqual([2, 4]);
+    expect([unmapped.length, units(unmapped)]).toEqual([1, 2]);
     expect(unmapped.map(([, s]) => s).sort()).toEqual([
-      "If there is no Stadium in play, this attack does nothing.",
       "If you don't have exactly 3 cards in your hand, this attack does nothing.",
     ]);
     // The parts sum, which is what makes a partition a partition.

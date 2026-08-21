@@ -100,11 +100,6 @@ const BOUGHT: readonly (readonly [string, number, string])[] = [
     remain, and they are D367's population. */
 const REFUSED: readonly (readonly [string, number, string])[] = [
   [
-    "If there is no Stadium in play, this attack does nothing.",
-    2,
-    "an ANY-OWNER stadium member — `yourStadiumInPlay` cannot be widened without changing Falkner",
-  ],
-  [
     "If you don't have exactly 3 cards in your hand, this attack does nothing.",
     2,
     "an OWN-hand exact-size member — `opponentHandAtMost` is the wrong seat AND the wrong comparator",
@@ -118,11 +113,25 @@ const REFUSED: readonly (readonly [string, number, string])[] = [
     still had to be BOUGHT, but D377 bought it for a BONUS clause one table over and
     this consequent came along for one row and no vocabulary, which is the pattern
     D363's Sawk row established and this is its second instance. */
-const TAKEN_SINCE: readonly (readonly [string, number, string])[] = [
+const TAKEN_SINCE: readonly (readonly [string, number, string, BoardCondition])[] = [
   [
     "If your opponent's Active Pokémon isn't Burned, this attack does nothing.",
     1,
     "a BURNED member — the state field exists, no condition reads it (TAKEN at D377)",
+    { kind: "opponentActiveBurned" },
+  ],
+  // 🆕🆕 D378 — THE SECOND ROW TO MOVE, AND D365's REASON WAS RIGHT ON BOTH HALVES.
+  // It said the sentence needed *"an ANY-OWNER stadium member"* and that
+  // `yourStadiumInPlay` could not be widened into one without changing Falkner —
+  // and that is EXACTLY what D378 did: it added `stadiumInPlay` BESIDE the ownership
+  // member rather than re-pointing it, and §4 below still drives the rename refusal
+  // on the same board it always did. **A REFUSAL THAT HAS BEEN PAID IS STILL
+  // EVIDENCE; SAY SO FROM THE OTHER SIDE** (D178).
+  [
+    "If there is no Stadium in play, this attack does nothing.",
+    2,
+    "an ANY-OWNER stadium member — `yourStadiumInPlay` cannot be widened without changing Falkner (TAKEN at D378)",
+    { kind: "stadiumInPlay" },
   ],
 ];
 
@@ -196,10 +205,12 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     expect([openers.length, units(openers)]).toEqual([9, 18]);
     // 🆕🆕 D377 — 6 / 13 -> 7 / 14, missing 3 / 5 -> 2 / 4. The POPULATION is still
     // 9 / 18 and still the invariant; what moved is the third row of `REFUSED`.
+    // 🆕🆕 D378 — 7 / 14 -> 8 / 16, missing 2 / 4 -> 1 / 2, and what moved is the row
+    // of `REFUSED` that this file has carried since D365. ONE sentence is left.
     const carried = openers.filter(([, s]) => deriveAttackRequirement(s) !== null);
-    expect([carried.length, units(carried)]).toEqual([7, 14]);
+    expect([carried.length, units(carried)]).toEqual([8, 16]);
     const missing = openers.filter(([, s]) => deriveAttackRequirement(s) === null);
-    expect([missing.length, units(missing)]).toEqual([2, 4]);
+    expect([missing.length, units(missing)]).toEqual([1, 2]);
     // THE PARTITION SUMS. Parts that do not add to the population are not a
     // partition, however carefully each half is measured.
     expect(carried.length + missing.length).toBe(openers.length);
@@ -234,10 +245,12 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     for (const [sentence, , cost] of REFUSED) {
       expect(deriveAttackRequirement(sentence), cost).toBeNull();
     }
-    // 🆕🆕 D377 — and the row that LEFT is asserted from the other side, so this
+    // 🆕🆕 D377 — and the rows that LEFT are asserted from the other side, so this
     // record says "was refused, is not any more" instead of going quiet.
-    for (const [sentence, , cost] of TAKEN_SINCE) {
-      expect(deriveAttackRequirement(sentence), cost).toEqual({ kind: "opponentActiveBurned" });
+    // 🆕🆕 D378 — the array carries the MEMBER each row now resolves to, so the
+    // assertion pins WHICH vocabulary paid the refusal rather than only that one did.
+    for (const [sentence, , cost, member] of TAKEN_SINCE) {
+      expect(deriveAttackRequirement(sentence), cost).toEqual(member);
     }
   });
 
@@ -255,9 +268,14 @@ describe("§1 — the population reproduces, and the PARTITION is published befo
     // 🆕🆕 D377 — still 3 / 5 as a RESIDUE OF D365's HANDOFF, but now spread over two
     // arrays: two rows still refused (4 printings) and one TAKEN (1 printing). The
     // sum is what this case is about, so it is re-assembled rather than re-stated.
-    const residue = [...REFUSED, ...TAKEN_SINCE];
-    expect(REFUSED).toHaveLength(2);
-    expect(TAKEN_SINCE).toHaveLength(1);
+    // 🆕🆕 D378 — still 3 / 5 as a RESIDUE OF D365's HANDOFF, and the split across the
+    // two arrays moves again: ONE row still refused (2 printings) and TWO taken (3).
+    const residue: readonly (readonly [string, number, string])[] = [
+      ...REFUSED,
+      ...TAKEN_SINCE.map(([sentence, n, cost]) => [sentence, n, cost] as const),
+    ];
+    expect(REFUSED).toHaveLength(1);
+    expect(TAKEN_SINCE).toHaveLength(2);
     expect(residue).toHaveLength(3);
     expect(residue.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
     for (const [sentence, expected, cost] of residue) {
@@ -386,10 +404,21 @@ describe("§4 — the two 'widenings' are not widenings, and that is DRIVEN", ()
       conditionHolds(p2Stadium, "p1", { kind: "yourStadiumInPlay" }) ===
         conditionHolds(p2Stadium, "p2", { kind: "yourStadiumInPlay" }),
     ).toBe(false);
-    // And the sentence is STILL unread, which is the whole point of refusing it.
-    expect(
-      deriveAttackRequirement("If there is no Stadium in play, this attack does nothing."),
-    ).toBeNull();
+    // 🆕🆕 D378 — **D365's REFUSAL WAS RIGHT AND IT HAS BEEN PAID, AND THE PARAGRAPH
+    // ABOVE IS WHY.** The sentence now resolves, and it resolves to a NEW member
+    // (`stadiumInPlay`) sitting BESIDE the ownership one rather than to the ownership
+    // one re-pointed — which is the exact distinction this case exists to make. The
+    // board above is unchanged and still refutes the rename; the assertion below is
+    // INVERTED rather than deleted, and it pins the DISAGREEMENT.
+    const stadiumRequirement = deriveAttackRequirement(
+      "If there is no Stadium in play, this attack does nothing.",
+    );
+    expect(stadiumRequirement).toEqual({ kind: "stadiumInPlay" });
+    expect(stadiumRequirement).not.toEqual({ kind: "yourStadiumInPlay" });
+    // …and on THIS board — the opponent's Stadium — the two answers differ, which is
+    // the board the rename would have got wrong.
+    expect(conditionHolds(p2Stadium, "p1", { kind: "stadiumInPlay" })).toBe(true);
+    expect(conditionHolds(p2Stadium, "p1", { kind: "yourStadiumInPlay" })).toBe(false);
   });
 
   it("🛑 Burn is an ADDITION — no member reads it, and the ANY-condition one is wider", () => {

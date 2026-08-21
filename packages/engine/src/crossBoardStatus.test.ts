@@ -244,14 +244,20 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 22 / 26 could not tell "the two rows landed" from "a reader broke".
     expect(refused.some(([, s]) => s === ROASTING_HEAT)).toBe(false);
     expect(refused.some(([, s]) => s === MENTAL_CRUSH)).toBe(false);
-    expect(refused.length).toBe(22);
-    expect(units(refused)).toBe(26);
+        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
+    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
+    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
+    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
+    // different residue — and there it is the BIGGER half.
+    expect(refused.length).toBe(21);
+    expect(units(refused)).toBe(25);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
+    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
+    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
+    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -260,9 +266,13 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // skeleton's unread remainder was 3 sentences / 5 printings at D376's head.
     const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === CHARRING_BREATH)).toBe(false);
-    expect(refused.length).toBe(2);
-    expect(units(refused)).toBe(4);
-    expect([refused.length + 1, units(refused) + 1]).toEqual([3, 5]);
+    // 🆕🆕 D378 — 2 / 4 -> 1 / 2: STADIUM PRESENCE took the bigger of the two
+    // sentences this rung had left (Fan Rotom `sv07-118`/`sv08.5-085`, 2 printings),
+    // so the cancel residue is now a SINGLE sentence — the exact hand-size read.
+    expect(refused.length).toBe(1);
+    expect(units(refused)).toBe(2);
+    expect([refused.length + 1, units(refused) + 2]).toEqual([2, 4]);
+    expect([refused.length + 2, units(refused) + 3]).toEqual([3, 5]);
   });
 
   it("🛑 THREE sentences, ONE legal printing each — a 3:3 step, which this run has not taken", () => {
@@ -350,7 +360,8 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // taking two out of it, nineteen clauses remain at one printing apiece. The pair
     // was worth taking because ONE purchase served THREE printings, not because the
     // band was thin.
-    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(19);
+    // 🆕🆕 D378 — 19 -> 18: the Stadium-PRESENCE bonus clause left the band.
+    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(18);
   });
 });
 

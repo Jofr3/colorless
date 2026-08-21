@@ -652,6 +652,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `sv01-029` and `sv01-041`). **THREE FIXTURES, THREE ENTRIES — and the reason it
     // is three and not five is that a census keyed on the SENTENCE cannot count a
     // sentence twice.**
+    // 🆕🆕 D378 — **118 → 118, AND THE ZERO IS THE MEASUREMENT.** TWO new fixtures and
+    // ZERO census entries: `fix-mountaindrop` prints *"If a Stadium is in play, …"*
+    // and `fix-assaultland` prints *"If there is no Stadium in play, …"*, and NEITHER
+    // carries an apostrophe, so neither can enter a sweep keyed on `'`. ⚠️ **AND A
+    // THIRD THING MOVED IN BOTH DIRECTIONS AND CANCELLED**: `fix-sawk`'s index-2 rider
+    // was re-pointed from the Stadium sentence to the exact hand-size one, and BOTH
+    // spellings carry the rider's own *"attack's"*, so the entry neither entered nor
+    // left. **A CENSUS KEYED ON A CHARACTER MOVES WHEN A FIXTURE'S TEXT CHANGES, NOT
+    // ONLY WHEN A FIXTURE IS ADDED — and this slice checked that both ways.**
     expect(derivable).toHaveLength(118);
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
@@ -884,7 +893,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // skeleton and one row serves up to six printed amounts.
     const carried = carriedBonusClauses();
     const withApostrophe = [...carried].filter((clause) => clause.includes(APOS));
-    expect(carried.size).toBe(39); // 🆕🆕 D377 — 37 -> 39, **TWO rows and both apostrophe-BEARING**, so THIS half moves by two (16 -> 18) while the apostrophe-free half stands still at 21. The first two-row step this line has taken since D367, and the two keys are one printed word apart. // 🆕🆕 D376 — 36 -> 37, ONE row and an apostrophe-FREE one, so THIS half stands still at 16 while the apostrophe-free half moves (20 -> 21): the filtered DISCARD-PILE THRESHOLD names no possessive and no contraction, so it is the OTHER half of the partition that gains it. // 🆕🆕 D375 — 35 -> 36, ONE row and an apostrophe-BEARING one again, so THIS half moves (15 -> 16) while the apostrophe-free half stands still at 20 — the SECOND slice running to land in the ROW partition of the apostrophe half // 🆕🆕 D374 — 34 -> 35, ONE row and an apostrophe-BEARING one, so THIS half moves (14 -> 15) while the apostrophe-free half stands still at 20 // 🆕🆕 D373 — 33 -> 34, ONE row and an apostrophe-FREE one, so THIS half stands still at 14 while the apostrophe-free half moves (19 -> 20) // 🆕🆕 D372 — 32 -> 33, and the new clause is a literal ROW that DOES spell a possessive, so it lands in the apostrophe half (13 -> 14) and in the ROW partition of it — the combination D371's did not have. ⚠️ ONE row and not two: this census is CLAUSE-keyed, and D372's two printed sentences share one clause // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
+    expect(carried.size).toBe(40); // 🆕🆕 D378 — 39 -> 40, **ONE row and it is apostrophe-FREE** ("a Stadium is in play"), so THIS half stands still at 18 and the free half takes the whole step (21 -> 22) — the mirror image of D377, one slice later // 🆕🆕 D377 — 37 -> 39, **TWO rows and both apostrophe-BEARING**, so THIS half moves by two (16 -> 18) while the apostrophe-free half stands still at 21. The first two-row step this line has taken since D367, and the two keys are one printed word apart. // 🆕🆕 D376 — 36 -> 37, ONE row and an apostrophe-FREE one, so THIS half stands still at 16 while the apostrophe-free half moves (20 -> 21): the filtered DISCARD-PILE THRESHOLD names no possessive and no contraction, so it is the OTHER half of the partition that gains it. // 🆕🆕 D375 — 35 -> 36, ONE row and an apostrophe-BEARING one again, so THIS half moves (15 -> 16) while the apostrophe-free half stands still at 20 — the SECOND slice running to land in the ROW partition of the apostrophe half // 🆕🆕 D374 — 34 -> 35, ONE row and an apostrophe-BEARING one, so THIS half moves (14 -> 15) while the apostrophe-free half stands still at 20 // 🆕🆕 D373 — 33 -> 34, ONE row and an apostrophe-FREE one, so THIS half stands still at 14 while the apostrophe-free half moves (19 -> 20) // 🆕🆕 D372 — 32 -> 33, and the new clause is a literal ROW that DOES spell a possessive, so it lands in the apostrophe half (13 -> 14) and in the ROW partition of it — the combination D371's did not have. ⚠️ ONE row and not two: this census is CLAUSE-keyed, and D372's two printed sentences share one clause // 🆕🆕 D371 — 31 -> 32, and the new clause is a TEMPLATE clause that DOES spell a possessive, so it lands in the apostrophe half (12 -> 13) and in the TEMPLATE partition of it, not among the rows // 🆕🆕 D370 — 30 -> 31, and the new clause is neither a row NOR apostrophe-bearing: it is a TEMPLATE clause with no apostrophe, so it lands in the OTHER half of the partition and the fold's population stands still at 12 // 🆕🆕 D369 — 29 -> 30, ONE row, and this time an apostrophe-BEARING one // 🆕🆕 D368 — 28 -> 29, ONE apostrophe-FREE row
     expect(withApostrophe).toHaveLength(18); // 🆕🆕 D377 — 16 -> 18, the CROSS-BOARD STATUS PAIR, and BOTH are ROWS rather than TEMPLATE-owned: `rowClauses` moves 13 -> 15 with them while `TEMPLATE_OWNED` stands still at 3. Both members are NULLARY, so the possessive is in the KEY only // 🆕🆕 D375 — 15 -> 16, the CROSS-BOARD TYPE INTERSECTION, a ROW rather than TEMPLATE-owned: `rowClauses` moves 12 -> 13 with it while `TEMPLATE_OWNED` stands still at 3. ⚠️ AND ITS APOSTROPHE IS IN THE KEY ONLY — the member is NULLARY, so D374's parameter half does not recur // 🆕🆕 D374 — 14 -> 15, the NAMED-ENERGY clause, and it is a ROW rather than TEMPLATE-owned: `rowClauses` moves 11 -> 12 with it while `TEMPLATE_OWNED` stands still at 3. ⚠️ AND IT IS THE FIRST WHOSE APOSTROPHE ALSO RIDES THE MEMBER'S OWN PARAMETER // 🆕🆕 D372 — 13 -> 14, the CROSS-BOARD EQUAL-ENERGY clause, and it is a ROW rather than TEMPLATE-owned: `rowClauses` moves 10 -> 11 with it while `TEMPLATE_OWNED` stands still at 3 // 🆕🆕 D371 — 12 -> 13, the OPPONENT-RESISTANCE clause, and it is TEMPLATE-owned rather than a row: the third entry in `TEMPLATE_OWNED` below, so `rowClauses` stands still at 10 while this half moves // 🆕🆕 D369 — 11 -> 12, the cross-board Tool clause. D368's row stood still here; this one does not, and the difference is one possessive
     // The TWO the parameterised template owns — named, so the day the template
     // stops owning one it lands in the row half and this guard says which.
@@ -935,7 +944,7 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // narrowing is just a way of not looking.
     const carried = carriedBonusClauses();
     const without = [...carried].filter((clause) => !clause.includes(APOS)).sort();
-    expect(without).toHaveLength(21); // 🆕🆕 D376 +1 — the FILTERED DISCARD-PILE THRESHOLD, apostrophe-free and a ROW rather than a template, so the fold's own population (16) stands still // 🆕🆕 D373 +1 — the UNIVERSAL-OVER-THE-BENCH clause, apostrophe-free and a ROW rather than a template // 🆕🆕 D370 +1 — the bench-scoped TYPE clause, apostrophe-free and TEMPLATE-owned rather than a row // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
+    expect(without).toHaveLength(22); // 🆕🆕 D378 +1 — the STADIUM-PRESENCE row, apostrophe-free and a ROW rather than a template, so the fold's own population (18) stands still // 🆕🆕 D376 +1 — the FILTERED DISCARD-PILE THRESHOLD, apostrophe-free and a ROW rather than a template, so the fold's own population (16) stands still // 🆕🆕 D373 +1 — the UNIVERSAL-OVER-THE-BENCH clause, apostrophe-free and a ROW rather than a template // 🆕🆕 D370 +1 — the bench-scoped TYPE clause, apostrophe-free and TEMPLATE-owned rather than a row // 🆕🆕 D368 +1 — the undamaged complement, an apostrophe-FREE key
     // Pinned BY NAME, so a row added on an apostrophe-free key reddens here.
     expect(without).toEqual(
       [
@@ -943,6 +952,14 @@ describe("the literal clause tables — the rows the fold was built for", () => 
         // apostrophe, so it lands in THIS half of the partition, and it sorts directly
         // above the EXISTENTIAL key it is one method call away from — which is the
         // clearest place in the repo to see that the two are different strings.
+        // 🆕🆕 D378 — `stadiumInPlay`, the ONE row this slice adds. It carries no
+        // apostrophe and no é, so it lands in THIS half and the fold's own population
+        // (18) stands still — the exact mirror of D377, whose two rows both carried a
+        // possessive AND a contraction. ⚠️ **AND IT SORTS DIRECTLY ABOVE NOTHING IT IS
+        // RELATED TO**: its near miss, *"you have a Stadium in play"*, is in the same
+        // half but sixteen entries down, because the printed possessive that separates
+        // the two members also separates them alphabetically.
+        "a Stadium is in play",
         "all of your Benched Pokémon have at least 1 damage counter on them",
         "Beldum and Metang are on your Bench",
         "Durant is on your Bench",
@@ -983,8 +1000,8 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     );
     // THE TWO HALVES PARTITION THE CARRIED SET — parts that do not add up are not
     // a partition, however carefully each half is measured.
-    expect(without.length + 18).toBe(carried.size); // 🆕🆕 D377 — 16 -> 18
-    expect(carried.size).toBe(39); // 🆕🆕 D377 — 37 -> 39, and the APOSTROPHE half is the one that moves, by TWO (16 -> 18), while THIS one stands still at 21. // 🆕🆕 D376 — 36 -> 37, and THIS half is the one that moves (20 -> 21) while the apostrophe half stands still at 16. // 🆕🆕 D375 — 35 -> 36, and the APOSTROPHE half is the one that moves (15 -> 16) while THIS one stands still at 20 for the second slice running — another literal ROW on a possessive key // 🆕🆕 D374 — 34 -> 35, and the APOSTROPHE half is the one that moves (14 -> 15) while THIS one stands still at 20 — a literal ROW on a possessive key, the partition D372's row landed in // 🆕🆕 D373 — 33 -> 34, and THIS half moves (19 -> 20) while the apostrophe half stands still at 14 — a literal ROW on an apostrophe-free key, the same partition D368's row landed in // 🆕🆕 D372 — 32 -> 33, and the apostrophe half moves again (13 -> 14) while THIS one stands still at 19 for the second slice running — but through the OTHER partition of that half: D371's clause was TEMPLATE-owned and D372's is a ROW // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
+    expect(without.length + 18).toBe(carried.size); // 🆕🆕 D378 — the apostrophe half STANDS STILL at 18 // 🆕🆕 D377 — 16 -> 18
+    expect(carried.size).toBe(40); // 🆕🆕 D378 — 39 -> 40, and THIS half is the one that moves, by ONE (21 -> 22), while the apostrophe half stands still at 18. // 🆕🆕 D377 — 37 -> 39, and the APOSTROPHE half is the one that moves, by TWO (16 -> 18), while THIS one stands still at 21. // 🆕🆕 D376 — 36 -> 37, and THIS half is the one that moves (20 -> 21) while the apostrophe half stands still at 16. // 🆕🆕 D375 — 35 -> 36, and the APOSTROPHE half is the one that moves (15 -> 16) while THIS one stands still at 20 for the second slice running — another literal ROW on a possessive key // 🆕🆕 D374 — 34 -> 35, and the APOSTROPHE half is the one that moves (14 -> 15) while THIS one stands still at 20 — a literal ROW on a possessive key, the partition D372's row landed in // 🆕🆕 D373 — 33 -> 34, and THIS half moves (19 -> 20) while the apostrophe half stands still at 14 — a literal ROW on an apostrophe-free key, the same partition D368's row landed in // 🆕🆕 D372 — 32 -> 33, and the apostrophe half moves again (13 -> 14) while THIS one stands still at 19 for the second slice running — but through the OTHER partition of that half: D371's clause was TEMPLATE-owned and D372's is a ROW // 🆕🆕 D371 — 31 -> 32, and the halves swap AGAIN: the apostrophe half moves (12 -> 13) while THIS one stands still at 19, because the new clause is a template clause that spells a possessive // 🆕🆕 D370 — 30 -> 31, and the halves swap back: THIS one moves (18 -> 19) while the apostrophe half stands still at 12 // 🆕🆕 D369 — 29 -> 30, and this time the APOSTROPHE half is the one that moves (11 -> 12) while this one stands still at 18 // 🆕🆕 D368 — 28 -> 29, and the apostrophe half STANDS STILL at 11
     // ⚠️ SIX of these seventeen are D367's own, and NONE of the six needed the
     // fold — which is the measurement that says this slice's rows and this slice's
     // guard are about different things. Named rather than pattern-matched: a
@@ -1050,7 +1067,11 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // 🆕🆕 D377 — 6 -> 7 carried and 5 -> 6 with an apostrophe: the new key spells BOTH
     // a possessive and a contraction, so it lands squarely in the fold's population and
     // Victini's apostrophe-free row still makes the list one longer than the walk.
-    expect(carried.size).toBe(7);
+    // 🆕🆕 D378 — 7 -> 8 carried and the apostrophe half STANDS STILL at 6: the new key
+    // (*"If there is no Stadium in play"*) carries neither an apostrophe nor a é, so it
+    // is the SECOND row this filter drops and the case below now names two. **THE
+    // FILTER D365 PAID FOR IS EARNING ITS KEEP A SECOND TIME.**
+    expect(carried.size).toBe(8);
     expect(withApostrophe).toHaveLength(6);
     for (const sentence of withApostrophe) {
       expect(APOSTROPHE_REQUIREMENT_SENTENCES).toContain(sentence);
@@ -1077,7 +1098,10 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     // one reddens above. Neither list can go stale in silence again.
     const carried = carriedClauseSentences();
     const withoutApostrophe = [...carried].filter((s) => !s.includes(APOS)).sort();
+    // 🆕🆕 D378 — the "second apostrophe-free row added later" this case was written to
+    // catch has ARRIVED, and it reddened here exactly as promised.
     expect(withoutApostrophe).toEqual([
+      "If there is no Stadium in play, this attack does nothing.",
       "If you have 4 or fewer Benched Pokémon, this attack does nothing.",
     ]);
     // The two halves PARTITION the carried set — parts that do not add up are not

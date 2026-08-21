@@ -206,8 +206,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-    expect(refused.length).toBe(22);
-    expect(units(refused)).toBe(26);
+        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
+    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
+    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
+    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
+    // different residue — and there it is the BIGGER half.
+    expect(refused.length).toBe(21);
+    expect(units(refused)).toBe(25);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -219,20 +225,20 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 2).toBe(24);
-    expect(units(refused) + 2).toBe(28);
-    expect(refused.length + 3).toBe(25);
-    expect(units(refused) + 4).toBe(30);
-    expect(refused.length + 4).toBe(26);
-    expect(units(refused) + 6).toBe(32);
-    expect(refused.length + 5).toBe(27);
-    expect(units(refused) + 8).toBe(34);
-    expect(refused.length + 6).toBe(28);
-    expect(units(refused) + 10).toBe(36);
-    expect(refused.length + 8).toBe(30);
-    expect(units(refused) + 12).toBe(38);
-    expect(refused.length + 9).toBe(31);
-    expect(units(refused) + 14).toBe(40);
+    expect(refused.length + 3).toBe(24);
+    expect(units(refused) + 3).toBe(28);
+    expect(refused.length + 4).toBe(25);
+    expect(units(refused) + 5).toBe(30);
+    expect(refused.length + 5).toBe(26);
+    expect(units(refused) + 7).toBe(32);
+    expect(refused.length + 6).toBe(27);
+    expect(units(refused) + 9).toBe(34);
+    expect(refused.length + 7).toBe(28);
+    expect(units(refused) + 11).toBe(36);
+    expect(refused.length + 9).toBe(30);
+    expect(units(refused) + 13).toBe(38);
+    expect(refused.length + 10).toBe(31);
+    expect(units(refused) + 15).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -363,7 +369,11 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // D377 adds THREE bodies (`fix-roastheat`, `fix-mindcrush`, `fix-charbreath`) and
     // no Energy at all, and none of the three prints a Resistance — the column that
     // slice reads is `SpecialConditions` on the opponent's Active.
-    expect(ids).toHaveLength(463);
+    // 🆕🆕 D378 — 463 -> **465**, and the other two columns stand still a SEVENTH time.
+    // D378 adds TWO bodies (`fix-mountaindrop`, `fix-assaultland`) and no Energy at
+    // all, and neither prints a Resistance — the column that slice reads is
+    // `state.stadium`, which is not on a card at all.
+    expect(ids).toHaveLength(465);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -378,13 +388,16 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // 🆕🆕 D377 — and one more again: +3 bodies / +0 / +0 (`fix-roastheat`,
     // `fix-mindcrush`, `fix-charbreath`, none of which prints a Resistance because the
     // column D377 reads is the opponent Active's `SpecialConditions`).
-    expect(ids.length - 3).toBe(460);
-    expect(ids.length - 3 - 1).toBe(459);
-    expect(ids.length - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D378 — a `- 2` term at the head of the chain: TWO bodies, ZERO Energy,
+    // ZERO Resistances.
+    expect(ids.length - 2).toBe(463);
+    expect(ids.length - 2 - 3).toBe(460);
+    expect(ids.length - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

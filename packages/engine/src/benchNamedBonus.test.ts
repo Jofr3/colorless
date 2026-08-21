@@ -281,18 +281,24 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-    expect([refused.length, units(refused)]).toEqual([22, 26]);
-    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([28, 36]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([30, 38]);
-    expect([refused.length + 9, units(refused) + 14]).toEqual([31, 40]);
-    expect([refused.length + 10, units(refused) + 16]).toEqual([32, 42]);
-    expect([refused.length + 11, units(refused) + 18]).toEqual([33, 44]);
-    expect([refused.length + 12, units(refused) + 18 + 3]).toEqual([34, 47]);
-    expect([refused.length + 12 + TAKEN.length, units(refused) + 21 + 13]).toEqual([43, 60]);
+        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
+    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
+    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
+    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
+    // different residue — and there it is the BIGGER half.
+    expect([refused.length, units(refused)]).toEqual([21, 25]);
+    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
+    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
+    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
+    expect([refused.length + 7, units(refused) + 11]).toEqual([28, 36]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([30, 38]);
+    expect([refused.length + 10, units(refused) + 15]).toEqual([31, 40]);
+    expect([refused.length + 11, units(refused) + 17]).toEqual([32, 42]);
+    expect([refused.length + 12, units(refused) + 19]).toEqual([33, 44]);
+    expect([refused.length + 13, units(refused) + 19 + 3]).toEqual([34, 47]);
+    expect([refused.length + 13 + TAKEN.length, units(refused) + 22 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -603,8 +609,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(357); // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1242); // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(359); // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1245); // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -627,8 +633,11 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // 🆕🆕 D376 — a NINTH, and a 1 / 2 step again (the FILTERED DISCARD-PILE THRESHOLD).
     // 🆕🆕 D377 — a `- 3` term: the CROSS-BOARD STATUS PAIR resolved THREE sentences at once
     // (two bonus, one cancel), so D366's head is still re-derived from the live total.
-    expect(resolved.length - TAKEN.length - 3 - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1 - 1).toBe(335);
-    expect(units(resolved) - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2).toBe(1207);
+    // 🆕🆕 D378 — a `- 2` / `- 3` pair: STADIUM PRESENCE resolved TWO sentences worth THREE
+    // printings, so the two terms differ for the second time in this chain (D372 was the
+    // first, the other way round) — one clause under two consequents is not one sentence.
+    expect(resolved.length - 2 - TAKEN.length - 3 - 1 - 1 - 1 - 1 - 2 - 1 - 1 - 1 - 1).toBe(335);
+    expect(units(resolved) - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2).toBe(1207);
   });
 
   it("🛑 NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {

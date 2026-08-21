@@ -188,10 +188,10 @@ describe("§1 — D362's counts reproduce and its ATTRIBUTION does not", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => readByAny(s));
     const residue = rows.filter(([, s]) => !readByAny(s));
-    expect(resolved).toHaveLength(357); // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD, 2 printings, ONE new PARAMETERISED member + ONE literal row) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION, 2 printings, ONE new NULLARY member + ONE literal row) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause, 2 printings, ONE new member + ONE literal row) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause, 2 printings, ONE new member + ONE literal row) // 🆕🆕 D372 **+2 SENTENCES** (the CROSS-BOARD EQUAL-ENERGY clause, printed under TWO sentences at 1 printing each, ONE new member + ONE literal row) — the first step on this line that is not +1 // 🆕🆕 D371 +1 sentence (the OPPONENT-RESISTANCE clause, 2 printings, ONE new member + ONE new template) // 🆕🆕 D370 +1 sentence (the bench-scoped {M} TYPE clause, 2 printings, ONE new member + ONE new template) // 🆕🆕 D369 +1 sentence (the cross-board Pokémon Tool clause, 2 printings) // 🆕🆕 D368 +1 sentence (Arven's Mabosstiff ex, 3 printings, ONE new member). // 🆕🆕 D367 +9 sentences (13 printings, ZERO new members). // 🆕🆕 D366 +1 sentence (Victini, 4 printings). // 330 at D362, 331 at D363, 🆕🆕 334 at D365 (+3 sentences / +5 printings, three more rows in the SAME table this file is about — the census this case pins is whole-corpus, so it moves whenever the table does)
-    expect(p(resolved)).toBe(1242); // 🆕🆕 D377 +3 // 🆕🆕 D376 +2. // 🆕🆕 D375 +2. // 🆕🆕 D374 +2. // 🆕🆕 D373 +2. // 🆕🆕 D372 +2. // 🆕🆕 D371 +2. // 🆕🆕 D370 +2. // 🆕🆕 D369 +2. // 🆕🆕 D368 +3. // 🆕🆕 D367 +13. // 🆕🆕 D366 +4. // 1,196 at D362, 1,198 at D363
-    expect(residue).toHaveLength(283); // 🆕🆕 D377 -3 // 🆕🆕 D376 -1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 -1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 -1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 -1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 -2 sentences // 🆕🆕 D371 -1 sentence // 🆕🆕 D370 -1 sentence // 🆕🆕 D369 -1 sentence // 🆕🆕 D368 -1 sentence // 🆕🆕 D367 -9 sentences // 🆕🆕 D366 -1 sentence
-    expect(p(residue)).toBe(490); // 🆕🆕 D377 -3 // 🆕🆕 D376 -2. // 🆕🆕 D375 -2. // 🆕🆕 D374 -2. // 🆕🆕 D373 -2. // 🆕🆕 D372 -2. // 🆕🆕 D371 -2. // 🆕🆕 D370 -2. // 🆕🆕 D369 -2. // 🆕🆕 D368 -3. // 🆕🆕 D367 -13. // 🆕🆕 D366 -4.
+    expect(resolved).toHaveLength(359); // 🆕🆕 D378 +2 sentences (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD, 2 printings, ONE new PARAMETERISED member + ONE literal row) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION, 2 printings, ONE new NULLARY member + ONE literal row) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause, 2 printings, ONE new member + ONE literal row) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause, 2 printings, ONE new member + ONE literal row) // 🆕🆕 D372 **+2 SENTENCES** (the CROSS-BOARD EQUAL-ENERGY clause, printed under TWO sentences at 1 printing each, ONE new member + ONE literal row) — the first step on this line that is not +1 // 🆕🆕 D371 +1 sentence (the OPPONENT-RESISTANCE clause, 2 printings, ONE new member + ONE new template) // 🆕🆕 D370 +1 sentence (the bench-scoped {M} TYPE clause, 2 printings, ONE new member + ONE new template) // 🆕🆕 D369 +1 sentence (the cross-board Pokémon Tool clause, 2 printings) // 🆕🆕 D368 +1 sentence (Arven's Mabosstiff ex, 3 printings, ONE new member). // 🆕🆕 D367 +9 sentences (13 printings, ZERO new members). // 🆕🆕 D366 +1 sentence (Victini, 4 printings). // 330 at D362, 331 at D363, 🆕🆕 334 at D365 (+3 sentences / +5 printings, three more rows in the SAME table this file is about — the census this case pins is whole-corpus, so it moves whenever the table does)
+    expect(p(resolved)).toBe(1245); // 🆕🆕 D378 +3 printings (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2. // 🆕🆕 D375 +2. // 🆕🆕 D374 +2. // 🆕🆕 D373 +2. // 🆕🆕 D372 +2. // 🆕🆕 D371 +2. // 🆕🆕 D370 +2. // 🆕🆕 D369 +2. // 🆕🆕 D368 +3. // 🆕🆕 D367 +13. // 🆕🆕 D366 +4. // 1,196 at D362, 1,198 at D363
+    expect(residue).toHaveLength(281); // 🆕🆕 D378 -2 sentences (STADIUM PRESENCE — `stadiumInPlay`, TWO sentences worth THREE printings across BOTH consequents) // 🆕🆕 D377 -3 // 🆕🆕 D376 -1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 -1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 -1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 -1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 -2 sentences // 🆕🆕 D371 -1 sentence // 🆕🆕 D370 -1 sentence // 🆕🆕 D369 -1 sentence // 🆕🆕 D368 -1 sentence // 🆕🆕 D367 -9 sentences // 🆕🆕 D366 -1 sentence
+    expect(p(residue)).toBe(487); // 🆕🆕 D378 -3 printings (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 -3 // 🆕🆕 D376 -2. // 🆕🆕 D375 -2. // 🆕🆕 D374 -2. // 🆕🆕 D373 -2. // 🆕🆕 D372 -2. // 🆕🆕 D371 -2. // 🆕🆕 D370 -2. // 🆕🆕 D369 -2. // 🆕🆕 D368 -3. // 🆕🆕 D367 -13. // 🆕🆕 D366 -4.
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(p(resolved) + p(residue)).toBe(p(rows));
     // The one sentence that moved, named — a delta of 2 could otherwise be any
@@ -302,16 +302,27 @@ describe("§4 — the split, and the accounting guard that makes it safe", () =>
     // The whole safety of the widening. An unmapped leading clause must keep its
     // WHOLE printed string, or the site would report only the remainder and a
     // printed requirement would be silently deleted.
-    const unmapped = `If there is no Stadium in play, this attack does nothing. ${SAWK_TAIL}`;
+    // ⚠️ 🆕🆕 D378 — RE-POINTED. This rung named the Stadium-PRESENCE sentence from
+    // D363 until D378 BUILT that clause, at which point the guard's subject stopped
+    // being unmapped. The sentence below is the one that is STILL unmapped at this
+    // head, and it is the LAST one behind the does-nothing skeleton — so the day it
+    // is built this guard needs a CONSTRUCTED near-miss and must say so.
+    const unmapped = `If you don't have exactly 3 cards in your hand, this attack does nothing. ${SAWK_TAIL}`;
     expect(deriveAttackRequirement(unmapped)).toBeNull();
     expect(splitAttackRequirementClause(unmapped)).toBeNull();
     // …and the leading sentence IS one the corpus prints and this engine refuses,
     // so the guard is driven on real text rather than a constructed near-miss.
     expect(
       legalAttackCorpus().some(
-        ([, s]) => s === "If there is no Stadium in play, this attack does nothing.",
+        ([, s]) => s === "If you don't have exactly 3 cards in your hand, this attack does nothing.",
       ),
     ).toBe(true);
+    // 🛑 AND THE SENTENCE THIS RUNG USED TO NAME IS NOW MAPPED, asserted from the
+    // other side rather than deleted (D178): the refusal was real, and what changed
+    // is the head, not the rule.
+    expect(
+      deriveAttackRequirement("If there is no Stadium in play, this attack does nothing."),
+    ).toEqual({ kind: "stadiumInPlay" });
   });
 
   it("does not touch D282's gate split — two splits, two populations, no overlap", () => {
@@ -386,7 +397,7 @@ describe("§5 — on a board: the requirement gates, the suppression lands, the 
     const skipped = after.events.find((e) => e.type === "ATTACK_EFFECT_SKIPPED");
     expect(skipped).toBeDefined();
     expect(skipped).toMatchObject({
-      effect: `If there is no Stadium in play, this attack does nothing. ${SAWK_TAIL}`,
+      effect: `If you don't have exactly 3 cards in your hand, this attack does nothing. ${SAWK_TAIL}`,
     });
     // No requirement was read, so nothing was gated…
     expect(types(after.events)).not.toContain("ATTACK_FAILED");

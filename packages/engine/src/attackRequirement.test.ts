@@ -631,9 +631,16 @@ describe("constructed near-misses stay LOUD", () => {
     // whose refusal `benchCountRequirement.test.ts` §1 prices at 2 printings). A
     // guard keyed on something NOT being built has to be re-read every time
     // something is.
+    // 🆕🆕 D378 — **AND IT ROTTED AGAIN, EXACTLY AS THE PARAGRAPH ABOVE PREDICTED
+    // IT WOULD.** D378 bought Fan Rotom's clause (`stadiumInPlay`), so the split
+    // started firing on it too. Re-aimed at the exact hand-size read, which is the
+    // LAST unmapped sentence behind this skeleton — so the NEXT slice to take it
+    // must replace this subject with a CONSTRUCTED near-miss and say so. **THREE
+    // SUBJECTS IN THREE SLICES IS NOT BAD LUCK; IT IS WHAT A GUARD KEYED ON A
+    // REFUSAL COSTS, AND THE COST IS NOW NAMED WITH ITS END DATE.**
     expect(
       splitAttackRequirementClause(
-        "If there is no Stadium in play, this attack does nothing. Then, discard an Energy from this Pokémon.",
+        "If you don't have exactly 3 cards in your hand, this attack does nothing. Then, discard an Energy from this Pokémon.",
       ),
     ).toBeNull();
   });

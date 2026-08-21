@@ -10534,12 +10534,28 @@ export const FIXTURE_POOL: Record<string, Card> = {
       // The UNMAPPED clause with a companion — the split's accounting guard, from
       // the other side: no table row, so nothing may be stripped and the WHOLE
       // string stays loud.
+      //
+      // ⚠️ 🆕🆕 **D378 RE-POINTED THIS SENTENCE, AND THE MOVE IS THE RECORD RATHER
+      // THAN A REPAIR.** It printed *"If there is no Stadium in play, this attack
+      // does nothing."* from D363 until D378 BUILT that clause (`stadiumInPlay`),
+      // at which point the guard's subject stopped being unmapped and this attack
+      // started gating instead of reporting. The clause below is the sentence that
+      // is STILL unmapped at this head — the exact hand-size read, which needs an
+      // OWN-hand EXACT-SIZE member (`opponentHandAtMost` is the wrong seat AND the
+      // wrong comparator, D365). It is a REAL printed corpus sentence, which is
+      // what keeps the guard driven on the catalog rather than on a straw string.
+      //
+      // 🛑 **AND IT IS THE LAST ONE.** After D378 the does-nothing skeleton has
+      // exactly ONE unmapped sentence left. The day that one is built, this rider
+      // has to become a CONSTRUCTED near-miss and the block must say so — a guard
+      // whose subject has quietly become buildable is the vacuity mode two files
+      // hit at D377.
       {
         cost: ["Colorless"],
         name: "Unmapped Rider",
         damage: 20,
         effect:
-          "If there is no Stadium in play, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
+          "If you don't have exactly 3 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
       },
     ],
   }),
@@ -11042,6 +11058,50 @@ export const FIXTURE_POOL: Record<string, Card> = {
       `types: ["Fire"]` because the real printing is Fire and nothing in this file
       reads the attacker's type — stated so a successor does not go looking for a
       reason it is load-bearing, as it is on `fix-typeshare` two blocks up. */
+  /** 🆕🆕 D378 — the STADIUM-PRESENCE family, the BONUS consequent: Probopass
+      `sv10-098` "Mountain Drop"'s printed sentence, verbatim, on a body of this
+      pool's own making. `fix-*` and not `sv10-098` for the standing reason (D369) —
+      a fixture id naming a real printing needs a `CATALOG_MANIFEST.printed` row and
+      the generator cannot write one without the local D1.
+
+      The printed cost is `{C}{C}{C}` and the printed base is **70+**, so with the
+      Stadium zone occupied the dealt number is 140 and without it 70 — two figures
+      that cannot be confused with `fix-assaultland`'s flat 70 in either state,
+      which matters because BOTH bodies are in the same deck. `hp: 150`, so the
+      attacker survives anything the cast throws back. */
+  "fix-mountaindrop": battler("fix-mountaindrop", {
+    hp: 150,
+    types: ["Fighting"],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Mountain Drop",
+        damage: "70+",
+        effect: "If a Stadium is in play, this attack does 70 more damage.",
+      },
+    ],
+  }),
+  /** 🆕🆕 D378 — the same board fact under the OTHER consequent: Fan Rotom
+      `sv07-118`/`sv08.5-085` "Assault Landing", the family's TWO-printing half and
+      the first time a member's cancel half outweighs its bonus half.
+
+      Costed `{C}` and 70 flat as printed — a one-Energy attack, which is what makes
+      the cancel observable with nothing else on the board to explain it. The
+      printed sentence carries NO POSSESSIVE, which is the whole reason it is
+      `stadiumInPlay` and not `yourStadiumInPlay`: the suite drives it against a
+      Stadium the OPPONENT played and it must RESOLVE. */
+  "fix-assaultland": battler("fix-assaultland", {
+    hp: 150,
+    types: ["Colorless"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Assault Landing",
+        damage: 70,
+        effect: "If there is no Stadium in play, this attack does nothing.",
+      },
+    ],
+  }),
   /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR, half one: Slugma `sv05-028`
       "Roasting Heat"'s printed sentence, verbatim, on a body of this pool's own
       making. `fix-*` and not `sv05-028` for `fix-emberpillar`'s reason unchanged —
@@ -11458,6 +11518,50 @@ export const TYPE_SHARE_DECK = deckOf({
         board needs a Fire Energy in play to attack.
 
     4 + 4 + 8 + 18 + 6 + 6 + 4 + 4 + 6 = **60**. */
+/** 🆕🆕 D378 — STADIUM PRESENCE (`stadiumInPlay`). A DEDICATED deck for the house
+    reason — every clause deck before it is seed-pinned by its own suite — and for
+    one specific to this slice: the cast has to field, on ONE board, the new
+    PRESENCE reading and the OWNERSHIP reading it must not be confused with, with a
+    real Stadium played by EITHER seat. No existing deck holds all three.
+
+    THE CAST IS THREE ATTACKERS AND THE THIRD IS THE NEAR MISS:
+
+      • `fix-mountaindrop` — Probopass's "Mountain Drop" ({C}{C}{C}, 70+), the
+        BONUS consequent on the new member;
+      • `fix-assaultland` — Fan Rotom's "Assault Landing" ({C}, 70), the CANCEL
+        consequent on the SAME member. Two cards, one board fact, two consequents —
+        and the cancel half is the bigger half by printings, which is a first;
+      • `sv02-096` (Palossand) — "Earthen Power" (80+), the SHIPPED
+        `yourStadiumInPlay` reading. It is in this deck for one purpose: on the
+        board where P2 owns the Stadium, Palossand's +80 must be ABSENT and
+        Probopass's +70 PRESENT, measured on the same state. **A DISAGREEMENT
+        ASSERTED ON ONE BOARD IS WHAT MAKES "THIS IS NOT A RENAME" A RESULT.**
+
+    `sv01-167` (Beach Court) is the Stadium, and the Stadium ZONE IS SHARED — the
+    same card played by the opponent sits in the very same slot with a different
+    `owner`, which is the only thing the two members read differently. FOUR copies,
+    not three: D376's margin lesson, and this deck plays a Stadium from BOTH seats
+    inside a single case.
+
+    Energy pays the printed symbols: `{P}` for Earthen Power's typed slot and plain
+    `{C}` (fix-energy) for every Colorless one, kept separate so no board can pay a
+    typed symbol with an untyped card by accident. `fix-bigbody` is the DOMINANT
+    mulligan-free starter, the body both Actives pin to, and — 200 HP, no Weakness,
+    no Resistance — the arithmetically clean defender every damage number is
+    measured against. It is also what keeps 140 (Mountain Drop, boosted) LOUD
+    without ending the board.
+
+    4 + 4 + 4 + 4 + 6 + 8 + 30 = **60**. */
+export const STADIUM_PRESENCE_DECK = deckOf({
+  "fix-mountaindrop": 4, // Probopass — "Mountain Drop" (70+): stadiumInPlay, +70
+  "fix-assaultland": 4, // Fan Rotom — "Assault Landing" (70): stadiumInPlay, the CANCEL
+  "sv02-096": 4, // Palossand — "Earthen Power" (80+): the OWNERSHIP reading, the near miss
+  "sv01-167": 4, // Beach Court — the Stadium, played from EITHER seat
+  "fix-psychic-energy": 6, // Basic {P} — pays Earthen Power's typed slot
+  "fix-energy": 8, // Basic {C} — pays every Colorless symbol in the cast
+  "fix-bigbody": 30, // 200 HP neutral Basic — DOMINANT starter, both pinned Actives, the clean defender
+});
+
 /** 🆕🆕 D377 — the CROSS-BOARD STATUS PAIR (`opponentActiveBurned`,
     `opponentActiveConfused`). A DEDICATED deck for the house reason — every clause
     deck before it is seed-pinned by its own suite — and for one specific to this

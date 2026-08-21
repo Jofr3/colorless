@@ -198,8 +198,14 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // live rather than decremented. ⚠️ AND THAT SLICE'S THIRD PRINTING IS NOT IN THIS
     // NUMBER: the same board fact is printed once more under the "does nothing"
     // consequent, which is a different skeleton and a different residue.
-    expect(refused.length).toBe(22);
-    expect(units(refused)).toBe(26);
+        // 🆕🆕 D378 — 22 / 26 -> 21 / 25: STADIUM PRESENCE (`stadiumInPlay`) left this
+    // residue — ONE sentence at ONE printing (Probopass `sv10-098` "Mountain Drop",
+    // +70) — re-derived live rather than decremented. ⚠️ AND TWO OF THAT SLICE'S
+    // THREE PRINTINGS ARE NOT IN THIS NUMBER: the same board fact is printed under
+    // the "does nothing" consequent by Fan Rotom, which is a different skeleton and a
+    // different residue — and there it is the BIGGER half.
+    expect(refused.length).toBe(21);
+    expect(units(refused)).toBe(25);
     // 🛑 AND THE STEP IS 1:2, the shape D369/D370/D371/D373 kept. Every earlier head
     // is re-derived from THIS one rather than frozen: 🆕 D374's 26/32, D373's 27/34,
     // D372's 28/36, D371's 30/38.
@@ -207,12 +213,12 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to three",
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 2, units(refused) + 2]).toEqual([24, 28]);
-    expect([refused.length + 3, units(refused) + 4]).toEqual([25, 30]);
-    expect([refused.length + 4, units(refused) + 6]).toEqual([26, 32]);
-    expect([refused.length + 5, units(refused) + 8]).toEqual([27, 34]);
-    expect([refused.length + 6, units(refused) + 10]).toEqual([28, 36]);
-    expect([refused.length + 8, units(refused) + 12]).toEqual([30, 38]);
+    expect([refused.length + 3, units(refused) + 3]).toEqual([24, 28]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([25, 30]);
+    expect([refused.length + 5, units(refused) + 7]).toEqual([26, 32]);
+    expect([refused.length + 6, units(refused) + 9]).toEqual([27, 34]);
+    expect([refused.length + 7, units(refused) + 11]).toEqual([28, 36]);
+    expect([refused.length + 9, units(refused) + 13]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
