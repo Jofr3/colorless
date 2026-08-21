@@ -5158,7 +5158,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D383 (0.287.0 → 0.288.0), in the SAME COMMIT as the bump —
+    // ⚠️ RE-POINTED AT D384 (0.288.0 → 0.289.0), and at D383 (0.287.0 → 0.288.0),
+    //    each in the SAME COMMIT as the bump —
     // the NINTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
@@ -5648,7 +5649,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.288.0";',
+    find: 'export const engineVersion = "0.289.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -14075,15 +14076,25 @@ export const MUTANTS: Mutant[] = [
     replace: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) >= countAttachedEnergy(state, theirs, null)\n      );",
     expectKilledBy: ["packages/engine/src/sameEnergyBonus.test.ts"],
   },
-  {
-    id: "D372-equal-energy-row-claims-the-strict-inequality-sentence",
-    decision: "D372",
-    what: "🛑 C5 — THE LITERAL-ROW ESCAPE HATCH, AND THE SENTENCE IT REACHES FOR IS PRINTED: a second `CONDITIONAL_DAMAGE_CLAUSES` row maps *\"this Pokémon has more Energy attached than your opponent's Active Pokémon\"* onto this same member. **THE MUTANT COMPILES, LOOKS LIKE ONE MORE LEGAL PRINTING FOR FREE, AND IS WRONG ON EVERY BOARD WHERE THE ATTACKER IS AHEAD** — the card says *strictly more* and the member answers *the same*. It is D370's C6 shape with the trap one OPERATOR away instead of one token, and more tempting than that one because the sentence is REAL: it is in `legalAttackCorpus()` at 1 printing and sits a dozen lines from this clause in the sorted corpus. **A ROW HAS NO DERIVER BEHIND IT TO REFUSE WHAT IT CANNOT PARSE** (D190b/D199), so whatever is authored is what the card does forever. `sameEnergyBonus.test.ts` §3 pins the refusal",
-    file: "packages/engine/src/effects.ts",
-    find: "  [\n    \"this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],",
-    replace: "  [\n    \"this Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],\n  [\n    \"this Pokémon has more Energy attached than your opponent's Active Pokémon\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],",
-    expectKilledBy: ["packages/engine/src/sameEnergyBonus.test.ts"],
-  },
+  // 🛑🆕🆕 **D384 RETIRED D372's C5 — THE FIRST ROW THIS CORPUS HAS LOST TO A LATER
+  //    SLICE MAKING ITS PREMISE FALSE RATHER THAN TO CODE MOVING.** C5 read: *"a
+  //    second `CONDITIONAL_DAMAGE_CLAUSES` row maps 'this Pokémon has more Energy
+  //    attached than your opponent's Active Pokémon' onto `activeEnergyCountsEqual`"*,
+  //    and `sameEnergyBonus.test.ts` §3 killed it by pinning that sentence as REFUSED.
+  //    D384 BUILT the sentence, on its own member and its own row — so the refusal is
+  //    gone and C5's mutation now inserts a DUPLICATE key.
+  //    ⚠️ **AND A DUPLICATE KEY HERE IS SILENT**: `CONDITIONAL_DAMAGE_CLAUSES` is a
+  //    `Map` built from an entry array, so the LAST duplicate wins, and D384's genuine
+  //    row sits AFTER C5's insertion point. The mutant would have changed nothing and
+  //    come back a **false SURVIVOR** — not an ERROR, not a `find` miss, just a green
+  //    row asserting a guard that no longer exists.
+  //    🛑 **A `find` THAT STILL MATCHES EXACTLY ONCE IS NOT PROOF THE MUTANT STILL
+  //    MEANS ANYTHING.** The exactly-once rule is an expiry date on the CODE a row is
+  //    anchored to; it says nothing about the row's PREMISE. **WHEN A SLICE BUILDS
+  //    SOMETHING AN EARLIER SLICE DELIBERATELY LEFT UNBUILT, GREP THIS FILE FOR THE
+  //    SENTENCE — not for the file, and not for the line.**
+  //    The identical defect at the new head is `D384-strict-row-claims-the-equal-member`
+  //    below, which mutates D384's OWN row rather than adding a second one.
   // ── D373 — THE UNIVERSAL OVER THE BENCH. Six rows, ONE PER CLAIM: the EMPTY
   //    BENCH is FALSE and not vacuously true (C1), the quantifier is `.every` and
   //    not the neighbouring `.some` (C2), the printed row resolves to the UNIVERSAL
@@ -15091,5 +15102,80 @@ export const MUTANTS: Mutant[] = [
     find: '    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
     replace: '    { op: "damageChosen", target: "opponentBench", amount, count: 2, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  // ── D384 — THE STRICT-INEQUALITY TWIN. Seven rows, ONE PER CLAIM: the ZONE is the
+  //    BODY and not the SIDE (C1), the POLARITY is yours-over-theirs (C2), an empty
+  //    Active Spot is FALSE and not zero (C3), the operator is STRICT (C4), the far
+  //    seat really is the far seat (C5), the printed clause resolves to THIS member
+  //    and not to its equal twin (C6), and the note is this member's note (C7).
+  //
+  // 🛑 C2 IS THE SLICE, AND IT IS A MUTANT THE EQUAL TWIN COULD NOT HAVE HAD.
+  //    Swapping the operands of `===` is a no-op; swapping them here inverts the
+  //    answer on every unequal board and is invisible on every equal one. **THE
+  //    MUTATION CORPUS IS WHERE "seat-asymmetric in value" STOPS BEING A COMMENT.**
+  //
+  // ⚠️ AND C6 IS D372's RETIRED C5, RE-HOMED — see the note above that row's grave.
+  {
+    id: "D384-strict-inequality-reads-the-whole-side",
+    decision: "D384",
+    what: "🛑 C1 — THE ZONE WIDENS FROM THE BODY TO THE SIDE: the two `countAttachedEnergy` calls become `countEnergyInPlay(state, seat, null)` / `countEnergyInPlay(state, otherSeat(seat), null)`, the helper ALREADY IN THIS FILE'S IMPORT BLOCK (since D193), which reads Active **plus Bench**. ⚠️ **IT IS RIGHT ON EVERY EMPTY-BENCH BOARD**, which is the shape a fixture deck naturally produces — the printed subjects are *\"this Pokémon\"* and *\"your opponent's Active Pokémon\"*, two BODIES. D372's C1 one operator over, and `moreEnergyBonus.test.ts` §5 drives it in BOTH directions: level Actives with the attacker's SIDE ahead (mutant TRUE, truth FALSE), and the attacker's ACTIVE ahead with the defender's SIDE ahead (mutant FALSE, truth TRUE)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    replace: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countEnergyInPlay(state, seat, null) > countEnergyInPlay(state, otherSeat(seat), null)\n      );",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-inequality-inverts-the-operands",
+    decision: "D384",
+    what: "🛑 C2 — THE OPERANDS SWAP, i.e. the polarity inverts: the clause answers *\"your opponent's Active holds more\"*. **THIS IS THE MUTANT AN EQUALITY MEMBER CANNOT HAVE**, and it is why D384 exists as a separate member at all — `===` commutes, so D372's arm is immune to this edit by construction and this one is not. It is `morePrizesThanOpponent`'s own doc-block warning (*\"the polarity is the one thing that can go silently wrong\"*) reached through two BODIES instead of two SIDES, and it is INVISIBLE on every equal board. `moreEnergyBonus.test.ts` §4 asserts one board's answer from BOTH seats, which is the only rung that separates a member from its own inverse",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    replace: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, theirs, null) > countAttachedEnergy(state, own, null)\n      );",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-inequality-reads-an-empty-active-spot-as-zero",
+    decision: "D384",
+    what: "🛑 C3 — AN ABSENT POKÉMON BECOMES A POKÉMON HOLDING ZERO: the far null guard is replaced by `theirs === null ? 0 : count(…)`. ⚠️ **IT LOOKS LIKE DEFENSIVE CODE AND IT ARMS THE CLAUSE — AND IT IS STRICTLY WORSE HERE THAN AT D372's C3.** There the mutant needed the attacker at exactly ZERO to be visible (0 = 0), so the only board that caught it was an unpaid one no legal action reaches. Under `>` it fires on the ORDINARY paying board: an attacker holding a single card answers 1 > 0. **THE SAME KEYSTROKE, A MUCH LARGER BLAST RADIUS, AND A MUCH EASIER BOARD TO CATCH IT ON** — `moreEnergyBonus.test.ts` §5's empty-spot rung, which empties the DEFENDER on a board where the attacker has paid",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    replace: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        countAttachedEnergy(state, own, null) >\n          (theirs === null ? 0 : countAttachedEnergy(state, theirs, null))\n      );",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-inequality-becomes-at-least-as-much",
+    decision: "D384",
+    what: "🛑 C4 — STRICTLY MORE BECOMES AT LEAST: `>` becomes `>=`. One keystroke, and ⚠️ **THE NEIGHBOURING ARM FOUR LINES UP GENUINELY SPELLS `>=`** (`yourActiveEnergyAtLeast`, D383), so the wrong operator is copied from real code in the same switch rather than invented. The printed words are *\"more Energy attached THAN\"* and the mutant is right on every board where the attacker leads and every board where it trails; **ONLY THE EQUAL BOARD SEPARATES THEM**, and that board is exactly where `activeEnergyCountsEqual` pays — so the two members would overlap where they must be disjoint. `moreEnergyBonus.test.ts` §5 drives that one board and asserts BOTH members on it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    replace: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) >= countAttachedEnergy(state, theirs, null)\n      );",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-inequality-compares-your-own-active-twice",
+    decision: "D384",
+    what: "⚠️ C5 — THE FAR SEAT FLIPS TO THE NEAR ONE: `state.players[otherSeat(seat)].active` becomes `state.players[seat].active`, so the member compares the attacker's Active with ITSELF. The slip is one call and this file is full of own-board arms that legitimately spell it (`yourActiveDamaged`, `yourActiveHasEnergyAttached`, and `yourActiveEnergyAtLeast` a few lines up). ⚠️ **AND IT IS THE ONE PLACE THIS MEMBER IS EASIER TO CATCH THAN ITS EQUAL TWIN**: at D372 the same edit produced a TAUTOLOGY (every equal board still answered TRUE), where `>` on one body against itself is a CONTRADICTION — always FALSE — so every paying board in the file reddens. Kept anyway, because a mutant that is easy to catch is still a claim about what the suite checks",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const own = state.players[seat].active;\n      const theirs = state.players[otherSeat(seat)].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    replace: "      const own = state.players[seat].active;\n      const theirs = state.players[seat].active;\n      return (\n        own !== null &&\n        theirs !== null &&\n        countAttachedEnergy(state, own, null) > countAttachedEnergy(state, theirs, null)\n      );",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-row-claims-the-equal-member",
+    decision: "D384",
+    what: "🛑 C6 — THE ROW ANSWERS THE CARD WITH THE NEIGHBOUR'S MEMBER: D384's key keeps its printed clause and its VALUE becomes `activeEnergyCountsEqual`, the member one row up. **THE MUTANT COMPILES, THE CENSUS DOES NOT MOVE, AND EVERY RESIDUE RUNG IN EIGHTEEN FILES STAYS GREEN** — the sentence still resolves, just to the wrong question — so only an assertion on the derived MEMBER reaches it. **THIS IS D372's C5 RE-HOMED**: that row added a duplicate key and was retired here, because a duplicate key on a `Map` whose last entry wins is silent once the genuine row exists. A row has no deriver behind it to refuse what it cannot parse (D190b/D199), so whatever is authored is what the card does forever. `moreEnergyBonus.test.ts` §3 asserts the pairing in BOTH directions and `sameEnergyBonus.test.ts` §3 asserts it from the other side",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"this Pokémon has more Energy attached than your opponent's Active Pokémon\",\n    { kind: \"moreActiveEnergyThanOpponent\" },\n  ],",
+    replace: "  [\n    \"this Pokémon has more Energy attached than your opponent's Active Pokémon\",\n    { kind: \"activeEnergyCountsEqual\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts", "packages/engine/src/sameEnergyBonus.test.ts"],
+  },
+  {
+    id: "D384-strict-note-copies-the-neighbouring-arm",
+    decision: "D384",
+    what: "⚠️ C7 — `conditionNote` RETURNS THE NEIGHBOURING ARM'S STRING, which is what a copy-paste of the arm above produces and what a `switch` fall-through would produce for free. **THE BOARD IS IDENTICAL UNDER THIS MUTANT**: the note is a reject pill and a HUD tooltip, so nothing about damage, legality or the census moves, and only an assertion on the string itself reaches it. The two notes differ in their VERB alone (*\"has more Energy attached than\"* against *\"have the same amount of Energy attached\"*), which is exactly the difference a reader skims past. `moreEnergyBonus.test.ts` §3 pins the string AND asserts it is not the twin's",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return \"your Active Pokémon has more Energy attached than your opponent's Active Pokémon\";",
+    replace: "      return \"your Active Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\";",
+    expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
   },
 ];
