@@ -5158,7 +5158,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D384 (0.288.0 → 0.289.0), and at D383 (0.287.0 → 0.288.0),
+    // ⚠️ RE-POINTED AT D385 (0.289.0 → 0.290.0), at D384 (0.288.0 → 0.289.0), at D383 (0.287.0 → 0.288.0),
     //    each in the SAME COMMIT as the bump —
     // the NINTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5649,7 +5649,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.289.0";',
+    find: 'export const engineVersion = "0.290.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -15177,5 +15177,80 @@ export const MUTANTS: Mutant[] = [
     find: "      return \"your Active Pokémon has more Energy attached than your opponent's Active Pokémon\";",
     replace: "      return \"your Active Pokémon and your opponent's Active Pokémon have the same amount of Energy attached\";",
     expectKilledBy: ["packages/engine/src/moreEnergyBonus.test.ts"],
+  },
+  // ── D385 — THE SECOND CONNECTIVE. Six rows, ONE PER CLAIM: the gate is a strict
+  //    `> 0` (C1), it reads the ATTACKER's own hand (C2), the connective's second
+  //    branch is what claims the sentence at all (C3), the alternation is CLOSED so a
+  //    bare connective cannot saturate it (C4), the cost row's GATE is the one that
+  //    makes the two connectives synonyms (C5), and the cost row's OPS move the HAND
+  //    and not the neighbour row's zone (C6).
+  //
+  //    ⚠️ NO ROW FOR THE ORDER, THE TWO DECLINE ARMS OR THE `>= 1` BONUS GUARD, said
+  //    out loud: all three live in `optionalCostBoostProgram` / `optionalCostPayoff`,
+  //    which this sentence SHARES with D381's, and D381's C1/C3/C4/C6/C8 are anchored
+  //    there at one occurrence each. Adding second copies would be the wrong-row
+  //    failure D207 paid for. What D385 DOES owe those rows is a kill from a THIRD
+  //    printed sentence, and `purgingStrike.test.ts` §4/§5 supplies it.
+  //
+  //    ⚠️ AND NO ROW FOR "THE COST ANCHOR LOSES ITS `^`": nothing in the legal attack
+  //    column spells `discard your hand` behind any other leading phrase, so a suffix
+  //    match claims the identical set. It would be unkillable, which is worse than no
+  //    row (D205).
+  {
+    id: "D385-hand-gate-becomes-vacuously-true",
+    decision: "D385",
+    what: "\u{1F6D1} C1 — `> 0` BECOMES `>= 0`, ONE KEYSTROKE, AND THE GATE STOPS BEING A GATE. Every hand there is satisfies `>= 0`, so the confirm is parked on a board with nothing to discard and a \"yes\" pays the printed **+120** for discarding NOTHING — D381's C2 defect reached through the cond instead of through the program. ⚠️ **AND THE BOARD THAT CATCHES IT IS ORDINARY, WHICH IS THIS MEMBER'S WHOLE POINT**: D381's false arm needs an empty Stadium zone and D383's cannot be reached from its own printing at all, while a player who has played their hand out and then attacks reaches this one by legal play. `purgingStrike.test.ts` §3 drives 0, 1 and 2 cards and §6 drives the empty hand through a real attack",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].hand.length > 0;",
+    replace: "      return state.players[seat].hand.length >= 0;",
+    expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
+  },
+  {
+    id: "D385-hand-gate-reads-the-opponents-hand",
+    decision: "D385",
+    what: "\u{1F6D1} C2 — THE SEAT FLIPS TO THE FAR ONE, and this is a NEIGHBOUR COPY rather than an invention: `opponentHandAtMost` five lines up genuinely spells `state.players[otherSeat(seat)].hand.length`, so the wrong seat is real code from the same switch. ⚠️ **IT IS INVISIBLE ON EVERY BOARD WHERE BOTH HANDS ARE NON-EMPTY**, which is every board a suite writes by accident — both players hold seven cards after setup. `purgingStrike.test.ts` §3's seat rung empties ONE hand and reads BOTH seats, which is the only shape that separates \"reads the attacker's hand\" from \"reads p1's hand\"",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].hand.length > 0;",
+    replace: "      return state.players[otherSeat(seat)].hand.length > 0;",
+    expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
+  },
+  {
+    id: "D385-connective-loses-its-second-branch",
+    decision: "D385",
+    what: "\u{1F6D1} C3 — THE ALTERNATION NARROWS BACK TO D381's LITERAL, i.e. the slice is undone at its one-token seam while the cost row and the member stay behind. The sentence goes back to the loud `ATTACK_EFFECT_SKIPPED` path and the census falls by one sentence and one printing — so this is the row that says the connective, and not the cost row, is what claims the card. ⚠️ **IT ALSO LOOKS LIKE A TIDY-UP**: with the alternation gone the constant is a bare literal again and every other printed member of the family still reads. `purgingStrike.test.ts` §1/§2 and `censusAtHead.test.ts` both reach it",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_CONNECTIVE = \"(?:If you do|If you discarded any cards in this way)\";",
+    replace: "const OPTIONAL_COST_CONNECTIVE = \"(?:If you do)\";",
+    expectKilledBy: [
+      "packages/engine/src/purgingStrike.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D385-connective-saturates",
+    decision: "D385",
+    what: "\u{1F6D1} C4 — **THE SATURATION TRAP, ARMED AT THE CONNECTIVE.** The closed alternation becomes `[^,]+`, so the reader claims *any* clause sitting between the sentence break and the comma — *\"If you discarded 3 or more cards in this way\"*, *\"If you discarded any Energy in this way\"*, *\"If your opponent's Active Pokémon is Burned\"* — and answers every one of them with the SAME program, which pays the bonus on a condition it never checked. ⚠️ **NOTHING IN THE CENSUS MOVES AND NOTHING ON ANY BOARD MOVES**, because the cost and payoff tables are closed and no printed card spells a third connective: the mutant is reachable only from OUTSIDE the population, which is exactly why §2 refuses three synthetic spellings rather than trusting the catalog (D379's rule)",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPTIONAL_COST_CONNECTIVE = \"(?:If you do|If you discarded any cards in this way)\";",
+    replace: "const OPTIONAL_COST_CONNECTIVE = \"[^,]+\";",
+    expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
+  },
+  {
+    id: "D385-hand-cost-row-copies-the-neighbours-gate",
+    decision: "D385",
+    what: "\u{1F6D1} C5 — THE COST ROW KEEPS ITS OPS AND TAKES THE ROW ABOVE'S GATE (`stadiumInPlay`, real code three lines up). **THIS IS THE EQUIVALENCE OBLIGATION FAILING IN THE ONE WAY THAT MATTERS**: the connective widening is licensed only because each row's `cond` is the cost's EXACT payability, and a gate about the Stadium zone is neither necessary nor sufficient for a hand discard — so *\"if you discarded any cards in this way\"* would pay out on a whiff (a Stadium in play and an empty hand) and refuse a payable one (no Stadium, seven cards in hand). ⚠️ **AND IT WOULD BE GREEN ON EVERY DAMAGE ASSERTION IN A SUITE WHOSE DECK HAPPENS TO CARRY A STADIUM**, which D381's does; `PURGING_STRIKE_DECK` deliberately carries none, and §6's empty-hand board is where it dies",
+    file: "packages/engine/src/effects.ts",
+    find: "    return { cond: { kind: \"yourHandNotEmpty\" }, ops: [{ op: \"discardHand\" }] };",
+    replace: "    return { cond: { kind: \"stadiumInPlay\" }, ops: [{ op: \"discardHand\" }] };",
+    expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
+  },
+  {
+    id: "D385-hand-cost-row-copies-the-neighbours-ops",
+    decision: "D385",
+    what: "\u{1F6D1} C6 — THE MIRROR OF C5: the row keeps its gate and takes the row above's OPS (`discardStadium`), so Purging Strike offers to discard your hand and discards a Stadium instead. **THE DAMAGE IS IDENTICAL ON EVERY BOARD** — the gate still reads the hand, the confirm still parks, the boosted 240 and the declined 120 are both unchanged — and the only thing that separates them is the ZONE, which is why §5 asserts the discard pile GREW BY THE HAND'S LENGTH and contains every uid rather than asserting the hand is empty. D190b's neighbour-copy shape, one row over",
+    file: "packages/engine/src/effects.ts",
+    find: "    return { cond: { kind: \"yourHandNotEmpty\" }, ops: [{ op: \"discardHand\" }] };",
+    replace: "    return { cond: { kind: \"yourHandNotEmpty\" }, ops: [{ op: \"discardStadium\" }] };",
+    expectKilledBy: ["packages/engine/src/purgingStrike.test.ts"],
   },
 ];
