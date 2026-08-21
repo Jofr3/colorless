@@ -1220,6 +1220,49 @@ export type BoardCondition =
       caught this time by the slice that falsified it rather than by a later
       reader. Corrected to FIRST, which is a fact that cannot rot. */
   | { kind: "handSizesEqual" }
+  /** 🆕🆕 **D379 — YOUR OWN hand holds EXACTLY `count` cards.** Alolan Dugtrio
+      `sv08-123`/`sv08-208` "Trio-Cheehoo" (**no Energy cost**, 120): *"If you
+      don't have exactly 3 cards in your hand, this attack does nothing."* — **2
+      legal printings**, read through `ATTACK_REQUIREMENT_CLAUSES`' polarity rule,
+      and the LAST sentence behind that skeleton the engine could not account for.
+
+      🛑 **THE NEAR MISS IS `opponentHandAtMost` TWO BLOCKS UP, AND IT IS WRONG
+      TWICE — THE SEAT AND THE COMPARATOR.** D365 measured that when it refused
+      this sentence, and both errors are real: that member reads
+      `players[otherSeat(seat)]` against `<=`, this one reads `players[seat]`
+      against `===`. Two independent defects, so this is an ADDITION and not a
+      widening — there is no parameterisation of a threshold that yields an
+      equality, and no seat argument that would make one member answer both
+      printed sentences. **Neither is a rename of the other and the union carries
+      both.**
+
+      ⚠️ **A SINGLE `count`, NOT `opponentPrizesRemaining`'s `counts` LIST — AND
+      THE CATALOG CHOSE.** Both shapes are already in this union one family over:
+      the Prize member takes a LIST because the pool prints *"exactly 2 or 4 Prize
+      cards"*, a disjunction no threshold can spell. The hand column prints no such
+      thing. Measured over `legalAttackCorpus()` at this head: *"exactly 3"* is the
+      **only** own-hand exact read in the whole legal attack column — no second
+      value, no disjunction, and no own-hand threshold anywhere. A `counts` list
+      here would be reachability nobody prints (D377's arithmetic). **WHAT WOULD
+      FLIP IT is a printed own-hand DISJUNCTION** (*"exactly 2 or 4 cards in your
+      hand"*); a second printing at a different single value flips nothing, because
+      that is the axis `count` already varies on — the same reason D119 gave for
+      `opponentHandAtMost`'s parameter, vindicated when Mienshao printed a second
+      threshold.
+
+      ⚠️ **STRICT EQUALITY, WHICH IS NOT THE USUAL POLARITY IN THIS CORNER.** The
+      skeleton owns the printed *"don't"*, so the POSITIVE fact stored here is
+      *"you have exactly 3"* — not a floor and not a ceiling. `>=` is green on a
+      3-card hand and wrong on a 4-card one; `<=` is green on a 3-card hand and
+      wrong on a 2-card one. Both are one board away, and both are driven.
+
+      ✅ **IT DOES NOT WIDEN THE P4 GAP**, for `opponentHandAtMost`'s reason
+      unchanged: a hand's SIZE is public — both players watched every draw, play and
+      discard that set it — while its CONTENTS are not, which is the exact line the
+      union's public-state invariant already draws. redact.ts ships the far hand as
+      `hiddenHand(side.hand.length)` and the near hand in full, so a LENGTH is
+      readable from either viewer. Sizes only, contents never. */
+  | { kind: "yourHandExactly"; count: number }
   /** 🆕🆕 **D372 — THE TWO ACTIVE BODIES CARRY THE SAME NUMBER OF ENERGY CARDS.**
       *"If this Pokémon and your opponent's Active Pokémon have the same amount of
       Energy attached, this attack does 100 more damage."* and the same clause at
@@ -10334,6 +10377,31 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é — the SECOND such key in this table
   // after D366's, and the same is true of its bonus twin.
   ["there is no Stadium in play", { kind: "stadiumInPlay" }],
+  // 🆕🆕 D379 — Alolan Dugtrio `sv08-123` / `sv08-208` "Trio-Cheehoo" (NO Energy
+  // cost, 120), TWO legal printings, and THE LAST SENTENCE BEHIND THIS SKELETON:
+  // with this row the table's reach is every does-nothing OPENER the legal attack
+  // column prints, 10 rows / 9 reachable / 18 printings out of a 9 s / 18 p
+  // opener population. There is no unmapped remainder left to name.
+  //
+  // 🛑 THE FIRST ROW IN THIS TABLE WHOSE MEMBER HAS NO BONUS TWIN. D363's Sawk,
+  // D365's Iron Boulder, D377's Centiskorch and D378's Fan Rotom each spelled a
+  // member `CONDITIONAL_DAMAGE_CLAUSES` also reads. Both consequents were asked
+  // again here and the bonus side is EMPTY: the legal attack column prints no
+  // own-hand exact read under a "+N more damage" consequent, so all 2 printings
+  // arrive through this table and `yourHandExactly` is bought by the cancel half
+  // alone.
+  //
+  // The polarity rule at the head of this block does the work, and it is the
+  // sharpest case of it so far: the skeleton owns the printed "don't", so the
+  // POSITIVE fact handed back is "you have exactly 3" — STRICT EQUALITY, not a
+  // floor and not a ceiling. `attack.ts` cancels when it does not hold, which is
+  // what makes a 2-card hand and a 4-card hand fail for the same printed reason.
+  //
+  // ⚠️ THE KEY CARRIES ONE APOSTROPHE, in "don't" — the TENTH row in this table
+  // and the EIGHTH to carry one, so `literalClauseRow`'s U+2019 fold is live on it
+  // (D137). It carries NO é, which is the ordinary case for a clause that never
+  // says "Pokémon".
+  ["you don't have exactly 3 cards in your hand", { kind: "yourHandExactly", count: 3 }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the

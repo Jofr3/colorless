@@ -12108,6 +12108,89 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.284.0 → **THE EXACT HAND-SIZE READ — THE LAST SENTENCE BEHIND THE
+    "…THIS ATTACK DOES NOTHING." SKELETON, AND THE FIRST CANCEL-ONLY MEMBER.**
+
+    D378 handed this over as the one printed sentence no `ATTACK_REQUIREMENT_CLAUSES`
+    row carried, with the shape question already half-measured. The answer held:
+    **ONE new PARAMETERISED `BoardCondition` member, `yourHandExactly { count }`,
+    ONE `ATTACK_REQUIREMENT_CLAUSES` row, TWO reader arms, ZERO new imports.**
+
+      Alolan Dugtrio  `sv08-123`/`sv08-208`  "Trio-Cheehoo"  (**no Energy cost**, 120)
+                      *"If you don't have exactly 3 cards in your hand, this attack does nothing."*
+                      **2 legal printings**
+
+    ✅ **THE SKELETON IS EMPTY.** The requirement table goes 9 rows / 8 reachable /
+    16 printings → **10 / 9 / 18**, and the unmapped remainder 1 sentence / 2
+    printings → **0 / 0**. Every *"If <clause>, this attack does nothing."* opener the
+    legal attack column prints is now read. 🛑 **AND THAT IS A GUARD EXPIRY, NOT ONLY
+    A MILESTONE**: `splitOrder.test.ts` §4's `unmapped` array is EMPTY,
+    `sawkRequirementSplit.test.ts`'s accounting rider, `attackRequirement.test.ts`,
+    `exOnlyActive.test.ts` and `fix-sawk`'s index-2 printed effect all lose their
+    real printed subject, and every one of them becomes a **CONSTRUCTED near-miss
+    that says so in its own block**. D378 re-aimed the same four at this sentence;
+    this slice is the expiry D378 wrote down, arriving one slice later exactly as
+    predicted. **A GUARD KEYED ON A REFUSAL HAS AN EXPIRY DATE, AND THE SLICE THAT
+    EXPIRES IT OWNS THE REWRITE.**
+
+    🛑 **BOTH CONSEQUENTS WERE ASKED AGAIN AND THE BONUS SIDE IS EMPTY — A FIRST.**
+    D363, D365, D377 and D378 each bought a member that both clause tables read, and
+    the last two turned on that. Measured over `legalAttackCorpus()`: the legal attack
+    column prints **no own-hand exact read under a bonus consequent at all**, so all
+    2 printings arrive through the cancel table and `yourHandExactly` has no
+    `CONDITIONAL_DAMAGE_CLAUSES` twin. **ASKING BOTH CONSEQUENTS IS STILL RIGHT; THE
+    ANSWER IS SOMETIMES ZERO, AND THAT IS A RESULT RATHER THAN A MISS.**
+
+    🛑 **THE SHAPE ANSWER: A SINGLE `count`, AND THE CATALOG CHOSE IT.** Both shapes
+    were already in the union one family over — `opponentPrizesRemaining { counts }`
+    is SET MEMBERSHIP because the pool prints *"exactly 3 or 4 Prize cards"*,
+    `opponentHandAtMost { count }` is a THRESHOLD. Asked of the hand column:
+    *"exactly 3"* is the **only** own-hand exact read in the whole legal attack
+    column — no second value, no disjunction, no own-hand threshold. A `counts` list
+    would be reachability nobody prints (D377's arithmetic). **WHAT WOULD FLIP IT is
+    a printed own-hand DISJUNCTION** (*"exactly 2 or 4 cards in your hand"*); a second
+    printing at a different single value flips nothing, because that is the axis
+    `count` already varies on.
+
+    🛑 **AND IT IS AN ADDITION, NOT A WIDENING, BECAUSE THE NEAR MISS IS WRONG
+    TWICE.** D365 recorded that `opponentHandAtMost` is the wrong SEAT **and** the
+    wrong COMPARATOR, and both halves are real: `players[otherSeat(seat)]` against
+    `<=` where this needs `players[seat]` against `===`. No parameterisation of a
+    threshold yields an equality and no seat argument makes one member answer both
+    printed sentences, so the seat-parameter question D366 left open is not even
+    reachable from here.
+
+    ⚠️ **STRICT EQUALITY IS NOT THE USUAL POLARITY IN THIS CORNER, AND IT IS DRIVEN
+    ON THREE BOARDS.** The skeleton owns the printed *"don't"*, so the stored fact is
+    *"you have exactly 3"*. `>=` is green on a 3-card hand and wrong on a 4-card one;
+    `<=` is green on a 3-card hand and wrong on a 2-card one. `exactHandSize.test.ts`
+    §4 attacks with 2, 3 and 4 cards in hand and reports 120 on exactly one of them.
+
+    ✅ **IT DOES NOT WIDEN THE P4 GAP**, for `opponentHandAtMost`'s reason unchanged:
+    a hand's SIZE is public and its CONTENTS are not, which is the line the union's
+    public-state invariant already draws. `redact.ts` ships the far hand as
+    `hiddenHand(side.hand.length)` and the near hand in full, so a LENGTH is readable
+    from either viewer.
+
+    ⚠️ **THE PRINTED COST IS ZERO, WHICH IS THE FIRST TIME IN THIS FAMILY.**
+    "Trio-Cheehoo" takes no Energy at all — the requirement is the ONLY thing between
+    a fielded Alolan Dugtrio and 120 damage, so a build that dropped the gate is a
+    free 120 rather than a rounding error. The fixture prints the cost as absent, as
+    the card does.
+
+    ⚠️ **THE CENSUS STEP IS +1 SENTENCE AND +2 PRINTINGS, AND THE BONUS RESIDUE
+    STANDS STILL.** raw 1,245 → **1,247**, `BUILT.attack` 1,274 → **1,276**, resolving
+    sentences 359 → **360**, the unbuilt attack remainder 487 → **485**; the bonus
+    residue is unmoved at **21 / 25** because this slice prints no bonus row — the
+    first reader-keyed slice since D366 where that half does not move.
+
+    engineVersion 0.283.0 → **0.284.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited: the member's parameter is a plain `number` inside a
+    `BoardCondition`, which the record already persists for
+    `opponentHandAtMost`/`yourBenchAtLeast`, and the arm reads `players[seat].hand`,
+    a field the persisted record has carried since M1 with its SHAPE untouched.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.283.0 → **STADIUM PRESENCE — THE HALF OF §7.3 THAT SURVIVES REDACTION,
     AND THE RENAME NEXT DOOR THAT WAS REFUSED AGAIN.**
 
@@ -14686,7 +14769,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.283.0";
+export const engineVersion = "0.284.0";
 
 export type {
   ApplyResult,

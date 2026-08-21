@@ -3171,6 +3171,14 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // 🆕 D372 — and no longer its ONLY one; the arm below is the second, and its
       // own doc block in effects.ts records what that correction cost.
       return state.players[seat].hand.length === state.players[otherSeat(seat)].hand.length;
+    case "yourHandExactly":
+      // 🆕 D379 — "you don't have exactly 3 cards in your hand" read POSITIVE:
+      // Alolan Dugtrio sv08-123/sv08-208 "Trio-Cheehoo". The seat is the ATTACKER's
+      // own, which is the half `opponentHandAtMost` gets wrong; the comparator is
+      // strict EQUALITY, which is the other half. `>=` and `<=` are each green on a
+      // 3-card hand and wrong one card away — `exactHandSize.test.ts` drives 2, 3
+      // and 4 rather than describing them. Sizes only, contents never.
+      return state.players[seat].hand.length === cond.count;
     case "activeEnergyCountsEqual": {
       // 🆕 D372 — "this Pokémon and your opponent's Active Pokémon have the same
       // amount of Energy attached". D116's pronoun rule again: the printed "this
@@ -3864,6 +3872,14 @@ export function conditionNote(cond: BoardCondition): string {
       return `your opponent has ${cond.count} or fewer cards in their hand`;
     case "handSizesEqual":
       return "you have the same number of cards in your hand as your opponent";
+    case "yourHandExactly":
+      // 🆕 D379 — built from the parameter. It does NOT round-trip to the printed
+      // bytes and cannot: the catalog prints the NEGATIVE ("you don't have exactly
+      // 3…") because the requirement skeleton owns the negation, while a reject pill
+      // has to say what the board must look like. The plural is unconditional — the
+      // pool prints this clause at ONE value, 3, so a singular branch would be a
+      // shape no printing can reach (D205's rule about never-spelled counts).
+      return `you have exactly ${cond.count} cards in your hand`;
     case "activeEnergyCountsEqual":
       // 🆕 D372 — the printed pronoun is dropped exactly as its siblings drop it
       // (D116), so the note names the body a reader can see on the board rather than
