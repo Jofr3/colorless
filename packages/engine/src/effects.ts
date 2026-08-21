@@ -4524,6 +4524,62 @@ export type EffectOp =
       field, so no persisted union gains a member; and the Knock Out is rendered
       through the EXISTING `KNOCKED_OUT` event rather than a new one. */
   | { op: "knockOutSelf" }
+  /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
+      Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
+      Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
+      ({C}{C}{C}, 90) and Mow Rotom `sv10-009` "Trimming Mower" ({G}, 20): **FOUR
+      legal printings** — and, behind D186's `optional`, *"You may discard a Stadium
+      in play."* — Wooloo `sv07-124` / Dubwool `sv07-125` "Knock Over" ({C}{C}, 30
+      and 70): **TWO more**. **SIX PRINTINGS ON ONE FIELD-FREE OP.**
+
+      🛑 **THE FIRST OP THIS ENGINE HAS THAT MOVES A CARD OUT OF THE SHARED ZONE,
+      AND IT IS SMALLER THAN ITS NAME BECAUSE `playStadium` ALREADY WROTE THE
+      TRANSITION.** cardplay.ts's §7.3 replace path has, since M4, discarded the
+      OUTGOING Stadium to its **OWNER's** pile and announced it with
+      `STADIUM_DISCARDED`. This op is that same three-line move reached from the
+      other direction, so it adds **no event**, **no zone**, and **no state key** —
+      `state.stadium` is already `{ uid, owner } | null` and this writes the `null`.
+
+      🛑 **THE PILE IS THE STADIUM'S OWNER'S, NOT THE ACTOR'S** — the same
+      PRESENCE/OWNERSHIP line D378 drew one union over. An op that routed to
+      `ctx.seat` would be right on every board where the attacker played the
+      Stadium and silently wrong on every board where the opponent did, which is
+      the majority of boards this family actually meets (you discard a Stadium
+      because it is THEIRS). Driven on a P2-owned zone in `stadiumDiscard.test.ts`
+      §3 rather than argued.
+
+      ⚠️ **NULLARY, AND THE ZONE IS A SINGLETON — WHICH IS ALSO THE ANSWER TO THE
+      ANAPHOR.** §7.3 keeps at most one Stadium in play, so *"a Stadium in play"*
+      (this op's own two sentences) and *"that Stadium"* (the two `If a Stadium is
+      in play, … discard that Stadium.` tails still unbuilt) denote the SAME card on
+      every legal board: the antecedent tests the singleton and the tail discards
+      the singleton. There is nothing to parameterise and no referent to carry, so
+      the tails will reuse this op unchanged rather than widen it.
+
+      ⚠️ **AN EMPTY ZONE IS A SILENT NO-OP, NOT AN ERROR** — §8.6's "do as much as
+      you can", the same ending `discardDeckTop` takes on a short deck. The printed
+      sentence has no "if you can't" on it (the ONE printing that does —
+      Eternatus `sv08-141` "World Ender" — spells the cancel in a TRAILING ANAPHORIC
+      clause the requirement skeleton's `^If` refuses, and is a separate slice). No
+      event is emitted for a discard that did not happen.
+
+      ⚠️ **§8.1 IS OWED AND IS ALREADY PAID BY THE CALLER.** Vacating the zone can
+      LOWER a body's maximum (Lively Stadium `sv02-196`, +30 to every Basic in play),
+      and §8.1's Knock Out is a state check on `damage ≥ maximum` rather than an
+      event of the thing that moved the number — exactly the reason `playStadium`
+      ends in `resolveMidTurnKnockOuts`. This op needs no sweep of its own: an ATTACK
+      program is swept by `finishAttack`'s `collectKnockOuts` over BOTH seats, and
+      every other program folds through `settleProgram` → `resolveMidTurnKnockOuts`.
+      **THE SWEEP IS A PROPERTY OF PROGRAM COMPLETION, NOT OF THIS OP** (D176's rule,
+      one op over).
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP.** Adding a member to `EffectOp` is a
+      WIDENING (D125): no version-22 record can hold `{op:"discardStadium"}`, because
+      no version-22 deploy could write one, and every byte string a v22 deploy DID
+      write still means exactly what it meant. The op never parks, so no
+      `EffectContinuation.pendingOp` inhabitant is added either (D335's test: "does
+      the old byte string still mean what it meant", not "did a field change"). */
+  | { op: "discardStadium" }
   /** Heal from the controller's own in-play Pokémon: `amount` HP, or `"all"`
       its damage. Without `upTo` it heals ONE — the printed exact "1 of your
       Pokémon" (Potion 30; Arboliva's "Enriching Oil" all) — and PARKS on a
@@ -13222,6 +13278,29 @@ const RETURN_BENCHED = new RegExp(
     ")\\.$",
 );
 
+
+/** 🆕🆕 D380 — THE TWO BARE SPELLINGS OF THE STADIUM DISCARD, as TWO anchors and
+    not one optional prefix.
+
+    ⚠️ **THE `You may ` PREFIX IS A DIFFERENT PROGRAM, NOT A DIFFERENT MATCH.** An
+    alternation with an optional group would hand one arm a boolean it then has to
+    branch on anyway, and the two programs differ by TWO ops (a `conditionGate` and
+    an `optional`) rather than by a field — `SELF_HEAL`'s rule, and the same call
+    `ATTACK_GUST_THEN_DAMAGE_NEW_ACTIVE` makes about its own "If you do" twin. Two
+    whole-sentence anchors is also what keeps them mutually exclusive by their first
+    two words, so their ORDER here is a refactor and not a change.
+
+    🛑 **NO `/i` AND NO FLOATING MATCH**, the standing policy of every deriver in
+    this file — and here it is what keeps the four COMPOUND printings of the same
+    family off this path. Each of them CONTAINS one of these clauses as a fragment
+    (Eternatus `sv08-141`'s trailing *"If you can't, this attack does nothing."*,
+    Cetitan ex `sv10-065`/`-210`'s *"If you do, this attack does 140 more damage."*,
+    and Chi-Yu `sv06-039` / Ting-Lu `sv06-110`'s *"discard that Stadium"* tails), and
+    each needs a mechanism this pair does not have. `^…$` refuses all five printings
+    LOUDLY, on the skipped-effect path, which is what a census can see. */
+const DISCARD_STADIUM = /^Discard a Stadium in play\.$/;
+const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -15450,6 +15529,48 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
     return [shuffleAway];
+  }
+
+  // 43. 🆕🆕 D380 — "Discard a Stadium in play." / "You may discard a Stadium in
+  //     play." — SIX legal printings on the new `discardStadium` op (4 + 2), and the
+  //     first slice in this corner that buys an OP rather than a `BoardCondition`.
+  if (DISCARD_STADIUM.test(effect)) {
+    // The bare imperative is the op ALONE. No gate: an empty zone is §8.6's "do as
+    // much as you can" and the op's own silent no-op, which is the correct printed
+    // reading — the sentence carries no "if you can't" (the one printing that does
+    // is Eternatus `sv08-141`, whose trailing anaphoric clause this anchor refuses).
+    return [{ op: "discardStadium" }];
+  }
+  if (MAY_DISCARD_STADIUM.test(effect)) {
+    return [
+      {
+        // 🛑 THE GATE IS NOT DECORATION, AND IT IS THE HALF THE PRINTED SENTENCE
+        // CANNOT SAY OUT LOUD. `optional` PARKS unconditionally, so without this
+        // wrapper an attacker facing an EMPTY §7.3 zone would be handed a confirm
+        // dialog whose "yes" and "no" leave the identical board — a decision with no
+        // stake, which is exactly what D186's op doc refuses ("this op is for the
+        // inner op that has NO empty answer"). `stadiumInPlay` (D378) is the member
+        // that already answers the zone question, so the gate costs a `cond` and
+        // nothing else; it is D246's finding verbatim — the clause neither `needs`
+        // cell priced is the one that decides the empty board.
+        op: "conditionGate",
+        cond: { kind: "stadiumInPlay" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "optional",
+            // The WHOLE printed sentence, the op's own contract: it is what the
+            // confirm dialog shows, and "you may" is the only thing being asked.
+            note: effect,
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: [{ op: "discardStadium" }],
+          },
+        ],
+        // NO `otherwise` — the printed sentence buys nothing on a decline and
+        // nothing on an empty zone, and D316's field is ABSENT rather than empty
+        // (D135: absent is the unmarked printing).
+      },
+    ];
   }
 
   return null;

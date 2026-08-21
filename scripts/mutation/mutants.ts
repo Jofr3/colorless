@@ -5158,9 +5158,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D379 (0.283.0 → 0.284.0), in the SAME COMMIT as the bump —
-    // the SIXTH slice running to do it that way, and the practice is now the one
+    // ⚠️ RE-POINTED AT D380 (0.284.0 → 0.285.0), in the SAME COMMIT as the bump —
+    // the SEVENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D380's whole diff is ONE new FIELD-FREE `EffectOp` (`discardStadium`), its one
+    // interpreter arm and two `deriveAttackEffect` arms. Adding a member to `EffectOp`
+    // is a WIDENING (D125) — no v22 deploy could have written `{op:"discardStadium"}`,
+    // so no v22 byte string means anything different under this one — and the op never
+    // PARKS, so `EffectContinuation.pendingOp` gains no inhabitant either.
+    // ⚠️ RE-POINTED AT D379 (0.283.0 → 0.284.0), in the SAME COMMIT as the bump —
+    // the SIXTH slice running to do it that way.
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
     // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
     // D379's whole diff is ONE PARAMETERISED `BoardCondition` member
@@ -5620,7 +5629,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.284.0";',
+    find: 'export const engineVersion = "0.285.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -14621,5 +14630,98 @@ export const MUTANTS: Mutant[] = [
     find: "          \"If you don't have exactly 4 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.\",",
     replace: "          \"If you don't have exactly 3 cards in your hand, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.\",",
     expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
+  },
+  // ── D380 — THE STADIUM-DISCARD OP. Eight rows, ONE PER CLAIM rather than one per
+  //    site: the DESTINATION is the Stadium's OWNER (C1), the ZONE is actually
+  //    vacated (C2), the PILE actually receives it (C3), the printed *"You may"*
+  //    is GATED on the zone being occupied (C4) and is a CONFIRM at all (C5), the
+  //    bare anchor is WHOLE-SENTENCE so it cannot swallow the compound printings
+  //    (C6), the confirm's note is the PRINTED sentence (C7), and the gate reads
+  //    PRESENCE rather than OWNERSHIP (C8).
+  //
+  //    ⚠️ NO ROW FOR THE OP MEMBER ITSELF, SAID OUT LOUD RATHER THAN OMITTED:
+  //    deleting `| { op: "discardStadium" }` from the union does not COMPILE, and a
+  //    mutant that fails to build reports nothing about a suite. What stands in its
+  //    place is C6, which keeps the op and removes the printing.
+  //
+  //    ⚠️ AND NO ROW FOR "§8.1 IS OWED": the sweep is the CALLER's (D176's rule),
+  //    so there is no line in this slice to mutate — and no board `FIXTURE_POOL` can
+  //    build makes a vacated zone lethal, because all three `hpDelta` Stadiums are
+  //    `sv08`/`sv10` and outside the six sets `CATALOG_MANIFEST` covers. A row here
+  //    would be unkillable, which is worse than no row (D205).
+  {
+    id: "D380-stadium-discard-routes-to-the-other-seat",
+    decision: "D380",
+    what: "\u{1F6D1} C1 — THE DESTINATION, and it is the PRESENCE/OWNERSHIP line D378 drew one union over, arriving as a pile instead of a predicate: the Stadium goes to `otherSeat(stadium.owner)`, which is the real code every cross-board arm in this file reads (D190b's neighbour-copy shape). **IT IS GREEN ON EVERY BOARD WHERE THE ATTACKER PLAYED THE STADIUM**, and the zone is still vacated and the event still fires, so nothing about the ZONE can see it — only the PILES can. `stadiumDiscard.test.ts` §3 drives a Stadium played by P2 and requires P1's pile UNCHANGED, then drives the same op on a P1-owned Stadium so a hard-coded seat cannot be green on both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const ownerSide = state.players[stadium.owner];",
+    replace: "  const ownerSide = state.players[otherSeat(stadium.owner)];",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-stadium-discard-leaves-the-zone-occupied",
+    decision: "D380",
+    what: "\u{1F6D1} C2 — THE HALF A PILE ASSERTION CANNOT SEE: the card reaches its owner's discard and `state.stadium` is left exactly where it was, so the Stadium is in TWO places at once and its continuous effect keeps applying forever. **EVERY `discard` ASSERTION AND THE `STADIUM_DISCARDED` EVENT STAY GREEN**, which is why §3 reads Beach Court's printed retreat discount off a body that was already on the board (0 before the attack, 1 after) instead of trusting the pile",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { ...next, stadium: null };",
+    replace: "  return next;",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-stadium-discard-never-reaches-a-pile",
+    decision: "D380",
+    what: "\u{1F6D1} C3 — THE MIRROR OF C2, and the reason both rows exist: the zone is vacated and the event fires, and the card reaches NO pile at all — it leaves the game. A suite that only asserted `state.stadium === null` is green here, and one that only asserted the pile is green on C2; neither claim implies the other, so neither is allowed to stand for both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    discard: [...ownerSide.discard, stadium.uid],",
+    replace: "    discard: ownerSide.discard,",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-may-discard-loses-its-empty-zone-gate",
+    decision: "D380",
+    what: "\u{1F6D1} C4 — **THE GATE DROPPED, AND IT IS THE EDIT A REVIEWER WOULD ASK FOR.** The `conditionGate` reads like scaffolding around a `You may` that already offers a decline, so the program becomes the bare `optional` — and on every board where the Stadium zone is OCCUPIED the two are byte-for-byte identical. What it costs is the EMPTY board: `optional` parks unconditionally, so the attacker is handed a confirm dialog whose \"yes\" and \"no\" leave the same state, which is exactly the decision-with-no-stake D186's op doc refuses. §5's empty-zone rung asserts the ABSENCE of a park and is the only observation that can move",
+    file: "packages/engine/src/effects.ts",
+    find: "        op: \"conditionGate\",\n        cond: { kind: \"stadiumInPlay\" },\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"optional\",",
+    replace: "        op: \"optional\",\n        note: effect,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"discardStadium\",",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-may-discard-becomes-mandatory",
+    decision: "D380",
+    what: "\u{1F6D1} C5 — THE PRINTED *\"You may\"* DELETED: the gate keeps its condition and its body becomes the bare op, so Wooloo and Dubwool discard the Stadium whether the player wants to or not. **THE CENSUS CANNOT SEE IT** — the sentence still resolves, `BUILT.attack` is unmoved and every residue figure stands still — because a census asks whether a reader answered, never what it answered. §5 requires the park, the `EFFECT_PENDING` row and a NO that leaves the zone untouched",
+    file: "packages/engine/src/effects.ts",
+    find: "            op: \"optional\",\n            // The WHOLE printed sentence, the op's own contract: it is what the\n            // confirm dialog shows, and \"you may\" is the only thing being asked.\n            note: effect,\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n            then: [{ op: \"discardStadium\" }],\n          },\n        ],",
+    replace: "            op: \"discardStadium\",\n          },\n        ],",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-bare-anchor-loses-its-terminator",
+    decision: "D380",
+    what: "\u{1F6D1} C6 — **THE HELPFUL WIDENING THAT TURNS A LOUD REFUSAL INTO A SILENT WRONG ANSWER.** Dropping the `$` makes the bare anchor a PREFIX match, so it swallows Eternatus `sv08-141` \"World Ender\"'s *\"Discard a Stadium in play. If you can't, this attack does nothing.\"* — the printed CANCEL is deleted and a 230-damage attack that should do nothing on an empty zone does 230 anyway. **IT LOOKS LIKE A COVERAGE WIN**: the sentence stops appearing in the unbuilt remainder and `BUILT.attack` RISES. §2 requires every one of the four compound printings to derive `null`, and `stadiumPresence.test.ts` §1's partition requires the two still-owed sentences to be unresolved",
+    file: "packages/engine/src/effects.ts",
+    find: "const DISCARD_STADIUM = /^Discard a Stadium in play\\.$/;",
+    replace: "const DISCARD_STADIUM = /^Discard a Stadium in play\\./;",
+    expectKilledBy: [
+      "packages/engine/src/stadiumDiscard.test.ts",
+      "packages/engine/src/stadiumPresence.test.ts",
+    ],
+  },
+  {
+    id: "D380-confirm-note-is-a-revoicing",
+    decision: "D380",
+    what: "\u{1F6D1} C7 — THE NOTE BECOMES A HAND-WRITTEN QUESTION instead of the printed sentence, which is what a `retrieveNoun`-style prompt looks like everywhere else in this engine and is WRONG here: `optional`'s contract is that the confirm shows the WHOLE printed sentence, because the player is agreeing to the card and not to a paraphrase. Nothing about the BOARD moves — the discard, the pile, the zone and the event are identical on both answers — so only the `EFFECT_PENDING` row can see it, and §5 pins it by equality",
+    file: "packages/engine/src/effects.ts",
+    find: "            note: effect,",
+    replace: "            note: \"Discard the Stadium in play?\",",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
+  },
+  {
+    id: "D380-may-discard-gate-reads-ownership",
+    decision: "D380",
+    what: "\u{1F6D1} C8 — THE GATE READS OWNERSHIP: `stadiumInPlay` becomes `yourStadiumInPlay`, the member sitting one line above it in the union and the exact widening D378 measured and refused, now arriving from the OP side. On a zone the ATTACKER filled the two are indistinguishable; on the board this family is actually printed for — the opponent's Stadium — the confirm is never offered and Knock Over silently does nothing. **THIS IS THE SAME MISTAKE AS C1 ONE MECHANISM UP**: C1 sends the card to the wrong pile, C8 refuses to ask at all. §5 drives the confirm on a P2-owned Stadium",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"stadiumInPlay\" },",
+    replace: "        cond: { kind: \"yourStadiumInPlay\" },",
+    expectKilledBy: ["packages/engine/src/stadiumDiscard.test.ts"],
   },
 ];

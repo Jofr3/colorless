@@ -12108,6 +12108,97 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.285.0 → **THE STADIUM-DISCARD OP — THE FIRST SLICE IN THIS RUN THAT BUYS
+    AN `EffectOp` RATHER THAN A `BoardCondition`, AND THE ARITHMETIC CHOSE IT.**
+
+    D379 saturated the *"…this attack does nothing."* skeleton and measured what was
+    left: the bonus residue is **21 sentences / 25 printings** and FLAT — three
+    non-singleton records carry 7 printings between them (D368's standing SHAPE
+    refusal at 2 + 3, and the deferred HEALED flag at 2) and the remaining **18
+    records carry 18 printings**. So the best clause row still on the table is worth
+    **ONE** printing. The Stadium-DISCARD family is worth **ELEVEN**, and this slice
+    takes **SIX** of them on ONE field-free op:
+
+      Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing Destruction" (no cost, no damage) ┐
+      Skarmory          `sv06-119`            "Big Storm"     ({C}{C}{C}, 90)            ├ "Discard a Stadium in play."         **4**
+      Mow Rotom         `sv10-009`            "Trimming Mower" ({G}, 20)                 ┘
+      Wooloo            `sv07-124`            "Knock Over"    ({C}{C}, 30)               ┐ "You may discard a Stadium in play." **2**
+      Dubwool           `sv07-125`            "Knock Over"    ({C}{C}, 70)               ┘
+
+    🛑 **AND THE OP IS THREE LINES, BECAUSE `playStadium` ALREADY WROTE THE
+    TRANSITION.** cardplay.ts's §7.3 replace path has discarded the OUTGOING Stadium
+    to its **OWNER's** pile and emitted `STADIUM_DISCARDED` since M4. `discardStadium`
+    is that same move reached from the other direction: **no new event, no new zone,
+    no new state key, no new prompt** — `state.stadium` was already
+    `{uid, owner} | null` and this writes the `null`. **PRICE AN OP AGAINST WHAT THE
+    ZONE ALREADY DOES, NOT AGAINST ITS NAME**, which is the transferable half of this
+    slice: "a whole OP" read like a milestone and cost less than D378's predicate.
+
+    ### THE FOUR SHAPE QUESTIONS, ANSWERED FROM THE CATALOG BEFORE ANYTHING WAS SPELLED
+
+    1. 🛑 **`You may discard…` IS NEITHER A SECOND OP NOR A FLAG — IT IS D186's
+       `optional`, WHICH ALREADY EXISTS.** The printed sentence is the bare one with
+       `You may ` in front and the verb lowercased; a field on the new op would have
+       been a second confirm mechanism beside one that already owns a prompt kind, a
+       choice kind and a dialog on both surfaces. `optional`'s own doc names the test
+       it passes: the wrapper is for an inner op with **no empty answer**.
+    2. 🛑 **AN EMPTY ZONE IS THREE DIFFERENT THINGS AND THE PRINTED TEXT SAYS WHICH.**
+       Bare imperative → a silent NO-OP (§8.6's "do as much as you can"; the sentence
+       carries no *"if you can't"*). *"You may"* → a question that must **not be
+       asked**, because `optional` parks unconditionally and a confirm whose two
+       answers leave the identical board is a decision with no stake — hence a
+       `conditionGate` on D378's `stadiumInPlay`, which costs a `cond` and nothing
+       else. *"…If you can't, this attack does nothing."* → a CANCEL, and
+       **`stadiumInPlay` ANSWERS IT ON THE BOARD FACT WHILE THE SKELETON STILL
+       REFUSES IT**: §7.3's zone is a singleton and nothing can make an occupied zone
+       undiscardable, so *"you can't discard a Stadium in play"* IS *"the zone is
+       empty"* — but `ATTACK_DOES_NOTHING` is anchored `^If` and Eternatus `sv08-141`
+       prints its clause TRAILING and ANAPHORIC. **THE MEMBER WAS RIGHT AND THE
+       READER WAS MISSING**, which is a different refusal from "no vocabulary".
+    3. 🛑 **`discard that Stadium` NEEDS NO REFERENT** — the singleton again: the
+       antecedent tests the one Stadium and the tail discards the one Stadium, so the
+       two remaining tail sentences will REUSE this op rather than widen it.
+    4. 🛑 **THE PILE IS THE STADIUM'S OWNER'S, NOT THE ACTOR'S** — the same
+       PRESENCE/OWNERSHIP line D378 drew one union over, and the one that would have
+       shipped green: an actor-routed op is correct on every board where the attacker
+       played the Stadium and silently wrong on the boards this family is printed for.
+       `stadiumDiscard.test.ts` §3 drives it with P2 as owner and asserts P1's pile
+       UNCHANGED.
+
+    ⚠️ **THE ZONE'S DEPARTURE IS OBSERVED THROUGH A CONTINUOUS EFFECT, NOT THROUGH A
+    PILE.** An op that appended the uid and left the zone occupied — or nulled the
+    zone and forgot the pile — passes every uid assertion. §3 therefore reads Beach
+    Court's printed *"Basic Pokémon retreat cost {C} less"* off a body that was
+    already on the board: 0 before the attack, 1 after.
+
+    ⚠️ **§8.1 IS OWED AND IS ALREADY PAID BY THE CALLER.** Vacating the zone can LOWER
+    a maximum (Lively Stadium, +30 to Basics), and §8.1's Knock Out is a state check
+    rather than an event of the thing that moved the number — which is exactly why
+    `playStadium` ends in `resolveMidTurnKnockOuts`. This op needs no sweep: an ATTACK
+    is swept by `finishAttack`'s `collectKnockOuts` over BOTH seats and every other
+    program folds through `settleProgram`. **THE SWEEP IS A PROPERTY OF PROGRAM
+    COMPLETION, NOT OF AN OP** (D176's rule, one op over). ⚠️ **AND IT IS NOT DRIVEN
+    HERE, WHICH IS SAID RATHER THAN SKIPPED**: the three `hpDelta` Stadiums are all
+    `sv08`/`sv10`, outside the six sets `CATALOG_MANIFEST` covers, so no board this
+    pool can build makes a vacated zone lethal.
+
+    ⚠️ **THE CENSUS STEP IS +2 SENTENCES AND +6 PRINTINGS** — the widest 1:n ratio
+    this column has taken since D366. raw 1,247 → **1,253**, `BUILT.attack` 1,276 →
+    **1,282**, resolving sentences 360 → **362**, the unbuilt attack remainder 485 →
+    **479**, the `FIXTURE_POOL` floor 466 → **468**. The bonus and cancel residues
+    both stand still — this slice prints neither consequent — and **the moving set was
+    TEN files**, two of them the OP-ENUMERATION guards no clause slice ever touches
+    (`preventBlock.test.ts`'s classifier/probe pair, and `programWalk.test.ts`, whose
+    pin gains its FIRST `optional.then` miss).
+
+    engineVersion 0.284.0 → **0.285.0**; `MATCH_RECORD_VERSION` **STAYS 22**, asked
+    rather than inherited: adding a member to `EffectOp` is a WIDENING (D125) — no
+    v22 deploy could have written `{op:"discardStadium"}`, so no v22 byte string
+    means anything different under this one — and the op never PARKS, so
+    `EffectContinuation.pendingOp` gains no inhabitant either. D335's discriminator
+    applied: *"does the old byte string still mean what it meant"*, not *"did a field
+    change"*. (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.284.0 → **THE EXACT HAND-SIZE READ — THE LAST SENTENCE BEHIND THE
     "…THIS ATTACK DOES NOTHING." SKELETON, AND THE FIRST CANCEL-ONLY MEMBER.**
 
@@ -14769,7 +14860,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.284.0";
+export const engineVersion = "0.285.0";
 
 export type {
   ApplyResult,

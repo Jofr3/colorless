@@ -2722,6 +2722,15 @@ function stepOp(
       // The Prize, the whole-stack discard, `KNOCKED_OUT` and the §8.1 promotion
       // are therefore §8.1's own and not this op's — no new stage, no new event.
       return { done: knockOutSelf(state, ctx) };
+    case "discardStadium":
+      // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
+      // this file that can change a body's MAXIMUM without touching its damage (a
+      // vacated `hpDelta` Stadium), and it rides the SAME §8.1 seam the two above it
+      // ride: an interpreter op returns a `GameState`, so the Knock Out a lowered
+      // maximum owes is `finishAttack`'s `collectKnockOuts` / `settleProgram`'s
+      // `resolveMidTurnKnockOuts`, never this line. No sweep here, no new event, no
+      // new stage — `playStadium` already owns the identical transition (cardplay.ts).
+      return { done: discardStadium(state, events) };
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -7990,6 +7999,33 @@ function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
           ),
         },
   );
+}
+
+/** 🆕🆕 D380 — §7.3's shared zone, emptied. The Stadium goes to **ITS OWNER's**
+    discard pile and announces itself with the EXISTING `STADIUM_DISCARDED` event —
+    both of which are `playStadium`'s replace path (cardplay.ts) read from the other
+    direction, which is the whole reason this op is three lines rather than a slice.
+
+    🛑 **`stadium.owner` AND NOT `ctx.seat`.** The actor is the player whose card did
+    it; the pile is the player whose card it IS. They coincide on a self-discard and
+    diverge on every board where the opponent played the Stadium — which is the
+    board this family is actually printed for.
+
+    ⚠️ **AN EMPTY ZONE RETURNS THE STATE UNTOUCHED AND EMITS NOTHING** (§8.6's "do as
+    much as you can", `discardDeckTop`'s short-deck ending): a `STADIUM_DISCARDED`
+    row on an empty zone would announce a card that does not exist. */
+function discardStadium(state: GameState, events: GameEvent[]): GameState {
+  const stadium = state.stadium;
+  if (stadium === null) return state;
+  const ownerSide = state.players[stadium.owner];
+  const next = withSide(state, stadium.owner, {
+    ...ownerSide,
+    discard: [...ownerSide.discard, stadium.uid],
+  });
+  events.push({ type: "STADIUM_DISCARDED", seat: stadium.owner, uid: stadium.uid });
+  // The zone is cleared LAST, off `next`, so the pile update and the vacancy are one
+  // reduction — nothing can observe a Stadium that is in neither place.
+  return { ...next, stadium: null };
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its
