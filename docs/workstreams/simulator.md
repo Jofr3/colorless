@@ -23581,3 +23581,139 @@ the printed effect byte for byte — and **Eternatus `sv08-141` was refuted that
 *"Discard a Stadium in play. If you can't, this attack does nothing."*, a different family, and it
 is the printing that corrected the ceiling's price from 8 to 9. ⚠️ **THE WEB STILL CANNOT GIVE A
 LEGAL-PRINTING COUNT**; that is `legalAttackCorpus()`'s alone.
+
+---
+
+## D388 — THE RETREAT-COST THRESHOLD: one printed noun phrase, two live readings, and the shape question settled before a line was written (engine 0.292.0 → **0.293.0**, `MATCH_RECORD_VERSION` **unchanged at 23**)
+
+Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**, index 0 of ONE attack), **1 legal
+printing**: *"If the Retreat Cost of your opponent's Active Pokémon is {C}{C} or more, this attack
+does 110 more damage."*
+
+D387 measured this as the cheapest thing in the whole residue (**1 printing / 2 mechanisms = 0.50**)
+and **deliberately did not take it**, on D368's rule rather than on price: its SHAPE question was
+open. Settling that question turned out to be the entire slice.
+
+### The shape question: TWO live readings of ONE printed noun phrase, and they disagree on real boards
+
+`retreatCostOf(card)` (cards.ts) is the printed {C} column — literally `card.retreat ?? 0`.
+`effectiveRetreatCost(state, pokemon)` (continuous.ts, D322) is the board fold: printed **+**
+`stadiumRetreatDelta` **+** `opposingRetreatSurcharge` **−** `alliedRetreatDiscount`, under ONE
+`Math.max(0, …)`, with `hasFreeRetreatAura` / `hasFreeRetreatSelf` short-circuiting to 0.
+
+**Both were already implemented and both already had consumers**, so this was never *"which do I
+build"* but *"which does the sentence NAME"*. They disagree on every board carrying a retreat Stadium
+or a retreat aura, and this pool holds four such levers (Calamitous Wasteland `sv02-175`, Beach Court
+`sv01-167`, Spidops ex `sv01-019`, Clefable ex `sv03-082`).
+
+**THE FOLD WAS TAKEN, ON THREE GROUNDS:**
+
+1. 🛑 **THE ENGINE HAD ALREADY ANSWERED THIS EXACT NOUN PHRASE.**
+   `DamageCountSource.opponentActiveRetreatCost` (D110) reads *"for each {C} in your opponent's
+   Active Pokémon's Retreat Cost"* and attack.ts resolves it through `effectiveRetreatCost`, with a
+   comment saying so: *"a Stadium that changes what it costs to retreat changes what these attacks
+   hit for"*. **D159 forbids a second answer to a question the engine already answers**, and a
+   printed reading here would have made one printed noun phrase mean two different things in two
+   readers of one file. ⚠️ **THE GENERAL MOVE, AND IT COST ONE GREP**: before arguing a shape
+   question from the rules, grep for the PHRASE and see whether this engine has already answered it.
+2. **THE RULES MAKE RETREAT COST A CURRENT VALUE.** `reference/ptcg-rules.md` §11 defines the cost off
+   the printed symbols and records that effects reduce it, but is **silent** on what a card TEXT
+   naming *"the Retreat Cost"* reads — so this went to the web (D373's route). The official account
+   states an **order of operations** over the value: increases apply first, then reductions, and a
+   Pokémon left with no Retreat Cost by an effect overrides every increase. Both halves are already
+   inside `effectiveRetreatCost`. **A printed constant would need no order of operations at all.**
+3. 🛑 **AND IT IS THE READING WITH A FALSIFIER.** Flipping the arm to the printed column turns **FIVE
+   cases RED, in BOTH directions** — measured by doing it before the build was trusted, and reverted
+   by copy-back rather than by git (the tree-mutation rule).
+
+### The disagreement is DRIVEN in both directions, and §3 alone would not have been enough
+
+A guard that only exercises boards where the two readings AGREE is the vacuous guard this repo keeps
+rediscovering (D200 → D214). So:
+
+* **§3, the fold LARGER, on TWO different summands.** A printed-{C} defender under **Calamitous
+  Wasteland** (the Stadium term) folds to {C}{C} and pays **220** where the printed column says 110;
+  the same body under a **BENCHED Spidops ex** (the aura term — its printed sentence scopes only the
+  TARGET, so a benched holder still imposes it) does the same **with no Stadium in play at all**.
+  ⚠️ **THE SECOND RUNG IS WHAT KEEPS THE FINDING FROM BEING A FACT ABOUT THE SHARED STADIUM ZONE.**
+* **§4, the MIRROR, and it is not decoration.** A printed-{C}{C} defender under **Beach Court** folds
+  to {C} and pays **110** where the printed column says 220. **A wrong build reading `printed + 1` is
+  green on all of §3 and red here.**
+* **The sharpest single board:** the two Stadiums REPLACE each other in the shared zone, so ONE
+  printed body answers TRUE → FALSE → TRUE across one game while `retreatCostOf` never moves. ⚠️ The
+  engine refused the first draft with `STADIUM_ALREADY_PLAYED` (§7.3 allows one Stadium play per
+  turn), so the swap costs two `endTurn`s — left as a line of play rather than surgeried around.
+
+🛑 **AND EVERY DISAGREEMENT RUNG ASSERTS THE TWO READINGS RETURN DIFFERENT NUMBERS ON THAT BOARD
+BEFORE IT READS ANY DAMAGE.** That is D214's **attribution control** applied to a pair of READINGS
+rather than to a build artifact, and it is what stops a board where the two happen to agree posing as
+a driven disagreement. **This is the transferable shape for any future two-reading clause.**
+
+### A printing count inherited from a doc comment was wrong, and only the corpus saw it
+
+`effects.ts` described the sibling retreat family as *"FOUR legal printings"*. `legalAttackCorpus()`
+says the noun phrase *"…Active Pokémon's Retreat Cost"* is worth **SIX** legal printings across five
+sentences, of which **TWO resolve** (both through the fold) and **three** are the SUBTRACTIVE twins
+(*"30 less"* ×2, *"50 less"* ×1) sitting in a different residue. The comment was naming four **CARDS**
+— Heracross, Spidops ex, Sharpedo, Stoutland — one of which has since **rotated** (`legal_standard =
+0`). **A CARD LIST AND A PRINTING COUNT ARE DIFFERENT NUMBERS, AND A DOC COMMENT AGES INTO THE WRONG
+ONE SILENTLY.** Corrected in effects.ts, interpreter.ts and index.ts. This is D367's
+perishable-uniqueness finding one field over: nothing in the suite was keyed on the four.
+
+### `>=` and not a set, and the neighbour is not a precedent
+
+`>=` is the printed *"or more"* — `yourBenchAtLeast`'s and `yourEnergyInPlayAtLeast`'s reading, **not**
+`opponentPrizesRemaining`'s set membership. That member may enumerate because `prizes.length` is 0-6
+and CLOSED (§3.8); a Retreat Cost has no such bound — printed values run to 5 and the Stadium/aura
+terms are unbounded sums — so D365's warning runs the usual way: a member whose fold is
+`counts.includes(…)` cannot be handed a threshold.
+
+⚠️ **AND `opponentActiveHasResistance` (D371) ONE LINE UP IS NOT A PRECEDENT FOR READING THIS ONE
+PRINTED.** That member reads `Card.resistances` directly — but this engine holds **no**
+Resistance-modifying continuous effect at all (measured: continuous.ts carries `seatRemovesWeakness`
+and no sibling for Resistance), so there is no fold there to decline. **The two members read the
+opponent's Active's other printed columns and read them differently, and the reason is the CATALOG's,
+not the code's.**
+
+### The census — the moving set was TWENTY-TWO files, and SIX rungs were masked
+
+Bonus residue **18 / 21 → 17 / 20** in sixteen suites; band `{1: 16, 5: 1}` → **`{1: 15, 5: 1}`**;
+nine-reader **366 / 1,258 → 367 / 1,259** and ten-reader **369 / 1,266 → 370 / 1,267**;
+`BUILT.attack` **1,295 → 1,296**; whole-census `built` **1,696 → 1,697**; apostrophe census
+**43 → 44** (the BEARING half took the whole step, second slice running); fixture floor
+**477 → 480**.
+
+🛑 **SIX rungs were MASKED behind an earlier failure in the same `it`** and took four targeted
+re-runs: `BUILT.attack - 922`, `- 922 - 252`, whole-census `built`, `units - built`, the leading
+literal in the unbuilt-remainder chain, and `head - rawDelta - splitDelta`.
+
+⚠️ **AND ONE MOVER WAS NOT ABOUT RETREAT AT ALL.** `stage1Bonus.test.ts` §1's *"Evolutions that are
+not Stage 1"* population went **24 → 25**, because `fix-aerochase` is a **Stage 2 with a named
+`evolveFrom`**. **That rung carries a fact about the WHOLE POOL, not about its own deck** — which is
+exactly why it is derived live rather than frozen, and the only reason the cross-effect was visible.
+
+### Two process traps, both cheap to avoid
+
+1. **A VARIABLE NAME IS NOT A SCOPE.** A regex that bumped every `refused.length + N` across the
+   residue files also moved THREE **CANCEL**-residue chains that had not moved at all — both rung
+   kinds build a local named `refused`. The repair keyed on the const's own initialiser
+   (`NOTHING.test` versus `BONUS.test`). **If you rewrite offset chains mechanically, key on what
+   BUILDS the value, never on its name.**
+2. **A MUTANT THAT CANNOT RUN IS NOT A MUTANT THAT WAS CAUGHT.** C1's first draft spelled the
+   rejected reading as `retreatCostOf(spot.card)` — but interpreter.ts does not import it, so the
+   mutant would have died on a **ReferenceError** before reaching a board, and **a KILLED verdict
+   reads the exit code, not the failure message**. Re-spelled inline as `spot.card.retreat ?? 0`,
+   which is that function's exact body. **Ask of every mutant: would this compile and run?**
+
+### The IDs — a web measurement, the sixteenth slice running, with one tooling gotcha
+
+A limitlesstcg `text:` search on the full clause **returned 0 cards**, because a `{C}{C}` glyph in the
+query is split by the tokeniser. ⚠️ **DROP THE BRACES AND INTERSECT TWO SEARCHES INSTEAD**: `text:"If
+the Retreat Cost of your opponent's Active Pokémon is"` returns 11 cards across a decade of sets and
+`text:"or more, this attack does 110 more damage"` returns 16; **the intersection is exactly one —
+Talonflame, SCR 123 (= `sv07-123`)**. `https://api.tcgdex.net/v2/en/cards/sv07-123` then returned the
+name, the 140 HP, the `Stage2` stage, the `Colorless` type, the {C}{C} cost, the `110+` base and the
+effect text byte for byte, at **index 0 of ONE attack**. ⚠️ `compendium.pokegym.net` returns **403**
+to WebFetch — its rulings are reachable only through search snippets and Bulbapedia, which is where
+the order-of-operations statement came from. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**;
+that is `legalAttackCorpus()`'s alone.
