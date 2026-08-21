@@ -154,7 +154,10 @@ const FAMILY = /^You may .*If you do,/;
 
 /** The EIGHTH member of the widened family, and the one the handoff's `/If you do,/`
     census could not see: the connective is a condition on the COST's own effect
-    rather than a bare *"if you do"*. Refused, and named so §1 can drive it. */
+    rather than a bare *"if you do"*. Refused, and named so §1 can drive it.
+    ✅ 🆕🆕 **D385 BUILT IT** — the sentence above is kept as written (D178) because the
+    census claim it makes is still true; what changed is that §1's two REFUSAL rungs
+    are now claims about the reading. */
 const HAND_DISCARD =
   "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.";
 const BEACH_COURT = "sv01-167";
@@ -293,12 +296,33 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     // moved — a record of the cost's own effect, not a board fact read before it.
     const extra = wide.filter(([, s]) => !strict.some(([, t]) => t === s));
     expect(extra.map(([n, s]) => [n, s])).toEqual([[1, HAND_DISCARD]]);
-    expect(resolvedByAnyReader(HAND_DISCARD)).toBe(false);
-    // 🛑 AND IT IS REFUSED BY THE COST HALF TOO, not merely by the connective — the
-    // same synthetic re-pairing §2 uses, so the refusal is attributable.
+    // ✅ 🆕🆕 **D385 TOOK IT, AND THE TWO REFUSAL RUNGS THAT STOOD HERE ARE RE-AIMED
+    // RATHER THAN DELETED.** This rung used to assert `resolvedByAnyReader(HAND_DISCARD)`
+    // was FALSE and that re-pairing the hand cost with `If you do,` was refused BY THE
+    // COST HALF. D385 widened the connective to a closed alternation of two and added
+    // the cost row, so BOTH claims are now false — and neither `find` moved a character,
+    // which is D384's premise-rot in the TEST file set. What the rung is ABOUT survives
+    // untouched: the census question (*"ask it once with the connective shortened"*)
+    // found a record the family regex could not see, and that is still exactly what the
+    // three lines above measure.
+    expect(resolvedByAnyReader(HAND_DISCARD)).toBe(true);
+    expect(deriveAttackOptionalCostBoost(HAND_DISCARD)).toEqual({
+      cond: { kind: "yourHandNotEmpty" },
+      ops: [{ op: "discardHand" }],
+      payoff: { kind: "moreDamage", bonus: 120 },
+    });
+    // 🛑 AND THE COST HALF IS WHAT CLAIMS IT, not the connective alone — the same
+    // synthetic re-pairing §2 uses, so the claim is attributable to one half. The hand
+    // cost reads under BOTH connectives (they are one reading — see
+    // `OPTIONAL_COST_CONNECTIVE`), and an UNKNOWN cost is still refused under both.
     expect(
       deriveAttackOptionalCostBoost(
         "You may discard your hand. If you do, this attack does 120 more damage.",
+      ),
+    ).toEqual(deriveAttackOptionalCostBoost(HAND_DISCARD));
+    expect(
+      deriveAttackOptionalCostBoost(
+        "You may turn 1 of your face-down Prize cards face up. If you discarded any cards in this way, this attack does 80 more damage.",
       ),
     ).toBeNull();
   });

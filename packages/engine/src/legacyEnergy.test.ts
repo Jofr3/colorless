@@ -983,8 +983,17 @@ describe("the engine version", () => {
     // a member that did not exist, and none means anything different under this head
     // (D335's discriminator). The version moves because a reader answers one printed
     // sentence it used to refuse. The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.289.0");
-    expect(manifest.version).toBe("0.289.0");
+    // 🆕🆕 D385 — 0.289.0 -> **0.290.0**, THE SECOND CONNECTIVE.
+    // `MATCH_RECORD_VERSION` STAYS 22, asked rather than assumed: the one new member
+    // (`yourHandNotEmpty`) is NULLARY, so there is nothing to store; a `conditionGate`
+    // resolves inline and never parks; and `discardHand` is an EXISTING op with no new
+    // field that never parks either, so no continuation shape moves. No v22 byte
+    // string can contain a member that did not exist and none means anything different
+    // under this head (D335's discriminator). The version moves because a reader
+    // answers one printed sentence it used to refuse. The post-bump anchor pass was
+    // clean.
+    expect(engineVersion).toBe("0.290.0");
+    expect(manifest.version).toBe("0.290.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

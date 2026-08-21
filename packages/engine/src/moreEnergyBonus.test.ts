@@ -512,12 +512,16 @@ describe("§5 — the boards", () => {
 describe("§6 — the census moves in exactly ONE summand, and the step is 1 and 1", () => {
   it("the resolving corpus gains ONE sentence and ONE printing", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(366);
-    expect(units(resolved)).toBe(1262);
+    // 🆕🆕 D385 — 366 -> **367** / 1,262 -> **1,263**, THE SECOND CONNECTIVE (Veluza ex
+    // `sv09-043` "Purging Strike", 1 legal printing). The head moved and the OFFSET
+    // below is what this rung is about, so it is re-derived rather than frozen — the
+    // rule D384 wrote into `exactHandSize.test.ts` one file over, paid here.
+    expect(resolved).toHaveLength(367);
+    expect(units(resolved)).toBe(1263);
     // The step, as an offset off the live head rather than a frozen pair. It is the
     // family's first 1:1 step: D368 moved 1:3, D369-D376 1:2 each, D377 3:3, D378 2:3,
     // D379 1:2, D380 2:6, D382 1:1 on the OTHER instrument and D383 1:5.
-    expect([resolved.length - 1, units(resolved) - 1]).toEqual([365, 1261]);
+    expect([resolved.length - 2, units(resolved) - 2]).toEqual([365, 1261]);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {

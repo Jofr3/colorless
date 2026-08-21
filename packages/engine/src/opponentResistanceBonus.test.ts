@@ -410,7 +410,12 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // Energy at all, and it prints no Resistance — what that slice reads off a board is
     // the ATTACHED Energy COUNT on two bodies (`InPlayPokemon.energy`) rather than any
     // printed column, so `Card.resistances` is untouched for a FIFTH consecutive slice.
-    expect(ids).toHaveLength(472);
+    // 🆕🆕 D385 — 472 -> **473**, and the other two columns stand still a FOURTEENTH
+    // time. D385 adds ONE body (`fix-purging`, Veluza ex's "Purging Strike") and no
+    // Energy at all, and it prints no Resistance — what that slice reads off a board is
+    // a HAND LENGTH, which is not on a card at all, so `Card.resistances` is untouched
+    // for a SIXTH consecutive slice.
+    expect(ids).toHaveLength(473);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -451,17 +456,22 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // (`fix-moreenergy`, Swalot's "Devouring Mouth" demonstrator), ZERO Energy, ZERO
     // Resistances, and an instrument that is `InPlayPokemon.energy` on TWO bodies
     // rather than any printed column. ⚠️ **THE CHAIN IS EDITED AT THE FRONT.**
-    expect(ids.length - 1 - 1 - 1 - 1).toBe(468);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D385 — a `- 1` term at the FRONT of the chain, the THIRD consecutive slice
+    // whose fixture's card data is read by neither this column nor a NAME: ONE body
+    // (`fix-purging`, Veluza ex's "Purging Strike" demonstrator), ZERO Energy, ZERO
+    // Resistances, and an instrument that is a HAND LENGTH — not on a card at all.
+    // ⚠️ **THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.**
+    expect(ids.length - 1 - 1 - 1 - 1 - 1).toBe(468);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

@@ -9,6 +9,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -130,13 +131,34 @@ const HANDS_LEVEL: BoardCondition = { kind: "handSizesEqual" };
 
 /** THE CEILING, PRICED FROM THE CORPUS AND LEFT. Every legal attack sentence that
     reads a hand's SIZE and is still refused. None of them is a `BoardCondition`:
-    the first is a `DamageCountSource` over the FAR hand, the second an op plus a
-    did-it clause, the third a draw whose count is the far hand. */
+    the first is a `DamageCountSource` over the FAR hand, and the second a draw whose
+    count is the far hand.
+
+    🛑 🆕🆕 **D385 TOOK THE MIDDLE ENTRY, AND THIS RUNG WAS GREEN AND FALSE WHEN IT DID
+    — WHICH IS D382's DEFECT REPRODUCED EXACTLY.** The list used to carry *"You may
+    discard your hand. If you discarded any cards in this way, this attack does 120
+    more damage."* under the note *"an op plus a did-it clause"*, and §1's loop asserts
+    every entry is refused by `resolvedByAnyReader`. D385 built that sentence — through
+    `deriveAttackOptionalCostBoost`, which **this file's hand-kept `READERS` array does
+    not contain** — so nothing here reddened and the rung went on claiming a refusal
+    that had stopped existing. It was caught by grepping `mutants.ts` and the suite for
+    the SENTENCE (D384's rule) rather than by running anything.
+
+    ⚠️ **THE NINE-READER ARRAY IS NOT A BUG AND IS NOT WIDENED HERE.** This file's
+    census figures (`resolved` / `residue`) are a NINE-reader instrument that four
+    suites share and that the resume point pins at 364 / 1,255; adding a tenth reader
+    to it would move numbers this slice has nothing to do with. What was wrong is that
+    a REFUSAL claim was drawn from an instrument that cannot see one reader. **A
+    CENSUS INSTRUMENT AND A REFUSAL ORACLE ARE NOT THE SAME OBJECT**, and the sentence
+    is removed from the list rather than the array being changed. */
 const SIZE_CEILING = [
   "This attack does 30 damage for each card in your opponent's hand.",
-  "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.",
   "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.",
 ] as const;
+/** …and the entry that LEFT the ceiling at D385, kept so this file still says what
+    happened to it. Refused by this file's nine readers and resolved by the tenth. */
+const CEILING_TAKEN_AT_D385 =
+  "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.";
 
 // ── boards ─────────────────────────────────────────────────────────────────────
 
@@ -351,6 +373,15 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
       expect(rows, sentence).toHaveLength(1);
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
     }
+    // 🛑 🆕🆕 **D385 — THE THIRD ENTRY IS GONE FROM THE LIST AND ITS DEPARTURE IS
+    // ASSERTED**, which is the only way this file can go red if it is ever "un-built".
+    // ⚠️ AND THE TWO ORACLES ARE READ SIDE BY SIDE ON PURPOSE: this file's NINE-reader
+    // instrument still refuses the sentence (it cannot see the tenth reader), and the
+    // TENTH reader resolves it. **THAT GAP IS WHAT MADE THE OLD RUNG GREEN AND FALSE**,
+    // and stating it here is what stops the next slice drawing a refusal from a census.
+    expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D385)).toHaveLength(1);
+    expect(resolvedByAnyReader(CEILING_TAKEN_AT_D385)).toBe(false);
+    expect(deriveAttackOptionalCostBoost(CEILING_TAKEN_AT_D385)).not.toBeNull();
     // …and the biggest unbuilt thing in this corner is a hand-ZONE op rather than a
     // hand-SIZE read, which is why it is a different slice: SEVEN printings.
     const discardHand = corpus().filter(([, s]) => s === "Discard your hand and draw 6 cards.");

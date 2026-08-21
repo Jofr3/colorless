@@ -341,6 +341,19 @@ describe("the pool sweep, structurally", () => {
       "fix-optionalboost attack 1 optionalBoost :: damageDefender",
       "fix-optionalboost attack 1 optionalBoost :: damageSelf",
       "fix-picnicker trainer :: drawCards",
+      // 🆕🆕 **D385 — THREE ROWS FROM ONE FIXTURE, AND THEY ARE `fix-crushpress`'s ARM
+      // REACHED THROUGH A DIFFERENT CONNECTIVE.** `fix-purging` (Veluza ex's printed
+      // "Purging Strike") assembles through `optionalCostBoostProgram`'s `moreDamage`
+      // half — the same branch `fix-crushpress` reaches — so this is NOT a new arm and
+      // D318's rule is not what puts it here. What puts it here is the OP: `discardHand`
+      // has been an `EffectOp` since Professor's Research and has only ever appeared in
+      // a `trainer` program, which is a FLAT list the enumerated walk can see. This is
+      // the first time it sits inside an `optional.then` NESTED IN a `conditionGate.then`,
+      // and the two `damageDefender` rows are the boosted hit and the decline arm that
+      // `costSnipeProgram`'s printings do not have.
+      "fix-purging attack 0 optionalCostBoost :: damageDefender",
+      "fix-purging attack 0 optionalCostBoost :: damageDefender",
+      "fix-purging attack 0 optionalCostBoost :: discardHand",
       "fix-rapidvernier trigger :: moveEnergy",
       "fix-rapidvernier trigger :: recordGate",
       "fix-rapidvernier trigger :: switchActive",
