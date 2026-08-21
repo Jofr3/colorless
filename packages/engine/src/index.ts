@@ -12108,6 +12108,93 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.283.0 → **STADIUM PRESENCE — THE HALF OF §7.3 THAT SURVIVES REDACTION,
+    AND THE RENAME NEXT DOOR THAT WAS REFUSED AGAIN.**
+
+    D377 handed over the STADIUM-PRESENCE family with the shape question already
+    stated, and the answer held: **ONE new nullary `BoardCondition` member,
+    `stadiumInPlay`, serving BOTH consequents and THREE legal printings.**
+
+      Probopass  `sv10-098`             "Mountain Drop"   ({C}{C}{C}, 70+)  +70 with a Stadium out
+      Fan Rotom  `sv07-118`/`sv08.5-085` "Assault Landing" ({C}, 70)        cancels with the zone EMPTY
+
+    ✅ **THE CANCEL HALF IS THE BIGGER HALF, WHICH IS A FIRST.** D363, D365 and D377
+    each put a member in both clause tables with the bonus consequent carrying the
+    weight; here it is 1 printing under the bonus and **2** under the cancel. It also
+    empties all but ONE sentence from behind the *"…this attack does nothing."*
+    skeleton: the requirement table goes 8 rows / 7 reachable / 14 printings →
+    **9 / 8 / 16**, and the unmapped remainder 2 sentences / 4 printings →
+    **1 / 2** (*"If you don't have exactly 3 cards in your hand…"*, which needs an
+    OWN-hand EXACT-SIZE member — `opponentHandAtMost` is the wrong seat AND the wrong
+    comparator, D365 measured it).
+
+    🛑 **THE SHAPE ANSWER: `yourStadiumInPlay` WAS NOT WIDENED, AND THE REASON IS
+    D362's, MEASURED RATHER THAN ASSERTED.** That member reads §7.3 OWNERSHIP and has
+    **two live consumers whose ownership is load-bearing** — registry `FALKNER` and
+    the positive `CONDITIONAL_DAMAGE_CLAUSES` row *"you have a Stadium in play"*
+    (Palossand `sv02-096` "Earthen Power", +80). A widening is free only when EVERY
+    existing consumer wants the wider reading; neither of these does, so yours→any is
+    a RENAME. **AND THE PRINTED TEXT SETTLES IT WITHOUT A JUDGEMENT CALL: neither new
+    sentence carries a possessive** (*"a Stadium"*, *"there is no Stadium"*) where
+    Palossand's says *"you have"*. The two members disagree on exactly one board — the
+    opponent owns the Stadium — and `stadiumPresence.test.ts` §3 drives that board
+    from BOTH seats, with Palossand's +80 asserted ABSENT and Probopass's +70 asserted
+    PRESENT on the very same state. **THIS IS THE SECOND TIME THIS EXACT WIDENING WAS
+    PRICED AND DECLINED** (D364 declined it in prose and shipped nothing; D378
+    declines it by BUILDING the member it would have been mistaken for).
+
+    ✅ **AND IT IS THE FIRST STADIUM MEMBER THAT DOES NOT WIDEN THE P4 GAP — WHICH
+    THE UNION'S OWN DOC BLOCK HAD ALREADY NAMED AS THE COST OF THE OTHER ONE.**
+    `BoardCondition`'s invariant paragraph says the online projection "does NOT carry
+    the Stadium's owner", so `yourStadiumInPlay` cannot be evaluated on a remote
+    client. `RedactedBoard.stadium` is a `redactedCardSchema.nullable()` — the CARD,
+    public to both viewers, with no owner field anywhere on it — so `stadiumInPlay` is
+    literally `board.stadium !== null` on the wire. **Presence is the half that
+    survives redaction; ownership is the half that does not**, and this member is the
+    presence half. Two members of this union now carry that note the other way round
+    (`opponentPrizesRemaining`, `youGoSecond`); this is the third, and the first in
+    the §7.3 corner.
+
+    ⚠️ **THE ARM IS THE OWNERSHIP ARM WITH THE OWNER TEST DELETED, AND `seat` IS
+    UNREAD.** It is the first member in the union whose answer is seat-INDEPENDENT,
+    because §7.3's zone is a shared singleton: two seats can disagree about whose
+    Stadium it is and never about whether one is there. That is asserted on a board
+    rather than left as a remark — every presence rung is read from BOTH seats and
+    required to AGREE, on the same states where the ownership member disagrees.
+
+    ⚠️ **THE CEILING ABOVE THIS FLOOR WAS PRICED AND LEFT.** Two more legal sentences
+    read the same board fact and both carry a TAIL: *"…does 60 more damage. Then,
+    discard that Stadium."* (1 printing) and *"…also does 30 damage to each of your
+    opponent's Benched Pokémon, and discard that Stadium."* (1 printing). Discarding a
+    Stadium is a WHOLE OP that does not exist — and it is worth **9 printings on its
+    own**, not the 8 the handoff priced: *"Discard a Stadium in play."* (4), *"You may
+    discard a Stadium in play."* (2), the *"If you do, …140 more damage"* spelling (2)
+    **and *"Discard a Stadium in play. If you can't, this attack does nothing."***
+    (Eternatus `sv08-141` "World Ender", 1) — the same op under the CANCEL consequent,
+    which the handoff's own sweep could not see because it asked one consequent.
+    **D377's LESSON, ONE FAMILY OVER.** So it is a separate and BIGGER slice. The
+    floor was taken whole; the ceiling was not allowed to eat it.
+
+    ⚠️ **A TEST FILE HELD A RECORD THIS SLICE FALSIFIED, FOR THE SECOND SLICE
+    RUNNING**, and this time it was a FIXTURE and not only an array.
+    `sawkRequirementSplit.test.ts` used *"If there is no Stadium in play, this attack
+    does nothing."* as its UNMAPPED leading clause — in a derivation rung, in
+    `exOnlyActive.test.ts`, and in `fix-sawk`'s index-2 printed effect, driven on a
+    board. All four are re-pointed at the sentence that is STILL unmapped (the exact
+    hand-size one) rather than deleted, so the accounting guard keeps a REAL printed
+    corpus sentence as its subject. ⚠️ **AND THAT SUBJECT IS NOW THE LAST ONE**: the
+    day the hand-size sentence is built, the guard needs a constructed near-miss and
+    should say so.
+
+    ⚠️ **THE CENSUS STEP IS +2 SENTENCES AND +3 PRINTINGS.** raw 1,242 → **1,245**,
+    `BUILT.attack` 1,271 → **1,274**, resolving sentences 357 → **359**, the unbuilt
+    attack remainder 490 → **487**.
+
+    engineVersion 0.282.0 → **0.283.0**; `MATCH_RECORD_VERSION` **STAYS 22** — the
+    member is NULLARY (no parameter to store) and it reads `state.stadium`, a field
+    the persisted record has carried since M4 with its shape untouched.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.282.0 → **THE CROSS-BOARD STATUS PAIR — ONE CLOSED PRINTED VOCABULARY
     OVER THREE MODEL SHAPES, AND THE TOKEN PRICED AND DECLINED.**
 
@@ -14599,7 +14686,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.282.0";
+export const engineVersion = "0.283.0";
 
 export type {
   ApplyResult,

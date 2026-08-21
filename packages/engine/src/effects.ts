@@ -704,6 +704,40 @@ export type BoardCondition =
       have a Stadium in play" is about OWNERSHIP, not mere presence: the
       opponent's Stadium sitting in the zone does not satisfy Falkner. */
   | { kind: "yourStadiumInPlay" }
+  /** 🆕🆕 **D378 — §7.3, the Stadium zone is OCCUPIED, by EITHER seat.** Probopass
+      `sv10-098` "Mountain Drop" ({C}{C}{C}, 70+): *"If a Stadium is in play, this
+      attack does 70 more damage."* — 1 legal printing — and, through
+      `ATTACK_REQUIREMENT_CLAUSES`' polarity rule, Fan Rotom `sv07-118` /
+      `sv08.5-085` "Assault Landing" ({C}, 70): *"If there is no Stadium in play,
+      this attack does nothing."* — 2 legal printings. **THREE PRINTINGS, TWO
+      CONSEQUENTS, ONE MEMBER.**
+
+      🛑 **THE NEAR MISS IS THE MEMBER ONE LINE UP, AND IT IS A RENAME AND NOT A
+      WIDENING.** `yourStadiumInPlay` reads OWNERSHIP and has two live consumers
+      whose ownership is load-bearing — registry `FALKNER` (*"if you have a Stadium
+      in play, draw 2 more cards"*) and the positive `CONDITIONAL_DAMAGE_CLAUSES`
+      row *"you have a Stadium in play"* (Palossand `sv02-096` "Earthen Power",
+      +80). Widening it to presence would make Palossand fire off the OPPONENT's
+      Stadium, which is the exact behaviour `conditionalDamage.test.ts` drives and
+      refuses. **NEITHER OF THESE TWO SENTENCES CARRIES A POSSESSIVE** — *"a
+      Stadium"*, *"there is no Stadium"* — so the printed text is what separates
+      them, not a judgement call, and the two members DISAGREE on exactly the board
+      where the opponent owns the Stadium (D362's rule: a widening is free, a
+      rename is not — the test is whether every existing consumer wants the wider
+      reading).
+
+      ✅ **AND IT IS THE FIRST STADIUM MEMBER THAT DOES NOT WIDEN THE P4 GAP.** The
+      union's doc block above notes that the online projection "does NOT carry the
+      Stadium's owner", which is what makes `yourStadiumInPlay` unevaluable on a
+      remote client. `RedactedBoard.stadium` (packages/schema) is a
+      `redactedCardSchema.nullable()` — the CARD, publicly, with no owner — so this
+      member is exactly `board.stadium !== null` on the wire. Presence is the half
+      that survives redaction; ownership is the half that does not.
+
+      ⚠️ **NULLARY, AND THE ZONE IS A SINGLETON.** §7.3 keeps at most one Stadium in
+      play at a time, so there is no count to parameterise and no "whose" to store.
+      False with an empty zone. */
+  | { kind: "stadiumInPlay" }
   /** None of your in-play Pokémon (Active or Benched) has ANY Energy attached —
       Basic or Special (Grusha's "if none of your Pokémon have any Energy
       attached"). Vacuously true with nothing in play. */
@@ -9041,6 +9075,18 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // Palossand sv02-096 "Earthen Power" (+80) and its siblings — §7.3 OWNERSHIP,
   // not mere presence: the opponent's Stadium in the shared zone does not count.
   ["you have a Stadium in play", { kind: "yourStadiumInPlay" }],
+  // 🆕🆕 D378 — Probopass sv10-098 "Mountain Drop" ({C}{C}{C}, 70+), ONE legal
+  // printing, and it sits DELIBERATELY one line under the row it must not be
+  // confused with. The printed clause carries NO POSSESSIVE — "a Stadium", where
+  // the row above says "you have a Stadium" — so §7.3 PRESENCE is what this one
+  // reads and the two rows disagree on exactly one board: the opponent owns the
+  // Stadium. Widening the row above instead would have been a RENAME with two live
+  // consumers (registry FALKNER and that row), not a free widening (D362).
+  //
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é — the SECOND row in this table that
+  // carries neither, after D366's bench-count key. `literalClauseRow`'s U+2019 fold
+  // is inert on it, which is stated rather than left to be rediscovered.
+  ["a Stadium is in play", { kind: "stadiumInPlay" }],
   // Gyarados sv02-043 "Revengeful Storm" (+100) — §14, the comeback clause: you
   // have MORE prizes left, i.e. you are BEHIND on prizes taken.
   ["you have more Prize cards remaining than your opponent", { kind: "morePrizesThanOpponent" }],
@@ -10267,6 +10313,27 @@ const ATTACK_REQUIREMENT_CLAUSES = new Map<string, BoardCondition>([
   // Pokémon is now Burned." — a built `applyStatus` — so the one board that can
   // legally use "Charring Breath" is a board the engine set up for itself.
   ["your opponent's Active Pokémon isn't Burned", { kind: "opponentActiveBurned" }],
+  // 🆕🆕 D378 — Fan Rotom `sv07-118` / `sv08.5-085` "Assault Landing" ({C}, 70),
+  // TWO legal printings, and the FOURTH row in this table to spell a member the
+  // bonus table already reads (D363's Sawk, D365's Iron Boulder, D377's Centiskorch,
+  // now this). The member is `stadiumInPlay`, bought by this same slice for
+  // Probopass `sv10-098` "Mountain Drop" one table up — so of the member's THREE
+  // legal printings, ONE arrives through the bonus consequent and TWO through this
+  // one, and this is the FIRST time the cancel half is the BIGGER half.
+  //
+  // The polarity rule at the head of this block does the work: the skeleton owns the
+  // negation, so the printed *"there is no Stadium"* needs no `{ kind: "not" }` and
+  // the POSITIVE fact handed back is "a Stadium is in play". `attack.ts` cancels
+  // when it does not hold.
+  //
+  // 🛑 THE WIDENING THIS ROW REFUSES, NAMED: pointing it at `yourStadiumInPlay`
+  // would read right and cancel an attack the printed card RESOLVES, on every board
+  // where the Stadium is the OPPONENT's. The sentence carries no possessive; the
+  // member's name is its specification.
+  //
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é — the SECOND such key in this table
+  // after D366's, and the same is true of its bonus twin.
+  ["there is no Stadium in play", { kind: "stadiumInPlay" }],
 ]);
 
 /** The board fact an attack REQUIRES in order to do anything, or null when the

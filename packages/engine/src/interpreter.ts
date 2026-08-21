@@ -2924,6 +2924,18 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
     case "yourStadiumInPlay":
       // §7.3 — presence is not enough; the Stadium must be the one YOU played.
       return state.stadium !== null && state.stadium.owner === seat;
+    case "stadiumInPlay":
+      // 🆕 D378 — "a Stadium is in play" (Probopass sv10-098 "Mountain Drop", +70)
+      // and, through `ATTACK_REQUIREMENT_CLAUSES`, the printed NEGATION on Fan Rotom
+      // sv07-118/sv08.5-085 "Assault Landing".
+      //
+      // 🛑 THE ARM IS THE ARM ABOVE WITH THE OWNER TEST DELETED, AND THAT IS THE
+      // WHOLE DIFFERENCE. `seat` is unread here — deliberately: §7.3's zone is
+      // shared and a single slot, so the two seats can never disagree about
+      // PRESENCE, only about OWNERSHIP. Every other member in this switch is
+      // seat-relative; this one is the first that is not, which is exactly why it
+      // could not have been the other member wearing a wider name.
+      return state.stadium !== null;
     case "noEnergyOnYourPokemon": {
       const side = state.players[seat];
       return [side.active, ...side.bench].every((p) => p === null || p.energy.length === 0);
@@ -3746,6 +3758,12 @@ export function conditionNote(cond: BoardCondition): string {
       return "you have more Prize cards remaining than your opponent";
     case "yourStadiumInPlay":
       return "you have a Stadium in play";
+    case "stadiumInPlay":
+      // 🆕 D378 — the printed clause verbatim, which is unusual in this switch: most
+      // arms drop a pronoun or re-voice a noun phrase (D116, D296) because a
+      // reject/tooltip fragment is read off the BOARD. This one needs neither — the
+      // sentence never says "you", so there is nothing to re-seat.
+      return "a Stadium is in play";
     case "noEnergyOnYourPokemon":
       return "none of your Pokémon have any Energy attached";
     case "opponentActiveDamaged":

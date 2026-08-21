@@ -5158,9 +5158,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D377 (0.281.0 → 0.282.0), in the SAME COMMIT as the bump —
-    // the FOURTH slice running to do it that way, and the practice is now the one
+    // ⚠️ RE-POINTED AT D378 (0.282.0 → 0.283.0), in the SAME COMMIT as the bump —
+    // the FIFTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
+    // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
+    // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
+    // D378's whole diff is ONE NULLARY `BoardCondition` member (`stadiumInPlay`), its
+    // two reader arms and two clause-table rows. The member is nullary, so there is
+    // no parameter to store; and it reads `state.stadium`, a field the persisted
+    // record has carried since M4 — the SHAPE of that field is untouched, which is
+    // the only thing that would move the record version.
+    // ⚠️ RE-POINTED AT D377 (0.281.0 → 0.282.0), in the SAME COMMIT as the bump —
+    // the FOURTH slice running to do it that way.
     // ⚠️ NO ORDINAL IS CLAIMED HERE EITHER, for D370's reason unchanged. The question
     // was ASKED again rather than inherited: `MATCH_RECORD_VERSION` STAYS 22 because
     // D377's whole diff is TWO NULLARY `BoardCondition` members, their four reader
@@ -5601,7 +5610,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.282.0";',
+    find: 'export const engineVersion = "0.283.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
