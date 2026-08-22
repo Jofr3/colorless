@@ -16010,4 +16010,77 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/censusAtHead.test.ts",
     ],
   },
+  // ── D396 — the ANGELITE CANCEL. Six rows over THREE surfaces: the SUBJECT (the
+  //    walk narrowed back to the Active, which is D394's real code copied verbatim),
+  //    the ROW (its index, its polarity and the attack its condition names, each
+  //    copied from a real neighbour in the same file), and the REPRINT GROUP (two of
+  //    three ids dropped).
+  //    🛑 **THE SUBJECT ROW IS WHY THIS SLICE IS WORTH MUTATING AT ALL.** The whole
+  //    shape question was MEMBER-vs-FIELD, and both answers agree on every board
+  //    where the stamped body is the Active — which is every board anyone writes
+  //    first. Only a board where the stamped Sylveon ex has left the Active Spot
+  //    separates them, and the failure is a `barredIf` that does not bar: an illegal
+  //    declaration accepted, silently.
+  //    ⚠️ **FOUR OF THESE SIX CARRY MULTI-LINE `find` STRINGS OVER ADJACENT LINES OF
+  //    ONE LITERAL** (`SYLVEON_EX_ANGELITE` in `registry.ts`, and the `conditionHolds`
+  //    arm in `interpreter.ts`). Inserting ANY line into either — a comment, a second
+  //    index, a second `some` term — falsifies them without changing a character
+  //    `git grep` would find. Re-transcribe them in the same commit if you touch it.
+  {
+    id: "D396-condition-reads-the-active-only",
+    decision: "D396",
+    what: "🔑 THE SLICE'S WHOLE SHAPE QUESTION, ANSWERED THE OTHER WAY: the in-play walk narrowed back to the Active Spot - D394's `yourActiveUsedAttackLastTurn` arm copied verbatim from four lines up, which is exactly what a `zone?: \"inPlay\"` field DEFAULTING TO ABSENT would have produced on a row that forgot it. The cancel still bites when the same Sylveon ex attacks twice, so every board an author writes first stays green; it stops biting the moment the stamped body retreats, which is a `barredIf` that does not bar and an ILLEGAL DECLARATION ACCEPTED. ⚠️ INVISIBLE TO THE TYPE SYSTEM, TO THE CENSUS AND TO EVERY DECLARATION ASSERTION THAT KEEPS ITS ATTACKER ACTIVE",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const side = state.players[seat];\n      return [side.active, ...side.bench].some(\n        (p) => p !== null && usedAttackOnYourLastTurn(state, p, cond.attack),\n      );",
+    replace: "      const active = state.players[seat].active;\n      return active !== null && usedAttackOnYourLastTurn(state, active, cond.attack);",
+    expectKilledBy: ["packages/engine/src/angeliteCancel.test.ts"],
+  },
+  {
+    id: "D396-row-authored-at-index-zero",
+    decision: "D396",
+    what: "🔑 THE INDEX, FROM THE AUTHORING SIDE, and on this card it is the mistake with the widest blast radius: keyed `0` - which is what THIRTEEN of the seventeen rows in this field are keyed, so it is the value a copy-paste produces. The cancel lands on \"Magical Charm\", the 160-damage attack the card is actually played for, and \"Angelite\" becomes unconditionally legal - so the printing is BOTH robbed of its damage and free to repeat the attack the clause exists to limit. ⚠️ A DIFFERENT FAILURE FROM MILTANK's SAME MISTAKE, which deadlocks instead, and only a board that reads both indices tells the two apart",
+    file: "packages/engine/src/registry.ts",
+    find: "  attackGate: {\n    1: {\n      kind: \"barredIf\",",
+    replace: "  attackGate: {\n    0: {\n      kind: \"barredIf\",",
+    expectKilledBy: ["packages/engine/src/angeliteCancel.test.ts"],
+  },
+  {
+    id: "D396-polarity-copied-from-miltank",
+    decision: "D396",
+    what: "⚠️ THE POLARITY TOKEN IS `onlyIf` - Miltank `sv08.5-081`'s REAL value, seventy lines up in the same file and the nearest neighbour a new gate row is written beside. The cancel then reads INVERTED: \"Angelite\" is legal exactly while one of your Pokémon HAS used it, and illegal on the fresh board every game opens with - so the attack can never be used a first time and can always be used a second. ⚠️ EVERY \"the cancel refuses\" ASSERTION AN AUTHOR WRITES FIRST STAYS GREEN, because it is written on the board where Angelite has already been used",
+    file: "packages/engine/src/registry.ts",
+    find: "      kind: \"barredIf\",\n      condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Angelite\" },",
+    replace: "      kind: \"onlyIf\",\n      condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Angelite\" },",
+    expectKilledBy: ["packages/engine/src/angeliteCancel.test.ts"],
+  },
+  {
+    id: "D396-condition-names-the-attack-beside-it",
+    decision: "D396",
+    what: "⚠️ THE CONDITION NAMES THE CARD'S *OTHER* ATTACK - `attack: \"Magical Charm\"`, read off index 0 of the very same `attacks_json`. The row still parses, the member is still well-formed, the census does not move a digit, and the cancel still bites on SOME board; what changes is WHICH one - \"Angelite\" becomes repeatable forever and is instead locked out for one turn after every \"Magical Charm\". D395's C3 one card over, and on this printing the trap is sharper because the clause quotes the name of the attack it is PRINTED ON, so \"the neighbouring name\" and \"the right name\" look equally plausible in the diff",
+    file: "packages/engine/src/registry.ts",
+    find: "      condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Angelite\" },",
+    replace: "      condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Magical Charm\" },",
+    expectKilledBy: ["packages/engine/src/angeliteCancel.test.ts"],
+  },
+  {
+    id: "D396-note-copied-from-the-sibling-arm",
+    decision: "D396",
+    what: "⚠️ THE NOTE IS THE SIBLING'S - `your Active Pokémon used …`, the string the arm four lines up returns, which is precisely what a `zone?` FIELD would have printed had it filled one interpolation slot instead of branching. THE GATE STILL BITES CORRECTLY: every declaration, every wire projection and every census figure in the repo is unmoved. What breaks is the §8 REJECT the player reads to find out why, and it names the WRONG POKÉMON on the one board this slice exists for - a benched Sylveon ex is what bars the attack, and the message points at the Active. ⚠️ THE ONE MEASUREMENT THAT ARGUED *FOR* A FIELD IS THE ONE THIS ROW REFUTES ON A BOARD",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `1 of your Pokémon used ${cond.attack} during your last turn`;",
+    replace: "      return `your Active Pokémon used ${cond.attack} during your last turn`;",
+    expectKilledBy: ["packages/engine/src/angeliteCancel.test.ts"],
+  },
+  {
+    id: "D396-reprint-group-authored-on-one-id",
+    decision: "D396",
+    what: "🔑 THE REPRINT IDIOM HALF-APPLIED: only `sv08-086` is keyed, and the two `sv08.5` reprints are left out - the mistake a slice makes when it reads the ids off the search result and the map off the neighbouring block, where Illumise and Scream Tail ex are ONE id apiece. TWO of the three legal printings then carry no gate at all and repeat \"Angelite\" every turn, while the third is correct - so the card is right or wrong depending on which art the player owns. ⚠️ IT MOVES FOUR CENSUS FIGURES TOO, which is the loud half; the quiet half is that every board assertion in the slice's own suite is written on the id that still works",
+    file: "packages/engine/src/registry.ts",
+    find: "  \"sv08-086\": SYLVEON_EX_ANGELITE,\n  \"sv08.5-041\": SYLVEON_EX_ANGELITE,\n  \"sv08.5-156\": SYLVEON_EX_ANGELITE,",
+    replace: "  \"sv08-086\": SYLVEON_EX_ANGELITE,",
+    expectKilledBy: [
+      "packages/engine/src/angeliteCancel.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
 ];
