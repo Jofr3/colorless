@@ -15690,4 +15690,73 @@ export const MUTANTS: Mutant[] = [
     replace: "        cost: [\"Grass\", \"Grass\", \"Grass\", \"Colorless\"],\n        name: \"Frozen Wood\",",
     expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
   },
+  // ── D392 — THE SUBSTRING NAME READ. Seven rows, ONE PER CLAIM: the OPERATOR is
+  //    `.includes` and not `===` (C1) and not `startsWith` (C2), the ZONE is the Bench
+  //    and not the whole board (C3), the row's FRAGMENT is the printed one (C4), the
+  //    row's KEY carries the printed quotation marks (C5), the NOTE carries them too
+  //    (C6) — and C7 is on the INSTRUMENT rather than the subject, because the
+  //    possessive in the fixture's name is the only thing that makes C2 killable.
+  {
+    id: "D392-substring-collapses-to-equality",
+    decision: "D392",
+    what: "🛑 C1 — **THE NEW MEMBER BECOMES THE OLD ONE**: `.includes(cond.fragment)` becomes `=== cond.fragment`, which is `yourBenchHasNamed`'s arm one case up copied verbatim — the single most likely author error, because the two arms are three lines apart and differ in one method call. Team Rocket's Nidoqueen `sv10-116`'s printed clause then answers FALSE on the board it was printed for: §4's naming rule makes the Standard satisfier **Team Rocket's Nidoking ex**, which CONTAINS the fragment and equals it nowhere, so the +120 never pays. ⚠️ AND THE EXACT-NAME CONTROL STAYS GREEN UNDER THIS EDIT — a board holding a body named exactly \"Nidoking\" answers TRUE either way — which is precisely why the possessive board is the one that has to exist",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        (p) => p !== null && (topCardOf(state, p)?.name.includes(cond.fragment) ?? false),",
+    replace: "        (p) => p !== null && topCardOf(state, p)?.name === cond.fragment,",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-substring-narrowed-to-prefix",
+    decision: "D392",
+    what: "🛑 C2 — **THE SUBSTRING BECOMES A PREFIX**: `.includes` becomes `.startsWith`, the other plausible wrong operator and the one an author reaches for when the demonstrator's fragment happens to open the name. It is the reason this slice PAID the possessive fixture-name toll instead of naming the bench body \"Nidoking ex\": the owner possessive puts the fragment at offset 14, so this edit is FALSE on exactly the board the printed clause is TRUE on. ⚠️ A TIDIER FIXTURE WOULD HAVE MADE THIS ROW UNKILLABLE, which is what C7 exists to keep true",
+    file: "packages/engine/src/interpreter.ts",
+    find: "topCardOf(state, p)?.name.includes(cond.fragment) ?? false",
+    replace: "topCardOf(state, p)?.name.startsWith(cond.fragment) ?? false",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-substring-arm-consults-the-active-spot",
+    decision: "D392",
+    what: "🛑 C3 — **THE ZONE WIDENS TO THE WHOLE BOARD**: the arm spreads `[side.active, ...side.bench]`, which is `yourNamedPokemonInPlay`'s reading one case DOWN and the widening D279 refused for the equality member. The printed word is \"Bench\", and this member inherits that refusal rather than re-deciding it — a benched-only clause read off the Active Spot is the defect that makes a conditional bonus unconditional the moment the attacker's own name carries the fragment, which is one printed reprint away from true here (the clause names \"Nidoking\" and the family's own attacker is a Nidoqueen)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return state.players[seat].bench.some(\n        (p) => p !== null && (topCardOf(state, p)?.name.includes(cond.fragment) ?? false),\n      );",
+    replace: "      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && (topCardOf(state, p)?.name.includes(cond.fragment) ?? false),\n      );",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-row-fragment-names-the-attacker",
+    decision: "D392",
+    what: "🛑 C4 — **THE FRAGMENT IN THE VALUE STOPS MATCHING THE FRAGMENT IN THE KEY**: the row resolves to `{ fragment: \"Nidoqueen\" }`. The sentence still RESOLVES, every census figure stands still, and the card scores its +120 off a Bench holding the wrong family entirely — the one defect in this shape that is invisible to every count and visible only on a board. ⚠️ AND IT IS WORSE HERE THAN AT D367's EQUALITY TWIN, because a SUBSTRING of the attacker's own name would let the clause be armed by a second copy of the attacker: this mutant does not merely mis-point the row, it turns a partner clause into a self-reference",
+    file: "packages/engine/src/effects.ts",
+    find: "    { kind: \"yourBenchHasNameContaining\", fragment: \"Nidoking\" },",
+    replace: "    { kind: \"yourBenchHasNameContaining\", fragment: \"Nidoqueen\" },",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-row-key-drops-the-printed-quotes",
+    decision: "D392",
+    what: "🛑 C5 — **THE ROW'S KEY LOSES THE PRINTED QUOTATION MARKS**, the tidying an author does when a key looks over-punctuated. The catalog spells ASCII U+0022 around the fragment, `CONDITIONAL_DAMAGE_CLAUSES` is keyed char-for-char, and `literalClauseRow`'s only tolerance is the U+2019 apostrophe fold — which reaches neither character. So the sentence stops resolving entirely and falls back to the loud ATTACK_EFFECT_SKIPPED path: the census summands move, the residue grows back to 14 / 17, and the card deals its printed 60 forever. **D183's defect in punctuation rather than in wording**",
+    file: "packages/engine/src/effects.ts",
+    find: "    'a Pokémon that has \"Nidoking\" in its name is on your Bench',",
+    replace: "    \"a Pokémon that has Nidoking in its name is on your Bench\",",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-note-drops-the-printed-quotes",
+    decision: "D392",
+    what: "🛑 C6 — **THE NOTE DROPS THE QUOTATION MARKS** and reads *\"a Pokémon that has Nidoking in its name is on your Bench\"*. The pill still names the right board and is still grammatical, which is what makes it a real author error rather than a straw one — and it stops round-tripping to its own `CONDITIONAL_DAMAGE_CLAUSES` key, so the ONE property that separates this member's note from the neighbouring `yourBenchHasNamed`'s (whose fragment is a whole card NAME and carries no quotes) is silently gone. §2 asserts the note by VALUE and then feeds it back through the reader, so both halves fail",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `a Pokémon that has \"${cond.fragment}\" in its name is on your Bench`;",
+    replace: "      return `a Pokémon that has ${cond.fragment} in its name is on your Bench`;",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
+  {
+    id: "D392-bench-body-loses-its-owner-possessive",
+    decision: "D392",
+    what: "⚠️ C7 — **THE BENCH BODY IS RENAMED \"Nidoking ex\"**, the tidy-up that dodges the possessive fixture-name toll three other suites charge. **IT IS A MUTANT ON THE INSTRUMENT RATHER THAN ON THE SUBJECT** (D391's C6 shape, one member over): the engine is untouched, C1 still dies, and every rung about the substring reading stays green — but the fragment now sits at offset 0, so a `startsWith` implementation would pass and C2 becomes UNKILLABLE. The file would go on claiming to refute a prefix read while testing nothing about one. §3 asserts the fixture's name by VALUE before it asserts any damage, which is what stops the cast drifting into agreement with the code",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "    name: \"Team Rocket's Nidoking ex\",",
+    replace: "    name: \"Nidoking ex\",",
+    expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
+  },
 ];
