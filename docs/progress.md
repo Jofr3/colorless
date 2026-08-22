@@ -416,12 +416,12 @@
 > 0 skipped(dirty) / 0 clobbers / 0 ERRORS, 22.7s — ON THE FIRST RUN**; corpus **1324 → 1331**
 > (**+7 new, 0 retired**). ✅ **AND `--decision D275` DID NOT GO ERROR FOR THE NINETEENTH SLICE
 > RUNNING**, because the version anchor was re-pointed at `0.297.0` **inside the commit that bumped
-> it**. ✅ **FIFTEEN NEIGHBOUR DECISIONS WERE PROBED BEFORE THE SWEEP WAS LAUNCHED** — `--decision
+> it**. ✅ **SIXTEEN NEIGHBOUR DECISIONS WERE PROBED BEFORE THE SWEEP WAS LAUNCHED** — `--decision
 > D279` **6/6** (the row this slice re-transcribed), **D367** 9/9 (the bench-name clause cluster the
 > new row was inserted into), **D275** 8/8, **D242** 6/6, **D243** 6/6, **D260** 3/3 (the three
 > possessive-enumeration decisions), **D316** 15/15, **D317** 16 killed / 1 declared survivor,
 > **D383** 12/12, **D384** 7/7, **D391** 6/6, **D390** 7/7, **D326** 12/12 with `MATCH_RECORD_VERSION`
-> unmoved, **D274** 3/3 — each run ONE AT A TIME because repeated `--decision` flags do not
+> unmoved, **D274** 3/3 and **D318** 10 killed / 1 declared survivor (the EIGHT anchors on `docs/progress.md`, probed AFTER the docs commit rewrote that page — the one probe that could not be run before it) — each run ONE AT A TIME because repeated `--decision` flags do not
 > accumulate.
 >
 > ### ▶ THE FIVE THINGS TO CARRY FORWARD ABOVE EVERYTHING ELSE
@@ -579,7 +579,7 @@
 >
 > ⚠️ **AND THE TOOLING NOTES, RE-MEASURED AT THIS HEAD**: `bun run mutants --list` is read-only BY
 > ORDERING ALONE, and **REPEATED `--decision` FLAGS DO NOT ACCUMULATE** (D382 measured it; D392 ran
-> fifteen decisions one at a time because of it). ✅ **`grep -c '^    id: "' scripts/mutation/mutants.ts`
+> sixteen decisions one at a time because of it). ✅ **`grep -c '^    id: "' scripts/mutation/mutants.ts`
 > returns **1331** and so does the harness.** ✅ **AND THE `find` PASS IS A SCRIPT, NOT A GREP** —
 > `bun scripts/mutation/precheck.ts` checks all 1,331 rows in about a second and is what caught the
 > D279 breakage at D392; `git grep` finds a quoted line even when the multi-line span around it has
@@ -7614,10 +7614,11 @@ archive ratchet raised **61 → 62** in the commit that demoted D391's resume po
 FIRST run**; corpus **1324 → 1331**. 🛑 **ONE D279 ROW WAS RE-TRANSCRIBED IN THE BUILD COMMIT** — its
 `find` spans the end of the `yourBenchHasNamed` arm and the head of the arm that followed it, and the
 new arm was inserted between the two, so it went to **zero matches with the claim perfectly intact**.
-`precheck.ts` found it in a second; `git grep` for the quoted return would not have. ✅ **FIFTEEN
+`precheck.ts` found it in a second; `git grep` for the quoted return would not have. ✅ **SIXTEEN
 NEIGHBOUR DECISIONS PROBED CLEAN BEFORE LAUNCH** — D279 6/6, D367 9/9, D275 8/8, D242 6/6, D243 6/6,
 D260 3/3, D316 15/15, D317 16 + 1 declared survivor, D383 12/12, D384 7/7, D391 6/6, D390 7/7, D326
-12/12, D274 3/3 — each ONE AT A TIME. **WHOLE-CORPUS SWEEP: LAUNCHED DETACHED, NOT YET READ**;
+12/12, D274 3/3, and D318 10 + 1 declared survivor (the eight `docs/progress.md` anchors, probed AFTER
+the docs commit rewrote that page) — each ONE AT A TIME. **WHOLE-CORPUS SWEEP: LAUNCHED DETACHED, NOT YET READ**;
 prediction **1331 · 1307 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) ·
 0 clobber(s) · 0 error(s), `SWEEP_EXIT=0`**, with `error` and `stale` named as the two fields most
 likely to falsify it. **NOTHING PUSHED.**
