@@ -313,7 +313,11 @@ describe("D299 §1 — the anchor reads exactly the four printed spellings", () 
       "You may shuffle this Pokémon and all attached cards into your deck.",
       // ④ TWO of them at once, plus a per-attack-name history rider. Sylveon ex
       // `sv08-086`/`sv08.5-041`/`-156` (3 printings) — a COUNT this op does not
-      // carry and D277's stamp, on one card.
+      // carry and D277's stamp, on one card. 🆕🆕 **D396 BUILT THE RIDER AND THIS
+      // LINE STILL HOLDS**: the history clause is now a registry `attackGate` on
+      // all three ids, enforced at the §8 declaration seam, and no split is
+      // authored for it — so the WHOLE printed string is still what reaches this
+      // reader, and the COUNT is still what refuses it.
       "Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
       // ⑤ the DISCARD destination, which is `discardFromStack`'s and not this
       // op's — and which names the Active besides.

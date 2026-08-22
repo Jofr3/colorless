@@ -744,6 +744,12 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   });
 
   it("🛑 ZERO registry keys were added — this slice moves no census figure", () => {
+    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
+    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
+    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
+    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
+    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
+    // authors no `attack` program, so the ATTACK summand cannot move with them.
     // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
     // — a bare `attackGate` at index **1**, the first gate in that field at a
     // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
@@ -753,7 +759,7 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(registryCardIds()).toHaveLength(710);
+    expect(registryCardIds()).toHaveLength(713);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

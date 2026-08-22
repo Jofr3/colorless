@@ -418,6 +418,12 @@ describe("§4 — on a BOARD: the cancel, the land, and the boundary between the
 describe("§5 — the census terms, MEASURED rather than assumed", () => {
   it("🛑 S2 — none of the four ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
+    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
+    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
+    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
+    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
+    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
+    // authors no `attack` program, so the ATTACK summand cannot move with them.
     // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
     // — a bare `attackGate` at index **1**, the first gate in that field at a
     // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
@@ -427,7 +433,7 @@ describe("§5 — the census terms, MEASURED rather than assumed", () => {
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids).toHaveLength(710);
+    expect(ids).toHaveLength(713);
     for (const id of VICTINI_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

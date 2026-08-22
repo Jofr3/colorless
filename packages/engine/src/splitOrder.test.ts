@@ -166,10 +166,21 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(firstTurn) - units(licence)).toBe(10);
   });
 
-  it("S2 — 14 of 710 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 17 of 713 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
+    // 🆕🆕 D396 — 14 -> **17**, and this is the FIRST slice on which the registry
+    // side and the TEXT side of §2 below DISAGREE: three ids joined the field and
+    // ZERO joined `ATTACK_GATE_CLAUSES`, because Angelite's clause is TRAILING and
+    // ships GATE-ONLY. The two surfaces were 13/13 and then 14/14; they are 17/14
+    // now, and the gap IS the measurement that no split was authored.
     const ids = registryCardIds();
+    // 🆕🆕 D396 — 710 -> **713**: THREE registry keys on ONE program object,
+    // Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` — a bare `attackGate` at index
+    // **1** carrying `barredIf`, the SECOND gate in that field at a NON-ZERO index
+    // and the first on which the gate NAMES its own attack. Real catalog ids and NOT
+    // `fix-*` keys (the suite drives a LOCAL `cardPool`, D275's idiom), and the row
+    // authors no `attack` program, so the ATTACK summand cannot move with them.
     // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
     // — a bare `attackGate` at index **1**, the first gate in that field at a
     // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
@@ -179,13 +190,15 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids.length).toBe(710);
+    expect(ids.length).toBe(713);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
-    expect(gated.length).toBe(14);
+    expect(gated.length).toBe(17);
     const kinds = gated.flatMap((id) =>
       Object.values(programFor(id)?.attackGate ?? {}).map((g) => g.kind),
     );
-    expect(kinds.filter((k) => k === "barredIf").length).toBe(7);
+    // 🆕🆕 D396 — 7 -> **10**: Sylveon ex's three printings are the EIGHTH, NINTH
+    // and TENTH `barredIf`, and the first whose condition is not §4's turn order.
+    expect(kinds.filter((k) => k === "barredIf").length).toBe(10);
     // 🆕🆕 D395 — 3 -> **4**: Miltank `sv08.5-081` is the FOURTH `onlyIf` and the
     // first whose condition is not the §4 `allOf([youGoSecond, yourFirstTurn])`.
     expect(kinds.filter((k) => k === "onlyIf").length).toBe(4);
@@ -194,9 +207,12 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // Thirteen gates sat at index 0 and one sits at index 1, so the KEY of this map
     // is finally load-bearing on the catalog side too — the same claim
     // `rolloutGate.test.ts` drives on a board.
+    // 🆕🆕 D396 — 13 / **4**: Sylveon ex's three join Miltank at index 1, and the
+    // majority at index 0 is now 13 of 17 rather than 13 of 14 — so an index-blind
+    // read is wrong on FOUR printings across TWO cards and two polarities.
     const indices = gated.flatMap((id) => Object.keys(programFor(id)?.attackGate ?? {}));
     expect(indices.filter((k) => k === "0").length).toBe(13);
-    expect(indices.filter((k) => k === "1").length).toBe(1);
+    expect(indices.filter((k) => k === "1").length).toBe(4);
   });
 });
 
@@ -208,6 +224,12 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     const both = all.filter(
       ([, s]) => splitAttackGateClause(s) !== null && splitAttackRequirementClause(s) !== null,
     );
+    // 🆕🆕 D396 — **UNMOVED at [6, 14]**, and that is the claim rather than an
+    // omission: Sylveon ex's three printings gained a registry `attackGate` and NO
+    // `ATTACK_GATE_CLAUSES` row, because their gate clause is TRAILING and
+    // `splitAttackGateClause` is `^`-anchored by policy. All nine readers were run
+    // over the stripped body at D396 and every one refuses it, so a trailing
+    // stripper would have moved this pair and bought ZERO printings.
     // 🆕🆕 D395 — [5, 13] -> **[6, 14]**, and the disjointness below is UNMOVED:
     // the new row is a clause-only printing, and `splitAttackRequirementClause`'s
     // own list does not contain it.

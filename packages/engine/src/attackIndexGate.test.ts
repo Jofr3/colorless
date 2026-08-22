@@ -778,11 +778,17 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     // THE ATTRIBUTION CONTROLS: the sweep really walked programs and really found
     // gates, so "no ops" is an answer rather than an empty population.
     expect(programsWalked).toBeGreaterThan(300);
+    // 🆕🆕 D396 — 14 -> **17**: Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156`'s
+    // `barredIf` over D396's in-play window, on THREE keys sharing ONE program
+    // object — so this counter steps by 3 where the object count steps by 1, which
+    // is the reprint idiom being counted from the id side. The reachability claim is
+    // UNCHANGED and re-measured rather than assumed: that condition is the same
+    // two-field record with no `then` and no op anywhere inside it.
     // 🆕🆕 D395 — 13 -> **14**: Miltank `sv08.5-081`'s `onlyIf` over D394's
     // per-body window. The reachability claim is UNCHANGED and re-measured rather
     // than assumed — that condition is a two-field record with no `then` and no op
     // anywhere inside it, so this sweep still answers 0.
-    expect(gatesFound).toBe(14);
+    expect(gatesFound).toBe(17);
     expect(opsInGates).toBe(0);
   });
 
