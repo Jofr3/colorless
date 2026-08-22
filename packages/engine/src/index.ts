@@ -12108,6 +12108,82 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.303.0 → **THE DECK-SIZE READ — THE LAST BUILDABLE SENTENCE IN THE BONUS
+    RESIDUE, AND A UNION INVARIANT CORRECTED RATHER THAN EXCEPTED.**
+
+      Rabsca `sv08-014` (Surging Sparks) "Counterturn"
+      ({G}, `40+`, **+200**, index **1** of TWO — its own index 0 is "Triple Draw",
+      {C}, *"Draw 3 cards."*)
+        *"If there are 3 or fewer cards in your deck, this attack does 200 more
+         damage."*
+        **1 legal printing**
+
+    🛑 **THE POPULATION IS EXHAUSTED, AND THAT IS THE HEADLINE RATHER THAN THE
+    MEMBER.** D397 enumerated the `CONDITIONAL_DAMAGE_BONUS` residue instead of
+    sampling it: 8 sentences / 11 printings, of which exactly ONE was buildable. This
+    is it. What remains is **7 sentences / 10 printings and every one is a refusal
+    already measured** — FIVE D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future`
+    ×2, all demand-only in every ingested column), ONE at 5 printings that is D368's
+    structural SHAPE refusal (*"…in addition to this attack's cost"* reads an attack
+    `conditionHolds` is never handed), and this clause's own TWIN under a different
+    consequent. **THE NEXT SLICE IS NOT IN THIS SKELETON**, and pricing it from
+    outside is the successor's first job rather than a surprise.
+
+    🛑 **THE INVARIANT WAS WRONG, NOT THE CARD — AND FOUR RESUME POINTS QUOTED IT
+    FORWARD AS A REASON TO REFUSE.** `BoardCondition`'s doc block has said since D40
+    that a condition over hidden state *"(a hand's CONTENTS, a deck)"* would leak
+    through the gate. The hand half names CONTENTS deliberately, because a hand's
+    SIZE is public and four shipped members read it. The deck half named the ZONE, and
+    that unqualified noun is what three handoffs read as "this member is unbuildable".
+    It is corrected in place: **the line is CONTENTS against CARDINALITY, not zone
+    against zone.** `redact.ts` writes `deckCount: side.deck.length` for BOTH sides
+    with no viewer test and `packages/schema` declares it `z.number()`, so this member
+    is evaluable on the wire and the P4 gap does not widen by a byte. A member reading
+    a deck's ORDER or its CARDS would still be a leak, and nothing here does.
+
+    🛑 **MEMBER, NOT FIELD — AND THE NEAREST CANDIDATE IS WRONG TWICE, WHICH IS
+    D379's ARITHMETIC AND NOT A NEW ARGUMENT.** `opponentHandAtMost { count: 3 }` is
+    keyed on *"your opponent has 3 or fewer cards in their hand"*: the same
+    comparator, the same printed digit, and two independent defects — the **SEAT**
+    (`players[otherSeat(seat)]` for `players[seat]`) and the **ZONE** (`.hand` for
+    `.deck`). No parameterisation of a threshold repairs either. D391's rule as
+    amended at D397 agrees and the **DELEGATE** clause is what binds: that arm is an
+    inline `.length <= cond.count` with no delegate anywhere, and neither `cards.ts`
+    nor `effects.ts` carries a zone-taking predicate to hand a filter to — **there is
+    no walk to take the filter, so the arm IS the walk.** The **NOTE** clause dissents
+    (one noun apart) and is recorded as a COST note only, which is what its 2/4 record
+    earns it. **POLARITY** vetoes a field independently: a `BoardCondition` is read at
+    `onlyIf`/`barredIf` and at `then`/`otherwise`, so an optional `zone?` has no safe
+    default. D389's count points the same way — this union holds THREE pairs differing
+    in the seat alone and NOT ONE member carrying a seat field.
+
+    ⚠️ **THE TWIN IS PRINTED AND IS DELIBERATELY NOT BOUGHT.** Wo-Chien `sv08-015`
+    "Hazardous Greed" ({G}{C}, 20) prints this member's clause byte for byte under
+    *"…this attack **also does 120 damage to 2 of your opponent's Benched Pokémon**.
+    (Don't apply Weakness and Resistance for Benched Pokémon.)"* — 1 legal printing,
+    and no reader claims it. `CONDITIONAL_DAMAGE_BONUS` wants *"does N more damage."*,
+    `BONUS_CONSEQUENT_CONDITION` wants *"more damage, and …"*, `ALSO_BENCHED_SNIPE` is
+    anchored at `^This` with a count of **1**. **THE MEMBER IS BOUGHT ONCE AND THE
+    CONSEQUENT IS PRICED SEPARATELY**, and that refusal is DRIVEN — which is also what
+    keeps this slice's residue guard off the vacuity that D379 warned exhaustion
+    invites: the same clause is accepted under one consequent and declined under
+    another, on the same board, in the same run.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 25, ASKED OF EACH HALF.** No `GameState` field,
+    no `EffectOp` and no registry row: the member is authored only into
+    `CONDITIONAL_DAMAGE_CLAUSES`, a CATALOG fact re-derived from the printed text on
+    every read, so it can never ride an `EffectContinuation.pendingOp` into a record.
+    No v25 record can contain it (no v25 build authors it) and no v25 record means
+    anything different now — D335's test, both directions.
+
+    Cost: **1 `BoardCondition` member + 1 `conditionHolds` arm + 1 `conditionNote`
+    arm + 1 literal clause row + 1 fixture.** ZERO new state, ops, events, error
+    codes, prompt kinds, choice kinds, readers, regexes, templates, patterns,
+    `CardFilter` members, registry rows, `redact.ts` bytes or `packages/schema` bytes.
+
+    engineVersion 0.302.0 → **0.303.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.302.0 → **THE BENCHED-CUBONE FILTER — ONE WALK WITH TWO TESTS ON
     THE SAME BODY, AND D391's SHAPE RULE AMENDED ON ITS THIRD TEST.**
 
@@ -16218,7 +16294,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.302.0";
+export const engineVersion = "0.303.0";
 
 export type {
   ApplyResult,

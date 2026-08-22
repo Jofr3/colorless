@@ -11013,6 +11013,57 @@ export const FIXTURE_POOL: Record<string, Card> = {
       so a benched Cubone can never move a damage number and every 60 / 180 in
       `benchNamedDamagedBonus.test.ts` stays attributable to the clause. */
   "fix-cubone": battler("fix-cubone", { name: "Cubone", hp: 60, types: ["Fighting"] }),
+  /** 🆕🆕 **D398 — THE DECK-SIZE READ'S ONE BODY.** Rabsca `sv08-014` (Surging
+      Sparks), transcribed WHOLE off tcgdex rather than trimmed to the fields the
+      tests read (D306): the printed 70 HP, the {G} type, the {R} ×2 weakness, the
+      retreat 1, the `evolveFrom` and BOTH attacks at their PRINTED indices.
+
+      ⚠️ **BOTH ATTACKS ARE KEPT AND THE INDEX IS THE REASON.** "Counterturn" is
+      index **1**; a fixture carrying only the clause-bearing attack would put it at 0
+      and every board below would pass while proving nothing about the index the
+      printing actually uses. 🛑 **AND INDEX 0 IS NOT AN INERT CONTROL HERE — IT IS
+      THE SHARPEST ONE THIS SLICE COULD HAVE ASKED FOR.** "Triple Draw" prints *"Draw
+      3 cards."*, a sentence `deriveAttackEffect` has read since 0.x, so on the very
+      board this member turns on it TAKES THE DECK TO ZERO. The clause is read at
+      DECLARATION and the draw happens inside the program, so the two orders are
+      distinguishable and `deckSizeBonus.test.ts` §6 drives them. D306's
+      transcribe-whole rule paying for itself rather than costing.
+
+      ⚠️ `evolveFrom` IS THE PRINTED STRING AND NO `fix-rellor` IS OWED — nothing in
+      this slice evolves, the clause names no card, and a pre-evolution fixture would
+      be a body in the pool that no board reads (D397 needed one only because its
+      clause named the species by name).
+
+      ⚠️ **`fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the six-set manifest, and **`sv08` is in
+      none of the six**. ⚠️ And the engine `Card` type carries no `suffix` column
+      (D207's finding), which costs nothing here — neither printing has a rule box. */
+  "fix-counterturn": {
+    ...blank,
+    id: "fix-counterturn",
+    name: "Rabsca",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Rellor",
+    hp: 70,
+    types: ["Grass"],
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Triple Draw",
+        effect: "Draw 3 cards.",
+      },
+      {
+        cost: ["Grass"],
+        name: "Counterturn",
+        damage: "40+",
+        effect:
+          "If there are 3 or fewer cards in your deck, this attack does 200 more damage.",
+      },
+    ],
+  },
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12911,6 +12962,24 @@ export const BENCH_NAME_SUBSTRING_DECK = deckOf({
     from the HAND while another stands on the Bench.
 
     4 + 4 + 4 + 24 + 16 + 8 = **60**. */
+/** 🆕🆕 D398 — a DEDICATED deck, D270's shape, with **no modifier of any kind and
+    no second attacker**: nothing in it can move a damage number except how many cards
+    are left in the drawing seat's deck. That is what makes every 40 and 240 in
+    `deckSizeBonus.test.ts` attributable to the clause.
+
+    🛑 **THE DECK IS THE SUBJECT OF THE CLAUSE, SO ITS COMPOSITION IS LOAD-BEARING IN
+    A WAY NO OTHER DECK CONSTANT'S IS.** `trimDeckTo` is what sets the count on each
+    board, and the cards left behind after a trim must still be inert — so the bulk is
+    `fix-titan` (340 HP, no attacks, no Rule Box: it survives the boosted 240 and can
+    never move a number from either seat) and `fix-grass-energy`, which pays BOTH
+    printed costs ({G} for "Counterturn" and, as any Energy does, the {C} for "Triple
+    Draw"). */
+export const DECK_SIZE_BONUS_DECK = deckOf({
+  "fix-counterturn": 4, // Rabsca — "Counterturn" ({G}, 40+) at index 1: the +200
+  "fix-titan": 36, // 340 HP, no attacks — survives the boosted 240, and the dominant starter
+  "fix-grass-energy": 20, // Basic {G} — "Counterturn"'s printed cost, and any Energy pays "Triple Draw"'s {C}
+});
+
 export const BENCH_NAMED_DAMAGED_DECK = deckOf({
   "fix-bonevengeance": 4, // Marowak — "Bone Vengeance" ({C}{C}, 60+) at index 1: the +120
   "fix-cubone": 4, // "Cubone" — the name the clause carries, and the attacker's pre-evolution

@@ -3258,6 +3258,28 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // hand is empty and moves every card when it is not, so this predicate and
       // "you discarded any cards in this way" have the same extension on every board.
       return state.players[seat].hand.length > 0;
+    case "yourDeckAtMost":
+      // 🆕🆕 D398 — the SIZE of your own deck, never its contents and never its
+      // ORDER, which is the line the union's public-state invariant draws and the
+      // line D398 had to correct before this member could be built: that block named
+      // *"a deck"* flat where it names *"a hand's CONTENTS"*, and a cardinality is
+      // not a content. `redact.ts` ships `deckCount: side.deck.length` for BOTH
+      // sides, so this survives P4 redaction exactly as the four hand-size arms above
+      // it do.
+      //
+      // 🛑 THE NEAREST WRONG ANSWER IS `opponentHandAtMost` FOUR ARMS UP AND IT IS
+      // WRONG TWICE — `players[otherSeat(seat)]` for `players[seat]` and `.hand` for
+      // `.deck` — while the comparator and the printed threshold are IDENTICAL (both
+      // clauses say "3 or fewer"). One board separates them: a short deck beside a
+      // full opponent hand. D379 refused the same widening one zone over for the same
+      // two reasons.
+      //
+      // `<=`, so an EMPTY deck is TRUE. That is not an edge board: §14.3's deck-out
+      // loss is checked at the DRAW step (flow.ts) and nowhere else, so a player who
+      // has milled themselves to zero attacks legally this turn and loses at the
+      // start of the next. 2 / 3 / 4 are driven rather than described — `<` is green
+      // at 2 and wrong at 3, `===` is green at 3 and wrong at 2.
+      return state.players[seat].deck.length <= cond.count;
     case "yourActiveEnergyAtLeast": {
       // 🆕🆕 D383 — the payability of Wellspring Mask Ogerpon ex's printed cost
       // ("You may shuffle 3 Energy attached to this Pokémon into your deck"),
@@ -4271,6 +4293,21 @@ export function conditionNote(cond: BoardCondition): string {
       // because a pill is read by a player and the sibling above spells its threshold
       // out too.
       return "you have at least 1 card in your hand";
+    case "yourDeckAtMost":
+      // 🆕🆕 D398 — built from the parameter, and the PRINTED CLAUSE IS NOT REUSED
+      // even though it would type-check: the card says *"there are 3 or fewer cards
+      // in your deck"* and a reject pill is read by a player looking at their own
+      // board, so the expletive head becomes the second person the rest of this
+      // function speaks in. It therefore does NOT round-trip to its
+      // `CONDITIONAL_DAMAGE_CLAUSES` key, exactly like the three bench notes above,
+      // and `deckSizeBonus.test.ts` §4 asserts the non-round-trip rather than leaving
+      // a successor to "fix" one into the other.
+      //
+      // ⚠️ THE PLURAL IS UNCONDITIONAL, for `yourActiveEnergyAtLeast`'s reason: the
+      // count is a parameter so 1 is representable, but no printing spells one and a
+      // singular branch would be a shape nothing can reach (D205's unreachable-shape
+      // rule). "or fewer" is the printed comparator spelled as printed.
+      return `you have ${cond.count} or fewer cards in your deck`;
     case "yourActiveEnergyAtLeast":
       // 🆕🆕 D383 — built from the parameter, and the pronoun is dropped exactly as
       // every sibling drops it (D116). The plural is unconditional for

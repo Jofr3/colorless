@@ -685,7 +685,24 @@ export interface AttackerClass {
     zone's owner, Energy sitting face up on Pokémon). Both players can already
     derive the answer off the board, which is why a gate emits no event, unlike
     `coinFlipGate`, whose flip IS new information. Keep it that way: a condition
-    over hidden state (a hand's CONTENTS, a deck) would leak through the gate.
+    over hidden state (a hand's CONTENTS, a deck's CONTENTS) would leak through
+    the gate.
+
+    ⚠️ 🆕🆕 **D398 — THAT SENTENCE USED TO READ *"(a hand's CONTENTS, a deck)"*,
+    AND THE BARE NOUN WAS WRONG IN THE SAME WAY THE HAND HALF SHOWS IT IS.** The
+    hand is named by its CONTENTS precisely because its SIZE is public and has been
+    read by `opponentHandAtMost`, `handSizesEqual`, `yourHandExactly` and
+    `yourHandNotEmpty` since D118 — four members, none of them a leak. A deck's
+    cardinality is public on exactly the same terms (both players watched every
+    draw, search and mill that set it) and `redact.ts` ships it as
+    `deckCount: side.deck.length` on BOTH sides, so `yourDeckAtMost` is no more a
+    leak than the hand-size four. **THE UNQUALIFIED NOUN WAS A CATEGORY ERROR THAT
+    HAS STOOD SINCE D40**, the commit that wrote this union — quoted forward by four
+    consecutive resume points as a reason to fear a deck read, twice with the
+    instruction to price a REFUSAL against it — and it is corrected rather than
+    worked around: the line the invariant draws is CONTENTS against CARDINALITY,
+    not zone against zone. **A member that read a deck's ORDER or its CARDS would still be a leak**,
+    and nothing in this union may.
 
     "Public" is about what a condition may DEPEND on, NOT about who can compute
     it: `conditionHolds` takes a `GameState`, so only a host holding raw engine
@@ -1434,6 +1451,85 @@ export type BoardCondition =
       this gate from a vacuous one, and `purgingStrike.test.ts` §6 drives it from the
       REAL printing rather than from a synthetic one. */
   | { kind: "yourHandNotEmpty" }
+  /** 🆕🆕 **D398 — YOUR OWN DECK holds AT MOST `count` cards.** Rabsca `sv08-014`
+      (Surging Sparks) "Counterturn" ({G}, `40+`, **+200**, index **1** of TWO — its
+      own index 0 is "Triple Draw", {C}, *"Draw 3 cards."*): *"If there are 3 or
+      fewer cards in your deck, this attack does 200 more damage."* — **1 legal
+      printing**, and **THE LAST BUILDABLE SENTENCE BEHIND THE
+      `CONDITIONAL_DAMAGE_BONUS` SKELETON.** After it the residue is **7 sentences /
+      10 printings**, every one of them a refusal already measured and named: FIVE
+      are D207 BANNER clauses (`Ancient` ×1, `Tera` ×2, `Future` ×2 — the supply side
+      absent from every ingested column), ONE at 5 printings is D368's structural
+      shape refusal (*"…in addition to this attack's cost"* reads an attack
+      `conditionHolds` is never handed) and the last is this clause's own TWIN, one
+      consequent over (below).
+
+      🛑 **THE FIRST MEMBER OF THIS UNION THAT READS A ZONE WHOSE CONTENTS ARE
+      HIDDEN, AND THE INVARIANT ABOVE IS AMENDED RATHER THAN EXCEPTED.** Four resume
+      points carried this printing forward with the instruction to price a REFUSAL
+      first, because the union's own doc block named *"a deck"* as hidden state. The
+      noun was unqualified and the hand half of the very same sentence shows why that
+      is wrong: a hand is named by its CONTENTS because its SIZE is public, and four
+      shipped members read exactly that size. `redact.ts` writes
+      `deckCount: side.deck.length` for BOTH sides with no viewer test, and
+      `packages/schema`'s `RedactedSide` declares it `z.number()`, so **this member is
+      evaluable on the wire and the P4 gap is not widened by one byte** — unlike
+      `yourStadiumInPlay`, which really is unevaluable there. **A CARDINALITY IS NOT
+      A CONTENT**, and the correction is written into the invariant so the next
+      deck-shaped clause is not refused for a reason that was never true.
+
+      🛑 **A SECOND MEMBER AND NOT A FIELD ON `opponentHandAtMost`, WHICH IS THE
+      NEAREST THING IN THE UNION AND IS WRONG TWICE.** That member's own clause row
+      is keyed *"your opponent has **3 or fewer cards** in their hand"* — the same
+      comparator and the same printed digit — and it differs from this sentence in
+      the **SEAT** (`players[otherSeat(seat)]` against `players[seat]`) and in the
+      **ZONE** (`hand` against `deck`). D379 refused the identical widening on the
+      identical grounds one zone over: **two independent defects, so this is an
+      ADDITION, and no parameterisation of a threshold repairs either of them.**
+      D391's rule, in the form D397 amended it to, agrees and the DELEGATE clause is
+      what binds: `opponentHandAtMost`'s arm is an inline `.length <= cond.count`
+      with no delegate at all, and neither `cards.ts` nor this file carries a
+      zone-taking predicate to hand a filter to — **there is no walk to take the
+      filter, so the arm IS the walk.** The NOTE clause dissents (the two notes are
+      one noun apart) and is kept as a COST note only, which is what its 2/4 record
+      earns it. POLARITY argues MEMBER independently: a `BoardCondition` is read at
+      `onlyIf`/`barredIf` and at `then`/`otherwise`, so an optional `zone?` has no
+      safe default and a forgotten one is silently wrong in opposite directions.
+      D389's arithmetic points the same way — the union already holds THREE pairs
+      differing in the seat alone and NOT ONE member carrying a seat field.
+
+      ⚠️ **THE THRESHOLD IS A PARAMETER AND THE NAME DOES NOT CARRY THE 3**, for
+      D118's reason and with D367's vindication behind it: `opponentHandAtMost` was
+      given a `count` at one printed threshold, a second printing arrived at 5, and
+      the member was right. Measured over `legalAttackCorpus()` at this head, the
+      legal attack column prints deck-CARDINALITY clauses at exactly ONE threshold
+      and in exactly ONE direction — *"3 or fewer"* — so `count` varies on nothing
+      today and is the axis a second printing would vary on. **WHAT WOULD FLIP IT to
+      a `counts` LIST is a printed deck DISJUNCTION** (*"exactly 2 or 4 cards in your
+      deck"*), which `opponentPrizesRemaining` already spells and which this column
+      does not print.
+
+      ⚠️ **THE TWIN IS PRINTED, IS IN THE CATALOG, AND IS DELIBERATELY NOT BOUGHT
+      HERE.** Wo-Chien `sv08-015` "Hazardous Greed" ({G}{C}, 20) prints this member's
+      clause **byte for byte** under a different consequent — *"…this attack **also
+      does 120 damage to 2 of your opponent's Benched Pokémon**. (Don't apply
+      Weakness and Resistance for Benched Pokémon.)"*, 1 legal printing — and no
+      reader in this file claims it: `CONDITIONAL_DAMAGE_BONUS` requires *"does N
+      more damage."*, `BONUS_CONSEQUENT_CONDITION` requires *"more damage, and …"*,
+      and `ALSO_BENCHED_SNIPE` is anchored at `^This` with a count of **1**. So the
+      member is bought once and the CONSEQUENT is priced separately — the whole
+      sentence stays on the loud ATTACK_EFFECT_SKIPPED path until a slice buys the
+      count-2 benched snipe, and **that refusal is driven rather than assumed**,
+      which is also what keeps this slice's residue guard from being vacuous: it is a
+      board fact the reader must decline while the same clause one consequent over is
+      accepted.
+
+      `<= count`, so an EMPTY deck is TRUE — and that board is ORDINARY rather than
+      an edge, because §14.3 costs the game only at the DRAW step (flow.ts checks it
+      there and nowhere else), so a player who
+      milled themselves to zero and then attacks is inside the rules until their next
+      turn begins. The boundary is driven at 2, 3 and 4 rather than described. */
+  | { kind: "yourDeckAtMost"; count: number }
   /** 🆕🆕 **D372 — THE TWO ACTIVE BODIES CARRY THE SAME NUMBER OF ENERGY CARDS.**
       *"If this Pokémon and your opponent's Active Pokémon have the same amount of
       Energy attached, this attack does 100 more damage."* and the same clause at
@@ -10036,9 +10132,13 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // Stadium. Widening the row above instead would have been a RENAME with two live
   // consumers (registry FALKNER and that row), not a free widening (D362).
   //
-  // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é — the SECOND row in this table that
-  // carries neither, after D366's bench-count key. `literalClauseRow`'s U+2019 fold
-  // is inert on it, which is stated rather than left to be rediscovered.
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é, so `literalClauseRow`'s U+2019 fold
+  // is inert on it — stated rather than left to be rediscovered. 🆕 **D398 STRUCK
+  // THE WORDS *"the SECOND row in this table that carries neither, after D366's
+  // bench-count key"* FROM HERE**: a count over this table's keys refutes the rank,
+  // and D366's key is in `ATTACK_REQUIREMENT_CLAUSES` rather than in this table at
+  // all. The claim was false when it was written and nothing was keyed on it; the
+  // partition that IS measured lives in `clauseApostrophe.test.ts`.
   ["a Stadium is in play", { kind: "stadiumInPlay" }],
   // Gyarados sv02-043 "Revengeful Storm" (+100) — §14, the comeback clause: you
   // have MORE prizes left, i.e. you are BEHIND on prizes taken.
@@ -10350,17 +10450,60 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // would be the first, at a re-measured 22 executable sites across 5 files, to save a
   // note body that `conditionNote` has to write twice regardless.
   //
-  // ⚠️ THE KEY CARRIES NO APOSTROPHE — the THIRD row in this table that does not, after
-  // D378's "a Stadium is in play" and D366's bench-count key one table down. The
-  // printed subject is "your opponent" and never "your opponent's", which is exactly
-  // what separates a ZONE count from the Active-Pokémon rows above it, so
-  // `literalClauseRow`'s U+2019 fold is inert on it. `Pokémon` carries a real U+00E9
-  // and `Benched` is capitalised as printed.
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE. The printed subject is "your opponent" and
+  // never "your opponent's", which is exactly what separates a ZONE count from the
+  // Active-Pokémon rows above it, so `literalClauseRow`'s U+2019 fold is inert on
+  // it. `Pokémon` carries a real U+00E9 and `Benched` is capitalised as printed.
+  // 🆕 **D398 STRUCK THE WORDS *"the THIRD row in this table that does not, after
+  // D378's \"a Stadium is in play\" and D366's bench-count key one table down"* FROM
+  // HERE** — a count over this table's keys refutes the rank, and the row's own key
+  // carries an é, so it was wrong on either reading of "does not". The partition
+  // that IS measured lives in `clauseApostrophe.test.ts`.
   //
   // ⚠️ AND THE THRESHOLD IS THE PARAMETER, WHICH THE CATALOG ITSELF VARIES: the legal
   // attack column prints exactly TWO bench-count board facts and their numbers differ
   // (3 here, "4 or fewer" on D366's V-Force, stored as the positive floor 5).
   ["your opponent has 3 or more Benched Pokémon", { kind: "opponentBenchAtLeast", count: 3 }],
+  // 🆕🆕 D398 — Rabsca `sv08-014` "Counterturn" ({G}, `40+`, **+200**, index 1 of
+  // TWO), ONE legal printing, and the LAST BUILDABLE SENTENCE behind this table's
+  // skeleton: the residue it leaves is 7 sentences / 10 printings, all refusals
+  // (five D207 BANNERS, D368's structural shape refusal at 5 printings, and this
+  // clause's own twin one consequent over).
+  //
+  // 🛑 **THE SHARPEST NEAR-MISS IN THIS TABLE IS FOUR ROWS UP AND SHARES THE
+  // PRINTED DIGIT.** *"your opponent has 3 or fewer cards in their hand"* is the
+  // same comparator at the same threshold, and differs in the SEAT and in the ZONE
+  // at once — D379's arithmetic, which refused the identical widening one zone
+  // over. Keys are whole printed clauses and never substrings, so neither row can
+  // reach the other; driven both ways on ONE board where the deck is short and the
+  // opponent's hand is not.
+  //
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE AND NO é, so `literalClauseRow`'s U+2019 fold
+  // is inert on it — stated rather than left to be rediscovered. 🛑 **AND THIS ROW
+  // CLAIMS NO RANK, BECAUSE THE TWO ROWS THAT DO ARE BOTH WRONG.** D378's calls
+  // itself *"the SECOND row in this table that carries neither"* and D389's *"the
+  // THIRD"*; a count over this table's own keys refutes both on sight, and D378's
+  // even names D366's key as its predecessor when that key is in
+  // `ATTACK_REQUIREMENT_CLAUSES`. Nothing in the suite was keyed on either, which is
+  // the same PERISHABLE-UNIQUENESS shape `opponentHandAtMost` and `handSizesEqual`
+  // each record one file over — except that these two did not perish, they were born
+  // wrong. **A COUNT IN A COMMENT IS A CLAIM, AND THE ONLY HONEST PLACE FOR ONE IS A
+  // TEST**: this partition IS counted, across both tables and the templates, by
+  // `clauseApostrophe.test.ts`, and this key lands on its apostrophe-FREE side. Both
+  // ranks are struck in place rather than left to mislead a fourth reader.
+  //
+  // ⚠️ AND THE PRINTED SUBJECT IS THE EXPLETIVE *"there are"* rather than *"you
+  // have"* — the only head in this table that names no seat at all. The possessive
+  // lives on the ZONE (*"your deck"*), and that is what resolves the member to the
+  // attacker's own side.
+  //
+  // 🛑 **A LITERAL ROW AND NOT A TEMPLATE, AND THE COLUMN DECIDES IT.** A pattern
+  // `there are (\d+) or fewer cards in your deck` would accept a threshold the
+  // catalog prints nowhere and answer it with this member — D373's rule verbatim: a
+  // NUMBER has no closed vocabulary to fail against, so D118's test cannot be run
+  // on it. The member's `count` is still a parameter, because the layer that would
+  // vary it is a SECOND ROW rather than a capture.
+  ["there are 3 or fewer cards in your deck", { kind: "yourDeckAtMost", count: 3 }],
   // Bronzong sv03-145 "Extrasensory" (+90). Bronzor sv03-144 "Mirror Draw"
   // prints this clause's exact words ("Draw cards until you have the same number
   // of cards in your hand as your opponent.") as a DRAW effect — a substring
