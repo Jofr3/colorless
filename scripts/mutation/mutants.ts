@@ -15620,4 +15620,66 @@ export const MUTANTS: Mutant[] = [
     replace: "    if (type !== undefined) return { kind: \"opponentActiveHasType\", type };",
     expectKilledBy: ["packages/engine/src/inPlayTypeBonus.test.ts", "packages/engine/src/clauseTemplateAnchors.test.ts"],
   },
+  // ── D391 — THE TYPED PER-BODY ENERGY THRESHOLD. Six rows, ONE PER CLAIM: the
+  //    FILTER is actually read (C1), the ROW answers with THIS member and not the
+  //    unquantified neighbour (C2), the ROW carries the FIELD and not just the count
+  //    (C3), the NOTE threads the field it was given (C4), the fixture Special really
+  //    provides TWO units of ONE type (C5), and the demonstrator's COST is independent
+  //    of its clause (C6). ⚠️ THE FIRST FOUR ARE THE SHAPE DECISION ITSELF: an optional
+  //    field is invisible to the compiler at every site that ignores it, which is the
+  //    one thing a SECOND MEMBER would have got for free, so it is bought here instead. —
+  {
+    id: "D391-typed-threshold-drops-the-filter",
+    decision: "D391",
+    what: "🛑 C1 — **THE FILTER DROPPED: `cond.energy ?? null` BECOMES `null`.** This is not an invented mistake — it is D383's own arm restored VERBATIM (D190b's neighbour-copy shape at its purest: the line as it stood one commit ago), and it is the exact edit an optional field invites, because nothing in the type system asks for it. ⚠️ **AND ITS BLAST RADIUS IS THE WHOLE PRINTING.** Frozen Wood costs {W}{W}{W}{C} and the clause counts {G}, so with single-unit attachments EVERY board that can legally declare the attack holds four Energy cards and `>= 2` is TRUE on all of them: the mutant does not misjudge some boards, it makes the printed +120 **unconditional**. `typedEnergyThreshold.test.ts` §3's attribution control drives three ordinary paying boards that each deal 120",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count;",
+    replace: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts", "packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D391-typed-threshold-row-claims-the-unquantified-neighbour",
+    decision: "D391",
+    what: "🛑 C2 — **THE ROW ANSWERS THE CARD WITH THE NEIGHBOUR'S MEMBER**: the key keeps its printed clause and its VALUE becomes `{ kind: \"yourActiveHasEnergyAttached\", energy: \"Grass\" }` — the typed-but-UNQUANTIFIED member on the SAME body, which this file's own doc block names as the nearest thing in the union. **THE MUTANT COMPILES, THE CENSUS DOES NOT MOVE, AND EVERY RESIDUE RUNG IN TWENTY FILES STAYS GREEN** — the sentence still resolves, just to a question one quantifier weaker — so only an assertion on the derived MEMBER or on a ONE-Grass board reaches it. A row has no deriver behind it to refuse what it cannot parse (D190b/D199), so whatever is authored is what the card does forever. §5 asserts the pairing by value and §3 drives the one-Grass board that separates them",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"this Pokémon has 2 or more {G} Energy attached\",\n    { kind: \"yourActiveEnergyAtLeast\", energy: \"Grass\", count: 2 },\n  ],",
+    replace: "  [\n    \"this Pokémon has 2 or more {G} Energy attached\",\n    { kind: \"yourActiveHasEnergyAttached\", energy: \"Grass\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
+  },
+  {
+    id: "D391-typed-threshold-row-forgets-the-new-field",
+    decision: "D391",
+    what: "⚠️ C3 — **THE ROW IS AUTHORED WITHOUT THE FIELD THE SLICE JUST ADDED**: `{ kind: \"yourActiveEnergyAtLeast\", count: 2 }`, which is the shipped D383 spelling and therefore the single most likely thing to type at this address. **THIS IS THE DEFECT AN OPTIONAL FIELD MAKES POSSIBLE AND A SECOND MEMBER WOULD HAVE MADE IMPOSSIBLE** — the object is still well-typed, the row still resolves, the residue still steps, and the answer is the unfiltered count. It is C1's defect one file over, and it is listed separately because the two are fixed in different places and a suite can easily catch one and not the other",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"this Pokémon has 2 or more {G} Energy attached\",\n    { kind: \"yourActiveEnergyAtLeast\", energy: \"Grass\", count: 2 },\n  ],",
+    replace: "  [\n    \"this Pokémon has 2 or more {G} Energy attached\",\n    { kind: \"yourActiveEnergyAtLeast\", count: 2 },\n  ],",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
+  },
+  {
+    id: "D391-typed-threshold-note-ignores-its-filter",
+    decision: "D391",
+    what: "⚠️ C4 — **THE NOTE COLLAPSES TO ITS UNNARROWED BRANCH**, so a narrowed condition renders the string D383 shipped and a player is told *\"2 or more Energy attached\"* on a clause that counts Grass. It is the half of the shape argument that says the field cost ONE interpolation slot rather than a second sentence — and the failure mode of that economy is exactly this: a slot nobody filled. **NOTHING ELSE IN THE SUITE READS THIS STRING**, so §2's three-spellings rung is the only thing between it and a shipped reject pill",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `your Active Pokémon has ${cond.count} or more ${\n        cond.energy === undefined\n          ? \"Energy\"\n          : cond.energy === \"special\"\n            ? \"Special Energy\"\n            : `${cond.energy} Energy`\n      } attached`;",
+    replace: "      return `your Active Pokémon has ${cond.count} or more Energy attached`;",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
+  },
+  {
+    id: "D391-grass-double-loses-its-second-unit",
+    decision: "D391",
+    what: "⚠️ C5 — **THE FIXTURE SPECIAL STOPS PROVIDING TWO UNITS**: `[\"Grass\", \"Grass\"]` becomes `[\"Grass\"]`, the dedupe instinct applied to a list where the duplicate is the whole point. **IT IS A MUTANT ON THE INSTRUMENT RATHER THAN ON THE SUBJECT**, and that is deliberate: §4's cards-versus-units finding is only a measurement while some card really provides two units of one type, and every rung in it stays GREEN under this edit except the one that reads `providedEnergy` — `countAttachedEnergy` answers 1 either way, so the file would go on *claiming* to separate cards from units while testing nothing. The pool prints no such card, so nothing else can restore the property",
+    file: "packages/engine/src/registry.ts",
+    find: "const FIX_GRASSDOUBLE: CardProgram = {\n  energy: { provides: [\"Grass\", \"Grass\"] },\n};",
+    replace: "const FIX_GRASSDOUBLE: CardProgram = {\n  energy: { provides: [\"Grass\"] },\n};",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
+  },
+  {
+    id: "D391-demonstrator-cost-names-the-clause-type",
+    decision: "D391",
+    what: "🛑 C6 — **THE DEMONSTRATOR'S COST IS RETYPED TO THE CLAUSE'S OWN ENERGY**: {W}{W}{W}{C} becomes {G}{G}{G}{C}. The printed card is a WATER Pokémon whose clause counts GRASS, and that independence is the reason C1 is catchable at all — under this fixture every board that pays the cost holds three Grass, so the clause is armed by paying and the FALSE case becomes unreachable. **A MUTANT THAT DOES NOT BREAK THE ENGINE AT ALL; IT BREAKS THE EXPERIMENT** (D390's fixture rule, one file over: a fixture's discriminating power is relative to the parameter under test). §3 asserts the printed cost by value BEFORE it asserts anything about damage, so the fixture cannot drift into agreeing with the clause",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "        cost: [\"Water\", \"Water\", \"Water\", \"Colorless\"],\n        name: \"Frozen Wood\",",
+    replace: "        cost: [\"Grass\", \"Grass\", \"Grass\", \"Colorless\"],\n        name: \"Frozen Wood\",",
+    expectKilledBy: ["packages/engine/src/typedEnergyThreshold.test.ts"],
+  },
 ];
