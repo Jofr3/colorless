@@ -11543,9 +11543,13 @@ export const FIXTURE_POOL: Record<string, Card> = {
       A **Stage 1** with 140 HP and retreat 3, all printed, and the printed ×2 Fighting
       Weakness is transcribed too — inert here, because nothing in this suite attacks
       the attacker, and carried anyway rather than trimmed to what the tests happen to
-      read (D306). `evolveFrom` is deliberately NULL: this pool seats it with
-      `setActiveFromDeck`, and inventing a pre-evolution name would be a datum nothing
-      printed.
+      read (D306). ⚠️ **AND `evolveFrom` IS TRANSCRIBED FOR A REASON THAT IS NOT
+      TIDINESS**: `stage1Bonus.test.ts` §1 sweeps this pool for Stage 1 bodies with a NULL
+      `evolveFrom` and pins the set at exactly ONE (`fix-exstage1`), because that
+      disagreement between two independent columns is its whole finding. A second
+      chainless Stage 1 invented here would have moved somebody else's measurement
+      rather than recorded one. The pool seats this body with `setActiveFromDeck`, so
+      the chain is never walked.
 
       ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts` diffs
       only the `sv*` ids in this pool against the 978-row / 6-set manifest, and `sv05`
@@ -11557,6 +11561,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     name: "Fixlectivire",
     category: "Pokemon",
     stage: "Stage1",
+    evolveFrom: "Electabuzz",
     hp: 140,
     types: ["Lightning"],
     retreat: 3,
