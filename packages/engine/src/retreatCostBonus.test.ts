@@ -631,7 +631,13 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect([refused.length, units(refused)]).toEqual([14, 17]);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect([refused.length, units(refused)]).toEqual([13, 16]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -649,9 +655,11 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // clause left above one printing is the 5-printing declaration one, disqualified
     // on SHAPE.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
@@ -669,14 +677,15 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
     // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
     // moves and no registry summand does.
-    expect([resolving.length, units(resolving)]).toEqual([370, 1262]);
+    expect([resolving.length, units(resolving)]).toEqual([371, 1263]); // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
     // 🆕🆕 D390 — a SECOND `- 1` term at the FRONT, for D389's reason verbatim: the
     // OPPONENT-SEAT TYPE READ resolved ONE sentence worth ONE printing, and this file's
     // own step stays the difference between two adjacent rungs.
     // 🆕🆕 D391 — a `- 1` term at the FRONT of each chain: the TYPED PER-BODY
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
-    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([368, 1260]);
+    // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
+    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([368, 1260]);
     // 🆕🆕 D389 — a `- 1` term at the FRONT of each chain, so THIS file's own step is
     // still the difference between two adjacent rungs while the HEAD above moves for
     // somebody else's work: D389 resolved ONE sentence worth ONE printing (the
@@ -684,8 +693,9 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — one more `- 1` term at the FRONT of each chain: the TYPED PER-BODY
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
-    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([367, 1259]);
+    // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
+    expect([resolving.length - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1]).toEqual([367, 1259]);
     // D387 left it at 366 / 1,258, and the difference is this file's sentence alone.
-    expect([resolving.length - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1]).toEqual([366, 1258]);
+    expect([resolving.length - 1 - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1 - 1]).toEqual([366, 1258]);
   });
 });

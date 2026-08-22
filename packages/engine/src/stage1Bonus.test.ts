@@ -188,7 +188,12 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // slice's demonstrator lands squarely in this population. **THE NUMBER THIS RUNG
     // CARRIES IS A FACT ABOUT THE WHOLE POOL, NOT ABOUT THIS FILE'S DECK** — which is
     // exactly why it is derived live and re-measured rather than frozen.
-    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(25);
+    // 🆕🆕 D392 — 25 -> **26**, and the mover is again a slice that is not about stages:
+    // `fix-loveimpact` is Team Rocket's Nidoqueen transcribed whole, a **Stage 2** with a
+    // named `evolveFrom`, so the SUBSTRING NAME READ's demonstrator lands in this
+    // population exactly as D388's did. The rung keeps saying what it always said — the
+    // subset is a catalog coincidence — at a number the pool decides.
+    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(26);
   });
 
   it("🛑 …and the BUILD is not a narrowing: the wide member keeps all NINE printings", () => {
@@ -510,7 +515,13 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect([refused.length, units(refused)]).toEqual([14, 17]);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect([refused.length, units(refused)]).toEqual([13, 16]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -528,14 +539,16 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // clause left above one printing is the 5-printing declaration one, disqualified
     // on SHAPE.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D389 — 16 -> **15**, and 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT BENCH
     // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same band.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

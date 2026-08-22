@@ -210,8 +210,15 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect([refused.length, units(refused)]).toEqual([14, 17]);
-    expect([refused.length + 2, units(refused) + 2]).toEqual([16, 19]);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect([refused.length, units(refused)]).toEqual([13, 16]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, D389's did not.
+    expect([refused.length + 3, units(refused) + 3]).toEqual([16, 19]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -223,10 +230,12 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
     // …and the TRAP is still in the residue, at its own printing, which is what makes
     // "the residue fell by one" a statement about THIS sentence.
@@ -562,12 +571,13 @@ describe("§6 — the fixture, the census this row moves, and the questions aske
     // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
     // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
     // moves and no registry summand does.
-    expect([resolving.length, units(resolving)]).toEqual([373, 1270]);
+    expect([resolving.length, units(resolving)]).toEqual([374, 1271]); // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
     // D389 left it at 371 / 1,268, and the difference is this sentence alone.
     // 🆕🆕 D391 — a `- 1` term at the FRONT of each chain: the TYPED PER-BODY
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
-    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([371, 1268]);
+    // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
+    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([371, 1268]);
   });
 
   it("🛑 the move is READER-keyed: no registry row, no gate clause, nothing persisted", () => {

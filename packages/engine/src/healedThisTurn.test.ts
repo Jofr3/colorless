@@ -245,16 +245,26 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect(refused.length).toBe(14);
-    expect(units(refused)).toBe(17);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect(refused.length).toBe(13);
+    expect(units(refused)).toBe(16);
     // 🛑 A 1:2 STEP, which is the shape seven earlier slices in this family took —
     // D384's was the family's only 1:1. Written as offsets off the LIVE head so a
     // successor inherits the history without freezing it: D384's 20/24, D378's 21/25,
     // D377's 22/26, D376's 24/28.
-    expect([refused.length + 6, units(refused) + 7]).toEqual([20, 24]);
-    expect([refused.length + 7, units(refused) + 8]).toEqual([21, 25]);
-    expect([refused.length + 8, units(refused) + 9]).toEqual([22, 26]);
-    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 7, units(refused) + 8]).toEqual([20, 24]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 8, units(refused) + 9]).toEqual([21, 25]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 9, units(refused) + 10]).toEqual([22, 26]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 11, units(refused) + 12]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -279,8 +289,10 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // the singleton band and nothing else moved.
     // 🆕🆕 D391 — `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`: the TYPED PER-BODY ENERGY
     // THRESHOLD left the singleton band and nothing else moved.
+    // 🆕🆕 D392 — `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`: the SUBSTRING NAME READ left the
+    // singleton band and nothing else moved.
     expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([
-      [1, 12],
+      [1, 11],
       [5, 1],
     ]);
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
@@ -293,7 +305,8 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same
     // band, with the 2-printing band already empty and staying empty.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect(Math.max(...byClause.values())).toBe(5);
     // …and the clause this slice bought is not in the map at all, which is a different
     // claim from "no clause has 2 printings" and fails on its own if the row is dropped.

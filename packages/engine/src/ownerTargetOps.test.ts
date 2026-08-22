@@ -1108,6 +1108,16 @@ describe("FIXTURE_POOL, swept as its own population", () => {
         // edit is the whole cost.
         "fix-tr-other-energy",
         "fix-not-tr-energy",
+        // ⚠️ **AND ANOTHER EXPIRY, AT D392 — THE FIRST IN SEVENTEEN SLICES, AND IT WAS
+        // PAID ON PURPOSE.** The SUBSTRING name read is demonstrated on Team Rocket's
+        // Nidoqueen `sv10-116`, whose printed clause is satisfied in Standard by Team
+        // Rocket's Nidoking ex — and the OWNER POSSESSIVE is exactly what puts the
+        // fragment "Nidoking" at a NON-ZERO offset, so a `startsWith` reading fails on
+        // the board the card is printed for. A tidy unprefixed name would have dodged
+        // this list and left that reading unrefuted. Neither body is reachable from this
+        // file's ops; the list edit is the whole cost.
+        "fix-loveimpact",
+        "fix-trnidoking",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

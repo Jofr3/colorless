@@ -755,6 +755,14 @@ describe("D200 — what the predicate reads", () => {
         "fix-ethans-cyndaquil/Ethan",
         "fix-ethans-typhlosion/Ethan",
         "fix-ethans-pichu/Ethan",
+        // ⚠️ **AND AN EXPIRY AT D392, WHICH THIS PREDICATE DID NOT ASK FOR AND WHICH IT
+        // ANSWERS CORRECTLY ANYWAY.** The SUBSTRING name read is demonstrated on Team
+        // Rocket's Nidoqueen `sv10-116` and its Standard satisfier Team Rocket's
+        // Nidoking ex, so two more `Team Rocket's ` bodies exist in the pool — and
+        // `ownerPokemon` matches the possessive WHOLE, which is why both land here and
+        // why the plain `fix-nidoking` (named "Nidoking", no prefix) does not.
+        "fix-loveimpact/Team Rocket",
+        "fix-trnidoking/Team Rocket",
       ].sort(),
     );
   });

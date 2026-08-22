@@ -312,7 +312,13 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect([refused.length, units(refused)]).toEqual([14, 17]);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect([refused.length, units(refused)]).toEqual([13, 16]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -348,7 +354,8 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // 🆕🆕 D391 — 13 -> **12**: the TYPED PER-BODY ENERGY THRESHOLD was a SINGLETON
     // too, so the comparison this rung makes (six printings for one op against ONE for the
     // best clause row) is again unchanged by it.
-    expect([singletons.length, units(singletons)]).toEqual([12, 12]);
+    // 🆕🆕 D392 — 12 / 12 -> **11 / 11**: the SUBSTRING NAME READ was a singleton.
+    expect([singletons.length, units(singletons)]).toEqual([11, 11]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);

@@ -249,8 +249,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect(refused.length).toBe(14);
-    expect(units(refused)).toBe(17);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect(refused.length).toBe(13);
+    expect(units(refused)).toBe(16);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -262,20 +268,22 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 10).toBe(24);
-    expect(units(refused) + 11).toBe(28);
-    expect(refused.length + 11).toBe(25);
-    expect(units(refused) + 13).toBe(30);
-    expect(refused.length + 12).toBe(26);
-    expect(units(refused) + 15).toBe(32);
-    expect(refused.length + 13).toBe(27);
-    expect(units(refused) + 17).toBe(34);
-    expect(refused.length + 14).toBe(28);
-    expect(units(refused) + 19).toBe(36);
-    expect(refused.length + 16).toBe(30);
-    expect(units(refused) + 21).toBe(38);
-    expect(refused.length + 17).toBe(31);
-    expect(units(refused) + 23).toBe(40);
+    // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
+    expect(refused.length + 11).toBe(24);
+    // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
+    expect(units(refused) + 12).toBe(28);
+    expect(refused.length + 12).toBe(25);
+    expect(units(refused) + 14).toBe(30);
+    expect(refused.length + 13).toBe(26);
+    expect(units(refused) + 16).toBe(32);
+    expect(refused.length + 14).toBe(27);
+    expect(units(refused) + 18).toBe(34);
+    expect(refused.length + 15).toBe(28);
+    expect(units(refused) + 20).toBe(36);
+    expect(refused.length + 17).toBe(30);
+    expect(units(refused) + 22).toBe(38);
+    expect(refused.length + 18).toBe(31);
+    expect(units(refused) + 24).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -314,7 +322,8 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // 1-printing band is again the ONLY band that moved. The 2-printing band was
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
@@ -503,7 +512,13 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // 🆕🆕 D391 — 484 -> **486**: TWO fixtures, `fix-frozenwood` (the Abomasnow
     // demonstrator) and `fix-grassdouble` (the Special providing `{G}{G}`). Both `fix-*`, so the
     // FLOOR moves and the catalog behind it does not.
-    expect(ids).toHaveLength(486);
+    // 🆕🆕 D392 — 486 -> **489**: THREE fixtures, `fix-loveimpact` (Team Rocket's
+    // Nidoqueen, the demonstrator) and the two bench bodies `fix-trnidoking` /
+    // `fix-nidoking`. None prints a Resistance — what D392 reads off a card is
+    // `Card.name`, a printed column that is not this one — so `Card.resistances` is
+    // untouched for a TWELFTH consecutive slice. All three are `fix-*`, so the FLOOR
+    // moves and the catalog behind it does not.
+    expect(ids).toHaveLength(489);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -575,17 +590,19 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // 🆕🆕 D391 — a `- 2` term at the FRONT: `fix-frozenwood` and `fix-grassdouble`,
     // the Abomasnow demonstrator and the Special providing `{G}{G}`. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D392 — a `- 3` term for this slice's three fixtures, at the FRONT of the chain.
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
+    // 🆕🆕 D392 — a `- 3` term for this slice's three fixtures, at the FRONT of the chain.
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

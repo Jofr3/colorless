@@ -215,8 +215,15 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // than quoted. 🛑 THE 2-PRINTING BAND WAS ALREADY EMPTY AND STAYS EMPTY, so the
     // band rung below is aimed at the WHOLE distribution and its refusal comes from
     // OUTSIDE the emptied band (D379's saturation rule).
-    expect([refused.length, units(refused)]).toEqual([14, 17]);
-    expect([refused.length + 1, units(refused) + 1]).toEqual([15, 18]);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect([refused.length, units(refused)]).toEqual([13, 16]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, D390's did not.
+    expect([refused.length + 2, units(refused) + 2]).toEqual([15, 18]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -227,9 +234,11 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // declaration clause D368 disqualified on SHAPE — a fact about the whole
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
-    expect(byClause.size).toBe(13);
+    // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
+    expect(byClause.size).toBe(12);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
     // …and the TRAP is still in the residue at its 5 printings, which is what makes
     // "the residue fell by one sentence" a statement about THIS sentence. It shares

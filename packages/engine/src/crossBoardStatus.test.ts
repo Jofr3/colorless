@@ -287,14 +287,22 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
     // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
     // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
-    expect(refused.length).toBe(14);
-    expect(units(refused)).toBe(17);
+    // 🆕🆕 D392 — 14 / 17 -> **13 / 16**: the SUBSTRING NAME READ left this residue — ONE
+    // sentence at ONE printing (Team Rocket's Nidoqueen `sv10-116` "Love Impact", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
+    // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
+    // decided it are driven in `benchNameSubstring.test.ts` §2.
+    expect(refused.length).toBe(13);
+    expect(units(refused)).toBe(16);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
-    expect([refused.length + 11, units(refused) + 13]).toEqual([25, 30]);
-    expect([refused.length + 12, units(refused) + 15]).toEqual([26, 32]);
-    expect([refused.length + 13, units(refused) + 17]).toEqual([27, 34]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 11, units(refused) + 12]).toEqual([24, 28]);
+    // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
+    expect([refused.length + 12, units(refused) + 14]).toEqual([25, 30]);
+    expect([refused.length + 13, units(refused) + 16]).toEqual([26, 32]);
+    expect([refused.length + 14, units(refused) + 18]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -412,7 +420,7 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the 1-printing band,
     // which is again the ONLY band that moved. The 2-printing band was already empty
     // and stays empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(13); // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band
+    expect(byClause.size).toBe(12); // 🆕🆕 D392 — the SUBSTRING NAME READ left the 1-printing band // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band
     // …and the 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -437,7 +445,8 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // clause left above one printing is the 5-printing declaration one, disqualified
     // on SHAPE.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
-    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
+    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(11);
   });
 });
 
