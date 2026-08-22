@@ -413,9 +413,16 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // afterwards with both headings present in order — D372's range-replace defect is
   // the thing this number exists to report, and it reports it only if the number is
   // raised in the SAME commit as the demotion (D376 shipped a red HEAD by omitting it).
-  const ARCHIVES = 58;
+  // 🆕🆕 D389 — 58 -> **59**, RAISED IN THE SAME COMMIT THAT DEMOTES D388's RESUME POINT
+  // (the guard's UP branch: archived deliberately, say so and raise the number). D388's body
+  // was captured BY INDEX before the rewrite — 197 lines, opening "THE NEXT CONCRETE ACTION
+  // (written 2026-08-22, after D388)" and closing "— and D388 also RAISED the ratchet 57 -> 58
+  // in the same commit." — re-emitted under its own archive heading, and the SEAM was re-read
+  // afterwards rather than assumed (D372's range-replace ate a body while this ratchet stayed
+  // green, because the heading count is not the body count).
+  const ARCHIVES = 59;
 
-  it("the page still holds all 58 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 59 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

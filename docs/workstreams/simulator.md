@@ -23717,3 +23717,189 @@ effect text byte for byte, at **index 0 of ONE attack**. ⚠️ `compendium.poke
 to WebFetch — its rulings are reachable only through search snippets and Bulbapedia, which is where
 the order-of-operations statement came from. ⚠️ **THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**;
 that is `legalAttackCorpus()`'s alone.
+
+---
+
+## D389 — THE OPPONENT-SEAT BENCH COUNT: the seat-parameter question, settled on a re-measurement (engine 0.293.0 → **0.294.0**, `MATCH_RECORD_VERSION` **STAYS 23**)
+
+**BUILT.** Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**, index 0 of TWO),
+**1 legal printing**: *"If your opponent has 3 or more Benched Pokémon, this attack does 80 more
+damage."* ONE parameterised `BoardCondition` member (`opponentBenchAtLeast { count }`) with TWO
+exhaustive-switch arms, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, ONE fixture
+(`fix-deletingslash`), ONE dedicated 60 (`OPPONENT_BENCH_COUNT_DECK`) and ONE 24-case suite
+(`opponentBenchCount.test.ts`). **ZERO new card predicates** — `bench` is a dense `InPlayPokemon[]`
+and its `length` IS the count.
+
+### 🛑 THE TRANSFERABLE FINDING: D388's §1 MOVE APPLIES TO A *SHAPE*, NOT ONLY TO A NOUN PHRASE
+
+D388 settled a two-reading noun phrase by grepping for whether the engine had already answered it.
+The same move settles a **SHAPE** question, and it settled the oldest one this run carried.
+
+The question — a second `BoardCondition` member, or a `seat` parameter on `yourBenchAtLeast`? — had
+been open since D362 and deferred for sixteen slices, and this candidate was the strongest case a
+parameter had ever had here: it differs from the shipped member in the **SEAT ALONE**. (Contrast
+D379's hand-size pair, which differed in the seat **AND** the comparator — two independent defects,
+so an addition was forced and no judgement was needed.)
+
+**ONE GREP ANSWERED IT.** `BoardCondition` holds **49 members and NOT ONE carries a seat field**, and
+it holds **THREE pairs that differ in the seat alone**, each shipped as a second member:
+
+  • `yourActiveDamaged` / `opponentActiveDamaged`
+  • `yourActivePoisoned` / `opponentActivePoisoned`
+  • `yourActiveHasToolAttached` / `opponentActiveHasToolAttached`  (D369)
+
+D369's block on the last of those already argues the point in as many words: *"NOT written as a
+recursive call on the twin with the seat flipped: `conditionHolds` is seat-RELATIVE, so 'the other
+seat's own Active' is exactly what the twin would answer for a caller that passed the other seat —
+and there is no caller that does."*
+
+⚠️ **BEFORE ARGUING A SHAPE FROM FIRST PRINCIPLES, GREP FOR WHETHER THIS ENGINE HAS ALREADY CHOSEN
+ONE.** A question a whole slice had been budgeted for had a precedent three deep.
+
+### ⚠️ AND THE PRICE MUST BE RE-MEASURED IN *BOTH* DIRECTIONS
+
+D387 caught a price quoted forward that had **shrunk** on contact (D362's 31 sites became three
+mechanisms once the SET relation was distinguished from the BUILD relation). The handoff here was
+explicit that D362's number might collapse again, because `yourBenchAtLeast` has ONE clause row and
+TWO arms. **It did not.**
+
+Measured at this head: **35 occurrences across 10 files, of which 22 are EXECUTABLE** — 20 `kind:`
+literals and 2 exhaustive-switch arms — across **5 files** (`benchCountRequirement.test.ts` 14,
+`benchTypeBonus.test.ts` 2, `effects.ts` 2, `interpreter.ts` 2, `scripts/mutation/mutants.ts` 2). The
+remaining 13 are prose in doc blocks.
+
+🆕 **THE INSTRUMENT, STATED SO THE NEXT SLICE DOES NOT INVENT ONE:**
+
+```
+grep -rn 'kind: "<member>"' --include=*.ts .   # the EXECUTABLE sites — what a rename costs
+grep -rn '<member>' --include=*.ts .           # the total — what a rename READS LIKE
+```
+
+The two differ by a factor of ~1.6 here. **ONLY THE FIRST IS A PRICE.** A doc-block mention is a
+paragraph to update, not a site that can break.
+
+### 🛑 THE GROUND THAT ACTUALLY SETTLED IT: THE NOTE IS A DIFFERENT SENTENCE PER SEAT
+
+The arithmetic above says a parameter is expensive. It does **not** say it is wrong. What does:
+
+`conditionNote` renders a **DIFFERENT PRINTED SENTENCE PER SEAT** — *"you have 3 or more Benched
+Pokémon"* against *"your opponent has 3 or more Benched Pokémon"*. A `seat` field therefore does not
+delete the second body; it moves two strings into a branch inside one arm, and pays the rename on
+top. **THE SECOND MEMBER IS STRICTLY CHEAPER, NOT MERELY MORE CONVENTIONAL.**
+
+⚠️ **AND THE NEW MEMBER'S NOTE IS A FULL ROUND TRIP** — byte-identical to its own
+`CONDITIONAL_DAMAGE_CLAUSES` key, which the twin's can never be, because D116 makes the table resolve
+the printed pronoun and the two seats print different subjects. **WHEN A NOTE ROUND-TRIPS TO ITS OWN
+KEY, ASSERT IT**: it is a free tripwire on the pair of tables and it names, in one line, why the seat
+is not a field.
+
+**GENERAL FORM:** *when deciding whether a distinction is a FIELD or a MEMBER, ask what the RENDERER
+has to say. A field that the renderer must branch on anyway has bought nothing.*
+
+### ⚠️ A RE-POINTING IS A RENAME UNTIL PROVEN OTHERWISE — SO PROVE IT EITHER WAY
+
+D365 recorded that rule and D366 reproduced it, but **this run had never actually tested it**. A
+refusal is only worth its evidence, so §1 drives **every live consumer of the shipped member on a
+board**, even though nothing was re-pointed: its clause row still derives to
+`{ kind: "yourBenchAtLeast", count: 5 }`, `conditionHolds` still answers on a five-body Bench,
+`conditionNote` still returns its own sentence, and neither reaches this slice's key. Then the two
+members are driven APART on one board.
+
+### 🛑 THE SEAT DEFECT IS INVISIBLE ON A SYMMETRIC BOARD
+
+The mistake an author actually makes is `state.players[seat].bench.length`, copied down verbatim from
+the twin one case up (D190b: the real defect is always a neighbour's real code). It is **GREEN on
+every board where the two Benches happen to match**, which is every symmetric board a suite tends to
+build — D380's defect, one field over. The shape that refuses it:
+
+  • **P1 FULL / P2 EMPTY** — the clause must be FALSE and the attack must deal the bare 40, while the
+    twin says TRUE on the very same board and the very same seat;
+  • **THE MIRROR (P1 EMPTY / P2 FULL)** — TRUE, 120, twin FALSE, so a build that read the seats
+    backwards is red on one of the two rather than green on both;
+  • **ONE BOARD, TWO SEATS** — `conditionHolds(state, "p1", …)` and `conditionHolds(state, "p2", …)`
+    must DISAGREE, which is what `otherSeat(seat)` means and what a hard-coded `"p2"` fails;
+  • **AND THE AGREEMENT BOARD, NAMED AS SUCH** (both Benches at 3) — so the case where the two
+    members coincide is measured rather than absent.
+
+### ⚠️ A TRIPWIRE THAT FIRES IS RE-AIMED AT ITS CLAIM, NEVER DELETED
+
+Two guards asserted this sentence was unbuilt, and both were written on purpose to fire:
+
+  • `benchNamedBonus.test.ts` — *"the tripwire that fires the day one is added"* (D367, verbatim);
+  • `benchCountRequirement.test.ts` — *"it is UNBUILT at this head, on BOTH readers"* (D366).
+
+Neither was deleted. Each now asserts **what the refusal was actually about**: D367's RATIO (1
+printing against the zero-vocabulary floor's 13, which is why the refusal was CORRECT AT THE TIME),
+and the fact that the sibling resolves onto a **DIFFERENT MEMBER** so `yourBenchAtLeast` is untouched
+— which is exactly what a re-pointing would have destroyed.
+
+⚠️ **AND ONE ARITHMETIC RUNG DID NOT MOVE WHILE ITS SUBJECT DID.** `benchNamedBonus.test.ts`'s `LEFT`
+table went 2 → 2 entries while **both** entries changed: the taken row left and the next candidate
+replaced it. **A LENGTH THAT DOES NOT MOVE IS NOT A LIST THAT DID NOT MOVE** — which is why the rungs
+above it walk the entries BY SENTENCE and the length rung only closes the arithmetic.
+
+### ⚠️ D384's ROT RULE PAID FOR THE FIRST TIME, AND IT PAID TWICE
+
+Two D366 mutant rows had a **PREMISE this slice killed while their `find` did not move a character**:
+
+  • **C3** (`yourBenchAtLeast` reads the other seat) argued the wrong-seat reading was urgent BECAUSE
+    *"If your opponent has 3 or more Benched Pokémon…"* was a real **UNBUILT** printing;
+  • **C5** (the note hard-codes its threshold) argued it had *"a named future victim rather than a
+    hypothetical one"*.
+
+The victim arrived. Neither the exactly-once rule nor the grep-your-key rule reaches this class;
+**only grepping `mutants.ts` for the SENTENCE does.** Both were re-homed in the same commit — and C3
+is strictly **sharper** now: its replacement makes `yourBenchAtLeast`'s arm byte-identical to its seat
+twin's, which is precisely the collapse the second-member decision refused.
+
+### ⚠️ THE READER-INSTRUMENT ROSTER, CORRECTED — AND MADE EXECUTABLE
+
+D388's handoff listed `stage1Bonus` and `retreatCostBonus` among the **TEN**-reader files. **Both run
+NINE**, which is why `retreatCostBonus` asserts 367 / 1,259 and not 370 / 1,267. Corrected roster:
+
+  • **TEN** (`deriveAttackOptionalCostBoost` included): `censusAtHead`, `torrentialPump`,
+    `moreEnergyBonus`, `optionalCostBoost`, `purgingStrike`, `healedThisTurn`, `opponentBenchCount`;
+  • **NINE**: `sameEnergyBonus`, `exOnlyActive`, `sawkRequirementSplit`, `benchNamedBonus`,
+    `exactHandSize`, `stage1Bonus`, `retreatCostBonus`.
+
+D385's rule stands — **only the ten-reader set may be a REFUSAL ORACLE**, because a set that omits a
+live reader can call a sentence "refused" that some reader already claims. 🆕 **BUT A ROSTER IN PROSE
+IS THE THING THAT WENT WRONG.** `opponentBenchCount.test.ts` §5 instead **asserts the BONUS residue
+partition is IDENTICAL under both sets** (16 / 19 either way), so the two numbers cannot drift apart
+unnoticed and the choice of instrument is a measured invariant rather than a preference. **SAY IT
+WITH A RUNG, NOT WITH A ROSTER.**
+
+### THE CENSUS, AND THE HALVES THAT SWAPPED
+
+Bonus residue **17 / 20 → 16 / 19**; band `{1: 15, 5: 1}` → **`{1: 14, 5: 1}`**, 2-printing band still
+EMPTY; nine-reader **367 / 1,259 → 368 / 1,260**, ten-reader **370 / 1,267 → 371 / 1,268**;
+`BUILT.attack` **1,296 → 1,297**; whole-census `built` **1,697 → 1,698**; `units − built`
+**686 → 685**; unbuilt attack column **436 → 435**; unbuilt remainder **465 → 464**; `FIXTURE_POOL`
+floor **480 → 481**.
+
+⚠️ **THE APOSTROPHE HALVES SWAPPED (44 → 45), AND THE CHARACTER IS WHY.** For two slices the
+apostrophe-BEARING half took the whole step; here the **FREE half takes it (23 → 24)** and the bearing
+half stands still at 21. The printed key is *"your opponent has …"* and never *"your opponent's …"* —
+**which is exactly what separates a ZONE count from the Active-Pokémon rows above it in the same
+table**. A row's partition is decided by one character, and that character is a semantic fact about
+what the clause is ABOUT.
+
+⚠️ **SIX RUNGS WERE MASKED AGAIN** and took five targeted re-runs to converge: `BUILT.attack - 922`,
+`- 922 - 252`, the leading literal in `465 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS`,
+`head - rawDelta - splitDelta`, `units - built`, and whole-census `built`. **A CLEAN RUN AFTER A ROUND
+OF FIXES IS NOT EVIDENCE THE ROUND WAS COMPLETE.**
+
+✅ **AND D388's OFFSET-CHAIN TRAP WAS AVOIDED.** The mechanical rewrite was scoped to the `it` block
+whose HEAD asserts the BONUS residue, so the CANCEL-residue chains that share the variable name
+`refused` were left alone. **KEY ON WHAT BUILDS THE VALUE, NOT ON THE NAME.**
+
+### RESEARCH NOTE — THE INTERSECTION IS THE INSTRUMENT
+
+`text:"or more Benched Pokémon, this attack does 80 more damage"` **&display=list** returned **24**
+cards; `text:"If your opponent has 3 or more Benched"` **&display=list** returned **50**. Their
+INTERSECTION is exactly ONE Standard printing (Iron Crown SSP 132), and
+`https://api.tcgdex.net/v2/en/cards/sv08-132` then returned the name, the 130 HP, the `Basic` stage,
+the `Metal` type, the {M}{C} cost, the `40+` base, the effect text byte for byte **and the second
+printed attack**, at **index 0 of TWO**. ⚠️ **NEITHER SEARCH ALONE IS AN IDENTIFICATION** — the
+intersection is. ⚠️ **AND THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
+`legalAttackCorpus()`'s alone.
