@@ -314,14 +314,14 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(8);
-    expect(units(refused)).toBe(11);
+    expect(refused.length).toBe(7); // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(10); // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 13, units(refused) + 14]).toEqual([21, 25]);
+    expect([refused.length + 14, units(refused) + 15]).toEqual([21, 25]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 14, units(refused) + 15]).toEqual([22, 26]);
+    expect([refused.length + 15, units(refused) + 16]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

@@ -221,9 +221,9 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([8, 11]);
+    expect([refused.length, units(refused)]).toEqual([7, 10]); // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, D390's did not.
-    expect([refused.length + 7, units(refused) + 7]).toEqual([15, 18]);
+    expect([refused.length + 8, units(refused) + 8]).toEqual([15, 18]); // 🆕🆕 D398 — 1 sentence / 1 printing out (THE DECK-SIZE READ)
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -235,10 +235,10 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(6); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(5); // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
     // …and the TRAP is still in the residue at its 5 printings, which is what makes
     // "the residue fell by one sentence" a statement about THIS sentence. It shares

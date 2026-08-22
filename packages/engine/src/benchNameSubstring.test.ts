@@ -187,8 +187,8 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // D391 left the residue at 14 / 17, re-derived here off the live readers.
-    expect([refused.length, units(refused)]).toEqual([8, 11]);
-    expect([refused.length + 6, units(refused) + 6]).toEqual([14, 17]);
+    expect([refused.length, units(refused)]).toEqual([7, 10]); // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
+    expect([refused.length + 7, units(refused) + 7]).toEqual([14, 17]); // 🆕🆕 D398 — 1 sentence / 1 printing out (THE DECK-SIZE READ)
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -198,8 +198,8 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // nothing else moved. The only clause above one printing is still the 5-printing
     // declaration clause D368 disqualified on SHAPE, so this rung goes red from the
     // other side too — a reader narrowing until some clause returns to 2 fails it.
-    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(6); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(5); // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(1);
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });

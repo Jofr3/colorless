@@ -542,7 +542,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([8, 11]);
+    expect([refused.length, units(refused)]).toEqual([7, 10]); // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
     // ⚠️ AND THE PARTITION DOES NOT DEPEND ON WHICH INSTRUMENT DRAWS IT: the NINE
     // readers and the TEN agree on this residue exactly, so D385's "only the
     // ten-reader one may be a refusal oracle" is satisfied here without the two
@@ -551,7 +551,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — 15 / 18 -> **14 / 17** on the NINE-reader instrument too, the same
     // ONE sentence / ONE printing step the ten-reader one takes.
     // 🆕🆕 D392 — 14 / 17 -> 13 / 16, the SUBSTRING NAME READ leaving the residue.
-    expect([refusedByNine.length, units(refusedByNine)]).toEqual([8, 11]); // 🆕🆕 D397 — 9 / 12 -> 8 / 11, the BENCHED-CUBONE FILTER leaving the residue on ONE sentence // 🆕🆕 D394 — 11 / 14 -> 9 / 12, the USED-ATTACK PAIR leaving the residue on the NINE-reader instrument too
+    expect([refusedByNine.length, units(refusedByNine)]).toEqual([7, 10]); // 🆕🆕 D398 — 1 sentence / 1 printing out (THE DECK-SIZE READ) // 🆕🆕 D397 — 9 / 12 -> 8 / 11, the BENCHED-CUBONE FILTER leaving the residue on ONE sentence // 🆕🆕 D394 — 11 / 14 -> 9 / 12, the USED-ATTACK PAIR leaving the residue on the NINE-reader instrument too
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -567,10 +567,10 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // the singleton band and nothing else moved. The band `n > 1` is STILL `[5]`.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(6); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(5); // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
@@ -588,7 +588,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
     // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
     // moves and no registry summand does.
-    expect([resolving.length, units(resolving)]).toEqual([379, 1276]); // 🆕🆕 D397 +1 sentence / +1 printing (THE BENCHED-CUBONE FILTER — Marowak `sv07-073` "Bone Vengeance" ({C}{C}, `60+`, **+120**, index **1** of TWO) at 1 legal printing, taken by ONE new `BoardCondition` member (`yourBenchNamedDamaged { name }`), TWO exhaustive-switch arms and ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row — a READER-keyed move, so `REGISTRY_ATTACK_UNITS` and `splitHead` BOTH stand still) // 🆕🆕 D394 +2 sentences / +2 printings (THE USED-ATTACK PAIR — Falinks `sv07-088` "All-Out Attack" ({C}{C}, `30+`, **+90**, index 1 of TWO) and Weezing `sv09-092` "Crazy Blast" ({D}{C}, `50+`, **+120**, index 1 of TWO), 1 legal printing each: ONE new `BoardCondition` member (`yourActiveUsedAttackLastTurn { attack }`), ONE new REQUIRED `InPlayPokemon` field (`usedAttack`), ONE new REQUIRED field on `PendingStage.attackEpilogue`, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and TWO new exhaustive-switch arms — the residue's LAST pair on one mechanism, the first window in the union that is not the turn in progress, and the third entry on this line to move `MATCH_RECORD_VERSION`, 24 -> 25) // 🆕🆕 D393 +2 sentences / +2 printings (THE EVOLVE PAIR — Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`, **+90**, index 0 of TWO) and Misty's Starmie `sv10-047` "Abrupt Flash" ({W}, `60+`, **+80**, index 0 of ONE), 1 legal printing each: ONE new `BoardCondition` member (`yourActiveEvolvedFromThisTurn { name }`), ONE new REQUIRED `InPlayPokemon` field (`evolvedTurn`), TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and TWO new exhaustive-switch arms — the residue's only PAIR on one mechanism, and the second entry on this line to move `MATCH_RECORD_VERSION`, 23 -> 24) // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
+    expect([resolving.length, units(resolving)]).toEqual([380, 1277]); // 🆕🆕 D398 +1 sentence / +1 printing (THE DECK-SIZE READ — Rabsca `sv08-014` "Counterturn" ({G}, `40+`, **+200**, index **1** of TWO) at 1 legal printing, taken by ONE new `BoardCondition` member (`yourDeckAtMost { count }`), TWO exhaustive-switch arms and ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row — a READER-keyed move, so `REGISTRY_ATTACK_UNITS` and `splitHead` BOTH stand still) // 🆕🆕 D397 +1 sentence / +1 printing (THE BENCHED-CUBONE FILTER — Marowak `sv07-073` "Bone Vengeance" ({C}{C}, `60+`, **+120**, index **1** of TWO) at 1 legal printing, taken by ONE new `BoardCondition` member (`yourBenchNamedDamaged { name }`), TWO exhaustive-switch arms and ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row — a READER-keyed move, so `REGISTRY_ATTACK_UNITS` and `splitHead` BOTH stand still) // 🆕🆕 D394 +2 sentences / +2 printings (THE USED-ATTACK PAIR — Falinks `sv07-088` "All-Out Attack" ({C}{C}, `30+`, **+90**, index 1 of TWO) and Weezing `sv09-092` "Crazy Blast" ({D}{C}, `50+`, **+120**, index 1 of TWO), 1 legal printing each: ONE new `BoardCondition` member (`yourActiveUsedAttackLastTurn { attack }`), ONE new REQUIRED `InPlayPokemon` field (`usedAttack`), ONE new REQUIRED field on `PendingStage.attackEpilogue`, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and TWO new exhaustive-switch arms — the residue's LAST pair on one mechanism, the first window in the union that is not the turn in progress, and the third entry on this line to move `MATCH_RECORD_VERSION`, 24 -> 25) // 🆕🆕 D393 +2 sentences / +2 printings (THE EVOLVE PAIR — Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`, **+90**, index 0 of TWO) and Misty's Starmie `sv10-047` "Abrupt Flash" ({W}, `60+`, **+80**, index 0 of ONE), 1 legal printing each: ONE new `BoardCondition` member (`yourActiveEvolvedFromThisTurn { name }`), ONE new REQUIRED `InPlayPokemon` field (`evolvedTurn`), TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and TWO new exhaustive-switch arms — the residue's only PAIR on one mechanism, and the second entry on this line to move `MATCH_RECORD_VERSION`, 23 -> 24) // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
     // 🆕🆕 D390 — a `- 1` term at the FRONT of the chain, so THIS file's own step is
     // still the difference between two adjacent rungs while the HEAD above moves for
     // somebody else's work: D390 resolved ONE sentence worth ONE printing (the
@@ -597,15 +597,17 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
     // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
+    // 🆕🆕 D398 — one more `- 1` on each chain: the DECK-SIZE READ, 1 sentence / 1 printing.
     expect([
-      resolving.length - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1,
-      units(resolving) - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1,
+      resolving.length - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1,
+      units(resolving) - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1,
     ]).toEqual([371, 1268]);
     // D388 left it at 370 / 1,267, and the difference is this sentence alone.
     // 🆕🆕 D391 — one more `- 1` term at the FRONT of each chain: the TYPED PER-BODY
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
     // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
-    expect([resolving.length - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1]).toEqual([370, 1267]);
+    // 🆕🆕 D398 — one more term at the FRONT of each chain: the DECK-SIZE READ, 1 sentence / 1 printing. ⚠️ EDITED AT THE FRONT, AND KEYED ON THE FROZEN TAIL RATHER THAN ON THE CHAIN (D397).
+    expect([resolving.length - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1 - 1]).toEqual([370, 1267]);
   });
 });

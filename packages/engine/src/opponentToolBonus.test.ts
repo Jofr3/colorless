@@ -223,8 +223,8 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(8);
-    expect(units(refused)).toBe(11);
+    expect(refused.length).toBe(7); // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(10); // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // D371's recorded residue, then D370's, then D369's, then D368's — all
     // re-derived from THIS head rather than quoted. A guard that only checked the
     // current pair could not tell "a row landed" from "a reader broke".
@@ -238,25 +238,25 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(refused.length + 16).toBe(24);
+    expect(refused.length + 17).toBe(24);
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(units(refused) + 17).toBe(28);
-    expect(refused.length + 17).toBe(25);
-    expect(units(refused) + 19).toBe(30);
-    expect(refused.length + 18).toBe(26);
-    expect(units(refused) + 21).toBe(32);
-    expect(refused.length + 19).toBe(27);
-    expect(units(refused) + 23).toBe(34);
-    expect(refused.length + 20).toBe(28);
-    expect(units(refused) + 25).toBe(36);
-    expect(refused.length + 22).toBe(30);
-    expect(units(refused) + 27).toBe(38);
-    expect(refused.length + 23).toBe(31);
-    expect(units(refused) + 29).toBe(40);
-    expect(refused.length + 24).toBe(32);
-    expect(units(refused) + 31).toBe(42);
-    expect(refused.length + 25).toBe(33);
-    expect(units(refused) + 33).toBe(44);
+    expect(units(refused) + 18).toBe(28);
+    expect(refused.length + 18).toBe(25);
+    expect(units(refused) + 20).toBe(30);
+    expect(refused.length + 19).toBe(26);
+    expect(units(refused) + 22).toBe(32);
+    expect(refused.length + 20).toBe(27);
+    expect(units(refused) + 24).toBe(34);
+    expect(refused.length + 21).toBe(28);
+    expect(units(refused) + 26).toBe(36);
+    expect(refused.length + 23).toBe(30);
+    expect(units(refused) + 28).toBe(38);
+    expect(refused.length + 24).toBe(31);
+    expect(units(refused) + 30).toBe(40);
+    expect(refused.length + 25).toBe(32);
+    expect(units(refused) + 32).toBe(42);
+    expect(refused.length + 26).toBe(33);
+    expect(units(refused) + 34).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -299,7 +299,7 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(band.length + 2).toBe(2);
     // …with D372's clause counted back in the band is SIX, with D371's as well SEVEN,
     // with D370's EIGHT, and with this file's own NINE — the number D368's handoff
