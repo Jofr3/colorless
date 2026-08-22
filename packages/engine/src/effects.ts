@@ -952,6 +952,96 @@ export type BoardCondition =
       empty Bench is the one board where a universal that is TRUE sits above an
       existential that is FALSE. Swept over every board that suite builds. */
   | { kind: "yourBenchAllDamaged" }
+  /** 🆕🆕 D397 — SOME ONE of your BENCHED Pokémon **NAMED `name`** has damage
+      counters on it — Marowak `sv07-073` (Stellar Crown) "Bone Vengeance"
+      ({C}{C}, `60+`, **+120**, index **1** of TWO — its own index 0 is "Growl",
+      {F}), printed *"If any of your Benched Cubone have any damage counters on
+      them, this attack does 120 more damage."*, **1 legal printing**. The
+      attacker is a Marowak and the clause names **its own pre-evolution**, which
+      is what makes the stack read below load-bearing rather than decorative.
+
+      🛑 **ONE WALK WITH BOTH TESTS ON THE SAME BODY, WHICH IS WHY `allOf` IS NOT
+      THE SHAPE — AND THE REFUTATION IS A BOARD, NOT AN ARGUMENT.**
+      `allOf([yourBenchHasNamed "Cubone", yourBenchDamaged])` asks *"some benched
+      Cubone exists"* **and** *"some benched body is damaged"* — two INDEPENDENT
+      existentials over the same array — which a Bench holding an UNDAMAGED Cubone
+      beside a DAMAGED anything-else satisfies. The printed clause does not: it
+      runs ONE existential over the FILTERED set. Both halves are shipped members
+      and their composition is a strictly WEAKER sentence, so this is the first
+      clause in this family that two existing members cannot spell between them.
+      That board is built and driven in `benchNamedDamagedBonus.test.ts` §3.
+
+      🛑 **A SECOND MEMBER AND NOT A `name?:` FIELD ON `yourBenchDamaged` — THE
+      THIRD TEST OF D391's RULE, AND THE ONE THAT AMENDS IT.** The rule reads *a
+      comparand is a shape and takes a MEMBER; a filter the delegate already
+      accepts is a FIELD*, and its clauses disagree here exactly as D396 said they
+      could. Priced at this head, all four ways:
+
+        · **DELEGATE — MEMBER, and this is the clause that was let bind.**
+          `yourBenchDamaged`'s arm is an INLINE
+          `bench.some((p) => p !== null && p.damage > 0)` with no delegate at all,
+          and `cards.ts` carries no name-matching predicate to hand a filter to. So
+          a field buys a BRANCH inside the walk, not an argument to a function —
+          D396's finding verbatim: **there is no walk to take the filter; the arm
+          IS the walk.**
+        · **NOTE — FIELD, and it is recorded rather than dropped.** `1 of your
+          Benched Pokémon has damage counters on it` and `1 of your Benched Cubone
+          has damage counters on it` are ONE interpolation slot apart, and the
+          unnarrowed spelling would come back byte-identical. This is the second
+          consecutive slice on which the NOTE clause dissented and lost, which is
+          why the rule is amended below rather than asserted again.
+        · **SITES — even, so it decides nothing.** `yourBenchDamaged` has **24**
+          executable sites (**22** `kind:` literals — 2 in source, 19 across four
+          suites, 1 inside a mutant row's `replace` — plus its 2 exhaustive-switch
+          arms). An OPTIONAL field edits **3** of them (the union line and both
+          arms) and none of the 22; a second member edits **0** and adds 3.
+        · **POLARITY — MEMBER, and this one is independent of all three clauses.**
+          `BoardCondition` is read at TWO polarities on purpose:
+          `AttackTimingGate.onlyIf` against `.barredIf` (D281) and
+          `conditionGate.then` against `.otherwise` (D269). An author who forgets an
+          optional `name` gets the UNNARROWED read, which pays / bars on boards the
+          printed clause excludes under one polarity and admits declarations it
+          excludes under the other — silently wrong either way, and never a type
+          error. A REQUIRED field on a distinct member is a compile error when
+          omitted. D396's finding, one member over.
+
+      🆕 **THE AMENDMENT, so a fourth test inherits a sharper rule than a coin
+      toss.** Over four tests (D391 FIELD, D392 MEMBER, D396 MEMBER, D397 MEMBER)
+      the **DELEGATE** clause has predicted the answer **4/4** and the **NOTE**
+      clause **2/4** — no better than chance. So the NOTE clause is **RETIRED AS A
+      DECIDER** and kept as a COST note, and the rule becomes: **a filter is a FIELD
+      only when a SHIPPED delegate already accepts it; otherwise it is a MEMBER —
+      and if the value is read at two polarities, MEMBER regardless, because an
+      optional field then has no safe default.**
+
+      ⚠️ **THE FIELD IS `name`, AND THAT IS A DELIBERATE DEPARTURE FROM D392's
+      NAMING RULE.** D392 spelled its field `fragment` so a mistyped `kind` could not
+      silently swap an exact read for a substring one — the two members there are two
+      readings of the SAME fact and would otherwise differ by their `kind` token
+      alone. These two assert DIFFERENT facts (a name lookup, against a name lookup
+      AND a damage test), which is what `yourBenchHasNamed` and
+      `yourNamedPokemonInPlay` already are — and those two have shared `name` since
+      D279. So `name` is this union's settled spelling for a printed card name and a
+      fourth member keeps it; the kind-swap that stays typeable is bought in mutants
+      instead, which is where D391 bought the same class of hazard.
+
+      🛑 **THE NAME IS READ THROUGH `topCardOf` (§1.2) AND HERE THAT IS THE WHOLE
+      BEHAVIOUR, NOT A CONVENTION COPIED FROM A NEIGHBOUR.** Damage stays on a body
+      across an evolution and the NAME does not, so a damaged benched Cubone that
+      evolves into Marowak keeps every counter and **stops satisfying this clause** —
+      the one board where the two tests this member conjoins move in opposite
+      directions at the same instant. `yourBenchHasNamed` can lose its name that way
+      too; only this member can lose it while the other half of its own predicate
+      stays true. Driven on a real `evolve` action rather than asserted.
+
+      YOUR BENCH ALONE and the Active Spot deliberately excluded, exactly as
+      `yourBenchDamaged` and `yourBenchHasNamed` exclude it, because the printed word
+      is "Benched". EXISTENTIAL, so an EMPTY Bench is FALSE — forced by logic rather
+      than chosen (D373's distinction: `∃` over the empty set), and this member
+      IMPLIES `yourBenchDamaged` on every board, which is swept. Own seat only
+      ("your"). Names and damage are both public the moment a Pokémon is in play, so
+      the union's public-state invariant holds. */
+  | { kind: "yourBenchNamedDamaged"; name: string }
   /** §12 — your opponent's Active Pokémon is Poisoned: Seviper sv01-128 and
       Paldean Clodsire sv03-129, both printing "Venoshock" (+120). Poison is a
       COUNTER amount on the model rather than a flag (`poisonDamage`, which
@@ -10004,6 +10094,28 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "all of your Benched Pokémon have at least 1 damage counter on them",
     { kind: "yourBenchAllDamaged" },
+  ],
+  // 🆕🆕 D397 — Marowak `sv07-073` "Bone Vengeance" (+120), 1 legal printing, and
+  // the THIRD reading of the same array in three consecutive rows. The two above are
+  // its near-misses and they are near-misses of DIFFERENT kinds: two rows up is this
+  // clause with the NAME FILTER dropped (strictly weaker — any damaged benched body
+  // pays), directly above is the same array quantified the other way. Keys are whole
+  // printed clauses and never substrings, so none of the three can reach another, and
+  // the printed heads differ anyway ("your Benched Pokémon have", "all of your Benched
+  // Pokémon have", "any of your Benched Cubone have").
+  //
+  // 🛑 A LITERAL ROW AND NOT A TEMPLATE, AND THE CORPUS DECIDES IT RATHER THAN THE
+  // COUNT. A pattern would have to capture the token after "Benched" as a card NAME,
+  // and that slot is measurably NOT a name slot: the same 640-sentence column prints
+  // "your Benched Ancient Pokémon" (a D207 BANNER no column classifies), "your Benched
+  // Team Rocket's Pokémon" and "all of your Benched Cynthia's Pokémon" (owner
+  // prefixes) and "all of your Benched {F} Pokémon" (a brace code). A `(.+)` capture
+  // would hand every one of those to an exact-name equality that succeeds against
+  // nothing — D118's rule failing on an OPEN vocabulary, which is `yourBenchHasNamed`'s
+  // own reason for being four literal rows rather than one template.
+  [
+    "any of your Benched Cubone have any damage counters on them",
+    { kind: "yourBenchNamedDamaged", name: "Cubone" },
   ],
   // Seviper sv01-128 "Venoshock" (+120) and Paldean Clodsire sv03-129, same
   // attack NAME and same clause on two different cards. NOT the same clause as

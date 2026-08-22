@@ -10956,6 +10956,63 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   },
+  /** 🆕🆕 **D397 — THE BENCHED-CUBONE FILTER'S TWO BODIES: THE ATTACKER AND THE
+      CARD ITS OWN CLAUSE NAMES.** Marowak `sv07-073` (Stellar Crown), transcribed
+      WHOLE off tcgdex rather than trimmed to the fields the tests read (D306): the
+      printed 120 HP, the {F} type, the {G} ×2 weakness, the retreat 2, the
+      `evolveFrom` and BOTH attacks at their PRINTED indices.
+
+      🛑 **THE CLAUSE NAMES THE ATTACKER'S OWN PRE-EVOLUTION, AND BOTH FIXTURES
+      EXIST SO THAT CAN BE DRIVEN.** `fix-cubone` is a real Basic in the same deck
+      and `fix-bonevengeance.evolveFrom` is the string its `name` carries, so a
+      benched, DAMAGED `fix-cubone` can be evolved by a real `evolve` action into the
+      attacker's own species — the board on which the damage stays and the NAME goes,
+      which is the §1.2 stack read this member turns on.
+
+      ⚠️ **BOTH ATTACKS ARE KEPT AND THE INDEX IS THE REASON.** "Bone Vengeance" is
+      index **1**; a fixture that carried only the clause-bearing attack would put it
+      at 0 and every board below would pass while proving nothing about the index the
+      printing actually uses. "Growl" is also the CONTROL attack — a flat, clause-free
+      declaration on the same body — so a damage number that moves for the wrong
+      reason has somewhere to show up.
+
+      ⚠️ **`fix-*` IDS, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the six-set manifest, and **`sv07` is in
+      none of the six**. ⚠️ And the engine `Card` type carries no `suffix` column
+      (D207's finding), which costs nothing here — neither printing has a rule box. */
+  "fix-bonevengeance": {
+    ...blank,
+    id: "fix-bonevengeance",
+    name: "Marowak",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Cubone",
+    hp: 120,
+    types: ["Fighting"],
+    retreat: 2,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fighting"],
+        name: "Growl",
+        effect:
+          "During your opponent's next turn, attacks used by the Defending Pokémon do 40 less damage (before applying Weakness and Resistance).",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Bone Vengeance",
+        damage: "60+",
+        effect:
+          "If any of your Benched Cubone have any damage counters on them, this attack does 120 more damage.",
+      },
+    ],
+  },
+  /** 🆕🆕 D397 — the card the clause above NAMES. A plain 60 HP {F} Basic whose
+      only load-bearing field is its `name`: it is what `topCardOf(...)?.name ===
+      "Cubone"` reads, and what `fix-bonevengeance.evolveFrom` points at. NO attacks,
+      so a benched Cubone can never move a damage number and every 60 / 180 in
+      `benchNamedDamagedBonus.test.ts` stays attributable to the clause. */
+  "fix-cubone": battler("fix-cubone", { name: "Cubone", hp: 60, types: ["Fighting"] }),
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12835,6 +12892,32 @@ export const BENCH_NAME_SUBSTRING_DECK = deckOf({
   "fix-titan": 25, // 340 HP, no attacks — survives the boosted 180, and the dominant starter
   "fix-dark-energy": 12, // Basic {D} — the printed cost of both attacks
   "fix-energy": 8, // Basic {C} — a non-Darkness filler that pays nothing here
+});
+
+/** 🆕🆕 D397 — a DEDICATED 60 (D270) for the NAMED bench-damage read, so no other
+    suite's seeded shuffles move.
+
+    🛑 **NO MODIFIER OF ANY KIND AND NO SECOND ATTACKER**, D392's rule one member
+    over: nothing in this 60 can change a damage number except which body is on the
+    Bench and whether it is carrying counters — which is what makes a 60 and a 180
+    attributable to the CLAUSE. `fix-titan` is 340 HP with NO attacks, so it survives
+    the boosted 180 without a §8.1 Prize tail landing under a damage assertion, and
+    the far seat can never move a number either.
+
+    ⚠️ **THE ATTACKER IS A STAGE 1 AND CANNOT OPEN**, so setup takes its Active from
+    the Basics and every board here is built by surgery afterwards. `fix-cubone` and
+    `fix-benchfiller` are Basics, which is what a Bench needs to be reachable from the
+    deck at all — and `fix-cubone` is at 4 because the evolution board consumes one
+    from the HAND while another stands on the Bench.
+
+    4 + 4 + 4 + 24 + 16 + 8 = **60**. */
+export const BENCH_NAMED_DAMAGED_DECK = deckOf({
+  "fix-bonevengeance": 4, // Marowak — "Bone Vengeance" ({C}{C}, 60+) at index 1: the +120
+  "fix-cubone": 4, // "Cubone" — the name the clause carries, and the attacker's pre-evolution
+  "fix-benchfiller": 4, // no name of consequence — the FALSE case however damaged it is
+  "fix-titan": 24, // 340 HP, no attacks — survives the boosted 180, and the dominant starter
+  "fix-energy": 16, // Basic {C} — "Bone Vengeance"'s printed {C}{C}
+  "fix-fighting-energy": 8, // Basic {F} — "Growl"'s printed cost, so the control attack is payable
 });
 
 /** 🆕🆕 D393 — a DEDICATED deck, D270's shape, with **no modifier of any kind and

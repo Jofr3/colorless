@@ -1009,8 +1009,8 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.301.0");
-    expect(manifest.version).toBe("0.301.0");
+    expect(engineVersion).toBe("0.302.0");
+    expect(manifest.version).toBe("0.302.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

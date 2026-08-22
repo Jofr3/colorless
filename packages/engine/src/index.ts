@@ -12108,6 +12108,77 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.302.0 → **THE BENCHED-CUBONE FILTER — ONE WALK WITH TWO TESTS ON
+    THE SAME BODY, AND D391's SHAPE RULE AMENDED ON ITS THIRD TEST.**
+
+      Marowak `sv07-073` (Stellar Crown) "Bone Vengeance"
+      ({C}{C}, `60+`, **+120**, index **1** of TWO — its own index 0 is "Growl", {F})
+        *"If any of your Benched Cubone have any damage counters on them, this
+         attack does 120 more damage."*
+        **1 legal printing**
+
+    🛑 **THE SHAPE IS A CONJUNCTION UNDER ONE QUANTIFIER, AND `allOf` CANNOT SPELL
+    IT.** Both halves are shipped members — `yourBenchHasNamed { name: "Cubone" }` and
+    `yourBenchDamaged` — and `allOf([…])` over the two asks *"some benched Cubone
+    exists"* AND *"some benched body is damaged"*, which is a strictly WEAKER sentence
+    that a Bench holding an undamaged Cubone beside a damaged Rattata satisfies. The
+    printed clause runs ONE existential over the FILTERED set. That board is built and
+    driven rather than argued.
+
+    🛑 **MEMBER, NOT FIELD — AND THE RULE IS AMENDED RATHER THAN ASSERTED A FOURTH
+    TIME.** D391's rule reads *a comparand is a shape and takes a MEMBER; a filter the
+    delegate already accepts is a FIELD*, and D396 established that its clauses can
+    disagree. They disagree here too, and were all priced:
+
+      · **DELEGATE — MEMBER, and this is the clause let bind.** `yourBenchDamaged`'s
+        arm is an INLINE `.some` with no delegate at all, and `cards.ts` carries no
+        name predicate to hand a filter to. A field buys a BRANCH inside the walk,
+        not an argument to a function. D396's finding verbatim: **the arm IS the walk.**
+      · **NOTE — FIELD, recorded rather than dropped.** The two notes are ONE
+        interpolation slot apart and the unnarrowed spelling comes back byte-identical.
+      · **SITES — even.** 24 executable sites on the sibling; a field edits 3 of them,
+        a member edits 0 and adds 3.
+      · **POLARITY — MEMBER, independently of the rule.** `BoardCondition` is read at
+        two polarities on purpose (`onlyIf`/`barredIf`, `then`/`otherwise`), so a
+        forgotten optional `name` is silently wrong in opposite directions and never a
+        type error.
+
+    🆕 **THE AMENDMENT.** Across four tests — D391 FIELD, D392 MEMBER, D396 MEMBER,
+    D397 MEMBER — the DELEGATE clause has predicted the answer **4/4** and the NOTE
+    clause **2/4**, which is chance. **THE NOTE CLAUSE IS RETIRED AS A DECIDER** and
+    kept as a cost note. The rule is now: *a filter is a FIELD only when a SHIPPED
+    delegate already accepts it; otherwise a MEMBER — and if the value is read at two
+    polarities, MEMBER regardless.*
+
+    🛑 **A LITERAL CLAUSE ROW AND NOT A TEMPLATE, DECIDED BY THE CORPUS RATHER THAN
+    BY THE COUNT.** A pattern would have to read the token after "Benched" as a card
+    NAME, and the 640-sentence column shows that slot taking a D207 BANNER ("Ancient"),
+    two OWNER prefixes ("Team Rocket's", "Cynthia's") and a BRACE CODE ("{F}"). A
+    `(.+)` capture would hand each of those to an exact-name equality that succeeds
+    against nothing — D118's rule failing on an OPEN vocabulary.
+
+    🛑 **THE §1.2 STACK READ IS BEHAVIOUR HERE, NOT HOUSEKEEPING.** Damage survives
+    an evolution and the NAME does not, so a damaged benched Cubone evolved into
+    Marowak keeps every counter and stops satisfying the clause — the one board where
+    the two tests this member conjoins move in opposite directions at once. Driven on
+    a real `evolve` action.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 25, ASKED OF EACH HALF.** No state field, no
+    `EffectOp` and no registry row: the member is authored only into
+    `CONDITIONAL_DAMAGE_CLAUSES`, which is a CATALOG fact re-derived from the printed
+    text on every read, so it can never ride an `EffectContinuation.pendingOp` into a
+    record. No v25 record can contain it (no v25 card authors it) and no v25 record
+    means anything different now — D335's test, both directions.
+
+    Cost: **1 `BoardCondition` member + 1 `conditionHolds` arm + 1 `conditionNote`
+    arm + 1 literal clause row + 2 fixtures + 1 dedicated 60.** ZERO new state, ops,
+    events, error codes, prompt kinds, choice kinds, readers, regexes, templates,
+    patterns, `CardFilter` members, registry rows, `redact.ts` bytes or
+    `packages/schema` bytes.
+
+    engineVersion 0.301.0 → **0.302.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.301.0 → **THE ANGELITE CANCEL — A SUBJECT WIDENING SETTLED AS A MEMBER,
     AND `attackGate`'s INDEX KEY GIVEN ITS SECOND FALSIFYING BOARD.**
 
@@ -16147,7 +16218,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.301.0";
+export const engineVersion = "0.302.0";
 
 export type {
   ApplyResult,

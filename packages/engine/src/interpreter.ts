@@ -3072,6 +3072,29 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const bench = state.players[seat].bench;
       return bench.length > 0 && bench.every((p) => p !== null && p.damage > 0);
     }
+    case "yourBenchNamedDamaged":
+      // 🆕🆕 D397 — the EXISTENTIAL two arms up with ONE MORE TEST ON THE SAME
+      // BODY, which is the whole member: `.some` over the Bench asking for a damaged
+      // Pokémon that is ALSO named `cond.name`. Composing the two shipped members
+      // with `allOf` asks the two questions of DIFFERENT bodies and answers TRUE on a
+      // Bench holding an undamaged Cubone beside a damaged Rattata; this arm cannot,
+      // because there is one `p`.
+      //
+      // 🛑 THE NAME IS READ THROUGH `topCardOf` — the stack TOP is the Pokémon's
+      // identity (§1.2), `yourBenchHasNamed`'s rule verbatim — and here that reading
+      // is BEHAVIOUR rather than housekeeping: damage survives an evolution and the
+      // name does not, so a damaged benched Cubone that evolves into Marowak keeps
+      // every counter and stops satisfying this clause. `?.name` is undefined for a
+      // uid the catalog cannot resolve, which fails the equality and pays nothing —
+      // `yourBenchHasNamed`'s unresolvable-uid path, unchanged.
+      //
+      // Bench only (the printed word is "Benched"), own seat only ("your"), and an
+      // EMPTY Bench is false for the existential arm's reason: `∃` over the empty set
+      // is forced, not chosen. The damage test is written FIRST because it is a field
+      // read and the name test is a catalog lookup.
+      return state.players[seat].bench.some(
+        (p) => p !== null && p.damage > 0 && topCardOf(state, p)?.name === cond.name,
+      );
     case "opponentActivePoisoned": {
       // §12 — Poison is stored as the counter amount an effect may raise, so
       // "is Poisoned" is `> 0`, exactly as the Checkup reads it (flow.ts).
@@ -4154,6 +4177,24 @@ export function conditionNote(cond: BoardCondition): string {
       // reading is NOT spelled into the note — a note is a fragment about the board a
       // player is looking at, and a player with no Bench is not reading it.
       return "all of your Benched Pokémon have at least 1 damage counter on them";
+    case "yourBenchNamedDamaged":
+      // 🆕🆕 D397 — the EXISTENTIAL's note two arms up with its noun replaced,
+      // and the collective plural turned into "1 of" for that arm's reason exactly: a
+      // reject pill names ONE body a player can point at. The printed clause says
+      // *"any of your Benched Cubone HAVE"*; a pill that kept the plural would
+      // describe a set nobody is looking at.
+      //
+      // ⚠️ THIS STRING IS THE PRICE OF CHOOSING A MEMBER OVER A FIELD AND IS SAID SO
+      // RATHER THAN HIDDEN: an optional `name?` on the sibling would have made these
+      // two arms one interpolation, and that measurement is recorded in the member's
+      // doc block as the clause that dissented. It lost to the DELEGATE clause, not
+      // to a tie.
+      //
+      // Like both bench notes above it this does NOT round-trip to its
+      // `CONDITIONAL_DAMAGE_CLAUSES` key — the key is the printed plural — and
+      // `benchNamedDamagedBonus.test.ts` §4 asserts the non-round-trip rather than
+      // leaving a successor to "fix" one into the other.
+      return `1 of your Benched ${cond.name} has damage counters on it`;
     case "opponentActivePoisoned":
       return "your opponent's Active Pokémon is Poisoned";
     case "opponentActiveHasSpecialCondition":
