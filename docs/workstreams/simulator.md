@@ -24708,3 +24708,156 @@ attached cards into the OPPONENT'S deck). So stripping the clause would leave a 
 takes, and the census gain would be **zero**. Ship GATE-ONLY, like the 13, and say so with the
 measurement rather than building a trailing split for a population of one whose remainder is refused
 anyway.
+
+## D396 — THE ANGELITE CANCEL: a subject widening settled as a MEMBER, and a map key given its second falsifying board (engine 0.300.0 → **0.301.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+Sylveon ex `sv08-086` / `sv08.5-041` / `sv08.5-156` "Angelite" ({W}{L}{P}, **no printed damage**,
+index **1** of TWO) —
+*"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into
+your opponent's deck. If 1 of your Pokémon used Angelite during your last turn, this attack can't be
+used."*, **3 legal printings on ONE byte-identical `attacks_json`**. Its own index 0 is "Magical
+Charm" ({P}{C}{C}, 160): **the attack an index-blind gate confiscates.**
+
+**WHAT SHIPS:** ONE `BoardCondition` member (`yourPokemonUsedAttackLastTurn { attack }`), its TWO
+exhaustive-switch arms, and ONE registry program shared by THREE ids. ZERO new state, ops, events,
+error codes, prompt kinds, choice kinds, readers, regexes, clause-table rows, `CardFilter` members,
+`redact.ts` bytes or `packages/schema` bytes.
+
+### 🛑 THE CONSEQUENT WAS PRICED AS A THIRD SHAPE AND IS THE PASSIVE VOICE OF ONE THAT SHIPPED AT 0.195.0
+
+D394's handoff called *"this attack can't be used"* a THIRD consequent the union does not spell.
+It is D281's `barredIf`, whose seven Terapagos ex printings spell the identical rule the other way
+round (*"…you can't use this attack during your first turn"*). Both bar the index **while the
+condition holds**; the polarity token is the whole of it.
+
+Measured on the committed corpus rather than argued: `"can't be used"` is **1 sentence / 3
+printings** and `"you can't use this attack"` is **1 sentence / 7 printings** — two spellings, one
+shape, no reader needed for either. **The row was materially cheaper than the price it was handed
+on at**, and D395 had already said so; this slice re-derived it instead of inheriting the
+correction.
+
+### 🛑 MEMBER OR FIELD — THE FIRST *SUBJECT* WIDENING D391's RULE HAS BEEN ASKED ABOUT, AND THE DELEGATE CLAUSE IS WHAT DECIDES IT
+
+D391's rule: *a comparand is a shape and takes a MEMBER; a filter the delegate already accepts is a
+FIELD.* The handoff predicted **FIELD**, reasoning *"the comparand is the same and the ZONE is a
+filter the walk already takes"*. **That is the error, and it is a precise one: there is no walk to
+take it — the arm IS the walk.**
+
+- **THE DELEGATE CLAUSE.** D391's field was cheap because `countAttachedEnergy` had accepted exactly
+  that filter since D128, so the member became isomorphic to a call it was already making.
+  `usedAttackOnYourLastTurn` (types.ts) takes ONE `InPlayPokemon` and cannot take a zone. A `zone`
+  field therefore buys a **BRANCH inside the `conditionHolds` arm**, not an argument to a function.
+- **SITE ARITHMETIC.** `yourActiveUsedAttackLastTurn` has **12 executable sites across 5 files** (8
+  `kind:` literals + 2 exhaustive-switch arms + 2 narrowing assertions). A second member edits
+  **ZERO** of them; an optional field edits **both** switch arms and rewrites the `conditionHolds`
+  one **wholly** — `active !== null && used(...)` becomes a spread and a `.some`. That is D391's own
+  test for a member, applied rather than quoted.
+- ⚠️ **AND ONE MEASUREMENT POINTED THE OTHER WAY.** The note IS one interpolation slot here:
+  *"your Active Pokémon used X during your last turn"* and *"1 of your Pokémon used X during your
+  last turn"* share a skeleton, so D389's *"a second SENTENCE, not a second SLOT"* arithmetic — the
+  bullet that carried D392 — **does not transfer**. It is recorded because it lost, not dropped
+  because it lost. **A RULE WITH FOUR TESTS BEHIND IT IS NOT A RULE WITH FOUR AGREEING MEASUREMENTS
+  BEHIND IT: SAY WHICH CLAUSE DECIDED.**
+
+### 🛑 AN OPTIONAL FIELD IS INVISIBLE TO THE COMPILER — AND ON *THIS* FIELD IT FAILS IN BOTH DIRECTIONS AT ONCE
+
+D392 wrote down that an optional field forgotten on a row silently gets the default read. This slice
+adds the sharp form: **the same forgotten default is too LOOSE and too STRICT depending on a token
+the field does not control.**
+
+- Under Angelite's **`barredIf`**, the Active-only default means the cancel does not bite on the
+  board the card is printed for → **an illegal declaration is accepted**.
+- Under Miltank `sv08.5-081`'s **`onlyIf`**, the identical omission would bar a legal attack.
+
+`AttackTimingGate` reads one condition at two polarities on purpose (D281), so a condition member
+whose meaning depends on a defaulted field can never have one safe default. **WHEN AN OPTIONAL FIELD
+FEEDS A VALUE READ AT TWO POLARITIES, ITS DEFAULT IS WRONG SOMEWHERE BY CONSTRUCTION.**
+
+⚠️ And the union had already settled a subject widening as a MEMBER **twice**, both times refusing
+the scope parameter by name: `yourBenchHasNamed` → `yourNamedPokemonInPlay` (D279 — *"the printed
+words are different, and the one printing that reads the narrow word depends on it being narrow"*)
+and `yourActiveHasEnergyAttached` → `yourEnergyInPlayAtLeast` (*"folding them together behind a
+`scope` parameter would put the choice between 'your Active' and 'your whole side' inside a value
+the four other consumers of this vocabulary would then have to author"*). D394's own two printings
+depend on the narrow reading staying narrow, for Falinks's reason exactly.
+
+### 🛑 THE SECOND NON-ZERO GATE INDEX, ON THE OPPOSITE GEOMETRY — WHICH IS WHY IT IS A SECOND TEST
+
+D395 gave `attackGate`'s `[attackIndex: number]` key its first falsifying board. **One board can
+still be an accident.** These three are the second, and the failure they catch is a different one:
+
+| | gate at | clause names | index-blind read does |
+|---|---|---|---|
+| Miltank `sv08.5-081` | 1 | index **0** ("Rollout") | **DEADLOCK** — gates the only attack that can open the gate |
+| Sylveon ex ×3 | 1 | index **1** ("Angelite" bars ITSELF) | **CONFISCATION** — gates "Magical Charm" (160 dmg) and frees "Angelite" |
+
+`splitOrder.test.ts` now reads **13 gates at index 0 / 4 at index 1**, and the registry side and the
+TEXT side of that file **disagree for the first time**: 17 registry ids carry the field, 14 printings
+carry a clause `splitAttackGateClause` claims. **The gap IS the measurement that no split was
+authored.**
+
+### ⚠️ NO SPLIT — AND THE INHERITED *REASON* FOR THAT WAS STALE
+
+The gate clause is TRAILING; `splitAttackGateClause` is `^`-anchored by deliberate policy. The
+handoff's cheap answer was right and its reason was not.
+
+- **The measurement that stands**: all nine live readers were RUN over the stripped body
+  (*"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into
+  your opponent's deck."*) and **every one refuses it**. A trailing stripper buys **ZERO** printings.
+- **The reason that did not**: the handoff said the body was *"Illumise `sv06-010`'s refusal
+  verbatim — no `EffectOp` moves an OPPONENT'S benched Pokémon into the OPPONENT'S deck"*.
+  **D299 BUILT THAT OP.** `returnBenched { whose: "opponent", dest: "deck" }` is exactly what
+  Illumise's own body derives to today, and `censusAtHead.test.ts` has asserted since D307 that
+  every gate sentence WITH A BODY resolves once split. What refuses Angelite's body is the **COUNT**
+  (*"Choose **2**"* against a park of `min: 1, max: 1`) plus the two-sentence *"those Pokémon"*
+  back-reference — Lickitung `sv05-124`/`-180`'s refusal, one op over.
+
+🛑 **A REFUSAL COMMENT AGES IN TWO WAYS AND ONLY ONE OF THEM MOVES A CHARACTER.** The stale bullet
+sat in `effects.ts`'s `returnBenched` doc block, which the op's OWN slice (D299) had edited without
+re-reading the refusal list beside it. `git grep` on any key in it finds it; nothing mechanical says
+its premise expired. **RE-RUN THE READERS OVER THE SENTENCE BEFORE YOU QUOTE A REFUSAL OF IT.**
+
+### THE FALSIFYING BOARD, AND IT IS REACHED TWO WAYS ON PURPOSE
+
+Sylveon ex A uses "Angelite" and leaves the Active Spot; Sylveon ex B is promoted and declares
+"Angelite" on the next of your turns. The printed clause bars it — A is 1 of your Pokémon and it used
+Angelite during your last turn — and the ACTIVE-only read does not, because B's own `usedAttack` is
+`null`. `angeliteCancel.test.ts` §3 drives it through `setActiveFromDeck` surgery **and** through a
+real §11 `retreat` paying the printed cost of 2, so the board is reachable in play and not only in a
+fixture. `stampAttackUse` (flow.ts) already wrote the stamp through a BENCH walk for its own reason
+(an attacker can move off the Active Spot mid-attack), so the record the member reads was already
+there — the slice is a walk, not new state.
+
+### CENSUS MOVEMENT
+
+Registry ids **710 → 713** (three REAL catalog ids, no `fix-*` demonstrator — the suite drives a
+LOCAL `cardPool`, D275's idiom); `nonAttackRegistryIds()` **565 → 568**; `BUILT.ability`
+**281 → 284**; whole-census `built` **1,706 → 1,709** and `units − built` **677 → 674**; the ability
+instrument **281/128/117/130 → 284/129/118/131** — a **3:1:1:1** step, so sizing any of the last
+three off the printing count is wrong by two; the `attackGate` shortfall **14 → 17**, its
+`attacksJson`/`abilitiesJson` pair moving UNEVENLY for a **second consecutive slice** (284/267),
+which only an `attackGate` row can do. **UNMOVED and that is the claim**: the gate-corpus split
+(6 sentences / 14 printings), the two-split disjointness, `BUILT.attack` (**1,304**), the bonus
+residue (**9 / 12**) and every `usedAttack`-family reader figure.
+
+⚠️ **`ABILITY_NAME_TERMS` GAINS "Sylveon ex" AND NOT "Sylveon"** — the page already carries a
+`Sylveon` term (`sv08.5-040`, sharing `PREVENT_FROM_EX` with Crustle). §4's naming rule makes the
+`ex` part of the printed NAME, so these are two names; folding them would have invented an
+`ABILITY_SPLIT_NAMES` entry that does not exist.
+
+### WHAT THIS SLICE HANDS ON
+
+The `during your last turn` family is now **exhausted in Standard except for one banner refusal**:
+of the corpus's 5 sentences / 7 printings, D394 took two, D395 took one, D396 takes one (3
+printings), and the fifth is *"If 1 of your other **Ancient** Pokémon used an attack during your last
+turn, this attack does 150 more damage."* (1 printing) — a D207 BANNER refusal (no column classifies
+`Ancient`; every occurrence is DEMAND and the SUPPLY side is absent) **that also widens the subject
+past anything this member spells**: *"1 of your OTHER"* excludes the attacker, and *"used an attack"*
+is any attack rather than a name. Two independent refusals on one sentence.
+
+The remaining live bonus-residue rows are unchanged and are the two D395 handed on:
+`there are 3 or fewer cards in your deck` (1 printing, a DECK-SIZE read — `RedactedSide.deckCount`
+already crosses the wire, so the feared refusal is unavailable; the printed amount is 200) and
+`any of your Benched Cubone have any damage counters on them` (1 printing, a NAME filter and a damage
+predicate quantified EXISTENTIALLY over the FILTERED set — `allOf` is the wrong tool, and the
+refutation is a board holding an undamaged Cubone beside a damaged Rattata).
