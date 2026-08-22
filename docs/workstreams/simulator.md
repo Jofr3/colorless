@@ -24243,3 +24243,137 @@ the new one rather than frozen, so each of those chains gained one term **at the
 **486 → 489**, and `stage1Bonus.test.ts`'s non-Stage-1 evolution sweep **25 → 26**, because
 `fix-loveimpact` is a **Stage 2** transcribed whole (D306) with its printed `evolveFrom` chain — the
 same way D388's demonstrator moved it.
+
+---
+
+## D393 — THE EVOLVE PAIR, AND THE FALSIFIER THAT FIRED WITHOUT ITS INFERENCE HOLDING
+
+**Gholdengo `sv08-131` "Strike It Rich"** ({M}, `30+`, index **0** of TWO), *"If this Pokémon evolved
+from Gimmighoul during this turn, this attack does 90 more damage."*, **1 legal printing**, and
+**Misty's Starmie `sv10-047` "Abrupt Flash"** ({W}, `60+`, index 0 of ONE), *"If this Pokémon evolved
+from Misty's Staryu during this turn, this attack does 80 more damage."*, **1 legal printing**. Each
+located with ONE brace-free limitlesstcg `text:` search on the printed clause tail — each returning
+exactly one card — and confirmed field by field against `https://api.tcgdex.net/v2/en/cards/<id>`,
+which returned the HP, the `Stage1`, the printed `evolveFrom` chain, the types, the weaknesses (and
+Gholdengo's Grass −30 Resistance), the retreat and every printed attack.
+
+### PRICING A PAIR AS A PAIR IS NOT BOOKKEEPING — IT BUYS A REFUTATION
+
+The two clauses differ only in the card they name, so **one member and one `InPlayPokemon` field
+serve both**. Either printing alone would have bought exactly the same state for half the printings.
+The part that is not arithmetic: **an arm that reads only the turn stamp and ignores `cond.name`
+passes every test either card could write by itself.** The board that kills it is a Gholdengo that
+evolved this turn being asked *Misty's Starmie's* clause — which does not exist until both printings
+are on the table. A singleton slice would have shipped the same code with the name test unrefuted.
+
+### THE STATE-SHAPE QUESTION, AND A FALSIFIER THAT FIRED WITHOUT ITS INFERENCE HOLDING
+
+D392's handoff attached a falsifiable prediction — a per-body `evolvedTurn: number | null` (D386's
+shape) rather than a per-seat `GameState` record (D326's) — and named two falsifiers.
+
+**Falsifier (a) FIRED.** It read: *"if the placement turns out to have a single call site that
+already knows the turn, a seat record may be cheaper to WRITE than a field is to thread"*. That site
+exists: `evolveOnto` (types.ts) is the engine's ONE evolution placement — `placeEvolution` reaches it
+from both hand routes (`evolve`, `rareCandy`), and all four `evolveFromDeck*` ops call it directly —
+and it already writes `turnPlayed: state.turn`. **The antecedent held and the consequent did not**,
+because a seat record would have been written at that same single site and bought nothing: the cost
+of a per-body stamp was never the threading.
+
+> ⚠️ **A FALSIFIER IS A PREDICTION ABOUT THE WORLD, NOT A PROOF SCHEMA. Its antecedent can hold while
+> its inference does not — so check the inference, not only the fact.**
+
+**Falsifier (b) did NOT fire.** `redactedInPlayOf` (redact.ts) names its output fields one at a time
+rather than spreading the body, and `packages/schema` has never carried `InPlayPokemon` at all. Both
+take **ZERO** bytes, so D386's precedent transfers whole.
+
+**And the compiler tied the two shapes, exactly as it tied D386's three.** Each candidate was added
+REQUIRED and initialised nowhere, then measured under `tsc -b --force`:
+
+| shape | files with errors | sites |
+|---|---|---|
+| `InPlayPokemon.evolvedTurn: number \| null` | 1 (`types.ts`) | 1 (`makeInPlay`) |
+| `GameState.evolvedFromThisTurn: Record<Seat, …>` | 1 (`setup.ts`) | 1 (the state literal) |
+
+🛑 **SO THE PRINTED SUBJECT SETTLED IT, AND IT WAS DRIVEN ON A BOARD RATHER THAN ARGUED.**
+*"this Pokémon"* is one BODY. `evolvedFromBonus.test.ts` §4 fields a Misty's Starmie placed straight
+into play as the Active and evolves a **BENCHED** Misty's Staryu on the same turn. A per-seat record
+answers *"did this SEAT evolve something from Misty's Staryu this turn"* → TRUE and pays the Active a
++80 it did not earn; the per-body stamp answers FALSE and the attack does its printed 60. §4's second
+case is the one a `Record<Seat, number>` cannot express at all: two bodies evolving in one turn from
+two different cards, where only one of them is the attacker.
+
+### ONE FIELD, NOT TWO — THE NAME IS ALREADY ON THE STACK
+
+`evolveOnto` APPENDS (`stack: [...from.stack, evolutionUid]`), so the card a body evolved FROM is
+always the entry **one below the stack top** — §1.2's identity rule read one position down. Storing
+the name beside the turn would be a second spelling of a fact the stack already holds, and the two
+could disagree (D222). `conditionHolds` reads the stack; mutant **C4** installs the `- 1` off-by-one,
+which is the slip this address invites because every other name read in the engine
+(`yourBenchHasNamed`, `yourBenchHasNameContaining`, `yourNamedPokemonInPlay`) goes through
+`topCardOf` and this is the only one that must not.
+
+### 🛑 A REQUIRED FIELD IS NO COMPILER GUARANTEE THAT ANYBODY SET IT
+
+`evolveOnto` builds its body as `{...from, …}`. **Deleting the `evolvedTurn: state.turn` line still
+typechecks** — the spread supplies the pre-evolution body's value — and the clause then silently
+never holds. That is the one safety a REQUIRED per-body field does *not* buy, and it is bought in
+mutants instead: **C3** installs `from.evolvedTurn`, which is precisely what `promotedTurn` and
+`healedTurn` correctly do one line up (§10 spreads them through, because evolving does not un-move or
+un-heal a Pokémon). **Any future `InPlayPokemon` field written inside a spread owes this mutant.**
+
+### `MATCH_RECORD_VERSION` 23 → 24, AND WHY IT IS SHARPER THAN D386's
+
+A v23 record's in-play Pokémon carry no `evolvedTurn` at all, so a resumed match reads
+`undefined === state.turn` **FALSE**. It does not throw. It does not look wrong. It silently withholds
+the printed +90 from the player who evolved into the attacker on the very turn the match was
+interrupted — the one turn the whole card is about. The record is refused instead.
+
+### THE PREMISE THAT DIED WITHOUT ITS `find` MOVING (D384's class, fired for real)
+
+D312 built Gholdengo's **index 1** ("Surf Back") as a registry row and pinned index 0 as *"an
+evolved-this-turn conditional this engine does not read"* — in `registry.ts`'s doc block, in
+`surfBack.test.ts`'s header and §1 comment, and inside the mutant
+`D312-surf-back-authors-the-wrong-attack-index`'s `what`. **D393 built that sentence, and not one
+character of the `find` moved.** `git grep` finds the quoted line; `precheck.ts` reports it matching
+exactly once; only a reader who knows to grep the SENTENCE rather than the KEY finds it. All three
+sites were re-transcribed in the build commit. The mutant is still KILLED and now kills for a
+**second** reason: `programFor(id)?.attack` beats `deriveAttackEffect`, so an index slip MASKS the
++90 as well as unsimulating "Surf Back".
+
+🆕 **Gholdengo is now the engine's FIRST card with a REGISTRY attack at one index and a DERIVED one at
+another**, which makes `censusAtHead.test.ts`'s index-precision rung load-bearing in both directions
+for the first time.
+
+### THE POSSESSIVE TOLL, PAID AGAIN AND NOT BY CHOICE
+
+The arm compares the pre-evolution card's `name` to the clause key **byte for byte**, so
+`fix-mistystaryu` must be named *"Misty's Staryu"* or the demonstrator matches no printed sentence at
+all — D183's defect wearing a proper noun. Mutant **C8** installs the tidy `"Staryu"` rename.
+`switchSeam.test.ts`, `inPlayTarget.test.ts` and `ownerTargetOps.test.ts` each gained two ids, and
+`ownerPrefix.test.ts` gained `fix-abruptflash/Misty` and `fix-mistystaryu/Misty` — **the first second
+owner that predicate has ever been shown**, which turns four rows about Team Rocket into evidence
+that `ownerPokemon` reads the PREFIX rather than a fixed list. D392 chose to pay this toll; D393
+could not avoid it.
+
+### ONE ROW OF THE FAMILY IS DELIBERATELY NOT BOUGHT
+
+The legal attack column prints *"evolved from"* **three** times. The third is *"Your opponent discards
+a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent
+discards 2 more cards."* (**1 printing**) — the same board fact under a **DISCARD** consequent, so the
+bonus skeleton refuses it before `CONDITIONAL_DAMAGE_CLAUSES` is consulted. `yourActiveEvolvedFromThisTurn`
+would serve it unchanged; what it needs is a THIRD consequent skeleton, which is a different and
+bigger slice. §1 asserts it is present in the corpus and refused by every reader, so the claim cannot
+rot into a silent widening.
+
+### THE CENSUS CASCADE — THE OFFSET-CHAIN WARNING, SHARPENED
+
+D392 recorded *"grep the offset chains up front"*. That is necessary and not sufficient, because
+**the chains are written in TWO syntaxes and a regex over one misses the other**:
+`benchNamedBonus.test.ts` spells its chain across twenty-two LINES (`resolved.length -\n  1 -\n …`)
+while every other file writes it inline, so a sweep for `resolved.length - 1` reported **zero matches
+in the one file that had two chains**.
+
+⚠️ **AND ONE FULL `vitest run` CAPTURED TO A FILE OUTSIDE THE CHECKOUT IS WORTH ITS 100 SECONDS.** It
+listed all 52 failures with file:line in a single pass, which is what collapsed the rest into targeted
+edits. The harness's own background task-output file is **TAIL-ONLY** and will under-report the
+failure list — at D393 it showed 3 of 52.
