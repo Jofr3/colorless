@@ -428,9 +428,9 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // afterwards rather than assumed, with BOTH headings confirmed present in order (D372's
   // range-replace ate a body while this ratchet stayed green, because a count of HEADINGS is
   // not a count of ARCHIVES).
-  const ARCHIVES = 60;
+  const ARCHIVES = 61;
 
-  it("the page still holds all 60 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 61 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

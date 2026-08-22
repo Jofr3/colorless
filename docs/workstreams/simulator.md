@@ -24032,3 +24032,128 @@ question can honestly come back *field*. **A convention that always answers the 
 being a measurement.** The second thing to settle first: does the printed *"2 or more {G} Energy"*
 count **cards or units**? D383's arm is deliberately CARDS, and `providesEnergyType` is cards too —
 say so with a rung on a multi-unit Special rather than inheriting it.
+
+## D391 — THE TYPED PER-BODY ENERGY THRESHOLD: the first shape question in this run that honestly answered *FIELD* (engine 0.295.0 → **0.296.0**, `MATCH_RECORD_VERSION` **stays 23**)
+
+Abomasnow `sv10-060` "Frozen Wood" ({W}{W}{W}{C}, `120+`, **+120**, index **1** of TWO), **1 legal
+printing**: *"If this Pokémon has 2 or more {G} Energy attached, this attack does 120 more damage."*
+The id was found by INTERSECTING two brace-free limitlesstcg `text:` searches — `"Energy attached,
+this attack does 120 more damage"` (26 cards) and `"If this Pokémon has 2 or more"` (247 cards) —
+whose overlap is **exactly one** Standard card, then confirmed field for field against tcgdex.
+⚠️ **A `{G}` GLYPH IN A `text:` QUERY MATCHES NOTHING** — the braced form of the first query returned
+`0 cards found`, which is why both halves are brace-free. The PRINTING COUNT is `legalAttackCorpus()`.
+
+### THE ANSWER, AND THE RULE IT LEAVES BEHIND
+
+**One OPTIONAL field**, `energy?: BasicEnergyType | "special"`, on the shipped
+`yourActiveEnergyAtLeast` member (D383) — **not** a second member, which is the opposite of what
+D389 decided one union axis over and of what nine consecutive slices had decided before it.
+
+The measurements, all taken at this head rather than quoted forward:
+
+  · **D389's strongest ground does not transfer.** Its seat parameter would have been **REQUIRED** —
+    a rename across 22 executable sites — and would have saved no note body, because `conditionNote`
+    prints a different SENTENCE per seat. `energy?` is **OPTIONAL**: `yourActiveEnergyAtLeast` has
+    **11 executable sites across 4 files** (9 `kind:` literals + 2 exhaustive-switch arms) and the
+    widening edits **ZERO** of them.
+  · **The note gains a SLOT, not a sentence.** All three spellings — absent, `"special"`, a basic
+    type — come out of one `return`, and the unnarrowed string is **byte-identical** to the one D383
+    shipped, so no reject pill moved.
+  · **The mechanism was already a parameter.** `countAttachedEnergy(state, pokemon, energy)` has
+    taken `BasicEnergyType | "special" | null` since D128 and this arm already passed `null`, so
+    `cond.energy ?? null` is the entire behavioural edit and the member is now isomorphic to the call
+    it delegates to.
+  · **It is D326's shape exactly — "ABSENT MEANS UNNARROWED".** The filtered set is a SUBSET of
+    `pokemon.energy`, so the narrowed gate is TRUE on a strict subset of the boards the bare one is.
+    ⚠️ D326's own settling argument (one card printing BOTH narrowings, which a union could not have
+    spelled) does **not** transfer; this stands on the arithmetic instead, and the difference is
+    stated rather than glossed.
+
+🆕 **THE TRANSFERABLE RULE.** The member's own doc block already separates it from
+`activeEnergyCountsEqual` by its COMPARAND (a printed constant versus another body).
+**A COMPARAND IS A SHAPE AND TAKES A MEMBER; A FILTER THE DELEGATE ALREADY ACCEPTS IS A FIELD.**
+
+⚠️ **AND THE PRICE OF A FIELD IS NAMED RATHER THAN WAVED AWAY.** An optional field is **invisible to
+the compiler** at every site that ignores it — a new union member forces every exhaustive switch to
+be updated, and a new optional field forces nothing. That is the one safety a second member gets for
+free, and it is bought back in mutants: four of D391's six rows are exactly the defects the field
+makes possible (the filter dropped, the row claiming the unquantified neighbour, the row authored
+WITHOUT the new field, the note ignoring the filter it was handed).
+
+### A LITERAL ROW, AND WHY A SIXTH TEMPLATE WOULD HAVE BEEN THE WORST ONE
+
+Two tokens vary in principle — the threshold and the energy code — so D118's one-token test fails and
+D119's corollary applies for the **third** time at this address. The row sits with its two siblings:
+the same *"N or more ⟨type⟩ Energy"* question asked of the whole SIDE (Absol `sv06.5-030`), of the
+DISCARD PILE (Chandelure `sv10.5w-018`) and now of ONE BODY. Three adjacent rows, three zones, three
+members.
+
+🛑 **AND THE ANCHOR ARGUMENT IS SHARPER HERE THAN ANYWHERE D390 LOOKED.**
+`SELF_ENERGY_ATTACHED_CLAUSE` is `^this Pokémon has any (.+) Energy attached$` — this clause's HEAD
+(`this Pokémon has `) *and* its TAIL (` Energy attached`), separated only by `any` versus a digit.
+That is the closest pair of anchors in the whole template set, so a sixth PATTERN would have entered
+`clauseTemplateAnchors.test.ts`'s cross product overlapping an existing one at **both** seams — the
+exact shape that file exists to refuse. A row is pass ONE and cannot collide with a pattern at all.
+
+### THE COST AND THE CLAUSE NAME DIFFERENT TYPES, AND THAT IS THE WHOLE GUARD
+
+Frozen Wood costs **{W}{W}{W}{C}** and its clause counts **{G}** — a **Water** Pokémon reading a
+**Grass** clause. With single-unit attachments, every board that can legally DECLARE the attack holds
+four Energy cards, so the UNFILTERED reading at `count: 2` is TRUE on all of them.
+**Dropping the filter does not make the printed bonus wrong somewhere; it makes it UNCONDITIONAL.**
+
+That is why the FALSE case in `typedEnergyThreshold.test.ts` §3 is an ordinary paying board rather
+than an unpayable one (D379's rule about driving a refusal from OUTSIDE a saturated population), and
+why mutant **C6** mutates the FIXTURE's cost to `{G}{G}{G}{C}`: it arms the clause by paying and
+deletes the FALSE case, breaking the EXPERIMENT rather than the engine. ⚠️ **A demonstrator whose cost
+and clause named the same type could not have shown any of this.**
+
+### CARDS, NOT UNITS — AND THE FIXTURE THAT CAN TELL THEM APART
+
+The typed branch counts cards whose PROVISION includes the type (`providesEnergyType`, D118's rule),
+so a Special providing `{G}{G}` counts **ONE** and the attack deals 120; two of them deal 240.
+
+🛑 **`fix-blend` COULD NOT HAVE ASKED THIS QUESTION.** It provides `["Fire", "Water"]`, which
+separates a CARD count from a UNIT count for an *unfiltered* tally and cannot do it for a `{G}` one —
+it contributes one Grass card and one Grass unit, so both readings agree. `fix-grassdouble`
+(`["Grass", "Grass"]`) is the first `EnergyProgram.provides` row in the repo to spell one type
+**twice**; `providedEnergy` is a `flatMap`, so the duplicate survives and a units reading really would
+see two. **A fixture's discriminating power is relative to the parameter under test** — D390's rule,
+one member over, and this time it needed a new registry row rather than a new body.
+
+⚠️ **AND `fix-frozenwood`'s `evolveFrom` IS THE PRINTED `"Snover"`** for D390's *other* fixture
+lesson: `stage1Bonus.test.ts` §1 sweeps `FIXTURE_POOL` for Stage 1 bodies with a NULL chain and pins
+that set at exactly ONE, so a tidy null would have turned another file's finding into an artefact.
+
+### TWO CORRECTIONS TO THE INHERITED HANDOFF, BOTH FOUND BY ENUMERATING RATHER THAN READING
+
+⑴ **THE RESIDUE HOLDS FOUR CLAUSES NO HANDOFF IN THIS RUN HAS EVER NAMED** — *"this Pokémon evolved
+from Gimmighoul during this turn"*, *"…from Misty's Staryu…"*, *"this Pokémon used Form Ranks during
+your last turn"* and *"…used Pervasive Gas…"*, one printing each, forming **two pairs that each share
+one mechanism**. The evolve pair's price is measured rather than guessed: `InPlayPokemon` carries
+`turnPlayed`, `promotedTurn` and `healedTurn` but **no evolution stamp**, and `evolvePokemon`
+(types.ts) spreads `{...from}` so the evolved body inherits the pre-evolution `turnPlayed`. A required
+`evolvedTurn: number | null` is **D386's exact shape** and owes `MATCH_RECORD_VERSION` 23 → 24.
+
+⑵ **THE FACE-UP PRIZE ROW IS NOT IN THE BONUS RESIDUE AT ALL.** *"You may turn 1 of your face-down
+Prize cards face up. If you do, this attack does 80 more damage."* does not match the
+`If …, this attack does N more damage.` skeleton, so seven consecutive slices compared their candidate
+against a figure the residue never contained. It is still the only multi-printing candidate in the
+wider backlog and it is still refused, at 2 / 9 = 0.22 against 0.50.
+
+**A HANDOFF TABLE IS A SAMPLE UNTIL SOMEBODY ENUMERATES THE RESIDUE.** Enumerate it.
+
+### THE NEXT SHAPE QUESTION, AND IT IS THE FIRST TEST OF THE RULE ABOVE
+
+The named next candidate is *"If a Pokémon that has \"Nidoking\" in its name is on your Bench, this
+attack does 120 more damage."* (1 legal printing) — a **SUBSTRING** name read against
+`yourBenchHasNamed { name }`'s **EQUALITY**.
+
+⚠️ **THE RULE ABOVE PREDICTS A *MEMBER*, NOT A FIELD**: what changes is the COMPARISON OPERATOR, not a
+filter the delegate already accepts, and no `nameMatches`-style predicate exists in `cards.ts` today.
+**STATE THE PREDICTION AND THEN TRY TO FALSIFY IT** — price an optional `match?: "substring"` field
+against a second member, count the executable sites BOTH ways at the head you find, and say which you
+took and why. Four live clause rows read the equality member (`Falinks`, `Durant`, `Illumise`,
+`Mightyena`, plus the `allOf` pair), so widening the member ITSELF is a rename with live consumers,
+which is the D389 arithmetic rather than the D391 one. The refutation board is cheap: §4's naming rule
+means "Dark Nidoking" and "Nidoking ex" satisfy the printed clause and fail the shipped one.
