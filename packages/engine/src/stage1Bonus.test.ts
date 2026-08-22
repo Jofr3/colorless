@@ -486,7 +486,12 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
     // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([17, 20]);
+    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
+    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
+    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
+    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
+    // band rung is still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([16, 19]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -498,11 +503,11 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // for the reason that matters: a reader narrowing so any clause returns to 2
     // fails it, as does that clause being claimed.
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(15);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(14);
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(16);
+    expect(byClause.size).toBe(15);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

@@ -292,12 +292,17 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
     // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(17);
-    expect(units(refused)).toBe(20);
+    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
+    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
+    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
+    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
+    // band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(16);
+    expect(units(refused)).toBe(19);
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
-    expect([refused.length + 4, units(refused) + 5]).toEqual([21, 25]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([22, 26]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([21, 25]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

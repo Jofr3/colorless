@@ -222,8 +222,13 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
     // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(17);
-    expect(units(refused)).toBe(20);
+    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
+    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
+    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
+    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
+    // band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(16);
+    expect(units(refused)).toBe(19);
     // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
     // add the sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -235,22 +240,22 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 7).toBe(24);
-    expect(units(refused) + 8).toBe(28);
-    expect(refused.length + 8).toBe(25);
-    expect(units(refused) + 10).toBe(30);
-    expect(refused.length + 9).toBe(26);
-    expect(units(refused) + 12).toBe(32);
-    expect(refused.length + 10).toBe(27);
-    expect(units(refused) + 14).toBe(34);
-    expect(refused.length + 11).toBe(28);
-    expect(units(refused) + 16).toBe(36);
-    expect(refused.length + 13).toBe(30);
-    expect(units(refused) + 18).toBe(38);
-    expect(refused.length + 14).toBe(31);
-    expect(units(refused) + 20).toBe(40);
-    expect(refused.length + 15).toBe(32);
-    expect(units(refused) + 22).toBe(42);
+    expect(refused.length + 8).toBe(24);
+    expect(units(refused) + 9).toBe(28);
+    expect(refused.length + 9).toBe(25);
+    expect(units(refused) + 11).toBe(30);
+    expect(refused.length + 10).toBe(26);
+    expect(units(refused) + 13).toBe(32);
+    expect(refused.length + 11).toBe(27);
+    expect(units(refused) + 15).toBe(34);
+    expect(refused.length + 12).toBe(28);
+    expect(units(refused) + 17).toBe(36);
+    expect(refused.length + 14).toBe(30);
+    expect(units(refused) + 19).toBe(38);
+    expect(refused.length + 15).toBe(31);
+    expect(units(refused) + 21).toBe(40);
+    expect(refused.length + 16).toBe(32);
+    expect(units(refused) + 23).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -285,7 +290,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(16);
+    expect(byClause.size).toBe(15);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);

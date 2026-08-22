@@ -258,13 +258,23 @@ describe("§2 — the COMPARATOR, settled from the catalog before it was spelled
     // The sibling's threshold is THREE, which is not the Bench cap — so "5" on
     // this row is a parameter the catalog varies and not the cap wearing a number.
     expect(benchCounts.some(([, s]) => s.includes("3 or more"))).toBe(true);
-    // …and it is UNBUILT at this head, on BOTH readers. D367's population, named
-    // rather than counted: 1 legal printing, and it wants a seat sibling of the
-    // member this slice just bought.
+    // 🆕🆕 D389 — AND IT IS BUILT NOW, AS THE SEAT SIBLING THIS ROW ASKED FOR AND NOT
+    // AS A SEAT PARAMETER ON THE MEMBER THIS SLICE BOUGHT. The rung is re-aimed rather
+    // than deleted, and it is re-aimed at the thing that matters: the sibling resolves
+    // through the BONUS consequent onto a DIFFERENT member, so this member's own
+    // reader still refuses it and `yourBenchAtLeast` is untouched — which is exactly
+    // what a re-pointing would have destroyed (D365's rename, priced at D362 and
+    // RE-MEASURED at D389 as 22 executable sites across 5 files).
     const sibling = "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.";
     expect(units(corpus().filter(([, s]) => s === sibling))).toBe(1);
-    expect(deriveAttackDamageBonus(sibling)).toBeNull();
+    expect(deriveAttackDamageBonus(sibling)?.count).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "opponentBenchAtLeast", count: 3 },
+    });
     expect(deriveAttackRequirement(sibling)).toBeNull();
+    // 🛑 AND THE TWO MEMBERS ARE STILL TWO: this row's clause maps to `yourBenchAtLeast`
+    // at the printed floor 5, and nothing about D389 moved it.
+    expect(deriveAttackRequirement(V_FORCE)).toEqual({ kind: "yourBenchAtLeast", count: 5 });
   });
 
   it("the anchor guards hold on the new key — no /i, the period is required, `^` is pinned", () => {

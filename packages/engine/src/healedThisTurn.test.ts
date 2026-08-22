@@ -229,16 +229,21 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
     // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(17);
-    expect(units(refused)).toBe(20);
+    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
+    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
+    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
+    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
+    // band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(16);
+    expect(units(refused)).toBe(19);
     // 🛑 A 1:2 STEP, which is the shape seven earlier slices in this family took —
     // D384's was the family's only 1:1. Written as offsets off the LIVE head so a
     // successor inherits the history without freezing it: D384's 20/24, D378's 21/25,
     // D377's 22/26, D376's 24/28.
-    expect([refused.length + 3, units(refused) + 4]).toEqual([20, 24]);
-    expect([refused.length + 4, units(refused) + 5]).toEqual([21, 25]);
-    expect([refused.length + 5, units(refused) + 6]).toEqual([22, 26]);
-    expect([refused.length + 7, units(refused) + 8]).toEqual([24, 28]);
+    expect([refused.length + 4, units(refused) + 5]).toEqual([20, 24]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([21, 25]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([22, 26]);
+    expect([refused.length + 8, units(refused) + 9]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -262,7 +267,7 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // 🆕🆕 D388 — `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`: the RETREAT-COST THRESHOLD left
     // the singleton band and nothing else moved.
     expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([
-      [1, 15],
+      [1, 14],
       [5, 1],
     ]);
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
@@ -271,7 +276,7 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(16);
+    expect(byClause.size).toBe(15);
     expect(Math.max(...byClause.values())).toBe(5);
     // …and the clause this slice bought is not in the map at all, which is a different
     // claim from "no clause has 2 printings" and fails on its own if the row is dropped.

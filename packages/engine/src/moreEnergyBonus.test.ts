@@ -264,11 +264,16 @@ describe("§1 — the price, RE-DERIVED, and BOTH consequents asked", () => {
     // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and
     // the distribution goes `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`, so every band rung is
     // still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(17);
-    expect(units(refused)).toBe(20);
+    // 🆕🆕 D389 — 17 / 20 -> **16 / 19**: the OPPONENT-SEAT BENCH COUNT left this
+    // residue — ONE sentence at ONE printing (Iron Crown `sv08-132` "Deleting Slash",
+    // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
+    // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
+    // band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(16);
+    expect(units(refused)).toBe(19);
     // …and the step is 1 and 1, the NARROWEST this chain has taken. Written as an
     // offset off the live head, which is what makes it re-derive rather than freeze.
-    expect([refused.length + 4, units(refused) + 5]).toEqual([21, 25]);
+    expect([refused.length + 5, units(refused) + 6]).toEqual([21, 25]);
   });
 
   it("🛑 D207's SUPPLY question does not ARISE, and that is a result rather than a skip", () => {
@@ -536,8 +541,8 @@ describe("§6 — the census moves in exactly ONE summand, and the step is 1 and
     // (Maractus `sv10.5b-008`/`-093` "Lively Needles", 2 legal printings). A 1:2 step,
     // so the two subtrahends below diverge again — which is the whole reason this rung
     // is written as an offset off the live head rather than as a frozen pair.
-    expect(resolved).toHaveLength(370); // 🆕🆕 D388 +1 sentence (THE RETREAT-COST THRESHOLD — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentActiveRetreatCostAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — ZERO new card predicates, because the printed noun phrase names `effectiveRetreatCost` (continuous.ts, D322) and not the printed `retreatCostOf` column, which is the SHAPE question D387 left open and this slice settled) // 🆕🆕 D387 +1 sentence (THE STAGE 1 CLAUSE — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**) at 1 legal printing: ONE `cards.ts` predicate, ONE `BoardCondition` member (`opponentActiveIsStage1`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms)
-    expect(units(resolved)).toBe(1267); // 🆕🆕 D388 +1 printing (THE RETREAT-COST THRESHOLD — one sentence, one printing: the 1:1 shape, and the fold is the reading the engine had already given this noun phrase since 0.61.0) // 🆕🆕 D387 +1 printing (THE STAGE 1 CLAUSE — one sentence, one legal printing)
+    expect(resolved).toHaveLength(371); // 🆕🆕 D389 +1 sentence (THE OPPONENT-SEAT BENCH COUNT — Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentBenchAtLeast { count }`), ONE literal clause row and TWO exhaustive-switch arms — a SECOND MEMBER and not a seat parameter on `yourBenchAtLeast`) // 🆕🆕 D388 +1 sentence (THE RETREAT-COST THRESHOLD — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentActiveRetreatCostAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — ZERO new card predicates, because the printed noun phrase names `effectiveRetreatCost` (continuous.ts, D322) and not the printed `retreatCostOf` column, which is the SHAPE question D387 left open and this slice settled) // 🆕🆕 D387 +1 sentence (THE STAGE 1 CLAUSE — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**) at 1 legal printing: ONE `cards.ts` predicate, ONE `BoardCondition` member (`opponentActiveIsStage1`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms)
+    expect(units(resolved)).toBe(1268); // 🆕🆕 D389 +1 printing (THE OPPONENT-SEAT BENCH COUNT — one sentence, one printing: the 1:1 shape for the third slice running) // 🆕🆕 D388 +1 printing (THE RETREAT-COST THRESHOLD — one sentence, one printing: the 1:1 shape, and the fold is the reading the engine had already given this noun phrase since 0.61.0) // 🆕🆕 D387 +1 printing (THE STAGE 1 CLAUSE — one sentence, one legal printing)
     // The step, as an offset off the live head rather than a frozen pair. It is the
     // family's first 1:1 step: D368 moved 1:3, D369-D376 1:2 each, D377 3:3, D378 2:3,
     // D379 1:2, D380 2:6, D382 1:1 on the OTHER instrument and D383 1:5.
@@ -546,7 +551,10 @@ describe("§6 — the census moves in exactly ONE summand, and the step is 1 and
     // 🆕🆕 D388 — a `- 1` / `- 1` pair at the FRONT of both terms: the RETREAT-COST
     // THRESHOLD resolved ONE sentence worth ONE printing, the family's second
     // consecutive 1:1 step.
-    expect([resolved.length - 1 - 1 - 3, units(resolved) - 1 - 1 - 4]).toEqual([365, 1261]);
+    // 🆕🆕 D389 — a `- 1` / `- 1` pair at the FRONT of both terms: the OPPONENT-SEAT
+    // BENCH COUNT resolved ONE sentence worth ONE printing, the family's third
+    // consecutive 1:1 step.
+    expect([resolved.length - 1 - 1 - 1 - 3, units(resolved) - 1 - 1 - 1 - 4]).toEqual([365, 1261]);
   });
 
   it("🛑 the move is READER-keyed: no registry row and no gate clause", () => {
