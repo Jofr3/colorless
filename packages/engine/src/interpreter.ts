@@ -3497,6 +3497,26 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[seat].bench.some(
         (p) => p !== null && topCardOf(state, p)?.name === cond.name,
       );
+    case "yourBenchHasNameContaining":
+      // 🆕 D392 — the arm directly above with ONE OPERATOR changed and everything
+      // else held exactly still: the same seat, the same Bench-only zone, the same
+      // `topCardOf` read of the stack TOP (§1.2), the same `!== null` slot guard.
+      // `.includes` is case-sensitive and does no normalisation, which is
+      // `yourBenchHasNamed`'s own rule — the catalog `name` IS the printed name.
+      //
+      // 🛑 AND IT IS DELIBERATELY NOT `startsWith`. Team Rocket's Nidoqueen
+      // `sv10-116`'s clause names "Nidoking", and the Standard body that satisfies it
+      // is Team Rocket's Nidoking ex — the fragment sits at a NON-ZERO offset behind
+      // an owner possessive, so a prefix reading fails on the exact board the card is
+      // printed for, and so does the equality reading one arm up. Both are refuted on
+      // a board in `benchNameSubstring.test.ts` §3.
+      //
+      // The `?? false` is the empty-name/unresolvable-card path: `topCardOf` returns
+      // undefined for a uid the catalog cannot resolve, and an unreadable card must
+      // never pay a bonus.
+      return state.players[seat].bench.some(
+        (p) => p !== null && (topCardOf(state, p)?.name.includes(cond.fragment) ?? false),
+      );
     case "yourNamedPokemonInPlay": {
       // D279 — the arm above's sentence with ONE printed word changed ("Bench" →
       // "in play"), and that one word is the whole difference: the Active Spot is
@@ -4252,6 +4272,15 @@ export function conditionNote(cond: BoardCondition): string {
       // Also verbatim — this clause names no pronoun and no timing word, so
       // nothing has to be dropped on the way out (D119's whole cluster).
       return `${cond.name} is on your Bench`;
+    case "yourBenchHasNameContaining":
+      // 🆕 D392 — also verbatim, and the QUOTATION MARKS are printed bytes rather
+      // than punctuation this note chose: the clause quotes its fragment on the card
+      // face (ASCII U+0022, checked against the committed corpus), so dropping them
+      // would make the pill read as a whole card name and mean the arm one line up.
+      // Like that arm it names no pronoun and no timing word, so nothing is dropped
+      // on the way out, and it round-trips to its `CONDITIONAL_DAMAGE_CLAUSES` key
+      // byte for byte.
+      return `a Pokémon that has "${cond.fragment}" in its name is on your Bench`;
     case "yourNamedPokemonInPlay":
       // D279 — round-trips to the printed clause with only the leading "If" and
       // the trailing comma dropped, exactly as the arm above does: "If you have

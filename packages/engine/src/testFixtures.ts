@@ -10713,6 +10713,78 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-illumise": battler("fix-illumise", { name: "Illumise", hp: 60, types: ["Grass"] }),
   "fix-beldum": battler("fix-beldum", { name: "Beldum", hp: 60, types: ["Metal"] }),
   "fix-metang": battler("fix-metang", { name: "Metang", hp: 60, types: ["Metal"] }),
+  /** 🆕 D392 — THE SUBSTRING NAME-READ DEMONSTRATOR AND ITS THREE BENCH BODIES.
+      Team Rocket's Nidoqueen `sv10-116`, transcribed and not interpolated (D306):
+      the real card prints TWO attacks and so does this, at their printed indices,
+      and the printed sentence is on the one at index **0** — so the CONTROL here is
+      the attack at index 1, the mirror of D391's demonstrator rather than a copy.
+
+      🛑 **THE THREE BENCH BODIES ARE A DISCRIMINATING TRIPLE, NOT A CAST.** The
+      printed clause names the FRAGMENT "Nidoking", and the three names separate the
+      three readings a successor could give it:
+
+        · `fix-trnidoking` — **"Team Rocket's Nidoking ex"**, the body the printed
+          clause is actually for in Standard. It CONTAINS the fragment at a NON-ZERO
+          offset, so it is TRUE under the substring reading, FALSE under the equality
+          reading `yourBenchHasNamed` ships, and FALSE under a `startsWith` one. It
+          is the board that refutes both wrong readings at once.
+        · `fix-nidoking` — **"Nidoking"** exactly, where the two readings AGREE. It is
+          what makes the new member a WIDENING rather than a different question, and
+          it is the control that stops the substring arm being "read the name off the
+          wrong field".
+        · `fix-benchfiller` (reused, D366) — a body with no name of consequence, the
+          FALSE case under every reading.
+
+      ⚠️ **AND THE ATTACKER IS ITS OWN FOURTH CONTROL.** "Team Rocket's Nidoqueen"
+      shares the possessive prefix and eight of its letters with the fragment and
+      still does not contain it, so a second copy on the Bench must NOT arm the
+      clause — the near-miss `fix-trnidoking` alone cannot show, because it differs
+      from the fragment in the direction that PASSES.
+
+      ⚠️ **THIS PAYS THE POSSESSIVE FIXTURE-NAME TOLL, DELIBERATELY, AFTER SEVENTEEN
+      SLICES OF DODGING IT.** `switchSeam.test.ts`, `inPlayTarget.test.ts` and
+      `ownerTargetOps.test.ts` each ENUMERATE every `/^[A-Z][A-Za-z' ]*'s /` name in
+      this pool, so two prefixed names cost a one-line list edit in three files that
+      name nothing else about this slice. It is paid rather than dodged because the
+      possessive is what puts the fragment at a non-zero offset: a tidy `Nidoking ex`
+      would have left `startsWith` alive and unrefuted.
+
+      ⚠️ `fix-trnidoking` IS A REAL 2-PRIZE BODY, because `prizeValueOf` reads the
+      printed " ex" suffix off the NAME (D93) and the real card carries it. Inert
+      here — nothing in `benchNameSubstring.test.ts` knocks a benched body out — and
+      transcribed rather than trimmed to what the tests read (D306).
+
+      ⚠️ **`fix-*` IDS, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the six-set manifest, and `sv10` is in
+      none of the six. */
+  "fix-loveimpact": {
+    ...blank,
+    id: "fix-loveimpact",
+    name: "Team Rocket's Nidoqueen",
+    category: "Pokemon",
+    stage: "Stage2",
+    evolveFrom: "Team Rocket's Nidorina",
+    hp: 170,
+    types: ["Darkness"],
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Love Impact",
+        damage: "60+",
+        effect:
+          'If a Pokémon that has "Nidoking" in its name is on your Bench, this attack does 120 more damage.',
+      },
+      { cost: ["Darkness", "Darkness"], name: "Mega Kick", damage: 130 },
+    ],
+  },
+  "fix-trnidoking": battler("fix-trnidoking", {
+    name: "Team Rocket's Nidoking ex",
+    hp: 60,
+    types: ["Darkness"],
+  }),
+  "fix-nidoking": battler("fix-nidoking", { name: "Nidoking", hp: 60, types: ["Darkness"] }),
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12567,6 +12639,31 @@ export const TYPED_ENERGY_THRESHOLD_DECK = deckOf({
   "fix-grass-energy": 12, // Basic {G} — the type the clause counts
   "fix-grassdouble": 4, // Special {G}{G} — ONE card, TWO units: the cards-vs-units board
   "fix-energy": 8, // Basic {C} — the printed Colorless symbol, and a NON-Grass filler
+});
+
+/** 🆕 D392 — a DEDICATED 60 (D270) for the SUBSTRING name read, so no other suite's
+    seeded shuffles move.
+
+    🛑 **NO MODIFIER OF ANY KIND AND NO SECOND ATTACKER**, D391's rule one member
+    over: nothing in this 60 can change a damage number except which body is on the
+    Bench, which is what makes a 60 and a 180 attributable to the NAME. `fix-titan`
+    is 340 HP with NO attacks, so it survives the boosted 180 without a §8.1 Prize
+    tail landing under a damage assertion, and the far seat can never move a number.
+
+    ⚠️ **THE ATTACKER IS A STAGE 2 AND CANNOT OPEN**, so setup takes its Active from
+    the Basics and every board here is built by surgery afterwards. The three named
+    bench bodies are Basics and so is `fix-benchfiller`, which is what a Bench needs
+    to be reachable from the deck at all.
+
+    3 + 4 + 4 + 4 + 25 + 12 + 8 = **60**. */
+export const BENCH_NAME_SUBSTRING_DECK = deckOf({
+  "fix-loveimpact": 3, // TR Nidoqueen — "Love Impact" ({D}, 60+) at index 0: the +120
+  "fix-trnidoking": 4, // "Team Rocket's Nidoking ex" — CONTAINS the fragment, does not equal it
+  "fix-nidoking": 4, // "Nidoking" — the name the two readings AGREE on
+  "fix-benchfiller": 4, // no name of consequence — the FALSE case under every reading
+  "fix-titan": 25, // 340 HP, no attacks — survives the boosted 180, and the dominant starter
+  "fix-dark-energy": 12, // Basic {D} — the printed cost of both attacks
+  "fix-energy": 8, // Basic {C} — a non-Darkness filler that pays nothing here
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

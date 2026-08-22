@@ -1924,6 +1924,62 @@ export type BoardCondition =
       empty Bench is false. Names are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasNamed"; name: string }
+  /** 🆕 D392 — A Pokémon whose printed name CONTAINS `fragment` is on YOUR Bench —
+      Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, at
+      index 0 of TWO), *"If a Pokémon that has "Nidoking" in its name is on your
+      Bench, this attack does 120 more damage."*, **1 legal printing**.
+
+      🛑 **A SECOND MEMBER AND NOT A `match?:` FIELD ON THE ARM ABOVE — AND THIS IS
+      THE FIRST TEST OF THE RULE D391 LEFT BEHIND.** That rule reads *a comparand is
+      a shape and takes a MEMBER; a filter the delegate already accepts is a FIELD*.
+      What changes here is the COMPARISON OPERATOR — `===` becomes `.includes` —
+      which is neither, so the rule predicts a member. It was PRICED BOTH WAYS at
+      this head rather than taken on the prediction, and the measurements agree:
+
+        · **A second member edits ZERO of `yourBenchHasNamed`'s 45 executable sites**
+          (11 in source here and in `interpreter.ts`, 34 across six suites). An
+          optional `match?: "substring"` edits THREE — the member line and BOTH
+          exhaustive-switch arms — with 8 live `kind:` literals and 34 live
+          assertions standing behind them.
+        · **The note would need a second SENTENCE, not a second SLOT.** That is
+          D389's arithmetic and it is the exact half of D391's that does NOT
+          transfer: `<name> is on your Bench` and `a Pokémon that has "<fragment>"
+          in its name is on your Bench` share no interpolation shape, so a field
+          buys a branch inside one arm rather than saving a string.
+        · **There is no delegate to take the parameter.** D391's field was cheap
+          because `countAttachedEnergy` had accepted exactly that filter since D128;
+          this arm compares `topCardOf(...)?.name` INLINE and `cards.ts` carries no
+          name-matching predicate at all.
+        · **And an optional field is invisible to the compiler.** A row spelling the
+          printed clause and forgetting `match` would silently get the EQUALITY read
+          and answer FALSE on every board the card was printed for.
+
+      ⚠️ **THE FIELD IS `fragment` AND NOT `name`, WHICH IS A COMPILER PROPERTY
+      RATHER THAN A NAMING TASTE.** Were it `name`, the two members would differ by
+      their `kind` token alone and a mistyped `kind` on any of the eight shipped
+      `yourBenchHasNamed` literals would still typecheck — silently swapping an exact
+      read for a substring one, or the reverse. Differently-named fields make that
+      swap a type error in both directions.
+
+      🛑 **THE TWO READINGS GENUINELY DISAGREE, AND THE PRINTED POOL IS WHERE.** §4's
+      naming rule means the Standard body this clause is for is **Team Rocket's
+      Nidoking ex** — a name that CONTAINS "Nidoking" and is not equal to it — so
+      `yourBenchHasNamed { name: "Nidoking" }` answers FALSE on exactly the board the
+      card was printed for. ⚠️ **AND A SUBSTRING IS NOT A PREFIX EITHER**: the owner
+      possessive puts the fragment at a NON-ZERO offset, so a `startsWith` reading
+      fails on the same board an `===` one does. Both are refuted on a board in
+      `benchNameSubstring.test.ts` §3 rather than argued here.
+
+      Substring, CASE-SENSITIVE and un-normalised — `yourBenchHasNamed`'s reading
+      verbatim but for the operator. The catalog `name` IS the printed name and the
+      printed clause quotes the fragment in its printed capitals, so a case fold
+      would admit names the card does not.
+
+      Your BENCH alone, read through `topCardOf` (§1.2), for the arm above's reasons
+      unchanged: the printed word is "Bench", an empty Bench is false, and evolving a
+      benched body swaps the name this clause reads. Names are public the moment a
+      Pokémon is in play, so the union's public-state invariant holds. */
+  | { kind: "yourBenchHasNameContaining"; fragment: string }
   /** D279 — You have a Pokémon named `name` ANYWHERE IN PLAY, Active Spot
       INCLUDED — Karrablast `sv10.5b-009`/`-094` and Shelmet `sv10.5w-008`/`-093`
       "Stimulated Evolution" (*"If you have Shelmet in play, this Pokémon can
@@ -10158,6 +10214,26 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   ["Durant is on your Bench", { kind: "yourBenchHasNamed", name: "Durant" }],
   ["Illumise is on your Bench", { kind: "yourBenchHasNamed", name: "Illumise" }],
   ["Mightyena is on your Bench", { kind: "yourBenchHasNamed", name: "Mightyena" }],
+  // 🆕 D392 — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**,
+  // at index 0 of TWO), ONE legal printing, and the first row in this cluster whose
+  // value is NOT `yourBenchHasNamed`: the printed clause reads a SUBSTRING of the
+  // name where the four rows above read the whole of it.
+  //
+  // 🛑 **A LITERAL ROW FOR THE EXACT REASON THE FOUR ABOVE ARE LITERAL, AND THE
+  // REASON IS STRONGER HERE.** A template `^a Pokémon that has "(.+)" in its name is
+  // on your Bench$` has a CLOSED delimiter and would look safe — but the token it
+  // captures is a card NAME, which is open-ended and has nothing to fail against, so
+  // an unparseable fragment would resolve to a predicate that answers FALSE forever
+  // and silently. That is the one outcome this family refuses; one row per printing.
+  //
+  // ⚠️ **THE QUOTATION MARKS ARE ASCII U+0022, CHECKED AGAINST THE COMMITTED CORPUS
+  // BYTE BY BYTE** — not U+201C/U+201D — which is why the key is spelled with a
+  // single-quoted JS string here rather than escaped. `literalClauseRow`'s U+2019
+  // fold is about APOSTROPHES and reaches none of this.
+  [
+    'a Pokémon that has "Nidoking" in its name is on your Bench',
+    { kind: "yourBenchHasNameContaining", fragment: "Nidoking" },
+  ],
   // 🆕🆕 D367 — Metagross `sv09-063` "Conjoined Beams" ({P}{P}, 130+, **+150**),
   // ONE legal printing, and the SECOND derived `allOf` in the engine — D365's
   // Mesprit row was the first, and it sits under the OTHER consequent. ZERO NEW

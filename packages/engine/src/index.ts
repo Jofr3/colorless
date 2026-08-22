@@ -12108,6 +12108,82 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.297.0 → **THE SUBSTRING NAME READ — AND THE FIRST TEST OF D391's OWN
+    RULE, WHICH HELD.**
+
+      Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, **60+**, index **0** of
+      TWO — confirmed field by field against tcgdex, and located by a single
+      brace-free limitlesstcg `text:` search for the printed tail *"in its name is on
+      your Bench"*, whose 30 hits hold exactly ONE Standard card)
+        *"If a Pokémon that has "Nidoking" in its name is on your Bench, this attack
+         does 120 more damage."*
+        **1 legal printing**
+
+    🛑 **A SECOND `BoardCondition` MEMBER (`yourBenchHasNameContaining { fragment }`),
+    NOT AN OPTIONAL `match?: "substring"` FIELD ON `yourBenchHasNamed` — AND THE RULE
+    D391 WROTE DOWN PREDICTED IT BEFORE THE MEASUREMENT DID.** That rule reads *a
+    comparand is a shape and takes a MEMBER; a filter the delegate already accepts is
+    a FIELD*. What changes here is the COMPARISON OPERATOR (`===` → `.includes`),
+    which is neither, so the rule says MEMBER. **IT WAS PRICED BOTH WAYS ANYWAY**, on
+    D391's own instruction, and every measurement agrees with the prediction:
+
+      · **A member edits ZERO of `yourBenchHasNamed`'s 45 executable sites** (11 in
+        source across `effects.ts` and `interpreter.ts`, 34 across six suites). An
+        optional `match?:` edits **THREE** — the member line and BOTH exhaustive
+        switch arms — with 8 live `kind:` literals and 34 live assertions behind them.
+      · **`conditionNote` needs a second SENTENCE, not a second SLOT.** That is the
+        exact half of D391's argument that does NOT transfer: `<name> is on your
+        Bench` and `a Pokémon that has "<fragment>" in its name is on your Bench`
+        share no interpolation shape, so a field buys a branch inside one arm rather
+        than saving a string — which is D389's arithmetic, on a different axis.
+      · **There is no delegate to take the parameter.** D391's field was cheap because
+        `countAttachedEnergy` had accepted exactly that filter since D128. This arm
+        compares `topCardOf(...)?.name` INLINE and `cards.ts` carries no name-matching
+        predicate at all, so a field would have had to invent the branch it claimed to
+        delegate.
+      · **And an optional field is invisible to the compiler** — the price D391 named
+        and bought back with four mutants. Here it would have been paid for nothing.
+
+    ⚠️ **SO THE RULE IS ONE-FOR-ONE, NOT PROVEN.** It was TESTED and it survived; what
+    it has not yet met is a case where the rule and the measurements DISAGREE, and
+    D391's instruction still stands — follow the measurements and say so.
+
+    🛑 **THE FIELD IS `fragment`, NOT `name`, AND THAT IS A COMPILER PROPERTY.** Were
+    it `name`, the two members would differ by their `kind` token alone and a mistyped
+    `kind` on any of the eight shipped `yourBenchHasNamed` literals would still
+    typecheck — silently swapping an exact read for a substring one. Differently-named
+    fields make the swap a type error in both directions, which is the safety a second
+    member is being bought for in the first place.
+
+    🛑 **THE TWO READINGS DISAGREE ON THE BOARD THE CARD WAS PRINTED FOR, AND A
+    SUBSTRING IS NOT A PREFIX EITHER.** §4's naming rule makes the Standard satisfier
+    **Team Rocket's Nidoking ex** — the fragment sits at a NON-ZERO offset behind an
+    owner possessive — so `===` answers FALSE there and so does `startsWith`. Both are
+    refuted on a board rather than argued, which is why this slice PAYS the possessive
+    fixture-name toll (three enumerating suites, one list line each) after seventeen
+    slices of dodging it: a tidy `Nidoking ex` would have left `startsWith` alive.
+
+    🛑 **A LITERAL `CONDITIONAL_DAMAGE_CLAUSES` ROW AND EMPHATICALLY NOT A SIXTH
+    TEMPLATE.** The captured token is a card NAME — open-ended, with nothing to fail
+    against — so a pattern would resolve an unparseable fragment into a predicate that
+    answers FALSE forever and silently. That is `yourBenchHasNamed`'s own row rule
+    (D118's one-token test refused for exactly this reason), and the printed quotation
+    marks around the fragment make the template look SAFER than it is, which is what
+    makes restating the rule here worth the lines.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape for a seventh
+    slice running. The BONUS RESIDUE goes **14 / 17 → 13 / 16** and its clause
+    distribution `{1: 12, 5: 1}` → `{1: 11, 5: 1}`; the 2-printing band stays empty.
+
+    engineVersion 0.296.0 → **0.297.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed. The test is *"would an old record MEAN SOMETHING ELSE"*
+    (D335): nothing persisted moved at all — no `InPlayPokemon`, `PlayerSide` or
+    `GameState` key, no new op, event, error code, prompt kind or choice kind — and a
+    NEW union member cannot re-interpret a stored one, which is the structural reason
+    this answer is easier than D391's (a FIELD on an existing member is the address a
+    widening argument does not automatically reach).
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.296.0 → **THE TYPED PER-BODY ENERGY THRESHOLD — AND THE FIRST SLICE IN
     THIS RUN WHOSE SHAPE QUESTION HONESTLY ANSWERED *FIELD*.**
 
@@ -15773,7 +15849,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.296.0";
+export const engineVersion = "0.297.0";
 
 export type {
   ApplyResult,

@@ -5158,7 +5158,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.296.0";',
+    find: 'export const engineVersion = "0.297.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6179,9 +6179,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D279",
     what: '🛑 THE D131 THIS SLICE DECLINED, TAKEN: `yourBenchHasNamed` is widened to consult the Active Spot instead of a second member being added. Falinks `sv02-119` "Reckless Charge Together" — whose clause names its OWN card and whose attacker is an ACTIVE Falinks — then satisfies itself, turning a conditional +90 into an unconditional one on every board with a single Falinks. ⚠️ THE DAMAGE SUITE IS WHERE THE REAL COST LANDS, which is why this row expects TWO killers: a vocabulary change is not local to the vocabulary',
     file: "packages/engine/src/interpreter.ts",
-    find: '      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourNamedPokemonInPlay": {',
+    // ⚠️ RE-TRANSCRIBED AT D392, WITH THE CLAIM UNCHANGED AND THE ADJACENCY MOVED. This
+    // row spans the end of the `yourBenchHasNamed` arm and the head of the arm that
+    // FOLLOWS it, and D392 inserted `yourBenchHasNameContaining` between the two — so the
+    // `find` went to ZERO matches while every word of the `what` above stayed true. That
+    // is the LOUD half of D384's lesson (the harness reports it; a `git grep` for the
+    // quoted return would still have found it), and the tail is re-pointed at the NEW
+    // neighbour rather than dropped, because the two-line return alone is not unique in
+    // this file.
+    find: '      return state.players[seat].bench.some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourBenchHasNameContaining":',
     replace:
-      '      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourNamedPokemonInPlay": {',
+      '      return [state.players[seat].active, ...state.players[seat].bench].some(\n        (p) => p !== null && topCardOf(state, p)?.name === cond.name,\n      );\n    case "yourBenchHasNameContaining":',
     expectKilledBy: [
       "packages/engine/src/typeNameClause.test.ts",
       "packages/engine/src/stimulatedEvolution.test.ts",
