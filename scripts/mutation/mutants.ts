@@ -15861,4 +15861,82 @@ export const MUTANTS: Mutant[] = [
     replace: "    name: \"Staryu\",",
     expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
   },
+  // == D394 - THE USED-ATTACK PAIR. The union half is one member and the SLICE is two
+  //    questions the earlier stamps never had to answer: WHOSE CLOCK (the window is
+  //    "your LAST turn", not "this turn") and WHEN THE WRITE HAPPENS (the clause is
+  //    read at declaration, so a write in front of that read clobbers its own
+  //    antecedent). Eight rows: two on the clock, one on the name, three on the write
+  //    site and its carriage across a park, one on the table and one on the note.
+  {
+    id: "D394-used-attack-window-is-the-opponents-clock",
+    decision: "D394",
+    what: "\u{1F6D1} C1 - **THE WINDOW BECOMES `state.turn - 1`**, which is `koedDuringOpponentsLastTurn`'s REAL arithmetic copied verbatim from four lines up in the same file - the likeliest mistake there is here, because that helper is the only other closed-window predicate in the engine and it reads *\"your OPPONENT's last turn\"*. One counter step back is the OPPONENT's turn, so the comparison is against a turn number no body of this seat can ever carry and BOTH printed bonuses silently stop existing. ⚠️ It is also the row that says the KO-park measurement was worth taking: every board in §5 was built to make this arithmetic falsifiable, and a `- 1` build is green on nothing at all",
+    file: "packages/engine/src/types.ts",
+    find: "  return used !== null && used.name === attack && used.turn === state.turn - 2;",
+    replace: "  return used !== null && used.name === attack && used.turn === state.turn - 1;",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-used-attack-window-becomes-this-turn",
+    decision: "D394",
+    what: "\u{1F6D1} C2 - **THE WINDOW BECOMES `=== state.turn`**, which is D393's `evolvedTurn` arm's REAL code one member over and the shape every OTHER stamp in this union uses. It is right about the field and wrong about the printed word: *\"during your LAST turn\"* is not *\"during this turn\"*, and since declaring an attack ENDS the turn (§5.3) the mutated gate can only ever be true for the attack currently resolving - so the bonus is unreachable rather than merely early. ⚠️ THE FAILING BOARD IS THE ORDINARY ONE: §3's two-turn combo, which is the only line of play either printing has",
+    file: "packages/engine/src/types.ts",
+    find: "  return used !== null && used.name === attack && used.turn === state.turn - 2;",
+    replace: "  return used !== null && used.name === attack && used.turn === state.turn;",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-used-attack-arm-ignores-the-attack-name",
+    decision: "D394",
+    what: "⚠️ C3 - **THE NAME TEST IS DROPPED** and any attack used on your last turn arms the clause. It passes every board either printing could build ALONE - each card's own two-turn combo still pays the printed amount - and dies only on the CROSS-CONTROL, which is precisely what pricing this as a PAIR bought. A Falinks that used Form Ranks would collect Weezing's +120 and the reverse",
+    file: "packages/engine/src/types.ts",
+    find: "  return used !== null && used.name === attack && used.turn === state.turn - 2;",
+    replace: "  return used !== null && used.turn === state.turn - 2;",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-finish-attack-never-writes-the-stamp",
+    decision: "D394",
+    what: "\u{1F6D1} C4 - **THE ONE WRITER STOPS WRITING**, restoring the pre-slice line (`let next = state;`) and leaving a REQUIRED field that nothing ever sets. ⚠️ **THIS IS THE ROW THAT SAYS A REQUIRED FIELD IS NO COMPILER GUARANTEE THAT ANYBODY SET IT** - D393's finding at a different address and by a different mechanism: there the hazard was a SPREAD supplying a stale value, here it is a default (`makeInPlay`'s `null`) supplying an honest one. Both typecheck, both leave the clause permanently false, and neither is visible in a diff of the type",
+    file: "packages/engine/src/flow.ts",
+    find: "  let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);",
+    replace: "  let next = state;",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-attack-stamp-goes-to-the-other-seat",
+    decision: "D394",
+    what: "⚠️ C5 - **THE STAMP IS WRITTEN ON THE DEFENDER'S BOARD**, `otherSeat(attackerSeat)` - the REAL argument of the very next line (`koRecoilOf(next, otherSeat(attackerSeat))`), which is the neighbour-copy this site invites. The attacker's uid resolves to nothing on the far board, so `stampAttackUse` returns the state unchanged and the field is never set: the failure is a SILENT no-op rather than a stamp in the wrong place, which is the harder half to notice by reading",
+    file: "packages/engine/src/flow.ts",
+    find: "  let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);",
+    replace: "  let next = stampAttackUse(state, otherSeat(attackerSeat), attackerUid, attackName);",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-parked-epilogue-loses-the-attack-name",
+    decision: "D394",
+    what: "\u{1F6D1} C6 - **THE PARKED ROUTE DROPS THE CARRIED NAME** and stamps the empty string. It is the whole reason `PendingStage.attackEpilogue` gained a REQUIRED `attack` at all, and it is invisible on FOUR of the five routes into `finishAttack`: only a program that PARKS reaches this line, so a suite whose attacks all resolve inline is green on it. Falinks's index 0 is a deck search and parks every time, which is why that fixture carries BOTH printed attacks rather than only the one this slice buys",
+    file: "packages/engine/src/flow.ts",
+    find: "      return finishAttack(popStage(state), events, stage.seat, stage.uid, stage.attack);",
+    replace: "      return finishAttack(popStage(state), events, stage.seat, stage.uid, \"\");",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-clause-rows-swap-their-attack-names",
+    decision: "D394",
+    what: "⚠️ C7 - **THE TWO CLAUSE ROWS TRADE THEIR ATTACK NAMES**: Falinks's sentence resolves to `attack: \"Pervasive Gas\"` and Weezing's to `\"Form Ranks\"`. Both rows still parse, both members are still well-formed, and the census figures do not move a digit - the sentences are still RESOLVED - so nothing outside this cluster can see it. Each card then pays its bonus only on a board it can never build (Falinks cannot use Pervasive Gas), which reads as *\"the clause just never fires\"* rather than as a wiring fault",
+    file: "packages/engine/src/effects.ts",
+    find: "    { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Form Ranks\" },",
+    replace: "    { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Pervasive Gas\" },",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
+  {
+    id: "D394-used-attack-note-drops-the-slot",
+    decision: "D394",
+    what: "⚠️ C8 - **THE NOTE DROPS THE INTERPOLATED ATTACK NAME** and reads *\"your Active Pokemon used an attack during your last turn\"* - still grammatical, still about the right board, and now the SAME pill for both printings. D393's C6 one field over, and the price of choosing a SLOT over a second sentence a second time: one arm serves two clauses, so its interpolation is load-bearing in a way a nullary member's never is. §2 asserts both notes by value and then round-trips both printed clauses back through the table",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `your Active Pokémon used ${cond.attack} during your last turn`;",
+    replace: "      return \"your Active Pokémon used an attack during your last turn\";",
+    expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
+  },
 ];
