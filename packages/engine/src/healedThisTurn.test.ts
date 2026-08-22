@@ -239,16 +239,22 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(15);
-    expect(units(refused)).toBe(18);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect(refused.length).toBe(14);
+    expect(units(refused)).toBe(17);
     // 🛑 A 1:2 STEP, which is the shape seven earlier slices in this family took —
     // D384's was the family's only 1:1. Written as offsets off the LIVE head so a
     // successor inherits the history without freezing it: D384's 20/24, D378's 21/25,
     // D377's 22/26, D376's 24/28.
-    expect([refused.length + 5, units(refused) + 6]).toEqual([20, 24]);
-    expect([refused.length + 6, units(refused) + 7]).toEqual([21, 25]);
-    expect([refused.length + 7, units(refused) + 8]).toEqual([22, 26]);
-    expect([refused.length + 9, units(refused) + 10]).toEqual([24, 28]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([20, 24]);
+    expect([refused.length + 7, units(refused) + 8]).toEqual([21, 25]);
+    expect([refused.length + 8, units(refused) + 9]).toEqual([22, 26]);
+    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -271,8 +277,10 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // singleton band and nothing else moved.
     // 🆕🆕 D388 — `{1: 16, 5: 1}` -> `{1: 15, 5: 1}`: the RETREAT-COST THRESHOLD left
     // the singleton band and nothing else moved.
+    // 🆕🆕 D391 — `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`: the TYPED PER-BODY ENERGY
+    // THRESHOLD left the singleton band and nothing else moved.
     expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([
-      [1, 13],
+      [1, 12],
       [5, 1],
     ]);
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
@@ -284,7 +292,8 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // 🆕🆕 D389 — 16 -> **15** and 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT BENCH
     // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same
     // band, with the 2-printing band already empty and staying empty.
-    expect(byClause.size).toBe(14);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
+    expect(byClause.size).toBe(13);
     expect(Math.max(...byClause.values())).toBe(5);
     // …and the clause this slice bought is not in the map at all, which is a different
     // claim from "no clause has 2 printings" and fails on its own if the row is dropped.

@@ -223,11 +223,23 @@ const LEFT: readonly (readonly [string, number, string])[] = [
   // the 5×4 head×tail cross product (`clauseTemplateAnchors.test.ts`) at the head BEFORE
   // the pattern existed, carrying this very sentence as an unbuilt row — so the guard is
   // older than the thing it guards, and the tripwire fired on the commit that built it.
-  [
-    "If this Pokémon has 2 or more {G} Energy attached, this attack does 120 more damage.",
-    1,
-    "a TYPED per-BODY Energy THRESHOLD — `yourActiveEnergyAtLeast { count }` (D383) is UNTYPED and `yourEnergyInPlayAtLeast { energy, count }` is SEAT-WIDE, so it is one FIELD short of one member and one ZONE short of the other, and the widening question has a live consumer either way",
-  ],
+  // 🛑🆕🆕 D391 — AND AGAIN, FOR THE TWELFTH SLICE RUNNING. The TYPED PER-BODY
+  // ENERGY THRESHOLD that sat here — *"If this Pokémon has 2 or more {G} Energy attached,
+  // this attack does 120 more damage."*, Abomasnow `sv10-060` "Frozen Wood" at ONE legal
+  // printing — was taken by D391 (`typedEnergyThreshold.test.ts`) for **ONE OPTIONAL
+  // FIELD** on the shipped `yourActiveEnergyAtLeast` member, ONE literal clause row and
+  // TWO **edited** arms. ZERO new members. `MATCH_RECORD_VERSION` stayed 23.
+  //
+  // 🛑 **AND THIS ROW'S `needs` COLUMN ASKED THE SHAPE QUESTION THE RIGHT WAY AND
+  // GOT AN ANSWER NINE SLICES OF PRECEDENT WOULD HAVE GOT WRONG.** It said the sentence
+  // is "one FIELD short of one member and one ZONE short of the other" — and the FIELD
+  // won, which is the OPPOSITE of what D389 decided one axis over. The discriminator is
+  // not the precedent but the arithmetic: D389's seat field would have been REQUIRED (a
+  // rename across 22 executable sites) and would have saved no note body; `energy?` is
+  // OPTIONAL, edits ZERO of `yourActiveEnergyAtLeast`'s 11 executable sites, drops into
+  // ONE interpolation slot of a note that already existed, and hands
+  // `countAttachedEnergy` a filter it has taken as a parameter since D128. **A COMPARAND
+  // IS A SHAPE AND TAKES A MEMBER; A FILTER THE DELEGATE ALREADY ACCEPTS IS A FIELD.**
 ];
 
 // ── boards ─────────────────────────────────────────────────────────────────────
@@ -346,18 +358,24 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([15, 18]);
-    expect([refused.length + 9, units(refused) + 10]).toEqual([24, 28]);
-    expect([refused.length + 10, units(refused) + 12]).toEqual([25, 30]);
-    expect([refused.length + 11, units(refused) + 14]).toEqual([26, 32]);
-    expect([refused.length + 12, units(refused) + 16]).toEqual([27, 34]);
-    expect([refused.length + 13, units(refused) + 18]).toEqual([28, 36]);
-    expect([refused.length + 15, units(refused) + 20]).toEqual([30, 38]);
-    expect([refused.length + 16, units(refused) + 22]).toEqual([31, 40]);
-    expect([refused.length + 17, units(refused) + 24]).toEqual([32, 42]);
-    expect([refused.length + 18, units(refused) + 26]).toEqual([33, 44]);
-    expect([refused.length + 19, units(refused) + 26 + 3]).toEqual([34, 47]);
-    expect([refused.length + 19 + TAKEN.length, units(refused) + 29 + 13]).toEqual([43, 60]);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect([refused.length, units(refused)]).toEqual([14, 17]);
+    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
+    expect([refused.length + 11, units(refused) + 13]).toEqual([25, 30]);
+    expect([refused.length + 12, units(refused) + 15]).toEqual([26, 32]);
+    expect([refused.length + 13, units(refused) + 17]).toEqual([27, 34]);
+    expect([refused.length + 14, units(refused) + 19]).toEqual([28, 36]);
+    expect([refused.length + 16, units(refused) + 21]).toEqual([30, 38]);
+    expect([refused.length + 17, units(refused) + 23]).toEqual([31, 40]);
+    expect([refused.length + 18, units(refused) + 25]).toEqual([32, 42]);
+    expect([refused.length + 19, units(refused) + 27]).toEqual([33, 44]);
+    expect([refused.length + 20, units(refused) + 27 + 3]).toEqual([34, 47]);
+    expect([refused.length + 20 + TAKEN.length, units(refused) + 30 + 13]).toEqual([43, 60]);
   });
 
   it("🛑 the ZERO-VOCABULARY FLOOR over that residue was 9 sentences / 13 printings", () => {
@@ -417,7 +435,6 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // becomes a cost comparison among equals. 🛑 THAT IS D379's SATURATION SHAPE, and
     // the rung stays able to go red from the OTHER side: a reader narrowing so any
     // clause returns to 2 fails it, as does the disqualified row being claimed.
-    expect(Math.max(...purchasable.map(([, n]) => n))).toBe(1);
     // 🆕🆕 D388 — 3 -> **2**: the RETREAT-COST THRESHOLD left this list, and the
     // purchasable maximum STANDS STILL at 1 — a second consecutive singleton, so the
     // saturation D386 recorded is not a one-slice artefact.
@@ -426,7 +443,21 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     // LENGTH THAT DOES NOT MOVE IS NOT A LIST THAT DID NOT MOVE**, which is why the
     // rungs above walk the entries by SENTENCE and this one only closes the arithmetic.
     // The purchasable maximum is a singleton for a THIRD consecutive slice.
-    expect(LEFT).toHaveLength(2);
+    //
+    // 🛑🆕🆕 D391 — **AND NOW THE PURCHASABLE HALF OF THIS FILE'S LIST IS EMPTY.** The
+    // TYPED PER-BODY ENERGY THRESHOLD was the last entry D366 named that anything could
+    // buy, and D391 bought it; what remains is the ONE row disqualified on SHAPE
+    // (D368's *"extra Energy … in addition to this attack's cost"*, which is not a
+    // `BoardCondition` at all). So `Math.max` over an empty list is no longer written —
+    // it would be `-Infinity`, a shape nothing means — and the emptiness is asserted
+    // DIRECTLY instead, which is D379's saturation rule applied to a list rather than
+    // to a band. ⚠️ **THIS RUNG CAN STILL GO RED IN BOTH DIRECTIONS**: it fails if the
+    // disqualified row is ever claimed (it is driven as unresolved just below), and it
+    // fails if a future candidate is appended here without being bought.
+    expect(purchasable).toEqual([]);
+    expect(LEFT).toHaveLength(1);
+    expect(LEFT[0]?.[2].startsWith("NOT A `BoardCondition`")).toBe(true);
+    expect(resolvedByAnyReader(LEFT[0]?.[0] ?? "")).toBe(false);
   });
 });
 
@@ -720,8 +751,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
   it("🛑 raw 1,207 → 1,220 → 🆕 1,223 and resolving sentences 335 → 344 → 🆕 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(369); // 🆕🆕 D390 +1 sentence (THE OPPONENT-SEAT TYPE READ — Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, `40+`, **+120**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentInPlayHasType { type }`), ONE anchored TEMPLATE reusing `CLAUSE_POKEMON_TYPES` whole and TWO exhaustive-switch arms — the family's FIFTH template pattern, and the first shipped behind a CROSS-PRODUCT anchor rung written at the PREVIOUS head) // 🆕🆕 D389 +1 sentence (THE OPPONENT-SEAT BENCH COUNT — Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentBenchAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — a SECOND MEMBER and not a seat parameter on `yourBenchAtLeast`, which is the shape question THIS FILE handed on at D367 and which was refused on a re-measurement rather than on D362's quoted price) // 🆕🆕 D388 +1 sentence (THE RETREAT-COST THRESHOLD — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentActiveRetreatCostAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — ZERO new card predicates, because the printed noun phrase names `effectiveRetreatCost` (continuous.ts, D322) and not the printed `retreatCostOf` column, which is the SHAPE question D387 left open and this slice settled) // 🆕🆕 D387 +1 sentence (THE STAGE 1 CLAUSE — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**) at 1 legal printing: ONE `cards.ts` predicate (`isStage1Pokemon`), ONE `BoardCondition` member (`opponentActiveIsStage1`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — a SUBSET of `opponentActiveIsEvolution` that is NOT a narrowing of it, so that member and all NINE of its printings stand still) // 🆕🆕 D386 +1 sentence (THE HEALED-THIS-TURN CLAUSE — Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, **+100**) at 2 legal printings: ONE `BoardCondition` member (`yourActiveHealedThisTurn`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO exhaustive-switch arms and ONE new REQUIRED `InPlayPokemon` field — the FIRST entry on this chain to move `MATCH_RECORD_VERSION`, 22 -> 23) // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
-    expect(units(resolved)).toBe(1261); // 🆕🆕 D390 +1 printing (THE OPPONENT-SEAT TYPE READ — one sentence, one printing: the 1:1 shape for the fourth slice running) // 🆕🆕 D389 +1 printing (THE OPPONENT-SEAT BENCH COUNT — one sentence, one printing: the 1:1 shape for the third slice running) // 🆕🆕 D388 +1 printing (THE RETREAT-COST THRESHOLD — one sentence, one printing: the 1:1 shape, and the fold is the reading the engine had already given this noun phrase since 0.61.0) // 🆕🆕 D387 +1 printing (THE STAGE 1 CLAUSE — one sentence, one legal printing; the family's third 1:1 step) // 🆕🆕 D386 +2 printings (THE HEALED-THIS-TURN CLAUSE — one sentence, two legal printings, a 1:2 step) // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
+    expect(resolved).toHaveLength(370); // 🆕🆕 D391 +1 sentence (THE TYPED PER-BODY ENERGY THRESHOLD — Abomasnow `sv10-060` "Frozen Wood" ({W}{W}{W}{C}, `120+`, **+120**, index 1 of TWO) at 1 legal printing: ONE **OPTIONAL FIELD** (`energy?`) on the shipped `yourActiveEnergyAtLeast` member (D383), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO **edited** exhaustive-switch arms — a FIELD and NOT a second member, the OPPOSITE of D389's answer and RE-MEASURED rather than inherited: the field is OPTIONAL and edits ZERO of that member's 11 executable sites, and `countAttachedEnergy` already took exactly this filter) // 🆕🆕 D390 +1 sentence (THE OPPONENT-SEAT TYPE READ — Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, `40+`, **+120**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentInPlayHasType { type }`), ONE anchored TEMPLATE reusing `CLAUSE_POKEMON_TYPES` whole and TWO exhaustive-switch arms — the family's FIFTH template pattern, and the first shipped behind a CROSS-PRODUCT anchor rung written at the PREVIOUS head) // 🆕🆕 D389 +1 sentence (THE OPPONENT-SEAT BENCH COUNT — Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentBenchAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — a SECOND MEMBER and not a seat parameter on `yourBenchAtLeast`, which is the shape question THIS FILE handed on at D367 and which was refused on a re-measurement rather than on D362's quoted price) // 🆕🆕 D388 +1 sentence (THE RETREAT-COST THRESHOLD — Talonflame `sv07-123` "Aero Chase" ({C}{C}, `110+`, **+110**) at 1 legal printing: ONE PARAMETERISED `BoardCondition` member (`opponentActiveRetreatCostAtLeast { count }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — ZERO new card predicates, because the printed noun phrase names `effectiveRetreatCost` (continuous.ts, D322) and not the printed `retreatCostOf` column, which is the SHAPE question D387 left open and this slice settled) // 🆕🆕 D387 +1 sentence (THE STAGE 1 CLAUSE — Paldean Tauros `sv08-018` "Spirited Tackle" ({R}{C}{C}, `90+`, **+90**) at 1 legal printing: ONE `cards.ts` predicate (`isStage1Pokemon`), ONE `BoardCondition` member (`opponentActiveIsStage1`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — a SUBSET of `opponentActiveIsEvolution` that is NOT a narrowing of it, so that member and all NINE of its printings stand still) // 🆕🆕 D386 +1 sentence (THE HEALED-THIS-TURN CLAUSE — Maractus `sv10.5b-008`/`-093` "Lively Needles" ({G}, `20+`, **+100**) at 2 legal printings: ONE `BoardCondition` member (`yourActiveHealedThisTurn`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO exhaustive-switch arms and ONE new REQUIRED `InPlayPokemon` field — the FIRST entry on this chain to move `MATCH_RECORD_VERSION`, 22 -> 23) // 🆕🆕 D384 +1 sentence (THE STRICT-INEQUALITY TWIN — Swalot `sv07-092` "Devouring Mouth" ({D}, `10+`, **+160**) at 1 legal printing: ONE nullary `BoardCondition` member (`moreActiveEnergyThanOpponent`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO exhaustive-switch arms — the sentence D372 priced, refused and pinned as its own near miss) // 🆕🆕 D382 +1 sentence (THE `. Then, ` JOIN — D317's shape with the printed comma changed: Chi-Yu `sv06-039` "Ground Melter" ({R}{C}, `60+`) at 1 legal printing, ONE anchor constant and ONE consequent row on `deriveAttackBonusConsequent`, ZERO new readers and ZERO new ops) // 🆕🆕 D380 +2 sentences (THE STADIUM-DISCARD OP — `discardStadium`: *"Discard a Stadium in play."* at 4 legal printings and *"You may discard a Stadium in play."* at 2, ONE new FIELD-FREE `EffectOp` behind TWO whole-sentence anchors — the first slice in this run to buy an OP rather than a `BoardCondition`) // 🆕🆕 D379 +1 sentence (THE EXACT HAND-SIZE READ — `yourHandExactly { count }`: ONE CANCEL sentence at 2 legal printings, Alolan Dugtrio `sv08-123`/`sv08-208` "Trio-Cheehoo", and NO bonus twin — ONE new PARAMETERISED `BoardCondition` member and ONE `ATTACK_REQUIREMENT_CLAUSES` row, ZERO `CONDITIONAL_DAMAGE_CLAUSES` rows) // 🆕🆕 D378 **+2 SENTENCES / +3 PRINTINGS** (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 **+3 SENTENCES / +3 PRINTINGS** (the CROSS-BOARD STATUS PAIR — TWO bonus sentences at 1 legal printing each, *"…is Burned"* +40 and *"…is Confused"* +90, PLUS one CANCEL sentence on the SAME member, *"…isn't Burned"*; TWO new NULLARY `BoardCondition` members, TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D376 +1 sentence (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +1 sentence (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +1 sentence (the NAMED-ENERGY clause) // 🆕🆕 D373 +1 sentence (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 sentences (ONE clause at TWO amounts) // 🆕🆕 D371 +1 sentence // 🆕🆕 D370 +1 sentence // 🆕🆕 D369 +1 sentence // 🆕🆕 D368 +1 sentence
+    expect(units(resolved)).toBe(1262); // 🆕🆕 D391 +1 printing (THE TYPED PER-BODY ENERGY THRESHOLD — one sentence, one printing: the 1:1 shape for a sixth slice running, and the FIRST taken by an OPTIONAL FIELD on a shipped `BoardCondition` member rather than by a new member) // 🆕🆕 D390 +1 printing (THE OPPONENT-SEAT TYPE READ — one sentence, one printing: the 1:1 shape for the fourth slice running) // 🆕🆕 D389 +1 printing (THE OPPONENT-SEAT BENCH COUNT — one sentence, one printing: the 1:1 shape for the third slice running) // 🆕🆕 D388 +1 printing (THE RETREAT-COST THRESHOLD — one sentence, one printing: the 1:1 shape, and the fold is the reading the engine had already given this noun phrase since 0.61.0) // 🆕🆕 D387 +1 printing (THE STAGE 1 CLAUSE — one sentence, one legal printing; the family's third 1:1 step) // 🆕🆕 D386 +2 printings (THE HEALED-THIS-TURN CLAUSE — one sentence, two legal printings, a 1:2 step) // 🆕🆕 D384 +1 printing (THE STRICT-INEQUALITY TWIN — one sentence, one legal printing; the family's FIRST 1:1 step) // 🆕🆕 D382 +1 printing (THE `. Then, ` JOIN — one sentence, one legal printing) // 🆕🆕 D380 +6 printings (THE STADIUM-DISCARD OP — TWO sentences, 4 + 2 legal printings, on ONE new FIELD-FREE `EffectOp`) // 🆕🆕 D379 +2 (THE EXACT HAND-SIZE READ — one sentence, both printings under the CANCEL consequent) // 🆕🆕 D378 +3 (STADIUM PRESENCE — `stadiumInPlay`: ONE bonus sentence at 1 legal printing, Probopass `sv10-098` "Mountain Drop" +70, PLUS one CANCEL sentence on the SAME member at 2 printings, Fan Rotom `sv07-118`/`sv08.5-085` "Assault Landing" — ONE new NULLARY `BoardCondition` member, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and ONE `ATTACK_REQUIREMENT_CLAUSES` row) // 🆕🆕 D377 +3 // 🆕🆕 D376 +2 printings (the FILTERED DISCARD-PILE THRESHOLD) // 🆕🆕 D375 +2 printings (the CROSS-BOARD TYPE INTERSECTION) // 🆕🆕 D374 +2 printings (the NAMED-ENERGY clause) // 🆕🆕 D373 +2 printings (the UNIVERSAL-OVER-THE-BENCH clause) // 🆕🆕 D372 +2 printings (the CROSS-BOARD EQUAL-ENERGY clause) // 🆕🆕 D371 +2 printings (the OPPONENT-RESISTANCE clause) // 🆕🆕 D370 +2 printings (the bench-scoped {M} TYPE clause) // 🆕🆕 D369 +2 printings (the CROSS-BOARD Pokémon Tool clause) // 🆕🆕 D368 +3 printings
     // The delta is EXACTLY this slice's nine sentences / thirteen printings —
     // re-added from the parts rather than incremented.
     // 🆕🆕 D369 — the two subtrahends each gain this slice's step (1 sentence /
@@ -764,7 +795,12 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // 🆕🆕 D387 — a `- 1` / `- 1` pair at the FRONT of both chains for the third time:
     // the STAGE 1 CLAUSE resolved ONE sentence worth ONE printing. ⚠️ **BOTH CHAINS
     // ARE EDITED AT THE FRONT, NEVER AT THE END.**
+    // 🆕🆕 D391 — a `- 1` / `- 1` pair at the FRONT of both chains again: the TYPED
+    // PER-BODY ENERGY THRESHOLD resolved ONE sentence worth ONE printing, and it is the
+    // first term in either chain contributed by an OPTIONAL FIELD on a member that was
+    // already shipped rather than by a new one.
       resolved.length -
+        1 -
         1 -
         1 -
         1 -
@@ -791,6 +827,7 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
       units(resolved) -
         1 -
         1 -
+        1 -
         1 - 1 - 2 - 1 - 1 - 6 - 2 - 3 - 13 - 3 - 3 - 2 - 2 - 2 - 2 - 2 - 2 - 2 - 2,
     ).toBe(1207);
   });
@@ -799,7 +836,11 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
     // D366's rule: the registry summand is REGISTRY-keyed and the raw one is
     // READER-keyed, so a reader move must be shown not to touch the other.
     const ids = new Set(registryCardIds());
-    expect(ids.size).toBe(708);
+    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
+    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
+    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
+    // typed filter. A `fix-*` key, so no catalog printing moved with it.
+    expect(ids.size).toBe(709);
     // ⚠️ ONE of the thirteen IS in the registry — Volbeat `sv06-009` — and it is
     // there on an ABILITY program, which is exactly the count a slice does not
     // think it is checking. Named, rather than glossed by an "all absent" claim

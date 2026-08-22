@@ -530,13 +530,21 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit Knuckle",
     // +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`.
-    expect([refused.length, units(refused)]).toEqual([15, 18]);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect([refused.length, units(refused)]).toEqual([14, 17]);
     // ⚠️ AND THE PARTITION DOES NOT DEPEND ON WHICH INSTRUMENT DRAWS IT: the NINE
     // readers and the TEN agree on this residue exactly, so D385's "only the
     // ten-reader one may be a refusal oracle" is satisfied here without the two
     // numbers being allowed to drift apart silently.
     const refusedByNine = openers.filter(([, s]) => !resolvedByNine(s));
-    expect([refusedByNine.length, units(refusedByNine)]).toEqual([15, 18]);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17** on the NINE-reader instrument too, the same
+    // ONE sentence / ONE printing step the ten-reader one takes.
+    expect([refusedByNine.length, units(refusedByNine)]).toEqual([14, 17]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -550,8 +558,10 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
     // 🆕🆕 D390 — `{1: 14, 5: 1}` → `{1: 13, 5: 1}`: the OPPONENT-SEAT TYPE READ left
     // the singleton band and nothing else moved. The band `n > 1` is STILL `[5]`.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(13);
-    expect(byClause.size).toBe(14);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
+    expect(byClause.size).toBe(13);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
@@ -566,13 +576,22 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // The 1:1 shape D382, D384, D387 and D388 took. Both columns, because a step in
     // one and not the other is a different event.
     const resolving = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolving.length, units(resolving)]).toEqual([372, 1269]);
+    // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
+    // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
+    // moves and no registry summand does.
+    expect([resolving.length, units(resolving)]).toEqual([373, 1270]);
     // 🆕🆕 D390 — a `- 1` term at the FRONT of the chain, so THIS file's own step is
     // still the difference between two adjacent rungs while the HEAD above moves for
     // somebody else's work: D390 resolved ONE sentence worth ONE printing (the
     // OPPONENT-SEAT TYPE READ). ⚠️ THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.
-    expect([resolving.length - 1, units(resolving) - 1]).toEqual([371, 1268]);
+    // 🆕🆕 D391 — a `- 1` term at the FRONT of each chain: the TYPED PER-BODY
+    // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
+    // THE FRONT, NEVER AT THE END.
+    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([371, 1268]);
     // D388 left it at 370 / 1,267, and the difference is this sentence alone.
-    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([370, 1267]);
+    // 🆕🆕 D391 — one more `- 1` term at the FRONT of each chain: the TYPED PER-BODY
+    // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
+    // THE FRONT, NEVER AT THE END.
+    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([370, 1267]);
   });
 });

@@ -170,7 +170,10 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // TYPE READ. 🛑 ITS `evolveFrom` IS TRANSCRIBED ("Electabuzz") PRECISELY SO THIS
     // FILE'S FINDING SURVIVES — a synthetic Stage 1 with a null chain would have made
     // the singleton below a pair and turned an inherited measurement into an artefact.
-    expect(stage1).toHaveLength(68);
+    // 🆕🆕 D391 — 68 -> **69**: `fix-frozenwood`, the Abomasnow demonstrator, is a
+    // Stage 1 — and its `evolveFrom` is the printed `"Snover"` precisely so THIS file's
+    // chainless-Stage-1 rung below stays at ONE. D390 paid that lesson; this row is it applied.
+    expect(stage1).toHaveLength(69);
     const chainless = stage1.filter((c) => (c.evolveFrom ?? null) === null);
     expect(chainless.map((c) => c.id)).toEqual(["fix-exstage1"]);
     // …and no Stage 1 is also a Stage 2, which is the only part of the ladder that IS
@@ -501,7 +504,13 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([15, 18]);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect([refused.length, units(refused)]).toEqual([14, 17]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -518,13 +527,15 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // member plus one anchored template. The band above is STILL empty, and the only
     // clause left above one printing is the 5-printing declaration one, disqualified
     // on SHAPE.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(13);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D389 — 16 -> **15**, and 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT BENCH
     // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same band.
-    expect(byClause.size).toBe(14);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
+    expect(byClause.size).toBe(13);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

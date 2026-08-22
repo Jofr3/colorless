@@ -302,12 +302,18 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(15);
-    expect(units(refused)).toBe(18);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect(refused.length).toBe(14);
+    expect(units(refused)).toBe(17);
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
-    expect([refused.length + 6, units(refused) + 7]).toEqual([21, 25]);
-    expect([refused.length + 7, units(refused) + 8]).toEqual([22, 26]);
+    expect([refused.length + 7, units(refused) + 8]).toEqual([21, 25]);
+    expect([refused.length + 8, units(refused) + 9]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

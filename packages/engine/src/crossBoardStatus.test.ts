@@ -281,14 +281,20 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(15);
-    expect(units(refused)).toBe(18);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect(refused.length).toBe(14);
+    expect(units(refused)).toBe(17);
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 9, units(refused) + 10]).toEqual([24, 28]);
-    expect([refused.length + 10, units(refused) + 12]).toEqual([25, 30]);
-    expect([refused.length + 11, units(refused) + 14]).toEqual([26, 32]);
-    expect([refused.length + 12, units(refused) + 16]).toEqual([27, 34]);
+    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
+    expect([refused.length + 11, units(refused) + 13]).toEqual([25, 30]);
+    expect([refused.length + 12, units(refused) + 15]).toEqual([26, 32]);
+    expect([refused.length + 13, units(refused) + 17]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -406,7 +412,7 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the 1-printing band,
     // which is again the ONLY band that moved. The 2-printing band was already empty
     // and stays empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(14);
+    expect(byClause.size).toBe(13); // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band
     // …and the 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused.
     expect(Math.max(...byClause.values())).toBe(5);
@@ -430,7 +436,8 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // member plus one anchored template. The band above is STILL empty, and the only
     // clause left above one printing is the 5-printing declaration one, disqualified
     // on SHAPE.
-    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(13);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
+    expect([...byClause].filter(([, n]) => n === 1)).toHaveLength(12);
   });
 });
 

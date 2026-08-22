@@ -204,8 +204,14 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // than quoted. 🛑 THE 2-PRINTING BAND WAS ALREADY EMPTY AND STAYS EMPTY, so the
     // band rung below is aimed at the WHOLE distribution and its refusal comes from
     // OUTSIDE the emptied band (D379's saturation rule).
-    expect([refused.length, units(refused)]).toEqual([15, 18]);
-    expect([refused.length + 1, units(refused) + 1]).toEqual([16, 19]);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect([refused.length, units(refused)]).toEqual([14, 17]);
+    expect([refused.length + 2, units(refused) + 2]).toEqual([16, 19]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -216,9 +222,11 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // declaration clause D368 disqualified on SHAPE — a fact about the whole
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
-    expect(byClause.size).toBe(14);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
+    expect(byClause.size).toBe(13);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(13);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(12);
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
     // …and the TRAP is still in the residue, at its own printing, which is what makes
     // "the residue fell by one" a statement about THIS sentence.
@@ -551,9 +559,15 @@ describe("§6 — the fixture, the census this row moves, and the questions aske
     // The 1:1 shape D387, D388 and D389 took. Both columns, because a step in one and
     // not the other is a different event.
     const resolving = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolving.length, units(resolving)]).toEqual([372, 1269]);
+    // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
+    // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
+    // moves and no registry summand does.
+    expect([resolving.length, units(resolving)]).toEqual([373, 1270]);
     // D389 left it at 371 / 1,268, and the difference is this sentence alone.
-    expect([resolving.length - 1, units(resolving) - 1]).toEqual([371, 1268]);
+    // 🆕🆕 D391 — a `- 1` term at the FRONT of each chain: the TYPED PER-BODY
+    // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
+    // THE FRONT, NEVER AT THE END.
+    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([371, 1268]);
   });
 
   it("🛑 the move is READER-keyed: no registry row, no gate clause, nothing persisted", () => {

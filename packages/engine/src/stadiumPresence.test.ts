@@ -290,15 +290,21 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(15);
-    expect(units(refused)).toBe(18);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect(refused.length).toBe(14);
+    expect(units(refused)).toBe(17);
     // 🛑 EVERY EARLIER HEAD IS RE-DERIVED FROM THIS ONE rather than frozen: D377's
     // 22/26, D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
-    expect([refused.length + 7, units(refused) + 8]).toEqual([22, 26]);
-    expect([refused.length + 9, units(refused) + 10]).toEqual([24, 28]);
-    expect([refused.length + 10, units(refused) + 12]).toEqual([25, 30]);
-    expect([refused.length + 11, units(refused) + 14]).toEqual([26, 32]);
-    expect([refused.length + 12, units(refused) + 16]).toEqual([27, 34]);
+    expect([refused.length + 8, units(refused) + 9]).toEqual([22, 26]);
+    expect([refused.length + 10, units(refused) + 11]).toEqual([24, 28]);
+    expect([refused.length + 11, units(refused) + 13]).toEqual([25, 30]);
+    expect([refused.length + 12, units(refused) + 15]).toEqual([26, 32]);
+    expect([refused.length + 13, units(refused) + 17]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {

@@ -243,8 +243,14 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
     // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
     // so every band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(15);
-    expect(units(refused)).toBe(18);
+    // 🆕🆕 D391 — 15 / 18 -> **14 / 17**: the TYPED PER-BODY ENERGY THRESHOLD left this
+    // residue — ONE sentence at ONE printing (Abomasnow `sv10-060` "Frozen Wood", +120) —
+    // re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS EMPTY and the
+    // distribution goes `{1: 13, 5: 1}` -> `{1: 12, 5: 1}`, so every band rung is still aimed
+    // at the WHOLE distribution (D379). ⚠️ AND IT IS THE FIRST STEP IN THIS RUN TAKEN BY AN
+    // OPTIONAL FIELD ON A SHIPPED MEMBER rather than by a new one.
+    expect(refused.length).toBe(14);
+    expect(units(refused)).toBe(17);
     // D371's recorded residue, then D370's, re-derived from THIS head: add the
     // sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -256,20 +262,20 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect(refused.length + 9).toBe(24);
-    expect(units(refused) + 10).toBe(28);
-    expect(refused.length + 10).toBe(25);
-    expect(units(refused) + 12).toBe(30);
-    expect(refused.length + 11).toBe(26);
-    expect(units(refused) + 14).toBe(32);
-    expect(refused.length + 12).toBe(27);
-    expect(units(refused) + 16).toBe(34);
-    expect(refused.length + 13).toBe(28);
-    expect(units(refused) + 18).toBe(36);
-    expect(refused.length + 15).toBe(30);
-    expect(units(refused) + 20).toBe(38);
-    expect(refused.length + 16).toBe(31);
-    expect(units(refused) + 22).toBe(40);
+    expect(refused.length + 10).toBe(24);
+    expect(units(refused) + 11).toBe(28);
+    expect(refused.length + 11).toBe(25);
+    expect(units(refused) + 13).toBe(30);
+    expect(refused.length + 12).toBe(26);
+    expect(units(refused) + 15).toBe(32);
+    expect(refused.length + 13).toBe(27);
+    expect(units(refused) + 17).toBe(34);
+    expect(refused.length + 14).toBe(28);
+    expect(units(refused) + 19).toBe(36);
+    expect(refused.length + 16).toBe(30);
+    expect(units(refused) + 21).toBe(38);
+    expect(refused.length + 17).toBe(31);
+    expect(units(refused) + 23).toBe(40);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -307,7 +313,8 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left it too, and the
     // 1-printing band is again the ONLY band that moved. The 2-printing band was
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(14);
+    // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
+    expect(byClause.size).toBe(13);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
@@ -493,7 +500,10 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // untouched for an ELEVENTH consecutive slice. ⚠️ `fix-shortcircuit` does print a
     // ×2 Fighting WEAKNESS, which is the neighbouring column and is deliberately not
     // what this rung counts.
-    expect(ids).toHaveLength(484);
+    // 🆕🆕 D391 — 484 -> **486**: TWO fixtures, `fix-frozenwood` (the Abomasnow
+    // demonstrator) and `fix-grassdouble` (the Special providing `{G}{G}`). Both `fix-*`, so the
+    // FLOOR moves and the catalog behind it does not.
+    expect(ids).toHaveLength(486);
     expect(withResistance).toHaveLength(27);
     expect(fighting).toHaveLength(18);
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
@@ -562,17 +572,20 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // (`fix-shortcircuit`, `fix-waterbody`, `fix-inplaydual`), ZERO Energy, ZERO
     // Resistances, and an instrument that is `Card.types` — a printed column, but not
     // this one. ⚠️ **THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.**
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    // 🆕🆕 D391 — a `- 2` term at the FRONT: `fix-frozenwood` and `fix-grassdouble`,
+    // the Abomasnow demonstrator and the Special providing `{G}{G}`. ⚠️ THE CHAIN IS EDITED AT
+    // THE FRONT, NEVER AT THE END.
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3).toBe(24);
     expect(fighting.length - 2).toBe(16);
   });

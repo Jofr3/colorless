@@ -579,7 +579,11 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 
   it("🛑 S2 — none of the five ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
-    expect(ids).toHaveLength(708);
+    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
+    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
+    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
+    // typed filter. A `fix-*` key, so no catalog printing moved with it.
+    expect(ids).toHaveLength(709);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

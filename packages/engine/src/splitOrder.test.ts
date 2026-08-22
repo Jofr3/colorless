@@ -161,7 +161,11 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     const ids = registryCardIds();
-    expect(ids.length).toBe(708);
+    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
+    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
+    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
+    // typed filter. A `fix-*` key, so no catalog printing moved with it.
+    expect(ids.length).toBe(709);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gated.length).toBe(13);
     const kinds = gated.flatMap((id) =>

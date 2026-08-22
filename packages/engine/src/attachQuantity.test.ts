@@ -744,7 +744,11 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   });
 
   it("🛑 ZERO registry keys were added — this slice moves no census figure", () => {
-    expect(registryCardIds()).toHaveLength(708);
+    // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
+    // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
+    // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
+    // typed filter. A `fix-*` key, so no catalog printing moved with it.
+    expect(registryCardIds()).toHaveLength(709);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

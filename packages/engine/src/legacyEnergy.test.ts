@@ -999,6 +999,7 @@ describe("the engine version", () => {
     // says is always there. A MISSING REQUIRED FIELD is the one case D335's
     // discriminator does not cover, and D124's own bump (1 -> 2) was this exact case at
     // this exact address. The post-bump anchor pass was clean.
+    // 🆕🆕 D391 — 0.295.0 -> **0.296.0**, THE TYPED PER-BODY ENERGY THRESHOLD.
     // 🆕🆕 D390 — 0.294.0 -> **0.295.0**, THE OPPONENT-SEAT TYPE READ.
     // `MATCH_RECORD_VERSION` **STAYS 23**, asked rather than assumed. The one new
     // member (`opponentInPlayHasType`) carries a `type: PokemonType` and is stored
@@ -1008,8 +1009,8 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.295.0");
-    expect(manifest.version).toBe("0.295.0");
+    expect(engineVersion).toBe("0.296.0");
+    expect(manifest.version).toBe("0.296.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
