@@ -15939,4 +15939,75 @@ export const MUTANTS: Mutant[] = [
     replace: "      return \"your Active Pokémon used an attack during your last turn\";",
     expectKilledBy: ["packages/engine/src/usedAttackBonus.test.ts"],
   },
+  // ── D395 — the ROLLOUT ATTACK-GATE. Six rows over THREE surfaces: the INDEX
+  //    (two ways, because a reader that ignores it and a row authored at the wrong
+  //    one are different mistakes), the CONDITION (its name and its polarity, each
+  //    copied from a real neighbour), and the SPLIT (the branch reversed back, and
+  //    the printed bytes mis-transcribed).
+  //    🛑 **THE INDEX ROWS ARE WHY THIS SLICE IS WORTH MUTATING AT ALL.** Thirteen
+  //    printings carried this field before Miltank and every one of them sits at
+  //    index 0, so an index-blind read was green on every board in the repo. Both
+  //    rows below produce the same visible symptom — "Rollout" itself is gated,
+  //    and "Rollout" is the only thing that can satisfy the gate, so the card is
+  //    locked out of the game forever.
+  {
+    id: "D395-gate-read-ignores-the-index",
+    decision: "D395",
+    what: "🔑 THE DEADLOCK, FROM THE READER SIDE: `attackGateOf` takes the FIRST gate on the body instead of the one at `index` - the per-BODY reading of a per-INDEX field, and the shape D281's own comment warned was indistinguishable on today's pool. Miltank's idx 0 \"Rollout\" then inherits idx 1's gate, and since \"Rollout\" is the ONLY way to satisfy that gate the card can never be used again. ⚠️ GREEN ON ALL 13 PRINTINGS THAT EXISTED BEFORE THIS SLICE, because every one of their gates IS the first one",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return programFor(top.id)?.attackGate?.[index];",
+    replace: "  return Object.values(programFor(top.id)?.attackGate ?? {})[0];",
+    expectKilledBy: ["packages/engine/src/rolloutGate.test.ts"],
+  },
+  {
+    id: "D395-row-authored-at-index-zero",
+    decision: "D395",
+    what: "🔑 THE SAME DEADLOCK FROM THE AUTHORING SIDE, and the mistake a real author actually makes: the registry row is keyed `0` - which is what all THIRTEEN neighbouring rows in this file are keyed, so it is the value a copy-paste produces. The gate lands on \"Rollout\" and \"Moomoo Rolling\" becomes unconditionally legal, so the card is BOTH locked out of its own precondition and free to use the attack the clause restricts. ⚠️ A DIFFERENT DEFECT FROM THE READER ROW ABOVE and only a board that reads both indices tells them apart",
+    file: "packages/engine/src/registry.ts",
+    find: "  attackGate: {\n    1: {\n      kind: \"onlyIf\",\n      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    replace: "  attackGate: {\n    0: {\n      kind: \"onlyIf\",\n      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    expectKilledBy: ["packages/engine/src/rolloutGate.test.ts"],
+  },
+  {
+    id: "D395-condition-names-the-gated-attack",
+    decision: "D395",
+    what: "⚠️ THE CONDITION NAMES THE ATTACK THE GATE IS **ON** RATHER THAN THE ONE IT **QUOTES** - `attack: \"Moomoo Rolling\"`, read off the very next field of the same card. The row still parses, the member is still well-formed, the gate still bites on a fresh board, and the census does not move a digit; what changes is that the window can never open, because using \"Moomoo Rolling\" requires having used \"Moomoo Rolling\". It reads as *\"the clause just never fires\"* rather than as a wiring fault - D394's C7 one seam over, on a card where the two candidate names are printed side by side",
+    file: "packages/engine/src/registry.ts",
+    find: "      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    replace: "      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Moomoo Rolling\" },",
+    expectKilledBy: ["packages/engine/src/rolloutGate.test.ts"],
+  },
+  {
+    id: "D395-polarity-copied-from-terapagos",
+    decision: "D395",
+    what: "⚠️ THE POLARITY TOKEN IS `barredIf` - Terapagos ex's REAL value, seven rows up in the same file, and the other half of the union D281 built as ONE field precisely because two parallel index maps would make every author ask which way round a row is. The gate then reads INVERTED: \"Moomoo Rolling\" is legal exactly while the player has NOT used Rollout, and illegal on the one board the card is printed for. ⚠️ EVERY \"the gate refuses\" ASSERTION AN AUTHOR WRITES FIRST STAYS GREEN if it is written on the opened board rather than the fresh one",
+    file: "packages/engine/src/registry.ts",
+    find: "    1: {\n      kind: \"onlyIf\",\n      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    replace: "    1: {\n      kind: \"barredIf\",\n      condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    expectKilledBy: ["packages/engine/src/rolloutGate.test.ts"],
+  },
+  {
+    id: "D395-clause-only-split-refuses-again",
+    decision: "D395",
+    what: "🔑 D282's EMPTY-BODY REFUSAL RE-INSTALLED, which is the state of the world one commit before this slice and the exact thing its own comment said was a guard against a FUTURE printing rather than a live path. The gate still bites and still opens - every declaration assertion in the suite stays green - and the engine reports `ATTACK_EFFECT_SKIPPED` naming a sentence it enforced in full at the §8 seam. ⚠️ **THE ONLY THING THAT CAN SEE IT IS AN EVENT ASSERTION PAIRED WITH ITS UNGATED TWIN**: the census counts move too, but a slice that re-pointed them would be green again",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (trimmed === clause) return { clause, body: \"\" };",
+    replace: "    if (trimmed === clause) return null;",
+    expectKilledBy: [
+      "packages/engine/src/rolloutGate.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D395-gate-clause-loses-its-accent",
+    decision: "D395",
+    what: "⚠️ THE PRINTED BYTES MIS-TRANSCRIBED BY ONE CHARACTER - `Pokemon` for `Pokémon` in the fourth `ATTACK_GATE_CLAUSES` row. D183's defect at the one place in this slice where a literal IS the interface: the list is matched by EQUALITY against catalog text, so the row silently matches nothing, the split stops firing, and the printing goes back to reporting a skipped effect. ⚠️ IT TYPECHECKS, IT READS CORRECTLY TO A HUMAN SKIMMING, AND NO GUARD WRITTEN ABOUT THE GATE ITSELF CAN SEE IT - the declaration seam never consults this list",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"You can use this attack only if this Pokémon used Rollout during your last turn.\",",
+    replace: "  \"You can use this attack only if this Pokemon used Rollout during your last turn.\",",
+    expectKilledBy: [
+      "packages/engine/src/rolloutGate.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
 ];
