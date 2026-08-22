@@ -436,7 +436,10 @@
 > one, whose comment this slice edited), **D397** 6/6, **D392** 7/7, **D275** 8/8, **D315** 12/12,
 > **D367** 9/9, **D366** 6/6, **D393** 8/8, **D378** 8/8 (the other row whose comment was edited),
 > **D373** 6/6, and **D382** 6 killed / 1 declared survivor. **ZERO errors, ZERO skipped, ZERO stale
-> and ZERO clobbers across all eighteen.**
+> and ZERO clobbers across all eighteen.** ✅ **AND ONE MORE AFTER THE DOCS COMMIT REWROTE THIS
+> PAGE** — **D318** (10 killed / 1 declared survivor), whose eight anchors live on `docs/progress.md`
+> and are the one set that cannot be probed before it, for **NINETEEN** in total. `precheck.ts` was
+> re-run over all 1,371 rows after the rewrite as well, and is clean.
 >
 > ### ▶ THE FOUR THINGS TO CARRY FORWARD ABOVE EVERYTHING ELSE
 >
