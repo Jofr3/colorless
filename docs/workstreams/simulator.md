@@ -25029,3 +25029,146 @@ sentences / 11 printings that remain behind `CONDITIONAL_DAMAGE_BONUS`:
   printing) carries a DIFFERENT CONSEQUENT, so the bonus skeleton never sees it — **the member is
   bought once and the second consequent is priced separately**, which is D383's payoff shape at a
   benched COUNT of 2.
+
+
+## D398 — THE DECK-SIZE READ: the last buildable sentence in a residue, and a union invariant corrected rather than excepted (engine 0.302.0 → **0.303.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+**Rabsca `sv08-014` (Surging Sparks) "Counterturn"** ({G}, `40+`, **+200**, index **1** of TWO —
+its own index 0 is "Triple Draw", {C}, *"Draw 3 cards."*), **1 legal printing**:
+*"If there are 3 or fewer cards in your deck, this attack does 200 more damage."*
+
+Bought with **ONE** new `BoardCondition` member (`yourDeckAtMost { count }`), its **TWO**
+exhaustive-switch arms, **ONE** literal `CONDITIONAL_DAMAGE_CLAUSES` row and **ONE** fixture.
+
+### 🛑 The population is exhausted, and that is the headline rather than the member
+
+D397 ENUMERATED this residue instead of sampling it: 8 sentences / 11 printings behind
+`CONDITIONAL_DAMAGE_BONUS`, of which exactly one was buildable. **This was it.** What remains is
+**7 sentences / 10 printings, and every one is a refusal already measured**:
+
+| what is left | printings | why it is refused |
+|---|---|---|
+| *"…this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost)…"* (×2 sentences, 100 and 80) | **5** | D368's structural SHAPE refusal — *"this attack's cost"* reads an attack `conditionHolds` is never handed |
+| *"If 1 of your other **Ancient** Pokémon used an attack during your last turn…"* | 1 | D207 BANNER — demand-only, no column classifies it |
+| *"If you have any **Tera** Pokémon on your Bench…"* | 1 | D207 BANNER |
+| *"If your opponent's Active Pokémon is a **Tera** Pokémon…"* | 1 | D207 BANNER |
+| *"If you played a **Future** Supporter card from your hand during this turn…"* | 1 | D207 BANNER |
+| *"If your opponent has any **Future** Pokémon in play…"* | 1 | D207 BANNER |
+
+**THE NEXT SLICE IS NOT IN THIS SKELETON.** Say so plainly rather than printing a table that still
+looks like a backlog: this figure can only move again if a REFUSAL'S REASON EXPIRES — a
+supply-side column for one of the three banners, or a structural answer to D368's cost read.
+
+### 🛑 The invariant was wrong, not the card, and it had refused this member since D40
+
+`BoardCondition`'s doc block has said since **D40**:
+
+> a condition over hidden state (a hand's CONTENTS, a deck) would leak through the gate.
+
+The hand half names **CONTENTS** deliberately, because a hand's SIZE is public and four shipped
+members have read exactly that since D118. The deck half named the **ZONE** — and that unqualified
+noun is what **four consecutive resume points** quoted forward as a reason to price a REFUSAL
+first, twice in as many words.
+
+**A CARDINALITY IS NOT A CONTENT.** `redact.ts` writes `deckCount: side.deck.length` for BOTH
+sides with no viewer test, and `packages/schema`'s `RedactedSide` declares it `z.number()`, so this
+member is evaluable on a projection and the P4 gap does not widen by a byte — unlike
+`yourStadiumInPlay`, which really is unevaluable there. The invariant is corrected IN PLACE: the
+line is **CONTENTS against CARDINALITY**, not zone against zone. A member reading a deck's ORDER or
+its CARDS would still be a leak, and nothing in this union does.
+
+⚠️ **THE GENERAL LESSON IS ABOUT DOC BLOCKS, NOT ABOUT DECKS.** An invariant written with an
+UNQUALIFIED NOUN is a refusal with no expiry date on it, and this one blocked a buildable printing
+through three handoffs without anyone re-deriving it. `redact.ts` answered the whole question in
+one grep. **WHEN A HANDOFF SAYS "PRICE A REFUSAL FIRST", THE FIRST THING TO PRICE IS THE SENTENCE
+THAT DEMANDS THE REFUSAL.**
+
+### 🛑 MEMBER, not FIELD — the nearest candidate is wrong TWICE (D379's arithmetic)
+
+`opponentHandAtMost { count: 3 }` is keyed on *"your opponent has **3 or fewer cards** in their
+hand"* — the same comparator at the same printed digit — and it differs in the **SEAT** and in the
+**ZONE** at once. Two INDEPENDENT defects, so this is an ADDITION and not a widening.
+
+| clause of D391's rule (as amended at D397) | verdict | measurement |
+|---|---|---|
+| **DELEGATE** — *binding* | **MEMBER** | `opponentHandAtMost`'s arm is an inline `.length <= cond.count` with no delegate at all, and neither `cards.ts` nor `effects.ts` carries a zone-taking predicate. **There is no walk to take the filter; the arm IS the walk.** |
+| **NOTE** — *cost note only* | FIELD | the two notes are ONE noun apart. Recorded, not dropped; its 2/4 record is what retired it as a decider. |
+| **POLARITY** — *independent veto* | **MEMBER** | a `BoardCondition` is read at `onlyIf`/`barredIf` and at `then`/`otherwise`, so an optional `zone?` has no safe default. |
+
+**THE DELEGATE CLAUSE IS NOW 5/5** across D391/D392/D396/D397/D398. D389's count agrees from
+another direction: this union holds THREE pairs differing in the seat alone and NOT ONE member
+carrying a seat field.
+
+### 🛑 Saturation looks exactly like vacuity — so the refusal comes from OUTSIDE the population
+
+D379 wrote this warning and this is the first slice that had to obey it. With the buildable residue
+at **zero**, a rung saying *"everything left is refused"* is passed by a reader that refuses
+everything, and one saying *"the sentence is read"* by a reader that reads everything. Neither half
+of the partition discriminates on its own.
+
+So the guard is a **DISCRIMINATION**: Wo-Chien `sv08-015` "Hazardous Greed" ({G}{C}, 20) prints
+this member's antecedent **BYTE FOR BYTE** under another consequent —
+
+> *"If there are 3 or fewer cards in your deck, this attack **also does 120 damage to 2 of your
+> opponent's Benched Pokémon**. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+
+— 1 legal printing, in the committed corpus, and **NOT in the bonus residue at all**, because
+`CONDITIONAL_DAMAGE_BONUS` never sees it. All nine readers must DECLINE it in the same case where
+the accepted half is asserted. **THE SAME CLAUSE ACCEPTED UNDER ONE CONSEQUENT AND DECLINED UNDER
+ANOTHER IS SOMETHING NO DEGENERATE READER CAN IMITATE.**
+
+**AND THE TWIN'S PRICE, MEASURED SO THE SUCCESSOR DOES NOT RE-DERIVE IT:** ONE new anchored
+skeleton plus a `conditionGate` over `damageChosen { target: "opponentBench", amount: 120,
+count: 2, source: "attack", deals: true }`. The op's `count` field ALREADY EXISTS (D383's shape at
+a benched count of 2), the member is bought by THIS slice, and the reason no reader reaches the
+sentence today is three anchors at once: `CONDITIONAL_DAMAGE_BONUS` wants *"does N more damage."*,
+`BONUS_CONSEQUENT_CONDITION` wants *"more damage, and …"*, and `ALSO_BENCHED_SNIPE` is anchored at
+`^This` with a count of **1**. **ZERO new vocabulary — it is a skeleton and a program.**
+
+### ⚠️ Two ordinal claims in `effects.ts` were false when they were written
+
+D378's clause row calls itself *"the SECOND row in this table that carries neither [apostrophe nor
+é]"* and D389's calls itself *"the THIRD"*. A count over `CONDITIONAL_DAMAGE_CLAUSES`' own keys
+refutes both on sight, and D378's even names D366's key as its predecessor when that key is in
+`ATTACK_REQUIREMENT_CLAUSES`. Nothing in the suite was keyed on either.
+
+This is the PERISHABLE-UNIQUENESS shape `opponentHandAtMost` and `handSizesEqual` each record one
+file over — **except that these two did not perish, they were born wrong.** A COUNT IN A COMMENT IS
+A CLAIM, AND THE ONLY HONEST PLACE FOR ONE IS A TEST. Both ranks are struck in place, D398's own
+row claims no rank at all, and the partition that IS measured stays in `clauseApostrophe.test.ts`
+(53 → 54 clauses, 31 → 32 apostrophe-free).
+
+### ⚠️ The threshold is a PARAMETER and the row is a LITERAL — one measurement decides both
+
+Over the whole 640-sentence legal attack column, deck-CARDINALITY clauses are **2 sentences /
+2 printings, at ONE threshold, in ONE direction** (*"3 or fewer"* — the two consequents above), and
+there is no deck FLOOR printed at any value. So:
+
+- a `there are (\d+) or fewer cards in your deck` **TEMPLATE** would accept a threshold the catalog
+  prints nowhere — D373's rule verbatim: a NUMBER has no closed vocabulary to fail against, so
+  D118's test cannot be run on it;
+- a `counts` **LIST** (`opponentPrizesRemaining`'s shape) would be reachability nobody prints —
+  D377's arithmetic;
+- and `count` stays a real field, because it is the axis a second printing would vary on. That is
+  exactly the bet D119 made on `opponentHandAtMost` and D367 collected on.
+
+### ⚠️ The board helper, and two failures that were observed rather than reasoned about
+
+`endTurn` starts a turn with a §5.1 DRAW. So a deck trimmed to N **before** the pass is a deck of
+N − 1 when the clause is read (the boundary case went green at the wrong value), and a deck trimmed
+to **0** is a §14.3 deck-out LOSS before an attack can be declared at all (`GAME_OVER: deckOut`).
+The trim now comes AFTER the draw — which is also what makes the EMPTY-deck board **ordinary**
+rather than an edge: §14.3 is checked at the DRAW step and nowhere else, so a player who milled
+themselves to zero attacks legally this turn and loses at the start of the next.
+
+### ⚠️ The mechanical repair over-applied in the OPPOSITE direction to D397's
+
+D397's lesson: key a scripted census repair on the `.toEqual([N, M])` TAIL, not on the offset chain.
+That held wherever it was applied. What bit instead was a **blanket** bump of every
+`refused.length + N` offset, which matched a LOCAL `refused` in three files that is not the bonus
+residue at all (its tails are `[1,2]` / `[2,4]` / `[3,5]`). **A VARIABLE NAME IS NOT A POPULATION.**
+
+And the corollary D397's rule leaves implicit, learned the hard way here: **THE TAIL IS THE THING A
+SLICE MUST NOT MOVE.** Three past-head tails were bumped along with their chains — which nets to no
+change at all and reddens the assertion — and were reverted. In these files a past-head figure is
+FROZEN and the OFFSET is what each slice grows.
