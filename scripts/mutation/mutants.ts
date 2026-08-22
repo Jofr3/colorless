@@ -15768,4 +15768,90 @@ export const MUTANTS: Mutant[] = [
     replace: "    name: \"Nidoking ex\",",
     expectKilledBy: ["packages/engine/src/benchNameSubstring.test.ts"],
   },
+  // == D393 - THE EVOLVE PAIR. Eight rows over THREE files, because this slice buys a
+  //    piece of STATE and a piece of VOCABULARY and the two fail in different places:
+  //    C1/C2/C4/C5 strike the reading arm (each of its four independent claims once),
+  //    C3 strikes the single WRITE site, C6 the note, C7 the clause KEY and C8 the
+  //    fixture that makes the second printing a real demonstrator rather than a name.
+  //
+  //    \u{1F6D1} THE ARM HAS FOUR CLAIMS AND EACH GETS ITS OWN ROW, because they fail on
+  //    DIFFERENT BOARDS and a single row would have proved only that some board exists.
+  //    (1) the body must have evolved THIS turn; (2) it must have evolved from the card
+  //    the clause NAMES; (3) the name is read one BELOW the stack top; (4) it is the
+  //    asking seat's OWN Active.
+  {
+    id: "D393-evolve-arm-ignores-the-printed-name",
+    decision: "D393",
+    what: "\u{1F6D1} C1 - **THE ARM DROPS `cond.name` AND ANSWERS \"did this body evolve this turn\"**, which is the mistake the FIRST of the two printings cannot see: with only Gholdengo on the board the two readings agree on every case a single-card suite would write. It is the whole reason the pair was priced as a pair - the refutation needs a SECOND printing whose clause names a different card, and §3's cross-control is a Gholdengo that evolved this turn being asked Misty's Starmie's clause and answering FALSE",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return beneath !== undefined && cardOfUid(state, beneath)?.name === cond.name;",
+    replace: "      return beneath !== undefined;",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-evolve-arm-drops-the-turn-and-keeps-the-stamp",
+    decision: "D393",
+    what: "\u{1F6D1} C2 - **`evolvedTurn !== state.turn` BECOMES `evolvedTurn === null`**, the exact simplification a reader makes who has seen the field is nullable and not seen that it is a turn STAMP. The printed sentence says *during this turn*; this pays Gholdengo's +90 on every turn after the evolution, forever. It is D386's C2 at D386's address one field over, and §3's clock case is what dies: the SAME board, one full round of the table later, at 30 instead of 120",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (active === null || active.evolvedTurn !== state.turn) return false;",
+    replace: "      if (active === null || active.evolvedTurn === null) return false;",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-evolve-stamp-is-inherited-instead-of-written",
+    decision: "D393",
+    what: "\u{1F6D1} C3 - **THE ONE WRITE SITE STOPS WRITING**: `evolvedTurn: state.turn` becomes `evolvedTurn: from.evolvedTurn`, which is what `promotedTurn` and `healedTurn` correctly do one line up (§10 spreads them through, because evolving does not un-move or un-heal a Pokemon). ⚠️ **AND IT WOULD STILL TYPECHECK IF THE LINE WERE SIMPLY DELETED**, because `evolveOnto` builds its body by `{...from}` - so a REQUIRED field is no compiler guarantee that anybody set it, which is the one safety this shape does NOT buy and is therefore bought here. Every armed board in §3 and §4 falls back to the printed base",
+    file: "packages/engine/src/types.ts",
+    find: "    evolvedTurn: state.turn,",
+    replace: "    evolvedTurn: from.evolvedTurn,",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-evolve-arm-reads-the-stack-top",
+    decision: "D393",
+    what: "⚠️ C4 - **THE OFF-BY-ONE ON THE STACK**: `stack.length - 2` becomes `- 1`, so the arm reads the card the body evolved INTO instead of the one it evolved FROM. §1.2 says the TOP is the identity, which is exactly why this is the slip an author makes here and not a straw one - every other name read in this engine (`yourBenchHasNamed`, `yourBenchHasNameContaining`, `yourNamedPokemonInPlay`) goes through `topCardOf`, and this is the only one that must not. The clause then never holds on any board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const beneath = active.stack[active.stack.length - 2];",
+    replace: "      const beneath = active.stack[active.stack.length - 1];",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-evolve-arm-reads-the-opponents-stamp",
+    decision: "D393",
+    what: "⚠️ C5 - **THE TURN TEST MOVES TO THE OTHER SEAT** - D386's C3 verbatim, one stamp over, and it is the neighbour-copy mistake this cluster of arms invites because three of the five members around it DO read `otherSeat(seat)`. The stamp needs no seat guard precisely because it is written on the Pokemon and `state.turn` is global (D124's second payoff), so an author who adds one is undoing the design rather than tightening it. §4's seat-blind case and every armed board in §3 die together",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (active === null || active.evolvedTurn !== state.turn) return false;",
+    replace: "      if (active === null || state.players[otherSeat(seat)].active?.evolvedTurn !== state.turn) return false;",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-evolve-note-drops-the-name",
+    decision: "D393",
+    what: "⚠️ C6 - **THE NOTE DROPS THE INTERPOLATED CARD NAME** and reads *\"your Active Pokemon evolved during this turn\"*. Still grammatical, still about the right board, and now it renders the SAME pill for both printings - so a player reading a reject pill cannot tell which of two clauses they failed, and the note stops round-tripping to either `CONDITIONAL_DAMAGE_CLAUSES` key. This is the price of choosing a SLOT over a second sentence: one arm serves two clauses, so its interpolation is load-bearing in a way a nullary member's never is. §2 asserts both notes by value and then feeds both printed clauses back through the reader",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `your Active Pokémon evolved from ${cond.name} during this turn`;",
+    replace: "      return \"your Active Pokémon evolved during this turn\";",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
+  {
+    id: "D393-misty-clause-key-takes-a-curly-apostrophe",
+    decision: "D393",
+    what: "\u{1F6D1} C7 - **THE SECOND CLAUSE KEY IS AUTHORED WITH U+2019 INSTEAD OF U+0027**, which is D183's defect in punctuation and the one this table's fold does NOT protect against: `literalClauseRow` folds the INCOMING clause, never the stored keys, so a typographic key matches nothing and resolves NOTHING, silently. The catalog prints zero curly apostrophes, so no sentence can ever reach it. Misty's Starmie's +80 quietly stops existing while Gholdengo's +90 keeps working, which is exactly the half-failure a pair makes visible and a singleton would not",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"this Pokémon evolved from Misty's Staryu during this turn\",",
+    replace: "    \"this Pokémon evolved from Misty’s Staryu during this turn\",",
+    expectKilledBy: [
+      "packages/engine/src/evolvedFromBonus.test.ts",
+      "packages/engine/src/clauseApostrophe.test.ts",
+    ],
+  },
+  {
+    id: "D393-pre-evolution-fixture-drops-its-owner-possessive",
+    decision: "D393",
+    what: "⚠️ C8 - **THE PRE-EVOLUTION FIXTURE IS RENAMED \"Staryu\"**, the tidy-up that dodges the possessive fixture-name toll four other suites charge - D392's C7 at a different address, and here the tidy name is not merely weaker but WRONG: the arm compares the pre-evolution card's `name` to the clause key byte for byte, so an unprefixed Staryu satisfies no printed sentence at all and the demonstrator stops demonstrating. ⚠️ **IT IS A MUTANT ON THE INSTRUMENT RATHER THAN ON THE SUBJECT** (D391's C6 shape): the engine is untouched and C1 still dies. §5 asserts both pre-evolution names by VALUE before any board is built, which is what stops the cast drifting into agreement with the code",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "    name: \"Misty's Staryu\",",
+    replace: "    name: \"Staryu\",",
+    expectKilledBy: ["packages/engine/src/evolvedFromBonus.test.ts"],
+  },
 ];
