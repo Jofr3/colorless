@@ -11484,6 +11484,45 @@ export const FIXTURE_POOL: Record<string, Card> = {
       340 HP and Colorless for the sibling's two reasons, unchanged. Its printed 2 is
       also the threshold EXACTLY, which is the rung that refuses a strict `>`. */
   "fix-retreat2-titan": battler("fix-retreat2-titan", { hp: 340, retreat: 2 }),
+  /** 🆕🆕 D389 — THE OPPONENT-SEAT BENCH COUNT DEMONSTRATOR. Iron Crown `sv08-132`,
+      transcribed and not interpolated (D306): the real card prints **TWO** attacks and
+      so does this, at their printed indices, and the second one is not decoration —
+      "Slicing Blade" ({M}{C}{C}, a flat 100) is the CONTROL a suite about a bonus
+      needs, an attack on the same body whose damage the clause cannot move.
+
+      The `40+` marker is REAL and load-bearing: the reader consumes the "+" and
+      attack.ts drops the printed base into the gate, so a flat `40` would exercise the
+      wrong half of the assembly. 40 bare, 120 boosted.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the 978-row / 6-set manifest, and `sv08`
+      is in none of the six. The NAME spells no possessive, so the three
+      `/^[A-Z][A-Za-z' ]*'s /` sweeps stand still (the fixture-name toll, unpaid for
+      the fifteenth slice running).
+
+      A **Basic** {M} with 130 HP and retreat 2, all printed. Metal is transcribed
+      rather than defaulted, and it is inert here on purpose: no body this suite fields
+      carries a Weakness or a Resistance at all, so the number on the damage event is
+      the number the clause decided and nothing else. */
+  "fix-deletingslash": {
+    ...blank,
+    id: "fix-deletingslash",
+    name: "Fixiron Crown",
+    category: "Pokemon",
+    stage: "Basic",
+    hp: 130,
+    types: ["Metal"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Metal", "Colorless"],
+        name: "Deleting Slash",
+        damage: "40+",
+        effect: "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.",
+      },
+      { cost: ["Metal", "Colorless", "Colorless"], name: "Slicing Blade", damage: 100 },
+    ],
+  },
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -12278,6 +12317,36 @@ export const RETREAT_COST_BONUS_DECK = deckOf({
   "sv01-167": 4, // Beach Court — the SUBTRACTIVE term (-1 on Basic), the mirror
   "fix-energy": 12, // Basic {C} — the two Colorless symbols of Aero Chase
   "fix-titan": 20, // 340 HP neutral Basic, NO attacks — DOMINANT starter and bench filler
+});
+
+/** 🆕🆕 D389 — the OPPONENT-SEAT BENCH COUNT (`opponentBenchCount.test.ts`). Its own
+    60 on D270's rule, and the cast is deliberately the SMALLEST any clause deck in
+    this family has fielded: the clause reads a Bench LENGTH, so the only lever the
+    suite needs is a body it can put on a Bench, and every extra card would be a card
+    an assertion about a damage number has to account for.
+
+      • `fix-deletingslash` — Iron Crown's printed "Deleting Slash" ({M}{C}, `40+`) at
+        its printed index 0, the ONE legal printing of the sentence, with the printed
+        "Slicing Blade" (a flat 100) at index 1 as the control attack;
+      • `fix-benchfiller` (60 HP) — the body the count is made of, at 12 so EITHER
+        seat can reach a full Bench of five and the two seats can be filled to
+        DIFFERENT depths on one board, which is the shape §4 is about;
+      • `fix-bigbody` (200 HP) — the defender, and 200 is chosen against the BOOSTED
+        total: 40 + 80 = 120 leaves it standing, so no §8.1 Prize tail ever runs
+        underneath an assertion whose whole subject is the damage number;
+      • `fix-metal-energy` / `fix-energy` — the {M} and the {C} of the printed cost.
+
+    🛑 **NO SECOND ATTACKER, AND NO MODIFIER OF ANY KIND.** Unlike D388's deck, whose
+    cast was a ladder of retreat-cost modifiers, nothing here can change the number
+    except the Bench length itself — which is what makes a 40 and a 120 attributable.
+
+    4 + 12 + 8 + 8 + 28 = **60**. */
+export const OPPONENT_BENCH_COUNT_DECK = deckOf({
+  "fix-deletingslash": 4, // Iron Crown — "Deleting Slash" ({M}{C}, 40+): the +80
+  "fix-benchfiller": 12, // 60 HP — the countable body, enough for a full Bench on both seats
+  "fix-bigbody": 8, // 200 HP — survives the boosted 120, so no KO tail interferes
+  "fix-metal-energy": 8, // Basic {M} — the first symbol of Deleting Slash
+  "fix-energy": 28, // Basic {C} — the second
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

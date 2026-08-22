@@ -2351,10 +2351,86 @@ export type BoardCondition =
       ⚠️ SEAT-RELATIVE AND SELF-SIDE, like the four other `yourBench*`/`your*`
       counters. The opponent's Bench is a different member and this slice does not
       buy it — see the census note above for the one printing that would want it.
+      🆕 **D389 BOUGHT IT, AND AS A SECOND MEMBER RATHER THAN AS A SEAT PARAMETER ON
+      THIS ONE** — see `opponentBenchAtLeast` directly below, which carries the
+      measurement. This member's name, its arms and its one clause row are UNCHANGED,
+      which is the outcome the price bought.
 
       Public: every Benched Pokémon is face-up on the table, so the union's
       public-state invariant holds. */
   | { kind: "yourBenchAtLeast"; count: number }
+  /** 🆕 **D389 — YOUR OPPONENT HAS `count` OR MORE BENCHED Pokémon. THE SEAT TWIN OF
+      THE MEMBER DIRECTLY ABOVE, AND A SECOND MEMBER RATHER THAN A SEAT PARAMETER ON
+      IT.** Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**, index 0 of
+      TWO — confirmed by id against tcgdex): *"If your opponent has 3 or more Benched
+      Pokémon, this attack does 80 more damage."* — the ONE legal printing.
+
+      🛑 **THE SHAPE QUESTION THIS RUN DEFERRED FOR SIXTEEN SLICES, AND THIS ROW IS THE
+      ONE THAT COULD NOT AVOID IT.** D366 named this exact printing as *"a DIFFERENT
+      seat at a DIFFERENT threshold"* and left the question open; unlike D379's
+      hand-size pair — which differed in the seat **AND** the comparator, two
+      independent defects, so an ADDITION was forced — **this candidate differs from
+      `yourBenchAtLeast` in the SEAT ALONE**, which is the strongest case a seat
+      parameter has ever had here. It is still refused, on three grounds, all measured
+      at this head:
+
+      ⑴ 🛑 **THE ENGINE HAD ALREADY ANSWERED THE SEAT QUESTION — THREE TIMES, AND
+      ALWAYS THE SAME WAY.** This union holds **49 members and not one of them carries
+      a seat field**; it holds **THREE pairs that differ in the SEAT ALONE**, and every
+      one shipped as a second member: `yourActiveDamaged`/`opponentActiveDamaged`,
+      `yourActivePoisoned`/`opponentActivePoisoned`, and
+      `yourActiveHasToolAttached`/`opponentActiveHasToolAttached`. D369's block on the
+      last of those argues the point in as many words — *"NOT written as a recursive
+      call on the twin with the seat flipped: `conditionHolds` is seat-RELATIVE, so
+      'the other seat's own Active' is exactly what the twin would answer for a caller
+      that passed the other seat, and there is no caller that does"*. **D388's §1 move,
+      applied to a SHAPE rather than to a noun phrase: before arguing, grep for whether
+      this engine has already answered it.**
+
+      ⑵ ⚠️ **AND THE PRICE WAS RE-MEASURED RATHER THAN QUOTED, BECAUSE D362's 31 SITES
+      WERE MEASURED ON A DIFFERENT MEMBER.** At this head `yourBenchAtLeast` occurs
+      **35 times across 10 files** — **22 of them EXECUTABLE** (20 `kind:` literals and
+      2 exhaustive-switch arms) across **5 files**, the rest prose in doc blocks. So
+      D362's order of magnitude **STANDS**, and the sixteen-slice deferral was not a
+      price nobody re-measured. Against that, this member edits **ZERO existing sites**.
+      ⚠️ **AND A RE-POINTING WOULD HAVE BEEN A RENAME UNTIL PROVEN OTHERWISE** (D365,
+      reproduced at D366): `opponentBenchCount.test.ts` §1 drives every one of the
+      shipped member's live consumers on a board anyway, because the refusal is only
+      worth what its evidence is.
+
+      ⑶ 🛑 **AND THE NOTE IS WHAT PROVES THE PARAMETER WOULD SAVE NOTHING.**
+      `conditionNote` renders a DIFFERENT PRINTED SENTENCE per seat — *"you have 3 or
+      more Benched Pokémon"* against *"your opponent has 3 or more Benched Pokémon"* —
+      so a `seat` field does not remove the second body, it moves it inside one arm as
+      a branch on the field. The pair costs two note bodies either way, and the
+      parameterised spelling costs the 22-site rename **on top**. **THE SECOND MEMBER IS
+      STRICTLY CHEAPER, NOT MERELY MORE CONVENTIONAL.**
+
+      ⚠️ **PARAMETERISED ON THE THRESHOLD, NOT ON THE SEAT** — `opponentHandAtMost`'s
+      argument (D118). The catalog varies exactly this token and nothing else: the
+      legal attack column prints TWO bench-count board facts, this one at **3** and
+      D366's V-Force at **4 or fewer** (stored as the positive floor 5), so a threshold
+      buried in the member's NAME would make a second printed number a second member.
+
+      ⚠️ **BENCH ONLY. THE ACTIVE SPOT IS NOT COUNTED**, exactly as the member above
+      and for the same printed word — an opponent with an Active and two Benched has
+      THREE Pokémon in play and does not satisfy this at 3. `bench` is a DENSE array
+      (`InPlayPokemon[]`, types.ts), so its `length` IS the number of Benched Pokémon;
+      there are no holes to filter.
+
+      ⚠️ **CROSS-BOARD, `otherSeat(seat)`, D369's shape** — the arm reads the ASKER's
+      opponent and never a hard-coded `"p2"`, so the same board answers differently
+      from the two seats. That is the property the still-open seat-parameter question
+      needs concrete boards for, and §4 is where it is driven.
+
+      `>=`, a FLOOR — the printed word is "or more", `yourBenchAtLeast`'s and
+      `yourEnergyInPlayAtLeast`'s reading and NOT `opponentPrizesRemaining`'s set
+      membership. Reachable at every value from 0 to `BENCH_MAX`, so no rung of the
+      ladder is unreachable.
+
+      Public: every Benched Pokémon is face-up on the table, on BOTH sides, so the
+      union's public-state invariant holds and redact.ts needs no byte. */
+  | { kind: "opponentBenchAtLeast"; count: number }
   /** D280 — every one of `conditions` holds for the reading seat. The
       vocabulary's FIRST COMBINATOR and its first RECURSIVE member, bought by
       Call Bell `sv08-165`'s *"You can use this card only if you go second, and
@@ -9801,6 +9877,32 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // on ("burying the 3 in the member's NAME would make the second printing a second
   // member"). **That second printing has now arrived, and the member was right.**
   ["your opponent has 5 or fewer cards in their hand", { kind: "opponentHandAtMost", count: 5 }],
+  // 🆕🆕 D389 — Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, `40+`, **+80**, index
+  // 0 of TWO), ONE legal printing, and it sits DELIBERATELY under the two rows above:
+  // all three are "your opponent has N …" COUNTS over an opponent-seat zone, and this
+  // is the family's THIRD.
+  //
+  // 🛑 **THE MEMBER IS A SECOND ONE, NOT A SEAT PARAMETER ON `yourBenchAtLeast`** —
+  // the question this run deferred for sixteen slices, and the one this row could not
+  // avoid, because the candidate differs from the shipped member in the SEAT ALONE.
+  // The member's own block carries the three measured grounds; the operative one for
+  // THIS table is that the union already holds THREE pairs differing in the seat alone
+  // (`yourActiveDamaged`, `yourActivePoisoned`, `yourActiveHasToolAttached` and their
+  // `opponent*` twins) and NOT ONE member carrying a seat field — so a parameter here
+  // would be the first, at a re-measured 22 executable sites across 5 files, to save a
+  // note body that `conditionNote` has to write twice regardless.
+  //
+  // ⚠️ THE KEY CARRIES NO APOSTROPHE — the THIRD row in this table that does not, after
+  // D378's "a Stadium is in play" and D366's bench-count key one table down. The
+  // printed subject is "your opponent" and never "your opponent's", which is exactly
+  // what separates a ZONE count from the Active-Pokémon rows above it, so
+  // `literalClauseRow`'s U+2019 fold is inert on it. `Pokémon` carries a real U+00E9
+  // and `Benched` is capitalised as printed.
+  //
+  // ⚠️ AND THE THRESHOLD IS THE PARAMETER, WHICH THE CATALOG ITSELF VARIES: the legal
+  // attack column prints exactly TWO bench-count board facts and their numbers differ
+  // (3 here, "4 or fewer" on D366's V-Force, stored as the positive floor 5).
+  ["your opponent has 3 or more Benched Pokémon", { kind: "opponentBenchAtLeast", count: 3 }],
   // Bronzong sv03-145 "Extrasensory" (+90). Bronzor sv03-144 "Mirror Draw"
   // prints this clause's exact words ("Draw cards until you have the same number
   // of cards in your hand as your opponent.") as a DRAW effect — a substring

@@ -12108,6 +12108,101 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.294.0 → **THE OPPONENT-SEAT BENCH COUNT — AND THE SEAT-PARAMETER QUESTION
+    THIS RUN DEFERRED FOR SIXTEEN SLICES, SETTLED ON A RE-MEASUREMENT.**
+
+      Iron Crown `sv08-132` "Deleting Slash" ({M}{C}, **40+**, index 0 of TWO —
+      confirmed by id against tcgdex, and by INTERSECTING two brace-free limitlesstcg
+      `text:` searches, which meet at Iron Crown SSP 132 as the only Standard printing)
+        *"If your opponent has 3 or more Benched Pokémon, this attack does 80 more
+         damage."*
+        **1 legal printing**
+
+    🛑 **THE SHAPE QUESTION WAS ORDERED FIRST, AND IT IS THE ONE D362, D365 AND D366
+    ALL LEFT OPEN: A SECOND MEMBER, OR A *SEAT PARAMETER* ON `yourBenchAtLeast`?** This
+    candidate is the sharpest case a seat parameter has ever had here, because unlike
+    D379's hand-size pair — which differed in the seat **AND** the comparator, two
+    independent defects, so an ADDITION was forced — **it differs from the shipped
+    member in the SEAT ALONE**. It is still a SECOND MEMBER, on three grounds, every
+    one measured at this head and none quoted forward:
+
+    ⑴ 🛑 **THE ENGINE HAD ALREADY ANSWERED THE SEAT QUESTION — THREE TIMES, AND ALWAYS
+    THE SAME WAY.** `BoardCondition` holds **49 members and NOT ONE carries a seat
+    field**, and it holds **THREE pairs that differ in the SEAT ALONE**, each shipped as
+    a second member: `yourActiveDamaged`/`opponentActiveDamaged`,
+    `yourActivePoisoned`/`opponentActivePoisoned`, and
+    `yourActiveHasToolAttached`/`opponentActiveHasToolAttached`. D369's block on the
+    last of those states the reasoning in as many words — *"NOT written as a recursive
+    call on the twin with the seat flipped: `conditionHolds` is seat-RELATIVE"*.
+    **THIS IS D388's §1 MOVE APPLIED TO A SHAPE RATHER THAN TO A NOUN PHRASE**: before
+    arguing from first principles, grep for whether this engine has already answered
+    it. One grep, and a question sixteen slices old had a precedent three deep.
+
+    ⑵ ⚠️ **AND D362's 31-SITE PRICE WAS RE-MEASURED RATHER THAN QUOTED — IT STANDS.**
+    D362 measured 31 sites across 7 files on a member with many consumers, and the
+    handoff was explicit that the number might collapse: `yourBenchAtLeast` has ONE
+    clause row and TWO arms, so a narrow answer was live. Measured: **35 occurrences
+    across 10 files, of which 22 are EXECUTABLE** (20 `kind:` literals and 2
+    exhaustive-switch arms) across **5 files** — `benchCountRequirement.test.ts` (14),
+    `benchTypeBonus.test.ts` (2), `effects.ts` (2), `interpreter.ts` (2) and
+    `scripts/mutation/mutants.ts` (2). **THE ORDER OF MAGNITUDE SURVIVES, AND SO THE
+    SIXTEEN-SLICE DEFERRAL WAS NOT A PRICE NOBODY RE-MEASURED.** ⚠️ **D387 CAUGHT THE
+    OPPOSITE ERROR** — a price quoted forward that did not apply — which is why this one
+    had to be re-run rather than inherited in either direction. The second member edits
+    **ZERO** existing sites.
+
+    ⑶ 🛑 **AND THE NOTE IS WHAT TURNS A CONVENTION INTO AN ARGUMENT: THE PARAMETER
+    WOULD SAVE NOTHING.** `conditionNote` renders a DIFFERENT PRINTED SENTENCE per seat
+    — *"you have 3 or more Benched Pokémon"* against *"your opponent has 3 or more
+    Benched Pokémon"* — so a `seat` field does not delete the second body, it moves the
+    two strings into a branch inside one arm. The pair costs two note bodies either way,
+    and the parameterised spelling pays the 22-site rename **on top**. **THE SECOND
+    MEMBER IS STRICTLY CHEAPER, NOT MERELY MORE CONVENTIONAL** — which is the part
+    nobody had established in sixteen slices of deferring it.
+
+    ⚠️ **AND THE REFUSAL WAS NOT TAKEN ON THE ARITHMETIC ALONE: EVERY LIVE CONSUMER OF
+    THE SHIPPED MEMBER IS DRIVEN ON A BOARD ANYWAY** (`opponentBenchCount.test.ts` §1)
+    — D365 recorded that a re-pointing is a RENAME until proven otherwise and D366
+    reproduced it, and this run had never actually tested it. The clause row still
+    derives to `yourBenchAtLeast { count: 5 }`, both its arms still answer, and the two
+    members are then driven APART on one board.
+
+    ⚠️ **PARAMETERISED ON THE THRESHOLD, NOT ON THE SEAT** (D118). The legal attack
+    column prints exactly TWO bench-count board facts and their numbers differ — 3 here,
+    "4 or fewer" on D366's V-Force (stored as the positive floor 5) — so the catalog
+    itself varies the token the parameter carries, and does not vary the one it does
+    not.
+
+    ⚠️ **BENCH ONLY, `otherSeat(seat)`, AND `>=`.** The Active Spot is not counted (the
+    printed word is "Benched", and an opponent with an Active and two Benched is three
+    in play and two Benched); `bench` is a DENSE `InPlayPokemon[]`, so its `length` IS
+    the count; and the arm reads the ASKER's opponent rather than a hard-coded `"p2"`,
+    which is the defect §4 exists to catch — a body copied down from the twin is green
+    on every board where the two Benches happen to match.
+
+    ⚠️ **THE PRICE, IN D382's UNITS: 1 printing / 2 mechanisms = 0.50** — ONE
+    parameterised `BoardCondition` member with its TWO exhaustive-switch arms, and ONE
+    literal `CONDITIONAL_DAMAGE_CLAUSES` row. ONE fixture and ONE dedicated 60; ZERO new
+    card predicates, readers, ops, events, prompts, choice kinds, payoff rows, registry
+    rows, `redact.ts` bytes or `packages/schema` bytes. Against the face-up PRIZE row's
+    **2 / 9 = 0.22** that is the same 2.3× margin D388 measured, and the Prize row loses
+    for the **FIFTH** consecutive slice on the same four mechanisms plus
+    `MATCH_RECORD_VERSION` 23 → 24, which this row does not owe.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape D382, D384, D387
+    and D388 took. The BONUS RESIDUE goes **17 / 20 → 16 / 19**. 🛑 **THE 2-PRINTING
+    BAND STAYS EMPTY AND THE BAND RUNG IS STILL DRIVEN FROM OUTSIDE IT** — the
+    distribution moves `{1: 15, 5: 1}` → `{1: 14, 5: 1}`.
+
+    engineVersion 0.293.0 → **0.294.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed. The one new member carries a `count: number` and is stored only
+    inside a derived `CardProgram`, never in a `MatchRecord`; a `conditionGate` resolves
+    inline and never parks; the arm is a pure READ of `bench.length` that writes
+    nothing; and NO field is added to `InPlayPokemon`, `PlayerSide` or `GameState`. No
+    v23 byte string can contain a member that did not exist, and none means anything
+    different under this head (D335's discriminator).
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.293.0 → **THE RETREAT-COST THRESHOLD — ONE PRINTED NOUN PHRASE, TWO LIVE
     READINGS, AND THE SHAPE QUESTION SETTLED BEFORE A LINE WAS WRITTEN.**
 
@@ -15500,7 +15595,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.293.0";
+export const engineVersion = "0.294.0";
 
 export type {
   ApplyResult,

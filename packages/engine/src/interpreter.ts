@@ -3614,6 +3614,35 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // spread in: the arm one family up (`yourNamedPokemonInPlay`) is what "in
       // play" looks like here, and the printed word on this card is "Benched".
       return state.players[seat].bench.length >= cond.count;
+    case "opponentBenchAtLeast":
+      // 🆕🆕 D389 — Iron Crown sv08-132 "Deleting Slash" ({M}{C}, 40+): "If your
+      // opponent has 3 or more Benched Pokémon, this attack does 80 more damage."
+      //
+      // 🛑 THE SEAT TWIN OF THE ARM DIRECTLY ABOVE, AND A SECOND ARM RATHER THAN A
+      // SEAT PARAMETER ON IT — the question this run deferred for sixteen slices,
+      // settled the way this union has settled it three times already
+      // (`opponentActiveDamaged`, `opponentActivePoisoned`,
+      // `opponentActiveHasToolAttached`, the last of which says so in as many words
+      // one screen up). NOT a recursive call on the twin with the seat flipped:
+      // `conditionHolds` is seat-RELATIVE, so "the other seat's own Bench" is exactly
+      // what the twin answers for a caller that passed the other seat, and no caller
+      // does — the sentence is printed on an ATTACK this seat declares. Two arms, two
+      // bodies, and the only board that separates them is one with different Bench
+      // sizes on the two sides.
+      //
+      // 🛑 `otherSeat(seat)`, NEVER A HARD-CODED "p2". The whole defect this member
+      // exists to avoid is `state.players[seat]` copied down from the arm above: it
+      // is green on every board where the two Benches happen to match and wrong on
+      // every board where they do not, which is the shape §4 drives.
+      //
+      // BENCH ONLY, and `bench` is a DENSE array (`InPlayPokemon[]`, types.ts), so its
+      // `length` IS the number of Benched Pokémon — no `!== null` filter, because
+      // there are no holes to skip. The opponent's Active Spot is deliberately not
+      // spread in: the printed word is "Benched", and an opponent with an Active and
+      // two Benched is three Pokémon in play and two Benched.
+      //
+      // `>=` because the printed word is "or more" — a FLOOR, the twin's reading.
+      return state.players[otherSeat(seat)].bench.length >= cond.count;
     case "yourOwnerPokemonInPlayAtLeast":
       // D242 — "you have 4 or more Team Rocket's Pokémon in play". Active + Bench,
       // TOP cards only (an evolved stack is ONE Pokémon in play, §4), counted
@@ -4218,6 +4247,18 @@ export function conditionNote(cond: BoardCondition): string {
       // person, so it says what the player must HAVE and never repeats the
       // sentence's "4 or fewer". Reads as a floor because it is one.
       return `you have ${String(cond.count)} or more Benched Pokémon`;
+    case "opponentBenchAtLeast":
+      // 🆕🆕 D389 — a FULL ROUND TRIP, and the thing that made the seat parameter a
+      // false economy: this fragment is the printed clause VERBATIM and is
+      // byte-identical to its `CONDITIONAL_DAMAGE_CLAUSES` key, while the twin one
+      // line up says "you have …" and can never say this. A `seat` field would not
+      // have removed the second body — it would have moved this string and that one
+      // into a branch inside a single arm, and paid a rename for the privilege.
+      //
+      // Built from the PARAMETER, so a second printed threshold is legible without a
+      // second string. No pronoun to resolve, no timing word to drop and no card-face
+      // glyph to spell out, which is why the round trip is available here at all.
+      return `your opponent has ${String(cond.count)} or more Benched Pokémon`;
     case "yourOwnerPokemonInPlayAtLeast":
       // The printed sentence verbatim, prefix and all — the family's second FULL
       // round-trip (`youPlayedSupporterThisTurn`'s), because the clause names no
