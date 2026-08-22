@@ -6354,6 +6354,24 @@ const FIX_BLEND: CardProgram = {
   energy: { provides: ["Fire", "Water"] },
 };
 
+/** 🆕 D391 — fix-grassdouble — FIXTURE Special Energy providing the SAME concrete
+    type TWICE ({G}{G}). `FIX_BLEND` above is this shape on the other axis (two
+    DISTINCT types), and the two are not interchangeable: a `{G}` question asked of a
+    blend gets the same answer from a CARD count and a UNIT count, because the blend
+    contributes one of each. This row is the one board where those two readings
+    disagree — one card, two units — and `countAttachedEnergy` answers **1**, because
+    "one Energy card is one Energy however many units it provides" (continuous.ts).
+
+    The pool prints no such card: every multi-unit Special in it is Colorless (Double
+    Turbo, Jet) or a wildcard (Luminous, Legacy), so the duplicate-type shape
+    `EnergyProgram.provides: string[]` allows has never been exercised. `providedEnergy`
+    is a `flatMap`, so the duplicate SURVIVES and a units reading really would see two —
+    which is what makes `typedEnergyThreshold.test.ts` §4 a measurement rather than an
+    assertion about a shape nothing can build. */
+const FIX_GRASSDOUBLE: CardProgram = {
+  energy: { provides: ["Grass", "Grass"] },
+};
+
 /** fix-pilescan — FIXTURE Item, no printed card and none imaginable: a
     `providesEnergy` filter handed to a DECK search, which is the one authoring
     mistake this filter invites. Provision is a while-attached property, so a card
@@ -12203,6 +12221,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv01-203": ARMAROUGE, // Armarouge (reprint)
   "fix-pilescan": FIX_PILESCAN, // FIXTURE — the filter handed to a DECK search: no match
   "fix-blend": FIX_BLEND, // FIXTURE — a Special providing TWO distinct types
+  "fix-grassdouble": FIX_GRASSDOUBLE, // FIXTURE — a Special providing ONE type TWICE
   // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)

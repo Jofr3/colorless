@@ -5158,7 +5158,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.295.0";',
+    find: 'export const engineVersion = "0.296.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -15038,8 +15038,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D383",
     what: "⚠️ C4 — `>=` BECOMES `>`, so the member is a CEILING-PLUS-ONE instead of a FLOOR and the printed cost is refused on the exact board it is written for: three Energy attached, three Energy charged, offer withheld. **OFF BY ONE AND GREEN ON EVERY OTHER COUNT**, which is why §3 sweeps 0..4 cards against 1..5 thresholds rather than asserting the printed 3 once (D379's `exactHandSize` rule: drive the value and its two neighbours)",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
-    replace: "      return own !== null && countAttachedEnergy(state, own, null) > cond.count;",
+    // ⚠️ RE-TRANSCRIBED AT D391, which widened this arm with an OPTIONAL `energy?`
+    //    filter: the `null` became `cond.energy ?? null` and this row's `find` went to
+    //    ZERO matches without a character of the CLAIM changing. The claim is intact and
+    //    the anchor is not — a line moved under a live row, which is exactly the expiry
+    //    date the exactly-once rule exists to publish (D215).
+    find:
+      "      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count;",
+    replace:
+      "      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) > cond.count;",
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
   {
@@ -15047,8 +15054,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D383",
     what: "\u{1F6D1} C5 — **THE ZONE WIDENED FROM THE BODY TO THE SIDE**, and it is the mistake the import block makes available: `countEnergyInPlay` is one identifier away in interpreter.ts's own import list, and D372's doc block names it as this counter's near miss in exactly these words. The printed cost is *Energy attached to THIS Pokémon*, so a benched Energy would arm an offer the attacker cannot pay — and **EVERY BOARD WITH AN EMPTY BENCH IS GREEN EITHER WAY**, which is nearly every board a suite writes. §3's near-miss board puts one {W} on the Bench for this row and this row alone",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
-    replace: "      return own !== null && countEnergyInPlay(state, seat, null) >= cond.count;",
+    // ⚠️ RE-TRANSCRIBED AT D391, which widened this arm with an OPTIONAL `energy?`
+    //    filter: the `null` became `cond.energy ?? null` and this row's `find` went to
+    //    ZERO matches without a character of the CLAIM changing. The claim is intact and
+    //    the anchor is not — a line moved under a live row, which is exactly the expiry
+    //    date the exactly-once rule exists to publish (D215).
+    find:
+      "      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count;",
+    replace:
+      "      return own !== null && countEnergyInPlay(state, seat, cond.energy ?? null) >= cond.count;",
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
   {
@@ -15056,8 +15070,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D383",
     what: "⚠️ C6 — THE NULL GUARD GOES POSITIVE-BY-DEFAULT: an EMPTY Active Spot reads as a Pokémon holding zero, so the member answers TRUE at a printed count of 0. **AN ABSENT POKÉMON IS NOT A POKÉMON HOLDING NOTHING** — the standing rule for every body-reading member in this union, and the one `yourActiveUndamaged` states at length. Unreachable from the attack path (§8 guarantees an Active), so only a direct `conditionHolds` probe can see it, which is what §3's empty-spot rung is",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;",
-    replace: "      return (own?.energy.length ?? 0) >= cond.count;",
+    // ⚠️ RE-TRANSCRIBED AT D391, which widened this arm with an OPTIONAL `energy?`
+    //    filter: the `null` became `cond.energy ?? null` and this row's `find` went to
+    //    ZERO matches without a character of the CLAIM changing. The claim is intact and
+    //    the anchor is not — a line moved under a live row, which is exactly the expiry
+    //    date the exactly-once rule exists to publish (D215).
+    find:
+      "      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count;",
+    replace:
+      "      return (own === null ? 0 : countAttachedEnergy(state, own, cond.energy ?? null)) >= cond.count;",
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
   {

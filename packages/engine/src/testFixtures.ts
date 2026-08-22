@@ -11593,6 +11593,79 @@ export const FIXTURE_POOL: Record<string, Card> = {
         member needs Water at a NON-ZERO index or its `.includes` is untested. */
   "fix-waterbody": battler("fix-waterbody", { hp: 60, types: ["Water"] }),
   "fix-inplaydual": battler("fix-inplaydual", { hp: 60, types: ["Fire", "Water"] }),
+  /** 🆕 D391 — THE TYPED PER-BODY ENERGY THRESHOLD DEMONSTRATOR. Abomasnow
+      `sv10-060`, transcribed and not interpolated (D306): the real card prints **TWO**
+      attacks and so does this, at their printed indices, and the printed sentence is
+      on the one at **index 1** — the first demonstrator in this run whose clause is
+      NOT on attack 0, which is itself worth a rung.
+
+      🛑 **THE PRINTED TYPE IS `Water` AND THE CLAUSE COUNTS `{G}`, AND THAT
+      INDEPENDENCE IS THE WHOLE POINT OF THE CAST.** The cost is {W}{W}{W}{C} — so a
+      board that can legally declare "Frozen Wood" with single-unit attachments holds
+      FOUR Energy cards, and the UNFILTERED reading of *"2 or more … Energy attached"*
+      is TRUE on every such board. The filter is therefore not a refinement of the
+      answer, it is the whole answer: drop it and the printed +120 becomes
+      unconditional. ⚠️ A demonstrator whose cost and clause named the SAME type
+      could not have shown that at all.
+
+      The `120+` marker is REAL and load-bearing: the reader consumes the "+" and
+      attack.ts drops the printed base into the gate, so a flat `120` would exercise
+      the wrong half of the assembly. 120 bare, 240 boosted — which is why this
+      suite's defender is `fix-titan` (340 HP) and not the usual `fix-bigbody` (200).
+
+      A **Stage 1** with 150 HP and retreat 4, all printed, with the printed ×2 Metal
+      Weakness transcribed too — inert here, because nothing in this suite attacks the
+      attacker, and carried anyway rather than trimmed to what the tests read (D306).
+      ⚠️ **`evolveFrom` IS `"Snover"`, THE PRINTED CHAIN, AND IT IS NOT COSMETIC**:
+      `stage1Bonus.test.ts` §1 sweeps `FIXTURE_POOL` for Stage 1 bodies with a NULL
+      chain and pins that set at exactly ONE, so a tidy null here would have turned
+      another file's finding into an artefact of this slice (D390 paid exactly that
+      and its fix was this rule).
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the 978-row / 6-set manifest, and
+      `sv10` is in none of the six. The NAME spells no possessive, so the three
+      `/^[A-Z][A-Za-z' ]*'s /` sweeps stand still. */
+  "fix-frozenwood": {
+    ...blank,
+    id: "fix-frozenwood",
+    name: "Fixomasnow",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Snover",
+    hp: 150,
+    types: ["Water"],
+    retreat: 4,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless", "Colorless", "Colorless"], name: "Lunge Out", damage: 90 },
+      {
+        cost: ["Water", "Water", "Water", "Colorless"],
+        name: "Frozen Wood",
+        damage: "120+",
+        effect: "If this Pokémon has 2 or more {G} Energy attached, this attack does 120 more damage.",
+      },
+    ],
+  },
+  /** 🆕 D391 — FIXTURE Special Energy providing TWO units of ONE type ({G}{G}), and
+      it is `fix-blend`'s shape rotated onto the axis this slice needs.
+
+      🛑 **IT IS THE ONE BOARD THAT SEPARATES CARDS FROM UNITS UNDER A *TYPE
+      FILTER*.** `fix-blend` provides `["Fire", "Water"]`, which separates the two
+      readings for an UNFILTERED count and cannot do it for a `{G}` one — it
+      contributes exactly one Grass unit and one Grass card, so both readings answer
+      the same. One card providing `{G}{G}` answers **1** by card and **2** by unit,
+      and `countAttachedEnergy` says 1. **A FIXTURE'S DISCRIMINATING POWER IS RELATIVE
+      TO THE PARAMETER UNDER TEST** (D390's rule, one member over), which is why this
+      exists rather than reusing the blend.
+
+      ⚠️ SYNTHETIC BY NECESSITY, exactly as `fix-blend` is: the pool's multi-unit
+      Special Energies are Colorless (`Double Turbo`, `Jet`) or wildcards (`Luminous`,
+      `Legacy`), and no printed card provides two units of one CONCRETE type. The
+      shape is what `EnergyProgram.provides: string[]` has always promised — a `flatMap`
+      in `providedEnergy`, so duplicates survive — and this is the first row to spell
+      the same type twice. */
+  "fix-grassdouble": specialEnergy("fix-grassdouble", "fix-grassdouble"),
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -12454,6 +12527,46 @@ export const IN_PLAY_TYPE_DECK = deckOf({
   "fix-bigbody": 8, // 200 HP Colorless — survives the boosted 160, and arms nothing
   "fix-lightning-energy": 4, // Basic {L} — the two Lightning symbols of the control
   "fix-energy": 28, // Basic {C} — the printed cost of "Short-Circuit Knuckle"
+});
+
+/** 🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD board
+    (`typedEnergyThreshold.test.ts`). Its own 60 on D270's rule, and the cast is the
+    smallest that can pose the question: the clause counts Energy CARDS of ONE TYPE on
+    ONE BODY, so the suite needs to vary the TYPE, the COUNT, the ZONE and the
+    CARDS-versus-UNITS reading — and nothing else.
+
+      • `fix-frozenwood` — Abomasnow's printed "Frozen Wood" ({W}{W}{W}{C}, `120+`) at
+        its printed index **1**, the ONE legal printing of the sentence, with the
+        printed "Lunge Out" (a flat 90) at index 0 as the control attack;
+      • `fix-titan` (340 HP, no attacks, no Weakness) — the defender AND the dominant
+        starter. 🛑 **CHOSEN AGAINST THE BOOSTED TOTAL**: 120 + 120 = 240, and the
+        usual `fix-bigbody` (200) would be Knocked Out by it, putting a §8.1 Prize
+        tail underneath an assertion whose subject is a damage number. It is also the
+        only BASIC in this 60 — `fix-frozenwood` is a Stage 1 and cannot open — so
+        setup can never mulligan into a board this suite did not ask for;
+      • `fix-water-energy` — Basic {W}, the three typed symbols of the printed cost,
+        and the type the clause does NOT count;
+      • `fix-grass-energy` — Basic {G}, the type it DOES count, and the card that pays
+        the printed {C} on the boards where the clause is armed;
+      • `fix-grassdouble` — the Special providing {G}{G}, ONE card and TWO units: the
+        board where a CARDS reading and a UNITS reading disagree;
+      • `fix-energy` — Basic {C}, the printed Colorless symbol on the boards where the
+        clause is NOT armed, so a control board is short of Grass without being short
+        of Energy.
+
+    🛑 **NO MODIFIER OF ANY KIND, AND NO SECOND ATTACKER.** Nothing in this 60 can
+    change a damage number except which Energy cards are attached and to which body —
+    which is what makes a 120 and a 240 attributable. `fix-titan` carries no attacks
+    at all, so the far seat can never move a number either.
+
+    4 + 20 + 12 + 12 + 4 + 8 = **60**. */
+export const TYPED_ENERGY_THRESHOLD_DECK = deckOf({
+  "fix-frozenwood": 4, // Abomasnow — "Frozen Wood" ({W}{W}{W}{C}, 120+) at index 1: the +120
+  "fix-titan": 20, // 340 HP, no attacks — survives the boosted 240, and the only Basic
+  "fix-water-energy": 12, // Basic {W} — the three typed symbols of the printed cost
+  "fix-grass-energy": 12, // Basic {G} — the type the clause counts
+  "fix-grassdouble": 4, // Special {G}{G} — ONE card, TWO units: the cards-vs-units board
+  "fix-energy": 8, // Basic {C} — the printed Colorless symbol, and a NON-Grass filler
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

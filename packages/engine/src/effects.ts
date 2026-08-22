@@ -1491,8 +1491,69 @@ export type BoardCondition =
       of that step), which for this reading is before any cost is paid. Attached
       Energy sits face up, so the union's public-state invariant holds. **FALSE with
       an empty Active Spot** — an absent Pokémon is not a Pokémon holding zero, the
-      standing rule for every body-reading member in this union. */
-  | { kind: "yourActiveEnergyAtLeast"; count: number }
+      standing rule for every body-reading member in this union.
+
+      🆕🆕 **D391 — `energy?`, AN OPTIONAL NARROWING, AND IT IS THE FIRST PRINTED
+      CLAUSE THIS MEMBER ANSWERS.** Abomasnow `sv10-060` "Frozen Wood"
+      ({W}{W}{W}{C}, `120+`, index 1 of TWO), **1 legal printing** —
+      *"If this Pokémon has **2 or more {G} Energy** attached, this attack does 120
+      more damage."* The paragraph above says this member *"does NOT round-trip to
+      any printed clause and CANNOT"*, and that sentence is now **struck**: the
+      catalog prints the threshold out loud, one type-filter away from the arity the
+      member was authored from. What it does NOT strike is the guard — the count
+      still comes off the printed digit (2 here, 3 there), never off a constant.
+
+      🛑 **A FIELD AND NOT A SECOND MEMBER, WHICH IS THE OPPOSITE OF D389's ANSWER
+      AND IS MEASURED RATHER THAN INHERITED.** D389 refused a SEAT parameter on
+      `yourBenchAtLeast` because it would have been **REQUIRED** — a rename across 22
+      executable sites — and because `conditionNote` prints a different sentence per
+      seat, so the parameter saved no body. **NEITHER HALF TRANSFERS.** Measured at
+      this head: `yourActiveEnergyAtLeast` has **11 executable sites across 4 files**
+      (9 `kind:` literals + 2 exhaustive-switch arms), and an OPTIONAL field edits
+      **ZERO** of them — every shipped `{ kind, count }` object still type-checks and
+      still means what it meant. And the note does NOT branch into a second sentence:
+      the filter drops into ONE interpolation slot of the string that was already
+      there, so the untyped note comes back byte-identical.
+
+      🛑 **D326's SHAPE, EXACTLY — "ABSENT MEANS UNNARROWED".** That member carries
+      two optional fields (`owner?`, `byAttack?`) on the same argument: each narrows
+      the SET being counted, so a narrowed gate is TRUE on a strict SUBSET of the
+      boards the bare one is, and the bare object keeps its meaning byte-for-byte.
+      `energy` is that monotone narrowing here — the filtered set is a subset of
+      `pokemon.energy`, so `count(energy) >= n` implies `count(null) >= n` and never
+      the reverse. ⚠️ D326's OWN settling argument does not transfer (there, one card
+      printed both narrowings at once and a union could not have spelled the
+      conjunction); this one stands on the arithmetic above instead.
+
+      🛑 **AND THE MECHANISM WAS ALREADY A PARAMETER, WHICH IS THE LINE BETWEEN A
+      FIELD AND A MEMBER HERE.** `countAttachedEnergy(state, pokemon, energy)`
+      already takes `BasicEnergyType | "special" | null` and this arm already passes
+      `null` to it; the member is now isomorphic to the call it delegates to. The
+      block above distinguishes this member from `activeEnergyCountsEqual` by its
+      COMPARAND (a printed constant versus another body) — **a comparand is a shape
+      and a filter the delegate already accepts is a field**, which is the rule that
+      keeps the two answers from being a coin toss.
+
+      ⚠️ **STILL CARDS, NOT UNITS — AND THE TYPED BRANCH IS A DIFFERENT ROUTE TO THE
+      SAME NOUN.** `energy: null` is `pokemon.energy.length`; a typed filter counts
+      cards whose PROVISION includes the type (`providesEnergyType`, D118's rule), so
+      one Special providing `{G}{G}` counts **ONE** either way and a wildcard counts
+      one Grass. Driven on a board in `typedEnergyThreshold.test.ts` §4 rather than
+      inherited from the untyped arm's paragraph.
+
+      🛑 **THE TYPE AND THE COST ARE INDEPENDENT ON THE ONE PRINTING, AND THAT IS
+      WHAT MAKES THE FILTER NON-VACUOUS.** Frozen Wood costs {W}{W}{W}{C} and the
+      clause counts {G} — so with single-unit attachments EVERY board that can
+      legally declare the attack holds four Energy cards, and the UNFILTERED reading
+      at `count: 2` is TRUE on all of them. Dropping the filter does not make the
+      bonus wrong on some boards; it makes it **unconditional**.
+
+      ⚠️ **`count: 1` WITH AN `energy` WOULD RESTATE `yourActiveHasEnergyAttached`**,
+      and that overlap is D205's never-spelled shape rather than an ambiguity: the
+      pool prints this threshold at 2 and nowhere at 1, and the count is captured
+      from the digit. A second member would have carried the identical overlap, so it
+      does not discriminate between the two answers. */
+  | { kind: "yourActiveEnergyAtLeast"; count: number; energy?: BasicEnergyType | "special" }
   /** Your opponent's Active Pokémon is a `type` Pokémon — Sylveon swsh10.5-035
       "Wonder Flash" (+90, `Dragon`), the pool's only printing of a TYPE clause
       and the only sentence in 978 cards / 6 sets that contains the word "Dragon" at all.
@@ -10165,6 +10226,34 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "you have 10 or more Basic {R} Energy cards in your discard pile",
     { kind: "yourBasicEnergyInDiscardAtLeast", energy: "Fire", count: 10 },
+  ],
+  // 🆕🆕 D391 — Abomasnow sv10-060 "Frozen Wood" (120+, **+120**), ONE legal
+  // printing, and it CLOSES the trio the two rows above open: the same "N or more
+  // ⟨type⟩ Energy" question asked of the whole SIDE (Absol), of the DISCARD PILE
+  // (Chandelure) and now of ONE BODY. Three adjacent rows, three zones, three
+  // members — and the adjacency is again the warning rather than a filing habit.
+  //
+  // 🛑 **A LITERAL ROW, D119's COROLLARY A THIRD TIME AT THIS ADDRESS.** TWO tokens
+  // vary here in principle — the threshold and the energy code — so D118's
+  // one-token test fails and the key takes the clause whole. The `120` is not part
+  // of the key (`CONDITIONAL_DAMAGE_BONUS` captures it), so a reprint that moved the
+  // number would still land here.
+  //
+  // 🛑 **AND IT IS NOT A SIXTH TEMPLATE, WHICH IS THE ANCHOR QUESTION D390 MADE
+  // EXECUTABLE.** `SELF_ENERGY_ATTACHED_CLAUSE` shares this clause's HEAD
+  // ("this Pokémon has ") and its TAIL (" Energy attached") and is separated from it
+  // only by `any` versus a digit — the closest two anchors in the whole set. Writing
+  // this as a pattern would put a sixth row into `clauseTemplateAnchors.test.ts`'s
+  // cross product with a head/tail pair that overlaps an existing one at both seams,
+  // which is exactly the shape that file exists to refuse. A row is pass ONE and
+  // cannot collide with a pattern at all.
+  //
+  // ⚠️ THE BRACE CODE IS PART OF THE KEY, like the row above: `{G}` is the printed
+  // glyph and `conditionNote` spells it "Grass" (D118), so this row does NOT
+  // round-trip from the note. Driven both ways in `typedEnergyThreshold.test.ts` §5.
+  [
+    "this Pokémon has 2 or more {G} Energy attached",
+    { kind: "yourActiveEnergyAtLeast", energy: "Grass", count: 2 },
   ],
   // 🆕🆕 D374 — Team Rocket's Zapdos sv10-070 "Wicked Thunder" (60+, **+60**), 2
   // legal printings byte-identical in rules text, so one row and one fixture serve

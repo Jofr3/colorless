@@ -3249,8 +3249,22 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       //
       // FALSE with an empty Active Spot, like every body-reading sibling: an absent
       // Pokémon is not a Pokémon holding zero.
+      //
+      // 🆕🆕 D391 — `cond.energy ?? null`, AND THE `?? null` IS THE WHOLE WIDENING.
+      // Abomasnow `sv10-060` "Frozen Wood" prints the SAME threshold with a TYPE on
+      // it ("2 or more {G} Energy attached"), and `countAttachedEnergy` has taken
+      // that filter as its third parameter since D128 — so the typed reading is this
+      // arm with the argument it was already passing made optional. ABSENT MEANS
+      // UNNARROWED (D326): every shipped `{ kind, count }` object still reaches
+      // `null` and still answers the unfiltered card count.
+      //
+      // 🛑 AND THE FILTER IS NOT DECORATION ON THE ONE PRINTING. Frozen Wood costs
+      // {W}{W}{W}{C} while the clause counts {G}, so any board that can legally
+      // declare it holds four Energy cards with single-unit attachments — the
+      // UNFILTERED reading at 2 is TRUE on every one of them. Dropping the filter
+      // makes the printed bonus unconditional rather than merely wrong somewhere.
       const own = state.players[seat].active;
-      return own !== null && countAttachedEnergy(state, own, null) >= cond.count;
+      return own !== null && countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count;
     }
     case "activeEnergyCountsEqual": {
       // 🆕 D372 — "this Pokémon and your opponent's Active Pokémon have the same
@@ -4113,14 +4127,30 @@ export function conditionNote(cond: BoardCondition): string {
       return "you have at least 1 card in your hand";
     case "yourActiveEnergyAtLeast":
       // 🆕🆕 D383 — built from the parameter, and the pronoun is dropped exactly as
-      // every sibling drops it (D116). It does NOT round-trip to any printed clause
-      // and CANNOT: nothing in the legal attack column prints this fact as a
-      // condition at all — it is read off the arity of a printed COST — so a reject
-      // pill is the only audience this string has ever had. The plural is
-      // unconditional for `yourHandExactly`'s reason inverted: the anchor captures
-      // the digit, so a count of 1 is representable, but no printing spells one and a
-      // singular branch would be a shape nothing can reach (D205).
-      return `your Active Pokémon has ${cond.count} or more Energy attached`;
+      // every sibling drops it (D116). The plural is unconditional for
+      // `yourHandExactly`'s reason inverted: the anchor captures the digit, so a
+      // count of 1 is representable, but no printing spells one and a singular branch
+      // would be a shape nothing can reach (D205).
+      //
+      // 🆕🆕 D391 — THE FILTER DROPS INTO ONE INTERPOLATION SLOT, AND THAT IS WHY THE
+      // FIELD COST LESS THAN A SECOND MEMBER HERE. D383's arm said this note "does
+      // NOT round-trip to any printed clause and CANNOT"; Abomasnow `sv10-060`
+      // "Frozen Wood" prints the typed half, so the narrowed note DOES round-trip —
+      // modulo the pronoun (D116) and the brace code, which reads as the spelled NAME
+      // because a pill is read off the board by a person and "{G}" is a card-face
+      // glyph (D118, `yourEnergyInPlayAtLeast`'s wording one member over). ⚠️ THE
+      // UNNARROWED STRING IS BYTE-IDENTICAL TO THE ONE THIS ARM RETURNED BEFORE, so
+      // no shipped pill moved: "Energy" is what the slot holds when the field is
+      // absent. `Special` is the CARD CLASS and not a type, so it spells "Special
+      // Energy" rather than "Special Energy Energy" — the same three-way this file
+      // spells nowhere else because no other member is optional on its filter.
+      return `your Active Pokémon has ${cond.count} or more ${
+        cond.energy === undefined
+          ? "Energy"
+          : cond.energy === "special"
+            ? "Special Energy"
+            : `${cond.energy} Energy`
+      } attached`;
     case "activeEnergyCountsEqual":
       // 🆕 D372 — the printed pronoun is dropped exactly as its siblings drop it
       // (D116), so the note names the body a reader can see on the board rather than

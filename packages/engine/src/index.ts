@@ -12108,6 +12108,88 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.296.0 → **THE TYPED PER-BODY ENERGY THRESHOLD — AND THE FIRST SLICE IN
+    THIS RUN WHOSE SHAPE QUESTION HONESTLY ANSWERED *FIELD*.**
+
+      Abomasnow `sv10-060` "Frozen Wood" ({W}{W}{W}{C}, **120+**, index **1** of TWO
+      — confirmed field by field against tcgdex, which returns both printed attacks,
+      and identified by INTERSECTING two brace-free limitlesstcg `text:` searches
+      whose overlap is exactly ONE card)
+        *"If this Pokémon has 2 or more {G} Energy attached, this attack does 120
+         more damage."*
+        **1 legal printing**
+
+    🛑 **AN OPTIONAL `energy?` FIELD ON `yourActiveEnergyAtLeast` (D383), NOT A SECOND
+    MEMBER — AND THAT IS THE OPPOSITE OF WHAT D389 DECIDED ONE UNION-AXIS OVER.** Nine
+    consecutive slices answered *"second member"*, and a convention that always answers
+    the same way has stopped being a measurement. So it was re-measured here and the
+    measurement points the other way:
+
+      · **D389's strongest ground does not transfer.** Its seat parameter would have
+        been **REQUIRED** — a rename across 22 executable sites — and would have saved
+        no note body, because `conditionNote` prints a different SENTENCE per seat.
+        `energy?` is **OPTIONAL**: `yourActiveEnergyAtLeast` has **11 executable sites
+        across 4 files** (9 `kind:` literals + 2 exhaustive-switch arms) and the
+        widening edits **ZERO** of them.
+      · **The note does not branch into a second sentence.** The filter drops into ONE
+        interpolation slot of the string that was already there, and the unnarrowed
+        string comes back BYTE-IDENTICAL, so no shipped reject pill moved.
+      · **The mechanism was already a parameter.** `countAttachedEnergy(state, pokemon,
+        energy)` has taken `BasicEnergyType | "special" | null` since D128 and this arm
+        already passed `null`; the member is now isomorphic to the call it delegates
+        to, and `cond.energy ?? null` is the entire behavioural edit.
+      · **It is D326's shape exactly — "ABSENT MEANS UNNARROWED".** `energy` narrows
+        the counted SET, so the narrowed gate is TRUE on a strict SUBSET of the boards
+        the bare one is, and every shipped `{ kind, count }` object keeps its meaning.
+        ⚠️ D326's own settling argument (one card printing both narrowings, which a
+        union could not spell) does NOT transfer; this stands on the arithmetic.
+
+    ⚠️ **THE LINE THIS DRAWS, so the next slice inherits a rule and not a coin toss:
+    the block above already separates this member from `activeEnergyCountsEqual` by its
+    COMPARAND. A COMPARAND IS A SHAPE AND TAKES A MEMBER; A FILTER THE DELEGATE ALREADY
+    ACCEPTS IS A FIELD.**
+
+    🛑 **A LITERAL ROW AND EMPHATICALLY NOT A SIXTH TEMPLATE.** Two tokens vary in
+    principle (the threshold and the energy code), so D118's one-token test fails and
+    D119's corollary applies for the third time at this address — the third of three
+    adjacent rows asking *"N or more ⟨type⟩ Energy"* of the SIDE (Absol), the DISCARD
+    PILE (Chandelure) and now ONE BODY. ⚠️ **AND A PATTERN WOULD HAVE BEEN THE WORST
+    POSSIBLE SIXTH ONE**: `SELF_ENERGY_ATTACHED_CLAUSE` shares this clause's HEAD
+    (`this Pokémon has `) *and* its TAIL (` Energy attached`), separated only by `any`
+    versus a digit — the closest two anchors in the whole set, and precisely the
+    overlap `clauseTemplateAnchors.test.ts` was written to refuse. A row is pass ONE
+    and cannot collide with a pattern at all.
+
+    🛑 **THE FILTER IS NOT DECORATION, AND THE PRINTED CARD IS WHY.** Frozen Wood costs
+    **{W}{W}{W}{C}** and the clause counts **{G}** — the attacker is a WATER Pokémon
+    reading a GRASS clause — so with single-unit attachments EVERY board that can
+    legally declare the attack holds four Energy cards, and the UNFILTERED reading at
+    `count: 2` is TRUE on all of them. **Dropping the filter does not make the bonus
+    wrong somewhere; it makes it UNCONDITIONAL.**
+
+    ⚠️ **CARDS, NOT UNITS, DRIVEN RATHER THAN INHERITED.** The typed branch counts
+    cards whose PROVISION includes the type (`providesEnergyType`, D118), so a Special
+    providing `{G}{G}` counts **ONE**. `fix-blend` could not have shown that — two
+    DISTINCT types answer the same under a `{G}` question by card and by unit — so
+    `fix-grassdouble` is the first `EnergyProgram.provides` row to spell one type
+    twice. A fixture's discriminating power is relative to the parameter under test.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape the last five
+    slices took. The BONUS RESIDUE goes **15 / 18 → 14 / 17**. 🛑 **THE 2-PRINTING BAND
+    STAYS EMPTY AND THE BAND RUNG IS STILL DRIVEN FROM OUTSIDE IT** — the distribution
+    moves `{1: 13, 5: 1}` → `{1: 12, 5: 1}`.
+
+    engineVersion 0.295.0 → **0.296.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed, and asked at the one address a widening argument does NOT
+    automatically reach: **a FIELD on a persisted structure.** The test is *"would an
+    old record MEAN SOMETHING ELSE"* (D335), and it would not — `energy` is OPTIONAL,
+    so a v23 `{ kind: "yourActiveEnergyAtLeast", count: 3 }` is still well-typed and
+    still means the unfiltered count it always meant. D386's bump was a REQUIRED field,
+    which is the case this is not. Nothing else moved: no `InPlayPokemon`,
+    `PlayerSide` or `GameState` key, no new op and no new event, and a `conditionGate`
+    resolves inline and never parks.
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.295.0 → **THE OPPONENT-SEAT TYPE READ — AND A GUARD SHIPPED ONE COMMIT
     AHEAD OF THE THING IT GUARDS.**
 
@@ -15691,7 +15773,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.295.0";
+export const engineVersion = "0.296.0";
 
 export type {
   ApplyResult,
