@@ -420,9 +420,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // in the same commit." — re-emitted under its own archive heading, and the SEAM was re-read
   // afterwards rather than assumed (D372's range-replace ate a body while this ratchet stayed
   // green, because the heading count is not the body count).
-  const ARCHIVES = 59;
+  // 🆕🆕 D390 — 59 -> **60**, RAISED IN THE SAME COMMIT THAT DEMOTES D389's RESUME POINT
+  // (the guard's UP branch: archived deliberately, say so and raise the number). D389's body
+  // was captured BY INDEX before the rewrite — 190 lines, opening "THE NEXT CONCRETE ACTION
+  // (written 2026-08-22, after D389)" and closing "— and D389 also RAISED the ratchet 58 -> 59
+  // in the same commit." — re-emitted under its own archive heading, and the SEAM was re-read
+  // afterwards rather than assumed, with BOTH headings confirmed present in order (D372's
+  // range-replace ate a body while this ratchet stayed green, because a count of HEADINGS is
+  // not a count of ARCHIVES).
+  const ARCHIVES = 60;
 
-  it("the page still holds all 59 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 60 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

@@ -23903,3 +23903,132 @@ the `Metal` type, the {M}{C} cost, the `40+` base, the effect text byte for byte
 printed attack**, at **index 0 of TWO**. ⚠️ **NEITHER SEARCH ALONE IS AN IDENTIFICATION** — the
 intersection is. ⚠️ **AND THE WEB STILL CANNOT GIVE A LEGAL-PRINTING COUNT**; that is
 `legalAttackCorpus()`'s alone.
+
+---
+
+## D390 — THE OPPONENT-SEAT IN-PLAY TYPE READ: an ANCHOR question, and a guard shipped one commit ahead of the thing it guards (engine 0.294.0 → **0.295.0**, `MATCH_RECORD_VERSION` **stays 23**)
+
+**BUILT.** Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, `40+`, **+120**, index 0 of TWO),
+**1 legal printing**: *"If your opponent has any {W} Pokémon in play, this attack does 120 more
+damage."* ONE parameterised `BoardCondition` member (`opponentInPlayHasType { type }`) with TWO
+exhaustive-switch arms and ONE anchored TEMPLATE (`OPPONENT_IN_PLAY_TYPE_CLAUSE`) reusing
+`CLAUSE_POKEMON_TYPES` whole — the family's **FIFTH** parameterised clause and that map's **FIFTH**
+consumer. ONE fixture (`fix-shortcircuit`), TWO bodies (`fix-waterbody`, `fix-inplaydual`), ONE
+dedicated 60 (`IN_PLAY_TYPE_DECK`) and TWO suites (`clauseTemplateAnchors.test.ts`, 8 cases;
+`inPlayTypeBonus.test.ts`, 23). **ZERO new vocabulary and ZERO new card predicates.**
+
+### 🛑 THE TRANSFERABLE FINDING: WRITE THE GUARD IN THE COMMIT *BEFORE* THE THING IT GUARDS
+
+`boardConditionForClause` consults the literal table and then **four anchored template patterns in
+order**, and every one of the four carries a comment saying, in almost the same words, *"the patterns
+are mutually exclusive at their anchors, so order decides nothing; appending keeps that true by
+construction."*
+
+That is a claim about the **whole set**, it was written four times, and **not one line of the suite
+executed it**. It is exactly the shape `conventions.md`'s "A guard must be able to go RED" is about —
+and worse than the usual case, because of *how* a fifth pattern falsifies it:
+
+> **AN OVERLAPPING PATTERN IS INVISIBLE FROM OUTSIDE.** If pattern 5 can claim a clause pattern 2
+> owns, nothing observable changes: pattern 2 still runs first, still matches, still returns the
+> right member. The defect only surfaces when somebody reorders the chain, or when pattern 2 declines
+> at its vocabulary and pattern 5 quietly answers instead — with a **different member** for a clause
+> that had a correct one.
+
+So the rung was written and **committed at the previous head**, with this slice's shape carried as a
+row at `cond: null`. That ordering is not ceremony: **a guard written after the code can only ever be
+fitted to it.** The file also became the tripwire that fires the day the shape is built, and it fired
+on the very next commit.
+
+**HOW THE CROSS PRODUCT IS DRIVEN.** Every pattern is `^<head><token><tail>$`, so the falsifiable
+question is whether pattern *j*'s tail can be reached from pattern *i*'s head. The table carries each
+pattern's head, token, tail, printed amount and printing count — so each row is authored from the
+catalog (D183) and §1 re-derives the counts off `legalAttackCorpus()`. §2 builds all **N×(N−1) = 20**
+hybrids and requires each to be REFUSED **and** to be absent from the corpus, so a refusal can never
+be refusing something the catalog actually prints.
+
+**THE RED WAS MEASURED, NOT ARGUED.** Loosening `YOUR_BENCH_TYPE_CLAUSE` from
+`^you have any (.+) Pokémon on your Bench$` to `^you have any (.+) Pokémon` makes §2 fail on the exact
+pair that overlapped; `effects.ts` was then restored by hand (never `git checkout`) and `git diff`
+confirmed empty. D390's mutant **C6** is the same defect on the new pattern — its ` in play$` tail
+dropped — and the cross-product rung is what kills it.
+
+### ⚠️ AND THE FOUR COMMENTS OVERSTATED THEIR OWN SCOPE — THE CORRECTION IS THE HALF WORTH KEEPING
+
+*"Order decides nothing"* is **true of the templates against each other** and **false of the resolver
+as a whole**. The templates are not disjoint from the **literal table above them**:
+*"your opponent's Active Pokémon is a Stage 1 Pokémon"* matches `OPPONENT_ACTIVE_TYPE_CLAUSE` (the
+capture is "Stage 1", which reaches `CLAUSE_POKEMON_TYPES` and misses) **and** is a
+`CONDITIONAL_DAMAGE_CLAUSES` row (D387) — and the row wins **only because the literal pass runs
+first**. That is the resolver's one genuine ordering dependency, and it is now pinned in a rung of its
+own, separate from the cross product, so a successor cannot read a true sentence about the templates
+as a claim about the function.
+
+### 🛑 THE ZONE IS THE MEMBER, AND IT IS WRONG IN TWO OPPOSITE DIRECTIONS
+
+* **Narrowing to the opponent's Active Spot** is D279's refutation with a TYPE. The printed words are
+  "in play", so a {W} body on the opponent's **Bench** satisfies the clause — an Active-only reading
+  agrees on every board where the {W} happens to be Active and silently **under-pays** on exactly the
+  boards the card is for.
+* **Widening to both seats** (`inPlayTypesIntersect`'s spread run twice) is the worse defect, because
+  it lets the **attacker's own side** arm the clause.
+
+⚠️ **AND THE PRINTED ATTACKER IS WHAT MAKES THE SECOND ONE VISIBLE AT ALL.** Electivire is
+`Lightning` reading a `{W}` clause, so unlike D370's Metal-on-Metal printings — where an "in play"
+misreading satisfies itself off the attacker and shows up immediately — this one needs a Water body
+**deliberately fielded on the attacker's side** before anything moves. `inPlayTypeBonus.test.ts` §5
+builds that board.
+
+### 🆕 TWO TRANSFERABLE LESSONS ABOUT FIXTURES
+
+**⑴ A FIXTURE DATUM CAN MOVE SOMEBODY ELSE'S FINDING, AND THE TIDY DEFAULT IS THE DANGEROUS ONE.**
+`fix-shortcircuit` was first written with a NULL `evolveFrom` — the obvious choice for a synthetic
+body that is seated with `setActiveFromDeck` and never evolved. But `stage1Bonus.test.ts` §1 sweeps
+`FIXTURE_POOL` for Stage 1 bodies with a null chain and pins that set at **exactly ONE**
+(`fix-exstage1`), because the disagreement between two independent printed columns (`stage` and
+`evolveFrom`) is that file's whole finding. A second chainless Stage 1 invented here would have turned
+an inherited measurement into an artefact of this slice, while every rung stayed green except a
+length. The real card evolves from Electabuzz, so **D306's transcribe-don't-interpolate rule was the
+fix as well as the diagnosis**. ⚠️ **ASK WHAT ELSE SWEEPS THE POOL FOR THE FIELD YOU ARE LEAVING
+NULL**, not only for the one you are setting.
+
+**⑵ A REUSED FIXTURE CAN SILENTLY UNDER-TEST, AND THE MUTANT IS WHERE IT SHOWS.** D370 cast
+`fix-dualbody` as `["Water", "Metal"]` precisely to separate `types.includes(t)` from an equality on
+`types[0]` — and **it cannot do that for a WATER clause at all**, because under `{W}` its Water sits
+at index 0 and the wrong reading passes. Reusing it here would have left D390's **C4** mutant ALIVE
+while the suite read as thorough. `fix-inplaydual` is `["Fire", "Water"]` for that one reason, and the
+mutant row records the reason rather than only the body. **A fixture's discriminating power is
+relative to the parameter under test, never a property of the fixture.**
+
+### ⚠️ THE APOSTROPHE PARTITION MOVED, AND A TEMPLATE LANDED IN THE FREE HALF
+
+`clauseApostrophe.test.ts` went **45 → 46** with the **apostrophe-FREE** half taking the whole step
+(24 → 25) for a second consecutive slice, while the bearing half stood still at 21. 🆕 **And the
+clause that landed there is TEMPLATE-owned, which only D370's bench-type key had ever been.** The two
+apostrophe-bearing templates spell a POSSESSIVE and carry D136's `['’]` class in their own source;
+this clause spells *"your opponent **has**"* and has nothing to class, so the new pattern carries no
+class at all. **The character decides which half a clause lands in, not the partition.**
+
+### THE NEXT SHAPE QUESTION, AND WHY D389's ANSWER DOES NOT TRANSFER TO IT
+
+The named next candidate is *"If this Pokémon has 2 or more {G} Energy attached, this attack does 120
+more damage."* (1 legal printing) — a **typed per-body Energy threshold**, one field short of
+`yourActiveEnergyAtLeast { count }` (D383, untyped) and one zone short of
+`yourEnergyInPlayAtLeast { energy, count }` (seat-wide).
+
+**PRICED AT THIS HEAD**: `yourActiveEnergyAtLeast` is **25 occurrences across 10 files, of which 11
+are EXECUTABLE** (9 `kind:` literals + 2 exhaustive-switch arms) across 4 files. ⚠️ **But the
+arithmetic points the OTHER way from D389's, and that is the finding to carry forward**: an
+**optional** `energy?: BasicEnergyType | "special"` is a **WIDENING** and edits **zero** existing
+sites, where D362's seat field would have been a **RENAME**. 🆕 **And the mechanism already exists and
+already takes exactly this filter** — `countAttachedEnergy(state, pokemon, energy: BasicEnergyType |
+"special" | null)` (continuous.ts) is the call the shipped arm already makes with `null`, so the arm
+becomes `countAttachedEnergy(state, own, cond.energy ?? null) >= cond.count` and **zero new card
+predicates** are owed.
+
+🛑 **SO ASK THE RENDERER QUESTION AGAIN RATHER THAN INHERITING "a seat is a member".** D389's
+strongest ground was that `conditionNote` prints a different sentence per seat, so the field saved no
+body and paid a rename on top. Here the field is optional and the rename does not exist, so the same
+question can honestly come back *field*. **A convention that always answers the same way has stopped
+being a measurement.** The second thing to settle first: does the printed *"2 or more {G} Energy"*
+count **cards or units**? D383's arm is deliberately CARDS, and `providesEnergyType` is cards too —
+say so with a rung on a multi-unit Special rather than inheriting it.
