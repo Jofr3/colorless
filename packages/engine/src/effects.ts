@@ -2370,6 +2370,83 @@ export type BoardCondition =
       PUBLIC — both players watched the attack be declared and `ATTACK_DECLARED`
       announces it by name — so the union's public-state invariant holds. */
   | { kind: "yourActiveUsedAttackLastTurn"; attack: string }
+  /** 🆕🆕 D396 — "**1 of your Pokémon** used {AttackName} during your last turn"
+      (Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` "Angelite", {W}{L}{P}, NO
+      printed damage, index 1 of TWO) — **3 legal printings on ONE byte-identical
+      `attacks_json`**, and the biggest single row in the `during your last turn`
+      family.
+
+      🛑 **THE ARM ABOVE WITH ITS SUBJECT WIDENED, AND IT IS A SECOND MEMBER RATHER
+      THAN A `zone?: "inPlay"` FIELD ON IT.** D391's rule reads *a comparand is a
+      shape and takes a MEMBER; a filter the delegate already accepts is a FIELD*,
+      and this is the first SUBJECT widening it has been asked about. It answers
+      MEMBER, and the deciding half is the delegate clause rather than the
+      comparand one — measured at this head rather than predicted:
+
+        · **THERE IS NO DELEGATE TO TAKE THE PARAMETER, WHICH IS THE HALF THAT
+          SETTLES IT.** D391's field was cheap because `countAttachedEnergy` had
+          accepted exactly that filter since D128, so the member became isomorphic
+          to a call it was already making. `usedAttackOnYourLastTurn` (types.ts)
+          takes ONE `InPlayPokemon` and cannot take a zone: the walk lives in the
+          `conditionHolds` arm, so a `zone` field buys a BRANCH inside that arm
+          rather than an argument to a function.
+        · **A second member edits ZERO of `yourActiveUsedAttackLastTurn`'s 12
+          executable sites** (8 `kind:` literals + 2 exhaustive-switch arms + 2
+          narrowing assertions, across 5 files). An optional field edits BOTH
+          switch arms, and it edits the `conditionHolds` one WHOLLY — `active !==
+          null && used(...)` becomes a spread and a `.some`, which is D391's own
+          test for a member (*"an OPTIONAL field that edits ZERO sites is a field;
+          one that edits the arm's whole body is a member"*).
+        · ⚠️ **AND ONE MEASUREMENT POINTS THE OTHER WAY, RECORDED RATHER THAN
+          DROPPED.** The note IS one interpolation slot: *"your Active Pokémon
+          used X during your last turn"* and *"1 of your Pokémon used X during
+          your last turn"* share a skeleton, so D389's *"a second SENTENCE, not a
+          second SLOT"* arithmetic — which is what carried D392 — does NOT
+          transfer here. It loses to the two above and to the polarity argument
+          below, and it is the reason this answer was priced both ways instead of
+          read off the rule.
+
+      🛑 **AND AN OPTIONAL FIELD IS INVISIBLE TO THE COMPILER, WHICH ON *THIS*
+      FIELD FAILS IN BOTH DIRECTIONS AT ONCE.** A row spelling the printed clause
+      and forgetting `zone` silently gets the ACTIVE-only read. Under this
+      printing's `barredIf` that is TOO LOOSE — the cancel does not bite on the
+      board it is printed for, and an illegal declaration is accepted; under
+      Miltank `sv08.5-081`'s `onlyIf` the identical omission would be TOO STRICT.
+      One silent default cannot be right for both polarities of the field these
+      conditions feed.
+
+      🛑 **AND THIS UNION HAS ALREADY SETTLED A SUBJECT WIDENING TWICE, BOTH TIMES
+      AS A MEMBER AND BOTH TIMES REFUSING THE SCOPE PARAMETER BY NAME.**
+      `yourBenchHasNamed` → `yourNamedPokemonInPlay` (D279: *"the printed words are
+      different … and the one printing that reads the narrow word depends on it
+      being narrow"*) and `yourActiveHasEnergyAttached` → `yourEnergyInPlayAtLeast`
+      (*"folding them together behind a `scope` parameter would put the choice
+      between 'your Active' and 'your whole side' inside a value the four other
+      consumers of this vocabulary would then have to author"*). D394's two
+      printings depend on the narrow reading STAYING narrow for Falinks's reason
+      exactly — *"this Pokémon used Form Ranks"* must not pay off a benched body.
+
+      ⚠️ **"1 of your Pokémon" IS ACTIVE + BENCH, TOP CARDS IRRELEVANT.** The read
+      is `[side.active, ...side.bench]` — `yourNamedPokemonInPlay`'s spread — and
+      unlike that member it does NOT go through `topCardOf`: the stamp is written
+      on the in-play BODY (`InPlayPokemon.usedAttack`, D394), so evolving a stamped
+      body keeps the history the printed clause asks about, which is the right
+      answer (the Pokémon that used the attack is the one still standing there).
+      YOUR side only — "your Pokémon" — and an empty board is FALSE.
+
+      🛑 **THE WIDENING IS NOT COSMETIC AND THE BOARD THAT SEPARATES THE TWO
+      READINGS IS THE ONE THE CARD IS FOR.** Sylveon ex A uses "Angelite" and
+      retreats; Sylveon ex B is promoted and declares "Angelite" on the next of
+      your turns. The printed clause bars it — A is 1 of your Pokémon and it used
+      Angelite during your last turn — and the ACTIVE-only reading does not, because
+      B's own `usedAttack` is `null`. `stampAttackUse` (flow.ts) already writes the
+      stamp through a BENCH walk for its own reason (an attacker can move off the
+      Active Spot mid-attack), so the record this member reads is already there.
+
+      PUBLIC, for the arm above's reason verbatim — both players watched every one
+      of those attacks be declared and `ATTACK_DECLARED` announced it by name — so
+      the union's public-state invariant holds. */
+  | { kind: "yourPokemonUsedAttackLastTurn"; attack: string }
   /** D242 — "you have **4 or more Team Rocket's Pokémon** in play" (Team Rocket's
       Mewtwo ex `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver",
       six legal printings, the biggest reprint group in the ABILITY column that
@@ -4922,6 +4999,17 @@ export type EffectOp =
           Angelite during your last turn, this attack can't be used"* rider. A
           COUNT and a per-attack-name history stamp: Lickitung's refusal (see
           `bottomFromOpponentHand`) and D277's, on one card.
+          🆕🆕 **D396 — HALF OF THIS REFUSAL IS NOW BUILT AND THE OTHER HALF IS THE
+          COUNT ALONE.** The rider is a registry `attackGate` (`barredIf` over
+          `yourPokemonUsedAttackLastTurn`), enforced at the §8 declaration seam, so
+          the *"history stamp"* clause of this bullet is discharged. What still
+          refuses the BODY is the **COUNT** — this op parks `min: 1, max: 1`, and
+          *"Choose 2"* with a *"those Pokémon"* back-reference across a SENTENCE
+          BREAK needs both a `count` on the park and a two-sentence reading. ⚠️ **AND
+          NO SPLIT IS AUTHORED FOR THE RIDER**, deliberately: the clause is TRAILING
+          and `splitAttackGateClause` is `^`-anchored, and all nine readers were run
+          over the stripped body at D396 — every one refuses it, so a trailing
+          stripper would buy ZERO printings and the printing stays loud either way.
         • The SELF-removal family, which names **this Pokémon** rather than a
           chosen one and is therefore `returnSelf`'s population, not this op's —
           see the block below it.

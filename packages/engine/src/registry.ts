@@ -6987,6 +6987,78 @@ const MILTANK_MOOMOO_ROLLING: CardProgram = {
   },
 };
 
+/** 🆕🆕 **D396 — Sylveon ex `sv08-086` / `sv08.5-041` / `sv08.5-156`** (Stage 1
+    from Eevee, 270 HP, {P}, ×2 {M} weakness, retreat 2 — **3 legal printings on
+    ONE byte-identical `attacks_json`**, every field re-read off tcgdex
+    2026-08-22) — idx **1** "Angelite" ({W}{L}{P}, NO printed damage):
+
+    *"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and all
+    attached cards into your opponent's deck. If 1 of your Pokémon used Angelite
+    during your last turn, this attack can't be used."*
+
+    🛑 **THE CONSEQUENT IS NOT A THIRD SHAPE — IT IS `barredIf`, AND THE HANDOFF
+    THAT SAID OTHERWISE WAS RE-CHECKED RATHER THAN INHERITED.** D394's handoff
+    priced *"this attack can't be used"* as a THIRD consequent the union does not
+    spell. It is the PASSIVE VOICE of the one Terapagos ex's seven printings
+    already carry (*"…you can't use this attack during your first turn"*): both bar
+    the index while the condition HOLDS, and the polarity token is the whole of it.
+    Measured on the corpus: *"can't be used"* is **1 sentence / 3 printings** (this
+    one) and *"you can't use this attack"* is **1 sentence / 7 printings**
+    (Terapagos), so the two spellings are two rows of one shape and neither needs a
+    reader. **The row is materially cheaper than it was priced.**
+
+    🛑 **THE SECOND NON-ZERO INDEX, AND THAT IS WHY THESE THREE PRINTINGS ARE WORTH
+    MORE THAN THREE UNITS.** D395 gave `attackGate`'s `[attackIndex: number]` key
+    its first falsifying board; a KEY WITH ONE falsifying board is a key that could
+    still be right by accident. These three are the second, on a different card, a
+    different polarity and a different opposite index: the gate is at 1 and the
+    attack the clause NAMES is also at 1 — Angelite bars ITSELF — where Miltank's
+    gate at 1 names index 0. So an index-blind read fails DIFFERENTLY here (it bars
+    "Magical Charm", the attack the card is otherwise played for, and leaves
+    "Angelite" unconditionally legal) and the two cards together pin the key from
+    both sides.
+
+    🛑 **THE BODY IS REFUSED AND THE GATE SHIPS ALONE — AND *"no split"* IS A
+    MEASUREMENT, NOT A CONVENIENCE.** The clause is TRAILING, and
+    `splitAttackGateClause` is a LEADING-clause matcher anchored at `^` by
+    deliberate policy. Adding a trailing stripper would buy **ZERO**: all nine live
+    readers were run at this head over the body *"Choose 2 of your opponent's
+    Benched Pokémon. Shuffle those Pokémon and all attached cards into your
+    opponent's deck."* and **every one of them refuses it**, so the split summand
+    would gain nothing and `ATTACK_EFFECT_SKIPPED` would name the same printing
+    either way. ⚠️ **AND THE INHERITED REASON FOR THAT WAS STALE**: the handoff said
+    the body was Illumise `sv06-010`'s refusal verbatim (*"no `EffectOp` moves an
+    OPPONENT'S benched Pokémon … into the OPPONENT'S deck"*), and **D299 built that
+    op** — `returnBenched { whose: "opponent", dest: "deck" }`, which is exactly what
+    Illumise's body derives to today. What refuses THIS body is the **COUNT**
+    (*"Choose **2**"*, against an op that parks `min: 1, max: 1`) and the two-sentence
+    choose-then-shuffle shape with its *"those Pokémon"* back-reference — Lickitung
+    `sv05-124`/`-180`'s refusal, one op over. Same conclusion, different reason; the
+    conclusion was re-derived by running the readers rather than by quoting the
+    comment.
+
+    ⚠️ **ONE PROGRAM OBJECT FOR THREE IDS — D281's REPRINT IDIOM, WHICH IS TERAPAGOS'S
+    TREATMENT AND NOT ILLUMISE / SCREAM TAIL's.** Those two print ONE clause on TWO
+    cards and are deliberately kept as two consts, because a later divergence on
+    either body must stay expressible. These three are one CARD reprinted, with a
+    byte-identical `attacks_json`, so they share the object exactly as Terapagos ex's
+    seven do.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED, ASKED OF ALL THREE HALVES.** The
+    registry row persists nothing (`attackGate` is a catalog fact re-derived on every
+    read, and it carries no `EffectOp`, so it cannot ride a parked `pendingOp` into a
+    record); the new `BoardCondition` member is a widening no v25 record can contain,
+    because no v25 card authors it; and the stamp it reads
+    (`InPlayPokemon.usedAttack`) has been REQUIRED since D394's own bump. **Stays 25.** */
+const SYLVEON_EX_ANGELITE: CardProgram = {
+  attackGate: {
+    1: {
+      kind: "barredIf",
+      condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
+    },
+  },
+};
+
 /** Falkner — "Draw 2 cards. If you have a Stadium in play, draw 2 more cards."
     (Supporter) — a ONE-ARMED conditionGate: the base draw is unconditional and
     the bonus is a SECOND drawCards inside the gate. Two ops rather than one
@@ -12916,6 +12988,14 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv08-001": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
   "sv08-192": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
   "sv08.5-081": MILTANK_MOOMOO_ROLLING,
+  // 🆕🆕 D396 — Sylveon ex, all THREE Standard-legal printings on ONE program
+  // object (one byte-identical `attacks_json`), Terapagos ex's reprint treatment
+  // above rather than Illumise / Scream Tail's two-consts one. No `fix-*`
+  // demonstrator, for the D281 reason two blocks up: these are Pokémon bodies
+  // driven on a LOCAL `cardPool` (D275's idiom), so `FIXTURE_POOL` is untouched.
+  "sv08-086": SYLVEON_EX_ANGELITE,
+  "sv08.5-041": SYLVEON_EX_ANGELITE,
+  "sv08.5-156": SYLVEON_EX_ANGELITE,
   "sv06-145": CARMINE,
   "sv06-204": CARMINE,
   "sv06-217": CARMINE,

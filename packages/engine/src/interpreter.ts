@@ -3719,6 +3719,39 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && usedAttackOnYourLastTurn(state, active, cond.attack);
     }
+    case "yourPokemonUsedAttackLastTurn": {
+      // 🆕🆕 D396 — the arm directly above with its SUBJECT widened from "this
+      // Pokémon" to the printed *"1 of your Pokémon"*, and the widening is the whole
+      // arm: the predicate, the window and the name test are `usedAttackOnYourLastTurn`
+      // unchanged, called once per in-play body instead of once on the Active.
+      //
+      // 🛑 `[side.active, ...side.bench]` IS THIS FILE'S IN-PLAY SPREAD
+      // (`yourNamedPokemonInPlay`, `countOwnerPokemonInPlay`), and the `!== null`
+      // covers the empty Active Spot — `bench` is dense, so there are no holes in it.
+      //
+      // ⚠️ NO `topCardOf`, WHICH IS WHERE THIS PARTS FROM EVERY OTHER IN-PLAY WALK
+      // HERE. Those read a fact about the CARD on top of the stack; this reads a
+      // record written on the in-play BODY (`InPlayPokemon.usedAttack`, D394), so an
+      // evolution placed on a stamped body keeps the history the printed clause asks
+      // about. That is the right answer — the Pokémon that used Angelite is still the
+      // Pokémon standing there — and it is also the only reading available, since the
+      // stamp has no other home.
+      //
+      // ⚠️ SEAT-RELATIVE AND SAFE OFF-TURN BY PARITY, inherited from the helper
+      // rather than re-argued: `state.turn - 2` shares the current turn's parity and a
+      // body is only ever stamped on a turn its own controller held, so a gate
+      // evaluated for the NON-turn seat compares against a turn number no body of that
+      // seat can carry.
+      //
+      // ⚠️ THE BENCH TERM IS LOAD-BEARING AND `angeliteCancel.test.ts` §3 drives the
+      // board that proves it: Sylveon ex A uses "Angelite" and retreats, Sylveon ex B
+      // is promoted and declares "Angelite" — the printed clause bars it, and dropping
+      // the spread back to the Active alone lets an illegal declaration through.
+      const side = state.players[seat];
+      return [side.active, ...side.bench].some(
+        (p) => p !== null && usedAttackOnYourLastTurn(state, p, cond.attack),
+      );
+    }
     case "yourBenchAtLeast":
       // 🆕🆕 D366 — Victini "V-Force": the printed *"4 or fewer Benched Pokémon"*
       // under a cancel, so what is stored is the POSITIVE floor 5 and the test is
@@ -4421,6 +4454,24 @@ export function conditionNote(cond: BoardCondition): string {
       // its reason: one arm now renders two clauses, so an arm that dropped the token
       // would render the same pill for Falinks and for Weezing.
       return `your Active Pokémon used ${cond.attack} during your last turn`;
+    case "yourPokemonUsedAttackLastTurn":
+      // 🆕🆕 D396 — THE FAMILY'S FIRST NOTE THAT RESOLVES NO PRONOUN, because the
+      // printed subject does not carry one: *"1 of your Pokémon"* is already
+      // board-relative and already addressed to the player reading it, so this arm
+      // round-trips to the printed clause with only the leading "If" and the trailing
+      // comma dropped — `yourNamedPokemonInPlay`'s treatment, not D116's.
+      //
+      // ⚠️ THE SUBJECT IS THE WHOLE DIFFERENCE FROM THE ARM ABOVE, and it is why a
+      // `zone?` field would have had to branch INSIDE this arm rather than fill a
+      // second slot in it: the two notes share a skeleton but not a subject, and a
+      // note that said "your Active Pokémon" on a board where a BENCHED body is what
+      // bars the attack would name the wrong Pokémon in a §8 reject the player is
+      // reading to find out why.
+      //
+      // Built from the PARAMETER for D394's reason unchanged — one arm, one slot, so
+      // a second printing quoting a different attack name is legible without a second
+      // string.
+      return `1 of your Pokémon used ${cond.attack} during your last turn`;
     case "yourBenchAtLeast":
       // The POSITIVE fact, in the printed noun — a note is read off the board by a
       // person, so it says what the player must HAVE and never repeats the

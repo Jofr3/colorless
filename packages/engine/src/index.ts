@@ -12108,6 +12108,80 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.301.0 → **THE ANGELITE CANCEL — A SUBJECT WIDENING SETTLED AS A MEMBER,
+    AND `attackGate`'s INDEX KEY GIVEN ITS SECOND FALSIFYING BOARD.**
+
+      Sylveon ex `sv08-086` / `sv08.5-041` / `sv08.5-156` "Angelite"
+      ({W}{L}{P}, NO printed damage, index **1** of TWO)
+        *"Choose 2 of your opponent's Benched Pokémon. Shuffle those Pokémon and
+         all attached cards into your opponent's deck. If 1 of your Pokémon used
+         Angelite during your last turn, this attack can't be used."*
+        **3 legal printings on ONE byte-identical `attacks_json`**
+
+    🛑 **THE CONSEQUENT WAS PRICED AS A THIRD SHAPE AND IS NOT ONE — RE-CHECKED,
+    NOT INHERITED.** D394's handoff called *"this attack can't be used"* a third
+    consequent; it is the PASSIVE VOICE of D281's `barredIf`, built since 0.195.0
+    and carried by Terapagos ex's seven printings as *"…you can't use this attack
+    during your first turn"*. Measured on the committed corpus: *"can't be used"* is
+    1 sentence / 3 printings and *"you can't use this attack"* is 1 sentence / 7
+    printings — two spellings of one shape, and neither needs a reader.
+
+    🛑 **THE SHAPE QUESTION WAS "MEMBER OR FIELD", AND IT IS THE FIRST SUBJECT
+    WIDENING D391's RULE HAS BEEN ASKED ABOUT.** *"1 of your Pokémon"* is
+    `yourActiveUsedAttackLastTurn`'s clause with its subject widened to in-play, so
+    a `zone?: "inPlay"` FIELD on that member was the live alternative. **Settled
+    MEMBER (`yourPokemonUsedAttackLastTurn { attack }`), and by the DELEGATE half of
+    the rule rather than the comparand half**: D391's field was cheap because
+    `countAttachedEnergy` already took exactly that filter, while
+    `usedAttackOnYourLastTurn` takes ONE body and cannot take a zone — so the walk
+    lives in the arm and a field buys a BRANCH inside it, not an argument.
+    Site arithmetic agrees (a second member edits ZERO of the 12 executable sites; a
+    field edits both switch arms and rewrites the `conditionHolds` one whole), and
+    ⚠️ **one measurement pointed the other way and is recorded rather than dropped**:
+    the note IS one interpolation slot here, so D389's *"a second sentence, not a
+    second slot"* arithmetic — which is what carried D392 — does not transfer.
+
+    🛑 **AND THE COMPILER ARGUMENT DECIDES IT, BECAUSE ON THIS FIELD A SILENT
+    DEFAULT FAILS IN BOTH DIRECTIONS AT ONCE.** An optional `zone` forgotten on a
+    row silently gives the ACTIVE-only read: under Angelite's `barredIf` that is TOO
+    LOOSE (the cancel does not bite, and an illegal declaration is accepted), under
+    Miltank `sv08.5-081`'s `onlyIf` the identical omission would be TOO STRICT.
+    ⚠️ This union has settled a subject widening as a MEMBER twice before —
+    `yourBenchHasNamed` → `yourNamedPokemonInPlay` (D279) and
+    `yourActiveHasEnergyAttached` → `yourEnergyInPlayAtLeast` — and both refused the
+    scope parameter by name.
+
+    🛑 **THE SECOND NON-ZERO GATE INDEX, ON THE OPPOSITE GEOMETRY.** D395 gave the
+    `[attackIndex: number]` key its first falsifying board; one board can still be an
+    accident. Miltank's gate is at 1 and names index 0; Angelite's gate is at 1 and
+    names index **1** — it bars ITSELF. So an index-blind read fails DIFFERENTLY here
+    (it bars "Magical Charm" and leaves "Angelite" unconditionally legal) and the two
+    cards pin the key from both sides.
+
+    ⚠️ **NO SPLIT IS AUTHORED, AND THAT IS A MEASUREMENT.** The gate clause is
+    TRAILING; `splitAttackGateClause` is `^`-anchored by deliberate policy. All nine
+    live readers were run at this head over the stripped body (*"Choose 2 of your
+    opponent's Benched Pokémon. Shuffle those Pokémon and all attached cards into
+    your opponent's deck."*) and **every one refuses it**, so a trailing stripper
+    would buy ZERO printings. ⚠️ **The inherited REASON for that was stale**: the
+    handoff said the body was Illumise `sv06-010`'s refusal verbatim, and D299 built
+    that op — what refuses this body is the **COUNT** (*"Choose 2"* against a park of
+    `min: 1, max: 1`) plus the two-sentence back-reference, which is Lickitung
+    `sv05-124`/`-180`'s refusal one op over.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 25, ASKED OF ALL THREE HALVES.** The registry
+    row persists nothing and carries no `EffectOp`; the new union member is a
+    widening no v25 record can contain, because no v25 card authors it; and the stamp
+    it reads (`InPlayPokemon.usedAttack`) has been REQUIRED since D394's own bump.
+
+    Cost: **1 `BoardCondition` member + 1 `conditionHolds` arm + 1 `conditionNote`
+    arm + 1 registry program on 3 ids.** ZERO new state, ops, events, error codes,
+    prompt kinds, choice kinds, readers, regexes, clause-table rows, `CardFilter`
+    members, `redact.ts` bytes or `packages/schema` bytes.
+
+    engineVersion 0.300.0 → **0.301.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.300.0 → **THE ROLLOUT ATTACK-GATE — D394's FIELD AT THE
     DECLARATION SEAM, AND THE FIRST BOARD ON WHICH `attackGate`'s INDEX KEY CAN BE
     WRONG.**
@@ -16073,7 +16147,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.300.0";
+export const engineVersion = "0.301.0";
 
 export type {
   ApplyResult,
