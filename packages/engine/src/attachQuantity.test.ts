@@ -744,11 +744,16 @@ describe("D359 §6 — the ids this file rests on are real and locally seated", 
   });
 
   it("🛑 ZERO registry keys were added — this slice moves no census figure", () => {
+    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
+    // — a bare `attackGate` at index **1**, the first gate in that field at a
+    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
+    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
+    // ATTACK summand cannot move with it.
     // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(registryCardIds()).toHaveLength(709);
+    expect(registryCardIds()).toHaveLength(710);
     for (const id of Object.values(QUANTITY_IDS).flat()) {
       if (programFor(id) === undefined) continue;
       // Every id that DOES have a program had one before this slice: the eight

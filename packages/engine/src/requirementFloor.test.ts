@@ -579,11 +579,16 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 
   it("🛑 S2 — none of the five ids is a registry row, so the registry summand cannot move", () => {
     const ids = registryCardIds();
+    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
+    // — a bare `attackGate` at index **1**, the first gate in that field at a
+    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
+    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
+    // ATTACK summand cannot move with it.
     // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids).toHaveLength(709);
+    expect(ids).toHaveLength(710);
     for (const id of BOUGHT_IDS) {
       expect(ids, id).not.toContain(id);
       expect(programFor(id), id).toBeUndefined();

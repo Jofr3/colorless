@@ -539,9 +539,17 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // them resolving after the split — and the 2 that do not are these. So the
     // split half of the move is 11 → 13 and the term would then be CLOSED.
     const gated = legalAttackCorpus().filter(([, text]) => splitAttackGateClause(text) !== null);
-    expect(gated.length).toBe(5);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
-    const unresolved = gated.filter(
+    // 🆕🆕 D395 — 5/13 -> **6/14**, and the new row has NO BODY: Miltank
+    // `sv08.5-081`'s whole printed effect text is the gate clause, so
+    // `splitAttackGateClause` answers `{body: ""}`. It is filtered out BEFORE the
+    // resolved/unresolved question below, because "no reader takes the empty
+    // string" is not the same finding as "no reader takes this body" and folding
+    // them would make this term read as a regression the day it is neither.
+    expect(gated.length).toBe(6);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(14);
+    const withBody = gated.filter(([, text]) => splitAttackGateClause(text)?.body !== "");
+    expect(withBody.length).toBe(5);
+    const unresolved = withBody.filter(
       ([, text]) => !resolvedByAnyReader(splitAttackGateClause(text)?.body ?? text),
     );
     // 🆕 D307 — the set is now EMPTY and the split term is 13 of 13, i.e. **5 of
@@ -550,7 +558,7 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // than as a number.
     expect(unresolved.map(([, text]) => text)).toEqual([]);
     expect(unresolved.reduce((sum, [units]) => sum + units, 0)).toBe(0);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
+    expect(withBody.reduce((sum, [units]) => sum + units, 0)).toBe(13);
   });
 });
 

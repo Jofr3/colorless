@@ -353,11 +353,18 @@ function swing(state: GameState, seat: Seat, index: number) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D282 §1 — the leading-clause census, re-derived at HEAD", () => {
-  it("🛑 the corpus holds exactly 5 gate sentences / 13 printings, and NO other leading clause", () => {
+  it("🛑 the corpus holds exactly 6 gate sentences / 14 printings, and NO other leading clause", () => {
     const corpus = legalAttackCorpus();
     const gated = corpus.filter(([, text]) => splitAttackGateClause(text) !== null);
-    expect(gated.length).toBe(5);
-    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(13);
+    // 🆕🆕 D395 — 5/13 -> **6/14**: Miltank `sv08.5-081`'s *"You can use this attack
+    // only if this Pokémon used Rollout during your last turn."* — a FOURTH row in
+    // `ATTACK_GATE_CLAUSES`, and the first that is a whole printed effect text
+    // rather than a leading clause. ⚠️ **IT MOVES THIS NUMBER AND NOT THE
+    // `leadingIf` ONE BELOW**, which is exactly the separation the comment there
+    // predicted a fourth spelling would test: the sentence neither starts with
+    // `If ` nor contains a `. `, so it is in NEITHER of that filter's two halves.
+    expect(gated.length).toBe(6);
+    expect(gated.reduce((sum, [units]) => sum + units, 0)).toBe(14);
 
     // ⚠️ THE NEGATIVE HALF, AND IT IS THE ONE THAT DECIDED THE DESIGN. Every OTHER
     // multi-sentence corpus row that opens with "If " is a sentence whose `If`
@@ -461,6 +468,12 @@ describe("D282 §2 — `yourBenchCount` on both folds", () => {
 // 3. The split anchor as a PURE function — three clauses, and nothing else.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** 🆕🆕 D395 — Miltank `sv08.5-081` idx 1 "Moomoo Rolling", the FOURTH
+    `ATTACK_GATE_CLAUSES` row and the only one that is a whole printed effect text.
+    Transcribed from the printing, not paraphrased. */
+const ROLLOUT_GATE_TEXT =
+  "You can use this attack only if this Pokémon used Rollout during your last turn.";
+
 describe("D282 §3 — splitAttackGateClause", () => {
   it("splits all three printed gate spellings and hands back BOTH halves", () => {
     expect(splitAttackGateClause(TERAPAGOS_TEXT)).toEqual({
@@ -484,16 +497,39 @@ describe("D282 §3 — splitAttackGateClause", () => {
     expect(splitAttackGateClause("")).toBeNull();
   });
 
-  it("⚠️ a clause with NO BODY behind it is not a split — the empty-remainder guard", () => {
-    // No legal printing is clause-only today (all 13 carry a body), so this is a
-    // guard against a future one and it fails SAFE: the whole printed string goes
-    // to the readers unchanged and an unread clause stays loud.
+  it("🆕🆕 a clause with NO BODY behind it IS a split, and `body` is the empty string", () => {
+    // 🛑 **D395 REVERSES D282's EMPTY-REMAINDER REFUSAL, AND THE REFUSAL NAMED ITS
+    // OWN TRIGGER.** This case used to assert `null`, and its comment said why:
+    // *"No legal printing is clause-only today (all 13 carry a body), so this is a
+    // guard against a future one."* Miltank `sv08.5-081` idx 1 IS that printing, so
+    // the premise has expired. ⚠️ **AND THE OLD ANSWER WAS THE UNSAFE ONE ONCE IT
+    // WENT LIVE**, which is the opposite of what the old comment claimed: `null`
+    // hands the WHOLE printed string to the readers, every one of them refuses it,
+    // and `ATTACK_EFFECT_SKIPPED` fires naming a sentence the §8 seam enforced in
+    // full. `""` is what `attack.ts` already spells as "no text" at every
+    // downstream site.
+    expect(splitAttackGateClause(ROLLOUT_GATE_TEXT)).toEqual({
+      clause: ROLLOUT_GATE_TEXT,
+      body: "",
+    });
+    // The two FIRST-TURN spellings answer the same way when nothing follows them —
+    // no legal printing spells either that way today, and the branch is one rule
+    // rather than one card.
     expect(
       splitAttackGateClause("If you go first, you can use this attack during your first turn."),
-    ).toBeNull();
+    ).toEqual({
+      clause: "If you go first, you can use this attack during your first turn.",
+      body: "",
+    });
+    // ⚠️ TRAILING WHITESPACE IS THE SAME CASE AND NOT A THIRD ONE — the leading
+    // `trim()` is what makes it so, and this is the assertion that says the branch
+    // is reached through the trim rather than around it.
     expect(
       splitAttackGateClause("If you go first, you can use this attack during your first turn.  "),
-    ).toBeNull();
+    ).toEqual({
+      clause: "If you go first, you can use this attack during your first turn.",
+      body: "",
+    });
   });
 
   it("🛑 DOES NOT LOOSEN ANY READER — the seven still refuse the WHOLE gated string", () => {
@@ -731,6 +767,10 @@ describe("D282 §7 — the persisted shape is untouched", () => {
     // whole registry is swept and the string `yourBenchCount` appears in no
     // authored program at all, while `attackGate` (D281's field) appears in 13 —
     // so the sweep is answering rather than empty.
+    // 🆕🆕 **D395 — THE 13 IS A FACT ABOUT `POOL`, NOT ABOUT THE REGISTRY**, and it
+    // stays 13 for that reason: the fourteenth gate (Miltank `sv08.5-081`) is driven
+    // from a LOCAL pool in `rolloutGate.test.ts` and never enters `FIXTURE_POOL`.
+    // `splitOrder.test.ts` §1 holds the registry-wide count, which IS 14.
     let programsWalked = 0;
     let gatesFound = 0;
     let countSourcesFound = 0;

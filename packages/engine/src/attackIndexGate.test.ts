@@ -47,10 +47,24 @@ import {
 //   ──
 //  13  and the pool-wide query returns 15 — the other 2 are Bombirdier ex
 //      `sv04-156`/`-234`, both `legal_standard = 0`. The phrase family is
-//      EXHAUSTED in Standard: there is no fourth shape.
+//      EXHAUSTED in Standard: there is no fourth shape OF THIS PHRASE FAMILY.
+//      🆕🆕 **D395 — AND "THIS PHRASE FAMILY" IS THE LOAD-BEARING QUALIFIER**, which
+//      the sentence used to leave implicit. `CardProgram.attackGate` now carries a
+//      FOURTEENTH printing from a DIFFERENT family (Miltank `sv08.5-081`, whose
+//      condition is a per-body used-attack window and not a §4 turn-order fact).
+//      The 13 / 7+3+3 above is unmoved and correct; what was never true is that the
+//      FIELD's population and this FAMILY's population are the same number.
 //
 // ⚠️ **EVERY ONE OF THE 13 IS AT INDEX 0**, and that is asserted from the fixture
-// bytes below rather than believed — four of the five bodies carry a SECOND attack
+// bytes below rather than believed.
+// 🆕🆕 **D395 — AND THAT IS NOW A CLAIM ABOUT THIS FAMILY AND NOT ABOUT THE FIELD.**
+// `CardProgram.attackGate` carries a FOURTEENTH printing, Miltank `sv08.5-081` idx
+// **1** — a second clause family (`onlyIf` over D394's per-body used-attack window)
+// whose gate is at a NON-ZERO index and whose own idx 0 is the attack the clause
+// names. It is driven in `rolloutGate.test.ts`, which is where the per-INDEX key
+// finally gets a board that can falsify it: every assertion in THIS file is written
+// about index 0, so an index-blind read is green on all of them.
+// The original wording, kept — four of the five bodies carry a SECOND attack
 // that must not inherit the clause, and a per-INDEX field authored off an assumed
 // reprint layout is the one way this shape fails silently.
 //
@@ -348,7 +362,7 @@ function wirePlayable(state: GameState, seat: Seat, index: number): boolean | un
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D281 — the census, and the per-INDEX claim checked against the printings", () => {
-  it("all 13 ids carry an `attackGate`, and every gate is at index 0", () => {
+  it("all 13 FIRST-TURN ids carry an `attackGate`, and every one of THOSE is at index 0", () => {
     for (const id of ALL_IDS) {
       const gate = programFor(id)?.attackGate;
       expect(gate, id).toBeDefined();
@@ -764,7 +778,11 @@ describe("D281 — MATCH_RECORD_VERSION stays 14, and the reachability claim is 
     // THE ATTRIBUTION CONTROLS: the sweep really walked programs and really found
     // gates, so "no ops" is an answer rather than an empty population.
     expect(programsWalked).toBeGreaterThan(300);
-    expect(gatesFound).toBe(13);
+    // 🆕🆕 D395 — 13 -> **14**: Miltank `sv08.5-081`'s `onlyIf` over D394's
+    // per-body window. The reachability claim is UNCHANGED and re-measured rather
+    // than assumed — that condition is a two-field record with no `then` and no op
+    // anywhere inside it, so this sweep still answers 0.
+    expect(gatesFound).toBe(14);
     expect(opsInGates).toBe(0);
   });
 

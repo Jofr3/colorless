@@ -152,28 +152,51 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(licence.every(([, s]) => s.includes(". "))).toBe(true);
     expect(licence.some(([, s]) => s.startsWith("If "))).toBe(false);
     // …and 13 is the WHOLE gate family, which is 10 + 3 and not 13 + 3.
+    // 🆕🆕 D395 — the WHOLE gate family is now 14, and the 13 above is the
+    // FIRST-TURN family alone: Miltank `sv08.5-081`'s clause is a second family
+    // sharing only the `onlyIf` polarity, and it is in NEITHER of this section's
+    // two populations (it is a SINGLE sentence, so not in the 271/613, and it opens
+    // `You can use…`, so not in the 16). **THE PARTITION 10 + 3 IS UNMOVED AND THE
+    // TOTAL IS NOT** — which is the arithmetic that says the new row joined from
+    // outside both filters rather than from inside one of them.
     const gateAll = corpus().filter(([, s]) => splitAttackGateClause(s) !== null);
-    expect(units(gateAll)).toBe(13);
-    expect(units(gateAll) - units(licence)).toBe(10);
+    expect(units(gateAll)).toBe(14);
+    const firstTurn = gateAll.filter(([, s]) => splitAttackGateClause(s)?.body !== "");
+    expect(units(firstTurn)).toBe(13);
+    expect(units(firstTurn) - units(licence)).toBe(10);
   });
 
-  it("S2 — 13 of 708 registry ids carry an `attackGate`, in three kinds", () => {
+  it("S2 — 14 of 710 registry ids carry an `attackGate`, in three kinds", () => {
     // The registry side of the same 13, walked independently of the text side:
     // a count that agrees across two surfaces is a count, not a transcription.
     const ids = registryCardIds();
+    // 🆕🆕 D395 — 709 -> **710**: ONE registry key, Miltank `sv08.5-081`
+    // — a bare `attackGate` at index **1**, the first gate in that field at a
+    // NON-ZERO index. A real catalog id and NOT a `fix-*` key (its suite drives a
+    // LOCAL `cardPool`, D275's idiom), and it authors no `attack` program, so the
+    // ATTACK summand cannot move with it.
     // 🆕🆕 D391 — 708 -> **709**: ONE `EnergyProgram` key, `fix-grassdouble`, the
     // FIXTURE Special providing `{G}{G}` — the first `provides` row to spell one type
     // TWICE, and the only board on which a CARD count and a UNIT count disagree under a
     // typed filter. A `fix-*` key, so no catalog printing moved with it.
-    expect(ids.length).toBe(709);
+    expect(ids.length).toBe(710);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
-    expect(gated.length).toBe(13);
+    expect(gated.length).toBe(14);
     const kinds = gated.flatMap((id) =>
       Object.values(programFor(id)?.attackGate ?? {}).map((g) => g.kind),
     );
     expect(kinds.filter((k) => k === "barredIf").length).toBe(7);
-    expect(kinds.filter((k) => k === "onlyIf").length).toBe(3);
+    // 🆕🆕 D395 — 3 -> **4**: Miltank `sv08.5-081` is the FOURTH `onlyIf` and the
+    // first whose condition is not the §4 `allOf([youGoSecond, yourFirstTurn])`.
+    expect(kinds.filter((k) => k === "onlyIf").length).toBe(4);
     expect(kinds.filter((k) => k === "firstTurnExempt").length).toBe(3);
+    // 🛑 AND THE INDEX, WHICH IS THE HALF THIS SECTION COULD NOT ASSERT BEFORE.
+    // Thirteen gates sat at index 0 and one sits at index 1, so the KEY of this map
+    // is finally load-bearing on the catalog side too — the same claim
+    // `rolloutGate.test.ts` drives on a board.
+    const indices = gated.flatMap((id) => Object.keys(programFor(id)?.attackGate ?? {}));
+    expect(indices.filter((k) => k === "0").length).toBe(13);
+    expect(indices.filter((k) => k === "1").length).toBe(1);
   });
 });
 
@@ -185,7 +208,10 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     const both = all.filter(
       ([, s]) => splitAttackGateClause(s) !== null && splitAttackRequirementClause(s) !== null,
     );
-    expect([gate.length, units(gate)]).toEqual([5, 13]);
+    // 🆕🆕 D395 — [5, 13] -> **[6, 14]**, and the disjointness below is UNMOVED:
+    // the new row is a clause-only printing, and `splitAttackRequirementClause`'s
+    // own list does not contain it.
+    expect([gate.length, units(gate)]).toEqual([6, 14]);
     expect([req.length, units(req)]).toEqual([1, 2]);
     // 🛑 THE TRIPWIRE. The day a printing carries both, this reddens by name and
     // the composer question is live again — with a population above zero.
@@ -206,7 +232,9 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     // split must be seen to MOVE the string on its own population.
     expect(siteOrder(SAWK)).toBe(SAWK_TAIL);
     expect(siteOrder(`${GATE_BAN} ${SAWK_TAIL}`)).toBe(SAWK_TAIL);
-    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(6);
+    // 🆕🆕 D395 — 6 -> **7**: the clause-only printing is MOVED by the site (to
+    // the empty string), which is the strongest form of "the reader really ran".
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
   });
 });
 
