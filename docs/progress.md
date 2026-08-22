@@ -425,7 +425,10 @@
 > 26/26 (the `attackEpilogue`-uid cluster whose stage this slice widened), **D316** 15/15, **D317**
 > 16 killed / 1 declared survivor, **D386** 9/9, **D312** 9 killed / 1 declared survivor, **D393**
 > 8/8, **D275** 8/8, **D271** 8/8, **D392** 7/7, **D391** 6/6 and **D306** 3/3 — each run ONE AT A
-> TIME because repeated `--decision` flags do not accumulate.
+> TIME because repeated `--decision` flags do not accumulate. ✅ **AND TWO MORE AFTER THE DOCS COMMIT
+> REWROTE THIS PAGE** — the EIGHT anchors on `docs/progress.md` are the one set that cannot be probed
+> before it: **D318** 10 killed / 1 declared survivor and **D274** 3/3, both clean, for **FOURTEEN**
+> in total.
 >
 > ### ▶ THE FIVE THINGS TO CARRY FORWARD ABOVE EVERYTHING ELSE
 >
@@ -611,7 +614,8 @@
 >     1,347 rows says zero, and twelve decisions were probed clean including **D323**, whose 26 rows
 >     are the `attackEpilogue`-uid cluster this slice widened — but `precheck.ts` runs BEFORE the docs
 >     commit rewrites `docs/progress.md`, and **the 8 mutants anchored on that page cannot be
->     pre-checked before it is rewritten**, so they are probed AFTER (below).
+>     pre-checked before it is rewritten** — they are D318's, and they were probed AFTER the rewrite
+>     (10 killed / 1 declared survivor, clean), together with D274's 3/3.
 >   · **`stale`** — this slice makes TRUE a sentence earlier slices' `what` strings may have declared
 >     false. D154's block says `LockedAttack` is *"the first durated record in the family that is not
 >     a bare number"* and that "which attack" is stored as an INDEX; D271's says `lastKoTurn` is *"the
