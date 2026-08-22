@@ -180,7 +180,7 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // the slice itself: the arm compares the pre-evolution card's NAME to the clause
     // key, so a null chain would have made the demonstrator unbuildable. The
     // chainless rung below stands still at ONE for a fourth consecutive slice.
-    expect(stage1).toHaveLength(72); // 🆕🆕 D394 — +1: `fix-crazyblast` (Weezing `sv09-092`) is a Stage 1 evolving from Koffing. ⚠️ A NUMBER THAT IS A FACT ABOUT THE WHOLE POOL IS MOVED BY SLICES THAT ARE NOT ABOUT IT
+    expect(stage1).toHaveLength(73); // 🆕🆕 D397 +1: `fix-bonevengeance` (Marowak `sv07-073`) is a Stage 1 evolving from Cubone, and the CHAINLESS rung below stands still because `fix-cubone` is in the pool beside it // 🆕🆕 D394 — +1: `fix-crazyblast` (Weezing `sv09-092`) is a Stage 1 evolving from Koffing. ⚠️ A NUMBER THAT IS A FACT ABOUT THE WHOLE POOL IS MOVED BY SLICES THAT ARE NOT ABOUT IT
     const chainless = stage1.filter((c) => (c.evolveFrom ?? null) === null);
     expect(chainless.map((c) => c.id)).toEqual(["fix-exstage1"]);
     // …and no Stage 1 is also a Stage 2, which is the only part of the ladder that IS
@@ -528,7 +528,7 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([9, 12]);
+    expect([refused.length, units(refused)]).toEqual([8, 11]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -547,7 +547,7 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // on SHAPE.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(7); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(6); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
@@ -555,7 +555,7 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same band.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(8); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

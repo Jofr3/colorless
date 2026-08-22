@@ -505,7 +505,15 @@ describe("the attacker-side debuff — derived, not authored", () => {
     // AT ALL, so its only printed attack — this family's 30 — was absent rather
     // than present-and-unread. The pool sweep D147 mandated is what found it; no
     // remainder list mentioned that the card was already fielded.
+    // 🆕🆕 D397 — FIVE, and the fifth arrived as a SIDE EFFECT of a slice about
+    // something else entirely, which is this rung doing exactly the job D147 gave it.
+    // `fix-bonevengeance` (Marowak `sv07-073`) was transcribed WHOLE for the
+    // benched-Cubone clause at index 1, and its index-0 "Growl" turns out to print this
+    // family's sentence at 40 — so the pool gained a producer nobody was pricing.
+    // **A NUMBER THAT IS A FACT ABOUT THE WHOLE POOL IS MOVED BY SLICES THAT ARE NOT
+    // ABOUT IT**, and a sweep is the only instrument that can say so.
     expect([...producers.entries()].sort()).toEqual([
+      ["fix-bonevengeance", [40]],
       ["sv01-093", [30]],
       ["sv02-062", [20]],
       ["sv06.5-008", [100]],

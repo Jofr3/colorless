@@ -251,20 +251,20 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(9);
-    expect(units(refused)).toBe(12);
+    expect(refused.length).toBe(8);
+    expect(units(refused)).toBe(11);
     // 🛑 A 1:2 STEP, which is the shape seven earlier slices in this family took —
     // D384's was the family's only 1:1. Written as offsets off the LIVE head so a
     // successor inherits the history without freezing it: D384's 20/24, D378's 21/25,
     // D377's 22/26, D376's 24/28.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 11, units(refused) + 12]).toEqual([20, 24]);
+    expect([refused.length + 12, units(refused) + 13]).toEqual([20, 24]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 12, units(refused) + 13]).toEqual([21, 25]);
+    expect([refused.length + 13, units(refused) + 14]).toEqual([21, 25]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 13, units(refused) + 14]).toEqual([22, 26]);
+    expect([refused.length + 14, units(refused) + 15]).toEqual([22, 26]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 15, units(refused) + 16]).toEqual([24, 28]);
+    expect([refused.length + 16, units(refused) + 17]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -294,7 +294,7 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // 🆕🆕 D393 — `{1: 11, 5: 1}` -> `{1: 9, 5: 1}`: the EVOLVE PAIR took TWO
     // singletons out at once, the first two-step this line has taken since D377.
     expect([...distribution].sort((a, b) => a[0] - b[0])).toEqual([
-      [1, 7],
+      [1, 6],
       [5, 1],
     ]);
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
@@ -308,7 +308,7 @@ describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing b
     // band, with the 2-printing band already empty and staying empty.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(8); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(7); // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(Math.max(...byClause.values())).toBe(5);
     // …and the clause this slice bought is not in the map at all, which is a different
     // claim from "no clause has 2 printings" and fails on its own if the row is dropped.
