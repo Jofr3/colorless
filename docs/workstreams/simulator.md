@@ -24157,3 +24157,89 @@ took and why. Four live clause rows read the equality member (`Falinks`, `Durant
 `Mightyena`, plus the `allOf` pair), so widening the member ITSELF is a rename with live consumers,
 which is the D389 arithmetic rather than the D391 one. The refutation board is cheap: §4's naming rule
 means "Dark Nidoking" and "Nidoking ex" satisfy the printed clause and fail the shipped one.
+
+---
+
+## D392 — THE SUBSTRING NAME READ, AND THE FIRST TEST OF D391's RULE
+
+**Team Rocket's Nidoqueen `sv10-116` "Love Impact"** ({D}, `60+`, index **0** of TWO), *"If a Pokémon
+that has \"Nidoking\" in its name is on your Bench, this attack does 120 more damage."*, **1 legal
+printing**. Located with ONE brace-free limitlesstcg `text:` search on the printed tail *"in its name
+is on your Bench"* — 30 hits, exactly ONE of them Standard — and confirmed field by field against
+`https://api.tcgdex.net/v2/en/cards/sv10-116`, which returns the 170 HP, the `Stage2`, the
+`Team Rocket's Nidorina` chain, the Darkness type, the ×2 Fighting Weakness, retreat 3 and BOTH
+printed attacks ("Mega Kick" {D}{D} 130 at index 1, the control).
+
+### THE RULE D391 LEFT BEHIND WAS TESTED, AND IT HELD — FOR THE REASON IT NAMES
+
+*A comparand is a shape and takes a MEMBER; a filter the delegate already accepts is a FIELD.* Here
+what changes is the **comparison OPERATOR** (`===` → `.includes`), which is neither, so the rule
+predicts a member. **It was priced BOTH ways anyway** — D391's own instruction — and every measurement
+points the same way:
+
+| | second MEMBER | optional `match?: "substring"` FIELD |
+|---|---|---|
+| sites of `yourBenchHasNamed` EDITED | **0** of 45 | **3** of 45 (the member line + both switch arms) |
+| live consumers behind those edits | — | 8 `kind:` literals, 34 test assertions |
+| `conditionNote` | a NEW arm, one sentence | a BRANCH inside one arm — a second **SENTENCE**, not a second **SLOT** |
+| delegate already takes the parameter? | n/a | **no** — the comparison is INLINE, and `cards.ts` has no name-matching predicate |
+| compiler safety | full: a mistyped `kind` is a type error | **none**: an optional field is invisible at every site that ignores it |
+
+⚠️ **SO THE RULE IS ONE-FOR-ONE, NOT PROVEN.** What it has not met is a case where it and the
+measurements DISAGREE — and D391's instruction still governs when it does: follow the measurements
+and say so.
+
+🛑 **THE PAYLOAD FIELD IS `fragment`, NOT `name`, AND THAT IS A COMPILER PROPERTY RATHER THAN A
+NAMING TASTE.** With matching payloads the two members would differ by their `kind` token alone, so a
+mistyped `kind` on any of the eight shipped `yourBenchHasNamed` literals would still typecheck and
+would silently swap an exact read for a substring one. Differently-named fields make that swap a type
+error in **both** directions.
+
+### THE POSSESSIVE IS LOAD-BEARING, AND THE TOLL WAS PAID FOR IT
+
+§4's naming rule makes the Standard satisfier **Team Rocket's Nidoking ex** — a name that CONTAINS
+"Nidoking" and equals it nowhere. So the shipped equality member answers **FALSE on the board the card
+was printed for**, and **so does a `startsWith` reading**, because the owner possessive puts the
+fragment at offset 14. A tidy `Nidoking ex` fixture would have refuted the equality read and left the
+prefix read alive; mutant **C7** installs exactly that rename on the FIXTURE — the engine untouched,
+every substring rung green, and **C2 unkillable**. **THE PRICE OF A TIDY FIXTURE IS A MUTANT THAT
+CANNOT DIE.**
+
+That is why this slice pays the possessive fixture-name toll after **seventeen** slices of dodging it:
+`switchSeam.test.ts`, `inPlayTarget.test.ts` and `ownerTargetOps.test.ts` enumerate every
+`/^[A-Z][A-Za-z' ]*'s /` name in `FIXTURE_POOL`, and `ownerPrefix.test.ts` additionally matches both
+new bodies through `ownerPokemon` — while the unprefixed `fix-nidoking` correctly lands in neither.
+Four one-line list edits, all four designed to expire.
+
+### THE POPULATION THE PRINTED PHRASE PICKS OUT IS NOT THE ONE THE ROW IS FOR
+
+**3 legal sentences say "in its name", 2 of those quote a SINGLE name, and 1 of those is a board fact
+under the bonus skeleton.** The other two are per-card SCALING reads — *"…20 damage for each Supporter
+card that has \"Team Rocket\" in its name in your discard pile"* and *"…40 damage for each Pokémon in
+play that has \"Koffing\" or \"Weezing\" in its name…"*, the second quoting **two** names in one clause,
+which no single-fragment predicate can hold. **A LITERAL ROW AND EMPHATICALLY NOT A SIXTH TEMPLATE**:
+the captured token is a card NAME, open-ended, with nothing to fail against, so a pattern would
+resolve an unparseable fragment into a predicate that answers FALSE forever and silently. The printed
+quotation marks make a template look SAFER than it is, which is why the rule is restated at the row.
+
+⚠️ **THE QUOTATION MARKS ARE ASCII U+0022, CHECKED AGAINST THE COMMITTED CORPUS BYTE BY BYTE** — not
+the curly pair — and `literalClauseRow`'s tolerance is the U+2019 **apostrophe** fold, which reaches
+neither character. `clauseApostrophe.test.ts` moves **47 → 48** with the apostrophe-FREE half taking
+the whole step for a FOURTH consecutive slice: **a key that LOOKS punctuated still has nothing to
+class. THE CHARACTER DECIDES, NOT THE APPEARANCE.**
+
+### THE CENSUS CASCADE TOOK SIX FULL VITEST RUNS
+
+Rungs hide behind earlier assertions inside one `it`, so each run surfaced only the first failure per
+case. Bonus residue **14 / 17 → 13 / 16**, distribution `{1: 12, 5: 1}` → `{1: 11, 5: 1}`; nine-reader
+**370 / 1,262 → 371 / 1,263** and its residue **270 / 470 → 269 / 469**; ten-reader
+**373 / 1,270 → 374 / 1,271**; `BUILT.attack` **1,299 → 1,300**; whole-census `built`
+**1,700 → 1,701** and its residue **683 → 682**; unbuilt attack column **433 → 432**; unbuilt
+remainder **462 → 461**; `BUILT.attack - 922` **377 → 378** and `- 922 - 252` **125 → 126**;
+`head - rawDelta - splitDelta` **1,293 → 1,294**. Every earlier head is re-derived as an OFFSET from
+the new one rather than frozen, so each of those chains gained one term **at the FRONT**.
+
+⚠️ **AND TWO MORE CENSUSES NOBODY EXPECTS A *NAME* TO MOVE**: the `FIXTURE_POOL` floor
+**486 → 489**, and `stage1Bonus.test.ts`'s non-Stage-1 evolution sweep **25 → 26**, because
+`fix-loveimpact` is a **Stage 2** transcribed whole (D306) with its printed `evolveFrom` chain — the
+same way D388's demonstrator moved it.
