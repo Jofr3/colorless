@@ -24490,7 +24490,7 @@ skeleton. The count of what the state actually answers is **six**, measured off 
 | printed sentence | printings | why it is not bought here |
 |---|---|---|
 | the pair | **2** | bought |
-| *"You can use this attack only if this Pokémon used **Rollout** during your last turn."* | **1** | SAME subject, SAME window, SAME field. Refused by its **SKELETON** alone — it is an ATTACK GATE (D281/D282), not a damage bonus. `yourActiveUsedAttackLastTurn { attack: "Rollout" }` serves it **UNCHANGED and with ZERO new state** |
+| *"You can use this attack only if this Pokémon used **Rollout** during your last turn."* | **1** | ✅ **BOUGHT AT D395** — Miltank `sv08.5-081` idx 1 "Moomoo Rolling". SAME subject, SAME window, SAME field; it is an ATTACK GATE (D281/D282), not a damage bonus, and `yourActiveUsedAttackLastTurn { attack: "Rollout" }` served it **UNCHANGED and with ZERO new state**, as this row predicted |
 | *"…If **1 of your Pokémon** used Angelite during your last turn, this attack can't be used."* | **3** | the biggest single row in the family. Same window, same field; the SUBJECT is Active **plus** Bench, so it needs a second member over the same field, and the consequent is a CANCEL the `NOTHING` skeleton does not spell |
 | *"If 1 of your other **Ancient** Pokémon used an attack during your last turn…"* | **1** | refused at the **BANNER** (D207), not at the window — the sharpest illustration in the residue of where this family stops |
 
@@ -24537,3 +24537,174 @@ turn stamp). No registry row, so `registryCardIds()` is unmoved at 709. What DID
 that have nothing to do with this clause: `stage1Bonus.test.ts`'s pool-wide Stage 1 sweep **71 → 72**
 and the `FIXTURE_POOL` floor **493 → 495**, while `Card.resistances` STOOD STILL at 28 because
 neither printing prints one.
+
+
+## D395 — THE ROLLOUT ATTACK-GATE: derived or authored, and the first board that can falsify a map key (engine 0.299.0 → **0.300.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+Miltank `sv08.5-081` "Moomoo Rolling" ({C}{C}, flat `100`, index **1** of TWO) —
+*"You can use this attack only if this Pokémon used Rollout during your last turn."*, **1 legal
+printing**. Its own index 0 is "Rollout" ({C}, 20, no effect text): **the attack the clause names is
+printed on the same card, one index down.**
+
+**WHAT SHIPS:** ONE registry row (a bare `CardProgram.attackGate`), ONE new `ATTACK_GATE_CLAUSES`
+literal, ONE reversed branch in `splitAttackGateClause`. ZERO new state, `BoardCondition` members,
+ops, events, error codes, prompt kinds, readers, regexes, `redact.ts` bytes or `packages/schema`
+bytes.
+
+### 🛑 THE SHAPE QUESTION WAS *DERIVED GATE OR REGISTRY ROW*, AND THE RULE DOES NOT NAME THE MEASUREMENT THAT DECIDES IT
+
+D180/D187 say *"an arm transfers across sets; a registry row does not"*. That is a claim about
+**reprints**. What settles the question is **how many legal printings a deriver buys that a row does
+not**, and here it is **ZERO**: the clause is 1 printing on 1 id (`legalAttackCorpus()`), and the
+only other gate spellings in the catalog are the 13 that already carry rows.
+
+Against that zero stand two costs:
+
+- **`attackGate` HAS NO DERIVER SEAM AT ALL.** `attackGateOf` (continuous.ts) reads
+  `programFor(top.id)?.attackGate?.[index]` and nothing else. Building the first deriver **is** the
+  machinery D282 refused for a family of one.
+- 🛑 **AND A DERIVER WOULD HAVE DISSOLVED A GUARD, NOT ONLY ADDED CODE.** `attack.ts` splits the
+  printed text **only when a registry row REPRESENTS the clause at this index** — its own comment
+  says *"the gate is the PRECONDITION, not the text"*. A derived gate makes that two-key check a
+  tautology and re-installs the too-loose build `D282-split-fires-without-a-gate` exists to refuse.
+
+**A TRANSFERABILITY ARGUMENT WITH A ZERO IN IT IS NOT AN ARGUMENT.**
+
+### 🆕 AND THE ONE ARGUMENT *FOR* A DERIVER IS D394's — WHICH DOES NOT SURVIVE THE MOVE, AND THAT IS A FINDING ABOUT SCOPE
+
+D394 refused `^this Pokémon used (.+) during your last turn$` and gave a specific reason: the
+varying token is an ATTACK NAME, **and it is not checked against the card**, so a template would
+resolve *"used Surf Back during your last turn"* to a predicate that answers FALSE forever and
+silently — on a body that CAN use Surf Back.
+
+That objection **does not transfer to this seam**. `attackGateOf` is handed the CARD (`topCardOf`)
+and could require the parsed name to appear in `top.attacks`; D394's site (`CONDITIONAL_DAMAGE_
+CLAUSES`, resolved by text alone) has no card in scope and could not. **The refusal D394 wanted is
+available here and is not available there.**
+
+> **THE SAME TOKEN IS UNTEMPLATABLE IN ONE PLACE AND TEMPLATABLE IN ANOTHER, AND THE DIFFERENCE IS
+> WHAT IS IN SCOPE — NOT WHAT IS PRINTED.**
+
+And the failure DIRECTION is worse here than there: D394's template would cost a damage bonus that
+never pays; this one costs the DECLARATION — a mis-parsed condition is a legal attack barred
+forever, on a board no suite would look wrong on. The template still loses, on population.
+
+### 🛑 THE FIRST GATE AT A NON-ZERO INDEX — A MAP KEY WITH NO FALSIFYING BOARD IS AN UNTESTED FIELD
+
+`CardProgram.attackGate` has been `{ [attackIndex: number]: AttackTimingGate }` since D281 and
+carried **13 printings, every one of them at index 0**. D281's own field doc says so and calls it
+*"an accident of today's pool and not a reason"*. The consequence nobody had written down: an
+**INDEX-BLIND** read — `Object.values(attackGate)[0]`, or a per-BODY flag — was **green on every
+assertion in the repo**, because every board anyone could build about that field was about index 0.
+
+Miltank is the first board that can tell them apart, and it does so totally:
+
+| index | attack | what an index-blind read does |
+|---|---|---|
+| **0** | "Rollout" ({C}, 20) — the attack the clause NAMES | inherits idx 1's gate |
+| **1** | "Moomoo Rolling" ({C}{C}, 100) — the attack the clause GATES | keeps its gate |
+
+Since "Rollout" is the **only** way to satisfy the gate, gating it locks the card out of the game
+forever. `rolloutGate.test.ts` §2 therefore asserts **idx 0 is LIVE before it asserts idx 1 is
+barred**, over 4 seeds × 2 seats × 2 assignments, on the engine and on the wire — D278/D279's
+standing lesson at its sharpest instance, because here the too-wide direction is not a wrong refusal
+but a **DEADLOCK**.
+
+> **WHEN YOU SHIP A KEYED RECORD, WRITE DOWN WHICH BOARD MAKES THE KEY WRONG. IF THERE ISN'T ONE,
+> THE KEY IS PROSE.**
+
+### 🆕 D282's EMPTY-BODY REFUSAL NAMED ITS OWN EXPIRY DATE — AND CALLED THE WRONG DIRECTION SAFE
+
+`splitAttackGateClause` returned `null` for a clause-only string, with this comment:
+
+> *"No legal printing is clause-only today (all 13 carry a body), so this is a guard against a
+> future one rather than a live path, **and it is the safe direction**: the whole printed string
+> goes to the readers unchanged."*
+
+Miltank is that printing. And the direction it called safe was the **unsafe** one the moment it went
+live: `null` hands the WHOLE printed string to the readers, every one refuses it, and
+`ATTACK_EFFECT_SKIPPED` fires **naming a sentence the §8 seam enforced in full** — which is D282's
+own defect (*"half their sentence resolved and the other half invisible"*) with the resolved half
+being ALL of it.
+
+The branch now returns `{clause, body: ""}`, and `""` needed **no caller change**: the requirement
+split, all four damage readers and the skip block in `attack.ts` are each already guarded
+`=== null || === ""`. The worry the old comment recorded — *"it would make the caller's 'is there a
+remainder' question depend on an empty string"* — was already answered by the code it was written
+about.
+
+> **A REFUSAL THAT NAMES ITS OWN TRIGGER IS NOT A DECISION TO REVERSE SILENTLY — IT IS A DECISION
+> FIRING. CHECK THE CLAIMED *SAFE DIRECTION* TOO: IT WAS ARGUED ON A BOARD THAT DID NOT EXIST.**
+
+### 🆕 A CENSUS FILTER CAN EXCLUDE A PRINTING TWICE OVER AND BE RIGHT BOTH TIMES
+
+D282 priced its refusal against *"1,732 legal attack units, 613 multi-sentence, and of those only 16
+open with `If `"*, and its clause list's doc said *"there is no fourth spelling in the catalog"*.
+Both were TRUE and both were blind to this row:
+
+- Miltank's printed text is a **SINGLE sentence**, so it cannot be in the 613;
+- it opens `You can use this attack only if…`, so it could never be in the 16.
+
+`splitOrder.test.ts` §1 now carries the arithmetic that says so: the **10 + 3 partition is UNMOVED**
+while the family total goes **13 → 14**, which is what proves the new row joined from OUTSIDE both
+filters rather than from inside one of them.
+
+### ⚠️ `BUILT.attack` DOES NOT MOVE, AND THE CENSUS GAINS A THIRD CLASS
+
+The split summand counts printings whose **BODY** a reader resolves. This one has no body, and
+`resolvedByAnyReader("")` is false because every reader in `effects.ts` is `^…$` anchored on a
+non-empty pattern. The printing is accounted at the **DECLARATION** seam, which that addition does
+not count from.
+
+So the gate census is now three readings where two used to do:
+
+| reading | at this head |
+|---|---|
+| gated (the split claims it) | **6 sentences / 14 printings** |
+| …of which it has a BODY | **5 / 13** |
+| …of which the body RESOLVES once split | **5 / 13** |
+
+Named explicitly in `censusAtHead.test.ts` and `precociousEvolution.test.ts` rather than folded into
+either of the two before it — **because *"5 of 6 resolve"* would otherwise read as a reader that
+stopped working, when it is really a printing with no body. The two findings look identical in the
+count and are opposite in the cause.**
+
+### CENSUS MOVEMENT
+
+registry ids **709 → 710** (a REAL catalog id, no `fix-*` demonstrator — the suite drives a LOCAL
+`cardPool`, D275's idiom, and `sv08.5` is not among `CATALOG_MANIFEST`'s six sets, so a shared-pool
+body would have owed a key); `BUILT.ability` **280 → 281** and `nonAttackRegistryIds()`
+**564 → 565**; whole-census `built` **1,705 → 1,706** with `units − built` **678 → 677**; the
+ability triple **280/127/116 → 281/128/117** and its join **129 → 130**; the `attackGate` shortfall
+**13 → 14**, with `attacksJson`/`abilitiesJson` moving **UNEVENLY for the first time since D310**
+(281 / 267) because Miltank carries an `attacks_json` and **no Ability at all**. `BUILT.attack`
+**1,304** and every `usedAttack`-family figure UNMOVED.
+
+### TWO SENTENCES ROTTED, AND THE GREP WAS FOR THE SENTENCE
+
+D394's rule, used one slice later. Neither would have reddened anything:
+
+- *"there is no fourth shape"* (`attackIndexGate.test.ts`) was a claim about the FIRST-TURN clause
+  family that read as a claim about the FIELD — the family is still 13 in three shapes; the field is
+  now 14 in four;
+- *"`attackGate` appears in 13"* (`benchBodySelfScaling.test.ts`) is a fact about that file's `POOL`,
+  not about the registry, and stays 13 for that reason. The registry-wide count lives in
+  `splitOrder.test.ts` §1 and IS 14.
+
+### WHAT THIS SLICE HANDS ON
+
+**The Angelite cancel — Sylveon ex `sv08-086` / `sv08.5-041` / `sv08.5-156`, 3 legal printings**,
+index **1** "Angelite" ({W}{L}{P}) on a byte-identical `attacks_json`. 🆕 **D394's handoff priced its
+consequent wrong**: it called *"this attack can't be used"* a THIRD consequent shape the `NOTHING`
+skeleton does not spell, and it is the **printed spelling of D281's `barredIf`**, built since
+0.195.0 and used by Terapagos ex's seven printings. What is left is a SECOND subject over the same
+per-body record (*"1 of your Pokémon"* is Active + Bench, and every in-play body already carries
+`usedAttack`, so it is a walk and not new state) and a registry row on three ids.
+
+⚠️ **AND THE SPLIT QUESTION HAS A CHEAP MEASURED ANSWER**: Angelite's gate clause is **TRAILING**,
+and `splitAttackGateClause` is a leading-clause matcher anchored at `^` by policy — but its BODY is
+**Illumise `sv06-010`'s refusal verbatim** (no `EffectOp` moves an opponent's benched Pokémon and its
+attached cards into the OPPONENT'S deck). So stripping the clause would leave a body no reader
+takes, and the census gain would be **zero**. Ship GATE-ONLY, like the 13, and say so with the
+measurement rather than building a trailing split for a population of one whose remainder is refused
+anyway.
