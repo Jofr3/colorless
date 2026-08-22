@@ -422,7 +422,10 @@
 > PREMISE this slice killed), **D275** 8/8, **D392** 7/7, **D391** 6/6, **D390** 7/7, **D367** 9/9,
 > **D316** 15/15, **D317** 16 killed / 1 declared survivor, **D242** 6/6 and **D279** 6/6 (the
 > possessive-enumeration and bench-name clusters whose lists this slice edited) and **D306** 3/3 —
-> each run ONE AT A TIME because repeated `--decision` flags do not accumulate.
+> each run ONE AT A TIME because repeated `--decision` flags do not accumulate. ✅ **AND TWO MORE
+> AFTER THE DOCS COMMIT REWROTE THIS PAGE** — the EIGHT anchors on `docs/progress.md` are the one
+> set that cannot be probed before it: **D318** 10 killed / 1 declared survivor and **D274** 3/3,
+> both clean, for **FIFTEEN** in total.
 >
 > ### ▶ THE FIVE THINGS TO CARRY FORWARD ABOVE EVERYTHING ELSE
 >
@@ -614,7 +617,8 @@
 > those is the adjacency class's home ground** (D317/D381/D383, and D392's D279 row). The forecast of
 > `0` rests on `precheck.ts` over all 1,339 rows plus thirteen decisions probed clean — **not on
 > hope** — but `precheck.ts` runs before the docs commit rewrites `docs/progress.md`, which carries
-> eight anchors, so `--decision D318` and `--decision D274` are probed AFTER it.
+> eight anchors, so `--decision D318` and `--decision D274` were probed AFTER it and both came back
+> clean, and `precheck.ts` was re-run over all 1,339 rows on the closed tree.
 > **② `stale`.** `stale` has been **0 for nine consecutive sweeps**, and this is the slice most likely
 > to end that streak, for D384's reason at its sharpest: **this slice BUILT a sentence an earlier
 > slice's mutant `what` declared unbuildable.** A declared survivor whose recorded reason rests on
