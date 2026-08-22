@@ -1485,11 +1485,20 @@ export interface GameState {
   stadium: StadiumInPlay | null;
   players: Record<Seat, PlayerSide>;
   /** The TURN NUMBER during which this seat most recently had one of its own
-      Pokémon Knocked Out — `null` while none ever has been. The engine's ONLY
-      piece of turn HISTORY: every other datum on `GameState` is the board as it
-      stands, and this one exists because a printed sentence asks about a window
+      Pokémon Knocked Out — `null` while none ever has been. `GameState`'s ONLY
+      piece of turn HISTORY: every other datum on this structure is the board as
+      it stands, and this one exists because a printed sentence asks about a window
       that has already closed (*"if any of your Pokémon were Knocked Out during
       your opponent's last turn"* — Unfair Stamp sv06-165, Hassel sv06-151/-205).
+
+      ⚠️ **IT IS NO LONGER THE ENGINE'S ONLY ONE, AND THIS LINE USED TO SAY IT WAS
+      (D394).** `InPlayPokemon.usedAttack` is a second closed-window record, on the
+      BODY rather than on the board, read as `turn === state.turn - 2` where this
+      one is read as `turn === state.turn - 1`. The two windows are one counter
+      step apart for a reason worth keeping: this field's question is about the
+      OPPONENT's last turn and that one's is about YOUR OWN, and turns strictly
+      alternate. **A CLAIM OF UNIQUENESS IS A CLAIM ABOUT THE WHOLE ENGINE AND
+      ROTS SILENTLY** — nothing mechanical checks a doc block.
 
       🛑 **A STAMP, NOT A TALLY, AND THAT IS WHY NOTHING CLEARS IT.** The obvious
       shape is a per-turn counter plus a snapshot of the previous turn, which
