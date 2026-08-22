@@ -620,7 +620,12 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
     // band rung is still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([16, 19]);
+    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
+    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
+    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
+    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
+    // so every band rung is still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([15, 18]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -632,8 +637,13 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // for the reason that matters: a reader narrowing so any clause returns to 2
     // fails it, as does that clause being claimed.
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(14);
-    expect(byClause.size).toBe(15);
+    // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the singleton band,
+    // the same trade one slice on — a 1-printing clause bought for ONE parameterised
+    // member plus one anchored template. The band above is STILL empty, and the only
+    // clause left above one printing is the 5-printing declaration one, disqualified
+    // on SHAPE.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(13);
+    expect(byClause.size).toBe(14);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
@@ -648,13 +658,17 @@ describe("§6 — the fixture, the census this row moves, and the summands it do
     // The 1:1 shape D382, D384 and D387 took. Both columns, because a step in one
     // and not the other is a different event.
     const resolving = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolving.length, units(resolving)]).toEqual([368, 1260]);
+    expect([resolving.length, units(resolving)]).toEqual([369, 1261]);
+    // 🆕🆕 D390 — a SECOND `- 1` term at the FRONT, for D389's reason verbatim: the
+    // OPPONENT-SEAT TYPE READ resolved ONE sentence worth ONE printing, and this file's
+    // own step stays the difference between two adjacent rungs.
+    expect([resolving.length - 1, units(resolving) - 1]).toEqual([368, 1260]);
     // 🆕🆕 D389 — a `- 1` term at the FRONT of each chain, so THIS file's own step is
     // still the difference between two adjacent rungs while the HEAD above moves for
     // somebody else's work: D389 resolved ONE sentence worth ONE printing (the
     // OPPONENT-SEAT BENCH COUNT). ⚠️ THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END.
-    expect([resolving.length - 1, units(resolving) - 1]).toEqual([367, 1259]);
+    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([367, 1259]);
     // D387 left it at 366 / 1,258, and the difference is this file's sentence alone.
-    expect([resolving.length - 1 - 1, units(resolving) - 1 - 1]).toEqual([366, 1258]);
+    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([366, 1258]);
   });
 });

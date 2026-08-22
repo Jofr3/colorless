@@ -301,7 +301,12 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
     // band rung is still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([16, 19]);
+    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
+    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
+    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
+    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
+    // so every band rung is still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([15, 18]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -330,7 +335,11 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // STANDS STILL at 2 / 5 for the THIRD consecutive slice: the RETREAT-COST
     // THRESHOLD was a SINGLETON too, so the comparison this rung makes (six printings
     // for one op against ONE for the best clause row) is again unchanged by it.
-    expect([singletons.length, units(singletons)]).toEqual([14, 14]);
+    // 🆕🆕 D390 — the singleton band 14 / 14 -> **13 / 13** and the non-singleton side
+    // STANDS STILL at 2 / 5 for the FIFTH consecutive slice: the OPPONENT-SEAT TYPE
+    // READ was a SINGLETON too, so the comparison this rung makes (six printings for
+    // one op against ONE for the best clause row) is again unchanged by it.
+    expect([singletons.length, units(singletons)]).toEqual([13, 13]);
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);

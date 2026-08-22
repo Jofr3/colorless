@@ -231,8 +231,13 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
     // band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(16);
-    expect(units(refused)).toBe(19);
+    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
+    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
+    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
+    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
+    // so every band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(15);
+    expect(units(refused)).toBe(18);
     // 🛑 AND THE STEP IS 1:2, NOT D372's 2:2. Every earlier head is re-derived from
     // THIS one rather than frozen: 🆕 D375's 26/32, D374's 27/34, D372's 28/36,
     // D371's 30/38, D370's 31/40.
@@ -240,13 +245,13 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // DISCARD-PILE THRESHOLD). ⚠️ THE HEAD IS NOW 24 / 28, so every OFFSET here moved
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
-    expect([refused.length + 8, units(refused) + 9]).toEqual([24, 28]);
-    expect([refused.length + 9, units(refused) + 11]).toEqual([25, 30]);
-    expect([refused.length + 10, units(refused) + 13]).toEqual([26, 32]);
-    expect([refused.length + 11, units(refused) + 15]).toEqual([27, 34]);
-    expect([refused.length + 12, units(refused) + 17]).toEqual([28, 36]);
-    expect([refused.length + 14, units(refused) + 19]).toEqual([30, 38]);
-    expect([refused.length + 15, units(refused) + 21]).toEqual([31, 40]);
+    expect([refused.length + 9, units(refused) + 10]).toEqual([24, 28]);
+    expect([refused.length + 10, units(refused) + 12]).toEqual([25, 30]);
+    expect([refused.length + 11, units(refused) + 14]).toEqual([26, 32]);
+    expect([refused.length + 12, units(refused) + 16]).toEqual([27, 34]);
+    expect([refused.length + 13, units(refused) + 18]).toEqual([28, 36]);
+    expect([refused.length + 15, units(refused) + 20]).toEqual([30, 38]);
+    expect([refused.length + 16, units(refused) + 22]).toEqual([31, 40]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -280,7 +285,11 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(15);
+    // 🆕🆕 D389 — 16 -> **15**: the OPPONENT-SEAT BENCH COUNT left the 1-printing band.
+    // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left it too, and the
+    // 1-printing band is again the ONLY band that moved. The 2-printing band was
+    // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
+    expect(byClause.size).toBe(14);
     expect(band.length + 2).toBe(2);
     expect(band.length + 5).toBe(5);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the

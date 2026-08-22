@@ -18,12 +18,14 @@ import type { BoardCondition } from "./index";
 // earlier pattern still wins, still returns the right member, and nothing moves
 // until the two are reordered or one of them declines.
 //
-// ⚠️ **SO THE GUARD IS WRITTEN FIRST AND THE PATTERN SECOND**, which is the only
+// ⚠️ **SO THE GUARD WAS WRITTEN FIRST AND THE PATTERN SECOND**, which is the only
 // order in which "the guard existed before the thing it guards against" is a
-// fact rather than a story. At the head this file lands on, the fifth row of
-// `TEMPLATES` carries `cond: null` — the sentence is REAL and PRINTED and
-// nothing in the engine claims it — so this suite is also the tripwire that
-// fires the day it is built.
+// fact rather than a story. At the head this file first landed on, the fifth row
+// of `TEMPLATES` carried `cond: null` — the sentence was REAL and PRINTED and
+// nothing in the engine claimed it — so the file was also the tripwire that
+// fires the day it is built. 🆕 **D390 BUILT IT AND THE TRIPWIRE FIRED**: the row
+// now carries `opponentInPlayHasType`, and NOT ONE of the twenty hybrids below
+// changed, which is the whole content of the claim the four comments made.
 //
 // **HOW THE CROSS PRODUCT IS DRIVEN, AND WHY THIS SHAPE RATHER THAN A REGEX
 // READ.** Every pattern here is `^<head><token><tail>$`, so the falsifiable
@@ -106,18 +108,20 @@ const TEMPLATES: readonly Template[] = [
     cond: { kind: "opponentActiveHasResistance", type: "Fighting" },
   },
   {
-    // 🛑 THE CANDIDATE, NOT YET BUILT — Electivire `sv05-054` "Short-Circuit
-    // Knuckle" ({C}{C}, `40+`), ONE legal printing. It is in this table at
-    // `cond: null` on purpose: the cross product below must already hold for the
-    // shape BEFORE the pattern that claims it exists, or the guard would be
-    // written to fit the code it is supposed to check.
-    pattern: "OPPONENT_IN_PLAY_TYPE_CLAUSE (unbuilt at this head)",
+    // 🆕 D390 — THE TRIPWIRE FIRED, AND THIS IS WHAT IT WAS FOR. This row shipped
+    // one commit earlier at `cond: null`, with the cross product below already
+    // holding for the SHAPE before any pattern claimed it — so the guard was
+    // written against the anchor rather than against the code, which is the only
+    // arrangement in which "the templates are mutually exclusive" is a
+    // measurement. D390 built the pattern; the row now carries its member, and the
+    // twenty hybrids below are unchanged and still refused.
+    pattern: "OPPONENT_IN_PLAY_TYPE_CLAUSE",
     head: "your opponent has any ",
     token: "{W}",
     tail: " Pokémon in play",
     per: 120,
     printings: 1,
-    cond: null,
+    cond: { kind: "opponentInPlayHasType", type: "Water" },
   },
 ];
 
@@ -131,7 +135,7 @@ const clauseOf = (t: Template): string => `${t.head}${t.token}${t.tail}`;
 const sentence = (clause: string, per: number): string =>
   `If ${clause}, this attack does ${per} more damage.`;
 
-describe("§1 — every template answers its OWN printed sentence, and the fifth is unclaimed", () => {
+describe("§1 — every template answers its OWN printed sentence, and the fifth now has one", () => {
   it("each row's clause is PRINTED, at the stated number of legal printings", () => {
     for (const t of TEMPLATES) {
       const text = sentence(clauseOf(t), t.per);
@@ -149,11 +153,11 @@ describe("§1 — every template answers its OWN printed sentence, and the fifth
     for (const t of TEMPLATES) {
       const got = deriveAttackDamageBonus(sentence(clauseOf(t), t.per));
       if (t.cond === null) {
-        // 🆕 D390 — the fifth shape, REFUSED AT THE ANCHOR rather than at the
-        // vocabulary (D363's distinction): `{W}` is a perfectly good
-        // `CLAUSE_POKEMON_TYPES` key and there is simply no pattern whose anchor
-        // reaches this sentence. This is the tripwire — building the pattern
-        // turns this branch red and the row must then carry its member.
+        // An UNBUILT row: the shape is printed and no pattern's anchor reaches it,
+        // which is D363's ANCHOR refusal rather than a vocabulary one. The branch
+        // is kept after D390 emptied it — this is where the NEXT candidate shape
+        // goes, and keeping it is what makes the next fifth-pattern slice able to
+        // write its guard first the way this one did.
         expect(got, t.pattern).toBeNull();
       } else {
         expect(got, t.pattern).toEqual({
@@ -167,9 +171,11 @@ describe("§1 — every template answers its OWN printed sentence, and the fifth
   it("the built rows land on FIVE DISTINCT members — no two shapes collapse", () => {
     const kinds = TEMPLATES.flatMap((t) => (t.cond === null ? [] : [t.cond.kind]));
     expect(new Set(kinds).size).toBe(kinds.length);
-    // The count is stated so the day the fifth is built this rung moves with it
-    // rather than staying quietly true at the old width.
-    expect(kinds).toHaveLength(4);
+    // 🆕 D390 — 4 -> **5**, and the two numbers are stated separately on purpose:
+    // the second is the width of the cross product below and the first is how much
+    // of it is BUILT, so a row added as a candidate and a row added as a member are
+    // different events here.
+    expect(kinds).toHaveLength(5);
     expect(TEMPLATES).toHaveLength(5);
   });
 });
@@ -233,7 +239,7 @@ describe("§3 — the MAP is the vocabulary, and the two maps do not leak into e
       ["your opponent's Active Pokémon is a Special Pokémon", "an energy CLASS as a body type"],
       ["you have any Special Pokémon on your Bench", "the same, one zone over"],
       ["your opponent's Active Pokémon has Special Resistance", "the same, one column over"],
-      ["your opponent has any Special Pokémon in play", "the same, on the unbuilt shape"],
+      ["your opponent has any Special Pokémon in play", "the same, on D390's shape"],
     ] as const) {
       expect(deriveAttackDamageBonus(sentence(clause, 90)), why).toBeNull();
     }

@@ -165,7 +165,12 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // been leaning on a coincidence rather than on a rule.
     const pokemon = Object.values(FIXTURE_POOL).filter((c) => c.category === "Pokemon");
     const stage1 = pokemon.filter((c) => isStage1Pokemon(c));
-    expect(stage1).toHaveLength(67);
+    // 🆕🆕 D390 — 67 -> **68**, and the mover is again a slice that is not about stages:
+    // `fix-shortcircuit` is Electivire, a printed Stage 1, added by the OPPONENT-SEAT
+    // TYPE READ. 🛑 ITS `evolveFrom` IS TRANSCRIBED ("Electabuzz") PRECISELY SO THIS
+    // FILE'S FINDING SURVIVES — a synthetic Stage 1 with a null chain would have made
+    // the singleton below a pair and turned an inherited measurement into an artefact.
+    expect(stage1).toHaveLength(68);
     const chainless = stage1.filter((c) => (c.evolveFrom ?? null) === null);
     expect(chainless.map((c) => c.id)).toEqual(["fix-exstage1"]);
     // …and no Stage 1 is also a Stage 2, which is the only part of the ladder that IS
@@ -491,7 +496,12 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
     // band rung is still aimed at the WHOLE distribution (D379).
-    expect([refused.length, units(refused)]).toEqual([16, 19]);
+    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
+    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
+    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
+    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
+    // so every band rung is still aimed at the WHOLE distribution (D379).
+    expect([refused.length, units(refused)]).toEqual([15, 18]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -503,11 +513,18 @@ describe("§6 — the census this row moves, and the summands it does not", () =
     // for the reason that matters: a reader narrowing so any clause returns to 2
     // fails it, as does that clause being claimed.
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(14);
+    // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the singleton band,
+    // the same trade one slice on — a 1-printing clause bought for ONE parameterised
+    // member plus one anchored template. The band above is STILL empty, and the only
+    // clause left above one printing is the 5-printing declaration one, disqualified
+    // on SHAPE.
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(13);
     // 🆕🆕 D388 — 17 -> **16**: the RETREAT-COST THRESHOLD left the 1-printing band,
     // which is the ONLY band that moved. The 2-printing band was already empty and stays
     // empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(15);
+    // 🆕🆕 D389 — 16 -> **15**, and 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT BENCH
+    // COUNT and then the OPPONENT-SEAT TYPE READ, each a singleton leaving the same band.
+    expect(byClause.size).toBe(14);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",

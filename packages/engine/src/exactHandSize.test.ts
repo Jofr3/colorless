@@ -297,12 +297,17 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // +80) — re-derived live rather than decremented. 🛑 THE 2-PRINTING BAND STAYS
     // EMPTY and the distribution goes `{1: 15, 5: 1}` -> `{1: 14, 5: 1}`, so every
     // band rung is still aimed at the WHOLE distribution (D379).
-    expect(refused.length).toBe(16);
-    expect(units(refused)).toBe(19);
+    // 🆕🆕 D390 — 16 / 19 -> **15 / 18**: the OPPONENT-SEAT TYPE READ left this
+    // residue — ONE sentence at ONE printing (Electivire `sv05-054` "Short-Circuit
+    // Knuckle", +120) — re-derived live rather than decremented. 🛑 THE 2-PRINTING
+    // BAND STAYS EMPTY and the distribution goes `{1: 14, 5: 1}` -> `{1: 13, 5: 1}`,
+    // so every band rung is still aimed at the WHOLE distribution (D379).
+    expect(refused.length).toBe(15);
+    expect(units(refused)).toBe(18);
     // D379's head (which is also D378's, because D379 moved this column by zero — the
     // whole point of the rung) and D377's before it, re-derived from THIS one.
-    expect([refused.length + 5, units(refused) + 6]).toEqual([21, 25]);
-    expect([refused.length + 6, units(refused) + 7]).toEqual([22, 26]);
+    expect([refused.length + 6, units(refused) + 7]).toEqual([21, 25]);
+    expect([refused.length + 7, units(refused) + 8]).toEqual([22, 26]);
   });
 
   it("🛑 BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {
