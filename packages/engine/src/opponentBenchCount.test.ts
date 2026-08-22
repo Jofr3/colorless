@@ -542,7 +542,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([13, 16]);
+    expect([refused.length, units(refused)]).toEqual([11, 14]);
     // ⚠️ AND THE PARTITION DOES NOT DEPEND ON WHICH INSTRUMENT DRAWS IT: the NINE
     // readers and the TEN agree on this residue exactly, so D385's "only the
     // ten-reader one may be a refusal oracle" is satisfied here without the two
@@ -551,7 +551,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — 15 / 18 -> **14 / 17** on the NINE-reader instrument too, the same
     // ONE sentence / ONE printing step the ten-reader one takes.
     // 🆕🆕 D392 — 14 / 17 -> 13 / 16, the SUBSTRING NAME READ leaving the residue.
-    expect([refusedByNine.length, units(refusedByNine)]).toEqual([13, 16]);
+    expect([refusedByNine.length, units(refusedByNine)]).toEqual([11, 14]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -567,10 +567,10 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // the singleton band and nothing else moved. The band `n > 1` is STILL `[5]`.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(9);
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band too.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(12);
+    expect(byClause.size).toBe(10);
     expect(
       resolvedByAnyReader(
         "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
@@ -588,7 +588,7 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // 🆕🆕 D391 — +1 sentence / +1 printing: the TYPED PER-BODY ENERGY THRESHOLD, an
     // OPTIONAL FIELD on a shipped member rather than a new one, so the READER-keyed summand
     // moves and no registry summand does.
-    expect([resolving.length, units(resolving)]).toEqual([374, 1271]); // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
+    expect([resolving.length, units(resolving)]).toEqual([376, 1273]); // 🆕🆕 D393 +2 sentences / +2 printings (THE EVOLVE PAIR — Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`, **+90**, index 0 of TWO) and Misty's Starmie `sv10-047` "Abrupt Flash" ({W}, `60+`, **+80**, index 0 of ONE), 1 legal printing each: ONE new `BoardCondition` member (`yourActiveEvolvedFromThisTurn { name }`), ONE new REQUIRED `InPlayPokemon` field (`evolvedTurn`), TWO literal `CONDITIONAL_DAMAGE_CLAUSES` rows and TWO new exhaustive-switch arms — the residue's only PAIR on one mechanism, and the second entry on this line to move `MATCH_RECORD_VERSION`, 23 -> 24) // 🆕🆕 D392 +1 sentence (THE SUBSTRING NAME READ — Team Rocket's Nidoqueen `sv10-116` "Love Impact" ({D}, `60+`, **+120**, index 0 of TWO) at 1 legal printing: ONE new `BoardCondition` member (`yourBenchHasNameContaining { fragment }`), ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row and TWO NEW exhaustive-switch arms — a SECOND MEMBER and not a `match?:` field on `yourBenchHasNamed`, and it is the FIRST test of the rule D391 wrote down, which HELD: what changes is the comparison OPERATOR rather than a filter the delegate already takes, `conditionNote` needs a second SENTENCE rather than a second SLOT, and a member edits ZERO of `yourBenchHasNamed`'s 45 executable sites where an optional field edits THREE)
     // 🆕🆕 D390 — a `- 1` term at the FRONT of the chain, so THIS file's own step is
     // still the difference between two adjacent rungs while the HEAD above moves for
     // somebody else's work: D390 resolved ONE sentence worth ONE printing (the
@@ -597,12 +597,12 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
     // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
-    expect([resolving.length - 1 - 1 - 1, units(resolving) - 1 - 1 - 1]).toEqual([371, 1268]);
+    expect([resolving.length - 1 - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1 - 1]).toEqual([371, 1268]);
     // D388 left it at 370 / 1,267, and the difference is this sentence alone.
     // 🆕🆕 D391 — one more `- 1` term at the FRONT of each chain: the TYPED PER-BODY
     // ENERGY THRESHOLD resolved ONE sentence worth ONE printing. ⚠️ THE CHAIN IS EDITED AT
     // THE FRONT, NEVER AT THE END.
     // 🆕🆕 D392 — one more `- 1` on each chain: the SUBSTRING NAME READ, 1 sentence / 1 printing.
-    expect([resolving.length - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1]).toEqual([370, 1267]);
+    expect([resolving.length - 1 - 1 - 1 - 1 - 1 - 1, units(resolving) - 1 - 1 - 1 - 1 - 1 - 1]).toEqual([370, 1267]);
   });
 });

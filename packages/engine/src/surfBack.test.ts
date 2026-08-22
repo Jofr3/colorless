@@ -40,10 +40,21 @@ import {
 //   idx 1  "Surf Back"       cost [Colorless × 3]              damage 100
 //          "You may shuffle this Pokémon and all attached cards into your deck."
 //
-// ⚠️ **INDEX 1 ONLY.** Index 0's evolved-this-turn conditional is unread by this
-// engine and MUST stay unsimulated rather than inherit this program — the
+// ⚠️ **INDEX 1 ONLY.** Index 0 MUST NOT inherit this program — the
 // index-precision rule `CardProgram.attack` states and D187's inflated
 // intermediate result paid for. §1 drives both halves of that.
+//
+// 🆕🆕 **D393 — THE REASON CHANGED AND THE RULE DID NOT.** This block used to read
+// *"index 0's evolved-this-turn conditional is unread by this engine and must stay
+// unsimulated"*, and D393 BUILT that sentence: *"If this Pokémon evolved from
+// Gimmighoul during this turn…"* now resolves through `CONDITIONAL_DAMAGE_CLAUSES`
+// to `yourActiveEvolvedFromThisTurn`. **THE PREMISE DIED WITHOUT A CHARACTER OF THE
+// MUTANT'S `find` MOVING** — D384's class — so it is re-transcribed here rather than
+// left to read as a fact. Gholdengo is now the engine's FIRST card with a REGISTRY
+// attack at one index and a DERIVED one at another, and §1's `toBeUndefined()` is
+// what keeps them apart: `programFor(id)` wins over `deriveAttackEffect`, so
+// authoring index 0 here would MASK the printed +90 as well as unsimulating
+// "Surf Back".
 //
 // ── 🛑 THE SEAM: MEASURED AT THE SECOND SITE, NOT ASSUMED FROM THE FIRST ────
 //
@@ -280,8 +291,10 @@ describe("D312 §1 — the print, the index-precision, and the `optional` that I
   it("🛑 the registry authors index 1 and index 0 STAYS UNSIMULATED", () => {
     const program = programFor(GHOLDENGO);
     expect(program?.attack?.[1]).toBeDefined();
-    // The index-precision rule. Index 0's evolved-this-turn conditional is unread
-    // by this engine and must NOT inherit "Surf Back"'s program.
+    // The index-precision rule. Index 0 is D393's DERIVED evolved-this-turn bonus
+    // and must NOT inherit "Surf Back"'s program — the registry beats the deriver,
+    // so an index slip here would silently swallow the printed +90 as well as
+    // leaving "Surf Back" unsimulated. Two failures, one assertion (D393).
     expect(program?.attack?.[0]).toBeUndefined();
     // …and the row is attack-ONLY: no Ability, no passive, no trigger.
     expect(Object.keys(program ?? {})).toEqual(["attack"]);

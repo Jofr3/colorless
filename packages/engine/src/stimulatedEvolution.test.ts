@@ -821,6 +821,7 @@ describe("D279 — MATCH_RECORD_VERSION stays 14, and the claim is MEASURED", ()
       // structure, and `MATCH_RECORD_VERSION` 22 → 23 with it). THIS slice still wrote
       // nothing: the pin is on the HEAD's key set, so it moves whenever anybody adds a
       // key, and what it asserts is that none of them was added HERE.
+      "evolvedTurn",
       "healedTurn",
       "installedRecoil",
       "lockedAttacks",

@@ -10785,6 +10785,101 @@ export const FIXTURE_POOL: Record<string, Card> = {
     types: ["Darkness"],
   }),
   "fix-nidoking": battler("fix-nidoking", { name: "Nidoking", hp: 60, types: ["Darkness"] }),
+  /** 🆕🆕 **D393 — THE EVOLVE PAIR'S FOUR BODIES: TWO EVOLUTIONS AND THEIR TWO
+      PRINTED PRE-EVOLUTIONS.** Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`,
+      **+90**, index **0** of TWO) and Misty's Starmie `sv10-047` "Abrupt Flash"
+      ({W}, `60+`, **+80**, index 0 of ONE) — the bonus residue's only PAIR on one
+      mechanism, both transcribed WHOLE off tcgdex (`sv08-131`, `sv10-047`) rather
+      than trimmed to the fields the tests read (D306).
+
+      🛑 **THE PAIR IS ITS OWN CROSS-CONTROL, WHICH IS THE ARGUMENT FOR BUYING BOTH
+      PRINTINGS IN ONE SLICE RATHER THAN ONE AND THEN THE OTHER.** Each attacker
+      evolved from a card the OTHER clause does not name, so a board that arms
+      Gholdengo's +90 must leave Misty's Starmie's +80 unarmed and the reverse. An
+      arm that ignored `cond.name` and read only the turn stamp would pass every
+      test either card could write alone and fail on the two together.
+
+      ⚠️ **`fix-strikeitrich` CARRIES BOTH PRINTED ATTACKS, AND INDEX 1 IS D312's.**
+      "Surf Back" is a REGISTRY row keyed on the real `sv08-131`, so on a `fix-*` id
+      it resolves to nothing and takes the loud `ATTACK_EFFECT_SKIPPED` path — which
+      is correct and is why no board below declares it. It is transcribed anyway
+      because the printed card has two attacks and D306 says transcribe the card.
+
+      ⚠️ **`fix-mistystaryu` PAYS THE POSSESSIVE FIXTURE-NAME TOLL FOR THE SECOND
+      SLICE RUNNING, AND HERE IT IS NOT OPTIONAL AT ALL.** `switchSeam.test.ts`,
+      `inPlayTarget.test.ts` and `ownerTargetOps.test.ts` each ENUMERATE every
+      `/^[A-Z][A-Za-z' ]*'s /` name in this pool, and `ownerPrefix.test.ts` matches
+      the same two through `matchesFilter`'s `ownerPokemon` arm. D392 chose to pay
+      it; this slice CANNOT avoid it, because the printed clause spells the owner
+      possessive and the arm compares the pre-evolution card's `name` to the clause
+      key byte for byte. A tidy "Staryu" would make the demonstrator match no
+      printed sentence at all (D183's defect, in a name).
+
+      ⚠️ **AND BOTH EVOLUTIONS CARRY THEIR PRINTED `evolveFrom` CHAINS**, so
+      `stage1Bonus.test.ts`'s Stage-1 sweep moves by TWO — a number that is a fact
+      about the whole pool being moved by a slice that is not about it (D392's
+      lesson, at twice the size). The two Basics are `stage: "Basic"` and move
+      nothing.
+
+      ⚠️ **`fix-*` IDS, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts`
+      diffs only the `sv*` ids in this pool against the six-set manifest, and
+      neither `sv08-131` (already a LOCAL card in `surfBack.test.ts`, D275's idiom)
+      nor `sv10-047` is added here. */
+  "fix-strikeitrich": {
+    ...blank,
+    id: "fix-strikeitrich",
+    name: "Gholdengo",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Gimmighoul",
+    hp: 130,
+    types: ["Metal"],
+    retreat: 2,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    resistances: [{ type: "Grass", value: "-30" }],
+    attacks: [
+      {
+        cost: ["Metal"],
+        name: "Strike It Rich",
+        damage: "30+",
+        effect:
+          "If this Pokémon evolved from Gimmighoul during this turn, this attack does 90 more damage.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Surf Back",
+        damage: 100,
+        effect: "You may shuffle this Pokémon and all attached cards into your deck.",
+      },
+    ],
+  },
+  "fix-gimmighoul": battler("fix-gimmighoul", { name: "Gimmighoul", hp: 60, types: ["Metal"] }),
+  "fix-abruptflash": {
+    ...blank,
+    id: "fix-abruptflash",
+    name: "Misty's Starmie",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Misty's Staryu",
+    hp: 100,
+    types: ["Water"],
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water"],
+        name: "Abrupt Flash",
+        damage: "60+",
+        effect:
+          "If this Pokémon evolved from Misty's Staryu during this turn, this attack does 80 more damage.",
+      },
+    ],
+  },
+  "fix-mistystaryu": battler("fix-mistystaryu", {
+    name: "Misty's Staryu",
+    hp: 60,
+    types: ["Water"],
+  }),
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12664,6 +12759,22 @@ export const BENCH_NAME_SUBSTRING_DECK = deckOf({
   "fix-titan": 25, // 340 HP, no attacks — survives the boosted 180, and the dominant starter
   "fix-dark-energy": 12, // Basic {D} — the printed cost of both attacks
   "fix-energy": 8, // Basic {C} — a non-Darkness filler that pays nothing here
+});
+
+/** 🆕🆕 D393 — a DEDICATED deck, D270's shape, with **no modifier of any kind and
+    no second attacker**: nothing in it can move a damage number except whether the
+    attacker evolved this turn and from what. That is what makes every 30 / 120 and
+    60 / 140 below attributable to the clause. `fix-titan` is 340 HP with no attacks,
+    so it survives the boosted 120 without a §8.1 Prize tail landing under a damage
+    assertion, and the far seat can never move a number either. */
+export const EVOLVED_FROM_DECK = deckOf({
+  "fix-strikeitrich": 4, // Gholdengo — "Strike It Rich" ({M}, 30+) at index 0: the +90
+  "fix-gimmighoul": 4, // "Gimmighoul" — the card Gholdengo's clause names
+  "fix-abruptflash": 4, // Misty's Starmie — "Abrupt Flash" ({W}, 60+) at index 0: the +80
+  "fix-mistystaryu": 4, // "Misty's Staryu" — the card Misty's Starmie's clause names
+  "fix-titan": 20, // 340 HP, no attacks — survives the boosted 120, and the dominant starter
+  "fix-metal-energy": 12, // Basic {M} — "Strike It Rich"'s printed cost
+  "fix-water-energy": 12, // Basic {W} — "Abrupt Flash"'s printed cost
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

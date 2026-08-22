@@ -187,8 +187,8 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // D391 left the residue at 14 / 17, re-derived here off the live readers.
-    expect([refused.length, units(refused)]).toEqual([13, 16]);
-    expect([refused.length + 1, units(refused) + 1]).toEqual([14, 17]);
+    expect([refused.length, units(refused)]).toEqual([11, 14]);
+    expect([refused.length + 3, units(refused) + 3]).toEqual([14, 17]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -198,8 +198,8 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // nothing else moved. The only clause above one printing is still the 5-printing
     // declaration clause D368 disqualified on SHAPE, so this rung goes red from the
     // other side too — a reader narrowing until some clause returns to 2 fails it.
-    expect(byClause.size).toBe(12);
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(11);
+    expect(byClause.size).toBe(10);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(9);
     expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(1);
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });

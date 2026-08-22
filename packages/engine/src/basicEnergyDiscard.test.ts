@@ -262,20 +262,20 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(13);
-    expect(units(refused)).toBe(16);
+    expect(refused.length).toBe(11);
+    expect(units(refused)).toBe(14);
     // 🛑 AND THE STEP IS 1:2 HERE, the shape D369/D370/D371/D373/D374/D375 all kept —
     // D377's was 2:2. Every earlier head is re-derived from THIS one rather than
     // frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34, D372's 28/36,
     // D371's 30/38.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 11, units(refused) + 12]).toEqual([24, 28]);
+    expect([refused.length + 13, units(refused) + 14]).toEqual([24, 28]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 12, units(refused) + 14]).toEqual([25, 30]);
-    expect([refused.length + 13, units(refused) + 16]).toEqual([26, 32]);
-    expect([refused.length + 14, units(refused) + 18]).toEqual([27, 34]);
-    expect([refused.length + 15, units(refused) + 20]).toEqual([28, 36]);
-    expect([refused.length + 17, units(refused) + 22]).toEqual([30, 38]);
+    expect([refused.length + 14, units(refused) + 16]).toEqual([25, 30]);
+    expect([refused.length + 15, units(refused) + 18]).toEqual([26, 32]);
+    expect([refused.length + 16, units(refused) + 20]).toEqual([27, 34]);
+    expect([refused.length + 17, units(refused) + 22]).toEqual([28, 36]);
+    expect([refused.length + 19, units(refused) + 24]).toEqual([30, 38]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -309,7 +309,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the 2-printing band empt
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(12);
+    expect(byClause.size).toBe(10);
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     // The 5-printing declaration clause D368 disqualified on SHAPE ("in addition to

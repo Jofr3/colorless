@@ -1118,6 +1118,15 @@ describe("FIXTURE_POOL, swept as its own population", () => {
         // file's ops; the list edit is the whole cost.
         "fix-loveimpact",
         "fix-trnidoking",
+        // 🆕🆕 D393 — TWO MORE, AND THIS TIME THE POSSESSIVE IS NOT A CHOICE. The
+        // EVOLVE PAIR's second printing is Misty's Starmie `sv10-047`, whose printed
+        // clause names *"Misty's Staryu"* — the arm compares that name to the clause
+        // key byte for byte, so a tidy "Staryu" would make the demonstrator match no
+        // printed sentence at all. D392 paid this toll deliberately; D393 could not
+        // avoid it. Neither body is reachable from this file's ops; the list edit is
+        // the whole cost.
+        "fix-abruptflash",
+        "fix-mistystaryu",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

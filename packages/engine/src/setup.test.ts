@@ -302,6 +302,11 @@ describe("placement", () => {
       // carries no damage, so there is nothing for a heal to remove. The stamp's
       // absence is `null` and not `0`, because turn 0 is a real turn number here.
       healedTurn: null,
+      // …and it has not EVOLVED either (D393): a card placed from the hand arrives
+      // as itself, and the one placement that is an evolution builds its body by
+      // spread in `evolveOnto` rather than through `makeInPlay`. `null` and not `0`
+      // for `healedTurn`'s reason one line up — turn 0 is a real turn number here.
+      evolvedTurn: null,
     });
   });
 

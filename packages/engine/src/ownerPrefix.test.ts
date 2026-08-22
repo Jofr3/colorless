@@ -763,6 +763,15 @@ describe("D200 — what the predicate reads", () => {
         // why the plain `fix-nidoking` (named "Nidoking", no prefix) does not.
         "fix-loveimpact/Team Rocket",
         "fix-trnidoking/Team Rocket",
+        // 🆕🆕 D393 — AND A SECOND OWNER JOINS THE POOL FOR THE FIRST TIME IN THIS
+        // RUN. The EVOLVE PAIR's Misty's Starmie `sv10-047` and its printed
+        // pre-evolution Misty's Staryu both carry `Misty's `, so `ownerPokemon`
+        // matches a possessive this predicate has never been shown before — which is
+        // what makes these two rows evidence that the arm reads the PREFIX and not a
+        // fixed list of owners. Neither was added for this test; both are the printed
+        // bytes the D393 clause key compares against.
+        "fix-abruptflash/Misty",
+        "fix-mistystaryu/Misty",
       ].sort(),
     );
   });
