@@ -982,6 +982,39 @@ export interface InPlayPokemon {
       would have to move the EVENT too, and changing one without the other is what
       this helper exists to prevent. */
   healedTurn: number | null;
+  /** 🆕🆕 **D393 — the turn this Pokémon last EVOLVED, or `null` if it never has.**
+      Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`): *"If this Pokémon evolved
+      from Gimmighoul during this turn, this attack does 90 more damage."* and Misty's
+      Starmie `sv10-047` "Abrupt Flash" ({W}, `60+`): *"If this Pokémon evolved from
+      Misty's Staryu during this turn, this attack does 80 more damage."* — the bonus
+      residue's only PAIR on one mechanism, and the two printings that make this field
+      worth a `MATCH_RECORD_VERSION` bump between them rather than one at a time.
+
+      🛑 **A TURN STAMP AT `healedTurn`'s ADDRESS, AND FOR D124's THREE REASONS A
+      THIRD TIME.** (1) NO TURN-BOUNDARY CLEAR: *"during this turn"* is
+      `evolvedTurn === state.turn`, so the fact expires by arithmetic. (2) NO SEAT
+      GUARD: the stamp is on the Pokémon and `state.turn` is global, so an evolution
+      made on somebody else's turn reads FALSE once the asker's own turn begins.
+      (3) It SURVIVES every zone move, because `retreat` and `switchInto` spread the
+      whole body — and unlike the two stamps above it does not have to survive
+      EVOLUTION, since §10 forbids a second evolution on the turn of the first.
+
+      🛑 **AND THE NAME IS NOT STORED BESIDE IT, WHICH IS THE HALF THAT MAKES THIS
+      ONE FIELD RATHER THAN TWO.** The printed clause names the PRE-EVOLUTION card,
+      and `evolveOnto` appends rather than replaces (`stack: [...from.stack,
+      evolutionUid]`), so the card evolved FROM is always the entry one below the
+      stack TOP. Storing the name would be a second spelling of a fact the stack
+      already holds, and the two could disagree; `conditionHolds` reads the stack.
+
+      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A `GameState`
+      RECORD.** A per-seat `Record<Seat, …>` answers *"did this SEAT evolve something
+      from Gimmighoul this turn"*, and the two come apart on an ordinary board: evolve
+      a BENCHED body and attack with an untouched Active. ⚠️ **AND THE COMPILER DID
+      NOT SEPARATE THEM** — measured at this head under `tsc -b --force`, a REQUIRED
+      field here costs 1 file / 1 site (`makeInPlay`) and a REQUIRED `GameState` field
+      costs 1 file / 1 site (`setup.ts`), the same tie D386 measured. The printed
+      subject decides it, not the arithmetic. */
+  evolvedTurn: number | null;
 }
 
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
@@ -1027,6 +1060,10 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // …and nothing has healed it either: a card entering play carries no damage,
     // so there is nothing to remove. The seven `HEALED` sites stamp it (D386).
     healedTurn: null,
+    // …and it has not evolved either: a card entering play arrives as itself, from
+    // the hand or a deck search, and the ONE placement that is an evolution
+    // (`evolveOnto`, below) builds its body by SPREAD and never through here (D393).
+    evolvedTurn: null,
   };
 }
 
@@ -1849,6 +1886,18 @@ export function evolveOnto(
     boostedAttack: null,
     markers: [],
     turnPlayed: state.turn,
+    // 🆕🆕 D393 — the evolution stamp, and this is the ENGINE'S ONLY WRITE SITE:
+    // every route that places an evolution — `evolve` and `rareCandy` through
+    // `placeEvolution` (turn.ts), and all four `evolveFromDeck*` ops through this
+    // function directly — comes here, so the hand route and the deck route cannot
+    // disagree about it any more than they can about the §10 clears above.
+    //
+    // ⚠️ IT IS THE ONE FIELD ON THIS LITERAL THAT IS NOT A CLEAR. Everything above
+    // is §10 shedding an effect; this RECORDS that the shedding happened, which is
+    // the fact the printed clause asks about. `turnPlayed` one line up cannot answer
+    // it: the two are equal here and differ on every body that was PLAYED this turn
+    // without evolving, which is the ordinary board Gholdengo's +90 must miss.
+    evolvedTurn: state.turn,
   };
   const side = state.players[seat];
   const updated: PlayerSide =

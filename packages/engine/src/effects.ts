@@ -2294,6 +2294,48 @@ export type BoardCondition =
       the table and the engine announces it — so the union's public-state invariant
       holds. */
   | { kind: "yourActiveHealedThisTurn" }
+  /** 🆕🆕 **D393 — §10, YOUR Active Pokémon EVOLVED FROM a named card during the
+      current turn.** Gholdengo `sv08-131` "Strike It Rich" ({M}, `30+`, index 0 of
+      TWO): *"If this Pokémon evolved from Gimmighoul during this turn, this attack
+      does 90 more damage."* and Misty's Starmie `sv10-047` "Abrupt Flash" ({W},
+      `60+`, index 0 of ONE): *"If this Pokémon evolved from Misty's Staryu during
+      this turn, this attack does 80 more damage."* — **2 sentences / 2 legal
+      printings**, the residue's ONLY pair on one mechanism and the reason this was
+      priced as a pair: either sentence alone buys the same field for half the
+      printings.
+
+      🛑 **THE FOURTH MEMBER TO READ A TURN EVENT AND THE THIRD TO BUY NEW STATE,
+      AT THE SAME ADDRESS AND ON THE SAME ARGUMENT AS THE TWO ABOVE.**
+      `InPlayPokemon` gained `evolvedTurn: number | null` (types.ts), a turn STAMP
+      rather than a flag, written at `evolveOnto`'s single placement literal. D116's
+      pronoun rule resolves the printed *"this Pokémon"* to the reader's Active for a
+      damage bonus, so the member is named for the board fact.
+
+      🛑 **THE `name` IS THE PRE-EVOLUTION CARD AND IT IS READ OFF THE STACK, NOT
+      OUT OF A SECOND FIELD.** `evolveOnto` APPENDS (`stack: [...from.stack,
+      evolutionUid]`), so the card evolved FROM is the entry one below the TOP —
+      §1.2's identity rule read one position down. That is what keeps this member at
+      ONE new field: a stored name would be a second spelling of a fact the stack
+      already holds, and D222's rule is that two readers of one fact become one
+      reader.
+
+      🛑 **AND IT IS DELIBERATELY NOT `topCardOf(...)?.evolveFrom`.** That column is
+      a fact about the CARD and is true on a Gholdengo that has sat on the Bench for
+      four turns, or one placed straight into play by a test or a future op; this
+      member is a fact about what HAPPENED. The two agree on every board reached by
+      an ordinary evolution and disagree on every board reached any other way, which
+      is why the printed sentence's verb is "evolved" and not "evolves from".
+
+      ⚠️ **A PER-SEAT `GameState` RECORD WAS PRICED AND REFUSED, AND NOT ON COST.**
+      The compiler ties the two at 1 file / 1 site each (measured under `tsc -b
+      --force` at this head). What separates them is the printed SUBJECT: a seat
+      record answers *"did this seat evolve something from Gimmighoul this turn"* and
+      pays the bonus to an Active that did nothing, on the ordinary board where a
+      BENCHED body is the one that evolved.
+
+      Whether a Pokémon evolved is PUBLIC — the evolution card is placed face-up and
+      `POKEMON_EVOLVED` announces it — so the union's public-state invariant holds. */
+  | { kind: "yourActiveEvolvedFromThisTurn"; name: string }
   /** D242 — "you have **4 or more Team Rocket's Pokémon** in play" (Team Rocket's
       Mewtwo ex `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver",
       six legal printings, the biggest reprint group in the ABILITY column that
@@ -10447,6 +10489,42 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // a swept "was healed"/"wasn't healed" pair does not exist, so this row has no
   // polarity partner to keep apart from — measured, not assumed.
   ["this Pokémon was healed during this turn", { kind: "yourActiveHealedThisTurn" }],
+  // 🆕🆕 D393 — the per-turn cluster's FOURTH and FIFTH entries, and the first pair
+  // in it that shares one member: Gholdengo `sv08-131` "Strike It Rich" ({M}, 30+,
+  // +90, at index **0** of two — index 1 is D312's registry "Surf Back") and Misty's
+  // Starmie `sv10-047` "Abrupt Flash" ({W}, 60+, +80, index 0 of ONE). ONE legal
+  // printing each. D116's pronoun rule again: "this Pokémon" is the attacker, which
+  // for a damage bonus is the reader's Active.
+  //
+  // 🛑 **TWO LITERAL ROWS AND EMPHATICALLY NOT A SIXTH TEMPLATE**, for D392's reason
+  // one cluster up and it is the same reason at full strength: the token that varies
+  // is a card NAME, which is open-ended and has nothing to fail against, so a pattern
+  // `^this Pokémon evolved from (.+) during this turn$` would resolve *"evolved from
+  // Rayquaza"* to a predicate that answers FALSE forever and silently. Every
+  // shipped template captures into a CLOSED vocabulary (`CLAUSE_POKEMON_TYPES`,
+  // `CLAUSE_ENERGY_TOKENS`) through `literalClauseRow`; a name has no such map, and
+  // the four `yourBenchHasNamed` rows above settled this family's answer at D367.
+  //
+  // ⚠️ **THE SECOND KEY CARRIES A POSSESSIVE (U+0027), WHICH IS THE FIRST TIME IN
+  // FIVE SLICES A NEW CLAUSE KEY BEARS AN APOSTROPHE AT ALL** — so `literalClauseRow`'s
+  // U+2019 fold reaches this row for real rather than as standing insurance, and
+  // `clauseApostrophe.test.ts`'s BEARING half moves for the first time in five.
+  //
+  // ⚠️ **AND A THIRD PRINTING OF THIS MEMBER'S SENTENCE EXISTS AND IS *NOT* BOUGHT
+  // HERE**: the legal column also prints *"Your opponent discards a card from their
+  // hand. If this Pokémon evolved from Salandit during this turn, your opponent
+  // discards 2 more cards."* (1 printing). It is not in the bonus residue because
+  // its CONSEQUENT is a discard rather than damage, so the outer skeleton refuses it
+  // before this table is consulted — the member is one consequent away from serving
+  // it, and nothing here has to change when that day comes.
+  [
+    "this Pokémon evolved from Gimmighoul during this turn",
+    { kind: "yourActiveEvolvedFromThisTurn", name: "Gimmighoul" },
+  ],
+  [
+    "this Pokémon evolved from Misty's Staryu during this turn",
+    { kind: "yourActiveEvolvedFromThisTurn", name: "Misty's Staryu" },
+  ],
   // 🆕 D326 — the "revenge" clause, and the family's first that reads a window
   // which has CLOSED rather than the board in front of the attacker: Iron Leaves
   // sv06-019 "Avenging Edge" (100+, +60), Revavroom sv06-125 "Rally Back"

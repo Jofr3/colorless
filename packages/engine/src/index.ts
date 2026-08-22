@@ -12108,6 +12108,82 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.298.0 → **THE EVOLVE PAIR — A PRINTED PAIR ON ONE MECHANISM, AND THE
+    RUN'S SECOND `MATCH_RECORD_VERSION` BUMP.**
+
+      Gholdengo `sv08-131` "Strike It Rich" ({M}, **30+**, index **0** of TWO —
+      index 1 is D312's registry "Surf Back", so this card now has a REGISTRY
+      attack and a DERIVED one and the index-precision claim is live in both
+      directions)
+        *"If this Pokémon evolved from Gimmighoul during this turn, this attack
+         does 90 more damage."*
+        **1 legal printing**
+
+      Misty's Starmie `sv10-047` "Abrupt Flash" ({W}, **60+**, index 0 of ONE)
+        *"If this Pokémon evolved from Misty's Staryu during this turn, this attack
+         does 80 more damage."*
+        **1 legal printing**
+
+    🛑 **PRICED AS A PAIR, WHICH IS WHAT ENDS FIVE SLICES OF A SATURATED 1-PRINTING
+    BAND.** The two sentences differ only in the card they name, so ONE member and
+    ONE field serve both; either alone would have bought exactly the same state for
+    half the printings, and the residue's remaining singletons cannot be combined
+    that way at all.
+
+    🛑 **THE UNION HALF WAS THE EASY HALF AND THE STATE HALF WAS THE SLICE.**
+    `BoardCondition` gains `yourActiveEvolvedFromThisTurn { name }` — a MEMBER by
+    D391's rule (the clause is a new board FACT, not a filter on an existing one)
+    and by D392's confirmation of it. `InPlayPokemon` gains `evolvedTurn:
+    number | null`, D386's exact shape at D386's exact address, written at
+    `evolveOnto`'s single placement literal (types.ts).
+
+    ⚠️ **THE PREDICTION THE HANDOFF ATTACHED WAS PER-BODY, IT WAS TESTED, AND IT
+    HELD — BUT NOT FOR THE REASON THE HANDOFF GAVE.** The handoff's falsifier (a)
+    was *"if the placement has a single call site that already knows the turn, a
+    seat record may be cheaper to WRITE"*. **THAT SITE EXISTS**: `evolveOnto` is the
+    ONE placement in the engine (the hand routes reach it through `placeEvolution`,
+    all four deck routes call it directly) and it already writes `turnPlayed:
+    state.turn`. So the antecedent was TRUE and the consequent was FALSE — a seat
+    record would have been written at the SAME single site, buying no cheapness at
+    all, because the cost of a per-body stamp was never the threading.
+    **MEASURED**: a REQUIRED field on `InPlayPokemon` costs 1 file / 1 site
+    (`makeInPlay`) under `tsc -b --force`; a REQUIRED `GameState` record costs 1
+    file / 1 site (`setup.ts`). **THE COMPILER TIES THEM, EXACTLY AS IT TIED
+    D386's THREE.** Falsifier (b) did not fire: `redactedInPlayOf` (redact.ts)
+    names its fields one by one rather than spreading the body, and `packages/schema`
+    has never carried `InPlayPokemon` at all, so both take ZERO bytes.
+
+    🛑 **SO THE SHAPE IS SETTLED BY THE PRINTED SUBJECT, WHICH IS THE ONLY
+    INSTRUMENT THAT SEPARATED THEM.** *"this Pokémon"* is one BODY. A per-seat
+    record answers *"did this seat evolve something from Gimmighoul this turn"* and
+    pays the +90 to an Active that did nothing, on the ordinary board where the
+    body that evolved is on the BENCH. That board is built and driven in
+    `evolvedFromBonus.test.ts` §4 rather than argued.
+
+    🆕 **AND THE NAME IS FREE, WHICH IS WHY ONE FIELD IS ENOUGH.** `evolveOnto`
+    APPENDS (`stack: [...from.stack, evolutionUid]`), so the card evolved FROM is
+    `stack[length - 2]` — §1.2's identity rule read one position down. A stored
+    name would be a second spelling of a fact the stack already holds (D222).
+
+    🛑 **`MATCH_RECORD_VERSION` 23 → 24**, the first bump since D386 and its exact
+    case: a new REQUIRED field on a structure persisted inside `MatchRecord.state`.
+    A v23 record's bodies carry no `evolvedTurn`, so `undefined === state.turn`
+    reads FALSE and silently withholds the bonus on the one turn the card is about.
+
+    ⚠️ **TWO LITERAL CLAUSE ROWS, NOT A SIXTH TEMPLATE** — D392's reason at full
+    strength: the varying token is a card NAME, which is open-ended and has nothing
+    to fail against, where every shipped pattern captures into a CLOSED vocabulary.
+
+    ⚠️ **AND A PREMISE DIED WITHOUT ITS `find` MOVING (D384's class).** D312 wrote
+    that Gholdengo's index 0 is *"an evolved-this-turn conditional this engine does
+    not read"* and pinned it in `registry.ts`, `surfBack.test.ts` and the mutant
+    `D312-surf-back-authors-the-wrong-attack-index`. This slice makes it read. All
+    three were re-transcribed in the same commit; the mutant is still KILLED and now
+    kills for a SECOND reason, which is what its `what` had to be rewritten to say.
+
+    engineVersion 0.297.0 → **0.298.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.297.0 → **THE SUBSTRING NAME READ — AND THE FIRST TEST OF D391's OWN
     RULE, WHICH HELD.**
 
@@ -15849,7 +15925,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.297.0";
+export const engineVersion = "0.298.0";
 
 export type {
   ApplyResult,

@@ -5158,7 +5158,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.297.0";',
+    find: 'export const engineVersion = "0.298.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8225,7 +8225,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D312-surf-back-authors-the-wrong-attack-index",
     decision: "D312",
-    what: '🛑 THE INDEX-PRECISION ROW. Gholdengo\'s program moves from index 1 to index 0, so "Strike It Rich" (an evolved-this-turn damage conditional this engine does not read) inherits the self-removal and "Surf Back" falls back to unsimulated. D187 lost a whole intermediate result to exactly this mistake, and it is the FIRST registry attack in the table that is not at index 0 -- so the census rung that used to assume index 0 was rewritten by this slice to catch it',
+    what: '🛑 THE INDEX-PRECISION ROW. Gholdengo\'s program moves from index 1 to index 0, so "Strike It Rich" inherits the self-removal and "Surf Back" falls back to unsimulated. D187 lost a whole intermediate result to exactly this mistake, and it is the FIRST registry attack in the table that is not at index 0 -- so the census rung that used to assume index 0 was rewritten by D312 to catch it. 🆕🆕 D393 -- THIS `what` IS RE-WRITTEN RATHER THAN LEFT, BECAUSE ITS PREMISE DIED WITHOUT THE `find` MOVING A CHARACTER (D384\'s class, and the clause table being a Map whose last duplicate key wins means the failure mode would have been a SILENT FALSE SURVIVOR rather than an ERROR). It used to read "(an evolved-this-turn damage conditional this engine does not read)"; D393 BUILT that sentence, so index 0 now carries a DERIVED +90 off `yourActiveEvolvedFromThisTurn`. The mutant is STILL KILLED and now kills for a SECOND reason: `programFor(id)?.attack` wins over `deriveAttackEffect`, so the slipped index MASKS the printed bonus as well as unsimulating "Surf Back". Gholdengo is the engine\'s first card with a REGISTRY attack at one index and a DERIVED one at another',
     file: "packages/engine/src/registry.ts",
     find: "const SURF_BACK: CardProgram = {\n  attack: {\n    1: [",
     replace: "const SURF_BACK: CardProgram = {\n  attack: {\n    0: [",
@@ -10376,10 +10376,19 @@ export const MUTANTS: Mutant[] = [
     //    every board, so a player who healed and attacked silently loses the printed
     //    +100. That is the QUIETEST failure this row has ever guarded, and the same
     //    guard catches it - which is the argument for ONE row here, made a third time.
+    // ⚠️ RE-POINTED AGAIN AT D393 (23 -> 24), IN THE SAME COMMIT AS THE BUMP, and the
+    //    `replace` TIGHTENED to 23 for D386's reason unchanged. The record this row now
+    //    accepts is a v23 one whose in-play Pokemon carry no `evolvedTurn` at all - D386's
+    //    class at D386's address, a MISSING REQUIRED FIELD on `InPlayPokemon`, so a resumed
+    //    match reads `undefined === state.turn` FALSE and silently withholds Gholdengo's
+    //    printed +90 from the player who evolved into it on the very turn the match was
+    //    interrupted. 🛑 AND `precheck.ts` IS WHAT FOUND THIS ROW AT ZERO MATCHES, on
+    //    the same run and in the same second as the version bump - the fourth consecutive
+    //    slice on which the whole-corpus `find` pass paid for itself before a sweep ran.
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 23;",
-    replace: "export const MATCH_RECORD_VERSION = 22;",
+    find: "export const MATCH_RECORD_VERSION = 24;",
+    replace: "export const MATCH_RECORD_VERSION = 23;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a

@@ -11252,8 +11252,18 @@ const TELEPORTER: CardProgram = {
     ⚠️ **INDEX 1 ONLY, AND THE INDEX-PRECISION IS THE POINT** (`CardProgram.attack`'s
     own rule, and D187's inflated intermediate result). Index 0 is *"Strike It
     Rich"* — *"If this Pokémon evolved from Gimmighoul during this turn, this
-    attack does 90 more damage."* — an evolved-this-turn conditional this engine
-    does not read, and it must stay UNSIMULATED rather than inherit this program.
+    attack does 90 more damage."*
+
+    🆕🆕 **D393 — AND THAT SENTENCE IS NOW READ, WHICH SHARPENS THIS ROW RATHER
+    THAN RETIRING IT.** D312 wrote *"an evolved-this-turn conditional this engine
+    does not read"*, and D393 built it (`yourActiveEvolvedFromThisTurn`, a DERIVED
+    bonus off `CONDITIONAL_DAMAGE_CLAUSES`). **THIS IS THE FIRST CARD IN THE
+    CATALOG WITH A REGISTRY ATTACK AT ONE INDEX AND A DERIVED ONE AT ANOTHER**, so
+    the index-precision claim now has teeth in BOTH directions: authoring index 0
+    here would not merely leave "Surf Back" unsimulated, it would MASK a bonus the
+    deriver already pays, because `programFor(id)?.attack` wins over
+    `deriveAttackEffect`. The claim is unchanged and its consequence is worse —
+    which is why the row is re-transcribed and not rewritten.
 
     🛑 **THE `optional` WRAPPER IS THE PRINTED "You may", AND HERE IT IS REAL
     WHERE AN ABILITY'S WOULD NOT BE.** `TELEPORTER` above takes no wrapper because

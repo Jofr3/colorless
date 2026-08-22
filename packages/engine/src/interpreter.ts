@@ -3667,6 +3667,33 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && active.healedTurn === state.turn;
     }
+    case "yourActiveEvolvedFromThisTurn": {
+      // 🆕🆕 D393 — the arm above at a THIRD stamp on the same body, with the same
+      // absence of a seat guard for the same reason (`evolvedTurn` is written on the
+      // Pokémon, `state.turn` is global), plus one thing neither of the two above
+      // needs: the printed clause NAMES the card evolved from, so the stamp alone is
+      // not the whole answer.
+      //
+      // 🛑 THE NAME COMES OFF THE STACK, ONE BELOW THE TOP. `evolveOnto` (types.ts)
+      // APPENDS the evolution card, so `stack[length - 2]` is the card this body
+      // evolved from — §1.2's "the top is the identity" read one position down. The
+      // `- 2` is guarded by `!== undefined` rather than by a length check, because a
+      // stack of one gives `stack[-1]`, which is `undefined` and not a throw.
+      //
+      // ⚠️ THE TWO TESTS ARE BOTH LOAD-BEARING AND THEY FAIL ON DIFFERENT BOARDS.
+      // Dropping the turn test pays Gholdengo's +90 forever after it evolves;
+      // dropping the name test pays Misty's Starmie's +80 to a Gholdengo that evolved
+      // this turn from something else. `evolvedFromBonus.test.ts` §3 drives both.
+      //
+      // The `?? false` — via the strict `===` against a possibly-undefined card — is
+      // the unresolvable-uid path `yourBenchHasNamed` carries: `cardOfUid` returns
+      // undefined for a uid the catalog cannot resolve, and an unreadable card must
+      // never pay a bonus.
+      const active = state.players[seat].active;
+      if (active === null || active.evolvedTurn !== state.turn) return false;
+      const beneath = active.stack[active.stack.length - 2];
+      return beneath !== undefined && cardOfUid(state, beneath)?.name === cond.name;
+    }
     case "yourBenchAtLeast":
       // 🆕🆕 D366 — Victini "V-Force": the printed *"4 or fewer Benched Pokémon"*
       // under a cancel, so what is stored is the POSITIVE floor 5 and the test is
@@ -4346,6 +4373,14 @@ export function conditionNote(cond: BoardCondition): string {
       // "your Active Pokémon". Everything after it is the printed clause verbatim,
       // the "during" included — the family's timing word is dropped by nobody here.
       return "your Active Pokémon was healed during this turn";
+    case "yourActiveEvolvedFromThisTurn":
+      // 🆕🆕 D393 — the same resolved pronoun as the two arms above (D116): the
+      // printed subject is "this Pokémon" and a note read off the board by a person
+      // has to spell it "your Active Pokémon". Everything after it is the printed
+      // clause verbatim, the pre-evolution NAME and the "during" included — so the
+      // note and the two `CONDITIONAL_DAMAGE_CLAUSES` keys differ by exactly that
+      // one resolved pronoun and nothing else.
+      return `your Active Pokémon evolved from ${cond.name} during this turn`;
     case "yourBenchAtLeast":
       // The POSITIVE fact, in the printed noun — a note is read off the board by a
       // person, so it says what the player must HAVE and never repeats the

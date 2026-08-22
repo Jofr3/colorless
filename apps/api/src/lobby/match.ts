@@ -882,8 +882,32 @@ export interface MatchRecord {
     NOT MOVE IT.** D383 widened a persisted op field's union, D384 added a nullary
     `BoardCondition` member and D385 added another: a v22 byte string means exactly
     what it meant under all three. Adding a FIELD to a persisted structure is the
-    case none of that covers. */
-export const MATCH_RECORD_VERSION = 23;
+    case none of that covers.
+
+    🆕🆕 **23 → 24 AT D393, AND IT IS D386's CASE AT D386's ADDRESS — A SECOND
+    MISSING REQUIRED FIELD ON `InPlayPokemon`.** D393 gave the body a THIRD
+    per-turn stamp, `evolvedTurn: number | null`, so the printed *"If this Pokémon
+    evolved from Gimmighoul during this turn"* (Gholdengo `sv08-131`) and *"…from
+    Misty's Staryu…"* (Misty's Starmie `sv10-047`) have somewhere to read. It is
+    **REQUIRED** for `healedTurn`'s reason verbatim: a nullable-but-present field
+    is a fact the model always knows, an absent one is a fact it has merely not
+    been told, and `conditionHolds` must never confuse the two.
+
+    🛑 **AND THIS ONE IS SHARPER THAN D386's, BECAUSE THE MISREAD IS NOT SYMMETRIC.**
+    A resumed v23 record's in-play Pokémon carry no `evolvedTurn` at all, so
+    `undefined === state.turn` reads FALSE — which silently withholds a +90 from a
+    player who DID evolve into the attacker on the turn the match was interrupted,
+    on the one turn the whole card is about. The record is refused rather than
+    resumed into a board where the bonus has quietly stopped existing.
+
+    ⚠️ **THE SIX SLICES BETWEEN D386 AND THIS ONE DID NOT MOVE IT, AND THE
+    DISCRIMINATOR ABOVE IS WHY.** D387 through D390 and D392 each added a
+    `BoardCondition` MEMBER (a v23 byte string still means what it meant — a new
+    member cannot re-interpret a stored one) and D391 added an OPTIONAL field
+    (absent still means unnarrowed). **A NEW REQUIRED FIELD ON A PERSISTED
+    STRUCTURE IS THE ONE CASE NONE OF THAT COVERS**, and it is the second time in
+    eight slices that the answer has been anything but "stays". */
+export const MATCH_RECORD_VERSION = 24;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
