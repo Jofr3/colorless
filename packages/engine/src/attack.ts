@@ -681,6 +681,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     printedEffect === null || attackGateOf(state, active, index) === undefined
       ? null
       : splitAttackGateClause(printedEffect);
+  // 🆕🆕 D395 — `gateSplit.body` IS `""` FOR A CLAUSE-ONLY PRINTING (Miltank
+  // `sv08.5-081` idx 1, whose whole printed effect text is the gate clause), and
+  // that flows through unchanged because every site below already spells "no text"
+  // as `=== null || === ""` — the requirement split, all four damage readers and
+  // the ATTACK_EFFECT_SKIPPED block itself. So the report the split exists to make
+  // honest is not made at all here, which is the right answer: the engine enforced
+  // the whole sentence at the §8 seam and has nothing left to skip.
   const gated = gateSplit === null ? printedEffect : gateSplit.body;
   // 🆕🆕 D363 — THE SECOND SPLIT, AND IT IS READ BEFORE IT IS SPENT rather than
   // after. D282's gate clause was already discharged at the declaration seam when
@@ -702,7 +709,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   //
   // 🆕🆕 D364 — **THE ORDER OF THESE TWO SPLITS IS A COMMITMENT, AND NOTHING
   // PRINTED CAN CURRENTLY REVEAL IT.** Re-measured over all 1,732 legal attack
-  // units: `splitAttackGateClause` claims 13, `splitAttackRequirementClause`
+  // units: `splitAttackGateClause` claims 14 (13 until D395 added the clause-only
+  // Miltank `sv08.5-081` row), `splitAttackRequirementClause`
   // claims 2, and **0 units are claimed by both** — the two strippers are DISJOINT
   // on the catalog, so running them in either order answers every printed string
   // identically. That is exactly why a `splitHead` that loops over a sentence list

@@ -18006,24 +18006,47 @@ function costSnipeProgram(
   ];
 }
 
-/** D282 — THE THREE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING
-    clause. Anchored at `^` and at the sentence break (`. `), never floating: the
-    clause is the FIRST sentence or this is not a split.
+/** D282 — THE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING clause.
+    Anchored at `^` and at the sentence break (`. `), never floating: the clause is
+    the FIRST sentence or this is not a split.
 
-    ⚠️ THE LIST IS CLOSED AND IT IS THE CENSUS, NOT A GUESS. `attackIndexGate.ts`'s
-    population is 13 legal printings in exactly these three shapes (7 BAN + 3 GATE
-    + 3 LICENCE), the pool-wide query returns 15 (the 2 extra are Bombirdier ex
-    `sv04-156`/`-234`, `legal_standard = 0`, and print the BAN shape), and there is
-    no fourth spelling in the catalog. Re-derived 2026-08-08. */
+    ⚠️ THE LIST IS CLOSED AND IT IS THE CENSUS, NOT A GUESS. The FIRST-TURN family
+    is 13 legal printings in exactly the first three shapes (7 BAN + 3 GATE + 3
+    LICENCE), the pool-wide query returns 15 (the 2 extra are Bombirdier ex
+    `sv04-156`/`-234`, `legal_standard = 0`, and print the BAN shape), and that
+    family has no fourth spelling in the catalog. Re-derived 2026-08-08.
+
+    🆕🆕 **D395 — THE FOURTH ROW IS A SECOND FAMILY, NOT A FOURTH SPELLING OF THE
+    FIRST, AND IT IS THE ROW THIS LIST'S "no fourth spelling" SENTENCE DID NOT
+    COVER.** *"You can use this attack only if this Pokémon used Rollout during
+    your last turn."* — Miltank `sv08.5-081` idx 1 "Moomoo Rolling", **1 legal
+    printing** (`legalAttackCorpus()`). It shares the `onlyIf` POLARITY and nothing
+    else: the condition is a per-body window (`yourActiveUsedAttackLastTurn`,
+    D394) rather than a §4 turn-order fact, so nothing about the first three
+    generalises to it and the row is authored whole.
+
+    🛑 **A LITERAL AND NOT `^You can use this attack only if (.+)\\.$`**, which is
+    D394's refusal at the sibling seam, re-derived here rather than inherited: the
+    quoted ATTACK NAME is open-ended, and a template would turn every unreadable
+    condition into a gate that bars a legal attack FOREVER and silently. ⚠️ **AND
+    THE FAILURE DIRECTION IS WORSE HERE THAN THERE.** D394's template would have
+    cost a damage BONUS that never pays; this one costs the DECLARATION — a
+    mis-parsed condition is an attack the player can never use, which no board in
+    the suite would look wrong on. A literal row lands on the loud unresolved path
+    instead. */
 const ATTACK_GATE_CLAUSES: readonly string[] = [
   "If you go second, you can't use this attack during your first turn.",
   "If you go first, you can use this attack during your first turn.",
   "You can use this attack only if you go second, and only during your first turn.",
+  "You can use this attack only if this Pokémon used Rollout during your last turn.",
 ];
 
 /** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off the FRONT of
     an attack's effect text and hand back the body sentence behind it, or `null`
-    when the text does not open with one.
+    when the text does not open with one. 🆕🆕 **D395 — `body` IS `""` WHEN THE
+    CLAUSE IS THE WHOLE PRINTED TEXT**, which is a MATCH and not a miss: the two
+    answers are "this string opens with an accounted-for clause" (an object, whose
+    `body` may be empty) and "it does not" (`null`).
 
     ⚠️ **THIS IS NOT A LOOSENING OF THE SEVEN READERS AND MUST NEVER BECOME ONE.**
     Every deriver in this file is `^…$` anchored by deliberate policy, and the five
@@ -18042,10 +18065,17 @@ const ATTACK_GATE_CLAUSES: readonly string[] = [
     readers unchanged and an unread clause stays loud, which is the pre-D282
     behaviour byte for byte.
 
-    ⚠️ **THE POPULATION IS 13 AND THAT IS SMALLER THAN THE CASE FOR A GENERIC
-    SENTENCE-LIST COMPOSER, WHICH IS WHY THIS IS NOT ONE.** Re-queried before a
-    line shipped (remote D1, 2026-08-08; re-run unchanged 2026-08-18): 1,732 legal
-    attack units, 613 multi-sentence, and of those only 16 open with `If ` at all.
+    ⚠️ **THE POPULATION IS 14 (13 UNTIL D395) AND THAT IS SMALLER THAN THE CASE
+    FOR A GENERIC SENTENCE-LIST COMPOSER, WHICH IS WHY THIS IS NOT ONE.**
+    Re-queried before a line shipped (remote D1, 2026-08-08; re-run unchanged
+    2026-08-18): 1,732 legal attack units, 613 multi-sentence, and of those only 16
+    open with `If ` at all. 🆕🆕 **D395's PRINTING IS IN NEITHER OF THOSE TWO
+    POPULATIONS**, which is the whole reason the "no fourth spelling" sentence
+    above could be true and still miss it: Miltank `sv08.5-081` is a SINGLE
+    sentence (so it is not in the 613) and it opens `You can use this attack only
+    if…` (so it could never be in the 16). **A CENSUS OVER MULTI-SENTENCE TEXT
+    CANNOT SEE A CLAUSE-ONLY PRINTING AT ALL** — the two filters that defined this
+    family's population each excluded it independently, and neither is wrong.
 
     🆕🆕 D364 — **THE 16 PARTITION AS 10 + 6, AND THE SENTENCE ABOVE USED TO SAY
     SOMETHING THAT READS AS 10 + 3 + 6.** The three arms are NOT three slices of
@@ -18065,9 +18095,10 @@ const ATTACK_GATE_CLAUSES: readonly string[] = [
     counts were never wrong; the attribution was. `splitOrder.test.ts` §1 asserts
     the partition so the prose cannot rot again.
 
-    So the leading-clause population a split can serve is **exactly the 13 gates
-    and not one printing more**, and a generic composer would be scaffolding for a
-    family of one. Build the narrow thing. ⚠️ AND THE SECOND STRIPPER DID NOT
+    So the leading-clause population a split can serve is **exactly the 14 gates
+    and not one printing more** (13 until D395 added the clause-only row), and a
+    generic composer would be scaffolding for a family of one. Build the narrow
+    thing. ⚠️ AND THE SECOND STRIPPER DID NOT
     CHANGE THAT: D364 measured `splitAttackGateClause` and
     `splitAttackRequirementClause` **DISJOINT over all 1,732 legal units** — 0 are
     claimed by both — so a `splitHead` that loops would still answer no printed
@@ -18079,15 +18110,35 @@ const ATTACK_GATE_CLAUSES: readonly string[] = [
 export function splitAttackGateClause(text: string): { clause: string; body: string } | null {
   const trimmed = text.trim();
   for (const clause of ATTACK_GATE_CLAUSES) {
+    // 🆕🆕 D395 — THE CLAUSE-ONLY PRINTING, AND THIS BRANCH IS THE REVERSAL OF A
+    // REFUSAL THAT NAMED ITS OWN TRIGGER. Until this slice the loop below read
+    // `body === "" ? null : {clause, body}`, and its comment said so in as many
+    // words: *"No legal printing is clause-only today (all 13 carry a body), so
+    // this is a guard against a future one rather than a live path."* Miltank
+    // `sv08.5-081` idx 1 IS that future printing — its whole printed effect text
+    // is the gate clause — so the premise the refusal rested on has expired and
+    // the branch it guarded is now the live one.
+    //
+    // 🛑 **AND IT IS THE DIFFERENCE BETWEEN A TRUE REPORT AND A FALSE ONE.** With
+    // `null` the caller keeps the WHOLE printed string, every reader refuses it,
+    // and `ATTACK_EFFECT_SKIPPED` fires naming a sentence the engine enforced in
+    // full at the §8 declaration seam — which is D282's own defect ("half their
+    // sentence resolved and the other half invisible") in its purest form, with
+    // the resolved half being all of it. `""` is what every downstream site in
+    // `attack.ts` already spells as "no text": the requirement split, all four
+    // damage readers and the skip block itself are each guarded
+    // `=== null || === ""`, so the "is there a remainder" question the old comment
+    // worried about is already answered there and answered correctly.
+    //
+    // ⚠️ Checked BEFORE `startsWith` and not folded into it: the `. ` sentence
+    // break is what makes this list a LEADING-clause matcher rather than a
+    // substring search, and a clause-only string has no trailing space to match.
+    if (trimmed === clause) return { clause, body: "" };
     if (!trimmed.startsWith(`${clause} `)) continue;
     const body = trimmed.slice(clause.length + 1).trim();
-    // A clause with nothing behind it is not a split — there is no body to read,
-    // and returning `{body: ""}` would make the caller's "is there a remainder"
-    // question depend on an empty string rather than on this answer. No legal
-    // printing is clause-only today (all 13 carry a body), so this is a guard
-    // against a future one rather than a live path, and it is the safe direction:
-    // the whole printed string goes to the readers unchanged.
-    return body === "" ? null : { clause, body };
+    // Whitespace-only behind the clause is the same answer as nothing behind it,
+    // by the branch above — the trim is what makes the two one case.
+    return { clause, body };
   }
   return null;
 }

@@ -2789,9 +2789,19 @@ export interface CardProgram {
       yourFirstTurn])`, authored identically on both — so a polarity TOKEN is the
       honest carrier and two parallel index maps would be one map with the
       discriminator hoisted into a field name. ⚠️ The two index SETS are in fact
-      disjoint per body (measured: every one of the 13 is at index 0, and no body
-      prints two of these clauses), so two maps would have been *green*; that is
-      an accident of today's pool and not a reason.
+      disjoint per body (measured: no body prints two of these clauses), so two
+      maps would have been *green*; that is an accident of today's pool and not a
+      reason.
+
+      🆕🆕 **D395 — "every one of the 13 is at index 0" WAS ALSO IN THAT SENTENCE
+      AND IS NO LONGER TRUE.** Miltank `sv08.5-081`'s gate is at index **1**
+      ("Moomoo Rolling"), and the attack its clause NAMES is at index 0 on the same
+      card. That is the first printing on which this record's KEY can be wrong: for
+      all 13 rows before it an index-blind read answered identically, so the
+      `[attackIndex: number]` half of this type had no falsifying board anywhere in
+      the repo. It has one now, and the failure it catches is total — an index-blind
+      read gates "Rollout", which is the only attack that can ever satisfy the
+      gate.
 
       🛑 **THE LICENCE IS THE THIRD ARM AND IT CARRIES NO `BoardCondition` AT
       ALL** — D223/D277/D280 each established independently that *"If you go
@@ -6621,14 +6631,18 @@ const CHILL_TEASER_TOY: CardProgram = {
   ],
 };
 
-// ── D281 — THE PER-ATTACK-INDEX TIMING GATE: 13 legal printings, 5 bodies ─────
+// ── D281 — THE PER-ATTACK-INDEX TIMING GATE: 14 legal printings, 6 bodies ─────
+//    (13 / 5 until D395 added Miltank `sv08.5-081`, the first at a NON-ZERO index)
 //
-// 🛑 **ALL THIRTEEN SHIP GATE-ONLY, AND THAT IS TWO NUMBERS AND NOT ONE.**
-// **13 printings whose GATE is built; 0 whose BODY is.** Each of the five printed
-// bodies is refused on a mechanism this slice does not have, NAMED here rather
-// than left as a gap — the effect stays on the loud ATTACK_EFFECT_SKIPPED path
-// while the gate is honoured at the §8 declaration seam, which is the coverage
-// strategy this repo has used since M4 and not a shortcut invented here.
+// 🛑 **ALL FOURTEEN SHIP GATE-ONLY, AND THAT IS TWO NUMBERS AND NOT ONE.**
+// **14 printings whose GATE is built; 0 whose BODY is.** Each of the first five
+// printed bodies is refused on a mechanism this slice does not have, NAMED here
+// rather than left as a gap — the effect stays on the loud ATTACK_EFFECT_SKIPPED
+// path while the gate is honoured at the §8 declaration seam, which is the
+// coverage strategy this repo has used since M4 and not a shortcut invented here.
+// 🆕🆕 **THE SIXTH IS GATE-ONLY FOR THE OPPOSITE REASON**: Miltank's printed text
+// IS the clause, so there is no body to refuse and nothing stays loud — see that
+// row's own block.
 //
 // ⚠️ **A GATE-ONLY ROW MOVES NO `BUILT.attack` UNIT**, deliberately: that column
 // is "the printed attack SENTENCE resolves", and half a sentence does not. What it
@@ -6637,11 +6651,15 @@ const CHILL_TEASER_TOY: CardProgram = {
 // EIGHTH non-attack surface `censusAtHead.test.ts` warned would arrive, and it is
 // the first that is not an Ability. See that file's D281 note.
 //
-// ⚠️ **EVERY ONE OF THE 13 IS AT INDEX 0** (measured, `json_each(attacks_json)`
+// ⚠️ **EVERY ONE OF THE FIRST 13 IS AT INDEX 0** (measured, `json_each(attacks_json)`
 // with the key returned) — asserted from the CATALOG in the suite rather than
 // trusted here, because a per-INDEX field authored off a reprint's assumed layout
 // is the one way this shape fails silently: four of the five bodies carry a
-// SECOND attack that must not inherit the clause.
+// SECOND attack that must not inherit the clause. 🆕🆕 **AND UNTIL D395 THAT WAS
+// TRUE OF ALL OF THEM, WHICH MADE THE MAP'S KEY UNFALSIFIABLE ON EVERY BOARD IN
+// THE REPO.** Miltank's gate is at index **1**, and the attack its clause names is
+// at index 0 on the same card — so an index-blind read locks the card out of the
+// game entirely. The 14th row is the one that gives the key a board.
 
 /** Terapagos ex `sv07-128`/`-170`/`-173`/`sv08.5-092`/`-169`/`-180`/`svp-165`
     (**7 legal printings**, one byte-identical `attacks_json`) — idx 0 "Unified
@@ -6911,6 +6929,62 @@ const VOLBEAT_QUICK_SIGN: CardProgram = {
         and the split collects these **2** — **1151 → 1157**, a move of SIX. */
 const EXEGGCUTE_PRECOCIOUS_EVOLUTION: CardProgram = {
   attackGate: { 0: { kind: "firstTurnExempt" } },
+};
+
+/** 🆕🆕 D395 — Miltank `sv08.5-081` (**1 legal printing**) — idx **1** "Moomoo
+    Rolling" ({C}{C}, flat `100`): *"You can use this attack only if this Pokémon
+    used Rollout during your last turn."* Its own idx 0 is "Rollout" ({C}, 20, no
+    effect text) — the attack the clause NAMES is printed on the same card, one
+    index up.
+
+    🛑 **THE FIRST GATE IN THIS FIELD THAT IS NOT AT INDEX 0, AND THAT IS THE
+    REASON THIS PRINTING IS WORTH MORE THAN ITS ONE UNIT.** D281's own comment
+    recorded that every one of its 13 is at index 0 and called that "an accident of
+    today's pool and not a reason" — so until this row, a build that ignored the
+    index entirely (`Object.values(attackGate)[0]`, or a per-BODY flag) was green on
+    every assertion in `attackIndexGate.test.ts`. The `attackGate` map's KEY had no
+    board that could falsify it. Miltank is that board: an index-blind read gates
+    "Rollout" itself, and "Rollout" is the only way to satisfy the gate — so the
+    card becomes permanently unusable, which is the deadlock §2 of
+    `rolloutGate.test.ts` drives.
+
+    🛑 **THE GATE IS A REGISTRY ROW AND NOT A DERIVED ONE, AND THE SHAPE QUESTION
+    WAS SETTLED FROM THE CATALOG BEFORE A LINE WAS WRITTEN.** `attackGate` has no
+    deriver behind it — `attackGateOf` (continuous.ts) reads `programFor(top.id)`
+    and nothing else — so building one would be new machinery, and the measurement
+    that decides it is how many legal printings it would buy that a row does not:
+    **ZERO.** The clause is 1 legal printing on 1 id (`legalAttackCorpus()`), and
+    the three shapes a deriver would also have to absorb are the 13 that already
+    carry rows. D180/D187's rule ("an arm transfers across sets; a row does not")
+    prices a FUTURE reprint, and against that stands D282's own refusal of a
+    generic composer for a family of one — plus a live cost the arm would incur
+    here and not there: the split at attack.ts fires only when a row REPRESENTS the
+    clause, so a derived gate would collapse that two-key check into a tautology
+    and re-install the "too loose" build `D282-split-fires-without-a-gate` exists
+    to refuse.
+
+    ✅ **THE BODY IS NOT REFUSED — THERE IS NO BODY**, and this row is the first of
+    the six that can say so. Every gate before it ships GATE-ONLY because its
+    printed body needs a mechanism the engine lacks; this one is gate-only because
+    the printed text is the gate and nothing else. D282's splitter now answers it
+    `{clause, body: ""}` (its own comment named this printing as the future one its
+    empty-body refusal was guarding against), so the whole sentence is accounted for
+    and `ATTACK_EFFECT_SKIPPED` does not fire.
+
+    ⚠️ **AND `BUILT.attack` STILL DOES NOT MOVE**, which is bookkeeping rather than
+    modesty: that column's split summand counts printings whose BODY a reader
+    resolves, and `resolvedByAnyReader("")` is false because every reader in
+    effects.ts is `^…$` anchored on a non-empty pattern. The census gains a THIRD
+    class here — gated, refused whole, and with no body to resolve — and
+    `censusAtHead.test.ts`'s gate section names it rather than folding it into
+    either of the two it already had. */
+const MILTANK_MOOMOO_ROLLING: CardProgram = {
+  attackGate: {
+    1: {
+      kind: "onlyIf",
+      condition: { kind: "yourActiveUsedAttackLastTurn", attack: "Rollout" },
+    },
+  },
 };
 
 /** Falkner — "Draw 2 cards. If you have a Stadium in play, draw 2 more cards."
@@ -12841,6 +12915,7 @@ const REGISTRY: Record<string, CardProgram> = {
   "sv06-009": VOLBEAT_QUICK_SIGN,
   "sv08-001": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
   "sv08-192": EXEGGCUTE_PRECOCIOUS_EVOLUTION,
+  "sv08.5-081": MILTANK_MOOMOO_ROLLING,
   "sv06-145": CARMINE,
   "sv06-204": CARMINE,
   "sv06-217": CARMINE,

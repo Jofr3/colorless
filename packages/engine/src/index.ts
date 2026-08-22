@@ -12108,6 +12108,67 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.300.0 → **THE ROLLOUT ATTACK-GATE — D394's FIELD AT THE
+    DECLARATION SEAM, AND THE FIRST BOARD ON WHICH `attackGate`'s INDEX KEY CAN BE
+    WRONG.**
+
+      Miltank `sv08.5-081` "Moomoo Rolling" ({C}{C}, flat **100**, index **1** of
+      TWO — its own index 0 is "Rollout", the attack the clause names)
+        *"You can use this attack only if this Pokémon used Rollout during your
+         last turn."*
+        **1 legal printing**
+
+    🛑 **ZERO NEW STATE, ZERO NEW VOCABULARY, AND ONE REGISTRY ROW.** D394's
+    `yourActiveUsedAttackLastTurn { attack }` serves this clause UNCHANGED, and
+    D281's `AttackTimingGate` already carries the `onlyIf` polarity over an
+    arbitrary `BoardCondition`. What the slice buys is the seam between them plus
+    the accounting D282 left unfinished.
+
+    🛑 **THE SHAPE QUESTION WAS "DERIVED OR REGISTRY ROW", AND IT WAS SETTLED BY
+    MEASURING WHAT A DERIVER WOULD BUY: ZERO ADDITIONAL LEGAL PRINTINGS.** The
+    clause is 1 printing on 1 id, and the only other gate spellings in the catalog
+    are the 13 that already carry rows — so D180/D187's "an arm transfers across
+    sets" prices a hypothetical reprint and nothing that is printed today, while
+    D282's refusal of a generic composer for a family of one prices the machinery.
+    ⚠️ **AND A DERIVER WOULD HAVE COST A GUARD, NOT JUST CODE**: `attack.ts` splits
+    the printed text ONLY when a registry row REPRESENTS the clause, so a derived
+    gate collapses that two-key check into a tautology and re-installs the
+    "too loose" build `D282-split-fires-without-a-gate` exists to refuse.
+
+    🛑 **THE FIRST GATE AT A NON-ZERO INDEX, WHICH IS WHY ONE PRINTING IS WORTH
+    MORE THAN ITS UNIT.** D281 recorded that all 13 of its printings sit at index 0
+    and called that "an accident of today's pool and not a reason" — so until this
+    row an index-blind read (`Object.values(attackGate)[0]`, or a per-BODY flag) was
+    green on every assertion in the repo. Miltank falsifies it totally: the gate is
+    at index 1 and the attack that SATISFIES the gate is at index 0, so an
+    index-blind build gates "Rollout" and the card can never be used again.
+
+    🆕 **AND THE SPLITTER'S EMPTY-BODY REFUSAL NAMED ITS OWN EXPIRY DATE.**
+    `splitAttackGateClause` returned `null` for a clause-only string and said why:
+    *"No legal printing is clause-only today (all 13 carry a body), so this is a
+    guard against a future one rather than a live path."* This is that printing —
+    its whole printed effect text is the gate — so the branch now returns
+    `{clause, body: ""}`. Without it the engine reports `ATTACK_EFFECT_SKIPPED`
+    naming a sentence it enforced in full, which is D282's own defect with the
+    resolved half being ALL of it. `""` needed no caller change: every downstream
+    site in `attack.ts` already spells "no text" as `=== null || === ""`.
+
+    ⚠️ **NO `MATCH_RECORD_VERSION` BUMP IS OWED AND THE QUESTION WAS ASKED.** The
+    slice persists nothing: `attackGate` is a CATALOG fact re-derived from the board
+    on every read (its own field doc block sweeps both halves of that), the
+    condition it carries is D394's already-persisted per-body stamp, and the split
+    is a pure function of printed text. **Stays 25.**
+
+    ⚠️ **`BUILT.attack` DOES NOT MOVE, AND THAT IS BOOKKEEPING RATHER THAN
+    MODESTY.** The census's split summand counts printings whose BODY a reader
+    resolves; this one has no body, and `resolvedByAnyReader("")` is false because
+    every reader is `^…$` anchored on a non-empty pattern. The gate census gains a
+    THIRD class instead — gated, refused whole, no body to resolve — named in
+    `censusAtHead.test.ts` rather than folded into either of the two before it.
+
+    engineVersion 0.299.0 → **0.300.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.299.0 → **THE USED-ATTACK PAIR — THE SAME SHAPE ONE FIELD OVER, AND THE
     FIRST WINDOW IN THIS UNION THAT IS NOT THE TURN IN PROGRESS.**
 
@@ -16012,7 +16073,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.299.0";
+export const engineVersion = "0.300.0";
 
 export type {
   ApplyResult,
