@@ -12108,6 +12108,102 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.295.0 → **THE OPPONENT-SEAT TYPE READ — AND A GUARD SHIPPED ONE COMMIT
+    AHEAD OF THE THING IT GUARDS.**
+
+      Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, **40+**, index 0 of TWO
+      — confirmed by id against tcgdex, which returns both printed attacks, and
+      identified by INTERSECTING two brace-free limitlesstcg `text:` searches whose
+      overlap is exactly TWO cards, of which the other is the `Future` trap)
+        *"If your opponent has any {W} Pokémon in play, this attack does 120 more
+         damage."*
+        **1 legal printing**
+
+    🛑 **THE SHAPE QUESTION HERE WAS AN *ANCHOR* QUESTION, NOT A SEAT ONE — D389 HAD
+    ALREADY SETTLED THE SEAT — AND IT IS THE FIRST IN THIS RUN WHOSE ANSWER HAD TO BE
+    BUILT BEFORE THE FEATURE.** `boardConditionForClause` consults the LITERAL table
+    and then FOUR anchored template patterns in order, and every one of the four
+    carries a comment saying *"the patterns are mutually exclusive at their anchors,
+    so order decides nothing"*. **THAT IS A CLAIM ABOUT THE WHOLE SET, AND NOT ONE
+    LINE OF THE SUITE EXECUTED IT.** It is also the class of claim a FIFTH pattern
+    can falsify **silently**: a pattern loose enough to span two anchors is invisible
+    from outside, because the earlier pattern still matches first and still returns
+    the right member — nothing moves until someone reorders them or one of them
+    declines at its vocabulary.
+
+    ⚠️ **SO THE RUNG WAS WRITTEN AND COMMITTED AT THE PREVIOUS HEAD, WITH THIS SHAPE
+    CARRIED AS AN UNBUILT ROW** (`clauseTemplateAnchors.test.ts`, `cond: null`), which
+    is the only order in which "the guard existed before the thing it guards against"
+    is a fact rather than a story. It splits each pattern at its two anchor seams and
+    drives the **5×4 = 20** head×tail hybrids, requiring every one to be refused —
+    **and the red was MEASURED**: loosening `YOUR_BENCH_TYPE_CLAUSE` to
+    `^you have any (.+) Pokémon` fails it on the exact pair that overlapped. 🛑 **AND
+    THE ONE PLACE ORDER *DOES* DECIDE SOMETHING IS PINNED SEPARATELY**, because the
+    four comments overstate their own scope: the templates are disjoint from EACH
+    OTHER, never from the LITERAL table above them —
+    *"your opponent's Active Pokémon is a Stage 1 Pokémon"* matches
+    `OPPONENT_ACTIVE_TYPE_CLAUSE` **and** is a `CONDITIONAL_DAMAGE_CLAUSES` row, and
+    the row wins only because the literal pass runs first.
+
+    ⚠️ **NEITHER NEIGHBOUR COULD BE WIDENED, AND IT IS TWO AXES AT ONCE.**
+    `opponentActiveHasType` reads the same FIELD on the right seat and the WRONG ZONE;
+    `yourBenchHasType` reads it on the wrong seat and a zone that is neither. D389's
+    grep already answers the seat half — **fifty members, not one seat field, three
+    pairs differing in the seat alone, all shipped as second members** — and the ZONE
+    half is not a relabelling at all: an Active Spot holds ONE body and "in play" is a
+    variable-size set, so *"is a {W} Pokémon"* becomes *"SOME body is"*, a quantifier
+    rather than a lookup.
+
+    🛑 **THE SPREAD IS WRONG IN TWO OPPOSITE DIRECTIONS AND BOTH ARE DRIVEN**
+    (`inPlayTypeBonus.test.ts` §5). Narrowing to the Active Spot is D279's refutation
+    on a TYPE — the printed words are "in play", so a {W} body on the opponent's BENCH
+    satisfies the clause and an Active-only reading silently UNDER-pays on exactly the
+    boards the card is for. Widening to BOTH seats (`inPlayTypesIntersect`'s spread run
+    twice) is the worse defect, because it lets the ATTACKER'S OWN side arm the clause.
+    ⚠️ **AND THE ATTACKER'S TYPE IS WHAT MAKES THAT VISIBLE**: Electivire is
+    **Lightning**, so the wrong-seat reading is not self-satisfying off the attacker
+    the way D370's Metal printings were — it needs a {W} body deliberately fielded on
+    the ATTACKER'S side, which is the board §5 builds.
+
+    ⚠️ **ZERO NEW VOCABULARY AND ZERO NEW MAP**: the token resolves through
+    `CLAUSE_POKEMON_TYPES`, which has carried BOTH notations since D367, so
+    `conditionNote` spelling `Water` for a printed `{W}` still round-trips to this
+    member through the map's other half. **AND THE TRAP IS PRINTED, ONE TOKEN AWAY**:
+    *"If your opponent has any Future Pokémon in play, this attack does 120 more
+    damage."* (Slither Wing `sv06.5-026`, 1 legal printing) is **byte-identical apart
+    from the token**, and `Future` is a banner no ingested column classifies (D204,
+    D205; D207 measured the identical shape on `Tera`). The capture stays `(.+)` so the
+    refusal happens at the MAP and the sentence stays LOUD.
+
+    ⚠️ **NO APOSTROPHE CLASS ON THIS PATTERN, AND THE CHARACTER IS WHAT DECIDES.** Its
+    two nearest siblings spell a POSSESSIVE and carry D136's `['’]`; this clause spells
+    *"your opponent **has**"* and holds no apostrophe at all — the same split
+    `clauseApostrophe.test.ts` keeps measuring between the ZONE readings and the
+    Active-Pokémon ones.
+
+    ⚠️ **THE PRICE, IN D382's UNITS: 1 printing / 2 mechanisms = 0.50** — ONE
+    parameterised `BoardCondition` member with its TWO exhaustive-switch arms, and ONE
+    anchored PATTERN reusing an existing map whole. ONE fixture and ONE dedicated 60;
+    ZERO new card predicates, readers, ops, events, prompts, choice kinds, payoff rows,
+    registry rows, `redact.ts` bytes or `packages/schema` bytes. Against the face-up
+    PRIZE row's **2 / 9 = 0.22** that is the same 2.3× margin D388 and D389 measured,
+    and the Prize row loses for the **SIXTH** consecutive slice on the same four
+    mechanisms plus `MATCH_RECORD_VERSION` 23 → 24, which this row does not owe.
+
+    ⚠️ **THE CENSUS STEP IS 1 SENTENCE / 1 PRINTING**, the 1:1 shape the last four
+    slices took. The BONUS RESIDUE goes **16 / 19 → 15 / 18**. 🛑 **THE 2-PRINTING BAND
+    STAYS EMPTY AND THE BAND RUNG IS STILL DRIVEN FROM OUTSIDE IT** — the distribution
+    moves `{1: 14, 5: 1}` → `{1: 13, 5: 1}`.
+
+    engineVersion 0.294.0 → **0.295.0**; **`MATCH_RECORD_VERSION` STAYS 23**, asked
+    rather than assumed. The one new member carries a `type: PokemonType` and is stored
+    only inside a derived `CardProgram`, never in a `MatchRecord`; a `conditionGate`
+    resolves inline and never parks; the arm is a pure READ of `active`/`bench` that
+    writes nothing; and NO field is added to `InPlayPokemon`, `PlayerSide` or
+    `GameState`. No v23 byte string can contain a member that did not exist, and none
+    means anything different under this head (D335's discriminator).
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.294.0 → **THE OPPONENT-SEAT BENCH COUNT — AND THE SEAT-PARAMETER QUESTION
     THIS RUN DEFERRED FOR SIXTEEN SLICES, SETTLED ON A RE-MEASUREMENT.**
 
@@ -15595,7 +15691,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.294.0";
+export const engineVersion = "0.295.0";
 
 export type {
   ApplyResult,

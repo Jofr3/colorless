@@ -3404,6 +3404,36 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return state.players[seat].bench.some(
         (p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type),
       );
+    case "opponentInPlayHasType":
+      // 🆕 D390 — Electivire sv05-054 "Short-Circuit Knuckle" ({C}{C}, 40+): "If
+      // your opponent has any {W} Pokémon in play, this attack does 120 more
+      // damage." The FIELD of the two arms above (`Card.types`, §8.5's read) over
+      // the ZONE of the arm below (a whole side) on the OPPONENT'S seat.
+      //
+      // 🛑 THE SPREAD IS THE MEMBER, AND IT IS WRONG IN TWO OPPOSITE DIRECTIONS.
+      // Narrowing to `activeTop(state, otherSeat(seat))` is D279's refutation on a
+      // type: the printed words are "in play", so a {W} body on the opponent's
+      // BENCH satisfies the clause and an Active-only reading silently UNDER-pays
+      // on exactly the boards this card is for. Widening to BOTH seats — the arm
+      // below's spread run twice — is the opposite defect and the worse one, since
+      // it would let the ATTACKER'S OWN side arm the clause. `inPlayTypeBonus.test.ts`
+      // §5 drives both readings red on one board rather than arguing them.
+      //
+      // `otherSeat(seat)` and never a hard-coded "p2": `conditionHolds` is
+      // seat-RELATIVE, and a body copied down from a same-seat sibling is green on
+      // every board where the two sides happen to match.
+      //
+      // `.includes` and never `types[0] ===` — the field is an array and dual types
+      // are a real printing. `types` is null on Trainers and Energy, hence the
+      // `?? []`. Read through `topCardOf` for the arm below's §1.2 reason verbatim:
+      // the stack TOP is the Pokémon's identity, so evolving the opponent's {W}
+      // Basic into another type DISARMS the clause mid-turn. An opponent with
+      // nothing in play is FALSE, and that is forced by the printed "any" rather
+      // than chosen (D369).
+      return [
+        state.players[otherSeat(seat)].active,
+        ...state.players[otherSeat(seat)].bench,
+      ].some((p) => p !== null && (topCardOf(state, p)?.types ?? []).includes(cond.type));
     case "inPlayTypesIntersect": {
       // 🆕 D375 — "any of your Pokémon in play are the same type as any of your
       // opponent's Pokémon in play" (Enamorus sv06-093 "Love Resonance", +120). The
@@ -4164,6 +4194,21 @@ export function conditionNote(cond: BoardCondition): string {
       // map's spelled-out half. Asserted both directions in
       // `benchTypeBonus.test.ts` §3.
       return `you have any ${cond.type} Pokémon on your Bench`;
+    case "opponentInPlayHasType":
+      // 🆕 D390 — built from the parameter, and the type reads as the printed NAME
+      // rather than the brace code, which is D118's rule and the arm directly above
+      // applied one seat and one zone over: the card prints `{W}` and this note
+      // answers "Water", because a reject pill and a HUD tooltip are read off the
+      // board by a person and a brace code is a card-face glyph.
+      //
+      // ⚠️ So it does NOT round-trip to the printed bytes, and it DOES round-trip to
+      // the same MEMBER — through `CLAUSE_POKEMON_TYPES`'s spelled-out half, which is
+      // the stronger of the two properties and the one D367's widening bought for the
+      // whole family. Asserted in both directions in `inPlayTypeBonus.test.ts` §3.
+      //
+      // The printed subject "your opponent" survives where D116 drops "this Pokémon":
+      // it names a side the reader can see, not a pronoun pointing back at the card.
+      return `your opponent has any ${cond.type} Pokémon in play`;
     case "inPlayTypesIntersect":
       // 🆕 D375 — VERBATIM, and this is the family's first CROSS-BOARD note that is.
       // The printed clause names no pronoun for D116 to resolve and no card-face

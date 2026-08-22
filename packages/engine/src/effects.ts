@@ -1703,6 +1703,71 @@ export type BoardCondition =
       Resistance make in §8.5. Types are public the moment a Pokémon is in play, so
       the union's public-state invariant holds. */
   | { kind: "yourBenchHasType"; type: PokemonType }
+  /** 🆕 **D390 — YOUR OPPONENT HAS AT LEAST ONE Pokémon OF TYPE `type` ANYWHERE IN
+      PLAY.** Electivire `sv05-054` "Short-Circuit Knuckle" ({C}{C}, **40+**, +120,
+      index 0 of TWO — confirmed by id against tcgdex, which returns both attacks):
+      *"If your opponent has any {W} Pokémon in play, this attack does 120 more
+      damage."* — the ONE legal printing, measured off `legalAttackCorpus()`.
+
+      🛑 **IT IS A THIRD ZONE AND A SECOND SEAT AT ONCE, AND THAT IS WHY NEITHER
+      NEIGHBOUR COULD BE WIDENED INTO IT.** `opponentActiveHasType` reads the same
+      FIELD on the right seat and the WRONG ZONE (one body, not the board);
+      `yourBenchHasType` reads the same field on the wrong seat AND a zone that is
+      neither. D131 says widen before you add, so both were priced that way first —
+      and **D389 had already settled the SEAT half of the question for this union**:
+      `BoardCondition` holds fifty members and NOT ONE carries a seat field, three
+      pairs differ in the seat alone, and every one of them shipped as a SECOND
+      MEMBER. A seat parameter on `opponentActiveHasType` would also be the wrong
+      axis twice over, because the ZONE change is not a relabelling: an Active Spot
+      holds ONE body and "in play" is a variable-size set, so "is a {W} Pokémon"
+      becomes "SOME body is", which is a quantifier and not a lookup.
+
+      ⚠️ **THE READ IS `[side.active, ...side.bench]` ON THE OPPONENT'S SIDE, AND
+      *BOTH* HALVES OF THAT ARE LOAD-BEARING IN OPPOSITE DIRECTIONS.** Narrowing to
+      the Active Spot is D279's refutation on a type: the printed words are "in
+      play", and a {W} body sitting on the opponent's BENCH satisfies the clause,
+      so an Active-only reading silently UNDER-pays on exactly the boards the card
+      is for. Widening to BOTH seats — `inPlayTypesIntersect`'s spread, run twice —
+      is the opposite defect and the more dangerous one here, because it would let
+      the ATTACKER'S OWN side arm the clause; `inPlayTypeBonus.test.ts` §5 drives
+      both wrong readings on a board rather than arguing them.
+
+      ⚠️ **THE PRINTED WORD IS "any", SO THE PREDICATE IS EXISTENTIAL** — an
+      opponent with nothing in play is FALSE because a positive existential over an
+      empty set cannot be true, not because a convention was chosen (D369's
+      distinction). In a legal game the opponent always has an Active, so the empty
+      case is reachable only mid-resolution; `.some` gives it for free, which is
+      exactly why it wants a rung and not a comment.
+
+      PARAMETERISED, the family's **FIFTH** parameterised clause and the **FOURTH**
+      resolved through `CLAUSE_POKEMON_TYPES` (D118's rule, `yourBenchHasType`'s
+      argument one seat and one zone over): the sentence varies on exactly ONE
+      token, that token resolves through the SAME closed vocabulary its three
+      siblings use — in BOTH notations since D367 — and a literal row would cost a
+      row per type per notation forever. **AND IT IS THE FIFTH ANCHORED TEMPLATE IN
+      `boardConditionForClause`, WHICH IS THE PART THAT NEEDED A GUARD RATHER THAN
+      A COMMENT**: the four patterns before it each claim in a comment that the set
+      is mutually exclusive at its anchors, and `clauseTemplateAnchors.test.ts`
+      (written at the PREVIOUS head, before this pattern existed) executes that
+      claim as a 5×4 head×tail cross product.
+
+      ⚠️ **THE TRAP IS THE SAME SENTENCE ONE TOKEN OVER, AND IT IS PRINTED.**
+      *"If your opponent has any Future Pokémon in play, this attack does 120 more
+      damage."* — Slither Wing `sv06.5-026` "Iron Smasher", **byte-identical apart
+      from the token**, at 1 legal printing. `Future` is a banner NO COLUMN
+      CLASSIFIES (D204/D205, and D207's measurement of the same shape on `Tera`),
+      so the capture is deliberately loose, the vocabulary refuses it, and the
+      sentence stays on the LOUD `ATTACK_EFFECT_SKIPPED` path. **THE MAP IS THE
+      VOCABULARY, NOT THE REGEX.**
+
+      Read through `topCardOf` (§1.2) like every other type-reading member: a
+      stack's TOP is the Pokémon's identity, so evolving an opponent's {W} Basic
+      into a body of another type DISARMS the clause mid-turn. `.includes` and never
+      `types[0] ===` — the field is an array and dual types are a real printing, the
+      same reading §8.5 makes. `types` is null on Trainers and Energy, hence the
+      `?? []`. Types are public the moment a Pokémon is in play, so the union's
+      public-state invariant holds and `redact.ts` needs no byte. */
+  | { kind: "opponentInPlayHasType"; type: PokemonType }
   /** 🆕🆕 **D375 — YOUR SIDE AND YOUR OPPONENT'S SIDE SHARE A Pokémon TYPE.**
       *"If any of your Pokémon in play are the same type as any of your opponent's
       Pokémon in play, this attack does 120 more damage."* — Enamorus `sv06-093`
@@ -10481,6 +10546,41 @@ const YOUR_BENCH_TYPE_CLAUSE = /^you have any (.+) Pokémon on your Bench$/;
 const OPPONENT_ACTIVE_RESISTANCE_CLAUSE =
   /^your opponent['’]s Active Pokémon has (.+) Resistance$/;
 
+/** 🆕 D390 — the family's FIFTH parameterised clause, and the first that reads a
+    type over an OPPONENT'S WHOLE BOARD: "If your opponent has any <type> Pokémon
+    in play, this attack does N more damage." — **1 legal printing**, printed
+    `{W}` (Electivire `sv05-054` "Short-Circuit Knuckle", {C}{C}, `40+`).
+
+    ⚠️ **ZERO NEW VOCABULARY.** It shares `CLAUSE_POKEMON_TYPES` with the three
+    patterns above for their reason verbatim: a token meaning "Water" in one clause
+    of this family must mean Water in every other one, and the sharing is what makes
+    the note's round trip work ACROSS NOTATIONS — the card prints `{W}`,
+    `conditionNote` answers `Water` (D118), and the re-derived sentence lands on the
+    same member through the map's spelled-out half.
+
+    ⚠️ **NO APOSTROPHE CLASS, AND THAT IS THE CHARACTER THAT DECIDES.** The two
+    patterns above spell a POSSESSIVE ("your opponent's Active Pokémon") and carry
+    D136's `['’]` because a re-ingest normalising the punctuation would un-derive
+    them silently. This clause spells "your opponent **has**" and holds no
+    apostrophe at all, so there is nothing to class — the same split
+    `clauseApostrophe.test.ts` keeps measuring between the ZONE readings and the
+    Active-Pokémon ones.
+
+    ⚠️ THE CAPTURE IS LOOSE (`(.+)`) for the reason the three patterns above are:
+    the MAP is the vocabulary and not the regex. The trap is PRINTED and sits one
+    token away — *"your opponent has any Future Pokémon in play"* (Slither Wing
+    `sv06.5-026`, 1 legal printing) is byte-identical apart from the token, and
+    `Future` is a banner no ingested column classifies (D204/D205). It reaches this
+    lookup, MISSES it, falls through to null and stays LOUD, which is the whole
+    reason the alternation is not hand-kept.
+
+    🛑 AND IT IS THE FIFTH ANCHORED PATTERN, WHICH MADE THE APPEND-LAST CLAIM WORTH
+    EXECUTING RATHER THAN RESTATING — see `boardConditionForClause` below and
+    `clauseTemplateAnchors.test.ts`, which was written at the PREVIOUS head, with
+    this pattern's shape carried as an unbuilt row, so the guard is older than the
+    thing it guards. */
+const OPPONENT_IN_PLAY_TYPE_CLAUSE = /^your opponent has any (.+) Pokémon in play$/;
+
 /** THE APOSTROPHE FOLD (D137) — the LITERAL-TABLE half of the hardening D136 gave
     the regexes, and the ONE site every exact lookup on printed text goes through.
 
@@ -10620,6 +10720,24 @@ function boardConditionForClause(clause: string): BoardCondition | null {
   if (activeResistance !== null) {
     const type = literalClauseRow(CLAUSE_POKEMON_TYPES, activeResistance[1] ?? "");
     if (type !== undefined) return { kind: "opponentActiveHasResistance", type };
+  }
+  // 🆕 D390 — the same lookup on the same map, one SEAT and one ZONE past the two
+  // above: the opponent's whole board rather than one body of it. Appended LAST for
+  // D370's and D371's reason — but the reason itself is no longer only a comment.
+  // 🛑 EACH OF THE FOUR PATTERNS ABOVE STATES "the set is mutually exclusive at its
+  // anchors, so order decides nothing", and until D390 that claim about the WHOLE
+  // SET was executed by nothing: a fifth pattern loose enough to span two anchors
+  // would be INVISIBLE, because the earlier pattern still wins and still returns
+  // the right member. `clauseTemplateAnchors.test.ts` — written at the head BEFORE
+  // this pattern existed, carrying this shape as an unbuilt row — drives the whole
+  // 5×4 head×tail cross product and requires every hybrid to be refused. So
+  // "appending keeps it true by construction" is now a measurement, and the one
+  // place order really does decide something (the LITERAL table above, which
+  // `"…is a Stage 1 Pokémon"` genuinely collides with) is pinned separately.
+  const inPlayType = OPPONENT_IN_PLAY_TYPE_CLAUSE.exec(clause);
+  if (inPlayType !== null) {
+    const type = literalClauseRow(CLAUSE_POKEMON_TYPES, inPlayType[1] ?? "");
+    if (type !== undefined) return { kind: "opponentInPlayHasType", type };
   }
   return null;
 }

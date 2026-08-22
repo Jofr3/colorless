@@ -11523,6 +11523,71 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Metal", "Colorless", "Colorless"], name: "Slicing Blade", damage: 100 },
     ],
   },
+  /** 🆕 D390 — THE OPPONENT-SEAT IN-PLAY TYPE DEMONSTRATOR. Electivire `sv05-054`,
+      transcribed and not interpolated (D306): the real card prints **TWO** attacks and
+      so does this, at their printed indices, and the second is the CONTROL a suite
+      about a bonus needs — "Electroslug" ({L}{L}{C}{C}, a flat 140) is an attack on
+      the same body whose damage this clause cannot move.
+
+      🛑 **THE PRINTED TYPE IS `Lightning`, AND THAT IS THE ONE FIELD THIS SUITE COULD
+      NOT HAVE INVENTED.** D370's bench-type printings are METAL bodies reading a METAL
+      clause, so an "in play" misreading there satisfies itself off the attacker. Here
+      the clause reads `{W}` on a `{L}` attacker, so the both-seats misreading needs a
+      Water body deliberately fielded on the ATTACKER'S side to show — which is exactly
+      the board `inPlayTypeBonus.test.ts` §5 builds.
+
+      The `40+` marker is REAL and load-bearing: the reader consumes the "+" and
+      attack.ts drops the printed base into the gate, so a flat `40` would exercise the
+      wrong half of the assembly. 40 bare, 160 boosted.
+
+      A **Stage 1** with 140 HP and retreat 3, all printed, and the printed ×2 Fighting
+      Weakness is transcribed too — inert here, because nothing in this suite attacks
+      the attacker, and carried anyway rather than trimmed to what the tests happen to
+      read (D306). `evolveFrom` is deliberately NULL: this pool seats it with
+      `setActiveFromDeck`, and inventing a pre-evolution name would be a datum nothing
+      printed.
+
+      ⚠️ **A `fix-*` ID, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the 978-row / 6-set manifest, and `sv05`
+      is in none of the six. The NAME spells no possessive, so the three
+      `/^[A-Z][A-Za-z' ]*'s /` sweeps stand still. */
+  "fix-shortcircuit": {
+    ...blank,
+    id: "fix-shortcircuit",
+    name: "Fixlectivire",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 140,
+    types: ["Lightning"],
+    retreat: 3,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Short-Circuit Knuckle",
+        damage: "40+",
+        effect: "If your opponent has any {W} Pokémon in play, this attack does 120 more damage.",
+      },
+      {
+        cost: ["Lightning", "Lightning", "Colorless", "Colorless"],
+        name: "Electroslug",
+        damage: 140,
+      },
+    ],
+  },
+  /** 🆕 D390 — the two WATER bodies the clause is told apart on. `fix-fairybody`
+      (D370, a real type that is not this one) is the FALSE case and is reused rather
+      than re-cast.
+
+      * `fix-waterbody` — single-typed `Water`, the plain TRUE case, and the body both
+        seats field so the SEAT can be varied with the type held still;
+      * `fix-inplaydual` — `["Fire", "Water"]`, and the ORDER is the point. D370's
+        `fix-dualbody` is `["Water", "Metal"]`, which separates `.includes` from an
+        equality on `types[0]` for a **Metal** clause and NOT for a Water one — under
+        a `{W}` reading its Water sits at index 0 and the wrong reading passes. So this
+        member needs Water at a NON-ZERO index or its `.includes` is untested. */
+  "fix-waterbody": battler("fix-waterbody", { hp: 60, types: ["Water"] }),
+  "fix-inplaydual": battler("fix-inplaydual", { hp: 60, types: ["Fire", "Water"] }),
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -12347,6 +12412,43 @@ export const OPPONENT_BENCH_COUNT_DECK = deckOf({
   "fix-bigbody": 8, // 200 HP — survives the boosted 120, so no KO tail interferes
   "fix-metal-energy": 8, // Basic {M} — the first symbol of Deleting Slash
   "fix-energy": 28, // Basic {C} — the second
+});
+
+/** 🆕 D390 — the OPPONENT-SEAT IN-PLAY TYPE board (`inPlayTypeBonus.test.ts`). Its
+    own 60 on D270's rule, and the cast is the smallest that can pose the question:
+    the clause reads a TYPE over a whole SIDE, so the suite needs bodies it can put
+    in either seat's Active Spot AND on either seat's Bench, and nothing else.
+
+      • `fix-shortcircuit` — Electivire's printed "Short-Circuit Knuckle" ({C}{C},
+        `40+`) at its printed index 0, the ONE legal printing of the sentence, with
+        the printed "Electroslug" (a flat 140) at index 1 as the control attack;
+      • `fix-waterbody` (60 HP, `Water`) at **8** — the body the clause is about, and
+        eight because BOTH seats have to be able to field one Active and several
+        Benched at once, which is the board the seat rung needs;
+      • `fix-inplaydual` (60 HP, `["Fire", "Water"]`) — Water at a NON-ZERO index,
+        the one board that separates `types.includes(t)` from `types[0] ===`;
+      • `fix-fairybody` (60 HP, `Fairy`) — a REAL type that is not this one, the
+        FALSE case, reused from D370's cast rather than re-invented;
+      • `fix-bigbody` (200 HP) — the defender, chosen against the BOOSTED total:
+        40 + 120 = 160 leaves it standing and so does the control's 140, so no §8.1
+        Prize tail ever runs underneath an assertion whose subject is a damage number;
+      • `fix-lightning-energy` / `fix-energy` — the {L}{L} of the control attack and
+        the {C}{C} of the printed one.
+
+    🛑 **NO MODIFIER OF ANY KIND, AND NO SECOND ATTACKER.** Nothing in this 60 can
+    change a damage number except which bodies are in play and on which side — which
+    is what makes a 40 and a 160 attributable. `fix-bigbody` is `Colorless`, so the
+    defender itself can never arm the clause by accident.
+
+    4 + 8 + 4 + 4 + 8 + 4 + 28 = **60**. */
+export const IN_PLAY_TYPE_DECK = deckOf({
+  "fix-shortcircuit": 4, // Electivire — "Short-Circuit Knuckle" ({C}{C}, 40+): the +120
+  "fix-waterbody": 8, // 60 HP Water — the body the clause reads, on EITHER seat
+  "fix-inplaydual": 4, // ["Fire","Water"] — Water at index 1, the `.includes` board
+  "fix-fairybody": 4, // 60 HP Fairy — a real type that is not Water, the FALSE case
+  "fix-bigbody": 8, // 200 HP Colorless — survives the boosted 160, and arms nothing
+  "fix-lightning-energy": 4, // Basic {L} — the two Lightning symbols of the control
+  "fix-energy": 28, // Basic {C} — the printed cost of "Short-Circuit Knuckle"
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({
