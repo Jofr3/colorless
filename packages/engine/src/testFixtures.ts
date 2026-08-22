@@ -10880,6 +10880,82 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 60,
     types: ["Water"],
   }),
+  /** 🆕🆕 D394 — Falinks `sv07-088`, transcribed WHOLE (D306): the printed 110 HP,
+      the {P} weakness, the retreat 2, and BOTH attacks in their printed order.
+
+      🛑 **THE PAIR ON ONE CARD IS THE POINT, AND IT IS WHY INDEX 1 IS THE ONE THIS
+      SLICE BUYS.** "Form Ranks" (index 0, {C}, no damage at all) is the attack the
+      clause NAMES, and "All-Out Attack" (index 1) is the attack that reads it — so
+      a board that drives this fixture has to spend a whole turn on an attack that
+      deals nothing, which is exactly the two-turn combo the printing is balanced
+      around and exactly the board a per-seat record gets wrong.
+
+      ⚠️ INDEX 0's printed sentence is a DECK SEARCH and derives a real program that
+      can PARK, which is not incidental: the parked route into `finishAttack` is the
+      one that carries the attack name on the `attackEpilogue` stage rather than in
+      scope, and this fixture is what drives it. */
+  "fix-alloutattack": {
+    ...blank,
+    id: "fix-alloutattack",
+    name: "Falinks",
+    category: "Pokemon",
+    stage: "Basic",
+    hp: 110,
+    types: ["Fighting"],
+    retreat: 2,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Form Ranks",
+        effect:
+          "Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "All-Out Attack",
+        damage: "30+",
+        effect:
+          "If this Pokémon used Form Ranks during your last turn, this attack does 90 more damage.",
+      },
+    ],
+  },
+  /** 🆕🆕 D394 — Weezing `sv09-092`, transcribed WHOLE (D306): the printed 130 HP,
+      the {F} weakness, the retreat 2, the `evolveFrom` chain and BOTH attacks.
+
+      ⚠️ **THE `evolveFrom` IS TRANSCRIBED AND DELIBERATELY NOT DRIVEN.** This
+      slice's clause is about what the body DID, not about how it got here, so no
+      board below evolves it — and the chain is kept anyway because D306 says
+      transcribe the card, and because a successor pricing an evolve/attack
+      interaction should not have to re-fetch it. It makes this the pool's newest
+      Stage 1, which moves `stage1Bonus.test.ts`'s pool-wide sweep by one. */
+  "fix-crazyblast": {
+    ...blank,
+    id: "fix-crazyblast",
+    name: "Weezing",
+    category: "Pokemon",
+    stage: "Stage1",
+    evolveFrom: "Koffing",
+    hp: 130,
+    types: ["Darkness"],
+    retreat: 2,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Pervasive Gas",
+        damage: 30,
+        effect: "Your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Darkness", "Colorless"],
+        name: "Crazy Blast",
+        damage: "50+",
+        effect:
+          "If this Pokémon used Pervasive Gas during your last turn, this attack does 120 more damage.",
+      },
+    ],
+  },
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12775,6 +12851,32 @@ export const EVOLVED_FROM_DECK = deckOf({
   "fix-titan": 20, // 340 HP, no attacks — survives the boosted 120, and the dominant starter
   "fix-metal-energy": 12, // Basic {M} — "Strike It Rich"'s printed cost
   "fix-water-energy": 12, // Basic {W} — "Abrupt Flash"'s printed cost
+});
+
+/** 🆕🆕 D394 — a DEDICATED deck, `EVOLVED_FROM_DECK`'s shape one slice on, with **no
+    modifier of any kind and no second attacker**: nothing in it can move a damage
+    number except which attack the attacker used on its LAST turn. That is what makes
+    every 30 / 120 and 50 / 170 in `usedAttackBonus.test.ts` attributable to the
+    clause.
+
+    ⚠️ **`fix-titan` IS THE FAR SEAT FOR D393's REASON AND ONE MORE.** 340 HP with no
+    attacks survives the boosted 170 without a §8.1 Prize tail landing under a damage
+    assertion — and it also cannot retaliate, which matters here because this slice's
+    boards span THREE turns rather than one, so a far seat that could attack would get
+    a turn in the middle of every case.
+
+    ⚠️ **AND IT CARRIES SPARE BASICS ON PURPOSE**: Falinks's index 0 is a deck search
+    that puts up to 2 Basic Pokémon onto the Bench, so the deck must be able to answer
+    it — a deck with nothing to find would make that attack resolve trivially and hide
+    the parked route into `finishAttack` this slice's stage field exists for. */
+export const USED_ATTACK_DECK = deckOf({
+  "fix-alloutattack": 4, // Falinks — "Form Ranks" (idx 0) then "All-Out Attack" (30+): the +90
+  "fix-crazyblast": 4, // Weezing — "Pervasive Gas" (idx 0) then "Crazy Blast" (50+): the +120
+  "fix-titan": 16, // 340 HP, no attacks — survives the boosted 170, and the dominant starter
+  "fix-basic-1": 8, // plain Basics for "Form Ranks" to find, and legal openings
+  "fix-victim": 4, // 30 HP — OHKO'd by "Pervasive Gas"'s printed 30, so a KO can PARK
+  "fix-dark-energy": 12, // Basic {D} — pays "Pervasive Gas" and half of "Crazy Blast"
+  "fix-energy": 12, // Basic {C} — pays both Falinks costs and "Crazy Blast"'s {C}
 });
 
 export const STADIUM_PRESENCE_DECK = deckOf({

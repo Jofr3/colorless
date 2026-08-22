@@ -603,6 +603,52 @@ export interface BoostedAttack {
   amount: number;
 }
 
+/** 🆕🆕 §8 (D394) — WHICH attack this Pokémon last USED, and on WHICH turn. Two
+    printed sentences, ONE legal printing each, and they differ only in the attack
+    they name:
+
+      "If this Pokémon used Form Ranks during your last turn, this attack does
+       90 more damage."                                                      (1)
+      "If this Pokémon used Pervasive Gas during your last turn, this attack does
+       120 more damage."                                                     (1)
+
+    — Falinks `sv07-088` "All-Out Attack" ({C}{C}, `30+`, index 1 of TWO, naming
+    its own index 0) and Weezing `sv09-092` "Crazy Blast" ({D}{C}, `50+`, index 1
+    of TWO, naming its own index 0).
+
+    🛑 **A NAME AND NOT AN INDEX, WHICH IS `LockedAttack`'s ANSWER INVERTED AND FOR
+    `LockedAttack`'s OWN REASON.** D154 stored an INDEX because every consumer of
+    that record asks per index (the §8 gate compares `action.index`, both payability
+    projections build rows by `attacks.map`), and the printed proper noun was
+    resolved ONCE at the install. This record's only consumer is
+    `conditionHolds`, which compares against a printed clause key that is a NAME —
+    so the same rule ("translate at the site that reads the printed token") lands on
+    the other side. **An index would also be the WRONG FACT here**: the record
+    outlives the turn it was written on, and a body that evolves between the two
+    turns renumbers its own attacks.
+
+    ⚠️ **ONE SLOT IS ENOUGH, AND THAT IS AN ARGUMENT ABOUT THE WRITERS AND NOT A
+    SIMPLIFICATION** (D165's test: *how many writers does this slot have, and can
+    any two of them stamp the same turn*). This slot has exactly ONE writer —
+    `finishAttack` (flow.ts) — and declaring an attack ENDS the turn (§5.3), so a
+    body can write it at most once per turn and never twice for one turn. The
+    printed window is *"your last turn"*, and the attack a body used on its last
+    turn is by construction the most recent one it used at the moment the question
+    is asked, so nothing an older entry could answer is ever asked.
+
+    THE TURN IS THE TURN THE ATTACK WAS DECLARED ON — `state.turn` as read inside
+    `finishAttack`, which runs BEFORE `turnTail` and therefore still inside the
+    attacking turn. Measured across a Knock Out PARK (both the attack-epilogue one
+    and the Checkup one), where the counter holds at the ending turn's value for the
+    whole prize/promotion sequence. */
+export interface UsedAttack {
+  /** The PRINTED attack name, byte for byte off the catalog — the token the
+      clause key carries. */
+  name: string;
+  /** The turn number the attack was declared on. */
+  turn: number;
+}
+
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
     energy and tools persist through evolution (M4). */
@@ -1015,6 +1061,58 @@ export interface InPlayPokemon {
       costs 1 file / 1 site (`setup.ts`), the same tie D386 measured. The printed
       subject decides it, not the arithmetic. */
   evolvedTurn: number | null;
+  /** 🆕🆕 **D394 — the attack this Pokémon last USED and the turn it used it, or
+      `null` if it has never attacked** (see `UsedAttack` above). Falinks
+      `sv07-088` "All-Out Attack" ({C}{C}, `30+`): *"If this Pokémon used Form
+      Ranks during your last turn, this attack does 90 more damage."* and Weezing
+      `sv09-092` "Crazy Blast" ({D}{C}, `50+`): *"If this Pokémon used Pervasive
+      Gas during your last turn, this attack does 120 more damage."* — the bonus
+      residue's last PAIR on one mechanism, and the two printings that make this
+      field worth a `MATCH_RECORD_VERSION` bump between them rather than one at a
+      time.
+
+      🛑 **A TURN STAMP AT `evolvedTurn`'s ADDRESS AND FOR D124's THREE REASONS A
+      FOURTH TIME**, but on a DIFFERENT window, which is the whole of what is new
+      here. (1) NO TURN-BOUNDARY CLEAR: *"during your last turn"* is
+      `turn === state.turn - 2`, so the fact expires by arithmetic. (2) NO SEAT
+      GUARD: the stamp is on the Pokémon and `state.turn` is global. (3) It
+      SURVIVES every zone move, because `retreat` and `switchInto` spread the whole
+      body — and it MUST, since the printing this field exists for is asked on a
+      LATER turn than the one it was written on, so a body that retreated and came
+      back is exactly the board the clause is about.
+
+      🛑 **THE WINDOW IS `state.turn - 2`, D143's NUMBER REFLECTED, AND IT WAS
+      MEASURED RATHER THAN ASSUMED.** `preventAttackUse` and `BoostedAttack` both
+      stamp *"during your next turn"* as `state.turn + 2` because declaring an
+      attack ends the turn and the turn after the declaring one is the opponent's;
+      *"during your last turn"* is that same claim read backwards. The measurement
+      that settles it is a KO PARK: `turnTail` queues exactly ONE `startTurn` and
+      the KO's prize/promotion stages are spliced in FRONT of it, so a Knock Out —
+      from the attack epilogue OR from the Checkup — holds `state.turn` at the
+      ending turn's value for the whole interrupt and the counter still advances by
+      exactly 2 between a seat's consecutive turns. **A `- 1` would be the
+      opponent's clock and would read a stamp no body of this seat can carry.**
+
+      ⚠️ **AND THE PARITY DOES THE SEAT CHECK FOR FREE.** `state.turn - 2` has the
+      same parity as `state.turn`, and a body is only ever stamped on a turn its own
+      controller held (the §8 gate refuses an attack from the seat that does not
+      hold `turn:action`). So evaluated OFF-TURN for the non-turn seat the
+      comparison is FALSE by construction — an honest FALSE rather than a borrowed
+      TRUE, `yourFirstTurn`'s property arrived at by arithmetic instead of by
+      operand choice.
+
+      ⚠️ **THE PRINTED SUBJECT IS "this Pokémon", WHICH IS WHY IT IS NOT A
+      `GameState` RECORD** — and this row is the one place where a per-seat record
+      had real precedent, since `lastKoTurn` answers the other closed-window
+      question that way. It fails on an ordinary board: use Pervasive Gas with the
+      Active, retreat it, and attack with a SECOND Weezing off the Bench. A seat
+      record answers *"did this SEAT use Pervasive Gas last turn"* → TRUE and pays
+      the +120 to a body that has never attacked. ⚠️ **AND THE COMPILER DID NOT
+      SEPARATE THEM, FOR THE THIRD CONSECUTIVE SLICE AT THIS ADDRESS** — measured
+      at this head under `tsc -b --force`, a REQUIRED field here costs 1 file / 1
+      site (`makeInPlay`) and a REQUIRED `GameState` record costs 1 file / 1 site
+      (`setup.ts`). The printed subject decides it, not the arithmetic. */
+  usedAttack: UsedAttack | null;
 }
 
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
@@ -1064,6 +1162,9 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // the hand or a deck search, and the ONE placement that is an evolution
     // (`evolveOnto`, below) builds its body by SPREAD and never through here (D393).
     evolvedTurn: null,
+    // …and it has not attacked either: a card entering play has never been the
+    // Attacking Pokémon, and `finishAttack` (flow.ts) is the one writer (D394).
+    usedAttack: null,
   };
 }
 
@@ -1269,8 +1370,19 @@ export type PendingStage =
       back on an old record as "fall back to the Active", i.e. exactly the bug,
       and would leave the defect one absent key away forever. That is D124's
       refusal of the soft landing, and it is what makes this stage cost
-      `MATCH_RECORD_VERSION` 11 → 12. */
-  | { kind: "attackEpilogue"; seat: Seat; uid: string }
+      `MATCH_RECORD_VERSION` 11 → 12.
+
+      🆕🆕 **`attack` IS REQUIRED FOR THE SAME REASON AND IS THE SAME KIND OF FACT
+      (D394)** — the PRINTED NAME of the attack that was declared, captured beside
+      `uid` at the one site that knows it and carried across a park unchanged.
+      `finishAttack` stamps `InPlayPokemon.usedAttack` with it, and this stage is
+      the ONE of the five routes into that function on which the name cannot be
+      re-derived: the top card's `attacks[index]` is gone from scope, and the body
+      may by then have self-switched or been shuffled away entirely. It is D189's
+      argument about `uid` with the subject changed from "which body" to "which
+      attack", and it costs `MATCH_RECORD_VERSION` 24 → 25 alongside
+      `InPlayPokemon.usedAttack` itself. */
+  | { kind: "attackEpilogue"; seat: Seat; uid: string; attack: string }
   | { kind: "startTurn"; seat: Seat };
 
 // The phase is the discriminant every action is validated against: mandatory
@@ -1583,6 +1695,30 @@ export function takenPrizes(state: GameState, seat: Seat): number {
 export function koedDuringOpponentsLastTurn(state: GameState, seat: Seat): boolean {
   const stamped = state.lastKoTurn[seat];
   return stamped !== null && stamped === state.turn - 1;
+}
+
+/** 🆕🆕 §8 (D394) — did `pokemon` use the attack printed as `attack` during the
+    turn BEFORE the one before this, i.e. during its controller's LAST turn?
+
+    A NAMED HELPER for `koedDuringOpponentsLastTurn`'s reason exactly: the `- 2` is
+    a claim about the TURN MACHINERY (turns strictly alternate, so the turn two
+    steps back is the same seat's) rather than about the `BoardCondition`
+    vocabulary, and D131 says one reading gets one implementation. It is the
+    mirror of the `state.turn + 2` that `preventAttackUse` and `BoostedAttack`
+    already stamp for *"during your next turn"*, arrived at from the other end.
+
+    FALSE on turns 1 and 2 by construction (`null` never equals a turn number, and
+    `turn - 2` is 0 or −1, which no `startTurn` ever produced), so no attacker can
+    bootstrap the bonus out of an empty history. FALSE for the non-turn seat too,
+    by PARITY rather than by a guard: `state.turn - 2` shares the current turn's
+    parity and a body is only stamped on turns its own controller held. */
+export function usedAttackOnYourLastTurn(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  attack: string,
+): boolean {
+  const used = pokemon.usedAttack;
+  return used !== null && used.name === attack && used.turn === state.turn - 2;
 }
 
 /** 🆕 D326 — ONE Pokémon this seat lost, co-stamped with `GameState.lastKoTurn`.

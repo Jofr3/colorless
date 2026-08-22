@@ -12108,6 +12108,93 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.299.0 → **THE USED-ATTACK PAIR — THE SAME SHAPE ONE FIELD OVER, AND THE
+    FIRST WINDOW IN THIS UNION THAT IS NOT THE TURN IN PROGRESS.**
+
+      Falinks `sv07-088` "All-Out Attack" ({C}{C}, **30+**, index **1** of TWO —
+      its own index 0 is "Form Ranks", the attack the clause names)
+        *"If this Pokémon used Form Ranks during your last turn, this attack does
+         90 more damage."*
+        **1 legal printing**
+
+      Weezing `sv09-092` "Crazy Blast" ({D}{C}, **50+**, index **1** of TWO — its
+      own index 0 is "Pervasive Gas")
+        *"If this Pokémon used Pervasive Gas during your last turn, this attack does
+         120 more damage."*
+        **1 legal printing**
+
+    🛑 **PRICED AS A PAIR, WHICH IS THE RESIDUE'S LAST CHANCE TO DO SO.** The two
+    sentences differ only in the attack they name, so ONE member and ONE field serve
+    both. Everything left in the bonus residue after this is a singleton or is
+    refused.
+
+    🛑 **THE UNION HALF WAS TRIVIAL AGAIN AND THE SLICE WAS *WHOSE CLOCK*.**
+    `BoardCondition` gains `yourActiveUsedAttackLastTurn { attack }` — a MEMBER by
+    D391's rule (a new board FACT), and its payload field is named `attack` rather
+    than `name` because the member DIRECTLY ABOVE carries a `name` that is a POKÉMON
+    name: D392's own rule, applied to a neighbour instead of to a delegate.
+
+    🛑 **`state.turn - 2` WAS A GUESS AND IS NOW A MEASUREMENT, TAKEN ACROSS A KO
+    PARK.** The handoff said so in as many words, and the board it named was built:
+      · an ATTACK-epilogue park — P1 attacks at `turn = 3`, the KO parks in
+        `ko:takePrizes` and then `ko:promote` **both at `turn = 3`**, and the board
+        sits at 4 once the tail drains. P1's next turn is **5**. Δ = 2.
+      · a CHECKUP park — a lethal poison tick between turns parks at the ENDING
+        turn's value (`pending` = `takePrizes, promote, startTurn`), and the counter
+        still advances by exactly one `startTurn`. Two consecutive parks: 1 → 3.
+    **`turnTail` queues exactly ONE `startTurn` and every KO stage is spliced in
+    FRONT of it**, so no park can insert or skip a counter step. A `- 1` would be
+    the OPPONENT's clock and would compare against a turn number no body of this
+    seat can ever carry.
+
+    🆕 **AND THE PARITY DOES THE SEAT CHECK FOR FREE.** `state.turn - 2` shares the
+    current turn's parity, and a body is only stamped on turns its own controller
+    held, so the arm evaluated OFF-TURN for the non-turn seat gets an honest FALSE
+    by arithmetic — `yourFirstTurn`'s property arrived at a third way.
+
+    🛑 **THE WRITE SITE IS THE SLICE'S OTHER HALF, AND IT IS AN *ORDERING*.** The
+    bonus clause is read by `scaledAttackDamage`'s `boardCondition` arm AT
+    DECLARATION (attack.ts, D115's placement); a stamp written beside
+    `ATTACK_DECLARED` would overwrite last turn's record with THIS turn's attack
+    BEFORE that read and the bonus would never pay on any board. So the one writer
+    is **`finishAttack` (flow.ts)** — which is this engine's definition of *"an
+    attack was used"*: every exit out of `attack.ts` reaches it (the confusion-tails
+    failure, the D125 requirement gate whose own comment says *"a cancelled attack
+    is an attack that was USED"*, the cancel-on-tails flip, the no-program tail and
+    the parked program's epilogue stage) and the Checkup and mid-turn KO paths never
+    do. **The read is at the front of the declaration and the write is at the back.**
+
+    ⚠️ **WHICH IS WHY `PendingStage.attackEpilogue` GAINS A REQUIRED `attack`.** The
+    parked route is the one of the five on which `declared.name` is out of scope —
+    D189's argument about `uid` with the subject changed from *which body* to *which
+    attack*, and the stage is where a fact captured at declaration is remembered.
+
+    🛑 **`MATCH_RECORD_VERSION` 24 → 25**, and this bump carries TWO required fields
+    rather than one: `InPlayPokemon.usedAttack` and `PendingStage.attackEpilogue.attack`.
+    A v24 record's bodies carry no `usedAttack` at all (the bonus silently stops
+    existing) and a v24 record PARKED mid-attack carries an epilogue stage with no
+    `attack` (the stamp would be written as `undefined`).
+
+    ⚠️ **A NAME AND NOT AN INDEX, WHICH IS `LockedAttack`'s ANSWER INVERTED FOR
+    `LockedAttack`'s OWN REASON.** D154 stored an INDEX because its consumers ask per
+    index; this record's one consumer compares against a printed clause key that is a
+    NAME. And an index would be the wrong FACT besides: the record outlives the turn
+    it was written on, and a body that evolves in between renumbers its own attacks.
+
+    ⚠️ **TWO LITERAL CLAUSE ROWS, NOT A SIXTH TEMPLATE** — D393's reason plus one
+    that is specific to this token: a template would resolve *"used Surf Back during
+    your last turn"* to a predicate that answers FALSE forever and silently, on a
+    body that CAN use Surf Back.
+
+    ⚠️ **AND THE BANNER TWIN IS REFUSED AT THE BANNER, NOT AT THE WINDOW.** The legal
+    column also prints *"1 of your other Ancient Pokémon used an attack during your
+    last turn"* (1 printing) — the same clock and the same mechanism — refused on
+    D207's ground, which is the sharpest illustration in the residue of where this
+    family stops.
+
+    engineVersion 0.298.0 → **0.299.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.298.0 → **THE EVOLVE PAIR — A PRINTED PAIR ON ONE MECHANISM, AND THE
     RUN'S SECOND `MATCH_RECORD_VERSION` BUMP.**
 
@@ -15925,7 +16012,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.298.0";
+export const engineVersion = "0.299.0";
 
 export type {
   ApplyResult,

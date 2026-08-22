@@ -641,7 +641,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       // (collectKnockOuts owes each KO's prize to the KO'd side's opponent). The
       // epilogue sweeps both boards; the defender took no damage on this failed
       // attack, so only the attacker's own board can be lethal here.
-      return finishAttack(next, events, action.seat, attackerUid);
+      return finishAttack(next, events, action.seat, attackerUid, declared.name);
     }
   }
 
@@ -1101,7 +1101,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       uid: attackerUid,
       reason: "requirement",
     });
-    return finishAttack(next, events, action.seat, attackerUid);
+    return finishAttack(next, events, action.seat, attackerUid, declared.name);
   }
 
   // D126 — the attack's OWN printed coin flip, taken here and nowhere else.
@@ -1253,7 +1253,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           uid: attackerUid,
           reason: "coinFlip",
         });
-        return finishAttack(next, events, action.seat, attackerUid);
+        return finishAttack(next, events, action.seat, attackerUid, declared.name);
       }
     } else if (coinFlip.kind === "programPerHeads") {
       // D130 — THE EXPANSION. One copy of the member's ops per heads, in flip
@@ -1868,7 +1868,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // a self-switch and put the attacker on its own Bench. Every other stage in
     // this queue either re-reads its subject off the live board or names a body
     // that cannot move; this one names a body that CAN, and remembers it.
-    { kind: "attackEpilogue", seat: action.seat, uid: attackerUid },
+    // 🆕🆕 D394 — `attack` rides beside `uid` for the SAME reason and is captured at
+    // the SAME instant: `finishAttack` stamps `usedAttack` with the printed name,
+    // and this is the one route into it where `declared` is out of scope by then.
+    { kind: "attackEpilogue", seat: action.seat, uid: attackerUid, attack: declared.name },
   ];
   if (program !== null) {
     return settleProgram(
@@ -1904,7 +1907,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // §8.1 Knock Out sweep on both boards, then the §5.3 turn end. With no effect
   // program there is no recoil, so only the defender's board can be lethal, but the
   // sweep stays total (finishAttack owns the order + the §14 tie).
-  return finishAttack(next, events, action.seat, attackerUid);
+  return finishAttack(next, events, action.seat, attackerUid, declared.name);
 }
 
 /** The interrupt phases that park the tail on a ko:* decision (§8.1). */

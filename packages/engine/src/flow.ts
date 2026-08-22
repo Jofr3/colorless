@@ -22,6 +22,7 @@ import type {
   KnockOutMark,
   PendingStage,
   Seat,
+  UsedAttack,
 } from "./types";
 import {
   BENCH_MAX,
@@ -253,6 +254,37 @@ function addDamageByUid(
     ...side,
     bench: side.bench.map((pokemon, at) =>
       at === index ? { ...pokemon, damage: pokemon.damage + amount } : pokemon,
+    ),
+  });
+}
+
+/** 🆕🆕 §8 (D394) — record on the ATTACKING body that it used `attack` on this
+    turn. `addDamageByUid`'s walk with a different field written, and copied from
+    it deliberately: both address a body that may have moved off the Active Spot
+    mid-attack, and one of them already got that right.
+
+    RETURNS THE STATE RATHER THAN `null`-ON-MISS, because unlike the recoil there
+    is nothing for the caller to decide: an attacker that is no longer in play
+    (Gholdengo's "Surf Back" shuffles its own actor away, D312) has nowhere to
+    carry the stamp and the record dies with the body, which is the right answer
+    and not an error. */
+function stampAttackUse(
+  state: GameState,
+  seat: Seat,
+  uid: string,
+  attack: string,
+): GameState {
+  const side = state.players[seat];
+  const used: UsedAttack = { name: attack, turn: state.turn };
+  if (side.active !== null && topUid(side.active) === uid) {
+    return withActive(state, seat, { ...side.active, usedAttack: used });
+  }
+  const index = side.bench.findIndex((pokemon) => topUid(pokemon) === uid);
+  if (index === -1) return state;
+  return withSide(state, seat, {
+    ...side,
+    bench: side.bench.map((pokemon, at) =>
+      at === index ? { ...pokemon, usedAttack: used } : pokemon,
     ),
   });
 }
@@ -948,6 +980,7 @@ export function finishAttack(
   events: GameEvent[],
   attackerSeat: Seat,
   attackerUid: string,
+  attackName: string,
 ): ApplyResult {
   // §8.1 KO-conditioned recoil (Vengeful Punch sv03-197), placed BEFORE the sweep
   // reads the board — the new READ SITE this printing needed, and the one thing
@@ -1028,7 +1061,32 @@ export function finishAttack(
   // 🛑 **A `null` GUARD DEFENDED BY A CENSUS OF THE POOL EXPIRES WHEN THE POOL
   // GROWS.** The guard is kept because it is TOTAL over uids, not because the
   // registry is small.
-  let next = state;
+  // 🆕🆕 **D394 — THE ONE WRITER OF `InPlayPokemon.usedAttack`, AND ITS PLACEMENT
+  // IS THE WHOLE OF WHY THE FIELD WORKS.** `finishAttack` IS this engine's
+  // definition of "an attack was used": every exit out of `attack.ts` reaches it —
+  // the confusion-tails failure (§12), the D125 requirement gate whose own comment
+  // already says *"a cancelled attack is an attack that was USED"*, the
+  // cancel-on-tails flip, the no-effect-program tail and the parked program's
+  // epilogue stage — and nothing else in the engine does. The Checkup's poison KO
+  // and the mid-turn evolve sweep call `collectKnockOuts` directly, so no
+  // non-attack can reach this line, which is the same placement argument D158 made
+  // for *"by an attack"* two paragraphs down.
+  //
+  // 🛑 **AND IT IS WRITTEN AT THE END SO THIS ATTACK CANNOT CLOBBER ITS OWN
+  // ANTECEDENT.** The printed clause is read by `scaledAttackDamage`'s
+  // `boardCondition` arm at DECLARATION (attack.ts, "so Gyarados ex's 'already has
+  // any damage counters on it' cannot be bootstrapped by this very attack") —
+  // hundreds of lines before this one. A stamp written beside `ATTACK_DECLARED`
+  // would overwrite last turn's record with THIS turn's attack before the bonus is
+  // read, and Weezing's +120 would never pay on any board. The read is at the front
+  // of the declaration and the write is at the back of it; that ordering is the
+  // slice.
+  //
+  // ⚠️ **`state.turn` HERE IS STILL THE ATTACKING TURN**, because this runs BEFORE
+  // `turnTail` is queued below — and it stays the attacking turn across a Knock Out
+  // PARK, since the prize/promotion stages are spliced in FRONT of that tail and
+  // hold the counter at the ending turn's value for the whole interrupt.
+  let next = stampAttackUse(state, attackerSeat, attackerUid, attackName);
   const koRecoil = koRecoilOf(next, otherSeat(attackerSeat));
   const recoiled = koRecoil > 0 ? addDamageByUid(next, attackerSeat, attackerUid, koRecoil) : null;
   if (recoiled !== null) {
@@ -1835,7 +1893,7 @@ export function advance(state: GameState, events: GameEvent[]): ApplyResult {
       // however many parks the effect program took (D189). This is the path where
       // re-reading the spot is not merely fragile but WRONG: the program that just
       // finished is the one allowed to have moved its own actor.
-      return finishAttack(popStage(state), events, stage.seat, stage.uid);
+      return finishAttack(popStage(state), events, stage.seat, stage.uid, stage.attack);
     case "startTurn":
       return startTurn(popStage(state), stage.seat, events);
   }

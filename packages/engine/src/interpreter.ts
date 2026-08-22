@@ -117,6 +117,7 @@ import {
   presentStatuses,
   stackUids,
   takenPrizes,
+  usedAttackOnYourLastTurn,
   withActive,
   withSide,
   without,
@@ -3694,6 +3695,30 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const beneath = active.stack[active.stack.length - 2];
       return beneath !== undefined && cardOfUid(state, beneath)?.name === cond.name;
     }
+    case "yourActiveUsedAttackLastTurn": {
+      // 🆕🆕 D394 — the FOURTH per-body stamp read by this switch, and the FIRST
+      // whose window is not the turn in progress. The whole predicate is
+      // `usedAttackOnYourLastTurn` (types.ts), a NAMED HELPER for the reason
+      // `koedDuringOpponentsLastTurn` and `isFirstTurnOf` are: the `- 2` is a claim
+      // about the TURN MACHINERY (turns strictly alternate, so two counter steps
+      // back is the same seat's previous turn) rather than about this vocabulary,
+      // and D131 gives one reading one implementation.
+      //
+      // ⚠️ SEAT-RELATIVE AND SAFE OFF-TURN BY PARITY RATHER THAN BY A GUARD, which
+      // is a third way of arriving at `yourFirstTurn`'s property. `state.turn - 2`
+      // shares the current turn's parity, and a body is only ever stamped on a turn
+      // its own controller held (the §8 gate refuses an attack from the seat that
+      // does not hold `turn:action`) — so a `conditionGate` evaluated for the
+      // NON-turn seat under a koTrigger park compares against a turn number no body
+      // of that seat can carry and gets an honest FALSE.
+      //
+      // ⚠️ THE TWO TESTS INSIDE THE HELPER ARE BOTH LOAD-BEARING AND FAIL ON
+      // DIFFERENT BOARDS: dropping the NAME test pays Weezing's +120 for having used
+      // "Crazy Blast" itself two turns ago, and dropping the TURN test pays it
+      // forever after one "Pervasive Gas". `usedAttackBonus.test.ts` §3 drives both.
+      const active = state.players[seat].active;
+      return active !== null && usedAttackOnYourLastTurn(state, active, cond.attack);
+    }
     case "yourBenchAtLeast":
       // 🆕🆕 D366 — Victini "V-Force": the printed *"4 or fewer Benched Pokémon"*
       // under a cancel, so what is stored is the POSITIVE floor 5 and the test is
@@ -4381,6 +4406,21 @@ export function conditionNote(cond: BoardCondition): string {
       // note and the two `CONDITIONAL_DAMAGE_CLAUSES` keys differ by exactly that
       // one resolved pronoun and nothing else.
       return `your Active Pokémon evolved from ${cond.name} during this turn`;
+    case "yourActiveUsedAttackLastTurn":
+      // 🆕🆕 D394 — the same resolved pronoun as the three arms above (D116): the
+      // printed subject is "this Pokémon" and a note read off the board by a person
+      // has to spell it "your Active Pokémon". Everything after it is the printed
+      // clause verbatim, the ATTACK NAME and the possessive "your last turn"
+      // included — the possessive is KEPT for `yourPokemonKoedOnOpponentsLastTurn`'s
+      // reason (a player knows whose turn it was; "two turns ago" is engine
+      // vocabulary), so the note differs from its two `CONDITIONAL_DAMAGE_CLAUSES`
+      // keys by exactly the one resolved pronoun.
+      //
+      // Built from the PARAMETER, so the second printing is legible without a second
+      // string — D393's ONE-ARM-ONE-SLOT reading, and the slot is load-bearing for
+      // its reason: one arm now renders two clauses, so an arm that dropped the token
+      // would render the same pill for Falinks and for Weezing.
+      return `your Active Pokémon used ${cond.attack} during your last turn`;
     case "yourBenchAtLeast":
       // The POSITIVE fact, in the printed noun — a note is read off the board by a
       // person, so it says what the player must HAVE and never repeats the

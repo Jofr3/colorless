@@ -2336,6 +2336,40 @@ export type BoardCondition =
       Whether a Pokémon evolved is PUBLIC — the evolution card is placed face-up and
       `POKEMON_EVOLVED` announces it — so the union's public-state invariant holds. */
   | { kind: "yourActiveEvolvedFromThisTurn"; name: string }
+  /** 🆕🆕 D394 — "this Pokémon used **{AttackName}** during your last turn"
+      (Falinks `sv07-088` "All-Out Attack", {C}{C}, `30+`, **+90**, index 1 of TWO;
+      Weezing `sv09-092` "Crazy Blast", {D}{C}, `50+`, **+120**, index 1 of TWO) —
+      ONE legal printing each, and the bonus residue's LAST pair on one mechanism.
+
+      🛑 **THE FIELD IS `attack` AND NOT `name`, WHICH IS D392's RULE APPLIED TO A
+      NEIGHBOUR RATHER THAN TO A DELEGATE.** The member directly above carries
+      `name: string` and it is a POKÉMON name; this one is an ATTACK name, and two
+      members whose payload fields agree in spelling and disagree in referent are
+      the shape D392 refused when it named its own field `fragment`. Nothing in the
+      type system separates two `string`s, so the identifier is the whole guard.
+
+      🛑 **A NEW BOARD FACT, SO A MEMBER — AND THE CLOCK IS WHAT MAKES IT NEW.**
+      Every other window in this union is *"during this turn"* and expires as
+      `stamp === state.turn`. This one is *"during your LAST turn"*, read as
+      `stamp === state.turn - 2` — D143's `state.turn + 2` reflected, and MEASURED
+      across a Knock Out park rather than assumed (`usedAttackOnYourLastTurn`,
+      types.ts, carries the measurement).
+
+      ⚠️ **`InPlayPokemon.lockedAttacks` IS THE WRONG SHAPE AND IS THE ONE A READER
+      REACHES FOR FIRST.** That list is a BLOCK addressed by attack INDEX, written
+      by two opponents' effects and pruned as it expires; this is a HISTORY
+      addressed by attack NAME, written once per turn by the body's own
+      declaration, and it must survive precisely the turns a lock is shed on. The
+      two records answer opposite questions about the same address.
+
+      ⚠️ **AND THE TWO PRINTINGS EACH NAME THEIR OWN CARD'S INDEX 0**, which is why
+      the clause is not *"this Pokémon attacked during your last turn"*: Falinks's
+      "Form Ranks" deals no damage at all and Weezing's "Pervasive Gas" Confuses,
+      so both cards are printed as a two-turn combo and the NAME is the whole gate.
+
+      PUBLIC — both players watched the attack be declared and `ATTACK_DECLARED`
+      announces it by name — so the union's public-state invariant holds. */
+  | { kind: "yourActiveUsedAttackLastTurn"; attack: string }
   /** D242 — "you have **4 or more Team Rocket's Pokémon** in play" (Team Rocket's
       Mewtwo ex `svp-205`/`-216`/`sv10-081`/`-213`/`-231`/`-240` "Power Saver",
       six legal printings, the biggest reprint group in the ABILITY column that
@@ -10524,6 +10558,37 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "this Pokémon evolved from Misty's Staryu during this turn",
     { kind: "yourActiveEvolvedFromThisTurn", name: "Misty's Staryu" },
+  ],
+  // 🆕🆕 D394 — "this Pokémon used {AttackName} during your last turn": Falinks
+  // `sv07-088` "All-Out Attack" ({C}{C}, 30+, +90, index 1 of TWO — its own index 0
+  // is "Form Ranks") and Weezing `sv09-092` "Crazy Blast" ({D}{C}, 50+, +120,
+  // index 1 of TWO — its own index 0 is "Pervasive Gas"). ONE legal printing each.
+  // D116's pronoun rule again: "this Pokémon" is the attacker, which for a damage
+  // bonus is the reader's Active.
+  //
+  // 🛑 **TWO LITERAL ROWS AND NOT A SIXTH TEMPLATE**, for the reason the pair
+  // directly above states and for one MORE that is specific to this token: the
+  // varying token is an ATTACK name, which is open-ended in exactly the way a card
+  // name is — but it is also NOT CHECKED AGAINST THE CARD. A template
+  // `^this Pokémon used (.+) during your last turn$` would resolve *"used Surf Back
+  // during your last turn"* to a predicate that answers FALSE forever and silently,
+  // and would do so on a body that CAN use Surf Back. A row lands on the loud
+  // unresolved path instead.
+  //
+  // ⚠️ **AND THE BANNER TWIN IS DELIBERATELY NOT BOUGHT HERE.** The legal column
+  // also prints *"1 of your other Ancient Pokémon used an attack during your last
+  // turn"* (1 printing) — the SAME window and the SAME mechanism with a banner
+  // bolted on, refused on D207's ground (`Ancient` is a banner no column
+  // classifies, so a predicate over one has a permanently empty candidate set) and
+  // not on the clock. It is the sharpest illustration in the residue of WHERE this
+  // family refuses: at the banner, never at the window.
+  [
+    "this Pokémon used Form Ranks during your last turn",
+    { kind: "yourActiveUsedAttackLastTurn", attack: "Form Ranks" },
+  ],
+  [
+    "this Pokémon used Pervasive Gas during your last turn",
+    { kind: "yourActiveUsedAttackLastTurn", attack: "Pervasive Gas" },
   ],
   // 🆕 D326 — the "revenge" clause, and the family's first that reads a window
   // which has CLOSED rather than the board in front of the attacker: Iron Leaves

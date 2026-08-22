@@ -906,8 +906,27 @@ export interface MatchRecord {
     member cannot re-interpret a stored one) and D391 added an OPTIONAL field
     (absent still means unnarrowed). **A NEW REQUIRED FIELD ON A PERSISTED
     STRUCTURE IS THE ONE CASE NONE OF THAT COVERS**, and it is the second time in
-    eight slices that the answer has been anything but "stays". */
-export const MATCH_RECORD_VERSION = 24;
+    eight slices that the answer has been anything but "stays".
+
+    🆕🆕 **24 → 25 AT D394, AND IT IS THE FIRST BUMP THIS RUN THAT CARRIES *TWO*
+    MISSING REQUIRED FIELDS RATHER THAN ONE.** D394 gave the body a FOURTH per-turn
+    stamp, `usedAttack: { name, turn } | null`, so the printed *"If this Pokémon
+    used Form Ranks during your last turn"* (Falinks `sv07-088`) and *"…used
+    Pervasive Gas…"* (Weezing `sv09-092`) have somewhere to read — REQUIRED for
+    `evolvedTurn`'s reason verbatim. **And it gave `PendingStage`'s
+    `attackEpilogue` a REQUIRED `attack: string`**, because that stage is the one
+    of the five routes into `finishAttack` on which the declared attack's printed
+    name is out of scope, and `finishAttack` is where the stamp is written.
+
+    🛑 **THE SECOND FIELD IS WHY THIS ONE CANNOT BE ARGUED DOWN TO A WIDENING.** A
+    v24 record's in-play Pokémon carry no `usedAttack` at all, so a resumed match
+    reads the pair's bonus as FALSE forever — the D393 failure mode one field over.
+    But a v24 record that was saved **PARKED MID-ATTACK** is worse than silent: its
+    `attackEpilogue` stage has no `attack` key, so draining it would stamp the
+    attacking body with `undefined` as a name and the record would go on looking
+    healthy. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT**, which is
+    D124's refusal of the soft landing at a second address in one slice. */
+export const MATCH_RECORD_VERSION = 25;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */
