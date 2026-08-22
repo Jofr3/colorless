@@ -24861,3 +24861,171 @@ already crosses the wire, so the feared refusal is unavailable; the printed amou
 `any of your Benched Cubone have any damage counters on them` (1 printing, a NAME filter and a damage
 predicate quantified EXISTENTIALLY over the FILTERED set — `allOf` is the wrong tool, and the
 refutation is a board holding an undamaged Cubone beside a damaged Rattata).
+
+## D397 — THE BENCHED-CUBONE FILTER: one walk with two tests on the same body, and D391's shape rule amended on its third test (engine 0.301.0 → **0.302.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+Marowak `sv07-073` (Stellar Crown) "Bone Vengeance" ({C}{C}, `60+`, **+120**, index **1** of TWO) —
+*"If any of your Benched Cubone have any damage counters on them, this attack does 120 more
+damage."*, **1 legal printing**. Its own index 0 is "Growl" ({F}, no printed damage): the control,
+and — as the pool sweep found — a producer in its own right.
+
+**WHAT SHIPS:** ONE `BoardCondition` member (`yourBenchNamedDamaged { name }`), its TWO
+exhaustive-switch arms, ONE literal `CONDITIONAL_DAMAGE_CLAUSES` row, TWO fixtures and ONE dedicated
+60. ZERO new state, ops, events, error codes, prompt kinds, choice kinds, readers, regexes,
+templates, patterns, registry rows, `CardFilter` members, `redact.ts` bytes or `packages/schema`
+bytes.
+
+### 🛑 HAVING BOTH HALVES OF A CLAUSE IS NOT HAVING THE CLAUSE — `allOf` IS REFUTED ON A BOARD
+
+Both halves were shipped members: `yourBenchHasNamed { name: "Cubone" }` (D118) and
+`yourBenchDamaged` (D116). `allOf([…])` over the two asks *"some benched Cubone exists"* **and**
+*"some benched body is damaged"* — two INDEPENDENT existentials over one array. The printed clause
+runs ONE existential over the FILTERED set, so the composition is strictly WEAKER and a Bench
+holding an UNDAMAGED Cubone beside a DAMAGED filler separates them. That board is built and driven
+(§3), the composed reading answers TRUE on it, the member answers FALSE, and the printing deals its
+unboosted 60. **THE COMPOSED READING IS NOT WRONG, IT IS WEAKER** — so the same suite shows the two
+agreeing once the counters move onto the Cubone, because a guard that only showed a disagreement
+could not tell "narrower" from "broken".
+
+### 🛑 MEMBER OR FIELD — THE THIRD TEST OF D391's RULE, AND THE ONE THAT AMENDS IT
+
+D391's rule reads *a comparand is a shape and takes a MEMBER; a filter the delegate already accepts
+is a FIELD*, and D396 established that its clauses can disagree. They disagree here too, and all
+four measurements were taken at this head rather than predicted:
+
+* **DELEGATE — MEMBER, and this is the clause that was let bind.** `yourBenchDamaged`'s arm is an
+  INLINE `bench.some((p) => p !== null && p.damage > 0)` with no delegate at all, and `cards.ts`
+  carries no name-matching predicate to hand a filter to. **There is no walk to take the filter; the
+  arm IS the walk** — D396's finding verbatim, one member over.
+* **NOTE — FIELD, recorded rather than dropped.** `1 of your Benched Pokémon has damage counters on
+  it` and `1 of your Benched Cubone has damage counters on it` are ONE interpolation slot apart and
+  the unnarrowed spelling comes back byte-identical. This is the SECOND consecutive slice on which
+  the NOTE clause dissented and lost.
+* **SITES — even, so it decides nothing.** `yourBenchDamaged` has **24** executable sites (**22**
+  `kind:` literals — 2 in source, 19 across four suites, 1 inside a mutant row's `replace` — plus
+  its 2 exhaustive-switch arms). An optional field edits **3** of them and none of the 22; a second
+  member edits **0** and adds 3.
+* **POLARITY — MEMBER, and independently of the rule.** `BoardCondition` is read at two polarities
+  on purpose: `AttackTimingGate.onlyIf` against `.barredIf` (D281) and `conditionGate.then` against
+  `.otherwise` (D269). A forgotten optional `name` silently takes the UNNARROWED read, which is
+  wrong in opposite directions under the two polarities and is never a type error. A REQUIRED field
+  on a distinct member is a compile error when omitted.
+
+### 🆕 THE AMENDMENT — THE NOTE CLAUSE IS RETIRED AS A DECIDER
+
+Across four tests the two clauses have very different records:
+
+| slice | DELEGATE says | NOTE says | answer |
+|---|---|---|---|
+| D391 (typed energy threshold) | FIELD (`countAttachedEnergy` took it since D128) | FIELD (one slot) | **FIELD** |
+| D392 (substring name read) | MEMBER (no delegate) | MEMBER (a second sentence) | **MEMBER** |
+| D396 (Angelite cancel) | MEMBER (the arm is the walk) | FIELD (one slot) | **MEMBER** |
+| D397 (benched-Cubone filter) | MEMBER (the arm is the walk) | FIELD (one slot) | **MEMBER** |
+
+**DELEGATE is 4/4 and NOTE is 2/4, which is chance.** So the rule is amended rather than asserted a
+fourth time: **the NOTE clause is RETIRED AS A DECIDER and kept as a COST note**, and what remains
+is *a filter is a FIELD only when a SHIPPED delegate already accepts it; otherwise it is a MEMBER —
+and if the value is read at two polarities, MEMBER regardless, because an optional field then has no
+safe default.* **A RULE TESTED THREE TIMES AND AMENDED ONCE IS WORTH MORE THAN ONE ASSERTED FIVE
+TIMES.**
+
+### ⚠️ THE FIELD IS `name`, WHICH IS A DELIBERATE DEPARTURE FROM D392's NAMING RULE
+
+D392 spelled its field `fragment` so a mistyped `kind` could not silently swap an exact read for a
+substring one — there, the two members are two readings of the SAME fact and would otherwise differ
+by their `kind` token alone. These two assert DIFFERENT facts (a name lookup, against a name lookup
+AND a damage test), which is exactly what `yourBenchHasNamed` and `yourNamedPokemonInPlay` already
+are — and those two have shared `name` since D279. **So `name` is this union's settled spelling for
+a printed card name, and the kind-swap that stays typeable is bought in MUTANTS instead** (C5), which
+is where D391 bought the same class of hazard.
+
+### 🛑 THE §1.2 STACK READ IS THE MEMBER'S WHOLE BEHAVIOUR HERE, NOT HOUSEKEEPING
+
+The attacker is a **Marowak** and the clause names **its own pre-evolution**. Damage rides a body
+across an evolution and the NAME does not, so a damaged benched Cubone evolved into Marowak keeps
+every counter and **stops satisfying the clause** — the one board where the two tests this member
+conjoins move in opposite directions at the same instant. `yourBenchHasNamed` can lose its name that
+way too; only this member can lose it while the other half of its own predicate stays true. Driven
+on a real `evolve` action (§5), which is why the suite needs a board two turns in — §4/§10 bar
+evolving on a seat's first turn, and the `armed` board IS that turn.
+
+### 🛑 A LITERAL ROW AND NOT A TEMPLATE — THE CORPUS DECIDES IT, NOT THE COUNT
+
+A pattern would have to read the token after "Benched" as a card NAME. Measured over the same
+640-sentence column, that slot takes a **D207 BANNER** (*"your Benched **Ancient** Pokémon"*), two
+**OWNER prefixes** (*"your Benched **Team Rocket's** Pokémon"*, *"all of your Benched **Cynthia's**
+Pokémon"*) and a **BRACE CODE** (*"all of your Benched **{F}** Pokémon"*). A `(.+)` capture would
+hand every one of those to an exact-name equality that succeeds against nothing — D118's rule
+failing on an OPEN vocabulary, which is `yourBenchHasNamed`'s own reason for being four literal rows.
+And under this skeleton the printed population is exactly ONE, so there is no second name to
+generalise from either.
+
+### 🆕 A POOL SWEEP MOVED FOR A SLICE THAT WAS NOT ABOUT IT — AND ONLY A SWEEP COULD HAVE SAID SO
+
+`fix-bonevengeance` was transcribed WHOLE off tcgdex (D306) for the clause at index **1**. Its index-0
+"Growl" prints *"During your opponent's next turn, attacks used by the Defending Pokémon do 40 less
+damage…"* — which `deriveAttackEffect` already reads, so `attackDebuff.test.ts`'s pool-wide
+`weakenDefenderAttacks` sweep went **4 producers → 5** and named the new one. Nothing in this slice
+was about attack debuffs; **D147's rule (a fixture is swept, not asserted) is what turned a silent
+pool change into a named one.**
+
+### ⚠️ `MATCH_RECORD_VERSION` STAYS 25, ASKED OF EACH HALF
+
+No state field, no `EffectOp`, no registry row. The member is authored ONLY into
+`CONDITIONAL_DAMAGE_CLAUSES`, which is a CATALOG fact re-derived from the printed text on every read,
+so it can never ride an `EffectContinuation.pendingOp` into a record. No v25 record can contain it
+(no v25 card authors it) and no v25 record means anything different now — D335's test, both
+directions.
+
+### CENSUS MOVEMENT
+
+`BUILT.attack` **1,304 → 1,305**; whole-census `built` **1,709 → 1,710** and `units − built`
+**674 → 673**; bonus residue **9 / 12 → 8 / 11**, its distribution `{1: 7, 5: 1}` → `{1: 6, 5: 1}`
+over **8 → 7** clauses; resolving sentences **378 → 379** and raw **1,275 → 1,276**; unbuilt attack
+column **428 → 427** and unbuilt remainder **457 → 456**; the nine-reader instrument
+**375 / 1,267 → 376 / 1,268** and its residue **265 / 465 → 264 / 464**; `BUILT.attack - 922`
+**382 → 383** and `- 922 - 252` **130 → 131**; `head − rawDelta − splitDelta` **1,298 → 1,299**;
+the apostrophe census **52 → 53** with the apostrophe-FREE half taking the whole step
+(**30 → 31**) for a FIFTH consecutive slice and the bearing half unmoved at 22; the `FIXTURE_POOL`
+floor **495 → 497**; the pool's Stage 1 sweep **72 → 73** with the CHAINLESS rung standing still at
+ONE, because `fix-cubone` is in the pool beside `fix-bonevengeance`; and the pool-wide
+`weakenDefenderAttacks` producer set **4 → 5**.
+
+**UNMOVED, and that is the claim**: registry ids (**713**), `nonAttackRegistryIds()` (**568**),
+`BUILT.ability` (**284**), the `attackGate` shortfall (**17**) and the gate-corpus split
+(**6 sentences / 14 printings**). A READER-keyed move touches none of them.
+
+### ⚠️ THE CASCADE TOOK FIVE FULL RUNS, AND ONE REPAIR OVER-APPLIED
+
+D354's lesson fired at every round — `byClause.size`, the singleton band, the past-head OFFSET
+chains, `BUILT.attack - 922` and `- 922 - 252` each sat behind an earlier `expect` in the same
+`it()`. 🆕 **AND A NEW WAY TO GET THE REPAIR WRONG**: a mechanical substitution that appends a
+`- 1` term matched a line an EARLIER substitution in the same pass had already lengthened, so one
+chain gained TWO terms and the next run reported it as an under-count in the opposite direction.
+**A MECHANICAL REPAIR OVER A CHAIN OF IDENTICAL TERMS MUST BE ANCHORED ON THE EXPECTED VALUE, NOT
+ON THE CHAIN** — the chain is not a unique string and grows into the pattern that matches it.
+
+### WHAT THIS SLICE HANDS ON
+
+🛑 **THE BONUS RESIDUE IS NOW ONE BUILDABLE SENTENCE, ENUMERATED RATHER THAN SAMPLED.** Of the 8
+sentences / 11 printings that remain behind `CONDITIONAL_DAMAGE_BONUS`:
+
+* **FIVE are D207 BANNER refusals** — *"1 of your other **Ancient** Pokémon used an attack during
+  your last turn"* (1), *"you have any **Tera** Pokémon on your Bench"* (1), *"your opponent's
+  Active Pokémon is a **Tera** Pokémon"* (1), *"you played a **Future** Supporter card from your
+  hand during this turn"* (1) and *"your opponent has any **Future** Pokémon in play"* (1). No
+  column classifies any of the three banners; every occurrence is DEMAND and the SUPPLY side is
+  absent. Measured at this head: `Tera Pokémon` is 4 sentences / 4 printings of demand, `Future ` 5
+  / 7, `Ancient ` 7 / 10 — **all demand.**
+* **ONE clause at FIVE printings is D368's structural SHAPE refusal** — *"this Pokémon has at least
+  2 extra Energy attached (in addition to this attack's cost)"*, printed at two amounts (2 + 3). It
+  reads THIS ATTACK'S COST and `conditionHolds(state, seat, cond)` is handed no attack; the same
+  clause sits on two attacks with two different costs, so one board answers both ways.
+* **EXACTLY ONE IS BUILDABLE**: *"If there are 3 or fewer cards in your deck, this attack does 200
+  more damage."* (1 printing). `RedactedSide.deckCount` already crosses the wire (`redact.ts`), so
+  the shape fear the handoff carried is unavailable. ⚠️ **AND ITS TWIN IS NOT IN THIS RESIDUE**:
+  *"If there are 3 or fewer cards in your deck, this attack **also does 120 damage to 2 of your
+  opponent's Benched Pokémon**. (Don't apply Weakness and Resistance for Benched Pokémon.)"* (1
+  printing) carries a DIFFERENT CONSEQUENT, so the bonus skeleton never sees it — **the member is
+  bought once and the second consequent is priced separately**, which is D383's payoff shape at a
+  benched COUNT of 2.
