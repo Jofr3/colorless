@@ -24377,3 +24377,163 @@ in the one file that had two chains**.
 listed all 52 failures with file:line in a single pass, which is what collapsed the rest into targeted
 edits. The harness's own background task-output file is **TAIL-ONLY** and will under-report the
 failure list — at D393 it showed 3 of 52.
+
+## D394 — THE USED-ATTACK PAIR: WHOSE CLOCK, AND WHICH COMES FIRST — THE READ OR THE WRITE
+
+**Falinks `sv07-088` "All-Out Attack"** ({C}{C}, `30+`, index **1** of TWO), *"If this Pokémon used
+Form Ranks during your last turn, this attack does 90 more damage."*, **1 legal printing**, and
+**Weezing `sv09-092` "Crazy Blast"** ({D}{C}, `50+`, index 1 of TWO), *"If this Pokémon used
+Pervasive Gas during your last turn, this attack does 120 more damage."*, **1 legal printing**. Each
+located with ONE brace-free limitlesstcg `text:` search on the printed clause tail (`SCR 88`,
+`JTG 92`) — each returning exactly one card — and confirmed field by field against
+`https://api.tcgdex.net/v2/en/cards/<id>`, **including the attack at index 0 that each clause NAMES**,
+which is the half a card-name search does not give you. 🆕 **A CLAUSE THAT QUOTES AN ATTACK NAME HAS
+A TAIL SEARCH JUST AS A CLAUSE THAT QUOTES A CARD NAME DOES.**
+
+### 🛑 THE CLOCK WAS A GUESS AND IT WAS MEASURED ACROSS A KO PARK
+
+`state.turn` is a GLOBAL counter, so *"your last turn"* is two counter steps back **only if nothing
+inserts or skips a step**. A Knock Out is the interrupt that could: it parks the tail on a player
+decision for an unbounded time. Both park shapes were built and driven rather than argued off
+`turnTail`:
+
+| board | what the counter did |
+|---|---|
+| **ATTACK-EPILOGUE KO** — Pervasive Gas's printed 30 is exactly lethal on a 30 HP defender | declared at `turn = 3`; `pending` = `takePrizes, promote, endTurn, checkup, startTurn`, and **both** ko:\* phases park at `turn = 3`; settles at 4; P1's next turn is **5**. **Δ = 2** |
+| **CHECKUP KO** — a lethal poison tick between the turns | parks at the ENDING turn's value with `pending` = `takePrizes, promote, startTurn`; two consecutive parks give 1 → 3. **Δ = 2** |
+
+The mechanism is that **`turnTail` queues exactly ONE `startTurn` and every KO stage is spliced in
+FRONT of it**. So `state.turn - 2` is D143's `state.turn + 2` reflected — the same claim
+(*"declaring an attack ENDS the turn, so the turn after this one is the opponent's"*) read backwards.
+A `- 1` is the OPPONENT's clock and compares against a turn number no body of this seat can carry.
+
+### 🆕 THE PARITY DOES THE SEAT CHECK FOR FREE
+
+`state.turn - 2` shares the current turn's parity, and a body is only ever stamped on a turn its own
+controller held (the §8 gate refuses an attack from the seat that does not hold `turn:action`). So
+the arm evaluated OFF-TURN for the non-turn seat compares against a turn number that seat's bodies
+cannot carry and gets an **honest FALSE rather than a borrowed TRUE** — `yourFirstTurn`'s property
+arrived at a third way, by arithmetic instead of by operand choice, with no `phaseViewOf` guard to
+forget. It is a false NEGATIVE off-turn, which is stated in the arm rather than hidden; no printed
+sentence asks this member off-turn.
+
+### 🛑 THE OTHER HALF OF THE SLICE IS AN *ORDERING*, AND NO EARLIER STAMP HAD TO ASK IT
+
+`promotedTurn`, `healedTurn` and `evolvedTurn` are all written by something that is NOT the attack,
+so their read and their write could not collide. **This one is written BY the attack and read BY the
+attack.** `scaledAttackDamage`'s `boardCondition` arm evaluates the clause **at declaration**
+(attack.ts, D115's placement — whose own comment says it is there so *"Gyarados ex's 'already has any
+damage counters on it' cannot be bootstrapped by this very attack"*), so a stamp written beside
+`ATTACK_DECLARED` would overwrite LAST turn's record with THIS turn's attack **before that read**.
+Neither printed bonus would then pay on any board, and every board would still look plausible.
+
+**THE READ IS AT THE FRONT OF THE DECLARATION AND THE WRITE IS AT THE BACK OF IT.** ⚠️ **WHENEVER A
+NEW FIELD IS BOTH WRITTEN AND READ BY THE SAME MECHANISM, WRITE DOWN WHICH COMES FIRST BEFORE YOU
+WRITE EITHER.**
+
+### `finishAttack` IS THIS ENGINE'S DEFINITION OF "AN ATTACK WAS USED"
+
+The one writer, and the placement is the argument. Every exit out of `attack.ts` reaches it — the
+confusion-tails failure (§12), the D125 requirement gate whose own comment already read *"a cancelled
+attack is an attack that was USED"*, the cancel-on-tails flip, the no-effect-program tail — plus the
+parked program's `attackEpilogue` stage; and the Checkup's poison KO and the mid-turn evolve sweep
+call `collectKnockOuts` directly and never come through. That is D158's *"by an attack"* discharged
+by placement, used a second time for a different verb.
+
+⚠️ **WHICH IS WHY `PendingStage.attackEpilogue` GAINED A REQUIRED `attack`.** The parked route is the
+one of the five on which `declared.name` is out of scope by the time the stamp is written — D189's
+argument about `uid` with the subject changed from *which body* to *which attack*. Falinks's index 0
+is a deck search and parks every time, which is why that fixture carries BOTH printed attacks and not
+only the one this slice buys.
+
+### A NAME AND NOT AN INDEX — `LockedAttack`'s ANSWER INVERTED FOR ITS OWN REASON
+
+D154 stored an INDEX because every consumer of that record asks per index (the §8 gate compares
+`action.index`; both payability projections build rows by `attacks.map`), resolving the printed proper
+noun ONCE at the install. This record's one consumer is `conditionHolds`, which compares against a
+printed clause key that is a **NAME** — so the same rule ("translate at the site that reads the
+printed token") lands on the other side. **And an index would be the wrong FACT besides**: the record
+outlives the turn it was written on, and a body that evolves in between renumbers its own attacks.
+
+### THE PAYLOAD FIELD IS `attack`, NOT `name` — D392's RULE APPLIED TO A NEIGHBOUR
+
+The member directly above in the union carries `name: string` and it is a POKÉMON name; this one is
+an ATTACK name. Nothing in the type system separates two `string`s, so **the identifier is the whole
+guard** — which is exactly why D392 named its own substring field `fragment`. D392's rule was written
+about a member and its DELEGATE; this is its first use on a member and its NEIGHBOUR.
+
+### 🛑 A REQUIRED FIELD IS NO COMPILER GUARANTEE THAT ANYBODY SET IT — THE SECOND MECHANISM
+
+D393 found this in a **SPREAD**: `evolveOnto` builds `{...from, …}`, so deleting the stamp line still
+typechecks because the pre-evolution body supplies a value. D394 finds it in a **DEFAULT**:
+`makeInPlay` writes `usedAttack: null`, so deleting the write in `finishAttack` leaves a REQUIRED
+field that nothing ever sets and a clause that is permanently false. Both typecheck, both are
+invisible in a diff of the type, and both are bought in mutants and nowhere else (**C4**).
+
+**THE GENERAL FORM IS NOW TWO CASES WIDE: A REQUIRED FIELD GUARANTEES A KEY, NEVER A WRITER.** Any
+per-body field whose writer is not the only constructor owes this mutant.
+
+### `MATCH_RECORD_VERSION` 24 → 25, WITH TWO MISSING REQUIRED FIELDS ON ONE BUMP
+
+A v24 record's in-play Pokémon carry no `usedAttack`, so a resumed match reads the clause FALSE
+forever and the printed bonus silently stops existing — D393's failure mode one field over. **The
+second field is the sharper one**: a v24 record saved **PARKED MID-ATTACK** carries an
+`attackEpilogue` stage with no `attack` key, so draining it would stamp the attacking body with
+`undefined` as an attack name while the record went on looking healthy. **A KEY THE WRITER NEVER
+WROTE IS NOT A KEY WITH A DEFAULT.**
+
+### 🛑 THE HANDOFF UNDER-PRICED THE FIELD BY A FACTOR OF THREE — SWEEP THE CLAUSE, NOT THE SENTENCE
+
+The handoff priced this row at **2 printings**, which is the count of sentences matching the BONUS
+skeleton. The count of what the state actually answers is **six**, measured off `legalAttackCorpus()`:
+
+| printed sentence | printings | why it is not bought here |
+|---|---|---|
+| the pair | **2** | bought |
+| *"You can use this attack only if this Pokémon used **Rollout** during your last turn."* | **1** | SAME subject, SAME window, SAME field. Refused by its **SKELETON** alone — it is an ATTACK GATE (D281/D282), not a damage bonus. `yourActiveUsedAttackLastTurn { attack: "Rollout" }` serves it **UNCHANGED and with ZERO new state** |
+| *"…If **1 of your Pokémon** used Angelite during your last turn, this attack can't be used."* | **3** | the biggest single row in the family. Same window, same field; the SUBJECT is Active **plus** Bench, so it needs a second member over the same field, and the consequent is a CANCEL the `NOTHING` skeleton does not spell |
+| *"If 1 of your other **Ancient** Pokémon used an attack during your last turn…"* | **1** | refused at the **BANNER** (D207), not at the window — the sharpest illustration in the residue of where this family stops |
+
+⚠️ **A HANDOFF'S PRINTING COUNT IS THE COUNT OF THE SENTENCES THAT MATCH ONE SKELETON, NOT THE COUNT
+OF WHAT THE STATE YOU ARE ABOUT TO BUILD CAN ANSWER.** This measurement cost one query and doubled
+the recorded value of the slice's own state.
+
+### A DOC BLOCK ROTTED, AND NOTHING MECHANICAL WOULD HAVE CAUGHT IT
+
+`lastKoTurn`'s block called itself *"the engine's ONLY piece of turn HISTORY"*. `usedAttack` is a
+second one. It is not in a mutant's `survives` reason (which reports **STALE** and fails the run) nor
+even in a `what` string (which rots silently but is at least inside the corpus `precheck.ts` walks) —
+it is a **comment**, with no harness looking at it at all. Found by grepping the SENTENCE. **D393's
+asymmetry, one address further out: `survives` fails loudly, `what` rots silently, a doc block rots
+invisibly.**
+
+### THE CENSUS CASCADE — TWO NEW WAYS TO GET THE REPAIR WRONG
+
+62 failures in 47 files, listed with file:line by **one** full `vitest run` captured outside the
+checkout. Four classes: the `attackEpilogue` stage shape (11 sites, most of which can read the name
+off their own `ATTACK_DECLARED` row — the idiom they already use for the uid), the `InPlayPokemon`
+key pins (10 sites), the bonus residue 11 / 14 → 9 / 12 with its offset chains, and the reader
+instruments.
+
+⚠️ **NEW (1): THE OFFSET CHAINS ARE WRITTEN OVER TWO DIFFERENT SUBJECTS UNDER THE SAME VARIABLE
+NAME.** A blind `refused.length + N → N + 2` sweep also hit the **CANCEL** residue in
+`crossBoardStatus.test.ts`, `exactHandSize.test.ts` and `stadiumPresence.test.ts`, which uses the
+identical local `refused` over the `NOTHING` skeleton and **did not move at all** — three files went
+red on a number this slice never touched. D392 said grep the chains; D393 said they are written in two
+syntaxes; **D394 adds that the name is not the subject.**
+
+⚠️ **NEW (2): A TWO-PASS INDENTATION REPLACE DOUBLE-APPLIES.** `"        \"turnPlayed\","` CONTAINS
+`"      \"turnPlayed\","`, so a 6-space pass run after an 8-space pass edits the line it just wrote.
+Both defects were caught by the next full run; neither would have been caught by reading.
+
+### WHAT DID NOT MOVE, SAID OUT LOUD
+
+The possessive fixture-name toll was **not** paid — neither `Falinks` nor `Weezing` carries an owner
+prefix — so `switchSeam.test.ts`, `inPlayTarget.test.ts`, `ownerTargetOps.test.ts` and
+`ownerPrefix.test.ts` stood still for the first time in three slices, and the apostrophe census's
+BEARING half stayed at 22 while its free half took both new keys. `redact.ts` and `packages/schema`
+took **ZERO bytes** (`redactedInPlayOf` names its output fields one at a time and has never carried a
+turn stamp). No registry row, so `registryCardIds()` is unmoved at 709. What DID move for reasons
+that have nothing to do with this clause: `stage1Bonus.test.ts`'s pool-wide Stage 1 sweep **71 → 72**
+and the `FIXTURE_POOL` floor **493 → 495**, while `Card.resistances` STOOD STILL at 28 because
+neither printing prints one.
