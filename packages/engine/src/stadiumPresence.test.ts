@@ -302,18 +302,18 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(11);
-    expect(units(refused)).toBe(14);
+    expect(refused.length).toBe(9);
+    expect(units(refused)).toBe(12);
     // 🛑 EVERY EARLIER HEAD IS RE-DERIVED FROM THIS ONE rather than frozen: D377's
     // 22/26, D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 11, units(refused) + 12]).toEqual([22, 26]);
+    expect([refused.length + 13, units(refused) + 14]).toEqual([22, 26]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 13, units(refused) + 14]).toEqual([24, 28]);
+    expect([refused.length + 15, units(refused) + 16]).toEqual([24, 28]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 14, units(refused) + 16]).toEqual([25, 30]);
-    expect([refused.length + 15, units(refused) + 18]).toEqual([26, 32]);
-    expect([refused.length + 16, units(refused) + 20]).toEqual([27, 34]);
+    expect([refused.length + 16, units(refused) + 18]).toEqual([25, 30]);
+    expect([refused.length + 17, units(refused) + 20]).toEqual([26, 32]);
+    expect([refused.length + 18, units(refused) + 22]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {

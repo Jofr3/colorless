@@ -244,8 +244,8 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(11);
-    expect(units(refused)).toBe(14);
+    expect(refused.length).toBe(9);
+    expect(units(refused)).toBe(12);
     // D371's recorded residue, then D370's, then D369's, re-derived from THIS head:
     // add the sentences back rather than freezing the pair that measured them.
     // 🆕🆕 D373 — one more term on each chain, and the step is 1 sentence /
@@ -258,23 +258,23 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(refused.length + 13).toBe(24);
+    expect(refused.length + 15).toBe(24);
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(units(refused) + 14).toBe(28);
-    expect(refused.length + 14).toBe(25);
-    expect(units(refused) + 16).toBe(30);
-    expect(refused.length + 15).toBe(26);
-    expect(units(refused) + 18).toBe(32);
-    expect(refused.length + 16).toBe(27);
-    expect(units(refused) + 20).toBe(34);
-    expect(refused.length + 17).toBe(28);
-    expect(units(refused) + 22).toBe(36);
-    expect(refused.length + 19).toBe(30);
-    expect(units(refused) + 24).toBe(38);
-    expect(refused.length + 20).toBe(31);
-    expect(units(refused) + 26).toBe(40);
-    expect(refused.length + 21).toBe(32);
-    expect(units(refused) + 28).toBe(42);
+    expect(units(refused) + 16).toBe(28);
+    expect(refused.length + 16).toBe(25);
+    expect(units(refused) + 18).toBe(30);
+    expect(refused.length + 17).toBe(26);
+    expect(units(refused) + 20).toBe(32);
+    expect(refused.length + 18).toBe(27);
+    expect(units(refused) + 22).toBe(34);
+    expect(refused.length + 19).toBe(28);
+    expect(units(refused) + 24).toBe(36);
+    expect(refused.length + 21).toBe(30);
+    expect(units(refused) + 26).toBe(38);
+    expect(refused.length + 22).toBe(31);
+    expect(units(refused) + 28).toBe(40);
+    expect(refused.length + 23).toBe(32);
+    expect(units(refused) + 30).toBe(42);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -315,7 +315,7 @@ describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not th
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(10);
+    expect(byClause.size).toBe(8); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);

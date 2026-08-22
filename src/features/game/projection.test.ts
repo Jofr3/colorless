@@ -540,7 +540,14 @@ describe("projectGameState — phase-derived fields", () => {
     // this is the one web case that pins the whole stage.
     const attacker = state.players.p1.active;
     expect(state.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", uid: attacker === null ? undefined : topUid(attacker) },
+      {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: attacker === null ? undefined : topUid(attacker),
+        // 🆕 D394 — and the printed ATTACK name, which rides the stage for the same
+        // reason the uid does: `finishAttack` cannot re-derive it after a park.
+        attack: "Blaze Dash",
+      },
     ]);
 
     // Unlike the on-KO park above, the decider IS the turn owner here.

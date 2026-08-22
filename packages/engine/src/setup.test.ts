@@ -307,6 +307,13 @@ describe("placement", () => {
       // spread in `evolveOnto` rather than through `makeInPlay`. `null` and not `0`
       // for `healedTurn`'s reason one line up — turn 0 is a real turn number here.
       evolvedTurn: null,
+      // …and it has never ATTACKED either (D394): the one writer is `finishAttack`
+      // (flow.ts) and a body being placed in the setup phase has not been near it.
+      // `null` and not a record for the same reason again — absence of a record is
+      // the only thing that separates "never attacked" from "attacked on turn 0",
+      // and unlike the six stamps above this one is READ two turns after it is
+      // written, so a wrong absence would be wrong for longer.
+      usedAttack: null,
     });
   });
 

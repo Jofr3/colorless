@@ -689,7 +689,14 @@ describe("end to end — Nacli 'Salt Coating' (heal 20, ANY zone, NO printed dam
     expect(types(events)).not.toContain("TURN_ENDED");
     // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
     expect(parked.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+      {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: find(events, "ATTACK_DECLARED")?.uid,
+        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+        attack: find(events, "ATTACK_DECLARED")?.attack,
+      },
     ]);
     expect(parked.players.p1.active?.damage).toBe(ATTACKER_HURT);
     expect(parked.players.p1.bench[0]?.damage).toBe(BENCH_HURT);

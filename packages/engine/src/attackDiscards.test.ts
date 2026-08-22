@@ -340,7 +340,14 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       expect(after.phase.kind).toBe("effect:choose");
       // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
       expect(after.pending).toEqual([
-        { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+        {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: find(events, "ATTACK_DECLARED")?.uid,
+        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+        attack: find(events, "ATTACK_DECLARED")?.attack,
+      },
       ]);
     }
     expect(parkedSomewhere).toBe(true);

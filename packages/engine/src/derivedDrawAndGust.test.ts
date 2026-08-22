@@ -1175,7 +1175,10 @@ describe("end to end — the SELF-SWITCH, the family D181 priced and D189 paid f
     // Nothing moved yet, and the turn has NOT ended.
     expect(activeUid(parked, "p1")).toBe(attacker);
     expect(types(events)).not.toContain("TURN_ENDED");
-    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1", uid: attacker }]);
+    expect(parked.pending).toEqual([
+      // 🆕 D394 — the stage names the ATTACK as well as the attacker.
+      { kind: "attackEpilogue", seat: "p1", uid: attacker, attack: "Slip Away" },
+    ]);
 
     // Answer it, and the switch lands + the turn ends through the SAME epilogue.
     const { state: done } = mustApply(parked, {

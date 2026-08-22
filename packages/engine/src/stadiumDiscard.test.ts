@@ -318,7 +318,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([11, 14]);
+    expect([refused.length, units(refused)]).toEqual([9, 12]);
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -355,7 +355,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // too, so the comparison this rung makes (six printings for one op against ONE for the
     // best clause row) is again unchanged by it.
     // 🆕🆕 D392 — 12 / 12 -> **11 / 11**: the SUBSTRING NAME READ was a singleton.
-    expect([singletons.length, units(singletons)]).toEqual([9, 9]); // 🆕🆕 D393 — 11 / 11 -> **9 / 9**: the EVOLVE PAIR was TWO singletons on one mechanism, which is the first two-step this line has seen and the reason the 1-printing band stopped being saturated
+    expect([singletons.length, units(singletons)]).toEqual([7, 7]); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices // 🆕🆕 D393 — 11 / 11 -> **9 / 9**: the EVOLVE PAIR was TWO singletons on one mechanism, which is the first two-step this line has seen and the reason the 1-printing band stopped being saturated
     // SIX printings against ONE. The comparison is the slice's whole argument, so it
     // is asserted rather than written down.
     expect(units(corpus().filter(([, s]) => s === BARE || s === MAY))).toBe(6 * 1);
@@ -447,7 +447,15 @@ describe("§3 — the board: the OWNER's pile, and a zone that is genuinely vaca
     expect(state.players.p2.active).toEqual(before.players.p2.active);
     expect(state.players.p2.bench).toEqual(before.players.p2.bench);
     expect(state.players.p1.discard).toEqual(before.players.p1.discard);
-    expect(state.players.p1.active).toEqual(before.players.p1.active);
+    // 🆕🆕 D394 — THE ATTACKER'S OWN BODY IS THE ONE EXCEPTION NOW, AND IT IS NAMED
+    // RATHER THAN RELAXED. `finishAttack` stamps `usedAttack` on the body that
+    // declared, so "nothing else moved" is asserted MODULO that one key and the key
+    // is then pinned to the printed attack name. Widening this to a partial match
+    // would have given back exactly the cross-seat blindness the rung exists for.
+    expect(state.players.p1.active).toEqual({
+      ...before.players.p1.active,
+      usedAttack: { name: "Blazing Destruction", turn: before.turn },
+    });
     // The EXISTING event, under the OWNER's seat — `playStadium`'s row verbatim.
     expect(find(result.events, "STADIUM_DISCARDED")).toEqual({
       type: "STADIUM_DISCARDED",

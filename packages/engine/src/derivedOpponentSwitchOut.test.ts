@@ -441,7 +441,10 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
     expect(parked.phase.prompt.note).toBe("Choose your new Active Pokémon.");
     // Nothing has moved yet, and the attacker is still where it was.
     expect(activeUid(parked, "p1")).toBe(attacker);
-    expect(parked.pending).toEqual([{ kind: "attackEpilogue", seat: "p1", uid: attacker }]);
+    expect(parked.pending).toEqual([
+      // 🆕 D394 — the stage names the ATTACK as well as the attacker.
+      { kind: "attackEpilogue", seat: "p1", uid: attacker, attack: "Kick Away" },
+    ]);
   });
 
   it("🛑 REFUSES the CONTROLLER's answer, and accepts the opponent's", () => {

@@ -505,7 +505,14 @@ describe("end to end — the park, and the two halves of one move", () => {
     expect(types(events)).not.toContain("TURN_ENDED");
     // D189 — the stage names the ATTACKER by uid (the ATTACK_DECLARED row's).
     expect(parked.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+      {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: find(events, "ATTACK_DECLARED")?.uid,
+        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+        attack: find(events, "ATTACK_DECLARED")?.attack,
+      },
     ]);
     expect(parked.players.p1.bench[0]?.damage).toBe(BENCH_HURT);
     expect(parked.players.p2.active?.damage).toBe(DEFENDER_HURT);

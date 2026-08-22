@@ -831,6 +831,10 @@ describe("D279 — MATCH_RECORD_VERSION stays 14, and the claim is MEASURED", ()
       "stack",
       "tools",
       "turnPlayed",
+      // 🆕🆕 D394 — `usedAttack` JOINS THE LIST (a FOURTH per-turn stamp on this
+      // structure, and `MATCH_RECORD_VERSION` 24 → 25 with it). THIS slice still
+      // wrote nothing; the pin is on the HEAD's key set.
+      "usedAttack",
     ];
     expect(Object.keys(activeOf(viaLicence, first)).sort()).toEqual(PERSISTED_BODY_KEYS);
     expect(Object.keys(activeOf(viaLicence, first)).sort()).toEqual(

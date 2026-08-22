@@ -221,9 +221,9 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([11, 14]);
+    expect([refused.length, units(refused)]).toEqual([9, 12]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, D390's did not.
-    expect([refused.length + 4, units(refused) + 4]).toEqual([15, 18]);
+    expect([refused.length + 6, units(refused) + 6]).toEqual([15, 18]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -235,10 +235,10 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(10);
+    expect(byClause.size).toBe(8); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
-    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(9);
+    expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(7); // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
     // …and the TRAP is still in the residue at its 5 printings, which is what makes
     // "the residue fell by one sentence" a statement about THIS sentence. It shares

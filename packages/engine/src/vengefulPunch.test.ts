@@ -830,6 +830,9 @@ describe("⚠️ the Attacking Pokémon is a UID the epilogue CARRIES — D189 p
       kind: "attackEpilogue",
       seat: "p1",
       uid: attackerUid,
+      // 🆕 D394 — and the ATTACK beside it, captured at the same instant and for the
+      // same reason: `finishAttack` cannot re-derive either one after a park.
+      attack: "Spin Turn",
     });
     // …and it is the ATTACKER's uid, not the spot's — the two are still the same
     // body here (the switch has not resolved yet), which is exactly why this case

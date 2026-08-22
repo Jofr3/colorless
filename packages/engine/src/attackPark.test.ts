@@ -172,7 +172,14 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     // epilogue survive a program that moves its own actor. It is the same uid the
     // ATTACK_DECLARED row carries, not a re-read of whoever is in the spot.
     expect(parked.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+      {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: find(events, "ATTACK_DECLARED")?.uid,
+        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+        attack: find(events, "ATTACK_DECLARED")?.attack,
+      },
     ]);
     expect(types(events)).not.toContain("TURN_ENDED");
     expect(activeEnergy(parked, "p1")).toHaveLength(3);

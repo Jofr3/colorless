@@ -551,7 +551,14 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
     expect(parked.phase.resumeTail).toBe(true);
     // The epilogue is QUEUED, not run: the turn has not ended and no card moved.
     expect(parked.pending).toEqual([
-      { kind: "attackEpilogue", seat: "p1", uid: find(events, "ATTACK_DECLARED")?.uid },
+      {
+        kind: "attackEpilogue",
+        seat: "p1",
+        uid: find(events, "ATTACK_DECLARED")?.uid,
+        // 🆕 D394 — the stage also names the ATTACK, off the same row, for the same
+        // reason: `finishAttack` stamps `usedAttack` and cannot re-derive the name.
+        attack: find(events, "ATTACK_DECLARED")?.attack,
+      },
     ]);
     expect(types(events)).not.toContain("TURN_ENDED");
     expect(types(events)).not.toContain("CARDS_DRAWN");
