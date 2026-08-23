@@ -1009,6 +1009,17 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
+    // 🆕🆕 D405 — 0.309.0 -> **0.310.0**, THE MANDATORY OWN-BOARD ENERGY RETRIEVAL.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and answered on the
+    // OP. `discardEnergy` PARKS, so it really does ride `GameState.phase.cont.pendingOp`
+    // and the question is live — but this arm authors NO new field and NO new union
+    // member: `from: "yourActive"` is 0.x, `filter: anyEnergy` is 0.x, `to: "hand"` is
+    // D295, and the ABSENT `count` is the shape every pre-D295 self-discard already
+    // stored. What is new is only which `from` the destination appears BESIDE, and a
+    // v25 record carrying that pair means exactly what each half meant separately.
+    // **A NEW COMBINATION OF AN ALREADY-PERSISTABLE VOCABULARY IS NOT A NEW SHAPE**
+    // (D361's own test, re-applied rather than cited). The post-bump anchor pass was
+    // clean.
     // 🆕🆕 D404 — 0.308.0 -> **0.309.0**, THE MANDATORY HAND WIPE AND REFILL.
     // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and answered on
     // the OPS rather than on the file. Both `discardHand` and `drawCards` have been
@@ -1055,8 +1066,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.309.0");
-    expect(manifest.version).toBe("0.309.0");
+    expect(engineVersion).toBe("0.310.0");
+    expect(manifest.version).toBe("0.310.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
