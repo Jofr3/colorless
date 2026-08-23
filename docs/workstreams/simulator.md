@@ -25681,6 +25681,122 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D406 — THE COUNTED TOOL SCALER: a fourth resource for a union that had counted three things for twelve members (engine 0.311.0)
+
+*"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* —
+**1 sentence / 5 legal printings**, identical raw and split-aware — on ONE whole-sentence anchor
+(`YOUR_TOOLS_MULTIPLY`), ONE `deriveAttackDamageMultiplier` arm, ONE THIRTEENTH `DamageCountSource`
+member (`toolsOnYourBoard`), ONE `scaledAttackDamage` evaluator arm and ONE shared board counter
+(`countToolsInPlay`). `BUILT.attack` 1360 → **1365**. **ZERO new ops, ZERO new `EffectOp` fields,
+ZERO new readers, ZERO `BoardCondition` members, ZERO registry rows and ZERO clause-table rows.**
+
+### The thirteenth member, and the first that counts a fourth kind of thing
+
+`DamageCountSource` had twelve members over THREE resources — damage counters, bodies, and attached
+Energy. The thirteenth adds a fourth, and it needed no new state at all: `InPlayPokemon.tools` has
+been an ingested, persisted uid array since M4, and `attachTool` (cardplay.ts) has always refused
+anything whose `trainerType` is not "Tool". So there is no provision question of the kind every
+Energy count answers — `tools.length`, summed over a zone, is the whole arithmetic.
+
+**NO PAYLOAD, and both halves are measured.** No `zone`: the pool prints no Active-only spelling of
+a Tool COUNT, so the field D193 gave `energyOnOpponent` would be one no reader could vary here. No
+`side`: the opponent-side spelling is not printed at all, so there is no mirror member to be a value
+of. The whole "for each Pokémon Tool" family in the legal attack column is ONE sentence, and
+`toolCountScaling.test.ts` §1 asserts that rather than assuming it.
+
+**MULTIPLY-ONLY, and it is the exact mirror of `bothActivesEnergyCount`.** That member is reachable
+from the ADDITIVE reader alone, because its no-adjective twin is 0 legal; this one is reachable from
+the `×` reader alone, because its *"more"* twin **is not printed at all**. Two members, two
+one-reader shapes, opposite folds — each absence pinned by a test rather than left to be
+re-discovered as an oversight.
+
+### 🛑 The scope falsifier fired, and it cost a FUNCTION rather than a FIELD
+
+The handoff named the printed scope as falsifier 1: *"all of your Pokémon" is Active + Bench, and
+whether an existing helper already counts Tools*. It answered NO — the engine's only two Tool
+readings, `yourActiveHasToolAttached` and D369's `opponentActiveHasToolAttached`, are
+`tools.length > 0` on ONE BODY, spelled inline in `interpreter.ts`. Its second half then decided
+WHERE the code goes: *"the walk must be the one already used, not a second opinion about the same
+list"*.
+
+So `countToolsInPlay` is a new exported function in **continuous.ts, directly beside
+`countEnergyInPlay`**. The reason is D159 and it is written on `countEnergyInPlay` already: *"it
+lives here, next to its sibling, so the two readings of the SAME printed noun cannot drift"*.
+*"attached to all of your Pokémon"* and *"attached to all of your opponent's Pokémon"* are ONE
+printed scope, read by two counters; putting the Tool walk anywhere else would have made §6.3's "in
+play" mean two things in one engine.
+
+**IT COST A FUNCTION, NOT A FIELD, AND THE MEMBER COUNT STAYED AT ONE** — so the handoff's "if the
+scope needs a second member rather than one, re-price against (C)" correctly did not trigger. This
+is D405's field-versus-branch distinction at its second use, one axis over: *saying which kind of
+thing a falsifier costs is what makes the call answerable rather than a judgement.*
+
+Falsifier 2, the DROPPED BASE, **held**: the sentence prints no *"more"* (D145/D167's whole
+discriminator), so it lands on `deriveAttackDamageMultiplier` and `scaledBase`'s existing
+`damageMultiplier !== null` disjunct zeroes the printed `30×`. Not one character of that chain
+moved, so none of the seven multi-line mutant `find` rows spanning `attack.ts`'s three disjunction
+chains was touched.
+
+### 🛑 A claim in `effects.ts` that has stopped being true, one resource over
+
+`energyOnSelf`'s doc block says the member carries no `zone` because *"the pool prints no board-wide
+spelling of '… attached to all of YOUR Pokémon'"* (D196, measured 2026-08-04 against the remote D1).
+**The committed `legal_standard = 1` attack column prints one:**
+
+    "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."
+    — 4 legal printings, ADDITIVE, and UNBUILT
+
+`SELF_ENERGY_SCALE` reads *"attached to this Pokémon"* and nothing else, so the sentence stays on the
+loud `ATTACK_EFFECT_SKIPPED` path. The correction is recorded **as an executable guard** —
+`toolCountScaling.test.ts` §2 pins the sentence at 4 printings and unread by both scaling readers —
+rather than as a comment, so a successor that gives `energyOnSelf` the zone D196 refused it reddens
+here BY NAME instead of discovering the claim a third time. That sentence is the slice this page
+hands on next.
+
+### ⚠️ An instrument's membership is a fact about its array
+
+The handoff predicted the NINE-reader instrument would stand still, *"because this slice's reader IS
+`deriveAttackEffect`"*. That was a fact about D405. The nine-reader ARRAY (shared by
+`censusAtHead.test.ts`, `retreatCostBonus.test.ts`, `benchNamedBonus.test.ts` and four others)
+carries `deriveAttackDamageMultiplier` as its FOURTH entry, so it moved 394 / 1,315 → **395 /
+1,320** alongside the eleven-reader one at 399 / 1,331 → **400 / 1,336**. ⚠️ And `unbuiltAttack` is a
+PRINTINGS column, so its step is **−5** (372 → **367**), not −1.
+
+**RESIDUES MEASURED LIVE RATHER THAN STEPPED** (D206's rule): nine-reader raw **245 / 412**,
+split-aware **240 / 399**; eleven-reader raw **240 / 396**, split-aware **235 / 383**. 🛑 The recorded
+predecessor does not reconstruct — D405's page carries the eleven-reader split-aware residue as
+*235 / 387*, and adding this slice's 1 sentence / 5 printings back to the live 235 / 383 gives
+**236 / 388**, a 1 / 1 disagreement no re-derivation here reproduces. The live figure is what the
+docs now carry.
+
+### The board that separates seven wrong answers
+
+`toolCountScaling.test.ts` (22 cases) turns on ONE setup. The attacker wears 2 Tools on its Active
+and 1 on bench[0] of TWO benched bodies; the defender wears 3 on its Active and 2 on its one benched
+body. On that board:
+
+| reading | count | damage |
+|---|---|---|
+| **the truth** — Tools on the attacker's own board | **3** | **90** |
+| the seat flipped (`opponentBenchCount`'s seat) | 5 | 150 |
+| the Active alone (`yourActiveHasToolAttached`'s zone) | 2 | 60 |
+| the Bench alone (`damageCountersOnYourBench`'s zone) | 1 | 30 |
+| bodies WEARING a Tool | 2 | 60 |
+| benched BODIES (`yourBenchCount`) | 2 | 60 |
+| attached ENERGY (`energyOnSelf`) | 1 | 30 |
+| both sides | 8 | 240 |
+
+Seven distinct wrong numbers against one right one, and §3 asserts the SPREAD **before any damage is
+read** — D214's attribution control applied to a set of readings rather than to a build artifact, so
+a fixture drift that collapsed two of them onto one number reddens by name instead of quietly making
+the suite vacuous. §4's Tool-less board asserts **no `DAMAGE_DEALT` event at all**: a build that kept
+the printed `30×` base would deal 30 there and be green on every other rung in the file.
+
+⚠️ **THE ONE-PER-BODY CAP IS AN ATTACH-GATE RULE, NOT AN INVARIANT.** Revavroom ex `sv03-156`'s
+"Tune-Up" raises §7.4's cap to 4, so a body wearing two Tools is a legal board — which is why
+`countToolsInPlay` sums `tools.length` rather than counting the bodies that have one, and why
+`attachToolFromDeck` (test surgery) deliberately does not enforce the cap.
+
 ## D405 — THE MANDATORY OWN-BOARD ENERGY RETRIEVAL, and the first slice in this run where the LARGEST HEAD LOST A PRICE COMPARISON (engine 0.310.0)
 
 *"Put an Energy attached to this Pokémon into your hand."* — **1 sentence / 5 legal printings**,
