@@ -505,9 +505,17 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // ends "…caught by grepping `mutants.ts` before the commit rather than by a red
   // sweep." — re-emitted under its own archive heading, and the SEAM was re-read
   // afterwards rather than assumed, with both headings confirmed present and in order.
-  const ARCHIVES = 76;
+  // 🆕🆕 D407 — 76 -> **77**, RAISED IN THE SAME COMMIT THAT DEMOTED D406's RESUME
+  // POINT. The guard's UP branch, taken deliberately, for the seventh slice running.
+  // D406's body was captured BY INDEX before the rewrite — 261 lines, opening "THE NEXT
+  // CONCRETE ACTION (written 2026-08-23, after D406)" and closing on the paragraph that
+  // ends "…THE DOCS' REASONS ROT FASTER THAN THEIR VERDICTS, AND FOUR IN ONE SLICE IS
+  // THE clearest measurement of that yet." — re-emitted under its own archive heading,
+  // and the SEAM was re-read afterwards rather than assumed, with both headings confirmed
+  // present and in order.
+  const ARCHIVES = 77;
 
-  it("the page still holds all 76 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 77 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

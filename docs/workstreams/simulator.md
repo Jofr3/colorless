@@ -25681,6 +25681,107 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D407 — THE BOARD-WIDE OWN-ENERGY COUNT: a zone refused on a measurement that has since stopped being true (engine 0.312.0, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+    "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."
+    — 1 sentence, 4 LEGAL printings, ADDITIVE
+
+D196 declined to give `energyOnSelf` a `zone` and wrote the reason into the type: *"the pool prints
+no board-wide spelling of '… attached to all of YOUR Pokémon', so a zone here would be a field no
+reader could ever vary"* — measured against the remote D1 on 2026-08-04. **D406 found the sentence**
+while pricing a Tool count one resource over, and left the correction as an EXECUTABLE GUARD
+(`toolCountScaling.test.ts` §2, pinning it at 4 printings and unread by both scaling readers) rather
+than as a comment. **That guard is what reddened when this slice landed**, which is the whole
+argument for writing a falsified claim as a rung instead of a sentence.
+
+### The shape: a `zone`, and an OPTIONAL one
+
+**A `zone` and not a fourteenth member.** D193's argument applies verbatim: two zone members would
+each have to carry `energyType`, and duplicating the field that answers *"which Energy counts"* is
+the second answer to one question D159 forbids. `energyOnOpponent` has carried exactly this shape
+since D193, at the other end of the table.
+
+**OPTIONAL, with `undefined` meaning the ATTACKING BODY** — D135's `zone?: "bench"` polarity read
+one union over. The printed words WIDEN the scope, so the field is present exactly when they are
+printed, and a producer that forgets it counts ONE BODY rather than a whole side. **The conservative
+direction is the one that UNDER-counts**: an absent-means-board default would silently score every
+Energy on the board for the twenty-one printings that name only the attacker.
+
+**The alternative was priced before the choice was made.** `grep -rn '"energyOnSelf"'
+packages/engine/src` returns **13 sites** — 2 producers, 1 consumer and **10 frozen test literals** —
+so a REQUIRED field would have rewritten ten assertions with nothing to do with this sentence. And
+the field is read at exactly ONE site (`scaledAttackDamage`), confirmed by grepping the read sites
+rather than by assuming, so the shape rule's polarity veto is not engaged.
+
+### The folds are mirror images, and each absence is pinned
+
+| | reads the zone | hard-codes one |
+|---|---|---|
+| `energyOnOpponent` | `deriveAttackDamageMultiplier` (`OPPONENT_ENERGY_MULTIPLY`) | `deriveAttackDamageBonus` (`zone: "active"`) |
+| `energyOnSelf` | `deriveAttackDamageBonus` (`SELF_ENERGY_SCALE`) | `deriveAttackDamageMultiplier` (the body) |
+
+The `×` spelling of a board-wide OWN Energy count is printed **nowhere** in the legal attack column —
+the column's only bare-fold *"attached to all of your Pokémon"* sentence counts Pokémon TOOLS (D406)
+— so `SELF_ENERGY_MULTIPLY` keeps its bare *"this Pokémon"* tail and that absence is a rung rather
+than an inference.
+
+### 🛑 The near miss is an OWNER-PREFIXED board, one word wider than the anchor
+
+    "This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pokémon."
+    — 1 legal printing
+
+It names a **SUBGROUP** of the same zone, not the zone. The alternative is the literal `all of your
+Pokémon` and nothing else, so the row stays LOUD; a widening spelled `all of your .* Pokémon` would
+score it off the whole board and author a card the catalog does not print (D120). One of D407's
+eight mutants is exactly that widening.
+
+### ✅ The delegation seam was verified rather than inherited (D403's rule)
+
+`countEnergyInPlay(state, seat, energy)` walks Active + Bench (§6.3 "in play"), reads a TYPE by
+**PROVISION** through `providesEnergyType` (D118) and `"special"` by card class. So a wildcard
+Luminous counts toward `{G}` for exactly as long as it does everywhere else, and stops the moment a
+second Special demotes it to `{C}`. **Driven in both directions on a live board** rather than argued:
+`boardWideEnergyScaling.test.ts` §3 and §4 attach a Luminous to a BENCHED body (50 damage), then a
+`fix-special` to the same body (back to the bare printed 20) with nothing else moved — and assert
+that one wildcard moves the `{G}` count by ONE, not by the size of the type table.
+
+### 🛑 The supply check for the NEXT slice found a WRONG-BUT-PLAUSIBLE PROGRAM at HEAD
+
+While pricing the residue, the attack-lock family was swept and one row is **read incorrectly**:
+
+    "During your next turn, this Pokémon can't use attacks."   — 4 legal printings
+
+`SELF_CANT_USE_ATTACK` is `/^During your next turn, this Pokémon can['’]t use (.+?)\.$/` (D154, for
+*"… can't use {AttackName}."*), and its lazy capture swallows the bare plural. The printing derives
+`preventAttackUse { attack: "attacks" }` — a lock keyed on an attack **named "attacks"**, which no
+card has — so four legal printings resolve to a program that does nothing and are counted as BUILT.
+This is precisely the shape conventions.md calls *strictly worse than an unbuilt one* (D190b, D199).
+Recorded here and handed on rather than fixed inside this slice.
+
+Two more spellings of the same rule are **UNREAD** while the op they need already ships:
+
+    "During your opponent's next turn, the Defending Pokémon can't attack."       — 3, UNREAD
+    "During your opponent's next turn, the Defending Pokémon can't use attacks."  — 4, UNREAD
+
+`preventAttack { target: "defender" }` exists and is produced by TWO compound anchors
+(`SELF_DISCARD_ONE_THEN_DEFENDER_LOCK` and `DEFENDER_BASIC_CANT_ATTACK`'s gate) — **there is no bare
+anchor at all**.
+
+### Census
+
+`BUILT.attack` 1365 → **1369**; **BOTH reader instruments step by 1 sentence / 4 printings** — the
+eleven-reader one 400 / 1,336 → **401 / 1,340** and the nine-reader one 395 / 1,320 → **396 / 1,324**
+— because `deriveAttackDamageBonus` is in BOTH arrays and the arrays were OPENED rather than reasoned
+about from the previous slice (D406's finding, applied). Whole-census `built` 1,770 → **1,774**, its
+residue 613 → **609**; unbuilt attack column 367 → **363** (a PRINTINGS column, so −4 and not −1);
+`BUILT.attack - 922` 443 → **447**, `- 922 - 252` 191 → **195**; `head - rawDelta - splitDelta`
+1,359 → **1,363**; `FIXTURE_POOL` 510 → **511**. `REGISTRY_ATTACK_UNITS`, `splitHead`,
+`BUILT.ability`, registry ids and the apostrophe file's DERIVABLE sweep all stand still — a
+READER-keyed move that edits `registry.ts` not at all.
+
+Residue MEASURED LIVE at this head (D403's rule — never stepped): eleven-reader raw **239 / 392**,
+split-aware **234 / 379**; nine-reader raw **244 / 408**, split-aware **239 / 395**.
+
 ## D406 — THE COUNTED TOOL SCALER: a fourth resource for a union that had counted three things for twelve members (engine 0.311.0)
 
 *"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* —
