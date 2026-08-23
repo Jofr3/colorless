@@ -16377,4 +16377,82 @@ export const MUTANTS: Mutant[] = [
     replace: "    \"(?:, or by any effects on (that|those) Pokémon)?\\\\.))?\",",
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
   },
+  // ── D401 — THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE. Eight rows, and
+  //    the split is the point: TWO are LOUD (C1 and C8 move a census figure, in
+  //    opposite directions) and SIX are SILENT IN EVERY CENSUS — the sentence still
+  //    matches, `BUILT.attack` is unmoved, and the derived program is wrong. That is
+  //    D400's finding one anchor over, and it is why this family's rungs drive a BOARD
+  //    and an unprinted near-miss rather than only reading the op back.
+  {
+    id: "D401-join-narrowed-to-the-period",
+    decision: "D401",
+    what: "🛑 C1 — **THE PRINTED JOIN COLLAPSES TO `. ` ONLY**, which is the reading this slice deliberately did not take. Three of the four sentences still resolve and the fourth — *\"Discard all Energy from this Pokémon, **and** this attack does 120 damage to 1 of…\"* — falls back onto the loud path, refused **on a CONJUNCTION rather than on a mechanism** (D399's *\"a refusal that expired on a literal\"*). ⚠️ **IT COSTS ONE PRINTING, SO EVERY CENSUS FIGURE IN THE REPO MOVES BY ONE AND NOTHING ELSE DOES** — the smallest possible step, which is exactly why the row exists: a slice that took the cheap join would have passed every board rung in the file",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"^Discard (all|\\\\d+) Energy from this Pokémon(?:\\\\. This|, and this) \" +",
+    replace: "  \"^Discard (all|\\\\d+) Energy from this Pokémon\\\\. This \" +",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D401-ops-in-the-wrong-order",
+    decision: "D401",
+    what: "🛑 C2 — **THE TWO OPS ARE RETURNED SNIPE-FIRST**, the mistake *\"the discard is a COST, and §8 runs costs after damage\"* actually invites. Every sentence still resolves, both ops still run, the board ends in the same place and **NO CENSUS FIGURE MOVES AT ALL** — what changes is the order of the two questions the player is asked, and with it which board the snipe's candidates are read off. Only a rung that drives BOTH parks in sequence can see it: §6 asserts the cost parks with NO `DAMAGE_DEALT` yet, and that every `ENERGY_DISCARDED` lands in the first resume and every `DAMAGE_DEALT` in the second. ⚠️ A MULTI-LINE `find` over the two return-literal lines — inserting anything between them falsifies it without touching a character (D317/D381/D383)",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: discard },\n        { op: \"damageChosen\", target: \"opponentAny\", amount, count, source: \"attack\", deals: true },",
+    replace: "        { op: \"damageChosen\", target: \"opponentAny\", amount, count, source: \"attack\", deals: true },\n        { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: discard },",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-discard-count-becomes-all",
+    decision: "D401",
+    what: "⚠️ C3 — **THE COST'S QUANTIFIER IS HARD-CODED TO `\"all\"`**, which is the NEIGHBOURING ARM'S REAL CODE copied verbatim (arm 9's `SELF_DISCARD_ALL` program, byte for byte). Three of the four printed sentences are unaffected because they really do say *\"all\"*; the fourth — the 3-printing *\"Discard **2** Energy…\"*, the largest sentence in the family — silently strips every Energy on the attacker instead of two. ⚠️ **THE SENTENCE STILL RESOLVES AND EVERY CENSUS FIGURE IS UNMOVED**: a reader can be right about what it accepts and wrong about what it builds, and only §5's inventory rung and §6's board reach it",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: discard },",
+    replace: "        { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, count: \"all\" },",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-snipe-arity-back-to-the-literal",
+    decision: "D401",
+    what: "🛑 C4 — **THE SNIPE'S ARITY IS PINNED AT 1**, i.e. D400's own C1 made one arm over. The `110 damage to 3 of` and `120 damage to 2 of` printings still resolve and still park, but for ONE body instead of three or two — a card that pays its whole Energy cost and then hits a third of what it prints. ⚠️ **SILENT IN EVERY CENSUS**, and the reason the arity capture belongs to a rung that drives the prompt's `min`/`max` rather than to one that only reads the op back",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"damageChosen\", target: \"opponentAny\", amount, count, source: \"attack\", deals: true },",
+    replace: "        { op: \"damageChosen\", target: \"opponentAny\", amount, count: 1, source: \"attack\", deals: true },",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-snipe-targets-the-bench-only",
+    decision: "D401",
+    what: "🛑 C5 — **THE SNIPE'S TARGET BECOMES `opponentBench`**, the SIBLING FAMILY'S REAL VALUE copied verbatim (`ALSO_BENCHED_SNIPE`'s op, a few anchors up). The printed noun here is *\"Pokémon\"* and not *\"Benched Pokémon\"*, so the Active stops being a candidate — and against a bare Active the whole snipe finds nothing and the attack does nothing at all, after the cost has already been paid. ⚠️ **STILL SILENT IN EVERY CENSUS**; §5's inventory rung compares the half against the bare anchor's own output and §6 asserts the Active leads the candidate list",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"damageChosen\", target: \"opponentAny\", amount, count, source: \"attack\", deals: true },",
+    replace: "        { op: \"damageChosen\", target: \"opponentBench\", amount, count, source: \"attack\", deals: true },",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-discard-positivity-guard-dropped",
+    decision: "D401",
+    what: "⚠️ C6 — **THE COST'S POSITIVITY GUARD GOES**, leaving the snipe's two. A printed *\"Discard 0 Energy from this Pokémon\"* then derives a `discardEnergy` at `count: 0` — an attack whose printed price is silently free — where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing rule that a printed 0 is not a real card). The other two guards survive the mutation, which is why §5 asserts the three positions SEPARATELY rather than as one",
+    file: "packages/engine/src/effects.ts",
+    find: "    if ((discard === \"all\" || discard >= 1) && amount >= 1 && count >= 1) {",
+    replace: "    if (amount >= 1 && count >= 1) {",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-amount-positivity-guard-dropped",
+    decision: "D401",
+    what: "⚠️ C7 — **THE SNIPE'S AMOUNT GUARD GOES**, leaving the cost's and the arity's. A printed `0 damage` then derives a hit that parks a real question and deals nothing, having already taken the Energy — the worst of the three zeroes, and the one an author is most likely to think the arity guard already covers. Separated from C6 for exactly that reason",
+    file: "packages/engine/src/effects.ts",
+    find: "    if ((discard === \"all\" || discard >= 1) && amount >= 1 && count >= 1) {",
+    replace: "    if ((discard === \"all\" || discard >= 1) && count >= 1) {",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D401-compound-anchor-loses-its-terminator",
+    decision: "D401",
+    what: "🛑 C8 — **THE SATURATION TRAP ON THE NEW ANCHOR.** Dropping the `$` makes the whole pattern a PREFIX match, so any sentence merely BEGINNING with one of the four printed compounds is swallowed and its remaining clause silently deleted — and **IT LOOKS LIKE A COVERAGE WIN**, because the swallowed sentence leaves the unbuilt remainder and `BUILT.attack` RISES. ⚠️ **ONLY A COMPOUND CAN REACH A WHOLE-SENTENCE TERMINATOR** (D399's real GAP, found the hard way): every other near-miss in §5 is refused further up — at `^Discard`, at the join, at a zone word or at a type token — and so proves nothing about the `$`. §5's terminator rung drives it at BOTH stopping points, because the optional clarifier is where a prefix match would otherwise halt. ⚠️ A MULTI-LINE `find`, for the ordinary reason: the `$`-bearing clarifier line is spelled identically on THREE anchors in this file, so only its neighbour makes it unique",
+    file: "packages/engine/src/effects.ts",
+    find: "    `attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,\n);",
+    replace: "    `attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?`,\n);",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
 ];
