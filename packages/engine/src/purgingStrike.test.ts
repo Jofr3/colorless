@@ -273,14 +273,20 @@ describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", (
     expect(connective.map(([, s]) => s)).toEqual([PURGING]);
   });
 
-  it("🛑 the MANDATORY hand discard is a DIFFERENT slice, and it is bigger", () => {
-    // The ceiling, priced and left (D379's rule, and `exactHandSize.test.ts` §1's own
-    // rung re-derived here rather than quoted). The imperative spelling is worth SEVEN
-    // printings and is refused for a reason this slice does not touch: it is a hand
-    // discard followed by a DRAW, with no offer, no gate and no bonus.
+  it("🛑 the MANDATORY hand discard was a DIFFERENT slice, and D404 took it", () => {
+    // The ceiling this file priced and left (D379's rule, and `exactHandSize.test.ts`
+    // §1's own rung re-derived here rather than quoted). The imperative spelling is
+    // worth SEVEN printings and was refused for a reason this slice does not touch: it
+    // is a hand discard followed by a DRAW, with no offer, no gate and no bonus.
+    //
+    // 🆕🆕 **D404 BUILT IT, AND THE RUNG IS RE-POINTED RATHER THAN DELETED** — as a
+    // `deriveAttackEffect` arm, which is a DIFFERENT producer from this file's, so the
+    // two readings must stay disjoint: this reader still refuses it, and if it ever
+    // claimed it `attack.ts` would have two programs for one sentence.
     const mandatory = corpus().filter(([, s]) => s === "Discard your hand and draw 6 cards.");
     expect([mandatory.length, units(mandatory)]).toEqual([1, 7]);
-    expect(resolvedByAnyReader("Discard your hand and draw 6 cards.")).toBe(false);
+    expect(resolvedByAnyReader("Discard your hand and draw 6 cards.")).toBe(true);
+    expect(deriveAttackOptionalCostBoost("Discard your hand and draw 6 cards.")).toBeNull();
   });
 
   it("🛑 NO own-hand THRESHOLD is printed anywhere, which is why the member is NULLARY", () => {

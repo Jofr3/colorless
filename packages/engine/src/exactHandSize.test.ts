@@ -422,12 +422,29 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D385)).toHaveLength(1);
     expect(resolvedByAnyReader(CEILING_TAKEN_AT_D385)).toBe(false);
     expect(deriveAttackOptionalCostBoost(CEILING_TAKEN_AT_D385)).not.toBeNull();
-    // …and the biggest unbuilt thing in this corner is a hand-ZONE op rather than a
-    // hand-SIZE read, which is why it is a different slice: SEVEN printings.
+    // 🛑 🆕🆕 **D404 TOOK THE HAND-ZONE SENTENCE, AND THE RUNG IS RE-POINTED RATHER
+    // THAN DELETED.** It sat here as *"the biggest unbuilt thing in this corner is a
+    // hand-ZONE op rather than a hand-SIZE read, which is why it is a different slice:
+    // SEVEN printings"*, asserted `false` through `resolvedByAnyReader`. D404 built it
+    // as a `deriveAttackEffect` arm — which **this file's NINE-reader array DOES
+    // contain** — so unlike D385's departure one paragraph up, this one reddened the
+    // rung by itself rather than going quiet. ⚠️ **THE DISTINCTION IS THE WHOLE POINT
+    // OF KEEPING BOTH HERE**: a refusal claim is only as loud as the instrument that
+    // states it, and D385's went silent for exactly the reason this one did not.
+    //
+    // The printing count is KEPT and still measured — the sentence and its 7 units are
+    // this file's evidence that the ceiling it priced was real, and D404 moved the
+    // VERDICT without moving the population.
     const discardHand = corpus().filter(([, s]) => s === "Discard your hand and draw 6 cards.");
     expect(discardHand).toHaveLength(1);
     expect(units(discardHand)).toBe(7);
-    expect(resolvedByAnyReader("Discard your hand and draw 6 cards.")).toBe(false);
+    expect(resolvedByAnyReader("Discard your hand and draw 6 cards.")).toBe(true);
+    // …and it is a hand-ZONE op and NOT a hand-SIZE read, which is the claim that made
+    // it a different slice in the first place: no `BoardCondition` was bought for it.
+    expect(deriveAttackEffect("Discard your hand and draw 6 cards.")).toEqual([
+      { op: "discardHand" },
+      { op: "drawCards", count: 6 },
+    ]);
   });
 });
 

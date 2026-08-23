@@ -1021,6 +1021,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // body from what an attack does TO it; there is no body in either op.
     drawCards: "untouched",
     drawUntilHandSize: "untouched",
+    // 🆕🆕 **D404 — THE TWENTY-SECOND OP, AND IT ARRIVED THE WAY D181's THREE DID
+    // RATHER THAN THE WAY D313's DID.** `discardHand` is not new code: it has run on
+    // the Trainer path since Professor's Research and D385 reached it from ATTACK
+    // text inside `optionalCostOps`. What made it visible HERE is that D404's arm is
+    // the first TOP-LEVEL attack producer of it — and `fix-handdraw` is in the shared
+    // pool, which is the population half of the rule `returnSelf`'s row above states.
+    // **THE TABLE CAUGHT IT BY GOING RED, WHICH IS WHAT IT IS FOR**: this row was
+    // written because the sweep named the op, not because the slice remembered.
+    //
+    // UNTOUCHED, and it is `drawCards`' argument with the direction reversed: the two
+    // zones are the ACTOR's own HAND and the ACTOR's own DISCARD PILE, and neither is
+    // a Pokémon. A §11 block protects a body from what an attack does TO it; there is
+    // no body in this op at all, and no opponent-side zone either. A block that
+    // stopped it would let the Defending Pokémon veto what its opponent does with
+    // their own hand.
+    discardHand: "untouched",
     // ⚠️⚠️ D237 — backlog row 13's op, arriving in this table because the sweep
     // above is TOTAL over what the deriver can emit and an attack now emits it.
     // UNTOUCHED, and for `drawCards`' reason with one more zone on the list: the
@@ -1799,6 +1815,21 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     drawCards: {
       op: { op: "drawCards", count: 1 },
       landed: (r) => r.after.players.p2.hand.length > r.before.players.p2.hand.length,
+    },
+    // 🆕🆕 D404. `landed` reads the DISCARD PILE rather than the hand, and that is not
+    // interchangeable here: an op that emptied the hand and dropped the cards on the
+    // floor would satisfy "the hand is smaller", and this table's whole business is
+    // telling a landed effect from a swallowed one. The probe board's hand is asserted
+    // non-empty first, because the op is SILENT on an empty one — a probe that read
+    // "untouched" off nothing to discard would be the vacuous guard this file exists
+    // to refuse (D205).
+    discardHand: {
+      op: { op: "discardHand" },
+      landed: (r) =>
+        r.after.players.p2.hand.length === 0 &&
+        r.after.players.p2.discard.length ===
+          r.before.players.p2.discard.length + r.before.players.p2.hand.length &&
+        r.before.players.p2.hand.length > 0,
     },
     // A NAMED board, for `clearStatus`'s reason from the other direction: this op
     // draws `size − hand.length`, so a probe on a hand that is already at or above

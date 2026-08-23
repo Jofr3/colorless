@@ -1009,6 +1009,16 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
+    // 🆕🆕 D404 — 0.308.0 -> **0.309.0**, THE MANDATORY HAND WIPE AND REFILL.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and answered on
+    // the OPS rather than on the file. Both `discardHand` and `drawCards` have been
+    // persistable vocabulary since Professor's Research; NEITHER gains a field here,
+    // and — unlike the last three slices' ops — neither PARKS, so nothing new can ride
+    // `GameState.phase.cont.pendingOp` at all. No union is widened anywhere, so D361's
+    // "a v25 record cannot contain a member that did not exist" has nothing to bite
+    // on. **A NEW ORDERING OF AN ALREADY-PERSISTABLE PAIR IS NOT A NEW SHAPE** — and
+    // the ordering is not even new: `registry.ts` has spelled these two ops in this
+    // order on Professor's Research since M4. The post-bump anchor pass was clean.
     // 🆕🆕 D403 — 0.307.0 -> **0.308.0**, THE ADDITIVE HALF OF THE SAME FAMILY.
     // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed, and this time
     // there were TWO places it could have moved rather than one — both of them on ops
@@ -1045,8 +1055,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.308.0");
-    expect(manifest.version).toBe("0.308.0");
+    expect(engineVersion).toBe("0.309.0");
+    expect(manifest.version).toBe("0.309.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

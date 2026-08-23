@@ -135,9 +135,6 @@ const NEAR_MISSES = [
       inner op. */
   "You may discard any number of cards from your hand until you have 4 or fewer. Draw cards until you have 5 cards in your hand.",
   // ── The plain-draw family, with something else in the sentence. ──
-  /** Discard-then-draw (7 legal printings). Contains "draw 6 cards." verbatim and
-      is not a "you may" at all: the discard is mandatory. */
-  "Discard your hand and draw 6 cards.",
   /** A draw from the WRONG END of the deck (1 legal). `drawCards` takes from the
       top; this is `deckBottom`'s dimension. */
   "Draw 3 cards from the bottom of your deck.",
@@ -178,6 +175,28 @@ const NEAR_MISSES = [
  *  unchanged and its shape is the same one the draws get. */
 const WRAPPED_ELSEWHERE =
   "You may switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
+
+/** ⚠️ 🆕🆕 **D404 — THE SECOND ROW TO LEAVE `NEAR_MISSES` BY BEING BUILT, AND IT LEFT
+    THROUGH A DIFFERENT DOOR FROM D227's.**
+ *
+ *  It sat in the list above with the note *"Discard-then-draw (7 legal printings).
+ *  Contains \"draw 6 cards.\" verbatim and is not a \"you may\" at all: the discard is
+ *  mandatory"* — and the whole point of the entry was that the ANCHORS here must not
+ *  eat it. They still must not, and that claim is now WORTH MORE rather than less: the
+ *  sentence derives, so a rung asserting `null` would be the wrong assertion, while a
+ *  rung asserting it derives to the WRAPPED shape would be flatly false.
+ *
+ *  🛑 **THE THING THIS FILE OWNS ABOUT IT IS THAT IT IS *NOT* WRAPPED.** D404's arm is a
+ *  bare two-op program with no `optional` in front of it, because the printed sentence
+ *  carries no offer. An anchor here that had grown an optional `(?:You may )?` group —
+ *  the single-regex arrangement this file's own doc block argues against — would have
+ *  had no way to tell this sentence's mandatory discard from a wrapped draw. So the
+ *  entry is re-pointed rather than dropped: the assertion is that the program is the
+ *  INNER shape and never the gated one.
+ *
+ *  ⚠️ AND IT IS STILL A NEAR-MISS FOR THE `^…$` CLAIM, which is why the trailing-clause
+ *  case below still builds a witness out of it. */
+const BUILT_AT_D404 = "Discard your hand and draw 6 cards.";
 
 describe("the two anchors — 12 legal printings, and the four words in front of the op", () => {
   it("derives each printed sentence to the WRAPPED program", () => {
@@ -301,6 +320,19 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+  });
+
+  it("🆕🆕 D404's row is BUILT and deliberately NOT wrapped", () => {
+    // See BUILT_AT_D404's block. The sentence prints no offer, so its program is the
+    // two ops bare — and this file's claim about it has become the SHAPE rather than
+    // the refusal. A shared anchor with an optional "You may " group would pass every
+    // accept case in this file and could not express this at all.
+    const built = deriveAttackEffect(BUILT_AT_D404);
+    expect(built).toEqual([{ op: "discardHand" }, { op: "drawCards", count: 6 }]);
+    expect(built?.some((op) => op.op === "optional")).toBe(false);
+    // …and the WRAPPED spelling of it is nobody's sentence, so the anchors here must
+    // still refuse it — which is the original entry's claim, kept.
+    expect(deriveAttackEffect("You may discard your hand and draw 6 cards.")).toBeNull();
   });
 
   it("D227's third producer wraps through the SAME gate, byte for byte", () => {
