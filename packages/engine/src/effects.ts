@@ -9560,6 +9560,85 @@ const SELF_DISCARD_N = /^Discard (\d+) Energy from this Pokémon\.$/;
 // sv06.5-047, Eiscue sv02-048/-205), each of which prints a second sentence after
 // the discard — see that anchor's census.
 const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
+// 🆕🆕 D401 — ADDENDUM TO THE PARAGRAPH ABOVE, WHICH IS KEPT VERBATIM (D178). Its
+// claim is unchanged and still true: this anchor's `$` refuses all four compounds.
+// What moved is where TWO of them are read — `SELF_DISCARD_THEN_ANY_TARGET` below
+// derives Kyurem's in printed order, exactly as D147 moved Eiscue's off this list
+// and D148 moved the "an" form's. Weavile's Paralyze compound is the one member of
+// D145's four that no anchor reaches yet.
+
+// 🆕🆕 D401 — THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE. The FIFTH
+// member of this file's compound family (`DEFENDER_POISON_CANT_RETREAT` arm 5c,
+// `COUNTER_PUT_ANY_THEN_SELF_LOCK` arm 25, `SELF_DISCARD_ALL_THEN_REDUCTION` D147
+// and `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK` D148 are the precedents) and the FIRST
+// whose SECOND half also PARKS — every earlier compound put a synchronous install
+// behind the discard's decision.
+//
+// FOUR SENTENCES / SEVEN LEGAL PRINTINGS, measured over `legalAttackCorpus()` and
+// transcribed byte for byte (the tail elided here is the Benched clarifier):
+//   3 — "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of
+//        your opponent's Pokémon. (Don't apply …)"
+//   2 — "Discard all Energy from this Pokémon. This attack does 120 damage to 1 of
+//        your opponent's Pokémon. (Don't apply …)"
+//   1 — "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of
+//        your opponent's Pokémon. (Don't apply …)" — Kyurem sv06.5-047 "Trifrost",
+//        the compound D145's census named and `attackPark.test.ts` has pinned as a
+//        NULL witness since M5.
+//   1 — "Discard all Energy from this Pokémon, AND this attack does 120 damage to
+//        1 of your opponent's Pokémon. (Don't apply …)"
+//
+// 🛑 THE SHAPE QUESTION WAS "ONE ANCHOR OR TWO READS", AND `deriveAttackEffect`
+// ANSWERS IT: THERE IS NO COMPOSITION PATH AND THERE NEVER HAS BEEN. Nothing in
+// this file calls `deriveAttackEffect` recursively; every compound the engine reads
+// is one whole-sentence anchor returning both ops in printed order. D382's `. Then, `
+// join is not a counterexample — it lives in `deriveAttackBonusConsequent` and
+// dispatches its tail over a CLOSED anchor list precisely BECAUSE it could not
+// delegate to this reader (that consequent lowercases its verb). So the price of
+// this family is a regex, not a table row, and the sequencing it needs is the one
+// `EffectOp[]` has had since M5.
+//
+// 🛑 THE PRINTED JOIN IS A TWO-WAY ALTERNATION AND NOT TWO CONSTANTS, WHICH IS THE
+// OPPOSITE OF D382's CALL — AND THE REASON D382 GAVE IS EXACTLY WHAT DOES NOT APPLY
+// HERE. That slice refused `(?:, and |\. Then, )` because its anchor wraps a leading
+// `(.+)` antecedent, so an alternation would have collapsed the pair "into a regex
+// whose greed nobody can read off the page". THIS anchor contains no `.` metachar at
+// all — every byte outside the three captures is a literal, and the two captures
+// that are not are `\d+` — so the alternation can only match at ONE offset and there
+// is no greed to hide. What it buys is that the ~100-byte snipe body is spelled ONCE
+// rather than twice: D383's rule, whose stated condition is met to the letter (a
+// second reading of the same printed clause with a LOWER-CASE leading word).
+// ⚠️ AND THE CASE LIVES IN THE JOIN RATHER THAN IN A `[Tt]` CLASS — D246's rule and
+// D316's precedent: a case class gives up the whole-sentence discipline in BOTH
+// directions at once, while `\. This` / `, and this` names the two printed spellings
+// and nothing else.
+//
+// 🛑 AND THE W/R TAIL IS NOT ADMITTED, WHICH IS D382's OTHER CALL AND HERE IT DOES
+// APPLY. `CHOSEN_ANY_TARGET`'s tail is a THREE-way optional (bare | the Benched
+// clarifier | Umbreon's "isn't affected by Weakness or Resistance…"); this one is
+// TWO-way, because a W/R tail behind a discard cost returns **ZERO** sentences in
+// the whole 640-sentence legal attack column. Sharing a fragment with that anchor
+// would therefore resolve a sentence nobody prints — authoring rather than reading
+// (D190b) — and it is the measured difference between the two tails that makes the
+// duplication of the shared head honest rather than lazy. `anyTargetSnipe.test.ts`
+// §4 asserts both halves: the W/R-tailed compound is refused, and the SAME sentence
+// with the printed clarifier resolves, so the refusal is the tail's and not another
+// byte's (D399).
+//
+// ⚠️ THE CLARIFIER IS OPTIONAL EVEN THOUGH ALL SEVEN PRINTINGS CARRY IT. §8.5 makes
+// it true regardless and older printings omit it, so every one of this file's four
+// snipe anchors spells it `(?: \(…\))?`; a mandatory copy here would be the odd one
+// out and would refuse on an ERA rather than on a mechanism.
+//
+// THREE CAPTURES, ALL OF THEM FIELDS OF THE TWO OPS (D131's test for "is this one
+// pattern"): the discard's quantifier, the snipe's amount and the snipe's arity.
+// `(all|\d+)` is the printed set exactly — three sentences say "all" and one says
+// "2" — and the "an" spelling `SELF_DISCARD_ONE` reads is NOT admitted, because no
+// compound prints it. No /i, on the family's standing reason.
+const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
+  "^Discard (all|\\d+) Energy from this Pokémon(?:\\. This|, and this) " +
+    `attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The OPPONENT-side twin of the self-discard family lives BELOW rather than
 // here, beside `TYPED_SELF_DISCARD`: D361 made both of its anchors MAP-BUILT
 // (`ENERGY_TYPE_BY_CODE` / `ENERGY_TYPE_BY_NAME`), and a `new RegExp` built
@@ -15020,6 +15099,46 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
     ];
+  }
+
+  // 9b. 🆕🆕 D401 — "Discard {all|N} Energy from this Pokémon[. |, and ]this attack
+  //     does A damage to C of your opponent's Pokémon. (Don't apply …)" — the §8
+  //     self-discard COST in front of the ANY-target snipe, TWO OPS IN PRINTED
+  //     ORDER. 4 sentences / 7 legal printings; see the anchor's own census.
+  //
+  //     🛑 THE FIRST COMPOUND IN THIS FILE WHOSE *SECOND* HALF ALSO PARKS, AND
+  //     NOTHING BELOW THE READER HAD TO MOVE FOR IT. `EffectContinuation` has
+  //     carried `rest: EffectOp[]` since M5 and `resumeProgram` re-enters
+  //     `runProgram` with it, so a program that parks, resumes and parks again is
+  //     the queue doing what it already did — the reason this slice bumps no
+  //     persisted version. The two-park attack precedent is D342's
+  //     `searchTopOrderProgram` (searchDeck then reorderTop); what is new here is
+  //     that BOTH parks belong to the same printed sentence pair and the second
+  //     one's candidates are read off a board the first one just changed.
+  //
+  //     Mutually exclusive with arms 6d and 7/8/9 in BOTH directions by their own
+  //     `^…$` — `CHOSEN_ANY_TARGET` requires the sentence to START at "This attack
+  //     does", the three bare discards require it to END at "Pokémon." — so this
+  //     arm's POSITION is a refactor and not a change.
+  match = SELF_DISCARD_THEN_ANY_TARGET.exec(effect);
+  if (match !== null) {
+    const discard = match[1] === "all" ? ("all" as const) : Number(match[1]);
+    const amount = Number(match[2]);
+    const count = Number(match[3]);
+    // THREE printed numbers, THREE positivity guards, asserted separately. A
+    // printed 0 in ANY of them is not a real card: a 0-Energy cost is a free
+    // attack, a 0 amount is a snipe that hits nothing and a 0 arity parks nothing
+    // — each a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the
+    // whole point (D145's standing rule for every captured amount in this file).
+    if ((discard === "all" || discard >= 1) && amount >= 1 && count >= 1) {
+      return [
+        // The cost, first, because that is the printed order — and because the
+        // snipe's candidates must be read AFTER the discard has run (a Pokémon
+        // the cost knocked out of the picture is not a target this op may offer).
+        { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: discard },
+        { op: "damageChosen", target: "opponentAny", amount, count, source: "attack", deals: true },
+      ];
+    }
   }
 
   // 10. "Discard a|all|{N} {type} Energy from this Pokémon." — the TYPED

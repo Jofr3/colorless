@@ -4621,6 +4621,65 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D401 FIXTURE — THE §8 SELF-DISCARD COST IN FRONT OF THE SNIPE, with a
+      NUMERIC cost so BOTH halves park.** The printed sentence is byte-for-byte the
+      legal column's *"Discard 2 Energy from this Pokémon. This attack does 120 damage
+      to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched
+      Pokémon.)"* — **3 legal printings**, the largest of the compound family's four
+      sentences.
+
+      🛑 **THE NUMERIC `2` IS THE WHOLE REASON THIS FIXTURE EXISTS BESIDE `fix-allsnipe`.**
+      *"all"* has no decision in it and resolves inline; *"2"* over three distinguishable
+      Energy is a real pick, so a board fielding this card PARKS TWICE on ONE attack —
+      once for the cost, once for the targets — which is the sequence D401 is about and
+      which no shipped attack program had. {C}{C} so `fix-energy` and
+      `fix-lightning-energy` both pay, and Lightning so an ACTIVE pick still doubles
+      into `fix-lightning-weak` (§8.5) through the compound's second op.
+
+      The ids that print this sentence are unknown to this container (no D1 credentials,
+      D369), so it is a `fix-*` key rather than a guessed one. A Basic. */
+  "fix-costsnipe": battler("fix-costsnipe", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Cost Arrow",
+        effect:
+          "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D401 FIXTURE — Kyurem `sv06.5-047` "Trifrost"'s printed sentence, and the
+      compound this repo has held as a NULL witness since M5.** *"Discard all Energy
+      from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon.
+      (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **1 legal
+      printing**, one of the FOUR compounds D145's discard census named and the last of
+      them to leave `attackPark.test.ts`'s and `tailsSelfCost.test.ts`'s refusal lists.
+
+      🛑 **IT IS THE `fix-costsnipe` CONTROL: NEITHER HALF PARKS ON THE RIGHT BOARD.**
+      *"all"* asks nothing, and a count-3 snipe against exactly three opponent bodies
+      auto-takes all three (the M1 doctrine — a choice with no choice in it is not a
+      choice). So the same anchor, the same two ops and the same printed order run with
+      ZERO prompts, which is what tells "this program parks" apart from "this program's
+      OPERANDS park". {C} so one Energy declares it and the surplus is still stripped.
+      A Basic. */
+  "fix-allsnipe": battler("fix-allsnipe", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Trifrost",
+        effect:
+          "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -13978,6 +14037,30 @@ export const TWIN_SNIPE_DECK = deckOf({
   "fix-lightning-weak": 32, // ×2 Lightning, 130 HP — DOMINANT pinned Active + bench targets
   "sv03-174": 4, // Bouffalant — "Bouffer" (−20 after W/R): the reduction ignoreWR SKIPS
   "fix-lightning-energy": 16, // pays both {C} costs
+});
+
+/** 🆕🆕 **D401: the SELF-DISCARD COST in front of an ANY-target snipe.** A SEPARATE
+    deck from `TWIN_SNIPE_DECK` for that deck's own stated reason — it pins
+    seed-sensitive openings and both of its Actives — and because THIS suite needs the
+    opposite pin: a NEUTRAL 200 HP Active on both sides, so a 120 or a 110 lands flat
+    and no KO tail interferes with a two-park sequence. `fix-bigbody` is therefore
+    DOMINANT (mulligan-free setup + the pinned Active), `fix-lightning-weak` supplies
+    the Benched targets AND the one rung that swaps it in as P2's Active to prove §8.5
+    still runs through the compound's second op (120 × 2 = 240 on a 130 HP body — a
+    deliberate KO, swept by the epilogue AFTER both parks).
+
+    🛑 **TWO DISTINCT ENERGY PRINTS, AND THAT IS THE DECK'S WHOLE JOB.** `discardEnergy`
+    auto-resolves when every candidate is interchangeable, so a board holding three
+    copies of one print would never park on the cost and the sequence this file is about
+    would be invisible. `fix-lightning-energy` and `fix-energy` are two prints that both
+    pay a {C}, which makes "which 2 of these 3 go" a real decision. */
+export const COST_SNIPE_DECK = deckOf({
+  "fix-costsnipe": 4, // "Discard 2 Energy…" + a count-2 snipe — PARKS TWICE
+  "fix-allsnipe": 4, // "Discard all Energy…" + a count-3 snipe — the ZERO-park control
+  "fix-bigbody": 28, // 200 HP neutral — DOMINANT (mulligan-free) + the pinned Active
+  "fix-lightning-weak": 8, // ×2 Lightning, 130 HP — the Bench targets, and the KO rung's Active
+  "fix-lightning-energy": 8, // Basic {L} — one of the two distinguishable prints
+  "fix-energy": 8, // Basic {C} — the other, which is what makes the cost a DECISION
 });
 
 /** 0.47.0: Chien-Pao ex "Hail Blade" — the variable-count discard whose damage

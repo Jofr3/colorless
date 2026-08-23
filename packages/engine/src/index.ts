@@ -12109,6 +12109,85 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.306.0 → **THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE, AND A
+    SEQUENCING QUESTION THAT TURNED OUT TO BE ALREADY ANSWERED.**
+
+      *"Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your
+       opponent's Pokémon. (Don't apply Weakness and Resistance for Benched
+       Pokémon.)"* — **3 legal printings**
+
+      *"Discard all Energy from this Pokémon. This attack does 120 damage to 1 of
+       your opponent's Pokémon. (…)"* — **2**
+
+      *"Discard all Energy from this Pokémon. This attack does 110 damage to 3 of
+       your opponent's Pokémon. (…)"* — **1** (Kyurem `sv06.5-047` "Trifrost", one of
+       the FOUR compounds D145's discard census named and the last of them still
+       held as a NULL witness)
+
+      *"Discard all Energy from this Pokémon, **and** this attack does 120 damage to
+       1 of your opponent's Pokémon. (…)"* — **1**
+
+    **4 sentences / 7 printings.** `BUILT.attack` 1320 → **1327**; the nine-reader
+    instrument 382 / 1,283 → **386 / 1,290**, the ten-reader one 385 / 1,291 →
+    **389 / 1,298**, and the residue 258 / 449 → **254 / 442**. The unbuilt attack
+    remainder 441 → **434**, the whole-census `built` 1,725 → **1,732**. A
+    READER-keyed move, so `REGISTRY_ATTACK_UNITS` and `splitHead` BOTH stand still.
+
+    🛑 **THE SHAPE QUESTION WAS "ONE ANCHOR OR TWO READS", AND `effects.ts` ANSWERED
+    IT WITHOUT A CENSUS.** `deriveAttackEffect` is never called recursively — not
+    once, anywhere — so this repo has NO `. `-joined composition path and every
+    compound it reads is one whole-sentence anchor returning both ops in printed
+    order (`DEFENDER_POISON_CANT_RETREAT`, `COUNTER_PUT_ANY_THEN_SELF_LOCK`, D147's
+    `SELF_DISCARD_ALL_THEN_REDUCTION`, D148's `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`).
+    **D382's `. Then, ` join is not the counterexample it looks like**: it lives in
+    `deriveAttackBonusConsequent` and dispatches its tail over a CLOSED anchor list
+    precisely BECAUSE it could not delegate to this reader. So the price was a regex
+    and not a table row — which is the cheaper answer, and the one the code had
+    already given four times.
+
+    ⚠️ **THE PRINTED JOIN IS A TWO-WAY ALTERNATION, WHICH IS THE OPPOSITE OF D382's
+    CALL — AND D382's OWN REASON IS WHAT DOES NOT TRANSFER.** That slice refused
+    `(?:, and |\. Then, )` because its anchor wraps a leading `(.+)` antecedent, so
+    an alternation would have collapsed the pair *"into a regex whose greed nobody
+    can read off the page"*. This anchor contains no `.` metacharacter at all, so the
+    alternation can match at exactly one offset. A `. `-only reading would have taken
+    3 of the 4 sentences and refused the fourth **on a conjunction rather than on a
+    mechanism** — D399's *"a refusal that expired on a literal"*, spelled out in
+    advance by the handoff and paid for here.
+
+    🛑 **THE FOUR STRUCTURAL QUESTIONS.** (1) **PARK?** **TWICE**, and that is the
+    slice's whole novelty: `discardEnergy {from:"yourActive", count:2}` asks which
+    Energy, then `damageChosen {target:"opponentAny", count:2}` asks which bodies —
+    the first attack program in this engine whose two halves are both decisions of
+    one printed sentence pair. (2) **`MATCH_RECORD_VERSION`?** **STAYS 25**, and the
+    question was asked of the CONTINUATION rather than of the ops, because a queue of
+    two parks is where a new persisted shape would have had to appear.
+    `EffectContinuation` has carried `rest: EffectOp[]` since M5 and `resumeProgram`
+    re-enters `runProgram` with it, so a program that parks, resumes and parks again
+    is the existing shape doing what it already did — D342's `searchTopOrderProgram`
+    (searchDeck then reorderTop) is the two-park attack precedent, live since then.
+    (3) **NEW OPS OR FIELDS?** **NONE.** Both ops ship, at values already authored:
+    `count: 2` on `discardEnergy` and every arity on `damageChosen`. (4) **REGISTRY?**
+    **NONE** — a deriver arm is a text parser and serves every reprint of its
+    sentence (D187).
+
+    ⚠️ **AND THE W/R TAIL IS NOT ADMITTED, WHICH *IS* D382's OTHER CALL.**
+    `CHOSEN_ANY_TARGET`'s tail is a THREE-way optional; this anchor's is TWO-way,
+    because a W/R tail behind a discard cost returns **ZERO** sentences in the whole
+    640-sentence legal attack column. Sharing a fragment with that anchor — D383's
+    rule, whose stated condition (a second reading of one printed clause with a
+    lower-case leading word) is otherwise met to the letter — would therefore have
+    resolved a sentence nobody prints. The measured difference between the two tails
+    is what makes the duplicated head honest rather than lazy.
+
+    Cost: **1 anchor, 1 `deriveAttackEffect` arm, 2 fixtures, 1 deck, and FOUR
+    re-pointed refusal claims** (`attackPark`, `tailsSelfCost`, `anyTargetSnipe` §1,
+    `conditionalBenchSnipe` §1 — all NULL → SHAPE, annotated rather than deleted,
+    D178). No web/API/DB/schema change.
+
+    engineVersion 0.305.0 → **0.306.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.305.0 → **THE ANY-TARGET ARITY, AND A GRAMMATICAL AGREEMENT READ OFF THE
     CATALOG RATHER THAN INVENTED.**
 
@@ -16484,7 +16563,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.305.0";
+export const engineVersion = "0.306.0";
 
 export type {
   ApplyResult,
