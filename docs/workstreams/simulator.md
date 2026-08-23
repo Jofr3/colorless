@@ -25320,6 +25320,125 @@ remaining sentences in the whole unresolved corpus share that shape, which is wh
 question is worth more than any single sentence.
 
 
+## D402 — THE DISCARD-COUNT-SCALED ATTACK: a deriver's refusal re-priced by re-deriving its reason (engine 0.307.0)
+
+The slice the section above handed on, taken at HALF its scope and for a measured reason:
+**6 sentences / 13 legal printings** of the `"… for each card you discarded in this way."` family,
+on ONE map-built whole-sentence anchor (`ENERGY_DISCARD_SCALED_DAMAGE`) and ONE
+`deriveAttackEffect` arm returning the two-op pair `registry.ts` has spelled BY HAND since D96.
+Zero new ops, fields, `BoardCondition` members or registry rows. `BUILT.attack` 1327 → **1340**.
+
+### 🛑 The refusal expired because its REASON died, not because its verdict aged
+
+D96 wrote *"a variable-count park the deriver deliberately refuses"* **on the day it invented the
+vocabulary**. On that day there was no `discardEnergy.count: "any"`, no `cap`, no
+`recordAs: "discarded"` and no `damageDefender` — the sentence had nothing to derive INTO, and a
+registry row was the only honest producer. D97 added the last piece and did not revisit the note.
+What reached this head was therefore a **verdict whose premise had been gone for three hundred
+decisions**.
+
+**THE TRANSFERABLE FORM, and it is the fifth slice this move has paid on (D396, D398, D399, D401,
+D402): a refusal written at the moment a mechanism was INVENTED is the most likely kind to have
+expired, because the thing it was waiting for is the thing that slice shipped.** Grep the SENTENCE,
+not the key (D384): `mutants.ts` held nothing, but `registry.ts` (three doc blocks), `attack.ts`,
+`testFixtures.ts`, `providesEnergy.test.ts`, `hailBlade.test.ts` and `psyPurge.test.ts` all did.
+
+### 🛑 D187 is an argument you can MEASURE, and here it paid 13 to 0
+
+*An arm transfers across sets; a registry row does not.* Chien-Pao ex `sv02-061` and Mewtwo VSTAR
+`swsh10.5-031` have both **rotated**, so the two hand-authored rows serve **ZERO** Standard-legal
+printings while the arm serves **13**.
+
+⚠️ **The rows were KEPT rather than retired, and that is the part to copy.** A registry program wins
+(`programFor(id)?.attack?.[index] ?? derive`), so no board moved; Mewtwo VSTAR's row is additionally
+this engine's only index-keyed multi-attack witness, and deleting it would have deleted the proof
+that "Star Raid" does not inherit index 0's program. What changed is that two
+`deriveAttackEffect(...) === null` rungs became `toEqual(AUTHORED)` rungs — D361's move on Mawile,
+one family over. **A null rung can only go red one way; an agreement rung goes red whenever EITHER
+producer moves alone**, which is the defect a hand-authored row and a text reader can actually have.
+Mutant C3 (the `cap` dropped, which is Hail Blade's row copied verbatim) is killed by
+`psyPurge.test.ts` and is the evidence that the re-pointed claim is load-bearing.
+
+### 🛑 The FOLD is the family's real split, and the other half is refused on a mechanism
+
+| half | sentences / printings | fold | taken? |
+|---|---|---|---|
+| *"does N damage for each"* | **6 / 13** | MULTIPLY — printed "N×" IS the per-unit, base dropped | ✅ built |
+| *"does N **more** damage for each"* | **3 / 10** | ADDITIVE — printed base KEPT | ❌ second reader |
+| deck mills + a hand discard feeding a chosen target | **3 / 4** | — | ❌ different mechanism |
+
+`damageDefender {per, count}` deals its hit through a **separate `snipeActive` pass**, and
+`attack.ts` drops the printed base whenever the program owns the damage (`programDamage` →
+`scaledBase`). That is exactly right for the multiply half. For the additive half a kept base would
+deal the printed number in the pre-program pipeline and the scaled part inside the program:
+**Weakness DISTRIBUTES over a split hit, but Resistance and `damageReductionAfterWR` are
+SUBTRACTIONS paid once PER HIT and the §8.1 survival clamp is asked twice**, so `base + per×N` is
+not `base` then `per×N`. D163's finding on `SELF_COUNTER_SCALE` / `SELF_COUNTER_MULTIPLY`, one
+count-source over: **a fold is a reader, not a field.**
+
+### ⚠️ The handed-down prediction was false, and its two named falsifiers were CORRELATED
+
+The prediction said all 12 sentences were expressible with no new op and no new field, the one
+widening being a Bench-only member on `discardEnergy.from`. Measured over `legalAttackCorpus()`:
+
+* every Bench-only printing — 2 sentences / **8** printings — is on the ADDITIVE side;
+* the count of Bench-only **MULTIPLY** printings is **ZERO**, asserted as zero rather than left
+  unsaid (D400).
+
+So the fold split **removed the need for the union member entirely** rather than compounding with
+it. `discardEnergy.from` was not widened, and that is also why `MATCH_RECORD_VERSION` stays 25.
+**When a prediction names two falsifiers, test whether they are correlated before you test either
+one.** Both mutants built from them (C9 admitting `more`, C10 admitting `Benched`) are silent on
+every real printing for exactly that reason, and are caught only by the vary-ONE-byte rung: a
+positive control, then the fold alone, then the zone alone, then the sentence as printed — which
+differs in both places at once (D399's rule made mechanical).
+
+### ⚠️ One read site moved that no census counts
+
+`energyNoun` (interpreter.ts) grew a `basicEnergy` arm. The family's largest member — *"You may
+discard any amount of **Basic** Energy from your Pokémon"*, 6 legal printings — is the first
+sentence ever to reach `discardNote` with that filter, and the caption would otherwise have promised
+*"any amount of Energy"* over a pick restricted to Basic Energy (D295's caption defect, one
+destination over). `auraNarrowing.test.ts`'s read-site census had graded that function **ZERO** on
+the ground that it *"spells two kinds and returns 'Energy' for the rest, so a filter that is not an
+Energy filter was already handled"* — true of `basicPokemon` and **not** true of `basicEnergy`,
+which is an Energy filter falling through to a WIDER noun than the card prints. `moveNote` had
+hand-spelled the same phrase since D226 and now delegates; its bytes are unchanged on every board.
+
+### ⚠️ The anchor's own shape questions, and how each was settled
+
+* **The QUANTIFIER is three COUPLED literals**, not a `(?:You may )?` prefix times an
+  `(any amount|all|up to N)` tail. The column prints *"You may discard any amount of"*,
+  *"Discard all"* and *"Discard up to N"* and prints NEITHER crossing, so a matrix would have
+  derived two sentences nobody prints (D361's refusal, re-derived).
+* **The ZONE is a free parameter**, and deliberately so: `this Pokémon` and `your Pokémon` are one
+  field (`from`) at two values the interpreter already resolves, the way the TYPE is one field at
+  nine. Where D361's refused matrix would have made the engine INVENT a behaviour, every
+  combination here is a board action it already performs.
+* **The FILTER's third arm is `Basic` → `basicEnergy`, not `providesEnergy`.** "Basic Energy" names
+  the CARD, not what the card provides — the distinction `TYPED_SELF_DISCARD`'s own doc draws about
+  Decidueye's hand discard — so a provision reading would have offered a Special Energy.
+* **`Energy(?: cards)?`** is `DECK_TOP_MILL`'s alternation: exactly one printing spells the plural
+  and it means the same thing.
+
+### ⚠️ The `count: "all"` arm is the first program to file a §9.2 record INLINE
+
+*"Discard all {L} Energy from this Pokémon"* asks nothing, so the whole attack resolves in one
+action: the board decides the count, the record carries it, and the damage reads it with no prompt
+anywhere. The op's doc had said for six years that *"only the `"any"` mode records today"* — a
+statement about what was AUTHORED, not about the interpreter, whose `op.count === "all"` branch has
+called `recordMoved` since D96. `fix-allscale` and `fix-basicscale` are the pair that separates
+*"the program parks"* from *"the OPERAND parks"*.
+
+### ⚠️ A tooling fact paid for here
+
+Biome's `useTemplate` and `noUnusedTemplateLiteral` together force **every concatenated piece of a
+map-built regex to carry an interpolation**: a quoted string beside an interpolated template trips
+the first, and a backticked string without one trips the second. `SELF_DISCARD_THEN_ANY_TARGET`
+looks like a counterexample and is not — none of its pieces interpolates. So a map-built anchor has
+as many source pieces as it has `${…}`s, and this one is two long lines for that reason alone.
+
+
 ## D401 — THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE: a sequencing question whose answer was already in the code (engine 0.306.0)
 
 The slice the section above handed on, taken exactly as scoped: **4 sentences / 7 legal
