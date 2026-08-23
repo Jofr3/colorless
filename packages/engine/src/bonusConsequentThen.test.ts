@@ -4,6 +4,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   bonusConsequentProgram,
   deriveAttackBonusConsequent,
+  deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
 } from "./effects";
 import type { EffectOp } from "./effects";
@@ -329,6 +330,7 @@ const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackDiscardScaledBoost,
 ];
 
 const units = (rows: readonly (readonly [number, string])[]): number =>

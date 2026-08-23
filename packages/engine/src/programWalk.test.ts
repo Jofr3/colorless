@@ -4,9 +4,11 @@ import {
   bonusConsequentProgram,
   deriveAttackBonusConsequent,
   deriveAttackCoinFlip,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  discardScaledBoostProgram,
   optionalBoostProgram,
   optionalCostBoostProgram,
 } from "./effects";
@@ -147,6 +149,20 @@ function poolPrograms(): { where: string; ops: readonly EffectOp[] }[] {
             parseAttackDamage(attack.damage).base,
             attack.effect ?? "",
           ),
+        });
+      }
+      // 🆕🆕 D403 — THE FIFTH, and the first whose reading carries NO gate at all.
+      // `deriveAttackDiscardScaledBoost` returns a ceiling, a filter and a per-card
+      // amount; the printed BASE it folds into the hit lives on the card, so the
+      // assembler is exported on its first line for the reason the four feeds above
+      // record. `fix-benchboost` and `fix-benchbasicboost` are the pool cards it is
+      // called on — the other half, without which the export changes no answer here.
+      const discardBoost =
+        attack.effect === undefined ? null : deriveAttackDiscardScaledBoost(attack.effect);
+      if (discardBoost !== null) {
+        out.push({
+          where: `${id} attack ${index} discardScaledBoost`,
+          ops: discardScaledBoostProgram(discardBoost, parseAttackDamage(attack.damage).base),
         });
       }
     }

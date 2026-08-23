@@ -9,6 +9,7 @@ import {
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
@@ -114,6 +115,7 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
+  deriveAttackDiscardScaledBoost,
 ];
 const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 

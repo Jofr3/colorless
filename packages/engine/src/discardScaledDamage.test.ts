@@ -7,6 +7,7 @@ import {
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
@@ -65,6 +66,7 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
+  deriveAttackDiscardScaledBoost,
 ];
 const readByAny = (s: string): boolean => READERS.some((r) => r(s) !== null);
 
@@ -135,18 +137,35 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect([...taken].sort()).toEqual([...TAKEN].sort());
   });
 
-  it("🛑 the ADDITIVE half is 3 sentences / 10 printings and NOT ONE of them is read", () => {
+  it("🛑 the ADDITIVE half is 3 sentences / 10 printings, and D403 took 2 / 8 of them", () => {
     // The fold is the family's real split. "does N MORE damage for each" keeps the
     // printed base; `damageDefender {per, count}` deals its hit through a SEPARATE
     // `snipeActive` pass, so a kept base would pay Resistance, the reduction passive
-    // and the §8.1 clamp TWICE. The half is refused by all ten readers, not merely
-    // by this one — the strong form of the claim.
+    // and the §8.1 clamp TWICE.
+    //
+    // 🆕🆕 D403 — RE-POINTED RATHER THAN DELETED (D178), AND THE CLAIM IT USED TO
+    // MAKE IS NAMED SO NOBODY THINKS IT WAS ALWAYS THIS. This rung read *"…and NOT
+    // ONE of them is read"* and asserted `readByAny` FALSE on all three. D403 built
+    // the mechanism it was blocked on — an optional `base` on `damageDefender`, which
+    // makes `base + P × N` ONE §8.5 pass — so the refusal is now TWO sentences wide,
+    // not three, and the rung asserts the SPLIT instead of the blanket. **THE SIZE OF
+    // THE HALF IS UNCHANGED (3 / 10): what moved is how much of it is refused.**
     const more = legalAttackCorpus().filter(
       ([, s]) => s.includes("discarded in this way") && s.includes("more damage for each"),
     );
     expect(more).toHaveLength(3);
     expect(units(more)).toBe(10);
-    for (const [, s] of more) expect(readByAny(s), s).toBe(false);
+    // The two D403 took, by the reader that takes them — and by NOTHING ELSE in the
+    // eleven, which is what keeps "at most one reader fires" structural.
+    const taken = more.filter(([, s]) => deriveAttackDiscardScaledBoost(s) !== null);
+    expect(taken).toHaveLength(2);
+    expect(units(taken)).toBe(8);
+    // The one still refused, and it is refused by all ELEVEN readers rather than
+    // merely by this file's subject — D382's strong form, kept.
+    const left = more.filter(([, s]) => deriveAttackDiscardScaledBoost(s) === null);
+    expect(left).toHaveLength(1);
+    expect(units(left)).toBe(2);
+    for (const [, s] of left) expect(readByAny(s), s).toBe(false);
   });
 
   it("🛑 the two NAMED FALSIFIERS interact: every Bench-only printing is ADDITIVE", () => {

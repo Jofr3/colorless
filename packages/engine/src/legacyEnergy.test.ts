@@ -1009,6 +1009,20 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
+    // 🆕🆕 D403 — 0.307.0 -> **0.308.0**, THE ADDITIVE HALF OF THE SAME FAMILY.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed, and this time
+    // there were TWO places it could have moved rather than one — both of them on ops
+    // that really are persisted (`discardEnergy` PARKS, so it rides
+    // `GameState.phase.cont.pendingOp`, and the `damageDefender` rides its `rest`
+    // tail). (1) `discardEnergy.from` GAINS `"yourBench"`: a v25 record cannot contain
+    // a union member that did not exist when it was written, and no v25 record's
+    // meaning changes — D361's own test, and D125's widening-not-a-missing-field
+    // distinction. (2) `damageDefender` GAINS `base?: number`: it is OPTIONAL and its
+    // ABSENT value is ZERO, which is byte-for-byte the arithmetic every `per`/`count`
+    // op has done since D96 — so an older record simply never carries it and reads the
+    // same either way. **A NEW REQUIRED FIELD WOULD HAVE BEEN A NEW SHAPE; AN OPTIONAL
+    // ONE WITH A SAFE DEFAULT IS A WIDENING**, which is the line D125 drew and D130
+    // paid (it added a whole op and did not bump). The post-bump anchor pass was clean.
     // 🆕🆕 D402 — 0.306.0 -> **0.307.0**, THE DISCARD-COUNT-SCALED ATTACK.
     // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed, and the honest
     // place to ask it was the `from` UNION — which this slice does NOT widen. Both
@@ -1031,8 +1045,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.307.0");
-    expect(manifest.version).toBe("0.307.0");
+    expect(engineVersion).toBe("0.308.0");
+    expect(manifest.version).toBe("0.308.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
