@@ -25320,6 +25320,79 @@ remaining sentences in the whole unresolved corpus share that shape, which is wh
 question is worth more than any single sentence.
 
 
+## D404 — THE MANDATORY HAND WIPE AND REFILL: an arm whose whole price is an ORDER (engine 0.309.0)
+
+The largest single sentence left in the SPLIT-AWARE residue D403 measured, and the cheapest.
+*"Discard your hand and draw 6 cards."* — **1 sentence / 7 legal printings** — on ONE
+whole-sentence anchor (`DISCARD_HAND_DRAW`) and ONE `deriveAttackEffect` arm returning
+`[{ op: "discardHand" }, { op: "drawCards", count }]`. `BUILT.attack` 1348 → **1355**. **ZERO new
+ops, ZERO new fields, ZERO readers, ZERO `BoardCondition` members, ZERO registry rows and ZERO
+`attack.ts` edits.**
+
+**THE PRINTED "and" IS AN ORDER, NOT A SET, AND THAT IS THE ENTIRE CORRECTNESS CLAIM.** Swapped,
+the six cards just drawn are exactly the ones discarded and the attack ends with an EMPTY hand:
+every op present, every op right in isolation, and the program wrong. ⚠️ **A COUNT CANNOT SEE
+IT** — a hand of three discarded and six drawn reads six under both readings — so the rung that
+owns this claim captures the hand and the deck's top six **BY UID** before the attack and asserts
+the two SETS end up in opposite zones. Generalised: **when a program's defect is a permutation of
+correct ops, the instrument has to be identity, never cardinality.** `mutants.ts` has carried the
+same defect against Larry's Skill's registry row since D336; this is the first time a DERIVER
+could make it.
+
+**BOTH HANDED-DOWN FALSIFIERS HELD, AND THE REASONS ARE RECORDED RATHER THAN THE VERDICTS**
+(D403's rule, sixth payment).
+
+1. **`drawCards` ON A SHORT DECK COSTS NO RULE, AND §8 ALREADY HELD THE PRECEDENT.**
+   `drawToHand` (types.ts) SLICES the deck and pushes the SHORT list, so a 6-card draw off a
+   2-card deck files two and stops. **§14.3's deck-out is checked at the DRAW** (`flow.ts`
+   `startTurn`), never at the moment the deck runs dry — so an attack-borne draw inside §8 cannot
+   lose the game however deep it digs, and the loss stays OWED to the drawing player's next turn.
+   That is not this arm's invention: `deckTopMill`'s doc block says it about a self-mill that
+   empties the ATTACKER's deck mid-attack, and `ATTACK_DRAW`'s arm says it about its own short
+   draw. `discardHandDraw.test.ts` §5 drives it end to end — attack on a 2-card deck, pass the
+   turn back, and P1 loses at their OWN draw step with `reason: "deckOut"`.
+2. **`discardHand` HAS NO TRAINER-SHAPED GATE, AND `programPlayable` NEVER SEES AN ATTACK.** The
+   interpreter's case is one line, fully automatic, no park, no `sourceUid`, keyed on `ctx.seat`
+   alone; `programPlayable`'s three call sites are `playTrainer` and the two ability paths. D385
+   had already reached this op from ATTACK text inside `optionalCostOps`; what is new is only the
+   TOP LEVEL. **The question "is this op reachable from a new site" is answered by grepping the
+   op's GATES, not by reasoning about the sentence.**
+
+⚠️ **A CAPTURE WHOSE POPULATION HAS ONE MEMBER CANNOT BE TESTED FROM THAT POPULATION.** The legal
+attack column prints **6 and nothing else** for this skeleton, so a literal `6` in the anchor
+could never go red off `legalAttackCorpus()` — the corpus simply cannot distinguish a capture from
+a constant. The evidence had to come from where the parameter varies: `registry.ts` carries the
+identical printed skeleton at **7** (Professor's Research `sv01-189`) and **5** (Carmine
+`sv06-145`), both hand-authored years before this arm. §2 reads the arm's output at those two
+counts **against those hand-authored programs** rather than against a re-typed literal, so one
+sentence with two producers has to agree byte for byte. `ATTACK_DRAW`'s own `(\d+)` is the sibling
+arrangement.
+
+🆕 **THE SUITE FOUND A GAP THE SLICE HAD NOT PREDICTED, AND IT IS THE TWENTY-SECOND OP IN
+`preventBlock.test.ts`'s §11 TABLE.** That sweep is TOTAL over what an attack in `FIXTURE_POOL`
+can emit, and it went RED naming `discardHand` — arriving the way D181's three did (an op the
+Trainer path has run since M4 that the deriver has just learned to reach) rather than the way
+D313's did (a population gap). Classified **untouched**: the two zones are the actor's own HAND
+and own DISCARD PILE and neither is a Pokémon, so there is no body for a §11 block to protect.
+⚠️ **THE PROBE READS THE DISCARD PILE, NOT THE HAND** — an op that emptied the hand and dropped
+the cards on the floor would satisfy *"the hand is smaller"*, and this table's whole business is
+telling a landed effect from a swallowed one.
+
+✅ **NO `attack.ts` TERM WAS OWED, AND THAT IS A PROPERTY OF THE SEAM RATHER THAN OF THE
+SENTENCE.** `effectSimulated`'s FIRST disjunct is `program !== null`, and `program` is
+`authored ?? derived` — so any new `deriveAttackEffect` arm answers the effect half by
+construction. `programDamage` stays FALSE (neither op is a `damageDefender`), so the printed base
+is KEPT and dealt by the pre-program §8.5 pipeline, which is what `fix-handdraw`'s flat `30`
+exists to observe. **The three disjunction chains were not touched, so none of the seven
+multi-line `find` rows that span them moved** — the first slice in eight not to pay that toll.
+
+✅ **AND THE MUTANT BLOCK IS THE FIRST IN THIS CORPUS WITH NO `find` SPANNING A COMMENT LINE.**
+The arm was WRITTEN for it: both explanatory blocks sit above the `return` rather than between the
+two op literals, because the ORDER is what the rows have to name and a comment spliced between
+those lines would break every one of them without a character of the code moving. D403's own
+lesson, applied to a two-line array instead of a disjunction chain.
+
+
 ## D403 — THE ADDITIVE HALF OF THE SAME FAMILY: a fold that needed the printed base (engine 0.308.0)
 
 The half the section below refused, taken once its **mechanism** was bought rather than argued
