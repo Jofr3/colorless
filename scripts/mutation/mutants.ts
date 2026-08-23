@@ -127,6 +127,13 @@ export const MUTANTS: Mutant[] = [
   },
 
   // ── D196 · energyOnSelf ────────────────────────────────────────────────────
+  //  🆕 D407 RE-TRANSCRIBED BOTH ROWS IN THE COMMIT THAT MADE THEM STALE. The arm
+  //  became a BLOCK when `energyOnSelf` gained its optional `zone`, so the count
+  //  source is destructured once and the line reads `energyType` rather than
+  //  `bonus.count.energyType`. Both rows still sit on the SAME arm they were written
+  //  for — the fall-through, zone-less path, which is exactly what D196 built — and
+  //  the new leading whitespace is what keeps them off the `energyOnOpponent` arm's
+  //  own `countAttachedEnergy` calls (D404: uniqueness is not ownership).
   // "13 mutants, ONE real first-round survivor and it was a real gap:
   //  countEnergyInPlay(state, attackerSeat, …) passed because the mirror board
   //  left the attacker's Bench bare. A SECOND survivor is EQUIVALENT."
@@ -135,8 +142,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D196",
     what: "energyOnSelf reads the attacker's WHOLE SIDE instead of the attacking body — the real first-round survivor, closed by one {R} on bench[0]",
     file: "packages/engine/src/attack.ts",
-    find: "return countAttachedEnergy(state, attacker, bonus.count.energyType) * bonus.per;",
-    replace: "return countEnergyInPlay(state, attackerSeat, bonus.count.energyType) * bonus.per;",
+    find: "      return countAttachedEnergy(state, attacker, energyType) * bonus.per;",
+    replace: "      return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;",
     expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
   },
   {
@@ -144,9 +151,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D196",
     what: "energyOnSelf reads the LIVE Active rather than the declaration snapshot",
     file: "packages/engine/src/attack.ts",
-    find: "return countAttachedEnergy(state, attacker, bonus.count.energyType) * bonus.per;",
+    find: "      return countAttachedEnergy(state, attacker, energyType) * bonus.per;",
     replace:
-      "return countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, bonus.count.energyType) * bonus.per;",
+      "      return countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, energyType) * bonus.per;",
     expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
     survives: {
       kind: "equivalent",
@@ -5657,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.311.0";',
+    find: 'export const engineVersion = "0.312.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -17070,5 +17077,101 @@ export const MUTANTS: Mutant[] = [
     find: "  /^This attack does (\\d+) damage for each Pok\u00e9mon Tool attached to all of your Pok\u00e9mon\\.$/;",
     replace: "  /^This attack does (\\d+) damage for each Pok\u00e9mon Tool attached to [^.]*\\.$/;",
     expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  // ── 🆕 D407 — THE BOARD-WIDE OWN-ENERGY COUNT. Eight rows, ONE PER CLAIM rather
+  //    than one per line, and EVERY `find` carries a symbol this slice owns: the
+  //    `zone === "board"` branch, `selfEnergy[3]`, the widened alternation, or the
+  //    `zone: "board"` literal the producer emits (D404's rule — uniqueness is not
+  //    ownership, so the anchor has to name the arm and not merely be unique in the
+  //    file). Not one of them is multi-line, so none can be falsified by an
+  //    insertion that never touches a quoted character (D317/D381/D383's shape).
+  //
+  //    ⚠️ **THE SHAPE OF THE SET IS THE SAME ONE SIX SLICES HAVE NOW MEASURED**:
+  //    SIX of the eight are SILENT IN EVERY CENSUS FIGURE IN THE REPO — the sentence
+  //    still resolves, `BUILT.attack` is still 1369 and both reader instruments still
+  //    step by 1 / 4, while the attack reads the opponent's board, ignores the Bench,
+  //    drops the type filter, or scores every printing of the family off the whole
+  //    board. Only a BOARD tells them apart, which is what §3 and §4 are for. The two
+  //    that a census CAN see are the two that move the reader's population (C7, C8).
+  {
+    id: "D407-board-zone-reads-the-defender",
+    decision: "D407",
+    what: "\ud83d\uded1 C1 \u2014 **THE SEAT**, and it is the neighbouring arm's REAL code five lines up: `energyOnOpponent`'s `zone: \"board\"` branch is the identical expression at `defenderSeat`. The printed word is *\"all of YOUR Pok\u00e9mon\"* and the attack damages the opponent, so the two seats are opposite ends of one swing. \u00a74's canonical board holds 4 {G} on the attacker's side and 8 on the defender's, so this deals 260 where the truth is 140 \u2014 and on the seat-isolation board it deals 260 where the truth is the bare printed 20",
+    file: "packages/engine/src/attack.ts",
+    find: '      if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;',
+    replace: '      if (zone === "board") return countEnergyInPlay(state, defenderSeat, energyType) * bonus.per;',
+    expectKilledBy: ["packages/engine/src/boardWideEnergyScaling.test.ts"],
+  },
+  {
+    id: "D407-board-zone-never-widens",
+    decision: "D407",
+    what: "\ud83d\uded1 C2 \u2014 **THE WIDENING NEVER LANDS AT THE EVALUATOR**: the board branch answers with the ATTACKING BODY, which is D196's shipped arm copied one line down. Every rung about the reader stays green (the field is produced, the type is right, the census is unmoved) and the card counts one body's Energy forever. \u00a74's zone rung is the only thing that separates 110 from 20 here",
+    file: "packages/engine/src/attack.ts",
+    find: '      if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;',
+    replace: '      if (zone === "board") return countAttachedEnergy(state, attacker, energyType) * bonus.per;',
+    expectKilledBy: ["packages/engine/src/boardWideEnergyScaling.test.ts"],
+  },
+  {
+    id: "D407-board-zone-drops-the-bench",
+    decision: "D407",
+    what: "\u26a0\ufe0f C3 \u2014 **THE ZONE NARROWS TO THE ACTIVE SPOT**, the mistake `yourActiveHasEnergyAttached` makes available one abstraction down: *\"all of\"* is \u00a76.3's *in play*, Active PLUS Bench, and this reads the live Active alone. \u00a74's Bench board splits 1 on the Active and 3 behind it, so this deals 50 where the truth is 140 \u2014 and 20 where the truth is 110",
+    file: "packages/engine/src/attack.ts",
+    find: '      if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;',
+    replace: '      if (zone === "board") return countAttachedEnergy(state, state.players[attackerSeat].active ?? attacker, energyType) * bonus.per;',
+    expectKilledBy: ["packages/engine/src/boardWideEnergyScaling.test.ts"],
+  },
+  {
+    id: "D407-board-zone-drops-the-filter",
+    decision: "D407",
+    what: "\ud83d\uded1 C4 \u2014 **THE TYPE FILTER IS DROPPED ON THE NEW ZONE ONLY**, which is `bothActivesEnergyCount`'s real call two cases down (`countAttachedEnergy(state, attacker, null)`) copied into the wrong arm. The printed noun is *\"{G} Energy\"* and the printed COST is `{C}`, so the card that pays for the attack is one the count must refuse \u2014 this scores it. \u00a74's canonical board reads 5 instead of 4, and its all-Colorless board reads 4 instead of 0",
+    file: "packages/engine/src/attack.ts",
+    find: '      if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;',
+    replace: '      if (zone === "board") return countEnergyInPlay(state, attackerSeat, null) * bonus.per;',
+    expectKilledBy: ["packages/engine/src/boardWideEnergyScaling.test.ts"],
+  },
+  {
+    id: "D407-producer-emits-the-zone-always",
+    decision: "D407",
+    what: "\ud83d\uded1 C5 \u2014 **THE OPTIONAL FIELD'S POLARITY INVERTS AT THE PRODUCER**: both alternatives emit `zone: \"board\"`, so all TWENTY-ONE legal printings of *\"\u2026 attached to this Pok\u00e9mon.\"* silently start counting the whole side. This is the failure mode the field is optional in order to make impossible, and it is invisible to every census (the same sentences resolve, at the same count). \u00a72's polarity rung and `selfEnergyScaling.test.ts`'s mirror boards are what field it",
+    file: "packages/engine/src/effects.ts",
+    find: '        ? { per, count: { kind: "energyOnSelf", energyType } }',
+    replace: '        ? { per, count: { kind: "energyOnSelf", zone: "board", energyType } }',
+    expectKilledBy: [
+      "packages/engine/src/boardWideEnergyScaling.test.ts",
+      "packages/engine/src/selfEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D407-producer-never-emits-the-zone",
+    decision: "D407",
+    what: "\u26a0\ufe0f C6 \u2014 **THE ANCHOR IS WIDENED AND THE FIELD IS FORGOTTEN**, which is the exact half-done shape an optional field invites: the sentence RESOLVES (so `BUILT.attack` is 1369 and both reader instruments step by 1 / 4 \u2014 every census figure in the repo is green) and the attack counts the attacking body's Energy instead of the board's. The most census-silent row in the set, and the one \u00a72's `zone: \"board\"` assertion exists for",
+    file: "packages/engine/src/effects.ts",
+    find: '        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };',
+    replace: '        : { per, count: { kind: "energyOnSelf", energyType } };',
+    expectKilledBy: ["packages/engine/src/boardWideEnergyScaling.test.ts"],
+  },
+  {
+    id: "D407-anchor-swallows-the-owner-prefix",
+    decision: "D407",
+    what: "\ud83d\uded1 C7 \u2014 **THE SECOND ALTERNATIVE BECOMES A WILDCARD AND SWALLOWS THE OWNER-PREFIXED BOARD**: *\"This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pok\u00e9mon.\"* is a REAL legal printing (1) naming a SUBGROUP of the same zone, and scoring it off the whole board authors a card the catalog does not print (D120). One of only TWO rows in this set a census can see \u2014 the reader's population gains a sentence, so `BUILT.attack` moves too",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each (?:(.+) )?Energy attached to (this Pok\u00e9mon|all of your Pok\u00e9mon)\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each (?:(.+) )?Energy attached to (this Pok\u00e9mon|all of your [^.]*Pok\u00e9mon)\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/boardWideEnergyScaling.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D407-multiply-widens-for-symmetry",
+    decision: "D407",
+    what: "\u26a0\ufe0f C8 \u2014 **THE `\u00d7` READER IS WIDENED \"FOR SYMMETRY\"**, which is the mistake the two-fold shape of this family invites every time a zone lands on one side of it. The bare-fold board-wide OWN-Energy spelling is printed NOWHERE in the legal attack column, so this buys an evaluator path for a sentence no legal deck can play \u2014 the mirror of the refusal `SELF_ENERGY_BOTH_ACTIVES_SCALE` and `YOUR_TOOLS_MULTIPLY` each make from the other fold. The second row a census can see",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to this Pok\u00e9mon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to (?:this Pok\u00e9mon|all of your Pok\u00e9mon)\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/boardWideEnergyScaling.test.ts",
+      "packages/engine/src/selfEnergyScaling.test.ts",
+    ],
   },
 ];
