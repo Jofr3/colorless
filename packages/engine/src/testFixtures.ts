@@ -4682,6 +4682,72 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D402 FIXTURE — THE `count: "all"` ARM OF THE DISCARD-COUNT-SCALED FAMILY,
+      which is the one member where NOTHING PARKS.** The printed sentence is byte for
+      byte the legal column's *"Discard all {L} Energy from this Pokémon. This attack
+      does 50 damage for each card you discarded in this way."* — **2 legal printings**,
+      and its `{M}` twin one row over makes three.
+
+      🛑 **IT EXISTS BECAUSE THIS IS THE FIRST PROGRAM TO FILE A §9.2 RECORD FROM THE
+      INLINE PATH.** `discardEnergy`'s doc said for six years that *"only the `"any"`
+      mode records today"* — a statement about what was AUTHORED, not about the
+      interpreter, whose `op.count === "all"` branch has called `recordMoved` since D96.
+      "all" strips every match and asks nothing, so the whole attack resolves in one
+      action: the board decides the count, the record carries it, and the damage reads
+      it with no prompt anywhere. That is the exact opposite of `fix-basicscale` below,
+      and the pair is what separates "the program parks" from "the OPERAND parks".
+
+      A {C} cost so `fix-energy` declares it and every {L} stays pure FUEL, and a
+      `50×` marker so a zero-{L} board proves the printed base is SUPPRESSED rather
+      than dealt. The ids that print this sentence are unknown to this container (no D1
+      credentials, D369), so it is a `fix-*` key rather than a guessed one. A Basic. */
+  "fix-allscale": battler("fix-allscale", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "All Scale",
+        damage: "50×",
+        effect:
+          "Discard all {L} Energy from this Pokémon. This attack does 50 damage for each card you discarded in this way.",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D402 FIXTURE — THE FAMILY'S LARGEST PRINTED MEMBER, AND THE ONLY ONE WHOSE
+      FILTER IS `basicEnergy`.** *"You may discard any amount of Basic Energy from your
+      Pokémon. This attack does 70 damage for each card you discarded in this way."* —
+      **6 legal printings**, more than any other sentence in the residue D402 was handed.
+
+      🛑 **"Basic Energy" NAMES THE CARD, NOT WHAT THE CARD PROVIDES**, which is why the
+      derived filter is `basicEnergy` and not `providesEnergy`: a Special Energy that
+      provides {C} is not a Basic Energy card, and a `providesEnergy` reading would have
+      offered one. `fix-special` in the deck is that witness. It is also the first
+      sentence ever to reach `discardNote` with this filter — the caption used to fall
+      through to the generic "Energy", so the prompt would have promised *"any amount of
+      Energy"* over a pick restricted to Basic Energy, and `energyNoun` grew a Basic arm
+      for it (interpreter.ts, D295's caption rule).
+
+      "from your Pokémon" is the WHOLE own side, so BENCHED Basic Energy is fuel; a {C}
+      cost so the attack declares off one; a `70×` marker so DECLINING proves the base
+      is suppressed. A Basic. */
+  "fix-basicscale": battler("fix-basicscale", {
+    types: ["Colorless"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Basic Scale",
+        damage: "70×",
+        effect:
+          "You may discard any amount of Basic Energy from your Pokémon. This attack does 70 damage for each card you discarded in this way.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -14063,6 +14129,34 @@ export const COST_SNIPE_DECK = deckOf({
   "fix-lightning-weak": 8, // ×2 Lightning, 130 HP — the Bench targets, and the KO rung's Active
   "fix-lightning-energy": 8, // Basic {L} — one of the two distinguishable prints
   "fix-energy": 8, // Basic {C} — the other, which is what makes the cost a DECISION
+});
+
+/** 🆕🆕 **D402: the DISCARD-COUNT-SCALED attack, both folds of the discard's own
+    quantifier on one board.** A SEPARATE deck from `HAIL_BLADE_DECK` for that deck's
+    stated reason — it is seed-pinned around an `ex` and a ×2 Water body — and because
+    this suite needs three Energy PRINTS rather than two, on three different footings:
+
+      • `fix-lightning-energy` — a Basic {L}, the ONLY thing `fix-allscale`'s
+        `providesEnergy` filter may take;
+      • `fix-energy` — a Basic {C}, which pays BOTH printed costs, is NEVER offered to
+        the {L} filter, and IS offered to `fix-basicscale`'s `basicEnergy` one;
+      • `fix-special` — a Special Energy that provides {C}. It pays a cost like the
+        others and is refused by BOTH filters, which is what makes "Basic Energy" a
+        read of the CARD rather than of its provision.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, and a defender the
+    50×/70× math never accidentally Knocks Out, so a count is never confounded with a
+    KO tail). No Weakness body is in here on purpose: the §8.5 re-entry of
+    `damageDefender` is `hailBlade.test.ts`'s and `psyPurge.test.ts`'s to prove, and
+    duplicating it here would be a rung that passes on their code rather than on the
+    reader this file is about. */
+export const DISCARD_SCALED_DECK = deckOf({
+  "fix-allscale": 4, // "Discard all {L} Energy…" — the inline, no-park, `count: "all"` arm
+  "fix-basicscale": 4, // "You may discard any amount of Basic Energy…" — the declinable arm
+  "fix-bigbody": 28, // 200 HP neutral — DOMINANT (mulligan-free) + the pinned Active
+  "fix-lightning-energy": 8, // Basic {L} — the ONLY fuel the typed filter takes
+  "fix-energy": 8, // Basic {C} — pays both costs, Basic fuel, never {L} fuel
+  "fix-special": 8, // Special {C} — pays a cost, and is fuel for NEITHER filter
 });
 
 /** 0.47.0: Chien-Pao ex "Hail Blade" — the variable-count discard whose damage
