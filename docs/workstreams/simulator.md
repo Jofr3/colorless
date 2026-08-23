@@ -25209,3 +25209,112 @@ And the corollary D397's rule leaves implicit, learned the hard way here: **THE 
 SLICE MUST NOT MOVE.** Three past-head tails were bumped along with their chains — which nets to no
 change at all and reddens the assertion — and were reverted. In these files a past-head figure is
 FROZEN and the OFFSET is what each slice grows.
+
+## D400 — THE ANY-TARGET ARITY: an empty evidence cell, and an agreement rule read off the whole column (engine 0.305.0)
+
+`CHOSEN_ANY_TARGET` — the `opponentAny` snipe, *"This attack does N damage to 1 of your
+opponent's Pokémon."* — spelled its count as the LITERAL `1` while the legal attack column printed
+2 on **two sentences worth nine printings**: the Benched-clarifier spelling (3) and the same
+opener under the W/R tail (6, the largest single sentence in the unresolved residue at D399's
+head). The count is a capture now. Nothing below the reader changed: `damageChosen.count` has been
+a plain `number` since M4, `snipeTargets`/`placeSnipe` take any arity, `validateChoice` enforces
+DISTINCT refs against the parked prompt, §8.6 clamps a short candidate set into an auto-take, and
+`snipeNote` already pluralises.
+
+### 🛑 The shape question, and the cell that turned out to be EMPTY
+
+The 6-printing sentence spells *those Pokémon* where Umbreon "Feint Attack"'s tail spells *that
+Pokémon*. So the choice was a `th(?:at|ose)` CLASS — which resolves two sentences nobody prints —
+or ENFORCED AGREEMENT between the count and the tail's number word. D399's handoff attached a
+falsifiable prediction: *that* only at count 1, *those* only at count ≥ 2, at every amount.
+
+**It holds in the direction it can be tested and is vacuous in the other.** Measured over
+`legalAttackCorpus()`:
+
+| cell | sentences | printings |
+|---|---|---|
+| this tail, *those*, count 2 | 1 | 6 |
+| this tail, *that*, count 1 | **0** | **0** |
+| the count-1 W/R sentence the column DOES print (bare tail) | 1 | 2 |
+
+The optional *"or by any effects on that Pokémon"* clause this anchor has admitted since **0.46.0
+serves no legal printing at all** — Umbreon's own legal printing carries the bare form. So the
+prediction's first half could not be falsified and could not be confirmed either.
+
+**⚠️ A PREDICTION WHOSE ANTECEDENT HAS AN EMPTY CELL IS NOT EVIDENCE, IT IS SILENCE.** Reporting it
+as "held" would have been the census version of a vacuous guard — D200's shape (a flag that can
+only fail if the card is deleted) arriving through a MEASUREMENT instead of through a test. **AN
+EMPTY CELL IS A RESULT AND MUST BE NAMED AS EMPTY RATHER THAN COUNTED AS AGREEMENT.**
+
+### ✅ What did decide it: the whole column, and it decided it mid-sentence
+
+Across all 640 legal attack sentences:
+
+- *that Pokémon* — **15 sentences / 32 printings**, referent SINGULAR every time (a "1 of", an
+  Active, or a distributive "for each of").
+- *those Pokémon* — **4 sentences / 12 printings**, referent PLURAL every time (a "2 of", a "3 of",
+  an "up to 2 of").
+- Zero counterexamples in either direction, and **one sentence spells BOTH, correctly**: the {D}
+  evolve search says *"Choose up to 2 of your {D} Pokémon. For each of **those** Pokémon, search
+  your deck for a card that evolves from **that** Pokémon…"*
+
+**The column does not merely happen to agree; it SWITCHES spelling when the referent's number
+switches.** That is the difference between a coincidence and a rule, and it is why enforcing
+agreement is READING while the class would have been AUTHORING — D190b's *exact map or flag*, read
+from the regex side.
+
+**THE TRANSFERABLE FORM: a census that answers "no data" is asking you to change the DENOMINATOR,
+not the predicate.** The anchor's own printings were the wrong population for the question.
+
+### ⚠️ The constraint lives at the READ SITE, because a regex cannot express it
+
+A regex cannot tie one capture to another capture's VALUE. Spelling agreement inside the pattern
+would take TWO copies of the whole skeleton with the count written twice — the duplication D399's
+shared fragment exists to prevent, one anchor over. So: one anchor, one count capture, one captured
+number word, and one comparison in `deriveAttackEffect`'s 6d arm. A DISAGREEING sentence falls
+through to the loud `ATTACK_EFFECT_SKIPPED` path exactly where a printed 0 falls through.
+
+Each refusal is driven by a **ONE-WORD FLIP** of a resolving sentence, with the unflipped twin
+asserted to resolve in the same `it` — so nothing but the comparison can be blamed for either.
+That is D399's *"a near-miss the fragment already refuses proves nothing about the anchor wrapped
+around it"*, spent before it could cost a GAP.
+
+### ⚠️ Inserting a capture renumbers every group after it — grep the PROSE
+
+Four doc blocks across three files claimed *"`CHOSEN_ANY_TARGET`'s group 2"*: `effects.ts` (twice),
+`index.ts` and `damageSuppression.test.ts`. All four are annotated in place with a
+`🆕🆕 D400: group 3 now` rider (D178). **The grep that found them was `"group 2"`** — not a symbol
+name, and not something a search for `CHOSEN_ANY_TARGET` surfaces in the same shape (D394's rule:
+grep the SENTENCE, not the key).
+
+Mutant **C6** exists for exactly this: keeping the `ignoreWR` branch on `match[2]`, which is now
+the COUNT and is never `undefined`, silently gives EVERY any-target snipe the flag — and **no
+census figure moves**, because every sentence still resolves. Four of D400's eight rows are silent
+that way. **A reader can be right about what it ACCEPTS and wrong about what it BUILDS, and only a
+board rung or an unprinted near-miss separates them.**
+
+### ⚠️ `ignoreWR` at `count: 2` on `opponentAny` — the one genuinely unexercised combination
+
+Team Rocket's Crobat ex ships `{opponentAny, count: 2}` without the flag; Umbreon ships the flag at
+count 1. `fix-twinsnipe` and `fix-twinfeint` drive the SAME two picks — the opponent's Active and a
+benched Bouffalant — under both readings, and the two answers move in OPPOSITE directions:
+
+| pick | flat (`fix-twinsnipe`) | `ignoreWR` (`fix-twinfeint`) |
+|---|---|---|
+| Active (×2 Lightning) | **100** (§8.5 doubling) | **50** (Weakness nulled) |
+| Bench (Bouffalant, −20 "Bouffer") | **30** | **50** (reduction nulled) |
+
+Neither number can move without the other staying put, so a flag threaded to one `placeSnipe` arm
+only cannot pass.
+
+### ⚠️ What this slice did NOT buy, named rather than left to be discovered
+
+Two more count-≠-1 any-target sentences are printed and both lead with a discard —
+*"Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's
+Pokémon. (…)"* (3 printings) and *"Discard all Energy from this Pokémon. This attack does 110
+damage to 3 of your opponent's Pokémon. (…)"* (1). They sit off the `^This attack does` anchor and
+a count capture structurally cannot move them. With their count-1 siblings that is **4 sentences /
+7 printings on ONE shape: a self-discard COST followed by an any-target snipe** — a
+split-sentence slice, not a regex slice, and the next thing to price. Three of the five largest
+remaining sentences in the whole unresolved corpus share that shape, which is why the sequencing
+question is worth more than any single sentence.
