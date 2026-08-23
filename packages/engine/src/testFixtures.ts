@@ -4926,6 +4926,48 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕 FIXTURE — D407's BOARD-WIDE OWN-ENERGY SCALER. The printed effect is
+      byte-for-byte off `legalAttackCorpus()` (the committed `legal_standard = 1`
+      attack column, 4 legal printings on this one sentence):
+
+        "This attack does 30 more damage for each {G} Energy attached to all of
+         your Pokémon."
+
+      ⚠️ **THE `+` MARKER IS THE HALF THAT IS TRANSCRIBED RATHER THAN CHOSEN.** The
+      sentence carries "more" (D145/D167's whole discriminator), so it lands on the
+      ADDITIVE fold and `attack.ts` KEEPS the printed base — a build that dropped it
+      would read 30 × n and be green on any board where the Energy count happens to
+      be the only thing moving. The base is `20+` and NOT `30+`, deliberately: with
+      base and per-unit equal, "the base was dropped" and "one fewer Energy was
+      counted" are the same number.
+
+      ⚠️ **THE COST IS `{C}` AND NOT `{G}`.** The Energy that pays for the attack must
+      be one the count IGNORES, or the filter's whole job is invisible on every board
+      that can legally attack. `fix-energy` (Basic Colorless) pays it and provides no
+      Grass at all.
+
+      NO owner prefix in the key — the possessive fixture toll (`ownerPrefix.test.ts`)
+      is not paid by this slice, which matters here because the pool's real near miss
+      IS an owner-prefixed board ("… attached to all of your Iono's Pokémon.", 1 legal)
+      and the anchor refuses it. The ids that print this sentence are unknown to this
+      container (no D1 credentials, D369), so the key is a `fix-*` one and every scalar
+      except the effect text and the `+` marker is CHOSEN rather than transcribed. A
+      Basic, 110 HP, so its own survival never gets in the way. */
+  "fix-boardgrass": battler("fix-boardgrass", {
+    types: ["Grass"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Verdant Surge",
+        damage: "20+",
+        effect:
+          "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -14413,6 +14455,39 @@ export const TOOL_COUNT_DECK = deckOf({
   "fix-tool": 12, // the unauthored Tool — the resource this whole suite counts
   "fix-bigbody": 36, // 200 HP neutral — DOMINANT (mulligan-free), the Bench bodies and the defender
   "fix-energy": 8, // Basic {C} — pays the printed {C}, and the Energy a Tool count must ignore
+});
+
+/** 🆕🆕 **D407: the board-wide own-Energy scaler, on a board where the ATTACHED
+    ENERGY is both the resource and the fuel.** Both seats run it, because the seat is
+    one of the readings the evaluator can get wrong: the printed word is *"all of YOUR
+    Pokémon"*, so the opponent's Energy has to be reachable in order to be proved
+    invisible.
+
+    THREE ENERGY PRINTS, and each one answers a different question rather than padding
+    the deck. `fix-grass-energy` (Basic {G}) is the resource the filter admits.
+    `fix-energy` (Basic {C}) pays the printed cost and is the Energy the filter must
+    REFUSE — a build that counted every attached card reads this board four higher.
+    `sv02-191` Luminous Energy is the PROVISION witness: it provides every type, so it
+    counts toward {G} for exactly as long as it does everywhere else (D118), and
+    `fix-special` (the unauthored Special, {C} only) is what DEMOTES it — attach the
+    second Special to the same body and the wildcard stops being a {G} Energy on a
+    board where nothing else moved. That pair is the only way to drive "PROVISION, not
+    the printed name" in both directions, which is the seam this member delegates
+    across.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, and a defender the
+    140 this suite's canonical board deals never Knocks Out, so no KO tail lands
+    between the fold and the events it is read from). It is the Bench filler on BOTH
+    sides as well as the defender — every body and every Energy this suite counts is
+    placed by surgery, so the populations can be moved independently and never agree by
+    accident. */
+export const BOARD_ENERGY_DECK = deckOf({
+  "fix-boardgrass": 4, // "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."
+  "fix-grass-energy": 16, // Basic {G} — the resource this whole suite counts
+  "fix-energy": 6, // Basic {C} — pays the printed {C}, and the Energy the {G} filter must refuse
+  "sv02-191": 4, // Luminous — the wildcard, and the reason the read is PROVISION
+  "fix-special": 4, // the unauthored Special — {C} only, and what DEMOTES the wildcard
+  "fix-bigbody": 26, // 200 HP neutral — DOMINANT (mulligan-free), the Bench bodies and the defender
 });
 
 export const SELF_ENERGY_HAND_DECK = deckOf({

@@ -12109,6 +12109,76 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.312.0 → **THE BOARD-WIDE OWN-ENERGY COUNT: A ZONE D196 REFUSED ON A
+    MEASUREMENT THAT HAS SINCE STOPPED BEING TRUE.**
+
+      *"This attack does 30 more damage for each {G} Energy attached to all of your
+       Pokémon."* — **4 legal printings on 1 sentence**
+
+    `BUILT.attack` 1365 → **1369**; BOTH reader instruments step by 1 sentence / 4
+    printings — the eleven-reader one 400 / 1,336 → **401 / 1,340** and the nine-reader
+    one 395 / 1,320 → **396 / 1,324** — because `deriveAttackDamageBonus` is in BOTH
+    arrays and the arrays were OPENED rather than reasoned about (D406's finding,
+    applied). Whole-census `built` 1,770 → **1,774**, its residue 613 → **609**; unbuilt
+    attack column 367 → **363** (PRINTINGS, so the step is −4 and not −1);
+    `BUILT.attack - 922` 443 → **447**, `- 922 - 252` 191 → **195**;
+    `head - rawDelta - splitDelta` 1,359 → **1,363**; `FIXTURE_POOL` 510 → **511**.
+    `REGISTRY_ATTACK_UNITS`, `splitHead`, `BUILT.ability`, registry ids and the
+    apostrophe file's DERIVABLE sweep all stand still — a READER-keyed move that edits
+    `registry.ts` not at all.
+
+    🛑 **THE FIELD IS A `zone` AND NOT A FOURTEENTH MEMBER, WHICH IS D193's ARGUMENT
+    APPLIED RATHER THAN CITED.** Two zone members would each have to carry `energyType`,
+    and duplicating the field that answers *"which Energy counts"* is precisely the
+    second answer to one question D159 forbids. `energyOnOpponent` has carried exactly
+    this shape since D193 at the other end of the table.
+
+    ⚠️ **AND IT IS OPTIONAL, WITH `undefined` MEANING THE ATTACKING BODY** — D135's
+    `zone?: "bench"` polarity, one union over. The printed words WIDEN the scope, so the
+    field is present exactly when they are printed and a producer that forgets it counts
+    ONE BODY rather than a whole side; the conservative direction is the one that
+    UNDER-counts. The alternative was a REQUIRED field, and its price was measured
+    before the choice was made: `grep -rn '"energyOnSelf"' packages/engine/src` returns
+    **13 sites** — 2 producers, 1 consumer and 10 frozen test literals — so a required
+    field would have rewritten ten assertions that have nothing to do with this
+    sentence. The field is read at exactly ONE site, so the shape rule's polarity veto
+    is not engaged (confirmed by grepping the read sites, not by assuming).
+
+    ⚠️ **ADDITIVE-ONLY ON THIS ZONE, AND THE MIRROR IS EXACT.** The column prints no `×`
+    spelling of a board-wide OWN Energy count, so `SELF_ENERGY_MULTIPLY` keeps its bare
+    *"this Pokémon"* tail. On the opponent side the `×` reader carries the zone and the
+    `+` reader hard-codes one; on this side it is the other way round. Two folds, two
+    one-reader zone captures, and each absence pinned by a test.
+
+    ⚠️ **THE REAL CATALOG NEAR MISS IS AN OWNER-PREFIXED BOARD**: *"This attack does 20
+    more damage for each {L} Energy attached to all of your Iono's Pokémon."* (1 legal
+    printing) names a SUBGROUP of the same zone. The alternative is the literal *"all of
+    your Pokémon"* and nothing else, so that row stays LOUD — a widening spelled
+    `all of your .* Pokémon` would score it off the whole board and author a card (D120).
+
+    ✅ **THE DELEGATION SEAM WAS VERIFIED RATHER THAN INHERITED (D403).**
+    `countEnergyInPlay(state, seat, energy)` walks Active + Bench, reads a TYPE by
+    PROVISION through `providesEnergyType` (D118) and `"special"` by card class — so a
+    wildcard Luminous counts toward `{G}` for exactly as long as it does everywhere
+    else, and stops the moment a second Special demotes it to `{C}`. Driven in BOTH
+    directions on a live board rather than argued.
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and argued from WHERE
+    THE FIELD IS STORED: `zone` lives inside a DERIVED `AttackDamageBonus` computed from
+    card text and consumed in the same tick. No `EffectOp` carries a `DamageCountSource`,
+    nothing parks one, and no `MatchRecord` field holds one — so no v25 record could ever
+    have contained one, let alone this field on one. DRIVEN rather than asserted, because
+    the constant is not exported (D406).
+
+    Cost: **1 WIDENED whole-sentence anchor, 1 captured group, 1 optional field, 1
+    producer branch and 1 evaluator branch.** ZERO new `DamageCountSource` members, ZERO
+    new counters, ZERO new ops, ZERO new readers, ZERO `BoardCondition` members, ZERO
+    registry rows, ZERO clause-table rows, ZERO prompts, ZERO events, ZERO error codes
+    and ZERO `GameState` fields. No web/API/DB or `@luminous/schema` change.
+
+    engineVersion 0.311.0 → **0.312.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.311.0 → **THE COUNTED TOOL SCALER: A FOURTH RESOURCE FOR A UNION THAT HAD
     COUNTED THREE THINGS FOR TWELVE MEMBERS.**
 
@@ -12185,7 +12255,8 @@ import type { GameState, Seat } from "./types";
     `SELF_ENERGY_SCALE` reads *"attached to this Pokémon"* and nothing else. The
     correction is recorded beside `YOUR_TOOLS_MULTIPLY` rather than acted on: giving
     `energyOnSelf` the zone D196 refused it is a slice of its own, and this pattern
-    refuses that sentence by naming the Tool.
+    refuses that sentence by naming the Tool. ✅ **D407 IS THAT SLICE** (0.312.0) — and
+    the guard this one left behind is the rung that reddened when it landed.
 
     `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than skipped, and argued from where
     the member is STORED rather than from the file it is declared in. A
@@ -16987,7 +17058,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.311.0";
+export const engineVersion = "0.312.0";
 
 export type {
   ApplyResult,

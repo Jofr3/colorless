@@ -270,7 +270,7 @@ function scaledAttackDamage(
         ? 0
         : countAttachedEnergy(state, defenderActive, energyType) * bonus.per;
     }
-    case "energyOnSelf":
+    case "energyOnSelf": {
       // D196 — the MIRROR of the arm directly above, off the ATTACKING body. Same
       // delegation to continuous.ts for the same D159 reason: `countAttachedEnergy`
       // already answers "how much Energy is attached to this Pokémon" for the
@@ -282,7 +282,26 @@ function scaledAttackDamage(
       // DECLARATION, the same body `damageCountersOnSelf` reads, so an attack can
       // never bootstrap the Energy it scales off. No missing-body case exists: the
       // attacker is the thing declaring.
-      return countAttachedEnergy(state, attacker, bonus.count.energyType) * bonus.per;
+      //
+      // 🆕 D407 — AND THE BOARD ZONE, WHICH IS THE SAME SHAPE THE `energyOnOpponent`
+      // ARM ABOVE HAS CARRIED SINCE D193, AT THE OTHER END OF THE TABLE. "all of
+      // your Pokémon" is §6.3's "in play" — Active + Bench — so it delegates to
+      // `countEnergyInPlay`, the counter the opponent-side `zone: "board"` arm
+      // already calls; the two readings of one printed scope cannot drift because
+      // there is only one of them. `attackerSeat`, because the printed word is
+      // "YOUR Pokémon" and the seat that declared the attack owns them — the same
+      // end of the swing as `yourBenchCount` and `toolsOnYourBoard`, and the
+      // opposite end from the `energyOnOpponent` call five lines up.
+      //
+      // ⚠️ The zone is OPTIONAL and `undefined` is the ATTACKING BODY, so this
+      // `if` is the whole widening: every sentence that reached this arm before
+      // D407 falls through it unchanged. A missing Active cannot matter on either
+      // path — `attacker` is the declaring body and `countEnergyInPlay` handles an
+      // absent Active inside its own walk.
+      const { zone, energyType } = bonus.count;
+      if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;
+      return countAttachedEnergy(state, attacker, energyType) * bonus.per;
+    }
     case "bothActivesEnergyCount": {
       // D196 — the first member BOTH SEATS contribute to: the Energy on the
       // attacker's Active PLUS the Energy on the defender's, added and then scaled

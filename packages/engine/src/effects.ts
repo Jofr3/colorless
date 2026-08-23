@@ -10269,8 +10269,38 @@ const OPPONENT_ENERGY_MULTIPLY =
 // discard the top card of your opponent's deck." (1 / 0) fails it too. No /i,
 // whole-sentence anchored with a required trailing period, `Pokémon` with the real
 // é (U+00E9) — the family's stated reason.
+//
+// 🆕 D407 — THE ZONE, AND IT IS ON THE ADDITIVE FOLD ONLY. The paragraph above
+// used to end "No zone: the board-wide spelling of the attacker's own Energy is
+// unprinted." **THAT IS FALSE AT THIS HEAD** and D406 measured it: the committed
+// `legal_standard = 1` attack column prints
+//
+//     "This attack does 30 more damage for each {G} Energy attached to all of
+//      your Pokémon."            (1 sentence, 4 LEGAL printings, TYPED, `+` fold)
+//
+// so the second alternative is captured WHOLE, the way `OPPONENT_ENERGY_MULTIPLY`
+// captures its two — a complete printed noun phrase rather than a cross-product of
+// optional fragments — and `energyOnSelf` gains the `zone` D196 refused it. The
+// D196 measurement was made against the remote D1 on 2026-08-04 and is kept beside
+// this correction rather than overwritten (D178): what changed is the pool, not the
+// reading.
+//
+// ⚠️ THE MULTIPLY TWIN IS STILL ABSENT, WHICH MAKES THIS PAIR THE EXACT MIRROR OF
+// THE OPPONENT ONE. `SELF_ENERGY_MULTIPLY` keeps its bare "this Pokémon" tail,
+// because "This attack does N damage for each … Energy attached to all of your
+// Pokémon." is printed NOWHERE in the column — the only bare-fold "all of your
+// Pokémon" sentence in it counts Pokémon TOOLS (D406). So on the opponent side the
+// `×` reader carries the zone and the `+` reader hard-codes one; on this side it is
+// the other way round. Each absence is pinned by a test rather than inferred.
+//
+// 🛑 AND THE REAL CATALOG NEAR MISS IS AN OWNER-PREFIXED BOARD, ONE WORD WIDER:
+// "This attack does 20 more damage for each {L} Energy attached to all of your
+// Iono's Pokémon." (1 legal printing) names a SUBGROUP of the same zone, not the
+// zone. The alternative is the literal "all of your Pokémon" and nothing else, so
+// that row stays LOUD — a widening spelled `all of your .* Pokémon` would score it
+// off the whole board and author a card the catalog does not print (D120).
 const SELF_ENERGY_SCALE =
-  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to this Pokémon\.$/;
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
 const SELF_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to this Pokémon\.$/;
 // D196 — THE THIRD ZONE, and the first thing this family counts that BOTH SEATS
@@ -10348,14 +10378,15 @@ const SELF_ENERGY_BOTH_ACTIVES_SCALE =
 //     which is a different question and a different fold.
 //
 // ⚠️ AND ONE NEAR MISS THAT IS NOT A TOOL SENTENCE AT ALL, RECORDED BECAUSE IT
-// CONTRADICTS A CLAIM THIS FILE ALREADY MAKES. `energyOnSelf`'s block below says
+// CONTRADICTED A CLAIM THIS FILE ALREADY MADE. `energyOnSelf`'s block below said
 // the member carries no `zone` because *"the pool prints no board-wide spelling of
 // '… attached to all of YOUR Pokémon'"* (D196, measured 2026-08-04). The committed
 // column prints one: "This attack does 30 more damage for each {G} Energy attached
-// to all of your Pokémon." — **4 legal printings**, ADDITIVE, and unbuilt, because
-// SELF_ENERGY_SCALE reads "attached to this Pokémon" and nothing else. It is a
-// real slice for a successor (`energyOnSelf` gains the `zone` D196 refused it);
-// this pattern refuses it by naming the Tool, and it is left LOUD.
+// to all of your Pokémon." — **4 legal printings**, ADDITIVE. ✅ **D407 BUILT IT**:
+// SELF_ENERGY_SCALE now captures its tail as a whole printed noun phrase and
+// `energyOnSelf` carries the optional `zone` D196 refused it. This pattern still
+// refuses the sentence by naming the Tool, which is the disjointness that matters
+// here — the two families share a zone and nothing else.
 //
 // No possessive and so no `['’]` class is needed. `Pokémon` carries the real é
 // (U+00E9) in both slots; no /i, whole-sentence anchored with a required trailing
@@ -17702,11 +17733,38 @@ export interface AttackDamageBonus {
     ⚠️ THE TENTH IS THE MIRROR OF THE NINTH, AND THE ONE THAT WAS BLOCKED (D196).
     `energyOnSelf` tallies the Energy attached to the ATTACKING body — the same
     resource `energyOnOpponent` reads off the other end of the table, and two
-    members rather than one member with a `side` for D168's reason. It carries
-    `energyType` and NOT a `zone`: the pool prints no board-wide spelling of "…
-    attached to all of YOUR Pokémon", so a zone here would be a field no reader
-    could ever vary — the same measurement `energyOnOpponent`'s ADDITIVE arm makes
-    in the other direction, in the other axis.
+    members rather than one member with a `side` for D168's reason. D196 gave it
+    `energyType` and NOT a `zone`, on this measurement: *"the pool prints no
+    board-wide spelling of '… attached to all of YOUR Pokémon', so a zone here
+    would be a field no reader could ever vary"* — taken against the remote D1 on
+    2026-08-04, and the mirror of the measurement `energyOnOpponent`'s ADDITIVE arm
+    makes in the other direction, in the other axis.
+
+    🆕 🛑 **THAT MEASUREMENT IS FALSE AT THIS HEAD, AND D407 GAVE THE MEMBER THE
+    ZONE.** The committed `legal_standard = 1` attack column prints *"This attack
+    does 30 more damage for each {G} Energy attached to all of your Pokémon."* at
+    **4 legal printings** — found by D406 one resource over, recorded as an
+    executable guard rather than as a comment, and built here. The sentence above
+    is kept rather than overwritten (D178): what moved is the POOL, not the
+    reading.
+
+    ⚠️ **`zone` IS OPTIONAL AND ITS ABSENT VALUE IS THE ATTACKING BODY**, which is
+    D135's `zone?: "bench"` polarity read one union over: the printed words WIDEN
+    the scope, so the field is present exactly when they are printed and a producer
+    that forgets it counts ONE BODY rather than a whole side. The conservative
+    direction is the one that under-counts — an absent-means-board default would
+    silently score every Energy on the board for the twenty-one printings that name
+    only the attacker. It is ONE member with a `zone` rather than a second flat
+    member for the reason D193 gives one line up: two zone members would each have
+    to carry `energyType`, and that is the second answer to one question D159
+    forbids. And the field is read at exactly ONE site (`scaledAttackDamage`), so
+    the shape rule's polarity veto is not engaged.
+
+    ⚠️ **ADDITIVE-ONLY, AND THE OTHER FOLD'S ABSENCE IS MEASURED**: the column
+    prints no `×` spelling of a board-wide OWN Energy count, so `SELF_ENERGY_MULTIPLY`
+    keeps its bare "this Pokémon" tail and `deriveAttackDamageMultiplier` can only
+    ever produce the zone-less shape. `energyOnOpponent` is the exact mirror — its
+    `×` reader carries the zone and its `+` reader hard-codes one.
 
     It is the LARGEST member of the family (21 legal printings, 38 catalog) and it
     arrived LAST, because its sentence was load-bearing as a NEGATIVE: Entei
@@ -17780,7 +17838,11 @@ export type DamageCountSource =
       zone: OpponentEnergyZone;
       energyType: BasicEnergyType | "special" | null;
     }
-  | { kind: "energyOnSelf"; energyType: BasicEnergyType | "special" | null }
+  | {
+      kind: "energyOnSelf";
+      zone?: "board";
+      energyType: BasicEnergyType | "special" | null;
+    }
   | { kind: "bothActivesEnergyCount" }
   | { kind: "toolsOnYourBoard" };
 
@@ -17879,14 +17941,23 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // unresolvable one ("Basic Energy", "{C}") falls through to `return null` and
   // stays LOUD. The only thing separating the two arms is the literal tail of the
   // anchored sentence — "this Pokémon" instead of "your opponent's Active
-  // Pokémon". No zone: the board-wide spelling of the attacker's own Energy is
-  // unprinted (see SELF_ENERGY_SCALE).
+  // Pokémon".
+  //
+  // 🆕 D407 — AND THE TAIL IS NOW A CAPTURE, because the board-wide spelling this
+  // arm's own comment used to call unprinted IS printed (4 legal printings, typed
+  // `{G}`). The zone is emitted ONLY for the wider phrase: "this Pokémon" produces
+  // the same zone-less shape it always did, so the twenty-one printings that
+  // reached this arm before are byte-identical afterwards. That asymmetry is the
+  // optional field's polarity, spelled at the producer rather than left to the
+  // reader.
   const selfEnergy = SELF_ENERGY_SCALE.exec(effect);
   if (selfEnergy !== null) {
     const per = Number(selfEnergy[1]);
     const energyType = attachedEnergyFilter(selfEnergy[2]);
     if (per >= 1 && energyType !== undefined) {
-      return { per, count: { kind: "energyOnSelf", energyType } };
+      return selfEnergy[3] === "this Pokémon"
+        ? { per, count: { kind: "energyOnSelf", energyType } }
+        : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };
     }
   }
   // D196 — BOTH Actives' attached Energy. On this fold ONLY: the no-adjective twin
