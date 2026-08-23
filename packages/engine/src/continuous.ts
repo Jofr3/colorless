@@ -2445,6 +2445,34 @@ export function countEnergyInPlay(
   return total;
 }
 
+/** 🆕 **D406 — HOW MANY POKÉMON TOOLS ARE ATTACHED TO EVERYTHING `seat` HAS IN
+    PLAY**, the TOOL sibling of `countEnergyInPlay` directly above and placed
+    beside it for that function's own stated reason: the two read the SAME printed
+    noun — *"attached to all of your Pokémon"* / *"attached to all of your
+    opponent's Pokémon"* — and two spellings of one scope are exactly what drifts.
+    "In play" is Active + Bench and nothing else; an empty board counts 0.
+
+    CARDS, and there is nothing else it could be. The Energy counter has to say so
+    out loud because one Energy card can provide two units; a Tool provides
+    nothing, so `tools.length` per holder is the whole arithmetic and no provision
+    question exists. Every uid in that array reached it through `attachTool`
+    (cardplay.ts), which has already refused anything whose `trainerType` is not
+    "Tool" — the same argument `yourActiveHasToolAttached` makes for its length
+    test one abstraction down.
+
+    ⚠️ **NOT BOUNDED AT ONE PER BODY.** §7.4's one-Tool-per-Pokémon cap is an
+    ATTACH-GATE rule and Revavroom ex `sv03-156`'s "Tune-Up" raises it to 4, so
+    this sums the arrays rather than counting the bodies that have one — which is
+    the difference between this and a `tools.length > 0` tally, and the difference
+    is observable on any board where one Pokémon wears two. */
+export function countToolsInPlay(state: GameState, seat: Seat): number {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let total = 0;
+  for (const holder of holders) total += holder.tools.length;
+  return total;
+}
+
 /** The attached Energy that are SPECIAL — the context Luminous's "any other
     Special Energy attached" clause is evaluated against. */
 function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {

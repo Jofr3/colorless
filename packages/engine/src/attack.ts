@@ -31,6 +31,7 @@ import {
   coinFlipShieldPrevents,
   countAttachedEnergy,
   countEnergyInPlay,
+  countToolsInPlay,
   effectiveAttackCost,
   effectiveRetreatCost,
   firstTurnAttackBanned,
@@ -301,6 +302,24 @@ function scaledAttackDamage(
         bonus.per
       );
     }
+    case "toolsOnYourBoard":
+      // 🆕 D406 — the POKÉMON TOOLS attached to everything the ATTACKER has in
+      // play ("This attack does 30 damage for each Pokémon Tool attached to all of
+      // your Pokémon."). Delegated to `countToolsInPlay`, which sits beside
+      // `countEnergyInPlay` in continuous.ts: "all of your Pokémon" is the SAME
+      // printed scope `energyOnOpponent`'s `zone: "board"` reads at the other end
+      // of the table, and D159's rule is that one question gets one answer.
+      //
+      // `attackerSeat`, because the printed word is "YOUR Pokémon" and the seat
+      // that declared the attack owns them — the same end of the swing as
+      // `yourBenchCount` two cases up, and the same reason. This is the only arm
+      // in this switch that names NEITHER Active: the Active is inside the walk
+      // rather than beside it, so a board whose Tools are all on the Bench and one
+      // whose Tools are all on the Active give the same number, which is what the
+      // printed "all of" means. Read at DECLARATION like every other member; an
+      // empty board is 0 and, with the printed "30×" base dropped, that is no
+      // DAMAGE_DEALT row at all.
+      return countToolsInPlay(state, attackerSeat) * bonus.per;
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more
       // damage." The printed bonus lands whole when the clause holds for the

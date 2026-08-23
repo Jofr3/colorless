@@ -1009,6 +1009,18 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
+    // 🆕🆕 D406 — 0.310.0 -> **0.311.0**, THE COUNTED TOOL SCALER.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and argued from
+    // WHERE THE NEW MEMBER IS STORED rather than from the file it is declared in. The
+    // slice widens `DamageCountSource` — a PARSE-TIME union produced from card text by
+    // `deriveAttackDamageMultiplier` and consumed inside `scaledAttackDamage` in the
+    // same tick. Nothing in `MatchRecord` or `GameState` holds one: it never reaches
+    // `phase.cont.pendingOp` (no op carries it), it is not an `EffectOp` field, and the
+    // persisted key list this file anchors is untouched. So D361's "a v25 record cannot
+    // contain a member that did not exist" has nothing to bite on — no v25 record could
+    // ever have contained a `DamageCountSource` in the first place. `InPlayPokemon.tools`
+    // is READ by the new evaluator arm and has been persisted since M4; reading a
+    // shipped field is not a shape change. The post-bump anchor pass was clean.
     // 🆕🆕 D405 — 0.309.0 -> **0.310.0**, THE MANDATORY OWN-BOARD ENERGY RETRIEVAL.
     // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed and answered on the
     // OP. `discardEnergy` PARKS, so it really does ride `GameState.phase.cont.pendingOp`
@@ -1066,8 +1078,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.310.0");
-    expect(manifest.version).toBe("0.310.0");
+    expect(engineVersion).toBe("0.311.0");
+    expect(manifest.version).toBe("0.311.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

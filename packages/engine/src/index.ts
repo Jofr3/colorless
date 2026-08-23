@@ -12109,6 +12109,104 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.311.0 → **THE COUNTED TOOL SCALER: A FOURTH RESOURCE FOR A UNION THAT HAD
+    COUNTED THREE THINGS FOR TWELVE MEMBERS.**
+
+      *"This attack does 30 damage for each Pokémon Tool attached to all of your
+       Pokémon."* — **5 legal printings on 1 sentence**
+
+    `BUILT.attack` 1360 → **1365**; the eleven-reader instrument 399 / 1,331 →
+    **400 / 1,336** and the NINE-reader one 394 / 1,315 → **395 / 1,320**. ⚠️ **BOTH
+    MOVE, AND THE HANDOFF PREDICTED THE SECOND WOULD NOT** — it reasoned from D405's
+    reader (`deriveAttackEffect`) rather than from the nine-reader LIST, which carries
+    `deriveAttackDamageMultiplier` as its fourth entry. **THE INSTRUMENT'S MEMBERSHIP IS
+    A FACT ABOUT ITS ARRAY, NOT ABOUT THE PREVIOUS SLICE.** Whole-census `built` 1,765 →
+    **1,770**, its residue 618 → **613**; unbuilt attack column 372 → **367** (that
+    column is PRINTINGS, so its step is −5 and not −1); `BUILT.attack - 922` 438 →
+    **443** and `- 922 - 252` 186 → **191**; `head - rawDelta - splitDelta` 1,354 →
+    **1,359**; `FIXTURE_POOL` 509 → **510**. `REGISTRY_ATTACK_UNITS` and `splitHead`
+    stand still — a READER-keyed move, and this slice edits `registry.ts` not at all.
+
+    ⚠️ **THE RESIDUE FIGURES, MEASURED LIVE AT THIS HEAD RATHER THAN STEPPED FROM THE
+    RECORDED ONES** (D206's rule). Nine-reader raw residue **245 / 412**, split-aware
+    **240 / 399**; ELEVEN-reader raw residue **240 / 396**, split-aware **235 / 383**.
+    🛑 **AND THE RECORDED PREDECESSOR DOES NOT RECONSTRUCT**: D405's page carries the
+    eleven-reader split-aware residue as *235 / 387*, and adding this slice's 1 sentence
+    / 5 printings back to the live 235 / 383 gives **236 / 388** — a 1 / 1 disagreement
+    that no re-derivation here reproduces. The LIVE number is what this page carries.
+
+    🛑 **THE THIRTEENTH `DamageCountSource`, AND THE FIRST THAT COUNTS NEITHER ENERGY,
+    NOR BODIES, NOR DAMAGE COUNTERS.** Twelve members over three resources became
+    thirteen over four. The fourth needed no new state: `InPlayPokemon.tools` has been
+    an ingested, persisted uid array since M4, and `attachTool` (cardplay.ts) has always
+    refused anything whose `trainerType` is not "Tool" — so the arithmetic is
+    `tools.length` summed over a zone and there is no provision question of the kind
+    every Energy count answers.
+
+    ✅ **BOTH OF THE HANDOFF'S NAMED FALSIFIERS WERE CHECKED BEFORE A LINE WAS WRITTEN,
+    AND THE REASONS ARE WRITTEN DOWN RATHER THAN THE VERDICTS** (D403's rule, eighth
+    payment). **THE FIRST FIRED AND COST A FUNCTION; THE SECOND HELD.**
+
+    ⑴ **THE PRINTED SCOPE IS ACTIVE + BENCH AND NOTHING IN THE ENGINE ANSWERED IT.**
+    The two Tool readings that exist — `yourActiveHasToolAttached` and D369's
+    `opponentActiveHasToolAttached` — are `tools.length > 0` on ONE BODY, spelled inline
+    in `interpreter.ts`, and neither is a count over a zone. So the falsifier's first
+    half ("does a shared counter already exist?") answered **NO**, and its second half
+    ("then the walk must be the one already used, not a second opinion") decided WHERE
+    the code goes: `countToolsInPlay` is a new exported function in **continuous.ts,
+    directly beside `countEnergyInPlay`**, because *"attached to all of your Pokémon"*
+    and *"attached to all of your opponent's Pokémon"* are ONE printed scope read by two
+    counters, and `countEnergyInPlay`'s own doc block already states that two spellings
+    of one noun is what drifts. **IT COST A FUNCTION, NOT A FIELD** — so the handoff's
+    "if the scope needs a second member rather than one, re-price against (C)" did not
+    trigger: the member count is one.
+
+    ⑵ **THE BASE REALLY IS DROPPED, AND THE PRINTED BYTES ARE WHAT SAY SO.** The
+    sentence carries no *"more"*, which is D145/D167's whole discriminator, so it lands
+    on `deriveAttackDamageMultiplier` and `scaledBase`'s existing
+    `damageMultiplier !== null` disjunct zeroes the printed `30×`. **NOT ONE CHARACTER
+    OF THAT CHAIN MOVED** — the term was already there for every other multiply arm — so
+    none of the seven multi-line `find` rows spanning `attack.ts`'s three disjunction
+    chains was touched. A Tool-less board therefore deals ZERO and emits no
+    `DAMAGE_DEALT` row at all, which the suite drives first.
+
+    ⚠️ **MULTIPLY-ONLY, AND THAT MAKES IT THE EXACT MIRROR OF `bothActivesEnergyCount`.**
+    That member is reachable from the ADDITIVE reader alone because its no-adjective twin
+    is 0 legal; this one is reachable from the `×` reader alone because its *"more"* twin
+    **is not printed at all**. Two members, two one-reader shapes, opposite folds — and
+    each absence is pinned by a test rather than left to be re-discovered as an oversight.
+
+    🛑 **AND THE SLICE FOUND A CLAIM IN `effects.ts` THAT HAS STOPPED BEING TRUE, ONE
+    RESOURCE OVER.** `energyOnSelf`'s block says it carries no `zone` because *"the pool
+    prints no board-wide spelling of '… attached to all of YOUR Pokémon'"* (D196,
+    measured 2026-08-04 against the remote D1). The committed `legal_standard = 1` attack
+    column prints one: *"This attack does 30 more damage for each {G} Energy attached to
+    all of your Pokémon."* — **4 legal printings**, ADDITIVE, and **unbuilt**, because
+    `SELF_ENERGY_SCALE` reads *"attached to this Pokémon"* and nothing else. The
+    correction is recorded beside `YOUR_TOOLS_MULTIPLY` rather than acted on: giving
+    `energyOnSelf` the zone D196 refused it is a slice of its own, and this pattern
+    refuses that sentence by naming the Tool.
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than skipped, and argued from where
+    the member is STORED rather than from the file it is declared in. A
+    `DamageCountSource` lives inside a DERIVED `CardProgram`/`AttackDamageBonus` computed
+    from card text at read time; nothing in `MatchRecord` or `GameState` holds one, no
+    park carries one, and `legacyEnergy.test.ts`'s persisted key list is untouched. The
+    same argument D390's member row makes.
+
+    ⚠️ **`countToolsInPlay` IS NOT RE-EXPORTED FROM THIS FILE**, for
+    `countOwnerPokemonInPlay`'s reason verbatim: nothing outside the engine counts Tools,
+    and an API with no caller is D135's defect.
+
+    Cost: **1 whole-sentence anchor, 1 reader arm, 1 `DamageCountSource` member, 1
+    evaluator arm and 1 shared board counter.** ZERO new ops, ZERO new `EffectOp` fields,
+    ZERO new readers, ZERO `BoardCondition` members, ZERO registry rows, ZERO clause-table
+    rows, ZERO prompts, ZERO events, ZERO error codes and ZERO `GameState` fields. No
+    web/API/DB or `@luminous/schema` change.
+
+    engineVersion 0.310.0 → **0.311.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.310.0 → **THE MANDATORY OWN-BOARD ENERGY RETRIEVAL, AND THE FIRST SLICE IN
     THIS RUN WHERE THE LARGEST HEAD LOST A PRICE COMPARISON.**
 
@@ -16889,7 +16987,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.310.0";
+export const engineVersion = "0.311.0";
 
 export type {
   ApplyResult,

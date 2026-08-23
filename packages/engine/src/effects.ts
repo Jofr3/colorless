@@ -10311,6 +10311,57 @@ const SELF_ENERGY_MULTIPLY =
 // /i, whole-sentence anchored with a required trailing period and a capital `This`.
 const SELF_ENERGY_BOTH_ACTIVES_SCALE =
   /^This attack does (\d+) more damage for each Energy attached to both Active Pokémon\.$/;
+// 🆕 D406 — THE POKÉMON TOOLS ATTACHED TO YOUR WHOLE BOARD, and the first thing
+// this family counts that is neither an Energy, a body nor a damage counter.
+//
+//   "This attack does 30 damage for each Pokémon Tool attached to all of your
+//    Pokémon." — 1 sentence, **5 LEGAL printings**, measured off
+//   `legalAttackCorpus()` (the committed `legal_standard = 1` attack column) and
+//   the largest record left in D405's split-aware residue once the three above it
+//   were priced and refused.
+//
+// MULTIPLY ONLY, AND THE ADJECTIVE IS THE WHOLE DISCRIMINATOR (D145/D167): the
+// sentence prints no "more", so the printed "30×" base is the PER-UNIT and
+// attack.ts drops it — a board with no Tools deals nothing and emits no
+// DAMAGE_DEALT row at all. There is no additive twin in the column, so
+// `deriveAttackDamageBonus` deliberately gains no arm and that absence is pinned
+// by a test, exactly as `bothActivesEnergyCount`'s one-reader shape is one arm up.
+//
+// THE SCOPE IS THE PRINTED NOUN AND IT IS ACTIVE + BENCH. "all of your Pokémon"
+// is §6.3's "in play", the same reading `OPPONENT_ENERGY_MULTIPLY` captures as
+// `zone: "board"` on the other side of the table — so the evaluator delegates to
+// `countToolsInPlay`, which lives beside `countEnergyInPlay` for exactly that
+// reason. NO zone capture here: the pool prints no Active-only spelling of a Tool
+// count, so a zone would be a field no reader could ever vary (D193's refusal to
+// give OPPONENT_ENERGY_SCALE one, and D196's to give `energyOnSelf` one).
+//
+// The near misses in the same column, all refused by the anchors alone:
+//   • "Before doing damage, discard all Pokémon Tools from your opponent's Active
+//     Pokémon." (5) and its three siblings (1 + 1 + 1) — the same noun DISCARDED
+//     rather than counted, and blocked on a pre-damage execution point this engine
+//     has no seam for; "Discard up to 2 Pokémon Tools from your opponent's
+//     Pokémon." (2) is the same family one zone over.
+//   • "If this Pokémon has a Pokémon Tool attached, this attack does 40 more
+//     damage." (2) and "If your opponent's Active Pokémon has a Pokémon Tool
+//     attached, this attack does 80 more damage." (2) — EXISTENCE on ONE body,
+//     already built as `BoardCondition`s and reached through the 0-or-1 indicator,
+//     which is a different question and a different fold.
+//
+// ⚠️ AND ONE NEAR MISS THAT IS NOT A TOOL SENTENCE AT ALL, RECORDED BECAUSE IT
+// CONTRADICTS A CLAIM THIS FILE ALREADY MAKES. `energyOnSelf`'s block below says
+// the member carries no `zone` because *"the pool prints no board-wide spelling of
+// '… attached to all of YOUR Pokémon'"* (D196, measured 2026-08-04). The committed
+// column prints one: "This attack does 30 more damage for each {G} Energy attached
+// to all of your Pokémon." — **4 legal printings**, ADDITIVE, and unbuilt, because
+// SELF_ENERGY_SCALE reads "attached to this Pokémon" and nothing else. It is a
+// real slice for a successor (`energyOnSelf` gains the `zone` D196 refused it);
+// this pattern refuses it by naming the Tool, and it is left LOUD.
+//
+// No possessive and so no `['’]` class is needed. `Pokémon` carries the real é
+// (U+00E9) in both slots; no /i, whole-sentence anchored with a required trailing
+// period and a capital `This`, for the family's stated reason.
+const YOUR_TOOLS_MULTIPLY =
+  /^This attack does (\d+) damage for each Pokémon Tool attached to all of your Pokémon\.$/;
 // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
 // damage.", the additive family's third arithmetic shape and the first one whose
 // count is not a count at all: the clause is a 0-or-1 INDICATOR, so `per × count`
@@ -17686,7 +17737,34 @@ export interface AttackDamageBonus {
     prints exactly one sentence for it and that sentence has no type filter (see
     SELF_ENERGY_BOTH_ACTIVES_SCALE). ADD-only, and by LEGALITY rather than by
     absence — unlike `bothSidesBenchCount`, its bare twin IS printed; it is simply
-    0 legal. */
+    0 legal.
+
+    🆕 ⚠️ **THE THIRTEENTH IS THE FIRST MEMBER THAT COUNTS NEITHER ENERGY, NOR
+    BODIES, NOR DAMAGE COUNTERS** (D406). `toolsOnYourBoard` sums the Pokémon
+    Tools attached to everything the ATTACKER has in play — *"This attack does 30
+    damage for each Pokémon Tool attached to all of your Pokémon."*, **5 legal
+    printings on 1 sentence**, the largest record in D405's split-aware residue
+    once the three above it were priced and refused. Three resources became four,
+    and the fourth was already a persisted field (`InPlayPokemon.tools`) with a
+    board walk (`countToolsInPlay`) it now shares with the Energy counter.
+
+    NO PAYLOAD, and both halves of that are measured rather than assumed. No
+    `zone`: the pool prints no Active-only spelling of a Tool count, so the field
+    D193 gave `energyOnOpponent` would be one no reader could vary here. No `side`
+    either — for D168's reason, and because the opponent-side spelling is not
+    printed at all, so there is no mirror member to be a value of.
+
+    ⚠️ **AND IT IS MULTIPLY-ONLY, WHICH MAKES IT THE MIRROR OF
+    `bothActivesEnergyCount` DIRECTLY ABOVE**: that member is reachable from the
+    ADDITIVE reader alone because its no-adjective twin is 0 legal; this one is
+    reachable from the `×` reader alone because its "more" twin is not printed at
+    all. Two members, two one-reader shapes, opposite folds — and each absence is
+    pinned by a test rather than left to be re-discovered.
+
+    Its evaluator arm is the only one in `scaledAttackDamage` that consults NEITHER
+    Active by name: it reads `attackerSeat`'s whole side, so an empty Bench, a
+    pristine board and a Tool-less one are all the same 0 — which on the `×` fold
+    (base dropped) means no `DAMAGE_DEALT` row at all. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -17703,7 +17781,8 @@ export type DamageCountSource =
       energyType: BasicEnergyType | "special" | null;
     }
   | { kind: "energyOnSelf"; energyType: BasicEnergyType | "special" | null }
-  | { kind: "bothActivesEnergyCount" };
+  | { kind: "bothActivesEnergyCount" }
+  | { kind: "toolsOnYourBoard" };
 
 /** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
     two are printed as two whole noun phrases — "your opponent's Active Pokémon"
@@ -17975,6 +18054,16 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnSelf", energyType } };
     }
+  }
+  // 🆕 D406 — the POKÉMON TOOLS on the attacker's whole board. Last in the chain
+  // and MULTIPLY-ONLY: the sentence prints no "more", so `deriveAttackDamageBonus`
+  // has no twin of this arm and a test pins that absence. Same `per >= 1` guard
+  // every arm in both families carries; no filter to resolve and so no
+  // `attachedEnergyFilter`, because the printed noun admits no narrowing.
+  const yourTools = YOUR_TOOLS_MULTIPLY.exec(effect);
+  if (yourTools !== null) {
+    const per = Number(yourTools[1]);
+    if (per >= 1) return { per, count: { kind: "toolsOnYourBoard" } };
   }
   return null;
 }
