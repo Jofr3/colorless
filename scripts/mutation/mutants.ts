@@ -16776,10 +16776,26 @@ export const MUTANTS: Mutant[] = [
   //    name and a comment spliced between those lines would break every one of them
   //    without a character of the code moving (D317/D381/D383, and D403's nine).
   //
-  //    ⚠️ THREE ROWS SHARE THE ANCHOR'S SINGLE LINE (C2, C3, C6) and THREE SHARE THE
-  //    TWO-LINE OP ARRAY (C1, C7, C8), D402's arrangement inherited deliberately: the
-  //    alternative is six near-identical multi-line finds whose adjacency claims are the
-  //    thing this corpus keeps paying for.
+  //    ⚠️ THREE ROWS SHARE THE ANCHOR'S SINGLE LINE (C2, C3, C6), THREE SHARE THE
+  //    TWO-LINE OP ARRAY (C1, C7, C8) and TWO SHARE THE FOUR-LINE HEAD (C4, C5) —
+  //    D402's arrangement inherited deliberately: the alternative is eight
+  //    near-identical multi-line finds whose adjacency claims are the thing this corpus
+  //    keeps paying for.
+  //
+  //    🛑 **AND C4/C5's FIND CARRIES THE `match = DISCARD_HAND_DRAW.exec(effect);` LINE
+  //    BECAUSE THE FIRST DRAFT DID NOT, AND THE PROBE CAUGHT IT AS TWO GAPs.** They were
+  //    written as `const count = Number(match[1]);\n    if (count >= 1) {` — a pair
+  //    `precheck.ts` reported as occurring EXACTLY ONCE, and which it does. It just
+  //    occurs once on the WRONG ARM: D186's `ATTACK_MAY_DRAW` (*"You may draw N
+  //    cards."*) spells those two lines adjacently and D404's, at first draft, did not.
+  //    Both rows therefore mutated a neighbouring reader whose killer is
+  //    `optionalDraw.test.ts`, were reported SURVIVED against `discardHandDraw.test.ts`,
+  //    and looked exactly like two weak guards. ⚠️ **THE EXACTLY-ONCE RULE DOES NOT
+  //    CATCH THIS — IT IS SATISFIED.** D207's phantom-survivor shape reproduced under a
+  //    find that is genuinely unique, because the find was a GENERIC IDIOM rather than
+  //    anything this slice named. **A ROW MUST BE ANCHORED ON A SYMBOL ITS OWN SLICE
+  //    OWNS**; when the mutated statement is an idiom the file repeats, extend the find
+  //    upward until it reaches one.
   {
     id: "D404-ops-in-the-wrong-order",
     decision: "D404",
@@ -16812,8 +16828,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D404",
     what: "🛑 C4 — **THE COUNT IS PINNED AT THE ONE VALUE THE ATTACK COLUMN PRINTS**, which is not a straw mutant but the reading this slice had to argue its way out of: the legal attack column prints **6 and nothing else**, so this mutation is INVISIBLE to `legalAttackCorpus()` and to every census figure in the repo. What kills it is the OTHER column — `registry.ts` has spelled the identical skeleton at **7** (Professor's Research) and **5** (Carmine) by hand since M4, and §2 reads the arm's output against those two hand-authored programs rather than against a re-typed literal. ⚠️ **A CAPTURE WHOSE POPULATION HAS ONE MEMBER CANNOT BE TESTED FROM THAT POPULATION** — the evidence has to come from where the parameter varies",
     file: "packages/engine/src/effects.ts",
-    find: "    const count = Number(match[1]);\n    if (count >= 1) {",
-    replace: "    const count = 6;\n    if (count >= 1) {",
+    find: "  match = DISCARD_HAND_DRAW.exec(effect);\n  if (match !== null) {\n    const count = Number(match[1]);\n    if (count >= 1) {",
+    replace: "  match = DISCARD_HAND_DRAW.exec(effect);\n  if (match !== null) {\n    const count = 6;\n    if (count >= 1) {",
     expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
   },
   {
@@ -16821,8 +16837,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D404",
     what: "⚠️ C5 — **THE PRINTED-0 GUARD GOES.** A *\"Discard your hand and draw 0 cards.\"* then derives a program whose second op moves nothing — a hand discard wearing a draw's sentence, silently resolved instead of loudly flagged, which is D145's standing rule about a printed 0 and the guard every counted arm in this file carries. §2 asserts the 0 is refused AND that 1 is not, so a guard moved to `> 1` fails the second half rather than passing both",
     file: "packages/engine/src/effects.ts",
-    find: "    const count = Number(match[1]);\n    if (count >= 1) {",
-    replace: "    const count = Number(match[1]);\n    if (count >= 0) {",
+    find: "  match = DISCARD_HAND_DRAW.exec(effect);\n  if (match !== null) {\n    const count = Number(match[1]);\n    if (count >= 1) {",
+    replace: "  match = DISCARD_HAND_DRAW.exec(effect);\n  if (match !== null) {\n    const count = Number(match[1]);\n    if (count >= 0) {",
     expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
   },
   {
