@@ -477,9 +477,16 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // POINT. The guard's UP branch, taken deliberately: one archive was added because one
   // resume point was archived. D376 shipped a red `HEAD` by making the demotion and not
   // this edit, so the two belong in one commit and always will.
-  const ARCHIVES = 72;
+  // 🆕🆕 D403 — 72 -> **73**, RAISED IN THE SAME COMMIT THAT DEMOTED D402's RESUME
+  // POINT. The guard's UP branch, taken deliberately, for the third slice running. D402's
+  // body was captured BY INDEX before the rewrite — 239 lines, opening "THE NEXT CONCRETE
+  // ACTION (written 2026-08-23, after D402)" and closing on the paragraph that ends
+  // "…re-run over all 1,395 rows after the rewrite as well." — re-emitted under its own
+  // archive heading, and the SEAM was re-read afterwards rather than assumed, with both
+  // headings confirmed present and in order.
+  const ARCHIVES = 73;
 
-  it("the page still holds all 72 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 73 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

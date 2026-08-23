@@ -25320,6 +25320,70 @@ remaining sentences in the whole unresolved corpus share that shape, which is wh
 question is worth more than any single sentence.
 
 
+## D403 — THE ADDITIVE HALF OF THE SAME FAMILY: a fold that needed the printed base (engine 0.308.0)
+
+The half the section below refused, taken once its **mechanism** was bought rather than argued
+around. *"You may discard up to 2 [Basic] Energy from your Benched Pokémon. This attack does
+{60|90} more damage for each card you discarded in this way."* — **2 sentences / 8 legal
+printings**, 8 of the 10 D402 measured. `BUILT.attack` 1340 → **1348**.
+
+**WEAKNESS CANNOT TEST A ONE-HIT-VERSUS-TWO CLAIM; ONLY A SUBTRACTION CAN.** This is the finding
+to carry out of the slice, and it is a statement about algebra rather than about this family. The
+claim under test is that `base + P × N` is dealt as ONE §8.5 pass. A ×2 Weakness **DISTRIBUTES**
+— `(b + s) × 2` equals `b × 2 + s × 2` — so a Weakness rung returns the same number under the
+correct build and under the split-hit build it exists to refuse: an identity dressed as a guard,
+the vacuous shape `conventions.md` is about. **Resistance, `damageReductionAfterWR` and the §8.1
+survival clamp are each paid ONCE PER HIT**, so any of them separates them. On
+`fix-psychic-resist-big` (200 HP, −30 Psychic) two discards read **140** for the built shape,
+**110** for two passes, **90** for a dropped base and **160** for an unsuppressed one. Generalised:
+**a MULTIPLICATIVE passive cannot distinguish any reassociation of a sum; an ADDITIVE or CLAMPING
+one can.** Pick the instrument from the algebra, not from what the fixture pool happens to hold.
+
+**THE OBSTACLE WAS A SIGNATURE, NOT A SHAPE.** `deriveAttackEffect` takes only a STRING and the
+printed base is a field on the attack, so a captured `more` on D402's anchor would have produced
+an op whose `base` nothing could populate. The build is therefore a READER
+(`deriveAttackDiscardScaledBoost`, the ELEVENTH) plus an EXPORTED assembler
+(`discardScaledBoostProgram(reading, base)`) read at `attack.ts`'s own site — D163's finding on
+the `SELF_COUNTER_SCALE` / `SELF_COUNTER_MULTIPLY` pair reproduced one count-source over, and the
+same shape D316/D317/D318/D381 already have. **The repair on the op is an OPTIONAL `base` whose
+absent value is ZERO**, which is byte-for-byte what every `per`/`count` op has meant since D96 —
+so it is a widening rather than a new arm, and `MATCH_RECORD_VERSION` stays 25.
+
+⚠️ **A `scaledBase` CLAIMANT IS OWED FOR AN *ORDERING* REASON, NOT A NESTING ONE, AND THE THREE
+EXISTING DOC BLOCKS ALL SAY OTHERWISE.** D316/D317/D381 each attribute their own `scaledBase` term
+to their `damageDefender` being NESTED inside a gate that `programDamage`'s top-level `.some` does
+not walk. That is true of them and is **not the general rule**. This slice's hit is a bare
+TOP-LEVEL op, exactly like Hail Blade's, and the term is owed anyway: `programDamage` is computed
+from the registry/derived program **four hundred lines above the append**, so no reading-borne
+program can reach it, nested or not. Any future reading read at that site owes the term.
+
+🛑 **`discardEnergy.from` GAINS A COMPLEMENT.** `yourBench` is the own side MINUS the Active, so
+the union's *"a spot, a side and a body"* is now four kinds. `yours` is wrong for it on every real
+board of the family — the attacker's own cost Energy is attached to the ACTIVE and a cost is not
+spent — and the member cost TWO literals (`discardVictimSeat`, `discardableEnergies`) plus ONE
+caption arm, because `attachedEnergies` has taken a `"bench"` argument since it was written with
+no producer ever asking for it. **`discardNote`'s `switch` is EXHAUSTIVE over this union**, which
+is the compiler D222 said the old negated conjunction did not have: the member cannot be added
+without answering the caption question.
+
+⚠️ **TWO PROCESS FINDINGS, BOTH PAID FOR HERE.**
+
+1. **A COVERAGE-FLAG ASSERTION AFTER A PARK IS GREEN BY CONSTRUCTION.**
+   `ATTACK_EFFECT_SKIPPED` is pushed while the attack is **declared**; a parking program splits
+   one attack into two actions with two event lists, and the row can never appear in the second.
+   Two of this slice's fifteen mutants (the `effectSimulated` and `modifierSimulated` terms)
+   SURVIVED the first probe for exactly that reason, and nothing else in the file noticed because
+   every other assertion was correct about its own list. **When a program parks, say which of the
+   two event lists your claim lives in.**
+2. **THE RAW RESIDUE OVER-COUNTS EVERY GATE-SPLIT SENTENCE, BY EXACTLY `splitHead`.** D402's
+   handed-down residue list named *"If you go second, … This attack does 30 damage for each of
+   your Benched Pokémon."* (7 printings) as a head; `YOUR_BENCH_MULTIPLY` has read it since D282,
+   reachable only after `splitAttackGateClause` takes the clause off the front. Eleven-reader raw
+   residue **243 / 413**; split-aware **238 / 400**; difference 5 sentences / **13** printings, to
+   the unit. **A residue list is a claim about a sweep, and a sweep that does not split is not the
+   one `BUILT.attack` uses.**
+
+
 ## D402 — THE DISCARD-COUNT-SCALED ATTACK: a deriver's refusal re-priced by re-deriving its reason (engine 0.307.0)
 
 The slice the section above handed on, taken at HALF its scope and for a measured reason:
