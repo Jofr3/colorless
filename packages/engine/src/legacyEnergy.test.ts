@@ -1009,8 +1009,16 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.304.0");
-    expect(manifest.version).toBe("0.304.0");
+    // 🆕🆕 D400 — 0.304.0 -> **0.305.0**, THE ANY-TARGET ARITY.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed. `damageChosen`
+    // PARKS (it rides `GameState.phase.cont.pendingOp`), so the question is a real
+    // one — and the answer is that NO FIELD IS ADDED. `count` has been a required
+    // `number` on that op since M4 and two registry rows already authored the value 2,
+    // so a v25 record can already carry this program and means exactly what it meant.
+    // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
+    // The post-bump anchor pass was clean.
+    expect(engineVersion).toBe("0.305.0");
+    expect(manifest.version).toBe("0.305.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

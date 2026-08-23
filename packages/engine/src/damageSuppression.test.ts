@@ -107,7 +107,8 @@ import {
 //
 // ⚠️ **NOT `damageChosen.ignoreWR`, AND ITS WRITER AND READERS WERE VERIFIED BEFORE
 // THE CONCLUSION.** That field has ONE writer (`CHOSEN_ANY_TARGET`'s optional
-// group 2 in effects.ts — Umbreon "Feint Attack" sv03-130) and TWO read paths
+// group 2 in effects.ts — 🆕🆕 D400: group 3 now, the count having taken 2 — Umbreon
+// "Feint Attack" sv03-130) and TWO read paths
 // (interpreter.ts `snipeActive` and `placeSnipe`'s `deals` arm). It is a member of
 // an OP, and the main hit has no op: this sentence IS the whole printed effect of
 // an attack whose damage comes from its `damage` field. It is also ONE boolean

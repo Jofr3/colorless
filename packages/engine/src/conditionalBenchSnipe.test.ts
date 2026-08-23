@@ -192,25 +192,37 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(units(flatTwos) + 1).toBe(5);
   });
 
-  it("🛑 the count-2 arity is the LAST hard-coded `1` in this family, and the rest are named", () => {
-    // ⚠️ **THE PRICE OF THE *NEXT* SLICE, MEASURED HERE RATHER THAN GUESSED THERE.**
-    // The same literal `1` still sits in `CHOSEN_ANY_TARGET` (the `opponentAny`
-    // snipe), and the column prints 2 there too — on TWO sentences worth NINE
-    // printings, which is nearly twice what this slice bought. It is NOT taken here
-    // because one of the two carries a plural W/R tail (*"those Pokémon"*) that
-    // Umbreon's singular anchor does not spell, so it is a second reading and not a
-    // second capture. This rung is what stops that from being re-derived from
-    // scratch, and it goes RED the moment somebody widens that anchor without
-    // updating the handoff.
+  it("🛑 the count-2 arity one anchor over is BUILT now, and the compound beside it is not", () => {
+    // ⚠️ **THE PRICE OF THE NEXT SLICE, MEASURED HERE — AND D400 THEN SPENT IT.** This
+    // rung was written as a HANDOFF: the same literal `1` sat in `CHOSEN_ANY_TARGET`
+    // over TWO sentences worth NINE printings, and the rung asserted the population,
+    // that both were unresolved, and that exactly one of them (6 printings) carried
+    // the plural W/R tail. D400 widened that anchor, so the "unresolved" half went
+    // true — and it is RE-HOMED ON A FINER AXIS rather than deleted (D399's rule):
+    // the population figure is unchanged and still guards the arithmetic, while the
+    // resolution half becomes a DISCRIMINATION between two sentence families that
+    // differ only in what comes BEFORE the count.
     const anyTwos = corpus().filter(([, s]) =>
       /^This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(s),
     );
     expect(anyTwos).toHaveLength(2);
     expect(units(anyTwos)).toBe(9);
-    for (const [, s] of anyTwos) expect(resolvedByAnyReader(s), s).toBe(false);
-    // The plural tail is the half that is a READING rather than a capture.
+    for (const [, s] of anyTwos) expect(resolvedByAnyReader(s), s).toBe(true);
+    // The plural tail is the half that was a READING rather than a capture, and D400
+    // settled it by requiring the tail's number to AGREE with the count.
     expect(anyTwos.filter(([, s]) => s.includes("those Pokémon"))).toHaveLength(1);
     expect(units(anyTwos.filter(([, s]) => s.includes("those Pokémon")))).toBe(6);
+    // 🛑 THE FINER AXIS: the SAME rider at the SAME arity, behind a leading discard,
+    // is still refused by all nine — 2 sentences / 4 printings that a count capture
+    // structurally cannot move because they are off the `^This attack does` anchor.
+    // A reader that answered everything fails this half; one that answered nothing
+    // fails the half above. Neither saturation can imitate the pair.
+    const compounds = corpus().filter(([, s]) =>
+      /^Discard .* This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(s),
+    );
+    expect(compounds).toHaveLength(2);
+    expect(units(compounds)).toBe(4);
+    for (const [, s] of compounds) expect(resolvedByAnyReader(s), s).toBe(false);
   });
 });
 
