@@ -16876,4 +16876,94 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
   },
 
+  // ── D405 — THE MANDATORY OWN-BOARD ENERGY RETRIEVAL. Eight rows, and the SHAPE of
+  //    the set is the finding again: **FOUR of the eight are SILENT IN EVERY CENSUS**
+  //    (C1, C2, C3, C4) — the sentence still matches, `BUILT.attack` is still 1360 and
+  //    every reader-sweep rung is still green, while the derived program takes the
+  //    Energy off the WRONG BODY, drops it in the WRONG ZONE, refuses a Special Energy
+  //    the card offers, or spells a `count` that changes the persisted bytes. A FIFTH
+  //    (C5) is silent in every census AND on every board: the state is identical and
+  //    only the prompt string moves. D400 measured this ratio at 4/8, D401 at 6/8,
+  //    D402 at 9/12 and D404 at 5/8; a FIFTH anchor reproduces it.
+  //
+  //    🛑 **EVERY ROW IS ANCHORED ON A SYMBOL THIS SLICE OWNS** (D404's finding, which
+  //    cost that slice two phantom SURVIVORs): the six `effects.ts` rows all carry
+  //    `PUT_SELF_ENERGY_TO_HAND` inside the `find`, and the one `interpreter.ts` row
+  //    carries the printed caption this arm is the only producer of. None of them can
+  //    land on a neighbouring arm, because none of the anchored text exists on one.
+  {
+    id: "D405-the-energy-goes-to-the-pile",
+    decision: "D405",
+    what: "\U0001f6d1 C1 — **THE DESTINATION IS DROPPED AND THE ENERGY LANDS IN THE DISCARD PILE**, which is the op's own NAME and the real code of all four neighbouring self-discard arms (7, 8, 9, 10 each emit this object without a `to`). The card is gone from the board either way, so every \"the attacker lost an Energy\" assertion stays green and **NO CENSUS FIGURE MOVES**: the sentence still matches and `BUILT.attack` is still 1360. What changes is who KEEPS the card — the printed sentence hands it back, the mutant burns it. \u00a74 asserts THREE zones by uid rather than one",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    replace: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }];",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-the-victim-is-the-defender",
+    decision: "D405",
+    what: "\U0001f6d1 C2 — **THE `from` BECOMES `opponentActive`, WHICH IS ARM 12b's REAL VALUE ONE ARM UP** (D190b's neighbour-copy shape: the twin sentence reads the same op with the same filter and the same `to` on the OTHER board). The attack then strips the DEFENDER and puts the card in the DEFENDER's hand — a printed *\"this Pok\u00e9mon\"* resolved to the opponent's Active. **THE SENTENCE STILL MATCHES AND EVERY CENSUS FIGURE IS UNMOVED**, and on a board where both Actives hold one Energy the EVENT counts agree too; only the seat on the row and the zone that grew tell them apart. \u00a74 pins `seat`, `actor` and all four zones",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    replace: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-the-filter-narrows-to-basic",
+    decision: "D405",
+    what: "\u26a0\ufe0f C3 — **THE FILTER NARROWS TO `basicEnergy`, D402's noun ONE MEMBER OVER and a value four other producers in this file really do emit.** The printed words are *\"an Energy\"* with no adjective, so a Special Energy attached to the attacker must be offered — under the mutant it silently is not, and an attacker holding only Special Energy retrieves NOTHING while the attack still resolves. **EVERY BOARD WHOSE ATTACHED ENERGY IS ALL BASIC ANSWERS IDENTICALLY**, which is the board a natural \"the retrieval works\" suite writes; \u00a75's third rung is the one that holds a Special print and picks it",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    replace: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"basicEnergy\" }, to: \"hand\" }];",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-the-count-is-spelled",
+    decision: "D405",
+    what: "\u26a0\ufe0f C4 — **THE ABSENT `count` IS SPELLED AS `1`, AND THE BOARD IS IDENTICAL ON EVERY SEED.** The interpreter reads `op.count ?? 1` and `discardNote` reads `op.count > 1`, so one Energy comes off either way and the caption is the same article — this is a defect in the PERSISTED BYTES alone, and the slice's own version block leans on it (*\"the ABSENT `count` is the shape every pre-D295 self-discard already stored\"*). A v25 record written under the mutant carries a key that shape never carried. Only \u00a72's `Object.hasOwn` rung and the whole-program equality can see it; **it is invisible to every board, every event and every census figure in the repo**",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    replace: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\", count: 1 }];",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-the-wrapper-is-added",
+    decision: "D405",
+    what: "\U0001f6d1 C5 — **AN `optional` WRAPPER IS ADDED, WHICH IS D296's REAL CODE ONE ARM UP AND THE ONE DESIGN CALL OF THE WHOLE SLICE.** The twin sentence prints *\"You may put \u2026\"* and needs the wrapper; these five printings print *\"Put \u2026\"* and must not have it. Under the mutant the player is handed a Yes/No the card does not offer, and a \"No\" leaves the Energy attached \u2014 a decline invented out of nothing. **THE YES BRANCH REACHES THE IDENTICAL BOARD**, so every assertion about where the Energy ends up passes as long as somebody answers yes; only the PROGRAM SHAPE and the prompt kind are wrong. \u00a72 drives both sides of the pair, asserting this arm has no `optional` AND that the twin still does",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }];",
+    replace: "  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {\n    return [{ op: \"optional\", note: effect, then: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" }, to: \"hand\" }] }];",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-anchor-flips-the-possessive",
+    decision: "D405",
+    what: "\U0001f6d1 C6 — **THE ANCHOR'S POSSESSIVE FLIPS TO `their hand`, WHICH IS THE TWIN ANCHOR'S REAL SPELLING ONE LINE UP** (`MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND` ends *\"into their hand\"*, because ITS victim is the opponent). The printed sentence then matches NOTHING, falls to the loud `ATTACK_EFFECT_SKIPPED` path, and this is the ONE row in the set every census figure can see \u2014 which is exactly why it is worth writing beside four that none of them can. \u00a71 and \u00a73 pin the sentence and the possessive independently",
+    file: "packages/engine/src/effects.ts",
+    find: "const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pok\u00e9mon into your hand\\.$/;",
+    replace: "const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pok\u00e9mon into their hand\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/selfEnergyToHand.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D405-anchor-admits-the-may",
+    decision: "D405",
+    what: "\u26a0\ufe0f C7 — **THE ANCHOR IS LOOSENED TO ADMIT A LEADING \"You may\"**, which is the temptation the twin one line up creates: two sentences that differ in two printed words get one regex. It resolves a string the legal column does not print, and worse, it resolves it to the MANDATORY program \u2014 so a future *\"You may put an Energy \u2026\"* printing would lose its decline silently rather than land on the loud skipped path. **NO CENSUS FIGURE MOVES** (no legal sentence carries the widened form), which is precisely what makes a widening this shape survivable; \u00a73's whole-sentence rung is the only thing that refuses it",
+    file: "packages/engine/src/effects.ts",
+    find: "const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pok\u00e9mon into your hand\\.$/;",
+    replace: "const PUT_SELF_ENERGY_TO_HAND = /^(?:You may )?[Pp]ut an Energy attached to this Pok\u00e9mon into your hand\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
+  {
+    id: "D405-caption-still-says-discard",
+    decision: "D405",
+    what: "\u26a0\ufe0f C8 — **THE PARK'S CAPTION REVERTS TO \"Discard an Energy from this Pok\u00e9mon.\" while the apply still puts the card in the HAND** \u2014 D295's caption defect at its THIRD destination and D383's row one zone over, and here the lie is about who KEEPS the card rather than about where it lands. **THE BOARD IS IDENTICAL UNDER THIS MUTANT AND SO IS EVERY EVENT**, so only an assertion on the prompt's own string reaches it; \u00a77 asserts the note IS the corpus sentence, and its paired control \u2014 Charcadet `sv01-039`'s bare self-discard, which comes out of the SAME `case \"yourActive\"` \u2014 is what stops a fix that simply captions every own-board pick the new way",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? `Put ${what} attached to this Pok\u00e9mon into your hand.`",
+    replace: "        ? `Discard ${what} from this Pok\u00e9mon.`",
+    expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
+  },
 ];
