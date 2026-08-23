@@ -590,9 +590,12 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
     expect(dealt(swing(state, SELF.power).events)).not.toBe(30 + 4 * 50);
     expect(dealt(swing(state, SELF.flare).events)).toBe(40 + 2 * 80);
     expect(dealt(swing(state, SELF.flare).events)).not.toBe(40 + 3 * 80);
-    // …and the board-wide spelling of the attacker's own Energy is UNPRINTED, so
-    // there is no sentence that could ever want the other answer (pinned in the
-    // exclusions below).
+    // …and the board-wide spelling of the attacker's own Energy was UNPRINTED when
+    // D196 measured it, so there was no sentence that could ever want the other
+    // answer. 🆕🆕 **D407: THERE IS ONE NOW** — *"…for each {G} Energy attached to
+    // all of your Pokémon."*, 4 legal printings — and it takes the `zone: "board"`
+    // path instead. What is pinned below is that THESE sentences still take THIS
+    // one: the field is optional and its absent value is the attacking body.
   });
 
   it("⚠️ counts CARDS, not units — and delegates rather than re-deriving", () => {
@@ -826,14 +829,22 @@ describe("the EXCLUSIONS — neighbourhoods that route elsewhere or stay loud", 
       kind: "energyOnSelf",
       energyType: null,
     });
-    // The board-zone spelling of the ATTACKER's own Energy is UNPRINTED, so no
-    // reader may invent it — pinned, because the next author to see two Energy
-    // members will assume both reach both zones.
+    // 🆕🆕 **D407 SPLIT THIS CLAIM IN TWO, AND ONLY HALF OF IT SURVIVED.** The
+    // board-zone spelling of the ATTACKER's own Energy is printed on the ADDITIVE
+    // fold (4 legal printings, typed `{G}`) and is now read there; it is printed
+    // NOWHERE on the `×` fold, so that reader still may not invent it. Both halves
+    // are asserted, because the next author to see two Energy members will assume
+    // both reach both zones — and on this side exactly one of them does.
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 60 damage for each Energy attached to all of your Pokémon.",
       ),
     ).toBeNull();
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.",
+      )?.count,
+    ).toEqual({ kind: "energyOnSelf", zone: "board", energyType: "Grass" });
   });
 });
 

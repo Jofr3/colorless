@@ -100,14 +100,15 @@ const FOE_TOOL_EXISTS =
     AFTER damage). It must stay LOUD. */
 const TOOL_DISCARD = "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.";
 
-/** ⚠️ **THE NEAR MISS ONE RESOURCE OVER, AND IT CONTRADICTS A CLAIM `effects.ts`
-    ALREADY MAKES.** `energyOnSelf`'s block says it carries no `zone` because *"the
+/** ⚠️ **THE NEAR MISS ONE RESOURCE OVER, AND IT CONTRADICTED A CLAIM `effects.ts`
+    ALREADY MADE.** `energyOnSelf`'s block said it carries no `zone` because *"the
     pool prints no board-wide spelling of '… attached to all of YOUR Pokémon'"*
     (D196, measured 2026-08-04 against the remote D1). The committed column prints
-    one, at 4 legal printings, and it is UNBUILT — `SELF_ENERGY_SCALE` reads
-    "attached to this Pokémon" and nothing else. Recorded here and beside
-    `YOUR_TOOLS_MULTIPLY` rather than acted on: giving `energyOnSelf` the zone D196
-    refused it is a slice of its own. */
+    one, at 4 legal printings. ✅ **D407 BUILT IT** — `SELF_ENERGY_SCALE` captures its
+    tail as a whole printed noun phrase and `energyOnSelf` carries the optional
+    `zone`. The constant stays here because the rung below is the one that reddened
+    when it landed, which is what a correction written as a GUARD buys over one
+    written as a comment. */
 const BOARD_WIDE_ENERGY = "This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.";
 
 /** One seed for the whole suite. Nothing here flips a coin and every Active, every
@@ -300,15 +301,22 @@ describe("§2 — deriveAttackDamageMultiplier: a thirteenth count member on the
     expect(deriveAttackEffect(TOOL_DISCARD)).toBeNull();
   });
 
-  it("⚠️ the BOARD-WIDE ENERGY sentence is still unbuilt, and D196's claim about it is FALSE", () => {
+  it("✅ the BOARD-WIDE ENERGY sentence is BUILT — this rung reddened by name, as designed", () => {
     // 4 legal printings of "… for each {G} Energy attached to all of your Pokémon."
-    // — the spelling `energyOnSelf`'s doc block says the pool does not print. It
-    // does. This rung records the correction and pins the sentence as UNBUILT, so
-    // a successor that gives `energyOnSelf` a zone reddens here by name rather than
-    // discovering the claim a third time.
+    // — the spelling `energyOnSelf`'s doc block said the pool does not print. It
+    // does, and D406 pinned the sentence UNBUILT here precisely so that the
+    // successor who gave `energyOnSelf` its zone would redden HERE rather than
+    // rediscover the claim a third time. 🆕🆕 **D407 IS THAT SUCCESSOR, AND THIS IS
+    // THE RUNG IT TURNED RED**; the population is unchanged and only the reader's
+    // answer moved, which is the whole point of writing the correction as a guard.
+    // The `×` half stays null — that fold's board-wide own-Energy spelling really
+    // is absent from the column (see `boardWideEnergyScaling.test.ts` §2).
     const rows = legalAttackCorpus().filter(([, s]) => s === BOARD_WIDE_ENERGY);
     expect(rows.reduce((sum, [n]) => sum + n, 0)).toBe(4);
-    expect(deriveAttackDamageBonus(BOARD_WIDE_ENERGY)).toBeNull();
+    expect(deriveAttackDamageBonus(BOARD_WIDE_ENERGY)).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", zone: "board", energyType: "Grass" },
+    });
     expect(deriveAttackDamageMultiplier(BOARD_WIDE_ENERGY)).toBeNull();
   });
 });
@@ -452,6 +460,6 @@ describe("§5 — the persisted question, asked and answered", () => {
     // saved record at all.
     expect(deriveAttackEffect(TOOL_COUNT)).toBeNull();
     expect(deriveAttackDamageMultiplier(TOOL_COUNT)).not.toBeNull();
-    expect(engineVersion).toBe("0.311.0");
+    expect(engineVersion).toBe("0.312.0");
   });
 });
