@@ -15161,7 +15161,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D383",
     what: "⚠️ C12 — THE SNIPE'S `count` GOES TO 2, so the printed *1 of your opponent's Benched Pokémon* hits two — and `count` IS EXACT on this op (a floor as well as a ceiling), so on a Bench of one it is FORCED to one and the mutant is invisible. **ONLY A BENCH OF TWO OR MORE REACHES IT**, which is the fixture a natural \"the snipe works\" suite never writes (D279's rule), and §6 is the only board here that has one: it asserts the SECOND benched body took nothing",
     file: "packages/engine/src/effects.ts",
-    find: '    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
+    // ⚠️ RE-TRANSCRIBED AT D399 — the literal `count: 1` this row overrode became the
+    // captured `count` when `ALSO_BENCHED_SNIPE_BODY` gained its second capture, so the
+    // old `find` matched ZERO. The CLAIM is unchanged and is now slightly sharper: the
+    // mutant pins an arity the sentence supplies, which is the same defect one level up.
+    find: '    { op: "damageChosen", target: "opponentBench", amount, count, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
     replace: '    { op: "damageChosen", target: "opponentBench", amount, count: 2, source: "attack", deals: true },\n  ];\n  const offer: EffectOp = { op: "optional", note, then };',
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
@@ -16190,5 +16194,105 @@ export const MUTANTS: Mutant[] = [
     find: "      return `you have ${cond.count} or fewer cards in your deck`;",
     replace: "      return \"there are 3 or fewer cards in your deck\";",
     expectKilledBy: ["packages/engine/src/deckSizeBonus.test.ts"],
+  },
+  // ── D399 — THE TWIN CONSEQUENT AND THE ARITY. Eight rows, ONE PER CLAIM: the shared
+  //    fragment's count is CAPTURED and not pinned (C1), the gated arm reads the capture
+  //    rather than the neighbour's old literal (C2), the GATE is real and not decoration
+  //    (C3), the anchor is a WHOLE sentence at both ends (C4) and takes the printed
+  //    lower-case consequent (C5), the third caller's threading is real (C6), the count
+  //    carries the same `>= 1` guard the amount does (C7), and the gate has NO decline
+  //    arm (C8).
+  //
+  // 🛑 C1 AND C6 ARE THE TWO HALVES OF ONE ARGUMENT AND NEITHER IS REDUNDANT. The
+  //    fragment is shared by THREE anchors now, so "the count is a capture" can fail in
+  //    two independent places: in the fragment (C1, where every caller loses it at once)
+  //    and in a caller that reads the capture and then throws it away (C6). D383's C9
+  //    wrote the same pair for the `$`, and it is the shape sharing a regex body owes.
+  //
+  // ⚠️ AND C3 IS THE ONLY ROW HERE WHOSE DEFECT IS DAMAGE RATHER THAN A CENSUS FIGURE.
+  //    Dropping the gate pays a free 120 × 2 on EVERY board including a full deck, which
+  //    is D381's "a free 140 on an empty board" one reader over — and the reason §3
+  //    drives the full-deck board at all.
+  {
+    id: "D399-shared-body-pins-the-new-arity",
+    decision: "D399",
+    what: "\u{1F6D1} C1 — **THE COUNT IS PINNED AT THE NUMBER THE NEW CARD PRINTS**, which is the edit an author reaches for after reading Wo-Chien and nothing else: the sentence says 2, so the fragment says 2. It is silent about itself and loud nowhere — the gated printing still resolves and its board still deals 120 to two bodies — while the FIFTEEN-printing `1 of` spelling and the five-printing `If you do` payoff both fall off the derived path onto `ATTACK_EFFECT_SKIPPED`. **THE COST OF A SHARED FRAGMENT PAID FROM THE WRONG SIDE**: one literal, three callers, and the only instrument that sees all three is the census",
+    file: "packages/engine/src/effects.ts",
+    find: "  `attack also does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Benched Pokémon\\\\.` +",
+    replace: "  `attack also does (\\\\d+) damage to (2) of your opponent['’]s Benched Pokémon\\\\.` +",
+    expectKilledBy: [
+      "packages/engine/src/alsoBenchedSnipe.test.ts",
+      "packages/engine/src/torrentialPump.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D399-gated-arm-keeps-the-neighbours-literal",
+    decision: "D399",
+    what: "⚠️ C2 — **THE GATED ARM GOES BACK TO `count: 1`, WHICH IS THE ARM ABOVE IT COPIED VERBATIM** (D190b's neighbour-copy shape, and the exact bytes `deriveAttackEffect` carried at D398's head). Every census figure is UNMOVED — the sentence still resolves, so `BUILT.attack` never notices — and the board is wrong by one body: the printed *2 of* hits ONE. ⚠️ **ONLY A BENCH OF TWO OR MORE REACHES IT**, because §8.6 clamps a shorter Bench to what is there, so the fixture a natural \"the snipe works\" suite writes cannot see it (D279's rule). §3 drives a Bench of THREE and asserts the prompt's `min`/`max` as well as the two damaged bodies",
+    file: "packages/engine/src/effects.ts",
+    find: "              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,",
+    replace: "              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count: 1,\n              source: \"attack\",\n              deals: true,",
+    expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
+  },
+  {
+    id: "D399-gate-is-dropped-from-the-gated-arm",
+    decision: "D399",
+    what: "\u{1F6D1} C3 — **THE `conditionGate` IS REMOVED AND THE SNIPE IS RETURNED BARE**, i.e. the arm becomes a byte-identical copy of the FLAT rider four lines up and the printed antecedent is decoration. **THE CENSUS STILL RISES BY THE SAME 5** — the sentence resolves either way — and the clause-resolution refusals of §4 stay green, because an UNMAPPED clause still returns null at the `cond` test. What moves is only DAMAGE, and only on the board a suite that just wants to see the snipe fire would never build: a FULL deck, where the gate is false and 240 lands anyway. §3's first case is that board, and it asserts every benched body at 0",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        {\n          op: \"conditionGate\",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [\n            {\n              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,\n            },\n          ],\n        },\n      ];",
+    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
+  },
+  {
+    id: "D399-gated-anchor-loses-its-terminator",
+    decision: "D399",
+    what: "\u{1F6D1} C4 — **THE SATURATION TRAP, ARMED ON THE THIRD CALLER OF THE SHARED BODY.** Dropping the `$` makes the gated anchor a PREFIX match, so it swallows any sentence that merely BEGINS with the clause — and it LOOKS LIKE A COVERAGE WIN, because a swallowed sentence leaves the unbuilt remainder and `BUILT.attack` rises. It is D383's C9 one anchor over, and it needs its own row for that row's own reason: a second caller of one fragment owes a second proof, since the `$` here is this anchor's and not the body's. §4 drives the trailing-clause near-miss (*…Benched Pokémon that has any damage counters on it*), which a prefix match claims",
+    file: "packages/engine/src/effects.ts",
+    find: "const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    replace: "const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}`);",
+    expectKilledBy: [
+      "packages/engine/src/conditionalBenchSnipe.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D399-gated-anchor-takes-the-capital",
+    decision: "D399",
+    what: "⚠️ C5 — **THE CONSEQUENT'S LEADING WORD IS CAPITALISED**, i.e. the gated anchor demands the spelling that only ever appears at the START of a sentence, and the printed compound — whose consequent is lower-case because it sits behind *If …, * — goes straight back to the loud `ATTACK_EFFECT_SKIPPED` path. **A SILENT REFUSAL: the four ungated printings stay green and the only thing that moves is the census plus one board.** D246/D316's lower-case rule stated as a defect, and the row exists because sharing the body between an `^This` caller and two lower-case ones makes exactly this substitution look harmless",
+    file: "packages/engine/src/effects.ts",
+    find: "const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    replace: "const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), This ${ALSO_BENCHED_SNIPE_BODY}$`);",
+    expectKilledBy: [
+      "packages/engine/src/conditionalBenchSnipe.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D399-payoff-reader-throws-the-capture-away",
+    decision: "D399",
+    what: "⚠️ C6 — **THE THIRD CALLER READS THE CAPTURE AND THEN IGNORES IT**, re-freezing the payoff's arity at the 1 that all five of ITS printings happen to spell. **NOTHING THE CATALOG PRINTS TODAY MOVES**, which is exactly why the row is worth writing: the defect is invisible to every census figure and to every board, and shows up only where the reader is asked about an arity the catalog has not printed on THIS sentence yet. `torrentialPump.test.ts` §2 asks it — the same cost re-paired with a *2 of* payoff — which is D382's practice (drive the refusals and the widenings from SYNTHETIC re-pairings) used on an ACCEPTANCE",
+    file: "packages/engine/src/effects.ts",
+    find: "    return amount < 1 || count < 1 ? null : { kind: \"benchSnipe\", amount, count };",
+    replace: "    return amount < 1 || count < 1 ? null : { kind: \"benchSnipe\", amount, count: 1 };",
+    expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
+  },
+  {
+    id: "D399-flat-arm-drops-the-count-guard",
+    decision: "D399",
+    what: "⚠️ C7 — **THE `count >= 1` GUARD IS DROPPED FROM THE FLAT ARM**, leaving the amount's guard alone — which is the asymmetry an author lands on when they add a capture to a line that already had one test on it. A printed *0 of* would then derive to a snipe that chooses NOBODY: `snipeTargets` still returns candidates, `Math.min(0, n)` is 0, and the park asks for zero Pokémon. **NO CARD PRINTS IT, WHICH IS THE POINT** — the guard is what keeps a silent no-op off the derived path instead of relying on the catalog, exactly as the amount's `>= 1` has since 0.38.0",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && count >= 1) {\n      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];\n    }\n  }",
+    replace: "    if (amount >= 1) {\n      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];\n    }\n  }",
+    expectKilledBy: ["packages/engine/src/alsoBenchedSnipe.test.ts"],
+  },
+  {
+    id: "D399-gate-gains-an-empty-decline-arm",
+    decision: "D399",
+    what: "⚠️ C8 — **THE GATE GAINS `otherwise: []`**, which is the shape every OTHER gate literal in this file carries and therefore the easiest wrong edit in the arm. **EVERY BOARD IS IDENTICAL AND EVERY CENSUS FIGURE IS UNMOVED** — an empty branch runs nothing — so nothing about behaviour can reach it. What it breaks is D135's rule as a CLAIM: an absent field says the NO arm buys nothing because the printed base is not re-homed, and an empty array says the NO arm buys nothing *this time*. §2 reads the field's ABSENCE rather than its emptiness, which is the only assertion that can tell the two apart",
+    file: "packages/engine/src/effects.ts",
+    find: "          op: \"conditionGate\",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).",
+    replace: "          op: \"conditionGate\",\n          cond,\n          otherwise: [],\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).",
+    expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
 ];
