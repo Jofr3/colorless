@@ -16763,4 +16763,93 @@ export const MUTANTS: Mutant[] = [
     replace: "    `attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon\\\\.` +\n    `(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?`,\n);",
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
+  // ── D404 — THE MANDATORY HAND WIPE AND REFILL. Eight rows on THREE finds, and the
+  //    shape of the set is the finding: FIVE of the eight are SILENT IN EVERY CENSUS.
+  //    The sentence still matches, `BUILT.attack` is unmoved, every reader rung still
+  //    finds a two-op program — while the attack discards the six cards it just drew,
+  //    draws nothing, discards nothing, or pins a count the printed family varies.
+  //
+  //    ✅ EVERY `find` HERE IS PURE CODE — NOT ONE SPANS A COMMENT LINE, which is the
+  //    first D-block in this corpus of which that is true. The arm was WRITTEN that way
+  //    (its own comment says so): both explanatory blocks sit above the `return` rather
+  //    than between the two op literals, because the ORDER is what these rows have to
+  //    name and a comment spliced between those lines would break every one of them
+  //    without a character of the code moving (D317/D381/D383, and D403's nine).
+  //
+  //    ⚠️ THREE ROWS SHARE THE ANCHOR'S SINGLE LINE (C2, C3, C6) and THREE SHARE THE
+  //    TWO-LINE OP ARRAY (C1, C7, C8), D402's arrangement inherited deliberately: the
+  //    alternative is six near-identical multi-line finds whose adjacency claims are the
+  //    thing this corpus keeps paying for.
+  {
+    id: "D404-ops-in-the-wrong-order",
+    decision: "D404",
+    what: "🛑 C1 — **THE TWO OPS ARE RETURNED DRAW-FIRST**, which is the whole defect this arm exists to avoid: the six cards just drawn become exactly the ones discarded and the attack ends with an EMPTY hand. Every op is present, every op is correct in isolation, the sentence still resolves and **NO CENSUS FIGURE MOVES AT ALL** — and a COUNT cannot see it either, because a hand of three discarded and six drawn reads six under both readings. Only a rung that reads UIDS can: §4 captures the hand and the deck's top six before the attack and asserts the two SETS end up in opposite zones. ⚠️ It is also the defect `mutants.ts` has carried against Larry's Skill's registry row since D336, one column over — the same mistake made by a deriver instead of by hand",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardHand\" },\n        { op: \"drawCards\", count },",
+    replace: "        { op: \"drawCards\", count },\n        { op: \"discardHand\" },",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-anchor-loses-its-start",
+    decision: "D404",
+    what: "🛑 C2 — **THE ANCHOR LOSES ITS `^`**, so any sentence merely ENDING in this clause is swallowed and everything in front of it silently deleted. ⚠️ **AND IT LOOKS LIKE A COVERAGE WIN** — a swallowed compound leaves the unbuilt remainder and `BUILT.attack` RISES, which is the direction a census reads as progress. §3's leading-clause rung is what refuses it, and it is CONSTRUCTED rather than quoted for the reason `optionalDraw.test.ts` states about its own: the catalog holds no printing with this clause at the end, so the witness has to be built by bolting a real first clause in front of the real anchor",
+    file: "packages/engine/src/effects.ts",
+    find: "const DISCARD_HAND_DRAW = /^Discard your hand and draw (\\d+) cards\\.$/;",
+    replace: "const DISCARD_HAND_DRAW = /Discard your hand and draw (\\d+) cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-anchor-loses-its-terminator",
+    decision: "D404",
+    what: "🛑 C3 — **THE ANCHOR LOSES ITS `$`**, the mirror of C2 and the one that reaches a REAL printed shape rather than a constructed one: a prefix match takes any compound whose FIRST clause is this sentence and drops the rest, which is precisely how *\"Discard your hand and draw 6 cards. Then, shuffle your deck.\"* would be read if a set ever printed it. Same false coverage win, same direction. §3's trailing-clause rung drives two different tails so a terminator that halted at the first is still caught",
+    file: "packages/engine/src/effects.ts",
+    find: "const DISCARD_HAND_DRAW = /^Discard your hand and draw (\\d+) cards\\.$/;",
+    replace: "const DISCARD_HAND_DRAW = /^Discard your hand and draw (\\d+) cards\\./;",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-count-pinned-to-the-printed-six",
+    decision: "D404",
+    what: "🛑 C4 — **THE COUNT IS PINNED AT THE ONE VALUE THE ATTACK COLUMN PRINTS**, which is not a straw mutant but the reading this slice had to argue its way out of: the legal attack column prints **6 and nothing else**, so this mutation is INVISIBLE to `legalAttackCorpus()` and to every census figure in the repo. What kills it is the OTHER column — `registry.ts` has spelled the identical skeleton at **7** (Professor's Research) and **5** (Carmine) by hand since M4, and §2 reads the arm's output against those two hand-authored programs rather than against a re-typed literal. ⚠️ **A CAPTURE WHOSE POPULATION HAS ONE MEMBER CANNOT BE TESTED FROM THAT POPULATION** — the evidence has to come from where the parameter varies",
+    file: "packages/engine/src/effects.ts",
+    find: "    const count = Number(match[1]);\n    if (count >= 1) {",
+    replace: "    const count = 6;\n    if (count >= 1) {",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-positivity-guard-dropped",
+    decision: "D404",
+    what: "⚠️ C5 — **THE PRINTED-0 GUARD GOES.** A *\"Discard your hand and draw 0 cards.\"* then derives a program whose second op moves nothing — a hand discard wearing a draw's sentence, silently resolved instead of loudly flagged, which is D145's standing rule about a printed 0 and the guard every counted arm in this file carries. §2 asserts the 0 is refused AND that 1 is not, so a guard moved to `> 1` fails the second half rather than passing both",
+    file: "packages/engine/src/effects.ts",
+    find: "    const count = Number(match[1]);\n    if (count >= 1) {",
+    replace: "    const count = Number(match[1]);\n    if (count >= 0) {",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-anchor-admits-the-opponents-hand",
+    decision: "D404",
+    what: "🛑 C6 — **THE SEAT IS WIDENED TO EITHER HAND**, the possessive spelling this file's own `RETURN_BENCHED` and `DAMAGE_SUPPRESSION` anchors really do carry — so it is a neighbouring anchor's real shape copied onto a sentence that must not have it. `discardHand` is keyed on `ctx.seat` and has no seat parameter at all, so the widened anchor would derive a program that empties the ATTACKER's hand while claiming to empty the defender's: a reading that is wrong about WHOSE zone it names, which no board in a naive fixture would reveal because both readings do the same thing on the only sentence the catalog prints. §3's SEAT rung is the one that refuses it",
+    file: "packages/engine/src/effects.ts",
+    find: "const DISCARD_HAND_DRAW = /^Discard your hand and draw (\\d+) cards\\.$/;",
+    replace: "const DISCARD_HAND_DRAW = /^Discard (?:your|your opponent['’]s) hand and draw (\\d+) cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-the-discard-is-dropped",
+    decision: "D404",
+    what: "⚠️ C7 — **THE DISCARD IS DROPPED AND ONLY THE DRAW SURVIVES**, which is the half a reader trained on `ATTACK_DRAW` would emit: the sentence's trailing clause is that arm's whole sentence, and an author who reached for the sibling would build exactly this. The attack then draws six onto a hand it never emptied — strictly BETTER for the player, which is why nothing complains. ⚠️ **SILENT IN EVERY CENSUS**: `deriveAttackEffect` still returns a non-null program, so the sentence still resolves and every figure this slice moved stays where it is",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardHand\" },\n        { op: \"drawCards\", count },",
+    replace: "        { op: \"drawCards\", count },",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D404-the-draw-is-dropped",
+    decision: "D404",
+    what: "⚠️ C8 — **THE DRAW IS DROPPED AND ONLY THE DISCARD SURVIVES**, C7's mirror and the strictly WORSE half: the attack empties its own controller's hand and gives nothing back. Separated from C7 rather than folded into one \"an op is missing\" row because the two fail in opposite directions and a rung that only counted the program's LENGTH would be green under neither reading being right. ⚠️ **ALSO SILENT IN EVERY CENSUS**, for C7's reason exactly",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardHand\" },\n        { op: \"drawCards\", count },",
+    replace: "        { op: \"discardHand\" },",
+    expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
+  },
 ];
