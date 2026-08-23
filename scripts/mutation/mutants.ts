@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.307.0";',
+    find: 'export const engineVersion = "0.308.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5757,7 +5757,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D402-the-additive-fold-is-swallowed",
     decision: "D402",
-    what: "\ud83d\uded1 C9 \u2014 **THE ANCHOR ADMITS THE PRINTED `more`, WHICH IS THE SLICE'S CENTRAL REFUSAL DELETED.** `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass and `attack.ts` drops the printed base whenever the program owns the damage \u2014 right for \"does N damage for each\" (the printed \"N\u00d7\" IS the per-unit) and WRONG for \"does N MORE damage for each\", whose base is kept. Weakness distributes over a split hit, but Resistance, `damageReductionAfterWR` and the \u00a78.1 survival clamp are each paid ONCE PER HIT, so `base + per\u00d7N` is not `base` then `per\u00d7N`. \u26a0 **AND IT IS SILENT IN EVERY CENSUS AND ON EVERY REAL PRINTING**: all three additive sentences ALSO name the Bench, so no legal card changes behaviour \u2014 only \u00a73's constructed one-byte variation sees it, which is the rung D399's rule exists for",
+    what: "\ud83d\uded1 C9 \u2014 **THE ANCHOR ADMITS THE PRINTED `more`, WHICH IS THE SLICE'S CENTRAL REFUSAL DELETED.** `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass and `attack.ts` drops the printed base whenever the program owns the damage \u2014 right for \"does N damage for each\" (the printed \"N\u00d7\" IS the per-unit) and WRONG for \"does N MORE damage for each\", whose base is kept. Weakness distributes over a split hit, but Resistance, `damageReductionAfterWR` and the \u00a78.1 survival clamp are each paid ONCE PER HIT, so `base + per\u00d7N` is not `base` then `per\u00d7N`. \u26a0 **AND IT IS SILENT IN EVERY CENSUS AND ON EVERY REAL PRINTING**: the two additive sentences this anchor could otherwise reach ALSO name the Bench (which its `from (this|your) Pok\u00e9mon` refuses on a second byte) and the third is a deck mill with a different opener, so no legal card changes behaviour \u2014 only \u00a73's constructed one-byte variation sees it, which is the rung D399's rule exists for. \ud83d\udd04 RE-DERIVED AT D403, WHICH BUILT THOSE TWO SENTENCES THROUGH A SECOND READER: the verdict is unchanged and the REASON is now the zone byte alone rather than \"all three name the Bench\"",
     file: "packages/engine/src/effects.ts",
     find: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
     replace: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) (?:more )?damage for each card you discarded in this way\\\\.$`,",
@@ -5766,7 +5766,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D402-the-bench-only-zone-is-admitted",
     decision: "D402",
-    what: "\ud83d\uded1 C10 \u2014 **THE ZONE ALTERNATION WIDENED TO ADMIT `Benched`, WHICH IS THE HANDED-DOWN PREDICTION'S OWN FALSIFIER BUILT AS A DEFECT.** That prediction said this family needed a Bench-only member on `discardEnergy.from`; the union has none, so the mutant captures \"your\" out of \"your **Benched** Pokemon\" and derives `from: \"yours\"` \u2014 the WHOLE own side, Active included \u2014 for a sentence naming the Bench alone. **NO LEGAL PRINTING MOVES** (every Bench-only sentence is additive and refused by C9's byte instead), so the census, both agreement rungs and every board in this suite stay green; \u00a73's zone-varied-alone rung is the only observation",
+    what: "\ud83d\uded1 C10 \u2014 **THE ZONE ALTERNATION WIDENED TO ADMIT `Benched`, WHICH IS THE HANDED-DOWN PREDICTION'S OWN FALSIFIER BUILT AS A DEFECT.** That prediction said this family needed a Bench-only member on `discardEnergy.from`; \ud83d\udd04 D403 ADDED ONE (`yourBench`) and this row's verdict did not move, because the mutant still derives the WRONG one \u2014 it captures \"your\" out of \"your **Benched** Pokemon\" and derives `from: \"yours\"` \u2014 the WHOLE own side, Active included \u2014 for a sentence naming the Bench alone. **NO LEGAL PRINTING MOVES** (every Bench-only sentence is additive and refused by C9's byte instead), so the census, both agreement rungs and every board in this suite stay green; \u00a73's zone-varied-alone rung is the only observation",
     file: "packages/engine/src/effects.ts",
     find: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
     replace: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) (?:Benched )?Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
@@ -5789,6 +5789,155 @@ export const MUTANTS: Mutant[] = [
     find: "  if (filter.kind === \"basicEnergy\") {\n    return filter.energyType === undefined ? \"Basic Energy\" : `Basic ${filter.energyType} Energy`;\n  }\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  // ── D403 — THE ADDITIVE HALF OF D402's FAMILY. Fifteen rows, ONE PER CLAIM rather
+  //    than one per site: the ZONE (C1, C5, C13, C14, C15), the FOLD (C2, C4, C12), the
+  //    printed CEILING (C3, C7), the OFFER (C6), the FILTER (C8) and the three claims
+  //    `attack.ts` makes about the printed number and the printed marker (C9, C10, C11).
+  //
+  //    ⚠️ THREE ROWS SHARE ONE `find` (C4, C5, C6 — the anchor's single line), so one
+  //    reformat of that regex retires three rows at once. That is D402's arrangement
+  //    inherited deliberately: the alternative is three near-identical multi-line finds
+  //    whose adjacency claims are the thing this corpus keeps paying for.
+  //
+  //    🛑 AND THE ROW THAT WOULD HAVE BEEN SILENT IS NAMED: C3 (the dropped `cap`) reads
+  //    IDENTICALLY to the real code on any Bench of two or fewer candidates, which is
+  //    what a natural fixture board would have had. §4's first rung fields THREE against
+  //    a printed ceiling of two for that reason and no other.
+  {
+    id: "D403-the-zone-is-the-whole-own-board",
+    decision: "D403",
+    what: "\ud83d\uded1 C1 \u2014 **THE ZONE WIDENED TO THE WHOLE OWN BOARD, WHICH IS HAIL BLADE'S REAL VALUE COPIED ONE FAMILY OVER.** `from: \"yours\"` is what the MULTIPLY half of this exact family emits and what `registry.ts` has spelled by hand since D96, so it is the single most likely edit an author makes here. The printed sentence says *\"your **Benched** Pok\u00e9mon\"*, and the board that separates them is the one every printing of this shape produces: the attacker's own cost Energy is attached to the ACTIVE, a cost is not spent, so the whole-board member lets the card fund its own boost with the Energy it just attacked with. \u00a74's first rung offers 3 uids under the mutant's 4 \u2014 and the extra one is the cost",
+    file: "packages/engine/src/effects.ts",
+    find: "      from: \"yourBench\",\n      filter: reading.filter,",
+    replace: "      from: \"yours\",\n      filter: reading.filter,",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-printed-base-is-dropped",
+    decision: "D403",
+    what: "\ud83d\uded1 C2 \u2014 **THE FOLD LOSES ITS ADDEND, WHICH IS THE WHOLE SLICE DELETED AND IS AGAIN A VERBATIM COPY OF THE MULTIPLY HALF'S OP.** With `base` absent the op means what it has meant since D96 \u2014 `per \u00d7 N` and nothing else \u2014 so the printed `50+` is dropped by `attack.ts` and never dealt by anybody. Two discards deal **90** where the card says **140** on the \u221230 body and **120** where it says **170** on the neutral one, and a DECLINE deals nothing at all where the card deals its printed base. \u00a72's program rung and every \u00a75 number see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    { op: \"damageDefender\", base, per: reading.per, count: \"discarded\" },",
+    replace: "    { op: \"damageDefender\", per: reading.per, count: \"discarded\" },",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-declinable-ceiling-is-dropped",
+    decision: "D403",
+    what: "\ud83d\uded1 C3 \u2014 **THE PRINTED CEILING DROPPED, WHICH IS HAIL BLADE'S UNCAPPED `any amount` ON A SENTENCE THAT PRINTS `up to 2`.** The op still parks and still records, so the shape is right and only the OFFER is wrong: a Bench holding four Energy would let the player discard all four and collect `50 + 60 \u00d7 4 = 290` off a card whose ceiling is `170`. \u26a0\ufe0f **IT IS SILENT ON A BENCH OF TWO OR FEWER**, which is why \u00a74's first rung fields THREE against a printed cap of two \u2014 a two-Energy board reads `max: 2` under both readings and would have been green",
+    file: "packages/engine/src/effects.ts",
+    find: "      count: \"any\",\n      cap: reading.cap,\n      recordAs: \"discarded\",",
+    replace: "      count: \"any\",\n      recordAs: \"discarded\",",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-additive-fold-is-refused",
+    decision: "D403",
+    what: "\ud83d\uded1 C4 \u2014 **THE ANCHOR'S `more` DELETED, WHICH INVERTS THE READER'S WHOLE DOMAIN.** It then refuses both printed sentences (the census falls back by 2 / 8) and claims a Bench-only MULTIPLY sentence the column does not carry \u2014 the count of which was measured as ZERO at D402 and asserted as zero rather than left unsaid. \u00a71's exactly-two rung and \u00a73's fold-alone rung both read it, and they read it from opposite directions: one says the two real sentences are gone, the other that a constructed near-miss has arrived",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^You may discard up to (\\d+) (Basic )?Energy from your Benched Pok\u00e9mon\\. This attack does (\\d+) more damage for each card you discarded in this way\\.$/;",
+    replace: "  /^You may discard up to (\\d+) (Basic )?Energy from your Benched Pok\u00e9mon\\. This attack does (\\d+) damage for each card you discarded in this way\\.$/;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-bench-scope-leaves-the-anchor",
+    decision: "D403",
+    what: "\ud83d\uded1 C5 \u2014 **THE ZONE BYTE DELETED FROM THE ANCHOR, WHICH IS D402's SPELLING COPIED WITHOUT ITS FAMILY.** The mutant reads `from your Pok\u00e9mon` and every printed sentence in this half says `from your **Benched** Pok\u00e9mon`, so the reader claims NOTHING legal and resolves a sentence nobody prints instead. Distinct from C1 in the direction of the error: that one derives the wrong ZONE for the right sentences, this one derives the right zone for no sentence at all. \u00a71 and \u00a73's zone-alone rung",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^You may discard up to (\\d+) (Basic )?Energy from your Benched Pok\u00e9mon\\. This attack does (\\d+) more damage for each card you discarded in this way\\.$/;",
+    replace: "  /^You may discard up to (\\d+) (Basic )?Energy from your Pok\u00e9mon\\. This attack does (\\d+) more damage for each card you discarded in this way\\.$/;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-offer-becomes-optional",
+    decision: "D403",
+    what: "\ud83d\uded1 C6 \u2014 **THE PRINTED `You may` MADE OPTIONAL, WHICH IS D402's REFUSED MATRIX ARRIVING ON THE OTHER HALF OF THE FAMILY.** That anchor spells its quantifier as three COUPLED literals because the catalog prints \"You may discard any amount of\", \"Discard all\" and \"Discard up to N\" and prints neither crossing; here the mutant admits a MANDATORY \"Discard up to 2 \u2026 more damage for each\" that no card carries, and derives a `count: \"any\"` park for it \u2014 an offer with a decline on a sentence that never offered one. \u00a73's offer-alone rung is the only observation, and it is exactly D399's constructed one-byte variation",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^You may discard up to (\\d+) (Basic )?Energy from your Benched Pok\u00e9mon\\. This attack does (\\d+) more damage for each card you discarded in this way\\.$/;",
+    replace: "  /^(?:You may d|D)iscard up to (\\d+) (Basic )?Energy from your Benched Pok\u00e9mon\\. This attack does (\\d+) more damage for each card you discarded in this way\\.$/;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-ceiling-guard-admits-zero",
+    decision: "D403",
+    what: "\ud83d\uded1 C7 \u2014 **THE CEILING'S POSITIVITY GUARD RELAXED TO `>= 0`, THE FIRST HALF OF A LINE THAT CARRIES TWO CLAIMS.** \"Discard up to 0\" derives to a park whose ceiling is zero \u2014 a prompt with nothing pickable, resolving to an empty record and the bare printed base. TWO printed numbers, TWO guards, asserted apart in \u00a73 for D361's reason (a row count is not a coverage map): a slice that fixed one and left the other would pass a rung that tested only the first",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (cap < 1 || per < 1) return null;",
+    replace: "  if (cap < 0 || per < 1) return null;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-filter-arms-are-swapped",
+    decision: "D403",
+    what: "\ud83d\uded1 C8 \u2014 **THE FILTER ARMS SWAPPED, WHICH IS THE OPTIONAL GROUP READ BACKWARDS.** A captured `(Basic )?` is `undefined` when the word is ABSENT, and the arm order is the one thing about that no type can check. The mutant offers a Special Energy to the sentence that prints \"Basic\" and refuses a Basic Energy card to the sentence that prints the bare noun \u2014 the exact board `fix-special` is in the deck for. \u00a72's two readings and \u00a74's Basic-filter rung",
+    file: "packages/engine/src/effects.ts",
+    find: "    filter: match[2] === undefined ? { kind: \"anyEnergy\" } : { kind: \"basicEnergy\" },",
+    replace: "    filter: match[2] === undefined ? { kind: \"basicEnergy\" } : { kind: \"anyEnergy\" },",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-base-is-claimed-nowhere",
+    decision: "D403",
+    what: "\ud83d\uded1 C9 \u2014 **THE `scaledBase` CLAIMANT DELETED, SO THE PRINTED BASE IS DEALT TWICE.** The reading re-homes the printed number INTO the program's one op; without this term `attack.ts` also deals it in the pre-program pipeline, so two discards land `(50 \u2212 30) + (50 + 120 \u2212 30) = 160` on the \u221230 body instead of `140`, in TWO `DAMAGE_DEALT` rows. \u26a0\ufe0f **THE OP IS TOP-LEVEL HERE, UNLIKE D316/D317/D381's**, so the term looks redundant to anyone reading `programDamage` \u2014 and it is not, because `programDamage` is computed four hundred lines ABOVE the append. \u00a75's row-count assertion and its number both see it",
+    file: "packages/engine/src/attack.ts",
+    find: "    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    replace: "    costBoostOwnsTheBase ||\n    coinFlip?.kind === \"perHeads\"",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-sentence-is-flagged-unsimulated",
+    decision: "D403",
+    what: "\ud83d\uded1 C10 \u2014 **`effectSimulated` LOSES ITS TERM, so the whole printed effect is loudly skipped although it was read completely.** The board is IDENTICAL \u2014 the program still runs, the discard still parks, the damage is still right \u2014 and the only thing that moves is an `ATTACK_EFFECT_SKIPPED` row telling the coverage instruments this engine cannot do something it just did. \u00a75's event-list rung",
+    file: "packages/engine/src/attack.ts",
+    find: "    optionalCostBoost !== null ||\n    discardScaledBoost !== null ||\n    damageSuppression !== null;",
+    replace: "    optionalCostBoost !== null ||\n    damageSuppression !== null;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-plus-marker-is-unclaimed",
+    decision: "D403",
+    what: "\ud83d\uded1 C11 \u2014 **`modifierSimulated` LOSES ITS TERM, the same defect on the other half of the same flag.** The printed clause IS the `+` of a `50+`/`30+` marker, so a reading that consumes the clause has consumed the marker; without the term the engine flags a modifier it has just spent. Declared apart from C10 because they are two claims about two printed things, and a slice that added one term and forgot the other would pass whichever rung it wrote",
+    file: "packages/engine/src/attack.ts",
+    find: "    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinExplainsModifier;",
+    replace: "    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-interpreter-ignores-the-addend",
+    decision: "D403",
+    what: "\ud83d\uded1 C12 \u2014 **THE ADDEND DROPPED AT THE OTHER END OF THE FIELD, WHICH IS THIS LINE EXACTLY AS IT STOOD BEFORE THIS SLICE.** C2 is the PRODUCER forgetting to write `base`; this is the CONSUMER forgetting to read it, and the two are different mistakes with one symptom \u2014 \u00a72's program rung still passes here, because the op carries the field and only the interpreter ignores it. Every \u00a75 number moves",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const amount = op.amount ?? (op.base ?? 0) + recorded(record, op.count).length * op.per;",
+    replace: "      const amount = op.amount ?? recorded(record, op.count).length * op.per;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-bench-scope-becomes-the-board",
+    decision: "D403",
+    what: "\ud83d\uded1 C13 \u2014 **THE CANDIDATE SCAN LOSES THE BENCH SCOPE, WHICH IS THIS EXPRESSION EXACTLY AS IT STOOD BEFORE THIS SLICE.** The op still says `yourBench` and the caption still says \"from your Benched Pok\u00e9mon\", so the program and the prompt are both right and the OFFER is wrong \u2014 the player is shown the Active's cost Energy under a heading that names the Bench. This is the half of a scope that a type cannot check, because `\"all\"` is a legal argument. \u00a74's first rung",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    activeOnly ? \"active\" : benchOnly ? \"bench\" : \"all\",",
+    replace: "    activeOnly ? \"active\" : \"all\",",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-bench-victim-is-the-opponent",
+    decision: "D403",
+    what: "\ud83d\uded1 C14 \u2014 **`discardVictimSeat` LOSES THE NEW MEMBER, WHICH IS D222's RECORDED FAILURE ARRIVING ON THE UNION IT WAS RECORDED ABOUT.** The helper falls through to `otherSeat`, so an attacker's own Bench discard is aimed at the OPPONENT's board and additionally routed through the \u00a711 attack-block guard \u2014 a self-discard refused by a rule about damage done to somebody else. On this suite's boards the opponent's Bench is empty, so the op whiffs, files an empty record and the attack silently degenerates to its printed base. \u00a74's ENERGY_DISCARDED rung and \u00a75's numbers",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.from === \"yourActive\" ||\n    op.from === \"yours\" ||\n    op.from === \"yourBench\" ||\n    op.from === \"self\"",
+    replace: "  return op.from === \"yourActive\" ||\n    op.from === \"yours\" ||\n    op.from === \"self\"",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
+  },
+  {
+    id: "D403-the-caption-names-the-whole-board",
+    decision: "D403",
+    what: "\ud83d\uded1 C15 \u2014 **THE NEW CAPTION ARM COPIES THE `yours` ARM ONE CASE UP, WHICH IS THE LINE DIRECTLY BELOW IT IN THE SAME SWITCH.** The board is identical and every offered uid is the same \u2014 the offer is built by the filter and the scope, not by the caption \u2014 so ONLY the one screen telling the player what their pick does is wrong, and it promises a board wider than the pick. D295's caption defect, at the fourth site this repo has found it. \u00a74's two note assertions",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return `Discard ${what} from your Benched Pok\u00e9mon.`;",
+    replace: "      return `Discard ${what} from your Pok\u00e9mon.`;",
+    expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
   },
   // ── D361 — THE CROSS-SEAT ENERGY DISCARD. Four rows, ONE PER CLAIM rather than
   //    one per site: the FILTER is read off the printed noun phrase (C1), the TYPE
@@ -5872,8 +6021,12 @@ export const MUTANTS: Mutant[] = [
     // payoffs answer `scaledBase` differently). A narrowing falsifies a multi-line
     // `find` exactly as an insertion does, and `git grep` for the quoted line still
     // finds most of it — which is why this is done in the same commit.
-    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: '    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace:
+      '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5910,8 +6063,12 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
     // 🆕🆕 RE-TRANSCRIBED AT D383 for the `scaledBase` row's reason, one chain over.
-    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
-    replace: "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinExplainsModifier;",
+    replace:
+      "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5920,9 +6077,12 @@ export const MUTANTS: Mutant[] = [
     what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
     file: "packages/engine/src/attack.ts",
     // 🆕 RE-POINTED AT D317 for the reason the `scaledBase` row above records.
-    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "    coinFlip !== null ||\n    optionalBoost !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    discardScaledBoost !== null ||\n    damageSuppression !== null;",
     replace:
-      "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
+      "    coinFlip !== null ||\n    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    discardScaledBoost !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -5943,9 +6103,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D316",
     what: "the flat arm passes `ignoreWR` - Umbreon's real flag on `damageChosen`, copied one op over, and it makes the gate's hit stop being genuine attack damage",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const amount = op.amount ?? recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, false, ctx, events) };",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the fold's first line gained the additive `base`
+    // addend, so this three-line `find` stopped matching without a character of the
+    // two lines it actually mutates moving — the adjacency class rule 12 names.
+    find: "      const amount = op.amount ?? (op.base ?? 0) + recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, false, ctx, events) };",
     replace:
-      "      const amount = op.amount ?? recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, true, ctx, events) };",
+      "      const amount = op.amount ?? (op.base ?? 0) + recorded(record, op.count).length * op.per;\n      if (amount <= 0) return { done: state };\n      return { done: snipeActive(state, amount, true, ctx, events) };",
     expectKilledBy: ["packages/engine/src/optionalDamageBoost.test.ts"],
   },
   {
@@ -8682,8 +8845,11 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/attack.ts",
     // 🆕🆕 RE-TRANSCRIBED AT D383 — the narrowing one chain up moved this row's
     // second line too. Same claim, same file, same commit.
-    find: '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
-    replace: '    costBoostOwnsTheBase ||\n    coinFlip?.kind === "perHeads"',
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: '    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === "perHeads"',
+    replace: '    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === "perHeads"',
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8692,8 +8858,11 @@ export const MUTANTS: Mutant[] = [
     what: 'the printed "+" is left unexplained, so all six printings keep a loud ATTACK_EFFECT_SKIPPED for a modifier the engine has just spent (D126\'s term, one reader further on)',
     file: "packages/engine/src/attack.ts",
     // 🆕🆕 RE-TRANSCRIBED AT D383 for the row above's reason.
-    find: "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
-    replace: "    costBoostOwnsTheBase ||\n    coinExplainsModifier;",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "    bonusConsequent !== null ||\n    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinExplainsModifier;",
+    replace: "    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinExplainsModifier;",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -8701,8 +8870,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D317",
     what: "the sentence is left unexplained, so the whole printed effect is loudly skipped although it was read completely",
     file: "packages/engine/src/attack.ts",
-    find: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    damageSuppression !== null;",
-    replace: "    optionalCostBoost !== null ||\n    damageSuppression !== null;",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "    bonusConsequent !== null ||\n    optionalCostBoost !== null ||\n    discardScaledBoost !== null ||\n    damageSuppression !== null;",
+    replace:
+      "    optionalCostBoost !== null ||\n    discardScaledBoost !== null ||\n    damageSuppression !== null;",
     expectKilledBy: ["packages/engine/src/bonusConsequent.test.ts"],
   },
   {
@@ -15041,8 +15214,11 @@ export const MUTANTS: Mutant[] = [
     // this row was written for) AND leaves D383's alone, which is why the kill list
     // stays a single file rather than gaining `torrentialPump.test.ts`. **THE ROW
     // ONE DOWN IS THE OTHER HALF**, and the pair is the point.
-    find: "    costBoostOwnsTheBase ||\n    coinFlip?.kind === \"perHeads\"",
-    replace: "    coinFlip?.kind === \"perHeads\"",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "    costBoostOwnsTheBase ||\n    discardScaledBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
+    replace: "    discardScaledBoost !== null ||\n    coinFlip?.kind === \"perHeads\"",
     expectKilledBy: ["packages/engine/src/optionalCostBoost.test.ts"],
   },
   {
@@ -15131,8 +15307,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D382",
     what: "\u{1F6D1} **THE DEFECT THIS SLICE FOUND, RE-INSTALLED.** `stadiumPresence.test.ts`'s `READERS` array loses `deriveAttackOptionalCostBoost` — the state it was actually in from D381 until D382, during which its `DISCARD_OP` list asserted a sentence was REFUSED while the tenth reader had been claiming it for a whole slice. **A REFUSAL GUARD WHOSE INSTRUMENT CANNOT SEE THE READER THAT EXPIRED IT READS GREEN FOR THE WRONG REASON**, and the `TAKEN_SINCE` list added in the same commit is what makes that detectable rather than silent",
     file: "packages/engine/src/stadiumPresence.test.ts",
-    find: "  deriveAttackBonusConsequent,\n  deriveAttackOptionalCostBoost,\n];",
-    replace: "  deriveAttackBonusConsequent,\n];",
+    // 🆕🆕 RE-TRANSCRIBED AT D403: the chain gained a `discardScaledBoost` term, so
+    // this multi-line `find` stopped matching without a character of the lines it
+    // mutates moving (the adjacency class the brief's rule 12 names).
+    find: "  deriveAttackBonusConsequent,\n  deriveAttackOptionalCostBoost,\n  deriveAttackDiscardScaledBoost,\n];",
+    replace: "  deriveAttackBonusConsequent,\n  deriveAttackDiscardScaledBoost,\n];",
     expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
   },
   // ── 🆕🆕 D383 — THE PAYOFF UNION (Wellspring Mask Ogerpon ex "Torrential Pump",
