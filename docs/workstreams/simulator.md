@@ -25125,6 +25125,43 @@ sentence today is three anchors at once: `CONDITIONAL_DAMAGE_BONUS` wants *"does
 `BONUS_CONSEQUENT_CONDITION` wants *"more damage, and …"*, and `ALSO_BENCHED_SNIPE` is anchored at
 `^This` with a count of **1**. **ZERO new vocabulary — it is a skeleton and a program.**
 
+#### ✅ 🆕🆕 D399 TOOK IT, AND THE PRICE ABOVE WAS RIGHT ABOUT THE PROGRAM AND WRONG ABOUT THE COST
+
+The paragraph above is kept verbatim (D178). Two of its three refusals were exact; the third was the
+whole slice. **`ALSO_BENCHED_SNIPE`'s *"count of 1"* was a LITERAL inside `ALSO_BENCHED_SNIPE_BODY`,
+a regex fragment THREE anchors share** — and the legal attack column prints that rider at **2 on
+FOUR legal printings** (*"This attack also does 130 damage to 2 of your opponent's Benched
+Pokémon."* ×3 and the same at 30 ×1), every one of them refused for no reason but that literal. So
+the gated sentence could not honestly be bought with an anchor of its own: an engine that read
+*"If X, this attack also does 120 damage to 2 of…"* while refusing *"This attack also does 130
+damage to 2 of…"* would be contradicting itself about one printed clause on the strength of what
+came before the comma. D399 captured the arity in the fragment, all three callers read it, and
+`CONDITIONAL_BENCH_SNIPE` (`/^If (.+), this ${BODY}$/`) is the third caller. **3 sentences /
+5 printings** on ZERO new ops, readers, members or registry rows.
+
+**⚠️ AND THE HANDOFF'S ONE NAMED RISK WAS ALREADY FALSE.** D398's resume point said to price
+*"whether the interpreter's pick loop really takes `count: 2` distinct bodies … every shipped
+`damageChosen` in the repo is `count: 1`, so that arity is UNEXERCISED."* `interpreter.ts` has read
+`op.count` since M4 and **TWO REGISTRY ROWS** — Hawlucha's "Flying Entry" and Team Rocket's Crobat
+ex's "Biting Spree" — have spelled 2 for two hundred decisions. One `grep registry.ts` settled it.
+**A HANDOFF'S "UNEXERCISED" IS A CLAIM ABOUT THE REPO; RE-DERIVE THE REASON EVEN WHEN THE REASON IS
+A PRICE.**
+
+**⚠️ THE REMAINING HARD-CODED ARITY IS `CHOSEN_ANY_TARGET`'s, AND IT IS BIGGER: 2 sentences /
+9 printings** (*"This attack does 50 damage to 2 of your opponent's Pokémon. (Don't apply Weakness
+and Resistance for Benched Pokémon.)"* at 3, and the same sentence with Umbreon's W/R tail in the
+PLURAL — *"…or by any effects on **those** Pokémon."* — at 6). It is deliberately NOT taken here,
+because the plural tail is a READING and not a capture: the tail's number agrees with the count, so
+the shape question is whether the anchor should ENFORCE that agreement. `conditionalBenchSnipe.test.ts`
+§1 pins the population as a RUNG so the handoff cannot rot.
+
+**⚠️ AND A GAP THE HARNESS FOUND THAT NO GREP WOULD HAVE.** D399's C4 (the `$` dropped from the new
+anchor) SURVIVED its first run: the near-miss driving that `$` was a TRAILING CLAUSE, which the
+shared fragment already refuses at its own literal `\.` right after *Pokémon*, so it never reached
+the anchor's terminator. **A NEAR-MISS THE FRAGMENT ALREADY REFUSES PROVES NOTHING ABOUT THE ANCHOR
+WRAPPED AROUND IT** — the only string that can is a COMPOUND, the whole sentence followed by a
+second one.
+
 ### ⚠️ Two ordinal claims in `effects.ts` were false when they were written
 
 D378's clause row calls itself *"the SECOND row in this table that carries neither [apostrophe nor
