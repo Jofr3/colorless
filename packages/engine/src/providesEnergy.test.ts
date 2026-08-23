@@ -148,12 +148,23 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
       // Bellibolt ex (sv02-079): "You may" — OPTIONAL, where this op is mandatory,
       // and the discard buys an effect rather than paying a cost.
       "You may discard 2 {L} Energy from this Pokémon to make your opponent's Active Pokémon Paralyzed.",
-      // Mewtwo VSTAR (swsh10.5-031): "up to", and from YOUR POKÉMON — the whole
-      // board, not this one. Its spelled-out "Psychic Energy" is a near-miss for
-      // the notation arm specifically.
-      "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage for each card you discarded in this way.",
-      // Chien-Pao ex (sv02-061): "any amount", declinable, damage scaling off it.
-      "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.",
+      // 🆕🛑 **D402 MOVED TWO STRINGS OUT OF THIS LIST, AND THIS COMMENT IS THE
+      //     RECORD OF WHY — D361's move at this same site, made a second time.**
+      //     Mewtwo VSTAR `swsh10.5-031` *"Discard up to 3 Psychic Energy from your
+      //     Pokémon. This attack does 90 damage for each card you discarded in this
+      //     way."* and Chien-Pao ex `sv02-061` *"You may discard any amount of {W}
+      //     Energy from your Pokémon. …"* stood here from D191 to D401 as REFUSALS.
+      //     They derive now: D402's `ENERGY_DISCARD_SCALED_DAMAGE` reads the whole
+      //     COMPOUND — the discard AND the scaling clause — into the two-op program
+      //     their registry rows already spell, and both are asserted POSITIVELY in
+      //     `psyPurge.test.ts` and `hailBlade.test.ts` instead.
+      //     ⚠️ **WHAT THEY WERE PINNING HERE IS NOT ABANDONED, IT IS RE-POINTED:**
+      //     the claim was always that `TYPED_SELF_DISCARD` refuses a sentence that
+      //     does not END at "this Pokémon.", and the rung below now makes it with
+      //     the one string that no other anchor claims — the SAME whole-board "up
+      //     to" discard with NO scaling clause behind it, which is a sentence the
+      //     column does not print and which therefore still derives to null.
+      "Discard up to 3 Psychic Energy from your Pokémon.",
       // Decidueye (sv06.5-005): a Basic {G} Energy CARD FROM YOUR HAND — the one
       // row in the family that really is about a PRINT and not about provision,
       // and the reason `basicEnergy` still exists alongside this filter.

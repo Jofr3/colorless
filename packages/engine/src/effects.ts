@@ -6991,9 +6991,20 @@ export type EffectOp =
       count?: "all" | number | "any";
       /** File the discarded uids under this §9.2 slot so a later op can read how
           many came off — Hail Blade's "for each card you discarded in this way"
-          (its `damageDefender` reads the count). Only the `"any"` mode records
-          today; absent = record nothing, the shape every discard predating this
-          parks into. */
+          (its `damageDefender` reads the count). Absent = record nothing, the shape
+          every discard predating this parks into.
+
+          🆕🆕 **D402 — THE `"all"` MODE RECORDS TOO, AND IT ALWAYS COULD.** This
+          doc used to read *"only the `"any"` mode records today"* — a statement
+          about what was AUTHORED, not about what the interpreter does: the
+          `op.count === "all"` branch has called `recordMoved(record, op.recordAs,
+          done.discarded)` since D96 wrote it, exactly like the forced and parked
+          paths. `ENERGY_DISCARD_SCALED_DAMAGE`'s *"Discard all {L} Energy from this
+          Pokémon. This attack does 50 damage for each card you discarded in this
+          way."* (3 legal printings on two sentences) is the first program to use
+          it, and it is the one member of the family where the count is NOT a
+          decision — the board decides it, the record carries it, and the damage
+          reads it without anybody parking. */
       recordAs?: EffectSlot;
       /** Only meaningful with `count: "any"`: an upper BOUND on the declinable
           up-to — the printed "up to N" (Mewtwo VSTAR "Psy Purge": discard up to
@@ -12600,6 +12611,106 @@ const TYPED_SELF_DISCARD = new RegExp(
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})) Energy from this Pokémon\\.$`,
 );
 
+// 🆕🆕 D402 — THE DISCARD-COUNT-SCALED ATTACK: THE §9.2 RECORD READ AS A DAMAGE
+// MULTIPLIER, AND THE RE-PRICING OF A REFUSAL THAT WAS WRITTEN DOWN AT D96.
+//
+// *"<discard some Energy>. This attack does N damage for each card you discarded
+// in this way."* — **6 sentences / 13 legal printings**, measured over
+// `legalAttackCorpus()` at this head and transcribed byte for byte:
+//   6 — "You may discard any amount of Basic Energy from your Pokémon. This attack
+//        does 70 damage for each card you discarded in this way."
+//   2 — "Discard all {L} Energy from this Pokémon. This attack does 50 damage for
+//        each card you discarded in this way."
+//   2 — "Discard up to 2 {M} Energy from this Pokémon. This attack does 120 damage
+//        for each card you discarded in this way."
+//   1 — "Discard all {M} Energy from this Pokémon. This attack does 50 damage for
+//        each card you discarded in this way."
+//   1 — "Discard up to 3 {G} Energy cards from your Pokémon. This attack does 70
+//        damage for each card you discarded in this way."
+//   1 — "Discard up to 5 {R} Energy from this Pokémon. This attack does 70 damage
+//        for each card you discarded in this way."
+//
+// 🛑 THE REFUSAL THIS REPLACES WAS REAL, AND IT EXPIRED BECAUSE ITS *REASON* DIED
+// RATHER THAN BECAUSE ITS VERDICT AGED. D96 wrote *"a variable-count park the
+// deriver deliberately refuses"* on the day the ops were INVENTED — there was no
+// `discardEnergy.count: "any"`, no `cap`, no `recordAs: "discarded"` and no
+// `damageDefender` until that slice built them, so the sentence genuinely had no
+// vocabulary to derive into and a registry row was the only honest producer. All
+// five of those pieces have shipped since, and D97 added the second row without
+// touching the deriver. What is left is a sentence whose whole program is now
+// spelled twice, by hand, on two cards.
+//
+// 🛑 AND D187's RULE IS WHAT MAKES THE RE-PRICING PAY, MEASURED RATHER THAN
+// QUOTED: *an arm transfers across sets; a registry row does not.* The two rows
+// serve **ZERO** Standard-legal printings — neither Chien-Pao ex's `{W}` sentence
+// nor Mewtwo VSTAR's spelled-out `Psychic` one appears anywhere in the 640-sentence
+// `legal_standard = 1` attack column, because both cards have rotated. The arm
+// serves 13. THE ROWS ARE KEPT ANYWAY (a registry program wins over the deriver,
+// so their boards are unchanged, and Mewtwo VSTAR's is this engine's only
+// index-keyed multi-attack witness) — but their doc blocks and the two suites'
+// `deriveAttackEffect(...) === null` rungs are RE-POINTED, NULL → SHAPE: the two
+// producers now derive the **identical** program for one printed sentence, by
+// construction rather than by coincidence, which is `OPPONENT_ACTIVE_DISCARD`'s
+// relationship to Mawile stated one family over (D361).
+//
+// 🛑 THE FOLD IS THE FAMILY'S REAL SPLIT AND ONLY THE MULTIPLY HALF IS TAKEN —
+// A MECHANISM REFUSES THE OTHER HALF, NOT A PREFERENCE. The wider
+// `discarded in this way` family is **12 sentences / 27 printings**; this anchor
+// takes the 6 / 13 that print *"does N damage for each"*, where the printed "N×"
+// IS the per-unit and the base is DROPPED (`attack.ts scaledBase`, via
+// `programDamage`). The **3 sentences / 10 printings** that print *"does N MORE
+// damage for each"* keep their printed base, and `damageDefender {per, count}`
+// CANNOT express that today: its hit is a SEPARATE `snipeActive` pass, so a kept
+// base would deal the printed number in the pre-program pipeline and the scaled
+// part inside the program. Weakness DISTRIBUTES over a split hit, but Resistance
+// and `damageReductionAfterWR` are SUBTRACTIONS paid once per hit and the §8.1
+// survival clamp is asked twice — so `base + per×N` is NOT `base` then `per×N`.
+// **THE ADDITIVE HALF IS A SECOND READER, NOT A CAPTURED `more`**, which is D163's
+// finding on the sibling `SELF_COUNTER_SCALE` / `SELF_COUNTER_MULTIPLY` pair
+// reproduced one count-source over, and it is why this anchor spells `damage` as a
+// literal instead of wrapping an optional `more`.
+//
+// ⚠️ THE PRICE OF THE HALF NOT TAKEN, NAMED SO NOBODY RE-DERIVES IT: 2 of those 3
+// sentences (8 printings) ALSO need a Bench-only `discardEnergy.from` member the
+// union does not have — *"…from your **Benched** Pokémon"* — and the third
+// (2 printings) counts a DECK MILL of both players rather than an Energy discard.
+// So the additive half costs a fold AND a union member AND a recording mill, and
+// the prediction this slice was handed (*"all 12 expressible with no new op and no
+// new field"*) is **FALSE**, measured. ⚠️ AND THE TWO NAMED FALSIFIERS INTERACT:
+// every Bench-only printing is on the additive side, so the fold split removes the
+// need for the union widening entirely rather than compounding with it.
+//
+// EIGHT CAPTURES, ALL OF THEM FIELDS OF THE TWO OPS (D131's test for "is this one
+// pattern"): 1–3 are the discard's QUANTIFIER (`count`/`cap`), 4–6 its FILTER, 7
+// the ZONE (`from`) and 8 the damage's PER. The quantifier is spelled as three
+// COUPLED literals rather than a `(?:You may )?` prefix times an `(any amount|all|
+// up to N)` tail, on D361's rule: the catalog prints "You may discard any amount
+// of", "Discard all" and "Discard up to N" and prints NEITHER "Discard any amount
+// of" NOR "You may discard all", so a matrix would derive two sentences nobody
+// prints. ⚠️ THE ZONE, BY CONTRAST, *IS* A FREE PARAMETER and that is deliberate:
+// `this Pokémon` and `your Pokémon` are one field (`from`) at two values the
+// interpreter already resolves identically well, the way the TYPE is one field at
+// nine — where D361's refused matrix would have made the engine INVENT a
+// behaviour, every combination here is a board action it already performs.
+//
+// ⚠️ THE FILTER'S THIRD ARM IS `Basic`, AND IT IS `basicEnergy` RATHER THAN A
+// PROVISION READ. "Basic Energy" names the CARD (a Basic Energy print), not what
+// the card provides — the distinction `TYPED_SELF_DISCARD`'s own doc draws about
+// Decidueye's hand discard — so a `providesEnergy` reading would have offered a
+// Luminous Energy to a sentence that says Basic. It is also the family's LARGEST
+// member at 6 printings, and it is what made `energyNoun` grow its Basic arm
+// (interpreter.ts): this is the first sentence to reach `discardNote` with that
+// filter, and the park's caption is the printed bytes.
+//
+// The `Energy(?: cards)?` alternation is `DECK_TOP_MILL`'s: exactly one printing
+// spells the plural noun ("up to 3 {G} Energy **cards**") and it means the same
+// thing, so the two spellings differ in whether the noun is written out and in
+// nothing else. No /i, on the family's standing reason (see TYPED_SELF_DISCARD).
+const ENERGY_DISCARD_SCALED_DAMAGE = new RegExp(
+  `^(?:You may discard (any amount) of|Discard (all)|Discard up to (\\d+)) (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\}` +
+    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})|(Basic)) Energy(?: cards)? from (this|your) Pokémon\\. This attack does (\\d+) damage for each card you discarded in this way\\.$`,
+);
+
 // ── D181: the TRAINER-PATH OPS, printed as ATTACK text. ─────────────────────
 //
 // Four families the engine has executed since M4 on the Trainer path and had no
@@ -15169,6 +15280,68 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       if (count >= 1) {
         return [{ op: "discardEnergy", from: "yourActive", filter, count }];
       }
+    }
+  }
+
+
+  // 10b. 🆕🆕 D402 — "<You may discard any amount of|Discard all|Discard up to N>
+  //      <{X}|Type|Basic> Energy[ cards] from <this|your> Pokémon. This attack does
+  //      P damage for each card you discarded in this way." — the §9.2 record read
+  //      as a DAMAGE MULTIPLIER, TWO OPS IN PRINTED ORDER. 6 sentences / 13 legal
+  //      printings; see the anchor's own census.
+  //
+  //      🛑 THE PROGRAM IS THE ONE `registry.ts` ALREADY SPELLS BY HAND ON TWO
+  //      CARDS, AND THAT IS THE POINT OF THE SLICE. Chien-Pao ex "Hail Blade"
+  //      (D96) and Mewtwo VSTAR "Psy Purge" (D97) authored exactly this pair; both
+  //      have since rotated to `legal_standard = 0`, so the two rows serve ZERO
+  //      legal printings and this arm serves 13 (D187). The rows are KEPT — a
+  //      registry program wins over the deriver, so their boards do not move — and
+  //      this arm derives them BYTE-IDENTICALLY, which `hailBlade.test.ts` and
+  //      `psyPurge.test.ts` now assert where they used to assert `null`.
+  //
+  //      Mutually exclusive with arms 7/8/9, 9b and 10 in BOTH directions by their
+  //      own `^…$`: every one of them ENDS at "Pokémon.", and this sentence has a
+  //      second clause. The `damage`/`more damage` split is the anchor's, not the
+  //      site's — see its block for why the additive half is a second reader.
+  match = ENERGY_DISCARD_SCALED_DAMAGE.exec(effect);
+  if (match !== null) {
+    // Exactly one of the three filter groups matched, and an unmapped brace code
+    // cannot reach here (both alternations are built FROM the maps).
+    const energyType =
+      match[4] === undefined ? ENERGY_TYPE_BY_NAME[match[5] ?? ""] : ENERGY_TYPE_BY_CODE[match[4]];
+    const filter: CardFilter | undefined =
+      match[6] !== undefined
+        ? { kind: "basicEnergy" }
+        : energyType === undefined
+          ? undefined
+          : { kind: "providesEnergy", energyType };
+    const per = Number(match[8]);
+    // TWO printed numbers where the sentence carries them, TWO positivity guards.
+    // A printed 0 per-unit is an attack that deals nothing however much comes off,
+    // and a printed "up to 0" is a park with no pick — each a SILENT no-op where
+    // the loud `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing
+    // rule for every captured amount in this file).
+    const cap = match[3] === undefined ? undefined : Number(match[3]);
+    if (filter !== undefined && per >= 1 && (cap === undefined || cap >= 1)) {
+      // "all" strips the lot and asks nothing; "any amount" and "up to N" are the
+      // SAME declinable mode at two ceilings (`cap` bounds it, absent means the
+      // whole offer) — D97's finding, and the reason the cap is a field rather
+      // than a third count mode.
+      const count = match[2] === undefined ? ("any" as const) : ("all" as const);
+      return [
+        // The discard, first, because that is the printed order — and because the
+        // damage READS what it filed: `recordAs: "discarded"` is the printed "in
+        // this way", an op→op §9.2 record and not a re-scan of the board.
+        {
+          op: "discardEnergy",
+          from: match[7] === "this" ? "yourActive" : "yours",
+          filter,
+          count,
+          ...(cap === undefined ? {} : { cap }),
+          recordAs: "discarded" as const,
+        },
+        { op: "damageDefender", per, count: "discarded" },
+      ];
     }
   }
 

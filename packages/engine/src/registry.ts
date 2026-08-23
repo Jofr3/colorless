@@ -2757,13 +2757,26 @@ export type AttackTimingGate =
 export interface CardProgram {
   /** Registry-authored attack programs, keyed by ATTACK INDEX (the position in
       the card's printed `attacks` list — the same index the `attack` action
-      carries). A card authors only the attacks whose printed sentence the deriver
-      refuses; the rest fall back to `deriveAttackEffect` (or stay unsimulated).
+      carries). A card authors the attacks the deriver does not read; the rest fall
+      back to `deriveAttackEffect` (or stay unsimulated).
       Sits ABOVE the deriver (D8): `programFor(id)?.attack?.[index] ?? derive`.
       Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was the first; Mewtwo VSTAR
       "Psy Purge" (swsh10.5-031 idx 0, D97) the second — and the first on a
       MULTI-attack card, which is WHY this is index-keyed: its idx-1 "Star Raid"
-      must fall through to unsimulated, not inherit Psy Purge's program. */
+      must fall through to unsimulated, not inherit Psy Purge's program.
+
+      🆕🆕 **D402 — "AUTHORED" AND "DERIVABLE" ARE NO LONGER EXCLUSIVE, AND THE `??`
+      IS WHY THAT COSTS NOTHING.** The sentence above used to say a card authors only
+      the attacks the deriver REFUSES. Both examples it names are now read by
+      `deriveAttackEffect` too — into the identical program — because D402 spent a
+      refusal D96 wrote on the day its ops were invented. The row still wins, so no
+      board moves; what changed is that the two producers can now be asserted AGAINST
+      each other (`hailBlade.test.ts`, `psyPurge.test.ts`), which is a stronger rung
+      than either had alone. ⚠️ **AND THAT IS THE REASON THE ROWS ARE KEPT RATHER
+      THAN RETIRED**: a registry row is legality-keyed and both cards have rotated,
+      so the rows serve ZERO Standard-legal printings (D187) — but Mewtwo VSTAR's is
+      this engine's only index-keyed multi-attack witness, and deleting it would
+      delete the proof that "Star Raid" does not inherit index 0's program. */
   attack?: { readonly [attackIndex: number]: EffectOp[] };
   /** §4/§8 (D281) — the printed TIMING clause on ONE attack, keyed by the SAME
       ATTACK INDEX `attack` above is keyed by. **13 legal printings on 5 bodies
@@ -3069,9 +3082,13 @@ const JACQ: CardProgram = {
     attack. Two ops: a DECLINABLE, whole-own-board, {W}-provision discard that
     FILES its count under the `discarded` §9.2 slot, then a `damageDefender` that
     reads that count and deals 60× it through the full W/R pipeline. Registry-
-    authored (not derived) because the printed sentence is a variable-count park
-    the deriver deliberately refuses (effects.ts). The printed "60×" base is
-    suppressed (attack.ts) — the program owns the damage. */
+    authored (not derived) because on the day this row landed the printed sentence
+    was a variable-count park the deriver could not read — 🆕🆕 **D402 SPENT THAT
+    REFUSAL** (`ENERGY_DISCARD_SCALED_DAMAGE`, effects.ts, 6 sentences / 13 legal
+    printings) and now derives this exact pair from this exact text. The row is
+    KEPT and still wins (`programFor(id)?.attack?.[index] ?? derive`); what it buys
+    beyond the arm is the AGREEMENT rung in `hailBlade.test.ts`. The printed "60×"
+    base is suppressed (attack.ts) — the program owns the damage. */
 const CHIEN_PAO: CardProgram = {
   attack: {
     0: [
@@ -3108,11 +3125,14 @@ const CHIEN_PAO: CardProgram = {
     Psychic Energy from your Pokémon. This attack does 90 damage for each card you
     discarded in this way." The Hail Blade shape one step further: the SAME
     declinable whole-own-board discard feeding `damageDefender`, but CAPPED at 3
-    (`cap: 3` bounds the `count: "any"` up-to). Registry-authored at INDEX 0 — the
-    deriver refuses the sentence exactly as it does Hail Blade's, and this is the
-    first authored attack on a MULTI-attack card: index 1 "Star Raid" (the VSTAR
-    Power spread onto opponent's Pokémon V) is NOT authored, so it falls through to
-    unsimulated rather than inheriting Psy Purge's program. See D97. */
+    (`cap: 3` bounds the `count: "any"` up-to). Registry-authored at INDEX 0 — and
+    this is the first authored attack on a MULTI-attack card: index 1 "Star Raid"
+    (the VSTAR Power spread onto opponent's Pokémon V) is NOT authored, so it falls
+    through to unsimulated rather than inheriting Psy Purge's program. See D97.
+    🆕🆕 **D402 — "the deriver refuses the sentence exactly as it does Hail Blade's"
+    CAME OUT OF THE LINE ABOVE, AND THE PARALLEL IT DREW HELD TO THE END**: the
+    deriver now reads BOTH, into both programs, and this printing is what pins the
+    SPELLED-OUT notation (`Psychic`) and the `cap` against a hand-authored row. */
 const MEWTWO_VSTAR: CardProgram = {
   attack: {
     0: [

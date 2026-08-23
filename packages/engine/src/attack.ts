@@ -739,11 +739,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const effect = requirementSplit === null ? gated : requirementSplit.body;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
   // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
-  // INDEX — a card authors only the attacks whose sentence the deriver refuses,
-  // the rest fall through. Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was
-  // the first; Mewtwo VSTAR "Psy Purge" (swsh10.5-031 idx 0, D97) the second, and
-  // the first on a MULTI-attack card — its idx-1 "Star Raid" must NOT inherit Psy
-  // Purge's program, which is WHY the seam is index-keyed.
+  // INDEX — a card authors only the attacks the deriver does not read, the rest
+  // fall through. Chien-Pao ex "Hail Blade" (sv02-061 idx 0, D96) was the first;
+  // Mewtwo VSTAR "Psy Purge" (swsh10.5-031 idx 0, D97) the second, and the first
+  // on a MULTI-attack card — its idx-1 "Star Raid" must NOT inherit Psy Purge's
+  // program, which is WHY the seam is index-keyed.
+  //
+  // 🆕🆕 D402 — THE WORD "REFUSES" CAME OUT OF THE SENTENCE ABOVE, AND THE
+  // PRECEDENCE IS WHY THIS LINE STILL NEEDS NO BRANCH. Both of the two examples
+  // it names are now read by `deriveAttackEffect` as well, into the IDENTICAL
+  // program (`ENERGY_DISCARD_SCALED_DAMAGE`, effects.ts) — so "authored" and
+  // "derivable" have stopped being exclusive, and the `??` below is what makes
+  // that a non-event rather than a conflict: the row wins, the deriver is never
+  // asked, and the two suites assert the agreement instead of a null.
   const authored = programFor(attacker.id)?.attack?.[index] ?? null;
   const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
   // REASSIGNABLE since D130, and only from the flip block below: a

@@ -1150,8 +1150,10 @@ export const FIXTURE_POOL: Record<string, Card> = {
   /** Chien-Pao ex — a Water Basic whose registry entry carries the activated
       "Shivery Chill" Ability (search up to 2 Basic {W} Energy → hand) AND the
       registry-authored "Hail Blade" attack (discard any amount of {W} → 60× the
-      count). Attack text is the VERBATIM sv02-061 print (the deriver refuses it;
-      the registry program is authoritative). */
+      count). Attack text is the VERBATIM sv02-061 print. 🆕🆕 D402 — this comment
+      used to add *"the deriver refuses it"*; it does not any more, and the second
+      half is unchanged: the registry program is authoritative because `attack.ts`
+      asks for it first. The two producers now agree op for op. */
   "sv02-061": battler("sv02-061", {
     name: "Chien-Pao ex",
     types: ["Water"],

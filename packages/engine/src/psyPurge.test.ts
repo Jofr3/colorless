@@ -26,8 +26,16 @@ import {
 // fall through to unsimulated, which is WHY the `programFor(id)?.attack` seam is
 // keyed by attack INDEX (D97) — a card authors only the attacks it needs.
 
-/** The VERBATIM swsh10.5-031 print (tcgdex-confirmed). Like Hail Blade's, the
-    deriver refuses this sentence — the registry program is authoritative. */
+/** The VERBATIM swsh10.5-031 print (tcgdex-confirmed). 🆕🆕 **D402 RE-POINTED THIS
+    COMMENT'S CLAIM, EXACTLY AS IT DID HAIL BLADE'S** (D178: kept, not deleted). It
+    read *"Like Hail Blade's, the deriver refuses this sentence"* — true from D97 to
+    D401 and false now, on purpose. *"The registry program is authoritative"* is
+    unchanged: `attack.ts` reads the row first, so this card's board did not move.
+    ⚠️ AND IT IS THE SPELLED-OUT `Psychic` THAT MAKES THIS SENTENCE WORTH ASSERTING
+    SEPARATELY FROM HAIL BLADE'S BRACE-CODED `{W}` — the anchor's notation
+    alternations are built from `ENERGY_TYPE_BY_NAME` and `ENERGY_TYPE_BY_CODE`, and
+    these two printings are the only place both are pinned against a hand-authored
+    program that was written years before either alternation existed. */
 const PSY_PURGE_TEXT =
   "Discard up to 3 Psychic Energy from your Pokémon. This attack does 90 damage for each card you discarded in this way.";
 
@@ -71,8 +79,8 @@ function activeEnergy(state: GameState, seat: "p1" | "p2"): string[] {
 }
 
 describe("Mewtwo VSTAR 'Psy Purge' — the REGISTRY-authored attack, keyed by index", () => {
-  it("is authored at INDEX 0 with cap 3, and the deriver REFUSES its sentence", () => {
-    expect(programFor("swsh10.5-031")?.attack?.[0]).toEqual([
+  it("is authored at INDEX 0 with cap 3, and the deriver now AGREES with it", () => {
+    const AUTHORED = [
       {
         op: "discardEnergy",
         from: "yours",
@@ -82,11 +90,17 @@ describe("Mewtwo VSTAR 'Psy Purge' — the REGISTRY-authored attack, keyed by in
         recordAs: "discarded",
       },
       { op: "damageDefender", per: 90, count: "discarded" },
-    ]);
+    ];
+    expect(programFor("swsh10.5-031")?.attack?.[0]).toEqual(AUTHORED);
     // The index-keying, from the other side: "Star Raid" (index 1) is NOT authored,
     // so it cannot inherit Psy Purge's program.
     expect(programFor("swsh10.5-031")?.attack?.[1]).toBeUndefined();
-    expect(deriveAttackEffect(PSY_PURGE_TEXT)).toBeNull();
+    // 🆕🆕 **D402 — WAS `toBeNull()` FROM D97 TO D401.** The CAP is what this rung
+    // now pins on both producers at once: the derived program must carry `cap: 3`
+    // and not a bare `count: "any"`, so an anchor that captured the "up to N" and
+    // then dropped it — an uncapped Psy Purge offering the whole board — reddens
+    // here as well as in D402's own suite.
+    expect(deriveAttackEffect(PSY_PURGE_TEXT)).toEqual(AUTHORED);
   });
 
   it("every printed swsh10.5 id carries it — the reprints are the same card", () => {

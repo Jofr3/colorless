@@ -35,8 +35,14 @@ import {
 // so an attack whose number depends on a mid-attack choice cannot use the pre-W/R
 // fold — it re-enters the same math from INSIDE the program, after the choice.
 
-/** The VERBATIM sv02-061 print (tcgdex-confirmed). The deriver deliberately
-    refuses this sentence — the registry program is authoritative. */
+/** The VERBATIM sv02-061 print (tcgdex-confirmed). 🆕🆕 **D402 RE-POINTED THE
+    CLAIM THIS COMMENT USED TO MAKE (D178: kept, not deleted).** It read *"the
+    deriver deliberately refuses this sentence — the registry program is
+    authoritative"*, and the second half is still exactly true: `attack.ts` reads
+    `programFor(id)?.attack?.[index]` FIRST, so this card's board is byte-for-byte
+    what it was. The first half is now false, deliberately — D402's
+    `ENERGY_DISCARD_SCALED_DAMAGE` derives this sentence into the SAME two ops,
+    and the rung below asserts the AGREEMENT rather than the refusal. */
 const HAIL_BLADE_TEXT =
   "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
 
@@ -91,12 +97,21 @@ function activeEnergy(state: GameState, seat: "p1" | "p2"): string[] {
 }
 
 describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
-  it("is authored in the registry, and the deriver REFUSES its printed sentence", () => {
-    // The first attack to use the `programFor(id)?.attack` seam: the variable-count
-    // sentence is one the deriver deliberately will not read (a park whose count is
-    // a player decision, feeding a scaling clause), so the program is hand-written
-    // and the text stays null — the two halves of "registry-authored".
-    expect(programFor("sv02-061")?.attack?.[0]).toEqual([
+  it("is authored in the registry, and the deriver now AGREES with it op for op", () => {
+    // The first attack to use the `programFor(id)?.attack` seam. This rung asserted
+    // `deriveAttackEffect(HAIL_BLADE_TEXT) === null` from D96 to D401 — the
+    // variable-count sentence was one the deriver deliberately would not read,
+    // because on the day this card landed NONE of `count: "any"`, `cap`,
+    // `recordAs: "discarded"` or `damageDefender` existed to read it INTO.
+    //
+    // 🆕🆕 **D402 SPENT THAT REFUSAL AND THE RUNG GETS THE STRICTLY STRONGER
+    // CLAIM** (D361's move on `OPPONENT_ACTIVE_DISCARD` and Mawile, one family
+    // over): the two producers now build the IDENTICAL program for one printed
+    // sentence, BY CONSTRUCTION rather than by coincidence. The old rung could only
+    // go red by the deriver learning the sentence; this one goes red if EITHER
+    // producer changes an op, a field or a value while the other does not — which
+    // is the defect a hand-authored row and a text reader can actually have.
+    const AUTHORED = [
       {
         op: "discardEnergy",
         from: "yours",
@@ -105,8 +120,13 @@ describe("Chien-Pao ex 'Hail Blade' — the REGISTRY-authored attack", () => {
         recordAs: "discarded",
       },
       { op: "damageDefender", per: 60, count: "discarded" },
-    ]);
-    expect(deriveAttackEffect(HAIL_BLADE_TEXT)).toBeNull();
+    ];
+    expect(programFor("sv02-061")?.attack?.[0]).toEqual(AUTHORED);
+    expect(deriveAttackEffect(HAIL_BLADE_TEXT)).toEqual(AUTHORED);
+    // …and the registry is what RUNS, which is the half of the old comment that
+    // stayed true: `attack.ts` reads `programFor(id)?.attack?.[index]` before it
+    // ever asks the deriver, so this card's board did not move by one byte.
+    expect(programFor("sv02-061")?.attack?.[0]).toEqual(deriveAttackEffect(HAIL_BLADE_TEXT));
   });
 
   it("every printed sv02-061 id carries it — the reprints are the same card", () => {

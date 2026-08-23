@@ -11075,10 +11075,11 @@ function attachFromHandNote(op: Extract<EffectOp, { op: "attachFromHand" }>): st
     N's Plan's note comes out as its printed bytes exactly — "Move up to 2 Energy
     from your Benched Pokémon to your Active Pokémon." */
 function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
-  const noun =
-    op.filter.kind === "basicEnergy"
-      ? `Basic ${op.filter.energyType === undefined ? "" : `${op.filter.energyType} `}Energy`
-      : energyNoun(op.filter);
+  // 🆕🆕 D402 — DELEGATED, where this line spelled the Basic phrase itself. The
+  // duplicate was the reason `energyNoun` could return a noun WIDER than the card
+  // prints to its other caller (`discardNote`) without this one noticing; the
+  // bytes it produces are identical on every board this note has ever captioned.
+  const noun = energyNoun(op.filter);
   // D226 — "1 of" IS the single-source coupling, spelled. Every printing that
   // couples says "from 1 of your …" and N's Plan, which does not, says "from your
   // Benched Pokémon" — so the rider and the article are the same fact, and one
@@ -11137,6 +11138,22 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
 function energyNoun(filter: CardFilter): string {
   if (filter.kind === "specialEnergy") return "Special Energy";
   if (filter.kind === "providesEnergy") return `${filter.energyType} Energy`;
+  // 🆕🆕 D402 — THE BASIC NOUN MOVES *IN* HERE RATHER THAN BEING SPELLED A SECOND
+  // TIME. `moveNote` has hand-spelled this exact phrase since D226 precisely
+  // because this function did not know it, and `auraNarrowing.test.ts`'s read-site
+  // census graded this function ZERO on the ground that it "spells two kinds and
+  // returns 'Energy' for the rest, so a filter that is not an Energy filter was
+  // already handled" — true of `basicPokemon`, and NOT true of `basicEnergy`,
+  // which is an Energy filter that was falling through to a WIDER noun than the
+  // card prints. D402's *"You may discard any amount of **Basic** Energy from your
+  // Pokémon."* (6 legal printings) is the first sentence to reach `discardNote`
+  // with it, and a caption reading "any amount of Energy" over a pick restricted to
+  // Basic Energy is D295's caption defect exactly: the board right and the one
+  // screen telling the player what their pick does wrong. Two readers, one answer —
+  // `moveNote` now delegates and its bytes are unchanged for every board.
+  if (filter.kind === "basicEnergy") {
+    return filter.energyType === undefined ? "Basic Energy" : `Basic ${filter.energyType} Energy`;
+  }
   return "Energy";
 }
 

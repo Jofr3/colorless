@@ -12109,6 +12109,83 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.307.0 → **THE DISCARD-COUNT-SCALED ATTACK: A DERIVER'S REFUSAL RE-PRICED
+    BY RE-DERIVING ITS REASON, AND A FOLD THAT SPLIT THE FAMILY IN HALF.**
+
+      *"You may discard any amount of Basic Energy from your Pokémon. This attack
+       does 70 damage for each card you discarded in this way."* — **6 legal
+       printings**, the largest single sentence in the residue this slice was handed
+
+      *"Discard all {L} Energy from this Pokémon. This attack does 50 damage for each
+       card you discarded in this way."* — **2**
+
+      *"Discard up to 2 {M} Energy from this Pokémon. This attack does 120 damage for
+       each card you discarded in this way."* — **2**
+
+      *"Discard all {M} Energy …"* **1**, *"Discard up to 3 {G} Energy cards from your
+       Pokémon …"* **1**, *"Discard up to 5 {R} Energy from this Pokémon …"* **1**
+
+    **6 sentences / 13 printings.** `BUILT.attack` 1327 → **1340**; the nine-reader
+    instrument 386 / 1,290 → **392 / 1,303**, the ten-reader one 389 / 1,298 →
+    **395 / 1,311**, residue 254 / 442 → **248 / 429**. `REGISTRY_ATTACK_UNITS` and
+    `splitHead` stand still — a READER-keyed move.
+
+    🛑 **THE SLICE IS A RE-PRICING, AND THE THING RE-DERIVED WAS THE REFUSAL'S
+    REASON RATHER THAN ITS VERDICT.** D96 wrote *"a variable-count park the deriver
+    deliberately refuses"* on the day it INVENTED `discardEnergy.count: "any"`,
+    `recordAs: "discarded"` and `damageDefender`; D97 added `cap` and a second
+    registry row. The sentence was unreadable then because there was nothing to read
+    it INTO. All five pieces have shipped since, so what survived into this head was
+    a verdict whose premise was gone — and the arm costs ONE map-built anchor and
+    ONE `deriveAttackEffect` arm returning the two ops those rows already spell.
+
+    🛑 **D187's RULE IS WHAT MADE IT PAY, MEASURED RATHER THAN QUOTED.** *An arm
+    transfers across sets; a registry row does not.* Chien-Pao ex `sv02-061` and
+    Mewtwo VSTAR `swsh10.5-031` have both ROTATED, so the two hand-authored rows
+    serve **ZERO** Standard-legal printings and the arm serves **13**. The rows are
+    KEPT (the registry wins, so no board moves; and Mewtwo VSTAR's is the engine's
+    only index-keyed multi-attack witness) and their two `deriveAttackEffect(...)
+    === null` rungs are RE-POINTED to assert the two producers build the IDENTICAL
+    program — a strictly stronger claim, and D361's move on Mawile one family over.
+
+    🛑 **THE FOLD SPLIT THE FAMILY AND ONLY HALF IS TAKEN, ON A MECHANISM.** The
+    wider *"…for each card you discarded in this way."* family is 12 sentences / 27
+    printings. The 6 / 13 that print *"does N damage for each"* MULTIPLY: the printed
+    "N×" is the per-unit and `attack.ts scaledBase` drops the base, which is exactly
+    what a top-level `damageDefender` already means. The 3 / 10 that print *"does N
+    **more** damage for each"* keep the base, and `damageDefender {per, count}`
+    cannot express that: its hit is a SEPARATE `snipeActive` pass, so a kept base
+    would deal the printed number in the pre-program pipeline and the scaled part
+    inside the program — Weakness distributes over a split hit, but Resistance and
+    `damageReductionAfterWR` are subtractions paid once per hit and the §8.1 survival
+    clamp is asked twice. **THE ADDITIVE HALF IS A SECOND READER**, which is D163's
+    finding on `SELF_COUNTER_SCALE` / `SELF_COUNTER_MULTIPLY` one count-source over.
+
+    ⚠️ **SO THE PREDICTION THIS SLICE WAS HANDED IS FALSE, AND ITS TWO NAMED
+    FALSIFIERS INTERACT.** It said all 12 were expressible with no new op and no new
+    field, the only widening being a Bench-only `discardEnergy.from`. Measured: every
+    Bench-only printing (2 sentences / 8) is on the ADDITIVE side, so the fold split
+    removes the need for that union member entirely rather than compounding with it —
+    and the union is NOT widened here, which is also why `MATCH_RECORD_VERSION` stays
+    **25**.
+
+    ⚠️ **ONE READ SITE MOVED THAT NO CENSUS COUNTS**: `energyNoun` (interpreter.ts)
+    grew its `basicEnergy` arm, because this family's largest member is the first
+    sentence to reach `discardNote` with that filter and the caption would otherwise
+    have promised *"any amount of Energy"* over a pick restricted to Basic Energy.
+    `moveNote` had hand-spelled the same phrase since D226 and now delegates —
+    identical bytes, one answer.
+
+    Cost: **1 anchor, 1 `deriveAttackEffect` arm, 1 `energyNoun` arm, 1 delegation,
+    2 fixtures, 1 deck, and SIX re-pointed refusal claims** (`hailBlade`,
+    `psyPurge`, `providesEnergy` §near-misses, `registry.ts` ×3 doc blocks,
+    `attack.ts`, `testFixtures.ts` — all NULL → SHAPE or reworded, annotated rather
+    than deleted, D178). **ZERO new ops, fields, `BoardCondition` members or registry
+    rows.** No web/API/DB/schema change.
+
+    engineVersion 0.306.0 → **0.307.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.306.0 → **THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE, AND A
     SEQUENCING QUESTION THAT TURNED OUT TO BE ALREADY ANSWERED.**
 
@@ -16563,7 +16640,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.306.0";
+export const engineVersion = "0.307.0";
 
 export type {
   ApplyResult,

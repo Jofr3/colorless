@@ -1009,6 +1009,19 @@ describe("the engine version", () => {
     // `InPlayPokemon`, `PlayerSide` or `GameState`. No v23 byte string can contain a
     // member that did not exist and none means anything different under this head
     // (D335's discriminator). The post-bump anchor pass was clean.
+    // 🆕🆕 D402 — 0.306.0 -> **0.307.0**, THE DISCARD-COUNT-SCALED ATTACK.
+    // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed, and the honest
+    // place to ask it was the `from` UNION — which this slice does NOT widen. Both
+    // ops are persisted (`discardEnergy` PARKS, so it rides
+    // `GameState.phase.cont.pendingOp`, and `damageDefender` rides its `rest` tail),
+    // so the question is live and not skippable. The answer is that EVERY value this
+    // arm emits was already representable and already authored: `from: "yours"`
+    // (D96), `from: "yourActive"` (0.x), `count: "any"` + `cap` (D97),
+    // `count: "all"` (0.x), `recordAs: "discarded"` (D96), `filter: providesEnergy`
+    // (D191) and `filter: basicEnergy` (M5) — so a v25 record holding this program
+    // means exactly what it meant before the arm existed. **NEW COMBINATIONS OF AN
+    // ALREADY-PERSISTABLE VOCABULARY ARE NOT A NEW SHAPE** (D361's own test, and its
+    // words). The post-bump anchor pass was clean.
     // 🆕🆕 D401 — 0.305.0 -> **0.306.0**, THE SELF-DISCARD COST BEFORE AN ANY-TARGET SNIPE.
     // 🆕🆕 D400 — 0.304.0 -> **0.305.0**, THE ANY-TARGET ARITY.
     // `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than assumed. `damageChosen`
@@ -1018,8 +1031,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.306.0");
-    expect(manifest.version).toBe("0.306.0");
+    expect(engineVersion).toBe("0.307.0");
+    expect(manifest.version).toBe("0.307.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
