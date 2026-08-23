@@ -16966,4 +16966,109 @@ export const MUTANTS: Mutant[] = [
     replace: "        ? `Discard ${what} from this Pok\u00e9mon.`",
     expectKilledBy: ["packages/engine/src/selfEnergyToHand.test.ts"],
   },
+  // ── D406 — THE COUNTED TOOL SCALER. Nine rows, and EVERY `find` carries a symbol
+  //    THIS SLICE OWNS — `countToolsInPlay`, `toolsOnYourBoard` or
+  //    `YOUR_TOOLS_MULTIPLY` — which is D404's finding applied rather than cited: an
+  //    exactly-once `find` can still be sitting on a neighbour's arm, and uniqueness
+  //    is not ownership. The four evaluator rows share ONE single-line `find` because
+  //    the four claims that line carries are independent (the SEAT, the ZONE twice
+  //    over, and the RESOURCE), and every one of them is a real neighbouring arm in
+  //    the same `switch` rather than a straw.
+  //
+  //    ⚠ **SEVEN OF THE NINE ARE SILENT IN EVERY CENSUS FIGURE IN THE REPO.** The
+  //    sentence still resolves, `BUILT.attack` is still 1365 and every reader
+  //    instrument still steps by 1 / 5 — while the attack reads the opponent's board,
+  //    ignores the Bench, counts bodies instead of Tools, or scores a printed 0. Only
+  //    the two ANCHOR rows (C8, C9) can move a census number at all, and C9 only
+  //    because it widens the pattern onto a sentence the column also prints. D400
+  //    measured this ratio at 4/8, D401 6/8, D402 9/12, D404 5/8, D405 5/8 — a SIXTH
+  //    anchor, and the highest yet.
+  //
+  //    🛑 **C5 AND C6 SHARE A THREE-LINE `find` OVER `countToolsInPlay`'s SIGNATURE AND
+  //    ITS FIRST TWO LINES, WHICH IS AN ADJACENCY CLAIM.** The `holders` line is the
+  //    idiom twenty-two other sites in continuous.ts spell verbatim, so it cannot be
+  //    anchored on alone; the signature above it is what makes the row OWNED. A slice
+  //    that inserts a line between them falsifies both rows without touching a
+  //    character of the quoted text (D317/D381/D383/D405's tripwire).
+  {
+    id: "D406-seat-is-the-defender",
+    decision: "D406",
+    what: "\ud83d\uded1 C1 \u2014 **THE SEAT FLIPS TO THE DEFENDER**, which is `opponentBenchCount`'s real arm three cases up in the same `switch` and the mistake the printed word invites: the attack DAMAGES the opponent, so the two seats are opposite ends of one swing and \"whose board\" is the one thing the arithmetic cannot tell you. \u26a0\ufe0f **EVERY BOARD WHERE THE TWO SIDES WEAR THE SAME NUMBER OF TOOLS IS GREEN EITHER WAY**, which is most boards a suite writes by accident. \u00a73's canonical board wears 3 on the attacker's side and 5 on the defender's, so this reads 150 where the truth is 90, and \u00a74's seat rung drives the extreme case: 5 on THEIR board and none on the attacker's, where the truth is no `DAMAGE_DEALT` row at all",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countToolsInPlay(state, attackerSeat) * bonus.per;",
+    replace: "      return countToolsInPlay(state, defenderSeat) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-zone-narrows-to-the-active",
+    decision: "D406",
+    what: "\ud83d\uded1 C2 \u2014 **THE ZONE NARROWS FROM THE BOARD TO THE ACTIVE**, which is the reading `yourActiveHasToolAttached` takes one abstraction down and the one this engine already had before the slice. The printed noun is *\"all of your Pok\u00e9mon\"*, \u00a76.3's \"in play\" \u2014 Active **plus** Bench. \u26a0\ufe0f **EVERY EMPTY-BENCH BOARD IS GREEN EITHER WAY**, which is the shape a fixture deck naturally produces; \u00a73 splits the canonical board 2 on the Active and 1 on the Bench, and \u00a74's bench rung puts ALL the Tools behind the Active, where this mutant deals nothing and the truth is 60",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countToolsInPlay(state, attackerSeat) * bonus.per;",
+    replace: "      return (state.players[attackerSeat].active?.tools.length ?? 0) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-zone-narrows-to-the-bench",
+    decision: "D406",
+    what: "\u26a0\ufe0f C3 \u2014 **THE ZONE NARROWS THE OTHER WAY, TO THE BENCH ALONE** \u2014 `damageCountersOnYourBench`'s real zone walk two cases up, which is the neighbour a copy-paste actually reaches. The Active is INSIDE the printed \"all of\", not beside it. \u00a73's canonical board reads 1 here against a truth of 3, and \u00a74's Active-only rungs read 0 against 30 and 60",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countToolsInPlay(state, attackerSeat) * bonus.per;",
+    replace: "      return state.players[attackerSeat].bench.reduce((total, p) => total + p.tools.length, 0) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-resource-is-bodies",
+    decision: "D406",
+    what: "\ud83d\uded1 C4 \u2014 **THE RESOURCE BECOMES BODIES**: the arm becomes `yourBenchCount`'s, verbatim, which is two cases up in this same `switch` and is the mirror-image mistake `damageCountersOnYourBench`'s own doc block warns about (same zone walk, different question). \u26a0\ufe0f **A BOARD WHERE EVERY BENCHED POK\u00c9MON WEARS EXACTLY ONE TOOL AND THE ACTIVE WEARS NONE IS GREEN EITHER WAY.** \u00a73's canonical board holds 2 benched bodies against 3 Tools, and \u00a74's bodies rung fields two benched Pok\u00e9mon wearing NOTHING, where this deals 60 and the truth is no `DAMAGE_DEALT` row at all",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countToolsInPlay(state, attackerSeat) * bonus.per;",
+    replace: "      return benchBodies(state, attackerSeat) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-counts-bodies-wearing-a-tool",
+    decision: "D406",
+    what: "\ud83d\uded1 C5 \u2014 **`tools.length` BECOMES A BOOLEAN TALLY: how many bodies WEAR a Tool, rather than how many Tools are attached.** This is the singular printed *\"a Pok\u00e9mon Tool\"* read the way both EXISTENCE clauses read it (`tools.length > 0`), and it is right on every board where \u00a77.4's one-per-body cap holds \u2014 which is every board the real attach gate can produce. It is WRONG because the cap is an ATTACH-GATE rule and Revavroom ex `sv03-156`'s \"Tune-Up\" raises it to 4, so a body wearing two is a legal board. \u00a73's canonical board reads 2 here against a truth of 3, and \u00a73's own three-on-one-body rung reads 1 against 3",
+    file: "packages/engine/src/continuous.ts",
+    find: "export function countToolsInPlay(state: GameState, seat: Seat): number {\n  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  for (const holder of holders) total += holder.tools.length;",
+    replace: "export function countToolsInPlay(state: GameState, seat: Seat): number {\n  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  for (const holder of holders) total += holder.tools.length > 0 ? 1 : 0;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-holders-drop-the-active",
+    decision: "D406",
+    what: "\u26a0\ufe0f C6 \u2014 **THE HOLDER LIST DROPS THE ACTIVE**, the same narrowing as C2 but made in the COUNTER rather than in the evaluator \u2014 which is where it would actually be made, because the `holders` ternary is the line a reader's eye edits. `countEnergyInPlay` directly above spells the identical idiom, so the two readings of one printed scope would drift apart here and nowhere else. \u00a73's zone rung and \u00a74's Active-only rungs both fall",
+    file: "packages/engine/src/continuous.ts",
+    find: "export function countToolsInPlay(state: GameState, seat: Seat): number {\n  const side = state.players[seat];\n  const holders = side.active === null ? side.bench : [side.active, ...side.bench];",
+    replace: "export function countToolsInPlay(state: GameState, seat: Seat): number {\n  const side = state.players[seat];\n  const holders = side.bench;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-zero-per-scores",
+    decision: "D406",
+    what: "\u26a0\ufe0f C7 \u2014 **THE `per >= 1` GUARD GOES**, which is the guard EVERY arm in both scaling families carries and the one a new arm most easily forgets. A printed 0 would then resolve silently at zero damage instead of staying on the loud ATTACK_EFFECT_SKIPPED path \u2014 the difference between \"this engine does not simulate that sentence\" and \"this engine simulates it as nothing\". \u00a72's zero rung is what fields it",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"toolsOnYourBoard\" } };",
+    replace: "    return { per, count: { kind: \"toolsOnYourBoard\" } };",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-member-is-the-neighbour",
+    decision: "D406",
+    what: "\ud83d\uded1 C8 \u2014 **THE ARM RETURNS `yourBenchCount`**, the member of the arm directly above it in the same reader \u2014 a neighbour copied whole, which is the mistake this corpus is built out of (D199's thirty-six). \u26a0\ufe0f **IT IS SILENT IN EVERY CENSUS**: the sentence still resolves, so `BUILT.attack` is still 1365 and every reader instrument still steps by 1 / 5, while the card counts the wrong thing forever. Only a BOARD tells them apart",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"toolsOnYourBoard\" } };",
+    replace: "    if (per >= 1) return { per, count: { kind: \"yourBenchCount\" } };",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts"],
+  },
+  {
+    id: "D406-anchor-swallows-the-seat",
+    decision: "D406",
+    what: "\ud83d\uded1 C9 \u2014 **THE ANCHOR'S NOUN BECOMES `[^.]*`, WHICH SWALLOWS THE OPPONENT-SIDE SPELLING** \u2014 the near miss D193 refused for `OPPONENT_ENERGY_SCALE` and D196 for `SELF_ENERGY_SCALE`, arriving here for the third time. The member carries no `side`, so a pattern that admits *\"all of your opponent's Pok\u00e9mon\"* would count the ATTACKER's Tools for a sentence about the DEFENDER's. \u26a0\ufe0f **AND THIS IS ONE OF ONLY TWO ROWS IN THE SET A CENSUS CAN SEE**, because the widened pattern also claims the four legal printings of *\"\u2026 for each {G} Energy attached to all of your Pok\u00e9mon.\"*'s neighbourhood \u2014 \u00a72's UNPRINTED_OPPONENT rung is what names it, and `censusAtHead` is what notices the count",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each Pok\u00e9mon Tool attached to all of your Pok\u00e9mon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each Pok\u00e9mon Tool attached to [^.]*\\.$/;",
+    expectKilledBy: ["packages/engine/src/toolCountScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
 ];
