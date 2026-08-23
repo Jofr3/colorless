@@ -4880,6 +4880,38 @@ export const FIXTURE_POOL: Record<string, Card> = {
       by this slice either. The ids that print this sentence are unknown to this
       container (no D1 credentials, D369), so the key is a `fix-*` one and the base is
       CHOSEN rather than transcribed. A Basic. */
+  /** 🆕 **D406 — the COUNTED TOOL SCALER's attacker**: the printed sentence *"This
+      attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."*
+      (5 legal printings, `legalAttackCorpus()`), the THIRTEENTH `DamageCountSource`
+      and the first thing this family counts that is neither an Energy, a body nor a
+      damage counter.
+
+      🛑 **THE PRINTED `30×` IS LOAD-BEARING.** The sentence carries no *"more"*, so it
+      lands on the MULTIPLY fold and `attack.ts` DROPS the printed base — a build that
+      kept it would read 30 + 30×n, and the Tool-less board would deal 30 instead of
+      nothing at all. The marker is what says so, and it is transcribed rather than
+      chosen.
+
+      `{C}` so the cost never gets in the way of a board this suite is measuring, and
+      110 HP so the attacker's own survival never does either. NO owner prefix in the
+      key — the possessive fixture toll (`ownerPrefix.test.ts`) is not paid by this
+      slice. The ids that print this sentence are unknown to this container (no D1
+      credentials, D369), so the key is a `fix-*` one and every scalar except the
+      effect text and the `×` marker is CHOSEN rather than transcribed. A Basic. */
+  "fix-toolscaler": battler("fix-toolscaler", {
+    types: ["Fighting"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Psychic", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Gear Grind",
+        damage: "30×",
+        effect: "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon.",
+      },
+    ],
+  }),
   "fix-selfenergyhand": battler("fix-selfenergyhand", {
     types: ["Grass"],
     hp: 110,
@@ -14360,6 +14392,29 @@ export const HAND_DRAW_DECK = deckOf({
 
     `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, and a defender the
     flat 30 never Knocks Out, so no KO tail lands between the pick and the hand write). */
+/** 🆕🆕 **D406: the counted Tool scaler, on a board where the attached TOOLS are the
+    instrument.** Both seats run it, because the seat is one of the two things the
+    evaluator can get wrong: the printed word is *"all of YOUR Pokémon"*, so the
+    opponent's Tools have to be reachable in order to be proved invisible.
+
+    `fix-tool` at TWELVE, and the number is a board rather than a habit: the widest
+    board this suite drives wears 3 Tools on the attacker's side and 5 on the
+    defender's, and §7.4's one-per-body cap is an ATTACH-GATE rule that
+    `attachToolFromDeck` deliberately does not enforce — so one Active wearing TWO is
+    a real board here and the count must be `tools.length` summed, never the number of
+    bodies that have one.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup), and it is the
+    Bench filler on BOTH sides as well as the defender — every body this suite counts
+    is placed by surgery, so the bench population and the Tool population can be moved
+    independently and never agree by accident. */
+export const TOOL_COUNT_DECK = deckOf({
+  "fix-toolscaler": 4, // "This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."
+  "fix-tool": 12, // the unauthored Tool — the resource this whole suite counts
+  "fix-bigbody": 36, // 200 HP neutral — DOMINANT (mulligan-free), the Bench bodies and the defender
+  "fix-energy": 8, // Basic {C} — pays the printed {C}, and the Energy a Tool count must ignore
+});
+
 export const SELF_ENERGY_HAND_DECK = deckOf({
   "fix-selfenergyhand": 4, // "Put an Energy attached to this Pokémon into your hand."
   "sv01-039": 2, // Charcadet "Ember" — the BARE self-discard, the caption CONTROL
