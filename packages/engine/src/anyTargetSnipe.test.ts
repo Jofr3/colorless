@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
   ANY_SNIPE_DECK,
+  COST_SNIPE_DECK,
   FEINT_DECK,
   TWIN_SNIPE_DECK,
   attachFromDeck,
@@ -37,6 +38,14 @@ import {
 // fix-feint (a synthetic {L} witness carrying the verbatim SV text) is the tester: on
 // the {L}-weak Active the 50 stays FLAT (not doubled), and a benched Bouffalant's −20
 // Bouffer is skipped.
+//
+// 0.305.0 → 0.306.0 — 🆕🆕 D401: THE SELF-DISCARD COST IN FRONT OF THE SNIPE (§4–§6 below).
+//
+// The compound family — 4 sentences / 7 printings — gets its OWN whole-sentence
+// anchor, because `deriveAttackEffect` has no composition path and never has had one.
+// The engine's first attack program to PARK TWICE on one printed sentence pair, and it
+// cost no op, no field and no persisted version: `EffectContinuation.rest` has been an
+// `EffectOp[]` since M5, so the queue already did this.
 //
 // 0.304.0 → 0.305.0 — 🆕🆕 D400: THE ARITY, AND THE TAIL'S NUMBER THAT AGREES WITH IT.
 //
@@ -422,18 +431,31 @@ describe("§1 — D400's price and its SHAPE question, both measured off the cor
     ).toEqual([]);
   });
 
-  it("⚠️ the COMPOUND count-≠-1 family is NAMED, not discovered — 2 sentences / 4 printings stay unbuilt", () => {
-    // Both lead with a discard, so they are off the `^This attack does` anchor and a
-    // count capture alone cannot move them. Recorded here so the next census
-    // arithmetic is not surprised by a residue that did not shrink as far as the
-    // "count ≠ 1" phrasing suggests it should.
+  it("⚠️ RE-POINTED AT D401 — the COMPOUND count-≠-1 family was NAMED here, and D401 built it", () => {
+    // ⚠️ **THE HANDOFF THIS RUNG WAS WRITTEN AS, SPENT ONE SLICE LATER.** D400 named
+    // the two count-≠-1 compounds, asserted the population and asserted that a count
+    // capture structurally could not move them — true then and true now: they are off
+    // the `^This attack does` anchor and it is a SECOND anchor, not a wider first one,
+    // that reads them. So the POPULATION half is unchanged and still guards the
+    // arithmetic, while the resolution half is RE-POINTED rather than deleted (D399's
+    // rule, third slice running).
     const compounds = corpus().filter(
       ([, t]) =>
         /^Discard .* This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(t),
     );
     expect(compounds).toHaveLength(2);
     expect(units(compounds)).toBe(4);
-    for (const [, t] of compounds) expect(deriveAttackEffect(t), t).toBeNull();
+    for (const [, t] of compounds) expect(deriveAttackEffect(t), t).not.toBeNull();
+    // 🛑 AND THE THING THAT IS STILL REFUSED IS THE ONE THAT MATTERS: `CHOSEN_ANY_TARGET`
+    // did NOT widen to reach them. Stripping the leading discard clause leaves a
+    // sentence that reader resolves on its own — so if the two anchors had been merged
+    // into a prefix match, the cost would silently vanish and this control would still
+    // be green. It is the compound that must derive TWO ops, not one.
+    for (const [, t] of compounds) {
+      expect(deriveAttackEffect(t), t).toHaveLength(2);
+      const bare = t.replace(/^Discard [^.]+\. /, "");
+      expect(deriveAttackEffect(bare), bare).toHaveLength(1);
+    }
   });
 });
 
@@ -638,6 +660,484 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
 
   it("never mutates the state it was given (purity — through the count-2 auto-take arm)", () => {
     const state = twin(4005, "fix-twinsnipe", ["sv03-174"]);
+    deepFreeze(state);
+    expect(() => applyAction(state, { type: "attack", seat: "p1", index: 0 })).not.toThrow();
+  });
+});
+
+// ── 🆕🆕 D401 ──────────────────────────────────────────────────────────────────
+//
+// The §8 SELF-DISCARD COST in front of the snipe: the compound family, the shape
+// question the catalog answered, and the first attack program in this engine that
+// parks TWICE on one sentence pair.
+
+/** The four printed compounds, byte-for-byte from the committed corpus. */
+const COST_TWO =
+  "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+const ALL_THREE =
+  "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+const ALL_ONE =
+  "Discard all Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+const ALL_ONE_COMMA =
+  "Discard all Energy from this Pokémon, and this attack does 120 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+const COMPOUNDS = [COST_TWO, ALL_THREE, ALL_ONE, ALL_ONE_COMMA] as const;
+
+const DISCARD_ALL = {
+  op: "discardEnergy",
+  from: "yourActive",
+  filter: { kind: "anyEnergy" },
+  count: "all",
+} as const;
+
+/** Both setup Actives pin to the NEUTRAL 200 HP body unless a rung asks otherwise,
+    so a 110 or a 120 lands flat and no KO tail rides along with the sequence. */
+function costBoard(seed: number, p2Active = "fix-bigbody"): GameState {
+  const state = driveSetup(
+    seed,
+    { p1: COST_SNIPE_DECK, p2: COST_SNIPE_DECK },
+    { first: "p2", active: { p1: "fix-bigbody", p2: p2Active } },
+  );
+  return mustApply(state, { type: "endTurn", seat: "p2" }).state;
+}
+
+/** P1 fields `attacker` with `energy` attached; P2 keeps its pinned Active and its
+    Bench holds exactly `benched`. */
+function costSnipe(
+  seed: number,
+  opts: {
+    attacker: string;
+    energy: readonly { id: string; count: number }[];
+    benched: readonly string[];
+    p2Active?: string;
+  },
+): GameState {
+  let state = setActiveFromDeck(costBoard(seed, opts.p2Active), "p1", opts.attacker);
+  for (const e of opts.energy) state = attachFromDeck(state, "p1", e.id, e.count);
+  for (const body of opts.benched) state = benchFromDeck(state, "p2", body);
+  return state;
+}
+
+describe("§4 — D401's price, and the SHAPE question settled from the catalog", () => {
+  it("🛑 the compound family is 4 sentences / 7 printings, and this anchor reads exactly them", () => {
+    // The population is measured from the committed column rather than inherited,
+    // and it is measured with the SAME shape the anchor spells — so a widened or
+    // narrowed regex moves this rung before it moves anything else.
+    const family = corpus().filter(([, t]) => COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    expect(family).toHaveLength(4);
+    expect(units(family)).toBe(7);
+    for (const t of COMPOUNDS) expect(corpus().some(([, c]) => c === t), t).toBe(true);
+    // …and nothing ELSE in the whole column derives to a self-discard followed by an
+    // any-target snipe. The reach and the census are the same set, which is the
+    // check D139 says a bare `(\d+)` cannot be trusted without.
+    const reads = corpus().filter(([, t]) => {
+      const ops = deriveAttackEffect(t);
+      return (
+        ops !== null &&
+        ops.length === 2 &&
+        ops[0]?.op === "discardEnergy" &&
+        ops[1]?.op === "damageChosen"
+      );
+    });
+    expect(reads.map(([, t]) => t).sort()).toEqual([...COMPOUNDS].sort());
+    expect(units(reads)).toBe(7);
+  });
+
+  it("🛑 THE SHAPE QUESTION: the printed JOIN is 3 sentences on `. ` and 1 on `, and `", () => {
+    // 🛑 THE `. `-ONLY READING WOULD HAVE REFUSED THE FOURTH ON A CONJUNCTION RATHER
+    // THAN ON A MECHANISM — D399's "a refusal that expired on a literal". Measured:
+    // the period join carries 3 sentences / 6 printings and the comma join 1 / 1, the
+    // ops are identical across the split, and both spellings resolve.
+    const period = corpus().filter(([, t]) => /Pokémon\. This attack does/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    const comma = corpus().filter(([, t]) => /Pokémon, and this attack does/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    expect([period.length, units(period)]).toEqual([3, 6]);
+    expect([comma.length, units(comma)]).toEqual([1, 1]);
+    // The two joins are ONE relation: rewriting the comma printing's join into the
+    // period one gives a sentence the anchor reads to the very same program.
+    expect(ALL_ONE_COMMA.replace("Pokémon, and this", "Pokémon. This")).toBe(ALL_ONE);
+    expect(deriveAttackEffect(ALL_ONE_COMMA)).toEqual(deriveAttackEffect(ALL_ONE));
+  });
+
+  it("🛑 AND THE W/R TAIL IS NOT ADMITTED, BECAUSE THIS SKELETON PRINTS IT ZERO TIMES", () => {
+    // `CHOSEN_ANY_TARGET`'s tail is a THREE-way optional; this one is TWO-way, and the
+    // difference is the measured cell rather than a preference. Sharing a fragment
+    // with that anchor would resolve a sentence nobody prints (D190b, and D382's own
+    // refusal to widen its `. Then, ` join to the coin form for the identical reason).
+    const tailed = corpus().filter(
+      ([, t]) => /^Discard /.test(t) && /isn't affected by Weakness or Resistance/.test(t),
+    );
+    expect(tailed).toEqual([]);
+    // …and the refusal is the TAIL's, not another byte's: the same sentence carrying
+    // the printed clarifier instead resolves, one clause apart (D399).
+    const wr =
+      "Discard all Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance.";
+    expect(deriveAttackEffect(wr)).toBeNull();
+    expect(
+      deriveAttackEffect(wr.replace(/ This attack's damage.*$/, " (Don't apply Weakness and Resistance for Benched Pokémon.)")),
+    ).toEqual(deriveAttackEffect(ALL_ONE));
+  });
+
+  it("🛑 the DISCARD quantifier is `all` or a digit, and `an` is printed ZERO times here", () => {
+    const all = corpus().filter(([, t]) => /^Discard all Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    const numeric = corpus().filter(([, t]) => /^Discard \d+ Energy/.test(t) && COMPOUNDS.includes(t as (typeof COMPOUNDS)[number]));
+    expect([all.length, units(all)]).toEqual([3, 4]);
+    expect([numeric.length, units(numeric)]).toEqual([1, 3]);
+    // The "an" spelling `SELF_DISCARD_ONE` reads on its own is not in the alternation,
+    // and the column is why: no compound prints it. The near-miss is one word from a
+    // resolving sentence, so nothing but the alternation can be refusing it.
+    const an = ALL_ONE.replace("Discard all Energy", "Discard an Energy");
+    expect(deriveAttackEffect(an)).toBeNull();
+    expect(corpus().some(([, t]) => t === an)).toBe(false);
+    expect(deriveAttackEffect(ALL_ONE)).not.toBeNull();
+  });
+});
+
+describe("§5 — the READING: two ops in printed order, and each half is the bare anchor's own", () => {
+  it("🛑 all four printed sentences derive, and the numbers are READ rather than remembered", () => {
+    expect(deriveAttackEffect(COST_TWO)).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 2 },
+      { op: "damageChosen", target: "opponentAny", amount: 120, count: 2, source: "attack", deals: true },
+    ]);
+    expect(deriveAttackEffect(ALL_THREE)).toEqual([
+      DISCARD_ALL,
+      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+    ]);
+    expect(deriveAttackEffect(ALL_ONE)).toEqual([
+      DISCARD_ALL,
+      { op: "damageChosen", target: "opponentAny", amount: 120, count: 1, source: "attack", deals: true },
+    ]);
+    expect(deriveAttackEffect(ALL_ONE_COMMA)).toEqual(deriveAttackEffect(ALL_ONE));
+    // Three numbers no printing carries, at once — the guard against a reader that
+    // memorised this slice's amounts instead of capturing them.
+    expect(
+      deriveAttackEffect(
+        "Discard 4 Energy from this Pokémon. This attack does 35 damage to 5 of your opponent's Pokémon.",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 4 },
+      { op: "damageChosen", target: "opponentAny", amount: 35, count: 5, source: "attack", deals: true },
+    ]);
+  });
+
+  it("🛑 D132's INVENTORY RULE: each half is BYTE-IDENTICAL to the bare anchor's own output", () => {
+    // The whole claim of a compound anchor is that it buys a JOIN and nothing else. If
+    // either half drifted from the reading the standalone sentence already has, this
+    // arm would be a second, quieter implementation of an op that already ships.
+    const compound = deriveAttackEffect(COST_TWO) as EffectOp[];
+    expect(compound[0]).toEqual(
+      (deriveAttackEffect("Discard 2 Energy from this Pokémon.") as EffectOp[])[0],
+    );
+    expect(compound[1]).toEqual(
+      (deriveAttackEffect(
+        "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ) as EffectOp[])[0],
+    );
+    const all = deriveAttackEffect(ALL_THREE) as EffectOp[];
+    expect(all[0]).toEqual(
+      (deriveAttackEffect("Discard all Energy from this Pokémon.") as EffectOp[])[0],
+    );
+    expect(all[1]).toEqual(
+      (deriveAttackEffect(
+        "This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ) as EffectOp[])[0],
+    );
+  });
+
+  it("🛑 a printed 0 in ANY of the THREE positions stays LOUD, each against its own twin", () => {
+    // Three separate positivity questions, asserted separately rather than as one —
+    // and each refusal is ONE CHARACTER from a sentence that resolves in the same `it`,
+    // so no other byte can be blamed for it (D399).
+    for (const [bad, good] of [
+      [
+        "Discard 0 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon.",
+        "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon.",
+      ],
+      [
+        "Discard 2 Energy from this Pokémon. This attack does 0 damage to 2 of your opponent's Pokémon.",
+        "Discard 2 Energy from this Pokémon. This attack does 1 damage to 2 of your opponent's Pokémon.",
+      ],
+      [
+        "Discard 2 Energy from this Pokémon. This attack does 120 damage to 0 of your opponent's Pokémon.",
+        "Discard 2 Energy from this Pokémon. This attack does 120 damage to 1 of your opponent's Pokémon.",
+      ],
+    ] as const) {
+      expect(deriveAttackEffect(bad), bad).toBeNull();
+      expect(deriveAttackEffect(good), good).not.toBeNull();
+    }
+  });
+
+  it("🛑 the printed NEAR-MISSES of the same family are all refused, and every one is real", () => {
+    // Every string here is a sentence the legal column actually prints beside this
+    // one, so none of them is a straw refusal. Each owes a mechanism this arm does
+    // not have: a zone (`Benched`), a rider verb (`also`), an `ex` filter, a typed
+    // discard, a discard from the HAND, or a scaling tail.
+    for (const text of [
+      "Discard 2 Energy from this Pokémon. This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all {R} Energy from this Pokémon, and this attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+    }
+    // ⚠️ AND THE ONE NEAR-MISS THAT IS **NOT** IN THIS COLUMN, NAMED AS SUCH RATHER
+    // THAN LEFT IN THE LIST ABOVE. Pawmot ex "Levin Strike"'s TYPED cost is the
+    // refusal `attackPark.test.ts` and `providesEnergy.test.ts` have both carried
+    // since M5, and it is the sentence this anchor comes closest to swallowing — but
+    // it is `legal_standard = 0` today, so it has no printing in the population every
+    // other line here is measured against. Asserting it as "real" would have been the
+    // census version of a vacuous guard; asserting the refusal is still worth it,
+    // because `TYPED_SELF_DISCARD` owns the sentence and this arm must not take it.
+    const typed =
+      "Discard 2 {L} Energy from this Pokémon. This attack does 220 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(deriveAttackEffect(typed)).toBeNull();
+    expect(corpus().some(([, t]) => t === typed)).toBe(false);
+    // …and it is refused by the TYPE token alone: strip the `{L}` and it resolves.
+    expect(deriveAttackEffect(typed.replace("2 {L} Energy", "2 Energy"))).not.toBeNull();
+  });
+
+  it("🛑 the anchor's TERMINATOR: a compound that BEGINS with a printed compound is refused", () => {
+    // Dropping the `$` would turn this into a PREFIX match and it would LOOK LIKE A
+    // COVERAGE WIN. The only strings that reach a whole-sentence terminator are ones
+    // the pattern matches ENTIRELY and that then keep going; every other near-miss
+    // above is refused further up. Driven at BOTH stopping points, because the
+    // optional clarifier is exactly where a prefix match would otherwise halt.
+    for (const text of [
+      "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
+      `${COST_TWO} Your opponent's Active Pokémon is now Paralyzed.`,
+    ]) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+    }
+    expect(
+      deriveAttackEffect(
+        "Discard 2 Energy from this Pokémon. This attack does 120 damage to 2 of your opponent's Pokémon.",
+      ),
+    ).not.toBeNull();
+    expect(deriveAttackEffect(COST_TWO)).not.toBeNull();
+  });
+
+  it("🛑 the three BARE anchors are UNMOVED — this slice added a reader, it did not re-aim one", () => {
+    expect(deriveAttackEffect("Discard all Energy from this Pokémon.")).toEqual([DISCARD_ALL]);
+    expect(deriveAttackEffect("Discard 2 Energy from this Pokémon.")).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 2 },
+    ]);
+    expect(deriveAttackEffect("Discard an Energy from this Pokémon.")).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "This attack does 120 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([
+      { op: "damageChosen", target: "opponentAny", amount: 120, count: 2, source: "attack", deals: true },
+    ]);
+  });
+});
+
+describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
+  it("🛑 the COST parks FIRST and no damage has been dealt yet", () => {
+    // Three Energy in TWO distinguishable prints: "which 2 of these 3 go" is a real
+    // decision, which is the only reason the first half parks at all.
+    const state = costSnipe(4100, {
+      attacker: "fix-costsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-lightning-weak"],
+    });
+    const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    // 🛑 THE ORDER IS THE CLAIM. Nothing has been damaged: the snipe is the SECOND op
+    // and it has not run. A build that emitted the two ops the other way round would
+    // deal 120 twice here and ask for the Energy afterwards.
+    expect(types(events)).not.toContain("DAMAGE_DEALT");
+    expect(types(events)).toContain("EFFECT_PENDING");
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(parked.phase.seat).toBe("p1");
+    expect(parked.phase.resumeTail).toBe(true);
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    expect(parked.phase.prompt.scope).toEqual({ kind: "total", count: 2 });
+    expect(parked.phase.prompt.discardable).toHaveLength(3);
+    // …and the epilogue is QUEUED behind it, not run.
+    expect(parked.pending).toHaveLength(1);
+    expect(parked.pending[0]?.kind).toBe("attackEpilogue");
+    expect(types(events)).not.toContain("TURN_ENDED");
+  });
+
+  it("🛑 resolving the cost PARKS AGAIN for the targets — the second question of one sentence pair", () => {
+    const state = costSnipe(4101, {
+      attacker: "fix-costsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-lightning-weak"],
+    });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    const picks = parked.phase.prompt.discardable.slice(0, 2).map((c) => c.uid);
+    const { state: second, events } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "discardEnergy", uids: picks },
+    });
+    // The cost was really PAID — two Energy left the attacker for its own pile, in
+    // ONE batched row (the event carries `uids`, not one row per card).
+    expect(find(events, "ENERGY_DISCARDED")?.uids).toEqual(picks);
+    expect(find(events, "ENERGY_DISCARDED")?.actor).toBe("p1");
+    for (const uid of picks) expect(second.players.p1.discard).toContain(uid);
+    expect(second.players.p1.active?.energy).toHaveLength(1);
+    // …and the turn did NOT end, because `rest` still held the second op.
+    expect(types(events)).not.toContain("TURN_ENDED");
+    if (second.phase.kind !== "effect:choose") throw new Error("expected a SECOND effect:choose");
+    if (second.phase.prompt.kind !== "choosePokemonMulti") {
+      throw new Error("expected choosePokemonMulti");
+    }
+    expect([second.phase.prompt.min, second.phase.prompt.max]).toEqual([2, 2]);
+    expect(second.phase.prompt.candidates).toHaveLength(3);
+    // Still nothing damaged: the second question has been ASKED, not answered.
+    expect(types(events)).not.toContain("DAMAGE_DEALT");
+    expect(second.players.p2.active?.damage).toBe(0);
+  });
+
+  it("🛑 answering BOTH runs the whole sentence pair, and ENERGY_DISCARDED precedes DAMAGE_DEALT", () => {
+    const state = costSnipe(4102, {
+      attacker: "fix-costsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-lightning-weak"],
+    });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    const { state: second, events: e1 } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: {
+        kind: "discardEnergy",
+        uids: parked.phase.prompt.discardable.slice(0, 2).map((c) => c.uid),
+      },
+    });
+    if (second.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (second.phase.prompt.kind !== "choosePokemonMulti") {
+      throw new Error("expected choosePokemonMulti");
+    }
+    const targets = second.phase.prompt.candidates;
+    const { state: done, events: e2 } = mustApply(second, {
+      type: "resolveEffect",
+      seat: "p1",
+      // The Active AND one Bench — the pair in which `opponentAny` at count 2 differs
+      // from either zone's own op, driven THROUGH the cost.
+      choice: {
+        kind: "pokemonMulti",
+        refs: [targets[0] as PokemonRef, targets[1] as PokemonRef],
+      },
+    });
+    const dealt = findAll(e2, "DAMAGE_DEALT");
+    expect(dealt).toHaveLength(2);
+    // fix-bigbody is a neutral 200 HP Active and the Bench never takes W/R, so both
+    // hits are the printed 120 and nothing is Knocked Out.
+    for (const row of dealt) expect(row).toMatchObject({ base: 120, weakness: null, dealt: 120 });
+    expect(done.players.p2.active?.damage).toBe(120);
+    expect(done.players.p2.bench.map((b) => b.damage)).toEqual([120, 0]);
+    // 🛑 THE PRINTED ORDER, READ OFF THE EVENT STREAM ACROSS TWO ACTIONS: every
+    // ENERGY_DISCARDED happened in the FIRST resume and every DAMAGE_DEALT in the
+    // second, which is what "in printed order" means once both halves can park.
+    expect(types(e1)).toEqual(["ENERGY_DISCARDED", "EFFECT_PENDING"]);
+    expect(types(e2).indexOf("DAMAGE_DEALT")).toBeGreaterThanOrEqual(0);
+    expect(types(e2)).not.toContain("ENERGY_DISCARDED");
+    // …and only THEN the epilogue drained.
+    expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(done.pending).toEqual([]);
+    expect(done.players.p1.active?.energy).toHaveLength(1);
+  });
+
+  it("🛑 the ZERO-PARK control: the SAME anchor, the same two ops, and no prompt at all", () => {
+    // Kyurem's sentence: "all" has no decision in it, and a count-3 snipe against
+    // exactly three opponent bodies auto-takes all three. So the program runs straight
+    // through — which is what tells "this PROGRAM parks" apart from "this program's
+    // OPERANDS park", and it is the arity's floor as well (§8.6).
+    const state = costSnipe(4103, {
+      attacker: "fix-allsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-lightning-weak"],
+    });
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expect(types(events)).not.toContain("EFFECT_PENDING");
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    // All three Energy went, including the one that was surplus to the {C} cost.
+    expect(find(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
+    expect(done.players.p1.active?.energy ?? []).toHaveLength(0);
+    const dealt = findAll(events, "DAMAGE_DEALT");
+    expect(dealt).toHaveLength(3);
+    for (const row of dealt) expect(row).toMatchObject({ base: 110, dealt: 110 });
+    expect(done.players.p2.active?.damage).toBe(110);
+    expect(done.players.p2.bench.map((b) => b.damage)).toEqual([110, 110]);
+    expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
+  });
+
+  it("🛑 §8.5 STILL RUNS through the compound's second op — and the KO waits for BOTH parks", () => {
+    // The compound's snipe is byte-identical to the bare anchor's, so it must behave
+    // identically: a {L} attacker into a ×2 Lightning ACTIVE doubles (120 → 240 on a
+    // 130 HP body), and the KO is swept by the epilogue AFTER the second answer rather
+    // than at the damage step. The Bench pick stays flat, which is the same §8.5 split
+    // D400's rungs prove for the standalone sentence.
+    const state = costSnipe(4104, {
+      attacker: "fix-costsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-bigbody"],
+      p2Active: "fix-lightning-weak",
+    });
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (parked.phase.prompt.kind !== "discardEnergy") throw new Error("expected discardEnergy");
+    const { state: second } = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: {
+        kind: "discardEnergy",
+        uids: parked.phase.prompt.discardable.slice(0, 2).map((c) => c.uid),
+      },
+    });
+    if (second.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    if (second.phase.prompt.kind !== "choosePokemonMulti") {
+      throw new Error("expected choosePokemonMulti");
+    }
+    const targets = second.phase.prompt.candidates;
+    const { state: after, events } = mustApply(second, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: {
+        kind: "pokemonMulti",
+        refs: [targets[0] as PokemonRef, targets[1] as PokemonRef],
+      },
+    });
+    const dealt = findAll(events, "DAMAGE_DEALT");
+    expect(dealt[0]).toMatchObject({ base: 120, weakness: { op: "multiply", amount: 2 }, dealt: 240 });
+    expect(dealt[1]).toMatchObject({ base: 120, weakness: null, dealt: 120 });
+    expect(find(events, "KNOCKED_OUT")).toBeDefined();
+    if (after.phase.kind !== "ko:takePrizes") throw new Error("expected ko:takePrizes");
+  });
+
+  it("never mutates the state it was given (purity — through the two-park compound)", () => {
+    const state = costSnipe(4105, {
+      attacker: "fix-costsnipe",
+      energy: [
+        { id: "fix-lightning-energy", count: 2 },
+        { id: "fix-energy", count: 1 },
+      ],
+      benched: ["fix-lightning-weak", "fix-lightning-weak"],
+    });
     deepFreeze(state);
     expect(() => applyAction(state, { type: "attack", seat: "p1", index: 0 })).not.toThrow();
   });

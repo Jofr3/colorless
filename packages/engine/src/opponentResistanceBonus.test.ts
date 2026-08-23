@@ -525,7 +525,7 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // a real Grass -30 and D306 says transcribe the card rather than the fields the
     // tests read. The FIGHTING count below is what stands still, which is the rung
     // that keeps this file's own subject separate from a pool that grew beside it.
-    expect(ids).toHaveLength(501); // 🆕🆕 D400 — +2 Pokémon fixtures (`fix-twinsnipe`, `fix-twinfeint`); `withResistance` stands still, because neither prints a Resistance (a {F} ×2 WEAKNESS is the other column) // 🆕🆕 D399 — +1 Pokémon fixture (`fix-hazardousgreed` Wo-Chien `sv08-015`); `withResistance` stands still, because the printing prints no Resistance (a {R} ×2 WEAKNESS is the other column) // 🆕🆕 D398 — +1 Pokémon fixture (`fix-counterturn` Rabsca `sv08-014`); `withResistance` stands still, because the printing prints no Resistance // 🆕🆕 D397 — +2 Pokémon fixtures (`fix-bonevengeance` Marowak `sv07-073`, `fix-cubone` the card its clause NAMES); `withResistance` stands still, because neither prints one // 🆕🆕 D394 — +2 Pokémon fixtures (`fix-alloutattack` Falinks, `fix-crazyblast` Weezing); `withResistance` stands still at 28, because neither printing carries a resistance row
+    expect(ids).toHaveLength(503); // 🆕🆕 D401 — +2 Pokémon fixtures (`fix-costsnipe`, `fix-allsnipe`); `withResistance` and the FIGHTING count both stand still, because neither prints a Resistance (a {F} ×2 WEAKNESS is the other field) // 🆕🆕 D400 — +2 Pokémon fixtures (`fix-twinsnipe`, `fix-twinfeint`); `withResistance` stands still, because neither prints a Resistance (a {F} ×2 WEAKNESS is the other column) // 🆕🆕 D399 — +1 Pokémon fixture (`fix-hazardousgreed` Wo-Chien `sv08-015`); `withResistance` stands still, because the printing prints no Resistance (a {R} ×2 WEAKNESS is the other column) // 🆕🆕 D398 — +1 Pokémon fixture (`fix-counterturn` Rabsca `sv08-014`); `withResistance` stands still, because the printing prints no Resistance // 🆕🆕 D397 — +2 Pokémon fixtures (`fix-bonevengeance` Marowak `sv07-073`, `fix-cubone` the card its clause NAMES); `withResistance` stands still, because neither prints one // 🆕🆕 D394 — +2 Pokémon fixtures (`fix-alloutattack` Falinks, `fix-crazyblast` Weezing); `withResistance` stands still at 28, because neither printing carries a resistance row
     expect(withResistance).toHaveLength(28);
     expect(fighting).toHaveLength(18);
     // 🆕🆕 D399 — a `- 1` term at the FRONT of EVERY rung below: ONE body
@@ -617,18 +617,23 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // TWO Pokémon fixtures to the pool (`fix-twinsnipe`, `fix-twinfeint`). ⚠️ THE CHAIN
     // IS EDITED AT THE FRONT, NEVER AT THE END — each line still names the floor at the
     // slice that measured it, and the substitution is keyed on the frozen `.toBe(N)`.
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
+    // 🆕🆕 D401 — a `- 2` at the FRONT of every chain below: the SELF-DISCARD COST BEFORE
+    // AN ANY-TARGET SNIPE added TWO Pokémon fixtures to the pool (`fix-costsnipe`,
+    // `fix-allsnipe`). ⚠️ THE CHAIN IS EDITED AT THE FRONT, NEVER AT THE END — each line
+    // still names the floor at the slice that measured it, and the substitution is keyed
+    // on the frozen `.toBe(N)`.
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
     // 🆕🆕 D392 — a `- 3` term for this slice's three fixtures, at the FRONT of the chain.
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 2 - 2 - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3 - 1).toBe(24); // 🆕🆕 D393 — a `- 1` term at the FRONT: Gholdengo `sv08-131` prints a real Grass -30, transcribed whole (D306)
     expect(fighting.length - 2).toBe(16);
   });

@@ -318,8 +318,6 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     for (const text of [
       // Weavile sv06.5-014 "Hail Claw" — the discard plus a Paralyze.
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      // Kyurem sv06.5-047 "Trifrost" — the discard plus a three-target snipe.
-      "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // And the MOVE verb, which is a different op entirely (Blissey sv01-145,
       // Tropius sv02-007/-195, Darkrai sv03-136) — four more printings that a
       // reader keying on "all Energy from this Pokémon" would have claimed.
@@ -327,6 +325,21 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D401, NOT DELETED — Kyurem sv06.5-047 "Trifrost" (the discard
+    // plus a three-target snipe) stood in the list above as a NULL witness until
+    // `SELF_DISCARD_THEN_ANY_TARGET` mapped it. The claim this arm needs was never
+    // "nothing reads this sentence"; it was "THIS anchor does not reach it", so the
+    // row becomes a SHAPE claim — strictly stronger, because a build where the
+    // TAILS-gated body claimed the compound would return the inner op UNWRAPPED, and
+    // a `toBeNull` could not tell that from a correct refusal.
+    expect(
+      deriveAttackEffect(
+        "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+    ]);
     // ⚠️ RE-POINTED AT D147, NOT DELETED, AND THE FORECAST ONE LINE UP IS WHAT
     // CAME TRUE. This list said of Eiscue sv02-048/-205 "Frigid Block" that "the
     // day that family lands both halves derive and this must still not match" —

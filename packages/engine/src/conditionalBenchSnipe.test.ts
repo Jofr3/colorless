@@ -192,7 +192,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(units(flatTwos) + 1).toBe(5);
   });
 
-  it("🛑 the count-2 arity one anchor over is BUILT now, and the compound beside it is not", () => {
+  it("🛑 the count-2 arity one anchor over is BUILT, and D401 built the compound beside it too", () => {
     // ⚠️ **THE PRICE OF THE NEXT SLICE, MEASURED HERE — AND D400 THEN SPENT IT.** This
     // rung was written as a HANDOFF: the same literal `1` sat in `CHOSEN_ANY_TARGET`
     // over TWO sentences worth NINE printings, and the rung asserted the population,
@@ -212,17 +212,24 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // settled it by requiring the tail's number to AGREE with the count.
     expect(anyTwos.filter(([, s]) => s.includes("those Pokémon"))).toHaveLength(1);
     expect(units(anyTwos.filter(([, s]) => s.includes("those Pokémon")))).toBe(6);
-    // 🛑 THE FINER AXIS: the SAME rider at the SAME arity, behind a leading discard,
-    // is still refused by all nine — 2 sentences / 4 printings that a count capture
-    // structurally cannot move because they are off the `^This attack does` anchor.
-    // A reader that answered everything fails this half; one that answered nothing
-    // fails the half above. Neither saturation can imitate the pair.
+    // 🛑 THE FINER AXIS: the SAME rider at the SAME arity, behind a leading discard.
+    // ⚠️ **RE-POINTED AT D401, NOT DELETED, AND THE DISCRIMINATION SURVIVES THE
+    // BUILD.** D399 wrote this half as "still refused by all nine" and said why: a
+    // count capture structurally cannot move these, because they are off the
+    // `^This attack does` anchor. That remains exactly true — what read them at D401
+    // is a SECOND whole-sentence anchor, not a wider first one — so the population
+    // stands and the resolution flips, which is the same re-homing D400 did to this
+    // rung's own predecessor one slice back.
     const compounds = corpus().filter(([, s]) =>
       /^Discard .* This attack does \d+ damage to [2-9] of your opponent's Pokémon\./.test(s),
     );
     expect(compounds).toHaveLength(2);
     expect(units(compounds)).toBe(4);
-    for (const [, s] of compounds) expect(resolvedByAnyReader(s), s).toBe(false);
+    for (const [, s] of compounds) expect(resolvedByAnyReader(s), s).toBe(true);
+    // …and the axis that still discriminates: the compound's reading is TWO ops, the
+    // bare rider's is ONE. A reader that had widened `CHOSEN_ANY_TARGET` into a prefix
+    // match would pass every line above this one and drop a printed Energy cost.
+    for (const [, s] of compounds) expect(deriveAttackEffect(s), s).toHaveLength(2);
   });
 });
 

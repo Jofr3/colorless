@@ -704,7 +704,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `'`. ⚠️ **ITS INDEX-1 SENTENCE (*"Discard the top 3 cards of your deck."*) DOES
     // NOT**, so the fixture adds ONE entry rather than two — a census keyed on a
     // CHARACTER counts sentences, not cards, and this fixture prints both kinds.
-    expect(derivable).toHaveLength(127); // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
+    expect(derivable).toHaveLength(129); // 🆕🆕 D401 +2 — `fix-costsnipe` and `fix-allsnipe`, ONE apostrophe-bearing sentence each: both spell `opponent's` and `Don't`, and each fixture carries exactly ONE attack, so a census keyed on a CHARACTER steps by one per fixture // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -81,13 +81,27 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
     for (const text of [
       // Whole-sentence anchoring: a rider after the discard is a different card.
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      // Kyurem sv06.5-047 "Trifrost" — the other still-unmapped COMPOUND printing
-      // of the "all" form (D145's consequent census: 10 discard printings, 4 of
-      // them compound).
-      "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // ⚠️ RE-POINTED AT D401, NOT DELETED — the FOURTH row this list has moved rather
+    // than dropped, and the last of D145's four compounds to leave it. Kyurem
+    // sv06.5-047 "Trifrost" sat here as a NULL witness for the whole-sentence
+    // anchoring claim; `SELF_DISCARD_THEN_ANY_TARGET` maps it, so the claim moves
+    // from "nothing reads this" to the strictly stronger "THIS anchor does not reach
+    // it, and the anchor that does derives BOTH halves in printed order". The
+    // distinction is worth more here than on any earlier row, because a build whose
+    // bare `SELF_DISCARD_ALL` swallowed the compound as a PREFIX would return the
+    // discard op ALONE — an attack that pays every Energy on the body and then does
+    // nothing at all — and a `toBeNull` could no longer tell that from a refusal.
+    expect(
+      deriveAttackEffect(
+        "Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "damageChosen", target: "opponentAny", amount: 110, count: 3, source: "attack", deals: true },
+    ]);
     // ⚠️ RE-POINTED AT D148, NOT DELETED — the THIRD row this list has moved
     // rather than dropped, and the first on the "an" form rather than the "all"
     // one. Eiscue ex sv03-042/-210/-222 "Scalding Block" sat here as a NULL
