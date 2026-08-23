@@ -5661,6 +5661,135 @@ export const MUTANTS: Mutant[] = [
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
+  // ── D402 — THE DISCARD-COUNT-SCALED ATTACK. Twelve rows, ONE PER CLAIM rather
+  //    than one per line, and the SHAPE of the set is the finding: NINE of the twelve
+  //    are SILENT IN EVERY CENSUS. The sentence still matches, `BUILT.attack` is
+  //    unmoved and both cross-producer agreement rungs would still find two ops —
+  //    while the derived program discards off the wrong zone, parks on a mandatory
+  //    cost, offers the whole board where the card caps it, takes a Special Energy
+  //    for a Basic one, files no record, or stops scaling entirely. D400 measured
+  //    this ratio at 4/8 and D401 at 6/8; a THIRD anchor reproduces it at 9/12, so it
+  //    is no longer a property of one slice.
+  //
+  //    ⚠ **AND THREE ROWS (C9, C10, C11) SHARE ONE `find`** — the anchor's second
+  //    template line — because the three claims that line carries are independent:
+  //    the FOLD (`damage`, not `more damage`), the ZONE (no `Benched`) and the NOUN
+  //    (`Energy` or `Energy cards`). One row per line would have tested one of them.
+  //
+  //    ⚠ **NO ROW FOR "THE TWO OPS COME BACK IN THE WRONG ORDER"**, and the omission
+  //    is declared rather than left as a gap (D205). A reversed pair reads an UNSET
+  //    slot and deals zero — byte for byte the board C5 produces — so the row would
+  //    add no observation, and its `find` would have to span fifteen lines including a
+  //    comment block, which is the multi-line adjacency tripwire that has fired four
+  //    times in this corpus (D317, D381, D383).
+  {
+    id: "D402-zone-hard-coded-to-the-active",
+    decision: "D402",
+    what: "\ud83d\uded1 C1 \u2014 **THE ZONE HARD-CODED TO `yourActive`, AND IT IS THE FOUR NEIGHBOURING ARMS' REAL CODE COPIED VERBATIM** (D190b's neighbour-copy shape: arms 7, 8, 9 and 10 each emit `from: \"yourActive\"` as a literal, because every sentence THEY read says \"this Pokemon\"). Three of this anchor's six sentences print \"from **your** Pokemon\" \u2014 the whole own side, Bench included \u2014 so the mutant strips Energy off the Active where the card lets you take it off any body, and on a board whose Active holds none it discards NOTHING and the attack deals ZERO. **THE SENTENCE STILL MATCHES AND EVERY CENSUS FIGURE IS UNMOVED**, which is this family's standing hazard: `BUILT.attack` counts sentences, not programs. \u00a72 pins the `from` on all six",
+    file: "packages/engine/src/effects.ts",
+    find: "        from: match[7] === \"this\" ? \"yourActive\" : \"yours\",",
+    replace: "        from: \"yourActive\",",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-every-quantifier-parks",
+    decision: "D402",
+    what: "\ud83d\uded1 C2 \u2014 **THE `count` COLLAPSED TO `\"any\"`, WHICH IS HAIL BLADE'S REGISTRY ROW COPIED ONE QUANTIFIER OVER.** *\"Discard **all** {L} Energy from this Pokemon\"* has no decision in it \u2014 every match comes off and the interpreter resolves it INLINE \u2014 while `\"any\"` ALWAYS parks on a non-empty board. So the mutant turns a one-action attack into a prompt asking the player how much of a MANDATORY cost to pay, and a decline then deals zero on a card that prints no choice at all. \u00a74 asserts the absence of `effect:choose` and the exact five-event sequence, which is the only place the difference shows: pick everything at the prompt and the board ends identical",
+    file: "packages/engine/src/effects.ts",
+    find: "      const count = match[2] === undefined ? (\"any\" as const) : (\"all\" as const);",
+    replace: "      const count = \"any\" as const;",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-cap-is-dropped",
+    decision: "D402",
+    what: "\ud83d\uded1 C3 \u2014 **THE `cap` DROPPED, WHICH IS AGAIN HAIL BLADE'S ROW VERBATIM** \u2014 that card prints \"any amount\" and rightly carries no cap, and D97 added the field precisely because Psy Purge does not. Three of the six sentences print \"up to N\", so the mutant offers the WHOLE board where the card offers 2, 3 or 5: eight {M} attached deals 960 instead of 240. **THE KILLER NAMED HERE IS `psyPurge.test.ts`, DELIBERATELY** \u2014 that suite's rung asserted `deriveAttackEffect(PSY_PURGE_TEXT) === null` from D97 to D401 and D402 re-pointed it to the AGREEMENT, so this row is the evidence that the re-pointed rung is load-bearing rather than decorative",
+    file: "packages/engine/src/effects.ts",
+    find: "\n          ...(cap === undefined ? {} : { cap }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/psyPurge.test.ts", "packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-basic-energy-read-as-any-energy",
+    decision: "D402",
+    what: "\ud83d\uded1 C4 \u2014 **`basicEnergy` REPLACED BY `anyEnergy`, THE UNTYPED SELF-DISCARD ARMS' REAL FILTER** (arms 7/8/9 emit exactly `{ kind: \"anyEnergy\" }`). *\"Basic Energy\"* names the CARD, not what the card provides, and that printed distinction is the whole reason `basicEnergy` exists beside `providesEnergy` \u2014 so the mutant offers a Special Energy as fuel to a sentence that says Basic. It is the family's LARGEST member (6 legal printings), and the only observation that separates the two readings is WHICH uids the park offers: \u00a75 asserts the offer excludes `fix-special`, \u00a72 asserts the filter",
+    file: "packages/engine/src/effects.ts",
+    find: "      match[6] !== undefined\n        ? { kind: \"basicEnergy\" }",
+    replace: "      match[6] !== undefined\n        ? { kind: \"anyEnergy\" }",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-record-is-never-filed",
+    decision: "D402",
+    what: "\ud83d\uded1 C5 \u2014 **`recordAs` DROPPED, WHICH IS WHAT EVERY DISCARD PREDATING D96 LOOKS LIKE** (the five original rows carry no slot at all, and the op's own doc calls that \"the shape every discard predating this parks into\"). The printed *\"in this way\"* is literally an op-to-op \u00a79.2 record read, so without the slot `damageDefender` counts an UNSET one: the discard still happens, the pile still grows, and the attack deals **ZERO on every board**. **NO CENSUS CAN SEE IT** \u2014 the sentence resolves, `BUILT.attack` is unmoved, and both agreement rungs would still find two ops. \u00a74 and \u00a75 read `DAMAGE_DEALT`",
+    file: "packages/engine/src/effects.ts",
+    find: "\n          recordAs: \"discarded\" as const,",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-scaled-hit-becomes-a-flat-one",
+    decision: "D402",
+    what: "\ud83d\uded1 C6 \u2014 **THE SCALED HIT SWAPPED FOR D316's FLAT ARM, WHICH IS A REAL SHAPE ON THIS VERY OP** (`{ op: \"damageDefender\", amount }`, the optional-boost reader's own emission). The attack stops scaling: it deals the printed per-unit ONCE however many cards came off, so a three-card discard deals 50 instead of 150 \u2014 and, worse, a ZERO-card discard deals 50 where the card deals nothing. `programDamage` still fires, so the base is still suppressed and no coverage flag moves. \u00a74's 150 / 50 / 0 triple and \u00a75's 140 are what read it",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"damageDefender\", per, count: \"discarded\" },",
+    replace: "        { op: \"damageDefender\", amount: per },",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-a-printed-zero-per-unit-derives",
+    decision: "D402",
+    what: "\ud83d\uded1 C7 \u2014 **THE PER-UNIT POSITIVITY GUARD RELAXED TO `>= 0`.** D145's standing rule for every captured amount in this file: a printed 0 is not a real card and derives to a SILENT no-op, where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point of refusing. The mutant derives a two-op program that spends a real cost and then deals nothing, and reports the attack as fully simulated. No catalog sentence prints 0, so this is reachable only from \u00a73's constructed near-miss \u2014 which is exactly why that rung exists",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (filter !== undefined && per >= 1 && (cap === undefined || cap >= 1)) {",
+    replace: "    if (filter !== undefined && per >= 0 && (cap === undefined || cap >= 1)) {",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-a-printed-up-to-zero-derives",
+    decision: "D402",
+    what: "\ud83d\uded1 C8 \u2014 **THE CAP'S POSITIVITY GUARD RELAXED TO `>= 0`, THE SECOND HALF OF THE SAME LINE AND A SEPARATE CLAIM.** \"Discard up to 0\" derives to a park whose ceiling is zero \u2014 a prompt with nothing pickable, resolving to an empty record and zero damage. TWO printed numbers, TWO guards, asserted apart in \u00a73 for D361's reason (a row count is not a coverage map): a slice that fixed one and left the other would pass a rung that tested only the first",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (filter !== undefined && per >= 1 && (cap === undefined || cap >= 1)) {",
+    replace: "    if (filter !== undefined && per >= 1 && (cap === undefined || cap >= 0)) {",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-additive-fold-is-swallowed",
+    decision: "D402",
+    what: "\ud83d\uded1 C9 \u2014 **THE ANCHOR ADMITS THE PRINTED `more`, WHICH IS THE SLICE'S CENTRAL REFUSAL DELETED.** `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass and `attack.ts` drops the printed base whenever the program owns the damage \u2014 right for \"does N damage for each\" (the printed \"N\u00d7\" IS the per-unit) and WRONG for \"does N MORE damage for each\", whose base is kept. Weakness distributes over a split hit, but Resistance, `damageReductionAfterWR` and the \u00a78.1 survival clamp are each paid ONCE PER HIT, so `base + per\u00d7N` is not `base` then `per\u00d7N`. \u26a0 **AND IT IS SILENT IN EVERY CENSUS AND ON EVERY REAL PRINTING**: all three additive sentences ALSO name the Bench, so no legal card changes behaviour \u2014 only \u00a73's constructed one-byte variation sees it, which is the rung D399's rule exists for",
+    file: "packages/engine/src/effects.ts",
+    find: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
+    replace: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) (?:more )?damage for each card you discarded in this way\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-bench-only-zone-is-admitted",
+    decision: "D402",
+    what: "\ud83d\uded1 C10 \u2014 **THE ZONE ALTERNATION WIDENED TO ADMIT `Benched`, WHICH IS THE HANDED-DOWN PREDICTION'S OWN FALSIFIER BUILT AS A DEFECT.** That prediction said this family needed a Bench-only member on `discardEnergy.from`; the union has none, so the mutant captures \"your\" out of \"your **Benched** Pokemon\" and derives `from: \"yours\"` \u2014 the WHOLE own side, Active included \u2014 for a sentence naming the Bench alone. **NO LEGAL PRINTING MOVES** (every Bench-only sentence is additive and refused by C9's byte instead), so the census, both agreement rungs and every board in this suite stay green; \u00a73's zone-varied-alone rung is the only observation",
+    file: "packages/engine/src/effects.ts",
+    find: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
+    replace: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) (?:Benched )?Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-plural-noun-is-refused",
+    decision: "D402",
+    what: "\ud83d\uded1 C11 \u2014 **`Energy(?: cards)?` NARROWED TO `Energy`, WHICH IS `TYPED_SELF_DISCARD`'s REAL SPELLING COPIED ONE ANCHOR OVER** (that pattern says `Energy from this Pokemon`, because no sentence it reads writes the noun out). Exactly ONE printing in this family spells the plural \u2014 *\"Discard up to 3 {G} Energy **cards** from your Pokemon\"* \u2014 and it means the same thing, so the mutant refuses a real card on a WORD rather than on a mechanism and leaves it on the loud skipped path. \u00a71's `toHaveLength(6)` and \u00a72's Grass rung both read it, and it is the ONE row in this set a census figure would also catch",
+    file: "packages/engine/src/effects.ts",
+    find: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy(?: cards)? from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
+    replace: "    `|(${Object.keys(ENERGY_TYPE_BY_NAME).join(\"|\")})|(Basic)) Energy from (this|your) Pok\u00e9mon\\\\. This attack does (\\\\d+) damage for each card you discarded in this way\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
+  {
+    id: "D402-the-basic-caption-falls-through",
+    decision: "D402",
+    what: "\ud83d\uded1 C12 \u2014 **`energyNoun`'s BASIC ARM DELETED, WHICH IS THE FUNCTION EXACTLY AS IT STOOD BEFORE THIS SLICE** \u2014 `auraNarrowing.test.ts`'s read-site census graded it ZERO on the ground that it \"spells two kinds and returns 'Energy' for the rest, so a filter that is not an Energy filter was already handled\". `basicEnergy` IS an Energy filter, and D402's largest sentence is the first to reach `discardNote` with it, so the mutant's prompt promises *\"any amount of Energy\"* over a pick restricted to Basic Energy. **THE BOARD IS IDENTICAL AND EVERY OFFERED UID IS THE SAME** \u2014 the offer is built by the filter, not by the caption \u2014 so only \u00a75's note assertion moves. D295's caption defect, one destination over",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (filter.kind === \"basicEnergy\") {\n    return filter.energyType === undefined ? \"Basic Energy\" : `Basic ${filter.energyType} Energy`;\n  }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/discardScaledDamage.test.ts"],
+  },
   // ── D361 — THE CROSS-SEAT ENERGY DISCARD. Four rows, ONE PER CLAIM rather than
   //    one per site: the FILTER is read off the printed noun phrase (C1), the TYPE
   //    inside it comes from the MAP rather than from a fixed value (C2), the sweep
