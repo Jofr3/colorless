@@ -9722,6 +9722,46 @@ const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
 // un-derive the sentence.
 const MAY_PUT_OPPONENT_ACTIVE_ENERGY_TO_HAND =
   /^You may put (an|\d+) Energy attached to your opponent['’]s Active (Stage 2 )?Pokémon into their hand\.$/;
+// 🆕🆕 **D405 — THE OWN-BOARD TWIN OF THE LINE ABOVE, AND IT IS MANDATORY WHERE THAT
+// ONE IS DECLINABLE.** *"Put an Energy attached to this Pokémon into your hand."* — **1
+// sentence / 5 legal printings**, measured over `legalAttackCorpus()` and identical raw
+// and split-aware (`splitAttackGateClause` finds no leading gate on it, so this is the
+// residue figure and not a raw one — D403's rule).
+//
+// 🛑 **THE SENTENCE PRINTS NO "You may", AND THAT ABSENCE IS THE WHOLE SHAPE.** The
+// declinable twin one line up needs D186's `optional` wrapper because its printed "may"
+// is a decision about WHETHER; this one is a decision about WHICH only, which is the
+// exact contract `discardEnergy`'s own doc block states ("MANDATORY, not 'up to': the
+// only decision is WHICH Energy, never whether"). So the wrapper D296 had to reach for
+// is not merely unnecessary here — adding it would author a card, and would offer a
+// decline the printed sentence withholds.
+//
+// ⚠️ **`to: "hand"` ON AN OWN-BOARD `from` IS THE THIRD PRODUCER OF D295's FIELD AND THE
+// SECOND WHOSE VICTIM IS THE ACTOR** (D383's deck destination was the first). Nothing
+// under the reader moves for it: `discardVictimSeat` returns the CONTROLLER for
+// `yourActive`, so the printed possessive "**your** hand" is what the apply already
+// writes — `side.hand` on the seat the op resolved — with no branch. What DOES move is
+// the CAPTION: `discardNote`'s `yourActive` arm had no `putBack` branch, because until
+// this sentence no own-board printing put Energy anywhere but the pile or the deck.
+//
+// 🛑 **THE QUANTIFIER IS "an" AND IT IS NOT WIDENED TO `(an|\d+)` LIKE THE TWIN'S.**
+// Measured over the whole 640-sentence legal attack column: *"Energy attached to this
+// Pokémon"* occurs on 18 sentences, and the ONLY one that puts any of it into a hand is
+// this one. There is no *"Put 2 Energy attached to this Pokémon into your hand."* to
+// read, so a numeric group would resolve a sentence nobody prints — D190b's "exact map
+// or flag", and the same refusal `FLIP_OPPONENT_ACTIVE_DISCARD` makes three anchors up.
+//
+// ⚠️ **THE ONE REAL NEAR-MISS IS A COMPOUND AND IT DIFFERS IN TWO PRINTED PLACES**:
+// *"You may put **all** Energy attached to this Pokémon into your hand **to have this
+// attack do 80 more damage**."* (1 legal printing). It carries the "may", the "all" and
+// a payoff tail, so this anchor's `^…$` refuses it three times over — which is why the
+// refusals `selfEnergyToHand.test.ts` §4 asserts are the ONE-token ones this anchor
+// actually owns (the possessive and the article), D399's rule: a near-miss the sentence
+// already fails on three counts proves nothing about any single byte here.
+//
+// The apostrophe class the twin carries is absent because this sentence contains no
+// apostrophe at all — said out loud, so the asymmetry does not read as an oversight.
+const PUT_SELF_ENERGY_TO_HAND = /^Put an Energy attached to this Pokémon into your hand\.$/;
 const FLIP_OPPONENT_ACTIVE_DISCARD =
   /^Flip a coin\. If heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 // The reveal-and-bottom attack sentence (Greavard "Underworld Stroll") — the
@@ -15579,6 +15619,35 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             },
           ];
     }
+  }
+
+  // 🆕 12c (D405). "Put an Energy attached to this Pokémon into your hand." — the
+  //     OWN-BOARD twin of 12b, **1 sentence / 5 legal printings**, and the whole arm
+  //     is one already-shipped op with one already-shipped field.
+  //
+  // 🛑 **NO `optional` WRAPPER, WHICH IS THE ONE DESIGN CALL AND IT IS A READING OF
+  //     THE PRINTED WORDS.** 12b's four printings all open *"You may put …"*; these five
+  //     open *"Put …"*. D296's own paragraph says why the wrapper exists there — the
+  //     decline is a decision about WHETHER, which `discardEnergy` cannot express — and
+  //     the same paragraph is why it must NOT appear here: this op is mandatory by
+  //     construction, and a mandatory sentence wrapped in `optional` would hand the
+  //     player a "No" the card does not print. **A CONTRACT WRITTEN ON ONE OP IS NOT A
+  //     CONTRACT ABOUT THE SENTENCE**, read in the other direction for once.
+  //
+  // ⚠️ **AND NO `count`, WHICH IS THE PRINTED "an" AND NOT AN OMISSION.** The op's absent
+  //     `count` means one (its doc block), the interpreter spells that as
+  //     `{ kind: "total", count: op.count ?? 1 }`, and `discardNote` reads the same
+  //     absence as the article. So the printed article is carried by a field that is not
+  //     there — checked at both read sites before this arm was written, because an
+  //     absent field that any reader took for "all" would strip the attacker bare.
+  //
+  // ⚠️ **IT PARKS ON A REAL DECISION AND ONLY ON ONE.** `interchangeableCandidates`
+  //     collapses same-print Energy on the same body, so an attacker holding three
+  //     identical {C} asks nothing and resolves inline, while a {C} beside an {L} is a
+  //     genuine two-way pick — the same park shape arms 7/8/9 have had since 0.x, now
+  //     with a caption that says "Put … into your hand" rather than "Discard".
+  if (PUT_SELF_ENERGY_TO_HAND.test(effect)) {
+    return [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, to: "hand" }];
   }
 
   // 13. "Your opponent reveals their hand. Choose a Supporter card you find

@@ -4849,6 +4849,51 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D405 FIXTURE — THE MANDATORY OWN-BOARD ENERGY RETRIEVAL.** The printed
+      sentence is byte for byte the legal column's *"Put an Energy attached to this
+      Pokémon into your hand."* — **5 legal printings**, and the whole card exists to put
+      that sentence on a body whose ATTACHED Energy the suite controls.
+
+      🛑 **A ONE-UNIT `{C}` COST, WHICH IS THE ONE FIELD THAT IS NOT A CONVENIENCE.**
+      This op takes an Energy OFF the attacker, so the printed cost is the FLOOR on how
+      few Energy a board can hold and still declare the attack — and the sharpest board
+      in the family is the one holding exactly ONE, where the pick is forced and the
+      program resolves inline with no prompt at all. A two-unit cost could never field
+      it. Two DIFFERENT prints then park, and two IDENTICAL prints do not
+      (`interchangeableCandidates` collapses them), so one cost reaches all three.
+
+      ⚠️ **AND THE EMPTY BOARD IS UNREACHABLE FROM THIS CARD, SAID OUT LOUD.** A whiff
+      needs zero Energy attached, and zero Energy cannot pay `{C}`; the op's
+      empty-candidate branch is real but no attack with a printed cost can drive it, so
+      this suite does not pretend to.
+
+      ⚠️ **AND THE DESTINATION IS WHAT THE SUITE READS, NOT THE COUNT.** A hand that grew
+      by one and a discard pile that grew by one are the same size change; the rungs
+      capture the chosen uid and assert it is in the ATTACKER'S OWN HAND and in neither
+      pile — the D404 lesson (identity, not cardinality) applied to a zone rather than
+      to an order.
+
+      A flat printed `30` for `fix-handdraw`'s reason verbatim (nothing derived here
+      deals damage, so `programDamage` stays FALSE and the base must survive §8.5
+      untouched), 110 HP so the attacker's own survival is never in the way, and NO owner
+      prefix in the key — the possessive fixture toll (`ownerPrefix.test.ts`) is not paid
+      by this slice either. The ids that print this sentence are unknown to this
+      container (no D1 credentials, D369), so the key is a `fix-*` one and the base is
+      CHOSEN rather than transcribed. A Basic. */
+  "fix-selfenergyhand": battler("fix-selfenergyhand", {
+    types: ["Grass"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Energy Recall",
+        damage: "30",
+        effect: "Put an Energy attached to this Pokémon into your hand.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -14293,6 +14338,36 @@ export const HAND_DRAW_DECK = deckOf({
   "fix-bigbody": 40, // 200 HP neutral — DOMINANT (mulligan-free), and the deck's bulk
   "fix-item": 8, // a plain Item — hand bulk with no program of its own to interfere
   "fix-energy": 8, // Basic {C} — pays the printed cost
+});
+
+/** 🆕🆕 **D405: the mandatory own-board Energy retrieval, on a board where the
+    ATTACHED Energy is the instrument.** Three Energy PRINTS on purpose, and the reason is
+    the park rather than the filter: `interchangeableCandidates` collapses same-print
+    Energy on one body, so a deck holding a single print could only ever field the FORCED
+    case and the suite's "this parks on a real decision" rung would be unwritable.
+    `fix-energy` (Basic {C}) and `fix-lightning-energy` (Basic {L}) are the two
+    distinguishable Basics that make the pick a decision; `fix-special` (Special {C}) is
+    the third print, and it is what proves the filter is `anyEnergy` rather than
+    `basicEnergy` — a Special Energy on the attacker must be OFFERED here.
+
+    ⚠️ **CHARCADET `sv01-039` RIDES ALONG AS THE CAPTION CONTROL, AND IT IS THE ONE ENTRY
+    THAT IS NOT ABOUT THE NEW SENTENCE.** Its "Ember" prints the BARE self-discard — the
+    same op, the same `from`, the same filter, and NO destination — so its prompt must
+    still read *"Discard an Energy from this Pokémon."* while the new one does not. A
+    caption fix that simply reworded every own-board pick passes without it. It costs a
+    Fire Energy print, because Ember's printed cost is `{R}` and the {C} above cannot pay
+    it.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, and a defender the
+    flat 30 never Knocks Out, so no KO tail lands between the pick and the hand write). */
+export const SELF_ENERGY_HAND_DECK = deckOf({
+  "fix-selfenergyhand": 4, // "Put an Energy attached to this Pokémon into your hand."
+  "sv01-039": 2, // Charcadet "Ember" — the BARE self-discard, the caption CONTROL
+  "fix-bigbody": 26, // 200 HP neutral — DOMINANT (mulligan-free), and the deck's bulk
+  "fix-energy": 8, // Basic {C} — pays the printed {C} cost, and one side of the pick
+  "fix-lightning-energy": 8, // Basic {L} — the second print, which makes the pick a DECISION
+  "fix-special": 8, // Special {C} — the third print, and the proof the filter is `anyEnergy`
+  "fix-fire-energy": 4, // Basic {R} — pays Ember's printed cost, and nothing else
 });
 
 export const BENCH_BOOST_DECK = deckOf({

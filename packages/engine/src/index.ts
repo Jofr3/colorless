@@ -12109,6 +12109,103 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.310.0 → **THE MANDATORY OWN-BOARD ENERGY RETRIEVAL, AND THE FIRST SLICE IN
+    THIS RUN WHERE THE LARGEST HEAD LOST A PRICE COMPARISON.**
+
+      *"Put an Energy attached to this Pokémon into your hand."* — **5 legal printings
+       on 1 sentence**
+
+    `BUILT.attack` 1355 → **1360**; the eleven-reader instrument 398 / 1,326 →
+    **399 / 1,331**, its residue 247 / 422 → **246 / 417**; the nine-reader one
+    393 / 1,310 → **394 / 1,315**; whole-census `built` 1,760 → **1,765**, its residue
+    623 → **618**; unbuilt attack column 377 → **372**; `FIXTURE_POOL` 508 → **509**.
+    `REGISTRY_ATTACK_UNITS` and `splitHead` stand still — a READER-keyed move, and this
+    slice edits `registry.ts` not at all.
+
+    🛑 **THE SLICE OPENED WITH A HEAD-TO-HEAD PRICE COMPARISON RATHER THAN A BUILD, AND
+    THE BIGGER SENTENCE LOST — SO SAY WHY IT LOST** (D382's practice). The largest single
+    record in D404's split-aware residue is *"Heal from this Pokémon the same amount of
+    damage you did to your opponent's Active Pokémon."* at **6** printings, one more than
+    this one. It lost on the **KIND OF QUANTITY**, not on the count:
+
+      • `EffectSlot` is `"paid" | "moved" | "discarded"` and `EffectRecord` is
+        `{ [K in EffectSlot]?: string[] }` — **every §9.2 slot in this engine is a LIST
+        OF CARD UIDS**, and *"the same amount of damage"* is an HP FIGURE. There is no
+        slot to file it in and no widening that keeps the map's value type.
+      • `EffectRecord` rides `EffectContinuation`, which IS the persisted phase — so
+        widening it is a persisted-shape change and `MATCH_RECORD_VERSION` would move
+        25 → 26. That is a cost this slice does not pay at all.
+      • `heal` is `{ op: "heal"; target: "self"; amount: number }` — a LITERAL. The
+        sentence needs `amount` to become a SOURCE, which is a second shape change on a
+        shipped op.
+      • And the figure is not the printed base: it is the post-W/R, post-reduction,
+        post-§8.1-clamp number, which lives in `applyAttackDamage`'s locals (`dealt` and
+        `clamped` are not the same number) and is handed to NOTHING. `EffectContext` is
+        `{ seat, sourceUid?, subjectUid?, invokedBy? }`; the carrier is a fourth cost.
+
+    **FOUR MECHANISMS FOR 6 PRINTINGS AGAINST ZERO FOR 5.** In printings-per-mechanism
+    that is 1.5 against 5 — and the loser's four include a persisted-shape bump, so the
+    ratio understates it. **THE LARGEST HEAD IS NOT AUTOMATICALLY THE CHEAPEST, AND THIS
+    IS THE FIRST TIME IN THIS RUN THAT THE TWO CAME APART.**
+
+    ✅ **THE TWO FALSIFIERS THE HANDOFF NAMED WERE CHECKED BEFORE A LINE WAS WRITTEN, AND
+    THEY ANSWERED IN OPPOSITE DIRECTIONS** (D403's rule, seventh payment — the REASONS,
+    not the verdicts).
+
+    ⑴ **THE `count` DEFAULT HELD, AND AT BOTH READ SITES.** The op's doc says an absent
+    `count` means one; the interpreter spells that `{ kind: "total", count: op.count ?? 1 }`
+    and `discardNote`'s `what` falls through to the ARTICLE (`an Energy`). Nothing takes
+    absence for `"all"` or for "no cap" — which was the failure mode that would have
+    stripped the attacker bare — so the printed *"an Energy"* is carried by a field that
+    is not there. `selfEnergyToHand.test.ts` §5 drives it on a two-Energy board.
+
+    ⑵ **THE CAPTION FIRED, AND IT COST A BRANCH RATHER THAN A FIELD.** `discardNote`'s
+    `case "yourActive"` read only `shuffleBack` (D383), because until this sentence no
+    own-board printing put Energy into a HAND — so this park would have captioned itself
+    *"Discard an Energy from this Pokémon."* over a pick that hands the card back. That
+    is D295's caption defect at its THIRD destination, and here it is wrong about who
+    KEEPS the card rather than merely about where it lands. The arm now reads BOTH flags
+    and its string is the printed sentence verbatim. **A BRANCH IS NOT A FIELD**, so the
+    handoff's "re-price against (A) if either costs a field" was not triggered.
+
+    🛑 **NO `optional` WRAPPER, AND THAT IS A READING OF THE PRINTED WORDS RATHER THAN A
+    SIMPLIFICATION.** D296's twin — *"**You may** put an Energy attached to your
+    opponent's Active Pokémon into their hand."* — needs D186's `optional` because its
+    "may" is a decision about WHETHER, which `discardEnergy` cannot express. These five
+    printings open *"Put …"*. The op's own doc block says it is *"MANDATORY, not 'up
+    to': the only decision is WHICH Energy, never whether"*, which is exactly this
+    sentence — so a wrapper here would hand the player a "No" the card does not print.
+    **A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE**, read in the
+    direction opposite to D296's for once.
+
+    ⚠️ **THE QUANTIFIER IS NOT WIDENED TO `(an|\d+)` THE WAY THE TWIN'S IS, AND THE
+    REASON IS A MEASUREMENT.** Over the whole 640-sentence legal attack column, exactly
+    TWO sentences put Energy off *this Pokémon* into a hand: this one, and the compound
+    *"You may put **all** Energy attached to this Pokémon into your hand **to have this
+    attack do 80 more damage**."* (1 printing, D381's family and a slice of its own).
+    There is no numeric printing to read, so a `\d+` group would author a card (D190b).
+
+    ✅ **NO `attack.ts` TERM IS OWED, FOR D404's REASON VERBATIM.** `effectSimulated`'s
+    first disjunct is `program !== null` and `program` is `authored ?? derived`, so a new
+    `deriveAttackEffect` arm answers the effect half by construction; `programDamage`
+    stays FALSE because the one op is not a `damageDefender`, which is what
+    `fix-selfenergyhand`'s flat `30` exists to observe. **The three disjunction chains
+    are untouched, so none of the seven multi-line `find` rows that span them moved.**
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than skipped. The op PARKS — so it
+    does ride `GameState.phase.cont.pendingOp` — but every field it carries has been
+    persisted vocabulary since D295, no union gains a member, and a v25 record's
+    `to: "hand"` meant exactly this before the slice. What is new is only which `from`
+    it appears BESIDE, and a pair of already-valid values is not a new shape.
+
+    Cost: **1 whole-sentence anchor, 1 arm, 1 caption branch, 1 fixture and 1 deck.**
+    ZERO new ops, ZERO new fields, ZERO new readers, ZERO `BoardCondition` members, ZERO
+    registry rows, ZERO clause-table rows and ZERO `attack.ts` edits. No web/API/DB or
+    `@luminous/schema` change.
+
+    engineVersion 0.309.0 → **0.310.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.309.0 → **THE MANDATORY HAND WIPE AND REFILL: AN ARM WHOSE WHOLE PRICE IS
     THE ORDER OF TWO OPS THAT ALREADY SHIPPED.**
 
@@ -16792,7 +16889,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.309.0";
+export const engineVersion = "0.310.0";
 
 export type {
   ApplyResult,

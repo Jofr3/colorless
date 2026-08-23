@@ -11215,6 +11215,12 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
   // tri-state local would have made every arm ask a question only one of them has.
   // The paragraph above said the own-board arms "are unreachable with `to` set" —
   // kept verbatim, and now false for exactly one value (D178).
+  // 🆕🆕 D405 — MAKE THAT TWO VALUES, AND THE SECOND ONE IS `putBack`'s OWN. The
+  // `yourActive` arm below now reads BOTH flags: *"Put an Energy attached to this
+  // Pokémon into your hand."* (5 legal printings, `deriveAttackEffect` arm 12c) is the
+  // first own-board printing whose destination is a HAND. So `putBack` is no longer
+  // "read by the two OPPONENT-side arms" either — the line two comments up is likewise
+  // kept verbatim and likewise now false by exactly one arm.
   const shuffleBack = op.to === "deck";
   switch (op.from) {
     case "opponentActive":
@@ -11235,9 +11241,21 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
       // "Discard" over a pick that shuffles is D295's own caption defect one
       // destination over — the board would be right and the one screen telling the
       // player what their pick does would be wrong.
-      return shuffleBack
-        ? `Shuffle ${what} attached to this Pokémon into your deck.`
-        : `Discard ${what} from this Pokémon.`;
+      // 🆕🆕 D405 — AND THE HAND ARM, WHICH IS THIS SWITCH'S THIRD DESTINATION AND
+      // THE SENTENCE VERBATIM: *"Put an Energy attached to this Pokémon into your
+      // hand."* (5 legal printings). It is spelled FIRST because `putBack` and
+      // `shuffleBack` read the same field for different values and the reading order
+      // is arbitrary — but the ORDER of the printed alternatives is not, and "hand" is
+      // the destination D295 named first. A caption still saying "Discard" over a pick
+      // that hands the card BACK is D295's caption defect at its third destination:
+      // the board right, and the one screen telling the player what their pick does
+      // wrong — and here it would be wrong about who KEEPS the card, not merely where
+      // it lands.
+      return putBack
+        ? `Put ${what} attached to this Pokémon into your hand.`
+        : shuffleBack
+          ? `Shuffle ${what} attached to this Pokémon into your deck.`
+          : `Discard ${what} from this Pokémon.`;
     case "self":
       // The SAME printed words for the same printed subject — the two members
       // differ in how they RESOLVE it (a spot versus a uid), not in what the

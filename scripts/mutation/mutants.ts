@@ -5657,7 +5657,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.309.0";',
+    find: 'export const engineVersion = "0.310.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -15460,8 +15460,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D383",
     what: "⚠️ C11 — THE PARK'S CAPTION REVERTS TO \"Discard 3 Energy from this Pokémon.\" while the apply still puts the cards in the DECK — so the one screen that tells a player what their pick is about to do says the opposite of what happens, and says it about a cost they are PAYING rather than one being taken from them. **THE BOARD IS IDENTICAL UNDER THIS MUTANT**, so only an assertion on the prompt's own string reaches it: `D295-caption-still-says-discard`'s claim one destination over, and it needs its own row for that row's own reason (a second VALUE of a field owes a second row exactly as a second producer does)",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return shuffleBack\n        ? `Shuffle ${what} attached to this Pokémon into your deck.`\n        : `Discard ${what} from this Pokémon.`;",
-    replace: "      return `Discard ${what} from this Pokémon.`;",
+    // 🆕🆕 RE-TRANSCRIBED AT D405 — the `yourActive` arm gained a THIRD destination
+    // (`putBack`, *"Put an Energy attached to this Pokémon into your hand."*), so the
+    // two-line ternary this row spanned became a three-line one and the old `find`
+    // matched ZERO. **THE CLAIM IS UNCHANGED**: the deck arm is deleted and its caption
+    // falls back to "Discard" while the apply still shuffles. The `putBack` arm is kept
+    // in both halves on purpose — a `replace` that dropped it too would be TWO defects
+    // in one row, and D405's own row is the one that owns the hand caption.
+    find: "      return putBack\n        ? `Put ${what} attached to this Pokémon into your hand.`\n        : shuffleBack\n          ? `Shuffle ${what} attached to this Pokémon into your deck.`\n          : `Discard ${what} from this Pokémon.`;",
+    replace: "      return putBack\n        ? `Put ${what} attached to this Pokémon into your hand.`\n        : `Discard ${what} from this Pokémon.`;",
     expectKilledBy: ["packages/engine/src/torrentialPump.test.ts"],
   },
   {
@@ -16868,4 +16875,5 @@ export const MUTANTS: Mutant[] = [
     replace: "        { op: \"discardHand\" },",
     expectKilledBy: ["packages/engine/src/discardHandDraw.test.ts"],
   },
+
 ];
