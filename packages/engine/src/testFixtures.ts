@@ -4818,6 +4818,37 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D404 FIXTURE — THE MANDATORY HAND WIPE AND REFILL.** The printed sentence is
+      byte for byte the legal column's *"Discard your hand and draw 6 cards."* — **7
+      legal printings**, the biggest single sentence left in the split-aware residue.
+
+      🛑 **A FLAT PRINTED `damage`, AND IT IS LOAD-BEARING RATHER THAN DECORATION.**
+      Neither derived op deals damage, so `programDamage` stays FALSE and the printed
+      base must survive the whole §8.5 pipeline untouched — a `30` that ever came back
+      `0` would mean a reader had claimed a number this sentence never spends. It is
+      also what keeps the OTHER half of `ATTACK_EFFECT_SKIPPED` readable: the marker is
+      flat, so `modifierSimulated` is never asked, and the effect half is answered by
+      `program !== null` alone.
+
+      A `{C}` cost so `fix-energy` declares it, 110 HP so nothing about this card's own
+      survival is in the way, and NO owner prefix in the key — the possessive fixture
+      toll (`ownerPrefix.test.ts`) is not paid by this slice. The ids that print this
+      sentence are unknown to this container (no D1 credentials, D369), so the key is a
+      `fix-*` one and the base is CHOSEN rather than transcribed. A Basic. */
+  "fix-handdraw": battler("fix-handdraw", {
+    types: ["Water"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Hand Refresh",
+        damage: "30",
+        effect: "Discard your hand and draw 6 cards.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -14243,6 +14274,27 @@ export const COST_SNIPE_DECK = deckOf({
 
     `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, the Bench bodies that
     carry the fuel, and a defender the 50+60× math never accidentally Knocks Out). */
+/** 🆕🆕 **D404: the mandatory hand wipe and refill, on a board where the DECK is the
+    instrument rather than the board.** A separate deck from every existing draw deck
+    for one reason: this suite has to make the deck SHALLOWER THAN THE PRINTED COUNT and
+    then keep playing, so the list must survive `trimDeckTo` down to two cards and still
+    field a legal board on both seats.
+
+    ⚠️ **THE HAND'S IDENTITY IS READ OFF UIDS, NOT OFF CARD IDS**, so this list carries no
+    marker print and deliberately does not need one: the suite captures the hand and the
+    deck's top SIX before the attack and compares the sets afterwards. A count cannot see
+    the defect that matters — the swapped order discards the six it just drew, and a hand
+    of three then reads SIX either way.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, and a defender the
+    flat 30 never Knocks Out, so no KO tail lands between the discard and the draw). */
+export const HAND_DRAW_DECK = deckOf({
+  "fix-handdraw": 4, // "Discard your hand and draw 6 cards." — the whole sentence
+  "fix-bigbody": 40, // 200 HP neutral — DOMINANT (mulligan-free), and the deck's bulk
+  "fix-item": 8, // a plain Item — hand bulk with no program of its own to interfere
+  "fix-energy": 8, // Basic {C} — pays the printed cost
+});
+
 export const BENCH_BOOST_DECK = deckOf({
   "fix-benchboost": 4, // "…up to 2 Energy from your Benched Pokémon… 60 more…" — the bare noun
   "fix-benchbasicboost": 4, // the same sentence at `basicEnergy` and 90 — the filter's other side

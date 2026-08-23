@@ -14960,6 +14960,30 @@ const RETURN_BENCHED = new RegExp(
 const DISCARD_STADIUM = /^Discard a Stadium in play\.$/;
 const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
 
+/** 🆕🆕 D404 — *"Discard your hand and draw 6 cards."*, the biggest single sentence
+    left in the split-aware residue (**1 sentence / 7 legal printings**), and the
+    cheapest of them: it buys NO OP AT ALL. `discardHand` and `drawCards` have both
+    been `EffectOp`s since Professor's Research (`registry.ts`), and D385 already
+    reached the first of them from ATTACK text through `optionalCostOps` — what this
+    anchor adds is the first TOP-LEVEL attack producer of either.
+
+    ⚠️ **THE COUNT IS CAPTURED, NOT PINNED, AND THE CATALOG IS THE ARGUMENT.** The
+    legal attack column prints **6 and nothing else** here, so a literal `6` could
+    never go red off the corpus — but the SAME printed skeleton carries **7** on
+    Professor's Research and **5** on Carmine in the trainer column, so the number is a
+    printed PARAMETER of this family and not a property of this sentence. `ATTACK_DRAW`
+    two hundred lines up already captures its own `(\d+)` for exactly that reason, and
+    the `>= 1` guard at the arm is the one every counted arm in this file carries.
+
+    🛑 **NO `/i` AND NO FLOATING MATCH**, the standing policy of every deriver here —
+    and the near-miss it has to refuse is REAL rather than constructed. The same legal
+    column prints *"Shuffle your hand into your deck. Then, draw 6 cards."* (1
+    printing): the same zone emptied by a DIFFERENT verb into a DIFFERENT pile, which
+    is `handRefresh` and not `discardHand`, with the identical trailing count. A read
+    that floated on *"draw 6 cards"* would take both and give one of them a program
+    that destroys the deck order the other sentence is printed to preserve. */
+const DISCARD_HAND_DRAW = /^Discard your hand and draw (\d+) cards\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -17396,6 +17420,50 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // (D135: absent is the unmarked printing).
       },
     ];
+  }
+
+  // 44. 🆕🆕 D404 — "Discard your hand and draw 6 cards." — SEVEN legal printings on
+  //     ONE sentence, and the only arm in this function whose whole price is the
+  //     ORDER of two ops that already shipped.
+  match = DISCARD_HAND_DRAW.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    // The `>= 1` guard every counted arm here carries. A printed "draw 0 cards." would
+    // file a program whose second op moves nothing — a hand discard wearing a draw's
+    // sentence — and that belongs on the loud skipped-effect path.
+    //
+    // 🛑 NO CEILING, AND THAT IS THE §5-INSIDE-§8 QUESTION ANSWERED RATHER THAN
+    // SKIPPED. `drawToHand` SLICES the deck, so a 6-card draw off a 2-card deck files
+    // TWO and stops; running the deck dry does NOT end the game here, because §14.3's
+    // deck-out is checked at the DRAW (`flow.ts` `startTurn`) and the loss therefore
+    // stays owed to the drawing player's next turn. That is not this arm's invention:
+    // it is `ATTACK_DRAW`'s stated reading of its own short draw, and `deckTopMill`'s
+    // of a self-mill that empties the ATTACKER's deck mid-§8.
+    if (count >= 1) {
+      // 🛑 THE PRINTED "and" IS AN ORDER, NOT A SET, AND IT IS THE WHOLE OF THIS ARM.
+      // `discardHand` empties the hand into the controller's discard pile and the draw
+      // then refills it; swapped, the cards just drawn would be exactly the ones
+      // discarded and the attack would end with an EMPTY hand. `registry.ts` spells the
+      // identical pair by hand on Professor's Research and Carmine, and `mutants.ts`
+      // already carries that swap against Larry's Skill's row one column over — every
+      // op present, every op right in isolation, and the program wrong.
+      //
+      // NO `recordAs` on the draw, and it is priced rather than skipped: the op takes
+      // one (D311 added it for *"if you drew any cards in this way"*), and nothing in
+      // this sentence reads what was drawn. A field with no reader is the branch no
+      // board can take that D205's rule refuses.
+      //
+      // 🛑 AND BOTH COMMENTS SIT ABOVE THE `return` RATHER THAN BETWEEN THE TWO OPS,
+      // WHICH IS NOT A STYLE CHOICE — D403's finding applied to a two-line array. The
+      // ORDER is what this arm's mutants have to name, so their `find` must span the
+      // two op lines; a comment spliced between them would break every such row without
+      // a character of the code moving, and would make them fragile forever rather than
+      // once.
+      return [
+        { op: "discardHand" },
+        { op: "drawCards", count },
+      ];
+    }
   }
 
   return null;

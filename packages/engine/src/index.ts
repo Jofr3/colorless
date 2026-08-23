@@ -12109,6 +12109,78 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.309.0 → **THE MANDATORY HAND WIPE AND REFILL: AN ARM WHOSE WHOLE PRICE IS
+    THE ORDER OF TWO OPS THAT ALREADY SHIPPED.**
+
+      *"Discard your hand and draw 6 cards."* — **7 legal printings on 1 sentence**
+
+    The biggest single sentence left in the SPLIT-AWARE residue D403 handed on, and the
+    cheapest: ONE whole-sentence anchor and ONE `deriveAttackEffect` arm returning
+    `[{ op: "discardHand" }, { op: "drawCards", count }]` in printed order.
+    `BUILT.attack` 1348 → **1355**; the eleven-reader instrument 397 / 1,319 →
+    **398 / 1,326**, its raw residue 243 / 413 → **242 / 406** and the SPLIT-AWARE one
+    238 / 400 → **237 / 393**; whole-census `built` 1,753 → **1,760**, its residue 630 →
+    **623**; unbuilt attack column 384 → **377**; `FIXTURE_POOL` 507 → **508**.
+    `REGISTRY_ATTACK_UNITS` and `splitHead` stand still — a READER-keyed move, and this
+    slice edits `registry.ts` not at all.
+
+    ✅ **BOTH OF THE HANDOFF'S NAMED FALSIFIERS WERE CHECKED AND BOTH HELD, AND THE
+    REASONS ARE WRITTEN DOWN RATHER THAN THE VERDICTS** (D403's rule, sixth payment).
+
+    ⑴ **`drawCards` ON A SHORT DECK COSTS NO RULE, AND THE PRECEDENT IS IN §8 ALREADY.**
+    `drawToHand` (types.ts) SLICES the deck and pushes the SHORT list, so a 6-card draw
+    off a 2-card deck files two and stops. **§14.3's deck-out is checked at the DRAW**
+    (`flow.ts` `startTurn`), never at the moment the deck runs dry — which is exactly
+    what `deckTopMill`'s own doc block already says about a self-mill that empties the
+    ATTACKER's deck mid-attack, and what `ATTACK_DRAW`'s arm already says about its own
+    short draw. So the loss stays OWED to the drawing player's next turn, and
+    `discardHandDraw.test.ts` §5 drives it end to end: attack on a 2-card deck, pass the
+    turn back, and P1 loses at their own draw step with `reason: "deckOut"`.
+
+    ⑵ **`discardHand` HAS NO TRAINER-SHAPED GATE, AND `programPlayable` NEVER SEES AN
+    ATTACK AT ALL.** The interpreter's case is one line (`{ done: discardHand(...) }`) —
+    fully automatic, no park, no `sourceUid`, keyed on `ctx.seat` alone — and
+    `programPlayable`'s three call sites are `playTrainer` and the two ability paths.
+    D385 had already reached this op from ATTACK text through `optionalCostOps`; what is
+    new here is only that it is reached at the TOP LEVEL.
+
+    🛑 **THE PRINTED "and" IS AN ORDER, NOT A SET, AND THAT IS THE WHOLE OF THE ARM.**
+    Swapped, the six cards just drawn are precisely the ones discarded and the attack
+    ends with an EMPTY hand — every op present, every op correct in isolation, and the
+    program wrong. `mutants.ts` has carried that exact defect against Larry's Skill's
+    registry row one column over since D336; this slice carries it against the arm.
+
+    ⚠️ **THE COUNT IS CAPTURED RATHER THAN PINNED, AND THE EVIDENCE IS THE OTHER
+    COLUMN.** The legal ATTACK column prints 6 and nothing else, so a literal `6` could
+    never go red off `legalAttackCorpus()` — but the same printed skeleton carries **7**
+    on Professor's Research and **5** on Carmine in `registry.ts`'s trainer column, so
+    the number is a printed parameter of the family. `ATTACK_DRAW`'s own `(\d+)` is the
+    sibling arrangement, and D183's paraphrase rule is satisfied either way because the
+    rest of the sentence is transcribed bytes.
+
+    ✅ **NO `attack.ts` TERM IS OWED, AND THAT IS A PROPERTY OF THE SEAM RATHER THAN OF
+    THIS SENTENCE.** `effectSimulated`'s FIRST disjunct is `program !== null` and
+    `program` is `authored ?? derived`, so a new `deriveAttackEffect` arm answers the
+    effect half by construction. `programDamage` stays FALSE — neither op is a
+    `damageDefender` — so the printed base is KEPT and dealt by the pre-program §8.5
+    pipeline, which is what `fix-handdraw`'s flat `30` exists to observe. **The three
+    disjunction chains are untouched, so none of the seven multi-line `find` rows that
+    span them moved.**
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, asked rather than skipped. Neither op takes a
+    new field, neither PARKS (both resolve inline, so nothing new rides
+    `GameState.phase.cont.pendingOp`), and both have been persisted vocabulary since
+    Professor's Research. No union member is added anywhere, so D361's "a v25 record
+    cannot contain a member that did not exist" is not in play.
+
+    Cost: **1 whole-sentence anchor, 1 arm, 1 fixture and 1 deck.** ZERO new ops, ZERO
+    new fields, ZERO `BoardCondition` members, ZERO registry rows, ZERO clause-table
+    rows, ZERO readers and ZERO `attack.ts` edits. No web/API/DB/`@luminous/schema`
+    change.
+
+    engineVersion 0.308.0 → **0.309.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.308.0 → **THE ADDITIVE HALF OF D402's FAMILY: A FOLD THAT NEEDED THE
     PRINTED BASE, AND A UNION MEMBER THAT IS A COMPLEMENT.**
 
@@ -16720,7 +16792,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.308.0";
+export const engineVersion = "0.309.0";
 
 export type {
   ApplyResult,
