@@ -11064,6 +11064,57 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   },
+  /** 🆕🆕 **D399 — THE TWIN CONSEQUENT'S ONE BODY.** Wo-Chien `sv08-015` (Surging
+      Sparks), transcribed WHOLE off tcgdex rather than trimmed to the fields the
+      tests read (D306): the printed 130 HP, the {G} type, the Basic stage, the {R} ×2
+      weakness, the retreat 3 and BOTH attacks at their PRINTED indices and costs.
+
+      ⚠️ **"Hazardous Greed" IS INDEX 0 HERE, WHICH IS THE OPPOSITE OF `fix-counterturn`
+      AND IS THE POINT.** D398's card carried its clause at index 1, so a fixture that
+      always put the interesting attack at 0 would have proved nothing about either.
+      🛑 **AND INDEX 1 IS NOT AN INERT CONTROL — IT IS THE ONE THAT ARMS THE CLAUSE.**
+      "Entangling Whip" prints *"Discard the top 3 cards of your deck."*, which
+      `deriveAttackEffect` has read as `discardDeckTop {whose:"self", count:3}` since
+      long before this slice, so on a deck of 6 the printed pair is a two-turn
+      combo the card is actually built around: mill yourself under the threshold with
+      index 1, then collect the gated 120 × 2 with index 0.
+      `conditionalBenchSnipe.test.ts` §5 drives exactly that, which is the sharpest
+      statement this suite can make that the clause is read at DECLARATION off the
+      board the attack is declared on.
+
+      ⚠️ **`fix-*` ID, SO NO MANIFEST ROW IS OWED**: `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the six-set manifest, and **`sv08` is in
+      none of the six**. ⚠️ No `evolveFrom` and no pre-evolution fixture is owed — the
+      printing is a BASIC, so nothing in the pool is left dangling (D397's Cubone rule
+      read from the easy side). ⚠️ And the engine `Card` type carries no `suffix`
+      column (D207's finding), which costs nothing here: neither printing has a rule
+      box. */
+  "fix-hazardousgreed": {
+    ...blank,
+    id: "fix-hazardousgreed",
+    name: "Wo-Chien",
+    category: "Pokemon",
+    stage: "Basic",
+    hp: 130,
+    types: ["Grass"],
+    retreat: 3,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Hazardous Greed",
+        damage: 20,
+        effect:
+          "If there are 3 or fewer cards in your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Grass", "Grass", "Colorless"],
+        name: "Entangling Whip",
+        damage: 130,
+        effect: "Discard the top 3 cards of your deck.",
+      },
+    ],
+  },
   /** 🆕 D368 — Arven's Mabosstiff ex `sv10-139`/`-218`/`-235` "Vigorous Tackle",
       the THREE legal printings of *"If this Pokémon has no damage counters on it,
       this attack does 120 more damage."*
@@ -12978,6 +13029,24 @@ export const DECK_SIZE_BONUS_DECK = deckOf({
   "fix-counterturn": 4, // Rabsca — "Counterturn" ({G}, 40+) at index 1: the +200
   "fix-titan": 36, // 340 HP, no attacks — survives the boosted 240, and the dominant starter
   "fix-grass-energy": 20, // Basic {G} — "Counterturn"'s printed cost, and any Energy pays "Triple Draw"'s {C}
+});
+
+/** 🆕🆕 D399 — a DEDICATED deck, `DECK_SIZE_BONUS_DECK`'s shape one card over, with
+    **no modifier of any kind and no second attacker**: nothing in it can move a
+    damage number except the clause and the printed 20.
+
+    🛑 **THE BENCH IS AS LOAD-BEARING AS THE DECK HERE, WHICH IS WHAT SEPARATES THIS
+    DECK FROM D398's.** The consequent picks TWO benched bodies, so the boards below
+    need a Bench of 0, 1, 2 and 3 out of ONE deck constant, and every body on it must
+    survive a 120 or a KO tail lands under a damage assertion. `fix-titan` (340 HP, no
+    attacks, no Rule Box) is both the Defender that survives the printed 20 and the
+    bench filler that survives the snipe, and `fix-grass-energy` pays BOTH printed
+    costs ({G}{C} for "Hazardous Greed" — any Energy pays the {C} — and {G}{G}{C} for
+    "Entangling Whip"). `trimDeckTo` is what sets the deck count on each board. */
+export const CONDITIONAL_BENCH_SNIPE_DECK = deckOf({
+  "fix-hazardousgreed": 4, // Wo-Chien — "Hazardous Greed" ({G}{C}, 20) at index 0: the gated 120 × 2
+  "fix-titan": 36, // 340 HP, no attacks — the Defender, every bench body, and the dominant starter
+  "fix-grass-energy": 20, // Basic {G} — pays both printed costs, and any Energy pays a {C}
 });
 
 export const BENCH_NAMED_DAMAGED_DECK = deckOf({

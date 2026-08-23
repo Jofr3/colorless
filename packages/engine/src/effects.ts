@@ -1524,6 +1524,22 @@ export type BoardCondition =
       board fact the reader must decline while the same clause one consequent over is
       accepted.
 
+      ✅ 🆕🆕 **D399 BOUGHT THE TWIN, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ONE
+      OF ITS THREE REFUSALS NOW EXPIRED** (D178: provenance is annotated, never
+      overwritten). `CONDITIONAL_DAMAGE_BONUS`'s and `BONUS_CONSEQUENT_CONDITION`'s
+      refusals still hold; `ALSO_BENCHED_SNIPE`'s *"count of 1"* was a LITERAL inside a
+      regex fragment THREE anchors share, and the legal attack column prints that rider
+      at 2 on FOUR printings. D399 captured the arity instead of pinning it and added
+      `CONDITIONAL_BENCH_SNIPE` as the fragment's third caller, so this member is now
+      read from TWO skeletons through the SAME `CONDITIONAL_DAMAGE_CLAUSES` row —
+      **the clause is bought once and serves both consequents**, which is what sharing
+      that table was for. ⚠️ **AND THE REFUSAL EXPIRED ON A LITERAL, exactly as D398's
+      expired on a NOUN**: nothing about the card, the op or the interpreter had to
+      change. The residue guard is re-homed rather than lost — the same clause now
+      routes to two DIFFERENT readers by its consequent, each declining the other's
+      printed sentence in the same run (`deckSizeBonus.test.ts` §5,
+      `conditionalBenchSnipe.test.ts` §4).
+
       `<= count`, so an EMPTY deck is TRUE — and that board is ORDINARY rather than
       an edge, because §14.3 costs the game only at the DRAW step (flow.ts checks it
       there and nowhere else), so a player who
@@ -9416,6 +9432,12 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // "1 of" separates it from SPREAD_EACH_BENCH's "each of". Refuses Flamigo's "If
 // Flamigo is on your Bench, …" (a board-condition gate, off the `^This` anchor),
 // "2 of" (count ≠ 1), and "1 of YOUR Benched" (self-target) by the exact phrase.
+// ✅ 🆕🆕 D399 — **THE SENTENCE ABOVE IS KEPT VERBATIM WITH TWO OF ITS THREE REFUSALS
+// NOW STALE** (D178). *"2 of"* is READ — the count is a capture and the column prints
+// it on FOUR legal printings — and Flamigo's sentence is refused by its CLAUSE rather
+// than by this anchor, now that `CONDITIONAL_BENCH_SNIPE` reads the gated skeleton:
+// "Flamigo is on your Bench" is simply not in `CONDITIONAL_DAMAGE_CLAUSES`. The
+// self-target refusal is unchanged and is still the exact printed phrase.
 // 🆕🆕 D383 — THE BODY IS A NAMED FRAGMENT NOW, AND THE *ONLY* REASON IS THAT A
 // SECOND READER SPELLS THE SAME CLAUSE WITH A LOWER-CASE LEADING WORD.
 // `deriveAttackOptionalCostBoost`'s payoff table reads this clause as the
@@ -9426,10 +9448,42 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // carries no `/i`). Sharing the body is D222's rule applied to a printed clause:
 // ONE reading of one sentence, so the two anchors cannot drift apart — widen this
 // fragment and BOTH readers widen, which is the coupling the two callers want.
+// 🆕🆕 D399 — AND THE ARITY IS CAPTURED NOW, NOT PINNED AT 1. The catalog prints
+// this rider at TWO counts: `This attack also does 130 damage to 2 of your
+// opponent's Benched Pokémon.` (3 legal printings) and the same clause at 30 (1),
+// beside the fifteen-printing `1 of`. `damageChosen.count` has been a plain
+// `number` since M4 and TWO registry rows already spell 2 (Hawlucha's "Flying
+// Entry", Team Rocket's Crobat ex's "Biting Spree"), so the arity cost NOTHING
+// below the reader — the literal `1` was the only thing refusing four printings.
+// The second capture is what the promise above is FOR: widening it here moves all
+// THREE callers at once, so one printed clause keeps one reading.
 const ALSO_BENCHED_SNIPE_BODY =
-  `attack also does (\\d+) damage to 1 of your opponent['’]s Benched Pokémon\\.` +
+  `attack also does (\\d+) damage to (\\d+) of your opponent['’]s Benched Pokémon\\.` +
   `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
 const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
+/** 🆕🆕 **D399 — THE SAME RIDER BEHIND A PRINTED BOARD-CONDITION CLAUSE.** Wo-Chien
+    `sv08-015` (Surging Sparks) "Hazardous Greed" ({G}{C}, **20**, index **0** of TWO
+    — confirmed by id against tcgdex): *"If there are 3 or fewer cards in your deck,
+    this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't
+    apply Weakness and Resistance for Benched Pokémon.)"*, **1 legal printing**.
+
+    🛑 **THE THIRD CALLER OF THE SHARED BODY, AND THE CONSEQUENT IS LOWER-CASE FOR
+    `OPTIONAL_COST_PAYOFF_BENCH_SNIPE`'s REASON** — the printed sentence lower-cases
+    it because it sits behind a leading clause, and D246's rule says the case is the
+    anchor's, not a `[Tt]` class's. Sharing the body is what makes this widening ONE
+    reading rather than a second opinion about the same clause: at D398's head the
+    engine read *"…to 1 of…"* and refused *"…to 2 of…"*, so a gated anchor spelling
+    its own arity would have shipped an engine that contradicted itself about one
+    printed sentence depending on what came before the comma.
+
+    ⚠️ **`(.+)` FOR THE CLAUSE AND NOT A CLOSED ALTERNATION**, exactly as
+    `CONDITIONAL_DAMAGE_BONUS` and `BONUS_CONSEQUENT_CONDITION` spell it: the
+    vocabulary lives in `CONDITIONAL_DAMAGE_CLAUSES`, which
+    `boardConditionForClause` consults, so an UNMAPPED clause returns null here and
+    the whole sentence stays on the loud `ATTACK_EFFECT_SKIPPED` path. That is the
+    one thing this anchor must not do quietly — a `.+` that always resolved would be
+    D379's saturation trap with the trap sprung. */
+const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_BODY}$`);
 // The ANY-target snipe: "This attack does N damage to 1 of your opponent's Pokémon."
 // — the WHOLE attack (no `damage` field), a chosen hit on the Active OR a Benched
 // Pokémon (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack", Paldean Tauros
@@ -14782,24 +14836,75 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
 
-  // 6c. "This attack also does N damage to 1 of your opponent's Benched Pokémon.
+  // 6c. "This attack also does N damage to M of your opponent's Benched Pokémon.
   //     (Don't apply Weakness and Resistance for Benched Pokémon.)" — the flat
   //     RIDER (Miraidon "Lightning Laser", Tadbulb, Pawmot, Bellibolt, …): the
-  //     SAME count-1 `deals` snipe as Covetous Ivy but WITHOUT `perTakenPrize`
-  //     (a fixed N, not Prize-scaled). The main hit rides the `damage` field; this
-  //     clause is the secondary benched snipe. A printed 0 is not a real card.
+  //     SAME `deals` snipe as Covetous Ivy but WITHOUT `perTakenPrize` (a fixed N,
+  //     not Prize-scaled). The main hit rides the `damage` field; this clause is
+  //     the secondary benched snipe. A printed 0 is not a real card.
+  // 🆕🆕 D399 — **THE ARITY IS THE CAPTURE NOW, AND IT COST NOTHING BELOW HERE.**
+  //     `M` was the literal `1` until this slice and the catalog prints 2 on four
+  //     legal printings; the interpreter's pick has always taken `op.count`
+  //     (`min: take, max: take` over DISTINCT refs, §8.6-clamped to a shorter
+  //     Bench), so the only new thing is which number reaches it. A printed 0-count
+  //     is not a real card either — same guard, same reason as the amount's.
   match = ALSO_BENCHED_SNIPE.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);
-    if (amount >= 1) {
+    const count = Number(match[2]);
+    if (amount >= 1 && count >= 1) {
       return [
         {
           op: "damageChosen",
           target: "opponentBench",
           amount,
-          count: 1,
+          count,
           source: "attack",
           deals: true,
+        },
+      ];
+    }
+  }
+
+  // 🆕🆕 6c-bis (D399). "If {clause}, this attack also does N damage to M of your
+  //     opponent's Benched Pokémon. (Don't apply Weakness and Resistance for
+  //     Benched Pokémon.)" — Wo-Chien `sv08-015` "Hazardous Greed": the arm above
+  //     with a printed board-condition clause in front of it, and the SAME op
+  //     inside a `conditionGate`.
+  //
+  //     🛑 THE CLAUSE IS RESOLVED THROUGH `boardConditionForClause`, WHICH IS THE
+  //     WHOLE POINT: the vocabulary is the shared `CONDITIONAL_DAMAGE_CLAUSES`
+  //     table, so a clause means the same thing here as it does in the two damage
+  //     readers, and an UNMAPPED one returns null and leaves the sentence LOUD.
+  //     `deriveAttackDamageBonus`'s rule, one consequent over.
+  //
+  //     ⚠️ NO `otherwise`, and D135's rule is why: the printed base rides the
+  //     attack's own `damage` field and lands whatever the clause says, so the NO
+  //     arm genuinely buys nothing and an empty array would be a branch claiming
+  //     otherwise (`costSnipeProgram`'s argument, one reader over). A
+  //     `conditionGate` is spliced by `runProgram`'s queue loop, so the condition
+  //     never enters `GameState.phase` and `MATCH_RECORD_VERSION` is untouched.
+  match = CONDITIONAL_BENCH_SNIPE.exec(effect);
+  if (match !== null) {
+    const cond = boardConditionForClause(match[1] ?? "");
+    const amount = Number(match[2]);
+    const count = Number(match[3]);
+    if (cond !== null && amount >= 1 && count >= 1) {
+      return [
+        {
+          op: "conditionGate",
+          cond,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [
+            {
+              op: "damageChosen",
+              target: "opponentBench",
+              amount,
+              count,
+              source: "attack",
+              deals: true,
+            },
+          ],
         },
       ];
     }
@@ -18026,8 +18131,15 @@ export type AttackOptionalCostPayoff =
       (`ALSO_BENCHED_SNIPE_BODY`) — differing only in the case of the leading word,
       which is what the printed sentence differs by. The parenthetical reminder is
       §8.5 true regardless (a benched target takes no Weakness or Resistance) and
-      changes no field, exactly as it changes none for the sibling anchor. */
-  | { kind: "benchSnipe"; amount: number };
+      changes no field, exactly as it changes none for the sibling anchor.
+
+      🆕🆕 **D399 — `count` IS A FIELD HERE BECAUSE THE SHARED BODY CAPTURED IT**,
+      not because this family printed a second arity: all 5 printings of this payoff
+      spell *"1 of"*. It is carried rather than dropped for the fragment's own
+      reason — one printed clause, one reading — so a reprint of THIS sentence at
+      *"2 of"* needs no row, and the number the offer's `then` places is the number
+      the sentence printed rather than a constant this reader re-asserted. */
+  | { kind: "benchSnipe"; amount: number; count: number };
 
 /** 🆕🆕 **D385 — THE CONNECTIVE, WIDENED FROM ONE LITERAL TO A CLOSED ALTERNATION
     OF TWO, AND THE LICENCE IS `cond`.**
@@ -18165,9 +18277,13 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
   const snipe = OPTIONAL_COST_PAYOFF_BENCH_SNIPE.exec(payoff);
   if (snipe !== null) {
     const amount = Number(snipe[1]);
+    // 🆕🆕 D399 — the shared body's SECOND capture, read here for the same reason it
+    // is read one anchor over: a number the sentence printed beats a number this
+    // reader remembered.
+    const count = Number(snipe[2]);
     // The same guard on the same reason — and it is the guard `deriveAttackEffect`'s
     // own benched-snipe arm carries on this clause's other spelling.
-    return amount < 1 ? null : { kind: "benchSnipe", amount };
+    return amount < 1 || count < 1 ? null : { kind: "benchSnipe", amount, count };
   }
   return null;
 }
@@ -18248,7 +18364,7 @@ export function optionalCostBoostProgram(
   note: string,
 ): EffectOp[] {
   if (reading.payoff.kind === "benchSnipe") {
-    return costSnipeProgram(reading, reading.payoff.amount, note);
+    return costSnipeProgram(reading, reading.payoff.amount, reading.payoff.count, note);
   }
   const [boosted, otherwise] = boostedArms(base, reading.payoff.bonus, []);
   const then = [...reading.ops, ...boosted];
@@ -18321,6 +18437,7 @@ export function optionalCostBoostProgram(
 function costSnipeProgram(
   reading: AttackOptionalCostBoost,
   amount: number,
+  count: number,
   note: string,
 ): EffectOp[] {
   // Named `then` so the confirm below splices it by SHORTHAND — D317's measured
@@ -18332,7 +18449,9 @@ function costSnipeProgram(
     // what makes it ATTACK DAMAGE rather than placed counters, so a benched
     // reduction passive still applies; Weakness and Resistance never do on a benched
     // target (§8.5), which is what the printed parenthetical reminds the player of.
-    { op: "damageChosen", target: "opponentBench", amount, count: 1, source: "attack", deals: true },
+    // 🆕🆕 D399 — `count` is the sentence's own capture now (every printing of THIS
+    // payoff spells 1, so no board below moves), for the shared fragment's reason.
+    { op: "damageChosen", target: "opponentBench", amount, count, source: "attack", deals: true },
   ];
   const offer: EffectOp = { op: "optional", note, then };
   return [

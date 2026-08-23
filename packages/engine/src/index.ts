@@ -12108,6 +12108,96 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.304.0 → **THE TWIN CONSEQUENT, AND THE ARITY THAT WAS A LITERAL IN THREE
+    PLACES.**
+
+      Wo-Chien `sv08-015` (Surging Sparks) "Hazardous Greed"
+      ({G}{C}, **20**, index **0** of TWO — its index 1 is "Entangling Whip",
+      {G}{G}{C}, 130, *"Discard the top 3 cards of your deck."* — confirmed by id
+      against tcgdex)
+        *"If there are 3 or fewer cards in your deck, this attack also does 120
+         damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and
+         Resistance for Benched Pokémon.)"*
+        **1 legal printing**
+
+      …and, from the SAME one-character widening and with no clause in front of them:
+        *"This attack also does 130 damage to 2 of your opponent's Benched Pokémon.
+         (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **3**
+        *"This attack also does 30 damage to 2 of your opponent's Benched Pokémon.
+         (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **1**
+
+    **3 sentences / 5 printings.** `BUILT.attack` 1306 → **1311**; the nine-reader
+    instrument 377 / 1,269 → **380 / 1,274** and its residue 263 / 463 → **260 / 458**.
+
+    🛑 **THE NAMED RISK IN THE HANDOFF WAS ALREADY RETIRED, AND CHECKING IT FIRST IS
+    WHAT MADE THE SLICE BIGGER RATHER THAN SMALLER.** D398 handed this row over with
+    one thing to price before anything else: *"whether the interpreter's pick loop
+    really takes `count: 2` distinct bodies … every shipped `damageChosen` in the repo
+    is `count: 1`, so that arity is UNEXERCISED and could be the slice's real cost."*
+    It is not, and it never was. `interpreter.ts`'s arm has read `op.count` since M4 —
+    `take = Math.min(op.count, candidates.length)` parks `choosePokemonMulti` at
+    `min: take, max: take`, `validateChoice` enforces DISTINCT refs against the
+    prompt's own candidate list, and §8.6 clamps a Bench shorter than the printed
+    number into an auto-take. And **TWO REGISTRY ROWS HAVE SPELLED `count: 2` SINCE
+    LONG BEFORE THIS SLICE** — Hawlucha's "Flying Entry" (`opponentBench`) and Team
+    Rocket's Crobat ex's "Biting Spree" (`opponentAny`), both driven on real boards.
+    ⚠️ **THE TRANSFERABLE FORM: A HANDOFF'S "UNEXERCISED" IS A CLAIM ABOUT THE REPO,
+    AND ONE `grep` OF THE REGISTRY IS CHEAPER THAN BELIEVING IT.** D398's own lesson
+    (re-derive the REASON, not the verdict) read from the other side — there the doc
+    block was wrong about a refusal, here the handoff was wrong about a cost.
+
+    🛑 **SO THE SLICE IS THE ARITY, NOT THE CARD, AND THE SHARED FRAGMENT IS WHY.**
+    `ALSO_BENCHED_SNIPE_BODY` exists (D383) so that ONE printed clause has ONE
+    reading: `deriveAttackEffect`'s `^This …` anchor and
+    `deriveAttackOptionalCostBoost`'s `^this …` payoff anchor splice the same string,
+    *"widen this fragment and BOTH readers widen"*. Its arity was the LITERAL `1`, and
+    the catalog prints the rider at TWO counts on four legal printings this engine was
+    refusing for no reason but that literal. So the gated sentence could not honestly
+    be bought with an anchor of its own: an engine that read *"If X, this attack also
+    does 120 damage to 2 of…"* while refusing *"This attack also does 130 damage to 2
+    of…"* would be contradicting itself about one printed clause on the strength of
+    what came before the comma. **THE COUNT IS CAPTURED IN THE FRAGMENT, ALL THREE
+    CALLERS READ IT, AND THE GATED ANCHOR IS THE THIRD CALLER** — D118's rule (the
+    printed number is a parameter, not part of the key) and D367's vindication of it.
+
+    🛑 **THE GATED ARM RESOLVES ITS CLAUSE THROUGH `boardConditionForClause` AND HAS
+    NO VOCABULARY OF ITS OWN.** That is the whole reason it costs nothing:
+    `yourDeckAtMost { count: 3 }` is D398's member, keyed by the row D398 authored,
+    and the two printed sentences differ ONLY in the consequent. An UNMAPPED clause
+    returns null and the sentence stays on the loud `ATTACK_EFFECT_SKIPPED` path —
+    driven, not asserted, from three printed near-misses the table does not carry
+    (Flamigo's *"If Flamigo is on your Bench, …"*, a `Tera` banner clause, and the
+    Stadium/`each of` compound).
+
+    ⚠️ **D398's DISCRIMINATION IS RE-HOMED, NOT DELETED, AND THAT WAS THE ONE REAL
+    COST.** `deckSizeBonus.test.ts` §5 defused D379's saturation trap by requiring the
+    same clause ACCEPTED under one consequent and DECLINED under another — and this
+    slice makes the declined half true. The replacement is stronger and lives in the
+    same shape: the clause is now routed to **two different readers by its
+    consequent**, and each of them declines the other's printed sentence in the same
+    run. Neither a read-everything nor a refuse-everything reader can pass that, and
+    `conditionalBenchSnipe.test.ts` §4 adds the other axis — the same CONSEQUENT
+    accepted behind a mapped clause and refused behind a printed unmapped one.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 25, AND THE OP THAT PARKS IS EXACTLY WHY THE
+    QUESTION HAD TO BE ASKED.** `damageChosen` rides `GameState.phase.cont.pendingOp`
+    while its pick is open, so its own doc block records that adding a REQUIRED field
+    to it cost `MATCH_RECORD_VERSION` 2 → 3. **NO FIELD IS ADDED HERE.** `count` has
+    been a required `number` on that op since M4 and the value 2 was already authored
+    by two registry rows, so a v25 record can already contain it and means exactly
+    what it meant. `AttackOptionalCostPayoff.benchSnipe` gains a `count`, but that
+    type is a READING of printed text, re-derived on every load and never serialized.
+    Authoring an EXISTING field at a new VALUE is a widening; adding a field is not.
+
+    Cost: **1 widened regex fragment (its second capture), 1 new anchor, 1 new
+    `deriveAttackEffect` arm, 1 threaded reader field and 1 fixture.** ZERO new state,
+    ops, events, error codes, prompt kinds, choice kinds, exported readers,
+    `BoardCondition` members, `CardFilter` members, registry rows, interpreter arms,
+    `redact.ts` bytes or `packages/schema` bytes.
+
+    engineVersion 0.303.0 → **0.304.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.303.0 → **THE DECK-SIZE READ — THE LAST BUILDABLE SENTENCE IN THE BONUS
     RESIDUE, AND A UNION INVARIANT CORRECTED RATHER THAN EXCEPTED.**
 
@@ -12163,7 +12253,10 @@ import type { GameState, Seat } from "./types";
     (Don't apply Weakness and Resistance for Benched Pokémon.)"* — 1 legal printing,
     and no reader claims it. `CONDITIONAL_DAMAGE_BONUS` wants *"does N more damage."*,
     `BONUS_CONSEQUENT_CONDITION` wants *"more damage, and …"*, `ALSO_BENCHED_SNIPE` is
-    anchored at `^This` with a count of **1**. **THE MEMBER IS BOUGHT ONCE AND THE
+    anchored at `^This` with a count of **1** [✅ 🆕🆕 **D399 BOUGHT IT**, and the third
+    refusal is the one that expired: that *"count of 1"* was a LITERAL in a regex
+    fragment THREE anchors share, so capturing the arity took the twin AND four ungated
+    printings. Kept verbatim per D178]. **THE MEMBER IS BOUGHT ONCE AND THE
     CONSEQUENT IS PRICED SEPARATELY**, and that refusal is DRIVEN — which is also what
     keeps this slice's residue guard off the vacuity that D379 warned exhaustion
     invites: the same clause is accepted under one consequent and declined under
@@ -16294,7 +16387,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.303.0";
+export const engineVersion = "0.304.0";
 
 export type {
   ApplyResult,
