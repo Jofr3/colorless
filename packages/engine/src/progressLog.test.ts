@@ -473,7 +473,7 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // (written 2026-08-23, after D399)" and closing on the paragraph that ends "…over all 1,379
   // rows after the rewrite as well." — re-emitted under its own archive heading, and the SEAM
   // was re-read afterwards rather than assumed, with BOTH headings confirmed present in order.
-  const ARCHIVES = 70;
+  const ARCHIVES = 71;
 
   it("the page still holds all 70 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];

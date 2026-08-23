@@ -25318,3 +25318,108 @@ a count capture structurally cannot move them. With their count-1 siblings that 
 split-sentence slice, not a regex slice, and the next thing to price. Three of the five largest
 remaining sentences in the whole unresolved corpus share that shape, which is why the sequencing
 question is worth more than any single sentence.
+
+
+## D401 — THE SELF-DISCARD COST IN FRONT OF AN ANY-TARGET SNIPE: a sequencing question whose answer was already in the code (engine 0.306.0)
+
+The slice the section above handed on, taken exactly as scoped: **4 sentences / 7 legal
+printings**, one whole-sentence COMPOUND anchor (`SELF_DISCARD_THEN_ANY_TARGET`) and one
+`deriveAttackEffect` arm returning two already-shipped ops in printed order. Zero new ops, fields,
+`BoardCondition` members or registry rows. `BUILT.attack` 1320 → **1327**.
+
+### 🛑 The shape question was answered by a GREP OF THE READER, not by a census of the cards
+
+The handoff asked *"one anchor or two reads"* and told the successor to look for a split
+mechanism first. The grep that settled it is one line: **`deriveAttackEffect` is never called
+recursively — not once, anywhere in the file.** So there is no `. `-joined composition path and
+there never has been; every compound this engine reads is its own whole-sentence anchor returning
+both ops in printed order (`DEFENDER_POISON_CANT_RETREAT` arm 5c, `COUNTER_PUT_ANY_THEN_SELF_LOCK`
+arm 25, D147's `SELF_DISCARD_ALL_THEN_REDUCTION`, D148's `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`).
+
+⚠️ **D382's `. Then, ` join is NOT the counterexample it looks like.** It lives in
+`deriveAttackBonusConsequent`, not here, and it dispatches its captured tail over a CLOSED anchor
+list *precisely because it could not delegate to this reader* — that consequent lowercases its
+verb and `deriveAttackEffect` returns null for it. The transferable form: **when a handoff asks
+whether a general mechanism exists, the cheapest honest answer is a grep for the CALL, not a
+census of the cards.**
+
+### 🛑 The same earlier decision reversed on one axis and upheld on the other, in one slice
+
+D382 made two calls about widening, and this slice goes opposite ways on them.
+
+**The JOIN call is REVERSED.** D382 refused `(?:, and |\. Then, )` because its anchor wraps a
+leading `(.+)` antecedent, so an alternation would have collapsed the pair *"into a regex whose
+greed nobody can read off the page"*. `SELF_DISCARD_THEN_ANY_TARGET` **contains no `.`
+metacharacter at all** — every byte outside its three captures is a literal, and the captures are
+`(all|\d+)` and two `(\d+)` — so `(?:\. This|, and this)` can match at exactly one offset and
+there is no greed to hide. Measured over `legalAttackCorpus()`: the period join carries **3
+sentences / 6 printings**, the comma join **1 / 1**, and the two derive to the IDENTICAL program.
+A `. `-only reading would have taken three of the four and refused the fourth **on a conjunction
+rather than on a mechanism** — D399's *"a refusal that expired on a literal"*. The CASE lives in
+the join (`\. This` / `, and this`) rather than in a `[Tt]` class, on D246/D316's rule: a case
+class gives up the whole-sentence discipline in both directions at once.
+
+**The TAIL call is UPHELD.** `CHOSEN_ANY_TARGET`'s tail is a THREE-way optional (bare | the
+Benched clarifier | Umbreon's W/R sentence); this anchor's is TWO-way, because a W/R tail behind a
+discard cost returns **ZERO** sentences in the whole 640-sentence legal attack column. Sharing a
+fragment with that anchor is otherwise **exactly D383's condition** — a second reading of one
+printed clause with a lower-case leading word — and it was still declined, because sharing a
+fragment is also a widening of every caller to every arm the fragment carries.
+
+⚠️ **The discriminator is which of the two arguments is a MEASUREMENT.** *"Is the alternation
+readable"* is an argument about the regex and yields to inspection; *"does the column print it"*
+is a count and does not. **A rule inherited from a prior slice must be re-tested against the
+reason it was written down with, not against its conclusion.**
+
+✅ A side benefit that mattered mechanically: `CHOSEN_ANY_TARGET`'s bytes were never touched, so
+D400's find surface — including its C3 row anchored on that anchor's first template line — is
+intact and needed no re-transcription.
+
+### 🛑 The first attack program in this engine that PARKS TWICE on one printed sentence pair
+
+`discardEnergy {from: "yourActive", count: 2}` asks which Energy; `damageChosen {target:
+"opponentAny", count: 2}` then asks which bodies. **The persisted question was asked of the
+CONTINUATION rather than of the ops**, because a queue of two parks is exactly where a new
+persisted shape would have had to appear. It does not: `EffectContinuation` has carried
+`rest: EffectOp[]` since M5 and `resumeProgram` re-enters `runProgram` with it, so a program that
+parks, resumes and parks again is the existing shape doing what it already did.
+**`MATCH_RECORD_VERSION` STAYS 25.** D342's `searchTopOrderProgram` (searchDeck then reorderTop)
+is the two-park ATTACK precedent and has been live since that slice.
+
+⚠️ **The ORDER of the two ops is invisible to every census.** Mutant C2 returns them snipe-first
+— the board ends in the same place, every sentence still resolves, no figure moves — and only a
+rung that drives both parks in sequence and reads the EVENT STREAM ACROSS TWO ACTIONS can see it.
+That is why `anyTargetSnipe.test.ts` §6 asserts every `ENERGY_DISCARDED` lands in the first resume
+and every `DAMAGE_DEALT` in the second, rather than only reading the derived op back.
+
+### ⚠️ Four earlier refusal claims re-pointed NULL → SHAPE, found by grepping the SENTENCE
+
+`attackPark.test.ts` and `tailsSelfCost.test.ts` each held Kyurem `sv06.5-047` "Trifrost" as a
+NULL witness — the **last of D145's four compounds** to leave those lists, after D147 and D148
+took Eiscue's two, leaving only Weavile `sv06.5-014`'s Paralyze compound unread.
+`anyTargetSnipe.test.ts` §1 and `conditionalBenchSnipe.test.ts` §1 each asserted the count-≠-1
+compounds were refused by all nine readers. Every population figure is kept and each rung gains
+the strictly stronger claim: **the bare anchors STILL refuse them, and the compound derives TWO
+ops where a prefix match would derive one.** A build that had merged the two anchors into a prefix
+match would pass every `toBeNull` in the repo and silently drop a printed Energy cost.
+
+### ⚠️ What this slice did NOT buy, named rather than left to be discovered
+
+The residue is **254 sentences / 442 printings**, and its biggest *shape* is not its biggest
+*sentence*: the `"… for each card you discarded in this way."` family is **12 sentences / 27
+printings** unresolved, against 7 for the largest single sentence left. Its two largest members
+are 6 printings each — *"You may discard any amount of Basic Energy from your Pokémon. This attack
+does 70 damage for each card you discarded in this way."* and *"You may discard up to 2 Energy
+from your Benched Pokémon. This attack does 60 **more** damage for each card you discarded in this
+way."*
+
+**The ops already ship, authored twice, as REGISTRY rows.** Chien-Pao ex's "Hail Blade" and Mewtwo
+VSTAR's "Psy Purge" are both
+`[discardEnergy {from, filter, count, recordAs: "discarded"}, damageDefender {per, count:
+"discarded"}]` in `registry.ts`, and the row's own doc says the sentence is *"a variable-count park
+the deriver deliberately refuses"*. **That refusal is the thing to re-price**, now that a two-op
+compound behind a park is known to cost one anchor and one arm. Two things will decide it: the
+`discardEnergy.from` union has no Bench-only member (and D222 is the standing warning on exactly
+that union), and the family splits on the same one-word FOLD discriminator D163 already paid for —
+*"does N damage for each"* multiplies and drops the printed base, *"does N **more** damage for
+each"* adds to it.
