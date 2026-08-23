@@ -452,12 +452,42 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     }
   });
 
+  it("🛑 a SECOND sentence after the period is refused — the anchor is whole at BOTH ends", () => {
+    // 🛑 **THE RUNG THE MUTATION HARNESS ASKED FOR, AND THE REASON IT HAD TO.** The
+    // first version of this section drove the `$` with a TRAILING-CLAUSE near-miss
+    // (*"…Benched Pokémon that has any damage counters on it."*) and `--decision D399`
+    // reported the terminator mutant SURVIVED. The near-miss was refused one level
+    // down: the shared BODY ends in a literal `\.` right after *Pokémon*, so a
+    // sentence that CONTINUES there never reaches the anchor's `$` at all. ⚠️ **A
+    // NEAR-MISS THAT THE FRAGMENT ALREADY REFUSES PROVES NOTHING ABOUT THE ANCHOR
+    // WRAPPED AROUND IT** — the only string that can reach a whole-sentence
+    // terminator is one the fragment matches ENTIRELY and that then keeps going, i.e.
+    // a COMPOUND. Both spellings are driven, with and without the optional clarifier,
+    // because the clarifier group is where a prefix match would otherwise stop.
+    //
+    // The defect a prefix match would ship is `deriveAttackBonusConsequent`'s own
+    // stated one, one reader over: it would swallow the damage and silently DROP the
+    // second sentence, so a printed discard would vanish rather than stay loud.
+    for (const compound of [
+      `${TAKEN} ${ENTANGLING_WHIP}`,
+      "If there are 3 or fewer cards in your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. Discard the top 3 cards of your deck.",
+    ]) {
+      expect(deriveAttackEffect(compound), compound).toBeNull();
+      expect(resolvedByAnyReader(compound), compound).toBe(false);
+    }
+    // …and the same string with the tail removed IS read, in the same case, so what
+    // refuses the compound is the terminator and not the clause or the consequent.
+    expect(deriveAttackEffect(TAKEN)).not.toBeNull();
+  });
+
   it("🛑 the neighbouring benched shapes keep their OWN ops behind the same clause", () => {
-    // The anchor is a whole sentence, so the three sibling spellings must not be
-    // swallowed by it. `each of` is a spread, `1 of your opponent's Pokémon` is the
-    // any-target snipe (a different op), and a trailing clause is a different
-    // sentence. All three carry a MAPPED antecedent here, so what refuses them is the
-    // consequent alone.
+    // The CONSEQUENT is a whole clause, so the sibling spellings must not be swallowed
+    // by it. `each of` is a spread, `2 of your opponent's Pokémon` is the any-target
+    // snipe (a different op), `your Benched` is a self-target, and a trailing clause
+    // continues where the body's own `\.` ends. All four carry a MAPPED antecedent
+    // here, so what refuses them is the consequent alone. ⚠️ **THESE FOUR TEST THE
+    // SHARED BODY, NOT THE ANCHOR'S TERMINATOR** — the case above is the one that
+    // tests that, and conflating the two is what the harness caught.
     for (const consequent of [
       "this attack also does 30 damage to each of your opponent's Benched Pokémon.",
       "this attack also does 30 damage to 2 of your opponent's Pokémon.",
