@@ -9490,18 +9490,57 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 // "Aqua Dive", Bellibolt ex, Kilowattrel). "Pokémon" (not "Benched Pokémon") is the
 // tell: the target may be the Active, where Weakness/Resistance DO apply (§8.5), so
 // the op is `target: "opponentAny"`. The tail is an ALTERNATION: the SAME Benched
-// clarifier (true only for a Benched pick, no op change), OR — captured as group 2 —
+// clarifier (true only for a Benched pick, no op change), OR — captured as group 2
+// (🆕🆕 D400: group 3 now, the count having taken 2) —
 // Umbreon "Feint Attack"'s "This attack's damage isn't affected by Weakness or
 // Resistance[, or by any effects on that Pokémon]." (sv03-130), which sets `ignoreWR`.
 // The ", or by any effects on that Pokémon" clause is optional so both the modern SV
 // wording and the bare classic one derive the same flag. Refuses the "Benched"-only
 // snipes (that clause names the zone) and Pawmot ex / Magikarp (a leading discard
 // cost / coin flip, off the `^This attack does` anchor).
+// 🆕🆕 D400 — AND THE ARITY IS CAPTURED HERE TOO, WITH THE TAIL'S NUMBER REQUIRED TO
+// AGREE WITH IT. The count was the literal `1` on this anchor while the legal attack
+// column printed 2 on TWO sentences worth NINE printings: the Benched-clarifier
+// spelling at 3, and the same opener under the W/R tail at 6 — and that tail spells
+// **those** rather than **that**. So the count is group 2 and the tail's number word
+// is a group of its own, which is why the ignoreWR group moved.
+//
+// 🛑 THE SHAPE QUESTION WAS "A `th(?:at|ose)` CLASS OR ENFORCED AGREEMENT", AND THIS
+// ANCHOR'S OWN PRINTINGS CANNOT SETTLE IT BECAUSE ONE OF THE FOUR CELLS IS EMPTY.
+// Measured over `legalAttackCorpus()`: this tail spells *those* on ONE sentence / 6
+// printings, all at count 2, and spells *that* on ZERO. The count-1 W/R-tail sentence
+// that IS printed carries the BARE form ("…isn't affected by Weakness or Resistance.",
+// 2 printings), so the optional "or by any effects on that Pokémon" clause this anchor
+// has admitted since 0.46.0 serves NO legal printing at all. It is KEPT — Umbreon
+// sv03-130 really does print it, and narrowing a spelling this reader has resolved for
+// fifty decisions is a different slice with its own price.
+//
+// ⚠️ SO THE EVIDENCE FOR AGREEMENT IS THE WHOLE COLUMN, NOT THIS TAIL. Across all 640
+// sentences, "that Pokémon" occurs on 15 sentences / 32 printings and its referent is
+// SINGULAR every time (a "1 of", an Active, or a distributive "for each of"); "those
+// Pokémon" on 4 sentences / 12 printings and its referent is PLURAL every time (a "2
+// of", a "3 of", an "up to 2 of"). Zero counterexamples either way — and ONE sentence
+// spells BOTH, correctly, which is the sharpest datum in the set: the {D} evolve
+// search says "for each of THOSE Pokémon … evolves from THAT Pokémon", plural for the
+// chosen set and singular for the member. The column does not merely happen to agree;
+// it switches spelling mid-sentence when the referent's number switches. Agreement is
+// a fact about the catalog, so enforcing it is READING; a `th(?:at|ose)` class would
+// instead resolve two
+// sentences nobody prints, which is D190b's "exact map or flag" read from the regex
+// side. The refusal is also the useful one: a disagreeing sentence almost certainly
+// means the referent is not the one this skeleton names, and the loud path is how this
+// engine finds that out.
+//
+// 🛑 AND THE ENFORCEMENT LIVES AT THE READ SITE, NOT IN THE PATTERN. A regex cannot tie
+// one capture to another capture's VALUE, so spelling agreement here would take two
+// copies of the whole skeleton with the count written twice — the duplication D399's
+// shared fragment exists to prevent, one anchor over. One anchor, one capture, one
+// comparison below, and a disagreeing sentence is left exactly where a printed 0 is.
 const CHOSEN_ANY_TARGET = new RegExp(
-  `^This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon\\.` +
+  `^This attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
     `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
-    "(?:, or by any effects on that Pokémon)?\\.))?$",
+    "(?:, or by any effects on (that|those) Pokémon)?\\.))?$",
 );
 // The self-discard attack COST (§8): "an" leaves the player one pick per
 // distinct Energy attached, "{N}" asks for exactly that many, "all" strips the
@@ -14915,19 +14954,32 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack"): the WHOLE attack is a
   //     chosen hit on the Active OR a Bench, `target: "opponentAny"` so a hit that
   //     lands on the Active takes W/R (§8.5). A printed 0 is not a real card. When
-  //     group 2 caught Umbreon "Feint Attack"'s "…isn't affected by Weakness or
-  //     Resistance, or by any effects on that Pokémon." tail, the hit sets `ignoreWR`.
+  //     group 2 (🆕🆕 D400: group 3) caught Umbreon "Feint Attack"'s "…isn't affected
+  //     by Weakness or Resistance, or by any effects on that Pokémon." tail, the hit
+  //     sets `ignoreWR`.
+  //     🆕🆕 D400 — THE COUNT IS READ RATHER THAN ASSUMED, on the same evidence D399
+  //     used one anchor over: `damageChosen.count` has been a plain `number` since M4,
+  //     `snipeTargets`/`placeSnipe` take any arity and `validateChoice` enforces
+  //     distinctness, so the literal `1` was the only thing refusing 2 sentences / 9
+  //     legal printings. The tail's NUMBER WORD must agree with it — see the anchor's
+  //     doc block for the column-wide measurement that makes that a reading — and a
+  //     disagreeing sentence falls through to the loud `ATTACK_EFFECT_SKIPPED` path
+  //     exactly as a printed 0 does, rather than being resolved on a spelling the
+  //     catalog has never printed.
   match = CHOSEN_ANY_TARGET.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);
-    if (amount >= 1) {
-      return match[2] === undefined
+    const count = Number(match[2]);
+    const number = match[4];
+    const agrees = number === undefined || (number === "those") === (count > 1);
+    if (amount >= 1 && count >= 1 && agrees) {
+      return match[3] === undefined
         ? [
             {
               op: "damageChosen",
               target: "opponentAny",
               amount,
-              count: 1,
+              count,
               source: "attack",
               deals: true,
             },
@@ -14937,7 +14989,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
               op: "damageChosen",
               target: "opponentAny",
               amount,
-              count: 1,
+              count,
               source: "attack",
               deals: true,
               ignoreWR: true,
@@ -17462,7 +17514,8 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     one field would have to be undone by the first of those riders to land.
 
     ⚠️ **NOT `damageChosen.ignoreWR`, AND THAT WAS CHECKED RATHER THAN ASSUMED.**
-    That field is an OP member (one writer — `CHOSEN_ANY_TARGET`'s group 2, Umbreon
+    That field is an OP member (one writer — `CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400:
+    group 3 now, the count having taken 2 — Umbreon
     "Feint Attack" sv03-130; two read paths — `placeSnipe`'s bench arm and
     `snipeActive`) and the main hit HAS NO OP: this sentence is the whole printed
     effect of an attack whose damage is its `damage` field. It is also ONE boolean

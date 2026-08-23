@@ -4572,6 +4572,55 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D400 FIXTURE — the ANY-target snipe at COUNT 2, flat.** The printed
+      sentence is byte-for-byte the legal column's *"This attack does 50 damage to 2 of
+      your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched
+      Pokémon.)"* — **3 legal printings**, refused until this slice by one literal `1`
+      in `CHOSEN_ANY_TARGET`. Typed {L} so `fix-lightning-weak` (the family's existing
+      ×2 Lightning witness) DOUBLES on an Active pick and stays FLAT on a Benched one,
+      which is the pair that makes `opponentAny` mean both zones at an arity above 1.
+      The card ids that print this sentence are unknown to this container (no D1
+      credentials, D369), so it is a `fix-*` key rather than a guessed id. A Basic;
+      {C} cost so `fix-lightning-energy` pays. */
+  "fix-twinsnipe": battler("fix-twinsnipe", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Twin Arrow",
+        effect:
+          "This attack does 50 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D400 FIXTURE — the same arity under the W/R TAIL, whose number word is
+      PLURAL.** *"This attack does 50 damage to 2 of your opponent's Pokémon. This
+      attack's damage isn't affected by Weakness or Resistance, or by any effects on
+      those Pokémon."* — **6 legal printings**, the largest single sentence in the
+      unresolved residue at D399's head. It is `fix-feint`'s sentence with two words
+      changed (*1*→*2*, *that*→*those*), which is exactly the point: the count and the
+      tail's number agree, and the reader now REQUIRES that. `ignoreWR` at `count: 2`
+      on `opponentAny` is the combination no shipped program had — Team Rocket's Crobat
+      ex spells `{opponentAny, count: 2}` without the flag and Umbreon spells the flag
+      at count 1 — so this fixture is the one board where a two-pick hit crosses the
+      Active/Bench line with W/R nulled on both sides. A Basic; {C} cost. */
+  "fix-twinfeint": battler("fix-twinfeint", {
+    types: ["Lightning"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Twin Feint",
+        effect:
+          "This attack does 50 damage to 2 of your opponent's Pokémon. This attack's damage isn't affected by Weakness or Resistance, or by any effects on those Pokémon.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -13911,6 +13960,24 @@ export const FEINT_DECK = deckOf({
   "sv03-174": 4, // Bouffalant — "Bouffer" (−20 after W/R): the reduction ignoreWR SKIPS
   "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 (an Active-snipe bonus witness)
   "fix-lightning-energy": 16, // pays Feint Attack's {C}
+});
+
+/** 🆕🆕 **D400: the ANY-target snipe at COUNT 2 — both printed spellings on one
+    deck.** A SEPARATE deck from `ANY_SNIPE_DECK` and `FEINT_DECK` for their own
+    stated reason: both of those pin seed-sensitive opening hands, and growing either
+    would reshuffle a suite this slice has no business touching. `fix-lightning-weak`
+    is DOMINANT so BOTH setup Actives pin to it (×2 Lightning, 130 HP — it survives
+    the doubled 100 an Active pick takes, so the W/R math stands alone with no KO in
+    it); `sv03-174` (Bouffalant, "Bouffer" −20 after W/R) is the benched reduction the
+    *"any effects on those Pokémon"* clause skips on ONE attacker and not the other,
+    which is the discriminating pair the whole arity rests on. {C}-only costs, so
+    `fix-lightning-energy` pays both. */
+export const TWIN_SNIPE_DECK = deckOf({
+  "fix-twinsnipe": 4, // count-2 flat snipe (opponentAny, 50) — W/R APPLIES on the Active pick
+  "fix-twinfeint": 4, // count-2 ignoreWR snipe (opponentAny, 50) — W/R nulled on BOTH picks
+  "fix-lightning-weak": 32, // ×2 Lightning, 130 HP — DOMINANT pinned Active + bench targets
+  "sv03-174": 4, // Bouffalant — "Bouffer" (−20 after W/R): the reduction ignoreWR SKIPS
+  "fix-lightning-energy": 16, // pays both {C} costs
 });
 
 /** 0.47.0: Chien-Pao ex "Hail Blade" — the variable-count discard whose damage

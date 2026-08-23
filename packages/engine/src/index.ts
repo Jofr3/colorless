@@ -5111,7 +5111,8 @@ import type { GameState, Seat } from "./types";
     own printed penalty stand.
 
     ⚠️ **NOT `damageChosen.ignoreWR`, VERIFIED BEFORE CONCLUDING.** ONE writer
-    (`CHOSEN_ANY_TARGET`'s group 2, Umbreon "Feint Attack") and TWO read paths
+    (`CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400: group 3 now, the count having taken 2 —
+    Umbreon "Feint Attack") and TWO read paths
     (`snipeActive`, `placeSnipe`'s `deals` arm); it is a member of an OP and the
     main hit has NO op, and it is one boolean where three are needed. Sibling, not
     shared — asserted in both directions.
@@ -12108,6 +12109,102 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.305.0 → **THE ANY-TARGET ARITY, AND A GRAMMATICAL AGREEMENT READ OFF THE
+    CATALOG RATHER THAN INVENTED.**
+
+      *"This attack does 50 damage to 2 of your opponent's Pokémon. (Don't apply
+       Weakness and Resistance for Benched Pokémon.)"* — **3 legal printings**
+
+      *"This attack does 50 damage to 2 of your opponent's Pokémon. This attack's
+       damage isn't affected by Weakness or Resistance, or by any effects on those
+       Pokémon."* — **6 legal printings**, the largest single sentence in the
+       unresolved residue at D399's head
+
+    **2 sentences / 9 printings.** `BUILT.attack` 1311 → **1320**; the nine-reader
+    instrument 380 / 1,274 → **382 / 1,283**, the ten-reader one 383 / 1,282 →
+    **385 / 1,291**, and the residue 260 / 458 → **258 / 449**. The unbuilt attack
+    column 421 → **412**, whole-census `built` 1,716 → **1,725** and its residue
+    667 → **658**. `FIXTURE_POOL` floor 499 → **501**; the apostrophe census's
+    DERIVABLE sweep 125 → **127**.
+
+    🛑 **THE SLICE IS `CHOSEN_ANY_TARGET`'s LITERAL `1`, THE SAME LITERAL D399 FREED
+    ONE ANCHOR OVER**, and it cost nothing below the reader for that slice's reason
+    verbatim: `damageChosen.count` has been a plain `number` since M4, `snipeTargets`
+    and `placeSnipe` take any arity, `validateChoice` enforces DISTINCT refs against
+    the parked prompt, §8.6 clamps a short candidate set into an auto-take, and
+    `snipeNote` already pluralises. The count is now a capture. ZERO new ops, fields,
+    events, error codes, prompt kinds, choice kinds, `BoardCondition` members,
+    registry rows, interpreter arms, `redact.ts` bytes or `packages/schema` bytes.
+
+    🛑 **THE SHAPE QUESTION WAS SETTLED FIRST, AND THIS ANCHOR'S OWN PRINTINGS COULD
+    NOT SETTLE IT.** The 6-printing sentence spells *those* where Umbreon's tail
+    spells *that*, so the choice was a `th(?:at|ose)` CLASS — which resolves two
+    sentences nobody prints — or ENFORCED AGREEMENT between the count and the tail's
+    number. The handoff attached a falsifiable prediction (*that* only at count 1,
+    *those* only at count ≥ 2, at every amount). **IT HOLDS IN THE DIRECTION IT CAN BE
+    TESTED AND IS VACUOUS IN THE OTHER**: measured over `legalAttackCorpus()`, this
+    tail spells *those* on ONE sentence / 6 printings, all at count 2, and spells
+    *that* on **ZERO** — the printed count-1 W/R sentence carries the BARE form
+    (*"…isn't affected by Weakness or Resistance."*, 2 printings). So the optional
+    *"or by any effects on that Pokémon"* clause this anchor has admitted since 0.46.0
+    serves NO legal printing at all. **A PREDICTION WHOSE ANTECEDENT HAS AN EMPTY CELL
+    IS NOT EVIDENCE, IT IS SILENCE**, and reporting it as "held" would have been the
+    census version of a vacuous guard.
+
+    ✅ **WHAT DID DECIDE IT WAS THE WHOLE COLUMN, AND IT DECIDED IT MID-SENTENCE.**
+    Across all 640 legal attack sentences, *that Pokémon* occurs on **15 sentences /
+    32 printings** and its referent is SINGULAR every time; *those Pokémon* on **4
+    sentences / 12 printings** and its referent is PLURAL every time. Zero
+    counterexamples either way — and **ONE sentence spells BOTH, correctly**: the {D}
+    evolve search says *"for each of THOSE Pokémon … evolves from THAT Pokémon"*,
+    plural for the chosen set and singular for the member. The column does not merely
+    happen to agree; **it switches spelling when the referent's number switches**,
+    which is the difference between a coincidence and a rule. Agreement is therefore a
+    fact about the catalog and enforcing it is READING; the class would have been
+    authoring, which is D190b's *exact map or flag* read from the regex side.
+
+    ⚠️ **AND THE ENFORCEMENT LIVES AT THE READ SITE, NOT IN THE PATTERN.** A regex
+    cannot tie one capture to another capture's VALUE, so spelling agreement inside
+    the anchor would take two copies of the whole skeleton with the count written
+    twice — the duplication D399's shared fragment exists to prevent, one anchor over.
+    One anchor, one capture, one comparison, and a DISAGREEING sentence is left on the
+    loud `ATTACK_EFFECT_SKIPPED` path exactly where a printed 0 is left. Each refusal
+    is driven by a ONE-WORD FLIP of a resolving sentence, with the unflipped twin
+    asserted to resolve in the same `it` — D399's *"a near-miss the fragment already
+    refuses proves nothing about the anchor wrapped around it"*, spent before it could
+    cost a GAP.
+
+    ⚠️ **`ignoreWR` AT `count: 2` ON `opponentAny` IS THE COMBINATION NO SHIPPED
+    PROGRAM HAD**, and the handoff was right to name it: Team Rocket's Crobat ex
+    spells `{opponentAny, count: 2}` without the flag, Umbreon spells the flag at
+    count 1. `fix-twinsnipe` and `fix-twinfeint` drive the SAME two picks — the Active
+    and a benched Bouffalant — under both readings, and the two answers move in
+    OPPOSITE directions: 100 → 50 on the Active as `ignoreWR` nulls the ×2 Weakness,
+    30 → 50 on the Bench as it nulls "Bouffer"'s −20. Neither number can move without
+    the other staying put, so a flag threaded to one arm only cannot pass.
+
+    ⚠️ **AND THE COMPOUND FAMILY BESIDE IT IS NAMED RATHER THAN DISCOVERED.** Two more
+    count-≠-1 any-target sentences are printed — *"Discard 2 Energy from this Pokémon.
+    This attack does 120 damage to 2 of…"* (3) and *"Discard all Energy from this
+    Pokémon. This attack does 110 damage to 3 of…"* (1) — and both lead with a discard,
+    so they are off the `^This attack does` anchor and a count capture structurally
+    cannot move them. **4 printings that stay unbuilt**, asserted as refused so the
+    next census arithmetic is not surprised.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 25, ASKED OF THE PARKING OP RATHER THAN ASSUMED.**
+    `damageChosen` rides `GameState.phase.cont.pendingOp` while its pick is open, and
+    its own doc block records that adding a REQUIRED field to it cost
+    `MATCH_RECORD_VERSION` 2 → 3. **NO FIELD IS ADDED HERE.** `count` has been a
+    required `number` since M4 and two registry rows already authored the value 2, so a
+    v25 record can already contain this program and means exactly what it meant.
+    Authoring an EXISTING field at a new VALUE is a widening; adding a field is not.
+
+    Cost: **1 widened capture, 1 captured number word, 1 read-site agreement
+    comparison, 2 fixtures and 1 deck.** No web/API/DB/schema change.
+
+    engineVersion 0.304.0 → **0.305.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.304.0 → **THE TWIN CONSEQUENT, AND THE ARITY THAT WAS A LITERAL IN THREE
     PLACES.**
 
@@ -16387,7 +16484,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.304.0";
+export const engineVersion = "0.305.0";
 
 export type {
   ApplyResult,
