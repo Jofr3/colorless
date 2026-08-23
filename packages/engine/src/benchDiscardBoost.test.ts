@@ -496,6 +496,9 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(types(events)).not.toContain("ENERGY_DISCARDED");
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(50);
+    // …and the flag stays down on the inline path too, where the whole attack is one
+    // action and the two event lists the rung above has to keep apart are the same one.
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
   });
 
   it("the 90-per fixture scales by ITS number, and the coverage flag stays down", () => {
@@ -512,9 +515,27 @@ describe("D403 §5 — `base + P × N` is ONE §8.5 pass, driven where it is obs
     });
     expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(120);
     expect(done.players.p2.active?.damage).toBe(120);
-    // The reading owns the printed effect AND the printed "+", so neither half of
-    // `ATTACK_EFFECT_SKIPPED` fires — the two `*Simulated` terms attack.ts gained.
-    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it("🛑 neither half of `ATTACK_EFFECT_SKIPPED` fires, on BOTH printed sentences", () => {
+    // The reading owns the printed EFFECT and the printed "+" marker, so both
+    // `*Simulated` terms `attack.ts` gained are load-bearing.
+    //
+    // 🛑 **THE ROW IS EMITTED BY THE `attack` ACTION, NOT BY THE `resolveEffect` THAT
+    // FOLLOWS IT, AND THE FIRST DRAFT OF THIS FILE ASSERTED IT ON THE WRONG ONE.** The
+    // §5 rung below used to carry `not.toContain("ATTACK_EFFECT_SKIPPED")` over the
+    // RESOLVE step's events — where the row can never appear, because the attack has
+    // already been declared — so it was green under both mutants and the D403 probe
+    // reported them as GAPs. `mustApply(state, attack)` is the only place this can be
+    // read, and a park splits the two event lists in a way that makes the mistake
+    // invisible to every other assertion in the file.
+    for (const attacker of ["fix-benchboost", "fix-benchbasicboost"] as const) {
+      const { state } = fielded(12, attacker, [["fix-energy", 2]]);
+      deepFreeze(state);
+      const { events } = mustApply(state, attack);
+      expect(types(events), attacker).toContain("ATTACK_DECLARED");
+      expect(types(events), attacker).not.toContain("ATTACK_EFFECT_SKIPPED");
+    }
   });
 
   it("the printed order is discard-then-damage, with nothing between", () => {
