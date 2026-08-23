@@ -488,6 +488,32 @@ describe("§2 — the READING: one capture, and the tail's number must AGREE wit
     for (const t of [singularAtTwo, pluralAtOne]) expect(corpus().some(([, c]) => c === t)).toBe(false);
   });
 
+  it("🛑 the anchor's TERMINATOR: a COMPOUND that BEGINS with the printed sentence is refused", () => {
+    // 🛑 D399's GAP, ARMED ONE ANCHOR OVER BEFORE IT COULD COST ANYTHING. Dropping the
+    // `$` would turn this anchor into a PREFIX match, and it would LOOK LIKE A COVERAGE
+    // WIN — a swallowed sentence leaves the unbuilt remainder and `BUILT.attack` rises.
+    // The only string that can reach a whole-sentence terminator is one the pattern
+    // matches ENTIRELY and that then keeps going, i.e. a COMPOUND; every other near-miss
+    // in this file is refused further up, at `^This attack does` or at a literal inside
+    // it, and so proves nothing about the `$`. Driven at THREE stopping points, because
+    // the two optional groups are exactly where a prefix match would otherwise halt: the
+    // bare opener, the Benched clarifier, and the W/R tail.
+    for (const text of [
+      "This attack does 50 damage to 2 of your opponent's Pokémon. Discard an Energy from this Pokémon.",
+      `${FLAT_TWO} Discard an Energy from this Pokémon.`,
+      `${FEINT_TWO} Discard an Energy from this Pokémon.`,
+    ]) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+    }
+    // …and all three PREFIXES resolve on their own, which is what makes the refusals
+    // above the terminator's rather than some other byte's.
+    expect(
+      deriveAttackEffect("This attack does 50 damage to 2 of your opponent's Pokémon."),
+    ).not.toBeNull();
+    expect(deriveAttackEffect(FLAT_TWO)).not.toBeNull();
+    expect(deriveAttackEffect(FEINT_TWO)).not.toBeNull();
+  });
+
   it("🛑 a printed 0 in EITHER position stays on the loud path", () => {
     for (const text of [
       "This attack does 0 damage to 2 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",

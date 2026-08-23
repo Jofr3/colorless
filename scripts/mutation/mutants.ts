@@ -16295,4 +16295,86 @@ export const MUTANTS: Mutant[] = [
     replace: "          op: \"conditionGate\",\n          cond,\n          otherwise: [],\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).",
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
+  // ── D400 — THE ANY-TARGET ARITY, AND THE TAIL'S NUMBER THAT MUST AGREE WITH IT.
+  //    Eight rows on one anchor and its two arms. 🛑 **FOUR OF THE EIGHT ARE SILENT IN
+  //    EVERY CENSUS** (C1, C2, C4, C6): the sentence still matches, so `BUILT.attack` and
+  //    both reader instruments stay green while the derived op is wrong. That is the
+  //    shape this family keeps producing — a reader can be right about what it ACCEPTS
+  //    and wrong about what it BUILDS — and only a board rung or an unprinted near-miss
+  //    separates them. ⚠️ C1 and C2 carry MULTI-LINE `find` strings over adjacent lines of
+  //    the two return literals in `deriveAttackEffect`'s 6d arm: EDITING EITHER ARM,
+  //    INCLUDING THE PROSE BESIDE IT, IS AN ADJACENCY CHANGE (D398/D399) — re-transcribe
+  //    them in the same commit.
+  {
+    id: "D400-flat-arm-keeps-the-old-literal",
+    decision: "D400",
+    what: "🛑 C1 — **THE FLAT ARM GOES BACK TO `count: 1`, WHICH IS THE BYTES THIS FILE CARRIED AT D399's HEAD** (D190b's neighbour-copy shape, and the edit an author reaches for after widening the anchor and forgetting the arm). ⚠️ **IT IS SILENT IN EVERY CENSUS**: the sentence still MATCHES and still resolves, so `BUILT.attack`, the nine- and ten-reader instruments and the residue are all UNMOVED. What is wrong is only the BOARD, and only where the opponent has more than one body — §8.6 clamps a shorter candidate set to what is there, so the fixture a natural \"the snipe works\" suite writes cannot see it (D279's rule). §3 drives THREE candidates and asserts the prompt's `min`/`max` as well as both damaged bodies",
+    file: "packages/engine/src/effects.ts",
+    find: "              amount,\n              count,\n              source: \"attack\",\n              deals: true,\n            },\n          ]\n        : [",
+    replace: "              amount,\n              count: 1,\n              source: \"attack\",\n              deals: true,\n            },\n          ]\n        : [",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-ignorewr-arm-keeps-the-old-literal",
+    decision: "D400",
+    what: "⚠️ C2 — **THE SAME REVERSION ON THE OTHER ARM**, and it needs its own row because the two arms are separate object literals and a hand-edit reaches one at a time. The 6-printing W/R-tail sentence is the bigger half of this slice, so an arm-local `count: 1` here loses SIX printings' worth of board behaviour while every census figure stays green. §3's second rung drives the SAME two picks as the first and asserts both damaged bodies",
+    file: "packages/engine/src/effects.ts",
+    find: "              count,\n              source: \"attack\",\n              deals: true,\n              ignoreWR: true,",
+    replace: "              count: 1,\n              source: \"attack\",\n              deals: true,\n              ignoreWR: true,",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-anchor-count-back-to-the-literal",
+    decision: "D400",
+    what: "🛑 C3 — **THE ANCHOR'S COUNT CAPTURE BECOMES THE LITERAL `1` AGAIN**, i.e. the whole slice undone at its source. This is the LOUD half of the pair above: both printed count-2 sentences fall off the derived path onto `ATTACK_EFFECT_SKIPPED`, so nine printings re-enter the unbuilt remainder and every census instrument in the repo moves at once. The row exists so the corpus has one mutant on the anchor and one on each arm — a reader can be right about which sentences it ACCEPTS and wrong about what it BUILDS from them, and only the pair separates those",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon\\\\.` +",
+    replace: "  `^This attack does (\\\\d+) damage to 1 of your opponent['’]s Pokémon\\\\.` +",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/conditionalBenchSnipe.test.ts"],
+  },
+  {
+    id: "D400-agreement-check-never-rejects",
+    decision: "D400",
+    what: "🛑 C4 — **THE AGREEMENT COMPARISON BECOMES A DISJUNCTION**, which is the `th(?:at|ose)` CLASS arriving through the read site instead of through the pattern — the shape this slice measured the whole column to reject. Under it the reader resolves *\"…to 1 of … on THOSE Pokémon\"* and *\"…to 2 of … on THAT Pokémon\"*, two sentences the catalog does not print, and **NOTHING IN ANY CENSUS NOTICES** because no printed sentence changes its answer. Only a rung that drives an UNPRINTED near-miss can reach it, which is why §2 spends both flips and asserts each unflipped twin resolves in the same `it`",
+    file: "packages/engine/src/effects.ts",
+    find: "    const agrees = number === undefined || (number === \"those\") === (count > 1);",
+    replace: "    const agrees = number === undefined || (number === \"those\") || (count > 1);",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-agreement-check-off-by-one",
+    decision: "D400",
+    what: "⚠️ C5 — **THE AGREEMENT'S THRESHOLD SLIPS `> 1` TO `>= 1`**, the off-by-one an author writing a plural test actually makes. `count >= 1` is already guaranteed by the guard on the line below, so the comparison collapses to *\"the word must be **those**\"*: the 6-printing sentence still resolves, and the PRINTED count-1 spelling *\"…, or by any effects on that Pokémon.\"* — Umbreon's, which this reader has resolved since 0.46.0 — is refused. 🛑 **A NARROWING THAT ONLY BITES A SENTENCE WITH ZERO LEGAL PRINTINGS**, so no census figure moves; §2's count-1 rung is the only thing that sees it, and it is there precisely because the anchor keeps a spelling the legal column does not carry",
+    file: "packages/engine/src/effects.ts",
+    find: "(number === \"those\") === (count > 1);",
+    replace: "(number === \"those\") === (count >= 1);",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-ignorewr-branch-reads-the-old-group",
+    decision: "D400",
+    what: "🛑 C6 — **THE ignoreWR BRANCH KEEPS READING GROUP 2**, which is EXACTLY the mistake this slice's own edit risks: inserting a capture renumbers every group after it, and group 2 is now the COUNT. `match[2]` is never `undefined` on a match, so the reader takes the `ignoreWR` arm for EVERY any-target snipe — Rotom, Fezandipiti and both count-2 spellings alike — and silently strips Weakness from a sentence whose printed parenthetical exists to say W/R applies on the Active. ⚠️ **EVERY SENTENCE STILL RESOLVES, SO EVERY CENSUS FIGURE IS UNMOVED**; the flag is visible only in the derived op and on a board with a WEAK Active, which §3's first rung and the 0.39.0 Rotom rungs both drive",
+    file: "packages/engine/src/effects.ts",
+    find: "      return match[3] === undefined",
+    replace: "      return match[2] === undefined",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-count-positivity-guard-dropped",
+    decision: "D400",
+    what: "⚠️ C7 — **THE `count >= 1` GUARD GOES**, leaving only the amount's. A printed `0 of` then derives a `damageChosen` at `count: 0`, which parks nothing and hits nothing — a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing rule that a printed 0 is not a real card). The amount's own guard survives the mutation, so the row separates the two positivity questions rather than testing them as one",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && count >= 1 && agrees) {",
+    replace: "    if (amount >= 1 && agrees) {",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D400-anchor-loses-its-terminator",
+    decision: "D400",
+    what: "🛑 C8 — **THE SATURATION TRAP, ARMED ON THE ANCHOR THIS SLICE REWROTE.** Dropping the `$` makes the whole pattern a PREFIX match, so it swallows any sentence that merely BEGINS with the printed one — and it LOOKS LIKE A COVERAGE WIN, because a swallowed sentence leaves the unbuilt remainder and `BUILT.attack` RISES. ⚠️ **THIS IS D399's REAL GAP, SPENT ONE ANCHOR OVER BEFORE IT COULD COST ANYTHING**: every other near-miss in `anyTargetSnipe.test.ts` is refused further up (at `^This attack does`, or at a literal inside the pattern) and so proves NOTHING about the terminator. Only a COMPOUND can reach it, and §2's rung drives three of them — one stopping after the bare opener, one after the Benched clarifier and one after the W/R tail, because the two optional groups are where a prefix match would otherwise halt",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"(?:, or by any effects on (that|those) Pokémon)?\\\\.))?$\",",
+    replace: "    \"(?:, or by any effects on (that|those) Pokémon)?\\\\.))?\",",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
 ];
