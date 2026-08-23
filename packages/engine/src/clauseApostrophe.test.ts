@@ -696,7 +696,15 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // Misty's Starmie). Its printed pre-evolution `fix-mistystaryu` carries the same
     // possessive in its NAME and no sentence at all, which is the eighth slice running
     // on which the fixture COUNT says nothing and the fixture TEXT says everything.
-    expect(derivable).toHaveLength(124); // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
+    // 🆕🆕 D399 — **124 → 125, AND THE CHARACTER DECIDED IT FOR THE NINTH SLICE
+    // RUNNING.** ONE new Pokémon fixture and ONE new census entry: `fix-hazardousgreed`
+    // (Wo-Chien `sv08-015`) prints *"…this attack also does 120 damage to 2 of **your
+    // opponent's** Benched Pokémon. (**Don't** apply Weakness and Resistance…)"*, which
+    // spells the possessive AND the contraction and therefore enters a sweep keyed on
+    // `'`. ⚠️ **ITS INDEX-1 SENTENCE (*"Discard the top 3 cards of your deck."*) DOES
+    // NOT**, so the fixture adds ONE entry rather than two — a census keyed on a
+    // CHARACTER counts sentences, not cards, and this fixture prints both kinds.
+    expect(derivable).toHaveLength(125); // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

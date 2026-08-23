@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
 import type { GameEvent, GameState, PokemonRef } from "./index";
 import {
@@ -15,14 +16,24 @@ import {
 
 // 0.37.0 → 0.38.0 — the flat benched-snipe RIDER family.
 //
-// "This attack ALSO does N damage to 1 of your opponent's Benched Pokémon. (Don't
+// "This attack ALSO does N damage to M of your opponent's Benched Pokémon. (Don't
 // apply Weakness and Resistance for Benched Pokémon.)" is a SECONDARY snipe AFTER
 // the main damage (which rides the attack's own `damage` field). It is the SAME
-// count-1 `deals` `damageChosen` op as D57's Covetous Ivy, only WITHOUT
-// `perTakenPrize` (a fixed N, not Prize-scaled) — so it is a new derive over the
-// existing op, no new interpreter code. Miraidon sv01-080 "Lightning Laser" (90 +
-// 30) and Tadbulb sv03-076 "Shake and Discharge" (20 + 10) are the representatives;
-// ~15 catalog prints share the shape (Pawmot, Bellibolt, Decidueye ex, Palafin, …).
+// `deals` `damageChosen` op as D57's Covetous Ivy, only WITHOUT `perTakenPrize` (a
+// fixed N, not Prize-scaled) — so it is a new derive over the existing op, no new
+// interpreter code. Miraidon sv01-080 "Lightning Laser" (90 + 30) and Tadbulb
+// sv03-076 "Shake and Discharge" (20 + 10) are the representatives; ~15 catalog
+// prints share the shape (Pawmot, Bellibolt, Decidueye ex, Palafin, …).
+//
+// 🆕🆕 0.303.0 → 0.304.0 — **D399: `M` IS A CAPTURE, NOT THE LITERAL `1`.** This file
+// asserted from 0.38.0 to D398 that *"2 of"* was a REFUSED near-miss, on the ground
+// that the anchor pinned the count. It was a real claim about the anchor and a wrong
+// one about the catalog: the legal attack column prints this rider at 2 on FOUR
+// printings (`130 damage to 2 of` ×3 and `30 damage to 2 of` ×1), and the pick that
+// consumes it has read `op.count` since M4 — two REGISTRY rows already spell 2. So
+// the near-miss below is now a POSITIVE, and it is asserted from the corpus's own
+// bytes rather than retyped. **A REFUSAL WHOSE ONLY REASON IS A LITERAL EXPIRES THE
+// MOMENT SOMEBODY MEASURES THE COLUMN** (D398's lesson, one file over).
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -63,7 +74,7 @@ function alsoSnipe(
   return state;
 }
 
-describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1 Benched')", () => {
+describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M Benched')", () => {
   it("reads the rider as a count-1 deals snipe with NO perTakenPrize (a fixed N)", () => {
     expect(
       deriveAttackEffect(
@@ -81,19 +92,52 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to 1
     ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 60, count: 1, source: "attack", deals: true }]);
   });
 
-  it("REFUSES the near-misses — Flamigo's gate, '2 of', 'YOUR', and a 0", () => {
+  it("REFUSES the near-misses — Flamigo's gate, 'YOUR', a 0 amount and a 0 count", () => {
     for (const text of [
-      // Flamigo's "Synchronized Feathers" — a leading board-condition gate, off `^This`.
+      // Flamigo's "Synchronized Feathers" — a leading board-condition gate whose
+      // clause `CONDITIONAL_DAMAGE_CLAUSES` does not carry. 🆕🆕 D399 — the gated
+      // SKELETON is read now (`CONDITIONAL_BENCH_SNIPE`), so what refuses this
+      // sentence is the CLAUSE and no longer the shape. It is the sharper refusal of
+      // the two and `conditionalBenchSnipe.test.ts` §4 owns the discrimination.
       "If Flamigo is on your Bench, this attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      // "2 of" — count ≠ 1.
-      "This attack also does 20 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // "1 of YOUR Benched" — a self-target, not the opponent's.
       "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // A printed 0-rider adds nothing — left on the loud path.
       "This attack also does 0 damage to 1 of your opponent's Benched Pokémon.",
+      // 🆕🆕 D399 — and a printed 0-COUNT is not a real card either: the second
+      // capture carries the same `>= 1` guard the first one always has, so a
+      // widening cannot smuggle in a snipe that chooses nobody.
+      "This attack also does 20 damage to 0 of your opponent's Benched Pokémon.",
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+  });
+
+  it("🆕🆕 D399 — '2 of' is a COUNT-2 snipe now, and both printings come off the corpus", () => {
+    // 🛑 THE TWO SENTENCES ARE TAKEN FROM THE COMMITTED CORPUS RATHER THAN RETYPED,
+    // so this case cannot pass against a paraphrase the catalog never printed (D183).
+    // They are also the whole count-2 population of this anchor, which is what makes
+    // "+4 printings" a measurement instead of a claim.
+    const twos = legalAttackCorpus().filter(
+      ([, s]) => /^This attack also does \d+ damage to 2 of your opponent's Benched Pokémon\./.test(s),
+    );
+    expect(twos).toHaveLength(2);
+    expect(twos.reduce((sum, [n]) => sum + n, 0)).toBe(4);
+    expect(new Set(twos.map(([, s]) => deriveAttackEffect(s)?.length))).toEqual(new Set([1]));
+    for (const [, s] of twos) {
+      const amount = Number(/does (\d+) damage/.exec(s)?.[1]);
+      expect(deriveAttackEffect(s), s).toEqual([
+        { op: "damageChosen", target: "opponentBench", amount, count: 2, source: "attack", deals: true },
+      ]);
+    }
+    // …and the count is READ rather than defaulted: the fifteen-printing `1 of`
+    // spelling still answers 1 in the same run, so a build that pinned either number
+    // fails one half of this pair.
+    expect(
+      deriveAttackEffect(
+        "This attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([{ op: "damageChosen", target: "opponentBench", amount: 30, count: 1, source: "attack", deals: true }]);
   });
 
   it("hands the 'each of' also-rider to the SPREAD op, not this single-target snipe", () => {

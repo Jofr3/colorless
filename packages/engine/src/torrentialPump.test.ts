@@ -346,7 +346,7 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
         },
         { op: "shuffleDeck" },
       ],
-      payoff: { kind: "benchSnipe", amount: 120 },
+      payoff: { kind: "benchSnipe", amount: 120, count: 1 },
     });
   });
 
@@ -375,7 +375,7 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
     expect(at("Shuffle 3 Energy attached to this Pokémon into your deck")).toBeNull();
   });
 
-  it("🛑 the PAYOFF's zone word, count and amount are all anchored", () => {
+  it("🛑 the PAYOFF's zone word is anchored, and the amount and count are CAPTURED", () => {
     const then = (payoff: string) =>
       deriveAttackOptionalCostBoost(`You may discard a Stadium in play. If you do, ${payoff}`);
     // The control: the SAME cost with the payoff this slice adds.
@@ -383,7 +383,7 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
       {
         cond: { kind: "stadiumInPlay" },
         ops: [{ op: "discardStadium" }],
-        payoff: { kind: "benchSnipe", amount: 90 },
+        payoff: { kind: "benchSnipe", amount: 90, count: 1 },
       },
     );
     // "Pokémon" without "Benched" is `opponentAny` — a DIFFERENT op, where a hit on
@@ -393,9 +393,21 @@ describe("§2 — both halves dispatched, and every refusal driven from OUTSIDE 
     expect(
       then("this attack also does 90 damage to each of your opponent's Benched Pokémon."),
     ).toBeNull();
-    // "2 of" is a count this row does not spell — the anchor pins 1.
+    // 🆕🆕 D399 — "2 of" IS a count this row spells now, and the change is not this
+    // reader's: `ALSO_BENCHED_SNIPE_BODY` captured the arity so that ONE printed
+    // clause keeps ONE reading, and this payoff shares that fragment on purpose. No
+    // printing of THIS sentence carries a 2 (all 5 spell 1, pinned in §1), so no
+    // board below moves — what moves is that the number comes off the sentence.
+    expect(then("this attack also does 90 damage to 2 of your opponent's Benched Pokémon.")).toEqual(
+      {
+        cond: { kind: "stadiumInPlay" },
+        ops: [{ op: "discardStadium" }],
+        payoff: { kind: "benchSnipe", amount: 90, count: 2 },
+      },
+    );
+    // …and a printed 0-COUNT is refused by the same `>= 1` guard the amount carries.
     expect(
-      then("this attack also does 90 damage to 2 of your opponent's Benched Pokémon."),
+      then("this attack also does 90 damage to 0 of your opponent's Benched Pokémon."),
     ).toBeNull();
     // A printed 0 buys nothing, on the second payoff exactly as on the first.
     expect(then("this attack also does 0 damage to 1 of your opponent's Benched Pokémon.")).toBeNull();

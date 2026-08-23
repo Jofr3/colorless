@@ -348,7 +348,10 @@ describe("§2 — BOTH halves dispatched, and each refusal driven from OUTSIDE t
         { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: 3, to: "deck" },
         { op: "shuffleDeck" },
       ],
-      payoff: { kind: "benchSnipe", amount: 120 },
+      // 🆕🆕 D399 — `count` is the shared fragment's second capture. All 5 printings
+      // of this payoff spell "1 of", so the value is the one this reader always
+      // built; what changed is that it is READ rather than remembered.
+      payoff: { kind: "benchSnipe", amount: 120, count: 1 },
     });
   });
 

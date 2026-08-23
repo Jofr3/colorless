@@ -525,9 +525,14 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // a real Grass -30 and D306 says transcribe the card rather than the fields the
     // tests read. The FIGHTING count below is what stands still, which is the rung
     // that keeps this file's own subject separate from a pool that grew beside it.
-    expect(ids).toHaveLength(498); // 🆕🆕 D398 — +1 Pokémon fixture (`fix-counterturn` Rabsca `sv08-014`); `withResistance` stands still, because the printing prints no Resistance // 🆕🆕 D397 — +2 Pokémon fixtures (`fix-bonevengeance` Marowak `sv07-073`, `fix-cubone` the card its clause NAMES); `withResistance` stands still, because neither prints one // 🆕🆕 D394 — +2 Pokémon fixtures (`fix-alloutattack` Falinks, `fix-crazyblast` Weezing); `withResistance` stands still at 28, because neither printing carries a resistance row
+    expect(ids).toHaveLength(499); // 🆕🆕 D399 — +1 Pokémon fixture (`fix-hazardousgreed` Wo-Chien `sv08-015`); `withResistance` stands still, because the printing prints no Resistance (a {R} ×2 WEAKNESS is the other column) // 🆕🆕 D398 — +1 Pokémon fixture (`fix-counterturn` Rabsca `sv08-014`); `withResistance` stands still, because the printing prints no Resistance // 🆕🆕 D397 — +2 Pokémon fixtures (`fix-bonevengeance` Marowak `sv07-073`, `fix-cubone` the card its clause NAMES); `withResistance` stands still, because neither prints one // 🆕🆕 D394 — +2 Pokémon fixtures (`fix-alloutattack` Falinks, `fix-crazyblast` Weezing); `withResistance` stands still at 28, because neither printing carries a resistance row
     expect(withResistance).toHaveLength(28);
     expect(fighting).toHaveLength(18);
+    // 🆕🆕 D399 — a `- 1` term at the FRONT of EVERY rung below: ONE body
+    // (`fix-hazardousgreed`, Wo-Chien `sv08-015`), ZERO Energy, ZERO Resistances. The
+    // rungs are nested PREFIXES of one chain, so a body added to the pool shifts all
+    // eleven by the same 1 and each frozen tail stays frozen. ⚠️ **THE CHAIN IS EDITED
+    // AT THE FRONT, NEVER AT THE END**, and it is keyed on the `.toBe(N)` tails (D397).
     // D371 measured this floor at 27 of 450 and D370 at 24 of 444, BEFORE their
     // fixtures landed. The arithmetic is spelled out so the inherited figures and
     // the live ones cannot silently disagree: D372 is +3 bodies / +0 / +0, and
@@ -608,18 +613,18 @@ describe("§2 — THE SUPPLY CHECK, run FIRST: the column exists, and the floor 
     // Pokémon fixture to the pool (`fix-counterturn`). ⚠️ THE CHAIN IS EDITED AT THE FRONT,
     // NEVER AT THE END — and the substitution above was keyed on each line's `.toBe(N)` TAIL
     // rather than on the chain, because a chain GROWS INTO THE PATTERN THAT MATCHES IT (D397).
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1).toBe(468);
     // 🆕🆕 D392 — a `- 3` term for this slice's three fixtures, at the FRONT of the chain.
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
-    expect(ids.length - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2).toBe(466);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1).toBe(465);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2).toBe(463);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3).toBe(460);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1).toBe(459);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2).toBe(457);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3).toBe(454);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1).toBe(453);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3).toBe(450);
+    expect(ids.length - 1 - 1 - 2 - 2 - 4 - 3 - 2 - 3 - 1 - 3 - 3 - 1 - 1 - 1 - 1 - 1 - 1 - 2 - 1 - 2 - 3 - 1 - 2 - 3 - 1 - 3 - 6).toBe(444);
     expect(withResistance.length - 3 - 1).toBe(24); // 🆕🆕 D393 — a `- 1` term at the FRONT: Gholdengo `sv08-131` prints a real Grass -30, transcribed whole (D306)
     expect(fighting.length - 2).toBe(16);
   });

@@ -51,6 +51,12 @@ import {
 // ONE CONSEQUENT AND DECLINED UNDER ANOTHER IS A DISCRIMINATION NO "REFUSE
 // EVERYTHING" AND NO "READ EVERYTHING" READER CAN IMITATE.**
 //
+// ✅ 🆕🆕 **D399 BUILT THE TWIN, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS
+// LAST CLAUSE NOW FALSE** (D178). The discrimination is re-homed on a finer axis
+// rather than dropped: the two sentences still differ ONLY in the consequent, and the
+// consequent alone now routes them to two DIFFERENT readers, each declining the
+// other's printed sentence in the same run. See §5's first case.
+//
 // 🛑 **THE INVARIANT WAS WRONG, NOT THE CARD (§3).** `BoardCondition`'s doc block has
 // said since D40 that a condition over hidden state *"(a hand's CONTENTS, a deck)"*
 // would leak through the gate, and four consecutive resume points read that bare noun
@@ -105,7 +111,14 @@ const TAKEN_CLAUSE = "there are 3 or fewer cards in your deck";
 
 /** THE TWIN, one consequent over — Wo-Chien `sv08-015` "Hazardous Greed", 1 legal
     printing. The SAME antecedent byte for byte, and NOT in the bonus residue at all,
-    because `CONDITIONAL_DAMAGE_BONUS` never sees it. */
+    because `CONDITIONAL_DAMAGE_BONUS` never sees it.
+
+    ✅ 🆕🆕 **D399 BOUGHT IT, AND THE PARAGRAPH ABOVE IS KEPT VERBATIM WITH ITS
+    "no reader claims it" HALF NOW FALSE** (D178: provenance is annotated, never
+    overwritten). `deriveAttackEffect` reads it through `CONDITIONAL_BENCH_SNIPE`,
+    which resolves THIS member's clause through the SAME `CONDITIONAL_DAMAGE_CLAUSES`
+    row this slice authored. §5's discrimination is re-homed rather than deleted —
+    see the case's own note. */
 const TWIN =
   "If there are 3 or fewer cards in your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
@@ -364,26 +377,54 @@ describe("§4 — the member on the board: seat, zone, boundary, empty deck", ()
 });
 
 describe("§5 — the REFUSALS, driven from OUTSIDE the population as well as inside it", () => {
-  it("🛑 the TWIN carries this clause byte for byte and NO reader claims it", () => {
-    // 🛑 D379's SATURATION TRAP, DEFUSED. With the buildable residue empty, a reader
-    // that answered everything would satisfy any "the sentence is read" rung and a
-    // reader that answered nothing would satisfy any "the rest are refused" rung. This
-    // sentence is neither inside the bonus population nor a synthetic near-miss: it is
-    // PRINTED, it is in the committed corpus, its antecedent is this member's key
-    // exactly, and all nine readers must decline it while the row one consequent over
-    // is accepted in the same run.
+  it("🛑 the TWIN carries this clause byte for byte and is routed to a DIFFERENT reader", () => {
+    // 🛑 D379's SATURATION TRAP, DEFUSED — AND RE-HOMED AT D399 RATHER THAN DELETED.
+    // Until D399 this case required all nine readers to DECLINE the twin while the row
+    // one consequent over was accepted; D399 built the twin, so that exact half is
+    // gone. The replacement is the same argument on a finer axis and is STRONGER: the
+    // two printed sentences share their antecedent byte for byte and differ only in
+    // the consequent, and the consequent alone routes them to two DIFFERENT readers —
+    // each of which declines the other's printed sentence in the same run. A reader
+    // that answered everything fails both refusal halves; one that answered nothing
+    // fails both acceptance halves; and a reader that simply widened until it caught
+    // the twin would be caught by `deriveAttackDamageBonus(TWIN)` going non-null.
     expect(corpus().filter(([, s]) => s === TWIN)).toHaveLength(1);
     expect(TWIN.startsWith(`If ${TAKEN_CLAUSE}, `)).toBe(true);
     expect(BONUS.test(TWIN)).toBe(false);
-    for (const read of READERS) expect(read(TWIN), read.name).toBeNull();
-    expect(resolvedByAnyReader(TWIN)).toBe(false);
-    // …and the accepted half, in the same case, so the pair is a DISCRIMINATION and
-    // not two independent claims.
+    // ⒜ the twin is read, by `deriveAttackEffect` ALONE, and it carries THIS member.
+    expect(resolvedByAnyReader(TWIN)).toBe(true);
+    expect(deriveAttackEffect(TWIN)).toEqual([
+      {
+        op: "conditionGate",
+        cond: DECK,
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: 120,
+            count: 2,
+            source: "attack",
+            deals: true,
+          },
+        ],
+      },
+    ]);
+    for (const read of READERS) {
+      if (read === deriveAttackEffect) continue;
+      expect(read(TWIN), read.name).toBeNull();
+    }
+    // ⒝ …and the accepted half, in the same case, so the pair is a DISCRIMINATION and
+    // not two independent claims: the SAME clause, the OTHER consequent, the OTHER
+    // reader — and `deriveAttackEffect` declines this one as flatly as
+    // `deriveAttackDamageBonus` declines the twin.
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     expect(deriveAttackDamageBonus(TAKEN)).toEqual({
       per: 200,
       count: { kind: "boardCondition", cond: DECK },
     });
+    expect(deriveAttackEffect(TAKEN)).toBeNull();
+    expect(deriveAttackDamageBonus(TWIN)).toBeNull();
   });
 
   it("🛑 no OTHER reader claims the taken sentence, so nothing was widened by accident", () => {
