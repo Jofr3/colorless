@@ -25679,3 +25679,105 @@ compound behind a park is known to cost one anchor and one arm. Two things will 
 that union), and the family splits on the same one-word FOLD discriminator D163 already paid for —
 *"does N damage for each"* multiplies and drops the printed base, *"does N **more** damage for
 each"* adds to it.
+
+
+## D405 — THE MANDATORY OWN-BOARD ENERGY RETRIEVAL, and the first slice in this run where the LARGEST HEAD LOST A PRICE COMPARISON (engine 0.310.0)
+
+*"Put an Energy attached to this Pokémon into your hand."* — **1 sentence / 5 legal printings**,
+identical raw and split-aware — on ONE whole-sentence anchor (`PUT_SELF_ENERGY_TO_HAND`), ONE
+`deriveAttackEffect` arm (12c) returning
+`[{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, to: "hand" }]`, and ONE
+caption branch. `BUILT.attack` 1355 → **1360**. **ZERO new ops, ZERO new fields, ZERO readers, ZERO
+`BoardCondition` members, ZERO registry rows and ZERO `attack.ts` edits.**
+
+### The price comparison, and why the bigger sentence lost
+
+D404 handed on a head-to-head with the instruction to settle it before building either side. This
+is the first time in this run that the LARGEST head was not the cheapest, so the arithmetic is
+recorded rather than the verdict (D382's practice).
+
+| | sentence | printings | mechanisms | printings per mechanism |
+|---|---|---|---|---|
+| (A) | *"Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon."* | 6 | 4 | **1.5** |
+| (B) | *"Put an Energy attached to this Pokémon into your hand."* | 5 | 0 new + 1 caption branch | **5** |
+
+🛑 **(A) LOSES ON THE KIND OF QUANTITY, NOT ON THE COUNT.** `EffectSlot` is
+`"paid" | "moved" | "discarded"` and `EffectRecord` is `{ [K in EffectSlot]?: string[] }` — **every
+§9.2 slot this engine files is a LIST OF CARD UIDS**, and *"the same amount of damage"* is an HP
+figure. Four mechanisms fall out of that, and they are worth writing down because the next slice
+that wants a numeric §9.2 channel will pay all four:
+
+1. **A numeric record channel.** Either the map's value type widens (touching every `recordMoved` /
+   `recorded` site) or a sibling accumulator is invented beside it.
+2. **A carrier from `applyAttackDamage`.** `dealt` and `clamped` are locals in `attack.ts` and are
+   handed to nothing; `EffectContext` is `{ seat, sourceUid?, subjectUid?, invokedBy? }`.
+3. **`heal.amount` widened from a literal to a SOURCE.** The op is
+   `{ op: "heal"; target: "self"; amount: number }` today.
+4. **A `MATCH_RECORD_VERSION` bump.** `EffectRecord` rides `EffectContinuation`, which IS the
+   persisted phase — so (1) is a persisted-shape change by construction.
+
+⚠️ **AND THE FIGURE IS NOT THE PRINTED BASE**: it is post-W/R, post-reduction and post-§8.1-clamp,
+and `dealt` (what the attack did) and `clamped` (what landed on the body) are different numbers in
+the same function, so even (2) carries a design question. **A build that healed the printed number
+would be wrong on every Weakness board and every Resistance board.**
+
+**Two more rows in the same residue were priced on the way past.** *"Before doing damage, discard
+all Pokémon Tools from your opponent's Active Pokémon."* (5) needs **two** mechanisms and the second
+is a SEAM rather than an op: there is no Tool-discard op at all (grepped — `discardStadium` exists
+since D380, `tools` is a real `InPlayPokemon` field, nothing names a `discardTool`), and *"before
+doing damage"* is an ordering a deriver cannot express, because `attack.ts` runs the program AFTER
+§8.5 and `deriveAttackDamageBonus`'s own doc block says so in as many words. *A new op is cheap; a
+new op its seam cannot reach is not* (D190's rule, one seam over). *"This Pokémon can't use Blaze
+Blitz again until it leaves the Active Spot."* (5) is plausible and NOT priced — D394's `usedAttack`
+field is close vocabulary, but the printed window is neither a turn nor a checkup.
+
+### The shape call: no `optional` wrapper, and the reason is the printed words
+
+D296's twin — *"**You may** put an Energy attached to your opponent's Active Pokémon into their
+hand."* — needs D186's `optional` because its printed "may" is a decision about WHETHER, which
+`discardEnergy` cannot express. These five printings open *"Put …"*. `discardEnergy`'s own doc block
+says the op is *"MANDATORY, not 'up to': the only decision is WHICH Energy, never whether"* — which
+is exactly this sentence — so a wrapper here would hand the player a "No" the card does not print.
+**A CONTRACT WRITTEN ON ONE OP IS NOT A CONTRACT ABOUT THE SENTENCE**, read in the direction
+opposite to D296's for once. `selfEnergyToHand.test.ts` §2 drives both sides of the pair in one rung.
+
+The quantifier is deliberately NOT widened to `(an|\d+)` the way the twin's is. Over the whole
+640-sentence legal attack column, exactly TWO sentences put Energy off *this Pokémon* into a hand:
+this one, and the compound *"You may put **all** Energy attached to this Pokémon into your hand to
+have this attack do 80 more damage."* (1 printing, D381's family and a slice of its own). A numeric
+group would resolve a sentence nobody prints (D190b).
+
+### The two falsifiers, and the distinction that decided the slice
+
+The handoff named two and said *"if either costs a FIELD, re-price against (A) rather than pressing
+on."* They answered in opposite directions.
+
+- ✅ **THE `count` DEFAULT HELD, AT BOTH READ SITES.** The interpreter spells the absence
+  `{ kind: "total", count: op.count ?? 1 }` and `discardNote`'s `what` falls through to the ARTICLE
+  (`an Energy`). Nothing takes absence for `"all"` or for "no cap" — the failure mode that would
+  have stripped the attacker bare. So the printed *"an Energy"* is carried by a field that is not
+  there, and the arm asserts its own absence rather than spelling a `count: 1` that would change
+  the persisted bytes for an identical board.
+- ⚠️ **THE CAPTION FIRED.** `discardNote`'s `case "yourActive"` read only `shuffleBack` (D383),
+  because until this sentence no own-board printing put Energy into a HAND. It cost **one branch on
+  an exhaustive switch**, and its string is the printed sentence verbatim. **A BRANCH IS A LINE; A
+  FIELD IS A SHAPE** — the falsifier fired as a COST and not as a re-price, and saying which is what
+  made the handoff's rule answerable rather than a judgement.
+
+### Two transferable findings
+
+🛑 **A CAPTION CONTROL MUST COME OUT OF THE *SAME ARM*, NOT MERELY THE SAME FAMILY.** §7's first
+draft asserted the new note and then asserted that the same prompt "does not contain Discard" — two
+readings of one board, which proves nothing about a fix that reworded every own-board pick. The
+control that works is Charcadet `sv01-039` "Ember": the BARE self-discard, same op, same `from`,
+same filter, **same `case "yourActive"` of the same `switch`**, with the DESTINATION as the only
+field between the two programs. When a guard's subject is one ARM of a switch, its control has to
+enter through that arm.
+
+🛑 **THE MULTI-LINE `find` TRIPWIRE GENERALISES OFF `attack.ts`.** Every earlier instance (D317,
+D381, D383) was a disjunction chain in `attack.ts`. This one was a **ternary in `interpreter.ts`**:
+D383's C11 spanned the two-line `yourActive` caption, this slice made it three-line, and the row's
+`find` would have matched ZERO. It was found by grepping `mutants.ts` for the lines about to be
+edited — before the commit — and re-transcribed inside it, with the new `putBack` arm kept in both
+halves so the row stays ONE defect. **ANY TERNARY OR CHAIN A ROW SPANS IS AN ADJACENCY CLAIM, AND
+INSERTING AN ARM FALSIFIES IT WITHOUT TOUCHING A CHARACTER OF THE QUOTED TEXT.**

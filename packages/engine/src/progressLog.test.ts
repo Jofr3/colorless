@@ -477,6 +477,13 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // POINT. The guard's UP branch, taken deliberately: one archive was added because one
   // resume point was archived. D376 shipped a red `HEAD` by making the demotion and not
   // this edit, so the two belong in one commit and always will.
+  // 🆕🆕 D405 — 74 -> **75**, RAISED IN THE SAME COMMIT THAT DEMOTED D404's RESUME
+  // POINT. The guard's UP branch, taken deliberately, for the FIFTH slice running. D404's
+  // body was captured BY INDEX before the rewrite — 213 lines, opening "THE NEXT CONCRETE
+  // ACTION (written 2026-08-23, after D404)" and closing on the paragraph that ends
+  // "…re-anchored and re-probed 8/8, and the rule is now in the standing brief." —
+  // re-emitted under its own archive heading, and the SEAM was re-read afterwards rather
+  // than assumed, with both headings confirmed present and their bodies in order.
   // 🆕🆕 D404 — 73 -> **74**, RAISED IN THE SAME COMMIT THAT DEMOTED D403's RESUME
   // POINT. The guard's UP branch, taken deliberately, for the fourth slice running. D403's
   // body was captured BY INDEX before the rewrite — 204 lines, opening "THE NEXT CONCRETE
@@ -491,9 +498,9 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // "…re-run over all 1,395 rows after the rewrite as well." — re-emitted under its own
   // archive heading, and the SEAM was re-read afterwards rather than assumed, with both
   // headings confirmed present and in order.
-  const ARCHIVES = 74;
+  const ARCHIVES = 75;
 
-  it("the page still holds all 74 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 75 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,
