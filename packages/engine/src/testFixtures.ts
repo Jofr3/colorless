@@ -4748,6 +4748,76 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D403 FIXTURE — THE ADDITIVE HALF OF D402's FAMILY, AT ITS LARGEST PRINTED
+      MEMBER.** The printed sentence is byte for byte the legal column's *"You may
+      discard up to 2 Energy from your Benched Pokémon. This attack does 60 more damage
+      for each card you discarded in this way."* — **6 legal printings**, the biggest
+      single sentence left in the residue D402 handed on.
+
+      🛑 **PSYCHIC ON PURPOSE, AND THAT IS THE WHOLE POINT OF THE FIXTURE.** The claim
+      this slice makes is that `base + P × N` is ONE §8.5 pass, and **Weakness cannot
+      test it** — a ×2 distributes over a split hit and both readings return the same
+      number, so a Weakness rung here would be an identity dressed as a guard.
+      RESISTANCE is a SUBTRACTION and is paid once per hit, so it separates them, and
+      `fix-psychic-resist-big` (200 HP, −30 Psychic) is already in the pool for D139.
+      With `50+` and a printed 60: two discards deal **(50 + 120) − 30 = 140**, where a
+      two-pass build deals **(50 − 30) + (120 − 30) = 110**, a build that dropped the
+      base deals **90**, and one that forgot to suppress it deals **160**. Four numbers,
+      one board.
+
+      A `{C}` cost so `fix-energy` declares it — and the cost Energy sits on the
+      ACTIVE, which is the other thing this card is for: `from: "yourBench"` must not
+      offer it, where `from: "yours"` would. A `50+` marker so the printed base is
+      real and DECLINING has something to deal. The ids that print this sentence are
+      unknown to this container (no D1 credentials, D369), so it is a `fix-*` key
+      rather than a guessed one, and the BASE is chosen rather than transcribed. A
+      Basic. */
+  "fix-benchboost": battler("fix-benchboost", {
+    types: ["Psychic"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Bench Boost",
+        damage: "50+",
+        effect:
+          "You may discard up to 2 Energy from your Benched Pokémon. This attack does 60 more damage for each card you discarded in this way.",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D403 FIXTURE — THE SAME SENTENCE WITH THE PRINTED FILTER NARROWED**, and
+      the pair is what makes the filter a READ rather than a constant. *"You may
+      discard up to 2 Basic Energy from your Benched Pokémon. This attack does 90 more
+      damage for each card you discarded in this way."* — **2 legal printings**.
+
+      🛑 **"Basic Energy" NAMES THE CARD, NOT WHAT THE CARD PROVIDES.** `fix-special`
+      provides {C} and is a Special Energy print: the bare-noun sibling above OFFERS it
+      and this one must not, which is the one board where a `providesEnergy` reading
+      and a `basicEnergy` one part company. It is also what the caption has to say —
+      *"Discard up to 2 Basic Energy from your Benched Pokémon."* against the sibling's
+      *"…up to 2 Energy…"* — which is `energyNoun`'s Basic arm (D402) reaching its
+      second producer.
+
+      `30+` and a printed 90, deliberately unlike the sibling's `50+`/60 in BOTH
+      numbers: a rung that read the wrong card would have to be wrong twice to look
+      right. A {C} cost, and a Basic. */
+  "fix-benchbasicboost": battler("fix-benchbasicboost", {
+    types: ["Psychic"],
+    hp: 110,
+    retreat: 1,
+    weaknesses: [{ type: "Darkness", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Bench Basic Boost",
+        damage: "30+",
+        effect:
+          "You may discard up to 2 Basic Energy from your Benched Pokémon. This attack does 90 more damage for each card you discarded in this way.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -14150,6 +14220,39 @@ export const COST_SNIPE_DECK = deckOf({
     `damageDefender` is `hailBlade.test.ts`'s and `psyPurge.test.ts`'s to prove, and
     duplicating it here would be a rung that passes on their code rather than on the
     reader this file is about. */
+/** 🆕🆕 **D403: the ADDITIVE half of the discard-count-scaled family, on a board where
+    the base is separable from the scaled part.** A SEPARATE deck from
+    `DISCARD_SCALED_DECK` because this suite needs two things that one does not have:
+
+      • **a RESISTANT defender.** The claim is that `base + P × N` is ONE §8.5 pass, and
+        Weakness cannot test it (a ×2 distributes over a split hit, so both readings
+        agree). `fix-psychic-resist-big` — 200 HP, −30 Psychic, in the pool since D139 —
+        is the body where the two readings differ, and both attackers are Psychic for
+        exactly that reason.
+      • **a BENCH that holds fuel while the ACTIVE holds the cost.** `from: "yourBench"`
+        is the own side MINUS the Active, and the only board that can tell it from
+        `from: "yours"` is one where the attacker's own cost Energy is attached and must
+        NOT be offered.
+
+    Three Energy PRINTS, on three footings: `fix-energy` (Basic {C}) pays both printed
+    costs and is fuel for both filters; `fix-lightning-energy` (Basic {L}) is the SECOND
+    distinguishable Basic print, without which every candidate would be interchangeable
+    and the declinable pick would never park on a real decision; `fix-special` (Special
+    {C}) is fuel for the bare-noun filter and refused by the Basic one, which is what
+    makes "Basic Energy" a read of the CARD rather than of its provision.
+
+    `fix-bigbody` is DOMINANT (200 HP neutral: mulligan-free setup, the Bench bodies that
+    carry the fuel, and a defender the 50+60× math never accidentally Knocks Out). */
+export const BENCH_BOOST_DECK = deckOf({
+  "fix-benchboost": 4, // "…up to 2 Energy from your Benched Pokémon… 60 more…" — the bare noun
+  "fix-benchbasicboost": 4, // the same sentence at `basicEnergy` and 90 — the filter's other side
+  "fix-psychic-resist-big": 4, // 200 HP, −30 Psychic — the ONE body where a split hit reads differently
+  "fix-bigbody": 24, // 200 HP neutral — DOMINANT (mulligan-free), the Bench holders, the plain defender
+  "fix-energy": 8, // Basic {C} — pays both costs, and fuel for BOTH filters
+  "fix-lightning-energy": 8, // Basic {L} — the second print, which is what makes the pick a DECISION
+  "fix-special": 8, // Special {C} — fuel for the bare noun, refused by the Basic one
+});
+
 export const DISCARD_SCALED_DECK = deckOf({
   "fix-allscale": 4, // "Discard all {L} Energy…" — the inline, no-park, `count: "all"` arm
   "fix-basicscale": 4, // "You may discard any amount of Basic Energy…" — the declinable arm

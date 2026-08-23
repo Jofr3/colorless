@@ -58,9 +58,11 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
   optionalBoostProgram,
+  discardScaledBoostProgram,
   optionalCostBoostProgram,
   splitAttackGateClause,
   splitAttackRequirementClause,
@@ -891,6 +893,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `base` is in scope.
   const optionalCostBoost =
     effect === null || effect === "" ? null : deriveAttackOptionalCostBoost(effect);
+  // 🆕🆕 D403 — the printed "You may discard up to {N} [Basic] Energy from your
+  // Benched Pokémon. This attack does {P} more damage for each card you discarded in
+  // this way.": the EIGHTH reader read at this site and the ELEVENTH overall, and it
+  // is D402's arm with the FOLD changed — the §9.2 `discarded` record read as an
+  // ADDEND on the printed base rather than as the whole hit. Disjoint from all ten,
+  // and the ONE it does not separate from by its leading words is the pair above,
+  // which share "You may " with it: `OPTIONAL_DAMAGE_BOOST` reads "You may do {N}
+  // more damage." and `OPTIONAL_COST_BOOST` requires a printed "If you do,", neither
+  // of which this sentence spells. So at most one of the eight read here ever fires —
+  // the property that keeps the terms below SUMS rather than choices. The PROGRAM is
+  // assembled at the coin block's site further down, where `base` is in scope.
+  const discardScaledBoost =
+    effect === null || effect === "" ? null : deriveAttackDiscardScaledBoost(effect);
   // A program that DEALS the main damage itself owns the printed number the same
   // way the multiply family does — Chien-Pao ex "Hail Blade" is "60×" (base 60,
   // modifier "×"), but its 60-per-discarded-card is dealt from INSIDE the program
@@ -964,12 +979,25 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // whatever the player answers — so dropping the base would silently delete a
   // 100-damage attack on every board, including the ones where the offer is declined.
   const costBoostOwnsTheBase = optionalCostBoost?.payoff.kind === "moreDamage";
+  //
+  // 🆕🆕 D403 — A SIXTH CLAIMANT, AND IT IS THE FIRST ONE WHOSE OP IS *TOP-LEVEL*
+  // YET STILL NEEDS A TERM HERE. D316/D317/D381 all nest their `damageDefender`
+  // inside a gate, which `programDamage`'s top-level `some` deliberately does not
+  // walk; this reading's hit is a bare top-level op exactly like Hail Blade's, and
+  // the reason the term is still owed is ORDERING rather than depth — `programDamage`
+  // is computed from the registry/derived program HERE, and every reading-borne
+  // program is APPENDED four hundred lines below. So the drop is claimed off the
+  // reading, like its three siblings, and the honest place is the same: the reader is
+  // what knows the printed number has been re-homed. Leaving it out would deal the
+  // base pre-program AND again inside the op that folds it, which is precisely the
+  // double hit `damageDefender.base` exists to avoid.
   const scaledBase =
     damageMultiplier !== null ||
     programDamage ||
     optionalBoost !== null ||
     bonusConsequent !== null ||
     costBoostOwnsTheBase ||
+    discardScaledBoost !== null ||
     coinFlip?.kind === "perHeads"
       ? 0
       : base;
@@ -1056,6 +1084,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     optionalBoost !== null ||
     bonusConsequent !== null ||
     optionalCostBoost !== null ||
+    discardScaledBoost !== null ||
     damageSuppression !== null;
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
@@ -1075,6 +1104,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // ⚠️ `effectSimulated` above needs no such narrowing and gets none: the sentence
   // is the WHOLE printed effect under BOTH payoffs, so the bare term is right for
   // both. Verified rather than copied.
+  // 🆕🆕 D403 adds ONE term to each of the three chains and NARROWS none. The additive
+  // reading consumes a printed "+" marker exactly as its three `more damage` siblings
+  // do (the printed clause IS the "+", and the base it is added to is the number
+  // beside it), so the bare term is right here for the same reason `optionalBoost`'s
+  // is. No narrowing is owed: this reading has ONE payoff, unlike D383's two.
+  //
+  // 🛑 AND THE COMMENT SITS ABOVE THE `const` RATHER THAN INSIDE THE CHAIN, WHICH IS
+  // NOT A STYLE CHOICE. Seven mutation rows (D316 ×3, D317 ×3, D381) carry multi-line
+  // `find` strings spanning adjacent lines of these three disjunctions; a comment
+  // spliced between two of those lines breaks every row that spans the gap without a
+  // character of the code moving. The rows were re-transcribed for the new TERM in the
+  // same commit — they had to be — but a comment INSIDE the chain would have made them
+  // fragile forever rather than once.
   const modifierSimulated =
     scaling !== null ||
     damagePenalty !== null ||
@@ -1082,6 +1124,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     optionalBoost !== null ||
     bonusConsequent !== null ||
     costBoostOwnsTheBase ||
+    discardScaledBoost !== null ||
     coinExplainsModifier;
   if (
     (modifier !== null && !modifierSimulated) ||
@@ -1376,6 +1419,28 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       ...(program ?? []),
       ...optionalCostBoostProgram(optionalCostBoost, base, effect ?? ""),
     ];
+  }
+  // 🆕🆕 D403 — THE SAME ASSEMBLY FOR THE ADDITIVE HALF OF D402's FAMILY, and the
+  // assembler lives in effects.ts from its first line (D318's finding, inherited
+  // rather than repeated). `deriveAttackDiscardScaledBoost` read the ceiling, the
+  // filter and the per-card damage out of the text; the printed BASE is a field on
+  // the attack and lives only in this function, so the value that crosses the gap is
+  // again the PROGRAM (D130's rule, fifth payment).
+  //
+  // 🛑 NO GATE AND NO DECLINE ARM, WHICH IS THE DIFFERENCE FROM ALL FOUR SIBLINGS
+  // ABOVE. Their "no" routes around the only op that deals damage, so each owes an
+  // `otherwise` carrying the printed base. Here the decline is a §9.2 count of ZERO
+  // and the one `damageDefender` deals `base + P × 0` — the printed base, by the same
+  // expression, on the same §8.5 pass. The arithmetic IS the decline arm.
+  //
+  // APPENDED, NEVER ASSIGNED — D130's rule, verbatim and for its reason. For these
+  // eight printings `program` is always null (the derivers are whole-sentence
+  // anchored, so a sentence this reader claims is one `deriveAttackEffect` refused,
+  // and no registry row names any id that prints either sentence — the ids are
+  // unknown to this container at all, D369), which makes the append
+  // behaviour-identical today and honest tomorrow.
+  if (discardScaledBoost !== null) {
+    program = [...(program ?? []), ...discardScaledBoostProgram(discardScaledBoost, base)];
   }
   // The flip's heads bonus is the attack's OWN printed extra damage, exactly like
   // a count-scaling clause's `scaled` — so it folds at the same step, PRE-Weakness

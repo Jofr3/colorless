@@ -12109,6 +12109,86 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.308.0 → **THE ADDITIVE HALF OF D402's FAMILY: A FOLD THAT NEEDED THE
+    PRINTED BASE, AND A UNION MEMBER THAT IS A COMPLEMENT.**
+
+      *"You may discard up to 2 Energy from your Benched Pokémon. This attack does 60
+       more damage for each card you discarded in this way."* — **6 legal printings**
+
+      *"You may discard up to 2 Basic Energy from your Benched Pokémon. This attack
+       does 90 more damage for each card you discarded in this way."* — **2**
+
+    **2 sentences / 8 printings**, and they are 8 of the 10 D402 measured and refused.
+    `BUILT.attack` 1340 → **1348**; the TEN-reader instrument becomes an ELEVEN-reader
+    one, 395 / 1,311 → **397 / 1,319**, residue 245 / 421 → **243 / 413**; whole-census
+    `built` 1,745 → **1,753**, its residue 638 → **630**; unbuilt attack column 392 →
+    **384**; `FIXTURE_POOL` 505 → **507**. `REGISTRY_ATTACK_UNITS` and `splitHead` stand
+    still — a READER-keyed move, and this slice edits `registry.ts` not at all.
+
+    🛑 **THE REFUSAL D402 WROTE WAS A MECHANISM, AND THE MECHANISM IS WHAT WAS BOUGHT.**
+    `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass, so a KEPT base
+    would be dealt in the pre-program pipeline and the scaled part inside the program.
+    **Weakness DISTRIBUTES over a split hit — and therefore cannot see the difference at
+    all — but Resistance and `damageReductionAfterWR` are SUBTRACTIONS paid once PER HIT
+    and the §8.1 survival clamp is asked once per hit**, so `base + P × N` is not `base`
+    then `P × N`. The repair is an OPTIONAL `base` on that op, whose absent value is
+    ZERO: byte-for-byte the arithmetic every `per`/`count` op has done since D96.
+    `benchDiscardBoost.test.ts` §5 drives it on the pool's −30 body, where the four
+    candidate builds deal **140 / 110 / 90 / 160** and only the first is right.
+
+    🛑 **A READER PLUS AN EXPORTED ASSEMBLER, NOT A `deriveAttackEffect` ARM, AND THE
+    OBSTACLE IS THE SIGNATURE RATHER THAN THE SHAPE.** That function takes only a
+    STRING; the printed base is a field on the attack and lives in `attack.ts`. A
+    captured `more` on D402's anchor would therefore have produced an op whose `base`
+    nothing could populate — D163's finding on the `SELF_COUNTER_SCALE` /
+    `SELF_COUNTER_MULTIPLY` pair reproduced one count-source over, and the same shape
+    D316/D317/D318/D381 already have. The assembler is exported on its first line
+    (D318's rule), and `fix-benchboost` / `fix-benchbasicboost` are in the pool so
+    `programWalk.test.ts` can BUILD what it audits.
+
+    ⚠️ **A `scaledBase` CLAIMANT WAS STILL OWED, AND FOR AN ORDERING REASON RATHER THAN
+    A NESTING ONE.** D316/D317/D381 each own the base because their `damageDefender` is
+    NESTED inside a gate that `programDamage`'s top-level `some` deliberately does not
+    walk. This one's hit is a bare top-level op exactly like Hail Blade's — but
+    `programDamage` is computed from the registry/derived program four hundred lines
+    ABOVE the append, so a reading-borne program is invisible to it either way. The term
+    is claimed off the reading, like its three siblings, and the reason is written down
+    so the next reader does not re-derive it from the wrong premise.
+
+    🛑 **`discardEnergy.from` GAINS `yourBench`, WHICH IS THE MEMBER D222's WARNING WAS
+    WRITTEN FOR.** The union's own doc called its three own-board members *"a spot, a
+    side and a body"*; this is a FOURTH kind — the side MINUS the spot, a COMPLEMENT —
+    and the sentence is rewritten rather than extended. `yours` is wrong for it on a
+    real board in the one direction that matters: the attacker's own cost Energy is on
+    the Active, and offering it would let the card fund its own boost with the Energy it
+    just attacked with. It costs TWO literals (`discardVictimSeat`, `discardableEnergies`)
+    and ONE caption arm, because `attachedEnergies` has taken a `"bench"` scope since it
+    was written and no producer had ever asked for it — and `discardNote`'s `switch` is
+    EXHAUSTIVE, so the member could not be added without answering the caption question.
+    **That exhaustiveness is the compiler D222 said a negated conjunction does not have.**
+
+    ✅ **NO DECLINE ARM, AND ITS ABSENCE IS ARITHMETIC.** D381's two gates each needed an
+    explicit `otherwise` carrying the printed base, because a "no" routed around the only
+    op that dealt damage. Here the decline is `N = 0` and the ONE op deals `base + P × 0`
+    — the printed base, by the same expression, on the same §8.5 pass. The cheapest
+    possible answer to D135's rule, and an empty Bench takes the same ending.
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, asked of BOTH widenings rather than of the file.
+    Both ops are persisted (the discard PARKS, so it rides `GameState.phase.cont.pendingOp`,
+    and the damage rides its `rest` tail). A v25 record cannot contain a union member that
+    did not exist (D361's own test), and an OPTIONAL field whose absent value is the old
+    behaviour is a WIDENING, not a missing field (D125's distinction, D130's precedent).
+    **A NEW REQUIRED FIELD WOULD HAVE BEEN A NEW SHAPE.**
+
+    Cost: **1 whole-sentence anchor, 1 reader, 1 exported assembler, 1 `discardEnergy.from`
+    member, 1 OPTIONAL `damageDefender` field, 3 `attack.ts` chain terms, 1 append, 2
+    interpreter literals, 1 caption arm, 2 fixtures and 1 deck.** ZERO new ops, ZERO
+    `BoardCondition` members, ZERO registry rows, ZERO clause-table rows. No web/API/DB/
+    `@luminous/schema` change.
+
+    engineVersion 0.307.0 → **0.308.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.307.0 → **THE DISCARD-COUNT-SCALED ATTACK: A DERIVER'S REFUSAL RE-PRICED
     BY RE-DERIVING ITS REASON, AND A FOLD THAT SPLIT THE FAMILY IN HALF.**
 
@@ -16640,7 +16720,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.307.0";
+export const engineVersion = "0.308.0";
 
 export type {
   ApplyResult,

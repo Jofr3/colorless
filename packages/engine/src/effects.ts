@@ -4188,8 +4188,34 @@ export type EffectOp =
       program in §8, so an attack whose number depends on a mid-attack choice
       cannot use the pre-W/R fold (`AttackDamageBonus`, read off the board at
       declaration) — it re-enters the same W/R math from inside the program, after
-      the choice is made. */
-  | { op: "damageDefender"; per: number; count: EffectSlot; amount?: never }
+      the choice is made.
+
+      🆕🆕 **D403 — `base` IS THE ADDITIVE HALF OF THE SAME FAMILY, AND IT IS AN
+      OPTIONAL FIELD ON THIS ARM RATHER THAN A THIRD ARM.** The catalog prints the
+      count-scaled clause two ways: *"This attack does N damage for each card you
+      discarded in this way"* (6 sentences / 13 legal printings, D402) DROPS the
+      printed base, because the printed "N×" IS the per-unit; *"This attack does N
+      **more** damage for each …"* (2 sentences / 8, `deriveAttackDiscardScaledBoost`)
+      KEEPS it, because the printed marker is a "+". ABSENT therefore means the
+      multiply family's dropped base — **zero is the safe default and it is the
+      behaviour every op written before this slice already had**, which is what makes
+      this a field and not a member.
+
+      🛑 **AND THE SUM MUST BE ONE HIT, WHICH IS THE WHOLE REASON THE ADDEND LIVES
+      HERE INSTEAD OF STAYING IN THE PRE-PROGRAM PIPELINE.** Weakness DISTRIBUTES
+      over a split hit, but Resistance and `damageReductionAfterWR` are SUBTRACTIONS
+      paid once PER HIT and the §8.1 survival clamp is asked once per hit too — so
+      `base + per × N` dealt as one `snipeActive` pass is NOT the same number as
+      `base` dealt pre-program and `per × N` dealt inside it. D402 refused the
+      additive half on exactly this mechanism; the field is what answers it.
+
+      ⚠️ **`amount` STAYS UNREPRESENTABLE BESIDE `per`/`count`, WHICH IS THE THING
+      THE UNION IS ACTUALLY PROTECTING.** `base` is not a third way of DECIDING the
+      number — it is an addend on this arm's way — so admitting it costs the union
+      nothing it was defending. An op carrying both `amount` and `per` would still
+      make the interpreter pick one and ignore the other silently, and that is still
+      refused below. */
+  | { op: "damageDefender"; per: number; count: EffectSlot; base?: number; amount?: never }
   /** 🆕 D316 — THE SAME HIT WITH A **FLAT** AMOUNT, and the second answer to the
       paragraph above rather than a second op. *"You may do {N} more damage. If you
       do, …"* (5 legal printings, `deriveAttackOptionalBoost`) is the OTHER kind of
@@ -6920,8 +6946,29 @@ export type EffectOp =
           three own-board members are therefore a spot (`yourActive`), a side
           (`yours`) and a body (`self`), and they are NOT interchangeable: on a
           board where the host is benched, `yourActive` strips a different
-          Pokémon and `yours` offers six. */
-      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "self";
+          Pokémon and `yours` offers six.
+
+          🆕🆕 **D403 — `yourBench` IS A FOURTH KIND OF OWN-BOARD SCOPE AND THE
+          SENTENCE ABOVE IS REWRITTEN RATHER THAN EXTENDED.** The printed *"discard
+          up to 2 Energy from your **Benched** Pokémon"* (2 sentences / 8 legal
+          printings, `deriveAttackDiscardScaledBoost`) names the own side MINUS the
+          Active — which is not a spot, not the whole side and not a body, but a
+          COMPLEMENT. `yours` is the wrong member for it in the one direction that
+          matters on a real board: an attacker's own cost Energy is attached to the
+          Active, and offering it would let the card pay for its own boost with the
+          Energy it just attacked with. So the four own-board members are a spot, a
+          side, a body and the side MINUS the spot.
+
+          ⚠️ **IT COSTS NO NEW MACHINERY, WHICH IS WHY IT IS A MEMBER AND NOT AN OP.**
+          `attachedEnergies` has taken a `"bench"` scope since it was written and no
+          producer had ever asked for it; `discardVictimSeat` answers "the
+          controller" for it the way it does for the other three, and `discardNote`'s
+          `switch` is exhaustive over this union — so a member added without a
+          caption does not compile. **THAT EXHAUSTIVENESS IS THE COMPILER BEHIND THE
+          WIDENING D222 SAID A NEGATED CONJUNCTION DOES NOT HAVE**, and both
+          hand-spelled reads of these members were re-checked by name before the
+          member was added rather than after. */
+      from: "opponentActive" | "opponentChosen" | "yourActive" | "yours" | "yourBench" | "self";
       filter: CardFilter;
       /** 🆕 **D295 — WHERE THE ENERGY LANDS, AS ONE OPTIONAL FIELD ON THE OP THAT
           ALREADY TAKES IT OFF.** ABSENT = the DISCARD PILE, which is what this
@@ -12679,6 +12726,17 @@ const TYPED_SELF_DISCARD = new RegExp(
 // new field"*) is **FALSE**, measured. ⚠️ AND THE TWO NAMED FALSIFIERS INTERACT:
 // every Bench-only printing is on the additive side, so the fold split removes the
 // need for the union widening entirely rather than compounding with it.
+//
+// 🆕🆕 **D403 PAID THAT PRICE AND THE PARAGRAPH ABOVE IS KEPT RATHER THAN REWRITTEN
+// (D178) — WHAT IT PRICED IS EXACTLY WHAT WAS BOUGHT.** The `from` union HAS a
+// Bench-only member now (`yourBench`), the fold IS a second reader
+// (`deriveAttackDiscardScaledBoost`) and `damageDefender` gained an OPTIONAL `base`
+// so the sum is ONE §8.5 pass. **2 of the 3 sentences / 8 of the 10 printings have
+// left this half**; the deck mill is still refused, and its recording mill is still
+// unbuilt. ⚠️ **THIS ANCHOR IS UNCHANGED BY ANY OF IT** — its `does (\d+) damage for
+// each` still refuses the printed `more` and its `from (this|your) Pokémon` still
+// refuses `Benched`, which is what keeps the two readers disjoint and what §3's
+// vary-ONE-byte rungs assert.
 //
 // EIGHT CAPTURES, ALL OF THEM FIELDS OF THE TWO OPS (D131's test for "is this one
 // pattern"): 1–3 are the discard's QUANTIFIER (`count`/`cap`), 4–6 its FILTER, 7
@@ -18810,6 +18868,151 @@ function costSnipeProgram(
       // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
       then: [offer],
     },
+  ];
+}
+
+/** 🆕🆕 D403 — THE ADDITIVE HALF OF D402's FAMILY: THE §9.2 `discarded` RECORD READ
+    AS A DAMAGE **ADDEND** RATHER THAN AS A MULTIPLIER.
+
+    *"You may discard up to N [Basic] Energy from your Benched Pokémon. This attack
+    does P **more** damage for each card you discarded in this way."* — **2
+    sentences / 8 legal printings**, measured over `legalAttackCorpus()` at this head
+    and transcribed byte for byte:
+      6 — "You may discard up to 2 Energy from your Benched Pokémon. This attack does
+           60 more damage for each card you discarded in this way."
+      2 — "You may discard up to 2 Basic Energy from your Benched Pokémon. This
+           attack does 90 more damage for each card you discarded in this way."
+
+    🛑 **D402 REFUSED THIS HALF ON A MECHANISM AND THE MECHANISM IS WHAT THIS SLICE
+    PAYS FOR.** `damageDefender {per, count}`'s hit is a SEPARATE `snipeActive` pass,
+    so a KEPT base would have been dealt in the pre-program pipeline and the scaled
+    part inside the program. Weakness DISTRIBUTES over a split hit, but Resistance
+    and `damageReductionAfterWR` are SUBTRACTIONS paid once PER HIT and the §8.1
+    survival clamp is asked once per hit — so `base + P × N` is NOT `base` then
+    `P × N`. The repair is an optional `base` on that op (see its own doc), which
+    makes the sum ONE §8.5 pass and leaves the multiply family byte-identical.
+
+    🛑 **AND THAT IS WHY THIS IS A SEPARATE READER RATHER THAN AN OPTIONAL `more` ON
+    `ENERGY_DISCARD_SCALED_DAMAGE`.** `deriveAttackEffect` takes only a STRING; the
+    printed base is a field on the attack and lives in `attack.ts`. A captured
+    `more` would therefore have produced an op whose `base` nothing could populate —
+    D163's finding on the `SELF_COUNTER_SCALE` / `SELF_COUNTER_MULTIPLY` pair
+    reproduced one count-source over, and the same shape D316/D317/D381 already have:
+    a reading read at attack.ts's site, and an EXPORTED assembler taking the base.
+
+    ✅ **NO DECLINE ARM, AND ITS ABSENCE IS ARITHMETIC RATHER THAN AN OMISSION.**
+    D381's two gates each needed an explicit `otherwise` carrying the printed base,
+    because a "no" there routed around the only op that dealt damage. Here the
+    decline is `N = 0` and the ONE op deals `base + P × 0` — the printed base, by the
+    same expression, on the same §8.5 pass. There is no second arm to keep in step,
+    which is the cheapest possible answer to D135's rule.
+
+    ⚠️ **THE ZONE IS A LITERAL, WHERE D402's IS A CAPTURE, AND THE DIFFERENCE IS
+    WHAT THE CATALOG PRINTS.** That anchor reads `(this|your) Pokémon` as a free
+    parameter because the multiply family prints BOTH values; the additive family
+    prints *"your Benched Pokémon"* and nothing else — `from your Benched Pokémon`
+    occurs in the whole 640-sentence legal attack column on these two sentences ONLY,
+    asserted as exactly that rather than left unsaid (D400). Capturing a zone the
+    family never varies would derive sentences nobody prints, which is D361's refused
+    matrix.
+
+    ⚠️ **THE FILTER IS TWO PRINTED SPELLINGS AND NOT THE NINE-TYPE MAP.** No additive
+    printing carries a brace code or a written-out type, so the alternation is the
+    printed contrast (`Energy` / `Basic Energy`) rather than `ENERGY_TYPE_BY_CODE`'s
+    keys. "Basic Energy" names the CARD and reads as `basicEnergy`, never as a
+    provision — D402's paragraph on the same word, and `fix-special` is the witness
+    both halves share. */
+export interface AttackDiscardScaledBoost {
+  /** The printed ceiling of the declinable discard (the "up to N"), which rides the
+      op's `cap` — the pick stays 0..min(cap, matches) and stays declinable. */
+  cap: number;
+  /** What may come off the Bench: the bare printed noun, or the Basic-Energy card. */
+  filter: CardFilter;
+  /** The printed extra damage EACH discarded card buys — the "+" of the attack's
+      own printed marker, which is why this reading claims that marker at the read
+      site the way `optionalBoost` and `bonusConsequent` do. */
+  per: number;
+}
+
+// No /i, on this file's standing reason for every whole-sentence attack anchor: the
+// capital first word is half of what keeps a whole-sentence reader off a mid-sentence
+// clause, and the `^…$` is the other half. Two printed spellings of the filter and
+// nothing else — see the doc block above for why the type map is not admitted here.
+const BENCH_DISCARD_SCALED_BOOST =
+  /^You may discard up to (\d+) (Basic )?Energy from your Benched Pokémon\. This attack does (\d+) more damage for each card you discarded in this way\.$/;
+
+/** Parse the Bench-discard additive boost into its ceiling, its filter and its
+    per-card damage, or null for anything else.
+
+    THE ELEVENTH READER of the same effect text, and disjoint from all ten. Its
+    leading words deny it `deriveAttackEffect`'s whole-sentence anchors (including
+    `ENERGY_DISCARD_SCALED_DAMAGE`, whose own `does (\d+) damage for each` refuses the
+    printed `more`), both scaling readers' `^This attack does` / `^If`, the coin
+    family's `^Flip a coin`, the requirement family's `^If` and the suppression
+    family's `^This attack's damage`. ⚠️ **THE TWO IT DOES *NOT* SEPARATE FROM BY ITS
+    LEADING WORDS ARE `deriveAttackOptionalBoost` AND `deriveAttackOptionalCostBoost`,
+    which share `^You may ` with it** — the three are separated by the WORD AFTER IT
+    (`OPTIONAL_DAMAGE_BOOST` reads `^You may do`, `OPTIONAL_COST_BOOST` reads a cost
+    clause followed by a printed `If you do,` which this sentence does not carry) and
+    by their payoffs. attack.ts owns the read site, beside its three siblings'. */
+export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScaledBoost | null {
+  const match = BENCH_DISCARD_SCALED_BOOST.exec(text.trim());
+  if (match === null) return null;
+  const cap = Number(match[1]);
+  const per = Number(match[3]);
+  // TWO printed numbers, TWO positivity guards — D145's standing rule for every
+  // captured amount in this file. A printed "up to 0" is a park with no pick and a
+  // printed 0 per-card is a clause that buys nothing however much comes off; each is
+  // a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point.
+  if (cap < 1 || per < 1) return null;
+  return {
+    cap,
+    per,
+    // The printed "Basic" names the CARD, not what it provides: a Special Energy
+    // providing {C} is not a Basic Energy card, so a `providesEnergy` reading would
+    // have offered one (D402's paragraph on the same word, one fold over).
+    filter: match[2] === undefined ? { kind: "anyEnergy" } : { kind: "basicEnergy" },
+  };
+}
+
+/** 🆕🆕 D403 — assemble the additive reading into its two ops, given the attack's
+    PRINTED BASE.
+
+    🛑 **EXPORTED FOR D318's REASON, WHICH IS A HOUSE RULE BY NOW.** `base` lives on
+    the attack and is in scope only inside attack.ts; a program assembled at that
+    call site is invisible to `programWalk.test.ts`, whose corpus is built from
+    `deriveAttackEffect` over `FIXTURE_POOL` plus the registry plus the readings FED
+    to it. So the assembler is a pure exported function of the base from its first
+    line, and `fix-benchboost` / `fix-benchbasicboost` are in the pool to call it on.
+
+    🛑 **`base` IS SPELLED ON THE OP EVEN WHEN IT IS ZERO, AND THAT IS DELIBERATE.**
+    Omitting it at 0 would give one reading two program shapes for no behavioural
+    difference, and the op's ABSENT `base` already means something specific — the
+    multiply family's DROPPED base. A reading that says "keep it" should say so at
+    every value it keeps.
+
+    ⚠️ **THE PRINTED ORDER IS DISCARD-THEN-DAMAGE AND IT IS LOAD-BEARING**, not
+    cosmetic: the damage READS what the discard filed (`recordAs: "discarded"` is the
+    printed *"in this way"*, an op→op §9.2 record and not a re-scan of the board), so
+    a swapped order counts an empty slot and deals the bare base forever. */
+export function discardScaledBoostProgram(
+  reading: AttackDiscardScaledBoost,
+  base: number,
+): EffectOp[] {
+  return [
+    {
+      op: "discardEnergy",
+      // The printed "your Benched Pokémon" — the own side MINUS the Active, which is
+      // why `yours` is the wrong member: the Active's Energy paid for this attack.
+      from: "yourBench",
+      filter: reading.filter,
+      // "You may discard up to N" is the declinable mode at a ceiling — `count: "any"`
+      // plus `cap`, D97's split, and it ALWAYS parks on a non-empty Bench.
+      count: "any",
+      cap: reading.cap,
+      recordAs: "discarded",
+    },
+    { op: "damageDefender", base, per: reading.per, count: "discarded" },
   ];
 }
 

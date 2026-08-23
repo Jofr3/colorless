@@ -1580,7 +1580,15 @@ function stepOp(
       // so there is no §9.2 slot to read. The `<= 0` guard covers BOTH arms and is
       // reachable on neither for the flat one — every printing carries a base of
       // at least 50 — which is why it is not re-stated per arm.
-      const amount = op.amount ?? recorded(record, op.count).length * op.per;
+      // 🆕🆕 D403 — AND THE ADDITIVE FOLD, WHICH IS THE THIRD READING OF THIS ONE
+      // EXPRESSION RATHER THAN A THIRD BRANCH. *"This attack does P more damage for
+      // each card you discarded in this way"* KEEPS its printed base where the
+      // multiply family drops it, and the sum is dealt HERE so that Resistance, the
+      // reduction passive and the §8.1 survival clamp are each paid ONCE — the
+      // mechanism D402 refused the family's additive half on. An ABSENT `base` is
+      // zero, which is byte-for-byte what every `per`/`count` op meant before this
+      // slice, so no board that existed moves.
+      const amount = op.amount ?? (op.base ?? 0) + recorded(record, op.count).length * op.per;
       if (amount <= 0) return { done: state };
       return { done: snipeActive(state, amount, false, ctx, events) };
     }
@@ -10121,14 +10129,24 @@ function matchesAttached(
 }
 
 /** The board a `discardEnergy` op takes Energy OFF: the controller's own for
-    `yourActive` / `yours` / `self`, the opponent's for the three hammer arms.
-    One helper so the candidate scan and the apply can never disagree about whose
-    Pokémon is stripped and whose discard pile it lands in — and, since D222, so
-    the §11 attack-block guard cannot disagree with either (it used to spell the
-    own-board members a second time, in a negated conjunction that a new member
-    silently fell out of). */
+    `yourActive` / `yours` / `yourBench` / `self`, the opponent's for the three
+    hammer arms. One helper so the candidate scan and the apply can never disagree
+    about whose Pokémon is stripped and whose discard pile it lands in — and, since
+    D222, so the §11 attack-block guard cannot disagree with either (it used to spell
+    the own-board members a second time, in a negated conjunction that a new member
+    silently fell out of).
+
+    🆕🆕 D403 — AND `yourBench` IS THE MEMBER D222's WARNING WAS WRITTEN FOR, ARRIVING
+    FOUR SLICE-HUNDREDS LATER. It is an OWN-board scope whose name does not begin
+    "your…Active", so the conjunction that helper replaced would have sent an
+    attacker's own Bench discard through the OPPONENT's §11 block — the exact failure
+    mode recorded at D222, on the exact union. One helper, one answer, one line
+    changed. */
 function discardVictimSeat(seat: Seat, op: Extract<EffectOp, { op: "discardEnergy" }>): Seat {
-  return op.from === "yourActive" || op.from === "yours" || op.from === "self"
+  return op.from === "yourActive" ||
+    op.from === "yours" ||
+    op.from === "yourBench" ||
+    op.from === "self"
     ? seat
     : otherSeat(seat);
 }
@@ -10166,12 +10184,18 @@ export function discardableEnergies(
       .filter((uid) => matchesAttached(state, host, uid, op.filter))
       .map((uid) => ({ uid, from: ref }));
   }
+  // 🆕🆕 D403 — THREE SCOPES WHERE THERE WERE TWO, and the third costs nothing:
+  // `attachedEnergies` has taken a `"bench"` argument since it was written and no
+  // producer had ever asked for it. The printed *"from your Benched Pokémon"* is the
+  // own side MINUS the Active — a COMPLEMENT rather than a spot or a side — and
+  // reading it as `"all"` would offer the very Energy that paid for the attack.
   const activeOnly = op.from === "opponentActive" || op.from === "yourActive";
+  const benchOnly = op.from === "yourBench";
   return attachedEnergies(
     state,
     discardVictimSeat(seat, op),
     op.filter,
-    activeOnly ? "active" : "all",
+    activeOnly ? "active" : benchOnly ? "bench" : "all",
   );
 }
 
@@ -11229,6 +11253,14 @@ function discardNote(op: Extract<EffectOp, { op: "discardEnergy" }>): string {
     case "yours":
       // The printed "from your Pokémon" — the whole own board (Hail Blade).
       return `Discard ${what} from your Pokémon.`;
+    case "yourBench":
+      // 🆕🆕 D403 — the printed "from your Benched Pokémon", verbatim. The card's
+      // leading "You may" is dropped for the reason every arm above drops it: a
+      // prompt that has appeared IS the offer, so restating the option is the dialog
+      // talking about itself. The `what` half already carries the printed ceiling
+      // ("up to 2 Energy" / "up to 2 Basic Energy"), so this caption is the printed
+      // sentence minus exactly those two words.
+      return `Discard ${what} from your Benched Pokémon.`;
   }
 }
 
