@@ -17646,11 +17646,17 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D414-basic-gate-becomes-unconditional",
+    // ⚠️ RE-ANCHORED AFTER THE SWEEP REPORTED `error`, AND THE CAUSE IS WORTH THE
+    //    LINE: this row was authored, prechecked clean, and THEN the arm gained a
+    //    `biome-ignore` comment between `cond:` and `then:` when `bun run check`
+    //    flagged `noThenProperty`. The quoted block stopped occurring. **A LINT FIX
+    //    IS AN EDIT TO A MUTATED FILE** — re-run `precheck` after one, exactly as
+    //    after any other edit. It cost a whole-corpus sweep's worth of wall clock.
     decision: "D414",
-    what: "🛑 C7 — THE GATE IS DROPPED: *\"If your opponent's Active Pokémon **is a Basic Pokémon**, it is Knocked Out.\"* becomes an unconditional Knock Out, which is a one-word deletion from the printed sentence and the strongest attack in the game. ⚠️ **IT IS RIGHT ON EVERY BOARD WHERE THE DEFENDER HAPPENS TO BE A BASIC** — which is most boards a fixture builds, and both of this suite's KO boards — so only the Stage 1 / Stage 2 negative controls can see it",
+    what: "🛑 C7 — THE GATE READS THE INVERSE MEMBER: `opponentActiveIsBasic` becomes `opponentActiveIsEvolution`, its exact opposite and a real member one identifier away in the same union. **THE SENTENCE STILL RESOLVES, THE OP STILL FIRES AND THE PROGRAM STILL HAS THE RIGHT SHAPE** — it simply Knocks Out on precisely the boards the printed *\"If your opponent's Active Pokémon **is a Basic Pokémon**\"* excludes, and refuses on the ones it names. ⚠️ **A CENSUS CANNOT SEE IT AND NEITHER CAN A DERIVER TEST THAT ONLY ASKS FOR NON-NULL**; it needs the positive Basic board AND the Stage 1 / Stage 2 negative controls, which is why this suite fields all three",
     file: "packages/engine/src/effects.ts",
-    find: "      {\n        op: \"conditionGate\",\n        cond: { kind: \"opponentActiveIsBasic\" },\n        then: [{ op: \"knockOutDefender\" }],\n      },",
-    replace: "      { op: \"knockOutDefender\" },",
+    find: "  match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);\n  if (match !== null) {\n    return [\n      {\n        op: \"conditionGate\",\n        cond: { kind: \"opponentActiveIsBasic\" },",
+    replace: "  match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);\n  if (match !== null) {\n    return [\n      {\n        op: \"conditionGate\",\n        cond: { kind: \"opponentActiveIsEvolution\" },",
     expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
   },
   {

@@ -465,13 +465,19 @@
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE**
 > (D411's entry says why in full).
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D414 has had `--decision D414` (8 killed / 0 GAPs),
-> `--decision D326` after re-pointing (11 killed, 1 ERROR that was only a mid-edit red baseline), a
-> clean `precheck` over 1,499 and a full serialised check. The other 1,491 rows have not run against
-> this head. ⚠️ **EXPOSURE IS HIGHER THAN D413's**: this slice edited `flow.ts` (the KO sweep, which
-> most of the engine funnels through), `types.ts`, `interpreter.ts` and `effects.ts`, and **two D326
-> rows already had to be re-transcribed**. A third row spanning a line D414 touched is the likely
-> `error`.
+> ⚠️ **THE SWEEP RAN AND FAILED ITS EXIT CODE ON ONE ERROR THAT WAS MINE — AND THE CAUSE IS THE
+> USEFUL PART.** **1499 · 1474 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped · 0
+> clobbers · 1 error · 5,422.3s**, `SWEEP_EXIT=1`. `1474 + 24 + 1 = 1499` closes; **verified by id in
+> both directions**, 1499 / 1499, 0 missing / 0 extra. Declared survivors held at **24 for a
+> thirty-first consecutive sweep**, on a slice that edited `flow.ts`'s KO sweep.
+> 🛑 **`D414-basic-gate-becomes-unconditional` was authored, prechecked CLEAN, and then the arm it
+> quotes gained a `biome-ignore` comment when `bun run check` flagged `noThenProperty`.** The quoted
+> block stopped occurring. **A LINT FIX IS AN EDIT TO A MUTATED FILE — re-run `precheck` after one.**
+> Re-anchored and re-probed: **8 killed / 0 GAPs**. ⚠️ And the first re-transcription pointed `cond`
+> at a union member that does not exist, which would have died for the WRONG reason (an exhaustive
+> switch throwing, not a rule broken) — re-pointed at a real inverse member instead.
+> ⚠️ **SO THE CORPUS IS CLEAN AT THIS HEAD BUT THE SWEEP THAT PROVES IT HAS NOT RE-RUN WHOLE.** Say
+> that plainly: what is measured is 1,498 rows swept clean plus the eighth re-probed alone.
 >
 > ### ▶ WHAT TO DO NEXT — THE PARKING HALF OF THE SAME FAMILY
 >

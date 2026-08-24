@@ -255,6 +255,16 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A LINT FIX IS AN EDIT TO A MUTATED FILE — RE-RUN `precheck` AFTER ONE (D414).** A row was
+  authored, prechecked clean, and then its quoted block gained a `biome-ignore` comment when
+  `bun run check` flagged `noThenProperty`. The `find` stopped occurring and the row reported ERROR
+  ninety minutes into a whole-corpus sweep. **The exactly-once rule caught it, which is the point —
+  but `precheck` costs seconds and the sweep costs ninety minutes.**
+- ⚠️ **A RE-TRANSCRIPTION CAN BREAK A ROW'S MEANING WHILE FIXING ITS ANCHOR.** The same repair first
+  pointed a `conditionGate`'s `cond` at a union member that does not exist. That mutant would have
+  been KILLED — by an exhaustive switch throwing, not by the rule the row is about. **A row that dies
+  for the wrong reason is worth less than one that survives**, because it reports success.
+  Re-transcribe onto a REAL neighbour with an inverted meaning.
 - ⚠️ **Anchor every pattern.** An unanchored regex mutated a byte-identical arm
   in a different card's program and reported a **phantom survivor** — the
   wrong-row failure, which has now cost three slices (D207). The exactly-once
