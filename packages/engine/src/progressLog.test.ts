@@ -541,9 +541,11 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // its place, in the same commit as the demotion.
   // 🆕🆕 D413 — 82 -> 83, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
   // the demotion of D412's live resume point.
-  const ARCHIVES = 83;
+  // 🆕🆕 D414 — 83 -> 84, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
+  // the demotion of D413's live resume point.
+  const ARCHIVES = 84;
 
-  it("the page still holds all 83 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 84 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

@@ -1800,6 +1800,45 @@ export function usedAttackOnYourLastTurn(
     be free to drift from the first. */
 export type KnockOutMark = { uid: string; name: string; byAttack: boolean };
 
+/** 🆕🆕 D414 — the marker a NON-DAMAGE Knock Out stamps on the body it dooms, and
+    the reason it carries the turn.
+
+    🛑 **UNTIL D414 THE DEFENDER'S BOARD COULD ONLY GO LETHAL BY DAMAGE, AND TWO
+    SHIPPED MECHANISMS ARE BUILT ON THAT.** `collectKnockOuts`'s `byAttack` mark is
+    read by four built sentences / six printings of *"Knocked Out **by damage** from
+    an attack"*, and `koRecoilOf` below discharges Vengeful Punch's printed *"by
+    damage"* **by placement rather than by a flag** — its own comment says so:
+    *"a body can only be lethal on the defender's board here because this attack
+    put it there"*. `knockOutDefender` makes that sentence false, so it says so in
+    the state rather than leaving two correct-by-accident premises to rot.
+
+    ⚠️ **A `markers` STRING RATHER THAN A FIELD, AND THAT IS WHAT KEEPS
+    `MATCH_RECORD_VERSION` AT 26.** `InPlayPokemon.markers` is already `string[]`,
+    already initialised at every constructor and already persisted; adding a VALUE
+    is a widening (D125), where a new required field is a bump (D394, D412).
+
+    ⚠️ **IT CARRIES THE TURN, AND THE BOARD THAT WOULD JUSTIFY THAT DOES NOT
+    CURRENTLY EXIST — WHICH IS SAID HERE RATHER THAN LEFT AS A FALSE REASON.** This
+    doc block first claimed the stamp was needed because Glimmora's "Shattering
+    Crystal" denies a Knock Out and would leave a live, lethally-damaged body
+    carrying a stale marker. **THAT CLAIM WAS MEASURED AND IS WRONG TWICE OVER**:
+    Shattering Crystal denies the *Prize* and the Knock Out happens for real
+    (`planPrizes`' own comment says so), and §11 is asked BEFORE the stamp is
+    written, so a refused effect leaves no marker at all (driven, not argued).
+
+    So the turn is **defensive**, against a position nothing in this catalog can
+    currently build, and it is kept for two honest reasons rather than the invented
+    one: it costs one template literal, and it makes the marker expire BY ARITHMETIC
+    — no clear site anywhere, and therefore no second place to forget one, which is
+    `attackLockedTurn`'s rule applied to a string. The expiry is driven at BOTH
+    readers in both directions on surgically-placed markers, so the arithmetic is
+    guarded even though the board that needs it is not printed. **A mechanism kept
+    for a stated cheap reason is fine; a mechanism kept for a reason that turns out
+    to be false is how this repo loses track of what is load-bearing.** */
+export function koByEffectMarker(turn: number): string {
+  return `koByEffect:${turn}`;
+}
+
 /** 🆕 §8.1 (D326) — the Pokémon `seat` lost during their OPPONENT'S last turn,
     or an EMPTY list when that window is not open. The one reader of
     `GameState.lastKoMarks`, and it reads `lastKoTurn` FIRST: the list carries no

@@ -121,6 +121,7 @@ import {
   withActive,
   withSide,
   without,
+  koByEffectMarker,
 } from "./types";
 
 // The shared effect interpreter (D8) — the one place a GameState changes under
@@ -2738,6 +2739,15 @@ function stepOp(
       // The Prize, the whole-stack discard, `KNOCKED_OUT` and the §8.1 promotion
       // are therefore §8.1's own and not this op's — no new stage, no new event.
       return { done: knockOutSelf(state, ctx) };
+    case "knockOutDefender":
+      // 🆕🆕 D414 — the same seam one seat over. It rides `knockOutSelf`'s
+      // reasoning verbatim (mark lethal, let §8.1's sweep do the Prize, the
+      // discard, the event and the promotion) and adds the one thing that is NOT
+      // a mirror: the lethality is stamped as NOT DAMAGE, because two shipped
+      // mechanisms read "lethal on the defender's board during an attack" as
+      // "damaged by that attack" and this op is the first thing that can make
+      // that false. See `koByEffectMarker` (flow.ts).
+      return { done: knockOutDefender(state, ctx, events) };
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -8618,6 +8628,53 @@ function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
           ),
         },
   );
+}
+
+/** 🆕🆕 D414 — §8.1, the Knock Out that reaches the OTHER side of the table.
+    `knockOutSelf`'s body one seat over, with one addition that is the whole reason
+    this is not a `target` field on that op.
+
+    🛑 **THE MARKER IS THE SLICE.** Marking the defender's Active lethal is three
+    lines; saying that the lethality is NOT DAMAGE is the part two shipped
+    mechanisms depend on. `collectKnockOuts`'s `byAttack` mark feeds four built
+    sentences / six printings of *"Knocked Out **by damage** from an attack"*, and
+    `koRecoilOf` discharges Vengeful Punch's printed *"by damage"* **by placement**
+    — its comment reads *"a body can only be lethal on the defender's board here
+    because this attack put it there"*. Both were true by construction until this
+    op existed. Neither is now, so both read the marker.
+
+    ⚠️ **IT ASKS §11 (D142), WHICH `knockOutSelf` DOES NOT — AND THE DIFFERENCE IS
+    THE SEAT, NOT AN INCONSISTENCY.** `knockOutSelf` kills its own host, which no
+    "prevent all effects of attacks done to this Pokémon" block on the OPPONENT's
+    body has any claim over. This one is an effect of an attack done TO THE
+    DEFENDING POKÉMON — the exact thing §11 blocks refuse — so it asks, exactly as
+    `preventRetreat` and `preventAttack` do. Refusing to ask would be a silent
+    rules call made by the newer of two siblings.
+
+    ⚠️ **A SILENT NO-OP ON AN EMPTY ACTIVE SPOT**, every sibling's contract: the
+    defender was Knocked Out earlier in the same program and there is nothing to
+    doom. */
+function knockOutDefender(
+  state: GameState,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  const side = state.players[seat];
+  const active = side.active;
+  if (active === null) return state;
+  const hp = effectiveMaxHp(state, active);
+  if (hp === null) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const marker = koByEffectMarker(state.turn);
+  const doomed = {
+    ...active,
+    damage: Math.max(active.damage, hp),
+    // Idempotent: a second install in the same turn re-computes the same string,
+    // so a program that dooms an already-doomed body adds no duplicate.
+    markers: active.markers.includes(marker) ? active.markers : [...active.markers, marker],
+  };
+  return withSide(state, seat, { ...side, active: doomed });
 }
 
 /** 🆕🆕 D380 — §7.3's shared zone, emptied. The Stadium goes to **ITS OWNER's**

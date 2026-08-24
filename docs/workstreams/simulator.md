@@ -25690,6 +25690,86 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D414 — THE KNOCK OUT THAT REACHES THE OTHER SIDE OF THE TABLE: the slice is what the op falsifies (engine 0.318.0, `MATCH_RECORD_VERSION` **STAYS 26**)
+
+**3 sentences / 4 legal printings** of the KO-without-damage family, on ONE new field-free
+`EffectOp` (`knockOutDefender`) and three `deriveAttackEffect` arms:
+
+- `"If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out."` (2) →
+  `conditionGate { opponentActiveIsBasic } → knockOutDefender`
+- `"Both Active Pokémon are Knocked Out."` (1) → `[knockOutDefender, knockOutSelf]`
+- `"This Pokémon does 100 damage to itself. Flip a coin. If heads, your opponent's Active Pokémon is
+  Knocked Out."` (1) → `[damageSelf, coinFlipGate → knockOutDefender]`
+
+### 🛑 The op is three lines. The slice is the premise it breaks.
+
+Until D414 a body could only become lethal **on the defender's board during an attack** by being
+DAMAGED. Two shipped mechanisms are built on that:
+
+1. `flow.ts` computed `byAttack` **once per BATCH** as `attackerSeat !== undefined` — *"this batch is
+   an attack's epilogue"*. **4 built sentences / 6 legal printings** read that mark as *"Knocked Out
+   **by damage** from an attack"*.
+2. Vengeful Punch's `koRecoilOf` discharges its printed *"by damage"* **by placement rather than by a
+   flag**: *"a body can only be lethal on the defender's board here because this attack put it
+   there"*.
+
+**Both go false the moment this op ships, and neither is reachable from `knockOutSelf`'s doc block.**
+A builder mirroring that op line for line ships both defects with a Knock Out that looks perfect —
+right body, right Prize, right event, right promotion. Repair: the op stamps `koByEffect:<turn>` into
+`markers`; `byAttack` becomes per-BODY; `koRecoilOf` skips effect-lethal bodies. **Mutants C1 and C2
+are those hazards restored, and both die.**
+
+### Why the version stays at 26
+
+`markers` is already `string[]` on `InPlayPokemon`, already initialised at every constructor and
+already persisted, so adding a VALUE is a **widening** (D125) where a required field is a bump (D394,
+D412). ⚠️ **It is `markers`' first inhabitant** — declared since M3 with zero producers and zero
+readers engine-wide — so the `koByEffect:` prefix is a convention D414 *establishes*.
+
+And *"Both Active Pokémon are Knocked Out."* is a **composition of two shipped field-free ops**, not
+a `target` field: a required field on an op is the one thing that costs a bump if it is ever renamed
+or widened (D309/D335/D352/D359 each paid it). §8.1 resolves a batch in one instant, so the prize
+order it produces — attacker's ahead of defender's — is §8.1's own tie-break, free.
+
+### Scope, and two corrections to this page's own earlier claims
+
+3 of the family's 7 sentences, chosen because their targets are **named by the printed text**, so no
+board asks anybody anything. The other three print *"Knock Out **1 of** your opponent's …"*.
+
+- ⚠️ **The claim that the park forces a version bump was WRONG.** D307 shipped a new parking op AND a
+  new prompt value at no cost — the test is *"can an older deploy author this byte string"*, not
+  *"did a field change"*.
+- ⚠️ **A justification written into a doc block was measured false.** The marker's turn stamp was
+  justified as protection against Glimmora's "Shattering Crystal" leaving a live, lethally-damaged
+  body. Wrong twice over: it denies the *Prize* and the KO happens for real, and §11 is asked BEFORE
+  the stamp so a refused effect leaves no marker. The stamp is kept for its real, cheap reason —
+  expiry by arithmetic, no clear site to forget — and the doc now says the motivating board does not
+  currently exist.
+
+### A latent defect the tests caught, and one debt named
+
+Two of the three new anchors spelled the possessive as a bare `'` where every neighbour spells
+`['’]` (D136/D137). The catalog prints both, so the narrow form would have silently un-simulated
+three printings onto the loud path. **Widened rather than pinned**, and the pin inverted into a
+program equality (D316/D317's pattern).
+
+⚠️ **`knockOutDefender` has no row in `preventBlock.test.ts`'s classification sweep** — the
+demonstrator lives in a file-local pool, deliberately, because putting the sentence in `FIXTURE_POOL`
+reddens a 2,273-line suite that is not this slice's. The §11 behaviour IS driven on a real board;
+only that sweep's coverage is missing.
+
+### 🛑 The rule this slice earned
+
+**When you build the first thing that can produce a state some other mechanism has only ever seen
+arrive one way, go find the mechanisms that assumed it.** Name the invariant your op breaks in one
+sentence, then grep for the vocabulary it is phrased in (`byAttack`, `lethal`, `by damage`). Neither
+reader here would have gone red, and neither is reachable from the new op's file.
+
+**8 mutants / 8 killed / 0 GAPs**; corpus 1491 → **1499**. Census: raw 405 → **408** / 1352 →
+**1356**; `BUILT.attack` 1399 → **1403**; residue 579 → **575**; `unbuiltAttack` 333 → **329**.
+`splitHead` **13**, `compoundHead` **18**, registry **16** re-derived live and unmoved. `bun run
+check` **416 files / 8,804 tests, exit 0** (+1 file / +28 cases).
+
 ## D413 — THE ADDITIVE MULTI-COIN FOLD: a refusal COLLECTED, not re-litigated (engine 0.317.0, `MATCH_RECORD_VERSION` **STAYS 26**)
 
 *"Flip 2 coins. This attack does {30|50} more damage for each heads."* — **2 sentences / 5 printings**

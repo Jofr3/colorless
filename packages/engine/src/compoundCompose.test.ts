@@ -445,14 +445,14 @@ describe("§3 — the parenthesis measurement, which is why this is a REGEX", ()
 });
 
 describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallback", () => {
-  it("🛑 147 sentences / 420 printings are multi-clause AND claimed whole — all refused", () => {
+  it("🛑 148 sentences / 421 printings are multi-clause AND claimed whole — all refused", () => {
     // 🛑 THE GUARD THAT MAKES THIS SAFE TO SHIP. Without `claimedByAnyReader(text)`
     // in front of the split, every one of these would be re-answered by composition
     // instead of by the whole-sentence anchor its author wrote — the same program
     // in the lucky cases and a different one in the rest, with nothing able to tell
     // which. `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`, `DEFENDER_POISON_CANT_RETREAT`,
     // `COUNTER_PUT_ANY_THEN_SELF_LOCK` and `SELF_DISCARD_ALL_THEN_REDUCTION` are
-    // four of the 147. Delete the refusal and this rung goes red 147 times.
+    // four of the 148. Delete the refusal and this rung goes red 148 times.
     // 🆕🆕 D413 — 145 / 415 → **147 / 420**, and the step is a change of CLAIM rather
     // than a change of CORPUS, which is why the 271 / 613 pair below STANDS STILL
     // while this one moves. Both of the ADDITIVE MULTI-COIN FOLD's sentences —
@@ -463,13 +463,30 @@ describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallb
     // `deriveAttackCoinFlip` now claims each of them WHOLE, so they cross out of the
     // multi-clause remainder and INTO the shadow-refusal population this rung counts
     // — and the loop below now owes a null on 147 sentences rather than 145.
+    // 🆕🆕 D414 — 147 / 420 → **148 / 421**, a change of CLAIM and not of CORPUS
+    // again, so the 271 / 613 pair below STANDS STILL a second slice running.
+    // 🛑 AND ONLY **ONE** OF THE SLICE'S THREE SENTENCES LANDS HERE, WHICH IS THE
+    // WHOLE POINT OF COUNTING CLAUSES RATHER THAN SENTENCES. The KO-without-damage
+    // subset is +3 sentences / +4 printings through the RAW summand, but this rung
+    // counts only the multi-clause members of that step: *"If your opponent's Active
+    // Pokémon is a Basic Pokémon, it is Knocked Out."* (2 printings) breaks on a
+    // COMMA and *"Both Active Pokémon are Knocked Out."* (1) has no internal break at
+    // all, so both are ONE clause and were never in the 271 to begin with. Only
+    // *"This Pokémon does 100 damage to itself. Flip a coin. If heads, your
+    // opponent's Active Pokémon is Knocked Out."* (1 printing) is multi-clause —
+    // THREE clauses on two `BREAK`s — and it has always sat in the 271; what D414
+    // changed is that `deriveAttackEffect` now claims it WHOLE, so it crosses out of
+    // the multi-clause remainder and INTO the shadow-refusal population. Hence
+    // +1 / +1 here against +3 / +4 on the census: 148 = 147 + 1, 421 = 420 + 1, and
+    // the other +2 sentences / +3 printings are invisible to this rung by
+    // construction. The loop below now owes a null on 148 sentences rather than 147.
     const corpus = legalAttackCorpus();
     const multiClause = corpus.filter(([, s]) => s.split(BREAK).length >= 2);
     expect(multiClause).toHaveLength(271);
     expect(units(multiClause)).toBe(613);
     const claimedWhole = multiClause.filter(([, s]) => claimedByAny(s));
-    expect(claimedWhole).toHaveLength(147);
-    expect(units(claimedWhole)).toBe(420);
+    expect(claimedWhole).toHaveLength(148);
+    expect(units(claimedWhole)).toBe(421);
     for (const [, s] of claimedWhole) expect(splitAttackTrailingClause(s), s).toBeNull();
   });
 
@@ -929,7 +946,7 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.317.0");
+    expect(engineVersion).toBe("0.318.0");
   });
 });
 

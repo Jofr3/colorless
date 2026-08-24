@@ -5518,6 +5518,44 @@ export type EffectOp =
       field, so no persisted union gains a member; and the Knock Out is rendered
       through the EXISTING `KNOCKED_OUT` event rather than a new one. */
   | { op: "knockOutSelf" }
+  /** 🆕🆕 **D414 — §8.1, THE KNOCK OUT THAT REACHES THE OTHER SIDE OF THE TABLE.**
+      *"If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out."*
+      (2 printings), *"Both Active Pokémon are Knocked Out."* (1) and *"This Pokémon
+      does 100 damage to itself. Flip a coin. If heads, your opponent's Active
+      Pokémon is Knocked Out."* (1) — **3 sentences / 4 legal printings**.
+
+      🛑 **FIELD-FREE, AND *"BOTH ACTIVE POKÉMON"* IS A COMPOSITION RATHER THAN A
+      `target`.** The obvious shape is `{ op: "knockOut"; target: "defender" |
+      "both" }`; the printed both-sides sentence is instead
+      `[{ op: "knockOutDefender" }, { op: "knockOutSelf" }]` — two shipped
+      field-free ops in printed order. That is not tidiness: **a REQUIRED field on
+      an op is the one thing that costs a `MATCH_RECORD_VERSION` bump if it is ever
+      renamed or widened** (D309, D335, D352, D359 each paid it, and
+      `damageChosen.source` is the recorded precedent at 2 → 3). A field this
+      family does not need is a bump this family has not yet had to spend.
+
+      ⚠️ **AND THE COMPOSITION IS THE PRINTED READING, NOT A DODGE.** §8.1 resolves
+      a batch in ONE instant, and `collectKnockOuts` collects both bodies before it
+      applies either — so the two ops mark, and the sweep decides. The prize order
+      that falls out (attacker's ahead of the defender's) is §8.1's own tie-break,
+      taken for free rather than re-implemented.
+
+      🛑 **THE LETHALITY IS MARKED AS *NOT DAMAGE*, AND THAT IS THE HALF OF THIS OP
+      THAT IS NOT `knockOutSelf` MIRRORED.** Until D414 a body could only become
+      lethal on the DEFENDER's board during an attack by being damaged, and TWO
+      shipped mechanisms are built on that premise being true — `flow.ts`'s
+      `byAttack` mark (read by 4 built sentences / 6 printings of *"Knocked Out by
+      damage from an attack"*) and Vengeful Punch's recoil, whose own comment
+      discharges its printed *"by damage"* **by placement rather than by a flag**.
+      This op falsifies that premise, so it stamps `koByEffect:<turn>` into
+      `markers` and both sites read it. See `flow.ts`.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP** (still 26): the op never parks and
+      carries no field, and a new `markers` STRING is a widening — `markers` is
+      already `string[]` on `InPlayPokemon`, and no v26 deploy can author this
+      value (D125's condition, D335's test: *does the old byte string still mean
+      what it meant*). */
+  | { op: "knockOutDefender" }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -9965,6 +10003,33 @@ const REVEAL_BOTTOM_SUPPORTER =
 // string's "this" is lowercase and mid-sentence, which is the same second guard
 // the rest of this file leans on.
 const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
+
+// 🆕🆕 D414 — §8.1, THE KNOCK OUT THAT REACHES THE OTHER SIDE OF THE TABLE.
+// Three sentences / four legal printings, all resolving to the field-free
+// `knockOutDefender` (see its doc block for why "both Actives" is a COMPOSITION of
+// two shipped ops rather than a `target` field).
+//
+// ⚠️ THE FAMILY IS SEVEN SENTENCES / THIRTEEN PRINTINGS AND THIS SLICE TAKES
+// FOUR OF THEM ON PURPOSE. The other three all need a PARK — "Knock Out 1 of your
+// opponent's ..." is a choice over a filtered candidate set — and the park is a
+// separate build with its own candidate funnel. What is taken here is exactly the
+// subset whose targets are NAMED by the printed text, so no board asks anybody
+// anything. Measured, not guessed: the split is recorded in the resume point.
+// ⚠️ THE POSSESSIVE IS `['’]`, WHICH THESE TWO ANCHORS DID NOT HAVE WHEN THEY WERE
+// FIRST WRITTEN. D136/D137's rule: the catalog prints BOTH the ASCII apostrophe and
+// U+2019, so an anchor spelling only one silently un-builds its printings the day a
+// punctuation-normalising re-ingest runs — and it fails SILENTLY, because the
+// sentence simply stops resolving and falls to the loud skip path. Every neighbouring
+// possessive anchor in this file carries the class; these were caught by the suite
+// author noticing the asymmetry, not by a rung, which is exactly why the widened
+// spelling is now asserted from both sides rather than assumed.
+// (`BOTH_ACTIVES_KO` prints no possessive at all, so it needs nothing.)
+const OPPONENT_ACTIVE_BASIC_KO =
+  /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\.$/;
+const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
+const SELF_DAMAGE_THEN_COIN_KO =
+  /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
+
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
 // [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
 // (censused against the local D1 2026-08-01), split 7 opponent-side (Chi-Yu ex
@@ -15442,6 +15507,56 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_CANT_RETREAT.exec(effect);
   if (match !== null) {
     return [{ op: "preventRetreat", target: "self" }];
+  }
+
+  // 6a. 🆕🆕 D414 — "If your opponent's Active Pokémon is a Basic Pokémon, it is
+  //     Knocked Out." (2 printings). ZERO new vocabulary beyond the op:
+  //     `conditionGate` and `opponentActiveIsBasic` both ship, and `effects.ts`
+  //     already writes this exact program SHAPE by hand for a stage gate.
+  match = OPPONENT_ACTIVE_BASIC_KO.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveIsBasic" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      },
+    ];
+  }
+
+  // 6b. 🆕🆕 D414 — "Both Active Pokémon are Knocked Out." (1 printing).
+  //     🛑 TWO SHIPPED FIELD-FREE OPS IN PRINTED ORDER, NOT A `target` FIELD.
+  //     §8.1 resolves a batch in ONE instant and `collectKnockOuts` collects both
+  //     bodies before applying either, so the composition is the printed reading
+  //     rather than a dodge — and the prize order it produces (the attacker's
+  //     ahead of the defender's) is §8.1's own tie-break, taken for free.
+  match = BOTH_ACTIVES_KO.exec(effect);
+  if (match !== null) {
+    return [{ op: "knockOutDefender" }, { op: "knockOutSelf" }];
+  }
+
+  // 6c. 🆕🆕 D414 — "This Pokémon does {N} damage to itself. Flip a coin. If heads,
+  //     your opponent's Active Pokémon is Knocked Out." (1 printing). Three shipped
+  //     pieces in printed order: `damageSelf`, `coinFlipGate`, and the new op.
+  //     ⚠️ THE SELF-DAMAGE IS UNCONDITIONAL AND COMES FIRST — it is not inside the
+  //     gate, which is what the printed sentence order says: the holder pays
+  //     whether or not the coin comes up heads.
+  match = SELF_DAMAGE_THEN_COIN_KO.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // `amount >= 1` is the guard every self-damage arm carries — a printed 0 is
+    // not a cost and would derive a silent no-op.
+    if (amount >= 1) {
+      return [
+        { op: "damageSelf", amount },
+        {
+          op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "knockOutDefender" }],
+        },
+      ];
+    }
   }
 
   // 5b-i. §7.1/§7.2 (D283) — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, in its three

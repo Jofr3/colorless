@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.317.0";',
+    find: 'export const engineVersion = "0.318.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10579,8 +10579,16 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "🛑 THE CAUSE NARROWING MADE VACUOUS: every Knock Out is marked `byAttack`. GREEN on every board where the KO came from an attack, so the only thing that can catch it is a Pokemon that died in the CHECKUP - and a revenge attack then scores +60 to +100 off a poison",
     file: "packages/engine/src/flow.ts",
-    find: "  const byAttack = attackerSeat !== undefined;",
-    replace: "  const byAttack = true;",
+    // ⚠️ RE-POINTED AT D414, in the SAME COMMIT that moved the line. `byAttack` went
+    //    from a per-BATCH constant to a per-BODY predicate (`byAttackFor`), so this
+    //    row's `find` matched ZERO. **THE DEFECT IS UNCHANGED** — "every Knock Out in
+    //    an attack's epilogue counts as by-attack" — and it is now spelled by making
+    //    the predicate answer TRUE unconditionally rather than by assigning a
+    //    constant. D414's own C1 is the same edit at the same line for a DIFFERENT
+    //    reason (its concern is the non-damage KO the predicate exists to exclude);
+    //    this one is still D326's, and its killer is still D326's suite.
+    find: "    if (attackerSeat === undefined) return false;",
+    replace: "    if (attackerSeat === undefined) return true;",
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -10588,8 +10596,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D326",
     what: "the cause narrowing inverted into a constant FALSE - the six revenge attacks never get their bonus at all. The mirror of the row above, and the pair is the point: a constant in either direction passes exactly the boards the other one fails",
     file: "packages/engine/src/flow.ts",
-    find: "  const byAttack = attackerSeat !== undefined;",
-    replace: "  const byAttack = attackerSeat === undefined;",
+    // ⚠️ RE-POINTED AT D414, in the SAME COMMIT that moved the line — see the row
+    //    above. The defect is unchanged (the discriminant INVERTED, so a Checkup KO
+    //    is marked by-attack and an attack's is not); only its spelling follows the
+    //    predicate's new shape.
+    find: "    if (attackerSeat === undefined) return false;\n    const side = state.players[ref.seat];",
+    replace: "    if (attackerSeat !== undefined) return false;\n    const side = state.players[ref.seat];",
     expectKilledBy: ["packages/engine/src/lastKoOwnerMark.test.ts"],
   },
   {
@@ -17570,5 +17582,84 @@ export const MUTANTS: Mutant[] = [
     find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1\n      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }",
     replace: "    return flips <= MAX_PRINTED_FLIPS && per >= 1\n      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }",
     expectKilledBy: ["packages/engine/src/multiCoinFlip.test.ts"],
+  },
+
+  // ── D414 · the Knock Out that reaches the other side of the table ──────────
+  // 🛑 C1–C4 ARE THE SLICE, AND NONE OF THEM BREAKS THE KNOCK OUT. Every one
+  //    leaves the right body doomed, the right Prize taken and the right event
+  //    fired — what they break is the engine's account of HOW the body died, which
+  //    four built sentences and Vengeful Punch read. C5–C8 are the ordinary
+  //    discipline a new op and two new anchors owe.
+  {
+    id: "D414-ko-mark-goes-back-to-per-batch",
+    decision: "D414",
+    what: "🛑 C1 — **HAZARD ONE, RESTORED**: `byAttackFor` answers `true` for every ref, which is the line `flow.ts` really carried until D414 (`attackerSeat !== undefined` — *\"this batch is an attack's epilogue\"*). That reading was a faithful rendering of the printed *\"Knocked Out **by damage** from an attack\"* ONLY while an attack could not doom a body without damaging it. **`knockOutDefender` is the first thing that can**, so the mutant marks a non-damage Knock Out as `byAttack: true` and **falsely satisfies all four built sentences / six legal printings** that read the mark. ⚠️ Nothing about the Knock Out itself goes wrong — the Prize, the discard, the event and the promotion are all correct — so only a rung that reads the MARK can see it",
+    file: "packages/engine/src/flow.ts",
+    find: "    return body === null || body === undefined ? true : !lethalByEffect(body, state.turn);",
+    replace: "    return true;",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-vengeful-punch-pays-on-an-effect-ko",
+    decision: "D414",
+    what: "🛑 C2 — **HAZARD TWO, RESTORED**: `koRecoilOf` drops its `!lethalByEffect(...)` narrowing and pays Vengeful Punch's recoil on a body that took NO damage. The printed condition is *\"if this Pokémon is Knocked Out **by damage** from an opponent's attack\"*, and `flow.ts`'s own comment discharges that clause **BY PLACEMENT rather than by a flag** — *\"a body can only be lethal on the defender's board here because this attack put it there\"*. **D414 is what makes that sentence false**, and this row is the proof the repair holds. ⚠️ It is the same defect as C1 at a different reader, which is why both exist: a fix applied at one site only would leave the other paying",
+    file: "packages/engine/src/flow.ts",
+    find: "    if (uid !== undefined && doomed.has(uid) && !lethalByEffect(body, state.turn)) {",
+    replace: "    if (uid !== undefined && doomed.has(uid)) {",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-op-stamps-no-marker",
+    decision: "D414",
+    what: "🛑 C3 — THE OP MARKS THE BODY LETHAL AND SAYS NOTHING ABOUT HOW. The `markers` write is dropped, so the op becomes `knockOutSelf` mirrored — which is exactly the slice as it would have been built by someone reading only `knockOutSelf`'s doc block. **BOTH HAZARDS FIRE AT ONCE** and the Knock Out still looks perfect: right body, right Prize, right event, right promotion. ⚠️ This is the row that says the marker is the SLICE rather than a detail of it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    markers: active.markers.includes(marker) ? active.markers : [...active.markers, marker],",
+    replace: "    markers: active.markers,",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-marker-drops-its-turn",
+    decision: "D414",
+    what: "🛑 C4 — THE MARKER STOPS CARRYING THE TURN, so it never expires. **THE EXPIRY IS THE ONLY THING KEEPING IT HONEST**: a body that survives its marking (nothing in this catalog can currently arrange that — measured, and said so in the doc block rather than assumed) would suppress `byAttack` on a LATER, genuine, damage Knock Out. ⚠️ The mutant is INVISIBLE on every board where the marked body is discarded in the same batch, which is every printed board today; the guard is driven on surgically-placed markers at both readers because the printed population cannot reach it",
+    file: "packages/engine/src/types.ts",
+    find: "  return `koByEffect:${turn}`;",
+    replace: "  return \"koByEffect\";",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-defender-ko-skips-the-section-11-gate",
+    decision: "D414",
+    what: "🛑 C5 — THE §11 CHECK IS DROPPED. A *\"prevent all effects of attacks done to this Pokémon\"* block must refuse this op, exactly as it refuses `preventRetreat` and `preventAttack` — it is an effect of an attack done TO THE DEFENDING POKÉMON, which is the whole of what those blocks are for. ⚠️ **`knockOutSelf` DOES NOT ASK, AND THE DIFFERENCE IS THE SEAT RATHER THAN AN INCONSISTENCY** — it kills its own host, which no block on the opponent's body has any claim over. An author mirroring `knockOutSelf` line for line drops this check and ships a Knock Out no block can stop",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const marker = koByEffectMarker(state.turn);",
+    replace: "  const marker = koByEffectMarker(state.turn);",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-both-actives-loses-the-self-half",
+    decision: "D414",
+    what: "🛑 C6 — *\"Both Active Pokémon are Knocked Out.\"* DROPS `knockOutSelf` and dooms only the opponent, turning a symmetric printed sentence into a one-sided one. **THIS IS THE COST OF EXPRESSING \"BOTH\" AS A COMPOSITION** rather than as a `target` field, and it is the price worth paying (a field is what costs a `MATCH_RECORD_VERSION` bump if it is ever renamed) — but the composition has to be pinned as an ORDERED PAIR, because half of it still resolves, still Knocks Out, and still awards a Prize",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"knockOutDefender\" }, { op: \"knockOutSelf\" }];",
+    replace: "    return [{ op: \"knockOutDefender\" }];",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-basic-gate-becomes-unconditional",
+    decision: "D414",
+    what: "🛑 C7 — THE GATE IS DROPPED: *\"If your opponent's Active Pokémon **is a Basic Pokémon**, it is Knocked Out.\"* becomes an unconditional Knock Out, which is a one-word deletion from the printed sentence and the strongest attack in the game. ⚠️ **IT IS RIGHT ON EVERY BOARD WHERE THE DEFENDER HAPPENS TO BE A BASIC** — which is most boards a fixture builds, and both of this suite's KO boards — so only the Stage 1 / Stage 2 negative controls can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"conditionGate\",\n        cond: { kind: \"opponentActiveIsBasic\" },\n        then: [{ op: \"knockOutDefender\" }],\n      },",
+    replace: "      { op: \"knockOutDefender\" },",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D414-basic-ko-anchor-loses-its-apostrophe-class",
+    decision: "D414",
+    what: "🛑 C8 — D202's FAMILY, ON THE ANCHOR THAT ACTUALLY SHIPPED IT WRONG. The possessive narrows to the ASCII apostrophe alone, which is **exactly how this anchor was first written** — the asymmetry was caught by a suite author noticing it disagreed with every neighbouring anchor, not by any rung. The catalog prints both spellings, so the narrow form silently un-simulates its printings onto the loud path where no census counts them",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\\.$/;",
+    replace: "  /^If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out\\.$/;",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
   },
 ];

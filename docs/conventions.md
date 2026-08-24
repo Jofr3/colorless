@@ -106,6 +106,21 @@ the trend improved.
   sweep that already has the machinery: D412's §10 claim belonged in the existing three-route clear
   sweep anyway, because **one route passing says nothing about the other two**.
 
+- 🛑 **WHEN YOU BUILD THE FIRST THING THAT CAN PRODUCE A STATE OTHER CODE HAS ONLY EVER SEEN ARRIVE
+  ONE WAY, GO FIND THE CODE THAT ASSUMED IT (D414).** A new op made a body lethal on the defender's
+  board *without damaging it*. Two shipped readers had quietly encoded *"lethal here ⇒ damaged by
+  this attack"* — one as a per-BATCH constant feeding six printings of *"Knocked Out by damage from
+  an attack"*, one **discharged by placement and stated as such in its own comment** (Vengeful
+  Punch). **Neither would have gone red, and neither is reachable from the new op's file.**
+  ⚠️ **THE SEARCH IS CHEAP AND IT IS THE WHOLE SLICE**: name the invariant your change breaks in one
+  sentence, then `grep` for the vocabulary that invariant is phrased in. Minutes, here.
+- ⚠️ **A DOC BLOCK'S JUSTIFICATION IS A CLAIM AND ROTS LIKE A COUNT — INCLUDING THE ONE YOU JUST
+  WROTE.** D414 justified a mechanism with a board that turns out not to exist (a card that denies
+  the *Prize*, not the Knock Out). The mechanism was cheap and worth keeping; the reason was invented.
+  It now says the motivating board does not exist. **A mechanism kept for a stated cheap reason is
+  fine; one kept for a reason that turns out to be false is how this repo loses track of what is
+  load-bearing.**
+
 ## Counting the catalog
 
 - **Every count carries a POPULATION and a LEGALITY.** Six-set local (978),

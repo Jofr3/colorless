@@ -34,6 +34,7 @@ import {
   presentStatuses,
   withActive,
   withSide,
+  koByEffectMarker,
 } from "./types";
 
 // The staged turn tail (types.ts: PendingStage) and everything that runs
@@ -213,14 +214,28 @@ function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid
     Helmet sv01-193 — does NOT print "is in the Active Spot": a benched holder
     finished off by a snipe retaliates. That is the read-site difference between
     the two Tools and it is the reason for the second field. */
+/** Is this body's lethality an EFFECT's doing rather than damage's, right now? */
+function lethalByEffect(body: InPlayPokemon, turn: number): boolean {
+  return body.markers.includes(koByEffectMarker(turn));
+}
+
 function koRecoilOf(state: GameState, seat: Seat): number {
+  // 🆕🆕 D414 — the doomed set is narrowed to bodies made lethal BY DAMAGE. The
+  // printed condition is "if this Pokémon is Knocked Out by damage from an
+  // opponent's attack", and until D414 the `by damage` half was true by
+  // construction at this line; `knockOutDefender` is the first thing that can put
+  // a body here without damaging it, and it must not pay this recoil.
   const doomed = new Set(lethalRefs(state, [seat]).map((ref) => ref.uid));
   if (doomed.size === 0) return 0;
   const side = state.players[seat];
   let total = 0;
   for (const body of side.active === null ? side.bench : [side.active, ...side.bench]) {
     const uid = topUid(body);
-    if (uid !== undefined && doomed.has(uid)) total += passivesOf(state, body).damageAttackerOnKo;
+    // 🆕🆕 D414 — `&& !lethalByEffect(...)` is the printed *"by damage"*, which
+    // until D414 was true by construction at this line and is now a question.
+    if (uid !== undefined && doomed.has(uid) && !lethalByEffect(body, state.turn)) {
+      total += passivesOf(state, body).damageAttackerOnKo;
+    }
   }
   return total;
 }
@@ -639,7 +654,23 @@ function collectKnockOutPass(
   // sweep, so it is already exactly "this batch is an attack's epilogue" — the
   // same discriminant D164 reads for Munkidori ex's "by an attack from your
   // opponent's Pokémon", inherited rather than re-derived.
-  const byAttack = attackerSeat !== undefined;
+  // 🆕🆕 D414 — PER-BODY, NOT PER-BATCH, AND THE OLD LINE WAS RIGHT ONLY BY
+  // ACCIDENT. It read `attackerSeat !== undefined` — "this batch is an attack's
+  // epilogue" — which was a faithful reading of *"by damage from an attack"* only
+  // while an attack could not doom a body WITHOUT damaging it. `knockOutDefender`
+  // can, so the batch-level answer would mark a non-damage Knock Out as
+  // `byAttack: true` and satisfy all six printings of the sentence it feeds.
+  // ⚠️ THE OTHER TWO CALLERS ARE UNCHANGED BY CONSTRUCTION: the Checkup and the
+  // mid-turn sweep pass no `attackerSeat`, so they answer FALSE either way.
+  const byAttackFor = (ref: { seat: Seat; uid: string }): boolean => {
+    if (attackerSeat === undefined) return false;
+    const side = state.players[ref.seat];
+    const body = [side.active, ...side.bench].find((p) => p !== null && topUid(p) === ref.uid);
+    // A ref whose body cannot be found answers TRUE — the pre-D414 reading — so a
+    // lookup miss degrades to the behaviour six shipped printings already have
+    // rather than silently withholding a mark they are owed.
+    return body === null || body === undefined ? true : !lethalByEffect(body, state.turn);
+  };
   const plan = planPrizes(state, refs, attackerSeat, attackerUid);
   const startState = plan.state;
 
@@ -651,7 +682,18 @@ function collectKnockOutPass(
   const koTriggerStages: PendingStage[] = [];
   const promoteStages: PendingStage[] = [];
   for (const entry of plan.entries) {
-    const ko = knockOut(next, entry.ref.seat, entry.ref.uid, otherSeat(entry.ref.seat), events, byAttack);
+    // 🆕🆕 D414 — asked of `state`, the PRE-BATCH board, and not of `next`: by the
+    // time this loop reaches a later ref the earlier Knock Outs have already left
+    // play, so the body carrying the marker may be gone. The question is about how
+    // this body BECAME lethal, which the pre-batch state is the only witness to.
+    const ko = knockOut(
+      next,
+      entry.ref.seat,
+      entry.ref.uid,
+      otherSeat(entry.ref.seat),
+      events,
+      byAttackFor(entry.ref),
+    );
     next = ko.state;
     for (const guardEvent of entry.guardEvents) events.push(guardEvent);
     for (const stage of ko.stages) {
