@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.312.0";',
+    find: 'export const engineVersion = "0.313.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -17173,5 +17173,93 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/boardWideEnergyScaling.test.ts",
       "packages/engine/src/selfEnergyScaling.test.ts",
     ],
+  },
+  {
+    id: "D408-the-defect-restored",
+    decision: "D408",
+    what: "\ud83d\uded1 C1 \u2014 **THE DEFECT ITSELF, PUT BACK**: the capture loses its `[A-Z]` and `SELF_CANT_USE_ATTACK`'s lazy `(.+?)` swallows the BARE PLURAL again, so *\"During your next turn, this Pok\u00e9mon can't use attacks.\"* (4 legal printings) derives `preventAttackUse { attack: \"attacks\" }` \u2014 a lock keyed on an attack no card is named, which `resolveAttackIndex` answers -1 for and which installs NOTHING. \u26a0\ufe0f **THE SENTENCE STILL RESOLVES, SO EVERY CENSUS FIGURE IN THIS REPO IS UNCHANGED**: `BUILT.attack` stays 1376, both reader instruments stay put, the unbuilt column stays 356. This row is the reason the suite exists \u2014 it is killed by a PROGRAM comparison and by a BOARD, and by nothing else in 1,463 rows",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_CANT_USE_ATTACK = /^During your next turn, this Pok\u00e9mon can['\u2019]t use ([A-Z].+?)\\.$/;",
+    replace: "const SELF_CANT_USE_ATTACK = /^During your next turn, this Pok\u00e9mon can['\u2019]t use (.+?)\\.$/;",
+    expectKilledBy: ["packages/engine/src/bareAttackLock.test.ts"],
+  },
+  {
+    id: "D408-plural-anchor-goes-singular",
+    decision: "D408",
+    what: "\u26a0\ufe0f C2 \u2014 the bare-plural anchor is transcribed as `use attack.` rather than `use attacks.`, which is the slip a sentence whose whole content is ONE letter invites. The printed string then matches nothing: arm 24a refuses it on the capital, this arm refuses it on the noun, and four legal printings go from wrong to UNREAD. Census-visible in the honest direction (`BUILT.attack` drops 4), which is exactly the direction the pre-D408 defect was NOT",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pok\u00e9mon can['\u2019]t use attacks\\.$/;",
+    replace: "const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pok\u00e9mon can['\u2019]t use attack\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/bareAttackLock.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D408-plural-arm-tests-the-neighbours-anchor",
+    decision: "D408",
+    what: "\u26a0\ufe0f C3 \u2014 **THE NEIGHBOURING ARM'S REAL CONDITION, COPIED VERBATIM**: this arm tests `SELF_CANT_ATTACK_NEXT_TURN` instead of its own anchor. That anchor is 58 printings and is already matched by arm 24 twelve lines up, so the arm becomes DEAD CODE and the bare plural falls through arm 24a (refused by the capital) to nothing. The failure reads like \"the sentence was never built\", which is the state D408 found it in one letter away from",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (SELF_CANT_USE_ATTACKS.test(effect)) {",
+    replace: "  if (SELF_CANT_ATTACK_NEXT_TURN.test(effect)) {",
+    expectKilledBy: [
+      "packages/engine/src/bareAttackLock.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D408-defender-verb-bare-only",
+    decision: "D408",
+    what: "\u26a0\ufe0f C4 \u2014 the alternation collapses to the verb the slice met FIRST (`can't attack`), which is what a build that read D148's compound and stopped looking would ship. The bare-plural defender spelling is the LARGER of the two at 4 legal printings against 3, so \"I built the family\" would be true of the minority. Census-visible",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
+    replace: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t attack\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/bareAttackLock.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D408-defender-verb-plural-only",
+    decision: "D408",
+    what: "\u26a0\ufe0f C5 \u2014 C4's MIRROR: the alternation keeps only `use attacks`, so the spelling D148's two compounds already carry as their second clause is the one left unread. The pair is here because a single-verb build is wrong in TWO directions and each one leaves a different three or four printings dark \u2014 and because `defenderLock.test.ts`'s re-pointed warrant reads the bare form specifically",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
+    replace: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t use attacks\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/bareAttackLock.test.ts",
+      "packages/engine/src/defenderLock.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D408-defender-lock-loses-its-seat",
+    decision: "D408",
+    what: "\ud83d\uded1 C6 \u2014 **D143's OWN ARM, COPIED ONTO THE OPPONENT-SIDE SENTENCE**: `target` is dropped, so the printed *\"your opponent's next turn\"* installs on the INSTALLER's own body at `state.turn + 2`. The attack still resolves, the damage still lands, an `ATTACK_LOCKED` row is still filed \u2014 on the wrong seat, on the wrong turn, and the victim plays freely through a turn it is printed to be barred from. \u26a0\ufe0f SILENT IN EVERY CENSUS FIGURE: the sentence resolves either way",
+    file: "packages/engine/src/effects.ts",
+    find: '    return [{ op: "preventAttack", target: "defender" }];',
+    replace: '    return [{ op: "preventAttack" }];',
+    expectKilledBy: [
+      "packages/engine/src/bareAttackLock.test.ts",
+      "packages/engine/src/defenderLock.test.ts",
+    ],
+  },
+  {
+    id: "D408-defender-anchor-unanchored",
+    decision: "D408",
+    what: "\u26a0\ufe0f C7 \u2014 the leading `^` is dropped, so the pattern becomes a SUFFIX match and claims any compound ending in this clause. That is the family's standing hazard read from the other end: D148's own compound (`Discard an Energy from this Pok\u00e9mon. \u2026`) then matches BOTH anchors and the Energy cost is silently dropped. \u26a0\ufe0f SILENT IN EVERY CENSUS FIGURE \u2014 arm order keeps the compound's own reading first, so the corpus resolves identically and only an anchoring case can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
+    replace: "  /During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
+    expectKilledBy: ["packages/engine/src/bareAttackLock.test.ts"],
+  },
+  {
+    id: "D408-defender-anchor-drops-the-curly-class",
+    decision: "D408",
+    what: "\u26a0\ufe0f C8 \u2014 both `['\u2019]` classes become bare straight apostrophes (D136/D137's standing hazard, and this sentence carries the asymmetry D137 found two whole tables missing: a POSSESSIVE and a CONTRACTION on one string). \u26a0\ufe0f SILENT IN EVERY CENSUS FIGURE and on every board \u2014 the pool contains no U+2019 at all, so this survives until a punctuation-normalising re-ingest un-simulates 7 printings at once. Only the fold case can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
+    replace: "  /^During your opponent's next turn, the Defending Pok\u00e9mon can't (?:attack|use attacks)\\.$/;",
+    expectKilledBy: ["packages/engine/src/bareAttackLock.test.ts"],
   },
 ];
