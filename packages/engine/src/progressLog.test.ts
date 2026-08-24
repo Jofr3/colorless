@@ -513,9 +513,15 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // THE clearest measurement of that yet." — re-emitted under its own archive heading,
   // and the SEAM was re-read afterwards rather than assumed, with both headings confirmed
   // present and in order.
-  const ARCHIVES = 77;
+  // 🆕🆕 D408 — 77 -> **78**, RAISED DELIBERATELY AND IN THE SAME COMMIT THAT DEMOTED
+  //    D407's resume point, which is the UP branch this guard's own message asks to be
+  //    told about. D407's body was captured BY INDEX before the rewrite (272 lines) and
+  //    re-emitted under its own archive heading, because a range-replace up to the FIRST
+  //    `### Prior resume point (` drops the demoted BODY while this heading count stays
+  //    green (D372 paid exactly that).
+  const ARCHIVES = 78;
 
-  it("the page still holds all 77 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 78 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

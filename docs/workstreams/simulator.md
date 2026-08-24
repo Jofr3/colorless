@@ -10513,6 +10513,15 @@ INCOMING-DAMAGE-REDUCTION neighbourhood above**.
 
 ## D148 — the OPPONENT-SIDE ATTACK LOCK: `Discard an Energy from this Pokémon. During your opponent's next turn, the Defending Pokémon can't attack.` + `If the Defending Pokémon is a Basic Pokémon, it can't attack during your opponent's next turn.` (engine 0.97.0, MATCH_RECORD_VERSION unchanged at 6)
 
+> 🛑 **CORRECTED AT D408 — THIS SECTION'S CENSUS WAS RIGHT ABOUT ITS POPULATION AND WRONG ABOUT THE
+> WIDER ONE.** D148 recorded in `effects.ts` that *"During your opponent's next turn, the Defending
+> Pokémon can't attack."* *"is printed NOWHERE in the pool as a standalone attack sentence"*, measured
+> against the local D1 (978 cards / 6 sets). The `legal_standard = 1` attack column prints it standalone
+> on **3** printings and its bare-plural twin *"…can't use attacks."* on **4**, and D408 reads both on
+> ONE alternation anchor. The table below is therefore a floor on the six-set pool, not a total.
+> **"There is none" is the one verdict a narrow population gets wrong in the direction nothing
+> re-checks** — see D408's section for the rule and for the guard that now holds it.
+
 Item 1 of D147's remainder list, and **the slice that answers a question D143
 wrote down and refused to guess**: whether `preventAttack` should carry a
 `target`. It should. What makes it worth a decision block is that D143's
@@ -25680,6 +25689,162 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 *"does N damage for each"* multiplies and drops the printed base, *"does N **more** damage for
 each"* adds to it.
 
+
+## D408 — THE BARE ATTACK LOCK ON BOTH SEATS, and a repair of a program that RESOLVED, was counted BUILT, and did NOTHING (engine 0.313.0, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+Three printed sentences, **11 legal printings**, and they are not three of a kind:
+
+| printings | sentence | state at `HEAD` before D408 |
+|---|---|---|
+| 3 | `During your opponent's next turn, the Defending Pokémon can't attack.` | **UNREAD** |
+| 4 | `During your opponent's next turn, the Defending Pokémon can't use attacks.` | **UNREAD** |
+| 4 | `During your next turn, this Pokémon can't use attacks.` | 🛑 **READ WRONGLY** |
+
+Both defender spellings land on ONE alternation anchor (`DEFENDER_CANT_ATTACK_NEXT_TURN`) and one arm
+returning D148's `preventAttack { target: "defender" }` byte for byte. The self-side plural gets its
+own anchor and its own arm returning D143's `preventAttack`. **ZERO new ops, fields, readers,
+`DamageCountSource`/`BoardCondition` members, registry rows, events, parks or error codes**, and no
+`attack.ts` / `interpreter.ts` / `types.ts` / `continuous.ts` / `turn.ts` / `redact.ts` / `registry.ts`
+diff at all.
+
+### 🛑🛑 THE FINDING — a census counts what RESOLVES, never what resolves CORRECTLY
+
+`SELF_CANT_USE_ATTACK` is `/^During your next turn, this Pokémon can['’]t use (.+?)\.$/`, written at
+D154 for *"…can't use {AttackName}."* — a capture over a PROPER NOUN. The legal attack column also
+prints the **bare plural** on the same skeleton, and the lazy capture swallowed the common noun:
+
+    "During your next turn, this Pokémon can't use attacks."
+      → { op: "preventAttackUse", attack: "attacks" }
+
+No card is named *"attacks"*. `resolveAttackIndex` does a `findIndex` over the holder's own printed
+attacks, answers `-1`, and `preventAttackUse` returns before it writes anything — **no event, no
+stamp, no refusal**. So for fifty-four decisions those four legal printings were:
+
+* counted BUILT by `BUILT.attack`;
+* counted BUILT by BOTH the nine-reader and eleven-reader instruments;
+* absent from the unbuilt attack column and from the whole-census residue;
+* and doing **nothing at all** on every board.
+
+**THAT IS THE WRONG-BUT-PLAUSIBLE PROGRAM `conventions.md` CALLS STRICTLY WORSE THAN AN UNBUILT ONE**
+(D190b, D199) — an unbuilt sentence fails LOUDLY. And it is the one class of defect no coverage
+instrument in this repo can find, because **every rung here counts what RESOLVES and none of them can
+tell that apart from what resolves CORRECTLY.** The repair moves NO figure in either direction.
+
+⇒ **THE GUARD FOR THIS CLASS IS A BOARD AND A PROGRAM COMPARISON, AND NOTHING ELSE.**
+`bareAttackLock.test.ts` was written first and MEASURED RED on the defective build: restoring `(.+?)`
+fails **7 of its 26 cases**, including §4's board, where the holder attacks freely on the turn its own
+printed sentence bars it from.
+
+### ⚠️ THE REFUSAL GOES IN THE PATTERN, AND THEN YOU CHECK THAT IT CAN STILL FIRE
+
+The capture is now `([A-Z].+?)`. That is not an ad-hoc blacklist of the one word the catalog happens
+to print today — it is this file's own device: *"No /i"* turns the capitalised `During` into the guard
+that keeps thirteen lowercase *"you can't use…"* Ability limiters off that path, and an attack name is
+a PROPER NOUN by the same reading. All twelve names the legal column prints in this sentence are
+title-cased (26 printings), as are all six fielded in `perAttackLock.test.ts`; `[A-Z]` refuses the
+whole class of COMMON nouns at once.
+
+🛑 **AND THE NEW ARM SITS *BELOW* THE CAPTURE ARM, DELIBERATELY.** Placed above, it would have
+repaired every board by POSITION and left `SELF_CANT_USE_ATTACK` still wrong in isolation — and it
+would have made the `[A-Z]` refusal **unreachable**, which is exactly the *"guard that cannot fire"*
+that arm's own doc block records D154 measuring and deleting. Below, the refusal is what routes the
+sentence to the new arm: restore `(.+?)` and the arm goes dead and the suite reddens by name. **THE
+TWO PLACEMENTS ARE INDISTINGUISHABLE ON EVERY BOARD AND DIFFER ENTIRELY IN WHAT A MUTANT CAN REACH.**
+
+### 🛑 D148's "THERE IS NO BARE ANCHOR" WAS FALSE RATHER THAN STALE — and it was false by POPULATION
+
+`effects.ts` carried this, above `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`, from D148 until D408:
+
+> ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE — … *"During your
+> opponent's next turn, the Defending Pokémon can't attack."* is printed NOWHERE in the pool as a
+> standalone attack sentence; the compound is the only form it takes.
+
+`defenderLock.test.ts` asserted the consequence as a `toBeNull`. **Both were readings of the SIX-SET
+local D1 (978 cards / 6 sets) and both were right about it.** The `legal_standard = 1` attack column
+prints the bare sentence standalone on **3** printings and its bare-plural twin on **4**.
+
+⇒ **A POSITIVE CENSUS CLAIM AGES LOUDLY; A NEGATIVE ONE AGES SILENTLY.** *"There is none"* is the one
+verdict a narrow population gets wrong in the direction nothing re-checks — nothing in this repo
+re-derives an absence. **Re-derive every *"the pool prints no such sentence"* against the committed
+column before building on it.** D407 paid this on D196's `zone` and D408 paid it again on D148's
+anchor, two slices running.
+
+The correction is left as a **GUARD, not a comment** (D406's rule, second payment):
+`bareAttackLock.test.ts` §1 derives both counts off `legalAttackCorpus()`, and the sixty-decision
+`toBeNull` warrant was **RE-POINTED into a PROGRAM comparison** against the compound's SECOND op
+(D299's move) rather than deleted — a stronger claim than the null it replaced, because the bare arm
+and the compound write ONE field on ONE body and no board tells a drift between them apart.
+
+### ⚠️ ONE ALTERNATION ACROSS THE TABLE, TWO ANCHORS ON THE SELF SIDE — D120's precondition
+
+`DEFENDER_CANT_ATTACK_NEXT_TURN` is one pattern with `can['’]t (?:attack|use attacks)`, because
+**exactly one token varies** while the subject, the seat, the window, the anchors and the consequent
+are identical, and no printing in the column gives the two verbs different consequents. That is the
+OPPOSITE call to the one `DEFENDER_BASIC_CANT_ATTACK` makes one const up, and the difference is
+D120's precondition rather than a preference: there, two strings differ in the first clause, in
+whether there is a gate at all, in the subject's noun phrase and in where the duration sits.
+
+On the self side the same pair of verbs needs TWO anchors, and the asymmetry is load-bearing: a
+CAPTURING arm sits between the two spellings there, so the bare plural has to be REFUSED by that
+pattern rather than merely ordered around it.
+
+### ✅ BOTH HANDED-DOWN FALSIFIERS WERE PRICED BEFORE THEY WERE TESTED
+
+⑴ **The verb — one anchor or two?** Cost if it fired: a BRANCH (an explicit refusal in front of the
+capture) or four anchors instead of two. It fired **halfway** — the defender side is one anchor, the
+self side needed the refusal, and the refusal is a character class rather than a branch.
+
+⑵ **Is `target` reachable from a bare producer?** Cost if it fired: an interpreter change, moving the
+slice out of "deriver-only". It did **not** fire. `interpreter.ts`'s `preventAttack` opens with
+
+    const seat = op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat;
+
+and the stamp is `state.turn + (op.target === "defender" ? 1 : 2)` — the seat and the window both come
+from `ctx` and the op, never from the compound around it. **Read, not inherited** (D403's rule).
+
+### ⚠️ THREE NEIGHBOURS MEASURED AND LEFT OUT, ON TWO DIFFERENT KINDS OF REASON
+
+* **The coin-gated defender lock** — *"Flip a coin. If heads, during your opponent's next turn, the
+  Defending Pokémon can't attack."*, **1 legal printing**. OUT on its **WITNESS**, not its arm: the
+  arm is one regex over a `coinFlipGate` whose `then` is this slice's own program (heads is the
+  default face, so not even `onTails`). But `attackLock.test.ts`, `defenderLock.test.ts` and
+  `bareAttackLock.test.ts` are all deliberately **SEED-FREE** and say so in their own deck blocks — a
+  coin-gated printing turns that determinism claim into a coincidence of one shuffle. The real price
+  is 1 printing against a seed sweep plus a fourth fixture, which is below the residue head.
+* **The two SIDE-WIDE spellings** — *"During your next turn, your Pokémon can't attack. (This includes
+  new Pokémon that come into play.)"* and *"During your opponent's next turn, Pokémon that have 2 or
+  less Energy attached can't attack. (This includes new Pokémon that come into play.)"*, 1 + 1. OUT on
+  the **MECHANISM**: `preventAttack` locks ONE body (`state.players[seat].active`) and both of these
+  lock a SIDE, *including bodies that arrive later*. That is a zone this op has no member for, and
+  mapping it here would be exactly the wrong-but-plausible program this slice is a repair of.
+
+### THE CENSUS
+
+`BUILT.attack` 1369 → **1376**; whole-census `built` 1,774 → **1,781**, its residue 609 → **602**;
+unbuilt attack column 363 → **356**; `BUILT.attack - 922` 447 → **454**, `- 922 - 252` 195 → **202**;
+the eleven-reader instrument 401 / 1,340 → **403 / 1,347** and its raw residue printings 392 → **385**;
+the nine-reader one 396 / 1,324 → **398 / 1,331**; `head - rawDelta - splitDelta` 1,363 → **1,370**;
+`FIXTURE_POOL` 511 → **513**; the apostrophe file's DERIVABLE sweep 129 → **132**, after six slices
+standing still.
+
+**THE STEP IS 7 AND NOT 11, EVERYWHERE.** The mis-read sentence was never in any residue, so its
+repair is invisible to every one of those numbers. `REGISTRY_ATTACK_UNITS`, `splitHead`,
+`nonAttackRegistryIds()`, `BUILT.ability`, the `attackGate` shortfall and the gate-corpus split all
+stand still — a READER-keyed move that edits `registry.ts` not at all.
+
+### THE MUTANTS — 1455 → 1463, 8 killed / 0 GAPs on the first run
+
+**FOUR OF THE EIGHT ARE SILENT IN EVERY CENSUS FIGURE**, which is the shape this run keeps
+reproducing: C1 (the defect restored — the sentence resolves either way), C6 (the defender lock loses
+`target` and installs on the INSTALLER at the installer's own `+ 2`: attack resolves, damage lands,
+row filed, wrong seat, wrong turn), C7 (the anchor loses its `^` and becomes a suffix match) and C8
+(both `['’]` classes go straight, and the pool holds no U+2019 at all, so it survives until a
+punctuation-normalising re-ingest un-simulates 7 printings at once). The other four move
+`BUILT.attack` in the HONEST direction, by leaving printings UNREAD rather than wrongly read.
+
+Every row is anchored on a symbol D408 owns — the narrowed capture, the new bare-plural anchor, that
+arm's own `if`, the alternation anchor, and the new arm's own `return` line — which is D404's finding
+applied rather than cited, for a fourth slice running. **Not one `find` is multi-line.**
 
 ## D407 — THE BOARD-WIDE OWN-ENERGY COUNT: a zone refused on a measurement that has since stopped being true (engine 0.312.0, `MATCH_RECORD_VERSION` **STAYS 25**)
 
