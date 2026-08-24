@@ -4968,6 +4968,87 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D408 — the SELF-side BARE PLURAL, the sentence that resolved for
+      fifty-four decisions and did nothing.** Its INDEX-1 effect is byte-for-byte off
+      `legalAttackCorpus()` (the committed `legal_standard = 1` attack column, 4 legal
+      printings on this one sentence):
+
+        "During your next turn, this Pokémon can't use attacks."
+
+      🛑 **TWO ATTACKS, AND THE SECOND ONE IS THE WHOLE POINT.** `SELF_CANT_USE_ATTACK`
+      read this string as a PROPER NOUN until D408 and derived a lock on an attack named
+      "attacks"; `resolveAttackIndex` answers -1 for that name and the op writes NOTHING,
+      so on the defective build this body attacks freely on its own next turn. The repair
+      locks the POKÉMON — so index 0 must be refused as well as index 1, and a fixture
+      with ONE attack could not tell "the lock is on the body" from "the lock is on the
+      attack that installed it". `fix-lockplural` is therefore the mirror of Alomomola's
+      job in `ATTACK_LOCK_DECK`, on a sentence Alomomola does not print.
+
+      ⚠️ **INDEX 1 CARRIES THE SENTENCE AND INDEX 0 IS COSTED LOWER**, so the sibling is
+      always affordable on the locked turn: a refusal that could be an Energy shortfall
+      is not a refusal about the lock (`errorCode` would differ, but the case would be
+      arguing with itself).
+
+      A Basic, 130 HP, so it survives the 30 the victim's own hit deals and no KO tail
+      lands between an install and the window it is read across. The ids that print this
+      sentence are unknown to this container (no D1 credentials, D369), so the key is a
+      `fix-*` one and every scalar except the effect text is CHOSEN rather than
+      transcribed. No owner prefix in the key — the possessive fixture toll
+      (`ownerPrefix.test.ts`) is not paid by this slice. */
+  "fix-lockplural": battler("fix-lockplural", {
+    hp: 130,
+    retreat: 1,
+    attacks: [
+      { cost: ["Colorless"], name: "Tail Whip", damage: 20 },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Overdrive",
+        damage: 90,
+        effect: "During your next turn, this Pokémon can't use attacks.",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D408 — the OPPONENT-side bare lock, BOTH printed verbs on ONE body.** Both
+      effect strings are byte-for-byte off `legalAttackCorpus()`:
+
+        index 0  "During your opponent's next turn, the Defending Pokémon can't attack."
+                 (3 legal printings)
+        index 1  "During your opponent's next turn, the Defending Pokémon can't use
+                  attacks."                                          (4 legal printings)
+
+      🛑 **ONE CARD AND NOT TWO, BECAUSE THE INDEX IS THEN THE ONLY THING THAT DIFFERS.**
+      `DEFENDER_CANT_ATTACK_NEXT_TURN` is a single alternation over the two verbs, and the
+      claim it makes is that the two spellings are ONE rule — so the board that checks it
+      must vary the verb and nothing else. Two fixtures would have varied the HP, the
+      types, the cost and the printed damage as well, and any of those could carry a
+      difference the assertion would then credit to the verb.
+
+      ⚠️ **THE PRINTED DAMAGE IS 30 ON BOTH INDEXES, DELIBERATELY.** The victim is
+      `fix-attacker` (120 HP): two installs never Knock it Out, so the same body can be
+      locked twice across one suite and the §10 clears stay reachable. Costs differ ({C}
+      and {C}{C}) only so that "which index did this board declare" is answerable from the
+      Energy as well as from the events.
+
+      A Basic, 130 HP. Ids unknown to this container (D369) → a `fix-*` key, every scalar
+      but the two effect strings CHOSEN. No owner prefix. */
+  "fix-deflock": battler("fix-deflock", {
+    hp: 130,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Frost Bind",
+        damage: 30,
+        effect: "During your opponent's next turn, the Defending Pokémon can't attack.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Glacier Hold",
+        damage: 30,
+        effect: "During your opponent's next turn, the Defending Pokémon can't use attacks.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -17375,6 +17456,44 @@ export const DEFENDER_LOCK_DECK = deckOf({
   "fix-water-energy": 12, // {W}{W}{W} for Scalding Block; {W} for Surf, Aqua Slash and Bubble
   "fix-dark-energy": 8, // {D}{D} for Evil Claw, {D}{D}{D} for Hound's Fang
   "fix-energy": 13, // Colorless Basic — every {C} in the deck
+});
+
+/** 🆕🆕 **D408's BARE ATTACK-LOCK deck (`bareAttackLock.test.ts`). Its own 60, for
+    `ATTACK_LOCK_DECK`'s reason and not `PREVENT_BLOCK_DECK`'s: none of the three
+    printed sentences flips anything, so the suite is SEED-FREE and pins that with an
+    unchanged `rngState` across a whole install-and-resolve. It cannot borrow
+    `ATTACK_LOCK_DECK` or `DEFENDER_LOCK_DECK` even though it reuses two of their
+    cards — both of those are seed-free too, but each one's own shuffle decides which
+    Basics its `armed()` finds, and adding two cards would move every board in them
+    (that deck's own doc block says so, and this is the third slice to pay it).
+
+    ONE DECK FOR BOTH SEATS, because this suite's two families point in OPPOSITE
+    directions off the same board: `fix-lockplural` locks ITSELF (`state.turn + 2`)
+    and `fix-deflock` locks the body ACROSS the table (`state.turn + 1`), and the
+    sharpest case in the file is the one where both stamps sit on one turn.
+
+      • `fix-lockplural` — the SELF-side bare plural at 4 legal printings, the
+        sentence D154's capture swallowed. "Overdrive" ({C}{C}, INDEX 1, 90 + the
+        rider); "Tail Whip" ({C}, INDEX 0, 20) is the index control AND the sibling a
+        locked body must be refused — which is the assertion that separates the repair
+        (a lock on the POKÉMON) from the defect (a lock on an attack no card has, which
+        installs nothing at all);
+      • `fix-deflock` — the OPPONENT-side bare lock in BOTH printed verbs on one body,
+        3 + 4 legal printings. The index is the only thing that varies between them;
+      • `fix-attacker` is the VICTIM and does two jobs: its costless "Yawn" (index 2)
+        means a locked body always has something it COULD declare, so every refusal in
+        this suite is about the lock and never about Energy, and "Bite" ({C}, 30, index
+        0) is the second attack that makes "the lock is on the Pokémon" a two-index
+        claim from the victim's seat as well as the installer's;
+      • `fix-titan` (340 HP, NO attacks) is the mulligan-free bench filler and the
+        promote target — and, as P2's opening Active, the body whose absence of attacks
+        keeps a window assertion off an accidental Knock Out. */
+export const BARE_ATTACK_LOCK_DECK = deckOf({
+  "fix-lockplural": 4, // "During your next turn, this Pokémon can't use attacks." at INDEX 1
+  "fix-deflock": 4, // the defender lock in BOTH verbs — "can't attack" idx 0, "can't use attacks" idx 1
+  "fix-attacker": 4, // the victim: costless "Yawn" (idx 2) and "Bite" (idx 0), so a refusal is the LOCK
+  "fix-energy": 16, // Basic {C} — pays every printed cost in this deck
+  "fix-titan": 32, // 340 HP neutral Basic, NO attacks — DOMINANT (mulligan-free), filler and promote target
 });
 
 /** D149's ATTACKER-SIDE DEBUFF deck (`attackDebuff.test.ts`). Its own 60, and

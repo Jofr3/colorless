@@ -3457,8 +3457,9 @@ export type EffectOp =
       to the actor's own body — `reduceDamage`'s verdict verbatim, and the §11
       classification table drives it). */
   | { op: "installRecoil"; amount: number }
-  /** §8/§11 (D143, widened D148) — LOCK a Pokémon out of attacking on ITS OWN
-      controller's NEXT turn. Four printed sentences, on both sides of the table:
+  /** §8/§11 (D143, widened D148, spellings closed D408) — LOCK a Pokémon out of
+      attacking on ITS OWN controller's NEXT turn. SIX printed sentences, on both
+      sides of the table and in both printed verbs:
 
         "During your next turn, this Pokémon can't attack."          (20 printings)
         "Put {N} damage counters on 1 of your opponent's Pokémon.
@@ -3467,6 +3468,19 @@ export type EffectOp =
          next turn, the Defending Pokémon can't attack."             ( 3 printings)
         "If the Defending Pokémon is a Basic Pokémon, it can't attack
          during your opponent's next turn."                          ( 1 printing )
+        "During your opponent's next turn, the Defending Pokémon
+         can't attack."                                              ( 3 legal   )
+        "During your opponent's next turn, the Defending Pokémon
+         can't use attacks."                                         ( 4 legal   )
+
+      ⚠️ AND A SEVENTH STRING REACHES THIS OP FROM THE SELF SIDE: "During your next
+      turn, this Pokémon can't use attacks." (4 legal). It is listed apart because
+      it is the one sentence here that was READ WRONGLY rather than unread — D154's
+      `SELF_CANT_USE_ATTACK` swallowed it as a proper noun until D408 — and because
+      its arrival moved NO census figure, which is the property that made it
+      invisible for fifty-four decisions. The two counts above and this one are
+      `legal_standard = 1` printings off the committed attack column; the four
+      above them are the SIX-SET local D1's. Two populations, named (D183/D187).
 
       The first two are the DRAWBACK half of a big-damage attack, and the pool's
       most re-printed durated rider after D112's retreat lock: Miraidon ex /
@@ -8975,8 +8989,37 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // happens to be true that all six name their OWN attack, and an anchor that could
 // not tell the difference would silently mis-map the first printing that does not.
 //
-// `(.+?)` is LAZY so the trailing `\.$` cannot be swallowed by a name; the anchors
-// do the rest. Greedent ex's "Slip 'n' Roll" carries TWO apostrophes INSIDE the
+// 🛑 `([A-Z].+?)` — LAZY, AND CAPITALISED, AND THE CAPITAL IS D408's REPAIR OF A
+// DEFECT THIS PARAGRAPH USED TO CALL CLOSED. What stood here was "`(.+?)` is LAZY
+// so the trailing `\.$` cannot be swallowed by a name; the anchors do the rest",
+// and the anchors did NOT do the rest. The legal attack column prints "During your
+// next turn, this Pokémon can't use attacks." — the BARE PLURAL, a whole-Pokémon
+// lock wearing this sentence's skeleton — on 4 printings, and the lazy capture
+// swallowed the common noun and derived `preventAttackUse { attack: "attacks" }`:
+// a lock keyed on an attack no card is named. `resolveAttackIndex` answers `-1`
+// and the op writes NOTHING, so those four printings RESOLVED, counted BUILT in
+// every census rung in this repo, and did nothing at all — the wrong-but-plausible
+// program `conventions.md` calls strictly worse than an unbuilt one, and the one
+// class of defect no coverage instrument here can see, because coverage counts
+// what resolves and never what resolves CORRECTLY.
+//
+// THE REFUSAL IS THE CAPITAL, AND IT IS THIS FILE'S OWN DEVICE RATHER THAN A NEW
+// ONE. "No /i" three paragraphs down turns the capitalised "During" into the guard
+// that keeps the thirteen lowercase Ability limiters off this path; the same
+// reading closes the capture. An attack name is a PROPER NOUN — all twelve names
+// the legal column prints in this sentence are title-cased, as are all six fielded
+// in `perAttackLock.test.ts` — so `[A-Z]` refuses the whole class of COMMON nouns
+// at once instead of blacklisting the one word the catalog happens to print today.
+//
+// 🛑 AND IT IS IN THE PATTERN RATHER THAN IN FRONT OF THE ARM, DELIBERATELY. Arm
+// 24a-i (the bare plural's own arm) sits BELOW arm 24a, so this refusal is what
+// routes the sentence there: restore `(.+?)` and the plural is swallowed again and
+// `bareAttackLock.test.ts` goes red by name. An arm ordered ABOVE arm 24a would
+// have repaired the defect by POSITION, left this pattern still wrong in
+// isolation, and left the refusal unfalsifiable — which is the "guard that cannot
+// fire" this very block records D154 measuring and deleting.
+//
+// Greedent ex's "Slip 'n' Roll" carries TWO apostrophes INSIDE the
 // captured name, which is why the capture is a free class rather than a word
 // pattern — and why `['’]` (D136/D137) is spelled only on the sentence's own
 // contraction ("can't"), the one slot the PATTERN owns. Every printing in the D1
@@ -8987,7 +9030,30 @@ const FLIP_TAILS_SELF_CANT_ATTACK =
 // No /i, for the standing reason (see TYPED_SELF_DISCARD): the capitalised
 // "During" plus `^…$` is the whole guard, and it is what keeps the thirteen
 // lowercase mid-sentence "you can't use…" Ability limiters off this path.
-const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use (.+?)\.$/;
+const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t use ([A-Z].+?)\.$/;
+// ── D408: the SAME lock as arm 24's, spelled with the BARE PLURAL ──
+//
+// "During your next turn, this Pokémon can't use attacks." — the whole printed
+// effect on **4 legal printings** (`legal_standard = 1` attack column, the
+// committed `censusAttackCorpus.ts`), and NOT a narrowing of anything: "can't use
+// attacks" and `SELF_CANT_ATTACK_NEXT_TURN`'s "can't attack" are two printed
+// spellings of ONE rule on ONE body, so this anchor's whole program is arm 24's
+// byte for byte. That identity is the family's checkable claim on the pair
+// (D134's shape on the coin's heads face, D144's on tails, D148's across the
+// table), and it is asserted rather than described.
+//
+// ⚠️ IT WAS NOT UNREAD — IT WAS READ WRONGLY, WHICH IS WHY IT ARRIVES WITH A
+// NARROWING RATHER THAN ALONE. `SELF_CANT_USE_ATTACK` above claimed this string
+// from D154 until D408 and the block above says how. The consequence for a
+// successor is the part worth keeping: a sentence that resolves to a program which
+// does nothing moves NO coverage figure in either direction, so `BUILT.attack`,
+// both reader instruments and the unbuilt-column count all stand still across this
+// repair. The only rungs that can see it are a BOARD and a program assertion, and
+// `bareAttackLock.test.ts` carries both.
+//
+// A `test` and not an `exec`: nothing varies. No /i, and the one apostrophe slot
+// classed, for the standing reasons.
+const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pokémon can['’]t use attacks\.$/;
 // ── D155: the PER-ATTACK BUFF, the same address with the opposite verb ──
 //
 // "During your next turn, this Pokémon's {AttackName} attack does {N} more damage
@@ -9195,12 +9261,23 @@ const OPPONENT_CHOSEN_ATTACK_LOCK =
 // to tell a floor from a total is to read the DATE before the number. It is
 // recorded rather than left implicit so a fifth pass does not re-own it.
 //
-// ⚠️ THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE —
-// exactly as it was for `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s first sentence one
-// slice back. "During your opponent's next turn, the Defending Pokémon can't
-// attack." is printed NOWHERE in the pool as a standalone attack sentence; the
-// compound is the only form it takes. So a bare pattern would map a sentence no
-// card prints (D120), and this anchor is the whole reading.
+// 🛑 "THERE IS NO BARE ANCHOR, AND THAT IS A CENSUS RESULT RATHER THAN A CHOICE"
+// STOOD HERE FOR SIXTY DECISIONS AND D408 FALSIFIED IT — NOT BY DISAGREEING WITH
+// THE MEASUREMENT, BUT BY WIDENING ITS POPULATION. D148 read the local D1
+// (978 cards / 6 sets) and was right about it: "During your opponent's next turn, the
+// Defending Pokémon can't attack." is printed nowhere in THAT pool as a standalone
+// attack sentence. The `legal_standard = 1` attack column prints it standalone on
+// **3** printings and its bare-plural twin ("…can't use attacks.") on **4**, so the
+// bare pattern maps a sentence 7 legal printings DO print, and it is
+// `DEFENDER_CANT_ATTACK_NEXT_TURN` below. Every count carries a POPULATION and a
+// LEGALITY (`conventions.md`), and a "there is none" is the one verdict a narrow
+// population can get wrong in the direction nothing re-checks — so the correction
+// is left as a GUARD and not as this comment: `bareAttackLock.test.ts` §1 derives
+// both counts off the committed column and reddens if either moves.
+//
+// The COMPOUND is still its own anchor for the reason below (an unrecognised
+// remainder must stay LOUD), and the bare arm does not weaken it: this pattern's
+// `^Discard` is what keeps the two apart, exactly as it always was.
 //
 // TWO SENTENCES, TWO OPS, IN PRINTED ORDER — `DEFENDER_POISON_CANT_RETREAT` (arm
 // 5c), `COUNTER_PUT_ANY_THEN_SELF_LOCK` (arm 25) and `SELF_DISCARD_ALL_THEN_REDUCTION`
@@ -9265,6 +9342,46 @@ const SELF_DISCARD_ONE_THEN_DEFENDER_LOCK =
 // whose consequent is "this attack does nothing" (attack.ts's disjointness note).
 const DEFENDER_BASIC_CANT_ATTACK =
   /^If the Defending Pokémon is a Basic Pokémon, it can['’]t attack during your opponent['’]s next turn\.$/;
+// ── D408: the BARE opponent-side lock, in BOTH printed verbs ──
+//
+// The two sentences the compounds above carry as their second clause, printed
+// standalone — 7 legal printings across 2 spellings of one rule:
+//
+//   "During your opponent's next turn, the Defending Pokémon can't attack."    (3)
+//   "During your opponent's next turn, the Defending Pokémon can't use attacks." (4)
+//
+// ONE ANCHOR AND NOT TWO, WHICH IS THE OPPOSITE CALL TO THE ONE MADE ONE CONST UP
+// — and the difference is the whole of D120's precondition rather than a
+// preference. There, two strings share four words and differ in the first clause,
+// in whether there is a gate at all, in the subject's noun phrase ("the Defending
+// Pokémon" / "it") and in where the four duration words sit, so an alternation
+// would be two patterns wearing one name. Here EXACTLY ONE TOKEN VARIES — the verb
+// — while the subject, the seat, the window, the anchors and the consequent are
+// identical, and no printing in the column gives the two verbs different
+// consequents (checked: the column's whole `can't attack` / `can't use attacks`
+// family is ten sentences and this pair is the only place both verbs appear on one
+// skeleton). So it is one pattern with one alternation and no capture.
+//
+// ⚠️ THE SELF SIDE IS TWO ANCHORS FOR THE SAME PAIR OF VERBS, AND THE ASYMMETRY IS
+// LOAD-BEARING RATHER THAN AN OVERSIGHT. Over there a CAPTURING arm
+// (`SELF_CANT_USE_ATTACK`, "can't use {AttackName}") sits between the two
+// spellings, and the bare plural has to be refused BY that pattern rather than
+// merely ordered around it — see its block. Here no capture exists on this
+// skeleton at all, so there is nothing to be refused by and nothing to order.
+//
+// ZERO NEW MECHANISM: the op, its `target` field, its `+ 1` stamp, the §8 gate,
+// the three §10 clears, the event, the log arm and BOTH payability projections are
+// D148's and are reused with no diff at all. This anchor's whole program is
+// `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`'s SECOND op, byte for byte — which makes
+// the shipped compound the suite's own control on the new arm, in the direction
+// this family has used since D134.
+//
+// THREE apostrophe slots, all classed (D136/D137): the possessive "opponent's" and
+// the contraction "can't". No /i — the capitalised "During" plus `^…$` is the
+// guard, and it is what keeps this pattern off `deriveAttackRequirement`'s
+// lowercase mid-sentence matter.
+const DEFENDER_CANT_ATTACK_NEXT_TURN =
+  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t (?:attack|use attacks)\.$/;
 // …and the LAST TWO members of that shape (D145), which CLOSE the bare
 // tails-gated family: the same gate over the two consequents whose ops this
 // engine has owned since 0.x, so each is ONE regex and ONE arm with no
@@ -16324,6 +16441,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     return [{ op: "preventAttackUse", attack: foldApostrophes(match[1] ?? "") }];
   }
 
+  // 24a-i. "During your next turn, this Pokémon can't use attacks." — D408's
+  //        REPAIR, 4 legal printings, and the only arm in this file whose job is to
+  //        take a sentence AWAY from the arm directly above it. The BARE PLURAL is
+  //        a WHOLE-POKÉMON lock wearing arm 24a's skeleton, so its program is arm
+  //        24's `[{ op: "preventAttack" }]` byte for byte and nothing here is new.
+  //
+  //        🛑 IT SITS BELOW ARM 24a ON PURPOSE, AND THAT PLACEMENT IS THE WHOLE
+  //        DESIGN. Above, it would repair the defect by POSITION and leave
+  //        `SELF_CANT_USE_ATTACK` still wrong in isolation — and would make that
+  //        pattern's `[A-Z]` refusal unfalsifiable, which is the "guard that cannot
+  //        fire" arm 24a's own block records D154 measuring and deleting. Below, the
+  //        refusal is what routes the string this far: restore `(.+?)` up there and
+  //        this arm goes dead and `bareAttackLock.test.ts` reddens by name.
+  //
+  //        ⚠️ AND IT MOVES NO CENSUS FIGURE IN EITHER DIRECTION. The sentence
+  //        resolved before this arm existed — to a lock keyed on an attack named
+  //        "attacks", which resolves to `-1` and installs nothing — so it was
+  //        counted BUILT throughout. A repair that is invisible to every coverage
+  //        rung in the repo is exactly why this one owes a BOARD.
+  if (SELF_CANT_USE_ATTACKS.test(effect)) {
+    return [{ op: "preventAttack" }];
+  }
+
   // 24b. "During your next turn, this Pokémon's {AttackName} attack does {N} more
   //      damage (before applying Weakness and Resistance)." — D155's PER-ATTACK
   //      BUFF, 1 printing (Seismitoad sv03-052 "Echoed Voice"). Arm 24a's address
@@ -16488,6 +16628,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     doc block: one rule ("the locked Pokémon's controller's next turn") read
   //     on two seats gives `+ 1` here and `+ 2` on the self arm, because declaring
   //     an attack ends the turn. That is why this is ONE field and not two.
+  // 26a (D408). "During your opponent's next turn, the Defending Pokémon can't
+  //      attack." (3) and "…can't use attacks." (4) — the BARE opponent-side lock in
+  //      both printed verbs, 7 legal printings, and the arm D148's own census said
+  //      the pool did not print. It was right about the SIX-SET local D1 and wrong
+  //      about the legal attack column; see the anchor's block for the correction
+  //      and for the guard that now holds it.
+  //
+  //      ⚠️ ZERO NEW MECHANISM, WHICH IS WHAT MAKES 7 PRINTINGS COST ONE REGEX AND
+  //      ONE ARM. The op, its `target` field, the `+ 1` stamp derived from that
+  //      field, the §8 gate, `attackLocked`, the three §10 clears, the
+  //      `ATTACK_LOCKED` event, the log arm and both payability projections are all
+  //      D148's, and none of them takes a diff. This program is the arm below's
+  //      SECOND op byte for byte — so the shipped compound is the control on the new
+  //      arm, and a reader that drifted between the two would be visible as a
+  //      DIFFERENT PROGRAM rather than as a different board.
+  if (DEFENDER_CANT_ATTACK_NEXT_TURN.test(effect)) {
+    return [{ op: "preventAttack", target: "defender" }];
+  }
+
   match = SELF_DISCARD_ONE_THEN_DEFENDER_LOCK.exec(effect);
   if (match !== null) {
     return [

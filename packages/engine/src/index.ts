@@ -12109,6 +12109,96 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.313.0 → **THE BARE ATTACK LOCK ON BOTH SEATS — AND A REPAIR OF A PROGRAM
+    THAT RESOLVED, WAS COUNTED BUILT, AND DID NOTHING.**
+
+      *"During your opponent's next turn, the Defending Pokémon can't attack."* (3)
+      *"During your opponent's next turn, the Defending Pokémon can't use attacks."* (4)
+      *"During your next turn, this Pokémon can't use attacks."* (4) — 🛑 MIS-READ, NOT UNREAD
+
+    **3 sentences / 11 legal printings, and only 7 of them move a number.**
+    `BUILT.attack` 1369 → **1376**; BOTH reader instruments step by 2 sentences / 7
+    printings — the eleven-reader one 401 / 1,340 → **403 / 1,347** and the nine-reader one
+    396 / 1,324 → **398 / 1,331** — because `deriveAttackEffect` heads BOTH arrays.
+    Whole-census `built` 1,774 → **1,781**, its residue 609 → **602**; unbuilt attack column
+    363 → **356** (PRINTINGS); `BUILT.attack - 922` 447 → **454**, `- 922 - 252` 195 → **202**;
+    the eleven-reader raw residue 392 → **385** (and its bare OPERAND at the identity rung,
+    grepped for rather than found by a red run — the SEVENTEENTH time at that site);
+    `head - rawDelta - splitDelta` 1,363 → **1,370**; `FIXTURE_POOL` 511 → **513**; the
+    apostrophe file's DERIVABLE sweep 129 → **132** after standing still for six slices.
+    `REGISTRY_ATTACK_UNITS`, `splitHead`, `nonAttackRegistryIds()`, `BUILT.ability`, the
+    `attackGate` shortfall and the gate-corpus split all stand still — a READER-keyed move
+    that edits `registry.ts` not at all.
+
+    🛑 **THE THIRD SENTENCE MOVES NOTHING, AND THAT IS THE WHOLE FINDING.** *"During your
+    next turn, this Pokémon can't use attacks."* has RESOLVED since D154 — to
+    `preventAttackUse { attack: "attacks" }`, because `SELF_CANT_USE_ATTACK` was written for
+    *"…can't use {AttackName}"* and its lazy `(.+?)` swallowed the bare plural. There is no
+    attack named "attacks", `resolveAttackIndex` answers `-1`, and the op returns before it
+    writes anything: **four legal printings were counted BUILT by every coverage rung in
+    this repo and installed nothing at all.** A census counts what RESOLVES, never what
+    resolves CORRECTLY, so `BUILT.attack`, both reader instruments, the unbuilt column and
+    the whole-census residue are all silent across the repair in both directions. **THE ONLY
+    RUNGS THAT CAN GO RED ON THIS CLASS OF DEFECT ARE A PROGRAM COMPARISON AND A BOARD**, and
+    `bareAttackLock.test.ts` was written and measured RED on the defective build before the
+    arm was written — 7 of its 26 cases, including the board where the holder attacks freely
+    on a turn it is printed to be locked out of.
+
+    ⚠️ **THE REFUSAL IS IN THE PATTERN, NOT IN THE ARM ORDER.** The capture is now
+    `([A-Z].+?)` — an attack name is a PROPER NOUN, which is the same capitalisation device
+    that already keeps thirteen lowercase *"you can't use…"* Ability limiters off that path
+    — and the bare plural's own arm sits **BELOW** the capture arm on purpose. Ordered
+    ABOVE it would have repaired the board by POSITION, left the pattern wrong in isolation,
+    and left the refusal unfalsifiable, which is the *"guard that cannot fire"* D154's own
+    doc block records measuring and deleting. Below, restoring `(.+?)` turns the new arm
+    dead and reddens the suite by name.
+
+    🛑 **AND D148's "THERE IS NO BARE ANCHOR" WAS FALSE RATHER THAN STALE — A POPULATION
+    RESULT THAT DID NOT SURVIVE A WIDER POPULATION.** That census read the local D1 (978
+    cards / 6 sets) and was right about it; the `legal_standard = 1` attack column prints the
+    bare defender sentence standalone on 3 printings and its plural twin on 4. Every count
+    carries a POPULATION and a LEGALITY, and **"there is none" is the one verdict a narrow
+    population gets wrong in the direction nothing re-checks.** The correction is left as a
+    GUARD and not as a comment (D406's rule, second payment): `bareAttackLock.test.ts` §1
+    derives both counts off the committed column, and `defenderLock.test.ts`'s sixty-decision
+    `toBeNull` warrant became a PROGRAM comparison against the compound's second op.
+
+    ⚠️ **ONE ALTERNATION ANCHOR ON THE DEFENDER SIDE, TWO ANCHORS ON THE SELF SIDE, AND THE
+    ASYMMETRY IS D120's PRECONDITION RATHER THAN A PREFERENCE.** Across the table exactly one
+    token varies (the verb) while the subject, seat, window, anchors and consequent are
+    identical, so `can['’]t (?:attack|use attacks)` is one pattern. On the self side a
+    CAPTURING arm sits between the two spellings, so the plural has to be REFUSED by that
+    pattern rather than merely ordered around it.
+
+    **ZERO new `EffectOp` inhabitants, fields, readers, `DamageCountSource`/`BoardCondition`
+    members, registry rows, events, parks or error codes.** The op, its `target`, the `+ 1`
+    stamp derived from that field, the §8 gate, `attackLocked`, the three §10 clears, the
+    `ATTACK_LOCKED` event, the log arm and both payability projections are all D148's and take
+    no diff. No `attack.ts` / `continuous.ts` / `turn.ts` / `types.ts` / `redact.ts` /
+    `flow.ts` / `log.ts` / `events.ts` / `registry.ts` / `interpreter.ts` diff at all — the
+    seat question was ANSWERED BY OPENING `interpreter.ts` rather than inherited: `preventAttack`
+    reads its seat from `op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat`, so a bare
+    producer buys nothing there.
+
+    ⚠️ **THE COIN-GATED DEFENDER LOCK (1 legal) AND THE TWO SIDE-WIDE SPELLINGS (1 + 1) ARE
+    OUT, ON TWO DIFFERENT KINDS OF REASON.** The coin one is out on its WITNESS, not its arm:
+    the arm is one regex over a `coinFlipGate` whose `then` is this slice's own program, but
+    this suite and both suites it sits between are deliberately SEED-FREE, and a coin-gated
+    printing turns that determinism claim into a coincidence of one shuffle — 1 printing
+    against a seed sweep and a fourth fixture. The side-wide ones are out on the MECHANISM:
+    `preventAttack` locks ONE body and both of those lock a SIDE, *"including new Pokémon that
+    come into play"*, which is a zone this op has no member for and not a wider `target`.
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, argued from whether any field changes rather than from
+    whether the op is new (`preventAttack` CAN be parked behind a pick — D148's compound proves
+    it — so "the op is old" would not have been an argument). Nothing here parks and nothing
+    stamps a new field: every op this slice produces is an inhabitant a v25 record could already
+    carry. ⚠️ It is not an exported constant (D406), so the claim is DRIVEN in
+    `bareAttackLock.test.ts` §6 rather than asserted.
+
+    engineVersion 0.312.0 → **0.313.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.312.0 → **THE BOARD-WIDE OWN-ENERGY COUNT: A ZONE D196 REFUSED ON A
     MEASUREMENT THAT HAS SINCE STOPPED BEING TRUE.**
 
@@ -17058,7 +17148,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.312.0";
+export const engineVersion = "0.313.0";
 
 export type {
   ApplyResult,
