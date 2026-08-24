@@ -463,10 +463,12 @@
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE** —
 > D411's entry explains why in full.
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D413 has had `--decision D413` (4 killed / 0 GAPs), a
-> clean `precheck` over 1,491 and a full serialised check; the other 1,487 rows have not run against
-> this head. Exposure is LOW by the standards of the last two: D413 edits `effects.ts` (heavily
-> anchored) but adds no field, no op and no reader, and `D275`'s version anchor is already re-pointed.
+> ✅ **THE SWEEP DEBT IS PAID — NOTHING IS OWED AT THIS HEAD.**
+> **1491 · 1467 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,379.2s**, `SWEEP_EXIT=0`, run on the committed tree with nothing else touching it.
+> `1467 + 24 = 1491` closes and it is **VERIFIED BY ID IN BOTH DIRECTIONS** against `--list` —
+> 1491 / 1491, **0 missing / 0 extra / 0 duplicate**. All 4 D413 rows KILLED. `error` is **0** after
+> editing `effects.ts`. Declared survivors held at **24 for a THIRTIETH consecutive sweep**.
 >
 > ### ▶ THE RESIDUE, MEASURED AT THIS HEAD — USE THIS, DO NOT RE-DERIVE IT
 >
