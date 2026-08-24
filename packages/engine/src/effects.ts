@@ -12461,6 +12461,30 @@ const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$
 // board and had to buy a termination argument instead of a ceiling).
 const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for each heads\.$/;
 
+// 🆕🆕 D413 — THE ADDITIVE TWIN OF THE LINE DIRECTLY ABOVE, and the ONE printed
+// combination of an already-shipped vocabulary that nothing produced.
+// "Flip 2 coins. This attack does {30|50} more damage for each heads." —
+// **2 sentences / 5 printings** (3 + 2) in the `legal_standard = 1` column.
+//
+// 🛑 IT WAS REFUSED BY NAME AND THE REFUSAL'S PREMISE HAS EXPIRED — WHICH IS WHY
+// THIS IS A COLLECTION RATHER THAN A RE-LITIGATION. `multiCoinFlip.test.ts` said
+// it was "the family's ONLY unmapped printed-count additive fold: ONE printing, so
+// D121's warrant for a shape (two printings with one token varying) is not met,
+// and a shape built for a single card would be a row wearing a regex." That was
+// measured on the LOCAL 978-card / 6-set pool, where Melmetal `swsh10.5-046`
+// (`90 more`) is the only printing. **Melmetal is not in the legal column at all**,
+// and the column prints TWO sentences varying exactly one token — `per` ∈ {30, 50}
+// with `flips` fixed at 2. D121's warrant is now MET, on the population the engine
+// is actually built against. The refusal was right when it was written.
+//
+// ⚠️ DISJOINT FROM ITS TWIN BY CONSTRUCTION, NOT BY ORDERING. `(\d+) damage` cannot
+// span "30 more damage": the digits match, then the pattern needs " damage" and the
+// string offers " more damage", and both anchors are `^…$` so there is no
+// backtracking that rescues it. The two arms could be written in either order and
+// neither can shadow the other — asserted rather than assumed.
+const ATTACK_COIN_MULTI_BONUS =
+  /^Flip (\d+) coins\. This attack does (\d+) more damage for each heads\.$/;
+
 // The BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each [{X}] Energy attached
 // to this Pokémon. This attack does D damage for each heads." — 3 printings, and
 // the shape where the board vocabulary finally earns its place in the coin family.
@@ -12731,6 +12755,28 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     // carries; `flips <= MAX_PRINTED_FLIPS` is the ingested-text ceiling.
     return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
       ? { kind: "perHeads", flips: { kind: "printed", count: flips }, per }
+      : null;
+  }
+  // 🆕🆕 D413 — the ADDITIVE reading of the arm directly above, and **ZERO new
+  // vocabulary**: `bonusOnHeads` has carried a `flips: AttackFlipCount` since D129
+  // and `AttackFlipCount` has carried `{ kind: "printed"; count }` since D127. The
+  // pair `bonusOnHeads × printed count` was already representable, already
+  // persistable and produced by NOTHING — D405's rule that a new COMBINATION of a
+  // shipped vocabulary is not a new shape, and the reason this slice moves no
+  // `MATCH_RECORD_VERSION`, adds no op, no field and no reader.
+  //
+  // ⚠️ THE GUARDS ARE ITS TWIN'S, COPIED DELIBERATELY AND FOR THE TWIN'S REASONS:
+  // `flips >= 2` because the regex's own "coins" is PLURAL, `flips <=
+  // MAX_PRINTED_FLIPS` as the ingested-text ceiling, `per >= 1` because a printed 0
+  // would spend a flip — and an `rngState` step — to add nothing. Sharing the
+  // guards is the point: the two arms differ in ONE word of the sentence and ONE
+  // member of the result, and anywhere else they diverge is a bug.
+  const multiBonus = ATTACK_COIN_MULTI_BONUS.exec(effect);
+  if (multiBonus !== null) {
+    const flips = Number(multiBonus[1]);
+    const per = Number(multiBonus[2]);
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
+      ? { kind: "bonusOnHeads", flips: { kind: "printed", count: flips }, per }
       : null;
   }
   const perEnergy = ATTACK_COIN_PER_ENERGY.exec(effect);

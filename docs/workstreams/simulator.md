@@ -25690,6 +25690,90 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D413 — THE ADDITIVE MULTI-COIN FOLD: a refusal COLLECTED, not re-litigated (engine 0.317.0, `MATCH_RECORD_VERSION` **STAYS 26**)
+
+*"Flip 2 coins. This attack does {30|50} more damage for each heads."* — **2 sentences / 5 printings**
+(3 + 2), bought with **ONE regex and ONE arm** in `deriveAttackCoinFlip`. Zero new ops, zero new
+fields, zero new readers, zero `attack.ts` change, no version bump.
+
+### How it was chosen: the residue, measured
+
+**213 sentences / 338 printings** unbuilt at D412's head with all three build paths and the registry
+applied. Its printed head is all expensive — the heal-same-amount (6) refused by D405, the Tool
+discard (5) blocked by D406 four times over, copy-an-attack (4, family 6/13) needing a mechanism that
+does not exist. **THE CHEAPEST REAL WIN WAS NOT IN THAT RANKING AT ALL.** It was found by a
+one-word-deletion sweep over the whole residue: delete *"more"* and an existing reader claims the
+sentence. D413 is the largest hit in that sweep.
+
+⚠️ **D410's handoff figure of 226/360 is wrong** — off by one sentence and one printing. D408's
+232/372 reproduces exactly; stepping it through D409/D410/D412 gives 223/354, which is what the live
+rungs confirm. Do not step 226/360.
+
+### The refusal, and why collecting it is not reversing it
+
+`multiCoinFlip.test.ts` asserted `toBe(null)` and said exactly why: *"the family's ONLY unmapped
+printed-count additive fold: **ONE printing**, so D121's warrant for a shape (two printings with one
+token varying) is not met, and a shape built for a single card would be a row wearing a regex."*
+
+🛑 **THAT WAS MEASURED ON THE LOCAL 978-CARD / 6-SET POOL**, where Melmetal `swsh10.5-046` (`90 more`)
+is the only printing — **and Melmetal is not in the `legal_standard = 1` column at all.** The column
+prints TWO sentences varying exactly one token (`per` ∈ {30, 50}, `flips` fixed at 2) over five
+printings. **The warrant is met on the population the engine is actually built against, so the
+trigger the refusal itself named has fired.** The refusal text is kept in the file in full rather than
+deleted: what a claim was warranted by is the part that rots (D178).
+
+### Zero new vocabulary — and why that still needed a board
+
+`bonusOnHeads` has carried `flips: AttackFlipCount` since D129; `AttackFlipCount` has carried
+`{ kind: "printed"; count }` since D127. The pair `bonusOnHeads × printed` was **already
+representable, already persistable, and produced by nothing** — the additive member was only ever
+reached with `count: 1` or `untilTails`. That is D405's rule (*a new COMBINATION of a shipped
+vocabulary is not a new shape*) and it is why nothing persisted moves.
+
+⚠️ **BUT "ALREADY REPRESENTABLE" IS A CLAIM ABOUT A LINE NOTHING HAD EXECUTED.** So the fold is driven
+rather than inferred: a **24-seed sweep** on a `20+` body reaching all three outcomes, with the
+multiplicative misreading asserted ABSENT at each — **20/50/80 against 0/30/60, disjoint at every
+outcome**, including the zero-heads one that no seed can fake.
+
+### What the guards actually pin
+
+- **The two anchors are disjoint BY CONSTRUCTION, and it is asserted rather than ordered.**
+  `(\d+) damage` cannot span *"30 more damage"*; both are `^…$`, so nothing backtracks. Either arm
+  could be written first. Mutant C2 is what makes that falsifiable instead of decorative.
+- **The one-word claim, from both sides**: the same sentence with and without *"more"* must resolve to
+  DIFFERENT members, because additive KEEPS the printed base and multiplicative DROPS it.
+- **The count is read from the sentence**, not hard-coded to the 2 every printing carries — the token
+  that varies is `per` and the invariant one is `flips`, and hard-coding the invariant turns a reader
+  into a row wearing a regex. ⚠️ Mutant C3 named that guard *before it existed*; the guard was written
+  rather than the claim softened.
+- **Two live refusal rungs went red BY NAME and were re-pointed rather than relaxed.**
+  `coinFlipDamage.test.ts`'s claim was never *"nothing reads it"* — it was *"`^Flip a coin\.` does not
+  swallow a TWO-coin sentence"*, now asserted POSITIVELY as `count: 2`. **Strictly stronger than the
+  null it replaced**: a null goes green the day the whole family stops resolving; `count: 2` does not.
+
+✅ **The one fact this container cannot measure was answered from the tree.** Whether these printings
+carry `"+"` or `"×"` decides additive-vs-multiplicative, and there are no D1 credentials here (D369).
+D129 had already recorded it: *"Melmetal swsh10.5-046 (base '30+')"*.
+
+### ⚠️ The fixture got its own deck — D412's lesson, paid back one slice later
+
+The obvious move was a slot in `MULTI_COIN_FLIP_DECK`. That deck is swept over **24 seeds**, and its
+own doc block explains that `fix-bigbody` is 40 of its 60 cards precisely to keep every one of them
+mulligan-free. D412 had just reddened three of D409's boards by adding one card to a shared deck.
+`COIN_BONUS_DECK` costs one export and disturbs nothing.
+
+### 🆕 The census shape is the INVERSE of the last four slices
+
+D409–D412 all moved `COMPOUND_ATTACK_UNITS` while `rawHead` stood still, because their clauses print
+standalone on zero cards. **D413's sentences do print standalone, so it moves RAW while the compound
+and split terms hold** — and it is the first slice since D408 to move `censusAtHead`'s bare `385`
+operand. Raw 403 → **405** / 1347 → **1352**; `BUILT.attack` 1394 → **1399**; residue 584 → **579**;
+`unbuiltAttack` 338 → **333**. `splitHead` **13**, `compoundHead` **18**, `REGISTRY_ATTACK_UNITS`
+**16** all held — verified, not assumed.
+
+**4 mutants / 4 killed / 0 GAPs on the first run**; corpus 1487 → **1491**. `bun run check` **415
+files / 8,776 tests, `CHECK_EXIT=0`** (+0 files / +5 cases).
+
 ## D412 — THE SELF-SIDE RETREAT LOCK: the slice is the CLOCK, not the `target` field (engine 0.316.0, `MATCH_RECORD_VERSION` **25 → 26**)
 
 *"During your next turn, this Pokémon can't retreat."* — **2 sentences / 3 legal printings**, the

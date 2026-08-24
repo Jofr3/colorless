@@ -490,14 +490,24 @@ describe("the rest of the coin family stays LOUD", () => {
       // Magikarp sv02-042 (+ its sv02-203 reprint) — TWO coins gating D126's own
       // consequent, and the closest live near-miss this slice has.
       "Flip 2 coins. If both of them are heads, this attack does 20 more damage.",
-      // Melmetal swsh10.5-046 — TWO coins, folded per heads.
-      "Flip 2 coins. This attack does 90 more damage for each heads.",
       // Bisharp sv03-149 — THREE coins with a stepped payout table.
       "Flip 3 coins. If 1 of them is heads, this attack does 20 more damage. If 2 of them are heads, this attack does 60 more damage. If all of them are heads, this attack does 120 more damage.",
     ]) {
       expect(deriveAttackCoinFlip(text)).toBeNull();
       expect(text.startsWith("Flip a coin. ")).toBe(false); // the opening sentence differs
     }
+    // 🆕🆕 D413 — MELMETAL swsh10.5-046 LEFT THAT LIST, AND IT IS RE-POINTED RATHER
+    // THAN DELETED, BECAUSE THE CLAIM IT WAS MAKING IS STILL THE ONE THAT MATTERS.
+    // Its sentence used to be refused by everything; D413 maps it. What this rung
+    // asserted was never "nothing reads it" — it was **`^Flip a coin\.` does not
+    // swallow a TWO-coin sentence**, and asserting that POSITIVELY is strictly
+    // stronger than asserting a null: a null goes green the day the whole family
+    // stops resolving, and `count: 2` does not. If the single-flip literal were ever
+    // loosened, this reads back `count: 1` and pays out on one head where the card
+    // demands two — the exact defect the paragraph above describes.
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. This attack does 90 more damage for each heads."),
+    ).toEqual({ kind: "bonusOnHeads", flips: { kind: "printed", count: 2 }, per: 90 });
     // Magikarp's tail really IS this slice's consequent, so the null above is the
     // OPENING doing the work and not the consequent.
     expect(

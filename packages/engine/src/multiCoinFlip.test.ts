@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
@@ -11,6 +12,7 @@ import {
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
 import { flipCoin } from "./rng";
 import {
+  COIN_BONUS_DECK,
   COIN_FLIP_DECK,
   FIXTURE_POOL,
   MULTI_COIN_FLIP_DECK,
@@ -529,15 +531,54 @@ describe("the rest of the flip family — what stays LOUD, and the one shape D12
     // is now read by a different arm instead of by nothing at all.
     //
     // Melmetal swsh10.5-046 (base "30+") — TWO coins, the same count as Tandemaus,
-    // and the only thing separating the two sentences is the word "more". D129 left
-    // it exactly where it was, and it is now the family's ONLY unmapped
-    // printed-count additive fold: ONE printing, so D121's warrant for a shape (two
-    // printings with one token varying) is not met, and a shape built for a single
-    // card would be a row wearing a regex. That is why it is still REFUSED rather
-    // than mapped — not because the arithmetic is hard, but because nothing yet says
-    // what varies.
+    // and the only thing separating the two sentences is the word "more".
+    //
+    // 🆕🆕 D413 — **THIS RUNG USED TO ASSERT `toBe(null)`, AND ITS REASON HAS
+    // EXPIRED RATHER THAN BEEN OVERRULED.** What stood here was: *"it is now the
+    // family's ONLY unmapped printed-count additive fold: ONE printing, so D121's
+    // warrant for a shape (two printings with one token varying) is not met, and a
+    // shape built for a single card would be a row wearing a regex."* That was
+    // measured on the LOCAL 978-card / 6-set pool, where Melmetal is the only
+    // printing — and Melmetal is **not in the `legal_standard = 1` column at all**.
+    // The column prints TWO sentences varying exactly one token, `per` ∈ {30, 50}
+    // with `flips` fixed at 2, over **5 printings**. D121's warrant is met on the
+    // population the engine is built against, so the trigger the refusal named has
+    // fired. **The refusal was CORRECT WHEN WRITTEN and is kept here in full rather
+    // than deleted, because what it was warranted by is the part that rots.**
+    //
+    // ⚠️ THE ONE-WORD CLAIM IS WHAT SURVIVES, AND IT IS ASSERTED FROM BOTH SIDES
+    // NOW. The two sentences differ in the single word "more", and they must resolve
+    // to DIFFERENT members — additive keeps the printed base ("30+"), multiplicative
+    // drops it. A regex that let either arm swallow the other's sentence scores the
+    // card wrong on every outcome, and a bare `toBe(null)` could never have caught
+    // that; a member comparison does.
     const melmetal = "Flip 2 coins. This attack does 90 more damage for each heads.";
-    expect(deriveAttackCoinFlip(melmetal)).toBe(null);
+    expect(deriveAttackCoinFlip(melmetal)).toEqual({
+      kind: "bonusOnHeads",
+      flips: { kind: "printed", count: 2 },
+      per: 90,
+    });
+    // …and the ONE WORD is the whole difference: drop "more" and the same sentence
+    // resolves to the OTHER member, with the same flips and the same per.
+    expect(deriveAttackCoinFlip(melmetal.replace(" more", ""))).toEqual({
+      kind: "perHeads",
+      flips: { kind: "printed", count: 2 },
+      per: 90,
+    });
+    // 🛑 AND THE TWO LEGAL PRINTINGS THE SLICE IS ACTUALLY FOR — asserted by their
+    // own bytes rather than through Melmetal, which the legal column does not print.
+    // `per` is the token that varies and `flips` is the one that does not; that pair
+    // IS D121's warrant, so the shape is pinned to the population that earned it.
+    for (const [text, per] of [
+      ["Flip 2 coins. This attack does 30 more damage for each heads.", 30],
+      ["Flip 2 coins. This attack does 50 more damage for each heads.", 50],
+    ] as const) {
+      expect(deriveAttackCoinFlip(text)).toEqual({
+        kind: "bonusOnHeads",
+        flips: { kind: "printed", count: 2 },
+        per,
+      });
+    }
     // Bouffalant sv03-174 (base "50+") — "more" AND an unbounded opening. It stood
     // here as the second refusal until D129 built the unbounded arm, and it is
     // asserted POSITIVELY now rather than dropped: the witness is what says which
@@ -1222,5 +1263,144 @@ describe("purity", () => {
       flips: { kind: "printed", count: 3 },
       per: 20,
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 D413 — THE ADDITIVE MULTI-COIN FOLD, DRIVEN
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 🛑 THE DERIVER ASSERTION ABOVE IS ONLY HALF THE CLAIM, AND THIS IS THE OTHER
+// HALF. `bonusOnHeads × { kind: "printed", count }` was ALREADY REPRESENTABLE and
+// already persistable — D129 gave `bonusOnHeads` its `flips` field and D127 gave
+// `AttackFlipCount` its printed count — but **nothing in the engine had ever
+// produced that pair**: the additive member was only ever reached with `count: 1`
+// or `untilTails`. So the fold code path is inherited rather than new, and
+// "inherited" is a claim about a line nothing had executed. These boards execute it.
+//
+// ⚠️ THE SEPARATION IS THE PRINTED BASE, AND IT IS DISJOINT AT EVERY OUTCOME.
+// `bonusOnHeads` KEEPS the printed base; `perHeads` DROPS it. On a `20+` body with
+// `per: 30` that is 20 / 50 / 80 against 0 / 30 / 60 — no outcome coincides,
+// including the zero-heads one, which is the one no seed can fake.
+describe("🆕🆕 D413 — the ADDITIVE printed-count fold, on real seeds", () => {
+  /** P1's turn 2 with the additive attacker fielded and its {C}{C} paid. Modelled
+      on `board`/`tandemausActive` above, against D413's own deck so this suite's
+      24-seed sweeps are untouched. */
+  function bonusBoard(seed: number): GameState {
+    const state = driveSetup(
+      seed,
+      { p1: COIN_BONUS_DECK, p2: COIN_BONUS_DECK },
+      { first: "p2", active: { p1: "fix-bigbody", p2: "fix-bigbody" } },
+    );
+    const opened = mustApply(state, { type: "endTurn", seat: "p2" }).state;
+    return attachFromDeck(
+      setActiveFromDeck(opened, "p1", "fix-coinbonus"),
+      "p1",
+      "fix-energy",
+      2,
+    );
+  }
+
+  it("keeps the printed base and adds per heads — swept, every outcome reached", () => {
+    const seen = new Set<number>();
+    for (let seed = 0; seed < SEEDS; seed++) {
+      const { state: done, events } = mustApply(bonusBoard(seed), {
+        type: "attack",
+        seat: "p1",
+        index: 0,
+      });
+      // EXACTLY TWO flips — the printed count, read from the sentence and not from
+      // the board or the faces.
+      const flips = all(events, "ATTACK_EFFECT_COIN_FLIP");
+      expect(flips).toHaveLength(2);
+      for (const flip of flips) expect(flip.seat).toBe("p1"); // the ATTACKER flips
+      const heads = headsIn(events);
+      seen.add(heads);
+      // 20 + 30 × heads — the base KEPT, which is the whole difference from the
+      // shipped `30×` twin one word away.
+      expect(activeDamage(done, "p2")).toBe(20 + 30 * heads);
+      // …and the multiplicative misreading is absent at every outcome, asserted
+      // rather than implied. It is the mutant, and on 0 heads it reads 0.
+      expect(activeDamage(done, "p2")).not.toBe(30 * heads);
+      expect(types(events)).not.toContain("KNOCKED_OUT");
+    }
+    // THE SWEEP REACHED EVERY OUTCOME — asserted, not assumed.
+    expect([...seen].sort()).toEqual([0, 1, 2]);
+  });
+
+  it("the 50 twin is the same program on the one token D121's warrant is about", () => {
+    // The pair differs in `per` and in nothing else — same cost, same base, same
+    // flip count — so a board that credited the fold to the wrong scalar disagrees
+    // here. 20 + 50 × heads = 20 / 70 / 120, all under the defender's 200 HP.
+    const seen = new Set<number>();
+    for (let seed = 0; seed < SEEDS; seed++) {
+      const { state: done, events } = mustApply(bonusBoard(seed), {
+        type: "attack",
+        seat: "p1",
+        index: 1,
+      });
+      const heads = headsIn(events);
+      seen.add(heads);
+      expect(activeDamage(done, "p2")).toBe(20 + 50 * heads);
+      expect(types(events)).not.toContain("KNOCKED_OUT");
+    }
+    expect([...seen].sort()).toEqual([0, 1, 2]);
+  });
+
+  it("the fixture prints the legal column's bytes verbatim, at the indices named", () => {
+    // The population guard. Both sentences are transcribed off `legalAttackCorpus()`
+    // rather than paraphrased (D183), and the printed base is pinned because the
+    // whole separation above rests on it.
+    const card = FIXTURE_POOL["fix-coinbonus"];
+    expect(card?.attacks).toHaveLength(2);
+    expect(card?.attacks?.[0]?.effect).toBe(
+      "Flip 2 coins. This attack does 30 more damage for each heads.",
+    );
+    expect(card?.attacks?.[1]?.effect).toBe(
+      "Flip 2 coins. This attack does 50 more damage for each heads.",
+    );
+    for (const attack of card?.attacks ?? []) expect(attack.damage).toBe("20+");
+  });
+
+  it("reads the COUNT from the sentence, and keeps its twin's two guards", () => {
+    // 🛑 THE TOKEN THAT VARIES IS `per` AND THE ONE THAT DOES NOT IS `flips` — every
+    // printing in the pool says "Flip 2 coins" — so a build that HARD-CODED 2 would
+    // agree with the whole population and with every census rung. That is the shape
+    // D121's warrant is about, and hard-coding the invariant token turns a reader
+    // into a row wearing a regex. Driven off the population on purpose: the claim
+    // is about the READER, not about a card.
+    expect(
+      deriveAttackCoinFlip("Flip 3 coins. This attack does 30 more damage for each heads."),
+    ).toEqual({ kind: "bonusOnHeads", flips: { kind: "printed", count: 3 }, per: 30 });
+
+    // …and both of the twin's guards, which this arm carries for the twin's reasons.
+    // PLURAL: "Flip 1 coins." is not English and not in the pool; the one-flip form
+    // is printed "Flip a coin." and read two patterns up, so admitting it here would
+    // silently overlap that arm.
+    expect(
+      deriveAttackCoinFlip("Flip 1 coins. This attack does 30 more damage for each heads."),
+    ).toBeNull();
+    // `per >= 1`: a printed 0 would spend a flip — and an `rngState` step — to add
+    // nothing. No card prints it; the guard is what keeps that a fact about the pool
+    // rather than an assumption.
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. This attack does 0 more damage for each heads."),
+    ).toBeNull();
+  });
+
+  it("🛑 both sentences are in the legal column, and they are its WHOLE population", () => {
+    // 🛑 D121's WARRANT, ASSERTED AGAINST THE POPULATION RATHER THAN CLAIMED IN
+    // PROSE — this is the rung that would have gone RED before D413 and the one that
+    // records why the earlier refusal expired. Two sentences, five printings, one
+    // varying token. If a re-ingest ever collapsed them to one, the shape loses its
+    // warrant and this says so.
+    const rows = legalAttackCorpus().filter(([, sentence]) =>
+      /^Flip \d+ coins\. This attack does \d+ more damage for each heads\.$/.test(sentence),
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows.reduce((sum, [n]) => sum + n, 0)).toBe(5);
+    // …and every one of them resolves, which is the claim the census summand makes
+    // one file over.
+    for (const [, sentence] of rows) expect(deriveAttackCoinFlip(sentence)).not.toBeNull();
   });
 });

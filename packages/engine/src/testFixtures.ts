@@ -2578,6 +2578,43 @@ export const FIXTURE_POOL: Record<string, Card> = {
       no-KO path (the plain §5.3 turn end) can be pinned separately from its KO
       path. fix-wall's 120 HP is exactly lethal to it, which is the trap. */
   "fix-bigbody": battler("fix-bigbody", { hp: 200 }),
+  /** FIXTURE — 🆕🆕 D413's ADDITIVE MULTI-COIN ATTACKER. Both printed sentences of
+      the family on one body, at indices 0 and 1, differing in exactly the token
+      D121's warrant is about (`per` ∈ {30, 50}) and in nothing else — same cost,
+      same printed base, same flip count. Two fixtures would have varied the HP and
+      the cost as well, and either could carry a difference the assertion would then
+      credit to `per`.
+
+      🛑 **THE PRINTED BASE IS `20+` AND IT IS THE WHOLE POINT.** `bonusOnHeads`
+      KEEPS the printed base and adds on top; `perHeads` DROPS it. So this board
+      reads 20 / 50 / 80 additively and 0 / 30 / 60 under a multiplicative misread —
+      **disjoint at every one of the three outcomes**, including the zero-heads one
+      that no seed can fake. Tandemaus (`sv01-160`, `30×`) is the shipped
+      multiplicative twin one word away, and `multiCoinFlip.test.ts` pins the pair.
+
+      ⚠️ A `fix-*` BODY RATHER THAN A REAL ID, AND THE REASON IS THAT THE LEGAL
+      COLUMN'S TWO PRINTINGS CANNOT BE NAMED HERE. This container has no D1
+      credentials (D369), so a real card id would be a guess; the SENTENCES are
+      transcribed byte-for-byte off `legalAttackCorpus()` and every scalar around
+      them — the HP, the cost, the base — is CHOSEN. 200 HP keeps every outcome of
+      both attacks under a Knock Out, so no case here is ever about one. */
+  "fix-coinbonus": battler("fix-coinbonus", {
+    hp: 200,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Twin Strike",
+        damage: "20+",
+        effect: "Flip 2 coins. This attack does 30 more damage for each heads.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Twin Crush",
+        damage: "20+",
+        effect: "Flip 2 coins. This attack does 50 more damage for each heads.",
+      },
+    ],
+  }),
   /** FIXTURE — the "Discard all Energy from this Pokémon." arm on a BASIC body.
       Every real print of that sentence is an evolution (Pawmot Stage 2, Raichu
       Stage 1), and the arm has no decision to test, so the board case runs on a
@@ -16184,6 +16221,28 @@ export const MULTI_COIN_FLIP_DECK = deckOf({
   "fix-energy": 8, // Basic {C} — pays both attacks' two generic symbols
   "fix-colorless-weak-big": 4, // 200 HP, ×2 COLORLESS — the pre-Weakness fold defender
   "fix-bigbody": 40, // 200 HP neutral Colorless Basic — DOMINANT pinned starter and the neutral defender
+});
+
+/** 0.316.0 → 0.317.0: 🆕🆕 D413's ADDITIVE multi-coin fold — "Flip 2 coins. This
+    attack does {30|50} more damage for each heads.", 2 sentences / 5 printings.
+
+    🛑 **ITS OWN DECK RATHER THAN A SLOT IN `MULTI_COIN_FLIP_DECK`, AND THAT IS A
+    MEASURED CHOICE.** The obvious move is to drop the new attacker into the
+    existing multi-coin deck beside Tandemaus. That deck is swept over 24 SEEDS, and
+    its own doc block explains that `fix-bigbody` is 40 of its 60 cards precisely to
+    keep every one of those seeds mulligan-free — so changing its composition moves
+    every shuffle underneath a sweep whose whole job is to reach all three outcomes.
+    D412 paid exactly that price one slice ago (one card added to
+    `COMPOUND_COMPOSE_DECK` reddened three of D409's boards), and conventions.md now
+    carries the rule. A new deck costs one export and disturbs nothing.
+
+    `fix-coinbonus` is the attacker (both sentences, indices 0 and 1);
+    `fix-bigbody` is the neutral 200 HP defender AND the dominant mulligan-free
+    starter both Active spots pin over, exactly as the multi-coin deck uses it. */
+export const COIN_BONUS_DECK = deckOf({
+  "fix-coinbonus": 4, // both printed sentences, indices 0 and 1, base "20+"
+  "fix-energy": 12, // Basic {C} — pays both attacks' two generic symbols
+  "fix-bigbody": 44, // 200 HP neutral Basic — DOMINANT pinned starter and the defender
 });
 
 /** 0.78.0 → 0.79.0: the BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each

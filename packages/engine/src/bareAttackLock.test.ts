@@ -511,7 +511,7 @@ describe("§6 — the persisted question, asked and DRIVEN", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.316.0");
+    expect(engineVersion).toBe("0.317.0");
   });
 });
 

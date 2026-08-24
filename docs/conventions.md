@@ -139,6 +139,22 @@ the trend improved.
 
 ## Pricing a slice
 
+- 🛑 **A REFUSAL CARRIES ITS OWN EXPIRY DATE IF IT SAYS WHAT IT IS WAITING FOR — SO GO BACK AND
+  CHECK THE TRIGGER (D413).** A sentence was refused because D121's warrant needs *two printings with
+  one token varying* and the pool had one. The refusal was correct and it named the exact condition
+  that would overturn it. **That condition had been true for a long time and nobody looked** — because
+  the refusal was measured on the LOCAL 978-card pool while the engine is built against the
+  `legal_standard = 1` column. *Two populations, two answers*, biting a REFUSAL instead of a census.
+  Collecting it cost one regex and one arm and bought 5 printings.
+  ⚠️ `grep -rn "REFUSED\|toBeNull\|toBe(null)" packages/engine/src/*.test.ts`, then re-read each
+  reason against **today's** population and **the population the engine actually runs on**.
+- ⚠️ **THE BIGGEST BUILDABLE THING IS OFTEN NOT AT THE TOP OF THE RESIDUE RANKING.** Ranking unbuilt
+  sentences by printings surfaces the expensive ones — they are unbuilt *because* they are expensive.
+  D413 was found instead by a **one-word-deletion sweep** over the whole residue: delete a token and
+  ask whether an existing reader claims the result. Cheap to run, and it names near-misses that no
+  size ranking can see.
+
+
 - **Establishing a true price is a full result, and refusing to build is a valid
   outcome.** Two "large" items collapsed on contact: D186's 78-printing gate is
   **12** buildable; D200's 80-printing filter yields **6**. D193 built

@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.316.0";',
+    find: 'export const engineVersion = "0.317.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -17528,5 +17528,47 @@ export const MUTANTS: Mutant[] = [
     find: "    !retreatLocked(game, active) &&",
     replace: "    !active.retreatBlocked &&",
     expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
+  },
+
+  // ── D413 · the additive multi-coin fold ────────────────────────────────────
+  // 🛑 C1 AND C2 ARE THE SLICE, AND THEY ARE THE SAME DEFECT FROM TWO SIDES: the
+  //    additive and multiplicative readings differ in ONE printed word and in whether
+  //    the printed base survives. C1 breaks the result, C2 breaks the anchor, and
+  //    NEITHER moves a census figure — the sentence resolves either way.
+  {
+    id: "D413-additive-arm-becomes-the-multiplicative-one",
+    decision: "D413",
+    what: "🛑 C1 — THE MEMBER FLIPS: `bonusOnHeads` becomes `perHeads`, which is the arm DIRECTLY ABOVE this one copied verbatim — same regex shape, same two guards, same `flips`/`per` payload, differing in one identifier. **THE PRINTED BASE IS THEN DROPPED**, so a `20+` body reads 0 / 30 / 60 where the card says 20 / 50 / 80. ⚠️ **IT IS INVISIBLE TO EVERY DERIVER-SHAPED ASSERTION THAT ONLY ASKS FOR NON-NULL, AND TO EVERY CENSUS RUNG** — the sentence still resolves and still counts as BUILT — so only a board that reads the DAMAGE separates them; `multiCoinFlip.test.ts`'s D413 sweep does, at all three outcomes including the zero-heads one no seed can fake",
+    file: "packages/engine/src/effects.ts",
+    find: "      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }",
+    replace: "      ? { kind: \"perHeads\", flips: { kind: \"printed\", count: flips }, per }",
+    expectKilledBy: ["packages/engine/src/multiCoinFlip.test.ts"],
+  },
+  {
+    id: "D413-additive-anchor-loses-the-one-word",
+    decision: "D413",
+    what: "🛑 C2 — THE ANCHOR DROPS `more`, WHICH MAKES IT ITS OWN TWIN's REGEX BYTE FOR BYTE. **THE TWO SENTENCES DIFFER IN EXACTLY THAT WORD** and must resolve to DIFFERENT members (additive keeps the printed base, multiplicative drops it), so a widened anchor that claimed both would score five printings wrong on every outcome. ⚠️ Which arm wins then depends on ORDER rather than on the text, and the doc block above this anchor asserts the two are disjoint BY CONSTRUCTION — this row is what makes that assertion falsifiable instead of decorative",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_MULTI_BONUS =\n  /^Flip (\\d+) coins\\. This attack does (\\d+) more damage for each heads\\.$/;",
+    replace: "const ATTACK_COIN_MULTI_BONUS =\n  /^Flip (\\d+) coins\\. This attack does (\\d+) damage for each heads\\.$/;",
+    expectKilledBy: ["packages/engine/src/multiCoinFlip.test.ts"],
+  },
+  {
+    id: "D413-additive-flip-count-hardcodes-the-printed-two",
+    decision: "D413",
+    what: "🛑 C3 — THE FLIP COUNT IS HARD-CODED TO THE 2 BOTH LEGAL PRINTINGS HAPPEN TO CARRY, instead of being read from the sentence. **EVERY BOARD IN THE POOL AGREES** — the whole population is `Flip 2 coins` — so no census rung and no printed board can tell the two builds apart, and the sentence still resolves. It is the shape D121's warrant is about (the token that varies is `per`, the one that does not is `flips`), and hard-coding the invariant one turns a READER into a row wearing a regex. `multiCoinFlip.test.ts` drives a 3-coin string through the arm to separate them",
+    file: "packages/engine/src/effects.ts",
+    find: "      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }\n      : null;",
+    replace: "      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: 2 }, per }\n      : null;",
+    expectKilledBy: ["packages/engine/src/multiCoinFlip.test.ts"],
+  },
+  {
+    id: "D413-additive-arm-loses-its-plural-guard",
+    decision: "D413",
+    what: "🛑 C4 — `flips >= 2` IS DELETED, so \"Flip 1 coins. …\" resolves as a one-flip fold. The regex's own noun is PLURAL and the one-flip sentence is printed \"Flip a coin.\" and read by a different arm, so admitting a singular-count string means accepting text no card prints AND silently overlapping the arm two patterns up. Its twin one arm above carries the identical guard for the identical reason — **the two arms differ in one word of the sentence and one member of the result, and anywhere else they diverge is a bug**",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1\n      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }",
+    replace: "    return flips <= MAX_PRINTED_FLIPS && per >= 1\n      ? { kind: \"bonusOnHeads\", flips: { kind: \"printed\", count: flips }, per }",
+    expectKilledBy: ["packages/engine/src/multiCoinFlip.test.ts"],
   },
 ];

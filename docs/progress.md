@@ -3,11 +3,13 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-24 — build session #352 (**P3-M5 — D412, *the self-side retreat lock — and the slice is the CLOCK, not the `target` field its resume point named.*** Engine **0.315.0 → 0.316.0**; 🛑 **`MATCH_RECORD_VERSION` 25 → 26 — the FIRST *yes* in twenty-six slices.** 2 sentences / 3 legal printings, both the TAIL of a *"Heal {N} damage from this Pokémon."* compound, reached through D409's splitter with **zero `attack.ts` change**. 🛑 **D410 PRICED IT AS *"give the op a `target`"*, WHICH SHIPS A PROGRAM THAT RESOLVES AND DOES NOTHING** — `retreatBlocked` rides the paralysis clock, flow.ts clears it for `endedSeat`, an attack ends the installer's turn, so a self-installed flag lifts before its window opens. **The refutation was already in the tree in two comments and neither had been read.** So: `target` on the op **and** a new turn STAMP (`retreatLockedTurn`, `state.turn + 2`, expiring by arithmetic). A SECOND field rather than converting the boolean — D143's precedent, and the conversion was PRICED (1 producer, 1 log arm, 6 assertions, 0 schema) and DEFERRED rather than ridden in on a feature slice. Two fields, one question → D222's remedy: one reader (`retreatLocked`) that the §11 gate, the wire and the HUD all route through. 🛑 **AND THE THIRD READ SITE WAS ALREADY WRONG — A LIVE DEFECT FOUND BY GREP, NOT BY A RED TEST**: `GameHud.tsx` still spelled the field by hand, so a self-locked body would have been offered a Retreat button the engine rejects. ⚠️ Corrections: the third §10 clear is in `evolveOnto` (types.ts), **not** `placeEvolution` — D411's own resume point inherited that wrong; and a one-card fixture-deck edit reddened THREE of D409's boards, so the §10 assertion was re-homed into the existing three-route sweep. **8 mutants / 8 killed / 0 GAPs**, corpus 1479 → **1487**. `bun run check` **415 files / 8,771 tests, `CHECK_EXIT=0`** (+0 files / +10 cases).)
+**Last updated:** 2026-08-24 — build session #353 (**P3-M5 — D413, *the additive multi-coin fold — a refusal COLLECTED rather than re-litigated, and the first slice in four that moves the RAW summand.*** Engine **0.316.0 → 0.317.0**; **`MATCH_RECORD_VERSION` STAYS 26** — zero new ops, fields, readers or `attack.ts` change. *"Flip 2 coins. This attack does {30|50} more damage for each heads."* — **2 sentences / 5 printings**, bought with ONE regex and ONE arm. 🛑 **IT WAS REFUSED BY NAME AND THE REFUSAL'S PREMISE EXPIRED**: `multiCoinFlip.test.ts` said D121's warrant (two printings, one varying token) was unmet at ONE printing — measured on the LOCAL 978-card pool, where the only printing is Melmetal, **which the `legal_standard = 1` column does not contain at all**. The column prints two sentences varying exactly one token over five printings, so the trigger the refusal itself named has fired. The refusal is KEPT in full rather than deleted. **ZERO NEW VOCABULARY** — `bonusOnHeads × printed count` was already representable and produced by nothing (D405's rule) — but *"already representable"* is a claim about a line nothing had executed, so the fold is DRIVEN on 24 real seeds, additive 20/50/80 against multiplicative 0/30/60, **disjoint at every outcome**. Two live refusal rungs went red BY NAME and were **re-pointed rather than relaxed** — one of them now asserts `count: 2` POSITIVELY, which is strictly stronger than the null it replaced. ⚠️ The new fixture got **its own deck**: D412 had just reddened three of D409's boards by adding one card to a shared one. 🆕 **THE INVERSE CENSUS SHAPE OF THE LAST FOUR SLICES** — D409–D412 moved the COMPOUND summand while raw stood still; D413 moves **RAW** while compound and split hold, and is the first since D408 to move the bare `385` operand. **4 mutants / 4 killed / 0 GAPs**, corpus 1487 → **1491**. `bun run check` **415 files / 8,776 tests, `CHECK_EXIT=0`** (+0 files / +5 cases).)
 
-**Last updated (was):** 2026-08-24 — build session #351 (**P3-M5 — D411, *the journal liveness gate — the slice that names the writer D410's sweep could not, because it was this session's own recovery command.*** **NO ENGINE CHANGE: engine STAYS 0.315.0, `MATCH_RECORD_VERSION` STAYS 25**, zero ops/fields/readers/registry rows. `recoverFromJournal()` conflated *a journal exists* with *a run died* — but the journal is written before every file change and cleared only at restore, so it is present for the WHOLE of a healthy run. Recovering from a LIVE run's journal restores its mutant out from under it, DELETES its last `kill -9` net, and leaves the row reporting CLOBBER against a phantom process. 🛑 **THAT IS EXACTLY WHAT PRODUCED D410's ONE CLOBBER**, 78 minutes into the 89-minute sweep, and D410's row recording the writer as UNKNOWN is now superseded: it was `bun run mutants` with no arguments, run by this session on a journal it read as wreckage, following the harness's own documented advice. ⚠️ **D369 FOUND THIS CLASS AND FIXED THE INSTANCE** — it moved `--list` ahead of the recovery and left every WRITING invocation walking in. Fix: `pidIsAlive()` via `process.kill(pid, 0)`, refuse on a live pid, **exit 3** kept distinct from the **2** that means a dead run was recovered. Guard: `scripts/mutation/recovery-gate.ts` (D212's `killedByCommand` precedent, only the second row in the corpus to use it), THREE rungs — refuse-when-live, still-recover-when-dead (the attribution control that kills the always-refuse vacuity mutant), and refuse-a-FOREIGN-owned pid. 🛑 **THE THIRD RUNG WAS BOUGHT BY A SURVIVOR**: `process.kill` throws for two opposite reasons (`ESRCH` gone, `EPERM` alive-not-yours) and both first rungs only exercised the same-user path, so collapsing the `catch` passed both — made REACHABLE via pid 1 rather than declared `unreachable-population`. **4 mutants / 4 killed / 0 GAPs** (3/1 before the repair); corpus 1475 → **1479**, precheck clean. `bun run check` **415 files / 8,761 tests, `CHECK_EXIT=0`** — **+0/+0, IDENTICAL TO D410's HEAD**, which retires this session's own earlier *"HEAD is RED"* reading: that check had RACED THE LIVE SWEEP and caught `D378-presence-keeps-the-owner-test` mid-window.)
+**Last updated (was):** 2026-08-24 — build session #352 (**P3-M5 — D412, *the self-side retreat lock — and the slice is the CLOCK, not the `target` field its resume point named.*** Engine **0.315.0 → 0.316.0**; 🛑 **`MATCH_RECORD_VERSION` 25 → 26 — the FIRST *yes* in twenty-six slices.** 2 sentences / 3 legal printings, both the TAIL of a *"Heal {N} damage from this Pokémon."* compound, reached through D409's splitter with **zero `attack.ts` change**. 🛑 **D410 PRICED IT AS *"give the op a `target`"*, WHICH SHIPS A PROGRAM THAT RESOLVES AND DOES NOTHING** — `retreatBlocked` rides the paralysis clock, flow.ts clears it for `endedSeat`, an attack ends the installer's turn, so a self-installed flag lifts before its window opens. **The refutation was already in the tree in two comments and neither had been read.** So: `target` on the op **and** a new turn STAMP (`retreatLockedTurn`, `state.turn + 2`, expiring by arithmetic). A SECOND field rather than converting the boolean — D143's precedent, and the conversion was PRICED (1 producer, 1 log arm, 6 assertions, 0 schema) and DEFERRED rather than ridden in on a feature slice. Two fields, one question → D222's remedy: one reader (`retreatLocked`) that the §11 gate, the wire and the HUD all route through. 🛑 **AND THE THIRD READ SITE WAS ALREADY WRONG — A LIVE DEFECT FOUND BY GREP, NOT BY A RED TEST**: `GameHud.tsx` still spelled the field by hand, so a self-locked body would have been offered a Retreat button the engine rejects. ⚠️ Corrections: the third §10 clear is in `evolveOnto` (types.ts), **not** `placeEvolution` — D411's own resume point inherited that wrong; and a one-card fixture-deck edit reddened THREE of D409's boards, so the §10 assertion was re-homed into the existing three-route sweep. **8 mutants / 8 killed / 0 GAPs**, corpus 1479 → **1487**. `bun run check` **415 files / 8,771 tests, `CHECK_EXIT=0`** (+0 files / +10 cases).)
 
 <!-- prior stamp -->
+
+**Prior stamp (was):** 2026-08-24 — build session #351 (**P3-M5 — D411, *the journal liveness gate — the slice that names the writer D410's sweep could not, because it was this session's own recovery command.*** **NO ENGINE CHANGE: engine STAYS 0.315.0, `MATCH_RECORD_VERSION` STAYS 25**, zero ops/fields/readers/registry rows. `recoverFromJournal()` conflated *a journal exists* with *a run died* — but the journal is written before every file change and cleared only at restore, so it is present for the WHOLE of a healthy run. Recovering from a LIVE run's journal restores its mutant out from under it, DELETES its last `kill -9` net, and leaves the row reporting CLOBBER against a phantom process. 🛑 **THAT IS EXACTLY WHAT PRODUCED D410's ONE CLOBBER**, 78 minutes into the 89-minute sweep, and D410's row recording the writer as UNKNOWN is now superseded: it was `bun run mutants` with no arguments, run by this session on a journal it read as wreckage, following the harness's own documented advice. ⚠️ **D369 FOUND THIS CLASS AND FIXED THE INSTANCE** — it moved `--list` ahead of the recovery and left every WRITING invocation walking in. Fix: `pidIsAlive()` via `process.kill(pid, 0)`, refuse on a live pid, **exit 3** kept distinct from the **2** that means a dead run was recovered. Guard: `scripts/mutation/recovery-gate.ts` (D212's `killedByCommand` precedent, only the second row in the corpus to use it), THREE rungs — refuse-when-live, still-recover-when-dead (the attribution control that kills the always-refuse vacuity mutant), and refuse-a-FOREIGN-owned pid. 🛑 **THE THIRD RUNG WAS BOUGHT BY A SURVIVOR**: `process.kill` throws for two opposite reasons (`ESRCH` gone, `EPERM` alive-not-yours) and both first rungs only exercised the same-user path, so collapsing the `catch` passed both — made REACHABLE via pid 1 rather than declared `unreachable-population`. **4 mutants / 4 killed / 0 GAPs** (3/1 before the repair); corpus 1475 → **1479**, precheck clean. `bun run check` **415 files / 8,761 tests, `CHECK_EXIT=0`** — **+0/+0, IDENTICAL TO D410's HEAD**, which retires this session's own earlier *"HEAD is RED"* reading: that check had RACED THE LIVE SWEEP and caught `D378-presence-keeps-the-owner-test` mid-window.)
 
 **Prior stamp (was):** 2026-08-24 — build session #350 (**P3-M5 — D410, *the bare retreat lock, opponent side — the first slice built entirely through D409's splitter, and the first finished by hand after its agent died mid-edit.*** Engine **0.314.0 → 0.315.0**; **`MATCH_RECORD_VERSION` STAYS 25**, driven not asserted. **2 sentences / 4 legal printings** on ONE anchor and ONE arm returning `preventRetreat` UNCHANGED — zero new ops, fields, readers, members or registry rows. The clause prints STANDALONE on **zero** cards, so every printing arrives as the TAIL of a compound and the arm exists to be reached through `splitAttackTrailingClause`; the Poisoned compound is still claimed WHOLE by its own anchor and the splitter's shadow refusal keeps it that way. The self-side twin stays UNBUILT and is asserted so by name — `preventRetreat` hard-codes `otherSeat(ctx.seat)`, so it needs a `target` on a shipped zero-field op, a persisted-shape question. 🛑 **THE BUILD AGENT DIED MID-EDIT ON AN API ERROR AND LEFT `bun run check` RED**: the Confused twin asserted `conditions.burned`, which reads the CHECKUP COIN rather than the composition — the test one line above had already measured that and used the §12 counters as the flip-independent witness — and three DERIVED census figures had not been stepped, reddening one per run in evaluation order. Both repaired rather than re-run. **The mutant rows were never written**; four were authored at close-out, anchored on the two lines the slice OWNS because the return line occurs TWICE in the file — D404's wrong-arm trap exactly. **4 killed / 0 GAPs on the first run**, corpus 1471 → **1475**. `bun run check` **415 files / 8,761 tests, `CHECK_EXIT=0`** (+0 files / +6 cases — the first slice in the run to add coverage without adding a file). ⚠️ **WHOLE-CORPUS SWEEP: RUN ON `main` AFTER THE MERGE — 1475 · 1450 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · **1 CLOBBER** · 0 error(s) · 5,327.6s**, `SWEEP_EXIT=**1**`. **THE RUN FAILED ITS EXIT CODE ON PURPOSE AND THE HARNESS WAS RIGHT TO FAIL IT.** One row — `D376-discard-threshold-note-drifts-off-the-clause` — reported **CLOBBER** rather than a verdict: the bytes on disk after its window were not the ones the harness wrote, so **something else wrote to `interpreter.ts` while it was mutated**. The harness detected it, restored the bytes it had read, preserved the intervening version beside the journal, and refused to call the row's answer trustworthy. **THAT IS THE `CLOBBER` VERDICT DOING EXACTLY WHAT D211 BUILT IT FOR, AND THE FIRST TIME IN THIS RUN IT HAS FIRED.** ✅ **NO DAMAGE: the tree is byte-identical to `HEAD`** (`git status` empty, `git diff HEAD` empty), and the clobbered row RE-PROBED ALONE comes back **KILLED** (`--decision D376` → 8 killed / 0 GAPs / 0 clobbers / 0 errors). So the corpus is fully accounted for: **1450 + 24 + 1 = 1475**, with all 4 D410 rows KILLED and the declared-survivor set diffed id-by-id against D409's and **IDENTICAL at 24** — a twenty-eighth consecutive sweep without movement. 🛑 **THE WRITER IS UNIDENTIFIED, AND SAYING SO IS THE HONEST ANSWER.** The obvious suspect was `bun run mutants --list`, which the coordinating session ran twice while the sweep was live — the exact hazard D369 fixed and D407 recorded as unpinned by any suite. **IT WAS TESTED AND EXONERATED**: `sha256sum` over `interpreter.ts` before and after a `--list` is unchanged and no journal is created, so D369's ordering fix holds. No other writer has been identified, and the cause is recorded as UNKNOWN rather than guessed. **THE OPERATIONAL RULE STANDS REGARDLESS AND IS NOW EARNED TWICE OVER: SERIALISE EVERYTHING AGAINST A LIVE SWEEP** — the harness cannot tell a benign reader from a writer, and its only safe response is to fail the run. ⚠️ **AND A PROCESS NOTE THAT COST A FALSE ALARM**: the sweep was launched with `nohup sh -c` and the coordinating session armed its waiter on a PID from `pgrep … | head -1`, which caught a transient wrapper rather than `bun scripts/mutation/run.ts`. The waiter fired in seconds, the log looked truncated at eleven rows, and the run was briefly reported as having died. **IT HAD NOT. TAKE THE PID OF THE `bun` PROCESS ITSELF, NOT THE FIRST MATCH.**)
 
@@ -450,6 +452,90 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-24, after D413)
+>
+> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 415 files / 8,776 tests, `CHECK_EXIT=0`,
+> `grep -c 'error TS'` = 0.** Baseline 415 / 8,771, so **+0 files / +5 cases**, all in
+> `multiCoinFlip.test.ts`. Engine **0.317.0**, **`MATCH_RECORD_VERSION` 26**, corpus **1,491**,
+> archive ratchet **83**.
+>
+> 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE** —
+> D411's entry explains why in full.
+>
+> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D413 has had `--decision D413` (4 killed / 0 GAPs), a
+> clean `precheck` over 1,491 and a full serialised check; the other 1,487 rows have not run against
+> this head. Exposure is LOW by the standards of the last two: D413 edits `effects.ts` (heavily
+> anchored) but adds no field, no op and no reader, and `D275`'s version anchor is already re-pointed.
+>
+> ### ▶ THE RESIDUE, MEASURED AT THIS HEAD — USE THIS, DO NOT RE-DERIVE IT
+>
+> **213 sentences / 338 printings** unbuilt with all three build paths and the registry applied
+> (before D413; **211 / 333 after it**). Derived with `precociousEvolution.test.ts`'s own
+> `rawUnitsAtHead`/`splitUnitsAtHead`/`compoundUnitsAtHead` and cross-checked against
+> `censusAtHead.test.ts` in both directions. 🛑 **D410's HANDOFF FIGURE OF 226/360 IS WRONG** — off by
+> one sentence and one printing; D408's 232/372 reproduces exactly and stepping it forward gives
+> these. **Do not step 226/360.**
+>
+> Printing histogram of the residue: `6×:1  5×:2  4×:4  3×:19  2×:68  1×:129`. **Only 26 sentences /
+> 89 printings carry ≥3 printings** — the long tail is genuinely long.
+>
+> 🛑 **THE PRINTED HEAD IS ALL EXPENSIVE, AND EACH ONE ALREADY HAS A RECORDED REASON. DO NOT
+> RE-LITIGATE THEM WITHOUT READING IT FIRST:**
+> ⑴ *"Heal from this Pokémon the same amount of damage you did…"* (6) — **refused by D405** on the
+> KIND of quantity: every §9.2 slot is a list of card uids and an HP figure has nowhere to go; four
+> mechanisms, 1.5 printings each. ⑵ *"Before doing damage, discard all Pokémon Tools…"* (5) —
+> **blocked, refused four times** (D406): there is no Tool-discard op at all, and *"Before doing
+> damage"* is an ordering the deriver seam cannot express. ⑶ *"…can't use Blaze Blitz again until it
+> leaves the Active Spot."* (5) — needs a liveness that does not expire by arithmetic;
+> **`MATCH_RECORD_VERSION` 26 → 27**. ⚠️ But D408's price for it is **partly wrong in your favour**:
+> it claims the §10 clears are keyed on the turn expiring, and in fact `clearOnLeavingActive` already
+> sets `lockedAttacks: []` outright and all three routes already sweep it. ⑷ *"Choose 1 of your
+> Benched N's Pokémon's attacks and use it as this attack."* (4, family 6/13) — **blocked**: nothing
+> executes another attack's program. ⑸ the **KO-without-damage family (7 sentences / 13 printings)** —
+> the largest coherent family left; the coin skeleton and the KO seam both exist, what is missing is
+> any KO op reaching a body other than the attacker, and the tails branch PARKS → likely a version
+> bump. **No prior decision refuses it.** ⑹ opponent hand-discard (4/8) — one new parking op with a
+> `decider`; `opponentMayDraw` is the precedent.
+>
+> 🛑 **AND THE CHEAP PATH THE LAST FOUR SLICES USED IS EXHAUSTED — SAY IT RATHER THAN LET THE NEXT
+> SESSION REDISCOVER IT.** The partially-covered compound family is now **15 sentences / 23 printings
+> across 15 distinct unread clauses, and every one completes exactly ONE compound.** D410's head row
+> was 4 printings across 2 compounds; the best row now is **3 printings / 1 compound**. None of the
+> printed top 6 is splitter-reachable.
+>
+> ### ▶ WHAT I WOULD TAKE NEXT
+>
+> **The KO-without-damage family (7 sentences / 13 printings)** — the largest coherent family in the
+> residue, no prior refusal, and the two halves it needs (`coinFlipGate` with its printed *"If tails"*
+> arm, and `resolveMidTurnKnockOuts`' sweep that already grants the Prize, the discard, the
+> `KNOCKED_OUT` event and the §8.1 promotion) both exist. **PRICE THE PARK FIRST**: the heads branch
+> needs no park, the tails branch chooses among the opponent's Benched Basics and does — and a new
+> parking op is a new `PendingStage`/`EffectContinuation` inhabitant, which is the persisted-shape
+> question. ⚠️ **Ask whether a NON-parking subset is worth building alone** (*"If your opponent's
+> Active Pokémon is a Basic Pokémon, it is Knocked Out."*, *"Both Active Pokémon are Knocked Out."*)
+> — that is 3+ printings with no version bump, and it would establish the op before the choice.
+>
+> ⚠️ **TWO CHEAP RUNNERS-UP FROM THE SAME ONE-WORD SWEEP THAT FOUND D413**, if a small slice is
+> wanted: *"Heal 100 damage from each of your {Basic|Benched} Pokémon."* (2 sentences / 4 printings —
+> `healEach`/`healEachAll` exist, wants a zone rider) and *"This attack does {30|50} less damage for
+> each {C} in your opponent's Active Pokémon's Retreat Cost."* (2 / 4 — probably a new count source).
+> **Neither was priced beyond the near-miss.**
+>
+> ### ▶ AND THE RULE D413 EARNED
+>
+> 🛑 **A REFUSAL CARRIES ITS OWN EXPIRY DATE IF IT SAYS WHAT IT IS WAITING FOR — SO GO BACK AND CHECK
+> THE TRIGGER.** D413's sentence was refused because D121's warrant needed *two printings with one
+> token varying* and the pool had one. That refusal was correct, and it named the exact condition
+> that would overturn it. **The condition had been true for a long time and nobody looked**, because
+> the refusal was measured on the LOCAL 978-card pool and the engine is built against the
+> `legal_standard = 1` column — **two populations, two answers** (conventions.md's counting rule,
+> biting a REFUSAL rather than a census). ⚠️ **`grep -rn "REFUSED\|toBeNull\|toBe(null)"
+> packages/engine/src/*.test.ts` and re-read the reason against today's population** — this run found
+> one worth 5 printings for the cost of one regex.
+
+### Prior resume point (P3-M5 — D412, the self-side retreat lock, kept for continuity)
+
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-24, after D412)
 >
@@ -11577,7 +11663,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D412, *the self-side retreat lock — the slice is the CLOCK, not the `target` field its resume point named.*** Engine **0.315.0 → 0.316.0**; 🛑 **`MATCH_RECORD_VERSION` 25 → 26**, the first *yes* in twenty-six slices. 2 sentences / 3 legal printings, both the tail of a heal compound, reached through D409's splitter. D410 priced it as a `target` field; that alone ships a program that **resolves and does nothing**, because `retreatBlocked` rides a clock that clears for `endedSeat`. So: `target` **plus** a new turn stamp `retreatLockedTurn`. One reader (`retreatLocked`) unifies both fields — and the third read site, `GameHud.tsx`, was **already wrong**: a live afford-then-reject found by grep. **8 mutants / 8 killed / 0 GAPs**, corpus 1479 → **1487**. `bun run check` **415 files / 8,771 tests, exit 0** (+0 files / +10 cases).) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D413, *the additive multi-coin fold — a refusal COLLECTED rather than re-litigated.*** Engine **0.316.0 → 0.317.0**; `MATCH_RECORD_VERSION` **stays 26**. *"Flip 2 coins. This attack does {30|50} more damage for each heads."* — 2 sentences / 5 printings, ONE regex + ONE arm, **zero new ops, fields or readers**. Its `toBe(null)` refusal was measured on the LOCAL pool, whose only printing the legal column does not contain; the warrant D121 named is now met, so the trigger fired. The fold is DRIVEN on 24 seeds (20/50/80 vs 0/30/60, disjoint everywhere) because *already representable* is a claim about a line nothing had executed. **4 mutants / 4 killed / 0 GAPs**, corpus 1487 → **1491**. `bun run check` **415 files / 8,776 tests, exit 0** (+0 files / +5 cases).) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D408, *the bare attack lock on both seats — and a repair of a program that resolved, was counted BUILT, and did nothing.*** Engine **0.312.0 → 0.313.0**, `MATCH_RECORD_VERSION` **stays 25**. 3 sentences / 11 legal printings on ONE alternation anchor, ONE `[A-Z]` narrowing and TWO arms; ZERO new ops, fields, readers, members or registry rows. The mis-read sentence moves NO census figure — only a program comparison and a BOARD can see it, and both were measured red before the arm was written.; **whole-corpus sweep 1463 · 1439 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D407's for a twenty-sixth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D407)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D407, *the board-wide own-Energy count — a zone D196 refused on a measurement that has since stopped being true.*** Engine **0.311.0 → 0.312.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the FIELD is STORED and DRIVEN rather than asserted (the constant is not exported). **1 sentence / 4 legal printings** — *"This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."* — on ONE WIDENED whole-sentence anchor (`SELF_ENERGY_SCALE` gains a captured `(this Pokémon|all of your Pokémon)` tail), ONE OPTIONAL `zone?: "board"` on the SHIPPED `energyOnSelf` member, ONE producer branch and ONE evaluator branch delegating to `countEnergyInPlay`. ZERO new members, counters, ops, readers, `BoardCondition` members, registry rows or clause rows. 🛑 A `zone` and not a fourteenth member (D193's argument: two zone members would each carry `energyType`, the second answer to one question D159 forbids), and OPTIONAL with `undefined` meaning the ATTACKING BODY (D135's polarity — a producer that forgets it UNDER-counts). ⚠️ ADDITIVE-ONLY on this zone, the exact mirror of `energyOnOpponent`: there the `×` reader carries the zone and the `+` reader hard-codes one. ✅ The PROVISION seam was VERIFIED rather than inherited — a wildcard Luminous on the Bench scores and a second Special demotes it, driven both ways on a live board. 🛑 The next slice's supply check found a WRONG-BUT-PLAUSIBLE PROGRAM at HEAD: *"During your next turn, this Pokémon can't use attacks."* (4 legal) derives `preventAttackUse { attack: "attacks" }`. Census: `BUILT.attack` 1365 → **1369**, both reader instruments +1 / +4, `FIXTURE_POOL` 510 → **511**, unbuilt attack column 367 → **363**. `bun run check` **413 files / 8,704 tests, exit 0**; mutants **1447 → 1455**, **8/8 on the first run**; **whole-corpus sweep 1455 · 1431 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D406's for a twenty-fifth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D406)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D406, *the counted Tool scaler — a fourth resource for a union that had counted three things for twelve members.*** Engine **0.310.0 → 0.311.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the member is STORED — a `DamageCountSource` is a PARSE-TIME type consumed in the same tick, so no record could ever hold one. **1 sentence / 5 legal printings** — *"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* — on ONE whole-sentence anchor, ONE `deriveAttackDamageMultiplier` arm, ONE THIRTEENTH `DamageCountSource` member (`toolsOnYourBoard`), ONE `scaledAttackDamage` arm and ONE shared board counter (`countToolsInPlay`, beside `countEnergyInPlay`). ZERO new ops, fields, readers, `BoardCondition` members, registry rows or clause rows. 🛑 The SCOPE falsifier FIRED and cost a **FUNCTION rather than a FIELD** — nothing in the engine counted Tools over a zone, both existing readings being `tools.length > 0` on ONE body — so the member count stayed at one and the pre-specified re-price did not trigger. The DROPPED BASE held; `attack.ts`'s three disjunction chains were not touched. 🛑 The slice also found `energyOnSelf`'s *"the pool prints no board-wide spelling"* claim to be FALSE at this head (4 legal printings, ADDITIVE, unbuilt) and pinned the correction as an executable guard. ⚠️ And the handoff's prediction that the NINE-reader instrument would stand still was wrong: its ARRAY carries `deriveAttackDamageMultiplier`, so it moved 394 / 1,315 → **395 / 1,320**. `BUILT.attack` 1360 → **1365**; check green **412 files / 8,677 tests, exit 0**; corpus 1438 → **1447**, D406 **9/9 killed on the first run**, neighbours D275/D196/D282/D316/D317/D274/D301/D310/D395/D405/D383/D403/D318/D382 each probed alone and green; **7 of the 9 rows are silent in every census figure in the repo**, the highest ratio of six anchors. **Whole-corpus sweep 1447 · 1423 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D405's for a twenty-fourth sweep, `HEAD` re-checked independently at exit 0.) |
@@ -11662,6 +11748,84 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-24 — build session #353 (P3-M5 — D413, the additive multi-coin fold)
+
+**D413 — A REFUSAL COLLECTED, NOT RE-LITIGATED.** Engine **0.316.0 → 0.317.0**;
+**`MATCH_RECORD_VERSION` STAYS 26**. *"Flip 2 coins. This attack does {30|50} more damage for each
+heads."* — **2 sentences / 5 printings** (3 + 2), bought with **ONE regex and ONE arm** in
+`deriveAttackCoinFlip`. Zero new ops, zero new fields, zero new readers, zero `attack.ts` change.
+
+🛑 **THE SLICE WAS CHOSEN BY MEASURING THE RESIDUE, AND THE BIGGEST BUILDABLE THING WAS NOT AT THE
+TOP OF IT.** The residue at this head is **213 sentences / 338 printings** (registry applied),
+cross-checked against two live rungs in both directions. Its printed head is all expensive: the
+6-printing heal-same-amount was refused by D405 on `EffectRecord`'s shape; the 5-printing Tool
+discard is blocked on a seam that does not exist (D406, four times); the 4-printing copy-an-attack
+row needs a mechanism the engine does not have. **THE CHEAPEST REAL WIN WAS FOUND BY A
+ONE-WORD-DELETION SWEEP OVER THE WHOLE RESIDUE** — delete *"more"* and an existing reader claims the
+sentence — and it was the largest hit in that sweep.
+
+⚠️ **AND AN INHERITED FIGURE WAS FOUND WRONG ON THE WAY**: D410's handoff says *"THE RESIDUE AT THIS
+HEAD IS 226 SENTENCES / 360 PRINTINGS"*. Stepping D408's own figure (232/372, which reproduces
+exactly) through D409's, D410's and D412's deltas gives **223/354**, which is what the live rungs
+confirm. **D410's 226/360 was off by one sentence and one printing — do not step it.**
+
+🛑 **THE REFUSAL'S PREMISE HAD EXPIRED, WHICH IS THE DIFFERENCE BETWEEN COLLECTING A DEFERRAL AND
+REVERSING A DECISION.** `multiCoinFlip.test.ts` asserted `toBe(null)` and said exactly why: *"the
+family's ONLY unmapped printed-count additive fold: **ONE printing**, so D121's warrant for a shape
+(two printings with one token varying) is not met, and a shape built for a single card would be a row
+wearing a regex."* That was measured on the **local 978-card / 6-set pool**, where Melmetal
+`swsh10.5-046` is the only printing — **and Melmetal is not in the `legal_standard = 1` column at
+all.** The column prints TWO sentences varying exactly one token (`per` ∈ {30, 50}, `flips` fixed at
+2) over five printings. The warrant is met on the population the engine is built against. ✅ **The
+refusal is kept in the file IN FULL rather than deleted** — what a claim was warranted by is the part
+that rots (D178), which is the same rule this run applied to the version literals one commit earlier.
+
+🛑 **ZERO NEW VOCABULARY — BUT "ALREADY REPRESENTABLE" IS A CLAIM ABOUT A LINE NOTHING HAD EXECUTED.**
+`bonusOnHeads` has carried `flips` since D129 and `AttackFlipCount` its printed count since D127, so
+the pair was already persistable and produced by **nothing** (D405's rule: a new COMBINATION of a
+shipped vocabulary is not a new shape). That makes the deriver assertion only half the claim. The
+other half is a **24-seed sweep on a `20+` body** reaching all three outcomes, with the
+multiplicative misreading asserted ABSENT at each: **20/50/80 against 0/30/60, disjoint at every
+outcome including the zero-heads one no seed can fake.**
+
+⚠️ **THE TWO ANCHORS ARE DISJOINT BY CONSTRUCTION AND IT IS ASSERTED, NOT ORDERED**: `(\d+) damage`
+cannot span *"30 more damage"*, and both anchors are `^…$` so nothing backtracks. Either arm could be
+written first. **C2 is what makes that falsifiable instead of decorative.**
+
+⚠️ **TWO LIVE REFUSAL RUNGS WENT RED BY NAME AND WERE RE-POINTED RATHER THAN RELAXED.**
+`coinFlipDamage.test.ts`'s claim was never *"nothing reads it"* — it was ***"`^Flip a coin\.` does not
+swallow a TWO-coin sentence"***, and that is now asserted POSITIVELY as `count: 2`. **Strictly
+stronger than the null it replaced**: a null goes green the day the whole family stops resolving; a
+`count: 2` does not.
+
+✅ **THE ONE FACT THIS CONTAINER COULD NOT MEASURE WAS ANSWERED FROM THE TREE.** Whether these
+printings carry a `"+"` or `"×"` damage marker decides additive-vs-multiplicative, and there are no
+D1 credentials here (D369). **D129 had already recorded it**: *"Melmetal swsh10.5-046 (base '30+')"*
+— recorded provenance, not an assumption.
+
+⚠️ **THE NEW FIXTURE GOT ITS OWN DECK, AND THAT IS D412's LESSON PAID BACK ONE SLICE LATER.** The
+obvious move was a slot in `MULTI_COIN_FLIP_DECK` — which is swept over 24 seeds, and whose own doc
+block explains that `fix-bigbody` is 40 of its 60 cards precisely to keep them mulligan-free. D412
+had just reddened three of D409's boards doing exactly that. `COIN_BONUS_DECK` costs one export and
+disturbs nothing.
+
+🆕 **AND THE CENSUS SHAPE IS THE INVERSE OF THE LAST FOUR SLICES.** D409–D412 all moved
+`COMPOUND_ATTACK_UNITS` while `rawHead` stood still, because their clauses print standalone on zero
+cards. D413's sentences DO print standalone, so it moves **RAW** while the compound and split terms
+hold — and it is **the first slice since D408 to move `censusAtHead`'s bare `385` operand**. Raw
+403 → **405** / 1347 → **1352**; `BUILT.attack` 1394 → **1399**; `built` 1799 → **1804**; residue
+584 → **579**; `unbuiltAttack` 338 → **333**; `385` → **380**. `splitHead` **13**, `compoundHead`
+**18**, `REGISTRY_ATTACK_UNITS` **16** all held — verified, not assumed. `compoundCompose` §4's
+shadow-refusal population 145/415 → **147/420**, a change of CLAIM rather than of corpus: both
+sentences were always two-clause and always in `multiClause` (271/613, unmoved); D413 only made a
+reader claim them WHOLE.
+
+**4 mutants / 4 killed / 0 GAPs on the first run**; corpus 1487 → **1491**. ⚠️ **ONE MUTANT'S `what`
+NAMED A GUARD THAT DID NOT YET EXIST** — C3 hard-codes the flip count to the 2 every printing carries,
+which the entire population agrees with — **and the guard was written rather than the claim
+softened.** `bun run check` **415 files / 8,776 tests, `CHECK_EXIT=0`** (+0 files / +5 cases).
+
 
 ### 2026-08-24 — build session #352 (P3-M5 — D412, the self-side retreat lock)
 
