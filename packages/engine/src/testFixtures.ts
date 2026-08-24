@@ -5062,7 +5062,14 @@ export const FIXTURE_POOL: Record<string, Card> = {
       face. ⚠️ Indices 0 and 1 print a "+" marker because their LEADING clause is a
       `deriveAttackDamageBonus` sentence and that reader is what spends it — a flat
       base would leave `modifierSimulated` with nothing to explain and change what
-      the skip block asserts. */
+      the skip block asserts.
+
+      🆕🆕 **D410 — INDICES 7 AND 8, THE TWO COMPOUNDS THE *PRONOUN* CLAUSE
+      COMPLETES.** The card now prints SEVEN printed compounds rather than five, and
+      the two new ones are the whole reason the split family grew without a reader
+      moving: their trailing clause (*"During your opponent's next turn, that
+      Pokémon can't retreat."*) prints STANDALONE on zero cards, so it could only
+      ever arrive here as half of a compound. */
   "fix-compound": battler("fix-compound", {
     hp: 340,
     retreat: 1,
@@ -5123,6 +5130,32 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "40+",
         effect:
           "This attack does 50 more damage for each Prize card your opponent has taken. The Defending Pokémon is now Asleep.",
+      },
+      // 🆕🆕 D410 — THE TWO COMPOUNDS THE PRONOUN CLAUSE COMPLETES, and they are
+      // here rather than on a fixture of their own for `fix-deflock`'s stated
+      // reason: the claim is that ONE clause completes BOTH, so the board that
+      // checks it must vary the leading STATUS and nothing else. Two fixtures would
+      // have varied the HP, the cost and the printed damage as well, and any of
+      // those could carry a difference the assertion would then credit to the
+      // status. Both effect strings are byte-for-byte off `legalAttackCorpus()`
+      // (2 legal printings each).
+      //
+      // ⚠️ THE PRINTED DAMAGE IS 20 ON BOTH, matching indices 3–5: the victim is
+      // this same 340 HP body, so a Burn tick at the Checkup never KOs it and the
+      // §11 clears stay reachable.
+      {
+        cost: ["Colorless"],
+        name: "Scorch Bind",
+        damage: 20,
+        effect:
+          "Your opponent's Active Pokémon is now Burned. During your opponent's next turn, that Pokémon can't retreat.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Dizzy Bind",
+        damage: 20,
+        effect:
+          "Your opponent's Active Pokémon is now Confused. During your opponent's next turn, that Pokémon can't retreat.",
       },
     ],
   }),
@@ -17582,7 +17615,7 @@ export const BARE_ATTACK_LOCK_DECK = deckOf({
     two-Energy discard at index 2 has something to park on, and `fix-titan` as the
     mulligan-free filler every deck in this file uses. */
 export const COMPOUND_COMPOSE_DECK = deckOf({
-  "fix-compound": 8, // the five compounds, their shipped twin and the refusal control
+  "fix-compound": 8, // 🆕 D410 — the SEVEN compounds, their shipped twin and the refusal control
   "fix-attacker": 4, // "Bounty" (idx 5) prints the LEADING clause of two of them ALONE
   "fix-energy": 16, // Basic {C} — pays every printed cost here and feeds the 2-Energy discard
   // ⚠️ A SECOND ENERGY *KIND*, AND IT IS WHAT MAKES THE PARK REACHABLE AT ALL.

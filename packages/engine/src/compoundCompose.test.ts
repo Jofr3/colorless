@@ -51,6 +51,35 @@ import {
 //
 // SEED-FREE: not one of the five compounds carries a coin, so a seed table would
 // describe a shuffle rather than a rule.
+//
+// 0.314.0 → 0.315.0 — 🆕🆕 D410: THE BARE RETREAT LOCK ON THE OPPONENT SEAT, AND
+// THE FIRST SLICE PRICED BY *"WHICH UNREAD CLAUSE COMPLETES THE MOST COMPOUNDS"*.
+//
+// 🛑 ONCE ONE STRING CAN BE READ AS TWO CLAUSES, THE BACKLOG STOPS BEING RANKED BY
+// SENTENCE. The residue at D409's head held **21 sentences / 32 printings across 17
+// distinct unread clauses, and NOT ONE of the 17 prints standalone anywhere in the
+// column** — so every one of them is invisible to a sentence-ranked backlog and
+// visible only to the instrument §2 below is. The top of that list is *"During your
+// opponent's next turn, that Pokémon can't retreat."*: 4 printings, 2 compounds,
+// ZERO standalone printings. ONE `^…$` anchor and ONE arm returning the shipped
+// zero-field `preventRetreat` unchanged buys both.
+//
+// 🛑 AND IT PUTS THE SHADOW REFUSAL UNDER REAL LOAD FOR THE FIRST TIME. Until this
+// slice, no sentence claimed WHOLE by an anchor also had both halves independently
+// readable — the refusal was a guard against a case the catalog did not yet print.
+// It does now: *"…is now Poisoned. During your opponent's next turn, that Pokémon
+// can't retreat."* (arm 5c, 3 printings) has BOTH clauses claimed as of this slice,
+// so it is splittable in principle and the refusal is the only thing keeping 5c's
+// program. §5 asserts BOTH halves of that — the splitter still refuses it, AND the
+// composition it would have produced is byte-for-byte what 5c returns.
+//
+// ⚠️ THE SELF-SIDE TWIN IS PRICED SEPARATELY AND STAYS UNBUILT, RE-DERIVED BY
+// OPENING `interpreter.ts` RATHER THAN INHERITED. *"During your next turn, this
+// Pokémon can't retreat."* (3 printings / 2 compounds, both behind a "Heal N damage
+// from this Pokémon." head) locks the ATTACKER's body, and `preventRetreat` is
+// `{ op: "preventRetreat" }` with `otherSeat(ctx.seat)` hard-coded at its
+// interpreter arm. A `target` on a shipped zero-field op is a persisted-shape
+// question and it is not this slice's.
 
 /** The five printed compounds, byte for byte off `legalAttackCorpus()`. */
 const PRIZE_THEN_DISCARD =
@@ -63,12 +92,25 @@ const DISCARD_ALL_THEN_PARALYZE =
   "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.";
 const POISON_THEN_NO_RETREAT =
   "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, the Defending Pokémon can't retreat.";
+/** 🆕🆕 D410 — the two compounds the PRONOUN clause completes, byte for byte off
+    `legalAttackCorpus()` (2 legal printings each). They differ from each other in
+    exactly one word and from `POISON_THEN_NO_RETREAT_ANCHORED` in exactly one more,
+    which is why the family is three sentences and one clause. */
+const BURN_THEN_NO_RETREAT =
+  "Your opponent's Active Pokémon is now Burned. During your opponent's next turn, that Pokémon can't retreat.";
+const CONFUSE_THEN_NO_RETREAT =
+  "Your opponent's Active Pokémon is now Confused. During your opponent's next turn, that Pokémon can't retreat.";
+/** The shared TAIL — the whole subject of D410, and a string the legal column
+    prints on ZERO cards as a whole attack effect (asserted in §2). */
+const PRONOUN_LOCK = "During your opponent's next turn, that Pokémon can't retreat.";
 const COMPOUNDS = [
   PRIZE_THEN_DISCARD,
   PRIZE_THEN_RECOIL,
   DISCARD_TWO_THEN_REDUCTION,
   DISCARD_ALL_THEN_PARALYZE,
   POISON_THEN_NO_RETREAT,
+  BURN_THEN_NO_RETREAT,
+  CONFUSE_THEN_NO_RETREAT,
 ] as const;
 
 /** The two SHIPPED whole-sentence anchors that are one token away from a member of
@@ -122,6 +164,9 @@ const PARALYZE_INDEX = 3;
 const POISON_INDEX = 4;
 const POISON_ANCHORED_INDEX = 5;
 const UNREAD_TAIL_INDEX = 6;
+// 🆕🆕 D410 — the two compounds the pronoun clause completes.
+const BURN_INDEX = 7;
+const CONFUSE_INDEX = 8;
 
 const SEED = 31;
 
@@ -205,24 +250,30 @@ describe("§1 — the quantifier is over EVERY reader, and the list is DRIVEN no
   });
 });
 
-describe("§2 — the census: the predicate admits FIVE sentences / ELEVEN printings", () => {
-  it("🛑 exactly the five, over the whole 640-sentence legal column", () => {
+describe("§2 — the census: the predicate admits SEVEN sentences / FIFTEEN printings", () => {
+  it("🛑 exactly the seven, over the whole 640-sentence legal column", () => {
     // The measurement that decided the shape. It is the WHOLE column and not the
     // residue, so a sentence some reader already claims cannot hide inside it.
+    // 🆕🆕 D410 — 5 / 11 → **7 / 15**, and the step came from ONE new clause rather
+    // than from two new sentences: the Burned and Confused compounds share a tail,
+    // so one `^…$` anchor completed both. That is the property the composition path
+    // was built for, measured a slice after it shipped.
     const corpus = legalAttackCorpus();
     expect(corpus).toHaveLength(640);
     expect(units(corpus)).toBe(1732);
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     expect([...admitted].map(([, s]) => s).sort()).toEqual([...COMPOUNDS].sort());
-    expect(admitted).toHaveLength(5);
-    expect(units(admitted)).toBe(11);
+    expect(admitted).toHaveLength(7);
+    expect(units(admitted)).toBe(15);
   });
 
-  it("the eleven split 8 / 3 across the two SHAPES, which is why the seam had to move", () => {
-    // 8 of the 11 are the CROSS-READER pair (a `deriveAttackDamageBonus` head), 3
+  it("the fifteen split 8 / 7 across the two SHAPES, which is why the seam had to move", () => {
+    // 8 of the 15 are the CROSS-READER pair (a `deriveAttackDamageBonus` head), 7
     // are SAME-READER (a `deriveAttackEffect` head). Named because the price
     // argument in the header rests on it: a concatenate-only composition path would
-    // have taken the 3 and left the 8, turning a 5/11 slice into a 3/3 one.
+    // have taken the 7 and left the 8. 🆕🆕 D410 — the CROSS half stands still at
+    // 2 / 8 and the SAME-READER half steps 3 → 7, which is this slice's whole shape:
+    // both new compounds put an effect clause in front of an effect clause.
     const corpus = legalAttackCorpus();
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     const cross = admitted.filter(([, s]) => {
@@ -231,14 +282,54 @@ describe("§2 — the census: the predicate admits FIVE sentences / ELEVEN print
     });
     expect(cross).toHaveLength(2);
     expect(units(cross)).toBe(8);
-    expect(units(admitted) - units(cross)).toBe(3);
-    // …and every one of the eleven has EXACTLY TWO clauses, which is why the
+    expect(units(admitted) - units(cross)).toBe(7);
+    // …and every one of the fifteen has EXACTLY TWO clauses, which is why the
     // splitter is not recursive: a three-clause compound whose parts are all
-    // readable is a family of ZERO today and stays LOUD until it is not.
+    // readable is a family of ZERO today and stays LOUD until it is not. 🆕🆕 D410
+    // re-derives that at SEVEN sentences rather than carrying it from five — the
+    // handoff named "one of these may need three clauses" as a thing to measure.
     for (const [, s] of admitted) expect(s.split(BREAK), s).toHaveLength(2);
   });
 
-  it("every clause of every one of the five is claimed INDEPENDENTLY", () => {
+  it("🛑 D410 — the PRONOUN clause prints STANDALONE nowhere, and its antecedent is swept", () => {
+    // 🛑 THE GUARD THE NEW ARM OWES, AND IT IS A GUARD RATHER THAN A PARAGRAPH
+    // (D406→D407). "That Pokémon" is a BACK-REFERENCE: read standalone it has no
+    // antecedent, and answering "the Defending Pokémon" is a CHOICE. What warrants
+    // the choice is a POPULATION — every printing that carries this tail names the
+    // opponent's Active in the clause in front of it — so the population is swept
+    // here and reddens BY NAME the day a head with a different antecedent prints it.
+    const corpus = legalAttackCorpus();
+    // ① The clause is never a whole printed attack effect. This is why the anchor is
+    //    reachable only through the splitter, and why claiming it moves `rawHead` by
+    //    ZERO while `COMPOUND_ATTACK_UNITS` takes the whole delta.
+    expect(corpus.filter(([, text]) => text === PRONOUN_LOCK)).toHaveLength(0);
+    // ② …and yet the arm claims it, which is the half ① alone cannot show.
+    expect(deriveAttackEffect(PRONOUN_LOCK)).toEqual([{ op: "preventRetreat" }]);
+    // ③ THE ANTECEDENT SWEEP. Every sentence in the column that ENDS with this
+    //    clause — three of them, seven printings — opens by naming the opponent's
+    //    Active Pokémon. A future head saying "This Pokémon is now …" would bind the
+    //    pronoun to the ATTACKER and this arm would lock the wrong body silently.
+    const carriers = corpus.filter(([, text]) => text !== PRONOUN_LOCK && text.endsWith(PRONOUN_LOCK));
+    expect(carriers).toHaveLength(3);
+    expect(units(carriers)).toBe(7);
+    for (const [, text] of carriers) {
+      const head = text.slice(0, text.length - PRONOUN_LOCK.length).trim();
+      expect(head, text).toMatch(/^Your opponent['’]s Active Pokémon is now [A-Za-z]+\.$/);
+    }
+    // ④ …and of the three, exactly ONE is claimed WHOLE by an anchor (5c's poison
+    //    compound) and the other two arrive by composition. 3 = 1 + 2 is the whole
+    //    accounting of this family, and it is asserted rather than described.
+    const anchored = carriers.filter(([, text]) => claimedByAny(text));
+    expect(anchored.map(([, text]) => text)).toEqual([POISON_THEN_NO_RETREAT_ANCHORED]);
+    expect(units(anchored)).toBe(3);
+    const composed = carriers.filter(([, text]) => splitAttackTrailingClause(text) !== null);
+    expect(composed.map(([, text]) => text).sort()).toEqual(
+      [BURN_THEN_NO_RETREAT, CONFUSE_THEN_NO_RETREAT].sort(),
+    );
+    expect(units(composed)).toBe(4);
+  });
+
+  it("every clause of every one of the seven is claimed INDEPENDENTLY", () => {
     // The supply check, re-derived rather than inherited: this is the property that
     // makes composition sound, and it is asserted per clause rather than per
     // sentence.
@@ -451,6 +542,62 @@ describe("§5 — the two SHIPPED twins: composition and anchor must agree byte 
     expect(composed[1]).toEqual((anchored as EffectOp[])[1]);
   });
 
+  it("🛑 D410 — the ANCHOR still wins the poison compound, and the two routes now genuinely overlap", () => {
+    // 🛑 THE RUNG THIS SLICE PUTS THE SHADOW REFUSAL UNDER REAL LOAD WITH. Until
+    // D410, `POISON_THEN_NO_RETREAT_ANCHORED` was refused by the splitter for a
+    // BORING reason — its tail was a clause no reader claimed — so the refusal was
+    // never the thing doing the work. Adding arm 5d makes that tail readable, so
+    // the sentence is now splittable in every respect EXCEPT the shadow refusal,
+    // which is the only thing left standing between it and a second route.
+    //
+    // ⚠️ A NEAR-MISS THE PREDICATE ALREADY REFUSES FOR ANOTHER REASON PROVES
+    // NOTHING ABOUT THE GUARD AROUND IT (D399's rule). So both halves are asserted:
+    // the refusal fires, AND the composition it suppresses would have produced
+    // exactly 5c's program. If those two ever disagree, the anchor and the arm have
+    // drifted apart and this rung is the only thing that can say so.
+    expect(claimedByAny(POISON_THEN_NO_RETREAT_ANCHORED)).toBe(true);
+    expect(splitAttackTrailingClause(POISON_THEN_NO_RETREAT_ANCHORED)).toBeNull();
+    const parts = POISON_THEN_NO_RETREAT_ANCHORED.split(BREAK);
+    expect(parts).toHaveLength(2);
+    expect(parts[1]).toBe(PRONOUN_LOCK);
+    const wouldCompose = [...(ops(parts[0] as string) ?? []), ...(ops(parts[1] as string) ?? [])];
+    expect(wouldCompose).toEqual(ops(POISON_THEN_NO_RETREAT_ANCHORED));
+    expect(wouldCompose).toEqual([
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "preventRetreat" },
+    ]);
+  });
+
+  it("🛑 D410 — one clause, two compounds: Burned and Confused compose into the SAME tail op", () => {
+    // The claim the price argument rests on: ONE anchor bought BOTH printings pairs.
+    // Asserted as "the two programs differ in exactly the status and nothing else",
+    // which is sharper than "both are two ops" — it says the composition reuses the
+    // same producer for the tail rather than resembling it.
+    const compose = (text: string): EffectOp[] => {
+      const split = splitAttackTrailingClause(text);
+      if (split === null) throw new Error(`refused: ${text}`);
+      return [...(ops(split.head) ?? []), ...(ops(split.tail) ?? [])];
+    };
+    expect(compose(BURN_THEN_NO_RETREAT)).toEqual([
+      { op: "applyStatus", target: "defender", status: "burned" },
+      { op: "preventRetreat" },
+    ]);
+    expect(compose(CONFUSE_THEN_NO_RETREAT)).toEqual([
+      { op: "applyStatus", target: "defender", status: "confused" },
+      { op: "preventRetreat" },
+    ]);
+    // The TAIL op is byte-identical across all three carriers — the two composed
+    // ones and the shipped anchor — which is the "one clause" claim itself.
+    const tailOf = (program: EffectOp[]): EffectOp | undefined => program[1];
+    expect(tailOf(compose(BURN_THEN_NO_RETREAT))).toEqual({ op: "preventRetreat" });
+    expect(tailOf(compose(CONFUSE_THEN_NO_RETREAT))).toEqual(
+      tailOf(compose(BURN_THEN_NO_RETREAT)),
+    );
+    expect(tailOf(ops(POISON_THEN_NO_RETREAT_ANCHORED) as EffectOp[])).toEqual(
+      tailOf(compose(BURN_THEN_NO_RETREAT)),
+    );
+  });
+
   it("the other three compose into their two clauses' own ops, in PRINTED order", () => {
     const compose = (text: string): EffectOp[] => {
       const split = splitAttackTrailingClause(text);
@@ -573,6 +720,99 @@ describe("§6 — the BOARDS: a fold and an op off ONE printed string", () => {
     expect(viaSplit.players.p2.active?.retreatBlocked).toBe(true);
   });
 
+  it("🛑 D410 — the Burned compound Burns AND locks the retreat, off ONE printed string", () => {
+    // 🛑 THE CASE THE SLICE IS FOR, ON A BOARD. Neither half happened before this
+    // slice: `deriveAttackEffect` refused the whole string, so the attack was
+    // reported on the loud ATTACK_EFFECT_SKIPPED path with the Burn AND the lock
+    // both invisible. Both halves are asserted, and the SKIP is asserted absent —
+    // a build that resolved the head alone would satisfy the Burn and leave the
+    // lock silently unbuilt, which is the direction this family refuses.
+    const { state: after, events } = mustApply(board(SEED + 7, { energy: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: BURN_INDEX,
+    });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(find(events, "STATUS_APPLIED")).toMatchObject({ seat: "p2", status: "burned" });
+    expect(after.players.p2.active?.retreatBlocked).toBe(true);
+    // …and the printed damage still landed, so the composition did not eat the §8.5
+    // pipeline on its way past.
+    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    expect(find(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
+    // 🛑 AND THE BURN IS ASSERTED THROUGH ITS §12 TICK RATHER THAN THROUGH THE FLAG
+    // ON THE BODY, WHICH IS A FACT THIS SLICE MEASURED RATHER THAN A STYLE CHOICE.
+    // The attack ENDS THE TURN, so the Checkup runs inside this one `applyAction`:
+    // Burn places 20 counters and then flips to cure (§13.2), and on this seed the
+    // flip is HEADS — so `conditions.burned` reads FALSE afterwards even though the
+    // op ran perfectly. The counters are the flip-independent witness. ⚠️ THIS IS
+    // ALSO WHY THE FILE'S "SEED-FREE" HEADER NOTE NO LONGER COVERS EVERY MEMBER:
+    // none of the SEVEN compounds carries a coin, but the Burned one's board
+    // outcome passes through the CHECKUP's coin, which belongs to §13 and not here.
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p2",
+      source: "burn",
+      amount: 20,
+    });
+  });
+
+  it("🛑 D410 — the Confused twin differs in the STATUS and in nothing else", () => {
+    // The pair, driven. One clause completes both compounds, so the two boards must
+    // agree on the lock and disagree only on the rotation status — which is a
+    // stronger claim than either board alone, and the one a second hand-written
+    // anchor could have got wrong without any assertion noticing.
+    const burnedRun = mustApply(board(SEED + 8, { energy: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: BURN_INDEX,
+    });
+    const confusedRun = mustApply(board(SEED + 8, { energy: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: CONFUSE_INDEX,
+    });
+    const burned = burnedRun.state;
+    const confused = confusedRun.state;
+    // 🛑 THE BURN IS READ OFF ITS §12 WITNESS, NOT OFF THE FLAG — the test one above
+    // measured why, and this twin is the case that would have hidden it. The attack
+    // ENDS THE TURN, so §13.2's cure flip runs inside this same `applyAction`, and on
+    // THIS seed it comes up heads: `conditions.burned` reads FALSE on a board where
+    // the op ran perfectly. Asserting the flag here would have made the rung a
+    // reading of the RNG rather than of the composition — which is exactly what it
+    // did before this line was written, and the only reason the suite went red.
+    // The STATUS event and the counters are flip-independent; the rotation is too,
+    // because Confusion carries no Checkup coin.
+    expect(find(burnedRun.events, "STATUS_APPLIED")).toMatchObject({
+      seat: "p2",
+      status: "burned",
+    });
+    expect(find(burnedRun.events, "COUNTERS_PLACED")).toMatchObject({
+      seat: "p2",
+      source: "burn",
+    });
+    expect(find(confusedRun.events, "STATUS_APPLIED")).toMatchObject({
+      seat: "p2",
+      status: "confused",
+    });
+    expect(find(confusedRun.events, "COUNTERS_PLACED")).toBeUndefined();
+    expect(confused.players.p2.active?.conditions.rotation).toBe("confused");
+    expect(confused.players.p2.active?.conditions.burned).toBe(false);
+    expect(burned.players.p2.active?.conditions.rotation).toBe("none");
+    // The half they share.
+    expect(confused.players.p2.active?.retreatBlocked).toBe(true);
+    expect(confused.players.p2.active?.retreatBlocked).toBe(
+      burned.players.p2.active?.retreatBlocked,
+    );
+    // …and it is the SAME half the shipped anchor installs at index 5.
+    const anchored = mustApply(board(SEED + 8, { energy: 1 }), {
+      type: "attack",
+      seat: "p1",
+      index: POISON_ANCHORED_INDEX,
+    }).state;
+    expect(anchored.players.p2.active?.retreatBlocked).toBe(
+      burned.players.p2.active?.retreatBlocked,
+    );
+  });
+
   it("🛑 the UNREADABLE tail keeps the whole compound LOUD, fold and all", () => {
     // The refusal, on a board. `fix-compound` index 6 prints the same +50/Prize head
     // with an old-era trailing sentence no reader claims, so nothing is folded and
@@ -655,17 +895,17 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.314.0");
+    expect(engineVersion).toBe("0.315.0");
   });
 });
 
 describe("§8 — the fixture IS the deck, and the deck is 60", () => {
-  it("`fix-compound` prints the five compounds at the indices this suite names", () => {
+  it("`fix-compound` prints the seven compounds at the indices this suite names", () => {
     const card = FIXTURE_POOL["fix-compound"];
     expect(card).toBeDefined();
     expect(card?.stage).toBe("Basic");
     expect(card?.hp).toBe(340);
-    expect(card?.attacks).toHaveLength(7);
+    expect(card?.attacks).toHaveLength(9);
     const effectAt = (i: number): string => card?.attacks?.[i]?.effect ?? "";
     expect(effectAt(PRIZE_DISCARD_INDEX)).toBe(PRIZE_THEN_DISCARD);
     expect(effectAt(PRIZE_RECOIL_INDEX)).toBe(PRIZE_THEN_RECOIL);
@@ -673,7 +913,9 @@ describe("§8 — the fixture IS the deck, and the deck is 60", () => {
     expect(effectAt(PARALYZE_INDEX)).toBe(DISCARD_ALL_THEN_PARALYZE);
     expect(effectAt(POISON_INDEX)).toBe(POISON_THEN_NO_RETREAT);
     expect(effectAt(POISON_ANCHORED_INDEX)).toBe(POISON_THEN_NO_RETREAT_ANCHORED);
-    // …and every one of the five is a sentence the COLUMN prints, byte for byte.
+    expect(effectAt(BURN_INDEX)).toBe(BURN_THEN_NO_RETREAT);
+    expect(effectAt(CONFUSE_INDEX)).toBe(CONFUSE_THEN_NO_RETREAT);
+    // …and every one of the seven is a sentence the COLUMN prints, byte for byte.
     const printed = new Set(legalAttackCorpus().map(([, s]) => s));
     for (const s of COMPOUNDS) expect(printed.has(s), s).toBe(true);
     expect(printed.has(POISON_THEN_NO_RETREAT_ANCHORED)).toBe(true);

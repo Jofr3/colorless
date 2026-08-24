@@ -9469,10 +9469,37 @@ const DEFENDER_POISON_N =
 // "that Pokémon" is bound by the preceding sentence to the same Defending
 // Pokémon. Matching the lock clause alone would silently swallow Clodsire's
 // Poison, which is why the compound gets its own anchored pattern.
+// 🆕🆕 **D410 — THREE WAYS, AND THE THIRD IS NOT A SENTENCE THE POOL PRINTS ALONE.**
+// The paragraph above stayed true for 298 slices and stopped being true here: the
+// pronoun clause is anchored a third time below, and the reason the third anchor
+// does NOT swallow Clodsire's Poison is no longer its own `^…$` alone but D409's
+// shadow refusal — arm 5c claims that string WHOLE, so the splitter never offers
+// it. Both halves of that are driven in `compoundCompose.test.ts` §5.
 const DEFENDER_CANT_RETREAT =
   /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\.$/;
 const DEFENDER_POISON_CANT_RETREAT =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
+// 🆕🆕 **D410 — THE THIRD SPELLING, AND IT IS THE *CLAUSE* RATHER THAN A SENTENCE
+// ANY CARD PRINTS ALONE.** The column prints this lock behind THREE different
+// leading clauses — Poisoned (3 printings, taken WHOLE by the anchor directly
+// above), Burned (2) and Confused (2) — and **ZERO printings print it standalone**
+// (measured over all 640 sentences / 1,732 printings of the committed
+// `legal_standard = 1` attack column). So this anchor exists to be reached through
+// D409's `splitAttackTrailingClause`, exactly as `OPPONENT_CANT_PLAY_TRAILING`'s
+// sibling arm is reached through `splitAttackGateClause` — the whole-sentence form
+// of a clause the pool only ever prints in company.
+//
+// 🛑 **"THAT POKÉMON" IS A BACK-REFERENCE, AND THE ANTECEDENT IS A POPULATION
+// FACT RATHER THAN A PARSE.** Read standalone the pronoun has nothing to bind to,
+// and answering "the Defending Pokémon" is a CHOICE. It is the right one here
+// because every printing that carries the clause names the opponent's Active in
+// the clause in front of it — 3 sentences / 7 printings, ALL of them opening
+// *"Your opponent's Active Pokémon is now …"*. That is not a comment, it is a
+// GUARD: `compoundCompose.test.ts` §2 sweeps the whole column and reddens by name
+// the day a head with a different antecedent prints this tail (D406→D407's rule
+// — write the correction as a guard, not as a paragraph).
+const DEFENDER_PRONOUN_CANT_RETREAT =
+  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
 // §7.1/§7.2 (D283) — the TURN-SCOPED IMPOSED HAND-PLAY LOCK, `preventHandPlay`.
 // **8 legal printings on 3 printed sentences**, and they are THREE anchors for
 // D136/D137's reason and not one loose one: the pool prints the same rule with
@@ -15295,6 +15322,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "applyStatus", target: "defender", status: "poisoned" },
       { op: "preventRetreat" },
     ];
+  }
+
+  // 5d. 🆕🆕 D410 — "During your opponent's next turn, that Pokémon can't
+  //     retreat." — THE PRONOUN CLAUSE ON ITS OWN, and the whole point of the arm
+  //     is that no card prints it alone: it is reached through D409's
+  //     `splitAttackTrailingClause`, which hands the two halves of the Burned (2)
+  //     and Confused (2) compounds to the readers separately. The Poisoned
+  //     compound never gets here — arm 5c claims it WHOLE and the splitter's
+  //     shadow refusal keeps it that way, which is asserted rather than assumed.
+  //
+  //     The program is `preventRetreat` UNCHANGED: zero new ops, zero new fields.
+  //     ⚠️ AND IT IS THE OPPONENT SEAT'S LOCK AND ONLY THAT — `preventRetreat`
+  //     hard-codes `otherSeat(ctx.seat)` at its interpreter arm, so the self-side
+  //     twin (*"During your next turn, this Pokémon can't retreat."*, 3 printings)
+  //     is NOT this arm with a different regex and stays unbuilt; it needs a
+  //     `target` on a shipped zero-field op, which is a persisted-shape question.
+  match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventRetreat" }];
   }
 
   // 5b-i. §7.1/§7.2 (D283) — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, in its three

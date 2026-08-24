@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.314.0";',
+    find: 'export const engineVersion = "0.315.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -17358,5 +17358,41 @@ export const MUTANTS: Mutant[] = [
     find: "    derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];",
     replace: "    derivedTail === null ? derivedHead : [...derivedTail, ...(derivedHead ?? [])];",
     expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D410-pronoun-lock-reads-the-self-side-twin",
+    decision: "D410",
+    what: "THE RISK THE ARM'S OWN DOC BLOCK NAMES: the anchor is re-pointed at the SELF-SIDE twin, 3 legal printings of the sentence that says THIS Pokemon rather than THAT one. `preventRetreat` hard-codes `otherSeat(ctx.seat)` at its interpreter arm, so reading that sentence here would install the OPPONENT's lock on a card that prints the owner's - a wrong-but-plausible program of exactly the shape D407 found live at HEAD. The twin is asserted UNBUILT by name, and that assertion is what makes this row die",
+    file: "packages/engine/src/effects.ts",
+    find: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\\.$/;",
+    replace: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your next turn, this Pokémon can['’]t retreat\\.$/;",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D410-pronoun-lock-installs-the-attack-lock",
+    decision: "D410",
+    what: "The neighbouring arm's REAL op copied verbatim: `preventAttack` where `preventRetreat` belongs. Both are opponent-seat locks installed by a sentence opening `During your opponent's next turn,`, so nothing about the arm's SHAPE objects - only a board does, and the two compounds' boards are what carry it",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);\n  if (match !== null) {\n    return [{ op: \"preventRetreat\" }];\n  }",
+    replace: "  match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);\n  if (match !== null) {\n    return [{ op: \"preventAttack\", target: \"defender\" }];\n  }",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D410-pronoun-lock-becomes-the-defending-noun",
+    decision: "D410",
+    what: "The PRONOUN is replaced by the NOUN its sibling anchor already claims, which makes this arm a duplicate of `DEFENDER_CANT_RETREAT` and leaves the pronoun clause unread - so both compounds fall back to the loud skip path. The two anchors differ in exactly this token and in nothing else, which is why copying the wrong one is the mistake an author actually makes here",
+    file: "packages/engine/src/effects.ts",
+    find: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\\.$/;",
+    replace: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, the Defending Pokémon can['’]t retreat\\.$/;",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D410-pronoun-lock-loses-its-apostrophe-class",
+    decision: "D410",
+    what: "D202's family, on the new anchor: the CONTRACTION's character class is narrowed to the ASCII apostrophe alone, so a printing spelling U+2019 stops resolving. The catalog prints both, and the apostrophe sweep asserts a PROGRAM EQUALITY across the two spellings rather than a non-null - which is the rung that dies here",
+    file: "packages/engine/src/effects.ts",
+    find: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\\.$/;",
+    replace: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, that Pokémon can't retreat\\.$/;",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
   },
 ];

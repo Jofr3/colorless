@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {
@@ -50,6 +50,11 @@ import {
 const BIND_DOWN_TEXT = "During your opponent's next turn, the Defending Pokémon can't retreat.";
 const POISON_RING_TEXT =
   "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.";
+/** 🆕🆕 D410 — the LOCK CLAUSE on its own. It is the second half of
+    `POISON_RING_TEXT` byte for byte, and no card in the legal column prints it as a
+    whole attack effect (0 of 640 sentences) — it is read only through D409's
+    `splitAttackTrailingClause`, which completes two more compounds with it. */
+const PRONOUN_LOCK_TEXT = "During your opponent's next turn, that Pokémon can't retreat.";
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -116,11 +121,45 @@ describe("the retreat lock — derived, not authored", () => {
     expect(deriveAttackEffect(`Flip a coin. If heads, ${BIND_DOWN_TEXT}`)).toBeNull();
     expect(deriveAttackEffect(BIND_DOWN_TEXT.replace(".", ""))).toBeNull();
     expect(deriveAttackEffect(BIND_DOWN_TEXT.toLowerCase())).toBeNull();
-    // Clodsire's LOCK CLAUSE alone is not the bare rider — it says "that
-    // Pokémon". Matching it loosely would have swallowed the Poison in front.
+    // 🆕🆕 **D410 — THIS ROW USED TO ASSERT THE PRONOUN CLAUSE DERIVES TO `null`,
+    // AND THAT CLAIM IS NOW FALSE ON PURPOSE.** It was written when the only route
+    // into the file was a whole printed sentence, so "the clause alone is not the
+    // bare rider" and "the clause alone is not read at all" were the same
+    // statement. D409's composition path separated them: the clause IS read now
+    // (arm 5d, `DEFENDER_PRONOUN_CANT_RETREAT`), and what still protects Clodsire's
+    // Poison is the SHADOW REFUSAL rather than this null — arm 5c claims the whole
+    // compound, so `splitAttackTrailingClause` never offers it. Both halves are
+    // asserted here so the replacement is a stronger claim than the one it retires.
     expect(
       deriveAttackEffect("During your opponent's next turn, that Pokémon can't retreat."),
-    ).toBeNull();
+    ).toEqual([{ op: "preventRetreat" }]);
+    expect(deriveAttackEffect(POISON_RING_TEXT)).toEqual([
+      { op: "applyStatus", target: "defender", status: "poisoned" },
+      { op: "preventRetreat" },
+    ]);
+    // …and the clause anchor is anchored too — it must not eat the compound.
+    expect(splitAttackTrailingClause(POISON_RING_TEXT)).toBeNull();
+  });
+
+  it("🆕🆕 D410 — derives the PRONOUN clause to the same single op, both apostrophes", () => {
+    // The third printed spelling of the §11 lock, and the one no card prints on its
+    // own: it reaches this deriver only as the TAIL of a compound. Both apostrophes,
+    // for D136/D137's standing reason — a punctuation-normalising re-ingest must not
+    // un-simulate the 4 printings that arrive through it.
+    expect(deriveAttackEffect(PRONOUN_LOCK_TEXT)).toEqual([{ op: "preventRetreat" }]);
+    expect(deriveAttackEffect(PRONOUN_LOCK_TEXT.replace(/'/g, "’"))).toEqual([
+      { op: "preventRetreat" },
+    ]);
+    // …and it is `^…$` like every sibling: a leading fragment, a missing period and
+    // a lowercase opener all keep the attack on the loud path.
+    expect(deriveAttackEffect(`Flip a coin. If heads, ${PRONOUN_LOCK_TEXT}`)).toBeNull();
+    expect(deriveAttackEffect(PRONOUN_LOCK_TEXT.replace(".", ""))).toBeNull();
+    expect(deriveAttackEffect(PRONOUN_LOCK_TEXT.toLowerCase())).toBeNull();
+    // ⚠️ AND THE SELF-SIDE TWIN IS STILL REFUSED, WHICH IS THE POINT OF THE ARM
+    // BEING ONE SEAT WIDE. `preventRetreat` hard-codes `otherSeat(ctx.seat)`, so
+    // *"During your next turn, this Pokémon can't retreat."* (3 legal printings)
+    // cannot be read by this arm and must stay LOUD until the op carries a target.
+    expect(deriveAttackEffect("During your next turn, this Pokémon can't retreat.")).toBeNull();
   });
 
   it("costs zero registry rows — both cards simulate off their printed text", () => {

@@ -556,6 +556,6 @@ describe("§5 — the persisted question, and the version pair", () => {
     expect(deriveAttackEffect(BOARD_ENERGY)).toBeNull();
     expect(programFor("fix-boardgrass")).toBeUndefined();
     expect(deriveAttackDamageBonus(BOARD_ENERGY)).not.toBeNull();
-    expect(engineVersion).toBe("0.314.0");
+    expect(engineVersion).toBe("0.315.0");
   });
 });

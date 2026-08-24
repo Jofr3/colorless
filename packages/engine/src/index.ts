@@ -12109,6 +12109,83 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.315.0 → **THE BARE RETREAT LOCK ON THE OPPONENT SEAT — A CLAUSE NO
+    CARD PRINTS ALONE, AND THE FIRST SLICE PRICED BY *"WHICH UNREAD CLAUSE COMPLETES
+    THE MOST COMPOUNDS"* RATHER THAN BY SENTENCE SIZE.**
+
+      *"Your opponent's Active Pokémon is now Burned. During your opponent's next
+       turn, that Pokémon can't retreat."* (2)
+      *"Your opponent's Active Pokémon is now Confused. During your opponent's next
+       turn, that Pokémon can't retreat."* (2)
+
+    **2 sentences / 4 legal printings, off ONE new `^…$` anchor
+    (`DEFENDER_PRONOUN_CANT_RETREAT`) and ONE `deriveAttackEffect` arm returning the
+    shipped zero-field `preventRetreat` UNCHANGED.** ZERO new `EffectOp`
+    inhabitants, fields, readers, registry rows, events, parks or error codes; no
+    `interpreter.ts` / `continuous.ts` / `types.ts` / `redact.ts` / `attack.ts` /
+    `registry.ts` diff at all.
+
+    🛑 **THE FOUR PRINTINGS ARRIVE THROUGH THE COMPOSITION PATH AND NOT THROUGH A
+    READER, WHICH IS WHY `rawHead` DOES NOT MOVE.** The new anchor claims a string
+    the column NEVER prints standalone — 0 of 640 sentences — so no whole sentence
+    changes hands: `COMPOUND_ATTACK_UNITS` 11 → **15** and every other summand
+    stands still. `BUILT.attack` 1387 → **1391**; whole-census `built` 1,792 →
+    **1,796**, its residue 591 → **587**; unbuilt attack column 345 → **341**
+    (PRINTINGS); `BUILT.attack - 922` 465 → **469**, `- 922 - 252` 213 → **217**;
+    `head - rawDelta - splitDelta` 1,381 → **1,385**; the apostrophe file's
+    DERIVABLE sweep 135 → **137**. The eleven-reader raw residue operand **385 is
+    unmoved for a SECOND slice running** and its fourth subtrahend steps instead:
+    385 − 16 − 13 − 15 = 1,732 − 1,391 = 341. Both reader instruments — 403 / 1,347
+    and 398 / 1,331 — stand still, again.
+
+    🛑 **THE SHAPE QUESTION WAS *"WHICH CLAUSE"*, NOT *"WHICH SENTENCE"*, AND THAT IS
+    D409's INSTRUMENT PAYING FOR ITSELF.** Once one printed string can be read as two
+    clauses, the backlog stops being ranked by sentence size: the sharp question is
+    which single UNREAD clause completes the most compounds. Measured live over the
+    residue, the whole partially-covered family is **21 sentences / 32 printings
+    across 17 distinct unread clauses, and NOT ONE of the 17 prints standalone
+    anywhere in the column** — so every one of them is invisible to a
+    sentence-ranked backlog. This clause tops that list at 4 printings / 2
+    compounds.
+
+    ⚠️ **THE PRONOUN HAS NO ANTECEDENT WHEN THE CLAUSE STANDS ALONE, AND THE
+    CORRECTION IS A GUARD RATHER THAN A COMMENT (D406→D407).** *"That Pokémon"* is a
+    back-reference; reading it as the Defending Pokémon standalone is a CHOICE. It
+    is warranted by a POPULATION and the population is swept: all **3 sentences / 7
+    printings** that carry this tail open *"Your opponent's Active Pokémon is now
+    …"*, and `compoundCompose.test.ts` §2 asserts that over the whole 640-sentence
+    column so a head with a different antecedent reddens by name.
+
+    🛑 **THE POISONED SIBLING IS THE CONTROL, AND IT IS WHY THE ANCHOR CAN BE
+    WHOLE-SENTENCE AT ALL.** *"…is now Poisoned. During your opponent's next turn,
+    that Pokémon can't retreat."* (3 printings) now has BOTH halves claimed
+    independently — so it becomes splittable in principle for the first time, and
+    D409's shadow refusal is the only thing that keeps arm 5c's whole-sentence
+    program. Asserted BOTH ways: the splitter still refuses it, AND the composition
+    it would have produced is byte-for-byte 5c's program. **THE ANCHOR WINS; THE
+    SPLITTER IS THE FALLBACK**, now with a case where the two genuinely overlap.
+
+    ⚠️ **THE SELF-SIDE TWIN IS *NOT* THIS ARM WITH A DIFFERENT REGEX, RE-DERIVED BY
+    OPENING THE FILE (D406's rule).** *"During your next turn, this Pokémon can't
+    retreat."* (3 printings / 2 compounds, both behind a *"Heal N damage from this
+    Pokémon."* head) locks the ATTACKER's own body. `preventRetreat` is
+    `{ op: "preventRetreat" }` — no fields — and `interpreter.ts` hard-codes
+    `otherSeat(ctx.seat)` inside it, so the twin needs a `target` on a shipped
+    zero-field op. **THE SEPARATION HOLDS AND IS MEASURED, NOT INHERITED.**
+
+    ⚠️ **AND THE SPLITTER STILL DOES NOT NEED TO RECURSE.** Both new compounds have
+    exactly TWO clauses (asserted with the other five), so the "family of zero"
+    verdict on recursion is re-derived at 7 sentences rather than carried at 5.
+
+    `MATCH_RECORD_VERSION` **STAYS 25.** No field changes and no new op inhabitant:
+    the arm returns an op that has been persisted since 0.62.0, and `preventRetreat`
+    never parks — it writes `InPlayPokemon.retreatBlocked` inline — so nothing new
+    can ride an `EffectContinuation` into a record. ⚠️ Not an exported constant
+    (D406), so the claim is DRIVEN rather than asserted.
+
+    engineVersion 0.314.0 → **0.315.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.314.0 → **THE TRAILING-CLAUSE COMPOSITION PATH — THE FIRST TIME THIS
     ENGINE READS ONE PRINTED STRING AS TWO CLAUSES.**
 
@@ -17263,7 +17340,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.314.0";
+export const engineVersion = "0.315.0";
 
 export type {
   ApplyResult,
