@@ -285,14 +285,34 @@ describe("the opponent-side lock — derived, not authored", () => {
       { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } },
     ]);
     expect(deriveAttackEffect(EISCUE_TEXT)).not.toEqual(deriveAttackEffect(DISCARD_HALF_ONLY));
-    // …and the second sentence ALONE is printed NOWHERE in the pool as an attack
-    // effect (censused, 978 cards / 6 sets), which is why there is no bare anchor for it
-    // and why it must stay LOUD.
+    // 🆕🆕 **D408 — THE SECOND SENTENCE ALONE LEFT THE `toBeNull`, AND THE CLAIM
+    // AROUND IT WAS FALSE RATHER THAN MERELY STALE.** What stood here was *"printed
+    // NOWHERE in the pool as an attack effect (censused, 978 cards / 6 sets), which
+    // is why there is no bare anchor for it and why it must stay LOUD"*. That census
+    // was right about ITS population and wrong about the wider one: the
+    // `legal_standard = 1` attack column prints this sentence standalone on **3**
+    // printings and its bare-plural twin (*"…can't use attacks."*) on **4**, and
+    // `DEFENDER_CANT_ATTACK_NEXT_TURN` reads both. **A "there is none" is the one
+    // verdict a narrow population gets wrong in the direction nothing re-checks** —
+    // every count carries a POPULATION and a LEGALITY (`conventions.md`), and this
+    // rung had been asserting the consequence of a scope for sixty decisions.
+    //
+    // ⚠️ RE-POINTED RATHER THAN DELETED, AND IT IS A STRONGER WARRANT NOW THAN IT
+    // WAS AS A NULL (D299's move, D382's practice). The bare arm must produce this
+    // compound's SECOND OP byte for byte, so a reader that drifted between the two
+    // shows up HERE as two different programs rather than on a board as a lock
+    // sitting on the wrong seat — which no assertion about the record's shape sees.
+    const compoundOps = deriveAttackEffect(EISCUE_TEXT) as EffectOp[];
+    expect(
+      deriveAttackEffect("During your opponent's next turn, the Defending Pokémon can't attack."),
+    ).toEqual([compoundOps[1]]);
+    // …and the bare-plural spelling of the same rule, which the ONE alternation
+    // anchor also claims: same op, same seat, same window, one token apart.
     expect(
       deriveAttackEffect(
-        "During your opponent's next turn, the Defending Pokémon can't attack.",
+        "During your opponent's next turn, the Defending Pokémon can't use attacks.",
       ),
-    ).toBeNull();
+    ).toEqual([compoundOps[1]]);
   });
 
   it("is anchored end to end", () => {

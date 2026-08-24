@@ -460,6 +460,6 @@ describe("§5 — the persisted question, asked and answered", () => {
     // saved record at all.
     expect(deriveAttackEffect(TOOL_COUNT)).toBeNull();
     expect(deriveAttackDamageMultiplier(TOOL_COUNT)).not.toBeNull();
-    expect(engineVersion).toBe("0.312.0");
+    expect(engineVersion).toBe("0.313.0");
   });
 });

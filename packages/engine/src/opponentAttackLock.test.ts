@@ -326,9 +326,19 @@ describe("the printed datum — both printings re-queried, field by field", () =
     expect(deriveAttackEffect("During your next turn, this Pokémon can't use Peck.")).toEqual([
       { op: "preventAttackUse", attack: "Peck" },
     ]);
+    // 🆕🆕 **D408 — AND THE OPPONENT-SIDE WHOLE-POKÉMON LOCK JOINED THEM, FOR
+    // EXACTLY D299's REASON ONE ROW UP.** This line was a `toBeNull` warrant: D148
+    // read the sentence only as the second clause of a compound, so "this anchor
+    // refuses it" could be spelled as "nobody reads it". The bare form is printed on
+    // 3 legal printings (plus 4 of *"…can't use attacks."*) and
+    // `DEFENDER_CANT_ATTACK_NEXT_TURN` reads it now, so the warrant is asserted as a
+    // DIFFERENT PROGRAM instead. That says both things at once, and the second is the
+    // one that matters here: this anchor did not claim the sentence, and the reader
+    // that did produced a WHOLE-POKÉMON lock rather than this file's per-attack one —
+    // two ops that write to the same body and are told apart by nothing on a board.
     expect(
       deriveAttackEffect("During your opponent's next turn, the Defending Pokémon can't attack."),
-    ).toBeNull();
+    ).toEqual([{ op: "preventAttack", target: "defender" }]);
   });
 });
 
