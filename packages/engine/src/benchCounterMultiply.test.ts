@@ -751,6 +751,8 @@ describe("the structural answers", () => {
         "markers",
         "promotedTurn",
         "retreatBlocked",
+        // 🆕🆕 D412 — the SELF-installed §11 retreat lock's stamp (MATCH_RECORD_VERSION 25 → 26).
+        "retreatLockedTurn",
         "stack",
         "tools",
         "turnPlayed",
@@ -760,7 +762,7 @@ describe("the structural answers", () => {
         "usedAttack",
       ].sort(),
     );
-    // …and the BENCHED bodies this slice reads are the same 16-key shape: the count
+    // …and the BENCHED bodies this slice reads are the same 20-key shape: the count
     // source reads an EXISTING field off an EXISTING zone and stamps nothing.
     const bench = withBench(board("fix-titan"), [3]).players.p1.bench[0];
     if (bench === undefined) throw new Error("no benched body");

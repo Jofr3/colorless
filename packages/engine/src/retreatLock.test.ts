@@ -3,6 +3,7 @@ import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import { applyAction, programFor, redactGame } from "./index";
 import type { GameEvent, GameState } from "./index";
 import {
+  COMPOUND_COMPOSE_DECK,
   FIXTURE_POOL,
   RETREAT_LOCK_DECK,
   activeUid,
@@ -16,6 +17,7 @@ import {
   must,
   mustApply,
   setActiveFromDeck,
+  setDamage,
   types,
 } from "./testFixtures";
 
@@ -55,6 +57,15 @@ const POISON_RING_TEXT =
     whole attack effect (0 of 640 sentences) — it is read only through D409's
     `splitAttackTrailingClause`, which completes two more compounds with it. */
 const PRONOUN_LOCK_TEXT = "During your opponent's next turn, that Pokémon can't retreat.";
+/** 🆕🆕 D412 — the SELF-side clause. Like `PRONOUN_LOCK_TEXT` it prints STANDALONE
+    on zero of the 640 legal sentences: both of its printings are the TAIL of a
+    "Heal {N} damage from this Pokémon." compound, so it too is reached only through
+    `splitAttackTrailingClause`. Unlike it, the seat it locks is the ATTACKER's. */
+const SELF_LOCK_TEXT = "During your next turn, this Pokémon can't retreat.";
+const SELF_HEAL_COMPOUND_50 =
+  "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
+const SELF_HEAL_COMPOUND_60 =
+  "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -155,11 +166,17 @@ describe("the retreat lock — derived, not authored", () => {
     expect(deriveAttackEffect(`Flip a coin. If heads, ${PRONOUN_LOCK_TEXT}`)).toBeNull();
     expect(deriveAttackEffect(PRONOUN_LOCK_TEXT.replace(".", ""))).toBeNull();
     expect(deriveAttackEffect(PRONOUN_LOCK_TEXT.toLowerCase())).toBeNull();
-    // ⚠️ AND THE SELF-SIDE TWIN IS STILL REFUSED, WHICH IS THE POINT OF THE ARM
-    // BEING ONE SEAT WIDE. `preventRetreat` hard-codes `otherSeat(ctx.seat)`, so
-    // *"During your next turn, this Pokémon can't retreat."* (3 legal printings)
-    // cannot be read by this arm and must stay LOUD until the op carries a target.
-    expect(deriveAttackEffect("During your next turn, this Pokémon can't retreat.")).toBeNull();
+    // ⚠️ AND THE SELF-SIDE TWIN IS A DIFFERENT PROGRAM RATHER THAN A REFUSED ONE,
+    // WHICH IS D412 COLLECTING WHAT D410 DEFERRED. This assertion read `.toBeNull()`
+    // until D412; it is INVERTED rather than deleted, because the fact it is really
+    // pinning has not changed — *these two anchors do not read each other's
+    // sentence*. The bare arm above must still answer the DEFENDER, and this one
+    // must carry `target: "self"`; a widened regex that let either claim both
+    // would go red here from whichever side it swallowed.
+    expect(deriveAttackEffect(SELF_LOCK_TEXT)).toEqual([{ op: "preventRetreat", target: "self" }]);
+    expect(deriveAttackEffect(SELF_LOCK_TEXT.replace(/'/g, "’"))).toEqual([
+      { op: "preventRetreat", target: "self" },
+    ]);
   });
 
   it("costs zero registry rows — both cards simulate off their printed text", () => {
@@ -371,5 +388,186 @@ describe("the retreat lock — the early clears (an effect of an attack ends)", 
     });
     expect(types(events)).toContain("POKEMON_EVOLVED");
     expect(done.players.p2.active?.retreatBlocked).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 D412 — THE SELF-SIDE LOCK, AND THE CLOCK IS THE WHOLE SLICE
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// 🛑 D410 PRICED THIS SENTENCE AS *"give `preventRetreat` a `target` and transfer
+// `preventAttack`'s ternary"*. THAT SHIPS A PROGRAM THAT RESOLVES AND DOES NOTHING,
+// and the refutation was already in the tree: `retreatBlocked` rides §13.4's
+// paralysis clock, flow.ts clears it for `endedSeat`, and an attack ENDS the
+// installer's turn (§5.3) — so a self-installed flag is lifted at the very first
+// Checkup, before its window opens. flow.ts's own comment guarded the clear with
+// *"which no print in the pool can do (the deriver's only two shapes both target
+// the DEFENDER)"*; this slice builds a third shape and keeps that parenthesis true
+// by construction, because the self arm writes a STAMP on a different field.
+//
+// So the section below is not "does the op resolve" — that is three lines up in the
+// deriver block. It is: **does the lock still exist on the turn it is supposed to
+// bite, and is it gone on the turn after.** Both boards below go RED against the
+// boolean implementation, which is the point of writing them.
+
+/** P2 opens and passes, so P1's turn 2 carries no §4 attack restriction. THE
+    LOCKER AND THE LOCKED BODY ARE THE SAME POKÉMON HERE — that is the difference
+    from `armed` above — so P1's Active is `fix-compound` (retreat 1, 340 HP) with
+    one {C} attached: enough to use the {C} attack AND to pay the retreat it is
+    about to be refused. It is damaged to 100 so the compound's HEAD is observable;
+    a heal on an undamaged body is a silent no-op and would leave half the
+    composition untestable. */
+function selfArmed(seed: number): GameState {
+  let state = must(
+    applyAction(
+      driveSetup(seed, { p1: COMPOUND_COMPOSE_DECK, p2: COMPOUND_COMPOSE_DECK }, { first: "p2" }),
+      { type: "endTurn", seat: "p2" },
+    ),
+  );
+  state = setActiveFromDeck(state, "p1", "fix-compound");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  return setDamage(state, "p1", 100);
+}
+
+/** The retreat P1's own armed body could otherwise pay. */
+function p1Retreat(state: GameState) {
+  return {
+    type: "retreat" as const,
+    seat: "p1" as const,
+    discardEnergy: state.players.p1.active?.energy ?? [],
+    promoteBenchIndex: 0,
+  };
+}
+
+describe("🆕🆕 D412 — the SELF-side retreat lock, composed off a heal head", () => {
+  it("composes both printed compounds in printed order — heal, then lock", () => {
+    // The head is claimed by `SELF_HEAL` and the tail by D412's arm; neither
+    // anchor claims the whole string, which is what admits the pair to the
+    // splitter. Asserted as a PROGRAM EQUALITY rather than a non-null: a
+    // composition that silently dropped the tail would satisfy a non-null.
+    for (const [text, amount] of [
+      [SELF_HEAL_COMPOUND_50, 50],
+      [SELF_HEAL_COMPOUND_60, 60],
+    ] as const) {
+      const split = splitAttackTrailingClause(text);
+      expect(split).not.toBeNull();
+      if (split === null) throw new Error("unreachable");
+      expect(deriveAttackEffect(split.head)).toEqual([{ op: "heal", target: "self", amount }]);
+      expect(deriveAttackEffect(split.tail)).toEqual([{ op: "preventRetreat", target: "self" }]);
+      // ⚠️ AND THE WHOLE STRING IS STILL REFUSED. If a later slice ever gives this
+      // compound a whole-sentence anchor, the splitter's shadow refusal fires and
+      // this composition path goes silent — so the refusal is pinned, not assumed.
+      expect(deriveAttackEffect(text)).toBeNull();
+    }
+  });
+
+  it("locks the ATTACKER's own body, not the defender — the polarity trap", () => {
+    // 🛑 THE FIELD NAME IS `target` ON BOTH THIS OP AND `preventAttack`, AND THE
+    // ABSENT VALUE MEANS OPPOSITE SEATS. Copying the sibling's ternary across
+    // without swapping the operands inverts this board silently, which is exactly
+    // what the mutant on that line does.
+    const before = selfArmed(20);
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: 9 });
+    expect(find(events, "RETREAT_BLOCKED")).toEqual({
+      type: "RETREAT_BLOCKED",
+      seat: "p1",
+      uid: activeUid(before, "p1"),
+    });
+    // The DEFENDER is untouched — the whole point of the seat being the near one.
+    expect(state.players.p2.active?.retreatBlocked).toBe(false);
+    expect(state.players.p2.active?.retreatLockedTurn).toBeNull();
+    // …and the head ran: 100 damage healed by 50.
+    expect(state.players.p1.active?.damage).toBe(50);
+  });
+
+  it("writes the STAMP and never the boolean, so the endedSeat clear cannot see it", () => {
+    const before = selfArmed(21);
+    const installTurn = before.turn;
+    const { state } = mustApply(before, { type: "attack", seat: "p1", index: 9 });
+    const locked = state.players.p1.active;
+    // `state.turn + 2` — the installer's OWN next turn, one full round away. The
+    // `+ 1` its four sibling records use is a window on the OPPONENT's turn.
+    expect(locked?.retreatLockedTurn).toBe(installTurn + 2);
+    // 🛑 THE BOOLEAN IS UNTOUCHED, AND THAT IS THE LOAD-BEARING HALF. flow.ts's
+    // clear reads `retreatBlocked` on `endedSeat` only; the attack has just ended
+    // P1's turn, so a boolean written here would have been cleared already.
+    expect(locked?.retreatBlocked).toBe(false);
+  });
+
+  it("is still live on the installer's OWN next turn — the board the boolean fails", () => {
+    let state = mustApply(selfArmed(22), { type: "attack", seat: "p1", index: 9 }).state;
+    // The attack ended P1's turn, so a Checkup has already run with endedSeat = p1.
+    // Walk to P1's next turn: P2 spends and ends theirs.
+    expect(state.phase.kind).toBe("turn:action");
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+
+    // 🛑 THIS IS THE ASSERTION THE WHOLE SLICE EXISTS FOR. It is P1's own next
+    // turn, the window the card prints, and the lock must still bite.
+    expect(state.turn).toBe(state.players.p1.active?.retreatLockedTurn);
+    expectErr(state, p1Retreat(state), "RETREAT_PREVENTED");
+    // …and the wire agrees, through the same one reader rather than a second
+    // hand-spelled disjunction: an offered retreat the gate then refuses is an
+    // afford-then-reject.
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "turn:action") throw new Error(`expected turn:action, got ${phase.kind}`);
+    expect(phase.retreat).toEqual({ cost: 1, can: false });
+  });
+
+  it("expires BY ARITHMETIC one round later, with no event and no clear", () => {
+    let state = mustApply(selfArmed(23), { type: "attack", seat: "p1", index: 9 }).state;
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    // P1 sits out its locked turn; P2 takes another.
+    const { events: p1End } = mustApply(state, { type: "endTurn", seat: "p1" });
+    // ⚠️ SILENT ON EXPIRY, which is this engine's stated convention for a stamp and
+    // is why no `RETREAT_BLOCK_ENDED` twin was added: a turn stamp expires by
+    // arithmetic, so there is no boundary walk to announce it from. The boolean is
+    // the one §11 rider that does emit one, and nothing here writes the boolean.
+    expect(types(p1End)).not.toContain("RETREAT_BLOCK_ENDED");
+    state = must(applyAction(state, { type: "endTurn", seat: "p1" }));
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+
+    // The stamp is UNCHANGED on the body — nothing cleared it — and it has simply
+    // stopped answering, which is the difference between a stamp and a flag.
+    expect(state.players.p1.active?.retreatLockedTurn).not.toBeNull();
+    expect(state.turn).not.toBe(state.players.p1.active?.retreatLockedTurn);
+    expect(types(mustApply(state, p1Retreat(state)).events)).toContain("RETREATED");
+  });
+
+  it("the 60-damage twin is the same program on a different scalar", () => {
+    // The pair differs in the printed heal and in nothing else, so a board that
+    // credited the lock to the wrong clause would disagree here.
+    const before = setDamage(selfArmed(24), "p1", 100);
+    const { state } = mustApply(before, { type: "attack", seat: "p1", index: 10 });
+    expect(state.players.p1.active?.damage).toBe(40);
+    expect(state.players.p1.active?.retreatLockedTurn).toBe(before.turn + 2);
+  });
+
+  // 🛑 THE §10 EARLY CLEARS ARE NOT DRIVEN HERE, AND SAYING WHERE THEY ARE IS THE
+  // POINT. They live in `attackLock.test.ts`'s "the §10 clear set is SWEPT, not
+  // listed" sweep, which sets a non-default value on every shed field, runs all
+  // THREE routes (retreat, forced switch, evolve) and asserts they shed the SAME
+  // set — the guard that exists precisely because the three clears are three
+  // hand-written object literals in three files with nothing making them agree.
+  // D412 adds `retreatLockedTurn` to that sweep rather than driving one route
+  // here, because one route passing says nothing about the other two.
+  //
+  // ⚠️ A BOARD FOR IT WAS WRITTEN HERE FIRST AND THROWN AWAY, AND THE MEASUREMENT
+  // IS WHY: `COMPOUND_COMPOSE_DECK` prints no Switch and no evolution line, and
+  // adding one — swapping a filler for `sv01-194` — REDDENED THREE OF D409's
+  // boards, because this deck's composition is load-bearing for its seeds. The
+  // cheap-looking local fixture edit was the expensive one.
+
+  it("the 35 bare printings are byte-identical — the widening is additive", () => {
+    // 🛑 THE ONE THING A NEW OPTIONAL FIELD MUST NOT DO IS CHANGE WHAT THE ABSENT
+    // VALUE MEANS. `preventRetreat` shipped defender-first, so bare must still be
+    // the DEFENDER — and it is asserted on a real board, not just at the deriver.
+    const before = armed(26);
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: 0 });
+    expect(find(events, "RETREAT_BLOCKED")?.seat).toBe("p2");
+    expect(state.players.p2.active?.retreatBlocked).toBe(true);
+    // …and the bare arm writes the BOOLEAN, never the stamp: two halves, two
+    // fields, and the imposed one keeps its own clock.
+    expect(state.players.p2.active?.retreatLockedTurn).toBeNull();
+    expect(state.players.p1.active?.retreatBlocked).toBe(false);
   });
 });

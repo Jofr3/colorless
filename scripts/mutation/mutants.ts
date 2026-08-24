@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.315.0";',
+    find: 'export const engineVersion = "0.316.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10661,6 +10661,16 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D326-record-version-not-bumped",
     decision: "D326",
+    // ⚠️ RE-POINTED AT D412 (25 → 26), in the SAME COMMIT as the bump. ⚠️ AND THIS
+    //    IS THE FIRST RE-POINT IN TWENTY-SIX SLICES WHERE THE QUESTION CAME BACK
+    //    **YES** — every entry below this one records the answer NO, because a
+    //    `BoardCondition` member, an op field or a `DamageCountSource` is derived at
+    //    read time and never persisted. D412 adds a REQUIRED field to
+    //    `InPlayPokemon` (`retreatLockedTurn`), so a v25 record genuinely has no
+    //    value for it and `retreatLocked` would read `undefined === state.turn` as
+    //    FALSE — handing back a retreat the player already paid a heal for. **THE
+    //    STREAK OF `NO`s WAS NOT A REASON TO ANSWER NO AGAIN**, which is the whole
+    //    point of asking rather than inheriting.
     // ⚠️ RE-POINTED AT D335 (19 → 20), and the ROW'S MEANING TRAVELS WITH THE
     //    LITERAL rather than staying with D326's own key: whatever the newest bump
     //    was for, reverting it makes this deploy ACCEPT a record whose meaning it no
@@ -10703,8 +10713,8 @@ export const MUTANTS: Mutant[] = [
     //    with `undefined` as an attack name while the record went on looking healthy.
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 25;",
-    replace: "export const MATCH_RECORD_VERSION = 24;",
+    find: "export const MATCH_RECORD_VERSION = 26;",
+    replace: "export const MATCH_RECORD_VERSION = 25;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -17440,5 +17450,83 @@ export const MUTANTS: Mutant[] = [
     replace: "    return false;",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/mutation/recovery-gate.ts"],
+  },
+
+  // ── D412 · the self-side retreat lock (the seat, the clock, the three clears) ──
+  // 🛑 C1 AND C2 ARE THE SLICE. C1 pins the POLARITY (one field name meaning
+  //    opposite seats on two adjacent ops) and C2 pins the CLOCK (the boolean that
+  //    lifts before its own window opens). Every other row is the ordinary
+  //    discipline a new persisted field owes.
+  {
+    id: "D412-seat-ternary-copied-from-the-sibling",
+    decision: "D412",
+    what: "🛑 C1 — THE POLARITY TRAP, AS `preventAttack`'s TERNARY COPIED VERBATIM. **THE TWO OPS SPELL THE SAME FIELD NAME AND THEIR ABSENT VALUE MEANS OPPOSITE SEATS** — `preventAttack` shipped self-first so bare means SELF, this op shipped defender-first so bare must mean DEFENDER — and the sibling arm is one function away in the same file. ⚠️ **THE SELF ARM STAYS CORRECT UNDER THIS MUTANT**, which is what makes it nasty: `target` is never `\"defender\"` on this op, so the ternary collapses to `ctx.seat` and it is the **35 SHIPPED BARE PRINTINGS** that silently invert onto the attacker. A suite that only drove the NEW sentence would pass. ⚠️ **ANCHORED ON THE COMMENT ABOVE THE LINE, NOT ON THE LINE**: the bare ternary occurs TWICE in this file (an unrelated op shares the expression), which is D404's wrong-arm trap exactly",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  // operands silently inverts every one of the 35 shipped bare printings.\n  //\n  // ⚠️ THE EXPRESSION IS DESCRIBED RATHER THAN QUOTED, WHICH IS D210's RULE AND IT\n  // PAID HERE: a doc block reproducing the line at its own indentation is a second\n  // occurrence, and the mutant anchored on it would edit PROSE and survive.\n  const seat = op.target === \"self\" ? ctx.seat : otherSeat(ctx.seat);",
+    replace: "  // operands silently inverts every one of the 35 shipped bare printings.\n  //\n  // ⚠️ THE EXPRESSION IS DESCRIBED RATHER THAN QUOTED, WHICH IS D210's RULE AND IT\n  // PAID HERE: a doc block reproducing the line at its own indentation is a second\n  // occurrence, and the mutant anchored on it would edit PROSE and survive.\n  const seat = op.target === \"defender\" ? otherSeat(ctx.seat) : ctx.seat;",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-self-arm-writes-the-boolean",
+    decision: "D412",
+    what: "🛑 C2 — **THE DEFECT THE WHOLE SLICE EXISTS TO AVOID**: the self arm writes `retreatBlocked: true` instead of the stamp, which is D410's resume point taken at its word (\"give the op a `target`\"). It COMPILES, it EMITS `RETREAT_BLOCKED`, it counts as BUILT on every reader-keyed instrument, **and it changes no board** — flow.ts clears the boolean for `endedSeat`, an attack ends the installer's turn, so the lock lifts at the very first Checkup before its window opens. D408's \"resolved and did nothing\" defect, in the one place the tree had already written down the warning",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"RETREAT_BLOCKED\", seat, uid });\n    return withActive(state, seat, { ...active, retreatLockedTurn: turn });",
+    replace: "    events.push({ type: \"RETREAT_BLOCKED\", seat, uid });\n    return withActive(state, seat, { ...active, retreatBlocked: true });",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-self-window-takes-the-defender-number",
+    decision: "D412",
+    what: "🛑 C3 — THE WINDOW NUMBER: `state.turn + 2` becomes `+ 1`, which is the number **FOUR OF THE FIVE SIBLING DURATED RECORDS USE** and therefore the one an author reaches for first. `+ 1` is the seat whose turn comes NEXT (§5.3) — the opponent's — so the lock would be live on a turn its owner cannot retreat on anyway and dead on the turn the card names. ⚠️ Invisible to every deriver and every census rung; only a board that walks to the installer's OWN next turn can see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const turn = state.turn + 2;",
+    replace: "    const turn = state.turn + 1;",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-reader-drops-the-imposed-half",
+    decision: "D412",
+    what: "🛑 C4 — THE UNIFYING READER LOSES ONE OF ITS TWO HALVES: `retreatLocked` stops reading `retreatBlocked` and answers on the stamp alone. **THIS IS THE COST OF THE TWO-FIELD SHAPE, PINNED.** D412 chose a second field over converting the boolean, and the entire safety argument for that choice is that exactly ONE function knows there are two. A half dropped here un-locks all 35 imposed printings at the §11 gate **and** on the wire at once, because both call sites route through this one line",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return pokemon.retreatBlocked || pokemon.retreatLockedTurn === state.turn;",
+    replace: "  return pokemon.retreatLockedTurn === state.turn;",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-forced-switch-forgets-the-new-clear",
+    decision: "D412",
+    what: "🛑 C5 — ONE OF THE THREE §10 CLEARS IS MISSED: `switchInto`'s literal loses `retreatLockedTurn: null`. **THE COMPILER CANNOT SEE THIS** — all three clears are hand-written spreads, so an unlisted field rides through unchanged and nothing fails to build. `attackLock.test.ts` names this hazard about ITSELF (\"a fourth stamped field would have to be added to all three by hand with nothing failing if one were missed\"); D412 is that fourth field, and this row is the proof the sweep now catches it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    // D412 — and unlike the retreat path's copy of this line, THIS one is live:\n    // a Boss's Orders dragging the self-locked body off the Active Spot inside\n    // its own window sheds the lock with the rest of the effects of the attack.\n    retreatLockedTurn: null,\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/attackLock.test.ts"],
+  },
+  {
+    id: "D412-arm-forgets-its-target",
+    decision: "D412",
+    what: "🛑 C6 — THE ARM RETURNS THE BARE OP: `target: \"self\"` is dropped and the return becomes arm 5d's line byte for byte. **IT IS THE COPY-PASTE THIS ARM WAS WRITTEN NEXT TO** — a few lines up, the same op, the same shape — and the result reads the SELF sentence onto the OPPONENT's body: the wrong-but-plausible program D407 found live at HEAD and D408 repaired. The compound still splits, still resolves and still counts, so no census rung moves and only a SEAT assertion can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"preventRetreat\", target: \"self\" }];",
+    replace: "    return [{ op: \"preventRetreat\" }];",
+    expectKilledBy: ["packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-self-anchor-loses-its-apostrophe-class",
+    decision: "D412",
+    what: "🛑 C7 — D202's FAMILY ON THE NEW ANCHOR: the CONTRACTION's character class narrows to the ASCII apostrophe alone, so a printing spelling U+2019 stops resolving. The catalog prints both, and `clauseApostrophe.test.ts` asserts a PROGRAM EQUALITY across the two spellings rather than a non-null — which is the rung that dies here, together with the deriver's own curly assertion",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retreat\\.$/;",
+    replace: "const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can't retreat\\.$/;",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts", "packages/engine/src/retreatLock.test.ts"],
+  },
+  {
+    id: "D412-hud-reads-the-imposed-field-by-hand",
+    decision: "D412",
+    what: "🛑 C8 — **THE DEFECT THAT WAS ACTUALLY LIVE, AND IT WAS FOUND BY GREP RATHER THAN BY A RED TEST.** The local hot-seat HUD goes back to spelling `!active.retreatBlocked` by hand — the line it really carried until D412 — so a body locked by its OWN attack is offered a Retreat button that `retreat` then rejects with `RETREAT_PREVENTED`. **AN AFFORD-THEN-REJECT ON THE ONE BOARD WHERE THE PLAYER HAS THE CARD IN FRONT OF THEM SAYING IT SHOULD NOT BE THERE.** ⚠️ THIS IS THE THIRD READ SITE OF A TWO-FIELD FACT, and the engine gate and the wire projection were BOTH already routed through `retreatLocked` when this one was still wrong — so D213's rule is what this row pins: *the server-side twin passing proves nothing about the local panel.* The imposed half keeps working under the mutant, which is why the guard needs the STAMP board and not just a retreat-is-greyed board",
+    file: "src/features/game/GameHud.tsx",
+    find: "    !retreatLocked(game, active) &&",
+    replace: "    !active.retreatBlocked &&",
+    expectKilledBy: ["src/features/game/GameHud.dom.test.tsx"],
   },
 ];

@@ -262,3 +262,70 @@ describe("EffectChooseDialog — §8/§11 the CHOSEN opponent attack (D157)", ()
     expect(applied.players.p2.active?.lockedAttacks).toEqual([{ turn: 3, attackIndex: 3 }]);
   });
 });
+
+// 🆕🆕 D412 — THE SELF-INSTALLED RETREAT LOCK REACHES THIS PANEL, AND THE REASON
+// THIS SUITE OWES A CASE IS THAT IT DID NOT.
+//
+// 🛑 THE BUG THIS PINS WAS LIVE, FOUND BY GREP RATHER THAN BY A RED TEST. D412
+// gave the §11 retreat lock a SECOND field — the imposed `retreatBlocked` and the
+// self-installed `retreatLockedTurn` stamp — and routed the engine gate and the
+// wire projection through one reader. **This panel was the third read site and it
+// was still spelling `!active.retreatBlocked` by hand**, so a body locked by its
+// OWN attack would have been offered a Retreat button that `retreat` then rejects
+// with RETREAT_PREVENTED. That is D222's defect exactly (a hand-spelled test over
+// members a helper already unifies) landing on D213's surface (the local HUD,
+// where the server-side twin passing proves nothing).
+//
+// ⚠️ TWO CASES AND NOT ONE, BECAUSE ONE OF THEM CANNOT FAIL ALONE. The imposed
+// half was already correct before D412, so a suite that only drove `retreatBlocked`
+// would have stayed green through the whole defect. The STAMP case is the one that
+// goes red against the old line; the imposed case is the attribution control that
+// stops a "fix" which simply swapped one hand-spelled field for the other.
+describe("TurnPanel — §11 the retreat lock reaches the panel from BOTH fields (D412)", () => {
+  /** The self-installed lock, stamped LIVE on the current turn — the shape
+      `preventRetreat { target: "self" }` writes. */
+  function selfLockRetreat(state: GameState): GameState {
+    const side = state.players.p1;
+    const active = side.active;
+    if (active === null) throw new Error("p1 has no Active Pokémon");
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        p1: { ...side, active: { ...active, retreatLockedTurn: state.turn } },
+      },
+    };
+  }
+
+  /** The imposed lock — the boolean 35 printings have written since D112. */
+  function imposeRetreatLock(state: GameState): GameState {
+    const side = state.players.p1;
+    const active = side.active;
+    if (active === null) throw new Error("p1 has no Active Pokémon");
+    return {
+      ...state,
+      players: { ...state.players, p1: { ...side, active: { ...active, retreatBlocked: true } } },
+    };
+  }
+
+  it("greys Retreat for the SELF-installed stamp — the half the old line could not see", () => {
+    renderHud(selfLockRetreat(battleReady()));
+    expect(retreatButton().disabled).toBe(true);
+    // …and ATTACKING is untouched: this lock says nothing about declaring an
+    // attack, which is the separation the sibling §11 rider is under.
+    expect(attackButton().disabled).toBe(false);
+  });
+
+  it("greys Retreat for the IMPOSED boolean — the attribution control", () => {
+    renderHud(imposeRetreatLock(battleReady()));
+    expect(retreatButton().disabled).toBe(true);
+    expect(attackButton().disabled).toBe(false);
+  });
+
+  it("leaves Retreat live when NEITHER field is set", () => {
+    // The board both cases above are measured against. Without it, a panel that
+    // greyed Retreat unconditionally would satisfy the two assertions above.
+    renderHud(battleReady());
+    expect(retreatButton().disabled).toBe(false);
+  });
+});

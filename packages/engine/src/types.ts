@@ -670,8 +670,52 @@ export interface InPlayPokemon {
       shape field-by-field — redact.ts `copyConditions`). It shares only the
       §13.4 paralysis LIFETIME: set by the attacker, cleared at the Checkup that
       ends the blocked player's own next turn (flow.ts), and dropped early
-      wherever an effect of an attack ends — leaving the Active Spot or evolving. */
+      wherever an effect of an attack ends — leaving the Active Spot or evolving.
+
+      🛑 D412 — THIS FIELD IS NOW THE OPPONENT-SIDE HALF AND ONLY THAT, AND THE
+      NARROWING IS LOAD-BEARING RATHER THAN COSMETIC. `preventRetreat`'s `"self"`
+      arm writes `retreatLockedTurn` below instead, because the paralysis clock
+      this field rides CANNOT express a self-installed window: flow.ts clears it
+      for `endedSeat`, an attack ENDS the installer's turn (§5.3), so the very
+      first Checkup after a self-lock would lift it before its window opened.
+      That is not a hypothetical — flow.ts's own clear comment says a block
+      applied by the ended seat's own attack "would lift a turn early", and
+      guarded the claim with "which no print in the pool can do (the deriver's
+      only two shapes both target the DEFENDER)". D412 built a third shape, and
+      kept that parenthesis TRUE by construction rather than by luck: no arm
+      writes this field for the installer's own seat. ⚠️ **READ THE FACT THROUGH
+      `retreatLocked` (continuous.ts), NEVER THIS FIELD DIRECTLY** — there are two
+      fields and one question, and a read site that names only one of them is the
+      D222 defect (a hand-spelled test over members a helper already unifies). */
   retreatBlocked: boolean;
+  /** §11 (D412) — the SELF-installed retreat lock ("During your next turn, this
+      Pokémon can't retreat." — 3 legal printings, all of them the tail of a
+      `"Heal {N} damage from this Pokémon."` compound), or `null` when none is
+      installed. The turn number on which the lock is LIVE, exactly
+      `attackLockedTurn`'s shape one field family over.
+
+      ⚠️ A STAMP AND NOT A SECOND BOOLEAN, WHICH IS THE WHOLE REASON THIS FIELD
+      EXISTS RATHER THAN A `target` ON THE OP. `state.turn + 2` — the installer's
+      OWN next turn, one full round away, which is `attackLockedTurn`'s self-arm
+      number and no other field's; the four sibling records that stamp `+ 1` are
+      all windows on the OPPONENT's turn. It expires BY ARITHMETIC (`=== state.turn`
+      stops holding) with no turn-boundary clear anywhere, so unlike
+      `retreatBlocked` it has no `endedSeat` mirror to get backwards.
+
+      ⚠️ NO `…_ENDED` EVENT, and that is this engine's stated convention for a
+      stamp rather than an omission: `attackLockedTurn`, `attackBlock`,
+      `damageReduction` and `installedRecoil` all say it in the same words — a
+      turn stamp expires by arithmetic, so there is no boundary walk to announce
+      it from and nothing to announce. `retreatBlocked` is the ONE §11 rider that
+      does emit one, because it is the one implemented as boolean-plus-clear.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE the rest of this family takes
+      (`clearOnLeavingActive` in turn.ts, `switchInto` in interpreter.ts,
+      `evolveOnto` below), with the SELF-side reachability story: the window is
+      the holder's own next turn, so retreating, being Switched out and evolving
+      are all lines of play the holder can take INSIDE it — its own escape from a
+      drawback it chose to pay, which is D148's agency argument on the self side. */
+  retreatLockedTurn: number | null;
   /** §11 — the attack-installed damage/effect block on this Pokémon (see
       `AttackBlock` above), or `null` when none has been installed. Only LIVE
       while its `turn` is the current one; read through `attackBlockOf`
@@ -1129,6 +1173,12 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // …and no attack of its own has locked it either (D143). Same reading of
     // §10's carry-over rule from the other end as the line above.
     attackLockedTurn: null,
+    // …nor has one locked its RETREAT for its own next turn (D412). This is the
+    // ONE site the compiler forces for a new required field — the other three
+    // constructors spread an existing body, so a missing §10 clear there is
+    // silent. See `retreatLocked` (continuous.ts) for why the fact has two
+    // fields and one reader.
+    retreatLockedTurn: null,
     // …and no attack has installed a durated damage reduction on it either
     // (D147). Same reading of §10's carry-over rule from the other end as the
     // two lines above.
@@ -1991,6 +2041,12 @@ export function evolveOnto(
     // sharpest of the three routes because it costs no Energy and no allowance.
     // Driven end to end on a printed line (Alomomola → fix-mola-stage1).
     attackLockedTurn: null,
+    // …and D412's self-installed RETREAT lock, whose story here is the lock's
+    // rather than the block's, for the same reason and by the same arithmetic:
+    // the window is the HOLDER's own next turn, so evolving out of it is a line
+    // the holder can actually take, and it is the holder's own escape from a
+    // drawback its own attack chose to pay.
+    retreatLockedTurn: null,
     // …and, since D147, the attack-installed DAMAGE REDUCTION — the same
     // reachability story as the block two lines up rather than the lock's, and
     // for the same arithmetic: its window is the OPPONENT's next turn, during

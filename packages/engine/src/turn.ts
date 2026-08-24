@@ -14,6 +14,7 @@ import {
   effectiveRetreatCost,
   opposingRetreatBlocked,
   pokemonPlayBarred,
+  retreatLocked,
 } from "./continuous";
 import type { GameEvent } from "./events";
 import {
@@ -648,6 +649,13 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     ...pokemon,
     conditions: noConditions(),
     retreatBlocked: false,
+    // D412 — the SELF-installed retreat lock. ⚠️ ON THIS PATH IT IS THE ONE CLEAR
+    // IN THE SET THAT CANNOT FIRE, and saying so is better than pretending: the
+    // window is the holder's own next turn and this function runs on a RETREAT,
+    // which is the one action the lock forbids. It is written anyway because the
+    // three §10 literals are hand-kept and nothing makes them agree — a field
+    // present in two of three is the defect `attackLock.test.ts` names.
+    retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
     // D147 — the durated damage reduction, whose story here is D142's block's:
@@ -712,10 +720,16 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
       `${rotation === "asleep" ? "an Asleep" : "a Paralyzed"} Pokémon cannot retreat (§11)`,
     );
   }
-  // §11 — an attack held it in place ("the Defending Pokémon can't retreat").
-  // Its own code, not STATUS_PREVENTS_RETREAT: nothing about it is a §12
+  // §11 — an attack held it in place ("the Defending Pokémon can't retreat", or
+  // since D412 "During your next turn, this Pokémon can't retreat" from its own
+  // attack). Its own code, not STATUS_PREVENTS_RETREAT: nothing about it is a §12
   // condition, and a client showing "Asleep/Paralyzed" here would be lying.
-  if (active.retreatBlocked) {
+  //
+  // ⚠️ THROUGH `retreatLocked` AND NOT OFF EITHER FIELD, because the fact now has
+  // two of them and this site does not care which one answered. The message stays
+  // one message for the same reason it stays one error code: the player is told it
+  // cannot retreat because of an attack, not whose attack (D112).
+  if (retreatLocked(state, active)) {
     return err("RETREAT_PREVENTED", "an attack effect prevents this Pokémon from retreating (§11)");
   }
   // §11 — an opposing CONTINUOUS Ability holding it in place (Snorlax "Block").

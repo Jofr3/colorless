@@ -259,6 +259,17 @@ describe("placement", () => {
       damage: 0,
       conditions: { rotation: "none", poisonDamage: 0, burned: false },
       retreatBlocked: false,
+      // …and no SELF-installed retreat lock either (D412), read the same way as
+      // the six stamps below rather than as the boolean above it: `retreatLocked`
+      // (continuous.ts) compares this stamp to `state.turn`, so `null` is "never
+      // locked" rather than "locked on turn 0". ⚠️ **TWO §11 RETREAT FIELDS AND
+      // ONE QUESTION** — the boolean one line up is the OPPONENT-side half and this
+      // stamp is the SELF-side one, and the pair is why `toEqual`'s exactness is
+      // doing more here than usual: a slice that added the second field and left
+      // this literal spelling only the first would have a fresh body asserting
+      // half of a two-field answer, which is precisely the D222 shape the field's
+      // own doc-comment warns about.
+      retreatLockedTurn: null,
       // A card entering play carries no effect of an attack (D142) — the only
       // installation site is an attack's own effect program.
       attackBlock: null,

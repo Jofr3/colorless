@@ -933,6 +933,14 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       retreatBlocked,
       attackBlock: { turn: 99, effects: true },
       attackLockedTurn: 99,
+      // 🆕🆕 D412 — the self-installed retreat lock's stamp. ⚠️ AND IT IS **NOT**
+      // PARAMETERISED THE WAY `retreatBlocked` ONE FIELD UP IS, WHICH IS THE
+      // DIFFERENCE BETWEEN A FLAG AND A STAMP RATHER THAN AN OVERSIGHT. The
+      // boolean blocks the retreat route by existing, so that route can never be
+      // entered carrying it; a stamp only blocks on the turn it NAMES, and 99 is
+      // not that turn — so all three routes carry this field and all three must
+      // shed it. `99` is the same not-this-turn sentinel the two lines above use.
+      retreatLockedTurn: 99,
     };
   }
 
@@ -946,6 +954,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     if (pokemon.retreatBlocked) set.push("retreatBlocked");
     if (pokemon.attackBlock !== null) set.push("attackBlock");
     if (pokemon.attackLockedTurn !== null) set.push("attackLockedTurn");
+    if (pokemon.retreatLockedTurn !== null) set.push("retreatLockedTurn");
     return set;
   }
 
@@ -1034,6 +1043,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       "retreatBlocked",
       "attackBlock",
       "attackLockedTurn",
+      "retreatLockedTurn",
     ]);
   });
 });

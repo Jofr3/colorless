@@ -1858,6 +1858,37 @@ export function attackLocked(state: GameState, pokemon: InPlayPokemon): boolean 
   return pokemon.attackLockedTurn === state.turn;
 }
 
+/** §11 (D412) — is `pokemon` held in place right now by an ATTACK EFFECT, from
+    either direction? `attackLocked`'s twin one function up, and the ONE reader of
+    a fact that lives in two fields.
+
+    🛑 TWO FIELDS AND ONE QUESTION, WHICH IS EXACTLY WHY THIS FUNCTION EXISTS. The
+    imposed lock (`retreatBlocked`, opponent-side, D112's paralysis clock) and the
+    self-installed one (`retreatLockedTurn`, D412's stamp) answer the same question
+    — *may this body retreat?* — and NOTHING about a call site distinguishes them:
+    the §11 gate in turn.ts and `redactedRetreatOf` in redact.ts each want the
+    disjunction and neither wants to know which half said yes. Spelled inline at
+    both sites they would be two hand-written disjunctions over the same pair, and
+    the day a THIRD source of the fact arrives one of them silently keeps answering
+    the old question — D222's defect verbatim, whose recorded remedy is *route them
+    through the one helper instead*.
+
+    ⚠️ THE TWO HALVES ARE NOT REDUNDANT AND ONE CANNOT SUBSUME THE OTHER: they
+    carry DIFFERENT CLOCKS on purpose. `retreatBlocked` is cleared at the Checkup
+    that ends the blocked player's turn, which is the right lifetime for a window
+    on somebody ELSE's turn and the wrong one for a window on your own; the stamp
+    expires by arithmetic, which is the only shape that survives an attack ending
+    the installer's own turn. Both can be live on one body at once — the opponent
+    locked you last turn and your own attack locked you for next turn — and the
+    disjunction is what makes that board answer correctly.
+
+    NOT folded into `effectiveRetreatCost`: a block is not a cost, which is
+    `opposingRetreatBlocked`'s rule one file over and is why the retreat gate asks
+    three separate questions rather than adding to one number. */
+export function retreatLocked(state: GameState, pokemon: InPlayPokemon): boolean {
+  return pokemon.retreatBlocked || pokemon.retreatLockedTurn === state.turn;
+}
+
 /** §4 (D277) — is `pokemon` FORBIDDEN from attacking right now by the first-turn
     ban? True on turn 1 unless the body's own printed Ability licenses it ("Debut
     Performance", Meloetta ex `sv10.5b-044`/`-159`/`-167`).

@@ -25690,6 +25690,89 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D412 — THE SELF-SIDE RETREAT LOCK: the slice is the CLOCK, not the `target` field (engine 0.316.0, `MATCH_RECORD_VERSION` **25 → 26**)
+
+*"During your next turn, this Pokémon can't retreat."* — **2 sentences / 3 legal printings**, the
+sentence D410 priced, refused and asserted UNBUILT by name. It prints STANDALONE on **zero** of the
+640, so both printings arrive as the TAIL of a `"Heal {N} damage from this Pokémon."` compound whose
+head `SELF_HEAL` already claims. One bare anchor (`SELF_CANT_RETREAT`), one arm, and **no
+`attack.ts` change at all** — D409's `splitAttackTrailingClause` admits the pair for free.
+
+### The thing that was wrong, and where the answer already was
+
+D411's resume point (following D410's) priced this as *"give `preventRetreat` a `target` and transfer
+`preventAttack`'s ternary"*. **That ships a program that resolves and does nothing.** `retreatBlocked`
+rides §13.4's paralysis clock; `flow.ts` clears it for `endedSeat`; an attack ENDS the installer's
+turn (§5.3) — so a self-installed flag is lifted at the very first Checkup, before its window opens.
+
+🛑 **BOTH HALVES OF THE REFUTATION WERE ALREADY COMMITTED, IN COMMENTS NOBODY HAD OPENED.**
+`flow.ts`'s clear guards its own correctness with *"a block applied by the ended seat's OWN attack
+would lift a turn early, which no print in the pool can do (the deriver's only two shapes both target
+the DEFENDER)"*. And `types.ts`, in `attackBlock`'s doc block **about a different op**, says: *"the
+§13.4 paralysis clock D112 reused for `retreatBlocked` is the WRONG clock for this shape … A stamp
+has no such mirror to get backwards."* The engine had written the answer down once already.
+
+### What was built
+
+- `EffectOp` `preventRetreat` gains `target?: "self"`. ⚠️ **OPPOSITE POLARITY TO `preventAttack`'s
+  `target?: "defender"`, and it is forced rather than chosen**: an optional field's ABSENT value must
+  keep meaning what every shipped program meant, and the two ops shipped from opposite ends. **The
+  same field name means opposite seats on two adjacent ops** — mutant C1 is the sibling's ternary
+  copied across, and it leaves the new arm correct while inverting the 35 shipped bare printings.
+- `InPlayPokemon.retreatLockedTurn: number | null` — stamped `state.turn + 2` (the installer's own
+  next turn, `attackLockedTurn`'s self-arm number), expiring **by arithmetic** with no boundary clear.
+  No `…_ENDED` event, which is this engine's stated convention for a stamp: four other families say
+  it in the same words.
+- `retreatLocked(state, pokemon)` in `continuous.ts` — **the one reader**, ORing the imposed boolean
+  and the self stamp. The §11 gate (`turn.ts`), the wire (`redact.ts`) and the local HUD
+  (`GameHud.tsx`) all route through it.
+- The field added to **all three** §10 clear literals, and to the eight `Object.keys(active).sort()`
+  enumeration guards. `MATCH_RECORD_VERSION` 25 → 26 (a REQUIRED field: a v25 record has no value for
+  it, and `retreatLocked` would read `undefined === state.turn` as FALSE — handing back a retreat the
+  player already paid a heal for).
+
+### 🛑 A live defect this slice found, and it was found by grep rather than by a red test
+
+After the engine gate and `redact.ts` were both routed through the new reader, **`GameHud.tsx` was
+still spelling `!active.retreatBlocked` by hand**. A body locked by its own attack would have been
+offered a Retreat button that `retreat` then rejects with `RETREAT_PREVENTED` — an **afford-then-
+reject on the one board where the player has the card in front of them saying it should not be
+there**. That is D222's defect (a hand-spelled test over members a helper already unifies) landing on
+D213's surface, and it re-earns D213's rule verbatim: **the server-side twin passing proves nothing
+about the local panel.** Guarded with THREE cases — stamp, imposed, neither — because the imposed
+half was already correct and a suite driving only it would have stayed green through the whole thing.
+
+### The shape question: a second field, not a conversion
+
+Converting `retreatBlocked` into ONE stamp for both seats is the cleaner end state and **no prior
+decision had priced and refused it** — this was a fresh call. Declined on three grounds: D143 is the
+direct structural precedent (*"A SECOND STAMPED FIELD, NOT A WIDENING OF THE FIRST"*, for the
+self-side ATTACK lock); the conversion deletes `RETREAT_BLOCK_ENDED`, which costs **no schema** but
+does cost a player-visible log line, and a feature slice should not carry a behaviour regression as a
+passenger; and it deserves its own row and its own guard. **PRICED FOR WHOEVER TAKES IT**: 1 producer
+(`flow.ts`), 1 render arm (`log.ts`), 6 assertions in `retreatLock.test.ts`, 0 zod shapes, 0
+`MatchRecord` impact — `GameEvent` is never persisted; `MatchRecord` stores the rendered
+`SeatLogEntry[]`.
+
+### ⚠️ Corrections to claims this doc and its neighbours were carrying
+
+- **The third §10 clear is in `evolveOnto` (`types.ts`), NOT `placeEvolution` (`turn.ts`).**
+  `placeEvolution` only calls it, and `evolveFromDeck*` ops reach `evolveOnto` directly, bypassing
+  `placeEvolution` entirely. `attackLock.test.ts` repeats the wrong attribution *about itself*, and
+  **D411's section below inherited it** — corrected here rather than left to be re-inherited.
+- **The cheap-looking fixture edit was the expensive one.** A §10 board here needed a Switch card;
+  swapping one filler into `COMPOUND_COMPOSE_DECK` **reddened three of D409's boards**, because that
+  deck's composition is load-bearing for its seeds. Reverted, and the assertion re-homed into
+  `attackLock.test.ts`'s existing three-route sweep — where it belonged anyway, since **one route
+  passing says nothing about the other two**.
+- **The sentence and printing deltas part company for the first time**: +2 sentences / **+3**
+  printings, because the two compounds differ only in the healed amount and the corpus prints those
+  heads once and twice. Every prior move of this term had them matching, so a reader reconciling
+  "+2 sentences" against a printings-keyed figure would be off by one.
+
+**8 mutants / 8 killed / 0 GAPs on the first run**; corpus 1479 → **1487**. `bun run check` **415
+files / 8,771 tests, `CHECK_EXIT=0`** (+0 files / +10 cases).
+
 ## D411 — THE SELF-SIDE RETREAT LOCK IS A CLOCK QUESTION, NOT A `target` QUESTION (no engine change; engine **STAYS 0.315.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
 
 ⚠️ **D411 BUILT NO ENGINE CODE.** It is a mutation-harness slice (`scripts/mutation/run.ts` — see
@@ -25733,7 +25816,11 @@ instrument, and changes no board. ⚠️ **AND D410's OWN C1 MUTANT ALREADY PINS
   the field.
 - **The three §10 early clears**, which for a self-side window are lines of play the holder can take
   INSIDE it: `clearOnLeavingActive` (`turn.ts`), `switchInto` (`interpreter.ts`), `placeEvolution`
-  (`turn.ts`).
+  (`turn.ts`). 🛑 **THAT LAST ATTRIBUTION IS WRONG AND D412 CORRECTED IT — the literal is in
+  `evolveOnto` (`types.ts`); `placeEvolution` only calls it.** Left standing here with the correction
+  beside it rather than silently edited, because it is exactly the failure this page keeps recording:
+  a claim read off a doc block (`attackLock.test.ts` states it wrongly about itself) and passed on
+  without opening the file. See the D412 section above.
 - **The retreat gate** in `turn.ts` reading the stamp beside the existing boolean (`RETREAT_PREVENTED`
   already has two provenances and two messages — an attack rider and an opposing Ability aura — so a
   third is a message, not a new error code).

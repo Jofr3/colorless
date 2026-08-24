@@ -536,9 +536,12 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // its place. ⚠️ THE SLICE TOUCHES NO ENGINE FILE — it is `scripts/mutation/run.ts`
   // plus a guard — so this literal and the two stamps are the whole of its footprint
   // inside `packages/engine`, and the raise rides in the same commit as the demotion.
-  const ARCHIVES = 81;
+  // 🆕🆕 D412 — 81 -> 82, ARCHIVED DELIBERATELY AND SAID SO. D412 demoted D411's live
+  // resume point under `### Prior resume point (P3-M5 — D411, …)` and wrote its own in
+  // its place, in the same commit as the demotion.
+  const ARCHIVES = 82;
 
-  it("the page still holds all 81 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 82 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

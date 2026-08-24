@@ -89,6 +89,23 @@ the trend improved.
   quiet.** Before adding a union member, grep for hand-spelled tests over the
   members you already have, and route them through the one helper instead.
 
+- 🛑 **WHEN ONE FACT GAINS A SECOND FIELD, FIND EVERY READ SITE BEFORE YOU FIX ANY OF THEM (D412).**
+  The §11 retreat lock went from one field to two (an imposed boolean and a self-installed stamp).
+  The engine gate and `redact.ts` were routed through a single new reader; **`GameHud.tsx` was the
+  third site and was still spelling the old field by hand** — a live afford-then-reject, found by
+  grep rather than by a red test. ⚠️ **THE SERVER-SIDE TWIN PASSING PROVES NOTHING ABOUT THE LOCAL
+  PANEL** (D213's rule, re-earned). `grep -rn "<fieldName>" src/ apps/ packages/` is the whole
+  procedure, and it costs seconds.
+- ⚠️ **A GUARD FOR A NEWLY-SPLIT FACT NEEDS THE HALF THAT WAS ALREADY CORRECT AS A CONTROL.** Driving
+  only the new half proves the new code runs; driving only the old half stays green through the
+  entire defect. D412's HUD guard is three cases — new, old, neither — and only the first goes red
+  against the old line.
+- ⚠️ **BEFORE EDITING A SHARED `*_DECK` FIXTURE, ASK WHOSE SEEDS IT FEEDS.** D412 added ONE card to
+  `COMPOUND_COMPOSE_DECK` so a local board could run, and **reddened three of D409's boards** — deck
+  composition is load-bearing for every suite seeded off it. Prefer re-homing your assertion into a
+  sweep that already has the machinery: D412's §10 claim belonged in the existing three-route clear
+  sweep anyway, because **one route passing says nothing about the other two**.
+
 ## Counting the catalog
 
 - **Every count carries a POPULATION and a LEGALITY.** Six-set local (978),

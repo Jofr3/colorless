@@ -1432,7 +1432,7 @@ function stepOp(
     case "clearStatus":
       return { done: clearStatus(state, ctx, events) };
     case "preventRetreat":
-      return { done: preventRetreat(state, ctx, events) };
+      return { done: preventRetreat(state, op, ctx, events) };
     case "preventHandPlay":
       return { done: preventHandPlay(state, op.bars, ctx, events) };
     case "preventDamage":
@@ -5239,18 +5239,51 @@ function clearStatus(state: GameState, ctx: EffectContext, events: GameEvent[]):
     locked Pokémon changes nothing and stays silent (the block has no stacking
     depth — one lock reads the same as two). No Active is a no-op, exactly as
     every other defender-relative op treats it. */
-function preventRetreat(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
-  const seat = otherSeat(ctx.seat);
+function preventRetreat(
+  state: GameState,
+  op: Extract<EffectOp, { op: "preventRetreat" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  // 🛑 D412 — THE OPERAND ORDER IS NOT `preventAttack`'s, AND THE TWO ARE ONE
+  // FUNCTION APART. That op spells its FAR side and this one spells its NEAR side,
+  // because they shipped from opposite ends: `preventAttack` arrived self-first, so
+  // bare means SELF there; this one arrived defender-first, so bare must still mean
+  // the OPPONENT here. Copying the sibling's ternary across without swapping the
+  // operands silently inverts every one of the 35 shipped bare printings.
+  //
+  // ⚠️ THE EXPRESSION IS DESCRIBED RATHER THAN QUOTED, WHICH IS D210's RULE AND IT
+  // PAID HERE: a doc block reproducing the line at its own indentation is a second
+  // occurrence, and the mutant anchored on it would edit PROSE and survive.
+  const seat = op.target === "self" ? ctx.seat : otherSeat(ctx.seat);
   const active = state.players[seat].active;
   if (active === null) return state;
   const uid = topUid(active);
   if (uid === undefined) return state;
-  // §11 (D142) — the DEFENDER's own block refuses this rider, which is the
-  // sharpest instance of the mirror: one durated block installed on the
+  // §11 (D142) — the target's own block refuses this rider, which on the bare arm
+  // is the sharpest instance of the mirror: one durated block installed on the
   // defender, another installed on the attacker, and the second one refuses the
   // first. Checked BEFORE the idempotence early-return so a refusal is announced
   // even on an already locked body.
+  //
+  // ⚠️ THE SELF ARM ASKS IT TOO, AND THAT IS `preventAttack`'s SHIPPED ANSWER
+  // INHERITED RATHER THAN RE-DERIVED. D148's self arm resolves `effectRefused`
+  // against its own seat for the identical shape, so diverging here would be a
+  // silent rules call made by the newer of two twins. If that reading is wrong it
+  // is wrong in both places, which is the honest way to be wrong.
   if (effectRefused(state, seat, ctx, events)) return state;
+  if (op.target === "self") {
+    // The installer's OWN next turn is one full round away, which is
+    // `attackLockedTurn`'s self-arm number: `otherSeat(ctx.seat)` takes the turn
+    // that comes next (§5.3), so the holder's own is the one after that.
+    const turn = state.turn + 2;
+    // Idempotent BY THE STAMP rather than by a flag test — two installs in one
+    // turn compute the same number, so the second write is the value the first
+    // one left, and the row is not emitted twice.
+    if (active.retreatLockedTurn === turn) return state;
+    events.push({ type: "RETREAT_BLOCKED", seat, uid });
+    return withActive(state, seat, { ...active, retreatLockedTurn: turn });
+  }
   if (active.retreatBlocked) return state;
   events.push({ type: "RETREAT_BLOCKED", seat, uid });
   return withActive(state, seat, { ...active, retreatBlocked: true });
@@ -9094,6 +9127,10 @@ export function switchInto(
     ...active,
     conditions: noConditions(),
     retreatBlocked: false,
+    // D412 — and unlike the retreat path's copy of this line, THIS one is live:
+    // a Boss's Orders dragging the self-locked body off the Active Spot inside
+    // its own window sheds the lock with the rest of the effects of the attack.
+    retreatLockedTurn: null,
     attackBlock: null,
     attackLockedTurn: null,
     damageReduction: null,

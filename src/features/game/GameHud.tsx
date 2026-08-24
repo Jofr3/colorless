@@ -42,6 +42,7 @@ import {
   programPlayable,
   providedEnergy,
   rareCandyOptions,
+  retreatLocked,
   STATUS_LABELS,
   topCardOf,
   topUid,
@@ -735,7 +736,18 @@ function TurnPanel(props: GameHudProps) {
     // §11 — an attack effect holding it in place ("the Defending Pokémon can't
     // retreat"). Read off raw GameState: it is not a §12 condition, so it is
     // deliberately absent from the projected/wire `conditions` shape.
-    !active.retreatBlocked &&
+    //
+    // 🛑 D412 — THROUGH THE ENGINE'S OWN PREDICATE NOW, EXACTLY AS THE ATTACK LOCK
+    // ABOVE IS, AND THIS SITE IS WHY THAT RULE EXISTS. The fact lives in TWO fields
+    // since D412 — the imposed `retreatBlocked` and the self-installed
+    // `retreatLockedTurn` stamp — and this line read only the first. A body locked
+    // by its OWN attack would have been offered a retreat button that `retreat`
+    // then rejects with RETREAT_PREVENTED: an afford-then-reject, on the one board
+    // where the player has the card in front of them saying it should not be there.
+    // ⚠️ IT IS A THIRD READ SITE AND `redact.ts` IS ONLY THE SECOND — the wire twin
+    // is `redactedRetreatOf`'s `can`, and a slice that fixed the engine and the wire
+    // and stopped there would have left this one silently wrong (D213's shape).
+    !retreatLocked(game, active) &&
     // §11 — the same hold from an opposing CONTINUOUS Ability (Snorlax "Block"),
     // read live off both Active spots rather than off a flag on this Pokémon.
     !opposingRetreatBlocked(game, active) &&

@@ -5157,6 +5157,33 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Your opponent's Active Pokémon is now Confused. During your opponent's next turn, that Pokémon can't retreat.",
       },
+      // 🆕🆕 D412 — THE TWO COMPOUNDS THE **SELF-SIDE** CLAUSE COMPLETES, indices
+      // 9 and 10. Here rather than on a fixture of their own for the same reason
+      // the pair above is: the claim is that ONE clause completes BOTH, so the
+      // board must vary the printed HEAL AMOUNT and nothing else. Both effect
+      // strings are byte-for-byte off `legalAttackCorpus()` (1 and 2 legal
+      // printings respectively — the whole population of the sentence).
+      //
+      // 🛑 THE PRINTED DAMAGE IS 0 ON BOTH, WHICH IS THE ONE SCALAR THAT IS NOT
+      // TRANSCRIBED, AND IT IS DELIBERATE. The real printings carry damage; this
+      // board needs the HEAD to be observable, and a heal is only observable on a
+      // body that is already damaged. Driving the attack from an undamaged body
+      // makes `heal` a silent no-op and the composition untestable from the head
+      // side, so the tests damage this body first and read the heal back. The
+      // damage figure is CHOSEN, and D409's rule applies: say which scalars are
+      // transcribed and which are chosen.
+      {
+        cost: ["Colorless"],
+        name: "Coil Rest",
+        damage: 0,
+        effect: "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Deep Rest",
+        damage: 0,
+        effect: "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.",
+      },
     ],
   }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex

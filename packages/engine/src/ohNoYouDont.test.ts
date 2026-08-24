@@ -762,6 +762,8 @@ describe("the structural questions — answered, not asserted", () => {
         "markers",
         "promotedTurn",
         "retreatBlocked",
+        // 🆕🆕 D412 — the SELF-installed §11 retreat lock's stamp (MATCH_RECORD_VERSION 25 → 26).
+        "retreatLockedTurn",
         "stack",
         "tools",
         "turnPlayed",

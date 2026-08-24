@@ -103,6 +103,14 @@ const CONFUSE_THEN_NO_RETREAT =
 /** The shared TAIL — the whole subject of D410, and a string the legal column
     prints on ZERO cards as a whole attack effect (asserted in §2). */
 const PRONOUN_LOCK = "During your opponent's next turn, that Pokémon can't retreat.";
+/** 🆕🆕 D412 — the two compounds the SELF-side lock completes. Their head is
+    `SELF_HEAL`, a `deriveAttackEffect` reader, so both land in the SAME-READER half
+    of the 8 / N split below. Byte-for-byte off `legalAttackCorpus()`. */
+const HEAL_50_THEN_SELF_LOCK =
+  "Heal 50 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
+const HEAL_60_THEN_SELF_LOCK =
+  "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
+
 const COMPOUNDS = [
   PRIZE_THEN_DISCARD,
   PRIZE_THEN_RECOIL,
@@ -111,6 +119,8 @@ const COMPOUNDS = [
   POISON_THEN_NO_RETREAT,
   BURN_THEN_NO_RETREAT,
   CONFUSE_THEN_NO_RETREAT,
+  HEAL_50_THEN_SELF_LOCK,
+  HEAL_60_THEN_SELF_LOCK,
 ] as const;
 
 /** The two SHIPPED whole-sentence anchors that are one token away from a member of
@@ -167,6 +177,11 @@ const UNREAD_TAIL_INDEX = 6;
 // 🆕🆕 D410 — the two compounds the pronoun clause completes.
 const BURN_INDEX = 7;
 const CONFUSE_INDEX = 8;
+// 🆕🆕 D412 — the two SELF-side compounds, appended rather than inserted: every
+// index above is quoted in this suite's prose and in D409's/D410's, and renumbering
+// them would rewrite claims that are still true.
+const HEAL_50_SELF_LOCK_INDEX = 9;
+const HEAL_60_SELF_LOCK_INDEX = 10;
 
 const SEED = 31;
 
@@ -250,30 +265,39 @@ describe("§1 — the quantifier is over EVERY reader, and the list is DRIVEN no
   });
 });
 
-describe("§2 — the census: the predicate admits SEVEN sentences / FIFTEEN printings", () => {
-  it("🛑 exactly the seven, over the whole 640-sentence legal column", () => {
+describe("§2 — the census: the predicate admits NINE sentences / EIGHTEEN printings", () => {
+  it("🛑 exactly the nine, over the whole 640-sentence legal column", () => {
     // The measurement that decided the shape. It is the WHOLE column and not the
     // residue, so a sentence some reader already claims cannot hide inside it.
     // 🆕🆕 D410 — 5 / 11 → **7 / 15**, and the step came from ONE new clause rather
     // than from two new sentences: the Burned and Confused compounds share a tail,
     // so one `^…$` anchor completed both. That is the property the composition path
     // was built for, measured a slice after it shipped.
+    // 🆕🆕 D412 — 7 / 15 → **9 / 18**, and the property held a SECOND time on the
+    // other seat: one `^…$` anchor for "During your next turn, this Pokémon can't
+    // retreat." completed both heal compounds. ⚠️ AND THE STEP IS THE WHOLE
+    // POPULATION OF THAT SENTENCE — 3 printings, 3 admitted, nothing left over.
     const corpus = legalAttackCorpus();
     expect(corpus).toHaveLength(640);
     expect(units(corpus)).toBe(1732);
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     expect([...admitted].map(([, s]) => s).sort()).toEqual([...COMPOUNDS].sort());
-    expect(admitted).toHaveLength(7);
-    expect(units(admitted)).toBe(15);
+    expect(admitted).toHaveLength(9);
+    expect(units(admitted)).toBe(18);
   });
 
-  it("the fifteen split 8 / 7 across the two SHAPES, which is why the seam had to move", () => {
+  it("the eighteen split 8 / 10 across the two SHAPES, which is why the seam had to move", () => {
     // 8 of the 15 are the CROSS-READER pair (a `deriveAttackDamageBonus` head), 7
     // are SAME-READER (a `deriveAttackEffect` head). Named because the price
     // argument in the header rests on it: a concatenate-only composition path would
     // have taken the 7 and left the 8. 🆕🆕 D410 — the CROSS half stands still at
     // 2 / 8 and the SAME-READER half steps 3 → 7, which is this slice's whole shape:
     // both new compounds put an effect clause in front of an effect clause.
+    // 🆕🆕 D412 — the CROSS half stands still at 2 / 8 for a SECOND slice running
+    // and the SAME-READER half steps 7 → 10. ⚠️ THE CROSS FIGURE HOLDING IS THE
+    // INFORMATIVE HALF, not a spare assertion: it says the two new compounds were
+    // taken by the path the price argument predicted, and a head that had quietly
+    // fallen out of `deriveAttackEffect` would move it.
     const corpus = legalAttackCorpus();
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     const cross = admitted.filter(([, s]) => {
@@ -282,8 +306,8 @@ describe("§2 — the census: the predicate admits SEVEN sentences / FIFTEEN pri
     });
     expect(cross).toHaveLength(2);
     expect(units(cross)).toBe(8);
-    expect(units(admitted) - units(cross)).toBe(7);
-    // …and every one of the fifteen has EXACTLY TWO clauses, which is why the
+    expect(units(admitted) - units(cross)).toBe(10);
+    // …and every one of the eighteen has EXACTLY TWO clauses, which is why the
     // splitter is not recursive: a three-clause compound whose parts are all
     // readable is a family of ZERO today and stays LOUD until it is not. 🆕🆕 D410
     // re-derives that at SEVEN sentences rather than carrying it from five — the
@@ -895,17 +919,17 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.315.0");
+    expect(engineVersion).toBe("0.316.0");
   });
 });
 
 describe("§8 — the fixture IS the deck, and the deck is 60", () => {
-  it("`fix-compound` prints the seven compounds at the indices this suite names", () => {
+  it("`fix-compound` prints the nine compounds at the indices this suite names", () => {
     const card = FIXTURE_POOL["fix-compound"];
     expect(card).toBeDefined();
     expect(card?.stage).toBe("Basic");
     expect(card?.hp).toBe(340);
-    expect(card?.attacks).toHaveLength(9);
+    expect(card?.attacks).toHaveLength(11);
     const effectAt = (i: number): string => card?.attacks?.[i]?.effect ?? "";
     expect(effectAt(PRIZE_DISCARD_INDEX)).toBe(PRIZE_THEN_DISCARD);
     expect(effectAt(PRIZE_RECOIL_INDEX)).toBe(PRIZE_THEN_RECOIL);
@@ -913,6 +937,8 @@ describe("§8 — the fixture IS the deck, and the deck is 60", () => {
     expect(effectAt(PARALYZE_INDEX)).toBe(DISCARD_ALL_THEN_PARALYZE);
     expect(effectAt(POISON_INDEX)).toBe(POISON_THEN_NO_RETREAT);
     expect(effectAt(POISON_ANCHORED_INDEX)).toBe(POISON_THEN_NO_RETREAT_ANCHORED);
+    expect(effectAt(HEAL_50_SELF_LOCK_INDEX)).toBe(HEAL_50_THEN_SELF_LOCK);
+    expect(effectAt(HEAL_60_SELF_LOCK_INDEX)).toBe(HEAL_60_THEN_SELF_LOCK);
     expect(effectAt(BURN_INDEX)).toBe(BURN_THEN_NO_RETREAT);
     expect(effectAt(CONFUSE_INDEX)).toBe(CONFUSE_THEN_NO_RETREAT);
     // …and every one of the seven is a sentence the COLUMN prints, byte for byte.

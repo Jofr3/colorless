@@ -925,8 +925,29 @@ export interface MatchRecord {
     `attackEpilogue` stage has no `attack` key, so draining it would stamp the
     attacking body with `undefined` as a name and the record would go on looking
     healthy. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT**, which is
-    D124's refusal of the soft landing at a second address in one slice. */
-export const MATCH_RECORD_VERSION = 25;
+    D124's refusal of the soft landing at a second address in one slice.
+
+    🆕🆕 **25 → 26 AT D412, AND IT IS D386's CASE AT D386's ADDRESS FOR THE
+    FOURTH TIME — A MISSING REQUIRED FIELD ON `InPlayPokemon`.** D412 gave the
+    body `retreatLockedTurn: number | null`, the SELF-installed §11 retreat lock
+    (*"During your next turn, this Pokémon can't retreat."* — 3 legal printings,
+    all of them the tail of a `"Heal {N} damage from this Pokémon."` compound).
+    It is a STAMP rather than a second boolean because the window is the
+    installer's OWN next turn (`state.turn + 2`), which `retreatBlocked`'s
+    paralysis clock cannot express. It is **REQUIRED** for `healedTurn`'s and
+    `evolvedTurn`'s reason verbatim: a nullable-but-present field is a fact the
+    model always knows, an absent one is a fact it has merely not been told, and
+    the read sites must never confuse the two.
+
+    🛑 **AND A v25 RECORD CANNOT BE READ BENIGNLY, WHICH IS THE RETIREMENT
+    REASON EVERY REQUIRED ADDITION ABOVE GIVES.** Every in-play Pokémon in a v25
+    record lacks a key this deploy's type says is always there, so
+    `retreatLocked` (continuous.ts) reads `undefined === state.turn` as FALSE and
+    a resumed board silently HANDS BACK a retreat the player had already paid a
+    heal for — D393's failure mode one field over, and on the one turn the whole
+    rider is about. The record is refused rather than resumed with the drawback
+    quietly gone. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT.** */
+export const MATCH_RECORD_VERSION = 26;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

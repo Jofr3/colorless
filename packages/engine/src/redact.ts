@@ -71,6 +71,7 @@ import {
   lockedAttackIndexes,
   opposingRetreatBlocked,
   providedEnergy,
+  retreatLocked,
 } from "./continuous";
 import type { DiscardScope, EffectPrompt, PokemonRef } from "./interpreter";
 import {
@@ -552,7 +553,11 @@ function redactedRetreatOf(
   const cost = effectiveRetreatCost(state, active);
   const can =
     !isImmobilized(active.conditions) &&
-    !active.retreatBlocked &&
+    // D412 — `retreatLocked` and not the bare field: the self-installed lock is
+    // the same fact from the other direction, and a HUD that greyed only the
+    // imposed one would offer a retreat the §11 gate then refuses — an
+    // afford-then-reject, which is the defect D222 paid for at the attach sites.
+    !retreatLocked(state, active) &&
     // §11 — the opposing CONTINUOUS Ability block (Snorlax "Block"), which rides
     // `can` for the same reason the attack-applied one does: no new wire field.
     !opposingRetreatBlocked(state, active) &&

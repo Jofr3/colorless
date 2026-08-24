@@ -1078,8 +1078,8 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.315.0");
-    expect(manifest.version).toBe("0.315.0");
+    expect(engineVersion).toBe("0.316.0");
+    expect(manifest.version).toBe("0.316.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

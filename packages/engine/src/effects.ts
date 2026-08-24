@@ -3217,14 +3217,40 @@ export type EffectOp =
       nothing in the §8.5 pipeline reads it), never parks, consumes no rng, and is
       idempotent — a body with nothing to recover from resolves silently. */
   | { op: "clearStatus" }
-  /** §11 — hold the Defending Pokémon in place for the opponent's next turn
-      ("During your opponent's next turn, the Defending Pokémon can't retreat.").
-      No `target` field: every print of this clause in the pool locks the
-      DEFENDER, so the shape stays bare until a self-locking one exists (D104).
+  /** §11 — hold a Pokémon in place for one turn. Bare, it is the DEFENDER for the
+      opponent's next turn ("During your opponent's next turn, the Defending
+      Pokémon can't retreat." — 35 printings); with `target: "self"` it is the
+      ATTACKER's own body for the attacker's next turn ("During your next turn,
+      this Pokémon can't retreat." — 3 printings, D412).
+
+      🛑 D104 SAID "THE SHAPE STAYS BARE UNTIL A SELF-LOCKING ONE EXISTS", AND
+      D412 IS THAT CONDITION ARRIVING — so this widening is the deferral being
+      collected, not a decision reversed.
+
+      🛑 `target?: "self"` AND NOT `target?: "defender"`, WHICH IS THE OPPOSITE
+      POLARITY TO `preventAttack` ONE FAMILY OVER, AND THE ASYMMETRY IS FORCED
+      RATHER THAN CHOSEN. An optional field's ABSENT value has to mean what every
+      already-shipped program meant, and the two ops shipped from opposite ends:
+      `preventAttack` arrived self-side first, so its bare form is SELF and it
+      spells the far side `"defender"`; this op arrived defender-side first, so its
+      bare form is DEFENDER and it must spell the near side `"self"`.
+      ⚠️ **THE CONSEQUENCE IS THAT `{ target: undefined }` MEANS DIFFERENT SEATS ON
+      TWO ADJACENT OPS WITH THE SAME FIELD NAME**, which is a live trap for anyone
+      copying an interpreter arm across — and it is why the seat expression in
+      `preventRetreat` is NOT `preventAttack`'s ternary with the operands in the
+      same order. There is a mutant on exactly that copy.
+
+      ⚠️ AND THE SELF ARM DOES NOT WRITE `retreatBlocked`. It writes
+      `retreatLockedTurn`, because the boolean rides a clock that clears for
+      `endedSeat` and an attack ends the installer's own turn — see that field's
+      doc block in types.ts. A `target` on this op WITHOUT the new field would ship
+      a program that resolves, emits `RETREAT_BLOCKED`, counts as BUILT on every
+      reader-keyed instrument, and changes no board.
+
       Not an `applyStatus` variant — `StatusName` is a closed five-value union
       pinned by two exhaustive `Record`s, the wire condition schema and the
       playmat's status chips; the block is none of those things. */
-  | { op: "preventRetreat" }
+  | { op: "preventRetreat"; target?: "self" }
   /** §7.1/§7.2/§10 (D283, WIDENED BY D285) — bar the OPPONENT from playing `bars`
       from their hand for exactly their next turn. **9 legal printings on 4 printed
       sentences, two Trainer classes and one Pokémon ACT**:
@@ -9500,6 +9526,15 @@ const DEFENDER_POISON_CANT_RETREAT =
 // — write the correction as a guard, not as a paragraph).
 const DEFENDER_PRONOUN_CANT_RETREAT =
   /^During your opponent['’]s next turn, that Pokémon can['’]t retreat\.$/;
+// §11 (D412) — the SELF-side twin of the two anchors above: "During your next
+// turn, this Pokémon can't retreat." ⚠️ IT PRINTS STANDALONE ON ZERO CARDS, like
+// D410's pronoun clause — both of its printings are the TAIL of a
+// "Heal {N} damage from this Pokémon." compound, so the arm exists to be reached
+// through `splitAttackTrailingClause` and by nothing else. The anchor is
+// deliberately BARE (no head, no alternation): a whole-compound anchor would trip
+// the splitter's shadow refusal and claim the sentence WHOLE, which is the one
+// thing that must not happen here — the head is already claimed by `SELF_HEAL`.
+const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retreat\.$/;
 // §7.1/§7.2 (D283) — the TURN-SCOPED IMPOSED HAND-PLAY LOCK, `preventHandPlay`.
 // **8 legal printings on 3 printed sentences**, and they are THREE anchors for
 // D136/D137's reason and not one loose one: the pool prints the same rule with
@@ -15333,14 +15368,34 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     shadow refusal keeps it that way, which is asserted rather than assumed.
   //
   //     The program is `preventRetreat` UNCHANGED: zero new ops, zero new fields.
-  //     ⚠️ AND IT IS THE OPPONENT SEAT'S LOCK AND ONLY THAT — `preventRetreat`
-  //     hard-codes `otherSeat(ctx.seat)` at its interpreter arm, so the self-side
-  //     twin (*"During your next turn, this Pokémon can't retreat."*, 3 printings)
-  //     is NOT this arm with a different regex and stays unbuilt; it needs a
-  //     `target` on a shipped zero-field op, which is a persisted-shape question.
+  //     ⚠️ AND IT IS THE OPPONENT SEAT'S LOCK AND ONLY THAT — the op is BARE here,
+  //     and since D412 that is a positive statement rather than the absence of a
+  //     choice: bare means the DEFENDER. The self-side twin is arm 5e below, and
+  //     D410's forecast that it "needs a `target` on a shipped zero-field op" was
+  //     right about the op and short by a persisted FIELD — see 5e.
   match = DEFENDER_PRONOUN_CANT_RETREAT.exec(effect);
   if (match !== null) {
     return [{ op: "preventRetreat" }];
+  }
+
+  // 5e. 🆕🆕 D412 — "During your next turn, this Pokémon can't retreat." — THE
+  //     SELF-SIDE TWIN D410 PRICED, REFUSED AND ASSERTED UNBUILT BY NAME.
+  //     2 sentences / 3 legal printings, and like 5d it prints STANDALONE on
+  //     ZERO cards: both arrive as the TAIL of a "Heal {N} damage from this
+  //     Pokémon." compound, whose head `SELF_HEAL` already claims, so the pair
+  //     is admitted by `splitAttackTrailingClause` with no change to `attack.ts`.
+  //
+  //     🛑 IT IS NOT ARM 5d WITH A DIFFERENT REGEX, AND THAT IS THE WHOLE SLICE.
+  //     D410's resume point priced this as "give the op a `target` and transfer
+  //     `preventAttack`'s ternary". That ships a program that RESOLVES AND DOES
+  //     NOTHING: `retreatBlocked` rides the §13.4 paralysis clock, which clears
+  //     for `endedSeat`, and an attack ends the installer's own turn — so a
+  //     self-installed flag lifts at the very first Checkup, before its window
+  //     opens. The op carries `target` AND the interpreter writes a turn STAMP
+  //     (`retreatLockedTurn`); either half alone is the defect.
+  match = SELF_CANT_RETREAT.exec(effect);
+  if (match !== null) {
+    return [{ op: "preventRetreat", target: "self" }];
   }
 
   // 5b-i. §7.1/§7.2 (D283) — THE TURN-SCOPED IMPOSED HAND-PLAY LOCK, in its three
