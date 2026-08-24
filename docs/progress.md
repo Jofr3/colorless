@@ -466,18 +466,19 @@
 >
 > ### ▶ WHAT TO DO NEXT — THE OPEN ITEMS, IN THE ORDER I'D TAKE THEM
 >
-> 🛑 **(1) THE SWEEP DEBT IS NOW TWO SLICES DEEP AND IT IS THE FIRST THING TO PAY.** Neither D411 nor
-> D412 has had a whole-corpus run. What HAS been measured at this head: `--decision D411` (4 killed /
-> 0 GAPs), `--decision D412` (**8 killed / 0 GAPs on the first run**), a clean `precheck` over all
-> 1,487, and a full serialised `bun run check`. What has NOT is the other 1,475 rows.
-> ⚠️ **THE TWO FIELDS TO READ FIRST ARE `error` AND `known survivor(s)`, AND THIS HEAD RAISES BOTH.**
-> `error`: D412 edited `types.ts`, `interpreter.ts`, `effects.ts`, `continuous.ts`, `turn.ts`,
-> `redact.ts` and `GameHud.tsx` — every densely-anchored file in the repo at once — and **two rows
-> already had to be re-pointed inside the bumping commit** (`D275` 0.315.0 → 0.316.0, `D326` 25 → 26).
-> A third that spans a line D412 touched is the likely miss. `known survivor(s)`: **24 for
-> twenty-eight consecutive sweeps**, but D412 is the first slice in a long while to add a persisted
-> field, and any declaration whose reason quantified over *"nothing writes `InPlayPokemon`"* or over
-> the retreat lock having ONE field has just stopped being true.
+> ✅ **(1) THE SWEEP DEBT IS PAID — IT WAS TWO SLICES DEEP AND ONE RUN CLEARED BOTH.**
+> **1487 · 1463 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,363.5s**, `SWEEP_EXIT=0`, run on the committed tree with nothing else touching it.
+> `1463 + 24 = 1487` closes, and it is **VERIFIED BY ID IN BOTH DIRECTIONS** against `--list` —
+> 1487 / 1487, **0 missing / 0 extra / 0 duplicate**. All 12 new rows KILLED.
+> ✅ **BOTH NAMED EXPOSURES CAME BACK ZERO, AND EACH WAS PRICED BEFORE THE RUN.** `error` is **0**
+> despite D412 editing seven densely-anchored files at once (`types.ts`, `interpreter.ts`,
+> `effects.ts`, `continuous.ts`, `turn.ts`, `redact.ts`, `GameHud.tsx`); re-pointing the two version
+> anchors inside the bumping commit is what bought that. `known survivor(s)` held at **24 for a
+> twenty-ninth consecutive sweep** — and this time it was a REAL TEST rather than a streak, because
+> D412 added a persisted `InPlayPokemon` field and any declaration resting on *"nothing writes that
+> type"* or on the retreat lock having ONE field would have reported `STALE-SURVIVOR` by name.
+> ⚠️ **THE `STALE-SURVIVOR` BRANCH HAS STILL NEVER FIRED. It is untested, not trusted.**
 >
 > ⚠️ **(2) THE BOOLEAN→STAMP CONVERSION, PRICED AND DELIBERATELY LEFT.** D412 declined to convert
 > `retreatBlocked` into a single stamp for both seats, and the reasoning is in its decision row — but
