@@ -524,7 +524,14 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   //    (257 lines, opening "### ▶ THE NEXT CONCRETE ACTION (written 2026-08-24, after
   //    D408)") and re-emitted under its own archive heading, and the seam was READ
   //    BACK afterwards to confirm the demoted body is still there — D372's rule.
-  const ARCHIVES = 79;
+  // 🆕🆕 D410 — 79 → **80**, the UP branch: D410 demoted D409's live resume point under
+  // `### Prior resume point (P3-M5 — D409, …)` and carried the demoted BODY across with it —
+  // 238 lines, captured BEFORE the rewrite and re-emitted after it, with the seam re-read
+  // afterwards. ⚠️ THIS SLICE WAS FINISHED BY HAND after its build agent died mid-edit on an
+  // API error, so the raise is the coordinating session's rather than the builder's — and it
+  // rides in the same commit as the demotion for D376's reason, which is the only reason that
+  // has ever mattered here.
+  const ARCHIVES = 80;
 
   it("the page still holds all 79 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
