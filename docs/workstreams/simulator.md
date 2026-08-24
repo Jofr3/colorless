@@ -25690,6 +25690,98 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D409 — THE TRAILING-CLAUSE COMPOSITION PATH: the first time this engine reads one printed string as TWO clauses (engine 0.314.0, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+**5 sentences / 11 legal printings**, and the slice is a SHAPE decision rather than a sentence build.
+Every compound this engine read before D409 was its own whole-sentence anchor
+(`SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`, `DEFENDER_POISON_CANT_RETREAT`,
+`COUNTER_PUT_ANY_THEN_SELF_LOCK`, `SELF_DISCARD_ALL_THEN_REDUCTION`). D409 adds the general path.
+
+### What shipped
+
+- **`splitAttackTrailingClause(text): { head, tail } | null`** (`effects.ts`, beside
+  `splitAttackGateClause`). It fires only when **no reader claims the whole string**, the text
+  splits at the LAST `(?<=\.)\s+(?=[A-Z(])` boundary, the **tail** is a sentence
+  `deriveAttackEffect` claims, and the **head** is claimed by **some** reader.
+- **`ATTACK_WHOLE_SENTENCE_READERS`** — the eleven `deriveAttack*` exports, listed once, which both
+  quantifiers range over. Pinned by NAME in `compoundCompose.test.ts` §1 and driven per reader.
+- **`attack.ts`** gains ONE split, ONE rebind (`composed` → `effect` is now the HEAD) and ONE
+  concatenation (`derivedHead ++ derivedTail`, printed order). **None of the three disjunction chains
+  is touched**: when the split fires the tail is a claimed effect, so `program` is non-null and
+  `effectSimulated`'s first term already carries it.
+
+### Why a splitter and not five anchors
+
+The predicate was run over the whole committed `legal_standard = 1` attack column (640 sentences /
+1,732 printings) and **admits exactly the five and nothing else — 0 false positives**. That is the
+argument; the rest is consequence.
+
+Two of the five put a `deriveAttackDamageBonus` clause in FRONT of a `deriveAttackEffect` one — 8 of
+the 11 printings — and the two readers return different KINDS. As whole-sentence anchors those two
+need an arm in **both** readers, each tolerating the other's grammar.
+
+🛑 **The falsifier that did not fire.** *"A path that only concatenates `EffectOp[]` cannot take the
+Prize pair."* False: `attack.ts` reads the bonus and the effect off the SAME local into TWO
+INDEPENDENT variables, and nothing has ever stopped both being non-null. The composition is *give the
+HEAD to the readers that were already reading, and APPEND the TAIL's ops*.
+
+⚠️ **The second falsifier's number is ZERO.** 54 of the 640 sentences carry a `.` inside parentheses
+and the break regex splits **none** of them; exactly one prints a `. ` inside parens
+(*"…etc. have Rule Boxes.)"*) and the following word is lowercase, so `(?=[A-Z(])` refuses it. No
+parenthesis-aware scanner was needed and the zero is asserted.
+
+### The two guards that make it safe
+
+1. **The shadow refusal, FIRST.** 145 sentences / 415 printings are multi-clause AND claimed whole
+   today. The anchor wins every one of them; the splitter is the fallback. Deleting it reddens four
+   rungs.
+2. **The tail must be an EFFECT clause specifically.** The five damage readers are all handed the
+   HEAD, so a trailing clause only they claim would be accounted for and applied by nobody.
+   ⚠️ **The catalog cannot discriminate this guard** — every printed compound puts its damage clause
+   first — so the mutant survived until a SYNTHETIC pair of real printed clauses was written in the
+   order the catalog does not print.
+
+### Not recursive, and that is a population result
+
+It splits at the LAST boundary, so a head that is itself a compound is claimed by nobody and the
+string stays LOUD. All eleven printed members have exactly TWO clauses. A three-clause compound whose
+parts are all readable is the trigger to revisit that.
+
+### The census shape
+
+`BUILT.attack` = `rawHead` + `splitHead` + **`compoundHead`** + `REGISTRY_ATTACK_UNITS`
+= 1,347 + 13 + **11** + 16 = **1,387**. The new term is a FOURTH summand rather than a widening of
+the raw one, because the composition is **not a reader** — and that is what keeps the delta
+attributable. Visible consequence: both reader instruments stand still and the eleven-reader residue
+operand **385 gains a subtrahend instead of moving**, for the first time in eighteen slices at that
+site.
+
+🛑 **A build that is not a reader is invisible to every reader-keyed instrument.** D408 found a
+program that resolved and did nothing; this is the mirror. `clauseApostrophe.test.ts`'s DERIVABLE
+sweep is keyed on `resolvedByAnyReader`, so it had to be **widened** to see three new
+apostrophe-bearing derivable sentences (132 → 135), and its U+2019 rung now asserts a **program
+equality** for compounds rather than a non-null.
+
+### The persisted question
+
+`MATCH_RECORD_VERSION` **stays 25**, and this is the one recent slice where the parking question is
+live: `discardEnergy` PARKS, so on the 2-Energy compound the trailing `reduceDamage` rides
+`EffectContinuation.rest` into a saved record. `rest` is an existing `EffectOp[]` field and
+`SELF_DISCARD_ALL_THEN_REDUCTION` has shipped those same two ops in that order since 0.x, so a v25
+record could already hold exactly this continuation. Driven in `compoundCompose.test.ts` §7 by
+inspecting the live park.
+
+### What this instrument found for the NEXT slice
+
+The composition path turns *"build a clause"* into *"build every compound that clause completes"*.
+Measured at this head: **21 residue sentences / 32 printings have exactly one unread clause**, across
+**17 distinct unread clauses, and not one of the 17 prints standalone anywhere in the column** — so
+every one of them is invisible to a sentence-ranked backlog. The top two are the same family:
+*"During your opponent's next turn, that Pokémon can't retreat."* (4 printings, 2 compounds) and
+*"During your next turn, this Pokémon can't retreat."* (3 printings, 2 compounds). `preventRetreat`
+is a **zero-field op** that locks the opponent's Active, so the first is a regex and the second is a
+field on a shipped op — **not the same price, and not one slice.**
+
 ## D408 — THE BARE ATTACK LOCK ON BOTH SEATS, and a repair of a program that RESOLVED, was counted BUILT, and did NOTHING (engine 0.313.0, `MATCH_RECORD_VERSION` **STAYS 25**)
 
 Three printed sentences, **11 legal printings**, and they are not three of a kind:
