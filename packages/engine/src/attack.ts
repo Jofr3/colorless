@@ -66,6 +66,7 @@ import {
   discardScaledBoostProgram,
   optionalCostBoostProgram,
   splitAttackGateClause,
+  splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
 import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
@@ -776,7 +777,37 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // `gated`, NOT off `effect`: the reader's own anchor tolerates a trailing
   // companion now, and `effect` is that companion once a split has fired.
   const requirement = gated === null || gated === "" ? null : deriveAttackRequirement(gated);
-  const effect = requirementSplit === null ? gated : requirementSplit.body;
+  const composed = requirementSplit === null ? gated : requirementSplit.body;
+  // 🆕🆕 D409 — THE THIRD SPLIT, AND THE FIRST ONE POINTED AT THE *TRAILING* END OF
+  // THE SENTENCE. D282's gate clause and D363's requirement clause both come off
+  // the FRONT and are SPENT by the time the readers below run; this one comes off
+  // the BACK and is not spent at all — it is a second half that must still be
+  // READ, which is why this is a composition rather than a strip.
+  //
+  // `splitAttackTrailingClause` fires only when NO reader claims the whole printed
+  // string, the trailing clause is one `deriveAttackEffect` claims, and the head is
+  // claimed by some reader. So `effect` below is the head, every reader keeps
+  // reading exactly the string it read before on all 629 other sentences of the
+  // legal column, and the tail is appended to the program by the ONE line at
+  // `derivedTail`. Measured over that column: the predicate admits 5 sentences /
+  // 11 printings and nothing else.
+  //
+  // ⚠️ THE REBIND IS DELIBERATELY ABOVE ALL FIVE DAMAGE READERS AND NOT JUST ABOVE
+  // `derived`. Two of the five printed compounds put a `deriveAttackDamageBonus`
+  // clause in FRONT of the effect clause (8 of the 11 printings), so the head is
+  // what the bonus reader has to see; leaving `effect` on the whole compound would
+  // resolve the discard and silently drop the "+50 for each Prize card" fold — the
+  // COST without the payoff, in the direction that loses damage rather than the
+  // direction that flags it.
+  //
+  // ⚠️ AND NOTHING IN THE THREE DISJUNCTION CHAINS BELOW MOVES. When this split
+  // fires the tail is a claimed effect, so `derived` is non-null, so `program` is
+  // non-null and `effectSimulated`'s FIRST term already carries it; the two Prize
+  // compounds additionally carry `scaling`, which is `modifierSimulated`'s first
+  // term. The skip report is therefore not reached at all on any of the eleven
+  // printings, which is why it may keep reporting `effect` (the head) unchanged.
+  const compoundSplit = composed === null || composed === "" ? null : splitAttackTrailingClause(composed);
+  const effect = compoundSplit === null ? composed : compoundSplit.head;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
   // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
   // INDEX — a card authors only the attacks the deriver does not read, the rest
@@ -793,7 +824,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // that a non-event rather than a conflict: the row wins, the deriver is never
   // asked, and the two suites assert the agreement instead of a null.
   const authored = programFor(attacker.id)?.attack?.[index] ?? null;
-  const derived = effect === null || effect === "" ? null : deriveAttackEffect(effect);
+  const derivedHead = effect === null || effect === "" ? null : deriveAttackEffect(effect);
+  // 🆕🆕 D409 — THE COMPOSITION SITE, AND IT IS ONE CONCATENATION IN PRINTED ORDER.
+  // `derivedHead` is null on the two Prize compounds (their head is a damage-bonus
+  // clause `deriveAttackEffect` refuses) and non-null on the other three, and the
+  // `??  []` is what makes those two cases one line rather than a branch. The order
+  // is the PRINTED order — head first — because that is the order the card reads in
+  // and the only order §8.5's fold and the post-damage ops agree on.
+  const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.tail);
+  const derived =
+    derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
   // REASSIGNABLE since D130, and only from the flip block below: a
   // `programPerHeads` coin member is expanded into `heads` copies of its ops and
   // APPENDED here, so the attack's existing tail runs them with no new channel.

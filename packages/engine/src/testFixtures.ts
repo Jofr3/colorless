@@ -5049,6 +5049,83 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 D409 FIXTURE — THE FIVE PRINTED `. `-JOINED COMPOUNDS, one per attack
+      index, in the order the census lists them. Every effect string here is the
+      PRINTED sentence off `legalAttackCorpus()` byte for byte (the ids that print
+      them are unknown to this container — see the resume point — so the body, its
+      HP, its costs and its printed damage are CHOSEN and only the sentences are
+      transcribed).
+
+      340 HP so no compound ever KOs it (self-damage at index 1, and it is also the
+      body the reduction at index 2 protects), and every cost is {C}-only so a
+      refusal on this fixture is never an Energy shortfall wearing a compound's
+      face. ⚠️ Indices 0 and 1 print a "+" marker because their LEADING clause is a
+      `deriveAttackDamageBonus` sentence and that reader is what spends it — a flat
+      base would leave `modifierSimulated` with nothing to explain and change what
+      the skip block asserts. */
+  "fix-compound": battler("fix-compound", {
+    hp: 340,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Prize Purge",
+        damage: "40+",
+        effect:
+          "This attack does 50 more damage for each Prize card your opponent has taken. Discard an Energy from this Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Prize Recoil",
+        damage: "40+",
+        effect:
+          "This attack does 50 more damage for each Prize card your opponent has taken. This Pokémon also does 30 damage to itself.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Cold Shoulder",
+        damage: 20,
+        effect:
+          "Discard 2 Energy from this Pokémon. During your opponent's next turn, this Pokémon takes 100 less damage from attacks (after applying Weakness and Resistance).",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Full Discharge",
+        damage: 20,
+        effect: "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Venom Bind",
+        damage: 20,
+        effect:
+          "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, the Defending Pokémon can't retreat.",
+      },
+      // The SHIPPED whole-sentence twin of index 4, one noun phrase over
+      // (`DEFENDER_POISON_CANT_RETREAT`, arm 5c). It is here so the equality of the
+      // two ROUTES — anchor and composition — is a fact about two attacks on one
+      // board rather than about two strings in a unit test.
+      {
+        cost: ["Colorless"],
+        name: "Venom Bind Classic",
+        damage: 20,
+        effect:
+          "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, that Pokémon can't retreat.",
+      },
+      // ⚠️ THE REFUSAL CONTROL, and it is a NEAR-MISS rather than a straw: the
+      // leading clause is one `deriveAttackDamageBonus` claims and the trailing one
+      // is a sentence NO reader claims, so the compound must stay LOUD in full. A
+      // splitter that took the head and dropped an unread tail would ship the fold
+      // and lose the rider — the "prefix match" failure this family refuses.
+      {
+        cost: ["Colorless"],
+        name: "Prize Riddle",
+        damage: "40+",
+        effect:
+          "This attack does 50 more damage for each Prize card your opponent has taken. The Defending Pokémon is now Asleep.",
+      },
+    ],
+  }),
   /** FIXTURE — a ×2 WATER body (200 HP), the Hail Blade W/R witness: Chien-Pao ex
       is a {W} attacker, so its `damageDefender` hit DOUBLES here (60 × k × 2),
       which is the proof that the op re-enters the full §8.5 pipeline rather than
@@ -17494,6 +17571,27 @@ export const BARE_ATTACK_LOCK_DECK = deckOf({
   "fix-attacker": 4, // the victim: costless "Yawn" (idx 2) and "Bite" (idx 0), so a refusal is the LOCK
   "fix-energy": 16, // Basic {C} — pays every printed cost in this deck
   "fix-titan": 32, // 340 HP neutral Basic, NO attacks — DOMINANT (mulligan-free), filler and promote target
+});
+
+/** 🆕🆕 D409's TRAILING-CLAUSE COMPOSITION deck (`compoundCompose.test.ts`).
+    SEED-FREE: not one of the five printed compounds carries a coin, so a seed
+    table would describe a shuffle rather than a rule.
+
+    `fix-compound` on both seats (P2's copy is the victim of the status compounds
+    and the attacker the reduction at index 2 has to survive), plenty of {C} so the
+    two-Energy discard at index 2 has something to park on, and `fix-titan` as the
+    mulligan-free filler every deck in this file uses. */
+export const COMPOUND_COMPOSE_DECK = deckOf({
+  "fix-compound": 8, // the five compounds, their shipped twin and the refusal control
+  "fix-attacker": 4, // "Bounty" (idx 5) prints the LEADING clause of two of them ALONE
+  "fix-energy": 16, // Basic {C} — pays every printed cost here and feeds the 2-Energy discard
+  // ⚠️ A SECOND ENERGY *KIND*, AND IT IS WHAT MAKES THE PARK REACHABLE AT ALL.
+  // `interchangeableCandidates` collapses identical Energy, so "discard 2" off
+  // three identical {C} is a FORCED set that resolves inline and never parks —
+  // the continuation this suite has to inspect would not exist. Two {C} plus one
+  // {R} is three candidates for a two-card pick, which is a real decision.
+  "fix-fire-energy": 4, // Basic {R} — pays {C} too, so it costs the boards nothing
+  "fix-titan": 28, // 340 HP neutral Basic, NO attacks — DOMINANT (mulligan-free) filler
 });
 
 /** D149's ATTACKER-SIDE DEBUFF deck (`attackDebuff.test.ts`). Its own 60, and

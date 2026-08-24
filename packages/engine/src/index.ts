@@ -12109,6 +12109,121 @@ import type { GameState, Seat } from "./types";
     engineVersion 0.245.0 → **0.246.0**
     (`packages/engine/package.json` in the same commit). */
 
+/** 🆕🆕 0.314.0 → **THE TRAILING-CLAUSE COMPOSITION PATH — THE FIRST TIME THIS
+    ENGINE READS ONE PRINTED STRING AS TWO CLAUSES.**
+
+      *"This attack does 50 more damage for each Prize card your opponent has taken.
+       Discard an Energy from this Pokémon."* (4)
+      *"This attack does 50 more damage for each Prize card your opponent has taken.
+       This Pokémon also does 30 damage to itself."* (4)
+      *"Discard 2 Energy from this Pokémon. During your opponent's next turn, this
+       Pokémon takes 100 less damage from attacks (after applying Weakness and
+       Resistance)."* (1)
+      *"Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now
+       Paralyzed."* (1)
+      *"Your opponent's Active Pokémon is now Poisoned. During your opponent's next
+       turn, the Defending Pokémon can't retreat."* (1)
+
+    **5 sentences / 11 legal printings, off ONE splitter and ONE composition site.**
+    `BUILT.attack` 1376 → **1387**; whole-census `built` 1,781 → **1,792**, its
+    residue 602 → **591**; unbuilt attack column 356 → **345** (PRINTINGS);
+    `BUILT.attack - 922` 454 → **465**, `- 922 - 252` 202 → **213**;
+    `head - rawDelta - splitDelta` 1,370 → **1,381**; `FIXTURE_POOL` 513 → **514**;
+    the apostrophe file's DERIVABLE sweep 132 → **135**.
+
+    🛑 **AND THE TWO READER INSTRUMENTS STAND STILL — 403 / 1,347 AND 398 / 1,331 —
+    WHILE `BUILT.attack` MOVES BY 11, WHICH IS THE SHAPE OF THIS SLICE.** No
+    `deriveAttack*` export gained an arm or a character; all five sentences are
+    still refused by all eleven readers. They leave the unbuilt column through a
+    FOURTH, SPLIT-KEYED summand of `BUILT.attack` (`COMPOUND_ATTACK_UNITS` = 11),
+    which is why the eleven-reader raw residue operand **385 does not move for the
+    first time in eighteen slices at that site** and gains a fourth subtrahend
+    instead: 385 − 16 − 13 − 11 = 1,732 − 1,387 = 345.
+
+    🛑 **THE SHAPE QUESTION WAS SETTLED BEFORE THE PRICE QUESTION (D368), AND IT WAS
+    SETTLED BY MEASUREMENT.** Five hand-written whole-sentence anchors, or a
+    composition path? The predicate — *refused whole by every reader, split at the
+    LAST `(?<=\.)\s+(?=[A-Z(])` boundary, tail claimed by `deriveAttackEffect`, head
+    claimed by SOME reader* — was run over the whole committed `legal_standard = 1`
+    attack column and **admits exactly those five sentences / eleven printings and
+    NOTHING ELSE**. A per-sentence anchor buys its own printing; this buys the five
+    and every future compound whose clauses this file already reads.
+
+    ⚠️ **THE HAND-ANCHOR ROUTE ALSO LOST ON PRICE, AND THE PRICE IS NOT FIVE
+    REGEXES.** Two of the five put a `deriveAttackDamageBonus` clause in FRONT of a
+    `deriveAttackEffect` one — 8 of the 11 printings — and the two readers return
+    DIFFERENT KINDS. As whole-sentence anchors those two need an arm in BOTH
+    readers, each tolerating the other's grammar: four arms for two sentences, and
+    two readers made permanently aware of each other.
+
+    🛑 **THE NAMED FALSIFIER DID NOT FIRE, AND IT WAS RE-DERIVED RATHER THAN
+    INHERITED (D406's rule).** The handoff warned that a path which only
+    concatenates `EffectOp[]` could not take the Prize pair at all and would drop
+    the slice to 3 / 3. `attack.ts` was OPENED: the bonus reader and the effect
+    reader are read off the SAME local into TWO INDEPENDENT variables and nothing
+    has ever stopped both being non-null. So the composition is not "concatenate two
+    op lists" — it is **"give the HEAD to the readers that were already reading, and
+    APPEND the TAIL's ops"** — and the cross-reader pair is the easy case.
+
+    ⚠️ **THE SECOND FALSIFIER DID NOT FIRE EITHER, AND ITS NUMBER IS ZERO.** The
+    split was priced as possibly needing a parenthesis-aware SCANNER because the
+    catalog prints periods inside parentheticals. It does — **54 of the 640
+    sentences carry a `.` inside parentheses** — and the regex splits **NONE** of
+    them. Exactly ONE sentence prints a `. ` inside parentheses at all
+    (*"…etc. have Rule Boxes.)"*) and the word after that period is lowercase, so
+    `(?=[A-Z(])` refuses it. A scanner would be a function written for a population
+    of zero, and the zero is asserted so the day it stops being zero is a red test.
+
+    🛑 **THE SHADOW REFUSAL IS THE GUARD THAT MAKES THIS SAFE, AND IT IS FIRST.**
+    145 sentences / 415 printings in that column are multi-clause AND claimed WHOLE
+    today. Without `claimedByAnyReader(text)` in front of the split, every one would
+    be re-answered by composition instead of by the anchor its author wrote — the
+    same program in the lucky cases and a different one in the rest, with nothing
+    able to tell which. **THE ANCHOR WINS; THE SPLITTER IS THE FALLBACK**, and
+    deleting the refusal reddens `compoundCompose.test.ts` in four places (measured).
+
+    ✅ **TWO OF THE FIVE HAVE A SHIPPED WHOLE-SENTENCE TWIN ONE TOKEN AWAY, WHICH
+    TURNS "IS THE COMPOSITION RIGHT" INTO A CHECKABLE EQUALITY.**
+    `DEFENDER_POISON_CANT_RETREAT` (arm 5c) reads the same rule with *"that
+    Pokémon"* where this column prints *"the Defending Pokémon"*, and
+    `SELF_DISCARD_ALL_THEN_REDUCTION` reads the same pair of ops with *"all"* where
+    this column prints *"2"*. **THAT IS WHY THE POISON ROW WAS TAKEN BY THE SPLITTER
+    RATHER THAN BY WIDENING 5c's CHARACTER CLASS** — widening would have produced
+    one program from one regex and proved nothing, while composing the halves and
+    comparing against the shipped anchor is a claim that can go RED from either
+    side. ⚠️ And `SELF_DISCARD_ALL_THEN_REDUCTION`'s own printing is **not in the
+    `legal_standard = 1` column** (it was measured on the six-set local D1, 978 cards
+    / 6 sets) while its *"Discard 2"* twin is — two populations, two answers, and
+    the anchor is still right about its own.
+
+    ⚠️ **THE SPLIT IS NOT RECURSIVE, AND THAT IS A POPULATION RESULT.** It splits at
+    the LAST boundary, so a head that is itself a compound is claimed by nobody and
+    the whole string stays LOUD. All eleven printed members have exactly TWO clauses
+    (asserted), so recursion would be scaffolding for a family of zero —
+    `splitAttackGateClause`'s own *"build the narrow thing"* verdict, at the other
+    end of the sentence.
+
+    **ZERO new `EffectOp` inhabitants, fields, readers, `DamageCountSource`/
+    `BoardCondition` members, registry rows, events, parks or error codes.** No
+    `interpreter.ts` / `continuous.ts` / `types.ts` / `redact.ts` / `flow.ts` /
+    `log.ts` / `events.ts` / `registry.ts` diff at all. `attack.ts` gains ONE split,
+    ONE rebind and ONE concatenation, and **none of its three disjunction chains is
+    touched**: when the split fires the tail is a claimed effect, so `program` is
+    non-null and `effectSimulated`'s first term already carries it.
+
+    `MATCH_RECORD_VERSION` **STAYS 25**, argued from whether any FIELD changes rather
+    than from whether an op is new — and this is the one recent slice where the
+    parking question is live: `discardEnergy` PARKS, so on the 2-Energy compound the
+    trailing `reduceDamage` rides `EffectContinuation.rest` into a saved record.
+    `rest` is an existing `EffectOp[]` field and `SELF_DISCARD_ALL_THEN_REDUCTION`
+    has shipped those same two ops in that same order since 0.x, so a v25 record
+    could already hold exactly this continuation. ⚠️ Not an exported constant (D406),
+    so the claim is DRIVEN in `compoundCompose.test.ts` §7 — the park is inspected
+    and `rest` is asserted to equal `[{ op: "reduceDamage", amount: 100 }]`.
+
+    engineVersion 0.313.0 → **0.314.0**
+    (`packages/engine/package.json` in the same commit). */
+
 /** 🆕🆕 0.313.0 → **THE BARE ATTACK LOCK ON BOTH SEATS — AND A REPAIR OF A PROGRAM
     THAT RESOLVED, WAS COUNTED BUILT, AND DID NOTHING.**
 
@@ -17148,7 +17263,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.313.0";
+export const engineVersion = "0.314.0";
 
 export type {
   ApplyResult,
@@ -17234,6 +17349,7 @@ export {
   deriveAttackRequirement,
   splitAttackGateClause,
   splitAttackRequirementClause,
+  splitAttackTrailingClause,
 } from "./effects";
 export { rareCandyOptions } from "./cardplay";
 export type { RareCandyOption } from "./cardplay";

@@ -19615,6 +19615,121 @@ export function splitAttackGateClause(text: string): { clause: string; body: str
   return null;
 }
 
+/** Every whole-sentence attack reader this module exports, in the order
+    `attack.ts` calls them. It exists for ONE caller — `splitAttackTrailingClause`
+    below, whose refusal is "no reader claims this string as a whole" and whose
+    admission is "some reader claims the head" — and both of those are quantified
+    over ALL of them, not over a hand-picked few.
+
+    🛑 **THE LIST IS THE ONE THING THAT CAN ROT SILENTLY HERE, SO IT IS PINNED
+    RATHER THAN TRUSTED.** A twelfth reader added to this file and forgotten here
+    would make the splitter claim a compound whose head that reader already reads
+    WHOLE — the shadowing failure the refusal exists to prevent — and nothing in
+    the composition would notice, because the head still resolves. So
+    `compoundCompose.test.ts` §1 derives the `deriveAttack`-prefixed export surface
+    off the MODULE (`precociousEvolution.test.ts`'s `EXPORTED_ATTACK_READERS`
+    idiom) and asserts it equals this array by NAME. Adding a reader without
+    adding it here goes RED by name. */
+const ATTACK_WHOLE_SENTENCE_READERS: readonly ((text: string) => unknown)[] = [
+  deriveAttackEffect,
+  deriveAttackDamageBonus,
+  deriveAttackDamagePenalty,
+  deriveAttackDamageMultiplier,
+  deriveAttackCoinFlip,
+  deriveAttackRequirement,
+  deriveAttackDamageSuppression,
+  deriveAttackOptionalBoost,
+  deriveAttackBonusConsequent,
+  deriveAttackOptionalCostBoost,
+  deriveAttackDiscardScaledBoost,
+];
+
+/** Does ANY whole-sentence reader claim this string? The splitter's refusal and
+    its admission are the same question asked of two different strings. */
+function claimedByAnyReader(text: string): boolean {
+  return ATTACK_WHOLE_SENTENCE_READERS.some((read) => read(text) !== null);
+}
+
+/** The printed sentence break inside one attack's effect text: a period, then
+    whitespace, then a capital or an opening parenthesis. The lookahead is what
+    keeps `etc. have` and `sv08.5` from being breaks, and it is why this is a regex
+    rather than a scanner — see the parenthesis measurement on the splitter below. */
+const COMPOUND_CLAUSE_BREAK = /(?<=\.)\s+(?=[A-Z(])/;
+
+/** The `. `-joined COMPOUND, split into a head and a TRAILING effect clause —
+    `null` unless the whole string is refused by every reader, the tail is a
+    sentence `deriveAttackEffect` claims, and the head is claimed by some reader.
+
+    🛑 **D409 — THIS IS THE FIRST COMPOSITION PATH IN THIS ENGINE, AND THE SHAPE
+    QUESTION IT ANSWERS WAS "FIVE MORE HAND-WRITTEN ANCHORS OR ONE SPLITTER".**
+    Measured live over the committed `legal_standard = 1` attack column (640
+    sentences / 1,732 printings): **five sentences / eleven printings are refused
+    whole and have EVERY clause claimed independently**, and no reader claims them
+    as a whole. Two of the five put a `deriveAttackDamageBonus` clause in front of
+    a `deriveAttackEffect` one (8 of the 11 printings); three put a
+    `deriveAttackEffect` clause in front of another. **A per-sentence anchor buys
+    exactly its own printing; this buys the five and every future compound whose
+    clauses this file already reads.**
+
+    ⚠️ **AND THE PREDICATE ADMITS EXACTLY THOSE FIVE OVER THE WHOLE COLUMN — 5 / 11,
+    0 false positives.** That is the measurement that decided the shape, not the
+    argument: a splitter that also admitted a sentence whose halves compose into
+    the wrong program would be the "too loose" failure D278/D279 keep refusing.
+
+    🛑 **THE SAFETY PROPERTY IS THE WHOLE-SENTENCE ANCHOR'S, SPELLED PER CLAUSE.**
+    The family's rule is that an unrecognised remainder stays LOUD — a prefix match
+    would ship the COST without the effect it buys. Requiring the tail to be a
+    claimed effect AND the head to be claimed by SOME reader is that rule
+    clause-by-clause: a compound with one unreadable half is refused whole and
+    `ATTACK_EFFECT_SKIPPED` still names it.
+
+    🛑 **AND THE FIRST GUARD IS THE SHADOW REFUSAL, WHICH IS NOT OPTIONAL.**
+    145 sentences / 415 printings in that column are multi-clause AND claimed
+    whole today (`SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`,
+    `DEFENDER_POISON_CANT_RETREAT`, `COUNTER_PUT_ANY_THEN_SELF_LOCK`,
+    `SELF_DISCARD_ALL_THEN_REDUCTION` among them). Without `claimedByAnyReader(text)`
+    in front, every one of them would be re-answered by composition instead of by
+    the anchor its author wrote — the same program in the lucky cases and a
+    different one in the rest, with nothing able to tell which. **THE ANCHOR WINS;
+    THE SPLITTER IS THE FALLBACK.**
+
+    ⚠️ **THE SPLIT IS A REGEX AND NOT A PARENTHESIS-AWARE SCANNER, AND THAT IS A
+    MEASUREMENT.** The catalog does print periods inside parentheticals — 54 of the
+    640 sentences carry a `.` inside parentheses — but `(?<=\.)\s+(?=[A-Z(])`
+    splits **ZERO** of the 640 inside them. Exactly ONE sentence contains a `. `
+    inside parentheses at all (*"…(Pokémon ex, Pokémon V, etc. have Rule
+    Boxes.)"*), and the word after that period is lowercase, so the lookahead
+    refuses it. A scanner would be a function written for a population of zero;
+    the number is asserted in `compoundCompose.test.ts` §2 so the day it stops
+    being zero is a RED test rather than a silent mis-split.
+
+    ⚠️ **IT SPLITS AT THE LAST BOUNDARY, SO THE HEAD MAY ITSELF BE A COMPOUND — AND
+    THEN IT IS REFUSED, BECAUSE NO READER CLAIMS A COMPOUND.** All five printed
+    members have exactly two clauses (asserted), so recursion would be scaffolding
+    for a family of zero — `splitAttackGateClause`'s own "build the narrow thing"
+    verdict, at the other end of the sentence. A three-clause compound whose parts
+    are all readable is the trigger to revisit that, and it stays LOUD until then.
+
+    Returns the two halves separately rather than the tail alone, so the caller can
+    feed the head to the readers it was already feeding and assert WHICH half it
+    accounted for. */
+export function splitAttackTrailingClause(text: string): { head: string; tail: string } | null {
+  const trimmed = text.trim();
+  // The shadow refusal, FIRST: a string any reader claims whole is that reader's,
+  // and composition never gets a look at it.
+  if (claimedByAnyReader(trimmed)) return null;
+  const parts = trimmed.split(COMPOUND_CLAUSE_BREAK);
+  if (parts.length < 2) return null;
+  const tail = parts[parts.length - 1] ?? "";
+  const head = parts.slice(0, -1).join(" ");
+  // The tail must be an EFFECT clause specifically — it is the half the caller
+  // appends to the program, and a tail claimed only by a damage reader would be a
+  // fold the caller has no place to put (the damage readers all read the HEAD).
+  if (deriveAttackEffect(tail) === null) return null;
+  if (!claimedByAnyReader(head)) return null;
+  return { head, tail };
+}
+
 /** The optional `{X}`/spelled-out type filter on an "…for each [<token>] Energy
     attached to…" sentence, resolved through D118's `CLAUSE_ENERGY_TOKENS` — `null`
     for the UNTYPED reading (no token printed: every attached card counts) and
