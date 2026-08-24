@@ -7,6 +7,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackEffect,
   deriveAttackRequirement,
+  splitAttackTrailingClause,
 } from "./index";
 import { FIXTURE_POOL } from "./testFixtures";
 
@@ -130,7 +131,19 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     for (const attack of card.attacks ?? []) {
       const sentence = attack.effect ?? "";
       if (!sentence.includes(APOS)) continue;
-      if (Object.values(READERS).every((read) => read(sentence) === null)) continue;
+      // 🆕🆕 D409 — **OR THE COMPOSITION PATH CLAIMS IT**, and this widening is the
+      // D408 defect class caught one instrument over rather than cited. This sweep
+      // is READER-keyed, and D409 builds five printed compounds that NO reader
+      // claims — three of them apostrophe-bearing. Left as it was, the suite whose
+      // whole job is *"every derivable apostrophe sentence survives a U+2019
+      // re-ingest"* would have stood still while three new derivable
+      // apostrophe sentences landed beside it, and nothing would have said so.
+      if (
+        Object.values(READERS).every((read) => read(sentence) === null) &&
+        splitAttackTrailingClause(sentence) === null
+      ) {
+        continue;
+      }
       const existing = derivable.find((entry) => entry.sentence === sentence);
       if (existing === undefined) derivable.push({ sentence, ids: [id] });
       else existing.ids.push(id);
@@ -704,7 +717,7 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `'`. ⚠️ **ITS INDEX-1 SENTENCE (*"Discard the top 3 cards of your deck."*) DOES
     // NOT**, so the fixture adds ONE entry rather than two — a census keyed on a
     // CHARACTER counts sentences, not cards, and this fixture prints both kinds.
-    expect(derivable).toHaveLength(132); // 🆕🆕 D408 +3, AND THE SWEEP MOVES AGAIN AFTER SIX SLICES STANDING STILL — `fix-lockplural` prints ONE apostrophe-bearing sentence (*"…this Pokémon can't use attacks."*, the CONTRACTION alone) and `fix-deflock` prints TWO (*"During your opponent's next turn, the Defending Pokémon can't attack."* and *"…can't use attacks."*, both spelling the POSSESSIVE and the CONTRACTION). Three sentences off TWO fixtures — a census keyed on a CHARACTER counts sentences and not cards, and `fix-deflock` is the fixture that makes that the difference between +2 and +3. 🆕🆕 D401 +2 — `fix-costsnipe` and `fix-allsnipe`, ONE apostrophe-bearing sentence each: both spell `opponent's` and `Don't`, and each fixture carries exactly ONE attack, so a census keyed on a CHARACTER steps by one per fixture // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
+    expect(derivable).toHaveLength(135); // 🆕🆕 D409 +3, AND THE SWEEP ITSELF HAD TO BE WIDENED TO SEE THEM — this census was READER-keyed and D409's five compounds are claimed by NO reader, so three apostrophe-bearing derivable sentences would have landed beside a suite whose whole job is to sweep them while it stood still. `fix-compound` prints SEVEN sentences and only THREE carry an apostrophe: the 2-Energy reduction, the discard-all Paralyze and the poison/no-retreat (all spelling the POSSESSIVE, the last also the CONTRACTION). The two Prize compounds and the refusal control print none at all, which is why the step is 3 rather than 5 or 7 — a census keyed on a CHARACTER counts sentences that carry it and not attacks. ⚠️ AND THE U+2019 RUNG ASSERTS A PROGRAM EQUALITY FOR THESE THREE, NOT A NON-NULL: every reader is null on a compound by construction, so the survival question is whether both HALVES still read after the fold. 🆕🆕 D408 +3, AND THE SWEEP MOVES AGAIN AFTER SIX SLICES STANDING STILL — `fix-lockplural` prints ONE apostrophe-bearing sentence (*"…this Pokémon can't use attacks."*, the CONTRACTION alone) and `fix-deflock` prints TWO (*"During your opponent's next turn, the Defending Pokémon can't attack."* and *"…can't use attacks."*, both spelling the POSSESSIVE and the CONTRACTION). Three sentences off TWO fixtures — a census keyed on a CHARACTER counts sentences and not cards, and `fix-deflock` is the fixture that makes that the difference between +2 and +3. 🆕🆕 D401 +2 — `fix-costsnipe` and `fix-allsnipe`, ONE apostrophe-bearing sentence each: both spell `opponent's` and `Don't`, and each fixture carries exactly ONE attack, so a census keyed on a CHARACTER steps by one per fixture // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);
@@ -724,7 +737,26 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
       // And at least one of them still says something — equality alone would be
       // satisfied by all five going null together, which is precisely the
       // regression this suite exists to catch.
-      expect(Object.values(READERS).some((read) => read(rewritten) !== null)).toBe(true);
+      // 🆕🆕 D409 — …or the COMPOSITION PATH does, and for a compound that is the
+      // whole claim: every reader is null on it by construction, so the survival
+      // question is whether the two HALVES still read after the fold. Asserted as a
+      // program equality rather than as a non-null, because a splitter that
+      // survived the rewrite while one of its clauses quietly stopped resolving
+      // would satisfy a non-null and be exactly the regression this file exists for.
+      const split = splitAttackTrailingClause(sentence);
+      if (split === null) {
+        expect(Object.values(READERS).some((read) => read(rewritten) !== null)).toBe(true);
+        continue;
+      }
+      const rewrittenSplit = splitAttackTrailingClause(rewritten);
+      expect(rewrittenSplit, `composition lost ${ids.join("/")}: ${sentence}`).not.toBeNull();
+      const composed = (parts: { head: string; tail: string }): unknown[] => [
+        ...(deriveAttackEffect(parts.head) ?? []),
+        ...(deriveAttackEffect(parts.tail) ?? []),
+      ];
+      expect(composed(rewrittenSplit as { head: string; tail: string })).toEqual(
+        foldNotes(composed(split)),
+      );
     }
   });
 });
