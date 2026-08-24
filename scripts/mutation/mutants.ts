@@ -13859,8 +13859,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D363",
     what: "🛑 THE REBIND IS UNDONE: every reader below the split is handed the WHOLE printed string again, so Sawk's trailing `This attack's damage isn't affected by Weakness or Resistance.` never reaches `deriveAttackDamageSuppression` (which is fully anchored and refuses the compound) and the 90 lands DOUBLED by the defender's printed Fighting Weakness. The requirement still gates, so the attack looks built — the half-read shape with nothing saying so",
     file: "packages/engine/src/attack.ts",
-    find: "  const effect = requirementSplit === null ? gated : requirementSplit.body;",
-    replace: "  const effect = gated;",
+    // ⚠️ RE-TRANSCRIBED AT D409 (`effect` -> `composed`), IN THE SAME COMMIT THAT
+    //    MOVED IT. D409 inserted a THIRD split between this binding and the readers
+    //    below it, so the requirement split's body now lands in `composed` and
+    //    `effect` is what the trailing-clause split hands on. The claim is unchanged
+    //    — undo the rebind and every reader is handed the whole printed string again
+    //    — and `precheck.ts` is what caught the move, at 0 matches rather than 1.
+    find: "  const composed = requirementSplit === null ? gated : requirementSplit.body;",
+    replace: "  const composed = gated;",
     expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
   },
   {
@@ -17261,5 +17267,96 @@ export const MUTANTS: Mutant[] = [
     find: "  /^During your opponent['\u2019]s next turn, the Defending Pok\u00e9mon can['\u2019]t (?:attack|use attacks)\\.$/;",
     replace: "  /^During your opponent's next turn, the Defending Pok\u00e9mon can't (?:attack|use attacks)\\.$/;",
     expectKilledBy: ["packages/engine/src/bareAttackLock.test.ts"],
+  },
+  // ── D409 — THE TRAILING-CLAUSE COMPOSITION PATH. Eight rows, ONE PER CLAIM, and
+  //    every `find` is anchored on a symbol THIS slice owns (D404's rule, applied
+  //    for a fifth slice running): the two quantifier guards, the tail guard, the
+  //    clause-break regex, the reader array's own entry, and the three lines
+  //    `attack.ts` gained. ⚠️ ALL EIGHT ARE SINGLE-LINE, deliberately — the
+  //    composition site is two lines and is anchored on its SECOND line alone.
+  //    ⚠️ AND THE SHAPE OF THE SET: FOUR of the eight are silent in every census
+  //    figure in this repo (C1, C3, C7 and C8 leave `BUILT.attack` at 1,387 while
+  //    changing which program a printing gets or whether an anchor keeps its own
+  //    sentence) — a census counts what RESOLVES, never what resolves CORRECTLY.
+  {
+    id: "D409-shadow-refusal-narrowed-to-one-reader",
+    decision: "D409",
+    what: "🛑 C1 — THE SHADOW REFUSAL NARROWED FROM ELEVEN READERS TO ONE, which is the mistake an author actually makes here: the TAIL guard names `deriveAttackEffect` two lines down, so making the whole-string guard name it too reads like symmetry. It is not — 145 sentences / 415 printings are multi-clause and claimed WHOLE, and the ones claimed by a reader OTHER than the effect one stop being shadowed and get re-answered by composition instead of by the anchor their author wrote. SILENT IN EVERY CENSUS: `BUILT.attack` cannot move, because a sentence already counted built stays built whichever route answers it.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (claimedByAnyReader(trimmed)) return null;",
+    replace: "  if (deriveAttackEffect(trimmed) !== null) return null;",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D409-head-quantifier-narrowed-to-effect-reader",
+    decision: "D409",
+    what: "🛑 C2 — THE HEAD QUANTIFIER NARROWED TO `deriveAttackEffect`, which is EXACTLY the concatenate-only composition path the handoff's first named falsifier described and the reason it was re-derived rather than inherited. The three SAME-READER compounds survive and the two cross-reader Prize ones — 8 of the 11 printings — are lost, dropping the slice from 5/11 to 3/3. `BUILT.attack` falls 1,387 -> 1,379, so this one is loud in the census as well as on a board.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (!claimedByAnyReader(head)) return null;",
+    replace: "  if (deriveAttackEffect(head) === null) return null;",
+    expectKilledBy: [
+      "packages/engine/src/compoundCompose.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D409-tail-guard-widened-to-any-reader",
+    decision: "D409",
+    what: "⚠️ C3 — C2's MIRROR, and the other symmetry mistake: the TAIL guard widened from `deriveAttackEffect` to any reader. A tail claimed only by a DAMAGE reader would then be admitted, and the caller has nowhere to put it — the damage readers all read the HEAD — so the trailing clause would be accounted for and never applied, which is the COST-without-the-payoff failure this family refuses. SILENT IN EVERY CENSUS: the count of printings that resolve is what moves, and it moves UP.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (deriveAttackEffect(tail) === null) return null;",
+    replace: "  if (!claimedByAnyReader(tail)) return null;",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D409-clause-break-loses-its-period",
+    decision: "D409",
+    what: "⚠️ C4 — the lookBEHIND is dropped, so the break stops being a SENTENCE break and becomes 'any whitespace before a capital'. Every printed string then splits at its last capitalised word, so the tail of all five compounds becomes a fragment no reader claims and the whole family is refused. The mutation is the half of the regex that is easiest to read as redundant beside the lookahead, which is why it is here rather than a straw edit.",
+    file: "packages/engine/src/effects.ts",
+    find: "const COMPOUND_CLAUSE_BREAK = /(?<=\\.)\\s+(?=[A-Z(])/;",
+    replace: "const COMPOUND_CLAUSE_BREAK = /\\s+(?=[A-Z(])/;",
+    expectKilledBy: [
+      "packages/engine/src/compoundCompose.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D409-reader-array-drops-the-bonus-reader",
+    decision: "D409",
+    what: "🛑 C5 — THE ROT THE ARRAY'S OWN DOC BLOCK PREDICTS, DRIVEN. `ATTACK_WHOLE_SENTENCE_READERS` loses `deriveAttackDamageBonus`, which is the entry a slice adding or moving a reader is most likely to disturb. Both quantifiers narrow at once: the two Prize compounds lose their head claim (8 printings) AND every sentence that reader alone claims stops being shadowed. This is the row `compoundCompose.test.ts` §1's per-reader rung exists for — a COUNT is a tripwire, and the count is unmoved by this edit.",
+    file: "packages/engine/src/effects.ts",
+    find: "  deriveAttackDamageBonus,",
+    replace: "",
+    expectKilledBy: [
+      "packages/engine/src/compoundCompose.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D409-attack-seam-keeps-the-whole-compound",
+    decision: "D409",
+    what: "🛑 C6 — THE REBIND REVERTED: every reader below is given the WHOLE printed compound again instead of the head. This is the pre-D409 seam byte for byte, so it is what a revert or a bad merge produces rather than an invented defect. Measured on the real tree before this row was written: it fails 5 of the 24 cases, all of them boards.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const effect = compoundSplit === null ? composed : compoundSplit.head;",
+    replace: "  const effect = composed;",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D409-composition-reads-the-head-twice",
+    decision: "D409",
+    what: "🛑 C7 — `compoundSplit.tail` becomes `compoundSplit.head`, the copy-paste slip this two-field shape invites. On the three same-reader compounds the head's ops run TWICE and the printed second clause never runs at all; on the two Prize ones the head is a damage clause `deriveAttackEffect` refuses, so `derivedTail` is null and the trailing op is simply lost. SILENT IN EVERY CENSUS: the sentence still resolves, so `BUILT.attack` stays 1,387 while the program is wrong.",
+    file: "packages/engine/src/attack.ts",
+    find: "  const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.tail);",
+    replace: "  const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.head);",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D409-composition-order-reversed",
+    decision: "D409",
+    what: "⚠️ C8 — the two halves are concatenated in the WRONG ORDER, tail before head. The card is read in PRINTED order and nothing else agrees with any other order: on the 2-Energy compound the reduction installs before the cost is paid, so the park's `EffectContinuation.rest` is empty where it should carry the trailing op. SILENT IN EVERY CENSUS, and invisible to a program-length check — both routes still return exactly two ops.",
+    file: "packages/engine/src/attack.ts",
+    find: "    derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];",
+    replace: "    derivedTail === null ? derivedHead : [...derivedTail, ...(derivedHead ?? [])];",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
   },
 ];
