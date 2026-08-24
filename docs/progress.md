@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-24 — build session #349 (**P3-M5 — D409, *the trailing-clause composition path — the first time this engine reads one printed string as two clauses, and a shape question settled by a sweep rather than by taste.*** Engine **0.313.0 → 0.314.0**; **`MATCH_RECORD_VERSION` STAYS 25** (driven, and the parking question is live for once). **5 sentences / 11 legal printings** off ONE splitter (`splitAttackTrailingClause`) and ONE composition site in `attack.ts`, chosen over five hand-written anchors on a MEASUREMENT: the predicate admits exactly those five over the whole 640-sentence legal column and nothing else. `BUILT.attack` **1376 → 1387** through a FOURTH, split-keyed summand, so BOTH reader instruments stand still and the eleven-reader residue operand 385 gains a subtrahend instead of moving for the first time in eighteen slices. `bun run check` **415 files / 8,754 tests, exit 0**; mutants **8/8 after one SURVIVED and was killed by a synthetic pair the catalog cannot print**; 36 neighbour decisions probed one at a time, all clean.)
+**Last updated:** 2026-08-24 — build session #349 (**P3-M5 — D409, *the trailing-clause composition path — the first time this engine reads one printed string as two clauses, and a shape question settled by a sweep rather than by taste.*** Engine **0.313.0 → 0.314.0**; **`MATCH_RECORD_VERSION` STAYS 25** (driven, and the parking question is live for once). **5 sentences / 11 legal printings** off ONE splitter (`splitAttackTrailingClause`) and ONE composition site in `attack.ts`, chosen over five hand-written anchors on a MEASUREMENT: the predicate admits exactly those five over the whole 640-sentence legal column and nothing else. `BUILT.attack` **1376 → 1387** through a FOURTH, split-keyed summand, so BOTH reader instruments stand still and the eleven-reader residue operand 385 gains a subtrahend instead of moving for the first time in eighteen slices. `bun run check` **415 files / 8,755 tests, exit 0**; mutants **8/8 after one SURVIVED and was killed by a synthetic pair the catalog cannot print**; 36 neighbour decisions probed one at a time, all clean.)
 
 <!-- prior stamp -->
 
@@ -447,11 +447,11 @@
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-24, after D409)
 >
-> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 415 files / 8,754 tests, `CHECK_EXIT=0`,
-> `grep -c 'error TS'` = 0.** Baseline was 414 / 8,730; the delta is **+1 file and +24 cases**, and the
-> arithmetic closes exactly: **all 24 are the new `compoundCompose.test.ts`'s** (25 after the extra
-> guard below), and the FOUR other edited test files moved a FIGURE or a COMMENT and never a case
-> count. **MEASURED TWICE — ONCE BEFORE THE DOCS COMMIT AND ONCE AFTER IT — AND THE ARCHIVE RATCHET
+> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 415 files / 8,755 tests, `CHECK_EXIT=0`,
+> `grep -c 'error TS'` = 0.** Baseline was 414 / 8,730; the delta is **+1 file and +25 cases**, and the arithmetic closes
+> exactly: **all 25 are the new `compoundCompose.test.ts`'s** — 24 written first and a 25th added to
+> kill the mutant that survived — and the FOUR other edited test files moved a FIGURE or a COMMENT
+> and never a case count. **MEASURED TWICE — ONCE BEFORE THE DOCS COMMIT AND ONCE AFTER IT — AND THE ARCHIVE RATCHET
 > WAS RAISED 78 → 79 IN THE SAME COMMIT THAT DEMOTED D408's RESUME POINT.** **KEEP DOING BOTH. A GREEN
 > FIGURE YOU DID NOT READ IS A CLAIM.** **NOTHING IS PUSHED** — this branch is
 > `claude/slice-loop-2026-08-20` and no push was made, by instruction. ✅ **AND THE MUTATION HARNESS
@@ -11536,7 +11536,7 @@ three compounds rather than a non-null.
 `nonAttackRegistryIds()`, `BUILT.ability`, the `attackGate` shortfall, the gate-corpus split, both
 reader instruments and `opponentResistanceBonus.test.ts`'s two columns all UNMOVED.
 
-**Verification.** `bun run check` **415 files / 8,754 tests, `CHECK_EXIT=0`, `grep -c 'error TS'`
+**Verification.** `bun run check` **415 files / 8,755 tests, `CHECK_EXIT=0`, `grep -c 'error TS'`
 = 0**, measured before and after the docs commit. Archive ratchet **78 → 79** in the same commit that
 demoted D408's resume point. Mutant corpus **1463 → 1471**; `precheck.ts` clean over all of it;
 36 neighbour decisions probed ONE AT A TIME, all clean. Nothing pushed.
