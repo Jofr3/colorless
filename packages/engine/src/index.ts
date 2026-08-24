@@ -12192,9 +12192,9 @@ import type { GameState, Seat } from "./types";
     one program from one regex and proved nothing, while composing the halves and
     comparing against the shipped anchor is a claim that can go RED from either
     side. ⚠️ And `SELF_DISCARD_ALL_THEN_REDUCTION`'s own printing is **not in the
-    `legal_standard = 1` column** (it was measured on the six-set local D1, 978 cards
-    / 6 sets) while its *"Discard 2"* twin is — two populations, two answers, and
-    the anchor is still right about its own.
+    `legal_standard = 1` column**: it was measured on the local D1, 978 cards / 6 sets,
+    while its *"Discard 2"* twin is legal — two populations, two answers, and the
+    anchor is still right about its own.
 
     ⚠️ **THE SPLIT IS NOT RECURSIVE, AND THAT IS A POPULATION RESULT.** It splits at
     the LAST boundary, so a head that is itself a compound is claimed by nobody and
