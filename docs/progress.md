@@ -490,14 +490,18 @@
 > to emit. Take it as its own slice with its own row, or decide explicitly to keep two fields — but
 > **do not let it drift as an unstated smell**.
 >
-> ⚠️ **(3) A STANDING DOC DEBT, NAMED BY THE AGENT THAT FOUND IT AND NOT SWEPT IN.** Several of the
-> eight `Object.keys(active).sort()` enumeration guards carry present-tense prose pinning OLD
-> `MATCH_RECORD_VERSION` numbers (*"…is pinned at 10 by match.test.ts"*, *"THE VERSION LITERAL IS 17
-> AT BOTH ENDS OF THIS SLICE"*). They have been stale since D386 and D394 and D412 made them no
-> worse. **It is a five-line sweep and it should be one decision's call**, not a side effect of the
-> next bump. ⚠️ Distinguish these from the `it(...)` titles saying *"NOTHING was written to
-> `InPlayPokemon`, so MATCH_RECORD_VERSION stays 10"* — those record **that slice's own finding** and
-> must NOT be rewritten.
+> ✅ **(3) THE STANDING DOC DEBT IS CLOSED, AND IT WAS SMALLER AND SHARPER THAN THE NOTE SAID.**
+> Swept deliberately rather than as a side effect. **Only TWO of the flagged comments were actually
+> false**, and the distinction is the finding: a claim about *what another file pins right now*
+> (*"…is pinned at 10 by `match.test.ts`"*) is present-tense, uncheckable from this side, and rots on
+> the first bump — those two had the LITERAL DELETED, not stepped, because the number was never this
+> file's to keep current. Everything else that looked stale was **historical and true**: the
+> `it(...)` titles (*"NOTHING was written to `InPlayPokemon`, so MATCH_RECORD_VERSION stays 10"*)
+> record that slice's own finding, and prismEnergy's *"THE VERSION LITERAL IS 17 AT BOTH ENDS OF THIS
+> SLICE"* is explicitly scoped to its slice. **Provenance preserved, not overwritten** (D178's rule).
+> 🛑 **THE TRANSFERABLE PART: BEFORE "FIXING" A STALE-LOOKING FIGURE, ASK WHETHER IT IS A CLAIM ABOUT
+> HEAD OR A RECORD OF A MEASUREMENT. Rewriting the second kind destroys the only evidence of how a
+> claim was warranted at the time.**
 >
 > ### ▶ AND THE ONE RULE THIS SLICE RE-EARNED, WORTH CARRYING WHOLE
 >

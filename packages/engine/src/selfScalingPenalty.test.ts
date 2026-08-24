@@ -708,9 +708,18 @@ describe("the structural answers", () => {
     // damage counter and every evolution, and would have bought a bump for nothing.
     // Pinned as an ABSENCE (D161's move), which is the only way a no-bump claim is
     // checkable. (`MATCH_RECORD_VERSION` itself lives in `apps/api/src/lobby/
-    // match.ts` and is pinned at 10 by `match.test.ts`; the engine cannot import
-    // it, so the assertion this side can make is the one that would FORCE the
-    // bump.)
+    // match.ts`; the engine cannot import it, so the assertion this side can make
+    // is the one that would FORCE the bump.)
+    //
+    // ⚠️ D412 — THIS PARENTHETICAL USED TO NAME THE LITERAL ("is pinned at 10 by
+    // `match.test.ts`") AND IT WENT STALE THE FIRST TIME ANYBODY BUMPED IT. The
+    // number is DELETED rather than stepped, because it was the one part of the
+    // sentence this file cannot check: a figure about ANOTHER file, carried in
+    // prose, with nothing comparing them — the exact shape conventions.md warns
+    // about. **What this slice MEASURED is preserved and unchanged**: at D161 the
+    // constant was 10 and this slice wrote nothing to `InPlayPokemon`. The second
+    // half is still asserted below; the first half was never this file's to keep
+    // current.
     const active = board("cetitan", "fix-titan").players.p1.active;
     if (active === null) throw new Error("no Active");
     expect(Object.keys(active).sort()).toEqual(

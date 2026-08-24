@@ -665,9 +665,14 @@ describe("the structural answers", () => {
     // field, no enum value, no union member — and, unlike D163, not even a new
     // reader. Pinned as an ABSENCE (D161's move), which is the only way a no-bump
     // claim is checkable. (`MATCH_RECORD_VERSION` itself lives in `apps/api/src/
-    // lobby/match.ts` and is pinned at 11 by `match.test.ts`; the engine cannot
-    // import it, so the assertion this side can make is the one that would FORCE
-    // the bump.)
+    // lobby/match.ts`; the engine cannot import it, so the assertion this side can
+    // make is the one that would FORCE the bump.)
+    //
+    // ⚠️ D412 — the literal ("is pinned at 11 by `match.test.ts`") is DELETED rather
+    // than stepped, for the reason spelled out in `selfScalingPenalty.test.ts`'s
+    // twin of this comment: a figure about another file, carried in prose, with
+    // nothing comparing them. This slice's own finding — that at D163 nothing was
+    // written to `InPlayPokemon` — is untouched and still asserted below.
     const active = board("drifloon", "fix-titan").players.p1.active;
     if (active === null) throw new Error("no Active");
     expect(Object.keys(active).sort()).toEqual(
