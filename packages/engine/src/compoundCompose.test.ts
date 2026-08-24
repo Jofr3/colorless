@@ -360,6 +360,39 @@ describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallb
     expect(splitAttackTrailingClause(`${head} ${unreadable}`)).toBeNull();
   });
 
+  it("🛑 a tail claimed only by a DAMAGE reader refuses — the fold has nowhere to go", () => {
+    // 🛑 THE MIRROR OF THE RUNG ABOVE, AND IT IS A RULE RATHER THAN A CATALOG FACT.
+    // The tail guard names `deriveAttackEffect` SPECIFICALLY, not "any reader", and
+    // the reason is structural: the five damage readers are all given the HEAD, so
+    // a trailing clause only THEY claim would be accounted for by the splitter and
+    // then applied by nobody — the cost-without-the-payoff failure, arriving
+    // through the guard meant to prevent it.
+    //
+    // ⚠️ WRITTEN BECAUSE THE MUTANT SURVIVED WITHOUT IT. Widening that guard to
+    // `claimedByAnyReader(tail)` changes NOTHING on the committed column — the
+    // printed compounds all put the damage clause FIRST — so every census rung in
+    // this file stayed green on a splitter that would silently swallow a trailing
+    // fold. The catalog cannot discriminate this; a synthetic compound built from
+    // two PRINTED sentences in the other order can, and does.
+    const head = "Discard an Energy from this Pokémon.";
+    const tail = "This attack does 50 more damage for each Prize card your opponent has taken.";
+    // Both halves are real printed clauses of the column, in the order the catalog
+    // does not currently print them. ⚠️ NAMED PRECISELY (D400): the HEAD is a
+    // standalone printing, and the TAIL is not — it is the LEADING clause of the
+    // two Prize compounds this slice takes, which is exactly why the order matters
+    // and why the catalog cannot tell these two guards apart on its own.
+    const printed = new Set(legalAttackCorpus().map(([, s]) => s));
+    expect(printed.has(head)).toBe(true);
+    expect(printed.has(tail)).toBe(false);
+    expect(PRIZE_THEN_DISCARD.startsWith(`${tail} `)).toBe(true);
+    expect(PRIZE_THEN_RECOIL.startsWith(`${tail} `)).toBe(true);
+    // The tail IS claimed — by the bonus reader — and is NOT an effect clause.
+    expect(claimedByAny(tail)).toBe(true);
+    expect(deriveAttackEffect(tail)).toBeNull();
+    expect(claimedByAny(`${head} ${tail}`)).toBe(false);
+    expect(splitAttackTrailingClause(`${head} ${tail}`)).toBeNull();
+  });
+
   it("an unreadable HEAD refuses too, and a single sentence is never split", () => {
     const readableTail = "Discard an Energy from this Pokémon.";
     expect(splitAttackTrailingClause(`The Defending Pokémon is now Asleep. ${readableTail}`)).toBeNull();
