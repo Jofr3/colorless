@@ -38,6 +38,14 @@
  *        RESTORES FROM IT AND REFUSES TO RUN until that is done. That is the
  *        only case a crashed run can leave behind, and it self-heals.
  *
+ *        🛑 BUT A JOURNAL IS NOT EVIDENCE OF A CRASH (D411). It is present for
+ *        the WHOLE of a healthy run — written before the first file change,
+ *        cleared only at the last restore — so "a journal exists" and "a run
+ *        died" are different propositions. Startup therefore asks whether the
+ *        journal's PID IS STILL ALIVE and, if it is, refuses without writing a
+ *        byte (exit 3). Recovering from a LIVE run's journal is not recovery,
+ *        it is the clobber this whole section exists to prevent.
+ *
  * ─── WHAT THIS DOES NOT PROVE ────────────────────────────────────────────────
  *   • It does not measure coverage, and a green table is NOT "the suite is
  *     good". It says: these forty-two specific defects, on these specific lines,
@@ -93,7 +101,9 @@
  *   bun run mutants --allow-dirty   # ⚠️ mutate files with uncommitted changes
  *                                   # (only when those changes are YOURS)
  *
- * Exit code is 0 only when every mutant matched its declaration.
+ * Exit code is 0 only when every mutant matched its declaration; 2 when a dead
+ * run's journal was recovered (the tree changed — go look); 3 when another run
+ * is already in flight and nothing was touched (D411).
  */
 
 import { spawn, spawnSync } from "node:child_process";
@@ -104,7 +114,16 @@ import { fileURLToPath } from "node:url";
 import { MUTANTS, type Mutant } from "./mutants.ts";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const JOURNAL = join(REPO_ROOT, "tmp", "mutation-journal.json");
+/** 🛑 D411 — OVERRIDABLE FOR ONE REASON: the guard for the liveness gate cannot
+    otherwise exist. `recovery-gate.ts` drives this CLI as a child process, and
+    the harness that RUNS that guard (via `killedByCommand`) has its own journal
+    in flight the whole time — so a guard pointed at the real path would either
+    read the harness's journal or write over it, which is the D411 defect wearing
+    the guard's clothes. An env override gives the guard a private path and keeps
+    its blast radius inside a temp dir. Unset in every other invocation, which is
+    every invocation a human or CI makes. */
+const JOURNAL =
+  process.env.MUTATION_JOURNAL_PATH ?? join(REPO_ROOT, "tmp", "mutation-journal.json");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Restoration
@@ -148,12 +167,84 @@ function restoreAll(): void {
   clearJournal();
 }
 
+/** Is the process that wrote the journal still running? `process.kill(pid, 0)`
+    sends NO signal — it only asks the kernel whether the pid is addressable.
+    `ESRCH` means gone; `EPERM` means alive and owned by another user, which is
+    still ALIVE and is the answer that matters here.
+
+    ⚠️ PIDS ARE REUSED, AND THIS FUNCTION CANNOT SEE THAT. A dead run whose pid
+    has been recycled by an unrelated process reads as alive, and the recovery
+    then refuses instead of restoring. That is the FAILURE DIRECTION CHOSEN: a
+    false "alive" costs one `rm` the message names, and a false "dead" is the
+    defect D411 exists to remove. `startedAt` is not a tie-break either — it is
+    the JOURNAL's clock, not the process's, so comparing it to anything would be
+    inventing precision the record does not carry. */
+function pidIsAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    return (err as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+/** What the journal on disk means for THIS invocation.
+    - `none`       — no journal; nothing to do.
+    - `in-flight`  — the writer is still running. Recovery would be a CLOBBER.
+    - `recovered`  — the writer is gone; its files have been put back. */
+type JournalDisposition = "none" | "in-flight" | "recovered";
+
 /** Recover from a run that died where none of the in-process nets could fire
     (SIGKILL, OOM, container loss). Refuses to continue afterwards on purpose:
-    the tree just changed under the user, and they should look at it. */
-function recoverFromJournal(): boolean {
-  if (!existsSync(JOURNAL)) return false;
+    the tree just changed under the user, and they should look at it.
+
+    🛑 D411 — THE LIVENESS GATE, AND IT IS D369's REPAIR FINISHED AT THE CLASS
+    RATHER THAN AT THE INSTANCE. The journal is written BEFORE every file change
+    and cleared only at restore, so it is present for the WHOLE of a healthy run:
+    "a journal exists" and "a run died" are not the same proposition, and until
+    now this function conflated them. D369 found that conflation through
+    `--list`, whose fix was to answer the read-only command BEFORE the recovery —
+    correct, and about the one command that had no business writing at all. Every
+    WRITING invocation still walked in: a second `bun run mutants`, a
+    `--decision X` probe, or an agent following this file's own recovery advice
+    would restore the live run's target out from under it, DELETE the journal
+    that was its last `kill -9` net, and leave the in-flight row reporting
+    CLOBBER against a phantom "another process".
+
+    ⚠️ MEASURED THE SAME WAY D369's WAS, AND THAT IS WHY IT WAS FINDABLE TWICE:
+    the preserved "clobbered" file is BYTE-IDENTICAL TO HEAD, which is the
+    signature of a RESTORE rather than of an edit. It cost the D410 whole-corpus
+    sweep one row (`D376-discard-threshold-note-drifts-off-the-clause`) 78
+    minutes into an 89-minute run, and the row came back KILLED on a targeted
+    re-run — so the verdict was never in doubt, only the 89 minutes.
+
+    ⚠️ THE REFUSAL IS THE POINT, NOT A CONVENIENCE. It exits non-zero and writes
+    nothing, because "another run is in flight" is exactly the state in which
+    this tool's one guarantee — that a tree carrying somebody's uncommitted work
+    comes out the way it went in — is at stake. */
+function recoverFromJournal(): JournalDisposition {
+  if (!existsSync(JOURNAL)) return "none";
   const journal = JSON.parse(readFileSync(JOURNAL, "utf8")) as Journal;
+
+  // `journal.pid !== process.pid` is not paranoia about our own run — we have
+  // written no journal yet — it is the pid-reuse case landing on US, where
+  // refusing would make the tool permanently unusable until someone deleted a
+  // file by hand.
+  if (journal.pid !== process.pid && pidIsAlive(journal.pid)) {
+    console.error(`\n🛑  A mutation run is ALREADY IN FLIGHT (pid ${journal.pid}, started ${journal.startedAt}).`);
+    console.error("    Refusing to recover: its journal is not wreckage, it is that run's net.");
+    console.error("    Restoring from it would overwrite the mutant that run has on disk right");
+    console.error("    now, and its row would report CLOBBER against this process.\n");
+    for (const entry of journal.files) {
+      console.error(`    in flight: ${entry.path}`);
+    }
+    console.error("\n    Wait for it to finish, or stop it (a SIGINT/SIGTERM restores and clears).");
+    console.error("    If you are certain that pid is NOT this harness (pids are reused), delete");
+    console.error(`    ${JOURNAL} by hand — but read it first: it holds the only copy of the`);
+    console.error("    original bytes.\n");
+    return "in-flight";
+  }
+
   console.error(`\n⚠️  A previous mutation run (pid ${journal.pid}, started ${journal.startedAt})`);
   console.error("    did not restore its files. Restoring them now from the journal.\n");
   for (const entry of journal.files) {
@@ -162,7 +253,7 @@ function recoverFromJournal(): boolean {
   }
   clearJournal();
   console.error("\n    Done. Verify with `git diff --stat`, then re-run.\n");
-  return true;
+  return "recovered";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -554,7 +645,14 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (recoverFromJournal()) process.exit(2);
+  // 🛑 D411 — TWO DIFFERENT EXITS, BECAUSE THEY ARE TWO DIFFERENT FACTS AND THE
+  // EXIT CODE IS THE ONLY PART OF THIS OUTPUT A SCRIPT READS. `2` means "a dead
+  // run's files were put back, go look at the tree"; `3` means "somebody else is
+  // mid-run, nothing was touched". Collapsing them would tell an automated caller
+  // to inspect a tree that never changed.
+  const journalState = recoverFromJournal();
+  if (journalState === "in-flight") process.exit(3);
+  if (journalState === "recovered") process.exit(2);
 
   const only = flagValue(argv, "--only")?.split(",");
   const decision = flagValue(argv, "--decision");

@@ -25690,6 +25690,73 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D411 — THE SELF-SIDE RETREAT LOCK IS A CLOCK QUESTION, NOT A `target` QUESTION (no engine change; engine **STAYS 0.315.0**, `MATCH_RECORD_VERSION` **STAYS 25**)
+
+⚠️ **D411 BUILT NO ENGINE CODE.** It is a mutation-harness slice (`scripts/mutation/run.ts` — see
+`decisions.md` D411 and `conventions.md`). What belongs in THIS doc is one finding it turned up on
+the way, because the next slice is about to act on a price that is wrong.
+
+🛑 **D410's RESUME POINT PRICES *"During your next turn, this Pokémon can't retreat."* (3 legal
+printings) AS *"give `preventRetreat` a `target`, and transfer `preventAttack`'s
+`op.target === "defender" ? otherSeat(ctx.seat) : ctx.seat`"*. THAT SHIPS A PROGRAM THAT RESOLVES AND
+DOES NOTHING.** The refutation was already in the tree, in two comments, before the question was
+asked:
+
+1. **`flow.ts`, at the `retreatBlocked` clear.** The flag is cleared for **`endedSeat`** — the seat
+   whose turn just ended — on the §13.4 paralysis clock. The comment states the consequence itself:
+   *"a block applied by the ended seat's OWN attack would lift a turn early, which no print in the
+   pool can do (the deriver's only two shapes both target the DEFENDER)."* **BUILDING THE SELF-SIDE
+   ARM IS PRECISELY WHAT MAKES THAT PARENTHESIS FALSE.** An attack ends the installer's turn (§5.3),
+   so the very first Checkup has `endedSeat === the holder's seat` and the lock lifts **before its
+   window ever opens**.
+2. **`types.ts`, in `attackBlock`'s doc block, about a DIFFERENT op** — which is why it reads as
+   settled law rather than as speculation: *"the §13.4 paralysis clock D112 reused for
+   `retreatBlocked` is the WRONG clock for this shape … a paralysis-clock clear would lift the block
+   one whole turn early, before its window ever opens. A stamp has no such mirror to get
+   backwards."*
+
+**THE SELF-SIDE RETREAT LOCK IS THAT SAME SHAPE.** So the `target`-field route is D408's defect
+exactly — a sentence that resolves, emits `RETREAT_BLOCKED`, counts as BUILT on every reader-keyed
+instrument, and changes no board. ⚠️ **AND D410's OWN C1 MUTANT ALREADY PINS THE NEIGHBOURING HALF**
+(the seat word widened onto the self side), so the guard exists before the build does.
+
+### The shape that does work, and what it actually costs
+
+`attackLockedTurn`'s: a **turn STAMP** on `InPlayPokemon`, not a boolean.
+
+- **`state.turn + 2`** — `types.ts` names `+2` as `attackLockedTurn`'s self-arm number and says which
+  sentences earn it (*"During YOUR next turn"* → the holder's own window; four of five sibling
+  records stamp `+1` because their window is the opponent's).
+- **Expires BY ARITHMETIC**, with no turn-boundary clear anywhere — which is the whole point: there
+  is no `endedSeat` mirror left to get backwards.
+- **A new persisted field → `MATCH_RECORD_VERSION` 25 → 26**, and the bump rides the same commit as
+  the field.
+- **The three §10 early clears**, which for a self-side window are lines of play the holder can take
+  INSIDE it: `clearOnLeavingActive` (`turn.ts`), `switchInto` (`interpreter.ts`), `placeEvolution`
+  (`turn.ts`).
+- **The retreat gate** in `turn.ts` reading the stamp beside the existing boolean (`RETREAT_PREVENTED`
+  already has two provenances and two messages — an attack rider and an opposing Ability aura — so a
+  third is a message, not a new error code).
+- **A wire decision**: `redact.ts` reads `retreatBlocked` today. The precedent (D112 folded the
+  retreat block into `can`, D143 folded the whole-Pokémon lock into `banned`, D154 folded the
+  per-attack bar into `playable`) is to fold the fact into the boolean the wire already carries
+  rather than ship a new record.
+
+🛑 **RE-DERIVE ALL OF IT BEFORE BUILDING (rule 21).** What was MEASURED here is narrow and is exactly
+this: the two comments above were read at their sites, and `preventRetreat` in `interpreter.ts`
+hard-codes `otherSeat(ctx.seat)` and writes the boolean inline. **The `+2`, the §10 clear list, the
+redact decision and the version bump are read off DOC BLOCKS and were not re-derived.** D406 found
+four inherited claims false in one pass; this page is now one more place they could hide.
+
+### ⚠️ A DOC GAP, NAMED RATHER THAN QUIETLY FILLED
+
+**D410 HAS NO SECTION IN THIS FILE** — `grep -c D410` over this doc returns **0**. Its build agent
+died mid-edit and the coordinating session finished the code, the tests and `progress.md`, but step 3
+of the end-of-session ritual (*write what you learned into the right workstream doc*) was never done.
+D411 records the absence instead of inventing the write-up, because a section reconstructed by a
+session that did not build the slice is exactly the kind of provenance this repo keeps losing (D178).
+**The material for it is in `decisions.md` D410 and in `progress.md`'s session #350 entry.**
+
 ## D409 — THE TRAILING-CLAUSE COMPOSITION PATH: the first time this engine reads one printed string as TWO clauses (engine 0.314.0, `MATCH_RECORD_VERSION` **STAYS 25**)
 
 **5 sentences / 11 legal printings**, and the slice is a SHAPE decision rather than a sentence build.

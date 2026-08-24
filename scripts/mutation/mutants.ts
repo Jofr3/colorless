@@ -17395,4 +17395,50 @@ export const MUTANTS: Mutant[] = [
     replace: "const DEFENDER_PRONOUN_CANT_RETREAT =\n  /^During your opponent['’]s next turn, that Pokémon can't retreat\\.$/;",
     expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
   },
+  // ── D411 · the journal liveness gate ───────────────────────────────────────
+  // ⚠️ The killer is a SCRIPT, not a suite — D212's `killedByCommand` precedent,
+  // and only the second row in the corpus to use it. These four mutate the
+  // HARNESS ITSELF, which is why the killer had to be hermetic: the harness has
+  // a journal of its own in flight for the whole window, so the guard drives the
+  // CLI against a private `MUTATION_JOURNAL_PATH` inside a temp dir.
+  {
+    id: "D411-liveness-gate-never-fires",
+    decision: "D411",
+    what: "🛑 C1 — THE GATE IS BACK TO D369's BEHAVIOUR AS ONE FLIPPED OPERATOR: `journal.pid !== process.pid` becomes `===`, and since a fresh run has written no journal the conjunction is FALSE on every real journal, so recovery walks into a LIVE run exactly as it did before D411. **THIS IS THE DEFECT ITSELF**, and it is the mistake an author makes because the guarded case (pid reuse landing on us) reads like the case being tested for. It cost the D410 whole-corpus sweep one row 78 minutes in",
+    file: "scripts/mutation/run.ts",
+    find: "  if (journal.pid !== process.pid && pidIsAlive(journal.pid)) {",
+    replace: "  if (journal.pid === process.pid && pidIsAlive(journal.pid)) {",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/recovery-gate.ts"],
+  },
+  {
+    id: "D411-liveness-gate-always-fires",
+    decision: "D411",
+    what: "🛑 C2 — THE VACUITY MUTANT, AND IT IS THE REASON THE GUARD HAS A SECOND HALF. The gate is hard-wired to refuse, so the refusal half passes forever while the journal net stops working entirely — a genuinely crashed run could never be recovered again, which is the one thing layer 4 exists for. **A GUARD THAT ONLY ASSERTS THE REFUSAL CANNOT SEE THIS**; only the attribution control (same journal, same command, dead pid) can, and it is what turns the pair into a claim instead of a constant",
+    file: "scripts/mutation/run.ts",
+    find: "  if (journal.pid !== process.pid && pidIsAlive(journal.pid)) {",
+    replace: "  if (true) {",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/recovery-gate.ts"],
+  },
+  {
+    id: "D411-two-exits-collapse-into-one",
+    decision: "D411",
+    what: "🛑 C3 — THE TWO EXIT CODES BECOME ONE: `in-flight` exits 2, the code that means *\"a dead run's files were put back, go look at the tree\"*. **THE TREE DID NOT CHANGE**, so an automated caller is sent to inspect a diff that does not exist, and the one genuinely new fact D411 publishes — *another run is in flight* — becomes unreadable. ⚠️ Nothing about the FILES goes wrong here, which is the point: the bytes are still untouched and only the exit code lies, so a guard reading `git status` instead of `$?` would pass this",
+    file: "scripts/mutation/run.ts",
+    find: '  if (journalState === "in-flight") process.exit(3);',
+    replace: '  if (journalState === "in-flight") process.exit(2);',
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/recovery-gate.ts"],
+  },
+  {
+    id: "D411-eperm-reads-as-dead",
+    decision: "D411",
+    what: "🛑 C4 — `pidIsAlive` TREATS EVERY THROW AS DEATH: the `EPERM` arm becomes `false`, so a live run owned by ANOTHER USER reads as wreckage and gets recovered out from under. **`process.kill(pid, 0)` throws for two opposite reasons** — `ESRCH` (gone) and `EPERM` (alive, not yours) — and collapsing them is the natural way to write this function, because a `catch` block reads as the failure case. ⚠️ **IT SURVIVED WHEN IT WAS FIRST RUN** - halves one and two only ever exercise the same-user path, so the guard grew a THIRD RUNG pointing the journal at a foreign-owned pid (pid 1, root) to reach the arm at all. That rung is ENVIRONMENT-DEPENDENT and says so: on a uid-0 machine nothing is foreign, the rung prints NOT RUN, and this row would GAP rather than kill",
+    file: "scripts/mutation/run.ts",
+    find: '    return (err as NodeJS.ErrnoException).code === "EPERM";',
+    replace: "    return false;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/mutation/recovery-gate.ts"],
+  },
 ];

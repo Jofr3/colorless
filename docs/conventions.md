@@ -222,6 +222,24 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   never-spelled `count: 1`). It is **the opposite of an allowlist**: a declared
   survivor that gets **KILLED** reports `STALE-SURVIVOR` and fails the run,
   because the recorded reason has stopped being true.
+- 🛑 **A LIVE RUN AND A CRASHED ONE LOOK IDENTICAL FROM THE OUTSIDE — CHECK `ps`
+  BEFORE YOU BELIEVE THE TREE (D411).** A mutant on disk, a
+  `tmp/mutation-journal.json`, and a red suite are all NORMAL MID-SWEEP STATES,
+  and one 89-minute sweep produced all three and fooled a reader with each: a
+  mutated `interpreter.ts` read as a leftover clobber, the journal read as
+  wreckage, and a `bun run check` racing the sweep read as *"HEAD is RED"* (it
+  had caught `D378-presence-keeps-the-owner-test` mid-window; HEAD was green).
+  **THE FIX FOR ALL THREE IS ONE COMMAND**: `ps aux | grep 'scripts/mutation/run.ts'`.
+  ⚠️ **And `bun run mutants` was itself the writer of that sweep's one CLOBBER** —
+  the recovery path took a live run's journal for a dead one's, which is why
+  `recoverFromJournal` now checks whether the journal's PID IS ALIVE and refuses
+  (exit **3**, distinct from the **2** that means a dead run was recovered).
+  **NEVER RUN THE HARNESS, OR A `check`, WHILE A SWEEP IS IN FLIGHT.**
+- ⚠️ **Fixing the instance is not fixing the class.** D369 hit exactly the defect
+  above through `--list` and repaired it by moving that one read-only command
+  ahead of the recovery — correct, and it left every WRITING invocation walking
+  into the same hazard for forty decisions. **When a fix reorders ONE caller past
+  a landmine, ask what the other callers do.**
 - ⚠️ **Restoration never uses git** — not `checkout`, not `stash`. The harness
   holds the original bytes and writes them back, so a tree carrying another
   agent's uncommitted edits comes out the way it went in. Four nets:
