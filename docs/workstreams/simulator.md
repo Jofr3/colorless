@@ -25690,6 +25690,72 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D416 — THE KNOCK OUT THAT IS A *CHOICE*: one parking op for two sentences (engine 0.320.0, `MATCH_RECORD_VERSION` **STAYS 26**)
+
+**2 sentences / 6 legal printings** on ONE new parking op:
+`knockOutChosen { target: "opponentBench" | "opponentAny"; basicOnly?: true; damageCountersExactly?: number }`.
+A is one `coinFlipGate` with both arms — its HEADS arm is D414's arm 6a byte for byte — and its TAILS
+arm plus B are the two producers of the new op.
+
+### Why they were built together
+
+`target` is REQUIRED because the two producers genuinely **disagree** about scope (A-tails is
+Bench-only, B is the whole opponent board), so no absent value is safe. Building B alone would have
+shipped that field with **one inhabitant ever exercised**, which is how a persisted field turns out
+to be the wrong shape after it is persisted. The comparator lives in the **field name**
+(`damageCountersExactly`): only *"exactly"* is printed, so a comparator selector would be vocabulary
+no card prints — but a bare name would need RENAMING the day *"at least"* prints, and **a rename on a
+parking op is the one thing that costs a bump**. No bump for the park itself (D307).
+
+### 🛑 A mutant survived, and the survivor was right
+
+Dropping the `koByEffect` stamp from the **parked** `applyChoice` path survived. **Every marker
+assertion in the suite ran on a bench of ONE**, where `parkOrForce` FORCES and the parked arm is never
+entered. The park is the *point* of this op, and the marker is what keeps D414's two mechanisms
+repaired — so the one path carrying both had **no witness at all while looking perfectly guarded**.
+Closed with a driving two-candidate board, with the READER driven rather than the mark.
+**13 mutants / 13 killed / 0 GAPs.**
+
+### ⚠️ The refactor rotted seven rows, in two classes
+
+Factoring `knockOutSelf`/`knockOutDefender` into a shared `doomBodyAt` moved four D345 rows
+(`find occurs 0×`, ordinary adjacency rot). **But the new funnel was written by copying
+`gustTargets`**, so three D331 rows matched BOTH — `find occurs 2×`, **D404's wrong-arm trap**: the
+mutant would edit the NEW copy while claiming to test the old one. Re-anchored onto lines the
+original uniquely owns, **and the copied filter got rows of its own**, so the repair did not move a
+tested line into a file nothing pins.
+
+### ✅ Two things verified rather than trusted
+
+- **A declared survivor's reason was re-argued and held.** `D345-self-ko-overwrites-existing-damage`
+  rests on `Math.max` being unreachable-equivalent; the factoring gave that line two new callers, so
+  the declaration was re-earned on three counts — and `expectKilledBy` was **widened to all three
+  callers**, because a survivor's suite list is the evidence its reason is claimed against.
+- **`flow.ts` needed nothing.** `lethalRefs`, `koRecoilOf` and `byAttackFor` already scan
+  `[active, ...bench]`, so a BENCHED body carrying D414's marker is classified correctly for free —
+  driven (benched effect-KO: Prize taken, no promotion owed, revenge clause FALSE, Vengeful Punch
+  pays **0** where a damage KO pays **40**), not asserted.
+
+⚠️ **One deviation from the design**: the §11 ask is not a parameter of `doomBodyAt`.
+`knockOutDefender` NAMES one body and refuses the op WHOLE (a guard); `knockOutChosen` PICKS from a
+set and must merely not OFFER a shielded body (D259's *"a filter and not a guard"*). A boolean cannot
+express both placements.
+
+### 🛑 The two rules this slice earned
+
+1. **A guard that only ever runs on the FORCED path does not guard the PARKED one.** When an op can
+   park, count the candidates your boards actually offer — if none offers two, the park is untested
+   however many cases there are.
+2. **Copying a function copies its mutants' anchors, and the corpus goes quiet rather than red.**
+   `precheck` catches it mechanically, but only if you run it — and the repair is **two-sided**.
+
+**CENSUS**: raw 409 → **411** / 1357 → **1363**; `BUILT.attack` 1404 → **1410**; residue 574 →
+**568**; `unbuiltAttack` 328 → **322**. `splitHead` **13**, `compoundHead` **18**, registry **16**
+untouched. ⚠️ `compoundCompose` §4 moves **+1 / +4** against the census's +2 / +6, taken off the
+sentences: the flip sentence is three clauses and crosses into the claimed-whole population; the
+counter sentence has no internal `. ` and cannot. `bun run check` **417 files / 8,856 tests, exit 0**
+(+1 file / +36 cases); corpus 1504 → **1517**.
+
 ## D415 — THE OPPONENT-SCOPED SPECIAL-ENERGY KO GATE: a seat mirror, and a slice that spent more of itself correcting false claims than building (engine 0.319.0, `MATCH_RECORD_VERSION` **STAYS 26**)
 
 *"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."* (Haxorus

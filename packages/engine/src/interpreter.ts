@@ -2748,6 +2748,36 @@ function stepOp(
       // "damaged by that attack" and this op is the first thing that can make
       // that false. See `koByEffectMarker` (flow.ts).
       return { done: knockOutDefender(state, ctx, events) };
+    case "knockOutChosen":
+      // 🆕🆕 D416 — THE SAME KNOCK OUT WITH A PICK IN IT, and the whole arm is
+      // three shipped pieces with nothing between them:
+      //   • `knockOutChosenTargets` — the ONE funnel, so the offer cannot come to
+      //     mean something the card does not say (`gustTargets`' rule, D331);
+      //   • `unshieldedRefs` — §11 as a FILTER rather than a guard (D259), because
+      //     a shielded body must not be OFFERED. It stays OUTSIDE the funnel on
+      //     purpose: it announces its refusals and needs `ctx`/`events`, which the
+      //     playability question the funnel is shared with has neither of;
+      //   • `parkOrForce` — the M1 doctrine for free: an empty opponent Bench is a
+      //     SILENT no-op (the coin still flipped and its row was still emitted, one
+      //     level up), a lone candidate is FORCED with no prompt, and two or more
+      //     park on the existing `choosePokemon`.
+      //
+      // 🛑 NO `decider`. Only two ops in this switch file one and both print the
+      // chooser explicitly ("(Your opponent chooses …)"); neither of these two
+      // sentences does, so the pick is the ATTACKER's — which is also the only
+      // reading under which "Knock Out 1 of your opponent's Pokémon" is a decision
+      // its controller gets to make.
+      //
+      // The Prize, the whole-stack discard, `KNOCKED_OUT` and the §8.1 promotion
+      // are §8.1's own, exactly as for the two ops above — and `flow.ts` needed
+      // NOTHING for the benched case, because `lethalRefs`, `koRecoilOf` and
+      // `byAttackFor` all already scan the Active AND the Bench.
+      return parkOrForce(
+        state,
+        unshieldedRefs(state, knockOutChosenTargets(state, ctx.seat, op), ctx, events),
+        (ref) => doomBodyAt(state, ref, koByEffectMarker(state.turn)),
+        knockOutChosenNote(op),
+      );
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -4973,6 +5003,20 @@ export function applyChoice(
     case "gust":
       return pickedPokemon(choice)
         ? switchRecording(op, (into) => gust(state, choice.ref, ctx, into), events, record)
+        : state;
+    case "knockOutChosen":
+      // 🆕🆕 D416 — the resumed half, and it is the SAME call the forced half makes
+      // (`doomBodyAt` with D414's marker), which is the whole point of routing both
+      // through one helper: a forced Knock Out and an answered one are byte-
+      // identical boards. `doomBodyAt` re-reads the named spot and no-ops on a wire
+      // answer whose body has since left play — `returnBenched`'s trust level one
+      // arm down, and the reason no re-validation is spelled here.
+      //
+      // ⚠️ NO §11 ASK ON THIS PATH EITHER. The shield filtered the CANDIDATES
+      // before the prompt was ever written, and `validateChoice` refuses any ref
+      // that is not among them, so a shielded body cannot reach this line.
+      return pickedPokemon(choice)
+        ? doomBodyAt(state, choice.ref, koByEffectMarker(state.turn))
         : state;
     case "returnBenched":
       // 🆕 D299 — the resumed half. NO `recordAs`: this op is on neither side of
@@ -8630,23 +8674,68 @@ function returnSelf(
 function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
   const [ref] = sourceRef(state, ctx);
   if (ref === undefined) return state;
-  const side = state.players[ctx.seat];
-  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];
+  // 🆕🆕 D416 — the body IS `doomBodyAt` now, with NO marker: the printed subject
+  // is this op's own host, and neither of the two mechanisms D414's stamp exists
+  // for has any claim over a body its own controller killed. Passing `undefined`
+  // is therefore a statement rather than an omission (see `doomBodyAt`).
+  return doomBodyAt(state, ref);
+}
+
+/** 🆕🆕 **D416 — MARK ONE IN-PLAY BODY LETHAL, WHEREVER IT STANDS.** The shared
+    half of `knockOutSelf` (D345), `knockOutDefender` (D414) and `knockOutChosen`
+    (D416), factored out because the third of them is the first that can name a
+    body that is neither its own host nor an Active: *"Knock Out 1 of your
+    opponent's **Benched** Basic Pokémon"*.
+
+    🛑 **IT MARKS RATHER THAN KILLS, WHICH IS D345's ARGUMENT INHERITED WHOLE.**
+    §8.1's sweep is `lethalRefs` → `planPrizes` → `knockOut` and it is reached by
+    three callers; killing a body here would need a fourth copy of the Prize plan,
+    the whole-stack discard, the `KNOCKED_OUT` emit and the §8.1 promotion, ALL of
+    which `settleProgram` already owes this program. So this writes the ONE thing
+    the sweep reads (`damage >= effectiveMaxHp`) and stops.
+
+    ⚠️ **`marker` IS THE ONE POLICY DIFFERENCE THAT LIVES IN HERE, AND §11 IS
+    DELIBERATELY NOT THE OTHER ONE.** D414's `koByEffect:<turn>` stamp says the
+    lethality is NOT DAMAGE — read by `flow.ts`'s `byAttackFor` and by
+    `koRecoilOf`. `knockOutSelf` omits it (its own host, no cross-table claim);
+    the two opponent-side ops pass it. The §11 ask (`effectRefused`, D142) does
+    NOT ride this parameter, because the two callers that owe it ask in two
+    STRUCTURALLY different places and a flag cannot express both:
+    `knockOutDefender` names ONE body and refuses the op WHOLE, while
+    `knockOutChosen` picks from a SET and must merely not OFFER a shielded body —
+    which is `unshieldedRefs`' FILTER (D259: *"a filter and not a guard"*), applied
+    at the funnel where `gust` and `returnBenched` already apply it. An ask in here
+    would be a second announcement on the guard path and an unreachable branch on
+    the filter path.
+
+    ⚠️ **A BODY WITH NO PRINTED HP IS A WHIFF, NOT A THROW** — `effectiveMaxHp`
+    owns that catalog gap and `isLethallyDamaged` answers false for such a body, so
+    marking it would produce a corpse §8.1 never collects. Unreachable in the
+    catalog (every carrier is a Pokémon with printed HP) and written anyway,
+    because inventing a maximum is the worse of the two failures.
+
+    ⚠️ **THE STAMP IS IDEMPOTENT**: a program that dooms an already-doomed body in
+    the same turn re-computes the same string and adds no duplicate. */
+function doomBodyAt(state: GameState, ref: PokemonRef, marker?: string): GameState {
+  const side = state.players[ref.seat];
+  const spot = ref.spot;
+  const body = spot.spot === "active" ? side.active : side.bench[spot.index];
   if (body === null || body === undefined) return state;
   const hp = effectiveMaxHp(state, body);
   if (hp === null) return state;
-  const doomed = { ...body, damage: Math.max(body.damage, hp) };
+  const doomed: InPlayPokemon = {
+    ...body,
+    damage: Math.max(body.damage, hp),
+    ...(marker === undefined || body.markers.includes(marker)
+      ? {}
+      : { markers: [...body.markers, marker] }),
+  };
   return withSide(
     state,
-    ctx.seat,
-    ref.spot.spot === "active"
+    ref.seat,
+    spot.spot === "active"
       ? { ...side, active: doomed }
-      : {
-          ...side,
-          bench: side.bench.map((pokemon, index) =>
-            index === (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,
-          ),
-        },
+      : { ...side, bench: side.bench.map((pokemon, i) => (i === spot.index ? doomed : pokemon)) },
   );
 }
 
@@ -8674,27 +8763,20 @@ function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
     ⚠️ **A SILENT NO-OP ON AN EMPTY ACTIVE SPOT**, every sibling's contract: the
     defender was Knocked Out earlier in the same program and there is nothing to
     doom. */
-function knockOutDefender(
-  state: GameState,
-  ctx: EffectContext,
-  events: GameEvent[],
-): GameState {
+function knockOutDefender(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
   const seat = otherSeat(ctx.seat);
-  const side = state.players[seat];
-  const active = side.active;
-  if (active === null) return state;
-  const hp = effectiveMaxHp(state, active);
-  if (hp === null) return state;
+  if (state.players[seat].active === null) return state;
   if (effectRefused(state, seat, ctx, events)) return state;
-  const marker = koByEffectMarker(state.turn);
-  const doomed = {
-    ...active,
-    damage: Math.max(active.damage, hp),
-    // Idempotent: a second install in the same turn re-computes the same string,
-    // so a program that dooms an already-doomed body adds no duplicate.
-    markers: active.markers.includes(marker) ? active.markers : [...active.markers, marker],
-  };
-  return withSide(state, seat, { ...side, active: doomed });
+  // 🆕🆕 D416 — the marking is `doomBodyAt`'s now; what stays here is the pair of
+  // things that are this op's and not the shared body's: the TARGET (the
+  // opponent's Active, named by the print rather than picked) and the §11 GUARD.
+  // ⚠️ THE GUARD NOW PRECEDES THE `effectiveMaxHp` READ, which it did not before
+  // the factoring. The only board that can tell the two orders apart is a
+  // §11-shielded body with NO PRINTED HP, where the refusal is now announced
+  // rather than swallowed by a whiff — unreachable in the catalog, and the
+  // announced form is the honest one either way: the effect WAS refused, and that
+  // it would also have whiffed is not the player's business.
+  return doomBodyAt(state, { seat, spot: { spot: "active" } }, koByEffectMarker(state.turn));
 }
 
 /** 🆕🆕 D380 — §7.3's shared zone, emptied. The Stadium goes to **ITS OWNER's**
@@ -9060,6 +9142,105 @@ export function gustTargets(
     // board half and every deck half of "Basic" stay one predicate.
     return card !== undefined && matchesFilter(card, { kind: "basicPokemon" });
   });
+}
+
+/** 🆕🆕 **D416 — HOW MANY DAMAGE COUNTERS ARE ON THIS BODY?** The printed UNIT,
+    which the engine does not store: `InPlayPokemon.damage` is HP, and a counter is
+    ten of it.
+
+    🛑 **`Math.floor(damage / 10)` AND NOT `damage === 60`, WHICH IS THE HOUSE
+    SPELLING AND NOT A STYLE CHOICE.** Three sites in `attack.ts` already convert
+    this way for the printed *"for each damage counter on …"* scalings (the
+    attacker's own, the defender's, and the bench fold), and the floor is what makes
+    the two readings agree on a board where damage is not a clean multiple of ten —
+    a 65-damage body carries SIX counters, and an `=== 60` window would answer NO to
+    a sentence the print answers YES to.
+
+    ⚠️ **ITS HOME IS HERE, BESIDE ITS ONE READER, AND THAT IS A DECISION RATHER
+    THAN A DEFAULT.** The obvious sibling is `remainingHpWithin` (continuous.ts),
+    the *"N HP or less remaining"* window `gust.remainingHpAtMost` reads — but that
+    predicate lives over there because it needs `state`: `effectiveMaxHp` folds HP
+    auras and Tools, so the answer moves with the whole board. This one is a pure
+    function of ONE body's own `damage` field, reads no passive, takes no seat and
+    cannot disagree with anything continuous.ts aggregates. Putting a state-free
+    read in the state-dependent module would say the two are the same kind of
+    question, and they are not. */
+function damageCountersOn(pokemon: InPlayPokemon): number {
+  return Math.floor(pokemon.damage / 10);
+}
+
+/** 🆕🆕 **D416 — THE ONE FUNNEL FOR A `knockOutChosen`'s CANDIDATE SET**, and the
+    fourth op in this file to get one. `gustTargets` (D331) and `snipeTargets`
+    (D345) each earned theirs by a `programPlayable` gate that had re-implemented
+    the op's predicate and drifted; this one is written as a funnel FROM THE FIRST
+    COMMIT, which is the same rule stated forwards instead of paid for backwards.
+
+    🛑 **THE SCOPE LINE IS `snipeTargets`' VERBATIM.** `opponentBench` →
+    `oppBenchRefs`, `opponentAny` → `oppAnyRefs` (Active first, then the Bench in
+    index order), which is exactly why `target` reuses `damageChosen`'s two member
+    names rather than coining new ones: two vocabularies over one pair of helpers
+    is two chances to disagree about what "any" includes.
+
+    ⚠️ **THE RIDERS COMPOSE AND NEITHER IS PRINTED WITH THE OTHER TODAY.** The
+    counter window is applied FIRST and separately because it reads the BODY
+    (`refPokemon`) while `basicOnly` reads the CARD (`refTopCard`) — `gustTargets`'
+    own split, for its own stated reason. A ref that resolves to no body or no card
+    is DROPPED rather than admitted: a narrowed sentence must not offer a body it
+    cannot read.
+
+    ⚠️ **THE SHIELD IS DELIBERATELY NOT IN HERE**, `gustTargets`' rule verbatim:
+    `unshieldedRefs` takes `ctx` and `events` because it ANNOUNCES each refusal, and
+    this function answers *"which bodies does the CARD name"* — not *"which of them
+    may be touched right now"*. Two questions; only the first is printed.
+
+    ⚠️ **EXPORTED, THOUGH `programPlayable` DOES NOT CALL IT — AND THE ABSENCE IS
+    STATED RATHER THAN LEFT TO BE NOTICED.** Both producers are ATTACKS, and attacks
+    never consult that gate (§8), so a line beside the `gust` / `damageChosen` /
+    `healChosen` ones would be dead today. It is exported anyway so that the day a
+    registry row prints this op, the gate has a funnel to ask instead of a bench
+    length to re-implement — which is the precise mistake D345 recorded. */
+export function knockOutChosenTargets(
+  state: GameState,
+  seat: Seat,
+  op: Extract<EffectOp, { op: "knockOutChosen" }>,
+): PokemonRef[] {
+  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
+  const inWindow =
+    op.damageCountersExactly === undefined
+      ? scope
+      : scope.filter((ref) => {
+          const pokemon = refPokemon(state, ref);
+          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;
+        });
+  if (op.basicOnly !== true) return inWindow;
+  return inWindow.filter((ref) => {
+    const card = refTopCard(state, ref);
+    // `isBasicPokemon` asked through `matchesFilter`'s own `basicPokemon` arm, so
+    // the board half and every deck half of "Basic" stay ONE predicate —
+    // `gustTargets`' line one op over, deliberately identical.
+    return card !== undefined && matchesFilter(card, { kind: "basicPokemon" });
+  });
+}
+
+/** 🆕🆕 D416 — the printed noun for a `knockOutChosen`'s candidates, in the card's
+    own word order. `gustTargetNoun`'s twin and for its reason: the caption must
+    name exactly the set the funnel offers, or the dialog contradicts its own
+    validator. Both live printings are reproduced verbatim — *"Knock Out 1 of your
+    opponent's Benched Basic Pokémon."* and *"Knock Out 1 of your opponent's Pokémon
+    that has exactly 6 damage counters on it."* */
+function knockOutChosenNote(op: Extract<EffectOp, { op: "knockOutChosen" }>): string {
+  const scope = op.target === "opponentBench" ? "Benched " : "";
+  const stage = op.basicOnly === true ? "Basic " : "";
+  // The window rides AFTER the noun because that is where the print puts it, and
+  // the counter word is pluralised rather than hard-coded: the anchor captures the
+  // number, so a printing at 1 must not read "1 damage counters".
+  const window =
+    op.damageCountersExactly === undefined
+      ? ""
+      : ` that has exactly ${op.damageCountersExactly} damage counter${
+          op.damageCountersExactly === 1 ? "" : "s"
+        } on it`;
+  return `Knock Out 1 of your opponent's ${scope}${stage}Pokémon${window}.`;
 }
 
 /** 🆕 D331 — the printed noun for a `gust`'s candidates, in the card's own word

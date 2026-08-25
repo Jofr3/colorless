@@ -5588,6 +5588,93 @@ export type EffectOp =
       value (D125's condition, D335's test: *does the old byte string still mean
       what it meant*). */
   | { op: "knockOutDefender" }
+  /** 🆕🆕 **D416 — §8.1, THE KNOCK OUT THAT IS A *CHOICE*.** The three sentences
+      D414 priced and left behind all need the same thing — *"Knock Out **1 of**
+      your opponent's …"* is a PICK over a filtered candidate set — and two of them
+      are built here, TOGETHER:
+
+        • *"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon.
+          If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*
+          (**4 printings**) — the TAILS arm is this op at
+          `{ target: "opponentBench", basicOnly: true }`. Its HEADS arm is D414's
+          own arm `6a` byte for byte and buys nothing new.
+        • *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage
+          counters on it."* (**2 printings**) — this op at
+          `{ target: "opponentAny", damageCountersExactly: 6 }`.
+
+      🛑 **THE TWO SENTENCES ARE ONE OP AND WERE BUILT IN ONE SLICE, WHICH IS A
+      STATEMENT ABOUT `target` RATHER THAN ABOUT TIDINESS.** Shipping the
+      counter-window sentence alone would have put a PERSISTED, REQUIRED field on
+      a PARKING op with exactly ONE inhabitant ever exercised — and a union whose
+      second member is first written after the first member is already on the wire
+      is how a persisted field turns out to be the wrong shape. The two producers
+      disagree about scope *in print*: A-tails names the BENCH, B names the whole
+      opponent board. Both members are live from the first commit.
+
+      🛑 **`target` IS REQUIRED, AND THE TWO MEMBER NAMES ARE `damageChosen`'s
+      VERBATIM.** There is no absent value that is safe here — an op defaulting to
+      one scope would silently Knock Out the opponent's ACTIVE for a sentence that
+      says *"Benched"*, or refuse the Active for one that does not. The names are
+      reused rather than re-coined because `oppBenchRefs` / `oppAnyRefs` already
+      sit behind exactly those two words (`snipeTargets` is the one-line switch),
+      so `knockOutChosenTargets` is that switch plus the riders and NOT a second
+      vocabulary for the same two sets.
+
+      ⚠️ **`basicOnly` AND `damageCountersExactly` ARE OPTIONAL, AND ABSENT MEANS
+      NO NARROWING** — which is exactly what the OTHER sentence means, on both
+      riders, in both directions. `gust.basicOnly?: true` is the verbatim
+      precedent (D331) down to the `true`-only spelling: a `false` would be a
+      second way to say "unnarrowed" and the funnel would owe both readings.
+
+      ⚠️ **THE COMPARATOR IS IN THE FIELD NAME, AND THAT IS A PRICED CHOICE.**
+      Only *"exactly"* is printed anywhere in the corpus today, so a
+      `{ comparator, count }` selector would be vocabulary NO CARD PRINTS — D135's
+      trap, a field that means nothing on every live producer. A bare
+      `damageCounters` was the other candidate and is WORSE: it reads as "at
+      least" to half its readers, and the day *"at least"* prints it must be
+      RENAMED to say which it always meant. 🛑 **A RENAME ON A PARKING OP IS A
+      `MATCH_RECORD_VERSION` BUMP** — this op rides `phase.cont.pendingOp` while
+      the pick is open, so an older deploy authors the old spelling and THIS
+      deploy cannot read it (`damageChosen.source` is the recorded precedent, at
+      2 → 3; D309 is the recorded rename bump). Spelling the comparator into the
+      name makes the future sentence a WIDENING (`damageCountersAtLeast?: number`,
+      a new optional field no old record can carry) instead of a bump.
+
+      ⚠️ **NO `count`, AND ITS ABSENCE IS FORECAST RATHER THAN OVERLOOKED.** Both
+      printed sentences say *"1 of"*. A future plural takes `count?: number` with
+      ABSENT = 1 — an optional widening on this same op, not a required field and
+      not a bump.
+
+      ✅ **NO `MATCH_RECORD_VERSION` BUMP (still 26).** This op PARKS, so it is a
+      thing a stored phase can now hold that it could not before — and that is
+      **precisely D307's paragraph** (match.ts): the evolve-from-deck family
+      shipped one new PARKING `EffectOp` *and* one new `EffectPrompt` value at no
+      cost, because this constant gates a record written by an OLDER deploy and no
+      version-26 deploy can author `{ op: "knockOutChosen", … }` in
+      `phase.cont.pendingOp` or in `cont.rest`. D125's condition, unchanged. This
+      op adds LESS than D307's did: the prompt is the EXISTING `choosePokemon`
+      with no new key, the Knock Out is the EXISTING `KNOCKED_OUT` event through
+      §8.1's own sweep, the lethality marker is D414's EXISTING `koByEffect:<turn>`
+      string in the EXISTING `markers: string[]`, and no `GameState`,
+      `InPlayPokemon` or `PlayerSide` key moves. */
+  | {
+      op: "knockOutChosen";
+      /** `opponentBench` — the pick is among the opponent's BENCH only (the coin
+          sentence's tails arm, whose heads arm names the Active separately).
+          `opponentAny` — 1 of ALL the opponent's Pokémon, Active OR Bench (the
+          damage-counter sentence). `damageChosen`'s two member names verbatim,
+          over `oppBenchRefs` / `oppAnyRefs`. */
+      target: "opponentBench" | "opponentAny";
+      /** *"…Benched **Basic** Pokémon"*. `gust.basicOnly` verbatim, read through
+          `matchesFilter`'s `basicPokemon` arm so board-side "Basic" stays ONE
+          predicate. Absent = every body in scope. */
+      basicOnly?: true;
+      /** *"…that has **exactly 6** damage counters on it"*. The comparator is in
+          the NAME (see above); the number is read off the print rather than
+          hard-coded, so a second printing at a different count needs no arm.
+          Absent = no counter window at all. */
+      damageCountersExactly?: number;
+    }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -10067,6 +10154,25 @@ const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
   /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
 const SELF_DAMAGE_THEN_COIN_KO =
   /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
+// 🆕🆕 D416 — the two PICK sentences of the same family, built together because
+// they are one op with two riders (see `knockOutChosen` for why shipping the
+// second one alone would have put a persisted REQUIRED field on the wire with
+// exactly one inhabitant ever exercised).
+// ⚠️ BOTH ANCHORS CARRY `['’]` AT EVERY POSSESSIVE — D136/D137's rule, and it is
+// spelled from the first draft here rather than retrofitted: the two D414 anchors
+// directly above shipped a bare `'` and it was caught by a suite author noticing
+// the asymmetry, not by any rung. The flip sentence prints the possessive TWICE
+// (once per arm), so it carries the class twice.
+const FLIP_KO_ACTIVE_OR_BENCHED_BASIC =
+  /^Flip a coin\. If heads, Knock Out your opponent['’]s Active Basic Pokémon\. If tails, Knock Out 1 of your opponent['’]s Benched Basic Pokémon\.$/;
+// ⚠️ THE COUNT IS CAPTURED, NOT SPELLED — the pool prints only 6 today, and a
+// hard-coded 6 would pass every board this slice drives while being a fact about
+// the corpus rather than about the reader. Guarded `>= 1` on the same reasoning
+// every capturing arm in this file carries: a printed 0 would derive a window that
+// admits every UNDAMAGED body on the opponent's board, which is the loudest
+// possible way for a Knock Out to be wrong.
+const KO_EXACT_DAMAGE_COUNTERS =
+  /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\d+) damage counters on it\.$/;
 
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
 // [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
@@ -15611,6 +15717,65 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           then: [{ op: "knockOutDefender" }],
         },
       ];
+    }
+  }
+
+  // 6d. 🆕🆕 D416 — "Flip a coin. If heads, Knock Out your opponent's Active Basic
+  //     Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."
+  //     (4 printings). ONE `coinFlipGate` WITH BOTH ARMS FILLED, which is what
+  //     D269's `otherwise` is for: the printed "If tails, …" is a SECOND
+  //     consequent on the SAME coin, not a second flip.
+  //
+  //     🛑 THE HEADS ARM IS ARM 6a ABOVE BYTE FOR BYTE — `conditionGate
+  //     { opponentActiveIsBasic }` over `knockOutDefender` — AND THE BASIC
+  //     NARROWING IS LOAD-BEARING RATHER THAN DECORATIVE. `knockOutDefender`
+  //     checks only that an Active EXISTS; the printed noun is "your opponent's
+  //     Active **Basic** Pokémon", so a bare op here would Knock Out an evolved
+  //     Active the sentence does not name.
+  //     ⚠️ THAT IS A RULES READING AND NOT AN ATTESTED FACT. No comment, table or
+  //     ruling in this tree settles whether the printed "Basic" is a target
+  //     RESTRICTION (nothing happens against a Stage 1) or merely a description of
+  //     the boards these cards expect; it is read as a restriction because that is
+  //     what the same adjective means in the tails arm one clause later, where it
+  //     provably narrows a candidate SET. Driven with a non-Basic negative control
+  //     rather than asserted.
+  //
+  //     ⚠️ AND THE TWO ARMS NAME TWO DIFFERENT SCOPES ON ONE COIN, which is the
+  //     whole reason `knockOutChosen.target` is REQUIRED: heads is the Active,
+  //     tails is the Bench, and no default could be right for both.
+  match = FLIP_KO_ACTIVE_OR_BENCHED_BASIC.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "conditionGate",
+            cond: { kind: "opponentActiveIsBasic" },
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: [{ op: "knockOutDefender" }],
+          },
+        ],
+        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],
+      },
+    ];
+  }
+
+  // 6e. 🆕🆕 D416 — "Knock Out 1 of your opponent's Pokémon that has exactly 6
+  //     damage counters on it." (2 printings). ONE op, and the ONLY sentence in
+  //     the family whose scope is the opponent's WHOLE board — Active or Bench,
+  //     which is `target: "opponentAny"` and the reason arm 6d's `opponentBench`
+  //     could not have been a default.
+  //
+  //     ⚠️ THE COUNT COMES OFF THE PRINT. `Number(match[1])` with the `>= 1` guard
+  //     every capturing arm here carries: a printed 0 is a window that admits every
+  //     undamaged body on the opponent's board.
+  match = KO_EXACT_DAMAGE_COUNTERS.exec(effect);
+  if (match !== null) {
+    const counters = Number(match[1]);
+    if (counters >= 1) {
+      return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];
     }
   }
 

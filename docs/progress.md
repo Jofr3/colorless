@@ -3,11 +3,13 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-25 — build session #355 (**P3-M5 — D415, *the opponent-scoped Special-Energy KO gate — a seat mirror, and a slice that spent more of itself correcting false claims than building.*** Engine **0.318.0 → 0.319.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **1 sentence / 1 legal printing**, bought with ONE new `BoardCondition` member and a deriver arm that is D414's arm 6a **with the `cond` swapped and nothing else**. 🛑 **EVERY MUTANT IS A WAY OF ACCIDENTALLY REBUILDING THE TWIN, AND UNDER ALL FIVE THE SENTENCE STILL RESOLVES AND THE KO STILL HAPPENS** — nothing a census counts moves, so only a board where the two seats DISAGREE tells the builds apart. **5 killed / 0 GAPs**, corpus 1499 → **1504**. A live `toBe(null)` rung was **re-pointed**, its two stated reasons having expired one per slice (D414 killed the *"a KO is not a bonus"* half, D415 the *"self-scoped by construction"* half). 🛑 **THREE FALSE CLAIMS IN SHIPPED WORK FOUND AND CORRECTED, TWO OF THEM MINE FROM THE DAY BEFORE**: D414's census note was wrong three ways and was **replicated byte-identically in 21 places across 10 suites** (all hashed, all corrected in place); the resume point priced this half at 8 printings when it is 7; and **a member of the family was named by NOTHING in the repo** — no rung, no comment, no census note — now in `UNBUILT_TEXT`, because **a witness that is not even a comment cannot go red**. ⚠️ **AND `precheck` CAUGHT A ROTTED ROW ONE COMMIT LATE**, sharpening D414's own lesson: not just *a lint fix* but **ANY edit to a file the corpus quotes**, including a test-only edit by somebody else. `bun run check` **416 files / 8,820 tests, `CHECK_EXIT=0`** (+0 files / +16 cases).)
+**Last updated:** 2026-08-25 — build session #356 (**P3-M5 — D416, *the Knock Out that is a CHOICE — one parking op for two sentences, and a mutant that found a hole the whole suite had missed.*** Engine **0.319.0 → 0.320.0**; **`MATCH_RECORD_VERSION` STAYS 26** (D307: a new parking op and a new prompt value both shipped at no cost). **2 sentences / 6 legal printings** on ONE new op, `knockOutChosen`. Built together on purpose: `target` is REQUIRED because the two producers DISAGREE about scope, and building one alone ships that field with a single inhabitant ever exercised. The comparator lives in the FIELD NAME (`damageCountersExactly`) — a bare name would need RENAMING the day *"at least"* prints, and **a rename on a parking op is the one thing that costs a bump**. 🛑 **A MUTANT SURVIVED AND THE SURVIVOR WAS RIGHT — IT FOUND A HOLE IN THE SUITE, NOT A WEAK CLAIM**: every marker assertion ran on a bench of ONE, where `parkOrForce` FORCES, so the **parked** path — the point of the op, and the path carrying D414's two repairs — had no witness at all while looking perfectly guarded. Closed with a driving two-candidate board, and the READER driven rather than the mark. **13 mutants / 13 killed / 0 GAPs.** ⚠️ **THE REFACTOR ROTTED SEVEN ROWS IN TWO CLASSES**, and the dangerous one was `find occurs 2×`: the new funnel was written by COPYING `gustTargets`, so three D331 rows matched BOTH — **D404's wrong-arm trap**. Re-anchored onto lines the original uniquely owns, and the copied filter got rows of its own so the repair did not move a tested line into a file nothing pins. ✅ A declared survivor's reason was **re-argued on three counts and held**, with `expectKilledBy` widened to all three callers so it is measured rather than argued. ✅ `flow.ts` needed nothing — verified by driving a benched effect-KO, not by trusting the handoff. `bun run check` **417 files / 8,856 tests, `CHECK_EXIT=0`** (+1 file / +36 cases); corpus 1504 → **1517**; `precheck` run BEFORE the commit.)
 
-**Last updated (was):** 2026-08-24 — build session #354 (**P3-M5 — D414, *the Knock Out that reaches the other side of the table — and the slice is not the op, it is what the op FALSIFIES.*** Engine **0.317.0 → 0.318.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **3 sentences / 4 legal printings** on ONE new field-free op (`knockOutDefender`). 🛑 **MARKING THE DEFENDER LETHAL IS THREE LINES; THE SLICE IS THE PREMISE IT BREAKS.** Until now a body could only go lethal on the DEFENDER's board during an attack by being DAMAGED, and two shipped mechanisms rest on that: `byAttack` was computed once per BATCH while **4 built sentences / 6 printings** read it as *"by damage from an attack"*, and Vengeful Punch discharges its printed *"by damage"* **by placement, not by a flag**. Both sentences go false the moment this op ships, and **neither is reachable from `knockOutSelf`'s doc block**. Repair: a turn-stamped `koByEffect` marker, `byAttack` per BODY, and `koRecoilOf` skipping effect-lethal bodies. **C1 and C2 are those hazards restored; both die.** *"Both Active Pokémon are Knocked Out."* is a **COMPOSITION of two shipped field-free ops**, not a `target` field — a required field is the one thing that costs a bump if later renamed. ⚠️ **A LATENT DEFECT CAUGHT BY A SUITE AUTHOR NOTICING AN ASYMMETRY, NOT BY A RUNG**: two anchors spelled the possessive bare where every neighbour spells `['’]`; widened, and the pin inverted. ⚠️ **AND A JUSTIFICATION I HAD WRITTEN INTO A DOC BLOCK WAS MEASURED FALSE** — the marker's turn stamp was justified by a Glimmora board that does not exist; the stamp is kept for its real cheap reason and the doc now says so. **8 mutants / 8 killed / 0 GAPs**, corpus 1491 → **1499**; two D326 rows re-transcribed in the same commit. `bun run check` **416 files / 8,804 tests, `CHECK_EXIT=0`** (+1 file / +28 cases).)
+**Last updated (was):** 2026-08-25 — build session #355 (**P3-M5 — D415, *the opponent-scoped Special-Energy KO gate — a seat mirror, and a slice that spent more of itself correcting false claims than building.*** Engine **0.318.0 → 0.319.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **1 sentence / 1 legal printing**, bought with ONE new `BoardCondition` member and a deriver arm that is D414's arm 6a **with the `cond` swapped and nothing else**. 🛑 **EVERY MUTANT IS A WAY OF ACCIDENTALLY REBUILDING THE TWIN, AND UNDER ALL FIVE THE SENTENCE STILL RESOLVES AND THE KO STILL HAPPENS** — nothing a census counts moves, so only a board where the two seats DISAGREE tells the builds apart. **5 killed / 0 GAPs**, corpus 1499 → **1504**. A live `toBe(null)` rung was **re-pointed**, its two stated reasons having expired one per slice (D414 killed the *"a KO is not a bonus"* half, D415 the *"self-scoped by construction"* half). 🛑 **THREE FALSE CLAIMS IN SHIPPED WORK FOUND AND CORRECTED, TWO OF THEM MINE FROM THE DAY BEFORE**: D414's census note was wrong three ways and was **replicated byte-identically in 21 places across 10 suites** (all hashed, all corrected in place); the resume point priced this half at 8 printings when it is 7; and **a member of the family was named by NOTHING in the repo** — no rung, no comment, no census note — now in `UNBUILT_TEXT`, because **a witness that is not even a comment cannot go red**. ⚠️ **AND `precheck` CAUGHT A ROTTED ROW ONE COMMIT LATE**, sharpening D414's own lesson: not just *a lint fix* but **ANY edit to a file the corpus quotes**, including a test-only edit by somebody else. `bun run check` **416 files / 8,820 tests, `CHECK_EXIT=0`** (+0 files / +16 cases).)
 
 <!-- prior stamp -->
+
+**Prior stamp (was):** 2026-08-24 — build session #354 (**P3-M5 — D414, *the Knock Out that reaches the other side of the table — and the slice is not the op, it is what the op FALSIFIES.*** Engine **0.317.0 → 0.318.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **3 sentences / 4 legal printings** on ONE new field-free op (`knockOutDefender`). 🛑 **MARKING THE DEFENDER LETHAL IS THREE LINES; THE SLICE IS THE PREMISE IT BREAKS.** Until now a body could only go lethal on the DEFENDER's board during an attack by being DAMAGED, and two shipped mechanisms rest on that: `byAttack` was computed once per BATCH while **4 built sentences / 6 printings** read it as *"by damage from an attack"*, and Vengeful Punch discharges its printed *"by damage"* **by placement, not by a flag**. Both sentences go false the moment this op ships, and **neither is reachable from `knockOutSelf`'s doc block**. Repair: a turn-stamped `koByEffect` marker, `byAttack` per BODY, and `koRecoilOf` skipping effect-lethal bodies. **C1 and C2 are those hazards restored; both die.** *"Both Active Pokémon are Knocked Out."* is a **COMPOSITION of two shipped field-free ops**, not a `target` field — a required field is the one thing that costs a bump if later renamed. ⚠️ **A LATENT DEFECT CAUGHT BY A SUITE AUTHOR NOTICING AN ASYMMETRY, NOT BY A RUNG**: two anchors spelled the possessive bare where every neighbour spells `['’]`; widened, and the pin inverted. ⚠️ **AND A JUSTIFICATION I HAD WRITTEN INTO A DOC BLOCK WAS MEASURED FALSE** — the marker's turn stamp was justified by a Glimmora board that does not exist; the stamp is kept for its real cheap reason and the doc now says so. **8 mutants / 8 killed / 0 GAPs**, corpus 1491 → **1499**; two D326 rows re-transcribed in the same commit. `bun run check` **416 files / 8,804 tests, `CHECK_EXIT=0`** (+1 file / +28 cases).)
 
 **Prior stamp (was):** 2026-08-24 — build session #353 (**P3-M5 — D413, *the additive multi-coin fold — a refusal COLLECTED rather than re-litigated, and the first slice in four that moves the RAW summand.*** Engine **0.316.0 → 0.317.0**; **`MATCH_RECORD_VERSION` STAYS 26** — zero new ops, fields, readers or `attack.ts` change. *"Flip 2 coins. This attack does {30|50} more damage for each heads."* — **2 sentences / 5 printings**, bought with ONE regex and ONE arm. 🛑 **IT WAS REFUSED BY NAME AND THE REFUSAL'S PREMISE EXPIRED**: `multiCoinFlip.test.ts` said D121's warrant (two printings, one varying token) was unmet at ONE printing — measured on the LOCAL 978-card pool, where the only printing is Melmetal, **which the `legal_standard = 1` column does not contain at all**. The column prints two sentences varying exactly one token over five printings, so the trigger the refusal itself named has fired. The refusal is KEPT in full rather than deleted. **ZERO NEW VOCABULARY** — `bonusOnHeads × printed count` was already representable and produced by nothing (D405's rule) — but *"already representable"* is a claim about a line nothing had executed, so the fold is DRIVEN on 24 real seeds, additive 20/50/80 against multiplicative 0/30/60, **disjoint at every outcome**. Two live refusal rungs went red BY NAME and were **re-pointed rather than relaxed** — one of them now asserts `count: 2` POSITIVELY, which is strictly stronger than the null it replaced. ⚠️ The new fixture got **its own deck**: D412 had just reddened three of D409's boards by adding one card to a shared one. 🆕 **THE INVERSE CENSUS SHAPE OF THE LAST FOUR SLICES** — D409–D412 moved the COMPOUND summand while raw stood still; D413 moves **RAW** while compound and split hold, and is the first since D408 to move the bare `385` operand. **4 mutants / 4 killed / 0 GAPs**, corpus 1487 → **1491**. `bun run check` **415 files / 8,776 tests, `CHECK_EXIT=0`** (+0 files / +5 cases).)
 
@@ -456,6 +458,57 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-25, after D416)
+>
+> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 417 files / 8,856 tests, `CHECK_EXIT=0`,
+> `grep -c 'error TS'` = 0.** Baseline 416 / 8,820, so **+1 file / +36 cases**. Engine **0.320.0**,
+> **`MATCH_RECORD_VERSION` 26**, corpus **1,517**, archive ratchet **86**, lint coverage **656**.
+>
+> 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE**
+> (D411's entry says why in full).
+>
+> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D416 has had `--decision D416` (13 killed / 0 GAPs after
+> the survivor was closed), `--decision D345` and `--decision D331` after re-pointing (all killed),
+> and a `precheck` clean over 1,517 — but **no whole-corpus run against this head**. ⚠️ **EXPOSURE IS
+> THE HIGHEST OF THE RUN**: this slice REFACTORED two shipped ops into a shared helper and COPIED a
+> funnel, which between them rotted **seven** existing rows. A row spanning a line the factoring
+> touched is the likely `error`, and the `find occurs 2×` class is the one to watch — it is silent
+> until something quotes the copy.
+>
+> ### ▶ WHAT TO DO NEXT — THE FAMILY'S LAST SENTENCE, AND IT IS A DIFFERENT MECHANISM
+>
+> *"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.
+> If you can't discard 6 cards in this way, this attack does nothing."* — **2 printings**, and the
+> ONLY member of the KO family left. The killer exists (`knockOutDefender`); what does not is:
+> ⑴ a **hand-Energy COST** — 6 Basic {G} from hand, which is `payFromHand`-shaped; and ⑵ an
+> **"If you can't … this attack does nothing" CANCEL**, which is a **whole-attack verdict, not a
+> gated step** — so it is NOT `conditionGate` with a different `cond`, and that is the whole of why
+> it was left. **PRICE THE CANCEL FIRST**: find whether any shipped sentence already expresses
+> *"this attack does nothing"* as a verdict, and if not, decide whether it belongs at the deriver, in
+> `attack.ts`'s §8.5 seam, or as an op — that choice is the slice.
+> ⚠️ It is in `knockOutDefender.test.ts`'s `UNBUILT_TEXT`, asserted null by name. **Before D415
+> nothing in the repo named it at all.**
+>
+> ### ▶ AND THE TWO RULES D416 EARNED
+>
+> 🛑 **(1) A GUARD THAT ONLY EVER RUNS ON THE FORCED PATH DOES NOT GUARD THE PARKED ONE.**
+> `parkOrForce` auto-resolves at ONE candidate, so a suite whose boards all field one candidate
+> exercises the forced arm exclusively — and every assertion still passes, which is why it reads as
+> covered. D416's marker on the `applyChoice` path had **no witness at all**, and only a mutant found
+> it. ⚠️ **WHEN AN OP CAN PARK, COUNT THE CANDIDATES YOUR BOARDS ACTUALLY OFFER.** If none of them
+> offers two, the park is untested no matter how many cases there are.
+>
+> 🛑 **(2) COPYING A FUNCTION COPIES ITS MUTANTS' ANCHORS, AND THE CORPUS GOES QUIET RATHER THAN
+> RED.** Writing the new funnel by copying `gustTargets` made three D331 rows match TWO sites —
+> `find occurs 2×`, D404's wrong-arm trap. `precheck` catches it mechanically, **but only if you run
+> it**; a whole-corpus sweep would have reported a phantom verdict about the wrong function.
+> ⚠️ **AND THE REPAIR IS TWO-SIDED**: re-anchoring the old rows onto lines the original uniquely owns
+> leaves the COPY untested unless you also write rows for it. Do both, or you have moved a tested
+> line into a file nothing pins.
+
+### Prior resume point (P3-M5 — D415, the opponent-scoped Special-Energy KO gate, kept for continuity)
+
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-25, after D415)
 >
@@ -11842,7 +11895,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D415, *the opponent-scoped Special-Energy KO gate — a seat mirror, and a slice that spent more of itself correcting false claims than building.*** Engine **0.318.0 → 0.319.0**; `MATCH_RECORD_VERSION` **stays 26**. 1 sentence / 1 printing, ONE new `BoardCondition` member and a deriver arm that is D414's with the `cond` swapped. Every mutant is a way of rebuilding the twin, and under all five the KO still happens — only a board where the two seats DISAGREE separates them. **5 killed / 0 GAPs**, corpus 1499 → **1504**. Three false claims in shipped work corrected, incl. a census note **replicated byte-identically in 21 places** and a family member **named by nothing in the repo**. `bun run check` **416 files / 8,820 tests, exit 0** (+0 files / +16 cases).) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D416, *the Knock Out that is a CHOICE — one parking op for two sentences, and a mutant that found a hole the whole suite had missed.*** Engine **0.319.0 → 0.320.0**; `MATCH_RECORD_VERSION` **stays 26**. 2 sentences / 6 printings on ONE parking op; `target` REQUIRED because the producers disagree about scope. **A mutant survived and was RIGHT**: every marker assertion ran on a one-candidate board where the park never happens, so the parked path — the point of the op — had no witness. Closed with a driving board. **13 mutants / 13 killed**, corpus 1504 → **1517**. The refactor rotted 7 rows incl. three `find occurs 2×` (D404's wrong-arm trap, from copying a funnel). `bun run check` **417 files / 8,856 tests, exit 0** (+1 file / +36 cases).) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D408, *the bare attack lock on both seats — and a repair of a program that resolved, was counted BUILT, and did nothing.*** Engine **0.312.0 → 0.313.0**, `MATCH_RECORD_VERSION` **stays 25**. 3 sentences / 11 legal printings on ONE alternation anchor, ONE `[A-Z]` narrowing and TWO arms; ZERO new ops, fields, readers, members or registry rows. The mis-read sentence moves NO census figure — only a program comparison and a BOARD can see it, and both were measured red before the arm was written.; **whole-corpus sweep 1463 · 1439 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D407's for a twenty-sixth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D407)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D407, *the board-wide own-Energy count — a zone D196 refused on a measurement that has since stopped being true.*** Engine **0.311.0 → 0.312.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the FIELD is STORED and DRIVEN rather than asserted (the constant is not exported). **1 sentence / 4 legal printings** — *"This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."* — on ONE WIDENED whole-sentence anchor (`SELF_ENERGY_SCALE` gains a captured `(this Pokémon|all of your Pokémon)` tail), ONE OPTIONAL `zone?: "board"` on the SHIPPED `energyOnSelf` member, ONE producer branch and ONE evaluator branch delegating to `countEnergyInPlay`. ZERO new members, counters, ops, readers, `BoardCondition` members, registry rows or clause rows. 🛑 A `zone` and not a fourteenth member (D193's argument: two zone members would each carry `energyType`, the second answer to one question D159 forbids), and OPTIONAL with `undefined` meaning the ATTACKING BODY (D135's polarity — a producer that forgets it UNDER-counts). ⚠️ ADDITIVE-ONLY on this zone, the exact mirror of `energyOnOpponent`: there the `×` reader carries the zone and the `+` reader hard-codes one. ✅ The PROVISION seam was VERIFIED rather than inherited — a wildcard Luminous on the Bench scores and a second Special demotes it, driven both ways on a live board. 🛑 The next slice's supply check found a WRONG-BUT-PLAUSIBLE PROGRAM at HEAD: *"During your next turn, this Pokémon can't use attacks."* (4 legal) derives `preventAttackUse { attack: "attacks" }`. Census: `BUILT.attack` 1365 → **1369**, both reader instruments +1 / +4, `FIXTURE_POOL` 510 → **511**, unbuilt attack column 367 → **363**. `bun run check` **413 files / 8,704 tests, exit 0**; mutants **1447 → 1455**, **8/8 on the first run**; **whole-corpus sweep 1455 · 1431 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D406's for a twenty-fifth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D406)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D406, *the counted Tool scaler — a fourth resource for a union that had counted three things for twelve members.*** Engine **0.310.0 → 0.311.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the member is STORED — a `DamageCountSource` is a PARSE-TIME type consumed in the same tick, so no record could ever hold one. **1 sentence / 5 legal printings** — *"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* — on ONE whole-sentence anchor, ONE `deriveAttackDamageMultiplier` arm, ONE THIRTEENTH `DamageCountSource` member (`toolsOnYourBoard`), ONE `scaledAttackDamage` arm and ONE shared board counter (`countToolsInPlay`, beside `countEnergyInPlay`). ZERO new ops, fields, readers, `BoardCondition` members, registry rows or clause rows. 🛑 The SCOPE falsifier FIRED and cost a **FUNCTION rather than a FIELD** — nothing in the engine counted Tools over a zone, both existing readings being `tools.length > 0` on ONE body — so the member count stayed at one and the pre-specified re-price did not trigger. The DROPPED BASE held; `attack.ts`'s three disjunction chains were not touched. 🛑 The slice also found `energyOnSelf`'s *"the pool prints no board-wide spelling"* claim to be FALSE at this head (4 legal printings, ADDITIVE, unbuilt) and pinned the correction as an executable guard. ⚠️ And the handoff's prediction that the NINE-reader instrument would stand still was wrong: its ARRAY carries `deriveAttackDamageMultiplier`, so it moved 394 / 1,315 → **395 / 1,320**. `BUILT.attack` 1360 → **1365**; check green **412 files / 8,677 tests, exit 0**; corpus 1438 → **1447**, D406 **9/9 killed on the first run**, neighbours D275/D196/D282/D316/D317/D274/D301/D310/D395/D405/D383/D403/D318/D382 each probed alone and green; **7 of the 9 rows are silent in every census figure in the repo**, the highest ratio of six anchors. **Whole-corpus sweep 1447 · 1423 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D405's for a twenty-fourth sweep, `HEAD` re-checked independently at exit 0.) |
@@ -11927,6 +11980,83 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-25 — build session #356 (P3-M5 — D416, the Knock Out that is a CHOICE)
+
+**D416 — ONE PARKING OP FOR TWO SENTENCES, AND A MUTANT THAT FOUND A HOLE THE WHOLE SUITE HAD
+MISSED.** Engine **0.319.0 → 0.320.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **2 sentences / 6 legal
+printings** on ONE new parking op,
+`knockOutChosen { target: "opponentBench" | "opponentAny"; basicOnly?: true; damageCountersExactly?: number }`.
+
+🛑 **BUILT TOGETHER ON PURPOSE, AND THE REASON IS THE PERSISTED SHAPE.** `target` is REQUIRED because
+the two producers genuinely DISAGREE about scope, so no absent value is safe — and building one alone
+would have shipped that field with a single inhabitant ever exercised, **which is how a persisted
+field turns out to be the wrong shape after it is persisted**. The comparator lives in the FIELD NAME
+(`damageCountersExactly`): only *"exactly"* is printed, so a comparator SELECTOR would be vocabulary
+no card prints — but a bare name would need RENAMING the day *"at least"* prints, and a rename on a
+parking op is the one thing that costs a bump. ✅ No bump for the park itself (D307).
+
+### 🛑 A mutant survived, and the survivor was right
+
+Dropping the `koByEffect` stamp from the **resumed/parked** `applyChoice` path survived — and it was
+a hole in the suite, not a weak claim. **Every marker assertion ran on a bench of ONE**, where
+`parkOrForce` FORCES and the parked arm is never entered. **The park is the point of this op**, and
+the marker is what keeps D414's two mechanisms repaired, so the one path carrying both had **no
+witness at all while looking perfectly guarded**.
+
+**Closed with a driving test on a two-candidate board rather than by weakening the row** — and the
+READER is driven (`byAttackFor`), not the mark, because asserting the string would pass on a build
+that stamped it somewhere nothing reads. **13 mutants / 13 killed / 0 GAPs** after the repair.
+
+### ⚠️ The refactor rotted seven rows, in two classes — and the second is the dangerous one
+
+Factoring `knockOutSelf` and `knockOutDefender` into a shared `doomBodyAt` moved four D345 rows
+(`find occurs 0×` — ordinary adjacency rot; re-pointed with defects unchanged, several now with a
+LARGER blast radius since the line has three callers). **But the new funnel was written by COPYING
+`gustTargets`**, so three D331 rows began matching **BOTH** funnels: `find occurs 2×`, **D404's
+wrong-arm trap** — the mutant would silently edit the NEW copy while claiming to test the old one.
+Re-anchored onto lines `gustTargets` uniquely owns (its `remainingHpAtMost` filter tail — a
+`gust`-only field — and `gustTargetNoun`'s own signature). ✅ **And the other half of that repair was
+written rather than skipped**: two new rows pin the COPIED filter, so re-anchoring away from the
+duplicate did not move a tested line into a file nothing pins.
+
+### ✅ A declared survivor's reason was re-argued rather than inherited — and held
+
+`D345-self-ko-overwrites-existing-damage` rests on `Math.max` being unreachable-equivalent, and the
+factoring gave that line two new callers, so the declaration had to be **re-earned**: the mutant is
+still lethal either way; D414's marker is a different field of the same literal and untouched; and
+the one genuinely new reader of `damage` (`damageCountersOn`) runs INSIDE the funnel — on the
+candidate set, BEFORE any doom — so it can never observe what that line wrote. Only a program
+composing two `knockOutChosen` ops could separate them, and none is printed. ⚠️ **`expectKilledBy`
+was widened to all three callers so the reason is MEASURED and not merely argued** — a survivor's
+suite list is the evidence its reason is claimed against.
+
+### ✅ `flow.ts` needed nothing, and that was verified rather than trusted
+
+`lethalRefs`, `koRecoilOf` and `byAttackFor` already scan `[active, ...bench]`, so a BENCHED body
+carrying D414's marker is classified correctly **for free**. Driven, not asserted: a benched
+effect-KO takes a Prize, owes no promotion, answers FALSE to the revenge clause, and pays a benched
+Vengeful Punch holder **0** where a damage KO pays **40**. That is D414's repair paying for this
+slice.
+
+⚠️ **One deviation from the design, and it is a placement argument**: the §11 ask is NOT a parameter
+of `doomBodyAt`. `knockOutDefender` NAMES one body and refuses the op WHOLE (a guard);
+`knockOutChosen` PICKS from a set and must merely not OFFER a shielded body (D259's *"a filter and
+not a guard"*). A boolean cannot express both placements, and the filter-path branch would be
+unreachable (D205). ⚠️ **And a doc claim I wrote was off by one**: *"four sites in `attack.ts`"* spell
+the counter floor — it is **three**; the fourth is a `Math.round` on a note string, a different
+predicate.
+
+**CENSUS**: raw 409 → **411** / 1357 → **1363**; `BUILT.attack` 1404 → **1410**; `built` 1809 →
+**1815**; residue 574 → **568**; `unbuiltAttack` 328 → **322**; remainder operand 375 → **369** at
+TWO sites. `splitHead` **13**, `compoundHead` **18**, registry **16** untouched. ⚠️
+**`compoundCompose` §4 moves +1 / +4 against the census's +2 / +6**, taken off the SENTENCES rather
+than the runner: the flip sentence has two `BREAK` boundaries / three clauses and was always in the
+271-member corpus, so it crosses into the claimed-whole population; the counter sentence has no
+internal `. ` at all and cannot. `multiClause` stands still — a change of CLAIM, not of corpus.
+`bun run check` **417 files / 8,856 tests, `CHECK_EXIT=0`** (+1 file / +36 cases); corpus 1504 →
+**1517**; `precheck` clean and run **BEFORE** the commit.
+
 
 ### 2026-08-25 — build session #355 (P3-M5 — D415, the opponent-scoped Special-Energy KO gate)
 

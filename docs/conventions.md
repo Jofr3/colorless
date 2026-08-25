@@ -255,6 +255,19 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A GUARD THAT ONLY EVER RUNS ON THE FORCED PATH DOES NOT GUARD THE PARKED ONE (D416).**
+  `parkOrForce` auto-resolves at ONE candidate, so a suite whose boards all field one candidate
+  exercises the forced arm exclusively — and every assertion still passes, which is exactly why it
+  reads as covered. D416's marker on the `applyChoice` path had **no witness at all**, and only a
+  mutant found it. ⚠️ **WHEN AN OP CAN PARK, COUNT THE CANDIDATES YOUR BOARDS ACTUALLY OFFER.** If
+  none offers two, the park is untested however many cases there are.
+- 🛑 **COPYING A FUNCTION COPIES ITS MUTANTS' ANCHORS, AND THE CORPUS GOES QUIET RATHER THAN RED
+  (D416).** A new funnel written by copying `gustTargets` made three existing rows match TWO sites —
+  `find occurs 2×`, D404's wrong-arm trap. `precheck` catches it mechanically, **but only if you run
+  it**; a sweep would have reported a phantom verdict about the wrong function. ⚠️ **The repair is
+  TWO-SIDED**: re-anchoring the old rows onto lines the original uniquely owns leaves the COPY
+  untested unless you also write rows for it — otherwise you have moved a tested line into a file
+  nothing pins.
 - 🛑 **A CLAIM THAT IS COPIED IS A CLAIM THAT ROTS IN N PLACES (D415).** A census note written at
   D414 was wrong three ways and had been replicated **byte-identically into 21 sites across 10
   suites**. Correcting the original would have left twenty copies asserting the false version.

@@ -130,19 +130,26 @@ const SPECIAL_ENERGY_KO_TEXT =
     today, and the cancel in particular is a whole-attack verdict rather than a
     gated step, so it is not `conditionGate` with a different `cond`. */
 const UNBUILT_TEXT = {
-  /** A PARK: "1 of your opponent's Pokémon that has …" is a choice over a filtered
-      candidate set, and the filter is a damage-counter EQUALITY. */
-  sixCounters: "Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it.",
-  /** A PARK on the tails branch, over the BENCH, filtered to Basics — and a coin
-      whose two faces name two different candidate sets. */
-  flipBasicPick:
-    "Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon.",
   /** ⚠️ NO PARK AT ALL — the target is NAMED ("your opponent's Active Pokémon").
       What it needs is a hand-Energy COST and an "If you can't … does nothing"
-      CANCEL, which is a different mechanism from both of the above and from D415's
-      gate. 2 printings. */
+      CANCEL, which is a different mechanism from D415's gate and from D416's park.
+      2 printings, and the LAST member of this printed family still unbuilt. */
   handEnergyKo:
     "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon. If you can't discard 6 cards in this way, this attack does nothing.",
+} as const;
+
+/** 🆕🆕 **D416 BUILT THE TWO PARK SENTENCES, AND THEY ARE NAMED HERE RATHER THAN
+    QUIETLY DELETED FROM THE LIST ABOVE.** Both stood in `UNBUILT_TEXT` under the
+    reason *"a PARK over a filtered candidate set"*; `knockOutChosen` is that park,
+    with `target` REQUIRED because these two sentences disagree about scope in
+    print — the coin's tails arm names the BENCH and the counter sentence names the
+    whole opponent board. Their rungs are `knockOutChosen.test.ts`; what is asserted
+    HERE is only that they stopped being refused, so this file's witness list stays
+    a claim about the corpus rather than a stale comment. */
+const BUILT_BY_D416 = {
+  sixCounters: "Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it.",
+  flipBasicPick:
+    "Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon.",
 } as const;
 
 // ── the local pool (FIXTURE_POOL untouched — D190's idiom, D275's `cardPool`) ─
@@ -416,26 +423,28 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
     ]);
   });
 
-  it("refuses the THREE sentences of the family that are STILL unbuilt — by name", () => {
-    // Each needs something no slice has bought: the first two need a PARK over a
-    // filtered candidate set ("Knock Out 1 of your opponent's …"), and the third
-    // needs a hand-Energy COST plus an "If you can't … does nothing" CANCEL. A
-    // half-built arm that resolved any of these to an op would silently Knock Out
-    // the WRONG body — or Knock one Out for free — and the loud
+  it("refuses the ONE sentence of the family that is STILL unbuilt — by name", () => {
+    // What it needs is a hand-Energy COST plus an "If you can't … does nothing"
+    // CANCEL — a whole-attack verdict rather than a gated step, which is not
+    // `conditionGate` with a different `cond`. A half-built arm that resolved it to
+    // an op would Knock the opponent's Active Out FOR FREE, and the loud
     // ATTACK_EFFECT_SKIPPED path is the correct behaviour, which is what this pins.
     //
-    // ⚠️ THE LIST IS NOT THE ONE D414 WROTE, and the swap is the point of keeping
-    // it: `specialEnergy` left because D415 BUILT it (§7), and `handEnergyKo` —
-    // a member of the same printed family that no rung, comment or census note in
-    // this repo named at all — took its place. The count is three either way, which
-    // is exactly why a witness list has to be transcribed off the corpus rather
-    // than trusted to stay total on its own.
+    // ⚠️ THE LIST IS NOT THE ONE D414 WROTE, NOR D415's, and the churn is the point
+    // of keeping it: `specialEnergy` left because D415 built it (§7), `handEnergyKo`
+    // — a member of the same printed family no rung, comment or census note in this
+    // repo named at all — joined in the same slice, and 🆕🆕 D416 took BOTH park
+    // sentences. Three, then three, now one. A witness list has to be transcribed
+    // off the corpus rather than trusted to stay total on its own.
     for (const [name, text] of Object.entries(UNBUILT_TEXT)) {
       expect(deriveAttackEffect(text), `${name} stopped being refused`).toBeNull();
     }
-    // The sentence that LEFT, asserted positively in the same breath — so "it is no
-    // longer refused" is a claim about a built program and not about a deleted line.
+    // The sentences that LEFT, asserted positively in the same breath — so "they are
+    // no longer refused" is a claim about built programs and not about deleted lines.
     expect(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT)).not.toBeNull();
+    for (const [name, text] of Object.entries(BUILT_BY_D416)) {
+      expect(deriveAttackEffect(text), `${name} is not built`).not.toBeNull();
+    }
   });
 
   it("is anchored end to end — all three, both ends", () => {

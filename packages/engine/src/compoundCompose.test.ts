@@ -445,14 +445,14 @@ describe("§3 — the parenthesis measurement, which is why this is a REGEX", ()
 });
 
 describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallback", () => {
-  it("🛑 148 sentences / 421 printings are multi-clause AND claimed whole — all refused", () => {
+  it("🛑 149 sentences / 425 printings are multi-clause AND claimed whole — all refused", () => {
     // 🛑 THE GUARD THAT MAKES THIS SAFE TO SHIP. Without `claimedByAnyReader(text)`
     // in front of the split, every one of these would be re-answered by composition
     // instead of by the whole-sentence anchor its author wrote — the same program
     // in the lucky cases and a different one in the rest, with nothing able to tell
     // which. `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`, `DEFENDER_POISON_CANT_RETREAT`,
     // `COUNTER_PUT_ANY_THEN_SELF_LOCK` and `SELF_DISCARD_ALL_THEN_REDUCTION` are
-    // four of the 148. Delete the refusal and this rung goes red 148 times.
+    // four of the 149. Delete the refusal and this rung goes red 149 times.
     // 🆕🆕 D413 — 145 / 415 → **147 / 420**, and the step is a change of CLAIM rather
     // than a change of CORPUS, which is why the 271 / 613 pair below STANDS STILL
     // while this one moves. Both of the ADDITIVE MULTI-COIN FOLD's sentences —
@@ -480,13 +480,30 @@ describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallb
     // +1 / +1 here against +3 / +4 on the census: 148 = 147 + 1, 421 = 420 + 1, and
     // the other +2 sentences / +3 printings are invisible to this rung by
     // construction. The loop below now owes a null on 148 sentences rather than 147.
+    // 🆕🆕 D416 — 148 / 421 → **149 / 425**, a change of CLAIM and not of CORPUS a
+    // THIRD slice running, so the 271 / 613 pair below STANDS STILL again.
+    // 🛑 AND ONLY **ONE** OF THE PARKING KO PAIR'S TWO SENTENCES LANDS HERE, counted
+    // off the `BREAK` boundaries rather than off the slice note. *"Flip a coin. If
+    // heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of
+    // your opponent's Benched Basic Pokémon."* (**4 printings**) carries TWO breaks —
+    // `Flip a coin.` ‖ `If heads, …` ‖ `If tails, …` — so it is THREE clauses, it has
+    // ALWAYS sat inside the 271, and what D416 changed is that `deriveAttackEffect`
+    // arm 6d now claims it WHOLE: it crosses out of the multi-clause remainder and
+    // INTO the shadow-refusal population this rung counts. *"Knock Out 1 of your
+    // opponent's Pokémon that has exactly 6 damage counters on it."* (**2 printings**)
+    // has NO internal break at all — one sentence, one clause, the D414 Basic-gate
+    // shape — so it was never in the 271 and cannot enter here. Hence +1 / +4 here
+    // against +2 / +6 on the census, and the printing steps DIFFER as well as the
+    // sentence steps: 149 = 148 + 1, 425 = 421 + 4, and the counter-window sentence's
+    // other +1 sentence / +2 printings are invisible to this rung by construction.
+    // The loop below now owes a null on 149 sentences rather than 148.
     const corpus = legalAttackCorpus();
     const multiClause = corpus.filter(([, s]) => s.split(BREAK).length >= 2);
     expect(multiClause).toHaveLength(271);
     expect(units(multiClause)).toBe(613);
     const claimedWhole = multiClause.filter(([, s]) => claimedByAny(s));
-    expect(claimedWhole).toHaveLength(148);
-    expect(units(claimedWhole)).toBe(421);
+    expect(claimedWhole).toHaveLength(149);
+    expect(units(claimedWhole)).toBe(425);
     for (const [, s] of claimedWhole) expect(splitAttackTrailingClause(s), s).toBeNull();
   });
 
@@ -946,8 +963,8 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    // 🆕🆕 D415 — 0.318.0 → **0.319.0**, moved with the behaviour: THE OPPONENT-SCOPED SPECIAL-ENERGY KO GATE (*"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."*, Haxorus `sv06.5-046`, 1 legal printing) is a WIDENING — ONE new `BoardCondition` member (`opponentActiveHasEnergyAttached`, the seat mirror of `yourActiveHasEnergyAttached`) behind the SHIPPED field-free `knockOutDefender` op, no new op and no new persisted field — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26.
-    expect(engineVersion).toBe("0.319.0");
+    // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
+    expect(engineVersion).toBe("0.320.0");
   });
 });
 

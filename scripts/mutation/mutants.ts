@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.319.0";',
+    find: 'export const engineVersion = "0.320.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -11059,8 +11059,20 @@ export const MUTANTS: Mutant[] = [
     // ⚠️ RE-POINTED AT D349 — `gustTargets` gained a SECOND rider
     // (`remainingHpAtMost`), so its early return now names `inWindow` rather than
     // `bench`. The mutant's MEANING is unchanged: return the un-narrowed set.
-    find: "  if (op.basicOnly !== true) return inWindow;\n",
-    replace: "  return bench;\n  if (op.basicOnly !== true) return inWindow;\n",
+    // ⚠️⚠️ RE-ANCHORED AT D416, AND THE REASON IS D404's WRONG-ARM TRAP RATHER
+    //    THAN A MOVE: `knockOutChosenTargets` was written by copying THIS funnel,
+    //    so `  if (op.basicOnly !== true) return inWindow;` is now a line TWO
+    //    functions own and the substitution had stopped being a fact — precheck
+    //    said `2×`. Left alone, the row would have been silently patching the NEW
+    //    op while claiming to test the gust. The anchor now carries the
+    //    `remainingHpWithin` line above it, which is `gust.remainingHpAtMost` and
+    //    can never appear in the Knock Out funnel (its window is on COUNTERS).
+    //    🛑 THE TWO FUNNELS ARE DELIBERATELY NOT DE-DUPLICATED — four sole funnels
+    //    is the pattern (D206/D331/D345/D349), so the fix is a sharper anchor and
+    //    never a shared helper.
+    find: "            pokemon !== undefined && remainingHpWithin(state, pokemon, op.remainingHpAtMost ?? 0)\n          );\n        });\n  if (op.basicOnly !== true) return inWindow;\n",
+    replace:
+      "            pokemon !== undefined && remainingHpWithin(state, pokemon, op.remainingHpAtMost ?? 0)\n          );\n        });\n  return bench;\n  if (op.basicOnly !== true) return inWindow;\n",
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
   {
@@ -11069,8 +11081,17 @@ export const MUTANTS: Mutant[] = [
     what: "the rider's sense is INVERTED - the funnel filters when `basicOnly` is ABSENT and passes everything when it is set. Lisia's Appeal goes back to offering the whole Bench and every gust that shipped before it (Boss's Orders, Pokemon Catcher, Prime Catcher, Giovanni, Florges) silently starts refusing Evolutions. The mutant is invisible to any suite that only ever drives the NEW card, which is why the attribution control and `switchSeam.test.ts`'s Prime Catcher board are both named below",
     file: "packages/engine/src/interpreter.ts",
     // ⚠️ RE-POINTED AT D349 — see the row above.
-    find: "  if (op.basicOnly !== true) return inWindow;\n",
-    replace: "  if (op.basicOnly === true) return inWindow;\n",
+    // ⚠️⚠️ RE-ANCHORED AT D416 — see the row above: the bare line is shared with
+    //    `knockOutChosenTargets` now, so the anchor carries `gustTargets`' own
+    //    `remainingHpWithin` filter tail to stay uniquely owned. **THIS ROW IS THE
+    //    ONE THE WRONG-ARM TRAP WOULD HAVE HURT MOST**: inverting the rider inside
+    //    the NEW funnel is invisible to `lisiasAppeal.test.ts` and to
+    //    `switchSeam.test.ts` alike, so the row would have reported KILLED-looking
+    //    green on a line neither suite drives — an attribution control that had
+    //    itself lost its attribution.
+    find: "            pokemon !== undefined && remainingHpWithin(state, pokemon, op.remainingHpAtMost ?? 0)\n          );\n        });\n  if (op.basicOnly !== true) return inWindow;\n",
+    replace:
+      "            pokemon !== undefined && remainingHpWithin(state, pokemon, op.remainingHpAtMost ?? 0)\n          );\n        });\n  if (op.basicOnly === true) return inWindow;\n",
     expectKilledBy: [
       "packages/engine/src/lisiasAppeal.test.ts",
       "packages/engine/src/switchSeam.test.ts",
@@ -11091,8 +11112,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D331",
     what: "the prompt caption loses its stage word, so a dialog offering ONLY Basics is captioned 'the opponent's Benched Pokemon'. The candidate set is untouched and every board resolves exactly as printed - the mutant is purely what the player is TOLD, which is the half a state-shaped assertion cannot reach. `switchTargetNoun`'s rule one op over: the caption must name exactly the set the funnel offers, or the dialog contradicts its own validator",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const stage = op.basicOnly === true ? "Basic " : "";\n',
-    replace: '  const stage = "";\n',
+    // ⚠️ RE-ANCHORED AT D416 — `knockOutChosenNote` is `gustTargetNoun`'s twin and
+    //    copies this line BYTE FOR BYTE (`const stage = op.basicOnly === true ?
+    //    "Basic " : "";`), so precheck read `2×` and the substitution had stopped
+    //    naming a site. The anchor now carries the FUNCTION SIGNATURE, which is the
+    //    one line in the pair that cannot be shared. D404's wrong-arm trap on a
+    //    caption: the mutant would have dropped the Knock Out prompt's adjective
+    //    while the row's `what` talked about a gust dialog, and
+    //    `lisiasAppeal.test.ts` — which never builds a `knockOutChosen` — would
+    //    have reported it SURVIVED.
+    find: 'function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {\n  const stage = op.basicOnly === true ? "Basic " : "";\n',
+    replace:
+      'function gustTargetNoun(op: Extract<EffectOp, { op: "gust" }>): string {\n  const stage = "";\n',
     expectKilledBy: ["packages/engine/src/lisiasAppeal.test.ts"],
   },
   {
@@ -12721,54 +12752,102 @@ export const MUTANTS: Mutant[] = [
   //    are about WHOSE uid left play and WHOSE prize row opened.
   {
     id: "D345-self-ko-never-fires",
+    // ⚠️ RE-POINTED AT D416, WHICH FACTORED `knockOutSelf`'s BODY INTO THE SHARED
+    //    `doomBodyAt`. The lethal write is a FIELD of an object literal now rather
+    //    than a whole `const`, so the quoted line moved — **the defect is
+    //    unchanged and its blast radius GREW**: the cost is now free for
+    //    `knockOutDefender` and `knockOutChosen` as well, so THREE printed Knock
+    //    Outs stop happening rather than one. ⚠️ AND THE TWO OPPONENT-SIDE OPS
+    //    STILL STAMP D414's MARKER on a body that then LIVES — a marked survivor,
+    //    which is the board `D414-marker-drops-its-turn` calls unreachable today.
+    //    Its killer stays `cursedBlast.test.ts`, which owns the self-KO claim.
     decision: "D345",
     what: "🛑 THE COST IS SILENTLY FREE: the op marks nothing, so Cursed Blast places its counters and the host lives. **THE BOARD STAYS COMPLETELY LEGAL** — the opponent takes the damage the card promises, no card count changes, no event is missing that a reader would notice, and the ability is still spent for the turn. The card simply becomes a strictly better card than the one printed, which is the failure mode a `you may` cost is most likely to hide",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
-    replace: "  const doomed = { ...body };",
+    find: "    damage: Math.max(body.damage, hp),\n",
+    replace: "",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
     id: "D345-self-ko-stops-one-counter-short",
+    // ⚠️ RE-POINTED AT D416 — the row above's factoring, same line, same reason.
+    //    **THE OFF-BY-ONE IS NOW SHARED BY THREE OPS**, and that makes it worth
+    //    more than it was: a `hp - 1` mark leaves the host, the defender and the
+    //    chosen body all standing on 10 HP, so every sentence in the family
+    //    resolves, spends its cost and produces a LIVE Pokémon. The defect is
+    //    unchanged; only its address moved.
     decision: "D345",
     what: "the host is marked to `hp - 1`, so it survives on 10 HP — the off-by-one that a `>=` KO check turns into a living body. Everything else is identical: the counters land, the ability is spent, the log reads the same. Only an assertion that the HOST's uid left play can see it, which is why this suite asserts `KNOCKED_OUT.uid` and never `toBeDefined`",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
-    replace: "  const doomed = { ...body, damage: Math.max(body.damage, hp - 1) };",
+    find: "    damage: Math.max(body.damage, hp),\n",
+    replace: "    damage: Math.max(body.damage, hp - 1),\n",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
     id: "D345-self-ko-overwrites-existing-damage",
+    // ⚠️ RE-POINTED AT D416 (the factoring into `doomBodyAt`), AND — BECAUSE THIS
+    //    ROW IS A DECLARED SURVIVOR — **ITS REASON WAS RE-READ AGAINST THE SHARED
+    //    SITE RATHER THAN CARRIED OVER**. A `survives` reason is a claim about
+    //    every board that can reach the line, so a line that gains two callers has
+    //    gained boards the reason never covered. The verdict is written into the
+    //    reason below: it STILL HOLDS, and the argument had to be extended to say
+    //    why. ⚠️ IF IT HAD NOT, THE ROW WOULD NOT HAVE BEEN DELETED — the
+    //    declaration would have come off and the runner would have said
+    //    STALE-SURVIVOR, which is the loud half of what this field is for.
     decision: "D345",
     what: "the `Math.max` becomes a plain assignment, so a host already damaged PAST its effective maximum is HEALED down to it on the way out. ⚠️ RECORDED AS A SURVIVOR AND NOT AS A GAP: the only boards that distinguish the two are ones where `damage > effectiveMaxHp` at the moment this op runs, and on every such board the body is already lethal by §8.1's state check — so the sweep collects it either way and the difference is unobservable. The `max` is kept because it says what the op MEANS (raise to lethal, never lower), which is the D205 rule applied to an expression instead of a field",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const doomed = { ...body, damage: Math.max(body.damage, hp) };",
-    replace: "  const doomed = { ...body, damage: hp };",
-    expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
+    find: "    damage: Math.max(body.damage, hp),\n",
+    replace: "    damage: hp,\n",
+    // ⚠️ THE SUITE LIST IS WIDENED AT D416 AND THAT IS PART OF THE RE-POINT, NOT
+    //    housekeeping: a DECLARED SURVIVOR's `expectKilledBy` is the set of suites
+    //    its reason is being claimed against, and the mutated line is now driven by
+    //    three ops rather than one. Narrowing it to `cursedBlast.test.ts` after the
+    //    factoring would have re-declared the survival on evidence from a third of
+    //    the site. All three run; all three stay green (measured, D335's rule).
+    expectKilledBy: [
+      "packages/engine/src/cursedBlast.test.ts",
+      "packages/engine/src/knockOutDefender.test.ts",
+      "packages/engine/src/knockOutChosen.test.ts",
+    ],
     survives: {
       kind: "equivalent",
       reason:
-        "\ud83d\uded1 DECLARED ONLY AFTER BEING RUN (D335's rule). The two spellings differ on EXACTLY one board \u2014 one where `body.damage > effectiveMaxHp` at the moment this op runs \u2014 and on every such board the body is ALREADY lethal by \u00a78.1's `damage >= maximum` state check, so `collectKnockOuts` takes it either way and the difference is unobservable. \u26a0\ufe0f AND THE FIELD NAME ON THIS ROW WAS `why` UNTIL THE SWEEP PRINTED THE REASON AS `undefined` \u2014 the row survived correctly, the runner reported it correctly, and the ONE thing a `survives` row exists to carry was empty. `Mutant.survives` is `{ kind, reason }`; `tsc -b` does not typecheck `scripts/`, so nothing but the sweep's own output could say so. **A DECLARED SURVIVOR WITH NO READABLE REASON IS AN ALLOWLIST ENTRY**, which is the one thing this field is documented not to be. The `Math.max` stays because it says what the op MEANS (raise to lethal, never lower), which is D205's rule applied to an expression instead of a field.",
+        "\ud83d\uded1 DECLARED ONLY AFTER BEING RUN (D335's rule). The two spellings differ on EXACTLY one board \u2014 one where `body.damage > effectiveMaxHp` at the moment this op runs \u2014 and on every such board the body is ALREADY lethal by \u00a78.1's `damage >= maximum` state check, so `collectKnockOuts` takes it either way and the difference is unobservable. \u26a0\ufe0f AND THE FIELD NAME ON THIS ROW WAS `why` UNTIL THE SWEEP PRINTED THE REASON AS `undefined` \u2014 the row survived correctly, the runner reported it correctly, and the ONE thing a `survives` row exists to carry was empty. `Mutant.survives` is `{ kind, reason }`; `tsc -b` does not typecheck `scripts/`, so nothing but the sweep's own output could say so. **A DECLARED SURVIVOR WITH NO READABLE REASON IS AN ALLOWLIST ENTRY**, which is the one thing this field is documented not to be. The `Math.max` stays because it says what the op MEANS (raise to lethal, never lower), which is D205's rule applied to an expression instead of a field.\n\n🔁 **RE-READ AT D416, WHEN THE LINE STOPPED BELONGING TO ONE OP.** The factoring into `doomBodyAt` gave this expression two more callers — `knockOutDefender` (the opponent's Active) and `knockOutChosen` (ANY opponent body, Active or Bench, picked at a park) — so the reason above had to be re-argued rather than inherited, and it survives the re-argument on three counts. (1) THE MUTANT IS STILL LETHAL: `damage = hp` is still `>= effectiveMaxHp`, so §8.1 collects the body under either spelling and the Prize, the discard, `KNOCKED_OUT` and the promotion are byte-identical. (2) THE MARKER IS NOT ON THIS LINE — D414's `koByEffect:<turn>` stamp is the next field of the same literal and is untouched, so nothing `flow.ts` reads moves. (3) THE ONE GENUINELY NEW READER OF `damage` IN THIS FAMILY IS `damageCountersOn`, and it runs INSIDE `knockOutChosenTargets` — i.e. BEFORE any doom, on the candidate set — so it can never observe a body this line has already written. A program composing two `knockOutChosen` ops could read a doomed body's counters between them and tell the spellings apart; **no printed sentence composes two**, which makes the difference `unreachable-shape` on the new callers for the same kind of reason it is `equivalent` on the old one. ⚠️ `expectKilledBy` WAS WIDENED TO ALL THREE SUITES so this is measured and not merely argued: green under `cursedBlast`, `knockOutDefender` AND `knockOutChosen`.",
     },
   },
   {
     id: "D345-self-ko-kills-the-active-instead-of-the-host",
+    // ⚠️ RE-POINTED AT D416, WHICH FACTORED THE SPOT READ INTO `doomBodyAt` AND
+    //    HOISTED `ref.spot` INTO A LOCAL — the quoted lines say `spot.spot` /
+    //    `spot.index` now, not `ref.spot.spot` / `ref.spot.index`. **THE DEFECT IS
+    //    UNCHANGED AND ITS BLAST RADIUS GREW**: the read is now the ONE place all
+    //    three Knock Out ops resolve a body, so "always the Active" also makes
+    //    `knockOutChosen` ignore the body the player just PICKED off the Bench and
+    //    doom the opponent's Active instead — a prompt that is offered honestly,
+    //    answered honestly and then not honoured. Its killer stays
+    //    `cursedBlast.test.ts`; `knockOutChosen.test.ts` §3 would also see it now.
     decision: "D345",
     what: "🛑🛑 THE HOST IS ALWAYS READ AS THE ACTIVE, so a BENCHED Dusclops blasts and the seat's Active dies instead. The opponent still takes the counters, the right number of bodies leave play, and the right seat pays a Prize — **every aggregate holds and the wrong card is dead**. The board is not even implausible: a player who benched the Dusclops on purpose loses the attacker they were protecting. Only a uid assertion separates them, and the printed sentence's subject is `this Pokémon`",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const body = ref.spot.spot === "active" ? side.active : side.bench[ref.spot.index];\n  if (body === null || body === undefined) return state;\n  const hp = effectiveMaxHp(state, body);',
+    find: '  const body = spot.spot === "active" ? side.active : side.bench[spot.index];\n  if (body === null || body === undefined) return state;\n  const hp = effectiveMaxHp(state, body);',
     replace:
       "  const body = side.active;\n  if (body === null || body === undefined) return state;\n  const hp = effectiveMaxHp(state, body);",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
     id: "D345-self-ko-marks-every-other-benched-body",
+    // ⚠️ RE-POINTED AT D416, WHICH FACTORED `knockOutSelf`'s BODY INTO THE SHARED
+    //    `doomBodyAt`. The bench writer is one line now rather than four, and the
+    //    index test it carries is the same test — **so the defect is unchanged and
+    //    its blast radius GREW**: inverting it now dooms every OTHER benched body
+    //    for `knockOutChosen` too, not only for the self-KO this row was written
+    //    against. Its killer stays `cursedBlast.test.ts`, which owns the claim.
     decision: "D345",
     what: "the write-back index test is INVERTED, so the mark lands on every benched body EXCEPT the host. On a bench of one this is a silent no-op (the host lives and nothing else dies); on a bench of two it kills the teammate and spares the blaster. ⚠️ THE SECOND HALF IS WHY THIS SUITE SEATS AN HP AURA BESIDE THE BLASTER — the teammate it would kill is the SOURCE of the maximum the host is being measured against, which is the most confusing board this op can produce and the one a bench-of-one suite would never build",
     file: "packages/engine/src/interpreter.ts",
-    find: '            index === (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,',
-    replace:
-      '            index !== (ref.spot as { spot: "bench"; index: number }).index ? doomed : pokemon,',
+    find: "      : { ...side, bench: side.bench.map((pokemon, i) => (i === spot.index ? doomed : pokemon)) },",
+    replace: "      : { ...side, bench: side.bench.map((pokemon, i) => (i !== spot.index ? doomed : pokemon)) },",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
@@ -17619,11 +17698,16 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D414-op-stamps-no-marker",
+    // ⚠️ RE-POINTED AT D416, WHICH FACTORED THE STAMP OUT OF `knockOutDefender`
+    //    INTO THE SHARED `doomBodyAt`. **THE ROW IS WORTH MORE THERE**: the stamp is
+    //    now the ONE line that keeps BOTH effect-KO ops distinguishable from damage,
+    //    so dropping it re-arms both of D414's hazards for two ops rather than one.
+    //    The defect is unchanged; only its address moved.
     decision: "D414",
     what: "🛑 C3 — THE OP MARKS THE BODY LETHAL AND SAYS NOTHING ABOUT HOW. The `markers` write is dropped, so the op becomes `knockOutSelf` mirrored — which is exactly the slice as it would have been built by someone reading only `knockOutSelf`'s doc block. **BOTH HAZARDS FIRE AT ONCE** and the Knock Out still looks perfect: right body, right Prize, right event, right promotion. ⚠️ This is the row that says the marker is the SLICE rather than a detail of it",
     file: "packages/engine/src/interpreter.ts",
-    find: "    markers: active.markers.includes(marker) ? active.markers : [...active.markers, marker],",
-    replace: "    markers: active.markers,",
+    find: "    ...(marker === undefined || body.markers.includes(marker)\n      ? {}\n      : { markers: [...body.markers, marker] }),",
+    replace: "    ...{},",
     expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
   },
   {
@@ -17637,11 +17721,18 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D414-defender-ko-skips-the-section-11-gate",
+    // ⚠️ RE-POINTED AT D416, WHICH FACTORED THE MARKING OUT INTO `doomBodyAt` AND
+    //    MOVED THE §11 ASK AHEAD OF THE `effectiveMaxHp` READ. The quoted pair of
+    //    lines changed; **the defect this row describes did not** — deleting the
+    //    guard still ships a Knock Out no §11 block can stop. ✅ CAUGHT BY
+    //    `precheck` BEFORE THE COMMIT this time rather than ninety minutes into a
+    //    sweep, which is D414's and D415's lesson finally being applied on the
+    //    right side of the commit.
     decision: "D414",
     what: "🛑 C5 — THE §11 CHECK IS DROPPED. A *\"prevent all effects of attacks done to this Pokémon\"* block must refuse this op, exactly as it refuses `preventRetreat` and `preventAttack` — it is an effect of an attack done TO THE DEFENDING POKÉMON, which is the whole of what those blocks are for. ⚠️ **`knockOutSelf` DOES NOT ASK, AND THE DIFFERENCE IS THE SEAT RATHER THAN AN INCONSISTENCY** — it kills its own host, which no block on the opponent's body has any claim over. An author mirroring `knockOutSelf` line for line drops this check and ships a Knock Out no block can stop",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const marker = koByEffectMarker(state.turn);",
-    replace: "  const marker = koByEffectMarker(state.turn);",
+    find: "  if (state.players[seat].active === null) return state;\n  if (effectRefused(state, seat, ctx, events)) return state;",
+    replace: "  if (state.players[seat].active === null) return state;",
     expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
   },
   {
@@ -17728,5 +17819,164 @@ export const MUTANTS: Mutant[] = [
     find: "      return cond.energy === \"special\"\n        ? \"your opponent's Active Pokémon has a Special Energy attached\"\n        : `your opponent's Active Pokémon has ${cond.energy} Energy attached`;",
     replace: "      return cond.energy === \"special\"\n        ? \"your Active Pokémon has a Special Energy attached\"\n        : `your Active Pokémon has ${cond.energy} Energy attached`;",
     expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+
+  // ── D416 · the Knock Out with a PICK in it (`knockOutChosen`) ──────────────
+  // 🛑 THE SHAPE OF THIS SET IS THE SHAPE OF THE OP: a REQUIRED persisted scope
+  //    field, TWO optional riders, a funnel, a caption and a marker — and almost
+  //    every row below leaves a legal board, a resolving sentence and a correct
+  //    Prize. What they break is WHICH body the player is offered, or what the
+  //    engine says about how it died.
+  // ⚠️ THE SCOPE IS MUTATED AT THREE ADDRESSES ON PURPOSE (two deriver arms and
+  //    the funnel's ternary). They are DIFFERENT DEFECTS: the deriver rows change
+  //    what the card SAYS — and the caption follows, because `knockOutChosenNote`
+  //    reads `target` too — while the funnel row changes what is DONE with what it
+  //    says, and leaves the caption correct and lying. A corpus that mutated only
+  //    the deriver would call the funnel tested.
+  // ⚠️ FOUR OF THESE ROWS EXIST BECAUSE THE FUNNEL AND THE NOTE WERE WRITTEN BY
+  //    COPYING `gustTargets` / `gustTargetNoun`. That copy is what made three D331
+  //    rows match `2×` (see their re-anchor comments) — and re-anchoring those rows
+  //    onto `gustTargets`' own lines is only half the repair: the other half is
+  //    that the COPIED lines now need rows of their own, or the fix would have
+  //    quietly moved a tested line into an untested file. **A COPIED LINE IS NOT A
+  //    TESTED LINE.**
+  {
+    id: "D416-tails-arm-scopes-the-whole-opponent-board",
+    decision: "D416",
+    what: "🛑 THE TAILS ARM WIDENS TO THE WHOLE BOARD: arm 6d's `otherwise` is derived with `target: \"opponentAny\"`, so *\"If tails, Knock Out 1 of your opponent's **Benched** Basic Pokémon\"* starts offering their ACTIVE. **AN AUTHOR MAKES THIS ONE BY WRITING THE TWO ARMS IN ONE SITTING** — 6e sits fourteen lines down and IS `opponentAny`, and of the two member names `opponentAny` is the one that reads like \"no narrowing\" rather than like a choice. ⚠️ WHAT STILL LOOKS RIGHT: the coin still flips, both arms still fill, the op still parks, and on every board whose Active is not a Basic the candidate set is IDENTICAL — because `basicOnly` filters the Active back out again. Only a Basic Active separates the two, which is the commonest Active there is and therefore the one a fixture author has to build ON PURPOSE",
+    file: "packages/engine/src/effects.ts",
+    find: '        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
+    replace: '        otherwise: [{ op: "knockOutChosen", target: "opponentAny", basicOnly: true }],',
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-counter-sentence-scopes-only-the-bench",
+    decision: "D416",
+    what: "🛑 THE MIRROR OF THE ROW ABOVE, AND THE REASON `target` IS REQUIRED: arm 6e derives `opponentBench`, so *\"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it\"* stops being able to name their Active. **THE SENTENCE PRINTS NO ZONE WORD AT ALL**, which is exactly why an author copies the neighbouring arm's value rather than deciding one — a missing adjective is not a prompt to think. ⚠️ WHAT STILL LOOKS RIGHT: the anchor still matches, the count still comes off the print, the `>= 1` guard still holds, the op still parks — and every board whose six-counter bodies are BENCHED resolves byte for byte, which is every board that does not think to damage the Active to exactly sixty. The caption even improves: it grows a \"Benched\" that reads perfectly plausibly",
+    file: "packages/engine/src/effects.ts",
+    find: '      return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];',
+    replace:
+      '      return [{ op: "knockOutChosen", target: "opponentBench", damageCountersExactly: counters }];',
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-funnel-scope-ternary-swaps-its-arms",
+    decision: "D416",
+    what: "🛑 THE SAME SCOPE DEFECT ONE LAYER DOWN AND AT A DIFFERENT ADDRESS: `knockOutChosenTargets`' ternary answers `oppBenchRefs` for `opponentAny` and `oppAnyRefs` for `opponentBench`. The doc block calls this line *\"`snipeTargets`' verbatim\"*, and a line written from memory against a two-member union is a coin flip about which arm is which. ⚠️ **THIS IS WHY THE DERIVER ROWS ABOVE ARE NOT ENOUGH.** Under those, the caption moves WITH the candidate set — `knockOutChosenNote` reads `target` too, so the dialog stays honest about a wrong set. Under THIS one the caption still says *\"Benched\"* while the prompt offers the Active: a dialog that contradicts its own validator, which is `switchTargetNoun`'s rule (D206/D331) and the one failure mode a state-shaped assertion cannot reach",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);',
+    replace:
+      '  const scope = op.target === "opponentAny" ? oppBenchRefs(state, seat) : oppAnyRefs(state, seat);',
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-counter-window-admits-anything-larger",
+    decision: "D416",
+    what: "🛑 *\"EXACTLY\"* BECOMES *\"AT LEAST\"*: the funnel's `===` is a `>=`. **AN AUTHOR MAKES THIS BECAUSE EVERY OTHER WINDOW IN THIS ENGINE IS A BOUND** — `gust.remainingHpAtMost`, `healChosen.remainingHpAtMost`, every printed *\"or less\"* — and because an equality on a number a player can change reads like a bug until you notice the print says the word. The field name (`damageCountersExactly`) is the whole defence and a field name does not execute. ⚠️ WHAT STILL LOOKS RIGHT: the printed board is a body at exactly six, and it is offered under BOTH spellings; the deriver is untouched; the caption still says *\"exactly 6\"*; and the FIVE-counter near-miss is still refused, so a suite fielding only the low side is fully green. Only the SEVEN-counter body — an over-damaged one the print passes over — separates them",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;",
+    replace:
+      "          return pokemon !== undefined && damageCountersOn(pokemon) >= op.damageCountersExactly;",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-counters-are-read-as-hit-points",
+    decision: "D416",
+    what: "🛑 THE UNIT IS DROPPED — `damageCountersOn` returns `pokemon.damage` instead of `Math.floor(damage / 10)`, so *\"exactly 6 damage counters\"* is compared against SIX HIT POINTS. **THIS IS THE MISTAKE THE FIELD IS SHAPED TO INVITE**: `InPlayPokemon.damage` is the only number in reach, it is spelled `damage`, and the printed noun is a UNIT this engine does not store — the three sites in `attack.ts` that already divide by ten are the evidence that it has to be converted every single time. ⚠️ WHAT STILL LOOKS RIGHT: **EVERYTHING STRUCTURAL.** The sentence still anchors, the op still derives with the right scope and the right count, `programFor` is still defined, the caption still reads *\"exactly 6 damage counters\"* and the attack still resolves. The window simply never matches on any board a card can produce (damage lands in tens), so every printing collapses to the SILENT ZERO ARM — an attack that looks like a coin that went the other way",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return Math.floor(pokemon.damage / 10);",
+    replace: "  return pokemon.damage;",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-chosen-funnel-drops-its-basic-narrowing",
+    // ⚠️ THIS ROW IS THE OTHER HALF OF A D416 REPAIR AND NOT AN AFTERTHOUGHT.
+    //    `knockOutChosenTargets` was written by copying `gustTargets`, which made
+    //    `D331-gust-ignores-its-own-rider` and its two neighbours match `2×` —
+    //    D404's wrong-arm trap, caught by `precheck`. Re-anchoring those rows onto
+    //    `gustTargets`' own lines fixes the ambiguity and would have left THIS copy
+    //    of the rider with no row at all: a line that used to be tested, moved into
+    //    a file nothing pins. The anchor here carries the counter-window filter
+    //    above it, which is this funnel's and cannot appear in the gust's.
+    decision: "D416",
+    what: "🛑 THE NEW FUNNEL'S `basicOnly` STOPS NARROWING — the early return is unconditional, so *\"Knock Out 1 of your opponent's Benched **Basic** Pokémon\"* offers benched Evolutions and the trailing filter becomes dead code. **AN AUTHOR MAKES THIS BY BUILDING THE FUNNEL FOR THE OTHER SENTENCE FIRST**: the counter-window printing spells no `basicOnly` at all, so the rider is unreachable on the board being driven and a missing line is a line that passes. ⚠️ WHAT STILL LOOKS RIGHT: on the printed board — an opponent Bench of Basics — the candidate set is IDENTICAL, the caption keeps its *\"Basic \"* (the note is a separate reader), the park shape, the forced arm and the zero arm are all unchanged. Only a bench holding an EVOLUTION separates them, which is the vacuous-rider defect D331 wrote its Stage 1 fixtures for, one op over",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;\n        });\n  if (op.basicOnly !== true) return inWindow;\n",
+    replace:
+      "          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;\n        });\n  return inWindow;\n",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-chosen-funnel-inverts-its-basic-narrowing",
+    decision: "D416",
+    what: "🛑 THE RIDER'S SENSE IS INVERTED — the funnel narrows when `basicOnly` is ABSENT and passes everything when it is set. **THIS BREAKS BOTH PRINTED SENTENCES IN OPPOSITE DIRECTIONS AT ONCE**, which is what makes it worse than the row above and why both exist: the flip sentence (`basicOnly: true`) goes back to offering benched Evolutions, and the counter sentence (no rider at all) starts REFUSING every non-Basic — a Stage 2 sitting on exactly six damage counters becomes uncatchable by a card printed to catch it. `D331-rider-narrows-every-gust` is the same inversion one funnel over; there the collateral was five shipped gusts, here it is the other half of this op's own slice. ⚠️ WHAT STILL LOOKS RIGHT: both sentences still derive, still park, still Knock Out and still caption themselves correctly — and a board of nothing but Basics, which is what a Basic-flavoured fixture pool tends to hold, cannot tell the two spellings apart in EITHER direction",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;\n        });\n  if (op.basicOnly !== true) return inWindow;\n  return inWindow.filter((ref) => {\n",
+    replace:
+      "          return pokemon !== undefined && damageCountersOn(pokemon) === op.damageCountersExactly;\n        });\n  if (op.basicOnly === true) return inWindow;\n  return inWindow.filter((ref) => {\n",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-shield-comes-off-the-candidate-set",
+    decision: "D416",
+    what: "🛑 §11 DISAPPEARS FROM THE PICK: `unshieldedRefs` is stripped off the funnel's result, so a body under *\"prevent all effects of attacks done to this Pokémon\"* is OFFERED and can be Knocked Out by an attack it is immune to. **AN AUTHOR MAKES THIS BY BELIEVING THE FUNNEL'S OWN DOC BLOCK** — it says at length that the shield is deliberately NOT in there (it announces refusals and needs `ctx`/`events`, which `programPlayable` has neither of), which is a correct reason to keep it out of the funnel and no reason at all to put it anywhere else. A guard that is documented as living somewhere else is a guard nobody owns. ⚠️ WHAT STILL LOOKS RIGHT: every board with no §11 body in play is byte-identical — the prompt, the caption, the candidate ORDER, the forced arm, the zero arm. And nothing is MISSING on the shielded board either: a refusal that never happens announces nothing, so the only signal is a body dying that should not have been on the list",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        unshieldedRefs(state, knockOutChosenTargets(state, ctx.seat, op), ctx, events),",
+    replace: "        knockOutChosenTargets(state, ctx.seat, op),",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-heads-arm-knocks-out-any-active",
+    // ⚠️ THE `biome-ignore` LINE IS INSIDE THIS ANCHOR ON PURPOSE AND IT IS THE
+    //    FRAGILE PART — `D414-basic-gate-becomes-unconditional` lost a whole sweep
+    //    to exactly that comment being ADDED between `cond:` and `then:` after the
+    //    row was prechecked. It is quoted rather than avoided because the defect is
+    //    STRUCTURAL (a nested object disappears) and no shorter unique block
+    //    expresses it. Re-run `precheck` after any lint pass over `effects.ts`.
+    decision: "D416",
+    what: "🛑 THE HEADS ARM LOSES ITS `conditionGate`, so *\"If heads, Knock Out your opponent's Active **Basic** Pokémon\"* Knocks Out an evolved Active too. **AN AUTHOR MAKES THIS BECAUSE `knockOutDefender` ALREADY READS AS THE WHOLE SENTENCE** — arm 6c one arm up composes a coin with a BARE `knockOutDefender`, so the shape *\"coin → knockOutDefender\"* is already in the file and looks finished; the printed adjective reads as scenery, and the op's own contract (*\"an Active exists\"*) does nothing to contradict that. ⚠️ AND THE ARM'S OWN COMMENT ADMITS THE NARROWING IS A RULES READING RATHER THAN AN ATTESTED FACT, which is precisely the kind of line a later editor deletes as over-thinking. ⚠️ WHAT STILL LOOKS RIGHT: on every board whose Active IS a Basic — the boards all four printings are played on — the program is behaviourally IDENTICAL: same coin, same Knock Out, same Prize, same D414 marker, same tails arm. Only a Stage 1 or Stage 2 Active separates them, and it must be built deliberately",
+    file: "packages/engine/src/effects.ts",
+    find: '        then: [\n          {\n            op: "conditionGate",\n            cond: { kind: "opponentActiveIsBasic" },\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract\'s gated-step list, not a thenable (arrays are not callable).\n            then: [{ op: "knockOutDefender" }],\n          },\n        ],\n        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
+    replace:
+      '        then: [{ op: "knockOutDefender" }],\n        otherwise: [{ op: "knockOutChosen", target: "opponentBench", basicOnly: true }],',
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-flip-anchor-loses-its-apostrophe-class",
+    decision: "D416",
+    what: "🛑 D202/D136's FAMILY ON THE FIRST OF D416's TWO ANCHORS: both possessives narrow to the ASCII apostrophe. **D414 SHIPPED TWO ANCHORS IN THIS EXACT FAMILY SPELLING A BARE `'`** and it was caught by a suite author noticing the asymmetry rather than by any rung, so this is a mistake with a date on it and not a hypothetical. This sentence prints the possessive TWICE (once per coin arm), which doubles the odds of getting one of them wrong and is why the row mutates both. ⚠️ WHAT STILL LOOKS RIGHT: **EVERYTHING, UNTIL AN INGEST CHANGES A CHARACTER.** Every fixture in this tree spells the ASCII form, so all four printings still derive, the program is unchanged and no assertion about the built op moves. The failure is SILENT and in the future: the sentence stops resolving, falls to the loud skip path, and four printings quietly leave the simulated set",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip a coin\\. If heads, Knock Out your opponent['’]s Active Basic Pokémon\\. If tails, Knock Out 1 of your opponent['’]s Benched Basic Pokémon\\.$/;",
+    replace:
+      "  /^Flip a coin\\. If heads, Knock Out your opponent's Active Basic Pokémon\\. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-counter-anchor-loses-its-apostrophe-class",
+    decision: "D416",
+    what: "🛑 THE SAME NARROWING ON THE SECOND ANCHOR, and it is a separate row because the two anchors are separate strings that were typed on separate lines — D414's pair proves the class can be right on one and missing on its neighbour. ⚠️ WHAT STILL LOOKS RIGHT: the capture group is untouched, so the count still comes off the print and the `>= 1` guard still holds; the derived op is identical on every card whose text carries the ASCII apostrophe, which is every local fixture. **THE ONLY WITNESS IS A SUITE THAT DERIVES BOTH SPELLINGS AND ASSERTS THEY AGREE**, which is what makes the widened class falsifiable instead of merely careful",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\\d+) damage counters on it\\.$/;",
+    replace:
+      "  /^Knock Out 1 of your opponent's Pokémon that has exactly (\\d+) damage counters on it\\.$/;",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-forced-knock-out-stamps-no-marker",
+    decision: "D416",
+    what: "🛑 THE CHOSEN KNOCK OUT STOPS SAYING HOW THE BODY DIED — `koByEffectMarker` is dropped from the FORCED apply, so `flow.ts` reads a non-damage Knock Out as a damage one. **AN AUTHOR MAKES THIS BY COPYING `knockOutSelf`**, whose call is `doomBodyAt(state, ref)` with a comment explaining that the omission is deliberate — and that comment is about the SEAT (*\"no cross-table claim over a body its own controller killed\"*), which does not transfer to an op that reaches the other side of the table. A deliberate omission copied out of context is indistinguishable from a forgotten argument. ⚠️ WHAT STILL LOOKS RIGHT: right body, right Prize, right discard, right `KNOCKED_OUT`, right promotion, right caption — **the Knock Out is perfect**. What breaks is D414's two hazards, re-armed one zone further out than D414 could reach: the revenge sentences read *\"Knocked Out by damage from an attack\"* as true, and Vengeful Punch pays recoil for a body that took no damage",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        (ref) => doomBodyAt(state, ref, koByEffectMarker(state.turn)),",
+    replace: "        (ref) => doomBodyAt(state, ref),",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+  {
+    id: "D416-answered-knock-out-stamps-no-marker",
+    decision: "D416",
+    what: "🛑 THE SAME OMISSION ON THE RESUMED HALF: the marker is dropped only when the pick actually PARKED. **THIS IS THE HALF AN AUTHOR IS LIKELIEST TO MISS AND THE HALF A SUITE IS LIKELIEST NOT TO DRIVE** — `parkOrForce` takes the forced arm at ONE candidate, which is the cheapest board to build, so every small fixture exercises the other line and this one is reached only at two or more. The arm's own comment claims the two paths are *\"byte-identical boards\"*; this row is what makes that claim falsifiable rather than aspirational. ⚠️ WHAT STILL LOOKS RIGHT: every forced board is untouched, so a marker assertion driven on a bench of one stays green; the parked board offers the right candidates, honours the picked ref, takes the Prize and discards the right stack. Only a board that PARKS, resolves, and THEN asks `byAttackFor` or Vengeful Punch can see it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? doomBodyAt(state, choice.ref, koByEffectMarker(state.turn))",
+    replace: "        ? doomBodyAt(state, choice.ref)",
+    expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
   },
 ];

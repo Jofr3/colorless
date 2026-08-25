@@ -556,7 +556,7 @@ describe("§5 — the persisted question, and the version pair", () => {
     expect(deriveAttackEffect(BOARD_ENERGY)).toBeNull();
     expect(programFor("fix-boardgrass")).toBeUndefined();
     expect(deriveAttackDamageBonus(BOARD_ENERGY)).not.toBeNull();
-    // 🆕🆕 D415 — 0.318.0 → **0.319.0**, moved with the behaviour: THE OPPONENT-SCOPED SPECIAL-ENERGY KO GATE (*"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."*, Haxorus `sv06.5-046`, 1 legal printing) is a WIDENING — ONE new `BoardCondition` member (`opponentActiveHasEnergyAttached`, the seat mirror of `yourActiveHasEnergyAttached`) behind the SHIPPED field-free `knockOutDefender` op, no new op and no new persisted field — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26.
-    expect(engineVersion).toBe("0.319.0");
+    // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
+    expect(engineVersion).toBe("0.320.0");
   });
 });
