@@ -469,10 +469,12 @@
 >
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE.**
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D417 has had `--decision D417` (5 killed / 0 GAPs) and a
-> `precheck` clean over 1,522, but no whole-corpus run against this head. Exposure is moderate: the
-> slice edited the `attack.ts` READER SEAM, which is densely anchored, and **two rows already rotted
-> there and were re-transcribed before the commit**.
+> ✅ **THE SWEEP DEBT IS PAID AND NOTHING IS OWED AT THIS HEAD.**
+> **1522 · 1498 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,526.1s**, `SWEEP_EXIT=0`. `1498 + 24 = 1522` closes; **verified by id in both
+> directions**, 1522 / 1522, 0 missing / 0 extra. All 5 D417 rows KILLED, and both rows that rotted
+> on the `attack.ts` seam with them. Declared survivors held at **24 for a thirty-fourth consecutive
+> sweep**.
 >
 > ### ▶ WHAT TO DO NEXT — THE EIGHT BLIND CENSUS INSTRUMENTS
 >
