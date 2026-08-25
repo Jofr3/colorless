@@ -24,6 +24,7 @@ import {
   types,
   walkProgram,
 } from "./testFixtures";
+import { koByEffectMarker } from "./types";
 
 // 0.90.0 → 0.91.0 — the GATED PREVENT clause (P3-M5 long tail, D142):
 //
@@ -825,9 +826,22 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       Iron Valiant `sv05-080` "Calculation" — the own-deck reorder. Its three
       opponent-deck siblings (`sv10-088`, `sv10.5w-042`/`-125`) emit the SAME op
       kind, so one sentence is what this set owes: it is keyed on the op the
-      deriver can emit, not on the printings that emit it. */
+      deriver can emit, not on the printings that emit it.
+
+      🆕🆕 **D414 — THE SECOND SENTENCE, AND IT IS HERE BY DESIGN RATHER THAN BY
+      OVERSIGHT.** `knockOutDefender`'s demonstrator (`fix-kod`) lives in a
+      FILE-LOCAL `cardPool` inside `knockOutDefender.test.ts` — D275's idiom, taken
+      deliberately: putting the sentence into `FIXTURE_POOL` would have reddened
+      this 2,273-line suite over a slice whose business was §8.1, not §11. The
+      third source above is exactly the repair for that trade, so the op enters the
+      sweep through the DERIVER instead of through the pool and the table is total
+      again without a shared-pool edit. The op's two other printed sentences
+      ("Both Active Pokémon are Knocked Out." and the coin-gated self-damage form)
+      emit the SAME op kind, so one sentence is all this set owes — the rule the
+      `reorderTop` entry above states. */
   const OFF_POOL_ATTACK_TEXT: readonly string[] = [
     "Look at the top 4 cards of your deck and put them back in any order.",
+    "If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out.",
   ];
 
   /** The classification the §11 block owes every one of them. `blocked` = a live
@@ -1332,6 +1346,35 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // this verdict is unchanged but the DESTINATION is not — `stadiumDiscard.test.ts`
     // §3 drives which pile received it, on a board where the two seats disagree.
     discardStadium: "untouched",
+    // 🆕🆕 **D414 — THE TWENTY-THIRD OP, AND THE FIRST THAT REACHES THIS TABLE
+    // THROUGH `OFF_POOL_ATTACK_TEXT` RATHER THAN THROUGH A POOL.** Its
+    // demonstrator sits in a file-local `cardPool` in `knockOutDefender.test.ts`
+    // (see that set's D414 note), so `attackOpKinds()`'s FIRST two sources are
+    // blind to it exactly as they were blind to `returnSelf` at D313 — and the
+    // THIRD source, which D341 added for precisely this, catches it. **THE
+    // POPULATION HOLE D313 NAMED IS NOW A PAID DEBT RATHER THAN A RECURRENCE.**
+    //
+    // **BLOCKED**, and it is `preventRetreat`'s verdict for `preventRetreat`'s
+    // reason: the op reaches the OPPONENT's Active and nothing else, which is
+    // squarely an effect of an attack done to the Defending Pokémon. The
+    // implementation says so itself — `knockOutDefender` (interpreter.ts) calls
+    // `effectRefused(state, seat, ctx, events)` on `otherSeat(ctx.seat)` and
+    // returns the state UNTOUCHED when it is true, which is the
+    // `ATTACK_EFFECT_PREVENTED` half of this table's `blocked` vocabulary.
+    //
+    // ⚠️ AND IT IS THE SIBLING SPLIT, WHICH IS THE PART A READER COULD GET WRONG:
+    // `knockOutSelf` does NOT ask §11 and is not in this table at all (no attack
+    // in the sweep's reach emits it bare — the both-sides printing pairs it with
+    // this op). That is a SEAT difference, not an inconsistency: `knockOutSelf`
+    // kills its own host, which no block on the opponent's body has any claim
+    // over. The same split `preventAttack` (blocked, defender arm) and
+    // `preventAttackUse` (untouched, own body) already carry two families up.
+    //
+    // ⚠️ AND THE REFUSAL IS TAKEN BEFORE THE STAMP IS WRITTEN, which is why the
+    // probe below can read the MARKER as its witness: a refused Knock Out leaves
+    // `markers` empty rather than stale, driven on the printed board in
+    // `knockOutDefender.test.ts` §6.
+    knockOutDefender: "blocked",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -2161,6 +2204,36 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
         return active === null ? undefined : active.stack[active.stack.length - 1];
       },
       landed: (r) => r.before.players.p2.active !== null && r.after.players.p2.active === null,
+    },
+    // 🆕🆕 D414 — the §8.1 doom, driven on the STANDARD board: the op reaches
+    // `otherSeat(ctx.seat)`'s Active, which from P2's chair is the shielded body
+    // itself, so no surgery is needed to put the block in the path.
+    //
+    // ⚠️ THE WITNESS IS THE MARKER **AND** THE DAMAGE, because either alone would
+    // be satisfied by half a landing: the op marks the body lethal against
+    // `effectiveMaxHp` and stamps `koByEffect:<turn>` so `flow.ts` can tell this
+    // Knock Out from one done BY DAMAGE, and a build that did one without the
+    // other has not run the op. The §8.1 sweep itself is NOT in the path here —
+    // `runProgram` marks and `resolveMidTurnKnockOuts` collects — so reading the
+    // emptied Active Spot would be reading a seam this harness does not cross.
+    knockOutDefender: {
+      op: { op: "knockOutDefender" },
+      board: () => {
+        const state = probeBoard();
+        // Undoomed to start with, or "did not land" would be true for a reason
+        // that has nothing to do with §11 — the vacuous-probe shape.
+        expect(p1Active(state)?.damage).toBe(0);
+        expect(p1Active(state)?.markers).toEqual([]);
+        return state;
+      },
+      landed: (r) => {
+        const after = p1Active(r.after);
+        if (after === null || after === undefined) return false;
+        return (
+          after.markers.includes(koByEffectMarker(r.before.turn)) &&
+          after.damage > (p1Active(r.before)?.damage ?? 0)
+        );
+      },
     },
   };
 

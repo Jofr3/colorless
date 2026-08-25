@@ -515,12 +515,16 @@
 >
 > ### ▶ TWO DEBTS THIS SLICE NAMED RATHER THAN PAID
 >
-> ⚠️ **(a) `knockOutDefender` HAS NO ROW IN `preventBlock.test.ts`'s CLASSIFICATION SWEEP.** That
-> sweep is total over the ops `FIXTURE_POOL`'s attack text can produce, and D414's demonstrator lives
-> in a FILE-LOCAL pool — deliberately, because putting the sentence in `FIXTURE_POOL` reddens a
-> 2,273-line suite that is not this slice's. The op's §11 behaviour IS driven on a real board in
-> `knockOutDefender.test.ts` §6; what is missing is that sweep's own coverage. **The fix is one
-> `OFF_POOL_ATTACK_TEXT` entry, one `CLASSIFIED` verdict and one probe.**
+> ✅ **(a) PAID — `knockOutDefender` NOW CARRIES ITS ROW AND ITS PROBE IN `preventBlock.test.ts`.**
+> One `OFF_POOL_ATTACK_TEXT` entry (the sentence verified byte-for-byte against
+> `censusAttackCorpus.ts`, not eyeballed), the `CLASSIFIED` verdict **`"blocked"`** — chosen from the
+> table's own D150 vocabulary rather than from the handoff, because the op refuses outright via
+> `effectRefused` and returns state unchanged, which is that verdict's first arm verbatim — and one
+> driven probe. ✅ **THE PROBE WAS RED-DRIVEN**: deleting the `effectRefused` call from
+> `knockOutDefender` reddens exactly one test, by name. Its `landed` witness requires **both** the
+> `koByEffect` stamp and a damage rise, since either alone is satisfied by half a landing. **+0 test
+> cases** — the probe rides existing rungs rather than adding one, which is what a totality table is
+> for. `FIXTURE_POOL` and every shared deck untouched.
 > ⚠️ **(b) THE BOOLEAN→STAMP CONVERSION FOR `retreatBlocked` IS STILL OPEN** (priced in D412: 1
 > producer, 1 log arm, 6 assertions, 0 schema, 1 player-visible log line).
 >
