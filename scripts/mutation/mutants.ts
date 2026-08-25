@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.320.0";',
+    find: 'export const engineVersion = "0.321.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -13981,10 +13981,16 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D363-effect-simulated-drops-the-split-gate",
+    // ⚠️ RE-POINTED AT D417, WHICH ADDED A THIRD CONJUNCT (`cancelSplit === null`)
+    //    FOR D363's OWN REASON ONE CLAUSE THE OTHER WAY ROUND. The defect this row
+    //    describes is unchanged — dropping the gate lets a printed requirement
+    //    SILENCE a sentence no reader resolved — and it now has two ways to happen
+    //    rather than one, since the requirement can be read off a LEADING or a
+    //    TRAILING clause and `effect` is the other half in both cases.
     decision: "D363",
     what: "🛑 THE SILENCER. `effectSimulated`'s requirement term stops being gated on `requirementSplit === null`, so a printed requirement marks the WHOLE compound simulated and the ATTACK_EFFECT_SKIPPED report for an unread companion sentence disappears. Nothing else changes — the attack still gates, still deals its damage, still passes every board assertion — and the engine goes quiet about text it cannot read. The failure D278/D279 cost two slices to learn, one boolean wide",
     file: "packages/engine/src/attack.ts",
-    find: "    (requirement !== null && requirementSplit === null) ||",
+    find: "    (requirement !== null && requirementSplit === null && cancelSplit === null) ||",
     replace: "    requirement !== null ||",
     expectKilledBy: ["packages/engine/src/sawkRequirementSplit.test.ts"],
   },
@@ -17444,11 +17450,17 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D409-attack-seam-keeps-the-whole-compound",
+    // ⚠️ RE-POINTED AT D417. The line is byte-identical except for the source it
+    //    falls back to: `composed` became `uncancelled`, because the cancel split
+    //    now sits BETWEEN the requirement split and the compound one. **The defect
+    //    is unchanged** — the compound's head is dropped and the whole string is
+    //    handed to the readers — and the mutant's `replace` moved with it so the
+    //    row still tests the fallback rather than accidentally testing the cancel.
     decision: "D409",
     what: "🛑 C6 — THE REBIND REVERTED: every reader below is given the WHOLE printed compound again instead of the head. This is the pre-D409 seam byte for byte, so it is what a revert or a bad merge produces rather than an invented defect. Measured on the real tree before this row was written: it fails 5 of the 24 cases, all of them boards.",
     file: "packages/engine/src/attack.ts",
-    find: "  const effect = compoundSplit === null ? composed : compoundSplit.head;",
-    replace: "  const effect = composed;",
+    find: "  const effect = compoundSplit === null ? uncancelled : compoundSplit.head;",
+    replace: "  const effect = uncancelled;",
     expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
   },
   {
@@ -17978,5 +17990,57 @@ export const MUTANTS: Mutant[] = [
     find: "        ? doomBodyAt(state, choice.ref, koByEffectMarker(state.turn))",
     replace: "        ? doomBodyAt(state, choice.ref)",
     expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
+  },
+
+  // ── D417 · the trailing, anaphoric cancel ──────────────────────────────────
+  // 🛑 C2 AND C3 ARE THE SLICE, AND THEY FAIL IN OPPOSITE DIRECTIONS. C2 lets a
+  //    sentence look BUILT when its cancel was dropped; C3 lets a sentence CANCEL
+  //    nothing when its reader was never consulted. Neither reddens a deriver
+  //    assertion — only a board that drives the un-payable case and asserts the
+  //    ABSENCE OF DAMAGE can tell either of them from the real build.
+  {
+    id: "D417-cancel-anchor-loses-its-apostrophe-class",
+    decision: "D417",
+    what: "🛑 C1 — D202's FAMILY ON THE NEW ANCHOR: the CONTRACTION narrows to the ASCII apostrophe alone, so a printing spelling U+2019 stops resolving and the whole attack silently stops being cancellable — **it does not half-resolve, it goes LOUD**, which is the failure this family is built to prefer but is still a printing lost. ⚠️ **THREE SLICES IN A ROW HAVE PAID FOR THIS CLASS** (D413 at the coin anchors, D414 shipping two anchors bare, D415 getting it right first time). The row is what makes the fourth one falsifiable rather than merely careful",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_CANCEL_TRAILING = /^(.+\\.) (If you can['’]t, this attack does nothing\\.)$/;",
+    replace: "const ATTACK_CANCEL_TRAILING = /^(.+\\.) (If you can't, this attack does nothing\\.)$/;",
+    expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
+  },
+  {
+    id: "D417-cancel-splitter-drops-its-accounting-guard",
+    decision: "D417",
+    what: "🛑 C2 — **THE ACCOUNTING GUARD, AND IT IS THE WHOLE SAFETY OF A FOURTH STRIPPER.** The splitter stops refusing heads the table does not carry, so ANY sentence ending in the cancel clause gets split — and its head is handed to the readers while its cancel is silently dropped on the floor. **THE SENTENCE THEN LOOKS BUILT**: the head may well resolve, `effectSimulated` goes true, and a printing whose entire point is that it CANCELS resolves as though it never could. `splitAttackRequirementClause` carries the identical guard for the identical reason; this row is why the fourth stripper is allowed to exist",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (head === \"\") return null;",
+    replace: "  if (head === \"\") return null;\n  return { head, clause: cancel[2] ?? \"\" };",
+    expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
+  },
+  {
+    id: "D417-attack-seam-drops-the-cancel-fold",
+    decision: "D417",
+    what: "🛑 C3 — **THE FOLD IS DROPPED AND THE CANCEL NEVER REACHES THE GATE**: `requirement` reverts to the LEADING reader alone. D125's gate at the §8.5 seam is byte-identical and still correct — it simply never sees a trailing cancel, so the attack **deals its full printed damage on a board where the print says it does nothing**. ⚠️ **NOTHING ABOUT THE DERIVER GOES RED**: the splitter still splits, the table still answers, the reader still returns a `BoardCondition`. Only a BOARD that drives the un-payable case and asserts the ABSENCE OF DAMAGE can see it",
+    file: "packages/engine/src/attack.ts",
+    find: "  const requirement = leadingRequirement ?? cancelRequirement;",
+    replace: "  const requirement = leadingRequirement;",
+    expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
+  },
+  {
+    id: "D417-cancelled-head-is-handed-back-whole",
+    decision: "D417",
+    what: "🛑 C4 — THE HEAD IS NOT STRIPPED: `uncancelled` falls back to the whole `composed` string, so the readers are handed the sentence WITH its trailing cancel clause still attached. Every whole-sentence anchor is `^…$`, so the head stops resolving — the cancel still fires correctly, but the printed EFFECT is lost and the attack cancels on a board it should have resolved on. **THIS IS D409's SAME MISTAKE ONE STRIPPER OVER**, which is why the row is spelled the same way",
+    file: "packages/engine/src/attack.ts",
+    find: "  const uncancelled = cancelSplit === null ? composed : cancelSplit.head;",
+    replace: "  const uncancelled = composed;",
+    expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
+  },
+  {
+    id: "D417-cancel-table-answers-the-wrong-board-fact",
+    decision: "D417",
+    what: "🛑 C5 — THE TABLE'S ONE ROW POINTS AT THE WRONG MEMBER: `stadiumInPlay` becomes `yourStadiumInPlay`, its OWNERSHIP twin — a real member, one identifier away, and the pair D378 built a whole slice to keep apart. **THE ATTACK STILL CANCELS AND STILL RESOLVES**; it simply asks whether YOU own a Stadium rather than whether one is in play, so the print is wrong on exactly the board where the OPPONENT played it. ⚠️ **THE TABLE IS KEYED ON THE HEAD SENTENCE, WHICH IS WHAT MAKES THIS REACHABLE AT ALL** — a clause-keyed table would have one row for the whole family and no place to be wrong per printing",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Discard a Stadium in play.\", { kind: \"stadiumInPlay\" }],",
+    replace: "  [\"Discard a Stadium in play.\", { kind: \"yourStadiumInPlay\" }],",
+    expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
   },
 ];

@@ -12596,6 +12596,166 @@ export function splitAttackRequirementClause(
   return { clause: `If ${nothing[1] ?? ""}, this attack does nothing.`, body };
 }
 
+// 🆕🆕 D417 — THE TRAILING, ANAPHORIC CANCEL. `ATTACK_DOES_NOTHING` above is
+// `^`-anchored, so it reads only sentences that OPEN with the clause; the pool
+// also prints the SAME cancel BEHIND its body, with the "can't" pointing back at
+// the sentence in front of it:
+//
+//   Eternatus `sv08-141` "World Ender" ({R}{D}{D}, 230)
+//     *"Discard a Stadium in play. If you can't, this attack does nothing."*  **1 legal printing**
+//   Ogerpon-shaped `sv06-025`
+//     *"Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing."*  **1 legal printing**
+//
+// D380 named the gap in as many words: *"THE MEMBER WAS RIGHT AND THE READER WAS
+// MISSING, which is a different refusal from 'no vocabulary'."* `stadiumInPlay`
+// (D378) already answers the Eternatus board fact — §7.3's zone is a singleton and
+// nothing can make an occupied zone undiscardable, so *"you can't discard a Stadium
+// in play"* IS *"the zone is empty"* — and the ONLY thing between the printed
+// sentence and D125's gate was an anchor that could not see a clause printed last.
+//
+// 🛑 **THIS BUYS NO NEW RESOLUTION SITE, AND D125 IS WHY.** *"This attack does
+// nothing"* means no damage, no W/R, no effect ops, no triggers, and an effect
+// PROGRAM runs at `attack.ts`'s TAIL, strictly AFTER the §8.5 pipeline — no op can
+// retract damage already dealt. A derived shape is classified by WHERE IN
+// RESOLUTION IT LANDS, not by how its sentence reads, so this clause is a
+// REQUIREMENT and lands on the requirement gate that has sat in front of §8.5
+// since D125. The site folds it into that gate's existing `requirement` value; the
+// gate itself is byte-unchanged.
+//
+// ⚠️ **THE CLAUSE IS BARE, AND THAT IS THE WHOLE POPULATION.** The corpus also
+// prints *"If you can't discard 6 cards in this way, this attack does nothing."*
+// (2 printings) — a cancel that NAMES its own referent and is therefore NOT
+// anaphoric. It is refused here by construction (the anchor admits `can't,` and
+// nothing between it and the comma) and stays on the loud ATTACK_EFFECT_SKIPPED
+// path, because reading it would need the head's ARITHMETIC and not just the
+// head's identity.
+//
+// ⚠️ THE HEAD GROUP IS GREEDY AND ENDS IN A PERIOD, so on a hypothetical compound
+// carrying the clause twice the LAST one is taken — the same end of the string
+// `splitAttackTrailingClause` splits at, and the opposite of
+// `ATTACK_DOES_NOTHING`'s lazy leading group, which takes the FIRST. Each anchor
+// is greedy TOWARDS the end it is anchored to. No printing spells that shape.
+//
+// The clause is a CAPTURE rather than a literal suffix so the split hands back the
+// printed bytes (D136/D137: `['’]` because "can't" is a contraction, and the fold
+// in `literalClauseRow` covers the TABLE's keys, not this one). Anchored `^…$`
+// with the required trailing period and no /i, exactly like every other reader in
+// this file.
+const ATTACK_CANCEL_TRAILING = /^(.+\.) (If you can['’]t, this attack does nothing\.)$/;
+
+/** 🆕🆕 D417 — the printed HEAD SENTENCE an anaphoric *"If you can't,"* points
+    back at → the POSITIVE board fact that head's action REQUIRES.
+
+    🛑 **KEYED ON THE HEAD AND NOT ON THE CLAUSE, AND THE ANAPHOR FORCES IT.** The
+    clause is byte-identical on every printing of this family — it carries no
+    referent of its own, which is what "anaphoric" means — so a table keyed on it
+    could hold exactly ONE row and would answer every member of the family with
+    that row's condition. *"If you can't,"* means **a Stadium is in play** behind
+    Eternatus's discard and **a Basic {G} Energy card in hand** behind Ogerpon's.
+    The referent IS the head, so the head is the key.
+
+    ⚠️ **THAT IS ALSO WHAT MAKES A SECOND MEMBER COST A ROW AND NOTHING ELSE.**
+    D380's bar: *"a split built for one card serves one card, and it must be
+    GENERAL OVER ITS BODY the way `splitAttackRequirementClause` is general over
+    its leading one."* The anchor, the splitter, the reader and the site are all
+    blind to WHICH head is printed; the only card-specific byte in this slice is
+    the key below. A successor who wants Ogerpon adds
+    `["Discard a Basic {G} Energy card from your hand.", { kind: … }]` and stops —
+    no anchor, no arm, no branch at the site.
+
+    A `Map` for `CONDITIONAL_DAMAGE_CLAUSES`' reason: arbitrary printed text must
+    not reach `Object.prototype`. Read through `literalClauseRow` (D137) like every
+    other exact lookup in this file, so a U+2019 reprint of a key folds — this
+    key spells no apostrophe and no é, so the fold is inert on it today and live
+    the moment a row needs it.
+
+    ⚠️ Deliberately shares no lookup with `ATTACK_REQUIREMENT_CLAUSES`: that table
+    is keyed on a printed NEGATIVE clause under a leading consequent, this one on a
+    printed IMPERATIVE SENTENCE under a trailing one. Two shapes, two vocabularies,
+    one helper (D137's rule). */
+const ATTACK_CANCEL_HEADS = new Map<string, BoardCondition>([
+  // 🆕🆕 D417 — Eternatus `sv08-141` "World Ender" ({R}{D}{D}, 230), **1 legal
+  // printing**. `discardStadium` (D380) already reads this head as a program and
+  // `stadiumInPlay` (D378) already answers it as a board fact, so this row buys
+  // NEITHER an op NOR a `BoardCondition` member — it buys the JOIN between the
+  // two, which is the anaphor's whole content.
+  //
+  // 🛑 THE POSITIVE, NOT THE NEGATIVE. The site cancels when the condition does
+  // NOT hold (D125's polarity, unchanged), so the value here is what the attack
+  // REQUIRES — "a Stadium is in play" — and never "the zone is empty".
+  ["Discard a Stadium in play.", { kind: "stadiumInPlay" }],
+]);
+
+/** 🆕🆕 D417 — THE FOURTH SPLIT AT `attack.ts`'s reader seam, and the first
+    pointed at a TRAILING clause that is SPENT rather than read: take the printed
+    *"If you can't, this attack does nothing."* off the BACK of an attack's effect
+    text and hand back the head sentence it points at, or `null` when the text does
+    not end in one this engine can account for.
+
+    🛑 **THE ACCOUNTING GUARD IS `splitAttackRequirementClause`'s, VERBATIM IN
+    SPIRIT: IT REFUSES ANY HEAD `ATTACK_CANCEL_HEADS` DOES NOT CARRY.** Without it
+    this function would strip a printed cancel that NOTHING answers, and the site
+    would resolve the head alone — an attack that should have done nothing dealing
+    its full damage, which is the D278/D279 "too loose" failure in its most
+    expensive direction. An unmapped *"<head>. If you can't, this attack does
+    nothing."* therefore keeps its WHOLE printed string and stays on the loud
+    ATTACK_EFFECT_SKIPPED path, byte for byte as before this slice.
+
+    ⚠️ **AND IT WIDENS NO READER.** Every deriver in this file stays `^…$` anchored
+    on the string it is given; this produces a DIFFERENT string and the readers run
+    over that whole, so a head they refuse is refused LOUDLY and named.
+
+    ⚠️ **DISJOINT FROM THE OTHER THREE STRIPPERS OVER ALL 1,732 LEGAL UNITS**, and
+    measured rather than argued (`splitOrder.test.ts` §6 pins all six pairs as a
+    tripwire): `splitAttackGateClause` finds no leading gate clause on either
+    printing, `splitAttackRequirementClause`'s `^If` refuses a cancel printed last,
+    and `splitAttackTrailingClause` refuses both because a does-nothing tail is not
+    a sentence `deriveAttackEffect` claims. So the site's ORDER among the four is
+    unobservable on the catalog — which is exactly why the fourth stripper is still
+    a narrow anchored function and not a generic sentence-list composer (D282's
+    standing refusal, re-derived).
+
+    Returns the head and the clause separately rather than the head alone, so a
+    caller that wants to assert WHICH clause it accounted for can — D282's reason,
+    unchanged through three successors. */
+export function splitAttackCancelClause(
+  text: string,
+): { head: string; clause: string } | null {
+  const trimmed = text.trim();
+  const cancel = ATTACK_CANCEL_TRAILING.exec(trimmed);
+  if (cancel === null) return null;
+  const head = (cancel[1] ?? "").trim();
+  // A clause with nothing in front of it is not a split, and it is not anaphoric
+  // either — there is nothing for the "can't" to point back at. Unreachable
+  // through the anchor above (`.+\.` cannot match empty), and spelled anyway so
+  // the guard survives a widened head group.
+  if (head === "") return null;
+  // 🛑 THE ACCOUNTING GUARD. See the block above: this is the line that keeps an
+  // unanswered cancel LOUD instead of deleting it.
+  if (literalClauseRow(ATTACK_CANCEL_HEADS, head) === undefined) return null;
+  return { head, clause: cancel[2] ?? "" };
+}
+
+/** 🆕🆕 D417 — the board fact an attack REQUIRES read off a TRAILING anaphoric
+    cancel, or `null` when the text does not end in one this engine can account for
+    — `null` keeps the attack on the loud ATTACK_EFFECT_SKIPPED path, never on a
+    silent cancel.
+
+    Returns the POSITIVE condition, exactly as `deriveAttackRequirement` does:
+    `attack.ts` folds the two into ONE `requirement` value and cancels when it does
+    NOT hold, so this reader lands on D125's gate rather than beside it.
+
+    🛑 **THE READER IS THE SPLITTER PLUS THE LOOKUP, AND THAT IS THE POINT.** Both
+    go through the same accounting guard, so they can never disagree about which
+    printings are claimed: a string this returns a condition for is exactly a
+    string `splitAttackCancelClause` splits, and the site relies on that pairing to
+    know the clause it strips is the clause it answered. */
+export function deriveAttackCancelRequirement(text: string): BoardCondition | null {
+  const split = splitAttackCancelClause(text);
+  if (split === null) return null;
+  return literalClauseRow(ATTACK_CANCEL_HEADS, split.head) ?? null;
+}
+
 // The PRINTED COIN FLIP (D126) — "Flip a coin. If heads, this attack does N more
 // damage." (20 printings) and "Flip a coin. If tails, this attack does nothing."
 // (11 printings). Two sentences, 31 printings, and the reason they are ONE slice
@@ -20124,6 +20284,18 @@ const ATTACK_WHOLE_SENTENCE_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
   deriveAttackDiscardScaledBoost,
+  // 🆕🆕 D417 — THE TWELFTH, AND THE TRIPWIRE ABOVE IS WHAT SAID SO: the reader
+  // landed, `compoundCompose.test.ts` §1 went red naming it, and this array was
+  // re-pointed rather than the assertion relaxed. ⚠️ **AND THE ADDITION MOVES NO
+  // SPLIT ON THE CATALOG, WHICH WAS MEASURED RATHER THAN ASSUMED**: over all 640
+  // sentences the ONE string this reader claims already failed
+  // `splitAttackTrailingClause`'s tail test (a does-nothing clause is not an
+  // effect `deriveAttackEffect` claims), and ZERO corpus sentences have a HEAD
+  // this reader claims — so the shadow refusal gains a member it never needed and
+  // the head test gains none. It belongs here anyway, and for the reason the block
+  // above gives: the guard is against a FUTURE compound whose head this reader
+  // already owns whole, and that compound is one printing away.
+  deriveAttackCancelRequirement,
 ];
 
 /** Does ANY whole-sentence reader claim this string? The splitter's refusal and

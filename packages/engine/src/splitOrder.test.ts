@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
+  deriveAttackCancelRequirement,
   deriveAttackDamageSuppression,
+  deriveAttackEffect,
   deriveAttackRequirement,
+  splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackRequirementClause,
+  splitAttackTrailingClause,
 } from "./effects";
 import type { GameState } from "./index";
 import { programFor, registryCardIds } from "./registry";
@@ -68,6 +72,14 @@ const SAWK_HEAD =
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.";
 /** Its trailing companion — `deriveAttackDamageSuppression`'s since D192. */
 const SAWK_TAIL = "This attack's damage isn't affected by Weakness or Resistance.";
+/** 🆕🆕 D417 — Eternatus `sv08-141` "World Ender", as PRINTED: the TRAILING,
+    ANAPHORIC cancel and the fourth stripper's whole population (1 legal unit). */
+const CANCEL_PRINTING = "Discard a Stadium in play. If you can't, this attack does nothing.";
+/** Its head — `deriveAttackEffect`'s since D380, and the TABLE's key. */
+const CANCEL_HEAD = "Discard a Stadium in play.";
+/** Its trailing clause. Byte-identical on every member of the family, which is what
+    "anaphoric" means and why the table cannot be keyed on it. */
+const CANCEL_CLAUSE = "If you can't, this attack does nothing.";
 /** D282's BAN spelling, printed on 7 legal units. */
 const GATE_BAN = "If you go second, you can't use this attack during your first turn.";
 /** D282's LICENCE spelling, printed on 3 legal units — and the one that is NOT
@@ -93,6 +105,23 @@ function siteOrder(text: string): string {
 function reversedOrder(text: string): string {
   const stripped = splitAttackRequirementClause(text)?.body ?? text;
   return splitAttackGateClause(stripped)?.body ?? stripped;
+}
+
+/** 🆕🆕 D417 — the site's order over all FOUR strippers: gate clause off the front,
+    then the requirement clause, then the cancel clause off the BACK, then D409's
+    trailing composition. What is left is the string the readers see. */
+function fourSiteOrder(text: string): string {
+  const gated = splitAttackGateClause(text)?.body ?? text;
+  const required = splitAttackRequirementClause(gated)?.body ?? gated;
+  const uncancelled = splitAttackCancelClause(required)?.head ?? required;
+  return splitAttackTrailingClause(uncancelled)?.head ?? uncancelled;
+}
+/** The four in the exact opposite order. Not what attack.ts does — §6's control. */
+function fourReversedOrder(text: string): string {
+  const composed = splitAttackTrailingClause(text)?.head ?? text;
+  const uncancelled = splitAttackCancelClause(composed)?.head ?? composed;
+  const required = splitAttackRequirementClause(uncancelled)?.body ?? uncancelled;
+  return splitAttackGateClause(required)?.body ?? required;
 }
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
@@ -479,5 +508,137 @@ describe("§5 — on a board: the requirement is read BEFORE the split, and that
     expect(after.events.find((e) => e.type === "ATTACK_FAILED")).toMatchObject({
       reason: "requirement",
     });
+  });
+});
+
+// 🆕🆕 D417 — THE FOURTH STRIPPER, AND IT OWES §2's MEASUREMENT OVER FOUR RATHER
+// THAN TWO. `splitAttackCancelClause` takes the printed *"If you can't, this attack
+// does nothing."* off the BACK of a compound and hands the head sentence to the
+// readers, so `attack.ts` now runs FOUR head/tail strippers in a fixed order at one
+// seam. §2 pinned the disjointness of the first two as a tripwire; three strippers
+// have six pairs, four have SIX MORE, and none of them had a number.
+//
+// 🛑 THE ANSWER IS THE SAME ONE, WIDER: **ALL SIX PAIRS ARE DISJOINT OVER ALL 1,732
+// LEGAL UNITS**, so the site's order among the four is unobservable on the catalog
+// and a generic composer is still scaffolding for a population of zero. That is the
+// measurement, and §6 is where it is a TRIPWIRE rather than a paragraph — the day a
+// printing carries two, exactly one pair reddens BY NAME.
+//
+// ⚠️ AND EACH REFUSAL IS ATTRIBUTED, NOT COUNTED. A matrix of zeroes is what a
+// suite of four dead functions also produces, so the section below states WHY each
+// stripper refuses the cancel family before it states that it does:
+//   • `splitAttackGateClause` matches a fixed LEADING clause list, and neither
+//     anaphoric printing opens with one;
+//   • `splitAttackRequirementClause` is `^If`-anchored — that is the whole gap D380
+//     named and D417 closes, so its refusal here is the slice's own premise;
+//   • `splitAttackTrailingClause` requires its tail to be a sentence
+//     `deriveAttackEffect` CLAIMS, and a does-nothing clause is not one. **THIS IS
+//     THE ONLY PAIR THAT COULD PLAUSIBLY HAVE COLLIDED** — both split at the same
+//     end of the same string — and the condition that separates them is driven
+//     rather than asserted.
+describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", () => {
+  /** The four, by name, in the order `attack.ts` runs them. */
+  const STRIPPERS: readonly (readonly [string, (text: string) => unknown])[] = [
+    ["gate", splitAttackGateClause],
+    ["requirement", splitAttackRequirementClause],
+    ["cancel", splitAttackCancelClause],
+    ["trailing", splitAttackTrailingClause],
+  ];
+
+  it("🛑 prices each stripper live off the corpus — 6/14, 1/2, 1/1, 9/18", () => {
+    const priced = STRIPPERS.map(([name, split]) => {
+      const rows = corpus().filter(([, s]) => split(s) !== null);
+      return [name, rows.length, units(rows)] as const;
+    });
+    // 🆕🆕 D417 — the fourth row is the new one; the first two are §2's figures
+    // re-derived through this section's own instrument, so the two sections cannot
+    // drift apart silently.
+    expect(priced).toEqual([
+      ["gate", 6, 14],
+      ["requirement", 1, 2],
+      ["cancel", 1, 1],
+      ["trailing", 9, 18],
+    ]);
+    // …and every one of the four MOVES a string, which is what stops the matrix
+    // below being a matrix of four dead functions.
+    for (const [name, sentences] of priced) expect([name, sentences > 0]).toEqual([name, true]);
+  });
+
+  it("🛑🛑 THE TRIPWIRE: 0 of 1,732 legal units are claimed by any TWO of the four", () => {
+    const collisions: string[] = [];
+    for (let i = 0; i < STRIPPERS.length; i += 1) {
+      for (let j = i + 1; j < STRIPPERS.length; j += 1) {
+        const [nameA, splitA] = STRIPPERS[i] ?? ["", () => null];
+        const [nameB, splitB] = STRIPPERS[j] ?? ["", () => null];
+        const both = corpus().filter(([, s]) => splitA(s) !== null && splitB(s) !== null);
+        // Named rather than summed: the day this fires, the message says WHICH pair
+        // and WHICH printing, which is the whole value of a tripwire.
+        for (const [n, s] of both) collisions.push(`${nameA} x ${nameB} (${n}): ${s}`);
+      }
+    }
+    expect(collisions).toEqual([]);
+    // The six pairs really were walked — a loop with the bounds wrong produces an
+    // empty array too.
+    expect((STRIPPERS.length * (STRIPPERS.length - 1)) / 2).toBe(6);
+  });
+
+  it("🛑 the near-collision, ATTRIBUTED: the trailing splitter refuses a does-nothing tail", () => {
+    // `splitAttackCancelClause` and `splitAttackTrailingClause` split at the SAME
+    // end of the SAME string, so "they are disjoint" is worth nothing without the
+    // reason. The reason is one condition: the trailing splitter's tail must be a
+    // sentence `deriveAttackEffect` claims, and this clause is not.
+    expect(deriveAttackEffect(CANCEL_CLAUSE)).toBeNull();
+    for (const [, s] of corpus().filter(([, s]) => s.endsWith(CANCEL_CLAUSE))) {
+      expect(splitAttackTrailingClause(s), s).toBeNull();
+      // …while the gate list and the `^If` anchor refuse them from the FRONT, which
+      // is a different reason and is stated as one.
+      expect(splitAttackGateClause(s), s).toBeNull();
+      expect(splitAttackRequirementClause(s), s).toBeNull();
+      expect(s.startsWith("If "), s).toBe(false);
+    }
+    // 🛑 AND THE CONVERSE, so the condition above is doing the work rather than the
+    // shape: change the tail to one `deriveAttackEffect` DOES claim and the trailing
+    // splitter takes the very string the cancel splitter refuses.
+    const composable = `${CANCEL_HEAD} Discard 3 Energy from this Pokémon.`;
+    expect(splitAttackCancelClause(composable)).toBeNull();
+    expect(splitAttackTrailingClause(composable)).toEqual({
+      head: CANCEL_HEAD,
+      tail: "Discard 3 Energy from this Pokémon.",
+    });
+  });
+
+  it("🛑 the ORDER among the four is UNOBSERVABLE on the catalog — the consequence", () => {
+    // §2's claim, one stripper wider: with every pair disjoint there is no printed
+    // string the four answer differently in any order, which is why the fourth
+    // stripper is a narrow anchored function and not a `splitHead` loop (D282's
+    // standing refusal, re-derived rather than inherited).
+    for (const [, text] of corpus()) {
+      expect(fourSiteOrder(text), text).toBe(fourReversedOrder(text));
+    }
+    // The CONTROL that says both pipelines really run: each moves the strings its
+    // own stripper owns, and the cancel printing is moved by both.
+    expect(fourSiteOrder(SAWK)).toBe(SAWK_TAIL);
+    expect(fourSiteOrder(CANCEL_PRINTING)).toBe(CANCEL_HEAD);
+    expect(fourReversedOrder(CANCEL_PRINTING)).toBe(CANCEL_HEAD);
+    // 🆕🆕 D417 — **17**, and it is NOT §2's 7 plus one. §2's pipeline runs two
+    // strippers and moves 7 sentences; this one runs four and moves **7 + 9 + 1**:
+    // D409's trailing composition moves nine on its own and had never been counted
+    // through this instrument, and the cancel printing is the one. The sum is
+    // asserted as its parts so a stripper that stopped moving anything is a red
+    // line here rather than a smaller total nobody reads.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(17);
+    expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
+    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(9);
+    expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(1);
+  });
+
+  it("🛑 the reader and the splitter agree on exactly one printing, and it is the same one", () => {
+    // The site strips a clause it has ANSWERED — that pairing is the whole safety of
+    // the fourth stripper, and it holds because both functions run one guard.
+    const split = corpus().filter(([, s]) => splitAttackCancelClause(s) !== null);
+    const read = corpus().filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
+    expect(split.map(([, s]) => s)).toEqual(read.map(([, s]) => s));
+    expect([read.length, units(read)]).toEqual([1, 1]);
+    expect(read[0]?.[1]).toBe(CANCEL_PRINTING);
   });
 });

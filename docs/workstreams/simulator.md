@@ -25690,6 +25690,68 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D417 — THE TRAILING, ANAPHORIC CANCEL: a reader for a mechanism that already existed (engine 0.321.0, `MATCH_RECORD_VERSION` **STAYS 26**)
+
+*"Discard a Stadium in play. If you can't, this attack does nothing."* — Eternatus `sv08-141`,
+**1 sentence / 1 legal printing**. One regex, one splitter, one head-keyed table, one reader, and
+four lines at the `attack.ts` reader seam.
+
+### The scoping inverted the plan
+
+The handoff said to price the cancel and, if it did not exist, choose a placement. **It exists.**
+`attack.ts` has cancelled whole attacks in front of the §8.5 pipeline since **D125**, with the
+printed semantics in its own comment — *"no damage, no W/R, no effect ops, no triggers"*. What was
+missing was a **reader**: the existing anchor is `^`-anchored and reads only sentences that OPEN with
+the clause; this printing puts it TRAILING and ANAPHORIC. **D380 had already named the gap** — *"the
+member was right and the reader was missing, which is a different refusal from 'no vocabulary'"*.
+
+⚠️ An abort **op** was refused by D125's standing rule, not by preference: a program runs after the
+damage pipeline, and *"a derived shape is classified by WHERE IN RESOLUTION IT LANDS"*.
+
+**The table is keyed on the HEAD SENTENCE, and that is forced.** The clause is byte-identical across
+the family and carries no referent — which is what *anaphoric* means — so the referent is the head. A
+second printing costs one `Map` row: no anchor, no arm, no branch.
+
+**The fourth head/tail stripper paid its disjointness debt**: all six pairs measured **0 / 0** over
+640 sentences / 1,732 legal units, each refusal attributed to the rule that produces it, and the
+converse driven rather than asserted.
+
+### 🛑 The bigger finding: a census instrument had gone blind
+
+`censusAtHead.test.ts` keeps a **hand-maintained local copy** of the reader list, and it held **11
+entries against 12 exported** — so `BUILT.attack`, the figure most of this repo's accounting keys
+off, was computed from an 11-reader view. Its sibling `precociousEvolution.test.ts` has exactly the
+tripwire that would have caught it; **`censusAtHead.test.ts` had zero references to it, and had had
+none since the file was written at D233.**
+
+**The stale entry was the symptom; the missing guard was the defect.** Measured, not assumed: one
+reader missing (D417's own, so the drift was one slice old), delta exactly +1/+1, checked by running
+the 11- and 12-reader views side by side. The file now derives its surface from the **module** and
+pins **both the diff and the count** — the count separately, because a diff alone stays green when a
+reader is deleted from the module and the list together.
+
+### ⚠️ And the same class sits in eight more suites
+
+`benchNamedBonus`, `exOnlyActive`, `retreatCostBonus`, `sameEnergyBonus`, `sawkRequirementSplit` run
+**9** readers; `inPlayTypeBonus`, `moreEnergyBonus`, `opponentBenchCount` run **11**. None has a
+module-surface rung, and **every one claims its list is "the same set `censusAtHead.test.ts` uses"** —
+false in all eight. Their figures are internally consistent with their own lists, **which is exactly
+why none has ever reddened**. Named and left for its own slice; the resume point says how to decide
+it per file (does the suite claim to measure THE HEAD, or only its own slice's delta against a frozen
+baseline? — those cost very different slices, and the doc claim is false either way).
+
+### The rule this slice earned
+
+🛑 **An instrument with a hand-kept copy of something the module already exports cannot go red — it
+can only go quiet.** The guard is not "keep the copy updated", it is "derive it from the module and
+pin both the diff and the count". **And when you add that guard to one file, grep for the other
+copies in the same breath.**
+
+**CENSUS**: raw 411 → **412** / 1363 → **1364**; `BUILT.attack` 1410 → **1411**; residue 568 →
+**567**; `unbuiltAttack` 322 → **321**. `splitHead` **13**, `compoundHead` **18**, registry **16**
+unmoved. **5 mutants / 5 killed / 0 GAPs**; corpus 1517 → **1522**. `bun run check` **418 files /
+8,881 tests, exit 0** (+1 file / +25 cases).
+
 ## D416 — THE KNOCK OUT THAT IS A *CHOICE*: one parking op for two sentences (engine 0.320.0, `MATCH_RECORD_VERSION` **STAYS 26**)
 
 **2 sentences / 6 legal printings** on ONE new parking op:

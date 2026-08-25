@@ -61,10 +61,12 @@ import {
   deriveAttackOptionalBoost,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackCancelRequirement,
   deriveAttackRequirement,
   optionalBoostProgram,
   discardScaledBoostProgram,
   optionalCostBoostProgram,
+  splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackTrailingClause,
   splitAttackRequirementClause,
@@ -776,8 +778,51 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // most one of the three ever fires on a given attack. 🆕 D363 — read off
   // `gated`, NOT off `effect`: the reader's own anchor tolerates a trailing
   // companion now, and `effect` is that companion once a split has fired.
-  const requirement = gated === null || gated === "" ? null : deriveAttackRequirement(gated);
+  const leadingRequirement =
+    gated === null || gated === "" ? null : deriveAttackRequirement(gated);
   const composed = requirementSplit === null ? gated : requirementSplit.body;
+  // 🆕🆕 D417 — THE FOURTH SPLIT, AND THE SECOND POINTED AT THE *TRAILING* END OF
+  // THE SENTENCE — but unlike D409's it strips a clause that is SPENT rather than
+  // composing one that still has to be read. `splitAttackCancelClause` takes the
+  // printed *"If you can't, this attack does nothing."* off the BACK; the clause is
+  // discharged by `deriveAttackCancelRequirement` on the very next line, off the
+  // UNSPLIT string, exactly as D363 reads its leading clause before spending it.
+  //
+  // 🛑 THE READING LANDS ON D125's GATE AND NOWHERE ELSE, WHICH IS WHY THIS IS A
+  // `requirement` AND NOT AN `EffectOp`. The printed words are "this attack does
+  // nothing", so nothing is what may happen — no damage, no W/R, no effect ops, no
+  // triggers — and an effect PROGRAM runs at this function's TAIL, strictly after
+  // the §8.5 pipeline, where no op can retract damage already dealt. D125's rule:
+  // a derived shape is classified by WHERE IN RESOLUTION IT LANDS, not by how its
+  // sentence reads. The gate below is byte-unchanged; only the value it reads grew
+  // a second source.
+  //
+  // ⚠️ `splitAttackCancelClause` fires only when the HEAD sentence resolves to an
+  // `ATTACK_CANCEL_HEADS` row, so what it removes is always something
+  // `cancelRequirement` has just answered. An unmapped trailing cancel keeps its
+  // whole string, every reader refuses the compound, and ATTACK_EFFECT_SKIPPED
+  // names it — the pre-D417 behaviour byte for byte, and the direction a wrong
+  // build fails in.
+  //
+  // ⚠️ AND THE ORDER AMONG THE FOUR STRIPPERS IS UNOBSERVABLE ON THE CATALOG.
+  // Measured over all 1,732 legal attack units, all six pairs are DISJOINT — 0
+  // units are claimed by any two — so this could sit anywhere in the chain and
+  // answer every printed string identically. It sits HERE, between the leading
+  // strip and D409's composition, because that is printed order: front clause off
+  // first, back clause off next, and what is left is the compound D409 composes.
+  // `splitOrder.test.ts` §6 pins the whole matrix as a tripwire that reddens by
+  // name the day a printing carries two.
+  const cancelSplit =
+    composed === null || composed === "" ? null : splitAttackCancelClause(composed);
+  const cancelRequirement =
+    composed === null || composed === "" ? null : deriveAttackCancelRequirement(composed);
+  // 🆕🆕 D417 — ONE `requirement`, TWO READERS, and the gate below is untouched.
+  // The two are mutually exclusive by their own anchors (`^If …` versus `… If you
+  // can't,$`), so the `??` is a JOIN and never a precedence: no printed string can
+  // make both non-null, which `cancelClause.test.ts` §2 drives over the whole
+  // legal column rather than asserting here in prose.
+  const requirement = leadingRequirement ?? cancelRequirement;
+  const uncancelled = cancelSplit === null ? composed : cancelSplit.head;
   // 🆕🆕 D409 — THE THIRD SPLIT, AND THE FIRST ONE POINTED AT THE *TRAILING* END OF
   // THE SENTENCE. D282's gate clause and D363's requirement clause both come off
   // the FRONT and are SPENT by the time the readers below run; this one comes off
@@ -806,8 +851,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // compounds additionally carry `scaling`, which is `modifierSimulated`'s first
   // term. The skip report is therefore not reached at all on any of the eleven
   // printings, which is why it may keep reporting `effect` (the head) unchanged.
-  const compoundSplit = composed === null || composed === "" ? null : splitAttackTrailingClause(composed);
-  const effect = compoundSplit === null ? composed : compoundSplit.head;
+  const compoundSplit =
+    uncancelled === null || uncancelled === "" ? null : splitAttackTrailingClause(uncancelled);
+  const effect = compoundSplit === null ? uncancelled : compoundSplit.head;
   // Registry ABOVE the deriver (D8): an authored attack program wins; else the
   // text deriver; else null (unsimulated). Authored programs are keyed by ATTACK
   // INDEX — a card authors only the attacks the deriver does not read, the rest
@@ -1157,7 +1203,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // requirement says nothing about it — leaving the bare term here would let a
     // printed requirement SILENCE a trailing sentence no reader resolved, which
     // is precisely the D278/D279 "too loose" failure this family keeps refusing.
-    (requirement !== null && requirementSplit === null) ||
+    // 🆕🆕 D417 NARROWS THIS TERM A SECOND TIME AND ADDS NONE, WHICH IS D130's RULE
+    // APPLIED TO A WIDENED READING RATHER THAN TO A NEW READER — and it is the same
+    // safety D363 bought one conjunct to the left. When the CANCEL split fires,
+    // `effect` is the HEAD sentence and the requirement was read off the TRAILING
+    // clause, so the requirement says nothing whatever about what `effect` now
+    // holds. Leaving the term bare would let a printed cancel SILENCE a head no
+    // reader resolved — the D278/D279 "too loose" failure, one clause round the
+    // other way.
+    //
+    // ⚠️ AND NO TERM IS OWED ON THE OTHER SIDE, WHICH WAS CHECKED RATHER THAN
+    // ASSUMED. The one printing this slice claims (Eternatus `sv08-141`) has its
+    // head claimed by `deriveAttackEffect` (D380's `discardStadium`), so `program`
+    // is non-null and `effectSimulated`'s FIRST term already carries it: the
+    // sentence is not reported as skipped, and it is not reported because the head
+    // is genuinely resolved rather than because a requirement vouched for it. A
+    // future `ATTACK_CANCEL_HEADS` row whose head NO reader claims is exactly the
+    // case this narrowing keeps loud, so the two halves are one decision.
+    // `modifierSimulated` below needs neither change: this reading explains no
+    // `+`/`×` marker at all, and Eternatus prints a FLAT 230.
+    //
+    // ⚠️ **AND THE CONJUNCT IS NOT DRIVEN, WHICH IS SAID RATHER THAN SKIPPED**
+    // (D130/D205). With ONE row in `ATTACK_CANCEL_HEADS` and that row's head
+    // claimed by `deriveAttackEffect`, `cancelSplit !== null` IMPLIES
+    // `program !== null` today, so removing this conjunct moves no assertion in the
+    // repo — verified by removing it and running the whole engine suite, which
+    // stayed green. It is written from the RULE rather than from what a test would
+    // notice; the second table row is what makes it live, and that row is one
+    // printing away.
+    (requirement !== null && requirementSplit === null && cancelSplit === null) ||
     coinFlip !== null ||
     optionalBoost !== null ||
     bonusConsequent !== null ||

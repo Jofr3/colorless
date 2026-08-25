@@ -255,6 +255,16 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **AN INSTRUMENT WITH A HAND-KEPT COPY OF SOMETHING THE MODULE ALREADY EXPORTS CANNOT GO RED —
+  IT CAN ONLY GO QUIET (D417).** `censusAtHead.test.ts` computed `BUILT.attack` — the figure most of
+  this repo's accounting keys off — from a **stale 11-entry reader list against 12 exported**, and
+  stayed green, because every figure it asserts is derived from that same stale list. It had had no
+  guard since the file was written at **D233**. ⚠️ **THE GUARD IS NOT "KEEP THE COPY UPDATED", IT IS
+  "DERIVE IT FROM THE MODULE AND PIN BOTH THE DIFF AND THE COUNT"** — the count separately, because a
+  diff alone stays green when a reader is deleted from the module and the list together.
+  ⚠️ **AND WHEN YOU ADD THAT GUARD TO ONE FILE, GREP FOR THE OTHER COPIES IN THE SAME BREATH.** There
+  were **eight** more, at 9 and 11 readers, none guarded — and all eight carried a doc claim that
+  their list was *"the same set `censusAtHead.test.ts` uses"*, false in every one.
 - 🛑 **A GUARD THAT ONLY EVER RUNS ON THE FORCED PATH DOES NOT GUARD THE PARKED ONE (D416).**
   `parkOrForce` auto-resolves at ONE candidate, so a suite whose boards all field one candidate
   exercises the forced arm exclusively — and every assertion still passes, which is exactly why it
