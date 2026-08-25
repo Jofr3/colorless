@@ -466,10 +466,13 @@
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE**
 > (D411's entry says why in full).
 >
-> ⚠️ **THE SWEEP DEBT IS TWO SLICES DEEP.** D414's whole-corpus run finished with **1 error I caused**
-> and its eighth row was re-probed alone; D415 has had `--decision D415` (5 killed / 0 GAPs),
-> `--only D341-…` after re-pointing (KILLED) and a clean `precheck` over 1,504, but no whole-corpus
-> run. **SAY IT PLAINLY: no single sweep has covered this head.**
+> ✅ **THE SWEEP DEBT IS PAID, AND THIS IS THE FIRST RUN TO COVER THE HEAD WHOLE.**
+> **1504 · 1480 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,493.8s**, `SWEEP_EXIT=0`, on the committed tree with nothing else touching it.
+> `1480 + 24 = 1504` closes; **verified by id in both directions**, 1504 / 1504, 0 missing / 0 extra.
+> ✅ **It clears D414's debt as well as D415's**: all 8 D414 rows KILLED — including the one whose
+> re-anchor was the `error` that failed D414's own sweep — and `D341-off-pool-sweep-source-is-emptied`
+> after its re-pointing. Declared survivors held at **24 for a thirty-second consecutive sweep**.
 >
 > ### ▶ WHAT TO DO NEXT — A AND B TOGETHER, ON ONE PARKING OP
 >
