@@ -255,6 +255,14 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **RE-POINTING A REFUSAL RUNG ONTO A DIFFERENT TRUE CLAIM CAN SILENTLY DROP THE DISCRIMINATION
+  THE OLD CLAIM PROVIDED (D418).** This run re-pointed refusal rungs four times, correctly, on the
+  rule *re-point, do not delete*. The fourth one still disarmed a mutant: a rung that had asserted
+  *"no reader takes this sentence"* became *"this reader takes it"* — both TRUE, but the new claim is
+  `true` under the mutant and under the real build alike, so only the old one could ever go red.
+  ⚠️ **THE RULE NEEDS ITS SECOND HALF: after re-pointing, ask what the OLD claim could catch that the
+  new one cannot** — and if a mutant row names that file as its killer, run `--only <row>` before you
+  commit. Re-arming cost one assertion once it was found; finding it cost a 92-minute sweep.
 - 🛑 **A DEFECT EVERY LOCAL DECISION IS RIGHT TO DECLINE HAS NO LOCAL FIX (D418).** A stale reader
   array was left unfixed for **179 commits** because every slice that met it was CORRECT to decline:
   *"adding a tenth reader would move numbers this slice has nothing to do with."* True of each slice,

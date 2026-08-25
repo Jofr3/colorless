@@ -15,6 +15,7 @@ import {
   deriveAttackDamageSuppression,
   deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
+  splitAttackCancelClause,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
@@ -739,6 +740,43 @@ describe("§6 — what this slice did NOT buy", () => {
     // the trailing clause has to be general over its body, exactly as
     // `splitAttackRequirementClause` is general over its leading one.
     expect(anaphoric.some(([, s]) => s.startsWith("Discard a Basic"))).toBe(true);
+  });
+
+  it("🛑 the bare anchor's TERMINATOR still refuses an UNMAPPED tail — D418's own repair re-armed", () => {
+    // 🛑 THIS RUNG EXISTS BECAUSE A MUTANT SURVIVED, AND THE MUTANT SURVIVED BECAUSE
+    // OF A REPAIR MADE IN THIS FILE. `D380-bare-anchor-loses-its-terminator` drops the
+    // `$` from `DISCARD_STADIUM`, turning a whole-sentence anchor into a PREFIX match
+    // — so a sentence that merely OPENS with the printed clause is claimed whole and
+    // whatever follows it is silently deleted. That row named this file as its killer.
+    //
+    // ⚠️ **D418 RE-POINTED THIS FILE'S REFUSAL RUNGS AND, WITHOUT MEANING TO, REMOVED
+    // THE WITNESS.** Before D417 the killer was `readByAny(Eternatus) === false`: with
+    // the `$` gone the prefix match claimed that sentence and the rung reddened. D417
+    // made the sentence genuinely resolved and D418 re-pointed the rung to say so — a
+    // TRUE claim, and a claim that **no longer discriminates**, because `readByAny` is
+    // now `true` under the mutant and under the real build alike.
+    //
+    // 🛑 **RE-POINTING A REFUSAL RUNG ONTO A DIFFERENT TRUE CLAIM CAN SILENTLY DROP THE
+    // DISCRIMINATION THE OLD CLAIM PROVIDED.** Both claims are correct; only one of
+    // them could go red. This rung pins what the terminator is actually FOR, on a
+    // string the splitter deliberately refuses, which is where the prefix match is
+    // still observable.
+    //
+    // The tail is UNMAPPED on purpose: `splitAttackCancelClause` refuses any head its
+    // table does not carry, so this string reaches `deriveAttackEffect` WHOLE — which
+    // is exactly the position Eternatus's sentence occupied before D417 built the
+    // splitter that now strips it.
+    const bare = "Discard a Stadium in play.";
+    const unmappedTail = `${bare} Draw a card.`;
+    expect(splitAttackCancelClause(unmappedTail)).toBeNull();
+    // 🛑 THE ASSERTION THE MUTANT DIES ON: a prefix match would return the op here.
+    expect(deriveAttackEffect(unmappedTail)).toBeNull();
+    // …and the CONTROL, so this cannot pass on a build where the anchor stopped
+    // reading anything at all.
+    expect(deriveAttackEffect(bare)).toEqual([{ op: "discardStadium" }]);
+    // …and the string this rung is really about — the one D417 taught the splitter to
+    // strip — is the SAME head with a MAPPED tail, which the splitter does take.
+    expect(splitAttackCancelClause(TAKEN_BY_D417)?.head).toBe(bare);
   });
 
   it("bought no new event, no new prompt and no second Stadium zone", () => {

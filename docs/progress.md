@@ -472,11 +472,15 @@
 >
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE.**
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D418 has had a clean `precheck` over 1,522 and one mutant
-> (`D382-refusal-instrument-loses-the-tenth-reader`) re-probed BY HAND after its anchor was nearly
-> broken — but **no whole-corpus run against this head**. Exposure is LOW for `error` (D418 touches
-> no engine behaviour and added no mutant rows) but **non-zero for the D382 row specifically**, which
-> now dies by a different rung than it used to.
+> ⚠️ **THE SWEEP RAN AND FOUND A REAL GAP THAT THIS SLICE ITSELF CAUSED — NOW CLOSED, BUT THE SWEEP
+> HAS NOT RE-RUN WHOLE SINCE.** **1522 · 1497 killed · 24 known · 1 GAP · 0 stale · 0 clobbers ·
+> 0 errors**, `SWEEP_EXIT=1`; `1497 + 24 + 1 = 1522` closes and 1522/1522 verified by id.
+> `D380-bare-anchor-loses-its-terminator` survived because **D418 re-pointed the very rung that used
+> to kill it** — from *"no reader takes this sentence"* to *"this reader takes it"*. Both claims are
+> true; only the old one could go red. **Re-armed** with an assertion on an UNMAPPED tail (the
+> position the sentence held before D417's splitter), re-probed **KILLED**, and the lesson is in
+> conventions.md. ⚠️ **SAY IT PLAINLY: what is measured at this head is 1,521 rows swept clean plus
+> the gapped row re-probed alone.**
 >
 > ### ▶ WHAT TO DO NEXT — CLOSE THE OTHER THIRTY, AT THE SOURCE
 >
