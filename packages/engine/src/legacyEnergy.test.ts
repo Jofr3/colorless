@@ -1078,8 +1078,9 @@ describe("the engine version", () => {
     // so a v25 record can already carry this program and means exactly what it meant.
     // Authoring an EXISTING field at a NEW VALUE is a widening; adding a field is not.
     // The post-bump anchor pass was clean.
-    expect(engineVersion).toBe("0.318.0");
-    expect(manifest.version).toBe("0.318.0");
+    // 🆕🆕 D415 — 0.318.0 → **0.319.0**, moved with the behaviour: THE OPPONENT-SCOPED SPECIAL-ENERGY KO GATE (*"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."*, Haxorus `sv06.5-046`, 1 legal printing) is a WIDENING — ONE new `BoardCondition` member (`opponentActiveHasEnergyAttached`, the seat mirror of `yourActiveHasEnergyAttached`) behind the SHIPPED field-free `knockOutDefender` op, no new op and no new persisted field — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26.
+    expect(engineVersion).toBe("0.319.0");
+    expect(manifest.version).toBe("0.319.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

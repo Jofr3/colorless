@@ -488,19 +488,62 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     expect(deriveAttackEffect(forEach)).toBeNull();
   });
 
-  it("refuses Haxorus sv06.5-046's opponent-scoped twin — the wrong board, and no bonus at all", () => {
-    // REAL printed text. Two things are wrong with it at once: it reads the
-    // OPPONENT's Active (this member is self-scoped by construction — the printed
-    // "this Pokémon" is resolved to YOUR Active in the clause table) and its
-    // consequence is a KO, not a damage bonus. It is the sentence that would tempt
-    // a substring match hardest, since "has any Special Energy attached" is
-    // Cetitan's and Tinkaton's clause verbatim.
+  it("refuses Haxorus sv06.5-046 as a BONUS — its clause is now READ, and by another reader", () => {
+    // RE-POINTED (D415), NOT DELETED — and this case is the family's clearest
+    // instance of a witness outliving its own reasons. It was written with TWO,
+    // and **BOTH HAVE SINCE EXPIRED, ONE PER SLICE**:
+    //
+    //   • *"its consequence is a KO, not a damage bonus"* — EXPIRED AT D414, which
+    //     built the field-free `knockOutDefender` op and made a Knock Out an
+    //     expressible consequent for the first time (its suite is
+    //     knockOutDefender.test.ts).
+    //   • *"it reads the OPPONENT's Active (this member is self-scoped by
+    //     construction — the printed 'this Pokémon' is resolved to YOUR Active in
+    //     the clause table)"* — EXPIRED AT D415, whose
+    //     `opponentActiveHasEnergyAttached` is the SEAT MIRROR of this file's own
+    //     member: same `energy` parameter, same `hasAttachedEnergy` predicate (by
+    //     PROVISION, D118), same false-on-an-empty-Active-Spot contract, one seat
+    //     over. The self-scoped half of the sentence is still true OF THIS FILE'S
+    //     MEMBER — what expired is "self-scoped BY CONSTRUCTION", the claim that no
+    //     member of the union could read the other board.
+    //
+    // 🛑 WHAT THE CASE STILL OWNS IS THE HALF THAT STAYED TRUE, AND IT IS SHARPER
+    // NOW THAN WHEN IT WAS WRITTEN: **a Knock Out is still not a damage bonus**, so
+    // both damage readers must keep declining. This is the sentence that would
+    // tempt a substring match hardest — "has any Special Energy attached" is
+    // Cetitan's and Tinkaton's clause VERBATIM — and where that used to be a
+    // hypothetical, there is now a live arm in the tree that reads these exact
+    // words to a program. A bonus reader that hunted the clause first and the
+    // sentence second would find a real member waiting for it and score +N off a
+    // sentence that prints no number at all.
     const haxorus =
       "If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out.";
     expect(haxorus).toContain("has any Special Energy attached");
+    // 🛑 THE TWO NULLS ARE KEPT UNCHANGED — they are the surviving half of the
+    // claim, and the reason this rung was re-pointed rather than dropped.
     expect(deriveAttackDamageBonus(haxorus)).toBeNull();
     expect(deriveAttackDamageMultiplier(haxorus)).toBeNull();
-    expect(deriveAttackEffect(haxorus)).toBeNull();
+    // …and the third null is now the POSITIVE program, asserted as an EQUALITY
+    // rather than as a non-null (D409's rule): an arm that emitted the op BARE —
+    // gate dropped — satisfies a non-null and unconditionally Knocks Out every
+    // Active in the format.
+    expect(deriveAttackEffect(haxorus)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      },
+    ]);
+    // The SEAT is the only thing that differs between the two members, said as a
+    // comparison on the same run rather than asserted about one side alone: this
+    // file's own sentence, whose clause is the Haxorus clause word for word past
+    // the subject, still resolves to the SELF-scoped member.
+    expect(deriveAttackDamageBonus(SPECIAL_HAMMER)?.count).toEqual({
+      kind: "boardCondition",
+      cond: { kind: "yourActiveHasEnergyAttached", energy: "special" },
+    });
+    expect(SPECIAL_HAMMER).toContain("has any Special Energy attached");
   });
 
   it("refuses Slither Wing sv06.5-026 — the OUTER shape matches and the clause still misses", () => {
@@ -620,9 +663,18 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     // CONSTRUCTED, and the member's defining boundary. `yourActiveHasEnergyAttached`
     // is named for what it READS, and the printed "this Pokémon" was resolved to
     // YOUR Active in the clause table (D116's rule) — so the cross-board wording is
-    // a DIFFERENT condition that nothing owns yet. If the template were keyed
-    // loosely enough to swallow it, Scovillain would score +90 off the defender's
-    // Energy, which the board layer below proves it does not.
+    // a DIFFERENT condition. If the template were keyed loosely enough to swallow
+    // it, Scovillain would score +90 off the defender's Energy, which the board
+    // layer below proves it does not.
+    //
+    // ⚠️ ONE WORD OF THIS COMMENT EXPIRED AT D415 and is corrected here rather than
+    // left to mislead: the cross-board condition is no longer one "that nothing
+    // owns" — `opponentActiveHasEnergyAttached` owns it, and `effects.ts` names
+    // THIS case as the sentence the repo had already written down as the thing the
+    // typed reading was waiting for. What is still unowned is the SENTENCE, not the
+    // condition: no BONUS reader reads an opponent-scoped clause, so both lines
+    // below stay null, and the day one is built this rung asserts a value rather
+    // than being deleted.
     expect(
       deriveAttackDamageBonus(
         "If your opponent's Active Pokémon has any {R} Energy attached, this attack does 90 more damage.",

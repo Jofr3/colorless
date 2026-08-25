@@ -1,9 +1,9 @@
-import type { Card } from "@luminous/schema";
+import { BASIC_ENERGY_TYPES, type Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
-import { conditionHolds, runProgram } from "./interpreter";
+import { conditionHolds, conditionNote, runProgram } from "./interpreter";
 import {
   FIXTURE_POOL,
   activeUid,
@@ -94,19 +94,55 @@ const BOTH_KO_TEXT = "Both Active Pokémon are Knocked Out.";
     printed sentence order says: the holder pays whether or not the coin is heads. */
 const COIN_KO_TEXT =
   "This Pokémon does 100 damage to itself. Flip a coin. If heads, your opponent's Active Pokémon is Knocked Out.";
+/** 🆕🆕 D415 — Haxorus `sv06.5-046` "Sharp Fang", 1 legal printing, verbatim off
+    `censusAttackCorpus.ts`. THE FOURTH PRINTING OF THIS OP AND THE FIRST ONE D414
+    LEFT BEHIND: arm `6a` (the Basic gate) with the `cond` swapped and nothing else,
+    over one new `BoardCondition` member. §7 is its section. */
+const SPECIAL_ENERGY_KO_TEXT =
+  "If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out.";
 
-/** The three sentences of the same printed family this slice DELIBERATELY leaves
-    unbuilt, asserted `null` BY NAME in §1. Each needs a PARK this slice does not
-    build — *"Knock Out 1 of your opponent's …"* is a choice over a filtered
-    candidate set — or a clause (`Special Energy attached`) whose consequent is a
-    Knock Out on a board this reader is not scoped to. A witness that is only a
-    comment cannot go red. */
+/** The sentences of the same printed family that are STILL unbuilt at head,
+    asserted `null` BY NAME in §1 — a witness that is only a comment cannot go red.
+    Each needs a mechanism no slice has bought yet, and the list is kept EXACT
+    rather than illustrative, because its whole job is to fail the day one of them
+    starts deriving.
+
+    🛑 **ONE MEMBER LEFT THIS LIST BECAUSE IT WAS BUILT, AND IT IS NAMED RATHER
+    THAN QUIETLY DROPPED.** *"If your opponent's Active Pokémon has any Special
+    Energy attached, it is Knocked Out."* (Haxorus `sv06.5-046`, 1 printing) stood
+    here as `specialEnergy` under the reason *"a clause whose consequent is a Knock
+    Out on a board this reader is not scoped to"*. **D415 built it** — a SEAT
+    MIRROR of the shipped `yourActiveHasEnergyAttached` (same `energy` parameter,
+    same `hasAttachedEnergy` predicate, one seat over) under D414's arm `6a` with
+    the `cond` swapped and nothing else. Its rungs are §7 below, and the old refusal
+    it also stood in — `energyClause.test.ts`'s Haxorus case — was RE-POINTED at
+    the positive program in the same slice.
+
+    ⚠️ **AND ONE MEMBER JOINED, WHICH NOTHING IN THIS REPO NAMED BEFORE D415.**
+    `handEnergyKo` is a member of this exact printed family — a Knock Out with no
+    damage, on a target the printed text NAMES — carried by no rung, no comment and
+    no census note anywhere at head, which made the list a partial census reading as
+    a total one. Transcribed byte-for-byte off `censusAttackCorpus.ts` (line 93,
+    2 printings). It is refused for a REASON UNLIKE THE OTHER TWO's: not a park, but
+    a COST paid out of the HAND (six Basic {G} Energy cards discarded) and an *"If
+    you can't …, this attack does nothing."* CANCEL — an attack that must un-resolve
+    when the cost is unaffordable. Neither half exists in the effect vocabulary
+    today, and the cancel in particular is a whole-attack verdict rather than a
+    gated step, so it is not `conditionGate` with a different `cond`. */
 const UNBUILT_TEXT = {
+  /** A PARK: "1 of your opponent's Pokémon that has …" is a choice over a filtered
+      candidate set, and the filter is a damage-counter EQUALITY. */
   sixCounters: "Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it.",
+  /** A PARK on the tails branch, over the BENCH, filtered to Basics — and a coin
+      whose two faces name two different candidate sets. */
   flipBasicPick:
     "Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon.",
-  specialEnergy:
-    "If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out.",
+  /** ⚠️ NO PARK AT ALL — the target is NAMED ("your opponent's Active Pokémon").
+      What it needs is a hand-Energy COST and an "If you can't … does nothing"
+      CANCEL, which is a different mechanism from both of the above and from D415's
+      gate. 2 printings. */
+  handEnergyKo:
+    "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon. If you can't discard 6 cards in this way, this attack does nothing.",
 } as const;
 
 // ── the local pool (FIXTURE_POOL untouched — D190's idiom, D275's `cardPool`) ─
@@ -151,6 +187,20 @@ const LOCAL_CARDS: Record<string, Card> = {
     stage: "Stage2",
     evolveFrom: "fix-kod-stage1",
   }),
+  /** 🆕🆕 D415's DEMONSTRATOR, BUILT AS THE SAME CONTROL PAIR as `fix-kod` and for
+      the same reason: idx 0 prints the D415 sentence and NO damage at all, so the
+      §8.5 pipeline is never entered and the only thing that can make the defender
+      lethal is the op; idx 1 is the ordinary 200-damage bite that proves any
+      "nothing was Knocked Out" board could have lost that body if the engine had
+      wanted to. Both cost {C}, so one `fix-energy` pays either and the two boards
+      differ by the attack INDEX and nothing else. */
+  "fix-kod-special": battler("fix-kod-special", {
+    hp: 120,
+    attacks: [
+      { cost: ["Colorless"], name: "Sharp Fang", effect: SPECIAL_ENERGY_KO_TEXT },
+      { cost: ["Colorless"], name: "Plain Bite", damage: 200 },
+    ],
+  }),
 };
 
 const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
@@ -180,8 +230,41 @@ const KO_DEFENDER_DECK = deckOf({
   "fix-energy": 18,
 });
 
+/** 🆕🆕 D415's OWN deck (D270's rule), 60 counted before the first run:
+    4+4+4+18+18+6+6. **It is a SECOND deck rather than four rows added to
+    `KO_DEFENDER_DECK`, and that is not fastidiousness**: §6's `WIDE_HEADS_SEEDS`
+    is a nine-seed table MEASURED on that deck's shuffle, so a card added there
+    moves the install flip and turns §6 red — the exact "a shared deck's
+    composition is load-bearing for seeds nobody in this file can see" hazard the
+    header block names. Nothing in §7 flips a coin, so this deck's own shuffle
+    carries no table.
+      • `sv02-190` Jet Energy — an AUTHORED Special, the positive by CLASS;
+      • `fix-fire-energy` — a BASIC typed Energy, the negative control's Energy,
+        and the one card that tells "has any Energy" from "has a Special";
+      • `fix-energy` — Colorless Basic: every printed cost in this deck is {C}. */
+const SPECIAL_KO_DECK = deckOf({
+  "fix-kod-special": 4,
+  "fix-kod-victim": 4,
+  "fix-titan": 4,
+  "fix-bigbody": 18,
+  "fix-energy": 18,
+  "sv02-190": 6,
+  "fix-fire-energy": 6,
+});
+
 const BASIC_BREAKER = 0;
 const PLAIN_BITE = 1;
+/** `fix-kod-special`'s two indices — the same 0/1 control pair, named apart so a
+    §7 board cannot be read as a §2 one. */
+const SHARP_FANG = 0;
+const SPECIAL_PLAIN_BITE = 1;
+
+/** D415's member, spelled once. `energy` is the parameter INHERITED from the self
+    twin, and `"special"` is the only value the printed pool carries today. */
+const OPPONENT_SPECIAL = {
+  kind: "opponentActiveHasEnergyAttached",
+  energy: "special",
+} as const;
 
 /** The revenge clause's own `BoardCondition`, spelled once. This is the reader
     behind four built sentences / six printings, and §3 drives it rather than only
@@ -195,10 +278,13 @@ function find<T extends GameEvent["type"]>(
   return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
 }
 
-function localSetup(seed: number, first: Seat): GameState {
+/** `deck` defaults to `KO_DEFENDER_DECK`, so every board §2–§6 drives is byte-for
+    byte the one it drove before D415 — the parameter exists only so §7 can bring
+    its own deck without moving §6's measured seed table. */
+function localSetup(seed: number, first: Seat, deck: string[] = KO_DEFENDER_DECK): GameState {
   const created = createGame({
     seed,
-    decks: { p1: KO_DEFENDER_DECK, p2: KO_DEFENDER_DECK },
+    decks: { p1: deck, p2: deck },
     cardPool: POOL,
   });
   if (!created.ok) throw new Error(`createGame failed: ${created.error.code}`);
@@ -330,16 +416,26 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
     ]);
   });
 
-  it("refuses the THREE sentences of the family this slice does not build — by name", () => {
-    // Each needs something this slice deliberately did not buy: the first two need
-    // a PARK over a filtered candidate set ("Knock Out 1 of your opponent's …"),
-    // and the third's clause is opponent-scoped where the clause table's Special
-    // Energy rows are self-scoped. A half-built arm that resolved any of these to
-    // an op would silently Knock Out the WRONG body; the loud
-    // ATTACK_EFFECT_SKIPPED path is the correct behaviour and this is what pins it.
+  it("refuses the THREE sentences of the family that are STILL unbuilt — by name", () => {
+    // Each needs something no slice has bought: the first two need a PARK over a
+    // filtered candidate set ("Knock Out 1 of your opponent's …"), and the third
+    // needs a hand-Energy COST plus an "If you can't … does nothing" CANCEL. A
+    // half-built arm that resolved any of these to an op would silently Knock Out
+    // the WRONG body — or Knock one Out for free — and the loud
+    // ATTACK_EFFECT_SKIPPED path is the correct behaviour, which is what this pins.
+    //
+    // ⚠️ THE LIST IS NOT THE ONE D414 WROTE, and the swap is the point of keeping
+    // it: `specialEnergy` left because D415 BUILT it (§7), and `handEnergyKo` —
+    // a member of the same printed family that no rung, comment or census note in
+    // this repo named at all — took its place. The count is three either way, which
+    // is exactly why a witness list has to be transcribed off the corpus rather
+    // than trusted to stay total on its own.
     for (const [name, text] of Object.entries(UNBUILT_TEXT)) {
       expect(deriveAttackEffect(text), `${name} stopped being refused`).toBeNull();
     }
+    // The sentence that LEFT, asserted positively in the same breath — so "it is no
+    // longer refused" is a claim about a built program and not about a deleted line.
+    expect(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT)).not.toBeNull();
   });
 
   it("is anchored end to end — all three, both ends", () => {
@@ -907,5 +1003,413 @@ describe("§6 §11 — a 'prevent all effects of attacks done to this Pokémon' 
     const { events } = mustApply(bare, { type: "attack", seat: "p1", index: BASIC_BREAKER });
     expect(find(events, "KNOCKED_OUT")).toBeDefined();
     expect(types(events)).not.toContain("ATTACK_EFFECT_PREVENTED");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §7 🆕🆕 D415 — THE SEAT MIRROR. Same op, same gate shape, ONE SEAT OVER.
+//
+//   "If your opponent's Active Pokémon has any Special Energy attached, it is
+//    Knocked Out."  (Haxorus sv06.5-046, 1 legal printing)
+//
+// D414's arm `6a` with the `cond` SWAPPED AND NOTHING ELSE, over one new
+// `BoardCondition` member — `opponentActiveHasEnergyAttached`, the seat mirror of
+// D118's `yourActiveHasEnergyAttached`: same `energy` parameter, same
+// `hasAttachedEnergy` predicate (by PROVISION, D118's rule — an Energy that can
+// pay a `{R}` cost is exactly an Energy a `{R}` sentence reads), same
+// false-on-an-empty-Active-Spot contract.
+//
+// 🛑 **THE ASSERTION WORTH THE SECTION IS THE SEAT, AND IT IS THE ONLY ONE HERE
+// THAT NO OTHER SUITE COULD MAKE.** A member whose implementation dropped
+// `otherSeat` — one call, and the arm above it in `conditionHolds` is the version
+// WITHOUT it — passes every deriver rung, every note round trip, and even the
+// positive board below (the boards a lazy suite would build attach the Special to
+// the defender and leave the attacker bare, so both readings agree). §7.3 is the
+// board where the two readings DISAGREE, and it exists for that mutant alone.
+//
+// ⚠️ The two damage readers still refuse this sentence — a Knock Out is not a
+// damage bonus — and that half of `energyClause.test.ts`'s Haxorus rung was KEPT
+// when D415 re-pointed its third assertion from `toBeNull()` to this program.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** TEST SURGERY: empty a seat's Active Spot, discarding the stack the way a Knock
+    Out's aftermath leaves it. Local to this file for the reason `staleMarked` is:
+    the only caller is the one contract rung below, and `testFixtures.ts` is a
+    shared module. (`energyClause.test.ts` keeps its own copy for its own half of
+    the family — the twin's empty-spot rung — which is the two suites asserting the
+    same contract on two members rather than one suite reaching into the other.) */
+function clearActive(state: GameState, seat: Seat): GameState {
+  const side = state.players[seat];
+  const active = side.active;
+  if (active === null) return state;
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: {
+        ...side,
+        active: null,
+        discard: [...side.discard, ...active.stack, ...active.energy, ...active.tools],
+      },
+    },
+  };
+}
+
+/** §7's board. P2 opens and passes; P1's Active is the D415 demonstrator holding
+    the one {C} either of its attacks costs; P2's Active is the plain victim with
+    two out-of-reach benched bodies (so the §8.1 promotion is a real PROMPT and the
+    board has no second Knock Out in it).
+
+    `theirs` attaches one card to the OPPONENT's Active, `mine` one to the
+    ATTACKER's — and the pair is what makes the seat testable at all: every case
+    below is one arrangement of which side is holding the Special. */
+function armedSpecial(seed: number, opts: { theirs?: string; mine?: string } = {}): GameState {
+  let state = must(
+    applyAction(localSetup(seed, "p2", SPECIAL_KO_DECK), { type: "endTurn", seat: "p2" }),
+  );
+  state = setActiveFromDeck(state, "p1", "fix-kod-special");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  if (opts.mine !== undefined) state = attachFromDeck(state, "p1", opts.mine, 1);
+  state = setActiveFromDeck(state, "p2", "fix-kod-victim");
+  state = clearBench(state, "p2");
+  state = benchFromDeck(state, "p2", "fix-titan");
+  state = benchFromDeck(state, "p2", "fix-bigbody");
+  if (opts.theirs !== undefined) state = attachFromDeck(state, "p2", opts.theirs, 1);
+  return state;
+}
+
+describe("§7.1 D415's deriver — arm 6a with the `cond` swapped and nothing else", () => {
+  it("derives the printed sentence to `conditionGate` over `knockOutDefender`", () => {
+    // Program EQUALITY, not a non-null (D409's rule): an arm that emitted the op
+    // BARE satisfies a non-null and Knocks Out every Active in the format — and
+    // here it would do so off a sentence most boards can never satisfy, which is
+    // the quietest possible way to be catastrophically wrong.
+    expect(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      },
+    ]);
+  });
+
+  it("🛑 differs from D414's Basic gate in the `cond` and in NOTHING else", () => {
+    // The family's checkable claim about this PAIR, asserted rather than left in a
+    // comment: two printed sentences, one gate shape, one field apart. A second op,
+    // a reordered program or a `then` that grew a step would break this while both
+    // equality rungs above still passed on their own.
+    const basic = deriveAttackEffect(BASIC_KO_TEXT);
+    const special = deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT);
+    for (const program of [basic, special]) {
+      expect(program).toHaveLength(1);
+      expect(program?.[0]).toMatchObject({
+        op: "conditionGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      });
+    }
+    expect(basic?.[0]).toMatchObject({ cond: { kind: "opponentActiveIsBasic" } });
+    expect(special?.[0]).toMatchObject({ cond: OPPONENT_SPECIAL });
+    // …and they are not the SAME program, so "one field apart" is a difference and
+    // not an alias.
+    expect(special).not.toEqual(basic);
+  });
+
+  it("🛑 D202's family — both apostrophe spellings derive the SAME program", () => {
+    // The `['’]` class was in this anchor from its first draft, unlike the two
+    // D414 shipped with a bare `'` — so this rung is a REGRESSION pin rather than
+    // a defect report. Asserted as an equality between the two spellings AND as a
+    // non-null, because two nulls are also "the same".
+    const curly = SPECIAL_ENERGY_KO_TEXT.replace(/'/g, "’");
+    expect(curly).not.toBe(SPECIAL_ENERGY_KO_TEXT);
+    expect(curly).toContain("opponent’s");
+    expect(deriveAttackEffect(curly)).toEqual(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT));
+    expect(deriveAttackEffect(curly)).not.toBeNull();
+  });
+
+  it("is anchored end to end — leading text, a lost period and a lowercase opener", () => {
+    // Three chances to forget a `^` or a `$`, and the failure mode of each is a
+    // half-simulated attack rather than a loud one.
+    expect(deriveAttackEffect(`Flip a coin. If heads, ${SPECIAL_ENERGY_KO_TEXT}`)).toBeNull();
+    expect(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT.replace(/\.$/, ""))).toBeNull();
+    expect(deriveAttackEffect(SPECIAL_ENERGY_KO_TEXT.toLowerCase())).toBeNull();
+    expect(deriveAttackEffect(`${SPECIAL_ENERGY_KO_TEXT} Draw a card.`)).toBeNull();
+    // ⚠️ THE NEAR-MISS THAT IS NOT ABOUT ANCHORING: the SELF-scoped rewrite of the
+    // same sentence. It is one subject apart and must not reach this arm, or a
+    // card would Knock Out the wrong Active entirely — the mirror of the mutant
+    // §7.3 drives, at the deriver instead of at the board.
+    expect(
+      deriveAttackEffect("If this Pokémon has any Special Energy attached, it is Knocked Out."),
+    ).toBeNull();
+  });
+
+  it("keeps the local fixture's printed text verbatim — the sentence IS the wiring", () => {
+    // A one-character drift does not throw on the deriver path: it drops the card
+    // onto ATTACK_EFFECT_SKIPPED and every board in §7.2 stops Knocking anything
+    // Out, with no other failure anywhere. ASCII apostrophe, a real é.
+    expect(LOCAL_CARDS["fix-kod-special"]?.attacks?.[0]).toEqual({
+      cost: ["Colorless"],
+      name: "Sharp Fang",
+      effect: SPECIAL_ENERGY_KO_TEXT,
+    });
+    expect(SPECIAL_ENERGY_KO_TEXT).toContain("opponent's");
+    expect(SPECIAL_ENERGY_KO_TEXT).toContain("Pokémon");
+    expect(SPECIAL_ENERGY_KO_TEXT).not.toContain("’");
+  });
+});
+
+describe("§7.2 the member on a real board — the gate, both directions", () => {
+  it("Knocks the opponent's Active Out when it holds a Special Energy", () => {
+    const before = armedSpecial(20, { theirs: "sv02-190" });
+    const victim = activeUid(before, "p2");
+    // The Special really is on, and the member really does read it — stated before
+    // the attack so a failing board below cannot be a fixture that never attached.
+    expect(before.players.p2.active?.energy).toHaveLength(1);
+    expect(conditionHolds(before, "p1", OPPONENT_SPECIAL)).toBe(true);
+    deepFreeze(before);
+
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: SHARP_FANG });
+
+    // No damage anywhere: this attack prints none, so `KNOCKED_OUT` is the only
+    // honest row and W/R never enters the picture.
+    expect(types(events)).not.toContain("DAMAGE_DEALT");
+    expect(types(events)).not.toContain("COUNTERS_PLACED");
+    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    // …and §8.1 runs whole, exactly as it does for D414's Basic gate.
+    expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+    const settled = settle(state);
+    expect(settled.players.p1.prizes).toHaveLength(5);
+    expect(settled.players.p2.discard).toContain(victim);
+  });
+
+  it("🛑 THE NEGATIVE CONTROL — a BASIC Energy on the same spot Knocks nothing Out", () => {
+    // 🛑 WHAT MAKES IT A GATE RATHER THAN AN UNCONDITIONAL KNOCK OUT. Same seat,
+    // same attacker, same attack, same bench, same NUMBER of attached Energy — the
+    // only thing that differs from the case above is whether the attached card is a
+    // Special. An arm that emitted the op bare, or a member that answered "is any
+    // Energy attached", passes the case above and fails here.
+    const before = armedSpecial(21, { theirs: "fix-fire-energy" });
+    const survivor = activeUid(before, "p2");
+    // The Energy IS attached and IS read — by the typed reading of the very same
+    // member, on the very same board. Without this pair the case would pass against
+    // a fixture whose attachment silently never happened.
+    expect(before.players.p2.active?.energy).toHaveLength(1);
+    expect(
+      conditionHolds(before, "p1", { kind: "opponentActiveHasEnergyAttached", energy: "Fire" }),
+    ).toBe(true);
+    expect(conditionHolds(before, "p1", OPPONENT_SPECIAL)).toBe(false);
+
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: SHARP_FANG });
+
+    expect(types(events)).not.toContain("KNOCKED_OUT");
+    expect(state.players.p2.active?.stack).toContain(survivor);
+    // Not merely un-Knocked-Out — UNTOUCHED. The op marks lethal against
+    // `effectiveMaxHp`, so a gate that fired and was then undone would still leave
+    // 120 damage and a `koByEffect:` marker sitting on a 120 HP body.
+    expect(state.players.p2.active?.damage).toBe(0);
+    expect(state.players.p2.active?.markers).toEqual([]);
+    // The attack RESOLVED — a gate answering "no" is not a skipped effect.
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+    expect(state.phase.kind).toBe("turn:action");
+    expect(state.players.p1.prizes).toHaveLength(6);
+    expect(state.players.p2.prizes).toHaveLength(6);
+  });
+
+  it("…and a BARE Active Spot with no Energy at all is refused too", () => {
+    // "No Special" is a two-member set — a wrong-class Energy and no Energy — and
+    // one member declining says nothing about the other.
+    const before = armedSpecial(22);
+    expect(before.players.p2.active?.energy).toEqual([]);
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: SHARP_FANG });
+    expect(types(events)).not.toContain("KNOCKED_OUT");
+    expect(state.players.p2.active?.damage).toBe(0);
+    expect(state.players.p2.active?.markers).toEqual([]);
+  });
+
+  it("the ORDINARY attack kills the SAME body on the SAME board — the pair is live", () => {
+    // ⚠️ WITHOUT THIS THE TWO REFUSALS ABOVE ARE AMBIGUOUS: "nothing was Knocked
+    // Out" could mean the gate declined OR that this victim is somehow unkillable
+    // on this board. Index 1 on the same card settles it, on the Basic-Energy board
+    // that just refused.
+    const before = armedSpecial(21, { theirs: "fix-fire-energy" });
+    const victim = activeUid(before, "p2");
+    const { state, events } = mustApply(before, {
+      type: "attack",
+      seat: "p1",
+      index: SPECIAL_PLAIN_BITE,
+    });
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 200 });
+    expect(find(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
+    expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+  });
+});
+
+describe("🛑 §7.3 THE SEAT — the member reads the OPPONENT's Active, never the viewer's", () => {
+  it("🛑 a Special on MY OWN Active Knocks nothing Out — the `otherSeat` mutant's board", () => {
+    // 🛑 THE CASE THIS SECTION EXISTS FOR. Every other rung in §7 passes against a
+    // member that dropped `otherSeat` and read `state.players[seat].active` — the
+    // arm directly above D415's in `conditionHolds` is literally that code. Here
+    // the two readings DISAGREE: the ATTACKER holds the Jet Energy and the defender
+    // holds a plain Fire, so a self-scoped read opens the gate and Knocks Out a body
+    // the printed sentence never named.
+    const before = armedSpecial(23, { mine: "sv02-190", theirs: "fix-fire-energy" });
+    const survivor = activeUid(before, "p2");
+    // The board really is the disagreeing one: MY Active holds a Special (plus the
+    // {C} that pays the attack), THEIRS does not.
+    expect(before.players.p1.active?.energy).toHaveLength(2);
+    expect(
+      conditionHolds(before, "p1", { kind: "yourActiveHasEnergyAttached", energy: "special" }),
+    ).toBe(true);
+    expect(conditionHolds(before, "p1", OPPONENT_SPECIAL)).toBe(false);
+
+    const { state, events } = mustApply(before, { type: "attack", seat: "p1", index: SHARP_FANG });
+
+    expect(types(events)).not.toContain("KNOCKED_OUT");
+    expect(state.players.p2.active?.stack).toContain(survivor);
+    expect(state.players.p2.active?.damage).toBe(0);
+    expect(state.players.p2.active?.markers).toEqual([]);
+    // …and the attacker is not Knocked Out either, which is the OTHER way a
+    // seat-confused build could read: the gate names a body, and no body on either
+    // board was named here.
+    expect(state.players.p1.active?.damage).toBe(0);
+    expect(state.players.p1.active?.markers).toEqual([]);
+    expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+  });
+
+  it("🛑 the SAME board answers TRUE for the other seat — it is a mirror, not a constant", () => {
+    // ⚠️ WITHOUT THIS THE CASE ABOVE IS SATISFIED BY A MEMBER THAT ALWAYS ANSWERS
+    // FALSE. One board, two viewers: P1's opponent (P2) holds only a basic Fire, so
+    // P1 reads false — and P2's opponent (P1) holds the Jet, so P2 reads true off
+    // the identical state.
+    const board = armedSpecial(23, { mine: "sv02-190", theirs: "fix-fire-energy" });
+    expect(conditionHolds(board, "p1", OPPONENT_SPECIAL)).toBe(false);
+    expect(conditionHolds(board, "p2", OPPONENT_SPECIAL)).toBe(true);
+    // 🛑 AND THE MIRROR ITSELF, asserted as the equivalence that NAMES the member:
+    // reading the opponent's Active from one seat is reading YOUR Active from the
+    // other, on every board and both parameter shapes. This is the claim "it is the
+    // seat mirror of `yourActiveHasEnergyAttached`" written as an assertion rather
+    // than as a doc comment.
+    for (const energy of ["special", "Fire"] as const) {
+      for (const seat of ["p1", "p2"] as const) {
+        const other = seat === "p1" ? "p2" : "p1";
+        expect(
+          conditionHolds(board, seat, { kind: "opponentActiveHasEnergyAttached", energy }),
+        ).toBe(conditionHolds(board, other, { kind: "yourActiveHasEnergyAttached", energy }));
+      }
+    }
+    // …and the two members really do disagree from a single seat, so the loop above
+    // is not comparing a value with itself.
+    expect(conditionHolds(board, "p1", OPPONENT_SPECIAL)).not.toBe(
+      conditionHolds(board, "p1", { kind: "yourActiveHasEnergyAttached", energy: "special" }),
+    );
+  });
+
+  it("is a PURE read on a frozen board, from both seats", () => {
+    // `conditionHolds` is the single evaluator behind the attack fold, the play
+    // gate and the HUD, and the HUD calls it on every render against state it does
+    // not own. The provision path is the one worth freezing: `hasAttachedEnergy`
+    // walks the host's whole attachment list on every read.
+    const frozen = deepFreeze(armedSpecial(24, { mine: "sv02-190", theirs: "sv02-190" }));
+    for (const seat of ["p1", "p2"] as const) {
+      expect(() => conditionHolds(frozen, seat, OPPONENT_SPECIAL)).not.toThrow();
+      expect(conditionHolds(frozen, seat, OPPONENT_SPECIAL)).toBe(true);
+    }
+  });
+});
+
+describe("§7.4 the contracts the member INHERITS from its self twin", () => {
+  it("answers FALSE — not a throw — on an EMPTY Active Spot, both parameter shapes", () => {
+    // 🛑 THE FAMILY'S STATED CONTRACT, and the seat mirror is the member that can
+    // actually meet it in play: the live attack gate guarantees a DEFENDING Pokémon,
+    // so no board reachable through `attack` presents an empty spot on either side —
+    // but a HUD rendering between a Knock Out and the promote reads exactly this
+    // board, from the seat whose OPPONENT has nothing in the spot.
+    const armedBoard = armedSpecial(25, { theirs: "sv02-190" });
+    expect(conditionHolds(armedBoard, "p1", OPPONENT_SPECIAL)).toBe(true); // …and it WAS true
+    const empty = clearActive(armedBoard, "p2");
+    expect(empty.players.p2.active).toBeNull();
+    for (const energy of ["special", "Fire"] as const) {
+      expect(() =>
+        conditionHolds(empty, "p1", { kind: "opponentActiveHasEnergyAttached", energy }),
+      ).not.toThrow();
+      expect(conditionHolds(empty, "p1", { kind: "opponentActiveHasEnergyAttached", energy })).toBe(
+        false,
+      );
+    }
+    // The VIEWER's own spot being empty is a different board and must not answer
+    // for the opponent's — the null check is on the seat the member reads.
+    const mineEmpty = clearActive(armedBoard, "p1");
+    expect(mineEmpty.players.p1.active).toBeNull();
+    expect(conditionHolds(mineEmpty, "p1", OPPONENT_SPECIAL)).toBe(true);
+  });
+
+  it("reads by PROVISION and by CLASS — a Basic is never a Special, whatever it pays", () => {
+    // D118's rule, inherited verbatim: the typed reading asks what the card
+    // PROVIDES (so it cannot drift from the §8.2 cost check) and the `"special"`
+    // reading asks the CLASS (so an unauthored Special answers the same way). Jet
+    // Energy provides {C} and nothing else, so no typed clause fires off it — which
+    // is what keeps the two parameter shapes independent rather than two spellings
+    // of one read.
+    const jet = armedSpecial(26, { theirs: "sv02-190" });
+    expect(conditionHolds(jet, "p1", OPPONENT_SPECIAL)).toBe(true);
+    for (const energy of BASIC_ENERGY_TYPES) {
+      expect(conditionHolds(jet, "p1", { kind: "opponentActiveHasEnergyAttached", energy })).toBe(
+        false,
+      );
+    }
+    const fire = armedSpecial(27, { theirs: "fix-fire-energy" });
+    expect(
+      conditionHolds(fire, "p1", { kind: "opponentActiveHasEnergyAttached", energy: "Fire" }),
+    ).toBe(true);
+    expect(conditionHolds(fire, "p1", OPPONENT_SPECIAL)).toBe(false);
+    // …and the wrong TYPE is as false as no Energy at all.
+    expect(
+      conditionHolds(fire, "p1", { kind: "opponentActiveHasEnergyAttached", energy: "Lightning" }),
+    ).toBe(false);
+  });
+});
+
+describe("§7.5 `conditionNote` — the pill a HUD renders, and the twin it must not echo", () => {
+  it("round-trips both parameter shapes, and NEITHER drops the possessive", () => {
+    // ⚠️ NO PRONOUN IS DROPPED HERE, WHICH IS THE DIFFERENCE FROM THE TWIN: the
+    // self-scoped member's note re-voices a printed "this Pokémon" that D116's
+    // clause table had already resolved; THIS sentence names the opponent's Active
+    // in printed words, so the note is the printed phrase itself and the round trip
+    // is exact. Nothing else in the suite would catch a typo — the HUD renders
+    // these strings verbatim.
+    expect(conditionNote(OPPONENT_SPECIAL)).toBe(
+      "your opponent's Active Pokémon has a Special Energy attached",
+    );
+    expect(conditionNote({ kind: "opponentActiveHasEnergyAttached", energy: "Fire" })).toBe(
+      "your opponent's Active Pokémon has Fire Energy attached",
+    );
+    // Built from the PARAMETER over the whole vocabulary, keyed off
+    // `BASIC_ENERGY_TYPES` itself so a type added to the schema is covered by
+    // construction rather than by a hand-maintained list. Prose, never "{R}": a
+    // reject fragment is read by a human.
+    for (const energy of BASIC_ENERGY_TYPES) {
+      const note = conditionNote({ kind: "opponentActiveHasEnergyAttached", energy });
+      expect(note).toBe(`your opponent's Active Pokémon has ${energy} Energy attached`);
+      expect(note).not.toContain("{");
+      expect(note).toContain("your opponent's");
+    }
+  });
+
+  it("🛑 DIFFERS from the self twin's note on every parameter — the seat is visible", () => {
+    // 🛑 THE HALF A COPY-PASTED ARM WOULD FAIL. Two members over one parameter, and
+    // a `conditionNote` arm that fell through to the twin's string would tell a
+    // player their OWN Active is the one holding the Special — the same confusion
+    // as the `otherSeat` mutant, one layer up, and invisible to every board.
+    for (const energy of ["special", ...BASIC_ENERGY_TYPES] as const) {
+      const mine = conditionNote({ kind: "yourActiveHasEnergyAttached", energy });
+      const theirs = conditionNote({ kind: "opponentActiveHasEnergyAttached", energy });
+      expect(theirs).not.toBe(mine);
+      // …and the difference is exactly the possessive, not a re-voicing: the twin's
+      // note is this one's tail.
+      expect(theirs).toBe(`your opponent's ${mine.slice("your ".length)}`);
+      expect(mine).not.toContain("opponent");
+    }
   });
 });

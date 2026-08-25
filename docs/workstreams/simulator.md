@@ -25690,6 +25690,72 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D415 — THE OPPONENT-SCOPED SPECIAL-ENERGY KO GATE: a seat mirror, and a slice that spent more of itself correcting false claims than building (engine 0.319.0, `MATCH_RECORD_VERSION` **STAYS 26**)
+
+*"If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out."* (Haxorus
+`sv06.5-046`) — **1 sentence / 1 legal printing**. One new `BoardCondition` member
+(`opponentActiveHasEnergyAttached`), its two arms, one anchor, and a `deriveAttackEffect` arm that is
+**D414's arm 6a with the `cond` swapped and nothing else**. No park, no new op, no persisted shape.
+
+### One printing, and why D121's warrant is not the bar
+
+D121's warrant — *two printings with one token varying* — decides whether a **parameterised
+template** is earned over a **literal row**. This is neither: one member mirroring a shipped member
+across the SEAT axis. The tree already builds members at one printing when the shape is inherited
+(D397's `yourBenchNamedDamaged`). Written down here so a successor does not re-litigate it.
+
+It carries the full `energy: BasicEnergyType | "special"` parameter for a sentence that only prints
+`"special"`, because the parameter is **inherited, not invented**: the twin has had it since D350 for
+a measured reason, `hasAttachedEnergy` takes both readings, and the `{R}` rewrite is already a
+constructed refusal in `energyClause.test.ts` — a named future rather than speculation.
+
+### 🛑 Why the mutants are unusual
+
+**Every one of the five is a way of accidentally rebuilding the twin** — the seat, the predicate, the
+gate's `cond`, the note, the apostrophe class. **Under all five the sentence still resolves, the gate
+still fires and the Knock Out still happens.** Nothing a census counts moves. **Only a board where
+the two seats DISAGREE tells the builds apart**, so the suite fields one and asserts the mirror as an
+equivalence in both directions. 5 killed / 0 GAPs.
+
+### A rung re-pointed, whose two reasons expired one slice apart
+
+`energyClause.test.ts` refused this sentence for two stated reasons: *"its consequence is a KO, not a
+damage bonus"* (**expired at D414**) and *"it reads the OPPONENT's Active — this member is
+self-scoped by construction"* (**expired at D415**). The `deriveAttackEffect` null became a program
+equality; the two damage-bonus nulls **stayed**, because a KO is still not a bonus. The rung's own
+point — that this sentence *"would tempt a substring match hardest"* — is **more** true now, since a
+live arm reads those exact words.
+
+### 🛑 Three false claims in shipped work, two of them a day old
+
+1. **D414's census note was wrong three ways**: the residue was 4 sentences / 9 printings, not three;
+   *"targets are NAMED"* was never the discriminator (two residue sentences name theirs too); and one
+   of them needed **no park at all**. ⚠️ It had been **replicated byte-identically into 21 sites
+   across 10 suites** — all hashed, all corrected in place, wrong clause left standing.
+2. The resume point priced this half at *"3 sentences / 8 printings"*. It is **7**.
+3. **A member of the family was named by nothing in the repo** — no rung, no comment, no census note:
+   the hand-Energy KO at `censusAttackCorpus.ts` line 93 (2 printings). **A witness that is not even
+   a comment cannot go red.** Now in `UNBUILT_TEXT`, with its mechanism stated: a hand-Energy COST
+   plus an *"If you can't …"* CANCEL — a whole-attack verdict, not a gated step.
+
+### 🛑 The rule this slice earned
+
+**A claim that is copied is a claim that rots in N places.** Before correcting a comment, `grep` for
+its first distinctive clause — if it appears more than once, the correction is a **sweep** and its
+cost is the sweep, not the sentence.
+
+⚠️ **And its corollary, which this slice also paid**: `precheck` is not just for lint fixes. **Any
+edit to a file the mutation corpus quotes rots a row — including a test-only edit made by an agent
+you delegated to.** Paying D414's classification debt added one sentence to a set `D341`'s mutant
+quotes, and it was committed without re-running `precheck`. Caught one commit late, re-pointed,
+killed.
+
+**CENSUS**: raw 408 → **409** / 1356 → **1357**; `BUILT.attack` 1403 → **1404**; residue 575 →
+**574**; `unbuiltAttack` 329 → **328**. `splitHead` **13**, `compoundHead` **18**, registry **16**
+byte-identical. ✅ `compoundCompose` §4 did **not** move, verified rather than assumed: D415's
+sentence breaks on a COMMA, so it is one clause and was never in the multi-clause population.
+`bun run check` **416 files / 8,820 tests, exit 0** (+0 files / +16 cases).
+
 ## D414 — THE KNOCK OUT THAT REACHES THE OTHER SIDE OF THE TABLE: the slice is what the op falsifies (engine 0.318.0, `MATCH_RECORD_VERSION` **STAYS 26**)
 
 **3 sentences / 4 legal printings** of the KO-without-damage family, on ONE new field-free

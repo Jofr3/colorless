@@ -255,11 +255,21 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A CLAIM THAT IS COPIED IS A CLAIM THAT ROTS IN N PLACES (D415).** A census note written at
+  D414 was wrong three ways and had been replicated **byte-identically into 21 sites across 10
+  suites**. Correcting the original would have left twenty copies asserting the false version.
+  ⚠️ **BEFORE CORRECTING A COMMENT, `grep` FOR ITS FIRST DISTINCTIVE CLAUSE.** If it appears more than
+  once, the correction is a SWEEP and its cost is the sweep, not the sentence. Hash the copies first:
+  if they are identical, one wording fits all; a drifted copy needs its own reading.
 - 🛑 **A LINT FIX IS AN EDIT TO A MUTATED FILE — RE-RUN `precheck` AFTER ONE (D414).** A row was
   authored, prechecked clean, and then its quoted block gained a `biome-ignore` comment when
   `bun run check` flagged `noThenProperty`. The `find` stopped occurring and the row reported ERROR
   ninety minutes into a whole-corpus sweep. **The exactly-once rule caught it, which is the point —
   but `precheck` costs seconds and the sweep costs ninety minutes.**
+  ⚠️ **THE GENERAL FORM IS BROADER THAN "A LINT FIX", AND D415 PAID FOR THE DIFFERENCE: ANY edit to a
+  file the corpus quotes rots a row — including a TEST-ONLY edit made by an agent you delegated to.**
+  Paying an unrelated debt added one sentence to a set a mutant quoted, and it was committed without
+  re-running `precheck`. **Run it before you commit, not after the sweep tells you.**
 - ⚠️ **A RE-TRANSCRIPTION CAN BREAK A ROW'S MEANING WHILE FIXING ITS ANCHOR.** The same repair first
   pointed a `conditionGate`'s `cond` at a union member that does not exist. That mutant would have
   been KILLED — by an exhaustive switch throwing, not by the rule the row is about. **A row that dies

@@ -1219,6 +1219,38 @@ export type BoardCondition =
       Energy sits face up, so the union's public-state invariant holds. False with
       an empty Active Spot. */
   | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
+  /** 🆕🆕 D415 — §6.1, THE SEAT MIRROR OF THE MEMBER DIRECTLY ABOVE: the OPPONENT's
+      Active Pokémon has at least one attached Energy of `energy`. Haxorus
+      `sv06.5-046`, *"If your opponent's Active Pokémon has any Special Energy
+      attached, it is Knocked Out."* — **1 legal printing**.
+
+      🛑 **A SEAT MIRROR, NOT A NEW SHAPE, AND THAT IS WHY IT CARRIES THE FULL
+      `energy` PARAMETER FOR A SENTENCE THAT ONLY EVER PRINTS `"special"`.** The
+      parameter is INHERITED rather than invented: the self twin has carried it
+      since D350 for a measured reason (nine printed energy codes, two rival
+      notations), `hasAttachedEnergy` already takes both readings, and narrowing
+      this member to a bare `opponentActiveHasSpecialEnergy` would be a SECOND way
+      to say something the union already says generally — D131's rule. ⚠️ And the
+      other width already has a named future: `energyClause.test.ts` carries a
+      constructed refusal for *"If your opponent's Active Pokémon has any {R}
+      Energy attached, …"*, so the type reading is a sentence this repo has already
+      written down as the thing it is waiting for.
+
+      ⚠️ **ONE PRINTING, AND D121's WARRANT IS NOT THE BAR HERE.** That warrant —
+      *two printings with one token varying* — decides whether a PARAMETERISED
+      TEMPLATE is earned over a literal row. This is neither: it is one member
+      mirroring a shipped member across the seat axis, and the tree already builds
+      members at one printing when the shape is inherited (D397's
+      `yourBenchNamedDamaged`, 1 legal printing). Said here rather than left for a
+      successor to re-litigate.
+
+      D116's pronoun rule does NOT apply and that is the difference from the twin:
+      this sentence names the opponent's Active in printed words, so nothing is
+      resolved by a clause table and the member is named for exactly what it reads.
+      The predicate is PROVISION (continuous.ts `hasAttachedEnergy`), not the
+      printed name, for the twin's reason verbatim. **False with an empty Active
+      Spot**, which is the whole family's contract. */
+  | { kind: "opponentActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
   /** 🆕🆕 D374 — §6.3, and the family's FIRST read of a printed CARD NAME on an
       ATTACHED card: YOUR Active Pokémon has at least one attached Energy whose
       printed name is `name`. Team Rocket's Zapdos `sv10-070` (and its second legal
@@ -10027,6 +10059,12 @@ const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
 const OPPONENT_ACTIVE_BASIC_KO =
   /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\.$/;
 const BOTH_ACTIVES_KO = /^Both Active Pokémon are Knocked Out\.$/;
+// 🆕🆕 D415 — Haxorus sv06.5-046, 1 legal printing. The `['’]` class is D136/D137's
+// and is present from the first draft this time: D414 shipped two anchors in this
+// family spelling a bare `'` and it was caught by a suite author noticing the
+// asymmetry rather than by any rung.
+const OPPONENT_ACTIVE_SPECIAL_ENERGY_KO =
+  /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\.$/;
 const SELF_DAMAGE_THEN_COIN_KO =
   /^This Pokémon does (\d+) damage to itself\. Flip a coin\. If heads, your opponent['’]s Active Pokémon is Knocked Out\.$/;
 
@@ -15519,6 +15557,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       {
         op: "conditionGate",
         cond: { kind: "opponentActiveIsBasic" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "knockOutDefender" }],
+      },
+    ];
+  }
+
+  // 6a-ii. 🆕🆕 D415 — "If your opponent's Active Pokémon has any Special Energy
+  //     attached, it is Knocked Out." (1 printing). **ARM 6a WITH THE `cond`
+  //     SWAPPED AND NOTHING ELSE** — same `conditionGate`, same `knockOutDefender`,
+  //     one new `BoardCondition` member behind it. That the two sentences differ
+  //     only in their gate is the family's checkable claim about this pair.
+  match = OPPONENT_ACTIVE_SPECIAL_ENERGY_KO.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveHasEnergyAttached", energy: "special" },
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "knockOutDefender" }],
       },

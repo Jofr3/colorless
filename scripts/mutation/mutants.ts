@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.318.0";',
+    find: 'export const engineVersion = "0.319.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12341,10 +12341,19 @@ export const MUTANTS: Mutant[] = [
   },
   {
     id: "D341-off-pool-sweep-source-is-emptied",
+    // ⚠️ RE-POINTED WHEN D414's CLASSIFICATION DEBT WAS PAID, WHICH ADDED A SECOND
+    //    SENTENCE TO THIS SET — and the row is worth MORE now than when it was
+    //    written, because emptying a two-entry set blinds the sweep to two ops
+    //    rather than one. ⚠️ THE ROT WAS CAUGHT BY `precheck` ONE COMMIT LATE: the
+    //    debt payment was committed without re-running it. That is D414's own
+    //    recorded lesson — **a lint fix is an edit to a mutated file** — and the
+    //    general form is broader than the way it was first written: **ANY edit to a
+    //    file the corpus quotes is one, including a test-only edit made by somebody
+    //    else.** `precheck` costs seconds; this cost a re-transcription.
     decision: "D341",
     what: "\ud83d\uded1 THE AUDITOR'S OWN WIDENING IS REVERTED \u2014 `OFF_POOL_ATTACK_TEXT` becomes empty, so `attackOpKinds()` goes back to sweeping `FIXTURE_POOL` alone and `reorderTop` becomes invisible to the \u00a711 table. This is the exact state the tree was in BEFORE D341, and the point of the row is that the hole is silent in one direction and loud in the other: with the verdict present the dead-weight rung fires, so the guard proves its own reach. Five of the last six slices used a local `cardPool`; each one made this sweep less total than its doc claims, and this row is what stops the repair being quietly undone",
     file: "packages/engine/src/preventBlock.test.ts",
-    find: '  const OFF_POOL_ATTACK_TEXT: readonly string[] = [\n    "Look at the top 4 cards of your deck and put them back in any order.",\n  ];',
+    find: '  const OFF_POOL_ATTACK_TEXT: readonly string[] = [\n    "Look at the top 4 cards of your deck and put them back in any order.",\n    "If your opponent\'s Active Pokémon is a Basic Pokémon, it is Knocked Out.",\n  ];',
     replace: "  const OFF_POOL_ATTACK_TEXT: readonly string[] = [];",
     expectKilledBy: ["packages/engine/src/preventBlock.test.ts"],
   },
@@ -17666,6 +17675,58 @@ export const MUTANTS: Mutant[] = [
     file: "packages/engine/src/effects.ts",
     find: "  /^If your opponent['’]s Active Pokémon is a Basic Pokémon, it is Knocked Out\\.$/;",
     replace: "  /^If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out\\.$/;",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+
+  // ── D415 · the opponent-scoped Special-Energy KO gate ──────────────────────
+  // 🛑 C1 IS THE SLICE. The member is a SEAT MIRROR of a shipped one, so every
+  //    row here is a way of accidentally rebuilding the twin — and under all of
+  //    them the sentence still resolves, the gate still fires and the Knock Out
+  //    still happens. Nothing a census counts moves. Only a board where the two
+  //    seats DISAGREE tells the builds apart.
+  {
+    id: "D415-opponent-member-reads-the-near-seat",
+    decision: "D415",
+    what: "🛑 C1 — **THE SEAT, AND IT IS THE WHOLE MEMBER**: `otherSeat(seat)` becomes `seat`, which makes the new member a duplicate of the self-scoped twin it was written to mirror — the twin whose arm sits FOUR LINES UP and which this one was copied from. ⚠️ **THE SENTENCE STILL RESOLVES, THE GATE STILL FIRES AND THE KO STILL HAPPENS**, on precisely the boards where the ATTACKER holds a Special Energy rather than the defender — so no census rung, no deriver assertion and no anchoring test can see it. Only a board on which the two seats DISAGREE separates them, which is why §7.3 fields one and asserts the mirror as an equivalence in both directions",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && hasAttachedEnergy(state, active, cond.energy);",
+    replace: "      const active = state.players[seat].active;\n      return active !== null && hasAttachedEnergy(state, active, cond.energy);",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D415-opponent-member-ignores-its-parameter",
+    decision: "D415",
+    what: "🛑 C2 — THE PREDICATE IS DROPPED AND THE MEMBER ANSWERS *\"the opponent has an Active\"*: `hasAttachedEnergy(...)` goes, leaving the null check. **THE POSITIVE BOARD IS UNCHANGED** — the printed card's victim does hold a Special Energy — so the whole slice looks built and the KO fires exactly when it should on every board that only ever attaches one. The separating board is the NEGATIVE control (Basic Energy only), which is the case that makes this a GATE rather than an unconditional Knock Out",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null && hasAttachedEnergy(state, active, cond.energy);\n    }\n    case \"yourActiveHasNamedEnergyAttached\": {",
+    replace: "      const active = state.players[otherSeat(seat)].active;\n      return active !== null;\n    }\n    case \"yourActiveHasNamedEnergyAttached\": {",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D415-arm-gates-on-the-self-scoped-twin",
+    decision: "D415",
+    what: "🛑 C3 — THE ARM REACHES FOR THE TWIN: `opponentActiveHasEnergyAttached` becomes `yourActiveHasEnergyAttached` in the derived program. **THIS IS THE MISTAKE THE SLICE EXISTS TO AVOID AND THE ONE `energyClause.test.ts` SPENT A RUNG WARNING ABOUT** — the twin's clause is *\"has any Special Energy attached\"* VERBATIM, which is why that file calls this sentence the one that *\"would tempt a substring match hardest\"*. The program still type-checks, still gates, still Knocks Out; it just reads the wrong side of the table",
+    file: "packages/engine/src/effects.ts",
+    find: "        cond: { kind: \"opponentActiveHasEnergyAttached\", energy: \"special\" },",
+    replace: "        cond: { kind: \"yourActiveHasEnergyAttached\", energy: \"special\" },",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D415-special-ko-anchor-loses-its-apostrophe-class",
+    decision: "D415",
+    what: "🛑 C4 — D202's FAMILY, ON AN ANCHOR THAT GOT IT RIGHT FIRST TIME. The possessive narrows to the ASCII apostrophe alone. **D414 SHIPPED TWO ANCHORS IN THIS FAMILY SPELLING EXACTLY THAT**, and it was caught by a suite author noticing the asymmetry rather than by any rung — this row is what makes the third one falsifiable instead of merely careful",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If your opponent['’]s Active Pokémon has any Special Energy attached, it is Knocked Out\\.$/;",
+    replace: "  /^If your opponent's Active Pokémon has any Special Energy attached, it is Knocked Out\\.$/;",
+    expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
+  },
+  {
+    id: "D415-opponent-note-falls-through-to-the-twin",
+    decision: "D415",
+    what: "🛑 C5 — THE REJECT FRAGMENT LOSES ITS POSSESSIVE and reads *\"your Active Pokémon has a Special Energy attached\"* — the twin's note byte for byte. **A NOTE THAT NAMES THE WRONG BOARD IS WORSE THAN NO NOTE**: it is exactly right about a fact the player can see and wrong about whose board decides, which on this sentence is the entire rule. ⚠️ The round trip is what catches it — the note re-derives to the TWIN's member, not this one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return cond.energy === \"special\"\n        ? \"your opponent's Active Pokémon has a Special Energy attached\"\n        : `your opponent's Active Pokémon has ${cond.energy} Energy attached`;",
+    replace: "      return cond.energy === \"special\"\n        ? \"your Active Pokémon has a Special Energy attached\"\n        : `your Active Pokémon has ${cond.energy} Energy attached`;",
     expectKilledBy: ["packages/engine/src/knockOutDefender.test.ts"],
   },
 ];

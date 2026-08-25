@@ -3197,6 +3197,17 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const active = state.players[seat].active;
       return active !== null && hasAttachedEnergy(state, active, cond.energy);
     }
+    case "opponentActiveHasEnergyAttached": {
+      // 🆕🆕 D415 — the seat mirror of the arm directly above, and the ONE line that
+      // differs is the seat. ⚠️ D116's pronoun rule does NOT fire here: the printed
+      // sentence names "your opponent's Active Pokémon" in words, so there is no
+      // pronoun for a clause table to resolve and the member is named for exactly
+      // what it reads. The predicate is `continuous.ts`'s, so a type reads by
+      // PROVISION and cannot drift from the §8.2 cost check — the twin's reason,
+      // inherited rather than re-derived. False with an empty Active Spot.
+      const active = state.players[otherSeat(seat)].active;
+      return active !== null && hasAttachedEnergy(state, active, cond.energy);
+    }
     case "yourActiveHasNamedEnergyAttached": {
       // 🆕 D374 — "this Pokémon has any Team Rocket's Energy attached" (Team Rocket's
       // Zapdos sv10-070, +60). D116's pronoun rule again: the clause table resolved
@@ -4272,6 +4283,15 @@ export function conditionNote(cond: BoardCondition): string {
       return cond.energy === "special"
         ? "your Active Pokémon has a Special Energy attached"
         : `your Active Pokémon has ${cond.energy} Energy attached`;
+    case "opponentActiveHasEnergyAttached":
+      // 🆕🆕 D415 — the seat mirror of the note directly above, built from the same
+      // parameter. ⚠️ NO PRONOUN IS DROPPED HERE, WHICH IS THE DIFFERENCE: the twin
+      // drops a printed "this Pokémon" because the clause table resolved it; this
+      // sentence names the opponent's Active in words, so the note is the printed
+      // phrase itself and the round trip is exact rather than re-voiced.
+      return cond.energy === "special"
+        ? "your opponent's Active Pokémon has a Special Energy attached"
+        : `your opponent's Active Pokémon has ${cond.energy} Energy attached`;
     case "yourActiveHasNamedEnergyAttached":
       // 🆕 D374 — built from the parameter, and the pronoun is dropped exactly as the
       // arm above drops it (D116), so the pill names the body a player can see rather
