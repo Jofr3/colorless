@@ -468,13 +468,20 @@
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE**
 > (D411's entry says why in full).
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D416 has had `--decision D416` (13 killed / 0 GAPs after
-> the survivor was closed), `--decision D345` and `--decision D331` after re-pointing (all killed),
-> and a `precheck` clean over 1,517 — but **no whole-corpus run against this head**. ⚠️ **EXPOSURE IS
-> THE HIGHEST OF THE RUN**: this slice REFACTORED two shipped ops into a shared helper and COPIED a
-> funnel, which between them rotted **seven** existing rows. A row spanning a line the factoring
-> touched is the likely `error`, and the `find occurs 2×` class is the one to watch — it is silent
-> until something quotes the copy.
+> ✅ **THE SWEEP DEBT IS PAID AND NOTHING IS OWED AT THIS HEAD.**
+> **1517 · 1493 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,496.7s**, `SWEEP_EXIT=0`. `1493 + 24 = 1517` closes; **verified by id in both
+> directions**, 1517 / 1517, 0 missing / 0 extra. All 13 D416 rows KILLED, and every re-pointed row
+> with them.
+> ✅ **`error` is 0 on the slice with the HIGHEST forecast exposure of the run** — a shared-helper
+> refactor plus a copied funnel, seven rotted rows between them. Repairing them BEFORE the sweep
+> rather than being told by it is the whole difference, and `precheck` is what made that possible.
+> 🛑 **AND `stale` IS 0 IN THE ONE PLACE IT COULD MEANINGFULLY HAVE FIRED.**
+> `D345-self-ko-overwrites-existing-damage`'s `equivalent` declaration was **re-argued rather than
+> inherited** when the factoring gave its line two new callers; a declaration that had stopped being
+> true would have reported `STALE-SURVIVOR` by name. **A meaningful zero rather than the usual one:**
+> for thirty-two sweeps that branch was untested because nothing challenged a declaration. This slice
+> challenged one, and the answer came back the same.
 >
 > ### ▶ WHAT TO DO NEXT — THE FAMILY'S LAST SENTENCE, AND IT IS A DIFFERENT MECHANISM
 >
