@@ -255,6 +255,19 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A DEFECT EVERY LOCAL DECISION IS RIGHT TO DECLINE HAS NO LOCAL FIX (D418).** A stale reader
+  array was left unfixed for **179 commits** because every slice that met it was CORRECT to decline:
+  *"adding a tenth reader would move numbers this slice has nothing to do with."* True of each slice,
+  and fatal in aggregate — the defect grew from one missing reader to three, and ended up wrong in
+  **38 of 40 files**. ⚠️ **THE MOVE IS NOT TO OVERRULE THE ARGUMENT, IT IS TO REMOVE ITS PREMISE.**
+  D418 made the figures come off a module-derived surface FIRST; widening the array then moved zero
+  digits and the objection dissolved rather than being argued with. **When a refusal keeps being
+  right, attack what makes it right.**
+- ⚠️ **A REPAIR THAT DOES NOT COMPOUND IS A DEBT WITH INTEREST (D418).** The declining slice worked
+  around its blind spot by deleting one sentence from a list instead of fixing the array. By the time
+  the array was fixed, that workaround had become a rung which would go **RED if anyone fixed it** —
+  the repair actively defending the defect. **Prefer a fix that makes the next one cheaper; if you
+  cannot, say in the comment that you are choosing a workaround and why.**
 - 🛑 **AN INSTRUMENT WITH A HAND-KEPT COPY OF SOMETHING THE MODULE ALREADY EXPORTS CANNOT GO RED —
   IT CAN ONLY GO QUIET (D417).** `censusAtHead.test.ts` computed `BUILT.attack` — the figure most of
   this repo's accounting keys off — from a **stale 11-entry reader list against 12 exported**, and

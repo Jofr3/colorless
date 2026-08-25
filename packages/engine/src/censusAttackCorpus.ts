@@ -1,3 +1,5 @@
+import * as effects from "./effects";
+
 // 0.189.0 — D274, THE CENSUS'S LAST UNGUARDED COLUMN: the committed corpus that
 // makes `BUILT.attack` derivable at test time.
 //
@@ -711,4 +713,104 @@ export function legalAttackCorpus(): readonly (readonly [number, string])[] {
       }
       return [units, sentence] as const;
     });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 D418 — THE READER SURFACE, DERIVED ONCE, HERE.
+//
+// 🛑 WHY THIS LIVES IN THIS FILE, AND THE MEASUREMENT THAT DECIDED IT. **FORTY**
+// test files carry a hand-maintained `READERS` array — a literal list of
+// `deriveAttack*` imports, several claiming in their own doc blocks to be *"the
+// same set `censusAtHead.test.ts` uses"*. At D418's head **THIRTY-EIGHT OF THE
+// FORTY WERE STALE**: twenty-five were NINE long (since D381, 2026-08-21 — 179
+// commits) and thirteen were ELEVEN long (since D417, the day before). Only
+// `censusAtHead.test.ts` and `precociousEvolution.test.ts` were current, and they
+// are precisely the two that carry a module-surface guard.
+//
+// ⚠️ **THE COUNT OF STALE COPIES AND THE COUNT OF WRONG NUMBERS ARE DIFFERENT
+// NUMBERS, and D418 fixed the second set.** Eight of the thirty-eight asserted a
+// WHOLE-CORPUS figure through their own copy — `benchNamedBonus`, `exOnlyActive`,
+// `retreatCostBonus`, `sameEnergyBonus`, `sawkRequirementSplit` (nine-long) and
+// `inPlayTypeBonus`, `moreEnergyBonus`, `opponentBenchCount` (eleven-long) — and
+// **ten published figures were wrong**. The truth over `legalAttackCorpus()` is
+// **412 sentences / 1,364 printings resolved, residue 228 / 368**; a nine-reader
+// view reads 406 / 1,347 / 234 / 385 and an eleven-reader view 411 / 1,363 / 229 /
+// 369. Those eight now call the predicate below.
+//
+// ⚠️ **AND THE REMAINING THIRTY ARE NOT HARMLESS, WHICH IS D418's OTHER FINDING.**
+// They run their stale unions over NARROWER populations, so no whole-corpus total
+// is involved — but three of them assert REFUSALS that the module already
+// contradicts: `stadiumDiscard.test.ts` (§1's `[4, 9]`, truly `[5, 10]`, and two
+// §6 rungs), `stadiumPresence.test.ts` (two rungs) and `exactHandSize.test.ts`
+// (one). All six turn on ONE sentence — *"Discard a Stadium in play. If you can't,
+// this attack does nothing."*, Eternatus `sv08-141` — which is exactly what D417's
+// `deriveAttackCancelRequirement` was built to claim. They are left for their own
+// slices rather than swept in here.
+//
+// 🛑🛑 **AND THIS HAS HAPPENED BEFORE, ON THE RECORD, AND WAS DECLINED.**
+// `exactHandSize.test.ts`'s own doc block describes D385 building a sentence that
+// file's `READERS` array could not see, leaving a refusal rung *"green and
+// false"* — and then says: *"THE NINE-READER ARRAY IS NOT A BUG AND IS NOT WIDENED
+// HERE… adding a tenth reader to it would move numbers this slice has nothing to
+// do with."* ⚠️ **THAT REASONING IS WHY THE DRIFT REACHED 179 COMMITS.** It is
+// locally correct — widening a list DOES move a neighbouring figure — and it makes
+// every individual slice the wrong place to fix it, which leaves no place at all.
+// The way out is not to widen thirty-eight lists but to stop the figures depending
+// on lists.
+//
+// ⚠️ **THE STALENESS WAS THE SYMPTOM; THE DUPLICATION WAS THE DEFECT.** D417
+// diagnosed the missing GUARD and added one — to one file. A guard per copy is
+// forty guards to keep, and the fortieth is the one nobody adds. So the surface is
+// derived from the MODULE, once, in the non-test `src` module all 40 census files
+// already import `legalAttackCorpus()` from, and the copies become callers.
+//
+// ⚠️⚠️ **THE KNOWN LIMIT, in `precociousEvolution.test.ts`'s own words**: it keys
+// on the `deriveAttack` NAME PREFIX, which is the naming convention all twelve
+// follow; *a reader added under a different name is still invisible here, and
+// that limit is why this is a tripwire and not a proof.*
+
+type Reader = (text: string) => unknown;
+
+/** The surface, resolved ONCE on first use. ⚠️ A cache is not a loss of liveness
+    here and the distinction is worth stating: a module's export set is fixed at
+    load, so this is the same answer `Object.entries` would give on every call — it
+    is `legalAttackCorpus()`'s 640 sentences × the callers that walk them that make
+    recomputing it wasteful. The hand-kept lists this replaces were stale because
+    a HUMAN had to update them, not because anything was cached. */
+let SURFACE: readonly (readonly [string, Reader])[] | null = null;
+
+function surface(): readonly (readonly [string, Reader])[] {
+  if (SURFACE === null) {
+    const found: [string, Reader][] = [];
+    for (const [name, value] of Object.entries(effects)) {
+      // ⚠️ BOTH HALVES OF THE TEST MATTER. The prefix is the naming convention (see
+      // the block above for its limit); the `typeof` keeps a non-function export
+      // that happens to be named `deriveAttack…` from being called as one.
+      if (name.startsWith("deriveAttack") && typeof value === "function") {
+        found.push([name, value as unknown as Reader]);
+      }
+    }
+    found.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    SURFACE = found;
+  }
+  return SURFACE;
+}
+
+/** The `deriveAttack`-prefixed reader surface, taken from the MODULE rather than
+    from a list, sorted by name. See the block above for the prefix limit. */
+export function attackReaderSurface(): readonly string[] {
+  return surface().map(([name]) => name);
+}
+
+/** "Does any LIVE reader claim this sentence whole?" — the census's resolution
+    predicate, run off the module surface so it can never fall behind the way a
+    hand-kept list can.
+
+    ⚠️ The readers are held as FUNCTIONS rather than looked up by name at call
+    time. A name lookup that missed would yield `undefined`, and `undefined !== null`
+    is TRUE — so a typo'd or renamed reader would make this predicate claim EVERY
+    sentence and every census figure in the repo would move at once, upward, with
+    nothing naming the cause. There is no lookup to miss. */
+export function resolvedByAnyReader(text: string): boolean {
+  return surface().some(([, read]) => read(text) !== null);
 }

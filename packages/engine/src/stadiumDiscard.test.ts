@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader as readByAny,
+} from "./censusAttackCorpus";
 import { effectiveRetreatCost } from "./continuous";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -72,6 +77,12 @@ import {
 //    in THIS population: **2 sentences / 2 printings** of the legal attack column, the
 //    Stadium discard and a Basic {G} hand cost. So the mechanism is worth building for
 //    the family, not for one card, and §6 leaves both of them named and loud.
+//    🆕🆕 **D417 BUILT IT FOR ONE CARD, NOT FOR THE FAMILY** — `deriveAttackCancelRequirement`
+//    reads the Stadium body and refuses the hand cost — so the prediction above was
+//    right about the MECHANISM and wrong about its REACH, and §6's rung is re-pointed
+//    at the SPLIT (D178: the clause stays, the correction is marked as one). ⚠️ And
+//    D418 is where this file found out: its `READERS` list could not see D417's
+//    reader, so §1 and §6 went on publishing a pre-D417 head for a whole slice.
 // 3. **`discard that Stadium` NEEDS NO REFERENT, AND §7.3's SINGLETON IS THE REASON.**
 //    D378 made `stadiumInPlay` nullary because the zone holds at most one Stadium;
 //    the same fact makes *"a Stadium in play"* and *"that Stadium"* denote the same
@@ -110,9 +121,25 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-/** The live readers, run as one — the same set `censusAtHead.test.ts` uses.
+/** The live readers, run as one — ~~the same set `censusAtHead.test.ts` uses~~.
     🆕🆕 D381 raised it from NINE to TEN (`deriveAttackOptionalCostBoost`), and that
-    is exactly why one row left `STILL_OWED` below. */
+    is exactly why one row left `STILL_OWED` below.
+
+    🛑🛑 🆕🆕 **D418 — THE SENTENCE ABOVE IS STRUCK BECAUSE IT WAS FALSE, AND THE
+    ROW IT BOASTS ABOUT IS THE PROOF THAT THE BOAST WAS UNCHECKED.** This list read
+    ELEVEN from **D403** while `effects.ts` reached TWELVE at **D417**, so the claim
+    to be "the same set `censusAtHead.test.ts` uses" was wrong for the whole of that
+    window — and nothing anywhere compared the two. The missing entry was
+    `deriveAttackCancelRequirement`, the reader D417 built for EXACTLY the sentence
+    this file's `STILL_OWED` list names first: *"Discard a Stadium in play. If you
+    can't, this attack does nothing."* ⚠️ **SO THE LIST DID NOT MERELY GO STALE — IT
+    WENT STALE AGAINST ITS OWN SUBJECT**, and three published figures below (§1's
+    `[4, 9]` and two §6 refusal rungs) went on stating a head that had moved.
+
+    ⚠️ WHAT THIS LIST IS FOR NOW. Every figure in this file is computed through
+    `resolvedByAnyReader` IMPORTED FROM `censusAttackCorpus.ts`, off the MODULE
+    surface, so no edit here can move one again. The list survives as a DECLARED
+    EXPECTATION for §1's first rung, which names the drifting reader. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -125,8 +152,9 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
   deriveAttackDiscardScaledBoost,
+  // 🆕🆕 D418 — the TWELFTH (D417), and the one this file most needed.
+  deriveAttackCancelRequirement,
 ];
-const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 /** THE TWO SENTENCES THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const BARE = "Discard a Stadium in play.";
@@ -141,9 +169,11 @@ const MAY = "You may discard a Stadium in play.";
     Kept as a list rather than as prose because §6 drives them: a successor who widens
     an anchor to swallow one of these reddens here by name. */
 const STILL_OWED = [
-  // The TRAILING ANAPHORIC cancel — Eternatus `sv08-141` "World Ender" ({R}{D}{D},
-  // 230). One of the TWO legal printings of that shape (§6 measures the other).
-  "Discard a Stadium in play. If you can't, this attack does nothing.",
+  // 🆕🆕 **D417 TOOK THE TRAILING ANAPHORIC CANCEL** — Eternatus `sv08-141` "World
+  // Ender" ({R}{D}{D}, 230), which sat on this list from D380 and is now
+  // `TAKEN_BY_D417` below. It was the THIRD row to leave, and the only one whose
+  // departure this file could not see: D381's and D382's readers were in the
+  // `READERS` array and this one was not (see that array's doc block).
   // The remaining `discard that Stadium` TAIL — Ting-Lu `sv06-110` "Ground Crasher".
   // 🆕🆕 **D382 TOOK ITS TWIN AND LEFT THIS ONE**, and the reason is in the MIDDLE
   // clause rather than in the join: `AttackBonusConsequent` (D317) reads *"…this
@@ -162,6 +192,21 @@ const STILL_OWED = [
     through D317's assembler, on ZERO new readers and ZERO new ops — the SECOND row
     to leave this list that way, after D381's. */
 const TAKEN_BY_D382 = "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.";
+
+/** 🆕🆕 D417 — the THIRD row to leave `STILL_OWED`, kept rather than deleted (D178)
+    and asserted RESOLVED in §6. Eternatus `sv08-141` "World Ender" ({R}{D}{D}, 230)
+    spends this slice's `discardStadium` under a CANCEL consequent read by
+    `deriveAttackCancelRequirement` — the trailing anaphoric split D380 named as the
+    missing mechanism, built exactly as predicted, on ZERO new ops.
+
+    🛑🛑 **AND THIS FILE WENT ON CALLING IT REFUSED FOR A WHOLE SLICE**, because the
+    `READERS` array above did not carry D417's reader. §1's `taken` figure read
+    `[4, 9]` when the truth was `[5, 10]`, and §6's two refusal rungs asserted a
+    refusal that had stopped existing — the exact defect D382 recorded one slice
+    back, reproduced by the same mechanism a third time. **THE INSTRUMENT WAS FIXED AT
+    D418 BY DELETING IT**: every figure here now runs off `censusAttackCorpus.ts`'s
+    module-derived predicate, which has no list to fall behind. */
+const TAKEN_BY_D417 = "Discard a Stadium in play. If you can't, this attack does nothing.";
 
 const BEACH_COURT = "sv01-167";
 
@@ -234,7 +279,20 @@ function find<T extends GameEvent["type"]>(
 const SEEDS = [9001, 9013, 9029] as const;
 
 describe("§1 — the price, MEASURED: six printings on one op, against ONE for the best clause row", () => {
-  it("🛑 the family is 6 sentences / 11 printings, and 3 / 8 of them now resolve", () => {
+  it("🆕🆕 D418 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE — and the file that needed it
+    // most, because the reader this list was missing is the one built for the sentence
+    // §6 names first. Until this slice nothing anywhere compared this list to what
+    // `effects.ts` exports, so it stayed ELEVEN from D403 while the module reached
+    // TWELVE at D417, and three of this file's claims were false the whole time.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
+    // GREEN when a reader leaves the module and this list in the same commit — and
+    // §1's and §6's figures would then move with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
+  it("🛑 the family is 6 sentences / 11 printings, and 5 / 10 of them now resolve", () => {
     // Both columns, off the same instrument, exactly as the resume point demands:
     // `corpus().filter(...)` gives the RECORDS and `units(...)` gives the PRINTINGS.
     const family = corpus().filter(([, s]) => s.includes("Stadium") && s.includes("iscard"));
@@ -243,11 +301,22 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // op: the reversed optional boost is a READING over this slice's own op.
     // 🆕🆕 D382 — 3 → **4** and 8 → **9**, and the FOURTH row cost no new op either:
     // Chi-Yu's tail is D317's assembler reached through a widened JOIN.
-    const taken = family.filter(([, s]) => s === BARE || s === MAY || resolvedByAnyReader(s));
-    expect([taken.length, units(taken)]).toEqual([4, 9]);
+    // 🛑🛑 🆕🆕 **D418 — 4 / 9 WAS NOT A HEAD, IT WAS A STALE ONE, AND THE CORRECTION
+    // IS 5 / 10.** ⚠️ The line above is left standing because it was TRUE when written
+    // and the mistake is not in it (D178): what went wrong is that **D417 took a FIFTH
+    // row** — Eternatus's trailing anaphoric cancel, `TAKEN_BY_D417` — and this figure
+    // did not move, because the `READERS` list it was computed through could not see
+    // D417's reader. The predicate is now imported from `censusAttackCorpus.ts` and
+    // derived from the module, so a sixth departure cannot go unnoticed the same way.
+    const taken = family.filter(([, s]) => s === BARE || s === MAY || readByAny(s));
+    expect([taken.length, units(taken)]).toEqual([5, 10]);
     expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D382);
+    expect(taken.map(([, s]) => s)).toContain(TAKEN_BY_D417);
     const left = family.filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect([left.length, units(left)]).toEqual([2, 2]);
+    // 🆕🆕 D418 — 2 / 2 -> **1 / 1**, the other half of D417's step: the row moved OUT
+    // of `STILL_OWED` rather than the total moving, which is what keeps the partition
+    // below a partition.
+    expect([left.length, units(left)]).toEqual([1, 1]);
     // The parts sum, which is what makes a partition a partition — and what stops a
     // successor quietly moving a sentence from one list to the other.
     expect(taken.length + left.length).toBe(family.length);
@@ -280,7 +349,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // deferred HEALED flag, so everything a clause row could still take is a
     // 1-printing row. Re-derived here rather than quoted.
     const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-    const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
+    const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !readByAny(s));
     // 🆕🆕 D384 — 21 / 25 -> 20 / 24: the STRICT-INEQUALITY TWIN left this residue —
     // ONE sentence at ONE printing (Swalot `sv07-092` "Devouring Mouth", +160) — and
     // it is the family's FIRST 1:1 step, re-derived live rather than decremented.
@@ -596,23 +665,31 @@ describe("§5 — the printed 'You may': a confirm that is asked ONLY when it ha
 });
 
 describe("§6 — what this slice did NOT buy", () => {
-  it("🛑 the two COMPOUND printings stay LOUD, each waiting on a named mechanism", () => {
+  it("🛑 the ONE COMPOUND printing left stays LOUD, waiting on a named mechanism", () => {
     for (const sentence of STILL_OWED) {
-      expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+      expect(readByAny(sentence), sentence).toBe(false);
     }
     // 🆕🆕 D381 — FIVE printings became THREE, and the two that left did so through a
     // READER rather than through an op.
     // 🆕🆕 D382 — THREE became **TWO**, the same way a third time. Two singletons is
     // the number the next slice is choosing against, and both are named above with
     // the mechanism each is waiting on.
+    // 🛑🛑 🆕🆕 **D418 — TWO became ONE at D417, AND THIS RUNG DID NOT NOTICE**: the
+    // loop above ran over a `STILL_OWED` that still held Eternatus, and asserted a
+    // refusal `deriveAttackCancelRequirement` had already ended. It was GREEN because
+    // this file's `READERS` list could not see that reader — **a refusal guard whose
+    // instrument cannot see the reader that expired it reads green for the wrong
+    // reason** (D211/D379), for the third time in this file. The loop is unchanged;
+    // what changed is the list it walks and the predicate it walks with.
     const left = corpus().filter(([, s]) => (STILL_OWED as readonly string[]).includes(s));
-    expect(units(left)).toBe(2);
-    // 🛑 …and the row that LEFT is asserted to have left, so this rung cannot go
+    expect(units(left)).toBe(1);
+    // 🛑 …and the rows that LEFT are asserted to have left, so this rung cannot go
     // green by a successor quietly shortening the list (D379's saturation trap).
-    expect(resolvedByAnyReader(TAKEN_BY_D382)).toBe(true);
+    expect(readByAny(TAKEN_BY_D382)).toBe(true);
+    expect(readByAny(TAKEN_BY_D417)).toBe(true);
   });
 
-  it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card", () => {
+  it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card — and D417 took HALF of it", () => {
     // Why Eternatus is not half-built here: `ATTACK_DOES_NOTHING`'s `^If` refuses every
     // one of them, and effects.ts has carried that count since D125. The member the
     // sentence needs (`stadiumInPlay`) already exists — what is missing is a SPLIT that
@@ -627,9 +704,35 @@ describe("§6 — what this slice did NOT buy", () => {
     // WITHOUT ITS POPULATION IS A FLOOR** (D183/D187), and the older comment is a floor
     // against this one rather than wrong.
     expect([anaphoric.length, units(anaphoric)]).toEqual([2, 2]);
-    for (const [, s] of anaphoric) {
-      expect(deriveAttackRequirement(s), s).toBeNull();
-      expect(resolvedByAnyReader(s), s).toBe(false);
+    // 🛑 THE CLAIM THIS RUNG ACTUALLY OWNS IS ABOUT `ATTACK_DOES_NOTHING`'s ANCHOR,
+    // and that claim is STILL TRUE OF BOTH: `deriveAttackRequirement` is anchored `^If`
+    // and refuses a clause printed BEHIND its body, which is the whole reason D380
+    // could not half-build Eternatus here.
+    for (const [, s] of anaphoric) expect(deriveAttackRequirement(s), s).toBeNull();
+    // 🛑🛑 🆕🆕 **D418 — THE SECOND HALF OF THIS LOOP WAS A DIFFERENT CLAIM AND IT
+    // STOPPED BEING TRUE AT D417, SO IT IS RE-POINTED RATHER THAN DELETED** (D316/D317's
+    // pattern). It read `expect(readByAny(s)).toBe(false)` over BOTH rows — *"no reader
+    // anywhere claims either of these"* — and D417 built `deriveAttackCancelRequirement`
+    // for exactly the Stadium one. ⚠️ **AND THE ROW BELOW IS WHY THE RUNG IS WORTH
+    // KEEPING AT ALL**: its subject is that this is a FAMILY and not a card, and the
+    // family is now SPLIT — which is a sharper form of the same claim than the refusal
+    // was. The split is asserted in both directions so neither half can rot quietly.
+    const [stadiumRow, handRow] = [
+      anaphoric.filter(([, s]) => s === TAKEN_BY_D417),
+      anaphoric.filter(([, s]) => s !== TAKEN_BY_D417),
+    ];
+    expect([stadiumRow.length, handRow.length]).toEqual([1, 1]);
+    for (const [, s] of stadiumRow) {
+      expect(deriveAttackCancelRequirement(s), s).not.toBeNull();
+      expect(readByAny(s), s).toBe(true);
+    }
+    // 🛑 …and the OTHER one is still refused by EVERY live reader, D417's included —
+    // which is what makes "a family, not one card" a debt this file still holds rather
+    // than a settled account. A split that reads the trailing clause generally would
+    // have taken both; D417's reads the Stadium body only.
+    for (const [, s] of handRow) {
+      expect(deriveAttackCancelRequirement(s), s).toBeNull();
+      expect(readByAny(s), s).toBe(false);
     }
     // 🛑 AND THE SECOND ONE IS WHY THIS IS A FAMILY AND NOT A CARD: it is a HAND COST
     // whose "can't" points at a different mechanism entirely, so the split that reads

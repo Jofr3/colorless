@@ -25690,6 +25690,65 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D418 — THE CENSUS INSTRUMENTS WERE STALE IN 38 OF 40 FILES (no engine change; 0.321.0, `MATCH_RECORD_VERSION` **26**)
+
+**Seventeen false assertions corrected across eleven suites**, ten of them **wrong figures** rather
+than misleading prose. No behaviour moved, so no version moved.
+
+### The measurement, and the correlation that is the whole mechanism
+
+40 test files keep a hand-maintained `READERS` array. **38 were stale at HEAD** — 25 nine-long, 13
+eleven-long, against 12 exported. **The only two that were current are exactly the two with a
+module-surface guard.** Nothing else predicted correctness.
+
+Ground truth over `legalAttackCorpus()`: 9 readers → 406 / 1,347; 11 → 411 / 1,363; **12 → 412 /
+1,364, residue 228 / 368**. Five suites were off by **6 sentences / 17 printings** (stale since
+**D381 — never re-pointed in 179 commits**); three by 1 / 1 (since D417).
+
+✅ **Every frozen baseline endpoint survived byte-identical** — the proof that the baselines were
+right and only the live-head term was wrong.
+
+### 🛑 The finding that matters most is about process
+
+**This fix had been explicitly declined**, by `exactHandSize.test.ts`: *"THE NINE-READER ARRAY IS NOT
+A BUG AND IS NOT WIDENED HERE… adding a tenth reader to it would move numbers this slice has nothing
+to do with."*
+
+**That reasoning was locally correct** — and it is why the drift lasted 179 commits and grew from one
+missing reader to three. **A defect every local decision is right to decline has no local fix; it
+makes every slice the wrong place and leaves no place at all.**
+
+✅ **D418 did not answer the argument. It removed the premise.** The figures now come off a
+module-derived `attackReaderSurface()` / `resolvedByAnyReader()` in `censusAttackCorpus.ts` FIRST, so
+widening a local array moved **zero digits** — proven by a red-drive where deleting a reader left
+every figure green and reddened only the guard. The original refusal is kept word for word with the
+correction marked beneath it.
+
+⚠️ **And its workaround is the second half of the lesson**: removing one sentence from a list rather
+than fixing the array is a repair that does not compound, and by D418 it had become a rung that would
+go **RED if anyone fixed the array** — the repair defending the defect.
+
+### What was built
+
+- **Eleven module-surface rungs**, each pinning the diff **and** the count separately (a diff alone
+  stays green when a reader is deleted from module and list together).
+- **Refusal rungs re-pointed, not deleted.** Where a rung claimed *"no reader takes this"* about a
+  family, the claim came apart: the Stadium row is now asserted RESOLVED and claimed **specifically**
+  by `deriveAttackCancelRequirement`, while the hand-cost row is asserted still refused by **every**
+  reader including D417's — a **sharper** rung, because D417 built the mechanism for one body and not
+  for the family.
+- **A mutant anchor saved without touching `mutants.ts`**: appending a reader would have moved the
+  `];` that a D382 row quotes, so the entry was spliced mid-list with the reason stated. All 1,522
+  anchors verified; the row re-probed by hand and still KILLED, now by the new guard.
+
+### ⚠️ Follow-on debt
+
+**30 files still hold an unguarded hand-kept copy.** Their figures are correct today **by luck**. The
+helper is exported and is the only fix that closes them at the source — **and it should be one slice,
+not thirty**, for exactly the reason above.
+
+`bun run check` **418 files / 8,892 tests, exit 0** (+0 files / +11 cases, exactly the guards).
+
 ## D417 — THE TRAILING, ANAPHORIC CANCEL: a reader for a mechanism that already existed (engine 0.321.0, `MATCH_RECORD_VERSION` **STAYS 26**)
 
 *"Discard a Stadium in play. If you can't, this attack does nothing."* — Eternatus `sv08-141`,

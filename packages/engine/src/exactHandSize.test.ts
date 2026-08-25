@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader as readByAny,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
@@ -100,7 +106,37 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 const NOTHING = /^If (.+), this attack does nothing\.$/;
 
-/** The nine live readers, run as one — the same set `censusAtHead.test.ts` uses. */
+/** ~~The nine live readers, run as one — the same set `censusAtHead.test.ts` uses.~~
+
+    🛑🛑 🆕🆕 **D418 — THE HEADER ABOVE IS STRUCK AND THE ARRAY IS WIDENED TO TWELVE,
+    WHICH REVERSES THIS FILE'S OWN EXPLICIT, ARGUED REFUSAL TO DO EXACTLY THAT.** The
+    refusal is in the `SIZE_CEILING` block below, kept verbatim and NOT deleted,
+    because it is the evidence. It said: *"THE NINE-READER ARRAY IS NOT A BUG AND IS
+    NOT WIDENED HERE… adding a tenth reader to it would move numbers this slice has
+    nothing to do with."*
+
+    ⚠️ **THAT REASONING WAS LOCALLY CORRECT, AND THAT IS THE PROBLEM WITH IT.**
+    Widening a shared instrument inside a slice about hand sizes really would move a
+    neighbouring figure the slice had not measured — so the right call, for that
+    slice, was to decline. The same call was available and equally right in every
+    other slice, which is how a two-entry gap survived **179 commits** and reached
+    THREE (D381's `deriveAttackOptionalCostBoost`, D403's
+    `deriveAttackDiscardScaledBoost`, D417's `deriveAttackCancelRequirement`). **A
+    DEFECT EVERY LOCAL DECISION IS RIGHT TO DECLINE HAS NO LOCAL FIX, AND A DEFECT
+    WITH NO LOCAL FIX IS PERMANENT UNTIL SOMEONE CHANGES THE SHAPE.**
+
+    🛑 **SO D418 DID NOT ANSWER THE ARGUMENT — IT REMOVED ITS PREMISE.** The premise
+    was that this array IS the census instrument, so touching it moves census
+    numbers. It no longer is: every figure in this file is computed through
+    `resolvedByAnyReader` IMPORTED FROM `censusAttackCorpus.ts` and derived from the
+    MODULE, which is the same twelve readers on every branch of the repo at once.
+    Widening the array below therefore moves NOTHING — it only makes §1's first rung
+    agree with the module. The old block's fear was real and is now unfounded, in
+    that order, and both halves are left standing so a successor can see why.
+
+    ⚠️ The one figure the widening DOES move is the refusal claim the old block
+    carved out by hand (`CEILING_TAKEN_AT_D385`), and §1 states that reversal in
+    place rather than deleting the rung. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -111,8 +147,12 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
+  // 🆕🆕 D418 — the TENTH, ELEVENTH and TWELFTH (D381, D403, D417). Three readers,
+  // one silence, one edit; see the block above for why it took 179 commits.
+  deriveAttackOptionalCostBoost,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackCancelRequirement,
 ];
-const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 /** THE SENTENCE THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const TRIO_CHEEHOO = "If you don't have exactly 3 cards in your hand, this attack does nothing.";
@@ -150,13 +190,38 @@ const HANDS_LEVEL: BoardCondition = { kind: "handSizesEqual" };
     to it would move numbers this slice has nothing to do with. What was wrong is that
     a REFUSAL claim was drawn from an instrument that cannot see one reader. **A
     CENSUS INSTRUMENT AND A REFUSAL ORACLE ARE NOT THE SAME OBJECT**, and the sentence
-    is removed from the list rather than the array being changed. */
+    is removed from the list rather than the array being changed.
+
+    🛑🛑 🆕🆕 **D418 — THE PARAGRAPH DIRECTLY ABOVE IS REVERSED, AND IT IS KEPT WORD
+    FOR WORD BECAUSE IT IS THE EVIDENCE.** The array WAS widened, to twelve, and the
+    census figures did not move a digit — because D418 first took the figures off the
+    array entirely (`resolvedByAnyReader` now comes from `censusAttackCorpus.ts` and
+    is derived from the MODULE). ⚠️ **THE ARGUMENT WAS NOT WRONG; IT WAS LOAD-BEARING
+    ON A PREMISE NOBODY THOUGHT TO ATTACK.** Its premise — *"this array IS a shared
+    census instrument, so widening it moves neighbouring numbers"* — was true, and it
+    made widening a cost that no single slice could justify paying. Every slice after
+    this one faced the identical trade and reached the identical, correct, local
+    answer. **THAT IS WHY THE GAP LASTED 179 COMMITS AND GREW FROM ONE READER TO
+    THREE** (D381, D403, D417): a defect that every local decision is right to decline
+    has no local fix, and it stays until the SHAPE changes rather than the verdict.
+
+    ⚠️ AND THE CARVE-OUT THIS BLOCK CHOSE INSTEAD — *"the sentence is removed from the
+    list rather than the array being changed"* — is the second half of the lesson. It
+    fixed the one refusal claim its author could SEE, by hand, and left the instrument
+    that hid it in place; the very next thing the instrument hid was D404's, then
+    D417's. **A HAND-CARVED EXCEPTION IS A REPAIR THAT DOES NOT COMPOUND.** The
+    resulting rung (`expect(readByAny(CEILING_TAKEN_AT_D385)).toBe(false)`) had by
+    D418 become a test that would go RED if anyone fixed the array — see §1's
+    ceiling rung, where it is reversed in place rather than deleted. */
 const SIZE_CEILING = [
   "This attack does 30 damage for each card in your opponent's hand.",
   "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.",
 ] as const;
 /** …and the entry that LEFT the ceiling at D385, kept so this file still says what
-    happened to it. Refused by this file's nine readers and resolved by the tenth. */
+    happened to it. ~~Refused by this file's nine readers and resolved by the tenth.~~
+    🆕🆕 **D418 — struck: there is one oracle now and it RESOLVES this sentence.** The
+    reader is still named (`deriveAttackOptionalCostBoost`) and §1 still pins WHICH one
+    took it; what is gone is the nine-reader view that called it refused. */
 const CEILING_TAKEN_AT_D385 =
   "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.";
 
@@ -246,12 +311,26 @@ function find<T extends GameEvent["type"]>(
 }
 
 describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", () => {
+  it("🆕🆕 D418 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE ARGUED ITSELF OUT OF NEEDING, IN D417's SHAPE. The
+    // `SIZE_CEILING` block below declined to widen this array and said so in capitals;
+    // what it could not do was make the DECISION visible to anyone else, so the array
+    // drifted from nine to a twelve-reader module in silence and the carve-out it
+    // wrote by hand went stale too. **A REFUSAL RECORDED IN PROSE IS NOT A GUARD** —
+    // this rung is the same refusal made falsifiable, and it goes red on the next
+    // reader instead of on the next reader plus 179 commits.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
+    // GREEN when a reader leaves the module and this list in the same commit.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("🛑 the CANCEL residue reaches ZERO — there is no sentence left to name", () => {
     // D378 left the does-nothing remainder at 1 sentence / 2 printings and named it.
     // This takes it, and the rung that used to say WHICH sentence was owed now says
     // there is none. Re-derived off the nine live readers over `legalAttackCorpus()`,
     // not quoted.
-    const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !resolvedByAnyReader(s));
+    const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !readByAny(s));
     expect(refused.some(([, s]) => s === TRIO_CHEEHOO)).toBe(false);
     expect(refused).toEqual([]);
     expect(units(refused)).toBe(0);
@@ -275,7 +354,7 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // MUST BE WRITTEN AS ONE**: the head is re-derived live below and D379's head is
     // reached by adding back exactly what left it since, which is a figure this rung
     // can keep being right about.
-    const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
+    const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !readByAny(s));
     // 🆕🆕 D386 — 20 / 24 -> 19 / 22: the HEALED-THIS-TURN clause left this residue —
     // ONE sentence at TWO printings (Maractus `sv10.5b-008`/`-093` "Lively Needles",
     // +100) — re-derived live rather than decremented. 🛑 AND IT EMPTIES THE 2-PRINTING
@@ -344,12 +423,12 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // not a hand-SIZE read at all — it asks what was PLAYED from the hand this turn.
     const handBonus = corpus().filter(([, s]) => (BONUS.exec(s.trim())?.[1] ?? "").includes("hand"));
     expect(handBonus).toHaveLength(4);
-    expect(handBonus.filter(([, s]) => resolvedByAnyReader(s))).toHaveLength(3);
+    expect(handBonus.filter(([, s]) => readByAny(s))).toHaveLength(3);
     for (const sentence of [CURSED_SLUG, EXTRASENSORY]) {
       expect(handBonus.some(([, s]) => s === sentence), sentence).toBe(true);
-      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
+      expect(readByAny(sentence), sentence).toBe(true);
     }
-    expect(handBonus.filter(([, s]) => !resolvedByAnyReader(s)).map(([, s]) => s)).toEqual([
+    expect(handBonus.filter(([, s]) => !readByAny(s)).map(([, s]) => s)).toEqual([
       "If you played a Future Supporter card from your hand during this turn, this attack does 100 more damage.",
     ]);
     for (const [, s] of handBonus) {
@@ -411,7 +490,7 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     for (const sentence of SIZE_CEILING) {
       const rows = corpus().filter(([, s]) => s === sentence);
       expect(rows, sentence).toHaveLength(1);
-      expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+      expect(readByAny(sentence), sentence).toBe(false);
     }
     // 🛑 🆕🆕 **D385 — THE THIRD ENTRY IS GONE FROM THE LIST AND ITS DEPARTURE IS
     // ASSERTED**, which is the only way this file can go red if it is ever "un-built".
@@ -419,9 +498,25 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // instrument still refuses the sentence (it cannot see the tenth reader), and the
     // TENTH reader resolves it. **THAT GAP IS WHAT MADE THE OLD RUNG GREEN AND FALSE**,
     // and stating it here is what stops the next slice drawing a refusal from a census.
+    //
+    // 🛑🛑 🆕🆕 **D418 — THE PARAGRAPH ABOVE IS THE MISTAKE, NOT THE FIX, AND THE RUNG
+    // IT DEFENDS IS REVERSED HERE.** It read `expect(readByAny(CEILING_TAKEN_AT_D385))
+    // .toBe(false)` and called the GAP between two oracles a thing to STATE. ⚠️ **A GAP
+    // BETWEEN TWO ORACLES IS NOT A FACT ABOUT THE ENGINE — IT IS A FACT ABOUT ONE
+    // INSTRUMENT BEING BROKEN**, and asserting it made the breakage load-bearing: the
+    // rung would have gone RED if anyone had fixed the array, which is a test that
+    // punishes the repair. D418 fixed the array (see its doc block), so the assertion
+    // is now `true` and the sentence is simply RESOLVED, like every other departed
+    // ceiling entry in this file. The `deriveAttackOptionalCostBoost` line below is
+    // KEPT, because naming WHICH reader took it is the part that was worth having.
     expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D385)).toHaveLength(1);
-    expect(resolvedByAnyReader(CEILING_TAKEN_AT_D385)).toBe(false);
+    expect(readByAny(CEILING_TAKEN_AT_D385)).toBe(true);
     expect(deriveAttackOptionalCostBoost(CEILING_TAKEN_AT_D385)).not.toBeNull();
+    // 🛑 …and the SPECIFICITY is kept too, so "resolved" cannot come to mean "some
+    // reader somewhere": the other two readers D418 added to this array refuse it, so
+    // the claim above is still about D385's reader and not about the widening.
+    expect(deriveAttackCancelRequirement(CEILING_TAKEN_AT_D385)).toBeNull();
+    expect(deriveAttackDiscardScaledBoost(CEILING_TAKEN_AT_D385)).toBeNull();
     // 🛑 🆕🆕 **D404 TOOK THE HAND-ZONE SENTENCE, AND THE RUNG IS RE-POINTED RATHER
     // THAN DELETED.** It sat here as *"the biggest unbuilt thing in this corner is a
     // hand-ZONE op rather than a hand-SIZE read, which is why it is a different slice:
@@ -438,7 +533,7 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     const discardHand = corpus().filter(([, s]) => s === "Discard your hand and draw 6 cards.");
     expect(discardHand).toHaveLength(1);
     expect(units(discardHand)).toBe(7);
-    expect(resolvedByAnyReader("Discard your hand and draw 6 cards.")).toBe(true);
+    expect(readByAny("Discard your hand and draw 6 cards.")).toBe(true);
     // …and it is a hand-ZONE op and NOT a hand-SIZE read, which is the claim that made
     // it a different slice in the first place: no `BoardCondition` was bought for it.
     expect(deriveAttackEffect("Discard your hand and draw 6 cards.")).toEqual([
