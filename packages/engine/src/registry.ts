@@ -6693,15 +6693,43 @@ const CHILL_TEASER_TOY: CardProgram = {
     attack. On turn 4 and after, and for the going-first seat at every moment, the
     condition is false and the attack is live.
 
-    🛑 **THE BODY IS REFUSED AND THE MISSING MECHANISM IS `DamageCountSource.
-    yourBenchCount`.** The multiply fold (`deriveAttackDamageMultiplier`,
-    effects.ts) has EIGHT count sources including `opponentBenchCount` and
-    `bothSidesBenchCount`, and **no member counts YOUR OWN Bench as bodies** —
-    the nearest is `damageCountersOnYourBench`, which tallies COUNTERS on that
-    zone and is a different number on every board with a damaged Bench. A second
-    blocker rides with it: every anchor in that fold is WHOLE-SENTENCE, and this
-    printing's damage sentence is preceded by the gate clause, so even with the
-    member the text would have to be split first. Two additions, not one. */
+    🛑🛑 **THE BODY WAS REFUSED ON TWO BLOCKERS AND BOTH ARE DEAD — CORRECTED IN
+    PASSING AT D422, WHICH MEASURED THEM RATHER THAN RE-READING THEM.**
+
+    **WHAT THIS BLOCK SAID (D277):** *"The body is refused and the missing
+    mechanism is `DamageCountSource.yourBenchCount`. The multiply fold
+    (`deriveAttackDamageMultiplier`) has EIGHT count sources … and no member counts
+    YOUR OWN Bench as bodies … A second blocker rides with it: every anchor in that
+    fold is WHOLE-SENTENCE, and this printing's damage sentence is preceded by the
+    gate clause, so even with the member the text would have to be split first. Two
+    additions, not one."*
+
+    **BOTH ADDITIONS LANDED, IN TWO LATER SLICES, NEITHER OF WHICH CAME BACK HERE.**
+      • `DamageCountSource.yourBenchCount` shipped at **D282** — it is a live union
+        member (`effects.ts`, `type DamageCountSource`) with an arm in `attack.ts`
+        and two producers in the multiply fold.
+      • The whole-sentence blocker fell to **`splitAttackGateClause`**, the FRONT
+        split that strips a leading gate clause in `attack.ts` before any damage
+        reader runs — the very shape this block said the text "would have to" get.
+
+    ⚠️ **SO THE BODY IS NOT REFUSED: IT RESOLVES AT THIS HEAD, AND THAT IS
+    MEASURED.** `splitAttackGateClause` returns `body = "This attack does 30 damage
+    for each of your Benched Pokémon."` and `deriveAttackDamageMultiplier(body)`
+    returns `{ per: 30, count: { kind: "yourBenchCount" } }` — a live probe over the
+    committed `legal_standard = 1` column at D422's head, where **6 gate-split
+    sentences / 14 printings** are found and **5 / 13 of them have bodies that
+    resolve**, these 7 printings among them. The row below still authors the GATE
+    and only the gate, which is correct and unchanged: the deriver reads the body.
+
+    🛑 **AND THE STALE CLAIM IS REPLICATED, SO CORRECTING THIS PARAGRAPH IS NOT THE
+    WHOLE REPAIR (conventions.md D415).** The headline *"13 gates built, 0 BODIES"*
+    — with this card as its first named example — also stands at
+    `attackIndexGate.test.ts:71`, `censusAtHead.test.ts:4040` and `index.ts` (the
+    D277 version block). D422 corrected the SITE it was sent to and did not sweep
+    the other three, because a real sweep means re-measuring all FIVE refused
+    bodies (Illumise, Scream Tail ex, Volbeat and Exeggcute beside this one) and
+    that is a slice, not a sentence. **What is fixed here is one of four; the other
+    three are named so the next reader does not have to re-find them.** */
 const TERAPAGOS_EX_UNIFIED_BEATDOWN: CardProgram = {
   attackGate: {
     0: {

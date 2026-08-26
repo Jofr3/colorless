@@ -187,10 +187,40 @@ const FLIP_SELF_SWITCH = 6;
 const SELF_SWITCH_BARE = CLAUSES[SELF_SWITCH].text;
 const SELF_SWITCH_FLIP = CLAUSES[FLIP_SELF_SWITCH].text;
 
-/** The printing NEITHER slice reads, verbatim. Its own block at the bottom says
-    why; it is named up here because it belongs to the same family and its
-    2 printings are part of the 28. */
+/** 🆕🆕 **D422 — THE PRINTING NEITHER D181 NOR D189 READ, AND IT IS BUILT NOW.**
+    Verbatim; named up here because it belongs to the same family and its 2 six-set
+    printings are part of the 28. **3 Standard-legal printings.**
+
+    🛑 EVERY ASSERTION THAT USED TO PIN THIS STRING NULL IS RE-POINTED IN PLACE
+    RATHER THAN DELETED (conventions.md's *re-point, do not delete* rule), and each
+    one is re-pointed onto the claim the OLD one was really making:
+      • the family-arithmetic rung (§"the ONE remaining printed sentence") now
+        asserts all THREE sentences derive and that this one's program is the bare
+        one WRAPPED;
+      • the case-vs-anchor mutant rung (§"a SUBSTRING matcher…") keeps both of its
+        mutants and asserts the same DISCRIMINATION it always did — a `.test()`
+        with no `^` still refuses this sentence and the capital-`S` build still
+        would have — but as an inequality against the real program rather than
+        against `null`;
+      • the STAYS-LOUD board (`fix-trainerops` idx 7) becomes a POSITIVE board.
+    ⚠️ Per D418's second half: what the old `toBeNull` rungs could catch that a
+    bare "it derives" cannot is a build whose anchor is too WIDE — `null` is false
+    under both the real build and the over-wide mutant only because the sentence
+    was unread. So the replacements assert the exact PROGRAM and, at the two mutant
+    sites, an INEQUALITY against the neighbouring sentence's program; "it derives"
+    alone would be true under the wrong-arm mutant too. */
 const YOU_MAY_SELF_SWITCH = "You may switch this Pokémon with 1 of your Benched Pokémon.";
+
+/** The program D422's arm derives it to: D189's bare program, wrapped. Spelled
+    once so the three re-pointed rungs below cannot drift apart from each other. */
+const YOU_MAY_SELF_SWITCH_PROGRAM: EffectOp[] = [
+  {
+    op: "optional",
+    note: YOU_MAY_SELF_SWITCH,
+    // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+    then: [{ op: "switchActive" }],
+  },
+];
 
 /** U+00A0, spelled as an ESCAPE rather than typed — byte-different from an ASCII
     space and invisible in a diff. `flipGatedOp.test.ts`'s convention, reused. */
@@ -311,9 +341,23 @@ describe("the five anchors — three ops that already existed, four readers that
     // are Standard-legal, and it serves **7** printings that are.
     expect(41).toBeGreaterThan(read);
     expect(CLAUSES[SELF_SWITCH].legalPrintings).toBe(7);
-    // The one sentence in the family still unread — D186's, and D189's line is
-    // exactly here.
-    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
+    // 🆕🆕 D422 — THE FAMILY IS WHOLE, AND THIS RUNG MOVED FROM AN ABSENCE TO A
+    // SHAPE. It used to read *"the one sentence in the family still unread —
+    // D186's, and D189's line is exactly here"* over a `toBeNull`. There is no
+    // line any more: all three printed sentences derive. What is asserted instead
+    // is the relationship the `toBeNull` was standing in for — the "You may"
+    // printing is the BARE printing's program and one wrapper, so a build that
+    // read the offer and dropped the switch, or read the switch and dropped the
+    // offer, is red here. (`optionalSelfSwitch.test.ts` owns its boards.)
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toEqual(YOU_MAY_SELF_SWITCH_PROGRAM);
+    const wrapped = deriveAttackEffect(YOU_MAY_SELF_SWITCH)?.[0];
+    expect(wrapped?.op === "optional" ? wrapped.then : undefined).toEqual(
+      deriveAttackEffect(SELF_SWITCH_BARE),
+    );
+    // …and it is NOT the bare program, which is what a dropped wrapper looks like.
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).not.toEqual(
+      deriveAttackEffect(SELF_SWITCH_BARE),
+    );
   });
 
   it("reads the SINGULAR and the PLURAL draw through ONE anchor", () => {
@@ -765,22 +809,34 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
       expect(deriveAttackEffect(text), text).toBeNull(); // …and the real reader does not
     }
     // ⚠️ AND A FINDING THAT FELL OUT OF WRITING THIS MUTANT RATHER THAN OF
-    // REASONING ABOUT IT: dropping the `^` does NOT reach D186's unbuilt "You may"
-    // printing, which was the first thing this case was written to claim. That
-    // sentence LOWERCASES the verb ("You may **s**witch…"), so the capital `S` is
-    // what refuses it, and the `^` is doing a different job entirely. Two guards,
-    // two rows, and neither is redundant — the `^` protects the trailing
-    // compounds and the CASE protects D186's printing.
+    // REASONING ABOUT IT: dropping the `^` does NOT reach the "You may" printing,
+    // which was the first thing this case was written to claim. That sentence
+    // LOWERCASES the verb ("You may **s**witch…"), so the capital `S` is what
+    // refuses it, and the `^` is doing a different job entirely. Two guards, two
+    // rows, and neither is redundant — the `^` protects the trailing compounds and
+    // the CASE keeps `ATTACK_SELF_SWITCH` off a sentence that is now a DIFFERENT
+    // ARM's rather than off one that is nobody's.
     expect(YOU_MAY_SELF_SWITCH).toContain(" switch this Pokémon");
     expect(YOU_MAY_SELF_SWITCH).not.toContain("Switch this Pokémon");
     expect(mutant(YOU_MAY_SELF_SWITCH)).toBeNull(); // NOT eaten — by the case, not the anchor
-    // …and the case-insensitive mutant, which is the one that WOULD reach it.
+    // 🆕🆕 D422 — AND THIS RUNG GOT SHARPER RATHER THAN WEAKER WHEN THE SENTENCE WAS
+    // BUILT, WHICH IS THE POINT OF RE-POINTING IT INSTEAD OF DELETING IT. `caseless`
+    // used to be "the mutant that WOULD reach an unbuilt sentence", refuted by a
+    // `toBeNull` — a weak claim, because the sentence was nobody's. It is now
+    // EXACTLY the defect D422's own author could have shipped: the right anchor with
+    // the `optional` wrapper forgotten, i.e. the offer read as a mandatory switch.
+    // The refutation is therefore an INEQUALITY against a real program rather than
+    // an absence, which is the one shape that stays red under both builds.
     const caseless = (text: string): EffectOp[] | null =>
       /^You may switch this Pokémon with 1 of your Benched Pokémon\.$/.test(text.trim())
         ? [{ op: "switchActive" }]
         : null;
     expect(caseless(YOU_MAY_SELF_SWITCH)).toEqual([{ op: "switchActive" }]);
-    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).not.toEqual(caseless(YOU_MAY_SELF_SWITCH));
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toEqual(YOU_MAY_SELF_SWITCH_PROGRAM);
+    // …and the un-anchored capital-`S` mutant STILL cannot reach it, so the two
+    // guards remain independent: one sentence, two ways to get it wrong.
+    expect(mutant(YOU_MAY_SELF_SWITCH)).not.toEqual(deriveAttackEffect(YOU_MAY_SELF_SWITCH));
   });
 
   it("SELF-SWITCH: reusing the GUST's apostrophe class — a widening with no printing behind it", () => {
@@ -1267,32 +1323,48 @@ describe("end to end — the SELF-SWITCH, the family D181 priced and D189 paid f
   });
 });
 
-// ── THE REMAINDER, STILL PINNED IN CODE. ────────────────────────────────────
+// ── THE REMAINDER — 🆕🆕 D422: THERE IS NONE. ───────────────────────────────
 
-describe("UNBUILT — the ONE printing left, and the mechanism it is still blocked on", () => {
+describe("🆕🆕 D422 — the family's LAST printing, and the blocker that had rotted under its own pin", () => {
   // ⚠️ D181 measured this family at 9 six-set printings across 3 sentences and
   // built NONE of them, on a price the backlog had got wrong. D189 paid that price
   // (a required `uid` on the `attackEpilogue` `PendingStage`, `MATCH_RECORD_VERSION`
-  // 11 → 12) and built 7 of the 9. What is left is ONE sentence and ONE blocker,
-  // and it is the SECOND of the two D181 named — untouched, because it is a
-  // vocabulary slice rather than a persistence one:
+  // 11 → 12) and built 7 of the 9. **D422 built the third sentence and the family
+  // is whole** — and what it cost is the finding, because it is not what either
+  // slice priced.
   //
   //   THE PRINTED "**You may** switch this Pokémon with 1 of your Benched
   //   Pokémon." (2 six-set printings, **3 among Standard-legal cards** — worth
   //   MORE than the six-set count suggests, which is the whole reason both axes
-  //   are carried). `switchActive` parks a `choosePokemon`, a prompt shape with NO
-  //   `declinable` field, and `parkOrForce` AUTO-APPLIES at one candidate, so a
-  //   decline has nowhere to live. The only optional pick that exists
-  //   (`damageChosen.optional`) rides `choosePokemonMulti` — a different prompt
-  //   kind with a different answer shape (`applyChoice` reads `pokemonMulti` there
-  //   and `pokemon` here) — and the decline-by-empty-pick idiom needs a park with
-  //   a legal empty answer, which this one is not. `TriggeredAbility.optional`
-  //   governs whether a TRIGGER fires, not whether a pick may be declined. The
-  //   remaining route is a new `declinable` on `choosePokemon` plus a decline
-  //   answer: also PERSISTED (`EffectPrompt` rides `phase.prompt`/`phase.cont`,
-  //   and `redact.ts` projects the `choosePokemonMulti` flag to the WIRE), which
-  //   is the bill D136 paid at `MATCH_RECORD_VERSION` 2 → 3. Queued as **D186,
-  //   the generic confirm-park**.
+  //   are carried). ONE anchor and ONE `deriveAttackEffect` arm:
+  //   `[{ op: "optional", note: effect, then: [{ op: "switchActive" }] }]`. No new
+  //   op, no new field, no new prompt kind, and `MATCH_RECORD_VERSION` STAYS 26.
+  //
+  // 🛑 **WHAT THIS BLOCK USED TO SAY, KEPT VERBATIM BECAUSE THE WAY IT WAS WRONG
+  // IS THE LESSON:** *"`switchActive` parks a `choosePokemon`, a prompt shape with
+  // NO `declinable` field, and `parkOrForce` AUTO-APPLIES at one candidate, so a
+  // decline has nowhere to live. … The remaining route is a new `declinable` on
+  // `choosePokemon` plus a decline answer: also PERSISTED … which is the bill D136
+  // paid at `MATCH_RECORD_VERSION` 2 → 3. Queued as **D186, the generic
+  // confirm-park**."*
+  //
+  // Every sentence of that was TRUE about `choosePokemon` when written. **The
+  // conclusion was wrong because it looked for the decline in the PICK.** The
+  // decline lives one op EARLIER, in the `confirm` that `optional` parks — and
+  // D186 had already built that wrapper, and **D227 had already proved this exact
+  // route on the mirror sentence** (*"You may switch out your opponent's Active
+  // Pokémon…"*), in one line, with no change to `optional` and none to
+  // `parkOrForce`. `parkOrForce` is untouched by D422 in either direction: behind a
+  // "yes" the pick is the same MANDATORY `choosePokemon` the bare sentence has had
+  // since D189, still forced at one candidate.
+  //
+  // ⚠️ **AND THE BLOCKER HAD ROTTED UNDER ITS OWN PIN.** `declinable` was RENAMED
+  // to `upTo?: number` on `choosePokemon` at D359 — so from that day *"the prompt
+  // has no `declinable` field"* stopped being a GAP and became a TAUTOLOGY, and the
+  // guard this block kept to watch it (below) could not go red for ANY reason.
+  // ⚠️ `declinable` is NOT gone from the engine and a successor must not read it
+  // that way: `choosePokemonMulti` still carries it as a REQUIRED boolean, projected
+  // to the wire by `redact.ts` and read by both HUDs. D359 renamed ONE member.
   //
   // ⚠️ AND NOTE WHAT IS NO LONGER HERE. D181's blocker (1) — "no attack program
   // can produce `switchActive`" — was a PIN ON AN INVARIANT, and D189 broke that
@@ -1301,22 +1373,47 @@ describe("UNBUILT — the ONE printing left, and the mechanism it is still block
   // `switchActive` IS reachable from attack text and a DRIVEN board shows the
   // epilogue surviving it.
 
-  it("reads the ONE remaining printed sentence NOT at all, and its two siblings fully", () => {
-    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toBeNull();
+  it("reads ALL THREE printed sentences of the family, and the third is the first WRAPPED", () => {
+    // 🆕🆕 D422 — was *"reads the ONE remaining printed sentence NOT at all"*.
+    expect(deriveAttackEffect(YOU_MAY_SELF_SWITCH)).toEqual(YOU_MAY_SELF_SWITCH_PROGRAM);
+    // …and it is an EFFECT and not a coin sentence, which the old rung also said.
     expect(deriveAttackCoinFlip(YOU_MAY_SELF_SWITCH)).toBeNull();
-    // Its two siblings DO derive now — so the refusal is about the printed "You
-    // may" and about nothing else, which is the claim D186 will discharge.
+    // Its two siblings are unchanged by the third arriving — the discrimination
+    // that matters, since all three share `SELF_SWITCH_CLAUSE`.
     expect(deriveAttackEffect(SELF_SWITCH_BARE)).toEqual([{ op: "switchActive" }]);
     expect(deriveAttackEffect(SELF_SWITCH_FLIP)).not.toBeNull();
+    // The three programs are pairwise DISTINCT, so no anchor has eaten another's
+    // sentence — the one claim that could not be made while the third was null.
+    const three = [SELF_SWITCH_BARE, SELF_SWITCH_FLIP, YOU_MAY_SELF_SWITCH].map((t) =>
+      JSON.stringify(deriveAttackEffect(t)),
+    );
+    expect(new Set(three).size).toBe(3);
     // The Switch ITEM's own near-miss string is refused too — it is Trainer text,
     // and the attack reader has no business claiming it.
     expect(deriveAttackEffect(FIXTURE_POOL["sv01-194"]?.effect ?? "")).toBeNull();
   });
 
-  it("blocker: the prompt an optional switch would need STILL has no `declinable`", () => {
-    // The pricing, as a fact rather than a paragraph. `switchActive` and `gust`
-    // park the SAME prompt kind, so this reads the shape off a LIVE gust park
-    // rather than off the type — a future widening of the prompt is visible here.
+  it("🛑 the prompt shape this arm RIDES, read off a live park — the dead guard, replaced", () => {
+    // 🛑🛑 D422 — WHAT WAS HERE COULD NOT GO RED, AND HAD NOT BEEN ABLE TO SINCE
+    // D359. It read:
+    //
+    //     expect(prompt?.kind).toBe("choosePokemon");
+    //     expect(prompt === undefined ? "unset" : "declinable" in prompt).toBe(false);
+    //
+    // titled *"blocker: the prompt an optional switch would need STILL has no
+    // `declinable`"*, with a comment promising *"a future widening of the prompt is
+    // visible here"*. The widening HAPPENED — D359 renamed `declinable` to `upTo`
+    // on this very prompt — and this case saw nothing, because once the key is
+    // gone from the member the second line is true BY CONSTRUCTION. It was a guard
+    // watching for a field its own type system had made unspellable.
+    //
+    // ⚠️ SO IT IS REPLACED RATHER THAN DELETED, AND THE REPLACEMENT NAMES A SHAPE
+    // D422 ACTUALLY DEPENDS ON: the `switchActive` behind the "yes" parks a
+    // `choosePokemon` with a `candidates` array and NO ceiling key — i.e. it is
+    // the MANDATORY pick, which is why the decline had to live in the `confirm`
+    // and why `parkOrForce` needed no change. A rename of `upTo`, a stray ceiling
+    // authored onto this park, or a `switchActive` that started offering a decline
+    // of its own all turn this RED. Read off a LIVE park, not off the type.
     const { state: parked } = mustApply(ready(10, 1, 3), {
       type: "attack",
       seat: "p1",
@@ -1325,37 +1422,65 @@ describe("UNBUILT — the ONE printing left, and the mechanism it is still block
     const phase = parked.phase;
     expect(phase.kind).toBe("effect:choose");
     const prompt = phase.kind === "effect:choose" ? phase.prompt : undefined;
-    expect(prompt?.kind).toBe("choosePokemon");
-    expect(prompt === undefined ? "unset" : "declinable" in prompt).toBe(false);
+    if (prompt?.kind !== "choosePokemon") throw new Error("expected a choosePokemon park");
+    // The positive half: the fields this park really carries.
+    expect(Object.keys(prompt).sort()).toEqual(["candidates", "kind", "note"]);
+    expect(prompt.candidates.length).toBeGreaterThan(1); // a real park, not a forced one
+    // The negative half, spelled as the key that EXISTS today rather than one that
+    // cannot: absent `upTo` is what makes this pick MANDATORY, and mandatory is
+    // what D422's design requires of it.
+    expect(prompt.upTo).toBeUndefined();
+    // ⚠️ THE CONTROL — the same read on a park that DOES carry a ceiling, so the
+    // assertion above is discriminating rather than vacuous. Without this, "no
+    // `upTo` here" would be as unfalsifiable as the line it replaced.
+    const withCeiling = { kind: "choosePokemon", candidates: [], upTo: 1, note: "x" } as const;
+    expect(withCeiling.upTo).toBeDefined();
+    expect(Object.keys(withCeiling).sort()).not.toEqual(["candidates", "kind", "note"]);
   });
 
-  it("STAYS LOUD on a board — the printing is fielded, so the gap has a live witness", () => {
-    // A row deliberately not built is pinned by a board that carries it. Index 7
-    // of `fix-trainerops` prints the unread sentence: the attack resolves, nothing
-    // moves on either side, and the engine SAYS SO with the loud
-    // ATTACK_EFFECT_SKIPPED row. The day D186 lands, this turns red — which is the
-    // point of pinning an absence in code.
+  it("▶️🆕🆕 D422 — it STOPPED being loud, and the board says so: the SAME index now PARKS", () => {
+    // 🛑 THE INVERTED CASE, AND IT IS THE POINT OF PINNING AN ABSENCE IN CODE.
+    // This case used to read *"STAYS LOUD on a board — the printing is fielded, so
+    // the gap has a live witness"*: index 7 of `fix-trainerops` printed the unread
+    // sentence, nothing moved on either side, and the engine SAID SO with a loud
+    // `ATTACK_EFFECT_SKIPPED`. Its own comment promised *"the day D186 lands, this
+    // turns red"*. **It did, and this is what it turned into** — the identical
+    // board and the identical index, asserting the opposite of each line.
     //
-    // ⚠️ THE OTHER TWO INDICES USED TO BE HERE AND ARE DELIBERATELY GONE: 5 and 6
-    // now RESOLVE, and their boards are two screens up. The case was narrowed
-    // rather than left asserting an absence that has been filled.
+    // ⚠️ IT IS CONVERTED RATHER THAN DELETED, AND IT IS A POSITIVE ASSERTION
+    // RATHER THAN A WEAKER NEGATIVE ONE. `expect(SKIPPED).toHaveLength(0)` alone
+    // would be true of a build that read the sentence into the WRONG program, or
+    // into an empty one; what is asserted is that the attack PARKS on a `confirm`
+    // whose note is the printed sentence, which no other outcome produces.
     const state = ready(9, 2, 2);
     const before = [activeUid(state, "p1"), activeUid(state, "p2")];
-    const { state: done, events } = mustApply(state, {
+    const { state: parked, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
       index: STRAFE,
     });
-    expect([activeUid(done, "p1"), activeUid(done, "p2")]).toEqual(before);
-    expect(done.phase.kind).not.toBe("effect:choose");
-    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(1);
-    // No coin either — the sentence is unread as a WHOLE sentence.
+    // No longer loud — and that is now the SECOND-strongest thing said here.
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    // The strongest: it asks, and it asks the printed question, of the CONTROLLER.
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected a confirm park");
+    expect(parked.phase.prompt.kind).toBe("confirm");
+    expect(parked.phase.prompt.note).toBe(YOU_MAY_SELF_SWITCH);
+    expect(parked.phase.answerer).toBeUndefined(); // the printed "you" is the attacker
+    // Nothing has MOVED yet — the offer is a question, not a switch.
+    expect([activeUid(parked, "p1"), activeUid(parked, "p2")]).toEqual(before);
+    // No coin either — the sentence carries none, and the arm reaches for none.
     expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
-    // …and the two siblings on the SAME body do resolve, on the same board — so
-    // "unread" is a fact about this sentence, not about this fixture.
+    // …and the two siblings on the SAME body still resolve WITHOUT asking, on the
+    // same board — so "asks" is a fact about this sentence and not this fixture.
     for (const index of [SLIP_AWAY, RIDE_THE_WIND]) {
-      const { events: live } = mustApply(ready(9, 2, 2), { type: "attack", seat: "p1", index });
+      const { state: sib, events: live } = mustApply(ready(9, 2, 2), {
+        type: "attack",
+        seat: "p1",
+        index,
+      });
       expect(all(live, "ATTACK_EFFECT_SKIPPED"), `index ${index}`).toHaveLength(0);
+      const kind = sib.phase.kind === "effect:choose" ? sib.phase.prompt.kind : "none";
+      expect(kind, `index ${index}`).not.toBe("confirm");
     }
   });
 });

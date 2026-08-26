@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.323.0";',
+    find: 'export const engineVersion = "0.324.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18176,5 +18176,107 @@ export const MUTANTS: Mutant[] = [
     find: "  const turn = until === undefined ? state.turn + 2 : state.turn;",
     replace: "  const turn = state.turn + 2;",
     expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+
+  // ── D422 · the OPTIONAL SELF-SWITCH ────────────────────────────────────────
+  // 🛑 EIGHT ROWS: THREE ON THE ANCHOR'S BYTES, FOUR ON THE PROGRAM, ONE ON THE
+  //    SEAT. The shape of the set is the finding, and it is the OPPOSITE of D421's:
+  //    D421's six were all census-SILENT, while **THREE of these eight MOVE
+  //    `BUILT.attack`** (the anchor rows stop claiming the sentence, so the raw sweep
+  //    drops back to 416 / 1,373) and **FIVE do not** (the sentence still resolves
+  //    while the program asks the wrong seat, asks nothing, switches on the DECLINE,
+  //    or moves the opponent's Active instead of the attacker's). A slice whose
+  //    mutants are all census-visible would need no boards; one whose mutants are all
+  //    census-silent would need no census rung. This one needs both, which is why
+  //    every `expectKilledBy` below names the suite that DRIVES a board.
+  //
+  // ⚠️ NO ROW MUTATES `SELF_SWITCH_CLAUSE`, AND THE OMISSION IS DECLARED (D205's
+  //    rule). It is shared by FOUR anchors and has been since D246, so a mutation on
+  //    it would die in `derivedDrawAndGust.test.ts` and `derivedGatedAttach.test.ts`
+  //    for reasons that are not this slice's — D416's "a row that dies for the wrong
+  //    reason is worth less than one that survives".
+  //
+  // 🛑 NO ROW ON THE EMPTY-BENCH DECISION, AND THIS OMISSION IS THE ONE WORTH
+  //    READING. The decision D422 pinned is that the offer IS asked on an empty own
+  //    Bench (`optionalSelfSwitch.test.ts` §5, a driven board pair plus its stocked-
+  //    Bench control). **It cannot be expressed as a mutant, because both rejected
+  //    alternatives are ADDITIONS rather than edits**: (b) a bench-not-empty
+  //    `conditionGate` needs a tenth `BoardCondition` member that does not exist —
+  //    a mutant that does not compile is not a mutant — and (c) extending the M1
+  //    no-choice rule to `optional` is a new branch, not a changed one. A mutation
+  //    expresses a defect in code that EXISTS, and the code here is an ABSENCE. The
+  //    §5 board pair is what pins it; the C6 row below is the closest reachable
+  //    proxy, and it pins the CONTROL that keeps §5 from being vacuous.
+  {
+    id: 'D422-anchor-loses-its-caret',
+    decision: "D422",
+    what: "🛑 C1 — THE ANCHOR DROPS ITS `^` AND EATS A TRAILING COMPOUND. `sv06.5`-era text prints *\"Search your deck for up to 2 cards and put them into your hand. Then, shuffle your deck. You may switch this Pokémon with 1 of your Benched Pokémon.\"* — this sentence as the LAST clause of a whole second mechanic. Without the `^` the arm claims that whole string and answers it with the switch ALONE, **silently dropping the search and the shuffle** — the COST-without-the-payoff direction the `^…$` convention exists against, and the exact string `derivedDrawAndGust.test.ts` has kept in `NEAR_MISSES` since D189 for this purpose. ⚠️ AND THE CENSUS MOVES THE WRONG WAY QUIETLY: the corpus row still resolves, so `BUILT.attack` is unchanged and only a NEAR-MISS rung can see it",
+    file: 'packages/engine/src/effects.ts',
+    find: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);",
+    replace: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`You may switch ${SELF_SWITCH_CLAUSE}$`);",
+    expectKilledBy: ["packages/engine/src/derivedDrawAndGust.test.ts", "packages/engine/src/optionalSelfSwitch.test.ts"],
+  },
+  {
+    id: 'D422-anchor-loses-its-dollar',
+    decision: "D422",
+    what: "🛑 C2 — THE ANCHOR DROPS ITS `$` AND CLAIMS A SENTENCE WITH A RIDER. The family already prints compounds that begin with a self-switch clause and continue (`ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT`, `ATTACK_SELF_SWITCH_THEN_HAND_ATTACH`), so *\"You may switch this Pokémon with 1 of your Benched Pokémon. If you do, …\"* is one printing away from existing. Without the `$` this arm would answer such a string with the OFFER ALONE and drop the consequent — and it would do it BEFORE the compound anchors two screens down get a look, because this arm returns. The two anchor guards are independent: the `^` protects the trailing compounds and the `$` protects the leading ones",
+    file: 'packages/engine/src/effects.ts',
+    find: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);",
+    replace: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}`);",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts"],
+  },
+  {
+    id: 'D422-anchor-capitalises-the-verb',
+    decision: "D422",
+    what: "🛑 C3 — THE VERB IS CAPITALISED, WHICH IS THE NEIGHBOURING ANCHOR'S REAL SPELLING. `ATTACK_SELF_SWITCH` one line up reads `^Switch ${SELF_SWITCH_CLAUSE}$`, and copying its capital `S` into this one is the mistake an author makes when writing the fourth spelling of one clause. **THE SENTENCE STOPS RESOLVING ENTIRELY** — it falls back to the loud `ATTACK_EFFECT_SKIPPED` path and `BUILT.attack` drops 1,423 → 1,420 — so this row is CENSUS-VISIBLE where C4-C8 are not. ⚠️ It is also the mutant `derivedDrawAndGust.test.ts` measured in the other direction at D189: dropping the `^` does NOT reach this sentence and dropping the CASE does, so the case is doing a job no anchor guard covers",
+    file: 'packages/engine/src/effects.ts',
+    find: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);",
+    replace: "const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may Switch ${SELF_SWITCH_CLAUSE}$`);",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: 'D422-arm-forgets-the-wrapper',
+    decision: "D422",
+    what: "🛑 C4 — THE WRAPPER IS FORGOTTEN AND THE ARM EMITS ITS NEIGHBOUR'S PROGRAM VERBATIM: `[{ op: \"switchActive\" }]`, which is `ATTACK_SELF_SWITCH`'s ENTIRE real body two arms up. **THE PRINTED \"You may\" IS SPENT AND NOTHING SAYS SO**: the sentence still resolves, `BUILT.attack` is byte-identical at 1,423, the switch still lands on a stocked Bench — and the player is never offered the choice the card prints, being forced off the Active Spot instead. This is D190b's rule exactly (a neighbouring arm's REAL code copied one line over) and it is the single most likely defect in the whole slice, which is why `derivedDrawAndGust.test.ts`'s `caseless` rung was RE-POINTED onto it rather than deleted when the sentence was built",
+    file: 'packages/engine/src/effects.ts',
+    find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
+    replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"switchActive\" },",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts", "packages/engine/src/derivedDrawAndGust.test.ts", "packages/engine/src/optionalDraw.test.ts"],
+  },
+  {
+    id: 'D422-arm-wraps-the-mirrors-op',
+    decision: "D422",
+    what: "🛑 C5 — THE INNER OP IS THE MIRROR'S, COPIED VERBATIM: `opponentSwitchOut` in place of `switchActive`, which is `ATTACK_MAY_OPPONENT_SWITCH_OUT`'s REAL `then` sixty lines down and the arm this one was written beside. **THE SENTENCE STILL RESOLVES, THE OFFER IS STILL ASKED OF THE RIGHT SEAT, AND THE CONFIRM'S NOTE IS STILL THE PRINTED STRING** — every census figure and every §1/§2 anchor rung is unmoved — while the YES moves the OPPONENT'S Active and hands the OPPONENT the pick. A card that says *switch this Pokémon* gusts instead. ⚠️ **ONLY A BOARD CAN SEE IT**, and specifically one that asserts the candidates' SEAT and the second park's `answerer`, which is why §3 and §6 both name it",
+    file: 'packages/engine/src/effects.ts',
+    find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
+    replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"opponentSwitchOut\" }] },",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts"],
+  },
+  {
+    id: 'D422-arm-empties-the-then',
+    decision: "D422",
+    what: "🛑 C6 — THE `then` IS EMPTIED, SO THE OFFER BUYS NOTHING. The question is still asked, the note is still the printed sentence, `BUILT.attack` still counts the sentence as built and NO event changes — **and both answers now reach the same board on EVERY board, not just an empty one**. ⚠️ **THIS ROW IS HERE BECAUSE OF WHAT IT PINS RATHER THAN WHAT IT BREAKS**: §5's empty-Bench decision is asserted as `yes === no`, which is a state EQUALITY and therefore satisfied by a build whose `then` never runs at all. The control that keeps it honest is the STOCKED-Bench pair asserting `yes !== no`, and this mutant is the one that kills that control. It is the closest reachable proxy for the empty-Bench decision, which cannot itself be mutated because both rejected alternatives are ADDITIONS (see the block above)",
+    file: 'packages/engine/src/effects.ts',
+    find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
+    replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [] },",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts"],
+  },
+  {
+    id: 'D422-arm-switches-on-the-decline',
+    decision: "D422",
+    what: "🛑 C7 — `then` AND `otherwise` ARE SWAPPED, so the DECLINE switches and the ACCEPT does nothing. D316 gave `optional` an `otherwise` arm for *\"You may do 120 more damage\"* — whose decline really does buy ops — so an author reaching for that member here is reaching for a real neighbouring shape. **THE SENTENCE RESOLVES, THE QUESTION IS ASKED, THE NOTE IS RIGHT AND THE SWITCH STILL HAPPENS**; only the ANSWER that triggers it is inverted, which is the sharpest possible statement of what a printed \"you may\" means. ⚠️ It also breaks the absent-key claim §2 makes (`otherwise` is ABSENT on this program because the sentence prints no alternative), so the row is killed by a shape rung and a board alike",
+    file: 'packages/engine/src/effects.ts',
+    find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
+    replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [], otherwise: [{ op: \"switchActive\" }] },",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts", "packages/engine/src/optionalDraw.test.ts"],
+  },
+  {
+    id: 'D422-arm-rebuilds-the-note',
+    decision: "D422",
+    what: "🛑 C8 — THE NOTE IS REBUILT FROM THE BARE SENTENCE INSTEAD OF CARRIED FROM `effect`. The `confirm` prompt's note is the ONLY prose either dialog renders for this offer, so it is what the player reads before answering — and here it would read *\"Switch this Pokémon with 1 of your Benched Pokémon.\"*, an imperative, on a card that prints an OFFER. **NOTHING ELSE MOVES AT ALL**: same op, same branch, same board on both answers, every census figure identical. ⚠️ **A MUTANT THAT IS ONLY VISIBLE IN A STRING**, which is why §3 and the inverted `fix-trainerops` idx-7 board both assert BYTE EQUALITY with the catalog string rather than \"a non-empty note\" — the assertion D186's own draw rows had to make for the same reason",
+    file: 'packages/engine/src/effects.ts',
+    find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
+    replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: \"Switch this Pokémon with 1 of your Benched Pokémon.\", then: [{ op: \"switchActive\" }] },",
+    expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts", "packages/engine/src/derivedDrawAndGust.test.ts"],
   },
 ];

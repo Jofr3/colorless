@@ -13926,18 +13926,56 @@ const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.
 //     `MATCH_RECORD_VERSION` **11 → 12**. `preventBlock.test.ts`'s total op
 //     classification is the second, independent enforcement of the same claim and
 //     now carries a `switchActive` verdict + probe.
-//   • **AND THE THIRD PRINTING STILL NEEDS A MECHANISM THAT DOES NOT EXIST** —
-//     "**You may** switch this Pokémon with 1 of your Benched Pokémon." (2 six-set
-//     printings, **3 Standard-legal**). `switchActive` parks a `choosePokemon`, a
-//     prompt shape with no `declinable` field, and `parkOrForce` auto-applies at
-//     one candidate, so there is nowhere for a decline to live. The only optional
-//     pick that exists (`damageChosen.optional`) rides `choosePokemonMulti` — a
-//     different prompt kind with a different answer shape — and
-//     `TriggeredAbility.optional` governs whether a TRIGGER fires, not whether a
-//     pick may be declined. Still queued as its own slice (**D186**), still
-//     PINNED loud in `derivedDrawAndGust.test.ts` against a fixture that fields
-//     it. D189 deliberately left it unbuilt: it is a vocabulary slice, not this
-//     one's persistence slice.
+//   • **AND THE THIRD PRINTING NEEDED NO MECHANISM AT ALL — 🆕🆕 BUILT AT D422,
+//     AND THE PRICE THIS BLOCK USED TO QUOTE WAS WRONG IN EVERY CLAUSE.** The
+//     record of what it ACTUALLY cost is kept here, in place of the refusal,
+//     because the refusal is what sent two later analyses down a persistence
+//     slice that was never needed.
+//
+//     **WHAT THIS BLOCK SAID (D189, and D181 before it):** *"'**You may** switch
+//     this Pokémon with 1 of your Benched Pokémon.' (2 six-set printings, 3
+//     Standard-legal). `switchActive` parks a `choosePokemon`, a prompt shape with
+//     no `declinable` field, and `parkOrForce` auto-applies at one candidate, so
+//     there is nowhere for a decline to live. … Still queued as its own slice
+//     (D186)"* — a NEW PROMPT KEY plus a DECLINE ANSWER, both PERSISTED, priced at
+//     a `MATCH_RECORD_VERSION` bump.
+//
+//     **WHAT IT COST: ONE ANCHOR AND ONE ARM.** `[{ op: "optional", note: effect,
+//     then: [{ op: "switchActive" }] }]` — both ops shipped, no new op, no new
+//     field, no new prompt kind, no event, no log row, no redaction, no persisted
+//     shape, and `MATCH_RECORD_VERSION` **STAYS 26** (driven in both directions in
+//     `optionalSelfSwitch.test.ts` §8, not asserted). The engine moved 0.323.0 →
+//     0.324.0 for the reader widening alone.
+//
+//     🛑 **THE ERROR WAS NOT THE FACTS, IT WAS WHERE THE REFUSAL LOOKED FOR THE
+//     DECLINE.** Every sentence quoted above was TRUE of `choosePokemon` when it
+//     was written, and two of them are true today. **The decline was never going
+//     to live in the pick.** It lives one op EARLIER — in the `confirm` that
+//     `optional` parks — so `parkOrForce` is untouched and the pick behind a "yes"
+//     stays the same MANDATORY pick the bare sentence has had since D189. D186
+//     built that wrapper for the draws; **D227 then proved this exact route on the
+//     MIRROR sentence** (*"You may switch out your opponent's Active Pokémon…"* →
+//     `optional` over `opponentSwitchOut`, one line, no change to the wrapper) and
+//     wrote the fact down in `optionalDraw.test.ts`'s own near-miss note: *"the
+//     MECHANISM now has a producer, so the reason this stays null has changed."*
+//     **That note sat unread for ~195 decisions while this block kept quoting the
+//     dead price.** conventions.md's D413 rule, re-earned in the sharpest form yet:
+//     *a refusal carries its own expiry date if it says what it is waiting for —
+//     so go back and check the trigger.* Here the trigger had not merely been met,
+//     it had been met BY A NEIGHBOURING SLICE THAT SAID SO IN WRITING.
+//
+//     ⚠️ **AND THE NAMED BLOCKER HAD ROTTED UNDERNEATH THE REFUSAL AS WELL**, which
+//     is the second-order hazard: `declinable` was RENAMED to `upTo?: number` on
+//     `choosePokemon` at D359 (the recorded reason `MATCH_RECORD_VERSION` moved
+//     21 → 22). So "a prompt shape with no `declinable` field" had stopped being a
+//     GAP and become a TAUTOLOGY — `choosePokemon` cannot carry that key by
+//     construction — and the guard D189 left behind in `derivedDrawAndGust.test.ts`
+//     to watch this blocker had been unfalsifiable ever since. D422 replaced it
+//     with one that asserts the shape this arm actually rides.
+//     ⚠️ `declinable` is NOT gone from the engine, and a successor should not read
+//     it that way: `choosePokemonMulti` still carries it as a REQUIRED boolean
+//     (interpreter.ts), projected to the wire by `redact.ts` and read by both HUDs.
+//     What D359 renamed was the `choosePokemon` member alone.
 //
 // The GUST is the mirror sentence and has NO such problem: it moves the
 // OPPONENT's Active, which `finishAttack` does not address by spot (the defender
@@ -13995,6 +14033,32 @@ const ATTACK_SELF_SWITCH = new RegExp(`^Switch ${SELF_SWITCH_CLAUSE}$`);
 const ATTACK_FLIP_SELF_SWITCH = new RegExp(
   `^Flip a coin\\. If heads, switch ${SELF_SWITCH_CLAUSE}$`,
 );
+/** 🆕🆕 D422 — THE FAMILY'S THIRD AND LAST PRINTING, AND THE FIFTH SPELLING OF
+    `SELF_SWITCH_CLAUSE`. *"You may switch this Pokémon with 1 of your Benched
+    Pokémon."* — **3 Standard-legal printings** (`censusAttackCorpus.ts`), the
+    sentence D181 named, D189 refused, and both of them priced against a mechanism
+    that does not exist any more.
+
+    ⚠️ **NO APOSTROPHE CLASS, MEASURED AT THIS HEAD RATHER THAN INHERITED FROM THE
+    TWO ANCHORS ABOVE.** The sentence contains neither U+0027 nor U+2019 — the
+    printed subject is *this Pokémon* and *your* Bench, so there is no possessive
+    and no contraction, and there is no character for a re-ingest to curl. This is
+    asserted on the BYTES in `optionalSelfSwitch.test.ts` §1 rather than reasoned
+    from the neighbours, because D227 got exactly this call wrong in writing by
+    reasoning from D189's, and D421's brief got it wrong in the other direction.
+    `clauseApostrophe.test.ts`'s derivable-sentence census therefore does NOT step
+    for this slice — an apostrophe-free sentence is invisible to a census keyed on
+    the character, however derivable it becomes.
+
+    ⚠️ **A SEPARATE WHOLE-STRING ANCHOR RATHER THAN A `(?:You may )?` GROUP ON
+    `ATTACK_SELF_SWITCH`**, following the rule the four draw anchors and
+    `ATTACK_MAY_OPPONENT_SWITCH_OUT` already follow: the bare sentence prints a
+    capital "Switch" and this one a lowercase "switch", so the shared body is not
+    shared BYTES. Folding them would need an `/i` these readers deliberately do not
+    have, and the case is load-bearing — `derivedDrawAndGust.test.ts` §"the case,
+    not the anchor" measured that dropping the `^` does NOT reach this sentence and
+    dropping the CAPITAL does, which is why the two mutants are not redundant. */
+const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);
 // ⚠️⚠️ D227 — THE OPPONENT-CHOSEN SWITCH-OUT, AND ITS PARENTHETICAL IS PART OF THE
 // ANCHOR RATHER THAN NOISE TRIMMED OFF THE END. "(Your opponent chooses the new
 // Active Pokémon.)" is printed reminder text, but it is the ONLY thing that tells
@@ -17995,6 +18059,74 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "switchActive" }],
       },
+    ];
+  }
+  // 🆕🆕 D422 — THE FAMILY'S LAST PRINTING, WRAPPED EXACTLY AS ITS MIRROR IS. Two
+  // shipped ops, zero new fields: `optional` parks the printed "you may" as a
+  // `confirm`, `continuationOps` splices `then` on yes and the absent `otherwise`
+  // (i.e. nothing) on no. The `switchActive` behind it is byte-identical to
+  // `ATTACK_SELF_SWITCH`'s whole program two arms up, which is the property
+  // `optionalSelfSwitch.test.ts` §2 asserts rather than restates.
+  //
+  // 🛑 D181 AND D189 BOTH PRICED THIS SENTENCE AT A MECHANISM, AND BOTH PRICES ARE
+  // FALSE AT THIS HEAD. They read: *"`switchActive` parks a `choosePokemon`, a
+  // prompt shape with no `declinable` field, and `parkOrForce` auto-applies at one
+  // candidate, so a decline has nowhere to live"* — and concluded the route was a
+  // new prompt key plus a decline answer, i.e. a PERSISTENCE slice. **The decline
+  // never needed to live in the pick at all.** It lives one op EARLIER, in the
+  // `confirm` D186 built, and `parkOrForce` is not touched by this slice in any
+  // direction: the pick behind a "yes" is the same MANDATORY pick the bare
+  // sentence has had since D189, forced at one candidate exactly as before.
+  // D227 proved this route on the mirror sentence and said so in `optionalDraw.
+  // test.ts`'s own note; nothing after it re-read the refusal. (⚠️ And the named
+  // blocker had additionally rotted underneath: `declinable` was RENAMED to
+  // `upTo?: number` at D359 on `choosePokemon`, so the field the refusal points at
+  // has not existed by that name on that prompt for sixty-odd decisions. The
+  // conventions.md rule this slice re-earns is D413's: *a refusal carries its own
+  // expiry date if it says what it is waiting for, so go back and check the
+  // trigger.*)
+  //
+  // 🛑🛑 THE EMPTY OWN BENCH IS ASKED, AND THAT IS A DECISION RATHER THAN AN
+  // OVERSIGHT — pinned on a DRIVEN board in `optionalSelfSwitch.test.ts` §5.
+  // `optional` ALWAYS parks (its own doc says so and means it), while
+  // `switchActive` no-ops silently at zero candidates. So an attacker with an
+  // EMPTY Bench is asked *"You may switch this Pokémon…?"*, answers YES, and
+  // nothing happens. Three readings were available and the third is the one taken:
+  //   • **(a) ACCEPT THE ASK — TAKEN.** §8 declares an attack against its Energy
+  //     cost and never against whether its effect can do anything (D189's own
+  //     argument for the bare arm's zero-candidate ending, which is REACHABLE and
+  //     CORRECT there). The printed offer is part of the text; the board is the
+  //     player's own and an empty Bench is visible on it. `ATTACK_MAY_OPPONENT_
+  //     SWITCH_OUT` — the mirror, shipped at D227 — behaves identically on an
+  //     empty OPPONENT Bench, so this is the family's answer and not this arm's.
+  //     ⚠️ THAT PRECEDENT WAS **UNDRIVEN** WHEN THIS SLICE CITED IT, which is how
+  //     a claim like this one propagates without ever being true, so D422 drove
+  //     the mirror's empty-Bench board too (`derivedOpponentSwitchOut.test.ts`).
+  //   • **(b) A BENCH-NOT-EMPTY `conditionGate` — REFUSED, AND ON A MEASURED
+  //     PRICE.** `BoardCondition` has NINE members and NOT ONE of them counts a
+  //     Bench (measured at this head: `morePrizesThanOpponent`,
+  //     `noEnergyOnYourPokemon`, `not`, `opponentActiveDamaged`,
+  //     `opponentActiveIsBasic`, `opponentActiveIsEvolution`, `stadiumInPlay`,
+  //     `yourActiveDamaged`, `yourStadiumInPlay`). So it is a new union member
+  //     plus an evaluator plus — per D222 — a sweep of every hand-spelled test
+  //     over the members that already exist: a THIRD mechanism, bought for a
+  //     sentence that prints no condition. And it would be a SECOND READER of a
+  //     fact `switchActive`'s own zero-candidate arm already owns, which is D412's
+  //     defect authored deliberately.
+  //   • **(c) EXTEND THE M1 NO-CHOICE RULE TO `optional` — REFUSED AS
+  //     UNDECIDABLE.** M1 retires a prompt whose two answers are the same state,
+  //     and on THIS board they are, so the rule's SPIRIT does reach here. But
+  //     every M1 site in this engine is a STATIC per-op test (an empty deck, a
+  //     zero-length candidate list); making it reach `optional` means asking
+  //     whether an arbitrary `then` is a no-op on this board, which is running the
+  //     program to find out. The op's own doc block already says the shortcut is
+  //     unavailable and gives this reason; this slice is the first board on which
+  //     that sentence is visibly ALMOST wrong, so it is recorded here rather than
+  //     silently disagreed with.
+  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {
+    return [
+      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+      { op: "optional", note: effect, then: [{ op: "switchActive" }] },
     ];
   }
   // ⚠️⚠️ D227 — THE THIRD SWITCH FAMILY, AND THE ONE THAT IS NEITHER OF THE OTHER

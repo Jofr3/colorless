@@ -148,14 +148,31 @@ const NEAR_MISSES = [
       branch is the one that draws — the inverted shape, and the only printing in
       the catalog where a decline does MORE than an accept. */
   "Look at the top card of your deck. You may put that card into your hand. If you don't, discard that card and draw a card.",
-  // ── The "You may" wrapper over an op this slice does NOT wrap. ──
-  /** D186's own remaining pin, and D189's: the self-switch behind the same
-      wrapper (3 legal printings). The MECHANISM now has a producer, so the reason
-      this stays null has changed — it is no longer "there is no wrapper", it is
-      "this slice wrote two anchors and not a third". Kept here so the distinction
-      is asserted rather than assumed. */
-  "You may switch this Pokémon with 1 of your Benched Pokémon.",
 ] as const;
+
+/** ⚠️ 🆕🆕 **D422 — THE THIRD ROW TO LEAVE `NEAR_MISSES`, AND ITS OLD NOTE HAD BEEN
+    NAMING ITS OWN EXPIRY CONDITION FOR ~195 DECISIONS.**
+
+    It sat in the list above reading: *"D186's own remaining pin, and D189's: the
+    self-switch behind the same wrapper (3 legal printings). **The MECHANISM now has
+    a producer, so the reason this stays null has changed** — it is no longer 'there
+    is no wrapper', it is 'this slice wrote two anchors and not a third'."*
+
+    🛑 **THAT NOTE WAS CORRECT, IT WAS WRITTEN DOWN, AND NOTHING ACTED ON IT** —
+    while `effects.ts` and `derivedDrawAndGust.test.ts` went on quoting a price
+    (a new `declinable` prompt key + a decline answer + a `MATCH_RECORD_VERSION`
+    bump) that this very row says is not the price. The true cost was ONE anchor and
+    ONE arm. conventions.md's D413 rule in its sharpest form: *a refusal carries its
+    own expiry date if it says what it is waiting for* — here the trigger had not
+    merely fired, **a neighbouring slice had fired it and left a note saying so**.
+
+    ⚠️ **THE ROW IS RE-POINTED, NOT DROPPED, AND ONTO A SHAPE RATHER THAN ONTO
+    "IT DERIVES" (D418's second half).** A rung asserting only that the sentence now
+    derives would be TRUE under the wrong-arm mutant — an anchor that returned the
+    bare `switchActive` with the wrapper forgotten. What this file owns about the
+    sentence is that it wraps through the SAME gate the two draw rows use, so that
+    is what is asserted, built with `wrapped` rather than hand-copied. */
+const BUILT_AT_D422 = "You may switch this Pokémon with 1 of your Benched Pokémon.";
 
 /** ⚠️ D227 — THE ROW THAT LEFT THIS LIST BY BEING BUILT, AND IT IS THE FIRST
     THIRD-PARTY PRODUCER OF THE `optional` WRAPPER THIS FILE OWNS.
@@ -350,6 +367,38 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     const bare = "Switch out your opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)";
     expect(WRAPPED_ELSEWHERE).toBe(`You may s${bare.slice(1)}`);
     expect(deriveAttackEffect(bare)).toEqual([{ op: "opponentSwitchOut" }]);
+  });
+
+  it("🆕🆕 D422's row is BUILT, and it wraps through the SAME gate as the draws", () => {
+    // See BUILT_AT_D422's block. Built with `wrapped` — the helper the two draw
+    // rows and D227's row are asserted with — so "the same shape" is a shared
+    // construction rather than a hand-copied literal that could drift from what
+    // this file's own cases mean by it. This is now the gate's FOURTH producer.
+    expect(deriveAttackEffect(BUILT_AT_D422)).toEqual(
+      wrapped(BUILT_AT_D422, { op: "switchActive" }),
+    );
+    // …and the wrapper is the ONLY thing the prefix adds: the bare sentence is the
+    // same string minus "You may " and a capital, and it derives to the inner op
+    // ALONE. A shared anchor with an optional `(?:You may )?` group would pass the
+    // line above and fail this one.
+    const bare = "Switch this Pokémon with 1 of your Benched Pokémon.";
+    expect(BUILT_AT_D422).toBe(`You may s${bare.slice(1)}`);
+    expect(deriveAttackEffect(bare)).toEqual([{ op: "switchActive" }]);
+    // 🛑 AND THE `optional` OP ITSELF IS UNTOUCHED BY THE FOURTH PRODUCER, which is
+    // the claim D186 made when it built the gate before it had a second body to
+    // wrap — asserted here rather than in the new suite alone, exactly as D227's
+    // row is. Four producers, one shape.
+    const four = [CLAUSES[UNTIL].text, CLAUSES[FIVE].text, WRAPPED_ELSEWHERE, BUILT_AT_D422];
+    for (const text of four) {
+      const program = deriveAttackEffect(text);
+      expect(program, text).toHaveLength(1);
+      const gate = program?.[0];
+      expect(gate?.op, text).toBe("optional");
+      // No `otherwise` on any of the four: a decline buys NOTHING on all of them,
+      // which is what makes D316's arm still unreached from this file.
+      expect(gate?.op === "optional" ? gate.otherwise : "unset", text).toBeUndefined();
+      expect(gate?.op === "optional" ? gate.note : undefined, text).toBe(text);
+    }
   });
 
   it("leaves the BARE forms on their existing (D181) path, UNWRAPPED", () => {

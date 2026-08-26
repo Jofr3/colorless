@@ -611,6 +611,61 @@ describe("end to end — the printed 'You may', two questions to two people", ()
     expect(choosing.phase.answerer).toBe("p2");
   });
 
+  it("🆕🆕 D422 — ASKS ON AN EMPTY OPPONENT BENCH TOO, and the YES does nothing", () => {
+    // 🛑 THE PRECEDENT D422 CITED, WHICH WAS **UNDRIVEN WHEN IT CITED IT**. D422
+    // builds the mirror of this sentence on the ATTACKER's own seat (*"You may
+    // switch this Pokémon with 1 of your Benched Pokémon."*) and had to decide
+    // what an EMPTY Bench does under an `optional` wrapper, because `optional`
+    // ALWAYS parks while the inner op no-ops silently at zero candidates. It chose
+    // to ACCEPT the ask, "for consistency with the shipped mirror" — and the
+    // shipped mirror's empty-Bench board was asserted nowhere. Two cases up, the
+    // BARE sentence's empty-Bench board IS driven (`toHaveLength(0)` on
+    // `ATTACK_EFFECT_SKIPPED`), but the bare op never asks, so it says nothing at
+    // all about the wrapped one.
+    //
+    // ⚠️ CITING AN UNPINNED PRECEDENT IS HOW A FALSE CLAIM PROPAGATES, so it is
+    // pinned here, in the file that owns the sentence, rather than only in D422's.
+    // The behaviour is the SAME on both seats and now both are boards.
+    const state = ready(53, 1, 0);
+    const before = [activeUid(state, "p1"), activeUid(state, "p2")];
+    expect(state.players.p2.bench).toHaveLength(0);
+    const { state: confirming } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: WINDING_WAVES,
+    });
+    // ASKED — on a board where the answer cannot matter.
+    if (confirming.phase.kind !== "effect:choose") throw new Error("expected a confirm park");
+    expect(confirming.phase.prompt.kind).toBe("confirm");
+    expect(confirming.phase.answerer).toBeUndefined();
+    // The YES: nothing moves, nobody is asked again, and the attack was USED.
+    const { state: done, events } = mustApply(confirming, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: true },
+    });
+    expect([activeUid(done, "p1"), activeUid(done, "p2")]).toEqual(before);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(all(events, "POKEMON_SWITCHED")).toHaveLength(0);
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    expect(types(events)).toContain("TURN_ENDED");
+    // ⚠️ THE CONTROL THAT MAKES THE ABOVE MEAN SOMETHING: the SAME seed with a
+    // STOCKED opponent Bench reaches the opponent's park off the same YES. Without
+    // it, "the yes did nothing" would be equally true of a broken wrapper.
+    const { state: stocked } = mustApply(ready(53, 1, 2), {
+      type: "attack",
+      seat: "p1",
+      index: WINDING_WAVES,
+    });
+    const { state: reached } = mustApply(stocked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: true },
+    });
+    if (reached.phase.kind !== "effect:choose") throw new Error("expected the opponent park");
+    expect(reached.phase.answerer).toBe("p2");
+  });
+
   it("a DECLINE moves nobody and ends the turn — the opponent is never asked", () => {
     const state = ready(52, 1, 3);
     const wasActive = activeUid(state, "p2");

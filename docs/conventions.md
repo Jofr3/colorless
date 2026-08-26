@@ -538,6 +538,65 @@ effects of attacks on evolution) but the sentence does not say it. A successor w
 finds an untested discrepancy assumes an accident and "fixes" it. **A decision that
 is not pinned is indistinguishable from an oversight.**
 
+## Confidence markers (D422)
+
+D421 produced the rule "mark which of your claims are MEASURED and which are
+REMEMBERED". **Its very first use attached `MEASURED` to a partial measurement**:
+a universal — *"`declinable` no longer exists on any prompt"* — generalised from
+the first five hits of a `grep -c` whose counts ran into the hundreds.
+`choosePokemonMulti` carries it as a REQUIRED field. The conclusion survived by
+luck; the stated reason was wrong and was repeated at four sites downstream.
+
+**A confidence marker is only as good as the check behind it, and a mislabelled
+claim is worse than an unlabelled one** — an unlabelled guess invites checking, a
+mislabelled one forbids it. **Say WHAT you measured and HOW, not that you
+measured.** "grep -c across packages/ returned N, I read all N" is a measurement.
+"I grepped it" is not.
+
+**Corollary — a universal needs a total check.** Any claim of the form "no X
+anywhere does Y" must be backed by reading every hit, or stated as the partial it
+is: "the five sites I read do not do Y".
+
+## Stale refusals (D422)
+
+**A stale refusal is more expensive than no refusal, because a refusal is read as
+a measurement.** D422 was priced in a doc block as a blocked vocabulary slice
+needing a prompt field that does not exist. Every clause of it was false — the
+field had been renamed ~60 slices earlier, and the decline the block said had
+nowhere to live sat one op earlier the whole time. The correct note, D227's, was
+four lines away and **sat unread for roughly 195 decisions**, because the louder
+and wronger block beside it kept every reader away.
+
+**When you refuse a slice, write the CONDITION THAT WOULD REVERSE THE REFUSAL**,
+so a successor can test it in one command instead of trusting it. A refusal
+without a falsifier is an assertion with a long shelf life and no expiry date.
+
+**And when a slice pays a price a doc block quoted, rewrite that block to record
+what the price ACTUALLY was.** Leaving it is how the next reader pays the quoted
+price instead of the real one.
+
+## Precedents (D422)
+
+**Drive the precedent you cite.** D422 leaned on a shipped mirror sentence to
+settle its empty-bench behaviour and discovered that board was never driven.
+Citing an unpinned precedent is how a false claim propagates: afterwards it reads
+as TWO confirmations of something nothing ever tested. **If you cite a shipped
+case as settling a question, check that it is driven — and drive it if it is
+not.**
+
+## Computing the unmapped residue (D422)
+
+`legalAttackCorpus()` minus `resolvedByAnyReader()` is **not** the set of
+printings that do not work. It is keyed on *"no whole-sentence reader claims this
+string"*, and misses three ways a printing can already be served: a registry row,
+`splitAttackGateClause`, and `splitAttackTrailingClause`. At D422's head that is
+**47 of 359 printings already working**, and `censusAtHead.test.ts` closes the
+identity directly. Ranking candidates on the raw difference put two
+already-fully-built sentences at the top of the list, one of them the highest by
+printing count. **Subtract the three served sets before ranking anything**, and
+compute it on a quiet tree — importing the instrument during a mutation sweep
+answers about a half-written module.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

@@ -385,6 +385,18 @@ describe("the pool sweep, structurally", () => {
       "fix-torrent attack 0 optionalCostBoost :: discardEnergy",
       "fix-torrent attack 0 optionalCostBoost :: shuffleDeck",
       "fix-trainerops attack 10 :: opponentSwitchOut",
+      // 🆕🆕 **D422 — THE SECOND `optional.then` ROW OFF THIS FIXTURE, AND THE FIRST
+      // WHOSE INNER OP IS THE ATTACKER'S OWN SWITCH.** Index 7 prints *"You may switch
+      // this Pokémon with 1 of your Benched Pokémon."* and derives to
+      // `optional → switchActive` — so the `switchActive` sits one level down a branch
+      // the enumerated walk reproduced above does not descend, exactly as index 10's
+      // `opponentSwitchOut` does. ⚠️ **THE ROW APPEARED WITHOUT A FIXTURE BEING ADDED**,
+      // which is the shape worth noting: index 7 has been on `fix-trainerops` since
+      // D189, fielded on purpose as the witness for an UNREAD sentence, and it walked to
+      // ZERO ops for as long as it stayed unread. Building the arm moved this list by
+      // one with no change to the pool — so a sweep keyed on "which fixtures exist" would
+      // have seen nothing, and only a sweep keyed on what the READERS return catches it.
+      "fix-trainerops attack 7 :: switchActive",
       "sv05-025 trigger :: moveEnergy",
       "sv05-025 trigger :: recordGate",
       "sv05-025 trigger :: switchActive",
