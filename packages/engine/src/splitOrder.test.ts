@@ -545,7 +545,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     ["trailing", splitAttackTrailingClause],
   ];
 
-  it("🛑 prices each stripper live off the corpus — 6/14, 1/2, 1/1, 9/18", () => {
+  it("🛑 prices each stripper live off the corpus — 6/14, 1/2, 4/5, 9/18", () => {
     const priced = STRIPPERS.map(([name, split]) => {
       const rows = corpus().filter(([, s]) => split(s) !== null);
       return [name, rows.length, units(rows)] as const;
@@ -553,10 +553,15 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // 🆕🆕 D417 — the fourth row is the new one; the first two are §2's figures
     // re-derived through this section's own instrument, so the two sections cannot
     // drift apart silently.
+    // 🆕🆕 D420 — the CANCEL row moves 1/1 → **4/5** and NO OTHER ROW MOVES, which is
+    // the shape this table exists to show: the widening is a CLOSED alternation on
+    // one anchor plus three rows in one table, so the three older strippers see
+    // exactly the strings they saw before. The hand-Energy cost family is 3 sentences
+    // / 4 printings.
     expect(priced).toEqual([
       ["gate", 6, 14],
       ["requirement", 1, 2],
-      ["cancel", 1, 1],
+      ["cancel", 4, 5],
       ["trailing", 9, 18],
     ]);
     // …and every one of the four MOVES a string, which is what stops the matrix
@@ -626,19 +631,26 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // through this instrument, and the cancel printing is the one. The sum is
     // asserted as its parts so a stripper that stopped moving anything is a red
     // line here rather than a smaller total nobody reads.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(17);
+    // 🆕🆕 D420 — 17 → **20**, and the WHOLE step is the cancel term: 7 + 9 + **4**.
+    // The other two parts are unmoved literals in the same breath, so a widening that
+    // had leaked into the gate or the composition path reddens on the PART rather
+    // than only on the sum.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(20);
     expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
     expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(9);
-    expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(1);
+    expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });
 
-  it("🛑 the reader and the splitter agree on exactly one printing, and it is the same one", () => {
+  it("🛑 the reader and the splitter agree on exactly the same printings", () => {
     // The site strips a clause it has ANSWERED — that pairing is the whole safety of
-    // the fourth stripper, and it holds because both functions run one guard.
+    // the fourth stripper, and it holds because both functions run one guard. 🆕🆕
+    // D420 widened the anchor and added three rows; the pairing is what says the
+    // widening did not let the splitter run ahead of the table.
     const split = corpus().filter(([, s]) => splitAttackCancelClause(s) !== null);
     const read = corpus().filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
     expect(split.map(([, s]) => s)).toEqual(read.map(([, s]) => s));
-    expect([read.length, units(read)]).toEqual([1, 1]);
-    expect(read[0]?.[1]).toBe(CANCEL_PRINTING);
+    expect([read.length, units(read)]).toEqual([4, 5]);
+    // …and D417's printing is still one of them, named rather than counted.
+    expect(read.map(([, s]) => s)).toContain(CANCEL_PRINTING);
   });
 });

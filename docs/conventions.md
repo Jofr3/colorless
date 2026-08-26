@@ -255,6 +255,20 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A ROW THAT SURVIVES BECAUSE IT CHANGES NOTHING IS WORSE THAN NO ROW — IT REPORTS A SUITE GAP
+  THAT DOES NOT EXIST (D420).** A mutant mutated a `case` LABEL with a TypeScript `as` assertion,
+  which is **erased at runtime**: the arm still matched, the row expressed no defect, and the sweep
+  dutifully reported a GAP. ⚠️ **BEFORE BELIEVING A SURVIVOR, CHECK THAT THE MUTATION IS OBSERVABLE
+  AT RUNTIME AT ALL** — types, `as`, `satisfies` and anything the compiler erases are not mutations.
+  This is the mirror of D416's rule (*a row that dies for the wrong reason*), and the two together
+  are the whole of what makes a tally mean anything.
+- 🛑 **A RECIPE IN A DOC BLOCK IS A CLAIM, AND IT CAN SHIP A DEFECT NO CODE REVIEW WOULD CATCH
+  (D420).** D417 wrote *"a successor adds a row and stops — no anchor, no arm"*. Following it
+  literally would have stepped `BUILT.attack` while the sentence still fell to the loud skip path —
+  **built-but-dead, authored by prose.** The corrected rule states its PRECONDITION: *a row costs a
+  row IFF its head is already claimed.* ⚠️ **WHEN YOU WRITE A "JUST DO X" NOTE FOR A SUCCESSOR, WRITE
+  THE CONDITION UNDER WHICH X IS ENOUGH** — and if you cannot state it, you have not finished
+  understanding the mechanism.
 - 🛑 **A SURVEY IS AS NARROW AS THE SHAPE IT GREPS FOR (D419).** D418 surveyed for a MODULE-LEVEL
   reader array and found 40 files; there were **47**, and the six it missed were the ones that hid
   the defect best — **inline declarations inside test bodies, every one a refusal rung, where a short

@@ -75,8 +75,12 @@ import {
 // ⚠️ **THE VACUITY MODES, NAMED BEFORE THE BUILD AND EACH DRIVEN:**
 //   • the ACCOUNTING GUARD could be dropped and every board below would still be
 //     green — an unmapped head would then be stripped and its cancel silently
-//     deleted, so §1 drives the column's OTHER anaphoric printing and requires a
-//     refusal on all four functions;
+//     deleted, so §1 drives an UNMAPPED head under the same clause and requires a
+//     refusal on all four functions. 🆕🆕 D420 RE-POINTED THAT WITNESS: it used to be
+//     the column's other anaphoric printing (Ogerpon's), which D420 CLAIMS, so the
+//     rung would have gone green and silent (D418's discrimination loss). It is now
+//     a CONSTRUCTED head `deriveAttackEffect` reads — and it has to be constructed,
+//     because after D420 the printed column holds no unmapped anaphoric member;
 //   • the whole reader could be dropped and the RESOLVING board would still be
 //     green (a Stadium in play cancels nothing) — §3's empty-zone board is the only
 //     one that moves, which is why it asserts the ABSENCE of damage rather than the
@@ -99,16 +103,49 @@ const CLAUSE = "If you can't, this attack does nothing.";
 /** The column's OTHER anaphoric printing, and the reason this is a family rather
     than a card: the "can't" points at a HAND COST, so the head resolves to a
     different board fact entirely. **1 legal printing**, byte-for-byte from the
-    corpus, and this slice deliberately leaves it UNMAPPED and LOUD. */
+    corpus.
+
+    ⚠️ 🆕🆕 **D420 CLAIMED IT, AND THE RUNGS BELOW ARE INVERTED RATHER THAN
+    DELETED.** D417 left it UNMAPPED and LOUD by name — *"this slice deliberately
+    leaves it unmapped"* — under the correct reading that a row alone would not have
+    been enough: its head was claimed by NO reader, so a row would have stepped the
+    census and changed no board (D407's "built but dead"). D420 shipped the row AND
+    the `deriveAttackEffect` arm together, which is the shape `ATTACK_CANCEL_HEADS`'
+    own doc block is corrected for. Everything this file said about the ANAPHOR is
+    unchanged; only the population moved. */
 const OGERPON = "Discard a Basic {G} Energy card from your hand. If you can't, this attack does nothing.";
 
-/** ⚠️ **THE NEAR MISS A LOOSER CLAUSE GROUP WOULD HAVE SWALLOWED**, byte-for-byte
-    from the corpus at **2 legal printings**: a cancel whose "can't" NAMES its own
-    referent and is therefore NOT anaphoric at all. Reading it needs the head's
-    ARITHMETIC ("6 cards in this way"), not the head's identity, so it is a
-    different build and must stay refused. */
+/** 🆕🆕 D420 — the UNMAPPED head this file now needs, and it is CONSTRUCTED rather
+    than printed: a sentence `deriveAttackEffect` claims ("Discard 3 Energy from this
+    Pokémon.") under the byte-identical anaphoric clause. **The head being READ is not
+    the guard; the TABLE is** — which is the property D417 built the accounting guard
+    for, and the one the D420 widening leans on harder than ever, since the anchor now
+    admits far more strings than the table carries. */
+const UNMAPPED_HEAD = "Discard 3 Energy from this Pokémon.";
+const UNMAPPED_PRINTING = `${UNMAPPED_HEAD} If you can't, this attack does nothing.`;
+
+/** Byte-for-byte from the corpus at **2 legal printings**: a cancel whose "can't"
+    NAMES its own referent.
+
+    ⚠️ 🆕🆕 **D420 ADMITTED IT, AND THE PARAGRAPH THAT STOOD HERE WAS HALF RIGHT.**
+    It read: *"THE NEAR MISS A LOOSER CLAUSE GROUP WOULD HAVE SWALLOWED … Reading it
+    needs the head's ARITHMETIC ('6 cards in this way'), not the head's identity, so
+    it is a different build and must stay refused."* The FACT is right — the clause
+    does restate a number — but the INFERENCE was wrong: it restates **only the
+    COUNT**, never the FILTER and never the ZONE ("6 cards", not "6 Basic {G} Energy
+    cards from your hand"), and "in this way" is what sends the manner back to the
+    head. So the head is still the whole referent for every board fact, head-keying
+    is untouched, and the one repeated number is guarded against the key it repeats
+    (`handEnergyCancel.test.ts` §2). The anchor is a CLOSED alternation, not a
+    loosening. */
 const NAMED_REFERENT =
   "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon. If you can't discard 6 cards in this way, this attack does nothing.";
+/** 🆕🆕 D420 — the named-referent family's other printing, **1 legal printing**,
+    byte-for-byte from the corpus. It is the cost WITHOUT the Knock Out, which is why
+    the family is 3 sentences rather than 2: the same clause, the same member, a
+    different threshold and no second op. */
+const TWO_CARD_COST =
+  "Discard 2 Basic {G} Energy cards from your hand. If you can't discard 2 cards in this way, this attack does nothing.";
 
 /** D378's LEADING spelling of the very same board fact — the sentence that must
     keep going to `deriveAttackRequirement` and must never reach this reader. **2
@@ -126,8 +163,15 @@ const LEADING_STADIUM = "If there is no Stadium in play, this attack does nothin
 const WORLD_ENDER = "fix-d417-worldender";
 
 /** A second body carrying a head this engine reads and a cancel it does NOT — the
-    accounting guard's subject on a BOARD rather than in a string. Its printed
-    sentence is the column's other anaphoric printing, so nothing is constructed. */
+    accounting guard's subject on a BOARD rather than in a string.
+
+    ⚠️ 🆕🆕 **D420 RE-POINTED IT AND THE BOARD IS UNCHANGED IN SHAPE.** It printed the
+    column's other anaphoric printing (Ogerpon's), which D420 CLAIMS — so left alone
+    this body would have gone on being green while testing nothing, which is exactly
+    the discrimination loss D418 named. It now prints `UNMAPPED_PRINTING`: a head
+    `deriveAttackEffect` reads, under the byte-identical clause, keyed by no row. The
+    string is CONSTRUCTED rather than printed, and it has to be — after D420 the
+    printed column has no unmapped anaphoric member left. */
 const UNMAPPED_CANCEL = "fix-d417-unmapped";
 
 const LOCAL_CARDS: Record<string, Card> = {
@@ -155,7 +199,7 @@ const LOCAL_CARDS: Record<string, Card> = {
         cost: ["Fire", "Darkness", "Darkness"],
         name: "Unmapped Cancel",
         damage: 230,
-        effect: OGERPON,
+        effect: UNMAPPED_PRINTING,
       },
     ],
   }),
@@ -315,37 +359,59 @@ describe("§1 — the reader: an exact value, four anchors, and a table that ref
     expect(splitAttackRequirementClause(ETERNATUS)).toBeNull();
   });
 
-  it("🛑 the TABLE refuses an unmapped head — the accounting guard, on both printings", () => {
-    // The column's other anaphoric printing. Its CLAUSE is byte-identical to
-    // Eternatus's, so a clause-keyed table would answer it with `stadiumInPlay` and
-    // cancel a hand-cost attack on a Stadium read. Its head is not carried, so all
-    // four functions refuse and the whole printed string stays LOUD.
+  it("🛑 the TABLE refuses an unmapped head — the accounting guard, after the widening", () => {
+    // 🆕🆕 D420 — the column's other anaphoric printing is now CARRIED, so the rung
+    // is INVERTED rather than deleted: it resolves, and it resolves to a DIFFERENT
+    // fact from Eternatus's off the byte-identical clause, which is the head-keying
+    // claim as a measurement instead of a refusal.
     expect(OGERPON.endsWith(CLAUSE)).toBe(true);
-    expect(splitAttackCancelClause(OGERPON)).toBeNull();
-    expect(deriveAttackCancelRequirement(OGERPON)).toBeNull();
-    expect(deriveAttackRequirement(OGERPON)).toBeNull();
-    expect(deriveAttackEffect(OGERPON)).toBeNull();
-    // A head this engine reads is still not enough — the TABLE decides, not the
-    // reader surface. This printed sentence is claimed by `deriveAttackEffect`…
-    const READ_HEAD = "Discard 3 Energy from this Pokémon.";
-    expect(deriveAttackEffect(READ_HEAD)).not.toBeNull();
+    expect(deriveAttackCancelRequirement(OGERPON)).toEqual({
+      kind: "yourBasicEnergyInHandAtLeast",
+      energy: "Grass",
+      count: 1,
+    });
+    expect(deriveAttackCancelRequirement(OGERPON)).not.toEqual(
+      deriveAttackCancelRequirement(ETERNATUS),
+    );
+    // A head this engine reads is STILL NOT ENOUGH — the TABLE decides, not the
+    // reader surface, and after the widening that is the guard's busiest day: the
+    // anchor now admits far more strings than the table carries. This sentence is
+    // claimed by `deriveAttackEffect`…
+    expect(deriveAttackEffect(UNMAPPED_HEAD)).not.toBeNull();
     // …and is still refused here, because no row carries it. **A SPLITTER GUARDED
     // BY "SOME READER CLAIMS THE HEAD" RATHER THAN BY THE TABLE WOULD SHIP THIS
-    // ONE**, and would answer it with whatever condition the table's single row
-    // happens to hold.
-    expect(splitAttackCancelClause(`${READ_HEAD} ${CLAUSE}`)).toBeNull();
-    expect(deriveAttackCancelRequirement(`${READ_HEAD} ${CLAUSE}`)).toBeNull();
+    // ONE**, and would answer it with whatever condition some row happens to hold.
+    expect(splitAttackCancelClause(UNMAPPED_PRINTING)).toBeNull();
+    expect(deriveAttackCancelRequirement(UNMAPPED_PRINTING)).toBeNull();
+    expect(deriveAttackRequirement(UNMAPPED_PRINTING)).toBeNull();
+    expect(deriveAttackEffect(UNMAPPED_PRINTING)).toBeNull();
   });
 
-  it("🛑 the NAMED-REFERENT cancel is refused: this reader is for the ANAPHORIC one", () => {
-    // 2 legal printings, and the clause between "can't" and the comma is exactly
-    // what makes them a different build: they name their own referent, so reading
-    // them needs the head's ARITHMETIC rather than the head's identity.
+  it("🛑 the NAMED-REFERENT cancel is ADMITTED by a CLOSED alternation, and only that", () => {
+    // 🆕🆕 D420 — the rung is inverted, and the constant's block says why the D417
+    // reading was half right. The clause restates the COUNT and nothing else.
     expect(NAMED_REFERENT.includes("If you can't discard 6 cards in this way,")).toBe(true);
-    expect(splitAttackCancelClause(NAMED_REFERENT)).toBeNull();
-    expect(deriveAttackCancelRequirement(NAMED_REFERENT)).toBeNull();
-    // …and it is really in the pool, so this is a refusal and not a straw man.
+    expect(splitAttackCancelClause(NAMED_REFERENT)?.head).toBe(
+      "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.",
+    );
+    expect(deriveAttackCancelRequirement(NAMED_REFERENT)).toEqual({
+      kind: "yourBasicEnergyInHandAtLeast",
+      energy: "Grass",
+      count: 6,
+    });
+    // …and it is really in the pool, so this is a claim and not a straw man.
     expect(units(corpus().filter(([, s]) => s === NAMED_REFERENT))).toBe(2);
+    // 🛑 CLOSED, NOT LOOSENED. Exactly two clause spellings are admitted; the pool's
+    // third *"If you can't discard **any**, …"* shape is refused by construction,
+    // and so is a spelled-out number. A `.*` between "can't" and the comma would
+    // have shipped both.
+    for (const bad of [
+      "If you can't discard any, this attack does nothing.",
+      "If you can't discard six cards in this way, this attack does nothing.",
+      "If you can't discard 6 cards, this attack does nothing.",
+    ]) {
+      expect(splitAttackCancelClause(`${HEAD} ${bad}`), bad).toBeNull();
+    }
   });
 
   it("🛑 the APOSTROPHE CLASS is live: a U+2019 reprint of the clause still reads", () => {
@@ -369,7 +435,19 @@ describe("§1 — the reader: an exact value, four anchors, and a table that ref
     // the table key — so this rung re-derives the whole reader over a LOCAL copy of
     // the lookup carrying a second row, and shows the same shape answers a second
     // family member with no other change. It is a MODEL of the table, labelled as
-    // one: the shipped table still carries exactly one row (§2 prices it).
+    // one.
+    //
+    // ⚠️ 🆕🆕 **D420 — THE MODEL IS KEPT AND ITS CLAIM IS NARROWED, BECAUSE THE
+    // SHIPPED SLICE FALSIFIED THE HEADLINE.** This rung's title reads *"a second
+    // member costs a ROW and nothing else"*, and the shipped second member cost a
+    // row AND a `deriveAttackEffect` ARM: Eternatus's head was already claimed by
+    // `discardStadium`, Ogerpon's was claimed by NOTHING, and a row alone would have
+    // stepped `BUILT.attack` while the attack still fell to the loud
+    // ATTACK_EFFECT_SKIPPED path (D407's "built but dead"). What this model still
+    // shows — and all it ever showed — is that **the SPLITTER and the LOOKUP are
+    // general over the body**: no anchor, no branch at the site, no second reader.
+    // The corrected rule lives at `ATTACK_CANCEL_HEADS`' doc block, and the shipped
+    // table carries FOUR rows now (§2 prices it).
     const rows = new Map<string, string>([
       [HEAD, "stadiumInPlay"],
       ["Discard a Basic {G} Energy card from your hand.", "yourHandHasBasicGrass"],
@@ -393,21 +471,28 @@ describe("§1 — the reader: an exact value, four anchors, and a table that ref
 });
 
 describe("§2 — the whole legal column: what this reader claims, and what it cannot", () => {
-  it("🛑 claims 1 sentence / 1 legal printing, and it is Eternatus's", () => {
+  it("🛑 claims 4 sentences / 5 legal printings, and names every one of them", () => {
+    // 🆕🆕 D420 — 1/1 → **4/5**: the hand-Energy cost family (3 sentences / 4
+    // printings) joins Eternatus behind the widened anchor and three new rows.
     const claimed = corpus().filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
-    expect([claimed.length, units(claimed)]).toEqual([1, 1]);
-    expect(claimed.map(([, s]) => s)).toEqual([ETERNATUS]);
-    // The ANAPHORIC family in this population is TWO printings and this slice takes
-    // ONE — so the reader is measured against the family it belongs to rather than
-    // against itself, and the other one is named above and refused below.
+    expect([claimed.length, units(claimed)]).toEqual([4, 5]);
+    expect(claimed.map(([, s]) => s).sort()).toEqual(
+      [ETERNATUS, OGERPON, NAMED_REFERENT, TWO_CARD_COST].sort(),
+    );
+    // The ANAPHORIC sub-family is TWO printings and this reader now takes BOTH — so
+    // the reader is still measured against the family it belongs to rather than
+    // against itself.
     const anaphoric = corpus().filter(([, s]) => s.endsWith(CLAUSE));
     expect([anaphoric.length, units(anaphoric)]).toEqual([2, 2]);
     expect(anaphoric.map(([, s]) => s).sort()).toEqual([OGERPON, ETERNATUS].sort());
-    // 🛑 THE ANTI-SATURATION RUNG (D379's trap). A reader that answered everything
-    // would satisfy the line above too. The unclaimed member is asserted UNCLAIMED
-    // by name, so a successor who widens the anchor instead of adding a row reddens
-    // here rather than shipping green.
-    expect(deriveAttackCancelRequirement(OGERPON)).toBeNull();
+    for (const [, s] of anaphoric) expect(deriveAttackCancelRequirement(s), s).not.toBeNull();
+    // 🛑 THE ANTI-SATURATION RUNG (D379's trap), RE-POINTED RATHER THAN DELETED —
+    // D418's standing rule, since a rung whose subject got built goes green and
+    // silent. The unclaimed witness is now a head no ROW carries under the very
+    // same clause, so a successor who widens the anchor instead of adding a row
+    // reddens here exactly as before.
+    expect(deriveAttackCancelRequirement(UNMAPPED_PRINTING)).toBeNull();
+    expect(claimed.length).toBeLessThan(corpus().length);
   });
 
   it("🛑 the two requirement readers are MUTUALLY EXCLUSIVE over all 1,732 units", () => {
@@ -519,14 +604,17 @@ describe("§3 — a REAL BOARD, driven BOTH WAYS off the one printed sentence", 
   });
 
   it.each(SEEDS)("seed %i — the CONTROL: an UNMAPPED cancel stays LOUD and is not gated", (seed) => {
-    // The accounting guard on a board. This body prints the column's OTHER anaphoric
-    // sentence, whose head no row carries — so the split does not fire, no
-    // requirement is read, the WHOLE printed string is reported, and the attack is
-    // NOT cancelled on an empty zone. Delete the guard and this rung goes red twice:
-    // the report shrinks to the head and the attack starts cancelling.
+    // The accounting guard on a board. This body prints a head `deriveAttackEffect`
+    // READS under the anaphoric clause, and no row carries it — so the split does not
+    // fire, no requirement is read, the WHOLE printed string is reported, and the
+    // attack is NOT cancelled on an empty zone. Delete the guard and this rung goes
+    // red twice: the report shrinks to the head and the attack starts cancelling on
+    // whatever condition some other row happens to hold.
     const result = attack(board(seed, false, UNMAPPED_CANCEL));
     expect(types(result.events)).not.toContain("ATTACK_FAILED");
-    expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({ effect: OGERPON });
+    expect(find(result.events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+      effect: UNMAPPED_PRINTING,
+    });
     expect(find(result.events, "DAMAGE_DEALT")?.dealt).toBe(230);
   });
 });

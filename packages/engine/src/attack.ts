@@ -1231,6 +1231,16 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // stayed green. It is written from the RULE rather than from what a test would
     // notice; the second table row is what makes it live, and that row is one
     // printing away.
+    //
+    // 🆕🆕 **D420 ADDED THREE MORE ROWS AND THE CONJUNCT IS STILL NOT DRIVEN — THE
+    // LAST SENTENCE ABOVE WAS THE WRONG FORECAST AND IS CORRECTED IN PLACE (D178).**
+    // A row whose head no reader claims would drive it, and D420's correction to
+    // `ATTACK_CANCEL_HEADS`' doc block is precisely that such a row must never be
+    // added ALONE: a row plus an unclaimed head steps `BUILT.attack` while the attack
+    // still falls to the loud path (D407's "built but dead"). So all FOUR rows have
+    // claimed heads, `cancelSplit !== null` still implies `program !== null`, and the
+    // term that would exercise this conjunct is the one the corrected rule forbids.
+    // It stays, unexercised and correct, which is what writing from the rule means.
     (requirement !== null && requirementSplit === null && cancelSplit === null) ||
     coinFlip !== null ||
     optionalBoost !== null ||

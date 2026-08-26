@@ -2340,6 +2340,91 @@ export type BoardCondition =
       list, so an unresolvable uid contributes nothing rather than throwing —
       `matchesFilter`'s own conservative direction on `undefined`. */
   | { kind: "yourBasicEnergyInDiscardAtLeast"; energy: BasicEnergyType; count: number }
+  /** 🆕🆕 **D420 — §6.5, THE SAME QUANTIFIER ONE ZONE OVER: your HAND holds at
+      least `count` Basic ⟨type⟩ Energy cards.** An EXACT ZONE MIRROR of the sibling
+      directly above — same `energy` type, same `count` threshold, same predicate,
+      `discard` swapped for `hand` — and it is authored for the printed hand COST the
+      three D420 sentences charge:
+
+        *"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your
+         opponent's Active Pokémon. If you can't discard 6 cards in this way, this
+         attack does nothing."*  **2 legal printings**
+        *"Discard 2 Basic {G} Energy cards from your hand. If you can't discard 2
+         cards in this way, this attack does nothing."*  **1 legal printing**
+        *"Discard a Basic {G} Energy card from your hand. If you can't, this attack
+         does nothing."*  **1 legal printing**
+
+      — 3 sentences / 4 legal printings off `legalAttackCorpus()`, one arm family, and
+      the member is what the trailing cancel on each of them POINTS AT
+      (`ATTACK_CANCEL_HEADS`).
+
+      🛑 **IT IS THE FIRST MEMBER OF THIS UNION THAT READS A HIDDEN ZONE'S CONTENTS,
+      AND THE UNION'S HEADER DRAWS ITS LINE EXACTLY THERE.** That block says the line
+      is *"CONTENTS against CARDINALITY, not zone against zone"* — the four hand-SIZE
+      members (`opponentHandAtMost`, `handSizesEqual`, `yourHandExactly`,
+      `yourHandNotEmpty`) are no leak because a hand's size is public, and it names *"a
+      hand's CONTENTS"* as the thing that would be. **THIS MEMBER READS CONTENTS. THE
+      ARGUMENT THAT CARRIES IT IS NOT A WIDENING OF THAT LINE — IT IS ALREADY IN THE
+      TREE, AND IT IS CITED RATHER THAN REINVENTED.**
+
+      **It reads the VIEWER'S OWN HAND AND NOTHING ELSE, which is `handCostUnmet`'s
+      posture verbatim.** D70 cleared that function on exactly this ground — *"reads
+      only the viewer's own hand"* — it is computed SERVER-SIDE and it ships as a
+      BOOLEAN, never as uids: `redact.ts` folds it into `redactedAbilitiesOf`'s and the
+      Trainer row's single `disabled` flag, and the comment there states the whole
+      test (*"Everything read is the viewer's own public board + own hand, and it is
+      emitted only to the actor, so nothing hidden leaves the DO"*). A player already
+      knows their own hand, so a predicate over it tells them nothing they cannot see,
+      and no projection carries it to the opponent. This member is that same read with
+      the same three properties, so it inherits the clearance rather than asking for a
+      new one.
+
+      **AND IT DOES NOT REACH `redactedAttacksOf`.** That projection folds §4 bans,
+      §12 status and cost payability into a per-attack `banned`/`can` for the wire; a
+      D125 REQUIREMENT is not one of its terms, and this member's only consumer is that
+      requirement gate. So no wire field learns a hand fact by this slice — asserted,
+      not assumed.
+
+      ⚠️ **THE AUTHORING HAZARD, NAMED BECAUSE THE MEMBER CANNOT NAME IT ITSELF.** This
+      union is SHARED with `CardProgram.trainerPlayableIf`, and THAT one **is**
+      projected: `redact.ts` evaluates `trainerPlayableIf` per hand card to grey a row.
+      Greying is still the viewer's own board and own hand — so even there the read is
+      not a leak — but the row is a WIRE surface where the attack gate is not, and the
+      two must not be conflated by a successor skimming this block. **This member is
+      ATTACK-GATE-ONLY TODAY.** A card that ever wants it as a `trainerPlayableIf` or
+      an `abilities[].playableIf` is a NEW decision about a WIRE-VISIBLE derived
+      boolean, not a free reuse of this one.
+
+      ✅ **`MATCH_RECORD_VERSION` STAYS 26.** The discriminator is stated at
+      `MATCH_RECORD_VERSION` itself (`apps/api/src/lobby/match.ts`): *"a new member
+      cannot re-interpret a stored one"* — a persisted v26 `BoardCondition` byte string
+      spells one of the kinds this deploy already knows, and nothing this slice adds is
+      a REQUIRED FIELD on a persisted structure (the one case that block says none of
+      that covers). D384/D385/D415 are the precedent, each a new member and each
+      leaving the version alone.
+
+      **`energy` IS `BasicEnergyType` WITH NO `| "special"`, THE SIBLING'S NARROWING
+      VERBATIM.** The printed noun FIXES the card class — *"Basic {G} Energy card"* —
+      so a `"special"` value here would spell "Basic Special Energy", a card that
+      cannot exist. The compiler is what keeps it narrow.
+
+      **THE PREDICATE IS `matchesFilter`'s AND NOT A FRESH ONE** — the sibling's own
+      stated rule, at the sibling's address: `CardFilter` already spells this printed
+      noun as `{ kind: "basicEnergy", energyType }`, and re-spelling it here would be
+      D222's defect in miniature, two readers of one noun free to disagree. It is also
+      the SAME predicate `handCostCandidates` (interpreter.ts) filters the payment
+      with, which is what makes the gate and the payment agree by construction rather
+      than by coincidence: the cancel asks the question the cost will answer.
+
+      PARAMETERISED but reached from LITERAL rows (D119's corollary, the sibling's
+      verbatim): TWO tokens vary in principle — the threshold and the energy code — so
+      D118's one-token test fails and `ATTACK_CANCEL_HEADS` takes each head whole.
+
+      `hand` is a uid list, so an unresolvable uid contributes nothing rather than
+      throwing (`matchesFilter`'s conservative direction on `undefined`). An empty hand
+      is 0, so a printed `count` of 0 would be trivially true; the pool prints 6, 2
+      and 1. */
+  | { kind: "yourBasicEnergyInHandAtLeast"; energy: BasicEnergyType; count: number }
   /** §7.4 — YOUR Active Pokémon is wearing a Pokémon Tool: Greedent sv01-152
       "Enhanced Fang" (+80), whose printed clause is "If **this Pokémon** has a
       Pokémon Tool attached". The pool's only printing, and no reprint.
@@ -7679,7 +7764,45 @@ export type EffectOp =
       would be SKIPPED when it could not be paid rather than refusing anything,
       because a trigger has no play to refuse. No printed card does that (nothing
       charges a hand cost for a trigger firing), and if one ever appears it needs a
-      decision about what an unpayable trigger even means, not a gate copied here. */
+      decision about what an unpayable trigger even means, not a gate copied here.
+
+      🆕🆕 🛑 **D420 — THE ATTACK HALF OF THAT SENTENCE CAME DUE, AND HERE IS THE
+      DECISION IT ASKED FOR. AT THE ATTACK SEAM, AN UNPAYABLE HAND COST IS A CANCEL:
+      CHECKED IN FRONT OF §8.5, NEVER INSIDE THE PROGRAM.**
+
+      The paragraph above is exactly right about the mechanics and it is worth
+      re-stating as the hazard rather than as a note: this op inside an ATTACK program
+      **pays what it can and refuses nothing** (interpreter.ts, the short-hand branch —
+      *"A SHORT hand … pays what there is"*), and `handCostUnmet` has **no caller in
+      attack.ts** — it is the two PLAY paths' gate and only theirs. So the first
+      hand-cost ATTACK sentence to be derived without an answer to this question ships
+      an attack that takes whatever it finds and resolves anyway. On D420's compound
+      (*"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your
+      opponent's Active Pokémon."*) that is a **FREE KNOCK OUT** off a hand of two,
+      and it passes every "was the cost paid" assertion that could be written about
+      it, because the cost WAS paid — just not in full.
+
+      **WHY A CANCEL AND NOT A GATE INSIDE THE PROGRAM.** D125's rule decides it: a
+      derived shape is classified by WHERE IN RESOLUTION IT LANDS. A program runs at
+      `attack.ts`'s TAIL, strictly AFTER the §8.5 pipeline, so a `conditionGate`
+      wrapping the payment could not retract damage already dealt — the attack would
+      deal its printed number and then decline to pay, which is not what *"this attack
+      does nothing"* says. Every one of the four printings in this family PRINTS that
+      cancel, so the printed text and the placement agree.
+
+      **WHY NOT TEACH `attack.ts` TO CALL `handCostUnmet`.** That would be a SECOND
+      reader of the affordability question, free to disagree with the first, and it
+      would answer for programs whose sentence prints no cancel at all — inventing a
+      refusal the card does not print. The cancel is read from the printed clause
+      (`deriveAttackCancelRequirement`) and lands on the requirement gate that has sat
+      in front of §8.5 since D125; the gate is byte-unchanged.
+
+      🛑 **AND THE DECISION IS BACKED BY A STRUCTURAL GUARD RATHER THAN BY THIS
+      PARAGRAPH.** `handEnergyCancel.test.ts` §4 walks the WHOLE legal attack column
+      and pins: **no derived attack program may contain a `payFromHand` — at any depth
+      — unless the same printed sentence also yields a cancel requirement.** It closes
+      the hazard for the NEXT hand-cost sentence, not just for these four printings,
+      and it reddens on the arm rather than on the board. */
   | {
       op: "payFromHand";
       count: number;
@@ -10174,6 +10297,7 @@ const FLIP_KO_ACTIVE_OR_BENCHED_BASIC =
 const KO_EXACT_DAMAGE_COUNTERS =
   /^Knock Out 1 of your opponent['’]s Pokémon that has exactly (\d+) damage counters on it\.$/;
 
+
 // D131 — the UNCONDITIONAL MILL, both directions on ONE anchor: "Discard the top
 // [N cards|card] of your [opponent's] deck." 16 printings / 7 distinct clauses
 // (censused against the local D1 2026-08-01), split 7 opponent-side (Chi-Yu ex
@@ -12596,6 +12720,51 @@ export function splitAttackRequirementClause(
   return { clause: `If ${nothing[1] ?? ""}, this attack does nothing.`, body };
 }
 
+// 🆕🆕 D420 — §7.5 AT THE ATTACK SEAM: THE HAND-ENERGY COST, AND THE COMPOUND THAT
+// BUYS A KNOCK OUT WITH IT. Two anchors, three printed sentences, four legal
+// printings, all reached BEHIND `splitAttackCancelClause` — every one of them
+// prints its cancel and NONE of them prints bare.
+//
+//   *"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your
+//    opponent's Active Pokémon."*  (2 printings, behind a named-referent cancel)
+//   *"Discard 2 Basic {G} Energy cards from your hand."*  (1, behind the same)
+//   *"Discard a Basic {G} Energy card from your hand."*  (1, behind the ANAPHORIC one)
+//
+// 🛑 **THE COST AND THE CANCEL LAND TOGETHER, AND THAT IS AN ORDERING CONSTRAINT
+// RATHER THAN A PREFERENCE.** `payFromHand` inside an ATTACK program PAYS WHAT IT CAN
+// AND REFUSES NOTHING — interpreter.ts's own words at the op, *"A SHORT hand … pays
+// what there is"* — and `handCostUnmet` has NO caller in `attack.ts` (it is the two
+// PLAY paths' gate and only theirs). So the cost WITHOUT the cancel is a **FREE KNOCK
+// OUT**: a hand holding two Grass discards both and Knocks the opponent's Active out
+// anyway, passing every "was the cost paid" assertion that could be written about it.
+// The decision that closes it is recorded at `payFromHand`'s doc block, and the
+// STRUCTURAL guard that keeps it closed for the NEXT hand-cost sentence is in
+// `handEnergyCancel.test.ts` §4.
+//
+// ⚠️ TWO ANCHORS AND NOT ONE, BECAUSE THE JOIN IS `", and "` AND NO SPLITTER REACHES
+// IT. `splitAttackTrailingClause` breaks on `/(?<=\.)\s+(?=[A-Z(])/` — a SENTENCE
+// boundary — and the compound's two halves are joined by a comma inside ONE sentence,
+// so the composition path cannot hand the Knock Out to a second reader. The compound
+// is therefore claimed WHOLE by an arm of its own, exactly as arm 6c claims its
+// three-piece printing whole.
+//
+// ⚠️ THE COUNT IS CAPTURED AND THE ARTICLE SPELLING IS PART OF THE ALTERNATION. The
+// pool prints "6"/"2" (plural noun, plural verb) and "a" (singular noun) — three
+// printed spellings of one arithmetic — so the singular branch is a printed case and
+// not a defensive one, and it resolves to `count: 1`.
+// ⚠️ THE ENERGY CODE COMES OFF `ENERGY_TYPE_BY_CODE`'s KEYS (the family's rule at
+// every Energy anchor in this file), so the regex cannot admit a code the map will
+// not resolve, and the `energyType` handed to the filter is a `BasicEnergyType` from
+// a MAP rather than a bare string (D238's rule).
+// ⚠️ THE POSSESSIVE CARRIES `['’]` — D136/D137 — spelled from the first draft.
+const ENERGY_CODES = Object.keys(ENERGY_TYPE_BY_CODE).join("");
+const HAND_BASIC_ENERGY_COST = new RegExp(
+  `^Discard (?:(\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards|(a) Basic \\{([${ENERGY_CODES}])\\} Energy card) from your hand\\.$`,
+);
+const HAND_BASIC_ENERGY_COST_KO = new RegExp(
+  `^Discard (\\d+) Basic \\{([${ENERGY_CODES}])\\} Energy cards from your hand, and Knock Out your opponent['’]s Active Pokémon\\.$`,
+);
+
 // 🆕🆕 D417 — THE TRAILING, ANAPHORIC CANCEL. `ATTACK_DOES_NOTHING` above is
 // `^`-anchored, so it reads only sentences that OPEN with the clause; the pool
 // also prints the SAME cancel BEHIND its body, with the "can't" pointing back at
@@ -12622,13 +12791,44 @@ export function splitAttackRequirementClause(
 // since D125. The site folds it into that gate's existing `requirement` value; the
 // gate itself is byte-unchanged.
 //
-// ⚠️ **THE CLAUSE IS BARE, AND THAT IS THE WHOLE POPULATION.** The corpus also
-// prints *"If you can't discard 6 cards in this way, this attack does nothing."*
-// (2 printings) — a cancel that NAMES its own referent and is therefore NOT
-// anaphoric. It is refused here by construction (the anchor admits `can't,` and
-// nothing between it and the comma) and stays on the loud ATTACK_EFFECT_SKIPPED
-// path, because reading it would need the head's ARITHMETIC and not just the
-// head's identity.
+// ⚠️ 🆕🆕 **D420 CORRECTS THE PARAGRAPH THAT STOOD HERE, AND THE OLD TEXT IS LEFT
+// VISIBLE RATHER THAN OVERWRITTEN (D178).** It read:
+//
+//     *"**THE CLAUSE IS BARE, AND THAT IS THE WHOLE POPULATION.** The corpus also
+//     prints \"If you can't discard 6 cards in this way, this attack does nothing.\"
+//     (2 printings) — a cancel that NAMES its own referent and is therefore NOT
+//     anaphoric. It is refused here by construction … because reading it would need
+//     the head's ARITHMETIC and not just the head's identity."*
+//
+// **THE FACT WAS RIGHT AND THE INFERENCE WAS WRONG.** The named-referent clause does
+// restate a number — but it restates ONLY THE COUNT, never the FILTER and never the
+// ZONE: it says *"6 cards in this way"*, not *"6 Basic {G} Energy cards from your
+// hand"*. The words *"in this way"* are what carry the manner, and they point back at
+// the HEAD for it exactly as the bare clause's *"can't"* does. So the head is still
+// the whole referent for everything that decides a board fact, and the arithmetic the
+// clause repeats is arithmetic the head already printed. It is admitted here, and the
+// GUARD that keeps the restatement honest is a table-shaped one: `handEnergyCancel.test.ts`
+// §2 pins, over EVERY row of `ATTACK_CANCEL_HEADS`, that the digit in the row's KEY
+// equals the `count` in the row's VALUE.
+//
+// 🛑 **SO THE ANCHOR IS A CLOSED ALTERNATION AND NOT A LOOSENING.** Exactly two
+// spellings are admitted — the bare `If you can't,` and `If you can't discard \\d+
+// cards in this way,` — and the accounting guard below still refuses any head the
+// table does not carry, so the widening buys four printings and no reach at all.
+//
+// ⚠️ **TWO NEAR MISSES ARE DELIBERATELY EXCLUDED, AND THE EXCLUSION IS THE ANCHOR'S
+// SHAPE RATHER THAN A COMMENT:**
+//   • *"If you can't discard **any**, …"* — its ONLY head in the pool is the Pokémon
+//     Tool sentence, which has been priced and REFUSED four times on the pre-damage
+//     seam. Admitting it would produce a split whose head no reader claims: a census
+//     step with nothing behind it (D407's "built but dead"), which is the very defect
+//     `ATTACK_CANCEL_HEADS`' own doc block is corrected for below. The alternation
+//     spells `discard \\d+ cards in this way` and `any` is not a digit.
+//   • Xerosic's *"If you can't, …"*-shaped clause carries a DIFFERENT referent (it
+//     points at a choice the sentence itself made, not at the head's action), so even
+//     where the bytes agree the anaphor does not — and it is not an attack sentence.
+//     It is out of population, and it is named here so a successor does not "fix" the
+//     anchor toward it.
 //
 // ⚠️ THE HEAD GROUP IS GREEDY AND ENDS IN A PERIOD, so on a hypothetical compound
 // carrying the clause twice the LAST one is taken — the same end of the string
@@ -12641,7 +12841,8 @@ export function splitAttackRequirementClause(
 // in `literalClauseRow` covers the TABLE's keys, not this one). Anchored `^…$`
 // with the required trailing period and no /i, exactly like every other reader in
 // this file.
-const ATTACK_CANCEL_TRAILING = /^(.+\.) (If you can['’]t, this attack does nothing\.)$/;
+const ATTACK_CANCEL_TRAILING =
+  /^(.+\.) (If you can['’]t(?: discard \d+ cards in this way)?, this attack does nothing\.)$/;
 
 /** 🆕🆕 D417 — the printed HEAD SENTENCE an anaphoric *"If you can't,"* points
     back at → the POSITIVE board fact that head's action REQUIRES.
@@ -12654,14 +12855,54 @@ const ATTACK_CANCEL_TRAILING = /^(.+\.) (If you can['’]t, this attack does not
     Eternatus's discard and **a Basic {G} Energy card in hand** behind Ogerpon's.
     The referent IS the head, so the head is the key.
 
+    ⚠️ 🆕🆕 **D420 — HEAD-KEYING SURVIVES THE WIDENED ANCHOR, AND D417's OWN STATED
+    REASON FOR DOUBTING IT DISSOLVES.** The anchor now also admits the NAMED-REFERENT
+    spelling *"If you can't discard 6 cards in this way,"*, so the clause is no longer
+    byte-identical across the family and the sentence above is scoped to the BARE
+    form. That does not move the key: the named clause restates **only the COUNT**,
+    never the FILTER and never the ZONE — *"6 cards"*, not *"6 Basic {G} Energy cards
+    from your hand"* — and *"in this way"* is the phrase that sends the manner back to
+    the head. So the head is still the whole referent for every board fact, and the
+    one thing the clause repeats is guarded against the key it repeats (§2 of
+    `handEnergyCancel.test.ts`).
+
     ⚠️ **THAT IS ALSO WHAT MAKES A SECOND MEMBER COST A ROW AND NOTHING ELSE.**
     D380's bar: *"a split built for one card serves one card, and it must be
     GENERAL OVER ITS BODY the way `splitAttackRequirementClause` is general over
     its leading one."* The anchor, the splitter, the reader and the site are all
     blind to WHICH head is printed; the only card-specific byte in this slice is
-    the key below. A successor who wants Ogerpon adds
-    `["Discard a Basic {G} Energy card from your hand.", { kind: … }]` and stops —
-    no anchor, no arm, no branch at the site.
+    the key below.
+
+    🛑🛑 **D420 — THE NEXT SENTENCE OF THIS BLOCK WAS FALSE WHEN D417 WROTE IT, AND
+    IT IS A TRAP. IT IS LEFT VISIBLE AND MARKED AS A CORRECTION (D178) RATHER THAN
+    DELETED.** It read:
+
+        *"A successor who wants Ogerpon adds
+        `["Discard a Basic {G} Energy card from your hand.", { kind: … }]` and stops —
+        no anchor, no arm, no branch at the site."*
+
+    **THAT SENTENCE IS TRUE ONLY BECAUSE ETERNATUS'S HEAD WAS ALREADY CLAIMED BY
+    `deriveAttackEffect` (`discardStadium`, D380). OGERPON'S WAS NOT.** A row ALONE
+    makes `resolvedByAnyReader` answer TRUE for the printing — the reader surface
+    includes `deriveAttackCancelRequirement`, so `BUILT.attack` STEPS — while the
+    attack itself still falls to the loud `ATTACK_EFFECT_SKIPPED` path, because
+    `attack.ts` re-runs the readers over the SPLIT HEAD and no reader claims it. That
+    is a census inflation with no behaviour behind it: D407's **"built but dead"**, and
+    the ONE failure mode this table can produce silently.
+
+    ✅ **THE CORRECTED RULE.** A row costs a row and nothing else **iff the head it
+    keys is a sentence some reader already claims**. Otherwise the row and an
+    `deriveAttackEffect` ARM are ONE decision and must land together — which is exactly
+    what D420 does for all three of its heads, and which is why `effectSimulated`'s
+    `cancelSplit === null` conjunct (attack.ts) exists: it is the term that keeps an
+    unclaimed head LOUD instead of letting the requirement vouch for it.
+
+    ⚠️ **AND D420 DOES NOT MAKE THAT CONJUNCT LIVE — IT MAKES IT UNNECESSARY AGAIN,
+    WHICH IS THE CORRECTED RULE BEING OBEYED RATHER THAN TESTED.** All four heads in
+    this table are now claimed by `deriveAttackEffect`, so `cancelSplit !== null` still
+    IMPLIES `program !== null` and removing the conjunct would still move no assertion
+    in the repo. It stays written from the RULE (D130/D205), and the row that would
+    drive it is exactly the row this correction forbids.
 
     A `Map` for `CONDITIONAL_DAMAGE_CLAUSES`' reason: arbitrary printed text must
     not reach `Object.prototype`. Read through `literalClauseRow` (D137) like every
@@ -12684,7 +12925,50 @@ const ATTACK_CANCEL_HEADS = new Map<string, BoardCondition>([
   // NOT hold (D125's polarity, unchanged), so the value here is what the attack
   // REQUIRES — "a Stadium is in play" — and never "the zone is empty".
   ["Discard a Stadium in play.", { kind: "stadiumInPlay" }],
+  // 🆕🆕 D420 — THE HAND-ENERGY COST FAMILY: three heads, four legal printings, one
+  // `BoardCondition` member (`yourBasicEnergyInHandAtLeast`) at three thresholds.
+  //
+  // 🛑 EACH OF THESE THREE ROWS SHIPS BESIDE A `deriveAttackEffect` ARM, AND THE
+  // CORRECTION ABOVE IS WHY. Eternatus's row could stand alone because D380 had
+  // already claimed its head; none of these heads was claimed by anything, so a row
+  // alone would have stepped the census and changed no board. The arms are `6f` and
+  // `6g` in `deriveAttackEffect`.
+  //
+  // 🛑 AND THE COUNT IN THE VALUE IS THE COUNT IN THE KEY — the printed cancel on two
+  // of the three RESTATES it (*"discard 6 cards in this way"*), so a row whose value
+  // disagreed with its key would gate on one number and pay another. That is pinned
+  // over EVERY row of this table in `handEnergyCancel.test.ts` §2 rather than trusted
+  // to review, because the two numbers sit 40 characters apart and read alike.
+  //
+  // ⚠️ THE POSITIVE, NOT THE NEGATIVE (the row above's rule, unchanged): the site
+  // cancels when the condition does NOT hold, so the value is what the attack
+  // REQUIRES — "6 Basic Grass Energy cards are in your hand" — never "you cannot pay".
+  [
+    "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.",
+    { kind: "yourBasicEnergyInHandAtLeast", energy: "Grass", count: 6 },
+  ],
+  [
+    "Discard 2 Basic {G} Energy cards from your hand.",
+    { kind: "yourBasicEnergyInHandAtLeast", energy: "Grass", count: 2 },
+  ],
+  [
+    "Discard a Basic {G} Energy card from your hand.",
+    { kind: "yourBasicEnergyInHandAtLeast", energy: "Grass", count: 1 },
+  ],
 ]);
+
+/** 🆕🆕 D420 — `ATTACK_CANCEL_HEADS` as an ORDERED ROW LIST, for the one guard the
+    widened anchor owes and for nothing else. The table stays module-private; this is
+    a READ of it, so a guard cannot drift from the thing it guards the way a
+    transcribed copy in a test file would.
+
+    ⚠️ NOT `deriveAttack…`-PREFIXED ON PURPOSE: `censusAttackCorpus.ts`'s
+    `attackReaderSurface()` collects every export whose name starts with that prefix
+    and CALLS it as a reader, so a differently-shaped export under that name would
+    corrupt every census figure in the repo at once. */
+export function attackCancelHeadRows(): readonly (readonly [string, BoardCondition])[] {
+  return [...ATTACK_CANCEL_HEADS];
+}
 
 /** 🆕🆕 D417 — THE FOURTH SPLIT AT `attack.ts`'s reader seam, and the first
     pointed at a TRAILING clause that is SPENT rather than read: take the printed
@@ -15936,6 +16220,90 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const counters = Number(match[1]);
     if (counters >= 1) {
       return [{ op: "knockOutChosen", target: "opponentAny", damageCountersExactly: counters }];
+    }
+  }
+
+  // 6f. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand." / "Discard a
+  //     Basic {X} Energy card from your hand." — THE PRINTED HAND COST, ALONE.
+  //     2 legal printings (counts 2 and 1), and NEITHER prints bare: both arrive as
+  //     the HEAD of a `splitAttackCancelClause` split, which is the whole reason this
+  //     arm may exist at all.
+  //
+  //     🛑 **THE ARM AND ITS `ATTACK_CANCEL_HEADS` ROW ARE ONE DECISION, NOT TWO.**
+  //     `payFromHand` in an ATTACK program pays what it can and refuses nothing (the
+  //     op's own doc, and interpreter.ts's short-hand branch), and `handCostUnmet` has
+  //     no caller in `attack.ts`. So this arm WITHOUT its row is an attack that
+  //     discards whatever Grass it finds and resolves anyway — for the compound in 6g
+  //     that is a FREE KNOCK OUT. The decision is recorded at `payFromHand`: at the
+  //     ATTACK seam an unpayable hand cost is a CANCEL, checked in front of §8.5,
+  //     never inside the program. The structural guard that keeps it true for the NEXT
+  //     hand-cost sentence — no derived attack program may carry a `payFromHand`
+  //     unless the same printed sentence also yields a cancel requirement — is
+  //     `handEnergyCancel.test.ts` §4.
+  //
+  //     `to: "discard"` is the printed verb. The filter is `CardFilter`'s
+  //     `basicEnergy` + `energyType`, which is the SAME predicate the gate's
+  //     `yourBasicEnergyInHandAtLeast` runs (interpreter.ts) — so the cancel asks
+  //     exactly the question this payment answers, by construction rather than by
+  //     coincidence. ⚠️ The energy is resolved through `ENERGY_TYPE_BY_CODE` and is
+  //     NEVER a bare string (D238): `G` → `"Grass"`, from a map.
+  match = HAND_BASIC_ENERGY_COST.exec(effect);
+  if (match !== null) {
+    // The plural branch captures a digit in [1] and its code in [2]; the singular
+    // branch captures the literal "a" in [3] and its code in [4]. Exactly one pair is
+    // defined, which is what the closed alternation buys.
+    const count = match[1] === undefined ? 1 : Number(match[1]);
+    const energyType = ENERGY_TYPE_BY_CODE[match[2] ?? match[4] ?? ""];
+    // `>= 1` is the guard every capturing arm here carries — a printed 0 would derive
+    // a cost that costs nothing. `energyType !== undefined` cannot fail through the
+    // anchor (the class is built from the map's keys) and is spelled anyway, so a
+    // widened class refuses LOUDLY rather than filing `undefined` into a filter.
+    if (count >= 1 && energyType !== undefined) {
+      return [
+        {
+          op: "payFromHand",
+          count,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType },
+        },
+      ];
+    }
+  }
+
+  // 6g. 🆕🆕 D420 — "Discard {N} Basic {X} Energy cards from your hand, and Knock Out
+  //     your opponent's Active Pokémon." (2 legal printings). ARM 6f's PROGRAM WITH
+  //     THE SHIPPED FIELD-FREE `knockOutDefender` APPENDED, in printed order.
+  //
+  //     🛑 **ONE ARM AND NOT A COMPOSITION, AND THE JOIN IS WHY.** The two halves are
+  //     joined by `", and "` INSIDE ONE SENTENCE; `splitAttackTrailingClause` breaks
+  //     on `/(?<=\.)\s+(?=[A-Z(])/`, a SENTENCE boundary, so D409's composition path
+  //     cannot see this join at all and the compound must be claimed whole. That is
+  //     the same reason arm 6c claims its three-piece printing whole rather than
+  //     leaning on the splitter.
+  //
+  //     ⚠️ THE ORDER IS THE PRINTED ORDER AND IT IS OBSERVABLE: the cost is paid
+  //     BEFORE the Knock Out, so a board that pays with its last Grass has already
+  //     lost those cards when the §8.1 sweep runs. `payFromHand`'s own doc states the
+  //     rule ("ORDER IS OBSERVABLE, and the printed sentence puts the cost first").
+  //
+  //     ⚠️ NO `conditionGate` WRAPS THE KO. The affordability question is answered in
+  //     front of §8.5 by this sentence's cancel row, not inside the program — see 6f.
+  //     A gate here would be a SECOND reading of the same fact, free to disagree with
+  //     the first, and it would resolve the attack's damage before declining.
+  match = HAND_BASIC_ENERGY_COST_KO.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    const energyType = ENERGY_TYPE_BY_CODE[match[2] ?? ""];
+    if (count >= 1 && energyType !== undefined) {
+      return [
+        {
+          op: "payFromHand",
+          count,
+          to: "discard",
+          filter: { kind: "basicEnergy", energyType },
+        },
+        { op: "knockOutDefender" },
+      ];
     }
   }
 

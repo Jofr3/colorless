@@ -463,7 +463,7 @@ describe("§3 — the parenthesis measurement, which is why this is a REGEX", ()
 });
 
 describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallback", () => {
-  it("🛑 149 sentences / 425 printings are multi-clause AND claimed whole — all refused", () => {
+  it("🛑 🆕🆕 D420 — 153 sentences / 430 printings are multi-clause AND claimed whole — all refused", () => {
     // 🛑 THE GUARD THAT MAKES THIS SAFE TO SHIP. Without `claimedByAnyReader(text)`
     // in front of the split, every one of these would be re-answered by composition
     // instead of by the whole-sentence anchor its author wrote — the same program
@@ -530,9 +530,40 @@ describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallb
     // not an effect it claims), so the shadow refusal is belt to a brace that was
     // already fastened. That is why the step is countable here and invisible
     // everywhere else.
+    // 🆕🆕 D420 — 150 / 426 -> **153 / 430**, a change of CLAIM and not of CORPUS for the
+    // FIFTH slice running, so the 271 / 613 pair above STANDS STILL again.
+    // 🛑 AND THIS IS THE FIRST SLICE SINCE D413 WHOSE STEP HERE EQUALS ITS STEP ON THE
+    // CENSUS — +3 / +4 against +3 / +4 — which is a FACT ABOUT THE PRINTED STRINGS and
+    // not a coincidence worth relaxing about. D414 landed 1 of 3 here and D416 landed 1
+    // of 2, because those slices' other sentences broke on a COMMA or carried no internal
+    // break at all and so were never in the 271. ALL THREE of the HAND-ENERGY COST
+    // FAMILY's sentences carry a sentence-boundary `BREAK` — the cost prints, then the
+    // cancel prints as its own sentence — so each is TWO clauses:
+    //   *"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's
+    //    Active Pokémon."* ‖ *"If you can't discard 6 cards in this way, this attack does
+    //    nothing."*  (2 printings)
+    //   *"Discard 2 Basic {G} Energy cards from your hand."* ‖ *"If you can't discard 2
+    //    cards in this way, this attack does nothing."*  (1)
+    //   *"Discard a Basic {G} Energy card from your hand."* ‖ *"If you can't, this attack
+    //    does nothing."*  (1)
+    // ⚠️ NOTE WHERE THE COMMA JOIN SITS AND WHY IT DOES **NOT** COST THIS RUNG A MEMBER:
+    // the six-Energy sentence's `", and "` join is INSIDE its first clause, so it is the
+    // reason that sentence needed an arm of its own (`deriveAttackEffect` 6g) rather than
+    // the composition path — but the clause count this rung reads is taken off the
+    // sentence boundary before the cancel, which every one of the three carries.
+    // ⚠️ ALL THREE HAVE ALWAYS SAT INSIDE THE 271, so the CORPUS term cannot move: what
+    // D420 changed is that `deriveAttackCancelRequirement` — its `ATTACK_CANCEL_TRAILING`
+    // head list WIDENED past D417's Stadium-only head — now claims each of them WHOLE, so
+    // all three cross out of the multi-clause remainder and INTO the shadow-refusal
+    // population this rung counts. 153 = 150 + 3, 430 = 426 + 4, and NOTHING of this
+    // slice is invisible here for once.
+    // ⚠️ AND THE `toBeNull()` LOOP BELOW GAINS THREE MEMBERS THAT WERE ALREADY NULL, for
+    // D417's reason verbatim: the trailing splitter refused all three on its TAIL test
+    // before this anchor widened (a does-nothing clause is not an effect it claims), so
+    // the shadow refusal is belt to a brace that was already fastened.
     const claimedWhole = multiClause.filter(([, s]) => claimedByAny(s));
-    expect(claimedWhole).toHaveLength(150);
-    expect(units(claimedWhole)).toBe(426);
+    expect(claimedWhole).toHaveLength(153);
+    expect(units(claimedWhole)).toBe(430);
     for (const [, s] of claimedWhole) expect(splitAttackTrailingClause(s), s).toBeNull();
   });
 
@@ -994,7 +1025,7 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   it("the engine version moved with the behaviour", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.321.0");
+    expect(engineVersion).toBe("0.322.0");
   });
 });
 

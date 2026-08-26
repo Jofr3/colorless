@@ -3681,6 +3681,44 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       }
       return matched >= cond.count;
     }
+    case "yourBasicEnergyInHandAtLeast": {
+      // 🆕🆕 D420 — the arm DIRECTLY ABOVE with ONE zone name changed, and that is the
+      // whole of it: same `CardFilter`, same `matchesFilter`, same `>=`, `discard`
+      // swapped for `hand`. Written as a zone mirror on purpose — the printed noun is
+      // identical on both families ("Basic {X} Energy card"), so two spellings of it
+      // would be D222's defect at a second address.
+      //
+      // 🛑 IT IS THE PRINT AND NOT THE PROVISION, for the sibling's reason at a zone
+      // where the reason is even flatter: a card sitting IN HAND is attached to
+      // nothing and pays for nothing, so `energyProvidesOf` has no board reading to
+      // give. §6.5's standing rule for every zone-scanning consumer.
+      //
+      // 🛑 AND IT IS THE SAME PREDICATE `handCostCandidates` FILTERS THE PAYMENT
+      // WITH, one function down this file. That is what makes the D420 cancel gate
+      // and the `payFromHand` it guards agree BY CONSTRUCTION: this arm asks exactly
+      // the question that op is about to answer, so a hand the gate admits is a hand
+      // the payment can take `count` cards out of. A hand-rolled loop here could
+      // drift from it silently, and the direction it would drift in is a FREE
+      // Knock Out (see `ATTACK_CANCEL_HEADS`).
+      //
+      // `cardOfUid` returns undefined for a uid the catalog cannot resolve and
+      // `matchesFilter` answers false for it, so an unreadable card in hand never
+      // pays. An empty hand is 0.
+      //
+      // ⚠️ THE LOCALS ARE `handFilter`/`held` AND NOT THE ARM ABOVE'S `filter`/`matched`,
+      // WHICH IS NOT A STYLE CHOICE. Five `D376-discard-threshold-*` mutation rows
+      // carry SINGLE-LINE `find` strings taken off that arm; a byte-identical mirror
+      // here makes every one of them match twice and `scripts/mutation/precheck.ts`
+      // reports them BROKEN. **A MUTATION ROW'S `find` UNIQUENESS IS A PROPERTY THE
+      // SOURCE OWES**, so the duplication is resolved where it was created rather than
+      // by re-anchoring five rows onto longer context.
+      const handFilter: CardFilter = { kind: "basicEnergy", energyType: cond.energy };
+      let held = 0;
+      for (const uid of state.players[seat].hand) {
+        if (matchesFilter(cardOfUid(state, uid), handFilter)) held += 1;
+      }
+      return held >= cond.count;
+    }
     case "yourActiveHasToolAttached": {
       // D116's pronoun rule again — "this Pokémon" was resolved to your Active by
       // the clause table, not here. `tools` is a uid array on the model and every
@@ -4546,6 +4584,23 @@ export function conditionNote(cond: BoardCondition): string {
       // The printed noun is plural on the card and stays plural here: the pool prints
       // 10 and a threshold of 1 is unprinted, so there is no singular to agree with.
       return `you have at least ${cond.count} Basic ${cond.energy} Energy cards in your discard pile`;
+    case "yourBasicEnergyInHandAtLeast":
+      // 🆕🆕 D420 — the arm one line up with the ZONE NOUN changed, and it inherits
+      // both of that arm's departures from a round trip: "{G}" is spelled "Grass"
+      // (D118 — a reject message is read off the board by a person, and a brace code
+      // is a card-face glyph), and the phrasing is the family's "at least N" rather
+      // than any printed words. There is nothing to round-TRIP to here in any case:
+      // `ATTACK_CANCEL_HEADS` is keyed on the printed IMPERATIVE HEAD SENTENCE
+      // ("Discard 6 Basic {G} Energy cards from your hand."), not on a condition
+      // clause, so this note and that key are different sentences by construction.
+      //
+      // SINGULAR AGREEMENT IS LIVE HERE AND WAS NOT IN THE DISCARD ARM. That member's
+      // pool prints only 10; this one prints 6, 2 AND 1, so the `count === 1` branch
+      // is a printed case rather than a defensive one — Ogerpon's *"a Basic {G}
+      // Energy card"* would otherwise read "at least 1 Basic Grass Energy cards".
+      return cond.count === 1
+        ? `you have a Basic ${cond.energy} Energy card in your hand`
+        : `you have at least ${cond.count} Basic ${cond.energy} Energy cards in your hand`;
     case "yourActiveHasToolAttached":
       // Back to a round-trip: this clause names no timing word and no energy
       // glyph, so only the pronoun is dropped (D116) and the rest is the printed

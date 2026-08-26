@@ -25690,6 +25690,65 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D420 — THE HAND-ENERGY COST AND ITS CANCEL: the KO-without-damage family closed (engine 0.322.0, `MATCH_RECORD_VERSION` **26**)
+
+**3 sentences / 4 legal printings** — the 6-card compound (2), the 2-card cost (1), the 1-card cost
+(1). With D414/D415/D416 this **closes the KO-without-damage family**: 7 sentences / 13 printings.
+
+### 🛑 Why the cost and the cancel had to land together
+
+`payFromHand` inside an ATTACK **pays what it can and refuses nothing**, and `handCostUnmet` has **no
+`attack.ts` caller**. So the cost without the cancel is a **FREE KNOCK OUT** — a hand of two Grass
+discards two and Knocks Out anyway, **passing every "was the cost paid" assertion**. That is not a
+tidiness argument; it is the defect the slice was ordered around, and mutant C4 is it.
+
+✅ It also discharges the decision `effects.ts` has said is owed since D46: **at the attack seam an
+unpayable hand cost is a CANCEL, checked in front of §8.5, never inside the program** — with
+why-not-a-`conditionGate` (D125's placement rule) and why-not-`handCostUnmet`-in-`attack.ts` (a second
+reader free to disagree, inventing refusals the card does not print).
+
+🛑 **Backed by a structural guard, not a comment**: no derived attack program may hold a `payFromHand`
+at **any depth** without a cancel requirement from the same sentence — recursive, and negatively
+controlled against a top-level-only scan. **The hazard is closed for the next hand-cost sentence.**
+
+### The member
+
+`yourBasicEnergyInHandAtLeast { energy: BasicEnergyType; count }` — a zone mirror evaluated by
+`matchesFilter`'s own predicate, so **gate and payment agree by construction**: the arm asks exactly
+what `handCostCandidates` is about to answer, and a hand-rolled loop would drift toward a free KO.
+
+⚠️ It is the union's **first member reading a hidden zone's CONTENTS**, and the argument was **cited**
+(D70's posture: the viewer's own hand only, server-side, shipped as a boolean) rather than invented.
+The authoring hazard is named: the union is shared with `trainerPlayableIf`, which IS projected, so
+the member is **attack-gate-only today**.
+
+### 🛑 A doc block written at D417 was false, and it was a trap
+
+It told a successor to add a table row *"and stop — no anchor, no arm"*. **True only when the head is
+already claimed.** For Ogerpon it is not, and a row ALONE makes `resolvedByAnyReader` true — stepping
+`BUILT.attack` while the attack still falls to the loud path. **D407's built-but-dead, introduced by a
+recipe rather than by code.** Corrected in place; the rule now states its precondition. And the
+correction was itself corrected — D420 does *not* make the `cancelSplit === null` conjunct live.
+
+### ⚠️ One mutant survived, and it was the author's fault
+
+C1's first spelling mutated a `case` **label** with a TypeScript `as` assertion — erased at runtime,
+so it expressed no defect and the sweep reported a GAP that did not exist. **A row that survives
+because it changes nothing is worse than no row.** Re-authored onto the zone read, KILLED.
+**5 mutants / 5 killed / 0 GAPs.**
+
+### Also closed
+
+A `find`-uniqueness collision fixed **at the source** (locals renamed rather than re-anchoring five
+rows); a stale corpus line pointer a test had copied; and **the residue's SENTENCE cardinality**,
+which was guarded nowhere while its printings count was pinned.
+
+**CENSUS**: raw 412 → **415** / 1,364 → **1,368**; `BUILT.attack` 1411 → **1415**; residue 567 →
+**563**; `unbuiltAttack` 321 → **317**. `splitHead` 13, `compoundHead` 18, registry 16 unmoved.
+`compoundCompose` §4 took the **full +3 / +4** — the first slice since D413 where that step equals the
+census step. `splitOrder`'s six-pair matrix re-driven, unchanged at 0. `bun run check` **419 files /
+8,970 tests, exit 0**.
+
 ## D419 — THE OTHER THIRTY, CLOSED AT THE SOURCE (no engine change; 0.321.0, `MATCH_RECORD_VERSION` **26**)
 
 **36 files converted, not the 30 the handoff named** — and the difference is the finding.

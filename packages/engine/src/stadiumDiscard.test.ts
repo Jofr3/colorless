@@ -690,7 +690,7 @@ describe("§6 — what this slice did NOT buy", () => {
     expect(readByAny(TAKEN_BY_D417)).toBe(true);
   });
 
-  it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card — and D417 took HALF of it", () => {
+  it("🛑 the TRAILING ANAPHORIC cancel is a FAMILY of 3 printings, not one card — and D420 closed it", () => {
     // Why Eternatus is not half-built here: `ATTACK_DOES_NOTHING`'s `^If` refuses every
     // one of them, and effects.ts has carried that count since D125. The member the
     // sentence needs (`stadiumInPlay`) already exists — what is missing is a SPLIT that
@@ -727,18 +727,33 @@ describe("§6 — what this slice did NOT buy", () => {
       expect(deriveAttackCancelRequirement(s), s).not.toBeNull();
       expect(readByAny(s), s).toBe(true);
     }
-    // 🛑 …and the OTHER one is still refused by EVERY live reader, D417's included —
-    // which is what makes "a family, not one card" a debt this file still holds rather
-    // than a settled account. A split that reads the trailing clause generally would
-    // have taken both; D417's reads the Stadium body only.
+    // 🛑🛑 🆕🆕 **D420 SETTLED THE DEBT, AND THIS HALF IS INVERTED RATHER THAN DELETED
+    // — D418's OWN LESSON, APPLIED TO D418's OWN RUNG.** It read
+    // `expect(deriveAttackCancelRequirement(s)).toBeNull()` / `readByAny(s) === false`
+    // over the hand row, under the reason *"a split that reads the trailing clause
+    // generally would have taken both; D417's reads the Stadium body only."* D420
+    // widened `ATTACK_CANCEL_TRAILING` to a CLOSED alternation and added the row —
+    // together with the `deriveAttackEffect` arm the row needed, which is the half
+    // `ATTACK_CANCEL_HEADS`' doc block was corrected for.
+    //
+    // ⚠️ **AND THE INVERTED FORM STILL DISCRIMINATES, WHICH IS THE THING D418 GOT
+    // WRONG ONE RUNG DOWN.** The claim below is not "some reader claims it" (which the
+    // Stadium row already satisfies): it is that the two rows resolve to DIFFERENT
+    // facts off the byte-identical clause, which is exactly the head-keying property a
+    // clause-keyed table would break and a saturating anchor would erase.
     for (const [, s] of handRow) {
-      expect(deriveAttackCancelRequirement(s), s).toBeNull();
-      expect(readByAny(s), s).toBe(false);
+      expect(deriveAttackCancelRequirement(s), s).not.toBeNull();
+      expect(readByAny(s), s).toBe(true);
     }
+    expect(deriveAttackCancelRequirement(handRow[0]?.[1] ?? "")).not.toEqual(
+      deriveAttackCancelRequirement(stadiumRow[0]?.[1] ?? ""),
+    );
     // 🛑 AND THE SECOND ONE IS WHY THIS IS A FAMILY AND NOT A CARD: it is a HAND COST
     // whose "can't" points at a different mechanism entirely, so the split that reads
-    // the trailing clause has to be general over its body, exactly as
-    // `splitAttackRequirementClause` is general over its leading one.
+    // the trailing clause had to be general over its body, exactly as
+    // `splitAttackRequirementClause` is general over its leading one — and D420 is the
+    // slice that proved it was, by adding a second body and touching neither the
+    // splitter's shape nor the site.
     expect(anaphoric.some(([, s]) => s.startsWith("Discard a Basic"))).toBe(true);
   });
 

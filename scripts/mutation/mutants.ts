@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.321.0";',
+    find: 'export const engineVersion = "0.322.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18000,11 +18000,16 @@ export const MUTANTS: Mutant[] = [
   //    ABSENCE OF DAMAGE can tell either of them from the real build.
   {
     id: "D417-cancel-anchor-loses-its-apostrophe-class",
+    // ⚠️ RE-POINTED AT D420, WHICH WIDENED THE ANCHOR TO A CLOSED ALTERNATION AND
+    //    SPLIT IT ACROSS TWO LINES. **The defect is unchanged** — the contraction's
+    //    class narrows to the ASCII apostrophe and every printing spelling U+2019
+    //    stops resolving — and it now costs MORE, because the anchor serves four
+    //    printings rather than one.
     decision: "D417",
     what: "🛑 C1 — D202's FAMILY ON THE NEW ANCHOR: the CONTRACTION narrows to the ASCII apostrophe alone, so a printing spelling U+2019 stops resolving and the whole attack silently stops being cancellable — **it does not half-resolve, it goes LOUD**, which is the failure this family is built to prefer but is still a printing lost. ⚠️ **THREE SLICES IN A ROW HAVE PAID FOR THIS CLASS** (D413 at the coin anchors, D414 shipping two anchors bare, D415 getting it right first time). The row is what makes the fourth one falsifiable rather than merely careful",
     file: "packages/engine/src/effects.ts",
-    find: "const ATTACK_CANCEL_TRAILING = /^(.+\\.) (If you can['’]t, this attack does nothing\\.)$/;",
-    replace: "const ATTACK_CANCEL_TRAILING = /^(.+\\.) (If you can't, this attack does nothing\\.)$/;",
+    find: "const ATTACK_CANCEL_TRAILING =\n  /^(.+\\.) (If you can['’]t(?: discard \\d+ cards in this way)?, this attack does nothing\\.)$/;",
+    replace: "const ATTACK_CANCEL_TRAILING =\n  /^(.+\\.) (If you can't(?: discard \\d+ cards in this way)?, this attack does nothing\\.)$/;",
     expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
   },
   {
@@ -18042,5 +18047,64 @@ export const MUTANTS: Mutant[] = [
     find: "  [\"Discard a Stadium in play.\", { kind: \"stadiumInPlay\" }],",
     replace: "  [\"Discard a Stadium in play.\", { kind: \"yourStadiumInPlay\" }],",
     expectKilledBy: ["packages/engine/src/cancelClause.test.ts"],
+  },
+
+  // ── D420 · the hand-Energy cost and its cancel ─────────────────────────────
+  // 🛑 C3 AND C4 ARE THE SLICE, AND BOTH LEAVE THE CENSUS GREEN. C3 pays the
+  //    cost and drops the payoff; C4 lets the cancel pass on a hand that cannot
+  //    afford it, at which point `payFromHand` pays what it can and the Knock Out
+  //    fires anyway — the FREE KNOCK OUT this slice was ordered around. Neither
+  //    moves a figure; only a board can see either.
+  {
+    id: "D420-hand-member-reads-the-discard-pile",
+    // ⚠️ THIS ROW WAS AUTHORED MALFORMED AND SURVIVED, AND THE SURVIVAL WAS THE
+    //    AUTHOR'S FAULT RATHER THAN THE SUITE'S. Its first spelling mutated the
+    //    `case` LABEL with a TypeScript `as` assertion — which is erased at runtime,
+    //    so the arm still matched the same string and the "mutant" expressed no
+    //    defect at all. **A ROW THAT SURVIVES BECAUSE IT CHANGES NOTHING IS WORSE
+    //    THAN NO ROW: it reports a suite gap that does not exist.** Re-authored onto
+    //    the zone READ, where the defect actually lives, and re-probed KILLED.
+    decision: "D420",
+    what: "🛑 C1 — **THE ZONE MIRROR MIRRORED BACK**: the new member scans the DISCARD PILE, which is the sibling it was copied from, one identifier away, in a doc block that says *\"the arm DIRECTLY ABOVE with ONE zone name changed\"*. **THE ATTACK STILL CANCELS AND STILL RESOLVES** — it simply asks whether you have already spent six Grass rather than whether you can spend them now, so the printed cost is checkable against the wrong pile. ⚠️ **THE TWO ZONES AGREE ON MOST MID-GAME BOARDS**, which is what makes it survivable: only a board with the Energy in ONE of the two can tell them apart",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      for (const uid of state.players[seat].hand) {",
+    replace: "      for (const uid of state.players[seat].discard) {",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  {
+    id: "D420-cost-arm-drops-its-energy-filter",
+    decision: "D420",
+    what: "🛑 C2 — THE COST STOPS BEING TYPED: `filter` is dropped, so *\"Discard 6 **Basic {G} Energy** cards from your hand\"* discards any six cards at all. **THE PROGRAM STILL HAS THE RIGHT SHAPE, THE RIGHT COUNT AND THE RIGHT DESTINATION**, and the cancel still gates on the typed member — so a hand holding six Grass pays correctly and only a MIXED hand separates the builds. ⚠️ It is the field an author omits precisely because the cancel already names the type, which is the trap: the gate and the payment are two readers of one printed noun and must not disagree",
+    file: "packages/engine/src/effects.ts",
+    find: "          op: \"payFromHand\",\n          count,\n          to: \"discard\",\n          filter: { kind: \"basicEnergy\", energyType },\n        },\n      ];\n    }\n  }\n\n  // 6g.",
+    replace: "          op: \"payFromHand\",\n          count,\n          to: \"discard\",\n        },\n      ];\n    }\n  }\n\n  // 6g.",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  {
+    id: "D420-compound-arm-loses-the-knock-out",
+    decision: "D420",
+    what: "🛑 C3 — THE COMPOUND PAYS THE COST AND DOES NOTHING WITH IT: `knockOutDefender` is dropped from arm 6g, so *\"…, and Knock Out your opponent's Active Pokémon\"* discards six Grass and stops. **EVERY CENSUS RUNG STAYS GREEN** — the sentence still resolves, still counts as BUILT, still cancels correctly when the hand is short — and the attack simply costs the player six cards for nothing. **D407's \"resolved and did nothing\" defect, on the half of the sentence that is the whole point of it**",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter: { kind: \"basicEnergy\", energyType },\n        },\n        { op: \"knockOutDefender\" },\n      ];",
+    replace: "          filter: { kind: \"basicEnergy\", energyType },\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  {
+    id: "D420-cancel-row-guards-the-wrong-threshold",
+    decision: "D420",
+    what: "🛑 C4 — THE SIX-CARD ROW ASKS FOR TWO: the `count: 6` head's value drops to `2`, so the cancel passes on a hand holding two Grass and the attack proceeds — **`payFromHand` then PAYS WHAT IT CAN (two) AND THE KNOCK OUT FIRES ANYWAY**, which is the exact free-Knock-Out hazard this slice was ordered around. ⚠️ **THE TABLE IS KEYED ON THE HEAD, WHICH IS WHAT MAKES THIS REACHABLE PER-PRINTING**: a clause-keyed table would carry one row for the family and have no place to hold a per-sentence threshold at all. The row-digit guard is the rung that dies",
+    file: "packages/engine/src/effects.ts",
+    find: "    { kind: \"yourBasicEnergyInHandAtLeast\", energy: \"Grass\", count: 6 },",
+    replace: "    { kind: \"yourBasicEnergyInHandAtLeast\", energy: \"Grass\", count: 2 },",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  {
+    id: "D420-cancel-anchor-drops-the-named-referent-branch",
+    decision: "D420",
+    what: "🛑 C5 — THE ALTERNATION COLLAPSES BACK TO D417's BARE CLAUSE, so the two NAMED-referent printings (*\"If you can't discard N cards in this way\"*) stop splitting. **THEY DO NOT HALF-RESOLVE — THEY GO LOUD**, which is this family's preferred failure and is exactly why it is worth a row: three of the four printings this slice builds silently leave the built set, and the census figures move under a green suite unless something pins the population",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^(.+\\.) (If you can['’]t(?: discard \\d+ cards in this way)?, this attack does nothing\\.)$/;",
+    replace: "  /^(.+\\.) (If you can['’]t, this attack does nothing\\.)$/;",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
   },
 ];

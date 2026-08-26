@@ -1,6 +1,10 @@
 import { BASIC_ENERGY_TYPES, type Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { deriveAttackEffect } from "./effects";
+import {
+  deriveAttackCancelRequirement,
+  deriveAttackEffect,
+  splitAttackCancelClause,
+} from "./effects";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote, runProgram } from "./interpreter";
@@ -119,23 +123,61 @@ const SPECIAL_ENERGY_KO_TEXT =
     the positive program in the same slice.
 
     ⚠️ **AND ONE MEMBER JOINED, WHICH NOTHING IN THIS REPO NAMED BEFORE D415.**
-    `handEnergyKo` is a member of this exact printed family — a Knock Out with no
+    `handEnergyKo` was a member of this exact printed family — a Knock Out with no
     damage, on a target the printed text NAMES — carried by no rung, no comment and
     no census note anywhere at head, which made the list a partial census reading as
-    a total one. Transcribed byte-for-byte off `censusAttackCorpus.ts` (line 93,
-    2 printings). It is refused for a REASON UNLIKE THE OTHER TWO's: not a park, but
-    a COST paid out of the HAND (six Basic {G} Energy cards discarded) and an *"If
-    you can't …, this attack does nothing."* CANCEL — an attack that must un-resolve
-    when the cost is unaffordable. Neither half exists in the effect vocabulary
-    today, and the cancel in particular is a whole-attack verdict rather than a
-    gated step, so it is not `conditionGate` with a different `cond`. */
+    a total one.
+
+    🛑🛑 **D420 CORRECTS TWO THINGS D415 WROTE HERE AND THEN BUILDS THE SENTENCE.**
+    Both are left visible and marked as corrections (D178):
+
+      1. **THE POINTER WAS STALE.** This block said the sentence stands at
+         `censusAttackCorpus.ts` **line 93**. It stands at **line 95** — the corpus
+         is sorted, so any record inserted above it moves the number, and a
+         line-number citation is a pointer with no guard on it. The transcription
+         itself is byte-exact and always was; only the address rotted.
+      2. **"NEITHER HALF EXISTS IN THE EFFECT VOCABULARY TODAY" WENT STALE AT D417.**
+         That slice shipped `splitAttackCancelClause` /
+         `deriveAttackCancelRequirement` and `ATTACK_CANCEL_HEADS`, so the CANCEL
+         half existed from D417 onward and this sentence went on claiming it did
+         not. What remained true until D420 was the COST half (`payFromHand` at the
+         attack seam) and the ROW that joins the two.
+
+    🆕🆕 **D420 BUILT IT** — `payFromHand` under `knockOutDefender` (arm `6g`), one new
+    `BoardCondition` member (`yourBasicEnergyInHandAtLeast`), three
+    `ATTACK_CANCEL_HEADS` rows and a widened `ATTACK_CANCEL_TRAILING`. Its rungs are
+    `handEnergyCancel.test.ts`; what is asserted HERE is only that it stopped being
+    refused, and 🛑 **THE ASSERTION IS NOT `deriveAttackEffect(text) !== null`** —
+    that reader is `^…$` anchored on the WHOLE printed string, cancel included, so it
+    still answers `null` and a naive move to a "built" list would have been GREEN AND
+    DEAD. The witness is MOVED rather than deleted (D415's rule) and it is moved to
+    the seam that actually claims the sentence: the SPLIT, then the head.
+
+    ⚠️ **AND THE LIST DOES NOT GO EMPTY, WHICH IS D418's LESSON APPLIED IN ADVANCE.**
+    A zero-length `UNBUILT_TEXT` makes §1's loop vacuous — green forever, discriminating
+    nothing. `delayedKo` is transcribed off the corpus (**line 113, 2 printings**) to
+    take the vacated rung, and it is a member of this same printed family: a Knock Out
+    with no damage on a target the printed text NAMES. */
 const UNBUILT_TEXT = {
-  /** ⚠️ NO PARK AT ALL — the target is NAMED ("your opponent's Active Pokémon").
-      What it needs is a hand-Energy COST and an "If you can't … does nothing"
-      CANCEL, which is a different mechanism from D415's gate and from D416's park.
-      2 printings, and the LAST member of this printed family still unbuilt. */
+  /** 🆕🆕 D420 — the DELAYED Knock Out, and the family's last unbuilt member: *"Discard
+      all Energy from this Pokémon. At the end of your opponent's next turn, the
+      Defending Pokémon will be Knocked Out."* (**2 printings**). Refused for a reason
+      unlike any of the four before it — not a park, not a hand cost, but a DOOM CLOCK:
+      the Knock Out is scheduled for a turn boundary two seats away, so it needs a
+      persisted per-body stamp and a §13.4-shaped sweep to read it, neither of which
+      exists. `resolvedByAnyReader` refuses it too, so it is genuinely in the residue
+      and not merely off this arm. */
+  delayedKo:
+    "Discard all Energy from this Pokémon. At the end of your opponent's next turn, the Defending Pokémon will be Knocked Out.",
+} as const;
+
+/** 🆕🆕 D420's sentence, MOVED here from `UNBUILT_TEXT` rather than deleted. Its head
+    and its trailing cancel are asserted separately below, because the printed WHOLE
+    is not what any reader claims. */
+const BUILT_BY_D420 = {
   handEnergyKo:
     "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon. If you can't discard 6 cards in this way, this attack does nothing.",
+  head: "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.",
 } as const;
 
 /** 🆕🆕 **D416 BUILT THE TWO PARK SENTENCES, AND THEY ARE NAMED HERE RATHER THAN
@@ -424,18 +466,25 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
   });
 
   it("refuses the ONE sentence of the family that is STILL unbuilt — by name", () => {
-    // What it needs is a hand-Energy COST plus an "If you can't … does nothing"
-    // CANCEL — a whole-attack verdict rather than a gated step, which is not
-    // `conditionGate` with a different `cond`. A half-built arm that resolved it to
-    // an op would Knock the opponent's Active Out FOR FREE, and the loud
-    // ATTACK_EFFECT_SKIPPED path is the correct behaviour, which is what this pins.
+    // 🆕🆕 D420 — the witness this rung carries is the DELAYED Knock Out, and it is a
+    // RE-POINT rather than a deletion (D415's standing rule, and D418's warning that
+    // a re-point which drops discrimination is worse than the stale rung it fixed).
+    // What it needs is a persisted per-body doom stamp and a turn-boundary sweep to
+    // read it — a mechanism unlike the park (D416), the gate (D415) and the hand
+    // cost (D420). A half-built arm that resolved it to a bare `knockOutDefender`
+    // would Knock the opponent's Active Out IMMEDIATELY, a whole turn early, and the
+    // loud ATTACK_EFFECT_SKIPPED path is the correct behaviour — which is what this
+    // pins.
     //
-    // ⚠️ THE LIST IS NOT THE ONE D414 WROTE, NOR D415's, and the churn is the point
-    // of keeping it: `specialEnergy` left because D415 built it (§7), `handEnergyKo`
-    // — a member of the same printed family no rung, comment or census note in this
-    // repo named at all — joined in the same slice, and 🆕🆕 D416 took BOTH park
-    // sentences. Three, then three, now one. A witness list has to be transcribed
-    // off the corpus rather than trusted to stay total on its own.
+    // ⚠️ THE LIST IS NOT THE ONE D414 WROTE, NOR D415's, NOR D416's, and the churn is
+    // the point of keeping it: `specialEnergy` left because D415 built it (§7),
+    // `handEnergyKo` — a member of the same printed family no rung, comment or census
+    // note in this repo named at all — joined in the same slice, D416 took BOTH park
+    // sentences, and 🆕🆕 D420 built `handEnergyKo` and put `delayedKo` in its place.
+    // Three, then three, then one, and one again. **A LIST THAT EMPTIES IS A LOOP
+    // THAT ASSERTS NOTHING**, so a slice that clears the last member owes the corpus
+    // a fresh transcription rather than a green run.
+    expect(Object.keys(UNBUILT_TEXT).length).toBeGreaterThan(0);
     for (const [name, text] of Object.entries(UNBUILT_TEXT)) {
       expect(deriveAttackEffect(text), `${name} stopped being refused`).toBeNull();
     }
@@ -445,6 +494,41 @@ describe("§1 the deriver — three sentences, four printings, one field-free op
     for (const [name, text] of Object.entries(BUILT_BY_D416)) {
       expect(deriveAttackEffect(text), `${name} is not built`).not.toBeNull();
     }
+  });
+
+  it("🆕🆕 D420's sentence is built THROUGH THE SPLIT, and the whole string is still refused", () => {
+    // 🛑 THE SHAPE OF THIS RUNG IS THE CORRECTION. `deriveAttackEffect` is `^…$`
+    // anchored on the string it is given, and the printed sentence ENDS in its cancel
+    // — so the reader answers `null` on the whole printing and will go on answering
+    // `null` forever. Moving `handEnergyKo` into a "built" list asserted the way
+    // `BUILT_BY_D416` is would therefore have been GREEN AND DEAD: it would have
+    // passed before D420 shipped a line.
+    expect(deriveAttackEffect(BUILT_BY_D420.handEnergyKo)).toBeNull();
+    // What actually claims it is the SEAM: `attack.ts` strips the trailing cancel
+    // (answering it as a D125 requirement) and re-runs the readers over the HEAD.
+    const split = splitAttackCancelClause(BUILT_BY_D420.handEnergyKo);
+    expect(split?.head).toBe(BUILT_BY_D420.head);
+    expect(deriveAttackCancelRequirement(BUILT_BY_D420.handEnergyKo)).toEqual({
+      kind: "yourBasicEnergyInHandAtLeast",
+      energy: "Grass",
+      count: 6,
+    });
+    // …and the head is this op's fourth printed home: the COST first, then the Knock
+    // Out, in printed order.
+    expect(deriveAttackEffect(BUILT_BY_D420.head)).toEqual([
+      {
+        op: "payFromHand",
+        count: 6,
+        to: "discard",
+        filter: { kind: "basicEnergy", energyType: "Grass" },
+      },
+      { op: "knockOutDefender" },
+    ]);
+    // 🛑 AND THE COST IS NOT OPTIONAL FURNITURE. Without it the printed sentence is a
+    // free Knock Out, which is the hazard `handEnergyCancel.test.ts` drives on a
+    // board; here it is pinned as the program's SHAPE, so an arm that dropped the
+    // payment reddens in the file about the op as well as in the file about the cost.
+    expect(deriveAttackEffect(BUILT_BY_D420.head)).not.toEqual([{ op: "knockOutDefender" }]);
   });
 
   it("is anchored end to end — all three, both ends", () => {
