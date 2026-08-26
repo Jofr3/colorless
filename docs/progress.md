@@ -481,9 +481,12 @@
 > Baseline 422 / 9,077, so **+1 file / +37 cases**. Engine **0.326.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,552**, archive ratchet **94**, lint coverage **662**.
 >
-> 🛑 **THE ONE DEBT: D424 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D424` (6 killed / 0 GAPs), 22
-> neighbour rows re-probed (all KILLED), `precheck` clean over 1,552. Exposure is **the highest of the
-> last four slices**: 68 sites across 22 files, including 21 front-edited chains.
+> ✅ **THE SWEEP DEBT IS PAID.** **1552 · 1528 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,816.4s**, `SWEEP_EXIT=0`; `1528 + 24 = 1552` closes and
+> 1552/1552 verified by id. All 6 D424 rows KILLED, **including the three silent in every census** — so
+> the collision refusal is guarded by rows a whole-corpus run confirms are live, not merely declared.
+> `error` **0** on the highest-exposure slice of the last four. Survivors held at **24 for a forty-first
+> consecutive sweep**.
 >
 > ▶ **NEXT SLICE — RE-DERIVE THE RESIDUE, SUBTRACT THE THREE SERVED SETS, AND GREP LOOSE.**
 > `legalAttackCorpus()` minus `resolvedByAnyReader()` is NOT the unbuilt set (it misses registry rows and
