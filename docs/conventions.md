@@ -649,6 +649,64 @@ mechanisms invisible in the code that MAINTAINS state. Two roads, one class: the
 number you are confident about is the shape, and it tells you nothing about the
 blast radius.
 
+## Enumerating a family (D424)
+
+**The enumerations are the unreliable part, not the reasoning.** Three briefs in
+four slices carried an incomplete enumeration, each by a different route:
+
+- **D421** asserted an apostrophe byte from memory — U+2019 where the byte is U+0027.
+- **D422** generalised *"no prompt carries `declinable`"* from the first five of
+  ~200 grep hits; `choosePokemonMulti` carries it as a REQUIRED field.
+- **D424** enumerated a sentence family with `is now (X) and (Y)`, which cannot
+  match the printed Oxford-comma form, and miscounted distinct pairs by counting
+  ROWS instead of PAIRS.
+
+Every one was caught downstream by a builder who checked instead of obeying —
+which is luck, not a process.
+
+**When enumerating a family, grep the LOOSEST plausible shape and read every hit.**
+The variant you did not imagine is exactly the one your pattern excludes. **And
+state the pattern you used**, so the next reader can see its edges rather than
+inheriting your blind spot as a fact.
+
+## Refusals the type system re-derives (D424)
+
+**Prefer a refusal derived from the model over one listed against it.** D424 must
+refuse two Special Conditions that occupy the same field (`asleep`/`paralyzed`/
+`confused` are all values of `rotation`, so applying both means the second
+silently overwrites the first — a lie that resolves). The refusal is
+`Record<StatusName, keyof SpecialConditions>` plus a shared-field test, not a
+blocklist of bad pairs.
+
+A blocklist would have been correct on the day it was written and silently wrong
+at the next status word. The map **does not compile** until a new word is
+classified, so the guard cannot drift from the model it guards. It also refuses
+`(X) and (X)` for free, off the same invariant.
+
+## Refusal rungs need controls (D424)
+
+**Every "X is refused" assertion owes a neighbouring "Y is admitted" on the same
+axis.** *"Same-slot status pairs are refused"* passes trivially if the reader
+refuses everything, so the rung is worthless without a case proving the reader
+still says yes to something. D424 admits Burned+Poisoned — two different slots,
+no printing anywhere — directly beside the refusals.
+
+This is the same defect shape as D423's specimen-shaped absence guard: an
+assertion that cannot distinguish the behaviour you want from a much worse one.
+
+## Cheapness is marginal sites, not mechanisms (D424)
+
+**A second anchor that moves no new site is nearly free.** D424 took the coin-flip
+twin of its pattern because the marginal cost was zero — the same census literals
+move either way, only by different deltas. Given that mechanism counts have now
+under-predicted blast radius three slices running (D421 by state maintenance,
+D423 and D424 by census bookkeeping: 4 mechanisms → **68 sites across 22 files**),
+**marginal site count is the better cheapness test.**
+
+**And re-count the version tax every slice.** It has been misquoted three slices
+running — a doc note says 5, D423 measured 7, D424 measured **9** assertions and
+12 version sites. Grep both `engineVersion` and `manifest.version`.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

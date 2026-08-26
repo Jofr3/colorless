@@ -13069,6 +13069,148 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Grass", "Fire"], name: "Speed Dive", damage: 70 },
     ],
   }),
+
+  /** 🆕🆕 **D424 — THE TWO-STATUS PAIR, five bodies for four printed sentences.**
+      All five rows were read column by column off the remote D1 `luminous`
+      (`735f0fb5-cdc3-494d-8b97-74a8ade0124a`) on 2026-08-26 and are transcribed
+      whole, printed index by printed index (D144's rule).
+
+      🛑 **EVERY ONE IS A `fix-` KEY BECAUSE EVERY ONE IS OUT-OF-CATALOG.** The
+      carriers sit in `sv05`, `sv06`, `sv09` and `sv10`; the local catalog is 978
+      cards / 6 sets (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`) and holds
+      none of those four. A real id here would be a fixture
+      `catalogManifest.test.ts` cannot diff, which is the case the `fix-` rule
+      exists for.
+
+      ⚠️ **THE BURNED+CONFUSED FAMILY IS 3 PRINTINGS / 2 CARDS / 1 SENTENCE.**
+      `sv10-191` is `sv10-038` at Illustration Rare — same 130 HP, same Fire type,
+      same retreat 2, same Water Weakness, same two attacks with the same costs,
+      damage and effect text, differing only in `rarity` (read column by column).
+      So there is no `fix-tr-houndoom-ir`: a second fixture would be a second COPY,
+      not a second body, and D421/D423 both paid for spelling that out.
+
+      ⚠️ **THE TWO BODIES ARE DELIBERATELY UNALIKE, AND ONE OF THEM PRINTS NO
+      DAMAGE.** Ninetales is {R}{R} for 90 with the sentence; Cruel Coal is a bare
+      {R} with NO `damage` key at all. A reader keyed on anything but the TEXT — a
+      cost, a type, a stage, the presence of damage — satisfies one and fails the
+      other, which is the whole reason both are here. */
+  "fix-ninetales": battler("fix-ninetales", {
+    name: "fix-ninetales",
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "Vulpix",
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire", "Fire"],
+        name: "Eerie Glow",
+        effect: "Your opponent's Active Pokémon is now Burned and Confused.",
+        damage: 90,
+      },
+    ],
+  }),
+
+  /** Team Rocket's Houndoom `sv10-038` — the SAME sentence on a second body, and
+      the one that prints NO damage. Its index 1 is a shipped `discardEnergy`
+      sentence, so the card also offers a non-status attack on the same body. */
+  "fix-tr-houndoom": battler("fix-tr-houndoom", {
+    name: "fix-tr-houndoom",
+    types: ["Fire"],
+    stage: "Stage1",
+    evolveFrom: "Team Rocket's Houndour",
+    hp: 130,
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Fire"],
+        name: "Cruel Coal",
+        effect: "Your opponent's Active Pokémon is now Burned and Confused.",
+      },
+      {
+        cost: ["Fire", "Colorless"],
+        name: "Scorching Fire",
+        effect: "Discard an Energy from this Pokémon.",
+        damage: 120,
+      },
+    ],
+  }),
+
+  /** Ekans `sv05-100` — the coin-flipped pair at Confused+Poisoned. Index 1 "Bite"
+      carries NO `effect` key at all, which is the control for "the flip arm did not
+      claim a sentence that has none". */
+  "fix-ekans": battler("fix-ekans", {
+    name: "fix-ekans",
+    types: ["Darkness"],
+    stage: "Basic",
+    hp: 60,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Darkness"],
+        name: "Poison Blend",
+        effect: "Flip a coin. If heads, your opponent's Active Pokémon is now Confused and Poisoned.",
+      },
+      { cost: ["Darkness", "Darkness"], name: "Bite", damage: 30 },
+    ],
+  }),
+
+  /** Glimmora `sv06-109` — the coin-flipped pair at Paralyzed+Poisoned, and the ONLY
+      Standard-legal carrier of that sentence. ⚠️ **`sv03-010` AMOONGUSS PRINTS IT
+      TOO AND IS `legal_standard = 0`** (remote D1, 2026-08-26), which is why the
+      corpus row is 1 printing and not 2 — and why a suite comment naming Amoonguss
+      as this sentence's card was naming a body outside the population the engine
+      runs on. */
+  "fix-glimmora": battler("fix-glimmora", {
+    name: "fix-glimmora",
+    types: ["Fighting"],
+    stage: "Stage1",
+    evolveFrom: "Glimmet",
+    hp: 130,
+    retreat: 3,
+    weaknesses: [{ type: "Grass", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Stun Poison",
+        effect:
+          "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned.",
+      },
+      {
+        cost: ["Fighting"],
+        name: "Venoshock",
+        effect: "If your opponent's Active Pokémon is Poisoned, this attack does 100 more damage.",
+        damage: "30+",
+      },
+    ],
+  }),
+
+  /** Accelgor `sv09-013` — the COMPOUND, and the printing this slice claims without
+      writing an anchor for it. Its head is `DEFENDER_STATUS_PAIR`'s and its tail has
+      been D189's `switchActive` since D189; `splitAttackTrailingClause` composes the
+      two. It is here so that composition is driven on a real board rather than
+      asserted off the corpus. */
+  "fix-accelgor": battler("fix-accelgor", {
+    name: "fix-accelgor",
+    types: ["Grass"],
+    stage: "Stage1",
+    evolveFrom: "Shelmet",
+    hp: 100,
+    retreat: 1,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Grass", "Colorless"],
+        name: "Poisonous Ploy",
+        effect:
+          "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.",
+        damage: 70,
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -20694,4 +20836,34 @@ export const OPPONENT_COUNTER_MULTIPLY_DECK = deckOf({
   "fix-grass-energy": 3, // {G} — Speed Dive's first symbol
   "fix-fire-energy": 3, // {R} — Speed Dive's second symbol
   "fix-energy": 6, // Colorless Basic — every {C} in the deck
+});
+
+/** 🆕🆕 **D424 — the two-status pair's own deck.** A NEW deck and not a widened
+    neighbour: D412 added ONE card to a shared `*_DECK` and reddened three of D409's
+    boards, because deck composition is load-bearing for every suite seeded off it.
+    Nothing else reads this list.
+
+      • `fix-ninetales`   — "Eerie Glow" ({R}{R}, 90) idx 0 — the bare pair sentence
+      • `fix-tr-houndoom` — "Cruel Coal" ({R}, NO damage) idx 0 — the SAME sentence,
+        second body; idx 1 "Scorching Fire" is a live `discardEnergy` control
+      • `fix-ekans`       — "Poison Blend" ({D}) idx 0 — the flip twin, Confused+Poisoned;
+        idx 1 "Bite" has no `effect` key
+      • `fix-glimmora`    — "Stun Poison" ({C}) idx 0 — the flip twin, Paralyzed+Poisoned
+      • `fix-accelgor`    — "Poisonous Ploy" ({G}{C}, 70) idx 0 — the COMPOUND, composed
+        by `splitAttackTrailingClause` rather than by an anchor
+
+    ⚠️ `fix-accelgor` needs a BENCH to switch into, so the switch tail has somewhere
+    to land; every other board in the suite clears its bench deliberately. */
+export const DEFENDER_STATUS_PAIR_DECK = deckOf({
+  "fix-ninetales": 4, // the bare pair — {R}{R} for 90
+  "fix-tr-houndoom": 4, // the bare pair on a second body — {R}, no damage
+  "fix-ekans": 4, // the flip pair — Confused+Poisoned
+  "fix-glimmora": 4, // the flip pair — Paralyzed+Poisoned
+  "fix-accelgor": 4, // the composed compound — pair + switch tail
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, filler, clean defender
+  "fix-fire-energy": 8, // {R} — Eerie Glow, Cruel Coal, Scorching Fire
+  "fix-dark-energy": 4, // {D} — Poison Blend and Bite
+  "fix-grass-energy": 4, // {G} — Poisonous Ploy's typed symbol
+  "fix-fighting-energy": 2, // {F} — Venoshock's typed symbol
+  "fix-energy": 6, // Colorless Basic — Stun Poison's {C} and Poisonous Ploy's
 });

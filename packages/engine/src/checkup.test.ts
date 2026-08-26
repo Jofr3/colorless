@@ -833,7 +833,17 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // would silently drop the rest, so nothing derives. (Paldean Clodsire's
       // "…that Pokémon can't retreat" USED to sit here; D112 built its second
       // clause, so it now derives to poison + preventRetreat — retreatLock.test.)
-      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned.", // sv03-010
+      //
+      // 🆕🆕 D424 — sv03-010's "Flip a coin. If heads, …is now Paralyzed and
+      // Poisoned." USED to sit here too, for the same reason one line up: the
+      // two-status pair was the unbuilt extra. `FLIP_DEFENDER_STATUS_PAIR` builds
+      // it, so the entry was RE-POINTED rather than dropped — onto the two rows of
+      // the same legal column that are STILL a real print with an unbuilt extra,
+      // so this list keeps the discrimination it had. Both would go RED under a
+      // loosened pair anchor (a dropped `\.$`, or an Oxford-comma third slot),
+      // which is exactly what the deleted entry used to catch.
+      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.", // sv03-010's TAILS twin — coinFlipGate has no tails branch
+      "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.", // the THREE-status Oxford list — a different printed shape
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",

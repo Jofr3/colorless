@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.325.0";',
+    find: 'export const engineVersion = "0.326.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18347,5 +18347,67 @@ export const MUTANTS: Mutant[] = [
     find: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };",
     replace: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    return { per, count: { kind: \"damageCountersOnOpponentActive\" } };",
     expectKilledBy: ["packages/engine/src/opponentCounterMultiply.test.ts"],
+  },
+  // ── D424 — THE TWO-STATUS PAIR. Six rows, ONE PER MECHANISM/DECISION, and the
+  //    SHAPE of the set is the finding: THREE OF THE SIX ARE SILENT IN EVERY CENSUS.
+  //    The sentence still matches, `BUILT.attack` still steps by 6, both compound
+  //    rungs still agree and every field assertion still passes — while the program
+  //    admits a pair that overwrites itself, returns its two ops in the wrong printed
+  //    order, or silences the loud path for a sentence it never understood. Two of
+  //    those three can only be driven by sentences NO CARD PRINTS, which is the whole
+  //    argument for building the collision refusal rather than discovering it.
+  {
+    id: "D424-pair-refusal-compares-words-not-slots",
+    decision: "D424",
+    what: "🛑 THE WHOLE DEFECT THIS SLICE EXISTS TO PREVENT, AND IT IS THE NAIVE READING RATHER THAN A STRAW: the coherence test becomes `a === b` — \"the two printed words must differ\" — which is what an author who had not read `SpecialConditions` would write, and which is TRUE of every pair a card actually prints, so all 5 printings still resolve, `BUILT.attack` still steps by 6, both census sweeps still agree and every model assertion in §4 still passes. What it admits is *\"Asleep and Confused\"*: two ops whose second overwrites the first on the shared `rotation` field, emitting two STATUS_APPLIED rows for a board that ends up carrying ONE condition. **A LIE THAT RESOLVES** — and only a test that drives a sentence NO CARD PRINTS can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (CONDITION_SLOT[a] === CONDITION_SLOT[b]) return null;",
+    replace: "  if (a === b) return null;",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  {
+    id: "D424-slot-map-misfiles-confused",
+    decision: "D424",
+    what: "the slot map files `confused` under `burned` instead of `rotation` — a one-word slip in a five-line table, and the table is the ONLY place the refusal's knowledge lives. It breaks the family in BOTH directions at once: *\"Burned and Confused\"* (3 printings) now shares a slot and is REFUSED, while *\"Asleep and Confused\"* stops sharing one and is ADMITTED. The census rungs catch the first half; only §3's constructed collisions catch the second, which is why the row is here rather than trusted to the counts",
+    file: "packages/engine/src/effects.ts",
+    find: "  confused: \"rotation\",",
+    replace: "  confused: \"burned\",",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D424-pair-ops-not-in-printed-order",
+    decision: "D424",
+    what: "the two `applyStatus` ops come back in the OTHER order. ⚠️ **THE MODEL CANNOT SEE THIS AND THAT IS THE POINT**: the pair is refused unless its two words occupy DIFFERENT `SpecialConditions` fields, so the two writes are disjoint and either order reaches a byte-identical board — every field assertion in §4, every census count, the STATUS_APPLIED pair's membership and the whole of §5 agree with the mutant. Only the printed-ORDER rung and the STATUS_APPLIED row SEQUENCE go red. Arm 5c's ops-in-printed-order rule is a faithfulness claim, and this is the row that proves something still checks it",
+    file: "packages/engine/src/effects.ts",
+    find: "    { op: \"applyStatus\", target: \"defender\", status: a },\n    { op: \"applyStatus\", target: \"defender\", status: b },",
+    replace: "    { op: \"applyStatus\", target: \"defender\", status: b },\n    { op: \"applyStatus\", target: \"defender\", status: a },",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  {
+    id: "D424-pair-anchor-loses-its-end-anchor",
+    decision: "D424",
+    what: "`DEFENDER_STATUS_PAIR` drops the closing `$`, which is the one-character version of the \"too loose\" failure D278/D279 cost two slices. The anchor then claims *\"…is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.\"* WHOLE — shipping the two statuses and SILENTLY DROPPING the printed switch — and in doing so shadows `splitAttackTrailingClause`, whose refusal is \"no reader claims this string as a whole\". The compound still resolves, still lands both conditions and reports nothing skipped, so the loud path never fires; the composition census and §5's tail assertion are what notice",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\\\.$`,",
+    replace: "  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\\\.`,",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts", "packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D424-flip-pair-drops-the-coin-gate",
+    decision: "D424",
+    what: "the flip arm returns the pair's two ops BARE instead of wrapping them in `coinFlipGate` — the bare arm's real code, three lines up, copied verbatim onto the flipped sentence. Both flip printings still resolve, still land both conditions in printed order, still report nothing skipped and still move every census figure by exactly the same amount. **THE COIN SIMPLY STOPS MATTERING**: the statuses land on TAILS too, which is the one board that tells the two arms apart",
+    file: "packages/engine/src/effects.ts",
+    find: "    return then === null\n      ? null\n      : [\n          {\n            op: \"coinFlipGate\",\n            then,\n          },\n        ];",
+    replace: "    return then;",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  {
+    id: "D424-flip-pair-nullish-check-never-fires",
+    decision: "D424",
+    what: "`then === null` becomes `then === undefined`, and `defenderStatusPair` returns `null` and never `undefined` — a nullish slip an author makes without noticing, since the guard still reads like a guard. Every printed sentence is unaffected. A COLLIDING flipped sentence now derives to `[{ op: \"coinFlipGate\", then: null }]` instead of `null`: non-null, so the loud `ATTACK_EFFECT_SKIPPED` path is silenced for a sentence no reader actually understood. It is the row that proves the collision refusal is honoured on BOTH arms rather than only on the one it is written next to",
+    file: "packages/engine/src/effects.ts",
+    find: "    return then === null",
+    replace: "    return then === undefined",
+    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
   },
 ];

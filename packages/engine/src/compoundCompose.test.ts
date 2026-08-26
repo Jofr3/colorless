@@ -111,6 +111,19 @@ const HEAL_50_THEN_SELF_LOCK =
 const HEAL_60_THEN_SELF_LOCK =
   "Heal 60 damage from this Pokémon. During your next turn, this Pokémon can't retreat.";
 
+/** 🆕🆕 D424 — THE TENTH, AND IT ARRIVED WITHOUT THE SPLITTER CHANGING AT ALL.
+    Its TAIL has been D189's `switchActive` since D189; its HEAD became readable the
+    moment `DEFENDER_STATUS_PAIR` landed, and the admission followed from the
+    predicate that was already here. That is the property D409 bought the splitter
+    for — *"every future compound whose clauses this file already reads"* — observed
+    rather than argued: this slice wrote no anchor for this string and no line of
+    this file's production code. ⚠️ AND IT IS A `cross`-ROW THAT IS NOT: unlike the
+    two 8-printing members whose heads only a DAMAGE reader claims, this head is
+    claimed by `deriveAttackEffect` itself, so `cross` stands still at 2 / 8 and the
+    whole step lands on the non-cross side (10 → 11). */
+const CONFUSE_POISON_THEN_SWITCH =
+  "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.";
+
 const COMPOUNDS = [
   PRIZE_THEN_DISCARD,
   PRIZE_THEN_RECOIL,
@@ -121,6 +134,7 @@ const COMPOUNDS = [
   CONFUSE_THEN_NO_RETREAT,
   HEAL_50_THEN_SELF_LOCK,
   HEAL_60_THEN_SELF_LOCK,
+  CONFUSE_POISON_THEN_SWITCH,
 ] as const;
 
 /** The two SHIPPED whole-sentence anchors that are one token away from a member of
@@ -300,8 +314,8 @@ describe("§2 — the census: the predicate admits NINE sentences / EIGHTEEN pri
     expect(units(corpus)).toBe(1732);
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     expect([...admitted].map(([, s]) => s).sort()).toEqual([...COMPOUNDS].sort());
-    expect(admitted).toHaveLength(9);
-    expect(units(admitted)).toBe(18);
+    expect(admitted).toHaveLength(10); // 🆕🆕 D424 the TENTH admitted compound.
+    expect(units(admitted)).toBe(19); // 🆕🆕 D424 +1 printing.
   });
 
   it("the eighteen split 8 / 10 across the two SHAPES, which is why the seam had to move", () => {
@@ -324,7 +338,7 @@ describe("§2 — the census: the predicate admits NINE sentences / EIGHTEEN pri
     });
     expect(cross).toHaveLength(2);
     expect(units(cross)).toBe(8);
-    expect(units(admitted) - units(cross)).toBe(10);
+    expect(units(admitted) - units(cross)).toBe(11); // 🆕🆕 D424 10 → 11 — `cross` stands still at 2 / 8 because the new member's HEAD is claimed by `deriveAttackEffect`, not merely by a damage reader.
     // …and every one of the eighteen has EXACTLY TWO clauses, which is why the
     // splitter is not recursive: a three-clause compound whose parts are all
     // readable is a family of ZERO today and stays LOUD until it is not. 🆕🆕 D410
@@ -562,8 +576,8 @@ describe("§4 — the SHADOW REFUSAL: the anchor wins, the splitter is the fallb
     // before this anchor widened (a does-nothing clause is not an effect it claims), so
     // the shadow refusal is belt to a brace that was already fastened.
     const claimedWhole = multiClause.filter(([, s]) => claimedByAny(s));
-    expect(claimedWhole).toHaveLength(153);
-    expect(units(claimedWhole)).toBe(430);
+    expect(claimedWhole).toHaveLength(155); // 🆕🆕 D424 153 → 155: BOTH *"Flip a coin. If heads, …is now {X} and {Y}."* rows are multi-clause AND are now claimed WHOLE by `FLIP_DEFENDER_STATUS_PAIR`, so the shadow refusal gains two members. The BARE pair sentence is single-clause and is not here.
+    expect(units(claimedWhole)).toBe(432); // 🆕🆕 D424 +2 printings (1 each).
     for (const [, s] of claimedWhole) expect(splitAttackTrailingClause(s), s).toBeNull();
   });
 
@@ -1025,7 +1039,7 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   it("the engine version moved with the behaviour", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.325.0");
+    expect(engineVersion).toBe("0.326.0");
   });
 });
 
