@@ -479,11 +479,11 @@
 > Baseline 421 / 9,038, so **+1 file / +39 cases**. Engine **0.325.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,546**, archive ratchet **93**, lint coverage **661**.
 >
-> 🛑 **THE ONE DEBT: D423 HAS HAD NO WHOLE-CORPUS SWEEP.** It has `--decision D423` (5 killed / 0 GAPs),
-> a **mechanised 118-row neighbour re-probe** (118 KILLED — every corpus row whose `expectKilledBy` lies
-> entirely inside the suites this slice edited), and a `precheck` clean over 1,546 run before and after
-> the `mutants.ts` edit — but no full run. Exposure is **moderate**: the engine diff is two lines, but the
-> slice moved **20 census literals across 13 files**.
+> ✅ **THE SWEEP DEBT IS PAID.** **1546 · 1522 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,651.4s**, `SWEEP_EXIT=0`; `1522 + 24 = 1546` closes and
+> 1546/1546 verified by id. All 5 D423 rows KILLED. `error` **0** despite 20 census literals moving across
+> 13 files, and `stale` **0** on a slice whose whole subject was a pinned claim going false. Declared
+> survivors held at **24 for a fortieth consecutive sweep** — which still means *not yet contradicted*.
 >
 > ▶ **NEXT SLICE — RE-DERIVE THE RESIDUE FIRST, AND SUBTRACT THE THREE SERVED SETS.**
 > `legalAttackCorpus()` minus `resolvedByAnyReader()` is **not** the unbuilt set: it misses registry rows,
