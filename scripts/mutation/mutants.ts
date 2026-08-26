@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.322.0";',
+    find: 'export const engineVersion = "0.323.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18106,5 +18106,75 @@ export const MUTANTS: Mutant[] = [
     find: "  /^(.+\\.) (If you can['’]t(?: discard \\d+ cards in this way)?, this attack does nothing\\.)$/;",
     replace: "  /^(.+\\.) (If you can['’]t, this attack does nothing\\.)$/;",
     expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  // ── D421 · the UNTIL-IT-LEAVES-ACTIVE bar ──────────────────────────────────
+  // 🛑 SIX ROWS, ONE PER MECHANISM, AND FIVE OF THE SIX ARE SILENT IN EVERY
+  //    CENSUS FIGURE IN THIS REPO. The sentence still resolves under all six, so
+  //    `BUILT.attack`, both reader instruments, the residue and the unbuilt-column
+  //    count are byte-identical on every mutant — while the derived program bars
+  //    the attack for ONE turn instead of forever, stops barring it the turn after
+  //    the install, GARBAGE-COLLECTS the bar on the next write, files a duplicate
+  //    entry, or tells the player in the log that a permanent bar lifts next turn.
+  //    **Only a BOARD can see any of them**, which is why every `expectKilledBy`
+  //    below names the suite that drives one.
+  //
+  // ⚠️ NO ROW ON THE THREE §10 CLEAR LITERALS, AND THE OMISSION IS DECLARED
+  //    (D205's rule). They are not this slice's code: `lockedAttacks: []` has been
+  //    on all three since D165 and each is already driven by `perAttackLock.test.ts`
+  //    and `lockedAttackMerge.test.ts`. A row here would re-test a shipped line and
+  //    report this slice's coverage as somebody else's.
+  {
+    id: "D421-arm-drops-the-rider-and-becomes-its-neighbour",
+    decision: "D421",
+    what: "🛑 C1 — THE ARM EMITS ARM 24a's PROGRAM VERBATIM: `until: \"leavesActive\"` is dropped, so *\"This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.\"* derives the SAME op D154's *\"During your next turn, this Pokémon can't use {AttackName}.\"* derives. **THE SENTENCE STILL RESOLVES, THE INSTALL STILL LANDS, THE PANEL STILL GREYS ONE ROW AND THE §8 GATE STILL REFUSES** — for exactly one turn, after which a bar the card prints as permanent quietly lifts. ⚠️ **EVERY CENSUS FIGURE IS BYTE-IDENTICAL**, because the sentence is claimed either way: this is the neighbouring arm's real code copied one line over, which is the mistake an author actually makes here",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE.test(effect)) {\n    return [{ op: \"preventAttackUse\", attack: \"Blaze Blitz\", until: \"leavesActive\" }];",
+    replace: "  if (SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE.test(effect)) {\n    return [{ op: \"preventAttackUse\", attack: \"Blaze Blitz\" }];",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+  {
+    id: "D421-reader-keeps-the-turn-comparison",
+    decision: "D421",
+    what: "🛑 C2 — THE READER STOPS EXEMPTING THE UNBOUNDED BAR: `lockedAttackIndexes` falls back to D154's bare `locked.turn === state.turn`, which is the line that shipped for 267 decisions and is what an author restores by reflex. **THE RECORD IS STILL WRITTEN, THE LOG STILL PROMISES A PERMANENT BAR, AND THE BAR NEVER BITES ONCE** — the entry's `turn` is the INSTALL turn and declaring ENDS the turn (§5.3), so the number names a turn its holder has already spent. ⚠️ A build that stamped `+ 2` instead would have degraded quietly into a one-turn lock here; the install turn is chosen precisely so this mutant is loud on the very next turn",
+    file: "packages/engine/src/continuous.ts",
+    find: "    .filter((locked) => locked.until === \"leavesActive\" || locked.turn === state.turn)",
+    replace: "    .filter((locked) => locked.turn === state.turn)",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+  {
+    id: "D421-prune-collects-the-unbounded-bar",
+    decision: "D421",
+    what: "🛑 C3 — THE GARBAGE RULE EATS A LIVE BAR: `addLockedAttack`'s prune loses its rider exemption and becomes D165's bare `lock.turn >= now`. Sound for a STAMP and fatal for PROVENANCE — the bar's `turn` is the install turn, so it is strictly behind `now` from the following turn onwards and the NEXT write to the list deletes it. **THIS IS D165's OWN DEFECT A THIRD TIME**, relocated out of the merge rule and into the rule that exists to bound the list, and it is invisible until a second bar lands on the same body",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const kept = existing.filter((lock) => lock.until === \"leavesActive\" || lock.turn >= now);",
+    replace: "  const kept = existing.filter((lock) => lock.turn >= now);",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+  {
+    id: "D421-idempotence-key-keeps-comparing-the-turn",
+    decision: "D421",
+    what: "🛑 C4 — THE RIDER'S IDEMPOTENCE KEY KEEPS THE PAIR (turn, index): the unbounded arm gains back `lock.turn === turn`, which is D142's key and is correct for every OTHER entry in this list. An unbounded bar re-installed on a LATER turn is the SAME FACT with a different stamp, so the key calls it new and APPENDS — **a duplicated index published by both payability projections and a second `ATTACK_LOCKED` row telling a player about a bar they already have**. ⚠️ The two predicates in this one function had to branch for OPPOSITE reasons (this one because the turn must be ignored, the prune because it must not be trusted), which is why they are two rows and not one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      : (lock: LockedAttack) => lock.until === until && lock.attackIndex === attackIndex;",
+    replace: "      : (lock: LockedAttack) =>\n          lock.until === until && lock.turn === turn && lock.attackIndex === attackIndex;",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+  {
+    id: "D421-log-row-promises-the-bar-lifts-next-turn",
+    decision: "D421",
+    what: "🛑 C5 — THE THIRD PHRASING COLLAPSES INTO THE SECOND: the `until` branch is dropped and the row prints D154's *\"<name> can't use Blaze Blitz next turn\"* for a bar that never lifts. **THE ROW IS NOT STILTED, IT IS FALSE**, and false in the direction that costs a player a turn — they wait, press the button, and are refused again, forever. ⚠️ **NOTHING ELSE MOVES**: the record, the gate and both projections are byte-identical, so the log is the only observable and a suite that rendered no row would report this line as covered",
+    file: "packages/engine/src/log.ts",
+    find: "            : event.until === \"leavesActive\"\n              ? ` can't use ${event.attack} again until it leaves the Active Spot`\n              : ` can't use ${event.attack} next turn`,",
+    replace: "            : ` can't use ${event.attack} next turn`,",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
+  },
+  {
+    id: "D421-install-stamps-the-neighbours-plus-two",
+    decision: "D421",
+    what: "🛑 C6 — THE INSTALL COPIES THE LINE ABOVE IT: `state.turn + 2` is stamped for the unbounded bar too, which is D143's number and the one every other writer of this field uses. **NO BOARD BEHAVES DIFFERENTLY TODAY** — the rider short-circuits the reader, the prune and the idempotence key alike — so what this row pins is the PERSISTED VALUE and the claim `LockedAttack.turn`'s doc block makes about it: with `+ 2` a build that later lost the rider would degrade SILENTLY into a one-turn lock, where the install turn makes it produce a bar that never bites once. ⚠️ **DECLARED AS A PROVENANCE ROW RATHER THAN A BEHAVIOUR ONE** (D205's rule), because a reader who assumed otherwise would mis-price the next slice at this address",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = until === undefined ? state.turn + 2 : state.turn;",
+    replace: "  const turn = state.turn + 2;",
+    expectKilledBy: ["packages/engine/src/untilLeavesActiveBar.test.ts"],
   },
 ];

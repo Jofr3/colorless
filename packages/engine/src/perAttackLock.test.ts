@@ -1044,8 +1044,21 @@ describe("the EIGHTH printing — Radiant Charizard swsh10.5-011, unread until t
     // `fix-curly-barrer` is the U+2019 witness and prints a SIXTH name of its own
     // ("Slip ’n’ Roll", curly), so the pool holds seven distinct spellings for six
     // printed names, and that is stated rather than filtered away.
+    //
+    // 🆕🆕 **D421 — AND THE SWEEP DID EXACTLY WHAT IT WAS BUILT TO DO: "Blaze
+    // Blitz" APPEARED HERE ON ITS OWN.** `fix-gougingfire` prints *"This Pokémon
+    // can't use Blaze Blitz again until it leaves the Active Spot."* (5 legal
+    // printings — Gouging Fire ex in five rarities), a DIFFERENT SENTENCE claimed by
+    // a DIFFERENT arm, and it derives the SAME op because the rider `until:
+    // "leavesActive"` is a widening rather than a sixth op. So this line is
+    // RE-POINTED rather than filtered: it now says "every fixture whose attack text
+    // derives `preventAttackUse`, under EITHER of its two printed durations", which
+    // is a strictly wider claim than the one it made and still the claim this file
+    // is about — the alternative (excluding the rider here) would have quietly
+    // narrowed a swept census back into a hand-kept list.
     expect([...printed.keys()].sort()).toEqual([
       "Accelerating Stab",
+      "Blaze Blitz",
       "Combustion Blast",
       "Dirty Headbutt",
       "Slashing Steel",

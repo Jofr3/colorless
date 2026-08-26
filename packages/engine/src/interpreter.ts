@@ -1443,7 +1443,7 @@ function stepOp(
     case "preventAttack":
       return { done: preventAttack(state, op, ctx, events) };
     case "preventAttackUse":
-      return { done: preventAttackUse(state, op.attack, ctx, events) };
+      return { done: preventAttackUse(state, op.attack, op.until, ctx, events) };
     case "boostAttack":
       return { done: boostAttack(state, op.attack, op.amount, ctx, events) };
     case "preventChosenAttack":
@@ -5716,6 +5716,21 @@ function printedAttackIndex(printed: readonly Attack[], attack: string): number 
         It is a garbage rule and NOT an expiry rule: expiry is the reader's turn
         comparison (`lockedAttackIndexes`), which is what makes a bar stop biting.
 
+    🆕🆕 **D421 ADDS A FOURTH KIND OF ENTRY AND BOTH PREDICATES ABOVE HAD TO
+    BRANCH — NEITHER WAS FREE, AND EITHER ONE ALONE IS THE DEFECT.** *"This
+    Pokémon can't use Blaze Blitz again until it leaves the Active Spot."* (5
+    legal printings, Gouging Fire ex) installs `until: "leavesActive"`, an entry
+    with NO window: its `turn` is the install turn and is provenance only.
+      • the PRUNE would collect it on the very next write, because that number is
+        behind `now` from the following turn onwards — a live, unbounded bar
+        deleted by the rule that exists to bound the list;
+      • the IDEMPOTENCE KEY would miss it, because the pair (turn, index) calls a
+        re-install on a later turn a NEW fact — appending a duplicate the two
+        payability projections publish as a repeated index and the log as a second
+        row about a bar the player already has.
+    Both are driven (`untilLeavesActiveBar.test.ts` §6), and the pair is why the
+    rider is checked in two places in one function rather than folded into one.
+
     ⚠️ AND THE PRUNE'S `>=` IS THE ONE CHARACTER THIS FUNCTION'S BOUNDARY TURNS ON
     — D166's finding, and the reason D165 shipped with an unfinished verification.
     An entry stamped for `now` is LIVE right now, so `> now` would DELETE A BAR THAT
@@ -5746,9 +5761,33 @@ function addLockedAttack(
   now: number,
   turn: number,
   attackIndex: number,
+  until?: "leavesActive",
 ): LockedAttack[] | null {
-  if (existing.some((lock) => lock.turn === turn && lock.attackIndex === attackIndex)) return null;
-  return [...existing.filter((lock) => lock.turn >= now), { turn, attackIndex }];
+  // 🆕🆕 D421 — THE IDEMPOTENCE KEY IS TWO KEYS, BECAUSE THE TWO KINDS OF ENTRY
+  // ARE ADDRESSED DIFFERENTLY. A turn-stamped bar is identified by the PAIR
+  // (turn, index) — that is D142's answer and every writer above relies on it. An
+  // `until: "leavesActive"` bar has no window, so the same fact re-installed on a
+  // later turn carries a DIFFERENT `turn` and the pair would call it new: the key
+  // is the INDEX and the rider alone. Comparing the turn there would append a
+  // second entry meaning exactly what the first one means, which the two
+  // payability projections would then publish as a duplicated index and the log as
+  // a second row telling a player about a bar they already have.
+  const duplicate =
+    until === undefined
+      ? (lock: LockedAttack) =>
+          lock.until === undefined && lock.turn === turn && lock.attackIndex === attackIndex
+      : (lock: LockedAttack) => lock.until === until && lock.attackIndex === attackIndex;
+  if (existing.some(duplicate)) return null;
+  // 🆕🆕 D421 — …AND THE PRUNE EXEMPTS THE SAME ENTRIES, FOR THE OPPOSITE REASON.
+  // The garbage rule below is sound only because a stamp names a turn that will
+  // eventually be behind `now`; an unbounded bar's `turn` is the INSTALL turn and
+  // is behind `now` from the very next write, so pruning by it would GARBAGE-
+  // COLLECT A LIVE BAR — D165's own defect a third time, this time in the rule
+  // that was written to bound the list. It stays bounded anyway: a body carries at
+  // most one such entry per attack index, and §10 sheds the whole list the moment
+  // it leaves the Active Spot, which is the only thing that ends this bar at all.
+  const kept = existing.filter((lock) => lock.until === "leavesActive" || lock.turn >= now);
+  return [...kept, until === undefined ? { turn, attackIndex } : { turn, attackIndex, until }];
 }
 
 /** §8/§11 (D154) — BAR ONE NAMED ATTACK on the controller's own Active ("During
@@ -5806,6 +5845,7 @@ function addLockedAttack(
 function preventAttackUse(
   state: GameState,
   attack: string,
+  until: "leavesActive" | undefined,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -5820,17 +5860,29 @@ function preventAttackUse(
   // The one rule, D143's: the window is the holder's own next turn, and declaring
   // an attack ENDS the turn (§5.3), so the turn after this one is the opponent's
   // and the one after THAT is the holder's.
-  const turn = state.turn + 2;
-  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex);
+  // 🆕🆕 D421 — …and when the printed duration is "until it leaves the Active
+  // Spot" there is no window to stamp, so the number recorded is the INSTALLING
+  // turn and it is PROVENANCE ONLY: the rider short-circuits the reader, the prune
+  // and the idempotence key alike (types.ts `LockedAttack.turn`). `state.turn` and
+  // not `state.turn + 2` deliberately — a build that lost the rider then writes a
+  // bar stamped for a turn its holder has already spent, which never bites once,
+  // where `+ 2` would have degraded quietly into D154's next-turn lock.
+  const turn = until === undefined ? state.turn + 2 : state.turn;
+  const locks = addLockedAttack(active.lockedAttacks, state.turn, turn, attackIndex, until);
   if (locks === null) return state;
   // The RESOLVED row's own name and not the op's token: the two differ only in
   // punctuation (the op's is folded, the card's is as printed), and a log row is
   // read by a player holding the card — so it prints the card's spelling.
+  // 🆕🆕 D421 — and the RIDER rides the row too, because the row's wording is a
+  // claim about WHEN: `log.ts`'s "can't use X next turn" is FALSE of an unbounded
+  // bar in the direction that makes a player wait one turn and press a button the
+  // server will still refuse. Same key, same value, third surface (events.ts).
   events.push({
     type: "ATTACK_LOCKED",
     seat: ctx.seat,
     uid,
     attack: printed[attackIndex]?.name ?? attack,
+    ...(until === undefined ? {} : { until }),
   });
   return withActive(state, ctx.seat, { ...active, lockedAttacks: locks });
 }

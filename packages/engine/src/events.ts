@@ -414,8 +414,32 @@ export type GameEvent =
       actor's on 22 printings and the victim's on 4. "next turn" means the NAMED
       player's next turn under either, which is what makes one wording carry all
       three paths (D148's finding, re-checked by rendering the new row under both
-      seats rather than by citing it). */
-  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string; attack?: string }
+      seats rather than by citing it).
+
+      🆕🆕 **D421 — A SECOND OPTIONAL RIDER, ON THE OTHER AXIS, AND D153's TEST IS
+      WHY IT IS OWED.** *"This Pokémon can't use Blaze Blitz again until it leaves
+      the Active Spot."* (5 legal printings, Gouging Fire ex sv05-038/-188/-204/
+      -214 and svp-144) bars ONE attack with NO clock. `attack` alone already
+      renders `"<name> can't use Blaze Blitz next turn"` — and that row is not
+      stilted, it is **FALSE**, and false in the direction that costs a player a
+      turn: they wait one turn, press the button and the server refuses it again,
+      forever. The question is never "does the row NAME the duration?" but "does
+      it ASSERT something this path makes untrue?", and it does.
+
+      `until` is the SAME key with the SAME value as the op's (effects.ts) and the
+      record's (types.ts `LockedAttack`), which is the point rather than a
+      coincidence: one spelling on three surfaces means a reader cannot honour the
+      rider in one place and forget it in another. ABSENT keeps meaning the
+      next-turn window on every path that had one, so `attack` and `until` are two
+      independent presence branches over ONE fact and neither is a sibling event
+      (D113's rule, held for the fourth time at this address).
+
+      THE SEAT RULE IS UNTOUCHED AND THE WORDING IS CHECKED AGAINST IT RATHER THAN
+      ASSUMED: `seat` still owns the BARRED Pokémon, and the new phrasing carries
+      no "next turn" and no player name at all, so it reads identically under
+      either seat — rendered under both and READ (`untilLeavesActiveBar.test.ts`
+      §7), which is what this family does instead of citing itself. */
+  | { type: "ATTACK_LOCKED"; seat: Seat; uid: string; attack?: string; until?: "leavesActive" }
   /** §8.5/§11 (D147) — an attack INSTALLED a durated DAMAGE REDUCTION on its own
       Active ("During your opponent's next turn, this Pokémon takes {N} less
       damage from attacks (after applying Weakness and Resistance)."). `amount` is

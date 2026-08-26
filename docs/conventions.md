@@ -475,6 +475,69 @@ D197's "10 files" was the capped view of `apps/api` alone. So `bun run format
 formatting-only commit plus a `biome format --check` step in `check`; until then,
 never run `bun run format` on a shared tree.
 
+## Handing work to another agent (D421)
+
+**An instruction is a claim, and nothing downstream of a brief audits the brief.**
+D421's brief asserted the target sentence carried a U+2019 apostrophe. It carries
+U+0027 — written from memory, never checked, and delivered as an instruction
+rather than as a question. It was caught only because the builder verified it
+instead of implementing it. **When you hand work off, mark which of your claims
+are MEASURED and which are REMEMBERED**, and expect the remembered ones to be the
+wrong ones. A false premise at the top of a task is the cheapest defect to inject
+and the most expensive to find, because every check below it is busy checking
+something else.
+
+## Pricing a sentence (D421)
+
+**The mechanism count is not the sentence's shape.** *"This Pokémon can't use
+Blaze Blitz again until it leaves the Active Spot."* reads like three edits — an
+anchor, a reader arm, an op — and cost five. The two extra sites were invisible
+from the text and each would have shipped a live defect: the field's PRUNE would
+have garbage-collected an unbounded bar, and the LOG row would have promised the
+wrong duration. **Before pricing a sentence, grep every writer and every reader of
+the field it lands in.** The invisible mechanisms live in the code that MAINTAINS
+the state, not in the code that interprets the sentence.
+
+**A log row is a claim with the same standing as a predicate.** The test is never
+*"does the row name the duration?"* but *"does it assert something this path makes
+untrue?"* — a row saying "next turn" on a bar with no clock is not stilted, it is
+false, and false in the direction that costs a player a turn.
+
+## Optional keys / widenings (D421)
+
+**An optional rider should fail LOUD.** A widening is free at the version boundary,
+which makes it tempting to stop thinking once the bump is avoided — but a build
+that DROPS the rider still has to be detectable. D421 stamps `LockedAttack.turn`
+with the install turn rather than `+ 2` for exactly this reason: `+ 2` would make a
+lost rider degrade silently into the neighbouring next-turn lock, while the install
+turn produces a bar stamped for a turn already spent, visible on the next board.
+**When you add an optional key, choose the REST of the record so that losing the
+key is detectable.** A widening that degrades into plausible behaviour will be
+mis-read for a year.
+
+**Same fact, same spelling, every surface.** D421's rider is the identical key with
+the identical value on the op, the persisted record and the event. That is the
+design, not a coincidence — it is what stops a reader honouring the rider in one
+place and forgetting it in another.
+
+## Re-pointing a swept claim (D421)
+
+When your slice makes a swept census case newly true, **widen the claim rather than
+excluding your own case from it.** D421's attack-name sweep in `perAttackLock.test.ts`
+began matching the new rider; the fix was to widen the assertion to "under EITHER
+printed duration", not to filter the rider out. Excluding it would have narrowed a
+swept census back into a hand-kept list — which is precisely the defect D419 spent a
+whole slice removing.
+
+## Deciding a discrepancy (D421)
+
+When the code and the printed text disagree and you are keeping the code, **write the
+decision down at the site and pin it with its own test.** `evolveOnto` lifts D421's
+bar though the Pokémon never left the Active Spot; that is right (§10 removes the
+effects of attacks on evolution) but the sentence does not say it. A successor who
+finds an untested discrepancy assumes an accident and "fixes" it. **A decision that
+is not pinned is indistinguishable from an oversight.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

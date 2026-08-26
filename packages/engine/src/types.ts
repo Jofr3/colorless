@@ -503,7 +503,26 @@ export interface LockedAttack {
       `preventAttackUse` wrote it (the HOLDER's own next turn, since declaring an
       attack ends the turn) and + 1 when `lockDefenderAttack` did (the VICTIM's
       next turn, which is the turn immediately after). Two writers, two offsets,
-      one number — which is exactly how two entries come to share it (D165). */
+      one number — which is exactly how two entries come to share it (D165).
+
+      🆕🆕 **D421 — AND WHEN `until` IS SET THIS NUMBER IS PROVENANCE AND NOTHING
+      ELSE: it is the INSTALLING turn, and no reader compares it.** The rider
+      short-circuits every read of this field — `lockedAttackIndexes` answers the
+      entry whatever the turn is, and `addLockedAttack`'s prune and its idempotence
+      key both branch away from it — so there is no window for a number to name.
+      It stays REQUIRED rather than becoming optional for `healedTurn`'s reason at
+      the other address (match.ts): a key the writer never wrote is not a key with
+      a default, and an optional `turn` would make every existing reader ask
+      "absent, or genuinely unknown?" about a fact the model always has.
+
+      ⚠️ **THE INSTALL TURN AND NOT `+ 2`, DELIBERATELY, AND THE GROUND IS THAT A
+      WRONG DEGRADATION IS WORSE THAN A LOUD ONE.** Stamping `state.turn + 2` would
+      make a build that DROPPED the rider degrade silently into D154's next-turn
+      lock — a real bar, on a real turn, that simply stops one turn later than the
+      card says. Stamping the install turn makes the same build produce a bar
+      stamped for a turn its holder has already spent (declaring ENDS the turn,
+      §5.3), so it never bites at all and a board says so on the very next turn.
+      The rider is the fact; the stamp is the audit trail. */
   turn: number;
   /** WHICH attack is barred, as an index into the stack-top card's `attacks`.
 
@@ -523,6 +542,34 @@ export interface LockedAttack {
       assumed either number would bar the wrong attack on four of the six
       printings, and on Munkidori ex it would be right for the wrong reason. */
   attackIndex: number;
+  /** 🆕🆕 **D421 — the DURATION, when the printed one is not a clock.** Present
+      only for *"This Pokémon can't use Blaze Blitz again until it leaves the
+      Active Spot."* (Gouging Fire ex sv05-038/-188/-204/-214, svp-144 — **5 legal
+      printings, one card in five rarities**), where the bar has no expiry at all
+      and is lifted by §10 instead. ABSENT means D154/D157's next-turn window,
+      which is what every entry written before this slice means (D135's absent-key
+      rule) — so this is a WIDENING and `MATCH_RECORD_VERSION` does not move.
+
+      🛑 **AND IT IS AN OPTIONAL KEY RATHER THAN A NEW `InPlayPokemon` FIELD,
+      WHICH IS D408's CRITERION EVALUATED RATHER THAN QUOTED.** That slice's rule
+      is that a fact needing MORE THAN THREE off-Active clear sites has outgrown a
+      sentence and wants a state slice of its own. This one needs exactly THREE —
+      `clearOnLeavingActive` (turn.ts), `switchInto` (interpreter.ts) and
+      `evolveOnto` (types.ts) — and it needs them BY ALREADY BEING ON THEM: all
+      three shed `lockedAttacks: []` unconditionally, so the whole of *"until it
+      leaves the Active Spot"* is machinery this field already owns. A new field
+      would have had to be added to the same three literals to say the same thing.
+
+      ⚠️ **AND `markers` IS THE ROUTE THAT LOOKS RIGHT AND IS WRONG** (D414's
+      precedent, checked rather than copied): that bag is cleared at `evolveOnto`
+      ONLY, so a bar carried there would survive a RETREAT — the counterplay the
+      printed sentence is entirely about. Wrong-with-no-failure, which is the
+      outcome this family refuses.
+
+      A `"leavesActive"` STRING rather than `true`, for the op's reason verbatim
+      (effects.ts): the axis is a DURATION and a second one is a printing away,
+      while a boolean would have to be renamed to admit it. */
+  until?: "leavesActive";
 }
 
 /** §8.5/§11 (D155) — an attack-installed PER-ATTACK DAMAGE BUFF on one Pokémon,

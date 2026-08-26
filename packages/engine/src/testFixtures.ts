@@ -12891,6 +12891,82 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D421 — GOUGING FIRE ex, THE UNTIL-IT-LEAVES-ACTIVE BAR.** Its INDEX-1
+      effect is byte-for-byte off `legalAttackCorpus()` (the committed
+      `legal_standard = 1` attack column, ONE row at count 5):
+
+        "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot."
+
+      ⚠️ **A `fix-*` KEY WITH A REAL CARD BEHIND IT, WHICH IS A DIFFERENT SITUATION
+      FROM D408's AND IS SAID RATHER THAN GLOSSED.** All five printings ARE known —
+      Gouging Fire ex `sv05-038` (Double rare), `sv05-188` (Ultra rare), `sv05-204`
+      (Special illustration rare), `sv05-214` (Hyper rare) and `svp-144` (Promo),
+      re-verified card by card against tcgdex (the ingest's own upstream) on
+      2026-08-26, all five `legal.standard = true`, regulation mark H, effect string
+      identical on all five. What is missing is not the id but the ROW: this
+      container's local D1 holds six sets and **no `sv05` and no `svp`**, and
+      `catalogManifest.test.ts` (c) requires every `^(sv|swsh)` fixture id to have a
+      manifest row — `CATALOG_MANIFEST.absent` is asserted EMPTY. A real-id fixture
+      would therefore redden that guard rather than strengthen this one, so the KEY
+      is synthetic and **every SCALAR below is TRANSCRIBED** (230 HP, Basic, {R},
+      retreat 2, ×2 Water, no Resistance, no Ability, both attacks at their printed
+      indices with printed costs and damage). The one invention is the NAME, and it
+      keeps the printed " ex" suffix because that is the only channel the engine has
+      for a rule box — ingest drops tcgdex's `suffix` field and `pokemonSuffixOf`
+      reads the name (cards.ts).
+
+      🛑 **TWO ATTACKS, AND INDEX 0 IS WHAT MAKES THE BAR CHECKABLE.** "Heat Blast"
+      ({R}{C}, 60, NO effect) is the sibling that must stay legal forever while
+      "Blaze Blitz" ({R}{R}{C}, INDEX 1, 260) is barred — the assertion that
+      separates this rule from D143's whole-Pokémon lock, and the one a one-attack
+      fixture could not make. It is also costed LOWER, so a refusal on this body is
+      never an Energy shortfall wearing the bar's face.
+
+      230 HP so nothing in this deck Knocks it Out, and no §8.1 tail lands between an
+      install and the turns it has to be read across. No owner prefix in the key —
+      the possessive fixture toll (`ownerPrefix.test.ts`) is not paid by this
+      slice. */
+  "fix-gougingfire": battler("fix-gougingfire", {
+    name: "fix-gougingfire ex",
+    types: ["Fire"],
+    stage: "Basic",
+    hp: 230,
+    retreat: 2,
+    weaknesses: [{ type: "Water", value: "×2" }],
+    attacks: [
+      { cost: ["Fire", "Colorless"], name: "Heat Blast", damage: 60 },
+      {
+        cost: ["Fire", "Fire", "Colorless"],
+        name: "Blaze Blitz",
+        damage: 260,
+        effect: "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot.",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D421 — a synthetic Stage 1 that evolves from `fix-gougingfire ex`**, and
+      it is `fix-skarm-stage1`'s job (D154) on a base that is itself synthetic. The
+      real Gouging Fire ex is a Basic with nothing printed above it, so the EVOLVE
+      route into §10's clear has no catalogued line at all — which is exactly why
+      this slice's evolve case needs an invented body rather than a found one, and
+      why the invention is declared here instead of inside the test.
+
+      ⚠️ **ONE ATTACK, DELIBERATELY, AND IT IS THE SHARPEST WITNESS THE CLEAR HAS.**
+      The bar names INDEX 1; the evolved body has only index 0 — so a clear that
+      failed to shed the list would leave an index pointing at NOTHING, and the
+      failure it rules out is not "still barred" but "barred somewhere else"
+      (D154's finding at the same address, inherited on purpose). */
+  "fix-gouging-stage1": {
+    ...blank,
+    id: "fix-gouging-stage1",
+    name: "fix-gouging-stage1",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 260,
+    types: ["Fire"],
+    retreat: 2,
+    evolveFrom: "fix-gougingfire ex",
+    attacks: [{ cost: ["Fire"], name: "Ember Wake", damage: 50 }],
+  } satisfies Card,
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -20420,4 +20496,42 @@ export const UNDAMAGED_BONUS_DECK = deckOf({
   "fix-bigbody": 8,
   "fix-dark-energy": 12,
   "fix-energy": 28,
+});
+
+/** 🆕🆕 **D421's UNTIL-IT-LEAVES-ACTIVE deck (`untilLeavesActiveBar.test.ts`).**
+    Its own 60, for `BARE_ATTACK_LOCK_DECK`'s reason and not a new one: every deck
+    in this family deals its `ready()` board off its own shuffle, so adding a card
+    to a neighbour's list would move every seeded board in it (D412 did exactly
+    that to three of D409's and it is the standing warning in `conventions.md`).
+
+    **SEED-FREE**: the one printed sentence this suite reads flips nothing, so a
+    seed table would describe a shuffle rather than a rule — pinned with an
+    unchanged `rngState` across a whole install.
+
+    ONE DECK FOR BOTH SEATS, because the bar has to be driven from BOTH seats (it
+    is installed by whoever declares it, and `lockedAttackIndexes` is asked of
+    whichever body carries it), and a second list would only vary the shuffle.
+
+      • `fix-gougingfire` — THE barrer. "Blaze Blitz" ({R}{R}{C}, INDEX 1, 260 + the
+        sentence) and "Heat Blast" ({R}{C}, INDEX 0, 60, no effect), which is the
+        sibling that must stay legal forever;
+      • `fix-gouging-stage1` — the EVOLVE route into §10's clear, and the body whose
+        single attack makes a surviving index 1 point at nothing;
+      • **sv01-194 Switch** (Item, `switchActive`) is the `switchInto` route on the
+        holder's OWN board — the second of the three §10 clears, driven through the
+        real action rather than by hand;
+      • `fix-fire-energy` / `fix-energy` pay {R}{R}{C}, {R}{C} and the printed
+        retreat of 2 — the THIRD clear, which is why there is enough of both to
+        attack and then retreat on the same board;
+      • `fix-titan` (340 HP, NO attacks) is the mulligan-free filler, the promote
+        target for both the retreat and the Switch, and P2's opening Active — its
+        having no attacks is what keeps every window assertion off an accidental
+        Knock Out. */
+export const UNTIL_LEAVES_ACTIVE_DECK = deckOf({
+  "fix-gougingfire": 4, // "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot." at INDEX 1
+  "fix-gouging-stage1": 2, // the evolve route's Stage 1 — ONE attack, so a stale index points at nothing
+  "sv01-194": 3, // Switch (Item, switchActive) — the switchInto route on the holder's OWN board
+  "fix-fire-energy": 10, // Basic {R} — {R}{R} of Blaze Blitz, {R} of Heat Blast, and the retreat
+  "fix-energy": 13, // Basic {C} — the {C} of both costs, and the retreat
+  "fix-titan": 28, // 340 HP neutral Basic, NO attacks — DOMINANT (mulligan-free), filler and promote target
 });

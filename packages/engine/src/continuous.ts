@@ -1985,6 +1985,16 @@ export function attackGateOf(
     address, so a bar is live iff that stamp is the turn now being played, and a
     bar whose window has passed stops answering without anyone having cleared it.
 
+    🆕🆕 **D421 — …UNLESS THE ENTRY CARRIES `until: "leavesActive"`, IN WHICH CASE
+    THERE IS NO WINDOW AND THE READER SAYS SO.** *"This Pokémon can't use Blaze
+    Blitz again until it leaves the Active Spot."* (5 legal printings) is the first
+    entry in this list whose duration is a BOARD EVENT rather than a number, and
+    the whole of that reading lives in the two clauses of the filter below: the
+    rider answers unconditionally, and everything without one keeps the turn
+    comparison it has had since D154. **The bar is ended by the §10 clears and by
+    nothing else** — which is why it costs no new clear site: all three literals
+    already shed this list whole.
+
     ⚠️ IT RETURNS THE INDICES RATHER THAN A PREDICATE, AND THAT IS THE ONE PLACE
     THIS FAMILY'S READER SHAPE HAD TO MOVE. `attackLocked` returns a boolean
     because there is ONE fact and nothing to carry (D104's minimal shape); here the
@@ -2022,8 +2032,18 @@ export function lockedAttackIndexes(state: GameState, pokemon: InPlayPokemon): n
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason two functions
   // up: the field is REQUIRED and a record written before it existed is retired
   // by MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
+  // 🆕🆕 D421 — …and the entry that has NO window answers on every turn. *"This
+  // Pokémon can't use Blaze Blitz again until it leaves the Active Spot."* (5
+  // legal printings, Gouging Fire ex) installs `until: "leavesActive"`, whose
+  // whole content is that the turn comparison beside it must not be asked: the
+  // bar ends when §10 sheds the LIST, and the three clears that do it are the
+  // same three every field on this body is already on. The `turn` such an entry
+  // carries is the INSTALL turn and is provenance only (types.ts `LockedAttack`),
+  // so a build that dropped this clause would compare a number naming a turn its
+  // holder has already spent — a bar that never bites once, rather than one that
+  // bites for the wrong length.
   return pokemon.lockedAttacks
-    .filter((locked) => locked.turn === state.turn)
+    .filter((locked) => locked.until === "leavesActive" || locked.turn === state.turn)
     .map((locked) => locked.attackIndex);
 }
 

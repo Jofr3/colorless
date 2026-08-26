@@ -2680,6 +2680,12 @@ export type BoardCondition =
       addressed by attack NAME, written once per turn by the body's own
       declaration, and it must survive precisely the turns a lock is shed on. The
       two records answer opposite questions about the same address.
+      🆕🆕 **D421 QUALIFIES ONE CLAUSE OF THAT AND STRENGTHENS THE REST**: since
+      the `until: "leavesActive"` rider, *not every* entry in that list is "pruned
+      as it expires" — an unbounded bar has no expiry and is shed only by §10. The
+      CONTRAST is unaffected and in fact sharper: that list is still cleared the
+      moment the body leaves the Active Spot, which is exactly what this history
+      must survive.
 
       ⚠️ **AND THE TWO PRINTINGS EACH NAME THEIR OWN CARD'S INDEX 0**, which is why
       the clause is not *"this Pokémon attacked during your last turn"*: Falinks's
@@ -3740,8 +3746,38 @@ export type EffectOp =
       Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
       free rather than lucky (D125's rule): the lock's entire effect is in the
       FUTURE. Never parks, consumes no rng, and is idempotent (a re-install writing
-      the same turn AND the same index is silent). */
-  | { op: "preventAttackUse"; attack: string }
+      the same turn AND the same index is silent).
+
+      🆕🆕 **D421 — `until`, AN OPTIONAL RIDER THAT REPLACES THE DURATION RATHER
+      THAN NARROWING IT.** *"This Pokémon can't use Blaze Blitz again until it
+      leaves the Active Spot."* — Gouging Fire ex `sv05-038`/`-188`/`-204`/`-214`
+      and `svp-144`, **5 legal printings of ONE byte-identical sentence**, all five
+      of them the same card in five rarities (attack INDEX 1, {R}{R}{C}, printed
+      260). The address is D154's exactly — one NAMED attack on the controller's
+      own Active, resolved to an INDEX at the install by the same helper — and the
+      ONLY thing that differs is how long it lasts.
+
+      ⚠️ **A RIDER ON THIS OP AND NOT A SIXTH OP, WHICH IS D131's WIDEN-DON'T-ADD
+      TEST RUN AND PASSING** — the direction D154 itself ran it and said NO to.
+      Strip `until` and what is left is `{ op: "preventAttackUse", attack }` byte
+      for byte, meaning exactly what it meant: bar this printed noun on the
+      holder's own next turn. That is the test's own criterion (D148's `target`
+      passes it; D154's `attack` on `preventAttack` fails it), so the same rule
+      that split those two ops joins these two readings.
+
+      ⚠️ **AND THE RIDER IS THE SAME KEY ON THE OP, ON THE RECORD AND ON THE ROW**
+      (`LockedAttack.until` in types.ts, `ATTACK_LOCKED.until` in events.ts). One
+      spelling, three surfaces, so a reader cannot honour the rider in one place
+      and forget it in another — and a `"leavesActive"` STRING rather than a
+      boolean because the axis is a DURATION and the pool may yet print a second
+      one; a `true` would have to be renamed to admit it (D135's absent-key rule
+      still supplies the default: ABSENT means D154's next-turn window).
+
+      ABSENT is the whole of the backward compatibility: every persisted
+      `EffectContinuation` and every registry row written before this slice is a
+      valid inhabitant of the new type and reads back as the next-turn lock
+      (D125's distinction, D146's `fromClass` at the same address). */
+  | { op: "preventAttackUse"; attack: string; until?: "leavesActive" }
   /** §8.5/§11 (D155) — BUY ONE NAMED ATTACK on the controller's own Active a flat
       pre-W/R DAMAGE BONUS for the holder's next turn ("During your next turn, this
       Pokémon's {AttackName} attack does {N} more damage (before applying Weakness
@@ -9360,6 +9396,50 @@ const SELF_CANT_USE_ATTACK = /^During your next turn, this Pokémon can['’]t u
 // A `test` and not an `exec`: nothing varies. No /i, and the one apostrophe slot
 // classed, for the standing reasons.
 const SELF_CANT_USE_ATTACKS = /^During your next turn, this Pokémon can['’]t use attacks\.$/;
+// ── 🆕🆕 D421: the SAME BAR WITH NO CLOCK — "until it leaves the Active Spot" ──
+//
+// "This Pokémon can't use Blaze Blitz again until it leaves the Active Spot." —
+// the whole printed effect on **5 legal printings** (`legal_standard = 1` attack
+// column, the committed `censusAttackCorpus.ts`, ONE row at count 5), and every
+// one of them is Gouging Fire ex: sv05-038 (Double rare), sv05-188 (Ultra rare),
+// sv05-204 (Special illustration rare), sv05-214 (Hyper rare) and svp-144
+// (Promo) — one card in five rarities, attack INDEX 1 ("Blaze Blitz", {R}{R}{C},
+// printed 260), index 0 "Heat Blast" ({R}{C}, 60) carrying no effect at all.
+// Re-verified card by card against tcgdex (the ingest's own upstream) on
+// 2026-08-26: all five rows carry `legal.standard = true`, regulation mark H, and
+// the effect string BYTE-IDENTICAL across all five, which is what makes the
+// corpus's single count-5 row a claim about printings rather than about spelling.
+//
+// 🛑 **A LITERAL ROW AND NOT A `(.+?)` CAPTURE — D121's CRITERION, RUN AND
+// ANSWERED THE OTHER WAY FROM ARM 24a's.** That anchor captures because D120's
+// question ("does exactly one token VARY?") is answered YES by four distinct
+// attack names across its printings. Here the varying axis holds **ONE** name:
+// "Blaze Blitz" is the only attack the legal column prints in this shape, so a
+// template would be parameterising over a pool of one and the capture would be a
+// claim about cards that do not exist (D119's corollary, D121's own call). The
+// noun is SPELLED, exactly as D146/D148 spell "Basic" for the same reason: the
+// vocabulary is closed where the READING is.
+//
+// ⚠️ **AND THE SPELLED NOUN IS STILL RESOLVED AT THE INSTALL RATHER THAN
+// ASSUMED.** The arm emits `attack: "Blaze Blitz"` and `preventAttackUse`
+// (interpreter.ts) looks it up against the HOLDER's own printed attacks — so the
+// literal buys the deriver nothing it does not already pay for, and a body that
+// does not print the name installs nothing (D154's contract, unchanged). A row
+// hardcoding index 1 would be right on all five printings today and wrong on the
+// first reprint that reorders them.
+//
+// ⚠️ **NOT A COMPOUND TAIL, MEASURED.** The corpus holds ONE row carrying this
+// text and it is the whole sentence; the string occurs nowhere else in the column,
+// so `splitAttackTrailingClause` never offers it as a half (contrast D410's and
+// D412's anchors, which exist ONLY to be reached that way). §1 of
+// `untilLeavesActiveBar.test.ts` sweeps the corpus and asserts both halves.
+//
+// A `test` and not an `exec`: nothing varies. No /i, and the one apostrophe slot
+// classed, for the standing reasons — the catalog prints the STRAIGHT one on all
+// five rows (checked byte for byte upstream), so the class is the family's
+// standing insurance against a punctuation-normalising re-ingest and nothing more.
+const SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE =
+  /^This Pokémon can['’]t use Blaze Blitz again until it leaves the Active Spot\.$/;
 // ── D155: the PER-ATTACK BUFF, the same address with the opposite verb ──
 //
 // "During your next turn, this Pokémon's {AttackName} attack does {N} more damage
@@ -17472,6 +17552,28 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //        rung in the repo is exactly why this one owes a BOARD.
   if (SELF_CANT_USE_ATTACKS.test(effect)) {
     return [{ op: "preventAttack" }];
+  }
+
+  // 24a-ii. 🆕🆕 D421 — "This Pokémon can't use Blaze Blitz again until it leaves
+  //         the Active Spot." — **5 legal printings, one card in five rarities**
+  //         (Gouging Fire ex sv05-038/-188/-204/-214, svp-144; attack INDEX 1).
+  //         Arm 24a's ADDRESS with arm 24a's DURATION REPLACED: same holder ("this
+  //         Pokémon"), same printed proper noun, same install-time resolution to an
+  //         index — and no clock at all, so the bar is lifted by the §10 clears
+  //         instead of by arithmetic.
+  //
+  //         🛑 A LITERAL ROW, NOT A CAPTURE, AND THE ANCHOR'S OWN BLOCK CARRIES THE
+  //         CENSUS THAT DECIDES IT: the varying axis holds ONE name. See
+  //         `SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE`.
+  //
+  //         ⚠️ IT SITS BELOW ARM 24a AND ITS PLURAL SIBLING ONLY BECAUSE THE FAMILY
+  //         READS IN PRINTED ORDER; unlike 24a-i, this placement decides NOTHING.
+  //         The sentence opens "This Pokémon" where both arms above open "During
+  //         your next turn", so neither `^…$` can reach it from any position — which
+  //         is asserted rather than described (§2 drives all four anchors against all
+  //         four sentences).
+  if (SELF_CANT_USE_NAMED_UNTIL_LEAVES_ACTIVE.test(effect)) {
+    return [{ op: "preventAttackUse", attack: "Blaze Blitz", until: "leavesActive" }];
   }
 
   // 24b. "During your next turn, this Pokémon's {AttackName} attack does {N} more

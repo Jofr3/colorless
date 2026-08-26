@@ -576,13 +576,36 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // family's seat rule "next turn" always means the NAMED player's own, which is
     // what lets one phrasing serve every path. Rendered under BOTH seats and read
     // before it was chosen (perAttackLock.test.ts), not assumed.
+    //
+    // 🆕🆕 D421 ADDS THE THIRD PHRASING, AND IT IS THE PARAGRAPH ABOVE APPLIED TO
+    // THE OTHER HALF OF THE SENTENCE. D154's branch narrows WHAT is barred; this
+    // one replaces WHEN. "This Pokémon can't use Blaze Blitz again until it leaves
+    // the Active Spot." (5 legal printings — Gouging Fire ex) has no clock at all,
+    // so the two-branch row would print "…can't use Blaze Blitz next turn" — not
+    // stilted but FALSE, and false in the direction that costs a player a turn:
+    // they wait, press the button, and are refused again, forever. Same test as
+    // D154's ("does it ASSERT something this path makes untrue?"), same answer.
+    //
+    // The narrowing rides the EVENT (`until`, the same key the op and the record
+    // carry) and the branch is on its presence — ABSENT still means the next-turn
+    // window, so the two riders are two independent presence checks over one fact
+    // rather than a shape somebody has to keep in sync.
+    //
+    // THE WORDING IS THE PRINTED ONE MINUS ITS SUBJECT, which is this family's
+    // standing rule (a player with the card in front of them reads back the words
+    // on it) and is also what keeps the SEAT rule intact: it names no player and
+    // says no "next turn", so unlike the two branches above it does not even have
+    // to be checked against whose turn is whose. Rendered under BOTH seats and
+    // read before it was chosen (`untilLeavesActiveBar.test.ts`), not assumed.
     case "ATTACK_LOCKED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
           event.attack === undefined
             ? " can't attack next turn"
-            : ` can't use ${event.attack} next turn`,
+            : event.until === "leavesActive"
+              ? ` can't use ${event.attack} again until it leaves the Active Spot`
+              : ` can't use ${event.attack} next turn`,
         ),
       ]);
     // §8.5/§11 — the attack-installed DAMAGE REDUCTION. ACTIVE voice for
