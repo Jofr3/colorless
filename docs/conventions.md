@@ -597,6 +597,58 @@ printing count. **Subtract the three served sets before ranking anything**, and
 compute it on a quiet tree — importing the instrument during a mutation sweep
 answers about a half-written module.
 
+## Pinning an absence (D423)
+
+**A true assertion can stand in for a false claim, and nothing goes red.**
+`opponentCounterScaling.test.ts` pinned "the multiply twin of this count source
+is printed NOWHERE" by asserting that one constructed sentence derives to null.
+The assertion was true — its string used an amount (`per = 30`) that nothing
+prints. The claim was false: three Standard-legal printings carry the same shape
+at `per = 20`. The two were never the same proposition, and only the assertion was
+executable, so the guard stayed green for 255 decisions while actively warning
+future slices away from correct work.
+
+**PIN AN ABSENCE ON THE POPULATION, NOT ON A SPECIMEN.** Assert that the census
+returns zero rows for the shape. Do not assert that one hand-written string
+derives to null — that is a specimen-shaped guard, green forever, and it means
+nothing about the pool.
+
+**And an absence sitting next to a disproved absence is not thereby disproved —
+nor is one sitting next to a surviving claim thereby safe.** Re-measure each on
+its own. D423 re-measured three: two held, one needed annotating.
+
+## Scoped claims (D423)
+
+**A claim scoped to a population must carry that population to every site it is
+copied to.** D168's decision row said *"the local D1, 2026-08-03, 978 cards / 6
+sets"*, and its measurement was EXACT on that population — re-running the literal
+against those six sets returns precisely the figure it recorded. Its doc block
+said *"the pool"*. The row was right, the copy was wrong, and **the copy is what
+every later reader saw**. This is the two-populations-two-answers failure (D413)
+reaching a pinned absence rather than a refusal.
+
+The mechanised half of this rule already exists and works: `catalogManifest.test.ts`
+reddens when "978 cards" is written without "/ 6 sets", and it fired on 13 fresh
+offenders mid-slice during D423 — catching the author, not a successor. **Prefer
+widening that guard's reach to trusting prose.**
+
+**Corollary: when you disprove a claim, date it before you rewrite it.** "Wrong
+when written" and "true then, rotted since" are different faults with different
+fixes, and the distinction is usually recoverable — from the decision row's own
+scope, from denominator identities that would have moved, or from git history.
+Do not write "rotted" for a claim that was never true.
+
+## Sites are not mechanisms (D423)
+
+**Price the MECHANISMS, then separately count the SITES.** D423 predicted one
+regex and one arm and was exactly right about the shape — then touched 27 sites,
+20 of them census literals across 13 files, in up to four layers per file,
+including a bare-literal operand (`356 − REGISTRY − SPLIT − COMPOUND`) that
+`grep 'toBe(N)'` cannot find. D421 made the identical error by a different road —
+mechanisms invisible in the code that MAINTAINS state. Two roads, one class: the
+number you are confident about is the shape, and it tells you nothing about the
+blast radius.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

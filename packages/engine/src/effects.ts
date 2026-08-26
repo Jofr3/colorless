@@ -10586,6 +10586,24 @@ const RETREAT_COST_MULTIPLY =
 // sentence and this one cannot match theirs, without either side needing a
 // negative lookahead. Asserted rather than argued (opponentCounterScaling.test.ts
 // sweeps the whole pool for a double answer).
+//   ⚠️ 🆕 D423 — **THE WORD "only" IN THAT PARAGRAPH WAS FALSE ON THE DAY IT WAS
+//   WRITTEN AND IS LEFT STANDING WITH ITS CORRECTION BESIDE IT** (D178's rule:
+//   annotate provenance, never overwrite it). D167 landed `SELF_COUNTER_MULTIPLY`
+//   — which carries "damage counter" — **eighteen minutes before D168** (`cfee910`
+//   16:56 → `d75ebf9` 17:14, 2026-08-03), so the count was three, not two, at this
+//   line's own commit. D170 then added `BENCH_COUNTER_MULTIPLY` and this slice adds
+//   `OPPONENT_COUNTER_MULTIPLY` below. The list is now FIVE, and the SUBSTANCE of
+//   the paragraph survives every addition unharmed, which is why it is corrected
+//   rather than deleted: all five are `^…$`-anchored and disjoint by their tails
+//   and by the adjective slot, and the sweep it points at is what proves it.
+//   ⚠️ AND THE TREVENANT PARAGRAPH BELOW IS SIX-SET-SCOPED THE SAME WAY. Against
+//   the remote D1 (2026-08-24, 3,786 rows) the literal `damage counter on your
+//   opponent` still returns Trevenant as the ONLY non-attack row — but the PLURAL
+//   spelling (`damage counters on your opponent's`) returns three more Abilities
+//   (`svp-129`, `svp-149`, `sv09-021`) and ~20 more attacks, and Trevenant itself
+//   is now `legal_standard = 0`. The refusal it names still holds three times over;
+//   the word "ONLY" is true of the singular literal and of the six-set pool, and of
+//   nothing wider.
 //
 // The possessive carries the `['’]` class per D137's fix, exactly like the
 // RETREAT_COST_* pair two lines up: all three catalog rows print the ASCII `0x27`
@@ -10604,6 +10622,64 @@ const RETREAT_COST_MULTIPLY =
 // Ability, which this deriver is never handed).
 const OPPONENT_COUNTER_SCALE =
   /^This attack does (\d+) more damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+// 🆕 D423 — THE `×`/MULTIPLY TWIN OF THE LINE DIRECTLY ABOVE, and the whole of it
+// is that D168's "more" was the only word in the way. "This attack does 20 damage
+// for each damage counter on your opponent's Active Pokémon." — **3 Standard-legal
+// printings on ONE sentence and TWO cards**: Glalie `sv06-052` "Damage Beat"
+// (idx 0, {W}, printed "20×") and Flapple `sv08-139` / `sv08-210` "Acidic Spit"
+// (idx 0, {C}, printed "20×" — the SAME card at Uncommon and at Illustration Rare,
+// so the second printing is a RARITY and not a second body). Re-measured against
+// the remote D1 `luminous` (2026-08-24) with `json_each` over all three text
+// columns, GLOB `*damage counter on your opponent*`, grouped by sentence before
+// anything was priced.
+//
+// 🛑 AND IT IS A CORRECTION, NOT A DISCOVERY. `opponentCounterScaling.test.ts`
+// carried a rung asserting this sentence was *"an ABSENCE, not an unread
+// printing"* — *"There is no no-adjective printing of this count source anywhere
+// in the pool"* — and that claim was **WRONG WHEN IT WAS WRITTEN (2026-08-03)**,
+// not overtaken by a re-ingest. D168's own decision row states its census scope:
+// *"measured against the local D1 (2026-08-03, 978 cards / 6 sets)"*, and the six
+// sets are sv01/sv02/sv03/sv06.5/sve/swsh10.5. Both cards above are `sv06` and
+// `sv08` — sets that have never been in the local catalog at all. The sweep D168
+// ran was EXACT on the population it named (that literal returns precisely four
+// rows over those six sets: Dedenne, Espeon, Bloodmoon Ursaluna and Trevenant's
+// Ability); what was false is the word "pool", which promoted a six-set absence
+// into a universal about the `legal_standard = 1` column the engine actually runs
+// on. This is D413's failure mode — *two populations, two answers* — biting a
+// PINNED ABSENCE instead of a refusal. The re-ingest hypothesis is refused by
+// measurement rather than by argument: D219 re-derived every population
+// denominator EXACTLY to D187's (640 distinct sentences / 1,732 units / 60,467
+// characters), `censusAtHead.test.ts` has quoted that same triple since D233 and
+// `censusAttackCorpus.ts` committed it at D274, so the legal attack column has not
+// churned across the whole window; and D183 records that `api.tcgdex.net` is
+// refused by this runner's network policy, so no agent in this checkout could have
+// re-ingested anything.
+//
+// ⚠️ IT IS ONE REGEX AND ONE `if`, FOR D167's REASON EXACTLY. The split in this
+// family is by FOLD, and BOTH halves of this sentence already existed: the `×`
+// fold is `deriveAttackDamageMultiplier`'s (the printed "20×" base is the per-unit
+// and attack.ts drops it via `scaledBase`), and the source it names —
+// `damageCountersOnOpponentActive` — has been in `DamageCountSource` with its own
+// `scaledAttackDamage` arm since D168 for the ADDITIVE twin. So: no new count
+// member, no new evaluator arm, no new fold, no branch in attack.ts.
+//
+// ⚠️ AND `damageCountersOnOpponentActive` IS NOW A TWO-READER MEMBER — the mirror
+// of what D167 did to `damageCountersOnSelf`, on the other body. That member is
+// the only one in the union reachable from all THREE folds; this one is reachable
+// from two, and the "less" spelling of it is the absence that remains (re-measured
+// 2026-08-24 across all three columns of the remote D1: ZERO rows, pinned in
+// `opponentCounterScaling.test.ts` rather than left to be re-discovered).
+//
+// DISJOINT from OPPONENT_COUNTER_SCALE above by the missing "more" and from the
+// three self-side patterns by their literal `on this Pokémon\.` tail, in both
+// directions and without a negative lookahead on either side, every one being
+// `^…$`-anchored. The possessive carries the `['’]` class per D137's fix — the
+// three catalog rows print ASCII `0x27` today (byte-verified on the corpus row,
+// `cat -A`, not eyeballed) — and `Pokémon` carries the real é (U+00E9). No /i,
+// whole-sentence anchored with a required trailing period and a capital `This`,
+// for the family's stated reason.
+const OPPONENT_COUNTER_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
 // D170 — the BENCH-WIDE damage-counter count, and the FIRST count source in this
 // family that tallies over a ZONE rather than off a single body. "This attack
 // does 10 damage for each damage counter on all of your Benched Pokémon." — ONE
@@ -10629,11 +10705,19 @@ const OPPONENT_COUNTER_SCALE =
 // `scaledAttackDamage` gets there through `attackerSeat`, in scope since 0.66.0
 // for the `boardCondition` indicator, so the signature takes no diff.
 //
-// DISJOINT FROM ALL THREE "damage counter" PATTERNS ABOVE BY THE LITERAL TAIL, IN
-// BOTH DIRECTIONS: the two self ones end in `on this Pokémon\.`, D168's in
-// `Active Pokémon\.`, this one in `on all of your Benched Pokémon\.`, and all four
+// DISJOINT FROM ALL FIVE "damage counter" PATTERNS ABOVE BY THE LITERAL TAIL, IN
+// BOTH DIRECTIONS: the three self ones end in `on this Pokémon\.`, D168's and
+// 🆕 D423's in `Active Pokémon\.`, this one in `on all of your Benched Pokémon\.`,
+// and all six
 // are `^…$`-anchored — so no side needs a negative lookahead. Driven both ways
 // (benchCounterMultiply.test.ts) rather than argued.
+//   ⚠️ 🆕 D423 — THE COUNT IN THAT SENTENCE MOVED TWICE AND ONLY THE SECOND MOVE
+//   WAS NOTICED. It read "ALL THREE … all four" and named "the two self ones",
+//   which was already short by `SELF_COUNTER_MULTIPLY` when D170 wrote it (D167
+//   landed eighteen minutes ahead of D168); adding `OPPONENT_COUNTER_MULTIPLY`
+//   directly above forced the re-count that found both. The tails still separate
+//   every pair, which is the claim; the arithmetic is what rots, exactly as this
+//   file's own standing rule says a justification does.
 //
 // The near-misses are real catalog rows and all refused by the anchors alone:
 // Oinkologne ex sv01-158/-234 "Maddening Scent" and Tyranitar sv02-135/-222
@@ -19093,7 +19177,17 @@ export interface AttackDamageBonus {
     seat (a `BoardCondition` is relative to whose board it reads, and `scaledAttackDamage`
     knew only the defender's).
 
-    ⚠️ THE FIFTH IS THE FIRST MEMBER THAT IS THE MIRROR OF ANOTHER MEMBER (D168).
+    ⚠️ THE FIFTH IS THE FIRST MEMBER THAT IS THE MIRROR OF ANOTHER MEMBER (D168),
+    and 🆕 since D423 it is also the SECOND member reachable from two folds —
+    `deriveAttackDamageBonus` for the printed "more" spelling (7 legal printings
+    over 4 sentences: 10/30/40/50) and `deriveAttackDamageMultiplier` for the bare
+    one (3 legal printings on 1 sentence, `20×` — Glalie `sv06-052`, Flapple
+    `sv08-139`/`sv08-210`). The "less" spelling of it is measured ABSENT (remote D1,
+    2026-08-24, all three text columns, zero rows) and pinned as an absence, so the
+    member sits at two of three folds rather than at `damageCountersOnSelf`'s three.
+    NEITHER READER NEEDED A NEW ARM IN `scaledAttackDamage` FOR THE SECOND FOLD:
+    the count evaluator is shared and the fold is attack.ts's, which is the whole
+    axis this union was built on.
     `damageCountersOnSelf` and `damageCountersOnOpponentActive` tally the SAME
     resource — `InPlayPokemon.damage ÷ 10` — off two different bodies, and they are
     two members rather than one member with a `side` field because every consumer
@@ -19445,7 +19539,21 @@ export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | nul
     twin. The fourth (D170, Tyranitar swsh10.5-043's bench-wide count) cost one
     more: the fold was here but the SOURCE was not, so it also bought a
     `DamageCountSource` member and an evaluator arm — the same shape D168 paid on
-    the additive reader. The arms are ordered to mirror `deriveAttackDamageBonus`
+    the additive reader.
+
+    🆕 ⚠️ **D423 IS D167's SHAPE ON THE OTHER BODY, AND IT ARRIVED AS A CORRECTION
+    TO A PINNED ABSENCE.** *"This attack does 20 damage for each damage counter on
+    your opponent's Active Pokémon."* — **3 Standard-legal printings** (Glalie
+    `sv06-052`, Flapple `sv08-139`/`sv08-210`) — cost one regex and one `if` for
+    D167's exact reason: the `×` fold was here and
+    `damageCountersOnOpponentActive` had been in the union with its own evaluator
+    arm since D168. What makes it worth a paragraph is that a suite rung had PINNED
+    this sentence as unprinted, on a census scoped to the local six-set catalog
+    while both cards live in `sv06`/`sv08`. **The claim was wrong when written, not
+    rotted** — see `OPPONENT_COUNTER_MULTIPLY`'s block above for the evidence that
+    separates the two, and `opponentCounterScaling.test.ts` for what replaced it.
+
+    The arms are ordered to mirror `deriveAttackDamageBonus`
     rather than by the order they were written; the regexes are mutually exclusive,
     so the order is legibility, not behaviour. */
 export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | null {
@@ -19467,6 +19575,22 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (retreatCost !== null) {
     const per = Number(retreatCost[1]);
     if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
+  // 🆕 D423 — the OPPONENT-SIDE damage-counter count on the `×` fold. Placed HERE,
+  // fourth, because the ADDITIVE reader puts `damageCountersOnOpponentActive`
+  // fourth (self counters → Prizes → Retreat Cost → the defender's counters), so
+  // the two readers over one `{per, count}` interface still read the same way down
+  // the page — and the members each reader has that the other does not
+  // (`bothSidesBenchCount` there, `damageCountersOnYourBench` here) then sit in the
+  // same slot as each other. The order is not observable: every pattern in this
+  // chain is whole-sentence anchored and mutually exclusive, so this is legibility,
+  // exactly as D167's block says it should be. Same `per >= 1` guard, and the only
+  // thing separating this arm from the first one above is the literal tail of its
+  // anchored sentence — `your opponent's Active Pokémon` for `this Pokémon`.
+  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);
+  if (opponentCounters !== null) {
+    const per = Number(opponentCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
   }
   // D170 — the BENCH-WIDE damage-counter count. Same `×` fold, same `per >= 1`
   // guard, a different ZONE: the only thing separating this arm from the first

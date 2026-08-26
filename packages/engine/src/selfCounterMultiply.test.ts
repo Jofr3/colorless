@@ -360,9 +360,6 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
       "Flip a coin. This attack does 30 damage for each damage counter on this Pokémon.",
       // trailing text
       "This attack does 30 damage for each damage counter on this Pokémon. Discard an Energy from this Pokémon.",
-      // the DEFENDER-side count — a real unread neighbour (Dedenne sv01-095,
-      // Espeon sv03-086, Bloodmoon Ursaluna sv06.5-025 print its "more" form)
-      "This attack does 30 damage for each damage counter on your opponent's Active Pokémon.",
       // the BENCH-wide count — ✅ READ SINCE D170 (Tyranitar swsh10.5-043 "Raging
       // Crash"), but this string is NOT that sentence: the printing says "on ALL OF
       // your Benched Pokémon" and `BENCH_COUNTER_MULTIPLY`'s literal tail requires
@@ -375,6 +372,34 @@ describe("deriveAttackDamageMultiplier — one regex, two amounts, an OLD count 
     ]) {
       expect(deriveAttackDamageMultiplier(near)).toBeNull();
     }
+  });
+
+  it("🛑 the DEFENDER-side twin is READ — and it must land on the OTHER count member", () => {
+    // 🆕 **D423 — RE-POINTED, BECAUSE THIS LINE'S SUBJECT MOVED SIDES.** This string
+    // sat in the near-miss list above under the caption *"a real unread neighbour"*,
+    // asserted null. It is read since D423 by `OPPONENT_COUNTER_MULTIPLY` (3
+    // Standard-legal printings — Glalie `sv06-052`, Flapple `sv08-139`/`sv08-210`),
+    // so a `toBeNull` there would now be false.
+    //
+    // ⚠️ **AND THE RE-POINTING KEEPS THE DISCRIMINATION THE OLD LINE CARRIED**, which
+    // is D418's second half rather than an afterthought. What that line ever proved is
+    // that `SELF_COUNTER_MULTIPLY` does not answer a sentence naming the OTHER body —
+    // and asserting `count.kind` rather than merely "not null" is what preserves it:
+    // a self-side tail widened off the literal `on this Pokémon.` would answer FIRST
+    // (it is arm one, this printing's arm is four) and hand `damageCountersOnSelf` to
+    // a printing whose counters are on the defender. Wrong body, right shape, no
+    // count moves — invisible to every census and wrong on every board.
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 30 damage for each damage counter on your opponent's Active Pokémon.",
+      ),
+    ).toEqual({ per: 30, count: { kind: "damageCountersOnOpponentActive" } });
+    // …and the self-side sentence still lands on the self-side member, which is the
+    // control that stops the line above passing because arm one stopped matching.
+    expect(deriveAttackDamageMultiplier(BALLOON_BLAST)).toEqual({
+      per: 30,
+      count: { kind: "damageCountersOnSelf" },
+    });
   });
 });
 

@@ -42,6 +42,21 @@ import {
 // Trevenant sv03-012's Ability "Forest Miasma" ("During Pokémon Checkup, if this
 // Pokémon is in the Active Spot, put 1 damage counter on your opponent's Active
 // Pokémon."), a PLACEMENT rather than a scaling clause, refused three times over.
+//
+// 🛑 🆕 **D423 — AND "TWO POPULATIONS" WAS THE RIGHT HEADING FOR THE WRONG PAIR.**
+// The two swept here are the LOCAL SIX-SET CATALOG and `FIXTURE_POOL`. The
+// population the ENGINE runs on is neither: it is `legal_standard = 1` (2,021 of
+// 3,786 rows / 20 sets), and against it the same literal returns **NINETEEN** rows,
+// not four — five distinct attack sentences on this count source. Every figure in
+// the block above is EXACT on the population it names and is a **FLOOR** against
+// the engine's. That is not a footnote here: a rung further down this file pinned
+// the multiply spelling as *"an ABSENCE … anywhere in the pool"* on exactly this
+// scope, and it was **wrong when it was written** — three Standard-legal printings
+// (Glalie `sv06-052`, Flapple `sv08-139`/`sv08-210`, both in sets the local catalog
+// has never held) were sitting in the legal column the whole time. D423 read them
+// with one regex and one `if`. **A SCOPED COUNT IS HONEST; A SCOPED COUNT WRITTEN
+// UP AS A UNIVERSAL IS A REFUSAL WITH NO EXPIRY DATE** — conventions.md's D413 rule,
+// paid here.
 // `FIXTURE_POOL` is a different population that also fields synthetic `fix-*`
 // bodies the catalog will never hold; swept for the same string before this slice
 // it returned ZERO rows — no card, no sentence, and no body whose damage had ever
@@ -92,11 +107,39 @@ const BURNING_VOICE = "This attack does 10 less damage for each damage counter o
 /** The self-side MULTIPLY twin (Drifloon sv01-089, Onix swsh10.5-036) — printed,
     unread, and refused here by the same literal tail. */
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
-/** The multiply twin of THIS family — no "more". Printed NOWHERE in the pool
-    (the D1 sweep returns three attack rows and all three carry "more"), so it is
-    an absence rather than an unread printing, and it is pinned as one. */
-const UNPRINTED_MULTIPLY =
+/** 🛑 **D423 — THIS CONSTANT'S DOC WAS FALSE FROM THE DAY IT WAS WRITTEN, AND ITS
+    OLD NAME (`UNPRINTED_MULTIPLY`) IS WHY NOBODY LOOKED.** It used to read *"Printed
+    NOWHERE in the pool (the D1 sweep returns three attack rows and all three carry
+    'more'), so it is an absence rather than an unread printing."* The sweep behind
+    that sentence was D168's, and D168's decision row names its own scope: *"measured
+    against the local D1 (2026-08-03, **978 cards / 6 sets**)"*. The multiply twin IS
+    printed — *"This attack does **20** damage for each damage counter on your
+    opponent's Active Pokémon."*, **3 Standard-legal printings** on Glalie `sv06-052`
+    and Flapple `sv08-139`/`sv08-210` — and `sv06` and `sv08` have never been among
+    those six sets. The assertion kept passing because the string it tested carries
+    `per = 30`, an amount nothing prints, so a TRUE assertion stood in for a FALSE
+    claim for the whole of its life.
+
+    **(a) WRONG WHEN WRITTEN, NOT (b) OVERTAKEN BY A RE-INGEST** — settled rather
+    than assumed. D168's four-row figure is EXACT against those six sets. The legal
+    attack column has not churned since: D219 re-derived every population denominator
+    to D187's digit (640 sentences / 1,732 units / 60,467 chars), `censusAtHead.test.ts`
+    has quoted that triple since D233, and `censusAttackCorpus.ts` committed it at
+    D274 (`a7e9a57`) with the `20` row already present. And D183 records that
+    `api.tcgdex.net` is refused by this runner's network policy, so no agent here
+    could have re-ingested anything. This is D413's *two populations, two answers*
+    biting a PINNED ABSENCE instead of a refusal.
+
+    The string is KEPT and RENAMED to what it actually is: the amount nothing prints
+    on a sentence shape that IS printed. It is now used to say something true and
+    falsifiable — the arm reads it, because a text parser serves the reprint the day
+    one is ingested (D187) — instead of to deny that the shape exists. */
+const UNPRINTED_AMOUNT_ON_A_PRINTED_SHAPE =
   "This attack does 30 damage for each damage counter on your opponent's Active Pokémon.";
+/** The amount that IS printed on that shape — 3 legal printings, read since D423 by
+    `deriveAttackDamageMultiplier` and driven in `opponentCounterMultiply.test.ts`. */
+const DAMAGE_BEAT =
+  "This attack does 20 damage for each damage counter on your opponent's Active Pokémon.";
 
 /** One seed for the whole suite. Nothing in this family flips a coin, every Active
     is placed by surgery, and the single flip in the deck (Espeon's index-1 "Psy
@@ -420,32 +463,84 @@ describe("deriveAttackDamageBonus — one regex, two amounts, a fifth count memb
       `${SECOND_BITE} Discard an Energy from this Pokémon.`,
       // a real Pokémon with a lookalike é would fall off the path silently
       SECOND_BITE.replace("Pokémon", "Pokemon"),
-      // the "less" spelling of THIS count source — unprinted in the pool, and
-      // refused here because a sign is a FOLD and this reader owns only one
+      // the "less" spelling of THIS count source — unprinted, and refused here
+      // because a sign is a FOLD and this reader owns only one.
+      // ⚠️ 🆕 D423 — **RE-MEASURED RATHER THAN INHERITED, BECAUSE IT SAT BESIDE A
+      // CLAIM THAT TURNED OUT FALSE.** The multiply absence pinned below this list
+      // was a six-set artefact; this one is not. `less damage for each damage counter
+      // on your opponent` returns **ZERO rows** across `attacks_json`,
+      // `abilities_json` and the flat `effect` column of the remote D1 (3,786 rows /
+      // 20 sets, 2026-08-24). It HOLDS on the population the engine runs on.
       SECOND_BITE.replace(" more ", " less "),
       // the BENCH-wide neighbour — ✅ READ SINCE D170, and this string differs from
       // the real printing (Tyranitar swsh10.5-043) on BOTH axes: it carries "more"
       // where the printing has no adjective, and it names the OPPONENT's Bench where
       // the printing says "all of YOUR Benched Pokémon". Unchanged and still null.
       "This attack does 10 more damage for each damage counter on your opponent's Benched Pokémon.",
+      // ⚠️ 🆕 D423 — RE-MEASURED WITH THE OTHERS: the opponent's Bench counted as
+      // COUNTERS is printed on ZERO rows in all three columns of the remote D1
+      // (2026-08-24), at either fold. That absence HOLDS too; only the multiply one
+      // did not.
+      //
       // Trevenant sv03-012's Ability, the one other catalog row in any text column
-      // carrying this possessive beside a damage counter — a PLACEMENT
+      // carrying this possessive beside a damage counter — a PLACEMENT.
+      // ⚠️ 🆕 D423 — "the one other" IS SIX-SET-SCOPED, like everything else in this
+      // block. Against the remote D1 the SINGULAR literal `damage counter on your
+      // opponent` still returns Trevenant as the only non-attack row, but the PLURAL
+      // spelling returns three more Abilities (`svp-129`, `svp-149`, `sv09-021`) and
+      // roughly twenty more attacks — and Trevenant itself is now
+      // `legal_standard = 0`. The three-way refusal below is unaffected; the word
+      // "one" is what needed the scope.
       "During Pokémon Checkup, if this Pokémon is in the Active Spot, put 1 damage counter on your opponent's Active Pokémon.",
     ]) {
       expect(deriveAttackDamageBonus(near)).toBeNull();
     }
   });
 
-  it("⚠️ the MULTIPLY twin of THIS family is an ABSENCE, not an unread printing", () => {
-    // The D1 sweep for `%damage counter on your opponent%` returns four rows: the
-    // three attacks here, all carrying "more", and Trevenant's Ability. There is no
-    // no-adjective printing of this count source anywhere in the pool — unlike the
-    // SELF-side one (Drifloon sv01-089, Onix swsh10.5-036), which is real, printed
-    // and unread. Pinned so that a slice which invents the multiply arm because "it
-    // is one regex away" is told here that it has no printing to serve.
-    expect(deriveAttackDamageMultiplier(UNPRINTED_MULTIPLY)).toBeNull();
-    expect(deriveAttackDamageBonus(UNPRINTED_MULTIPLY)).toBeNull();
-    expect(deriveAttackEffect(UNPRINTED_MULTIPLY)).toBeNull();
+  it("🛑 the MULTIPLY twin of THIS family IS PRINTED and IS READ — D423 retired the absence", () => {
+    // 🛑 WHAT THIS RUNG USED TO SAY, and why the replacement is not merely an
+    // inversion of it. The old title read *"the MULTIPLY twin of THIS family is an
+    // ABSENCE, not an unread printing"* and its comment claimed *"There is no
+    // no-adjective printing of this count source anywhere in the pool"*, on D168's
+    // SIX-SET sweep. Three Standard-legal printings say otherwise (see
+    // `UNPRINTED_AMOUNT_ON_A_PRINTED_SHAPE` above for the evidence that settles
+    // WHICH failure it was). The rung is re-pointed rather than deleted, and D418's
+    // second half is what decides its content: **after re-pointing, ask what the OLD
+    // claim could catch that the new one cannot.**
+    //
+    // The old claim's real discriminating power was on the ADDITIVE anchor — it
+    // asserted that a sentence WITHOUT "more" is refused by `deriveAttackDamageBonus`,
+    // which is what stops `OPPONENT_COUNTER_SCALE` quietly losing its adjective slot
+    // and swallowing the `×` printings into the wrong fold. That half is KEPT, on the
+    // amount that is actually printed. What is added is the positive it could never
+    // make. Both lines can go RED: drop ` more ` from `OPPONENT_COUNTER_SCALE` and the
+    // second reddens; delete `OPPONENT_COUNTER_MULTIPLY`'s arm and the first does.
+    expect(deriveAttackDamageMultiplier(DAMAGE_BEAT)).toEqual({
+      per: 20,
+      count: { kind: "damageCountersOnOpponentActive" },
+    });
+    expect(deriveAttackDamageBonus(DAMAGE_BEAT)).toBeNull();
+    expect(deriveAttackDamagePenalty(DAMAGE_BEAT)).toBeNull();
+    expect(deriveAttackEffect(DAMAGE_BEAT)).toBeNull();
+    // …and the ADDITIVE sentences this suite is about still land on the ADDITIVE
+    // reader, which is the control that stops the two `toBeNull`s above passing
+    // because `deriveAttackDamageBonus` stopped working altogether (D412's rule).
+    expect(deriveAttackDamageBonus(SECOND_BITE)?.per).toBe(10);
+    expect(deriveAttackDamageMultiplier(SECOND_BITE)).toBeNull();
+  });
+
+  it("…and an amount NOTHING prints is still claimed by the arm — a parser is not a list", () => {
+    // The constant this file used to call `UNPRINTED_MULTIPLY`, saying something
+    // true. `per = 30` on this shape is printed on no card in the 3,786-row remote
+    // D1 (2026-08-24, all three text columns), and the arm reads it anyway, because
+    // a deriver arm is a TEXT PARSER and serves every reprint of its sentence the day
+    // one is ingested — D187's rule, which is exactly what makes an arm worth more
+    // than a registry row. Stated here so a successor does not read the arm's reach
+    // as a census.
+    expect(deriveAttackDamageMultiplier(UNPRINTED_AMOUNT_ON_A_PRINTED_SHAPE)).toEqual({
+      per: 30,
+      count: { kind: "damageCountersOnOpponentActive" },
+    });
   });
 });
 

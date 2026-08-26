@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.324.0";',
+    find: 'export const engineVersion = "0.325.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18278,5 +18278,74 @@ export const MUTANTS: Mutant[] = [
     find: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: effect, then: [{ op: \"switchActive\" }] },",
     replace: "  if (ATTACK_MAY_SELF_SWITCH.test(effect)) {\n    return [\n      // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n      { op: \"optional\", note: \"Switch this Pokémon with 1 of your Benched Pokémon.\", then: [{ op: \"switchActive\" }] },",
     expectKilledBy: ["packages/engine/src/optionalSelfSwitch.test.ts", "packages/engine/src/derivedDrawAndGust.test.ts"],
+  },
+  // ── D423 — the OPPONENT-SIDE damage-counter count on the `×` FOLD: the multiply
+  //    twin of D168, ONE anchor and ONE `if`, and a CORRECTION to an absence that
+  //    `opponentCounterScaling.test.ts` had pinned in error since 2026-08-03. Five
+  //    rows, one per DECISION rather than one per line: the missing adjective, the
+  //    body the tail names, the count member returned, the zero guard, and D137's
+  //    apostrophe class. ⚠️ NO ROW FOR THE ARM'S PLACEMENT, and the omission is
+  //    DECLARED rather than left as a gap (D205): every pattern in
+  //    `deriveAttackDamageMultiplier`'s chain is `^…$`-anchored and mutually
+  //    exclusive, so moving this arm to any other slot is BEHAVIOUR-IDENTICAL — an
+  //    unobservable mutation is not a mutation (D420), and a row for it would report
+  //    a suite gap that does not exist. The placement is a LEGIBILITY decision and is
+  //    asserted as one, by §2's "KEEPS every older count source" rung driving the
+  //    three arms above it and the three below. ──
+  {
+    id: "D423-multiply-anchor-admits-the-additive-twin",
+    decision: "D423",
+    what: "\u{1F6D1} THE DEFECT THE WHOLE SLICE TURNS ON: the missing adjective stops being REQUIRED, so `OPPONENT_COUNTER_MULTIPLY` also matches D168's *\"…10 more damage for each damage counter on your opponent's Active Pokémon.\"*. This is the exact mistake an author widening a pattern to \"cover the family\" makes, and it is silent in every count — `BUILT.attack` does not move, because the additive reader already claimed those seven printings and runs FIRST in attack.ts's ladder. What breaks is the INVARIANT the ladder's guard is free on: two of the three scaling readers now answer one string, so the file's standing `at most one reader answers any attack` sweep is the thing that catches it",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) damage for each damage counter on your opponent['’]s Active Pokémon\\.$/;",
+    replace: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) (?:more )?damage for each damage counter on your opponent['’]s Active Pokémon\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/opponentCounterMultiply.test.ts",
+      "packages/engine/src/opponentCounterScaling.test.ts",
+      "packages/engine/src/selfCounterMultiply.test.ts",
+    ],
+  },
+  {
+    id: "D423-multiply-anchor-names-the-wrong-body",
+    decision: "D423",
+    what: "the anchor's TAIL is `SELF_COUNTER_MULTIPLY`'s, copied verbatim from the arm three lines up — so the new pattern is byte-identical to a pattern that already exists and the printed sentence matches NOTHING. A duplicate-by-copy is the mistake this file's own doc block warns about (D416: copying a function copies its anchors), and the failure mode is the loud one: the sentence falls back to `ATTACK_EFFECT_SKIPPED` and the slice ships built-but-dead",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) damage for each damage counter on your opponent['’]s Active Pokémon\\.$/;",
+    replace: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) damage for each damage counter on this Pokémon\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/opponentCounterMultiply.test.ts",
+      "packages/engine/src/opponentCounterScaling.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D423-multiply-anchor-drops-the-curly-apostrophe",
+    decision: "D423",
+    what: "D137's `['\u2019]` class narrows to the ASCII `'` alone. \u26A0\uFE0F **INVISIBLE AGAINST TODAY'S CATALOG AND AGAINST EVERY BOARD IN THIS SLICE'S OWN SUITE** — all three printings spell U+0027 (byte-verified), so the arm keeps working and no census figure moves. It is caught only by `clauseApostrophe.test.ts`, whose entire job is to re-derive every apostrophe-bearing fixture sentence with the possessive rewritten to U+2019 and require every reader to answer IDENTICALLY. The class exists against a re-ingest that normalises punctuation, and this row is the only thing that says so out loud",
+    file: "packages/engine/src/effects.ts",
+    find: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) damage for each damage counter on your opponent['’]s Active Pokémon\\.$/;",
+    replace: "const OPPONENT_COUNTER_MULTIPLY =\n  /^This attack does (\\d+) damage for each damage counter on your opponent's Active Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D423-multiply-arm-returns-the-self-member",
+    decision: "D423",
+    what: "\u{1F6D1} THE MIRROR DEFECT, AND IT IS THE FIRST ARM'S REAL CODE COPIED VERBATIM: the new arm returns `damageCountersOnSelf` — what `SELF_COUNTER_MULTIPLY`'s arm four lines above returns — so the fold reads the ATTACKER's counters instead of the DEFENDING body's. The sentence still resolves, `BUILT.attack` still steps by 3, the census sweeps still find two producers, the log crumb still renders and the damage is still `per × counters`. **ONLY THE BODY IS WRONG**, and on a pristine attacker it is wrong in the direction of DEALING NOTHING — which is exactly what a correct build does against a pristine DEFENDER, so half this suite's boards agree with the mutant",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };",
+    replace: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnSelf\" } };",
+    expectKilledBy: [
+      "packages/engine/src/opponentCounterMultiply.test.ts",
+      "packages/engine/src/opponentCounterScaling.test.ts",
+    ],
+  },
+  {
+    id: "D423-multiply-arm-drops-the-zero-guard",
+    decision: "D423",
+    what: "the `per >= 1` guard every arm in both scaling families carries is dropped, so a printed `0` is CLAIMED and simulated as a clause that can never do anything. On the `×` fold that is worse than on the additive one: `scaledBase` is dropped for a multiply, so a `0`-per printing would deal literally nothing while reporting itself as fully simulated, and the loud `ATTACK_EFFECT_SKIPPED` path — the only thing that would tell a reader the sentence is unread — is silenced",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };",
+    replace: "  const opponentCounters = OPPONENT_COUNTER_MULTIPLY.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    return { per, count: { kind: \"damageCountersOnOpponentActive\" } };",
+    expectKilledBy: ["packages/engine/src/opponentCounterMultiply.test.ts"],
   },
 ];

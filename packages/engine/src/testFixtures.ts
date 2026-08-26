@@ -12967,6 +12967,108 @@ export const FIXTURE_POOL: Record<string, Card> = {
     evolveFrom: "fix-gougingfire ex",
     attacks: [{ cost: ["Fire"], name: "Ember Wake", damage: 50 }],
   } satisfies Card,
+
+  /** 🆕🆕 **D423 — GLALIE `sv06-052`, THE `×` TWIN OF D168's OPPONENT-SIDE COUNT.**
+      Its INDEX-0 "Damage Beat" ({W}, printed **`20×`**) prints *"This attack does
+      20 damage for each damage counter on your opponent's Active Pokémon."* — the
+      NO-ADJECTIVE spelling of the sentence Dedenne/Espeon/Ursaluna print with
+      "more", and the sentence a suite rung had PINNED as unprinted since D168.
+
+      ⚠️ **A `fix-*` KEY WITH A REAL CARD BEHIND IT, D421's SITUATION EXACTLY.** The
+      id is known and so is every scalar — remote D1 `luminous`, 2026-08-24,
+      `legal_standard = 1`, regulation mark H, Uncommon, illustrator Oku. What is
+      missing is the ROW: this container's local D1 holds six sets
+      (sv01/sv02/sv03/sv06.5/sve/swsh10.5) and **no `sv06`**, and
+      `catalogManifest.test.ts` (c) asserts `CATALOG_MANIFEST.absent` is EMPTY, so a
+      real-id fixture would REDDEN that guard instead of strengthening this one.
+      **Every SCALAR below is TRANSCRIBED**: 120 HP, Stage 1 from Snorunt, {W},
+      retreat 2, ×2 Metal, NO Resistance, NO Ability, both attacks at their printed
+      indices with printed costs, damage markers and effect text.
+      🛑 **THAT THE SET IS ABSENT LOCALLY IS THE WHOLE DEFECT THIS SLICE REPAIRS**,
+      not an inconvenience: D168 swept the six-set catalog, found four rows, and
+      wrote the absence down as universal.
+
+      🛑 **TWO ATTACKS, AND INDEX 1 IS A DIFFERENT LIVE MECHANISM.** "Crazy
+      Headbutt" ({W}{C}{C}, 140) prints *"Discard an Energy from this Pokémon."* —
+      an already-read `discardEnergy` program (24 legal printings) — so this body
+      asserts BOTH halves of the index negative at once: index 0's fold must not
+      leak into a simulated sibling, and it must not displace one. Onix
+      `swsh10.5-036`'s role in `selfCounterMultiply.test.ts`, on the other seat.
+
+      A WATER attacker, which is what makes `fix-water-weak` (200 HP, ×2 Water) the
+      pre-W/R ORDER witness for this fold: the `×` result is what doubles, and there
+      is no printed base underneath it to double as well. */
+  "fix-glalie": battler("fix-glalie", {
+    name: "fix-glalie",
+    types: ["Water"],
+    stage: "Stage1",
+    evolveFrom: "Snorunt",
+    hp: 120,
+    retreat: 2,
+    weaknesses: [{ type: "Metal", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Water"],
+        name: "Damage Beat",
+        effect:
+          "This attack does 20 damage for each damage counter on your opponent's Active Pokémon.",
+        damage: "20×",
+      },
+      {
+        cost: ["Water", "Colorless", "Colorless"],
+        name: "Crazy Headbutt",
+        effect: "Discard an Energy from this Pokémon.",
+        damage: 140,
+      },
+    ],
+  }),
+
+  /** 🆕🆕 **D423 — FLAPPLE `sv08-139`, THE SAME SENTENCE ON A SECOND CARD.** Its
+      INDEX-0 "Acidic Spit" ({C}, printed **`20×`**) prints the sentence Glalie
+      prints, byte for byte. That duplication is the point and is D168's own reason
+      re-used one fold over: this family's 3 legal printings are only ONE distinct
+      sentence, so a reader keyed on anything but the TEXT — an id, a type, a stage,
+      a cost — would satisfy a one-card suite and fail here. Glalie is {W} at 120 HP
+      with a Weakness; this is {C} at 80 HP with none.
+
+      ⚠️ **THE THIRD PRINTING IS A RARITY, NOT A THIRD BODY.** `sv08-210` is this
+      card at Illustration Rare — same 80 HP, same Dragon type, same retreat 1, same
+      two attacks with the same costs, damage and effect text, differing only in
+      `rarity`, `illustrator` and `variants_json` (remote D1, 2026-08-24, read
+      column by column). So the family is **3 printings / 2 cards / 1 sentence**,
+      which is D421's "five printings were one card in five rarities" finding at
+      one third the multiplier — and it is why there is no `fix-flapple-ir`: a
+      second fixture would field the same bytes and prove nothing the text path
+      does not already prove.
+
+      ⚠️ **A `fix-*` KEY FOR THE SAME REASON GLALIE HAS ONE** (`sv08` is not among
+      the local six sets). Every scalar transcribed: 80 HP, Stage 1 from Applin,
+      Dragon, retreat 1, **NO Weakness and NO Resistance** (both `null` on the row),
+      no Ability, two attacks at their printed indices.
+
+      🛑 **ITS INDEX 1 CARRIES NO `effect` KEY AT ALL** — "Speed Dive" ({G}{R}, 70)
+      — which is the OTHER shape of the sibling negative: a fold keyed on the CARD
+      rather than on the declared attack's text would turn this printed 70 into
+      `20 × counters`. Glalie's index 1 answers the "displaces a live sibling"
+      half; this one answers the "claims a bare sibling" half. */
+  "fix-flapple": battler("fix-flapple", {
+    name: "fix-flapple",
+    types: ["Dragon"],
+    stage: "Stage1",
+    evolveFrom: "Applin",
+    hp: 80,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Acidic Spit",
+        effect:
+          "This attack does 20 damage for each damage counter on your opponent's Active Pokémon.",
+        damage: "20×",
+      },
+      { cost: ["Grass", "Fire"], name: "Speed Dive", damage: 70 },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -20534,4 +20636,62 @@ export const UNTIL_LEAVES_ACTIVE_DECK = deckOf({
   "fix-fire-energy": 10, // Basic {R} — {R}{R} of Blaze Blitz, {R} of Heat Blast, and the retreat
   "fix-energy": 13, // Basic {C} — the {C} of both costs, and the retreat
   "fix-titan": 28, // 340 HP neutral Basic, NO attacks — DOMINANT (mulligan-free), filler and promote target
+});
+
+/** 🆕🆕 **D423's OPPONENT-SIDE `×`-FOLD deck (`opponentCounterMultiply.test.ts`).**
+    Its own 60, for `SELF_COUNTER_MULTIPLY_DECK`'s reason and not a new one: every
+    deck in this family deals its board off its own shuffle, so adding a card to a
+    neighbour's list moves every seeded board in it. **`OPPONENT_COUNTER_DECK` was
+    deliberately left alone** — it is D168's, it is the ADDITIVE twin's, and D412's
+    standing warning in `conventions.md` is exactly about paying a slice's cost out
+    of a sibling's fixture.
+
+    ⚠️ **THE COUNT IS ONLY OBSERVABLE ON A DAMAGED DEFENDER, AND THE `×` FOLD DROPS
+    THE PRINTED BASE — so a pristine defender takes NOTHING AT ALL.** That is the
+    board this deck exists to make readable rather than fatal: `fix-titan` (340 HP,
+    NO attacks, no Weakness or Resistance) can hold twelve counters and still
+    survive `20 × 12 = 240`, which is what lets the counter ladder be read as
+    arithmetic instead of as a Knock Out.
+
+    ⚠️ **AND THE ORDER WITNESS HAS TO BE WEAK TO THE ATTACKER'S TYPE WHILE ALREADY
+    CARRYING COUNTERS.** `fix-water-weak` (200 HP, ×2 Water) is that body for Glalie:
+    at 3 counters it is `(0 + 60) × 2 = 120`, and a fold that leaked the printed
+    "20×" base would report `(20 + 60) × 2 = 160` — two observables moving together,
+    on a body whose 200 HP survives the right answer (30 + 120) and dies to nothing.
+    Flapple is DRAGON and the pool prints no Dragon Weakness at all, which is stated
+    rather than worked around: its job here is the SECOND CARD on one sentence, not
+    a second W/R board.
+
+    **SEED-FREE.** Neither printing flips a coin, every Active is placed by SURGERY
+    (both attackers are Stage 1 and are never evolved into, so no Snorunt and no
+    Applin is carried), and the only damage in the suite is placed with `setDamage`.
+
+    Everything else is a body chosen to make exactly one claim observable:
+      • `fix-glalie` — "Damage Beat" ({W}, INDEX 0, `20×`). Its INDEX-1 "Crazy
+        Headbutt" ({W}{C}{C}, 140, a live `discardEnergy`) is the sibling that must
+        keep its OWN mechanism, which is why there is Water and Colorless enough to
+        pay a three-symbol cost;
+      • `fix-flapple` — "Acidic Spit" ({C}, INDEX 0, `20×`), the SAME sentence on a
+        second card at a second cost. Its INDEX-1 "Speed Dive" ({G}{R}, 70) carries
+        NO effect key and is the bare sibling the fold must not claim — which is the
+        only reason this deck holds Grass and Fire at all;
+      • `sv01-095` Dedenne — "Second Bite" ({P}{C}, INDEX 0, `30+`), D168's ADDITIVE
+        twin on the IDENTICAL count source. It is in this deck so the two folds can
+        be driven off ONE board at ONE counter total, which is the sharpest thing
+        that can go wrong here and the one no single-sentence assertion can see;
+      • `fix-water-weak` (200 HP, ×2 Water) — the pre-W/R ORDER board;
+      • `fix-titan` (340 HP, NO attacks, no W/R) — the mulligan-free starter, the
+        bench filler and the arithmetically clean defender every unmodified number
+        is measured against. */
+export const OPPONENT_COUNTER_MULTIPLY_DECK = deckOf({
+  "fix-glalie": 4, // "Damage Beat" idx 0 ({W}, "20×") — the sentence under test
+  "fix-flapple": 4, // "Acidic Spit" idx 0 ({C}, "20×") — the SAME sentence, second card
+  "sv01-095": 4, // Dedenne "Second Bite" — the ADDITIVE twin on the same count source
+  "fix-water-weak": 2, // 200 HP, ×2 Water — the pre-W/R ORDER board for Damage Beat
+  "fix-titan": 22, // 340 HP neutral Basic, NO attacks — starter, filler, clean defender
+  "fix-water-energy": 8, // {W} — Damage Beat, and the typed symbol of Crazy Headbutt
+  "fix-psychic-energy": 4, // {P} — Second Bite's typed symbol
+  "fix-grass-energy": 3, // {G} — Speed Dive's first symbol
+  "fix-fire-energy": 3, // {R} — Speed Dive's second symbol
+  "fix-energy": 6, // Colorless Basic — every {C} in the deck
 });
