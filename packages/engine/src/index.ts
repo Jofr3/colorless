@@ -17340,7 +17340,109 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.246.0 → **0.247.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.326.0";
+/** 🆕🆕 **0.326.0 → 0.327.0 — D425, THE OWN-SIDE BENCH-WIDE SPREAD.**
+
+    *"This attack also does {N} damage to each of **your** Benched Pokémon.
+     (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **3 sentences /
+    5 legal printings** (10 ×3, 20 ×1, 30 ×1), measured over `legalAttackCorpus()`'s
+    640 sentences / 1,732 printings.
+
+    🛑 **ZERO NEW ANCHORS AND ZERO NEW READERS. THE POSSESSIVE BECAME A CAPTURE.**
+    `SPREAD_EACH_BENCH` has read the opponent-side twin since the op existed; D425
+    replaced the literal `your opponent's` with `(your opponent['’]s|your)` and the
+    arm resolves `target` off group 2. A second regex would have been this one with
+    two words changed — D416's copied-function hazard — and would have let an
+    "also" rider or an apostrophe class drift onto one wording and not the other.
+
+    🛑 **THE MECHANISM THE SENTENCE DOES NOT ADVERTISE: THIS IS THE FIRST ATTACK
+    WHOSE OWN DAMAGE CAN KNOCK OUT ITS USER'S OWN POKÉMON AND HAND THE OPPONENT A
+    PRIZE.** The engine needed **no new code** for any of it, and that was DRIVEN on
+    real boards rather than reasoned from these paragraphs (`ownBenchSpread.test.ts`):
+
+      • `finishAttack` already sweeps `[defender, attacker]`, so the attacker's own
+        Bench is in the §8.1 batch;
+      • `collectKnockOutPass` already owes each Knock Out's Prize to
+        `otherSeat(entry.ref.seat)`, so a self-inflicted benched KO parks on
+        `ko:takePrizes` for the OPPONENT and their row goes 6 → 5;
+      • `knockOut`'s benched branch already queues NO promotion — the Bench
+        compacts and no spot is left empty;
+      • the game ENDS this way: an opponent on their last Prize wins outright off
+        the attacker's self-inflicted Knock Out, `reason: "prizesTaken"`;
+      • D189's invariant survives. `spreadDamage` only ever touches `side.bench`, so
+        it cannot move the actor off the Active Spot; the attacker keeps its
+        `usedAttack` stamp with its own board a body shorter.
+
+    ⚠️ **AND THE ONE THING THAT *DID* NEED A MECHANISM WAS THE LOG, WHICH THE
+    SENTENCE ADVERTISES EVEN LESS.** `log.ts` rendered every `DAMAGE_DEALT` row
+    under `otherSeat(event.seat)` — a hand-derived closed-world assumption meaning
+    *"whoever was damaged, the OTHER player did it"* (D222's shape exactly). It held
+    for every producer this engine had and it held BY ACCIDENT: all four write sites
+    aimed across the table, and `damageSelf` — the one op that does not — emits
+    `COUNTERS_PLACED` rather than this row. An own-side bench spread is the first
+    `DAMAGE_DEALT` whose dealer and damaged owner are the SAME seat, and under the
+    old line **the log credited the DEFENDER with damage the ATTACKER had just done
+    to its own Bench.** So the event gained a REQUIRED `by: Seat`.
+
+    🛑 **REQUIRED RATHER THAN AN OPTIONAL `selfInflicted` RIDER, ON D421's OWN TEST.**
+    An optional key must be chosen so that LOSING it is detectable; a lost rider here
+    degrades into exactly the plausible-looking wrong attribution above, which is the
+    failure mode D421 named ("a widening that degrades into plausible behaviour will
+    be mis-read for a year"). A required field makes a future damage site that
+    forgets it a COMPILE ERROR. It equals `otherSeat(seat)` on every pre-D425 board,
+    so every shipped log row renders byte-identically — asserted, not claimed.
+
+    ⚠️ **THE PRICE, MECHANISMS AND SITES COUNTED SEPARATELY (D423), AND COUNTED
+    AFTER THE SWEEP RATHER THAN BEFORE IT.** FIVE mechanisms:
+
+      1. `spreadDamage.target` widened from a singleton to a union;
+      2. `SPREAD_EACH_BENCH`'s possessive turned into a capture, plus the side
+         ternary in the arm that reads it;
+      3. the interpreter arm reading `op.target`, plus `spreadDamage` taking a
+         VICTIM SEAT instead of hoisting `otherSeat(ctx.seat)`;
+      4. `DAMAGE_DEALT.by`, REQUIRED, at all four damage write sites;
+      5. the log rendering under the dealer instead of deriving it.
+
+    Against **94 SITES ACROSS 34 FILES**, plus one new suite. 16 are engine code;
+    **58 are census/population figures across 13 test files**; 13 are the version
+    tax; 5 are re-pointed rungs; 2 are fixtures.
+
+    🛑 **SITES ARE NOT MECHANISMS, FOR THE FOURTH SLICE RUNNING** (D421 by state
+    maintenance, D423 and D424 by census bookkeeping, D425 by both). And this
+    slice's first estimate of its OWN blast radius, written into this very block
+    before the sweep finished, said *"57 sites in 21 files, 26 of them census
+    literals in 14 files"* — wrong on every figure and wrong in the direction that
+    under-prices. It is corrected here rather than quietly replaced, because
+    **a doc block's justification is a claim and rots like a count, including the
+    one you just wrote** (D414).
+
+    ⚠️ **THE TWO SHAPES THAT COST THE MOST TO FIND, BOTH PREDICTED BY D423/D424:**
+    the BARE-LITERAL OPERAND `343 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS -
+    COMPOUND_ATTACK_UNITS` — not a `toBe(N)`, so no grep for the moving figure names
+    it and it was located by RUNNING the suite — and an 11-rung nested prefix chain
+    in `opponentResistanceBonus.test.ts`, edited at the FRONT and never at the end.
+
+    ⚠️ **AND THE VERSION TAX MOVED AGAIN, FOR A FOURTH SLICE RUNNING.** D424 measured
+    9 assertions / 12 sites; D425 measures **10 assertions / 13 sites** — nine
+    `engineVersion` reads, one `manifest.version` read, `packages/engine/package.json`,
+    this declaration, and `D275`'s mutant anchor (re-pointed in the same commit as
+    the bump, as every slice since D386 has done).
+
+    ⚠️ **NOTHING PERSISTED MOVES, AND IT WAS DRIVEN BOTH DIRECTIONS RATHER THAN
+    ARGUED.** `spreadDamage` NEVER PARKS — its interpreter arm returns
+    `{ done: … }` unconditionally — so the op can never appear in
+    `EffectContinuation.pendingOp`, which is the only place in `MatchRecord.state`
+    an `EffectOp` is written at all. And even where it could: widening a REQUIRED
+    field's type to admit MORE values is D125's widening test, not D309's rename
+    case — a v26 record holding `{op:"spreadDamage", target:"opponentBench"}` means
+    under this deploy exactly what it meant under the last, because the value it
+    carries is still in the union and still resolves to the opponent's Bench. The
+    `by` field on `DAMAGE_DEALT` is invisible to the constant for a different
+    reason: `MatchRecord` persists `state` and the already-RENDERED
+    `log: SeatLogEntry[]`, never raw events.
+
+    engineVersion 0.326.0 → **0.327.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.327.0";
 
 export type {
   ApplyResult,

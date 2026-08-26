@@ -115,12 +115,43 @@ export type GameEvent =
       0. `weakness`/`resistance` are the PARSED printed modifiers as applied
       (modern weakness multiplies ×2, the old-era prints add +20, resistance
       subtracts — cards.ts DamageModifier); null = did not apply.
-      `seat`/`uid` name the DEFENDER (the seat owns the uid, as everywhere),
-      `dealt` what this attack added and `damage` the defender's cumulative
-      total after. */
+      `seat`/`uid` name the DAMAGED body (the seat owns the uid, as everywhere),
+      `dealt` what this attack added and `damage` that body's cumulative
+      total after.
+
+      🆕🆕 **D425 — `by` NAMES THE SEAT THAT DEALT IT, AND IT IS REQUIRED BECAUSE THE
+      ONE READER THAT NEEDED IT WAS DERIVING IT (D222's rule on a log row).**
+      `log.ts` rendered this row under `otherSeat(event.seat)` — a hand-spelled
+      closed-world assumption meaning *"whoever was damaged, the OTHER player did
+      it"*. That held for every producer this engine had, and it held by ACCIDENT:
+      all four write sites aimed across the table, and `damageSelf` — the one op
+      that does not — emits `COUNTERS_PLACED`, never this row.
+
+      🛑 **D425's own-side bench spread is the first `DAMAGE_DEALT` whose `seat` IS
+      the attacker's**, and under the old line the log credited the DEFENDER with
+      damage the ATTACKER had just done to its own Bench. A false row, in the
+      direction that misreads the board.
+
+      ⚠️ **REQUIRED RATHER THAN AN OPTIONAL `selfInflicted` RIDER, on D421's test:
+      an optional key must be chosen so that LOSING it is detectable, and a lost
+      rider here degrades into exactly the plausible-looking wrong attribution
+      above.** A required field makes a new damage site that forgets it a COMPILE
+      ERROR instead. It is `otherSeat(seat)` on every pre-D425 board, so every
+      shipped log row renders byte-identically — asserted in `ownBenchSpread.test.ts`
+      rather than claimed here.
+
+      ⚠️ **NOTHING PERSISTED MOVES.** `MatchRecord` holds `state` and the already-
+      RENDERED `log: SeatLogEntry[]`; raw events are transient inputs to
+      `logFromEvents` and are never written. So this field is invisible to
+      `MATCH_RECORD_VERSION`, which stays 26. */
   | {
       type: "DAMAGE_DEALT";
       seat: Seat;
+      /** The seat whose Pokémon DEALT this damage — the attacker, or the
+          controller of the Ability that placed it. Equal to `otherSeat(seat)` on
+          every board printed before D425, and NOT equal to it on an own-side
+          bench spread. */
+      by: Seat;
       uid: string;
       base: number;
       /** HP the attack's own printed damage-scaling clause added to `base`

@@ -4187,15 +4187,35 @@ export type EffectOp =
           not. */
       fromBench?: number;
     }
-  /** Spread damage (§8.5): place `amount` HP of damage on EACH of the
-      opponent's Benched Pokémon. Weakness/Resistance NEVER apply to Benched
-      Pokémon, so this is flat. A SECONDARY damage clause, distinct from the
-      attack's main numeric damage; the interpreter only PLACES it (one
-      DAMAGE_DEALT per benched Pokémon) — the Knock Out check runs afterwards in
-      the attack epilogue (attack.ts finishAttack), which sweeps the whole
-      board, so the interpreter still never KOs or touches the flow tail. This
-      is what the M4 KO generalization off the Active exists to reach. */
-  | { op: "spreadDamage"; target: "opponentBench"; amount: number }
+  /** Spread damage (§8.5): place `amount` HP of damage on EACH Benched Pokémon of
+      the side `target` names. Weakness/Resistance NEVER apply to Benched Pokémon,
+      so this is flat. A SECONDARY damage clause, distinct from the attack's main
+      numeric damage; the interpreter only PLACES it (one DAMAGE_DEALT per benched
+      Pokémon) — the Knock Out check runs afterwards in the attack epilogue
+      (attack.ts finishAttack), which sweeps the whole board, so the interpreter
+      still never KOs or touches the flow tail. This is what the M4 KO
+      generalization off the Active exists to reach.
+
+      🆕🆕 **D425 — `target` WAS THE SINGLETON `"opponentBench"` AND IS NOW A UNION,
+      BECAUSE THE PRINTED SENTENCE COMES IN BOTH POSSESSIVES.** *"This attack also
+      does {N} damage to each of YOUR Benched Pokémon."* is 3 sentences / 5 legal
+      printings (10 ×3, 20 ×1, 30 ×1 — `censusAttackCorpus.ts`), and until D425 the
+      field was DEAD: the interpreter's arm read `op.amount` and never `op.target`,
+      so the one value the type admitted was documentation rather than a switch.
+      Widening it is what forces the arm to read it.
+
+      🛑 **AND THE SIDE IS THE MECHANISM THE SENTENCE DOES NOT ADVERTISE.** Damaging
+      your OWN Bench can Knock Out your OWN Pokémon, and §8.1 owes that Prize to the
+      OPPONENT. Every producer before D425 hit the other side of the table, so the
+      sweep's own-side path had never been reached from an attack's own damage — it
+      is reached now, and `ownBenchSpread.test.ts` drives the Prize, the game end and
+      the promotion question rather than arguing them. The engine needed NO new
+      mechanism for any of the three: `finishAttack` already sweeps
+      `[defender, attacker]`, `collectKnockOutPass` already owes each Knock Out's
+      Prize to `otherSeat(entry.ref.seat)`, and `knockOut`'s benched branch already
+      queues no promotion. All three are DRIVEN there rather than inherited from
+      this paragraph. */
+  | { op: "spreadDamage"; target: "opponentBench" | "yourBench"; amount: number }
   /** 🆕 D319 — Put `amount` HP of damage counters on **THAT POKÉMON**: the body
       the WATCHED action was just performed on, carried as `EffectContext.subjectUid`.
       Team Rocket's Ampharos sv10-074 "Darkest Impulse" (*"…put 4 damage counters on
@@ -10077,8 +10097,30 @@ const SELF_RECOVERS_ALL = /^This Pokémon recovers from all Special Conditions\.
 // for both wordings, unlike the snipe family where "1 of" vs "each of" pick
 // genuinely different ops (damageChosen vs spreadDamage) — here the shape after
 // "does" is identical, so a separate `ALSO_` regex would be a redundant twin.
+// 🆕🆕 **D425 — THE POSSESSIVE IS A CAPTURE NOW, NOT A LITERAL, AND THAT IS THE
+// WHOLE SLICE.** The own-side twin — *"This attack also does {N} damage to each of
+// YOUR Benched Pokémon."* — is 3 sentences / **5 legal printings** (10 ×3, 20 ×1,
+// 30 ×1; measured over `legalAttackCorpus()`'s 640 sentences / 1,732 printings, the
+// `legal_standard = 1` population). It differs from the shipped opponent-side form
+// in exactly ONE token, so a second `SPREAD_EACH_YOUR_BENCH` regex would have been
+// a copy of this one with two words changed — and D416's rule says a copied
+// function copies its anchors and goes QUIET rather than red. One anchor with the
+// side in group 2 cannot drift: an "also" rider, an apostrophe class or a W/R tail
+// added to one wording is added to both by construction.
+//
+// ⚠️ **ORDER IN THE ALTERNATION IS DELIBERATE.** `your opponent['’]s` is tried
+// first; a leading bare `your` would match the prefix of *"your opponent's"* and
+// then fail at `Benched`, so the two are unambiguous either way — but the longer
+// branch first says so without relying on backtracking to rescue it.
+//
+// ⚠️ **NO NEW APOSTROPHE SLOT.** The own-side sentence carries NO possessive at
+// all (*"each of your Benched"*), so its ONLY apostrophe is `Don't` in the W/R
+// parenthetical — and that byte was measured with `hexdump`, not remembered: the
+// corpus holds `0x27` (U+0027 APOSTROPHE), never U+2019. The `['’]` class is kept
+// on both slots for the family's standing reason (a re-ingest could curl them),
+// which is exactly what D421 got wrong from memory and D425 checked.
 const SPREAD_EACH_BENCH = new RegExp(
-  `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon\\.` +
+  `^This attack (?:also )?does (\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 // The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
@@ -16704,9 +16746,22 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //    The optional "also" rider (Cetoddle sv02-053 "Avalanche" — 30 to the
   //    Active, then 10 to each Bench) shares this case: the main hit rides the
   //    attack's `damage` field, this clause is its secondary bench spread.
+  //    🆕🆕 D425 — AND *"each of YOUR Benched Pokémon"* rides the same arm, with the
+  //    possessive as group 2. Krookodile `sv01-117` "Earthquake" (180 + 30 to its own
+  //    Bench) and Tyranitar `swsh10.5-043` "Earthquake" (180 + 20) are both already in
+  //    `FIXTURE_POOL` and were both carried as DECLARED-UNSIMULATED siblings until this
+  //    slice; the 10 is 3 more printings. This is the first attack in the engine whose
+  //    own damage can Knock Out its user's OWN Pokémon and hand the OPPONENT a Prize.
   match = SPREAD_EACH_BENCH.exec(effect);
   if (match !== null) {
-    return [{ op: "spreadDamage", target: "opponentBench", amount: Number(match[1]) }];
+    // 🆕🆕 D425 — THE SIDE IS READ OFF THE PRINTED POSSESSIVE, group 2, and it is
+    // the one thing in this arm a reader cannot see from the outside. A build that
+    // returned `"opponentBench"` unconditionally still derives, still passes every
+    // shipped opponent-side case, and turns 5 printings into an attack that damages
+    // the WRONG SIDE OF THE TABLE — which is why the ternary carries a mutant row of
+    // its own (`D425-spread-side-flips`) rather than a comment saying it is careful.
+    const side = match[2] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
+    return [{ op: "spreadDamage", target: side, amount: Number(match[1]) }];
   }
 
   // 6b. "This attack does N damage to 1 of your opponent's Benched Pokémon for

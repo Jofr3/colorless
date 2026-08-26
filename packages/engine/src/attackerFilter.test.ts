@@ -941,6 +941,7 @@ describe("the log — rendered under BOTH seats and READ, not copied", () => {
         {
           type: "DAMAGE_DEALT",
           seat: "p2",
+          by: "p1", // 🆕🆕 D425 — the dealer, required on this row since the own-side spread.
           uid: "u",
           base: 50,
           weakness: null,

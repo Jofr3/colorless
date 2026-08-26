@@ -13211,6 +13211,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+
+  /** 🆕🆕 **D425 — THE OWN-SIDE BENCH SPREAD, one constructed body carrying BOTH
+      possessives of one printed shape.**
+
+      🛑 **THE CARD IS SYNTHETIC AND THE TWO SENTENCES ARE NOT.** Both are
+      transcribed byte-for-byte off `censusAttackCorpus.ts` — the committed
+      `legal_standard = 1` attack column, 640 sentences / 1,732 printings:
+
+        · index 0 — *"This attack also does 10 damage to each of your Benched
+          Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+          (corpus line 516, **3 legal printings**, the amount D425 collects that no
+          existing fixture carried);
+        · index 1 — *"This attack also does 10 damage to each of your opponent's
+          Benched Pokémon. (Don't apply Weakness and Resistance for Benched
+          Pokémon.)"* (corpus line 517, **1 legal printing**, shipped since the op
+          existed).
+
+      ⚠️ **WHY THE TWO ARE ON ONE BODY: THE SIDE IS THE ONLY DIFFERENCE, SO THE SIDE
+      IS THE ONLY THING A BOARD CAN BE MEASURING.** Same cost, same printed damage,
+      same amount, same attacker, same board, two indices — a build that resolved
+      `target` to the wrong bench passes every single-index probe in the repo and
+      fails the pair. That is the defect a reader cannot see, and it is why this
+      fixture is a PAIR rather than a card.
+
+      ⚠️ **THE CARRIER IDS FOR THE 10 ARE NOT RECORDED HERE, AND THAT IS STATED
+      RATHER THAN INVENTED (D422/D423).** This checkout holds no D1 — neither the
+      local six-set sqlite `scripts/catalog-manifest.ts` reads nor remote
+      credentials — so the three printings' card ids could not be resolved. What IS
+      measured is the SENTENCE and its printing count, off the committed corpus. The
+      20 and the 30 are carried by REAL fixtures that name their cards
+      (`swsh10.5-043` Tyranitar "Earthquake", `sv01-117` Krookodile "Earthquake"),
+      which is why this body only had to supply the third amount.
+
+      Fighting, so that `fix-fighting-weak` (200 HP, ×2 Fighting) is a Weakness
+      witness for BOTH halves of the parenthetical on ONE board: the main hit into a
+      ×2 Active DOUBLES and the very same card standing on a Bench takes the splash
+      FLAT. `damage: 30` on both, so the main hit is never zero and the "did the
+      spread land" question is never answered by the main hit's absence. */
+  "fix-tremor": battler("fix-tremor", {
+    name: "fix-tremor",
+    types: ["Fighting"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Home Tremor",
+        effect:
+          "This attack also does 10 damage to each of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Away Tremor",
+        effect:
+          "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+    ],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -18926,6 +18987,37 @@ export const OPPONENT_COUNTER_DECK = deckOf({
       • fix-darkness-weak (200 HP, ×2 Darkness, no attacks) — the §8.5 board: the
         `×` fold's whole damage is `scaled`, so this is where "the base really was
         dropped" is observable THROUGH a doubling rather than beside it. */
+/** 🆕🆕 **D425's OWN-SIDE BENCH-SPREAD deck (`ownBenchSpread.test.ts`). Its own 60,
+    and the reason is D412's rule rather than habit**: the three amounts this slice
+    collects sit on cards that already belong to two OTHER suites' decks
+    (`swsh10.5-043` in `BENCH_COUNTER_DECK`, `sv01-117` in `LEADING_SENTENCE_DECK`),
+    and adding a body to either would reshuffle every seeded board those suites own —
+    which is exactly how D412 reddened three of D409's boards with one card.
+
+    ⚠️ **SEED-FREE BY CONSTRUCTION.** Nothing this suite declares flips a coin, and
+    every Active, benched body, damage total and Prize row is placed by surgery, so
+    the seed describes a shuffle and nothing else (D143's move, inherited).
+
+    The cast, and why each is here:
+      · `fix-tremor` — the 10, and the ONE body carrying both possessives;
+      · `sv01-117` Krookodile — the 30 ({F}{F}, printed 180), a REAL card;
+      · `swsh10.5-043` Tyranitar — the 20 ({D}{D}{C}{C}, printed 180), a REAL card;
+      · `fix-fighting-weak` — 200 HP, ×2 Fighting: the Weakness witness on the Bench
+        and the doubling CONTROL on the Active, against every Fighting attacker here;
+      · `fix-titan` — 340 HP, NO attacks: mulligan-free filler, clean defender, and
+        the body a 10/20/30 splash provably cannot Knock Out;
+      · Energy enough for every cost above with nothing left to chance. */
+export const OWN_BENCH_SPREAD_DECK = deckOf({
+  "fix-tremor": 4, // the 10, both possessives, indices 0 and 1
+  "sv01-117": 3, // Krookodile — "Earthquake" idx 1 ({F}{F}, 180 + 30 own bench)
+  "swsh10.5-043": 3, // Tyranitar — "Earthquake" idx 1 ({D}{D}{C}{C}, 180 + 20 own bench)
+  "fix-fighting-weak": 6, // 200 HP ×2 Fighting — the W/R witness and its Active control
+  "fix-titan": 14, // 340 HP neutral Basic, NO attacks — filler, defender, un-KO-able body
+  "fix-fighting-energy": 6, // {F}{F} — Krookodile's whole cost
+  "fix-darkness-energy": 6, // {D}{D} — Tyranitar's typed half
+  "fix-energy": 18, // Colorless — every {C} slot on this list
+});
+
 export const BENCH_COUNTER_DECK = deckOf({
   "swsh10.5-043": 4, // Tyranitar — "Raging Crash" idx 0: the whole family
   "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, damaged bench, clean defender

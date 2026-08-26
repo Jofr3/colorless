@@ -236,11 +236,24 @@ describe("the fixture pool — swept first, then authored", () => {
     expect(programFor("fix-oppenergy")).toBeUndefined();
   });
 
-  it("⚠️ DECLARES ITS OWN SIMPLIFICATION: `fix-benchcount` index 3 is UNSIMULATED", () => {
-    // "Herd Stomp" names the attacker's own Bench with the same preposition the
-    // three scaling sentences use and is a SPREAD, so no reader may answer it.
-    // Carried anyway (D169's convention) so the fixture states the gap out loud.
-    expect(deriveAttackEffect(HERD_STOMP)).toBeNull();
+  it("🆕🆕 D425 — `fix-benchcount` index 3 was DECLARED-UNSIMULATED and is SIMULATED now", () => {
+    // 🛑 **THE ADMISSION EXPIRED AT D425 AND THE RUNG IS RE-POINTED, NOT DELETED
+    // (D418).** It read *"'Herd Stomp' names the attacker's own Bench with the same
+    // preposition the three scaling sentences use and is a SPREAD, so no reader may
+    // answer it"* — carried out loud on D169's convention. `SPREAD_EACH_BENCH` reads
+    // the printed possessive as a capture now, so the sentence derives.
+    //
+    // ⚠️ **AND THE NEW CLAIM NAMES THE SIDE, WHICH `toBeNull()` COULD NOT.** A build
+    // that answered `"opponentBench"` here would be reading a sentence with no
+    // "opponent" in it onto the wrong board, and would pass every negative this
+    // suite used to run. `D425-spread-side-flips` names this file among its killers.
+    expect(deriveAttackEffect(HERD_STOMP)).toEqual([
+      { op: "spreadDamage", target: "yourBench", amount: 20 },
+    ]);
+    // ⚠️ **THE THREE SCALING READERS STILL REFUSE IT — the half of the old rung that
+    // was never about D425.** This suite's subject counts BODIES on a zone; index 3
+    // names the identical zone with the identical preposition and is a spread, so a
+    // scaling reader claiming it would be reading the zone instead of the clause.
     expect(deriveAttackDamageBonus(HERD_STOMP)).toBeNull();
     expect(deriveAttackDamageMultiplier(HERD_STOMP)).toBeNull();
     expect(deriveAttackDamagePenalty(HERD_STOMP)).toBeNull();

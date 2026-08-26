@@ -25,7 +25,6 @@ import {
   type GameOverReason,
   type GameState,
   type Seat,
-  otherSeat,
 } from "./types";
 
 export interface LogContext {
@@ -300,7 +299,14 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       return row("system", [strong(event.attack), plain(wording)]);
     }
     case "DAMAGE_DEALT": {
-      // The event's seat owns the DEFENDER; the line reads from the attacker.
+      // The event's seat owns the DAMAGED body; the line reads from the DEALER,
+      // which the event names in `by` (D425). It said `otherSeat(event.seat)` here
+      // until then — a hand-derived closed-world assumption, true of every board
+      // this engine could produce and true BY ACCIDENT (all four write sites aimed
+      // across the table, and `damageSelf` emits COUNTERS_PLACED rather than this
+      // row). D425's own-side bench spread is the first row whose dealer and
+      // damaged owner are the SAME seat, and under the old line the log credited
+      // the DEFENDER with damage the ATTACKER had just done to its own Bench.
       const segments: LogSegment[] = [
         plain("dealt "),
         { text: String(event.dealt), tone: "damage" },
@@ -353,9 +359,13 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // engine ran it (attack.ts computes both and lets the null win).
       //
       // ⚠️ IT NAMES THE FACT AND NOT THE RULE, WHICH IS THE VOICE ANSWER. This row
-      // renders under the ATTACKER's name (`otherSeat(event.seat)`, the line below)
-      // while `event.seat` owns the DAMAGED Pokémon — the one event in this family
-      // whose row is filed under the opposite seat from its own contract. So a
+      // renders under the DEALER's name (`event.by`, the line below) while
+      // `event.seat` owns the DAMAGED Pokémon — the one event in this family whose
+      // row is filed under a seat its own contract does not name. 🆕🆕 **D425 — AND
+      // THE TWO ARE NO LONGER ALWAYS OPPOSITE.** This paragraph said
+      // `otherSeat(event.seat)` and *"the opposite seat"* until then; an own-side
+      // bench spread files and voices the row under the SAME seat, which is exactly
+      // why the dealer became a field instead of a derivation. So a
       // crumb naming an owner ("your Pokémon is protected"), a turn, or a source
       // ("Safeguard") would be spoken from the wrong chair, and the last of those
       // is unknowable here anyway: five rules set this flag and the event carries
@@ -390,7 +400,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // Bravery Charm board is exactly where that goes wrong — and the board
       // already shows it. A crumb that can be wrong is worse than one that is short.
       if (event.survived === true) segments.push(plain(" · survived the Knock Out"));
-      return row(otherSeat(event.seat), segments);
+      return row(event.by, segments);
     }
     // — M3 special conditions (§12) + the Pokémon Checkup (§13). Card names
     //   resolve off the event's own uid, so a status that lands on a Pokémon

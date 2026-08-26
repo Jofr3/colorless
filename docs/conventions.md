@@ -707,6 +707,68 @@ D423 and D424 by census bookkeeping: 4 mechanisms → **68 sites across 22 files
 running — a doc note says 5, D423 measured 7, D424 measured **9** assertions and
 12 version sites. Grep both `engineVersion` and `manifest.version`.
 
+## Derived facts in consumers (D425)
+
+**A closed-world assumption that is true by accident looks exactly like correct
+code until its first counterexample.** `log.ts` rendered every `DAMAGE_DEALT` row
+under `otherSeat(event.seat)` — deriving the DEALER from the VICTIM's seat. That
+was correct for all four producers in the engine, not because anything enforced
+it, but because all four happened to aim across the table. The first own-side
+producer made the log credit the DEFENDER with damage the ATTACKER had just done
+to its own Bench.
+
+**When you add a producer to a shipped event, grep every consumer for facts it
+DERIVES rather than READS.** A consumer that recomputes one field from another is
+asserting an invariant nobody declared and nothing checks. The fix is to carry the
+fact on the event.
+
+## Required field vs optional rider (D425)
+
+**Apply the test; do not copy the outcome.** D421 added an optional rider and
+defended it by choosing the rest of the record so that losing the rider fails
+LOUD. D425 faced the same choice and went the other way, because here an optional
+`selfInflicted` flag, when forgotten, reproduces exactly the attribution bug that
+had just been found — a plausible-looking wrong answer. A **required** `by: Seat`
+makes the next damage site a compile error instead.
+
+The rule is the same in both slices: **choose the shape so that losing the new
+information is detectable.** Sometimes that is an optional key beside a value that
+degrades visibly; sometimes it is a required key. The blast radius is usually the
+deciding practicality — D425's was one strict `toEqual` literal.
+
+## Publishing your pattern (D425)
+
+**Stating the pattern you grepped is what makes your blind spot findable by
+someone else.** D424's convention says to state it; D425's family survey did, used
+`/also does \d+ damage to/`, and missed a corpus row that prints the same shape
+BARE — no *also*. The builder found the hole precisely by checking the published
+pattern's edges.
+
+That is now four incomplete enumerations in five slices, each by a different route
+(asserted from memory, generalised from a partial grep, a pattern too narrow for a
+comma, a pattern too narrow for a missing adverb). **The enumerations remain the
+unreliable part. Publish the pattern every time.**
+
+## Census deltas come from fixtures too (D425)
+
+`clauseApostrophe`'s sweep moves when a **fixture** is added, not only when a
+reader is. D425 moved it 147 → 151, four sentences arriving by two different
+routes. **A slice predicting that delta from the reader side alone gets it wrong.**
+
+## Doc-block justifications rot like counts (D425)
+
+D425's own mid-slice price paragraph claimed "57 sites in 21 files" and was wrong
+on every figure; it was corrected in place and says so. A prose justification is a
+claim with the same shelf life as the number beside it — **including the paragraph
+you are writing right now.**
+
+## When a card id cannot be resolved (D425)
+
+This checkout has **no D1** — no local sqlite, no remote credentials. Ids that
+cannot be resolved must be **stated as unresolved, never invented**; sentence text
+and printing counts remain measurable off the committed corpus. A plausible-looking
+invented id is indistinguishable from a real one to every later reader.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

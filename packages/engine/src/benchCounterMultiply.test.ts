@@ -235,14 +235,30 @@ describe("the printed data — one fresh fixture, whole", () => {
     expect(programFor("swsh10.5-043")).toBeUndefined();
   });
 
-  it("⚠️ DECLARES ITS OWN SIMPLIFICATION: index 1 is UNSIMULATED, and carried anyway", () => {
-    // "Earthquake" is a self-SPREAD — 20 to each of the attacker's OWN Benched
-    // Pokémon — and no regex in effects.ts matches it. Carrying it means the
-    // fixture states the gap out loud instead of hiding it behind a card that
-    // looks fully simulated (D169's convention, two admissions discharged there).
-    // It is ALSO the skipped-sibling witness this slice's index-keyed negative is
-    // asserted against, which is why the pin lives here rather than in a comment.
-    expect(deriveAttackEffect(EARTHQUAKE)).toBeNull();
+  it("🆕🆕 D425 — index 1 was DECLARED-UNSIMULATED and is SIMULATED now, on the OWN side", () => {
+    // 🛑 **THE ADMISSION THIS RUNG CARRIED HAS EXPIRED, AND IT IS RE-POINTED RATHER
+    // THAN DELETED (D418's rule).** It read *"'Earthquake' is a self-SPREAD — 20 to
+    // each of the attacker's OWN Benched Pokémon — and no regex in effects.ts
+    // matches it"*, and carrying the sentence stated the gap out loud instead of
+    // hiding it (D169's convention). D425 closed the gap: `SPREAD_EACH_BENCH` reads
+    // the printed possessive as a CAPTURE, so this sentence derives to the same op
+    // the opponent-side twin does with the side flipped.
+    //
+    // ⚠️ **AND THE RE-POINTED CLAIM IS STRICTLY STRONGER THAN "IS NULL", WHICH IS
+    // THE HALF D418 SAYS TO CHECK.** `toBeNull()` could catch exactly one build (the
+    // arm missing). `toEqual({target: "yourBench"})` catches that one AND the build
+    // that reads the sentence onto the WRONG SIDE OF THE TABLE — the defect a reader
+    // cannot see, since an `opponentBench` answer here derives, interprets, damages
+    // a Bench and passes every shipped case. `D425-spread-side-flips` names this
+    // file among its killers.
+    expect(deriveAttackEffect(EARTHQUAKE)).toEqual([
+      { op: "spreadDamage", target: "yourBench", amount: 20 },
+    ]);
+    // ⚠️ **THE THREE SCALING READERS STILL REFUSE IT, AND THAT IS THE PART OF THE
+    // OLD RUNG THAT WAS NEVER ABOUT D425.** This suite's subject is a `×` fold over
+    // damage counters; the sibling names the identical ZONE ("your Bench") in the
+    // identical card, so a scaling reader that claimed it would be reading the zone
+    // rather than the clause. Unchanged, and unchanged is the point.
     expect(deriveAttackDamageBonus(EARTHQUAKE)).toBeNull();
     expect(deriveAttackDamageMultiplier(EARTHQUAKE)).toBeNull();
     expect(deriveAttackDamagePenalty(EARTHQUAKE)).toBeNull();
@@ -502,15 +518,31 @@ describe("the fold — `per × (counters on YOUR Bench)` is the WHOLE damage", (
     expect(row?.scaled).toBeUndefined();
   });
 
-  it("…and index 1 is still LOUD, which is the other half of the same claim", () => {
-    // The skipped-sibling witness. Index 0's text stops being flagged (below);
-    // index 1's does not, because the engine really does not simulate its spread —
-    // and the two facts have to hold on the SAME board or "the clause was read"
-    // could mean "the card was recognised".
+  it("🆕🆕 D425 — …and index 1 now does its OWN thing, which is the other half of the same claim", () => {
+    // 🛑 **THIS RUNG WAS THE SKIPPED-SIBLING WITNESS AND ITS WITNESS IS GONE.** It
+    // asserted `ATTACK_EFFECT_SKIPPED` on index 1 while index 0's text stopped being
+    // flagged, so that *"the clause was read"* could not quietly mean *"the card was
+    // recognised"*. D425 simulates index 1, so no skip is emitted for it any more.
+    //
+    // ⚠️ **RE-POINTED ONTO A CLAIM THAT STILL SEPARATES THE TWO INDICES, BECAUSE
+    // "NO SKIP" ALONE WOULD NOT (D418).** *"Index 1 emits no skip"* is TRUE under a
+    // card-keyed fold as well, so on its own it would drop exactly the
+    // discrimination the old rung existed for. The pair asserted here cannot both
+    // hold under a fold keyed on the CARD: index 1 keeps its FLAT printed 180 with
+    // no `scaled` key (a card-keyed `10×` fold would rewrite it), and it puts its
+    // own 20 on each of the attacker's THREE benched bodies (index 0 puts none).
     const { events } = swing(benched("fix-titan", [2, 0, 5], "earthquake"), "earthquake");
-    const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped).toBeDefined();
-    expect(skipped?.effect).toBe(EARTHQUAKE);
+    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
+    // The main hit on the DEFENDER's Active, flat and unscaled…
+    expect(rows[0]).toMatchObject({ seat: "p2", base: 180, dealt: 180 });
+    expect((rows[0] as { scaled?: number }).scaled).toBeUndefined();
+    // …then one row per body on the ATTACKER's OWN Bench, 20 apiece.
+    expect(rows.slice(1).map((r) => [r.seat, (r as { dealt: number }).dealt])).toEqual([
+      ["p1", 20],
+      ["p1", 20],
+      ["p1", 20],
+    ]);
   });
 });
 

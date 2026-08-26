@@ -1977,6 +1977,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     events.push({
       type: "DAMAGE_DEALT",
       seat: defenderSeat,
+      // 🆕🆕 D425 — the §8.5 main hit's dealer is the declaring seat, always.
+      by: action.seat,
       uid: defenderUid,
       base: scaledBase,
       // Present only when the attack's own printed extra actually added HP — the

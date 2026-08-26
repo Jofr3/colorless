@@ -191,6 +191,11 @@ describe("damage pipeline (§8.5)", () => {
     expect(first.events.find((e) => e.type === "DAMAGE_DEALT")).toEqual({
       type: "DAMAGE_DEALT",
       seat: "p2",
+      // 🆕🆕 D425 — the DEALER, required on this row since the own-side bench spread
+      // made `otherSeat(seat)` a wrong answer for the first time. This is the
+      // STRICT-equality rung in the repo, so it is where a build that dropped the
+      // field or filled it from the damaged seat goes red.
+      by: "p1",
       uid: defenderUid,
       base: 30,
       weakness: null,

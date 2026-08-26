@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.326.0";',
+    find: 'export const engineVersion = "0.327.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18409,5 +18409,72 @@ export const MUTANTS: Mutant[] = [
     find: "    return then === null",
     replace: "    return then === undefined",
     expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  // ── D425 — the OWN-SIDE bench-wide spread. SIX rows, and the FIRST is the one a
+  //    code review cannot catch: a build that reads the sentence onto the WRONG SIDE
+  //    OF THE TABLE derives, interprets, damages a Bench, emits the right number of
+  //    rows in the right shape, and passes every single-index probe in this repo.
+  //    Two more are about the §8.1 consequence nobody asked for (an own Knock Out,
+  //    the opponent's Prize) and the log row that had been deriving its speaker.
+  {
+    id: "D425-spread-side-flips",
+    decision: "D425",
+    what: "🛑 THE DEFECT A READER CANNOT SEE, AND THE WHOLE REASON THE POSSESSIVE IS A CAPTURE: the arm's side ternary is INVERTED, so *\"each of YOUR Benched Pokémon\"* derives to `opponentBench` and the shipped opponent-side twin to `yourBench`. Nothing about the shape changes — one `spreadDamage` op, the right amount, the right op name, the right number of DAMAGE_DEALT rows — so every count in every census still agrees, `BUILT.attack` still steps by 5 and the residue still drops by 3. **FIVE PRINTINGS SIMPLY DAMAGE THE WRONG SIDE OF THE TABLE**, and one printing that was correct for the whole life of the op starts doing so too. Only a board that fields BOTH benches and reads WHICH one moved can tell",
+    file: "packages/engine/src/effects.ts",
+    find: "    const side = match[2] === \"your\" ? (\"yourBench\" as const) : (\"opponentBench\" as const);",
+    replace: "    const side = match[2] === \"your\" ? (\"opponentBench\" as const) : (\"yourBench\" as const);",
+    expectKilledBy: [
+      "packages/engine/src/ownBenchSpread.test.ts",
+      "packages/engine/src/benchCounterMultiply.test.ts",
+      "packages/engine/src/benchBodyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D425-anchor-loses-the-bare-possessive",
+    decision: "D425",
+    what: "`SPREAD_EACH_BENCH`'s alternation reverts to the SHIPPED literal it carried before this slice — `your opponent['’]s` with no `|your` branch — which is the pre-D425 bytes copied verbatim and therefore exactly the mistake of forgetting half the widening. The opponent side is untouched and every board that existed before D425 behaves identically; the three own-side sentences fall back off the derived path and onto the LOUD `ATTACK_EFFECT_SKIPPED` skip, taking 5 printings out of `BUILT.attack` with them. It is the row that separates \"the anchor widened\" from \"the arm reads a capture\"",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack (?:also )?does (\\\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\\\.` +",
+    replace: "  `^This attack (?:also )?does (\\\\d+) damage to each of (your opponent['’]s) Benched Pokémon\\\\.` +",
+    expectKilledBy: [
+      "packages/engine/src/ownBenchSpread.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D425-interpreter-ignores-the-own-side-target",
+    decision: "D425",
+    what: "the victim switch's `\"yourBench\"` arm returns `otherSeat(ctx.seat)` — its NEIGHBOUR'S REAL CODE COPIED VERBATIM from one line down, and byte-for-byte what this function did before D425 when `target` was a dead singleton. The DERIVATION is untouched, so every reader rung in §2 passes, every census figure is exact and the op still carries `target: \"yourBench\"` everywhere anyone inspects it. The damage simply lands on the other board. **THIS IS THE HALF-MIGRATION**: the type widened, the arm read the field, and the field decided nothing",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      case \"yourBench\":\n        return ctx.seat;",
+    replace: "      case \"yourBench\":\n        return otherSeat(ctx.seat);",
+    expectKilledBy: ["packages/engine/src/ownBenchSpread.test.ts"],
+  },
+  {
+    id: "D425-spread-writes-the-damage-to-the-other-board",
+    decision: "D425",
+    what: "the fold's write-back names `otherSeat(ctx.seat)` instead of `victim`, so the EVENTS are all correct — right seat, right uid, right amount, right dealer — and the BOARD is not: an own-side spread emits three truthful DAMAGE_DEALT rows for bodies whose damage totals never move, while three of the opponent's benched Pokémon silently gain HP of damage they were never told about. **A ROW-ONLY BUILD IS THE WORST KIND**, because the log, the animator and every event-shaped assertion agree with it; only a case that reads the post-attack BOARD goes red. It also un-KOs §6 entirely, since `lethalRefs` scans the board and not the rows",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return withSide({ ...state, rngState: rng }, victim, { ...side, bench });",
+    replace: "  return withSide({ ...state, rngState: rng }, otherSeat(ctx.seat), { ...side, bench });",
+    expectKilledBy: ["packages/engine/src/ownBenchSpread.test.ts"],
+  },
+  {
+    id: "D425-damage-row-names-the-victim-as-the-dealer",
+    decision: "D425",
+    what: "`by: ctx.seat` becomes `by: victim` at the spread site. On the OWN-SIDE arm those two are the SAME seat, so every board this slice exists for renders identically and reads identically — which is exactly why the row is here. The SHIPPED opponent-side spread is what breaks: its splash rows start claiming the DEFENDER dealt the damage to their own Bench, the inverse of the very defect `by` was added to fix. It is the control D418 says a re-pointed claim owes: the new field must be right on the half that was already right",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      by: ctx.seat,\n      uid,\n      base: amount,\n      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,\n      weakness: null,\n      resistance: null,\n      reduction: reduction > 0 ? reduction : undefined,\n      prevented: prevented ? true : undefined,\n      survived: clamped === null ? undefined : true,\n      dealt,\n      damage,\n    });\n    bench.push({ ...pokemon, damage });",
+    replace: "      by: victim,\n      uid,\n      base: amount,\n      debuff: attackerDebuff > 0 ? attackerDebuff : undefined,\n      weakness: null,\n      resistance: null,\n      reduction: reduction > 0 ? reduction : undefined,\n      prevented: prevented ? true : undefined,\n      survived: clamped === null ? undefined : true,\n      dealt,\n      damage,\n    });\n    bench.push({ ...pokemon, damage });",
+    expectKilledBy: ["packages/engine/src/ownBenchSpread.test.ts"],
+  },
+  {
+    id: "D425-log-voices-the-row-under-the-damaged-seat",
+    decision: "D425",
+    what: "the log renders `DAMAGE_DEALT` under `event.seat` — the row's OWN contract field, which is the obvious thing to reach for and which is wrong on every board that is not an own-side spread. It is the exact mirror of the defect D425 found: the old line derived the dealer as `otherSeat(event.seat)` and mis-attributed the ONE new case, this one takes the field at face value and mis-attributes ALL the old ones. The op, the board, the Knock Outs, the Prizes and every census figure are untouched; only the rendered log moves, which is the point — **a log row is a claim with the same standing as a predicate (D421)**",
+    file: "packages/engine/src/log.ts",
+    find: "      return row(event.by, segments);",
+    replace: "      return row(event.seat, segments);",
+    expectKilledBy: ["packages/engine/src/ownBenchSpread.test.ts"],
   },
 ];

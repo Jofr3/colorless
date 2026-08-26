@@ -1561,7 +1561,11 @@ function stepOp(
       );
     }
     case "spreadDamage":
-      return { done: spreadDamage(state, op.amount, ctx, events) };
+      // 🆕🆕 D425 — `op.target` IS READ HERE FOR THE FIRST TIME. It has been on the op
+      // since the op existed and was a SINGLETON, so this arm passed `op.amount`
+      // alone and the field was documentation. Widening the union is what makes the
+      // omission a type error rather than a silent one.
+      return { done: spreadDamage(state, op.target, op.amount, ctx, events) };
     case "damageSelf":
       return { done: damageSelf(state, op.amount, ctx, events) };
     case "damageDefender": {
@@ -6544,24 +6548,65 @@ function unshieldedRefs(
   });
 }
 
-/** Spread damage: place `amount` HP on EACH of the opponent's Benched Pokémon
-    (§8.5 — Weakness/Resistance never apply on the Bench, so it is flat there).
-    A benched Pokémon's own continuous damage REDUCTION still applies though
-    (Bouffalant "Bouffer" / a defending Tool — the passive that is not
+/** Spread damage: place `amount` HP on EACH Benched Pokémon of the side `target`
+    names (§8.5 — Weakness/Resistance never apply on the Bench, so it is flat
+    there). A benched Pokémon's own continuous damage REDUCTION still applies
+    though (Bouffalant "Bouffer" / a defending Tool — the passive that is not
     Active-only), floored at 0; the attacker's pre-W/R bonus (Vitality Band) is
     Active-target-only and does NOT reach the Bench. One DAMAGE_DEALT per benched
-    Pokémon (seat/uid name the DEFENDER, as everywhere). Only raises damage — the
-    KO check runs in attack.ts's epilogue, so this never KOs or ends the game
-    (interpreter header). */
+    Pokémon (seat/uid name the DAMAGED body's owner, as everywhere). Only raises
+    damage — the KO check runs in attack.ts's epilogue, so this never KOs or ends
+    the game (interpreter header).
+
+    🆕🆕 **D425 — THE VICTIM SEAT IS A PARAMETER NOW, AND EVERY LINE BELOW THAT
+    NAMED "the opponent" WAS ALREADY ASKING THE RIGHT QUESTION OF THE WRONG NOUN.**
+    `victim` replaces the hoisted `otherSeat(ctx.seat)`; nothing else in the body
+    moved, because every prevention, reduction and shield in the fold is read off
+    the DAMAGED BODY rather than off a seat. That is not a convenience — it is why
+    the own-side arm needs no second copy of a 120-line pipeline:
+
+      • the `preventDamageFrom…` family, the coin-flip shield, the §11 block, the
+        Stadium and the bench shields all ask *"is THIS body protected from an
+        attack by THAT card"*, and `attackerCard` is the attacker either way. A
+        Mimikyu "Safeguard" standing on your OWN Bench while your own ex spreads
+        into it is protected, because the printed sentence says "by attacks from
+        Pokémon ex" and yours is one. The engine says so by construction.
+      • `attackerDebuff` (D149/D151) is a fact about the ATTACKER — "the Defending
+        Pokémon's attacks do 20 less damage" scopes the attacker and names no
+        target — so it comes off the own-side splash too, unchanged.
+      • `koSurvivalClamp` is asked of the damaged body, so a full-HP own benched
+        holder survives its controller's own attack exactly as an opponent's does.
+
+    🛑 **AND THE THING THIS FUNCTION STILL DOES NOT DO IS THE THING THAT MATTERS
+    MOST.** It does not Knock Out, and it did not before. `finishAttack` sweeps
+    `[defender, attacker]` and `collectKnockOutPass` owes each Knock Out's Prize to
+    `otherSeat(entry.ref.seat)` — so an own-side spread that kills your own benched
+    body hands your OPPONENT the Prize with no code written here or there.
+    `ownBenchSpread.test.ts` drives that, the game end it can cause, and the fact
+    that a benched Knock Out owes NO promotion; none of the three is asserted from
+    this comment. */
 function spreadDamage(
   state: GameState,
+  target: "opponentBench" | "yourBench",
   amount: number,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
   if (amount <= 0) return state;
-  const opponent = otherSeat(ctx.seat);
-  const side = state.players[opponent];
+  // 🆕🆕 D425 — the ONE line the side decides. `ctx.seat` is the attacker's seat on
+  // every attack program (attack.ts sets it), so `"yourBench"` is the attacker's own
+  // board and `"opponentBench"` is the other one. A `switch` rather than a negated
+  // test, on D222's rule: a third member added to the union stops compiling here
+  // instead of falling silently out of the wrong side of a `!==`.
+  const victim = ((): Seat => {
+    switch (target) {
+      case "yourBench":
+        return ctx.seat;
+      case "opponentBench":
+        return otherSeat(ctx.seat);
+    }
+  })();
+  const side = state.players[victim];
   if (side.bench.length === 0) return state;
   // Mimikyu "Safeguard" prevents spread damage too (no "Active Spot" clause) when
   // the attacker is an ex/V — the same gate the main hit runs.
@@ -6687,7 +6732,7 @@ function spreadDamage(
     const [flipPrevented, nextRng] = coinFlipShieldPrevents(
       { ...state, rngState: rng },
       pokemon,
-      opponent,
+      victim,
       preventedBeforeFlip ? 0 : wouldDeal,
       events,
     );
@@ -6704,7 +6749,11 @@ function spreadDamage(
     const damage = clamped ?? pokemon.damage + dealt;
     events.push({
       type: "DAMAGE_DEALT",
-      seat: opponent,
+      seat: victim,
+      // 🆕🆕 D425 — and THIS is the site where `by` stops equalling
+      // `otherSeat(seat)`: on the `"yourBench"` arm the dealer and the damaged
+      // body's owner are the SAME seat.
+      by: ctx.seat,
       uid,
       base: amount,
       debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
@@ -6718,7 +6767,7 @@ function spreadDamage(
     });
     bench.push({ ...pokemon, damage });
   }
-  return withSide({ ...state, rngState: rng }, opponent, { ...side, bench });
+  return withSide({ ...state, rngState: rng }, victim, { ...side, bench });
 }
 
 /** Snipe: put `amount` HP of damage counters on the opponent's Benched Pokémon
@@ -6966,6 +7015,7 @@ function placeSnipe(
     events.push({
       type: "DAMAGE_DEALT",
       seat: opponent,
+      by: ctx.seat, // 🆕🆕 D425 — placeSnipe's `deals` arm aims across the table.
       uid,
       base: amount,
       debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
@@ -7139,6 +7189,7 @@ function snipeActive(
   events.push({
     type: "DAMAGE_DEALT",
     seat: opponent,
+    by: ctx.seat, // 🆕🆕 D425 — snipeActive aims across the table.
     uid: target.uid,
     base: amount,
     bonus: bonus > 0 ? bonus : undefined,
