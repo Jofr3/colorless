@@ -478,13 +478,14 @@
 >
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE.**
 >
-> ⚠️ **THE SWEEP DEBT IS TWO SLICES DEEP AND ONE OF THEM IS PARTIAL.** D418's sweep found a GAP that
-> D418 itself caused; it was re-armed and the row re-probed alone, so **what is measured at that head
-> is 1,521 rows swept clean plus one re-probed**. D419 has had `precheck` clean over 1,522 and **62
-> rows re-probed by decision** — but no whole-corpus run. **Neither head has had one complete sweep.**
-> ⚠️ Exposure for `error` is LOW (36 files touched, all tests, readers spliced mid-list so no anchor
-> could move) but the `GAP` field is the one to watch: **D419 widened refusal sets in nine files**,
-> and a widened refusal set is where discrimination quietly drains away (D418's lesson).
+> ✅ **THE SWEEP DEBT IS PAID AND BOTH HEADS ARE NOW FULLY MEASURED.**
+> **1522 · 1498 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s)
+> · 0 error(s) · 5,528.6s**, `SWEEP_EXIT=0`; `1498 + 24 = 1522` closes and 1522/1522 verified by id.
+> ✅ **It closes D418's partial measurement too**: `D380-bare-anchor-loses-its-terminator` — the row
+> D418's own repair disarmed — is KILLED **in a whole-corpus run**, not just a targeted probe, which
+> is the measurement that was owed. ✅ Both fields this head's exposure was named on came back zero:
+> `error` **0** and `GAP` **0**, on a slice that touched 36 test files and widened refusal sets in
+> nine. Declared survivors held at **24 for a thirty-sixth consecutive sweep**.
 >
 > ### ▶ WHAT TO DO NEXT — BACK TO THE PRINTED BACKLOG
 >
