@@ -478,12 +478,11 @@
 >
 > 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE.**
 >
-> ⚠️ **THE SWEEP DEBT IS ONE SLICE DEEP.** D420 has had `--decision D420` (5 killed / 0 GAPs after a
-> malformed row was re-authored), `--only D417-cancel-anchor-…` after re-pointing (KILLED), and a
-> `precheck` clean over 1,527 — but **no whole-corpus run**. ⚠️ Exposure is moderate: the slice edited
-> `effects.ts`, `interpreter.ts` AND `attack.ts`'s reader seam, and **two rows already rotted** (the
-> D417 anchor, plus five `D376-*` rows that were saved at the SOURCE by renaming locals rather than
-> re-anchoring).
+> ✅ **THE SWEEP DEBT IS PAID.** **1527 · 1503 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,642.0s**, `SWEEP_EXIT=0`; `1503 + 24 = 1527` closes
+> and 1527/1527 verified by id. All 5 D420 rows KILLED. `error` **0** on a slice that edited the
+> reader seam — bought by re-pointing the D417 anchor and fixing five `D376-*` collisions **at the
+> source** before the run. Declared survivors held at **24 for a thirty-seventh consecutive sweep**.
 >
 > ### ▶ THE RESIDUE AT THIS HEAD — MEASURED, NOT CARRIED
 >
