@@ -477,20 +477,34 @@
 > Baseline 420 / 9,006, so **+1 file / +32 cases**. Engine **0.324.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,541**, archive ratchet **92**, lint coverage **660**.
 >
-> 🛑 **THE ONE DEBT: D422 HAS HAD NO WHOLE-CORPUS SWEEP.** It has `--decision D422` (8 killed / 0 GAPs),
-> re-probes of the neighbours whose suites it re-pointed (**D202 3/3, D227 8/8, D275 KILLED**), and a
-> `precheck` clean over 1,541 — but no full run. Exposure is **low-to-moderate**: the engine diff is two
-> lines, but the slice edited `effects.ts` and re-pointed guards in three suites.
+> ✅ **THE SWEEP DEBT IS PAID.** **1541 · 1517 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,721.7s**, `SWEEP_EXIT=0`; `1517 + 24 = 1541` closes
+> and 1541/1541 verified by id. All 8 D422 rows KILLED. `stale` is **0** on a slice that retired a dead
+> guard and rewrote two doc blocks — the branch that would fire if a declared survivor's premise had
+> rested on any of them. Declared survivors held at **24 for a thirty-ninth consecutive sweep**.
 >
 > ▶ **THE NEXT SLICE — THE CHEAPEST THING ON THE BOARD, ALREADY PRICED.**
 > *"This attack does 20 damage for each damage counter on your opponent's Active Pokémon."* (**3 legal
 > printings**) is **one regex and one `if`**. The count source already exists
 > (`DamageCountSource.damageCountersOnOpponentActive`, `effects.ts:19101`, built at D168 for the ADDITIVE
 > spelling); the fold already exists (`deriveAttackDamageMultiplier`); there is no
-> `OPPONENT_COUNTER_MULTIPLY` yet. **The repo has made this exact move three times and wrote the price
-> down at `effects.ts:10513-10516`**: *"one regex and one `if` — no new `DamageCountSource`, no new
-> evaluator arm, no new fold, no branch in attack.ts."* ⚠️ **Verify that price rather than quoting it** —
-> this run has now been misled by a written price TWICE (D422's own blocker, and the registry block below).
+> `OPPONENT_COUNTER_MULTIPLY` yet. The shape is **verified structurally**, not quoted: `DamageCountSource`
+> is ONE shared union read by ONE evaluator (`scaledAttackDamage`), and `deriveAttackDamageMultiplier` is
+> a flat chain of six `exec` + `if (per >= 1) return {per, count}` arms — a seventh is the same shape.
+> ⚠️ The anchor needs the `['’]` class (the sentence carries `opponent's`, unlike the Prize anchors), and
+> the `×` fold **drops the printed base**, so the fixture must print the `20×` form.
+>
+> 🛑🛑 **AND THE GUARD STANDING IN FRONT OF THIS SLICE IS AIMED AT YOU AND ITS PREMISE HAS ROTTED.**
+> `opponentCounterScaling.test.ts` pins `UNPRINTED_MULTIPLY` with the note: *"Pinned so that a slice which
+> invents the multiply arm because 'it is one regex away' is told here that it has no printing to serve."*
+> **It has three.** The guard's constructed string uses `per = 30`, which is genuinely unprinted, but its
+> stated claim — D168's *"there is no no-adjective printing of this count source anywhere in the pool"* —
+> is **FALSE at HEAD**: corpus row 546 carries the `20` form at **3 legal printings**. So the assertion
+> still passes while the reason it exists is wrong. **SETTLE WHICH FAILURE THIS IS** — was D168 wrong when
+> written, or did a later catalog re-ingest overtake it? They are different faults and the fix differs.
+> Retire the claim, keep a guard that can still go red, and re-point the "less"-spelling absence beside it
+> only after re-measuring it too. ⚠️ **THIS IS THE THIRD STALE RECORD IN THREE SLICES, AND THE FIRST THAT
+> WOULD HAVE TURNED A SLICE AWAY FROM CORRECT WORK RATHER THAN TOWARD INCORRECT WORK.**
 >
 > ▶ **A REAL SLICE THAT IS NAMED RATHER THAN IMPLIED: THE FOUR REPLICATED FALSE HEADLINES.**
 > `registry.ts`'s Terapagos block claims *"13 gates built, 0 BODIES"*. **That is false — the body resolves
