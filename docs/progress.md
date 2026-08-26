@@ -475,11 +475,12 @@
 > Baseline 419 / 8,970, so **+1 file / +36 cases**. Engine **0.323.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,533**, archive ratchet **91**, lint coverage **659**.
 >
-> 🛑 **THE ONE DEBT: D421 HAS HAD NO WHOLE-CORPUS SWEEP.** It has `--decision D421` (6 killed / 0 GAPs),
-> `--only D275-engine-version-drifts-again` (KILLED), and a `precheck` clean over 1,533 run BOTH before
-> and after the last edit — but no full run. Exposure is **moderate**: the slice edited `effects.ts`,
-> `interpreter.ts`, `types.ts`, `events.ts`, `continuous.ts` and `log.ts`, and moved 17 census
-> assertions across 14 test files. **Run it before taking anything large.**
+> ✅ **THE SWEEP DEBT IS PAID.** **1533 · 1509 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,635.5s**, `SWEEP_EXIT=0`; `1509 + 24 = 1533` closes
+> and 1533/1533 verified by id, 0 missing / 0 extra. All 6 D421 rows KILLED. `error` **0** on a slice
+> touching six engine files and 14 test files — bought by running `precheck` before AND after the last
+> edit and re-probing `--decision D318` after the docs ritual. Declared survivors held at **24 for a
+> thirty-eighth consecutive sweep**.
 >
 > ▶ **THE NEXT SLICE — PICK FROM THE RESIDUE, AND COMPUTE THE RESIDUE RATHER THAN READING THE CORPUS.**
 > `censusAttackCorpus.ts` is a histogram of the WHOLE legal corpus, not of what is unbuilt; its
