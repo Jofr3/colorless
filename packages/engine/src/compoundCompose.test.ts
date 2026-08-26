@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import { deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import type { EffectOp } from "./effects";
@@ -142,11 +142,19 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
 /** The `deriveAttack`-prefixed reader surface, taken from the MODULE rather than
-    from a list (`precociousEvolution.test.ts`'s idiom). */
-const EXPORTED_ATTACK_READERS = Object.entries(effects)
-  .filter(([name, value]) => name.startsWith("deriveAttack") && typeof value === "function")
-  .map(([name]) => name)
-  .sort();
+    from a list.
+
+    🆕🆕 D419 — **THIS WAS THE LAST PRIVATE COPY OF THE DERIVATION AND IT IS NOW A
+    CALL.** The expression lived here, in `precociousEvolution.test.ts` (since D306)
+    and in `censusAtHead.test.ts` (since D417) — three files deriving the same surface
+    three ways, which is the *duplication* half of the defect D418 spent a slice on.
+    ⚠️ **IT IS A WEAKER DEFECT THAN THE HAND-KEPT ARRAYS AND WAS STILL WORTH CLOSING**:
+    a derived copy cannot go STALE the way a literal list can, so nothing here was ever
+    wrong — but three derivations are three places for the PREFIX CONVENTION to drift,
+    and the whole point of D418/D419 is that the surface has exactly one definition.
+    ⚠️ D419's own close-out claimed this copy was already gone; it was not, and the
+    claim was checked rather than taken. */
+const EXPORTED_ATTACK_READERS = attackReaderSurface();
 
 const readerNamed = (name: string): ((text: string) => unknown) =>
   (effects as unknown as Record<string, (text: string) => unknown>)[name] as (

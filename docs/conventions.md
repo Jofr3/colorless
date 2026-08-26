@@ -255,6 +255,18 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   neighbouring arm's REAL code copied verbatim (D190b: Scorching Armor's status
   onto Poison Point; D199's 36 are all neighbour copies). A straw mutant proves
   nothing about a real defect.
+- 🛑 **A SURVEY IS AS NARROW AS THE SHAPE IT GREPS FOR (D419).** D418 surveyed for a MODULE-LEVEL
+  reader array and found 40 files; there were **47**, and the six it missed were the ones that hid
+  the defect best — **inline declarations inside test bodies, every one a refusal rung, where a short
+  list makes the claim NARROWER rather than FALSE and so nothing ever reddens.** ⚠️ **WHEN A SURVEY
+  DRIVES A SLICE, STATE THE SHAPE IT SEARCHED FOR AND ASK WHAT THAT SHAPE CANNOT SEE.** This is
+  D310's census rule ("a census is as narrow as the columns its query names") with an instrument in
+  place of a catalog.
+- ⚠️ **A CLOSE-OUT CLAIM IS A CLAIM, AND IT ROTS THE SAME WAY A FIGURE DOES.** Three close-out
+  assertions in four slices were falsified by grepping them — *"the derivation now exists exactly
+  once"* (it did not), *"the sweep has not run"* (it had), *"the writer is unidentified"* (it was
+  identifiable). **Check the sentence you are about to write into `decisions.md` the same way you
+  would check a number.**
 - 🛑 **RE-POINTING A REFUSAL RUNG ONTO A DIFFERENT TRUE CLAIM CAN SILENTLY DROP THE DISCRIMINATION
   THE OLD CLAIM PROVIDED (D418).** This run re-pointed refusal rungs four times, correctly, on the
   rule *re-point, do not delete*. The fourth one still disarmed a mutant: a rung that had asserted

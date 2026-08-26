@@ -1,11 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackOptionalCostBoost,
+} from "./effects";
+import {
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
+  deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackTrailingClause,
 } from "./index";
@@ -117,9 +129,43 @@ const READERS = {
   effect: deriveAttackEffect,
   coinFlip: deriveAttackCoinFlip,
   damageSuppression: deriveAttackDamageSuppression,
+  // 🆕🆕 D419 — THE OTHER SIX, AND ONE OF THEM WAS NOT A FORMALITY. See the
+  // correction under the block above: `optionalCostBoost` (D381) is the reader
+  // whose absence held this census at 139 when the true figure was 140.
+  // ⚠️ SPLICED BEFORE THE LAST ENTRY RATHER THAN APPENDED, and `damageSuppression`
+  // is left holding the position adjacent to the closing brace it has held since
+  // D192: mutant `find` strings quote an array's or object's LAST entries plus its
+  // terminator, and appending moves that anchor without a character of it changing
+  // (the adjacency class D418 paid for once on `stadiumPresence.test.ts`). This
+  // file carries TWO mutant rows already (D366 C6, D367 C9).
+  bonusConsequent: deriveAttackBonusConsequent,
+  cancelRequirement: deriveAttackCancelRequirement,
+  damagePenalty: deriveAttackDamagePenalty,
+  discardScaledBoost: deriveAttackDiscardScaledBoost,
+  optionalBoost: deriveAttackOptionalBoost,
+  optionalCostBoost: deriveAttackOptionalCostBoost,
 } as const;
 
 describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures print", () => {
+  it("🆕🆕 D419 — the hand-kept READERS table IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS TABLE NEVER HAD, AND IT IS THE ONE FILE IN D419's SWEEP WHERE
+    // THE STALENESS HAD ALREADY COST A FIGURE. The doc block above argues carefully
+    // for ONE reader's absence and is silent about five others, which is the D418
+    // shape exactly: a locally-correct refusal that nothing re-examined when the
+    // module grew. The count below is diffed against `effects.ts`'s exports, so the
+    // next reader to land reddens HERE, by name, before the census can drift again.
+    expect(
+      Object.values(READERS)
+        .map((read) => read.name)
+        .sort(),
+    ).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this table in the SAME commit, and the census would move with
+    // nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   /** Every distinct printed attack effect in FIXTURE_POOL that carries an
       apostrophe AND that at least one reader resolves. DISCOVERED, not listed:
       the sentences this suite must cover are exactly the ones the engine derives
@@ -138,10 +184,12 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
       // whole job is *"every derivable apostrophe sentence survives a U+2019
       // re-ingest"* would have stood still while three new derivable
       // apostrophe sentences landed beside it, and nothing would have said so.
-      if (
-        Object.values(READERS).every((read) => read(sentence) === null) &&
-        splitAttackTrailingClause(sentence) === null
-      ) {
+      // 🆕🆕 D419 — **THE MEMBERSHIP TEST NOW RUNS OFF THE MODULE, AND THAT IS NOT A
+      // TIDY-UP: IT MOVED THE CENSUS.** This filter decides what the whole suite
+      // sweeps, and it was folded over the hand-kept table above — six readers of a
+      // twelve-reader engine — so a sentence claimed only by one of the other six was
+      // silently OUTSIDE the fold. Exactly one was (see the census figure below).
+      if (!resolvedByAnyReader(sentence) && splitAttackTrailingClause(sentence) === null) {
         continue;
       }
       const existing = derivable.find((entry) => entry.sentence === sentence);
@@ -717,7 +765,22 @@ describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures pri
     // `'`. ⚠️ **ITS INDEX-1 SENTENCE (*"Discard the top 3 cards of your deck."*) DOES
     // NOT**, so the fixture adds ONE entry rather than two — a census keyed on a
     // CHARACTER counts sentences, not cards, and this fixture prints both kinds.
-    expect(derivable).toHaveLength(139); // 🆕🆕 D412 +2 — `fix-compound` gains indices 9 and 10 (the `Heal 50` and `Heal 60` compounds the **SELF**-side retreat lock completes), and unlike D410's pair they carry the apostrophe exactly ONCE EACH and spell only the CONTRACTION (*can't*) — no POSSESSIVE at all, because the self-side clause names *this Pokémon* where the pronoun clause named *your opponent's*. **A CENSUS KEYED ON A CHARACTER DOES NOT CARE HOW MANY TIMES THE CHARACTER APPEARS**, so a sentence carrying it once counts the same as D410's carrying it three times, and the step is +2 for the same reason D410's was: two sentences, not two occurrences and not two fixtures. Both enter through the COMPOSITION arm of the predicate D409 widened — no reader claims either string whole — so that widening is load-bearing for a THIRD slice rather than for the one that made it. ⚠️ AND THE HEADS ARE WHAT MAKE THEM TWO ENTRIES RATHER THAN ONE: the printed TAIL is byte-identical across both, and only the healed amount (50 vs 60) differs, so a sweep keyed on the SENTENCE takes two where a sweep keyed on the CLAUSE would take one. 🆕🆕 D410 +2 — `fix-compound` gains indices 7 and 8 (the Burned and Confused compounds of the pronoun retreat lock) and BOTH carry the apostrophe TWICE OVER, spelling the POSSESSIVE (*opponent's*, twice per sentence) and the CONTRACTION (*can't*). Both enter through the COMPOSITION arm of the sweep's predicate that D409 had to widen to see — no reader claims either string whole — so the widening is load-bearing for a SECOND slice rather than for the one that made it 🆕🆕 D409 +3, AND THE SWEEP ITSELF HAD TO BE WIDENED TO SEE THEM — this census was READER-keyed and D409's five compounds are claimed by NO reader, so three apostrophe-bearing derivable sentences would have landed beside a suite whose whole job is to sweep them while it stood still. `fix-compound` prints SEVEN sentences and only THREE carry an apostrophe: the 2-Energy reduction, the discard-all Paralyze and the poison/no-retreat (all spelling the POSSESSIVE, the last also the CONTRACTION). The two Prize compounds and the refusal control print none at all, which is why the step is 3 rather than 5 or 7 — a census keyed on a CHARACTER counts sentences that carry it and not attacks. ⚠️ AND THE U+2019 RUNG ASSERTS A PROGRAM EQUALITY FOR THESE THREE, NOT A NON-NULL: every reader is null on a compound by construction, so the survival question is whether both HALVES still read after the fold. 🆕🆕 D408 +3, AND THE SWEEP MOVES AGAIN AFTER SIX SLICES STANDING STILL — `fix-lockplural` prints ONE apostrophe-bearing sentence (*"…this Pokémon can't use attacks."*, the CONTRACTION alone) and `fix-deflock` prints TWO (*"During your opponent's next turn, the Defending Pokémon can't attack."* and *"…can't use attacks."*, both spelling the POSSESSIVE and the CONTRACTION). Three sentences off TWO fixtures — a census keyed on a CHARACTER counts sentences and not cards, and `fix-deflock` is the fixture that makes that the difference between +2 and +3. 🆕🆕 D401 +2 — `fix-costsnipe` and `fix-allsnipe`, ONE apostrophe-bearing sentence each: both spell `opponent's` and `Don't`, and each fixture carries exactly ONE attack, so a census keyed on a CHARACTER steps by one per fixture // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
+    // 🛑🛑 D419 — **139 → 140, AND NOTHING SHIPPED: THIS FIGURE WAS FALSE AT THE HEAD.**
+    // The membership filter above ran over this file's hand-kept SIX-reader table, and
+    // Wellspring Mask Ogerpon ex's "Torrential Pump" (*"You may shuffle 3 Energy
+    // attached to this Pokémon into your deck. If you do, this attack also does 120
+    // damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and
+    // Resistance for Benched Pokémon.)"*) is claimed by `deriveAttackOptionalCostBoost`
+    // and by NO other reader — so from **D381 (2026-08-21)** this sentence was
+    // derivable, apostrophe-bearing (**three** exposed slots: the possessive and the
+    // contraction), printed by a fixture in `FIXTURE_POOL`, and NOT SWEPT. The suite
+    // whose entire job is *"every derivable apostrophe sentence survives a U+2019
+    // re-ingest"* had a hole in it for the whole of that time and said 139 the entire
+    // way. ⚠️ AND THE SHAPE OF THE MISS IS D409's, ONE INSTRUMENT OVER: that slice
+    // widened this same filter for the COMPOSITION path after finding three
+    // apostrophe-bearing compounds outside it. The reader path had the identical
+    // defect and was not looked at, because the list it folded over looked complete.
+    expect(derivable).toHaveLength(140); // 🆕🆕 D412 +2 — `fix-compound` gains indices 9 and 10 (the `Heal 50` and `Heal 60` compounds the **SELF**-side retreat lock completes), and unlike D410's pair they carry the apostrophe exactly ONCE EACH and spell only the CONTRACTION (*can't*) — no POSSESSIVE at all, because the self-side clause names *this Pokémon* where the pronoun clause named *your opponent's*. **A CENSUS KEYED ON A CHARACTER DOES NOT CARE HOW MANY TIMES THE CHARACTER APPEARS**, so a sentence carrying it once counts the same as D410's carrying it three times, and the step is +2 for the same reason D410's was: two sentences, not two occurrences and not two fixtures. Both enter through the COMPOSITION arm of the predicate D409 widened — no reader claims either string whole — so that widening is load-bearing for a THIRD slice rather than for the one that made it. ⚠️ AND THE HEADS ARE WHAT MAKE THEM TWO ENTRIES RATHER THAN ONE: the printed TAIL is byte-identical across both, and only the healed amount (50 vs 60) differs, so a sweep keyed on the SENTENCE takes two where a sweep keyed on the CLAUSE would take one. 🆕🆕 D410 +2 — `fix-compound` gains indices 7 and 8 (the Burned and Confused compounds of the pronoun retreat lock) and BOTH carry the apostrophe TWICE OVER, spelling the POSSESSIVE (*opponent's*, twice per sentence) and the CONTRACTION (*can't*). Both enter through the COMPOSITION arm of the sweep's predicate that D409 had to widen to see — no reader claims either string whole — so the widening is load-bearing for a SECOND slice rather than for the one that made it 🆕🆕 D409 +3, AND THE SWEEP ITSELF HAD TO BE WIDENED TO SEE THEM — this census was READER-keyed and D409's five compounds are claimed by NO reader, so three apostrophe-bearing derivable sentences would have landed beside a suite whose whole job is to sweep them while it stood still. `fix-compound` prints SEVEN sentences and only THREE carry an apostrophe: the 2-Energy reduction, the discard-all Paralyze and the poison/no-retreat (all spelling the POSSESSIVE, the last also the CONTRACTION). The two Prize compounds and the refusal control print none at all, which is why the step is 3 rather than 5 or 7 — a census keyed on a CHARACTER counts sentences that carry it and not attacks. ⚠️ AND THE U+2019 RUNG ASSERTS A PROGRAM EQUALITY FOR THESE THREE, NOT A NON-NULL: every reader is null on a compound by construction, so the survival question is whether both HALVES still read after the fold. 🆕🆕 D408 +3, AND THE SWEEP MOVES AGAIN AFTER SIX SLICES STANDING STILL — `fix-lockplural` prints ONE apostrophe-bearing sentence (*"…this Pokémon can't use attacks."*, the CONTRACTION alone) and `fix-deflock` prints TWO (*"During your opponent's next turn, the Defending Pokémon can't attack."* and *"…can't use attacks."*, both spelling the POSSESSIVE and the CONTRACTION). Three sentences off TWO fixtures — a census keyed on a CHARACTER counts sentences and not cards, and `fix-deflock` is the fixture that makes that the difference between +2 and +3. 🆕🆕 D401 +2 — `fix-costsnipe` and `fix-allsnipe`, ONE apostrophe-bearing sentence each: both spell `opponent's` and `Don't`, and each fixture carries exactly ONE attack, so a census keyed on a CHARACTER steps by one per fixture // 🆕🆕 D400 +2 — `fix-twinsnipe` and `fix-twinfeint`, ONE apostrophe-bearing sentence each (the flat one spells `opponent's` and `Don't`; the W/R one spells `opponent's`, `attack's` and `isn't`) // 🆕🆕 D399 +1 — the TWIN CONSEQUENT's printed sentence, apostrophe-BEARING twice over // 🆕🆕 D397 +1 — the BENCHED-CUBONE FILTER's key, apostrophe-FREE
     // Every entry names at least one real card id — the sweep read fixtures, not
     // constructed text.
     for (const entry of derivable) expect(entry.ids.length).toBeGreaterThanOrEqual(1);

@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -62,6 +67,13 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
+  // this list never had.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -96,6 +108,25 @@ function reading(text: string): AttackDiscardScaledBoost {
 }
 
 describe("D403 §1 — the family this reader takes, measured live over the column", () => {
+  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
+    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
+    // it could sit short of the module indefinitely — which is precisely the state
+    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
+    // D418. A guard in another file guards that file's copy alone.
+    //
+    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
+    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
+    // off the MODULE surface, so no edit here can move a census number again. What
+    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the figures would then move
+    // with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("the two printed sentences are really in the column, at 6 and 2 printings", () => {
     const rows = legalAttackCorpus();
     for (const [n, text] of TAKEN) {
@@ -111,7 +142,7 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     expect(claimed).toHaveLength(2);
     expect(units(claimed)).toBe(8);
     expect([...claimed].sort()).toEqual([...TAKEN].sort());
-    // …and the other TEN refuse both, which is what makes "at most one reader fires
+    // …and the other ELEVEN refuse both, which is what makes "at most one reader fires
     // per attack" a structural property rather than a rule attack.ts has to keep.
     for (const [, s] of TAKEN) {
       for (const read of READERS) {
@@ -135,7 +166,7 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
   it("⚠️ the ONE additive sentence still refused is a DECK MILL, and it stays loud", () => {
     // The third member of D402's additive half: its record is cards off two DECKS
     // rather than Energy off a board, so it needs a recording mill this engine does
-    // not have. Refused by all ELEVEN readers, not merely by this one.
+    // not have. Refused by all TWELVE readers, not merely by this one.
     const left = legalAttackCorpus().filter(
       ([, s]) =>
         s.includes("discarded in this way") &&
@@ -146,6 +177,11 @@ describe("D403 §1 — the family this reader takes, measured live over the colu
     expect(units(left)).toBe(2);
     for (const [, s] of left) {
       expect(s.startsWith("Discard the top card of each player's deck."), s).toBe(true);
+      // 🆕🆕 D419 — THE REFUSAL IS NOW ASSERTED OFF THE MODULE FIRST. The loop
+      // below names WHICH reader broke and is kept for that; but it can only ever
+      // walk the readers this file happens to list, which is the failure mode D418
+      // measured in 38 files. This line walks whatever `effects.ts` exports today.
+      expect(resolvedByAnyReader(s), s).toBe(false);
       for (const read of READERS) expect(read(s), `${read.name} :: ${s}`).toBeNull();
     }
   });

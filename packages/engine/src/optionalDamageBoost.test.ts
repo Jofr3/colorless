@@ -1,7 +1,15 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { parseAttackDamage } from "./cards";
-import { deriveAttackOptionalBoost, optionalBoostProgram } from "./effects";
+import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  optionalBoostProgram,
+} from "./effects";
 import type { EffectOp } from "./effects";
 import {
   deriveAttackCoinFlip,
@@ -345,7 +353,7 @@ function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
 }
 
-/** The other SEVEN readers, run as one — the disjointness control. */
+/** The other ELEVEN readers, run as one — the disjointness control. */
 const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -353,6 +361,17 @@ const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageMultiplier,
   deriveAttackCoinFlip,
   deriveAttackRequirement,
+  // 🆕🆕 D419 — the readers this COMPLEMENT never named (D317, D381, D403, D417), written
+  // in NAME order rather than in landing order because the guard in §2 diffs a
+  // SORTED list against the module surface.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackDamageSuppression,
 ];
 
@@ -434,8 +453,30 @@ describe("D316 §1 — the print, and the reading each of the four sentences get
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud", () => {
-  it("🛑 all SEVEN other readers refuse all four sentences", () => {
+  it("🆕🆕 D419 — OTHER_READERS plus the reader under test IS the module's surface", () => {
+    // 🛑 THE GUARD THIS COMPLEMENT NEVER HAD, AND A COMPLEMENT IS WHERE A STALE LIST
+    // DOES ITS WORST WORK. The rung below asserts that all the OTHER readers refuse
+    // all four of this slice's sentences — a claim whose entire force is the word ALL. A list that has fallen
+    // behind `effects.ts` does not make that claim FALSE, it makes it NARROWER, and
+    // narrower is invisible: the missing reader is simply never asked and the rung
+    // stays green. This list ran short of the module until this slice, so the
+    // refusal below was quantified over a strict subset of the surface.
+    expect([...OTHER_READERS.map((read) => read.name), "deriveAttackOptionalBoost"].sort()).toEqual(
+      attackReaderSurface(),
+    );
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the refusals would quietly
+    // narrow again with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
+  it("🛑 all ELEVEN other readers refuse all four sentences", () => {
     for (const text of [POLIWRATH_TEXT, GURDURR_TEXT, DONDOZO_TEXT, COPPERAJAH_TEXT]) {
+      // 🆕🆕 D419 — THE POSITIVE HALF, TAKEN OFF THE MODULE. "Exactly one reader
+      // claims this" is two facts and the loop only ever carried the second;
+      // `resolvedByAnyReader` walks whatever `effects.ts` exports today.
+      expect(resolvedByAnyReader(text), text).toBe(true);
       for (const read of OTHER_READERS) expect(read(text), text).toBeNull();
       expect(deriveAttackOptionalBoost(text), text).not.toBeNull();
     }

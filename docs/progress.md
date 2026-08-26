@@ -3,11 +3,13 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-25 — build session #358 (**P3-M5 — D418, *the census instruments were stale in 38 of 40 files, and the only two that were current were the only two with a guard.*** 🛑 **NO ENGINE CHANGE — `engineVersion` STAYS 0.321.0, `MATCH_RECORD_VERSION` STAYS 26**; no behaviour moved. **SEVENTEEN FALSE ASSERTIONS CORRECTED ACROSS ELEVEN SUITES**, ten of them **demonstrably wrong figures** rather than misleading prose — five suites off by **6 sentences / 17 printings**, stale since **D381 and never re-pointed in 179 commits**. ✅ **Every frozen baseline endpoint survived byte-identical**, which is the proof the baselines were right and only the live-head term was wrong. 🛑 **THE DEEPEST FINDING IS ABOUT PROCESS AND IT WAS ALREADY IN THE TREE**: this fix had been **explicitly declined**, and the reasoning was *locally correct* — *"adding a tenth reader would move numbers this slice has nothing to do with."* **A defect every local decision is right to decline has no local fix; it makes every slice the wrong place and leaves no place at all.** D418 did not answer that argument, it **removed its premise**: the figures now come off a module-derived surface FIRST, so widening a local array moved **zero digits** — proven by a red-drive where deleting a reader left every figure green and reddened only the guard. **11 module-surface rungs added**, each pinning the diff AND the count. Refusal rungs **re-pointed, not deleted**, and the replacements are sharper than what they replace. A mutant anchor was saved by splicing a reader mid-list rather than appending; all 1,522 verified. ⚠️ **30 files still hold an unguarded copy — correct today BY LUCK.** `bun run check` **418 files / 8,892 tests, `CHECK_EXIT=0`** (+0 files / +11 cases, exactly the eleven guards).)
+**Last updated:** 2026-08-26 — build session #359 (**P3-M5 — D419, *the other thirty, closed at the source — and the survey that found them could not see six of them.*** 🛑 **NO ENGINE CHANGE** — 0.321.0, `MATCH_RECORD_VERSION` 26. **36 files converted, not the 30 the handoff named**, and the difference is the finding: D418's survey counted MODULE-LEVEL arrays, and three files declare the list **INLINE inside a test body** — never in the 40, never in the 30, all 5–7 long against 12, and **all refusal rungs, the shape where a short list makes the claim NARROWER rather than false and is therefore invisible**. ⚠️ **A SURVEY IS AS NARROW AS THE SHAPE IT GREPS FOR.** Completeness now machine-checked: **47 collections, 0 unguarded**. 🛑 **ONE MORE WRONG FIGURE, AND THE WORST-PLACED YET**: `clauseApostrophe`'s sweep asserted **139** where the truth is **140**, because a missing reader gated the suite's **DISCOVERY FILTER** — silently excluding a fixture-printed sentence with **three apostrophe slots** from the one suite whose job is *"every derivable apostrophe sentence survives a U+2019 re-ingest"*. Green since 2026-08-21, **and its shape is D409's one instrument over**: D409 widened this same filter for the composition path and nobody looked at the reader path. ✅ **Every other figure in all 36 files stood still, as predicted** — the redesign's central claim, proven directly by deleting the LARGEST reader from the census and watching **no figure move and only the guard redden**. ✅ Surface derivation now exists **exactly once**; ⚠️ **the slice's own close-out claimed that before it was true, and the claim was CHECKED rather than taken** — the third close-out assertion in four slices to be falsified by grepping it. **62 mutant rows re-probed, 0 stopped dying**; 5 red-drives, all by name. `bun run check` **418 files / 8,924 tests, `CHECK_EXIT=0`** (+0 files / +31 cases).)
 
-**Last updated (was):** 2026-08-25 — build session #357 (**P3-M5 — D417, *the trailing anaphoric cancel — a reader for a mechanism that already existed, and a census instrument found silently blind.*** Engine **0.320.0 → 0.321.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **1 sentence / 1 legal printing**. 🛑 **THE SCOPING INVERTED THE PLAN**: the whole-attack cancel has existed since D125 (`attack.ts` cancels in front of §8.5 — *no damage, no W/R, no effect ops, no triggers*); what was missing was a READER for the TRAILING, ANAPHORIC form, **which D380 had already named** — *"the member was right and the reader was missing"*. An abort OP was refused by D125's standing rule, not by preference. The table is keyed on the HEAD SENTENCE because the clause is byte-identical across the family and carries no referent — which is what anaphoric means. The fourth stripper paid its disjointness debt: **all six pairs 0/0** over 1,732 units, driven with its converse. 🛑 **AND THE SLICE FOUND A CENSUS INSTRUMENT GONE BLIND**: `censusAtHead.test.ts` kept a hand-maintained reader copy at **11 against 12 exported**, so `BUILT.attack` was computed from an 11-reader view — and it had had **no guard since D233**, while its sibling has exactly that tripwire. **The stale entry was the symptom; the missing guard was the defect**, and the file now derives its surface from the MODULE and pins the diff AND the count. ⚠️ **THE SAME CLASS SITS IN EIGHT MORE SUITES** at 9 or 11 readers, none guarded, **all eight claiming to use "the same set `censusAtHead` uses"** — false in all eight. Named, left for its own slice. **5 mutants / 5 killed / 0 GAPs**, corpus 1517 → **1522**. `bun run check` **418 files / 8,881 tests, `CHECK_EXIT=0`** (+1 file / +25 cases).)
+**Last updated (was):** 2026-08-25 — build session #358 (**P3-M5 — D418, *the census instruments were stale in 38 of 40 files, and the only two that were current were the only two with a guard.*** 🛑 **NO ENGINE CHANGE — `engineVersion` STAYS 0.321.0, `MATCH_RECORD_VERSION` STAYS 26**; no behaviour moved. **SEVENTEEN FALSE ASSERTIONS CORRECTED ACROSS ELEVEN SUITES**, ten of them **demonstrably wrong figures** rather than misleading prose — five suites off by **6 sentences / 17 printings**, stale since **D381 and never re-pointed in 179 commits**. ✅ **Every frozen baseline endpoint survived byte-identical**, which is the proof the baselines were right and only the live-head term was wrong. 🛑 **THE DEEPEST FINDING IS ABOUT PROCESS AND IT WAS ALREADY IN THE TREE**: this fix had been **explicitly declined**, and the reasoning was *locally correct* — *"adding a tenth reader would move numbers this slice has nothing to do with."* **A defect every local decision is right to decline has no local fix; it makes every slice the wrong place and leaves no place at all.** D418 did not answer that argument, it **removed its premise**: the figures now come off a module-derived surface FIRST, so widening a local array moved **zero digits** — proven by a red-drive where deleting a reader left every figure green and reddened only the guard. **11 module-surface rungs added**, each pinning the diff AND the count. Refusal rungs **re-pointed, not deleted**, and the replacements are sharper than what they replace. A mutant anchor was saved by splicing a reader mid-list rather than appending; all 1,522 verified. ⚠️ **30 files still hold an unguarded copy — correct today BY LUCK.** `bun run check` **418 files / 8,892 tests, `CHECK_EXIT=0`** (+0 files / +11 cases, exactly the eleven guards).)
 
 <!-- prior stamp -->
+
+**Prior stamp (was):** 2026-08-25 — build session #357 (**P3-M5 — D417, *the trailing anaphoric cancel — a reader for a mechanism that already existed, and a census instrument found silently blind.*** Engine **0.320.0 → 0.321.0**; **`MATCH_RECORD_VERSION` STAYS 26**. **1 sentence / 1 legal printing**. 🛑 **THE SCOPING INVERTED THE PLAN**: the whole-attack cancel has existed since D125 (`attack.ts` cancels in front of §8.5 — *no damage, no W/R, no effect ops, no triggers*); what was missing was a READER for the TRAILING, ANAPHORIC form, **which D380 had already named** — *"the member was right and the reader was missing"*. An abort OP was refused by D125's standing rule, not by preference. The table is keyed on the HEAD SENTENCE because the clause is byte-identical across the family and carries no referent — which is what anaphoric means. The fourth stripper paid its disjointness debt: **all six pairs 0/0** over 1,732 units, driven with its converse. 🛑 **AND THE SLICE FOUND A CENSUS INSTRUMENT GONE BLIND**: `censusAtHead.test.ts` kept a hand-maintained reader copy at **11 against 12 exported**, so `BUILT.attack` was computed from an 11-reader view — and it had had **no guard since D233**, while its sibling has exactly that tripwire. **The stale entry was the symptom; the missing guard was the defect**, and the file now derives its surface from the MODULE and pins the diff AND the count. ⚠️ **THE SAME CLASS SITS IN EIGHT MORE SUITES** at 9 or 11 readers, none guarded, **all eight claiming to use "the same set `censusAtHead` uses"** — false in all eight. Named, left for its own slice. **5 mutants / 5 killed / 0 GAPs**, corpus 1517 → **1522**. `bun run check` **418 files / 8,881 tests, `CHECK_EXIT=0`** (+1 file / +25 cases).)
 
 **Prior stamp (was):** 2026-08-25 — build session #356 (**P3-M5 — D416, *the Knock Out that is a CHOICE — one parking op for two sentences, and a mutant that found a hole the whole suite had missed.*** Engine **0.319.0 → 0.320.0**; **`MATCH_RECORD_VERSION` STAYS 26** (D307: a new parking op and a new prompt value both shipped at no cost). **2 sentences / 6 legal printings** on ONE new op, `knockOutChosen`. Built together on purpose: `target` is REQUIRED because the two producers DISAGREE about scope, and building one alone ships that field with a single inhabitant ever exercised. The comparator lives in the FIELD NAME (`damageCountersExactly`) — a bare name would need RENAMING the day *"at least"* prints, and **a rename on a parking op is the one thing that costs a bump**. 🛑 **A MUTANT SURVIVED AND THE SURVIVOR WAS RIGHT — IT FOUND A HOLE IN THE SUITE, NOT A WEAK CLAIM**: every marker assertion ran on a bench of ONE, where `parkOrForce` FORCES, so the **parked** path — the point of the op, and the path carrying D414's two repairs — had no witness at all while looking perfectly guarded. Closed with a driving two-candidate board, and the READER driven rather than the mark. **13 mutants / 13 killed / 0 GAPs.** ⚠️ **THE REFACTOR ROTTED SEVEN ROWS IN TWO CLASSES**, and the dangerous one was `find occurs 2×`: the new funnel was written by COPYING `gustTargets`, so three D331 rows matched BOTH — **D404's wrong-arm trap**. Re-anchored onto lines the original uniquely owns, and the copied filter got rows of its own so the repair did not move a tested line into a file nothing pins. ✅ A declared survivor's reason was **re-argued on three counts and held**, with `expectKilledBy` widened to all three callers so it is measured rather than argued. ✅ `flow.ts` needed nothing — verified by driving a benched effect-KO, not by trusting the handoff. `bun run check` **417 files / 8,856 tests, `CHECK_EXIT=0`** (+1 file / +36 cases); corpus 1504 → **1517**; `precheck` run BEFORE the commit.)
 
@@ -462,6 +464,66 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-26, after D419)
+>
+> ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 418 files / 8,924 tests, `CHECK_EXIT=0`,
+> `grep -c 'error TS'` = 0.** Baseline 418 / 8,893, so **+0 files / +31 cases**, exactly the new
+> guards. Engine **0.321.0** (unmoved — D418 and D419 changed no behaviour),
+> **`MATCH_RECORD_VERSION` 26**, corpus **1,522**, archive ratchet **89**, lint coverage **657**.
+>
+> ✅ **THE READER-SURFACE DEBT IS FULLY CLOSED.** 47 files hold a reader collection, **0 unguarded**,
+> machine-checked; the derivation exists **exactly once**, in `censusAttackCorpus.ts`. Three slices
+> (D417, D418, D419) corrected **eighteen false assertions**, of which **eleven were wrong figures**.
+>
+> 🛑 **RUN `ps aux | grep 'scripts/mutation/run.ts'` BEFORE BELIEVING ANYTHING ABOUT THIS TREE.**
+>
+> ⚠️ **THE SWEEP DEBT IS TWO SLICES DEEP AND ONE OF THEM IS PARTIAL.** D418's sweep found a GAP that
+> D418 itself caused; it was re-armed and the row re-probed alone, so **what is measured at that head
+> is 1,521 rows swept clean plus one re-probed**. D419 has had `precheck` clean over 1,522 and **62
+> rows re-probed by decision** — but no whole-corpus run. **Neither head has had one complete sweep.**
+> ⚠️ Exposure for `error` is LOW (36 files touched, all tests, readers spliced mid-list so no anchor
+> could move) but the `GAP` field is the one to watch: **D419 widened refusal sets in nine files**,
+> and a widened refusal set is where discrimination quietly drains away (D418's lesson).
+>
+> ### ▶ WHAT TO DO NEXT — BACK TO THE PRINTED BACKLOG
+>
+> The instrument work is done and the residue is the honest thing to spend the next slice on.
+> **RE-DERIVE IT FIRST — it has not been measured since D416**, and three slices have since changed
+> what the instruments see. Use `censusAtHead.test.ts`'s own live figures, which are now
+> module-derived and trustworthy for the first time in this run.
+>
+> **The named candidate is the KO family's last sentence**, now fully unblocked by D417:
+> *"Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.
+> If you can't discard 6 cards in this way, this attack does nothing."* (**2 printings**). Remaining
+> pieces: ⑴ a deriver arm producing `payFromHand { count, to: "discard", filter: { kind:
+> "basicEnergy", energyType } }` — the op exists and PARKS, but **nothing derives it today**; ⑵ a
+> compound arm for the `", and Knock Out…"` tail (the killer exists); ⑶ one `BoardCondition` member
+> for *"N Basic {G} Energy in hand"*, a **zone mirror** of the shipped `yourBasicEnergyInDiscardAtLeast`;
+> ⑷ **a second cancel-table row**, whose printed clause is *"If you can't discard 6 cards in this
+> way"* — a **NAMED-referent** variant that D417's anchor refuses by construction, so **the anchor
+> needs widening and the table's head-keying has to survive it**.
+> 🛑 **RE-READ WHY D417 CAME FIRST**: `payFromHand` inside an attack **pays what it can and refuses
+> nothing**, and `handCostUnmet` has no `attack.ts` caller — so the cost WITHOUT the cancel is a
+> **free Knock Out**. That slice must also record the decision `effects.ts` says is owed: **at the
+> attack seam, an unpayable hand cost is a CANCEL, checked in front of §8.5, never inside the
+> program.**
+>
+> ### ▶ AND THE RULE D419 EARNED
+>
+> 🛑 **A SURVEY IS AS NARROW AS THE SHAPE IT GREPS FOR.** D418 surveyed for a **module-level** array
+> and found 40; there were 47, and the six it missed were the ones that hid the defect best —
+> **inline declarations inside test bodies, all of them refusal rungs, where a short list makes the
+> claim NARROWER rather than FALSE and so nothing ever reddens.** ⚠️ **WHEN A SURVEY DRIVES A SLICE,
+> STATE THE SHAPE IT SEARCHED FOR AND ASK WHAT THAT SHAPE CANNOT SEE** — D310 says the same thing
+> about census literals, and this is its instrument-side twin.
+> ⚠️ **AND ITS COROLLARY, EARNED THREE TIMES IN FOUR SLICES: A CLOSE-OUT CLAIM IS A CLAIM.** D419's
+> own close-out said the surface derivation existed exactly once; it did not, until the claim was
+> grepped. **Check the sentence you are about to write into `decisions.md` the same way you would
+> check a figure.**
+
+### Prior resume point (P3-M5 — D418, the stale census instruments, kept for continuity)
+
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-25, after D418)
 >
@@ -12052,7 +12114,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D418, *the census instruments were stale in 38 of 40 files, and the only two that were current were the only two with a guard.*** **NO ENGINE CHANGE** — 0.321.0, `MATCH_RECORD_VERSION` 26. **17 false assertions across 11 suites**, ten of them wrong FIGURES; five suites off by 6 sentences / 17 printings, stale since D381 and never re-pointed in **179 commits**. Every frozen baseline survived byte-identical — the proof only the live-head term was wrong. 🛑 **The fix had been explicitly declined once, for a LOCALLY CORRECT reason** — which is why it lasted: a defect every local decision is right to decline has no local fix. D418 removed the premise instead, deriving the surface from the module. **11 guards added; 30 unguarded copies remain, correct by luck.** `bun run check` **418 files / 8,892 tests, exit 0**.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D419, *the other thirty, closed at the source — and the survey that found them could not see six of them.*** **NO ENGINE CHANGE** — 0.321.0, `MATCH_RECORD_VERSION` 26. **36 files, not 30**: D418's survey grepped for module-level arrays, and three files declare the list INLINE in a test body — invisible because a short list makes a refusal claim NARROWER, not false. **A survey is as narrow as the shape it greps for.** One more wrong figure (139 → **140**), and the worst-placed yet: a missing reader gated a suite's DISCOVERY FILTER, excluding a three-apostrophe sentence from the very suite that sweeps apostrophes. Every other figure stood still — proven by deleting the largest reader and watching only the guard redden. **47 collections, 0 unguarded**; 62 mutant rows re-probed, 0 stopped dying. `bun run check` **418 files / 8,924 tests, exit 0**.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D408, *the bare attack lock on both seats — and a repair of a program that resolved, was counted BUILT, and did nothing.*** Engine **0.312.0 → 0.313.0**, `MATCH_RECORD_VERSION` **stays 25**. 3 sentences / 11 legal printings on ONE alternation anchor, ONE `[A-Z]` narrowing and TWO arms; ZERO new ops, fields, readers, members or registry rows. The mis-read sentence moves NO census figure — only a program comparison and a BOARD can see it, and both were measured red before the arm was written.; **whole-corpus sweep 1463 · 1439 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D407's for a twenty-sixth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D407)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D407, *the board-wide own-Energy count — a zone D196 refused on a measurement that has since stopped being true.*** Engine **0.311.0 → 0.312.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the FIELD is STORED and DRIVEN rather than asserted (the constant is not exported). **1 sentence / 4 legal printings** — *"This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."* — on ONE WIDENED whole-sentence anchor (`SELF_ENERGY_SCALE` gains a captured `(this Pokémon|all of your Pokémon)` tail), ONE OPTIONAL `zone?: "board"` on the SHIPPED `energyOnSelf` member, ONE producer branch and ONE evaluator branch delegating to `countEnergyInPlay`. ZERO new members, counters, ops, readers, `BoardCondition` members, registry rows or clause rows. 🛑 A `zone` and not a fourteenth member (D193's argument: two zone members would each carry `energyType`, the second answer to one question D159 forbids), and OPTIONAL with `undefined` meaning the ATTACKING BODY (D135's polarity — a producer that forgets it UNDER-counts). ⚠️ ADDITIVE-ONLY on this zone, the exact mirror of `energyOnOpponent`: there the `×` reader carries the zone and the `+` reader hard-codes one. ✅ The PROVISION seam was VERIFIED rather than inherited — a wildcard Luminous on the Bench scores and a second Special demotes it, driven both ways on a live board. 🛑 The next slice's supply check found a WRONG-BUT-PLAUSIBLE PROGRAM at HEAD: *"During your next turn, this Pokémon can't use attacks."* (4 legal) derives `preventAttackUse { attack: "attacks" }`. Census: `BUILT.attack` 1365 → **1369**, both reader instruments +1 / +4, `FIXTURE_POOL` 510 → **511**, unbuilt attack column 367 → **363**. `bun run check` **413 files / 8,704 tests, exit 0**; mutants **1447 → 1455**, **8/8 on the first run**; **whole-corpus sweep 1455 · 1431 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D406's for a twenty-fifth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D406)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D406, *the counted Tool scaler — a fourth resource for a union that had counted three things for twelve members.*** Engine **0.310.0 → 0.311.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the member is STORED — a `DamageCountSource` is a PARSE-TIME type consumed in the same tick, so no record could ever hold one. **1 sentence / 5 legal printings** — *"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* — on ONE whole-sentence anchor, ONE `deriveAttackDamageMultiplier` arm, ONE THIRTEENTH `DamageCountSource` member (`toolsOnYourBoard`), ONE `scaledAttackDamage` arm and ONE shared board counter (`countToolsInPlay`, beside `countEnergyInPlay`). ZERO new ops, fields, readers, `BoardCondition` members, registry rows or clause rows. 🛑 The SCOPE falsifier FIRED and cost a **FUNCTION rather than a FIELD** — nothing in the engine counted Tools over a zone, both existing readings being `tools.length > 0` on ONE body — so the member count stayed at one and the pre-specified re-price did not trigger. The DROPPED BASE held; `attack.ts`'s three disjunction chains were not touched. 🛑 The slice also found `energyOnSelf`'s *"the pool prints no board-wide spelling"* claim to be FALSE at this head (4 legal printings, ADDITIVE, unbuilt) and pinned the correction as an executable guard. ⚠️ And the handoff's prediction that the NINE-reader instrument would stand still was wrong: its ARRAY carries `deriveAttackDamageMultiplier`, so it moved 394 / 1,315 → **395 / 1,320**. `BUILT.attack` 1360 → **1365**; check green **412 files / 8,677 tests, exit 0**; corpus 1438 → **1447**, D406 **9/9 killed on the first run**, neighbours D275/D196/D282/D316/D317/D274/D301/D310/D395/D405/D383/D403/D318/D382 each probed alone and green; **7 of the 9 rows are silent in every census figure in the repo**, the highest ratio of six anchors. **Whole-corpus sweep 1447 · 1423 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D405's for a twenty-fourth sweep, `HEAD` re-checked independently at exit 0.) |
@@ -12137,6 +12199,70 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-26 — build session #359 (P3-M5 — D419, the other thirty, closed at the source)
+
+**D419 — 36 FILES CONVERTED, NOT THE 30 THE HANDOFF NAMED, AND THE DIFFERENCE IS THE FINDING.**
+🛑 No engine change: `engineVersion` stays **0.321.0**, `MATCH_RECORD_VERSION` stays **26**.
+
+### 🛑 The survey that found the defect could not see six of its instances
+
+D418 counted *"40 files with a hand-maintained `READERS` array"* by grepping for a **module-level
+array**. D419's own scan found **four shapes**, and the fourth was **three files declaring the list
+INLINE inside a test body** (`const readers = [` / `const others = [` / `for (const read of [`).
+**Those three were never in the 40 and never in the 30** — all 5–7 long against a 12-reader module,
+and **all three are refusal rungs**, which is the shape where a short list makes the claim **NARROWER
+rather than false**, and is therefore invisible from the outside.
+
+⚠️ **A SURVEY IS AS NARROW AS THE SHAPE IT GREPS FOR** — D310's rule about census literals, landing
+on an instrument survey instead. Completeness is now **machine-checked**: 47 files hold a reader
+collection, **0 unguarded**.
+
+### 🛑 One more wrong figure, and the worst-placed one yet
+
+`clauseApostrophe.test.ts` asserted `derivable` = **139**; the truth is **140**. `deriveAttackOptionalCostBoost`
+(D381) was missing from a **6-reader** table that gates the suite's **DISCOVERY FILTER** — so a
+sentence claimed only by a reader outside the table was excluded from the sweep **entirely**.
+
+The excluded sentence is Wellspring Mask Ogerpon ex's *"You may shuffle 3 Energy attached to this
+Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched
+Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **printed by a `FIXTURE_POOL`
+fixture, carrying THREE exposed apostrophe slots, and sitting outside the one suite whose entire job
+is *"every derivable apostrophe sentence survives a U+2019 re-ingest"*. Green since 2026-08-21.**
+
+⚠️ **AND ITS SHAPE IS D409's, ONE INSTRUMENT OVER.** D409 widened *this same filter* for the
+composition path, after finding three apostrophe-bearing compounds outside it. **The READER path had
+the identical defect and was never looked at, because the list it folded over looked complete.**
+
+### ✅ Everything else stood still, which is the claim
+
+Every other figure in all 36 files was unmoved, exactly as forecast — the figures now come off the
+module-derived surface, so widening a local array moves zero digits. **Proven directly**: one
+red-drive deleted the LARGEST reader (`deriveAttackEffect`) from the whole census and **no figure
+moved; only the guard reddened.**
+
+### ✅ The surface derivation now exists exactly once — and that claim was checked
+
+⚠️ **The slice's own close-out asserted it before it was true** — `compoundCompose.test.ts` still held
+a live private copy. **The claim was CHECKED rather than taken**, which is the **third close-out
+assertion in four slices** to be falsified by grepping it. (A derived copy cannot go STALE the way a
+literal list can, so nothing there was ever wrong; three derivations were still three places for the
+prefix convention to drift.)
+
+### The discipline that carried
+
+- **The adjacency class was paid PROACTIVELY**: readers spliced **mid-list in every one of the 36
+  files**, never appending, never moving a closing `];`, reason stated in-comment at each site — so
+  although only one mutant row quotes a reader array's tail, **no row could break by construction**.
+  `precheck` clean at 1,522 before, twice during, and after.
+- **Refusal rungs re-pointed with D418's second-half question asked of each** — *what could the OLD
+  claim catch that the new one cannot?* The answer was **nothing** every time, because each widening
+  made a refusal set **strictly harder** to satisfy. **62 mutant rows re-probed, 0 stopped dying.**
+- **5 red-drives, all red BY NAME, all restored byte-exact.**
+
+`bun run check` **418 files / 8,924 tests, `CHECK_EXIT=0`** (was 418 / 8,893; **+0 files / +31
+cases**, exactly the new guards); corpus **1,522**.
+
 
 ### 2026-08-25 — build session #358 (P3-M5 — D418, the stale census instruments)
 

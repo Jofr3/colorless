@@ -1,17 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import type { PokemonType } from "./effects";
 import {
   POKEMON_TYPES,
   POKEMON_TYPE_BY_CODE,
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -86,9 +93,18 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
+  // 🆕🆕 D419 — the THREE readers this list never had (D381, D403, D417), written
+  // in NAME order rather than in landing order because the guard below diffs a
+  // SORTED list against the module surface.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackBonusConsequent,
 ];
-const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 /** THE SENTENCE THIS SLICE BUYS, and the clause inside it. */
 const TAKEN = "If you have any {M} Pokémon on your Bench, this attack does 80 more damage.";
@@ -168,6 +184,25 @@ function pushOnBench(state: GameState, seat: Seat, index: number, cardId: string
 }
 
 describe("§1 — the price, RE-DERIVED: the `needs` column and the band, not the handoff's words", () => {
+  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
+    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
+    // it could sit short of the module indefinitely — which is precisely the state
+    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
+    // D418. A guard in another file guards that file's copy alone.
+    //
+    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
+    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
+    // off the MODULE surface, so no edit here can move a census number again. What
+    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the figures would then move
+    // with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("🛑 the residue steps by exactly this sentence, and the 2-printing band by exactly one", () => {
     // D369 left the residue at 32 / 42 and pinned EIGHT clauses at 2 printings. Both
     // figures are re-derived here off the same instrument — the nine live readers

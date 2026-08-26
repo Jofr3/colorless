@@ -1,13 +1,22 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
+import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -532,7 +541,7 @@ describe("D282 §3 — splitAttackGateClause", () => {
     });
   });
 
-  it("🛑 DOES NOT LOOSEN ANY READER — the seven still refuse the WHOLE gated string", () => {
+  it("🛑 DOES NOT LOOSEN ANY READER — all TWELVE still refuse the WHOLE gated string", () => {
     // The split's entire safety argument: it produces a different STRING, and the
     // anchors are untouched. If any reader ever resolves the compound directly,
     // `censusAtHead`'s split term double-counts and this line is the earlier warning.
@@ -543,9 +552,30 @@ describe("D282 §3 — splitAttackGateClause", () => {
       deriveAttackDamageMultiplier,
       deriveAttackCoinFlip,
       deriveAttackRequirement,
+      // 🆕🆕 D419 — COMPLETED TO THE MODULE'S TWELVE. This list was hand-kept INLINE,
+      // which is why D418's survey of forty module-level `READERS` arrays did not see
+      // it at all. ⚠️ A REFUSAL OVER A SHORT LIST IS NOT FALSE, IT IS NARROWER — the
+      // missing reader is simply never asked and the rung stays green, which is the
+      // failure mode this whole run is about.
+      deriveAttackBonusConsequent,
+      deriveAttackCancelRequirement,
+      deriveAttackDiscardScaledBoost,
+      deriveAttackOptionalBoost,
+      deriveAttackOptionalCostBoost,
       deriveAttackDamageSuppression,
     ];
+    // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
+    // The diff names the drifting reader; the COUNT is pinned separately because a
+    // diff alone stays GREEN when a slice deletes a reader from the module and from
+    // this list in the same commit.
+    expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    expect(attackReaderSurface()).toHaveLength(12);
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
+      // 🆕🆕 D419 — the claim the TITLE makes, taken off the module rather than off
+      // the list beside it. The loop below names WHICH reader broke and is kept for
+      // that; this line is what makes "no reader resolves the compound" true of the
+      // engine and not merely of this array.
+      expect(resolvedByAnyReader(text), text).toBe(false);
       for (const read of readers) expect(read(text), text).toBeNull();
     }
     // …and the BODIES behind all three resolve. 🆕 **D299 — ILLUMISE'S JOINED

@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
+  deriveAttackRequirement,
 } from "./effects";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -350,14 +357,37 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
     expect(deriveAttackDamageMultiplier(EVERYONE_DISCHARGE_COUNT_HALF)).toBeNull();
     // …and the whole printing is unread by every reader in the family, which is
     // what makes it a witness at all.
-    for (const read of [
+    const readers = [
       deriveAttackDamageBonus,
       deriveAttackDamageMultiplier,
       deriveAttackDamagePenalty,
       deriveAttackEffect,
+      // 🆕🆕 D419 — COMPLETED TO THE MODULE'S TWELVE. This list was hand-kept INLINE,
+      // which is why D418's survey of forty module-level `READERS` arrays did not see
+      // it at all. ⚠️ A REFUSAL OVER A SHORT LIST IS NOT FALSE, IT IS NARROWER — the
+      // missing reader is simply never asked and the rung stays green, which is the
+      // failure mode this whole run is about.
+      deriveAttackBonusConsequent,
+      deriveAttackCancelRequirement,
+      deriveAttackDamageSuppression,
+      deriveAttackDiscardScaledBoost,
+      deriveAttackOptionalBoost,
+      deriveAttackOptionalCostBoost,
+      deriveAttackRequirement,
       deriveAttackCoinFlip,
-    ]) {
-      expect(read(EVERYONE_DISCHARGE)).toBeNull();
+    ];
+    // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
+    // The diff names the drifting reader; the COUNT is pinned separately because a
+    // diff alone stays GREEN when a slice deletes a reader from the module and from
+    // this list in the same commit.
+    expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    expect(attackReaderSurface()).toHaveLength(12);
+    // 🆕🆕 D419 — the claim taken off the MODULE. The loop below names WHICH reader
+    // broke; this line is what makes "unread by every reader in the family" a fact
+    // about `effects.ts` rather than about the array above it.
+    expect(resolvedByAnyReader(EVERYONE_DISCHARGE), EVERYONE_DISCHARGE).toBe(false);
+    for (const read of readers) {
+      expect(read(EVERYONE_DISCHARGE), read.name).toBeNull();
     }
     // The fixture really prints it, so the assertions above are about a card and
     // not about a string this file made up. sv01-208 is the byte-identical second

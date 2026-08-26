@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -119,9 +124,15 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
+  // this list never had.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
 ];
-const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 /** THE SENTENCE THIS SLICE BUYS, byte-for-byte from the committed corpus. */
 const PURGING =
@@ -217,6 +228,25 @@ function find<T extends GameEvent["type"]>(
 const SEEDS = [9001, 9013, 9029] as const;
 
 describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", () => {
+  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
+    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
+    // it could sit short of the module indefinitely — which is precisely the state
+    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
+    // D418. A guard in another file guards that file's copy alone.
+    //
+    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
+    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
+    // off the MODULE surface, so no edit here can move a census number again. What
+    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the figures would then move
+    // with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("🛑 the reading goes 7 sentences / 14 printings → 8 / 15, and the REFUSED half stands still", () => {
     // 🛑 THE DENOMINATOR IS THE THING THAT MOVED, WHICH NO EARLIER SLICE IN THIS
     // FAMILY CHANGED. D381 and D383 each claimed one more of a FIXED seven; this one

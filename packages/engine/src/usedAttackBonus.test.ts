@@ -1,14 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameAction, GameState, PendingStage, Seat } from "./index";
@@ -101,9 +108,18 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
+  // 🆕🆕 D419 — the THREE readers this list never had (D381, D403, D417), written
+  // in NAME order rather than in landing order because the guard below diffs a
+  // SORTED list against the module surface.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
+  deriveAttackDiscardScaledBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackBonusConsequent,
 ];
-const resolvedByAnyReader = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 /** THE TWO SENTENCES THIS SLICE BUYS, byte for byte off the committed corpus. */
 const FALINKS =
@@ -229,6 +245,25 @@ const activeOf = (state: GameState, seat: Seat) => state.players[seat].active;
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", () => {
+  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
+    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
+    // it could sit short of the module indefinitely — which is precisely the state
+    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
+    // D418. A guard in another file guards that file's copy alone.
+    //
+    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
+    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
+    // off the MODULE surface, so no edit here can move a census number again. What
+    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the figures would then move
+    // with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("🛑 the PAIR is real, is worth 2 printings, and both reached the SKELETON all along", () => {
     for (const [sentence, clause, amount] of [
       [FALINKS, FALINKS_CLAUSE, "90"],

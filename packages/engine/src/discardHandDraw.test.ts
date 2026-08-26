@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -63,6 +68,13 @@ const READERS: readonly ((t: string) => unknown)[] = [
   deriveAttackOptionalBoost,
   deriveAttackBonusConsequent,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D419 — the TWELFTH reader (D417, `deriveAttackCancelRequirement`), which
+  // this list never had.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -83,6 +95,25 @@ const SHUFFLED = "Shuffle your hand into your deck. Then, draw 6 cards.";
 const program = (count: number) => [{ op: "discardHand" }, { op: "drawCards", count }];
 
 describe("D404 §1 — the sentence, measured live over the legal column", () => {
+  it("🆕🆕 D419 — the hand-kept READERS list IS the module's reader surface", () => {
+    // 🛑 THE GUARD THIS FILE NEVER HAD, IN D417's SHAPE AND D418's WORDING. This
+    // copy was hand-kept and NOTHING compared it to what `effects.ts` exports, so
+    // it could sit short of the module indefinitely — which is precisely the state
+    // `censusAtHead.test.ts` was in before D417 and thirty more files were in after
+    // D418. A guard in another file guards that file's copy alone.
+    //
+    // ⚠️ AND THE FIGURES NO LONGER COME OFF THIS LIST AT ALL. Resolution below is
+    // computed through `resolvedByAnyReader` IMPORTED from `censusAttackCorpus.ts`,
+    // off the MODULE surface, so no edit here can move a census number again. What
+    // survives is a DECLARED EXPECTATION, and this rung is its only remaining job.
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the figures would then move
+    // with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
   it("is really in the column, ONCE, at SEVEN printings", () => {
     // The attribution control (D183): without it every rung below could be green
     // against a paraphrase that no card prints.
@@ -90,7 +121,7 @@ describe("D404 §1 — the sentence, measured live over the legal column", () =>
     expect([rows.length, units(rows)]).toEqual([1, 7]);
   });
 
-  it("🛑 the arm is its ONLY reader — the other ten refuse it", () => {
+  it("🛑 the arm is its ONLY reader — the other ELEVEN refuse it", () => {
     expect(deriveAttackEffect(TAKEN)).not.toBeNull();
     for (const read of READERS) {
       if (read === deriveAttackEffect) continue;
@@ -108,11 +139,16 @@ describe("D404 §1 — the sentence, measured live over the legal column", () =>
     expect(units(family)).toBe(7);
   });
 
-  it("⚠️ the SHUFFLE spelling is a real printing and is still refused by all eleven", () => {
+  it("⚠️ the SHUFFLE spelling is a real printing and is still refused by all twelve", () => {
     // It is a whole slice of its own (`handRefresh` with `toBottom` absent), and its
     // being refused here is what stops this anchor from being widened toward it.
     const rows = legalAttackCorpus().filter(([, s]) => s === SHUFFLED);
     expect([rows.length, units(rows)]).toEqual([1, 1]);
+    // 🆕🆕 D419 — THE REFUSAL IS NOW ASSERTED OFF THE MODULE FIRST. The loop
+    // below names WHICH reader broke and is kept for that; but it can only ever
+    // walk the readers this file happens to list, which is the failure mode D418
+    // measured in 38 files. This line walks whatever `effects.ts` exports today.
+    expect(resolvedByAnyReader(SHUFFLED), SHUFFLED).toBe(false);
     for (const read of READERS) expect(read(SHUFFLED), read.name).toBeNull();
   });
 });

@@ -1,9 +1,14 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   bonusConsequentProgram,
   deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
 } from "./effects";
@@ -319,7 +324,7 @@ function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
   return events.filter((e) => e.type === type).length;
 }
 
-/** The other NINE readers, run as one — the disjointness control. */
+/** The other ELEVEN readers, run as one — the disjointness control. */
 const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -330,6 +335,14 @@ const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D419 — the reader this COMPLEMENT never named (D417), written
+  // in NAME order rather than in landing order because the guard in §2 diffs a
+  // SORTED list against the module surface.
+  // ⚠️ SPLICED MID-LIST RATHER THAN APPENDED: mutant `find` strings in
+  // `scripts/mutation/mutants.ts` quote an array's LAST entries plus its closing
+  // `];`, and appending moves that anchor without a character of it changing —
+  // the adjacency class D418 paid for once on `stadiumPresence.test.ts`.
+  deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
 ];
 
@@ -393,7 +406,31 @@ describe("D382 §1 — the print, and the reading it gets", () => {
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud", () => {
-  it("🛑 all NINE other readers refuse the sentence", () => {
+  it("🆕🆕 D419 — OTHER_READERS plus the reader under test IS the module's surface", () => {
+    // 🛑 THE GUARD THIS COMPLEMENT NEVER HAD, AND A COMPLEMENT IS WHERE A STALE LIST
+    // DOES ITS WORST WORK. The rungs below assert that all the OTHER readers refuse
+    // these sentences — a claim whose entire force is the word ALL. A list that has
+    // fallen behind `effects.ts` does not make that claim FALSE, it makes it
+    // NARROWER, and narrower is invisible: the missing reader is simply never asked
+    // and the rung stays green. This list ran short of the module until this slice,
+    // so every refusal below was quantified over a strict subset of the surface.
+    expect([...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort()).toEqual(
+      attackReaderSurface(),
+    );
+    // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF ABOVE, and the separation is
+    // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
+    // module and from this list in the SAME commit, and the refusals would quietly
+    // narrow again with nothing naming the cause.
+    expect(attackReaderSurface()).toHaveLength(12);
+  });
+
+  it("🛑 all ELEVEN other readers refuse the sentence", () => {
+    // 🆕🆕 D419 — THE POSITIVE HALF, TAKEN OFF THE MODULE. "Exactly one reader
+    // claims this" is two facts, and the loop below only ever carried the second.
+    // `resolvedByAnyReader` walks whatever `effects.ts` exports TODAY, so if the
+    // sentence ever stopped being claimed at all this rung reddens — where the loop
+    // alone would go greener.
+    expect(resolvedByAnyReader(MELTER_TEXT), MELTER_TEXT).toBe(true);
     for (const read of OTHER_READERS) expect(read(MELTER_TEXT)).toBeNull();
   });
 
@@ -413,6 +450,10 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
     // capitalised standalone imperative and returns null for the printed tail.
     expect(MELTER_TEXT.endsWith(` Then, ${INNER_CONSEQUENT}`)).toBe(true);
     expect(deriveAttackEffect(INNER_CONSEQUENT)).toBeNull();
+    // 🆕🆕 D419 — "NOTHING reads it alone" over the WHOLE module surface, not over
+    // this file's list minus the reader under test. The loop below names which
+    // reader broke; this line is the claim the title actually makes.
+    expect(resolvedByAnyReader(INNER_CONSEQUENT), INNER_CONSEQUENT).toBe(false);
     for (const read of OTHER_READERS) expect(read(INNER_CONSEQUENT)).toBeNull();
   });
 
@@ -423,6 +464,9 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
     // widened at the JOIN rather than at the ANCHOR would have swallowed it.
     expect(corpus().filter(([, s]) => s === TINGLU_TEXT)).toEqual([[1, TINGLU_TEXT]]);
     expect(deriveAttackBonusConsequent(TINGLU_TEXT)).toBeNull();
+    // 🆕🆕 D419 — the near miss is refused by the MODULE's whole surface, so a reader
+    // added tomorrow that swallows it reddens here rather than passing unasked.
+    expect(resolvedByAnyReader(TINGLU_TEXT), TINGLU_TEXT).toBe(false);
     for (const read of OTHER_READERS) expect(read(TINGLU_TEXT)).toBeNull();
   });
 

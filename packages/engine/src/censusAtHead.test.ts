@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
-import * as effects from "./effects";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -1301,19 +1304,16 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCancelRequirement,
 ];
 
-/** 🆕🆕 D417 — the attack-reader surface taken from the MODULE rather than from the
-    list above, the same instrument `precociousEvolution.test.ts` §2 has carried since
-    D306 and which this file never had. It keys on the `deriveAttack` prefix, which is
-    the naming convention all twelve follow; a reader added under a different name is
-    still invisible here, and that limit is why this is a tripwire and not a proof. */
-const EXPORTED_ATTACK_READERS = Object.entries(effects)
-  .filter(([name, value]) => name.startsWith("deriveAttack") && typeof value === "function")
-  .map(([name]) => name)
-  .sort();
-
-function resolvedByAnyReader(text: string): boolean {
-  return READERS.some((read) => read(text) !== null);
-}
+/** 🆕🆕 D419 — THE LAST TWO PRIVATE COPIES OF THIS DERIVATION ARE GONE. D417 wrote
+    the surface out longhand HERE, from `Object.entries(effects)`, because
+    `precociousEvolution.test.ts` §2 had carried exactly that expression since D306 —
+    two files, two identical derivations, and D418 then needed a THIRD for the thirty
+    it converted. So the derivation moved into `censusAttackCorpus.ts` (the non-test
+    `src` module every census file already imports `legalAttackCorpus()` from) and
+    this file became a CALLER of `attackReaderSurface()` / `resolvedByAnyReader()`
+    like the other forty. ⚠️ The prefix limit is unchanged and still worth naming: it
+    keys on `deriveAttack`, which is the convention all twelve follow, so a reader
+    added under a different name is invisible — a tripwire, not a proof. */
 
 /** One backlog row. `attack` is the printed ATTACK-column sentences with their
     legal printing counts; `abilityIds` / `effectIds` are the UNBUILT ids in the
@@ -7929,12 +7929,12 @@ describe("D274 — BUILT.attack, derived from the LIVE readers over the committe
     // DEFECT; THE MISSING ENTRY WAS ONLY THE SYMPTOM.** With this rung the next
     // reader to land reddens HERE, BY NAME, before any figure below it moves —
     // which is the difference between a census that steps and one that drifts.
-    expect(READERS.map((read) => read.name).sort()).toEqual(EXPORTED_ATTACK_READERS);
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
     // \U0001f195\U0001f195 D417 — 11 -> **12** (`deriveAttackCancelRequirement`). The count is
     // pinned SEPARATELY from the diff above on purpose: the diff alone stays green
     // if a slice deletes a reader from BOTH the module and this list, and the
     // census figures below would then move with nothing naming the cause.
-    expect(EXPORTED_ATTACK_READERS.length).toBe(12);
+    expect(attackReaderSurface()).toHaveLength(12);
   });
 
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {

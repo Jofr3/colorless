@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus } from "./censusAttackCorpus";
-import * as effects from "./effects";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -102,9 +105,16 @@ import {
 //     one, and §8.1 `finishAttack` sweeps the evolve-induced KO. See
 //     `evolveFromDeck.test.ts`, which drives both of those claims on a board.
 
-/** The seven exported readers, run as one. The same set `censusAtHead.test.ts`
-    uses; duplicated rather than exported across files because the point here is
-    to run the readers a SECOND time, from outside, over two named sentences. */
+/** The exported readers, run as one. The same set `censusAtHead.test.ts` uses;
+    duplicated rather than exported across files because the point here is to run
+    the readers a SECOND time, from outside, over two named sentences.
+
+    🆕🆕 D419 — AND THE HALF OF THAT SENTENCE THAT IS NO LONGER TRUE. The list is
+    still duplicated; the *surface* it is checked against no longer is. The four
+    notes below name `EXPORTED_ATTACK_READERS.length` — the local derivation this
+    file carried from D306 — and that expression is now `attackReaderSurface()`,
+    exported from `censusAttackCorpus.ts`. The notes are kept word for word (D178):
+    each records a tripwire firing, and every one of those firings happened. */
 const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackEffect,
   deriveAttackDamageBonus,
@@ -147,21 +157,16 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCancelRequirement,
 ];
 
-function resolvedByAnyReader(text: string): boolean {
-  return READERS.some((read) => read(text) !== null);
-}
-
-/** The attack-reader surface taken from the MODULE rather than from the list
-    above. ⚠️ WITHOUT THIS THE COPY IS A HOLE, NOT A DUPLICATE: §2's refusal rung
-    would keep passing after a slice added an EIGHTH reader to `effects.ts` that
-    resolves this family — the census would move by 4 and this file would still
-    read "refused". It keys on the `deriveAttack` prefix, which is the naming
-    convention all seven follow; a reader added under a different name is still
-    invisible here, and that limit is why this is a tripwire and not a proof. */
-const EXPORTED_ATTACK_READERS = Object.entries(effects)
-  .filter(([name, value]) => name.startsWith("deriveAttack") && typeof value === "function")
-  .map(([name]) => name)
-  .sort();
+/** 🆕🆕 D419 — THIS FILE'S DERIVATION IS THE ONE THAT GOT EXPORTED. It was written
+    here at D306 and it fired at D316, D317, D381, D403 and D417 — the best-behaved
+    instrument in the repo — but it guarded THIS file's copy and no other, and D418
+    measured what that cost: 38 of 40 hand-kept lists stale, the only current two
+    being the only two guarded. So the expression itself now lives in
+    `censusAttackCorpus.ts` as `attackReaderSurface()` / `resolvedByAnyReader()`,
+    and this file calls it. ⚠️ The prefix limit is unchanged and is quoted verbatim
+    in the shared module: it keys on `deriveAttack`, the convention all twelve
+    follow, so a reader added under a different name is still invisible here — which
+    is why this is a tripwire and not a proof. */
 
 /** `BUILT.attack`'s raw summand, by D274's own method: the readers run live over
     the whole legal corpus, with no registry term in the addition. */
@@ -327,9 +332,9 @@ describe("D306 §2 — what BUILT.attack would move by, keyed on the READER", ()
     // ten long, so this file went red before a single census figure was touched. It
     // is the fourth time it has (D316, D317, D381), and the reason it is worth the
     // duplication.
-    expect(READERS.map((read) => read.name).sort()).toEqual(EXPORTED_ATTACK_READERS);
+    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
     // 🆕🆕 D417 — 11 -> **12** (`deriveAttackCancelRequirement`).
-    expect(EXPORTED_ATTACK_READERS.length).toBe(12);
+    expect(attackReaderSurface()).toHaveLength(12);
   });
 
   it("🆕 D307 — BOTH sentences now RESOLVE, and they resolve DIFFERENTLY", () => {

@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
+import { attackReaderSurface } from "./censusAttackCorpus";
 import {
+  deriveAttackBonusConsequent,
+  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
   deriveAttackDamageSuppression,
+  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
+  deriveAttackOptionalBoost,
+  deriveAttackOptionalCostBoost,
   deriveAttackRequirement,
 } from "./effects";
 import { applyAction, programFor } from "./index";
@@ -346,7 +352,7 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     expect(deriveAttackDamageSuppression(POOL_RIDER)).toBeNull();
   });
 
-  it("is DISJOINT from all six sibling readers on all four sentences", () => {
+  it("is DISJOINT from all ELEVEN sibling readers on all four sentences", () => {
     // The whole-sentence anchor is what makes "a card carries at most one" true,
     // and it is asserted rather than argued: no other reader may answer on this
     // text, and this reader may not answer on theirs.
@@ -356,8 +362,25 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
       deriveAttackDamagePenalty,
       deriveAttackRequirement,
       deriveAttackEffect,
+      // 🆕🆕 D419 — COMPLETED TO THE MODULE'S TWELVE. This list was hand-kept INLINE,
+      // which is why D418's survey of forty module-level `READERS` arrays did not see
+      // it at all. ⚠️ A REFUSAL OVER A SHORT LIST IS NOT FALSE, IT IS NARROWER — the
+      // missing reader is simply never asked and the rung stays green, which is the
+      // failure mode this whole run is about.
+      deriveAttackBonusConsequent,
+      deriveAttackCancelRequirement,
+      deriveAttackDiscardScaledBoost,
+      deriveAttackOptionalBoost,
+      deriveAttackOptionalCostBoost,
       deriveAttackCoinFlip,
     ];
+    // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
+    // The diff names the drifting reader; the COUNT is pinned separately because a
+    // diff alone stays GREEN when a slice deletes a reader from the module and from
+    // this list in the same commit.
+    expect([...others.map((read) => read.name), "deriveAttackDamageSuppression"].sort()).toEqual(attackReaderSurface());
+    expect(attackReaderSurface()).toHaveLength(12);
+
     for (const sentence of [S_EFFECTS, S_RESISTANCE, S_WR_EFFECTS, S_WR]) {
       for (const read of others) expect(read(sentence)).toBeNull();
     }

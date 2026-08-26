@@ -25690,6 +25690,56 @@ that union), and the family splits on the same one-word FOLD discriminator D163 
 each"* adds to it.
 
 
+## D419 — THE OTHER THIRTY, CLOSED AT THE SOURCE (no engine change; 0.321.0, `MATCH_RECORD_VERSION` **26**)
+
+**36 files converted, not the 30 the handoff named** — and the difference is the finding.
+
+### 🛑 The survey that found the defect could not see six of its instances
+
+D418 counted *"40 files with a hand-maintained `READERS` array"* by grepping for a **module-level**
+array. D419's scan found **four shapes**, and the fourth was **three files declaring the list INLINE
+inside a test body**. Those were never in the 40 and never in the 30 — 5–7 entries against 12, and
+**all three refusal rungs**, which is the shape where a short list makes the claim **narrower rather
+than false**, so nothing ever reddens.
+
+⚠️ **A survey is as narrow as the shape it greps for** — D310's census rule with an instrument in
+place of a catalog. Completeness is now machine-checked: **47 collections, 0 unguarded**, and the
+surface derivation exists **exactly once**.
+
+### 🛑 One more wrong figure, and the worst-placed yet
+
+`clauseApostrophe.test.ts` asserted 139 where the truth is **140**. A missing reader
+(`deriveAttackOptionalCostBoost`, D381) gated the suite's **discovery filter**, so a sentence claimed
+only by a reader outside its 6-entry table was excluded from the sweep entirely — Wellspring Mask
+Ogerpon ex's, **printed by a fixture, carrying three apostrophe slots, and outside the one suite
+whose job is "every derivable apostrophe sentence survives a U+2019 re-ingest"**. Green since
+2026-08-21.
+
+⚠️ **Its shape is D409's, one instrument over**: D409 widened *this same filter* for the composition
+path after finding compounds outside it. The reader path had the identical defect and was never
+looked at, because the list it folded over looked complete.
+
+### ✅ What did not move, and why that is the point
+
+Every other figure in all 36 files stood still. **Proven directly**: a red-drive deleted the largest
+reader (`deriveAttackEffect`) from the whole census and **no figure moved — only the guard reddened**.
+That is the redesign's central claim, demonstrated rather than argued.
+
+⚠️ **The slice's own close-out claimed the derivation was already single-sourced; it was not** —
+`compoundCompose.test.ts` still held a live private copy, and the claim was **checked rather than
+taken**. Third close-out assertion in four slices to be falsified by grepping it.
+
+### Discipline carried forward
+
+- **Adjacency paid proactively**: readers spliced mid-list in all 36 files, never appending, reason
+  in-comment — so no mutant anchor could break by construction. `precheck` clean before, twice
+  during, after.
+- **Refusal rungs re-pointed with D418's second-half question asked of each**; the answer was
+  *nothing* every time, because each widening made a refusal set strictly harder to satisfy.
+  **62 mutant rows re-probed, 0 stopped dying.** 5 red-drives, all red by name.
+
+`bun run check` **418 files / 8,924 tests, exit 0** (+31 cases, exactly the guards).
+
 ## D418 — THE CENSUS INSTRUMENTS WERE STALE IN 38 OF 40 FILES (no engine change; 0.321.0, `MATCH_RECORD_VERSION` **26**)
 
 **Seventeen false assertions corrected across eleven suites**, ten of them **wrong figures** rather
