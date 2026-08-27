@@ -767,6 +767,31 @@ export type GameEvent =
       in-play Pokémon at `target`. It stays attached (rides the stack through
       evolution, discards with a KO'd stack) — there is no detach in scope. */
   | { type: "TOOL_ATTACHED"; seat: Seat; uid: string; target: PokemonTarget }
+  /** 🆕🆕 **D428 — §7.4/§8: every POKÉMON TOOL attached to `seat`'s ACTIVE left
+      play for `seat`'s OWN discard pile, driven by an attack's printed
+      *"Before doing damage, discard all Pokémon Tools from your opponent's Active
+      Pokémon."*** — the first detach this engine has that is not a Knock Out
+      (`TOOL_ATTACHED`'s own note above says "there is no detach in scope", and this
+      row is that sentence expiring).
+
+      `seat` is the OWNER whose board lost the cards, `actor` is the controller
+      whose card caused it — `ENERGY_DISCARDED`'s convention, and the two are
+      OPPOSITE for every printing that exists today. `log.ts` files the row under
+      the ACTOR. A Tool goes to its own controller's pile (§7.4), never the
+      attacker's, which is why the two seats cannot be collapsed.
+
+      `host` is the stripped Pokémon's TOP-CARD uid, and it is what a consumer must
+      name it by, for `ENERGY_DISCARDED`'s reason verbatim: the same attack's damage
+      can Knock that body Out in the SAME batch, so resolving a spot against the
+      post-state yields "the Active spot".
+
+      ⚠️ NEVER EMITTED FOR AN EMPTY `uids` — a defender with no Tool is a silent
+      no-op, exactly as `HEALED` is never filed at 0.
+
+      ⚠️ WIDENING THIS UNION OWES NO `MATCH_RECORD_VERSION` BUMP: `GameEvent` is not
+      persisted at all (`MatchRecord` stores the RENDERED `SeatLogEntry[]`), so this
+      is a row-wording seam for NEW rows only. */
+  | { type: "TOOLS_DISCARDED"; seat: Seat; actor: Seat; uids: string[]; host: string }
   /** §7.3 — the Stadium `uid` left play for its OWNER `seat`'s discard pile,
       replaced by a different-named Stadium (whose own TRAINER_PLAYED rides in
       the same batch). */

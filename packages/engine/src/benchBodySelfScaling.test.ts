@@ -17,6 +17,7 @@ import {
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
   splitAttackGateClause,
 } from "./effects";
@@ -562,6 +563,11 @@ describe("D282 §3 — splitAttackGateClause", () => {
       deriveAttackDiscardScaledBoost,
       deriveAttackOptionalBoost,
       deriveAttackOptionalCostBoost,
+      // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+      // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+      // array's LAST entries plus its closing bracket, and appending moves that anchor
+      // without a character of it changing.
+      deriveAttackPreDamage,
       deriveAttackDamageSuppression,
     ];
     // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
@@ -569,7 +575,7 @@ describe("D282 §3 — splitAttackGateClause", () => {
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
       // 🆕🆕 D419 — the claim the TITLE makes, taken off the module rather than off
       // the list beside it. The loop below names WHICH reader broke and is kept for

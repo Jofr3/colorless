@@ -16,6 +16,7 @@ import {
   deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   deriveAttackOptionalBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -131,6 +132,17 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackRequirement,
   deriveAttackDamageSuppression,
   deriveAttackOptionalBoost,
+  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard.
+  // 🛑 **SPLICED HERE, ABOVE THE LAST THREE ENTRIES, FOR THE REASON THE BLOCK BELOW
+  // ALREADY SPELLS OUT — AND THE FIRST DRAFT GOT IT WRONG AND `precheck` SAID SO.**
+  // This slice's bulk edit put it between `deriveAttackOptionalCostBoost` and
+  // `deriveAttackDiscardScaledBoost`, which broke
+  // `D382-refusal-instrument-loses-the-tenth-reader`'s three-line anchor without a
+  // character of the quoted lines changing — `find occurs 0×`, exactly the adjacency
+  // rot D403 and D418 each paid once. **`precheck` costs seconds and a whole-corpus
+  // sweep costs ninety minutes** (D414). §1's first rung sorts by NAME, so position
+  // here carries no meaning of its own.
+  deriveAttackPreDamage,
   // 🆕🆕 D418 — the TWELFTH (D417), the reader built for `DISCARD_OP`'s own sentence.
   // ⚠️ **IT IS SPLICED IN HERE RATHER THAN APPENDED, AND THAT IS NOT COSMETIC.**
   // `mutants.ts`'s `D382-refusal-instrument-loses-the-tenth-reader` anchors on the
@@ -307,7 +319,7 @@ describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the big
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit — and
     // every figure in §1 would then move with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("🛑 the bonus residue steps by exactly ONE sentence and ONE printing", () => {

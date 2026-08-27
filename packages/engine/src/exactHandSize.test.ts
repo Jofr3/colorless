@@ -16,6 +16,7 @@ import {
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -151,6 +152,11 @@ const READERS: readonly ((text: string) => unknown)[] = [
   // one silence, one edit; see the block above for why it took 179 commits.
   deriveAttackOptionalCostBoost,
   deriveAttackDiscardScaledBoost,
+  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+  // array's LAST entries plus its closing bracket, and appending moves that anchor
+  // without a character of it changing.
+  deriveAttackPreDamage,
   deriveAttackCancelRequirement,
 ];
 
@@ -322,7 +328,7 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit.
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("🛑 the CANCEL residue reaches ZERO — there is no sentence left to name", () => {

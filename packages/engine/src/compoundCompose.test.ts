@@ -249,6 +249,10 @@ describe("§1 — the quantifier is over EVERY reader, and the list is DRIVEN no
       "deriveAttackEffect",
       "deriveAttackOptionalBoost",
       "deriveAttackOptionalCostBoost",
+      // 🆕🆕 D428 — TWELVE -> **THIRTEEN**, the FIFTH firing of this rung, re-pointed
+      // rather than relaxed: `deriveAttackPreDamage` (the PRE-DAMAGE Tool discard)
+      // landed and this line went red naming it.
+      "deriveAttackPreDamage",
       "deriveAttackRequirement",
     ]);
   });
@@ -292,7 +296,12 @@ describe("§1 — the quantifier is over EVERY reader, and the list is DRIVEN no
     // synthetic compound whole and the shadow refusal fires; D417's is `$`-anchored
     // on its clause, so the compound is refused, the HEAD (its own printed sentence)
     // is claimed by this very array, and the splitter admits the pair.
-    expect(admitted).toHaveLength(11);
+    // 🆕🆕 D428 — 11 -> **12**, and the thirteenth reader lands in `admitted` for
+    // D417's reason verbatim: `deriveAttackPreDamage` is `$`-anchored on its whole
+    // sentence, so the synthetic compound is refused whole, the HEAD (its own printed
+    // sentence) is claimed by this very array, and the splitter admits the pair.
+    // `shadowed` is unmoved and still names exactly `deriveAttackRequirement`.
+    expect(admitted).toHaveLength(12);
     expect(shadowed).toEqual(["deriveAttackRequirement"]);
   });
 });
@@ -1039,7 +1048,7 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   it("the engine version moved with the behaviour", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.329.0");
+    expect(engineVersion).toBe("0.330.0");
   });
 });
 

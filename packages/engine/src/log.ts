@@ -938,6 +938,33 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" → "),
         strong(targetName(state, event.seat, event.target)),
       ]);
+    case "TOOLS_DISCARDED": {
+      // 🆕🆕 D428 — the pre-damage Tool strip. `ENERGY_DISCARDED`'s row one
+      // attachment kind over, and every one of its four wording decisions applies
+      // here for its own reason rather than by copying:
+      //   · filed under `event.actor` (whose card did it — its ATTACK_DECLARED row
+      //     sits just above), NOT under `event.seat`, who OWNS the stripped body;
+      //   · the host is named by `event.host`, never by re-reading the spot: the
+      //     same attack's damage can Knock that body Out in this very batch;
+      //   · the owner is named OUTRIGHT rather than by a possessive pronoun, since
+      //     the `who` chip is viewer-relative while these segments are fixed text;
+      //   · the cards are named — attached Tools and the discard pile are both
+      //     public — and carry the `energy` tone so the two names in the row do not
+      //     render identically, which is exactly `ENERGY_DISCARDED`'s cue problem.
+      // ⚠️ THE ROW SAYS "before doing damage" BECAUSE THAT IS WHAT THIS EVENT
+      // MEANS, and it is a claim this path makes true: the row is pushed in front
+      // of the §8.5 `DAMAGE_DEALT` it precedes, so a reader who sees the two in
+      // order is reading the order they happened in (D421 — a log row is a claim
+      // with the same standing as a predicate).
+      const cards = event.uids.map((uid) => cardName(state, uid));
+      return row(event.actor, [
+        plain("discarded "),
+        { text: countedNames(cards), tone: "energy" },
+        plain(" from "),
+        strong(`${names[event.seat]}'s ${cardName(state, event.host)}`),
+        plain(" before doing damage"),
+      ]);
+    }
     case "STADIUM_DISCARDED":
       // Follows the replacing Stadium's TRAINER_PLAYED row (§7.3); `seat` is
       // the OWNER whose discard pile gained the old card.

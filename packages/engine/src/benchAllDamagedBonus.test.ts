@@ -16,6 +16,7 @@ import {
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
@@ -116,6 +117,11 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+  // array's LAST entries plus its closing bracket, and appending moves that anchor
+  // without a character of it changing.
+  deriveAttackPreDamage,
   deriveAttackBonusConsequent,
 ];
 
@@ -211,7 +217,7 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
     // module and from this list in the SAME commit, and the figures would then move
     // with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("🛑 the residue steps by exactly this ONE sentence and TWO printings", () => {

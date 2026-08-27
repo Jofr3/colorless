@@ -7,6 +7,7 @@ import {
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
 } from "./effects";
 import type { EffectOp } from "./effects";
 import {
@@ -387,6 +388,11 @@ const OTHER_READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackCancelRequirement,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
+  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+  // array's LAST entries plus its closing bracket, and appending moves that anchor
+  // without a character of it changing.
+  deriveAttackPreDamage,
   deriveAttackOptionalBoost,
 ];
 
@@ -521,7 +527,7 @@ describe("D317 §2 — the REFUSALS, which are what keep an unread sentence loud
     // load-bearing: a diff alone stays GREEN when a slice deletes a reader from the
     // module and from this list in the SAME commit, and the refusals would quietly
     // narrow again with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("🛑 all ELEVEN other readers refuse BOTH sentences", () => {

@@ -909,6 +909,60 @@ The mechanism: **every note counts the pins it INHERITED and never the one it is
 about to AUTHOR.** Now 13 assertions / 16 sites. Count your own suite's pin, and
 grep both `engineVersion` and `manifest.version`.
 
+## Placement is necessary, not sufficient (D428)
+
+**When you insert a state change mid-function, grep for locals bound from that
+state earlier.** D428's pre-damage hook sits on exactly the right line — the last
+before §8.5 — and would still have been dead. `defender` was a `const`
+destructured ~1,150 lines earlier, and that OBJECT (not the seat) is what
+`passivesOf`, `installedReductionOf`, `seatDamageReduction`, `koSurvivalClamp` and
+the §8.1 reads all take. A hook updating only `next` fires its event, prints its
+log row, mutates the board — **and moves no number.**
+
+That is D407's built-but-dead defect arriving through a **stale local** rather
+than through a missing table row, which makes it much harder to see: everything
+observable except the number is correct.
+
+**Write the mutant that skips the rebind.** It is the build a careless slice
+actually ships, and it is indistinguishable from the real thing in the log.
+
+## A refusal's falsifier should be executable (D428)
+
+D428 declined a prefix stripper on a measurement — four corpus sentences share the
+head `Before doing damage, `, and **zero** of the four remainders is claimed by any
+reader, so the stripper buys nothing today — and put that measurement **in the
+suite**. The day a second remainder becomes claimed, the refusal goes RED.
+
+**A refusal written as prose rots** (D422's stale block cost ~195 decisions).
+**A refusal written as a test cannot.** When you decline a generalisation, state
+the condition that would reverse it *and make that condition a rung*.
+
+## Never truncate an enumeration (D428)
+
+**`head -N` silently converts "all hits" into "the first N".** D428's brief listed
+eight rows of a ten-row column because the survey was piped through `head -8` and
+then reported as complete. The pattern was correct; the output was cut.
+
+That is the sixth incomplete enumeration in seven slices, and the routes have all
+been different: a remembered byte (D421), a partial grep (D422), an Oxford comma
+(D424), a missing adverb (D425), a block scope (D427), and now self-inflicted
+truncation. **State the pattern AND the limit, and do not pipe an enumeration you
+are about to call complete through `head`.**
+
+## Census deltas have a third route (D428)
+
+`clauseApostrophe` stepped 152 → 153 with **no fixture added and no new
+apostrophe-bearing sentence** — a card already in the pool simply became
+derivable. Reader additions and fixture additions are two routes into that census;
+**a previously-refused sentence becoming claimed is a third.**
+
+## Step every nested chain, not the one that reddened (D428)
+
+`opponentResistanceBonus.test.ts` carries **eleven** nested prefix chains, and all
+eleven needed the front term. A green suite after fixing the one that failed is
+not evidence the round was complete — the others fail only on a later run, or
+worse, silently stop asserting what they were written for.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

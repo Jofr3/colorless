@@ -62,6 +62,7 @@ import {
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
   deriveAttackCancelRequirement,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
   optionalBoostProgram,
   discardScaledBoostProgram,
@@ -71,7 +72,7 @@ import {
   splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
-import type { AttackDamageBonus, AttackFlipCount, EffectOp } from "./effects";
+import type { AttackDamageBonus, AttackFlipCount, AttackPreDamage, EffectOp } from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -442,6 +443,63 @@ function takeFlips(
     written once for the whole family. */
 const ONE_FLIP: AttackFlipCount = { kind: "printed", count: 1 };
 
+/** 🆕🆕🛑 **D428 — THE PRE-DAMAGE ACT, AND ITS SIGNATURE IS WHAT FORBIDS A PARK.**
+
+    It takes a board and returns a BOARD — not an `ApplyResult`, not a
+    `{state, pending}` pair, not anything `settleProgram` could drain. A union
+    member that needed a player's decision could not be implemented against this
+    return type, so *"can the pre-damage seam park?"* is answered by the compiler
+    rather than by a convention or a hand-kept list of safe ops. **That is the whole
+    reason this is not an `EffectOp[]` run through `runProgram` at a second call
+    site** (effects.ts's `AttackPreDamage` block carries the long form): `runProgram`
+    can hand back a parked state, and `attack.ts` has no continuation for *"…and then
+    do §8.5, the §8.1 sweep and the epilogue"* — everything after this point is
+    straight-line code and only the TAIL is expressible as `PendingStage[]`.
+
+    A `switch` over the union rather than an `if` on `kind`, on D222's rule: a
+    second member goes RED at compile time here, where a conjunction would go quiet.
+
+    ⚠️ **THE VICTIM'S SEAT OWNS THE DISCARD PILE**, which is `ENERGY_DISCARDED`'s
+    settled convention one attachment kind over: `seat` is whose board lost the
+    cards and `actor` is whose card caused it, and the two are opposite here and
+    the same for a self-discard. A Tool is played by its holder's controller and
+    goes back to that controller's pile (§7.4), never to the attacker's.
+
+    ⚠️ **A DEFENDER WITH NO TOOL IS A SILENT NO-OP** — the state is returned
+    IDENTICAL (`===`, not a rebuilt copy) and no event is pushed, because the
+    `ATTACK_DECLARED` row already said the attack happened and a row saying nothing
+    was discarded is a row that has to be read to learn nothing. That is
+    `randomFromOpponentHand`'s empty-hand ending and `HEALED`'s never-0 rule. */
+function applyAttackPreDamage(
+  state: GameState,
+  pre: AttackPreDamage,
+  actor: Seat,
+  events: GameEvent[],
+): GameState {
+  switch (pre.kind) {
+    case "discardOpponentActiveTools": {
+      const seat = otherSeat(actor);
+      const side = state.players[seat];
+      const victim = side.active;
+      if (victim === null || victim.tools.length === 0) return state;
+      const host = topUid(victim);
+      if (host === undefined) return state;
+      const uids = victim.tools;
+      // `host` is the stripped body's TOP-CARD uid and it is what a consumer must
+      // name it by — `ENERGY_DISCARDED`'s reason verbatim: this attack's own damage
+      // can Knock the body Out in the same batch, so re-reading "the Active spot"
+      // afterwards finds an empty slot, while a uid resolves through `cardIdByUid`
+      // forever.
+      events.push({ type: "TOOLS_DISCARDED", seat, actor, uids, host });
+      return withSide(state, seat, {
+        ...side,
+        active: { ...victim, tools: [] },
+        discard: [...side.discard, ...uids],
+      });
+    }
+  }
+}
+
 /** §8 — declare one attack with the Active Pokémon; resolving it ends the
     turn through the staged tail. The cost is a CHECK, not a payment (§8.2):
     energy stays attached unless attack text discards it (M4). */
@@ -649,7 +707,24 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // Unreachable — the KO'd side promotes (or loses) before play resumes.
     return err("NO_TARGET", "no Defending Pokémon");
   }
-  const { active: defender, uid: defenderUid, card: defenderCard } = defenderSpot;
+  const { active: declaredDefender, uid: defenderUid, card: defenderCard } = defenderSpot;
+  // 🆕🆕 **D428 — REBINDABLE, AND THE REBIND IS THE WHOLE OBSERVABILITY OF THE
+  // PRE-DAMAGE SEAM.** `defenderSpot` is read here, ~1,150 lines before §8.5, and
+  // the object it hands back is a SNAPSHOT: `passivesOf(next, defender)`,
+  // `installedReductionOf`, `seatDamageReduction`, `koSurvivalClamp` and the
+  // §8.1 reads all take that OBJECT, not the seat. So a pre-damage act that strips
+  // the defender's Tools into `next` and leaves this binding alone would fire its
+  // event, file its log row, empty the board's `tools` array — and change NO NUMBER,
+  // because every §8.5 read is still folding the pre-discard snapshot. That is
+  // D407's built-but-dead defect exactly, and it is invisible to any assertion that
+  // only checks the discard happened.
+  //
+  // ⚠️ THE `const` DESTRUCTURE IS KEPT AND A `let` ALIASES IT, rather than making
+  // all three bindings `let`: `defenderUid` and `defenderCard` must NOT move (the
+  // uid names the same body and the CARD is unchanged by a Tool leaving it), and
+  // spelling that structurally is cheaper than a comment saying so. `defended`
+  // (~950 lines down) is the same shape for the same reason, one damage step later.
+  let defender = declaredDefender;
 
   const events: GameEvent[] = [
     { type: "ATTACK_DECLARED", seat: action.seat, uid: attackerUid, attack: declared.name, index },
@@ -885,6 +960,23 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // APPENDED here, so the attack's existing tail runs them with no new channel.
   // Nothing else in this function writes it.
   let program = authored ?? derived;
+  // 🆕🆕 **D428 — THE PRE-DAMAGE READER, AND IT IS DELIBERATELY NOT `program`.**
+  // *"Before doing damage, discard all Pokémon Tools from your opponent's Active
+  // Pokémon."* (5 legal printings). Read off `effect` — the fully-split head, the
+  // same string `derivedHead` above is read off — and kept in its OWN binding
+  // because it lands in a different place in resolution: `program` runs at this
+  // function's TAIL, this runs in FRONT of §8.5. D125's rule, and effects.ts's
+  // `AttackPreDamage` block has the argument for why an `EffectOp[]` could not
+  // carry it (a pre-damage program may PARK, and there is no continuation for the
+  // rest of the damage step).
+  //
+  // ⚠️ ONE `preDamage` AND ONE `program` CAN NEVER BOTH BE NON-NULL ON A PRINTED
+  // STRING TODAY — the readers are whole-sentence anchored and disjoint by
+  // construction — so nothing here has to decide an order between them. That is a
+  // fact about the anchors, not a property worth depending on, which is why the
+  // hook below is placed by the RULE (before §8.5) rather than by what the pool
+  // happens to print.
+  const preDamage = effect === null || effect === "" ? null : deriveAttackPreDamage(effect);
   // The count-scaling clause reads the SAME effect text but folds into the damage
   // BEFORE the §8.5 pipeline, unlike a post-damage program. THREE sibling families,
   // told apart by ONE adjective: ADDITIVE ("more") folds `per × count` onto the
@@ -1192,8 +1284,21 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // both printed sentences carry a "+" marker (`140+` on all five Ogerpon ids,
   // `30+` on Floragato) which is EXACTLY the bonus this reader consumes, so
   // without the second the engine would flag a modifier it has just spent.
+  // 🆕🆕 **D428 ADDS ONE TERM HERE AND NONE TO `modifierSimulated`, AND BOTH HALVES
+  // ARE D130's RULE APPLIED RATHER THAN COPIED.** The pre-damage sentence is the
+  // WHOLE printed effect of all five of its printings, so without the term here
+  // every one of them would stay loudly `ATTACK_EFFECT_SKIPPED` for text this
+  // engine now resolves completely — the built-but-dead report, which is a lie in
+  // the direction that wastes a successor's slice. And it explains NO `+`/`×`
+  // marker at all: nothing about discarding a Tool accounts for a printed damage
+  // modifier, so claiming one there would suppress a loud row the engine has not
+  // earned (D383's narrowing, read from the other side). Written from the rule; the
+  // ids that print this sentence are unresolvable in this checkout (no D1 — D425),
+  // so whether any of the five ALSO prints a marker is not knowable here, and the
+  // rule is what makes the answer right either way.
   const effectSimulated =
     program !== null ||
+    preDamage !== null ||
     scaling !== null ||
     damagePenalty !== null ||
     // 🆕🆕 D363 — GATED ON `requirementSplit === null`, AND THE GATE IS THE WHOLE
@@ -1613,6 +1718,44 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // The two can never both be non-zero on a real printing (the anchors are
   // disjoint), but summing rather than choosing keeps the arithmetic total.
   const scaledTotal = scaled + coinBonus;
+
+  // 🆕🆕🛑 **D428 — THE PRE-DAMAGE HOOK, AND ITS PLACEMENT IS THE SLICE.** The
+  // printed words are *"Before doing damage"*, and this is the last line before the
+  // §8.5 pipeline opens. Everything that can still CANCEL the attack has run — the
+  // D125 requirement gate, D126's flip gate, §8 step 3's confusion check — so an
+  // attack that never resolves never strips a Tool; and nothing between here and
+  // the pipeline reads the defender's attachments.
+  //
+  // 🛑 **A HOOK PLACED AFTER §8.5 WOULD RESOLVE, EMIT ITS EVENT, PRINT ITS LOG ROW
+  // AND CHANGE NO NUMBER** — D407's built-but-dead defect, and the reason this
+  // slice is defined by an ORDER rather than by an effect. The §8.5 reads that make
+  // the discard observable, all of them off the defending body:
+  //   · `passivesOf(next, defender)` → `damageReductionAfterWR` (Rock Chestplate
+  //     `sv01-192`, a TOOL: 30 less after W/R on an {F} holder) — the damage MOVES;
+  //   · `effectiveMaxHp` at the §8.1 sweep → `basicHpBonus` (Bravery Charm
+  //     `sv02-173`, a TOOL: +50 HP on a Basic holder) — the KNOCK OUT moves.
+  // Both are driven with the Tool present and the Tool discarded on ONE board in
+  // `preDamageToolDiscard.test.ts` §3/§4, so "the number is unchanged" is a RED
+  // assertion and not a missing one.
+  //
+  // ⚠️ **`scaled` IS COMPUTED ~700 LINES ABOVE AND IS NOT RE-READ**, which is a
+  // commitment and is said out loud. `deriveAttackDamageBonus` claims *"If your
+  // opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more
+  // damage."* (2 printings) off the DECLARATION board, so on a hypothetical card
+  // printing both sentences the bonus would count a Tool this line then discards.
+  // No printing carries both — the readers are whole-sentence anchored, so one
+  // attack's effect text cannot be two sentences unless a splitter composes it, and
+  // no splitter composes these — so the order is UNOBSERVABLE on today's column and
+  // is chosen because it is the order the rules read in.
+  if (preDamage !== null) {
+    next = applyAttackPreDamage(next, preDamage, action.seat, events);
+    // 🛑 THE REBIND. See `declaredDefender` at the top of this function: without
+    // this line the whole §8.5 pipeline keeps folding the pre-discard snapshot and
+    // the slice is built-but-dead. `?? defender` rather than a throw because the
+    // Active cannot vanish here (nothing above removes it) and a silent keep is the
+    // no-op that a vanished body would deserve anyway.
+    defender = next.players[defenderSeat].active ?? defender;
+  }
 
   let defended = defender;
   // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at

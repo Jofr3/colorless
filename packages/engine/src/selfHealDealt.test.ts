@@ -209,8 +209,16 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
     // The census keys on the MODULE's `deriveAttack*` export set (D418). An arm adds
     // no export, so every figure in this repo that moved, moved because a SENTENCE
     // became claimed and for no other reason.
-    expect(attackReaderSurface()).toHaveLength(12);
+    // 🆕🆕 **D428 — 12 → 13, AND THE COUNT ALONE CAN NO LONGER CARRY THIS CLAIM.**
+    // The surface genuinely grew (D428's `deriveAttackPreDamage`), so a rung that
+    // only pins the number has stopped saying anything about D427's arm. Re-pointed
+    // WITH its discrimination replaced rather than dropped (D418's second half): the
+    // proposition is *"no export is named for THIS sentence"*, and a slice that
+    // quietly split the heal arm out into a `deriveAttackHealDealt` reader breaks the
+    // third rung while the first two stay green.
+    expect(attackReaderSurface()).toHaveLength(13);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
+    expect(attackReaderSurface().filter((name) => /Heal|Dealt/i.test(name))).toEqual([]);
   });
 
   it("🛑 the sentence is claimed WHOLE — neither splitter is involved, and no registry row is", () => {
@@ -432,7 +440,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.329.0");
+    expect(engineVersion).toBe("0.330.0");
   });
 });
 

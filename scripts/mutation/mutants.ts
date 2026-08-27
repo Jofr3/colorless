@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,12 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.329.0";',
+    // ⚠ RE-POINTED AT D428 (0.329.0 → 0.330.0) — the question was ASKED again rather
+    // than inherited: `MATCH_RECORD_VERSION` STAYS 26 because D428 adds no persisted
+    // field, no `EffectOp` inhabitant and no continuation key (its pre-damage shape is
+    // deliberately not an `EffectOp` and its seam cannot park), so
+    // `D326-record-version-not-bumped` is NOT owed and was not touched.
+    find: 'export const engineVersion = "0.330.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18718,5 +18723,119 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/selfHealDealt.test.ts",
       "packages/engine/src/censusAtHead.test.ts",
     ],
+  },
+  // ── 🆕🆕 D428 — THE PRE-DAMAGE TOOL DISCARD. ELEVEN rows, ONE PER CLAIM rather than
+  //    one per line, and the SHAPE of the set is the finding: **FIVE of the eleven are
+  //    SILENT IN EVERY CENSUS** (C2, C3, C5, C7, C11). The sentence still matches,
+  //    `BUILT.attack` is unmoved and `ATTACK_EFFECT_SKIPPED` still stays quiet — while
+  //    the engine strips the ATTACKER's own Tools, or strips the defender's and lets
+  //    §8.5 keep folding them anyway, or credits the cards to the wrong pile, or
+  //    discards one Tool where the sentence says all. D402 measured this ratio at 9/12
+  //    and D427 at 3/8; a fourth anchor reproduces it at 5/11.
+  //
+  //    🛑 **C3 IS THE ROW THE BRIEF ASKED FOR UNDER THE NAME "MOVE THE HOOK TO AFTER
+  //    §8.5".** A textual find/replace cannot relocate a block, but it does not need to:
+  //    the OBSERVABLE content of "after §8.5" is *the pipeline folds the pre-discard
+  //    body*, and dropping the `defender` rebind produces exactly that board — the
+  //    discard resolves, the event fires, the log row prints, and no number moves.
+  //    D407's built-but-dead defect, reachable in one line.
+  {
+    id: "D428-anchor-drops-the-tail",
+    decision: "D428",
+    what: "the anchor drops `\\.$`, so a sentence that CONTINUES past this clause is claimed as if it stopped there — and there IS such a printing: *\"…from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.\"*. The engine would strip the Tools and silently drop the Paralyze while reporting a fully simulated attack, which is strictly worse than the loud skip because nothing says a clause was lost. The boundary `splitAttackTrailingClause` owns, and this arm must not shadow it",
+    file: "packages/engine/src/effects.ts",
+    find: "discard all Pokémon Tools from your opponent['’]s Active Pokémon\\.$/;",
+    replace: "discard all Pokémon Tools from your opponent['’]s Active Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-anchor-loses-the-apostrophe-class",
+    decision: "D428",
+    what: "the possessive's `['’]` class collapses to a bare U+0027 — the exact class D136 found on three regexes and D137 wrote a whole suite about. The catalog prints U+0027 TODAY, so every board stays green and the arm survives until a re-ingest normalises punctuation, at which point five printings silently stop discarding anything and land back on the loud path with no code change to blame",
+    file: "packages/engine/src/effects.ts",
+    find: "discard all Pokémon Tools from your opponent['’]s Active Pokémon",
+    replace: "discard all Pokémon Tools from your opponent's Active Pokémon",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-reader-array-drops-the-pre-damage-reader",
+    decision: "D428",
+    what: "🛑 `ATTACK_WHOLE_SENTENCE_READERS` loses the new reader — the rot that array's own doc block predicts and the entry a slice adding a reader is most likely to forget. `splitAttackTrailingClause`'s shadow refusal then stops seeing a sentence this file claims WHOLE, so a future compound whose head is that sentence would be re-answered by the splitter instead of by the reader that owns it. Nothing about the discard changes, which is why the tripwire is a separate rung from every board in the suite",
+    file: "packages/engine/src/effects.ts",
+    find: "  deriveAttackPreDamage,\n];",
+    replace: "];",
+    expectKilledBy: ["packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D428-victim-is-the-attacker",
+    decision: "D428",
+    what: "🛑 SILENT IN EVERY CENSUS. `otherSeat(actor)` becomes `actor`, so the attack strips its OWN Active's Pokémon Tools instead of the defender's — the seat mistake `ENERGY_DISCARDED`'s own doc block records the log shipping once, reached here through the victim rather than through the reporter. The sentence still matches, the event still fires, nothing is skipped, and the player is punished for using their own card",
+    file: "packages/engine/src/attack.ts",
+    find: "      const seat = otherSeat(actor);",
+    replace: "      const seat = actor;",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-pre-damage-discard-not-rebound",
+    decision: "D428",
+    what: "🛑🛑 THE ROW THIS SLICE EXISTS TO PIN, AND IT IS D407's BUILT-BUT-DEAD DEFECT EXACTLY. The `defender` rebind is dropped, so `next` loses the Tools while every §8.5 read keeps folding the snapshot bound ~1,150 lines earlier: `passivesOf`, `installedReductionOf`, `seatDamageReduction`, `koSurvivalClamp`. The discard resolves, `TOOLS_DISCARDED` fires, the log row prints, the board shows an empty `tools` array — AND NO NUMBER MOVES. This is what placing the hook AFTER the pipeline would produce, and it is invisible to any assertion that merely checks the discard happened",
+    file: "packages/engine/src/attack.ts",
+    find: "    defender = next.players[defenderSeat].active ?? defender;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-effect-not-marked-simulated",
+    decision: "D428",
+    what: "`effectSimulated` loses its `preDamage` term, so all five printings resolve the discard AND are reported as `ATTACK_EFFECT_SKIPPED` for text the engine just executed. D130's rule inverted: the report becomes a lie in the direction that wastes a successor's slice, since the census would keep saying the sentence is unbuilt while the board says otherwise",
+    file: "packages/engine/src/attack.ts",
+    find: "    preDamage !== null ||\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-event-swaps-owner-and-actor",
+    decision: "D428",
+    what: "🛑 SILENT IN EVERY CENSUS. `TOOLS_DISCARDED` is pushed with `seat` and `actor` crossed, so the row names the ATTACKER as the board that lost the cards and the DEFENDER as the cause. This is the mistake `ENERGY_DISCARDED`'s doc block says the log actually shipped before its self-discard arm existed, and it is invisible on the board — the cards still move correctly, only the attribution is inverted, and the log row then reads as the opponent having discarded their own Tool",
+    file: "packages/engine/src/attack.ts",
+    find: '      events.push({ type: "TOOLS_DISCARDED", seat, actor, uids, host });',
+    replace: '      events.push({ type: "TOOLS_DISCARDED", seat: actor, actor: seat, uids, host });',
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-empty-board-still-files-a-row",
+    decision: "D428",
+    what: "the no-op guard loses its `tools.length === 0` conjunct, so a defender with NO Tool gets a `TOOLS_DISCARDED` row carrying an empty `uids` list and a rebuilt side. A row saying nothing was discarded is a row that has to be read to learn nothing — `HEALED`'s never-0 rule and `randomFromOpponentHand`'s empty-hand ending, both broken at once — and the log then prints \"discarded  from …\" on every swing into a bare body",
+    file: "packages/engine/src/attack.ts",
+    find: "      if (victim === null || victim.tools.length === 0) return state;",
+    replace: "      if (victim === null) return state;",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-tools-not-detached",
+    decision: "D428",
+    what: "🛑 SILENT IN EVERY CENSUS. The stripped body keeps its `tools` array while the uids are also appended to the discard pile — the card is in two zones at once, §8.5 keeps folding a Tool that has been discarded, and the event says it left. The state-model half of the rebind row: C3 loses the READ, this loses the WRITE, and the two together are why the placement is stated as an ORDER rather than as an effect",
+    file: "packages/engine/src/attack.ts",
+    find: "        active: { ...victim, tools: [] },",
+    replace: "        active: victim,",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-discards-only-the-first-tool",
+    decision: "D428",
+    what: "🛑 SILENT IN EVERY CENSUS. `victim.tools` becomes `victim.tools.slice(0, 1)`, so the printed *\"all Pokémon Tools\"* becomes *\"one Pokémon Tool\"*. §7.4 caps a body at one Tool TODAY, so every ordinary board agrees — and Revavroom ex's \"Tune-Up\" raises that cap in the real game, which is precisely why the suite drives a two-Tool body. A plural the engine reads as a singular, green on every board that cannot show the difference",
+    file: "packages/engine/src/attack.ts",
+    find: "      const uids = victim.tools;",
+    replace: "      const uids = victim.tools.slice(0, 1);",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
+  },
+  {
+    id: "D428-log-row-filed-under-the-owner",
+    decision: "D428",
+    what: "the log row is filed under `event.seat` (the board that LOST the Tools) instead of `event.actor` (whose card did it) — the `ENERGY_DISCARDED` / `CARD_TO_BOTTOM_OF_DECK` convention broken at the one site that has to honour it. The row then appears in the wrong player's column, directly beneath the attacker's own `ATTACK_DECLARED`, and reads as the defender having discarded their own Tool before taking damage",
+    file: "packages/engine/src/log.ts",
+    find: "      const cards = event.uids.map((uid) => cardName(state, uid));\n      return row(event.actor, [\n        plain(\"discarded \"),",
+    replace: "      const cards = event.uids.map((uid) => cardName(state, uid));\n      return row(event.seat, [\n        plain(\"discarded \"),",
+    expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
   },
 ];

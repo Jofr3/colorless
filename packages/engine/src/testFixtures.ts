@@ -1301,10 +1301,20 @@ export const FIXTURE_POOL: Record<string, Card> = {
   //   (0 to Klefki, 20 to fix-attacker), with each attacker carrying its own
   //   no-passive baseline, which is confound-free where "the same printed 30" only
   //   looked it. "Joust"'s rider ("Before doing damage, discard all Pokémon Tools
-  //   from your opponent's Active Pokémon") is unsimulated — MEASURED, not assumed:
-  //   all SEVEN `derive*` readers return null on it (six until D192 added
-  //   `deriveAttackDamageSuppression`) — so it rides as an inert string
-  //   on a plain printed 10. —
+  //   from your opponent's Active Pokémon") WAS unsimulated — MEASURED, not assumed:
+  //   all SEVEN `derive*` readers returned null on it (six until D192 added
+  //   `deriveAttackDamageSuppression`) — so it rode as an inert string
+  //   on a plain printed 10.
+  //   🆕🆕 🛑 **D428 — THAT SENTENCE HAS EXPIRED, AND IT IS DATED RATHER THAN
+  //   BACK-WRITTEN (D423).** It was TRUE when written and true through D427; the
+  //   THIRTEENTH reader, `deriveAttackPreDamage`, claims this exact string, so
+  //   Klefki's Joust now DISCARDS the defender's Pokémon Tools before its 10 lands
+  //   and is no longer reported by `ATTACK_EFFECT_SKIPPED`. ⚠️ **THIS FIXTURE IS
+  //   THEREFORE THE REAL PRINTING BEHIND D428's SENTENCE** — a genuine catalog id,
+  //   not a `fix-*` demonstrator — and `preDamageToolDiscard.test.ts` §2 drives it
+  //   as such. Nothing about the Ability-lock pairs above changes: a Tool is not an
+  //   Ability, so `passivesOf` keeps folding the defender's Tools under the aura,
+  //   and the two lock pairs put no Tool on either board. —
   "sv01-096": battler("sv01-096", {
     name: "Klefki",
     types: ["Psychic"],
@@ -13423,6 +13433,63 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 300,
     weaknesses: [{ type: "Fire", value: "×2" }],
   }),
+  /** 🆕🆕 **D428 — THE PRE-DAMAGE TOOL DISCARD's ATTACKER, AND IT EXISTS BESIDE A REAL
+      PRINTING RATHER THAN INSTEAD OF ONE.** Klefki `sv01-096` (above) has printed this
+      exact sentence in this pool since D100 and is driven as the real card in
+      `preDamageToolDiscard.test.ts` §2 — but it deals a printed **10**, which a Rock
+      Chestplate's −30 floors to 0, and it carries an Ability-lock aura that would have
+      to be argued away on every board. So the observability boards get a body with
+      NOTHING else printed on it.
+
+      🛑 **THE INDICES ARE FOUR PAIRS OF ONE AXIS, WHICH IS THE WHOLE POINT.** Indices 0
+      and 1 print the SAME cost and the SAME 100 damage and differ ONLY in whether the
+      pre-damage sentence is there; indices 2 and 3 do the same at 120. So *"the Tool
+      changed the number"* and *"the discard changed the number"* are two different
+      claims measured on one board, and a near-miss differs on ONE axis (D427). Index 4
+      prints a sentence NO reader claims, so §6's *"nothing was skipped"* has a witness
+      on the same body rather than a missing row.
+
+      ⚠️ 200 HP so no board here ever Knocks the ATTACKER out, and no `weaknesses` or
+      `resistances` at all — a fixture added for a Tool claim has no business moving the
+      W/R censuses (D427's own rule about `fix-drainwall`). */
+  "fix-toolstrip": battler("fix-toolstrip", {
+    name: "Fixlefki",
+    types: ["Psychic"],
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Pry Off",
+        damage: 100,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Plain Swipe", damage: 100 },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Pry Through",
+        damage: 120,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Plain Through", damage: 120 },
+      { cost: ["Colorless"], name: "Odd Job", damage: 10, effect: "Each player draws 3 cards." },
+    ],
+  }),
+  /** 🆕🆕 **D428 — THE TWO DEFENDERS, EACH CHOSEN FOR THE ONE TOOL FIELD IT CAN WEAR.**
+
+      · `fix-chestwall` is **{F}**, because Rock Chestplate `sv01-192` gates its −30 on
+        the HOLDER's Fighting type (`damageReductionAfterWRIfType`, D161). 300 HP so the
+        damage figure is never confounded by a Knock Out.
+      · `fix-charmwall` is a 100 HP **Basic**, because Bravery Charm `sv02-173`'s +50
+        applies only while the top card is a Basic. 100 + 50 = 150, and index 2's
+        printed 120 falls BETWEEN the two — which is the whole KO-boundary board.
+
+      Neither prints a Weakness, a Resistance, an Ability or an attack: every number
+      these bodies produce has to come from the Tool or from nothing. */
+  "fix-chestwall": battler("fix-chestwall", { types: ["Fighting"], hp: 300 }),
+  "fix-charmwall": battler("fix-charmwall", { hp: 100 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13461,6 +13528,35 @@ export function deckOf(counts: Record<string, number>): string[] {
       · `fix-titan` — 340 HP, no attacks: mulligan-free filler and a clean defender;
       · `fix-energy` — Colorless, enough for every cost above with nothing left to
         chance. */
+/** 🆕🆕 **D428 — the PRE-DAMAGE TOOL DISCARD. Both seats run the same list**, because
+    the sentence names *"your opponent's Active"* and a seat-swapped board is the only
+    thing that can tell that reading from *"the p2 Active"* (D361's rule).
+
+      · `fix-toolstrip` — the attacker; four indices in two same-damage pairs plus one
+        deliberately unread row (see its own block above);
+      · `sv01-096` **Klefki** — the REAL printing of the sentence, driven as such;
+      · `fix-chestwall` — {F}, 300 HP: Rock Chestplate's −30 is the damage that moves;
+      · `fix-charmwall` — Basic, 100 HP: Bravery Charm's +50 is the KO that moves;
+      · `sv01-192` **Rock Chestplate**, `sv02-173` **Bravery Charm** and `sv01-197`
+        **Vitality Band** — REAL Tools, reused rather than invented, and placed by
+        `attachToolFromDeck` because §7.4's `attachTool` action cannot reach the
+        OPPONENT's board. The Band is the NULL control: its `damageBonusBeforeWR` is
+        read off the ATTACKER, so discarding it from the body being hit moves nothing;
+      · `fix-titan` — 340 HP, no attacks: mulligan-free filler and the no-Tool control
+        defender;
+      · `fix-energy` — Colorless, two per swing with nothing left to chance. */
+export const PRE_DAMAGE_TOOL_DECK = deckOf({
+  "fix-toolstrip": 4, // the attacker — indices 0/1 (100) and 2/3 (120), 4 = the loud row
+  "sv01-096": 2, // Klefki — the REAL printing of the sentence
+  "fix-chestwall": 4, // {F}, 300 HP — Rock Chestplate's holder
+  "fix-charmwall": 4, // Basic, 100 HP — Bravery Charm's holder
+  "sv01-192": 4, // Rock Chestplate (Tool) — 30 less after W/R on an {F} holder
+  "sv02-173": 4, // Bravery Charm (Tool) — +50 HP on a Basic holder
+  "sv01-197": 2, // Vitality Band (Tool) — an ATTACKER-side bonus: the null-effect control
+  "fix-titan": 8, // 340 HP, no attacks — filler and the no-Tool control defender
+  "fix-energy": 28, // Colorless Basic — every cost on this list
+});
+
 export const SELF_HEAL_DEALT_DECK = deckOf({
   "fix-suction": 4, // the attacker — indices 0 (50), 1 (200), 2 (no damage)
   "fix-drainwall": 4, // 300 HP, no W/R — the dealt-50 control

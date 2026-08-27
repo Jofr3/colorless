@@ -17693,7 +17693,215 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.328.0 → **0.329.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.329.0";
+/** 🆕🆕 **0.329.0 → 0.330.0 — D428, THE PRE-DAMAGE TOOL DISCARD.**
+
+    *"Before doing damage, discard all Pokémon Tools from your opponent's Active
+    Pokémon."* — **1 sentence / 5 legal printings** (corpus line 73), measured over
+    `legalAttackCorpus()`: the committed `legal_standard = 1` attack column, 640
+    sentences / 1,732 printings. The **LARGEST single record in the split-aware unbuilt
+    residue** at D427's head — **195 sentences / 293 printings**, subtracting
+    `resolvedByAnyReader`, `splitAttackGateClause`, `splitAttackTrailingClause` and a
+    `registry.ts` substring test (D425's rule: a residue figure without its subtraction
+    set names nothing). After this slice, **194 / 288**.
+
+    `BUILT.attack` 1449 → **1454**; the reader surface **12 → 13** (the first slice
+    since D417 to add a reader rather than an arm); the instrument's resolution
+    427 / 1,401 → **428 / 1,406** and its RAW residue 213 / 331 → **212 / 326**;
+    whole-census `built` 1,854 → **1,859**; unbuilt attack column 283 → **278**;
+    `clauseApostrophe`'s discovered sweep 152 → **153**. `SPLIT_ATTACK_UNITS` (13
+    resolving of 14 gated), `COMPOUND_ATTACK_UNITS` (19) and `REGISTRY_ATTACK_UNITS`
+    (16) ALL stand still, **measured after the reader landed** rather than assumed
+    (D424 gained a printing exactly this way).
+
+    🛑🛑 **THE SLICE IS THREE DESIGN DECISIONS BEFORE IT IS A READER, AND THE THIRD IS
+    THE ONE THAT COULD HAVE SUNK IT.**
+
+    ① **BESPOKE SHAPE, NOT AN `EffectOp` PROGRAM — AND D125's RULE IS ONLY HALF THE
+    ARGUMENT.** D125: *a derived shape is classified by WHERE IN RESOLUTION IT LANDS*.
+    An effect program runs at `attack.ts`'s TAIL, strictly AFTER §8.5; the printed words
+    are *"Before doing damage"*; so an `EffectOp` is in the wrong place, exactly as it
+    was for D125's requirement gate and D126's coin flip.
+
+    🛑 **THE HALF D125 NEVER FACED IS THE PARK.** `runProgram` can return a state parked
+    on `effect:choose`, and `attack.ts` has NO CONTINUATION for *"…and then run §8.5,
+    the §8.1 KO sweep and the epilogue"* — everything after the pre-damage seam is
+    straight-line code, and only the TAIL is expressible as `PendingStage[]`. An
+    `EffectOp[]` at a pre-damage call site would therefore be correct exactly as long as
+    nobody ever put a parking op in it, and the thing keeping it correct would be a
+    hand-kept list of safe ops — **D222's closed-world assumption with no compiler behind
+    it**. So the carrier is `AttackPreDamage`, a CLOSED union with one inhabitant,
+    applied by `applyAttackPreDamage`: a TOTAL function returning `GameState`.
+    **The signature is the enforcement** — a member needing a decision cannot be written
+    against a function that returns a board rather than an `ApplyResult` — and a `switch`
+    over the union rather than an `if` on `kind` means a second member is a compile error
+    (D222's other half). ⚠️ **THIS IS DELIBERATELY THE OPPOSITE TRADE FROM
+    `deriveAttackEffect`**, whose whole value is that new ops compose; here composability
+    IS the hazard.
+
+    ② **A WHOLE-SENTENCE ANCHOR, AND THE PREFIX STRIPPER WAS PRICED WITH A MEASUREMENT
+    RATHER THAN DECLINED ON TASTE.** The family shares the literal head
+    `Before doing damage, `, so a `splitAttackPreDamageClause` shaped like
+    `splitAttackGateClause` looks like it would set up rows 71 / 72 / 74 cheaply.
+    Measured over all 640 corpus sentences: **FOUR sentences open with that head, and
+    ZERO of the four remainders is claimed by any of the twelve readers** — as printed,
+    and with the remainder re-capitalised, since the printed remainder starts lowercase.
+    **A stripper buys nothing at all today**; each of the four still needs its own arm,
+    and the only way to make it pay would be to hand its remainder to
+    `deriveAttackEffect` — which is precisely the `EffectOp` program ① refuses.
+    `splitAttackGateClause`'s own *"build the narrow thing"* verdict, at the other end of
+    the sentence. **The condition that would reverse it (D422): two or more pre-damage
+    remainders claimed by a reader that already exists.** `preDamageToolDiscard.test.ts`
+    §1 re-runs the measurement live, so the refusal has an executable falsifier rather
+    than a paragraph.
+
+    ③ **NO, A PRE-DAMAGE OP CANNOT PARK UNDER THIS DESIGN — BY THE TYPE, NOT BY
+    CONVENTION.** The corpus row that WOULD force one is
+    *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."* (2 printings): *"up
+    to 2"* over a multi-body board is a real decision. It carries NO pre-damage head, so
+    it belongs at the program TAIL where parking is already solved, and it stays UNBUILT.
+    ⚠️ **THE REFUSAL IS PINNED ON THE POPULATION AND NOT ON A SPECIMEN** (D423): §7
+    asserts that the set of corpus sentences this reader claims is exactly `[SENTENCE]`
+    and that none of them spells `up to` / `you may` / `choose`, **with the neighbouring
+    admission beside it** (the reader still says yes to its own sentence — D424).
+
+    🛑🛑 **THE HOOK'S PLACEMENT IS THE SLICE, AND THE REBIND IS THE MECHANISM.** The
+    hook sits between the last cancelling gate and the §8.5 pipeline — after D125's
+    requirement gate, after D126's flip gate, after §8 step 3's confusion check, so a
+    cancelled attack strips nothing. **But placing it there is not enough.** `attack.ts`
+    binds `defender` from `activeTop(state, …)` roughly 1,150 lines earlier and passes
+    that OBJECT — not the seat — to `passivesOf`, `installedReductionOf`,
+    `seatDamageReduction`, `koSurvivalClamp` and the §8.1 reads. A hook that updated only
+    `next` would empty the board's `tools`, fire its event, print its log row **and move
+    no number**: D407's built-but-dead defect, invisible to any assertion that merely
+    checks the discard happened. The destructure is therefore split — `declaredDefender`
+    stays `const`, `defender` becomes a `let` — and the hook rebinds it. Mutant
+    `D428-pre-damage-discard-not-rebound` is that exact build, and it is the row the
+    brief asked for under the name *"move the hook to AFTER §8.5"*.
+
+    🛑 **THE OBSERVABILITY, DRIVEN ON BOARDS WHERE THE NUMBER MOVES.**
+      · **Rock Chestplate `sv01-192`** (a real TOOL, −30 after W/R gated on the holder's
+        {F}) on a 300 HP {F} defender: `fix-toolstrip` indices 0 and 1 print the SAME
+        cost and the SAME 100 and differ ONLY in the sentence — **70 for the plain twin,
+        100 for the pre-damage one, a delta of exactly 30**. One board, one axis (D427).
+      · **Bravery Charm `sv02-173`** (+50 HP on a Basic holder) on a 100 HP Basic: the
+        printed 120 falls BETWEEN 100 and 150, so the Charm SURVIVES the plain twin and
+        the discard turns the same 120 into a **KNOCKED_OUT** — `effectiveMaxHp` is the
+        second §8.5-adjacent read and it moves too.
+      · **No Tool at all**: silent no-op — no event, no row, and the damage UNCHANGED
+        at 100 both ways.
+      · **Klefki `sv01-096`**, the REAL printing, drives the same seam end to end: its
+        printed 10 into a Chestplated body dealt **0** before this slice and deals **10**
+        after.
+
+    ⚠️ **THE BRIEF NAMED VITALITY BAND AS A NUMBER-MOVER AND IT IS NOT ONE.**
+    `damageBonusBeforeWR` is read off the ATTACKER (`attackerPreWRBonus`), so a Band on
+    the body being hit contributes nothing to the hit, discarded or not. It is kept as a
+    driven NULL control rather than dropped: the Tool still leaves play (the sentence
+    says ALL Pokémon Tools, not the ones that matter) and the number holds still.
+
+    ⚠️ **THE COMMISSIONING BRIEF'S ENUMERATION WAS SHORT BY TWO, THE SIXTH IN EIGHT
+    SLICES.** Its `/Pokémon Tool/` sweep listed corpus rows 71–74, 136, 313, 360 and 448;
+    the column carries **TEN**, the two unlisted being the counted-Tool scaler (*"This
+    attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."*, 5
+    printings) and the hand-reveal discard (*"…Discard all Item cards and Pokémon Tool
+    cards you find there."*). Neither is in scope; both are now measured in §1.
+    ⚠️ **AND THIS SLICE'S OWN FIRST DRAFT REPEATED THE CLASS ONE LEVEL DOWN**: a rung
+    asserted that *"before this attack does damage"* is printed by NO row. It is printed
+    by **2** (a `deriveAttackRequirement` does-nothing gate, built since D125), the rung
+    went RED, and it is now the measurement instead of the claim. **Publishing the
+    pattern is what made the blind spot findable — including by its own author.**
+
+    ⚠️ **A SHIPPED FIXTURE CLAIM EXPIRED AND IS DATED RATHER THAN BACK-WRITTEN (D423).**
+    `testFixtures.ts`'s Klefki block has said since D100 that *"Joust"'s rider … is
+    unsimulated — MEASURED, not assumed: all SEVEN `derive*` readers return null on it*.
+    That was TRUE when written and true through D427. It is corrected in place with its
+    date, and the fixture is re-labelled as what it now is: **the real printing behind
+    this slice's sentence**, so the suite drives a catalog card and not only a `fix-*`
+    demonstrator.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 26, AND IT WAS DRIVEN IN BOTH DIRECTIONS RATHER
+    THAN ARGUED FROM A CARRIER'S NAME (D427's rule).** Three ways a slice at this seam
+    could owe a bump, and all three are absent: **no new persisted field** (`tools` has
+    been a `string[]` on `InPlayPokemon` since M4 and this slice only ever empties it —
+    the stripped body's key set is asserted as a 20-name LITERAL); **no new `EffectOp`
+    inhabitant** reaching `phase.cont`, because the pre-damage shape is deliberately not
+    an `EffectOp`; and **no continuation key at all**, because this seam cannot park.
+    Driven in `preDamageToolDiscard.test.ts` §8: a board serialized BEFORE the swing
+    rehydrates and produces byte-identical events and a byte-identical board, and the
+    post-swing board survives the same trip unchanged.
+
+    ⚠️ **NO `packages/schema` DIFF, AND THE QUESTION WAS ASKED.** The one new event
+    (`TOOLS_DISCARDED`) widens `GameEvent`, which is **not persisted at all** —
+    `MatchRecord` stores the RENDERED `SeatLogEntry[]` (`apps/api/src/lobby/match.ts`) —
+    so it is a row-wording seam for NEW rows only. `log.ts` has a `default: return null`
+    rather than an exhaustive switch, so the log arm is written from the RULE and not
+    because the compiler demanded it: a row saying *"before doing damage"* is a claim
+    this path makes true, since the event is pushed ahead of the `DAMAGE_DEALT` it
+    precedes, and §3 pins the order in the rendered sequence as well as in the events.
+
+    ⚠️ **THE PRICE: MECHANISMS AND SITES COUNTED SEPARATELY (D423).** SEVEN mechanisms —
+    the `AttackPreDamage` type + its anchor + `deriveAttackPreDamage`; its entry in
+    `ATTACK_WHOLE_SENTENCE_READERS`; `attack.ts`'s `preDamage` binding; the
+    `effectSimulated` term; the split `declaredDefender` / `let defender` rebind; the
+    hook + `applyAttackPreDamage`; and the `TOOLS_DISCARDED` event with its log arm.
+    Against **215 edit sites across 68 files** — and ⚠️ **THE FIRST FIGURE THIS BLOCK
+    CARRIED WAS "62 sites across 55 files", WRITTEN BEFORE THE DIFF WAS COUNTED AND
+    WRONG ON BOTH NUMBERS.** It is corrected here rather than quietly replaced, because
+    a doc block's justification is a claim and rots like a count — including the one you
+    just wrote (D414/D425), and this is the third consecutive slice whose own mid-slice
+    price paragraph was wrong in the UNDER-pricing direction.
+
+    Measured, with the definition stated so the number can be re-derived: an EDIT SITE
+    is one changed assertion, literal or list entry.
+      · **96** `deriveAttackPreDamage,` insertions — 48 import lines and 48 reader-list
+        entries, one pair in each of the 48 test files that keeps a hand-copied
+        `READERS` array, plus `effects.ts`'s own `ATTACK_WHOLE_SENTENCE_READERS`;
+      · **48** `attackReaderSurface()).toHaveLength(12 → 13)` rungs — D418's
+        module-derived surface guard firing exactly as designed, in 48 files at once,
+        which is what a slice that adds a READER pays and a slice that adds an ARM does
+        not;
+      · **28** accumulating census chains stepped at the FRONT, in 7 files (11 of them
+        the nested prefix chain in `opponentResistanceBonus.test.ts`, which D425 named
+        as the hardest edit in this repo — every one of the eleven starts from
+        `ids.length`, so stepping only the rung that reddened would have left ten
+        tautologies behind);
+      · **27** other census literals across 11 files, including the bare-literal operand
+        `326 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS - COMPOUND_ATTACK_UNITS`,
+        which no `toBe(N)` grep can find and which was located by RUNNING the suite;
+      · **16** version sites (see the tax paragraph below);
+      · three fixtures, one deck, one new suite, eleven mutant rows.
+
+    **Mechanisms 7, sites 215 — a 1:31 ratio, and the ninth slice running on which the
+    mechanism count told you nothing about the blast radius.**
+
+    🛑 **EVERY CENSUS CHAIN ENDPOINT WAS DIFFED AGAINST `HEAD` AFTER THE EDITS (D426).**
+    Seven chains gained a front term (`- 1` / `- 5`, or `- 5` alone where the chain is
+    printings-only); the frozen right-hand sides — 336, 1207, 521, 269, [371, 1268],
+    [370, 1267], [367, 1259], [366, 1258] — are **byte-unchanged**, verified by
+    extracting every `).toBe(N);` / `]).toEqual([N, M])` from each file at HEAD and at
+    the working tree and diffing the two lists. The only endpoint that moved by design is
+    `precociousEvolution.test.ts`'s `head - rawDelta - splitDelta`, which is `head` minus
+    THIS family's own deltas and therefore tracks the head by construction — annotated as
+    such rather than left to read like a bumped tail.
+
+    ⚠️ **AND THE VERSION TAX MOVED AGAIN, FOR A SEVENTH SLICE RUNNING — BECAUSE THE
+    SLICE THAT COUNTS IT IS ALWAYS THE ONE THAT ADDS ONE.** D424 measured 9 assertions /
+    12 sites, D425 10 / 13, D426 12 / 15, D427 13 / 16; D428 measures **14 assertions /
+    17 sites** — THIRTEEN `engineVersion` reads (twelve inherited plus this slice's own
+    in `preDamageToolDiscard.test.ts` §9), ONE `manifest.version` read
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump, as every slice
+    since D386 has done). Grep BOTH `engineVersion` and `manifest.version`; D427 named
+    the mechanism and this note is its first test — **count the pin you are authoring.**
+
+    Cost: **1 whole-sentence anchor, 1 new reader, 1 new exported type, 1 module-private
+    applier, 1 new `GameEvent` and 1 log arm.** ZERO new `EffectOp`s, ZERO new prompts,
+    ZERO parks, ZERO `BoardCondition` members, ZERO registry rows, ZERO error codes, ZERO
+    `GameState` fields and ZERO `packages/schema` bytes. No web/API/DB diff.
+
+    engineVersion 0.329.0 → **0.330.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.330.0";
 
 export type {
   ApplyResult,

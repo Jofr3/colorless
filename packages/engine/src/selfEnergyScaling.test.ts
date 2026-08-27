@@ -12,6 +12,7 @@ import {
   deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import { applyAction } from "./index";
@@ -374,6 +375,11 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
       deriveAttackOptionalBoost,
       deriveAttackOptionalCostBoost,
       deriveAttackRequirement,
+      // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+      // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+      // array's LAST entries plus its closing bracket, and appending moves that anchor
+      // without a character of it changing.
+      deriveAttackPreDamage,
       deriveAttackCoinFlip,
     ];
     // 🆕🆕 D419 — THE TWO-RUNG GUARD, CO-LOCATED because this list is function-local.
@@ -381,7 +387,7 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
     // diff alone stays GREEN when a slice deletes a reader from the module and from
     // this list in the same commit.
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
     // 🆕🆕 D419 — the claim taken off the MODULE. The loop below names WHICH reader
     // broke; this line is what makes "unread by every reader in the family" a fact
     // about `effects.ts` rather than about the array above it.

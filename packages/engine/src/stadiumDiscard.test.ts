@@ -18,6 +18,7 @@ import {
   splitAttackCancelClause,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
+  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
@@ -154,6 +155,11 @@ const READERS: readonly ((text: string) => unknown)[] = [
   deriveAttackOptionalCostBoost,
   deriveAttackDiscardScaledBoost,
   // 🆕🆕 D418 — the TWELFTH (D417), and the one this file most needed.
+  // 🆕🆕 D428 — THE THIRTEENTH, the PRE-DAMAGE Tool discard. ⚠️ SPLICED BEFORE THE
+  // LAST ENTRY RATHER THAN APPENDED, D419's rule: mutant `find` strings quote an
+  // array's LAST entries plus its closing bracket, and appending moves that anchor
+  // without a character of it changing.
+  deriveAttackPreDamage,
   deriveAttackCancelRequirement,
 ];
 
@@ -290,7 +296,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // ⚠️ THE COUNT IS PINNED SEPARATELY FROM THE DIFF, because the diff alone stays
     // GREEN when a reader leaves the module and this list in the same commit — and
     // §1's and §6's figures would then move with nothing naming the cause.
-    expect(attackReaderSurface()).toHaveLength(12);
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("🛑 the family is 6 sentences / 11 printings, and 5 / 10 of them now resolve", () => {
