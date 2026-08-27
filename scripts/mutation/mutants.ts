@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.328.0";',
+    find: 'export const engineVersion = "0.329.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18606,5 +18606,117 @@ export const MUTANTS: Mutant[] = [
     replace:
       '    const count = match[1] === undefined ? 2 : Number(match[1]);\n    if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];',
     expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // 🆕🆕 D427 — HEAL SELF BY THE DAMAGE THIS ATTACK DEALT.
+  //
+  // 🛑 THE ROW THIS SET EXISTS FOR IS `D427-heals-the-printed-base`. A build that
+  // healed the PRINTED BASE instead of the DEALT amount is invisible to every census
+  // in the repo (the sentence is claimed either way, so `BUILT.attack` is exact), it
+  // passes any board where Weakness, Resistance and reduction all happen to be absent
+  // — which is most boards — and it reads perfectly at the call site. Three of the
+  // rows below are the same defect at three different points of the §8.5 pipeline,
+  // and each dies on a DIFFERENT one of the suite's three defenders.
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: "D427-heals-the-printed-base",
+    decision: "D427",
+    what: "🛑 THE DEFECT A CENSUS CANNOT SEE. `attack.ts` publishes `scaledBase` — the PRINTED damage — instead of §8.5's `dealt`. The sentence is still claimed, the arm still fires, `BUILT.attack` is still 1449 and the log row is untouched; only the NUMBER the healer gets back is wrong, and it is wrong only on boards where the pipeline moved the figure. `scaledBase` is the neighbour an author reaches for because it is the value the card prints and the one the `if` on the enclosing block already tests. Dies on the ×2 Weakness board (heals 50 where 100 was dealt) and on Hariyama's reduction board (heals 50 where 40 was dealt); a suite with only a neutral defender would never see it",
+    file: "packages/engine/src/attack.ts",
+    find: "    dealtToDefender = dealt;",
+    replace: "    dealtToDefender = scaledBase;",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-heals-the-pre-reduction-figure",
+    decision: "D427",
+    what: "the SAME defect one step later in the pipeline: `afterWR` is published instead of `dealt`, so Weakness and Resistance ARE honoured and the post-W/R reduction is not. This is the sharper half of the row above — a build carrying it passes the ×2 Weakness board outright, and only Hariyama `sv02-113`'s seat-wide −10 *\"after applying Weakness and Resistance\"* can tell it apart. `afterWR` is a real local four lines up the same block, which is what makes it the copy an author actually makes rather than a straw",
+    file: "packages/engine/src/attack.ts",
+    find: "    dealtToDefender = dealt;\n",
+    replace: "    dealtToDefender = afterWR;\n",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-heals-through-a-prevented-hit",
+    decision: "D427",
+    what: "`wouldDeal` is published instead of `dealt`, which is the SAME expression minus the prevention ternary on the line directly above (`const dealt = prevented ? 0 : wouldDeal`). Weakness, Resistance and reduction are all still honoured, so every board in §4 stays green — and a hit a shield PREVENTED still heals its full amount, which is the card paying out for damage it did not do. Dies only on the `fix-imperviousshell` board",
+    file: "packages/engine/src/attack.ts",
+    find: "    dealtToDefender = dealt;\n    // §8.1 (D208)",
+    replace: "    dealtToDefender = wouldDeal;\n    // §8.1 (D208)",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-whiffed-attack-heals-the-base",
+    decision: "D427",
+    what: "the function-scope initialiser becomes `scaledBase` instead of `0`. Every DAMAGING board is unaffected — the assignment inside the §8.5 block overwrites it — so this is invisible to §4, §5 and §7 alike. What breaks is the one shape that never enters that block: an attack with NO printed damage, which would heal the printed base of an attack that has none, i.e. whatever the last read of `scaledBase` happens to be. The initialiser IS the whiff semantics, and this row is the only thing that says so",
+    file: "packages/engine/src/attack.ts",
+    find: "  let dealtToDefender = 0;",
+    replace: "  let dealtToDefender = scaledBase;",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "PROBED INDIVIDUALLY BEFORE THE SWEEP AND CAME BACK AS THIS SLICE'S ONE SURVIVOR, which is what individual probing is for — and the row is DECLARED rather than tested around, because no board can close it and a test written to kill it would be the next vacuous guard (D205/D208). THE DEMONSTRATION IS EXHAUSTIVE RATHER THAN SAMPLED. The initialiser is read on exactly one path: the one where `if (scaledBase + scaledTotal > 0)` is FALSE, since the block's own first act is to overwrite it. `scaledBase` (attack.ts) is a ternary yielding either the literal `0` or `base`, and `base` comes from `parseAttackDamage(declared.damage)`, which never yields a negative. `scaledTotal` is `scaled + coinBonus`; `scaled` is `0` or `scaledAttackDamage(...)`, a damage figure, and `coinBonus` is `0` or `heads * coinFlip.per`. Every summand is therefore >= 0, so `scaledBase + scaledTotal <= 0` implies `scaledBase === 0` — and on the ONLY path that reads the initialiser, the mutant writes the same value the original does. There is no third path and no board that separates them. ⚠️ IT IS KEPT RATHER THAN DELETED BECAUSE THE ARGUMENT IS ABOUT SIGNS, AND SIGNS ARE EXACTLY WHAT A LATER SLICE CHANGES: the day any of those four summands can go negative — a printed damage REDUCTION folded into `scaledBase`, a penalty read into `scaled` — the paths come apart, an effect-only attack starts healing a number, and this row reports STALE-SURVIVOR and fails the run. That is the whole reason a declared survivor is worth more than a deleted one.",
+    },
+  },
+  {
+    id: "D427-context-drops-the-carrier",
+    decision: "D427",
+    what: "🛑 THE CARRIER IS SIMPLY NOT PASSED. `EffectContext.dealt` is OPTIONAL — which is exactly what keeps `MATCH_RECORD_VERSION` at 26 — so dropping the key from `attack.ts`'s object literal **STILL COMPILES**, and the interpreter's `?? 0` then turns every one of these six printings into a silent whiff. That is D421's warning made concrete: an optional rider that degrades into plausible behaviour. The engine's answer is that the key travels in the SAME literal as `invokedBy`, and §3's park rung asserts the continuation's key set as a LITERAL rather than as a diff, so the pairing cannot be lost quietly",
+    file: "packages/engine/src/attack.ts",
+    find: '        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack", dealt: dealtToDefender },',
+    replace: '        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack" },',
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-interpreter-ignores-the-context",
+    decision: "D427",
+    what: "the interpreter resolves `\"dealt\"` to a literal 0 rather than reading `ctx.dealt`. This is the mirror of the row above — the value is published and then thrown away — and it is what an author writes while stubbing the arm in. Every printing heals nothing on every board, so it dies on the first heal assertion; it is here because the two halves of one channel fail independently and a corpus that pinned only the producer would report the reader untested",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),',
+    replace: "        done: healSelf(state, op.amount === \"dealt\" ? 0 : op.amount, ctx, events),",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-literal-heal-reads-the-dealt-amount",
+    decision: "D427",
+    what: "the ternary's ARMS ARE SWAPPED, so the eighteen printings of the SHIPPED bare self-heal (`\"Heal {N} damage from this Pokémon.\"`, D132) start healing whatever this attack dealt, and this slice's six start healing the string `\"dealt\"` coerced to zero. A widening's real hazard is the code path it shares with what was already there — D425's rule that the shape must make losing the new information detectable, read from the other side — and this is the one row that fails on the OLD sentences rather than on the new one",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      return {\n        done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),\n      };',
+    replace: '      return {\n        done: healSelf(state, op.amount === "dealt" ? Number(op.amount) : (ctx.dealt ?? 0), ctx, events),\n      };',
+    expectKilledBy: [
+      "packages/engine/src/selfHealDealt.test.ts",
+      "packages/engine/src/selfHeal.test.ts",
+    ],
+  },
+  {
+    id: "D427-anchor-loses-its-leading-caret",
+    decision: "D427",
+    what: "the whole-sentence anchor drops `^`, which is the guard every arm in this reader carries and the one three heal suites' near-miss lists exist to police. A compound whose TAIL is this clause — e.g. a coin gate in front of it — would then be claimed WHOLE by this arm, and its HEAD silently forgotten: the flip would never be taken and the card would heal unconditionally. `boardHeal.test.ts` names exactly this failure mode for Saguaro one anchor over",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Heal from this Pokémon the same amount of damage you did to your opponent['’]s Active Pokémon\\.$/;",
+    replace: "  /Heal from this Pokémon the same amount of damage you did to your opponent['’]s Active Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-anchor-loses-its-trailing-terminator",
+    decision: "D427",
+    what: "the anchor drops `\\.$`, so a sentence that CONTINUES past this clause is claimed as if it stopped there. The engine would run the heal and drop whatever the card printed after it — a status, a switch, a second effect — while reporting a fully simulated attack, which is strictly worse than the loud skip because nothing says a clause was lost. It is the mirror of the caret row and it is the boundary `splitAttackTrailingClause` owns; the arm must not shadow that path with a loose anchor",
+    file: "packages/engine/src/effects.ts",
+    find: "you did to your opponent['’]s Active Pokémon\\.$/;",
+    replace: "you did to your opponent['’]s Active Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/selfHealDealt.test.ts"],
+  },
+  {
+    id: "D427-arm-files-a-literal-amount",
+    decision: "D427",
+    what: "the arm files `amount: 0` instead of the SOURCE `\"dealt\"` — the shape every OTHER arm in this function has (`Number(match[1])`), reached for out of habit on a sentence that carries no numeral to read. It type-checks, because the field is `number | \"dealt\"`. Every printing derives to a program that resolves, reports no skipped effect, and heals nothing on every board — the quietest possible failure for six printings",
+    file: "packages/engine/src/effects.ts",
+    find: '    return [{ op: "heal", target: "self", amount: "dealt" }];',
+    replace: '    return [{ op: "heal", target: "self", amount: 0 }];',
+    expectKilledBy: [
+      "packages/engine/src/selfHealDealt.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
   },
 ];

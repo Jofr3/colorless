@@ -1618,6 +1618,36 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // §9 — the damaged Active's reactive onDamagedByAttack Ability, recorded at
   // damage time but run as a staged epilogue below (so a PARKING discard survives).
   let damagedTriggerStage: PendingStage | null = null;
+  // 🆕🆕 **D427 — WHAT § 8.5 ACTUALLY DEALT TO THE DEFENDING ACTIVE, HOISTED TO
+  // FUNCTION SCOPE SO THE EFFECT PROGRAM CAN READ IT.** The printed *"Heal from this
+  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."*
+  // (6 legal printings) needs a number this function computes and, until this slice,
+  // handed to nothing.
+  //
+  // 🛑 **IT IS A `let` HERE AND NOT A READ OF `dealt` BELOW, BECAUSE `dealt` IS NOT IN
+  // SCOPE AT THE `runProgram` CALL AND THAT IS EASY TO GET WRONG.** `const dealt` is
+  // declared INSIDE the `if` block that opens on the next line and closes ~100 lines
+  // before the program runs; the handoff that priced this slice asserted the opposite
+  // from reading the enclosing FUNCTION rather than the enclosing BLOCK. `defended` and
+  // `damagedTriggerStage` directly above are the same shape and the same reason.
+  //
+  // 🛑 **INITIALISED TO 0, AND THAT INITIALISER IS THE WHOLE OF TWO PRINTED CASES.** An
+  // attack whose damage step never runs at all — no printed base and no scaled bonus,
+  // i.e. an effect-only attack — leaves this at 0 and heals nothing, which is exactly
+  // *"the same amount of damage you did"* when the answer is none. A PREVENTED hit
+  // reaches the assignment and stores `dealt`'s own 0. Both arrive as an explicit
+  // number rather than as an absent key, so `EffectContext.dealt` is optional only for
+  // the runners that are not attacks.
+  //
+  // ⚠️ **`dealt` AND NOT `clamped`, AND NOT `wouldDeal`, AND NOT THE BASE.** `dealt` is
+  // the post-Weakness / post-Resistance / post-reduction / post-prevention figure and
+  // is the SAME number `DAMAGE_DEALT.dealt` publishes one push down — so the heal and
+  // the log row can never disagree, and the identity is pinned rather than described.
+  // `clamped` is the §8.1 KO-SURVIVAL total (a damage TOTAL, not this hit's delta) and
+  // its own block says `dealt` is deliberately left unclamped because *"the attack
+  // really did deal it"*; a Knocked Out defender likewise does not change what was
+  // dealt. `wouldDeal` ignores prevention. `scaledBase` ignores the whole pipeline.
+  let dealtToDefender = 0;
   if (scaledBase + scaledTotal > 0) {
     // §8.5 damage pipeline, in printed order: base + the attack's own printed
     // scaling clause (`scaled` — Paldean Tauros "Raging Horns", counted at
@@ -1964,6 +1994,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     next = { ...next, rngState };
     const prevented = preventedBeforeFlip || flipPrevented;
     const dealt = prevented ? 0 : wouldDeal;
+    // 🆕🆕 D427 — published to the effect program on `EffectContext.dealt`. Assigned
+    // HERE, beside the declaration, rather than recomputed at the call site: there is
+    // one §8.5 answer and one place that knows it.
+    dealtToDefender = dealt;
     // §8.1 (D208) — THE KO-SURVIVAL CLAMP, read HERE and not at the KO sweep. The
     // printed antecedent is "has full HP", a fact about the PRE-damage board, and
     // `defender` is the last binding in the whole §8 sequence that still holds it:
@@ -2130,7 +2164,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         // effect from a Trainer's or an Ability's (D142, interpreter.ts
         // EffectContext), and it rides the continuation so an attack effect that
         // PARKS is still an attack's effect when it resolves.
-        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack" },
+        //
+        // 🆕🆕 D427 — `dealt` rides in the SAME object literal as `invokedBy`, on
+        // purpose: both are facts only this call site knows, both are optional keys on
+        // a context that rides `EffectContinuation` into the persisted `phase.cont`,
+        // and keeping them together is what makes
+        // `invokedBy === "attack"` ⟺ `dealt !== undefined` true of every continuation
+        // this engine writes. A widening either way, so `MATCH_RECORD_VERSION` stays 26.
+        { seat: action.seat, sourceUid: attackerUid, invokedBy: "attack", dealt: dealtToDefender },
         events,
       ),
       action.seat,

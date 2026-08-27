@@ -87,7 +87,9 @@ const CLAUSES = [
         family, SIMULATED SINCE 0.85.0 by `FLIP_SELF_HEAL` (D134) — so it is refused
         here for TWO reasons at once (wrong target, wrong anchor) and its case moves
         out of the null loop below.
-      • Iron Moth sv06.5-009 "Suction" — an amount read off the damage just dealt.
+      • 🆕🆕 **BUILT AT D427.** This bullet named Iron Moth sv06.5-009 "Suction" — *"an
+        amount read off the damage just dealt"* — which is exactly what D427 built. The
+        slot is RE-POINTED (see the comment on the list entry) rather than emptied.
       • Saguaro sv02-187 / -255 / -270 — THE DANGEROUS ONE. It prints "…and heal 50
         damage from each of them.": the mapped words, mid-sentence, behind a CHOICE
         of up to 2 Pokémon. A reader without `^` would take its tail and heal the
@@ -106,7 +108,18 @@ const REAL_NEAR_MISSES = [
   "Heal 60 damage from 1 of your Benched Pokémon.",
   "Heal all damage from 1 of your Benched Pokémon.",
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
-  "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+  // 🆕🆕 RE-POINTED AT D427 (0.328.0 → 0.329.0). This slot held *"Heal from this
+  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."* — the
+  // row the doc block below calls *"an amount read off the damage just dealt"* — until
+  // D427 BUILT it (6 legal printings; `deriveAttackEffect` arm 45 over
+  // `heal.amount: number | "dealt"`). Re-pointed rather than deleted, per the STANDING
+  // NOTE above, onto a row refused by every one of the twelve readers TODAY (measured,
+  // not assumed) and a NEARER miss for THIS anchor than the old one: it prints this
+  // arm's exact `Heal (\d+) damage from each of your` head and then NARROWS the board
+  // with `Basic`, which is the one word between it and a whole-board heal. A build that
+  // dropped the adjective from the anchor would heal a Bench the card does not name.
+  // 2 legal printings, corpus line 273.
+  "Heal 100 damage from each of your Basic Pokémon.",
   "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
   "Heal 30 damage from each Pokémon (both yours and your opponent's).",
 ] as const;

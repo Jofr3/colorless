@@ -845,6 +845,70 @@ during the park" proves little on its own. The case that carries the claim is th
 one after the answer: exactly the discarded cards become public, and the rest stay
 shut.
 
+## Scope is not the enclosing function (D427)
+
+**Reading the enclosing function is not reading the enclosing scope.** D427's
+brief asserted that a `const` was in scope at a call site because both lines sit
+inside the same `export function`. It is declared inside an `if` block that closes
+~60 lines before the call. The plan was unimplementable as written — a compile
+error for anyone who followed it.
+
+This is the fifth incomplete enumeration in six slices, and **the first that no
+grep could have caught**: the four earlier ones were about TEXT (a remembered
+byte, a partial grep, an Oxford comma, a missing adverb), and this one is about
+lexical structure. **When a plan depends on a value being reachable, open the
+braces — or say plainly that you have not.**
+
+## A price is a forecast; a rule is a criterion (D427)
+
+A shipped test comment stated that D427's widening *"widens a type that rides
+`EffectContinuation` across the wire"* and would therefore bump
+`MATCH_RECORD_VERSION`. It does not. An earlier slice had **priced** it that way
+while declining it, and the price outlived its context as prose.
+
+The rule turns on optional-vs-required, and the precedent is written verbatim
+elsewhere in the codebase. **A forecast that survives in prose gets read as a
+criterion** — D422's stale refusal one abstraction level up. **When you decline a
+slice on price, mark the price AS a price**, with the date and the head it was
+measured at.
+
+## Choosing a carrier does not duck persistence (D427)
+
+Both `EffectContext` and `EffectRecord` ride `phase.cont` and are serialized. A
+version prediction that rests on "I chose the carrier that isn't persisted" is
+resting on nothing. **Drive the record; do not reason from the carrier's name.**
+
+D427's prediction held because the added key is OPTIONAL — which is the rule —
+and the carrier was chosen on a different axis entirely: `EffectRecord`'s slots
+are all `string[]` lists of card uids, and the new value is an HP figure, so no
+widening keeps the map's value type.
+
+## Near-misses must differ on one axis (D427)
+
+Two of D427's mutants survived the first pass, and both were real gaps in its own
+suite: a refusal rung whose near-miss was BOTH lowercased and re-worded, and
+another BOTH comma-joined and re-ordered. Neither could show which feature of the
+anchor did the refusing, so both rungs passed and proved nothing.
+
+**A near-miss that differs on more than one axis tests nothing about either.**
+
+## Declared survivors should self-invalidate (D427)
+
+D427 keeps one `equivalent` survivor whose argument is that every summand in a
+sum is non-negative, so a mutated initialiser is unreachable-by-value. That
+declaration is preferred over deleting the row because **the day any summand can
+go negative, the row reports `STALE-SURVIVOR` and fails the run.**
+
+**Prefer a declaration that a future change breaks loudly over one that quietly
+stays true.**
+
+## The version-tax miss, mechanism named (D427)
+
+The count of `engineVersion` assertions has been misquoted **six slices running**.
+The mechanism: **every note counts the pins it INHERITED and never the one it is
+about to AUTHOR.** Now 13 assertions / 16 sites. Count your own suite's pin, and
+grep both `engineVersion` and `manifest.version`.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

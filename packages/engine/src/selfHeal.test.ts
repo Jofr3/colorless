@@ -117,17 +117,34 @@ const CLAUSES = [
         that THIS anchor does not reach it. What changed is the shape of the proof —
         the gated program's `then` is now byte-identical to what this anchor derives
         for the same N, which is a sharper statement than a null was.)
-      • Iron Moth sv06.5-009 "Suction" — the same target, an amount that is not a
-        number at all but a read of the damage this attack just dealt.
+      • 🆕🆕 **BUILT AT D427, AND THE SLOT IS RE-POINTED RATHER THAN EMPTIED.** This
+        bullet named Iron Moth sv06.5-009 "Suction" — *"the same target, an amount that
+        is not a number at all but a read of the damage this attack just dealt"* — and
+        that is exactly the sentence D427 built (`heal.amount: number | "dealt"`, the
+        figure carried on `EffectContext.dealt`). The list slot now holds *"Heal 100
+        damage from each of your Benched Pokémon."* (2 legal printings, corpus line
+        274), refused by every one of the twelve readers today. ⚠️ THE OLD CLAIM'S
+        DISCRIMINATION IS NOT LOST WITH IT (D418's second half): what it could catch
+        was an anchor whose amount slot accepted something that is not a numeral, and
+        `selfHealDealt.test.ts` §2 now pins the two anchors apart directly — the bare
+        sentence derives `amount: 30`, the echo sentence derives `amount: "dealt"`, and
+        neither anchor takes the other's string.
       • Slowpoke sv01-042 / -204 "Rest" — the COMPOUND form, refused by THIS anchor
         and simulated by SELF_SLEEP_HEAL. Its presence here is the boundary case.
       • Floette sv01-092 "Magical Leaf" — ADDED at 0.86.0, and the file's sharpest
         live witness now that D135 mapped three of the six above. It prints THIS
         anchor's exact action, in lowercase, at the tail of a gated sentence that
         ALSO carries a damage bonus: "Flip a coin. If heads, this attack does 30 more
-        damage, and heal 30 damage from this Pokémon." Genuinely unmapped everywhere
-        — `coinFlipGate` could carry the heal, but the bonus is pre-damage math and
-        the two cannot ride one op — so the row stays loud, and a reader that dropped
+        damage, and heal 30 damage from this Pokémon." ⚠️ **"GENUINELY UNMAPPED
+        EVERYWHERE" WAS TRUE WHEN WRITTEN AT 0.86.0 AND HAS ROTTED — measured at D427,
+        `deriveAttackBonusConsequent` CLAIMS this string** and returns
+        `{decider:{kind:"coinFlip"}, bonus:30, ops:[{op:"heal",target:"self",amount:30}]}`,
+        which is precisely the "bonus is pre-damage math and the two cannot ride one op"
+        that the next clause says is impossible; D317 built the op that carries both.
+        The ASSERTION below is unaffected and stays true — THIS anchor still refuses it
+        — so the row is annotated rather than moved, and the correction is dated rather
+        than back-written (D423). D427 did not need this slot and did not take it. So
+        the row stays loud on this reader, and a reader that dropped
         `^` or added /i would half-resolve it and silently forget the 30.
 
     STANDING NOTE: when a later slice maps one of these, RE-POINT the case at another
@@ -139,7 +156,15 @@ const REAL_NEAR_MISSES = [
   "Heal 60 damage from 1 of your Benched Pokémon.",
   "Heal all damage from 1 of your Benched Pokémon.",
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
-  "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+  // 🆕🆕 RE-POINTED AT D427 (0.328.0 → 0.329.0). This slot held *"Heal from this
+  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."* until
+  // D427 BUILT it (6 legal printings, `deriveAttackEffect` arm 45, `heal.amount: "dealt"`).
+  // Re-pointed rather than deleted, per the STANDING NOTE above, onto a row that is
+  // unmapped by every one of the twelve readers TODAY (measured, not assumed) and that
+  // is a NEARER miss for this anchor than the old one was: it prints this anchor's exact
+  // verb, its exact `(\d+)` slot and its exact `damage from` — and then a board-wide
+  // target where the anchor demands `this Pokémon`. 2 legal printings, corpus line 274.
+  "Heal 100 damage from each of your Benched Pokémon.",
   "This Pokémon is now Asleep. Heal 30 damage from it.",
   "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
 ] as const;
@@ -153,11 +178,17 @@ const REAL_NEAR_MISSES = [
     below — a loop over all seven would be asserting that a simulated card is
     unsimulated.
 
-    IT IS DOWN TO TWO, and that is the honest state of this neighbourhood rather than
-    a gap: after D135 the only real catalog rows sharing these words that NOTHING
-    reads are Iron Moth's damage-echo and Floette's compound gate. Both were kept
-    (and Floette added) because the suite's claim — an unread sentence stays LOUD —
-    needs a live witness to keep being about anything. */
+    IT IS STILL TWO AT D427, AND BOTH SENTENCES IN IT CHANGED IDENTITY. The claim this
+    paragraph used to make — "the only real catalog rows sharing these words that
+    NOTHING reads are Iron Moth's damage-echo and Floette's compound gate" — is false in
+    both halves as of D427 and was already false in one: the damage-echo is BUILT here,
+    and Floette's gate is claimed by `deriveAttackBonusConsequent` (D317) and has been
+    for a long time. What the two slots hold now is the honest, MEASURED statement: index
+    4 is *"Heal 100 damage from each of your Benched Pokémon."*, refused by all twelve
+    readers today; index 6 is Floette's, refused by THIS anchor, which is the only claim
+    the assertion below ever made about it. The suite's claim — an unread sentence stays
+    LOUD on this reader — needs a live witness to keep being about anything, and index 4
+    is that witness. */
 const UNMAPPED_NEAR_MISSES = [REAL_NEAR_MISSES[4], REAL_NEAR_MISSES[6]] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII

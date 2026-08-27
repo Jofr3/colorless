@@ -138,8 +138,11 @@ const CENSUS_IDS = [
 
 /** The real catalog rows this anchor must refuse, verbatim off the local D1. Every
     one contains the mapped words; not one is the mapped sentence:
-      • Iron Moth sv06.5-009 "Suction" — a self-heal whose AMOUNT is read off the
-        damage just dealt. Unmapped everywhere: no op expresses it.
+      • 🆕🆕 **BUILT AT D427.** This bullet named Iron Moth sv06.5-009 "Suction" — *"a
+        self-heal whose AMOUNT is read off the damage just dealt. Unmapped everywhere:
+        no op expresses it."* An op expresses it now: `heal` took `amount: number |
+        "dealt"` and `EffectContext` took the figure. The slot is RE-POINTED (see the
+        comment on the list entry) rather than emptied.
       • Saguaro sv02-187 / -255 / -270 — THE DANGEROUS ONE, and dangerous in a way
         it is not for D133. It prints "Choose up to 2 of your Pokémon and heal 50
         damage from each of them.", which is the SAME OP this arm emits (`healChosen`,
@@ -163,7 +166,23 @@ const CENSUS_IDS = [
     witness in two files until the flip-gated family mapped it, and both files
     re-pointed rather than dropped the case.) */
 const REAL_NEAR_MISSES = [
-  "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+  // 🆕🆕 RE-POINTED AT D427 (0.328.0 → 0.329.0). This slot held *"Heal from this
+  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."* — the
+  // row the doc block below calls *"a self-heal whose AMOUNT is read off the damage just
+  // dealt. Unmapped everywhere: no op expresses it."* — until D427 BUILT it (6 legal
+  // printings; `deriveAttackEffect` arm 45 over `heal.amount: number | "dealt"`, the
+  // figure carried on `EffectContext.dealt`). Re-pointed rather than deleted, per the
+  // STANDING NOTE above, onto a row refused by every one of the twelve readers TODAY
+  // (measured, not assumed) and a NEARER miss for this anchor than the old one: it
+  // prints this anchor's exact verb, its exact `(\d+)` slot and its exact `from 1 of
+  // your` — and then NARROWS the target with two adjectives the anchor does not carry.
+  // ⚠️ WHAT THE OLD CLAIM COULD CATCH AND THIS ONE CANNOT (D418): it was one of three
+  // rungs asserting that the damage-echo shape reached no reader at all. That claim is
+  // now FALSE and cannot be preserved anywhere; its DISCRIMINATION — that a heal anchor
+  // must refuse an amount slot that is not a numeral — is pinned directly in
+  // `selfHealDealt.test.ts` §2, which drives both anchors against both strings.
+  // 1 legal printing, corpus line 272.
+  "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
   "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
   "Heal 30 damage from each Pokémon (both yours and your opponent's).",
   "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
@@ -434,7 +453,7 @@ describe("the anchor — 10 printings, 7 clauses, one regex with two captures", 
     ]);
   });
 
-  it("refuses the FOUR real catalog rows that share its words", () => {
+  it("refuses the FOUR real catalog rows that share its words — one of them re-pointed at D427", () => {
     for (const text of REAL_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }

@@ -13320,6 +13320,109 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
+
+      🛑 **THE CARD IS SYNTHETIC AND THE SENTENCE IS NOT.** The effect on all three
+      attacks is transcribed byte-for-byte off `censusAttackCorpus.ts` line 286 — the
+      committed `legal_standard = 1` attack column, 640 sentences / 1,732 printings —
+      where it carries **6 legal printings**, the largest single record in the
+      split-aware unbuilt residue at D426's head.
+
+      ⚠️ **ONLY ONE OF THE SIX CARRIERS CAN BE NAMED, AND THE REST ARE STATED AS
+      UNRESOLVED RATHER THAN INVENTED (D425).** This checkout holds no D1 — neither the
+      local six-set sqlite nor remote credentials — so the printings cannot be
+      enumerated here. `selfHeal.test.ts`, `chosenHeal.test.ts` and `boardHeal.test.ts`
+      have each named **Iron Moth `sv06.5-009` "Suction"** as a carrier since they were
+      written, describing it in those words as *"an amount read off the damage just
+      dealt"*; that id is INHERITED FROM THOSE SHIPPED COMMENTS and was not
+      independently verified against a catalog, which is why it is not used as a
+      fixture id here. What IS measured is the sentence and its printing count.
+
+      🛑 **FOUR ATTACKS; THREE PRINT ONE SENTENCE AND THE ONLY VARIABLE IS THE PRINTED
+      DAMAGE.** The same effect string sits at indices 0, 1 and 2, so every board this
+      suite drives is answering *"what number did §8.5 arrive at"* and nothing else:
+        · index 0 "Suction" — a printed **50**, the working amount every W/R and
+          reduction board reads;
+        · index 1 "Deep Suction" — a printed **200**, which exists for exactly two
+          boards a 50 cannot reach: `fix-imperviousshell`'s *"…if that damage is 200 or
+          more"* PREVENTION, and a Knock Out;
+        · index 2 "Dry Suction" — **NO printed damage at all**, so `attack.ts`'s
+          `scaledBase + scaledTotal > 0` block never runs and the healer reads the
+          hoisted initialiser rather than an assignment. That is the whiff case, and it
+          is a printed shape rather than a constructed one: effect-only attacks are
+          ordinary;
+        · index 3 "Loud Suction" — **NOT THIS SENTENCE AT ALL**, and it is here because
+          a *"nothing was skipped"* rung is worthless without a board that skips (D424:
+          every *"X is refused"* owes a neighbouring *"Y is admitted"*, read in the
+          other direction). It prints *"Each player draws 3 cards."* — a REAL corpus
+          row (1 legal printing) that **no** reader claims, that neither splitter
+          reaches and that no registry row serves, so it falls to `attack.ts`'s loud
+          `ATTACK_EFFECT_SKIPPED` path. Same body, same seat, the same printed 50 as
+          index 0, so the ONLY difference between the quiet board and the loud one is
+          which sentence the attack prints. No apostrophe and no possessive, so it
+          moves `clauseApostrophe`'s discovered sweep not at all.
+
+      **Fire**, because `fix-drainweak` below is ×2 Fire and `fix-drainwall` is its
+      W/R-free twin. 200 HP so the healer survives every return hit and no §8.1 tail
+      ever truncates a heal this suite is measuring. */
+  "fix-suction": battler("fix-suction", {
+    name: "Fixmoth",
+    types: ["Fire"],
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Suction",
+        damage: 50,
+        effect:
+          "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Deep Suction",
+        damage: 200,
+        effect:
+          "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Dry Suction",
+        effect:
+          "Heal from this Pokémon the same amount of damage you did to your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Loud Suction",
+        damage: 50,
+        effect: "Each player draws 3 cards.",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D427 — THE W/R PAIR, IDENTICAL BUT FOR ONE ROW.** `fix-drainwall` is 300
+      HP and prints no Weakness, no Resistance, no Ability and no attack;
+      `fix-drainweak` is the SAME 300 HP with `×2 Fire` added and nothing else. A
+      printed 50 therefore deals **50** into one and **100** into the other, on one
+      board, with one attacker, at one index — so *"the heal read the BASE instead of
+      the DEALT amount"* is a defect no single-defender probe can see and this pair
+      cannot miss (D425's "the side is the only difference", one axis over).
+
+      ⚠️ **THEY EXIST BECAUSE THE SHIPPED 300-HP PAIR IS CONFOUNDED.**
+      `fix-suppresswall` (×2 Fire) and `fix-resistwall` (−30 Fire) are the same HP as
+      each other and would have been free — but BOTH also carry a −30 post-W/R
+      reduction from their registry rows, which is exactly the second subtraction this
+      suite needs to hold STILL while it reads the first. Reusing them would have
+      measured Weakness and reduction through one number.
+
+      No `resistances` on either, deliberately: `opponentResistanceBonus.test.ts`
+      counts the pool's resistance-bearing bodies, and a fixture added for a Weakness
+      claim has no business moving a Resistance census. 300 HP so nothing here is ever
+      a Knock Out except the board that means to be one. */
+  "fix-drainwall": battler("fix-drainwall", { hp: 300 }),
+  "fix-drainweak": battler("fix-drainweak", {
+    hp: 300,
+    weaknesses: [{ type: "Fire", value: "×2" }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13330,6 +13433,44 @@ export function deckOf(counts: Record<string, number>): string[] {
   }
   return ids;
 }
+
+/** 🆕🆕 **D427's SELF-HEAL-BY-DAMAGE-DEALT deck (`selfHealDealt.test.ts`). Its own
+    60, on D412's rule**: every body below either belongs to another suite's seeded
+    boards already (`sv02-113`, `fix-imperviousshell`, `fix-wall`, `fix-titan`) or is
+    brand new, and widening any existing deck to hold the new attacker would reshuffle
+    boards this slice has nothing to do with.
+
+    ⚠️ **SEED-FREE BY CONSTRUCTION.** Nothing this suite declares flips a coin, and
+    every Active, benched body and damage total is placed by surgery — so the seed
+    describes a shuffle and nothing else (D143's move, inherited).
+
+    The cast, and the §8.5 figure each one exists to produce off ONE printed 50:
+      · `fix-suction` — the attacker: three indices on one sentence, plus index 3's
+        deliberately unread row so the loud path has a witness on the same body;
+      · `fix-drainwall` — 300 HP, no W/R: **dealt 50**, the CONTROL;
+      · `fix-drainweak` — 300 HP, ×2 Fire: **dealt 100**, base ≠ dealt UPWARD;
+      · `sv02-113` **Hariyama** — a REAL card whose "Arm Thrust Practice" is a
+        SEAT-WIDE −10 *"after applying Weakness and Resistance"*: **dealt 40**, base ≠
+        dealt DOWNWARD and through the pipeline's LAST step rather than its first. ×2
+        Psychic, which a Fire attacker cannot trigger, so the two subtractions stay
+        separable;
+      · `fix-imperviousshell` — 340 HP, *"prevent all damage … if that damage is 200
+        or more"*: **dealt 0** against index 1, the PREVENTION board;
+      · `fix-wall` — 120 HP and no attacks: the body index 1's 200 Knocks Out, which
+        is where *"a KO does not change what was dealt"* is driven;
+      · `fix-titan` — 340 HP, no attacks: mulligan-free filler and a clean defender;
+      · `fix-energy` — Colorless, enough for every cost above with nothing left to
+        chance. */
+export const SELF_HEAL_DEALT_DECK = deckOf({
+  "fix-suction": 4, // the attacker — indices 0 (50), 1 (200), 2 (no damage)
+  "fix-drainwall": 4, // 300 HP, no W/R — the dealt-50 control
+  "fix-drainweak": 4, // 300 HP ×2 Fire — the dealt-100 board
+  "sv02-113": 3, // Hariyama — seat-wide −10 after W/R: the dealt-40 board
+  "fix-imperviousshell": 3, // 340 HP, prevents ≥200 — the dealt-0 board
+  "fix-wall": 4, // 120 HP, no attacks — the body a 200 Knocks Out
+  "fix-titan": 12, // 340 HP neutral Basic, NO attacks — filler and clean defender
+  "fix-energy": 26, // Colorless Basic — every {C} slot on this list
+});
 
 /** 🆕 D361 — the CROSS-SEAT Energy discard. Both seats run it, because the
     OPPONENT's board is what every case here dresses.

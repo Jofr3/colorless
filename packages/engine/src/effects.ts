@@ -3895,8 +3895,38 @@ export type EffectOp =
       now Asleep. Heal {N} damage from it.", since 0.x), the bare `SELF_HEAL`
       sentence (since 0.83.0, D132) and — since 0.85.0 — `FLIP_SELF_HEAL`
       ("Flip a coin. If heads, heal {N} damage from this Pokémon.", D134), which
-      wraps this very op in a `coinFlipGate` and changes nothing about it. */
-  | { op: "heal"; target: "self"; amount: number }
+      wraps this very op in a `coinFlipGate` and changes nothing about it.
+
+      🆕🆕 **D427 — `amount` IS A SOURCE NOW, NOT ONLY A LITERAL**, because *"Heal
+      from this Pokémon the same amount of damage you did to your opponent's Active
+      Pokémon."* (6 legal printings, corpus line 286) fixes the figure at the moment
+      §8.5's damage lands rather than at the moment the text is read. `"dealt"` names
+      the §8.5 post-Weakness / post-Resistance / post-reduction / post-prevention
+      number — the SAME number `DAMAGE_DEALT.dealt` reports — carried on
+      `EffectContext.dealt` by the one `runProgram` call that has a damage pipeline
+      behind it. A FOURTH reader produces this op, and it is the first one whose
+      program cannot be read off the sentence alone.
+
+      🛑 **WIDENING THE FIELD RATHER THAN ADDING A `healDealt` OP, AND THE REASON IS
+      THE CLAMP.** `healSelf` already does `Math.min(amount, active.damage)` — *"you
+      cannot heal more damage than is on the healer"* — and already whiffs SILENTLY at
+      zero. A second op would have had to restate both, which is one rule in two
+      places with two chances to drift (D222's shape). Widening leaves ONE producer of
+      `HEALED` from an attack's self-heal, one log arm, one event.
+
+      ⚠️ **AND THE WIDENING IS WHAT MAKES FORGETTING TO RESOLVE IT A TYPE ERROR.**
+      There is exactly ONE read site (`interpreter.ts`'s `case "heal"`, which passed
+      `op.amount` straight through); `number | "dealt"` stops compiling there until the
+      source is resolved. D425's rule applied in the direction it points: choose the
+      shape so that losing the new information cannot be silent.
+
+      ⚠️ `MATCH_RECORD_VERSION` **STAYS 26.** An `EffectOp` IS persisted — it reaches
+      `phase.cont.pendingOp` and `phase.cont.rest` — but this op never parks and, more
+      to the point, a v26 record holding `amount: 30` still parses and still means 30.
+      A new UNION INHABITANT on an existing field is D125's WIDENING, exactly as D426
+      argued for a new op and D358 for an absent flag; a RENAME (D352, D359) is what
+      bumps. Driven both directions in `selfHealDealt.test.ts`. */
+  | { op: "heal"; target: "self"; amount: number | "dealt" }
   /** Heal `amount` HP from EACH of the controller's own in-play Pokémon — the
       ACTIVE and the whole Bench, which is what the printed "each of your
       Pokémon" means (the Active is one of your Pokémon; only the printed word
@@ -8514,6 +8544,38 @@ const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from i
 // clause — Fuecoco sv02-035's "Flip a coin. If heads, heal 30 damage from this
 // Pokémon." — off this path and on the loud one where it belongs.
 const SELF_HEAL = /^Heal (\d+) damage from this Pokémon\.$/;
+// 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THIS ATTACK JUST DEALT.**
+//
+//   "Heal from this Pokémon the same amount of damage you did to your opponent's
+//    Active Pokémon."
+//
+// **6 legal printings on 1 sentence** (corpus line 286) — the largest single record
+// in the split-aware unbuilt residue at D426's head (196 sentences / 299 printings,
+// subtracting `resolvedByAnyReader`, `splitAttackGateClause`,
+// `splitAttackTrailingClause` and a `registry.ts` substring test; D425's rule — a
+// residue figure is meaningless without the subtraction set that produced it).
+//
+// 🛑 **A LITERAL AND NOT A TEMPLATE, ON D121's OWN WARRANT.** That warrant wants TWO
+// printings with ONE TOKEN VARYING before a parameter is justified. The LOOSEST
+// plausible family grep over all 640 corpus sentences — `/same amount of damage|damage
+// you did|amount of damage/i`, deliberately three alternatives wide and case-insensitive
+// so a possessive, an adverb or a capitalisation cannot hide a sibling — returns
+// **exactly this row and nothing else**. There is no second spelling and no varying
+// token, so every capture group this anchor could carry would be a template over a
+// population of one, which is D190b's authored card. **THE PATTERN IS PUBLISHED HERE SO
+// ITS EDGES ARE VISIBLE** (D424/D425): what it cannot see is a sentence that spells the
+// idea without any of those three substrings — e.g. *"…heal that much damage…"* — and
+// no such row is in this column.
+//
+// ⚠️ **THE APOSTROPHE BYTE IS MEASURED, NOT REMEMBERED (D421).** `hexdump -C` on
+// `censusAttackCorpus.ts` line 286 returns `6f 70 70 6f 6e 65 6e 74 27 73` —
+// `opponent's` with **U+0027** — and the whole corpus file contains **zero** U+2019
+// bytes. The `['’]` class is therefore DEFENSIVE rather than load-bearing, and it is
+// spelled that way because 133 anchors in this file already are: a re-ingest that
+// swapped the byte would otherwise un-simulate six printings with nothing on screen to
+// see. `\.$` anchors both ends, so no compound carrying this clause is half-claimed.
+const SELF_HEAL_DEALT =
+  /^Heal from this Pokémon the same amount of damage you did to your opponent['’]s Active Pokémon\.$/;
 // The OWN-BOARD heal (D133) — "Heal {N} damage from each of your Pokémon.", the
 // whole printed effect, 7 printings across 2 distinct clauses (N = 20, 30):
 // Skeledirge ex sv02-037/-233/-258/-272 "Vitality Song" (30, WITH a printed 50),
@@ -19422,6 +19484,36 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "drawCards", count },
       ];
     }
+  }
+
+  // 45. 🆕🆕 D427 — "Heal from this Pokémon the same amount of damage you did to
+  //     your opponent's Active Pokémon." — SIX legal printings on ONE sentence, the
+  //     largest single record in the split-aware residue, and the FIRST arm in this
+  //     function whose program cannot be read off the sentence alone.
+  //
+  //     🛑 EVERY OTHER ARM HERE DERIVES A CONSTANT; THIS ONE DERIVES A REFERENCE.
+  //     `SELF_HEAL` two hundred lines up reads `Number(match[1])` and files it — the
+  //     amount IS the text. Here the text names a quantity §8.5 has not computed yet
+  //     when the program is built, so the op files the STRING `"dealt"` and the
+  //     interpreter resolves it against `EffectContext.dealt` at run time. That is why
+  //     `heal.amount` is `number | "dealt"` rather than a second op: see the union
+  //     member's block for the clamp argument.
+  //
+  //     🛑 NO `>= 1` GUARD, AND THE ABSENCE IS THE POINT RATHER THAN AN OMISSION.
+  //     Every counted arm in this function carries `amount >= 1` because a printed
+  //     "Heal 0 damage" is not a real card and would file a program that moves nothing.
+  //     There is no printed number here to be zero — the sentence carries no numeral at
+  //     all — so the guard has nothing to test. The runtime zero cases are REAL boards
+  //     rather than malformed text (a prevented hit, a damage-less attack, an undamaged
+  //     healer), and each is a silent whiff in `healSelf` by the same rule that has
+  //     governed `heal` since 0.x. They are NOT `ATTACK_EFFECT_SKIPPED`: the sentence
+  //     was read, the effect ran, and the board had no use for it.
+  //
+  //     ⚠️ A `test` RATHER THAN AN `exec`, because the anchor captures nothing — the
+  //     `match =` idiom would bind a value no line below reads (D404's arm makes the
+  //     opposite trade for the opposite reason: it has three captures).
+  if (SELF_HEAL_DEALT.test(effect)) {
+    return [{ op: "heal", target: "self", amount: "dealt" }];
   }
 
   return null;

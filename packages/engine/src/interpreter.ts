@@ -221,6 +221,62 @@ export interface EffectContext {
       an Ability's program leaves it absent, which is why an Ability that discards
       an opposing Energy is refused by neither channel. */
   invokedBy?: "attack" | "item" | "supporter";
+  /** 🆕🆕 **D427 — THE DAMAGE THIS ATTACK JUST DEALT TO THE DEFENDING ACTIVE**, the
+      printed *"the same amount of damage you did to your opponent's Active
+      Pokémon."* (6 legal printings on 1 sentence). Set by `attack.ts` at the ONE
+      `runProgram` call that has an §8.5 pipeline behind it — the same call, the same
+      argument, that sets `invokedBy: "attack"` — and ABSENT everywhere else (a
+      Trainer, an Ability, a trigger, the Checkup), none of which has done any damage
+      to read.
+
+      🛑 **WHY `EffectContext` AND NOT `EffectRecord`, AND THE FIRST REASON IS THE
+      VALUE TYPE RATHER THAN THE MEANING.** `EffectRecord` is
+      `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
+      `"paid" | "moved" | "discarded"` — **every §9.2 slot in this engine is a LIST
+      OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
+      widening that keeps the map's value type, so the record could only carry it by
+      becoming a different kind of thing. D406 priced this sentence and named exactly
+      that, one slice before declining it.
+
+      ⚠️ **AND THE MEANING AGREES, WHICH IS THE SECOND REASON AND NOT THE FIRST.**
+      `EffectRecord`'s own doc block says it is *"what the ops ALREADY RUN in this
+      program left behind for the ops still to come"* — an accumulator that changes at
+      nearly every op. This value is computed by §8.5 **before the program's first op
+      runs**, is fixed for the whole run, and is read rather than written by every op
+      in it. That is `seat`'s and `sourceUid`'s shape, not `record`'s. Filing it in
+      the record would also have made it mutable mid-run by any recording op, which is
+      a lie about a number the card fixes at the moment the damage lands.
+
+      🛑 **BOTH CANDIDATES ARE PERSISTED, SO THE VERSION QUESTION IS NOT SETTLED BY
+      PICKING THE OTHER ONE — IT IS SETTLED BY THE FIELD BEING OPTIONAL.** `ctx` rides
+      `EffectContinuation` into `phase.cont`, exactly as `record` does, so a program
+      that PARKS writes this key into a persisted `MatchRecord`. `MATCH_RECORD_VERSION`
+      **STAYS 26** on D125's distinction: an OPTIONAL key is a WIDENING — a
+      continuation written by an earlier deploy simply lacks it, which reads as
+      `undefined` — where a REQUIRED key would be a missing field and would bump.
+      `invokedBy` is the precedent verbatim (`apps/api/src/lobby/match.ts`: *"an
+      OPTIONAL field and therefore a WIDENING… it would not have bumped anything on
+      its own"*), and D412's 25 → 26 is the counter-case: a REQUIRED
+      `InPlayPokemon.retreatLockedTurn`.
+
+      ⚠️ **LOSING THE KEY WOULD DEGRADE INTO A SILENT WHIFF, WHICH IS THE SHAPE D421
+      WARNS ABOUT — SO SAY WHY IT IS UNREACHABLE RATHER THAN CLAIM IT IS LOUD.** The
+      only op that reads this is `{ op: "heal", target: "self", amount: "dealt" }`, and
+      the only producer of THAT is `deriveAttackEffect`'s D427 arm. No deploy before
+      this one could author the op, so no pre-D427 continuation can hold a reader for
+      a key it also lacks: the absent-key path is uninhabited by construction rather
+      than merely unlikely. What IS checkable is the pairing — `attack.ts` sets this
+      field and `invokedBy: "attack"` in the same object literal, so
+      `invokedBy === "attack"` ⟺ `dealt !== undefined` on every continuation this
+      engine writes, and `selfHealDealt.test.ts` drives that across a real park.
+
+      ⚠️ **ALWAYS A NUMBER FROM `attack.ts`, INCLUDING ZERO.** `attack.ts` declares it
+      at function scope initialised to 0 and assigns the §8.5 `dealt` inside the damage
+      block, so a prevented hit, a whiffed (damage-less) attack and an attack whose
+      damage step never ran all arrive as an explicit `0` rather than as an absent key.
+      The optionality is for the OTHER `runProgram` callers, which have no damage to
+      report at all — it is not a "sometimes attack.ts forgets" hedge. */
+  dealt?: number;
 }
 
 /** A specific in-play Pokémon, addressed by the board it sits on and the spot.
@@ -1468,7 +1524,22 @@ function stepOp(
     case "installRecoil":
       return { done: installRecoil(state, op.amount, ctx, events) };
     case "heal":
-      return { done: healSelf(state, op.amount, ctx, events) };
+      // 🆕🆕 D427 — `amount` IS `number | "dealt"`, and this line is the whole of the
+      // resolution. `"dealt"` is the printed *"the same amount of damage you did to
+      // your opponent's Active Pokémon."*, which §8.5 fixed before this program's
+      // first op ran and `attack.ts` handed over on the context.
+      //
+      // 🛑 `?? 0` IS NOT A DEFENSIVE HEDGE, IT IS THE ONE HONEST ANSWER FOR A
+      // RUNNER THAT DID NO DAMAGE. `attack.ts` always supplies a number (0 when the
+      // §8.5 damage block never ran at all), so the nullish arm is reachable only
+      // from a Trainer's, an Ability's or a trigger's `runProgram` — none of which
+      // has dealt anything — and from a continuation written before D427 existed,
+      // which cannot hold this op because no deploy could author it. Zero then flows
+      // into `healSelf`'s `healed <= 0` early return and whiffs SILENTLY, which is
+      // what `heal` has done for an unusable amount since 0.x.
+      return {
+        done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),
+      };
     case "healEach":
       return { done: healEach(state, op.amount, ctx, events, op.pokemonType) };
     case "healEachAll":

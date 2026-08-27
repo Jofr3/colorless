@@ -17540,7 +17540,160 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.327.0 → **0.328.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.328.0";
+/** 🆕🆕 **0.328.0 → 0.329.0 — D427, HEAL SELF BY THE DAMAGE THIS ATTACK DEALT.**
+
+    *"Heal from this Pokémon the same amount of damage you did to your opponent's
+    Active Pokémon."* — **1 sentence / 6 legal printings**, measured over
+    `legalAttackCorpus()`: the committed `legal_standard = 1` attack column, 640
+    sentences / 1,732 printings. The **LARGEST single record in the split-aware unbuilt
+    residue** at D426's head — **196 sentences / 299 printings**, subtracting
+    `resolvedByAnyReader`, `splitAttackGateClause`, `splitAttackTrailingClause` and a
+    `registry.ts` substring test (D425's rule: a residue figure without its subtraction
+    set names nothing). After this slice, **195 / 293**.
+
+    `BUILT.attack` 1443 → **1449**; the twelve-reader instrument 426 / 1,395 →
+    **427 / 1,401**, its RAW residue 214 / 337 → **213 / 331**; whole-census `built`
+    1,848 → **1,854**; unbuilt attack column 289 → **283**; `FIXTURE_POOL` 525 →
+    **528**; `clauseApostrophe`'s discovered sweep 151 → **152**.
+    `SPLIT_ATTACK_UNITS` (13), `COMPOUND_ATTACK_UNITS` (19) and
+    `REGISTRY_ATTACK_UNITS` (16) ALL stand still — measured after the arm landed.
+
+    🛑 **THE SLICE IS A DESIGN DECISION BEFORE IT IS A READER: WHICH STRUCTURE CARRIES
+    THE NUMBER.** `deriveAttackEffect` can read the sentence in one regex, but the
+    quantity it names does not exist when the program is built. Two candidates, and
+    they are not equivalent:
+
+      • **`EffectRecord` LOSES ON ITS VALUE TYPE, WHICH IS A HARDER FACT THAN THE
+        MEANING.** It is `{ [K in EffectSlot]?: string[] }` and `EffectSlot` is
+        `"paid" | "moved" | "discarded"` — **every §9.2 slot in this engine is a LIST
+        OF CARD UIDS**, and this is an HP FIGURE. There is no slot to file it in and no
+        widening that keeps the map's value type. D406 wrote exactly this down while
+        DECLINING the sentence on price; D427 is that note acted on rather than
+        re-derived.
+      • **AND THE MEANING AGREES, SECOND.** The record's own doc block calls it *"what
+        the ops ALREADY RUN in this program left behind"* — an accumulator that changes
+        at nearly every op, whose sibling is `rest` and not `seat`. This value is
+        computed by §8.5 **before the program's first op runs**, is fixed for the whole
+        run, and is read rather than written by every op in it. Filing it in the record
+        would also have made it mutable mid-run by any recording op — a lie about a
+        number the card fixes at the instant the damage lands.
+
+    So the carrier is **`EffectContext.dealt?: number`**, set at `attack.ts`'s single
+    `runProgram` call, in the SAME object literal as `invokedBy: "attack"`, because both
+    are facts only that call site knows.
+
+    🛑 **CHOOSING `EffectContext` DOES NOT DUCK THE VERSION QUESTION — BOTH CANDIDATES
+    ARE PERSISTED, AND THAT WAS CHECKED RATHER THAN ASSUMED.** `ctx` rides
+    `EffectContinuation` into `phase.cont` exactly as `record` does, so an attack program
+    that PARKS writes this key into a `MatchRecord`. Driven, not argued:
+    `selfHealDealt.test.ts` §3 parks a real attack and reads
+    `{"seat":"p1","sourceUid":…,"invokedBy":"attack","dealt":30}` straight out of the
+    persisted phase.
+
+    `MATCH_RECORD_VERSION` **STAYS 26**, and the reason is the KEY'S OPTIONALITY rather
+    than the structure's identity. D125's distinction: an OPTIONAL key is a WIDENING —
+    an older continuation simply lacks it and reads `undefined` — where a REQUIRED key
+    is a missing field and bumps. The precedent is verbatim: `apps/api/src/lobby/
+    match.ts` says of D142's `EffectContext.invokedBy` that it is *"an OPTIONAL field
+    and therefore a WIDENING (D125's distinction) … It would not have bumped anything on
+    its own"*. The counter-case is D412's 25 → 26, a REQUIRED
+    `InPlayPokemon.retreatLockedTurn`. ⚠️ **THE PREDICTION WAS DRIVEN IN BOTH DIRECTIONS
+    RATHER THAN ASSERTED**: a v26 continuation with the key STRIPPED resolves
+    byte-identically to one this build writes, and a v26 `cont.rest` holding the OLD
+    `{op:"heal",target:"self",amount:30}` still parses, still dispatches and still heals
+    exactly 30 — which is the second widening this slice makes, since `heal.amount` went
+    `number` → `number | "dealt"` at an address (`cont.pendingOp` / `cont.rest`) where an
+    `EffectOp` IS persisted. A new UNION INHABITANT there is D125's widening too (D426's
+    argument for a new op; D358's for an absent flag). **A RENAME would have bumped;
+    neither of these is one.**
+
+    ⚠️ **NO `packages/schema` DIFF, AND THE QUESTION WAS ASKED.** `redactedGamePhase`'s
+    `effect:choose` member is `{ kind, prompt }` — `cont` is NEVER projected to the wire,
+    so the new key reaches no client and no zod shape. `readMatchRecord` performs no
+    structural validation of `state` at all beyond `typeof === "object"`.
+
+    🛑 **A LITERAL ANCHOR AND NOT A TEMPLATE, ON D121's OWN WARRANT AND A PUBLISHED
+    PATTERN.** The warrant wants TWO printings with ONE TOKEN VARYING before a capture
+    group is justified. The loosest plausible family grep —
+    `/same amount of damage|damage you did|amount of damage/i`, three alternatives wide
+    and case-insensitive — over all 640 corpus sentences returns **exactly this row**.
+    No sibling spelling, no varying token, so any group would be a template over a
+    population of one (D190b's authored card). **THE PATTERN IS PUBLISHED SO ITS EDGES
+    ARE VISIBLE** (D424/D425): it cannot see a sentence spelling the idea with none of
+    those substrings, and no such row is in this column.
+
+    ⚠️ **THE HANDOFF CARRIED ONE FALSE PREMISE AND IT WAS THE STRUCTURAL ONE — THE FIFTH
+    INCOMPLETE ENUMERATION IN SEVEN SLICES, ARRIVING BY A NEW ROUTE.** The brief stated,
+    as a checked fact, that `attack.ts`'s `const dealt` is in scope at the `runProgram`
+    call because both sit inside `export function attack`. Both do; `dealt` is declared
+    inside the `if (scaledBase + scaledTotal > 0)` **block**, which closes ~60 lines
+    before the call. **Reading the enclosing FUNCTION is not reading the enclosing
+    BLOCK**, and the four prior routes (a byte from memory, a partial grep, a comma, a
+    missing adverb) were all about TEXT — this one is about SCOPE, which no grep would
+    have caught. The repair is a function-scope `let dealtToDefender = 0`, and its
+    initialiser then turned out to BE the whiff semantics: an effect-only attack never
+    enters the block and correctly heals nothing.
+
+    🛑 **THE FIVE SEMANTICS, EACH DECIDED AND EACH PINNED WITH A DRIVEN BOARD** (§4–§7 of
+    `selfHealDealt.test.ts`, one printed 50 throughout so the base is a constant):
+
+      ⑴ **THE FINAL AMOUNT, NOT THE PRINTED BASE.** `dealt` is post-Weakness,
+        post-Resistance, post-reduction and post-prevention. Driven with a ×2 Weakness
+        body (dealt **100**), a W/R-free twin identical but for that one printed row
+        (dealt **50**) and Hariyama `sv02-113`'s seat-wide −10 *"after applying Weakness
+        and Resistance"* (dealt **40**). **Three distinct answers off one base**, so no
+        fixed constant satisfies the rung — this is the defect a census cannot see.
+      ⑵ **PREVENTED ⇒ `dealt` IS 0 ⇒ HEAL 0**, and no `HEALED` row at all rather than a
+        row saying nothing happened. The `DAMAGE_DEALT` row is still filed with
+        `prevented`, so this is *"the pipeline ran and arrived at nothing"* and not
+        *"the pipeline did not run"*. Controlled by the same attack into an unshielded
+        body.
+      ⑶ **THE CLAMP IS THE HEALER'S OWN DAMAGE, AND IT IS THE SHIPPED ONE.** An attacker
+        with 20 damage that deals 100 heals **20**. `healSelf`'s `Math.min(amount,
+        active.damage)` has done this since 0.x, which is the whole reason `heal.amount`
+        was WIDENED rather than a `healDealt` op added: a second op would have restated
+        the clamp and the silent-whiff rule, one rule in two places with two chances to
+        drift (D222's shape).
+      ⑷ **A KNOCKED OUT DEFENDER CHANGES NOTHING ABOUT WHAT WAS DEALT.** 200 into a
+        120-HP body deals 200, not 120 — `dealt` is deliberately unclamped by the
+        defender's remaining HP (§8.1's own comment says so) — the heal resolves, and
+        THEN the KO sweep runs. Pinned as an ORDER: `DAMAGE_DEALT` → `HEALED` →
+        `KNOCKED_OUT`.
+      ⑸ **A WHIFFED ATTACK AND AN ABSENT DEFENDER ARE DIFFERENT GUARDS.** An attack with
+        no printed damage never enters the §8.5 block, so the hoisted `0` is read and
+        nothing heals. An ABSENT defender never reaches the program at all: `attack.ts`
+        returns `NO_TARGET` ~1,300 lines earlier, driven rather than argued.
+
+    ⚠️ **AND THE HEAL READS THE SAME NUMBER THE LOG PUBLISHES.** `HEALED.amount ===
+    min(DAMAGE_DEALT.dealt, healer damage)` is swept over every board in the suite, so
+    the two cannot each recompute §8.5 and disagree — D425's derived-facts rule applied
+    before there is a second reader to disagree with.
+
+    ⚠️ **THREE SHIPPED REFUSAL RUNGS NAMED THIS SENTENCE AND ARE RE-POINTED, NOT
+    DELETED** (`selfHeal`, `chosenHeal`, `boardHeal` — each carries a STANDING NOTE
+    saying so). Each moved onto a row measured unmapped by all twelve readers TODAY, and
+    each new target is a NEARER miss than the old one. **AND THE OLD CLAIM'S
+    DISCRIMINATION IS REPLACED RATHER THAN DROPPED** (D418's second half): what those
+    rungs could catch was a heal anchor accepting a non-numeral amount slot, and
+    `selfHealDealt.test.ts` §2 now drives both anchors against both strings.
+
+    ⚠️ **A ROTTED CLAIM FOUND WHILE RE-POINTING, DATED RATHER THAN BACK-WRITTEN (D423).**
+    `selfHeal.test.ts` called Floette `sv01-092`'s *"Flip a coin. If heads, this attack
+    does 30 more damage, and heal 30 damage from this Pokémon."* **"Genuinely unmapped
+    everywhere"**, reasoning that *"the bonus is pre-damage math and the two cannot ride
+    one op"*. `deriveAttackBonusConsequent` claims that exact string and has since D317
+    built the op that carries both. The ASSERTION was unaffected — it only ever tested
+    THIS anchor — so the prose is annotated in place and the row keeps its slot.
+
+    Cost: **1 whole-sentence anchor, 1 reader arm, 1 widened `EffectOp` field, 1 new
+    optional `EffectContext` key, 1 hoisted `attack.ts` local and 1 interpreter
+    expression.** ZERO new ops, ZERO new readers, ZERO new prompts, ZERO parks, ZERO
+    events, ZERO `BoardCondition` members, ZERO registry rows, ZERO error codes, ZERO
+    `GameState` fields and ZERO `packages/schema` bytes. No web/API/DB diff.
+
+    engineVersion 0.328.0 → **0.329.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.329.0";
 
 export type {
   ApplyResult,
