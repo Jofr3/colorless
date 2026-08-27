@@ -791,6 +791,60 @@ get copied into later claims unqualified.
 `splitAttackCancelClause` serve **zero** additional unresolved sentences, so the
 honest subtraction is **gate + trailing + registry, and nothing more**.
 
+## Census chains: the frozen tail (D426, about D425)
+
+**A frozen tail that moves with the head asserts nothing, and no sweep can tell
+you.** The census chains assert `head - term - term - … === <frozen historical
+value>`. The right-hand side is a constant; each slice pays its step by adding a
+term at the FRONT. D425 instead **bumped the frozen endpoint** in 8 chains across
+6 files, turning the assertion into `head === head`.
+
+It was a slip rather than a decision — the same commit added the term correctly to
+a sibling chain immediately below. It passed review, and **1,558 mutants plus a
+clean whole-corpus sweep said nothing, because the assertion still passes.**
+
+**WHEN YOU STEP A CENSUS CHAIN, DIFF THE FROZEN ENDPOINT AGAINST THE PREVIOUS
+COMMIT.** If it moved, you wrote a tautology. This is D423's shape — a true
+assertion standing in for a claim that no longer holds — reaching the INSTRUMENT
+layer, where it is hardest to see and where the mutation harness is blind to it by
+construction.
+
+## Resumed slices (D426)
+
+**A resumed slice must re-derive what it inherits.** D426's engine half was built
+by an agent that died mid-slice; the agent that finished it was told to
+reconstruct and CHECK those decisions rather than build on them. Six survived and
+one did not: *"the SECOND park in the engine with a `decider`"* is the THIRD.
+
+**And the error was inherited, not invented** — two shipped doc lines had said so
+since D227 and were false the day they were written. Interrupted work carries its
+author's premises silently; the assertions in a half-finished diff have not been
+reviewed by anyone.
+
+## The splitter composes on the TAIL (D426)
+
+**State the mechanism, not the outcome.** D424 gained a free printing when a
+compound composed; D426 gained none. One fact predicts both:
+`splitAttackTrailingClause` composes when `deriveAttackEffect` already reads the
+**TAIL**. D424 claimed a tail's head; D426 made a head readable whose tail is
+still unread.
+
+"Compounds sometimes compose for free" is not something you can plan with. The
+mechanism is.
+
+## Probing for leaked identifiers (D426)
+
+**Quote the uid.** `p2#4` is a prefix of `p2#42`, so a bare substring test for a
+leaked identifier passes on a snapshot that leaks. Any redaction probe must quote
+the identifier, and any "nothing leaked" claim made with an unquoted search is
+worth nothing.
+
+**And a redaction assertion needs its attribution control.** The actor could not
+see the opponent's hand before the attack either, so "the actor cannot see it
+during the park" proves little on its own. The case that carries the claim is the
+one after the answer: exactly the discarded cards become public, and the rest stay
+shut.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

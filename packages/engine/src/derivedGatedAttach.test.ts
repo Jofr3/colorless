@@ -626,7 +626,16 @@ describe("PROVENANCE — the demonstrator carries the three sentences at 58-60",
     // D230, 17 at D229, 14 at D228, 13 at D227, 9 at D189, 8 at D181. ELEVEN
     // slices, eleven appends, zero inserts — which is what every index constant in
     // eleven suites depends on.
-    expect(attacks()).toHaveLength(61);
+    // 🆕🆕 **63 AT D426**, which appended **61-62** — the opponent-chooses hand
+    // discard (*"Your opponent discards 2 cards from their hand."* / *"…a card…"*).
+    // `opponentHandDiscard.test.ts` owns them, and the append-never-insert
+    // discipline this whole paragraph exists for holds again: 0-60 are addressed by
+    // constant in a dozen sibling suites and every one of them still means what it
+    // meant. ⚠️ NO ORDINAL IS CLAIMED (*"the Nth slice"*) — the running count above
+    // was last written at D241 and was already one append behind by D246, which is
+    // exactly how a count in a comment rots. The LENGTH is the executable half and
+    // it is the line below.
+    expect(attacks()).toHaveLength(63);
     expect(attacks()[RETURN_CHARGE_IDX]?.effect).toBe(RETURN_CHARGE);
     expect(attacks()[BUT_FIRST_FOOD_IDX]?.effect).toBe(BUT_FIRST_FOOD);
     expect(attacks()[FIST_OF_FOCUS_IDX]?.effect).toBe(FIST_OF_FOCUS);

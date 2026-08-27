@@ -189,11 +189,22 @@ function redactPhase(state: GameState, viewerSeat: Seat, spectating: boolean): R
 }
 
 /** The redacted mid-effect prompt for `viewerSeat` — non-null ONLY for the seat
-    that must ANSWER it: `phase.answerer ?? phase.seat` (the non-controller for
-    opponentMayDraw — Ortega — else the controller). Every other viewer gets
-    null. This gate is the hidden-information barrier: a prompt's candidates can
-    be the controller's own deck cards (a search) or a "look at the top N", so
-    the raw prompt must never reach the other side of the wire.
+    that must ANSWER it: `phase.answerer ?? phase.seat`. Every other viewer gets
+    null. This gate is the hidden-information barrier: a prompt's candidates are
+    built from the ANSWERER's own private zones — a deck search's uids, a "look at
+    the top N", 🆕 D426's opponent-chosen HAND discard — so the raw prompt must
+    never reach the other side of the wire.
+
+    🛑 🆕🆕 **"THE ANSWERER" IS NOT A SYNONYM FOR "THE CONTROLLER", AND D426 IS THE
+    FIRST PARK WHERE THE DIFFERENCE CAN LEAK A CARD.** This paragraph used to say
+    the candidates were *the controller's own deck cards*, which was true of every
+    hidden-candidate producer until D426 and true BY ACCIDENT: the two `decider`
+    producers were Ortega's `opponentMayDraw` (non-controller, but its prompt
+    resolves no card at all) and nothing else. `opponentDiscardsFromHand` parks a
+    `chooseCards` on the NON-controller over that seat's OWN HIDDEN HAND — so the
+    line below is what keeps the ATTACKER from receiving a face-up list of the
+    DEFENDER's hand, and answering it. It reads `answerer`; it derives nothing.
+    Driven from both chairs in `opponentHandDiscard.test.ts` §4.
 
     This is STRICTER than `phaseViewOf`'s local `withheld` (phaseView.ts), and
     deliberately: that hot-seat projection only withholds an EXPLICIT-answerer
@@ -232,12 +243,15 @@ function redactedPromptOf(
     discardEnergy — 2b-iii-b), whose candidates are all in-play `PokemonRef`s and
     attached-Energy uids ALREADY public on the redacted board (fresh ref/scope
     copies, no card resolution); and the HIDDEN-CANDIDATE family (chooseCards /
-    attachCards — 2b-iii-c), whose candidates are the controller's own deck/top/
+    attachCards — 2b-iii-c), whose candidates are the ANSWERER's own deck/top/
     hand/discard cards — the deck ones hidden until this effect REVEALS them — so
     each candidate uid is resolved to a `RedactedCard` (identity keyed by that
     uid, which the answer dispatches back). That resolution goes to the answerer
     ALONE (the gate above), which is what keeps a deck uid off the opponent's
-    wire. The switch stays EXHAUSTIVE so a new engine prompt kind is a compile
+    wire. 🆕 **D426 CORRECTED "CONTROLLER" TO "ANSWERER" HERE**: those were the
+    same seat for every hidden-candidate producer until `opponentDiscardsFromHand`
+    parked one on the NON-controller, and the gate above has always said
+    `answerer` — the word in this sentence was the one that was wrong. The switch stays EXHAUSTIVE so a new engine prompt kind is a compile
     error here, not a silent null. Every branch builds FRESH objects (the
     ref/scope copies and redactedCardOf), so nothing aliases the input state — the
     redactor's purity contract, like copyConditions. */

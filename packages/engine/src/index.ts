@@ -17442,7 +17442,105 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.326.0 → **0.327.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.327.0";
+/** 🆕🆕 **0.327.0 → 0.328.0 — D426, THE OPPONENT-CHOOSES HAND DISCARD.**
+
+    *"Your opponent discards 2 cards from their hand."* (**4 legal printings**) and
+    *"Your opponent discards a card from their hand."* (**2**) — **2 sentences / 6
+    legal printings**, measured over `legalAttackCorpus()`: the committed
+    `legal_standard = 1` attack column, 640 sentences / 1,732 printings.
+    ⚠️ **THE CARRIER IDS ARE UNRESOLVED AND ARE STATED AS SUCH RATHER THAN INVENTED**
+    (D425's limitation, unchanged: this checkout has no D1).
+
+    🛑 **THE FIRST PARK IN THIS ENGINE WHOSE ANSWERER IS THE NON-CONTROLLER *AND*
+    WHOSE CANDIDATES ARE HIDDEN CARD IDENTITIES.** It is the **THIRD** `decider`
+    producer, not the second — ⚠️ **THE ORDINAL WAS WRITTEN WRONG FIRST, OFF TWO
+    STALE DOC LINES** (`RunResult.decider`'s *"opponentMayDraw is the ONE producer"*
+    and the `opponentMayDraw` case comment's *"the ONE park whose ANSWERER is the
+    other seat"*, both false since **D227**, both corrected here). The three, read
+    off `parkOrForce`'s call sites:
+      · `opponentMayDraw` (Ortega, M5) — a `mayDraw` prompt, NO candidates at all;
+      · `opponentSwitchOut` (D227) — a `choosePokemon` prompt whose candidates are
+        `PokemonRef`s ALREADY PUBLIC on the redacted board;
+      · this op — a `chooseCards` prompt over the answerer's HIDDEN HAND.
+    So the ordinal was wrong and the substantive claim was not: neither predecessor
+    put a hidden identity behind the gate, and two shipped mechanisms cross here for
+    the first time — the `decider` → `phase.answerer` route and the hidden-candidate
+    `chooseCards` resolution (`redactPrompt`, which turns each candidate uid into a
+    full `RedactedCard`). If the second ran without the first,
+    the ATTACKER's own wire snapshot would carry a face-up list of the DEFENDER's
+    hand and the attacker could answer it. `opponentHandDiscard.test.ts` §4 drives
+    both halves from both chairs and pins the absence on the WHOLE SNAPSHOT rather
+    than on the prompt field — a null prompt proves only that the gate ran.
+
+    ⚠️ **IT IS NOT A WIDENING OF `randomFromOpponentHand`, AND THAT OP'S WHOLE POINT
+    IS THE REASON.** *"A random card"* means NOBODY chooses; this sentence's whole
+    content is that the hand's OWNER does. The two are told apart in the VERB PHRASE
+    (D232's rule, third use), so they are two arms and two ops rather than a
+    `chooser?` rider putting two mutually exclusive resolution models behind one
+    union member. The pair sits on ONE fixture body at indices 26 and 62 for exactly
+    that reason: same seat's hand, same destination, same count of one, and a build
+    that crossed them moves the same card to the same pile.
+
+    🛑 **§8.6 ANSWERS BOTH SHORT BOARDS OFF ONE LINE, AND BOTH ARE PINNED.**
+    `take = min(count, hand.length)`:
+      · **0 cards** — a silent no-op. No event (the ATTACK_DECLARED row already said
+        the attack happened) and no park (there is no decision for the M1 no-choice
+        rule to retire). `randomFromOpponentHand`'s empty-hand ending.
+      · **1..count cards** — the whole hand goes, FORCED. ⚠️ A SHORT HAND AND AN
+        EXACT HAND ARE TWO DECISIONS SHARING ONE LINE: at `M === count` the printed
+        count is met and there is no choice; at `M < count` there is no choice AND
+        the printed count cannot be met. Both are driven, because a decision that is
+        not pinned is indistinguishable from an oversight (D421).
+      · **more than `count`** — a real decision, so it PARKS, and the park's floor is
+        true by construction: every board that could make `min: count` unanswerable
+        was already swallowed by the forced arm.
+
+    ⚠️ **THE PRICE, MECHANISMS AND SITES COUNTED SEPARATELY (D423).** SEVEN
+    mechanisms: the anchor + arm (`ATTACK_OPPONENT_DISCARDS_HAND`, an alternation
+    over the count whose absent group is the ARTICLE); the `EffectOp` member; the
+    `stepOp` arm with its forced/park split and its `decider`; the `applyChoice`
+    arm; `discardChosenFromHand` + `opponentDiscardNote`; the `FORCED_HAND_DISCARD`
+    event and its count-only log row; and the §11 classification + probe pair in
+    `preventBlock.test.ts` that the op's arrival made owed. Two CORRECTIONS ride
+    beside them and neither is this sentence's: `validateChoice`'s floor comment
+    said *"the mandatory hand COST"* when four ops now park a mandatory
+    `chooseCards`, and BOTH HUDs' mandatory caption said *"this cost must be paid"*
+    — already false for two shipped producers before this slice added a third, and
+    live-wrong here, because it would have told the player being ATTACKED that they
+    were paying a cost for a card they did not play.
+
+    🛑 **NEITHER RELATED COMPOUND COMPOSED FOR FREE, AND IT WAS MEASURED AFTER THE
+    ARM LANDED RATHER THAN ASSUMED** (D424 gained a printing exactly this way).
+    *"Your opponent discards a card from their hand. If this Pokémon evolved from
+    Salandit during this turn…"* and *"Discard a card from your hand. If you do,
+    your opponent discards a card from their hand."* both stay refused:
+    `splitAttackTrailingClause` needs the **TAIL** claimed by `deriveAttackEffect`,
+    and this slice made a **HEAD** readable. `COMPOUND_ATTACK_UNITS` does not move.
+
+    ⚠️ **AND THE VERSION TAX MOVED AGAIN, FOR A FIFTH SLICE RUNNING.** D424 measured
+    9 assertions / 12 sites, D425 measured 10 / 13; D426 measures **12 assertions /
+    15 sites** — eleven `engineVersion` reads (ten inherited plus this slice's own),
+    one `manifest.version` read, `packages/engine/package.json`, this declaration,
+    and `D275`'s mutant anchor (re-pointed in the SAME commit as the bump, as every
+    slice since D386 has done). Grep BOTH `engineVersion` and `manifest.version`.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 26, AND THE UNION RULE ALONE DOES NOT SETTLE
+    IT.** Unlike D425's `spreadDamage`, THIS OP PARKS — so it reaches
+    `EffectContinuation.pendingOp`, which IS persisted inside
+    `MatchRecord.state.phase`. What keeps the constant is that the op is a NEW
+    INHABITANT of the `EffectOp` union (D125's widening): a v26 record cannot
+    CONTAIN `{op:"opponentDiscardsFromHand"}`, because no deploy that wrote one
+    could author it, and every inhabitant a v26 record does contain still means what
+    it meant. `answerer` is not a new field either — an OPTIONAL key Ortega has been
+    writing into this phase since M5, gaining a second producer. Driven both
+    directions in `opponentHandDiscard.test.ts` §8: the parked op's key set is
+    asserted as a LITERAL (`["count","op"]`) rather than as a diff, the phase's key
+    set likewise, and the rehydrated record answers to the same events and the same
+    board as the live one.
+
+    engineVersion 0.327.0 → **0.328.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.328.0";
 
 export type {
   ApplyResult,

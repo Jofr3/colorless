@@ -342,7 +342,16 @@ describe("the anchor — one printed sentence, one new op", () => {
     // demonstrator and the index list does not move. Eleven sibling suites address
     // 0-60 by constant and every one of them still means what it meant.
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    expect(attacks).toHaveLength(61);
+    // 🆕🆕 **63 AT D426**, which appended **61-62** — the opponent-chooses hand
+    // discard (*"Your opponent discards 2 cards from their hand."* / *"…a card…"*).
+    // `opponentHandDiscard.test.ts` owns them, and the append-never-insert
+    // discipline this whole paragraph exists for holds again: 0-60 are addressed by
+    // constant in a dozen sibling suites and every one of them still means what it
+    // meant. ⚠️ NO ORDINAL IS CLAIMED (*"the Nth slice"*) — the running count above
+    // was last written at D241 and was already one append behind by D246, which is
+    // exactly how a count in a comment rots. The LENGTH is the executable half and
+    // it is the line below.
+    expect(attacks).toHaveLength(63);
     expect(attacks[TROPICAL_FRENZY_IDX]?.name).toBe("Tropical Frenzy");
     expect(attacks[TROPICAL_FRENZY_IDX]?.effect).toBe(TROPICAL_FRENZY);
     // ⚠️ AND THE PRINTED 150 IS STILL ABSENT — D236's divergence, inherited rather

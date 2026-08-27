@@ -3844,6 +3844,54 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: 30,
         effect: "Attach an Energy card from your discard pile to this Pokémon.",
       },
+      /** 🆕🆕 **D426 — THE OPPONENT-CHOOSES HAND DISCARD, APPENDED AT 61-62** (never
+          inserted: 0-60 are addressed by constant in more than twenty sibling
+          suites). Two printed sentences, **6 legal printings**, transcribed
+          character-for-character off `censusAttackCorpus.ts` lines 666-667 — the
+          committed `legal_standard = 1` attack column:
+            61 *"Your opponent discards 2 cards from their hand."*  — **4 legal**
+            62 *"Your opponent discards a card from their hand."*   — **2 legal**
+
+          🛑 **THE PAIR IS ON ONE BODY BECAUSE THE COUNT IS THE ONLY DIFFERENCE,
+          SO THE COUNT IS THE ONLY THING A BOARD CAN BE MEASURING** (D425's
+          fixture rule). Same cost, same absent damage, same attacker, same
+          opponent hand — a build that welded the count, or that read the
+          singular article as anything but 1, passes every single-index probe and
+          fails the pair.
+
+          🛑 **AND THE FAMILY'S *WHO-CHOOSES* CONTROL IS ALREADY ON THIS BODY, AT
+          INDEX 26.** *"Discard a random card from your opponent's hand."* is the
+          same seat's hand, the same destination and the same count of one; the
+          only difference in the world is whether anybody chooses. That is what
+          makes index 26 against index 62 the discriminator no census can see —
+          a build that routed one sentence to the other's op moves the same card
+          to the same pile and is wrong about the whole mechanism.
+
+          ⚠️ **THE CARRIER CARD IDS AND THE PRINTED ATTACK NAMES ARE UNRESOLVED
+          AND ARE STATED AS SUCH RATHER THAN INVENTED (D425).** This checkout
+          holds no D1 — no local sqlite, no remote credentials — so the six
+          printings behind these two sentences cannot be named. What IS measured
+          is the SENTENCE and its printing count, off the committed corpus, and
+          it is pinned on the POPULATION in `opponentHandDiscard.test.ts` §1. The
+          two names below are this fixture's own words and carry no claim about
+          any card.
+
+          ⚠️ **NO `damage` FIELD ON EITHER, AND HERE IT IS LOAD-BEARING RATHER
+          THAN A DIVERGENCE OF CONVENIENCE** — D232's block above declares the
+          same omission for the same family and this one needs it more: these two
+          sentences PARK, so a base-damage Knock Out would put a promotion prompt
+          in front of the very `effect:choose` phase every case below reads. The
+          {C} cost is this demonstrator's usual divergence. */
+      {
+        cost: ["Colorless"],
+        name: "Hand Purge",
+        effect: "Your opponent discards 2 cards from their hand.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Hand Pinch",
+        effect: "Your opponent discards a card from their hand.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive

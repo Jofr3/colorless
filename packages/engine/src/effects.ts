@@ -8117,6 +8117,93 @@ export type EffectOp =
       are held by TWO SEPARATE GUARDS rather than one; see the interpreter helper,
       whose own comment was corrected by a mutant that turned out equivalent. */
   | { op: "randomFromOpponentHand"; to: "discard" | "deck" }
+  /** 🆕🆕 **D426 — THE OPPONENT DISCARDS `count` CARDS FROM THEIR OWN HAND, AND
+      *THEY* CHOOSE WHICH.** Two printed sentences, one op, told apart by the
+      count — measured over the committed `legal_standard = 1` attack column
+      (`censusAttackCorpus.ts`, 640 sentences / 1,732 printings):
+        · *"Your opponent discards 2 cards from their hand."*  (**4 printings**)
+        · *"Your opponent discards a card from their hand."*   (**2 printings**)
+      **6 legal printings on 2 sentences.** ⚠️ The carrier card ids could not be
+      resolved: this checkout holds no D1 (no local sqlite, no remote
+      credentials), so they are STATED AS UNRESOLVED rather than invented (D425).
+      The sentences and their printing counts are measured off the committed
+      corpus and are pinned on the POPULATION in `opponentHandDiscard.test.ts`.
+
+      🛑 **IT IS NOT A WIDENING OF `randomFromOpponentHand`, AND THE REASON IS THAT
+      OP'S WHOLE POINT.** That op exists because *"a random card"* means NOBODY
+      chooses — "the engine picks, which is why this op and not a `chooseCards`
+      prompt is the right shape" (its own doc). This sentence is the other half of
+      the family: a `chooseCards` prompt is EXACTLY the right shape, and the seat
+      that answers it is the seat whose hand it is. A `chooser?: "owner"` rider on
+      the random op would have put two mutually exclusive resolution models behind
+      one union member, and the `to` field would then mean something only on one of
+      them.
+
+      🛑 **THE ANSWERER IS THE *OPPONENT*, WHICH MAKES THIS THE THIRD PARK IN THE
+      ENGINE WITH A `decider` AND THE FIRST ONE CARRYING HIDDEN CANDIDATES.**
+      ⚠️ **THIS PARAGRAPH SAID "SECOND" AND NAMED ONLY ORTEGA UNTIL IT WAS CHECKED,
+      AND THE WRONG ORDINAL WAS INHERITED RATHER THAN INVENTED** — `RunResult.decider`'s
+      own doc (interpreter.ts) still said *"opponentMayDraw is the one producer"* and
+      the `opponentMayDraw` case comment still said *"the one park whose ANSWERER is
+      the other seat"*, both false since **D227** and both corrected in this slice.
+      D422's shape exactly: a stale claim is read as a measurement.
+
+      The three producers, enumerated rather than counted:
+        · `opponentMayDraw` (Ortega, M5) — a `mayDraw` prompt: a count and a caption,
+          **no candidates at all**;
+        · `opponentSwitchOut` (D227, *"(Your opponent chooses the new Active
+          Pokémon.)"*) — a `choosePokemon` prompt over the answerer's own Bench, whose
+          candidates are **`PokemonRef`s already public on the redacted board**;
+        · this op — a `chooseCards` prompt over card uids out of the answerer's own
+          **HIDDEN HAND**.
+
+      So the ORDINAL was wrong and the substantive claim was not: neither predecessor
+      puts a hidden identity behind the gate, and the two shipped mechanisms cross
+      here for the first time — the `decider` → `phase.answerer` route
+      (interpreter.ts / flow.ts) and the hidden-candidate `chooseCards` resolution
+      (`redactPrompt`). The safety property is `redactedPromptOf`'s answerer gate, and
+      it is DRIVEN in both directions rather than argued — the ACTOR's wire snapshot
+      carries `prompt: null` and none of those uids anywhere in it.
+
+      🛑 **A HAND OF `count` OR FEWER IS *FORCED*, NOT PARKED, AND A HAND OF ZERO
+      IS A SILENT NO-OP.** Both come off ONE rule and it is the printed one (§8.6:
+      do as much as you can), so the arithmetic is `min(count, hand.length)`:
+        · **0 cards** — nothing to discard. No event, no park, no state change.
+          `randomFromOpponentHand`'s empty-hand ending, and there is no decision
+          for the M1 no-choice rule to retire either.
+        · **1..count cards** — the whole hand goes, and there is exactly ONE answer
+          to *"which `min(count, M)` of your `M` cards"*, so the M1 rule forces it.
+          ⚠️ **A SHORT HAND IS NOT THE SAME CASE AS AN EXACT ONE and they land in
+          the same branch anyway**: at `M === count` the player has no choice, and
+          at `M < count` they have no choice AND the printed count cannot be met.
+          Two decisions, one line, and both are driven.
+        · **more than `count`** — a real decision, so it PARKS, and the park's floor
+          is true by construction (`payFromHand`'s and `bottomFromOpponentHand`'s
+          rule): every board that could make `min: count` unanswerable was already
+          swallowed by the forced arm, so this op never needs `lookAtTopN`'s clamp.
+
+      **NO `filter`.** The printed noun is the bare *"cards"* — no Item, no
+      Supporter, no Pokémon — and D135's rule is that an absent field means what
+      the sentence means. **NO `to`**: both printings say *discards*, and a
+      destination field with one reachable value is the unkillable mutant D231
+      refuses. **NO `recordAs`**: no printing pairs this with a §9.2 *"if you do"*.
+
+      **NO COLLAPSE OF INTERCHANGEABLE COPIES**, unlike `payFromHand` and
+      `bottomFromOpponentHand`, and the reason is that both of those collapse for
+      an information argument this op does not have: the offer here is the
+      answerer's OWN hand, which they can already see in full, so there is no
+      duplicate structure to hide and nothing an uncollapsed list gives away. What
+      a collapse WOULD do is move the forced/park boundary onto card identity —
+      three copies of one card under a printed 2 would resolve without asking —
+      and that is a mechanism whose only product is fewer buttons.
+
+      ⚠️ **NO `programPlayable` WHIFF GATE (cardplay.ts), AND THAT IS THE FAMILY'S
+      STANDING ANSWER RATHER THAN AN OMISSION.** That gate exists so a CARD PLAY is
+      not spent on a program that can only whiff; attacks never consult it (§8 — the
+      attack is already declared and paid for), and this op has no registry row.
+      `randomFromOpponentHand` has no line there either, for the same reason. The
+      condition that would reverse it: a Trainer or Ability printing this sentence. */
+  | { op: "opponentDiscardsFromHand"; count: number }
   /** The OPPONENT of the controller may draw `count` cards — the printed "your
       opponent may draw a card" (Ortega), and the engine's first decision that
       belongs to the seat that did NOT make the play. The park carries a
@@ -15017,6 +15104,45 @@ const ATTACK_REVEAL_AND_BOTTOM =
 const ATTACK_REVEAL_AND_BENCH_UP_TO =
   /^Your opponent reveals their hand\. Put up to (\d+) Basic Pokémon you find there onto your opponent['’]s Bench\.$/;
 
+// 🆕🆕 **D426 — THE OPPONENT-CHOOSES HAND DISCARD, AND IT IS THE FAMILY'S SIXTH
+// SENTENCE SHAPE AND ITS FIRST OPPONENT-ANSWERED PARK.** Two printed sentences,
+// **6 legal printings**, measured over the committed `legal_standard = 1` attack
+// column (`censusAttackCorpus.ts` lines 666-667, 640 sentences / 1,732 printings):
+//   • "Your opponent discards 2 cards from their hand."   — **4 legal printings**
+//   • "Your opponent discards a card from their hand."    — **2 legal printings**
+// ⚠️ The carrier ids are UNRESOLVED and are stated as such rather than invented:
+// this checkout has no D1 (D425's limitation, unchanged).
+//
+// 🛑 **A TEMPLATE AND NOT TWO LITERALS, ON A WARRANT THAT WAS MEASURED (D121).**
+// That warrant wants two printings with ONE token varying before a parameter is
+// justified. Here the varying token is the COUNT and BOTH of its printed spellings
+// are in the pool at 4 and 2 printings — so the capture has two witnesses and is
+// not a template over a population of one. `ATTACK_DRAW`'s alternation verbatim
+// (`/^Draw (?:(\d+) cards|a card)\.$/`): the singular branch leaves group 1
+// undefined and the site invents the `1`, because THE MISSING NUMBER IS THE
+// ARTICLE. A pair of literals would also have cost more than the template — two
+// regexes and two arms for one mechanism — which is D424's "when a literal costs
+// more, the warrant question is moot".
+//
+// ⚠️ **THE PATTERN THIS FAMILY WAS ENUMERATED WITH, PUBLISHED SO ITS EDGES ARE
+// VISIBLE (D424/D425).** `/opponent discards|opponent chooses|discards? [0-9a-z]+
+// cards?/i` over all 640 corpus sentences, every hit read. It returns exactly four
+// rows carrying an opponent-side hand discard — these two, the Salandit compound
+// and the "If you do" compound — plus `Your opponent chooses 3 cards from their
+// hand and shuffles those cards into their deck.` (1 printing), which is this
+// mechanism with a DIFFERENT DESTINATION and is refused whole. What the pattern
+// cannot see: a printing that says "your opponent puts … into the discard pile"
+// or that names the discarder by anything but the word *opponent*. Zero such rows
+// exist in this column today; that is the edge, stated rather than assumed.
+//
+// **NO APOSTROPHE OF EITHER CLASS ON THIS ANCHOR, AND NONE IS OWED.** Both
+// sentences say *their hand* and never *your opponent's hand* — the possessive
+// this family's other five anchors all carry — so there is no `['’]` slot for a
+// re-ingest to curl and `clauseApostrophe.test.ts`'s BEARING census is predicted
+// to stand still at 151. That prediction is asserted rather than left as prose.
+const ATTACK_OPPONENT_DISCARDS_HAND =
+  /^Your opponent discards (?:(\d+) cards|a card) from their hand\.$/;
+
 // ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE (backlog row 9), AND THE ROW'S OWN
 // PREDICTION HELD: **ONE anchor, twelve printed sentences.** The row wrote the
 // prediction down so a successor could falsify it — "the sentences vary in the
@@ -18721,6 +18847,28 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   if (ATTACK_RANDOM_SHUFFLE_FROM_HAND.test(effect)) {
     return [{ op: "randomFromOpponentHand", to: "deck" }];
+  }
+  // 🆕🆕 **D426 — THE FAMILY SPLITS BY *WHO CHOOSES*, AND THIS IS THE OTHER SIDE OF
+  // THAT SPLIT.** The two arms directly above are the RANDOM half — nobody chooses,
+  // so the engine picks off `rngState`. This one is the OPPONENT-CHOOSES half: the
+  // seat whose hand it is picks which cards go, which is a `chooseCards` park whose
+  // ANSWERER is not the controller. D232's rule about this family holds again and
+  // for the third time — these sentences differ from the random ones in the VERB
+  // PHRASE (*your opponent discards* against *discard a random card*), and a verb
+  // selects the op, so this is a separate arm and a separate op rather than a
+  // widening.
+  //
+  // ⚠️ **THE ABSENT GROUP IS THE ARTICLE, NOT A DEFAULT** — `ATTACK_DRAW`'s reading,
+  // and the fifth arm in this file to take it. `count >= 1` is the guard every
+  // numeric arm here carries: a printed *"discards 0 cards"* would derive to an
+  // attack that reports a simulated effect and moves nothing. NO CEILING, for
+  // `ATTACK_DRAW`'s reason exactly — the op clamps to what the hand actually holds
+  // (§8.6, do as much as you can), so a malformed large count empties a hand and
+  // stops, which is a legal board.
+  match = ATTACK_OPPONENT_DISCARDS_HAND.exec(effect);
+  if (match !== null) {
+    const count = match[1] === undefined ? 1 : Number(match[1]);
+    if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];
   }
   // The fourth arm, and the ONLY one in this slice that costs nothing but itself:
   // an op that has been in the union since M5, reached by a sentence nobody had

@@ -395,9 +395,13 @@ export type RedactedEnergyOffer = z.infer<typeof redactedEnergyOfferSchema>;
     It rides `effect:choose` (below) NULLABLE and is populated ONLY for the seat
     that must answer it (`phase.answerer ?? phase.seat`) — every other viewer
     gets null. That answerer gate is the whole point: a prompt's candidates CAN
-    be built from the CONTROLLER's private zones (a deck search's uids, a "look
-    at the top N"), so the raw prompt must never reach the other side of the
-    wire. `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s
+    be built from the ANSWERER's private zones (a deck search's uids, a "look at
+    the top N", 🆕 D426's opponent-chosen HAND discard), so the raw prompt must
+    never reach the other side of the wire. ⚠️ **"ANSWERER", NOT "CONTROLLER" —
+    D426 CORRECTED THAT WORD HERE AND AT THREE OTHER SITES.** The two were the
+    same seat for every hidden-candidate producer until this op parked one on the
+    non-controller; the field's own `phase.answerer ?? phase.seat` spelling one
+    line up was right the whole time. `redactedPromptOf` (redact.ts) is STRICTER than `phaseViewOf`'s
     hot-seat `withheld` — the wire delivers a payload to one client, so a
     controller-answered prompt goes to the CONTROLLER ALONE, where the local
     projection may keep it in both viewers' (never-rendered) `pendingDecision`.

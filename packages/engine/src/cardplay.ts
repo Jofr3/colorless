@@ -1317,8 +1317,14 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         return err("BAD_EFFECT_CHOICE", `pick at most ${prompt.max} card(s)`);
       }
       // The FLOOR — 0 for every printed "up to" (a decline is a legal answer),
-      // `count` for the mandatory hand COST, where the only decision is which
-      // cards and an empty answer would take the effect without paying for it.
+      // and `min === max` for a MANDATORY exact pick, where the only decision is
+      // WHICH cards. 🆕 D426 CORRECTED THIS COMMENT, which said "the mandatory hand
+      // COST": that was the only mandatory producer when it was written, and there
+      // are now four — `payFromHand` (a cost, where an empty answer would take the
+      // effect without paying for it), `bottomFromOpponentHand`'s unridden
+      // exactly-one, `lookAtTopN.exact`, and `opponentDiscardsFromHand`, whose
+      // answer comes from the seat that did NOT make the play. The floor means the
+      // same thing at all four and says nothing about why.
       if (choice.uids.length < prompt.min) {
         return err("BAD_EFFECT_CHOICE", `pick at least ${prompt.min} card(s)`);
       }

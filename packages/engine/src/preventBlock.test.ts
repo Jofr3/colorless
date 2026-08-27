@@ -1196,6 +1196,32 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // stay put.
     revealOpponentHand: "untouched",
     randomFromOpponentHand: "untouched",
+    // 🆕🆕 **D426 — THE TWENTY-FOURTH OP, AND THE THIRD ON THE OPPONENT'S HAND.**
+    // *"Your opponent discards 2 cards from their hand."* — the OPPONENT-CHOOSES half
+    // of the family whose two random halves sit directly above.
+    //
+    // **UNTOUCHED**, and the argument is the one those two rows already make, which
+    // is why it is stated once and cited rather than re-derived: the §11 clause is
+    // about what an attack does to the SHIELDED BODY, and **a hand is not a
+    // Pokémon**. A block that stopped this would let the Defending Pokémon veto a
+    // move between two zones neither player's Active is in — and the cards never
+    // even leave the block-holder's own side of the table under this op; their
+    // owner picks them out of their own hand and puts them in their own pile.
+    //
+    // ⚠️ **AND THIS ROW CARRIES A CLAIM NEITHER SIBLING DOES: the op PARKS, and the
+    // park's ANSWERER is the seat holding the block.** So "the block does not stop
+    // it" has to mean the PROMPT ARRIVED, and arrived for the right seat — a build
+    // that refused the op in front of the park would leave the board byte-identical
+    // and a state-only witness could not tell that from a hand that happened to stay
+    // put. The probe below reads `r.parked`, which is `attachEnergyFrom`'s and
+    // `searchDeck`'s witness reached from a different direction.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER: the verdict says nothing about
+    // WHICH hand emptied. A build that read `ctx.seat` instead of
+    // `otherSeat(ctx.seat)` would empty the ATTACKER's hand, keep this verdict and
+    // keep this probe green — `opponentHandDiscard.test.ts` §5 drives which side
+    // shrank, from both chairs.
+    opponentDiscardsFromHand: "untouched",
     // ⚠️⚠️ D234 — the discard-pile attach, and the FIFTEENTH op this table
     // classifies. It arrives, like D181's three, D189's, D229's and D230's, as an
     // op the ABILITY path has run since M5 that the deriver has only now learned
@@ -2041,6 +2067,31 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       landed: (r) =>
         r.after.players.p1.hand.length < r.before.players.p1.hand.length &&
         r.after.rngState !== r.before.rngState,
+    },
+    // 🆕🆕 **D426 — the opponent-CHOOSES discard, and THE WITNESS IS THE PARK** —
+    // `attachEnergyFrom`'s, `searchDeck`'s and `discardPileRetrieval`'s reason,
+    // reached here by the one route that makes it mandatory rather than
+    // convenient: this op moves NOTHING until the prompt is answered, so on a
+    // parking board every zone is byte-identical before and after and a
+    // state-comparing probe would pass on an op deleted entirely
+    // (`revealOpponentHand`'s row, one family up).
+    //
+    // ⚠️ **THE PRECONDITION IS THE COUNT AND IT IS ASSERTED RATHER THAN ASSUMED**
+    // (D416): the op FORCES at a hand of `count` or fewer and PARKS only above it,
+    // so a board whose P1 held one or two cards would read "blocked" for a reason
+    // that has nothing to do with §11 — and the forced ending is a real state
+    // change, so it would not even fail in the honest direction. `count: 1` against
+    // the standard board's dealt hand leaves the margin as wide as this page's board
+    // allows.
+    opponentDiscardsFromHand: {
+      op: { op: "opponentDiscardsFromHand", count: 1 },
+      board: () => {
+        const state = probeBoard();
+        // Strictly greater than the printed count, or this parks nothing.
+        expect(state.players.p1.hand.length).toBeGreaterThan(1);
+        return state;
+      },
+      landed: (r) => r.parked,
     },
     // ⚠️⚠️ D234 — the discard-pile attach. THE WITNESS IS THE PARK, `optional`'s,
     // `moveEnergy`'s and `searchDeck`'s reason verbatim: with more than one

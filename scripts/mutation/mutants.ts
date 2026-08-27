@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    find: 'export const engineVersion = "0.327.0";',
+    find: 'export const engineVersion = "0.328.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18476,5 +18476,135 @@ export const MUTANTS: Mutant[] = [
     find: "      return row(event.by, segments);",
     replace: "      return row(event.seat, segments);",
     expectKilledBy: ["packages/engine/src/ownBenchSpread.test.ts"],
+  },
+  // ── D426 — the OPPONENT-CHOOSES hand discard. ELEVEN rows, ONE PER MECHANISM OR
+  //    DECISION rather than one per line, and the FIRST is the one no census, no
+  //    board comparison and no code review can see: the park's `decider`. Under it
+  //    the op still derives, still parks, still offers the right cards and still
+  //    moves them to the right pile — while the ATTACKER receives a face-up list of
+  //    the DEFENDER's hidden hand on the wire AND gets to choose what their opponent
+  //    throws away. Every count in this repo is unmoved.
+  //
+  //    ⚠️ THE SECOND ROW IS NOT THIS SLICE'S CODE. `redactedPromptOf`'s answerer gate
+  //    is the SHIPPED line the safety property rests on, and it had NO mutant row in
+  //    the corpus — because the two parks that reached it with an `answerer` set
+  //    (Ortega's `mayDraw` and D227's `opponentSwitchOut`) carry, respectively, no
+  //    candidates at all and candidates already public on the redacted board. D416's
+  //    shape: a guard whose only exercised payloads were payload-free. It gets a row
+  //    now, in the slice that gave it something to protect.
+  {
+    id: "D426-decider-is-the-actor",
+    decision: "D426",
+    what: "🛑 **THE DEFECT NO CENSUS CAN SEE.** The park's `decider` is the CONTROLLER instead of the hand's owner — which is what a build gets by copying the four neighbouring `chooseCards` parks verbatim, since every one of them IS controller-answered. `settleProgram` then files NO `answerer` (flow.ts writes the key only when `decider !== controller`), so `phase.answerer` is absent, `redactedPromptOf` falls through to `phase.seat`, and the ATTACKER's wire snapshot carries the DEFENDER's hand face up — AND `resolveEffect`'s gate accepts the attacker's answer, so they also pick which cards their opponent discards. **THE DERIVATION, THE OP, THE CANDIDATE LIST, THE PILE AND EVERY CENSUS FIGURE ARE IDENTICAL**; the only observable difference is who is asked and who can see. §3 and §4 are the only places it shows",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        decider: owner,",
+    replace: "        decider: ctx.seat,",
+    expectKilledBy: [
+      "packages/engine/src/opponentHandDiscard.test.ts",
+      "src/features/game/projection.test.ts",
+    ],
+  },
+  {
+    id: "D426-redact-answerer-gate-reads-the-controller",
+    decision: "D426",
+    what: "🛑 **THE SHIPPED GATE THE WHOLE SLICE RESTS ON, AND IT HAD NO ROW UNTIL NOW.** `redactedPromptOf`'s `phase.answerer ?? phase.seat` collapses to `phase.seat` — the pre-`answerer` spelling, and the one an author writes when they think \"the prompt goes to whoever is playing\". Every CONTROLLER-answered park in the engine behaves identically, which is why this line could sit unmutated for two hundred decisions. ⚠️ The two parks that DID reach it with an `answerer` set carried nothing hidden — Ortega's `mayDraw` (a count and a caption, no candidates) and D227's `opponentSwitchOut` (a `choosePokemon` over in-play refs ALREADY PUBLIC on the redacted board) — which is D416's shape: a guard whose only exercised payloads were payload-free. D426 is the first park to put HIDDEN CARD IDENTITIES behind it: under the mutant the attacker's snapshot carries the defender's whole hand, keyed by uid and resolved to real names, and the defender — the seat that must answer — gets `null` and a soft-lock. ⚠️ `redact.test.ts`'s Ortega case dies here too, which is the CONTROL: the gate was always wrong under this mutation and nothing could tell until a payload rode it",
+    file: "packages/engine/src/redact.ts",
+    find: "  const answerer = phase.answerer ?? phase.seat;\n  if (answerer !== viewerSeat) return null;",
+    replace: "  const answerer = phase.seat;\n  if (answerer !== viewerSeat) return null;",
+    expectKilledBy: [
+      "packages/engine/src/opponentHandDiscard.test.ts",
+      "packages/engine/src/redact.test.ts",
+      "src/features/game/projection.test.ts",
+    ],
+  },
+  {
+    id: "D426-park-empties-the-actors-own-hand",
+    decision: "D426",
+    what: "🛑 THE SEAT CROSS, PARK SIDE: `owner` is `ctx.seat` rather than `otherSeat(ctx.seat)`, which is the ACTOR'S OWN HAND. It is the mistake `switchActive`'s row one family over warns about in its own words (\"a build that benched the found cards on the OPPONENT's side would keep this verdict\") reached from the other direction — and it is self-consistently wrong: the park's candidates, its `decider`, the answerer gate and the discard pile all move together, so the prompt arrives at the right screen for the wrong hand. Every event shape, every count and every census figure is unmoved; §5 reads WHICH side shrank, from both chairs",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const owner = otherSeat(ctx.seat);\n      const hand = state.players[owner].hand;",
+    replace: "      const owner = ctx.seat;\n      const hand = state.players[owner].hand;",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-apply-arm-reads-the-controllers-hand",
+    decision: "D426",
+    what: "🛑 THE SAME SEAT CROSS ON THE **RESUMED** HALF ALONE, and it is a separate row because the two halves are separate code paths reached by separate boards — D416's rule (\"a guard that only ever runs on the forced path does not guard the parked one\") applied to its own inverse. The park is untouched, so the OPPONENT is still asked, still sees their own hand and still answers; `applyChoice` then hunts those uids in the CONTROLLER's hand, finds none, filters them all out and returns the state unchanged — **a card that asks a question and then does nothing with the answer**. No event, no error, no count moves",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        ? discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)",
+    replace: "        ? discardChosenFromHand(state, ctx.seat, choice.uids, events)",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-exact-hand-parks-instead-of-forcing",
+    decision: "D426",
+    what: "the forced/park boundary is `<` rather than `<=`, so a hand of EXACTLY the printed count parks a prompt whose only legal answer is \"all of them\" — the M1 no-choice rule broken at its exact edge, and an off-by-one an author makes by reading the guard as \"strictly fewer than we asked for\". ⚠️ THE SHORT HAND IS UNAFFECTED and so is every board above the count, which is why this needs the boundary swept rather than sampled: §6 reads a TABLE of hand size → parked at both printed counts, so the mutant names its own size",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (hand.length <= take) {",
+    replace: "      if (hand.length < take) {",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-mandatory-pick-becomes-declinable",
+    decision: "D426",
+    what: "the park's floor drops to 0 — `searchDeck`'s and `discardPileRetrieval`'s REAL SPELLING copied verbatim (both are printed \"up to\" picks and both park at `min: 0`), which is exactly the neighbour-copy this corpus is built out of. The sentence prints no \"may\" and no \"up to\": under the mutant the player being attacked can answer with an empty list and discard NOTHING, and both HUDs grow a \"Take none\" button off `prompt.min > 0`. The candidates, the `decider`, the answerer gate, the destination and every census figure are untouched",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          min: take,\n          max: take,\n          dest: \"discard\",",
+    replace: "          min: 0,\n          max: take,\n          dest: \"discard\",",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-caption-round-trips-the-printed-sentence",
+    decision: "D426",
+    what: "🛑 THE CAPTION ROUND-TRIPS THE PRINTED TEXT, WHICH IS THE **SIBLING'S ACTUAL RULE** APPLIED ONE PARK TOO FAR. `bottomFromOpponentHandNote` is grown one printed form per card precisely so its caption matches the catalog byte for byte, and copying that convention here is the natural move — but the seat reading THIS dialog is the seat the printed sentence calls \"your opponent\", so the mutant tells the player being attacked to make someone ELSE discard, over a list of their own cards. `mayDrawNote` (Ortega) is the precedent that settles it and the only other opponent-answered caption in the engine. Nothing else moves: same offer, same seat, same pile",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    ? \"Discard a card from your hand.\"\n    : `Discard ${op.count} cards from your hand.`;",
+    replace: "    ? \"Your opponent discards a card from their hand.\"\n    : `Your opponent discards ${op.count} cards from their hand.`;",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-log-derives-the-speaker-from-the-other-seat",
+    decision: "D426",
+    what: "🛑 **D425's DEFECT, ONE EVENT OVER, AS THE MISTAKE IT ACTUALLY IS.** The row files under `otherSeat(event.seat)` — the habit every OTHER cross-seat card move in `log.ts` follows correctly (`CARD_TO_BOTTOM_OF_DECK`, `RANDOM_CARD_TAKEN`, `POKEMON_RETURNED`, `DECK_TOP_DISCARDED` all file under the ACTOR), and true of this op too **BY CONSTRUCTION OF ONE OP** rather than because anything enforces it. Here the actor chose nothing, so the mutant credits the ATTACKER with discarding cards out of a hand they never touched. The board, the pile, the event and every count are byte-identical: only the rendered log moves, and a log row is a claim with the same standing as a predicate (D421)",
+    file: "packages/engine/src/log.ts",
+    find: "      const n = event.uids.length;\n      return row(event.seat, [\n        plain(`discarded ${n} card${n === 1 ? \"\" : \"s\"} from their hand`),",
+    replace: "      const n = event.uids.length;\n      return row(otherSeat(event.seat), [\n        plain(`discarded ${n} card${n === 1 ? \"\" : \"s\"} from their hand`),",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-anchor-loses-the-article-branch",
+    decision: "D426",
+    what: "the anchor's alternation collapses to the NUMERIC branch alone — `(\\d+) cards`, the shape the four sibling count-axis anchors in this file carry, which is precisely what an author writes before noticing that the catalog spells one as an ARTICLE. The four printings of the plural are untouched; the TWO printings of *\"Your opponent discards a card from their hand.\"* fall off the derived path onto the loud `ATTACK_EFFECT_SKIPPED` route, taking 1 sentence / 2 printings out of `BUILT.attack` with them. ⚠️ It is the row that separates \"the anchor is a template\" from \"the arm reads the capture\", and the census suite is the CONTROL: a build that lost the article would move every figure this slice moved by 2 instead of 6",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent discards (?:(\\d+) cards|a card) from their hand\\.$/;",
+    replace: "  /^Your opponent discards (\\d+) cards from their hand\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/opponentHandDiscard.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D426-zero-count-derives",
+    decision: "D426",
+    what: "the arm's `count >= 1` guard becomes `count >= 0` — the guard every numeric arm in this file carries, dropped. A printed *\"Your opponent discards 0 cards from their hand.\"* would derive to an op that reports a resolved effect and moves nothing, instead of taking the loud skip path that says the engine could not read the sentence. ⚠️ NO LEGAL PRINTING CARRIES A ZERO, so this row is about the REFUSAL rather than about a board — and §2 pairs it with its control (`discards 1 cards` is still ADMITTED), because a rung that only asserts a refusal passes against a reader that refuses everything (D424)",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (count >= 1) return [{ op: \"opponentDiscardsFromHand\", count }];",
+    replace: "    if (count >= 0) return [{ op: \"opponentDiscardsFromHand\", count }];",
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
+  },
+  {
+    id: "D426-absent-group-defaults-to-the-plural",
+    decision: "D426",
+    what: "the ARTICLE resolves to 2 rather than 1 — the printed plural's number, which is what an author copies when the two spellings sit one line apart and the numeric branch is the one they were looking at. `ATTACK_DRAW` settles the reading (\"the missing number is the article\"), and this is the fifth arm in the file to take it. **THE SENTENCE STILL MATCHES AND EVERY CENSUS FIGURE IS EXACT** — `BUILT.attack` still steps by 6 on 2 sentences — while two printings discard twice what they print, and on a hand of exactly two they empty it outright through the FORCED arm with no prompt at all",
+    file: "packages/engine/src/effects.ts",
+    // ⚠️ ANCHORED ON THE FOLLOWING LINE TOO: the bare `const count = …` spelling
+    // occurs FOUR times in this file (draw, look-at-top, attach-quantity and this
+    // arm all read the same absent-article shape), which `precheck` reported as
+    // `find occurs 4×` — D404's wrong-arm trap, caught mechanically in seconds.
+    find:
+      '    const count = match[1] === undefined ? 1 : Number(match[1]);\n    if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];',
+    replace:
+      '    const count = match[1] === undefined ? 2 : Number(match[1]);\n    if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];',
+    expectKilledBy: ["packages/engine/src/opponentHandDiscard.test.ts"],
   },
 ];

@@ -836,6 +836,42 @@ export type GameEvent =
   | { type: "PRIZE_BONUS"; seat: Seat; uid: string; by: number; count: number }
   /** The controller's whole hand went to the discard (Professor's Research). */
   | { type: "HAND_DISCARDED"; seat: Seat; uids: string[] }
+  /** 🆕🆕 D426 — `seat` discarded `uids` from their OWN hand because the OTHER
+      player's card told them to, and **`seat` is the player who CHOSE them**
+      (*"Your opponent discards 2 cards from their hand."*).
+
+      🛑 **THE ROW IS FILED UNDER THE DISCARDER AND NAMES NO ACTOR, WHICH IS WHERE
+      THIS EVENT DIFFERS FROM EVERY OTHER CROSS-SEAT MOVE IN THIS FILE.**
+      `RANDOM_CARD_TAKEN` and `CARD_TO_BOTTOM_OF_DECK` carry both `seat` (the
+      zone's owner) and `actor` (whose card did it) because the ACTOR reached
+      across the table and moved the card; the log then files them under `actor`
+      and names the owner outright. Nobody reaches across the table here — the
+      owner picked their own cards out of their own hand and put them in their own
+      pile — so the active voice under `seat` is the true one and there is no
+      second seat for a segment to name. `HAND_REVEALED`'s rule ("filed under the
+      REVEALING seat, not the actor whose card caused it — the ATTACK_DECLARED row
+      directly above names the cause"), reached by a different road.
+
+      ⚠️ **SO THERE IS NO `actor` FIELD, AND THE CONDITION THAT WOULD BUY ONE IS
+      STATED RATHER THAN LEFT TO BE GUESSED (D422).** It is owed the moment a
+      consumer needs to name the causer — and a consumer that reaches for it must
+      NOT write `otherSeat(event.seat)`, which is true of this op only because the
+      op is cross-seat by construction. That is precisely the closed-world shape
+      D425 found on `DAMAGE_DEALT`, and the whole point of not shipping a derived
+      seat is that nothing can derive one from a row that does not mention it.
+
+      ⚠️ **DISTINCT FROM `HAND_DISCARDED` DESPITE THE IDENTICAL SHAPE.** That row is
+      the controller's WHOLE hand going at once (Professor's Research) and speaks
+      in the first person about a player's own play; this is a PARTIAL discard
+      imposed from the other side of the table. Two rows rather than one flag, for
+      `PRIZE_REDUCED`/`PRIZE_BONUS`'s reason: one row with a rider would leave the
+      log unable to say which of the two things happened.
+
+      The LOG speaks in COUNTS (log.ts), like every card leaving the hidden hand —
+      `HAND_COST_PAID`'s convention, and its `to: "discard"` arm is this exact
+      journey. The cards do land face up in the §2 public pile, so a curious player
+      reads them off the pile rather than off the row. */
+  | { type: "FORCED_HAND_DISCARD"; seat: Seat; uids: string[] }
   /** A deck search resolved: `uids` moved deck → `dest` (§15.E).
 
       `reveal` carries the printed *"reveal it/them"* clause off the `searchDeck`

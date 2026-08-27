@@ -1047,6 +1047,32 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       const n = event.uids.length;
       return row(event.seat, [plain(`discarded their hand (${n} card${n === 1 ? "" : "s"})`)]);
     }
+    case "FORCED_HAND_DISCARD": {
+      // 🆕🆕 D426 — the opponent-chooses hand discard (*"Your opponent discards 2
+      // cards from their hand."*).
+      //
+      // 🛑 **FILED UNDER `event.seat`, AND THIS ROW IS THE COUNTEREXAMPLE TO A
+      // HABIT RATHER THAN AN INSTANCE OF ONE.** Every other cross-seat card move
+      // in this file (`CARD_TO_BOTTOM_OF_DECK`, `RANDOM_CARD_TAKEN`,
+      // `POKEMON_RETURNED`, `DECK_TOP_DISCARDED`) files under the ACTOR, because
+      // the actor is who chose and who moved. Here the actor chose NOTHING: the
+      // card named a number and the OWNER picked the cards. So the active voice
+      // belongs to the owner, and there is no possessive to disambiguate — this is
+      // `HAND_DISCARDED`'s sentence with a different cause, and the
+      // ATTACK_DECLARED row directly above is what names that cause.
+      // ⚠️ **NOTHING IS DERIVED HERE.** The event carries no `actor` and this row
+      // asks for none; `otherSeat(event.seat)` would have been true today and true
+      // BY CONSTRUCTION OF ONE OP, which is D425's `DAMAGE_DEALT` defect exactly.
+      //
+      // Count only — the `HAND_COST_PAID` convention, which is about the zone the
+      // cards came FROM and not the zone they land in. They do land face up in the
+      // §2 public pile, so a player who wants the identities reads the pile; the
+      // log's job here is to say that a hidden hand got smaller and by how much.
+      const n = event.uids.length;
+      return row(event.seat, [
+        plain(`discarded ${n} card${n === 1 ? "" : "s"} from their hand`),
+      ]);
+    }
     case "HAND_SHUFFLED_INTO_DECK": {
       // The hand-refresh Supporter family (Youngster / Judge / Brassius / Katy).
       // Count only — the hand is hidden (module header), so this names no card

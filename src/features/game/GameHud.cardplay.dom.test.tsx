@@ -492,7 +492,7 @@ describe("effect:choose — the MANDATORY cost dialog (chooseCards min > 0)", ()
     // "Take none" button is not something a screen reader announces.
     expect(screen.getByText("Discard 2 cards from your hand.")).toBeTruthy();
     expect(
-      screen.getByText("Pick 2 (0/2). Pick 2 more — this cost must be paid."),
+      screen.getByText("Pick 2 (0/2). Pick 2 more — this pick can't be declined."),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
     // The verb is DISCARD, not "Take" — a cost is spent, not gained — and it
@@ -513,9 +513,9 @@ describe("effect:choose — the MANDATORY cost dialog (chooseCards min > 0)", ()
     const state = parkedCost();
     renderHud(state, vi.fn());
     const live = screen.getByRole("status");
-    expect(live.textContent).toBe("Pick 2 (0/2). Pick 2 more — this cost must be paid.");
+    expect(live.textContent).toBe("Pick 2 (0/2). Pick 2 more — this pick can't be declined.");
     fireEvent.click(screen.getByRole("button", { name: "fix-item" }));
-    expect(live.textContent).toBe("Pick 2 (1/2). Pick 1 more — this cost must be paid.");
+    expect(live.textContent).toBe("Pick 2 (1/2). Pick 1 more — this pick can't be declined.");
     fireEvent.click(screen.getByRole("button", { name: "fix-special" }));
     // Same node, satisfied text — not a removal, which announces nothing.
     expect(screen.getByRole("status")).toBe(live);
@@ -584,7 +584,7 @@ describe("effect:choose — the MANDATORY cost dialog (chooseCards min > 0)", ()
     renderHud(state, vi.fn());
 
     expect(screen.getByText("Discard a card from your hand.")).toBeTruthy();
-    expect(screen.getByText("Pick 1 (0/1). Pick 1 more — this cost must be paid.")).toBeTruthy();
+    expect(screen.getByText("Pick 1 (0/1). Pick 1 more — this pick can't be declined.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
     expect(
       (screen.getByRole("button", { name: "Discard 0/1" }) as HTMLButtonElement).disabled,
@@ -656,7 +656,7 @@ describe("the hand cost paid UNDER THE DECK (Dendra, M5)", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe(
-      "Pick 1 (0/1). Pick 1 more — this cost must be paid.",
+      "Pick 1 (0/1). Pick 1 more — this pick can't be declined.",
     );
     expect(screen.queryByRole("button", { name: "Take none" })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Discard/ })).toBeNull();

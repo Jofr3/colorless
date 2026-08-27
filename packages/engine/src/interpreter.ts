@@ -782,11 +782,24 @@ export type RunResult =
       state: GameState;
       prompt: EffectPrompt;
       cont: EffectContinuation;
-      /** The seat that must ANSWER, when it is not the program's controller —
-          opponentMayDraw is the one producer (Ortega's "your opponent may").
+      /** The seat that must ANSWER, when it is not the program's controller.
           Absent everywhere else, so settleProgram files the phase's `answerer`
-          only for the park that needs it and every pre-D52 park stays
-          byte-identical. */
+          only for the parks that need it and every pre-D52 park stays
+          byte-identical.
+
+          🆕🆕 **D426 CORRECTED THIS SENTENCE, WHICH READ "opponentMayDraw is the ONE
+          producer" AND HAD BEEN FALSE SINCE D227.** There are THREE, and the
+          difference between them is the whole of what the answerer gate protects:
+            · `opponentMayDraw` (Ortega) — a `mayDraw` prompt, no candidates at all;
+            · `opponentSwitchOut` (D227) — a `choosePokemon` prompt whose candidates
+              are `PokemonRef`s ALREADY PUBLIC on the redacted board;
+            · `opponentDiscardsFromHand` (D426) — a `chooseCards` prompt over card
+              uids out of the answerer's own HIDDEN HAND, the first payload the gate
+              has ever had to keep off the other seat's wire.
+          ⚠️ **THE STALE COUNT WAS READ AS A MEASUREMENT AND PROPAGATED**: D426's own
+          op doc was written saying "the SECOND park with a `decider`" off this line
+          and the `opponentMayDraw` case comment below, and was corrected only because
+          the ordinal was checked against `parkOrForce`'s call sites. */
       decider?: Seat;
     };
 
@@ -2595,9 +2608,71 @@ function stepOp(
       // D232 — the FIRST op whose outcome is drawn from `rngState`. Never parks:
       // "random" is precisely the absence of a chooser, so neither seat is asked.
       return { done: randomFromOpponentHand(state, op, ctx, events) };
+    case "opponentDiscardsFromHand": {
+      // 🆕🆕 D426 — the OPPONENT-CHOOSES half of the same family, and the ONE park
+      // in this engine that shows a player their OWN hidden hand on the OTHER
+      // player's turn. `owner` is the hand, the chooser, the discard pile AND the
+      // answerer — four roles that every other cross-seat op in this file splits
+      // between two seats, which is exactly why `decider` is set here.
+      const owner = otherSeat(ctx.seat);
+      const hand = state.players[owner].hand;
+      // 🛑 §8.6 — DO AS MUCH AS YOU CAN, and that ONE rule answers both short
+      // boards. `take` is the printed count clamped to the hand, so:
+      //   · an EMPTY hand takes zero, and the two lines below make that a silent
+      //     no-op — no event (there is nothing to announce; the ATTACK_DECLARED
+      //     row above already said the attack happened) and no park (there is no
+      //     decision here for the M1 no-choice rule to retire). This is
+      //     `randomFromOpponentHand`'s empty-hand ending, and `payFromHandApply`'s
+      //     `paid.length === 0` guard, arriving at one op from two directions.
+      //   · a hand of `take` cards or fewer has exactly ONE answer to "which
+      //     `take` of your `M`", so the M1 rule FORCES it and nothing is asked.
+      //     ⚠️ A SHORT HAND AND AN EXACT HAND ARE TWO DECISIONS SHARING ONE LINE:
+      //     at `M === count` the printed count is met and there is no choice; at
+      //     `M < count` the printed count CANNOT be met and the card does what it
+      //     can. Both are driven (`opponentHandDiscard.test.ts` §4), because a
+      //     decision that is not pinned is indistinguishable from an oversight.
+      const take = Math.min(op.count, hand.length);
+      if (take === 0) return { done: state };
+      if (hand.length <= take) {
+        return { done: discardChosenFromHand(state, owner, hand, events) };
+      }
+      // 🛑 THE PARK, AND ITS FLOOR IS TRUE BY CONSTRUCTION. `min === max === take`
+      // is a MANDATORY exact pick — the only decision is WHICH cards, never
+      // whether — and every board that could make that floor unanswerable was
+      // already swallowed by the forced arm above. So this op needs no
+      // `lookAtTopN`-style clamp; it is `payFromHand`'s and
+      // `bottomFromOpponentHand`'s "gated upstream on a zone that holds the cards"
+      // reached by a different route, and `take === op.count` here always.
+      //
+      // 🛑 THE WHOLE HAND IS THE OFFER — NO INTERCHANGEABLE COLLAPSE. Both sibling
+      // hand-picks collapse duplicate classes; both do it for an information
+      // argument this park does not have (see the op's doc). The answerer owns
+      // this hand and is looking at it.
+      return {
+        park: {
+          kind: "chooseCards",
+          candidates: [...hand],
+          min: take,
+          max: take,
+          dest: "discard",
+          note: opponentDiscardNote(op),
+        },
+        // 🛑 THE OPPONENT ANSWERS, AND THIS ONE FIELD IS THE WHOLE OF IT. The park's
+        // `decider` becomes `phase.answerer` (flow.ts `settleProgram`), which
+        // `resolveEffect` gates on (cardplay.ts), `phaseViewOf` reports as the
+        // waiting seat, and `redactedPromptOf` uses to send this prompt — hand card
+        // identities and all — to the OWNER alone. A build that dropped it would
+        // hand the controller a list of the opponent's hidden cards AND let them
+        // choose what their opponent discards; both halves are driven.
+        decider: owner,
+      };
+    }
     case "opponentMayDraw": {
-      // The opponent's printed "may" — the one park whose ANSWERER is the other
-      // seat (the decider below; settleProgram files it as phase.answerer). An
+      // The opponent's printed "may" — the FIRST park whose ANSWERER is the other
+      // seat (the decider below; settleProgram files it as phase.answerer).
+      // 🆕🆕 D426 — this read "the ONE park" and had been false since D227 added
+      // `opponentSwitchOut`'s decider; D426's `opponentDiscardsFromHand` is the
+      // third. `RunResult.decider`'s doc carries the enumeration. An
       // empty opponent deck makes both answers the same state, so the question
       // does not exist and the op resolves silently (the M1 no-choice rule —
       // drawCards' own empty-deck no-op, asked about first).
@@ -5017,6 +5092,21 @@ export function applyChoice(
       recordMoved(record, op.recordAs, paid.paid);
       return paid.state;
     }
+    case "opponentDiscardsFromHand":
+      // 🆕🆕 D426 — THE ANSWER COMES FROM THE *OPPONENT*, AND THE APPLY MOVES CARDS
+      // ON THEIR SIDE OF THE TABLE. `ctx.seat` is still the controller (the context
+      // is the program's owner and never the answerer — see `EffectContext`), so
+      // the owner is re-derived here exactly as the park derived it. Reading the
+      // seat off the answer instead is the thing this line exists to not do.
+      //
+      // ⚠️ `validateChoice` has already checked membership and count against the
+      // PROMPT (cardplay.ts), and the phase's `answerer` gate has already refused
+      // the controller's frame — so a uid reaching here is one of the offered
+      // cards. The helper still re-reads the LIVE hand, which is the retrieval
+      // rule this file applies everywhere: what MOVED is what the event names.
+      return choice.kind === "cards"
+        ? discardChosenFromHand(state, otherSeat(ctx.seat), choice.uids, events)
+        : state;
     case "bottomFromOpponentHand": {
       if (choice.kind !== "cards") return state;
       const moved = bottomFromOpponentHandApply(state, choice.uids, ctx, events, op.dest);
@@ -9024,6 +9114,85 @@ function bottomFromOpponentHandNote(
     around into the second person, the way it is said across a table. */
 function mayDrawNote(op: Extract<EffectOp, { op: "opponentMayDraw" }>): string {
   return op.count === 1 ? "You may draw a card." : `You may draw ${op.count} cards.`;
+}
+
+/** 🆕🆕 D426 — the opponent-chooses hand discard's caption, **IN THE ANSWERER'S
+    VOICE AND DELIBERATELY NOT THE PRINTED SENTENCE.**
+
+    🛑 **THIS IS THE ONE PLACE THE FAMILY'S ROUND-TRIP RULE HAS TO BE BROKEN, AND
+    IT IS BROKEN ON PURPOSE.** `bottomFromOpponentHandNote` is grown one printed
+    form per card precisely so its caption round-trips to the catalog text
+    character for character — and it can be, because the seat reading that prompt
+    is the seat the printed sentence addresses. Here it is not: the card says
+    *"**Your opponent** discards 2 cards from their hand."* and the player looking
+    at this dialog **IS** that opponent. A verbatim caption would tell them to make
+    someone else discard. `mayDrawNote` settled this at the engine's only other
+    opponent-answered park — Ortega prints *"your opponent may draw a card"* and
+    the note reads *"You may draw a card."* — and this is that rule's second use.
+
+    ⚠️ **THE COUNT IS THE PRINTED ONE, NOT THE CLAMPED ONE, AND THAT COSTS NOTHING
+    HERE.** The op only ever parks when the hand is strictly bigger than `count`
+    (the forced arm swallows every short board), so caption and offer can never
+    disagree — which is the contradiction `choosePokemon.upTo`'s doc block warns
+    about when a ceiling is cut to what a zone actually holds.
+
+    ⚠️ **THE SINGULAR IS THE PRINTED ARTICLE**, matching the anchor's alternation
+    rather than writing "1 card": *"Discard a card from your hand."* is how the
+    catalog spells the count of one everywhere in this column. */
+function opponentDiscardNote(op: Extract<EffectOp, { op: "opponentDiscardsFromHand" }>): string {
+  return op.count === 1
+    ? "Discard a card from your hand."
+    : `Discard ${op.count} cards from your hand.`;
+}
+
+/** 🆕🆕 D426 — move `uids` from `owner`'s HAND to `owner`'s DISCARD PILE, and
+    announce what actually moved.
+
+    🛑 **`owner` IS THE HAND, THE CHOOSER AND THE DESTINATION — ONE SEAT, THREE
+    ROLES, AND `ctx` NEVER REACHES THIS FUNCTION.** That is the `returnBenched` /
+    `randomFromOpponentHand` rule (the zone's owner is not the actor) taken one
+    step further: those two still name an `actor` on their event because the ACTOR
+    is who moved the card. Here the owner moved it themselves, so there is no
+    second seat for the row to name, and the function does not take one.
+
+    ⚠️ **WHAT MOVED, NOT WHAT WAS ASKED FOR** — `payFromHandApply`'s membership and
+    duplicate filter, byte for byte. Both callers already hold a subset of the live
+    hand (the forced arm passes the hand itself; the parked one passes a
+    validator-checked answer), so the filter is a belt — and it is the belt that
+    keeps the EVENT honest if either of those two facts ever stops being true.
+
+    ⚠️ **AN EMPTY RESULT EMITS NOTHING.** `payFromHandApply`'s `paid.length === 0`
+    ending, for its reason: a row announcing a discard of zero cards describes
+    something that did not happen. The op's own empty-hand branch means this is
+    unreachable from a printed board today, and it is written anyway because it is
+    the same guard the sibling carries at the same address.
+
+    **THE CARDS LAND FACE UP IN THE §2 PUBLIC PILE**, appended in pile order like
+    every other discard in this file — so their identity becomes public by the
+    board and not by the log, which is why the log row stays a COUNT (see
+    `FORCED_HAND_DISCARD` in log.ts). */
+function discardChosenFromHand(
+  state: GameState,
+  owner: Seat,
+  uids: readonly string[],
+  events: GameEvent[],
+): GameState {
+  const side = state.players[owner];
+  const inHand = new Set(side.hand);
+  const discarded: string[] = [];
+  const gone = new Set<string>();
+  for (const uid of uids) {
+    if (!inHand.has(uid) || gone.has(uid)) continue;
+    gone.add(uid);
+    discarded.push(uid);
+  }
+  if (discarded.length === 0) return state;
+  events.push({ type: "FORCED_HAND_DISCARD", seat: owner, uids: [...discarded] });
+  return withSide(state, owner, {
+    ...side,
+    hand: side.hand.filter((uid) => !gone.has(uid)),
+    discard: [...side.discard, ...discarded],
+  });
 }
 
 /** The cards in `seat`'s hand that may pay a `payFromHand`, with

@@ -52,8 +52,8 @@ import type { PlayerId } from "../../playmat/types";
 // discardEnergy), whose candidates are all in-play refs and attached-Energy uids
 // already public on the redacted board, plus — from 2b-iii-c — the HIDDEN-
 // CANDIDATE prompts (chooseCards / attachCards), whose candidates are the
-// controller's own deck/top cards: the server puts a full `RedactedCard` per
-// candidate on the wire (the reveal), sent to the controller alone, so the dialog
+// ANSWERER's own deck/top/hand cards: the server puts a full `RedactedCard` per
+// candidate on the wire (the reveal), sent to that seat alone, so the dialog
 // names them straight off the prompt rather than the board, plus — from D201 —
 // `chooseAttack` (D157's kind), which had been on the wire WITHOUT a dialog here
 // since it landed and soft-locked any online match that parked it. Every
@@ -947,13 +947,23 @@ function DiscardEnergyDialog({
 
 // --- Hidden-candidate effect prompts (2b-iii-c) ------------------------------
 //
-// chooseCards / attachCards. Their candidates are the CONTROLLER's own deck /
+// chooseCards / attachCards. Their candidates are the ANSWERER's own deck /
 // looked-at-top / hand / discard cards — the deck ones HIDDEN until this effect
 // reveals them — so unlike the public-ref family they DON'T resolve off the
 // board: the server puts a full `RedactedCard` per candidate on the wire (sent
-// to the controller alone), and the dialog names them straight off the prompt.
-// The answer dispatches each pick's `id` (the engine uid). Restated from the
-// local GameHud dialogs over the wire shape.
+// to the answering seat alone), and the dialog names them straight off the
+// prompt. The answer dispatches each pick's `id` (the engine uid). Restated from
+// the local GameHud dialogs over the wire shape.
+//
+// 🛑 🆕🆕 **D426 CORRECTED "CONTROLLER" TO "ANSWERER" IN BOTH SENTENCES ABOVE, AND
+// THE DIFFERENCE IS NOT COSMETIC.** They were the same seat for every
+// hidden-candidate producer until `opponentDiscardsFromHand` (*"Your opponent
+// discards 2 cards from their hand."*) parked a `chooseCards` on the
+// NON-controller, over that seat's own hidden HAND. The server gate has always
+// read `phase.answerer ?? phase.seat` (`redactedPromptOf`), so nothing here had
+// to change — but a successor reading "sent to the controller alone" would have
+// been reading a sentence that describes a live hidden-information leak, and
+// might have "fixed" the gate to match it.
 
 /** chooseCards (§15.E / §7.1 / §7.5) — pick min..max cards: a deck search, a
     discard retrieval, a look-at-top, or a §7.5 hand cost. `min > 0` is a
@@ -984,12 +994,17 @@ function ChooseCardsDialog({
     <Dialog label="Choose cards">
       <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
       {/* A live region — the running total is otherwise unannounceable; the
-          mandatory branch also states the cost cannot be declined (the absent
-          "Take none" is not something a screen reader announces). */}
+          mandatory branch also states the pick cannot be declined (the absent
+          "Take none" is not something a screen reader announces).
+          🆕🆕 D426 — was "this cost must be paid", and `GameHud.tsx`'s twin of this
+          block carries the whole argument: the sentence was written when the only
+          mandatory producer was a printed COST and was already false for two
+          shipped ops before this slice added a third. Changed in the SAME edit as
+          the local panel, D412's rule. */}
       <output className="mt-1.5 block text-sm text-white/55">
         {mandatory
           ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
-              short ? `Pick ${prompt.min - picked.length} more — this cost must be paid.` : "Ready."
+              short ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.` : "Ready."
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>

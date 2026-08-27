@@ -1124,4 +1124,62 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
       expect(projectGameState(state, "p2").pendingDecision).not.toBeNull();
     }
   });
+
+  it("🆕🆕 D426 — an OPPONENT-ANSWERED hidden-candidate park round-trips for BOTH viewers", () => {
+    // 🛑 **THE FIRST PROMPT IN THIS FILE THAT IS BOTH `answerer`-ROUTED AND
+    // HIDDEN-CANDIDATE, AND THAT COMBINATION IS THE WHOLE CASE.** Every other
+    // `chooseCards` park is CONTROLLER-answered, so `phaseViewOf` keeps the
+    // decision for BOTH local viewers while the wire withholds it from one — the
+    // asymmetry the two cases above assert on purpose. Here `phase.answerer` is
+    // set, so the LOCAL projection withholds it too, and the wire round-trip is an
+    // identity on BOTH sides for the first time.
+    //
+    // ⚠️ **WHAT WOULD BREAK IT IS A CONSUMER THAT DERIVES "WHOSE PROMPT IS THIS"
+    // FROM THE ACTIVE SEAT** rather than reading `answerer` — D425's finding, one
+    // field over. `projectionFromRedacted` never sees the phase's seats at all
+    // (`waitingOn` arrives viewer-relative off `phaseViewOf`, server-side), and
+    // this equality is what says so: an implementation that recomputed it from
+    // `activePlayer` would hand the ATTACKER the dialog and disagree here.
+    //
+    // The candidates are P2's REAL hand uids, so a build that leaked them would
+    // resolve real identities into P1's snapshot rather than failing to resolve.
+    const CONT: EffectContinuation = {
+      pendingOp: { op: "opponentDiscardsFromHand", count: 2 },
+      rest: [],
+      ctx: { seat: "p1" },
+    };
+    const base = turnOneState();
+    const oppHand = base.players.p2.hand.slice(0, 3);
+    expect(oppHand.length).toBe(3); // more than `min`, or the engine would not park
+    const state: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        answerer: "p2",
+        prompt: {
+          kind: "chooseCards",
+          candidates: oppHand,
+          min: 2,
+          max: 2,
+          dest: "discard",
+          note: "Discard 2 cards from your hand.",
+        },
+        cont: CONT,
+      },
+    };
+    // BOTH viewers round-trip exactly — the answerer WITH the prompt, the actor
+    // with the same withheld null on both surfaces.
+    for (const seat of ["p1", "p2"] as const) {
+      expect(projectionFromRedacted(redactGame(state, seat))).toEqual(
+        projectGameState(state, seat),
+      );
+    }
+    expect(projectGameState(state, "p1").pendingDecision).toBeNull();
+    expect(projectGameState(state, "p2").pendingDecision?.kind).toBe("effectChoose");
+    // …and the ACTOR's whole wire snapshot names none of the opponent's cards.
+    // Quoted, because a uid like `p2#4` is a PREFIX of `p2#42`.
+    const wire = JSON.stringify(redactGame(state, "p1"));
+    for (const uid of oppHand) expect(wire, uid).not.toContain(`"${uid}"`);
+  });
 });

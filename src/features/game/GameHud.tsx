@@ -1539,11 +1539,15 @@ function MayDrawDialog({
 }
 
 /** A card pick, origin-agnostic — a deck search (§15.E), a discard-pile
-    retrieval (§7.1), a look at the deck top, or a printed hand COST (§7.5),
-    whether it is paid to the discard (Ultra Ball) or under the deck (Dendra).
-    The prompt's `note` says which; the candidate cards are public in every case
-    (deck picks are revealed, the discard pile is open, and a cost is paid out of
-    the viewer's OWN hand).
+    retrieval (§7.1), a look at the deck top, a printed hand COST (§7.5, paid to
+    the discard (Ultra Ball) or under the deck (Dendra)), or 🆕 **D426's
+    OPPONENT-ANSWERED hand discard** (*"Your opponent discards 2 cards from their
+    hand."* — the viewer here is the seat being attacked, and the engine files
+    them as the phase's `answerer`).
+    The prompt's `note` says which; the candidate cards are visible to THIS VIEWER
+    in every case (deck picks are revealed, the discard pile is open, and both
+    hand-sourced picks come out of the viewer's OWN hand — which for D426 is the
+    whole reason the engine routes the prompt to the non-controller).
 
     `prompt.min` is the whole behavioural split, and it is the ENGINE's answer
     rather than this component's guess about the prompt's origin: at 0 the pick is
@@ -1646,14 +1650,31 @@ function ChooseCardsDialog({
           reachable — is announced. A region that unmounts on satisfaction says
           nothing at the only moment it had something to say.
 
-          The mandatory branch also states that the cost cannot be declined: the
+          The mandatory branch also states that the pick cannot be declined: the
           absence of a "Take none" button is not something a screen reader
           announces. `min === max` at every park site the engine has (0 for the
-          printed "up to", `count` here), so the pick is exact. */}
+          printed "up to", `count` here), so the pick is exact.
+
+          🛑 🆕🆕 **D426 CORRECTED THIS SENTENCE, WHICH READ "this cost must be
+          paid" AND WAS ALREADY FALSE FOR TWO SHIPPED PRODUCERS.** It was written
+          when `payFromHand` was the only op that parked a MANDATORY
+          `chooseCards`, and it stayed while two more arrived that are not costs
+          at all: `bottomFromOpponentHand`'s unridden exactly-one (the actor
+          picking a card out of the opponent's REVEALED hand — nobody pays
+          anything) and D334's `lookAtTopN.exact` (*"put 2 of them into your
+          hand"*). D426 is the third and the loudest, because its answerer is the
+          OPPONENT: the caption told the player being attacked that they were
+          paying a cost for a card they did not play. **`min > 0` means the pick
+          cannot be declined and says nothing about WHY**, so the caption now says
+          only that — which is true of all four producers and of the next one.
+          ⚠️ Restated BYTE-IDENTICALLY in `OnlineHud.tsx` (D62/D63's
+          restate-per-surface rule), and D412's lesson is why both were changed in
+          one edit: the server-side twin passing proves nothing about the local
+          panel. */}
       <output className="mt-1.5 block text-sm text-white/55">
         {mandatory
           ? `Pick ${prompt.min} (${picked.length}/${prompt.max}). ${
-              short ? `Pick ${prompt.min - picked.length} more — this cost must be paid.` : "Ready."
+              short ? `Pick ${prompt.min - picked.length} more — this pick can't be declined.` : "Ready."
             }`
           : `Pick up to ${prompt.max} (${picked.length}/${prompt.max}).`}
       </output>

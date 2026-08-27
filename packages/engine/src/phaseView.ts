@@ -109,6 +109,17 @@ export function phaseViewOf(state: GameState, viewerSeat: Seat): PhaseView {
     // controller's, so activeSeat keeps reading phase.seat. An `answerer`
     // park's prompt goes ONLY to the seat that may answer it (the decision is
     // withheld from the other viewer).
+    //
+    // 🆕🆕 **D426 IS THE FIRST PARK TO SET `answerer` AND `resumeTail` AT ONCE, AND
+    // THE TWO TERMS BELOW HANDLE IT WITHOUT A FOURTH CASE.** Ortega and D227's
+    // `opponentSwitchOut` are both played from `turn:action`, so every prior
+    // `answerer` park had `resumeTail` absent; *"Your opponent discards 2 cards from
+    // their hand."* is an ATTACK effect, so it parks with the attackEpilogue queued.
+    // `activeSeat` therefore comes off `koParkActiveSeat` rather than `phase.seat` —
+    // which returns the SAME seat here, because the sweep sits inside the attacker's
+    // turn. That agreement is DRIVEN rather than assumed (`opponentHandDiscard.test.ts`
+    // §3 reads both fields from both chairs): a board that handed the answering seat
+    // the turn glow would be lying about whose turn it is.
     case "effect:choose": {
       const answerer = phase.answerer ?? phase.seat;
       const withheld = phase.answerer !== undefined && phase.answerer !== viewerSeat;
