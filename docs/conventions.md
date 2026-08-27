@@ -769,6 +769,28 @@ cannot be resolved must be **stated as unresolved, never invented**; sentence te
 and printing counts remain measurable off the committed corpus. A plausible-looking
 invented id is indistinguishable from a real one to every later reader.
 
+## Quoting a residue (D425)
+
+**A residue figure is meaningless without the subtraction set that produced it.**
+Two sessions measured "the unbuilt residue" at the same HEAD and got 203/315 and
+201/310. Neither was wrong; they had subtracted different served sets and neither
+had said which. Measured in one run at D425's head:
+
+| subtraction set | residue |
+|---|---|
+| reader only (`!resolvedByAnyReader`) | 216 sentences / 343 printings |
+| − gate + trailing splitters | 200 / 310 |
+| − registry as well | **198 / 305** |
+| − all four splitters + registry | 198 / 305 (unchanged) |
+
+**Always name the set.** This is D423's scoped-claim rule arriving at a
+denominator instead of a population, and denominators are exactly the numbers that
+get copied into later claims unqualified.
+
+**And carry this fact:** `splitAttackRequirementClause` and
+`splitAttackCancelClause` serve **zero** additional unresolved sentences, so the
+honest subtraction is **gate + trailing + registry, and nothing more**.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

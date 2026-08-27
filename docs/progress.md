@@ -483,10 +483,11 @@
 > Baseline 423 / 9,114, so **+1 file / +31 cases**. Engine **0.327.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,558**, archive ratchet **95**, lint coverage **663**.
 >
-> 🛑 **THE ONE DEBT: D425 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D425` (6 killed / 0 GAPs), **120
-> at-risk neighbour rows re-probed (120 KILLED)**, all four `D208` clamp sites, `precheck` clean twice.
-> Exposure is **the widest of this run**: 94 sites across 34 files, and the slice changed a REQUIRED
-> field on a shipped event (`DAMAGE_DEALT.by`), which touches four write sites and the log.
+> ✅ **THE SWEEP DEBT IS PAID.** **1558 · 1534 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,851.7s**, `SWEEP_EXIT=0`; `1534 + 24 = 1558` closes and
+> 1558/1558 verified by id. All 6 D425 rows KILLED. `error` **0** on the widest-exposure slice of this run
+> (94 sites / 34 files) and on one that changed a REQUIRED field of a shipped event. Survivors held at
+> **24 for a forty-second consecutive sweep**.
 >
 > ▶ **NEXT SLICE — THE FAMILY THIS ONE DELIBERATELY LEFT, ALREADY PRICED AND PINNED.**
 > `…also does {N} damage to 1 of your Benched Pokémon.` (**2 printings**) is a DIFFERENT op — it parks a
@@ -496,10 +497,13 @@
 > filtered one (`…that has any damage counters on it`) a per-body predicate. ⚠️ **Re-derive the residue
 > first** — subtract splitters AND registry, and grep the LOOSEST shape.
 >
-> ⚠️ **AN UNRESOLVED DISAGREEMENT, RECORDED RATHER THAN SPLIT**: two independent runs of the same residue
-> method at the same HEAD returned **203 / 315** and **201 / 310**. Small, but nobody has explained it.
-> **Settle it before quoting either figure** — a denominator two sessions disagree about is exactly the
-> kind of number that later gets copied into a claim.
+> ✅ **THE RESIDUE DISAGREEMENT IS SETTLED, AND IT WAS NEVER ABOUT THE CORPUS.** Measured at this head in
+> ONE run: reader-only **216 / 343** · minus gate+trailing splitters **200 / 310** · minus registry too
+> **198 / 305** · minus ALL FOUR splitters plus registry **198 / 305, unchanged**. Both earlier figures
+> were real and named DIFFERENT subtraction sets. **QUOTE A RESIDUE ONLY WITH ITS SUBTRACTION SET.**
+> ⚠️ Carry this: `splitAttackRequirementClause` and `splitAttackCancelClause` serve **zero** additional
+> unresolved sentences, so the honest subtraction is **gate + trailing + registry and nothing more**.
+> **The number to work from is 198 sentences / 305 printings.**
 >
 > 🛑🛑 **(1) A CLOSED-WORLD ASSUMPTION THAT IS TRUE BY ACCIDENT LOOKS EXACTLY LIKE CORRECT CODE.**
 > `log.ts` derived a `DAMAGE_DEALT` row's dealer as `otherSeat(event.seat)`. That was true of all four
