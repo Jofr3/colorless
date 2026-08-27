@@ -489,11 +489,14 @@
 > Baseline 426 / 9,212. Engine **0.330.0**, **`MATCH_RECORD_VERSION` 26**, corpus **1,590**, archive
 > ratchet **98**, lint coverage **666**.
 >
-> 🛑 **THE ONE DEBT: D428 HAS HAD NO WHOLE-CORPUS SWEEP**, and its exposure is **the widest of this run
-> by a wide margin** — 215 edit sites across 68 files, including 96 reader-list insertions and 48 surface
-> rungs stepping 12 → 13. `--decision D428` (11 killed / 0 GAPs) and a 233-row neighbour re-probe
-> (232 killed + 1 declared) are clean, `precheck` is clean at 1,590 — but run the sweep before anything
-> large.
+> ✅ **THE SWEEP DEBT IS PAID.** **1590 · 1565 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,069.9s**, `SWEEP_EXIT=0`; `1565 + 25 = 1590` closes and
+> 1590/1590 verified by id. All 11 D428 rows KILLED, **including the one that skips the defender rebind**
+> — the placement guard is confirmed live, not merely declared. ✅ **`error` is 0 on the widest-exposure
+> slice of the run (215 sites / 68 files, 96 of them reader-list insertions)**, and that was bought:
+> `precheck` caught exactly such a splice breakage mid-slice. **The sweep confirms the repair; `precheck`
+> finds the breakage — and only if you run it before committing.** Survivors held at **25**, diffed
+> id-by-id against D427's and identical.
 >
 > ▶ **RESIDUE, SUBTRACTION SET NAMED** (reader − gate − trailing − registry): **194 sentences / 288
 > printings**. The pre-damage family has **3 rows left**, each one anchor: row 71 (Tools **and Special
