@@ -485,10 +485,23 @@
 > Baseline 424 / 9,145, so **+1 file / +37 cases**. Engine **0.328.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,569**, archive ratchet **96**, lint coverage **664**.
 >
-> 🛑 **THE ONE DEBT: D426 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D426` (11 killed / 0 GAPs, run
-> twice), **306 at-risk neighbour rows re-probed (305 KILLED + 1 declared)**, `precheck` clean twice.
-> Exposure is **the widest of this run**: ~96 sites across 49 files, a new op that PARKS, a new event, and
-> edits to `redact.ts`, both HUDs and `cardplay.ts`.
+> ✅ **THE SWEEP DEBT IS PAID.** **1569 · 1545 killed · 24 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,796.2s**, `SWEEP_EXIT=0`; `1545 + 24 = 1569` closes and
+> 1569/1569 verified by id. All 11 D426 rows KILLED. Survivors held at **24 for a forty-third consecutive
+> sweep**. ⚠️ **`skipped(dirty)` is 0 and that was BOUGHT**: the first launch ran against a tree with
+> `packages/schema/src/match/redacted.ts` unstaged (a `git add` covering `packages/engine` and
+> `src/features` but not `packages/schema`), and **one mutant targets that package**. Stopped with
+> SIGTERM — the harness restored and cleared its journal on the way out — amended, relaunched clean.
+> **A DIRTY FILE DOES NOT FAIL A SWEEP; IT QUIETLY REMOVES ROWS FROM IT.**
+>
+> ✅ **AND THE D425 FROZEN-TAIL REPAIR IS NOW COMPLETE.** An audit of all six slices — diffing every chain
+> rung's TERM COUNT against its ENDPOINT — found D426 had repaired the sibling rung in
+> `opponentBenchCount` but left a second one at D425's bumped value `(373, 1272)` with its term count
+> standing still at 60. Restored to `(370, 1267)` with D425's owed `- 3` / `- 5` at the front.
+> 🛑 **THE ORIGINAL DIAGNOSIS IS CORRECTED, NOT REPEATED**: that rung never became `head === head` — the
+> chain stayed consistent and would still redden if a reader were removed. **What a moved endpoint costs
+> is the ITEMISATION**: the step survives only inside a constant, where no reader can tell which slice
+> owns it. The chain is the only place the per-slice arithmetic is written down.
 >
 > 🛑🛑 **(1) A FROZEN TAIL THAT MOVES WITH THE HEAD ASSERTS NOTHING — AND NO SWEEP CAN TELL YOU.**
 > D425 paid its census step in 8 chains across 6 files by **bumping the frozen endpoint** instead of
