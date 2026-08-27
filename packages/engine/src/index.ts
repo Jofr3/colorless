@@ -17901,7 +17901,184 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.329.0 → **0.330.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.330.0";
+/** 🆕🆕 **0.330.0 → 0.331.0 — D429, CLOSING THE PRE-DAMAGE FAMILY.**
+
+    Corpus rows 71, 72 and 74 — *"Before doing damage, discard all Pokémon Tools **and
+    Special Energy** from your opponent's Active Pokémon."*, *"…discard all Pokémon
+    Tools from **this Pokémon**. If you can't discard any, this attack does nothing."*
+    and *"…discard all Pokémon Tools from your opponent's Active Pokémon. **If you
+    discarded a Pokémon Tool in this way**, your opponent's Active Pokémon is now
+    Paralyzed."* — **3 sentences / 3 legal printings**, ONE printing each, measured over
+    `legalAttackCorpus()`: the committed `legal_standard = 1` attack column, 640
+    sentences / 1,732 printings.
+
+    🛑 **THE RATIO IS THE WORST OF THE RUN AND IT IS DELIBERATE.** One printing per
+    sentence buys almost nothing on its own. What the slice is for is the two things
+    the printing count cannot show:
+      ① the pre-damage seam gains a **RESULT CHANNEL** — two of these three sentences
+         condition on WHAT THE ACT JUST DID, which D428's `GameState` return could not
+         express, and every future pre-damage sentence with a consequent needs it;
+      ② the `Before doing damage, ` head is left with **no unread remainder in this
+         column**, so the next sentence in the family is a new shape rather than a
+         fifth near-miss — and D428's prefix-stripper falsifier ("two or more remainders
+         claimed by an existing reader") becomes unreachable rather than merely unmet.
+
+    🛑 **HOW PARKING STAYED UNWRITABLE, WHICH IS THE ONLY PROPERTY THE WIDENING COULD
+    HAVE COST.** D428's doc said the SIGNATURE forbade a park because the applier
+    "returns a board". That was the observation, not the criterion. The criterion is
+    what a park REQUIRES: `RunResult`'s `{ kind: "parked"; prompt; cont }`, drained by
+    `settleProgram` into an `ApplyResult` carrying `phase: effect:choose`. The new
+    return, `AttackPreDamageResult = { state: GameState; tools: number; cancelled:
+    boolean }`, holds no prompt, no continuation, and nothing a resolver could drain;
+    it is assignable to neither `ApplyResult` nor `RunResult`. A member needing a
+    player's decision is therefore still a COMPILE ERROR to write. The rule is now
+    stated at the type so the next widening is safe: **fields may be added when the
+    CALLER consumes and discards them; never when a RESOLVER would have to drain them.**
+    `preDamageFamily.test.ts` §8 drives the observable form on every board.
+
+    🛑 **THE ATTACKER OBJECT HAD D428's STALE-LOCAL DEFECT, AND IT WAS CHECKED RATHER
+    THAN ASSUMED.** Row 72 targets *this Pokémon*, so the attacker's body becomes a
+    write target for the first time at this seam. `const active` is bound ~1,350 lines
+    above §8.5 and is read there five times; two of those reads make a missing rebind
+    observable, and the second is worse than the defect D428 found:
+      · `attackerPreWRBonus(next, active, …)` folds the attacker's own Tools, so a
+        discarded Vitality Band `sv01-197` keeps adding its +10 — a number that does
+        not move, D428's shape exactly;
+      · the §9 counterattack site spells `{ ...active, damage: active.damage + recoil }`
+        and writes it back with `withActive`, so a stale binding **RESTORES the
+        discarded Tool onto the board** ~500 lines after it was filed into the discard
+        pile. D428's stale local was invisible-but-inert; this one puts one physical
+        card in two zones.
+    The fix is `let attackerBody`, rebound beside `defender`, and the five §8.5-and-later
+    reads re-pointed onto it. `D429-own-strip-not-rebound` and
+    `D429-recoil-resurrects-stripped-tool` are those two builds.
+
+    🛑 **ROW 72's CANCEL REUSES `finishAttack` AND DOES NOT COPY IT.** The consequent is
+    D125's (*"this attack does nothing"* — no damage, no W/R, no effect ops, no
+    triggers); the ANTECEDENT is new, because D125's requirement gate reads a BOARD FACT
+    before anything happens and this reads the RESULT of an act the attack already
+    performed. The branch sits at the pre-damage call site immediately after the two
+    rebinds and returns through the same `finishAttack` the confusion-tails path, D125
+    and D126 all use — so §8.1 still sweeps BOTH boards and the §5.3 turn still ends.
+    Driven with a lethal defender on the cancelled path (Knocked Out with zero damage
+    dealt) plus the non-lethal control, so the sweep claim is not vacuous. ⚠️ The call
+    site tests `cancelled`, never `kind`: which members print a cancel branch is the
+    union's business, and a `kind` test there would be D222's hand-spelled reader of a
+    closed union.
+
+    `BUILT.attack` 1454 → **1457**; the reader surface **STANDS STILL at 13** (three
+    anchors and three union members on the EXISTING `deriveAttackPreDamage`, not a
+    fourteenth reader); the instrument's resolution 428 / 1,406 → **431 / 1,409** and its
+    RAW residue 212 / 326 → **209 / 323**; whole-census `built` 1,859 → **1,862**;
+    unbuilt attack column 278 → **275**; `clauseApostrophe` 153 → **156**; the
+    multi-clause-and-claimed-whole population 158 / 437 → **160 / 439** (only TWO of the
+    three sentences are multi-clause — row 71 is not — which is why that step is 2 where
+    the resolution censuses move 3). ⚠️ `SPLIT_ATTACK_UNITS` (**14**),
+    `COMPOUND_ATTACK_UNITS` (**19**) and `REGISTRY_ATTACK_UNITS` (**16**) were
+    RE-MEASURED after the anchors landed rather than assumed (D424): all three unmoved,
+    so the whole step arrives through the RAW summand.
+
+    The split-aware unbuilt residue, WITH ITS SUBTRACTION SET NAMED (D425): subtracting
+    `resolvedByAnyReader`, `splitAttackGateClause`, `splitAttackTrailingClause` and a
+    `registry.ts` substring test, **194 / 288 → 191 / 285**. Subtracting the reader and
+    the two splitters only, **209 / 323 → 193 / 290** at this head.
+
+    🛑 **EVERY CENSUS CHAIN ENDPOINT WAS DIFFED AGAINST `HEAD` AFTER THE EDITS (D426).**
+    THIRTY-ONE chain EXPRESSIONS across 28 lines gained a front term (some lines carry
+    both the sentence chain and the printing chain) — 11 of them the nested `ids.length` prefixes in
+    `opponentResistanceBonus.test.ts` (D428 warned there were eleven; there are eleven),
+    plus 2 in `benchNamedBonus`, 2 in `sameEnergyBonus`, 2 in `moreEnergyBonus`, 2 in
+    `inPlayTypeBonus`, 4 in `opponentBenchCount`, 6 in `retreatCostBonus` and 2 in
+    `censusAtHead` — and every frozen right-hand side is **byte-unchanged**, verified by
+    extracting every `).toBe(N)`, `toHaveLength(N)` and `toEqual([N, M])` from each
+    touched file at HEAD and in the working tree and diffing the two lists. The only
+    endpoint that moved by design is `precociousEvolution.test.ts`'s
+    `head - rawDelta - splitDelta` (1,448 → 1,451), which is `head` minus THIS family's
+    own deltas and therefore tracks the head by construction — annotated as such, exactly
+    as D428 annotated it.
+
+    ⚠️ **THE VERSION TAX, RE-COUNTED — 15 assertions / 18 sites.** D424 measured 9 / 12,
+    D425 10 / 13, D426 12 / 15, D427 13 / 16, D428 14 / 17. FOURTEEN `engineVersion`
+    literal pins (thirteen inherited plus this slice's own in `preDamageFamily.test.ts`
+    §10), ONE `manifest.version` literal pin (`legacyEnergy.test.ts`),
+    `packages/engine/package.json`, this declaration, and `D275`'s mutant anchor
+    (re-pointed in the SAME commit as the bump). Grep BOTH `engineVersion` and
+    `manifest.version`, and note that `expect(engineVersion)` returns **19** hits of
+    which only 13 pin a LITERAL — the rest compare against `manifest.version` and never
+    move.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 26, DRIVEN BOTH DIRECTIONS.** No `GameState` or
+    `InPlayPokemon` field (`tools`, `energy`, `discard` and `conditions.rotation` all
+    predate this slice); no new `EffectOp` inhabitant reaching `phase.cont` (row 74's
+    `applyStatus` op is constructed at the call site and never enters a program); no new
+    continuation key, because this seam still never parks; and the widened return is a
+    LOCAL value rather than a persisted carrier — the axis D427 warns is easy to get
+    wrong by reasoning from a carrier's name, so it is driven rather than argued.
+    `ATTACK_FAILED.reason` gained a fourth member (`"preDamage"`), which is a `GameEvent`
+    widening, and `GameEvent` is not persisted at all (`MatchRecord` stores the RENDERED
+    `SeatLogEntry[]`).
+
+    ⚠️ **ROW 71's SECOND ZONE MOVES NO NUMBER TODAY, AND THAT IS MEASURED RATHER THAN
+    GLOSSED.** The Tool half carries the ordering claim (Rock Chestplate `sv01-192`:
+    70 → 100 on one board, three indices, one axis apiece). The Special-Energy half is a
+    ZONE move and nothing more, because **no §8.5 read in `attack.ts` consults the
+    DEFENDER's attached Energy**. `passivesOf` does fold an attached Energy's `passive`
+    (D174), so the shape exists — but every pool-resident Special Energy passive is read
+    somewhere else: `statusImmunities` by `applyStatus` (§12), `preventAttackEffects` by
+    `effectRefused` (§11), `onKoPrizeReduction` by flow.ts's §8.1 sweep. The suite states
+    that and drives the equality (rows 71 and 73 deal the SAME damage on the armed board)
+    rather than dressing a state write up as a number — D428's Vitality-Band null control
+    one zone over.
+
+    ⚠️ **AND TWO WALLS WERE HIT LOOKING FOR A NUMBER-MOVING SPECIAL ENERGY. BOTH ARE
+    FINDINGS ABOUT GUARDS, NOT ABOUT THIS SLICE.**
+      ① **A REAL CATALOG ID CANNOT ENTER `FIXTURE_POOL` IN THIS CHECKOUT.** Spiky Energy
+         `sv09-159` (a real Standard-legal Special Energy whose `energy.passive` is
+         `damageAttacker: 20`, read at the §9 counterattack site) was the obvious witness.
+         `catalogManifest.test.ts` requires every REAL id in the pool to be classified by
+         the GENERATED `catalogManifest.ts` (`printed` ∪ `absent`, with `absent` asserted
+         EMPTY), and that manifest comes off a 978-row / 6-set local sqlite this clone
+         does not have and which holds no `sv09` row at all. `spikeClad.test.ts` met the
+         same wall at D2xx and answered it with a local `cardPool`.
+      ② **`counterattack.test.ts`'s "text census = program census" GUARD CANNOT SEE AN
+         ENERGY-BORNE RECOIL.** Its `fix-spikyenergy` demonstrator was moved into the
+         shared pool and put straight back: that suite discovers the §9 recoil family by
+         sweeping `FIXTURE_POOL` for the printed clause and then partitions it by reading
+         `programFor(id)?.passive`, which **cannot reach `programFor(id)?.energy?.passive`**
+         — so the card in the shared pool makes its central claim FALSE, and its drive
+         loop would try to `attachTool` an Energy. The guard is correct today only because
+         no Energy-borne recoil is in the shared pool: D425's closed-world assumption
+         true by accident, one instrument over. Repairing it means widening
+         `COUNTERATTACK_DECK`, which reshuffles every board seeded off it (D412), so D429
+         declined and recorded the reason at the card rather than moving on quietly.
+
+    Cost: **3 whole-sentence anchors, 3 `AttackPreDamage` members, 1 widened return type,
+    1 shared strip helper, 1 exported `applyStatus`, 1 attacker rebind (+5 re-pointed
+    reads), 1 `ATTACK_FAILED.reason` member and 1 log arm.** TWO new fixtures
+    (`fix-preseam`, `fix-seamwall`), one new deck, one new suite, eighteen mutant rows —
+    and **NINE EXISTING mutant rows re-anchored**, six of them D428's, because
+    `applyAttackPreDamage` became a four-arm dispatch over a shared helper and the
+    §8.5 attacker reads moved onto `attackerBody`. `precheck` named all nine before
+    a single sweep ran (D416's hazard, caught mechanically as designed: six at `0×`,
+    one at `2×`).
+
+    🛑 **AND ONE RE-ANCHOR SILENTLY DISARMED ITS ROW, WHICH IS D418's RULE PAYING OFF ON
+    ITS FIRST APPLICATION HERE.** `D428-empty-board-still-files-a-row` was re-anchored
+    onto the new per-zone push guard with its `expectKilledBy` left alone, and the sweep
+    reported it **SURVIVED**. The reason is exact and was not visible from the diff: D429
+    split the no-op into an early return (both zones empty) plus a per-zone push guard,
+    so D428's bare-defender board short-circuits BEFORE the mutated line and cannot reach
+    it. The board that can is row 71 over a body carrying a Special Energy and no Tool,
+    which lives in the new suite — so the row's KILLER moved with its anchor. **Running
+    the re-anchored rows was the only thing that could have found this**; the corpus was
+    `precheck`-clean and the whole suite was green. ZERO new `EffectOp`s, ZERO
+    new readers, ZERO new prompts, ZERO parks, ZERO `BoardCondition` members, ZERO
+    registry rows, ZERO error codes, ZERO `GameState` fields, ZERO new `GameEvent` types
+    and ZERO `packages/schema` bytes. No web/API/DB diff.
+
+    engineVersion 0.330.0 → **0.331.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.331.0";
 
 export type {
   ApplyResult,

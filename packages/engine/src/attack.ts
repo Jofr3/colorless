@@ -11,8 +11,10 @@ import {
   activeTop,
   applyDamageModifier,
   attacksOf,
+  cardOfUid,
   hasPrintedAbility,
   isExOrV,
+  isSpecialEnergy,
   parseAttackDamage,
   preventsAttackerClass,
   resistanceOf,
@@ -82,6 +84,7 @@ import {
   settleProgram,
 } from "./flow";
 import {
+  applyStatus,
   attackBarredByAbility,
   attackTimingBlocked,
   attackTimingNote,
@@ -443,59 +446,226 @@ function takeFlips(
     written once for the whole family. */
 const ONE_FLIP: AttackFlipCount = { kind: "printed", count: 1 };
 
-/** 🆕🆕🛑 **D428 — THE PRE-DAMAGE ACT, AND ITS SIGNATURE IS WHAT FORBIDS A PARK.**
+/** 🆕🆕🛑 **D429 — THE PRE-DAMAGE SEAM'S RESULT CHANNEL, AND KEEPING IT UNPARKABLE
+    WAS THE DESIGN.**
 
-    It takes a board and returns a BOARD — not an `ApplyResult`, not a
-    `{state, pending}` pair, not anything `settleProgram` could drain. A union
-    member that needed a player's decision could not be implemented against this
-    return type, so *"can the pre-damage seam park?"* is answered by the compiler
-    rather than by a convention or a hand-kept list of safe ops. **That is the whole
-    reason this is not an `EffectOp[]` run through `runProgram` at a second call
-    site** (effects.ts's `AttackPreDamage` block carries the long form): `runProgram`
-    can hand back a parked state, and `attack.ts` has no continuation for *"…and then
-    do §8.5, the §8.1 sweep and the epilogue"* — everything after this point is
-    straight-line code and only the TAIL is expressible as `PendingStage[]`.
+    D428 returned a bare `GameState` and wrote that the SIGNATURE forbade a park.
+    Two of the four printed sentences in this family condition on **what the act
+    just did** — row 72's *"If you can't discard any, this attack does nothing."*
+    and row 74's *"If you discarded a Pokémon Tool in this way, …is now
+    Paralyzed."* — so a board alone cannot carry the answer and the return had to
+    widen.
 
-    A `switch` over the union rather than an `if` on `kind`, on D222's rule: a
-    second member goes RED at compile time here, where a conjunction would go quiet.
+    🛑 **THE PROPERTY IS PRESERVED, AND THE REASON IS NOT "IT IS STILL ALMOST A
+    `GameState`".** A park is `RunResult`'s `{ kind: "parked"; prompt; cont }`, and
+    turning one into a playable board is `settleProgram`'s job — it is the PROMPT
+    and the CONTINUATION that a parking member would have to hand back, not a
+    modified board. This record holds a `GameState`, a `number` and a `boolean`:
+    plain data the caller reads and throws away. There is no field a resolver could
+    drain, no shape `settleProgram` accepts, and `AttackPreDamageResult` is not
+    assignable to `ApplyResult` or `RunResult` in either direction — so a member
+    that needed a player's decision remains **unwritable**, exactly as it was at
+    D428, and for a reason that survives the next widening as long as the next
+    widening obeys the same rule: **fields may be added when the CALLER consumes and
+    discards them; never when a RESOLVER would have to drain them.**
+
+    ⚠️ `cancelled` AND NOT A RAW COUNT FOR THE CALLER TO INTERPRET. `attack.ts`'s
+    §8.5 site must not know that row 72 is the member with a cancel branch — that is
+    the union's business, and a `kind` test at the call site would be D222's
+    hand-spelled reader of a closed union, one arm out of date the day a fifth
+    sentence prints a cancel too. So the APPLIER decides and the caller obeys.
+
+    ⚠️ `tools` IS A COUNT AND NOT A `string[]`, AND IT COUNTS **TOOLS ONLY**. Row 74's
+    printed condition is *"if you discarded a **Pokémon Tool** in this way"*, and row
+    71 discards a second card class in the same act — so a single "cards moved" total
+    would make a hypothetical Special-Energy-only strip satisfy a Tool consequent.
+    Nothing consumes the uids (the events already carry them, and every consumer of
+    those is downstream), so a list would be a field kept for nobody. */
+type AttackPreDamageResult = {
+  /** The board after the act — `===` the input when the act moved nothing. */
+  state: GameState;
+  /** How many POKÉMON TOOLS came off, which is the only quantity a printed
+      consequent in this family conditions on. */
+  tools: number;
+  /** The member's own printed *"this attack does nothing"* branch fired. The caller
+      ends the attack through `finishAttack` (§8.1 still sweeps, the turn still
+      ends); `false` for every member that prints no such branch. */
+  cancelled: boolean;
+};
+
+/** The act itself, shared by all four members because all four print the same verb
+    over the same two zones and differ only in WHOSE body, WHICH zones, and what
+    happens afterwards.
 
     ⚠️ **THE VICTIM'S SEAT OWNS THE DISCARD PILE**, which is `ENERGY_DISCARDED`'s
-    settled convention one attachment kind over: `seat` is whose board lost the
-    cards and `actor` is whose card caused it, and the two are opposite here and
-    the same for a self-discard. A Tool is played by its holder's controller and
-    goes back to that controller's pile (§7.4), never to the attacker's.
+    settled convention: `seat` is whose board lost the cards and `actor` is whose card
+    caused it. They are OPPOSITE for rows 71/73/74 and the SAME for row 72's
+    self-strip — which is why the two are separate parameters here rather than one
+    seat and an `otherSeat` call, and why row 72 is the first producer in the engine
+    to file a `TOOLS_DISCARDED` whose `seat === actor`.
 
-    ⚠️ **A DEFENDER WITH NO TOOL IS A SILENT NO-OP** — the state is returned
+    ⚠️ **A BODY WITH NOTHING TO TAKE IS A SILENT NO-OP** — the state is returned
     IDENTICAL (`===`, not a rebuilt copy) and no event is pushed, because the
     `ATTACK_DECLARED` row already said the attack happened and a row saying nothing
     was discarded is a row that has to be read to learn nothing. That is
-    `randomFromOpponentHand`'s empty-hand ending and `HEALED`'s never-0 rule. */
+    `randomFromOpponentHand`'s empty-hand ending and `HEALED`'s never-0 rule. The
+    CANCEL is reported on that same path and is the one thing a caller can still see.
+
+    ⚠️ **TWO ZONES, TWO EVENTS, NEVER ONE.** Row 71's Tools and Special Energy leave
+    together but they are different attachment kinds with different existing rows, and
+    `TOOLS_DISCARDED` cannot name an Energy without lying about what a consumer may
+    do with the uid. `ENERGY_DISCARDED` already carries the identical
+    seat/actor/uids/host quartet plus the `from` spot, so the second zone cost a
+    second push and no new event type. */
+function stripPreDamage(
+  state: GameState,
+  seat: Seat,
+  actor: Seat,
+  events: GameEvent[],
+  what: { specialEnergy: boolean; cancelIfNone: boolean },
+): AttackPreDamageResult {
+  const side = state.players[seat];
+  const victim = side.active;
+  const nothing = { state, tools: 0, cancelled: what.cancelIfNone };
+  if (victim === null) return nothing;
+  const host = topUid(victim);
+  if (host === undefined) return nothing;
+  const tools = victim.tools;
+  // "Special" is the CARD CLASS and not an energy TYPE (`isSpecialEnergy`, cards.ts),
+  // so a Basic Energy on the same body is untouched by row 71 — the one distinction
+  // an "all Energy" mis-build erases, and the reason this reads the class rather than
+  // filtering on what the card provides.
+  const special = what.specialEnergy
+    ? victim.energy.filter((uid) => {
+        const card = cardOfUid(state, uid);
+        return card !== undefined && isSpecialEnergy(card);
+      })
+    : [];
+  if (tools.length === 0 && special.length === 0) return nothing;
+  // `host` is the stripped body's TOP-CARD uid and it is what a consumer must name it
+  // by — `ENERGY_DISCARDED`'s reason verbatim: this attack's own damage can Knock the
+  // body Out in the same batch, so re-reading "the Active spot" afterwards finds an
+  // empty slot, while a uid resolves through `cardIdByUid` forever.
+  if (tools.length > 0) events.push({ type: "TOOLS_DISCARDED", seat, actor, uids: tools, host });
+  if (special.length > 0) {
+    events.push({
+      type: "ENERGY_DISCARDED",
+      seat,
+      actor,
+      uids: special,
+      from: { spot: "active" },
+      host,
+    });
+  }
+  const kept = new Set(special);
+  return {
+    state: withSide(state, seat, {
+      ...side,
+      active: {
+        ...victim,
+        tools: tools.length > 0 ? [] : victim.tools,
+        energy: special.length > 0 ? victim.energy.filter((uid) => !kept.has(uid)) : victim.energy,
+      },
+      // The printed order of the noun phrase — Tools, then Special Energy — so the
+      // pile reads the way the sentence does.
+      discard: [...side.discard, ...tools, ...special],
+    }),
+    tools: tools.length,
+    cancelled: false,
+  };
+}
+
+/** 🆕🆕🛑 **D428/D429 — THE PRE-DAMAGE ACT: ONE FUNCTION THAT KNOWS WHAT EVERY
+    MEMBER MEANS, AND A RETURN TYPE NO DECISION CAN TRAVEL DOWN.**
+
+    It takes a board and returns `AttackPreDamageResult` — not an `ApplyResult`, not
+    a `RunResult`, not anything `settleProgram` could drain. A union member that
+    needed a player's decision could not be implemented against this return type, so
+    *"can the pre-damage seam park?"* is answered by the compiler rather than by a
+    convention or a hand-kept list of safe ops. **That is the whole reason this is
+    not an `EffectOp[]` run through `runProgram` at a second call site** (effects.ts's
+    `AttackPreDamage` block carries the long form): `runProgram` can hand back a
+    parked state, and `attack.ts` has no continuation for *"…and then do §8.5, the
+    §8.1 sweep and the epilogue"* — everything after this point is straight-line code
+    and only the TAIL is expressible as `PendingStage[]`. `AttackPreDamageResult`'s
+    own block states the rule that keeps this true across future widenings.
+
+    A `switch` over the union rather than an `if` on `kind`, on D222's rule: a fifth
+    member goes RED at compile time here, where a conjunction would go quiet. **All
+    four arms are here and nowhere else** — the §8.5 call site tests `cancelled`,
+    never `kind`, so exactly one place in the engine reads this union.
+
+    🆕🆕 **D429 — `actorUid` IS CARRIED FOR ROW 74's CONSEQUENT AND FOR NOTHING ELSE.**
+    It fills `EffectContext.sourceUid` on the one `applyStatus` call below; the strip
+    itself never needs it. Passed rather than re-derived off `state.players[actor]`
+    because the caller already holds the attacker's uid as of DECLARATION (`attackerUid`),
+    and that is the body the sentence belongs to even if the strip empties its Tools. */
 function applyAttackPreDamage(
   state: GameState,
   pre: AttackPreDamage,
   actor: Seat,
+  actorUid: string,
   events: GameEvent[],
-): GameState {
+): AttackPreDamageResult {
   switch (pre.kind) {
-    case "discardOpponentActiveTools": {
-      const seat = otherSeat(actor);
-      const side = state.players[seat];
-      const victim = side.active;
-      if (victim === null || victim.tools.length === 0) return state;
-      const host = topUid(victim);
-      if (host === undefined) return state;
-      const uids = victim.tools;
-      // `host` is the stripped body's TOP-CARD uid and it is what a consumer must
-      // name it by — `ENERGY_DISCARDED`'s reason verbatim: this attack's own damage
-      // can Knock the body Out in the same batch, so re-reading "the Active spot"
-      // afterwards finds an empty slot, while a uid resolves through `cardIdByUid`
-      // forever.
-      events.push({ type: "TOOLS_DISCARDED", seat, actor, uids, host });
-      return withSide(state, seat, {
-        ...side,
-        active: { ...victim, tools: [] },
-        discard: [...side.discard, ...uids],
+    case "discardOpponentActiveTools":
+      return stripPreDamage(state, otherSeat(actor), actor, events, {
+        specialEnergy: false,
+        cancelIfNone: false,
       });
+    case "discardOpponentActiveToolsAndSpecialEnergy":
+      // Row 71. The SECOND ZONE and nothing else changes — same victim, same seat
+      // convention, same silent no-op. `specialEnergy` is a CARD CLASS
+      // (`isSpecialEnergy`), not an energy type, so a Basic on the same body stays
+      // attached; that is the one thing an "all Energy" mis-build would get wrong
+      // and it is driven as a control rather than described.
+      return stripPreDamage(state, otherSeat(actor), actor, events, {
+        specialEnergy: true,
+        cancelIfNone: false,
+      });
+    case "discardOwnToolsElseCancel":
+      // Row 72. The victim is the ATTACKER's own body — `actor` on both sides of the
+      // event, which is exactly the self-discard case `TOOLS_DISCARDED`'s own doc
+      // block already anticipated ("the two are opposite here and the same for a
+      // self-discard"). The printed *"If you can't discard any, this attack does
+      // nothing."* is reported through the RESULT and executed by the caller, which
+      // is the only place that can return.
+      return stripPreDamage(state, actor, actor, events, {
+        specialEnergy: false,
+        cancelIfNone: true,
+      });
+    case "discardOpponentActiveToolsThenParalyze": {
+      // Row 74. The act is row 73's, byte for byte; the consequent is conditioned on
+      // its RESULT — *"If you discarded a Pokémon Tool in this way"* — which is the
+      // whole reason `stripPreDamage` reports what it moved instead of only a board.
+      const stripped = stripPreDamage(state, otherSeat(actor), actor, events, {
+        specialEnergy: false,
+        cancelIfNone: false,
+      });
+      if (stripped.tools === 0) return stripped;
+      // 🛑 THROUGH THE INTERPRETER'S OWN `applyStatus`, NOT A SECOND
+      // IMPLEMENTATION. That function owns §11's `effectRefused` (a "prevent all
+      // effects of attacks done to this Pokémon" block refuses the Paralysis and
+      // files ATTACK_EFFECT_PREVENTED) and §12's printed `statusImmunities`
+      // (Therapeutic Energy `sv02-193` files STATUS_PREVENTED instead). Re-deriving
+      // either here would be D222's second reader of one rule. It is TOTAL and
+      // returns a board, so it cannot smuggle a park into a seam that forbids one.
+      //
+      // ⚠️ `invokedBy: "attack"` IS LOAD-BEARING AND `dealt: 0` IS TRUE RATHER
+      // THAN DECORATIVE. `effectRefused` returns false outright unless the context
+      // says an attack is doing this, so dropping the field would silently disarm the
+      // §11 gate; and D427's pairing invariant (`invokedBy === "attack"` ⇔
+      // `dealt !== undefined`) is kept literally, with the honest value — no damage
+      // has been dealt yet, because this is the pre-damage seam.
+      return {
+        ...stripped,
+        state: applyStatus(
+          stripped.state,
+          { op: "applyStatus", target: "defender", status: "paralyzed" },
+          { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 },
+          events,
+        ),
+      };
     }
   }
 }
@@ -725,6 +895,30 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // spelling that structurally is cheaper than a comment saying so. `defended`
   // (~950 lines down) is the same shape for the same reason, one damage step later.
   let defender = declaredDefender;
+  // 🆕🆕🛑 **D429 — AND THE ATTACKER'S OWN BODY IS A SNAPSHOT TOO. IT WAS CHECKED
+  // RATHER THAN ASSUMED, AND IT HAS THE DEFECT.** D428 found `defender` stale and
+  // fixed it; the brief for this slice asked whether the ATTACKER object has the same
+  // problem before row 72 (*"discard all Pokémon Tools from **this Pokémon**"*) starts
+  // writing to it. It does, in TWO flavours, and the second is worse than D428's:
+  //   · a NUMBER THAT DOES NOT MOVE — `attackerPreWRBonus(next, active, …)` folds the
+  //     attacker's attached Tools through `passivesOf`, so a Vitality Band `sv01-197`
+  //     discarded by row 72 still adds its +10 if §8.5 reads the pre-strip snapshot;
+  //   · a STATE RESURRECTION — the §9 counterattack site spells
+  //     `{ ...active, damage: active.damage + recoil }` and writes it back with
+  //     `withActive`, so a stale binding **puts the discarded Tools back on the board**
+  //     several hundred lines after they were filed into the discard pile. D428's
+  //     defect was invisible-but-inert; this one is a duplicated physical card.
+  //
+  // ⚠️ A SECOND NAME RATHER THAN D428's ALIAS-THE-CONST SHAPE, AND THE REASON IS
+  // ARITHMETIC. `declaredDefender` had three readers; `active` has ~17 above this line,
+  // every one of them a DECLARATION-TIME gate (§4, §12, §11, the cost check, the
+  // damage-scaling reads) that must keep reading the board as of declaration. Renaming
+  // those to make the plain name the live one would have been a 17-site rename of code
+  // this slice has no business touching. So `active` stays the declaration snapshot and
+  // `attackerBody` is the post-seam binding — and the hazard that trade buys is named
+  // here: **a §8.5-or-later read spelled `active` is silently stale.** The mutant
+  // `D429-own-strip-not-rebound` is exactly that build.
+  let attackerBody = active;
 
   const events: GameEvent[] = [
     { type: "ATTACK_DECLARED", seat: action.seat, uid: attackerUid, attack: declared.name, index },
@@ -1748,13 +1942,47 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // no splitter composes these — so the order is UNOBSERVABLE on today's column and
   // is chosen because it is the order the rules read in.
   if (preDamage !== null) {
-    next = applyAttackPreDamage(next, preDamage, action.seat, events);
+    const stripped = applyAttackPreDamage(next, preDamage, action.seat, attackerUid, events);
+    next = stripped.state;
     // 🛑 THE REBIND. See `declaredDefender` at the top of this function: without
     // this line the whole §8.5 pipeline keeps folding the pre-discard snapshot and
     // the slice is built-but-dead. `?? defender` rather than a throw because the
     // Active cannot vanish here (nothing above removes it) and a silent keep is the
     // no-op that a vanished body would deserve anyway.
     defender = next.players[defenderSeat].active ?? defender;
+    // 🆕🆕 D429 — THE SECOND REBIND, for row 72's own-body strip. See `attackerBody`'s
+    // block at the top of this function for the two §8.5-and-later reads it feeds and
+    // for why a missing rebind here resurrects a discarded card rather than merely
+    // mis-counting. Unconditional (not gated on `preDamage.kind`) for the same reason
+    // the cancel below is: this site does not know what a member means, and a member
+    // that starts touching the attacker's board later must not need an edit here.
+    attackerBody = next.players[action.seat].active ?? attackerBody;
+    // 🆕🆕🛑 D429 — ROW 72's PRINTED CANCEL, AND IT REUSES D125's ENDING RATHER THAN
+    // RE-SPELLING IT. *"If you can't discard any, this attack does nothing."* is the
+    // same consequent D125's requirement gate and D126's coin flip already have —
+    // no damage, no W/R, no effect ops, no triggers — but conditioned on what the
+    // PRE-DAMAGE SEAM JUST DID rather than on a board fact read before anything
+    // happened. `finishAttack` is the shared ending: §8.1 still sweeps BOTH boards and
+    // the §5.3 turn still ends, because a cancelled attack is an attack that was USED.
+    //
+    // ⚠️ THE TEST IS `stripped.cancelled` AND NOT `preDamage.kind`. Which members print
+    // a cancel branch is the union's business (`applyAttackPreDamage`), and a `kind`
+    // test here would be a second reader of a closed union — D222's exact shape, quiet
+    // the day a fifth sentence prints the same branch.
+    //
+    // ⚠️ IT SITS AFTER THE REBINDS AND THAT IS FREE TODAY, SAID RATHER THAN LEFT AS A
+    // COINCIDENCE: a cancelling member discarded nothing by construction, so both
+    // rebinds are no-ops on this path. Ordering it this way keeps "apply, rebind,
+    // then decide" as one sequence a successor cannot half-copy.
+    if (stripped.cancelled) {
+      events.push({
+        type: "ATTACK_FAILED",
+        seat: action.seat,
+        uid: attackerUid,
+        reason: "preDamage",
+      });
+      return finishAttack(next, events, action.seat, attackerUid, declared.name);
+    }
   }
 
   let defended = defender;
@@ -1846,10 +2074,10 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // the attacker's RECORD, not catalog folds. `attackerSuppressesTargetEffects`
     // is the third, reached the same way and named for the same reason.
     const suppressTargetEffects =
-      damageSuppression?.targetEffects === true || attackerSuppressesTargetEffects(next, active);
+      damageSuppression?.targetEffects === true || attackerSuppressesTargetEffects(next, attackerBody);
     const bonus =
-      attackerPreWRBonus(next, active, action.seat, defenderCard) +
-      boostedAttackDamage(next, active, index);
+      attackerPreWRBonus(next, attackerBody, action.seat, defenderCard) +
+      boostedAttackDamage(next, attackerBody, index);
     // §8.5 step 5, the OTHER pre-W/R term (D149) — the printed "attacks used by
     // the Defending Pokémon do {N} less damage (before applying Weakness and
     // Resistance)", installed onto THIS attacker's body by the opponent's
@@ -1905,8 +2133,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // verbatim — the one site where `ignoreWR` splits this same sum the same way,
     // for the same reason and with the same two halves surviving.
     const debuff =
-      installedAttackDebuffOf(next, active) +
-      (suppressTargetEffects ? 0 : opposingAttackDebuff(next, active)) +
+      installedAttackDebuffOf(next, attackerBody) +
+      (suppressTargetEffects ? 0 : opposingAttackDebuff(next, attackerBody)) +
       selfPenalty;
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
@@ -2060,13 +2288,17 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           // D252 — the FOURTH attacker-property prevent, at the FIRST of its FIVE
           // read sites (the other four are interpreter.ts's spread, `deals` and
           // snipe arms, plus `attackEffectRefused` — the fifth is what makes this
-          // family's first WIDE spelling wide). `active` and not `attacker`: this
+          // family's first WIDE spelling wide). `attackerBody` and not `attacker`: this
           // gate is a fact about the attacking BODY's attachments, not about its
-          // printed row, and `active` is the InPlayPokemon this site has held since
-          // §8.5 step 1. Inside the suppression guard with its three siblings, for
+          // printed row. 🆕 D429 RE-POINTED IT FROM `active` TO THE POST-SEAM BINDING —
+          // the sentence said "the InPlayPokemon this site has held since §8.5 step 1",
+          // and since D429 that object can be one row 72 stripped. It reads ENERGY and
+          // row 72 takes TOOLS, so no printing moves the answer today; re-pointed anyway,
+          // because leaving one §8.5 read on the snapshot is how the next one gets
+          // written that way. Inside the suppression guard with its three siblings, for
           // their reason verbatim.
           (defenderPassives.preventDamageAndEffectsFromSpecialEnergy &&
-            attackerHasSpecialEnergy(next, active)) ||
+            attackerHasSpecialEnergy(next, attackerBody)) ||
           // D253 — the fifth prevent, at the FIRST of its five read sites, and the
           // first of the three that are DEAD BY CONSTRUCTION: this arm damages the
           // defending ACTIVE (§8), and the flag is false for any body that is not
@@ -2213,7 +2445,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // is wrong on a THIRD axis and the mechanism label needs no new member.
     const recoil = defenderPassives.damageAttacker + installedRecoilOf(next, defender);
     if (dealt > 0 && recoil > 0) {
-      const retaliated = { ...active, damage: active.damage + recoil };
+      const retaliated = { ...attackerBody, damage: attackerBody.damage + recoil };
       next = withActive(next, action.seat, retaliated);
       events.push({
         type: "COUNTERS_PLACED",

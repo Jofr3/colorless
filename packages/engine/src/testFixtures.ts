@@ -13490,6 +13490,73 @@ export const FIXTURE_POOL: Record<string, Card> = {
       these bodies produce has to come from the Tool or from nothing. */
   "fix-chestwall": battler("fix-chestwall", { types: ["Fighting"], hp: 300 }),
   "fix-charmwall": battler("fix-charmwall", { hp: 100 }),
+  /** 🆕🆕 **D429 — THE OTHER THREE ROWS OF THE PRE-DAMAGE FAMILY, ON ONE BODY.**
+
+      Corpus rows 71, 72 and 74 are **1 legal printing each** and none of the three
+      real ids is resolvable in this checkout (there is no D1 here — no local sqlite,
+      no remote credentials), so the printings are **stated as unresolved and NOT
+      invented** (D425). The sentences themselves are transcribed byte-for-byte off
+      `censusAttackCorpus.ts` lines 71 / 72 / 74, which is the measurable half.
+
+      🛑 **SIX INDICES, AND EVERY COMPARISON THE SUITE MAKES IS A ONE-AXIS PAIR ON THIS
+      ONE BODY** (D427). Index 4 prints the same cost and the same 100 damage and NO
+      effect at all, so it is the null control for all four sentences; index 1 is row
+      73 — already built at D428 — and is the control for index 0, whose ONLY printed
+      difference is the words *"and Special Energy"*; index 3 is row 74, whose only
+      printed difference from index 1 is the appended consequent. Index 5 prints a
+      sentence no reader claims, so *"nothing was skipped"* has a witness on the same
+      body rather than a missing row.
+
+      ⚠️ 200 HP so no board here Knocks the ATTACKER out (index 0's board deliberately
+      makes the defender hit BACK), and no `weaknesses` or `resistances` at all — a
+      fixture added for a Tool claim has no business moving the W/R censuses. */
+  "fix-preseam": battler("fix-preseam", {
+    name: "Fixseam",
+    types: ["Psychic"],
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Purge Off",
+        damage: 100,
+        effect:
+          "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Pry Off",
+        damage: 100,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Shed Gear",
+        damage: 100,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Lock Off",
+        damage: 100,
+        effect:
+          "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.",
+      },
+      { cost: ["Colorless", "Colorless"], name: "Plain Blow", damage: 100 },
+      { cost: ["Colorless"], name: "Odd Job", damage: 10, effect: "Each player draws 3 cards." },
+    ],
+  }),
+  /** 🆕🆕 **D429 — THE ONE DEFENDER, WEARING UP TO THREE ATTACHMENTS AT ONCE.**
+
+      **{F}** because Rock Chestplate `sv01-192` gates its −30 on the HOLDER's Fighting
+      type (`damageReductionAfterWRIfType`, D161) — that is the damage figure row 71's
+      and row 74's Tool half moves. **300 HP** so no number here is ever confounded by a
+      Knock Out, and so the body survives to show a Special Condition landing on it.
+      No Weakness, no Resistance, no Ability and no attack: every number it produces
+      comes from an attachment or from nothing. */
+  "fix-seamwall": battler("fix-seamwall", { types: ["Fighting"], hp: 300 }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -13555,6 +13622,47 @@ export const PRE_DAMAGE_TOOL_DECK = deckOf({
   "sv01-197": 2, // Vitality Band (Tool) — an ATTACKER-side bonus: the null-effect control
   "fix-titan": 8, // 340 HP, no attacks — filler and the no-Tool control defender
   "fix-energy": 28, // Colorless Basic — every cost on this list
+});
+
+/** 🆕🆕 **D429 — the rest of the PRE-DAMAGE family. Its OWN 60, on D412's rule**: not
+    one card is added to `PRE_DAMAGE_TOOL_DECK`, because widening a deck reshuffles
+    every board seeded off it and D428's five suites have nothing to do with this slice.
+    Both seats run the same list, because two of the three sentences name *"your
+    opponent's"* and the third names *"this Pokémon"* — a seat-swapped board is the only
+    thing that can tell either reading from "the p2 Active" (D361).
+
+      · `fix-preseam` — the attacker; six indices, every comparison a one-axis pair
+        (see its own block above);
+      · `fix-seamwall` — {F}, 300 HP: wears the Tool, the Special Energy and a Basic
+        Energy at once, which is what makes row 71's CARD-CLASS distinction drivable;
+      · `sv01-192` **Rock Chestplate** — the Tool whose −30 is the damage that moves
+        when the opponent-side rows strip it;
+      · `sv01-197` **Vitality Band** — the ATTACKER's own Tool, and the whole
+        observability of row 72: `attackerPreWRBonus` folds it, so *"discard all
+        Pokémon Tools from this Pokémon"* costs the attack its own +10;
+      · `sv01-193` **Rocky Helmet** — on the DEFENDER, so the §9 counterattack site
+        actually runs: that is the site whose `{ ...attackerBody, … }` spread would
+        RESURRECT the Tool row 72 just discarded if the attacker binding were stale;
+      · `fix-mist-energy` **Mist Energy** — a Special Energy printing *"Prevent all
+        effects of attacks…"*, which is row 74's §11 control (the Paralysis is REFUSED
+        and `ATTACK_EFFECT_PREVENTED` is filed, while the Tool is discarded anyway) and
+        row 71's second-zone subject;
+      · `sv02-193` **Therapeutic Energy** — a Special Energy printing *"can't be
+        affected by those Special Conditions"*, which is row 74's §12 immunity control:
+        the Tool is still discarded and the Paralysis is REFUSED;
+      · `fix-titan` — 340 HP, no attacks: mulligan-free filler and the bare defender;
+      · `fix-energy` — Colorless Basic: pays every cost above, and one copy on the
+        DEFENDER is the card-class control that row 71 must NOT take. */
+export const PRE_DAMAGE_FAMILY_DECK = deckOf({
+  "fix-preseam": 6, // the attacker — 0 row 71, 1 row 73, 2 row 72, 3 row 74, 4 plain, 5 loud
+  "fix-seamwall": 6, // {F}, 300 HP — wears Tool + Special Energy + Basic at once
+  "sv01-192": 4, // Rock Chestplate (Tool) — 30 less after W/R on an {F} holder
+  "sv01-197": 4, // Vitality Band (Tool) — the ATTACKER's own +10, row 72's number
+  "sv01-193": 4, // Rocky Helmet (Tool) — 20 counters back on the attacker, on the DEFENDER
+  "sv02-193": 2, // Therapeutic Energy (Special) — the §12 Paralysis immunity control
+  "fix-mist-energy": 2, // Mist Energy (Special) — the §11 "prevent all effects" control
+  "fix-titan": 4, // 340 HP, no attacks — filler and the bare defender
+  "fix-energy": 28, // Colorless Basic — every cost here, and the class control
 });
 
 export const SELF_HEAL_DEALT_DECK = deckOf({

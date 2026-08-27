@@ -5379,7 +5379,26 @@ export function applyChoice(
 
 // ── Op implementations ──
 
-function applyStatus(
+/** 🆕🆕 **D429 EXPORTED THIS, AND THE EXPORT IS SAFE FOR THE SAME REASON THE
+    PRE-DAMAGE SEAM EXISTS: IT RETURNS A BOARD.** Row 74 of the attack corpus prints
+    *"…If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is
+    now Paralyzed."* — a §12 condition applied BEFORE the damage step, conditioned on
+    what the pre-damage act just did. `attack.ts`'s `applyAttackPreDamage` calls this
+    directly rather than re-deriving the rule, so the two §12 gates below (§11's
+    `effectRefused` and the printed `statusImmunities`) are asked ONCE in the engine
+    instead of twice.
+
+    🛑 **AND IT IS NOT A HOLE IN THE "NO PARK BEFORE DAMAGE" PROPERTY.** This function
+    is TOTAL and synchronous: `GameState` in, `GameState` out, no `RunResult`, no
+    prompt, no continuation. Calling it from the pre-damage seam therefore cannot
+    introduce the one thing that seam forbids. That is the check to re-run before
+    exporting any other op implementation to it — the op's own SIGNATURE, not its
+    behaviour today.
+
+    ⚠️ The `op` argument is constructed by the caller rather than lifted out of a
+    program, and it never reaches `phase.cont`: the pre-damage seam never parks, so
+    no `EffectContinuation` is written and `MATCH_RECORD_VERSION` is untouched. */
+export function applyStatus(
   state: GameState,
   op: Extract<EffectOp, { op: "applyStatus" }>,
   ctx: EffectContext,

@@ -21607,13 +21607,25 @@ function defenderStatusPair(first: string | undefined, second: string | undefine
 // the thing keeping it correct would be a hand-kept list of safe ops — D222's
 // closed-world assumption with no compiler behind it.
 //
-// So the carrier is a CLOSED UNION applied by a TOTAL function returning
-// `GameState` (attack.ts `applyAttackPreDamage`). **The signature is the
-// enforcement**: a member that needed a decision could not be written into a
-// function that returns a board rather than an `ApplyResult`, so the parking
-// question is answered by the type and not by a convention. That is deliberately
-// the OPPOSITE trade from `deriveAttackEffect`, whose whole value is that new ops
-// compose; here composability is the hazard.
+// So the carrier is a CLOSED UNION applied by a TOTAL function returning a board
+// (attack.ts `applyAttackPreDamage`). **The signature is the enforcement**: a
+// member that needed a decision could not be written into a function that returns
+// a board rather than an `ApplyResult`, so the parking question is answered by the
+// type and not by a convention. That is deliberately the OPPOSITE trade from
+// `deriveAttackEffect`, whose whole value is that new ops compose; here
+// composability is the hazard.
+//
+// 🆕🆕🛑 **D429 WIDENED THAT RETURN TO `{ state, cancelled }` AND THE ENFORCEMENT
+// SURVIVED — SAID HERE BECAUSE THE OLD SENTENCE ("returns `GameState`") READ AS
+// THE CRITERION AND IT NEVER WAS.** The criterion is *what a park requires*: a
+// park is `RunResult`'s `{ kind: "parked"; prompt; cont }`, and it is `settleProgram`
+// that turns one into an `ApplyResult` carrying `phase: effect:choose`. A record of
+// a `GameState` and a `boolean` can express neither the prompt nor the continuation,
+// so a member needing a decision is still UNWRITABLE — not because the return is
+// literally `GameState`, but because it holds no channel a decision could travel
+// down. The rule, stated so a successor can widen it again safely: **the pre-damage
+// return may gain fields whose types are plain data the caller consumes and
+// discards; it may never gain a field a resolver would have to drain.**
 //
 // ⚠️ **WHAT THIS FORBIDS, NAMED SO THE REFUSAL HAS A FALSIFIER (D422).** The
 // corpus row *"Discard up to 2 Pokémon Tools from your opponent's Pokémon."*
@@ -21625,20 +21637,21 @@ function defenderStatusPair(first: string | undefined, second: string | undefine
 // printed pre-damage sentence that needs a DECISION**; on today's column there is
 // none, and `preDamageToolDiscard.test.ts` §7 asserts that on the POPULATION.
 //
-// 🛑 **AND A PREFIX STRIPPER WAS PRICED AND REFUSED, WITH THE MEASUREMENT.** The
-// family shares the literal head `Before doing damage, `, so a
-// `splitAttackPreDamageClause` in the shape of `splitAttackGateClause` looks like it
-// would set up rows 71/72/74 cheaply. Measured over all 640 corpus sentences: FOUR
-// open with that head, and stripping it yields four remainders of which
-// **ZERO are claimed by any of the twelve readers** — checked as printed AND with
-// the remainder re-capitalised, since the printed remainder starts lowercase. A
-// stripper today buys **nothing** on its own; every one of the four still needs its
-// own arm, and the stripper would additionally have to hand its remainder to
-// `deriveAttackEffect` to be worth anything — which is precisely the `EffectOp`
-// program the block above refuses. It is `splitAttackGateClause`'s own *"build the
-// narrow thing"* verdict re-derived at a different end of the sentence. **The
-// condition that would reverse it: two or more pre-damage remainders claimed by a
-// reader that already exists.**
+// 🛑 **A PREFIX STRIPPER WAS PRICED AND REFUSED AT D428, AND D429 CLOSED THE FAMILY
+// WITHOUT ONE — SO THE REFUSAL IS NOW SETTLED RATHER THAN PENDING.** The family
+// shares the literal head `Before doing damage, `, so a `splitAttackPreDamageClause`
+// in the shape of `splitAttackGateClause` looked like it would set up rows 71/72/74
+// cheaply. Measured over all 640 corpus sentences at D428: FOUR open with that head,
+// and stripping it yields four remainders of which **ZERO are claimed by any
+// reader** — checked as printed AND with the remainder re-capitalised, since the
+// printed remainder starts lowercase. D429 re-ran that measurement AFTER claiming
+// all four rows whole and it is **still ZERO**, which is the point: a whole-sentence
+// anchor does not make its own remainder readable, so the stripper's yield never
+// improved and the four arms were the honest price. **The condition D428 wrote as
+// the falsifier — two or more pre-damage remainders claimed by a reader that already
+// exists — is now unreachable for this head**, because the head has no unread
+// remainder left in this column at all; a fifth pre-damage sentence would have to
+// arrive from a re-ingest before the question can be asked again.
 //
 // ⚠️ **THE PATTERN THIS FAMILY WAS ENUMERATED WITH, PUBLISHED SO ITS EDGES ARE
 // VISIBLE (D424/D425).** `/[Bb]efore doing damage/` over all 640 sentences returns
@@ -21646,36 +21659,126 @@ function defenderStatusPair(first: string | undefined, second: string | undefine
 // {W} Energy attached to this Pokémon. Before doing damage, you may attach any
 // number of Basic {W} Energy cards from your hand to this Pokémon."*, where the
 // clause is the SECOND sentence and no prefix stripper could ever see it. A
-// separate `/Pokémon Tool/` sweep returns TEN rows, three of them outside the brief
-// that commissioned this slice. Neither pattern can see a sentence that spells the
-// timing some other way ("before this attack does damage" is spelled by no row in
-// this column) — that is the limit, stated rather than left implicit.
+// separate `/Pokémon Tool/` sweep returns TEN rows.
+//
+// ⚠️ **AND THE SENTENCE THAT USED TO END THIS BLOCK WAS FALSE WHEN IT WAS WRITTEN.**
+// It read *"a sentence that spells the timing some other way ('before this attack
+// does damage') is spelled by no row in this column"*. The column refutes it:
+// *"If your opponent's Active Pokémon has no damage counters on it before this
+// attack does damage, this attack does nothing."* is a real row at **2 printings**.
+// D428's own suite caught it and corrected the rung (`preDamageToolDiscard.test.ts`
+// §1) — and left this copy standing, which is D415's rule arriving inside one slice:
+// **a claim corrected in one place is not corrected.** The row is not this family
+// (it is a `deriveAttackRequirement` does-nothing gate, built since D125), but the
+// LIMIT the paragraph exists to state is real and now stated truthfully: neither
+// pattern is anchored on the TIMING, so a future printing spelling the instant a
+// third way is invisible to both.
 
-/** 🆕🆕 D428 — the act an attack must perform BEFORE its damage step. A closed
-    union with ONE inhabitant, deliberately: see the block above for why it is not
-    an `EffectOp` and why it must stay incapable of parking. */
-export type AttackPreDamage = { kind: "discardOpponentActiveTools" };
+/** 🆕🆕 D428 — the act an attack must perform BEFORE its damage step, and since
+    D429 the whole printed family: see the block above for why it is not an
+    `EffectOp` and why it must stay incapable of parking.
 
-/** 🛑 A LITERAL ANCHOR AND NOT A TEMPLATE, ON D121's WARRANT. That warrant wants
-    TWO printings with ONE TOKEN VARYING before a capture group is justified. This
-    row's siblings vary by whole CLAUSES, not by a token — one adds
-    *"and Special Energy"*, one swaps the victim to *"this Pokémon"* and appends a
-    cancel clause, one appends a Paralyze consequent — so any group would be a
-    template over a population of one (D190b). The apostrophe class `['’]` is
-    D137's fold, spelled here as it is by 133 of its neighbours: the byte in the
-    committed corpus is **U+0027** (`hexdump -C` on `censusAttackCorpus.ts` line 73,
-    measured rather than remembered — D421), and the class is what survives a
-    re-ingest that normalises punctuation. `^…$` anchored like every reader in this
-    file, so the three sibling rows stay REFUSED and loud. */
+    🛑 **FOUR MEMBERS, NOT ONE MEMBER WITH THREE RIDERS, AND D425's TEST IS WHAT
+    DECIDED IT.** Rows 71 / 73 / 74 all strip the opponent's Active — 71 adds a
+    second ZONE, 74 adds a CONSEQUENT — so an optional `alsoSpecialEnergy?: true` /
+    `thenParalyze?: true` rider on `discardOpponentActiveTools` is the obvious
+    cheaper shape. It is the wrong one: a build that DROPS such a rider degrades
+    into row 73 exactly, which is a real, shipped, plausible-looking behaviour and
+    therefore silent. Four `kind`s make the same mistake a **compile error** at
+    `applyAttackPreDamage`'s `switch` (D222) and at every future reader of the
+    union. This is D425's *"choose the shape so that losing the new information is
+    detectable"* answered the same way D425 answered it (a required field over an
+    optional rider), for the same reason and on a different axis.
+
+    ⚠️ **THE MEMBER NAMES SPELL THE PRINTED ACT, INCLUDING ITS CONSEQUENT.**
+    `discardOwnToolsElseCancel` carries the cancel in its NAME because the cancel
+    is not a separate sentence — *"If you can't discard any, this attack does
+    nothing."* is the same printed act's failure branch, and `attack.ts` learns
+    about it through `AttackPreDamageResult.cancelled` rather than by re-reading
+    the `kind`, so exactly one place in the engine knows what a member means. */
+export type AttackPreDamage =
+  /** Row 73 (D428, **5 legal printings**) — *"…discard all Pokémon Tools from your
+      opponent's Active Pokémon."* */
+  | { kind: "discardOpponentActiveTools" }
+  /** Row 71 (D429, **1 legal printing**) — the same act over a SECOND ZONE:
+      *"…discard all Pokémon Tools and Special Energy from your opponent's Active
+      Pokémon."* "Special" is the CARD CLASS (`isSpecialEnergy`), not a type, so a
+      Basic Energy on the same body stays attached. */
+  | { kind: "discardOpponentActiveToolsAndSpecialEnergy" }
+  /** Row 72 (D429, **1 legal printing**) — the victim is the ATTACKER's own body
+      and the act has a failure branch: *"…discard all Pokémon Tools from this
+      Pokémon. If you can't discard any, this attack does nothing."* */
+  | { kind: "discardOwnToolsElseCancel" }
+  /** Row 74 (D429, **1 legal printing**) — row 73 plus a consequent conditioned on
+      the RESULT of the act: *"…If you discarded a Pokémon Tool in this way, your
+      opponent's Active Pokémon is now Paralyzed."* */
+  | { kind: "discardOpponentActiveToolsThenParalyze" };
+
+/** 🛑 FOUR LITERAL ANCHORS AND NOT ONE TEMPLATE, ON D121's WARRANT — AND D429
+    RE-DERIVED THAT WARRANT RATHER THAN INHERITING D428's SENTENCE. The warrant
+    wants TWO printings with ONE TOKEN VARYING before a capture group is justified.
+    Across this family the four rows vary by whole CLAUSES: a second zone
+    (*"and Special Energy"*), a swapped victim (*"this Pokémon"*) carrying a cancel
+    branch, an appended Paralyze consequent. There is no token that varies, so
+    every capture group would be a template over a population of one (D190b) — and
+    a template is the shape that invents behaviour for strings nobody printed.
+
+    ⚠️ **THE THREE D429 ROWS ARE 1 PRINTING EACH, WHICH IS A BAD RATIO AND IS SAID
+    OUT LOUD.** What the slice buys is the RESULT CHANNEL (`AttackPreDamageResult`
+    in attack.ts) that every future pre-damage sentence conditioning on its own
+    outcome will need, plus a closed family: with all four rows claimed, the
+    `Before doing damage, ` head has no unread remainder left in this column, so
+    the *next* sentence in the family is a genuinely new shape rather than a
+    fifth near-miss.
+
+    The apostrophe class `['’]` is D137's fold: every apostrophe byte in all four
+    rows of the committed corpus is **U+0027** — `awk 'NR>=71 && NR<=74' | cat -A`
+    over `censusAttackCorpus.ts`, read for all four rows including row 72's
+    *"can't"*, measured rather than remembered (D421) — and the class is what
+    survives a re-ingest that normalises punctuation. `^…$` anchored like every
+    reader in this file: the four are mutually exclusive by construction, because
+    row 73's anchor ends at the `.` that rows 72 and 74 continue past. */
 const ATTACK_PRE_DAMAGE_TOOL_DISCARD =
   /^Before doing damage, discard all Pokémon Tools from your opponent['’]s Active Pokémon\.$/;
 
-/** *"Before doing damage, discard all Pokémon Tools from your opponent's Active
-    Pokémon."* — **5 legal printings on 1 sentence**, measured over
-    `legalAttackCorpus()` (the committed `legal_standard = 1` attack column: 640
-    sentences / 1,732 printings). `null` for every other string. */
+/** Row 71 — the SECOND ZONE. `Tools and Special Energy` is one noun phrase over two
+    attachment kinds, and both come off the same body. */
+const ATTACK_PRE_DAMAGE_TOOL_AND_SPECIAL_DISCARD =
+  /^Before doing damage, discard all Pokémon Tools and Special Energy from your opponent['’]s Active Pokémon\.$/;
+
+/** Row 72 — the OWN-BODY strip with the printed cancel branch. Two sentences in one
+    printed `effect` string, anchored WHOLE: the cancel is not separable, because
+    *"any"* refers back to the first sentence's act and means nothing on its own. */
+const ATTACK_PRE_DAMAGE_OWN_TOOL_DISCARD_OR_NOTHING =
+  /^Before doing damage, discard all Pokémon Tools from this Pokémon\. If you can['’]t discard any, this attack does nothing\.$/;
+
+/** Row 74 — row 73's act plus a consequent conditioned on its RESULT. Anchored whole
+    for row 72's reason: *"in this way"* is a §9.2 back-reference and is false of any
+    string that does not carry the act it refers to. */
+const ATTACK_PRE_DAMAGE_TOOL_DISCARD_THEN_PARALYZE =
+  /^Before doing damage, discard all Pokémon Tools from your opponent['’]s Active Pokémon\. If you discarded a Pokémon Tool in this way, your opponent['’]s Active Pokémon is now Paralyzed\.$/;
+
+/** The *"Before doing damage, …"* family, whole-sentence anchored — **4 sentences /
+    8 legal printings**, measured over `legalAttackCorpus()` (the committed
+    `legal_standard = 1` attack column: 640 sentences / 1,732 printings): row 73 at 5
+    printings (D428) plus rows 71, 72 and 74 at 1 each (D429). `null` for every other
+    string, including the fifth *"before doing damage"* row in the column, whose
+    clause is the SECOND sentence and is already served by `deriveAttackRequirement`.
+
+    ⚠️ ONE reader for the whole family rather than four, so the ATTACK READER
+    SURFACE stays at **13** across this slice — the census figures move by printings
+    and not by instrument shape. */
 export function deriveAttackPreDamage(text: string): AttackPreDamage | null {
-  return ATTACK_PRE_DAMAGE_TOOL_DISCARD.test(text.trim())
-    ? { kind: "discardOpponentActiveTools" }
-    : null;
+  const trimmed = text.trim();
+  if (ATTACK_PRE_DAMAGE_TOOL_DISCARD.test(trimmed)) return { kind: "discardOpponentActiveTools" };
+  if (ATTACK_PRE_DAMAGE_TOOL_AND_SPECIAL_DISCARD.test(trimmed)) {
+    return { kind: "discardOpponentActiveToolsAndSpecialEnergy" };
+  }
+  if (ATTACK_PRE_DAMAGE_OWN_TOOL_DISCARD_OR_NOTHING.test(trimmed)) {
+    return { kind: "discardOwnToolsElseCancel" };
+  }
+  if (ATTACK_PRE_DAMAGE_TOOL_DISCARD_THEN_PARALYZE.test(trimmed)) {
+    return { kind: "discardOpponentActiveToolsThenParalyze" };
+  }
+  return null;
 }

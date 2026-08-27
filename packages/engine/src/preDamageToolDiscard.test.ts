@@ -276,31 +276,51 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
     expect(deriveAttackPreDamage(curly)).toEqual(deriveAttackPreDamage(SENTENCE));
   });
 
-  it("🛑 the THREE SIBLINGS stay REFUSED — and each near-miss differs on ONE axis", () => {
-    // D427's rule: a near-miss that differs on more than one axis tests nothing about
-    // either. Each string below is the target sentence with exactly ONE printed
-    // feature changed, and each is a REAL corpus row rather than a construction.
+  it("🛑 the THREE SIBLINGS are now CLAIMED — and each still derives to its OWN member", () => {
+    // 🆕🆕 **D429 RE-POINTED THIS RUNG, AND THE OLD CLAIM IS RECORDED RATHER THAN
+    // DELETED.** At D428 this asserted *"the three siblings stay REFUSED"* and it was
+    // TRUE; D429 claimed all three, so the sentence expired by design. ⚠️ **D418's rule
+    // is what shaped the replacement**: a re-pointed rung can silently drop the
+    // discrimination the old one provided, so the question asked here is not the weaker
+    // *"are they claimed?"* but the SAME BOUNDARY the refusal used to guard — **does
+    // each of the four anchors claim its own sentence and nobody else's?** Row 73's
+    // anchor is a strict PREFIX of row 74's string, so an anchor that lost its `\.$`
+    // would swallow the sibling; under that build this rung goes RED on the KIND, where
+    // a bare non-null test would not. (`D428-anchor-drops-the-tail` is that mutant, and
+    // it names this file as its killer.)
     const siblings = legalAttackCorpus()
       .filter(([, s]) => s.startsWith(HEAD) && s !== SENTENCE)
       .map(([, s]) => s);
     expect(siblings).toHaveLength(3);
-    for (const s of siblings) expect(deriveAttackPreDamage(s), s).toBeNull();
-    // Named individually, because "three are refused" says nothing about WHICH three.
+    // Named individually, because "three are claimed" says nothing about WHICH three,
+    // and each still differs from `SENTENCE` on exactly ONE printed axis (D427).
     // ① the NOUN grows a second term…
-    expect(siblings).toContain(
-      "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
-    );
+    expect(
+      deriveAttackPreDamage(
+        "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
+      ),
+    ).toEqual({ kind: "discardOpponentActiveToolsAndSpecialEnergy" });
     // ② …the VICTIM changes and a cancel clause rides behind…
-    expect(siblings).toContain(
-      "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",
-    );
+    expect(
+      deriveAttackPreDamage(
+        "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",
+      ),
+    ).toEqual({ kind: "discardOwnToolsElseCancel" });
     // ③ …and the CONSEQUENT grows a second sentence.
-    expect(siblings).toContain(
-      "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.",
-    );
-    // ⚠️ THE ADMISSION BESIDE THE REFUSALS (D424): the reader still says YES to the
-    // one string it is for, so "everything is refused" is excluded.
-    expect(deriveAttackPreDamage(SENTENCE)).not.toBeNull();
+    expect(
+      deriveAttackPreDamage(
+        "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.",
+      ),
+    ).toEqual({ kind: "discardOpponentActiveToolsThenParalyze" });
+    // 🛑 THIS SENTENCE STILL DERIVES TO **ITS OWN** MEMBER — the half that keeps the
+    // boundary. Four sentences, four kinds, no overlap.
+    expect(deriveAttackPreDamage(SENTENCE)).toEqual({ kind: "discardOpponentActiveTools" });
+    const kinds = [SENTENCE, ...siblings].map((s) => deriveAttackPreDamage(s)?.kind);
+    expect(new Set(kinds).size).toBe(4);
+    // ⚠️ AND THE REFUSAL SIDE IS NOT GONE, IT MOVED OUT ONE RING (D424's rule: every
+    // "X is claimed" owes a neighbouring "Y is refused" on the same axis). The head
+    // alone is not enough — a constructed fifth opener is still `null`.
+    expect(deriveAttackPreDamage(`${HEAD}discard all Pokémon Tools from your Bench.`)).toBeNull();
   });
 
   it("🛑 ③ does not COMPOSE for free either — measured after the reader landed", () => {
@@ -311,14 +331,24 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
       ([, s]) => s.startsWith(SENTENCE) && s !== SENTENCE,
     )?.[1];
     expect(compound).toBeDefined();
-    expect(deriveAttackPreDamage(compound ?? "")).toBeNull();
+    // 🆕🆕 **D429 RE-POINTED THIS LINE**: the compound is corpus row 74, which D429
+    // claims WHOLE, so *"the pre-damage reader refuses it"* stopped being true. What
+    // this rung is ABOUT is unchanged and is now stated directly — it is claimed by its
+    // OWN anchor and NOT by row 73's, which is what "does not compose for free" meant.
+    expect(deriveAttackPreDamage(compound ?? "")).toEqual({
+      kind: "discardOpponentActiveToolsThenParalyze",
+    });
     expect(splitAttackTrailingClause(compound ?? "")).toBeNull();
     expect(
       deriveAttackEffect(
         "If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.",
       ),
     ).toBeNull();
-    expect(resolvedByAnyReader(compound ?? "")).toBe(false);
+    // 🆕🆕 D429: `true` where D428 measured `false`. The reader that claims it is
+    // `deriveAttackPreDamage` and NOT the trailing splitter — which is precisely the
+    // mechanism D426 named and this rung exists to pin: the splitter composes when
+    // `deriveAttackEffect` already reads the TAIL, and it still does not.
+    expect(resolvedByAnyReader(compound ?? "")).toBe(true);
   });
 
   it("🛑 THE REAL PRINTING: Klefki `sv01-096` has printed this sentence since D100", () => {
@@ -576,10 +606,19 @@ describe("§7 — a pre-damage act cannot park, and the row that would is refuse
     expect(parkers.length).toBeGreaterThan(0);
     // EVERY sentence this reader claims, over the whole column, is the ONE unconditional
     // discard-all — no "up to", no "you may", no count.
+    // 🆕🆕 **D429: FOUR, NOT ONE — AND THE CLAIM THIS RUNG MAKES IS UNCHANGED.** The
+    // population test was never *"exactly one sentence is claimed"*; it was *"every
+    // sentence this reader claims is UNCONDITIONAL — no `up to`, no `you may`, no
+    // count"*, i.e. nothing that could need a decision. That is still true of all four,
+    // and it is what keeps the un-parkable return type honest on the POPULATION rather
+    // than on a specimen (D423). The length is pinned separately so a reader that
+    // silently stopped claiming three of them cannot pass this on the survivor.
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackPreDamage(s) !== null);
-    expect(claimed.map(([, s]) => s)).toEqual([SENTENCE]);
+    expect(claimed).toHaveLength(4);
+    expect(claimed.map(([, s]) => s)).toContain(SENTENCE);
     for (const [, s] of claimed) {
       expect(/up to|you may|choose/i.test(s), s).toBe(false);
+      expect(s.startsWith(HEAD), s).toBe(true);
     }
     // …and the parking row is refused by the pre-damage reader AND still unbuilt.
     const UP_TO_2 = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
@@ -678,6 +717,6 @@ describe("§9 — purity and the version", () => {
     // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
     // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.330.0");
+    expect(engineVersion).toBe("0.331.0");
   });
 });

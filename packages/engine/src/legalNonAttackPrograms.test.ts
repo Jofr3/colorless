@@ -1261,6 +1261,21 @@ const LOCAL_CARDS: Record<string, Card> = {
     "Stadium",
     "Once during each player's turn, that player may put up to 2 Basic {L} Energy cards from their discard pile into their hand.",
   ),
+  /** ⚠️ **D429 TRIED TO MOVE THIS CARD INTO THE SHARED `FIXTURE_POOL` AND PUT IT BACK,
+      AND THE REASON IS A FINDING ABOUT A GUARD ONE FILE OVER.** It wanted an
+      Energy-borne `damageAttacker` in the shared pool as a witness. Two walls, both
+      real: `catalogManifest.test.ts` will not accept the REAL id `sv09-159` in a
+      checkout with no D1 (the manifest is GENERATED and must classify every real id,
+      with `absent` asserted empty); and `counterattack.test.ts` discovers the §9 recoil
+      family by sweeping `FIXTURE_POOL` for the printed clause and then partitions it by
+      reading `programFor(id)?.passive`, which **cannot see `programFor(id)?.energy?.passive`**
+      — so this card in the shared pool makes that suite's *"text census = program
+      census"* claim FALSE, and its drive loop would try to `attachTool` an Energy.
+      That guard is correct today only because no Energy-borne recoil is in the shared
+      pool; it is D425's closed-world-assumption-true-by-accident, and repairing it means
+      widening `COUNTERATTACK_DECK`, which reshuffles every board seeded off it (D412).
+      D429 declined that and recorded it here rather than leaving the card where it would
+      have gone unnoticed. */
   "fix-spikyenergy": specialEnergy(
     "fix-spikyenergy",
     "fix-spikyenergy",

@@ -963,6 +963,59 @@ eleven needed the front term. A green suite after fixing the one that failed is
 not evidence the round was complete — the others fail only on a later run, or
 worse, silently stop asserting what they were written for.
 
+## A stale local can UNDO a change (D429)
+
+D428 found a hook that fired its event, printed its row, and moved no number,
+because a `const` bound ~1,150 lines earlier was what every later read consulted.
+**D429 found the strictly worse form.** The §9 counterattack site spells
+`{ ...active, damage: active.damage + recoil }` and writes it back with
+`withActive` — so a stale binding **puts a discarded card back on the board** ~500
+lines after it entered the discard pile. One physical card, two zones.
+
+**When you mutate state mid-function, grep every later `{ ...local }` WRITE-BACK,
+not only every later read.** A stale read is invisible-but-inert; a stale
+write-back is a resurrection, and it corrupts the board rather than merely
+failing to see it.
+
+## Write the property, not the shape that has it (D429)
+
+D428 forbade a parking pre-damage op by having its applier return `GameState`.
+Both D428's own doc block and the following brief then treated **the return type**
+as the criterion. It is not. A park is `RunResult`'s `{ kind: "parked"; prompt;
+cont }`, drained by `settleProgram`; what actually forbids one is that the return
+carries **no prompt and no continuation** — nothing a resolver could drain.
+
+The distinction bites the moment the type is widened for an unrelated reason.
+D429 needed a result channel, and had the literal type been the rule, adding
+fields would have looked forbidden while adding the wrong field would have looked
+fine. The rule is now written at the type: **fields may be added when the CALLER
+consumes and discards them; never when a RESOLVER would have to drain them.**
+
+**When you rely on a property, write the property — not the shape that happens to
+have it.**
+
+## A streak is a claim (D429)
+
+D429's brief stated the version-tax count had been "wrong seven slices running".
+It had not: D428 counted its own pin and ended the streak, exactly as D427
+predicted when it named the mechanism. The figure was inherited from D427's note
+and **incremented without re-reading the note being cited**.
+
+**Extending a streak asserts it afresh.** A running count is one of the easiest
+claims to carry forward unchecked, because each increment feels like arithmetic
+rather than a measurement. Re-read the last entry before you add to it.
+
+## Do not pin a defect's current behaviour (D429, applying D418)
+
+D429 found a live rules gap — the pre-damage strip ignores `effectRefused` while
+a sibling effect in the same seam honours it, so the seam is internally
+inconsistent on a board two real cards can reach. It **deliberately did not add a
+test** for the current behaviour.
+
+**A guard that reddens when someone fixes a defect actively defends the defect.**
+Record the gap in prose and in the resume point, and leave the tests silent, so
+the person who fixes it meets no resistance.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

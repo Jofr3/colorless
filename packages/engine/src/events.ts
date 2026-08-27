@@ -718,6 +718,15 @@ export type GameEvent =
           attack does nothing." came up tails. PRECEDED by the
           ATTACK_EFFECT_COIN_FLIP that announces the face, and followed by
           nothing; the attacker is untouched.
+        • 🆕🆕 "preDamage" — D429, the attack's printed pre-damage act had nothing to
+          do and the sentence says so: "Before doing damage, discard all Pokémon
+          Tools from this Pokémon. If you can't discard any, this attack does
+          nothing." (1 legal printing). Nothing follows and nothing PRECEDES either —
+          the silent-no-op rule means no TOOLS_DISCARDED row is filed on this path,
+          so this row is the whole of what a reader is told, which is why it is a
+          FOURTH reason rather than a reuse of "requirement". The two are genuinely
+          different facts: "requirement" is a BOARD condition read before the attack
+          did anything, this one is the RESULT of an act the attack already performed.
       Each widening is a WIDENING of the reason enum, not a shape change — no
       MATCH_RECORD_VERSION bump for any of them (see match.ts's own doc block);
       a record written by an older deploy stays readable, it simply never carries
@@ -726,7 +735,7 @@ export type GameEvent =
       type: "ATTACK_FAILED";
       seat: Seat;
       uid: string;
-      reason: "confusion" | "requirement" | "coinFlip";
+      reason: "confusion" | "requirement" | "coinFlip" | "preDamage";
     }
   /** Damage removed from one of `seat`'s IN-PLAY Pokémon by an effect; `amount`
       is what actually came off (clamped at the damage present — never 0), so a

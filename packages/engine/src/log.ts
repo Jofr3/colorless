@@ -831,7 +831,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.result),
       ]);
     case "ATTACK_FAILED":
-      // Three reasons: "confusion" is §12's tails (the 30 self-damage follows as
+      // Four reasons: "confusion" is §12's tails (the 30 self-damage follows as
       // its own row), "requirement" is D125's printed "this attack does
       // nothing" with its clause held — nothing follows that one, so the row
       // must say so on its own or the attack reads as a silent no-op — and
@@ -839,6 +839,16 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // last one is PRECEDED by its own ATTACK_EFFECT_COIN_FLIP row, which
       // already named the face, so this line states the CONSEQUENCE and does not
       // repeat "tails".
+      //
+      // 🆕🆕 **D429 — "preDamage" NEEDED ITS OWN ARM AND WOULD HAVE FALLEN INTO THE
+      // DEFAULT.** Adding the reason without touching this ternary would have printed
+      // *"its condition was not met"* for a row whose printed sentence is
+      // *"If you can't discard any, this attack does nothing."* — a sentence with no
+      // condition in it at all, on an attack that failed because its own act found
+      // nothing to take. That is D421's rule exactly: a log row is a claim with the
+      // same standing as a predicate, and the default arm's claim is FALSE here. The
+      // wording names the ACT rather than the sentence, because nothing else in the
+      // batch does: the silent-no-op rule means this path files no TOOLS_DISCARDED.
       return row(event.seat, [
         strong(cardName(state, event.uid)),
         plain(
@@ -846,7 +856,9 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             ? "'s attack failed — Confused"
             : event.reason === "coinFlip"
               ? "'s attack did nothing — the coin flip missed"
-              : "'s attack did nothing — its condition was not met",
+              : event.reason === "preDamage"
+                ? "'s attack did nothing — it had no Pokémon Tool to discard"
+                : "'s attack did nothing — its condition was not met",
         ),
       ]);
     case "HEALED":
