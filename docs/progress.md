@@ -487,8 +487,12 @@
 > Baseline 425 / 9,182, so **+1 file / +30 cases**. Engine **0.329.0**, **`MATCH_RECORD_VERSION` 26**,
 > corpus **1,579**, archive ratchet **97**, lint coverage **665**.
 >
-> 🛑 **THE ONE DEBT: D427 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D427` (9 killed / 1 declared
-> equivalent / 0 GAPs), neighbours re-probed across **11 owning decisions**, `precheck` clean twice.
+> ✅ **THE SWEEP DEBT IS PAID.** **1579 · 1554 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 5,857.7s**, `SWEEP_EXIT=0`; `1554 + 25 = 1579` closes and
+> 1579/1579 verified by id. ✅ **The declared-survivor set moved for only the SECOND time in forty-four
+> sweeps, 24 → 25**, and the diff is exactly one line — the row D427 declared — with nothing removed.
+> `0 stale` is the other half: no existing declaration started dying. ⚠️ **The stale-survivor branch has
+> still never fired in this run**, which means *not yet contradicted*, not *verified*.
 >
 > ▶ **RESIDUE AT THIS HEAD, WITH ITS SUBTRACTION SET NAMED**: reader − gate − trailing − registry =
 > **195 sentences / 293 printings**. Largest rows left: *"Before doing damage, discard all Pokémon Tools
