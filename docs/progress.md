@@ -494,8 +494,10 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 430 files / 9,347 tests, `CHECK_EXIT=0`.**
 > Engine **0.333.0**, **`MATCH_RECORD_VERSION` 26**, corpus **1,623**, archive ratchet **101**.
 >
-> 🛑 **THE ONE DEBT: D431 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D431` (9 killed / 0 GAPs), **257
-> neighbour rows re-probed (257 KILLED + 1 declared)**, `precheck` clean three times at 1,623.
+> ✅ **THE SWEEP DEBT IS PAID.** **1623 · 1598 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,296.0s**, `SWEEP_EXIT=0`; `1598 + 25 = 1623` closes and
+> 1623/1623 verified by id. All 9 D431 rows KILLED — including the wrong-seat row, **the generalisation
+> an author would make from the shipped producers and invisible to every census**. Survivors held at 25.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES, DO NOT RE-DERIVE THEM.** `censusAtHead.test.ts` pins
 > `rawUnbuiltSentences` **208**, `residueSentences` **183**, `unbuiltAttack` **272**. Hand-rolled
