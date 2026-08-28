@@ -490,8 +490,12 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 428 files / 9,285 tests, `CHECK_EXIT=0`.**
 > Engine **0.331.0**, **`MATCH_RECORD_VERSION` 26**, corpus **1,608**, archive ratchet **99**.
 >
-> 🛑 **THE ONE DEBT: D429 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D429` (18 killed / 0 GAPs),
-> `--decision D428` re-probed (11 KILLED), `precheck` clean at 1,608 — but no full run.
+> ✅ **THE SWEEP DEBT IS PAID.** **1608 · 1583 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,006.6s**, `SWEEP_EXIT=0`; `1583 + 25 = 1608` closes and
+> 1608/1608 verified by id. **All 18 D429 rows and all 11 D428 rows KILLED** — the latter is the real
+> result, since nine of them were re-anchored mid-slice and one had SURVIVED on its first probe. A
+> whole-corpus run is the only evidence a re-anchor did not quietly disarm a guard. Survivors held at
+> **25**, identical to D428's.
 >
 > 🛑🛑 **A LIVE RULES GAP IS OPEN AND DELIBERATELY UNPINNED — READ THIS BEFORE TOUCHING THE SEAM.**
 > Mist Energy `sv05-161` prevents all effects of attacks done to its holder. **The pre-damage Tool strip
