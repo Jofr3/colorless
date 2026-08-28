@@ -496,9 +496,13 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 431 files / 9,382 tests, `CHECK_EXIT=0`.**
 > Engine **0.334.0**, **`MATCH_RECORD_VERSION` 27**, corpus **1,636**, archive ratchet **102**.
 >
-> 🛑 **THE ONE DEBT: D432 HAS HAD NO WHOLE-CORPUS SWEEP**, and its exposure is high — a **required key on
-> `InPlayPokemon`**, 134 diff hunks across 59 files, and two rotted rows re-pointed mid-slice.
-> `--decision D432` is 13/13 with 0 GAPs and 295 neighbour rows were re-probed (294 + 1 declared).
+> ✅ **THE SWEEP DEBT IS PAID.** **1636 · 1611 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,137.8s**, `SWEEP_EXIT=0`; `1611 + 25 = 1636` closes and
+> 1636/1636 verified by id. All 13 D432 rows KILLED, **and so did the three rows guarding this slice's own
+> premises** — `D326-record-version-not-bumped` (the row that guards the version constant itself,
+> re-pointed for a bump it had never seen), `D192-weakness` and `D275-engine-version-drifts-again`.
+> **A version bump is the one edit that can disarm the guard watching it; this run is the evidence it did
+> not.** Survivors held at 25.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES.** `censusAtHead.test.ts` pins them; at this head
 > `rawUnbuiltSentences` **207**, `residueSentences` **182**, `unbuiltAttack` **269**. The canonical
