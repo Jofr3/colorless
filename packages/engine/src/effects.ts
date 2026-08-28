@@ -5846,6 +5846,47 @@ export type EffectOp =
           Absent = no counter window at all. */
       damageCountersExactly?: number;
     }
+  /** 🆕🆕 **D431 — §8.1, THE FIRST PRIZE TAKEN WITHOUT A KNOCK OUT.**
+      *"Discard all Energy from this Pokémon, and take a Prize card."* — **1 sentence /
+      3 legal printings**, the tail half of a compound anchor whose head is the shipped
+      `discardEnergy { from: "yourActive", filter: anyEnergy, count: "all" }`.
+
+      🛑 **EVERY OTHER PRODUCER OF A `takePrizes` STAGE IS A KNOCK OUT.** `flow.ts`
+      queues one from `knockOut` — the Active branch and the Bench branch — and from
+      nowhere else, so until this op every consumer of that stage could have encoded
+      *"a body just left play"* and been right BY ACCIDENT, which is D425's shape
+      exactly. The audit is written out at `queueTakePrize` (interpreter.ts) and its
+      finding is that no consumer derives a Knock Out from the stage.
+
+      🛑 **FIELD-FREE, AND THE MISSING FIELD IS THE `count`.** The obvious shape is
+      `{ op: "takePrizes"; count: number }`, since `PendingStage.takePrizes` carries a
+      `count` this op would pass straight through. It is refused on `knockOutDefender`'s
+      recorded rule, quoted rather than re-derived: *"a REQUIRED field on an op is the
+      one thing that costs a `MATCH_RECORD_VERSION` bump if it is ever renamed or
+      widened"*. The legal attack column prints this action at ONE count, and that is a
+      measurement rather than an impression: the LOOSEST plausible family grep — `/prize/i`
+      over all 640 corpus sentences — returns **14 rows and every one was read**. ONE
+      takes prizes as an attack effect (this sentence); ONE takes *"2 more Prize cards"*
+      as a next-turn rider on a Knock Out (a different mechanism, still unbuilt); the
+      other twelve READ the prize count as a condition or a scaler, or LOOK AT / TURN
+      OVER a face-down prize. So D416's warrant for shipping two members at once — both
+      inhabitants live from the first commit — is UNMET here. The day a second count is
+      printed, this op gains a `count?: number` whose ABSENCE means 1, which is still a
+      widening and still not a bump.
+
+      ⚠️ **THE OP QUEUES A STAGE; IT DOES NOT TAKE THE PRIZE.** WHICH face-down slot is a
+      real decision, so the taking must be able to PARK — and `advance` (flow.ts) already
+      owns the whole of that: the clamp to what is left, the forced auto-resolve at a
+      full row, `PRIZES_OWED` / `PRIZES_TAKEN`, and the §14 win check that runs BEFORE
+      the tail resumes. Re-implementing any of it here would be a SECOND §14 evaluation,
+      which is precisely what D329 lifted to one point to prevent.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP** (still **26**), on `discardStadium`'s verbatim
+      argument: adding a member to `EffectOp` is D125's WIDENING — no v26 deploy can author
+      `{op:"takePrize"}`, and every byte string a v26 deploy DID write still means exactly
+      what it meant. No `PendingStage` inhabitant is added either; `takePrizes` has ridden
+      that union since M1. Driven in BOTH directions in `takePrizeAttack.test.ts` §3. */
+  | { op: "takePrize" }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -10502,6 +10543,36 @@ const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
     `attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+
+// 🆕🆕 D431 — THE SELF-DISCARD COST IN FRONT OF A PRIZE. The SIXTH member of this
+// file's compound family (arm 5c `DEFENDER_POISON_CANT_RETREAT`, arm 25
+// `COUNTER_PUT_ANY_THEN_SELF_LOCK`, D147's `SELF_DISCARD_ALL_THEN_REDUCTION`, D148's
+// `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK` and D401's `SELF_DISCARD_THEN_ANY_TARGET`
+// directly above are the five precedents), and the FIRST whose second half reaches
+// §8.1 rather than a board.
+//
+// CENSUS: **1 sentence / 3 legal printings**, read off `censusAttackCorpus.ts` row
+// 108 — the committed `legal_standard = 1` attack column (640 sentences / 1,732
+// printings, remote D1 `luminous`, 2026-08-08). ⚠️ THE THREE CARRIERS CANNOT BE
+// RESOLVED IN THIS CHECKOUT — there is no local D1 and no remote credentials, and the
+// corpus is grouped BY SENTENCE, so it records the count and not the ids. Stated
+// unresolved rather than invented (D425).
+//
+// 🛑 ONE ANCHOR AND NOT A COMPOSED PAIR, AND THAT WAS MEASURED RATHER THAN ASSUMED.
+// `splitAttackTrailingClause` returns `null` on this string for TWO independent
+// reasons, either of which alone refuses it: the clause break is
+// `COMPOUND_CLAUSE_BREAK` (a period, then whitespace, then a capital or an opening
+// paren) and this sentence joins its halves with ", and"; and the tail *"take a Prize
+// card."* is claimed by NO reader, which is the splitter's own tail test. Both are
+// driven in `takePrizeAttack.test.ts` §2, and the second is the one that would
+// still refuse if the printing ever switched to a period.
+//
+// ⚠️ MUTUALLY EXCLUSIVE WITH `SELF_DISCARD_ALL` IN BOTH DIRECTIONS BY `^…$`: that
+// anchor requires the sentence to END at "Pokémon." — the refusal its own D145 block
+// already claims for four compound printings — and this one requires the comma. So
+// this arm's POSITION in `deriveAttackEffect` is locality, not precedence.
+const SELF_DISCARD_ALL_THEN_TAKE_PRIZE =
+  /^Discard all Energy from this Pokémon, and take a Prize card\.$/;
 // The OPPONENT-side twin of the self-discard family lives BELOW rather than
 // here, beside `TYPED_SELF_DISCARD`: D361 made both of its anchors MAP-BUILT
 // (`ENERGY_TYPE_BY_CODE` / `ENERGY_TYPE_BY_NAME`), and a `new RegExp` built
@@ -17163,6 +17234,29 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "damageChosen", target: "opponentAny", amount, count, source: "attack", deals: true },
       ];
     }
+  }
+
+  // 9c. 🆕🆕 D431 — "Discard all Energy from this Pokémon, and take a Prize card."
+  //     — the §8 self-discard COST in front of a §8.1 PRIZE, TWO OPS IN PRINTED ORDER.
+  //     1 sentence / 3 legal printings; see the anchor's own census.
+  //
+  //     🛑 THE PRIZE IS SECOND BECAUSE IT IS PRINTED SECOND, and here the order is
+  //     LOAD-BEARING rather than tidy: the discard resolves synchronously ("all" has no
+  //     decision in it) while the prize PARKS, so a program with the two the other way
+  //     round would ask which face-down prize to reveal and only THEN throw the Energy
+  //     away. That is visible to a player and it is wrong about what the card says you
+  //     pay first. Arm 9b's rule ("the cost, first, because that is the printed order")
+  //     inherited rather than restated.
+  //
+  //     ⚠️ NO POSITIVITY GUARD, BECAUSE THERE IS NO CAPTURED NUMBER. Every arm above
+  //     that captures an amount carries D145's printed-0 guard; this anchor captures
+  //     nothing at all — both halves are literals — so there is no value that could
+  //     derive to a silent no-op and nothing for a guard to refuse.
+  if (SELF_DISCARD_ALL_THEN_TAKE_PRIZE.test(effect)) {
+    return [
+      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },
+      { op: "takePrize" },
+    ];
   }
 
   // 10. "Discard a|all|{N} {type} Energy from this Pokémon." — the TYPED

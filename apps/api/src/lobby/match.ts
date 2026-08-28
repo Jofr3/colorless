@@ -1067,7 +1067,14 @@ export const MATCH_ACTION_DISPOSITION = {
 /** The engine action types the online client can DRIVE and RECOVER from: setup,
     the `moveToAction` turn drags (attach energy, bench a Basic, evolve, attach a
     Tool, play a Stadium), pass, the attack + KO loop (increment 2b-i — `attack`,
-    then the KOing player's `takePrizes` and the KO'd player's `promote`),
+    then the KOing player's `takePrizes` and the KO'd player's `promote`
+    — 🆕🆕 D431: `takePrizes` is NO LONGER ONLY the KOing player's. An attack whose
+    printed effect says *"…and take a Prize card."* queues the same decision with no
+    Knock Out anywhere on the board, so this clause names the ORIGIN that was
+    exhaustive until 0.333.0 and is now one origin of two. Nothing in this file
+    changes — the action is the same action and its support flag is unconditional —
+    but the sentence would otherwise read as a claim about when the client can expect
+    the prompt, which is exactly the closed-world reading D431 exists to remove),
     `retreat` (2b-ii), the effect:choose answer `resolveEffect` (2b-iii-c), and —
     from increment 3b — the activated Ability + non-Stadium Trainer plays
     (`useAbility` newly ON; `playTrainer` was already on but only the Stadium DRAG

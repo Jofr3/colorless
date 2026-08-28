@@ -1401,6 +1401,26 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // `markers` empty rather than stale, driven on the printed board in
     // `knockOutDefender.test.ts` §6.
     knockOutDefender: "blocked",
+    // 🆕🆕 **D431 — THE TWENTY-FOURTH OP, AND THE FIRST WHOSE SUBJECT IS THE
+    // ATTACKER'S OWN PRIZE ROW.** `takePrize` queues §8.1's prize decision from an
+    // attack's EFFECT rather than from a Knock Out.
+    //
+    // **UNTOUCHED**, and it is `knockOutSelf`'s verdict for `knockOutSelf`'s reason,
+    // one zone over: §11 prevents *effects of attacks done to THIS Pokémon*, and every
+    // end this op reaches — the actor's own prize row and the actor's own hand —
+    // belongs to the ATTACKER. There is no opponent-side body in it for a block to
+    // protect. A block that stopped this would let the Defending Pokémon veto whether
+    // its opponent may reveal one of their OWN face-down cards, which is not a claim
+    // §11 gives it. The implementation says so itself: `queueTakePrize`
+    // (interpreter.ts) does not call `effectRefused` at all, exactly as `knockOutSelf`
+    // does not — where `knockOutDefender` one row up does.
+    //
+    // ⚠️ AND THE PART THIS ROW DOES **NOT** COVER: the seat is `ctx.seat`, so the day a
+    // printing hands the prize to the OPPONENT ("your opponent takes a Prize card") the
+    // verdict has to be re-argued rather than inherited — that op reaches across the
+    // table and this one does not. `takePrizeAttack.test.ts` §4 drives which seat's row
+    // shortened, on a board where the two seats disagree.
+    takePrize: "untouched",
   };
 
   it("classifies EVERY op an attack in the pool can produce", () => {
@@ -2285,6 +2305,28 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
           after.damage > (p1Active(r.before)?.damage ?? 0)
         );
       },
+    },
+    takePrize: {
+      op: { op: "takePrize" },
+      // 🆕🆕 D431 — the witness is the QUEUE, because that is the whole of what this
+      // op does: it appends no card and emits no event, it inserts the §8.1 decision
+      // stage and lets `advance` resolve it. Read as "P2's own row is now owed a prize",
+      // never as "the pending queue got longer" — the seat is the half a block could
+      // plausibly be thought to have a claim over, and it is the half this row's
+      // classification turns on.
+      board: () => {
+        const state = probeBoard();
+        // Nothing owed to start with, or "did not land" would be true for a reason
+        // that has nothing to do with §11 — the vacuous-probe shape `knockOutDefender`
+        // above spells out.
+        expect(state.pending).toEqual([]);
+        expect(state.players.p2.prizes.length).toBeGreaterThan(0);
+        return state;
+      },
+      landed: (r) =>
+        r.after.pending.some(
+          (stage) => stage.kind === "takePrizes" && stage.seat === "p2" && stage.count === 1,
+        ),
     },
   };
 

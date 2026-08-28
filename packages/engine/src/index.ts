@@ -18161,7 +18161,77 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.331.0 → **0.332.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.332.0";
+/** 🆕🆕 **0.332.0 → 0.333.0 — D431, THE FIRST PRIZE TAKEN WITHOUT A KNOCK OUT.**
+
+    *"Discard all Energy from this Pokémon, and take a Prize card."* — **1 sentence /
+    3 legal printings** over the committed `legal_standard = 1` attack column (640
+    sentences / 1,732 printings). ONE compound anchor
+    (`SELF_DISCARD_ALL_THEN_TAKE_PRIZE`), ONE arm in `deriveAttackEffect` (9c), ONE new
+    field-free `EffectOp` (`takePrize`), ONE `stepOp` case and ONE interpreter helper
+    (`queueTakePrize`). ZERO new events, ZERO new `PendingStage` inhabitants, ZERO new
+    prompts, ZERO new error codes, ZERO `GameState` fields, ZERO registry rows, ZERO
+    `packages/schema` bytes, ZERO web/API diff.
+
+    🛑 **THE SLICE IS THE CLOSED-WORLD AUDIT, NOT THE ARM.** Until this op the ONLY
+    producer of a `takePrizes` `PendingStage` was `flow.ts`'s `knockOut`, on both of its
+    branches. That makes *"this stage is here ⇒ a body just left play"* an invariant
+    nobody declared and nothing checked — D425's `log.ts` defect and D414's lethal-
+    without-damage defect are the same shape, and both shipped. So every consumer was
+    enumerated with `grep -rn '"takePrizes"'` across every `.ts`/`.tsx` outside
+    `node_modules` (**15 hits, all read** — the brief priced the slice on FOUR) and read
+    for facts it DERIVES rather than READS. **Nothing broke, and that is the reported
+    result rather than a silence**: `flow.ts`'s two batch-local quantifiers
+    (`collectKnockOutPass`, `tiedOverTheBatch`) range over their own pass's stages and
+    never over `state.pending`; `attack.ts`, `phaseView.ts`, `redact.ts`,
+    `projection.ts` and both HUDs carry `seat` and `count` through; `log.ts`'s
+    `PRIZES_OWED` / `PRIZES_TAKEN` rows say *"takes N prize cards"* and *"took N — M
+    left"*, which name no Knock Out. The one real derivation in the set,
+    `phaseView.ts`'s `koParkActiveSeat`, reads `pending` for the TURN a ko:* park sits
+    inside and already lists `attackEpilogue` — the stage this park is spliced in front
+    of — so it answers correctly here for a reason that predates the slice. It is
+    DRIVEN rather than assumed.
+
+    🛑 **THE STAGE IS SPLICED AHEAD OF THE ATTACK TAIL, AND THAT IS THE §8.1 ORDER.**
+    `attack.ts` queues `[damagedTrigger?, koToolTrigger?, attackEpilogue]` before the
+    program runs, so appending would take this prize AFTER the Knock Out sweep and
+    after the turn ended. Every other interpreter op finishes synchronously — i.e.
+    ahead of all three — and this one is a stage only because WHICH face-down prize is a
+    player's decision, so it belongs where the work would have happened. An attack that
+    also Knocks the Defender out therefore queues **two** `takePrizes` stages, in that
+    order, and they are correctly not one batch: this prize is step 4 of the attack,
+    which precedes the Knock Out check.
+
+    🛑 **FIELD-FREE, ON `knockOutDefender`'s RECORDED RULE.** The op could carry the
+    `count` that `PendingStage.takePrizes` already has; it does not, because *"a
+    REQUIRED field on an op is the one thing that costs a `MATCH_RECORD_VERSION` bump if
+    it is ever renamed or widened"*, and the LOOSEST family grep (`/prize/i` over all
+    640 corpus sentences, **14 rows, every one read**) shows this action printed at
+    exactly ONE count. D416's warrant for two live inhabitants is UNMET.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 26 — PREDICTED, THEN DRIVEN BOTH DIRECTIONS.** A new
+    `EffectOp` inhabitant is D125's WIDENING (`discardStadium`'s verbatim argument): no
+    v26 deploy can author `{op:"takePrize"}`, and every byte string a v26 deploy DID
+    write still means what it meant. The `PendingStage` shape is untouched — it has
+    carried `takePrizes` since M1. `takePrizeAttack.test.ts` §3 replays a v26 record
+    holding a pre-slice program AND one holding this op.
+
+    **THE VERSION TAX, RE-COUNTED RATHER THAN INHERITED (D427/D429/D430): 17 assertions
+    / 20 sites** — SIXTEEN `engineVersion` literal pins (fifteen inherited plus this
+    slice's own in `takePrizeAttack.test.ts` §8), ONE `manifest.version` literal pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). ⚠️ D430's note
+    said 16 / 19 and it RE-MEASURES EXACTLY at this head; the increment is this slice's
+    own pin, which is D427's named mechanism. `expect(engineVersion)` returns more hits
+    than that — the rest compare against `manifest.version`, or assert an inequality
+    (`>= "0.248.0"`), and never move — so grep BOTH names and count the LITERALS.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** This checkout has no D1;
+    the corpus is grouped by sentence and records the COUNT, not the ids. Stated
+    unresolved rather than invented (D425).
+
+    engineVersion 0.332.0 → **0.333.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.333.0";
 
 export type {
   ApplyResult,

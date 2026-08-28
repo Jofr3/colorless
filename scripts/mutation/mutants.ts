@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5675,7 +5675,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.332.0";',
+    find: 'export const engineVersion = "0.333.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19147,5 +19147,91 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/preDamageRefusal.test.ts",
       "packages/engine/src/preDamageFamily.test.ts",
     ],
+  },
+  // ── D431 — the prize taken WITHOUT a Knock Out: the compound anchor, the two ops in
+  //    printed order, the stage's SEAT and COUNT, its POSITION in the attack tail, and
+  //    the §14 win check the position makes reachable. Every row below is silent in the
+  //    coverage census by construction: the sentence stays BUILT under all nine, so
+  //    `BUILT.attack` reads 1,460 either way and only a driven board can tell them apart.
+  {
+    id: "D431-anchor-wants-a-period-joiner",
+    decision: "D431",
+    what: "The anchor is transcribed with the PERIOD joiner every neighbouring compound in this file uses (`SELF_DISCARD_ALL_THEN_REDUCTION`, `SELF_DISCARD_ONE_THEN_DEFENDER_LOCK`, `SELF_DISCARD_ALL_THEN_HAND_LOCK` all spell `Pokémon\\. `), so the printed `, and` form stops deriving and all THREE printings fall to the loud `ATTACK_EFFECT_SKIPPED` path. A neighbour's real spelling copied verbatim — D190b's rule for what a mutant should be — and the one an author writing this anchor from the family above is most likely to produce",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard all Energy from this Pokémon, and take a Prize card\\.$/;",
+    replace: "  /^Discard all Energy from this Pokémon\\. Take a Prize card\\.$/;",
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-anchor-templates-the-count",
+    decision: "D431",
+    what: "🛑 THE DEFECT THE FIELD-FREE OP EXISTS TO REFUSE. The literal `a` becomes a `(a|\\\\d+)` class, so *\"…and take 2 Prize cards.\"* — a string NO printing carries — resolves, and resolves to the SAME one-prize program, because the op has no count to carry the capture into. That is D190b's wrong-but-plausible program: a template over a population of ONE, authoring a card the catalog does not print and then getting it wrong. The near-miss rung in §2 is the only thing that can see it; every board-driving rung passes",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Discard all Energy from this Pokémon, and take a Prize card\\.$/;",
+    replace: "  /^Discard all Energy from this Pokémon, and take (?:a|\\d+) Prize cards?\\.$/;",
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-arm-drops-the-prize",
+    decision: "D431",
+    what: "🛑 SILENT IN EVERY CENSUS, AND THE MOST PLAUSIBLE MISTAKE HERE. The arm returns the SHIPPED discard-all program alone — byte-identical to arm 9's output, which is exactly what an author re-pointing the existing anchor at the compound would write and then forget to finish. The sentence still counts as BUILT (`resolvedByAnyReader` is true, `BUILT.attack` still reads 1,460), no `ATTACK_EFFECT_SKIPPED` is filed, the Energy still goes to the pile, and the player is simply never offered the prize the card promises them",
+    file: "packages/engine/src/effects.ts",
+    find: '      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n      { op: "takePrize" },\n    ];\n  }',
+    replace: '      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n    ];\n  }',
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-arm-drops-the-discard",
+    decision: "D431",
+    what: "The other half of the compound goes missing: the prize is taken and the printed COST is never paid, so the attacker keeps every Energy on the wheel and takes a card for free. The mirror of the row above, and the reason both halves are asserted on ONE board in §4 rather than in two `it`s — an assertion that reads only the prize cannot see this, and an assertion that reads only the discard cannot see the other",
+    file: "packages/engine/src/effects.ts",
+    find: '      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n      { op: "takePrize" },\n    ];\n  }',
+    replace: '      { op: "takePrize" },\n    ];\n  }',
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-arm-reverses-printed-order",
+    decision: "D431",
+    what: "The two ops are emitted in the wrong printed order — the prize queued before the cost is paid. Both still happen and the BOARD ends up identical, so only the EVENT ORDER separates the builds: `PRIZES_OWED` before `ENERGY_DISCARDED` instead of after. It is a real defect rather than a cosmetic one because the sentence prints the cost first and a player answering the prize prompt would be doing so with the Energy still attached. Arm 9b's own comment (*\"the cost, first, because that is the printed order\"*) is the rule this breaks",
+    file: "packages/engine/src/effects.ts",
+    find: '      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n      { op: "takePrize" },\n    ];\n  }',
+    replace: '      { op: "takePrize" },\n      { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: "all" },\n    ];\n  }',
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-take-prize-wrong-seat",
+    decision: "D431",
+    what: "🛑🛑 THE DEFECT NO CENSUS CAN SEE, AND THE REASON THIS SLICE IS AN AUDIT. Every OTHER producer of a `takePrizes` stage is `flow.ts`'s `knockOut`, which is handed `otherSeat(koedSeat)` — so \"this stage's seat is the seat across the table from the subject\" has been true of every stage this engine ever queued, by accident rather than by rule. An author reading the shipped producers and generalising writes `otherSeat(ctx.seat)` here and hands the OPPONENT a prize on every board. The sentence still derives, the stage still resolves, the log still files `PRIZES_OWED` and `PRIZES_TAKEN`, `BUILT.attack` still reads 1,460 — and the game is being lost by the wrong player",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };',
+    replace: '  const prize: PendingStage = { kind: "takePrizes", seat: otherSeat(ctx.seat), count: 1 };',
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-take-prize-takes-two",
+    decision: "D431",
+    what: "The count is 2 rather than the printed `a`. It is the plausible transcription slip for this family — an `ex` Knock Out is worth two and `prizeValueOf` is the neighbouring producer's spelling — and it is invisible to every structural check: the stage shape is legal, the phase carries the count faithfully, both HUDs render \"Take 2 prize cards\", and `advance`'s clamp keeps it from ever throwing. Only counting the row before and after can see it, which is why §4 asserts the whole `PRIZES_TAKEN` payload rather than that a prize was taken",
+    file: "packages/engine/src/interpreter.ts",
+    find: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };',
+    replace: '  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 2 };',
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-stage-appended-not-spliced",
+    decision: "D431",
+    what: "🛑 THE ORDERING DEFECT, AND THE BUILD AN AUTHOR WRITES FIRST. The stage is APPENDED to `state.pending` instead of spliced ahead of the attack's queued tail, so the prize is taken AFTER `attackEpilogue` — i.e. after the §8.1 Knock Out sweep, after `TURN_ENDED` and after the Checkup. On a quiet board the prize still arrives and only the queue order and the event order differ; on the board where the same attack Knocks the Defender Out, the §8.1 prize is now taken FIRST and the effect's second, which reverses the printed order; and on the last-prize board the game ends through the KO instead of through the effect, with a different event stream. `EffectOp` appliers returning a `GameState` can reach `pending` at all only because `reactToAttackDamage` proved it, and that function APPENDS on its `-1` branch — so the wrong half of the shipped precedent is right there to copy",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return {\n    ...state,\n    pending:\n      tail === -1\n        ? [...state.pending, prize]\n        : [...state.pending.slice(0, tail), prize, ...state.pending.slice(tail)],\n  };",
+    replace: "  return { ...state, pending: [...state.pending, prize] };",
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  {
+    id: "D431-prize-resolution-drops-the-win-check",
+    decision: "D431",
+    what: "🛑 §14 IS NOT EVALUATED WHEN A PRIZE IS TAKEN. `resolvePrizesAndResume` is the ONE point where taking prizes decides the game (D329 lifted it here precisely so the action handler and `advance`'s forced auto-resolve cannot drift), and this row deletes it: the row empties, the tail resumes, and the turn simply passes to a player who has already lost. It is filed under D431 rather than under §8.1's own decision because THIS slice is what makes the line reachable without a Knock Out — until now every prize taken was a KO's, so the check was only ever exercised from one direction. ⚠️ The line is SHARED, so several KO suites would also redden; `takePrizeAttack.test.ts` §6 is named because it is the one that reddens for the NON-KO reason, which is the property under test",
+    file: "packages/engine/src/flow.ts",
+    find: "  const next = popStage(resolveTakePrizes(state, seat, indices, events));\n  const outcome = evaluateWin(next);\n  if (outcome !== null) return finishGame(next, outcome, events);\n  return advance(next, events);",
+    replace: "  const next = popStage(resolveTakePrizes(state, seat, indices, events));\n  return advance(next, events);",
+    expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
   },
 ];

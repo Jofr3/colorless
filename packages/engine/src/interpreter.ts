@@ -2928,6 +2928,13 @@ function stepOp(
         (ref) => doomBodyAt(state, ref, koByEffectMarker(state.turn)),
         knockOutChosenNote(op),
       );
+    case "takePrize":
+      // 🆕🆕 D431 — §8.1's Prize, reached WITHOUT a Knock Out: the first producer
+      // of a `takePrizes` stage in this engine that is not `knockOut`. The op queues
+      // the decision and does nothing else — `advance` (flow.ts) owns the clamp, the
+      // forced auto-resolve and the §14 win check. See `queueTakePrize` below for the
+      // seat, the queue POSITION and the closed-world audit that position rests on.
+      return { done: queueTakePrize(state, ctx) };
     case "discardStadium":
       // 🆕🆕 D380 — the printed *"Discard a Stadium in play."* It is the THIRD op in
       // this file that can change a body's MAXIMUM without touching its damage (a
@@ -9225,6 +9232,96 @@ function discardStadium(state: GameState, events: GameEvent[]): GameState {
   // The zone is cleared LAST, off `next`, so the pile update and the vacancy are one
   // reduction — nothing can observe a Stadium that is in neither place.
   return { ...next, stadium: null };
+}
+
+/** 🆕🆕 **D431 — §8.1's PRIZE, QUEUED BY AN ATTACK'S EFFECT INSTEAD OF BY A KNOCK
+    OUT.** *"…and take a Prize card."* This function moves no card: it inserts the
+    SHIPPED `{ kind: "takePrizes" }` `PendingStage` and lets `advance` (flow.ts) do all
+    of it — clamp to what is left, park on `ko:takePrizes` or auto-resolve a forced
+    pick, emit `PRIZES_OWED` / `PRIZES_TAKEN`, and run the §14 check BEFORE the tail
+    resumes. Nothing here re-implements any of that; D329 lifted the §14 evaluation to
+    a single point on purpose, and a second one is how two answers start disagreeing.
+
+    🛑 **THE SEAT IS `ctx.seat` — THE PLAYER WHOSE CARD PRINTED THE SENTENCE.** Every
+    other producer of this stage is `knockOut`, which is handed `otherSeat(koedSeat)`,
+    so the stage's `seat` has always meant "the player who did NOT lose the body".
+    Reading that as an invariant and writing `otherSeat(ctx.seat)` here would hand the
+    OPPONENT the prize on every board — a defect no census and no coverage figure can
+    see, because the sentence would still be BUILT and the stage would still resolve.
+    It is a mutant row (`D431-take-prize-wrong-seat`).
+
+    🛑 **THE CLOSED-WORLD AUDIT, BECAUSE THIS IS THE FIRST PRIZE WITHOUT A KNOCK OUT
+    (D425/D414).** Every consumer of the `takePrizes` stage was read for facts it
+    DERIVES rather than READS, and the enumeration is `grep -rn '"takePrizes"'` over
+    every `.ts`/`.tsx` outside `node_modules` — **15 hits, all read**, not the four the
+    slice was priced with:
+      · `flow.ts` `knockOut` ×2 — the two PRODUCERS, untouched;
+      · `flow.ts` `advance` — reads `stage.seat` and `stage.count`, derives nothing;
+      · `flow.ts` `collectKnockOutPass` and `tiedOverTheBatch` — both quantify over the
+        stages of THEIR OWN batch, never over `state.pending`, so a stage this op
+        queued is invisible to them by construction (and is already RESOLVED by the
+        time `attackEpilogue` runs it, which is what the splice below guarantees);
+      · `attack.ts` `takePrizes` — cross-checks the head stage against the phase and
+        reads `seat`/`count` off it;
+      · `types.ts`, `actions.ts`, `phaseView.ts` ×2, `redact.ts`, `projection.ts`,
+        `GameHud.tsx` ×2, `OnlineHud.tsx` — counts and seats, carried through.
+    **NOTHING infers "a KO happened", "a body left play" or "the other seat lost a
+    Pokémon" from the presence of this stage.** The nearest thing to a derivation is
+    `phaseView.ts`'s `koParkActiveSeat`, which reads `state.pending` to decide whether
+    a ko:* park sits INSIDE a turn — and it already names `attackEpilogue`, the stage
+    this park is spliced in front of, for the effect-program case. So it answers
+    "inside the attacker's turn" here, which is the truth. Driven, not assumed, in
+    `takePrizeAttack.test.ts` §7.
+
+    🛑 **SPLICED AHEAD OF THE ATTACK'S QUEUED TAIL, NOT APPENDED.** `attack.ts` queues
+    `[damagedTrigger?, koToolTrigger?, attackEpilogue]` BEFORE it runs the program, so
+    an append would take this prize AFTER the §8.1 Knock Out sweep and after the turn
+    had ended. The position is not a preference: **every other op in this file finishes
+    its work synchronously — i.e. before ANY of those three stages runs — and this one
+    is a stage only because WHICH face-down prize is a decision a player must make.**
+    So it goes where the work would have happened had it needed no answer: in front of
+    the whole tail. (`reactToAttackDamage` splices for a different reason — its stage
+    must precede a Knock Out it is printed to survive — and in front of a two-member
+    set; the shapes are deliberately not shared.)
+
+    ⚠️ **WHICH MAKES THE ORDER AGAINST A KNOCK OUT FROM THE SAME ATTACK EXPLICIT, AND
+    IT IS §8.1's OWN.** An attack that prints this clause AND Knocks the Defender out
+    queues **two** `takePrizes` stages: this one, then the sweep's from inside
+    `attackEpilogue`. They are not one batch and must not be merged — this prize is
+    step 4 of the attack, which PRECEDES the Knock Out check, while the sweep's prize
+    is the Knock Out's own. So printed order and §8.1 order agree, the attacker answers
+    two prompts in that sequence, and if the FIRST one empties the row the game ends
+    before the second is ever offered (`resolvePrizesAndResume`'s win check). Driven in
+    `takePrizeAttack.test.ts` §5.
+
+    ⚠️ **WITH NO TAIL QUEUED THE APPEND IS THE ANSWER, AND IT IS UNREACHABLE TODAY.**
+    The op's only producer is `deriveAttackEffect`'s D431 arm, which runs only from
+    `attack()`, so the `-1` branch needs an Ability or Trainer program carrying this op
+    and none exists. It is written as the honest ending rather than a throw because
+    `settleProgram`'s other routes drain `pending` too, so a future Ability route works
+    unchanged — but the branch is declared as an `unreachable-population` survivor in
+    the mutant corpus rather than tested around (D205).
+
+    ⚠️ **NO CLAMP AND NO WIN CHECK HERE, DELIBERATELY.** A seat with an empty prize row
+    has already won, and `advance`'s own arm pops a stage whose clamped count is 0
+    rather than parking on a row it cannot fill — its comment says so and
+    `takePrizeAttack.test.ts` §6 pins it. Asking either question here would be a second
+    answer to a question that already has exactly one. */
+function queueTakePrize(state: GameState, ctx: EffectContext): GameState {
+  const prize: PendingStage = { kind: "takePrizes", seat: ctx.seat, count: 1 };
+  const tail = state.pending.findIndex(
+    (queued) =>
+      queued.kind === "damagedTrigger" ||
+      queued.kind === "koToolTrigger" ||
+      queued.kind === "attackEpilogue",
+  );
+  return {
+    ...state,
+    pending:
+      tail === -1
+        ? [...state.pending, prize]
+        : [...state.pending.slice(0, tail), prize, ...state.pending.slice(tail)],
+  };
 }
 
 /** The `returnBenched` pick prompt, in the printed card's own words minus its

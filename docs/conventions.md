@@ -1122,6 +1122,48 @@ itself is an unbounded loop inside a Durable Object request — not a failing te
 hang. **Before adding an op that can name another op's source, ask whether the
 source set can contain the op itself, and what bounds it.**
 
+## A brief that supplies the list pre-empts the audit (D431)
+
+D431's brief commissioned a closed-world audit of every consumer of a pending
+stage — and then listed **4** of the **15** sites, omitting exactly the eleven
+consumers the audit was for. The conclusion happened to survive, but the brief had
+already answered the question it was asking.
+
+**Supply the PATTERN, not the answers.** If you list sites at all, state the count
+and say you read every hit; a partial list handed to someone told to audit reads
+as the audit's scope.
+
+## A sentence true of every existing case reads as a law (D431)
+
+Four op doc blocks state that an interpreter op *"returns a `GameState` and cannot
+reach `pending`"*. `GameState` **contains** `pending`, and a sibling op in the same
+file has spliced into it for a long time. Each sentence is true *of its own op*;
+read together they assert a type-level constraint that does not exist.
+
+**When you rely on something several comments assert, check whether it is a
+property or a habit** — a property is enforced by a type or a test, a habit is
+merely what every case has happened to do so far. This is the same shape as D430's
+reasoning-that-rots, arriving through repetition rather than through time.
+
+## A clean audit is a finding (D431)
+
+D431 audited every consumer of the `takePrizes` stage for KO assumptions and found
+none. That is worth recording rather than dropping, precisely because D425 found
+the opposite one event over: a consumer deriving a damage row's dealer from the
+victim's seat, correct for every producer by accident. **A negative result about a
+hazard you had specific reason to expect is evidence about the design, not an
+absence of news.**
+
+## Sibling rungs go quiet, not red (D431)
+
+Vitest stops at the first failure in a file, so when one rung of a repeated pattern
+breaks, its siblings are never evaluated. All **eleven** nested chains in
+`opponentResistanceBonus.test.ts` needed a front term and only one reddened.
+
+**After fixing the rung that failed, step every sibling and re-run.** A green suite
+following a one-rung fix is not evidence the round was complete — it is evidence
+that the runner stopped early.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

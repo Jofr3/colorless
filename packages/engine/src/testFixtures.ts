@@ -13409,6 +13409,72 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D431 — the PRIZE-TAKING attacker.** SYNTHETIC BY NECESSITY: the
+      sentence has **3 legal printings** and this checkout has no D1, so the carriers
+      cannot be resolved and are stated unresolved rather than invented (D425). The
+      STRING is `censusAttackCorpus.ts` row 108 byte for byte — no paraphrase (D183).
+
+      FOUR indices, each present for a claim no other index can make:
+        • **0 "Prize Drain"** ({C}{C}, **30**) — the sentence with printed damage small
+          enough that nothing dies. The ordinary board.
+        • **1 "Deep Drain"** ({C}{C}{C}, **130**) — the SAME sentence at a damage that
+          Knocks a 120-HP body Out, which is the only way to reach the DOUBLE
+          `takePrizes` case (this op's stage, then §8.1's) on one attack.
+        • **2 "Dry Drain"** ({C}, **no `damage` key**) — the SAME sentence with no §8.5
+          hit at all. The prize is an effect, not a consequence of damage, and an
+          attack that deals nothing still takes it.
+        • **3 "Idle Drain"** ({C}, 10, *"Each player draws 3 cards."*) — the
+          `ATTACK_EFFECT_SKIPPED` CONTROL. Its sentence is claimed by no reader (D427
+          used the same string for the same job), so a suite asserting "no SKIPPED row"
+          on indices 0–2 has a neighbouring index that DOES emit one — otherwise the
+          assertion passes on an engine that never emits the row at all.
+        • **4 "Pick Drain"** ({C}, 10, *"Discard an Energy from this Pokémon."*) — the
+          PARKING sibling, and the only route to the version question. `takePrize` is an
+          `EffectOp` and an `EffectOp` is PERSISTED (`phase.cont.rest`), but THIS slice's
+          own program never parks: `count: "all"` resolves inline. So the v26 replay needs
+          an attack on the same body that DOES park, whose persisted continuation a test
+          can rewrite. Two Energy of DIFFERENT types on the Active is what makes the
+          singular discard a real decision (see `SELF_DISCARD_ONE`'s own arm).
+
+      No Weakness, no Resistance, no Ability, retreat 0: every number in the suite is
+      the printed one, so a wrong prize cannot hide behind arithmetic. */
+  "fix-prizewheel": battler("fix-prizewheel", {
+    name: "Fixwheel",
+    types: ["Colorless"],
+    hp: 200,
+    retreat: 0,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Prize Drain",
+        damage: 30,
+        effect: "Discard all Energy from this Pokémon, and take a Prize card.",
+      },
+      {
+        cost: ["Colorless", "Colorless", "Colorless"],
+        name: "Deep Drain",
+        damage: 130,
+        effect: "Discard all Energy from this Pokémon, and take a Prize card.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Dry Drain",
+        effect: "Discard all Energy from this Pokémon, and take a Prize card.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Idle Drain",
+        damage: 10,
+        effect: "Each player draws 3 cards.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Pick Drain",
+        damage: 10,
+        effect: "Discard an Energy from this Pokémon.",
+      },
+    ],
+  }),
   /** 🆕🆕 **D427 — THE W/R PAIR, IDENTICAL BUT FOR ONE ROW.** `fix-drainwall` is 300
       HP and prints no Weakness, no Resistance, no Ability and no attack;
       `fix-drainweak` is the SAME 300 HP with `×2 Fire` added and nothing else. A
@@ -21358,4 +21424,30 @@ export const DEFENDER_STATUS_PAIR_DECK = deckOf({
   "fix-grass-energy": 4, // {G} — Poisonous Ploy's typed symbol
   "fix-fighting-energy": 2, // {F} — Venoshock's typed symbol
   "fix-energy": 6, // Colorless Basic — Stun Poison's {C} and Poisonous Ploy's
+});
+
+/** 🆕🆕 **D431 — the prize-taking attack's own deck.** A NEW deck and not a
+    widened neighbour, on D412's rule: adding ONE card to a shared `*_DECK` reddened
+    three of D409's boards, because deck composition is load-bearing for every suite
+    seeded off it. Nothing else reads this list.
+
+      • `fix-prizewheel` — the attacker. Indices 0 (30), 1 (130), 2 (no damage) all
+        print the D431 sentence; index 3 is the `ATTACK_EFFECT_SKIPPED` control.
+        EIGHT copies because BOTH seats attack in §7 and each needs one in the OPENING
+        HAND — 7 cards off a 60-card list, so four was not enough at every seed.
+      • `fix-wall` (120 HP, no attacks) — the body index 1's 130 Knocks Out, which is
+        the whole of the double-`takePrizes` case.
+      • `fix-titan` (340 HP, NO attacks, no W/R) — the mulligan-free starter, the
+        BENCH the Knocked-Out seat promotes from (without it the KO board ends in a
+        §14.2 loss and the second prize prompt is never reached), and the defender
+        every unmodified number is measured against.
+      • `fix-energy` — Colorless Basic. Every cost on this list is {C}-only, and the
+        count is the slack `attachFromDeck` needs after 7 to hand and 6 to prizes on
+        both seats. */
+export const TAKE_PRIZE_DECK = deckOf({
+  "fix-prizewheel": 8, // the attacker — indices 0 (30), 1 (130), 2 (none), 3 (skip control)
+  "fix-wall": 4, // 120 HP, no attacks — the body index 1's 130 Knocks Out
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, bench, clean defender
+  "fix-energy": 28, // Colorless Basic — every cost here, plus the surgery slack
+  "fix-fire-energy": 4, // {R} — the SECOND energy type index 4 needs to PARK on a choice
 });
