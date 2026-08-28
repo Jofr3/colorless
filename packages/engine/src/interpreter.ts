@@ -47,6 +47,7 @@ import {
   groupShieldedFromAttackEffects,
   hasAttachedEnergy,
   installedAttackDebuffOf,
+  installedNoWeakness,
   installedRecoilOf,
   installedReductionOf,
   koSurvivalClamp,
@@ -1519,6 +1520,9 @@ function stepOp(
       return preventChosenAttack(state, ctx, events);
     case "reduceDamage":
       return { done: reduceDamage(state, op.amount, ctx, events) };
+    // 🆕🆕 D432 — no `op.` read at all, which is the shape of a field-free op.
+    case "installNoWeakness":
+      return { done: installNoWeakness(state, ctx, events) };
     case "weakenDefenderAttacks":
       return { done: weakenDefenderAttacks(state, op.amount, ctx, events) };
     case "installRecoil":
@@ -6373,6 +6377,50 @@ function reduceDamage(
   return withActive(state, ctx.seat, { ...active, damageReduction: { turn, amount: merged } });
 }
 
+/** 🆕🆕 §8.5/§11 (D432) — INSTALL the printed NO-WEAKNESS bar on the CONTROLLER's
+    own Active ("During your opponent's next turn, this Pokémon has no Weakness.",
+    3 legal printings, 1 sentence). `reduceDamage`'s SIBLING and written directly
+    beneath it: same holder resolution ("this Pokémon" is `ctx.seat`'s Active),
+    same absence of a `target` field, same no-park, same `state.turn + 1` stamp.
+
+    THE STAMP IS `state.turn + 1` FOR `reduceDamage`'s REASON VERBATIM — the
+    sentence prints "during your OPPONENT's next turn", declaring an attack ENDS
+    the turn (§5.3), so the turn after the installing one is the opponent's by
+    construction.
+
+    ⚠️ IDEMPOTENT **BY THE STAMP**, WHICH IS `retreatLockedTurn`'s ANSWER AND NOT
+    `reduceDamage`'s `Math.max`. That op merges because it holds a NUMBER and two
+    installs can disagree about it; this record holds only a turn, so a second
+    install in the same turn computes the same number and the write is the value
+    the first one left. The early return is what suppresses the duplicate ROW —
+    announcing a re-install that changed nothing would be announcing a non-event
+    (D140/D146), the same rule `reduceDamage` states one function up. Unreachable
+    off any printing (one attack per turn, and no card prints two of these), so it
+    is constructed and pinned.
+
+    ⚠️ NO `attackEffectRefused` CHECK, AND THAT IS `reduceDamage`'s AND
+    `installRecoil`'s VERDICT AND NOT AN OMISSION. The record lands on the ACTOR's
+    own Active, so there is no opponent-side body a §11 "prevent all effects of
+    attacks done to this Pokémon" could be protecting from it. The §11
+    classification table (preventBlock.test.ts) carries the verdict AND a board
+    that drives it, which is D150's rule.
+
+    ⚠️ AND THE READ IS SOMEWHERE ELSE ENTIRELY, which is the part a successor will
+    want: this function only stamps. Both §8.5 sites that can apply Weakness —
+    `attack.ts`'s main hit and `snipeActive` below — consult the stamp through
+    `installedNoWeakness` (continuous.ts), and a build that widened one of the two
+    passes every board that only swings the other. */
+function installNoWeakness(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const active = state.players[ctx.seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  const turn = state.turn + 1;
+  if (active.noWeaknessTurn === turn) return state;
+  events.push({ type: "WEAKNESS_REMOVED", seat: ctx.seat, uid });
+  return withActive(state, ctx.seat, { ...active, noWeaknessTurn: turn });
+}
+
 /** §8.5/§11 (D149) — INSTALL the printed ATTACK-DAMAGE DEBUFF on the DEFENDING
     Pokémon ("During your opponent's next turn, the Defending Pokémon's attacks do
     {N} less damage (before applying Weakness and Resistance).", 5 printings across
@@ -7350,7 +7398,27 @@ function snipeActive(
   // Weakness, unless nulled by `ignoreWR` (Feint Attack) OR by a "your Pokémon
   // have no Weakness" aura on the sniped seat (Florges "Blooming Garden");
   // Resistance still applies to a Blooming-Garden-protected Active.
-  const noWeakness = ignoreWR || attacker === null || seatRemovesWeakness(state, opponent);
+  //
+  // 🆕🆕 D432 — …OR by the target's own installed bar ("During your opponent's
+  // next turn, this Pokémon has no Weakness."), the THIRD null path on this
+  // question and the THIRD store behind it (continuous.ts `installedNoWeakness`
+  // tabulates all three). THIS SITE IS DRIVEN ON ITS OWN BOARD rather than
+  // inherited from attack.ts's: the two reads are separate expressions in separate
+  // files, and a build that widened one and not the other is invisible to any
+  // suite that only swings the main hit. `D432-snipe-bar-not-read` is exactly that
+  // build.
+  //
+  // ⚠️ ORDER: `attacker === null` is LOAD-BEARING WHERE IT SITS, unlike the free
+  // permutation at the main-hit site. TypeScript's aliased-condition narrowing is
+  // what lets `weaknessOf(attacker.card, …)` on the next line compile at all, so
+  // the null test must remain an operand of THIS `const`. The new disjunct is
+  // appended rather than inserted for that reason, and it needs no guard of its
+  // own: `target` is non-null from the early return above.
+  const noWeakness =
+    ignoreWR ||
+    attacker === null ||
+    seatRemovesWeakness(state, opponent) ||
+    installedNoWeakness(state, target.active);
   const weakness = noWeakness ? null : weaknessOf(attacker.card, target.card);
   const resistance =
     ignoreWR || attacker === null ? null : resistanceOf(attacker.card, target.card);
@@ -9989,6 +10057,15 @@ export function switchInto(
     attackBlock: null,
     attackLockedTurn: null,
     damageReduction: null,
+    // 🆕🆕 D432 — and the NO-WEAKNESS bar's story here is the reduction's
+    // above it verbatim: the window is the OPPONENT's turn, so the only player who
+    // can move the body inside it is the opponent — a Boss's Orders played on that
+    // very turn drags the unweakened body off the spot and the bar goes with it.
+    // ⚠️ AND IT IS THE ONE MEMBER OF THIS SET WHOSE CLEAR CANNOT BE WITNESSED BY A
+    // NUMBER, because §8.5 applies Weakness only to the ACTIVE: once the body is
+    // benched there is no Weakness step left for the bar to have removed. Pinned
+    // structurally off the field instead (`noWeaknessBar.test.ts`).
+    noWeaknessTurn: null,
     // D149 — and this is the FORCED half of the debuff's story: a Boss's Orders
     // played by the DEBUFFED player on their own turn (the window) pulls the body
     // off the spot and the debuff with it, and so does the opponent dragging it up

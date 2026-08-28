@@ -941,6 +941,15 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       // not that turn — so all three routes carry this field and all three must
       // shed it. `99` is the same not-this-turn sentinel the two lines above use.
       retreatLockedTurn: 99,
+      // 🆕🆕 D432 — the NO-WEAKNESS bar's stamp, and it is `retreatLockedTurn`'s
+      // case one line up verbatim: a STAMP rather than a flag, so `99` (not this
+      // turn) blocks no route and all three carry it. ⚠️ IT IS ALSO THE ONE FIELD
+      // IN THIS SET WHOSE CLEAR NO NUMBER COULD WITNESS — §8.5 applies Weakness
+      // only to the ACTIVE, so after every one of these three routes the body is
+      // either benched or a different Pokémon and there is no Weakness step left
+      // for the bar to have removed. `stillSet` reading the FIELD is the whole
+      // witness, which is exactly what this sweep is for.
+      noWeaknessTurn: 99,
     };
   }
 
@@ -955,6 +964,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     if (pokemon.attackBlock !== null) set.push("attackBlock");
     if (pokemon.attackLockedTurn !== null) set.push("attackLockedTurn");
     if (pokemon.retreatLockedTurn !== null) set.push("retreatLockedTurn");
+    if (pokemon.noWeaknessTurn !== null) set.push("noWeaknessTurn"); // 🆕🆕 D432
     return set;
   }
 
@@ -1044,6 +1054,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       "attackBlock",
       "attackLockedTurn",
       "retreatLockedTurn",
+      "noWeaknessTurn", // 🆕🆕 D432
     ]);
   });
 });

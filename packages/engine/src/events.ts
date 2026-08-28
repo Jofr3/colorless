@@ -498,6 +498,33 @@ export type GameEvent =
       member to say something the install row above already put in the reader's
       hands (D142's argument for `prevented`, on the number instead of the flag). */
   | { type: "DAMAGE_REDUCTION_APPLIED"; seat: Seat; uid: string; amount: number }
+  /** 🆕🆕 §8.5/§11 (D432) — an attack INSTALLED a durated NO-WEAKNESS bar on
+      the CONTROLLER's own Active ("During your opponent's next turn, this Pokémon
+      has no Weakness."). ACTOR-voiced by construction, exactly as
+      DAMAGE_REDUCTION_APPLIED is: the op has no defender arm, so the row always
+      renders under the INSTALLER's name and may therefore keep the PRINTED words
+      "during your opponent's next turn" — which are true only under that name
+      (ATTACK_DEBUFF_APPLIED's whole argument, arriving at the answer instead of
+      the exception).
+
+      ⚠️ **NO `amount`, AND NO FIELD AT ALL BEYOND THE BODY — WHICH IS WHY THIS ROW
+      IS NOT DAMAGE_REDUCTION_APPLIED's SHAPE.** Every durated row above carries a
+      number *because the number IS the rule*. Here the rule is the ABSENCE of a
+      step, so there is nothing for a number to report and a `0` would be a lie in
+      the shape of a fact.
+
+      No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
+      expires by arithmetic, with no boundary walk to announce it from), and the
+      EARLY endings — retreating, being Switched out, evolving — are already told
+      by their own POKEMON_SWITCHED / RETREATED / POKEMON_EVOLVED row.
+
+      AND NO ROW WHEN IT BITES — but the biting is still fully reported, and by a
+      field rather than by silence: `DAMAGE_DEALT.weakness` is `null` on exactly
+      the hit the bar shortened, where the same board without the bar carries
+      `{ op: "multiply", amount: 2 }`. That is the one place in this family where
+      the "no row when it fires" rule (D140/D146) is backed by a DIFFERENCE a
+      reader can see rather than by an argument. */
+  | { type: "WEAKNESS_REMOVED"; seat: Seat; uid: string }
   /** §8.5/§11 (D149) — an attack INSTALLED a durated ATTACK-DAMAGE DEBUFF on the
       DEFENDING Pokémon ("During your opponent's next turn, the Defending
       Pokémon's attacks do {N} less damage (before applying Weakness and

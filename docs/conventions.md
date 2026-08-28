@@ -1076,9 +1076,19 @@ way out.
 ## Do not roll your own instrument (D430 follow-up)
 
 **A hand-rolled instrument competing with a guarded one loses silently.**
-`censusAtHead.test.ts:6218` ships the canonical unbuilt-residue predicate and pins
-its outputs (`rawUnbuiltSentences` 209, `residueSentences` 184, `unbuiltAttack`
-275). It is tested; a script in `$CLAUDE_JOB_DIR/tmp` is not. This run quoted a
+`censusAtHead.test.ts` ships the canonical unbuilt-residue predicate (the
+`residueSentences` filter) and pins its outputs — `rawUnbuiltSentences`,
+`residueSentences` and `unbuiltAttack`. It is tested; a script in
+`$CLAUDE_JOB_DIR/tmp` is not.
+
+⚠️ **THE FIGURES ARE DELIBERATELY NOT QUOTED HERE ANY MORE (D432).** This block
+used to say *"209 / 184 / 275"* and a line number; by D431's head the file had
+moved and the numbers were **208 / 183 / 272**, and D432 moved them again to
+**207 / 182 / 269**. A residue figure copied into prose rots on the next slice by
+construction — this note is about not trusting a copy, so it may not BE one.
+**Read them off the suite** (`grep -n 'rawUnbuiltSentences.length' packages/engine/src/censusAtHead.test.ts`),
+never off this paragraph. That is D418's move applied to this doc: remove the
+premise instead of maintaining it. This run quoted a
 hand-rolled figure for five slices and it was wrong every time — most recently
 191/285 against a true 184/275, from two errors that partly cancelled:
 
@@ -1163,6 +1173,59 @@ breaks, its siblings are never evaluated. All **eleven** nested chains in
 **After fixing the rung that failed, step every sibling and re-run.** A green suite
 following a one-rung fix is not evidence the round was complete — it is evidence
 that the runner stopped early.
+
+## A wrong citation is worse than a missing one (D432)
+
+D432's brief attributed `retreatLockedTurn` to D421. It is **D412's** — and that
+was not bookkeeping. **The two decisions took opposite roads on exactly the
+question the slice turned on**: D412 added a REQUIRED key and bumped
+`MATCH_RECORD_VERSION`; D421 added an OPTIONAL key and defended it by making the
+loss loud. Citing the wrong one pointed at the wrong answer for the only real
+decision in the slice.
+
+**A missing citation makes a builder look; a wrong one makes them confident.**
+Before citing a precedent for a decision, check which way that precedent actually
+went — `git log -S "<field>" -- <path>` settles it in one command.
+
+## The optional-key mitigation needs a record with other fields (D432)
+
+D421's rule — *choose the rest of the record so that losing the key is
+detectable* — is **unavailable when the stored fact is a single number with
+nothing beside it.** D432's bar carries no amount, no filter and no narrowing, so
+dropping the key reproduces the previous engine exactly: the effect silently does
+not happen and the board looks normal.
+
+That is the benign soft landing `MATCH_RECORD_VERSION` exists to refuse (D124).
+**When a record has no rest, required is the only honest choice, and the bump is
+the price of honesty.** Do not reach for optional because it is free.
+
+## Line numbers in a brief are claims (D432)
+
+One of four clear sites cited in D432's brief pointed inside an unrelated
+function. A builder following the number rather than the description would have
+edited the wrong code.
+
+**Quote the line's TEXT beside its number**, so a wrong number is self-evident
+rather than authoritative.
+
+## Disjunct order can be load-bearing for a type reason (D432)
+
+At `snipeActive`, `attacker === null` is what admits `attacker.card` on the next
+line, through TypeScript's aliased-condition narrowing. Whether a new disjunct is
+appended or prepended there is a **correctness** question, not a style one.
+
+**When you add a disjunct to an existing condition, check whether any later line
+depends on the narrowing the existing operands provide** — and state which, and
+why, in the code.
+
+## Adding to a swept set re-reads the set (D432)
+
+Three of the four swept clear-set assertions were missing a field that D412 never
+added — drift invisible until someone else's field arrived and the set was read as
+a whole.
+
+**When you add a field to a swept set, re-read the entire set.** Earlier omissions
+do not redden anything on their own; they surface only when the next author looks.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.

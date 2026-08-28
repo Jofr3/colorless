@@ -285,6 +285,14 @@ describe("placement", () => {
       // `makeInPlay` without a thought about what it means at placement fails
       // here first.
       damageReduction: null,
+      // 🆕🆕 …and no attack-installed NO-WEAKNESS bar (D432), read the same way a
+      // sixth time: `installedNoWeakness` compares the stamp to `state.turn`, so a
+      // fresh body is Weak rather than un-Weak on turn 0. ⚠️ AND THIS `toEqual` IS
+      // WHY THE FIELD IS `number | null` RATHER THAN `number | undefined`: an
+      // exact object comparison tells "absent" from "present and null", which is
+      // the very distinction `MATCH_RECORD_VERSION` 26 -> 27 exists to enforce at
+      // the storage boundary.
+      noWeaknessTurn: null,
       attackDamageDebuff: null,
       // …and no ARMED recoil (D152), read the same way a fifth time:
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body

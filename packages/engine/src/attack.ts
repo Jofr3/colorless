@@ -38,6 +38,7 @@ import {
   effectiveRetreatCost,
   firstTurnAttackBanned,
   installedAttackDebuffOf,
+  installedNoWeakness,
   installedRecoilOf,
   installedReductionOf,
   koSurvivalClamp,
@@ -2199,8 +2200,36 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // costs a `||` and no structure: Blooming Garden nulls the DEFENDER's Weakness
     // from its own side of the table, this nulls it from the ATTACKER's, and both
     // arrive at the same "there is no modifier at this step" answer.
+    //
+    // 🆕🆕 **D432 — …or unless the DEFENDER's own previous attack installed the
+    // bar** ("During your opponent's next turn, this Pokémon has no Weakness.",
+    // 3 legal printings). A THIRD null path on the same ternary, and the THIRD
+    // distinct STORE behind it: D192's is a parse of the attacker's sentence,
+    // Blooming Garden's is a seat-wide catalog aura, and this one is a turn stamp
+    // on the single body (continuous.ts `installedNoWeakness`, which tabulates the
+    // three). Resistance is untouched by all three of the defender-side ones.
+    //
+    // ⚠️ **THE ORDER OF THE THREE DISJUNCTS IS FREE AND IS SAID SO RATHER THAN
+    // LEFT TO BE RE-DERIVED.** All three operands are pure, total and
+    // side-effect-free, none narrows a value another dereferences, and `||` is
+    // commutative over booleans — so any permutation computes the same `weakness`.
+    // (That is NOT true at the twin site: `snipeActive`'s chain carries an
+    // `attacker === null` operand that TypeScript's aliased-condition narrowing
+    // uses to admit `attacker.card` on the next line, so that one operand is
+    // load-bearing wherever it sits. The mutant `D432-snipe-bar-not-read` is the
+    // build that drops this line's twin and keeps this one.) They are written
+    // cheapest-first only as a courtesy: this one is a field read and an integer
+    // compare, the aura scans a seat's bodies.
+    //
+    // 🛑 **`defender` AND NOT `declaredDefender`** — the D428/D429 rebind. The bar
+    // is stamped on a PREVIOUS turn so nothing in the pre-damage seam can move it
+    // today, which makes the two spellings equal RIGHT NOW; the live binding is
+    // used anyway, because "equal today" is how the stale-local defect gets
+    // written, and the seam is one op away from being able to move a body.
     const weakness =
-      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)
+      damageSuppression?.weakness === true ||
+      seatRemovesWeakness(next, defenderSeat) ||
+      installedNoWeakness(next, defender)
         ? null
         : weaknessOf(attacker, defenderCard);
     // D192 — Resistance has no defender-side null path (nothing in the pool prints

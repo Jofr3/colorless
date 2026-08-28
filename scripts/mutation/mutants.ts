@@ -83,10 +83,19 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D192-weakness",
     decision: "D192",
+    // ⚠️ RE-ANCHORED AT D432, NOT SKIPPED: that slice added a THIRD disjunct
+    //    (`installedNoWeakness`) to this ternary and reflowed it across three lines, so the
+    //    old one-line `find` stopped occurring. 🛑 THE CLAIM IS UNCHANGED AND THAT IS THE
+    //    POINT (D414's re-transcription rule): the row still deletes D192's PARSE half and
+    //    leaves the other two null paths standing, so what it proves is still "the attacker's
+    //    printed clause is what nulls Weakness here", not "something nulls Weakness". The
+    //    D432 disjunct is deliberately KEPT in the `replace` - dropping it too would make
+    //    this row a duplicate of `D432-main-hit-bar-not-read` and quietly retire the
+    //    discrimination D192 paid for (D418's second half).
     what: "attack damage suppression stops nulling Weakness (the ×2 comes back)",
     file: "packages/engine/src/attack.ts",
-    find: "damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)",
-    replace: "seatRemovesWeakness(next, defenderSeat)",
+    find: "      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)",
+    replace: "      seatRemovesWeakness(next, defenderSeat) || installedNoWeakness(next, defender)",
     expectKilledBy: ["packages/engine/src/damageSuppression.test.ts"],
   },
   {
@@ -5165,7 +5174,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5673,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5675,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.333.0";',
+    find: 'export const engineVersion = "0.334.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10734,10 +10743,24 @@ export const MUTANTS: Mutant[] = [
     //    bonus silently stops existing) AND, on a record saved PARKED mid-attack, an
     //    `attackEpilogue` stage with no `attack` key, which would stamp the attacking body
     //    with `undefined` as an attack name while the record went on looking healthy.
+    // ⚠️ RE-POINTED AGAIN AT D412 (25 -> 26) and NOW AT D432 (26 -> 27), IN THE SAME
+    //    COMMIT AS THE BUMP EACH TIME, with the `replace` TIGHTENED to 26 for D386's reason
+    //    unchanged. The record this row now accepts is a v26 one whose in-play Pokemon carry
+    //    no `noWeaknessTurn` at all - D386's class at D386's address for the sixth time, a
+    //    MISSING REQUIRED FIELD on `InPlayPokemon`, so `installedNoWeakness` reads
+    //    `undefined === state.turn` as FALSE and a resumed board hands the OPPONENT a
+    //    doubled hit on the one turn the protection was bought for. 🛑 AND THE FAILURE IS
+    //    QUIETER THAN D393's OR D394's, WHICH IS THE ARGUMENT FOR THIS ROW MADE A SIXTH
+    //    TIME: this record has NO other field, so there is nothing left over to look wrong -
+    //    the board is byte-for-byte a board on which the attack was never used.
+    // ⚠️ AND `precheck.ts` FOUND IT AT ZERO MATCHES AGAIN, in the same second as the
+    //    bump - the sixth consecutive slice on which the whole-corpus `find` pass paid for
+    //    itself before a sweep ran (D414's rule: any edit to a file the corpus quotes rots a
+    //    row, and a lint fix is only the smallest case of it).
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 26;",
-    replace: "export const MATCH_RECORD_VERSION = 25;",
+    find: "export const MATCH_RECORD_VERSION = 27;",
+    replace: "export const MATCH_RECORD_VERSION = 26;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -19233,5 +19256,138 @@ export const MUTANTS: Mutant[] = [
     find: "  const next = popStage(resolveTakePrizes(state, seat, indices, events));\n  const outcome = evaluateWin(next);\n  if (outcome !== null) return finishGame(next, outcome, events);\n  return advance(next, events);",
     replace: "  const next = popStage(resolveTakePrizes(state, seat, indices, events));\n  return advance(next, events);",
     expectKilledBy: ["packages/engine/src/takePrizeAttack.test.ts"],
+  },
+  // ── D432 — THE INSTALLED "NO WEAKNESS" BAR. Thirteen rows, ONE PER MECHANISM OR
+  //    DECISION rather than one per line, and the SHAPE of the set is the finding:
+  //    the slice installs at ONE address and is READ at TWO, in two different files,
+  //    so the row that matters most is the one-sided build. `D432-snipe-bar-not-read`
+  //    passes every board in §4 of the suite and every census figure in the repo.
+  //
+  //    ⚠ THREE ROWS SHARE ANCHORS INSIDE `installNoWeakness` (the stamp pair and the
+  //    idempotence guard), because the claims those two lines carry are independent:
+  //    WHICH turn the window is, and whether a second install announces itself.
+  //
+  //    ⚠ NO ROW FOR THE FRESH-BODY CLEAR (`makeInPlay`), and the omission is declared
+  //    rather than left as a gap (D205): that literal is a FULL construction, so
+  //    dropping the key yields `undefined` and `installedNoWeakness` answers FALSE —
+  //    which is the correct behaviour for a body that has never been attacked with.
+  //    The defect is a TYPE one and is caught by `setup.test.ts`'s exact `toEqual`
+  //    and by thirteen key-set assertions, none of which a mutation can express.
+  {
+    id: "D432-main-hit-bar-not-read",
+    decision: "D432",
+    what: "\u{1f6d1} THE PRE-SLICE TERNARY, RESTORED. `attack.ts`'s §8.5 Weakness step ignores the installed bar and only consults D192's parse and Blooming Garden's aura, so the record is written, the row is logged, the field survives every §10 clear — and the number does not move. D428's built-but-dead defect at the read end instead of the write end: everything observable except the damage is correct",
+    file: "packages/engine/src/attack.ts",
+    find: "    const weakness =\n      damageSuppression?.weakness === true ||\n      seatRemovesWeakness(next, defenderSeat) ||\n      installedNoWeakness(next, defender)\n        ? null\n        : weaknessOf(attacker, defenderCard);",
+    replace: "    const weakness =\n      damageSuppression?.weakness === true || seatRemovesWeakness(next, defenderSeat)\n        ? null\n        : weaknessOf(attacker, defenderCard);",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-snipe-bar-not-read",
+    decision: "D432",
+    what: "\u{1f6d1} THE ROW A SINGLE-PATH SUITE CANNOT SEE, AND THE REASON §5 OF THE SUITE EXISTS. The disjunct is added to `attack.ts` and NOT to `interpreter.ts`'s `snipeActive`, so the main hit honours the bar and the Active-target snipe doubles straight through it. Every board in §4 passes, every census figure is unmoved, the record and the event and the log row are all correct, and `bun run check` is green: the two reads are separate expressions in separate files and nothing but a board aimed at the second one can tell them apart. This is the defect the brief for this slice named in advance",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const noWeakness =\n    ignoreWR ||\n    attacker === null ||\n    seatRemovesWeakness(state, opponent) ||\n    installedNoWeakness(state, target.active);",
+    replace: "  const noWeakness = ignoreWR || attacker === null || seatRemovesWeakness(state, opponent);",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-stamp-is-this-turn",
+    decision: "D432",
+    what: "The window is the INSTALLING turn rather than the opponent's next one. The printed sentence says \"During your opponent's next turn\", and declaring an attack ENDS the turn (§5.3), so a bar stamped `state.turn` is live only on a turn that is already over — the bar never bites at all. It is the slip an author makes by reading \"this turn\" off the op's own position in the program, and the board looks entirely normal",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 1;\n  if (active.noWeaknessTurn === turn) return state;",
+    replace: "  const turn = state.turn;\n  if (active.noWeaknessTurn === turn) return state;",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-stamp-plus-two",
+    decision: "D432",
+    what: "`state.turn + 2` — the OTHER window this family stamps, copied verbatim from `preventAttackUse` and `preventRetreat`'s self arms two screens up. It is the neighbouring arm's REAL code (D190b) and it is the plausible one, because half the durated ops in this file stamp `+ 2`: the bar then arrives one full round late, protecting on the holder's own turn where Weakness is never consulted. `MATCH_RECORD_VERSION` cannot see it and neither can any census",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 1;\n  if (active.noWeaknessTurn === turn) return state;",
+    replace: "  const turn = state.turn + 2;\n  if (active.noWeaknessTurn === turn) return state;",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-reader-ignores-the-turn",
+    decision: "D432",
+    what: "\u{1f6d1} THE UNBOUNDED BAR. The reader answers \"is a stamp present\" instead of \"is the stamp THIS turn\", so a one-turn protection becomes permanent and nothing ever ends it — the §10 clears still fire, so the only board that can see it is one where the window has PASSED and the body is still Active. That is D421's PRUNE hazard arriving at the read end, and it is the failure mode a stamp-based field exists to prevent (D124)",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return pokemon.noWeaknessTurn === state.turn;",
+    replace: "  return pokemon.noWeaknessTurn !== null;",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-installs-on-the-defender",
+    decision: "D432",
+    what: "\u{1f6d1} THE WRONG SEAT, AND IT IS THE NEIGHBOUR'S REAL CODE. `weakenDefenderAttacks` sits directly beneath this function and resolves its holder as `otherSeat(ctx.seat)` — the two ops are the same `{ turn }`-shaped fact on opposite bodies, and the printed subject (\"this Pokémon\" versus \"the Defending Pokémon\") is the ONLY thing that decides which. Copied here, the attacker buys a protection for the very body it just hit, and the §11 classification table stays green because both verdicts turn on the op's own address rather than on which seat it wrote to",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  if (active.noWeaknessTurn === turn) return state;\n  events.push({ type: \"WEAKNESS_REMOVED\", seat: ctx.seat, uid });\n  return withActive(state, ctx.seat, { ...active, noWeaknessTurn: turn });",
+    replace: "  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  if (active.noWeaknessTurn === turn) return state;\n  events.push({ type: \"WEAKNESS_REMOVED\", seat: otherSeat(ctx.seat), uid });\n  return withActive(state, otherSeat(ctx.seat), { ...active, noWeaknessTurn: turn });",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-silent-install",
+    decision: "D432",
+    what: "The record is written and NOTHING is announced. Every other durated installer in this family emits a row — `ATTACK_BLOCK_APPLIED`, `DAMAGE_REDUCTION_APPLIED`, `ATTACK_DEBUFF_APPLIED`, `RECOIL_ARMED`, `ATTACK_BOOSTED`, `RETREAT_BLOCKED` — and a build that forgot this one is invisible to every damage assertion in the suite, because the NUMBER still moves. A player is simply never told a rule changed, which is the loudness D140/D146 make an owed property of unread text and of installed state alike",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  events.push({ type: \"WEAKNESS_REMOVED\", seat: ctx.seat, uid });\n  return withActive(state, ctx.seat, { ...active, noWeaknessTurn: turn });",
+    replace: "  void uid;\n  return withActive(state, ctx.seat, { ...active, noWeaknessTurn: turn });",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-idempotence-guard-dropped",
+    decision: "D432",
+    what: "A second install in the same turn re-announces itself. The write is idempotent BY THE STAMP (the second one computes the same number), so the board is identical either way and only the LOG differs — which is exactly why `reduceDamage` and `preventDamage` suppress their own duplicate rows and say so: announcing a re-install that changed nothing is announcing a non-event (D140/D146). Unreachable off any printing and therefore constructed, which is the honest way to pin an unreachable rule",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (active.noWeaknessTurn === turn) return state;\n  events.push({ type: \"WEAKNESS_REMOVED\", seat: ctx.seat, uid });",
+    replace: "  events.push({ type: \"WEAKNESS_REMOVED\", seat: ctx.seat, uid });",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-evolve-clear-dropped",
+    decision: "D432",
+    what: "The §10 EVOLVE literal (types.ts `placeEvolution`) forgets the new field, so an evolved body keeps a bar its pre-evolution installed. THE FOUR CLEAR LITERALS ARE HAND-KEPT AND NOTHING MAKES THEM AGREE — that is the whole reason this family sweeps the set rather than listing it — and this is the site D147's own doc block calls unreachable-by-construction and writes anyway. The mutation is a DELETION of one line from a spread, so the stale stamp survives",
+    file: "packages/engine/src/types.ts",
+    find: "    // this is one) and pinned STRUCTURALLY rather than by a number.\n    noWeaknessTurn: null,\n",
+    replace: "    // this is one) and pinned STRUCTURALLY rather than by a number.\n",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-forced-switch-clear-dropped",
+    decision: "D432",
+    what: "The §10 FORCED-SWITCH literal (interpreter.ts `switchInto`) forgets the new field, so a body dragged off the Active Spot by a Boss's Orders or a Switch carries its bar to the Bench. This is the REACHABLE half of the clear on this record's window — the opponent owns the turn the bar is live on, so they are the only player who can move the body inside it — and it is the literal three of the four swept clear-set assertions in this repo were still missing `retreatLockedTurn` from when this slice landed",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    // structurally off the field instead (`noWeaknessBar.test.ts`).\n    noWeaknessTurn: null,\n",
+    replace: "    // structurally off the field instead (`noWeaknessBar.test.ts`).\n",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-anchor-drops-the-apostrophe-class",
+    decision: "D432",
+    what: "The anchor spells the possessive with U+0027 alone and loses the `['’]` class every sibling in this family carries. It is the single most-repeated transcription slip in this codebase's regexes — D136/D137's whole reason for the class — and it is invisible against the committed corpus, which spells U+0027: every census figure holds, `BUILT.attack` does not move, and only a catalog re-ingest that normalises to the typographic apostrophe reveals that three printings stopped resolving. `clauseApostrophe.test.ts`'s U+2019 fold is the repo-wide guard; §2 of this suite is the local one",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_NO_WEAKNESS = /^During your opponent['’]s next turn, this Pokémon has no Weakness",
+    replace: "const SELF_NO_WEAKNESS = /^During your opponent's next turn, this Pokémon has no Weakness",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-arm-emits-the-neighbours-op",
+    decision: "D432",
+    what: "The arm returns `reduceDamage` — the op arm 19d two lines below it returns, for a sentence that differs from this one only in its consequent clause. D190b's shape verbatim (a neighbouring arm's REAL code copied onto the wrong sentence), and it is the plausible one here because the two anchors share their whole four-word duration prefix and their \"this Pokémon\" holder. The sentence still RESOLVES, so `BUILT.attack`, the residue and every reader-keyed census figure are unmoved and `ATTACK_EFFECT_SKIPPED` still never fires: the card simply does something else",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (SELF_NO_WEAKNESS.test(effect)) return [{ op: \"installNoWeakness\" }];",
+    replace: "  if (SELF_NO_WEAKNESS.test(effect)) return [{ op: \"reduceDamage\", amount: 30 }];",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  {
+    id: "D432-log-row-names-the-wrong-turn",
+    decision: "D432",
+    what: "The row says \"next turn\" instead of \"during your opponent's next turn\" — `ATTACK_DEBUFF_APPLIED`'s wording, which is the neighbouring row's REAL text and is correct THERE for a reason that inverts here: that row is VICTIM-voiced by construction, so \"next turn\" means the named player's own; this one is ACTOR-voiced, so under the installer's name \"next turn\" names the turn the bar is NOT live on. A log row is a claim with the same standing as a predicate (D421), and this one would tell a player their protection covers the wrong turn",
+    file: "packages/engine/src/log.ts",
+    find: "        plain(\" has no Weakness during your opponent's next turn\"),",
+    replace: "        plain(\" has no Weakness next turn\"),",
+    expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
   },
 ];

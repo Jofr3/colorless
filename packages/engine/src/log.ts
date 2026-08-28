@@ -634,6 +634,23 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` takes ${event.amount} less damage from attacks during your opponent's next turn`),
       ]);
+    // 🆕🆕 §8.5/§11 — the attack-installed NO-WEAKNESS bar (D432). ACTOR voice
+    // by construction (the op has no defender arm), so it keeps the row above's
+    // ending — "during your opponent's next turn" — which is honest only under the
+    // INSTALLER's name and is exactly why ATTACK_DEBUFF_APPLIED below could not
+    // reuse it.
+    //
+    // The phrasing is the PRINTED sentence with its subject replaced by the card's
+    // name, for DAMAGE_REDUCTION_APPLIED's reason: a player holding the card reads
+    // back the words on it. There is no number in the wording because there is no
+    // number in the rule — and the row it sets up on the next turn reports itself
+    // by the ABSENCE of a `×2` segment on that hit's DAMAGE_DEALT row, which is
+    // the honest signal for a step that was removed rather than a number moved.
+    case "WEAKNESS_REMOVED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(" has no Weakness during your opponent's next turn"),
+      ]);
     // §8.5/§11 — the attack-installed ATTACK-DAMAGE DEBUFF (D149). VICTIM voice,
     // and it is the first row in this family that is victim-side BY CONSTRUCTION:
     // `seat` owns the debuffed Pokémon (D136's finding 1) and this op has no self

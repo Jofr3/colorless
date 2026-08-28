@@ -935,6 +935,25 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // hit the block does not reach, which is a real board and is driven in
     // damageReduction.test.ts.
     reduceDamage: "untouched",
+    // 🆕🆕 **D432 — THE TWENTY-FIFTH OP, and the durated NO-WEAKNESS bar.**
+    // UNTOUCHED for `reduceDamage`'s verdict verbatim — it writes a stamp onto the
+    // CONTROLLER's own Active, so there is no opponent-side body a §11 block could
+    // be protecting from it, and `installNoWeakness` (interpreter.ts) calls
+    // `effectRefused` nowhere, exactly as `reduceDamage` and `installRecoil` do not.
+    //
+    // ⚠️ AND THE PAIRING WITH `weakenDefenderAttacks` FOUR ROWS DOWN IS THE USEFUL
+    // PART, because the two read as one mechanism and land on OPPOSITE sides of this
+    // table: both shorten what an attack does at §8.5, and the table asks about the
+    // BODY rather than about the step. That one is written onto the DEFENDING
+    // Pokémon and is squarely an effect of an attack done to it; this one is written
+    // onto the actor's own.
+    //
+    // ⚠️ WHAT THIS ROW DOES **NOT** COVER, said for `switchActive`'s reason: the op
+    // installs at ONE address and is READ at TWO (attack.ts's main hit and
+    // `snipeActive`), and a build that widened one read site and not the other keeps
+    // this verdict and this probe green — the probe reads the RECORD, not a damage
+    // number. `noWeaknessBar.test.ts` drives both read sites on their own boards.
+    installNoWeakness: "untouched",
     // D149's attacker-side debuff, and the THIRD op classified by this table
     // rather than by the slice that wrote it. BLOCKED, and it is `reduceDamage`'s
     // verdict INVERTED for the reason its op doc gives: the two are the same
@@ -1862,6 +1881,13 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     reduceDamage: {
       op: { op: "reduceDamage", amount: 20 },
       landed: (r) => p2Active(r.after)?.damageReduction != null,
+    },
+    // 🆕🆕 D432 — the actor's own body again, so `landed` is read off P2 (the
+    // chair the probe runs from) exactly as `reduceDamage`'s is. Field-free op, so
+    // the literal is the whole program.
+    installNoWeakness: {
+      op: { op: "installNoWeakness" },
+      landed: (r) => p2Active(r.after)?.noWeaknessTurn != null,
     },
     // D152 — the actor's own body again, so `landed` is read off P2 (the chair the
     // probe runs from) exactly as `reduceDamage`'s is.

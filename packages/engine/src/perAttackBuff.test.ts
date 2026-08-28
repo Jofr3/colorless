@@ -823,9 +823,13 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
     // D149's rule: the clear-set is literals that have to agree with nothing making
-    // them. The sweep is STRUCTURAL — the eight durated keys are read off ONE body
+    // them. The sweep is STRUCTURAL — the TEN durated keys are read off ONE body
     // that has been through the clear, so a literal that forgot the new field fails
     // on the field rather than on a board somebody remembered to write.
+    // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
+    // here for the reason its own suite states: §8.5 applies Weakness only to the
+    // ACTIVE, so once a body has been through a §10 clear there is no number left
+    // that could witness the bar's absence. The field is the only witness there is.
     const window = inWindow(boosted("fix-echoer", ECHO_CHORUS_INDEX, 4).state);
     const held = handFromDeck(window, "p1", "fix-echoer-stage1", 1);
     const { state: evolved } = mustApply(held, {
@@ -838,7 +842,9 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
     expect({
       attackBlock: body.attackBlock,
       attackLockedTurn: body.attackLockedTurn,
+      retreatLockedTurn: body.retreatLockedTurn,
       damageReduction: body.damageReduction,
+      noWeaknessTurn: body.noWeaknessTurn,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -847,7 +853,9 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
     }).toEqual({
       attackBlock: null,
       attackLockedTurn: null,
+      retreatLockedTurn: null,
       damageReduction: null,
+      noWeaknessTurn: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],

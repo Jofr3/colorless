@@ -826,6 +826,8 @@ describe("D279 — MATCH_RECORD_VERSION stays 14, and the claim is MEASURED", ()
       "installedRecoil",
       "lockedAttacks",
       "markers",
+      // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).
+      "noWeaknessTurn",
       "promotedTurn",
       "retreatBlocked",
       // 🆕🆕 D412 — the SELF-installed §11 retreat lock's stamp (MATCH_RECORD_VERSION 25 → 26).

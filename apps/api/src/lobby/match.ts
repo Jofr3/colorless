@@ -946,8 +946,45 @@ export interface MatchRecord {
     a resumed board silently HANDS BACK a retreat the player had already paid a
     heal for — D393's failure mode one field over, and on the one turn the whole
     rider is about. The record is refused rather than resumed with the drawback
-    quietly gone. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT.** */
-export const MATCH_RECORD_VERSION = 26;
+    quietly gone. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT.**
+
+    🆕🆕 **26 → 27 AT D432, AND IT IS D386's CASE AT D386's ADDRESS FOR THE
+    FIFTH TIME — A MISSING REQUIRED FIELD ON `InPlayPokemon`.** D432 gave the body
+    `noWeaknessTurn: number | null`, the attack-installed NO-WEAKNESS bar (*"During
+    your opponent's next turn, this Pokémon has no Weakness."* — 1 sentence, 3
+    legal printings). It is a BARE STAMP rather than a record because the printed
+    sentence has no amount, no attacker filter and no type narrowing: it removes
+    §8.5's Weakness STEP rather than moving a number, so the only fact to store is
+    *when*.
+
+    🛑 **THE REQUIRED-VS-OPTIONAL QUESTION WAS ASKED IN BOTH DIRECTIONS AND THE
+    ANSWER IS DECIDED BY D421's OWN RULE FAILING TO APPLY.** An optional
+    `noWeaknessTurn?: number` is a WIDENING and costs no bump — D146's case, and
+    genuinely available here. D421 takes that road safely by *choosing the rest of
+    the record so that LOSING the key is detectable*: its `LockedAttack.turn` is
+    stamped with the INSTALL turn so a dropped rider produces a bar for a turn
+    already spent, visible on the very next board. **That mitigation is unavailable
+    to this field, because there is no rest of the record.** A dropped optional key
+    here reproduces the pre-D432 engine exactly — the bar silently never bites,
+    Weakness doubles the hit, and the board looks entirely normal. That is the
+    benign soft landing D124 refused for `promotedTurn`, D142 for `attackBlock`,
+    D143 for `attackLockedTurn`, D147 for `damageReduction` and D412 for
+    `retreatLockedTurn`, arriving for the sixth time.
+
+    🛑 **AND A v26 RECORD CANNOT BE READ BENIGNLY.** Every in-play Pokémon in a
+    v26 record lacks a key this deploy's type says is always there, so
+    `installedNoWeakness` (continuous.ts) reads `undefined === state.turn` as FALSE
+    and a resumed board hands the OPPONENT back a doubled hit the installer had
+    already paid an attack for — on the one turn the whole rider is about. The
+    record is refused rather than resumed with the protection quietly gone.
+    **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT.**
+
+    ⚠️ Nothing else persisted moved — no `GameState` field, no `EffectContext`
+    field, and `removeWeakness` never parks (it is deterministic and asks nothing),
+    so no `EffectContinuation` carries the new op into `phase.cont` either. The
+    RENDERED `SeatLogEntry[]` gains one new row type (`WEAKNESS_REMOVED`), which is
+    text in NEW records only and is D141's already-settled case. */
+export const MATCH_RECORD_VERSION = 27;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

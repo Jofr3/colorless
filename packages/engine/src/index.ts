@@ -5078,6 +5078,26 @@ import type { GameState, Seat } from "./types";
     Resistance one had none), and the first deferred rider to land would have to
     un-merge them. Three booleans, one of them justified differently than priced.
 
+    🛑 **THE RIDER LANDED AT D432 AND THE FORECAST IN THE SENTENCE ABOVE WAS
+    WRONG — REWRITTEN HERE RATHER THAN LEFT STANDING (D422's rule: when a slice
+    pays a price a doc block quoted, record what the price ACTUALLY was).**
+    *"During your opponent's next turn, this Pokémon has no Weakness."* (1 sentence
+    / 3 legal printings) is the deferred Weakness-alone rider, and it un-merged
+    nothing. Two reasons, and the second is the one this block could not see:
+      • the fields were never merged. D192 kept three booleans, so there was
+        nothing for a rider to un-merge — the clause is a forecast about a design
+        that was not taken;
+      • **and the rider does not land in `AttackDamageSuppression` at all.** That
+        record is a PARSE of the sentence the ATTACKER just declared, discarded when
+        the attack ends. D432's fact is a turn STAMP on the DEFENDER's body, written
+        a turn earlier by that body's own attack — a third store
+        (`InPlayPokemon.noWeaknessTurn`, read through `installedNoWeakness`), joining
+        this parse and Blooming Garden's seat-wide aura at the same two read sites.
+    So the real price was not a field un-merge (~0 sites): it was a REQUIRED
+    `InPlayPokemon` key and `MATCH_RECORD_VERSION` **26 → 27**. **A price is a
+    forecast, not a criterion** (D427) — and this one was wrong in KIND, not merely
+    in size, which is the failure mode a quoted price hides best.
+
     ⚠️ **THE READ SITE IS SHARED, THE STORAGE IS NOT** — this repo's standing rule,
     and here both halves bite. Three §8.5 steps consult one local
     (`suppressTargetEffects`) and none can tell which half answered; the two stores
@@ -18231,7 +18251,123 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.332.0 → **0.333.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.333.0";
+/** 🆕🆕 **0.333.0 → 0.334.0 — D432, THE INSTALLED "NO WEAKNESS" BAR, AND THE
+    THIRD WAY THIS ENGINE CAN NULL §8.5's WEAKNESS STEP.**
+
+    *"During your opponent's next turn, this Pokémon has no Weakness."* — **1
+    sentence / 3 legal printings** over the committed `legal_standard = 1` attack
+    column (640 sentences / 1,732 printings), `censusAttackCorpus.ts` row 192. ONE
+    anchor (`SELF_NO_WEAKNESS`), ONE arm in `deriveAttackEffect` (19d-bis), ONE new
+    field-free `EffectOp` (`installNoWeakness`), ONE `stepOp` case, ONE interpreter
+    installer, ONE new REQUIRED `InPlayPokemon` field (`noWeaknessTurn`), ONE new
+    reader (`installedNoWeakness`), ONE new event (`WEAKNESS_REMOVED`) with ONE
+    log row, FOUR §10 clear literals and TWO read-site disjuncts. ZERO new
+    `PendingStage` inhabitants, ZERO prompts, ZERO error codes, ZERO `GameState`
+    fields, ZERO registry rows, ZERO `packages/schema` bytes, ZERO web diff.
+
+    🛑 **`MATCH_RECORD_VERSION` 26 → 27, AND THE REQUIRED-VS-OPTIONAL QUESTION IS
+    THE SLICE.** An optional `noWeaknessTurn?: number` is D146's WIDENING and costs
+    no bump; it was genuinely available and was driven before being rejected. D421
+    takes that road safely under its own rule — *choose the rest of the record so
+    that LOSING the key is detectable* — by stamping `LockedAttack.turn` with the
+    INSTALL turn, so a dropped rider produces a bar for a turn already spent.
+    **That mitigation is unavailable here because there IS no rest of the record.**
+    The printed sentence carries no amount, no attacker filter and no type
+    narrowing, so the stored fact is one number; dropping it reproduces the
+    pre-D432 engine EXACTLY — Weakness doubles the hit, no row says anything, and
+    the board looks normal. That is D124's benign soft landing, refused now for the
+    sixth time at this address (D124 `promotedTurn`, D142 `attackBlock`, D143
+    `attackLockedTurn`, D147 `damageReduction`, D412 `retreatLockedTurn`).
+    `noWeaknessBar.test.ts` §8 drives BOTH directions and the soft landing itself:
+    the same board, the same action, the same event TYPES, and 50 versus 100 HP.
+    **A bump is a legitimate outcome; a silent one is not, so it is stated here, at
+    the constant (apps/api/src/lobby/match.ts) and in `match.test.ts`'s literal.**
+
+    🛑 **THE STORAGE IS A THIRD STORE, AND NEITHER EXISTING ONE COULD BE WIDENED —
+    WHICH IS THE STANDING RULE (*the read site is shared, the storage is not*)
+    arriving at THREE shapes over TWO sites.** Both Weakness reads already carried
+    a null path: `AttackDamageSuppression.weakness` (D192) is a PARSE of the
+    attacker's declared sentence, alive for one declaration and with no body to
+    live on; `seatRemovesWeakness` (D161, Florges "Blooming Garden") is a seat-wide
+    catalog AURA with no clock, and a §9 Ability-lock switches it OFF — which an
+    attack INSTALLATION must be immune to (D147's own reason for keeping
+    `installedReductionOf` out of `passivesOf`). This one is per-body, installed
+    and turn-scoped. The table is in continuous.ts at `installedNoWeakness`, and
+    `noWeaknessBar.test.ts` §10 drives all three signs on one board.
+
+    ⚠️ **THE WRITTEN PRICE WAS A FORECAST AND IT WAS WRONG — REWRITTEN AT ITS OWN
+    BLOCK (D422's rule).** The 0.125.0 / D192 block above said Weakness-alone
+    *"lives entirely in the deferred riders"* and that *"the first deferred rider
+    to land would have to un-merge them"*. This slice IS that rider, and it un-merged
+    nothing: `damageSuppression.weakness` and `damageSuppression.resistance` were
+    never merged in the first place (D192 kept three booleans), and — the part the
+    forecast could not see — **this rider does not land in `AttackDamageSuppression`
+    at all.** It is not attacker-side text; it is a stamp on the DEFENDER's body,
+    installed a turn earlier by that body's own attack. The forecast priced a field
+    un-merge at ~0 sites; the real price was a REQUIRED `InPlayPokemon` key and a
+    `MATCH_RECORD_VERSION` bump. **A price is a forecast, not a criterion**, and
+    both halves of that sentence were re-measured rather than inherited.
+
+    ⚠️ **PRICED AS 10 MECHANISMS, MOVED 134 DIFF HUNKS ACROSS 59 FILES** (D423's
+    rule — price the MECHANISMS, then count the SITES separately; mechanism counts
+    have under-predicted blast radius every slice since D421). Counted
+    mechanically, not estimated: `git diff -U0 | grep -c '^@@'` is **134** over 58
+    tracked files plus one new suite, of which **44 are test files**. The
+    mechanisms are the ten named above. The sites are 4 §10 clear literals, 2 read-site disjuncts, 13
+    hand-kept `InPlayPokemon` key-list assertions across 13 files, 4 swept
+    clear-set `toEqual`s, the three-route §10 sweep in `attackLock.test.ts`, the
+    §11 classification table and its probe, 20 census literals (including
+    `censusAtHead`'s BARE-LITERAL operand `320 - REGISTRY - SPLIT - COMPOUND`,
+    which `grep 'toBe(N)'` cannot find), 20 nested prefix chains that took a FRONT
+    term, 3 new fixtures + 1 new deck, and the version tax.
+
+    ⚠️ **THE CENSUS STEP IS READER-KEYED AND THE FRONT-TERM RULE WAS OBEYED
+    MECHANICALLY.** `BUILT.attack` 1,460 → **1,463**; `resolved` 432 → **433** /
+    1,412 → **1,415**; `rawUnbuiltSentences` 208 → **207**; `residueSentences` 183
+    → **182**; `unbuiltAttack` 272 → **269**; `clauseApostrophe`'s fixture-keyed
+    sweep 156 → **157**; `stage1Bonus`'s pool count 81 → **82**;
+    `opponentResistanceBonus`'s fixture floor 534 → **537**. `SPLIT_ATTACK_UNITS`,
+    `COMPOUND_ATTACK_UNITS` and `REGISTRY_ATTACK_UNITS` were RE-MEASURED unmoved,
+    and the reader SURFACE stands still at 13 (an ARM, not a fourteenth reader).
+    **Every touched test file was diffed against HEAD by extracting every
+    `toBe(N)` / `toHaveLength(N)` / `toEqual([N,M])` and comparing mechanically:
+    every diff is a REPLACE at equal cardinality, and NO frozen endpoint moved.**
+    The eleven chains in `opponentResistanceBonus`, the three in `retreatCostBonus`
+    and the two in `opponentBenchCount` were ALL stepped, not only the ones that
+    reddened (D431 — vitest stops at the first failure, so siblings go quiet).
+
+    ⚠️ **THE OP IS `installNoWeakness` AND NOT `removeWeakness`, DELIBERATELY**:
+    `PassiveEffects.removeWeakness` is already the AURA half's key (registry.ts,
+    Blooming Garden), and the two facts are read at the same two sites. The pairing
+    with `installedNoWeakness` is the shipped `installRecoil` / `installedRecoilOf`
+    relationship verbatim — writer's tense, reader's tense.
+
+    ⚠️ **THE CLEAR IS BY STAMP *AND* BY SITE, and it is pinned STRUCTURALLY because
+    no number can witness it.** §8.5 applies Weakness only to the ACTIVE, so after
+    any §10 route the body is benched or is a different Pokémon and there is no
+    Weakness step left for the bar to have removed. `noWeaknessBar.test.ts` §7
+    drives all four literals off a real install, and `attackLock.test.ts`'s
+    three-route sweep carries the field on all three routes.
+
+    ⚠️ **THE VERSION TAX, RE-COUNTED RATHER THAN INHERITED: 18 assertions / 21
+    sites** — SEVENTEEN `engineVersion` literal pins (sixteen inherited plus this
+    slice's own in `noWeaknessBar.test.ts` §8), ONE `manifest.version` literal pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). ⚠️ D431's
+    note said 17 / 20 and it RE-MEASURES EXACTLY at this head; the increment is
+    this slice's own pin, which is D427's named mechanism, for the second
+    consecutive slice. `expect(engineVersion)` returns 21 hits — the other three
+    compare against `manifest.version` and never move — so grep BOTH names and
+    count the LITERALS.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** This checkout has no
+    D1; the corpus is grouped by sentence and records the COUNT, not the ids.
+    Stated unresolved rather than invented (D425), and the demonstrator is a
+    `fix-*` key with no catalog row behind it.
+
+    engineVersion 0.333.0 → **0.334.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.334.0";
 
 export type {
   ApplyResult,
@@ -18297,6 +18433,7 @@ export {
   hasFreeRetreatSelf,
   attackerSuppressesTargetEffects,
   boostedAttackDamage,
+  installedNoWeakness,
   installedReductionOf,
   lockedAttackIndexes,
   opposingRetreatBlocked,

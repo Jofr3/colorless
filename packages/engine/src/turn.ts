@@ -663,6 +663,12 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // is the opponent's turn, and the holder's controller cannot retreat on it),
     // while the FORCED half (`switchInto`) is exactly where it bites.
     damageReduction: null,
+    // 🆕🆕 D432 — the NO-WEAKNESS bar, whose story here is the reduction's
+    // one line up verbatim: the window is the OPPONENT's turn, so the RETREAT half
+    // is unreachable inside it and the FORCED half (`switchInto`) is where it
+    // bites. EIGHT durated effects on one clear, FIVE reachability stories — which
+    // is why the clear-set is SWEPT and not listed.
+    noWeaknessTurn: null,
     // D149 — the attack-damage debuff, whose story here is the LOCK's: the window
     // is the HOLDER's own next turn, so the RETREAT half is a played line and the
     // victim's own counterplay (retreat the weakened body, attack with a fresh

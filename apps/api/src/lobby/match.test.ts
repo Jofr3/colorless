@@ -611,7 +611,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // this constant alone, because a v20 record's MISSING key meant mandatory
     // before and after. One slice later the key is renamed and the constant must
     // move. A widening is free; a rename is not; they are one edit apart.
-    expect(MATCH_RECORD_VERSION).toBe(26); // 🆕🆕 D412 — 25 -> 26: `InPlayPokemon.retreatLockedTurn`, a missing required field (the self-installed §11 retreat lock's turn stamp)
+    expect(MATCH_RECORD_VERSION).toBe(27); // 🆕🆕 D432 — 26 -> 27: `InPlayPokemon.noWeaknessTurn`, a missing required field (the attack-installed §8.5 NO-WEAKNESS bar's turn stamp). D412 took 25 -> 26 on the identical trigger (`retreatLockedTurn`); the required-vs-optional argument is written out at the constant itself, and the deciding fact is that this record has NO other field for D421's loud-degradation trick to live in.
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

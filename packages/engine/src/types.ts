@@ -879,6 +879,48 @@ export interface InPlayPokemon {
       turn) and is written anyway, pinned by a surgery. A Knocked Out holder takes
       it out of play with the rest of the stack. */
   damageReduction: DamageReduction | null;
+  /** 🆕🆕 §8.5/§11 (D432) — the turn on which an attack-installed *"During your
+      opponent's next turn, this Pokémon has no Weakness."* bar is live on this
+      Pokémon (the installing turn + 1), or `null` when none has been installed.
+      Read through `installedNoWeakness` (continuous.ts) rather than by touching
+      this field, so no read site can forget the turn comparison — the same
+      contract the four fields above are under.
+
+      ⚠️ A BARE STAMP AND NOT A RECORD, WHICH IS `attackLockedTurn`'s AND
+      `retreatLockedTurn`'s SHAPE RATHER THAN `damageReduction`'s. The printed
+      sentence carries no amount, no attacker filter and no type narrowing — it
+      removes a STEP rather than moving a number — so the only fact to store is
+      *when*. A `{ turn }` record would be a one-key object whose absence and
+      whose staleness are two spellings of the same answer.
+
+      🛑 **AND THAT IS ALSO WHY IT IS REQUIRED RATHER THAN OPTIONAL, AND WHY THIS
+      SLICE BUMPS `MATCH_RECORD_VERSION` 26 → 27.** D421's rule for an optional
+      key is *choose the rest of the record so that LOSING the key is
+      detectable* — and here there IS no rest of the record. A dropped
+      `noWeaknessTurn?: number` degrades into exactly the pre-D432 board: the bar
+      silently never bites, which is the benign soft landing D124 refused for
+      `promotedTurn`, D142 for `attackBlock`, D143 for `attackLockedTurn`, D147
+      for `damageReduction` and D412 for `retreatLockedTurn`. A required key makes
+      every body in a v26 record the wrong TYPE, which is the whole trigger. See
+      `MATCH_RECORD_VERSION` (apps/api/src/lobby/match.ts) for the retirement.
+
+      ⚠️ `state.turn + 1`, `damageReduction`'s AND `installedRecoil`'s PAIR OF
+      ANSWERS: the sentence prints "During your OPPONENT's next turn" and "this
+      Pokémon", so the window is the opponent's (declaring an attack ends the
+      turn, §5.3) and the holder is the installer's own Active.
+
+      THE THREE §10 EARLY CLEARS ARE THE SAME THREE, with `damageReduction`'s
+      reachability story verbatim: leaving the Active Spot is REACHABLE inside the
+      window (a Boss's Orders played by the opponent on the very turn the bar is
+      live drags the body off the spot and the bar goes with it), while EVOLVING
+      is unreachable by construction (installing ends the turn, the window is the
+      opponent's, and nobody evolves on someone else's turn) and is written anyway
+      — §10 sheds the effects of ATTACKS and this is one. A Knocked Out holder
+      takes it out of play with the rest of the stack. All three literals are
+      pinned STRUCTURALLY (`noWeaknessBar.test.ts`), off the field rather than off
+      a number, because the number is unobservable after the body has left the
+      Active Spot: §8.5 applies Weakness only to the Active. */
+  noWeaknessTurn: number | null;
   /** §8.5/§11 (D149) — the attack-installed ATTACK-DAMAGE DEBUFF on this Pokémon
       (see `AttackDamageDebuff` above), or `null` when none has been installed.
       Read through `installedAttackDebuffOf` (continuous.ts) rather than by
@@ -1230,6 +1272,13 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // (D147). Same reading of §10's carry-over rule from the other end as the
     // two lines above.
     damageReduction: null,
+    // 🆕🆕 …and no attack has removed its Weakness for the opponent's
+    // next turn either (D432). Same reading of §10's carry-over rule from the
+    // other end as the three lines above, and this is the SECOND site the compiler
+    // forces for a new required field — `retreatLockedTurn`'s note above says the
+    // other three constructors spread an existing body, so a missing §10 clear
+    // there is silent. `noWeaknessBar.test.ts` drives all three structurally.
+    noWeaknessTurn: null,
     // …and no attack has WEAKENED its own attacks either (D149) — the mirror of
     // the line above, on the other side of the §8.5 pipeline. Same reading of
     // §10's carry-over rule from the other end as the three lines above.
@@ -2140,6 +2189,13 @@ export function evolveOnto(
     // puts an evolution between the install and the expiry. Written anyway (§10
     // sheds the effects of ATTACKS and this is one) and pinned by a surgery.
     damageReduction: null,
+    // 🆕🆕 …and, since D432, the attack-installed NO-WEAKNESS bar — the
+    // reduction's story one line up verbatim, and for the same arithmetic: its
+    // window is the OPPONENT's next turn, during which the holder's controller
+    // cannot evolve anything, so no legal sequence puts an evolution between the
+    // install and the expiry. Written anyway (§10 sheds the effects of ATTACKS and
+    // this is one) and pinned STRUCTURALLY rather than by a number.
+    noWeaknessTurn: null,
     // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
     // here is the LOCK's rather than the reduction's, and that is the whole
     // difference between the two mirrors: the debuff's window is the HOLDER's own

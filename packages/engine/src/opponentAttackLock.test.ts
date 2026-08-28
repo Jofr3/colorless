@@ -738,6 +738,10 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
     // D154's, already on all four literals. What the sweep proves is that pointing
     // an existing field at the OTHER seat's body needs no fifth site — the clears
     // are written on `InPlayPokemon` and know nothing about who installed what.
+    // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
+    // here for the reason its own suite states: §8.5 applies Weakness only to the
+    // ACTIVE, so once a body has been through a §10 clear there is no number left
+    // that could witness the bar's absence. The field is the only witness there is.
     const { state } = barred(1, "fix-echoer");
     const held = handFromDeck(state, "p2", "fix-echoer-stage1", 1);
     const { state: evolved } = mustApply(held, {
@@ -750,7 +754,9 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
     expect({
       attackBlock: body.attackBlock,
       attackLockedTurn: body.attackLockedTurn,
+      retreatLockedTurn: body.retreatLockedTurn,
       damageReduction: body.damageReduction,
+      noWeaknessTurn: body.noWeaknessTurn,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -759,7 +765,9 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
     }).toEqual({
       attackBlock: null,
       attackLockedTurn: null,
+      retreatLockedTurn: null,
       damageReduction: null,
+      noWeaknessTurn: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],

@@ -1710,6 +1710,42 @@ export function installedReductionOf(state: GameState, pokemon: InPlayPokemon): 
   return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
 }
 
+/** 🆕🆕 §8.5/§11 (D432) — does `pokemon` currently carry an attack-installed
+    *"During your opponent's next turn, this Pokémon has no Weakness."* bar? The
+    ONE read of `InPlayPokemon.noWeaknessTurn`, and `installedReductionOf`'s
+    sibling in the one respect that matters: the field holds a turn STAMP, so the
+    bar is live iff that stamp is the turn now being played, and a bar whose window
+    has passed simply stops answering without anyone having cleared it (D124's
+    rule).
+
+    ⚠️ **IT IS THE THIRD WEAKNESS-NULLING SHAPE AND IT SHARES NEITHER STORE WITH
+    THE OTHER TWO.** The two Weakness read sites (attack.ts's main hit,
+    interpreter.ts's `snipeActive`) already carried two null paths before this one:
+
+    | | store | scope | clock |
+    |---|---|---|---|
+    | `AttackDamageSuppression.weakness` (D192) | a PARSE of the declared attack | the attacker's own sentence | one declaration |
+    | `seatRemovesWeakness` (D161) | a CATALOG fold over a seat's bodies | seat-wide, either zone | none — an aura |
+    | this (D432) | a STAMP on one `InPlayPokemon` | that one body | one turn |
+
+    This repo's standing rule is *the read site is shared, the storage is not*, and
+    here the third store is forced twice over rather than chosen. Widening D192's
+    boolean is impossible: it is derived from the sentence the ATTACKER declared
+    this instant and is discarded when the attack ends, so it has nowhere to keep a
+    turn and no body to keep it on. Widening the AURA is worse than impossible — it
+    is a §9 category error: `seatRemovesWeakness` folds printed Abilities and is
+    switched OFF by an Ability-lock (Ting-Lu ex "Cursed Land"), while an
+    attack-INSTALLED effect must be immune to that suppression, which is D147's own
+    structural reason for keeping `installedReductionOf` out of `passivesOf`.
+
+    Cheap on the common path: one field read and one integer compare, no scan. */
+export function installedNoWeakness(state: GameState, pokemon: InPlayPokemon): boolean {
+  // No defensive `=== undefined` arm, for `installedReductionOf`'s reason above:
+  // the field is REQUIRED and a record written before it existed is retired by
+  // MATCH_RECORD_VERSION (26 -> 27 at D432) rather than read benignly here.
+  return pokemon.noWeaknessTurn === state.turn;
+}
+
 /** §8.5/§11 (D149) — the HP an attack-installed ATTACK-DAMAGE DEBUFF takes off
     every damage `pokemon`'s own attack does right now, or 0. The ONE read of
     `InPlayPokemon.attackDamageDebuff`, and `installedReductionOf`'s MIRROR ON

@@ -766,6 +766,8 @@ describe("§7 — the structural answers", () => {
         "installedRecoil",
         "lockedAttacks",
         "markers",
+        // 🆕🆕 D432 — the attack-installed §8.5 NO-WEAKNESS bar's stamp (MATCH_RECORD_VERSION 26 -> 27).
+        "noWeaknessTurn",
         "promotedTurn",
         "retreatBlocked",
         "retreatLockedTurn",
@@ -810,7 +812,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.333.0");
+    expect(engineVersion).toBe("0.334.0");
   });
 });
 

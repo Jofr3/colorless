@@ -637,8 +637,12 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
     // D149's rule, and the reason this slice adds no clear site: the three §10
     // literals are hand-kept and nothing makes them agree, so the new fact is read
-    // off ONE body that has been through one of them beside the eight that were
+    // off ONE body that has been through one of them beside the NINE that were
     // already there.
+    // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
+    // here for the reason its own suite states: §8.5 applies Weakness only to the
+    // ACTIVE, so once a body has been through a §10 clear there is no number left
+    // that could witness the bar's absence. The field is the only witness there is.
     const window = laterTurns(barred().state, "p1", 1);
     const held = handFromDeck(window, "p1", "fix-gouging-stage1", 1);
     const { state: evolved } = mustApply(held, {
@@ -652,6 +656,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       attackBlock: body.attackBlock,
       attackLockedTurn: body.attackLockedTurn,
       damageReduction: body.damageReduction,
+      noWeaknessTurn: body.noWeaknessTurn,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -662,6 +667,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       attackBlock: null,
       attackLockedTurn: null,
       damageReduction: null,
+      noWeaknessTurn: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],
@@ -936,7 +942,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.333.0");
+    expect(engineVersion).toBe("0.334.0");
   });
 });
 

@@ -13623,6 +13623,97 @@ export const FIXTURE_POOL: Record<string, Card> = {
       No Weakness, no Resistance, no Ability and no attack: every number it produces
       comes from an attachment or from nothing. */
   "fix-seamwall": battler("fix-seamwall", { types: ["Fighting"], hp: 300 }),
+  /** 🆕🆕 **D432 FIXTURE — the NO-WEAKNESS installer, and the body the number
+      moves ON.** Its index-0 sentence is byte-for-byte the legal column's *"During
+      your opponent's next turn, this Pokémon has no Weakness."* — **1 sentence / 3
+      legal printings**, `censusAttackCorpus.ts` row 192. The three card ids that
+      print it are UNRESOLVED in this container (no D1 credentials), so this is a
+      `fix-*` key rather than a guessed id (D425).
+
+      ⚠️ **×2 LIGHTNING IS THE WHOLE POINT AND THE HP IS CHOSEN AROUND IT.** A bar
+      that removes a step is only observable where the step MOVES A NUMBER, so this
+      body must be Weak to something the pool can swing: `fix-bolt`'s 50 reads 100
+      here and 50 under the bar, and Rotom `sv01-069`'s snipe reads 40 here and 20.
+      220 HP so NONE of those four numbers is confounded by a Knock Out — the
+      largest is 100 and the body must also survive two of them across a suite that
+      drives a window and then the turn after it.
+
+      ⚠️ **THREE INDICES, AND EACH ONE IS A CONTROL FOR THE ONE BEFORE IT.**
+        · 0 "Type Veil" — the sentence. {C}, 10 damage.
+        · 1 "Plain Veil" — {C}, 10 damage, **NO `effect` key at all**. The no-bar
+          control differing on exactly ONE axis (D427): same body, same cost, same
+          printed damage, same turn, same everything the §8.5 pipeline reads —
+          only the sentence is absent.
+        · 2 "Retype Veil" — {C}, 10 damage, printing corpus row 629, *"Until the end
+          of your next turn, the Defending Pokémon's Weakness is now {C}. (The
+          amount of Weakness doesn't change.)"*. A REAL unbuilt legal sentence from
+          the SAME Weakness family, so the loud `ATTACK_EFFECT_SKIPPED` path has a
+          witness on this very card — and the suite can show the skip fires for
+          index 2 and NOT for index 0, which is what "the sentence is built"
+          actually means. It is not the refusal rung's near-miss: it differs from
+          index 0 on three axes at once (duration, body, verb), and D427's rule
+          wants one. The single-axis near-misses are constructed strings in
+          `noWeaknessBar.test.ts` §2. */
+  "fix-nowk": battler("fix-nowk", {
+    types: ["Water"],
+    hp: 220,
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Type Veil",
+        damage: 10,
+        effect: "During your opponent's next turn, this Pokémon has no Weakness.",
+      },
+      { cost: ["Colorless"], name: "Plain Veil", damage: 10 },
+      {
+        cost: ["Colorless"],
+        name: "Retype Veil",
+        damage: 10,
+        effect:
+          "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)",
+      },
+    ],
+  }),
+  /** 🆕🆕 **D432 FIXTURE — the Stage 1 that evolves from `fix-nowk`**, for the
+      §10 EVOLVE clear. `fix-echoer-stage1`'s twin and invented for its reason: the
+      clear literal in `placeEvolution` (types.ts) is hand-kept and nothing makes it
+      agree with the other three, so the field must be READ off a body that has
+      actually been through it.
+
+      ⚠️ IT KEEPS `fix-nowk`'s ×2 LIGHTNING DELIBERATELY. The evolved body is still
+      Weak, so "the bar is gone" and "the body stopped being weak" are different
+      claims and the suite is asserting the first. Same 220 HP for the same reason. */
+  "fix-nowk-stage1": {
+    ...blank,
+    id: "fix-nowk-stage1",
+    name: "fix-nowk-stage1",
+    category: "Pokemon",
+    stage: "Stage1",
+    hp: 220,
+    types: ["Water"],
+    retreat: 1,
+    weaknesses: [{ type: "Lightning", value: "×2" }],
+    evolveFrom: "fix-nowk",
+    attacks: [{ cost: ["Colorless"], name: "Ripple", damage: 20 }],
+  } satisfies Card,
+  /** 🆕🆕 **D432 FIXTURE — the {L} swinger the bar is measured against.** ONE
+      attack, no `effect` key, printed 50: into `fix-nowk` that is **100** without
+      the bar and **50** with it, and the two numbers straddle nothing (220 HP), so
+      the only thing that moves is the §8.5 Weakness step.
+
+      It prints NO sentence at all, deliberately — a second sentence here would add
+      a row to `clauseApostrophe`'s fixture-keyed census for no reason this slice
+      needs (D425's third route). Typed {L} to match `fix-nowk`'s Weakness; ×2
+      Fighting so it is not itself neutral, which keeps the mirrored board honest. */
+  "fix-bolt": battler("fix-bolt", {
+    types: ["Lightning"],
+    hp: 130,
+    retreat: 1,
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [{ cost: ["Colorless"], name: "Bolt", damage: 50 }],
+  }),
 };
 
 /** Expand `{ id: count }` into a flat deck list. */
@@ -21450,4 +21541,39 @@ export const TAKE_PRIZE_DECK = deckOf({
   "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, bench, clean defender
   "fix-energy": 28, // Colorless Basic — every cost here, plus the surgery slack
   "fix-fire-energy": 4, // {R} — the SECOND energy type index 4 needs to PARK on a choice
+});
+
+/** 🆕🆕 **D432 — the NO-WEAKNESS bar's own deck.** A NEW deck and not a widened
+    neighbour, on D412's rule: adding ONE card to a shared `*_DECK` reddened three of
+    D409's boards, because deck composition is load-bearing for every suite seeded off
+    it. Nothing else reads this list.
+
+      • `fix-nowk` — the installer. Index 0 prints the D432 sentence, index 1 is the
+        one-axis no-bar control, index 2 is the `ATTACK_EFFECT_SKIPPED` control.
+        EIGHT copies because BOTH seats install in the mirrored §6 and each needs one
+        reachable by surgery off a 60-card list.
+      • `fix-nowk-stage1` — the §10 EVOLVE clear, kept ×2 Lightning so "the bar
+        cleared" and "the body stopped being weak" stay separable.
+      • `fix-bolt` — the {L} swinger: printed 50 → **100** unbarred, **50** barred,
+        through `attack.ts`'s MAIN HIT.
+      • `sv01-069` **Rotom** — a REAL card, "Linear Attack" ({C}, `opponentAny` 20,
+        `deals`): printed 20 → **40** unbarred, **20** barred, through
+        `interpreter.ts`'s `snipeActive`. Reused rather than re-printed as a `fix-*`
+        so this suite adds NO second sentence to `clauseApostrophe`'s fixture-keyed
+        census, and so the SECOND read site is driven off printed text.
+      • `sv01-194` **Switch** — the Item that drives `interpreter.ts`'s `switchInto`
+        §10 clear literal, which is the one of the four the retreat path cannot reach
+        (`attackLock.test.ts` names the same three routes off the same Item).
+      • `fix-titan` (340 HP, NO attacks, no W/R) — the mulligan-free starter, the
+        Bench body the retreat and forced-switch clears promote, and the neutral
+        defender the installer's own printed 10 lands on.
+      • `fix-energy` — Colorless Basic. Every cost on this list is {C}-only. */
+export const NO_WEAKNESS_DECK = deckOf({
+  "fix-nowk": 8, // the installer — idx 0 (the sentence), 1 (one-axis control), 2 (skip control)
+  "fix-nowk-stage1": 4, // evolves from fix-nowk — the §10 EVOLVE clear
+  "fix-bolt": 8, // {L}, printed 50 — the MAIN-HIT witness (100 unbarred / 50 barred)
+  "sv01-069": 4, // Rotom "Linear Attack" ({C}, opponentAny 20, deals) — the snipeActive witness
+  "sv01-194": 4, // Switch (Item) — the §10 FORCED-SWITCH clear, `interpreter.ts`'s literal
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, bench, clean defender
+  "fix-energy": 16, // Colorless Basic — every cost here, plus the surgery slack
 });

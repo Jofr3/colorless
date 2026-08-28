@@ -3536,6 +3536,53 @@ export type EffectOp =
       no rng, and is idempotent (installing twice in one turn keeps the larger
       number — see the interpreter for why MAX and not a sum). */
   | { op: "reduceDamage"; amount: number }
+  /** 🆕🆕 §8.5/§11 (D432) — INSTALL a durated NO-WEAKNESS bar on the
+      CONTROLLER's own Active:
+
+        "During your opponent's next turn, this Pokémon has no Weakness."   (3)
+
+      `reduceDamage`'s SIBLING and not its mirror: same holder ("this Pokémon" is
+      `ctx.seat`'s Active, so no `target` field and no park), same
+      `state.turn + 1` window, same four §10 clear literals, same tail placement.
+      The one difference is what the record does at §8.5 — that one subtracts a
+      NUMBER at step 5, this one removes STEP 4 entirely.
+
+      ⚠️ **FIELD-FREE, AND THE PRINT IS WHY.** The sentence carries no amount, no
+      attacker-class filter, no type narrowing and no seat word beyond "this
+      Pokémon" — every token of it is either the duration or the holder, and both
+      are spent at the install. A field here would be a second spelling of what the
+      op's name already says (D131, `weakenDefenderAttacks`'s no-`target` argument
+      read off a sentence with nothing left to capture).
+
+      ⚠️ **NAMED `installNoWeakness` AND NOT `removeWeakness`, DELIBERATELY.**
+      `PassiveEffects.removeWeakness` is already taken by the seat-wide AURA half
+      (registry.ts, Florges "Blooming Garden"), and the two facts are read at the
+      same two sites and must never be confused for one another — a shared spelling
+      is how two readers come to disagree about which store answered (D222). The
+      pairing with continuous.ts's `installedNoWeakness` is the shipped
+      `installRecoil` / `installedRecoilOf` relationship verbatim: the op is the
+      writer's tense and the reader is the record's.
+
+      ⚠️ **IT IS THE THIRD WAY THIS ENGINE CAN NULL WEAKNESS AND THE FIRST THAT IS
+      INSTALLED.** `AttackDamageSuppression.weakness` (D192) is a PARSE of the
+      attacker's own declared sentence, alive for one declaration; `Blooming
+      Garden` (D161) is a seat-wide catalog AURA with no clock. Both are read at
+      the same two sites this one is, and none of the three can be expressed as a
+      widening of another — continuous.ts `installedNoWeakness` carries the table
+      and the argument.
+
+      Runs at `attack.ts`'s TAIL like every other durated rider, and that placement
+      is FREE rather than lucky (D125's rule): the bar's entire effect is in the
+      FUTURE, so nothing about it needs to precede the §8.5 pipeline it will later
+      shorten — the very pipeline running now belongs to the installing attack,
+      whose own Weakness step is the DEFENDER's and not the holder's. Never parks,
+      consumes no rng, refusable by no §11 block (it writes to the actor's own body
+      — `reduceDamage`'s and `installRecoil`'s verdict verbatim, and the §11
+      classification table drives it). Idempotent BY THE STAMP: a second install in
+      the same turn computes the same number, so the write is the value the first
+      one left and the row is not emitted twice (`retreatLockedTurn`'s answer, and
+      there is no amount for a `Math.max` to be about). */
+  | { op: "installNoWeakness" }
   /** §8.5/§11 (D149) — INSTALL a durated ATTACK-DAMAGE DEBUFF on the DEFENDING
       Pokémon, i.e. weaken what the opponent's Active DEALS on its own next turn:
 
@@ -9000,6 +9047,27 @@ const SELF_DAMAGE_REDUCTION =
 // are even compared. Both directions are asserted (damageReduction.test.ts), and
 // `SELF_DISCARD_ALL`'s own `$` is what keeps this sentence off the bare discard
 // path — the live guard D145 said would matter the day this family landed.
+// 🆕🆕 D432 — the DURATED NO-WEAKNESS BAR, `SELF_DAMAGE_REDUCTION`'s sibling one
+// §8.5 step up: same four-word duration prefix, same "this Pokémon" holder, and a
+// consequent with NO capture in it at all. The whole family is ONE sentence / 3
+// legal printings — checked with the loosest plausible shape rather than assumed:
+// `grep -n Weakness censusAttackCorpus.ts` returns 73 lines and every one was read.
+// Exactly one is this sentence (row 192); the only other "no Weakness" wording in
+// the repo is the always-on AURA on a fixture ("Your Pokémon in play have no
+// Weakness.", Blooming Garden), which is an ABILITY and not attack text.
+//
+// ⚠️ THE NEAR-MISS THE POOL ACTUALLY PRINTS IS ROW 629 — "Until the end of your
+// next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness
+// doesn't change.)" — which differs on ONE axis at a time from nothing here: it
+// names a different duration, a different body AND a different verb (a Weakness
+// RETYPE, not a removal). It stays on the loud `ATTACK_EFFECT_SKIPPED` path and
+// `^…$` keeps it there. The refusal rung in `noWeaknessBar.test.ts` uses single-axis
+// near-misses instead (D427's rule), because a three-axis miss tests nothing.
+//
+// The apostrophe alternation is the family idiom (D143): the catalog prints U+0027
+// here — verified by `cat -A` on corpus row 192, not remembered — and the curly
+// form is admitted for the same reason every sibling anchor admits it.
+const SELF_NO_WEAKNESS = /^During your opponent['’]s next turn, this Pokémon has no Weakness\.$/;
 const SELF_DISCARD_ALL_THEN_REDUCTION =
   /^Discard all Energy from this Pokémon\. During your opponent['’]s next turn, this Pokémon takes (\d+) less damage from attacks \(after applying Weakness and Resistance\)\.$/;
 // The ATTACKER-SIDE DEBUFF (D149) — the OTHER parenthetical, and D147's mirror on
@@ -17771,6 +17839,24 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //      it buys for the opponent's turn, so a log that announced the shield before
   //      the payment would describe the card backwards. Neither op parks, so the two
   //      resolve inline in sequence.
+  // 🆕🆕 19d-bis. The DURATED NO-WEAKNESS BAR (D432) — 1 sentence / 3 legal
+  //      printings, corpus row 192. A `test` rather than an `exec`, and that is the
+  //      shape of the sentence rather than a shortcut: 19d captures an AMOUNT
+  //      because four amounts are printed, and this sentence has no varying token
+  //      at all — the duration, the holder and the verb are the whole string. So
+  //      there is nothing to capture, nothing to guard with a `>= 1` floor, and the
+  //      derived program is the bare field-free op.
+  //
+  //      UNGATED like arms 19c-19e and for the same reason: no coin is printed on
+  //      any of the three.
+  //
+  //      ⚠️ PLACED ABOVE 19e RATHER THAN BELOW IT, AND THE ORDER IS FREE — the
+  //      three anchors in this block are mutually exclusive in BOTH directions by
+  //      `^…$` before their bodies are compared (19d ends "…Weakness and
+  //      Resistance).", 19e begins "Discard all Energy", this one ends "…has no
+  //      Weakness."). Said rather than assumed: `noWeaknessBar.test.ts` drives all
+  //      three strings against all three anchors.
+  if (SELF_NO_WEAKNESS.test(effect)) return [{ op: "installNoWeakness" }];
   match = SELF_DISCARD_ALL_THEN_REDUCTION.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);
