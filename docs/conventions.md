@@ -1016,6 +1016,63 @@ test** for the current behaviour.
 Record the gap in prose and in the resume point, and leave the tests silent, so
 the person who fixes it meets no resistance.
 
+## Reasoning that rots when a channel is added (D430)
+
+**A claim can be true when written and falsified by a channel added later — and
+nothing tells you, because the arm still runs.** Three ops (`applyStatus`,
+`preventRetreat`, `preventAttack`) carried doc blocks saying their `target:"self"`
+arm *"can never be refused in practice"*, reasoning from an installed block's
+CLOCK: a block stamped `turn + 1` cannot be live on its holder's own turn. That
+was true at D142, when installs were the only channel. **D260 added clockless
+AURA channels, 118 decisions later, and the reasoning became false** while every
+line of code stayed valid — so a self-inflicted Special Condition was being
+cancelled by the attacker's own card.
+
+**When you add a CHANNEL, grep for claims that reason about the channels that
+existed before it.** Code that still compiles and tests that still pass are not
+evidence; the rot is in the justification, not the behaviour.
+
+## When defect and fix emit the same events (D430)
+
+D430's refusal produces **exactly one** `ATTACK_EFFECT_PREVENTED` row — the same
+count the defect produced, because the refusal makes a downstream zero-guard
+short-circuit. A log-shaped assertion would have passed on both builds.
+
+**That identical count is why the defect survived two slices.** When a fix does
+not change what is emitted, **the killing rung must read the BOARD**, not the log.
+Verify by applying the fix's inverse by hand and diffing both — D430 did, and the
+only difference was `tools=[]` versus `tools=["p2#13"]`.
+
+## A regex that matches a clock is not a regex that matches a source (D430)
+
+D430's first population rung asserted `/opponent/` across all 8 printings of an
+effect-prevention family and **passed** — including on a printing whose only
+"opponent" is *"during your opponent's next turn"*, a CLOCK rather than a source
+restriction. The rung proved nothing about the property it was written for.
+
+**Split a population rung by KIND before trusting it**, and choose the token that
+carries the meaning rather than the token that happens to appear in every row.
+
+## `grep -c` counts text, not structure (D430)
+
+Two briefs in this run asserted a structural fact from a substring count:
+*"`sv05-161` appears in `testFixtures.ts`"* was offered as *"is in the fixture
+pool"* (all three hits are comments; the key is `fix-mist-energy`), and
+*"`grep -c packages/schema` returns 1"* was offered as *"one mutant targets
+`packages/schema`"* (the hit was a `what:` description string; zero rows target
+it).
+
+**Grep for the structural spelling** — `file: "…"`, a key declaration, an export —
+**not the substring.** "Appears in the file" and "is a key in the pool" are
+different propositions, and only one of them is what you are claiming.
+
+## Process: the precheck command (D430)
+
+**`bun run mutants --precheck` is NOT a flag — it silently starts a FULL SWEEP.**
+The precheck is `bun scripts/mutation/precheck.ts`. If you start one by accident,
+SIGTERM it; the harness restores its mutated file and clears the journal on the
+way out.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

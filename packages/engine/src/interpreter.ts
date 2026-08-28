@@ -5411,10 +5411,20 @@ export function applyStatus(
   if (uid === undefined) return state;
   // §11 (D142) — a §12 Special Condition is an EFFECT of the attack, so a body
   // carrying the wider block takes none. Checked on the RESOLVED seat rather
-  // than on the "defender" arm, so it is total over both targets: the "self"
-  // arm can never be refused in practice (a block is live only during its
-  // holder's OPPONENT's turn, and the self arm runs on the holder's own), and
-  // asking anyway costs one read and removes a case from the reasoning.
+  // than on the "defender" arm, so it is total over both targets.
+  //
+  // 🛑 **D430 — THE SENTENCE THAT USED TO END THIS PARAGRAPH WAS TRUE WHEN IT WAS
+  // WRITTEN AND FALSE FROM D260 ONWARD.** It read *"the `self` arm can never be
+  // refused in practice (a block is live only during its holder's OPPONENT's turn,
+  // and the self arm runs on the holder's own)"*. That reasons about the INSTALLED
+  // block, which was the only channel this gate had at D142; D260 added the AURA
+  // channels, which carry no clock, so a `target: "self"` status on an attacker
+  // wearing Mist Energy `sv05-161` WAS refused — a self-inflicted Special Condition
+  // the attacker's own card cancelled, which no printing says. `effectRefusedOn`
+  // now answers `false` for `seat === ctx.seat` on the attack channel too, off the
+  // printed source clause every one of those auras carries, so the arm is refused by
+  // the FUNNEL rather than by a claim in this comment. Dated rather than silently
+  // rewritten (D423): rotted, not wrong-when-written.
   if (effectRefused(state, seat, ctx, events)) return state;
   // §12 (D172) — the target's printed IMMUNITY ("This Pokémon can't be Burned." /
   // "…can't be Paralyzed." / Therapeutic Energy sv02-193's "…can't be affected by
@@ -5584,6 +5594,14 @@ function preventRetreat(
   // against its own seat for the identical shape, so diverging here would be a
   // silent rules call made by the newer of two twins. If that reading is wrong it
   // is wrong in both places, which is the honest way to be wrong.
+  //
+  // 🛑 **D430 SETTLED IT, AND THE READING WAS WRONG IN BOTH PLACES — WHICH IS
+  // EXACTLY WHY IT WAS WRITTEN THAT WAY.** Every §11 printing names the attack's
+  // source and every one of them names the holder's OPPONENT, so a self-imposed
+  // retreat lock is refused by nothing. Both twins still ASK, byte-unchanged; the
+  // answer is now `false` by construction because `effectRefusedOn` carries the
+  // own-side rule on the attack channel. The refusal moved into the funnel instead
+  // of into two call sites, which is the single-read contract (D222).
   if (effectRefused(state, seat, ctx, events)) return state;
   if (op.target === "self") {
     // The installer's OWN next turn is one full round away, which is
@@ -6567,6 +6585,50 @@ function effectRefusedOn(
     return ctx.invokedBy === "supporter" && seatShieldedFromSupporterEffects(state, seat);
   }
   if (ctx.invokedBy !== "attack") return false;
+  // 🆕🆕🛑 **D430 — A SHIELD PRINTED AGAINST YOUR OPPONENT'S CARDS DOES NOT PROTECT
+  // AGAINST YOUR OWN, AND THIS IS THE ATTACK CHANNEL'S HALF OF THE RULE THE TRAINER
+  // CHANNEL HAS SPELLED SINCE D259.** Every printing that can make this function
+  // return `true` names the ATTACK'S SOURCE, and the source it names is always the
+  // holder's OPPONENT. Enumerated by `grep -rn "Prevent all" testFixtures.ts`
+  // (18 hits, all read) plus `grep -n "effects of attacks" censusAttackCorpus.ts`
+  // (2 rows, both read) — the loosest shape the family is spelled in, so the
+  // enumeration's edges are visible (D424/D425):
+  //   · Mist Energy `sv05-161` / Skeledirge `sv08-031` (`preventAttackEffects`) —
+  //     *"attacks **used by your opponent's Pokémon** done to …"*;
+  //   · Team Rocket's Articuno `sv10-051` (`preventAttackEffectsForGroup`) — same
+  //     source clause, a group target;
+  //   · Carracosta `sv10.5b-023` (`preventDamageAndEffectsFromSpecialEnergy`) —
+  //     *"…done to this Pokémon **by your opponent's Pokémon** that have any
+  //     Special Energy attached"*;
+  //   · Poltchageist `sv06-020` (`preventDamageAndEffectsWhileBenched`) and Rabsca
+  //     `sv05-024` (`benchShieldedFromEffects`) — *"attacks **from your opponent's
+  //     Pokémon**"*;
+  //   · the INSTALLED block (`attackBlockOf`, the two corpus rows) — *"**during your
+  //     opponent's next turn**, prevent all damage from and effects of attacks done
+  //     to this Pokémon"*, which is a clock rather than a source clause and reaches
+  //     the same place: it is not live on its holder's own turn.
+  // So an effect an attack aims at its OWN side is refused by nothing in the pool,
+  // and asking the shields anyway is a wrong answer rather than a conservative one.
+  //
+  // 🛑 **IT IS A SECOND LINE AND NOT ONE HOISTED ABOVE THE CHANNEL SPLIT, ON D416's
+  // RULE.** The trainer channel's identical guard (~30 lines up) is pinned by
+  // `D259-trainer-channel-ignores-owner`, a DECLARED SURVIVOR whose whole claim is
+  // about Trainers. Hoisting would make that row die for the ATTACK channel's
+  // reason — a row that dies for the wrong reason is worth less than one that
+  // survives — and would leave the next channel inheriting a rule instead of
+  // deriving it from what its own cards print.
+  //
+  // ⚠️ **AND IT REMOVES A HAND-SPELLED COPY RATHER THAN ADDING A RULE.**
+  // `discardEnergy` has carried `discardVictimSeat(ctx.seat, op) !== ctx.seat` at
+  // its CALL SITE since D259 — one caller answering a question the funnel is for
+  // (D222). That guard is now redundant and is kept only as the reader's own
+  // narrowing; the two other own-side callers (`applyStatus`'s `"self"` arm,
+  // `preventRetreat`/`preventAttack`'s `"self"` arms) asked and got the WRONG
+  // answer on any board where the attacker's own body wears a Mist Energy. Their
+  // doc blocks said the self arm "can never be refused in practice" and named the
+  // INSTALLED block's clock as the reason; that was true of the one channel that
+  // existed when it was written and false from D260 onward.
+  if (seat === ctx.seat) return false;
   // The ATTACKER is `ctx.seat`'s Active by construction — `invokedBy === "attack"`
   // is set by the one `runProgram` call `attack.ts` makes, and an attack comes
   // from the Active Spot (§8). Resolved HERE rather than passed in because the
@@ -6669,8 +6731,29 @@ function effectRefusedOn(
     ⚠️ THE DEFAULT IS NOT A CONVENIENCE, IT IS THE PROOF THAT THE WIDENING IS A
     WIDENING. Had the parameter been required, eight call sites would each have
     re-spelled `state.players[seat].active` and the next benched-target op would
-    have had eight places to get wrong instead of one. */
-function effectRefused(
+    have had eight places to get wrong instead of one.
+
+    🆕🆕🛑 **D430 EXPORTED IT, AND THE EXPORT IS SAFE FOR THE PROPERTY D429 WROTE AT
+    THE TYPE RATHER THAN FOR THE SHAPE OF ITS RETURN.** `attack.ts`'s pre-damage
+    strip (`stripPreDamage`) is an EFFECT of an attack done to a Pokémon and had
+    never consulted this gate at all, while its sibling consequent one arm over
+    (row 74's Paralysis, through `applyStatus`) always had — so one printed sentence
+    had one half gated and one half not, on a board Mist Energy `sv05-161` and Klefki
+    `sv01-096` can reach today. The check to re-run before exporting anything else to
+    that seam is the SIGNATURE: this returns a `boolean`. A park is `RunResult`'s
+    `{ kind: "parked"; prompt; cont }`, drained by `settleProgram`; a boolean carries
+    neither a prompt nor a continuation, so there is nothing a resolver could drain
+    and the seam stays un-parkable. It is also TOTAL — every path returns — so it
+    cannot leave the caller without an answer.
+
+    ⚠️ **THE ANNOUNCING WRAPPER AND NOT `effectRefusedOn`, WHICH IS THE PLACEMENT
+    QUESTION D430 HAD TO SETTLE.** The pure predicate exists for a per-CANDIDATE
+    reader that is only CONSIDERING a body (D259). The strip is not considering
+    anything: it has one target, it either performs the printed act on it or it does
+    not, and a refusal the player cannot see is a Tool that silently stays attached
+    with no row saying why. So the seam takes the wrapper and files the same
+    `ATTACK_EFFECT_PREVENTED` every other refused attack effect files. */
+export function effectRefused(
   state: GameState,
   seat: Seat,
   ctx: EffectContext,

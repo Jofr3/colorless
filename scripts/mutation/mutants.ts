@@ -5165,7 +5165,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5664,7 +5664,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5675,7 +5675,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.331.0";',
+    find: 'export const engineVersion = "0.332.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18787,8 +18787,15 @@ export const MUTANTS: Mutant[] = [
     // `stripPreDamage`, so the victim seat is now an ARGUMENT rather than a local. The
     // claim is verbatim — row 73 strips its OWN Active — and the arm is named in the
     // anchor so a future fifth member cannot inherit this row by accident.
-    find: '    case "discardOpponentActiveTools":\n      return stripPreDamage(state, otherSeat(actor), actor, events, {',
-    replace: '    case "discardOpponentActiveTools":\n      return stripPreDamage(state, actor, actor, events, {',
+    // ⚠️ RE-ANCHORED AT D430, WHICH REPLACED `stripPreDamage`'s `actor: Seat` parameter
+    // with the `ctx: EffectContext` the §11 gate needs — so the third argument changed
+    // spelling at all four call sites. The claim is verbatim (row 73 strips its OWN
+    // Active) and the arm is still named in the anchor. ⚠️ **RE-PROBED RATHER THAN
+    // ASSUMED (D429's rule): the mutated build now also asks the gate on the ATTACKER's
+    // seat, where `effectRefusedOn`'s own-side rule answers `false`, so the strip still
+    // happens and the killing board is unchanged.**
+    find: '    case "discardOpponentActiveTools":\n      return stripPreDamage(state, otherSeat(actor), ctx, events, {',
+    replace: '    case "discardOpponentActiveTools":\n      return stripPreDamage(state, actor, ctx, events, {',
     expectKilledBy: ["packages/engine/src/preDamageToolDiscard.test.ts"],
   },
   {
@@ -18895,6 +18902,13 @@ export const MUTANTS: Mutant[] = [
   //    because nothing can see it is worse than no row. The honest record is this
   //    sentence plus the §12 immunity rung (Therapeutic Energy), which drives the OTHER
   //    gate inside the same function.
+  //
+  //    ✅ **WRITTEN AT D430 — THE REFUSAL NAMED ITS OWN EXPIRY CONDITION AND THE
+  //    CONDITION WAS MET.** The missing thing was a BOARD, and `preDamageRefusal.test.ts`
+  //    fields one (Mist Energy `sv05-161`'s demonstrator on the defending Active). The
+  //    row is `D430-context-loses-invokedBy` below, and it is now strictly stronger than
+  //    D429 priced it: D430 hoisted ONE `EffectContext` for the whole seam, so dropping
+  //    the field disarms the gate at BOTH sites — the strip and the status — at once.
   {
     id: "D429-row71-anchor-drops-the-second-zone",
     decision: "D429",
@@ -19053,8 +19067,85 @@ export const MUTANTS: Mutant[] = [
     decision: "D429",
     what: "🛑 SILENT IN EVERY CENSUS. Row 72's `this Pokémon` is read as the opponent's Active, so the attack strips the DEFENDER's Tools and cancels itself whenever the defender happens to be bare — two printed facts wrong at once off one argument. The mirror of `D428-victim-is-the-attacker` and the reason that row's anchor now names its arm: with four members sharing one helper, a victim-seat row must say WHICH sentence it is about",
     file: "packages/engine/src/attack.ts",
-    find: "      return stripPreDamage(state, actor, actor, events, {",
-    replace: "      return stripPreDamage(state, otherSeat(actor), actor, events, {",
+    // ⚠️ RE-ANCHORED AT D430 (`actor` → `ctx` as the third argument, for the §11 gate).
+    // Claim verbatim. ⚠️ **RE-PROBED**: the mutated build strips the OPPONENT's Active,
+    // which now passes through the gate on the opponent's seat — no board in
+    // `preDamageFamily.test.ts` wears a §11 shield, so the refusal never fires there and
+    // the killing rungs are the ones they always were.
+    find: "      return stripPreDamage(state, actor, ctx, events, {",
+    replace: "      return stripPreDamage(state, otherSeat(actor), ctx, events, {",
     expectKilledBy: ["packages/engine/src/preDamageFamily.test.ts"],
+  },
+  // ── 🆕🆕 D430 — ROUTING THE PRE-DAMAGE SEAM THROUGH THE §11 REFUSAL GATE. SIX ROWS,
+  //    and the SHAPE of the set is that **all six are SILENT IN EVERY CENSUS** — the
+  //    highest ratio of the run, and structurally so: this slice claims no sentence,
+  //    adds no reader and buys ZERO new printings, so nothing it can break is visible
+  //    to `resolvedByAnyReader`, to `BUILT.attack` or to `ATTACK_EFFECT_SKIPPED`. Every
+  //    row below ships an engine that gets a RULE wrong on a board two real cards reach.
+  //
+  //    🛑 **R1 IS THE DEFECT BEING FIXED AND IT MUST DIE.** It restores D429's build
+  //    exactly — the strip with no gate — and the whole slice is the claim that this is
+  //    wrong. If R1 ever survives, the suite has stopped defending the fix.
+  //
+  //    ⚠️ **AND THE EVENT COUNT CANNOT CATCH R1, WHICH IS WHY THE ROW MATTERS.** On the
+  //    row-74 board the old build filed exactly one `ATTACK_EFFECT_PREVENTED` (the
+  //    Paralysis, refused inside `applyStatus`) and the new build files exactly one (the
+  //    strip). Only the BOARD — the Tool still attached — separates them.
+  {
+    id: "D430-strip-skips-the-refusal-gate",
+    decision: "D430",
+    what: "🛑🛑 SILENT IN EVERY CENSUS, AND IT IS THE DEFECT THIS SLICE EXISTS TO FIX — D429's build, restored. The §11 ask is deleted from `stripPreDamage`, so a *\"Prevent all effects of attacks used by your opponent's Pokémon done to the Pokémon this card is attached to\"* shield (Mist Energy `sv05-161`) stops the Paralysis half of corpus row 74 and NOT the discard half — two effects of one printed sentence, one gated and one not. The sentence still derives, the attack still resolves, nothing is reported as skipped, and the event count on the row-74 board is IDENTICAL either way (one `ATTACK_EFFECT_PREVENTED` before, one after), so only a rung reading the BOARD can see it. Reachable today off Klefki `sv01-096` \"Joust\" into a Mist-Energy holder",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return nothing;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
+  },
+  {
+    id: "D430-own-side-rule-dropped",
+    decision: "D430",
+    what: "🛑 SILENT IN EVERY CENSUS. `effectRefusedOn`'s attack channel loses its own-side guard, so an effect an attack aims at its OWN board is judged against shields printed *\"used by your opponent's Pokémon\"*. Corpus row 72 — *\"Before doing damage, discard all Pokémon Tools from THIS POKÉMON. If you can't discard any, this attack does nothing.\"* — is then REFUSED by the attacker's own Mist Energy, and because a refused act discarded none, the printed cancel fires: the attacker's own card makes its own attack do nothing. Three shipped self arms ride the same line (`applyStatus target: \"self\"`, `preventRetreat`, `preventAttack`), which is why the rule lives in the FUNNEL and not at one call site (D222). ⚠️ The neutering keeps the line syntactically identical to D259's trainer-channel row so the two cannot be confused; the anchor carries the following line because a bare 2-space `find` is a SUBSTRING of the trainer channel's 4-space one (D404's wrong-arm trap, caught by `precheck` at 2×)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (seat === ctx.seat) return false;\n  // The ATTACKER is `ctx.seat`'s Active by construction",
+    replace: "  if (seat === ctx.seat && false) return false;\n  // The ATTACKER is `ctx.seat`'s Active by construction",
+    expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
+  },
+  {
+    id: "D430-refusal-is-not-announced",
+    decision: "D430",
+    what: "🛑 SILENT IN EVERY CENSUS AND SILENT ON THE BOARD TOO, WHICH IS THE POINT. The gate is asked through a THROWAWAY event list, so the refusal is correct and invisible: the Tool stays attached, the damage is right, and no `ATTACK_EFFECT_PREVENTED` is ever filed. This is the mistake the `effectRefused` / `effectRefusedOn` split invites — D259 built the pure predicate precisely so a per-CANDIDATE reader could ASK without announcing, and an author reaching for \"just tell me if it's blocked\" writes this. A player then sees a printed act do nothing with no row saying why, which is the one thing the strip's silent-no-op contract must NOT be confused with",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return nothing;",
+    replace: "  if (effectRefused(state, seat, ctx, [])) return nothing;",
+    expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
+  },
+  {
+    id: "D430-refused-strip-claims-a-discard",
+    decision: "D430",
+    what: "🛑 SILENT IN EVERY CENSUS. The refused act reports `tools: 1` — \"what WOULD have come off\" — instead of what did. The board is right and the RESULT CHANNEL lies, so corpus row 74's printed *\"If you discarded a Pokémon Tool in this way\"* reads TRUE on a board where nothing was discarded and the Paralysis lands through a shield that just refused the act it was conditioned on. It also files a SECOND `ATTACK_EFFECT_PREVENTED` (the strip's, then `applyStatus`'s), which is the doubled prevention row this slice had to rule out — and the reason the no-double property is a consequence of `tools === 0` rather than of a check anybody wrote",
+    file: "packages/engine/src/attack.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return nothing;",
+    replace: "  if (effectRefused(state, seat, ctx, events)) return { ...nothing, tools: 1 };",
+    expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
+  },
+  {
+    id: "D430-context-loses-invokedBy",
+    decision: "D430",
+    what: "🛑🛑 SILENT IN EVERY CENSUS, AND IT IS THE ROW D429 PRICED AND DECLINED FOR WANT OF A BOARD. `EffectContext.invokedBy` is dropped from the seam's one hoisted context, and `effectRefusedOn` returns `false` outright unless the context says an attack is doing this — so §11 is disarmed at BOTH sites at once, the strip's and row 74's status's. D429 refused to write this because no board in its suite installed a §11 shield on the defending Active and the row would have SURVIVED, reporting a suite gap that was really a missing board (D420). **The refusal named its own expiry condition and D430 met it**: `preDamageRefusal.test.ts` fields exactly that board. ⚠️ The field is OPTIONAL and single-valued (`invokedBy?: \"attack\"`), so dropping it is the edit an author actually makes when trimming a context literal — and it degrades into \"this is not an attack's effect\", which is byte-identical to the pre-D142 behaviour and therefore plausible",
+    file: "packages/engine/src/attack.ts",
+    find: '  const ctx: EffectContext = { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 };',
+    replace: "  const ctx: EffectContext = { seat: actor, sourceUid: actorUid, dealt: 0 };",
+    expectKilledBy: ["packages/engine/src/preDamageRefusal.test.ts"],
+  },
+  {
+    id: "D430-context-seat-is-the-victim",
+    decision: "D430",
+    what: "🛑 SILENT IN EVERY CENSUS. The hoisted context is built with the VICTIM's seat instead of the ACTOR's — the mistake the hoist itself invites, because the gate is *about* the victim and an author threading one record through both call sites can talk themselves into it. `EffectContext.seat` means WHOSE EFFECT THIS IS, and getting it wrong flips two rules at once: `effectRefusedOn` then sees the shielded defender as the effect's OWN side and lets every strip through, and row 74's `applyStatus target: \"defender\"` resolves to `otherSeat(ctx.seat)` and Paralyzes the ATTACKER. The events are unaffected — they are filed off the `seat`/`actor` parameters, not off the context — so the log reads correctly while both rules are wrong",
+    file: "packages/engine/src/attack.ts",
+    find: '  const ctx: EffectContext = { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 };',
+    replace: '  const ctx: EffectContext = { seat: otherSeat(actor), sourceUid: actorUid, invokedBy: "attack", dealt: 0 };',
+    expectKilledBy: [
+      "packages/engine/src/preDamageRefusal.test.ts",
+      "packages/engine/src/preDamageFamily.test.ts",
+    ],
   },
 ];

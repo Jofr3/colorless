@@ -13644,9 +13644,16 @@ export const PRE_DAMAGE_TOOL_DECK = deckOf({
         actually runs: that is the site whose `{ ...attackerBody, … }` spread would
         RESURRECT the Tool row 72 just discarded if the attacker binding were stale;
       · `fix-mist-energy` **Mist Energy** — a Special Energy printing *"Prevent all
-        effects of attacks…"*, which is row 74's §11 control (the Paralysis is REFUSED
-        and `ATTACK_EFFECT_PREVENTED` is filed, while the Tool is discarded anyway) and
-        row 71's second-zone subject;
+        effects of attacks…"*, row 74's §11 control and row 71's second-zone subject.
+        🛑 **D430 CORRECTED THIS LINE AND THE CORRECTION IS THE WHOLE OF THAT SLICE.**
+        It used to read *"the Paralysis is REFUSED and `ATTACK_EFFECT_PREVENTED` is
+        filed, while the Tool is discarded anyway"* — a description of a DEFECT written
+        as if it were the rule, and never driven by any rung in `preDamageFamily.test.ts`
+        (`grep -n mist` over that file returned zero at D429's head, so the "control" this
+        deck was widened for did not exist). The strip is an EFFECT of an attack and the
+        shield refuses it too: on a shielded body the Tool STAYS, one
+        `ATTACK_EFFECT_PREVENTED` is filed, and row 74's Paralysis is never reached
+        because nothing was discarded. `preDamageRefusal.test.ts` drives it;
       · `sv02-193` **Therapeutic Energy** — a Special Energy printing *"can't be
         affected by those Special Conditions"*, which is row 74's §12 immunity control:
         the Tool is still discarded and the Paralysis is REFUSED;

@@ -91,8 +91,10 @@ import {
   attackerPreWRBonus,
   conditionHolds,
   conditionNote,
+  effectRefused,
   runProgram,
 } from "./interpreter";
+import type { EffectContext } from "./interpreter";
 import { programFor } from "./registry";
 import { flipCoin, flipUntilTails, MAX_UNTIL_TAILS_FLIPS } from "./rng";
 import type { CoinFace } from "./rng";
@@ -516,20 +518,56 @@ type AttackPreDamageResult = {
     `TOOLS_DISCARDED` cannot name an Energy without lying about what a consumer may
     do with the uid. `ENERGY_DISCARDED` already carries the identical
     seat/actor/uids/host quartet plus the `from` spot, so the second zone cost a
-    second push and no new event type. */
+    second push and no new event type.
+
+    🆕🆕🛑 **D430 — THE ACTOR ARRIVES AS THE `EffectContext` AND NOT AS A BARE SEAT,
+    BECAUSE THE §11 GATE NEEDS THE WHOLE CONTEXT AND TWO SPELLINGS OF "WHO IS
+    ATTACKING" COULD DRIFT.** `ctx.seat` IS the actor, `ctx.invokedBy` is what arms
+    the gate, and both come from the ONE record `applyAttackPreDamage` builds — so
+    the seat the events name and the seat the refusal is judged against cannot
+    disagree. */
 function stripPreDamage(
   state: GameState,
   seat: Seat,
-  actor: Seat,
+  ctx: EffectContext,
   events: GameEvent[],
   what: { specialEnergy: boolean; cancelIfNone: boolean },
 ): AttackPreDamageResult {
+  const actor = ctx.seat;
   const side = state.players[seat];
   const victim = side.active;
   const nothing = { state, tools: 0, cancelled: what.cancelIfNone };
   if (victim === null) return nothing;
   const host = topUid(victim);
   if (host === undefined) return nothing;
+  // 🆕🆕🛑 **D430 — §11, AND THIS SLICE EXISTS BECAUSE THIS LINE DID NOT.** A strip
+  // is an EFFECT of an attack done to a Pokémon, which is precisely what a *"Prevent
+  // all effects of attacks used by your opponent's Pokémon done to the Pokémon this
+  // card is attached to"* shield refuses (Mist Energy `sv05-161`). Until D430 this
+  // function consulted the gate NOWHERE, while row 74's Paralysis one arm over went
+  // through `applyStatus` and WAS refused — two effects of ONE printed sentence, one
+  // gated and one not, on a board Klefki `sv01-096`'s "Joust" reaches today. **This
+  // slice buys ZERO new printings; it makes an already-built sentence obey a rule the
+  // engine already had.**
+  //
+  // 🛑 **THE ORDERING IS `applyStatus`'s, LINE FOR LINE**: body, uid, then the gate.
+  // In FRONT of every read of `tools`/`energy` and in front of both pushes, so a
+  // refused strip files ONE `ATTACK_EFFECT_PREVENTED` and no `TOOLS_DISCARDED` — it
+  // must not claim to have discarded anything, and it must not silently do nothing.
+  //
+  // 🛑 **AND THE CANCEL FALLS OUT OF `nothing` RATHER THAN BEING DECIDED HERE.** Row
+  // 72's printed *"If you can't discard any, this attack does nothing."* is
+  // conditioned on the ACT's result, and a refused act discarded none — so a refused
+  // self-strip WOULD cancel. ⚠️ **THAT BRANCH IS UNREACHABLE, AND THE REASON IS THE
+  // PRINTED SOURCE CLAUSE RATHER THAN AN ACCIDENT OF THIS FILE**: row 72's victim IS
+  // the actor, and `effectRefusedOn` answers `false` whenever `seat === ctx.seat`,
+  // because every §11 printing in the pool refuses only attacks *"used by your
+  // opponent's Pokémon"*. No `if (seat !== actor)` is spelled here, on D222's rule —
+  // a caller re-deciding what the funnel owns is the second reader that goes quiet —
+  // and `preDamageRefusal.test.ts` §3 drives the own-side board both ways (the
+  // attacker's OWN Mist Energy does not save its own Tool, and neither does the
+  // opponent's) so the claim is executable rather than argued.
+  if (effectRefused(state, seat, ctx, events)) return nothing;
   const tools = victim.tools;
   // "Special" is the CARD CLASS and not an energy TYPE (`isSpecialEnergy`, cards.ts),
   // so a Basic Energy on the same body is untouched by row 71 — the one distinction
@@ -607,9 +645,21 @@ function applyAttackPreDamage(
   actorUid: string,
   events: GameEvent[],
 ): AttackPreDamageResult {
+  // 🆕🆕🛑 **D430 — ONE CONTEXT FOR THE WHOLE SEAM, BUILT HERE AND PASSED DOWN.** It
+  // was constructed inline on row 74's `applyStatus` call until this slice; now the
+  // §11 gate inside `stripPreDamage` needs the same record, and TWO literals spelling
+  // the same four fields is the drift D427's pairing invariant exists to stop.
+  //
+  // ⚠️ `invokedBy: "attack"` IS LOAD-BEARING AND `dealt: 0` IS TRUE RATHER THAN
+  // DECORATIVE. `effectRefusedOn` returns `false` outright unless the context says an
+  // attack is doing this, so dropping the field silently disarms the gate at BOTH
+  // sites at once; and D427's pairing invariant (`invokedBy === "attack"` ⇔
+  // `dealt !== undefined`) is kept literally, with the honest value — no damage has
+  // been dealt yet, because this is the pre-damage seam.
+  const ctx: EffectContext = { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 };
   switch (pre.kind) {
     case "discardOpponentActiveTools":
-      return stripPreDamage(state, otherSeat(actor), actor, events, {
+      return stripPreDamage(state, otherSeat(actor), ctx, events, {
         specialEnergy: false,
         cancelIfNone: false,
       });
@@ -619,7 +669,7 @@ function applyAttackPreDamage(
       // (`isSpecialEnergy`), not an energy type, so a Basic on the same body stays
       // attached; that is the one thing an "all Energy" mis-build would get wrong
       // and it is driven as a control rather than described.
-      return stripPreDamage(state, otherSeat(actor), actor, events, {
+      return stripPreDamage(state, otherSeat(actor), ctx, events, {
         specialEnergy: true,
         cancelIfNone: false,
       });
@@ -630,7 +680,7 @@ function applyAttackPreDamage(
       // self-discard"). The printed *"If you can't discard any, this attack does
       // nothing."* is reported through the RESULT and executed by the caller, which
       // is the only place that can return.
-      return stripPreDamage(state, actor, actor, events, {
+      return stripPreDamage(state, actor, ctx, events, {
         specialEnergy: false,
         cancelIfNone: true,
       });
@@ -638,7 +688,7 @@ function applyAttackPreDamage(
       // Row 74. The act is row 73's, byte for byte; the consequent is conditioned on
       // its RESULT — *"If you discarded a Pokémon Tool in this way"* — which is the
       // whole reason `stripPreDamage` reports what it moved instead of only a board.
-      const stripped = stripPreDamage(state, otherSeat(actor), actor, events, {
+      const stripped = stripPreDamage(state, otherSeat(actor), ctx, events, {
         specialEnergy: false,
         cancelIfNone: false,
       });
@@ -651,18 +701,22 @@ function applyAttackPreDamage(
       // either here would be D222's second reader of one rule. It is TOTAL and
       // returns a board, so it cannot smuggle a park into a seam that forbids one.
       //
-      // ⚠️ `invokedBy: "attack"` IS LOAD-BEARING AND `dealt: 0` IS TRUE RATHER
-      // THAN DECORATIVE. `effectRefused` returns false outright unless the context
-      // says an attack is doing this, so dropping the field would silently disarm the
-      // §11 gate; and D427's pairing invariant (`invokedBy === "attack"` ⇔
-      // `dealt !== undefined`) is kept literally, with the honest value — no damage
-      // has been dealt yet, because this is the pre-damage seam.
+      // 🆕🆕🛑 **D430 — AND SINCE THE STRIP NOW ASKS THE SAME GATE, THE §11 REFUSAL
+      // CANNOT DOUBLE, WHICH IS A PROPERTY OF THE LINE ABOVE RATHER THAN OF A CHECK.**
+      // A shielded body refuses the STRIP, so `stripPreDamage` returns `tools: 0` and
+      // `stripped.tools === 0` returns one line up — `applyStatus` is never reached
+      // and exactly ONE `ATTACK_EFFECT_PREVENTED` is filed. Before this slice the
+      // same board filed exactly one too, for the opposite and wrong reason: the Tool
+      // came off unrefused and only the Paralysis was blocked. **The event count is
+      // identical either way, which is precisely why nothing went red and why the
+      // rung that catches it has to read the BOARD (the Tool stays attached), not the
+      // event log.**
       return {
         ...stripped,
         state: applyStatus(
           stripped.state,
           { op: "applyStatus", target: "defender", status: "paralyzed" },
-          { seat: actor, sourceUid: actorUid, invokedBy: "attack", dealt: 0 },
+          ctx,
           events,
         ),
       };

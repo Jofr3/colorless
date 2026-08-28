@@ -18078,7 +18078,90 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.330.0 → **0.331.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.331.0";
+/** 🆕🆕 **0.331.0 → 0.332.0 — D430, ROUTING THE PRE-DAMAGE SEAM THROUGH THE §11
+    REFUSAL GATE.**
+
+    🛑 **THIS IS A CORRECTNESS SLICE AND IT BUYS ZERO NEW PRINTINGS.** No sentence is
+    claimed, no reader is added, no census figure of the built corpus moves. It exists
+    because D429 found a live rules gap, recorded it in prose, and deliberately did NOT
+    pin the broken behaviour — a guard that reddens when someone fixes a defect defends
+    the defect (D418).
+
+    **THE GAP.** `attack.ts`'s pre-damage strip (`stripPreDamage`) consulted §11's
+    `effectRefused` NOWHERE — grepped for `effectRefused|refused|prevent` over the whole
+    applier at D429's head: zero hits. Row 74's Paralysis, one arm over in the same
+    `switch`, went through `applyStatus` and therefore WAS refused. So two effects of
+    ONE printed sentence had one gated and one not, and the board is reachable off two
+    real cards: Klefki `sv01-096` "Joust" into a body wearing Mist Energy `sv05-161`
+    (*"Prevent all effects of attacks used by your opponent's Pokémon done to the
+    Pokémon this card is attached to."*) took the Tool anyway.
+
+    **THE FIX IS ONE LINE AT ONE SITE plus ONE LINE IN THE FUNNEL.** `effectRefused` —
+    the ANNOUNCING wrapper, not `effectRefusedOn`'s pure half, because the strip has one
+    target and is not merely CONSIDERING a body — is exported and called at the top of
+    `stripPreDamage`, in `applyStatus`'s own order (body, uid, gate) and in front of
+    both event pushes. A refused strip files exactly one `ATTACK_EFFECT_PREVENTED`,
+    files no `TOOLS_DISCARDED`, and returns the board `===` unchanged.
+
+    🛑 **THE CRUX WAS ROW 72, AND THE ROWS GENUINELY DIFFER.** Rows 71/73/74 aim at the
+    OPPONENT's Active and are refusable by a shield on that body. Row 72 aims at *"this
+    Pokémon"* — the ATTACKER's OWN body — and is refusable by NOTHING, because every §11
+    printing in the pool names the attack's source and every one of them names the
+    holder's opponent: *"used by your opponent's Pokémon"* (Mist Energy `sv05-161`,
+    Skeledirge `sv08-031`, Team Rocket's Articuno `sv10-051`), *"by your opponent's
+    Pokémon"* (Carracosta `sv10.5b-023`), *"from your opponent's Pokémon"* (Poltchageist
+    `sv06-020`, Rabsca `sv05-024`), and *"during your opponent's next turn"* for the
+    INSTALLED block, which is a clock reaching the same answer. So the rule went into
+    `effectRefusedOn` — `seat === ctx.seat` ⇒ `false` on the attack channel, the exact
+    guard the TRAINER channel has spelled since D259 — and row 72 needs no special case
+    at the call site (D222: a caller re-deciding what the funnel owns is the second
+    reader that goes quiet).
+
+    ⚠️ **AND THAT FUNNEL LINE FIXED TWO SIBLING DEFECTS NOBODY HAD MET.** `applyStatus`'s
+    `target: "self"` arm and `preventRetreat`/`preventAttack`'s `"self"` arms all ask the
+    gate on their OWN seat. Their doc blocks said the self arm "can never be refused in
+    practice" and gave the INSTALLED block's clock as the reason — true at D142, when
+    that was the only channel, and false from D260, when the clockless AURA channels
+    arrived. A self-inflicted Special Condition on an attacker wearing Mist Energy was
+    being cancelled by the attacker's own card. Both blocks are corrected in place and
+    DATED rather than silently rewritten (D423). `discardEnergy` was the one caller that
+    had the rule right, hand-spelled at its own call site since D259; it is left
+    byte-unchanged as the reader's own narrowing and is now redundant.
+
+    ⚠️ **NO `ATTACK_EFFECT_PREVENTED` DOUBLES, AND THAT IS A PROPERTY OF THE EXISTING
+    CODE RATHER THAN A NEW CHECK.** A shielded body refuses the STRIP, so row 74 returns
+    `tools: 0` and the pre-existing `if (stripped.tools === 0) return stripped;` never
+    reaches `applyStatus`. **The event COUNT on that board is 1 before and 1 after** —
+    which is exactly why nothing went red, and why the rung that catches the defect has
+    to read the BOARD (the Tool stays attached), not the log.
+
+    ⚠️ **THE `EffectContext` IS BUILT ONCE FOR THE WHOLE SEAM** and passed to both
+    `stripPreDamage` and `applyStatus`; `stripPreDamage`'s `actor: Seat` parameter became
+    `ctx: EffectContext` so the seat the events name and the seat the refusal is judged
+    against cannot drift. The un-parkability property survives for D429's stated reason
+    rather than for a shape: `effectRefused` returns a `boolean`, which carries neither a
+    prompt nor a continuation, so no resolver could drain it.
+
+    **THE VERSION TAX, RE-COUNTED RATHER THAN INHERITED (D427/D429): 16 assertions / 19
+    sites** — FIFTEEN `engineVersion` literal pins (fourteen inherited plus this slice's
+    own in `preDamageRefusal.test.ts` §7), ONE `manifest.version` literal pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). ⚠️ D429's note
+    said 15 / 18 and it re-measures EXACTLY to the digit at this head; the increment is
+    this slice's own pin, which is the mechanism D427 named. `expect(engineVersion)`
+    returns more hits than that — the rest compare against `manifest.version` and never
+    move — so grep BOTH names and count the LITERALS.
+
+    Cost: **1 exported function, 1 funnel line, 1 gate call, 1 hoisted context.** ZERO
+    new sentences, ZERO new readers, ZERO new `EffectOp`s, ZERO new prompts, ZERO parks,
+    ZERO `BoardCondition` members, ZERO registry rows, ZERO error codes, ZERO
+    `GameState` fields, ZERO new `GameEvent` types, ZERO fixture cards, ZERO deck edits
+    and ZERO `packages/schema` bytes. `MATCH_RECORD_VERSION` STAYS **26**. No web/API/DB
+    diff.
+
+    engineVersion 0.331.0 → **0.332.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.332.0";
 
 export type {
   ApplyResult,
