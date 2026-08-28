@@ -503,9 +503,50 @@
 > defect was recorded in prose, the fix met no red guard, and the mutant that restores the old build now
 > dies.
 >
-> ▶ **RESIDUE, SUBTRACTION SET NAMED** (reader − gate − trailing − registry): re-derive it — D430 added
-> no sentence, so it should stand at **209 / 323** on the raw column. **Assert that rather than assuming
-> it.** Then grep the loosest shape and read every hit.
+> 🛑🛑 **▶ STOP ROLLING YOUR OWN RESIDUE. A GUARDED ONE SHIPS.** `censusAtHead.test.ts:6218` holds the
+> canonical predicate and pins it: **`rawUnbuiltSentences` = 209, `residueSentences` = 184,
+> `unbuiltAttack` = 275**. Every residue figure quoted by hand in the last several resume points came
+> from a bespoke script and was WRONG — most recently **191 / 285 against a true 184 / 275**, from two
+> errors that partly cancelled:
+> - **`registry.ts` DOES NOT CONTAIN THE SENTENCES.** It is keyed by card id and holds PROGRAMS; the
+>   printed text lives in `REGISTRY_ATTACK_SENTENCES` in the test file. A substring test against
+>   `registry.ts` finds **2** of **10** and under-subtracts 8 sentences / 10 printings.
+> - **A bare `splitAttackGateClause(text) !== null` over-subtracts.** The canonical also requires
+>   `gate.body !== "" && resolvedByAnyReader(gate.body)` — a gate whose body nothing claims is NOT served.
+>
+> **READ THE PINNED FIGURES; DO NOT RE-DERIVE THEM.** If you need the list rather than the count, copy the
+> predicate from `censusAtHead.test.ts` verbatim. **A HAND-ROLLED INSTRUMENT COMPETING WITH A GUARDED ONE
+> LOSES SILENTLY** — the guarded one is tested and the hand-rolled one is not, and this run quoted the
+> hand-rolled one for five slices.
+>
+> 🛑 **▶ THE ATTACK-COPY FAMILY IS REFUSED, WITH ITS FALSIFIER MADE EXECUTABLE.** It is the largest
+> unbuilt mechanism left — **7 sentences / 14 printings** (six attack-copies plus a *"use the effect of a
+> Supporter card … as the effect of this attack"* cousin that a narrower pattern missed) — and it is
+> unbuilt for a reason that does not go away:
+> - **A copy op can only splice `deriveAttackEffect`'s output.** Measured over all 1,732 printings: 964
+>   resolve that way, **445 resolve through one of the other twelve readers into `attack()` locals that
+>   an op cannot reach**, and 323 resolve nowhere. So the cheap build is **correct on 56%, silently wrong
+>   on 26%, inert on 19%**.
+> - 🛑🛑 **AND IT LAUNDERS THE CENSUS.** `effectSimulated` is computed from the COPIER's sentence, so the
+>   moment the copy anchor claims it, `ATTACK_EFFECT_SKIPPED` **can never fire for that attack again** —
+>   the engine's one honest failure channel is switched off exactly where it is needed most, while
+>   `BUILT.attack` steps. **That corrupts the instrument the whole repo's accounting keys off.**
+> - 🛑 **RECURSION IS A LIVE HANG, NOT A THEORETICAL ONE.** `runProgram` is `while (queue.length > 0)`
+>   with **no step limit**; row 78's source is the opponent's Active and `ctx.seat` never changes, so a
+>   mirror board with that sentence on both Actives **loops forever inside a Durable Object request**.
+> - **The correct build** (substitute before §8.5) needs a persisted resume channel that does not exist —
+>   `EffectContinuation` can only resume an op program, which is precisely the obstacle D428 named — plus
+>   a version bump.
+>
+> ✅ **THE FALSIFIER, AS A RUNG RATHER THAN A PARAGRAPH** (D422/D428): this refusal reverses when
+> **`attack()`'s §8.5 block becomes a callable function taking an attacker, a defender and a `declared`.**
+> Until then the family stays refused, and the refusal is worth more than its 14 printings.
+>
+> ⚠️ **AND TWO PREMISES OF THE PRICING BRIEF WERE FALSE, BOTH IN THE CHEAP DIRECTION**: `chooseAttack` is
+> **already a shipped prompt kind** (`interpreter.ts:609`, in the nine-member wire union, with a live
+> producer in `preventChosenAttack`), and the **`N's` owner filter already ships** (`CardFilter.ownerPokemon`,
+> `cards.ts:488`). Neither needs inventing. The family is still refused — **on the census-laundering and
+> the hang, not on the park.**
 >
 > 🛑🛑 **(1) A CLAIM CAN BE TRUE WHEN WRITTEN AND FALSIFIED BY A CHANNEL ADDED LATER — AND NOTHING TELLS
 > YOU, BECAUSE THE ARM STILL RUNS.** Three `"self"` arms carried doc blocks saying they "can never be

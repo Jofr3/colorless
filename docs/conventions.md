@@ -1073,6 +1073,55 @@ The precheck is `bun scripts/mutation/precheck.ts`. If you start one by accident
 SIGTERM it; the harness restores its mutated file and clears the journal on the
 way out.
 
+## Do not roll your own instrument (D430 follow-up)
+
+**A hand-rolled instrument competing with a guarded one loses silently.**
+`censusAtHead.test.ts:6218` ships the canonical unbuilt-residue predicate and pins
+its outputs (`rawUnbuiltSentences` 209, `residueSentences` 184, `unbuiltAttack`
+275). It is tested; a script in `$CLAUDE_JOB_DIR/tmp` is not. This run quoted a
+hand-rolled figure for five slices and it was wrong every time — most recently
+191/285 against a true 184/275, from two errors that partly cancelled:
+
+- **`registry.ts` does not contain the printed sentences.** It is keyed by card id
+  and holds PROGRAMS; the text lives in `REGISTRY_ATTACK_SENTENCES` in the test
+  file. A substring test against `registry.ts` finds 2 of 10.
+- **A bare `splitAttackGateClause(text) !== null` over-subtracts.** The canonical
+  also requires `gate.body !== "" && resolvedByAnyReader(gate.body)` — a gate whose
+  body nothing claims is not served.
+
+**Before measuring anything the repo already measures, grep the test suite for the
+figure.** If you need the list rather than the count, copy the predicate verbatim
+rather than reconstructing it from its description.
+
+## A mechanism that launders the census (attack-copy refusal)
+
+The attack-copy family (7 sentences / 14 printings) is refused, and the reason
+generalises. A copy op can only splice `deriveAttackEffect`'s output — 964 of
+1,732 printings — while 445 resolve through one of the other twelve readers into
+`attack()` locals no op can reach, and 323 resolve nowhere.
+
+**But the disqualifying part is not the 44%.** `effectSimulated` is computed from
+the COPIER's sentence, so the moment a copy anchor claims it,
+`ATTACK_EFFECT_SKIPPED` can never fire for that attack again. The build would
+switch off the engine's one honest failure channel exactly where it is needed
+most, while stepping `BUILT.attack`.
+
+**A mechanism that makes the coverage instrument report success it did not earn is
+worse than an unbuilt sentence**, which at least fails loudly (D190b/D199 at the
+instrument layer rather than the program layer).
+
+**The falsifier is executable, not prose**: the refusal reverses when `attack()`'s
+§8.5 block becomes a callable function taking an attacker, a defender and a
+`declared`.
+
+## Unbounded queues (attack-copy refusal)
+
+`runProgram` is `while (queue.length > 0)` with **no step limit**, and gates splice
+with `queue.unshift(...)`. Any op whose candidate set can include an instance of
+itself is an unbounded loop inside a Durable Object request — not a failing test, a
+hang. **Before adding an op that can name another op's source, ask whether the
+source set can contain the op itself, and what bounds it.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
