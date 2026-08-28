@@ -492,8 +492,11 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 429 files / 9,312 tests, `CHECK_EXIT=0`.**
 > Engine **0.332.0**, **`MATCH_RECORD_VERSION` 26**, corpus **1,614**, archive ratchet **100**.
 >
-> 🛑 **THE ONE DEBT: D430 HAS HAD NO WHOLE-CORPUS SWEEP.** `--decision D430` (6 killed / 0 GAPs),
-> neighbours re-probed (D428 11/11, D429 18/18, D275 8/8), `precheck` clean at 1,614.
+> ✅ **THE SWEEP DEBT IS PAID.** **1614 · 1589 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,021.4s**, `SWEEP_EXIT=0`; `1589 + 25 = 1614` closes and
+> 1614/1614 verified by id. **All 6 D430, all 18 D429 and all 11 D428 rows KILLED** — the whole
+> pre-damage seam, across three slices that each rewrote part of it, confirmed live in one run. `stale`
+> is a meaningful 0: this slice corrected three shipped doc blocks whose reasoning had gone false.
 >
 > ✅ **THE RULES GAP D429 LEFT OPEN IS CLOSED**, and closing it cost nothing extra because D429 had
 > deliberately **not** pinned the broken behaviour. That is D418's rule demonstrated end to end: the
