@@ -1227,6 +1227,64 @@ a whole.
 **When you add a field to a swept set, re-read the entire set.** Earlier omissions
 do not redden anything on their own; they surface only when the next author looks.
 
+## Grepping prose: the derived noun (D433)
+
+**A stem pattern misses the derived noun, and the derived noun is where reference
+prose states the rule.** D433's brief grepped `docs/reference/ptcg-rules.md` with
+`/[Dd]evolv/` and reported what it found. The line stating the slice's central
+hazard outright is `:538` — *"**Devolution** (some effects): removes the top
+evolution card; excess damage past the now-lower HP causes a KO"* — and
+`/[Dd]evolv/` **cannot match it**, because the noun's stem is `devolu`.
+
+**When grepping prose, grep the shortest unambiguous stem** (`devolu`), and grep
+the concept at least two ways. Code uses verbs; documentation uses nouns.
+
+**And exactness is not rigour.** Inside the same verification, an exact-phrase
+grep for a known doc comment returned nothing where a looser pattern found it
+instantly. A grep that finds nothing is evidence about the pattern before it is
+evidence about the codebase.
+
+## When precedents disagree, the disagreement is the rule (D433)
+
+Three shipped literals disagree about clearing `markers` on a body: `evolveOnto`
+clears it; `switchInto` and `clearOnLeavingActive` keep it. The disagreement is
+not drift — **it is cleared only where a FRESH CARD ARRIVES.** Devolve is not that,
+so it follows the two that keep, and copying the nearest-looking precedent
+(`evolveOnto`, the other evolution-stack operation) would have been a live defect.
+
+**Before following a precedent, check whether its siblings agree with it.** A lone
+precedent is a data point; a unanimous set is a rule; a split set is a
+distinction you have not found yet.
+
+## The second producer of a marker (D433)
+
+**A marker correct for every board its first producer could reach can still need a
+guard for its second.** D414's `koByEffect` marker never needed a `wasLethal`
+conjunct, because its producer could not encounter an already-lethal body. D433's
+producer can — §8.5 damage lands before the effect program — and stamping
+unconditionally would have **denied a recoil that is owed**, since that body
+genuinely *was* Knocked Out by damage.
+
+**When you become the second producer of a marker, re-derive its precondition from
+scratch** rather than inheriting the first producer's.
+
+## Ask the shield after narrowing (D433)
+
+D433's first build asked the §11 refusal gate over the whole opponent board and
+*then* filtered to the printed candidate set, so a shielded body that the effect
+could never have reached filed a prevention row. Every other caller narrows first.
+
+**Every board is identical under both builds; the only casualty is a false log
+row** — which is exactly why it would have survived review. Narrow to the printed
+candidates, then ask.
+
+## Declare partial evidence as partial (D433)
+
+D433's neighbour re-probe covered 92 of 439 rows; a full probe was aborted twice
+on wall time, because the harness re-runs a baseline per suite-set change. **The
+report says so, in those terms.** A clean `precheck` proves no anchor rotted,
+which is a different and weaker claim than a probe. Say which one you have.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

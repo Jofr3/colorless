@@ -38,6 +38,14 @@ import {
   countAttachedEnergy,
   countEnergyInPlay,
   effectiveMaxHp,
+  // 🆕🆕 D433 — MOVED HERE FROM `flow.ts` (which now re-exports it) so `devolveEach`
+  // can ask the ONE lethality question rather than re-spelling `damage >= maximum`
+  // (D131/D222). ⚠️ NOT because a flow.ts import is impossible — this file already
+  // closes a cycle with triggers.ts and the reason it is safe is written above that
+  // import — but because the predicate reads `effectiveMaxHp` and NOTHING ELSE, so
+  // continuous.ts is where it belonged; opening a THIRD module cycle for a two-line
+  // comparator would have been the worse of the two.
+  isLethallyDamaged,
   // 🆕 D388 — the SECOND value this file takes from the retreat-cost seam's single
   // derivation point (D108/D322). `opponentActiveRetreatCostAtLeast` reads the
   // printed noun phrase "the Retreat Cost of your opponent's Active Pokémon", and
@@ -78,7 +86,7 @@ import type {
   HandRefreshDraw,
   PokemonType,
 } from "./effects";
-import type { GameEvent } from "./events";
+import type { GameEvent, StatusName } from "./events";
 // THE one exhaustive switch over `Phase` (phaseView.ts) — `conditionHolds` reads
 // the turn OWNER from it rather than re-deriving one by turn parity, which that
 // module's header forbids. phaseView.ts imports from here TYPE-ONLY
@@ -2948,6 +2956,14 @@ function stepOp(
       // `resolveMidTurnKnockOuts`, never this line. No sweep here, no new event, no
       // new stage — `playStadium` already owns the identical transition (cardplay.ts).
       return { done: discardStadium(state, events) };
+    // 🆕🆕 D433 — no `op.` read at all, which is the shape of a field-free op. It is
+    // the FOURTH op in this file that can change a body's MAXIMUM without touching its
+    // damage, and the FIRST that does so by shortening the evolution stack: the §8.1
+    // Knock Out it owes is `finishAttack`'s `collectKnockOuts` / `settleProgram`'s
+    // `resolveMidTurnKnockOuts`, never this line. What it DOES owe here is the CAUSE —
+    // see `devolveEach` for D414's `koByEffect` stamp and the `wasLethal` conjunct.
+    case "devolveEach":
+      return { done: devolveEach(state, ctx, events) };
     case "healChosen": {
       // `zone: "bench"` is the printed word "Benched" and nothing else (D135):
       // it drops the Active from the candidate set and changes NOTHING else —
@@ -9131,6 +9147,256 @@ function returnSelf(
   const [deck, rngState] = shuffle([...placed.deck, ...zones.deck], state.rngState);
   events.push({ type: "SHUFFLE", seat });
   return { ...withSide(state, seat, { ...placed, deck }), rngState };
+}
+
+/** 🆕🆕 **D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.** *"Devolve each of
+    your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it
+    into your opponent's deck."* — **1 sentence / 3 legal printings**, corpus row 88.
+
+    🛑 **THE CANDIDATE SET IS `oppAnyRefs` AND NOT A NEW SCAN.** *"each of your
+    opponent's evolved Pokémon"* is the Active AND the Bench, which is exactly the set
+    `damageChosen`'s `opponentAny` snipe already funnels through — reused rather than
+    re-spelled, on `snipeTargets`' own stated rule (a second enumeration of one noun
+    phrase is how two readers come to disagree). The "evolved" filter is
+    `stack.length >= 2` and NOT a printed-stage read: §1.2 makes the stack the identity,
+    a Rare Candy places a Stage 2 straight onto a Basic (`stack` = 2, with no Stage 1
+    card in it at all), and a catalog gap on the top card must not silently make a body
+    un-devolvable.
+
+    🛑 **§11 IS A FILTER AND NOT A GUARD, WHICH IS D259's RULE AND NOT A CHOICE.**
+    The sentence names a SET, so a shielded body must merely not be devolved — refusing
+    the op whole would let one Mist-Energy'd Fraxure protect the entire board, a rule no
+    printing states. `unshieldedRefs` is the same funnel `gust`, `returnBenched` and
+    `knockOutChosen` already apply, and it announces one `ATTACK_EFFECT_PREVENTED` per
+    shielded BODY rather than one for the sweep.
+
+    🛑 **THE CLEAR SET IS THE §10/§11 ELEVEN, AND THE THREE FIELDS `evolveOnto`
+    ALSO WRITES ARE DECIDED SEPARATELY BECAUSE THEY SAY SOMETHING ELSE.** The eleven —
+    `conditions` through `boostedAttack` below — are byte-for-byte the set `switchInto`
+    (interpreter.ts) and `clearOnLeavingActive` (turn.ts) clear, and §12 names
+    devolution in the same breath as evolution (*"retreats / moves to Bench, evolves,
+    devolves, or by card effect"*, `docs/reference/ptcg-rules.md` §12). `evolveOnto`
+    writes THREE more, and all three of those say *a new card arrived*:
+
+      · `turnPlayed` — **KEPT**. Nothing came into play; the body has been here since it
+        was played. A devolved Pokémon that could not be evolved again on its
+        controller's next turn would be a rule no card prints.
+      · `markers` — **KEPT**, and this is the one that would be a live defect if copied
+        from `evolveOnto`. The only marker in the engine is D414's `koByEffect:<turn>`,
+        which records that a body's LETHALITY is not damage's doing; clearing it here
+        would silently restore the *"Knocked Out by damage from an attack"* reading for
+        a body §8.1 is about to collect. `switchInto` and `clearOnLeavingActive` keep it
+        too — the three shipped literals already DISAGREE about this field, and the
+        disagreement is right: it is cleared only where a fresh card arrives.
+      · `evolvedTurn` — **NULLED**, the one write here that is neither the eleven nor a
+        keep. It is a fact ABOUT THE CARD THAT JUST LEFT, so it must not outlive it.
+        `null` rather than a stale number because the field's only reader asks
+        `=== state.turn` (Gholdengo `sv08-131`'s +90): under-claiming is invisible and
+        over-claiming pays a bonus to a body that is no longer the Pokémon which earned
+        it. No board in this catalog can currently witness the difference — devolution
+        happens on the OPPONENT's turn, so `evolvedTurn === state.turn` is already false
+        for every body this op can reach — so it is pinned by a surgery, exactly as
+        `evolveOnto` pins its own unreachable clears.
+
+    Damage, Energy and Tools carry over untouched: §10's carry-over read in the other
+    direction, and the damage half is what makes the Knock Out below possible at all.
+
+    🛑 **THE KNOCK OUT ARRIVES BY THE MAXIMUM MOVING, §8.1 NEEDS NO NEW MECHANISM
+    — BUT THE *CAUSE* DOES.** `isLethallyDamaged` is a `damage >= effectiveMaxHp` STATE
+    check and `effectiveMaxHp` resolves the stack TOP live, so a Stage 2 carrying 100
+    damage that devolves to a 90 HP Stage 1 is lethal the instant the stack shortens —
+    no damage dealt, no counter placed. `finishAttack`'s `collectKnockOuts` sweeps both
+    boards after the program settles and collects it; the Prize and the promotion fall
+    out with no code. What §8.1 does NOT get right by itself is *"Knocked Out **by
+    damage** from an attack"* — read by four built sentences / six printings through
+    `KnockOutMark.byAttack`, and by `koRecoilOf` for Vengeful Punch `sv03-197`.
+    `collectKnockOuts`' own comment already states the rule this op needs: *"a cascade
+    Knock Out is caused by the maximum MOVING, not by the attack's damage"*. So a body
+    this op makes lethal is stamped with D414's `koByEffect:<turn>` marker — the SECOND
+    producer of that stamp, and the first that writes it without writing damage.
+
+    ⚠️ **THE STAMP IS CONDITIONED ON `wasLethal`, AND THAT CONJUNCT IS THE PRECISION OF
+    IT.** §8.5's damage lands BEFORE the effect program runs (D125), so the Defending
+    Pokémon can already be lethal when this op reaches it. That body WAS Knocked Out by
+    damage from an attack, and stamping it would deny Vengeful Punch a recoil it is
+    owed. Only a body that crosses the line BECAUSE the maximum moved is marked.
+
+    ⚠️ **THE `wasLethal` READ AND THE RE-READ STRADDLE THE WRITE, DELIBERATELY.**
+    `effectiveMaxHp` → `seatMaxHpBonus` locates the body by matching its TOP UID against
+    the bodies IN PLAY, so asking about a devolved body that has not been written back
+    yet answers 0 for every seat-wide HP aura — a silently wrong maximum on exactly the
+    boards this op is interesting on. The devolved bodies are therefore committed to the
+    board FIRST and the lethality question asked of the COMMITTED state (D428/D429's
+    stale-local hazard, arriving through a helper's lookup rather than through a
+    `const`).
+
+    ⚠️ **AND THE SIBLING GAP IS NAMED RATHER THAN PINNED (D429).** This is not the only
+    op that can drop a maximum below a body's existing damage: `discardStadium` (D380)
+    can vacate Lively Stadium's `+30` to every Basic, and `discardTool` can take a
+    Bravery Charm off. Neither stamps, so both currently report a max-moved Knock Out as
+    *"by damage from an attack"*. That is a REAL inconsistency and it PREDATES this
+    slice; it is recorded here so the next reader finds it, and deliberately NOT covered
+    by a test, because a guard asserting today's answer would redden when someone fixes
+    it.
+
+    ⚠️ **ONE `SHUFFLE` FOR THE WHOLE SWEEP**, `returnSelf`'s stated rule: the cards are
+    gathered and the deck is touched at most once, so three devolutions file three
+    `POKEMON_DEVOLVED` rows and ONE `SHUFFLE`, and a board with nothing evolved on it
+    files neither — a silent no-op, every sibling's contract. The RNG draw count is part
+    of that contract: a per-body shuffle would advance `rngState` a different number of
+    times and desynchronise every later flip.
+
+    ⚠️ **THE DECK IS THE OWNER'S**, `returnBenched`'s and `randomFromOpponentHand`'s
+    line: every zone touched belongs to the body, and `ctx.seat` reaches only the
+    event's `actor`. */
+function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  const owner = otherSeat(ctx.seat);
+  // The printed CANDIDATE SET: the opponent's Active first, then Bench in index
+  // order (`oppAnyRefs`' order, which is also `lethalRefs`', so the log rows and the
+  // KO sweep read the board the same way round), narrowed to the bodies the sentence
+  // names — *"each of your opponent's EVOLVED Pokémon"*. §1.2's identity rule makes
+  // that `stack.length >= 2`: a body with one card on it is what it was played as,
+  // and only a stack of two or more has an evolution card to shed.
+  //
+  // 🛑 **NARROWED BEFORE §11 IS ASKED, AND THE ORDER IS THE WHOLE CORRECTNESS OF THE
+  // REFUSAL ROW.** Every other caller of `unshieldedRefs` hands it an already-printed
+  // candidate set — `gustTargets` (bench only), `knockOutChosenTargets` (the printed
+  // stage filter), `discardableEnergies` (bodies that HOLD Energy). Asking the shield
+  // over the whole board first would file an `ATTACK_EFFECT_PREVENTED` row for a
+  // Mist-Energy'd BASIC this op was never going to touch: a refusal announcing an
+  // effect that does not exist, which is a false log row rather than a conservative
+  // one (D430 — a log row is a claim with the same standing as a predicate).
+  const evolvedRefs = oppAnyRefs(state, ctx.seat).filter((ref) => {
+    const side = state.players[ref.seat];
+    const spot = ref.spot;
+    const target = spot.spot === "active" ? side.active : side.bench[spot.index];
+    return target !== null && target !== undefined && target.stack.length >= 2;
+  });
+  const refs = unshieldedRefs(state, evolvedRefs, ctx, events);
+  const devolved: {
+    ref: PokemonRef;
+    body: InPlayPokemon;
+    from: string;
+    cleared: StatusName[];
+    wasLethal: boolean;
+  }[] = [];
+  const returned: string[] = [];
+  for (const ref of refs) {
+    const side = state.players[ref.seat];
+    const spot = ref.spot;
+    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+    // Not in play — unreachable (`evolvedRefs` just read every one of these bodies),
+    // and a silent skip rather than a throw for the reason every ref guard in this
+    // file is: the op validates refs. The "evolved" filter is NOT repeated here; it
+    // lives in `evolvedRefs` alone, so the printed candidate set has ONE spelling and
+    // the refusal rows above cannot disagree with the bodies this loop collects.
+    if (body === null || body === undefined) continue;
+    const from = body.stack[body.stack.length - 1];
+    if (from === undefined) continue;
+    devolved.push({
+      ref,
+      from,
+      cleared: presentStatuses(body.conditions),
+      wasLethal: isLethallyDamaged(state, body),
+      body: {
+        ...body,
+        // "the highest Stage Evolution card" — ONE card off the top, not the whole
+        // stack: a Stage 2 devolves to its Stage 1 (or, after a Rare Candy, to its
+        // Basic). `evolveOnto`'s APPEND read backwards.
+        stack: body.stack.slice(0, -1),
+        // §12 — devolving removes Special Conditions, named in the same clause as
+        // evolving and retreating.
+        conditions: noConditions(),
+        // …and §10's effects of attacks, the same eleven `switchInto` and
+        // `clearOnLeavingActive` shed. Every one of them was installed on a body whose
+        // top card is now in the deck.
+        retreatBlocked: false,
+        retreatLockedTurn: null,
+        attackBlock: null,
+        attackLockedTurn: null,
+        damageReduction: null,
+        noWeaknessTurn: null,
+        attackDamageDebuff: null,
+        installedRecoil: null,
+        lockedAttacks: [],
+        boostedAttack: null,
+        // …and the evolution stamp, which belongs to the card that left. See the block
+        // above for why this is `null` and why `turnPlayed` and `markers` are NOT
+        // touched.
+        evolvedTurn: null,
+      },
+    });
+    returned.push(from);
+  }
+  if (devolved.length === 0) return state;
+
+  let next = state;
+  for (const entry of devolved) {
+    const side = next.players[entry.ref.seat];
+    const spot = entry.ref.spot;
+    next = withSide(
+      next,
+      entry.ref.seat,
+      spot.spot === "active"
+        ? { ...side, active: entry.body }
+        : {
+            ...side,
+            bench: side.bench.map((pokemon, i) => (i === spot.index ? entry.body : pokemon)),
+          },
+    );
+    // The new stack top. `undefined` is unreachable — the slice left at least one card
+    // behind — and an empty string would be a uid no client can render, so the `??` is
+    // a total-function tail rather than a case.
+    const to = entry.body.stack[entry.body.stack.length - 1] ?? entry.from;
+    events.push({
+      type: "POKEMON_DEVOLVED",
+      seat: entry.ref.seat,
+      actor: ctx.seat,
+      from: entry.from,
+      to,
+    });
+    // §10/§12 — announced only when there was something to remove, `evolveOnto`'s rule
+    // verbatim; `uid` is the NEW top (events.ts).
+    if (entry.cleared.length > 0) {
+      events.push({
+        type: "STATUS_CLEARED",
+        seat: entry.ref.seat,
+        uid: to,
+        statuses: entry.cleared,
+        reason: "devolved",
+      });
+    }
+  }
+  // The whole pile in ONE move, so the deck is touched at most once.
+  const ownerSide = next.players[owner];
+  const [deck, rngState] = shuffle([...ownerSide.deck, ...returned], next.rngState);
+  next = { ...withSide(next, owner, { ...ownerSide, deck }), rngState };
+  events.push({ type: "SHUFFLE", seat: owner });
+
+  // 🛑 ASKED OF THE COMMITTED BOARD, NOT OF THE LOCAL BODY — see the block above:
+  // `seatMaxHpBonus` finds a body by scanning the bodies IN PLAY, so a maximum read
+  // before the write-back silently drops every seat-wide HP aura.
+  for (const entry of devolved) {
+    if (entry.wasLethal) continue;
+    const side = next.players[entry.ref.seat];
+    const spot = entry.ref.spot;
+    const body = spot.spot === "active" ? side.active : side.bench[spot.index];
+    if (body === null || body === undefined) continue;
+    if (!isLethallyDamaged(next, body)) continue;
+    const marker = koByEffectMarker(next.turn);
+    // Idempotent, `doomBodyAt`'s contract: a body already carrying this turn's stamp
+    // is left alone rather than given a duplicate.
+    if (body.markers.includes(marker)) continue;
+    const marked: InPlayPokemon = { ...body, markers: [...body.markers, marker] };
+    next = withSide(
+      next,
+      entry.ref.seat,
+      spot.spot === "active"
+        ? { ...side, active: marked }
+        : { ...side, bench: side.bench.map((p, i) => (i === spot.index ? marked : p)) },
+    );
+  }
+  return next;
 }
 
 /** 🆕 D345 — *"If you use this Ability, this Pokémon is Knocked Out."* (Dusclops

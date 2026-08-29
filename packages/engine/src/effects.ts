@@ -5934,6 +5934,55 @@ export type EffectOp =
       what it meant. No `PendingStage` inhabitant is added either; `takePrizes` has ridden
       that union since M1. Driven in BOTH directions in `takePrizeAttack.test.ts` §3. */
   | { op: "takePrize" }
+  /** 🆕🆕 **D433 — §10, THE FIRST DEVOLUTION IN THIS ENGINE.**
+      *"Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage
+      Evolution card on it into your opponent's deck."* — **1 sentence / 3 legal
+      printings**, `censusAttackCorpus.ts` row 88.
+
+      🛑 **A LITERAL AND NOT A TEMPLATE, AND THE POOL IS TWO ROWS.** The loosest
+      plausible family grep is `/[Dd]evolv/`; run over the whole 640-sentence corpus it
+      returns **exactly two rows and both were read**:
+
+        88: 3  Devolve each of your opponent's evolved Pokémon by shuffling the
+               highest Stage Evolution card on it into your opponent's deck.
+        87: 1  Devolve 1 of your opponent's evolved Pokémon by putting the highest
+               Stage Evolution card on it into your opponent's hand.
+
+      They differ on **TWO axes at once** — CARDINALITY (`each` vs `1`, a sweep vs a
+      PARK) and DESTINATION (deck-plus-shuffle vs hand) — so a parameterised
+      `{ whose, count, dest }` op would carry a pool of ONE on both fields and be a
+      guess about the second, which is D121's warrant unmet twice over (its precondition
+      is two printings with ONE token varying). Row 87 is left on the loud
+      `ATTACK_EFFECT_SKIPPED` path and used as this suite's skip witness instead. The
+      day it is built, the two ops share `devolveBody` in interpreter.ts rather than one
+      widening into the other — the same call `returnSelf`/`returnBenched` made.
+
+      🛑 **FIELD-FREE, BECAUSE EVERY TOKEN OF THE SENTENCE IS SPENT.** "each of
+      your opponent's" is the side AND the quantifier, "evolved" is the filter,
+      "the highest Stage Evolution card" is ONE card off the top of `stack` (§1.2's
+      identity rule, `evolveOnto`'s APPEND read backwards), and "shuffling … into your
+      opponent's deck" is the destination and the shuffle. Nothing varies, so nothing
+      is captured (D104's minimal shape, `discardStadium`'s and `installNoWeakness`'s
+      verdict verbatim).
+
+      ⚠️ **IT IS THE FIRST OP THAT CAN KNOCK A POKÉMON OUT BY LOWERING ITS
+      MAXIMUM, AND §8.1 CATCHES IT WITH NO NEW MECHANISM.** `isLethallyDamaged` is a
+      `damage >= effectiveMaxHp` STATE check and `effectiveMaxHp` resolves the stack
+      TOP live, so a Stage 2 carrying 100 damage that devolves to a 90 HP Stage 1 is
+      lethal the instant the stack shortens — no damage dealt, no counter placed.
+      `finishAttack`'s `collectKnockOuts` sweeps BOTH boards after the program settles
+      and collects it, with the Prize and the promotion falling out unchanged. **What
+      the op DOES owe is the CAUSE**: see `devolveEach` (interpreter.ts) for
+      `koByEffectMarker`, which is D414's stamp reaching a second producer.
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` BUMP (still 27)**, on `takePrize`'s and
+      `discardStadium`'s verbatim argument: adding a member to `EffectOp` is D125's
+      WIDENING — no v27 deploy can author `{op:"devolveEach"}` and every byte string a
+      v27 deploy DID write still means what it meant. No `InPlayPokemon` field is added
+      (`stack` has been there since M4), no `GameState` field, no `PendingStage`
+      inhabitant, and the op never parks — so nothing it produces reaches `phase.cont`.
+      Driven in BOTH directions in `devolveEach.test.ts` §9. */
+  | { op: "devolveEach" }
   /** 🆕🆕 **D380 — §7.3, THE STADIUM ZONE EMPTIED BY AN ATTACK.** *"Discard a
       Stadium in play."* — Hisuian Growlithe `sv06-099`/`sv06-181` "Blazing
       Destruction" (**no Energy cost**, no damage), Skarmory `sv06-119` "Big Storm"
@@ -16599,6 +16648,36 @@ export function searchTopOrderProgram(n: number): EffectOp[] {
     printings (Poliwrath, Gholdengo, Eldegoss, Lillie's Comfey) and Sylveon ex's
     two-target compound OFF this path: each of them contains one of these clauses
     as a fragment, and each needs a mechanism this op does not have. */
+// 🆕🆕 **D433 — THE DEVOLUTION SWEEP.** *"Devolve each of your opponent's
+// evolved Pokémon by shuffling the highest Stage Evolution card on it into your
+// opponent's deck."* — **1 sentence / 3 legal printings**, `censusAttackCorpus.ts`
+// row 88, placed beside `RETURN_BENCHED` because it is the other op in this file
+// that shuffles a card off the BOARD into the OPPONENT's deck.
+//
+// ⚠️ **THE FAMILY IS TWO ROWS AND BOTH WERE READ.** The pattern is the loosest
+// plausible one — `/[Dd]evolv/`, a stem with no surrounding words at all — and over
+// the whole 640-sentence `legal_standard = 1` corpus it returns exactly rows 87 and
+// 88. Row 87 (*"Devolve 1 of your opponent's evolved Pokémon by putting the highest
+// Stage Evolution card on it into your opponent's hand."*, 1 printing) varies from
+// this one on TWO axes at once — a PARKED single choice instead of a sweep, and the
+// hand instead of the deck — so it is NOT this anchor's single-axis near-miss and it
+// is deliberately left on the loud `ATTACK_EFFECT_SKIPPED` path; `^…$` is what keeps
+// it there. `devolveEach.test.ts` §2 uses CONSTRUCTED single-axis near-misses for the
+// refusal rungs (D427: a miss that differs on more than one axis tests nothing about
+// either) and drives row 87 as the skip witness instead.
+//
+// ⚠️ **BOTH APOSTROPHES ARE U+0027 AND THAT WAS MEASURED, NOT REMEMBERED** —
+// `hexdump -C` on corpus row 88 shows `0x27` at both possessive slots. The `['’]`
+// class is kept on both for the family's standing reason (a re-ingest could curl
+// them), which is exactly what D421 got wrong from memory and D425 checked.
+//
+// ⚠️ **NO CAPTURE AT ALL, AND THAT IS WHY THE ARM IS A `test`.** Every token is
+// spent: the side, the quantifier, the "evolved" filter, the one-card-off-the-top
+// reading of "the highest Stage Evolution card", the destination and the shuffle.
+const DEVOLVE_EACH_TO_DECK = new RegExp(
+  `^Devolve each of your opponent['’]s evolved Pokémon by shuffling the highest ` +
+    `Stage Evolution card on it into your opponent['’]s deck\\.$`,
+);
 const RETURN_BENCHED = new RegExp(
   "^(?:" +
     `(Shuffle 1 of your opponent['’]s Benched Pokémon and all attached cards into their deck)` +
@@ -19543,6 +19622,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // deliberately kept, which is the opposite of what the card offers.
     ];
   }
+
+  // 41-bis. 🆕🆕 D433 — "Devolve each of your opponent's evolved Pokémon by
+  //     shuffling the highest Stage Evolution card on it into your opponent's deck."
+  //     **1 sentence / 3 legal printings**, corpus row 88. A `test` rather than an
+  //     `exec`, and that is the SHAPE OF THE SENTENCE rather than a shortcut: the
+  //     anchor has no capture group at all, because every token of the string is
+  //     either the side, the quantifier, the "evolved" filter, the one-card reading
+  //     or the destination — all of them spent at the op (see `DEVOLVE_EACH_TO_DECK`).
+  //
+  //     UNGATED: no coin is printed on any of the three.
+  //
+  //     ⚠️ PLACED IMMEDIATELY ABOVE ARM 42 AND THE ORDER IS FREE, said rather than
+  //     assumed. Both anchors are `^…$` and the first WORD differs ("Devolve" vs
+  //     "Shuffle"/"Put"/"Flip"), so neither can claim a string the other matches in
+  //     either direction — `devolveEach.test.ts` §2 drives this sentence against
+  //     `RETURN_BENCHED` and row 42's three sentences against this anchor.
+  if (DEVOLVE_EACH_TO_DECK.test(effect)) return [{ op: "devolveEach" }];
 
   // 42. "Shuffle 1 of your [opponent's] Benched Pokémon and all attached cards
   //     into (their|your) deck." / "Put 1 of your Benched Pokémon and all

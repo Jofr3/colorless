@@ -66,6 +66,35 @@ export type GameEvent =
       to: string;
       target: PokemonTarget;
     }
+  /** 🆕🆕 §10 (D433) — the INVERSE of the row above: the highest Stage
+      Evolution card (`from`, the uid that WAS the stack top) came off the in-play
+      Pokémon on `seat`'s board and was shuffled into `seat`'s deck; `to` is the card
+      the stack now tops out at. Damage, Energy and Tools stay attached (§10's
+      carry-over, unchanged by direction); Special Conditions are removed — a separate
+      STATUS_CLEARED with reason "devolved" lists any that were, exactly as the
+      evolution row announces its "evolved" clear.
+
+      🛑 **`actor` IS A CARRIED FIELD AND NOT A DERIVED ONE, AND D425 IS THE
+      REASON.** `seat` OWNS the devolved body, as every zone-changing row in this file
+      does; the player whose card did it is the OTHER seat on every board this op's one
+      printed sentence can build (*"each of YOUR OPPONENT'S evolved Pokémon"*). A
+      `log.ts` that recomputed the actor as `otherSeat(event.seat)` would be TRUE today
+      and true only by accident — which is precisely the closed-world assumption D425
+      found shipped on `DAMAGE_DEALT` and had to repair, where four producers all
+      happened to aim across the table until one did not. The field is carried so the
+      first same-side devolution (row 87's hand twin, or any own-board print) cannot
+      make the log credit the wrong player.
+
+      ⚠️ **NO `target`, unlike POKEMON_EVOLVED.** That row carries one because its
+      caller already holds the action's `PokemonTarget` object; this op names no target
+      at all — it sweeps a whole board — and nothing reads a spot off this row. A field
+      with no reader is a second spelling of the uid (D104).
+
+      ⚠️ **ONE ROW PER BODY AND ONE `SHUFFLE` FOR THE WHOLE SWEEP.** The cards are
+      gathered and the deck is touched at most once (`returnSelf`'s stated rule), so a
+      sweep that devolves three bodies files three of these and ONE `SHUFFLE`, and a
+      sweep that devolves nothing files neither. */
+  | { type: "POKEMON_DEVOLVED"; seat: Seat; actor: Seat; from: string; to: string }
   /** The compensation decision resolving (§3.5) — fires even when the owed
       player declines, because the phase advances either way and an
       event-only consumer must not be left waiting on the prompt. */
@@ -299,7 +328,21 @@ export type GameEvent =
       seat: Seat;
       uid: string;
       statuses: StatusName[];
-      reason: "benched" | "evolved" | "wokeUp" | "burnCured" | "paralysisEnded" | "recovered";
+      /** 🆕🆕 "devolved" (D433) is "evolved"'s inverse and NOT a re-use of it:
+          §12 names the two events separately (*"retreats / moves to Bench, evolves,
+          devolves, or by card effect"*), and the two rows render under DIFFERENT
+          seats' agency — an evolution is always the owner's own play, a devolution in
+          this pool is always the opponent's attack. A shared reason would make one
+          fact two readings (D131) in the one direction a player cannot recover
+          afterwards. */
+      reason:
+        | "benched"
+        | "evolved"
+        | "devolved"
+        | "wokeUp"
+        | "burnCured"
+        | "paralysisEnded"
+        | "recovered";
     }
   /** §11 — an attack effect locked `seat`'s Active in place ("During your
       opponent's next turn, the Defending Pokémon can't retreat."). Deliberately

@@ -235,6 +235,26 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         plain(" → "),
         strong(cardName(state, event.to)),
       ]);
+    // 🆕🆕 §10 (D433) — the row above INVERTED, and the differences from it are
+    // both about AGENCY rather than about the movement.
+    //
+    // 🛑 **FILED UNDER `event.actor`, WHICH IS CARRIED AND NOT DERIVED.** The
+    // evolution row files under `seat` because evolving is always the owner's own play;
+    // this one is always somebody else's attack, so it takes the ACTOR voice every
+    // cross-seat card move in this file takes (`POKEMON_RETURNED`,
+    // `CARD_TO_BOTTOM_OF_DECK`, `DECK_TOP_DISCARDED`). ⚠️ `otherSeat(event.seat)` would
+    // be true today and true only BY CONSTRUCTION OF ONE OP — D425's `DAMAGE_DEALT`
+    // defect verbatim — so the seat is read off the row rather than recomputed from it.
+    //
+    // `from` is still resolvable: it went into the owner's DECK, and `cardName` reads
+    // the catalog index by uid rather than the board.
+    case "POKEMON_DEVOLVED":
+      return row(event.actor, [
+        plain("devolved "),
+        strong(`${names[event.seat]}'s ${cardName(state, event.from)}`),
+        plain(" → "),
+        strong(cardName(state, event.to)),
+      ]);
     case "COMPENSATION_DECIDED":
       // A draw already logged its own CARDS_DRAWN row; only the decline is
       // otherwise invisible.
@@ -470,6 +490,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
             plain(" shed "),
             strong(statuses),
             plain(" on evolving"),
+          ]);
+        case "devolved":
+          // 🆕🆕 D433 — follows the POKEMON_DEVOLVED row; §12 names devolving in the
+          // same clause as evolving, so it clears every condition at once too and
+          // `name` is likewise the NEW top card. A SEPARATE arm rather than a shared
+          // one with "evolved" above: the words differ ("on devolving"), and a player
+          // reading back a row that said "on evolving" about a card that just left the
+          // board would be told the opposite of what happened. Filed under `seat` — the
+          // OWNER — like every other clear in this switch; the AGENCY is on the
+          // POKEMON_DEVOLVED row directly above, which is where it belongs.
+          return row(seat, [
+            strong(name),
+            plain(" shed "),
+            strong(statuses),
+            plain(" on devolving"),
           ]);
         default:
           return row(seat, [strong(name), plain(" recovered from "), strong(statuses)]);

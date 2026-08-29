@@ -2,7 +2,7 @@ import type { Card } from "@luminous/schema";
 import type { ApplyResult, ConcedeAction } from "./actions";
 import { err, ok } from "./actions";
 import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
-import { effectiveMaxHp, passivesOf, seatKoPrizeBonuses } from "./continuous";
+import { isLethallyDamaged, passivesOf, seatKoPrizeBonuses } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
 import { runProgram } from "./interpreter";
@@ -67,14 +67,13 @@ export function startTurn(state: GameState, seat: Seat, events: GameEvent[]): Ap
   return ok(next, events);
 }
 
-/** The one "damage ≥ max HP" Knock Out test (§8.1/§13), reading the
-    CONTINUOUS max HP (printed + Tool bonuses — Bravery Charm) and owning the
-    null-hp rule: a missing/non-positive printed hp is a catalog data gap, and
-    a data gap never KOs (cards.ts hpOf via continuous.ts effectiveMaxHp). */
-export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
-  const hp = effectiveMaxHp(state, pokemon);
-  return hp !== null && pokemon.damage >= hp;
-}
+/** 🆕🆕 D433 — THE DEFINITION MOVED TO `continuous.ts`, BESIDE `effectiveMaxHp`,
+    AND THIS RE-EXPORT IS WHAT KEEPS EVERY EXISTING IMPORT PATH RESOLVING. It is that
+    function's comparator and reads nothing else; interpreter.ts's `devolveEach` needs
+    it and cannot import this module (this module takes `runProgram` from it). ONE
+    definition, two spellings of the same import — see the block at the definition for
+    why re-spelling the comparison at the op was refused. */
+export { isLethallyDamaged } from "./continuous";
 
 /** §8.1 KO cleanup, generalized off the Active (M4): Knock Out the in-play
     Pokémon whose stack-top is `koedUid` on `koedSeat`'s board — Active OR a

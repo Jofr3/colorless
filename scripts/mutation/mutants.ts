@@ -432,8 +432,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D208",
     what: "the clamp reads the PRINTED hp instead of `effectiveMaxHp` — a Bravery Charm on the holder raises both the bar and the HP left standing, and this gets both wrong on one board",
     file: "packages/engine/src/continuous.ts",
-    find: "  const hp = effectiveMaxHp(state, pokemon);",
-    replace: "  const hp = topCardOf(state, pokemon)?.hp ?? null;",
+    // ⚠️ **RE-ANCHORED AT D433, AND `precheck` IS WHAT FOUND IT.** The bare line
+    // `  const hp = effectiveMaxHp(state, pokemon);` stopped being unique the moment
+    // D433 MOVED `isLethallyDamaged` into this file (from flow.ts, so `devolveEach`
+    // could ask the one lethality question rather than re-spelling the comparison) —
+    // it spells the identical line. `find occurs 2×` is D404's wrong-arm trap, and a
+    // sweep would have reported a verdict about the wrong function. The preceding
+    // guard line is `koSurvivalClamp`'s alone, so the row's CLAIM is untouched: the
+    // clamp still reads the printed hp instead of the continuous maximum.
+    // ⚠️ **AND THE TWO-SIDED HALF OF D416's REPAIR DOES NOT APPLY HERE**: this was a
+    // MOVE and not a COPY, so there is still exactly ONE definition of the predicate
+    // and no untested second site was created.
+    find: "  if (!passivesOf(state, pokemon).survivesKoAtFullHp) return null;\n  const hp = effectiveMaxHp(state, pokemon);",
+    replace: "  if (!passivesOf(state, pokemon).survivesKoAtFullHp) return null;\n  const hp = topCardOf(state, pokemon)?.hp ?? null;",
     expectKilledBy: ["packages/engine/src/koSurvival.test.ts"],
   },
   {
@@ -5174,7 +5185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5673,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5684,7 +5695,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.334.0";',
+    find: 'export const engineVersion = "0.335.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -19389,5 +19400,166 @@ export const MUTANTS: Mutant[] = [
     find: "        plain(\" has no Weakness during your opponent's next turn\"),",
     replace: "        plain(\" has no Weakness next turn\"),",
     expectKilledBy: ["packages/engine/src/noWeaknessBar.test.ts"],
+  },
+  // ── D433 — THE DEVOLUTION SWEEP. Seventeen rows, ONE PER MECHANISM OR DECISION, and
+  //    the shape of the set is the finding again: ELEVEN of the seventeen are SILENT IN
+  //    EVERY CENSUS — the sentence still matches, `BUILT.attack` is unmoved and the loud
+  //    `ATTACK_EFFECT_SKIPPED` path still never fires — while the build devolves the whole
+  //    stack, sweeps its own board, shuffles the wrong deck, scrambles a deck it never
+  //    touched, or reports a maximum-moved Knock Out as one *"by damage from an attack"*.
+  //    The two HAZARD-ONE rows are a PAIR in both directions, because the `wasLethal`
+  //    conjunct can be wrong either way and each half passes the other's board.
+  {
+    id: "D433-devolves-the-whole-stack",
+    decision: "D433",
+    what: "The op strips the WHOLE evolution stack instead of the single highest Stage card, leaving the Basic. It is the mistake the printed sentence invites — *\"devolve\"* reads like an undo of the whole chain, and `discardFromStack(..., \"all\")` sits one file over doing exactly this to a KO'd body. 🛑 NO CENSUS CAN SEE IT: the sentence still resolves, `BUILT.attack` is unmoved, `ATTACK_EFFECT_SKIPPED` still never fires, a `POKEMON_DEVOLVED` row is still filed, the deck still grows and the Stage 1 board is IDENTICAL under both builds. Only a Stage 2 board tells them apart, which is why §4 exists",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        stack: body.stack.slice(0, -1),",
+    replace: "        stack: body.stack.slice(0, 1),",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-evolved-filter-admits-a-basic",
+    decision: "D433",
+    what: "The *\"evolved\"* filter reads `< 1` instead of `< 2`, so an unevolved Basic is swept too and comes out with an EMPTY stack — a body in play that is no card at all. The silent no-op on an unevolved board becomes a board-corrupting sweep, and it is the off-by-one an author writing \"a stack with something on it\" actually makes",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return target !== null && target !== undefined && target.stack.length >= 2;",
+    replace: "    return target !== null && target !== undefined && target.stack.length >= 1;",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-ko-cause-never-stamped",
+    decision: "D433",
+    what: "🛑 HAZARD ONE, HALF ONE. The `koByEffect` stamp is never written, so a Knock Out caused by the MAXIMUM MOVING is reported as *\"Knocked Out by damage from an attack\"* — `KnockOutMark.byAttack` reads TRUE for four built sentences / six printings, and Vengeful Punch `sv03-197` charges the attacker 40 for a recoil it is not owed. This is the pre-D414 engine reappearing through a producer D414 could not have known about: everything else about the board is right, including the Knock Out itself, the Prize and the promotion",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (!isLethallyDamaged(next, body)) continue;",
+    replace: "    if (isLethallyDamaged(next, body)) continue;",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-ko-cause-always-stamped",
+    decision: "D433",
+    what: "🛑 HAZARD ONE, HALF TWO — the `wasLethal` conjunct deleted, which is the build a careless author actually ships (the guard reads like a micro-optimisation). Every body the op touches on a lethal board is stamped, including one the attack's OWN DAMAGE had already Knocked Out before the program ran — so a genuine *\"by damage from an attack\"* Knock Out is reported as an effect Knock Out and Vengeful Punch is DENIED the 40 it is owed. The mirror of the row above, and the reason §6 carries a pair rather than a case",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (entry.wasLethal) continue;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-lethality-read-before-the-writeback",
+    decision: "D433",
+    what: "🛑 D428/D429's STALE-LOCAL DEFECT, in the shape this op can actually take it: the marker loop reads the body off `state` — the PRE-devolve board — instead of off `next`, the board the devolutions were just committed to. The op still devolves, still files its rows, still shuffles the deck, and §8.1 still Knocks the body Out; only the CAUSE goes wrong, because the maximum consulted is the Stage 2's and nothing looks lethal. `seatMaxHpBonus` locating a body by its top uid is what makes the same read wrong a second way, which is why the two calls straddle the write rather than sitting together",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (entry.wasLethal) continue;\n    const side = next.players[entry.ref.seat];",
+    replace: "    if (entry.wasLethal) continue;\n    const side = state.players[entry.ref.seat];",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-sweeps-the-actors-own-board",
+    decision: "D433",
+    what: "The candidate set is the ACTOR's own in-play bodies rather than the opponent's — `ownInPlayRefs` is the real neighbouring funnel in the same file (D190b's rule: a neighbour's REAL code, not a straw). *\"each of YOUR OPPONENT'S evolved Pokémon\"* is the whole side reading, and the sentence still resolves under this build: the census does not move and the attack still emits `POKEMON_DEVOLVED` and `SHUFFLE`. It simply devolves the wrong player's board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const evolvedRefs = oppAnyRefs(state, ctx.seat).filter((ref) => {",
+    replace: "  const evolvedRefs = ownInPlayRefs(state, ctx.seat).filter((ref) => {",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-cards-go-to-the-actors-deck",
+    decision: "D433",
+    what: "The pile is shuffled into the ACTOR's deck instead of the OWNER's — `returnBenched`'s and `randomFromOpponentHand`'s stated rule (*\"every zone touched belongs to the body\"*) forgotten, and D380's `discardStadium` argument arriving one op over. The victim's board is still correct, the row still fires, and the attacker quietly gains a card the opponent lost",
+    file: "packages/engine/src/interpreter.ts",
+    find: "function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const owner = otherSeat(ctx.seat);",
+    replace: "function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {\n  const owner = ctx.seat;",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-deck-not-shuffled",
+    decision: "D433",
+    what: "The pile is APPENDED to the deck and the deck is never shuffled — the printed verb (*\"by SHUFFLING the highest Stage Evolution card ... into your opponent's deck\"*) dropped. Every card lands in the right zone, the deck's LENGTH is right, the `SHUFFLE` row still fires (it is pushed unconditionally beside the assignment) and `rngState` is the only thing that moves differently, so a length-and-membership suite cannot see it — the victim simply knows the top of their own deck",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const [deck, rngState] = shuffle([...ownerSide.deck, ...returned], next.rngState);",
+    replace: "  const [deck, rngState]: [string[], number] = [[...ownerSide.deck, ...returned], next.rngState];",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-shuffles-an-untouched-deck",
+    decision: "D433",
+    what: "The early return is disarmed, so a board with NOTHING evolved on it still reaches the shuffle: the opponent's deck is scrambled and a `SHUFFLE` row is filed for an event that did not happen. 🛑 EVERY BOARD-STATE ASSERTION IN THE SUITE STILL PASSES — no Pokémon changed, no card moved zone, no HP moved — because the only casualty is deck ORDER, which nothing else in this suite pins. It is the exact shape of a no-op an author forgets to make silent",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (devolved.length === 0) return state;",
+    replace: "  if (devolved.length < 0) return state;",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-clears-markers-like-evolveOnto",
+    decision: "D433",
+    what: "🛑 THE COPY DEFECT D432 NAMED, ONE SLICE LATER: `markers: []` copied across from `evolveOnto`'s literal, which really does write it. The clear set here is `switchInto`'s ELEVEN and not `evolveOnto`'s fourteen, and this is the one of the three extra fields whose copy is actively wrong — the only marker in the engine is D414's `koByEffect:<turn>`, so clearing it restores the *\"by damage\"* reading for a body §8.1 is about to collect",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        evolvedTurn: null,\n      },\n    });",
+    replace: "        evolvedTurn: null,\n        markers: [],\n      },\n    });",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-keeps-the-evolution-stamp",
+    decision: "D433",
+    what: "`evolvedTurn` is left standing, so the body keeps a stamp that belongs to a card now sitting in the deck. It is the field that is neither one of the eleven nor a keep, so an author working from `switchInto`'s literal alone omits it exactly like this — and the value it leaves behind is the OVER-claiming direction, the one that pays Gholdengo `sv08-131` a +90 for an evolution that has been undone",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        // touched.\n        evolvedTurn: null,",
+    replace: "        // touched.",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-status-clear-says-evolved",
+    decision: "D433",
+    what: "The clear announces `reason: \"evolved\"` — the neighbouring member of the very union D433 widened, and the one an author copying `evolveOnto`'s emit would reach for. The board is identical under both builds; only the log lies, telling a player their Pokémon shed its conditions \"on evolving\" at the moment a card left the board. D424's rule at the event layer: a reason that resolves is not a reason that is true",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        reason: \"devolved\",",
+    replace: "        reason: \"evolved\",",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-log-row-derives-the-actor",
+    decision: "D433",
+    what: "🛑 D425's DEFECT, RE-INJECTED AT THE ROW IT WAS DESIGNED OUT OF: the log files the devolution under `event.seat` — the OWNER — instead of the carried `event.actor`. Under this build the victim is shown as having devolved their own Pokémon, which is the one thing a player cannot recover afterwards from anything else on the board. The carried field exists precisely so no consumer has to derive the actor; this is what deriving it looks like",
+    file: "packages/engine/src/log.ts",
+    find: "    case \"POKEMON_DEVOLVED\":\n      return row(event.actor, [",
+    replace: "    case \"POKEMON_DEVOLVED\":\n      return row(event.seat, [",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-refusal-is-dropped",
+    decision: "D433",
+    what: "§11 is not consulted at all — the `unshieldedRefs` funnel `gust`, `returnBenched` and `knockOutChosen` all apply is dropped, so a Mist Energy `sv05-161` holder is devolved anyway and no `ATTACK_EFFECT_PREVENTED` row is filed. The op is *an effect of an attack done to* the opponent's Pokémon and D259's filter is what the printed shield says; a build without it is right on every unshielded board, which is nearly all of them",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const refs = unshieldedRefs(state, evolvedRefs, ctx, events);",
+    replace: "  const refs = evolvedRefs;",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-anchor-loses-the-side",
+    decision: "D433",
+    what: "The anchor's possessive becomes optional, so *\"Devolve each of your evolved Pokémon by shuffling...\"* — the OWN-SIDE near-miss no card prints — is claimed too. The kind of widening that looks like generosity and is a closed-world assumption: the op has no `whose` field, so every string this newly admits resolves to the opponent-side program and devolves the wrong board. §2's single-axis refusal rungs are what see it",
+    file: "packages/engine/src/effects.ts",
+    find: "`^Devolve each of your opponent['’]s evolved Pokémon by shuffling the highest `",
+    replace: "`^Devolve each of your (?:opponent['’]s )?evolved Pokémon by shuffling the highest `",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-arm-emits-the-neighbours-op",
+    decision: "D433",
+    what: "The arm returns `returnBenched` — the op arm 42 immediately below it returns, for the other sentence in this file that shuffles a Pokémon's cards into the opponent's deck. D190b's shape verbatim (a neighbouring arm's REAL code on the wrong sentence). The sentence still RESOLVES, so `BUILT.attack`, the residue and every reader-keyed census figure stand still and `ATTACK_EFFECT_SKIPPED` never fires: the card simply shuffles a whole benched Pokémon away instead of devolving the board",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (DEVOLVE_EACH_TO_DECK.test(effect)) return [{ op: \"devolveEach\" }];",
+    replace: "  if (DEVOLVE_EACH_TO_DECK.test(effect)) return [{ op: \"returnBenched\", whose: \"opponent\", dest: \"deck\" }];",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
+  },
+  {
+    id: "D433-shield-asked-before-the-filter",
+    decision: "D433",
+    what: "§​11 is asked over the WHOLE opponent board instead of over the printed candidate set — the order every other caller of `unshieldedRefs` gets right by handing it an already-narrowed list (`gustTargets`, `knockOutChosenTargets`, `discardableEnergies`). Under this build a Mist Energy `sv05-161` on an UNEVOLVED Basic files an `ATTACK_EFFECT_PREVENTED` row for an effect that was never going to reach it. 🛑 EVERY BOARD IS IDENTICAL — the same bodies devolve, the same cards reach the deck, the same Knock Outs land — and the only casualty is a log row claiming a refusal that did not happen, which is D430's rule at the event layer",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const refs = unshieldedRefs(state, evolvedRefs, ctx, events);",
+    replace: "  const refs = unshieldedRefs(state, oppAnyRefs(state, ctx.seat), ctx, events);",
+    expectKilledBy: ["packages/engine/src/devolveEach.test.ts"],
   },
 ];

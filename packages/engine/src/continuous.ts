@@ -2294,6 +2294,29 @@ export function effectiveMaxHp(state: GameState, pokemon: InPlayPokemon): number
   );
 }
 
+/** The one "damage ≥ max HP" Knock Out test (§8.1/§13), reading the CONTINUOUS
+    max HP directly above (printed + Tool bonuses — Bravery Charm) and owning the
+    null-hp rule: a missing/non-positive printed hp is a catalog data gap, and a data
+    gap never KOs (cards.ts hpOf via `effectiveMaxHp`).
+
+    🆕🆕 **D433 MOVED IT HERE FROM `flow.ts`, AND THE MOVE IS A PLACEMENT FIX
+    RATHER THAN A REFACTOR.** It is `effectiveMaxHp`'s comparator and reads nothing
+    else — no stage, no event, no seat — so its home was never the turn-tail module.
+    The move is forced by a real caller: `devolveEach` (interpreter.ts) must ask
+    whether a body was ALREADY lethal before it shortens the stack, and interpreter.ts
+    cannot import flow.ts (flow.ts takes `runProgram` from it). The alternative was to
+    re-spell `damage >= effectiveMaxHp` at the op, which is the two-readings-of-one-
+    question defect this repo keeps paying for (D131/D222) — and it would be exactly
+    the reading that must NOT drift, because the marker it decides is read by
+    `lethalRefs`' own sweep two stages later.
+
+    ⚠️ `flow.ts` RE-EXPORTS IT so every existing import path still resolves; there is
+    still exactly ONE definition. */
+export function isLethallyDamaged(state: GameState, pokemon: InPlayPokemon): boolean {
+  const hp = effectiveMaxHp(state, pokemon);
+  return hp !== null && pokemon.damage >= hp;
+}
+
 /** 🆕 **D349 — THE PRINTED *"N HP or less **remaining**"* AS ONE PREDICATE, FOR
     ALL THREE OF ITS SUBJECTS.** *Remaining HP* is `effectiveMaxHp − damage`, and
     the catalog prints the threshold about three different bodies: the ability's

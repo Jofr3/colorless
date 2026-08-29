@@ -18367,7 +18367,174 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.333.0 → **0.334.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.334.0";
+/** 🆕🆕 **0.334.0 → 0.335.0 — D433, THE FIRST DEVOLUTION IN THIS ENGINE, AND
+    THE FIRST KNOCK OUT THAT ARRIVES BY A MAXIMUM MOVING.**
+
+    *"Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage
+    Evolution card on it into your opponent's deck."* — **1 sentence / 3 legal
+    printings** over the committed `legal_standard = 1` attack column (640 sentences
+    / 1,732 printings), `censusAttackCorpus.ts` row 88. ONE anchor
+    (`DEVOLVE_EACH_TO_DECK`), ONE arm in `deriveAttackEffect` (41-bis), ONE
+    field-free `EffectOp` (`devolveEach`), ONE `stepOp` case, ONE interpreter sweep,
+    ONE new `GameEvent` (`POKEMON_DEVOLVED`) with ONE log row, ONE new
+    `STATUS_CLEARED` reason (`"devolved"`) with ONE log row, and ONE function MOVED
+    (`isLethallyDamaged`, flow.ts → continuous.ts, re-exported so no import path
+    changed). **11 mechanisms → 77 diff hunks across 37 files**, counted
+    mechanically rather than estimated (D423: price the MECHANISMS, then count the
+    SITES separately — only the first was predictable).
+
+    🛑 **HAZARD ONE — §8.1 CATCHES THE KNOCK OUT WITH NO NEW MECHANISM, AND THE
+    *CAUSE* IS THE WHOLE COST.** `isLethallyDamaged` is a `damage >= effectiveMaxHp`
+    STATE check and `effectiveMaxHp` resolves the stack TOP live, so a Stage 2
+    carrying 100 damage that devolves to a 90 HP Stage 1 is lethal the instant the
+    stack shortens — no damage dealt, no counter placed, no `DAMAGE_DEALT` row
+    anywhere. `finishAttack`'s `collectKnockOuts` sweeps both boards after the
+    program settles and collects it; the Prize and the promotion fall out with ZERO
+    new code, and both are DRIVEN rather than argued. What does NOT fall out is
+    *"Knocked Out **by damage** from an attack"*, read by four built sentences / six
+    printings through `KnockOutMark.byAttack` and by Vengeful Punch `sv03-197`
+    (`koRecoilOf`). `collectKnockOuts`' own comment already states the rule: *"a
+    cascade Knock Out is caused by the maximum MOVING, not by the attack's damage"*.
+    So the op stamps D414's `koByEffect:<turn>` marker — **the SECOND producer of
+    that stamp, and the first that writes it without writing damage.**
+
+    🛑 **AND THE STAMP IS CONDITIONED ON `wasLethal`, WHICH IS THE PRECISION D414
+    DID NOT NEED.** §8.5's damage lands BEFORE the effect program runs (D125), so the
+    Defending Pokémon can already be lethal when the op reaches it — that body WAS
+    Knocked Out by damage, and stamping it would DENY Vengeful Punch a recoil it is
+    owed. Both directions are driven on one Tool, one holder and one op: 0 recoil on
+    the maximum-moved Knock Out, 40 on the damage one. Two mutants, one per
+    direction, both KILLED. **17 rows in total, 17 KILLED, 0 GAPs — and ALL
+    SEVENTEEN are SILENT IN EVERY CENSUS**, which was checked row by row rather than
+    estimated (the two that touch the READER still leave `deriveAttackEffect` non-null
+    on this sentence, and the widened anchor's new language is printed by no card): the sentence still matches, `BUILT.attack`
+    is unmoved and the loud path still never fires, while the build devolves the whole
+    stack, sweeps its own board, shuffles the wrong deck, scrambles a deck it never
+    touched, or mis-reports the cause of a Knock Out.
+
+    ⚠️ **THE SIBLING GAP IS NAMED IN PROSE AND DELIBERATELY NOT PINNED (D429).**
+    `discardStadium` (D380, vacating Lively Stadium's `+30` to every Basic) and
+    `discardTool` (a Bravery Charm) can also drop a maximum below a body's existing
+    damage, and NEITHER stamps — so both report a max-moved Knock Out as *"by
+    damage"*. That inconsistency PREDATES this slice. It is recorded at `devolveEach`
+    so the next reader finds it, and carries no test, because a guard asserting
+    today's answer would redden when someone fixes it.
+
+    🛑 **HAZARD TWO — FOURTEEN CARRY-OVER DECISIONS, AND THE INTERESTING ONES ARE
+    THE THREE THAT DIVERGE FROM `evolveOnto`.** The ELEVEN §10/§11 bars are cleared —
+    byte-for-byte the set `switchInto` (interpreter.ts) and `clearOnLeavingActive`
+    (turn.ts) clear — and §12 names devolution in the same clause as evolution
+    (`docs/reference/ptcg-rules.md` §12). Damage, Energy and Tools carry over. Of the
+    three fields `evolveOnto` ALSO writes, all three of which say *a new card
+    arrived*: `turnPlayed` is KEPT (nothing came into play), `markers` is KEPT
+    (clearing it would erase the `koByEffect` stamp for a body §8.1 is about to
+    collect — the one copy that would be a live defect), and `evolvedTurn` is NULLED
+    (a fact about the card that just left; `null` is the only value that cannot
+    OVER-claim, and over-claiming pays Gholdengo `sv08-131` a +90). ⚠️ **The three
+    shipped literals already DISAGREED about `markers`** — `evolveOnto` clears it,
+    `switchInto` and `clearOnLeavingActive` keep it — so there was no single
+    precedent to copy, and the disagreement turns out to be right: it is cleared
+    only where a fresh card arrives.
+
+    🛑 **THE LITERAL-VS-TEMPLATE CALL, AND THE POPULATION IS ASSERTED RATHER THAN
+    ARGUED.** The devolve family is TWO rows. The pattern is the loosest possible
+    stem — `/[Dd]evolv/`, no surrounding words at all — over all 640 corpus
+    sentences, and BOTH hits were read. Row 87 (*"Devolve 1 of your opponent's
+    evolved Pokémon by putting the highest Stage Evolution card on it into your
+    opponent's hand."*, 1 printing) varies on TWO axes at once — a PARKED single
+    choice instead of a sweep, and the hand instead of the deck — so a parameterised
+    `{ whose, count, dest }` op would carry a pool of ONE on both fields and guess at
+    the second, which is D121's warrant unmet twice over. Row 87 stays unbuilt and is
+    the suite's `ATTACK_EFFECT_SKIPPED` witness. **The two-row claim is a RUNG, not a
+    sentence**: `devolveEach.test.ts` §1 runs the stem over the live corpus, so a
+    third devolve printing entering the legal column reddens the suite and re-opens
+    the template question by construction (D422's executable falsifier).
+
+    ⚠️ **D414's SEARCH WAS RUN AND CAME BACK CLEAN, WHICH IS A FINDING (D431).** The
+    invariant this op breaks, in one sentence: *"an in-play Pokémon's evolution stack
+    only ever GROWS."* Every non-test reader of `stack` was enumerated —
+    `grep -n '\.stack' *.ts` over the engine, **4 positional sites and every one
+    read**: `cards.ts topUid` (the live top), `interpreter.ts`'s
+    `stack[length - 2]` (the card evolved FROM), and this op's own two. All four
+    resolve LIVE, so none needed a change. **The clean audit has exactly one
+    consequence, and it was already written down and could not be driven**:
+    `registry.ts`'s Neo Upper Energy `sv05-162` row says *"evolving a Stage 1 into a
+    Stage 2 with this card ALREADY attached upgrades it on the spot — and devolving
+    would demote it"*, and adds that a STAMPED implementation "would pass every
+    static board in this suite and be silently wrong". Nothing could devolve until
+    now, so the second half of that sentence had no board. §14 gives it one, with the
+    non-devolving control beside it (D422: drive the precedent you cite).
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 27, PREDICTED THEN DRIVEN BOTH DIRECTIONS.**
+    Adding a member to `EffectOp` is D125's WIDENING — no v27 deploy can author
+    `{op:"devolveEach"}` and every byte string a v27 deploy DID write still means
+    what it meant. `stack` has ridden `InPlayPokemon` since M4; no field is added
+    anywhere; `GameEvent` is not persisted at all (`MatchRecord` stores the RENDERED
+    `SeatLogEntry[]`, so a new row type is D141's settled case); and the op never
+    parks, so nothing it produces reaches `phase.cont`. §11 loads a `cont.rest`
+    WITHOUT the op (it drains, no devolution) and one WITH it (round-tripped through
+    JSON, it devolves) — the half that proves the inhabitant survives serialisation
+    rather than that the old bytes were merely ignored.
+
+    ⚠️ **THE ONE MOVE, AND WHY IT IS A PLACEMENT FIX RATHER THAN A REFACTOR.**
+    `devolveEach` must ask whether a body was ALREADY lethal, and re-spelling
+    `damage >= effectiveMaxHp` at the op is the two-readings-of-one-question defect
+    this repo keeps paying for (D131/D222) — on exactly the comparison that must NOT
+    drift from `lethalRefs`' own. `isLethallyDamaged` reads `effectiveMaxHp` and
+    nothing else, so continuous.ts is where it belonged. ⚠️ **NOT because a flow.ts
+    import was impossible** — interpreter.ts already closes a cycle with triggers.ts
+    and says why that is safe; opening a THIRD cycle for a two-line comparator was
+    the worse of the two. `flow.ts` RE-EXPORTS it, so all four existing import paths
+    still resolve and there is still exactly ONE definition.
+
+    ⚠️ **`precheck` EARNED ITS SECONDS AGAIN.** The move made D208's `find` — the bare
+    line `  const hp = effectiveMaxHp(state, pokemon);` — occur **2×** in
+    continuous.ts, D404's wrong-arm trap, and a sweep would have reported a verdict
+    about the wrong function. Re-anchored onto the guard line `koSurvivalClamp`
+    uniquely owns, with the row's CLAIM untouched, and KILLED by its own suite
+    afterwards. ⚠️ D416's TWO-SIDED half does not apply: this was a MOVE, not a COPY,
+    so no untested second site was created.
+
+    ⚠️ **THE CENSUS STEP IS READER-KEYED AND THE FRONT-TERM RULE WAS OBEYED
+    MECHANICALLY.** `BUILT.attack` 1,463 → **1,466**; `resolved` 433 → **434** /
+    1,415 → **1,418**; `rawUnbuiltSentences` 208−1 → **206**; `residueSentences` 182
+    → **181**; `unbuiltAttack` 269 → **266**. `SPLIT_ATTACK_UNITS`,
+    `COMPOUND_ATTACK_UNITS` and `REGISTRY_ATTACK_UNITS` were RE-MEASURED unmoved, and
+    the reader SURFACE stands still at 13 (an ARM, not a fourteenth reader).
+    `clauseApostrophe`'s fixture-keyed sweep does NOT move and neither does
+    `opponentResistanceBonus`' eleven-chain fixture floor — **because this slice adds
+    NO card to `FIXTURE_POOL` and no shared `*_DECK`**: every fixture it needs is
+    declared LOCALLY inside `devolveEach.test.ts` (D412's rule, taken one step
+    further). **Every touched test file was diffed against HEAD by extracting every
+    `toBe(N)` / `toHaveLength(N)` / `toEqual([N,M])` and comparing mechanically: 28
+    files, every diff a REPLACE at equal cardinality, and NO frozen endpoint moved.**
+    Both `BUILT.attack` chains in `censusAtHead.test.ts` took a FRONT term with 521
+    and 269 untouched, and all fifteen nested chains across six files were stepped —
+    not only the ones that reddened (D431: vitest stops at the first failure, so
+    siblings go quiet). `censusAtHead`'s BARE-LITERAL operand
+    `317 - REGISTRY - SPLIT - COMPOUND`, which `grep 'toBe(N)'` cannot find, was found
+    and stepped.
+
+    ⚠️ **THE VERSION TAX, RE-COUNTED RATHER THAN INHERITED: 19 assertions / 22
+    sites** — EIGHTEEN `engineVersion` literal pins (seventeen inherited plus this
+    slice's own in `devolveEach.test.ts` §11), ONE `manifest.version` literal pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). ⚠️ D432's note
+    said 18 / 21 and it RE-MEASURES EXACTLY at this head; the increment is this
+    slice's own pin, which is D427's named mechanism, for the third consecutive
+    slice. Measured with `grep -rn 'expect(engineVersion)\.toBe("'` and
+    `'expect(manifest\.version)\.toBe("'` over the whole repo, every hit read — the
+    two other `engineVersion` mentions are doc comments and the inequality pins
+    (`>= "0.248.0"`) never move.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** This checkout has no D1;
+    the corpus is grouped by sentence and records the COUNT, not the ids. Stated
+    unresolved rather than invented (D425), and the demonstrator is a `fix-*` key
+    with no catalog row behind it.
+
+    engineVersion 0.334.0 → **0.335.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.335.0";
 
 export type {
   ApplyResult,
