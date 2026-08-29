@@ -498,12 +498,13 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 432 files / 9,442 tests, `CHECK_EXIT=0`.**
 > Engine **0.335.0**, **`MATCH_RECORD_VERSION` 27**, corpus **1,653**, archive ratchet **103**.
 >
-> 🛑🛑 **THE ONE DEBT IS LARGER THAN USUAL AND MUST BE PAID FIRST: D433 HAS HAD NO WHOLE-CORPUS SWEEP,
-> AND ITS NEIGHBOUR RE-PROBE IS PARTIAL — 92 of 439 rows.** A full probe was aborted twice on wall time
-> (the harness re-runs a baseline per suite-set change, so it is ~3–5 hours, not the ~2s/row the table
-> implies). All of D414, D416, D432, D274 and D208 were covered; **the remainder is unverified**, and the
-> whole-corpus sweep is what closes it. `--decision D433` is 17/17 with 0 GAPs and `precheck` is clean at
-> 1,653, so no anchor rotted — but that is not the same evidence.
+> ✅✅ **THE SWEEP DEBT IS PAID, AND IT CLOSED A DECLARED GAP.** **1653 · 1628 killed · 25 known
+> survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,423.4s**,
+> `SWEEP_EXIT=0`; `1628 + 25 = 1653` closes and 1653/1653 verified by id. All 17 D433 rows KILLED.
+> D433's neighbour re-probe was **partial — 92 of 439 rows — and said so**; the sweep probes all 1,653,
+> so the 347 unreached rows are now measured at 0 GAPs / 0 stale / 0 errors, across a slice that MOVED a
+> function between modules. **A DECLARED GAP IS A DEBT THE NEXT MEASUREMENT CAN PAY; AN UNDECLARED ONE IS
+> NEVER PAID, BECAUSE NOBODY KNOWS IT IS OWED.** Survivors held at 25.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES, DO NOT RE-DERIVE.** After D433: `rawUnbuiltSentences` **206**,
 > `residueSentences` **181**, `unbuiltAttack` **266**. Canonical predicate at `censusAtHead.test.ts:6218`.
