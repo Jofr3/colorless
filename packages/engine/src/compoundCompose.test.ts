@@ -124,6 +124,15 @@ const HEAL_60_THEN_SELF_LOCK =
 const CONFUSE_POISON_THEN_SWITCH =
   "Your opponent's Active Pokémon is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.";
 
+/** 🆕🆕 D435 — the ELEVENTH admitted compound (corpus row 113, **2 legal printings**).
+    Its HEAD is D431's *"Discard all Energy from this Pokémon."* and its TAIL is the
+    delayed family's KNOCK-OUT payload, claimed by a BARE anchor D435 wrote precisely
+    so that the shadow refusal would not take the compound whole. D434 measured this
+    string being REFUSED and named the condition that would admit it; this is that
+    condition, arriving. */
+const DISCARD_ALL_THEN_DELAYED_KO =
+  "Discard all Energy from this Pokémon. At the end of your opponent's next turn, the Defending Pokémon will be Knocked Out.";
+
 const COMPOUNDS = [
   PRIZE_THEN_DISCARD,
   PRIZE_THEN_RECOIL,
@@ -135,6 +144,7 @@ const COMPOUNDS = [
   HEAL_50_THEN_SELF_LOCK,
   HEAL_60_THEN_SELF_LOCK,
   CONFUSE_POISON_THEN_SWITCH,
+  DISCARD_ALL_THEN_DELAYED_KO,
 ] as const;
 
 /** The two SHIPPED whole-sentence anchors that are one token away from a member of
@@ -323,8 +333,13 @@ describe("§2 — the census: the predicate admits NINE sentences / EIGHTEEN pri
     expect(units(corpus)).toBe(1732);
     const admitted = corpus.filter(([, s]) => splitAttackTrailingClause(s) !== null);
     expect([...admitted].map(([, s]) => s).sort()).toEqual([...COMPOUNDS].sort());
-    expect(admitted).toHaveLength(10); // 🆕🆕 D424 the TENTH admitted compound.
-    expect(units(admitted)).toBe(19); // 🆕🆕 D424 +1 printing.
+    // 🆕🆕 D435 — 10 / 19 → **11 / 21**, and the step is D424's shape rather than
+    // D410's or D412's: ONE new compound, admitted because its TAIL became readable
+    // rather than because a splitter changed. Nothing about `splitAttackTrailingClause`
+    // moved this slice. ⚠️ AND THE STEP IS THE WHOLE POPULATION OF THAT SENTENCE — 2
+    // printings, 2 admitted, nothing left over.
+    expect(admitted).toHaveLength(11); // 🆕🆕 D435 the ELEVENTH admitted compound. 🆕🆕 D424 the TENTH.
+    expect(units(admitted)).toBe(21); // 🆕🆕 D435 +2 printings. 🆕🆕 D424 +1 printing.
   });
 
   it("the eighteen split 8 / 10 across the two SHAPES, which is why the seam had to move", () => {
@@ -347,7 +362,7 @@ describe("§2 — the census: the predicate admits NINE sentences / EIGHTEEN pri
     });
     expect(cross).toHaveLength(2);
     expect(units(cross)).toBe(8);
-    expect(units(admitted) - units(cross)).toBe(11); // 🆕🆕 D424 10 → 11 — `cross` stands still at 2 / 8 because the new member's HEAD is claimed by `deriveAttackEffect`, not merely by a damage reader.
+    expect(units(admitted) - units(cross)).toBe(13); // 🆕🆕 D435 11 → 13 — `cross` stands still at 2 / 8 for a THIRD slice running, because the new member's HEAD (D431's energy discard) is claimed by `deriveAttackEffect` and not merely by a damage reader. 🆕🆕 D424 10 → 11 — `cross` stands still at 2 / 8 because the new member's HEAD is claimed by `deriveAttackEffect`, not merely by a damage reader.
     // …and every one of the eighteen has EXACTLY TWO clauses, which is why the
     // splitter is not recursive: a three-clause compound whose parts are all
     // readable is a family of ZERO today and stays LOUD until it is not. 🆕🆕 D410
@@ -1048,7 +1063,7 @@ describe("§7 — the persisted question, asked and DRIVEN", () => {
   it("the engine version moved with the behaviour", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.336.0");
+    expect(engineVersion).toBe("0.337.0");
   });
 });
 

@@ -953,7 +953,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       // 🆕🆕 D434 — the SCHEDULED counter placement, `retreatLockedTurn`'s and
       // `noWeaknessTurn`'s case again: a stamp for turn 99 is not this turn, so it
       // blocks no route and all three carry it.
-      scheduledCounters: { turn: 99, amount: 90 },
+      scheduledEffect: { turn: 99, kind: "counters", amount: 90 },
       // 🛑🛑 AND THE FIVE FIELDS BELOW ARE A REPAIR, NOT THIS SLICE'S FIELD (D418's
       // move: remove the premise instead of arguing with it). This helper's own
       // comment says the sweep is "discovered by construction rather than by listing
@@ -984,7 +984,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     if (pokemon.attackLockedTurn !== null) set.push("attackLockedTurn");
     if (pokemon.retreatLockedTurn !== null) set.push("retreatLockedTurn");
     if (pokemon.noWeaknessTurn !== null) set.push("noWeaknessTurn"); // 🆕🆕 D432
-    if (pokemon.scheduledCounters !== null) set.push("scheduledCounters"); // 🆕🆕 D434
+    if (pokemon.scheduledEffect !== null) set.push("scheduledEffect"); // 🆕🆕 D434
     // 🆕🆕 D434 — the five the list had never carried; see `fullyEncumbered`.
     if (pokemon.damageReduction !== null) set.push("damageReduction");
     if (pokemon.attackDamageDebuff !== null) set.push("attackDamageDebuff");
@@ -1087,7 +1087,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       "attackLockedTurn",
       "retreatLockedTurn",
       "noWeaknessTurn", // 🆕🆕 D432
-      "scheduledCounters", // 🆕🆕 D434
+      "scheduledEffect", // 🆕🆕 D434
       // 🆕🆕 D434 — the five `stillSet` never carried, in `stillSet`'s push order.
       "damageReduction",
       "attackDamageDebuff",

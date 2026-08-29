@@ -733,11 +733,38 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // schedule if the body retreats, is switched or evolves, so a row promising the
     // damage would be false in the direction that costs a player a play. "will be
     // put" would be that false row; "scheduled" is the fact.
-    case "COUNTERS_SCHEDULED":
-      return row(event.seat, [
-        strong(cardName(state, event.uid)),
-        plain(` has ${event.amount} damage scheduled for the end of your next turn`),
-      ]);
+    //
+    // 🆕🆕 **D435 — THREE PAYLOADS, THREE PREDICATES, AND THE `switch` IS WHAT KEEPS
+    // THEM FROM COLLAPSING.** The discard and the Knock Out differ by a PRIZE CARD
+    // (§8.1: the prize is owed by the Knock Out and by nothing else), so the two rows
+    // must not read alike — a player told "will be discarded" and then charged a
+    // Prize, or told "will be Knocked Out" and then not paid one, has been lied to
+    // about the only thing that separates the two sentences. Spelled as a `switch`
+    // over `scheduled.kind` rather than as a ternary chain, so a fourth payload does
+    // not compile until somebody words it (D222).
+    case "EFFECT_SCHEDULED": {
+      const scheduled = event.scheduled;
+      switch (scheduled.kind) {
+        case "counters":
+          return row(event.seat, [
+            strong(cardName(state, event.uid)),
+            plain(` has ${scheduled.amount} damage scheduled for the end of your next turn`),
+          ]);
+        case "discard":
+          return row(event.seat, [
+            strong(cardName(state, event.uid)),
+            plain(" is scheduled to be discarded at the end of your next turn"),
+          ]);
+        case "knockOut":
+          return row(event.seat, [
+            strong(cardName(state, event.uid)),
+            plain(" is scheduled to be "),
+            { text: "Knocked Out", tone: "damage" },
+            plain(" at the end of your next turn"),
+          ]);
+      }
+      break;
+    }
     // §9/§11 — the attack-armed REACTIVE RECOIL (D152). ACTIVE voice for
     // DAMAGE_REDUCTION_APPLIED's reason verbatim: `seat` owns the armed Pokémon
     // AND that Pokémon is the actor's own (the op has no defender arm), so the
@@ -895,7 +922,7 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         // this seat would read as the victim doing it to itself (D136's finding 1,
         // which the `default` arm below would have committed for free).
         //
-        // The label matches the COUNTERS_SCHEDULED row that armed it a turn earlier,
+        // The label matches the EFFECT_SCHEDULED row that armed it a turn earlier,
         // so the pair reads as one mechanism — RECOIL_ARMED/"counterattack"'s rule.
         case "delayed":
           return row("system", [

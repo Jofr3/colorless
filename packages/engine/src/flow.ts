@@ -5,7 +5,7 @@ import { activeTop, cardOfUid, prizeValueOf, topCardOf, topUid } from "./cards";
 import { isLethallyDamaged, passivesOf, seatKoPrizeBonuses } from "./continuous";
 import type { GameEvent } from "./events";
 import type { RunResult } from "./interpreter";
-import { runProgram } from "./interpreter";
+import { doomBodyAt, runProgram } from "./interpreter";
 import type { KoPrizeReduction } from "./registry";
 import { flipCoin } from "./rng";
 import {
@@ -35,7 +35,7 @@ import {
   withActive,
   withSide,
   koByEffectMarker,
-  scheduledCountersDue,
+  scheduledEffectDue,
 } from "./types";
 
 // The staged turn tail (types.ts: PendingStage) and everything that runs
@@ -169,6 +169,44 @@ export function knockOut(
   }
   // Not in play — unreachable (every caller just scanned it lethal). No-op.
   return { state, stages: [] };
+}
+
+/** 🆕🆕 **D435 — THE §8.1 PROMOTION OWED FOR AN ACTIVE SPOT NOTHING KNOCKED OUT,
+    HOISTED.** D311 wrote this filter for `resolveMidTurnKnockOuts`, D312 copied it
+    byte-for-byte into `finishAttack`, and D312's own comment named the expiry date:
+    *"If a THIRD caller of `collectKnockOuts` ever appears it owes the same six lines,
+    and the honest fix at that point is to hoist the filter into a helper rather than
+    to write it a third time — two copies with two different tails is a shape, three
+    would be a duplication."* D435 is that third caller: the delayed DISCARD payload
+    (corpus row 53) is the first thing in this engine that can empty an Active Spot
+    **during the Checkup**, so `runCheckup` needs it too. The premise is removed
+    rather than the argument re-had (D418).
+
+    🛑 **THE PREDICATE IS "EMPTY AND NOT ALREADY PROMISED A PROMOTION", NOT "EMPTY".**
+    `collectKnockOuts` empties the spot it kills and queues that seat's `promote`
+    itself, so an unconditional filter would queue a SECOND stage for every KO'd seat.
+    That stage would be harmless — the handler pops on an occupied spot — and it would
+    still be wrong: a board with two promotions owed for one dead Pokémon is a queue
+    nobody can read.
+
+    ⚠️ **THE THREE CALLERS DIFFER ONLY IN THE TAIL THEY SPLICE IN FRONT OF**, which is
+    what D312 said and what the hoist preserves: `resumeTurn` where the actor keeps
+    playing, `turnTail` where §8.1's promotion is owed before the turn ends, and — at
+    the Checkup — the queue that was already pending, because the promotion is owed
+    before the NEXT player's turn starts and a board handed over with an empty Active
+    Spot is exactly what §8.1 forbids. */
+function orphanedPromotions(
+  state: GameState,
+  seats: readonly Seat[],
+  staged: readonly PendingStage[],
+): PendingStage[] {
+  return seats
+    .filter(
+      (seat) =>
+        state.players[seat].active === null &&
+        !staged.some((stage) => stage.kind === "promote" && stage.seat === seat),
+    )
+    .map((seat) => ({ kind: "promote", seat }));
 }
 
 /** Every lethally-damaged in-play Pokémon on `seats` right now, Active first
@@ -947,7 +985,16 @@ function planPrizes(
     of `resumeTurn`. **If a THIRD caller of `collectKnockOuts` ever appears it owes
     the same six lines**, and the honest fix at that point is to hoist the filter
     into a helper beside `collectKnockOuts` rather than to write it a third time —
-    two copies with two different tails is a shape, three would be a duplication. */
+    two copies with two different tails is a shape, three would be a duplication.
+
+    🆕🆕 **D435 — THE THIRD CALLER ARRIVED AND THE PREDICTION WAS PAID EXACTLY AS
+    WRITTEN.** `runCheckup` has in fact called `collectKnockOuts` directly since long
+    before D312 wrote that sentence; what it did not have until D435 was any way for
+    a Checkup to leave an Active Spot empty without a Knock Out. The delayed DISCARD
+    payload (corpus row 53) is that way, and the filter is now `orphanedPromotions`
+    above, called from all three sites. The price was the hoist and three call lines
+    — the quoted "six lines" per site, avoided — and this paragraph records it rather
+    than leaving the forecast to be read as a criterion (D427). */
 export function resolveMidTurnKnockOuts(
   state: GameState,
   actorSeat: Seat,
@@ -956,13 +1003,10 @@ export function resolveMidTurnKnockOuts(
 ): ApplyResult {
   const batch = collectKnockOuts(state, seats, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
-  const orphaned: PendingStage[] = seats
-    .filter(
-      (seat) =>
-        batch.state.players[seat].active === null &&
-        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),
-    )
-    .map((seat) => ({ kind: "promote", seat }));
+  // 🆕🆕 D435 — the filter itself is `orphanedPromotions` now, shared with
+  // `finishAttack` below and with `runCheckup`'s third site. Nothing about this
+  // call's behaviour changed; what changed is that there is one copy of it.
+  const orphaned = orphanedPromotions(batch.state, seats, batch.stages);
   // Nothing KO'd and no spot left empty.
   if (batch.stages.length === 0 && orphaned.length === 0) return ok(batch.state, events);
   return advance(
@@ -1191,13 +1235,11 @@ export function finishAttack(
   // interaction this site has that D311's does not: an attack can KO the DEFENDER
   // and remove the ATTACKER in one resolution, which is exactly the board where a
   // naive predicate queues two promotions for one seat and none for the other.
-  const orphaned: PendingStage[] = [otherSeat(attackerSeat), attackerSeat]
-    .filter(
-      (seat) =>
-        batch.state.players[seat].active === null &&
-        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),
-    )
-    .map((seat) => ({ kind: "promote", seat }));
+  const orphaned = orphanedPromotions(
+    batch.state,
+    [otherSeat(attackerSeat), attackerSeat],
+    batch.stages,
+  );
   // §5.3 — attacking ends the turn, through the same staged tail as a pass.
   // COMPOSES with whatever is still queued rather than overwriting it: both
   // callers hand over an empty queue (turn:action never carries a tail, and the
@@ -1582,7 +1624,7 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // sentence rather than an optimisation: *"your opponent's next turn"* names the
   // seat whose turn just ended, and *"the Defending Pokémon"* is a body that was in
   // the Active Spot — §10 sheds the schedule the moment it leaves (four literals,
-  // `types.ts scheduledCounters`), so a BENCHED body can never carry one. The turn
+  // `types.ts scheduledEffect`), so a BENCHED body can never carry one. The turn
   // stamp alone would in fact determine the seat, by a parity argument that is true
   // today and is exactly the kind of accident D430 was spent on: an attack stamps
   // `turn + 1` on its opponent, turns alternate, so only the seat owning turn T can
@@ -1590,23 +1632,138 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // wrong-seat build is then a red test rather than a coincidence.
   //
   // ⚠️ NOTHING IS CLEARED AFTER FIRING. The stamp expires by arithmetic
-  // (`scheduledCountersDue`), which is `attackLockedTurn`'s rule: there is exactly
+  // (`scheduledEffectDue`), which is `attackLockedTurn`'s rule: there is exactly
   // one Checkup per turn, so `=== next.turn` is true once and never again, and there
   // is no boundary write for anyone to forget. The §11 `retreatBlocked` walk 100
   // lines below is the engine's ONE boundary-cleared rider and it is a boolean.
+  //
+  // 🆕🆕 **D435 — THREE PAYLOADS ON THIS ONE CLOCK, AND THE `switch` IS WHERE THE
+  // FAMILY'S ONE REAL DISTINCTION LIVES: A KNOCK OUT PAYS A PRIZE AND A DISCARD DOES
+  // NOT.** §8.1 (`docs/reference/ptcg-rules.md`) defines the Knock Out and then says
+  // *"the player **who KO'd** the Pokémon takes prize card(s)"* — the Prize is owed by
+  // the Knock Out and by nothing else in the rules. Corpus row 53 prints *discard* and
+  // Knocks nothing Out; corpus row 113 prints *"will be Knocked Out"*. On the board
+  // the two are indistinguishable — the body leaves play, the Active Spot empties, a
+  // promotion is owed — and they differ on exactly one row of the prize track. Two
+  // arms, two shipped seams, no shared "remove the body" helper between them: the
+  // discard reaches `discardFromStack` (§8.1's own cleanup move, minus §8.1) and the
+  // Knock Out reaches §8.1's SWEEP at the bottom of this function.
+  //
+  // ⚠️ **THE ORDERING AGAINST §13.1 IS OBSERVABLE FOR THESE TWO IN A WAY IT WAS NOT
+  // FOR D434's COUNTERS, AND THAT IS DRIVEN RATHER THAN NOTED.** D434 could only
+  // assert a SEQUENCE, because damage is commutative and the KO is resolved for the
+  // whole batch below. A DISCARDED body is GONE before §13.1 reads the spot, so a
+  // Poisoned victim files no `source: "poison"` row at all and takes no poison damage
+  // — a BOARD difference, not merely a log one. A DOOMED body is still standing (this
+  // engine marks; §8.1 kills), so Poison lands on it and the row is filed; harmless,
+  // and asserted so that "marks rather than kills" cannot quietly become "kills".
+  //
+  // ── (a) THE DISCARD PAYLOAD (corpus row 53) ────────────────────────────────
+  //
+  // 🛑 **`discardFromStack(…, "all")` IS THE MOVE, AND THE TWO PRECEDENTS WERE CHECKED
+  // AGAINST EACH OTHER RATHER THAN ONE COPIED (D433).** *"and all attached cards"* has
+  // to name a set, and three shipped literals could have supplied one: §8.1's
+  // `knockOut` (this file), `returnSelf` with `dest: "discard"` (interpreter.ts, D313,
+  // Revavroom ex's *"Discard this Pokémon and all attached cards."*) and `devolveEach`
+  // (D433). The first two AGREE to the byte — the set is `stackUids` =
+  // `[...stack, ...energy, ...tools]`, evolution stack bottom→top then Energy then
+  // Tools, appended to the OWNER's pile in §2's order. `devolveEach` is not a third
+  // opinion at all: it moves ONE evolution card and never touches an attachment, so it
+  // is not a precedent for this sentence. That is a finding rather than an omission.
+  //
+  // ⚠️ **`POKEMON_RETURNED` AND NOT A NEW EVENT, AND CERTAINLY NOT `KNOCKED_OUT`.**
+  // D299's row is the engine's *"a body left play without being Knocked Out"* row and
+  // already carries the two facts this needs: `seat` OWNS the body, `actor` DID it, and
+  // here they differ exactly as they do on Illumise's printing. Emitting `KNOCKED_OUT`
+  // would be the lie this whole family is about.
+  //
+  // ⚠️ **AND THE PROMOTION IS OWED** — the spot is now empty with no Knock Out to
+  // explain it, which is `orphanedPromotions`' subject and the THIRD site of D311/D312's
+  // seam, spliced in below.
+  //
+  // ── (b) THE KNOCK-OUT PAYLOAD (corpus row 113's tail) ──────────────────────
+  //
+  // 🛑 **IT MARKS AND THE SWEEP AT THE BOTTOM OF THIS FUNCTION KILLS** — `doomBodyAt`
+  // (interpreter.ts), D345's argument inherited whole and now at its FOURTH caller
+  // rather than its fourth copy. Killing here would need a fourth Prize plan, a fourth
+  // whole-stack discard, a fourth `KNOCKED_OUT` and a fourth promotion, all of which
+  // `collectKnockOuts` already owes this Checkup.
+  //
+  // ⚠️ **A CHECKUP-TRIGGERED HEAL BETWEEN THE MARK AND THE SWEEP CAN SAVE THE BODY, AND
+  // THAT IS D434's UNDRIVEN ORDERING CONSEQUENCE ARRIVING AT A HIGHER STAKE — SAID
+  // RATHER THAN SKIPPED.** `runCheckupTriggers` runs below this block, and Garganacl
+  // "Blessed Salt" heals 20 from each of its controller's Pokémon; a doomed body healed
+  // below `effectiveMaxHp` is not collected. NOT DRIVEN: it needs that card on the
+  // victim's board, a fixture this suite does not carry, and the falsifier is one deck
+  // entry away. The alternative — resolving the Knock Out inside this block — is the
+  // fourth §8.1 copy the paragraph above refuses.
+  //
+  // ── (c) THE CAUSE, RE-DERIVED AND NOT INHERITED ───────────────────────────
+  //
+  // 🛑 **THE `koByEffect` MARKER IS RE-DERIVED FROM SCRATCH (D433's rule for a marker's
+  // second producer).** D434 withheld it because its payload PLACES DAMAGE COUNTERS, so
+  // its Knock Out genuinely is by damage and stamping would have denied Vengeful Punch a
+  // recoil that is owed. **This payload places no damage at all** — D414's marker's exact
+  // subject, *"lethal WITHOUT damage"* — so the reasoning does not transfer and the stamp
+  // is owed.
+  //
+  // 🛑 **AND D433's `wasLethal` CONJUNCT *DOES* ARISE HERE, WHICH D434 NEVER HAD TO ASK.**
+  // A body already lethally damaged when this fires WAS Knocked Out by damage, whatever
+  // the appointment says; stamping it would deny a recoil that is genuinely owed. So the
+  // marker is passed only when the body is not already lethal.
+  //
+  // ⚠️ **THE MARKER IS SEMANTICALLY OWED AND OBSERVATIONALLY INERT ON THIS PATH TODAY,
+  // AND BOTH HALVES ARE STATED BECAUSE ONLY ONE IS A MEASUREMENT (D414).** Its two
+  // readers are `byAttackFor` (this file — returns `false` outright when `attackerSeat`
+  // is `undefined`, which the Checkup's `collectKnockOuts` call always leaves it) and
+  // `koRecoilOf` (this file — called by `finishAttack` alone, which this path never
+  // reaches). So no board today distinguishes the stamped build from the unstamped one.
+  // It is stamped anyway, because the alternative is a body whose lethality is an
+  // effect's doing carrying — by ABSENCE — the mark that says it was damage's, which is
+  // precisely the closed-world assumption D414 was spent removing. The corresponding
+  // mutant row is DECLARED `equivalent` rather than expected to die, so the day a third
+  // reader or a Checkup-side `attackerSeat` appears it reports `STALE-SURVIVOR` and
+  // fails the run (D427).
   {
     const spot = activeTop(next, endedSeat);
-    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);
+    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);
     if (spot !== null && due !== null) {
       const { active, uid } = spot;
-      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });
-      events.push({
-        type: "COUNTERS_PLACED",
-        seat: endedSeat,
-        uid,
-        amount: due,
-        source: "delayed",
-      });
+      switch (due.kind) {
+        // D434 — counters. §12's one-counter-is-10 conversion happened at the ARM.
+        case "counters": {
+          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });
+          events.push({
+            type: "COUNTERS_PLACED",
+            seat: endedSeat,
+            uid,
+            amount: due.amount,
+            source: "delayed",
+          });
+          break;
+        }
+        // 🆕🆕 D435 — the DISCARD (corpus row 53). NO Prize; see (a) above.
+        case "discard": {
+          const cleanup = discardFromStack(next.players[endedSeat], active, "all");
+          next = withSide(next, endedSeat, { ...cleanup.side, active: null });
+          events.push({
+            type: "POKEMON_RETURNED",
+            seat: endedSeat,
+            uid,
+            actor: otherSeat(endedSeat),
+            dest: "discard",
+            uids: cleanup.discarded,
+          });
+          break;
+        }
+        // 🆕🆕 D435 — the KNOCK OUT (corpus row 113's tail). §8.1 IN FULL, Prize
+        // included, and not one line of it written here; see (b) and (c) above.
+        case "knockOut": {
+          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);
+          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: "active" } }, marker);
+          break;
+        }
+      }
     }
   }
 
@@ -1712,10 +1869,34 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // mid-turn paths.
   const batch = collectKnockOuts(next, order, events);
   if (batch.done !== null) return finishGame(batch.state, batch.done, events);
+  // 🆕🆕 **D435 — THE §8.1 PROMOTION SEAM AT ITS *THIRD* SITE, WHICH D312 PREDICTED
+  // AND NAMED.** Until this slice, an Active Spot could only be empty at this line
+  // because something died, and `collectKnockOuts` queues that seat's promotion
+  // itself. The delayed DISCARD payload (corpus row 53) is the first thing in this
+  // engine that empties a spot **during the Checkup** with no Knock Out to explain
+  // it — and the next thing in the queue is the OTHER seat's `startTurn`, so without
+  // this the victim would face an attack with no Active Pokémon at all, and a victim
+  // with an empty Bench would never reach the §14.2 loss they are owed.
+  //
+  // ⚠️ **`order` AND NOT `[endedSeat]`**, `finishAttack`'s reason verbatim: only the
+  // ended seat's spot can be emptied this way today (the schedule is `endedSeat`'s by
+  // construction — see the block above), scanning both is a harmless superset, and a
+  // future payload that removes the other side's Active is then correct by
+  // construction rather than by this comment.
+  //
+  // ⚠️ **AND THE TAIL IS THE PENDING QUEUE ITSELF**, which is this site's one
+  // difference from the other two (D312: *"the whole difference between the sites is
+  // the TAIL behind the splice"*): the promotion is spliced in front of the
+  // `startTurn` that was already queued, because §8.1 owes it before the next
+  // player's turn begins.
+  const orphaned = orphanedPromotions(batch.state, order, batch.stages);
   // Pop the checkup stage, put the KO stages in front of what remains
   // (the startTurn) and keep draining — a decision stage parks as usual.
   return advance(
-    { ...batch.state, pending: [...batch.stages, ...batch.state.pending.slice(1)] },
+    {
+      ...batch.state,
+      pending: [...batch.stages, ...orphaned, ...batch.state.pending.slice(1)],
+    },
     events,
   );
 }

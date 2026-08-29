@@ -661,7 +661,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       attackLockedTurn: body.attackLockedTurn,
       damageReduction: body.damageReduction,
       noWeaknessTurn: body.noWeaknessTurn,
-      scheduledCounters: body.scheduledCounters,
+      scheduledEffect: body.scheduledEffect,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -673,7 +673,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       attackLockedTurn: null,
       damageReduction: null,
       noWeaknessTurn: null,
-      scheduledCounters: null,
+      scheduledEffect: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],
@@ -948,7 +948,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.336.0");
+    expect(engineVersion).toBe("0.337.0");
   });
 });
 

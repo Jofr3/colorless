@@ -562,7 +562,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
       ["gate", 6, 14],
       ["requirement", 1, 2],
       ["cancel", 4, 5],
-      ["trailing", 10, 19], // 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
+      ["trailing", 11, 21], // 🆕🆕 D435 10/19 → 11/21 — the delayed KNOCK-OUT anchor claims the TAIL of one more printed compound (corpus row 113, 2 printings); no stripper changed, and the other three rows stand still for a SECOND slice running. 🆕🆕 D424 9/18 → 10/19 — the two-status pair claims the HEAD of one more printed compound; no stripper changed, and the other three rows stand still.
     ]);
     // …and every one of the four MOVES a string, which is what stops the matrix
     // below being a matrix of four dead functions.
@@ -635,9 +635,9 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     // The other two parts are unmoved literals in the same breath, so a widening that
     // had leaked into the gate or the composition path reddens on the PART rather
     // than only on the sum.
-    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(21); // 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
+    expect(corpus().filter(([, s]) => fourSiteOrder(s) !== s).length).toBe(22); // 🆕🆕 D435 21 → 22: the four-stripper seam rewrites one more sentence, and the WHOLE step is the trailing term — 7 + 11 + 4 — so a widening that had leaked into the gate or the cancel path reddens on the PART below rather than only on this sum. 🆕🆕 D424 20 → 21: the four-stripper seam now rewrites one more sentence, because the trailing splitter admits one more.
     expect(corpus().filter(([, s]) => siteOrder(s) !== s).length).toBe(7);
-    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(10); // 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
+    expect(corpus().filter(([, s]) => splitAttackTrailingClause(s) !== null).length).toBe(11); // 🆕🆕 D435 10 → 11. 🆕🆕 D424 9 → 10 — an UNNAMED re-derivation of the trailing-split census; reachable by no grep of the constant.
     expect(corpus().filter(([, s]) => splitAttackCancelClause(s) !== null).length).toBe(4);
   });
 

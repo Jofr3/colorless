@@ -726,7 +726,7 @@ function loaded(seed: number): { before: GameState; turn: number } {
           // (the schedule's window is the holder's own turn and a devolve arrives on
           // the opponent's), so it is pinned by surgery for the reason the paragraph
           // above already gives about the other ten.
-          scheduledCounters: { turn: turn + 1, amount: 90 },
+          scheduledEffect: { turn: turn + 1, kind: "counters", amount: 90 },
           attackDamageDebuff: { turn: turn + 1, amount: 20 },
           installedRecoil: { turn: turn + 1, amount: 40 },
           lockedAttacks: [{ turn, attackIndex: 0 }],
@@ -751,7 +751,7 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     expect(after.attackLockedTurn).toBeNull();
     expect(after.damageReduction).toBeNull();
     expect(after.noWeaknessTurn).toBeNull();
-    expect(after.scheduledCounters).toBeNull(); // 🆕🆕 D434 — eleven bars became twelve
+    expect(after.scheduledEffect).toBeNull(); // 🆕🆕 D434 — eleven bars became twelve
     expect(after.attackDamageDebuff).toBeNull();
     expect(after.installedRecoil).toBeNull();
     expect(after.lockedAttacks).toEqual([]);
@@ -1060,7 +1060,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.336.0");
+    expect(engineVersion).toBe("0.337.0");
   });
 });
 

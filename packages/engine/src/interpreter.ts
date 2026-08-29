@@ -109,6 +109,7 @@ import type {
   PendingStage,
   PlayerSide,
   PokemonTarget,
+  ScheduledEffect,
   Seat,
 } from "./types";
 import {
@@ -1537,6 +1538,12 @@ function stepOp(
     // flow.ts `runCheckup`; neither is a build on its own.
     case "scheduleCounters":
       return { done: scheduleCounters(state, op.amount, ctx, events) };
+    // 🆕🆕 D435 — the delayed family's other two payloads. Payload-free ops, so the
+    // two lines differ only in which member of `ScheduledEffect` they book.
+    case "scheduleDiscard":
+      return { done: scheduleDiscard(state, ctx, events) };
+    case "scheduleKnockOut":
+      return { done: scheduleKnockOut(state, ctx, events) };
     case "installRecoil":
       return { done: installRecoil(state, op.amount, ctx, events) };
     case "heal":
@@ -6531,31 +6538,97 @@ function weakenDefenderAttacks(
     BEFORE `startTurn` increments (flow.ts `knockOut`'s note), so the stamped turn is
     live at exactly one Checkup and never again.
 
-    ⚠️ THE §11 GATE IS ASKED, AND IT IS NOT INHERITED — IT IS RE-DERIVED (D430's
-    rule). This is an effect of an attack done TO the Defending Pokémon in the
-    plainest possible sense: it puts damage counters on that body. A *"prevent all
-    effects of attacks done to this Pokémon"* block installed by the defender on
-    their own previous turn is live on exactly this turn and refuses it. Asked BEFORE
-    the idempotence early-return, `preventRetreat`'s ordering, so a refusal is
-    announced even on an already-scheduled body. Classified in
-    `preventBlock.test.ts`'s §11 table AND driven under a live wide block.
-
-    ⚠️ AND THE BLOCK IS ASKED HERE, NOT AT THE CHECKUP. A body that acquires a §11
-    block AFTER the schedule lands still takes the counters, which is the right
-    reading: the printed block refuses the effect of an attack *done to* the body,
-    and the doing is this line. A gate at the firing site would be a second opinion
-    that can disagree with this one — `koRecoilOf`'s "never hold a second opinion"
-    rule, one seam over.
-
-    ⚠️ IDEMPOTENT BY THE STAMP, MERGED BY `Math.max` — `weakenDefenderAttacks`'
-    answer rather than `reduceDamage`'s, because this record holds a NUMBER and two
-    installs can disagree about it. A SUM would be wrong for the same reason it is
-    wrong there: two schedules on one body are two printed sentences, not one doubled
-    one. Unreachable off any printing (one attack per turn, no card prints two of
-    these), so it is constructed and pinned rather than trusted. */
+    🆕🆕 **D435 — THE BODY OF THIS FUNCTION MOVED TO `scheduleDelayed` BELOW, AND
+    NOTHING ABOUT IT CHANGED.** The seat, the §11 ask, the `state.turn + 1` stamp,
+    the `Math.max` merge and the suppressed-when-unchanged row are all still exactly
+    what D434 wrote; they are shared with the two payloads D435 adds rather than
+    copied into them, which is D416's rule (*"copying a function copies its mutants'
+    anchors, and the corpus goes quiet rather than red"*). The paragraphs that used
+    to sit here — the §11 derivation, the ask-at-the-install-not-at-the-Checkup
+    reading and the `Math.max`-not-sum argument — live on `scheduleDelayed`, where
+    the code they describe now is. */
 function scheduleCounters(
   state: GameState,
   amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  return scheduleDelayed(state, { kind: "counters", amount }, ctx, events);
+}
+
+/** 🆕🆕 §13 (D435) — SCHEDULE the printed DISCARD of the Defending Pokémon for the
+    END of the opponent's next turn (*"At the end of your opponent's next turn,
+    discard the Defending Pokémon and all attached cards."* — 1 legal printing,
+    corpus row 53).
+
+    🛑 **IT IS NOT THE KNOCK OUT ONE ROW DOWN, AND THE DIFFERENCE IS A PRIZE CARD.**
+    §8.1 pays a Prize to *"the player who KO'd the Pokémon"*; this sentence prints
+    *discard* and Knocks nothing Out, so it pays none. The two payloads look
+    identical on the board — the body leaves play, the Active Spot empties, a
+    promotion is owed — and differ on exactly the prize row. `scheduleDelayed` below
+    is deliberately payload-BLIND about that: the difference lives in `runCheckup`,
+    where one path calls `discardFromStack` and the other hands the body to §8.1.
+
+    ⚠️ NO PAYLOAD BEYOND THE CLOCK, which is D432's question asked again rather than
+    inherited: the printed sentence carries no amount, no filter and no narrowing, so
+    the record member is `{ turn, kind: "discard" }` and there is nothing for a field
+    to vary over (D104's minimal shape). */
+function scheduleDiscard(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  return scheduleDelayed(state, { kind: "discard" }, ctx, events);
+}
+
+/** 🆕🆕 §13/§8.1 (D435) — SCHEDULE the printed KNOCK OUT of the Defending Pokémon
+    for the END of the opponent's next turn (*"…At the end of your opponent's next
+    turn, the Defending Pokémon will be Knocked Out."* — the TAIL of corpus row 113,
+    2 legal printings, reached through `splitAttackTrailingClause`).
+
+    🛑 **THIS ONE PAYS A PRIZE AND THE ROW ABOVE DOES NOT.** *"will be Knocked Out"*
+    is §8.1's own words, so the Checkup hands the body to §8.1's sweep and every
+    consequence — the Prize, the whole-stack discard, `KNOCKED_OUT`, the promotion —
+    comes from the shipped seam rather than from here.
+
+    ⚠️ **AND IT PLACES NO DAMAGE AT ALL, WHICH IS WHY THE CAUSE QUESTION IS RE-DERIVED
+    AND NOT INHERITED FROM D434.** D434's payload puts damage counters on, so its
+    Knock Out genuinely IS by damage and stamping D414's `koByEffect` marker would
+    have denied a recoil that is owed. This payload is a Knock Out with NO damage —
+    D414's marker's exact subject — so the firing site stamps it, under D433's
+    `wasLethal` conjunct. The whole of that derivation lives at the firing site
+    (`flow.ts runCheckup`), where the marker is written; this function only makes the
+    appointment. */
+function scheduleKnockOut(state: GameState, ctx: EffectContext, events: GameEvent[]): GameState {
+  return scheduleDelayed(state, { kind: "knockOut" }, ctx, events);
+}
+
+/** 🆕🆕 §13 (D435) — the shared half of the THREE `schedule*` installers above: the
+    seat, the §11 ask, the `state.turn + 1` stamp, the merge and the row. D434 wrote
+    this body inline in `scheduleCounters` for one payload; three copies of it would
+    be D416's hazard verbatim (*"copying a function copies its mutants' anchors, and
+    the corpus goes quiet rather than red"*), so it is factored ONCE and the three
+    callers are one line each.
+
+    ⚠️ **THE §11 GATE AND THE `+ 1` STAMP ARE D434's, MOVED RATHER THAN RE-DECIDED**,
+    and both are re-derived for the new payloads rather than inherited: a scheduled
+    discard and a scheduled Knock Out are effects of an attack done TO the Defending
+    Pokémon in the plainest possible sense, so a *"prevent all effects of attacks done
+    to this Pokémon"* block refuses them exactly as it refuses the counters. The gate
+    is asked HERE and not at the firing site, `koRecoilOf`'s never-hold-a-second-
+    opinion rule: the doing is this line.
+
+    🛑 **ONE APPOINTMENT PER BODY, AND THE MERGE IS KIND-AWARE.** Two counter
+    schedules for one turn merge by `Math.max` — D434's answer, unchanged and for its
+    reason (two schedules are two printed sentences, not one doubled one). A schedule
+    of a DIFFERENT kind REPLACES what stood there, because the field holds one record
+    and the alternative would be inventing a precedence order between three printed
+    sentences that no rule states. Both cases need two attacks in one turn and are
+    unreachable off any printing, so both are constructed and pinned rather than
+    trusted (`delayedCounters.test.ts` §10).
+
+    ⚠️ **THE ROW IS SUPPRESSED WHEN THE MERGE SAYS NOTHING NEW** (D142's idempotence
+    answer, inherited from `scheduleCounters` and widened to the two payload-free
+    members, for which "nothing new" is simply "the same kind for the same turn"). */
+function scheduleDelayed(
+  state: GameState,
+  payload: { kind: "counters"; amount: number } | { kind: "discard" } | { kind: "knockOut" },
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -6566,12 +6639,40 @@ function scheduleCounters(
   if (uid === undefined) return state;
   if (effectRefused(state, seat, ctx, events)) return state;
   const turn = state.turn + 1;
-  const existing = active.scheduledCounters;
-  const stacking = existing !== null && existing.turn === turn;
-  const merged = stacking ? Math.max(existing.amount, amount) : amount;
-  if (stacking && merged === existing.amount) return state;
-  events.push({ type: "COUNTERS_SCHEDULED", seat, uid, amount: merged, turn });
-  return withActive(state, seat, { ...active, scheduledCounters: { turn, amount: merged } });
+  const existing = active.scheduledEffect;
+  const stacking = existing !== null && existing.turn === turn ? existing : null;
+  const wanted: ScheduledEffect =
+    payload.kind === "counters"
+      ? {
+          turn,
+          kind: "counters",
+          amount:
+            stacking !== null && stacking.kind === "counters"
+              ? Math.max(stacking.amount, payload.amount)
+              : payload.amount,
+        }
+      : payload.kind === "discard"
+        ? { turn, kind: "discard" }
+        : { turn, kind: "knockOut" };
+  if (stacking !== null && sameSchedule(stacking, wanted)) return state;
+  events.push({ type: "EFFECT_SCHEDULED", seat, uid, scheduled: { ...wanted } });
+  return withActive(state, seat, { ...active, scheduledEffect: wanted });
+}
+
+/** Do these two appointments say the same thing? The idempotence test
+    `scheduleDelayed` suppresses its row on, spelled as a SWITCH over the payload
+    rather than as a chain of `!==` (D222: a negated conjunction over union members
+    is a closed-world assumption with no compiler behind it, while a member added to
+    `ScheduledEffect` makes this stop compiling). */
+function sameSchedule(a: ScheduledEffect, b: ScheduledEffect): boolean {
+  switch (a.kind) {
+    case "counters":
+      return b.kind === "counters" && a.amount === b.amount;
+    case "discard":
+      return b.kind === "discard";
+    case "knockOut":
+      return b.kind === "knockOut";
+  }
 }
 
 /** §9/§11 (D152) — ARM the printed REACTIVE RECOIL on the CONTROLLER's own Active
@@ -9398,7 +9499,7 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
         // D433's own rule is that the four §10 literals AGREE about the durated set
         // and disagree only about `markers`. Following the set is the rule; a
         // reachability argument is not a licence to leave a hole in it.
-        scheduledCounters: null,
+        scheduledEffect: null,
         attackDamageDebuff: null,
         installedRecoil: null,
         lockedAttacks: [],
@@ -9560,8 +9661,15 @@ function knockOutSelf(state: GameState, ctx: EffectContext): GameState {
     because inventing a maximum is the worse of the two failures.
 
     ⚠️ **THE STAMP IS IDEMPOTENT**: a program that dooms an already-doomed body in
-    the same turn re-computes the same string and adds no duplicate. */
-function doomBodyAt(state: GameState, ref: PokemonRef, marker?: string): GameState {
+    the same turn re-computes the same string and adds no duplicate.
+
+    🆕🆕 **D435 — A FOURTH CALLER, AND THE FIRST FROM OUTSIDE AN EFFECT PROGRAM.**
+    `runCheckup` (flow.ts) fires the delayed KNOCK-OUT payload of the D434/D435
+    schedule through this function, which is why it is exported. It passes the
+    `koByEffect` marker under D433's `wasLethal` conjunct — re-derived at that site
+    rather than inherited from any of the three callers here, since its lethality is
+    an appointment's doing and no damage is placed. */
+export function doomBodyAt(state: GameState, ref: PokemonRef, marker?: string): GameState {
   const side = state.players[ref.seat];
   const spot = ref.spot;
   const body = spot.spot === "active" ? side.active : side.bench[spot.index];
@@ -10422,7 +10530,7 @@ export function switchInto(
     // before it fires. §10 sheds the effects of attacks and the schedule goes with
     // the body — the printed answer to this family, and the sharpest available
     // witness that the clear is real (the Checkup that follows places nothing).
-    scheduledCounters: null,
+    scheduledEffect: null,
     // D149 — and this is the FORCED half of the debuff's story: a Boss's Orders
     // played by the DEBUFFED player on their own turn (the window) pulls the body
     // off the spot and the debuff with it, and so does the opponent dragging it up

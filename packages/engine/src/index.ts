@@ -18534,6 +18534,111 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.334.0 → **0.335.0**
     (`packages/engine/package.json` in the same commit). */
+/** 🆕🆕 **0.336.0 → 0.337.0 — D435, THE DELAYED FAMILY CLOSED, AND THE DISTINCTION
+    THE TWO NEW PAYLOADS EXIST TO KEEP APART IS A PRIZE CARD.**
+
+    D434 built the delayed CHANNEL and mapped one of its three rows. D435 maps the
+    other two, closing the family at **3 sentences / 6 legal printings**:
+
+      row  53 (1)  "At the end of your opponent's next turn, discard the Defending
+                    Pokémon and all attached cards."
+      row 113 (2)  "Discard all Energy from this Pokémon. At the end of your
+                    opponent's next turn, the Defending Pokémon will be Knocked Out."
+
+    🛑 **DISCARD AND KNOCK OUT ARE NOT ONE PAYLOAD, AND THE RULE SAYS SO IN ONE
+    SENTENCE.** §8.1 (`docs/reference/ptcg-rules.md`): a Pokémon is Knocked Out when
+    its *"damage ≥ its current HP"*, and *"the player **who KO'd** the Pokémon takes
+    prize card(s)"*. **The Prize is owed by the Knock Out and by nothing else in the
+    rules.** Row 53 prints *discard* and Knocks nothing Out, so no Prize is taken; row
+    113 prints *"will be Knocked Out"*, so one is. On the board they are
+    indistinguishable — the body leaves play, the Active Spot empties, a promotion is
+    owed — and they differ on exactly one row of the prize track. They are therefore
+    TWO ops and TWO `ScheduledEffect` members, never one with a flag: a flag is
+    something a later author copies, a missing `case` is something the compiler
+    refuses. Driven on ONE axis in `delayedCounters.test.ts` §12 — same board, same
+    clock, same removal, and 6 prizes against 5.
+
+    ⚠️ **AND THE ENGINE ALREADY AGREED WITH THE RULE BEFORE EITHER OP EXISTED**, which
+    is why neither invents a prize policy: `returnSelf` with `dest: "discard"` (D313,
+    Revavroom ex) removes a body to the discard pile, emits `POKEMON_RETURNED` and
+    stages NO `takePrizes`; `knockOut` (flow.ts) stages one. The discard payload
+    reaches `discardFromStack` — §8.1's own cleanup move, minus §8.1 — and the Knock
+    Out payload reaches `doomBodyAt` and §8.1's sweep.
+
+    🛑 **THE VERSION ANSWER IS 28 → 29, AND IT DEPARTS FROM D432 AND D434 ON THE
+    PREMISE WHILE AGREEING ON THE OUTCOME.** `ScheduledCounters` becomes the
+    discriminated union `ScheduledEffect`, which is a new REQUIRED `kind` (D386's
+    case) AND a RENAME of the type, the field and the reader (D359's case) — two
+    independent reasons. **D421's optional road was AVAILABLE here for the first time
+    in this run** (D434's *"a rest must be OLD"* test is satisfied: `{turn, amount}`
+    were both written by the v28 deploy) and is refused anyway, on D421's own
+    criterion applied rather than its outcome copied: a dropped `kind` reads as the
+    counters member with `amount === undefined`, `damage + undefined` is `NaN`, and
+    `NaN >= hp` is false — a body that can never be Knocked Out again, on a board that
+    looks normal. Silent corruption, not a soft landing. Both roads driven in
+    `delayedCounters.test.ts` §8; the full argument is at
+    `apps/api/src/lobby/match.ts`'s constant.
+
+    🛑 **THE COMPOUND COMPOSED, AND IT WAS D434's OWN EXECUTABLE FALSIFIER PAYING
+    OUT.** D434 measured `splitAttackTrailingClause` refusing corpus row 113 *because
+    no anchor claimed its tail*, and left a rung that would redden the day one did.
+    It reddened on the exact line. The KO anchor is deliberately BARE (no head, no
+    alternation) so the splitter's shadow refusal cannot claim the compound whole —
+    `SELF_CANT_RETREAT`'s rule verbatim — and the two printings then arrive with **no
+    change to `attack.ts` at all**. The rung is RE-POINTED onto the split's exact
+    halves and the composed board rather than onto `not.toBeNull()`, because the
+    latter would be true under a build whose anchor swallowed the head (D418).
+
+    🛑 **THE KO CAUSE IS RE-DERIVED FROM SCRATCH AND COMES OUT THE OPPOSITE WAY FROM
+    D434's.** D434 withheld D414's `koByEffect` marker because its payload PLACES
+    DAMAGE COUNTERS, so its Knock Out genuinely is by damage. Row 113's payload places
+    **no damage at all** — D414's marker's exact subject — so the marker is owed, and
+    D433's `wasLethal` conjunct, which did not arise for D434, arises here: a body
+    already lethal when the appointment fires WAS Knocked Out by damage and must not
+    be re-attributed. `byAttack` stays FALSE for D434's reason (the Checkup passes no
+    `attackerSeat`). ⚠️ **AND THE MARKER IS OBSERVATIONALLY INERT ON THIS PATH TODAY,
+    MEASURED AND SAID SO**: its two readers are `byAttackFor` (short-circuits on
+    `attackerSeat === undefined`) and `koRecoilOf` (called by `finishAttack` alone).
+    The mutant row that drops it is DECLARED `equivalent` rather than expected to die,
+    so the day a third reader appears it reports `STALE-SURVIVOR` and fails the run
+    (D427's self-invalidating declaration).
+
+    ⚠️ **A THIRD SITE FOR D311/D312's PROMOTION SEAM, AND D312 NAMED THE PRICE IN
+    ADVANCE.** The delayed discard is the first thing in this engine that empties an
+    Active Spot **during the Checkup**, so `runCheckup` owes the orphaned-promotion
+    filter that `resolveMidTurnKnockOuts` and `finishAttack` each carried a copy of.
+    D312 wrote *"if a THIRD caller appears, hoist the filter rather than write it a
+    third time"*; `orphanedPromotions` (flow.ts) is that hoist, and all three sites
+    call it. Without it the victim would face the next turn with no Active Pokémon at
+    all, and a victim with an empty Bench would never reach the §14.2 loss they are
+    owed.
+
+    ⚠️ **THE ORDERING AGAINST §13.1 IS OBSERVABLE FOR THESE TWO WHERE IT WAS NOT FOR
+    D434's.** D434 could only assert a SEQUENCE (damage commutes, the KO is resolved
+    for the whole batch). A DISCARDED body is gone before §13.1 reads the spot, so a
+    Poisoned victim takes no poison damage and files no `source: "poison"` row at all
+    — a BOARD difference. A DOOMED body is still standing (this engine marks; §8.1
+    kills), so Poison lands on it. Both driven.
+
+    ⚠️ **THE VERSION TAX RE-MEASURED AT THIS HEAD, AND THE COUNT DID NOT MOVE — WHICH
+    IS ITSELF THE MEASUREMENT (D429: extending a streak asserts it afresh).** **20
+    assertions / 23 sites**, the same figure D434 recorded, because D435 extends
+    D434's suite instead of adding one: 19 `expect(engineVersion).toBe(…)` pins, ONE
+    `manifest.version` pin (`legacyEnergy.test.ts`), `packages/engine/package.json`,
+    this declaration, and `D275`'s mutant anchor (re-pointed in the SAME commit as the
+    bump). **D427's mechanism is that a note counts the pins it INHERITED and never
+    the one it AUTHORS; this slice authors NONE**, and says so rather than
+    incrementing by reflex. Measured with `grep -rn 'expect(engineVersion)\.toBe("'`
+    and `'expect(manifest\.version)\.toBe("'` over the whole repo, all 21 and 1 hits
+    read — two of the 21 are PROSE inside doc comments quoting a historical
+    `"0.237.0"` pin, so the real count is 19.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** This checkout has no D1;
+    the corpus is grouped by sentence and records the COUNT, not the ids (D425).
+
+    engineVersion 0.336.0 → **0.337.0**
+    (`packages/engine/package.json` in the same commit).
+    `MATCH_RECORD_VERSION` 28 → **29** (`apps/api/src/lobby/match.ts`). */
 /** 🆕🆕 **0.335.0 → 0.336.0 — D434, THE FIRST DELAYED EFFECT IN THIS ENGINE, AND
     THE FIRST FACT ON `InPlayPokemon` THAT NOTHING READS.**
 
@@ -18542,9 +18647,9 @@ import type { GameState, Seat } from "./types";
     `legal_standard = 1` attack column (640 sentences / 1,732 printings),
     `censusAttackCorpus.ts` row 54. ONE anchor (`DELAYED_DEFENDER_COUNTERS`), ONE arm
     in `deriveAttackEffect` (5f), ONE `EffectOp` (`scheduleCounters`), ONE `stepOp`
-    case, ONE interpreter installer, ONE new record type (`ScheduledCounters`), ONE
-    new REQUIRED `InPlayPokemon` field (`scheduledCounters`), ONE new reader
-    (`scheduledCountersDue`), ONE new `GameEvent` (`COUNTERS_SCHEDULED`) with ONE log
+    case, ONE interpreter installer, ONE new record type (`ScheduledEffect`), ONE
+    new REQUIRED `InPlayPokemon` field (`scheduledCounters`, renamed to
+    `scheduledEffect` at D435), ONE new reader (`scheduledCountersDue`), ONE new `GameEvent` (`COUNTERS_SCHEDULED`) with ONE log
     row, ONE new `COUNTERS_PLACED.source` member (`"delayed"`) with ONE log row, ONE
     FIRING SITE in the §13 Checkup (`runCheckup`), and FIVE `InPlayPokemon` literals.
 
@@ -18643,7 +18748,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.336.0";
+export const engineVersion = "0.337.0";
 
 export type {
   ApplyResult,

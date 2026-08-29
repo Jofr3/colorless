@@ -5185,7 +5185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5684,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5695,7 +5695,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.336.0";',
+    find: 'export const engineVersion = "0.337.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8387,10 +8387,10 @@ export const MUTANTS: Mutant[] = [
     // seconds. The anchor gains the `resumeTurn` tail that only D311's site has,
     // which is exactly the term that distinguishes the two copies (see the doc block
     // above `resolveMidTurnKnockOuts`: two sites, two tails, one seam).
-    find: '        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // Nothing KO\'d and no spot left empty.',
-    replace:
-      '        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // Nothing KO\'d and no spot left empty.',
-    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
+    // 🆕🆕 RE-POINTED AT D435, ONTO THE HOISTED `orphanedPromotions`. D311 wrote this filter inline in `resolveMidTurnKnockOuts` and D312 copied it byte-for-byte into `finishAttack`, naming the expiry date in its own comment: a THIRD caller means hoist it. D435's delayed DISCARD payload is that third caller, so both copies are now one function and the two rows below would otherwise have become the SAME mutation on the SAME line. They are re-pointed onto DIFFERENT terms of the shared predicate instead — this one on the DEDUP term, D312's on the EMPTINESS term — so each still expresses a defect the other cannot (D418's second half). Killers widened to all three sites, because one function now answers for all three.
+    find: "        state.players[seat].active === null &&\n        !staged.some((stage) => stage.kind === \"promote\" && stage.seat === seat),",
+    replace: "        state.players[seat].active === null,",
+    expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts", "packages/engine/src/surfBack.test.ts", "packages/engine/src/delayedCounters.test.ts"],
   },
   {
     id: "D311-self-removal-leaves-the-body-in-the-active-spot",
@@ -8495,23 +8495,24 @@ export const MUTANTS: Mutant[] = [
     decision: "D312",
     what: "the dedup drops out of the SECOND site's filter, so a seat the KO batch already queued a promotion for takes a second one. ⚠️ THIS SITE IS WHERE THAT ACTUALLY BITES, unlike D311's: an attack routinely empties BOTH Active Spots at once -- the defender by Knock Out and the attacker by `returnSelf` -- so the double-queue is not a rare board here, it is the board Gholdengo is printed to make",
     file: "packages/engine/src/flow.ts",
-    find: '        batch.state.players[seat].active === null &&\n        !batch.stages.some((stage) => stage.kind === "promote" && stage.seat === seat),\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // §5.3 — attacking ends the turn',
-    replace:
-      '        batch.state.players[seat].active === null,\n    )\n    .map((seat) => ({ kind: "promote", seat }));\n  // §5.3 — attacking ends the turn',
-    expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
+    // 🆕🆕 RE-POINTED AT D435 ONTO THE **EMPTINESS** TERM RATHER THAN THE DEDUP ONE — see the note on `D311-ko-seat-gets-a-second-promotion`. Inverting it queues a promotion for every seat whose spot is OCCUPIED and none for the seat that actually needs one, which is the defect that survives if the predicate is written from the wrong side.
+    find: "  return seats\n    .filter(\n      (seat) =>\n        state.players[seat].active === null &&",
+    replace: "  return seats\n    .filter(\n      (seat) =>\n        state.players[seat].active !== null &&",
+    expectKilledBy: ["packages/engine/src/surfBack.test.ts", "packages/engine/src/runAwayDraw.test.ts", "packages/engine/src/delayedCounters.test.ts"],
   },
   {
     id: "D312-attack-seam-scans-only-the-attacker",
     decision: "D312",
     what: "the second site's seat list narrows from `[defender, attacker]` to the attacker alone. Green on every board this slice drives EXCEPT the one where both spots empty -- and it is the narrowing an author makes on the true observation that only `returnSelf` can empty a spot without a KO and only the attacker can run one. The KO'd defender's own promotion comes from `collectKnockOuts`, so the bug is invisible until something else empties that side",
     file: "packages/engine/src/flow.ts",
-    find: "  const orphaned: PendingStage[] = [otherSeat(attackerSeat), attackerSeat]",
-    replace: "  const orphaned: PendingStage[] = [attackerSeat]",
+    // 🆕🆕 RE-TRANSCRIBED AT D435: the seat list is an ARGUMENT to the hoisted helper now, not an inline literal. The claim is unchanged.
+    find: "  const orphaned = orphanedPromotions(\n    batch.state,\n    [otherSeat(attackerSeat), attackerSeat],\n    batch.stages,\n  );",
+    replace: "  const orphaned = orphanedPromotions(batch.state, [attackerSeat], batch.stages);",
     expectKilledBy: ["packages/engine/src/surfBack.test.ts"],
     survives: {
       kind: "unreachable-population",
       reason:
-        "🛑 **DECLARED AFTER IT SURVIVED, AND THE ROW'S OWN `what` STRING PREDICTED IT IN ADVANCE** — *\"the bug is invisible until something else empties that side\"*. It was authored as a drivable row, SURVIVED the sweep, and the GREP that followed is the measurement rather than the author's opinion, which is D259's shape exactly. ⚠️ **EXACTLY TWO SITES IN THE WHOLE ENGINE CAN EMPTY AN IN-PLAY ACTIVE SPOT**, `grep -rn \"active: null\" packages/engine/src` at this commit, `setup.ts`'s game construction aside: (1) `knockOut` (flow.ts), which queues its OWN `{kind:\"promote\"}` stage in the same return — so a KO'd seat is ALWAYS named by `batch.stages` and the skip-term removes it from `orphaned` before the seat list is ever consulted; and (2) `returnSelf` (interpreter.ts), whose ref is `ctx.sourceRef` — the program's own body, which inside `finishAttack` is by definition on the ATTACKER's board. **So `otherSeat(attackerSeat)` cannot be in `orphaned` on any board that exists today, and narrowing the list is behaviour-identical.** KEPT FOR TOTALITY rather than deleted, for D259's reason verbatim: the superset is what makes a future op correct by construction instead of by a comment. 🛑 **THE DAY AN OP CAN EMPTY THE OPPONENT'S ACTIVE SPOT WITHOUT A KNOCK OUT** — a bounce-the-defender attack, or a `returnBenched` widened past its ref guard — **this row reports STALE-SURVIVOR and the seat list is already right.** ⚠️ AND NOTE WHICH HALF IS *NOT* DECLARED: the SKIP-TERM row (`D312-attack-seam-drops-the-ko-dedup`) is KILLED, because the both-spots-empty board it guards is reachable today — the defender by Knock Out and the attacker by `returnSelf`, which is exactly the board Gholdengo is printed to make.",
+        "🛑 **DECLARED AFTER IT SURVIVED, AND THE ROW'S OWN `what` STRING PREDICTED IT IN ADVANCE** — *\"the bug is invisible until something else empties that side\"*. It was authored as a drivable row, SURVIVED the sweep, and the GREP that followed is the measurement rather than the author's opinion, which is D259's shape exactly. ⚠️ **EXACTLY THREE SITES IN THE WHOLE ENGINE CAN EMPTY AN IN-PLAY ACTIVE SPOT** — 🆕🆕 TWO WHEN THIS WAS WRITTEN, AND D435 ADDED THE THIRD; THE COUNT IS CORRECTED IN PLACE RATHER THAN LEFT TO ROT (D425), AND THE CONCLUSION SURVIVES THE CORRECTION — `grep -rn \"active: null\" packages/engine/src` at this commit, `setup.ts`'s game construction aside: (1) `knockOut` (flow.ts), which queues its OWN `{kind:\"promote\"}` stage in the same return — so a KO'd seat is ALWAYS named by `batch.stages` and the skip-term removes it from `orphaned` before the seat list is ever consulted; and (2) `returnSelf` (interpreter.ts), whose ref is `ctx.sourceRef` — the program's own body, which inside `finishAttack` is by definition on the ATTACKER's board. and 🆕🆕 (3) D435's DELAYED DISCARD payload (`runCheckup`, flow.ts), which empties `endedSeat`'s spot with no Knock Out to explain it — but that site is in the CHECKUP and is never reached from `finishAttack`, so it cannot put the defender's seat into THIS call's `orphaned` either. **So `otherSeat(attackerSeat)` still cannot be in `orphaned` on any board that exists today, and narrowing the list is behaviour-identical.** KEPT FOR TOTALITY rather than deleted, for D259's reason verbatim: the superset is what makes a future op correct by construction instead of by a comment. 🛑 **THE DAY AN OP CAN EMPTY THE OPPONENT'S ACTIVE SPOT WITHOUT A KNOCK OUT** — a bounce-the-defender attack, or a `returnBenched` widened past its ref guard — **this row reports STALE-SURVIVOR and the seat list is already right.** ⚠️ AND NOTE WHICH HALF IS *NOT* DECLARED: the SKIP-TERM row (`D312-attack-seam-drops-the-ko-dedup`) is KILLED, because the both-spots-empty board it guards is reachable today — the defender by Knock Out and the attacker by `returnSelf`, which is exactly the board Gholdengo is printed to make.",
     },
   },
   {
@@ -10770,8 +10771,8 @@ export const MUTANTS: Mutant[] = [
     //    row, and a lint fix is only the smallest case of it).
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 28;",
-    replace: "export const MATCH_RECORD_VERSION = 27;",
+    find: "export const MATCH_RECORD_VERSION = 29;",
+    replace: "export const MATCH_RECORD_VERSION = 28;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -19571,8 +19572,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE BUILT-BUT-DEAD HALF, and it is the defect this slice's whole shape invites (D407). The installer still runs its §11 gate, still computes the stamp and still pushes its `COUNTERS_SCHEDULED` row — it simply hands back the board it was given. The log says the appointment was made, the census says the sentence resolves, `ATTACK_EFFECT_SKIPPED` never fires, and no counter is ever placed. A log-shaped assertion passes on this build; only a rung that reads the RECORD or the Checkup's output sees it",
     file: "packages/engine/src/interpreter.ts",
-    find: "  events.push({ type: \"COUNTERS_SCHEDULED\", seat, uid, amount: merged, turn });\n  return withActive(state, seat, { ...active, scheduledCounters: { turn, amount: merged } });",
-    replace: "  events.push({ type: \"COUNTERS_SCHEDULED\", seat, uid, amount: merged, turn });\n  return state;",
+    find: "  events.push({ type: \"EFFECT_SCHEDULED\", seat, uid, scheduled: { ...wanted } });\n  return withActive(state, seat, { ...active, scheduledEffect: wanted });",
+    replace: "  events.push({ type: \"EFFECT_SCHEDULED\", seat, uid, scheduled: { ...wanted } });\n  return state;",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19580,8 +19581,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE WRONG TURN, WRITE SIDE — `state.turn + 1` becomes `+ 2`, which is `preventRetreat`'s SELF-arm number copied verbatim onto the defender arm (D412's operand-inversion defect, one op over). The record is written, the log row is identical apart from its `turn` field, the §10 clears all still work — and the counters land one full round late, or never, because the body has usually left the spot by then. Off-by-one is the defect this shape invites and it is why the event carries `turn` at all",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledCounters;",
-    replace: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 2;\n  const existing = active.scheduledCounters;",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledEffect;",
+    replace: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 2;\n  const existing = active.scheduledEffect;",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19589,8 +19590,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The installer aims at its OWN Active instead of the Defending Pokémon — `installNoWeakness`'s real first line (`state.players[ctx.seat].active`) transplanted onto a defender-side op, which is D412's finding at its own address: bare means the DEFENDER here and the SELF for the neighbours. Every event still fires, the schedule still lands on a body and the Checkup still places 90 counters — on the attacker",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const seat = otherSeat(ctx.seat);\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledCounters;",
-    replace: "  const seat = ctx.seat;\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledCounters;",
+    find: "  const seat = otherSeat(ctx.seat);\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledEffect;",
+    replace: "  const seat = ctx.seat;\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledEffect;",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19598,8 +19599,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §11 refusal gate is dropped — `preventHandPlay`'s REAL shape (that op deliberately asks nothing, and its doc block says why), applied to an op that must ask. The board that catches it is a Mist Energy `sv05-161` shield on the Defending Pokémon: under this build the schedule lands anyway, no `ATTACK_EFFECT_PREVENTED` row is filed, and 90 counters arrive on a body the printed block says cannot be touched by an effect of an attack",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledCounters;\n  const stacking = existing !== null && existing.turn === turn;",
-    replace: "  const turn = state.turn + 1;\n  const existing = active.scheduledCounters;\n  const stacking = existing !== null && existing.turn === turn;",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.scheduledEffect;\n  const stacking = existing !== null && existing.turn === turn ? existing : null;",
+    replace: "  const turn = state.turn + 1;\n  const existing = active.scheduledEffect;\n  const stacking = existing !== null && existing.turn === turn ? existing : null;",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19607,8 +19608,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "`Math.max` becomes a sum — `reduceDamage`'s merge, which really does add, transplanted onto an op whose record is a printed AMOUNT rather than an accumulating shield. Unreachable off any printing (one attack per turn), which is exactly why §10 drives it through `runProgram` instead of through a board: without that rung this defect would ship with a green suite",
     file: "packages/engine/src/interpreter.ts",
-    find: "  const merged = stacking ? Math.max(existing.amount, amount) : amount;\n  if (stacking && merged === existing.amount) return state;\n  events.push({ type: \"COUNTERS_SCHEDULED\"",
-    replace: "  const merged = stacking ? existing.amount + amount : amount;\n  if (stacking && merged === existing.amount) return state;\n  events.push({ type: \"COUNTERS_SCHEDULED\"",
+    find: "              ? Math.max(stacking.amount, payload.amount)\n              : payload.amount,",
+    replace: "              ? stacking.amount + payload.amount\n              : payload.amount,",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19625,8 +19626,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE WRONG SEAT'S END-OF-TURN — the Checkup reads the schedule off the seat whose turn is ABOUT TO BEGIN instead of the one that just ended. It is the plausible mistake, because `runCheckup`'s `order` array is `[endedSeat, otherSeat(endedSeat)]` and half the blocks in this function iterate BOTH seats. Under this build the placement simply never happens on any legal board (only the ended seat's body can carry a stamp for the ended turn, by the parity argument the site states), so the mutant is the silent no-op the wrong-seat spelling produces",
     file: "packages/engine/src/flow.ts",
-    find: "    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);",
-    replace: "    const spot = activeTop(next, otherSeat(endedSeat));\n    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);",
+    find: "    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);",
+    replace: "    const spot = activeTop(next, otherSeat(endedSeat));\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19634,8 +19635,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE WRONG TURN, READ SIDE — the twin of `D434-stamp-is-off-by-one` at the other end of the same arithmetic, and it is worth its own row because the two are fixed in different files. `next.turn + 1` never equals a stamp `runCheckup` can see, so the appointment is silently missed while the record sits on the board looking correct",
     file: "packages/engine/src/flow.ts",
-    find: "    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);",
-    replace: "    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn + 1);",
+    find: "    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);",
+    replace: "    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn + 1);",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19643,8 +19644,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The other built-but-dead half: the Checkup finds the schedule, files its `COUNTERS_PLACED` row with the right amount and the right uid — and does not move the damage total. D428's defect exactly (a hook in the right place that fires its event, prints its row and moves no number), which is why the killing rungs read the BOARD and not the log",
     file: "packages/engine/src/flow.ts",
-    find: "      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });\n      events.push({\n        type: \"COUNTERS_PLACED\",",
-    replace: "      events.push({\n        type: \"COUNTERS_PLACED\",",
+    find: "          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",",
+    replace: "          events.push({\n            type: \"COUNTERS_PLACED\",",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19652,8 +19653,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "THE ORDERING DECISION, INVERTED — the placement moves BEHIND §13.1 Poison, which is the plausible wrong choice because the engine's existing home for non-condition between-turns work (`runCheckupTriggers`) sits after the four condition steps. 🛑 THE BOARD IS IDENTICAL UNDER BOTH BUILDS: damage is additive and the KO sweep runs once for the whole batch, so only the EVENT SEQUENCE moves — D430's rule read from the other side, and the reason §5's rung asserts the sequence rather than a total",
     file: "packages/engine/src/flow.ts",
-    find: "  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: endedSeat,\n        uid,\n        amount: due,\n        source: \"delayed\",\n      });\n    }\n  }\n\n  // §13.1 Poison — the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n",
-    replace: "  // §13.1 Poison — the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });\n      events.push({\n        type: \"COUNTERS_PLACED\",\n        seat: endedSeat,\n        uid,\n        amount: due,\n        source: \"delayed\",\n      });\n    }\n  }\n",
+    find: "  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n\n  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n",
+    replace: "  // \u00a713.1 Poison \u2014 the condition's own counter amount (10 unless raised).\n  for (const seat of order) {\n    const spot = activeTop(next, seat);\n    if (spot === null || spot.active.conditions.poisonDamage <= 0) continue;\n    const { active, uid } = spot;\n    const amount = active.conditions.poisonDamage;\n    next = withActive(next, seat, { ...active, damage: active.damage + amount });\n    events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"poison\" });\n  }\n\n  {\n    const spot = activeTop(next, endedSeat);\n    const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);\n    if (spot !== null && due !== null) {\n      const { active, uid } = spot;\n      switch (due.kind) {\n        // D434 \u2014 counters. \u00a712's one-counter-is-10 conversion happened at the ARM.\n        case \"counters\": {\n          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });\n          events.push({\n            type: \"COUNTERS_PLACED\",\n            seat: endedSeat,\n            uid,\n            amount: due.amount,\n            source: \"delayed\",\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the DISCARD (corpus row 53). NO Prize; see (a) above.\n        case \"discard\": {\n          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });\n          break;\n        }\n        // \ud83c\udd95\ud83c\udd95 D435 \u2014 the KNOCK OUT (corpus row 113's tail). \u00a78.1 IN FULL, Prize\n        // included, and not one line of it written here; see (b) and (c) above.\n        case \"knockOut\": {\n          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);\n          break;\n        }\n      }\n    }\n  }\n",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19661,8 +19662,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "D433's second-producer treatment copied onto a producer that does not want it: the Checkup stamps `koByEffect:<turn>` on the body it damages. D414's marker means *\"this body went lethal WITHOUT damage\"*, and this op places damage counters — so the stamp is a lie, and a lie in the direction that DENIES Vengeful Punch `sv03-197` a recoil on any board where the two ever meet. The mistake an author makes by pattern-matching the nearest KO-adjacent slice rather than re-deriving the precondition (D433's own rule)",
     file: "packages/engine/src/flow.ts",
-    find: "      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });",
-    replace: "      next = withActive(next, endedSeat, { ...active, damage: active.damage + due, markers: [...active.markers, koByEffectMarker(next.turn)] });",
+    find: "          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount });",
+    replace: "          next = withActive(next, endedSeat, { ...active, damage: active.damage + due.amount, markers: [...active.markers, koByEffectMarker(next.turn)] });",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
   {
@@ -19679,7 +19680,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the retreat literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/turn.ts",
-    find: "    // schedule goes with the body. NINE durated effects on one clear, SIX\n    // reachability stories.\n    scheduledCounters: null,",
+    find: "    // schedule goes with the body. NINE durated effects on one clear, SIX\n    // reachability stories.\n    scheduledEffect: null,",
     replace: "    // schedule goes with the body. NINE durated effects on one clear, SIX\n    // reachability stories.",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
@@ -19688,7 +19689,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the switch literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/interpreter.ts",
-    find: "    // witness that the clear is real (the Checkup that follows places nothing).\n    scheduledCounters: null,",
+    find: "    // witness that the clear is real (the Checkup that follows places nothing).\n    scheduledEffect: null,",
     replace: "    // witness that the clear is real (the Checkup that follows places nothing).",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
@@ -19697,7 +19698,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the devolve literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/interpreter.ts",
-    find: "        // reachability argument is not a licence to leave a hole in it.\n        scheduledCounters: null,",
+    find: "        // reachability argument is not a licence to leave a hole in it.\n        scheduledEffect: null,",
     replace: "        // reachability argument is not a licence to leave a hole in it.",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
   },
@@ -19706,8 +19707,99 @@ export const MUTANTS: Mutant[] = [
     decision: "D434",
     what: "The §10 clear at the evolve literal is dropped. There is no shared helper — five hand-written object literals in three files, and nothing makes them agree (D147 priced the unification and refused it) — so a forgotten field here is exactly the drift D432 found three of. Under this build the Defending Pokémon walks off the Active Spot and the appointment follows it, which is the opposite of the printed §10 rule and of the whole family's ruling",
     file: "packages/engine/src/types.ts",
-    find: "    // theoretical one. Driven end to end in `delayedCounters.test.ts`.\n    scheduledCounters: null,",
-    replace: "    // theoretical one. Driven end to end in `delayedCounters.test.ts`.",
+    find: "    // which is the same printed counterplay at a much higher stake.\n    scheduledEffect: null,",
+    replace: "    // which is the same printed counterplay at a much higher stake.",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-discard-pays-a-prize",
+    decision: "D435",
+    what: "\ud83d\uded1 THE DEFECT THE TWO PAYLOADS INVITE, AND THE ONE THIS WHOLE SLICE IS ABOUT. The DISCARD arm is replaced by the KNOCK-OUT arm's real code \u2014 the neighbour's body copied verbatim, which is the mistake an author actually makes when two arms 'both remove the body'. Every board fact stays identical: the same Pok\u00e9mon leaves play, the same cards land in the same discard pile, the same promotion is owed. The ONLY difference is that the opponent takes a Prize card \u00a78.1 does not owe them, and `lastKoTurn`/`lastKoMarks` gain a Knock Out that never happened. A rung that read 'is the body gone?' passes on this build",
+    file: "packages/engine/src/flow.ts",
+    find: "          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });",
+    replace: "          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-knock-out-pays-no-prize",
+    decision: "D435",
+    what: "The mirror of the row above, and it is the OTHER half of the same confusion: the KNOCK-OUT arm is replaced by the DISCARD arm's real code. \u00a78.1 says the player who Knocked the Pok\u00e9mon Out takes prize card(s); under this build the body leaves play and nobody is paid. Same board, one prize row short \u2014 and the log says 'was Knocked Out' nowhere, which is the second observable",
+    file: "packages/engine/src/flow.ts",
+    find: "          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);\n          next = doomBodyAt(next, { seat: endedSeat, spot: { spot: \"active\" } }, marker);",
+    replace: "          const cleanup = discardFromStack(next.players[endedSeat], active, \"all\");\n          next = withSide(next, endedSeat, { ...cleanup.side, active: null });\n          events.push({\n            type: \"POKEMON_RETURNED\",\n            seat: endedSeat,\n            uid,\n            actor: otherSeat(endedSeat),\n            dest: \"discard\",\n            uids: cleanup.discarded,\n          });",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-discard-arm-returns-the-knock-out-op",
+    decision: "D435",
+    what: "Arm 5g returns the NEIGHBOURING arm's op \u2014 `scheduleKnockOut` for a sentence that prints *discard*. The sentence still resolves, `ATTACK_EFFECT_SKIPPED` never fires and `BUILT.attack` is unmoved, so every census in the repo is silent; the only thing that moves is a Prize card. This is the same defect as the firing-site row, injected one layer up, and it is written separately because the two layers fail independently",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = DELAYED_DEFENDER_DISCARD.exec(effect);\n  if (match !== null) {\n    return [{ op: \"scheduleDiscard\" }];\n  }",
+    replace: "  match = DELAYED_DEFENDER_DISCARD.exec(effect);\n  if (match !== null) {\n    return [{ op: \"scheduleKnockOut\" }];\n  }",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-knock-out-arm-returns-the-discard-op",
+    decision: "D435",
+    what: "Arm 5h returns `scheduleDiscard` for the sentence that prints *\"will be Knocked Out\"*. The compound still composes, the body still leaves play, and the opponent is quietly denied the Prize \u00a78.1 owes them",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = DELAYED_DEFENDER_KO.exec(effect);\n  if (match !== null) {\n    return [{ op: \"scheduleKnockOut\" }];\n  }",
+    replace: "  match = DELAYED_DEFENDER_KO.exec(effect);\n  if (match !== null) {\n    return [{ op: \"scheduleDiscard\" }];\n  }",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-bare-anchor-swallows-the-compound",
+    decision: "D435",
+    what: "\ud83d\uded1 THE ANCHOR IS BARE ON PURPOSE, AND THIS IS WHAT A WHOLE-COMPOUND ANCHOR COSTS. Widened to admit the printed head, `DELAYED_DEFENDER_KO` claims corpus row 113 WHOLE \u2014 which trips `splitAttackTrailingClause`'s shadow refusal (`claimedByAnyReader` runs FIRST), so the compound is answered by this reader instead of by the splitter and D431's *\"Discard all Energy from this Pok\u00e9mon.\"* head SILENTLY STOPS HAPPENING. The card still Knocks the defender out on schedule; it simply never pays its printed cost. Nothing on the loud path, and `BUILT.attack` is unmoved because the printings are already counted \u2014 through a different summand",
+    file: "packages/engine/src/effects.ts",
+    find: "const DELAYED_DEFENDER_KO =\n  /^At the end of your opponent['\u2019]s next turn, the Defending Pok\u00e9mon will be Knocked Out\\.$/;",
+    replace: "const DELAYED_DEFENDER_KO =\n  /^(?:Discard all Energy from this Pok\u00e9mon\\. )?At the end of your opponent['\u2019]s next turn, the Defending Pok\u00e9mon will be Knocked Out\\.$/;",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts", "packages/engine/src/compoundCompose.test.ts"],
+  },
+  {
+    id: "D435-checkup-owes-no-promotion",
+    decision: "D435",
+    what: "\ud83d\uded1 THE THIRD SITE OF D311/D312's PROMOTION SEAM, DROPPED. The delayed discard is the first thing in this engine that empties an Active Spot DURING the Checkup, and the next stage in the queue is the OTHER seat's `startTurn`. Under this build the victim faces an attack with no Active Pok\u00e9mon at all, and a victim with an empty Bench never reaches the \u00a714.2 loss they are owed \u2014 while every event up to that point is identical. This is D312's own forecast (*\"a THIRD caller owes the same six lines\"*) as an executable defect",
+    file: "packages/engine/src/flow.ts",
+    find: "      pending: [...batch.stages, ...orphaned, ...batch.state.pending.slice(1)],",
+    replace: "      pending: [...batch.stages, ...batch.state.pending.slice(1)],",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-discard-row-credits-the-victim",
+    decision: "D435",
+    what: "`actor` and `seat` are swapped on the `POKEMON_RETURNED` row, so the log files the discard under the player who LOST the Pok\u00e9mon rather than the player whose attack did it \u2014 D136's finding 1, and the same derived-fact defect D425 found on `DAMAGE_DEALT` one event over. The board is byte-identical under both builds; only the row's attribution moves, which is exactly why it would survive review",
+    file: "packages/engine/src/flow.ts",
+    find: "            actor: otherSeat(endedSeat),\n            dest: \"discard\",",
+    replace: "            actor: endedSeat,\n            dest: \"discard\",",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-returned-row-names-only-the-body",
+    decision: "D435",
+    what: "`uids` carries only the stack top instead of the whole pile, which is D299's contract (*\"`uids` IS THE WHOLE BODY and `uid` IS ONE OF ITS MEMBERS\"*) broken on the one payload whose printed sentence says *\"and all attached cards\"*. The cards really do move; the row under-reports what left play, so a client rebuilding zones from events loses the Energy and the Tool",
+    file: "packages/engine/src/flow.ts",
+    find: "            uids: cleanup.discarded,",
+    replace: "            uids: [uid],",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-a-second-payload-is-suppressed",
+    decision: "D435",
+    what: "`sameSchedule` answers TRUE for any two appointments on the same turn, so a schedule of a DIFFERENT kind landing on an already-scheduled body is swallowed by the idempotence early-return instead of replacing what stood there. The `Math.max` merge is what the row LOOKS like it is about and is not: this is the cross-kind case, where 'nothing new' is a category error rather than an arithmetic one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  switch (a.kind) {\n    case \"counters\":\n      return b.kind === \"counters\" && a.amount === b.amount;",
+    replace: "  switch (a.kind) {\n    case \"counters\":\n      return true;",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+  },
+  {
+    id: "D435-ko-marker-not-stamped",
+    decision: "D435",
+    what: "D414's `koByEffect:<turn>` marker is not stamped on a body this appointment made lethal WITHOUT damage \u2014 the marker's exact subject. The stamp is semantically owed (D433's rule for a marker's second producer, re-derived rather than inherited from D434, whose payload does place damage) and is DECLARED to survive because no reader can see it on this path today",
+    file: "packages/engine/src/flow.ts",
+    find: "          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);",
+    replace: "          const marker = undefined;",
+    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
+    survives: { kind: "equivalent", reason: "\ud83d\uded1 **DECLARED BEFORE THE SWEEP AND MEASURED RATHER THAN ASSUMED, AND IT IS SELF-INVALIDATING BY CONSTRUCTION (D427).** The `koByEffect:<turn>` marker has EXACTLY TWO readers, both in `flow.ts`: `byAttackFor`, which returns `false` outright when `attackerSeat` is `undefined`, and `koRecoilOf`, which is called by `finishAttack` alone. The Checkup's `collectKnockOuts` call passes NO `attackerSeat` and this path never reaches `finishAttack`, so both readers answer identically with and without the stamp and NO BOARD distinguishes the two builds today. \u26a0\ufe0f **IT IS STAMPED ANYWAY, AND THE REASON IS STATED AS A REASON RATHER THAN AS AN OBSERVATION (D414's rule about a justification that rots):** the alternative is a body whose lethality is an effect's doing carrying \u2014 BY ABSENCE \u2014 the mark that says it was damage's, which is the closed-world assumption D414 was spent removing. \ud83d\uded1 **THE DAY A THIRD READER APPEARS, OR THE DAY THE CHECKUP'S SWEEP GAINS AN `attackerSeat`, THIS ROW IS KILLED AND THE RUN FAILS WITH `STALE-SURVIVOR`** \u2014 which is the whole reason it is declared rather than deleted." },
   },
 ];

@@ -1,7 +1,7 @@
 import type { DamageModifier } from "./cards";
 import type { AttackerClass, StampedPlayLockKey } from "./effects";
 import type { CoinFace } from "./rng";
-import type { GameOutcome, PokemonTarget, Seat } from "./types";
+import type { GameOutcome, PokemonTarget, ScheduledEffect, Seat } from "./types";
 
 // GameEvents are the animation and wire contract (simulator.md): semantic
 // "what happened" facts, never "how to render" instructions. Every state
@@ -600,25 +600,30 @@ export type GameEvent =
       own since Bouffalant "Bouffer" (D140/D146: loudness is owed to UNREAD TEXT,
       not to a read rule doing its job). */
   | { type: "ATTACK_DEBUFF_APPLIED"; seat: Seat; uid: string; amount: number }
-  /** 🆕🆕 §13 (D434) — an attack SCHEDULED a counter placement onto `seat`'s Active
-      for the END of `turn` (*"At the end of your opponent's next turn, put 9 damage
-      counters on the Defending Pokémon."*). `seat` OWNS the scheduled Pokémon, which
-      is the sibling rows' contract above verbatim, so the log row renders as a
-      system/passive line rather than in the owner's voice.
+  /** 🆕🆕 §13 (D434 as `COUNTERS_SCHEDULED`, RENAMED AND GENERALISED AT D435) — an
+      attack SCHEDULED a delayed effect onto `seat`'s Active for the END of
+      `scheduled.turn`. Three payloads share the row because they share the clock:
+      counters (D434), a DISCARD and a KNOCK OUT (D435). `seat` OWNS the scheduled
+      Pokémon, which is the sibling rows' contract above verbatim, so the log row
+      renders as a system/passive line rather than in the owner's voice.
 
-      🛑 **IT CARRIES `turn`, AND THAT IS THE ONE FIELD THAT MAKES THE ROW HONEST
-      RATHER THAN STILTED (D421's log rule).** A row saying "at the end of your next
-      turn" on a schedule with no clock would be a claim this path makes untrue the
-      moment the body leaves the Active Spot; carrying the number lets the renderer
-      say WHICH turn, and lets a consumer check the arithmetic against the
-      COUNTERS_PLACED row that eventually arrives — the same reason
-      DAMAGE_REDUCTION_APPLIED puts its number in the wording.
+      🛑 **IT CARRIES THE WHOLE `ScheduledEffect` RECORD, WHICH IS D421's "SAME FACT,
+      SAME SPELLING, EVERY SURFACE" AND NOT A CONVENIENCE.** The op, the persisted
+      per-body field and this event now all spell the appointment with the identical
+      shape, so a renderer honouring the discard and forgetting the Knock Out is a
+      missing `switch` arm rather than a silently mis-worded row. The `turn` inside it
+      is D434's field, kept for D434's reason (D421's log rule): a row saying "at the
+      end of your next turn" on a schedule with no clock would be a claim this path
+      makes untrue the moment the body leaves the Active Spot, and carrying the number
+      lets a consumer check the arithmetic against whatever eventually fires.
 
-      ⚠️ THE PAIR IS DELIBERATE: this row and the `source: "delayed"` COUNTERS_PLACED
-      it eventually produces are the arming and the firing of one mechanism, and a
-      match that ends before the Checkup shows the first with no second — which is
-      the truth about the board, not a gap. */
-  | { type: "COUNTERS_SCHEDULED"; seat: Seat; uid: string; amount: number; turn: number }
+      ⚠️ **THE FIRING ROW IS NOT ONE ROW BUT THREE, AND THAT IS THE PRIZE DISTINCTION
+      REACHING THE LOG.** Counters fire as `COUNTERS_PLACED` with `source: "delayed"`;
+      the discard fires as `POKEMON_RETURNED` with `dest: "discard"` and NO prize
+      stage; the Knock Out fires as §8.1's own `KNOCKED_OUT` plus a `takePrizes`. A
+      match that ends before the Checkup shows this row with no second — which is the
+      truth about the board, not a gap. */
+  | { type: "EFFECT_SCHEDULED"; seat: Seat; uid: string; scheduled: ScheduledEffect }
   /** §9/§11 (D152) — an attack ARMED a durated REACTIVE RECOIL on the
       CONTROLLER's own Active ("During your opponent's next turn, if this Pokémon
       is damaged by an attack (even if it is Knocked Out), put 10 damage counters
@@ -789,7 +794,7 @@ export type GameEvent =
         // 🆕🆕 D434 — counters an attack SCHEDULED a turn earlier and the §13 Checkup
         // is placing now. A PROVENANCE label like "attack" rather than a mechanism
         // label like "counterattack": the amount has exactly one source (the printed
-        // sentence that armed it) and the COUNTERS_SCHEDULED row a turn back names
+        // sentence that armed it) and the EFFECT_SCHEDULED row a turn back names
         // it. It is NOT `"attack"`, because that member's log row renders inside the
         // attack's own resolution and this one lands between turns, next to Poison.
         | "delayed";

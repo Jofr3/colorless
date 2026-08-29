@@ -725,7 +725,7 @@ describe("the structural answers", () => {
         "retreatBlocked",
         // 🆕🆕 D412 — the SELF-installed §11 retreat lock's stamp (MATCH_RECORD_VERSION 25 → 26).
         "retreatLockedTurn",
-        "scheduledCounters",
+        "scheduledEffect",
         "stack",
         "tools",
         "turnPlayed",

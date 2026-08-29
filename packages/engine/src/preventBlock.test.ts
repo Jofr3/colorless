@@ -1762,7 +1762,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // damage does not land until the next Checkup.
     scheduleCounters: {
       op: { op: "scheduleCounters", amount: 90 },
-      landed: (r) => p1Active(r.after)?.scheduledCounters != null,
+      landed: (r) => p1Active(r.after)?.scheduledEffect != null,
     },
     // — the two DAMAGE ops a block stops without any per-op guard: the null is
     //   taken at the damage site, so the evidence is the row, not a refusal —

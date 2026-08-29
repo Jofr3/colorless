@@ -3667,6 +3667,61 @@ export type EffectOp =
       sentences, not one doubled one; unreachable off any printing, so it is
       constructed and pinned). */
   | { op: "scheduleCounters"; amount: number }
+  /** 🆕🆕 **D435 — SCHEDULE THE PRINTED DISCARD OF THE DEFENDING POKÉMON.** *"At the
+      end of your opponent's next turn, discard the Defending Pokémon and all attached
+      cards."* — 1 sentence / **1 legal printing** (`censusAttackCorpus.ts` row 53).
+      The card ids that print it are UNRESOLVED in this checkout (no D1) and are
+      stated unresolved rather than invented (D425).
+
+      🛑 **IT IS NOT `scheduleKnockOut` BELOW, AND THE DIFFERENCE IS A PRIZE CARD.**
+      §8.1 (`docs/reference/ptcg-rules.md`) says *"the player **who KO'd** the Pokémon
+      takes prize card(s)"* — the Prize is owed by the Knock Out and by nothing else.
+      This sentence prints *discard*; the body and everything attached to it leave play
+      for their OWNER's discard pile, the Active Spot empties, a promotion is owed, and
+      **the opponent's prize row does not move.** On the board the two payloads are
+      indistinguishable and they differ on exactly that one row, which is why they are
+      two ops rather than one with a flag: a flag is a thing a later author can
+      copy-paste, and a missing `case` is a thing the compiler refuses.
+
+      ⚠️ **THE ENGINE ALREADY AGREED WITH THE RULE BEFORE THIS OP EXISTED.**
+      `returnSelf` with `dest: "discard"` (D313, Revavroom ex `sv06.5-015`/`-081` —
+      *"Discard this Pokémon and all attached cards."*) removes a body to the discard
+      pile, emits `POKEMON_RETURNED` and stages **no** `takePrizes`. This op's firing
+      site reaches the same seam, so nothing here invents a prize rule.
+
+      ⚠️ **FIELD-FREE, AND THE ABSENCE OF FIELDS IS A MEASUREMENT** (`knockOutSelf`'s
+      rule): the printed sentence carries no amount, no filter and no narrowing, and
+      the one printing is the whole population — there is nothing for a field to vary
+      over (D104's minimal shape).
+
+      ⚠️ **NO `MATCH_RECORD_VERSION` CLAIM OF ITS OWN.** A new `EffectOp` MEMBER is a
+      widening (D383–D385: an old byte string still means what it meant), so this op
+      moves the constant not at all. The bump D435 pays is the `ScheduledEffect`
+      discriminant and the field rename — see `types.ts` and `apps/api/src/lobby/
+      match.ts`. */
+  | { op: "scheduleDiscard" }
+  /** 🆕🆕 **D435 — SCHEDULE THE PRINTED KNOCK OUT OF THE DEFENDING POKÉMON.**
+      *"Discard all Energy from this Pokémon. At the end of your opponent's next turn,
+      the Defending Pokémon will be Knocked Out."* — 1 sentence / **2 legal printings**
+      (`censusAttackCorpus.ts` row 113), reached as the TAIL of that compound through
+      `splitAttackTrailingClause`, whose head D431 already claims. Ids UNRESOLVED here
+      (no D1) and stated so.
+
+      🛑 **THIS ONE PAYS A PRIZE.** *"will be Knocked Out"* is §8.1's own vocabulary,
+      so the firing site marks the body and hands it to §8.1's sweep — the Prize, the
+      whole-stack discard, `KNOCKED_OUT` and the promotion all come from the shipped
+      seam. Contrast the op directly above on ONE axis: same clock, same subject, same
+      removal, one prize row of difference.
+
+      ⚠️ **IT PLACES NO DAMAGE, WHICH IS WHY THE CAUSE QUESTION IS RE-OPENED RATHER
+      THAN INHERITED (D433).** D434's counters payload withheld D414's `koByEffect`
+      marker because it DOES place damage; this one is that marker's exact subject.
+      The derivation, the `wasLethal` conjunct and the measurement that the marker has
+      no live reader on the Checkup path all live at the firing site (`flow.ts
+      runCheckup`), where the stamp is written.
+
+      ⚠️ **FIELD-FREE**, and a widening for `scheduleDiscard`'s reasons verbatim. */
+  | { op: "scheduleKnockOut" }
   /** §9/§11 (D152) — ARM a durated REACTIVE RECOIL on the controller's own Active
       ("During your opponent's next turn, if this Pokémon is damaged by an attack
       (even if it is Knocked Out), put 10 damage counters on the Attacking
@@ -10356,14 +10411,22 @@ const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retr
 //                          Knocked Out."
 //
 // ONE shared clock, THREE different payloads (counters, a discard-to-hand-less
-// removal, a flat Knock Out). The CLOCK is what this slice builds as a channel —
-// `InPlayPokemon.scheduledCounters` plus the §13 firing site — and a successor
+// removal, a flat Knock Out). The CLOCK is what D434 built as a channel —
+// `InPlayPokemon.scheduledEffect` plus the §13 firing site — and a successor
 // claiming either sibling adds a payload to that channel, not a second clock.
-// ⚠️ AND ROW 113 DOES NOT COMPOSE OFF THIS ARM, MEASURED RATHER THAN ASSUMED: its
-// HEAD is claimed (D431's `Discard all Energy from this Pokémon.`) so
-// `splitAttackTrailingClause` offers its TAIL to the readers — but that tail is the
-// KNOCK-OUT payload, which no anchor in this file matches. `compoundCompose.test.ts`
-// pins the split's shape and this suite pins the tail staying unclaimed.
+//
+// 🆕🆕 **D435 CLAIMED BOTH SIBLINGS AND THE FAMILY IS CLOSED AT 3 SENTENCES / 6
+// PRINTINGS.** The forecast above held exactly: the two new anchors
+// (`DELAYED_DEFENDER_DISCARD`, `DELAYED_DEFENDER_KO` below) added payloads to this
+// channel and no second clock. 🛑 **AND THE TWO NEW PAYLOADS ARE NOT ONE PAYLOAD:
+// §8.1 pays a Prize to *"the player who KO'd the Pokémon"*, so row 113 pays one and
+// row 53 does not.**
+// ⚠️ AND D434's MEASUREMENT — *"row 113 does not compose off this arm, because its
+// TAIL is claimed by no anchor in this file"* — WAS TRUE WHEN WRITTEN AND IS NOW
+// FALSE, which is the outcome its own rung was written to force: D435 claims that
+// tail with a BARE anchor, `splitAttackTrailingClause` composes the compound with no
+// change to `attack.ts`, and the rung in `delayedCounters.test.ts` §1 was RE-POINTED
+// onto the split's exact halves rather than relaxed (D418).
 //
 // ⚠️ A `(\d+)` CAPTURE AND NOT THE LITERAL 9, for `DamageReduction`'s reason: the
 // varying token is a NUMBER and a number is closed by its type (D120's precondition),
@@ -10378,6 +10441,45 @@ const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retr
 // (D421's finding); the class is what survives a punctuation-normalising re-ingest.
 const DELAYED_DEFENDER_COUNTERS =
   /^At the end of your opponent['’]s next turn, put (\d+) damage counters on the Defending Pokémon\.$/;
+// 🆕🆕 §13 (D435) — THE DELAYED DISCARD, the family's second payload. *"At the end of
+// your opponent's next turn, discard the Defending Pokémon and all attached cards."*
+// — the whole effect on 1 legal printing (`censusAttackCorpus.ts` row 53), printed
+// STANDALONE, so this anchor is reached by `deriveAttackEffect` directly.
+//
+// 🛑 **IT IS NOT THE KNOCK-OUT ANCHOR BELOW WITH A DIFFERENT VERB, AND THE WHOLE
+// SLICE TURNS ON THAT.** §8.1 pays a Prize to *"the player who KO'd the Pokémon"*;
+// this sentence prints *discard* and Knocks nothing Out, so it pays none. Two
+// anchors, two ops, two `ScheduledEffect` members — never one anchor with a captured
+// verb, because a captured verb is exactly how the two would come to share a payload.
+//
+// ⚠️ NO CAPTURE AT ALL, which is D120's precondition failing rather than being
+// ignored: the varying token in D434's sibling is a NUMBER (closed by its type), and
+// this sentence has no varying token whatever. A literal is right here for the reason
+// a literal was wrong there.
+const DELAYED_DEFENDER_DISCARD =
+  /^At the end of your opponent['’]s next turn, discard the Defending Pokémon and all attached cards\.$/;
+// 🆕🆕 §8.1/§13 (D435) — THE DELAYED KNOCK OUT, the family's third payload and the
+// one that pays a Prize. *"At the end of your opponent's next turn, the Defending
+// Pokémon will be Knocked Out."* — 2 legal printings, and it prints STANDALONE on
+// **zero** cards: both arrive as the TAIL of `censusAttackCorpus.ts` row 113, whose
+// head (*"Discard all Energy from this Pokémon."*) D431 already claims.
+//
+// 🛑 **THE ANCHOR IS DELIBERATELY BARE — NO HEAD, NO ALTERNATION — WHICH IS
+// `SELF_CANT_RETREAT`'s RULE VERBATIM AND NOT A STYLE CHOICE.** A whole-compound
+// anchor would trip `splitAttackTrailingClause`'s shadow refusal
+// (`claimedByAnyReader(text)` runs FIRST) and claim row 113 WHOLE, which is the one
+// thing that must not happen here: the head is already claimed, and re-answering it
+// by a second reader is how two readers come to disagree about one sentence. Bare, the
+// splitter's second guard (`deriveAttackEffect(tail) !== null`) starts passing and the
+// compound composes with no change to `attack.ts` at all.
+//
+// ⚠️ **AND THAT COMPOSITION IS THE EXECUTABLE FALSIFIER D434 LEFT BEHIND, COLLECTED.**
+// D434 measured `splitAttackTrailingClause(row 113) === null` and wrote *"the rung
+// reddens and the compound composes free the day a successor claims that tail"*. It
+// did redden, exactly there, and it is re-pointed rather than relaxed
+// (`delayedCounters.test.ts` §1).
+const DELAYED_DEFENDER_KO =
+  /^At the end of your opponent['’]s next turn, the Defending Pokémon will be Knocked Out\.$/;
 // §7.1/§7.2 (D283) — the TURN-SCOPED IMPOSED HAND-PLAY LOCK, `preventHandPlay`.
 // **8 legal printings on 3 printed sentences**, and they are THREE anchors for
 // D136/D137's reason and not one loose one: the pool prints the same rule with
@@ -16985,6 +17087,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const counters = Number(match[1]);
     if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * 10 }];
+  }
+
+  // 5g. 🆕🆕 D435 — "At the end of your opponent's next turn, discard the Defending
+  //     Pokémon and all attached cards." (1 sentence / 1 legal printing, corpus row
+  //     53). The family's DISCARD payload: the body and everything attached to it go
+  //     to their OWNER's discard pile and **no Prize is taken**.
+  //
+  //     🛑 A DIFFERENT OP FROM ARM 5h BELOW, NOT A FIELD ON ONE OP. §8.1 owes a Prize
+  //     to *"the player who KO'd the Pokémon"* and this sentence Knocks nothing Out.
+  //     The two payloads are indistinguishable on the board and differ by one prize
+  //     row, which is precisely why they must be separated where the compiler can see
+  //     it rather than by a boolean somebody can forget.
+  match = DELAYED_DEFENDER_DISCARD.exec(effect);
+  if (match !== null) {
+    return [{ op: "scheduleDiscard" }];
+  }
+
+  // 5h. 🆕🆕 D435 — "At the end of your opponent's next turn, the Defending Pokémon
+  //     will be Knocked Out." (1 sentence / 2 legal printings — the TAIL of corpus
+  //     row 113). The family's KNOCK-OUT payload, and the one that DOES pay a Prize.
+  //
+  //     🛑 IT PRINTS STANDALONE ON ZERO CARDS — arm 5e's situation exactly. Both
+  //     printings arrive through `splitAttackTrailingClause`, whose head
+  //     (*"Discard all Energy from this Pokémon."*, D431) is already claimed; the
+  //     anchor is BARE so the splitter can offer this tail without the shadow refusal
+  //     claiming the compound whole. D434 measured that split returning `null` and
+  //     named this arm as the condition that would change the answer; it is the
+  //     change, and `delayedCounters.test.ts` §1 re-points the measurement rather
+  //     than deleting it.
+  match = DELAYED_DEFENDER_KO.exec(effect);
+  if (match !== null) {
+    return [{ op: "scheduleKnockOut" }];
   }
 
   // 6a. 🆕🆕 D414 — "If your opponent's Active Pokémon is a Basic Pokémon, it is

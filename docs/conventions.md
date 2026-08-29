@@ -1343,6 +1343,61 @@ still missing a key whose class D432 had already found.
 **When you touch a swept set, count it against the TYPE**, not against the list
 that is there.
 
+## An optional key can degrade into silent CORRUPTION (D435)
+
+D435 was the first slice in this run where D434's *rest must be OLD* test was
+**satisfied**: both existing keys were written by the previous deploy, so an
+optional `kind` was a real, free option. **It was still refused**, on a
+degradation that was measured rather than classified from the shape.
+
+A dropped `kind` reads as the old member, `amount` is `undefined`, the Checkup
+computes `damage + undefined` → **`NaN`**, and `NaN >= hp` is **false**. The body
+is not removed, is not Knocked Out, **and can never be Knocked Out again — on a
+board that looks entirely normal.**
+
+That is neither D124's benign soft landing nor a loud failure. It is **silent
+corruption**, and it is a third distinct outcome. The sequence to carry:
+
+- **D432** — no rest → required, because a lost key is undetectable.
+- **D434** — a rest that is not OLD is not a rest; the old bytes hold nothing.
+- **D435** — rest old, option genuinely available, **degradation is `NaN`**.
+
+**Measure the degradation. Do not classify it from the record's shape.**
+
+## Two payloads that read alike (D435)
+
+*Discard the Defending Pokémon* and *the Defending Pokémon will be Knocked Out*
+both remove a body. **Only the Knock Out pays a Prize** — `ptcg-rules.md` §8.1
+owes it to "the player who KO'd the Pokémon" and no clause pays one for a card
+leaving play any other way. The engine already agreed before either op existed:
+a shipped discard op stages no `takePrizes`.
+
+So they are **two ops and two union members, never one with a flag** — and the
+discriminating rung only works because a sibling rung asserts that everything
+*else* agrees, leaving the prize assertion as the single thing that reddens if
+the two collapse.
+
+## A precedent named in a brief is a claim (D435)
+
+D435's brief named `devolveEach` as the precedent for *"and all attached cards"*.
+It moves one evolution card and touches no attachment — **not a precedent at
+all** — while the real one, `returnSelf { dest: "discard" }` (D313), went
+unmentioned and agrees with §8.1 byte for byte.
+
+**Two unanimous precedents are a rule; check for a third before assuming a
+split.** D433's `markers` case came out the other way, and knowing which you have
+is the whole point.
+
+## Not incrementing is also a measurement (D435)
+
+The version tax stands at **20/23** across D434 and D435, because D435 extends an
+existing suite and authors no new pin. It was **re-measured rather than stepped**,
+and saying so is the point: **incrementing a running count by reflex is the
+failure D429 named** (a streak is a claim, and extending one asserts it afresh).
+
+Grep the assertion, not the string — two of the twenty-one hits for the pin are
+prose inside doc comments quoting a historical version.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

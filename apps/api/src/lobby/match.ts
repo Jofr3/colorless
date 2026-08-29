@@ -1028,6 +1028,65 @@ export interface MatchRecord {
     board looks entirely normal — D432's case exactly. Both roads are refused, and
     `delayedCounters.test.ts` §8 drives them side by side.
 
+    🆕🆕 **28 → 29 AT D435, AND IT IS THE FIRST ENTRY IN THIS BLOCK WHERE D421's
+    OPTIONAL ROAD IS GENUINELY AVAILABLE AND IS REFUSED ANYWAY.** D435 closed the
+    delayed-effect family — *"At the end of your opponent's next turn, discard the
+    Defending Pokémon and all attached cards."* (corpus row 53, 1 legal printing) and
+    *"…the Defending Pokémon will be Knocked Out."* (corpus row 113, 2 printings) —
+    which turns D434's `ScheduledCounters` record into a DISCRIMINATED UNION
+    `ScheduledEffect`. **TWO INDEPENDENT REASONS POINT AT THE SAME BUMP AND NEITHER IS
+    THE OTHER COUNTED TWICE:**
+
+      · a new REQUIRED key (`kind`) on a persisted structure — D386's case at D386's
+        address for the SEVENTH time; and
+      · a RENAME — of the type, of the `InPlayPokemon` field (`scheduledCounters` →
+        `scheduledEffect`) and of the reader (`scheduledCountersDue` →
+        `scheduledEffectDue`) — which is **D359's** case, and the discriminator this
+        block states outright: *"a WIDENING is free and a RENAME is not"*.
+
+    🛑 **AND THE OPTIONAL ROAD WAS PRICED RATHER THAN DISMISSED, BECAUSE THE TWO
+    REFUSALS THIS RUN ALREADY RECORDED DO NOT REACH IT.** D432's rule is *a record with
+    no rest must be required*; this record HAS a rest. D434's sharpening is *a rest
+    must be OLD, not merely PLURAL*; here it IS old — `{turn, amount}` were both
+    written by the v28 deploy, so a v28 record genuinely is a `scheduledEffect` missing
+    exactly one key, which is precisely the shape D421's mitigation was written for.
+    **A `kind?: "counters"` defaulting to counters would have kept every v28 byte
+    string meaning what it meant, and would have cost no bump at all.**
+
+    🛑 **IT IS REFUSED ON D421's OWN CRITERION, APPLIED RATHER THAN COPIED (D425's
+    rule).** The criterion is *choose the rest of the record so that LOSING the key is
+    DETECTABLE*, so the question is what the loss actually degrades into — and it was
+    MEASURED. A v29-authored `{turn, kind: "discard"}` that drops its `kind` reads as
+    the counters member with `amount === undefined`; the Checkup computes
+    `damage + undefined` → **`NaN`**; and `isLethallyDamaged` answers `NaN >= hp` →
+    **false**. The body is not discarded, is not Knocked Out, can never be Knocked Out
+    again, and the board looks entirely normal. **That is neither D124's benign soft
+    landing nor a loud failure — it is silent CORRUPTION**, which is strictly worse
+    than the six entries above, and it is driven in `delayedCounters.test.ts` §8
+    rather than argued.
+
+    So the sequence now has three entries with three DIFFERENT reasons: D432 *no
+    rest*, D434 *rest not old*, D435 *rest old, optional available, and the
+    degradation is `NaN` rather than a soft landing*.
+
+    🛑 **AND A v28 RECORD IS UNREADABLE FOR D434's REASON VERBATIM, WHICH IS WHY THE
+    RENAME'S DIRECTION DOES NOT SOFTEN IT.** A v28 body carries `scheduledCounters` and
+    no `scheduledEffect`, so `scheduledEffectDue` reads `undefined !== null` and
+    dereferences `.turn` on the very next line. Every Checkup calls that reader on the
+    ended seat's Active, so a v28 record resumed on this deploy **throws at the next
+    turn boundary** — the leftover `scheduledCounters` key is not read by anything and
+    does not rescue it. **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT**,
+    and a key under a different name is not that key.
+
+    ⚠️ Nothing else persisted moved. TWO new `EffectOp` members (`scheduleDiscard`,
+    `scheduleKnockOut`) are a WIDENING (D383–D385: a v28 byte string still means what
+    it meant, and no older deploy can author the new members), neither op parks, and
+    no `PendingStage` inhabitant is added — the delayed discard reuses the shipped
+    `promote` stage and the delayed Knock Out reuses §8.1's own `takePrizes`. The
+    RENDERED `SeatLogEntry[]` gains two new rows and one renamed one
+    (`COUNTERS_SCHEDULED` → `EFFECT_SCHEDULED`), which is text in NEW records only and
+    is D141's already-settled case.
+
     ⚠️ Nothing else persisted moved — no `GameState` field, and `scheduleCounters`
     never parks (it is deterministic and asks nothing), so no `EffectContinuation`
     carries the new op into `phase.cont` either. The `COUNTERS_PLACED.source` enum
@@ -1035,7 +1094,7 @@ export interface MatchRecord {
     note above says so), and the RENDERED `SeatLogEntry[]` gains one new row type
     (`COUNTERS_SCHEDULED`) plus one new rendering of an existing one — text in NEW
     records only, D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 28;
+export const MATCH_RECORD_VERSION = 29;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

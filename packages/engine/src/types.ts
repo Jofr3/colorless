@@ -285,13 +285,38 @@ export interface DamageReduction {
   amount: number;
 }
 
-/** 🆕🆕 §13 (D434) — a DELAYED counter placement scheduled onto one Pokémon by an
-    attack, with the printed clock baked in as a turn STAMP exactly as
-    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` bake theirs. The one
-    printed sentence is
+/** 🆕🆕 §13 (D434, GENERALISED AT D435) — a DELAYED EFFECT scheduled onto one
+    Pokémon by an attack, with the printed clock baked in as a turn STAMP exactly as
+    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` bake theirs. The family
+    is THREE printed sentences / SIX legal printings, ONE clock and THREE payloads,
+    and D435 closes it:
 
       "At the end of your opponent's next turn, put 9 damage counters on the
-       Defending Pokémon."                                                    (3)
+       Defending Pokémon."                                       (3)   D434 counters
+      "At the end of your opponent's next turn, discard the Defending Pokémon and
+       all attached cards."                                      (1)   D435 discard
+      "Discard all Energy from this Pokémon. At the end of your opponent's next
+       turn, the Defending Pokémon will be Knocked Out."          (2)   D435 knockOut
+
+    🛑 **THE DISCARD AND THE KNOCK OUT ARE NOT THE SAME PAYLOAD, AND THE DIFFERENCE
+    IS A PRIZE CARD.** §8.1 (`docs/reference/ptcg-rules.md`) defines a Knock Out as
+    *"damage ≥ its current HP"* and says *"the player **who KO'd** the Pokémon takes
+    prize card(s)"* — the prize is owed BY the Knock Out and by nothing else. Row 53
+    prints *discard*, which removes the body to its owner's discard pile with no
+    Knock Out anywhere in the sentence, so **no Prize is taken**; row 113 prints
+    *"will be Knocked Out"*, so one is. Both remove the body, both empty the Active
+    Spot, both owe a promotion — and the only board difference is the prize row.
+    They would collapse into one "remove the body" payload in any implementation that
+    reasoned from the board instead of from the sentence, which is why they are two
+    members here rather than one with a flag. `delayedCounters.test.ts` §12 drives the
+    two on ONE axis: same board, same clock, one Prize taken and one not.
+
+    ⚠️ **THE ENGINE ALREADY HELD BOTH HALVES OF THE DISTINCTION AND THEY AGREE WITH
+    THE RULE.** `returnSelf` with `dest: "discard"` (D313, Revavroom ex `sv06.5-015`/
+    `-081` — *"Discard this Pokémon and all attached cards."*) removes a body to the
+    discard pile, emits `POKEMON_RETURNED` and stages **no** `takePrizes`; `knockOut`
+    (flow.ts) stages one. The two payloads below reach exactly those two shipped
+    seams, so neither invents a prize rule.
 
     🛑 **IT IS THE FIRST FACT IN THIS ENGINE THAT SCHEDULES WORK RATHER THAN
     GATING IT, AND THAT IS THE WHOLE OF WHY IT IS A NEW SHAPE.** Every other
@@ -316,7 +341,9 @@ export interface DamageReduction {
     records a previous deploy wrote. Both keys here arrive in the SAME deploy, so
     they cannot witness each other's loss: a v27 record has no `scheduledCounters`
     at all, not a `scheduledCounters` missing one key. **A "rest" must be OLD, not
-    merely PLURAL.**
+    merely PLURAL.** (The field was called `scheduledCounters` at D434 and is
+    `scheduledEffect` from D435; the historical names are kept in this paragraph
+    because a provenance note that renames itself stops being one.)
 
     🛑 **AND A RECORD-VALUED FIELD FAILS DIFFERENTLY FROM D432's BARE STAMP, WHICH
     WAS MEASURED RATHER THAN ASSUMED — THIS PARAGRAPH FIRST CLAIMED THE BENIGN SOFT
@@ -333,23 +360,60 @@ export interface DamageReduction {
     REQUIRED and the constant goes 27 → 28 — for a SHARPER reason than D432's rather
     than the same one. An OPTIONAL key would have forced the tolerant reader, and
     THAT is where the loss becomes D124's benign soft landing: both roads driven side
-    by side in `delayedCounters.test.ts` §8. */
-export interface ScheduledCounters {
-  /** The single turn number at whose END this placement fires — the installing
-      turn + 1, `damageReduction`'s and `attackDamageDebuff`'s number and for their
-      reason: the sentence prints *"your opponent's next turn"* and declaring an
-      attack ENDS the turn (§5.3), so the turn after the installing one is the
-      opponent's by construction. Compared with `===` and never with `<=`, so the
-      fact EXPIRES BY ARITHMETIC: a stamp for a turn already gone by reads as "no
-      schedule" and there is no post-fire clear anywhere to forget. */
-  turn: number;
-  /** HP to place, i.e. the printed COUNTER COUNT × 10 (§12's one-counter-is-10
-      conversion, `DEFENDER_POISON_N`'s `poisonDamage` convention verbatim). Stored
-      in HP rather than in counters so the Checkup's placement is `damage + amount`
-      with no second unit conversion — the same reason `DamageReduction.amount` and
-      `SpecialConditions.poisonDamage` are both HP. */
-  amount: number;
-}
+    by side in `delayedCounters.test.ts` §8.
+
+    🛑🆕🆕 **D435 — AND THIS TIME D421's PRECONDITION IS GENUINELY MET, THE OPTIONAL
+    ROAD IS GENUINELY AVAILABLE, AND IT IS STILL REFUSED. THE RULE IS NOT "REQUIRED
+    ALWAYS"; IT IS "MEASURE WHAT THE LOSS DEGRADES INTO".** D435 turns this record
+    into a DISCRIMINATED UNION, which is a new REQUIRED key (`kind`) plus a RENAME of
+    the type, the field (`scheduledCounters` → `scheduledEffect`) and the reader
+    (`scheduledCountersDue` → `scheduledEffectDue`). Either half alone moves
+    `MATCH_RECORD_VERSION` (D359: *"a WIDENING is free and a RENAME is not"*; D386: a
+    new required key on a persisted structure), so **28 → 29**, and the two reasons
+    are independent rather than one argument counted twice.
+
+    The optional road was priced properly rather than dismissed, because the two
+    refusals this run already recorded do NOT reach it:
+
+      · D432's rule — *a record with no rest must be required* — does not apply.
+        This record HAS a rest.
+      · D434's sharpening — *a rest must be OLD, not merely PLURAL* — is, for the
+        first time, SATISFIED. `{turn, amount}` were both written by the v28 deploy,
+        so a v28 record IS a `scheduledEffect` missing exactly one key, which is
+        precisely the shape D421's mitigation is written for. **A `kind?: "counters"`
+        defaulting to counters would have kept every v28 byte string meaning what it
+        meant, and would have cost no bump.**
+
+    🛑 **IT IS REFUSED ON D421's OWN CRITERION, APPLIED RATHER THAN COPIED (D425).**
+    The criterion is *choose the rest of the record so that LOSING the key is
+    DETECTABLE*. Measure what losing it actually does here: a v29-authored
+    `{turn, kind: "discard"}` that drops its `kind` reads as the counters member with
+    `amount === undefined`, the Checkup computes `damage + undefined` → **`NaN`**, and
+    `isLethallyDamaged` answers `NaN >= hp` → **false**. The body is not discarded, is
+    not Knocked Out, cannot ever be Knocked Out again, and the board looks entirely
+    normal. That is neither D124's benign soft landing nor a loud failure — it is
+    silent CORRUPTION, which is strictly the worst of the three, and it is driven in
+    `delayedCounters.test.ts` §8 rather than argued.
+
+    So the sequence now has three entries and they are three different reasons:
+    D432 *no rest*, D434 *rest not old*, **D435 *rest old, optional available, and the
+    degradation is NaN rather than a soft landing***. */
+export type ScheduledEffect =
+  /** The COUNTER placement (D434, corpus row 54). `amount` is HP, i.e. the printed
+      COUNTER COUNT × 10 (§12's one-counter-is-10 conversion, `DEFENDER_POISON_N`'s
+      `poisonDamage` convention verbatim). Stored in HP rather than in counters so
+      the Checkup's placement is `damage + amount` with no second unit conversion —
+      the same reason `DamageReduction.amount` and `SpecialConditions.poisonDamage`
+      are both HP. */
+  | { turn: number; kind: "counters"; amount: number }
+  /** 🆕🆕 The DISCARD (D435, corpus row 53) — the body and everything attached to
+      it leave play for their OWNER's discard pile, and **no Prize is taken**. No
+      payload beyond the clock: the printed sentence names no amount, no filter and
+      no narrowing. */
+  | { turn: number; kind: "discard" }
+  /** 🆕🆕 The KNOCK OUT (D435, corpus row 113's tail) — §8.1 in full, **including
+      the Prize**. Payload-free for the same reason the discard is. */
+  | { turn: number; kind: "knockOut" };
 
 /** §8.5/§11 (D149) — an attack-installed ATTACK-DAMAGE DEBUFF on one Pokémon,
     with the printed DURATION baked in as a turn STAMP exactly as `AttackBlock`
@@ -987,11 +1051,21 @@ export interface InPlayPokemon {
       a number, because the number is unobservable after the body has left the
       Active Spot: §8.5 applies Weakness only to the Active. */
   noWeaknessTurn: number | null;
-  /** 🆕🆕 §13 (D434) — the DELAYED counter placement an attack scheduled onto this
-      Pokémon (see `ScheduledCounters` above), or `null` when none has been
-      scheduled. Read through `scheduledCountersDue` below rather than by touching
-      this field, so no read site can forget the turn comparison — the same
-      contract every durated field above is under.
+  /** 🆕🆕 §13 (D434, RENAMED AND GENERALISED AT D435) — the DELAYED EFFECT an
+      attack scheduled onto this Pokémon (see `ScheduledEffect` above), or `null`
+      when none has been scheduled. ONE clock, THREE payloads: counters (D434),
+      a discard with NO Prize and a Knock Out WITH one (both D435). Read through
+      `scheduledEffectDue` below rather than by touching this field, so no read site
+      can forget the turn comparison — the same contract every durated field above
+      is under.
+
+      ⚠️ **ONE APPOINTMENT PER BODY, WHICH IS A MODEL LIMITATION AND IS STATED AS
+      ONE.** The field holds a single record, so two schedules landing on one body
+      for one turn cannot both be kept. Two counter schedules merge by `Math.max`
+      (D434's answer, unchanged); a schedule of a DIFFERENT kind REPLACES whatever
+      stood there. Both are unreachable off any printing — it takes two attacks in
+      one turn, and no card prints two of these — so both are constructed and pinned
+      rather than trusted (`delayedCounters.test.ts` §10).
 
       🛑 **THE ONE FIELD IN THIS SET WHOSE §10 CLEARS ARE THE *NORMAL* CASE RATHER
       THAN THE THEORETICAL ONE, AND IT INVERTS THE REACHABILITY STORY EVERY
@@ -1017,7 +1091,7 @@ export interface InPlayPokemon {
       four literals AGREE about the durated set and disagree only about `markers`.
 
       ⚠️ NO POST-FIRE CLEAR, AND THAT IS DELIBERATE. The stamp expires by
-      arithmetic (`ScheduledCounters.turn`), which is `attackLockedTurn`'s and
+      arithmetic (`ScheduledEffect.turn`), which is `attackLockedTurn`'s and
       `koByEffect`'s rule: a spent schedule sits on the body reading as "no
       schedule" for the rest of the game, and there is no boundary write anybody can
       forget, run twice, or run on the wrong side of the Checkup. The §11 retreat
@@ -1025,14 +1099,21 @@ export interface InPlayPokemon {
       a boolean; this one is a number, so it does not need to be.
 
       PUBLIC, AND NO PROJECTION READS IT TODAY — both halves stated, because only
-      the second is a measurement. `grep -rn "scheduledCounters" src/ apps/ packages/`
-      (D412's procedure) returns engine sources and this suite only: `redact.ts` and
-      `packages/schema` build their own per-body shapes and carry no durated field at
-      all, so nothing about this record reaches a client. Were one ever added, it
+      the second is a measurement. 🆕🆕 **RE-MEASURED AT D435 AFTER THE RENAME, WHICH
+      IS THE ONE EDIT THAT COULD HAVE INVALIDATED IT** (a rename cannot break a reader
+      that does not exist, but the measurement was of the OLD name and would have read
+      as a stale claim otherwise): `grep -rn "scheduledEffect\|ScheduledEffect" src/
+      apps/ packages/ scripts/` (D412's procedure) returns **zero hits in `src/` and
+      zero in `packages/schema`**, and outside `packages/engine/src` only the
+      `MATCH_RECORD_VERSION` doc block and its test in `apps/api/src/lobby/` plus the
+      mutant corpus — all of them PROSE or anchors, none of them readers (D430: grep
+      the structural spelling, not the substring). `redact.ts` and `packages/schema`
+      build their own per-body shapes and carry no durated field at all, so nothing
+      about this record reaches a client. Were one ever added, it
       would leak nothing: the attack that scheduled it resolved in front of both
       players and both can count turns (`handPlayLockedTurn`'s note, one interface
       over). */
-  scheduledCounters: ScheduledCounters | null;
+  scheduledEffect: ScheduledEffect | null;
   /** §8.5/§11 (D149) — the attack-installed ATTACK-DAMAGE DEBUFF on this Pokémon
       (see `AttackDamageDebuff` above), or `null` when none has been installed.
       Read through `installedAttackDebuffOf` (continuous.ts) rather than by
@@ -1360,28 +1441,32 @@ export interface InPlayPokemon {
   usedAttack: UsedAttack | null;
 }
 
-/** 🆕🆕 §13 (D434) — the HP a body's scheduled counter placement owes RIGHT NOW,
+/** 🆕🆕 §13 (D434, GENERALISED AT D435) — the delayed effect a body owes RIGHT NOW,
     or `null` when it owes nothing. The ONE reader of
-    `InPlayPokemon.scheduledCounters`, and the whole of that field's arithmetic:
-    the writer records the turn at whose END the placement fires, so the printed
+    `InPlayPokemon.scheduledEffect`, and the whole of that field's arithmetic:
+    the writer records the turn at whose END the effect fires, so the printed
     question is one `===` and the Checkup does not have to know who installed it or
     when.
 
-    🛑 **`null` RATHER THAN `0` ON "NOTHING DUE", AND THE DISTINCTION IS LOAD-
-    BEARING AT THE ONE CALL SITE.** A `0` return would be indistinguishable from a
-    scheduled placement of zero, and while no printing carries a 0 the deriver's
-    `(\d+)` capture is what forbids it (`>= 1`), not this function — so the two
-    answers are kept apart here rather than collapsed and re-separated at the
-    caller. Same rule `parkOrForce`'s emptied-set arm is under.
+    🛑 **IT RETURNS THE RECORD AND NOT A NUMBER, WHICH IS THE ONE SHAPE CHANGE D435
+    MAKES TO D434's READER — AND IT RETIRES D434's `null`-RATHER-THAN-`0` ARGUMENT
+    RATHER THAN KEEPING IT AS PROSE.** D434 returned `number | null` and spent a
+    paragraph on why `null` is not `0` (a scheduled placement of zero would be
+    indistinguishable from nothing due). With three payloads the caller has to
+    branch on `kind` anyway, so the reader hands back the whole appointment and the
+    ambiguity it was avoiding cannot be expressed: a `ScheduledEffect` is never
+    falsy, and the `discard` and `knockOut` members carry no number at all. The
+    deriver's `>= 1` guard still forbids a printed 0 at the ARM, which is where D434
+    put it and where it belongs.
 
     FALSE-EQUIVALENT on every turn but the stamped one, BY CONSTRUCTION and with no
     clear site anywhere: a stamp for a turn already gone by can never equal
     `state.turn` again (turns only increase), so a spent schedule is inert without
     anybody sweeping it up. `null` is never a turn number, so an unscheduled body
     answers `null` too. */
-export function scheduledCountersDue(pokemon: InPlayPokemon, turn: number): number | null {
-  const scheduled = pokemon.scheduledCounters;
-  return scheduled !== null && scheduled.turn === turn ? scheduled.amount : null;
+export function scheduledEffectDue(pokemon: InPlayPokemon, turn: number): ScheduledEffect | null {
+  const scheduled = pokemon.scheduledEffect;
+  return scheduled !== null && scheduled.turn === turn ? scheduled : null;
 }
 
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
@@ -1421,7 +1506,7 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // required field — `retreatLockedTurn`'s note above still holds for the four
     // that spread an existing body. `delayedCounters.test.ts` drives all four
     // literals plus this one structurally.
-    scheduledCounters: null,
+    scheduledEffect: null,
     // …and no attack has WEAKENED its own attacks either (D149) — the mirror of
     // the line above, on the other side of the §8.5 pipeline. Same reading of
     // §10's carry-over rule from the other end as the three lines above.
@@ -2339,15 +2424,19 @@ export function evolveOnto(
     // install and the expiry. Written anyway (§10 sheds the effects of ATTACKS and
     // this is one) and pinned STRUCTURALLY rather than by a number.
     noWeaknessTurn: null,
-    // 🆕🆕 …and, since D434, the SCHEDULED counter placement — and this literal is
+    // 🆕🆕 …and, since D434 (all three payloads since D435), the SCHEDULED DELAYED
+    // EFFECT — and this literal is
     // the one place in the set where that field's story is the OPPOSITE of the bar
     // directly above it. The bar's window is the opponent's turn, so nobody can
     // evolve inside it and the clear is written for the rule. The schedule's window
     // IS the holder's own turn, so evolving the Defending Pokémon before the end of
     // it is a legal, cheap and printed-ruling-correct answer to the attack — the
     // FIRST field on this literal whose evolve clear is a played line rather than a
-    // theoretical one. Driven end to end in `delayedCounters.test.ts`.
-    scheduledCounters: null,
+    // theoretical one. Driven end to end in `delayedCounters.test.ts` — and D435
+    // drives it for the DISCARD and the KNOCK OUT payloads too, on the same literal:
+    // evolving the Defending Pokémon is how a player answers a scheduled Knock Out,
+    // which is the same printed counterplay at a much higher stake.
+    scheduledEffect: null,
     // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
     // here is the LOCK's rather than the reduction's, and that is the whole
     // difference between the two mirrors: the debuff's window is the HOLDER's own

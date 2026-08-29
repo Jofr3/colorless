@@ -678,7 +678,7 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // how a player answers the attack — §10 sheds the effects of attacks, and the
     // schedule goes with the body. NINE durated effects on one clear, SIX
     // reachability stories.
-    scheduledCounters: null,
+    scheduledEffect: null,
     // D149 — the attack-damage debuff, whose story here is the LOCK's: the window
     // is the HOLDER's own next turn, so the RETREAT half is a played line and the
     // victim's own counterplay (retreat the weakened body, attack with a fresh
