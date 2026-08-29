@@ -502,10 +502,13 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 433 files / 9,519 tests, `CHECK_EXIT=0`.**
 > Engine **0.337.0**, **`MATCH_RECORD_VERSION` 29**, corpus **1,679**, archive ratchet **105**.
 >
-> 🛑 **THE ONE DEBT: D435 HAS HAD NO WHOLE-CORPUS SWEEP, AND ITS NEIGHBOUR RE-PROBE IS PARTIAL AND SAYS
-> SO** — 21 decisions / **218 of 1,679 rows**, all clean. Exposure is high: a **rename** across a
-> persisted type, its field and its reader; **17 mutant rows re-transcribed**; a filter hoisted into three
-> call sites. The last two slices each declared a gap and the sweep paid it — do that again.
+> ✅✅ **THE SWEEP DEBT IS PAID, AND IT CLOSES THE THIRD CONSECUTIVE DECLARED GAP.**
+> **1679 · 1653 killed · 26 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> 0 error(s) · 6,357.8s**, `SWEEP_EXIT=0`; `1653 + 26 = 1679` closes and 1679/1679 verified by id.
+> ✅ The declared-survivor set moved **25 → 26** and the diff is **exactly one line** — the row D435
+> declared `equivalent` — with nothing removed and `0 stale`. **`error` is 0 across a RENAME of a
+> persisted type, its field and its reader, with 17 mutant rows re-transcribed** — the column doing
+> exactly what it exists for.
 >
 > ▶ **THE DELAYED-EFFECT FAMILY IS CLOSED** (3 sentences / 6 printings). Residue pins are in
 > `censusAtHead.test.ts`, canonical predicate at `:6218` — **read them, do not re-derive**.
