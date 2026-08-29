@@ -1285,6 +1285,64 @@ on wall time, because the harness re-runs a baseline per suite-set change. **The
 report says so, in those terms.** A clean `precheck` proves no anchor rotted,
 which is a different and weaker claim than a probe. Say which one you have.
 
+## A rest must be OLD, not merely plural (D434)
+
+D421's optional-key mitigation — *choose the rest of the record so that losing the
+key is detectable* — requires a rest **that a previous deploy already wrote**.
+
+D434's record has two keys, and the brief argued the optional road was therefore
+available. It was not: **both keys arrive in the same deploy, so neither can
+witness the other's loss.** A v27 record does not hold a `scheduledCounters`
+missing one key — it holds no `scheduledCounters` at all.
+
+**When you reach for the optional road, ask what the OLD bytes contain, not what
+the NEW type contains.** D432 established that a record with no rest must be
+required; this adds that a record whose rest is *new* has no rest for this purpose
+either.
+
+## A record-valued field fails differently from a bare stamp (D434)
+
+- A missing `number | null` **stamp** reads `undefined === state.turn` → `false`.
+  **Silent** — D432's benign soft landing.
+- A missing `Record | null` reads `undefined !== null` and the next line
+  dereferences. **An old board THROWS.**
+
+D434's first doc block claimed the benign landing by analogy with its stamp
+neighbours, and was measured false. The two shipped record-valued fields both say
+in their own comments that the absent-key arm is the version constant's job rather
+than the reader's — so the reader is deliberately intolerant, and the constant is
+what protects it.
+
+**Work out which failure you are choosing. Do not inherit the neighbouring stamp's.**
+
+## "Cleared at §10 sites" is false for half the stamps (D434)
+
+`promotedTurn` and `healedTurn` are cleared at **no** §10 site; `evolvedTurn` is
+written at `evolveOnto` and nulled at `devolveEach`. The six per-body stamps split
+in two: **durated effect-of-attack stamps are cleared, HISTORY stamps are kept.**
+
+**Check which kind yours is before copying a neighbour** — and note that the
+reachability story can invert: D434's record fires at the end of the *holder's own*
+turn, so retreat, Switch and evolving are all live counterplay inside its window,
+where every neighbour's window sits on the opponent's turn.
+
+## A clear-rung must assert the silent aftermath (D434)
+
+Reading a cleared field back as `null` **passes on a build that clears the record
+and fires a second copy anyway.** The rung has to drive the boundary where the
+effect would have fired and assert that nothing happened.
+
+## A short list makes a claim narrower, not false (D434, restating D419)
+
+`attackLock.test.ts`'s three-route sweep listed **8 field names against 11 durated
+fields**, so the three-route agreement was never checked for five of them — and
+nothing ever reddened, because a narrow claim still passes. Widened to the whole
+family, **it passes, and that is the finding.** `perAttackLock`'s swept set was
+still missing a key whose class D432 had already found.
+
+**When you touch a swept set, count it against the TYPE**, not against the list
+that is there.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

@@ -842,6 +842,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
   const OFF_POOL_ATTACK_TEXT: readonly string[] = [
     "Look at the top 4 cards of your deck and put them back in any order.",
     "If your opponent's Active Pokémon is a Basic Pokémon, it is Knocked Out.",
+    // 🆕🆕 D434 — THE THIRD SENTENCE, and it is here for D414's reason verbatim:
+    // `scheduleCounters`' demonstrator (`fix-doom`) lives in a FILE-LOCAL `cardPool`
+    // inside `delayedCounters.test.ts`, so the op would have been invisible to the
+    // pool-keyed sources above and this table would have gone green with it
+    // unclassified. Real printed bytes off `censusAttackCorpus.ts` row 54.
+    "At the end of your opponent's next turn, put 9 damage counters on the Defending Pokémon.",
   ];
 
   /** The classification the §11 block owes every one of them. `blocked` = a live
@@ -970,6 +976,17 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // describes is pinned somewhere, which is the most the table can offer until
     // it is hardened.
     weakenDefenderAttacks: "blocked",
+    // 🆕🆕 D434 — the DELAYED counter placement. BLOCKED, for the line above's reason
+    // verbatim and with the live-block case DRIVEN rather than merely classified
+    // (`delayedCounters.test.ts` §9, under Mist Energy `sv05-161`'s effects-only
+    // shield): it is an effect of an attack done TO the Defending Pokémon in the
+    // plainest sense, since it puts damage counters on that body. ⚠️ AND THE GATE IS
+    // ASKED AT THE INSTALL RATHER THAN AT THE FIRING, which is a decision and is
+    // pinned as one — a block that arrives after the schedule lands does not save the
+    // body, because the printed refusal is about the effect being DONE and the doing
+    // is the install. A second gate at the Checkup would be a second opinion that can
+    // disagree with the first (`koRecoilOf`'s rule, one seam over).
+    scheduleCounters: "blocked",
     // D152's attack-armed §9 recoil, and the FOURTH op classified by this table
     // rather than by the slice that wrote it. UNTOUCHED for `reduceDamage`'s
     // verdict verbatim — it writes a stamp onto the CONTROLLER's own Active, so
@@ -1738,6 +1755,14 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     weakenDefenderAttacks: {
       op: { op: "weakenDefenderAttacks", amount: 20 },
       landed: (r) => p1Active(r.after)?.attackDamageDebuff != null,
+    },
+    // 🆕🆕 D434 — the DELAYED counter placement. Classified `blocked` for the three
+    // rows above it verbatim: it is an effect of an attack done TO the Defending
+    // Pokémon, and the evidence is the RECORD rather than the damage, because the
+    // damage does not land until the next Checkup.
+    scheduleCounters: {
+      op: { op: "scheduleCounters", amount: 90 },
+      landed: (r) => p1Active(r.after)?.scheduledCounters != null,
     },
     // — the two DAMAGE ops a block stops without any per-op guard: the null is
     //   taken at the damage site, so the evidence is the row, not a refusal —

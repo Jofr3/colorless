@@ -983,8 +983,59 @@ export interface MatchRecord {
     field, and `removeWeakness` never parks (it is deterministic and asks nothing),
     so no `EffectContinuation` carries the new op into `phase.cont` either. The
     RENDERED `SeatLogEntry[]` gains one new row type (`WEAKNESS_REMOVED`), which is
-    text in NEW records only and is D141's already-settled case. */
-export const MATCH_RECORD_VERSION = 27;
+    text in NEW records only and is D141's already-settled case.
+
+    🆕🆕 **27 → 28 AT D434, AND IT IS D386's CASE AT D386's ADDRESS FOR THE SIXTH
+    TIME — A MISSING REQUIRED FIELD ON `InPlayPokemon`.** D434 gave the body
+    `scheduledCounters: ScheduledCounters | null`, the attack-scheduled DELAYED
+    counter placement (*"At the end of your opponent's next turn, put 9 damage
+    counters on the Defending Pokémon."* — 1 sentence, 3 legal printings). It is a
+    RECORD rather than a bare stamp, which is the one axis on which it differs from
+    D432's bar directly above: the printed sentence carries an AMOUNT as well as a
+    clock, and the amount is a `(\d+)` capture rather than a literal.
+
+    🛑 **AND THE SECOND KEY DOES NOT BUY THE OPTIONAL ROAD, WHICH IS THIS SLICE'S
+    FINDING AND SHARPENS D432's RULE RATHER THAN REPEATING IT.** D432 wrote that
+    D421's mitigation — *choose the rest of the record so that losing the key is
+    detectable* — is unavailable *"when the stored fact is a single number with
+    nothing beside it"*. That is true and it is not the whole rule. **The "rest" D421
+    means is the rest that ALREADY EXISTS in records a previous deploy wrote.** Both
+    of this record's keys arrive in the SAME deploy, so neither can witness the
+    other's loss: a v27 record does not hold a `scheduledCounters` missing one key,
+    it holds no `scheduledCounters` at all. **A REST MUST BE OLD, NOT MERELY
+    PLURAL** — and a slice reading D432's rule as "a record with two fields may go
+    optional" would have shipped exactly the soft landing this constant exists to
+    refuse. Asked in both directions and DRIVEN both ways in
+    `delayedCounters.test.ts` §8.
+
+🛑 **AND A v27 RECORD IS NOT MERELY UNSAFE HERE, IT IS UNREADABLE — WHICH IS A
+    SHARPER RETIREMENT REASON THAN THE SIX ABOVE, AND WAS MEASURED RATHER THAN
+    INHERITED.** The six preceding entries all name D124's BENIGN soft landing: a
+    missing STAMP reads as `undefined === state.turn`, i.e. FALSE, and a rule quietly
+    stops existing. A missing RECORD reads as `undefined !== null`, and
+    `scheduledCountersDue`'s next comparison dereferences `.turn`. Every Checkup calls
+    that reader on the ended seat's Active, so a v27 record resumed on this deploy
+    **throws at the next turn boundary**. The reader carries no defensive
+    `=== undefined` arm on purpose — `attackBlockOf` and `installedReductionOf`
+    (continuous.ts) are the two shipped record-valued fields and both state in their
+    own comments that the absent-key arm is THIS CONSTANT's job. **A KEY THE WRITER
+    NEVER WROTE IS NOT A KEY WITH A DEFAULT**, and here it is not even a key with a
+    wrong answer.
+
+    ⚠️ THE BENIGN LANDING IS WHAT THE **OPTIONAL** ROAD WOULD HAVE BOUGHT, which is
+    the other half of the argument and is driven rather than argued: an optional key
+    forces the reader to admit `undefined`, at which point the loss is silent and the
+    board looks entirely normal — D432's case exactly. Both roads are refused, and
+    `delayedCounters.test.ts` §8 drives them side by side.
+
+    ⚠️ Nothing else persisted moved — no `GameState` field, and `scheduleCounters`
+    never parks (it is deterministic and asks nothing), so no `EffectContinuation`
+    carries the new op into `phase.cont` either. The `COUNTERS_PLACED.source` enum
+    gains `"delayed"`, which is a WIDENING and not a shape change (the enum's own
+    note above says so), and the RENDERED `SeatLogEntry[]` gains one new row type
+    (`COUNTERS_SCHEDULED`) plus one new rendering of an existing one — text in NEW
+    records only, D141's already-settled case. */
+export const MATCH_RECORD_VERSION = 28;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

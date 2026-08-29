@@ -18534,7 +18534,116 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.334.0 → **0.335.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.335.0";
+/** 🆕🆕 **0.335.0 → 0.336.0 — D434, THE FIRST DELAYED EFFECT IN THIS ENGINE, AND
+    THE FIRST FACT ON `InPlayPokemon` THAT NOTHING READS.**
+
+    *"At the end of your opponent's next turn, put 9 damage counters on the Defending
+    Pokémon."* — **1 sentence / 3 legal printings** over the committed
+    `legal_standard = 1` attack column (640 sentences / 1,732 printings),
+    `censusAttackCorpus.ts` row 54. ONE anchor (`DELAYED_DEFENDER_COUNTERS`), ONE arm
+    in `deriveAttackEffect` (5f), ONE `EffectOp` (`scheduleCounters`), ONE `stepOp`
+    case, ONE interpreter installer, ONE new record type (`ScheduledCounters`), ONE
+    new REQUIRED `InPlayPokemon` field (`scheduledCounters`), ONE new reader
+    (`scheduledCountersDue`), ONE new `GameEvent` (`COUNTERS_SCHEDULED`) with ONE log
+    row, ONE new `COUNTERS_PLACED.source` member (`"delayed"`) with ONE log row, ONE
+    FIRING SITE in the §13 Checkup (`runCheckup`), and FIVE `InPlayPokemon` literals.
+
+    🛑 **HAZARD ONE — A STAMP ALONE IS INERT, AND THAT IS THE WHOLE SHAPE.** Every
+    other durated record on `InPlayPokemon` is read by code that was going to run
+    anyway: §8.5 asks `installedReductionOf` while it is already computing a hit, §11
+    asks `retreatLocked` while it is already validating a retreat. **Nothing in the
+    engine reads this one.** So the build is a stamp PLUS a firing site that goes
+    looking for it, and either half shipped alone is a program that resolves, emits
+    its row, persists its record and never places a counter — D407's built-but-dead
+    defect wearing a green suite. Both halves carry their own mutant row
+    (`D434-schedule-never-written`, `D434-checkup-never-fires`).
+
+    🛑 **HAZARD TWO — WHEN IT FIRES, AND THE ORDERING IS A DECISION.** It runs FIRST
+    inside `runCheckup`, ahead of §13.1 Poison. The printed clock is *"at the END OF"*
+    the turn; Poison, Burn and Sleep all print *"During Pokémon Checkup"*, which
+    `docs/reference/ptcg-rules.md` §13 puts AFTER the turn has ended. That is the only
+    order in which both printed clocks run in their printed sequence. It is observable
+    in exactly two ways: the EVENT sequence (damage is additive and the KO sweep runs
+    once for the whole batch, so the BOARD cannot see the order at all), which is
+    DRIVEN on a body that is Poisoned, Burned and Asleep at once and re-checked by a
+    mutant that swaps the two blocks; and the state `runCheckupTriggers` is handed
+    further down — Garganacl "Blessed Salt" heals 20 during the Checkup, so counters
+    placed HERE can be partly healed and counters placed after it could not. **The
+    second is NOT DRIVEN and is marked as reasoning rather than measurement** (D130's
+    rule): it needs that card on the victim's board, which is one deck entry away.
+
+    🛑 **HAZARD THREE — THE §10 STORY IS INVERTED, AND IT IS THE FIRST FIELD IN THE
+    SET FOR WHICH IT IS.** Every neighbouring durated field has its window on the
+    OPPONENT's turn, so its holder's controller can neither retreat nor evolve inside
+    it, and three of its four clears are written for the rule rather than for a board.
+    This record fires at the end of the HOLDER's OWN next turn: **retreat, a Switch
+    and EVOLVING are all live lines of play inside the window, and all three are the
+    victim's printed counterplay.** The fourth literal, `devolveEach` (D433), is the
+    one unreachable clear and is written anyway, because D433's own rule is that the
+    four literals AGREE about the durated set and disagree only about `markers`.
+
+    🛑 **HAZARD FOUR — THE KNOCK OUT ARRIVES BETWEEN TURNS, AND THE CAUSE FALLS OUT
+    OF PLACEMENT RATHER THAN OF A FLAG.** 90 counters onto a 90 HP body is lethal with
+    no attack in flight; the Checkup's own `collectKnockOuts` collects it with zero new
+    machinery, the Prize goes to the installer and the victim promotes. `byAttack` is
+    FALSE because the Checkup passes no `attackerSeat` — **which is attack-applied
+    POISON's shipped answer since D326, driven here rather than cited** (D422). No
+    `koByEffect` marker is stamped and D433's `wasLethal` conjunct does not arise: that
+    marker says *"this body went lethal WITHOUT damage"*, and this op places damage, so
+    the marker would be a lie. Vengeful Punch `sv03-197` pays nothing, because
+    `koRecoilOf` is called by `finishAttack` alone — contrasted on one axis with the
+    same Tool on the same body Knocked Out by an attack, which pays 40.
+
+    🛑🛑 **`MATCH_RECORD_VERSION` 27 → 28, AND THE ARGUMENT SHARPENS D432's RULE
+    RATHER THAN COPYING IT (D425: apply the test, do not copy the outcome).** D432
+    bumped because its record was ONE NUMBER with *no rest* for D421's optional-key
+    mitigation to live in. This record HAS a rest — a turn AND an amount — and the
+    optional road is **still** unavailable, because **the rest D421 means is the rest
+    that ALREADY EXISTS in records a previous deploy wrote.** Both keys here arrive in
+    the same deploy and cannot witness each other's loss: a v27 record does not hold a
+    half-record, it holds nothing. **A REST MUST BE OLD, NOT MERELY PLURAL.**
+    ⚠️ AND THE FAILURE MODE DIFFERS FROM EVERY BUMP ABOVE IT, MEASURED RATHER THAN
+    ASSUMED — the first draft of this block claimed D432's benign soft landing and was
+    WRONG. A missing STAMP reads `undefined === state.turn`, i.e. false, and a rule
+    quietly stops existing. A missing RECORD reads `undefined !== null` and the next
+    line dereferences `.turn`, so a v27 board **throws at the next turn boundary**.
+    The reader is undefensive on purpose (`attackBlockOf` and `installedReductionOf`
+    both say so in their own comments). Both directions driven in
+    `delayedCounters.test.ts` §8, including the tolerant reader an optional key would
+    have forced — which is where the silent landing actually lives.
+
+    ⚠️ **THE FAMILY IS THREE SENTENCES / SIX PRINTINGS AND NOTHING COMPOSED, MEASURED
+    AFTER THE ARM LANDED.** The pattern is `/at the end of/i` over all 640 committed
+    sentences, every hit read: rows 53 (discard the body, 1), 54 (this slice, 3) and
+    113 (a Knock Out behind a claimed head, 2). One shared clock, three payloads. Row
+    113's head IS claimed (D431), so D426's composition mechanism was checked rather
+    than assumed — and `splitAttackTrailingClause` refuses it outright, because its
+    second guard requires the TAIL to derive and no anchor claims the Knock-Out
+    payload. The refusal is an executable falsifier: the rung goes RED, and the
+    compound composes for free, the day a successor claims that tail. ⚠️ The looser
+    stem `/end of/i` catches a FOURTH row (*"Until the end of your next turn…"*) which
+    is a DURATION rather than a schedule — D433's grep-the-concept-twice rule, and the
+    wider pattern is what proves the narrower one hides no member.
+
+    ⚠️ **THE VERSION TAX, RE-COUNTED RATHER THAN INHERITED: 20 assertions / 23
+    sites** — NINETEEN `engineVersion` literal pins (eighteen inherited plus this
+    slice's own in `delayedCounters.test.ts` §8), ONE `manifest.version` literal pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). ⚠️ D433's note
+    said 19 / 22 and it RE-MEASURES EXACTLY at this head; the increment is this
+    slice's own pin, which is D427's named mechanism for the fourth consecutive slice.
+    Measured with `grep -rn 'expect(engineVersion)\.toBe("'` and
+    `'expect(manifest\.version)\.toBe("'` over the whole repo, every hit read — the
+    inequality pins (`>= "0.248.0"`) and the `toBe(manifest.version)` tie never move,
+    and the corpus row's `find` is SINGLE-quoted so a double-quoted sweep misses it.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** This checkout has no D1;
+    the corpus is grouped by sentence and records the COUNT, not the ids. Stated
+    unresolved rather than invented (D425).
+
+    engineVersion 0.335.0 → **0.336.0**
+    (`packages/engine/package.json` in the same commit). */
+export const engineVersion = "0.336.0";
 
 export type {
   ApplyResult,

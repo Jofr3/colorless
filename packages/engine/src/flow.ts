@@ -35,6 +35,7 @@ import {
   withActive,
   withSide,
   koByEffectMarker,
+  scheduledCountersDue,
 } from "./types";
 
 // The staged turn tail (types.ts: PendingStage) and everything that runs
@@ -1543,6 +1544,71 @@ export function recoverStatuses(state: GameState, events: GameEvent[]): GameStat
 function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): ApplyResult {
   const order: readonly Seat[] = [endedSeat, otherSeat(endedSeat)];
   let next = state;
+
+  // 🆕🆕 §13/D434 — THE DELAYED COUNTER PLACEMENT, AND IT RUNS FIRST.
+  //
+  // *"At the end of your opponent's next turn, put 9 damage counters on the
+  // Defending Pokémon."* (3 legal printings, corpus row 54). `scheduleCounters`
+  // (interpreter.ts) stamped `state.turn + 1` onto the Defending Pokémon a turn ago;
+  // this block is the half that makes the stamp mean anything.
+  //
+  // 🛑 **WHY BEFORE §13.1, AND IT IS A DECISION RATHER THAN AN ACCIDENT.** The
+  // printed clock is *"at the END OF"* the turn; Poison, Burn and Sleep all print
+  // *"During Pokémon Checkup"*, which is the step AFTER the turn has ended
+  // (docs/reference/ptcg-rules.md §13: the Checkup "runs between turns — after the
+  // current player's turn ends"). Placing this first is the only order in which both
+  // printed clocks are honoured in their printed sequence; any other placement puts
+  // a during-Checkup effect ahead of an end-of-turn one.
+  //
+  // ⚠️ THE ORDER HAS EXACTLY TWO OBSERVABLE CONSEQUENCES, AND ONLY ONE OF THEM IS
+  // DRIVEN — WHICH IS SAID RATHER THAN SKIPPED (D130/D205). Damage is additive and
+  // commutative and the KO is resolved for the whole batch at the bottom of this
+  // function, so the ordering canNOT change whether the body dies. It changes:
+  //   (1) the EVENT SEQUENCE, which is what a player reads — DRIVEN, in
+  //       `delayedCounters.test.ts` §5, on a body that is Poisoned, Burned and
+  //       Asleep at once, and by the mutant `D434-fires-after-the-condition-steps`
+  //       which swaps this block with §13.1 and leaves every board identical;
+  //   (2) the board `runCheckupTriggers` is handed further down — Garganacl
+  //       "Blessed Salt" heals 20 from each of its controller's Pokémon during the
+  //       Checkup, so counters placed HERE can be partly healed and counters placed
+  //       after it could not. **NOT DRIVEN**: it needs that card on the victim's
+  //       board, which is a fixture this suite does not carry. The falsifier is one
+  //       deck entry away, and the claim is marked as reasoning rather than as a
+  //       measurement.
+  // Running first is the reading in which an end-of-turn placement can be answered
+  // by a during-Checkup heal, which is the sequence the two printed clocks describe.
+  //
+  // ⚠️ `endedSeat` ONLY, AND THE ACTIVE ONLY. Both narrowings are the printed
+  // sentence rather than an optimisation: *"your opponent's next turn"* names the
+  // seat whose turn just ended, and *"the Defending Pokémon"* is a body that was in
+  // the Active Spot — §10 sheds the schedule the moment it leaves (four literals,
+  // `types.ts scheduledCounters`), so a BENCHED body can never carry one. The turn
+  // stamp alone would in fact determine the seat, by a parity argument that is true
+  // today and is exactly the kind of accident D430 was spent on: an attack stamps
+  // `turn + 1` on its opponent, turns alternate, so only the seat owning turn T can
+  // hold a stamp of T. **Both facts are printed, so both are spelled** — and a
+  // wrong-seat build is then a red test rather than a coincidence.
+  //
+  // ⚠️ NOTHING IS CLEARED AFTER FIRING. The stamp expires by arithmetic
+  // (`scheduledCountersDue`), which is `attackLockedTurn`'s rule: there is exactly
+  // one Checkup per turn, so `=== next.turn` is true once and never again, and there
+  // is no boundary write for anyone to forget. The §11 `retreatBlocked` walk 100
+  // lines below is the engine's ONE boundary-cleared rider and it is a boolean.
+  {
+    const spot = activeTop(next, endedSeat);
+    const due = spot === null ? null : scheduledCountersDue(spot.active, next.turn);
+    if (spot !== null && due !== null) {
+      const { active, uid } = spot;
+      next = withActive(next, endedSeat, { ...active, damage: active.damage + due });
+      events.push({
+        type: "COUNTERS_PLACED",
+        seat: endedSeat,
+        uid,
+        amount: due,
+        source: "delayed",
+      });
+    }
+  }
 
   // §13.1 Poison — the condition's own counter amount (10 unless raised).
   for (const seat of order) {

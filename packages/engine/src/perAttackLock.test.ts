@@ -807,8 +807,8 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
     // D149's rule: the clear-set is swept because it is three literals that have
-    // to agree with nothing making them. The sweep here is structural — the NINE
-    // durated keys are read off ONE body that has been through the clear, so a
+    // to agree with nothing making them. The sweep here is structural — the ELEVEN
+    // durated keys (ELEVEN since D434) are read off ONE body that has been through the clear, so a
     // literal that forgot the new field fails on the field rather than on a board
     // somebody remembered to write.
     // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
@@ -823,6 +823,16 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       uid: handUid(held, "p1", "fix-skarm-stage1"),
       target: { spot: "active" },
     });
+    // 🆕🆕 D434 — the SCHEDULED counter placement joins the swept set, and it is read
+    // STRUCTURALLY for a reason of its own: the record's whole effect is in the
+    // future, so after a §10 clear there is no number that could witness its absence
+    // until a Checkup that will never place anything. The field IS the witness.
+    // 🛑 AND D432's OWN FINDING WAS STILL OPEN IN THIS FILE — REPAIRED HERE. D432
+    // audited the four swept clear-sets and found three missing `retreatLockedTurn`,
+    // which D412 never added. This one was ALSO missing `boostedAttack` (D155), and
+    // its comment above still said "the NINE durated keys" while its siblings said
+    // TEN. Drift is invisible until the next author reads the set as a whole, which
+    // is exactly D432's rule; the set is now ELEVEN and all four literals agree.
     const body = must0(evolved.players.p1.active);
     expect({
       attackBlock: body.attackBlock,
@@ -830,9 +840,11 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       retreatLockedTurn: body.retreatLockedTurn,
       damageReduction: body.damageReduction,
       noWeaknessTurn: body.noWeaknessTurn,
+      scheduledCounters: body.scheduledCounters,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
+      boostedAttack: body.boostedAttack,
       retreatBlocked: body.retreatBlocked,
     }).toEqual({
       attackBlock: null,
@@ -840,9 +852,11 @@ describe("§10 sheds it — the three clears, and the sweep that keeps them toge
       retreatLockedTurn: null,
       damageReduction: null,
       noWeaknessTurn: null,
+      scheduledCounters: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],
+      boostedAttack: null,
       retreatBlocked: false,
     });
   });

@@ -771,6 +771,7 @@ describe("§7 — the structural answers", () => {
         "promotedTurn",
         "retreatBlocked",
         "retreatLockedTurn",
+        "scheduledCounters",
         "stack",
         "tools",
         "turnPlayed",
@@ -812,7 +813,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.335.0");
+    expect(engineVersion).toBe("0.336.0");
   });
 });
 

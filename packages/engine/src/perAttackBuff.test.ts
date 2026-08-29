@@ -823,7 +823,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
 
   it("the clear-set is the SAME set every durated field is on — swept, not listed", () => {
     // D149's rule: the clear-set is literals that have to agree with nothing making
-    // them. The sweep is STRUCTURAL — the TEN durated keys are read off ONE body
+    // them. The sweep is STRUCTURAL — the ELEVEN durated keys (TEN before D434) are read off ONE body
     // that has been through the clear, so a literal that forgot the new field fails
     // on the field rather than on a board somebody remembered to write.
     // 🆕🆕 D432 — the NO-WEAKNESS bar joins the swept set. It is read STRUCTURALLY
@@ -838,6 +838,10 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       uid: handUid(held, "p1", "fix-echoer-stage1"),
       target: { spot: "active" },
     });
+    // 🆕🆕 D434 — the SCHEDULED counter placement joins the swept set, and it is read
+    // STRUCTURALLY for a reason of its own: the record's whole effect is in the
+    // future, so after a §10 clear there is no number that could witness its absence
+    // until a Checkup that will never place anything. The field IS the witness.
     const body = must0(evolved.players.p1.active);
     expect({
       attackBlock: body.attackBlock,
@@ -845,6 +849,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       retreatLockedTurn: body.retreatLockedTurn,
       damageReduction: body.damageReduction,
       noWeaknessTurn: body.noWeaknessTurn,
+      scheduledCounters: body.scheduledCounters,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -856,6 +861,7 @@ describe("§10 sheds it — and here that is a LOSS rather than an escape", () =
       retreatLockedTurn: null,
       damageReduction: null,
       noWeaknessTurn: null,
+      scheduledCounters: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],

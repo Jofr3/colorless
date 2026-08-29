@@ -713,6 +713,31 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(`'s attacks do ${event.amount} less damage next turn`),
       ]);
+    // 🆕🆕 §13 (D434) — the attack SCHEDULED a counter placement on the DEFENDING
+    // Pokémon. PASSIVE/system-free but filed under `event.seat`, which owns the
+    // scheduled body — ATTACK_DEBUFF_APPLIED's contract directly above verbatim, and
+    // for its reason: the row renders after the victim's name, so an active-voice
+    // verb would credit the victim with doing it to themselves (D136's finding 1).
+    //
+    // ⚠️ IT SAYS *"at the end of your next turn"* AND NOT *"your opponent's"*,
+    // because the row is filed under the VICTIM — the same seat-flip
+    // DAMAGE_REDUCTION_APPLIED makes one case up. The printed sentence is written
+    // from the attacker's side; this row is read from the other one.
+    //
+    // ⚠️ THE UNIT IS HP, NOT COUNTERS — RECOIL_ARMED's rule below, and for its
+    // reason: the COUNTERS_PLACED row this eventually produces says 90, so a reader
+    // told "9" and then shown "90" cannot check the arithmetic they are shown.
+    //
+    // 🛑 AND THE ROW ASSERTS ONLY WHAT THIS PATH KEEPS TRUE (D421's log rule). It
+    // says the counters are SCHEDULED, not that they will land: §10 sheds the
+    // schedule if the body retreats, is switched or evolves, so a row promising the
+    // damage would be false in the direction that costs a player a play. "will be
+    // put" would be that false row; "scheduled" is the fact.
+    case "COUNTERS_SCHEDULED":
+      return row(event.seat, [
+        strong(cardName(state, event.uid)),
+        plain(` has ${event.amount} damage scheduled for the end of your next turn`),
+      ]);
     // §9/§11 — the attack-armed REACTIVE RECOIL (D152). ACTIVE voice for
     // DAMAGE_REDUCTION_APPLIED's reason verbatim: `seat` owns the armed Pokémon
     // AND that Pokémon is the actor's own (the op has no defender arm), so the
@@ -859,6 +884,22 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
           // source. This row is the entire explanation a reader gets.
           return row("system", [
             plain("Counterattack: "),
+            amount,
+            plain(" damage to "),
+            strong(name),
+          ]);
+        // 🆕🆕 D434 — counters an attack SCHEDULED a turn ago, placed by the §13
+        // Checkup. A SYSTEM row like "poison" and "burn" directly above it and for
+        // exactly their reason: it lands between turns with no actor taking an
+        // action, and `seat` owns the DAMAGED Pokémon, so an active-voice row under
+        // this seat would read as the victim doing it to itself (D136's finding 1,
+        // which the `default` arm below would have committed for free).
+        //
+        // The label matches the COUNTERS_SCHEDULED row that armed it a turn earlier,
+        // so the pair reads as one mechanism — RECOIL_ARMED/"counterattack"'s rule.
+        case "delayed":
+          return row("system", [
+            plain("Delayed: "),
             amount,
             plain(" damage to "),
             strong(name),

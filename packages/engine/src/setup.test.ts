@@ -293,6 +293,16 @@ describe("placement", () => {
       // the very distinction `MATCH_RECORD_VERSION` 26 -> 27 exists to enforce at
       // the storage boundary.
       noWeaknessTurn: null,
+      // 🆕🆕 …and NO SCHEDULED counter placement (D434), which is the SEVENTH read of
+      // the same rule and the first one that is a RECORD rather than a stamp. That
+      // matters exactly here: `scheduledCountersDue` asks `scheduled !== null` and
+      // then dereferences `.turn`, so a body that reached this line with the key
+      // ABSENT would not read as "nothing scheduled" — it would THROW at the next
+      // Checkup. ⚠️ AND THIS `toEqual` IS WHY THE FIELD IS `… | null` RATHER THAN
+      // `… | undefined`: an exact object comparison tells "absent" from "present and
+      // null", which is the very distinction `MATCH_RECORD_VERSION` 27 -> 28 exists
+      // to enforce at the storage boundary.
+      scheduledCounters: null,
       attackDamageDebuff: null,
       // …and no ARMED recoil (D152), read the same way a fifth time:
       // `installedRecoilOf` compares the stamp to `state.turn`, so a fresh body

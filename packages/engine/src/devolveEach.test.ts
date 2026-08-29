@@ -699,7 +699,7 @@ describe("🛑 §6 — a devolve Knock Out is NOT 'by damage', and an already-le
 
 /** A board whose victim Active carries EVERY §10/§11 bar plus a Special Condition,
     a Tool, Energy and damage — placed by surgery because no legal sequence can put
-    all eleven on one body at once, which is exactly `evolveOnto`'s own reason for
+    all twelve on one body at once (eleven before D434), which is exactly `evolveOnto`'s own reason for
     pinning its unreachable clears by surgery. */
 function loaded(seed: number): { before: GameState; turn: number } {
   const base = armed(seed, { stages: 1, damage: 40, tool: "sv03-197" });
@@ -721,6 +721,12 @@ function loaded(seed: number): { before: GameState; turn: number } {
           attackLockedTurn: turn + 1,
           damageReduction: { turn: turn + 1, amount: 30 },
           noWeaknessTurn: turn + 1,
+          // 🆕🆕 D434 — the SCHEDULED counter placement, added when the field joined
+          // the durated set. It is UNREACHABLE on this literal by any legal sequence
+          // (the schedule's window is the holder's own turn and a devolve arrives on
+          // the opponent's), so it is pinned by surgery for the reason the paragraph
+          // above already gives about the other ten.
+          scheduledCounters: { turn: turn + 1, amount: 90 },
           attackDamageDebuff: { turn: turn + 1, amount: 20 },
           installedRecoil: { turn: turn + 1, amount: 40 },
           lockedAttacks: [{ turn, attackIndex: 0 }],
@@ -734,7 +740,7 @@ function loaded(seed: number): { before: GameState; turn: number } {
 }
 
 describe("🛑 §7 — the carry-over set, decided field by field", () => {
-  it("the ELEVEN §10/§11 bars are all cleared — the set `switchInto` clears", () => {
+  it("the TWELVE §10/§11 bars are all cleared — the set `switchInto` clears", () => {
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
     const after = body(state.players.p2.active);
@@ -745,6 +751,7 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     expect(after.attackLockedTurn).toBeNull();
     expect(after.damageReduction).toBeNull();
     expect(after.noWeaknessTurn).toBeNull();
+    expect(after.scheduledCounters).toBeNull(); // 🆕🆕 D434 — eleven bars became twelve
     expect(after.attackDamageDebuff).toBeNull();
     expect(after.installedRecoil).toBeNull();
     expect(after.lockedAttacks).toEqual([]);
@@ -1053,7 +1060,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.335.0");
+    expect(engineVersion).toBe("0.336.0");
   });
 });
 

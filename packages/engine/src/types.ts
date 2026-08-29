@@ -285,6 +285,72 @@ export interface DamageReduction {
   amount: number;
 }
 
+/** 🆕🆕 §13 (D434) — a DELAYED counter placement scheduled onto one Pokémon by an
+    attack, with the printed clock baked in as a turn STAMP exactly as
+    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` bake theirs. The one
+    printed sentence is
+
+      "At the end of your opponent's next turn, put 9 damage counters on the
+       Defending Pokémon."                                                    (3)
+
+    🛑 **IT IS THE FIRST FACT IN THIS ENGINE THAT SCHEDULES WORK RATHER THAN
+    GATING IT, AND THAT IS THE WHOLE OF WHY IT IS A NEW SHAPE.** Every other
+    durated record on `InPlayPokemon` is READ by code that was going to run anyway
+    — §8.5 asks `installedReductionOf` while it is already computing a hit, §11
+    asks `retreatLocked` while it is already validating a retreat. Nothing reads
+    this one. A stamp alone is INERT: the §13 Checkup has to go looking for it,
+    which is why the mechanism is a stamp PLUS a firing site (flow.ts `runCheckup`)
+    and why either half alone is a build that resolves and does nothing.
+
+    ⚠️ A RECORD AND NOT A BARE STAMP, WHICH IS `damageReduction`'s SHAPE RATHER
+    THAN `noWeaknessTurn`'s — and the deciding question is D432's, asked again
+    rather than inherited: does the printed sentence carry anything besides a
+    clock? It carries an AMOUNT (9 counters), and the amount is a `(\d+)` capture
+    in the anchor rather than a literal, so the record has to hold it. That is the
+    one axis on which this field differs from the bar D432 built.
+
+    🛑 **AND THE RECORD HAVING A SECOND KEY DOES *NOT* BUY D421's OPTIONAL ROAD —
+    THIS IS THE FINDING, AND IT SHARPENS D432's RULE RATHER THAN APPLYING IT.**
+    D421's mitigation is *choose the REST of the record so that losing the key is
+    detectable*, and the rest it means is the rest that ALREADY EXISTS in the
+    records a previous deploy wrote. Both keys here arrive in the SAME deploy, so
+    they cannot witness each other's loss: a v27 record has no `scheduledCounters`
+    at all, not a `scheduledCounters` missing one key. **A "rest" must be OLD, not
+    merely PLURAL.**
+
+    🛑 **AND A RECORD-VALUED FIELD FAILS DIFFERENTLY FROM D432's BARE STAMP, WHICH
+    WAS MEASURED RATHER THAN ASSUMED — THIS PARAGRAPH FIRST CLAIMED THE BENIGN SOFT
+    LANDING AND WAS WRONG (D425: correct it in place and say so).** A missing
+    `noWeaknessTurn` reads as `undefined === state.turn`, i.e. FALSE, and the bar
+    silently stops existing. A missing `scheduledCounters` reads as
+    `undefined !== null`, and `scheduledCountersDue`'s very next comparison
+    dereferences `.turn` — so a v27 record does not lose a rule on this deploy, **it
+    dies at the next turn boundary**, because every Checkup calls that reader on the
+    ended seat's Active. The reader carries no defensive `=== undefined` arm on
+    purpose: `attackBlockOf` and `installedReductionOf` (continuous.ts) are the two
+    shipped record-valued fields and both say in their own comments that the
+    absent-key arm is `MATCH_RECORD_VERSION`'s job, not theirs. So the field is
+    REQUIRED and the constant goes 27 → 28 — for a SHARPER reason than D432's rather
+    than the same one. An OPTIONAL key would have forced the tolerant reader, and
+    THAT is where the loss becomes D124's benign soft landing: both roads driven side
+    by side in `delayedCounters.test.ts` §8. */
+export interface ScheduledCounters {
+  /** The single turn number at whose END this placement fires — the installing
+      turn + 1, `damageReduction`'s and `attackDamageDebuff`'s number and for their
+      reason: the sentence prints *"your opponent's next turn"* and declaring an
+      attack ENDS the turn (§5.3), so the turn after the installing one is the
+      opponent's by construction. Compared with `===` and never with `<=`, so the
+      fact EXPIRES BY ARITHMETIC: a stamp for a turn already gone by reads as "no
+      schedule" and there is no post-fire clear anywhere to forget. */
+  turn: number;
+  /** HP to place, i.e. the printed COUNTER COUNT × 10 (§12's one-counter-is-10
+      conversion, `DEFENDER_POISON_N`'s `poisonDamage` convention verbatim). Stored
+      in HP rather than in counters so the Checkup's placement is `damage + amount`
+      with no second unit conversion — the same reason `DamageReduction.amount` and
+      `SpecialConditions.poisonDamage` are both HP. */
+  amount: number;
+}
+
 /** §8.5/§11 (D149) — an attack-installed ATTACK-DAMAGE DEBUFF on one Pokémon,
     with the printed DURATION baked in as a turn STAMP exactly as `AttackBlock`
     and `DamageReduction` above bake theirs. The printed sentences are
@@ -921,6 +987,52 @@ export interface InPlayPokemon {
       a number, because the number is unobservable after the body has left the
       Active Spot: §8.5 applies Weakness only to the Active. */
   noWeaknessTurn: number | null;
+  /** 🆕🆕 §13 (D434) — the DELAYED counter placement an attack scheduled onto this
+      Pokémon (see `ScheduledCounters` above), or `null` when none has been
+      scheduled. Read through `scheduledCountersDue` below rather than by touching
+      this field, so no read site can forget the turn comparison — the same
+      contract every durated field above is under.
+
+      🛑 **THE ONE FIELD IN THIS SET WHOSE §10 CLEARS ARE THE *NORMAL* CASE RATHER
+      THAN THE THEORETICAL ONE, AND IT INVERTS THE REACHABILITY STORY EVERY
+      NEIGHBOUR ABOVE TELLS.** `damageReduction`, `noWeaknessTurn` and
+      `installedRecoil` all have their window on the OPPONENT's turn, so their
+      holder's controller cannot retreat or evolve inside it and their clears are
+      written for the rule rather than for a board. This record is installed on the
+      OPPONENT's Active and fires at the end of the OPPONENT's own next turn — so
+      for the whole of its window the body's own controller is the player taking
+      actions. **RETREAT, a Switch (`switchInto`) and EVOLVING are all live lines of
+      play inside the window, and all three are the victim's counterplay**: §10
+      sheds the effects of attacks, so walking the Defending Pokémon off the Active
+      Spot — or evolving it — is how a player answers this attack. That is the
+      printed ruling for the family (the Knock-Out twin of this sentence is refused
+      the same way) and it is DRIVEN on all four literals rather than argued.
+
+      ⚠️ THE FOURTH LITERAL, `devolveEach` (D433), IS THE ONE UNREACHABLE CLEAR AND
+      IS WRITTEN ANYWAY. Devolution arrives only as an opponent's attack effect, and
+      inside this record's window the opponent is the seat that installed it —
+      whose turn it is not. So no legal sequence devolves a scheduled body before it
+      fires. It joins the eleven bars that literal already sheds because §10 sheds
+      the effects of ATTACKS and this is one, and because D433's own rule says the
+      four literals AGREE about the durated set and disagree only about `markers`.
+
+      ⚠️ NO POST-FIRE CLEAR, AND THAT IS DELIBERATE. The stamp expires by
+      arithmetic (`ScheduledCounters.turn`), which is `attackLockedTurn`'s and
+      `koByEffect`'s rule: a spent schedule sits on the body reading as "no
+      schedule" for the rest of the game, and there is no boundary write anybody can
+      forget, run twice, or run on the wrong side of the Checkup. The §11 retreat
+      flag one field family over is the engine's ONE boundary-walked rider and it is
+      a boolean; this one is a number, so it does not need to be.
+
+      PUBLIC, AND NO PROJECTION READS IT TODAY — both halves stated, because only
+      the second is a measurement. `grep -rn "scheduledCounters" src/ apps/ packages/`
+      (D412's procedure) returns engine sources and this suite only: `redact.ts` and
+      `packages/schema` build their own per-body shapes and carry no durated field at
+      all, so nothing about this record reaches a client. Were one ever added, it
+      would leak nothing: the attack that scheduled it resolved in front of both
+      players and both can count turns (`handPlayLockedTurn`'s note, one interface
+      over). */
+  scheduledCounters: ScheduledCounters | null;
   /** §8.5/§11 (D149) — the attack-installed ATTACK-DAMAGE DEBUFF on this Pokémon
       (see `AttackDamageDebuff` above), or `null` when none has been installed.
       Read through `installedAttackDebuffOf` (continuous.ts) rather than by
@@ -1248,6 +1360,30 @@ export interface InPlayPokemon {
   usedAttack: UsedAttack | null;
 }
 
+/** 🆕🆕 §13 (D434) — the HP a body's scheduled counter placement owes RIGHT NOW,
+    or `null` when it owes nothing. The ONE reader of
+    `InPlayPokemon.scheduledCounters`, and the whole of that field's arithmetic:
+    the writer records the turn at whose END the placement fires, so the printed
+    question is one `===` and the Checkup does not have to know who installed it or
+    when.
+
+    🛑 **`null` RATHER THAN `0` ON "NOTHING DUE", AND THE DISTINCTION IS LOAD-
+    BEARING AT THE ONE CALL SITE.** A `0` return would be indistinguishable from a
+    scheduled placement of zero, and while no printing carries a 0 the deriver's
+    `(\d+)` capture is what forbids it (`>= 1`), not this function — so the two
+    answers are kept apart here rather than collapsed and re-separated at the
+    caller. Same rule `parkOrForce`'s emptied-set arm is under.
+
+    FALSE-EQUIVALENT on every turn but the stamped one, BY CONSTRUCTION and with no
+    clear site anywhere: a stamp for a turn already gone by can never equal
+    `state.turn` again (turns only increase), so a spent schedule is inert without
+    anybody sweeping it up. `null` is never a turn number, so an unscheduled body
+    answers `null` too. */
+export function scheduledCountersDue(pokemon: InPlayPokemon, turn: number): number | null {
+  const scheduled = pokemon.scheduledCounters;
+  return scheduled !== null && scheduled.turn === turn ? scheduled.amount : null;
+}
+
 export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
   return {
     stack: [uid],
@@ -1279,6 +1415,13 @@ export function makeInPlay(uid: string, turnPlayed: number): InPlayPokemon {
     // other three constructors spread an existing body, so a missing §10 clear
     // there is silent. `noWeaknessBar.test.ts` drives all three structurally.
     noWeaknessTurn: null,
+    // 🆕🆕 …and no attack has SCHEDULED damage counters onto it for the end of a
+    // turn either (D434). §10's carry-over rule read from the other end for the
+    // seventh time, and this is the THIRD site the compiler forces for a new
+    // required field — `retreatLockedTurn`'s note above still holds for the four
+    // that spread an existing body. `delayedCounters.test.ts` drives all four
+    // literals plus this one structurally.
+    scheduledCounters: null,
     // …and no attack has WEAKENED its own attacks either (D149) — the mirror of
     // the line above, on the other side of the §8.5 pipeline. Same reading of
     // §10's carry-over rule from the other end as the three lines above.
@@ -2196,6 +2339,15 @@ export function evolveOnto(
     // install and the expiry. Written anyway (§10 sheds the effects of ATTACKS and
     // this is one) and pinned STRUCTURALLY rather than by a number.
     noWeaknessTurn: null,
+    // 🆕🆕 …and, since D434, the SCHEDULED counter placement — and this literal is
+    // the one place in the set where that field's story is the OPPOSITE of the bar
+    // directly above it. The bar's window is the opponent's turn, so nobody can
+    // evolve inside it and the clear is written for the rule. The schedule's window
+    // IS the holder's own turn, so evolving the Defending Pokémon before the end of
+    // it is a legal, cheap and printed-ruling-correct answer to the attack — the
+    // FIRST field on this literal whose evolve clear is a played line rather than a
+    // theoretical one. Driven end to end in `delayedCounters.test.ts`.
+    scheduledCounters: null,
     // …and, since D149, the attack-installed ATTACK-DAMAGE DEBUFF — whose story
     // here is the LOCK's rather than the reduction's, and that is the whole
     // difference between the two mirrors: the debuff's window is the HOLDER's own

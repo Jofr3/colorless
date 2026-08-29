@@ -1533,6 +1533,10 @@ function stepOp(
       return { done: installNoWeakness(state, ctx, events) };
     case "weakenDefenderAttacks":
       return { done: weakenDefenderAttacks(state, op.amount, ctx, events) };
+    // 🆕🆕 D434 — the SCHEDULE half of the delayed placement. The other half is
+    // flow.ts `runCheckup`; neither is a build on its own.
+    case "scheduleCounters":
+      return { done: scheduleCounters(state, op.amount, ctx, events) };
     case "installRecoil":
       return { done: installRecoil(state, op.amount, ctx, events) };
     case "heal":
@@ -6501,6 +6505,75 @@ function weakenDefenderAttacks(
   return withActive(state, seat, { ...active, attackDamageDebuff: { turn, amount: merged } });
 }
 
+/** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for the
+    END of the opponent's next turn (*"At the end of your opponent's next turn, put 9
+    damage counters on the Defending Pokémon."* — 3 legal printings, corpus row 54).
+
+    🛑 **THIS FUNCTION ONLY STAMPS, AND THAT SENTENCE IS THE WHOLE HAZARD OF THE
+    SLICE.** Every other installer in this file writes a fact some existing read site
+    was already going to consult; nothing in the engine reads this one. The
+    placement, the event and the Knock Out all happen in flow.ts `runCheckup`, which
+    goes looking for the stamp at the end of every turn. **A build that ships this
+    half alone resolves, emits its row, persists its record and never places a
+    counter** — D407's built-but-dead defect, and the reason both halves carry their
+    own mutant row rather than one shared one.
+
+    `weakenDefenderAttacks` DIRECTLY ABOVE IS THE TEMPLATE and the resemblance is
+    deliberate: same `otherSeat(ctx.seat)` holder, same §11 gate ahead of the
+    idempotence return, same `state.turn + 1` stamp, same `Math.max` merge. The one
+    difference is what the record is FOR, and it is the difference between a fact and
+    an appointment.
+
+    THE STAMP IS `state.turn + 1` FOR `weakenDefenderAttacks`' REASON VERBATIM — the
+    sentence prints *"your opponent's next turn"*, declaring an attack ENDS the turn
+    (§5.3), so the turn after the installing one is the opponent's by construction.
+    `runCheckup` compares it to `state.turn` as it stands, and the Checkup runs
+    BEFORE `startTurn` increments (flow.ts `knockOut`'s note), so the stamped turn is
+    live at exactly one Checkup and never again.
+
+    ⚠️ THE §11 GATE IS ASKED, AND IT IS NOT INHERITED — IT IS RE-DERIVED (D430's
+    rule). This is an effect of an attack done TO the Defending Pokémon in the
+    plainest possible sense: it puts damage counters on that body. A *"prevent all
+    effects of attacks done to this Pokémon"* block installed by the defender on
+    their own previous turn is live on exactly this turn and refuses it. Asked BEFORE
+    the idempotence early-return, `preventRetreat`'s ordering, so a refusal is
+    announced even on an already-scheduled body. Classified in
+    `preventBlock.test.ts`'s §11 table AND driven under a live wide block.
+
+    ⚠️ AND THE BLOCK IS ASKED HERE, NOT AT THE CHECKUP. A body that acquires a §11
+    block AFTER the schedule lands still takes the counters, which is the right
+    reading: the printed block refuses the effect of an attack *done to* the body,
+    and the doing is this line. A gate at the firing site would be a second opinion
+    that can disagree with this one — `koRecoilOf`'s "never hold a second opinion"
+    rule, one seam over.
+
+    ⚠️ IDEMPOTENT BY THE STAMP, MERGED BY `Math.max` — `weakenDefenderAttacks`'
+    answer rather than `reduceDamage`'s, because this record holds a NUMBER and two
+    installs can disagree about it. A SUM would be wrong for the same reason it is
+    wrong there: two schedules on one body are two printed sentences, not one doubled
+    one. Unreachable off any printing (one attack per turn, no card prints two of
+    these), so it is constructed and pinned rather than trusted. */
+function scheduleCounters(
+  state: GameState,
+  amount: number,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  const seat = otherSeat(ctx.seat);
+  const active = state.players[seat].active;
+  if (active === null) return state;
+  const uid = topUid(active);
+  if (uid === undefined) return state;
+  if (effectRefused(state, seat, ctx, events)) return state;
+  const turn = state.turn + 1;
+  const existing = active.scheduledCounters;
+  const stacking = existing !== null && existing.turn === turn;
+  const merged = stacking ? Math.max(existing.amount, amount) : amount;
+  if (stacking && merged === existing.amount) return state;
+  events.push({ type: "COUNTERS_SCHEDULED", seat, uid, amount: merged, turn });
+  return withActive(state, seat, { ...active, scheduledCounters: { turn, amount: merged } });
+}
+
 /** §9/§11 (D152) — ARM the printed REACTIVE RECOIL on the CONTROLLER's own Active
     ("During your opponent's next turn, if this Pokémon is damaged by an attack
     (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
@@ -9307,15 +9380,25 @@ function devolveEach(state: GameState, ctx: EffectContext, events: GameEvent[]):
         // §12 — devolving removes Special Conditions, named in the same clause as
         // evolving and retreating.
         conditions: noConditions(),
-        // …and §10's effects of attacks, the same eleven `switchInto` and
-        // `clearOnLeavingActive` shed. Every one of them was installed on a body whose
-        // top card is now in the deck.
+        // …and §10's effects of attacks, the same TWELVE `switchInto` and
+        // `clearOnLeavingActive` shed (eleven until D434). Every one of them was
+        // installed on a body whose top card is now in the deck.
         retreatBlocked: false,
         retreatLockedTurn: null,
         attackBlock: null,
         attackLockedTurn: null,
         damageReduction: null,
         noWeaknessTurn: null,
+        // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE member of
+        // this set that NO legal sequence can reach at this literal, which is said
+        // rather than left to look like the others. Devolution arrives only as an
+        // opponent's attack effect, and inside the schedule's window the opponent
+        // is the seat that installed it — whose turn it is not. Written anyway,
+        // because §10 sheds the effects of ATTACKS and this is one, and because
+        // D433's own rule is that the four §10 literals AGREE about the durated set
+        // and disagree only about `markers`. Following the set is the rule; a
+        // reachability argument is not a licence to leave a hole in it.
+        scheduledCounters: null,
         attackDamageDebuff: null,
         installedRecoil: null,
         lockedAttacks: [],
@@ -10332,6 +10415,14 @@ export function switchInto(
     // benched there is no Weakness step left for the bar to have removed. Pinned
     // structurally off the field instead (`noWeaknessBar.test.ts`).
     noWeaknessTurn: null,
+    // 🆕🆕 D434 — the SCHEDULED counter placement, and this literal is where the
+    // field's VOLUNTARY half lives: the window is the HOLDER's own turn, so the
+    // player who reaches this line is the victim playing their own Switch (or
+    // Escape Rope) to walk the Defending Pokémon out from under the schedule
+    // before it fires. §10 sheds the effects of attacks and the schedule goes with
+    // the body — the printed answer to this family, and the sharpest available
+    // witness that the clear is real (the Checkup that follows places nothing).
+    scheduledCounters: null,
     // D149 — and this is the FORCED half of the debuff's story: a Boss's Orders
     // played by the DEBUFFED player on their own turn (the window) pulls the body
     // off the spot and the debuff with it, and so does the opponent dragging it up

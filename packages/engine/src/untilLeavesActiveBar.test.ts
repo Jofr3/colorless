@@ -651,12 +651,17 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       uid: handUid(held, "p1", "fix-gouging-stage1"),
       target: { spot: "active" },
     });
+    // 🆕🆕 D434 — the SCHEDULED counter placement joins the swept set, and it is read
+    // STRUCTURALLY for a reason of its own: the record's whole effect is in the
+    // future, so after a §10 clear there is no number that could witness its absence
+    // until a Checkup that will never place anything. The field IS the witness.
     const body = must0(evolved.players.p1.active);
     expect({
       attackBlock: body.attackBlock,
       attackLockedTurn: body.attackLockedTurn,
       damageReduction: body.damageReduction,
       noWeaknessTurn: body.noWeaknessTurn,
+      scheduledCounters: body.scheduledCounters,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -668,6 +673,7 @@ describe("§5 — the bar is lifted by leaving the Active Spot, and by nothing e
       attackLockedTurn: null,
       damageReduction: null,
       noWeaknessTurn: null,
+      scheduledCounters: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],
@@ -942,7 +948,7 @@ describe("§9 — a v26 record still means what it meant, and this one is readab
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.335.0");
+    expect(engineVersion).toBe("0.336.0");
   });
 });
 

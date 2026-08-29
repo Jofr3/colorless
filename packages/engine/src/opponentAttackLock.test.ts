@@ -750,6 +750,10 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       uid: handUid(held, "p2", "fix-echoer-stage1"),
       target: { spot: "active" },
     });
+    // 🆕🆕 D434 — the SCHEDULED counter placement joins the swept set, and it is read
+    // STRUCTURALLY for a reason of its own: the record's whole effect is in the
+    // future, so after a §10 clear there is no number that could witness its absence
+    // until a Checkup that will never place anything. The field IS the witness.
     const body = must0(evolved.players.p2.active);
     expect({
       attackBlock: body.attackBlock,
@@ -757,6 +761,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       retreatLockedTurn: body.retreatLockedTurn,
       damageReduction: body.damageReduction,
       noWeaknessTurn: body.noWeaknessTurn,
+      scheduledCounters: body.scheduledCounters,
       attackDamageDebuff: body.attackDamageDebuff,
       installedRecoil: body.installedRecoil,
       lockedAttacks: body.lockedAttacks,
@@ -768,6 +773,7 @@ describe("§10 sheds it — every clear driven from the VICTIM's chair", () => {
       retreatLockedTurn: null,
       damageReduction: null,
       noWeaknessTurn: null,
+      scheduledCounters: null,
       attackDamageDebuff: null,
       installedRecoil: null,
       lockedAttacks: [],

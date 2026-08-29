@@ -950,6 +950,25 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       // for the bar to have removed. `stillSet` reading the FIELD is the whole
       // witness, which is exactly what this sweep is for.
       noWeaknessTurn: 99,
+      // 🆕🆕 D434 — the SCHEDULED counter placement, `retreatLockedTurn`'s and
+      // `noWeaknessTurn`'s case again: a stamp for turn 99 is not this turn, so it
+      // blocks no route and all three carry it.
+      scheduledCounters: { turn: 99, amount: 90 },
+      // 🛑🛑 AND THE FIVE FIELDS BELOW ARE A REPAIR, NOT THIS SLICE'S FIELD (D418's
+      // move: remove the premise instead of arguing with it). This helper's own
+      // comment says the sweep is "discovered by construction rather than by listing
+      // the fields three call sites happen to mention" — and `stillSet` listed
+      // EIGHT names against ELEVEN durated fields on the literals, so the
+      // three-route AGREEMENT was never checked for `damageReduction`,
+      // `attackDamageDebuff`, `installedRecoil`, `lockedAttacks` or `boostedAttack`.
+      // A short list makes a claim NARROWER rather than FALSE, which is why nothing
+      // ever reddened (D419). Adding a field to a swept set re-reads the set (D432),
+      // and the set is now the whole durated family.
+      damageReduction: { turn: 99, amount: 20 },
+      attackDamageDebuff: { turn: 99, amount: 20 },
+      installedRecoil: { turn: 99, amount: 40 },
+      lockedAttacks: [{ turn: 99, attackIndex: 0 }],
+      boostedAttack: { turn: 99, attackIndex: 0, amount: 20 },
     };
   }
 
@@ -965,6 +984,13 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     if (pokemon.attackLockedTurn !== null) set.push("attackLockedTurn");
     if (pokemon.retreatLockedTurn !== null) set.push("retreatLockedTurn");
     if (pokemon.noWeaknessTurn !== null) set.push("noWeaknessTurn"); // 🆕🆕 D432
+    if (pokemon.scheduledCounters !== null) set.push("scheduledCounters"); // 🆕🆕 D434
+    // 🆕🆕 D434 — the five the list had never carried; see `fullyEncumbered`.
+    if (pokemon.damageReduction !== null) set.push("damageReduction");
+    if (pokemon.attackDamageDebuff !== null) set.push("attackDamageDebuff");
+    if (pokemon.installedRecoil !== null) set.push("installedRecoil");
+    if (pokemon.lockedAttacks.length > 0) set.push("lockedAttacks");
+    if (pokemon.boostedAttack !== null) set.push("boostedAttack");
     return set;
   }
 
@@ -986,7 +1012,13 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
     // ⚠️ THE HAZARD THIS EXISTS FOR. The three clears are three hand-written
     // object literals in two files (`clearOnLeavingActive` and `placeEvolution` in
     // turn.ts, `switchInto` in interpreter.ts). Nothing makes them agree, and a
-    // fourth stamped field would have to be added to all three by hand with
+    // 🆕🆕 D434 — FOUR routes, not three: `devolveEach` (interpreter.ts, D433) is a
+    // fourth hand-written literal of the same set and this sweep does not reach it.
+    // Stated as a known gap rather than left implied; `devolveEach.test.ts` §7 pins
+    // that literal field by field on both sides (cleared AND kept), which is the
+    // stronger shape, and `delayedCounters.test.ts` §7 drives all four for the field
+    // this slice adds.
+    // a fourth stamped field would have to be added to all three by hand with
     // nothing failing if one were missed — which is the concrete cost the
     // "generalise `attackBlock` into installed effects" question is really about.
     // Until that question is answered, THIS is the thing that fails.
@@ -1055,6 +1087,13 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       "attackLockedTurn",
       "retreatLockedTurn",
       "noWeaknessTurn", // 🆕🆕 D432
+      "scheduledCounters", // 🆕🆕 D434
+      // 🆕🆕 D434 — the five `stillSet` never carried, in `stillSet`'s push order.
+      "damageReduction",
+      "attackDamageDebuff",
+      "installedRecoil",
+      "lockedAttacks",
+      "boostedAttack",
     ]);
   });
 });

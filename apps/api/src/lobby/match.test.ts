@@ -611,7 +611,7 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     // this constant alone, because a v20 record's MISSING key meant mandatory
     // before and after. One slice later the key is renamed and the constant must
     // move. A widening is free; a rename is not; they are one edit apart.
-    expect(MATCH_RECORD_VERSION).toBe(27); // 🆕🆕 D432 — 26 -> 27: `InPlayPokemon.noWeaknessTurn`, a missing required field (the attack-installed §8.5 NO-WEAKNESS bar's turn stamp). D412 took 25 -> 26 on the identical trigger (`retreatLockedTurn`); the required-vs-optional argument is written out at the constant itself, and the deciding fact is that this record has NO other field for D421's loud-degradation trick to live in.
+    expect(MATCH_RECORD_VERSION).toBe(28); // 🆕🆕 D434 — 27 -> 28: `InPlayPokemon.scheduledCounters`, a missing required field (the attack-scheduled §13 DELAYED counter placement). D432 took 26 -> 27 on the identical trigger and wrote that the optional road is unavailable "when the stored fact is a single number with nothing beside it"; THIS record has a turn AND an amount and the road is STILL unavailable, because D421's "rest of the record" means the rest a PREVIOUS DEPLOY ALREADY WROTE — both keys here arrive together and cannot witness each other's loss. The argument is written out at the constant itself.
     expect(readMatchRecord({ ...record, version: MATCH_RECORD_VERSION - 1 })).toBeNull();
     // Newer matters too: a rollback must not read a record from the deploy ahead
     // of it, which is exactly when the embedded GameState is likeliest to differ.

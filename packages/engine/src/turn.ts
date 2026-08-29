@@ -669,6 +669,16 @@ function clearOnLeavingActive(pokemon: InPlayPokemon): InPlayPokemon {
     // bites. EIGHT durated effects on one clear, FIVE reachability stories — which
     // is why the clear-set is SWEPT and not listed.
     noWeaknessTurn: null,
+    // 🆕🆕 D434 — the SCHEDULED counter placement, and it is the ONE field on this
+    // literal whose RETREAT half is not merely reachable but is the printed
+    // counterplay. Every neighbour here has its window on the opponent's turn, so
+    // the paragraphs above all say "the retreat half is unreachable, the forced
+    // half is where it bites". This record fires at the end of the HOLDER's own
+    // next turn, so retreating the Defending Pokémon during that turn is exactly
+    // how a player answers the attack — §10 sheds the effects of attacks, and the
+    // schedule goes with the body. NINE durated effects on one clear, SIX
+    // reachability stories.
+    scheduledCounters: null,
     // D149 — the attack-damage debuff, whose story here is the LOCK's: the window
     // is the HOLDER's own next turn, so the RETREAT half is a played line and the
     // victim's own counterplay (retreat the weakened body, attack with a fresh

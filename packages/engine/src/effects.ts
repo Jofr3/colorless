@@ -3625,6 +3625,48 @@ export type EffectOp =
       (installing twice in one turn keeps the LARGER number — the interpreter says
       why MAX and not a sum, `reduceDamage`'s argument on the other seat). */
   | { op: "weakenDefenderAttacks"; amount: number }
+  /** 🆕🆕 §13 (D434) — SCHEDULE a counter placement onto the DEFENDING Pokémon for
+      the end of the opponent's next turn:
+
+        "At the end of your opponent's next turn, put 9 damage counters on the
+         Defending Pokémon."                                        (3 printings)
+
+      🛑 **THE FIRST OP IN THIS UNION WHOSE EFFECT DOES NOT HAPPEN, AND THE
+      DISTINCTION IS THE WHOLE BUILD.** Every neighbour above INSTALLS a fact that
+      later code was going to consult anyway — a §8.5 subtraction, a §11 gate. This
+      one installs a fact NOTHING reads, and pairs it with a firing site in the §13
+      Checkup (flow.ts `runCheckup`) that goes looking. **A stamp alone is inert and
+      a firing site alone has nothing to fire**; either half shipped without the
+      other is a program that resolves and does nothing, which is D407's built-but-
+      dead defect wearing a green suite. Both halves have their own mutant row.
+
+      ⚠️ NO `target` FIELD, AND BARE MEANS THE DEFENDER — D412's positive statement
+      rather than the absence of a choice. All 3 printings say *"the Defending
+      Pokémon"*, and the two sibling sentences in the family (`censusAttackCorpus`
+      rows 53 and 113) say it too, so the whole family aims one way. The day a
+      self-side printing exists it is D131's widening on the holder axis, and the
+      stamp follows the holder for `preventAttack`'s reason (`+ 1` for the defender,
+      `+ 2` for the installer, because declaring an attack ends the turn).
+
+      ⚠️ `amount` IS HP, NOT COUNTERS — the deriver multiplies the printed `(\d+)`
+      by 10 at the arm, `installRecoil`'s convention verbatim, so nothing downstream
+      of the parse carries the counter unit.
+
+      ⚠️ IT IS AN EFFECT OF AN ATTACK DONE TO THE DEFENDING POKÉMON, so a §11 block
+      that refuses "effects of attacks" refuses THIS — `preventRetreat`'s,
+      `preventAttack`'s and `weakenDefenderAttacks`' check verbatim, and reachable
+      off printed cards for their reason. Classified in `preventBlock.test.ts`'s §11
+      table AND driven under a live wide block, because that table forces a verdict
+      without checking one (D148's finding).
+
+      Runs at `attack.ts`'s TAIL like every other `EffectOp`, and that placement is
+      FREE rather than lucky (D125's rule): the whole effect is in the future.
+      Never parks, consumes no rng, and is idempotent BY THE STAMP — two installs in
+      one turn compute the same turn number, and the AMOUNT merges by `Math.max`
+      for `weakenDefenderAttacks`' reason (two schedules on one body are two printed
+      sentences, not one doubled one; unreachable off any printing, so it is
+      constructed and pinned). */
+  | { op: "scheduleCounters"; amount: number }
   /** §9/§11 (D152) — ARM a durated REACTIVE RECOIL on the controller's own Active
       ("During your opponent's next turn, if this Pokémon is damaged by an attack
       (even if it is Knocked Out), put 10 damage counters on the Attacking
@@ -10297,6 +10339,45 @@ const DEFENDER_PRONOUN_CANT_RETREAT =
 // the splitter's shadow refusal and claim the sentence WHOLE, which is the one
 // thing that must not happen here — the head is already claimed by `SELF_HEAL`.
 const SELF_CANT_RETREAT = /^During your next turn, this Pokémon can['’]t retreat\.$/;
+// 🆕🆕 §13 (D434) — THE DELAYED COUNTER PLACEMENT. *"At the end of your opponent's
+// next turn, put 9 damage counters on the Defending Pokémon."* — the whole effect on
+// 3 legal printings (`censusAttackCorpus.ts` row 54), printed STANDALONE, so this
+// anchor is reached by `deriveAttackEffect` directly and not through a splitter.
+//
+// 🛑 **THE FAMILY IS THREE SENTENCES AND THIS ANCHOR CLAIMS EXACTLY ONE OF THEM,
+// WHICH IS D136/D137's RULE AND NOT A NARROWING TO BE WIDENED LATER.** The pattern
+// `/at the end of/i` over all 640 committed sentences returns exactly three rows,
+// every one read:
+//
+//   row  53 (1 printing)  "…, discard the Defending Pokémon and all attached cards."
+//   row  54 (3 printings) "…, put 9 damage counters on the Defending Pokémon."
+//   row 113 (2 printings) "Discard all Energy from this Pokémon. At the end of your
+//                          opponent's next turn, the Defending Pokémon will be
+//                          Knocked Out."
+//
+// ONE shared clock, THREE different payloads (counters, a discard-to-hand-less
+// removal, a flat Knock Out). The CLOCK is what this slice builds as a channel —
+// `InPlayPokemon.scheduledCounters` plus the §13 firing site — and a successor
+// claiming either sibling adds a payload to that channel, not a second clock.
+// ⚠️ AND ROW 113 DOES NOT COMPOSE OFF THIS ARM, MEASURED RATHER THAN ASSUMED: its
+// HEAD is claimed (D431's `Discard all Energy from this Pokémon.`) so
+// `splitAttackTrailingClause` offers its TAIL to the readers — but that tail is the
+// KNOCK-OUT payload, which no anchor in this file matches. `compoundCompose.test.ts`
+// pins the split's shape and this suite pins the tail staying unclaimed.
+//
+// ⚠️ A `(\d+)` CAPTURE AND NOT THE LITERAL 9, for `DamageReduction`'s reason: the
+// varying token is a NUMBER and a number is closed by its type (D120's precondition),
+// unlike an open consequent vocabulary that gets one anchor each. Only 9 is printed
+// today; a literal would have been right today and blind to why. `>= 1` at the arm
+// refuses a printed 0, which is not a real card and would derive to a silent no-op.
+//
+// ⚠️ THE POSSESSIVE CARRIES `['’]` FROM THE FIRST DRAFT — D136/D137's rule, spelled
+// here rather than retrofitted (D414 shipped two anchors in this file with a bare `'`
+// and it was caught by a suite author noticing the asymmetry, not by a rung). The
+// committed corpus row spells U+0027, verified byte-wise rather than remembered
+// (D421's finding); the class is what survives a punctuation-normalising re-ingest.
+const DELAYED_DEFENDER_COUNTERS =
+  /^At the end of your opponent['’]s next turn, put (\d+) damage counters on the Defending Pokémon\.$/;
 // §7.1/§7.2 (D283) — the TURN-SCOPED IMPOSED HAND-PLAY LOCK, `preventHandPlay`.
 // **8 legal printings on 3 printed sentences**, and they are THREE anchors for
 // D136/D137's reason and not one loose one: the pool prints the same rule with
@@ -16882,6 +16963,28 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_CANT_RETREAT.exec(effect);
   if (match !== null) {
     return [{ op: "preventRetreat", target: "self" }];
+  }
+
+  // 5f. 🆕🆕 D434 — "At the end of your opponent's next turn, put {N} damage
+  //     counters on the Defending Pokémon." (1 sentence / 3 legal printings).
+  //     THE FIRST DELAYED EFFECT IN THIS ENGINE: the op writes a stamp and the §13
+  //     Checkup fires it, so the arm alone builds nothing (`scheduleCounters` in
+  //     effects.ts states the two-halves rule).
+  //
+  //     ⚠️ COUNTERS → HP AT THE ARM (one counter = 10, §12), `installRecoil`'s and
+  //     `DEFENDER_POISON_N`'s conversion verbatim, so no code past the parse carries
+  //     the counter unit. The `>= 1` guard is `installRecoil`'s too: a printed 0 is
+  //     not a real card, and returning `null` for it keeps the sentence on the loud
+  //     ATTACK_EFFECT_SKIPPED path instead of building a silent no-op.
+  //
+  //     ⚠️ ORDER AGAINST EVERY ARM ABOVE AND BELOW IS A REFACTOR, NOT BEHAVIOUR:
+  //     the anchor is `^…$` on a sentence beginning "At the end of", which no other
+  //     anchor in this reader can match. Stated because it is exactly what a future
+  //     arm added here could fail to have.
+  match = DELAYED_DEFENDER_COUNTERS.exec(effect);
+  if (match !== null) {
+    const counters = Number(match[1]);
+    if (counters >= 1) return [{ op: "scheduleCounters", amount: counters * 10 }];
   }
 
   // 6a. 🆕🆕 D414 — "If your opponent's Active Pokémon is a Basic Pokémon, it is
