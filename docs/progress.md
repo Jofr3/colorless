@@ -500,11 +500,12 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 433 files / 9,487 tests, `CHECK_EXIT=0`.**
 > Engine **0.336.0**, **`MATCH_RECORD_VERSION` 28**, corpus **1,669**, archive ratchet **104**.
 >
-> 🛑🛑 **THE ONE DEBT, AND IT IS AGAIN PARTLY DECLARED: D434 HAS HAD NO WHOLE-CORPUS SWEEP, AND ITS
-> NEIGHBOUR RE-PROBE IS PARTIAL.** Complete at **112/112** on every file edited non-additively (111
-> KILLED + 1 declared); partial at **504/878** on `effects.ts` + `interpreter.ts`, all KILLED, aborted on
-> wall time. **374 rows unprobed. The edits there are ADDITIVE, which is a reason to expect them clean and
-> NOT evidence that they are.** D433 declared the same gap and the sweep closed it — do that again.
+> ✅✅ **THE SWEEP DEBT IS PAID, AND IT CLOSED A DECLARED GAP FOR THE SECOND SLICE RUNNING.**
+> **1669 · 1644 killed · 25 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> 0 error(s) · 6,499.8s**, `SWEEP_EXIT=0`; `1644 + 25 = 1669` closes and 1669/1669 verified by id. All 16
+> D434 rows KILLED. D434 named **374 unprobed rows** and said its additive edits were *"a reason to expect
+> them clean and NOT evidence that they are"*. **The sweep is that evidence.** Survivors held at **25**,
+> unmoved for a fifth consecutive sweep.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES** (`censusAtHead.test.ts`, canonical predicate at `:6218`).
 > ▶ **The delayed-effect FAMILY is now 2 rows / 3 printings short of closed**: row 113's Knock-Out tail
