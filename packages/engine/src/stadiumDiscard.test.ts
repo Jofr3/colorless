@@ -396,7 +396,7 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([7, 10]); // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
+    expect([refused.length, units(refused)]).toEqual([5, 5]); // 🆕🆕 D436 -2 sentences / -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
     const singletons = refused.filter(([n]) => n === 1);
     // ⚠️ **THE 5-PRINTING BAND IS TWO ROWS, NOT ONE**, which the handoff's prose did
     // not say: D368's *"in addition to this attack's cost"* is printed at 100 (2) AND
@@ -415,8 +415,14 @@ describe("§1 — the price, MEASURED: six printings on one op, against ONE for 
     // it is the row D368 disqualified on SHAPE: the comparison this rung makes (six
     // printings for one op against one for the best clause row) is now made against a
     // band with no purchasable member above 1 at all.
-    expect(refused.length - singletons.length).toBe(2);
-    expect(units(refused) - units(singletons)).toBe(5);
+    // 🆕🆕 **D436 — 2 / 5 → 0 / 0: THE NON-SINGLETON SIDE IS EMPTY.** The one clause
+    // above the singleton band was D368's declaration row, printed at two amounts, and
+    // D436 claims it. The comparison this rung exists to make — six printings for one
+    // op against the best clause row — is now made against a band that is ENTIRELY
+    // singletons, which is the strongest form of the same statement rather than a
+    // weaker one, and it reddens the moment any clause returns above one printing.
+    expect(refused.length - singletons.length).toBe(0);
+    expect(units(refused) - units(singletons)).toBe(0);
     // 🆕🆕 D387 — the singleton band 17 / 17 -> **16 / 16** and the non-singleton side
     // STANDS STILL at 2 / 5: the STAGE 1 clause was a SINGLETON, so this is D384's
     // step repeated and the comparison this rung makes (six printings for one op

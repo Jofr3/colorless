@@ -187,14 +187,29 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
     expect(COSTS.map(([, cost]) => cost + 2)).toEqual([5, 4]);
   });
 
-  it("🛑 …so it is NOT a `BoardCondition`, and NO row was added for it", () => {
-    // Both printed sentences are real, are in the corpus at 3 and 2, and are still
-    // refused by all nine readers at this head. This rung is the tripwire that
-    // fires the day a row IS added for a clause the union cannot evaluate.
+  it("🛑 …so it is NOT a `BoardCondition` — and D436 claims it as a `DamageCountSource` instead", () => {
+    // Both printed sentences are real and are in the corpus at 3 and 2.
+    //
+    // 🆕🆕 **D436 — THE TRIPWIRE FIRED, AND IT FIRED FOR THE RIGHT REASON.** This rung
+    // was written as *"the tripwire that fires the day a row IS added for a clause the
+    // union cannot evaluate"*, and NO ROW WAS ADDED: the union is untouched, the two
+    // exhaustive `switch (cond.kind)` statements gain no arm, and the sentence is
+    // claimed by a WHOLE-SENTENCE ANCHOR feeding a `DamageCountSource` member whose
+    // evaluator is handed the declared attack's EFFECTIVE cost. **§1's measurement
+    // above is what makes that legal and it is unchanged** — two costs, one board, two
+    // answers; a `(state, seat)` predicate still cannot do it and this one is not one.
+    //
+    // ⚠️ **THE `boardCondition` HALF OF THE CLAIM IS KEPT AS AN ASSERTION** rather than
+    // dropped to prose, because it is the half D368 actually settled: the day someone
+    // routes this clause through `CONDITIONAL_DAMAGE_CLAUSES`, the derived `count.kind`
+    // changes and this rung reddens.
     for (const [sentence, printings] of DECLARATION_SENTENCES) {
       expect(units(corpus().filter(([, s]) => s === sentence)), sentence).toBe(printings);
-      expect(resolvedByAnyReader(sentence), sentence).toBe(false);
-      expect(deriveAttackDamageBonus(sentence), sentence).toBeNull();
+      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
+      const read = deriveAttackDamageBonus(sentence);
+      expect(read, sentence).not.toBeNull();
+      expect(read?.count, sentence).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
+      expect(read?.per, sentence).toBe(Number(BONUS.exec(sentence)?.[2]));
       // Refused by VOCABULARY, not by the ANCHOR — D363's distinction. It matches
       // the skeleton and misses at the table, which is what made it look cheap.
       expect(BONUS.test(sentence.trim()), sentence).toBe(true);

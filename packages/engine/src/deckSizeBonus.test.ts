@@ -244,8 +244,8 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     // D397 left the residue at 8 / 11, re-derived here off the live readers.
-    expect([refused.length, units(refused)]).toEqual([7, 10]);
-    expect([refused.length + 1, units(refused) + 1]).toEqual([8, 11]);
+    expect([refused.length, units(refused)]).toEqual([5, 5]);// 🆕🆕 D436 -2 sentences / -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
+    expect([refused.length + 3, units(refused) + 6]).toEqual([8, 11]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -255,9 +255,9 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // else moved. The only clause above one printing is still the 5-printing
     // declaration clause D368 disqualified on SHAPE, so this rung goes red from the
     // other side too — a reader narrowing until some clause returns to 2 fails it.
-    expect(byClause.size).toBe(6);
+    expect(byClause.size).toBe(5);// 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(5);
-    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(1);
+    expect([...byClause.values()].filter((n) => n === 5)).toHaveLength(0);// 🆕🆕 D436 the 5-printing band EMPTIES with the declaration clause (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     expect([...byClause.values()].filter((n) => n === 2)).toHaveLength(0);
   });
 
@@ -266,6 +266,16 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     // Every clause left is a refusal with a REASON, and the reasons are two: a D207
     // BANNER no ingested column classifies, or D368's structural shape refusal. If a
     // successor ever finds a THIRD kind here, this case is where it shows up.
+    //
+    // 🆕🆕 **D436 — THE SHAPE BUCKET IS NOW EMPTY, AND THAT IS THE FINDING RATHER
+    // THAN A NARROWING.** D368's refusal was of a `BoardCondition`; D436 reads the
+    // identical sentence as a `DamageCountSource`, where the declared attack's cost
+    // is in scope — so the clause LEAVES this residue and one of the two reasons has
+    // no occupant left. ⚠️ **THE BUCKET IS KEPT AND ITS EMPTINESS IS ASSERTED, and
+    // the clause is asserted CLAIMED beside it** (D418: a re-pointed rung must keep
+    // the discrimination the old one had). The old rung went red if the clause got
+    // claimed; this one goes red if it stops being claimed OR if a third kind of
+    // refusal appears, which is the pair of directions that matters now.
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     const clauses = new Set(refused.map(([, s]) => BONUS.exec(s.trim())?.[1] ?? ""));
     const BANNERS = ["Ancient ", "Tera ", "Future "] as const;
@@ -273,7 +283,13 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     const banner = [...clauses].filter((c) => BANNERS.some((b) => c.includes(b)));
     const shape = [...clauses].filter((c) => c === SHAPE);
     expect(banner).toHaveLength(5);
-    expect(shape).toHaveLength(1);
+    expect(shape).toHaveLength(0);
+    // …and the clause the bucket was built for is CLAIMED, on BOTH of its printed
+    // amounts, so "the bucket is empty" cannot be satisfied by the clause vanishing
+    // from the catalog instead of being read.
+    for (const amount of [80, 100]) {
+      expect(resolvedByAnyReader(`If ${SHAPE}, this attack does ${amount} more damage.`)).toBe(true);
+    }
     // …and the partition is EXACT: nothing is left over and nothing is double-counted.
     expect(banner.length + shape.length).toBe(clauses.size);
     for (const c of banner) expect(shape).not.toContain(c);

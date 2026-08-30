@@ -5185,7 +5185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5684,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5695,7 +5695,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.337.0";',
+    find: 'export const engineVersion = "0.338.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -14257,9 +14257,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D367-bonus-apostrophe-guard-loses-its-partition",
     decision: "D367",
-    what: "🛑 C9 — D367's OWN COMPLETENESS GUARD STOPS SEPARATING ROWS FROM TEMPLATE: the two clauses the parameterised TYPE template owns are no longer excluded, so the guard compares all ELEVEN carried apostrophe clauses against a list of NINE literal rows. That is D366's defect exactly — a population that coincides with the one you want is not the one you wrote — reproduced one table over, and it is the reason this guard partitions explicitly instead of filtering once. ⚠️ **THE TARGET IS A TEST FILE ON PURPOSE** (D318's precedent): a guard keyed on the wrong population cannot be caught by the code it guards",
+    what: "🛑 C9 — D367's OWN COMPLETENESS GUARD STOPS SEPARATING ROWS FROM TEMPLATE: the two clauses the parameterised TYPE template owns are no longer excluded, so the guard compares all ELEVEN carried apostrophe clauses against a list of NINE literal rows. That is D366's defect exactly — a population that coincides with the one you want is not the one you wrote — reproduced one table over, and it is the reason this guard partitions explicitly instead of filtering once. ⚠️ **THE TARGET IS A TEST FILE ON PURPOSE** (D318's precedent): a guard keyed on the wrong population cannot be caught by the code it guards. \u26a0\ufe0f **RE-TRANSCRIBED AT D436**, which widened the partition from TWO buckets to THREE (a whole-sentence ANCHOR owns a carried clause that is neither a row nor a template). The `find` moved by three lines and not one character of its MEANING: the mutant still collapses the partition to the whole apostrophe half, so the same rung reddens for the same reason. Caught by `precheck`, not by the sweep (D414)",
     file: "packages/engine/src/clauseApostrophe.test.ts",
-    find: "    const rowClauses = withApostrophe.filter((clause) => !TEMPLATE_OWNED.includes(clause));",
+    find: "    const rowClauses = withApostrophe.filter(\n      (clause) => !TEMPLATE_OWNED.includes(clause) && !ANCHOR_OWNED.includes(clause),\n    );",
     replace: "    const rowClauses = withApostrophe;",
     expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
   },
@@ -19801,5 +19801,94 @@ export const MUTANTS: Mutant[] = [
     replace: "          const marker = undefined;",
     expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
     survives: { kind: "equivalent", reason: "\ud83d\uded1 **DECLARED BEFORE THE SWEEP AND MEASURED RATHER THAN ASSUMED, AND IT IS SELF-INVALIDATING BY CONSTRUCTION (D427).** The `koByEffect:<turn>` marker has EXACTLY TWO readers, both in `flow.ts`: `byAttackFor`, which returns `false` outright when `attackerSeat` is `undefined`, and `koRecoilOf`, which is called by `finishAttack` alone. The Checkup's `collectKnockOuts` call passes NO `attackerSeat` and this path never reaches `finishAttack`, so both readers answer identically with and without the stamp and NO BOARD distinguishes the two builds today. \u26a0\ufe0f **IT IS STAMPED ANYWAY, AND THE REASON IS STATED AS A REASON RATHER THAN AS AN OBSERVATION (D414's rule about a justification that rots):** the alternative is a body whose lethality is an effect's doing carrying \u2014 BY ABSENCE \u2014 the mark that says it was damage's, which is the closed-world assumption D414 was spent removing. \ud83d\uded1 **THE DAY A THIRD READER APPEARS, OR THE DAY THE CHECKUP'S SWEEP GAINS AN `attackerSeat`, THIS ROW IS KILLED AND THE RUN FAILS WITH `STALE-SURVIVOR`** \u2014 which is the whole reason it is declared rather than deleted." },
+  },
+  // ── D436 — THE "EXTRA ENERGY" DECLARATION READ. Nine rows, ONE PER MECHANISM OR
+  //    DECISION, and the SHAPE of the set is the finding: SEVEN of the nine are SILENT
+  //    IN EVERY CENSUS. The sentence still matches its anchor, `BUILT.attack` is
+  //    unmoved and every residue rung in 28 suites stays green — while the engine
+  //    counts CARDS where the decision says units, drops the cost out of the
+  //    subtraction entirely, reads the PRINTED cost under a Stadium, or scores the
+  //    bonus one Energy early. Only the two ANCHOR rows (8 and 9) move a census figure,
+  //    which is exactly D400/D401/D402's ratio arriving at a reader that no op backs.
+  {
+    id: "D436-counts-cards-not-units",
+    decision: "D436",
+    what: "\ud83d\uded1 THE DECISION THIS SLICE IS ABOUT, INVERTED: the fold delegates to `countAttachedEnergy` (D121's CARDS reading, which every other Energy member in both vocabularies uses) instead of to `providedEnergy` (UNITS, the operand `costMet` consumes). It is the mistake the sentence invites, it is one identifier long, and NO CENSUS CAN SEE IT \u2014 the sentence still resolves, `BUILT.attack` is unmoved and every board with only single-unit attachments answers identically. It shows only where one card provides several units: two attached `fix-grassdouble` on a {C}{C} cost are 2 cards and 4 units, so the bonus lands under one reading and not the other with the CARD COUNT HELD CONSTANT.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return providedEnergy(state, attacker).length - cost.length >= bonus.count.extra",
+    replace: "      return countAttachedEnergy(state, attacker, null) - cost.length >= bonus.count.extra",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-cost-dropped-from-the-comparison",
+    decision: "D436",
+    what: "\ud83d\uded1 THE PARENTHETICAL DELETED FROM THE CODE RATHER THAN FROM THE REGEX: *\"at least 2 extra Energy attached\"* read as *\"at least 2 Energy attached\"*, with `- cost.length` gone. The clause becomes a bare threshold on the attacker's own body \u2014 which is `yourActiveEnergyAtLeast`, a member that already exists, and therefore the single most plausible wrong build. Every board that can legally declare either printing holds at least its cost in units, so the bonus fires almost always; the boundary sweep at cost+1 is what refuses it.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return providedEnergy(state, attacker).length - cost.length >= bonus.count.extra",
+    replace: "      return providedEnergy(state, attacker).length >= bonus.count.extra",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-strictly-greater-not-at-least",
+    decision: "D436",
+    what: "`>=` becomes `>`, so *\"at least 2 extra\"* needs THREE. Off by exactly one value, which is why the threshold is swept at cost+1, cost+2 and cost+3 rather than driven armed/unarmed: a two-point sweep cannot tell the two operators apart, and the boundary is the only board where they disagree.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return providedEnergy(state, attacker).length - cost.length >= bonus.count.extra",
+    replace: "      return providedEnergy(state, attacker).length - cost.length > bonus.count.extra",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-printed-cost-not-effective",
+    decision: "D436",
+    what: "\ud83d\uded1 THE OTHER HALF OF THE DECISION: the fold is handed `declared.cost` (the PRINTED symbols) instead of `cost` (the EFFECTIVE array \u00a78.2 charged, `effectiveAttackCost`, D169). Identical on every board with no cost modifier in play \u2014 which is nearly all of them \u2014 and wrong under Pok\u00e9mon League Headquarters or a \"Quaking Zone\" aura, where the player has paid a symbol the clause then refuses to count. The precedent it violates is one arm over in the same switch: `opponentActiveRetreatCost` reads the FOLD and says so.",
+    file: "packages/engine/src/attack.ts",
+    find: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, cost);",
+    replace: "      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, declared.cost ?? []);",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-threshold-hardcoded-at-two",
+    decision: "D436",
+    what: "The captured threshold is replaced by the literal the catalog happens to print. EQUIVALENT on all five legal printings and on every corpus rung \u2014 D206's `* 30` defect exactly, where a hard-coded constant survives every real card because every real card prints it. The probe at *\"at least 3 extra\"* is the only thing that separates a captured digit from a constant.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"extraEnergyUnitsBeyondCost\", extra } };",
+    replace: "    if (per >= 1) return { per, count: { kind: \"extraEnergyUnitsBeyondCost\", extra: 2 } };",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-amount-and-threshold-swapped",
+    decision: "D436",
+    what: "The two capture groups are read the wrong way round, so the sentence derives `per: 2` and `extra: 80`. A transcription slip with two digits in one anchor, and the derived value is still a well-formed member \u2014 nothing type-checks it into place.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const per = Number(extraEnergy[2]);\n    const extra = Number(extraEnergy[1]);",
+    replace: "    const per = Number(extraEnergy[1]);\n    const extra = Number(extraEnergy[2]);",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-printed-zero-guard-dropped",
+    decision: "D436",
+    what: "The family's printed-0 guard is relaxed to `per >= 0`, so *\"does 0 more damage\"* is CLAIMED and silently scores nothing instead of staying on the loud ATTACK_EFFECT_SKIPPED path. The guard every arm of `deriveAttackDamageBonus` carries, dropped on the newest one.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1) return { per, count: { kind: \"extraEnergyUnitsBeyondCost\", extra } };",
+    replace: "    if (per >= 0) return { per, count: { kind: \"extraEnergyUnitsBeyondCost\", extra } };",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-anchor-drops-the-parenthetical",
+    decision: "D436",
+    what: "\ud83d\uded1 THE ANCHOR WRITTEN FROM THE CLAUSE'S MEANING RATHER THAN FROM ITS BYTES: the printed *\"(in addition to this attack's cost)\"* is dropped from the pattern. It is the half of the sentence that names the comparand, so a build without it claims a sentence the catalog does not print and refuses both sentences it does \u2014 the loudest possible failure, and the one row here that a census would also catch.",
+    file: "packages/engine/src/effects.ts",
+    find: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached \\(in addition to this attack['\u2019]s cost\\), this attack does (\\d+) more damage\\.$/;",
+    replace: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached, this attack does (\\d+) more damage\\.$/;",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts"],
+  },
+  {
+    id: "D436-apostrophe-class-narrowed",
+    decision: "D436",
+    what: "`['\u2019]` becomes a bare U+0027, so the anchor stops surviving a punctuation-normalising re-ingest. The catalog prints the straight apostrophe today, so EVERY corpus figure and every board in this suite is unmoved \u2014 D136/D137's standing insurance is exactly the kind of guard whose absence is invisible until the day it matters, and only the U+2019 round-trip rung can see it.",
+    file: "packages/engine/src/effects.ts",
+    find: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached \\(in addition to this attack['\u2019]s cost\\), this attack does (\\d+) more damage\\.$/;",
+    replace: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached \\(in addition to this attack's cost\\), this attack does (\\d+) more damage\\.$/;",
+    expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts", "packages/engine/src/clauseApostrophe.test.ts"],
   },
 ];

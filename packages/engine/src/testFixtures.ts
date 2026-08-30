@@ -12777,6 +12777,87 @@ export const FIXTURE_POOL: Record<string, Card> = {
       in `providedEnergy`, so duplicates survive — and this is the first row to spell
       the same type twice. */
   "fix-grassdouble": specialEnergy("fix-grassdouble", "fix-grassdouble"),
+  /** 🆕🆕 D436 — THE "EXTRA ENERGY" DECLARATION READ, three attackers, and the cast is
+      the smallest that can pose the question the sentence asks.
+
+      🛑 **TWO OF THEM CARRY THE *RECORDED* COSTS, WHICH IS THE WHOLE REASON THERE ARE
+      TWO.** D368 measured the family against the remote D1 and found the identical
+      clause printed on TWO attacks with TWO DIFFERENT COSTS — Electivire ex
+      `sv10-069`/`-212` "High-Voltage Press" ({L}{L}{C}, cost 3, the **+100** sentence,
+      2 legal printings) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Power Press"
+      ({P}{C}, cost 2, the **+80** sentence, 3 legal printings). Four Energy satisfies
+      one and fails the other WITH THE BOARD IDENTICAL, which is what disqualified the
+      clause as a `BoardCondition` and what a suite for the replacement has to drive.
+      The costs and the printings are D368's measurement (kept in
+      `undamagedBonus.test.ts` §1); ⚠️ **the BASE damage, the HP and the STAGE are
+      FIXTURE CHOICES and are NOT catalog facts** — this checkout has no D1 (D425), the
+      real printings are a Stage 2 and a Stage 1, and nothing in this family reads
+      either, so a `fix-*` Basic is used and the deviation is declared rather than
+      hidden. A base of 20 keeps 20 + 100 under `fix-titan`'s 340 HP, so no §8.1 Prize
+      tail ever runs beneath a damage assertion.
+
+      🛑 **AND THE THIRD IS A PROBE, DELIBERATELY UNPRINTED** (`fix-attacker`'s "Fury"
+      idiom, D115). `fix-extraprobe` costs {C}{C} — two COLORLESS symbols, so ANY
+      attachment pays it — which is the only shape that can put a board on the table
+      where the attached Energy is FEWER CARDS than the cost has symbols: one
+      `fix-grassdouble` provides {G}{G} and pays the whole cost by itself, so a
+      CARDS-minus-SYMBOLS reading of "extra" evaluates to **-1** on a board §8.2
+      admits. That negative is the argument for the UNITS reading, and it cannot be
+      built on either printed cost, because neither `fix-grassdouble` nor any other
+      multi-unit Special in this pool provides {P} or {L}.
+
+      ⚠️ **NO POSSESSIVE IN ANY NAME**, so the three `/^[A-Z][A-Za-z' ]*'s /` owner
+      sweeps stand still; the printed SENTENCES do spell one ("this attack's cost"),
+      which is why all three enter `clauseApostrophe.test.ts`'s derivable sweep — the
+      standing insurance on the `['’]` class the new anchor carries.
+
+      ⚠️ **`fix-*` IDS, SO NO MANIFEST ROW IS OWED** — `catalogManifest.test.ts` diffs
+      only the `sv*` ids in this pool against the 978-row / 6-set manifest. */
+  "fix-powerpress": battler("fix-powerpress", {
+    name: "Fixellicent",
+    hp: 180,
+    types: ["Psychic"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Psychic", "Colorless"],
+        name: "Power Press",
+        damage: "20+",
+        effect:
+          "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
+      },
+    ],
+  }),
+  "fix-highvoltage": battler("fix-highvoltage", {
+    name: "Fixectivire",
+    hp: 180,
+    types: ["Lightning"],
+    retreat: 2,
+    attacks: [
+      {
+        cost: ["Lightning", "Lightning", "Colorless"],
+        name: "High-Voltage Press",
+        damage: "20+",
+        effect:
+          "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 100 more damage.",
+      },
+    ],
+  }),
+  "fix-extraprobe": battler("fix-extraprobe", {
+    name: "Fixtra Probe",
+    hp: 180,
+    types: ["Colorless"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Surplus Press",
+        damage: "20+",
+        effect:
+          "If this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost), this attack does 80 more damage.",
+      },
+    ],
+  }),
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -14558,6 +14639,55 @@ export const TYPED_ENERGY_THRESHOLD_DECK = deckOf({
   "fix-grass-energy": 12, // Basic {G} — the type the clause counts
   "fix-grassdouble": 4, // Special {G}{G} — ONE card, TWO units: the cards-vs-units board
   "fix-energy": 8, // Basic {C} — the printed Colorless symbol, and a NON-Grass filler
+});
+
+/** 🆕🆕 D436 — the "EXTRA ENERGY" DECLARATION board (`extraEnergyBonus.test.ts`). Its
+    own 60 on D270's rule, and the cast is the smallest that can pose the question: the
+    clause compares attached Energy against THIS ATTACK'S COST, so the suite has to vary
+    the COST (two printed values plus a modifier), the ATTACHMENT (cards against units)
+    and the SEAT — and nothing else.
+
+      • `fix-powerpress` ({P}{C}, cost 2, `20+`, **+80**) and `fix-highvoltage`
+        ({L}{L}{C}, cost 3, `20+`, **+100**) — the two printed sentences at the two
+        RECORDED costs (D368's D1 measurement). Two costs is the whole point: the
+        threshold is 4 attached units for one and 5 for the other, so a board that arms
+        one fails the other and no `(state, seat)` predicate could tell them apart;
+      • `fix-extraprobe` ({C}{C}, `20+`, **+80**) — the unprinted PROBE whose
+        all-Colorless cost any attachment pays, so the cards-vs-units boards can be
+        built without payability ever being the reason a bonus is absent;
+      • `fix-titan` (340 HP, no attacks, no Weakness) — the defender. 🛑 CHOSEN AGAINST
+        THE BOOSTED TOTAL: 20 + 100 = 120, so nothing here is ever Knocked Out and no
+        §8.1 Prize tail runs underneath a damage assertion;
+      • `fix-grassdouble` — the Special providing {G}{G}: ONE card, TWO units, and the
+        only board on which a CARDS reading and a UNITS reading of "extra" disagree;
+      • `fix-psychic-energy` / `fix-lightning-energy` — the typed symbols of the two
+        printed costs; `fix-energy` — Basic {C}, every Colorless slot and every filler;
+      • `sv03-192` Pokémon League Headquarters (Stadium, `basicAttackCostSurcharge`) and
+        `sv03-052` Seismitoad ("Quaking Zone", `opposingAttackCostSurcharge`) — the TWO
+        live sources that make `effectiveAttackCost` differ from the printed cost, and
+        therefore the two boards that separate the printed reading from the effective
+        one. ⚠️ TWO rather than one because the Stadium's surcharge is gated on the
+        attacker being a BASIC and the aura is stage-agnostic, so a build reading the
+        printed cost has to survive both to look correct.
+
+    🛑 **NO OTHER MODIFIER AND NO SECOND ATTACKER.** Nothing in this 60 can change a
+    damage number except which Energy is attached and which cost modifier is in play —
+    which is what makes a 20 and a 100 attributable. `fix-titan` carries no attacks, so
+    the far seat can never move a number of its own; Seismitoad's own attack is never
+    declared, and it is fielded only as the aura's carrier.
+
+    4 + 4 + 4 + 12 + 4 + 8 + 8 + 12 + 2 + 2 = **60**. */
+export const EXTRA_ENERGY_DECK = deckOf({
+  "fix-powerpress": 4, // {P}{C}, cost 2 — the +80 sentence at Jellicent ex's recorded cost
+  "fix-highvoltage": 4, // {L}{L}{C}, cost 3 — the +100 sentence at Electivire ex's recorded cost
+  "fix-extraprobe": 4, // {C}{C} — the all-Colorless PROBE, for the cards-vs-units boards
+  "fix-titan": 12, // 340 HP, no attacks — survives the boosted 120, and arms nothing
+  "fix-grassdouble": 4, // Special {G}{G} — ONE card, TWO units: the cards-vs-units board
+  "fix-psychic-energy": 8, // Basic {P} — the typed symbol of "Power Press"
+  "fix-lightning-energy": 8, // Basic {L} — the two typed symbols of "High-Voltage Press"
+  "fix-energy": 12, // Basic {C} — every Colorless slot, and the untyped filler
+  "sv03-192": 2, // Pokémon League Headquarters — the STADIUM surcharge, Basics only
+  "sv03-052": 2, // Seismitoad "Quaking Zone" — the stage-agnostic opposing surcharge
 });
 
 /** 🆕 D392 — a DEDICATED 60 (D270) for the SUBSTRING name read, so no other suite's

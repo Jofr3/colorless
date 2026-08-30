@@ -262,9 +262,9 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect([refused.length, units(refused)]).toEqual([7, 10]); // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
+    expect([refused.length, units(refused)]).toEqual([5, 5]); // 🆕🆕 D436 -2 sentences / -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took the LAST BUILDABLE sentence out (Rabsca `sv08-014` "Counterturn", 1 printing), so 8 / 11 -> 7 / 10 and the residue is now EXHAUSTED of buildable rows: FIVE D207 banners and D368's 5-printing SHAPE refusal are all that is left, and this figure can only move again if a refusal's REASON expires
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, D390's did not.
-    expect([refused.length + 8, units(refused) + 8]).toEqual([15, 18]); // 🆕🆕 D398 — 1 sentence / 1 printing out (THE DECK-SIZE READ)
+    expect([refused.length + 10, units(refused) + 13]).toEqual([15, 18]); // 🆕🆕 D398 — 1 sentence / 1 printing out (THE DECK-SIZE READ)
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -276,19 +276,27 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the shape of 
     // distribution, which is what keeps this rung able to go red for the reason that
     // matters (a reader narrowing so any clause returns to 2 fails it too).
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect(byClause.size).toBe(5); // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D392 — 12 -> **11**, the whole of this slice's step.
     expect([...byClause.values()].filter((n) => n === 1)).toHaveLength(5); // 🆕🆕 D398 — the DECK-SIZE READ left the singleton band, 6 -> 5 // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(byClause.has(TAKEN_CLAUSE)).toBe(false);
-    // …and the TRAP is still in the residue at its 5 printings, which is what makes
-    // "the residue fell by one sentence" a statement about THIS sentence. It shares
-    // the printed noun AND the digit and is refused for a reason no vocabulary can
-    // fix: it reads the attack's own cost, and this member is handed no attack.
-    expect(byClause.get(TRAP_CLAUSE)).toBe(5);
-    expect(deriveAttackDamageBonus(`If ${TRAP_CLAUSE}, this attack does 100 more damage.`)).toBe(
-      null,
-    );
+    // 🆕🆕 **D436 — THE TRAP LEFT THE RESIDUE, AND ITS STATED REASON WAS RIGHT ABOUT
+    // THE VOCABULARY AND WRONG ABOUT THE SENTENCE.** This rung read *"refused for a
+    // reason no vocabulary can fix: it reads the attack's own cost, and this member is
+    // handed no attack"* — true of `BoardCondition`, which is still handed no attack,
+    // and false of the engine, because `DamageCountSource` is evaluated inside
+    // `attack()` where the declared cost is a local. ⚠️ **A REFUSAL SCOPED TO ONE
+    // VOCABULARY MUST SAY SO** (D423's scoped-claim rule, arriving at a refusal).
+    // The rung is INVERTED rather than deleted (D418): it still names the clause, still
+    // pins its 5 printings against the corpus, and now reddens if the claim is lost.
+    expect(byClause.get(TRAP_CLAUSE)).toBeUndefined();
+    expect(
+      units(corpus().filter(([, s]) => BONUS.exec(s.trim())?.[1] === TRAP_CLAUSE)),
+    ).toBe(5);
+    expect(
+      deriveAttackDamageBonus(`If ${TRAP_CLAUSE}, this attack does 100 more damage.`)?.count,
+    ).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
   });
 });
 

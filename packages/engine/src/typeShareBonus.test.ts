@@ -339,8 +339,8 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(7); // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(10); // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
+    expect(refused.length).toBe(5); // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(5); // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // The recorded residues of D374, D373, D372, D371, D370 and D369, re-derived
     // from THIS head: add the sentences back rather than freezing the pair that
     // measured them. The step here is 1 sentence / 2 printings — the 1:2 shape for
@@ -350,19 +350,19 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // by one sentence and two printings while the expected values stayed put — which
     // is the point of writing them as offsets off the live head at all.
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(refused.length + 17).toBe(24);
+    expect(refused.length + 19).toBe(24);
     // 🆕🆕 D392 — the OFFSET gains one: the head moved, this one's did not.
-    expect(units(refused) + 18).toBe(28);
-    expect(refused.length + 18).toBe(25);
-    expect(units(refused) + 20).toBe(30);
-    expect(refused.length + 19).toBe(26);
-    expect(units(refused) + 22).toBe(32);
-    expect(refused.length + 20).toBe(27);
-    expect(units(refused) + 24).toBe(34);
-    expect(refused.length + 21).toBe(28);
-    expect(units(refused) + 26).toBe(36);
-    expect(refused.length + 23).toBe(30);
-    expect(units(refused) + 28).toBe(38);
+    expect(units(refused) + 23).toBe(28);
+    expect(refused.length + 20).toBe(25);
+    expect(units(refused) + 25).toBe(30);
+    expect(refused.length + 21).toBe(26);
+    expect(units(refused) + 27).toBe(32);
+    expect(refused.length + 22).toBe(27);
+    expect(units(refused) + 29).toBe(34);
+    expect(refused.length + 23).toBe(28);
+    expect(units(refused) + 31).toBe(36);
+    expect(refused.length + 25).toBe(30);
+    expect(units(refused) + 33).toBe(38);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -388,7 +388,7 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -401,14 +401,22 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     // already empty and stays empty, and the refusal is still driven from OUTSIDE it.
     // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band.
     // 🆕🆕 D392 — 13 -> **12**: the SUBSTRING NAME READ's clause left the 1-printing band.
-    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
+    expect(byClause.size).toBe(5); // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices
     expect(band.length + 2).toBe(2);
     expect(band.length + 3).toBe(3);
     expect(band.length + 4).toBe(4);
     expect(band.length + 5).toBe(5);
     // The 5-printing declaration clause D368 disqualified on SHAPE is still the
     // largest thing in the residue and still refused, so nothing here re-priced it.
-    expect(Math.max(...byClause.values())).toBe(5);
+    // 🆕🆕 **D436 — 5 → 1: THE DECLARATION CLAUSE LEFT AND THE RESIDUE IS FLAT.** The
+    // paragraph above is right about the SHAPE and D436 does not contradict it: no
+    // `BoardCondition` answers *"in addition to this attack's cost"*, and none does
+    // now. The sentence is claimed by a `DamageCountSource` instead, whose fold runs
+    // inside `attack()` where the declared cost is a local. ⚠️ **A REFUSAL SCOPED TO
+    // ONE VOCABULARY IS NOT A REFUSAL OF THE SENTENCE.** The rung is kept and inverted
+    // rather than deleted (D418): a FLAT maximum reddens the moment any clause returns
+    // above one printing, which is the direction that still matters.
+    expect(Math.max(...byClause.values())).toBe(1);
   });
 
   it("the taken sentence is 2 legal printings, and that is ALL of them", () => {

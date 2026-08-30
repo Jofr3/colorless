@@ -18534,6 +18534,146 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.334.0 → **0.335.0**
     (`packages/engine/package.json` in the same commit). */
+/** 🆕🆕 **0.337.0 → 0.338.0 — D436, THE "EXTRA ENERGY" CLAUSE: D368's SHAPE REFUSAL
+    COLLECTED, AND THE ONE PLACE THIS ENGINE COUNTS ENERGY IN *UNITS*.**
+
+    *"If this Pokémon has at least 2 extra Energy attached (in addition to this
+    attack's cost), this attack does {80|100} more damage."* — **2 sentences / 5 legal
+    printings on ONE clause**, `censusAttackCorpus.ts` rows 319/320, over the committed
+    `legal_standard = 1` attack column (640 sentences / 1,732 printings). The largest
+    record left behind the `CONDITIONAL_DAMAGE_BONUS` skeleton since D367 handed it on.
+
+    🛑 **D368's REFUSAL IS COLLECTED, NOT OVERTURNED, AND THE DISTINCTION IS THE WHOLE
+    SLICE.** D368 measured that the identical clause is printed on TWO attacks with TWO
+    DIFFERENT COSTS — Electivire ex `sv10-069`/`-212` "High-Voltage Press" ({L}{L}{C},
+    3) and Jellicent ex `sv10.5w-045`/`-160`/`-168` "Power Press" ({P}{C}, 2) — so four
+    Energy arms one and fails the other **with the board identical**, and
+    `conditionHolds(state, seat, cond)` is handed no attack. Every clause of that is
+    still TRUE and `extraEnergyBonus.test.ts` §1 re-drives it on boards. What it
+    refuses is a **`BoardCondition`**, and this slice adds none: `DamageCountSource` is
+    folded by `scaledAttackDamage` INSIDE `attack()`, where the declared attack's
+    effective cost has been a local since the §8.2 check ~380 lines earlier. ⚠️ **A
+    REFUSAL SCOPED TO ONE VOCABULARY IS NOT A REFUSAL OF THE SENTENCE** — D423's
+    scoped-claim rule arriving at a refusal rather than at a census — and FOUR shipped
+    rungs (`undamagedBonus`, `typedEnergyThreshold`, `benchNamedBonus`, `deckSizeBonus`
+    plus three `resolvedByAnyReader(...) === false` tripwires) carried it as though it
+    were a refusal of the sentence. All are INVERTED rather than deleted (D418), and
+    the `boardCondition` half is kept as an executable assertion on the derived
+    `count.kind`, because that is the half D368 actually settled.
+
+    🛑 **UNITS, NOT CARDS — THE ONE MEMBER IN EITHER VOCABULARY THAT DOES NOT DELEGATE
+    TO `countAttachedEnergy`.** D121's rule (*"one Energy card is one Energy however
+    many units it provides"*) governs a count against a printed CONSTANT
+    (`yourActiveEnergyAtLeast`) or against another BODY (`activeEnergyCountsEqual`).
+    This sentence counts against **a cost**, and the comparand fixes the unit: §6.4 pays
+    a cost in UNITS OF PROVISION (`costMet` consumes `providedEnergy`), so
+    cards-minus-symbols is not a quantity at all. **D425's rule applied and not copied:
+    the test is the discriminating board, and it was DRIVEN.** Two attached Energy CARDS
+    deal **20 or 100** on the same attacker depending only on what they provide; and one
+    `fix-grassdouble` ({G}{G}) paying a whole {C}{C} cost makes the CARDS reading
+    **-1**, a negative "extra" on a board §8.2 admits. Cost 2 with 3 cards / 4 units is
+    the same disagreement on a PRINTED cost.
+
+    🛑 **THE COST IS THE EFFECTIVE ONE (D169), on the precedent one arm over in the same
+    switch**: `opponentActiveRetreatCost` reads `effectiveRetreatCost` because *"a
+    Stadium that changes what it costs to retreat changes what these attacks hit for"*.
+    §8.2 charges `effectiveAttackCost`, so the cost the Energy is "in addition to" is
+    the one the player had to meet. Both live surcharge sources are driven — Pokémon
+    League Headquarters `sv03-192` (Stadium, Basics only) and Seismitoad `sv03-052`
+    "Quaking Zone" (stage-agnostic, which is the one that reaches the two REAL printings,
+    a Stage 1 and a Stage 2). A build reading `declared.cost` answers 100 on both boards
+    and moves no other number; `D436-printed-cost-not-effective` is exactly that build.
+    ⚠️ The value is PASSED, never recomputed — one question, one answer (D159).
+
+    ⚠️ **§8.2 IS A CHECK AND NOT A PAYMENT** (`docs/reference/ptcg-rules.md` §8 step 2),
+    so "extra" is measured against everything still attached at §8.5, and the frozen
+    pair asserts the arming Energy is still there afterwards. The pre-damage seam
+    discards TOOLS, so nothing between the gate and the fold moves either operand.
+
+    WHAT SHIPS: **1 whole-sentence anchor** (`EXTRA_ENERGY_BONUS`, carrying `['’]` and a
+    real é), **1 reader arm** inside `deriveAttackDamageBonus`, **1 `DamageCountSource`
+    member** (`extraEnergyUnitsBeyondCost`, the FOURTEENTH and the first whose answer is
+    not a fact about the board), **1 evaluator arm**, **1 new parameter** on
+    `scaledAttackDamage` with its two call sites, **3 fixtures** and **1 dedicated 60**.
+    ZERO new `BoardCondition` members, clause-table rows, templates, ops, events, error
+    codes, state fields, prompts, parks, registry rows or `packages/schema` bytes.
+
+    ⚠️ **MECHANISMS ARE NOT SITES, AND THIS SLICE IS THE RULE'S WIDEST WITNESS YET
+    (D423).** FIVE mechanisms — anchor, reader arm, union member, evaluator arm, and
+    the sixth parameter on `scaledAttackDamage`. **57 files touched** (56 modified plus
+    the new suite), and **277 edited assertion lines across 31 census suites** on top
+    of the 20 version pins, the three fixtures and the 60. Measured with
+    `git diff -U0` over the added non-comment lines, not estimated. The predicted
+    SHAPE was exactly right and told nothing at all about the blast radius, which is
+    D421/D423/D424's finding arriving for the fifth time; **the single largest driver
+    was not the census head at all but D428/D431's sibling rule** — TWENTY-ONE suites
+    carry the same residue chain at up to eighteen rungs apiece (122 front terms in
+    all), and vitest reddens exactly ONE of them per run, so the set had to be stepped
+    by GREP and not by following the failures. It took FOUR full runs to reach green,
+    each one surfacing a wave the previous had kept quiet.
+
+    ⚠️ **AND THE FOURTH WAVE WAS NOT A CENSUS AT ALL.** `Math.max(...byClause.values())`
+    in nine suites, a `{1: 5, 5: 1}` distribution in a tenth, and a
+    `refused - singletons` pair in an eleventh all recorded *"the 5-printing declaration
+    clause is the largest thing left and it is refused"*. Each is inverted to the flat
+    residue it now describes rather than deleted, so each still reddens the day a clause
+    returns above one printing. The census move is READER-keyed and lands in ONE summand:
+    `BUILT.attack` 1,472 → **1,477**, raw unbuilt sentences 204 → **202**, residue 178 →
+    **176**, `unbuiltAttack` 260 → **255**; `REGISTRY_ATTACK_UNITS`, `SPLIT_ATTACK_UNITS`
+    and `COMPOUND_ATTACK_UNITS` were RE-MEASURED UNMOVED, and the reader SURFACE stands
+    still at **13** (the arm is inside an existing reader). ⚠️ **AND ONE INSTRUMENT
+    LEARNT A THIRD KIND OF OWNER**: `carriedBonusClauses()` probes the READER, so this
+    clause enters `clauseApostrophe.test.ts`'s carried set (54 → **55**, apostrophe half
+    22 → **23**) without any Map key existing — the partition there gains an
+    `ANCHOR_OWNED` bucket rather than the row half gaining an entry, which is D421's
+    widen-do-not-exclude rule.
+
+    ⚠️ **THE VERSION TAX RE-MEASURED, AND IT MOVED BECAUSE THIS SLICE AUTHORS A PIN.**
+    **21 assertions / 24 sites** (D435 measured 20 / 23 and authored none): 20
+    `expect(engineVersion).toBe(…)` literal pins — nineteen inherited plus this slice's
+    own in `extraEnergyBonus.test.ts` §7 — ONE `manifest.version` pin
+    (`legacyEnergy.test.ts`), `packages/engine/package.json`, this declaration, and
+    `D275`'s mutant anchor (re-pointed in the SAME commit as the bump). Measured with
+    `grep -rn 'expect(engineVersion)\.toBe("'` and `'expect(manifest\.version)\.toBe("'`
+    over the whole repo, all 21 and 1 hits read: **two of the 21 are PROSE** inside doc
+    comments quoting a historical `"0.237.0"` pin, which is why the real count is 19 + 1
+    inherited. D427's mechanism — a note counts the pins it INHERITED and never the one
+    it AUTHORS — is why this one is counted explicitly.
+
+    ⚠️ **THE FIVE CARRIERS ARE NAMED BUT NOT RE-VERIFIED.** The ids and costs above are
+    D368's remote-D1 measurement (2026-08-19), recorded in `undamagedBonus.test.ts` §1;
+    this checkout has no D1 (D425), so they are carried with their provenance rather
+    than re-read, and the three FIXTURES that drive the boards are `fix-*` bodies whose
+    HP, stage and base damage are declared fixture choices, not catalog facts.
+
+    ⚠️ **THE MUTANT CORPUS 1,679 → 1,688**: NINE rows, one per mechanism or decision,
+    all KILLED, 0 GAPs. **SEVEN of the nine are silent in every census** — the sentence
+    still resolves and `BUILT.attack` is unmoved while the engine counts CARDS, drops
+    the cost out of the subtraction, reads the PRINTED cost under a Stadium, hard-codes
+    the threshold, or scores the bonus one Energy early. The two the brief asked for by
+    name are `D436-counts-cards-not-units` and
+    `D436-cost-dropped-from-the-comparison`. ⚠️ **`precheck` FOUND ONE ROTTED ANCHOR AND
+    THE SWEEP WOULD NOT HAVE** (D414): widening `clauseApostrophe`'s partition to three
+    buckets broke `D367-bonus-apostrophe-guard-loses-its-partition`'s `find`; it was
+    re-transcribed onto the new three-line expression with its MEANING unchanged and
+    re-run under `--only` (KILLED), which is D418's second-half rule.
+
+    ⚠️ **THE NEIGHBOUR RE-PROBE IS PARTIAL AND SAID TO BE (D433).** 497 corpus rows
+    quote a file this slice edited (398 in `effects.ts`, 83 in `attack.ts`, 11 in
+    `testFixtures.ts`, 4 in edited suites). **179 rows across 19 decisions were re-run**
+    — every row whose TARGET is an edited test file or fixture, plus the
+    `DamageCountSource` and `deriveAttackDamageBonus` neighbours (D383, D384, D406,
+    D407) and the two `attack()` local-binding decisions (D428, D429). All KILLED or
+    declared-survivor, 0 GAPs, 0 stale, 0 errors. The other 318 rows were NOT probed;
+    a clean `precheck` over all 1,688 proves no anchor rotted, which is a weaker claim.
+
+    engineVersion 0.337.0 → **0.338.0**
+    (`packages/engine/package.json` in the same commit).
+    `MATCH_RECORD_VERSION` **STAYS 29** — `DamageCountSource` is a PARSE-TIME type
+    derived from card text and consumed in the same tick, no op carries one and no
+    field stores one. Driven in BOTH directions in `extraEnergyBonus.test.ts` §7: a v29
+    record round-trips and still scores the bonus, and the serialized post-attack board
+    contains no new key and no new substring. */
 /** 🆕🆕 **0.336.0 → 0.337.0 — D435, THE DELAYED FAMILY CLOSED, AND THE DISTINCTION
     THE TWO NEW PAYLOADS EXIST TO KEEP APART IS A PRIZE CARD.**
 
@@ -18748,7 +18888,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.337.0";
+export const engineVersion = "0.338.0";
 
 export type {
   ApplyResult,

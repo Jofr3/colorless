@@ -165,13 +165,25 @@ export function costMet(cost: readonly string[], provided: readonly string[]): b
     quietly hard-coding a two-player table into this fold. D170's bench-wide count
     ("… for each damage counter on all of YOUR Benched Pokémon", Tyranitar
     swsh10.5-043) is the second thing that argument buys, and it cost this
-    signature nothing for exactly that reason. */
+    signature nothing for exactly that reason.
+
+    🆕🆕 **D436 — `cost`, THE SIXTH PARAMETER, AND THE FIRST FACT IN THIS FOLD THAT
+    IS NOT ON THE BOARD.** Every source above answers from `(state, seat, attacker)`;
+    `extraEnergyUnitsBeyondCost` answers *"how much Energy is attached beyond what
+    THIS attack charged"*, and the charge is a property of the DECLARATION. It is the
+    EFFECTIVE cost (`effectiveAttackCost`, D169) and it is PASSED rather than
+    recomputed — `attack()` already holds the identical array for the §8.2 check, and
+    a second call would be a second answer to a question the engine answers once
+    (D159). ⚠️ A caller that hands the PRINTED cost here is a live defect on every
+    board with a cost modifier in play and moves no other number; the mutant
+    `D436-printed-cost-not-effective` is exactly that build. */
 function scaledAttackDamage(
   attacker: InPlayPokemon,
   bonus: AttackDamageBonus,
   state: GameState,
   defenderSeat: Seat,
   attackerSeat: Seat,
+  cost: readonly string[],
 ): number {
   switch (bonus.count.kind) {
     case "damageCountersOnSelf":
@@ -349,6 +361,30 @@ function scaledAttackDamage(
       // empty board is 0 and, with the printed "30×" base dropped, that is no
       // DAMAGE_DEALT row at all.
       return countToolsInPlay(state, attackerSeat) * bonus.per;
+    case "extraEnergyUnitsBeyondCost":
+      // 🆕🆕 D436 — the 0-or-1 INDICATOR again, but read against the DECLARATION.
+      // "…at least N extra Energy attached (in addition to this attack's cost)".
+      //
+      // 🛑 **UNITS ON BOTH SIDES.** `providedEnergy` is the flat list of provision
+      // UNITS — the operand `costMet` consumes — and `cost` is the effective symbol
+      // list, so the subtraction is symbols-minus-symbols. `countAttachedEnergy`
+      // (CARDS, D121) is the WRONG delegate here and the difference is visible on
+      // any board holding a multi-unit Special: one card providing two units is two
+      // Energy toward this cost and would be one Energy to that counter. The full
+      // argument is at `EXTRA_ENERGY_BONUS` (effects.ts); the discriminating board
+      // is driven in `extraEnergyBonus.test.ts` §2.
+      //
+      // `attacker` is the DECLARATION snapshot, like every other arm here — the
+      // pre-damage seam discards Tools and never Energy, and §8.2 is a CHECK and not
+      // a payment (the rules reference says so out loud), so nothing between the
+      // gate and this line can move either operand.
+      //
+      // `>=`, a FLOOR, like every `at least` reading in this engine. The difference
+      // cannot be negative on a board that passed the §8.2 check, which is the
+      // arithmetic that makes the UNITS reading the only coherent one.
+      return providedEnergy(state, attacker).length - cost.length >= bonus.count.extra
+        ? bonus.per
+        : 0;
     case "boardCondition":
       // The 0-or-1 INDICATOR (D115) — "If <clause>, this attack does N more
       // damage." The printed bonus lands whole when the clause holds for the
@@ -1303,7 +1339,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     effect === null || effect === "" ? null : deriveAttackDamageSuppression(effect);
   const scaling = damageBonus ?? damageMultiplier;
   const scaled =
-    scaling === null ? 0 : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat);
+    scaling === null
+      ? 0
+      : scaledAttackDamage(active, scaling, next, defenderSeat, action.seat, cost);
   // `per × count` off the SAME evaluator the two adding readers use (D159's rule —
   // no second answer to a question the engine already answers), counted at
   // DECLARATION like every other member of the family, so this attack's own damage
@@ -1311,7 +1349,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const selfPenalty =
     damagePenalty === null
       ? 0
-      : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat);
+      : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat, cost);
   // D125's REQUIREMENT is read at the split above, not here — see `requirement`.
   // D126/D127 — the printed coin flip the attack itself calls for: a `bonusOnHeads`
   // that adds its printed N to this attack's own damage, a `cancelOnTails` that

@@ -553,6 +553,8 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   // the demotion of D417's live resume point.
   // 🆕🆕 D419 — 88 -> 89, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
   // the demotion of D418's live resume point.
+  // 🆕🆕 D436 — 105 -> 106, ARCHIVED DELIBERATELY AND SAID SO, in the same commit that demotes
+  //    D435's resume point.
   // 🆕🆕 D435 — 104 -> 105, ARCHIVED DELIBERATELY AND SAID SO, in the same commit that demotes
   //    D434's resume point.
   // 🆕🆕 D434 — 103 -> 104, ARCHIVED DELIBERATELY AND SAID SO, in the same commit that demotes
@@ -585,9 +587,9 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   //    D420's resume point. The two-site edit is what keeps this a ratchet.
   // 🆕🆕 D420 — 89 -> 90, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
   // the demotion of D419's live resume point.
-  const ARCHIVES = 105;
+  const ARCHIVES = 106;
 
-  it("the page still holds all 105 archived resume points, and they still live in the span a range-replace targets", () => {
+  it("the page still holds all 106 archived resume points, and they still live in the span a range-replace targets", () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

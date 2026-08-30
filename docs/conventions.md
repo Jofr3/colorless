@@ -1398,6 +1398,57 @@ failure D429 named** (a streak is a claim, and extending one asserts it afresh).
 Grep the assertion, not the string — two of the twenty-one hits for the pin are
 prose inside doc comments quoting a historical version.
 
+## A refusal is scoped (D436)
+
+**A refusal scoped to one vocabulary is not a refusal of the sentence.** D368
+refused *"If this Pokémon has at least N extra Energy attached (in addition to
+this attack's cost)…"* as a `BoardCondition`, and was right for a structural
+reason: `conditionHolds(state, seat, cond)` is handed **no attack**, and the
+identical clause is printed on two attacks with two different costs, so one board
+answers it two ways.
+
+**Seven shipped rungs across four suites then carried that refusal as though the
+SENTENCE were unbuildable.** It is not: claimed as a `DamageCountSource`, whose
+fold runs inside `attack()` where the declared cost is a local, it costs one
+anchor and one arm.
+
+**When you meet a refusal, check what it refuses** — the vocabulary, the shape, or
+the sentence. Collect the ones that were right about their own scope rather than
+overturning them.
+
+## The comparand fixes the unit (D436)
+
+D121 established that counting Energy counts **cards**, not units of provision,
+and that rule governs the whole engine. **D436 is the first place it does not
+apply**, and the reason is the comparand: *"extra Energy in addition to this
+attack's COST"* compares attachment against a multiset of **symbols**.
+
+- **Cards-minus-symbols is not a quantity.**
+- The cards reading **goes negative on a board the rules admit** — one
+  double-provision card pays a two-symbol cost by itself, giving −1, where units
+  give 0, the floor the cost check guarantees.
+- D121 governs a **count**; this is a **difference**.
+
+**Apply the test, do not copy the outcome** (D425). And note the general form:
+when a predicate compares two quantities, **the comparand decides the unit**, not
+the local convention.
+
+## The sibling hazard, priced (D436)
+
+Twenty-one suites carry the same residue chain at up to eighteen rungs apiece —
+**122 front terms** — and vitest reddens exactly one per run. D436 needed **four
+full runs to green**, each exposing rungs the previous failure had silenced.
+
+**Step every sibling in one pass, or budget the runs.** This is the wall-clock
+cost of the rule that was previously only described.
+
+## Cost is a check, not a payment (D436)
+
+`ptcg-rules.md` §8 step 2: *"Cost is only a check, not a payment."* Energy is not
+consumed by attacking unless the attack text says so — so "extra" Energy is
+measured against what remains attached, and a frozen pair should assert the
+arming Energy is still there afterwards.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

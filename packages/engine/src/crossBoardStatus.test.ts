@@ -334,16 +334,16 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // distribution goes `{1: 12, 5: 1}` -> `{1: 11, 5: 1}`. ⚠️ AND THIS STEP WAS TAKEN BY A
     // SECOND MEMBER, the OPPOSITE shape from D391's one slice back — the measurements that
     // decided it are driven in `benchNameSubstring.test.ts` §2.
-    expect(refused.length).toBe(7); // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
-    expect(units(refused)).toBe(10); // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
+    expect(refused.length).toBe(5); // 🆕🆕 D436 -2 sentences (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 8 -> 7, the DECK-SIZE READ, and the LAST buildable sentence in this residue
+    expect(units(refused)).toBe(5); // 🆕🆕 D436 -5 printings (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — 11 -> 10, the DECK-SIZE READ's one printing
     // 🛑 AND THE STEP IS 2:2 ON THIS COLUMN. Every earlier head is re-derived from THIS
     // one rather than frozen: D376's 24/28, D375's 25/30, D374's 26/32, D373's 27/34.
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 17, units(refused) + 18]).toEqual([24, 28]);
+    expect([refused.length + 19, units(refused) + 23]).toEqual([24, 28]);
     // 🆕🆕 D392 — the OFFSET gains one on each axis: the head moved, this one's did not.
-    expect([refused.length + 18, units(refused) + 20]).toEqual([25, 30]);
-    expect([refused.length + 19, units(refused) + 22]).toEqual([26, 32]);
-    expect([refused.length + 20, units(refused) + 24]).toEqual([27, 34]);
+    expect([refused.length + 20, units(refused) + 25]).toEqual([25, 30]);
+    expect([refused.length + 21, units(refused) + 27]).toEqual([26, 32]);
+    expect([refused.length + 22, units(refused) + 29]).toEqual([27, 34]);
   });
 
   it("🛑 the CANCEL residue steps too — the third printing nobody was counting", () => {
@@ -449,7 +449,7 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // ONE printing is the 5-printing declaration clause D368 disqualified on SHAPE,
     // and the 1-printing band is SIXTEEN deep (D387 took one out of it).
     expect(band2).toEqual([]);
-    expect([...byClause.values()].filter((n) => n > 1)).toEqual([5]);
+    expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);// 🆕🆕 D436 the `n > 1` BAND IS NOW EMPTY — its one occupant was the 5-printing DECLARATION clause and this slice claims it. The rung still goes RED the moment any reader narrows so that a clause returns above one printing (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.)
     // 🆕🆕 D387 — 18 -> **17**: the STAGE 1 clause left the 1-printing band, which is
     // the ONLY band that moved. The 2-printing band was already empty and stays empty,
     // and the refusal is still driven from OUTSIDE it.
@@ -461,10 +461,14 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     // 🆕🆕 D390 — 15 -> **14**: the OPPONENT-SEAT TYPE READ left the 1-printing band,
     // which is again the ONLY band that moved. The 2-printing band was already empty
     // and stays empty, and the refusal is still driven from OUTSIDE it.
-    expect(byClause.size).toBe(6); // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices // 🆕🆕 D392 — the SUBSTRING NAME READ left the 1-printing band // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band
-    // …and the 5-printing declaration clause D368 disqualified on SHAPE is still the
-    // largest thing in the residue and still refused.
-    expect(Math.max(...byClause.values())).toBe(5);
+    expect(byClause.size).toBe(5); // 🆕🆕 D436 -1 clause: the 5-printing DECLARATION clause LEAVES this residue, and the 5 remaining are the D207 banners (THE "EXTRA ENERGY" DECLARATION READ — corpus rows 319/320, **2 sentences / 5 legal printings on ONE clause**, the record D368 refused on SHAPE as a `BoardCondition` and this slice takes as a `DamageCountSource` (`extraEnergyUnitsBeyondCost`), because the predicate reads THIS ATTACK'S COST and the fold runs inside `attack()` where that cost is a local. Claimed WHOLE by `deriveAttackDamageBonus` through ONE new anchor `EXTRA_ENERGY_BONUS`, so the RAW reader summand alone steps: the reader SURFACE stands still at 13 and the registry / split / compound summands were RE-MEASURED UNMOVED rather than assumed.) // 🆕🆕 D398 — the DECK-SIZE READ took ONE more singleton out, a 1:1 step, and it was the LAST BUILDABLE one // 🆕🆕 D397 — the BENCHED-CUBONE FILTER took ONE more singleton out, back to a 1:1 step // 🆕🆕 D394 — the USED-ATTACK PAIR took TWO more singletons out at once, the second two-step in two slices // 🆕🆕 D392 — the SUBSTRING NAME READ left the 1-printing band // 🆕🆕 D391 — the TYPED PER-BODY ENERGY THRESHOLD left the 1-printing band
+    // 🆕🆕 **D436 — 5 → 1: THE DECLARATION CLAUSE LEFT, AND THE RESIDUE IS NOW FLAT.**
+    // That clause was the only thing in this band above one printing; D436 reads it as
+    // a `DamageCountSource` (the refusal D368 wrote was of a `BoardCondition`, and it
+    // still stands as written). The rung is kept because a FLAT maximum is the claim a
+    // successor needs: it goes RED the moment any clause returns above one printing,
+    // which is the direction that matters once the band has emptied.
+    expect(Math.max(...byClause.values())).toBe(1);
     // 🛑 THE 1-PRINTING BAND IS WHERE THIS SLICE CAME FROM AND IT IS STILL DEEP: after
     // taking two out of it, nineteen clauses remain at one printing apiece. The pair
     // was worth taking because ONE purchase served THREE printings, not because the

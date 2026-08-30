@@ -11726,6 +11726,64 @@ const YOUR_TOOLS_MULTIPLY =
 //     do, this attack does 90 more damage." — a leading OPTIONAL action whose
 //     "if you do" reads a choice, not the board.
 // Both stay on the loud ATTACK_EFFECT_SKIPPED path, which is where they belong.
+// 🆕🆕 **D436 — THE "EXTRA ENERGY" CLAUSE, AND IT IS A WHOLE-SENTENCE ANCHOR
+// RATHER THAN A CLAUSE ROW BECAUSE THE PREDICATE READS THE DECLARATION.**
+//
+//   "If this Pokémon has at least 2 extra Energy attached (in addition to this
+//    attack's cost), this attack does 80 more damage."   — 3 legal printings
+//   "…, this attack does 100 more damage."                — 2 legal printings
+//
+// **5 legal printings on 2 sentences sharing ONE clause**, the largest record left
+// in the `CONDITIONAL_DAMAGE_BONUS` residue and the one D368 disqualified on SHAPE:
+// the clause reads THIS ATTACK'S COST, `conditionHolds(state, seat, cond)` is handed
+// no attack, and the SAME board answers it differently for the two printings
+// (Electivire ex {L}{L}{C} against Jellicent ex {P}{C} — D368's measurement, kept in
+// `undamagedBonus.test.ts` §1). 🛑 **THAT REFUSAL IS COLLECTED RATHER THAN
+// OVERTURNED**: it was a refusal of a `BoardCondition`, and this is not one. The
+// `DamageCountSource` fold runs inside `attack()`, where the declared attack's cost
+// is a local — so the fact is answerable exactly where the refusal said it was not.
+//
+// 🛑 **UNITS, NOT CARDS — AND THIS IS THE ONE PLACE IN THE ENGINE WHERE THAT NOUN
+// COMES OUT THE OTHER WAY FROM D121's.** `countAttachedEnergy`'s doc block settles
+// *"one Energy card is one Energy however many units it provides"* for every sentence
+// that COUNTS Energy against a printed constant or against another body. This
+// sentence does neither: it counts Energy against **this attack's cost**, and a cost
+// is a multiset of SYMBOLS that §6.4 pays in UNITS OF PROVISION (`costMet` consumes
+// `providedEnergy`, the flat unit list). Three things follow and each is driven in
+// `extraEnergyBonus.test.ts`:
+//   • the two operands must share a unit for the subtraction to mean anything, and
+//     the cost fixes which one;
+//   • a CARDS reading subtracts symbols from cards and goes NEGATIVE on a legal
+//     board — one Double-Turbo-like card paying a two-symbol cost is `1 - 2 = -1`,
+//     and no printed "extra" can be less than none once the cost is met;
+//   • the discriminating board is one card providing two units (`fix-grassdouble`),
+//     where the two readings give different damage. D425's rule: APPLY the test,
+//     do not copy D121's outcome.
+//
+// 🛑 **THE COST IS THE EFFECTIVE ONE (D169), NOT THE PRINTED ONE**, and the precedent
+// is one arm over in the very same switch: `opponentActiveRetreatCost` reads
+// `effectiveRetreatCost` because *"a Stadium that changes what it costs to retreat
+// changes what these attacks hit for"*. §8.2 charges `effectiveAttackCost`, so the
+// cost this sentence says the Energy is "in addition to" is the one the player
+// actually had to meet — under Pokémon League Headquarters a Basic owes one more
+// {C} and therefore has one fewer extra. The value is not recomputed: `attack()`
+// already holds it, and the fold is handed that binding (D159 — one question, one
+// answer).
+//
+// ⚠️ **THE THRESHOLD IS CAPTURED, NOT CONSTANT.** The catalog prints "at least 2"
+// and nothing else, but the digit comes off the sentence for D206's reason — a
+// hard-coded `2` is the exact defect a `per`-shaped probe exists to catch, and a
+// captured one serves a reprint at any threshold for free. The AMOUNT is captured
+// too, which is what makes ONE anchor serve both printed sentences.
+//
+// ⚠️ **`['’]` ON THE POSSESSIVE** (D136/D137) — the catalog prints U+0027 today,
+// verified against `censusAttackCorpus.ts`; the class is the standing insurance
+// against a punctuation-normalising re-ingest, and `clauseApostrophe.test.ts` sweeps
+// it because both fixtures print the sentence. `Pokémon` carries the real é
+// (U+00E9). No /i, whole-sentence anchored with a required trailing period, and the
+// parentheses are escaped — the family's rule, unchanged.
+const EXTRA_ENERGY_BONUS =
+  /^If this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\), this attack does (\d+) more damage\.$/;
 const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 /** The printed clauses this family understands, keyed CHAR-FOR-CHAR on the text
     between the leading "If " and the ", this attack does" — a Map rather than an
@@ -20238,7 +20296,25 @@ export interface AttackDamageBonus {
     Its evaluator arm is the only one in `scaledAttackDamage` that consults NEITHER
     Active by name: it reads `attackerSeat`'s whole side, so an empty Bench, a
     pristine board and a Tool-less one are all the same 0 — which on the `×` fold
-    (base dropped) means no `DAMAGE_DEALT` row at all. */
+    (base dropped) means no `DAMAGE_DEALT` row at all.
+
+    🆕🆕 ⚠️ **THE FOURTEENTH IS THE FIRST MEMBER WHOSE ANSWER IS NOT A FACT ABOUT THE
+    BOARD AT ALL** (D436). `extraEnergyUnitsBeyondCost` compares the attacker's
+    attached Energy against **the cost of the attack being declared**, which is why
+    D368 could refuse the identical sentence as a `BoardCondition` and this member can
+    take it: every other count source in this union is answerable from
+    `(state, seat)`, and this one is not. It is the reason `scaledAttackDamage` grew
+    its sixth parameter — the fold now takes the declared attack's EFFECTIVE cost,
+    which `attack()` already computed for the §8.2 check.
+
+    🛑 **AND IT IS THE ONLY MEMBER IN THE UNION THAT COUNTS UNITS OF PROVISION RATHER
+    THAN CARDS.** `energyOnSelf`, `energyOnOpponent`, `bothActivesEnergyCount` and
+    every `BoardCondition` Energy member delegate to `countAttachedEnergy`, whose doc
+    block settles CARDS for the whole engine. This one delegates to `providedEnergy`
+    instead — `costMet`'s own operand — because its comparand is a COST, and a
+    difference between a card count and a symbol count is not a quantity. See
+    `EXTRA_ENERGY_BONUS` for the full argument and the negative-extra board that
+    settles it. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -20260,7 +20336,8 @@ export type DamageCountSource =
       energyType: BasicEnergyType | "special" | null;
     }
   | { kind: "bothActivesEnergyCount" }
-  | { kind: "toolsOnYourBoard" };
+  | { kind: "toolsOnYourBoard" }
+  | { kind: "extraEnergyUnitsBeyondCost"; extra: number };
 
 /** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
     two are printed as two whole noun phrases — "your opponent's Active Pokémon"
@@ -20385,6 +20462,33 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (bothActivesEnergy !== null) {
     const per = Number(bothActivesEnergy[1]);
     if (per >= 1) return { per, count: { kind: "bothActivesEnergyCount" } };
+  }
+  // 🆕🆕 D436 — the "extra Energy" DECLARATION read. It sits directly ABOVE the
+  // conditional arm because it is the EXACT anchor and that one's `(.+)` clause
+  // capture is the loosest pattern in this function, which is the ordering rule the
+  // whole file follows. ⚠️ **AND ORDER DECIDES NOTHING HERE — BUT THE CHECK IS A
+  // MUTANT AND NOT A RUNG, WHICH IS SAID RATHER THAN IMPLIED.**
+  // `CONDITIONAL_DAMAGE_CLAUSES` carries no row for this clause and no template
+  // claims it, so the conditional arm below falls through to `return null` on the
+  // same two sentences whichever order the arms sit in. **No assertion can show that
+  // from outside this file**: `boardConditionForClause` is not exported, and every
+  // sentence carrying this clause matches THIS anchor too, so a test would be asking
+  // a question only one arm can answer. The executable falsifier is the mutant
+  // `D436-anchor-drops-the-parenthetical`, which reddens exactly because nothing else
+  // claims the sentence — a positive statement of the same fact (D428: a refusal's
+  // falsifier should be executable, and this is where it lives).
+  const extraEnergy = EXTRA_ENERGY_BONUS.exec(effect);
+  if (extraEnergy !== null) {
+    const per = Number(extraEnergy[2]);
+    const extra = Number(extraEnergy[1]);
+    // The family's printed-0 guard, unchanged: a bonus of 0 adds nothing and the
+    // sentence stays on the loud ATTACK_EFFECT_SKIPPED path. The THRESHOLD carries
+    // no such guard — "at least 0 extra" would be a tautology this arm answers
+    // CORRECTLY, and refusing a sentence one can read is a rule the catalog does
+    // not ask for. ⚠️ THE POPULATION CLAIM IS PINNED ON THE POPULATION (D423): the
+    // column prints this threshold at 2 and at no other value, asserted over all 640
+    // corpus sentences in `extraEnergyBonus.test.ts` §1, never against a specimen.
+    if (per >= 1) return { per, count: { kind: "extraEnergyUnitsBeyondCost", extra } };
   }
   // The CONDITIONAL flat bonus (D115) — "If <clause>, this attack does N more
   // damage." — last, because its clause capture is the loosest pattern here and
