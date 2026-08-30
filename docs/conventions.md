@@ -1485,6 +1485,31 @@ clause is captured on 2 by the pre-empted carrier and 0 by each of the others.
 A figure that is zero on both sides of a change cannot move. **It needed a probe,
 not a count.**
 
+## A low percentage can mean cost, not neglect (D436 follow-up)
+
+The trainer column is **42.8% built** against the attack column's **85.3%**, which
+reads as the obvious place to pivot. It is not.
+
+**There is no trainer text deriver at all.** Trainers are built as **registry rows
+keyed by card id** — 113 units from 82 rows, **1.38 units per hand-authored row**
+— so the 151 unbuilt units would need roughly **110 bespoke rows**. Attacks
+amortize: one anchor serves every printing of a sentence, and slices in this run
+repeatedly took **5 printings per anchor**.
+
+**Before pivoting on a coverage percentage, measure the unit cost of the column.**
+A column that is less built may simply be one where each unit costs more.
+
+## The unit is not "cards" (D436 follow-up)
+
+The census counts **units** — one effect-bearing text slot, so a card with two
+attacks and an ability contributes three — over **printings**, where reprints
+count separately (one sentence's five printings were a single card in five
+rarities).
+
+**Card-level identity is not resolvable in this checkout**: there is no local D1.
+Any "how many cards" figure derived here is invented. **Quote units and
+printings, and say which one you mean.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

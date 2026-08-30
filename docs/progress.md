@@ -501,6 +501,26 @@
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-30, after D436)
 >
+> ▶ **WHERE THE REMAINING WORK ACTUALLY IS — MEASURED, AND IT REFUTES THE OBVIOUS PIVOT.**
+> The pool is **2,383 effect-bearing units across 2,021 Standard-legal printings**, and **1,882 are
+> built (79%)**, leaving **501**. By column: attack **1,477 / 1,732** (85.3% — 255 left), ability
+> **284 / 376** (75.5% — 92), trainer **113 / 264** (**42.8%** — 151), special energy **8 / 11** (3).
+> Both totals reconcile against figures the suite pins independently (`built` 1882, `units − built` 501).
+>
+> 🛑🛑 **THE TRAINER COLUMN LOOKS NEGLECTED AND IS ACTUALLY EXPENSIVE — DO NOT PIVOT THERE ON THE
+> PERCENTAGE.** **There is no trainer text deriver at all** (`grep -rnE "export function
+> derive(Trainer|Item|Supporter)"` returns nothing). Trainers are **registry-keyed, one row per card id**:
+> **113 units from 82 rows = 1.38 units per hand-authored row**, so the 151 unbuilt would need
+> **~110 bespoke rows**. Attacks AMORTIZE — one anchor serves every printing of a sentence, and this
+> session repeatedly took **5 printings per anchor** (D421, D428, D436). **The percentage measures cost,
+> not neglect.**
+>
+> ⚠️ **AND THE UNIT IS NOT "CARDS".** The census counts *units* (one effect-bearing text slot — a card
+> with two attacks and an ability contributes three) over *printings* (reprints counted separately; D421
+> hit a sentence whose 5 printings were one card in five rarities). **Card-level identity is NOT
+> resolvable in this checkout** — there is no local D1 — so any card count here would be invented. Quote
+> units and printings, and say which.
+>
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 434 files / 9,544 tests, `CHECK_EXIT=0`.**
 > Engine **0.338.0**, **`MATCH_RECORD_VERSION` 29**, corpus **1,688**, archive ratchet **106**.
 >
