@@ -506,10 +506,14 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 435 files / 9,575 tests, `CHECK_EXIT=0`.**
 > Engine **0.339.0**, **`MATCH_RECORD_VERSION` 29**, corpus **1,699**, archive ratchet **107**.
 >
-> 🛑 **THE ONE DEBT: D437 HAS HAD NO WHOLE-CORPUS SWEEP, AND ITS NEIGHBOUR RE-PROBE IS PARTIAL AND SAYS
-> SO** — 333 of 1,699 rows re-run (331 killed + 2 declared, 0 GAPs); **1,035 rows are at risk and 702 were
-> not probed**. Five slices running have declared a gap and the sweep has paid it every time — **and the
-> one slice that did NOT declare one produced this run's only GAP.**
+> ✅✅ **THE SWEEP DEBT IS PAID, AND IT CONFIRMS THE PRE-EMPTIVE REPAIR.** **1699 · 1673 killed · 26 known
+> survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,469.2s**,
+> `SWEEP_EXIT=0`; `1673 + 26 = 1699` closes, 1699/1699 verified by id, **zero undeclared survivors**.
+> All 11 D437 rows KILLED — **and all 8 D399 rows KILLED, which is what this run existed to check**: D437
+> changed the refusal one of them rested on, found it BEFORE building, and re-armed the tripwire where it
+> lives. **Only a whole-corpus run can confirm a repair DISCRIMINATES rather than merely passes.**
+> **D436's GAP cost a repair slice; D437's equivalent cost nothing.** Survivors held at 26, a third
+> consecutive sweep unmoved.
 >
 > ▶ **THE DAMAGE-COUNTER PREDICATE FAMILY HAS FOUR ROWS LEFT (4 printings), ALL PRICED**, and the
 > predicate `hasAnyDamageCounters` is free for three of them — **the consequent is the price every time**:
