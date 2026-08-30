@@ -504,9 +504,22 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 434 files / 9,544 tests, `CHECK_EXIT=0`.**
 > Engine **0.338.0**, **`MATCH_RECORD_VERSION` 29**, corpus **1,688**, archive ratchet **106**.
 >
-> 🛑 **THE ONE DEBT: D436 HAS HAD NO WHOLE-CORPUS SWEEP, AND ITS NEIGHBOUR RE-PROBE IS PARTIAL AND SAYS
-> SO** — 497 rows quote an edited file, **179 across 19 decisions were re-run** (all clean), **318 were
-> not**. Four slices running have declared a gap and the sweep has paid it every time.
+> 🛑🛑 **THE SWEEP RAN AND FOUND A GAP — THE FIRST IN SEVENTEEN — AND IT WAS THIS SLICE'S FAULT.**
+> **1688 · 1661 killed · 26 known · 1 GAP · 0 stale · 0 clobbers · 0 errors**; `1661 + 26 + 1 = 1688`
+> closes, 1688/1688 by id. All 9 D436 rows KILLED; the survivor was
+> **`D368-declaration-clause-gets-a-board-row`** — D368's own tripwire, guarding the refusal D436
+> collected. **D436 re-pointed seven test rungs and never checked whether a MUTANT row rested on that
+> refusal** (D384's rule). ⚠️ **`--decision D436` was 9/9 and `precheck` was clean over all 1,688 rows** —
+> `precheck` proves an anchor still MATCHES, not that a row still DISCRIMINATES. **Only the whole-corpus
+> run could see it.**
+>
+> ✅ **CLOSED IN `434b1ad` — and the tempting answer was wrong.** "The anchor pre-empts, so the row is
+> dead" holds for **one of three** call sites; the other two are reachable through exported readers, so
+> the mutation is observable and declaring it `equivalent` would have recorded D368's finding as
+> unguarded. Of 640 sentences the clause is captured on **2** by the pre-empted carrier and **0** by each
+> of the others — **it needed a probe, not a count.** Two claims D436 shipped were false and are
+> corrected. D368's finding stands; only the tripwire's route changed. Both decisions re-run **clean
+> without `--allow-dirty`**. ⚠️ **A CONFIRMING WHOLE-CORPUS SWEEP IS STILL OWED** at corpus 1,688.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES** (`censusAtHead.test.ts`; canonical predicate at `:6218`): raw
 > unbuilt **202**, residue **176**, `unbuiltAttack` **255**. ⚠️ **AND DO NOT SORT THE RAW LIST FOR

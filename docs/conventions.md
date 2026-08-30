@@ -1449,6 +1449,42 @@ consumed by attacking unless the attack text says so — so "extra" Energy is
 measured against what remains attached, and a frozen pair should assert the
 arming Energy is still there afterwards.
 
+## When you build what an earlier slice refused (D436's GAP)
+
+**Grep the mutation corpus for the SENTENCE, not just the test suites.** D384
+wrote this rule; D436 broke it and produced the run's first GAP in seventeen
+sweeps.
+
+D368 had refused a clause as a `BoardCondition` and planted a **tripwire** — a
+mutant adding a clause-table row for it, killed by a rung asserting the sentence
+was unclaimed. D436 built that sentence through a different vocabulary and
+carefully re-pointed **seven test rungs** onto the new truth. It never asked
+whether a *mutant row* rested on the old refusal. The re-pointed claim is true
+under the mutant and the real build alike, so the tripwire stopped firing.
+
+⚠️ **`precheck` cannot catch this.** It proves every `find` still MATCHES; it says
+nothing about whether a row still DISCRIMINATES. `--decision D436` was 9/9 and
+precheck was clean over all 1,688 rows. **Only the whole-corpus run could see it.**
+
+## "The new reader pre-empts it" is a claim about ONE call site (D436's GAP)
+
+The tempting resolution — *the anchor matches first, so the added table row is
+dead, therefore the mutation is equivalent* — was **wrong**, and declaring it
+would have recorded a live finding as unguarded.
+
+`boardConditionForClause` has **three** call sites. The anchor pre-empts exactly
+one. The other two sit inside exported readers reached by carriers whose joins the
+anchor's `\.$` cannot match, so the mutation is observable through them.
+
+**Before declaring a mutation equivalent because a new reader pre-empts it,
+enumerate every call site of the thing it mutates** — and judge each hit
+code-vs-prose rather than counting matches.
+
+**And note why no census could have caught it**: of 640 corpus sentences the
+clause is captured on 2 by the pre-empted carrier and 0 by each of the others.
+A figure that is zero on both sides of a change cannot move. **It needed a probe,
+not a count.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
