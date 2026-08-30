@@ -12858,6 +12858,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕 **D437 FIXTURE — THE FILTERED BENCH SNIPE, WITH ITS ONE-AXIS CONTROL ON
+      THE SAME BODY.** Index 0 prints corpus row 528 verbatim (*"This attack also
+      does 60 damage to 1 of your opponent's Benched Pokémon **that has any damage
+      counters on it**. (Don't apply Weakness and Resistance for Benched Pokémon.)"*,
+      **3 legal printings**); index 1 prints the SAME sentence with the narrowing
+      clause deleted and nothing else changed, which is what makes every board in
+      `filteredBenchSnipe.test.ts` a one-axis comparison rather than two boards that
+      happen to differ.
+
+      🛑 **THE TWO ATTACKS SHARE A COST AND A `damage` FIELD ON PURPOSE.** `{C}` and
+      `30` on both, so a board can declare either one with no re-attaching and no
+      difference in what lands on the Defending Pokémon — the ONLY thing that can
+      move between them is which benched bodies the snipe offers.
+
+      ⚠️ Index 2 is a **deliberately unread row**, and it is a real corpus sentence
+      rather than an invented one: *"This attack does 50 damage for each of your
+      Pokémon that has any damage counters on it."* (row 596, 1 legal printing) is
+      one of the four SIBLINGS of D437's printed predicate that this slice does not
+      build. It gives the `ATTACK_EFFECT_SKIPPED` rung its control **on the same
+      body**, and it doubles as a tripwire: the day someone claims that sentence,
+      the rung goes red and points at the slice that did it.
+
+      🛑 **NO ids ARE INVENTED.** This checkout has no D1 — no local sqlite, no
+      remote credentials — so the three carriers of row 528 could not be resolved and
+      are NOT guessed (D425). The SENTENCES are transcribed off `censusAttackCorpus.ts`
+      and the printing count is that file's. A `fix-*` key with no card behind it.
+      140 HP so it survives a counterattack, and no `resistances` row at all. */
+  "fix-filteredsnipe": battler("fix-filteredsnipe", {
+    name: "Fixquilla",
+    hp: 140,
+    // {R}, so the SHIPPED pair `fix-drainwall` / `fix-drainweak` (300 HP each,
+    // identical but for one printed `×2 Fire` row, D427) is this suite's W/R control
+    // with no new fixture: on the BENCH both take a flat 60 (§8.5, the printed
+    // parenthetical), and the same attacker's main hit against `fix-drainweak` in the
+    // ACTIVE spot is DOUBLED — which is what makes "no Weakness on the Bench" an
+    // observation rather than the absence of one (D214's attribution control).
+    types: ["Fire"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Picky Barrage",
+        damage: "30",
+        effect:
+          "This attack also does 60 damage to 1 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Blunt Barrage",
+        damage: "30",
+        effect:
+          "This attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Idle Barrage",
+        damage: "30",
+        effect: "This attack does 50 damage for each of your Pokémon that has any damage counters on it.",
+      },
+    ],
+  }),
   "fix-lively": battler("fix-lively", {
     name: "Fixactus",
     hp: 100,
@@ -14766,6 +14827,30 @@ export const CONDITIONAL_BENCH_SNIPE_DECK = deckOf({
   "fix-hazardousgreed": 4, // Wo-Chien — "Hazardous Greed" ({G}{C}, 20) at index 0: the gated 120 × 2
   "fix-titan": 36, // 340 HP, no attacks — the Defender, every bench body, and the dominant starter
   "fix-grass-energy": 20, // Basic {G} — pays both printed costs, and any Energy pays a {C}
+});
+
+/** 🆕🆕 **D437 — a DEDICATED deck for the FILTERED bench snipe.** D270's shape: no
+    modifier of any kind on either side, so the only thing that can move a benched
+    number is which bodies the narrowing offers. `fix-titan` is 340 HP with no
+    attacks — it survives the 60 without a §8.1 Prize tail landing under a damage
+    assertion, and it can never move a number of its own. `fix-teaparty` is the ONE
+    body here that changes an outcome, and it changes it in the direction this slice
+    is about: 220 HP, no attacks, and a §11 aura that refuses damage **only while it
+    is Benched**, so a shielded body that is UNDAMAGED must never be asked about
+    (D433's false log row) while a shielded body that IS damaged must be asked and
+    must file its refusal.
+
+    ⚠️ **A NEW DECK RATHER THAN A ROW ADDED TO A SHARED ONE**, D412's rule: deck
+    composition is load-bearing for every suite seeded off a `*_DECK`, and adding one
+    card to `CURIOUS_TEA_PARTY_DECK` to get a shield onto this board would have
+    reddened boards belonging to slices that have nothing to do with this one. */
+export const FILTERED_BENCH_SNIPE_DECK = deckOf({
+  "fix-filteredsnipe": 4, // the attacker — narrowed at index 0, un-narrowed at index 1, unread at 2
+  "fix-titan": 24, // 340 HP, no attacks — the Defender, every ordinary bench body, the starter
+  "fix-teaparty": 4, // 220 HP — the benched-only §11 damage shield, for the D433 pair
+  "fix-drainwall": 4, // 300 HP, NO printed Weakness — the W/R control's null half (D427's pair)
+  "fix-drainweak": 4, // 300 HP, ×2 Fire — the same body PLUS one printed Weakness row
+  "fix-energy": 20, // Basic {C} — pays all three printed {C} costs
 });
 
 export const BENCH_NAMED_DAMAGED_DECK = deckOf({

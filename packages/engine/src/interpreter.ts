@@ -1782,7 +1782,14 @@ function stepOp(
           min: take,
           max: take,
           declinable,
-          note: snipeNote(amount, take, declinable, op.deals === true, op.target),
+          note: snipeNote(
+            amount,
+            take,
+            declinable,
+            op.deals === true,
+            op.target,
+            op.damagedOnly === true,
+          ),
         },
       };
     }
@@ -7857,6 +7864,13 @@ function snipeNote(
   optional: boolean,
   deals: boolean,
   target: "opponentBench" | "opponentAny" = "opponentBench",
+  /** 🆕🆕 D437 — `op.damagedOnly`. The caption must name exactly the set the funnel
+      offers or the dialog contradicts its own validator (`gustTargetNoun`'s and
+      `knockOutChosenNote`'s stated rule), and here that matters more than usual:
+      the narrowed prompt can offer TWO of a five-body Bench, and a heading that
+      still said "your opponent's Benched Pokémon" would read as a mis-built offer
+      rather than as the card doing what it prints. */
+  damagedOnly = false,
 ): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
@@ -7864,7 +7878,14 @@ function snipeNote(
     : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
   // `opponentAny` offers the Active too, so the heading drops "Benched".
   const zone = target === "opponentAny" ? "Pokémon" : "Benched Pokémon";
-  return `${verb} ${count} of your opponent's ${zone} (${each} each).`;
+  // 🆕🆕 D437 — the window rides AFTER the noun because that is where the print puts
+  // it, `knockOutChosenNote`'s line verbatim. ⚠️ **SINGULAR ONLY, AND THAT IS NOT AN
+  // OVERSIGHT**: the clause is printed *"that has … on it"*, and `ALSO_BENCHED_SNIPE`
+  // refuses it against any count but 1 on exactly that number agreement, so a plural
+  // spelling here would be a branch no build can reach — the unreachable arm D205
+  // says to remove rather than test around.
+  const window = damagedOnly ? " that has any damage counters on it" : "";
+  return `${verb} ${count} of your opponent's ${zone}${window} (${each} each).`;
 }
 
 /** The heading for healChosen's "up to N" park. Quotes the card (Saguaro:
@@ -10291,6 +10312,44 @@ function damageCountersOn(pokemon: InPlayPokemon): number {
   return Math.floor(pokemon.damage / 10);
 }
 
+/** 🆕🆕 **D437 — DOES THIS BODY HAVE *ANY* DAMAGE COUNTERS ON IT?** The printed
+    predicate of *"…to 1 of your opponent's Benched Pokémon **that has any damage
+    counters on it**."* (corpus row 528), asked per BODY as a candidate-set
+    narrowing rather than per BOARD as a gate.
+
+    🛑 **`damage > 0` AND NOT `damageCountersOn(pokemon) >= 1`, AND THE PRECEDENT IS
+    UNANIMOUS RATHER THAN NEAREST.** Five shipped `conditionHolds` arms already read
+    this exact printed phrase — `opponentActiveDamaged`, `yourActiveDamaged`,
+    `yourBenchDamaged`, `yourBenchAllDamaged`, `yourBenchNamedDamaged` — and every
+    one of the five spells it `p.damage > 0`, with the first saying so outright in
+    its own comment (*"Damage is HP on the model, so 'any counters' is `> 0`"*).
+    `damageCountersOn` directly above is not a disagreeing sibling: it exists for a
+    phrase whose comparand is a NUMBER (*"exactly 6 damage counters"*), where the
+    unit has to be counters or `65` damage answers a question the print answers the
+    other way. D436's rule — **the comparand fixes the unit** — sends *"any"* to the
+    presence test and *"exactly N"* to the count. Following the structurally nearest
+    neighbour instead of the phrase's own five would have been D433's `markers`
+    mistake at a predicate.
+
+    ⚠️ **THE TWO SPELLINGS DIFFER ON EXACTLY ONE CLASS OF BOARD — 1 to 9 damage —
+    AND THAT BOARD IS NOT REACHABLE IN PLAY**, which is measured rather than assumed:
+    every writer of `InPlayPokemon.damage` in this file adds or subtracts a printed
+    amount or a catalog HP figure (`koSurvivalClamp`'s `hp - 10`), all multiples of
+    ten, and the engine has no halving, rounding or percentage damage anywhere. It is
+    still constructible as a FIXTURE, and `filteredBenchSnipe.test.ts` drives it, so
+    the choice is pinned by a rung rather than left to a comment: a 5-damage body IS
+    a candidate here, and a `damageCountersOn(p) >= 1` build would drop it.
+
+    ⚠️ Its home is beside `damageCountersOn` for that function's own stated reason:
+    a pure read of ONE body's `damage` field, no `state`, no seat, no passive — the
+    line that keeps it out of continuous.ts, where `remainingHpWithin` lives because
+    it folds HP auras. And it is a NAMED READER rather than an inline predicate at
+    `snipeTargets` for D222's: the day a second sentence prints this phrase over a
+    candidate set, there is one place for it to ask. */
+function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {
+  return pokemon.damage > 0;
+}
+
 /** 🆕🆕 **D416 — THE ONE FUNNEL FOR A `knockOutChosen`'s CANDIDATE SET**, and the
     fourth op in this file to get one. `gustTargets` (D331) and `snipeTargets`
     (D345) each earned theirs by a `programPlayable` gate that had re-implemented
@@ -11984,13 +12043,50 @@ function oppAnyRefs(state: GameState, seat: Seat): PokemonRef[] {
     opponent with a bare Active greyed out an Ability whose own op offers that
     Active as a candidate. **A GATE THAT RE-IMPLEMENTS ITS OP'S PREDICATE IS RIGHT
     UNTIL THE OP GROWS AN ARM**, which is the argument the `gust` line beside it
-    already makes in words. */
+    already makes in words.
+
+    🆕🆕 **D437 — AND THE PRINTED PER-BODY NARROWING GOES HERE, WHICH IS THE WHOLE
+    OF THAT SLICE'S PLACEMENT DECISION.** *"…to 1 of your opponent's Benched Pokémon
+    **that has any damage counters on it**."* — `op.damagedOnly`. Three things follow
+    from narrowing at the funnel rather than at the op, and each is a case a careless
+    build gets wrong:
+
+      • **A FILTERED SET CAN BE EMPTY WHERE THE UNFILTERED ONE WAS NOT.** An opponent
+        with three UNDAMAGED benched bodies offers three candidates unfiltered and
+        ZERO filtered, and the op's own `candidates.length === 0` arm turns that into
+        the silent no-op every snipe already takes on an empty Bench — no prompt, no
+        event, and NOT an `ATTACK_EFFECT_SKIPPED`, because the sentence was read.
+      • **A FILTERED SET OF EXACTLY ONE IS FORCED**, where the unfiltered board would
+        have parked. `stepOp`'s `!declinable && candidates.length <= op.count` arm is
+        the M1 no-choice rule, and it must read the NARROWED count: one damaged body
+        beside two undamaged ones is not a decision.
+      • **THE SHIELD IS ASKED AFTER THE NARROWING, NOT BEFORE** (D433). Every §11-ish
+        prevention this op consults — `benchShieldedFromDamage`, the six
+        `targetPassives.prevent*` disjuncts, `attackDamageBlocked`,
+        `coinFlipShieldPrevents` — lives INSIDE `placeSnipe`'s loop over the refs it
+        is handed, so a body this narrowing removed is never asked about and cannot
+        file a `DAMAGE_DEALT{prevented}` row for a hit that was never coming.
+        Narrowing here is what makes that true; narrowing later would reproduce
+        D433's false log row exactly.
+
+    ⚠️ **AND IT IS APPLIED TO WHICHEVER SCOPE `target` NAMES**, not to the Bench by
+    hand. No printing spells the narrowing against `opponentAny` today; spelling the
+    Bench twice would be the second enumeration of one noun this funnel exists to
+    prevent. */
 export function snipeTargets(
   state: GameState,
   seat: Seat,
   op: Extract<EffectOp, { op: "damageChosen" }>,
 ): PokemonRef[] {
-  return op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
+  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
+  if (op.damagedOnly !== true) return scope;
+  // A ref that resolves to no body is DROPPED rather than admitted — the narrowed
+  // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule
+  // one funnel over, and the same `refPokemon` behind it).
+  return scope.filter((ref) => {
+    const pokemon = refPokemon(state, ref);
+    return pokemon !== undefined && hasAnyDamageCounters(pokemon);
+  });
 }
 
 /** Every in-play Pokémon the controller could heal — Active first, then bench. */

@@ -5185,7 +5185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5684,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5695,7 +5695,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.338.0";',
+    find: 'export const engineVersion = "0.339.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12914,8 +12914,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D345",
     what: "🛑 `snipeTargets` returns the opponent's BENCH for every op, so `opponentAny` stops offering their Active — and because the funnel now feeds BOTH the offer and the gate, the two stay CONSISTENTLY wrong: an opponent with a bare Active greys the Ability out, and one with a bench sees a prompt missing its first candidate. **A shared predicate makes a defect total instead of contradictory**, which is the cost side of the fix this row guards and the reason it is worth a row of its own",
     file: "packages/engine/src/interpreter.ts",
-    find: '  return op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);',
-    replace: "  return oppBenchRefs(state, seat);",
+    // ⚠️ RE-TRANSCRIBED AT D437, AND THE REASON IS D416's TRAP FROM THE OTHER SIDE.
+    // `snipeTargets` gained the `damagedOnly` narrowing, so its one-line `return` became
+    // a `const scope = …` — which is BYTE-IDENTICAL to `knockOutChosenTargets`' first
+    // line, the function D416 wrote by COPYING this one. The old `find` matched ZERO
+    // here and D416's matched TWO. Both rows are re-anchored on the line BELOW their own
+    // scope line, which each function owns uniquely. **THE CLAIM IS UNCHANGED**: the
+    // funnel forgets the Active arm and answers the Bench for every op.
+    find:
+      '  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);\n  if (op.damagedOnly !== true) return scope;',
+    replace:
+      "  const scope = oppBenchRefs(state, seat);\n  if (op.damagedOnly !== true) return scope;",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
@@ -16721,8 +16730,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "\u{1F6D1} C1 — **THE COUNT IS PINNED AT THE NUMBER THE NEW CARD PRINTS**, which is the edit an author reaches for after reading Wo-Chien and nothing else: the sentence says 2, so the fragment says 2. It is silent about itself and loud nowhere — the gated printing still resolves and its board still deals 120 to two bodies — while the FIFTEEN-printing `1 of` spelling and the five-printing `If you do` payoff both fall off the derived path onto `ATTACK_EFFECT_SKIPPED`. **THE COST OF A SHARED FRAGMENT PAID FROM THE WRONG SIDE**: one literal, three callers, and the only instrument that sees all three is the census",
     file: "packages/engine/src/effects.ts",
-    find: "  `attack also does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Benched Pokémon\\\\.` +",
-    replace: "  `attack also does (\\\\d+) damage to (2) of your opponent['’]s Benched Pokémon\\\\.` +",
+    // ⚠️ RE-TRANSCRIBED AT D437 — the fragment gained a THIRD capture (the printed
+    // narrowing) and its terminating `\\.` moved onto the NEXT line, so the old `find`
+    // matched ZERO. **THE CLAIM IS UNCHANGED**: the arity capture becomes the literal 2.
+    find: "  `attack also does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Benched Pokémon` +",
+    replace: "  `attack also does (\\\\d+) damage to (2) of your opponent['’]s Benched Pokémon` +",
     expectKilledBy: [
       "packages/engine/src/alsoBenchedSnipe.test.ts",
       "packages/engine/src/torrentialPump.test.ts",
@@ -16734,8 +16746,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "⚠️ C2 — **THE GATED ARM GOES BACK TO `count: 1`, WHICH IS THE ARM ABOVE IT COPIED VERBATIM** (D190b's neighbour-copy shape, and the exact bytes `deriveAttackEffect` carried at D398's head). Every census figure is UNMOVED — the sentence still resolves, so `BUILT.attack` never notices — and the board is wrong by one body: the printed *2 of* hits ONE. ⚠️ **ONLY A BENCH OF TWO OR MORE REACHES IT**, because §8.6 clamps a shorter Bench to what is there, so the fixture a natural \"the snipe works\" suite writes cannot see it (D279's rule). §3 drives a Bench of THREE and asserts the prompt's `min`/`max` as well as the two damaged bodies",
     file: "packages/engine/src/effects.ts",
-    find: "              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,",
-    replace: "              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count: 1,\n              source: \"attack\",\n              deals: true,",
+    // ⚠️ RE-TRANSCRIBED AT D437 — the gated arm's op literal now sits in BOTH branches
+    // of a `damagedOnly` ternary, so the old 14-space `find` matched TWO sites. Anchored
+    // on the UN-NARROWED branch (18-space fields, closing `],`), which is the branch the
+    // ONE printed gated sentence takes and the branch `conditionalBenchSnipe.test.ts`
+    // drives. **THE CLAIM IS UNCHANGED**: the captured arity becomes the literal 1.
+    find:
+      '            : [\n                {\n                  op: "damageChosen",\n                  target: "opponentBench",\n                  amount,\n                  count,\n                  source: "attack",\n                  deals: true,\n                },\n              ],',
+    replace:
+      '            : [\n                {\n                  op: "damageChosen",\n                  target: "opponentBench",\n                  amount,\n                  count: 1,\n                  source: "attack",\n                  deals: true,\n                },\n              ],',
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
   {
@@ -16743,8 +16762,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "\u{1F6D1} C3 — **THE `conditionGate` IS REMOVED AND THE SNIPE IS RETURNED BARE**, i.e. the arm becomes a byte-identical copy of the FLAT rider four lines up and the printed antecedent is decoration. **THE CENSUS STILL RISES BY THE SAME 5** — the sentence resolves either way — and the clause-resolution refusals of §4 stay green, because an UNMAPPED clause still returns null at the `cond` test. What moves is only DAMAGE, and only on the board a suite that just wants to see the snipe fire would never build: a FULL deck, where the gate is false and 240 lands anyway. §3's first case is that board, and it asserts every benched body at 0",
     file: "packages/engine/src/effects.ts",
-    find: "      return [\n        {\n          op: \"conditionGate\",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: [\n            {\n              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,\n            },\n          ],\n        },\n      ];",
-    replace: "      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];",
+    // ⚠️ RE-TRANSCRIBED AT D437 — the gated arm's `then` became a `damagedOnly` ternary
+    // over two branches, so the old `find` matched ZERO. Re-transcribed onto the whole
+    // new block and the `replace` keeps BOTH branches, so the mutant is exactly "the
+    // gate is gone" and not "the gate is gone AND the narrowing is gone" — a row that
+    // carried two defects would die for whichever reason came first (D416).
+    // **THE CLAIM IS UNCHANGED.**
+    find: "      return [\n        {\n          op: \"conditionGate\",\n          cond,\n          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n          then: damagedOnly\n            ? [\n                {\n                  op: \"damageChosen\",\n                  target: \"opponentBench\",\n                  amount,\n                  count,\n                  source: \"attack\",\n                  deals: true,\n                  damagedOnly: true,\n                },\n              ]\n            : [\n                {\n                  op: \"damageChosen\",\n                  target: \"opponentBench\",\n                  amount,\n                  count,\n                  source: \"attack\",\n                  deals: true,\n                },\n              ],\n        },\n      ];",
+    replace: "      return damagedOnly\n        ? [\n            {\n              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,\n              damagedOnly: true,\n            },\n          ]\n        : [\n            {\n              op: \"damageChosen\",\n              target: \"opponentBench\",\n              amount,\n              count,\n              source: \"attack\",\n              deals: true,\n            },\n          ];",
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
   {
@@ -16785,8 +16810,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D399",
     what: "⚠️ C7 — **THE `count >= 1` GUARD IS DROPPED FROM THE FLAT ARM**, leaving the amount's guard alone — which is the asymmetry an author lands on when they add a capture to a line that already had one test on it. A printed *0 of* would then derive to a snipe that chooses NOBODY: `snipeTargets` still returns candidates, `Math.min(0, n)` is 0, and the park asks for zero Pokémon. **NO CARD PRINTS IT, WHICH IS THE POINT** — the guard is what keeps a silent no-op off the derived path instead of relying on the catalog, exactly as the amount's `>= 1` has since 0.38.0",
     file: "packages/engine/src/effects.ts",
-    find: "    if (amount >= 1 && count >= 1) {\n      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];\n    }\n  }",
-    replace: "    if (amount >= 1) {\n      return [\n        {\n          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count,\n          source: \"attack\",\n          deals: true,\n        },\n      ];\n    }\n  }",
+    // ⚠️ RE-TRANSCRIBED AT D437 — the flat arm's guard gained `&& agrees` (the printed
+    // clause is singular, so it may only ride `1 of`), which made the bare guard line
+    // BYTE-IDENTICAL to `D400-count-positivity-guard-dropped`'s one anchor over. Both
+    // rows now carry their own PRECEDING line, which the two arms spell differently.
+    // **THE CLAIM IS UNCHANGED**: the count's positivity guard is dropped and the
+    // amount's is left alone, which is the asymmetry an author lands on.
+    find:
+      "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && count >= 1 && agrees) {",
+    replace: "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && agrees) {",
     expectKilledBy: ["packages/engine/src/alsoBenchedSnipe.test.ts"],
   },
   {
@@ -16867,8 +16899,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D400",
     what: "⚠️ C7 — **THE `count >= 1` GUARD GOES**, leaving only the amount's. A printed `0 of` then derives a `damageChosen` at `count: 0`, which parks nothing and hits nothing — a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing rule that a printed 0 is not a real card). The amount's own guard survives the mutation, so the row separates the two positivity questions rather than testing them as one",
     file: "packages/engine/src/effects.ts",
-    find: "    if (amount >= 1 && count >= 1 && agrees) {",
-    replace: "    if (amount >= 1 && agrees) {",
+    // ⚠️ RE-TRANSCRIBED AT D437 — see `D399-flat-arm-drops-the-count-guard`. The benched
+    // rider's guard grew an `agrees` conjunct of its own, so this `find` began matching
+    // TWO sites. Anchored on THIS arm's own preceding line (the number-word agreement,
+    // which the benched arm spells differently). **THE CLAIM IS UNCHANGED**.
+    find:
+      '    const agrees = number === undefined || (number === "those") === (count > 1);\n    if (amount >= 1 && count >= 1 && agrees) {',
+    replace:
+      '    const agrees = number === undefined || (number === "those") === (count > 1);\n    if (amount >= 1 && agrees) {',
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
   },
   {
@@ -17935,9 +17973,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D416",
     what: "🛑 THE SAME SCOPE DEFECT ONE LAYER DOWN AND AT A DIFFERENT ADDRESS: `knockOutChosenTargets`' ternary answers `oppBenchRefs` for `opponentAny` and `oppAnyRefs` for `opponentBench`. The doc block calls this line *\"`snipeTargets`' verbatim\"*, and a line written from memory against a two-member union is a coin flip about which arm is which. ⚠️ **THIS IS WHY THE DERIVER ROWS ABOVE ARE NOT ENOUGH.** Under those, the caption moves WITH the candidate set — `knockOutChosenNote` reads `target` too, so the dialog stays honest about a wrong set. Under THIS one the caption still says *\"Benched\"* while the prompt offers the Active: a dialog that contradicts its own validator, which is `switchTargetNoun`'s rule (D206/D331) and the one failure mode a state-shaped assertion cannot reach",
     file: "packages/engine/src/interpreter.ts",
-    find: '  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);',
+    // ⚠️ RE-TRANSCRIBED AT D437 — see `D345-snipe-funnel-forgets-the-active-arm`. This
+    // row's `find` started matching TWO sites the moment `snipeTargets` grew a local of
+    // the same name, which is D404's wrong-arm trap and exactly what `precheck` is for.
+    // Anchored on `const inWindow =`, the line only THIS function owns. **THE CLAIM IS
+    // UNCHANGED**: the ternary's arms are swapped.
+    find:
+      '  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);\n  const inWindow =',
     replace:
-      '  const scope = op.target === "opponentAny" ? oppBenchRefs(state, seat) : oppAnyRefs(state, seat);',
+      '  const scope = op.target === "opponentAny" ? oppBenchRefs(state, seat) : oppAnyRefs(state, seat);\n  const inWindow =',
     expectKilledBy: ["packages/engine/src/knockOutChosen.test.ts"],
   },
   {
@@ -19899,5 +19943,104 @@ export const MUTANTS: Mutant[] = [
     find: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached \\(in addition to this attack['\u2019]s cost\\), this attack does (\\d+) more damage\\.$/;",
     replace: "const EXTRA_ENERGY_BONUS =\n  /^If this Pok\u00e9mon has at least (\\d+) extra Energy attached \\(in addition to this attack's cost\\), this attack does (\\d+) more damage\\.$/;",
     expectKilledBy: ["packages/engine/src/extraEnergyBonus.test.ts", "packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D437-funnel-drops-the-narrowing",
+    decision: "D437",
+    what: "🛑 C1 — **THE FUNNEL IGNORES `damagedOnly` AND RETURNS THE WHOLE SCOPE.** The sentence still resolves, the op still carries the flag, `BUILT.attack` still rises and `ATTACK_EFFECT_SKIPPED` never fires — the card simply snipes a body the print does not name. It is the build every one of this slice's three arity boards was written for: the empty-filtered board PARKS instead of whiffing silently, the forced board PARKS instead of forcing, and a SHIELDED UNDAMAGED body files a `DAMAGE_DEALT{prevented}` row for a hit that was never coming (D433's false log row, arriving here rather than at `unshieldedRefs`). ⚠️ It also breaks the D345 funnel contract in the direction nothing else can see: `programPlayable` greys off the same wide set, so the gate and the offer agree — WRONGLY — and no cross-check reddens",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.damagedOnly !== true) return scope;\n  // A ref that resolves to no body is DROPPED rather than admitted — the narrowed\n  // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule\n  // one funnel over, and the same `refPokemon` behind it).\n  return scope.filter((ref) => {\n    const pokemon = refPokemon(state, ref);\n    return pokemon !== undefined && hasAnyDamageCounters(pokemon);\n  });",
+    replace: "  return scope;",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-narrows-after-the-arity-doctrine",
+    decision: "D437",
+    what: "🛑 C2 — **THE THREE ARITY ENDINGS ARE DECIDED ON THE UNFILTERED SET AND THE NARROWING IS APPLIED ONLY TO WHAT IS OFFERED**, which is the defect this shape invites: an author who filters at the last moment, where the filter is most visible. `stepOp`'s zero-test, its `take` and its M1 no-choice test all read `wide`, while the prompt and `placeSnipe` still get the narrowed `candidates`. **THE DAMAGE THAT EVENTUALLY LANDS IS CORRECT IN EVERY CASE** — only the ARITY moves — so every damage-shaped assertion in this file passes and the rungs that kill it are the prompt-shaped ones: three UNDAMAGED benched bodies park a prompt over an EMPTY candidate list instead of whiffing silently (§3), and one damaged body among three parks instead of being forced (§4). This is the row the brief asked for by name, and it is the mirror of `D416-park-marker-never-written`: a narrowing that runs after the doctrine rather than before it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const candidates = snipeTargets(state, ctx.seat, op);\n      if (candidates.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, candidates.length);\n      if (!declinable && candidates.length <= op.count) {",
+    replace: "      const candidates = snipeTargets(state, ctx.seat, op);\n      const wide = snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined });\n      if (wide.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, wide.length);\n      if (!declinable && wide.length <= op.count) {",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-placement-gets-the-unfiltered-set",
+    decision: "D437",
+    what: "🛑 C3 — **THE NARROWING IS HONOURED FOR THE OFFER AND FORGOTTEN AT THE PLACEMENT**, i.e. the forced arm hands `placeSnipe` the un-narrowed set. ⚠️ **THIS IS THE CLOSEST THIS OP CAN COME TO D433's DEFECT, AND THE DIFFERENCE IS WORTH STATING**: `damageChosen` never calls `unshieldedRefs`, so there is no §11 gate to ask in the wrong order — every prevention it consults (`benchShieldedFromDamage`, the six `targetPassives.prevent*` disjuncts, `attackDamageBlocked`, `coinFlipShieldPrevents`) lives INSIDE `placeSnipe`'s loop over the refs it is handed. So *asking the shield before narrowing* is expressible here only as *handing the placement the wide set*, and its casualty is exactly D433's: a SHIELDED UNDAMAGED benched body files a `DAMAGE_DEALT{dealt:0, prevented:true}` row for a hit the card was never going to aim at it. §6's first rung reads that row list by uid and is the assertion that reddens first; the damage on the undamaged neighbours reddens after it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        return {\n          done: placeSnipe(\n            state,\n            candidates,\n            amount,",
+    replace: "        return {\n          done: placeSnipe(\n            state,\n            snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined }),\n            amount,",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-predicate-counts-counters-not-presence",
+    decision: "D437",
+    what: "⚠️ C4 — **THE PREDICATE BECOMES `damageCountersOn(pokemon) >= 1`**, which is the STRUCTURALLY NEAREST NEIGHBOUR's real code: `knockOutChosenTargets` sits forty lines away and reads its own per-body damage window exactly that way, through the helper declared directly above this one. The two spellings agree on every board the engine can REACH — every writer of `InPlayPokemon.damage` moves a printed amount or a catalog HP figure, all multiples of ten — so this mutant is invisible to every board a natural suite would build, and it is NOT declared equivalent, because §4 drives the one board that separates them: a body at 5 damage carries ZERO counters under the floor and is a candidate under the presence test. The printed phrase is *\"has ANY damage counters\"*, and D436's rule (the comparand fixes the unit) sends *\"any\"* to presence and *\"exactly N\"* to the count",
+    file: "packages/engine/src/interpreter.ts",
+    find: "function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {\n  return pokemon.damage > 0;\n}",
+    replace: "function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {\n  return damageCountersOn(pokemon) >= 1;\n}",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-predicate-inverted",
+    decision: "D437",
+    what: "🛑 C5 — **THE PREDICATE IS THE COMPLEMENT**: `pokemon.damage > 0` becomes `pokemon.damage === 0`, which is `conditionHolds`' `yourActiveUndamaged` arm verbatim — a neighbouring member's REAL code on the wrong sentence (D190b's shape). The card then snipes exactly the bodies it is printed to spare. It is the sharpest one-token near-miss in this slice, and it is here because the five shipped arms that spell this printed phrase sit beside a sixth that spells its complement, one line apart",
+    file: "packages/engine/src/interpreter.ts",
+    find: "function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {\n  return pokemon.damage > 0;\n}",
+    replace: "function hasAnyDamageCounters(pokemon: InPlayPokemon): boolean {\n  return pokemon.damage === 0;\n}",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-reader-drops-the-narrowing",
+    decision: "D437",
+    what: "🛑 C6 — **THE READER NEVER SETS THE FLAG**: the third capture is read and thrown away, so the printed clause is decoration. **THIS ROW IS SILENT IN EVERY CENSUS** — the sentence still resolves through the same anchor, `BUILT.attack` still rises by 3, the residue still falls by 3, `resolvedByAnyReader` is still true and `ATTACK_EFFECT_SKIPPED` never fires. The only thing that moves is which bodies the card can hit, which is the whole of what it prints. It is also the shape D190b ranks BELOW an unbuilt sentence: a wrong-but-plausible program that fails silently instead of loudly. ⚠️ It disarms the number agreement too (`agrees` becomes vacuously true), so §2's `2 of … that has …` refusal reddens beside §3's and §4's boards",
+    file: "packages/engine/src/effects.ts",
+    find: "    const damagedOnly = match[3] !== undefined;",
+    replace: "    const damagedOnly = false;",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-number-agreement-dropped",
+    decision: "D437",
+    what: "⚠️ C7 — **THE NUMBER AGREEMENT IS DROPPED**, i.e. the singular clause is admitted against any arity. This is the guard an author simply does not think of: the narrowing looks like a property of the noun, and the printed *\"that has … on it\"* only refuses a plural by being singular. 🛑 **AND IT IS THE ROW THAT RE-ARMS D399's TRIPWIRE** (the D436 GAP's lesson, applied forwards): `conditionalBenchSnipe.test.ts` §4 has asserted since D399 that *\"…to 2 of your opponent's Benched Pokémon that has any damage counters on it.\"* derives to null, and until this slice the shared fragment refused it at its own literal `\\\\.`. This slice makes that string MATCH the fragment, so the refusal is now the number's alone — and that rung would have gone quiet under any build that forgot the guard, exactly the way D368's clause-table tripwire went quiet at D436. This row is the FLAT arm's guard alone and is killed by this slice's own suite; the GATED arm's guard is `D437-gated-agreement-dropped` below, and THAT is the row the D399 rung kills, because that rung's sentence goes through `CONDITIONAL_BENCH_SNIPE`. ⚠️ Splitting them is D416's rule: a row that dies for the wrong reason reports a success it did not earn",
+    file: "packages/engine/src/effects.ts",
+    find: "    const agrees = !damagedOnly || count === 1;",
+    replace: "    const agrees = true;",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-gated-caller-drops-the-widening",
+    decision: "D437",
+    what: "⚠️ C8 — **THE THIRD CALLER OF THE SHARED FRAGMENT SILENTLY DROPS THE WIDENING**: the gated arm reads the new capture and ignores it, so *\"If {clause}, this attack also does N damage to 1 of your opponent's Benched Pokémon that has any damage counters on it.\"* derives an UN-narrowed snipe. This is precisely the failure D383 made the fragment shared to prevent — one printed clause with two readings depending on what came before the comma — and it needs its own row for that row's own reason: a fragment with three callers owes three proofs, and the flat caller passing says nothing about the gated one",
+    file: "packages/engine/src/effects.ts",
+    find: "    const damagedOnly = match[4] !== undefined;",
+    replace: "    const damagedOnly = false;",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-payoff-drops-the-narrowing",
+    decision: "D437",
+    what: "🛑 C9 — **THE OPTIONAL-COST PAYOFF STOPS REFUSING THE NARROWED SPELLING AND RESOLVES IT UN-NARROWED.** `AttackOptionalCostPayoff.benchSnipe` is `{amount, count}` with no slot for a candidate-set narrowing, so dropping the guard does not lose the clause loudly — it ships a snipe that hits an UNDAMAGED body the card never offered, off a sentence the census then counts as BUILT. That is the exact-map-or-flag rule (D190b/D199) at a THIRD caller: a shared fragment that widens under a caller which then ignores the widening is how this repo authors an effect no card prints",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (snipe[3] !== undefined) return null;",
+    replace: "    if (snipe[3] === undefined) return null;",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-note-forgets-the-window",
+    decision: "D437",
+    what: "⚠️ C10 — **THE PROMPT'S CAPTION DROPS THE PRINTED WINDOW** while the offer stays narrowed, so a player looking at two of a five-body Bench is told to *\"Choose 1 of your opponent's Benched Pokémon\"* and reads the dialog as broken rather than as the card doing what it prints. **THE BOARD IS IDENTICAL UNDER THIS MUTANT** — every damage figure, every event, every candidate list — so only an assertion on the prompt's own string reaches it (`D295-caption-still-says-discard`'s claim, and `gustTargetNoun`'s stated rule that the caption must name exactly the set the validator will enforce). §5 pins BOTH captions: the narrowed one in full, and the un-narrowed one byte-identical to what shipped before this slice",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const window = damagedOnly ? \" that has any damage counters on it\" : \"\";",
+    replace: "  const window = \"\";",
+    expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
+  },
+  {
+    id: "D437-gated-agreement-dropped",
+    decision: "D437",
+    what: "🛑 C11 — **THE GATED ARM'S NUMBER AGREEMENT IS DROPPED**, and this is the row that RE-ARMS D399's TRIPWIRE. `conditionalBenchSnipe.test.ts` §4 has asserted since D399 that *\"If {mapped clause}, this attack also does 30 damage to 2 of your opponent's Benched Pokémon that has any damage counters on it.\"* derives to NULL — and until this slice the shared fragment refused that string at its own literal `\\\\.`, so the rung's discrimination was the FRAGMENT's. D437 makes the string MATCH the fragment, which moves the refusal onto the gated arm's arity check and would otherwise leave the rung TRUE-BUT-TOOTHLESS. That is the exact shape of D436's GAP (a re-pointed claim that is true under the mutant and the real build alike), found by grepping the mutation corpus for the SENTENCE before building it — D384's rule, which D436 broke. **THE KILLER IS D399's OWN SUITE**, deliberately: the rung is re-armed where it lives rather than replaced by a new one over here",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {",
+    replace: "    if (cond !== null && amount >= 1 && count >= 1) {",
+    expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
 ];

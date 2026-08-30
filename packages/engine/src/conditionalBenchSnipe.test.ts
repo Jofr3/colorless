@@ -548,6 +548,24 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     // here, so what refuses them is the consequent alone. ⚠️ **THESE FOUR TEST THE
     // SHARED BODY, NOT THE ANCHOR'S TERMINATOR** — the case above is the one that
     // tests that, and conflating the two is what the harness caught.
+    //
+    // 🛑🛑 **THE FOURTH ROW'S REFUSAL CHANGED MECHANISM AT D437 AND THE ASSERTION DID
+    // NOT, WHICH IS EXACTLY THE SHAPE OF D436's GAP.** When this case was written the
+    // trailing clause was refused ONE LEVEL DOWN: `ALSO_BENCHED_SNIPE_BODY` ended in a
+    // literal `\.` right after *Pokémon*, so a sentence that CONTINUED there never
+    // reached this anchor at all. D437 widened that fragment — the clause is now its
+    // THIRD capture — so the string MATCHES the body, and what refuses it is the gated
+    // arm's NUMBER AGREEMENT: *"that has … on it"* is singular and may only ride
+    // *"1 of"*. **BOTH refusals are true; only one of them is still the reason**, and
+    // a rung that merely kept saying `toBeNull()` would be TRUE-BUT-TOOTHLESS if a
+    // build forgot the new guard (D418's second half). Two things re-arm it:
+    //   • the ADMISSION directly below — the SAME consequent at `1 of` IS read, and it
+    //     carries `damagedOnly`, so this loop's fourth row is now a claim about the
+    //     NUMBER rather than about the clause;
+    //   • the mutant `D437-gated-agreement-dropped`, which drops that guard and is
+    //     killed BY THIS FILE. The tripwire is re-armed where it lives rather than
+    //     replaced by a new one in the new slice's own suite (D384's rule, which D436
+    //     broke by re-pointing seven rungs and never asking what a MUTANT rested on).
     for (const consequent of [
       "this attack also does 30 damage to each of your opponent's Benched Pokémon.",
       "this attack also does 30 damage to 2 of your opponent's Pokémon.",
@@ -556,6 +574,32 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     ]) {
       expect(deriveAttackEffect(`If ${TAKEN_CLAUSE}, ${consequent}`), consequent).toBeNull();
     }
+    // 🆕🆕 D437 — THE ADMISSION, one axis from the fourth row above: the same clause at
+    // the arity it is printed against IS read, through the shared fragment's new
+    // capture, and the op carries the narrowing. No card prints this composition; the
+    // reading is stated because a fragment with three callers owes three readings.
+    expect(
+      deriveAttackEffect(
+        `If ${TAKEN_CLAUSE}, this attack also does 30 damage to 1 of your opponent's Benched Pokémon that has any damage counters on it.`,
+      ),
+    ).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "yourDeckAtMost", count: 3 },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "damageChosen",
+            target: "opponentBench",
+            amount: 30,
+            count: 1,
+            source: "attack",
+            deals: true,
+            damagedOnly: true,
+          },
+        ],
+      },
+    ]);
   });
 });
 

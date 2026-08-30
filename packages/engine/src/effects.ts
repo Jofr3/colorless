@@ -4560,6 +4560,32 @@ export type EffectOp =
           bonus is an effect on the ATTACKER, not the target, so it still applies. Only
           the `opponentAny` reader sets it (Feint Attack targets any Pokémon). */
       ignoreWR?: true;
+      /** 🆕🆕 **D437 — THE PRINTED PER-BODY NARROWING**: *"…to 1 of your opponent's
+          Benched Pokémon **that has any damage counters on it**."* (corpus row 528,
+          1 sentence / 3 legal printings). It narrows the CANDIDATE SET inside
+          `snipeTargets` — the funnel `programPlayable` shares — and nothing else:
+          same amount, same arity, same W/R answer, same park.
+
+          🛑 **AND IT IS READ ONLY WHERE THE CANDIDATES ARE BUILT, WHICH IS WHY IT IS
+          OPTIONAL AND WHY `MATCH_RECORD_VERSION` STANDS STILL AT 29.** The rest of
+          this record is OLD — every other key was written by a previous deploy, so
+          D434's *"a rest must be OLD"* test is satisfied — but the argument does not
+          even need to reach the degradation: `applyChoice`'s `damageChosen` arm hands
+          `choice.refs` straight to `placeSnipe` and never re-derives a candidate set,
+          and `validateChoice` matches the answer against the PARKED PROMPT rather
+          than against the op. So a resumed pick reads this field at NO site. A record
+          that lost it resolves to the identical board, because the narrowing already
+          happened when the prompt was built. ⚠️ **THE BUMP WOULD BE OWED THE DAY
+          `applyChoice` RE-DERIVES `snipeTargets`** — that is the falsifier, and it is
+          one grep (`snipeTargets` inside `applyChoice`).
+
+          ⚠️ **`true` AND NOT `boolean`**, the six riders above it: an absent key and
+          `false` are two spellings of one board and this op is compared by value.
+
+          The narrowing composes with `target` in principle; no printing spells it
+          against `opponentAny` today, and `snipeTargets` applies it to whichever
+          scope the op names rather than to the Bench by hand. */
+      damagedOnly?: true;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -10661,8 +10687,35 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // below the reader — the literal `1` was the only thing refusing four printings.
 // The second capture is what the promise above is FOR: widening it here moves all
 // THREE callers at once, so one printed clause keeps one reading.
+// 🆕🆕 D437 — AND THE PRINTED NOUN GAINS AN OPTIONAL PER-BODY NARROWING, WHICH IS
+// THE THIRD CAPTURE AND THE WHOLE OF THIS SLICE'S READING. *"This attack also does
+// 60 damage to 1 of your opponent's Benched Pokémon **that has any damage counters
+// on it**. (Don't apply Weakness and Resistance for Benched Pokémon.)"* — corpus row
+// 528, **1 sentence / 3 legal printings**. The clause narrows the CANDIDATE SET and
+// nothing else: same op, same park, same amount, same W/R parenthetical.
+//
+// 🛑 **IT IS APPENDED AFTER THE EXISTING TWO GROUPS' OPENING PARENS, SO NO CALLER'S
+// INDICES SHIFT.** The W/R clarifier beside it is `(?:…)`, non-capturing, so the
+// body held exactly two groups before this slice and holds three after — `[1]` is
+// still the amount and `[2]` still the count at all three callers, and the gated
+// anchor's clause is still `[1]` because its own group opens earlier in the pattern.
+// That is the reason the narrowing is spelled here rather than as a fourth anchor:
+// D383 made this fragment shared precisely so ONE printed clause keeps ONE reading,
+// and a fourth anchor would have duplicated the noun phrase to widen half of it.
+//
+// ⚠️ **ALL THREE CALLERS THEREFORE SEE THE GROUP AND ALL THREE ANSWER IT** — the
+// flat rider READS it (arm 6c), the gated one READS it (arm 6c-bis, a composition
+// no card prints today), and `optionalCostPayoff` REFUSES the narrowed spelling
+// outright, because its `benchSnipe` payoff record has no slot to carry it and a
+// silently-dropped narrowing is a wrong-but-plausible program (D190b). A shared
+// fragment that widens under a caller which then ignores the widening is exactly
+// how this repo ships an effect the card does not print.
+//
+// ⚠️ **THE CLAUSE IS SINGULAR AND THE ARITY IS CHECKED AGAINST IT** — see arm 6c's
+// `agrees` test, D400's number-agreement rule verbatim one anchor over.
 const ALSO_BENCHED_SNIPE_BODY =
-  `attack also does (\\d+) damage to (\\d+) of your opponent['’]s Benched Pokémon\\.` +
+  `attack also does (\\d+) damage to (\\d+) of your opponent['’]s Benched Pokémon` +
+  "( that has any damage counters on it)?\\." +
   `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
 const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
 /** 🆕🆕 **D399 — THE SAME RIDER BEHIND A PRINTED BOARD-CONDITION CLAUSE.** Wo-Chien
@@ -17503,21 +17556,59 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     (`min: take, max: take` over DISTINCT refs, §8.6-clamped to a shorter
   //     Bench), so the only new thing is which number reaches it. A printed 0-count
   //     is not a real card either — same guard, same reason as the amount's.
+  // 🆕🆕 D437 — **AND THE PRINTED NARROWING IS THE BODY'S THIRD CAPTURE.** Present →
+  //     the op carries `damagedOnly`, and `snipeTargets` (interpreter.ts) drops every
+  //     undamaged benched body from the candidate set BEFORE the arity doctrine reads
+  //     it. Absent → the op is byte-identical to the one this arm has returned since
+  //     D399, which is what keeps the fifteen un-narrowed printings on their own path.
+  //
+  //     🛑 **THE NUMBER MUST AGREE, AND THE GUARD IS D400's `agrees` ONE ANCHOR OVER.**
+  //     The clause is SINGULAR — *"…Pokémon **that has** any damage counters on **it**"*
+  //     — so it can only be printed against *"1 of"*; the plural spelling a 2-count
+  //     printing would carry (*"that have … on them"*) is a different string this
+  //     fragment does not match at all. A narrowed sentence at count ≥ 2 is therefore
+  //     a spelling the catalog has never printed, and it falls through to the loud
+  //     `ATTACK_EFFECT_SKIPPED` path rather than being resolved on a guess — exactly
+  //     as a printed 0 does two lines down. ⚠️ **THIS IS ALSO WHAT KEEPS D399's
+  //     REFUSAL RUNG TRUE**: `conditionalBenchSnipe.test.ts` §4 drives *"…to 2 of your
+  //     opponent's Benched Pokémon that has any damage counters on it."* and asserts
+  //     null, and after this slice the refusal is the NUMBER's rather than the
+  //     fragment's terminating `\.`. Both are true; only one of them is still the
+  //     reason, and that rung now drives the 1-count twin beside it to say so.
   match = ALSO_BENCHED_SNIPE.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);
     const count = Number(match[2]);
-    if (amount >= 1 && count >= 1) {
-      return [
-        {
-          op: "damageChosen",
-          target: "opponentBench",
-          amount,
-          count,
-          source: "attack",
-          deals: true,
-        },
-      ];
+    const damagedOnly = match[3] !== undefined;
+    const agrees = !damagedOnly || count === 1;
+    if (amount >= 1 && count >= 1 && agrees) {
+      // ⚠️ TWO WHOLE LITERALS AND NOT A CONDITIONAL SPREAD — `CHOSEN_ANY_TARGET`'s
+      // `ignoreWR` arm four anchors down, spelled the same way for D135's reason:
+      // an ABSENT key and a key set to `undefined` are different wire values, and
+      // this op is persisted (it parks). The un-narrowed literal is byte-identical
+      // to the one this arm has returned since D399.
+      return damagedOnly
+        ? [
+            {
+              op: "damageChosen",
+              target: "opponentBench",
+              amount,
+              count,
+              source: "attack",
+              deals: true,
+              damagedOnly: true,
+            },
+          ]
+        : [
+            {
+              op: "damageChosen",
+              target: "opponentBench",
+              amount,
+              count,
+              source: "attack",
+              deals: true,
+            },
+          ];
     }
   }
 
@@ -17544,22 +17635,43 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const cond = boardConditionForClause(match[1] ?? "");
     const amount = Number(match[2]);
     const count = Number(match[3]);
-    if (cond !== null && amount >= 1 && count >= 1) {
+    // 🆕🆕 D437 — THE SHARED BODY'S THIRD CAPTURE, READ HERE FOR THE REASON THE
+    //     FRAGMENT EXISTS: a widening that one caller honours and another drops is
+    //     two opinions about one printed clause, which is precisely what D383 made
+    //     this fragment shared to prevent. **NO CARD PRINTS THIS COMPOSITION TODAY**
+    //     — the gated skeleton has one legal printing (Wo-Chien `sv08-015`) and it
+    //     carries no narrowing — so this is a reading the deriver would give if the
+    //     sentence were printed, not a claim that it is. The group is `[4]`: the
+    //     antecedent's `(.+)` opens first, then the body's three.
+    const damagedOnly = match[4] !== undefined;
+    if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {
       return [
         {
           op: "conditionGate",
           cond,
           // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
-          then: [
-            {
-              op: "damageChosen",
-              target: "opponentBench",
-              amount,
-              count,
-              source: "attack",
-              deals: true,
-            },
-          ],
+          then: damagedOnly
+            ? [
+                {
+                  op: "damageChosen",
+                  target: "opponentBench",
+                  amount,
+                  count,
+                  source: "attack",
+                  deals: true,
+                  damagedOnly: true,
+                },
+              ]
+            : [
+                {
+                  op: "damageChosen",
+                  target: "opponentBench",
+                  amount,
+                  count,
+                  source: "attack",
+                  deals: true,
+                },
+              ],
         },
       ];
     }
@@ -21547,6 +21659,19 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
     // is read one anchor over: a number the sentence printed beats a number this
     // reader remembered.
     const count = Number(snipe[2]);
+    // 🆕🆕 D437 — **THE THIRD CAPTURE IS REFUSED HERE RATHER THAN DROPPED**, and the
+    // asymmetry with the two `deriveAttackEffect` arms that READ it is the point.
+    // `AttackOptionalCostPayoff.benchSnipe` is `{amount, count}` and has no slot for a
+    // candidate-set narrowing, so honouring the printed clause would mean widening
+    // that record and `costSnipeProgram` with it — for a composition **no card prints**
+    // (*"You may {cost}. If you do, this attack also does N damage to 1 of your
+    // opponent's Benched Pokémon that has any damage counters on it."* is absent from
+    // all 640 corpus sentences). Returning the un-narrowed payoff instead would be a
+    // wrong-but-plausible program — the snipe would hit an UNDAMAGED body the card
+    // never offered — and a registry-shaped defect is what D190b/D199 rank strictly
+    // below an unbuilt sentence, which at least fails loudly. So: null, and the whole
+    // sentence stays on the `ATTACK_EFFECT_SKIPPED` path.
+    if (snipe[3] !== undefined) return null;
     // The same guard on the same reason — and it is the guard `deriveAttackEffect`'s
     // own benched-snipe arm carries on this clause's other spelling.
     return amount < 1 || count < 1 ? null : { kind: "benchSnipe", amount, count };

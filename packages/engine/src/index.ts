@@ -18534,6 +18534,111 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.334.0 → **0.335.0**
     (`packages/engine/package.json` in the same commit). */
+/** 🆕🆕 **0.338.0 → 0.339.0 — D437, THE FILTERED BENCH SNIPE: THE FIRST PER-BODY
+    PREDICATE TO NARROW A CANDIDATE SET ON `damageChosen`.**
+
+    *"This attack also does 60 damage to 1 of your opponent's Benched Pokémon **that
+    has any damage counters on it**. (Don't apply Weakness and Resistance for Benched
+    Pokémon.)"* — **1 sentence / 3 legal printings**, `censusAttackCorpus.ts` row 528,
+    over the committed `legal_standard = 1` attack column (640 sentences / 1,732
+    printings). The un-narrowed rider has shipped since 0.38.0; what is new is a
+    clause in the middle of the printed noun phrase.
+
+    🛑 **THE FILTER LANDS ON THE CANDIDATE SET, AND THAT MOVES BOARDS BETWEEN
+    `stepOp`'s THREE EXISTING ENDINGS.** The `damageChosen` arm has always had them —
+    0 candidates is a silent no-op, `<= count` auto-takes (the M1 no-choice rule),
+    anything more parks — and the narrowing does not add a fourth, it RE-SORTS boards:
+
+      • **EMPTY WHERE THE UNFILTERED SET WAS NOT.** Three undamaged benched bodies is
+        three candidates unfiltered and ZERO filtered. The sentence resolves and moves
+        nothing — no prompt, no event, and **NOT an `ATTACK_EFFECT_SKIPPED`**, because
+        the sentence was READ; the printed candidate set is simply empty. That is the
+        ending an empty Bench has always taken.
+      • **FORCED WHERE THE UNFILTERED SET WOULD HAVE PARKED.** One damaged body beside
+        two undamaged ones is not a decision, and this is the case a build that
+        filtered AFTER the arity doctrine gets wrong.
+      • **PARKED, with the offer exactly the printed set** — the arm D416 warns is
+        invisible to a suite whose boards all field one candidate.
+
+    Every one of the three is driven against the SAME board with the clause deleted
+    (index 1 of the demonstrator), so "the narrowing did it" is an attribution rather
+    than an inference.
+
+    🛑 **WHERE THE NARROWING GOES: `snipeTargets`, THE FUNNEL — AND THAT IS WHAT MAKES
+    D433's ORDER FREE.** `programPlayable` shares that funnel (D345), so the grey-out
+    and the offer cannot disagree; and `placeSnipe` asks every prevention it consults
+    (`benchShieldedFromDamage`, the six `targetPassives.prevent*` disjuncts,
+    `attackDamageBlocked`, `coinFlipShieldPrevents`) INSIDE its loop over the refs it
+    is handed. So a body the clause removed is never asked about and cannot file a
+    false refusal row. ⚠️ **AND `damageChosen` NEVER CALLS `unshieldedRefs` AT ALL** —
+    D433's defect is not literally reachable at this op; its nearest expression is
+    handing the PLACEMENT the wide set, which is the mutant
+    `D437-placement-gets-the-unfiltered-set`. Driven with its admission: a shielded
+    UNDAMAGED body files no row, a shielded DAMAGED one is a printed candidate and
+    files its `DAMAGE_DEALT{dealt:0, prevented:true}`.
+
+    🛑 **THE PREDICATE IS `damage > 0`, NOT `damageCountersOn(p) >= 1`, AND THE
+    PRECEDENT IS UNANIMOUS RATHER THAN NEAREST.** Five shipped `conditionHolds` arms
+    read this exact printed phrase (`opponentActiveDamaged`, `yourActiveDamaged`,
+    `yourBenchDamaged`, `yourBenchAllDamaged`, `yourBenchNamedDamaged`) and all five
+    spell it `> 0`. `damageCountersOn` (D416) is not a disagreeing sibling: it serves
+    *"exactly N damage counters"*, whose comparand is a NUMBER, so the unit must be
+    counters — D436's rule that **the comparand fixes the unit**. The two spellings
+    differ only at 1–9 damage, which no writer of `InPlayPokemon.damage` in this engine
+    can produce; the board is constructible as a fixture and is DRIVEN, so the choice
+    is pinned by a rung rather than left to a comment.
+
+    🛑 **THE READING IS THE SHARED FRAGMENT'S THIRD CAPTURE, AND ALL THREE CALLERS
+    ANSWER IT.** D383 made `ALSO_BENCHED_SNIPE_BODY` shared so one printed clause keeps
+    one reading; the new group is appended after the existing two opening parens, so no
+    caller's indices move. The flat arm READS it, the gated arm READS it (a composition
+    no card prints), and `optionalCostPayoff` **REFUSES** the narrowed spelling — its
+    `benchSnipe` record has no slot for a narrowing, and a silently-dropped one is the
+    wrong-but-plausible program D190b ranks below an unbuilt sentence.
+
+    ⚠️ **THE CLAUSE IS SINGULAR AND THE ARITY IS CHECKED AGAINST IT** (D400's `agrees`
+    rule one anchor over). *"that has … on it"* may only ride *"1 of"*. 🛑 **THAT GUARD
+    IS ALSO WHAT KEEPS A D399 RUNG HONEST**: `conditionalBenchSnipe.test.ts` §4 has
+    asserted since D399 that the same clause at *"2 of"* derives to null, and until this
+    slice the fragment refused it at its own literal `\.`. The refusal moved mechanism
+    while the assertion stayed the same — **D436's GAP shape exactly** — so the corpus
+    was grepped for the SENTENCE before the build (D384's rule), the rung gained its
+    1-count admission, and `D437-gated-agreement-dropped` re-arms it in its own file.
+
+    **THE FAMILY, MEASURED AND DELIBERATELY NOT BUILT.** Grepped two ways over all 640
+    corpus sentences — `/that ha[sv]e? any damage counters/i` (5 sentences / 7
+    printings, every hit read) and the looser `/any damage counters/i` (13 / 17, the
+    other 8 being `If …` board-condition gates, 7 of them built). This slice claims ONE
+    of the five. The other four each need a different CONSEQUENT, and none of them
+    needs another predicate — `hasAnyDamageCounters` is now there for three of the four:
+      • *"Put 2 damage counters on each of your opponent's Pokémon that has…"* (1) —
+        `counterEachAll` walks BOTH seats and filters by `CardFilter`, which never sees
+        the board (D307), so it needs a seat scope AND a board rider, or a new op.
+      • *"…also does 40 damage to each Benched Pokémon that has… (both yours and your
+        opponent's)"* (1) — `spreadDamage.target` is one side per op; a both-benches
+        member (or two ops) plus the rider.
+      • *"…does 50 damage for each of your Pokémon that has…"* (1) — a COUNT: a new
+        `DamageCountSource` member and its fold in `attack.ts`, where this reader is
+        NOT in scope (D436's shape).
+      • *"…does 50 damage to each Pokémon that has… (both yours and your opponent's),
+        except for this Pokémon."* (1) — the dearest: all four zones, W/R applying on
+        the two Actives and not on the Benches, plus a self-exclusion.
+
+    ⚠️ **THE THREE CARRIERS ARE UNRESOLVED AND SAID TO BE.** No D1 in this checkout;
+    the corpus is grouped by sentence and records the COUNT, not the ids (D425). The
+    demonstrator `fix-filteredsnipe` is a `fix-*` key with no catalog row behind it.
+
+    engineVersion 0.338.0 → **0.339.0**
+    (`packages/engine/package.json` in the same commit).
+    `MATCH_RECORD_VERSION` **STAYS 29**, and the argument is stronger than *"the key is
+    optional"*: `applyChoice`'s `damageChosen` arm hands `choice.refs` straight to
+    `placeSnipe` and never re-derives a candidate set, while `validateChoice` matches
+    the answer against the PARKED PROMPT rather than against the op. The narrowing has
+    already happened by the time a record exists, so the resumed pick reads the field at
+    NO site. Driven both ways in `filteredBenchSnipe.test.ts` §8 — the op IS on the wire
+    (it parks), and DELETING the key from a round-tripped record produces a
+    byte-identical board. **The falsifier is executable**: the bump becomes owed the day
+    the resume path re-derives `snipeTargets`. */
 /** 🆕🆕 **0.337.0 → 0.338.0 — D436, THE "EXTRA ENERGY" CLAUSE: D368's SHAPE REFUSAL
     COLLECTED, AND THE ONE PLACE THIS ENGINE COUNTS ENERGY IN *UNITS*.**
 
@@ -18888,7 +18993,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.338.0";
+export const engineVersion = "0.339.0";
 
 export type {
   ApplyResult,

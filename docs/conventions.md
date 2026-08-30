@@ -1510,6 +1510,62 @@ rarities).
 Any "how many cards" figure derived here is invented. **Quote units and
 printings, and say which one you mean.**
 
+## Truncation has a second axis (D437)
+
+`head -N` has cost four briefs in this run, and the convention written against it
+only covered ROW count. D437's brief instead cut each surveyed line at **108
+characters**, and lost `, except for this Pokémon.` from a family member — **a
+whole mechanism, and the thing that made that sibling the dearest of four.**
+
+**Truncating by WIDTH is truncating.** Print enumerations whole on both axes, or
+do not quote them.
+
+## Citing a helper is not citing the code path (D437)
+
+`parkOrForce` exists and its 0/1/≥2 doctrine holds — but `damageChosen`
+**hand-rolls the same three endings inline** and never calls it. A brief naming
+the helper sends a builder to the wrong file.
+
+**Quote the arm, not the utility it resembles.** And note the consequence for the
+slice: a narrowing that runs before the arity check **re-sorts boards between
+arms** — *parks* becomes *silent* or *forced* — so each arity case needs the
+unnarrowed board as its one-axis control.
+
+## Check a gate is reachable before applying an ordering rule to it (D437)
+
+D433 earned *ask the shield after narrowing, not before*. It is **inapplicable**
+at `damageChosen`, which never calls `unshieldedRefs`: its preventions live inside
+the placement loop over the refs it is handed, so narrowing precedes the ask **by
+construction**.
+
+Drive it anyway, with the admission — because the refusal case alone passes on a
+build that asks nobody. **The shield REFUSES; it does not UN-NAME**: a shielded
+body that is a printed candidate still files its row with `prevented: true`, while
+one the filter excluded is never named at all.
+
+## Five shipped arms beat one structural neighbour (D437)
+
+The *"has any damage counters on it"* predicate is spelled `damage > 0`, because
+**five shipped `conditionHolds` arms read that exact printed phrase and all five
+spell it so**. The counter-valued function it most resembles serves *"exactly N
+damage counters"*, whose comparand is a NUMBER — so its unit must be counters
+(D436's comparand rule).
+
+**Following the structurally nearest code would have been D433's `markers`
+mistake at a predicate.** Count the arms that read the same PRINTED phrase, not
+the functions that look alike.
+
+## The copied-function trap, from the other side (D437)
+
+D416's rule is usually read as *copying a function copies its mutants' anchors*.
+D437 hit the converse: `precheck` found **seven broken rows** — three at `0×`,
+four at `2×` — because **newly written lines became byte-identical to lines
+elsewhere** (a fresh `const scope = …` matching another function's first line, a
+guard gaining `&& agrees` matching a neighbour's).
+
+**Writing a line that already exists elsewhere breaks a row you never touched.**
+Run `precheck` after every edit round, not once at the end.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
