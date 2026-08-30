@@ -20470,13 +20470,23 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // MUTANT AND NOT A RUNG, WHICH IS SAID RATHER THAN IMPLIED.**
   // `CONDITIONAL_DAMAGE_CLAUSES` carries no row for this clause and no template
   // claims it, so the conditional arm below falls through to `return null` on the
-  // same two sentences whichever order the arms sit in. **No assertion can show that
-  // from outside this file**: `boardConditionForClause` is not exported, and every
-  // sentence carrying this clause matches THIS anchor too, so a test would be asking
-  // a question only one arm can answer. The executable falsifier is the mutant
-  // `D436-anchor-drops-the-parenthetical`, which reddens exactly because nothing else
-  // claims the sentence — a positive statement of the same fact (D428: a refusal's
-  // falsifier should be executable, and this is where it lives).
+  // same two sentences whichever order the arms sit in.
+  //
+  // 🛑 **D436 WROTE HERE THAT *"no assertion can show that from outside this file"* —
+  // AND THAT WAS WRONG, MEASURED BY A SURVIVING MUTANT.** The reason given (that
+  // `boardConditionForClause` is not exported, and that every sentence carrying this
+  // clause matches THIS anchor too) is half a fact and half a non-sequitur: the
+  // helper is indeed private, but it has THREE call sites and this anchor pre-empts
+  // exactly ONE of them. `CONDITIONAL_BENCH_SNIPE` and
+  // `BONUS_CONSEQUENT_CONDITION[_THEN]` reach the same table through carriers this
+  // anchor cannot match, and both of their readers ARE exported — so *"no row claims
+  // this clause"* is askable from outside, and `undamagedBonus.test.ts` §1 now asks
+  // it at both, with the taken clause as the admitted twin. That rung is what kills
+  // `D368-declaration-clause-gets-a-board-row`, which SURVIVED the sweep that landed
+  // D436 because the assertion this block said was impossible did not exist.
+  // The anchor's own falsifier is still the mutant `D436-anchor-drops-the-
+  // parenthetical`, which reddens because nothing else claims the sentence (D428: a
+  // refusal's falsifier should be executable, and this is where it lives).
   const extraEnergy = EXTRA_ENERGY_BONUS.exec(effect);
   if (extraEnergy !== null) {
     const per = Number(extraEnergy[2]);

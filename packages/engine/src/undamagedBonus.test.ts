@@ -200,9 +200,16 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
     // answers; a `(state, seat)` predicate still cannot do it and this one is not one.
     //
     // ⚠️ **THE `boardCondition` HALF OF THE CLAIM IS KEPT AS AN ASSERTION** rather than
-    // dropped to prose, because it is the half D368 actually settled: the day someone
-    // routes this clause through `CONDITIONAL_DAMAGE_CLAUSES`, the derived `count.kind`
-    // changes and this rung reddens.
+    // dropped to prose, because it is the half D368 actually settled.
+    //
+    // 🛑 **AND D436's SENTENCE HERE — *"the day someone routes this clause through
+    // `CONDITIONAL_DAMAGE_CLAUSES`, the derived `count.kind` changes and this rung
+    // reddens"* — WAS FALSE, MEASURED.** `EXTRA_ENERGY_BONUS` is executed BEFORE
+    // `CONDITIONAL_DAMAGE_BONUS` inside `deriveAttackDamageBonus`, so a table row
+    // added for this clause is DEAD on this path and `count.kind` never moves. The
+    // corpus row `D368-declaration-clause-gets-a-board-row` SURVIVED for exactly that
+    // reason. **The discrimination is re-armed in the rung directly below**, which is
+    // where the table claim now lives; this loop keeps the `DamageCountSource` half.
     for (const [sentence, printings] of DECLARATION_SENTENCES) {
       expect(units(corpus().filter(([, s]) => s === sentence)), sentence).toBe(printings);
       expect(resolvedByAnyReader(sentence), sentence).toBe(true);
@@ -218,6 +225,87 @@ describe("§1 — the handed candidate is a DECLARATION fact, settled from the C
     // the biggest thing on D367's list, kept so a successor inherits it measured.
     expect(DECLARATION_SENTENCES.reduce((sum, [, n]) => sum + n, 0)).toBe(5);
     expect(new Set(DECLARATION_SENTENCES.map(([s]) => BONUS.exec(s)?.[1])).size).toBe(1);
+  });
+
+  it("🛑🆕🆕 NO `CONDITIONAL_DAMAGE_CLAUSES` ROW CLAIMS THE CLAUSE — driven at the two call sites the ANCHOR does not pre-empt", () => {
+    // 🛑 **THE RUNG THE ONE ABOVE WAS CLAIMED TO BE.** D368's finding is a claim about
+    // a TABLE — *"this clause is not a `BoardCondition`, so no row may map it"* — and
+    // after D436 nothing executed it: the sentence that would have shown a row's
+    // effect is claimed by `EXTRA_ENERGY_BONUS` first, so the row is invisible there.
+    // This is D418's second half arriving one slice after the rule was written.
+    // **THE QUESTION, ASKED: what could the OLD claim catch that the NEW one
+    // cannot?** The old rung (read off `a2db519`, the commit before D436) asserted
+    // `resolvedByAnyReader(sentence) === false` and
+    // `deriveAttackDamageBonus(sentence) === null`. **THE ANSWER: a
+    // `CONDITIONAL_DAMAGE_CLAUSES` row added for this clause** — under the old claim
+    // both assertions flip; under the new one (*"`count.kind` is
+    // `extraEnergyUnitsBeyondCost`"*) nothing moves, because the claim is TRUE under
+    // a build carrying the row and under the real build alike. The re-pointing was
+    // right — D436 really does claim the sentence, and re-point-do-not-delete is the
+    // rule — but it dropped discrimination, and this rung buys it back.
+    //
+    // 🛑 **AND `EXTRA_ENERGY_BONUS`'s OWN DOC BLOCK SAID THIS ASSERTION WAS
+    // IMPOSSIBLE** — *"No assertion can show that from outside this file:
+    // `boardConditionForClause` is not exported, and every sentence carrying this
+    // clause matches THIS anchor too."* The first clause is true and the second is not
+    // a reason. `boardConditionForClause` has THREE call sites in `effects.ts`
+    // (measured: `grep -n 'boardConditionForClause' packages/engine/src/effects.ts`
+    // returns 15 hits, 12 of them prose, and the code sites are the declaration plus
+    // `CONDITIONAL_BENCH_SNIPE`, `CONDITIONAL_DAMAGE_BONUS` and
+    // `BONUS_CONSEQUENT_CONDITION[_THEN]`), and the anchor pre-empts exactly ONE of
+    // them. The other two are reached by CARRIERS the anchor cannot match — a
+    // `, and `/`. Then, ` consequent join, and the benched-snipe rider — and both of
+    // their readers are exported. So the question is askable from outside, and the
+    // three probes below ask it.
+    //
+    // ⚠️ **ONE AXIS (D427)**: the carriers are byte-identical per site and the CLAUSE
+    // is the only thing substituted. ⚠️ **AND THE ADMITTED TWIN IS D368's OWN ROW
+    // (D424)**: a reader that refused every clause would satisfy the refusal half on
+    // its own and prove nothing, so the same carrier is driven with the taken clause
+    // and required to resolve to the member this slice bought.
+    //
+    // ⚠️ These carriers are PROBES OF A VOCABULARY, not authored cards — the shape
+    // `clauseApostrophe.test.ts` already uses to drive its TEMPLATE-owned bucket. No
+    // printing in `legalAttackCorpus()` carries this clause under either skeleton
+    // (measured: 0 of 640 for each of `BONUS_CONSEQUENT_CONDITION`,
+    // `BONUS_CONSEQUENT_CONDITION_THEN` and `CONDITIONAL_BENCH_SNIPE`; 2 of 640 for
+    // `CONDITIONAL_DAMAGE_BONUS`, which are the two the anchor claims), which is why
+    // the difference is invisible to every census in the repo.
+    const ROW_CLAUSE = BONUS.exec(TAKEN)?.[1] ?? "";
+    expect(ROW_CLAUSE).toBe("this Pokémon has no damage counters on it");
+    const PROBES = [
+      {
+        site: "BONUS_CONSEQUENT_CONDITION",
+        carrier: (clause: string) =>
+          `If ${clause}, this attack does 80 more damage, and discard all Energy from this Pokémon.`,
+        read: (sentence: string): unknown => deriveAttackBonusConsequent(sentence),
+      },
+      {
+        site: "BONUS_CONSEQUENT_CONDITION_THEN",
+        carrier: (clause: string) =>
+          `If ${clause}, this attack does 80 more damage. Then, discard all Energy from this Pokémon.`,
+        read: (sentence: string): unknown => deriveAttackBonusConsequent(sentence),
+      },
+      {
+        site: "CONDITIONAL_BENCH_SNIPE",
+        carrier: (clause: string) =>
+          `If ${clause}, this attack also does 30 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)`,
+        read: (sentence: string): unknown => deriveAttackEffect(sentence),
+      },
+    ] as const;
+    for (const { site, carrier, read } of PROBES) {
+      // REFUSED — the table holds no row for the declaration clause, so the reader
+      // falls through to null and the sentence stays LOUD.
+      expect(read(carrier(DECLARATION_CLAUSE)), site).toBeNull();
+      // ADMITTED — D368's own row, the SAME carrier, the clause the only difference.
+      // Quoted (D426), because a bare substring would pass on a neighbouring member.
+      expect(JSON.stringify(read(carrier(ROW_CLAUSE))), site).toContain('"yourActiveUndamaged"');
+    }
+    // …and the pre-emption itself, so the reason this rung exists cannot rot into
+    // prose: at the ONE site the anchor covers, the SAME clause resolves — through
+    // the anchor, not through the table.
+    expect(deriveAttackDamageBonus(`If ${DECLARATION_CLAUSE}, this attack does 80 more damage.`)
+      ?.count).toEqual({ kind: "extraEnergyUnitsBeyondCost", extra: 2 });
   });
 
   it("🛑 and 3 printings for a BOARD fact beat 5 printings for a fact of the wrong shape", () => {

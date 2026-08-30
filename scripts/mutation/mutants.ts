@@ -14320,11 +14320,20 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D368-declaration-clause-gets-a-board-row",
     decision: "D368",
-    what: "🛑 C6 — THE TRIPWIRE FOR THIS SLICE'S CENTRAL FINDING: a clause row is added for *\"this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost)\"*, mapping it to a board fact. That clause is a DECLARATION fact, not a board fact — it is printed on Electivire ex sv10-069/-212 at cost 3 and Jellicent ex sv10.5w-045/-160/-168 at cost 2, so FOUR Energy satisfies one and fails the other with the board IDENTICAL, and `conditionHolds(state, seat, cond)` is handed no attack. ⚠️ **THE MUTANT COMPILES AND LOOKS LIKE PROGRESS** — the census raw summand would rise by 5, the largest single step available behind this skeleton — which is precisely why the refusal has to be a driven assertion rather than a doc block. **A CANDIDATE CAN BE THE LARGEST THING ON THE TABLE AND STILL BE THE WRONG SHAPE FOR THE TABLE**",
+    what: "🛑 C6 — THE TRIPWIRE FOR THIS SLICE'S CENTRAL FINDING: a clause row is added for *\"this Pokémon has at least 2 extra Energy attached (in addition to this attack's cost)\"*, mapping it to a board fact. That clause is a DECLARATION fact, not a board fact — it is printed on Electivire ex sv10-069/-212 at cost 3 and Jellicent ex sv10.5w-045/-160/-168 at cost 2, so FOUR Energy satisfies one and fails the other with the board IDENTICAL, and `conditionHolds(state, seat, cond)` is handed no attack. ⚠️ **THE MUTANT COMPILES AND LOOKS LIKE PROGRESS** — the census raw summand would rise by 5, the largest single step available behind this skeleton — which is precisely why the refusal has to be a driven assertion rather than a doc block. **A CANDIDATE CAN BE THE LARGEST THING ON THE TABLE AND STILL BE THE WRONG SHAPE FOR THE TABLE**. 🛑 **AND THE ROUTE THAT KILLS IT CHANGED UNDER D436, WHICH IS WHY THIS ROW SURVIVED ONE SWEEP.** D436 claimed the same clause as a WHOLE-SENTENCE anchor (`EXTRA_ENERGY_BONUS`), executed BEFORE `CONDITIONAL_DAMAGE_BONUS`, so the added row is DEAD on `deriveAttackDamageBonus` — the census cannot move and the re-pointed `count.kind` rung is true under both builds (D418's second half). The row is now killed at the two OTHER call sites of `boardConditionForClause`, which the anchor cannot pre-empt: the consequent join (`deriveAttackBonusConsequent`) and the benched-snipe rider (`deriveAttackEffect`). ⚠️ **If a future slice makes the clause anchor-free again, this row goes back to dying on the census — the assertion that pins it is `undamagedBonus.test.ts` §1's carrier sweep, not a count.**",
     file: "packages/engine/src/effects.ts",
     find: '  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],',
     replace: '  ["this Pokémon has no damage counters on it", { kind: "yourActiveUndamaged" }],\n  ["this Pokémon has at least 2 extra Energy attached (in addition to this attack\'s cost)", { kind: "yourActiveUndamaged" }],',
-    expectKilledBy: ["packages/engine/src/undamagedBonus.test.ts"],
+    expectKilledBy: [
+      "packages/engine/src/undamagedBonus.test.ts",
+      // 🆕🆕 THE SECOND KILLER, added with its assertion: `clauseApostrophe.test.ts`'s
+      // `ANCHOR_OWNED` bucket now DRIVES its own membership at the consequent join,
+      // as its `TEMPLATE_OWNED` neighbour has always done. Listed because it really
+      // does assert on the mutated site — over-narrowing is the lie, not the cost.
+      // ⚠️ MEASURED INDEPENDENTLY: each of the two files, run ALONE against this
+      // mutant, reports KILLED — so neither is riding on the other.
+      "packages/engine/src/clauseApostrophe.test.ts",
+    ],
   },
   {
     id: "D369-cross-board-tool-reads-its-own-seat",

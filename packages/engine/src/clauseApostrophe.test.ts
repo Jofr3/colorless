@@ -1124,6 +1124,33 @@ describe("the literal clause tables — the rows the fold was built for", () => 
     for (const clause of TEMPLATE_OWNED) {
       expect(deriveAttackDamageBonus(`If ${clause}, this attack does 30 more damage.`)).not.toBeNull();
     }
+    // 🛑🆕🆕 **AND THE ANCHOR HALF REALLY IS ANCHOR-OWNED — DRIVEN, AS ITS TWO
+    // NEIGHBOURS ARE.** D436 added this bucket and no driver for it, so membership was
+    // asserted by a hand-kept array alone: a build that ALSO added a
+    // `CONDITIONAL_DAMAGE_CLAUSES` row for the clause left every figure above
+    // unmoved, because `carriedBonusClauses()` probes the READER and
+    // `EXTRA_ENERGY_BONUS` is executed before `CONDITIONAL_DAMAGE_BONUS` — the row
+    // would be dead on that path. The corpus row
+    // `D368-declaration-clause-gets-a-board-row` survived on exactly that. The
+    // question is asked HERE at a call site the anchor does not pre-empt: the
+    // consequent join, whose reader is exported and whose skeleton this anchor cannot
+    // match. An UNMAPPED clause returns null; a row would make it resolve.
+    for (const clause of ANCHOR_OWNED) {
+      expect(
+        deriveAttackBonusConsequent(
+          `If ${clause}, this attack does 80 more damage, and discard all Energy from this Pokémon.`,
+        ),
+        clause,
+      ).toBeNull();
+      // The control on the same axis (D424): a row-owned clause in the identical
+      // carrier DOES resolve, so the refusal above is not a reader that says no to
+      // everything.
+      expect(
+        deriveAttackBonusConsequent(
+          "If this Pokémon has no damage counters on it, this attack does 80 more damage, and discard all Energy from this Pokémon.",
+        ),
+      ).not.toBeNull();
+    }
     expect(
       deriveAttackDamageBonus(
         "If your opponent's Active Pokémon is a Psychic Pokémon, this attack does 30 more damage.",
