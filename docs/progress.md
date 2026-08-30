@@ -519,7 +519,13 @@
 > unguarded. Of 640 sentences the clause is captured on **2** by the pre-empted carrier and **0** by each
 > of the others — **it needed a probe, not a count.** Two claims D436 shipped were false and are
 > corrected. D368's finding stands; only the tripwire's route changed. Both decisions re-run **clean
-> without `--allow-dirty`**. ⚠️ **A CONFIRMING WHOLE-CORPUS SWEEP IS STILL OWED** at corpus 1,688.
+> without `--allow-dirty`**.
+>
+> ✅✅ **THE CONFIRMING SWEEP RAN AND THE GAP IS CLOSED**: **1688 · 1662 killed · 26 known survivor(s) ·
+> 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,416.9s**, `SWEEP_EXIT=0`;
+> `1662 + 26 = 1688` closes and 1688/1688 verified by id. **The killed count rose by exactly one — the
+> row that was the GAP — and `D368-declaration-clause-gets-a-board-row` now reports KILLED.** Zero
+> undeclared survivors anywhere in the corpus. Declared survivors held at **26**.
 >
 > ▶ **RESIDUE — READ THE PINNED FIGURES** (`censusAtHead.test.ts`; canonical predicate at `:6218`): raw
 > unbuilt **202**, residue **176**, `unbuiltAttack` **255**. ⚠️ **AND DO NOT SORT THE RAW LIST FOR
