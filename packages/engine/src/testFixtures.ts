@@ -10138,6 +10138,73 @@ export const FIXTURE_POOL: Record<string, Card> = {
     hp: 120,
     attacks: [{ cost: ["Colorless"], name: "Slash", damage: 20 }],
   }),
+  /** 🆕🆕 D439 — THE FILTERED IN-PLAY BODY COUNTER (`bodiesInPlayScaling.test.ts`).
+      FIVE attacks on ONE body, one per printed noun this slice claims, and that is
+      deliberate rather than five fixtures: the five sentences differ ONLY in the
+      noun and the per-unit amount, so five cards would have varied the HP, the cost
+      and the types as well and any of those differences could then carry an
+      assertion the noun was supposed to carry (D413's stated reason for putting a
+      family's two printings on one body).
+
+      🛑 **THE HOLDER IS ITSELF A COUNTABLE BODY, AND ITS CLASSIFICATION IS CHOSEN
+      SO THAT THE ACTIVE SPOT IS NOT UNIFORMLY IN OR OUT.** It is an EVOLUTION (so
+      `evolutionPokemon` counts it), OWNER-PREFIXED (so `ownerPokemon` counts it),
+      a Pokémon (so `anyPokemon` counts it), **Darkness** (so `typedPokemon`
+      Grass does NOT) and **not a Basic** (so `basicPokemon` does NOT). A build
+      whose walk skipped the Active Spot answers three of the five wrongly and two
+      of them RIGHT — which is exactly why the suite drives all five off one board
+      instead of trusting a single filter to expose the zone.
+
+      🛑 **THE NAME IS AN INVENTED PREFIXED NAME AND NOT A REAL PRINTING.**
+      `fix-tr-stage1` above already carries the real "Team Rocket's Persian"; this
+      one must be a SECOND prefixed body that is distinguishable from it on the
+      board, and inventing the name keeps `catalogManifest.test.ts`'s printed-card
+      diff out of a fixture that exists only to be counted. The prefix's trailing
+      space is what `matchesFilter`'s `ownerPokemon` arm reads, so the apostrophe
+      is U+0027 exactly as the corpus sentence prints it.
+
+      Its HP is 200 so no board in the suite can Knock it out, and every cost is a
+      single {C} so one attached Basic Energy arms all five attacks — the count is
+      the only thing that may vary between one rung and the next. */
+  "fix-inplaybodies": battler("fix-inplaybodies", {
+    name: "Team Rocket's Fixmon",
+    stage: "Stage1",
+    evolveFrom: "Team Rocket's Fixling",
+    types: ["Darkness"],
+    hp: 200,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Full House",
+        damage: "20\u00d7",
+        effect: "This attack does 20 damage for each of your Pokémon in play.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Rookie Rush",
+        damage: "20\u00d7",
+        effect: "This attack does 20 damage for each of your Basic Pokémon in play.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Syndicate Strike",
+        damage: "30\u00d7",
+        effect: "This attack does 30 damage for each of your Team Rocket's Pokémon in play.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Verdant Tally",
+        damage: "30\u00d7",
+        effect: "This attack does 30 damage for each of your {G} Pokémon in play.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Lineage Press",
+        damage: "40+",
+        effect: "This attack does 40 more damage for each of your Evolution Pokémon in play.",
+      },
+    ],
+  }),
 
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
@@ -14739,6 +14806,58 @@ export const OPPONENT_BENCH_COUNT_DECK = deckOf({
     defender itself can never arm the clause by accident.
 
     4 + 8 + 4 + 4 + 8 + 4 + 28 = **60**. */
+/** 🆕🆕 D439 — the FILTERED IN-PLAY BODY COUNT board (`bodiesInPlayScaling.test.ts`).
+    ITS OWN 60 on D270's rule, and NOT a widened `IN_PLAY_TYPE_DECK` — D412 added one
+    card to a shared deck and reddened three of another slice's boards, because deck
+    composition is load-bearing for every suite seeded off it.
+
+    🛑 **THE CAST IS CHOSEN SO THAT THE FIVE FILTERS ANSWER FIVE DIFFERENT NUMBERS ON
+    ONE BOARD**, which is the only way a wrong filter is distinguishable from a wrong
+    zone or a wrong seat. On the canonical board the attacker's side fields the
+    Active `fix-inplaybodies` plus a full Bench of
+    `fix-grass-stage1` ×2 / `fix-stage1` / `fix-benchfiller` / `fix-grass-basic`, and
+    the five counts are **6 / 2 / 4 / 3 / 1** (any / Basic / Evolution / {G} /
+    Team Rocket's). The defender's side is deliberately shaped to answer **5 / 3 / 2 /
+    1 / 2** on the same five questions, so a SIDE INVERSION moves every one of the
+    five and no rung can pass on the wrong board by coincidence.
+
+      • `fix-inplaybodies` — the five-attack holder, an owner-prefixed Darkness
+        Stage 1 (see its own block: it is IN for three filters and OUT for two, which
+        is what makes the Active Spot's participation observable);
+      • `fix-grass-stage1` — Grass AND an Evolution, so it is the body that stops
+        `typedPokemon` and `evolutionPokemon` being the same question;
+      • `fix-stage1` — a Colorless Evolution, the Evolution that is NOT Grass;
+      • `fix-grass-basic` — a Grass BASIC, the Grass that is NOT an Evolution;
+      • `fix-benchfiller` (60 HP) — a Colorless Basic that matches only `anyPokemon`
+        and `basicPokemon`, so an over-wide filter shows up as a count that is too
+        big rather than as no change at all;
+      • `fix-tr-stage1` ("Team Rocket's Persian") — the SECOND prefixed body, fielded
+        on the DEFENDER's side, which is what makes the owner count's seat rung read
+        1 against 2 instead of 1 against 0;
+      • `fix-titan` (340 HP, no attacks) — the defender, CHOSEN AGAINST THE BOOSTED
+        TOTAL: the largest number this board can produce is the additive attack's
+        40 + 4×40 = 200, so no §8.1 Prize tail ever runs underneath an assertion
+        whose subject is a damage number. It is also a BASIC, so setup has an opener
+        on a board whose headline attacker is a Stage 1;
+      • `fix-energy` — Basic {C}, the single printed symbol of all five attacks, so
+        one attachment arms every rung and the count is the only thing that varies.
+
+    🛑 **NO MODIFIER OF ANY KIND.** Nothing in this 60 has an Ability, a Tool, a
+    Weakness or a Resistance, and `fix-titan` carries no attacks at all — so every
+    damage figure in the suite is `per × count` and nothing else.
+
+    4 + 4 + 4 + 4 + 4 + 4 + 8 + 28 = **60**. */
+export const IN_PLAY_BODIES_DECK = deckOf({
+  "fix-inplaybodies": 4, // the five-attack holder: any / Basic / TR's / {G} / Evolution
+  "fix-grass-stage1": 4, // Grass AND Evolution — the body two filters share
+  "fix-stage1": 4, // Colorless Evolution — the Evolution that is not Grass
+  "fix-grass-basic": 4, // Grass Basic — the Grass that is not an Evolution
+  "fix-benchfiller": 4, // Colorless Basic — matches only `anyPokemon` / `basicPokemon`
+  "fix-tr-stage1": 4, // "Team Rocket's Persian" — the second prefixed body
+  "fix-titan": 8, // 340 HP, no attacks — the defender, and the only opener
+  "fix-energy": 28, // Basic {C} — the one printed symbol of all five attacks
+});
+
 export const IN_PLAY_TYPE_DECK = deckOf({
   "fix-shortcircuit": 4, // Electivire — "Short-Circuit Knuckle" ({C}{C}, 40+): the +120
   "fix-waterbody": 8, // 60 HP Water — the body the clause reads, on EITHER seat

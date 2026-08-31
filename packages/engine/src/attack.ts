@@ -92,6 +92,7 @@ import {
   attackerPreWRBonus,
   conditionHolds,
   conditionNote,
+  countPokemonInPlay,
   effectRefused,
   runProgram,
 } from "./interpreter";
@@ -361,6 +362,35 @@ function scaledAttackDamage(
       // empty board is 0 and, with the printed "30×" base dropped, that is no
       // DAMAGE_DEALT row at all.
       return countToolsInPlay(state, attackerSeat) * bonus.per;
+    case "yourPokemonInPlay":
+      // 🆕🆕 D439 — the ATTACKER's BODIES IN PLAY matching the printed noun
+      // ("This attack does 30 damage for each of your {G} Pokémon in play.").
+      //
+      // 🛑 **`countPokemonInPlay` AND NOT `benchBodies`, AND THE TWO ARE NOT THE
+      // SAME NUMBER.** `benchBodies` — three cases up, serving `yourBenchCount`,
+      // `opponentBenchCount` and `bothSidesBenchCount` — reads the printed word
+      // "Benched" and deliberately skips the Active Spot. This member's printed
+      // words are "in play", which §4 defines as the Active PLUS the Bench, so on
+      // a board with an Active and two Benched bodies the two nouns answer 3 and
+      // 2. Reaching for the structurally nearest neighbour here would have shipped
+      // a card one body short on every board it is ever played on — and every
+      // damage figure would still have looked plausible, which is why the suite
+      // drives an Active-contributes board and a Bench-contributes board
+      // separately rather than one board that happens to have both.
+      //
+      // The walk is `countOwnerPokemonInPlay`'s, GENERALISED at its own site
+      // rather than copied here, so D242's `BoardCondition` reading of "in play"
+      // and this one cannot drift — D159's rule, and the reason this arm is one
+      // line. It also owns the NULL-ACTIVE case: a seat whose Active Spot is empty
+      // answers with its Bench and never throws.
+      //
+      // `attackerSeat`, because the printed word is "YOUR Pokémon in play" and the
+      // seat that declared the attack owns them — the same end of the swing as
+      // `yourBenchCount` and `toolsOnYourBoard`, and the opposite end from
+      // `opponentBenchCount`. Read at DECLARATION like every other member; a board
+      // matching nothing is 0, and on the `×` fold (printed base dropped) that is
+      // no DAMAGE_DEALT row at all, which is the printed floor.
+      return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;
     case "extraEnergyUnitsBeyondCost":
       // 🆕🆕 D436 — the 0-or-1 INDICATOR again, but read against the DECLARATION.
       // "…at least N extra Energy attached (in addition to this attack's cost)".

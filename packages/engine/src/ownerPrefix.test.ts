@@ -1,6 +1,7 @@
 import type { Card } from "@luminous/schema";
 import { describe, expect, it } from "vitest";
 import { matchesFilter } from "./cards";
+import { resolvedByAnyReader } from "./censusAttackCorpus";
 import type { CardFilter } from "./effects";
 import { applyAction, createGame, programFor } from "./index";
 import type { GameState, Seat } from "./index";
@@ -214,15 +215,33 @@ const DROPPED = [
   // `BOSSS_ORDERS`' whole program byte-for-byte. Removed rather than annotated in
   // place — the UNBUILT assertion below is what keeps this work order from
   // rotting, and it fails on a built row.
-  {
-    sentence: "This attack does 30 damage for each of your Team Rocket's Pokémon in play.",
-    // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidorino / Team Rocket's Ariana).
-    ids: ["sv10-020", "sv10-187"],
-    legal: 2,
-    surface: "attack",
-    needs:
-      "a `DamageCountSource` that counts OWN BODIES IN PLAY MATCHING A PREDICATE — and ⚠️ D282 INVALIDATED HALF OF THIS CELL'S STATED REASON WHILE LEAVING ITS CONCLUSION EXACTLY WHERE IT WAS. It used to read 'the family counts bodies (`bothSidesBenchCount`, `opponentBenchCount`) … never a filtered subset of a side'; `yourBenchCount` now counts the attacker's OWN side, so the missing thing is no longer the SIDE but the two narrowings printed on top of it: the owner PREDICATE (`Team Rocket's`) and the ZONE (`in play`, which is Active + Bench and NOT the Bench this member walks). D193's 4–7 edit price still stands for the source itself; the predicate is spellable and neither narrowing is.",
-  },
+  // ✅ D439 BUILT THIS ROW — Team Rocket's Spidops sv10-020/sv10-187, 2 legal,
+  // *"This attack does 30 damage for each of your Team Rocket's Pokémon in play."*
+  // ⚠️ **AND ITS `needs` WAS RIGHT IN EVERY CLAUSE, WHICH IS WORTH RECORDING
+  // BECAUSE THE CELL HAD ALREADY BEEN CORRECTED ONCE.** It named "a
+  // `DamageCountSource` that counts OWN BODIES IN PLAY MATCHING A PREDICATE",
+  // and it named the two narrowings D282 left behind — the owner PREDICATE and
+  // the ZONE, *"`in play`, which is Active + Bench and NOT the Bench this member
+  // walks"*. That is `yourPokemonInPlay` and `countPokemonInPlay` word for word.
+  // The predicate was already spellable (`CardFilter.ownerPokemon`, D200's own
+  // arm) and the price was ONE union member, ONE evaluator arm, TWO anchors and a
+  // noun vocabulary — shared with four other printed nouns.
+  //
+  // 🛑 **IT IS A DERIVER ARM AND NOT A REGISTRY ROW, WHICH IS WHY THIS ROW ROTTED
+  // SILENTLY AND WHY THE GUARD BELOW IS NOW WIDER.** `programFor(id)?.attack`
+  // reads the REGISTRY only, while an attack program resolves
+  // `registry ?? deriveAttackEffect` — the vacuity `conventions.md` records
+  // against D204 verbatim. So the moment D439 claimed this sentence through the
+  // TEXT path, the row was a stale work order and **nothing reddened**. It was
+  // found by grepping the suites for the sentence before building it, not by a
+  // failing test. The guard now asks the DERIVER as well, for `attack` rows.
+  //
+  // ⚠️ **AND IT LEAVES `LANDED` ALONE, DELIBERATELY.** That table counts D200's
+  // REGISTRY printings and this is not one; the two printings simply leave DROPPED
+  // without arriving in LANDED, so the census's 80 units now split three ways
+  // (registry-built, deriver-built, unbuilt) rather than two. Said out loud rather
+  // than folded into a number, because "the gap between the census and the yield"
+  // is what the rung below it asserts.
   {
     sentence: "Discard a Team Rocket's Energy from this Pokémon. If you do, discard your opponent's Active Pokémon and all attached cards.",
     // ⚠️ CORRECTED BY D204 (shipped as Team Rocket's Nidoking ex / Team Rocket's
@@ -512,7 +531,7 @@ describe("D200 — the census, as data", () => {
     // built by D204; Team Rocket's Wobbuffet 2, built by D205; Team Rocket's
     // Orbeetle 2 and N's Zoroark ex 4, still flagged in `inPlayTarget.test.ts`).
     // This table is D200's scope; that one is the current work order.
-    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(8);
+    expect(DROPPED.reduce((n, r) => n + r.legal, 0)).toBe(6); // 🆕🆕 D439 −2 printings — Team Rocket's Spidops sv10-020/-187 left through the DERIVER rather than through the registry, so `LANDED` stands still at 6 and the difference is now deriver-built. See the ✅ D439 block above `DROPPED`.
   });
 });
 
@@ -574,6 +593,24 @@ describe("D200 — the registry map", () => {
   //    🆕 **GROUP BY SENTENCE, NOT PRINTING — AND ASSERT BY SENTENCE TOO.** The
   //    census discipline has said the first half for twenty slices; this is the
   //    first time a GUARD has been caught violating the second.
+  //    🛑🛑 **D439 WIDENED THIS GUARD FROM THE REGISTRY TO THE READER, AND IT WAS
+  //    THE SAME DEFECT ONE LAYER DOWN.** D263's fix asked the right KEY of the
+  //    right CARD — and still asked only `programFor`, which is the REGISTRY.
+  //    An attack program resolves `registry ?? deriveAttackEffect`, so a sentence
+  //    claimed by a DERIVER ARM leaves this guard perfectly green. That is the
+  //    vacuity `conventions.md` records against D204 in those exact words, and it
+  //    happened: D439 built *"This attack does 30 damage for each of your Team
+  //    Rocket's Pokémon in play."* through two new anchors, and this table went on
+  //    advertising it as unbuilt work with NOTHING RED. It was caught by grepping
+  //    the suites for the sentence, which is luck rather than a process.
+  //    ⚠️ **THE FIX ASKS BOTH CHANNELS, AND ONLY FOR THE SURFACE THAT HAS TWO.**
+  //    `resolvedByAnyReader` is the attack column's text path; the `trainer` and
+  //    `stadium` rows have no deriver behind them at all, so asking it of them
+  //    would be a rung that could never fire. Measured before it was written: of
+  //    the five DROPPED rows, two are `attack`, and the OTHER one
+  //    (*"Discard a Team Rocket's Energy from this Pokémon. …"*) is still refused
+  //    by every reader — so the widening removes a live blind spot and moves no
+  //    other row, which is what makes it a fix rather than a re-scoping.
   it("every DROPPED printing is still UNBUILT on its own SURFACE — the work order cannot rot", () => {
     for (const { sentence, ids, legal, surface } of DROPPED) {
       expect(ids, `${sentence.slice(0, 40)}…: id list disagrees with its legal count`).toHaveLength(legal);
@@ -582,6 +619,14 @@ describe("D200 — the registry map", () => {
           programFor(id)?.[surface],
           `${id}'s ${surface} was quietly authored; update DROPPED`,
         ).toBeUndefined();
+      }
+      // 🛑 THE SECOND CHANNEL. An `attack` row can also be built by TEXT, and that
+      // is the road this table was blind to for as long as it existed.
+      if (surface === "attack") {
+        expect(
+          resolvedByAnyReader(sentence),
+          `${sentence.slice(0, 40)}… is now claimed by a READER; update DROPPED`,
+        ).toBe(false);
       }
     }
   });
@@ -772,6 +817,18 @@ describe("D200 — what the predicate reads", () => {
         // bytes the D393 clause key compares against.
         "fix-abruptflash/Misty",
         "fix-mistystaryu/Misty",
+        // 🆕🆕 **AN EXPIRY AT D439, AND IT IS THE ARM'S EIGHTH CONSUMER** —
+        // `DamageCountSource.yourPokemonInPlay`, the first to read `ownerPokemon`
+        // as a COUNT over a whole side rather than as an eligibility test on one
+        // card. `fix-inplaybodies` ("Team Rocket's Fixmon") is the holder of the
+        // five printed nouns this slice claims, and it is prefixed ON PURPOSE: the
+        // owner sentence's own board needs the Active Spot to be inside the counted
+        // set, so that a walk which skipped the Active answers 0 where the truth is
+        // 1. ⚠️ It is a STAGE 1 and the sweep passes no `stage`, so it matches the
+        // bare filter exactly as `fix-tr-stage1` does — the two together are why the
+        // count in `bodiesInPlayScaling.test.ts` reads 1 on the attacker's side and
+        // 2 on the defender's, which is the seat rung.
+        "fix-inplaybodies/Team Rocket",
       ].sort(),
     );
   });

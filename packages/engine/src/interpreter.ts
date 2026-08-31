@@ -4230,11 +4230,43 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
     surface would be the opposite mistake — an API nobody calls (D135) — so it stops
     at the module boundary, which is where the tests are. */
 export function countOwnerPokemonInPlay(state: GameState, seat: Seat, owner: string): number {
+  return countPokemonInPlay(state, seat, { kind: "ownerPokemon", owner });
+}
+
+/** 🆕🆕 D439 — HOW MANY OF `seat`'s POKÉMON IN PLAY MATCH `filter`. This is
+    `countOwnerPokemonInPlay`'s walk GENERALISED IN PLACE, not a copy of it: that
+    function is now a two-line adapter over this one, so *"how many of your
+    <noun> Pokémon are in play"* has exactly ONE answer no matter which vocabulary
+    asks — `BoardCondition.yourOwnerPokemonInPlayAtLeast` (D242) or
+    `DamageCountSource.yourPokemonInPlay` (D439).
+
+    🛑 **GENERALISED RATHER THAN COPIED, AND THAT IS THE WHOLE POINT (D159, and
+    D418's "remove the premise").** A second walk beside this one would have been
+    four lines and would have made "in play" a question with two implementations
+    that drift — and D416/D437's corpus hazard makes it worse than that: the line
+    below is quoted verbatim by `D242-count-skips-the-active-spot`, so a
+    byte-identical copy would have broken that row into a `2×` ERROR without
+    anybody touching it.
+
+    ⚠️ **"IN PLAY" IS ACTIVE + BENCH, TOP CARDS ONLY**, D242's reading unchanged
+    and §4's: an evolved stack is ONE Pokémon in play, so this reads `topCardOf`
+    and never the buried cards. The `body === null` guard is what makes a board
+    with an EMPTY ACTIVE SPOT answer with its Bench rather than throwing —
+    `continuous.ts`'s Energy walks spell the same fact the other way round
+    (`side.active === null ? side.bench : [side.active, ...side.bench]`), and the
+    two agree on every board; this shape is kept because it is the one the
+    corpus quotes.
+
+    ⚠️ `topCardOf` can return undefined when a stack outruns the catalog, so the
+    guard is explicit rather than a non-null assertion — and `matchesFilter`'s own
+    first line refuses `undefined` as well, which makes this belt-and-braces on
+    the data gap rather than on the category. */
+export function countPokemonInPlay(state: GameState, seat: Seat, filter: CardFilter): number {
   const side = state.players[seat];
   return [side.active, ...side.bench].filter((body) => {
     if (body === null) return false;
     const card = topCardOf(state, body);
-    return card !== undefined && matchesFilter(card, { kind: "ownerPokemon", owner });
+    return card !== undefined && matchesFilter(card, filter);
   }).length;
 }
 

@@ -1222,6 +1222,13 @@ describe("FIXTURE_POOL, swept as its own population", () => {
         // the whole cost.
         "fix-abruptflash",
         "fix-mistystaryu",
+        // 🆕🆕 D439 — `fix-inplaybodies` ("Team Rocket's Fixmon"), the FILTERED IN-PLAY
+        // BODY COUNT's five-attack holder. Prefixed ON PURPOSE: the owner sentence's
+        // board needs the ACTIVE SPOT inside the counted set, so that a walk which
+        // skipped the Active answers 0 where the truth is 1. A Stage 1, like
+        // `fix-tr-stage1` beside it, and matched by the bare owner filter for the same
+        // reason — this sweep passes no `stage`.
+        "fix-inplaybodies",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

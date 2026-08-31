@@ -11536,6 +11536,156 @@ const OPPONENT_BENCH_MULTIPLY =
 // in `benchBodySelfScaling.test.ts` rather than argued.
 const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
 const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
+// 🆕🆕 D439 — THE SAME BODY COUNT OVER "IN PLAY" RATHER THAN "BENCHED", AND
+// FILTERED BY A PRINTED NOUN. *"This attack does N damage for each of your <noun>
+// Pokémon in play."* — measured over `legalAttackCorpus()` (the committed
+// `legal_standard = 1` attack column, 640 rows) by running the two patterns below
+// against every row, ALL SEVEN HITS PRINTED WHOLE:
+//
+//   MULTIPLY (`×`, no adjective) — 6 sentences / 9 printings reach the anchor:
+//     • "This attack does 20 damage for each of your Basic Pokémon in play."      1  → basicPokemon
+//     • "This attack does 20 damage for each of your Pokémon in play."            1  → anyPokemon
+//     • "This attack does 30 damage for each of your Ancient Pokémon in play."    2  → 🛑 NO FILTER (below)
+//     • "This attack does 30 damage for each of your Team Rocket's Pokémon in play."  2 → ownerPokemon
+//     • "This attack does 30 damage for each of your {G} Pokémon in play."        2  → typedPokemon
+//     • "This attack does 40 damage for each of your Stage 1 Pokémon in play."    1  → 🛑 NO FILTER (below)
+//   ADDITIVE ("more") — 1 sentence / 2 printings reaches the anchor:
+//     • "This attack does 40 more damage for each of your Evolution Pokémon in play." 2 → evolutionPokemon
+//
+// So the ANCHORS reach 7 sentences / 11 printings and the VOCABULARY claims
+// **5 sentences / 8 printings**; the other two fall through `inPlayBodyFilter` to
+// null and stay on the loud ATTACK_EFFECT_SKIPPED path. That split is deliberate
+// and is `CLAUSE_POKEMON_TYPES`' own stated design — *"the clause pattern is
+// unchanged and still loose, so 'Stage 1', 'Tera' and 'Evolution' still reach this
+// lookup and still MISS it … that is what makes the map, and not the regex, the
+// vocabulary."*
+//
+// 🛑 THE TWO REFUSALS, EACH WITH ITS OWN REASON — NOT ONE REASON TWICE.
+//   • **Ancient** (2 printings) is DATA-BLOCKED and permanently so, not unbuilt.
+//     `PREVENT_DAMAGE_FROM_CLASS`'s block settles it in full: the banner is in NO
+//     column of the persisted catalog and NO field of tcgdex's card model, and a
+//     name-keyed species table is refused there FOREVER because the banner is a
+//     per-PRINTING fact (Great Tusk ex sv01-123/-230/-246 is the same species with
+//     no banner). Re-read at D439 and it holds word for word. The fix is an INGEST
+//     change; nothing in this file can be the fix.
+//   • **Stage 1** (1 printing) is UNBUILT, which is a different thing. The
+//     predicates exist in cards.ts (`isBasicPokemon`, `evolveFromOf`) but no
+//     `CardFilter` member reads a printed STAGE ORDINAL — `basicPokemon` and
+//     `evolutionPokemon` between them partition the pool into two, and "Stage 1"
+//     is a proper subset of the second. It needs a member; Ancient needs a column.
+//
+// 🛑 THE `(?!opponent)` LOOKAHEAD IS LOAD-BEARING AND THE BENCH TRIO ABOVE DOES
+// NOT NEED ONE — the difference is `[^.]+` versus a literal noun. Those four
+// patterns spell their nouns out, so their sides are disjoint by construction and
+// their own block says so ("no side needs a negative lookahead"). This pattern
+// CAPTURES its noun, so `for each of your ` would otherwise match the printed
+// "for each of your opponent's Pokémon ex in play." with the noun
+// `opponent's Pokémon ex` — scoring the OPPONENT's sentence off the ATTACKER's
+// board. That is D407's defect exactly (`D407-anchor-swallows-the-owner-prefix`,
+// where a widened alternative swallowed an owner-prefixed printing), reached from
+// the capture side rather than the alternation side. Today the vocabulary would
+// refuse that noun anyway and the card would merely be LOUD; the lookahead is what
+// stops the refusal turning into a WRONG CARD the day an ex/V filter member lands.
+// Driven both ways in `bodiesInPlayScaling.test.ts` §2 rather than argued.
+//
+// 🛑 THE CAPTURE IS `[^.]+` AND NOT `(.+)`, WHICH IS WHAT REFUSES THE COMPOUND
+// STRUCTURALLY RATHER THAN BY VOCABULARY. The pool prints
+// "This attack does 50 damage for each of your Drifloon and Drifblim in play. This
+// attack also does 30 damage to each of your Drifloon and Drifblim. (Don't apply
+// Weakness and Resistance for Benched Pokémon.)" (2 legal) — a greedy `.+` would
+// let `for each of your (.+) in play\.$` span the sentence break and claim a
+// noun of "Drifloon and Drifblim in play. This attack also does 30 damage to each
+// of your Drifloon and Drifblim" on some future row that happens to end in a
+// period, which is the anchor-swallows-a-compound defect D207 paid for three
+// times. A class that cannot cross a `.` cannot do it at all.
+//
+// ⚠️ AND THAT COMPOUND DOES NOT COMPOSE, MEASURED ON BOTH SIDES OF THIS SLICE
+// (D426's mechanism at the three-way end). `splitAttackTrailingClause` splits it
+// into THREE parts on `COMPOUND_CLAUSE_BREAK`, so the TAIL is the parenthetical
+// "(Don't apply Weakness and Resistance for Benched Pokémon.)" — and
+// `deriveAttackEffect` returns null for it, which is the FIRST guard the splitter
+// fails, before the head is ever consulted. Claiming the head here therefore buys
+// ZERO census printings and the row stays in the residue whatever this slice does.
+// Stated because "compounds sometimes compose for free" is not something a slice
+// can plan with; the mechanism is.
+//
+// The possessive in a captured owner noun carries whichever apostrophe the catalog
+// prints — the capture is a character class, so D137's `['’]` fix is not needed
+// HERE and is needed in `IN_PLAY_OWNER_NOUN` below, which spells one. `Pokémon`
+// carries the real é (U+00E9). No /i, whole-sentence anchored with a required
+// trailing period and a capital `This`, for the family's stated reason.
+const IN_PLAY_BODY_MULTIPLY =
+  /^This attack does (\d+) damage for each of your ((?!opponent)[^.]+) in play\.$/;
+const IN_PLAY_BODY_SCALE =
+  /^This attack does (\d+) more damage for each of your ((?!opponent)[^.]+) in play\.$/;
+/** The three printed nouns with no parameter, mapped to the `CardFilter` members
+    that already spell them. A MAP and not a regex alternation, for
+    `CLAUSE_ENERGY_TOKENS`' reason: the accepted vocabulary is a single list rather
+    than something somebody edits by hand in two places. */
+const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map([
+  ["Pokémon", { kind: "anyPokemon" }],
+  ["Basic Pokémon", { kind: "basicPokemon" }],
+  ["Evolution Pokémon", { kind: "evolutionPokemon" }],
+]);
+/** The OWNER-PREFIXED noun ("Team Rocket's Pokémon"). The `['’]` class is D137's
+    fix and is needed here because this pattern spells the apostrophe, unlike the
+    outer capture which is a character class. The owner is captured rather than
+    listed, so a sixth prefix printing is admitted the day it is ingested and this
+    file never learns a card name — `countOwnerPokemonInPlay`'s own warrant, one
+    vocabulary up. */
+const IN_PLAY_OWNER_NOUN = /^(.+)['’]s Pokémon$/;
+/** The TYPED noun ("{G} Pokémon", and the spelled-out "Grass Pokémon" the older
+    prints carry). Resolved through `CLAUSE_POKEMON_TYPES` — the map that is TOTAL
+    over `POKEMON_TYPES` in BOTH notations and already pinned against it — rather
+    than through a fresh table, so a type meaning Grass in one clause of this file
+    means Grass in every other one. */
+const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
+/** 🆕🆕 D439 — the printed noun between "for each of your " and " in play.",
+    resolved to the `CardFilter` that already answers it, or `null` when this file
+    has no way to spell it (Ancient, Stage 1) — which keeps the sentence on the loud
+    ATTACK_EFFECT_SKIPPED path.
+
+    🛑 **THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, AND THAT PARAGRAPH IS HERE
+    BECAUSE THE FIRST DRAFT OF IT SAID THE OPPOSITE.** This block originally
+    asserted *"order is behaviour here, unlike every regex chain in this file"* —
+    reasoning that `IN_PLAY_TYPED_NOUN` (`^(.+) Pokémon$`) also matches
+    "Team Rocket's Pokémon" and would swallow it. It does match it, and it does NOT
+    swallow it: the typed arm returns only when `CLAUSE_POKEMON_TYPES` RESOLVES the
+    token, so an unresolved one falls THROUGH to the next lookup rather than
+    short-circuiting to null. **The claim was false the day it was written, and the
+    thing that caught it was `D439-vocabulary-order-loses-the-owner` SURVIVING** —
+    a mutant written to prove the paragraph, which instead disproved it. It is kept
+    as a declared `equivalent` survivor rather than deleted, so the day the sets
+    below stop being disjoint it reports `STALE-SURVIVOR` (D427).
+
+    ⚠️ **WHAT IS ACTUALLY TRUE IS THAT THE THREE BRANCHES ARE PAIRWISE DISJOINT,
+    AND IT IS MEASURED EXHAUSTIVELY RATHER THAN ARGUED.** The whole vocabulary is
+    25 nouns — the 3 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
+    codes — and NOT ONE of them matches `IN_PLAY_OWNER_NOUN`, because no Pokémon
+    type name ends in a possessive and no exact key carries an apostrophe. So no
+    noun can resolve down two branches, and the order is free. Pinned in
+    `bodiesInPlayScaling.test.ts` §2 over the whole of `POKEMON_TYPES`, so the day
+    a type name gains a `'s` the disjointness rung goes RED and this paragraph
+    stops being true LOUDLY.
+
+    ⚠️ **WHAT DOES THE REFUSING IS THE MAP AND NOT THE REGEX**: `(.+) Pokémon` also
+    matches "Ancient Pokémon" and "Stage 1 Pokémon", and both MISS
+    `CLAUSE_POKEMON_TYPES`, fall past the owner pattern too, and reach the trailing
+    `return null`. That is the vocabulary. */
+function inPlayBodyFilter(noun: string): CardFilter | null {
+  const exact = IN_PLAY_BODY_NOUNS.get(noun);
+  if (exact !== undefined) return exact;
+  const owner = IN_PLAY_OWNER_NOUN.exec(noun);
+  if (owner !== null && owner[1] !== undefined) {
+    return { kind: "ownerPokemon", owner: owner[1] };
+  }
+  const typed = IN_PLAY_TYPED_NOUN.exec(noun);
+  if (typed !== null) {
+    const pokemonType = literalClauseRow(CLAUSE_POKEMON_TYPES, typed[1] ?? "");
+    if (pokemonType !== undefined) return { kind: "typedPokemon", pokemonType };
+  }
+  return null;
+}
 // D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
 // filter: the first member of this family whose payload is not a condition, and
 // the first whose count is already answered elsewhere in the engine (continuous.ts
@@ -20455,7 +20605,53 @@ export interface AttackDamageBonus {
     instead — `costMet`'s own operand — because its comparand is a COST, and a
     difference between a card count and a symbol count is not a quantity. See
     `EXTRA_ENERGY_BONUS` for the full argument and the negative-extra board that
-    settles it. */
+    settles it.
+
+    🆕🆕 ⚠️ **THE FIFTEENTH IS THE FIRST MEMBER WHOSE PAYLOAD IS A `CardFilter`, AND
+    THE FIRST BODY COUNT THAT READS THE ACTIVE SPOT** (D439). `yourPokemonInPlay`
+    tallies the ATTACKER's bodies in play that match a printed noun —
+    *"This attack does N damage for each of your <noun> Pokémon in play."* —
+    **5 sentences / 8 legal printings**, measured over `legalAttackCorpus()` at
+    D439's head with the two anchors below run against all 640 rows.
+
+    🛑 **"IN PLAY" IS ACTIVE + BENCH, WHICH IS THE WHOLE DIFFERENCE FROM THE BENCH
+    TRIO THREE MEMBERS UP.** `yourBenchCount`, `opponentBenchCount` and
+    `bothSidesBenchCount` all read the printed word "Benched" and all three
+    deliberately skip the Active Spot; this member reads the printed words "in
+    play", which §4 defines as the Active plus the Bench. On a board with an
+    Active and two Benched bodies the two nouns answer **3** and **2**, so a slice
+    that reached for the nearest-looking neighbour would have shipped a card one
+    body short on every board it is ever played on. The zone walk is
+    `countPokemonInPlay` (interpreter.ts) — `countOwnerPokemonInPlay`'s walk,
+    GENERALISED rather than copied, so the two readings of "in play" cannot drift
+    (D159: no second answer to a question the engine already answers).
+
+    ⚠️ **THE FILTER IS `CardFilter` AND NOT A FRESH PREDICATE**, and every noun this
+    member admits is an EXISTING member of that union: `basicPokemon`, `anyPokemon`,
+    `ownerPokemon`, `typedPokemon`, `evolutionPokemon`. **ZERO new `CardFilter`
+    members**, which is what keeps this slice out of `retrieveNoun`'s switch and
+    `BENCHABLE_RETRIEVAL_KINDS` — the two other consumers of that union a widening
+    would have had to answer for. The vocabulary is `IN_PLAY_BODY_NOUNS` plus the
+    two parameterised readings below; a noun that misses it returns null and stays
+    LOUD, which is `CLAUSE_POKEMON_TYPES`' own stated design.
+
+    ⚠️ **NO `side` FIELD, AND THAT IS THE UNION'S CONVENTION RATHER THAN AN
+    OMISSION.** The pool DOES print an opponent-side spelling — *"…for each of your
+    opponent's Pokémon ex in play."* (2 legal) and *"…Pokémon ex and Pokémon V in
+    play."* (1 legal) — but both are refused for their FILTER (no `CardFilter`
+    member reads a rule-box class) and not for their side, so a `side` field today
+    would have exactly one reachable value on every printed row. This union spells
+    a side into the member NAME (`yourBenchCount` / `opponentBenchCount`), and
+    D168's reason for that is unchanged here. **THE FALSIFIER IS EXECUTABLE**: the
+    day a `CardFilter` member reads `pokemonSuffixOf`, those 3 printings become
+    buildable and this member gains an `opponentPokemonInPlay` sibling — pinned in
+    `bodiesInPlayScaling.test.ts` §6 as a census row that reddens when it happens.
+
+    ⚠️ **REACHABLE FROM BOTH READERS**, unlike `bothActivesEnergyCount` (additive
+    only) and `toolsOnYourBoard` (multiply only) directly above: the pool prints
+    both folds of this noun — four `×` sentences and one `more` sentence — so the
+    adjective picks the fold exactly as it does for the Bench trio, and both arms
+    are driven rather than argued. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -20478,7 +20674,8 @@ export type DamageCountSource =
     }
   | { kind: "bothActivesEnergyCount" }
   | { kind: "toolsOnYourBoard" }
-  | { kind: "extraEnergyUnitsBeyondCost"; extra: number };
+  | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
+  | { kind: "yourPokemonInPlay"; filter: CardFilter };
 
 /** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
     two are printed as two whole noun phrases — "your opponent's Active Pokémon"
@@ -20554,6 +20751,25 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (yourBench !== null) {
     const per = Number(yourBench[1]);
     if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+  }
+  // 🆕🆕 D439 — the ATTACKER's bodies IN PLAY (Active + Bench), FILTERED by the
+  // printed noun. Placed directly after the Bench trio it is the "in play" reading
+  // of, so the two nouns sit together on the page and a reader meeting one meets
+  // the other — they answer DIFFERENT numbers on every board with an Active, and
+  // that is the one thing about this member worth being unable to miss.
+  //
+  // TWO guards and not one, and they refuse for two different reasons: `per >= 1`
+  // is the family's printed-zero guard (a printed 0 does nothing, so claiming it
+  // would mark a sentence SIMULATED that the engine does nothing about), and
+  // `filter !== null` is the VOCABULARY — "Ancient Pokémon" and "Stage 1 Pokémon"
+  // reach this line and must leave it LOUD. Neither subsumes the other.
+  const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);
+  if (inPlayBodies !== null) {
+    const per = Number(inPlayBodies[1]);
+    const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "yourPokemonInPlay", filter } };
+    }
   }
   // D193 — the opponent's attached Energy, ACTIVE ZONE ONLY on this fold: the
   // board-zone spelling carries no "more" anywhere in the pool, so this arm
@@ -20842,6 +21058,20 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (yourBench !== null) {
     const per = Number(yourBench[1]);
     if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
+  }
+  // 🆕🆕 D439 — the `×` fold of the arm one reader up, placed at the same point in
+  // the chain so the two readers over one `{per, count}` interface keep reading the
+  // same way down the page. FOUR of this member's five sentences are on THIS fold
+  // and one is on the additive one, so unlike `bothActivesEnergyCount` (additive
+  // only) and `toolsOnYourBoard` (multiply only) both arms are reachable from
+  // printed text and both are driven.
+  const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);
+  if (inPlayBodies !== null) {
+    const per = Number(inPlayBodies[1]);
+    const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "yourPokemonInPlay", filter } };
+    }
   }
   // D193 — the opponent's attached Energy, BOTH ZONES on this fold. The zone is
   // the whole printed noun phrase (capture 3), never inferred from the amount;

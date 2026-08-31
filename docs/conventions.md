@@ -1614,6 +1614,63 @@ It is recorded at the site as unresolvable rather than guessed, the same posture
 as unresolved card ids. **No local D1 means some questions must be left open;
 answering them confidently is the failure, not leaving them.**
 
+## A filter union is not a private vocabulary (D439)
+
+Widening `CardFilter` looks like adding one member. It is not: the union has
+consumers beyond the reader you are building for — an exhaustive `retrieveNoun`
+switch **and a `Set`, where a new member falls out silently** (D222's closed-world
+hazard).
+
+D439 refused its largest countable (3 sentences / 6 printings) on that basis
+rather than on the predicate, which was trivially expressible. **Before adding a
+member to a shared union, enumerate its consumers** — the cost is measured in
+files, not in the member.
+
+## "Spellable by a filter" is not "reachable by the anchor" (D439)
+
+A row whose filter already exists can still be unbuildable for reasons that have
+nothing to do with the vocabulary:
+
+- the sentence **ends in `)`** against an `^…$` anchor;
+- and separately, it **does not compose** — the trailing splitter's **first**
+  guard refuses its tail, so the head is never consulted at all.
+
+D439's brief listed such a row as spellable. It was blocked twice over, and
+claiming the head would have bought **zero** census printings. **Check the anchor
+and the splitter, not just the filter.**
+
+## A guard that asks the registry only is vacuous for derived surfaces (D439)
+
+A shipped work-order table carried one of D439's own sentences as UNBUILT and
+reddened nothing, because its check read `programFor(id)?.[surface]` — **the
+registry alone** — while attack programs resolve `registry ?? deriveAttackEffect`.
+That is D204's vacuity at a new address.
+
+It was found by **grepping the suites before building**, which is now the third
+distinct defect that habit has caught in this run.
+
+## A surviving mutant can disprove your prose (D439)
+
+D439 wrote *"order is behaviour here"* in a doc block, then watched the row that
+would have demonstrated it **survive**. The claim was false — a sibling arm
+returns only on a resolved token, so it falls through.
+
+The block was corrected **to say it was false when written**, the branches proved
+pairwise disjoint over the whole 25-noun vocabulary, and the row kept as a
+declared survivor that reports `STALE-SURVIVOR` if the sets ever overlap. **A
+surviving mutant is a claim about your prose as often as about your tests.**
+
+## Process finding: argv-anchored process checks (D439)
+
+`ps aux | grep '[b]un scripts/mutation/run.ts'` **matches a waiter shell whose own
+command line quotes the string** — it did, twice, and read as a live sweep. The
+reliable check is argv[0]-anchored, `ps -eo args | grep -E '^bun
+scripts/mutation/run\.ts'`, **plus the journal's recorded pid**.
+
+That is the **third** instrument written to obey D411 and then bitten by it —
+`pgrep -f` matched its own waiter two slices earlier. **A process check that can
+match the checker is not a process check.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
