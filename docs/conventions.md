@@ -1566,6 +1566,54 @@ guard gaining `&& agrees` matching a neighbour's).
 **Writing a line that already exists elsewhere breaks a row you never touched.**
 Run `precheck` after every edit round, not once at the end.
 
+## Assertion polarity over a disjunction (D438 — and why D436's GAP happened)
+
+**A negative assertion over a disjunction is a claim about EVERY disjunct; its
+positive replacement is a claim about NONE of them.**
+
+`resolvedByAnyReader(s) === false` is a thirteen-way refusal: it reddens if any
+one of thirteen readers is ever widened onto `s`. When a slice builds `s` and
+re-points that rung to `=== true`, the suite stays green — and **all thirteen
+refusals are discarded**, because the new claim is true under a mistaken widening
+and under the real build alike.
+
+**That is exactly how D436 disarmed D368's tripwire and produced this run's only
+GAP.** D438 hit the same fork and took the other branch: assert **the owner reader
+by name AND that every other reader still refuses**. Strictly stronger in both
+directions, and it arms rows a boolean never could.
+
+**When you re-point a negative, name what now owns it and keep the refusals.**
+
+## Never run a formatter on a shared tree (D438)
+
+`biome format --write` on a **single** test file swept **140 insertions / 32
+deletions of pre-existing format drift** into an unrelated slice. The repo carries
+122 format-dirty files; that is a separate commit, not a passenger.
+
+It was found and undone by reconstructing the file from `git show HEAD:` and
+re-applying the three real edits — **no `git checkout --`, no `stash`, no
+`reset`**, per the standing rule against wholesale tree operations.
+
+## Rename when the second inhabitant arrives (D438)
+
+A local called `selfPenalty` described its **count source** by accident and its
+**printed clause** by intent. Both readings were true while the reader had one
+arm. The accidental one became false the moment a second count source joined it.
+
+**Rename when a second inhabitant arrives, not when the wrong reading finally
+causes a bug.**
+
+## Some questions are unresolvable here, and must stay open (D438)
+
+D438 re-checked whether a suppression term should reach its new fold. The answer
+requires a registry row on a fixture that also prints the sentence, and the six
+real card ids are in neither `catalogManifest.ts` nor `FIXTURE_POOL` — so it is
+**not answerable in this checkout**.
+
+It is recorded at the site as unresolvable rather than guessed, the same posture
+as unresolved card ids. **No local D1 means some questions must be left open;
+answering them confidently is the failure, not leaving them.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

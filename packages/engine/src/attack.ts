@@ -1294,6 +1294,22 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // SUBTRACTING half of the same step and is reported through `debuff` beside
   // D149's installed weakener — see the `debuff` term in the pipeline below, where
   // the choice is argued.
+  //
+  // 🆕🆕 D438 — …AND THE SAME READER NOW ALSO ANSWERS "This attack does {30|50}
+  // less damage for each {C} in your opponent's Active Pokémon's Retreat Cost."
+  // (corpus rows 573/603, 2 sentences / 3 legal printings; the card ids are
+  // UNRESOLVED in this checkout, which has no D1, and are not guessed). NOTHING
+  // HERE MOVED TO ADMIT IT: `scaling`, the guard ladder, the fold below and the
+  // reported field were all written against the READER rather than against its
+  // `count` member — D167's finding, holding for the fourth time.
+  //
+  // ⚠️ **THE COUNT IS NO LONGER ALWAYS THE ATTACKER'S OWN BODY, WHICH IS WHY THE
+  // LOCAL BELOW IS `printedPenalty` AND NOT `selfPenalty` ANY MORE.** The name it
+  // carried from D163 to D437 described the COUNT SOURCE by accident and the
+  // printed clause by intent; with `opponentActiveRetreatCost` on the same reader
+  // the first reading became false, and a successor reading `selfPenalty` would
+  // have assumed the number is priced off the attacker (D429's rule — write the
+  // property, not the shape that happens to have it).
   const damagePenalty =
     damageBonus !== null || damageMultiplier !== null || effect === null || effect === ""
       ? null
@@ -1346,7 +1362,7 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // no second answer to a question the engine already answers), counted at
   // DECLARATION like every other member of the family, so this attack's own damage
   // cannot bootstrap the counters it reads.
-  const selfPenalty =
+  const printedPenalty =
     damagePenalty === null
       ? 0
       : scaledAttackDamage(active, damagePenalty, next, defenderSeat, action.seat, cost);
@@ -2221,14 +2237,55 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // the printed clause names exactly that body — "any effects on your opponent's
     // ACTIVE Pokémon". So it is nulled below, while the OTHER TWO terms of the same
     // number stand: `installedAttackDebuffOf` is a stamp on the ATTACKER's own
-    // record and `selfPenalty` is this attack's own printed clause, and neither is
-    // an effect on the defender at all. That is `snipeActive`'s D151 reading
+    // record and `printedPenalty` is this attack's own printed clause, and neither
+    // is an effect on the defender at all. That is `snipeActive`'s D151 reading
     // verbatim — the one site where `ignoreWR` splits this same sum the same way,
     // for the same reason and with the same two halves surviving.
+    //
+    // 🆕🆕 ⚠️ **D438 — AND THE SENTENCE ABOVE IS EXACTLY THE KIND D430 SAYS TO
+    // RE-CHECK WHEN A CHANNEL IS ADDED, SO IT WAS RE-CHECKED RATHER THAN
+    // INHERITED.** `printedPenalty` can now be priced off the DEFENDER: the D438
+    // arm's count source is `opponentActiveRetreatCost`, which
+    // `scaledAttackDamage` resolves through `effectiveRetreatCost` on the
+    // defending body — a fold that itself absorbs Stadiums and retreat auras. So
+    // "neither is an effect on the defender at all" is now a claim about the TERM
+    // and no longer about the whole computation.
+    //   • **THE TERM STILL STANDS UNSUPPRESSED, and the engine had already
+    //     answered this for the identical printed noun phrase.** The `more` and
+    //     no-adjective twins of D438's sentence read the SAME
+    //     `effectiveRetreatCost` through the SAME arm and land in `scaled`, which
+    //     `suppressTargetEffects` has never touched — shipped that way since D110
+    //     and unchanged through D192. Nulling this one would make three adjectives
+    //     of one sentence disagree about whether a §11 board quantity is "an
+    //     effect on your opponent's Active Pokémon" (D159 — do not invent a second
+    //     answer to a question the engine already answers).
+    //   • 🛑 **AND THE INTERACTION IS NOT DRIVEN BY THIS SLICE — SAID PLAINLY
+    //     RATHER THAN LEFT TO BE ASSUMED (D433).** `suppressTargetEffects` has two
+    //     channels: the D192 SENTENCE, which a whole-sentence anchor means can
+    //     never co-occur with D438's on one attack, and
+    //     `attackerSuppressesTargetEffects`, an ABILITY passive
+    //     (`suppressTargetEffectsOnAttack`, Walking Wake ex "Azure Seas"). Only
+    //     the second can reach a D438 attacker, and it is CATALOG-shaped: it is
+    //     read through `programFor(id)?.passive`, so driving it needs a REGISTRY
+    //     ROW on a fixture that also prints D438's sentence — and a registry row
+    //     moves `registryCardIds()`, `REGISTRY_ATTACK_UNITS` and the census's
+    //     four-way partition, which is a blast radius this question does not
+    //     justify. ⚠️ **AND THE POPULATION THAT COULD REACH IT IS SEVEN ROWS
+    //     WIDE**: `registry.ts` carries `suppressTargetEffectsOnAttack` on
+    //     `sv05-050`/`-189`/`-205`/`-215`, `sv08.5-178`, `svp-127` (Walking Wake
+    //     ex and its five reprints, ONE printed card) and the `fix-azureseas`
+    //     demonstrator, whose own attack carries no effect text at all. The six
+    //     `sv05`/`sv08.5`/`svp` rows are in NEITHER `catalogManifest.ts` NOR
+    //     `FIXTURE_POOL`, so whether Walking Wake ex's own attacks print a scaling
+    //     sentence is **not checkable in this checkout** and is left UNRESOLVED
+    //     rather than assumed (D425). What is checkable: nothing in the fixture
+    //     pool can reach the combination, so no board here drives it. The day a
+    //     card carries both, this paragraph is the note that says the answer was
+    //     CHOSEN and not stumbled into.
     const debuff =
       installedAttackDebuffOf(next, attackerBody) +
       (suppressTargetEffects ? 0 : opposingAttackDebuff(next, attackerBody)) +
-      selfPenalty;
+      printedPenalty;
     // §8.5 Weakness, unless the defender's controller has a "your Pokémon have no
     // Weakness" aura in play (Florges "Blooming Garden"); Resistance still applies.
     //

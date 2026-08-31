@@ -1006,7 +1006,7 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.339.0");
+    expect(engineVersion).toBe("0.340.0");
   });
 });
 

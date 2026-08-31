@@ -12595,6 +12595,93 @@ export const FIXTURE_POOL: Record<string, Card> = {
       340 HP and Colorless for the sibling's two reasons, unchanged. Its printed 2 is
       also the threshold EXACTLY, which is the rung that refuses a strict `>`. */
   "fix-retreat2-titan": battler("fix-retreat2-titan", { hp: 340, retreat: 2 }),
+  /** 🆕🆕 D438 — the printed-{C}{C}{C} defender. The retreat ladder D388 left at
+      1 and 2 needs a THIRD rung for a PER-UNIT clause, because a penalty read as
+      `per` flat rather than `per × count` is green at count 1 and a penalty read
+      off a hardcoded 2 is green at count 2: only a board at THREE separates
+      "30 less per {C}" from either. 340 HP so a 200-base attack never Knocks it
+      Out, Colorless for `fix-retreat1-titan`'s stated reason (Calamitous
+      Wasteland's surcharge carries `excludesType: "Fighting"`, so a {F} body would
+      be silently exempt). */
+  "fix-retreat3-titan": battler("fix-retreat3-titan", { hp: 340, retreat: 3 }),
+  /** 🆕🆕 D438 — the printed-**ZERO** defender, and it is the discriminator between
+      this slice's fold and the one one word away. A retreat-0 Active makes
+      `per × count` **0**, so the SUBTRACT fold (keep the printed base, take 0 off)
+      reads the full 200 while the MULTIPLY fold (`per × count` IS the damage,
+      printed base dropped) reads 0 and emits no `DAMAGE_DEALT` at all. Nothing
+      else in this pool prints `retreat: 0` — `battler` defaults it to 1 — so this
+      body exists for exactly that one number. 340 HP, Colorless, no attacks. */
+  "fix-retreat0-titan": battler("fix-retreat0-titan", { hp: 340, retreat: 0 }),
+  /** 🆕🆕 D438 — THE RETREAT-COST PENALTY DEMONSTRATOR, and the only fixture in the
+      pool that prints the SUBTRACTIVE adjective on the retreat-cost noun phrase.
+
+      🛑 **A SYNTHETIC `fix-*` BODY AND NOT A TRANSCRIBED PRINTING, ON PURPOSE AND
+      NOT FOR CONVENIENCE.** The two sentences it carries are corpus rows 573 and
+      603 — real `legal_standard = 1` text, **3 printings between them** — but this
+      checkout has **no D1**, so WHICH cards print them is not resolvable here, and
+      an invented `sv*` id is indistinguishable from a real one to every later
+      reader (D425). The SENTENCES are transcribed byte for byte off
+      `censusAttackCorpus.ts`; the body around them is declared synthetic.
+
+      Four attacks, and each index is one claim:
+        • **idx 0 "Anchor Drag"** ({C}, printed `200-`, corpus row 573) — the
+          30-per-{C} printing. The `200-` marker is REAL and load-bearing: the
+          penalty fold KEEPS the printed base (D163) where the multiply fold drops
+          it, so a flat `200` would still read 200 at retreat 0 and prove nothing.
+        • **idx 1 "Chain Slam"** ({C}, printed `150-`, corpus row 603) — the
+          50-per-{C} printing, and the FLOOR board: at `fix-titan`'s retreat 4 the
+          penalty is 200 against a base of 150, so `preWR`'s `Math.max(0, …)` is
+          driven with a genuinely negative subtotal rather than described.
+          **A hardcoded per-unit fails one index or the other**, which is the whole
+          reason both printed amounts are on one body.
+        • **idx 2 "Blunt Tackle"** ({C}, a flat 90, NO `effect` key) — the control
+          an attack-scaling suite owes: an attack on the SAME body whose number no
+          retreat cost can move.
+        • **idx 3 "Hook Toss"** ({C}, a flat 90) — the loud-path control. Its text
+          is D438's sentence with the noun phrase re-spelled in the SIBLING word
+          order (*"the Retreat Cost of your opponent's Active Pokémon"*, D388's
+          printed clause), which is a real paraphrase an author would reach for and
+          which **no reader in the engine claims**: it must fire
+          `ATTACK_EFFECT_SKIPPED`. ⚠️ It is apostrophe-BEARING and NOT derivable,
+          which also makes it the one-axis control on `clauseApostrophe.test.ts`'s
+          two-factor membership filter.
+
+      Basic, Colorless, 340 HP (it is attacked back on the mirror-seat boards), and
+      every cost is a single {C} so no board here is about paying for an attack. */
+  "fix-retreatless": {
+    ...blank,
+    id: "fix-retreatless",
+    name: "Fixanchor",
+    category: "Pokemon",
+    stage: "Basic",
+    hp: 340,
+    types: ["Colorless"],
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Anchor Drag",
+        damage: "200-",
+        effect:
+          "This attack does 30 less damage for each {C} in your opponent's Active Pokémon's Retreat Cost.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Chain Slam",
+        damage: "150-",
+        effect:
+          "This attack does 50 less damage for each {C} in your opponent's Active Pokémon's Retreat Cost.",
+      },
+      { cost: ["Colorless"], name: "Blunt Tackle", damage: 90 },
+      {
+        cost: ["Colorless"],
+        name: "Hook Toss",
+        damage: 90,
+        effect:
+          "This attack does 30 less damage for each {C} in the Retreat Cost of your opponent's Active Pokémon.",
+      },
+    ],
+  } satisfies Card,
   /** 🆕🆕 D389 — THE OPPONENT-SEAT BENCH COUNT DEMONSTRATOR. Iron Crown `sv08-132`,
       transcribed and not interpolated (D306): the real card prints **TWO** attacks and
       so does this, at their printed indices, and the second one is not decoration —
@@ -21791,4 +21878,51 @@ export const NO_WEAKNESS_DECK = deckOf({
   "sv01-194": 4, // Switch (Item) — the §10 FORCED-SWITCH clear, `interpreter.ts`'s literal
   "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, bench, clean defender
   "fix-energy": 16, // Colorless Basic — every cost here, plus the surgery slack
+});
+
+/** 🆕🆕 D438 — the RETREAT-COST PENALTY (`retreatCostPenalty.test.ts`). Its own 60
+    on D270's rule: `RETREAT_COST_BONUS_DECK` next door is seed-pinned by a suite
+    about a THRESHOLD clause and holds no retreat-3 and no retreat-0 body, which
+    are exactly the two rungs a PER-UNIT clause needs.
+
+    **SEED-FREE.** Nothing here flips a coin and every Active is placed by surgery,
+    so a seed table would describe a shuffle rather than a rule (D143's move,
+    D147/D161/D163's inheritance). `fix-titan` dominates the opening hand at 20.
+
+      • `fix-retreatless` — the two printings (idx 0 `200-` at 30 per {C}, idx 1
+        `150-` at 50 per {C}), the flat control at idx 2 and the loud-path control
+        at idx 3. Fielded on BOTH seats, so the seat rung is a real mirror;
+      • `fix-retreat0-titan` / `fix-retreat1-titan` / `fix-retreat2-titan` /
+        `fix-retreat3-titan` — the LADDER, printed {}, {C}, {C}{C}, {C}{C}{C}. Four
+        rungs and not two, because a flat `per` is green at count 1 and a hardcoded
+        2 is green at count 2;
+      • `fix-titan` (340 HP, printed retreat **4**, NO attacks) — the DOMINANT
+        mulligan-free starter, the bench filler on both sides, AND the floor board:
+        50 × 4 = 200 against idx 1's printed base of 150;
+      • `sv02-175` **Calamitous Wasteland** (+1 on each Basic non-{F}) and
+        `sv01-167` **Beach Court** (−1 on each Basic) — the two directions of
+        `effectiveRetreatCost`, so this suite proves the PENALTY reads the FOLD and
+        not the printed column, in both directions. Only one Stadium is ever in
+        play, so they are driven by REPLACING each other, never by stacking;
+      • `sv01-002` **Heracross** ("Superpowered Throw", `10+`, 30 MORE per {C}) and
+        `sv03-172` **Stoutland** ("Chomp Chomp Panic", `50×`, 50 per {C}, no base) —
+        🛑 **THE ADMITTED TWINS.** The three adjectives on ONE noun phrase are
+        driven off ONE board here rather than compared as three `toEqual`s, which
+        is the only way a rung can say the `more`/no-adverb pair still answer their
+        OWN readers after this slice widened the third.
+
+    4 + 3 + 3 + 3 + 3 + 2 + 2 + 2 + 2 + 4 + 16 + 16 = **60**. */
+export const RETREAT_COST_PENALTY_DECK = deckOf({
+  "fix-retreatless": 4, // the demonstrator — idx 0 (30 per {C}), 1 (50 per {C}), 2 (flat), 3 (loud)
+  "fix-retreat0-titan": 3, // 340 HP, printed {} — the base-KEPT rung the multiply fold fails
+  "fix-retreat1-titan": 3, // 340 HP, printed {C} — the rung a flat `per` is green on
+  "fix-retreat2-titan": 3, // 340 HP, printed {C}{C} — the rung a hardcoded 2 is green on
+  "fix-retreat3-titan": 3, // 340 HP, printed {C}{C}{C} — the rung that separates them
+  "sv02-175": 2, // Calamitous Wasteland — the fold's ADDITIVE term (+1 on Basic non-{F})
+  "sv01-167": 2, // Beach Court — the fold's SUBTRACTIVE term (-1 on Basic), the mirror
+  "sv01-002": 2, // Heracross "Superpowered Throw" (10+, 30 MORE per {C}) — the additive twin
+  "sv03-172": 2, // Stoutland "Chomp Chomp Panic" (50×) — the multiply twin, a Stage 2 (surgery)
+  "fix-grass-energy": 4, // {G} — the first symbol of Superpowered Throw's cost, and nothing else
+  "fix-energy": 16, // Colorless Basic — every other cost here, plus the surgery slack
+  "fix-titan": 16, // 340 HP, printed retreat 4 — DOMINANT starter, bench filler, the FLOOR board
 });

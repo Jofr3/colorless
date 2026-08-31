@@ -347,9 +347,21 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // are different rules and a reader reconstructing the pipeline needs both
       // (events.ts `DAMAGE_DEALT.debuff`).
       //
-      // D163 — the SAME crumb now also carries the attack's OWN self-scaling
-      // penalty ("This attack does 20 less damage for each damage counter on this
+      // D163 — the SAME crumb now also carries the attack's OWN printed penalty
+      // ("This attack does 20 less damage for each damage counter on this
       // Pokémon."), and the wording was READ under both seats before it was kept.
+      //
+      // 🆕🆕 ⚠️ **D438 — THE WORD "self-scaling" WAS TRUE WHEN WRITTEN AND IS NOT
+      // ANY MORE, WHICH IS WHY IT IS CORRECTED HERE RATHER THAN LEFT (D430).**
+      // `deriveAttackDamagePenalty` gained a SECOND count source — *"This attack
+      // does {30|50} less damage for each {C} in your opponent's Active Pokémon's
+      // Retreat Cost."* — so a `debuff` reaching this crumb can now be priced off
+      // the DEFENDER's folded Retreat Cost rather than off the attacker's own
+      // damage counters. **THE CRUMB IS UNCHANGED AND THE ARGUMENT BELOW IS WHY**:
+      // it names the FACT (this attack's damage was reduced before Weakness) and
+      // not the RULE, so a fourth source arriving on the same field costs it
+      // nothing. The count of boards it is spoken from moves; the sentence does
+      // not.
       // It survives because it names the FACT (this attack's damage was reduced
       // before Weakness) and not the RULE, the standard D159's " · prevented"
       // crumb was written to: this row is filed under the DEFENDER and rendered

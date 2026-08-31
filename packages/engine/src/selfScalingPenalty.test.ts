@@ -357,7 +357,7 @@ describe("deriveAttackDamagePenalty — one regex, two amounts", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the census — discovered from the population, not enumerated", () => {
-  it("is exactly TWO fixture attacks, and they are the two printed sentences", () => {
+  it("🆕🆕 D438 — is exactly FOUR fixture attacks, on TWO count sources", () => {
     // D145's move (D147/D159/D161's inheritance): discover the producers by
     // deriving every attack in the pool, so a third printing added without a case
     // fails HERE.
@@ -372,12 +372,29 @@ describe("the census — discovered from the population, not enumerated", () => 
     const found: string[] = [];
     for (const [id, card] of Object.entries(FIXTURE_POOL)) {
       for (const [index, attack] of (card.attacks ?? []).entries()) {
-        if (deriveAttackDamagePenalty(attack.effect ?? "") !== null) {
-          found.push(`${id}[${index}] ${attack.name}`);
-        }
+        const read = deriveAttackDamagePenalty(attack.effect ?? "");
+        if (read !== null) found.push(`${id}[${index}] ${read.count.kind}`);
       }
     }
-    expect(found.sort()).toEqual(["sv01-060[1] Sweeping Tackle", "sv02-037[1] Burning Voice"]);
+    // 🆕🆕 **D438 — THIS RUNG WAS THE TRIPWIRE AND IT FIRED.** It was written as a
+    // DISCOVERED sweep precisely so that a third printing landing without a case
+    // would redden here, and D438 is that: `deriveAttackDamagePenalty` gained a
+    // second count source — `opponentActiveRetreatCost`, corpus rows 573/603,
+    // *"This attack does {30|50} less damage for each {C} in your opponent's Active
+    // Pokémon's Retreat Cost."* — so the demonstrator `fix-retreatless` prints two
+    // more sentences this reader claims. ⚠️ **THE COUNT SOURCE IS ASSERTED BESIDE
+    // THE ID, WHICH THE OLD LIST COULD NOT DO**: a build that answered the new
+    // sentences with `damageCountersOnSelf` (the arm one line up, the real
+    // neighbour copy) would return the identical four ids and this rung would have
+    // stayed green on it. The header comment above still holds for the D163 half —
+    // three of that family's five printings are byte-identical Skeledirge ex
+    // rarities served by one fixture.
+    expect(found.sort()).toEqual([
+      "fix-retreatless[0] opponentActiveRetreatCost",
+      "fix-retreatless[1] opponentActiveRetreatCost",
+      "sv01-060[1] damageCountersOnSelf",
+      "sv02-037[1] damageCountersOnSelf",
+    ]);
   });
 
   it("…and the SIGN-FLIPPED TWIN's producers are asserted beside them", () => {

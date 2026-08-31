@@ -11249,6 +11249,35 @@ const RETREAT_COST_SCALE =
   /^This attack does (\d+) more damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
 const RETREAT_COST_MULTIPLY =
   /^This attack does (\d+) damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
+// 🆕🆕 D438 — THE THIRD ADJECTIVE ON THIS NOUN PHRASE, AND IT IS THE SUBTRACTIVE ONE.
+// "This attack does {30|50} less damage for each {C} in your opponent's Active
+// Pokémon's Retreat Cost." — **2 sentences / 3 legal printings**, read off
+// `censusAttackCorpus.ts` rows 573 (30-less, 2 printings) and 603 (50-less, 1),
+// which is the `legal_standard = 1` attack column and the only population this
+// checkout can measure (there is no local D1 here, so the CARD IDS behind these
+// three printings are UNRESOLVED and are not guessed — D425's rule).
+//
+// ⚠️ ONE ANCHOR AND NOT TWO, ON D121's WARRANT, AND THE DIFF WAS RUN RATHER THAN
+// ASSUMED: the two printed sentences differ at exactly ONE character position —
+// `3` versus `5` at byte 18 — and nowhere else, so one `(\d+)` capture spans both
+// (`diff <(fold -w1 …) <(fold -w1 …)` over the two corpus rows returns a single
+// `18c18` hunk). The apostrophes are ASCII U+0027 on the bytes (`hexdump -C`, not
+// remembered — D421), and the `['’]` class is spelled on BOTH slots exactly as
+// its two siblings above spell theirs, for D137's reason: a re-ingest that
+// normalised punctuation would move all three together and half a fix reads like
+// the whole one until it does not.
+//
+// 🛑 IT DIFFERS FROM `RETREAT_COST_SCALE` BY ONE WORD — `more` → `less` — AND
+// THAT WORD IS THE WHOLE DISCRIMINATOR, which is why `retreatCostPenalty.test.ts`
+// drives all three adjectives on ONE noun phrase in one place. The FOLD is what
+// separates them (D163): `+` keeps the printed base and adds, no adjective at all
+// makes `per × count` the whole damage, and `less` keeps the printed base and
+// SUBTRACTS. Nothing about the count source changed to admit this —
+// `opponentActiveRetreatCost` has been a `DamageCountSource` with its own
+// `scaledAttackDamage` arm since D110, so this line and one `if` are the whole
+// engine cost, and the ATTACK READER SURFACE STANDS STILL AT 13.
+const RETREAT_COST_PENALTY =
+  /^This attack does (\d+) less damage for each \{C\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\.$/;
 // D168 — the OPPONENT-SIDE damage-counter count, and the first count source this
 // family reads off the DEFENDING body's own `damage` field. "This attack does
 // {10|30} more damage for each damage counter on your opponent's Active Pokémon."
@@ -20630,13 +20659,42 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
 }
 
 /** Parse a printed SUBTRACTIVE damage-scaling sentence — "This attack does {N}
-    less damage for each damage counter on this Pokémon." (D163) — into the same
-    `{per, count}` shape as its two siblings, `per` POSITIVE and the direction
-    carried by which reader answered, or null for anything else. The one sentence
-    this family prints with this sign; `count` is therefore always
-    `damageCountersOnSelf` today, and the type is the shared one because the count
-    evaluator is shared (`scaledAttackDamage`) rather than because the other four
-    members are reachable from here.
+    less damage for each damage counter on this Pokémon." (D163) or "This attack
+    does {N} less damage for each {C} in your opponent's Active Pokémon's Retreat
+    Cost." (D438) — into the same `{per, count}` shape as its two siblings, `per`
+    POSITIVE and the direction carried by which reader answered, or null for
+    anything else. The type is the shared one because the count evaluator is shared
+    (`scaledAttackDamage`), not because every member of the union is reachable from
+    here: **TWO of `DamageCountSource`'s FOURTEEN members** are, and the other
+    twelve stay on their siblings' folds. (The sentence replaced here said *"the
+    other FOUR members"* — a second stale figure in the same paragraph, true when
+    the union was five long and never re-counted since.)
+
+    🛑 **THE PARAGRAPH THAT USED TO SIT HERE WAS FALSE, AND IT WAS STEERING SLICES
+    AWAY FROM CORRECT WORK — D422's shape, at a doc block instead of a refusal.**
+    It read: *"The one sentence this family prints with this sign; `count` is
+    therefore always `damageCountersOnSelf` today"*. **The legal column prints
+    THREE sentences with this sign, not one**, and only the first of them counts
+    damage counters. Measured 2026-08-24 over `censusAttackCorpus.ts` — the
+    `legal_standard = 1` attack column, 640 sentences — with the LOOSEST plausible
+    pattern (`grep -n "less damage"`, 14 hits, every hit read; the other eleven are
+    the damage-REDUCTION bar family, a different clause at a different §8.5 step):
+
+        row 532  2 printings  …10 less damage for each damage counter on this Pokémon.
+        row 573  2 printings  …30 less damage for each {C} in your opponent's Active Pokémon's Retreat Cost.
+        row 603  1 printing   …50 less damage for each {C} in your opponent's Active Pokémon's Retreat Cost.
+
+    **3 sentences / 5 legal printings, and after D438 this reader claims all
+    three.** ⚠️ **DATED, NOT CALLED "ROTTED" (D423's corollary), and the honest
+    answer is that WHICH of the two it was is NOT RESOLVABLE IN THIS CHECKOUT.**
+    The claim was written at D163 (commit `6731751`) against *"the local D1,
+    2026-08-03, 978 cards / 6 sets"*, and this checkout has **no D1** — that
+    population cannot be re-queried here. What IS measurable: rows 573 and 603
+    entered the tree at **D274** (`a7e9a57`, the commit that created
+    `censusAttackCorpus.ts` from a 2026-08-08 remote-D1 query), so the claim was
+    **demonstrably false from D274 onward** with the counterexample committed four
+    thousand lines away in the same package. That is 164 decisions of a louder,
+    wronger sentence keeping readers off a two-line build.
 
     THE THIRD FOLD. The additive reader adds `per × count` to the printed base and
     the multiply reader makes it the whole damage; this one KEEPS the printed base
@@ -20645,21 +20703,41 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     weakener and D151's aura rather than into `scaled`. See SELF_COUNTER_PENALTY
     above for why a negative `per` on the additive reader is refused.
 
-    Refuses its "more" twin (the additive reader owns it) and its no-adjective
-    multiply twin (Drifloon sv01-089, Onix swsh10.5-036 — READ since D167 by
-    `deriveAttackDamageMultiplier`, where this block always said it belonged), a
-    lowercased "this", a missing trailing period and any leading/trailing text: all
-    stay on the loud ATTACK_EFFECT_SKIPPED path. Disjoint from `deriveAttackEffect` for the
+    Refuses BOTH of its "more" twins (the additive reader owns them) and BOTH of
+    its no-adjective multiply twins (the self-counter one on Drifloon sv01-089 and
+    Onix swsh10.5-036 — READ since D167 by `deriveAttackDamageMultiplier`, where
+    this block always said it belonged; the retreat-cost one, corpus row 597, read
+    by the same function since D110), a lowercased "this", a missing trailing
+    period and any leading/trailing text: all stay on the loud
+    ATTACK_EFFECT_SKIPPED path. ⚠️ **THE TWO NOUN PHRASES ARE MUTUALLY EXCLUSIVE BY
+    THEIR LITERAL TAILS AND NEED NO LOOKAHEAD**: both anchors are `^…$` and one
+    ends `on this Pokémon\.`, the other `Retreat Cost\.`, so neither can reach the
+    other's sentence in either direction — the same argument `OPPONENT_COUNTER_SCALE`
+    makes above, asserted rather than argued (`retreatCostPenalty.test.ts` sweeps
+    all 640 corpus sentences for a double answer across all thirteen readers).
+    Disjoint from `deriveAttackEffect` for the
     reason both siblings are — the whole-sentence anchor means a scaling sentence
     never also derives an op. */
 export function deriveAttackDamagePenalty(text: string): AttackDamageBonus | null {
-  const selfCounters = SELF_COUNTER_PENALTY.exec(text.trim());
-  if (selfCounters === null) return null;
-  // A printed 0 subtracts nothing — the guard every arm in this family carries,
+  const effect = text.trim();
+  // A printed 0 subtracts nothing — the guard every arm in BOTH families carries,
   // and it keeps such a printing on the loud ATTACK_EFFECT_SKIPPED path rather
   // than silently claiming to simulate a sentence that does nothing.
-  const per = Number(selfCounters[1]);
-  return per >= 1 ? { per, count: { kind: "damageCountersOnSelf" } } : null;
+  const selfCounters = SELF_COUNTER_PENALTY.exec(effect);
+  if (selfCounters !== null) {
+    const per = Number(selfCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnSelf" } };
+  }
+  // 🆕🆕 D438 — the SECOND count source this reader answers, and the first one it
+  // reads off the DEFENDER rather than off the attacker's own body. See
+  // `RETREAT_COST_PENALTY` above for the corpus rows and the one-character diff
+  // that makes the two printed amounts one anchor.
+  const retreatCost = RETREAT_COST_PENALTY.exec(effect);
+  if (retreatCost !== null) {
+    const per = Number(retreatCost[1]);
+    if (per >= 1) return { per, count: { kind: "opponentActiveRetreatCost" } };
+  }
+  return null;
 }
 
 /** Parse a printed "×"/multiply damage-scaling sentence — "This attack does N

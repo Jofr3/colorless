@@ -18534,6 +18534,101 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.334.0 → **0.335.0**
     (`packages/engine/package.json` in the same commit). */
+/** 🆕🆕 **0.339.0 → 0.340.0 — D438, THE RETREAT-COST PENALTY: THE THIRD ADJECTIVE
+    ON ONE NOUN PHRASE, AND A DOC CLAIM THAT HAD STEERED SLICES AWAY FROM IT.**
+
+    *"This attack does {30|50} less damage for each {C} in your opponent's Active
+    Pokémon's Retreat Cost."* — **2 sentences / 3 legal printings**,
+    `censusAttackCorpus.ts` rows 573 and 603, over the committed `legal_standard = 1`
+    attack column (640 sentences / 1,732 printings).
+
+    **ONE ANCHOR, ON D121's WARRANT, AND THE DIFF WAS RUN.** The two printed strings
+    differ at exactly ONE character position — the `3` versus the `5`, index 17
+    zero-based (`diff`'s `18c18`) — and nowhere else, so one `(\d+)` capture spans
+    both. `retreatCostPenalty.test.ts` §1 re-computes that diff in TypeScript rather
+    than quoting it, because a warrant asserted in a commit message is a claim.
+
+    🛑 **THE PRICE WAS ONE REGEX CONSTANT AND ONE `if`, AND EVERY OTHER HALF ALREADY
+    SHIPPED.** `deriveAttackDamagePenalty` has been the THIRD FOLD since D163 — the
+    additive reader adds `per × count` to the printed base, the multiply reader makes
+    it the whole damage, this one KEEPS the base and SUBTRACTS through `attack.ts`'s
+    `debuff` term, `per` positive and the direction carried by which reader answered.
+    The count source is not new either: `opponentActiveRetreatCost` has been a
+    `DamageCountSource` with its own `scaledAttackDamage` arm since **D110**, reading
+    `effectiveRetreatCost` on the DEFENDING body. So this slice adds **no union
+    member, no evaluator arm, no fold change and no fourteenth reader** —
+    `attackReaderSurface()` stands still at **13** and only the RAW summand steps.
+    Its anchor differs from the shipped `RETREAT_COST_SCALE` by ONE WORD.
+
+    🛑 **THE ROTTED CLAIM, AND IT IS THE HALF OF THIS SLICE THAT IS NOT THE BUILD.**
+    The doc block over this reader said, from D163 until now: *"The one sentence this
+    family prints with this sign; `count` is therefore always `damageCountersOnSelf`
+    today"*. **The legal column prints THREE sentences with this sign** — corpus rows
+    532, 573 and 603, **5 printings** — measured with the loosest plausible pattern
+    (`less damage`, 14 hits, every hit read; the other eleven are the damage-REDUCTION
+    bar family, a different clause at a different §8.5 step). The same paragraph also
+    said *"the other FOUR members"* of `DamageCountSource`, which has **fourteen**.
+    That is D422's shape at a doc block rather than at a refusal: a louder-and-wronger
+    sentence keeping readers off a two-line build. ⚠️ **DATED, NOT CALLED "ROTTED"**
+    (D423's corollary), and the honest answer is that WHICH it was is not resolvable
+    here: the claim was written at D163 against the local D1 of 2026-08-03
+    (*"978 cards / 6 sets"*) and this checkout has no D1, but rows 573/603 entered at D274
+    (`a7e9a57`), so it was **demonstrably false from D274 onward** with the
+    counterexample committed in the same package.
+
+    🛑 **A REFUSAL RUNG WHOSE OWN FALSIFIER WAS MET.** `retreatCostBonus.test.ts`'s
+    `NOUN_PHRASE_SIBLINGS` carried both of these sentences with `resolves: false` and
+    its doc block said *"the 'less' pair sits in a different residue"* — a refusal
+    that named its own condition. Re-pointed, not deleted, and D418's second-half
+    question is answered in writing at the site: the OLD claim could catch a build
+    that widened one of the OTHER two readers onto a `less` sentence, and the new one
+    cannot, so a rung asserting **which reader owns each of the four** was added
+    beside it rather than the totals being stepped alone.
+
+    ⚠️ **THE CARD IDS BEHIND THE THREE PRINTINGS ARE UNRESOLVED AND ARE NOT GUESSED**
+    (D425). The demonstrator `fix-retreatless` is a declared-synthetic `fix-*` key
+    carrying the two printed sentences byte for byte, plus a no-`effect` control at
+    index 2 and a real paraphrase no reader claims at index 3.
+
+    ⚠️ **`attack.ts`'s LOCAL `selfPenalty` IS NOW `printedPenalty`** — a rename and
+    not a mechanism. The old name described the COUNT SOURCE by accident and the
+    printed clause by intent; with `opponentActiveRetreatCost` on the same reader the
+    first reading became false (D429 — write the property, not the shape that happens
+    to have it). Three sites, no behaviour.
+
+    ⚠️ **AND ONE D430 RE-CHECK CAME BACK WITH A NAMED, UNDRIVEN INTERACTION.** The
+    `debuff` sum's doc block reasons that its non-aura terms are *"not an effect on
+    the defender at all"*; `printedPenalty` can now be priced off the defender's
+    folded Retreat Cost. The term still stands unsuppressed, because the `more` and
+    no-adjective twins read the SAME value through the SAME arm into `scaled`, which
+    `suppressTargetEffects` has never touched (D159 — no second answer). The board
+    that would drive it needs a REGISTRY ROW on a fixture that also prints the
+    sentence, which moves the census's four-way partition; it is declared undriven at
+    the site rather than claimed.
+
+    engineVersion 0.339.0 → **0.340.0**
+    (`packages/engine/package.json` in the same commit).
+    `MATCH_RECORD_VERSION` **STAYS 29**, and the argument is the strongest form there
+    is: **there is no carrier at all.** An `AttackDamageBonus` is a parse-time value
+    and a LOCAL inside `attack()` — not an `InPlayPokemon` field, not an `EffectOp`
+    inhabitant, not on `EffectContext`, `EffectRecord` or `phase.cont`, and not on any
+    event payload. Driven in `retreatCostPenalty.test.ts` §8 **over the serialized
+    bytes** rather than reasoned from the type's name (D427): neither
+    `"opponentActiveRetreatCost"` nor `"damageCountersOnSelf"` appears anywhere in
+    `JSON.stringify(state)` before or after the swing, the attack resolves in ONE
+    action with nothing to resume, and a round-tripped v29 record swings the same
+    clause again for the same `dealt`.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AND NOT INCREMENTED** (D429 — a streak is a
+    claim). **23 literal assertions across 25 sites**: 22 `expect(engineVersion).toBe`
+    pins (21 inherited + **this slice's own**, in `retreatCostPenalty.test.ts` §8) and
+    ONE `manifest.version` literal pin (`legacyEnergy.test.ts`), plus
+    `packages/engine/package.json`, this declaration and the `D275-engine-version-frozen`
+    mutant `find`. ⚠️ A bare `grep engineVersion` returns far more than that — three
+    `toBe(manifest.version)` ties, five `.not.toBe(...)` rungs, one inequality pin
+    (`>= "0.248.0"`) and two PROSE occurrences inside doc comments quoting a
+    historical version never move. Grep BOTH `engineVersion` and `manifest.version`,
+    and count your own pin. */
 /** 🆕🆕 **0.338.0 → 0.339.0 — D437, THE FILTERED BENCH SNIPE: THE FIRST PER-BODY
     PREDICATE TO NARROW A CANDIDATE SET ON `damageChosen`.**
 
@@ -18993,7 +19088,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.339.0";
+export const engineVersion = "0.340.0";
 
 export type {
   ApplyResult,

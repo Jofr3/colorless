@@ -5684,7 +5684,7 @@ export const MUTANTS: Mutant[] = [
     // literal. **A SIDE EFFECT YOU REMEMBERED TO GREP IN ONE FILE SET IS NOT A SIDE
     // EFFECT YOU ENUMERATED** — and this row is single-quoted here on purpose, so a
     // patch searching for the double-quoted spelling matches zero.
-    // ⚠ RE-POINTED AT D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5695,7 +5695,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.339.0";',
+    find: 'export const engineVersion = "0.340.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20042,5 +20042,61 @@ export const MUTANTS: Mutant[] = [
     find: "    if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {",
     replace: "    if (cond !== null && amount >= 1 && count >= 1) {",
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
+  },
+  // ── 🆕🆕 D438 — THE RETREAT-COST PENALTY. 🛑 **THE FIRST MUTANT ROWS THIS READER
+  //    HAS EVER HAD.** At D437's head a grep of this corpus for
+  //    `deriveAttackDamagePenalty`, `SELF_COUNTER_PENALTY` and the phrase
+  //    `less damage for each` returned ZERO rows across all 1,699 — a shipped fold with
+  //    a live consumer and no tally behind it since D163. Five rows: the neighbour-copy
+  //    that collapses the anchor into its sibling, the wrong-count transcription that
+  //    must die for the RIGHT reason (D416), the two straight-only apostrophe slots
+  //    (D137's historical defect on this very family), and the anchor drop.
+  {
+    id: "D438-anchor-takes-the-more-twin",
+    decision: "D438",
+    what: "\U0001f6d1 C1 — **`less` BECOMES `more`, WHICH MAKES THIS ANCHOR BYTE-IDENTICAL TO `RETREAT_COST_SCALE` ONE SCREEN UP.** A neighbouring arm's REAL code copied verbatim (D190b), and the single likeliest defect on a family whose three members differ by ONE WORD: the two `less` printings (corpus rows 573/603, 3 legal printings) fall straight back to the loud ATTACK_EFFECT_SKIPPED path while the reader starts claiming a sentence the ADDITIVE reader already owns. ⚠️ **attack.ts's ladder HIDES the second half** — `damagePenalty` is only read when `deriveAttackDamageBonus` declined, so the `more` card's board is untouched and the ONLY observable is the two `less` sentences going unread. It moves every whole-corpus figure at once (`BUILT.attack`, the residue, both apostrophe censuses), which is why the killers are the census suites as well as this slice's own",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) less damage for each \\{C\\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each \\{C\\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/retreatCostPenalty.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D438-arm-takes-the-self-counter-source",
+    decision: "D438",
+    what: "\U0001f6d1 C2 — **THE NEW ARM RETURNS `damageCountersOnSelf`**, the count source of the arm SEVEN LINES UP, copied verbatim. The sentence still resolves, so `BUILT.attack`, the residue, both reader instruments and every apostrophe census stand still — **a census asks whether a reader ANSWERED and never what it answered with** (D380's note) — and the card silently prices its penalty off the ATTACKER's damage counters instead of the DEFENDER's Retreat Cost. ⚠️ **IT DIES FOR THE RIGHT REASON AND THAT WAS ENGINEERED** (D416): every board in §3 fields a PRISTINE attacker, so the mutated fold returns 0 and the printed 200 lands whole — a DAMAGE NUMBER, not a shape assertion. §2's producer sweep asserts the `count.kind` beside the id for the same reason, because a build that returned the right four ids with the wrong source would otherwise read as correct",
+    file: "packages/engine/src/effects.ts",
+    find: "  const retreatCost = RETREAT_COST_PENALTY.exec(effect);\n  if (retreatCost !== null) {\n    const per = Number(retreatCost[1]);\n    if (per >= 1) return { per, count: { kind: \"opponentActiveRetreatCost\" } };",
+    replace: "  const retreatCost = RETREAT_COST_PENALTY.exec(effect);\n  if (retreatCost !== null) {\n    const per = Number(retreatCost[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnSelf\" } };",
+    expectKilledBy: ["packages/engine/src/retreatCostPenalty.test.ts"],
+  },
+  {
+    id: "D438-anchor-goes-straight-only",
+    decision: "D438",
+    what: "⚠️ C3 — **BOTH `['’]` CLASSES COLLAPSE TO THE ASCII APOSTROPHE**, which is D137's REAL historical defect on THIS EXACT PAIR of anchors: its own comment records that the retreat-cost regexes *\"were the LAST straight-only patterns in the file\"* and that D136's review missed them because it never looked for a sentence carrying TWO possessives. The corpus stores U+0027, so every damage board in this repo stays green — the only instrument that sees it is `clauseApostrophe.test.ts`, whose whole job is to re-ingest every derivable apostrophe-bearing sentence at U+2019 and require it to still resolve. **THE ROW EXISTS BECAUSE THE NEW SENTENCE IS THE WIDEST EXPOSURE IN THE POOL**: two possessive slots, and a fix to one of them reads exactly like a fix to both until a re-ingest normalises punctuation",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) less damage for each \\{C\\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\\.$/;",
+    replace: "  /^This attack does (\\d+) less damage for each \\{C\\} in your opponent's Active Pokémon's Retreat Cost\\.$/;",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D438-anchor-loses-its-tail",
+    decision: "D438",
+    what: "⚠️ C4 — **THE TRAILING `\\.$` BECOMES UNANCHORED**, the defect D207 paid for three times over: an unanchored pattern claims a COMPOUND whose leading half happens to be this clause, so the engine simulates a subtraction and silently drops whatever the printed tail said. No board that prints the sentence WHOLE can tell — every §3/§4 damage figure is identical — so the killer is §2's near-miss ladder, where a trailing companion is one of nine one-axis rows",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) less damage for each \\{C\\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\\.$/;",
+    replace: "  /^This attack does (\\d+) less damage for each \\{C\\} in your opponent['’]s Active Pokémon['’]s Retreat Cost\\./;",
+    expectKilledBy: ["packages/engine/src/retreatCostPenalty.test.ts"],
+  },
+  {
+    id: "D438-zero-guard-admits-a-printed-zero",
+    decision: "D438",
+    what: "⚠️ C5 — **THE ZERO GUARD ON THE NEW ARM ADMITS `per = 0`**, dropping the guard *\"every arm in both families carries\"*. A printed 0 subtracts nothing, so claiming it would mark a sentence SIMULATED that the engine does nothing about — the coverage-instrument defect (D190b/D199 at the instrument layer), and the one this whole family's `>= 1` exists to refuse. ⚠️ **THE MUTATION IS OBSERVABLE ONLY THROUGH A CONSTRUCTED STRING, AND THAT IS STATED RATHER THAN HIDDEN** (D420): the catalog prints no `0 less` row, so no board and no census figure moves — §2's near-miss ladder carries the constructed printed-0 as one of its nine one-axis rows, and a rung beside it asserts the string really reaches the regex so the GUARD is what is being tested and not the match",
+    file: "packages/engine/src/effects.ts",
+    find: "    const per = Number(retreatCost[1]);\n    if (per >= 1) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  return null;",
+    replace: "    const per = Number(retreatCost[1]);\n    if (per >= 0) return { per, count: { kind: \"opponentActiveRetreatCost\" } };\n  }\n  return null;",
+    expectKilledBy: ["packages/engine/src/retreatCostPenalty.test.ts"],
   },
 ];
