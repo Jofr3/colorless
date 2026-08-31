@@ -508,9 +508,12 @@
 > ✅ **THE TREE IS CLEAN AND `bun run check` IS GREEN — 436 files / 9,606 tests, `CHECK_EXIT=0`.**
 > Engine **0.340.0**, **`MATCH_RECORD_VERSION` 29**, corpus **1,704**, archive ratchet **108**.
 >
-> 🛑 **THE ONE DEBT: D438 HAS HAD NO WHOLE-CORPUS SWEEP.** Its neighbour re-probe, unusually, is
-> **COMPLETE** — 340 rows across 33 suites, 338 killed + 2 pre-existing declared, 0 GAPs — for the
-> population *rows a file this slice touched could kill*. The sweep is still owed for everything else.
+> ✅✅ **THE SWEEP DEBT IS PAID, AND IT CLOSES THE CLASS THE PROBE NAMED AS ITS BLIND SPOT.**
+> **1704 · 1678 killed · 26 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> 0 error(s) · 6,707.3s**, `SWEEP_EXIT=0`; `1678 + 26 = 1704` closes, 1704/1704 verified by id, **zero
+> undeclared survivors**. D438's own probe was complete for *rows a file it touched could kill* (340 across
+> 33 suites) and said any delta would lie in rows whose killers it did **not** touch. **There is no
+> delta.** Survivors held at **26**, a fourth consecutive sweep unmoved.
 >
 > 🛑🛑 **(1) A NEGATIVE ASSERTION OVER A DISJUNCTION IS A CLAIM ABOUT EVERY DISJUNCT; ITS POSITIVE
 > REPLACEMENT IS A CLAIM ABOUT NONE OF THEM.** `resolvedByAnyReader(s) === false` reddens if ANY of
