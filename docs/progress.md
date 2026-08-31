@@ -3,7 +3,7 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-31 — build session #381 (**P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions, and a refusal whose own stated blocker was half wrong.*** Engine **0.342.0 → 0.343.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions.** *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — **1 sentence / 2 legal printings** (`sv08-020`/`-195` Castform) — now SIMULATES on ONE new anchor over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The shipped refusal named the right blocker and the wrong size**: the quantifier was one inhabitant (`max: number | "any" | "all"`), and the real work is that *"any amount"* and *"all"* **disagree about ZERO** — this family has been declinable since M4 and `validateChoice` carried a ceiling with no floor. 🛑 `"all"` is ONE VALUE ON `max` and not a second field, because the printed determiner answers BOTH questions at once (D361's rule on the sibling `discardEnergy.count`, on the same word: **a widening is free; a generalisation is not**). 🛑 The op carries the printed WORD, the prompt carries the resolved NUMBERS — `min === max` is `chooseCards`'s shipped declinable split, `choosePokemonMulti`'s bounds and the `const exact = prompt.min === prompt.max` both HUDs already caption from: **derived from the model, not invented.** 🛑 **The first FORCED arm this op has ever had** — one destination and a fixed quantity is one legal answer, so it applies inline; gated on the FLOOR so every declinable printing still asks on the same board. 🛑 **Three sentences refused with three distinct reasons** — destination SHAPE, own-board SEAT by construction, and seat-plus-a-fifth-route. ✅ **The pre-build tripwire audit ran and found nothing resting on the refusal** — but it was **wrong in the other direction**: D229's anchor rows survived (a separate third anchor) and `D244-any-amount-clamps-to-one` rotted instead. **17 mutants / 17 KILLED**, 49 rows re-probed all KILLED, precheck clean over **1,745**. `bun run check` **439 files / 9,689 tests**.)
+**Last updated:** 2026-08-31 — build session #381 (**P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions, and a refusal whose own stated blocker was half wrong.*** Engine **0.342.0 → 0.343.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions.** *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — **1 sentence / 2 legal printings** (`sv08-020`/`-195` Castform) — now SIMULATES on ONE new anchor over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The shipped refusal named the right blocker and the wrong size**: the quantifier was one inhabitant (`max: number | "any" | "all"`), and the real work is that *"any amount"* and *"all"* **disagree about ZERO** — this family has been declinable since M4 and `validateChoice` carried a ceiling with no floor. 🛑 `"all"` is ONE VALUE ON `max` and not a second field, because the printed determiner answers BOTH questions at once (D361's rule on the sibling `discardEnergy.count`, on the same word: **a widening is free; a generalisation is not**). 🛑 The op carries the printed WORD, the prompt carries the resolved NUMBERS — `min === max` is `chooseCards`'s shipped declinable split, `choosePokemonMulti`'s bounds and the `const exact = prompt.min === prompt.max` both HUDs already caption from: **derived from the model, not invented.** 🛑 **The first FORCED arm this op has ever had** — one destination and a fixed quantity is one legal answer, so it applies inline; gated on the FLOOR so every declinable printing still asks on the same board. 🛑 **Three sentences refused with three distinct reasons** — destination SHAPE, own-board SEAT by construction, and seat-plus-a-fifth-route. ✅ **The pre-build tripwire audit ran and found nothing resting on the refusal** — but it was **wrong in the other direction**: D229's anchor rows survived (a separate third anchor) and `D244-any-amount-clamps-to-one` rotted instead. **17 mutants / 17 KILLED**, 49 rows re-probed all KILLED, precheck clean over **1,745**. `bun run check` **439 files / 9,689 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1718 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,801.9s`** — `+17 killed, +0 declared`, **the second slice running whose delta was written down before the sweep launched**. Completeness check structural: **1,745 listed / 1,745 run / 1,745 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-08-31 — build session #380 (**P3-M5 — D440, *damage scaled by a filtered discard-pile count — the first seat this union carries as a FIELD, and a confound no printed sentence can break.*** Engine **0.341.0 → 0.342.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes.** *"This attack does N [more] damage for each &lt;noun&gt; in your [opponent's] discard pile."* — **4 sentences / 8 legal printings** — now SIMULATE on ONE `DamageCountSource` and **ZERO new `CardFilter` members**: `anyEnergy`, `basicEnergy`, `item`, `byName`. 🛑🛑 **FOLD AND SEAT ARE PERFECTLY CONFOUNDED IN THE BUILDABLE CORE** — every claimed "more" row reads YOUR pile, every claimed bare row your OPPONENT's — so a build deriving either from the other is green on all 8 printings. Broken by CONSTRUCTED text, after checking the house style permits it (D439's own suite drives 3 non-corpus sentences to positive values), and the two confound mutants were given an ATTRIBUTION CONTROL: with the constructed rungs removed they SURVIVE. 🛑 The seat is a FIELD, inverting the union's apparent rule — D168's reason is about a union-wide side and D369's about a RENAME; **D193's `zone` is what decides it**, because two members would duplicate the `CardFilter`. ✅ D376's pile walk GENERALISED IN PLACE, one mutant reddening two suites through two vocabularies. 🛑 Two refusals, two reasons: Ancient is DATA-BLOCKED permanently, the Team Rocket name substring is UNBUILT with an executable falsifier. ⚠️ The first noun map in this family with an apostrophe in a KEY — `literalClauseRow`, not `.get`. **13 mutants / 13 KILLED / 0 GAPs**, corpus 1,715 → 1,728. `bun run check` GREEN 438 files / 9,669 tests.)
 
@@ -514,25 +514,26 @@
 > ✅ **`bun run check` IS GREEN — 439 files / 9,689 tests**, measured after the ritual, not before it.
 > Engine **0.343.0**, **`MATCH_RECORD_VERSION` 29**, mutation corpus **1,745**, archive ratchet **111**.
 >
-> 🛑🛑 **(1) THE DEBT, AND IT IS THE ONLY THING BLOCKING THE NEXT SLICE: D441 IS UNCOMMITTED AND ITS
-> WHOLE-CORPUS SWEEP HAS NOT RUN.** The builder was told to do neither. Commit with EXPLICIT PATHS
-> (never `git add -A`), then run the sweep.
+> ✅ **(1) THE DEBT IS PAID.** D441 is committed (`1792f07`) with explicit paths across five packages,
+> and its whole-corpus sweep is green: `1718 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale ·
+> 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 6,801.9s`, `SWEEP_EXIT=0`, tree clean at exit.
 >
-> ✅✅ **(2) THE EXPECTED SWEEP DELTA, WRITTEN DOWN BEFORE THE SWEEP RUNS — D440's rule, and the point
-> is that this is a PREDICTION and not a reading.** D440 closed at
-> `1701 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s)`
-> over 1,728 rows. D441 adds **17 rows and declares NO survivor**, so the prediction is:
+> ✅✅ **(2) THE PREDICTION WAS EXACT, AND THIS IS THE SECOND TIME.** The block below was written
+> BEFORE the sweep launched and named `1718 killed · 27 known` — which is what arrived, to the row.
 >
 > > **`1718 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale` over 1,745 — i.e. `+17 killed, +0 declared`.**
 >
-> ⚠️ **THE `+0 DECLARED` HALF CARRIES AS MUCH AS THE OTHER.** This slice **generalised two shipped
+> **The `+0 declared` half was the part worth predicting.** This slice **generalised two shipped
 > functions in place** (`moveCap` gained a second literal; the `moveEnergy` park gained a forced arm)
-> and **re-transcribed a neighbour's row** (`D244-any-amount-clamps-to-one`), which is exactly the
-> combination under which a silent verdict flip is plausible. If the killed figure is not **1718**,
-> or the known-survivor figure is not **27**, **a pre-existing row flipped and that is a finding**,
-> not a rounding error — chase it before committing anything on top.
-> ⚠️ Report the MATCHED count, not the two totals (D440): `listed === run` is also satisfied by a run
-> line matched to the wrong id. Enumerate the corpus **from the module**, never from a grep.
+> and **re-transcribed a neighbour's row** (`D244-any-amount-clamps-to-one`) — the combination under
+> which a silent verdict flip is most plausible. It did not flip. 🛑 **Keep writing the delta down
+> first**: D440 and D441 have now both landed on the number, and a figure you commit to in advance is
+> the only version of this check that can actually fail.
+>
+> ✅ **The completeness check was structural and clean, third run in a row**: enumerated **from the
+> module**, log matched **by id** rather than by splitting on the ` … ` separator — **1,745 listed /
+> 1,745 run lines / 1,745 matched / 0 missing / 0 unmatched**, 17 of them D441's. Report the MATCHED
+> figure, not the two totals: `listed === run` is also satisfied by a run line matched to the wrong id.
 >
 > ⚠️ **(3) WHAT THIS SLICE DID NOT RE-PROBE, STATED AS THE PARTIAL IT IS (D433).** 49 rows were
 > re-probed and all 49 KILLED: **D441 17/17, D226 9/9, D229 9/9, D244 7/7**, plus
