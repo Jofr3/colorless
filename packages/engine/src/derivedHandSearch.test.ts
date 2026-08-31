@@ -719,7 +719,11 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
-    expect(attacks()).toHaveLength(63);
+    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
+    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
+    // same length pin and ALL of them were stepped in one pass (D431): a green run
+    // after fixing the one that reddened is evidence the runner stopped early.
+    expect(attacks()).toHaveLength(66);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

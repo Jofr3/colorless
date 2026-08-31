@@ -208,7 +208,7 @@ function answer(state: GameState, uids: string[]): { state: GameState; events: G
   return mustApply(state, {
     type: "resolveEffect",
     seat: state.phase.answerer ?? state.phase.seat,
-    choice: { kind: "moveEnergy", uids, dest },
+    choice: { kind: "moveEnergy", picks: uids.map((uid) => ({ uid, dest })) },
   });
 }
 
@@ -455,7 +455,7 @@ describe("the park — who is asked, and what resumes", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [energy as string], dest: destinationOf(parked) },
+        choice: { kind: "moveEnergy", picks: [{ uid: energy as string, dest: destinationOf(parked) }] },
       },
       "WRONG_SEAT",
     );
@@ -813,7 +813,7 @@ describe("the structural questions", () => {
       {
         type: "resolveEffect",
         seat: "p2",
-        choice: { kind: "moveEnergy", uids: ["not-a-uid"], dest: destinationOf(parked) },
+        choice: { kind: "moveEnergy", picks: [{ uid: "not-a-uid", dest: destinationOf(parked) }] },
       },
       "BAD_EFFECT_CHOICE",
     );

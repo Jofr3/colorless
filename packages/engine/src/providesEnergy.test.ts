@@ -594,8 +594,9 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [benched as string],
-        dest: { seat: "p1", spot: { spot: "active" } },
+        picks: [
+          { uid: benched as string, dest: { seat: "p1", spot: { spot: "active" } } },
+        ],
       },
     });
     expect(activeEnergy(done, "p1")).toEqual([benched]);
@@ -652,13 +653,13 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
     next = mustApply(next, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [bench[0] as string], dest },
+      choice: { kind: "moveEnergy", picks: [{ uid: bench[0] as string, dest }] },
     }).state;
     next = mustApply(next, fireOff()).state;
     next = mustApply(next, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [bench[1] as string], dest },
+      choice: { kind: "moveEnergy", picks: [{ uid: bench[1] as string, dest }] },
     }).state;
 
     expect(activeEnergy(next, "p1")).toEqual([bench[0], bench[1]]);
@@ -692,8 +693,9 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
         seat: "p1",
         choice: {
           kind: "moveEnergy",
-          uids: [own as string],
-          dest: { seat: "p1", spot: { spot: "active" } },
+          picks: [
+            { uid: own as string, dest: { seat: "p1", spot: { spot: "active" } } },
+          ],
         },
       },
     );
@@ -733,12 +735,16 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [benched as string],
-        // A legal destination by every rule validateChoice applies — plus junk.
-        dest: {
-          seat: "p1",
-          spot: { spot: "active", index: 99, evil: "payload" },
-        } as unknown as PokemonRef,
+        picks: [
+          {
+            uid: benched as string,
+            // A legal destination by every rule validateChoice applies — plus junk.
+            dest: {
+              seat: "p1",
+              spot: { spot: "active", index: 99, evil: "payload" },
+            } as unknown as PokemonRef,
+          },
+        ],
       },
     });
     const moved = events.find((e) => e.type === "ENERGY_MOVED");
@@ -761,8 +767,9 @@ describe("M5 op-slice — the providesEnergy filter: Armarouge, the second consu
         seat: "p1",
         choice: {
           kind: "moveEnergy",
-          uids: [onActive as string],
-          dest: { seat: "p1", spot: { spot: "active" } },
+          picks: [
+            { uid: onActive as string, dest: { seat: "p1", spot: { spot: "active" } } },
+          ],
         },
       },
       "BAD_EFFECT_CHOICE",

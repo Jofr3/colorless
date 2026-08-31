@@ -3902,6 +3902,48 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Hand Pinch",
         effect: "Your opponent discards a card from their hand.",
       },
+      /** 🆕🆕 D442 — THE DESTINATION-SIDE SPREAD, appended at 63/64/65 (never
+          inserted: 0-62 are addressed by CONSTANT in a dozen sibling suites, and
+          `derivedSelfEnergyMove`'s 14/15/16 and `derivedDeckSearchAttach`'s 17/18/19
+          are the two blocks that would break first). The three printed sentences
+          whose answer is a MAP, character-for-character from the catalog:
+            63 "Spread Cyclone" — Kilowattrel `sv08-067` (3 printings / **1 legal**),
+               the `selfToBench` route with the printed *"in any way you like"*. It
+               is D441's Castform sentence with its destination clause replaced and
+               nothing else changed, which is exactly what the two anchors assert.
+            64 "Free Flow" — the FREE route with BOTH riders, *"You may move any
+               amount of Energy from your Pokémon to your other Pokémon in any way
+               you like."* (**1 legal**). The first printing in this family to be
+               `anySource` AND `anyDest` at once.
+            65 "Metal Flow" — 64 with the noun TYPED, *"…any amount of {M} Energy…"*
+               (**1 legal**). Its filter is `providesEnergy` and not `basicEnergy`,
+               because an attached Energy's type is a PROVISION question (§6.3,
+               D118) — which is why the deck below carries a Metal line AND a
+               Colorless one: without a non-Metal Energy on the board the typed
+               filter is indistinguishable from `anyEnergy`.
+          ⚠️ NO `damage` FIELD ON ANY OF THE THREE, D229's divergence for D229's
+          stated reason — all three park, and a base-damage Knock Out would put a
+          promotion prompt in front of the `effect:choose` phase every case reads.
+          The {C} cost is this demonstrator's usual divergence; a {M} Energy pays it
+          (§8: Colorless takes anything), which is what lets 65 run off the same
+          attack economy as its two siblings. */
+      {
+        cost: ["Colorless"],
+        name: "Spread Cyclone",
+        effect: "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Free Flow",
+        effect:
+          "You may move any amount of Energy from your Pokémon to your other Pokémon in any way you like.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Metal Flow",
+        effect:
+          "You may move any amount of {M} Energy from your Pokémon to your other Pokémon in any way you like.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
@@ -21074,6 +21116,26 @@ export const SELF_ENERGY_MOVE_DECK = deckOf({
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 20, // Colorless Basic — every attack here costs {C}
   "fix-special": 4, // the `basicEnergy` filter's only discriminator
+});
+
+/** 🆕🆕 D442 — the destination-side SPREAD. `SELF_ENERGY_MOVE_DECK` with the
+    Special-Energy line replaced by a Metal one, and **A SEPARATE DECK RATHER THAN
+    AN EDIT OF THAT ONE** for the reason D229's own block gives and D412 paid for:
+    `SELF_ENERGY_MOVE_DECK` is seed-pinned by `derivedSelfEnergyMove` and
+    `derivedDeckSearchAttach` reads its shape, and `deckOf` order feeds the shuffle,
+    so swapping one card there reshuffles every board in both.
+
+    ⚠️ **THE TWO ENERGY LINES ARE THE TYPED FILTER'S ONLY DISCRIMINATOR** — a board
+    holding Metal Energy alone cannot tell *"any amount of {M} Energy"* from *"any
+    amount of Energy"*, which is D229's `fix-special` argument one filter over. The
+    Colorless line stays deep (16) because every `fix-trainerops` attack costs {C}
+    and these cases attach up to four Energy to one body. */
+export const SPREAD_ENERGY_MOVE_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-basic-1": 14, // the Bench population — every destination this slice offers
+  "fix-bigbody": 16, // 200 HP control body / setup starter
+  "fix-energy": 16, // Colorless Basic — every attack here costs {C}
+  "fix-metal-energy": 8, // the `providesEnergy {Metal}` filter's only discriminator
 });
 
 /** D230 — the deck search onto your own Bench. `SELF_ENERGY_MOVE_DECK`'s shape

@@ -1192,8 +1192,9 @@ describe('§9.2 `contains: "yourActive"` resolves on the LATER truth', () => {
           result.cont,
           {
             kind: "moveEnergy",
-            uids: [p.movable[0]?.uid as string],
-            dest: p.destinations[0] as PokemonRef,
+            picks: [
+              { uid: p.movable[0]?.uid as string, dest: p.destinations[0] as PokemonRef },
+            ],
           },
           events,
         );

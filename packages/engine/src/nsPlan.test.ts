@@ -179,7 +179,7 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [fire, water], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: fire, dest: P1_ACTIVE }, { uid: water, dest: P1_ACTIVE }] },
     });
 
     expect(activeEnergy(done, "p1")).toEqual([fire, water]);
@@ -214,7 +214,7 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [a, b], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: a, dest: P1_ACTIVE }, { uid: b, dest: P1_ACTIVE }] },
     });
     expect(activeEnergy(done, "p1")).toEqual([a, b]);
     expect(benchEnergy(done, "p1", 0)).toEqual([]);
@@ -229,7 +229,7 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     expect(find(events, "ENERGY_MOVED")).toHaveLength(0);
     expect(benchEnergy(done, "p1", 0)).toHaveLength(1);
@@ -246,7 +246,7 @@ describe("D226 — the two-source answer the coupling used to refuse", () => {
     const refused = applyAction(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: uids.map((m) => m.uid), dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: uids.map((m) => m.uid).map((uid) => ({ uid, dest: P1_ACTIVE })) },
     });
     expect(refused.ok).toBe(false);
     if (!refused.ok) {
@@ -275,7 +275,7 @@ describe("D226 — THE CONTROL: the coupling still holds where it is PRINTED", (
     const refused = applyAction(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [fire, water], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: fire, dest: P1_ACTIVE }, { uid: water, dest: P1_ACTIVE }] },
     });
     expect(refused.ok).toBe(false);
     if (!refused.ok) {
@@ -288,7 +288,7 @@ describe("D226 — THE CONTROL: the coupling still holds where it is PRINTED", (
     const { state: done } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [fire], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: fire, dest: P1_ACTIVE }] },
     });
     expect(activeEnergy(done, "p1")).toEqual([fire]);
   });
@@ -304,7 +304,7 @@ describe("D226 — THE CONTROL: the coupling still holds where it is PRINTED", (
     const refused = applyAction(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [fire], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: fire, dest: P1_BENCH0 }] },
     });
     expect(refused.ok).toBe(false);
     if (!refused.ok) {

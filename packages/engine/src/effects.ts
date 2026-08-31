@@ -7933,7 +7933,40 @@ export type EffectOp =
       one destination"*). Spreading one answer over MANY destinations needs the
       `attachCards` map answer, which is a different prompt, a different wire
       choice shape and a `MATCH_RECORD_VERSION` question of its own. **The two
-      sentences differ on one axis and only one of them is this slice's.** */
+      sentences differ on one axis and only one of them is this slice's.**
+
+      🆕🆕 **D442 PAID THAT PRICE, AND THE PARAGRAPH ABOVE IS KEPT BECAUSE IT NAMED
+      THE RIGHT AXIS AND MISPRICED EXACTLY ONE CLAUSE OF IT.** The answer IS now the
+      map (`{ picks: { uid, dest }[] }`, `anyDest` above), and three sentences /
+      three legal printings derive on it:
+        • *"Move all Energy from this Pokémon to your Benched Pokémon in any way you
+          like."* (`sv08-067` Kilowattrel, **1 legal**) — `selfToBench` + `anyDest`,
+          the sentence this block refused.
+        • *"You may move any amount of Energy from your Pokémon to your other
+          Pokémon in any way you like."* (**1 legal**) — the FREE route + `anySource`
+          + `anyDest`, the first printing to carry BOTH riders at once.
+        • *"You may move any amount of {M} Energy from your Pokémon to your other
+          Pokémon in any way you like."* (**1 legal**) — the same, with the noun
+          typed. `providesEnergy` already exists and `attachedEnergies` already
+          filters through `matchesAttached`, so the typed axis costs ONE optional
+          capture group in the shared anchor and ONE `ENERGY_TYPE_BY_CODE` lookup:
+          it is a widening of this arm, not a second mechanism, and it is taken.
+
+      🛑 **THE MISPRICED CLAUSE IS *"a `MATCH_RECORD_VERSION` question of its own"*,
+      AND IT WAS WRONG — WHICH IS WORTH MORE THAN THE THREE PRINTINGS.** `EffectChoice`
+      is **NOT PERSISTED ANYWHERE**: `MatchRecord` is `{version, seed, startedAt,
+      state, log, names}` (apps/api/src/lobby/match.ts), `state` is a `GameState`
+      whose `effect:choose` phase holds the PROMPT and the `EffectContinuation`
+      (`{pendingOp, rest, ctx, record?}`), and `log` is the RENDERED `SeatLogEntry[]`.
+      A choice rides one `resolveEffect` action, is validated, is applied, and is
+      gone. So renaming `uids`/`dest` → `picks` is not D359's case; it is not the
+      constant's case at all. What the constant DOES govern here are the two
+      OPTIONAL riders that reach persisted bytes — `anyDest` on this op (inside
+      `phase.cont.pendingOp`) and `anyDest` on the prompt (inside `phase.prompt`) —
+      and for both, ABSENT means the single-destination coupling, which is exactly
+      what every writer before this deploy meant. **D334's case twice over, and the
+      constant STAYS 29.** Driven over reconstructed v29 bytes in both directions in
+      `derivedSpreadEnergyMove.test.ts` §7. */
   | {
       op: "moveEnergy";
       filter: CardFilter;
@@ -7948,6 +7981,30 @@ export type EffectOp =
           printed "from your Benched Pokémon", plural). Absent = the single-source
           coupling every other printed member of this family carries. */
       anySource?: true;
+      /** 🆕🆕 **D442 — THE DESTINATION-SIDE MIRROR OF `anySource`, AND THE FIELD
+          `selfToBench`'s DOC NAMED THREE SLICES AGO** (*"the destination-side
+          mirror of `anySource`: one answer spread over MANY destinations, which
+          the compound prompt (one `dest`) cannot say"*). Let ONE answer put its
+          picks on SEVERAL of the offered destinations — the printed *"in any way
+          you like"*. Absent = the single-destination coupling every printed member
+          of this family carried before D442.
+
+          🛑 **A RIDER ON THE COUPLING AND NOT A `route`, WHICH IS `anySource`'s OWN
+          ARGUMENT READ OFF THE OTHER END**: a `route` fixes WHICH ENDPOINTS are
+          offered, `anyDest` says HOW MANY of the offered destinations ONE ANSWER
+          may spread over. It is independent of `route` and of `anySource` — the
+          three printed sentences use two different combinations of the two riders
+          — and, exactly like `anySource`, **it rides the PROMPT as well as the op**,
+          because the wire validator, the wire schema and both HUD dialogs read the
+          prompt and never the op.
+
+          ⚠️ **IT CHANGES THE ANSWER'S SHAPE, WHICH `anySource` DID NOT.** The
+          `moveEnergy` choice is now `{ picks: { uid, dest }[] }` — `attachCards`'s
+          MAP, which this op's doc has cited as the blocking difference since D335.
+          Under this rider the picks' destinations may differ; without it
+          `validateChoice` requires them all equal, which is the same rule the old
+          single `dest` field expressed and is now enforced per pick. */
+      anyDest?: true;
     }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
@@ -15491,6 +15548,42 @@ const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH =
 // bodies, where the `moveEnergy` answer names ONE `dest` for every pick. The `$`
 // and the literal "to 1 of your Benched Pokémon." refuse it on its own bytes; the
 // op's doc block says what building it would actually cost.
+// 🆕🆕 D442 — AND THAT SIBLING NOW HAS ITS OWN ANCHOR, ONE LINE DOWN. The paragraph
+// above is kept verbatim rather than rewritten because it is still the whole reason
+// these are TWO anchors and not one: the two sentences are distinguished by their
+// destination clause and by nothing else, so an alternation over that clause would
+// have to be read back out to decide `anyDest`, which is D441's "two kinds, two
+// anchors" applied to the destination instead of to the quantifier.
+const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH_SPREAD =
+  /^Move all Energy from this Pokémon to your Benched Pokémon in any way you like\.$/;
+/** 🆕🆕 **D442 — THE FREE-ROUTE SPREAD, AND THE FIRST PRINTED SENTENCE IN THIS
+    FAMILY TO CARRY BOTH RIDERS AT ONCE.** *"You may move any amount of [{X}] Energy
+    from your Pokémon to your other Pokémon in any way you like."* — **2 sentences,
+    2 legal printings**, the untyped one and the `{M}` one.
+
+    ⚠️ **ONE ANCHOR WITH AN OPTIONAL BRACE GROUP, NOT TWO ANCHORS, AND THAT IS THE
+    OPPOSITE CALL FROM THE `all` SIBLING FIVE LINES UP — DELIBERATELY.** D441's rule
+    is *two KINDS, two anchors*: it applies when the absent capture would have to be
+    read as a value of a different kind. Here it would not. The group's presence
+    switches the FILTER between `{ kind: "anyEnergy" }` and
+    `{ kind: "providesEnergy", energyType }`, which is a dispatch on WHICH GROUP
+    MATCHED (D230's rule) and never on the matched text — and it is the shipped
+    spelling of exactly this axis one family over, in `ATTACK_HAND_ANY_NUMBER_ATTACH`
+    (D247), whose optional `(?:\{([…])\} )?` group is built from the same map.
+
+    ⚠️ **THE CHARACTER CLASS IS BUILT FROM `ENERGY_TYPE_BY_CODE` RATHER THAN WRITTEN
+    OUT**, so the anchor and the lookup cannot drift and `{C}`/`{N}` are refused by
+    construction — the provision-fallback rule that map's own doc block states.
+
+    ⚠️ **AND THE SOURCE SIDE IS THE SECOND AXIS: `your Pokémon` IS PLURAL.** Sentence
+    1 above prints *"from this Pokémon"*, one body, and needs no `anySource`; these
+    two print *"from your Pokémon"* and do — so the two riders are independent in the
+    PRINT and not only in the type. The printed *"your **other** Pokémon"* is the
+    per-pick source-exclusion `validateChoice` has enforced since D226; it needs no
+    field of its own. */
+const ATTACK_MOVE_ANY_AMOUNT_SPREAD = new RegExp(
+  `^You may move any amount of (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy from your Pokémon to your other Pokémon in any way you like\\.$`,
+);
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -19715,6 +19808,80 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         slot: "moved",
         // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
         then: [{ op: "damageNewActive", amount: Number(match[1]) }],
+      },
+    ];
+  }
+  // 🆕🆕 D442 — THE DESTINATION-SIDE SPREAD, THREE SENTENCES / THREE LEGAL
+  // PRINTINGS, AND THE FAMILY'S FIRST MAP ANSWER. Both arms are `anyDest: true`
+  // and nothing else about them is new: the endpoints are two ALREADY-SHIPPED
+  // routes (`selfToBench`, and the free route with `anySource`), the quantifiers
+  // are D441's `"all"` and D244's `"any"`, and the typed noun is the
+  // `providesEnergy` filter D171 built for Armarouge.
+  //
+  // ⚠️ **THESE TWO ARMS SIT AT THE HEAD OF THE FAMILY RATHER THAN BESIDE THEIR
+  // SIBLINGS, AND THE REASON IS MECHANICAL RATHER THAN AESTHETIC.**
+  // `D441-arm-emits-the-mirror-route` quotes the `max: "all"` arm TOGETHER WITH the
+  // `// ⚠️⚠️ D230` comment that follows it, so inserting between them would rot that
+  // row to `find occurs 0×` — D414's lesson, which D441's own doc says it avoided
+  // rather than paid, arriving at the next slice as a placement constraint. Order
+  // is otherwise free: every anchor in this family is `^…$` over a distinct printed
+  // sentence, so no two can match the same string.
+  match = ATTACK_MOVE_ANY_AMOUNT_SPREAD.exec(effect);
+  if (match !== null) {
+    // The optional brace group: absent is the bare noun ("any amount of Energy"),
+    // present is the typed one ("any amount of {M} Energy"). Dispatched on WHICH
+    // GROUP MATCHED (D230) and resolved through the one notation map, so a code the
+    // map does not carry — `{C}`, `{N}` — cannot reach the anchor at all.
+    const code = match[1];
+    const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
+    // An anchor that matched a code the map refuses would be a filter with no type;
+    // it cannot happen (the character class IS the map's key set), and the guard is
+    // the loud skip rather than a silent `anyEnergy` widening.
+    //
+    // 🛑 **AND THIS GUARD IS UNKILLABLE, WHICH IS WRITTEN DOWN HERE RATHER THAN
+    // TESTED AROUND (D205/D420).** It was measured, not assumed: `D442-anchor-hand-
+    // spells-the-code-class` was first written as *the class admits `C` and `N`* and
+    // SURVIVED, because this guard turns an unmapped code into exactly the same
+    // `null` the unmatched anchor produces. So building the class from the map buys
+    // two things and only ONE of them is observable — it cannot ADMIT a code the map
+    // refuses (unobservable, this guard), and it cannot DROP one the map carries
+    // (observable, and what that row now installs). The guard stays because
+    // TypeScript needs the narrowing and because a future arm without it would be a
+    // filter carrying `undefined`; its unkillability is the note, not a defect.
+    if (code === undefined || energyType !== undefined) {
+      return [
+        {
+          op: "moveEnergy",
+          filter:
+            energyType === undefined
+              ? { kind: "anyEnergy" }
+              : { kind: "providesEnergy", energyType },
+          // D244's printed "any amount" — declinable, clamped to the movable count
+          // when the prompt is built. The printed "You may" and the quantifier are
+          // the same fact here, exactly as D441 established for "all".
+          max: "any",
+          // The printed "from your Pokémon" (plural) and "to your other Pokémon …
+          // in any way you like" — the two riders, one per endpoint. No `route`:
+          // the FREE route is what "your Pokémon"/"your other Pokémon" name, and
+          // its `needed: 2` is the printed "other" made structural.
+          anySource: true,
+          anyDest: true,
+        },
+      ];
+    }
+  }
+  // Kilowattrel `sv08-067` — D441's refused sibling, whose blocker was never the
+  // quantifier. `max: "all"` is byte-for-byte the arm four screens down; the ONE
+  // thing that differs is `anyDest`, which is the whole of the printed clause "in
+  // any way you like".
+  if (ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH_SPREAD.test(effect)) {
+    return [
+      {
+        op: "moveEnergy",
+        filter: { kind: "anyEnergy" },
+        max: "all",
+        route: "selfToBench",
+        anyDest: true,
       },
     ];
   }

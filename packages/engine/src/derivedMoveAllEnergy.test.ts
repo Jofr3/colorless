@@ -120,18 +120,35 @@ describe("§1 — the deriver: one anchor, and the edges it must not reach", () 
     expect({ ...(all[0] as object), max: undefined }).toEqual({ ...(one[0] as object), max: undefined });
   });
 
-  it("🛑 REFUSES the multi-destination sibling — the destination shape, NOT the quantifier", () => {
+  it("🆕 D442 — THIS ANCHOR STILL DOES NOT REACH the multi-destination sibling", () => {
     // *"Move all Energy from this Pokémon to your Benched Pokémon IN ANY WAY YOU
     // LIKE."* (`sv08-067` Kilowattrel, 1 legal) carries the IDENTICAL `max: "all"`
-    // and is refused for a reason this slice does not touch: the `moveEnergy`
-    // answer is `{ uids, dest }` — ONE destination for every pick — and spreading
-    // one answer over many bodies needs `attachCards`' MAP answer instead.
+    // and used to be REFUSED here, for a reason this slice did not touch: the
+    // `moveEnergy` answer was `{ uids, dest }` — ONE destination for every pick.
+    //
+    // 🛑 **RE-POINTED, NOT DELETED, AND NOT RE-POINTED ONTO A BOOLEAN (D438).**
+    // D442 gave the answer `attachCards`' map and the sibling now derives, so
+    // `toBeNull` has stopped being true — but `!== null` would be true under the
+    // failure this rung actually guards, which is D441's anchor WIDENING to swallow
+    // the spread sentence and deriving it as the coupled program. The claim is
+    // therefore the PROGRAM, and the pair is one key apart: the spread sentence
+    // carries `anyDest`, this file's own sentence does not.
     expect(
       deriveAttackEffect("Move all Energy from this Pokémon to your Benched Pokémon in any way you like."),
-    ).toBeNull();
+    ).toEqual([
+      {
+        op: "moveEnergy",
+        filter: { kind: "anyEnergy" },
+        max: "all",
+        route: "selfToBench",
+        anyDest: true,
+      },
+    ]);
+    const mine = deriveAttackEffect(SENTENCE) as EffectOp[];
+    expect(Object.hasOwn(mine[0] as object, "anyDest")).toBe(false);
     // …and the discriminating BYTES are named, so a later widening has to walk past
-    // this line rather than past a bare `toBeNull` (D427: a near-miss must differ on
-    // ONE axis). The two strings agree up to the destination phrase and there only.
+    // this line too (D427: a near-miss must differ on ONE axis). The two strings
+    // agree up to the destination phrase and there only.
     expect(SENTENCE.startsWith("Move all Energy from this Pokémon to ")).toBe(true);
     expect(SENTENCE.endsWith("1 of your Benched Pokémon.")).toBe(true);
   });
@@ -194,7 +211,7 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     const dest = parked(state).destinations[0] as PokemonRef;
     expectErr(
       state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", uids: [], dest } },
+      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: [] } },
       "BAD_EFFECT_CHOICE",
     );
     // …and a SHORT answer is refused too, which the empty one alone does not prove:
@@ -203,7 +220,7 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     const short = [parked(state).movable[0]?.uid as string];
     expectErr(
       state,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", uids: short, dest } },
+      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: short.map((uid) => ({ uid, dest })) } },
       "BAD_EFFECT_CHOICE",
     );
   });
@@ -216,7 +233,7 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     const done = mustApply(state, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids, dest },
+      choice: { kind: "moveEnergy", picks: uids.map((uid) => ({ uid, dest })) },
     });
     expect(done.state.phase.kind).not.toBe("effect:choose");
     expect(done.state.players.p1.active?.energy).toEqual([]);
@@ -251,11 +268,12 @@ describe("§2 — the PARK: the floor crosses, and the decline stops being an an
     // the admission that keeps §2's refusal rungs from passing on a build that
     // simply refuses every empty pick (D424). Same op, same route, same engine.
     const sibling = swingSiblingState();
-    const dest = parked(sibling).destinations[0] as PokemonRef;
+    // D442 — the decline no longer names a destination (`picks: []`), so the
+    // sibling's prompt is not read here at all.
     const declined = mustApply(sibling, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     expect(declined.state.phase.kind).not.toBe("effect:choose");
     expect(events(declined.events, "ENERGY_MOVED")).toHaveLength(0);
@@ -387,11 +405,10 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     }
     const { min: _dropped, ...withoutFloor } = v29.phase.prompt;
     const resumed: GameState = { ...v29, phase: { ...v29.phase, prompt: withoutFloor } };
-    const dest = parked(resumed).destinations[0] as PokemonRef;
     const declined = mustApply(resumed, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     // The v29 park is answerable exactly as it was: the decline goes through and
     // nothing moves. A build reading the missing key as MANDATORY would refuse a
@@ -403,7 +420,7 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     // rung (a) is not passing because the engine accepts every empty answer.
     expectErr(
       live,
-      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", uids: [], dest } },
+      { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: [] } },
       "BAD_EFFECT_CHOICE",
     );
 
@@ -427,6 +444,6 @@ describe("§5 — the persisted shape: a v29 record still means what it meant", 
     // `engineVersion` and `manifest.version`: **25 assertions across 25 files**
     // before this line, **26** with it, over 27 sites once `index.ts`'s declaration
     // and `packages/engine/package.json` are counted.
-    expect(engineVersion).toBe("0.343.0");
+    expect(engineVersion).toBe("0.344.0");
   });
 });

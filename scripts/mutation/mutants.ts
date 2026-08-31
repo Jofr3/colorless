@@ -1052,7 +1052,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D226",
     what: "the self-move rule goes out with the coupling it used to ride on — the collateral of the mutant above, and the one that lets a Pokémon move its own Energy onto itself",
     file: "packages/engine/src/cardplay.ts",
-    find: "        if (refEquals(from, choice.dest)) selfMove = true;\n",
+    // ⚠️ RE-TRANSCRIBED AT D442, AND THE CLAIM IS UNCHANGED. The `moveEnergy` answer
+    // became a MAP, so the destination is read off the ENTRY (`dest`) instead of off
+    // the frame (`choice.dest`) — the same line, the same rule, the same two killers.
+    // Under `anyDest` the rule is per PICK rather than per answer, which is D226's own
+    // generalisation one endpoint over, so deleting it is still exactly "a Pokémon may
+    // move its own Energy onto itself".
+    find: "        if (refEquals(from, dest)) selfMove = true;\n",
     replace: "",
     expectKilledBy: [
       "packages/engine/src/nsPlan.test.ts",
@@ -1417,8 +1423,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D229",
     what: "the prompt sentence falls through to the FREE route's phrase — the branch's own fallback, one line down — so the dialog tells the player \"from 1 of your Pokémon to another of your Pokémon\" while the offer is fixed to the attacker",
     file: "packages/engine/src/interpreter.ts",
-    find: '            "from this Pokémon to 1 of your Benched Pokémon"',
-    replace: "            `from ${one}your Pokémon to another of your Pokémon`",
+    // ⚠️ RE-TRANSCRIBED AT D442: the `selfToBench` caption gained an `anyDest` branch
+    // above it (Kilowattrel's printed destination clause), so the coupled arm moved from
+    // the `?` position to the `:` one. The mutation is CONFINED to that arm — the spread
+    // caption is untouched — so `derivedSelfEnergyMove.test.ts` still owns the kill for
+    // the reason it always did, and D442's own note rung cannot take it (D416).
+    find: '            : "from this Pokémon to 1 of your Benched Pokémon"',
+    replace: "            : `from ${one}your Pokémon to another of your Pokémon`",
     expectKilledBy: ["packages/engine/src/derivedSelfEnergyMove.test.ts"],
   },
 
@@ -5194,7 +5205,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5700,7 +5711,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5711,7 +5722,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.343.0";',
+    find: 'export const engineVersion = "0.344.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20429,7 +20440,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D441",
     what: "🛑 C7 — the wire validator's floor check is DELETED, so the prompt says `min: 3` and the engine accepts an empty answer anyway. The dialogs both honour the field, so a LOCAL player sees nothing wrong and only a crafted frame — or the online client of a build one deploy behind — reaches it. The failure is at the wire and not at the board, which is why a rung asserting attached Energy alone would miss it",
     file: "packages/engine/src/cardplay.ts",
-    find: "      if (choice.uids.length < (prompt.min ?? 0)) {\n        return err(\"BAD_EFFECT_CHOICE\", `move all ${prompt.min ?? 0} Energy`);\n      }",
+    // ⚠️ RE-TRANSCRIBED AT D442 — `choice.uids` became `choice.picks` when the answer
+    // became a map. The block, the message and the killer are otherwise unchanged.
+    find: "      if (choice.picks.length < (prompt.min ?? 0)) {\n        return err(\"BAD_EFFECT_CHOICE\", `move all ${prompt.min ?? 0} Energy`);\n      }",
     replace: "",
     expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
   },
@@ -20438,8 +20451,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D441",
     what: "⚠️ C8 — the ABSENT-KEY ARM READS AS THE CEILING (`prompt.min ?? prompt.max`) instead of as 0. Every D441 prompt behaves perfectly, so §2 and §4 stay green; what breaks is the whole DECLINABLE family that has parked since M4 — and, precisely, a v29 record resumed under this deploy, which is the `MATCH_RECORD_VERSION` bump condition arriving as a defect instead of a version",
     file: "packages/engine/src/cardplay.ts",
-    find: "      if (choice.uids.length < (prompt.min ?? 0)) {",
-    replace: "      if (choice.uids.length < (prompt.min ?? prompt.max)) {",
+    // ⚠️ RE-TRANSCRIBED AT D442 — `choice.uids` became `choice.picks`; the absent-key
+    // arm and both killers are unchanged.
+    find: "      if (choice.picks.length < (prompt.min ?? 0)) {",
+    replace: "      if (choice.picks.length < (prompt.min ?? prompt.max)) {",
     expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts", "packages/engine/src/moveEnergy.test.ts"],
   },
   {
@@ -20492,8 +20507,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D441",
     what: "🛑 C14 — the LOCAL dialog keeps offering 'Move none' (the pre-slice line verbatim): the card is legal, the engine refuses the answer, and the player is shown a button that can only produce an error. The afford-then-reject defect D222 named, on the one screen that tells the player what their pick does",
     file: "src/features/game/GameHud.tsx",
-    find: "  const declineDest = floor > 0 ? undefined : prompt.destinations[0];",
-    replace: "  const declineDest = prompt.destinations[0];",
+    // ⚠️ RE-TRANSCRIBED AT D442 — the local is a BOOLEAN now (`canDecline`), because the
+    // map answer's decline is `picks: []` and no longer needs a destination to name. The
+    // claim is unchanged and so is the killer: the dialog offers "Move none" on a prompt
+    // whose floor forbids the empty answer, and the dom rung asserting that button's
+    // ABSENCE at `min === max` is the only thing that can see it.
+    find: "  const canDecline = floor === 0;",
+    replace: "  const canDecline = true;",
     expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
   },
   {
@@ -20501,8 +20521,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D441",
     what: "🛑 C15 — the ONLINE dialog keeps offering 'Move none' — the same defect on the other HUD, which is why the price was two read sites and not one (D226's pair, and D412's third-read-site rule)",
     file: "src/features/online/components/OnlineHud.tsx",
-    find: "  const declineDest = floor > 0 ? undefined : prompt.destinations[0];",
-    replace: "  const declineDest = prompt.destinations[0];",
+    // ⚠️ RE-TRANSCRIBED AT D442 — the local is a BOOLEAN now (`canDecline`), because the
+    // map answer's decline is `picks: []` and no longer needs a destination to name. The
+    // claim is unchanged and so is the killer: the dialog offers "Move none" on a prompt
+    // whose floor forbids the empty answer, and the dom rung asserting that button's
+    // ABSENCE at `min === max` is the only thing that can see it.
+    find: "  const canDecline = floor === 0;",
+    replace: "  const canDecline = true;",
     expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
   {
@@ -20521,6 +20546,162 @@ export const MUTANTS: Mutant[] = [
     file: "src/features/online/components/OnlineHud.tsx",
     find: "  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;",
     replace: "  const ready = pickedUids.length > 0 && dest !== null;",
+    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
+  },
+  // ── D442 — THE DESTINATION AXIS OF THE MOVE-ENERGY FAMILY. Sixteen rows, and the
+  //    SHAPE of the set is the finding: the slice's whole mechanism is that ONE
+  //    ANSWER MAY NAME SEVERAL DESTINATIONS, and NINE of the sixteen are invisible
+  //    to every "did the Energy move" assertion in this repo — the same number of
+  //    Energy leaves the same bodies, the same count arrives, the log renders, and
+  //    the only observable is WHERE each one landed or which row claims it.
+  //
+  //    ⚠️ THE TWO RIDERS ARE EACH OTHER'S CONTROL. `anySource` (D226) and `anyDest`
+  //    (D442) are independent in the PRINT — sentence 1 has only the second, and the
+  //    two "any amount" printings have both — so a row dropping one and a row
+  //    dropping the other are written separately, and neither can hide behind the
+  //    other's kill.
+  {
+    id: "D442-spread-arm-drops-the-destination-rider",
+    decision: "D442",
+    what: "🛑 C1 — THE WHOLE SLICE AT ONE KEY: the `selfToBench` spread arm emits D441's COUPLED program (`max: \"all\", route: \"selfToBench\"` and nothing else), which is the REAL code of the arm four screens down. Kilowattrel still parks, still names the right endpoints, still moves every Energy, and still passes every generic `moveEnergy` assertion in this repo — it simply pins the whole answer to ONE benched body, which is the printed difference between this sentence and its sibling. Reachable only from a board with TWO benched destinations, which is why §3 fields two",
+    file: "packages/engine/src/effects.ts",
+    find: "        max: \"all\",\n        route: \"selfToBench\",\n        anyDest: true,",
+    replace: "        max: \"all\",\n        route: \"selfToBench\",",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-spread-arm-emits-the-mirror-route",
+    decision: "D442",
+    what: "🛑 C2 — the spread arm emits `benchToActive` — D229's crossed build, installed on the FOURTH anchor of the family it was written for. The Energy moves the right distance in the WRONG direction, and neither D229's nor D441's row can see it: both quote arms this slice deliberately did not touch",
+    file: "packages/engine/src/effects.ts",
+    find: "        max: \"all\",\n        route: \"selfToBench\",\n        anyDest: true,",
+    replace: "        max: \"all\",\n        route: \"benchToActive\",\n        anyDest: true,",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-free-arm-drops-the-source-rider",
+    decision: "D442",
+    what: "🛑 C3 — the free-route arm loses `anySource`, so the printed PLURAL *\"from your Pokémon\"* becomes the single-source coupling. The destination spread still works and the card still resolves; what is lost is exactly half the sentence, and `validateChoice` then refuses the ordinary answer (one Energy off each of two bodies) at the wire. The other half of the pair with C4 — the two riders are independent in the print, so each needs its own row",
+    file: "packages/engine/src/effects.ts",
+    find: "          anySource: true,\n          anyDest: true,\n        },\n      ];",
+    replace: "          anyDest: true,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-free-arm-drops-the-destination-rider",
+    decision: "D442",
+    what: "⚠️ C4 — the free-route arm loses `anyDest` instead, so the printed *\"to your other Pokémon in any way you like\"* becomes one shared destination. C3's mirror, and the reason both are written: a suite that only asserted \"the spread resolves\" would be green under whichever rider it did not happen to exercise",
+    file: "packages/engine/src/effects.ts",
+    find: "          anySource: true,\n          anyDest: true,\n        },\n      ];",
+    replace: "          anySource: true,\n        },\n      ];",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-typed-arm-falls-back-to-any-energy",
+    decision: "D442",
+    what: "🛑 C5 — the optional brace group is MATCHED AND IGNORED: the filter is `anyEnergy` whether or not the sentence typed its noun, so *\"any amount of {M} Energy\"* offers every Energy on the board. The card still parks, still spreads and still moves the right NUMBER — it simply moves Energy the print never named, which is the direction a dropped narrowing always fails in. Invisible on any board carrying one Energy type, which is why the deck holds a Colorless line AND a Metal one",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter:\n            energyType === undefined\n              ? { kind: \"anyEnergy\" }\n              : { kind: \"providesEnergy\", energyType },",
+    replace: "          filter: { kind: \"anyEnergy\" },",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-typed-arm-reads-the-print-not-the-provision",
+    decision: "D442",
+    what: "🛑 C6 — `providesEnergy` becomes `basicEnergy`, the sibling filter one union member over. §6.3/D118: an attached Energy's type is a PROVISION question — a Special Energy that provides {M} IS a {M} Energy for this sentence and a Basic Metal card that has been overwritten is not — so the mutant reads the PRINT where the engine's own cost matcher reads the provision. It is the exact call `moveEnergy`'s own doc block makes for Armarouge, copied wrong",
+    file: "packages/engine/src/effects.ts",
+    find: "              : { kind: \"providesEnergy\", energyType },",
+    replace: "              : { kind: \"basicEnergy\", energyType },",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-anchor-hand-spells-the-code-class",
+    decision: "D442",
+    what: "⚠️ C7 — the anchor's character class is a HAND-KEPT LIST instead of `Object.keys(ENERGY_TYPE_BY_CODE)`, and it has DRIFTED: `M` is missing, so the one typed sentence the catalog actually prints falls silently off the built set while its untyped sibling keeps working and `BUILT.attack` steps back by one. 🛑 **RE-POINTED ONTO THE DRIFT DIRECTION AT AUTHORING TIME, BECAUSE THE FIRST VERSION OF THIS ROW WAS A REAL GAP AND ITS OWN GUARD IS WHY.** The row first added `C`/`N` to the class — the codes the map deliberately omits — and it SURVIVED: the arm's `code === undefined || energyType !== undefined` guard turns an unmapped code into the loud skip, so `{C}` derives to null under the mutant exactly as under the real anchor. That is D420's *a row that survives because it changes nothing*, and the honest reading is that the guard makes the ADMIT direction unobservable while leaving the DROP direction wide open. Building the class from the map buys both; only one of them can be killed, and this is it",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^You may move any amount of (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy from your Pokémon to your other Pokémon in any way you like\\\\.$`,",
+    replace: "  \"^You may move any amount of (?:\\\\{([GRWLPFDY])\\\\} )?Energy from your Pokémon to your other Pokémon in any way you like\\\\.$\",",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-park-drops-the-destination-rider",
+    decision: "D442",
+    what: "🛑 C8 — the park does not carry `anyDest` onto the prompt: the OP knows and nothing downstream does. D222/D223's failure mode in its purest form, and D226's own C-row one endpoint over — the wire validator, the wire schema and both HUD dialogs read the PROMPT, so the engine derives a spread nobody can answer and `validateChoice` refuses the very answer the card prints",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          ...(op.anyDest === undefined ? {} : { anyDest: op.anyDest }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-redact-drops-the-destination-rider",
+    decision: "D442",
+    what: "🛑 C9 — the rider does not cross the wire: the ONLINE dialog renders the coupled wizard and the online validator refuses the spread, while the local game is entirely fine. D226's redact row one rider over, and the reason the price was two read sites and not one",
+    file: "packages/engine/src/redact.ts",
+    find: "        ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-projection-drops-the-destination-rider",
+    decision: "D442",
+    what: "⚠️ C10 — the wire-to-engine rebuild drops the rider — the FOURTH `moveEnergy` read site, whose own doc promises the round trip is EXACT, so a spread prompt rebuilds as a coupled one on the client that reconstructs it",
+    file: "src/features/game/projection.ts",
+    find: "          ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),",
+    replace: "",
+    expectKilledBy: ["src/features/game/projection.test.ts"],
+  },
+  {
+    id: "D442-validator-deletes-the-destination-coupling",
+    decision: "D442",
+    what: "🛑 C11 — the destination coupling is DELETED rather than made conditional — D226's own C1 one endpoint over, and the cheapest way to make the spread work. Under `{ uids, dest }` this coupling was expressed by the answer's SHAPE and could not be dropped; the rename makes it an assertion, and the mutant is what happens when nobody writes it. Energy Switch and Poppy silently become spread cards, which no board driving THIS slice's sentences can see",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (prompt.anyDest !== true) {\n          if (destination === undefined) destination = dest;",
+    replace: "        if (false) {\n          if (destination === undefined) destination = dest;",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-validator-asks-the-wrong-rider",
+    decision: "D442",
+    what: "⚠️ C12 — the destination coupling is asked of `anySource` instead of `anyDest` — the copy-paste an author actually makes with two riders four lines apart. It is WRONG IN BOTH DIRECTIONS AND EACH ALONE LOOKS LIKE A TYPO: Kilowattrel (`anyDest`, no `anySource`) has its printed spread REFUSED, and a hypothetical `anySource`-only prompt would have its coupling silently lifted. The two \"any amount\" printings carry both riders and cannot see it at all",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (prompt.anyDest !== true) {\n          if (destination === undefined) destination = dest;",
+    replace: "        if (prompt.anySource !== true) {\n          if (destination === undefined) destination = dest;",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-apply-pins-every-pick-to-the-first-destination",
+    decision: "D442",
+    what: "🛑 C13 — THE BUILD THAT KEPT `destRef`: every pick is applied to the FIRST pick's destination, so the map is read and then thrown away. The same Energy leaves the same bodies, the same COUNT arrives, `validateChoice` has already passed and the log renders — the whole answer simply lands in one place. It is the defect a slice that renamed the field without generalising the apply ships, and the only assertion that can see it is WHERE each uid ends up",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const to = targetOf(dest);",
+    replace: "    const to = targetOf((picks[0] as { dest: PokemonRef }).dest);",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-apply-groups-events-by-source-alone",
+    decision: "D442",
+    what: "🛑 C14 — the `ENERGY_MOVED` grouping loses its DESTINATION half, so a two-destination answer emits ONE row claiming both Energy went where the first one went. **THE BOARD IS ENTIRELY CORRECT** — the re-attach reads `arrivals`, which is keyed separately — so every state assertion in every suite stays green and the only casualty is a log row that is FALSE. D430's rule inverted: when the defect and the fix produce the same board, the killing rung has to read the EVENT",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      let group = byDest.get(keyOf(to));",
+    replace: "      let group = byDest.get(\"one\");",
+    expectKilledBy: ["packages/engine/src/derivedSpreadEnergyMove.test.ts"],
+  },
+  {
+    id: "D442-local-hud-offers-a-picks-own-host",
+    decision: "D442",
+    what: "⚠️ C15 — the LOCAL spread dialog offers every destination to every pick, including the body the Energy is sitting on. The engine refuses that entry, so the player is shown a row that can only produce an error — the afford-then-reject D222 named, and the printed *\"other\"* it drops. Invisible on Kilowattrel's board (the Active is not a destination there), so the case that reads it is the FREE route, where a body is both",
+    file: "src/features/game/GameHud.tsx",
+    find: "    return prompt.destinations.filter((ref) => host === undefined || keyOf(ref) !== keyOf(host));",
+    replace: "    return prompt.destinations;",
+    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
+  },
+  {
+    id: "D442-online-hud-offers-a-picks-own-host",
+    decision: "D442",
+    what: "⚠️ C16 — C15 on the ONLINE dialog, which is why the price was two read sites and not one (D226's pair, D412's third-read-site rule). The two HUDs answer the SAME wire prompt, so a destination one offers and the other withholds is a seat-dependent card",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "    return prompt.destinations.filter((ref) => host === undefined || refKey(ref) !== refKey(host));",
+    replace: "    return prompt.destinations;",
     expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
 ];

@@ -340,6 +340,14 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         // before the rider existed (the schema's field is optional for the same
         // reason).
         ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),
+        // 🆕 D442 — the DESTINATION-side rider crosses for the source-side rider's
+        // reason, word for word. The online dialog decides from this object alone
+        // whether each pick names its own destination, and the wire validator
+        // enforces the coupling off the same object; a rider the wire drops is a
+        // spread the remote player cannot build and the engine would refuse anyway.
+        // Spread, so a coupled prompt's wire bytes are byte-identical to what they
+        // were before this rider existed.
+        ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),
         note: prompt.note,
       };
     case "discardEnergy":

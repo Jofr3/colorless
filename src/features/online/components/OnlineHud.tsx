@@ -266,7 +266,16 @@ function EffectChooseDialog({
         <ChoosePokemonMultiDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />
       );
     case "moveEnergy":
-      return <MoveEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
+      // 🆕 D442 — TWO DIALOGS FOR ONE PROMPT KIND, split on the rider exactly as
+      // the local HUD splits it. `anyDest` changes the SHAPE of the decision (one
+      // destination for the answer versus one per pick), so the two hold different
+      // state; the two HUDs must split the same way or the same prompt gets two
+      // different interactions on the two screens (D412's third-read-site rule).
+      return prompt.anyDest === true ? (
+        <MoveEnergySpreadDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />
+      ) : (
+        <MoveEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />
+      );
     case "discardEnergy":
       return <DiscardEnergyDialog prompt={prompt} board={board} seat={seat} onAction={onAction} />;
     case "chooseCards":
@@ -677,7 +686,10 @@ function MoveEnergyDialog({
   // ⚠️ WITHHELD RATHER THAN DISABLED — the local dialog's rule, and it has to be
   // the SAME rule: two HUDs answering one prompt differently is D412's
   // third-read-site defect waiting to happen.
-  const declineDest = floor > 0 ? undefined : prompt.destinations[0];
+  // 🆕 D442 — a BOOLEAN, where this pulled `prompt.destinations[0]` to fill the
+  // decline frame's mandatory `dest`. The map answer's decline is `picks: []` and
+  // names nobody.
+  const canDecline = floor === 0;
 
   const reset = () => {
     setPickedUids([]);
@@ -789,7 +801,7 @@ function MoveEnergyDialog({
         </>
       )}
       <div className="mt-5 flex justify-between gap-2">
-        {declineDest !== undefined && (
+        {canDecline && (
           <button
             type="button"
             className={GLASS_DIALOG_GHOST_BUTTON}
@@ -797,7 +809,7 @@ function MoveEnergyDialog({
               onAction({
                 type: "resolveEffect",
                 seat,
-                choice: { kind: "moveEnergy", uids: [], dest: declineDest },
+                choice: { kind: "moveEnergy", picks: [] },
               })
             }
           >
@@ -827,13 +839,202 @@ function MoveEnergyDialog({
                 onAction({
                   type: "resolveEffect",
                   seat,
-                  choice: { kind: "moveEnergy", uids: pickedUids, dest },
+                  // The coupled answer IS a map whose entries agree — one
+                  // destination, spelled once per pick.
+                  choice: {
+                    kind: "moveEnergy",
+                    picks: pickedUids.map((uid) => ({ uid, dest })),
+                  },
                 });
               }}
             >
               Move {pickedUids.length}
             </button>
           )}
+        </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** 🆕🆕 **D442 — moveEnergy with the printed "in any way you like" (§6)**, over the
+    wire shape. Each picked Energy names its OWN destination, so this is a two-step
+    LOOP (pick an Energy, pick where it goes, repeat) rather than the wizard
+    `MoveEnergyDialog` is — the `AttachCardsDialog` model one prompt over, and the
+    local `MoveEnergySpreadDialog`'s twin. The two HUDs must split on this rider the
+    same way and offer the same answers: a spread one client can build and the other
+    cannot is a seat-dependent card (D226's pair, D412's third-read-site rule).
+
+    Three printed sentences reach it and they differ on the OTHER axes: Kilowattrel's
+    "Move all …" is MANDATORY (`min === max`) and single-source; the two "You may
+    move any amount …" printings are declinable and multi-source. Both facts are read
+    off the prompt, so this dialog carries no card knowledge. */
+function MoveEnergySpreadDialog({
+  prompt,
+  board,
+  seat,
+  onAction,
+}: {
+  prompt: Extract<RedactedEffectPrompt, { kind: "moveEnergy" }>;
+  board: RedactedBoard;
+  seat: MatchSeat;
+  onAction: (action: GameAction) => void;
+}) {
+  const [moves, setMoves] = useState<{ uid: string; dest: RedactedPokemonRef }[]>([]);
+  const [pending, setPending] = useState<string | null>(null);
+  const destOf = (uid: string) => moves.find((m) => m.uid === uid)?.dest;
+  const hostOf = (uid: string) => prompt.movable.find((m) => m.uid === uid)?.from;
+  const floor = prompt.min ?? 0;
+  const atCap = moves.length >= prompt.max;
+  /** Where the PENDING Energy may go: every offered destination except the body it
+      sits on — the printed "other", per pick. */
+  const destsFor = (uid: string) => {
+    const host = hostOf(uid);
+    return prompt.destinations.filter((ref) => host === undefined || refKey(ref) !== refKey(host));
+  };
+  const destLabel = (ref: RedactedPokemonRef) => `${refName(board, seat, ref)} · ${spotLabel(ref)}`;
+
+  const tapEnergy = (uid: string) => {
+    if (destOf(uid) !== undefined) {
+      setMoves((prev) => prev.filter((m) => m.uid !== uid));
+      setPending((prev) => (prev === uid ? null : prev));
+      return;
+    }
+    const only = destsFor(uid);
+    if (only.length === 1) {
+      if (!atCap) setMoves((prev) => [...prev, { uid, dest: only[0] as RedactedPokemonRef }]);
+      return;
+    }
+    setPending((prev) => (prev === uid ? null : atCap ? prev : uid));
+  };
+  const assign = (dest: RedactedPokemonRef) => {
+    if (pending === null) return;
+    setMoves((prev) => [...prev, { uid: pending, dest }]);
+    setPending(null);
+  };
+  const pendingHost = pending === null ? null : hostOf(pending);
+  const pendingName =
+    pending === null || pendingHost === undefined || pendingHost === null
+      ? null
+      : energyName(board, seat, pendingHost, pending);
+  const ready = moves.length >= Math.max(1, floor);
+
+  return (
+    <Dialog label="Move Energy">
+      <h2 className="text-lg font-semibold text-white">{prompt.note}</h2>
+      <output className="mt-1.5 block text-sm text-white/55">
+        {pendingName === null
+          ? `${floor > 0 ? "Moving all" : "Moving"} ${moves.length}/${prompt.max}. ${
+              atCap ? "Tap a placed Energy to move it." : "Pick an Energy, then where it goes."
+            }`
+          : `Moving ${moves.length}/${prompt.max}. Where does ${pendingName} go?`}
+      </output>
+      <ul className="mt-3 flex max-h-52 flex-col gap-1.5 overflow-y-auto">
+        {prompt.movable.map(({ uid, from }) => {
+          const dest = destOf(uid);
+          const selected = pending === uid;
+          const name = energyName(board, seat, from, uid);
+          const refused = dest === undefined && !selected && atCap;
+          return (
+            <li key={uid}>
+              <button
+                type="button"
+                aria-label={
+                  dest === undefined
+                    ? selected
+                      ? `${name} on ${destLabel(from)} — choosing where it goes`
+                      : `${name} on ${destLabel(from)}`
+                    : `${name} on ${destLabel(from)} → ${destLabel(dest)}`
+                }
+                aria-pressed={dest !== undefined}
+                aria-current={selected || undefined}
+                aria-disabled={refused || undefined}
+                onClick={() => tapEnergy(uid)}
+                className={`${ROW_BUTTON_BASE} ${
+                  dest !== undefined
+                    ? ROW_BUTTON_SELECTED
+                    : selected
+                      ? ROW_BUTTON_ENABLED
+                      : refused
+                        ? ROW_BUTTON_DISABLED
+                        : ROW_BUTTON_ENABLED
+                }`}
+              >
+                <span className="truncate">{`${name} — ${refName(board, seat, from)}`}</span>
+                {(dest !== undefined || selected) && (
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    {dest === undefined ? "choosing…" : `→ ${destLabel(dest)}`}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {pending !== null && (
+        <>
+          <p className="mt-3 text-sm text-white/55">Move to:</p>
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {destsFor(pending).map((ref) => (
+              <li key={refKey(ref)}>
+                <button
+                  type="button"
+                  aria-label={destLabel(ref)}
+                  onClick={() => assign(ref)}
+                  className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
+                >
+                  <span className="truncate">{refName(board, seat, ref)}</span>
+                  <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                    {spotLabel(ref)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <div className="mt-5 flex justify-between gap-2">
+        {/* 🆕 D442 — the gate is INLINE and not a named local, deliberately: its
+            coupled twin above spells `const canDecline = floor === 0;` and a
+            byte-identical second copy would make `D441-*-hud-keeps-the-decline`
+            match twice (D437's converse of the copied-function trap). */}
+        {floor === 0 && (
+          <button
+            type="button"
+            className={GLASS_DIALOG_GHOST_BUTTON}
+            onClick={() =>
+              onAction({
+                type: "resolveEffect",
+                seat,
+                choice: { kind: "moveEnergy", picks: [] },
+              })
+            }
+          >
+            Move none
+          </button>
+        )}
+        <div className="ml-auto flex gap-2">
+          <button
+            type="button"
+            className={ACCENT_BUTTON}
+            disabled={!ready}
+            onClick={() =>
+              onAction({
+                type: "resolveEffect",
+                seat,
+                // Filtered against the OFFER at dispatch time — the local twin's
+                // rule and its reason (a stale uid renders no row, so it could not
+                // be released, and every dispatch would be refused on a prompt that
+                // never changes: a soft-lock turned into a lost pick).
+                choice: {
+                  kind: "moveEnergy",
+                  picks: moves.filter((m) => prompt.movable.some((o) => o.uid === m.uid)),
+                },
+              })
+            }
+          >
+            Move {moves.length}
+          </button>
         </div>
       </div>
     </Dialog>

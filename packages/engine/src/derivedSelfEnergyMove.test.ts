@@ -129,10 +129,19 @@ const COLLECTED_AT_D441 = [
   ["Move all Energy from this Pokémon to 1 of your Benched Pokémon.", 2],
 ] as const;
 
-/** Still refused, and NOT for `max`'s reason — the destination shape. It reverses
-    the day `moveEnergy`'s answer becomes a MAP (pick → destination), which is
-    `attachCards`' shipped shape and a wire-choice change of its own. */
-const DEFERRED = [
+/** 🆕🆕 **D442 COLLECTED THIS HALF, AND THE FALSIFIER THE LIST CARRIED IS EXACTLY
+    WHAT FIRED.** It said the row *"reverses the day `moveEnergy`'s answer becomes a
+    MAP (pick → destination), which is `attachCards`' shipped shape and a wire-choice
+    change of its own"* — which is what D442 built, and the wire-choice change turned
+    out NOT to be a `MATCH_RECORD_VERSION` question at all (an `EffectChoice` is never
+    serialized; the PROMPT is, and its new key is optional).
+
+    The list is kept rather than deleted, and it is asserted as its PROGRAM rather
+    than as `!== null` (D438): the sentence differs from `COLLECTED_AT_D441`'s by its
+    destination clause alone, so the claim that discriminates is that it derives with
+    `anyDest: true` and its sibling derives WITHOUT — a boolean is true under a build
+    where D441's anchor swallowed this string and dropped the rider. */
+const COLLECTED_AT_D442 = [
   ["Move all Energy from this Pokémon to your Benched Pokémon in any way you like.", 1],
 ] as const;
 
@@ -223,7 +232,7 @@ describe("the two anchors — three printed sentences, one new route value", () 
     // shrinking it, so the arithmetic below still totals the family's 16 and the
     // two halves are told apart by their REASON rather than by their count.
     expect(COLLECTED_AT_D441.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
-    expect(DEFERRED.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    expect(COLLECTED_AT_D442.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
     // 🛑 THE COLLECTED HALF IS ASSERTED AS ITS PROGRAM, NOT AS `!== null` (D438):
     // a boolean is true under the real build and under a build that claimed the
     // sentence with the WRONG route or the WRONG quantifier, and this file exists
@@ -233,15 +242,29 @@ describe("the two anchors — three printed sentences, one new route value", () 
         { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" },
       ]);
     }
-    // …and the deferred half is STILL refused, which is what keeps the rung above
-    // from reading as "this family is claimed now": one anchor moved, the other
-    // sentence did not follow it.
-    for (const [text] of DEFERRED) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🆕 D442 — …and the OTHER half is now claimed too, BY ITS OWN ANCHOR AND WITH
+    // ITS OWN RIDER. Asserted as the program (D438) rather than as `!== null`,
+    // because the failure this rung has to see is not "unclaimed" — it is D441's
+    // anchor widening to swallow this string, which would derive the SIBLING's
+    // program (no `anyDest`) and pass every truthiness test. The pair above and
+    // this line are each other's control: same op, same route, same quantifier,
+    // and exactly one key apart.
+    for (const [text] of COLLECTED_AT_D442) {
+      expect(deriveAttackEffect(text), text).toEqual([
+        {
+          op: "moveEnergy",
+          filter: { kind: "anyEnergy" },
+          max: "all",
+          route: "selfToBench",
+          anyDest: true,
+        },
+      ]);
+    }
     // 13 + 2 + 1 = 16, which is the number the backlog row says is 19.
     expect(
       CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
         COLLECTED_AT_D441.reduce((sum, [, legal]) => sum + legal, 0) +
-        DEFERRED.reduce((sum, [, legal]) => sum + legal, 0),
+        COLLECTED_AT_D442.reduce((sum, [, legal]) => sum + legal, 0),
     ).toBe(16);
   });
 
@@ -368,7 +391,14 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
-    expect(attacks).toHaveLength(63);
+    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
+    // (*"Move all Energy from this Pokémon to your Benched Pokémon in any way you
+    // like."* / *"You may move any amount of [{M}] Energy from your Pokémon to your
+    // other Pokémon in any way you like."*). `derivedSpreadEnergyMove.test.ts` owns
+    // them, and the append-never-insert discipline held again: 0-62 are addressed by
+    // constant in a dozen sibling suites and every one still means what it meant —
+    // which THIS rung is what proves, and it is the rung that caught the append.
+    expect(attacks).toHaveLength(66);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);
@@ -499,7 +529,7 @@ describe("end to end — off the ATTACKER, onto the attacker's OWN Bench", () =>
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [moved], dest },
+      choice: { kind: "moveEnergy", picks: [{ uid: moved, dest }] },
     });
     expect(done.state.phase.kind).not.toBe("effect:choose");
     expect(done.state.players.p1.active?.energy).not.toContain(moved);
@@ -529,11 +559,13 @@ describe("end to end — off the ATTACKER, onto the attacker's OWN Bench", () =>
     // and the reason the prompt for "Move 3 Energy" reads "up to 3".
     const state = ready(14, { basics: 2, ownBench: 2 });
     const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: VOLT_CYCLONE });
-    const prompt = parkedMove(parked);
+    // D442 — the decline names no destination now, so the park is read only to
+    // prove it IS a park.
+    expect(parkedMove(parked).movable.length).toBeGreaterThan(0);
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest: prompt.destinations[0] as PokemonRef },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     expect(done.state.phase.kind).not.toBe("effect:choose");
     expect(all(done.events, "ENERGY_MOVED")).toHaveLength(0);
@@ -560,8 +592,9 @@ describe("end to end — off the ATTACKER, onto the attacker's OWN Bench", () =>
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [prompt.movable[0]?.uid as string],
-        dest: prompt.destinations[0] as PokemonRef,
+        picks: [
+          { uid: prompt.movable[0]?.uid as string, dest: prompt.destinations[0] as PokemonRef },
+        ],
       },
     });
     expect(done.state.players.p1.bench[0]?.energy).toHaveLength(1);
@@ -620,7 +653,7 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: picks, dest: prompt.destinations[0] as PokemonRef },
+      choice: { kind: "moveEnergy", picks: picks.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })) },
     });
     expect(done.state.players.p1.active?.energy).toHaveLength(1);
     expect(done.state.players.p1.bench[0]?.energy).toEqual(picks);
@@ -638,8 +671,7 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: prompt.movable.map((m) => m.uid),
-        dest: prompt.destinations[0] as PokemonRef,
+        picks: prompt.movable.map((m) => m.uid).map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })),
       },
     });
     expect(tooMany.ok).toBe(false);
@@ -659,8 +691,7 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: singlePrompt.movable.slice(0, 2).map((m) => m.uid),
-        dest: singlePrompt.destinations[0] as PokemonRef,
+        picks: singlePrompt.movable.slice(0, 2).map((m) => m.uid).map((uid) => ({ uid, dest: singlePrompt.destinations[0] as PokemonRef })),
       },
     });
     expect(pair.ok).toBe(false);
@@ -675,8 +706,9 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [prompt.movable[0]?.uid as string],
-        dest: { seat: "p1", spot: { spot: "active" } },
+        picks: [
+          { uid: prompt.movable[0]?.uid as string, dest: { seat: "p1", spot: { spot: "active" } } },
+        ],
       },
     });
     expect(onto.ok).toBe(false);
@@ -690,8 +722,9 @@ describe("the numeric arm — `max` is the printed count, and it is a CEILING", 
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [prompt.movable[0]?.uid as string],
-        dest: { seat: "p2", spot: { spot: "bench", index: 0 } },
+        picks: [
+          { uid: prompt.movable[0]?.uid as string, dest: { seat: "p2", spot: { spot: "bench", index: 0 } } },
+        ],
       },
     });
     expect(across.ok).toBe(false);

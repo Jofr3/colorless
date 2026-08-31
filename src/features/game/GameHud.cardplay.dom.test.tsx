@@ -27,6 +27,7 @@ import {
   RARE_CANDY_DECK,
   SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
+  SPREAD_ENERGY_MOVE_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
   attachBenchFromDeck,
@@ -1074,8 +1075,8 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toHaveLength(1);
-    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 0 });
+    expect(call.choice.picks).toHaveLength(1);
+    expect(call.choice.picks[0]?.dest.spot).toEqual({ spot: "bench", index: 0 });
   });
 
   it("declines with 'Move none'", () => {
@@ -1088,7 +1089,9 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toEqual([]);
+    // D442 — the decline is `picks: []` and names NO destination; the arbitrary
+    // `prompt.destinations[0]` the old frame had to carry is gone.
+    expect(call.choice.picks).toEqual([]);
   });
 
   it("🆕 a FLOOR withholds 'Move none' and holds Move disabled until the pick is WHOLE", () => {
@@ -1150,7 +1153,7 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toEqual(movable.map((m) => m.uid));
+    expect(call.choice.picks.map((pick) => pick.uid)).toEqual(movable.map((m) => m.uid));
     // 🛑 THE CONTROL, on the UNPATCHED prompt: the decline IS on screen. Without
     // it "no Move none button" passes on a dialog that renders no buttons at all.
     dispatch.mockClear();
@@ -1186,9 +1189,9 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toHaveLength(1);
+    expect(call.choice.picks).toHaveLength(1);
     // The destination is the benched fix-basic-2 (index 0), not the source Active.
-    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 0 });
+    expect(call.choice.picks[0]?.dest.spot).toEqual({ spot: "bench", index: 0 });
   });
 
   it("with TWO destinations nothing is pre-chosen — the pick is the player's", () => {
@@ -1231,7 +1234,7 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
       throw new Error("expected a moveEnergy resolveEffect");
     }
     // Index 1, NOT the first offered destination.
-    expect(call.choice.dest.spot).toEqual({ spot: "bench", index: 1 });
+    expect(call.choice.picks[0]?.dest.spot).toEqual({ spot: "bench", index: 1 });
     expect(applyAction(state, call).ok).toBe(true);
   });
 
@@ -1272,7 +1275,7 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toEqual([onBench]); // source B's Energy, not source A's
+    expect(call.choice.picks.map((pick) => pick.uid)).toEqual([onBench]); // source B's, not A's
     expect(applyAction(state, call).ok).toBe(true);
   });
 
@@ -1316,8 +1319,13 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.uids).toEqual([fire, water]);
-    expect(call.choice.dest.spot).toEqual({ spot: "active" }); // the route's sole destination
+    expect(call.choice.picks.map((pick) => pick.uid)).toEqual([fire, water]);
+    // D442 — EVERY pick names the same destination, which is what a coupled
+    // (`anyDest`-less) prompt's answer means and what `validateChoice` re-checks.
+    expect(call.choice.picks.map((pick) => pick.dest.spot)).toEqual([
+      { spot: "active" },
+      { spot: "active" },
+    ]);
     expect(applyAction(state, call).ok).toBe(true);
   });
 });
@@ -2195,7 +2203,106 @@ describe("the providesEnergy filter (M5) — the typed discard and Fire Off", ()
     if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
       throw new Error("expected a moveEnergy resolveEffect");
     }
-    expect(call.choice.dest.spot).toEqual({ spot: "active" });
+    expect(call.choice.picks[0]?.dest.spot).toEqual({ spot: "active" });
     expect(applyAction(parked.state, call).ok).toBe(true);
+  });
+});
+
+describe("MoveEnergySpreadDialog — the printed 'in any way you like' (D442)", () => {
+  const SPREAD_CYCLONE = 63; // fix-trainerops — Kilowattrel's sentence
+  const FREE_FLOW = 64; // fix-trainerops — the declinable free-route spread
+
+  /** `fix-trainerops` Active with two Colorless Energy and a Bench of two
+      `fix-basic-1`, then the attack. The two benched bodies are IDENTICALLY named,
+      which is the board the SPOT readback exists for — and the one a dialog that
+      labelled destinations by name alone would silently collapse. */
+  function parkedSpread(index: number, ownBench = 2): GameState {
+    let state = p1Turn2(0x5c21, { p1: SPREAD_ENERGY_MOVE_DECK, p2: SPREAD_ENERGY_MOVE_DECK });
+    state = setActiveFromDeck(state, "p1", "fix-trainerops");
+    state = attachFromDeck(state, "p1", "fix-energy", 2);
+    state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
+    for (let i = 0; i < ownBench; i++) state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = mustApply(state, { type: "attack", seat: "p1", index }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  it("🛑 assigns each Energy its OWN destination and dispatches the MAP", () => {
+    // THE READ SITE THAT MAKES THESE THREE PRINTINGS ANSWERABLE (D226's rule for
+    // `anySource`, one endpoint over): the engine accepts a spread, so a dialog that
+    // kept the single-destination wizard would leave the card's whole point
+    // unreachable from the UI while the server accepted it. The last line ties the
+    // halves together — the answer this dialog builds is APPLIED to the real state.
+    const state = parkedSpread(SPREAD_CYCLONE);
+    const [first, second] = state.players.p1.active?.energy as [string, string];
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // No source stage and no shared "Move to:" list — the destination list mounts
+    // only while ONE Energy is waiting for it.
+    expect(screen.queryByText("Choose which Pokémon to move Energy from.")).toBeNull();
+    expect(screen.queryByText("Move to:")).toBeNull();
+
+    // Two IDENTICALLY LABELLED Energy rows — the same card on the same host — so the
+    // rows are addressed by INDEX. That is the shape the map answer is for: they are
+    // interchangeable as cards and distinguishable only by where they end up.
+    const energyRows = () =>
+      screen.getAllByRole("button", { name: "fix-energy on fix-trainerops · Active" });
+    expect(energyRows()).toHaveLength(2);
+    fireEvent.click(energyRows()[0] as Element);
+    expect(screen.getByText("Move to:")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-1 · Bench 1" }));
+    // The assigned row's accessible NAME now carries its destination ("→ fix-basic-1
+    // · Bench 1"), so the unassigned one is what `energyRows()` still returns —
+    // which is the readback the dialog exists to give and is asserted by using it.
+    expect(energyRows()).toHaveLength(1);
+    expect(
+      screen.getByRole("button", {
+        name: "fix-energy on fix-trainerops · Active → fix-basic-1 · Bench 1",
+      }),
+    ).toBeTruthy();
+    fireEvent.click(energyRows()[0] as Element);
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-1 · Bench 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 2" }));
+
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.picks.map((pick) => pick.uid).sort()).toEqual([first, second].sort());
+    // 🛑 TWO DIFFERENT DESTINATIONS. A dialog that kept one shared `dest` dispatches
+    // the same uids and the same count, so the destinations are the only observable.
+    expect(call.choice.picks.map((pick) => pick.dest.spot)).toEqual([
+      { spot: "bench", index: 0 },
+      { spot: "bench", index: 1 },
+    ]);
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("withholds 'Move none' under the printed floor, and offers it without one", () => {
+    // D441's floor on the spread dialog, and its CONTROL on the same screen shape:
+    // Kilowattrel's "Move all" is mandatory, the free-route "You may move any
+    // amount" is not, and the button is the only thing that differs.
+    renderHud(parkedSpread(SPREAD_CYCLONE), vi.fn());
+    expect(screen.queryByRole("button", { name: "Move none" })).toBeNull();
+    cleanup();
+    renderHud(parkedSpread(FREE_FLOW), vi.fn());
+    expect(screen.getByRole("button", { name: "Move none" })).toBeTruthy();
+  });
+
+  it("a pick's own host is NOT offered as its destination", () => {
+    // The printed "other", per pick — `validateChoice` refuses a self-move on every
+    // entry, so offering one would be the afford-then-reject D222 named. On the free
+    // route the Active is BOTH a source and a destination, which is the only board
+    // where the exclusion is visible at all.
+    const state = parkedSpread(FREE_FLOW);
+    renderHud(state, vi.fn());
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: "fix-energy on fix-trainerops · Active",
+      })[0] as Element,
+    );
+    expect(screen.getByRole("button", { name: "fix-basic-1 · Bench 1" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "fix-trainerops · Active" })).toBeNull();
   });
 });

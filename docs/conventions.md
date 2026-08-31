@@ -1958,6 +1958,120 @@ of the other half.** A list that keeps its original justification after losing a
 member is asserting that reason about a sentence nobody re-checked — D422's stale
 refusal, arriving inside a test fixture instead of a doc block.
 
+## Not every shape change is at a persisted address (D442)
+
+**Before pricing a type change against `MATCH_RECORD_VERSION`, grep for where the
+type actually LANDS in `MatchRecord`.** D442's brief asserted that the
+`moveEnergy` CHOICE shape *"is persisted in `phase.cont`"*, which would have made
+a rename D359's case and owed a bump. It is false: a `MatchRecord` is
+`{version, seed, startedAt, state, log, names}`; `state.phase` (`effect:choose`)
+holds the PROMPT and an `EffectContinuation` (`{pendingOp, rest, ctx, record?}`);
+`log` is the RENDERED `SeatLogEntry[]`. **An `EffectChoice` is in none of them** —
+it rides one `resolveEffect` action, is validated, is applied, and is gone.
+
+D427 wrote *"choosing a carrier does not duck persistence — drive the record, do
+not reason from the carrier's name."* This is the same rule pointing the other
+way and it is worth as much: **a shape that is NOT persisted must not be priced as
+though it were**, or a slice pays a bump it does not owe and retires every live
+match to do it. The version question is still asked — D442's two OPTIONAL
+`anyDest` riders (one on the persisted OP, one on the PROMPT) are exactly D334's
+case and are driven over reconstructed v29 bytes — it is just asked at the right
+address.
+
+## A coupling expressed by a SHAPE becomes an assertion when the shape widens (D442)
+
+Under `{ kind: "moveEnergy"; uids: string[]; dest: PokemonRef }`, *"every pick
+lands on ONE destination"* was true **by construction** — unwritable and
+unbreakable. Under `{ picks: { uid, dest }[] }` it is one `if` in
+`validateChoice`, and deleting it turns Energy Switch and Poppy into spread cards
+**with every board driving the new sentences still green**.
+
+**When you widen a shape, enumerate what the OLD shape was asserting for free and
+write each one down as a check.** The mutant that deletes it is the one worth
+writing, because the slice's own suite cannot see it.
+
+## Two riders need two rows when they are independent in the PRINT (D442)
+
+`moveEnergy` now carries `anySource` (D226) and `anyDest` (D442). They co-occur on
+two of the three printed sentences and not on the third, so a suite asserting only
+*"the spread resolves"* is green under whichever rider it did not happen to
+exercise. **One mutant per rider, each the other's control** — the same rule
+D440's confound argument reaches from the vocabulary side.
+
+## A row can be unkillable in one direction and killable in the other (D442)
+
+Building a regex character class from `Object.keys(ENERGY_TYPE_BY_CODE)` buys two
+properties, and only ONE of them is observable:
+
+- **it cannot ADMIT a code the map refuses** — unobservable, because the arm's own
+  `energyType !== undefined` guard turns an unmapped code into exactly the `null`
+  an unmatched anchor already gives;
+- **it cannot DROP one the map carries** — observable: the printed sentence falls
+  silently off the built set and `BUILT.attack` steps back.
+
+D442's first version of that row installed the ADMIT direction and **SURVIVED** —
+D420's *a row that survives because it changes nothing*, found by the probe rather
+than by reading. **Measure which direction is observable, write the row for that
+one, and record the other at the guard** rather than deleting a guard the type
+system needs.
+
+## Appending to a shared demonstrator reddens its provenance rungs (D442)
+
+`fix-trainerops` gained three attacks at 63-65 and **twelve** suites pin
+`attacks.length` on it. Only one of the twelve surfaced first, and it surfaced as
+a **RED BASELINE inside the mutation harness** (`--decision D229` reported ERROR),
+because the full-suite run predated the append.
+
+**Grep `toHaveLength(<old>)` across `packages/engine/src/*.test.ts` immediately
+after appending to a shared fixture**, and step every hit in one pass — D431's
+sibling rule, arriving at a fixture instead of at a census chain. The rungs exist
+to catch exactly this and they did; the expensive part was finding them one at a
+time.
+
+## D437's converse trap is easiest to hit when you add a COMPONENT (D442)
+
+A new dialog written beside an existing one naturally repeats its neighbour's
+lines. `const canDecline = floor === 0;` written a second time in the same file
+makes `D441-*-hud-keeps-the-decline` match **2×** — a row broken by a file the row
+does not describe. `precheck` catches it in seconds. **Spell the new copy
+differently (or inline it) and say at the site why**, so the next author does not
+"tidy" it back.
+
+### A resume point is a work order, so correct a false one in place (D442)
+
+The run's standing practice is **not** to retro-edit earlier slices when they
+merely disagree with a later one — three slices' numbers are not evidence, and
+neither is one slice's dissent. **A factually false claim is a different case.**
+D441's resume point asserted that the `moveEnergy` choice shape *"is persisted in
+`phase.cont`"*; it is persisted nowhere, and the claim would have forced a
+`MATCH_RECORD_VERSION` bump that nothing owes. That paragraph was copied into
+D442's brief **verbatim**, which re-asserted it — and only measuring
+`MatchRecord` instead of obeying the paragraph caught it.
+
+So: **a disagreement is recorded and left standing; a falsehood is corrected
+where it lives**, with a note saying which slice corrected it and how it was
+measured. The test is whether a future reader acting on the sentence would do
+the wrong thing.
+
+**And a claim carried forward is still a claim being made.** It inherits no
+evidence from having been written down before — this is the same rule as *a
+streak is a claim; extending one asserts it afresh*, arriving at a work order
+instead of a count.
+
+### Editor diagnostics are not a measurement while the harness is running (D442)
+
+The mutation harness writes a mutant into a source file, runs a suite, and writes
+the original bytes back. An editor or language server that indexes the file
+inside that window reports a file the repo never had — during D442's verification
+the LSP surfaced errors in `interpreter.ts` about members that do not exist,
+sitting on top of a tree where `tsc -b` exits 0.
+
+**Settle it with the tool that owns the answer** (`bun run check`, or `bunx tsc
+-b`) and with `git status`, not with a diagnostics panel. This is the same rule
+as *a process check that can match the checker is not a process check*, one layer
+up: an instrument that samples a transient state is reporting the instrument, not
+the tree.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

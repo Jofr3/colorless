@@ -351,7 +351,11 @@ describe("the anchor — one printed sentence, one new op", () => {
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
-    expect(attacks).toHaveLength(63);
+    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
+    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
+    // same length pin and ALL of them were stepped in one pass (D431): a green run
+    // after fixing the one that reddened is evidence the runner stopped early.
+    expect(attacks).toHaveLength(66);
     expect(attacks[TROPICAL_FRENZY_IDX]?.name).toBe("Tropical Frenzy");
     expect(attacks[TROPICAL_FRENZY_IDX]?.effect).toBe(TROPICAL_FRENZY);
     // ⚠️ AND THE PRINTED 150 IS STILL ABSENT — D236's divergence, inherited rather

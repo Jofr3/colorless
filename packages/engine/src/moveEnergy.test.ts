@@ -80,7 +80,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [energyUid], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_BENCH0 }] },
     });
     expect(done.phase.kind).toBe("turn:action");
     // The Energy left the Active and landed on the benched Pokémon (one card, moved).
@@ -108,7 +108,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [energyUid], dest: P1_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_ACTIVE }] },
     });
     expect(benchEnergy(done, "p1", 0)).not.toContain(energyUid);
     expect(activeEnergy(done, "p1")).toContain(energyUid);
@@ -133,7 +133,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [energyUid], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_BENCH0 }] },
     });
     expect(benchEnergy(done, "p1", 1)).not.toContain(energyUid); // left the source bench slot
     expect(benchEnergy(done, "p1", 0)).toContain(energyUid); // landed on the destination bench slot
@@ -164,7 +164,7 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [specialUid as string], dest: P1_BENCH0 },
+        choice: { kind: "moveEnergy", picks: [{ uid: specialUid as string, dest: P1_BENCH0 }] },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -185,7 +185,7 @@ describe("M5 op-slice — moveEnergy", () => {
     ]) {
       expectErr(
         parked,
-        { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", uids: [energyUid], dest } },
+        { type: "resolveEffect", seat: "p1", choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest }] } },
         "BAD_EFFECT_CHOICE",
       );
     }
@@ -205,7 +205,7 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [energyUid], dest: P1_ACTIVE },
+        choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_ACTIVE }] },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -224,7 +224,7 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [e1 as string, e2 as string], dest: P1_BENCH0 },
+        choice: { kind: "moveEnergy", picks: [{ uid: e1 as string, dest: P1_BENCH0 }, { uid: e2 as string, dest: P1_BENCH0 }] },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -248,7 +248,7 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [energyUid, energyUid], dest: P1_BENCH0 },
+        choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_BENCH0 }, { uid: energyUid, dest: P1_BENCH0 }] },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -266,7 +266,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     expect(done.phase.kind).toBe("turn:action");
     expect(types(events)).not.toContain("ENERGY_MOVED");
@@ -318,7 +318,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done, events } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: energies, dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: energies.map((uid) => ({ uid, dest: P1_BENCH0 })) },
     });
     expect(activeEnergy(done, "p1")).toHaveLength(0);
     expect(benchEnergy(done, "p1", 0)).toEqual(expect.arrayContaining(energies));
@@ -337,7 +337,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [e1 as string], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: e1 as string, dest: P1_BENCH0 }] },
     });
     expect(benchEnergy(done, "p1", 0)).toEqual([e1]);
     expect(activeEnergy(done, "p1")).toEqual([e2]); // the un-picked Energy stays
@@ -358,7 +358,7 @@ describe("M5 op-slice — moveEnergy", () => {
     const { state: done } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [moved], dest: P1_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: moved, dest: P1_BENCH0 }] },
     });
     // The destination now holds BOTH — its own Energy plus the moved one (appended,
     // not replaced); the source is emptied; the on-board total is unchanged.
@@ -383,7 +383,7 @@ describe("M5 op-slice — moveEnergy", () => {
       {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [activeE, benchE], dest: P1_ACTIVE },
+        choice: { kind: "moveEnergy", picks: [{ uid: activeE, dest: P1_ACTIVE }, { uid: benchE, dest: P1_ACTIVE }] },
       },
       "BAD_EFFECT_CHOICE",
     );
@@ -409,7 +409,7 @@ describe("M5 op-slice — moveEnergy", () => {
       applyAction(deepFreeze(parked), {
         type: "resolveEffect",
         seat: "p1",
-        choice: { kind: "moveEnergy", uids: [energyUid], dest: P1_BENCH0 },
+        choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest: P1_BENCH0 }] },
       }),
     ).not.toThrow();
   });

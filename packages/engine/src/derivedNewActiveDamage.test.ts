@@ -324,7 +324,11 @@ describe("PROVENANCE — both printed shapes on one body, and NEITHER prints bas
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
-    expect(attacks).toHaveLength(63);
+    // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
+    // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
+    // same length pin and ALL of them were stepped in one pass (D431): a green run
+    // after fixing the one that reddened is evidence the runner stopped early.
+    expect(attacks).toHaveLength(66);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(CLAUSES[GATED].text);
     expect(attacks[DRAG_OFF]?.effect).toBe(CLAUSES[GUST_30].text);
     // The indices this file and its two siblings address by constant did not move.

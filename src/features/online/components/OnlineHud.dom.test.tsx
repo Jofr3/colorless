@@ -788,7 +788,7 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     expect(onAction).toHaveBeenCalledWith({
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: ["e1"], dest: YOU_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: "e1", dest: YOU_BENCH0 }] },
     });
   });
 
@@ -823,7 +823,84 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     expect(onAction).toHaveBeenCalledWith({
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest: YOU_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [] },
+    });
+  });
+
+  it("🆕🆕 D442 moveEnergy: `anyDest` gives each pick its OWN destination", () => {
+    // 🛑 THE ONLINE HALF OF THE MAP ANSWER. The board is the SAME shape as the
+    // mandatory case below (two Energy on the Active, `min === max === 2`) and the
+    // ONLY differences are `anyDest` and a second benched destination — so a build
+    // that dropped the rider on the wire, in the projection or in this dialog would
+    // pass every assertion there and fail every one here. D226's pair rule: a
+    // spread one client can build and the other cannot is a seat-dependent card.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [
+                { uid: "e1", from: YOU_ACTIVE },
+                { uid: "e2", from: YOU_ACTIVE },
+              ],
+              // The ACTIVE is a destination too, which is what makes the per-pick
+              // "other" exclusion observable at all: both Energy sit on it.
+              destinations: [YOU_ACTIVE, YOU_BENCH0, YOU_BENCH1],
+              max: 2,
+              min: 2,
+              anyDest: true,
+              note: "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.",
+            },
+          },
+          you: {
+            active: inPlay("a", "My Active", {
+              attached: {
+                tools: [],
+                energies: [energy("e1", "Water Energy"), energy("e2", "Fire Energy")],
+              },
+            }),
+            bench: [inPlay("b0", "Bench One"), inPlay("b1", "Bench Two")],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // The destination list mounts only while an Energy is waiting for one — the
+    // two-step LOOP, not the shared "Move to:" list of the coupled dialog.
+    expect(screen.queryByText("Move to:")).toBeNull();
+    // The floor is read here exactly as the coupled dialog reads it.
+    expect(screen.queryByRole("button", { name: /Move none/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy on My Active · Active" }));
+    expect(screen.getByText("Move to:")).toBeTruthy();
+    // The printed "other", PER PICK: the body this Energy sits on is not offered as
+    // its destination — `validateChoice` refuses a self-move per entry, so offering
+    // one would be the afford-then-reject D222 named.
+    expect(screen.queryByRole("button", { name: "My Active · Active" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Bench One · Bench 1" }));
+    // A SHORT answer is still refused — one of two, under `min === max === 2`.
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: /Move 1/ }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy on My Active · Active" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bench Two · Bench 2" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move 2/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: {
+        kind: "moveEnergy",
+        // 🛑 TWO DIFFERENT DESTINATIONS. A dialog that kept one shared `dest`
+        // dispatches the same uids and the same count; the destinations are the
+        // only observable, which is why they are what the rung reads.
+        picks: [
+          { uid: "e1", dest: YOU_BENCH0 },
+          { uid: "e2", dest: YOU_BENCH1 },
+        ],
+      },
     });
   });
 
@@ -878,7 +955,7 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     expect(onAction).toHaveBeenCalledWith({
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: ["e1", "e2"], dest: YOU_BENCH0 },
+      choice: { kind: "moveEnergy", picks: [{ uid: "e1", dest: YOU_BENCH0 }, { uid: "e2", dest: YOU_BENCH0 }] },
     });
   });
 
@@ -934,7 +1011,7 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     expect(onAction).toHaveBeenCalledWith({
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: ["e1", "e2"], dest: YOU_ACTIVE },
+      choice: { kind: "moveEnergy", picks: [{ uid: "e1", dest: YOU_ACTIVE }, { uid: "e2", dest: YOU_ACTIVE }] },
     });
   });
 

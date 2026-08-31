@@ -538,6 +538,12 @@ function effectDecisionFromPrompt(
           // coupling on the round-tripped prompt. Spread, so a prompt without the
           // rider rebuilds to the byte-identical object it always did.
           ...(prompt.anySource === undefined ? {} : { anySource: prompt.anySource }),
+          // 🆕 D442 — the FOURTH moveEnergy read site takes the destination-side
+          // rider on the same promise: this rebuild reproduces `phaseViewOf`'s
+          // decision EXACTLY, so a rider dropped here silently re-imposes the
+          // single-destination coupling on the round-tripped prompt. Spread, so a
+          // prompt without it rebuilds to the byte-identical object it always did.
+          ...(prompt.anyDest === undefined ? {} : { anyDest: prompt.anyDest }),
           note: prompt.note,
         },
       };

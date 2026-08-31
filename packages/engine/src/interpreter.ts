@@ -519,7 +519,23 @@ export type EffectPrompt =
       `MATCH_RECORD_VERSION` precisely because absent came to mean MANDATORY where
       the old bytes meant declinable. **Direction is the whole of the difference**,
       and it is the discriminator that block states outright: *"does the old byte
-      string still mean what it meant"*. */
+      string still mean what it meant"*.
+
+      🆕🆕 **D442 — `anyDest` IS THE DESTINATION-SIDE MIRROR, AND IT IS WHAT MAKES
+      THIS PROMPT'S ANSWER A MAP.** Absent (every park before this deploy) the picks
+      all land on ONE of the offered `destinations` and the answer's `picks` must
+      agree about it — which is exactly what the old `{ uids, dest }` answer said in
+      its shape. Present (the printed *"in any way you like"*) each pick names its
+      OWN destination, and the only surviving rule is the per-pick one this prompt
+      has enforced since D226: a pick's destination may not be the body it came off.
+
+      It is carried HERE and not only on the op for `anySource`'s reason word for
+      word, and it is OPTIONAL for `min`'s: absent means the coupling, which is what
+      every older writer meant, so `MATCH_RECORD_VERSION` does not move (D334, not
+      D359). ⚠️ **THE ANSWER'S RENAME COSTS NO BUMP EITHER, AND NOT BECAUSE IT IS
+      ADDITIVE** — `EffectChoice` is never serialized at all: it rides one
+      `resolveEffect` action and is discarded, where the PROMPT and the
+      `EffectContinuation` are what `phase` persists. */
   | {
       kind: "moveEnergy";
       movable: { uid: string; from: PokemonRef }[];
@@ -527,6 +543,7 @@ export type EffectPrompt =
       max: number;
       min?: number;
       anySource?: true;
+      anyDest?: true;
       note: string;
     }
   /** Discard Energy off the board — the energy-removal family (Crushing Hammer /
@@ -790,10 +807,44 @@ export type EffectChoice =
       this way" ends up with a body and no uids. One answer, one spelling. */
   | { kind: "pokemon"; ref?: PokemonRef; take?: number }
   | { kind: "pokemonMulti"; refs: PokemonRef[] }
-  /** The moveEnergy answer: up to `max` movable Energy uids (all sharing one
-      source) moved onto `dest` — the compound decision validateChoice checks
-      (same source, dest distinct from it). An empty `uids` is a decline. */
-  | { kind: "moveEnergy"; uids: string[]; dest: PokemonRef }
+  /** The moveEnergy answer: up to `max` movable Energy, EACH PAIRED WITH THE
+      POKÉMON IT MOVES ONTO — the compound decision validateChoice checks (every
+      uid offered and taken once, every destination offered, no pick landing on the
+      body it came off, and — unless the prompt carries `anySource` / `anyDest` —
+      one source and one destination across the whole answer). An empty `picks` is
+      a decline, refused when the prompt carries a `min`.
+
+      🆕🆕 **D442 — A MAP WHERE THIS WAS `{ uids: string[]; dest: PokemonRef }`,
+      AND IT IS A RENAME RATHER THAN AN ADDITIVE `picks?:` BESIDE THE PAIR.** The
+      printed *"in any way you like"* (3 sentences / 3 legal printings) needs each
+      pick to name its own destination, which is `attachCards`'s shipped
+      `assignments` shape — the one this file's `attachCards` doc has cited as the
+      difference since D335 (*"each attached card names its OWN destination — so the
+      answer is a MAP (card → Pokémon), not a list … moveEnergy's picks share one
+      destination"*).
+
+      🛑 **THE OPTIONAL ROAD WAS AVAILABLE AND IS REFUSED ON D359's OWN RULE, ONE
+      MEMBER UP.** `{ uids: [a, b], dest: X }` and `{ picks: [{a, X}, {b, X}] }` are
+      the SAME ANSWER, so keeping both is *"two spellings of one answer"* — the
+      shape `{ ref, take: 0 }` is refused for four lines above, and for the same
+      consequence: two spellings mean two apply paths, and a log row can then name a
+      Pokémon by one route that the other route never named. One answer, one
+      spelling.
+
+      ⚠️ **AND THE RENAME IS FREE OF `MATCH_RECORD_VERSION`, WHICH IS A FACT ABOUT
+      THIS TYPE AND NOT A JUDGEMENT ABOUT THE CHANGE.** Nothing persists an
+      `EffectChoice`: a `MatchRecord` holds `{version, seed, startedAt, state, log,
+      names}`, `state.phase` holds the PROMPT and the `EffectContinuation`
+      (`{pendingOp, rest, ctx, record?}`), and `log` is the rendered
+      `SeatLogEntry[]`. A choice rides one action, is validated, is applied, and is
+      gone. What a v29 record CAN hold is a parked `moveEnergy` prompt, and that
+      prompt's new key is optional with the old reading as its absent arm.
+
+      ⚠️ **THE DECLINE LOSES ITS INVENTED DESTINATION, WHICH IS THE OTHER HALF OF
+      WHY THE RENAME IS THE HONEST SHAPE.** Under `{ uids, dest }` both HUDs had to
+      pull an arbitrary ref off `prompt.destinations[0]` to spell "Move none" — a
+      body named in a frame where nothing happens to it. `picks: []` names nobody. */
+  | { kind: "moveEnergy"; picks: { uid: string; dest: PokemonRef }[] }
   /** The discardEnergy answer: the Energy uids to discard — exactly `count` in
       total (`{kind:"total"}`) or exactly one per offered source Pokémon
       (`{kind:"each"}`), as validateChoice enforces. Never empty for those two
@@ -2452,13 +2503,17 @@ function stepOp(
       // keeps every declinable printing parking exactly as it did: Armarouge and
       // Exp. Share both offer exactly one destination and both must still ask,
       // because the answer they would be forced into is one the player may refuse.
+      //
+      // 🆕 D442 — STILL GATED ON `destinations.length === 1` UNDER `anyDest`, AND
+      // THAT IS THE SAME TEST RATHER THAN A LUCKY ONE: a spread over ONE
+      // destination is not a spread. With the quantity fixed and a single body to
+      // put it on, the map has exactly one inhabitant whatever the rider says.
       if (floor > 0 && destinations.length === 1) {
         const dest = destinations[0] as PokemonRef;
         return {
           done: moveEnergyApply(
             state,
-            movable.map((entry) => entry.uid),
-            dest,
+            movable.map((entry) => ({ uid: entry.uid, dest })),
             ctx,
             events,
           ),
@@ -2484,6 +2539,11 @@ function stepOp(
           // Spread rather than set to `undefined` so a single-source park's shape
           // is byte-identical to the one it had before the rider existed.
           ...(op.anySource === undefined ? {} : { anySource: op.anySource }),
+          // 🆕 D442 — the destination-side rider, carried by the identical rule for
+          // the identical reason: the wire validator, the wire schema and both HUD
+          // dialogs read the PROMPT and never the op, and spreading rather than
+          // assigning keeps a coupled park's persisted shape byte-identical.
+          ...(op.anyDest === undefined ? {} : { anyDest: op.anyDest }),
           note: moveNote(op),
         },
       };
@@ -5535,7 +5595,7 @@ export function applyChoice(
     }
     case "moveEnergy":
       return choice.kind === "moveEnergy"
-        ? moveEnergyApply(state, choice.uids, choice.dest, ctx, events)
+        ? moveEnergyApply(state, choice.picks, ctx, events)
         : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
@@ -11509,58 +11569,99 @@ function attachFromTopApply(
   });
 }
 
-/** Move the chosen Energy `uids` off their source Pokémon onto the controller's
-    own `destRef` (Energy Switch / Poppy / N's Plan). validateChoice already proved
-    every uid sits on a source Pokémon distinct from the destination — on ONE such
-    Pokémon unless the prompt carried `anySource` (D226); this re-finds each on
-    the live board (wire-safety, like searchMove/retrieveMove) and moves only those
-    actually attached to an own in-play Pokémon OTHER than the destination — a stale
-    or self-targeting uid is skipped, never duplicated. The Pokémon stay put (no
-    bench compaction), so the ENERGY_MOVED `from`/`to` targets are valid against
-    the post-state. Atomic: strip then re-attach in one reduction, so an Energy is
-    never left detached — including across a multi-source move, where the whole
-    answer is still ONE reduction and the several events are its record, not its
-    stages. */
+/** Move each chosen Energy off the Pokémon it sits on and onto the destination
+    THAT PICK NAMES (Energy Switch / Poppy / N's Plan / Kilowattrel).
+    validateChoice already proved every uid was offered, appears once, and names a
+    destination that is an offered ref other than its own host — on ONE source
+    unless the prompt carried `anySource` (D226) and onto ONE destination unless it
+    carried `anyDest` (D442). This re-finds each on the live board (wire-safety,
+    like searchMove/retrieveMove) and moves only those actually attached to an own
+    in-play Pokémon OTHER than the destination the pick names — a stale uid, a
+    self-targeting one, or one aimed at a body that is no longer there is SKIPPED,
+    never duplicated. The Pokémon stay put (no bench compaction), so the
+    ENERGY_MOVED `from`/`to` targets are valid against the post-state. Atomic:
+    strip then re-attach in one reduction, so an Energy is never left detached —
+    including across a multi-source, multi-destination move, where the whole answer
+    is still ONE reduction and the several events are its record, not its stages.
+
+    🆕🆕 **D442 — THE PARAMETER IS THE MAP, AND THE `destRef` PARAMETER IS GONE
+    RATHER THAN JOINED.** A shared destination is expressible as a map whose
+    entries agree, so keeping both would be two ways to say one thing at the one
+    site that writes the board (`EffectChoice`'s own note on the rename). Every
+    pre-D442 board reduces byte-identically: with one destination the grouping
+    below produces exactly one group per source, in the same order, so the
+    `ENERGY_MOVED` rows are the ones this function has always emitted. */
 function moveEnergyApply(
   state: GameState,
-  uids: readonly string[],
-  destRef: PokemonRef,
+  picks: readonly { uid: string; dest: PokemonRef }[],
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  if (uids.length === 0 || destRef.seat !== ctx.seat) return state;
   const side = state.players[ctx.seat];
-  const destSpot = destRef.spot;
-  const picks = new Set(uids);
-  // ⚠️ D226 — GROUPED BY SOURCE, WHERE THIS USED TO HOLD ONE. `validateChoice`
-  // guaranteed a single source until N's Plan's `anySource` prompt ("from your
-  // Benched Pokémon", plural), and `ENERGY_MOVED`'s own doc PROMISES that all of
-  // an event's `uids` came off the one `from` — a promise the log renders
-  // literally ("moved 2 energy from Bench 1 to Active"). So the answer is one
-  // event PER SOURCE rather than a widened event: nothing about the event shape
-  // moves, no consumer changes, `MATCH_RECORD_VERSION` stays put, and the
-  // single-source case emits exactly the one row it always did. Each entry keeps
-  // its TOP uid too (D171 — the source may be Knocked Out later in this same
-  // reduction, and a spot cannot name a Pokémon that has left play).
-  const bySource: { from: PokemonTarget; fromUid: string | undefined; uids: string[] }[] = [];
-  const moved: string[] = [];
-  const isDest = (target: PokemonTarget): boolean =>
-    destSpot.spot === target.spot &&
-    (destSpot.spot === "active" || destSpot.index === (target as { index: number }).index);
+  // ⚠️ THE DESTINATION IS REBUILT FIELD BY FIELD, NEVER SPREAD OFF THE PICK — that
+  // object came from the WIRE. `validateChoice` proves it `refEquals` an offered
+  // ref, but refEquals compares only seat/spot/index, so any extra key a client
+  // hangs on it (`{spot:"active", index:99, evil:"…"}`) would ride the spread
+  // straight into an event that is handed to the animator, the log and, in P4,
+  // broadcast to both players. The state was always safe (the extra keys are
+  // inert); the EVENT is the §2 copy contract, and a copy of attacker-controlled
+  // data is not a copy of the engine's own value.
+  const targetOf = (ref: PokemonRef): PokemonTarget =>
+    ref.spot.spot === "active" ? { spot: "active" } : { spot: "bench", index: ref.spot.index };
+  const keyOf = (target: PokemonTarget): string =>
+    target.spot === "active" ? "active" : `bench:${target.index}`;
+  const bodyAt = (target: PokemonTarget): InPlayPokemon | undefined =>
+    target.spot === "active" ? (side.active ?? undefined) : side.bench[target.index];
+  // uid → where it is going. Built first so the strip walk can ask one question per
+  // Energy, and so a pick naming a body that is not in play drops out HERE rather
+  // than after its uid has already left its host — which is the resurrection-shaped
+  // failure D429 named, read forwards: a card that leaves one zone and enters none.
+  const destOf = new Map<string, PokemonTarget>();
+  for (const { uid, dest } of picks) {
+    if (typeof uid !== "string" || dest.seat !== ctx.seat || destOf.has(uid)) continue;
+    const to = targetOf(dest);
+    if (bodyAt(to) === undefined) continue;
+    destOf.set(uid, to);
+  }
+  if (destOf.size === 0) return state;
+  // ⚠️ D226 — GROUPED BY SOURCE, WHERE THIS USED TO HOLD ONE, and 🆕 D442 — BY
+  // (SOURCE, DESTINATION) PAIR, WHERE IT USED TO HOLD ONE DESTINATION.
+  // `ENERGY_MOVED`'s own doc PROMISES that all of an event's `uids` came off the
+  // one `from` — a promise the log renders literally ("moved 2 energy from Bench 1
+  // to Active") — and it says the same thing about `to`. So the answer is one event
+  // per PAIR rather than a widened event: nothing about the event shape moves, no
+  // consumer changes, `MATCH_RECORD_VERSION` stays put, and the single-source
+  // single-destination case emits exactly the one row it always did. Each entry
+  // keeps its source's TOP uid too (D171 — the source may be Knocked Out later in
+  // this same reduction, and a spot cannot name a Pokémon that has left play).
+  const groups: {
+    from: PokemonTarget;
+    fromUid: string | undefined;
+    to: PokemonTarget;
+    uids: string[];
+  }[] = [];
+  const arrivals = new Map<string, string[]>();
   const strip = (pokemon: InPlayPokemon, target: PokemonTarget): InPlayPokemon => {
-    if (isDest(target)) return pokemon; // never strip the destination (no self-move)
-    let group: { from: PokemonTarget; fromUid: string | undefined; uids: string[] } | undefined;
+    const byDest = new Map<string, { uids: string[] }>();
     const kept = pokemon.energy.filter((uid) => {
-      if (picks.has(uid)) {
-        moved.push(uid);
-        if (group === undefined) {
-          group = { from: target, fromUid: topUid(pokemon), uids: [] };
-          bySource.push(group);
-        }
-        group.uids.push(uid);
-        return false;
+      const to = destOf.get(uid);
+      // Never strip a pick whose destination IS the body it sits on — the per-pick
+      // self-move rule, which under `anyDest` is the SAME rule applied per entry
+      // rather than once for the whole answer (D226's generalisation, one endpoint
+      // over). `validateChoice` refuses such an answer; this keeps the apply honest
+      // if one ever arrives.
+      if (to === undefined || keyOf(to) === keyOf(target)) return true;
+      let group = byDest.get(keyOf(to));
+      if (group === undefined) {
+        group = { uids: [] };
+        byDest.set(keyOf(to), group);
+        groups.push({ from: target, fromUid: topUid(pokemon), to, uids: group.uids });
       }
-      return true;
+      group.uids.push(uid);
+      const inbound = arrivals.get(keyOf(to));
+      if (inbound === undefined) arrivals.set(keyOf(to), [uid]);
+      else inbound.push(uid);
+      return false;
     });
     return kept.length === pokemon.energy.length ? pokemon : { ...pokemon, energy: kept };
   };
@@ -11568,44 +11669,28 @@ function moveEnergyApply(
   const benchStripped = side.bench.map((pokemon, index) =>
     strip(pokemon, { spot: "bench", index }),
   );
-  if (moved.length === 0) return state; // nothing actually moved
-  // Re-attach onto the destination, read off the stripped board (the destination
-  // was never stripped, so this can't drop a just-moved uid).
-  const addTo = (pokemon: InPlayPokemon): InPlayPokemon => ({
-    ...pokemon,
-    energy: [...pokemon.energy, ...moved],
-  });
-  let active = activeStripped;
-  let bench = benchStripped;
-  if (destSpot.spot === "active") {
-    if (active === null) return state;
-    active = addTo(active);
-  } else {
-    if (benchStripped[destSpot.index] === undefined) return state;
-    bench = benchStripped.map((pokemon, index) =>
-      index === destSpot.index ? addTo(pokemon) : pokemon,
-    );
-  }
-  // The destination is REBUILT field by field, never spread off `destSpot` — that
-  // object came from the WIRE. `validateChoice` proves it `refEquals` an offered
-  // ref, but refEquals compares only seat/spot/index, so any extra key a client
-  // hangs on it (`{spot:"active", index:99, evil:"…"}`) rides the spread straight
-  // into an event that is handed to the animator, the log and, in P4, broadcast to
-  // both players. The state was always safe (the extra keys are inert); the EVENT
-  // is the §2 copy contract, and a copy of attacker-controlled data is not a copy
-  // of the engine's own value.
-  const to: PokemonTarget =
-    destSpot.spot === "active" ? { spot: "active" } : { spot: "bench", index: destSpot.index };
-  // One row per SOURCE, in the order the board was walked (Active first, then the
-  // bench left to right) — a two-source N's Plan reads as the two sentences it is.
-  for (const group of bySource) {
+  if (groups.length === 0) return state; // nothing actually moved
+  // Re-attach, read off the STRIPPED board (no destination is ever stripped for a
+  // pick aimed at it, so this cannot drop a just-moved uid) — and in board-walk
+  // order, which for a single destination is byte-identical to the order this
+  // function appended before the map existed.
+  const addTo = (pokemon: InPlayPokemon, key: string): InPlayPokemon => {
+    const inbound = arrivals.get(key);
+    return inbound === undefined ? pokemon : { ...pokemon, energy: [...pokemon.energy, ...inbound] };
+  };
+  const active = activeStripped === null ? null : addTo(activeStripped, "active");
+  const bench = benchStripped.map((pokemon, index) => addTo(pokemon, `bench:${index}`));
+  // One row per (SOURCE, DESTINATION) pair, in the order the board was walked
+  // (Active first, then the bench left to right) — a two-source N's Plan reads as
+  // the two sentences it is, and a Kilowattrel spread reads as the several it is.
+  for (const group of groups) {
     events.push({
       type: "ENERGY_MOVED",
       seat: ctx.seat,
       uids: [...group.uids],
       from: group.from,
       ...(group.fromUid === undefined ? {} : { fromUid: group.fromUid }),
-      to,
+      to: group.to,
     });
   }
   return withSide(state, ctx.seat, { ...side, active, bench });
@@ -12814,14 +12899,30 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
             // literally instead of riding `one`: this route has ONE source by
             // construction (the attacker), which is what makes `anySource`
             // meaningless on it and its article unspoken in print.
-            "from this Pokémon to 1 of your Benched Pokémon"
+            //
+            // 🆕 D442 — and `anyDest` replaces exactly the words the print
+            // replaces. Kilowattrel's sentence differs from D229's in its
+            // destination clause and in nothing else, so the caption differs
+            // there and nowhere else; the "1 of" that is the coupling, spelled,
+            // goes when the coupling does.
+            op.anyDest === true
+            ? "from this Pokémon to your Benched Pokémon in any way you like"
+            : "from this Pokémon to 1 of your Benched Pokémon"
           : op.route === "othersToSelf"
             ? // D244 — Iron Leaves ex's printed second half, verbatim. The article
               // rides `one` like the two free-source routes: this route is
               // `anySource` on every printing that exists, so `one` is empty and
               // the phrase reads as the card does ("from your other Pokémon").
               `from ${one}your other Pokémon to this Pokémon`
-            : `from ${one}your Pokémon to another of your Pokémon`;
+            : // 🆕 D442 — the FREE route's destination clause, in the two forms the
+              // pool prints. `anyDest` is *"to your other Pokémon in any way you
+              // like"* (the two "any amount" spread printings) and its absence is
+              // Energy Switch's *"to another of your Pokémon"*. The SOURCE half is
+              // untouched and still rides `one`, which is what makes the two riders
+              // readable as the two independent clauses they are in print.
+              op.anyDest === true
+              ? `from ${one}your Pokémon to your other Pokémon in any way you like`
+              : `from ${one}your Pokémon to another of your Pokémon`;
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is

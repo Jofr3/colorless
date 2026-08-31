@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-08-31 — build session #381 (**P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions, and a refusal whose own stated blocker was half wrong.*** Engine **0.342.0 → 0.343.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions.** *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — **1 sentence / 2 legal printings** (`sv08-020`/`-195` Castform) — now SIMULATES on ONE new anchor over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The shipped refusal named the right blocker and the wrong size**: the quantifier was one inhabitant (`max: number | "any" | "all"`), and the real work is that *"any amount"* and *"all"* **disagree about ZERO** — this family has been declinable since M4 and `validateChoice` carried a ceiling with no floor. 🛑 `"all"` is ONE VALUE ON `max` and not a second field, because the printed determiner answers BOTH questions at once (D361's rule on the sibling `discardEnergy.count`, on the same word: **a widening is free; a generalisation is not**). 🛑 The op carries the printed WORD, the prompt carries the resolved NUMBERS — `min === max` is `chooseCards`'s shipped declinable split, `choosePokemonMulti`'s bounds and the `const exact = prompt.min === prompt.max` both HUDs already caption from: **derived from the model, not invented.** 🛑 **The first FORCED arm this op has ever had** — one destination and a fixed quantity is one legal answer, so it applies inline; gated on the FLOOR so every declinable printing still asks on the same board. 🛑 **Three sentences refused with three distinct reasons** — destination SHAPE, own-board SEAT by construction, and seat-plus-a-fifth-route. ✅ **The pre-build tripwire audit ran and found nothing resting on the refusal** — but it was **wrong in the other direction**: D229's anchor rows survived (a separate third anchor) and `D244-any-amount-clamps-to-one` rotted instead. **17 mutants / 17 KILLED**, 49 rows re-probed all KILLED, precheck clean over **1,745**. `bun run check` **439 files / 9,689 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1718 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,801.9s`** — `+17 killed, +0 declared`, **the second slice running whose delta was written down before the sweep launched**. Completeness check structural: **1,745 listed / 1,745 run / 1,745 matched / 0 unmatched**.)
+**Last updated:** 2026-08-31 — build session #382 (**P3-M5 — D442, *the destination axis of the move-Energy family — the answer becomes a MAP, and the version question the brief asked was at the wrong address.*** Engine **0.343.0 → 0.344.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions, and the rename it was asked about turns out not to be at a persisted address at all.** *"Move all Energy from this Pokémon to your Benched Pokémon in any way you like."* and the two *"You may move any amount of [{M}] Energy from your Pokémon to your other Pokémon in any way you like."* printings — **3 sentences / 3 legal printings** — now SIMULATE over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The slice is ONE FACT: the answer `{ uids: string[]; dest: PokemonRef }` becomes `{ picks: { uid, dest }[] }`** — `attachCards`' shipped map, which D441's refusal named by name. 🛑 **The additive `picks?:` road is refused on D359's own rule four lines up in the same union**: two spellings of one answer. 🛑 **`EffectChoice` IS NEVER SERIALIZED** — `MatchRecord` holds `state` + a rendered `log`, and a choice rides one action — so the constant reaches the two OPTIONAL `anyDest` riders (op + prompt) and not the rename; both read ABSENT as the pre-D442 coupling, which is D334 twice. 🛑 **A coupling expressed by a SHAPE becomes an assertion the moment the shape widens** — and `validateChoice` is the only thing holding it. 🛑 **Two GAPs found at authoring time, both findings**: a missing `anyDest` arm in `projection.test.ts`'s round-trip table, and a row that was unkillable because the arm's own guard makes the ADMIT direction unobservable. **Mutants 1,745 → 1,761; 16/16 KILLED; 100 neighbour rows re-probed, all KILLED. `bun run check` GREEN — 440 files / 9,716 tests.** Archive ratchet **111 → 112**.)
+
+**Last updated (was):** 2026-08-31 — build session #381 (**P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions, and a refusal whose own stated blocker was half wrong.*** Engine **0.342.0 → 0.343.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions.** *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — **1 sentence / 2 legal printings** (`sv08-020`/`-195` Castform) — now SIMULATES on ONE new anchor over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The shipped refusal named the right blocker and the wrong size**: the quantifier was one inhabitant (`max: number | "any" | "all"`), and the real work is that *"any amount"* and *"all"* **disagree about ZERO** — this family has been declinable since M4 and `validateChoice` carried a ceiling with no floor. 🛑 `"all"` is ONE VALUE ON `max` and not a second field, because the printed determiner answers BOTH questions at once (D361's rule on the sibling `discardEnergy.count`, on the same word: **a widening is free; a generalisation is not**). 🛑 The op carries the printed WORD, the prompt carries the resolved NUMBERS — `min === max` is `chooseCards`'s shipped declinable split, `choosePokemonMulti`'s bounds and the `const exact = prompt.min === prompt.max` both HUDs already caption from: **derived from the model, not invented.** 🛑 **The first FORCED arm this op has ever had** — one destination and a fixed quantity is one legal answer, so it applies inline; gated on the FLOOR so every declinable printing still asks on the same board. 🛑 **Three sentences refused with three distinct reasons** — destination SHAPE, own-board SEAT by construction, and seat-plus-a-fifth-route. ✅ **The pre-build tripwire audit ran and found nothing resting on the refusal** — but it was **wrong in the other direction**: D229's anchor rows survived (a separate third anchor) and `D244-any-amount-clamps-to-one` rotted instead. **17 mutants / 17 KILLED**, 49 rows re-probed all KILLED, precheck clean over **1,745**. `bun run check` **439 files / 9,689 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1718 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,801.9s`** — `+17 killed, +0 declared`, **the second slice running whose delta was written down before the sweep launched**. Completeness check structural: **1,745 listed / 1,745 run / 1,745 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-08-31 — build session #380 (**P3-M5 — D440, *damage scaled by a filtered discard-pile count — the first seat this union carries as a FIELD, and a confound no printed sentence can break.*** Engine **0.341.0 → 0.342.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes.** *"This attack does N [more] damage for each &lt;noun&gt; in your [opponent's] discard pile."* — **4 sentences / 8 legal printings** — now SIMULATE on ONE `DamageCountSource` and **ZERO new `CardFilter` members**: `anyEnergy`, `basicEnergy`, `item`, `byName`. 🛑🛑 **FOLD AND SEAT ARE PERFECTLY CONFOUNDED IN THE BUILDABLE CORE** — every claimed "more" row reads YOUR pile, every claimed bare row your OPPONENT's — so a build deriving either from the other is green on all 8 printings. Broken by CONSTRUCTED text, after checking the house style permits it (D439's own suite drives 3 non-corpus sentences to positive values), and the two confound mutants were given an ATTRIBUTION CONTROL: with the constructed rungs removed they SURVIVE. 🛑 The seat is a FIELD, inverting the union's apparent rule — D168's reason is about a union-wide side and D369's about a RENAME; **D193's `zone` is what decides it**, because two members would duplicate the `CardFilter`. ✅ D376's pile walk GENERALISED IN PLACE, one mutant reddening two suites through two vocabularies. 🛑 Two refusals, two reasons: Ancient is DATA-BLOCKED permanently, the Team Rocket name substring is UNBUILT with an executable falsifier. ⚠️ The first noun map in this family with an apostrophe in a KEY — `literalClauseRow`, not `.get`. **13 mutants / 13 KILLED / 0 GAPs**, corpus 1,715 → 1,728. `bun run check` GREEN 438 files / 9,669 tests.)
 
@@ -509,6 +511,126 @@
 
 ## NEXT (resume point)
 
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-31, after D442)
+>
+> ✅ **`bun run check` IS GREEN — 440 files / 9,716 tests, `CHECK_EXIT=0`**, measured after the
+> ritual, not before it. Engine **0.344.0**, **`MATCH_RECORD_VERSION` 29**, mutation corpus
+> **1,761**, archive ratchet **112**.
+>
+> 🛑 **(1) THE DEBT: D442 IS UNCOMMITTED AND ITS WHOLE-CORPUS SWEEP HAS NOT RUN.** The builder was
+> told to do neither. Commit with EXPLICIT PATHS (never `git add -A`), then launch the sweep.
+>
+> 🔮 **(2) THE EXPECTED SWEEP DELTA, WRITTEN DOWN BEFORE THE SWEEP RUNS — THIS IS THE THIRD SLICE
+> RUNNING TO COMMIT TO A NUMBER, AND IT IS THE ONLY FORM OF THIS CHECK THAT CAN FAIL.**
+>
+> > **`1734 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 1,761 — i.e. `+16 killed, +0 declared` off D441's `1718 · 27` over 1,745.**
+>
+> **The `+0` is again the half worth predicting, and this slice earns it harder than D441 did.**
+> D442 **RENAMED a shipped wire member** (`EffectChoice.moveEnergy`: `{uids, dest}` → `{picks}`),
+> **generalised a shipped apply in place** (`moveEnergyApply` now takes the map and groups events by
+> (source, destination) pair), and **re-transcribed SIX of its neighbours' rows** — the exact
+> combination under which a pre-existing verdict flips silently. If the sweep returns anything other
+> than the line above, the difference is a finding, not a rounding.
+>
+> ✅ **(3) WHAT WAS RE-PROBED, AND WHAT WAS NOT, STATED AS THE PARTIAL IT IS (D433).** **100 rows
+> re-probed and all 100 KILLED**: D442 16/16, D226 9/9, D229 9/9, D244 7/7, D441 17/17, D275 8/8,
+> D359 17/17, D426 11/11, D223 6/6. **NOT PROBED: the ~327 further rows whose `expectKilledBy` names
+> a suite this slice edited** (427 in total) — almost all of them pinned on `censusAtHead.test.ts`
+> and the nine census siblings, where every edit is a HEAD PIN or a chain FRONT TERM. **That is an
+> argument, not a probe**, and the whole-corpus sweep is what settles it. ✅ `precheck` is clean over
+> all **1,761**, which proves no anchor rotted — a different and weaker claim than a probe.
+>
+> ✅ **(4) D426's TAUTOLOGY CHECK WAS RUN AND PASSES.** Thirteen numeric assertions in ten files
+> moved and **every one of them is a HEAD PIN**: 451→454, 1451→1454, 189→186, 281→278, 163→160,
+> 1501→1504, 231→228, 1906→1909, 477→474 (plus their duplicates in the sibling suites). **THIRTEEN
+> CHAINS took a `- 3` FRONT TERM** — two in `censusAtHead`, two each in `inPlayTypeBonus`,
+> `moreEnergyBonus`, `benchNamedBonus`, `sameEnergyBonus`, three in `opponentBenchCount`, four in
+> `retreatCostBonus`, one in `precociousEvolution` — and **every frozen endpoint is unchanged**: 521,
+> 269, 1210, 1477, and the five narrowed instrument pairs `[372,1271] [371,1270] [369,1263]
+> [368,1262] [367,1261]`.
+>
+> 🛑 **(5) THE BIGGEST FINDING, AND IT IS ABOUT WHERE A TYPE LIVES RATHER THAN ABOUT THE SLICE.**
+> The work order asserted that the `moveEnergy` CHOICE shape *"is persisted in `phase.cont`"*, which
+> would have made a rename D359's case and owed a version bump. **It is false.** A `MatchRecord` is
+> `{version, seed, startedAt, state, log, names}`; `state.phase` (`effect:choose`) holds the PROMPT
+> and an `EffectContinuation` (`{pendingOp, rest, ctx, record?}`); `log` is the RENDERED
+> `SeatLogEntry[]`. **An `EffectChoice` appears in none of them** — it rides one `resolveEffect`
+> action, is validated, is applied, and is gone. So `MATCH_RECORD_VERSION` never reached the rename;
+> what it reached were the two OPTIONAL `anyDest` riders (on the OP inside `phase.cont.pendingOp`,
+> and on the PROMPT), and both read ABSENT as the pre-D442 coupling. **D334 twice, not D359 once.**
+> ⚠️ **THE GENERAL RULE FOR A SUCCESSOR: before pricing a shape change against the version constant,
+> `grep` for where the type actually LANDS in `MatchRecord`.** D427 wrote *"choosing a carrier does
+> not duck persistence — drive the record, do not reason from the carrier's name"*; this is the same
+> rule pointing the other way, and it is worth as much: **a shape that is NOT persisted must not be
+> priced as though it were**, or a slice pays a bump it does not owe and retires every live match to
+> do it.
+>
+> ▶ **(6) THE RESIDUE, RE-MEASURED AT THIS HEAD — and always name the subtraction set (D425).**
+> `!resolvedByAnyReader` alone: **186 sentences / 278 printings** (was 189 / 281). `residueSentences`
+> (− registry − gate − trailing): **160**. `BUILT.attack` **1504**; unbuilt attack units **228**.
+> Reader surface **13, unmoved**. Read these off `censusAtHead.test.ts`, never off this paragraph;
+> it rots by construction.
+>
+> ▶ **(7) WHAT IS LEFT IN THE MOVE-ENERGY FAMILY, MEASURED AT THIS HEAD.** The loosest plausible
+> pattern over the whole 640-sentence corpus is `/mov/i` (17 hits, all read, unchanged from D441).
+> After D442 the unbuilt Energy-move sentences are **THREE**:
+>
+> | p | sentence | why it is unbuilt |
+> |---|---|---|
+> | 2 | `Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon.` | **SEAT** — the op is own-board on all five `moveEndpoints` branches, in `moveEnergyApply` (`destRef.seat !== ctx.seat` → return state) and in `moveEnergyPlayable` |
+> | 3 | `You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon.` | **SEAT** + a fifth `route` + a `decider` question no `moveEnergy` park has ever asked |
+> | 1 | `Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any Pokémon onto your Bench in this way, move an Energy from this Pokémon to the new Benched Pokémon.` | a COMPOUND whose move tail lands on a body that did not exist when the program started, so the destination is a uid the park cannot name |
+>
+> ⚠️ **STATE THE PATTERN AND ASK WHAT IT CANNOT SEE** (D419/D424/D425): `/mov/i` cannot see a
+> printing that spells the action with a different verb (`Switch`, `Attach`, `Put`), so seventeen is
+> a floor. The `damage counter` movers (corpus rows 406-408, 649, 686) are a DIFFERENT family — they
+> are `moveCountersChosen`, not `moveEnergy` — and are named here only so a survey that drops them
+> is not mistaken for one that never saw them.
+>
+> ▶ **(8) THE OPPONENT-SIDE PAIR IS THE NEXT SLICE IN THIS FAMILY: ONE MECHANISM, TWO SENTENCES,
+> FIVE LEGAL PRINTINGS — AND IT IS DEARER THAN IT LOOKS.** `moveEndpoints`, `moveEnergyApply`,
+> `moveEnergyPlayable` and `moveNote` are all own-board, and the §11 refusal gate has **never been
+> asked about this op** because it has never reached the other side of the table. **Before pricing
+> it, grep for the invariant the change breaks** (D414): *"a `moveEnergy` only ever touches the
+> controller's own bodies"* — `state.players[seat]`, `ctx.seat`, `destRef.seat !== ctx.seat`,
+> `ownInPlayRefs(state, seat)`. ⚠️ **AND ASK THE `decider` QUESTION FIRST**: a pick on the
+> OPPONENT's board is the first `moveEnergy` prompt whose answerer might not be its controller, and
+> `RunResult.decider` + `phase.answerer` are the shipped machinery for that (three producers today —
+> `opponentMayDraw`, `opponentSwitchOut`, `opponentDiscardsFromHand`). The second sentence prints
+> *"You may"* on a move the CONTROLLER makes to the opponent's board, which is a fourth shape again.
+>
+> ⚠️ **(9) THINGS THIS SLICE LEARNED THAT A SUCCESSOR SHOULD NOT RE-LEARN.**
+> · **A coupling expressed by a SHAPE becomes an ASSERTION the moment the shape widens, and nothing
+>   else holds it.** *"Every pick lands on one destination"* was true by construction under
+>   `{ uids, dest }`; under the map it is one `if` in `validateChoice`, and deleting it turns Energy
+>   Switch and Poppy into spread cards with every board driving D442's OWN sentences still green.
+> · **A row can be unkillable in one direction and killable in the other.** Building a regex class
+>   from `ENERGY_TYPE_BY_CODE` buys *cannot ADMIT a code the map refuses* (unobservable — the arm's
+>   own guard turns an unmapped code into the same `null` an unmatched anchor gives) and *cannot DROP
+>   one it carries* (observable). Only the second can be a mutant. **Write the row for the observable
+>   direction and record the other at the guard** (D420, measured rather than classified).
+> · **Two riders on one op need TWO rows when they are independent in the PRINT.** `anySource` and
+>   `anyDest` co-occur on two of the three sentences and not on the third; a suite asserting only
+>   *"the spread resolves"* would be green under whichever rider it did not happen to exercise.
+> · **Appending to a shared demonstrator reddens its provenance rungs — TWELVE of them here.**
+>   `fix-trainerops` gained attacks 63-65 and twelve suites pin `attacks.length`. **Grep
+>   `toHaveLength(<old>)` across `packages/engine/src/*.test.ts` before running anything**; the first
+>   one surfaced as a RED BASELINE inside the mutation harness, which is the expensive way to find it.
+> · **D437's converse trap is easiest to hit when you add a COMPONENT.** A second dialog that spells
+>   a neighbour's line byte-identically (`const canDecline = floor === 0;`) makes an existing mutant
+>   match twice. `precheck` catches it in seconds; write the gate differently and say why at the site.
+>
+> ⚠️ **(10) PROCESS, UNCHANGED AND STILL TRUE.** `bun run mutants --precheck` is NOT a flag — it
+> silently starts a full sweep; the precheck is `bun scripts/mutation/precheck.ts` and it costs
+> seconds. `--allow-dirty` is REQUIRED on an uncommitted slice or every row returns SKIPPED-DIRTY and
+> the run exits 1. Check for a live sweep with an **argv[0]-anchored**
+> `ps -eo args | grep -E '^bun scripts/mutation/run\.ts'` plus the journal's pid. **Never run a
+> formatter on this tree** — 122 files are format-dirty and `--write` on ONE file swept 140 lines of
+> unrelated drift into a slice at D438.
+
+### Prior resume point (P3-M5 — D441, the declinability axis of the move-Energy family, kept for continuity)
+
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-08-31, after D441)
 >
 > ✅ **`bun run check` IS GREEN — 439 files / 9,689 tests**, measured after the ritual, not before it.
@@ -596,6 +718,19 @@
 > ADDITIVE optional `picks?:` beside the existing pair is D334's case and does not. **Ask it in both
 > directions and drive it, per this run's standing practice.** Row 5's typed `{M}` filter is a
 > separate axis (`providesEnergy` exists and Armarouge already carries it) and should not be folded in.
+>
+> 🛑 **CORRECTED AT D442, IN PLACE, BECAUSE A RESUME POINT IS A WORK ORDER AND A FALSE ONE GETS ACTED
+> ON.** Two claims in the paragraph above are WRONG. (1) The choice shape **is not persisted in
+> `phase.cont`, or anywhere** — a `MatchRecord` is `{version, seed, startedAt, state, log, names}`;
+> `state.phase` (`effect:choose`) holds the PROMPT and an `EffectContinuation`
+> (`{pendingOp, rest, ctx, record?}`); `log` is the RENDERED entries. An `EffectChoice` is in none of
+> them, so a rename is **not** D359's case and the version constant never sees it. D442 measured
+> `MatchRecord` instead of obeying this paragraph, and that was its biggest finding.
+> (2) The typed `{M}` filter **was folded in and cost one optional brace group plus one map lookup** —
+> it is a difference in FILTER, not in a captured value's KIND, so D441's *two kinds, two anchors* rule
+> does not reach it. Priced rather than inherited, and taken. ⚠️ The general point: **this paragraph was
+> repeated into D442's brief verbatim, which re-asserted it.** A claim carried forward from a resume
+> point is still a claim being made, and it inherits no evidence from having been written down before.
 >
 > ⚠️ **(9) THE OPPONENT-SIDE PAIR IS ONE MECHANISM AND TWO SENTENCES, AND IT IS DEARER THAN IT LOOKS.**
 > `moveEndpoints`, `moveEnergyApply` (`destRef.seat !== ctx.seat` → return state), `moveEnergyPlayable`
@@ -13712,8 +13847,9 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions.*** Engine **0.342.0 → 0.343.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes in both directions. *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — 1 sentence / 2 legal printings — on ONE new anchor over the shipped `moveEnergy` op; `max` gains `"all"`, the prompt gains an optional `min`, and the op gains its FIRST forced arm. Three sentences refused with three distinct reasons. 17 mutants / 17 killed; `bun run check` 439 files / 9,689 tests.) |
-| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D440, *damage scaled by a filtered discard-pile count — the first seat this union carries as a FIELD.*** Engine **0.341.0 → 0.342.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes. 4 sentences / 8 legal printings on ONE `DamageCountSource` and ZERO new `CardFilter` members. Fold and seat are perfectly confounded in the buildable core and the confound is broken by CONSTRUCTED text, with an attribution control proving the constructed rungs are the only killers. 13 mutants / 13 KILLED / 0 GAPs; corpus 1,728. `bun run check` GREEN 438 files / 9,669 tests.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D442, *the destination axis of the move-Energy family — the answer becomes a MAP.*** Engine **0.343.0 → 0.344.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes both ways — and the RENAME it was asked about is not at a persisted address (`EffectChoice` is never serialized; the PROMPT and the persisted OP are, and both new keys are optional with the old coupling as their absent arm). **3 sentences / 3 legal printings**, TWO anchors, ZERO new ops/prompt kinds/`CardFilter` members, reader surface **13**. Mutants **1,745 → 1,761**, 16/16 killed; `bun run check` **440 files / 9,716 tests**.) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions.*** Engine **0.342.0 → 0.343.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes in both directions. *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — 1 sentence / 2 legal printings — on ONE new anchor over the shipped `moveEnergy` op; `max` gains `"all"`, the prompt gains an optional `min`, and the op gains its FIRST forced arm. Three sentences refused with three distinct reasons. 17 mutants / 17 killed; `bun run check` 439 files / 9,689 tests.) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D440)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D440, *damage scaled by a filtered discard-pile count — the first seat this union carries as a FIELD.*** Engine **0.341.0 → 0.342.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes. 4 sentences / 8 legal printings on ONE `DamageCountSource` and ZERO new `CardFilter` members. Fold and seat are perfectly confounded in the buildable core and the confound is broken by CONSTRUCTED text, with an attribution control proving the constructed rungs are the only killers. 13 mutants / 13 KILLED / 0 GAPs; corpus 1,728. `bun run check` GREEN 438 files / 9,669 tests.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D408)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D408, *the bare attack lock on both seats — and a repair of a program that resolved, was counted BUILT, and did nothing.*** Engine **0.312.0 → 0.313.0**, `MATCH_RECORD_VERSION` **stays 25**. 3 sentences / 11 legal printings on ONE alternation anchor, ONE `[A-Z]` narrowing and TWO arms; ZERO new ops, fields, readers, members or registry rows. The mis-read sentence moves NO census figure — only a program comparison and a BOARD can see it, and both were measured red before the arm was written.; **whole-corpus sweep 1463 · 1439 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D407's for a twenty-sixth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D407)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D407, *the board-wide own-Energy count — a zone D196 refused on a measurement that has since stopped being true.*** Engine **0.311.0 → 0.312.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the FIELD is STORED and DRIVEN rather than asserted (the constant is not exported). **1 sentence / 4 legal printings** — *"This attack does 30 more damage for each {G} Energy attached to all of your Pokémon."* — on ONE WIDENED whole-sentence anchor (`SELF_ENERGY_SCALE` gains a captured `(this Pokémon|all of your Pokémon)` tail), ONE OPTIONAL `zone?: "board"` on the SHIPPED `energyOnSelf` member, ONE producer branch and ONE evaluator branch delegating to `countEnergyInPlay`. ZERO new members, counters, ops, readers, `BoardCondition` members, registry rows or clause rows. 🛑 A `zone` and not a fourteenth member (D193's argument: two zone members would each carry `energyType`, the second answer to one question D159 forbids), and OPTIONAL with `undefined` meaning the ATTACKING BODY (D135's polarity — a producer that forgets it UNDER-counts). ⚠️ ADDITIVE-ONLY on this zone, the exact mirror of `energyOnOpponent`: there the `×` reader carries the zone and the `+` reader hard-codes one. ✅ The PROVISION seam was VERIFIED rather than inherited — a wildcard Luminous on the Bench scores and a second Special demotes it, driven both ways on a live board. 🛑 The next slice's supply check found a WRONG-BUT-PLAUSIBLE PROGRAM at HEAD: *"During your next turn, this Pokémon can't use attacks."* (4 legal) derives `preventAttackUse { attack: "attacks" }`. Census: `BUILT.attack` 1365 → **1369**, both reader instruments +1 / +4, `FIXTURE_POOL` 510 → **511**, unbuilt attack column 367 → **363**. `bun run check` **413 files / 8,704 tests, exit 0**; mutants **1447 → 1455**, **8/8 on the first run**; **whole-corpus sweep 1455 · 1431 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D406's for a twenty-fifth sweep, `HEAD` re-checked independently at exit 0.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D406)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D406, *the counted Tool scaler — a fourth resource for a union that had counted three things for twelve members.*** Engine **0.310.0 → 0.311.0**; **`MATCH_RECORD_VERSION` STAYS 25**, argued from where the member is STORED — a `DamageCountSource` is a PARSE-TIME type consumed in the same tick, so no record could ever hold one. **1 sentence / 5 legal printings** — *"This attack does 30 damage for each Pokémon Tool attached to all of your Pokémon."* — on ONE whole-sentence anchor, ONE `deriveAttackDamageMultiplier` arm, ONE THIRTEENTH `DamageCountSource` member (`toolsOnYourBoard`), ONE `scaledAttackDamage` arm and ONE shared board counter (`countToolsInPlay`, beside `countEnergyInPlay`). ZERO new ops, fields, readers, `BoardCondition` members, registry rows or clause rows. 🛑 The SCOPE falsifier FIRED and cost a **FUNCTION rather than a FIELD** — nothing in the engine counted Tools over a zone, both existing readings being `tools.length > 0` on ONE body — so the member count stayed at one and the pre-specified re-price did not trigger. The DROPPED BASE held; `attack.ts`'s three disjunction chains were not touched. 🛑 The slice also found `energyOnSelf`'s *"the pool prints no board-wide spelling"* claim to be FALSE at this head (4 legal printings, ADDITIVE, unbuilt) and pinned the correction as an executable guard. ⚠️ And the handoff's prediction that the NINE-reader instrument would stand still was wrong: its ARRAY carries `deriveAttackDamageMultiplier`, so it moved 394 / 1,315 → **395 / 1,320**. `BUILT.attack` 1360 → **1365**; check green **412 files / 8,677 tests, exit 0**; corpus 1438 → **1447**, D406 **9/9 killed on the first run**, neighbours D275/D196/D282/D316/D317/D274/D301/D310/D395/D405/D383/D403/D318/D382 each probed alone and green; **7 of the 9 rows are silent in every census figure in the repo**, the highest ratio of six anchors. **Whole-corpus sweep 1447 · 1423 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D405's for a twenty-fourth sweep, `HEAD` re-checked independently at exit 0.) |
@@ -13798,6 +13934,84 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-08-31 — build session #382 (P3-M5 — D442, the destination-side spread)
+
+- **D442** — three printed sentences simulate, and they are **ONE mechanism**:
+  *"Move all Energy from this Pokémon to your Benched Pokémon **in any way you like**."*
+  (`sv08-067` Kilowattrel, 1 legal — the sentence D441 refused by name) and
+  *"You may move any amount of **[{M}]** Energy from your Pokémon to your other Pokémon in any way
+  you like."* (2 sentences, 1 legal each). **3 sentences / 3 legal printings**, TWO new anchors
+  inside `deriveAttackEffect` over the SHIPPED `moveEnergy` op — **zero new ops, zero new prompt
+  kinds, zero new `CardFilter` members, reader surface unmoved at 13.**
+- 🛑 **The slice is one fact: the answer becomes a MAP.** `{ kind: "moveEnergy"; uids: string[];
+  dest: PokemonRef }` → `{ kind: "moveEnergy"; picks: { uid: string; dest: PokemonRef }[] }` —
+  `attachCards`' shipped `assignments` shape, which this repo has named as the blocking difference
+  since D335 (*"moveEnergy's picks share one destination"*).
+- 🛑 **The additive `picks?:` road was available and is REFUSED on D359's own rule, four lines up in
+  the same union.** `{ uids: [a,b], dest: X }` and `{ picks: [{a,X},{b,X}] }` are the SAME ANSWER, so
+  keeping both is *"two spellings of one answer"* — the shape `{ ref, take: 0 }` is refused for, with
+  the same consequence (two apply paths, and a log row one route can name that the other never did).
+  **One answer, one spelling.** The decline also stops inventing a destination: both HUDs used to pull
+  `prompt.destinations[0]` to fill an empty move's mandatory `dest`, and `picks: []` names nobody.
+- 🛑🛑 **THE BRIEF'S CENTRAL PREMISE WAS FALSE, AND CHECKING IT IS THE BIGGEST FINDING.** It said the
+  choice shape *"is persisted in `phase.cont`"*, which would have made the rename D359's case and
+  owed a `MATCH_RECORD_VERSION` bump. **It is not persisted anywhere.** `MatchRecord` is
+  `{version, seed, startedAt, state, log, names}`; `state.phase` (`effect:choose`) holds the PROMPT
+  and an `EffectContinuation` (`{pendingOp, rest, ctx, record?}`); `log` is the RENDERED
+  `SeatLogEntry[]`. An `EffectChoice` is in none of them — it rides one `resolveEffect` action, is
+  validated, is applied, and is gone.
+- ✅ **So the constant reaches the two OPTIONAL riders instead**, and both were driven: `anyDest` on
+  the OP (inside `phase.cont.pendingOp`) and `anyDest` on the PROMPT. ABSENT means the
+  single-destination coupling — what every pre-D442 writer meant — so this is **D334's added optional
+  `exact`, twice**, and the INVERSE of D359's `upTo`. §7 reconstructs a v29 record by deleting BOTH
+  keys, replays it through `applyAction`, and shows the coupled answer still accepted **and the
+  spread still refused**, beside the live board accepting it. **`MATCH_RECORD_VERSION` STAYS 29.**
+- 🛑 **A coupling expressed by a SHAPE becomes an ASSERTION the moment the shape widens.** Under
+  `{ uids, dest }`, *"every pick lands on one destination"* was true by construction and could not be
+  written wrong. Under the map it is a check in `validateChoice`, and
+  `D442-validator-deletes-the-destination-coupling` is what happens if nobody writes it: Energy
+  Switch and Poppy silently become spread cards, invisible to every board driving this slice's own
+  sentences. It is D226's C1 one endpoint over.
+- ⚠️ **The two riders are independent in the PRINT, so they are independent in the corpus.** Sentence
+  1 is `anyDest` with no `anySource` (*"from **this Pokémon**"*, one body); the two *"any amount"*
+  printings carry both (*"from **your Pokémon**"*, plural). Two rows, each the other's control.
+- ⚠️ **The typed `{M}` axis was PRICED and TAKEN, and it is one map entry.** `providesEnergy` exists
+  (D171), `attachedEnergies` already filters through `matchesAttached`, and `ENERGY_TYPE_BY_CODE` is
+  already shared — so it is ONE optional brace group in the shared anchor (D247's shipped spelling),
+  dispatched on WHICH GROUP MATCHED (D230). **A separate anchor would have been D441's rule
+  misapplied**: that rule is *two KINDS, two anchors*, and these differ in FILTER, not in the kind of
+  a captured value.
+- ⚠️ **The source axis was priced too and cost nothing** — it is `anySource`, shipped at D226 — and
+  `moveEndpoints` needed **no new branch at all**: the FREE route's `needed: 2` IS the printed
+  *"other"*.
+- ✅ **The pre-build tripwire audit was run BOTH ways (D441's correction).** SEMANTIC: 1,745 rows
+  enumerated from the module, fourteen needles, **226 hits**; none rests on the refusal. MECHANICAL:
+  every row whose `file` this slice edits — **1,083** — tested against the HEAD bytes; exactly **7**
+  had a region this slice changed (the 6 `precheck` then reported broken, plus
+  `D275-engine-version-drifts-again`, re-pointed in the same edit as the bump).
+- 🛑 **Two GAPs at authoring time, both findings.** `D442-projection-drops-the-destination-rider`
+  survived because `projection.test.ts`'s round-trip table had `anySource` and `min` arms and no
+  `anyDest` one. And `D442-anchor-hand-spells-the-code-class`, first written as *the class admits
+  `C`/`N`*, survived because the arm's own guard turns an unmapped code into the same `null` the
+  unmatched anchor gives — **building a class from its map buys two properties and only ONE is
+  observable**. The row now installs the DROP direction; the other is written down at the guard.
+- ⚠️ **What I got wrong mid-flight and how it was found:** appending three attacks to
+  `fix-trainerops` reddened **twelve** attack-count provenance rungs (63 → 66) across twelve suites,
+  which I had not predicted; the first surfaced as a **RED BASELINE** on `--decision D229` rather than
+  in my own run, because that run predated the append. Those rungs exist to catch an append and did.
+- ⚠️ **D437's converse trap was hit and avoided**: the new spread dialogs would have spelled
+  `const canDecline = floor === 0;` a second time in each HUD file, making
+  `D441-*-hud-keeps-the-decline` match twice. The gate is INLINE in the new components, and why is
+  written at the site.
+- **Census:** resolving **451 s / 1,451 p → 454 / 1,454**; raw unbuilt **189 / 281 → 186 / 278**;
+  `residueSentences` **163 → 160**; `BUILT.attack` **1,501 → 1,504**; unbuilt attack units
+  **231 → 228**; built total **1,906 → 1,909**; `units − built` **477 → 474**. Thirteen assertions in
+  ten files, plus **thirteen chains given a `- 3` FRONT TERM** and every frozen endpoint untouched.
+- **Mutants: 16 rows, 16 KILLED**; corpus **1,745 → 1,761**; `precheck` clean over all 1,761.
+  Neighbours re-probed: **100 rows, all KILLED** (D442 16, D226 9, D229 9, D244 7, D441 17, D275 8,
+  D359 17, D426 11, D223 6). `bun run check` **GREEN — 440 files / 9,716 tests**. Archive ratchet
+  **111 → 112**. Engine **0.343.0 → 0.344.0**.
 
 ### 2026-08-31 — build session #381 (P3-M5 — D441, the mandatory Energy move)
 

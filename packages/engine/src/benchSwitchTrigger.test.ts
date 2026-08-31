@@ -348,7 +348,7 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
     const { state: done, events } = mustApply(state, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: all, dest: prompt.destinations[0] as PokemonRef },
+      choice: { kind: "moveEnergy", picks: all.map((uid) => ({ uid, dest: prompt.destinations[0] as PokemonRef })) },
     });
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.active?.energy).toHaveLength(4);
@@ -374,8 +374,9 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: [special[0]?.uid as string],
-        dest: prompt.destinations[0] as PokemonRef,
+        picks: [
+          { uid: special[0]?.uid as string, dest: prompt.destinations[0] as PokemonRef },
+        ],
       },
     });
     expect(done.players.p1.active?.energy).toEqual([special[0]?.uid]);
@@ -385,11 +386,13 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
     // The printed "you may move" needs no `optional` wrapper: this family parks
     // with a legal EMPTY answer, so wrapping it would ask the same question twice.
     const { state, leaves } = afterSwitch();
-    const prompt = movePrompt(state);
+    // D442 — the decline names no destination at all now (`picks: []`), so the
+    // parked prompt is read only for its own assertions above.
+    movePrompt(state);
     const { state: done, events } = mustApply(state, {
       type: "resolveEffect",
       seat: "p1",
-      choice: { kind: "moveEnergy", uids: [], dest: prompt.destinations[0] as PokemonRef },
+      choice: { kind: "moveEnergy", picks: [] },
     });
     expect(done.phase.kind).toBe("turn:action");
     expect(activeUid(done, "p1")).toBe(leaves);
@@ -449,8 +452,10 @@ describe("D244 §3b — `othersToSelf` vs `benchToActive`, on the board that sep
       seat: "p1",
       choice: {
         kind: "moveEnergy",
-        uids: prompt.movable.map((m) => m.uid),
-        dest: prompt.destinations[0] as PokemonRef,
+        picks: prompt.movable.map((m) => ({
+          uid: m.uid,
+          dest: prompt.destinations[0] as PokemonRef,
+        })),
       },
     });
     expect(done.players.p1.active?.energy).toHaveLength(0);

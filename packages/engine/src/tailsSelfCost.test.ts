@@ -343,13 +343,25 @@ describe("the tails-gated self-costs — derived, not authored", () => {
       { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" },
     ]);
     expect(moveAll?.some((op) => op.op === "discardEnergy")).toBe(false);
-    // …and the SELF-DISCARD sentence one word away is still refused by the same
-    // reader, which is the control that keeps the rung above from passing on a
-    // build that simply claims everything (D424's rule: every refusal owes a
-    // neighbouring admission on the same axis, and every admission owes a refusal).
-    expect(
-      deriveAttackEffect("Move all Energy from this Pokémon to your Benched Pokémon in any way you like."),
-    ).toBeNull();
+    // …and the SPREAD sentence one clause away carries the SAME verb and must also
+    // never produce a discard. 🆕 **RE-POINTED AT D442, NOT DELETED** — it stood
+    // here as a `toBeNull` control from D441 until the map answer claimed it, and a
+    // bare `!== null` in its place would be true under exactly the build this rung
+    // exists to refuse. The claim that survives the collection is the SHAPE one:
+    // whatever reader owns a "Move" sentence, the program it returns is a move.
+    const moveSpread = deriveAttackEffect(
+      "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.",
+    );
+    expect(moveSpread).toEqual([
+      {
+        op: "moveEnergy",
+        filter: { kind: "anyEnergy" },
+        max: "all",
+        route: "selfToBench",
+        anyDest: true,
+      },
+    ]);
+    expect(moveSpread?.some((op) => op.op === "discardEnergy")).toBe(false);
     // ⚠️ RE-POINTED AT D401, NOT DELETED — Kyurem sv06.5-047 "Trifrost" (the discard
     // plus a three-target snipe) stood in the list above as a NULL witness until
     // `SELF_DISCARD_THEN_ANY_TARGET` mapped it. The claim this arm needs was never

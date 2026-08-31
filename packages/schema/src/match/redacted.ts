@@ -556,6 +556,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     max: z.number(),
     min: z.number().int().nonnegative().optional(),
     anySource: z.literal(true).optional(),
+    anyDest: z.literal(true).optional(),
     note: z.string(),
   }),
   /** Discard Energy off the board (Crushing Hammer / Giacomo / a §8 self-discard

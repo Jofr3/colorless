@@ -1053,6 +1053,25 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         min: 2,
         note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
       },
+      // 🆕🆕 D442 — the SAME kind carrying `anyDest` (Kilowattrel's printed "in any
+      // way you like"). Here for the two riders' reason above, verbatim: it is
+      // OPTIONAL, so the first arm pins that a prompt without it rebuilds
+      // byte-identically and this one pins that a prompt with it does not lose it —
+      // which would re-impose the single-DESTINATION coupling on the client and
+      // render the coupled wizard for a spread the server accepts. Two benched
+      // destinations, because a spread over one is not a spread.
+      {
+        kind: "moveEnergy",
+        movable: [
+          { uid: "e1", from: active("p1") },
+          { uid: "e2", from: active("p1") },
+        ],
+        destinations: [bench0, { seat: "p1", spot: { spot: "bench", index: 1 } }],
+        max: 2,
+        min: 2,
+        anyDest: true,
+        note: "Move all Energy from this Pokémon to your Benched Pokémon in any way you like.",
+      },
       {
         kind: "discardEnergy",
         discardable: [{ uid: "e1", from: active("p2") }],

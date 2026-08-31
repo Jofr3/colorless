@@ -1459,33 +1459,39 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       return null;
     }
     case "moveEnergy": {
-      // Up to `max` movable Energy uids moved onto `dest` (Energy Switch / Poppy /
-      // N's Plan). The couplings the compound decision must hold: every picked uid
-      // is an offered movable Energy (distinct), all picks share ONE source Pokémon
-      // (the printed "from 1 of your Pokémon"), the destination is an offered one,
-      // and no picked Energy's source IS the destination (no moving Energy onto
-      // itself). An empty pick is a legal decline.
+      // Up to `max` movable Energy, each paired with the Pokémon it moves onto
+      // (Energy Switch / Poppy / N's Plan / Kilowattrel). The couplings the
+      // compound decision must hold: every picked uid is an offered movable Energy
+      // (distinct), every named destination is an offered one, and no pick lands on
+      // the body it came off (no moving Energy onto itself). Unless the prompt
+      // lifts them, the picks all share ONE source (the printed "from 1 of your
+      // Pokémon") and ONE destination (the printed "to another"). An empty pick is
+      // a legal decline, unless the prompt carries a floor.
       //
-      // ⚠️ D226 — THE SINGLE-SOURCE RULE IS NOW THE PROMPT'S TO ASK FOR, AND THE
+      // ⚠️ D226 — THE SINGLE-SOURCE RULE IS THE PROMPT'S TO ASK FOR, AND THE
       // SELF-MOVE RULE IS PER PICK. N's Plan prints "from your Benched Pokémon",
       // plural, so its prompt carries `anySource` and one Energy off each of two
       // benched bodies is a legal answer here. Everything else is unchanged and
       // deliberately so: this arm is the ONLY thing standing between a wire
-      // message and `moveEnergyApply`, so relaxing the coupling by DELETING the
-      // check — rather than by making it conditional — would also have deleted
-      // the self-move rule that used to ride on `source`. Per pick, that rule is
-      // the SAME rule: under the single-source coupling every pick shares one
-      // source, so "no pick's source is the destination" and "the source is not
-      // the destination" are the same test, and the message stays the one the
-      // suite already pins.
-      if (
-        choice.kind !== "moveEnergy" ||
-        !Array.isArray(choice.uids) ||
-        !isPokemonRef(choice.dest)
-      ) {
+      // message and `moveEnergyApply`, so relaxing a coupling by DELETING the
+      // check — rather than by making it conditional — would also delete the rule
+      // riding on it.
+      //
+      // 🆕🆕 D442 — AND THE SINGLE-DESTINATION RULE IS NOW THE PROMPT'S TO ASK FOR
+      // TOO, BY THE IDENTICAL CONSTRUCTION. It used to be expressed by the answer's
+      // SHAPE (one `dest` field for the whole frame), which is why lifting it had to
+      // be a rename rather than a flag: a shape cannot be made conditional. Under
+      // `anyDest` the destinations may differ; without it they must all agree, which
+      // is the same proposition the old field asserted, now asserted rather than
+      // assumed. ⚠️ THE SELF-MOVE RULE IS UNCHANGED IN MEANING AND MOVES INSIDE THE
+      // LOOP'S PER-PICK PAIR: under the old coupling every pick shared one
+      // destination, so "no pick's source is ITS destination" and "the source is not
+      // the destination" are the same test, and the message stays the one the suite
+      // already pins.
+      if (choice.kind !== "moveEnergy" || !Array.isArray(choice.picks)) {
         return err("BAD_EFFECT_CHOICE", "expected an energy-move choice");
       }
-      if (choice.uids.length > prompt.max) {
+      if (choice.picks.length > prompt.max) {
         return err("BAD_EFFECT_CHOICE", `move at most ${prompt.max} Energy`);
       }
       // 🆕🆕 D441 — THE FLOOR, AND IT IS THE ONLY THING STANDING BETWEEN A
@@ -1499,31 +1505,51 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // declinable, so reading the missing key as 0 is what keeps those records
       // meaning what they meant (`MATCH_RECORD_VERSION` unmoved — see the prompt's
       // own doc for the D334-versus-D359 argument).
-      if (choice.uids.length < (prompt.min ?? 0)) {
+      if (choice.picks.length < (prompt.min ?? 0)) {
         return err("BAD_EFFECT_CHOICE", `move all ${prompt.min ?? 0} Energy`);
-      }
-      if (!prompt.destinations.some((d) => refEquals(d, choice.dest))) {
-        return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal destination");
       }
       const sourceOf = new Map(prompt.movable.map((m) => [m.uid, m.from]));
       const seen = new Set<string>();
       let source: PokemonRef | undefined;
+      let destination: PokemonRef | undefined;
       let selfMove = false;
-      for (const uid of choice.uids) {
+      // The entries come off the WIRE, so each is checked as an unknown shape
+      // (TypeScript's `{uid, dest}` is a claim about the action, not about the
+      // JSON) — the `attachCards` arm's rule, and the one this arm inherits along
+      // with its map.
+      for (const entry of choice.picks as readonly ({
+        uid?: unknown;
+        dest?: unknown;
+      } | null)[]) {
+        if (typeof entry !== "object" || entry === null) {
+          return err("BAD_EFFECT_CHOICE", "each move must name an Energy and a Pokémon");
+        }
+        const uid = entry.uid;
         const from = typeof uid === "string" ? sourceOf.get(uid) : undefined;
-        if (from === undefined) {
+        if (from === undefined || typeof uid !== "string") {
           return err("BAD_EFFECT_CHOICE", `${String(uid)} is not a movable Energy`);
         }
         if (seen.has(uid)) return err("BAD_EFFECT_CHOICE", `${uid} picked twice`);
         seen.add(uid);
-        if (refEquals(from, choice.dest)) selfMove = true;
-        // The coupling, unless the prompt lifted it (N's Plan). Checked INSIDE the
-        // loop, before the self-move verdict below, so the message a mixed-source
-        // answer gets is the one it got before this rider existed.
+        const dest = entry.dest;
+        if (!isPokemonRef(dest) || !prompt.destinations.some((d) => refEquals(d, dest))) {
+          return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal destination");
+        }
+        if (refEquals(from, dest)) selfMove = true;
+        // The couplings, unless the prompt lifted them (N's Plan; Kilowattrel).
+        // Checked INSIDE the loop, before the self-move verdict below, so the
+        // message a mixed-source answer gets is the one it got before these riders
+        // existed.
         if (prompt.anySource !== true) {
           if (source === undefined) source = from;
           else if (!refEquals(source, from)) {
             return err("BAD_EFFECT_CHOICE", "every Energy must come from the same Pokémon");
+          }
+        }
+        if (prompt.anyDest !== true) {
+          if (destination === undefined) destination = dest;
+          else if (!refEquals(destination, dest)) {
+            return err("BAD_EFFECT_CHOICE", "every Energy must go to the same Pokémon");
           }
         }
       }

@@ -1190,7 +1190,7 @@ describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", 
     const done = mustApply(parked, {
       type: "resolveEffect",
       seat: "p2",
-      choice: { kind: "moveEnergy", uids: [energyUid], dest },
+      choice: { kind: "moveEnergy", picks: [{ uid: energyUid, dest }] },
     });
     expect(done.state.players.p2.active?.energy).toContain(energyUid);
     expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
