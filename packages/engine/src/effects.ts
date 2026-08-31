@@ -11686,6 +11686,166 @@ function inPlayBodyFilter(noun: string): CardFilter | null {
   }
   return null;
 }
+// 🆕🆕 D440 — DAMAGE SCALED BY A COUNT OF FILTERED CARDS IN A DISCARD PILE, ON
+// EITHER SEAT. *"This attack does N [more] damage for each <noun> in your
+// [opponent's] discard pile."* — measured over `legalAttackCorpus()` (the committed
+// `legal_standard = 1` attack column, 640 sentences / 1,732 printings) by running
+// the two patterns below against every row.
+//
+// 🛑 THE WHOLE FAMILY, PRINTED WHOLE AND ON BOTH AXES (D428/D437: never truncate an
+// enumeration by rows or by width). The survey pattern is published so its edges are
+// visible (D425): every corpus row matching BOTH `/for each/` AND `/discard pile/` —
+// **8 hits, every hit read** — which is deliberately looser than either anchor below
+// and is what found the two rows a "for each X in your discard pile." shape cannot:
+//
+//   ADDITIVE ("more"), YOUR pile — 3 sentences / 6 printings reach the anchor:
+//     • "This attack does 20 more damage for each Energy card in your discard pile."             2 → anyEnergy
+//     • "This attack does 60 more damage for each Ethan's Adventure card in your discard pile."   2 → byName
+//     • "This attack does 10 more damage for each Ancient card in your discard pile."             2 → 🛑 NO FILTER (below)
+//   MULTIPLY (`×`, no adjective), the OPPONENT's pile — 2 sentences / 4 printings reach it:
+//     • "This attack does 30 damage for each Basic Energy card in your opponent's discard pile."  2 → basicEnergy
+//     • "This attack does 30 damage for each Item card in your opponent's discard pile."          2 → item
+//   MULTIPLY, YOUR pile — 1 sentence / 2 printings reaches it:
+//     • "This attack does 20 damage for each Supporter card that has "Team Rocket" in its name in your discard pile."  2 → 🛑 NO FILTER (below)
+//   REACHES NEITHER ANCHOR, and each for its own structural reason:
+//     • "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack."  1 —
+//       the noun is SPLIT AROUND the zone phrase, so the sentence does not END at
+//       "discard pile." and an `^…$` anchor cannot see it at all. It also needs a
+//       `CardFilter` member reading `attacksOf`, which is D439's refused widening one
+//       zone over — two independent blocks, and the anchor is the cheaper one to state.
+//     • "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck."  3 —
+//       a counter PLACEMENT compound, not a damage fold: its count scales an op's
+//       amount rather than the attack's damage, so it belongs to no reader in this
+//       family. Listed because the loose pattern found it and a survey that silently
+//       drops a hit is the defect this file keeps paying for.
+//
+// So the ANCHORS reach 6 sentences / 12 printings and the VOCABULARY claims
+// **4 sentences / 8 printings**; the other two fall through `discardPileFilter` to
+// null and stay on the loud ATTACK_EFFECT_SKIPPED path.
+//
+// 🛑 THE TWO REFUSALS, EACH WITH ITS OWN REASON — NOT ONE REASON TWICE.
+//   • **Ancient card** (2 printings) is DATA-BLOCKED and permanently so, not unbuilt.
+//     `types.ts`:146-149 settles it and was re-read at D440 word for word — *"are BOTH
+//     answerable, because `stage` and `types` are catalog columns; *"Ancient"* (1, Iron
+//     Moth sv06.5-009) is not, because / the Ancient/Future banner is printed on the
+//     card FACE and appears in NO / field of the persisted catalog and NONE of tcgdex's
+//     own card model (checked / upstream against Roaring Moon ex sv04-124, the canonical
+//     Ancient print — it"*. A name-keyed species table is refused there FOREVER because
+//     the banner is a per-PRINTING fact. **The fix is an INGEST change; nothing in this
+//     file can be the fix.** D439 refused the same banner one zone over for the same
+//     reason and this is the second reading of one permanent block, not a second block.
+//   • **Supporter card that has "Team Rocket" in its name** (2 printings) is UNBUILT,
+//     which is a different thing. `matchesFilter`'s `byName` arm is EXACT EQUALITY
+//     (`cards.ts`:518 — `      return card.name === filter.name;`) and **no `CardFilter`
+//     member does substring matching at any width**. A substring reading of a printed
+//     name DOES exist in this file — `CONDITIONAL_DAMAGE_CLAUSES` carries
+//     `'a Pokémon that has "Nidoking" in its name is on your Bench'` mapped to
+//     `{ kind: "yourBenchHasNameContaining", fragment: "Nidoking" }` (effects.ts:12608-12609) —
+//     but that is a `BoardCondition` member reading `topCardOf` on a BENCH, not a
+//     `CardFilter` scanning a pile, and the two vocabularies do not share a predicate.
+//     ⚠️ **THE FALSIFIER IS EXECUTABLE AND IS PINNED ON THE POPULATION** (D422/D423/D428):
+//     `discardPileScaling.test.ts` §6 asserts that the corpus row is claimed by NO
+//     reader, so the day a `CardFilter` member reads a name SUBSTRING and this map gains
+//     the row, that rung goes RED and the refusal stops being true LOUDLY. It is not
+//     asserted against a hand-written specimen.
+//
+// 🛑 THE VOCABULARY IS A CLOSED MAP AND NOT A CAPTURE, AND THAT IS WHAT KEEPS THE
+// ANCIENT ROW HONEST. The tempting generalisation is `^(.+) card$` → `byName`, which
+// would spell "Ethan's Adventure card" without this file learning a card name. It also
+// claims **"Ancient card"** — `byName { name: "Ancient" }` matches nothing in the
+// catalog, counts 0 on every board, and the sentence would score its printed base
+// FOREVER while `BUILT.attack` stepped for it. That is D190b/D199's rule exactly (*a
+// wrong-but-plausible program is strictly worse than an unbuilt one, which at least
+// fails loudly*), and it is why the price of the map is one hand-written proper name.
+// The same argument is `CLAUSE_POKEMON_TYPES`' own stated design: *"what does the
+// refusing is the map and not the regex."*
+//
+// 🛑 THE SEAT IS CAPTURED FROM THE PRINTED WORDS AND IS NEVER INFERRED FROM THE FOLD.
+// ⚠️ **IN THE BUILDABLE CORE THE TWO ARE PERFECTLY CONFOUNDED — MEASURED — AND A BUILD
+// THAT DERIVED EITHER FROM THE OTHER WOULD READ ALL FOUR PRINTED SENTENCES AND ALL
+// EIGHT PRINTINGS CORRECTLY.** Every claimed "more" sentence is YOUR pile and every
+// claimed bare sentence is your OPPONENT's. **The confound is a property of the
+// BUILDABLE SUBSET and not of the print**: the MULTIPLY × YOUR-pile cell IS printed
+// (the Team Rocket row above, 2 legal), and it is refused for its FILTER rather than
+// for its seat — so the day a substring member lands, a fold-derived seat would score
+// that card off the WRONG PILE. The empty cell is the other diagonal, ADDITIVE ×
+// OPPONENT, which the column prints nowhere at all.
+// ⚠️ **BOTH EMPTY CELLS ARE DRIVEN ON CONSTRUCTED TEXT RATHER THAN ARGUED**
+// (`discardPileScaling.test.ts` §2, labelled as constructed — `bodiesInPlayScaling.test.ts`
+// §2's own posture, which drives three non-corpus sentences to positive values and says
+// *"Constructed, and labelled so."*). **A reader is a function of TEXT**, so a rung over
+// text the column does not print is a claim about the reader and not about the pool —
+// which is exactly what breaks a confound that no printed sentence can break.
+//
+// 🛑 THE NOUN CAPTURE IS `[^.]+` AND NOT `(.+)`, D439's guard verbatim: a class that
+// cannot cross a `.` cannot span a sentence break, so the anchor can never swallow a
+// compound's second clause the way D207 paid for three times. It needs no
+// `(?!opponent)` lookahead and the reason is structural rather than lucky — the SEAT
+// is a separate capture that sits AFTER the noun, so an owner-prefixed pile phrase has
+// nowhere to hide inside the noun group.
+//
+// ⚠️ THE POSSESSIVE IS SPELLED `['’]` AND THE CORPUS BYTE IS U+0027, MEASURED RATHER
+// THAN REMEMBERED (D421's byte, and the reason this comment names it): the four claimed
+// sentences carry exactly three apostrophes between them — `opponent's` at index 70 and
+// 62 of the two MULTIPLY rows and `Ethan's` at index 46 of the additive one — and all
+// three are U+0027 (`codePointAt` over `legalAttackCorpus()`, not a visual read). The
+// class is D137's standing insurance; the NOUN group is a character class and takes
+// either spelling for free, which is why only the seat token spells it.
+const DISCARD_PILE_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+const DISCARD_PILE_COUNT_SCALE =
+  /^This attack does (\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
+/** The four printed nouns, mapped to the `CardFilter` members that already spell
+    them. **ZERO new `CardFilter` members**, which is what keeps this slice out of
+    `retrieveNoun`'s exhaustive switch (interpreter.ts) and out of
+    `BENCHABLE_RETRIEVAL_KINDS` (effects.ts) — the two other consumers of that union,
+    where D222's closed-world hazard means an omission from the `Set` compiles
+    silently. D439 refused its largest countable on exactly that cost; this family was
+    chosen because it does not pay it.
+
+    A MAP and not a regex alternation, for `CLAUSE_ENERGY_TOKENS`' reason: the accepted
+    vocabulary is a single list rather than something somebody edits by hand in two
+    places. Read through `literalClauseRow` (D137) and NOT through a bare `.get`, which
+    is load-bearing here and is not in `IN_PLAY_BODY_NOUNS` one vocabulary up: **this
+    map's fourth key spells an apostrophe**, so a U+2019 re-ingest would miss it and the
+    printed sentence would fall silently off the built set. `clauseApostrophe.test.ts`
+    sweeps every derivable apostrophe-bearing fixture sentence through exactly that
+    rewrite and asserts reader-for-reader EQUALITY, so the omission would go red there —
+    and the retry is what keeps it green rather than the suite being narrowed. */
+const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, CardFilter>([
+  // "Energy card" is Basic OR Special (`isEnergyCard`), the printed noun with no class
+  // adjective — the widest of the three Energy readings this union spells.
+  ["Energy card", { kind: "anyEnergy" }],
+  // 🛑 "Basic Energy card" carries the printed word **Basic** and must not widen to the
+  // row above. UNTYPED, because the printed noun names no type: `basicEnergy`'s
+  // `energyType` is optional and absent means every Basic, which is the reading D376's
+  // sibling deliberately could not use (its sentence prints `{R}`).
+  ["Basic Energy card", { kind: "basicEnergy" }],
+  // The catalog's `trainerType: "Item"`, read exactly as `supporter` and `stadium` read
+  // theirs one field over (D231). ⚠️ A Pokémon Tool is NOT an Item — separate printed
+  // subtypes since SM, and the ingested column agrees.
+  ["Item card", { kind: "item" }],
+  // The one PROPER NAME in the vocabulary. `byName` is exact equality on `Card.name`,
+  // so this row is a claim about the catalog's spelling of one card and nothing else;
+  // see the block above for why the generalising capture is refused. No `cardNoun`
+  // rider: that field is a CAPTION rider read only by `retrieveNoun` (D264), and this
+  // member captions nothing, so emitting it would be an inert value nothing reads.
+  ["Ethan's Adventure card", { kind: "byName", name: "Ethan's Adventure" }],
+]);
+/** 🆕🆕 D440 — the printed noun between "for each " and " in your[ opponent's] discard
+    pile.", resolved to the `CardFilter` that already answers it, or `null` when this
+    file has no way to spell it (Ancient, the Team Rocket name substring) — which keeps
+    the sentence on the loud ATTACK_EFFECT_SKIPPED path.
+
+    ONE lookup and no fall-through patterns, unlike `inPlayBodyFilter` one vocabulary
+    up: that function needs three branches because two of its nouns are PARAMETERISED
+    (an owner prefix and a type code), and none of this family's four is. There is
+    therefore no branch ORDER here to be right or wrong about — which is worth saying
+    rather than leaving implicit, because D439's block asserted the opposite about its
+    own three branches and a surviving mutant disproved it. */
+function discardPileFilter(noun: string): CardFilter | null {
+  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;
+}
 // D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
 // filter: the first member of this family whose payload is not a condition, and
 // the first whose count is already answered elsewhere in the engine (continuous.ts
@@ -20651,7 +20811,52 @@ export interface AttackDamageBonus {
     only) and `toolsOnYourBoard` (multiply only) directly above: the pool prints
     both folds of this noun — four `×` sentences and one `more` sentence — so the
     adjective picks the fold exactly as it does for the Bench trio, and both arms
-    are driven rather than argued. */
+    are driven rather than argued.
+
+    🆕🆕 ⚠️ **THE SIXTEENTH IS THE FIRST MEMBER THAT READS A ZONE NEITHER PLAYER HAS
+    ON THE BOARD, AND THE FIRST THAT CARRIES A SEAT AS A FIELD** (D440).
+    `cardsInDiscardPile` tallies the cards in a DISCARD PILE matching a printed noun —
+    *"This attack does N [more] damage for each <noun> in your [opponent's] discard
+    pile."* — **4 sentences / 8 legal printings**, measured over `legalAttackCorpus()`
+    at D440's head with the two anchors run against all 640 rows.
+
+    🛑 **A PILE SCAN READS THE PRINT AND NEVER THE PROVISION — §6.5, AND IT IS THE ONE
+    THING ABOUT THIS MEMBER WORTH BEING UNABLE TO MISS.** Two of its four nouns are
+    Energy nouns, and the sibling members that count Energy (`energyOnSelf`,
+    `energyOnOpponent`, `bothActivesEnergyCount`) all delegate to `countEnergyInPlay`,
+    which reads PROVISION — right for an Energy IN PLAY, because that is what it pays
+    with, so a wildcard Luminous counts as `{R}` while it is alone. **A CARD IN A
+    DISCARD PILE IS ATTACHED TO NOTHING AND PROVIDES NOTHING**, so *"Energy card"* and
+    *"Basic Energy card"* name a printed card CLASS. `yourBasicEnergyInDiscardAtLeast`
+    (D376) settled this for the pile and this member inherits it rather than re-deciding
+    it. ⚠️ **AND IT IS RE-VERIFIED AT THE PREDICATE RATHER THAN INHERITED FROM PROSE**:
+    `matchesFilter`'s `anyEnergy` arm is `isEnergyCard(card)` and its `basicEnergy` arm
+    is `isEnergyCard(card) && card.energyType === "Normal" && …` — both PRINT reads —
+    and its `providesEnergy` arm returns **false, always**, with the pile argument
+    written into the arm itself. So the filter union cannot express a provision reading
+    of a pile even if a successor asked it to.
+
+    🛑 **THE PREDICATE IS `matchesFilter`'s AND NOT A FRESH ONE**, and the WALK is
+    `countCardsInDiscardPile` (interpreter.ts) — D376's arm GENERALISED IN PLACE, so
+    that arm is now a delegation and *"how many cards in this pile match this filter"*
+    has exactly ONE implementation no matter which vocabulary asks. Two readers of one
+    printed noun are free to drift apart (D222), and a byte-identical COPY would also
+    have broken shipped mutation rows into `2×` ERRORs (D416/D437) — which is why the
+    old lines were MOVED rather than duplicated and four `D376-*` rows were
+    re-transcribed onto them.
+
+    ⚠️ **A DISCARD PILE IS ORDERED AND PUBLIC (§2), SO THE OPPONENT-SIDE READ LEAKS
+    NOTHING.** `redact.ts` ships both piles face up to both seats — the projection
+    copies `discard` through unredacted for the viewer AND for the opponent — so a
+    count over the DEFENDER's pile is answerable from what the attacking player can
+    already see, and this union's public-state invariant holds on both values of `seat`.
+    D376's member only ever counted the actor's own pile, so this is checked here rather
+    than assumed from it (`discardPileScaling.test.ts` §6 drives the projection).
+
+    `discard` is a uid LIST, so an unresolvable uid contributes 0 rather than throwing —
+    `cardOfUid` returns undefined and `matchesFilter`'s own first line answers false. An
+    EMPTY pile is 0, which on the `×` fold (printed base dropped) means no
+    `DAMAGE_DEALT` row at all, and on the `+` fold means the printed base alone. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -20675,7 +20880,52 @@ export type DamageCountSource =
   | { kind: "bothActivesEnergyCount" }
   | { kind: "toolsOnYourBoard" }
   | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
-  | { kind: "yourPokemonInPlay"; filter: CardFilter };
+  | { kind: "yourPokemonInPlay"; filter: CardFilter }
+  | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter };
+
+/** WHOSE discard pile a `cardsInDiscardPile` count walks (D440). CONTROLLER-RELATIVE,
+    like every other side-valued field in this vocabulary — `you` is the seat that
+    declared the attack and `opponent` is the other one, the same reading
+    `HandRefreshDraw`'s `who: "you" | "opponent"` and `disableAbilities.side` already
+    use — so a derived count is never authored against `p1`/`p2` and the same object is
+    correct for either seat swinging.
+
+    🛑 **A FIELD RATHER THAN TWO SEAT-NAMED MEMBERS, AND THE UNION'S OWN RULE IS WHAT
+    ADMITS IT.** Every seat distinction this union has made so far is spelled into a
+    member NAME (`damageCountersOnSelf`/`damageCountersOnOpponentActive`,
+    `yourBenchCount`/`opponentBenchCount`, `energyOnSelf`/`energyOnOpponent`), and the
+    reason is stated once, at D168: *"they are two members rather than one member with a
+    `side` field because every consumer of this union dispatches on `kind` and nothing
+    else: a `side` would have to be read by `scaledAttackDamage` anyway, and the three
+    members that have no side at all would then carry a field they must ignore."*
+    **THAT TEST IS ABOUT A UNION-WIDE `side` AND IT DOES NOT BITE A PER-MEMBER FIELD**:
+    no side-less member gains anything here. The second reason, D369's, is *"parameterising
+    instead is not a widening but a RENAME of a shipped member, which D362 priced at 31
+    sites across 7 files against 4 for the addition"* — and there is no shipped member to
+    rename, because this one is born with the field.
+
+    ⚠️ **WHAT DECIDES IT POSITIVELY IS D193's `zone`, IN THIS UNION, ONE MEMBER OVER.**
+    `energyOnOpponent` carries `zone` as a FIELD rather than splitting into two members,
+    on the ground that *"the two zones would each have to carry `energyType`, and
+    duplicating the field that answers 'which Energy counts' is precisely the second
+    answer to one question D159 forbids."* Both ends of this member carry the IDENTICAL
+    `CardFilter` payload, so two members would duplicate the noun vocabulary across two
+    `kind`s and give `scaledAttackDamage` two arms differing only in a seat expression.
+    **So the union's split is not "seat ⇒ name"** — it is *nullary or asymmetric payload
+    ⇒ two members; identical payload ⇒ one member with the discriminator as a field*, and
+    every shipped pair fits it. (D433: check whether a precedent's siblings agree before
+    following it — here they agree on a rule that is narrower than the one they look
+    like.)
+
+    ⚠️ **AND BOTH VALUES ARE PRINTED AND BUILDABLE ON DAY ONE — 4 legal printings each
+    side — WHICH IS THE EXACT OPPOSITE OF D439's DELIBERATE NO-`side` CALL ONE MEMBER
+    UP.** That member declined a side because the pool's opponent-side rows were all
+    refused for their FILTER, leaving the field one reachable value on every printed row
+    and a falsifier pinned for the day that changed. Here neither value is hypothetical:
+    `anyEnergy`/`byName` on YOUR pile and `basicEnergy`/`item` on your OPPONENT's are
+    all claimed by this slice, so both arms are driven off printed text rather than
+    argued. */
+export type DiscardPileSeat = "you" | "opponent";
 
 /** WHICH of the opponent's bodies an `energyOnOpponent` count walks (D193). The
     two are printed as two whole noun phrases — "your opponent's Active Pokémon"
@@ -20769,6 +21019,36 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "yourPokemonInPlay", filter } };
+    }
+  }
+  // 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT, on EITHER seat. Placed directly after
+  // the in-play body count it is the other-ZONE reading of, so the two filtered counts
+  // sit together on the page; the patterns are whole-sentence anchored and mutually
+  // exclusive (one ends `in play\.` and the other `discard pile\.`), so this is
+  // legibility and not behaviour.
+  //
+  // THREE things are read and the third is the one this family invites getting wrong.
+  // `per >= 1` is the printed-zero guard every arm in both families carries;
+  // `filter !== null` is the VOCABULARY, and "Ancient card" reaches this line and must
+  // leave it LOUD; and the SEAT comes from capture 3 — the printed noun phrase — and
+  // NEVER from which reader is running.
+  //
+  // 🛑 **THE SEAT IS NOT DERIVABLE FROM THE FOLD, THOUGH ON TODAY'S BUILDABLE ROWS IT
+  // WOULD LOOK LIKE IT.** Both sentences this arm claims name YOUR pile and both the
+  // `×` arm claims name your OPPONENT's, so `seat = "you"` hard-coded here and
+  // `"opponent"` hard-coded there is green on all 8 printings. It is still wrong: the
+  // pool prints `×` over YOUR pile (the Team Rocket name-substring row, 2 legal),
+  // refused for its FILTER and not for its seat, so the confound is an artefact of the
+  // vocabulary rather than of the print. `discardPileScaling.test.ts` §2 drives both
+  // empty cells on CONSTRUCTED text and says so — a reader is a function of text, and
+  // that is the only rung that can separate the two axes today.
+  const yourDiscard = DISCARD_PILE_COUNT_SCALE.exec(effect);
+  if (yourDiscard !== null) {
+    const per = Number(yourDiscard[1]);
+    const filter = discardPileFilter(yourDiscard[2] ?? "");
+    const seat: DiscardPileSeat = yourDiscard[3] === "your" ? "you" : "opponent";
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "cardsInDiscardPile", seat, filter } };
     }
   }
   // D193 — the opponent's attached Energy, ACTIVE ZONE ONLY on this fold: the
@@ -21071,6 +21351,26 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const filter = inPlayBodyFilter(inPlayBodies[2] ?? "");
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "yourPokemonInPlay", filter } };
+    }
+  }
+  // 🆕🆕 D440 — the `×` fold of the arm one reader up, placed at the same point in the
+  // chain so the two readers over one `{per, count}` interface keep reading the same
+  // way down the page. TWO of this member's four sentences are on THIS fold and two are
+  // on the additive one, so — unlike `bothActivesEnergyCount` (additive only) and
+  // `toolsOnYourBoard` (multiply only) — both arms are reachable from printed text and
+  // both are driven.
+  //
+  // 🛑 **THE SEAT IS CAPTURE 3 HERE TOO, AND THE EXPRESSION IS THE ADDITIVE ARM'S BYTE
+  // FOR BYTE.** Both sentences this arm claims name the OPPONENT's pile; hard-coding
+  // that would be green on every printed row and is the defect this family invites.
+  // See the additive arm above for the measurement that separates the two axes.
+  const foeDiscard = DISCARD_PILE_COUNT_MULTIPLY.exec(effect);
+  if (foeDiscard !== null) {
+    const per = Number(foeDiscard[1]);
+    const filter = discardPileFilter(foeDiscard[2] ?? "");
+    const seat: DiscardPileSeat = foeDiscard[3] === "your" ? "you" : "opponent";
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "cardsInDiscardPile", seat, filter } };
     }
   }
   // D193 — the opponent's attached Energy, BOTH ZONES on this fold. The zone is

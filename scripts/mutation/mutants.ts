@@ -5185,7 +5185,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5691,7 +5691,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5702,7 +5702,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.341.0";',
+    find: 'export const engineVersion = "0.342.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -14896,9 +14896,9 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D376-discard-threshold-reads-energy-in-play",
     decision: "D376",
-    what: "🛑 C1 — **THE SLICE'S WHOLE POINT**: the arm becomes the SIBLING's arm, verbatim. `yourEnergyInPlayAtLeast` is the same three words one zone over and its body is a single line (`countEnergyInPlay(state, seat, cond.energy) >= cond.count`), so this is not a straw mutant — it is the neighbouring arm copied, which is the mistake the resume point predicted before the build started. ⚠️ **IT IS WRONG ON TWO AXES AT ONCE AND INDISTINGUISHABLE FROM THE RIGHT ANSWER ON THE PILE A SUITE WRITES BY ACCIDENT**: the ZONE (in play, not the discard pile) and the READING (provision, not the printed card). `basicEnergyDiscard.test.ts` §4 fields both directions on one pair of boards — ten Basic {R} attached with an EMPTY pile, where this mutant says TRUE and the member says FALSE, and ten in the pile with none in play, where they swap",
+    what: "🛑 C1 — **THE SLICE'S WHOLE POINT**: the arm becomes the SIBLING's arm, verbatim. `yourEnergyInPlayAtLeast` is the same three words one zone over and its body is a single line (`countEnergyInPlay(state, seat, cond.energy) >= cond.count`), so this is not a straw mutant — it is the neighbouring arm copied, which is the mistake the resume point predicted before the build started. ⚠️ **IT IS WRONG ON TWO AXES AT ONCE AND INDISTINGUISHABLE FROM THE RIGHT ANSWER ON THE PILE A SUITE WRITES BY ACCIDENT**: the ZONE (in play, not the discard pile) and the READING (provision, not the printed card). `basicEnergyDiscard.test.ts` §4 fields both directions on one pair of boards — ten Basic {R} attached with an EMPTY pile, where this mutant says TRUE and the member says FALSE, and ten in the pile with none in play, where they swap ⚠️ **RE-TRANSCRIBED AT D440, BECAUSE THE LINES MOVED AND NOT THE CLAIM.** D440 generalised this arm's loop into `countCardsInDiscardPile` (interpreter.ts) so a `DamageCountSource` could ask the same question of the same zone; the arm is now a delegation and the walk lives in a top-level function at a different indentation, so `precheck` would have reported these rows BROKEN. The mutation each row expresses is byte-for-byte the same defect at its new address, and `expectKilledBy` is UNCHANGED — the row is about D376's threshold and `basicEnergyDiscard.test.ts` is still what kills it (D414: re-transcribe onto a REAL neighbour with the SAME meaning; a row that dies for the wrong reason is worth less than one that survives).",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const filter: CardFilter = { kind: \"basicEnergy\", energyType: cond.energy };\n      let matched = 0;\n      for (const uid of state.players[seat].discard) {\n        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;\n      }\n      return matched >= cond.count;",
+    find: "      const filter: CardFilter = { kind: \"basicEnergy\", energyType: cond.energy };\n      return countCardsInDiscardPile(state, seat, filter) >= cond.count;",
     replace: "      return countEnergyInPlay(state, seat, cond.energy) >= cond.count;",
     expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
   },
@@ -14923,28 +14923,28 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D376-discard-threshold-counts-the-whole-pile",
     decision: "D376",
-    what: "🛑 C4 — THE FILTER DISAPPEARS and the predicate becomes the pile's LENGTH. The crudest of the three widenings and the easiest to write, because `discard.length >= count` is the shape the sentence reads like if the noun phrase is skipped. ⚠️ **IT IS TRUE ON EVERY BOARD C2 AND C3 ARE TRUE ON**, so it needs a board where the tenth card is not an Energy at all: `basicEnergyDiscard.test.ts` §3 discards `fix-basic-1`, a POKÉMON, into a pile of nine Fire and asserts that BOTH energy readings stay false while the length reading goes true. Ordered widenings, one board each",
+    what: "🛑 C4 — THE FILTER DISAPPEARS and the predicate becomes the pile's LENGTH. The crudest of the three widenings and the easiest to write, because `discard.length >= count` is the shape the sentence reads like if the noun phrase is skipped. ⚠️ **IT IS TRUE ON EVERY BOARD C2 AND C3 ARE TRUE ON**, so it needs a board where the tenth card is not an Energy at all: `basicEnergyDiscard.test.ts` §3 discards `fix-basic-1`, a POKÉMON, into a pile of nine Fire and asserts that BOTH energy readings stay false while the length reading goes true. Ordered widenings, one board each ⚠️ **RE-TRANSCRIBED AT D440, BECAUSE THE LINES MOVED AND NOT THE CLAIM.** D440 generalised this arm's loop into `countCardsInDiscardPile` (interpreter.ts) so a `DamageCountSource` could ask the same question of the same zone; the arm is now a delegation and the walk lives in a top-level function at a different indentation, so `precheck` would have reported these rows BROKEN. The mutation each row expresses is byte-for-byte the same defect at its new address, and `expectKilledBy` is UNCHANGED — the row is about D376's threshold and `basicEnergyDiscard.test.ts` is still what kills it (D414: re-transcribe onto a REAL neighbour with the SAME meaning; a row that dies for the wrong reason is worth less than one that survives).",
     file: "packages/engine/src/interpreter.ts",
-    find: "        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;",
-    replace: "        matched += 1;",
+    find: "    if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;",
+    replace: "    matched += 1;",
     expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
   },
   {
     id: "D376-discard-threshold-is-strict",
     decision: "D376",
-    what: "🛑 C5 — `>=` BECOMES `>`, the off-by-one this member owes. The printed words are *\"10 or more\"* — a FLOOR, `yourEnergyInPlayAtLeast`'s reading of *\"at least\"* — and the edit is invisible at every count except the boundary itself, which is why the resume point named 9-and-10 before the build. `basicEnergyDiscard.test.ts` §5 drives EXACTLY 9 (false, 10 damage dealt) and EXACTLY 10 (true, 110 dealt) through the attack path, and then walks the whole ramp 0..11 in one loop so the step is a property of the predicate rather than of three counts a case happened to pick",
+    what: "🛑 C5 — `>=` BECOMES `>`, the off-by-one this member owes. The printed words are *\"10 or more\"* — a FLOOR, `yourEnergyInPlayAtLeast`'s reading of *\"at least\"* — and the edit is invisible at every count except the boundary itself, which is why the resume point named 9-and-10 before the build. `basicEnergyDiscard.test.ts` §5 drives EXACTLY 9 (false, 10 damage dealt) and EXACTLY 10 (true, 110 dealt) through the attack path, and then walks the whole ramp 0..11 in one loop so the step is a property of the predicate rather than of three counts a case happened to pick ⚠️ **RE-TRANSCRIBED AT D440, BECAUSE THE LINES MOVED AND NOT THE CLAIM.** D440 generalised this arm's loop into `countCardsInDiscardPile` (interpreter.ts) so a `DamageCountSource` could ask the same question of the same zone; the arm is now a delegation and the walk lives in a top-level function at a different indentation, so `precheck` would have reported these rows BROKEN. The mutation each row expresses is byte-for-byte the same defect at its new address, and `expectKilledBy` is UNCHANGED — the row is about D376's threshold and `basicEnergyDiscard.test.ts` is still what kills it (D414: re-transcribe onto a REAL neighbour with the SAME meaning; a row that dies for the wrong reason is worth less than one that survives).",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return matched >= cond.count;",
-    replace: "      return matched > cond.count;",
+    find: "      return countCardsInDiscardPile(state, seat, filter) >= cond.count;",
+    replace: "      return countCardsInDiscardPile(state, seat, filter) > cond.count;",
     expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
   },
   {
     id: "D376-discard-threshold-hardcodes-the-printed-ten",
     decision: "D376",
-    what: "🛑 C6 — THE `count` PARAMETER IS IGNORED and the printed 10 is written into the arm. ⚠️ **THE CLAUSE ROW STAYS CORRECT AND EVERY BOARD IN THE FILE STAYS GREEN**, because the only producer in the catalog prints 10 — which is exactly what makes this the survivor a suite written around the real card would ship. It is D119's corollary read from the other end: the row is a LITERAL because two tokens vary IN PRINCIPLE, and a parameter nothing exercises is a parameter that will be wrong the day a second threshold prints. `basicEnergyDiscard.test.ts` §5 asks the SAME nine-card pile at `count: 9` and requires TRUE",
+    what: "🛑 C6 — THE `count` PARAMETER IS IGNORED and the printed 10 is written into the arm. ⚠️ **THE CLAUSE ROW STAYS CORRECT AND EVERY BOARD IN THE FILE STAYS GREEN**, because the only producer in the catalog prints 10 — which is exactly what makes this the survivor a suite written around the real card would ship. It is D119's corollary read from the other end: the row is a LITERAL because two tokens vary IN PRINCIPLE, and a parameter nothing exercises is a parameter that will be wrong the day a second threshold prints. `basicEnergyDiscard.test.ts` §5 asks the SAME nine-card pile at `count: 9` and requires TRUE ⚠️ **RE-TRANSCRIBED AT D440, BECAUSE THE LINES MOVED AND NOT THE CLAIM.** D440 generalised this arm's loop into `countCardsInDiscardPile` (interpreter.ts) so a `DamageCountSource` could ask the same question of the same zone; the arm is now a delegation and the walk lives in a top-level function at a different indentation, so `precheck` would have reported these rows BROKEN. The mutation each row expresses is byte-for-byte the same defect at its new address, and `expectKilledBy` is UNCHANGED — the row is about D376's threshold and `basicEnergyDiscard.test.ts` is still what kills it (D414: re-transcribe onto a REAL neighbour with the SAME meaning; a row that dies for the wrong reason is worth less than one that survives).",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return matched >= cond.count;",
-    replace: "      return matched >= 10;",
+    find: "      return countCardsInDiscardPile(state, seat, filter) >= cond.count;",
+    replace: "      return countCardsInDiscardPile(state, seat, filter) >= 10;",
     expectKilledBy: ["packages/engine/src/basicEnergyDiscard.test.ts"],
   },
   {
@@ -20217,5 +20217,142 @@ export const MUTANTS: Mutant[] = [
     find: "  return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return false;\n    const card = topCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
     replace: "  return [side.active, ...side.bench].filter((body) => {\n    if (body === null) return true;\n    const card = topCardOf(state, body);\n    return card !== undefined && matchesFilter(card, filter);\n  }).length;",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts", "packages/engine/src/abilityAttackGate.test.ts"],
+  },
+  // ── 🆕🆕 D440 — THE FILTERED DISCARD-PILE COUNT. Thirteen rows, and the SHAPE of
+  //    the set is the finding: **TWO of them (C2/C3) are green on every printed
+  //    sentence and every printed printing, and can only be killed by CONSTRUCTED
+  //    text.** In the buildable core fold and seat are perfectly confounded — every
+  //    claimed "more" sentence reads YOUR pile and every claimed bare one reads your
+  //    OPPONENT's — so a build that derived either axis from the other passes a suite
+  //    written entirely on the print. A reader is a function of TEXT, so the two empty
+  //    cells of the 2×2 are driven on non-corpus strings and labelled as constructed,
+  //    which is `bodiesInPlayScaling.test.ts` §2's own posture one slice earlier.
+  //
+  //    THREE rows quote the SAME vocabulary line (C7/C8/C9) and express three
+  //    different defects at it — a silent default, an open capture that claims a
+  //    DATA-BLOCKED sentence, and the loss of D137's apostrophe fold. Two of them
+  //    (C7/C8) move a CENSUS figure while every board number stays put, and one (C9)
+  //    moves nothing at all except under a punctuation-normalising re-ingest.
+  //
+  //    ⚠️ AND "COUNTS UNITS RATHER THAN CARDS" IS ABSENT ON PURPOSE, WITH ITS REASON
+  //    AT C6: `matchesFilter` is a per-CARD boolean, so a count built on it is cards by
+  //    construction and there is no unit reading to mutate into. The nearest REAL
+  //    defect is the provision VOCABULARY, and that is the row that was written.
+  {
+    id: "D440-arm-reads-energy-in-play",
+    decision: "D440",
+    what: "🛑 C1 — **THE EVALUATOR ARM DELEGATES TO `countEnergyInPlay`, WHICH IS THE SIBLING MEMBERS' REAL CODE AND THE §6.5 HAZARD THIS SLICE IS BUILT AROUND.** Every OTHER Energy-counting member of this union (`energyOnSelf`, `energyOnOpponent`, `bothActivesEnergyCount`) reads PROVISION off the BOARD through exactly this call, so it is a neighbour copied and not a straw (D190b). It is wrong on TWO axes at once — the ZONE (in play, not the pile) and the READING (provision, not the printed card) — which is D376's own C1 one vocabulary over, at the fold instead of at the threshold. ⚠️ **AND THE BOARD IS SHAPED SO THE WRONG WALK IS NON-ZERO RATHER THAN EMPTY**: the attacker holds ONE `{C}` attached to pay the printed cost, so index 0 deals **40** where the print says 80 — a plausible number on a plausible board. An attacker with no attachment would have made the mutant look like an obvious zero and hidden it",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countCardsInDiscardPile(state, pileSeat, bonus.count.filter) * bonus.per;",
+    replace: "      return countEnergyInPlay(state, pileSeat, null) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-additive-arm-hardcodes-your-pile",
+    decision: "D440",
+    what: "🛑 C2 — **THE SEAT IS DERIVED FROM THE FOLD: the additive arm stops reading capture 3 and always says YOUR pile.** ⚠️ **THIS IS THE DEFECT THE FAMILY INVITES, AND IT IS GREEN ON ALL FOUR PRINTED SENTENCES AND ALL EIGHT PRINTINGS** — measured: in the buildable core every claimed \"more\" sentence reads YOUR pile and every claimed bare one reads your OPPONENT's, so fold and seat are PERFECTLY confounded and no printed row can separate them. It is not harmless: the pool DOES print `×` over YOUR pile (the Team Rocket name-substring row, 2 legal), refused for its FILTER and not for its seat, so the confound is an artefact of the vocabulary and a fold-derived seat is a live defect waiting on one map row. The killer is `discardPileScaling.test.ts` §2's CONSTRUCTED cell — a reader is a function of TEXT, and driving text the column does not print is the only rung that can break a confound the print does not",
+    file: "packages/engine/src/effects.ts",
+    find: "    const seat: DiscardPileSeat = yourDiscard[3] === \"your\" ? \"you\" : \"opponent\";",
+    replace: "    const seat: DiscardPileSeat = \"you\";",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-multiply-arm-hardcodes-the-opponents-pile",
+    decision: "D440",
+    what: "🛑 C3 — **THE MIRROR OF C2 ON THE OTHER FOLD: the `×` arm always says the OPPONENT's pile.** The two rows are ONE claim seen from both ends and both are written, because a build could plausibly hard-code either arm alone — and each is green on every printed row its own reader answers. Killed by `discardPileScaling.test.ts` §2's OTHER constructed cell. ⚠️ **THE TWO CELLS ARE NOT EQUALLY HYPOTHETICAL AND THE SUITE SAYS SO**: this arm's empty cell (`×` over YOUR pile) IS printed and merely unbuilt, while C2's (additive over the OPPONENT's) is printed nowhere at all",
+    file: "packages/engine/src/effects.ts",
+    find: "    const seat: DiscardPileSeat = foeDiscard[3] === \"your\" ? \"you\" : \"opponent\";",
+    replace: "    const seat: DiscardPileSeat = \"opponent\";",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-evaluator-crosses-the-seat",
+    decision: "D440",
+    what: "🛑 C4 — **THE SEAT CROSS AT THE FOLD: `you` resolves to the DEFENDER and `opponent` to the ATTACKER.** The reader is correct, the member carries the right value, and the evaluator reads it backwards — which is a different site and a different mistake from C2/C3 and needs its own row. Every printed attack moves: the canonical piles answer 3/1/3/2 the right way round and 4/0/2/1 the wrong one, so `discardPileScaling.test.ts` §4 reads **100 / 60 / 60 / 30** for **80 / 120 / 90 / 60**. ⚠️ **NO PAIR OF PILES WOULD HAVE DONE**: the two piles were shaped so that all four filters differ across them, and the `byName` noun is the sharpest — 1 against 0 — because the named card sits in exactly one of them",
+    file: "packages/engine/src/attack.ts",
+    find: "      const pileSeat = bonus.count.seat === \"you\" ? attackerSeat : defenderSeat;",
+    replace: "      const pileSeat = bonus.count.seat === \"you\" ? defenderSeat : attackerSeat;",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-noun-drops-the-printed-basic",
+    decision: "D440",
+    what: "🛑 C5 — **THE PRINTED WORD `Basic` IS DROPPED and \"Basic Energy card\" widens to `anyEnergy`.** It is the one-word edit an author makes reading the noun off the middle of the sentence, and it is D376's own C2 at a second address — that row does the identical widening to the identical printed word one vocabulary over. ⚠️ **A PILE OF ONLY BASIC ENERGY CANNOT SEE IT**, which is nearly every pile a suite writes by accident, so the separating card is the ONE Special Energy in the defender's pile: `basicEnergy` answers 3 and `anyEnergy` answers 4, and index 2 deals **120** for 90",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Basic Energy card\", { kind: \"basicEnergy\" }],",
+    replace: "  [\"Basic Energy card\", { kind: \"anyEnergy\" }],",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-energy-noun-reads-provision",
+    decision: "D440",
+    what: "🛑 C6 — **THE ENERGY NOUN IS SPELLED AS A PROVISION FILTER**, which is §6.5's hazard reached through the VOCABULARY rather than through the walk (C1 is the same mistake at the fold). An author who has just written four `energyOnSelf`-style arms reaches for `providesEnergy` by habit — and `matchesFilter`'s own arm returns **false, always**, for that filter, with the pile argument written into the arm, so every count silently becomes 0 and index 0 deals its bare printed base of **20**. ⚠️ **THE ROW IS ALSO THE HONEST FORM OF \"COUNTS UNITS RATHER THAN CARDS\", WHICH IS NOT REACHABLE HERE AND IS SAID SO RATHER THAN FAKED**: `matchesFilter` is a per-CARD boolean, so a `matchesFilter`-based count is cards by construction and there is no unit reading to mutate into (D436's comparand rule does not bite — this is a COUNT with no symbol comparand)",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Energy card\", { kind: \"anyEnergy\" }],",
+    replace: "  [\"Energy card\", { kind: \"providesEnergy\", energyType: \"Fire\" }],",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-vocabulary-defaults-instead-of-staying-loud",
+    decision: "D440",
+    what: "🛑 C7 — **THE UNREADABLE NOUN DEFAULTS TO `anyCard` INSTEAD OF RETURNING null**, so both refused sentences become CLAIMED and score the pile's LENGTH. This is the mutation that moves a CENSUS figure as well as a board: `Ancient card` (2 printings) and the Team Rocket name-substring row (2) leave the residue, `BUILT.attack` steps from 1,499 to 1,503, and the engine reports SIMULATED on a sentence it is answering with the wrong number rather than refusing. **A wrong-but-plausible program is strictly worse than an unbuilt one** (D190b/D199), and at the instrument layer it is worse still — the coverage figure records success it did not earn",
+    file: "packages/engine/src/effects.ts",
+    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
+    replace: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? { kind: \"anyCard\" };",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D440-vocabulary-claims-any-card-noun",
+    decision: "D440",
+    what: "🛑 C8 — **THE CLOSED MAP GAINS AN OPEN `^(.+) card$` FALL-THROUGH TO `byName`**, which is the *tempting generalisation* the vocabulary's own doc block refuses in as many words: it spells \"Ethan's Adventure card\" without this file learning a card name, and it also claims **\"Ancient card\"** as `byName { name: \"Ancient\" }` — a filter that matches nothing in the catalog, counts 0 on every board, and leaves a DATA-BLOCKED sentence scoring its printed base forever while `BUILT.attack` steps for it. ⚠️ **IT IS THE SUBTLEST ROW IN THE SET BECAUSE IT IS RIGHT ABOUT EVERY SENTENCE THIS SLICE CLAIMS** — all four printed nouns resolve identically under it, every board number is unchanged, and only the REFUSAL rung and the census move. That is exactly why the refusals are pinned on the population and not left as prose",
+    file: "packages/engine/src/effects.ts",
+    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
+    replace: "  const named = /^(.+) card$/.exec(noun);\n  return (\n    literalClauseRow(DISCARD_PILE_NOUNS, noun) ??\n    (named === null ? null : { kind: \"byName\", name: named[1] ?? \"\" })\n  );",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D440-noun-lookup-drops-the-apostrophe-fold",
+    decision: "D440",
+    what: "⚠️ C9 — **THE LOOKUP GOES BACK TO A BARE `Map.get` AND LOSES D137's U+2019 RETRY.** It reads like a simplification, and it is invisible on every board and in every census: the committed corpus stores U+0027, so all four sentences resolve and every number stays put. ⚠️ **THE ONLY INSTRUMENT THAT SEES IT IS THE RE-INGEST SWEEP**, and it sees it because THIS map is the first noun table in the family with an apostrophe in a KEY — `IN_PLAY_BODY_NOUNS` one vocabulary up has three keys and none carries one, so a successor copying that function's bare `.get` writes this defect by imitation. `clauseApostrophe.test.ts` rewrites every derivable apostrophe-bearing fixture sentence at U+2019 and requires reader-for-reader EQUALITY; under the mutant the `Ethan's Adventure card` row folds to null on one side and a value on the other",
+    file: "packages/engine/src/effects.ts",
+    find: "  return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;",
+    replace: "  return DISCARD_PILE_NOUNS.get(noun) ?? null;",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D440-anchor-loses-the-opponent-branch",
+    decision: "D440",
+    what: "🛑 C10 — **THE SEAT ALTERNATION COLLAPSES TO `your`**, so the two OPPONENT-pile sentences stop matching the `×` anchor entirely. **THEY DO NOT HALF-RESOLVE — THEY GO LOUD**, which is this family's preferred failure and is exactly why the row is worth writing: half of this slice's printings silently leave the built set (`BUILT.attack` 1,499 → 1,495) under a suite that would otherwise stay green, because every board rung that mentions them is on the sentences themselves. It is also the mutation a build makes by starting from D439's anchors, which spell one seat and need no alternation at all",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each ([^.]+) in (your opponent['’]s|your) discard pile\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each ([^.]+) in (your) discard pile\\.$/;",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D440-anchor-loses-its-terminator",
+    decision: "D440",
+    what: "⚠️ C11 — **THE TRAILING `\\.$` BECOMES UNANCHORED ON THE ADDITIVE ANCHOR**, the defect D207 paid for three times: an unanchored pattern claims a COMPOUND whose leading half happens to be this sentence, so the engine scales its damage and silently drops whatever the printed tail said. ⚠️ **NO BOARD AND NO CENSUS FIGURE MOVES** — the four printed rows are single sentences and match either way — so the killer is §2's near-miss ladder, and specifically the TRAILING-CLAUSE rows, which are the only near-misses in the file that can see a terminator at all. (A missing-period near-miss cannot: without the period there is nothing for `\\.` to match, so it is refused under both builds. That is stated because writing the obvious near-miss and calling the row killed would have been a row that dies for the wrong reason.) ONE row and not two: the `×` anchor is byte-identical bar the printed word \"more\", so a second row would be the same claim twice",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\\./;",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-zero-guard-admits-a-printed-zero",
+    decision: "D440",
+    what: "⚠️ C12 — **THE ZERO GUARD ON THE `×` ARM ADMITS `per = 0`**, dropping the guard every arm in both families carries. A printed 0 scales to 0 on every pile, so claiming it would mark a sentence SIMULATED that the engine does nothing about — the coverage-instrument defect (D190b/D199 one layer up), and the thing `>= 1` exists to refuse. ⚠️ **THE MUTATION IS OBSERVABLE ONLY THROUGH A CONSTRUCTED STRING, AND THAT IS STATED RATHER THAN HIDDEN** (D420): the catalog prints no `0 damage for each … discard pile` row, so no board and no census figure moves. §2's near-miss ladder carries the constructed printed-0 on BOTH folds as two of its nine one-axis rows",
+    file: "packages/engine/src/effects.ts",
+    find: "    const filter = discardPileFilter(foeDiscard[2] ?? \"\");\n    const seat: DiscardPileSeat = foeDiscard[3] === \"your\" ? \"you\" : \"opponent\";\n    if (per >= 1 && filter !== null) {",
+    replace: "    const filter = discardPileFilter(foeDiscard[2] ?? \"\");\n    const seat: DiscardPileSeat = foeDiscard[3] === \"your\" ? \"you\" : \"opponent\";\n    if (per >= 0 && filter !== null) {",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts"],
+  },
+  {
+    id: "D440-shared-walk-reads-the-hand",
+    decision: "D440",
+    what: "🛑 C13 — **THE GENERALISED WALK SCANS THE HAND INSTEAD OF THE DISCARD PILE.** It is D420's C1 pointed the other way — that row mirrors the HAND arm back onto the pile, this one mirrors the shared PILE walk onto the hand — and it is the mistake an author makes precisely because the two arms sit six lines apart and read alike. ⚠️ **THE ROW IS ALSO THE PROOF THAT THE WALK IS GENUINELY SHARED, WHICH IS THE WHOLE ARGUMENT FOR GENERALISING IN PLACE RATHER THAN COPYING**: ONE mutation reddens TWO suites through TWO vocabularies — `discardPileScaling.test.ts` (the `DamageCountSource` COUNT) and `basicEnergyDiscard.test.ts` (D376's `BoardCondition` THRESHOLD). A copied loop would have needed two rows and would have let either half drift silently (D159/D222)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  for (const uid of state.players[seat].discard) {",
+    replace: "  for (const uid of state.players[seat].hand) {",
+    expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/basicEnergyDiscard.test.ts"],
   },
 ];

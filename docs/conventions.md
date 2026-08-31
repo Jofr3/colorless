@@ -1709,6 +1709,117 @@ verdict, which is the claim worth making about a slice that **generalised a
 shipped function in place**. An unexplained delta is a finding even when every
 verdict is green.
 
+## A confound in the BUILDABLE subset is not a confound in the print (D440)
+
+D440's four buildable sentences are perfectly confounded on two axes: every printed
+`more` row counts YOUR discard pile and every printed bare row counts your
+OPPONENT's. **A build that derived the seat from the fold reads all four printed
+sentences and all eight printings correctly**, so a suite written entirely on the
+print passes on the defect.
+
+**The confound was an artefact of the VOCABULARY, not of the catalog.** The pool
+does print the `×` fold over YOUR pile — that row is refused for its FILTER, not for
+its seat — so the defect is live the day the vocabulary widens by one map row. That
+distinction is what decides the answer:
+
+1. **Ask whether the suites already drive constructed text before choosing.** They
+   do. Measured by extracting every `deriveAttackDamage*("…")` call with a single
+   double-quoted literal argument and testing corpus membership: **45 such calls, of
+   which 38 carry a NON-corpus sentence.** A crude verb heuristic put **10** of those
+   38 on a positive VALUE assertion rather than `toBeNull`; **8 were then read
+   directly and all 8 confirm it** — `bodiesInPlayScaling` ×2 (one of them carrying
+   the note *"Constructed, and labelled so."*), `trEnergyBonus` ×2,
+   `typedEnergyThreshold`, `crossBoardStatus`, `opponentCounterMultiply` and
+   `benchBodyScaling`. ⚠️ **THE PATTERN'S EDGE, STATED** (D425): it cannot see a call
+   whose argument is an identifier, a template literal or a single-quoted string, so
+   45 is a FLOOR on the population and not a census. A reader is a function of TEXT, so a
+   rung over unprinted text is a claim about the READER, not about the pool.
+   Declaring `survives: {unreachable-population}` here would have been an invented
+   reason with a true-looking shape.
+2. **Then give the mutant an attribution control.** With D440's two constructed
+   rungs temporarily removed, both seat-from-fold mutants **SURVIVE** and the
+   evaluator seat-cross still dies. Without that experiment, "13 KILLED" is a claim
+   about an exit code. This is D214's attribution-control rule reaching a mutation
+   row instead of a build artifact.
+
+## Re-derive a union's rule; do not read it off the member names (D440)
+
+Every one of `DamageCountSource`'s sixteen prior members spells a side into its NAME,
+which reads as a law. **It is not the law, and the two stated reasons are both
+narrower than the pattern they produced:**
+
+- **D168** — *"a `side` would have to be read by `scaledAttackDamage` anyway, and the
+  three members that have no side at all would then carry a field they must ignore"*
+  — is a claim about a **union-wide** side. A per-member field makes no side-less
+  member carry anything.
+- **D369** — *"parameterising instead is not a widening but a RENAME of a shipped
+  member, which D362 priced at 31 sites across 7 files against 4"* — is about
+  **retrofitting**. There is nothing to rename when the member is born with the field.
+
+What decides it positively is **D193's `zone`, inside the same union**: two members
+would each have to carry the identical payload, and *"duplicating the field that
+answers 'which Energy counts' is precisely the second answer to one question D159
+forbids."* So the real rule is **nullary or asymmetric payload ⇒ two members;
+identical payload ⇒ one member with the discriminator as a field** — and every
+shipped pair fits it.
+
+**A unanimous set of names is a habit until you read the reasons** (D431's
+property-versus-habit test, arriving at a naming convention).
+
+## A closed noun map is what keeps a data-blocked refusal honest (D440)
+
+D440's vocabulary could have been a capture: `^(.+) card$` → `byName` spells the one
+proper-name noun without the file learning a card name, which is the property D439's
+owner-noun pattern was built for. **It also claims `"Ancient card"`** — a `byName`
+filter matching nothing in the catalog, counting 0 on every board, leaving a
+permanently DATA-BLOCKED sentence scoring its printed base forever while
+`BUILT.attack` steps for it. That is D190b/D199 at the instrument layer: *a
+wrong-but-plausible program is strictly worse than an unbuilt one*.
+
+**When a vocabulary could be a capture, ask what the capture claims that the map
+refuses** — and write the mutant, because it is right about every sentence the slice
+claims and only the refusal rung and the census move.
+
+## An apostrophe in a KEY needs `literalClauseRow`, not `Map.get` (D440)
+
+`IN_PLAY_BODY_NOUNS` (D439) uses a bare `.get`, correctly — its three keys carry no
+apostrophe. D440's map is the first in the family whose key spells one
+(`Ethan's Adventure card`), **so a successor copying the neighbouring function writes
+the defect by imitation.** A bare `.get` loses the row under a punctuation-normalising
+re-ingest and the printed sentence falls silently off the built set.
+
+**No board and no census can see it.** The only instrument that can is
+`clauseApostrophe.test.ts`'s re-ingest sweep, which rewrites every derivable
+apostrophe-bearing fixture sentence at U+2019 and requires reader-for-reader
+EQUALITY. Check whether your table's keys carry the character before copying the
+neighbour's lookup — and measure the corpus byte with `codePointAt`, never by eye
+(D421; D440's three slots are all U+0027, at indexes 70, 62 and 46).
+
+## An owner-prefixed fixture is a census subject even when it is not a Pokémon (D440)
+
+`fix-ethansadv` ("Ethan's Adventure") reddened the D242 prefixed-NAME enumeration in
+**three** suites — `inPlayTarget`, `ownerTargetOps`, `switchSeam` — while being
+**invisible to every `ownerPokemon` PREDICATE in the engine**, because that arm
+requires `category === "Pokemon"`. D337 recorded *"a shared pool is shared per SWEEP,
+not per test"* about bodies; this is the same finding arriving from the Trainer side.
+
+**Before adding a fixture with a possessive in its name, grep the NAME sweeps rather
+than the predicates.** A predicate that cannot see your card is not evidence that a
+sweep cannot.
+
+## Not every classic defect is reachable — say so rather than write a straw (D440)
+
+D440 was asked for a "counts units rather than cards" mutant and does not have one:
+a count built on `matchesFilter` is **cards by construction**, because that function
+is a per-CARD boolean with no unit reading to mutate into, and D436's comparand rule
+needs a SYMBOL comparand that a bare count has none of. The nearest REAL defect is
+the provision VOCABULARY (`{ kind: "providesEnergy" }` in the noun map), and that is
+the row that was written, with the unreachability stated in its own `what`.
+
+**A straw mutant proves nothing about a real defect** — and a corpus row whose
+premise is unreachable is D420's *"a row that survives because it changes nothing"*
+waiting to happen.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

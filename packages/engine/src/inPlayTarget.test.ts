@@ -1048,6 +1048,20 @@ describe("FIXTURE_POOL, swept as a separate population", () => {
         // `fix-tr-stage1` beside it, and matched by the bare owner filter for the same
         // reason — this sweep passes no `stage`.
         "fix-inplaybodies",
+        // 🆕🆕 D440 — `fix-ethansadv`, a Supporter whose NAME is exactly "Ethan's
+        // Adventure". Prefixed ON PURPOSE and unavoidably: `matchesFilter`'s `byName`
+        // arm is `card.name === filter.name`, and the printed noun the FILTERED
+        // DISCARD-PILE COUNT reads is *"Ethan's Adventure card"* — so the possessive is
+        // the card's own name and a tidy alternative would make the demonstrator match
+        // no printed sentence at all (D393's case, at a Trainer instead of a body).
+        // 🛑 **AND IT IS AN ENERGY/TRAINER RATHER THAN A BODY, WHICH IS WHY THIS SWEEP
+        // AND NOT THE `ownerPokemon` ONE CATCHES IT**: `matchesFilter`'s `ownerPokemon`
+        // arm requires `category === "Pokemon"`, so this card is invisible to every
+        // owner-prefix PREDICATE in the engine and visible only to this NAME sweep —
+        // which is exactly the "a shared pool is shared per SWEEP, not per test"
+        // finding D337 wrote three expiries up, arriving from the other side.
+        // The list edit is the whole cost.
+        "fix-ethansadv",
       ].sort(),
     );
     // …and NONE of the four is a Pokémon this file's ops can reach: three are

@@ -10206,6 +10206,80 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT's four-attack holder. ONE card and
+      not four, because the four printed sentences differ only in the noun and the
+      seat, and `attack()` reads the sentence off the attack it was handed — so one
+      body with four indexes drives every cell of the 2×2 without four setups.
+
+      🛑 **THE MARKERS ARE LOAD-BEARING AND THEY ARE NOT ALL THE SAME.** `20+` / `60+`
+      tell attack.ts to KEEP the printed base; `30×` tells it to DROP it. The two
+      printed folds sit on the two printed SEATS in this family (both "more" sentences
+      read YOUR pile, both bare ones read your OPPONENT's), which is exactly the
+      confound this suite is built around — see `discardPileScaling.test.ts` §2.
+
+      No Ability, 340 HP so every index can be driven twice without a KO ending the
+      match mid-suite, and `retreat: 1` so nothing here depends on a Retreat Cost. */
+  "fix-discardpile": battler("fix-discardpile", {
+    types: ["Darkness"],
+    hp: 340,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Ash Recall",
+        damage: "20+",
+        effect: "This attack does 20 more damage for each Energy card in your discard pile.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Journey's End",
+        damage: "60+",
+        effect:
+          "This attack does 60 more damage for each Ethan's Adventure card in your discard pile.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Spent Fuel",
+        damage: "30\u00d7",
+        effect:
+          "This attack does 30 damage for each Basic Energy card in your opponent's discard pile.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Litter Sweep",
+        damage: "30\u00d7",
+        effect: "This attack does 30 damage for each Item card in your opponent's discard pile.",
+      },
+    ],
+  }),
+
+  /** 🆕🆕 D440 — a Supporter whose NAME is exactly `Ethan's Adventure`, which is the
+      whole of what this fixture is for: `matchesFilter`'s `byName` arm is
+      `card.name === filter.name` and nothing else, so the printed noun *"Ethan's
+      Adventure card"* needs a card the catalog would call by that name.
+
+      🛑 **IT IS A SECOND FIXTURE AND NOT A RENAME OF `fix-ethansadventure`.** That
+      card (D337) is built by the `trainerCard` helper, which sets `name: id` for every
+      Trainer in this pool — so its name is the literal string `"fix-ethansadventure"`,
+      NOT the printed card name. Renaming it would be an edit to a shared fixture four
+      D337 rungs read, which is the class of change D412 paid for; adding one is not.
+      **And keeping both is what makes the `byName` predicate falsifiable**: the two
+      sit in the same pile in `discardPileScaling.test.ts` §4, so a build that read
+      `supporter` instead of `byName` counts TWO where the print counts ONE.
+
+      Its `effect` is the real card's, carried verbatim from `fix-ethansadventure` —
+      the two are the same printing and a fixture that lies about its text is worse
+      than one that repeats it. Nothing reads it: this pool's Trainer programs are
+      keyed by id, and `clauseApostrophe.test.ts`'s derivable sweep reads
+      `card.attacks[].effect` only, so a Trainer's `effect` enters no census here. */
+  "fix-ethansadv": {
+    ...trainerCard(
+      "fix-ethansadv",
+      "Supporter",
+      "Search your deck for up to 3 in any combination of Ethan's Pokémon and Basic {R} Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+    ),
+    name: "Ethan's Adventure",
+  },
+
   /** D256 — the HOLDER of "Flower Curtain" (Shaymin `sv10-010`/`-185`,
       `preventBenchDamageNoRuleBox`). ONE new body, and the sweep that decided that
       is D250's rule run on BOTH sides of the new conjunct:
@@ -14856,6 +14930,42 @@ export const IN_PLAY_BODIES_DECK = deckOf({
   "fix-tr-stage1": 4, // "Team Rocket's Persian" — the second prefixed body
   "fix-titan": 8, // 340 HP, no attacks — the defender, and the only opener
   "fix-energy": 28, // Basic {C} — the one printed symbol of all five attacks
+});
+
+/** 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT's board. Every card in it is in the
+    pool because it answers a DIFFERENT subset of the four printed nouns, so a build
+    that reached for a neighbouring `CardFilter` member reads a different number:
+
+      card                  anyEnergy  basicEnergy  item  byName "Ethan's Adventure"
+      fix-energy               ✓            ✓         ·            ·
+      fix-fire-energy          ✓            ✓         ·            ·
+      fix-special              ✓            ·         ·            ·
+      fix-item                 ·            ·         ✓            ·
+      fix-ethansadv            ·            ·         ·            ✓
+      fix-ethansadventure      ·            ·         ·            ·
+      fix-titan                ·            ·         ·            ·
+
+    ⚠️ **`fix-fire-energy` IS THE UNTYPED-`basicEnergy` CONTROL**, not filler: the
+    printed noun is *"Basic Energy card"* with no type, so a build that copied D376's
+    `{ kind: "basicEnergy", energyType }` shape would count Colorless-only and miss it.
+    **`fix-special` IS THE PRINTED WORD "Basic"**: it is an Energy card and not a Basic
+    one, so it separates `anyEnergy` from `basicEnergy` on a single pile.
+    **`fix-ethansadventure` IS THE `byName` CONTROL**: a Supporter that is not the named
+    card, so `supporter` and `byName` answer 2 and 1 on the same pile.
+    **`fix-titan` IS THE NON-CARD-CLASS CONTROL AND THE OPENER**: a Pokémon matches none
+    of the four nouns, so a build that counted the pile's LENGTH is visible.
+
+    ⚠️ AND IT IS EXACTLY 60: 4 + 12 = 16, + 10 = 26, + 8 = 34, + 8 = 42, + 8 = 50,
+    + 5 = 55, + 5 = **60**. */
+export const DISCARD_PILE_COUNT_DECK = deckOf({
+  "fix-discardpile": 4, // the four-attack holder: your Energy / your Ethan's Adventure / their Basic Energy / their Items
+  "fix-titan": 12, // 340 HP, no attacks — the defender, the only opener, and the pile's non-card-class control
+  "fix-energy": 10, // Basic {C} Energy — the printed cost, and `anyEnergy` + `basicEnergy` in the pile
+  "fix-fire-energy": 8, // Basic {R} Energy — the UNTYPED-`basicEnergy` control
+  "fix-special": 8, // SPECIAL Energy — `anyEnergy` YES, `basicEnergy` NO (the printed word "Basic")
+  "fix-item": 8, // Item Trainer — `item` YES, and NOT a Pokémon Tool
+  "fix-ethansadv": 5, // the Supporter NAMED "Ethan's Adventure" — `byName` YES
+  "fix-ethansadventure": 5, // a Supporter named otherwise — `byName` NO, `supporter` YES
 });
 
 export const IN_PLAY_TYPE_DECK = deckOf({

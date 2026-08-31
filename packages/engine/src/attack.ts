@@ -92,6 +92,7 @@ import {
   attackerPreWRBonus,
   conditionHolds,
   conditionNote,
+  countCardsInDiscardPile,
   countPokemonInPlay,
   effectRefused,
   runProgram,
@@ -391,6 +392,35 @@ function scaledAttackDamage(
       // matching nothing is 0, and on the `×` fold (printed base dropped) that is
       // no DAMAGE_DEALT row at all, which is the printed floor.
       return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;
+    case "cardsInDiscardPile": {
+      // 🆕🆕 D440 — the cards in a DISCARD PILE matching the printed noun, on the seat
+      // the sentence NAMED ("…for each Item card in your opponent's discard pile.").
+      //
+      // 🛑 **THE SEAT IS READ OFF THE MEMBER AND IS NEVER DERIVED FROM THE FOLD, AND
+      // THIS ARM IS WHERE THAT WOULD BE INVISIBLE.** `bonus` carries no adjective by
+      // the time it reaches here — the fold is decided by WHICH reader answered, in
+      // attack.ts's caller — so a build that hard-coded `attackerSeat` here would be
+      // right on the two printed "more" sentences and silently wrong on the two printed
+      // `×` ones (and vice versa). The printed noun phrase is the discriminator, and it
+      // was captured where it is printed.
+      //
+      // `attackerSeat` / `defenderSeat` and not `state.players[...]` derived from one
+      // of them: `scaledAttackDamage` has taken BOTH ends of the table since 0.66.0,
+      // and deriving one from the other would quietly hard-code a two-player table into
+      // this fold — the argument `boardCondition` and `damageCountersOnYourBench` make
+      // for the same pair of parameters.
+      //
+      // The walk is `countCardsInDiscardPile` (interpreter.ts) — D376's own scan,
+      // GENERALISED at its site rather than copied here, so the `BoardCondition`
+      // threshold and this count cannot disagree about what a printed noun admits in a
+      // pile (D159). It owns the EMPTY pile (0) and the unresolvable uid (0) too.
+      //
+      // A pile that matches nothing is 0, and on the `×` fold (printed base dropped)
+      // that is no DAMAGE_DEALT row at all, which is the printed floor; on the `+` fold
+      // it is the printed base alone.
+      const pileSeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;
+      return countCardsInDiscardPile(state, pileSeat, bonus.count.filter) * bonus.per;
+    }
     case "extraEnergyUnitsBeyondCost":
       // 🆕🆕 D436 — the 0-or-1 INDICATOR again, but read against the DECLARATION.
       // "…at least N extra Energy attached (in addition to this attack's cost)".

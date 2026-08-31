@@ -3869,12 +3869,15 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // reading of "at least". `cardOfUid` returns undefined for a uid the catalog
       // cannot resolve and `matchesFilter` answers false for it, so an unreadable card
       // in the pile never pays the bonus. An empty pile is 0.
+      //
+      // 🆕🆕 D440 — THE WALK MOVED OUT AND THIS ARM IS NOW A DELEGATION. The loop that
+      // used to sit here is `countCardsInDiscardPile` (above), generalised in place
+      // when `DamageCountSource.cardsInDiscardPile` needed the same scan over the same
+      // zone with a different vocabulary. NOTHING ABOUT THIS ARM'S READING CHANGED —
+      // same `CardFilter`, same `matchesFilter`, same `>=` on the printed "or more" —
+      // and the filter stays a named local because two mutation rows quote that line.
       const filter: CardFilter = { kind: "basicEnergy", energyType: cond.energy };
-      let matched = 0;
-      for (const uid of state.players[seat].discard) {
-        if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;
-      }
-      return matched >= cond.count;
+      return countCardsInDiscardPile(state, seat, filter) >= cond.count;
     }
     case "yourBasicEnergyInHandAtLeast": {
       // 🆕🆕 D420 — the arm DIRECTLY ABOVE with ONE zone name changed, and that is the
@@ -4268,6 +4271,52 @@ export function countPokemonInPlay(state: GameState, seat: Seat, filter: CardFil
     const card = topCardOf(state, body);
     return card !== undefined && matchesFilter(card, filter);
   }).length;
+}
+
+/** 🆕🆕 D440 — HOW MANY CARDS IN `seat`'s DISCARD PILE MATCH `filter`. This is
+    D376's `yourBasicEnergyInDiscardAtLeast` loop GENERALISED IN PLACE, not a copy of
+    it: that arm is now a delegation, so *"how many cards in this pile match this
+    printed noun"* has exactly ONE implementation no matter which vocabulary asks —
+    `BoardCondition.yourBasicEnergyInDiscardAtLeast` (D376, a THRESHOLD) or
+    `DamageCountSource.cardsInDiscardPile` (D440, the COUNT itself).
+
+    🛑 **GENERALISED RATHER THAN COPIED, AND BOTH HALVES OF THAT ARE LOAD-BEARING**
+    (D159, and D416/D437's corpus hazard). A second walk beside this one would have
+    made a pile scan a question with two implementations free to drift (D222); and the
+    lines below were quoted VERBATIM by `D376-discard-threshold-counts-the-whole-pile`,
+    so a byte-identical copy would ALSO have broken a shipped mutation row into a `2×`
+    ERROR without anybody touching it. The lines were MOVED here and four `D376-*` rows
+    were re-transcribed onto their new addresses in the same edit — the indentation
+    changed, so `precheck` would have caught it either way, which is exactly the point
+    of the exactly-once rule.
+
+    ⚠️ **THE `hand` TWIN ONE ARM DOWN IS DELIBERATELY LEFT INLINE.** D420's
+    `yourBasicEnergyInHandAtLeast` runs the identical shape over `hand`, and its own
+    doc block explains that its locals are named `handFilter`/`held` precisely to keep
+    five `D376-*` `find` strings unique. Folding it in would mean a `zone` parameter and
+    a rewrite of a shipped arm for a family this slice does not print — so it is not
+    done, and it is recorded here rather than left as an inconsistency a successor has
+    to rediscover. **The two zones are different zones**; this is not a second answer to
+    one question.
+
+    🛑 **THE PREDICATE IS `matchesFilter`'s AND THE READING IS THE PRINT** (§6.5). A card
+    in a discard pile is attached to nothing and provides nothing, so an Energy noun here
+    is a printed card CLASS and never `providesEnergy` — which `matchesFilter` enforces
+    on its own side by answering `false` for that filter unconditionally.
+
+    ⚠️ `cardOfUid` returns `undefined` for a uid the catalog cannot resolve and
+    `matchesFilter`'s first line answers false for it, so an unreadable card in the pile
+    contributes 0 rather than throwing. An EMPTY pile is 0. */
+export function countCardsInDiscardPile(
+  state: GameState,
+  seat: Seat,
+  filter: CardFilter,
+): number {
+  let matched = 0;
+  for (const uid of state.players[seat].discard) {
+    if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;
+  }
+  return matched;
 }
 
 /** §8/§9 (D242) — is `pokemon` barred from attacking by its OWN always-on printed
