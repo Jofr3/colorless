@@ -939,6 +939,27 @@ describe("redactGame — the public-ref effect prompts (answerer-only, 2b-iii-b)
     expect(promptFor(prompt, "p1")).toEqual(prompt);
   });
 
+  it("🆕 D441 — passes a moveEnergy prompt's FLOOR through, and its absence too", () => {
+    // Both shapes, for `anySource`'s reason exactly: the field is OPTIONAL, so the
+    // arm above pins that a prompt WITHOUT it round-trips byte-identically (no
+    // `min: undefined` appearing on either side), and this one pins that a prompt
+    // WITH it does not silently lose it — which would hand the online player a
+    // "Move none" button on Castform's printed "Move all Energy" and let the wire
+    // validator accept the empty answer. D358's defect on the other prompt.
+    const prompt: EffectPrompt = {
+      kind: "moveEnergy",
+      movable: [
+        { uid: "e1", from: P1_ACTIVE },
+        { uid: "e2", from: P1_ACTIVE },
+      ],
+      destinations: [P1_BENCH0],
+      max: 2,
+      min: 2,
+      note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+    };
+    expect(promptFor(prompt, "p1")).toEqual(prompt);
+  });
+
   it("passes a discardEnergy prompt through with its scope", () => {
     const prompt: EffectPrompt = {
       kind: "discardEnergy",

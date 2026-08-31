@@ -106,12 +106,33 @@ const ANY = 0;
 const THREE = 1;
 const BASIC = 2;
 
-/** The two sentences of the same family this slice deliberately does NOT read,
-    with the legal count each carries. They are DEFERRED for a reason about `max`
-    and not about the endpoints — see the op's doc — and they are pinned here so
-    the deferral has a live subject rather than a comment. */
-const DEFERRED = [
+/** The two sentences of the same family D229 deliberately did NOT read, with the
+    legal count each carries. They were DEFERRED for a reason about `max` and not
+    about the endpoints — see the op's doc — and they are pinned here so the
+    deferral has a live subject rather than a comment.
+
+    🆕🆕 **D441 COLLECTED THE FIRST AND LEFT THE SECOND, AND THE SPLIT IS THE
+    WHOLE FINDING.** D229's note said the blocker was `max`. It was half right: the
+    quantifier was one edit (`max: "all"`), and what actually stood in the way was
+    that *"any amount"* and *"all"* disagree about ZERO — a DECLINABILITY gap, which
+    is what `min` on the prompt closes. The second sentence carries the identical
+    quantifier and is still refused, **for a reason that was never about `max` at
+    all**: *"to your Benched Pokémon **in any way you like**"* spreads one answer
+    over MANY destinations, and the `moveEnergy` answer names ONE `dest` for every
+    pick (`{ kind: "moveEnergy"; uids: string[]; dest: PokemonRef }`).
+
+    So the list is now split by REASON rather than kept as one deferral, because a
+    single list would have gone on saying `max` about a sentence whose blocker is
+    the answer shape. Each row carries its legal printing count and its own
+    falsifier. */
+const COLLECTED_AT_D441 = [
   ["Move all Energy from this Pokémon to 1 of your Benched Pokémon.", 2],
+] as const;
+
+/** Still refused, and NOT for `max`'s reason — the destination shape. It reverses
+    the day `moveEnergy`'s answer becomes a MAP (pick → destination), which is
+    `attachCards`' shipped shape and a wire-choice change of its own. */
+const DEFERRED = [
   ["Move all Energy from this Pokémon to your Benched Pokémon in any way you like.", 1],
 ] as const;
 
@@ -198,12 +219,30 @@ describe("the two anchors — three printed sentences, one new route value", () 
     expect(CLAUSES[THREE].legalPrintings).toBe(3);
     expect(CLAUSES[BASIC].legalPrintings).toBe(2);
     // …and the residual, which is the other half of the same census: 3 more legal
-    // printings over two sentences, both DEFERRED and both derived to null here so
-    // the deferral is a fact about the code rather than a note.
-    expect(DEFERRED.reduce((sum, [, legal]) => sum + legal, 0)).toBe(3);
+    // printings over two sentences. 🆕 D441 SPLIT THAT RESIDUAL 2 + 1 rather than
+    // shrinking it, so the arithmetic below still totals the family's 16 and the
+    // two halves are told apart by their REASON rather than by their count.
+    expect(COLLECTED_AT_D441.reduce((sum, [, legal]) => sum + legal, 0)).toBe(2);
+    expect(DEFERRED.reduce((sum, [, legal]) => sum + legal, 0)).toBe(1);
+    // 🛑 THE COLLECTED HALF IS ASSERTED AS ITS PROGRAM, NOT AS `!== null` (D438):
+    // a boolean is true under the real build and under a build that claimed the
+    // sentence with the WRONG route or the WRONG quantifier, and this file exists
+    // because `benchToActive` here would pass every generic assertion in the repo.
+    for (const [text] of COLLECTED_AT_D441) {
+      expect(deriveAttackEffect(text), text).toEqual([
+        { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" },
+      ]);
+    }
+    // …and the deferred half is STILL refused, which is what keeps the rung above
+    // from reading as "this family is claimed now": one anchor moved, the other
+    // sentence did not follow it.
     for (const [text] of DEFERRED) expect(deriveAttackEffect(text), text).toBeNull();
-    // 13 + 3 = 16, which is the number the backlog row says is 19.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 3).toBe(16);
+    // 13 + 2 + 1 = 16, which is the number the backlog row says is 19.
+    expect(
+      CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
+        COLLECTED_AT_D441.reduce((sum, [, legal]) => sum + legal, 0) +
+        DEFERRED.reduce((sum, [, legal]) => sum + legal, 0),
+    ).toBe(16);
   });
 
   it("🛑 REFUSES the TYPED sibling — the family's one real near miss", () => {

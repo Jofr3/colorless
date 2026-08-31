@@ -326,6 +326,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         movable: prompt.movable.map(redactedOfferOf),
         destinations: prompt.destinations.map(redactedRefOf),
         max: prompt.max,
+        // 🆕 D441 — the FLOOR crosses for the ceiling's reason: `validateChoice`
+        // runs against the WIRE prompt for an online seat, and the online dialog
+        // decides from this object alone whether to render "Move none". A floor the
+        // wire drops is a mandatory move the remote player is offered the right to
+        // refuse — D358's exact defect on the other prompt, arriving here. Spread,
+        // so a declinable prompt's wire bytes are unchanged.
+        ...(prompt.min === undefined ? {} : { min: prompt.min }),
         // D226 — N's Plan's lifted single-source coupling. It has to CROSS: the
         // online dialog stages its pick by source and the wire validator enforces
         // the coupling, and both read this object rather than the op. Spread so a

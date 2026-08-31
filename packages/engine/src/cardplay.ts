@@ -1488,6 +1488,20 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       if (choice.uids.length > prompt.max) {
         return err("BAD_EFFECT_CHOICE", `move at most ${prompt.max} Energy`);
       }
+      // 🆕🆕 D441 — THE FLOOR, AND IT IS THE ONLY THING STANDING BETWEEN A
+      // MANDATORY MOVE AND A DECLINE. Castform's printed *"Move **all** Energy"*
+      // parks with `min === max`, so the empty answer the comment above calls "a
+      // legal decline" stops being one — and this is where that is decided, because
+      // the ceiling check one line up cannot see the difference between a prompt
+      // that offers 0..N and one that offers only N. ⚠️ `?? 0` IS THE ABSENT-KEY
+      // ARM AND IT IS LOAD-BEARING RATHER THAN DEFENSIVE: every `moveEnergy` park a
+      // pre-D441 deploy could persist carries no `min` and genuinely meant
+      // declinable, so reading the missing key as 0 is what keeps those records
+      // meaning what they meant (`MATCH_RECORD_VERSION` unmoved — see the prompt's
+      // own doc for the D334-versus-D359 argument).
+      if (choice.uids.length < (prompt.min ?? 0)) {
+        return err("BAD_EFFECT_CHOICE", `move all ${prompt.min ?? 0} Energy`);
+      }
       if (!prompt.destinations.some((d) => refEquals(d, choice.dest))) {
         return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal destination");
       }

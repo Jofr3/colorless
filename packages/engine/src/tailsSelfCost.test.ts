@@ -318,13 +318,38 @@ describe("the tails-gated self-costs — derived, not authored", () => {
     for (const text of [
       // Weavile sv06.5-014 "Hail Claw" — the discard plus a Paralyze.
       "Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.",
-      // And the MOVE verb, which is a different op entirely (Blissey sv01-145,
-      // Tropius sv02-007/-195, Darkrai sv03-136) — four more printings that a
-      // reader keying on "all Energy from this Pokémon" would have claimed.
-      "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // 🆕🆕 RE-POINTED AT D441, NOT DELETED, AND THE POLARITY IS THE POINT (D438).
+    // The MOVE verb — Blissey sv01-145, Tropius sv02-007/-195, Darkrai sv03-136 —
+    // stood in the list above as a NULL witness for "a reader keying on 'all Energy
+    // from this Pokémon' would have claimed these four printings". D441 gave it a
+    // reader, so `toBeNull` is no longer available; the claim this arm needs was
+    // never *"nothing reads this sentence"* but *"THIS anchor does not reach it"*,
+    // exactly as the Kyurem paragraph below records for D401.
+    //
+    // 🛑 IT IS ASSERTED AS A SHAPE AND NOT AS A BOOLEAN. `deriveAttackEffect(...) !==
+    // null` would be true under the real build AND under a build where this file's
+    // `discard all Energy` anchor swallowed the sentence — the two are
+    // indistinguishable to a truthiness test, which is precisely how D436 disarmed
+    // D368's tripwire. So the rung names the op that owns it and asserts the
+    // discarding one is absent: the ONE thing that must never come back is a
+    // `discardEnergy` on a sentence whose verb is "Move".
+    const moveAll = deriveAttackEffect(
+      "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+    );
+    expect(moveAll).toEqual([
+      { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" },
+    ]);
+    expect(moveAll?.some((op) => op.op === "discardEnergy")).toBe(false);
+    // …and the SELF-DISCARD sentence one word away is still refused by the same
+    // reader, which is the control that keeps the rung above from passing on a
+    // build that simply claims everything (D424's rule: every refusal owes a
+    // neighbouring admission on the same axis, and every admission owes a refusal).
+    expect(
+      deriveAttackEffect("Move all Energy from this Pokémon to your Benched Pokémon in any way you like."),
+    ).toBeNull();
     // ⚠️ RE-POINTED AT D401, NOT DELETED — Kyurem sv06.5-047 "Trifrost" (the discard
     // plus a three-target snipe) stood in the list above as a NULL witness until
     // `SELF_DISCARD_THEN_ANY_TARGET` mapped it. The claim this arm needs was never

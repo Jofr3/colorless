@@ -2178,7 +2178,16 @@ function MoveEnergyDialog({
   const dest =
     dests.find((ref) => keyOf(ref) === destKey) ??
     (dests.length === 1 ? (dests[0] as PokemonRef) : null);
-  const declineDest = prompt.destinations[0];
+  // 🆕🆕 D441 — THE PRINTED FLOOR. 0 (or absent) is this dialog's whole history
+  // — every `moveEnergy` park before Castform could be answered with nothing. At
+  // `min === max` the quantity stops being a decision: the ONLY legal answer takes
+  // every offered Energy, so "Move none" must not be on screen and Confirm must not
+  // enable until the pick is complete. Both fall out of this one number.
+  const floor = prompt.min ?? 0;
+  // ⚠️ WITHHELD RATHER THAN DISABLED. A greyed "Move none" would tell the player
+  // the print grants a refusal it does not; the empty answer simply is not one of
+  // this prompt's answers, so it is not on offer.
+  const declineDest = floor > 0 ? undefined : prompt.destinations[0];
 
   const reset = () => {
     setPickedUids([]);
@@ -2193,7 +2202,10 @@ function MoveEnergyDialog({
           : prev,
     );
   };
-  const ready = pickedUids.length > 0 && dest !== null;
+  // D441 — `Math.max(1, floor)` rather than `floor`: the pre-existing `> 0` is the
+  // declinable family's own floor (an empty pick leaves through "Move none", never
+  // through Confirm), and the printed floor replaces it only when it is larger.
+  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;
   // Past the source stage — either because it was answered, or (D226) because
   // there was never one. Confirm and the Energy list both hang off this.
   const picking = anySource || source !== null;
@@ -2233,11 +2245,19 @@ function MoveEnergyDialog({
               only way to learn where the Energy is going is to tab onto a row that
               is already pressed without anyone having pressed it. */}
           <output className="mt-1.5 block text-sm text-white/55">
+            {/* D441 — "all" where the print says all. The count that follows is the
+                same number either way; what changes is whether the player is being
+                told they may stop short of it. */}
             {source === null ? (
-              "Pick up to "
+              floor > 0 ? (
+                "Pick all "
+              ) : (
+                "Pick up to "
+              )
             ) : (
               <>
-                From <span className="text-white/80">{refName(game, source)}</span> — pick up to{" "}
+                From <span className="text-white/80">{refName(game, source)}</span> —{" "}
+                {floor > 0 ? "pick all " : "pick up to "}
               </>
             )}
             {prompt.max} ({pickedUids.length}/{prompt.max})
@@ -2861,7 +2881,11 @@ function promptKey(prompt: EffectPrompt): string {
       // first was declined is exactly the case a movable-only key would let
       // inherit a stale pick. No program has two today; the key's job is not to
       // depend on that.
-      return `move:${prompt.max}:${prompt.destinations
+      // D441 — the FLOOR rides the key beside the ceiling, for the ceiling's own
+      // stated reason: it caps the pick (from below), and two parks over the same
+      // movable set that differ only in whether a short answer is legal are
+      // different questions.
+      return `move:${prompt.min ?? 0}:${prompt.max}:${prompt.destinations
         .map((d) => `${d.seat}-${d.spot.spot === "bench" ? d.spot.index : "active"}`)
         .join(",")}:${prompt.movable.map((m) => m.uid).join(",")}`;
     case "attachCards":

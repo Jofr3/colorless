@@ -2777,8 +2777,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D244",
     what: 'the printed "any amount" becomes the family\'s default single Energy. The prompt still appears, the note still says "any amount", the card still works \u2014 it simply moves one Energy where the print moves the board, which is the quietest possible way to get this sentence wrong and the one no structural assertion would notice',
     file: "packages/engine/src/interpreter.ts",
-    find: '  return op.max === "any" ? movable : op.max;',
-    replace: '  return op.max === "any" ? 1 : op.max;',
+    // 🆕🆕 RE-TRANSCRIBED AT D441, AND ITS MEANING HELD DELIBERATELY CONSTANT.
+    // `moveCap` gained a second literal (`|| op.max === "all"`), so the old `find`
+    // stopped occurring — D414's rot, caught by `precheck` in seconds rather than
+    // ninety minutes into a sweep. ⚠️ THE NAIVE RE-TRANSCRIPTION WOULD CLAMP BOTH
+    // WORDS TO 1, which also breaks `"all"` and hands this row's kill to D441's own
+    // suite — a row that dies for the wrong reason is worth less than one that
+    // survives (D416). So the mutation is confined to the `"any"` branch, the
+    // `"all"` branch is left exactly as the real build has it, and the killer is
+    // unchanged: same claim, same suite, one more ternary.
+    find: '  return op.max === "any" || op.max === "all" ? movable : op.max;',
+    replace: '  return op.max === "any" ? 1 : op.max === "all" ? movable : op.max;',
     expectKilledBy: ["packages/engine/src/benchSwitchTrigger.test.ts"],
   },
   {
@@ -5185,7 +5194,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5691,7 +5700,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5702,7 +5711,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.342.0";',
+    find: 'export const engineVersion = "0.343.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20354,5 +20363,164 @@ export const MUTANTS: Mutant[] = [
     find: "  for (const uid of state.players[seat].discard) {",
     replace: "  for (const uid of state.players[seat].hand) {",
     expectKilledBy: ["packages/engine/src/discardPileScaling.test.ts", "packages/engine/src/basicEnergyDiscard.test.ts"],
+  },
+  // ── D441 — THE DECLINABILITY AXIS OF THE MOVE-ENERGY FAMILY. Seventeen rows,
+  //    and the SHAPE of the set is the finding: SEVEN of them (C1, C5, C7, C8, C9,
+  //    C10, C16/C17 at one Energy) leave every BOARD in this slice correct and change
+  //    only WHICH ANSWERS ARE LEGAL — the axis this slice exists for, and the one no
+  //    board-state assertion can see. Three more (C12, C13, C14/C15) are wholly
+  //    invisible to the engine and live on the wire or the screen.
+  {
+    id: "D441-arm-emits-a-number-instead-of-the-quantifier",
+    decision: "D441",
+    what: "🛑 C1 — THE WHOLE SLICE AT ONE LITERAL: the new arm emits `max: 1`, which is the NEIGHBOURING arm's real value four lines up. The card still parks, still names the right endpoints, still moves Energy and still passes every generic `moveEnergy` assertion in this repo — it simply moves ONE Energy where Castform gives the whole body away, and it hands the player back the decline. Reachable only from a board holding TWO or more movable Energy, which is why §2 fields three",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"moveEnergy\", filter: { kind: \"anyEnergy\" }, max: \"all\", route: \"selfToBench\" }];",
+    replace: "    return [{ op: \"moveEnergy\", filter: { kind: \"anyEnergy\" }, max: 1, route: \"selfToBench\" }];",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-arm-emits-the-mirror-route",
+    decision: "D441",
+    what: "🛑 C2 — the new arm emits `benchToActive` — D229's crossed build, installed on the THIRD anchor of the family it was written for. The Energy moves the right distance in the WRONG direction, and D229's own row cannot see it: that one quotes the numeric arm's lines, which this slice deliberately did not touch",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"moveEnergy\", filter: { kind: \"anyEnergy\" }, max: \"all\", route: \"selfToBench\" }];\n  }\n  // ⚠️⚠️ D230",
+    replace: "    return [{ op: \"moveEnergy\", filter: { kind: \"anyEnergy\" }, max: \"all\", route: \"benchToActive\" }];\n  }\n  // ⚠️⚠️ D230",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-anchor-loses-its-terminator",
+    decision: "D441",
+    what: "⚠️ C3 — the new anchor loses its `\\.$`, the defect D207 paid for three times and D229 installed on both of its own anchors. No member of this family carries a tail in print, so the witness is CONSTRUCTED and §1 says so — which is exactly the gap D228 found the hard way",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH =\n  /^Move all Energy from this Pokémon to 1 of your Benched Pokémon\\.$/;",
+    replace: "const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH =\n  /^Move all Energy from this Pokémon to 1 of your Benched Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-cap-forgets-the-new-quantifier",
+    decision: "D441",
+    what: "🛑 C4 — `moveCap` is the PRE-SLICE LINE VERBATIM, so the widening lands on the op and not on the clamp. `\"all\"` falls to the numeric side and the prompt's `max` becomes the STRING `\"all\"`: the dialog's pick cap, the wire schema's `z.number()` and the validator's ceiling all read a word. The quietest form of 'I widened the type and forgot the reader'",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return op.max === \"any\" || op.max === \"all\" ? movable : op.max;",
+    replace: "  return op.max === \"any\" ? movable : op.max;",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-floor-is-read-off-the-wrong-word",
+    decision: "D441",
+    what: "🛑 C5 — `moveFloor` keys on `\"any\"` instead of `\"all\"`, which inverts the slice: the printed *\"any amount\"* becomes MANDATORY (Iron Leaves ex can no longer decline a sweep the card offers) and Castform's *\"all\"* goes back to being declinable. Both halves are wrong and each alone would look like a typo; every board with a single movable Energy reads identically under both",
+    file: "packages/engine/src/interpreter.ts",
+    find: "function moveFloor(op: Extract<EffectOp, { op: \"moveEnergy\" }>, cap: number): number {\n  return op.max === \"all\" ? cap : 0;\n}",
+    replace: "function moveFloor(op: Extract<EffectOp, { op: \"moveEnergy\" }>, cap: number): number {\n  return op.max === \"any\" ? cap : 0;\n}",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-park-drops-the-floor",
+    decision: "D441",
+    what: "🛑 C6 — THE PARK DOES NOT CARRY THE FLOOR ONTO THE PROMPT: the op knows and nothing downstream does, which is D226's `prompt-drops-rider` in its purest form on the same op one field over. Every endpoint, every event and every board is correct; the only thing that changes is that the answer may be short",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          ...(floor === 0 ? {} : { min: floor }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-validator-drops-the-floor",
+    decision: "D441",
+    what: "🛑 C7 — the wire validator's floor check is DELETED, so the prompt says `min: 3` and the engine accepts an empty answer anyway. The dialogs both honour the field, so a LOCAL player sees nothing wrong and only a crafted frame — or the online client of a build one deploy behind — reaches it. The failure is at the wire and not at the board, which is why a rung asserting attached Energy alone would miss it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.uids.length < (prompt.min ?? 0)) {\n        return err(\"BAD_EFFECT_CHOICE\", `move all ${prompt.min ?? 0} Energy`);\n      }",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-validator-floor-defaults-to-the-max",
+    decision: "D441",
+    what: "⚠️ C8 — the ABSENT-KEY ARM READS AS THE CEILING (`prompt.min ?? prompt.max`) instead of as 0. Every D441 prompt behaves perfectly, so §2 and §4 stay green; what breaks is the whole DECLINABLE family that has parked since M4 — and, precisely, a v29 record resumed under this deploy, which is the `MATCH_RECORD_VERSION` bump condition arriving as a defect instead of a version",
+    file: "packages/engine/src/cardplay.ts",
+    find: "      if (choice.uids.length < (prompt.min ?? 0)) {",
+    replace: "      if (choice.uids.length < (prompt.min ?? prompt.max)) {",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts", "packages/engine/src/moveEnergy.test.ts"],
+  },
+  {
+    id: "D441-force-swallows-the-declinable-family",
+    decision: "D441",
+    what: "🛑 C9 — THE FORCED ARM LOSES ITS FLOOR GUARD and fires on destination count alone, so every ONE-DESTINATION printing in the family auto-resolves: Armarouge, Exp. Share, Iron Leaves ex and D229's own sentence all stop asking. It is D358's defect exactly ('the M1 no-choice rule swallows the decline at one candidate'), and D47's review reversed a draft on this very question. Castform's own boards are untouched, so every rung about THIS slice stays green",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (floor > 0 && destinations.length === 1) {",
+    replace: "      if (destinations.length === 1) {",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts", "packages/engine/src/expShare.test.ts"],
+  },
+  {
+    id: "D441-no-force-at-one-destination",
+    decision: "D441",
+    what: "⚠️ C10 — the forced arm never fires (`floor > 0` becomes `floor < 0`), so a mandatory move with a single legal destination PARKS on a prompt with exactly one answer. Nothing is wrong with the board and nothing is wrong with the answer; the player is simply asked a question that has one. It is the SAFE direction of the failure, which is why it needs a row: every board-state assertion in this file passes under it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (floor > 0 && destinations.length === 1) {",
+    replace: "      if (floor < 0 && destinations.length === 1) {",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-note-numbers-a-sentence-that-prints-none",
+    decision: "D441",
+    what: "⚠️ C11 — the `\"all\"` caption arm is deleted, so the note falls through to `Move up to N …` and the dialog reads a number the card does not carry AND that CHANGES WITH THE BOARD. This is D244's refusal for `\"any amount\"` and D333's row for `lookAtTopN`, arriving at the third address. The candidate set, the floor and every resolution are untouched",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.max === \"all\") return `Move all ${noun} ${where}.`;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-redact-drops-the-floor",
+    decision: "D441",
+    what: "🛑 C12 — THE FLOOR DOES NOT CROSS THE WIRE, so the online dialog renders 'Move none' on Castform's printed *\"Move all Energy\"* and the online validator — which reads the redacted prompt — accepts the empty answer. The local game is entirely fine, which is D358's `wire-drops-the-decline` with the polarity reversed",
+    file: "packages/engine/src/redact.ts",
+    find: "        ...(prompt.min === undefined ? {} : { min: prompt.min }),",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/redact.test.ts", "packages/engine/src/derivedMoveAllEnergy.test.ts"],
+  },
+  {
+    id: "D441-projection-drops-the-floor",
+    decision: "D441",
+    what: "🛑 C13 — the wire-to-engine REBUILD drops the floor, the THIRD read site and the one D226's work order did not name. Its own doc promises the round-trip is exact, so a prompt that crossed correctly is re-granted a decline on the way back in",
+    file: "src/features/game/projection.ts",
+    find: "          ...(prompt.min === undefined ? {} : { min: prompt.min }),",
+    replace: "",
+    expectKilledBy: ["src/features/game/projection.test.ts"],
+  },
+  {
+    id: "D441-local-hud-keeps-the-decline",
+    decision: "D441",
+    what: "🛑 C14 — the LOCAL dialog keeps offering 'Move none' (the pre-slice line verbatim): the card is legal, the engine refuses the answer, and the player is shown a button that can only produce an error. The afford-then-reject defect D222 named, on the one screen that tells the player what their pick does",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const declineDest = floor > 0 ? undefined : prompt.destinations[0];",
+    replace: "  const declineDest = prompt.destinations[0];",
+    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
+  },
+  {
+    id: "D441-online-hud-keeps-the-decline",
+    decision: "D441",
+    what: "🛑 C15 — the ONLINE dialog keeps offering 'Move none' — the same defect on the other HUD, which is why the price was two read sites and not one (D226's pair, and D412's third-read-site rule)",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "  const declineDest = floor > 0 ? undefined : prompt.destinations[0];",
+    replace: "  const declineDest = prompt.destinations[0];",
+    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
+  },
+  {
+    id: "D441-local-hud-confirm-ignores-the-floor",
+    decision: "D441",
+    what: "⚠️ C16 — the LOCAL Confirm reverts to the family's standing `pickedUids.length > 0`, so a SHORT answer can be dispatched and the engine refuses it. ⚠️ IT IS INVISIBLE AT ONE MOVABLE ENERGY — the two readings agree there — which is why the local dom case fields TWO and asserts 'Move 1' is dead",
+    file: "src/features/game/GameHud.tsx",
+    find: "  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;",
+    replace: "  const ready = pickedUids.length > 0 && dest !== null;",
+    expectKilledBy: ["src/features/game/GameHud.cardplay.dom.test.tsx"],
+  },
+  {
+    id: "D441-online-hud-confirm-ignores-the-floor",
+    decision: "D441",
+    what: "⚠️ C17 — the ONLINE Confirm reverts to `pickedUids.length > 0` — C16 on the other HUD, and the same one-Energy blind spot: the online case fields two Energy for exactly that reason",
+    file: "src/features/online/components/OnlineHud.tsx",
+    find: "  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;",
+    replace: "  const ready = pickedUids.length > 0 && dest !== null;",
+    expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
   },
 ];

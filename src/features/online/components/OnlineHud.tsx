@@ -668,7 +668,16 @@ function MoveEnergyDialog({
   const dest =
     dests.find((ref) => refKey(ref) === destKey) ??
     (dests.length === 1 ? (dests[0] as RedactedPokemonRef) : null);
-  const declineDest = prompt.destinations[0];
+  // 🆕🆕 D441 — THE PRINTED FLOOR. 0 (or absent) is this dialog's whole history
+  // — every `moveEnergy` park before Castform could be answered with nothing. At
+  // `min === max` the quantity stops being a decision: the ONLY legal answer takes
+  // every offered Energy, so "Move none" must not be on screen and Confirm must not
+  // enable until the pick is complete. Both fall out of this one number.
+  const floor = prompt.min ?? 0;
+  // ⚠️ WITHHELD RATHER THAN DISABLED — the local dialog's rule, and it has to be
+  // the SAME rule: two HUDs answering one prompt differently is D412's
+  // third-read-site defect waiting to happen.
+  const declineDest = floor > 0 ? undefined : prompt.destinations[0];
 
   const reset = () => {
     setPickedUids([]);
@@ -682,7 +691,9 @@ function MoveEnergyDialog({
           ? [...prev, uid]
           : prev,
     );
-  const ready = pickedUids.length > 0 && dest !== null;
+  // D441 — the local dialog's line verbatim; see it for why the 1 is a `Math.max`
+  // rather than a replacement.
+  const ready = pickedUids.length >= Math.max(1, floor) && dest !== null;
   // Past the source stage — answered, or (D226) never asked.
   const picking = anySource || source !== null;
 
@@ -714,12 +725,17 @@ function MoveEnergyDialog({
           {/* A live region carrying the count AND the destination (which this
               dialog picks for the player when only one is legal). */}
           <output className="mt-1.5 block text-sm text-white/55">
+            {/* D441 — "all" where the print says all; the local dialog's copy. */}
             {source === null ? (
-              "Pick up to "
+              floor > 0 ? (
+                "Pick all "
+              ) : (
+                "Pick up to "
+              )
             ) : (
               <>
-                From <span className="text-white/80">{refName(board, seat, source)}</span> — pick up
-                to{" "}
+                From <span className="text-white/80">{refName(board, seat, source)}</span> —{" "}
+                {floor > 0 ? "pick all " : "pick up to "}
               </>
             )}
             {prompt.max} ({pickedUids.length}/{prompt.max})

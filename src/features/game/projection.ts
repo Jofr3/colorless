@@ -527,6 +527,11 @@ function effectDecisionFromPrompt(
           })),
           destinations: prompt.destinations.map(refFromWire),
           max: prompt.max,
+          // 🆕 D441 — the floor rides the rebuild for the rider's reason, verbatim:
+          // this promise is EXACT reproduction, so a `min` dropped here silently
+          // re-grants a decline the print refuses. Spread, so a prompt without a
+          // floor rebuilds to the byte-identical object it always did.
+          ...(prompt.min === undefined ? {} : { min: prompt.min }),
           // D226 — the THIRD moveEnergy read site, and the one the work order did
           // not name: this rebuild promises to reproduce `phaseViewOf`'s decision
           // EXACTLY, so a rider dropped here silently re-imposes the single-source

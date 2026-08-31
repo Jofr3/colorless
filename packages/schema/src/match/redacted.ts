@@ -532,12 +532,29 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       prompt written by a build that predates the rider round-trips unchanged.
       The dialog reads it to skip its source-picking STAGE, and `validateChoice`
       reads it to allow the answer; neither can see the engine op, which is why
-      it crosses at all. */
+      it crosses at all.
+
+      🆕🆕 **D441 — `min` IS THE PRINTED FLOOR**, and it is what makes Castform's
+      *"Move **all** Energy from this Pokémon to 1 of your Benched Pokémon."*
+      answerable rather than merely offerable: `min === max` means the quantity is
+      not a decision and only the destination is. Same split `chooseCards` has
+      carried since M4 (0 = the printed "up to"; `min === max` = a mandatory exact),
+      and the online dialog reads it to withhold "Move none" exactly as
+      `validateChoice` reads it to refuse the empty answer.
+
+      **OPTIONAL, AND — UNLIKE D359's `upTo` DIRECTLY ABOVE — THAT COSTS NO
+      `MATCH_RECORD_VERSION` BUMP.** This prompt rides the persisted
+      `effect:choose` phase, so a v29 snapshot can hold one; it carries no `min`,
+      and no `min` meant DECLINABLE both before this field and after it. D359 bumped
+      because absent came to mean MANDATORY where the old bytes meant declinable —
+      the same shape pointing the other way. *"Does the old byte string still mean
+      what it meant"* is the discriminator, and here it does. */
   z.object({
     kind: z.literal("moveEnergy"),
     movable: z.array(redactedEnergyOfferSchema),
     destinations: z.array(redactedPokemonRefSchema),
     max: z.number(),
+    min: z.number().int().nonnegative().optional(),
     anySource: z.literal(true).optional(),
     note: z.string(),
   }),

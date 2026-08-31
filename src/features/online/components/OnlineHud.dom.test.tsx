@@ -827,6 +827,61 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
     });
   });
 
+  it("🆕 moveEnergy: a FLOOR withholds 'Move none' and holds Move disabled until the pick is WHOLE", () => {
+    // 🛑 D441 — Castform's printed *"Move all Energy"*. The board is the SAME
+    // shape as the declinable case two tests up (one source, one destination) and
+    // the ONLY difference is `min`, so a build that ignored the field would pass
+    // every assertion there and fail every one here.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [
+                { uid: "e1", from: YOU_ACTIVE },
+                { uid: "e2", from: YOU_ACTIVE },
+              ],
+              destinations: [YOU_BENCH0],
+              max: 2,
+              min: 2,
+              note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+            },
+          },
+          you: {
+            active: inPlay("a", "My Active", {
+              attached: {
+                tools: [],
+                energies: [energy("e1", "Water Energy"), energy("e2", "Fire Energy")],
+              },
+            }),
+            bench: [inPlay("b0", "My Bench")],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // The decline is WITHHELD rather than disabled — the empty answer is not one of
+    // this prompt's answers, so it is not a row on screen.
+    expect(screen.queryByRole("button", { name: /Move none/ })).toBeNull();
+    // …and a SHORT answer cannot be dispatched either, which the missing button
+    // alone does not prove: one Energy of two is a legal answer to every other
+    // prompt this dialog renders and the engine now refuses it.
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy" }));
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: /Move 1/ }).disabled).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Fire Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move 2/ }));
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", uids: ["e1", "e2"], dest: YOU_BENCH0 },
+    });
+  });
+
   it("moveEnergy: `anySource` drops the source stage and lets the picks SPAN hosts", () => {
     // 🛑 D226 — N's Plan over the wire. The source stage filters the Energy list
     // to ONE host, so keeping it would make the card's printed answer (one Energy

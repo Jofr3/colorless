@@ -1850,6 +1850,114 @@ longer able to impersonate a mutant. **A check anchored on the structure cannot
 be fooled by prose that contains the structure's punctuation** — which is the
 general form of the fix, not a special case for that one row.
 
+## A quantifier that answers two questions is ONE field (D441)
+
+`moveEnergy.max` went `number | "any"` → `+ "all"`, and the tempting shape was a
+separate `mandatory?: true` beside the number. **It is refused because the printed
+determiner answers the quantity AND the declinability at once**, so two fields
+would spell combinations nothing prints — `max: 3` with the flag is *"Move exactly
+3"*, and `max: "any"` with it is *"any amount, but not none"*, which is not
+English. D361 settled the identical question one op over on
+`discardEnergy.count`, on the same word: **a WIDENING is free; a GENERALISATION is
+not.**
+
+⚠️ **The test is not "how many questions does the union member answer" but "how
+many INDEPENDENT questions does the PRINT ask".** If the two always co-vary in
+print, a second field is a way to author cards nobody printed.
+
+## Derive the new field's spelling from the model, not from the slice (D441)
+
+D441 needed a mandatory-vs-declinable floor on a prompt that had none. The answer
+was **not invented**: `min === max` is already this engine's spelling for exactly
+that fact in three shipped places — `chooseCards`'s wire doc (*"`min` is the
+DECLINABLE split (0 = the printed 'up to', `min === max === count` = a mandatory
+exact cost)"*), `choosePokemonMulti`'s `{min, max, declinable}`, and the
+`const exact = prompt.min === prompt.max` **both** HUD dialogs caption from.
+
+**Before adding a field, grep the sibling members of the same union for the fact
+you are about to name.** A shape that already has three readers costs nothing to
+learn and cannot drift from them; a new one has to be taught to every surface.
+
+## Which way does the absent key point (D441)
+
+D432/D434/D435 built the sequence *no rest → required*, *rest not old → required*,
+*rest old but degradation is `NaN` → required*. D441 is the case where the optional
+road is not merely available but **correct**, and the discriminator is DIRECTION:
+
+- **D359 BUMPED 21 → 22** because `choosePokemon`'s absent `upTo` came to mean
+  MANDATORY, where a v21 record's bytes meant DECLINABLE.
+- **D441 stays at 29** because `moveEnergy`'s absent `min` means DECLINABLE, and
+  every park an older deploy could write **was** declinable.
+
+Same field shape, same persisted address, opposite answers. **The question is never
+"is the key optional" — it is "does the ABSENT key still say what the old writer
+meant".** And it is settled by reconstructing an old record (delete the key the old
+writer never wrote), replaying it through the real action API, and asserting the old
+answer is still accepted — beside the new board refusing it. Both directions or
+neither.
+
+⚠️ **The exact precedents are usually already written down.** D333 measured no bump
+for a **widened `max` union** and D334 none for an **added optional `exact`**, both
+on the SAME op (`lookAtTopN`), and both are quoted verbatim inside
+`MATCH_RECORD_VERSION`'s own doc block. Read that block for your shape before
+reasoning from the type's name.
+
+## An op's arity doctrine can have a hole nothing has ever reached (D441)
+
+`parkOrForce`'s 0/1/≥2 doctrine is shipped and correct, and `moveEnergy`
+**hand-rolls it and has never had the 1 arm at all** — not by oversight, but because
+a DECLINE was always a second answer, so no board this op could reach ever offered
+exactly one. The first mandatory quantifier removed the decline and the arm became
+reachable in the same edit.
+
+**When you remove an answer from a prompt, re-derive its arity from scratch.** The
+missing arm is invisible until you do, because every existing board still has two.
+And **gate the new arm on the thing that changed** (here the FLOOR), not on the
+condition that happens to co-occur (the destination count) — the loose gate is
+D358's shipped defect, and it silently forces every declinable sibling on the same
+board.
+
+## The pre-build tripwire audit is right to run and wrong about which row (D441)
+
+D436's GAP produced the rule *before building what an earlier slice refused, grep
+the mutation corpus for the SENTENCE*. D441 ran it over all 1,728 rows from the
+module, on six fields, with ten needles, and read all 48 hits. **The audit's
+conclusion held — nothing rested on the refusal — and its PREDICTION was wrong.**
+It expected D229's two anchor rows to rot; the build took a separate third anchor
+and they did not. What rotted was `D244-any-amount-clamps-to-one`, whose `find`
+quotes a HELPER the audit had read and not flagged.
+
+⚠️ **An audit that names the rows it expects to break is doing two jobs, and only
+one of them is reliable.** The GAP question ("does a row rest on this refusal") is
+answerable by reading. The ROT question ("which `find` will stop matching") is
+answerable only by `bun scripts/mutation/precheck.ts`, which costs seconds and is
+mechanical. **Do both, and never let the reading stand in for the precheck.**
+
+## A separate anchor is cheaper than a wider alternation when the KINDS differ (D441)
+
+Widening `/^Move (?:(\d+)|an) …/` to `(?:(\d+)|an|all)` looks like one character of
+work. It is not: the arm reads the absent capture AS the value (`match[1] ===
+undefined ? 1 : Number(match[1])` — the whole of D229's article reading), so a third
+alternative producing a DIFFERENT `max` kind forces the arm to ask which branch
+matched. **Two kinds, two anchors** — the rule the BASIC sibling already stated for
+a different reason (the article moves with the noun).
+
+⚠️ **And it has a second payoff that is worth naming: a new anchor breaks no
+existing row, where an in-place widening rots every mutant that quotes the regex.**
+D414's lesson, avoided rather than paid.
+
+## Splitting a deferral list by REASON (D441)
+
+`derivedSelfEnergyMove.test.ts` carried a two-row `DEFERRED` list whose comment gave
+ONE reason (`max`) for both. D441 collected one of them and discovered the other's
+blocker was never `max` at all — it is the ANSWER SHAPE. The list was **split into
+two named lists, each with its own falsifier**, rather than shortened.
+
+**When you collect half of a deferral, check whether the stated reason was ever true
+of the other half.** A list that keeps its original justification after losing a
+member is asserting that reason about a sentence nobody re-checked — D422's stale
+refusal, arriving inside a test fixture instead of a doc block.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

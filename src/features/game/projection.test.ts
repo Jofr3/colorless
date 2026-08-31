@@ -1037,6 +1037,22 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         anySource: true,
         note: "Move up to 2 Energy from your Benched Pokémon to your Active Pokémon.",
       },
+      // 🆕 D441 — the SAME kind carrying `min` (Castform's printed "Move ALL
+      // Energy"). Here for the rider's reason above, verbatim: the floor is
+      // OPTIONAL, so the first arm pins that a prompt without it rebuilds
+      // byte-identically and this one pins that a prompt with it does not lose it —
+      // which would re-grant the client a decline the print refuses.
+      {
+        kind: "moveEnergy",
+        movable: [
+          { uid: "e1", from: active("p1") },
+          { uid: "e2", from: active("p1") },
+        ],
+        destinations: [bench0],
+        max: 2,
+        min: 2,
+        note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+      },
       {
         kind: "discardEnergy",
         discardable: [{ uid: "e1", from: active("p2") }],

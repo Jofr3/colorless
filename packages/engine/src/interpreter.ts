@@ -496,12 +496,36 @@ export type EffectPrompt =
       never the op — a coupling only the interpreter knows about is one no
       answerer can satisfy. OPTIONAL, so a park persisted by a build that predates
       it reads back as the single-source coupling it was written under
-      (`MATCH_RECORD_VERSION` unmoved — a widening, not a missing field). */
+      (`MATCH_RECORD_VERSION` unmoved — a widening, not a missing field).
+
+      🆕🆕 **D441 — `min` IS THE FLOOR, AND IT IS WHAT LETS THIS PROMPT SAY
+      "MANDATORY".** Absent (or 0) is the decline this arm has carried since M4;
+      `min === max` is Castform's printed *"Move **all** Energy"*, where the
+      quantity is not a decision and only the destination is. It is carried HERE
+      and not only on the op for `anySource`'s reason word for word — the wire
+      validator, the wire schema and both HUD dialogs read the PROMPT and never
+      the op — and it is a NUMBER rather than a boolean because that is this
+      engine's shipped spelling for the same fact in three other places:
+      `chooseCards`'s *"`min` is the DECLINABLE split (0 = the printed 'up to',
+      `min === max === count` = a mandatory exact cost)"* (redacted.ts),
+      `choosePokemonMulti`'s `{min, max, declinable}`, and the
+      `const exact = prompt.min === prompt.max` both HUDs already caption from.
+
+      🛑 **OPTIONAL, AND THE MISSING KEY IS NOT A LOST FACT — IT IS THE CORRECT
+      READING OF THE OLD BYTES.** Every `moveEnergy` park an earlier deploy could
+      author was declinable (this block's own third sentence), so `prompt.min ?? 0`
+      resumes such a record meaning exactly what it meant. That is D334's optional
+      `exact` verbatim, and it is the INVERSE of D359's `upTo`, which DID move
+      `MATCH_RECORD_VERSION` precisely because absent came to mean MANDATORY where
+      the old bytes meant declinable. **Direction is the whole of the difference**,
+      and it is the discriminator that block states outright: *"does the old byte
+      string still mean what it meant"*. */
   | {
       kind: "moveEnergy";
       movable: { uid: string; from: PokemonRef }[];
       destinations: PokemonRef[];
       max: number;
+      min?: number;
       anySource?: true;
       note: string;
     }
@@ -2413,6 +2437,33 @@ function stepOp(
       if (movable.length === 0 || destinations.length < needed || cap <= 0) {
         return { done: state };
       }
+      const floor = moveFloor(op, cap);
+      // 🆕🆕 D441 — THE FORCED ARM, AND IT IS THIS OP'S FIRST. `parkOrForce`'s
+      // doctrine is 0 candidates ⇒ silent no-op, 1 ⇒ forced, ≥2 ⇒ park; this op
+      // hand-rolls the 0 and the ≥2 above and has never had the 1 — not by
+      // oversight, but because a DECLINE is always a second answer, so no board this
+      // op could reach ever offered only one. A mandatory quantity removes it: with
+      // the picks fixed at the whole `movable` set and a SINGLE eligible
+      // destination there is literally one legal answer, and asking for it is the
+      // redundant click D171's sole-destination rule already refuses INSIDE the
+      // dialog — taken here instead, where no dialog has to exist.
+      //
+      // ⚠️ GATED ON THE FLOOR AND NOT ON `destinations.length` ALONE, which is what
+      // keeps every declinable printing parking exactly as it did: Armarouge and
+      // Exp. Share both offer exactly one destination and both must still ask,
+      // because the answer they would be forced into is one the player may refuse.
+      if (floor > 0 && destinations.length === 1) {
+        const dest = destinations[0] as PokemonRef;
+        return {
+          done: moveEnergyApply(
+            state,
+            movable.map((entry) => entry.uid),
+            dest,
+            ctx,
+            events,
+          ),
+        };
+      }
       return {
         park: {
           kind: "moveEnergy",
@@ -2422,6 +2473,12 @@ function stepOp(
           // (and therefore the wire schema, the validator and both dialogs) keeps
           // the plain number it has always had. `attachFromTop`'s spelling.
           max: cap,
+          // 🆕 D441 — and the FLOOR is clamped by the same rule at the same moment,
+          // for the same reason. Spread rather than written as 0, so a declinable
+          // park's shape is BYTE-IDENTICAL to the one it had before the floor
+          // existed — `anySource`'s spelling one line down, and what keeps the wire
+          // field optional and `MATCH_RECORD_VERSION` at 29.
+          ...(floor === 0 ? {} : { min: floor }),
           // D226 — carried onto the prompt because every downstream reader (the
           // wire validator, the wire schema, both HUD dialogs) reads the PROMPT.
           // Spread rather than set to `undefined` so a single-source park's shape
@@ -11896,7 +11953,27 @@ function refKeyOf(ref: PokemonRef): string {
     inline; it is a FUNCTION here because two callers ask, and because the clamp is
     what keeps the PROMPT's `max` a number — no wire shape moves for this. */
 function moveCap(op: Extract<EffectOp, { op: "moveEnergy" }>, movable: number): number {
-  return op.max === "any" ? movable : op.max;
+  // 🆕 D441 — `"all"` clamps to the SAME number as `"any"`; the two differ only in
+  // the FLOOR, which is `moveFloor`'s question and not this one. Spelled as a
+  // membership test over the two literal words rather than as
+  // `typeof op.max === "number"`, so a fourth quantifier cannot fall silently onto
+  // the numeric side (D222's closed-world hazard, reaching a value union).
+  return op.max === "any" || op.max === "all" ? movable : op.max;
+}
+
+/** How FEW Energy a `moveEnergy` answer may carry — 0 for every printing this
+    family has had since M4, and the whole clamp for Castform's printed *"Move
+    **all** Energy"* (D441). `cap` is `moveCap`'s answer, so "all" means "the
+    ceiling is also the floor" and the two can never disagree about the number.
+
+    ⚠️ A SECOND FUNCTION RATHER THAN A SECOND RETURN OUT OF `moveCap`, and for
+    `moveCap`'s own stated reason read backwards: TWO callers ask the ceiling (the
+    park and the `programPlayable` gate) and only ONE asks the floor. The gate
+    deliberately does not — a play refused because its floor could not be met
+    would be a rule no card prints, and "all" of nothing is already a no-op
+    through `movable.length === 0` one line above the call. */
+function moveFloor(op: Extract<EffectOp, { op: "moveEnergy" }>, cap: number): number {
+  return op.max === "all" ? cap : 0;
 }
 
 /** A moveEnergy op does something iff the controller has ≥1 Energy the filter
@@ -12755,6 +12832,13 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   // "Move up to 3 Energy" on a board that happens to hold three would put a
   // number in front of a sentence that prints none.
   if (op.max === "any") return `Move any amount of ${noun} ${where}.`;
+  // 🆕 D441 — Castform's printed determiner, spelled rather than resolved, for the
+  // paragraph above's reason exactly: "Move all Energy from this Pokémon to 1 of
+  // your Benched Pokémon." is the card's own sentence, and a heading reading "Move
+  // up to 3 Energy" over a pick the player may not shorten would be a caption
+  // contradicting its own dialog (D295's defect — the board right and the one
+  // screen telling the player what their pick does wrong).
+  if (op.max === "all") return `Move all ${noun} ${where}.`;
   return op.max > 1
     ? `Move up to ${op.max} ${noun} ${where}.`
     : `Move ${article} ${noun} ${where}.`;

@@ -7883,13 +7883,66 @@ export type EffectOp =
       `selfToBench`'s doc names Castform's *"Move **all** Energy"* as blocked on
       exactly this; that sentence is now representable (it is `max: "any"` with a
       mandatory-vs-declinable question left standing) and stays unbuilt because
-      the declinability gap, not the number, is what it is waiting on. */
+      the declinability gap, not the number, is what it is waiting on.
+
+      🆕🆕 **D441 CLOSED THAT GAP, AND THE PARAGRAPH ABOVE IS KEPT BECAUSE IT
+      NAMED THE RIGHT BLOCKER.** `max: "all"` is the third value, and the sentence
+      *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."*
+      (`sv08-020`/`-195` Castform, **2 legal printings**) now derives. What was
+      missing was never the quantifier — `"any"` could already say "the whole
+      movable set" — it was that "any amount" and "all" DISAGREE ABOUT ZERO.
+      Printed *"any amount"* is a player choice and 0 is a legal answer; printed
+      *"all"* is mandatory and 0 is not.
+
+      🛑 **`"all"` IS ONE VALUE ON `max` AND NOT A SECOND FIELD, AND THE REASON IS
+      THAT IT ANSWERS BOTH QUESTIONS AT ONCE.** A separate `mandatory?: true`
+      would be representable in combinations nothing prints — `max: 3` with it
+      (*"Move exactly 3"*) and `max: "any"` with it (*"move any amount, but not
+      none"*, which is not English) — and D361 settled that shape one op over on
+      the sibling `discardEnergy.count`, on the same word, with the same
+      reasoning: **A WIDENING IS FREE; A GENERALISATION IS NOT.** The printed
+      determiner IS the quantity AND the declinability, so it is one field.
+
+      ⚠️ **THE OP CARRIES THE PRINTED WORD; THE PROMPT CARRIES THE RESOLVED
+      NUMBERS** — D244's own move for `"any"`, applied to the floor. `moveCap`
+      clamps `"all"` to the movable count exactly as it clamps `"any"`, and the
+      park additionally sets the prompt's `min` to that clamp, because the wire
+      validator, the wire schema and both HUD dialogs read the PROMPT and never
+      the op (D226's rule, and the whole price of `anySource`). `min === max` is
+      not a new idea either: it is `chooseCards`'s shipped DECLINABLE SPLIT
+      (*"`min` is the DECLINABLE split — 0 = the printed 'up to', `min === max ===
+      count` = a mandatory exact cost"*, redacted.ts) and the `exact` both
+      `choosePokemonMulti` dialogs already render.
+
+      ⚠️ **AT ONE DESTINATION IT DOES NOT PARK AT ALL.** With the quantity fixed
+      and a single eligible destination the answer is fully determined, so the op
+      applies inline — `parkOrForce`'s 0/1/≥2 doctrine, reached by this op for the
+      first time. It could never arise before: with a decline always available,
+      every board offered at least two answers. **The declinable arms are
+      untouched and still always park**, which is why the force is gated on
+      `max === "all"` rather than on the destination count alone.
+
+      🛑 **AND THE SIBLING SENTENCE IS STILL REFUSED, FOR A REASON THAT IS NOT
+      ABOUT THE QUANTIFIER.** *"Move all Energy from this Pokémon to your Benched
+      Pokémon **in any way you like**."* (`sv08-067` Kilowattrel, 1 legal) carries
+      the identical `max: "all"` and is blocked on its DESTINATION SHAPE: the
+      `moveEnergy` ANSWER is `{ uids: string[]; dest: PokemonRef }` — one
+      destination for every pick — and `attachFromTop`'s doc states the
+      distinction outright (*"each attached card names its OWN destination — so
+      the answer is a MAP (card → Pokémon), not a list … moveEnergy's picks share
+      one destination"*). Spreading one answer over MANY destinations needs the
+      `attachCards` map answer, which is a different prompt, a different wire
+      choice shape and a `MATCH_RECORD_VERSION` question of its own. **The two
+      sentences differ on one axis and only one of them is this slice's.** */
   | {
       op: "moveEnergy";
       filter: CardFilter;
       /** `"any"` is the printed "any amount" — clamped to the movable count when
-          the prompt is built, exactly as `attachFromTop` clamps to its window. */
-      max: number | "any";
+          the prompt is built, exactly as `attachFromTop` clamps to its window.
+          🆕 D441 — `"all"` is the printed "all" and clamps to the SAME number;
+          the difference is the FLOOR, which the park carries onto the prompt as
+          `min`. Absent floor = the family's standing decline. */
+      max: number | "any" | "all";
       route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench" | "othersToSelf";
       /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
           printed "from your Benched Pokémon", plural). Absent = the single-source
@@ -15419,6 +15472,25 @@ const ATTACK_MOVE_ENERGY_SELF_TO_BENCH =
 // not. Same rule the two draw anchors and D227's three follow.
 const ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH =
   /^Move a Basic Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+// 🆕🆕 D441 — THE MANDATORY-ALL SIBLING (`sv08-020`/`-195` Castform "Weather
+// Ball"-line, 5 printings / **2 legal**). A THIRD ANCHOR RATHER THAN A THIRD
+// BRANCH OF THE ALTERNATION ABOVE, for the reason the BASIC one gives four lines
+// up and for one more: `(?:(\d+)|an|all)` would fold two DIFFERENT `max` KINDS
+// into one capture, so the arm could no longer read the missing group as `max: 1`
+// (`match[1] === undefined ? 1 : Number(match[1])` — the whole of D229's article
+// reading) without first asking which alternative matched. Two kinds, two
+// anchors. ⚠️ AND IT KEEPS D229's TWO ANCHOR MUTANTS ANCHORED: both quote the
+// numeric regex verbatim, and widening it in place would have rotted them to
+// `find occurs 0×` — D414's lesson, avoided rather than paid.
+const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH =
+  /^Move all Energy from this Pokémon to 1 of your Benched Pokémon\.$/;
+// 🛑 THE SIBLING THIS ANCHOR MUST NOT REACH, and it is a CATALOG ROW rather than a
+// construction: "Move all Energy from this Pokémon to **your Benched Pokémon in
+// any way you like**." (`sv08-067` Kilowattrel, 3 printings / **1 legal**). Its
+// quantifier is identical and its DESTINATION is not: one answer spread over many
+// bodies, where the `moveEnergy` answer names ONE `dest` for every pick. The `$`
+// and the literal "to 1 of your Benched Pokémon." refuse it on its own bytes; the
+// op's doc block says what building it would actually cost.
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -19672,6 +19744,15 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // two arms differ by that one word in the op exactly as they do in print.
   if (ATTACK_MOVE_BASIC_ENERGY_SELF_TO_BENCH.test(effect)) {
     return [{ op: "moveEnergy", filter: { kind: "basicEnergy" }, max: 1, route: "selfToBench" }];
+  }
+  // 🆕🆕 D441 — Castform `sv08-020`/`-195`, the MANDATORY member of the same
+  // family. Identical endpoints, identical filter; the ONE thing that differs from
+  // the arm above is that the player may not answer with nothing. `max: "all"` is
+  // the printed determiner carried whole — the deriver has no board, so "all" has
+  // no number here and is resolved where every other clamp in this op is (D244's
+  // `"any"`, verbatim).
+  if (ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH.test(effect)) {
+    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: "all", route: "selfToBench" }];
   }
   // ⚠️⚠️ D230 — THE DECK SEARCH ONTO YOUR OWN BENCH, and the FIRST derived arm
   // whose program is TWO OPS. Both have existed since M4 (`NEST_BALL` is

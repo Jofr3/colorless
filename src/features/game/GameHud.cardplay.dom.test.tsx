@@ -1046,10 +1046,10 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
 
   /** p1's turn with Energy Switch parked: one Basic Energy on the Active (the
       only source, so it auto-selects) and a distinctly-named benched destination. */
-  function parkedMove(seed: number): GameState {
+  function parkedMove(seed: number, energies = 1): GameState {
     let state = p1Turn2(seed, moveDecks);
     state = benchFromDeck(state, "p1", "fix-basic-2"); // a distinct destination at index 0
-    state = attachFromDeck(state, "p1", "fix-fire-energy", 1); // one Basic Energy on the Active
+    state = attachFromDeck(state, "p1", "fix-fire-energy", energies); // Basic Energy on the Active
     state = handFromDeck(state, "p1", "sv01-173", 1); // Energy Switch
     const uid = handUid(state, "p1", "sv01-173");
     state = mustApply(state, { type: "playTrainer", seat: "p1", uid }).state;
@@ -1089,6 +1089,73 @@ describe("effect:choose — the move-energy dialog (moveEnergy)", () => {
       throw new Error("expected a moveEnergy resolveEffect");
     }
     expect(call.choice.uids).toEqual([]);
+  });
+
+  it("🆕 a FLOOR withholds 'Move none' and holds Move disabled until the pick is WHOLE", () => {
+    // 🛑 D441 — Castform's printed *"Move all Energy from this Pokémon to 1 of
+    // your Benched Pokémon."* The board is the very one the two tests above use,
+    // and the ONLY difference is the prompt's `min`: a build that ignored the field
+    // would pass both of them and fail every line here.
+    //
+    // ⚠️ THE PROMPT IS PATCHED RATHER THAN DERIVED, AND THAT IS A CLAIM ABOUT THE
+    // READER (D440). `MOVE_ENERGY_DECK` fields Energy Switch and Poppy, neither of
+    // which prints a mandatory quantifier; the engine-side park is DRIVEN off a real
+    // printing in `derivedMoveAllEnergy.test.ts`, and what is under test here is the
+    // dialog's response to a prompt shape, which is a function of the prompt.
+    // TWO movable Energy, deliberately: at ONE the floor and the pre-existing
+    // `pickedUids.length > 0` agree on every answer, so a build ignoring `min`
+    // would render an identical dialog. The Confirm rung below is only reachable
+    // above one.
+    const base = parkedMove(4, 2);
+    if (base.phase.kind !== "effect:choose" || base.phase.prompt.kind !== "moveEnergy") {
+      throw new Error("expected a parked moveEnergy prompt");
+    }
+    const movable = base.phase.prompt.movable;
+    expect(movable).toHaveLength(2);
+    const state: GameState = {
+      ...base,
+      phase: {
+        ...base.phase,
+        prompt: {
+          ...base.phase.prompt,
+          max: movable.length,
+          min: movable.length,
+          note: "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+        },
+      },
+    };
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // The decline is WITHHELD, not disabled — the empty answer is not one of this
+    // prompt's answers, so it is not a row on screen at all.
+    expect(screen.queryByRole("button", { name: "Move none" })).toBeNull();
+    // …and the heading is the card's own sentence rather than an "up to" the print
+    // does not carry.
+    expect(screen.getByRole("dialog", { name: "Move Energy" }).textContent).toContain(
+      "Move all Energy from this Pokémon to 1 of your Benched Pokémon.",
+    );
+    // Confirm is dead until the pick is complete, and live once it is.
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Move 0" }).disabled).toBe(true);
+    const rows = screen.getAllByRole("button", { name: "Fire Energy" });
+    expect(rows).toHaveLength(2);
+    fireEvent.click(rows[0] as HTMLElement);
+    // 🛑 ONE OF TWO IS STILL SHORT. This is the rung the pre-slice `pickedUids.length
+    // > 0` cannot pass, and the only one in this file that can tell the floor from
+    // the family's standing "at least one".
+    expect(screen.getByRole<HTMLButtonElement>("button", { name: "Move 1" }).disabled).toBe(true);
+    fireEvent.click(rows[1] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: "fix-basic-2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move 2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    expect(call.choice.uids).toEqual(movable.map((m) => m.uid));
+    // 🛑 THE CONTROL, on the UNPATCHED prompt: the decline IS on screen. Without
+    // it "no Move none button" passes on a dialog that renders no buttons at all.
+    dispatch.mockClear();
+    renderHud(base, dispatch);
+    expect(screen.getAllByRole("button", { name: "Move none" }).length).toBeGreaterThan(0);
   });
 
   it("with two sources, picks a source (the multi-source stage) then its Energy + a destination", () => {
