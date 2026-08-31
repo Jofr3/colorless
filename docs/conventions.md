@@ -1671,6 +1671,44 @@ That is the **third** instrument written to obey D411 and then bitten by it —
 `pgrep -f` matched its own waiter two slices earlier. **A process check that can
 match the checker is not a process check.**
 
+### A completeness check is a parse, and a parse is not the thing (D439)
+
+The sweep prints one line per mutant and the corpus declares one row per mutant,
+so "did every row run" looks like a two-line `comm`. **Both lines were wrong on
+the first attempt, in opposite directions, and each would have produced a
+confident false report.**
+
+- **The corpus side.** `grep -oE 'id: "..."' scripts/mutation/mutants.ts`
+  returned **1707** for a **1715**-row corpus: eight rows are written in a shape
+  the pattern does not match. Trusting it means reporting **eight missing
+  mutants on a sweep that ran every row** — an invented failure, which is worse
+  than a missed one because it costs a slice to chase. **Enumerate from the
+  module** — `bun -e 'const {MUTANTS} = await import(...)'` and read `.id` — so
+  the count comes from the same structure the runner iterates. This is
+  *`grep -c` counts text, not structure* on its **fourth** distinct axis: a
+  `what:` string, a comment, a `;` inside an object type, and now an `id:` that
+  does not sit alone on its line.
+- **The log side.** Splitting each line on the ` … ` column separator returned
+  **1716** ids for 1715 rows, because **one row's own prose contains the
+  delimiter**. *A delimiter that also occurs inside the payload is not a
+  delimiter* — the same defect as parsing a union to its first `;`.
+
+**So run the comparison in BOTH directions and read both residues.** `missing`
+alone would have shown the eight phantoms and hidden the parse bug; `extra`
+alone would have shown the phantom row and hidden the eight. The tell that a
+residue is a parse artefact rather than a real gap is that its "id" carries a
+trailing fragment of English.
+
+### The delta of a whole-corpus sweep should equal the slice (D439)
+
+A green sweep says the corpus passes; it does not say *this slice changed only
+what it meant to*. Subtract the previous sweep's line: D438 closed at
+`1678 killed · 26 known`, D439 at `1688 killed · 27 known` — **+10 and +1, which
+is exactly D439's 11 new rows**. Equality means no pre-existing row flipped
+verdict, which is the claim worth making about a slice that **generalised a
+shipped function in place**. An unexplained delta is a finding even when every
+verdict is green.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
