@@ -1820,6 +1820,36 @@ the row that was written, with the unreachability stated in its own `what`.
 premise is unreachable is D420's *"a row that survives because it changes nothing"*
 waiting to happen.
 
+### Write the expected sweep delta down BEFORE the sweep runs (D440)
+
+D439 established that a whole-corpus sweep's delta should equal the slice. D440
+went one better: the resume point named the expected delta — **+13 killed and +0
+declared** — *while the sweep had not yet been launched*, and that is what
+arrived. **Make it a prediction, not a reading.** A number subtracted afterwards
+can be rationalised into agreement; a number written down first cannot. Put the
+expectation in the resume point beside the debt, so whoever runs the sweep is
+checking a claim rather than describing an outcome.
+
+**And the zero half carries as much as the other half.** `+0 declared` says the
+slice added no equivalent and moved no existing verdict — worth stating
+explicitly on any slice that **generalises a shipped function in place** or
+re-transcribes a neighbour's rows, which is exactly when a silent verdict flip
+is plausible.
+
+### Report the MATCHED count, not the two totals (D440)
+
+`listed === run` is not "every row ran": it is also satisfied by a run line
+matched to the *wrong* id. The check that means something is the third figure —
+how many listed ids were found in the log — reported alongside the count of run
+lines matching **no** listed id. D440 measured **1728 listed / 1728 run lines /
+1728 matched / 0 unmatched**.
+
+Anchoring on the id list also dissolved D439's phantom `extra`: nothing parses
+the ` … ` separator any more, so a row whose prose contains the delimiter is no
+longer able to impersonate a mutant. **A check anchored on the structure cannot
+be fooled by prose that contains the structure's punctuation** — which is the
+general form of the fix, not a special case for that one row.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
