@@ -401,7 +401,7 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // them, and the append-never-insert discipline held again: 0-62 are addressed by
     // constant in a dozen sibling suites and every one still means what it meant —
     // which THIS rung is what proves, and it is the rung that caught the append.
-    expect(attacks).toHaveLength(68);
+    expect(attacks).toHaveLength(71);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

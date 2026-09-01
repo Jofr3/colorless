@@ -157,24 +157,28 @@ const ROTATED: readonly (readonly [string, readonly EffectOp[] | null, string])[
 
     `[printed sentence, why it is left, legal printings]`. */
 const DEFERRED: readonly (readonly [string, string, number])[] = [
-  [
-    "Your opponent reveals their hand. This attack does 50 damage for each Trainer card you find there.",
-    "a damage SCALER counting a hidden zone — `deriveAttackDamageBonus`'s union has no such count source",
-    3,
-  ],
-  [
-    "Your opponent reveals their hand. Discard a card you find there.",
-    "a CHOSEN discard out of the revealed hand — `bottomFromOpponentHand`'s pick with a different destination",
-    2,
-  ],
+  // 🆕🆕 **D445 — TWO ROWS LEFT THIS LIST, AND BOTH STATED REASONS WERE EXACTLY RIGHT.**
+  // *"…This attack does 50 damage for each Trainer card you find there."* (3) was deferred
+  // as *"a damage SCALER counting a hidden zone — the union has no such count source"*; it
+  // now has one (`cardsInOpponentHand`, the seventeenth), and the *hidden zone* half is
+  // what made the slice interesting rather than routine — the printed reveal is what makes
+  // the counted fact public, and `deriveAttackEffect` claims the same string for it, which
+  // makes this the FIRST sentence in the column with two readers. *"…Discard a card you find
+  // there."* (2) was deferred as *"`bottomFromOpponentHand`'s pick with a different
+  // destination"*; that is precisely what it cost — one `dest` value, one apply branch, one
+  // note branch and one new event. ⚠️ **THE STEP IS TAKEN AS A TERM, NOT AS AN EDIT TO A
+  // NUMBER**: `builtElsewhere` below gains 5, exactly as D297 added its 2, so a re-census
+  // disagrees with a sentence rather than with a total. And D441's rule was applied before
+  // shortening the list — each surviving row's reason was re-read against the sentence it
+  // is actually about, and neither inherited a departed row's justification.
   [
     "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find there.",
-    "a filtered SWEEP of the revealed hand, and a two-subtype disjunction",
+    "a MANDATORY TOTAL SWEEP with no pick at all — the FILTER is free (`anyOf` of two shipped members) and the SHAPE is not: `bottomFromOpponentHand`'s whole middle is an offer that is collapsed and then asked, and a sweep has neither. Refused by D445 with its own reason and its own falsifier (opponentHandScaling.test.ts §6)",
     1,
   ],
   [
     "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
-    "running another card's program as this one's — no seam exists",
+    "running another card's program as this one's — no seam exists. 🆕 D445 RE-ARGUED this refusal for a SUPPORTER rather than inheriting it from the attack-copy family (D436's defect is a refusal carried without re-argument), and the reasons hold in a STRONGER form: a Supporter's program is a REGISTRY row keyed by card id, so a copy op could reach only the 82 authored rows and would answer NOTHING for the rest — and `effectSimulated` is computed from the COPIER's sentence, so claiming this anchor would switch off `ATTACK_EFFECT_SKIPPED` for the attack forever. See opponentHandScaling.test.ts §6",
     1,
   ],
   [
@@ -288,7 +292,7 @@ describe("D232 — the opponent-hand family's census", () => {
     ]);
   });
 
-  it("prices the EIGHT legal printings still unbuilt, and they are all compounds", () => {
+  it("prices the THREE legal printings still unbuilt, and they are all compounds", () => {
     const left = DEFERRED.reduce((sum, [, , n]) => sum + n, 0);
     // 🆕 D297 — **10 → 8.** Lickitung `sv05-124`/`-180` "Tongue Pull" left this
     // list: *"Your opponent reveals their hand. Put up to 2 Basic Pokémon you find
@@ -300,8 +304,13 @@ describe("D232 — the opponent-hand family's census", () => {
     // a fifth anchor built three slices later on a widened op, so the family's
     // arithmetic gains a TERM rather than moving a number — which is the only way
     // a re-census can disagree with the right thing.
-    expect(left).toBe(8);
-    const builtElsewhere = 2; // D297's Lickitung pair
+    // 🆕 D445 — **8 → 3.** Two rows left (see the block on `DEFERRED`): the Trainer-count
+    // scaler (3 printings) and the chosen discard (2). What is left is the mandatory sweep
+    // (1, refused by D445 on its SHAPE), the Supporter copy (1, refused by D445 as a member
+    // of the attack-copy family, re-argued for a Supporter rather than inherited) and the
+    // three-coin fold (1, the composition rather than the op).
+    expect(left).toBe(3);
+    const builtElsewhere = 7; // D297's Lickitung pair + D445's five
     // 21 built here + 2 built later + 8 deferred = the family's 31 legal ATTACK
     // printings. The 35 the backlog row printed matches neither this nor the
     // all-columns 43.

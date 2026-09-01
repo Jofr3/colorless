@@ -4089,12 +4089,20 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       // reports them BROKEN. **A MUTATION ROW'S `find` UNIQUENESS IS A PROPERTY THE
       // SOURCE OWES**, so the duplication is resolved where it was created rather than
       // by re-anchoring five rows onto longer context.
+      // 🆕🆕 D445 — THE WALK MOVED OUT AND THIS ARM IS NOW A DELEGATION, which is the
+      // move D440 made for the pile arm directly above and explicitly deferred for this
+      // one (*"folding it in would mean a `zone` parameter and a rewrite of a shipped
+      // arm for a family this slice does not print"*). D445 prints it:
+      // `DamageCountSource.cardsInOpponentHand` needs the identical scan over the
+      // identical zone with a different vocabulary. NOTHING ABOUT THIS ARM'S READING
+      // CHANGED — same `CardFilter`, same `matchesFilter`, same `>=` on the printed "or
+      // more" — and the filter stays a named local because a mutation row quotes that
+      // line. ⚠️ **AND `countCardsInHand` KEEPS THE `held` COUNTER RATHER THAN THE PILE
+      // WALK'S `matched`**, for the reason this block has carried since D420 and which
+      // survives the move: five `D376-discard-threshold-*` rows quote single lines off
+      // the pile walk, and a byte-identical mirror makes every one of them match twice.
       const handFilter: CardFilter = { kind: "basicEnergy", energyType: cond.energy };
-      let held = 0;
-      for (const uid of state.players[seat].hand) {
-        if (matchesFilter(cardOfUid(state, uid), handFilter)) held += 1;
-      }
-      return held >= cond.count;
+      return countCardsInHand(state, seat, handFilter) >= cond.count;
     }
     case "yourActiveHasToolAttached": {
       // D116's pronoun rule again — "this Pokémon" was resolved to your Active by
@@ -4469,7 +4477,7 @@ export function countPokemonInPlay(state: GameState, seat: Seat, filter: CardFil
     changed, so `precheck` would have caught it either way, which is exactly the point
     of the exactly-once rule.
 
-    ⚠️ **THE `hand` TWIN ONE ARM DOWN IS DELIBERATELY LEFT INLINE.** D420's
+    ⚠️ ~~**THE `hand` TWIN ONE ARM DOWN IS DELIBERATELY LEFT INLINE.**~~ D420's
     `yourBasicEnergyInHandAtLeast` runs the identical shape over `hand`, and its own
     doc block explains that its locals are named `handFilter`/`held` precisely to keep
     five `D376-*` `find` strings unique. Folding it in would mean a `zone` parameter and
@@ -4477,6 +4485,18 @@ export function countPokemonInPlay(state: GameState, seat: Seat, filter: CardFil
     done, and it is recorded here rather than left as an inconsistency a successor has
     to rediscover. **The two zones are different zones**; this is not a second answer to
     one question.
+
+    🆕🆕 **D445 — THE DEFERRAL ABOVE HAS EXPIRED, AND IT EXPIRED EXACTLY WHERE IT SAID IT
+    WOULD.** Its condition was *"a family this slice does not print"*;
+    `DamageCountSource.cardsInOpponentHand` prints it (2 sentences / 4 legal printings),
+    so the hand loop moved out to `countCardsInHand` DIRECTLY BELOW and D420's arm is now
+    a delegation. ⚠️ **AND THE `zone` PARAMETER THIS BLOCK PRICED WAS STILL REFUSED**: two
+    sibling functions, not one with a discriminator, because the `find`-uniqueness the
+    paragraph above is about is exactly what a shared body would destroy — the two walks
+    differ in a zone name and a counter name, and both differences are load-bearing for
+    six shipped mutation rows. **The refusal was right about its price and right about its
+    trigger; only the date was open.** (D413's rule, at a source comment instead of a
+    decision row.)
 
     🛑 **THE PREDICATE IS `matchesFilter`'s AND THE READING IS THE PRINT** (§6.5). A card
     in a discard pile is attached to nothing and provides nothing, so an Energy noun here
@@ -4496,6 +4516,54 @@ export function countCardsInDiscardPile(
     if (matchesFilter(cardOfUid(state, uid), filter)) matched += 1;
   }
   return matched;
+}
+
+/** 🆕🆕 D445 — HOW MANY CARDS IN `seat`'s HAND MATCH `filter`. This is D420's
+    `yourBasicEnergyInHandAtLeast` loop GENERALISED IN PLACE, not a copy of it: that arm
+    is now a delegation, so *"how many cards in this hand match this printed noun"* has
+    exactly ONE implementation no matter which vocabulary asks —
+    `BoardCondition.yourBasicEnergyInHandAtLeast` (D420, a THRESHOLD) or
+    `DamageCountSource.cardsInOpponentHand` (D445, the COUNT itself).
+
+    🛑 **THE SIBLING ONE FUNCTION UP RECORDED THIS AS DEFERRED RATHER THAN AS AN
+    INCONSISTENCY, AND THE CONDITION IT NAMED HAS ARRIVED.** `countCardsInDiscardPile`'s
+    block says the hand twin is *"deliberately left inline"* because folding it in would
+    cost *"a rewrite of a shipped arm for a family this slice does not print"*. D445
+    prints that family (2 sentences / 4 legal printings), so the refusal expired exactly
+    where it said it would — D413's rule, and the reason a refusal is written with its
+    trigger rather than as a preference.
+
+    🛑 **THE LOCALS ARE DELIBERATELY NOT THE PILE WALK'S, AND THAT IS NOT STYLE.**
+    `held` where the sibling has `matched`, and `state.players[seat].hand` is the one
+    other line that differs. Five `D376-discard-threshold-*` mutation rows plus
+    `D440-shared-walk-reads-the-hand` carry single-line `find` strings taken off that
+    function; a byte-identical mirror here would make each of them match TWICE and
+    `scripts/mutation/precheck.ts` would report them BROKEN. **A MUTATION ROW'S `find`
+    UNIQUENESS IS A PROPERTY THE SOURCE OWES** (D416/D437), so the duplication is
+    resolved where it is created rather than by re-anchoring six rows onto longer
+    context. D420 wrote that rule for the inline arm; it is carried here with the loop.
+
+    🛑 **THE PREDICATE IS `matchesFilter`'s AND THE READING IS THE PRINT** (§6.5), and at
+    this zone the reason is flatter than at the pile: a card sitting in hand is attached
+    to nothing and pays for nothing, so `energyProvidesOf` has no board reading to give.
+    `matchesFilter` enforces it on its own side by answering `false` for `providesEnergy`
+    unconditionally.
+
+    ⚠️ **A HAND IS HIDDEN, AND THIS FUNCTION DOES NOT CARE — WHICH IS THE POINT.** It is
+    a pure count over the engine's full-information state; whether the ANSWER may be
+    shown is decided by the printed sentence at the reader (see
+    `DamageCountSource.cardsInOpponentHand`), never here. A walk that tried to enforce
+    visibility would be a second place that has to know which sentences reveal.
+
+    ⚠️ `cardOfUid` returns `undefined` for a uid the catalog cannot resolve and
+    `matchesFilter`'s first line answers false for it, so an unreadable card in hand
+    contributes 0 rather than throwing. An EMPTY hand is 0. */
+export function countCardsInHand(state: GameState, seat: Seat, filter: CardFilter): number {
+  let held = 0;
+  for (const uid of state.players[seat].hand) {
+    if (matchesFilter(cardOfUid(state, uid), filter)) held += 1;
+  }
+  return held;
 }
 
 /** §8/§9 (D242) — is `pokemon` barred from attacking by its OWN always-on printed
@@ -9319,7 +9387,7 @@ function bottomFromOpponentHandApply(
   uids: readonly string[],
   ctx: EffectContext,
   events: GameEvent[],
-  dest?: "bench",
+  dest?: "bench" | "discard",
 ): { state: GameState; moved: string[] } {
   const owner = otherSeat(ctx.seat);
   const side = state.players[owner];
@@ -9352,6 +9420,33 @@ function bottomFromOpponentHandApply(
         ...side,
         hand: side.hand.filter((uid) => !kept.has(uid)),
         bench: [...side.bench, ...landing.map((uid) => makeInPlay(uid, state.turn))],
+      }),
+      moved: landing,
+    };
+  }
+  // 🆕🆕 D445 — THE DISCARD ARM. The card leaves the OWNER's hand for the OWNER's own
+  // §2 pile, appended in pile order like every other discard in this file, so its
+  // identity becomes public by the BOARD and not only by the log.
+  //
+  // ⚠️ **NO CLAMP AND NO ROOM CHECK, UNLIKE THE BENCH ARM ABOVE** — a discard pile has
+  // no capacity, so `retrieveMove`'s "the offer must be the set that can land" has
+  // nothing to enforce here and inventing a guard would be a rule the model does not
+  // have. The membership/duplicate filter above is still what keeps a stale wire answer
+  // from moving a card twice.
+  //
+  // ⚠️ **A SEPARATE EVENT AND NOT `FORCED_HAND_DISCARD`**: the ACTOR chose this card out
+  // of a hand that is not theirs, which is precisely the consumer D426's row said would
+  // buy an `actor` — see events.ts for why widening that row would have given one event
+  // two voices.
+  if (dest === "discard") {
+    for (const uid of landing) {
+      events.push({ type: "CARD_DISCARDED_FROM_HAND", seat: owner, uid, actor: ctx.seat });
+    }
+    return {
+      state: withSide(state, owner, {
+        ...side,
+        hand: side.hand.filter((uid) => !kept.has(uid)),
+        discard: [...side.discard, ...landing],
       }),
       moved: landing,
     };
@@ -10182,6 +10277,15 @@ function bottomFromOpponentHandNote(
       return `Your opponent reveals their hand. Put up to ${op.upTo} ${retrieveNoun(op.filter ?? { kind: "anyCard" }).plural} you find there onto your opponent's Bench.`;
     }
     return `Your opponent reveals their hand, and you put ${retrieveNoun(op.filter ?? { kind: "anyCard" }).singular} you find there onto your opponent's Bench.`;
+  }
+  // 🆕🆕 D445 — the DISCARD destination, checked before the filter for D294's reason
+  // one line up: the destination is the clause that changes the verb, and a note naming
+  // the bottom of a deck over a card going to a pile would describe a move the dialog
+  // is about to not make. Grown one printed form per card (the `retrieveNoun` rule),
+  // and it round-trips to the catalog text character for character — the check this
+  // file can run and effects.ts cannot.
+  if (op.dest === "discard") {
+    return "Your opponent reveals their hand. Discard a card you find there.";
   }
   if (op.filter?.kind === "supporter") {
     return "Your opponent reveals their hand. Choose a Supporter card you find there and put it on the bottom of their deck.";

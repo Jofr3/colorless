@@ -220,9 +220,23 @@ const HANDS_LEVEL: BoardCondition = { kind: "handSizesEqual" };
     D418 become a test that would go RED if anyone fixed the array — see §1's
     ceiling rung, where it is reversed in place rather than deleted. */
 const SIZE_CEILING = [
-  "This attack does 30 damage for each card in your opponent's hand.",
+  // 🛑 🆕🆕 **D445 REMOVED THE FIRST ENTRY FROM THIS LIST AND KEPT ITS SUBJECT, WHICH IS
+  // D444's RULE RATHER THAN D385's.** *"This attack does 30 damage for each card in your
+  // opponent's hand."* is now claimed — by `deriveAttackDamageMultiplier`, through the
+  // seventeenth `DamageCountSource` (`cardsInOpponentHand`) — so re-pointing the rung ONTO
+  // it would have produced a TRUE assertion nothing can falsify. **The move is to find the
+  // sentence that STILL has the old property**, and the second entry does: it reads the far
+  // hand's size, no reader claims it, and it wants a DRAW COUNT rather than this member. The
+  // departure is asserted below beside D385's, so an "un-build" reddens this file.
   "Shuffle your hand into your deck. Then, draw a card for each card in your opponent's hand.",
 ] as const;
+/** 🆕🆕 **D445 — THE SECOND CEILING ENTRY TO LEAVE, AND IT LEAVES FOR A DIFFERENT REASON
+    THAN D385's.** D385's entry was taken by a reader that was already in the file's array
+    and merely unseen by it; this one is taken by a reader arm that did not exist. What it
+    is NOT is this file's member: a per-card damage SCALER over the far hand is a
+    `DamageCountSource`, where an exact-hand-size READ is a `BoardCondition` — the ceiling
+    block's own distinction, and the reason it was priced and left rather than built. */
+const CEILING_TAKEN_AT_D445 = "This attack does 30 damage for each card in your opponent's hand.";
 /** …and the entry that LEFT the ceiling at D385, kept so this file still says what
     happened to it. ~~Refused by this file's nine readers and resolved by the tenth.~~
     🆕🆕 **D418 — struck: there is one oracle now and it RESOLVES this sentence.** The
@@ -517,6 +531,24 @@ describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", 
     // KEPT, because naming WHICH reader took it is the part that was worth having.
     expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D385)).toHaveLength(1);
     expect(readByAny(CEILING_TAKEN_AT_D385)).toBe(true);
+    // 🆕🆕 D445 — the SECOND departure, asserted the same way, and its owner NAMED. A bare
+    // `readByAny(...) === true` would be satisfied by any of the thirteen widening onto it
+    // (D438: a positive replacement for a negated disjunction is a claim about none of the
+    // disjuncts), so the owner is pinned and the neighbour that must still refuse is pinned
+    // beside it.
+    expect(corpus().filter(([, s]) => s === CEILING_TAKEN_AT_D445)).toHaveLength(1);
+    expect(readByAny(CEILING_TAKEN_AT_D445)).toBe(true);
+    expect(deriveAttackDamageMultiplier(CEILING_TAKEN_AT_D445)).toEqual({
+      per: 30,
+      count: { kind: "cardsInOpponentHand", filter: { kind: "anyCard" } },
+    });
+    expect(deriveAttackDamageBonus(CEILING_TAKEN_AT_D445)).toBeNull();
+    // 🛑 AND THE CEILING'S OWN CLAIM IS UNCHANGED: this sentence still wants NO
+    // `BoardCondition`, which is the thing the block was priced on. The `exactly N cards in
+    // your hand` member reads a SIZE against a printed number; this reads a COUNT as a
+    // multiplicand. Two different questions, and the survivor above is the proof the list
+    // still discriminates rather than having been emptied.
+    expect(SIZE_CEILING).toHaveLength(1);
     expect(deriveAttackOptionalCostBoost(CEILING_TAKEN_AT_D385)).not.toBeNull();
     // 🛑 …and the SPECIFICITY is kept too, so "resolved" cannot come to mean "some
     // reader somewhere": the other two readers D418 added to this array refuse it, so

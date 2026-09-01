@@ -1495,6 +1495,40 @@ export type GameEvent =
       EMPTY HAND — no card moved, so there is nothing to announce (and no RNG was
       spent; see the op). */
   | { type: "RANDOM_CARD_TAKEN"; seat: Seat; uid: string; actor: Seat; to: "discard" | "deck" }
+  /** 🆕🆕 D445 — `actor` CHOSE one card out of `seat`'s REVEALED hand and put it in
+      `seat`'s own discard pile (*"Your opponent reveals their hand. Discard a card you
+      find there."*).
+
+      🛑 **THE CHOSEN TWIN OF `RANDOM_CARD_TAKEN`'s `discard` ROUTE, AND A SEPARATE ROW
+      BECAUSE THE LOG HAS TO BE ABLE TO SAY WHICH HAPPENED.** That row's own comment in
+      `log.ts` states the rule outright — *"the word 'random' is in the row on purpose;
+      without it this reads exactly like a card the ACTOR chose … a materially different
+      thing to have happened to you"* — so a `to`-style flag on that event would be one
+      row unable to distinguish the two halves of its own family. `PRIZE_REDUCED` /
+      `PRIZE_BONUS`'s argument, at a hand.
+
+      🛑 **AND IT IS NOT `FORCED_HAND_DISCARD` EITHER, WHICH IS THE CONDITION THAT ROW
+      NAMED FOR ITSELF.** D426's block says there is no `actor` field *"and the condition
+      that would buy one is stated rather than left to be guessed: it is owed the moment
+      a consumer needs to name the causer — and a consumer that reaches for it must NOT
+      write `otherSeat(event.seat)`"*. This is that consumer. The card is CHOSEN from
+      across the table rather than picked by its owner, so the active voice belongs to
+      the actor, and the row names the owner outright. Widening `FORCED_HAND_DISCARD`
+      would have given one event two voices and left every existing reader deriving which
+      one it was — D425's `DAMAGE_DEALT` defect, invited.
+
+      **NAMES THE UID**, and the reason is the same one `CARD_TO_BOTTOM_OF_DECK` gives
+      one row up: the whole HAND was revealed a moment earlier and the pick was made in
+      the open, so nothing is disclosed that both players did not just see. The §2
+      discard pile is public besides, so the card is face up the instant it lands — the
+      module header's rule is *never name a card that is STILL hidden*, and this one is
+      not.
+
+      `actor` is REQUIRED, not optional. No `GameEvent` is in a `MatchRecord` at all
+      (`{version, seed, startedAt, names, state, log}` — `state` holds no events and
+      `log` is rendered), so required costs nothing at the wire (D443/D425) and makes the
+      next producer of this row a compile error rather than a silent attribution bug. */
+  | { type: "CARD_DISCARDED_FROM_HAND"; seat: Seat; uid: string; actor: Seat }
   /** An effect switched `seat`'s Active with their benched `nowActive`
       (Switch / Boss's Orders gust): the old Active (`wasActive`) went to the
       bench from `fromBench`'s freed slot and landed at `toBench`; the bench

@@ -8423,8 +8423,35 @@ export type EffectOp =
           Toy's sentence and it moves an ATTACHED ENERGY, not a hand card — a
           different source, a different op (`discardEnergy`'s `from:
           "opponentChosen"`) and refused by D294 by name. A member no printing
-          reaches is an arm no board drives. */
-      dest?: "bench";
+          reaches is an arm no board drives.
+
+          🆕🆕 **D445 — `"discard"` IS THE THIRD DESTINATION AND THE SECOND VALUE
+          THIS FIELD SPELLS.** *"Your opponent reveals their hand. Discard a card
+          you find there."* — **2 legal printings**, corpus row 672. The card leaves
+          the OWNER's hand for the OWNER's own discard pile, so the op's standing
+          rule holds unchanged: every destination this field names is a zone the
+          card's owner owns, and the controller only ever chooses WHICH card.
+
+          🛑 **A WIDENING OF THIS FIELD RATHER THAN A NEW OP, ON D294's ARGUMENT
+          RE-DERIVED.** The first three quarters of the sentence are the same
+          sentence — reveal the whole hand, pick one card by a printed filter out of
+          the opponent's hand, move it into a zone they own — and the reveal's
+          ordering, the interchangeable-class collapse, the live-hand re-read, the
+          one-representative park and `recordAs` are shared line for line. What
+          changes is one printed noun and one branch in the apply.
+
+          🛑 **IT IS A NEW VALUE ON AN OPTIONAL FIELD OF AN OP THAT PARKS, SO THE
+          VERSION QUESTION IS ASKED AT THE RIGHT ADDRESS AND DRIVEN OVER BYTES.** A
+          parked `bottomFromOpponentHand` rides `phase.cont.pendingOp`, which IS
+          inside `state` and therefore inside a `MatchRecord`. The test this repo
+          applies is *"can the PREVIOUS deploy's RECORD hold the new TYPE"*
+          (apps/api/src/lobby/match.ts): a v29 continuation carries `dest` ABSENT or
+          `"bench"` and no v29 writer could ever have written `"discard"`, so every
+          old byte string means in this deploy exactly what it meant in the last
+          one. **A WIDENING is free; a RENAME is not** — nothing here is renamed.
+          `MATCH_RECORD_VERSION` stays **29**, and D445 drives the round trip in
+          both directions rather than asserting it. */
+      dest?: "bench" | "discard";
       /** 🆕 **D297 — THE PRINTED "UP TO N", AND THE FIRST TIME THIS OP'S PICK IS
           NEITHER EXACTLY-ONE NOR MANDATORY.** Absent = the M5 shape every earlier
           printing spells: *"you choose **a** card"* / *"you put **a** Basic
@@ -12017,6 +12044,125 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
     own three branches and a surviving mutant disproved it. */
 function discardPileFilter(noun: string): CardFilter | null {
   return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;
+}
+// 🆕🆕 **D445 — THE OPPONENT'S HAND, COUNTED, AND IT IS THE FIRST DAMAGE FOLD IN
+// THIS ENGINE OVER A ZONE THAT IS NOT PUBLIC.** Two printed sentences / **4 legal
+// printings**, measured over `legalAttackCorpus()` (the committed
+// `legal_standard = 1` attack column: 640 sentences / 1,732 printings) by running
+// both anchors below against all 640 rows:
+//
+//   3  Your opponent reveals their hand. This attack does 50 damage for each
+//      Trainer card you find there.                                   (corpus 675)
+//   1  This attack does 30 damage for each card in your opponent's hand.
+//                                                                     (corpus 564)
+//
+// ⚠️ **THE PATTERN THE FAMILY WAS ENUMERATED WITH, PUBLISHED SO ITS EDGES ARE
+// VISIBLE (D424/D425).** `grep -niE "hand" | grep -iE "does [0-9]+ (more |less )?damage"`
+// over all 640 corpus rows, every one of the ten hits read. Eight are `BoardCondition`
+// sentences (*"If your opponent has 3 or fewer cards in their hand, this attack does
+// 120 more damage."* and siblings — a THRESHOLD, already served), a mid-attack
+// discard fold, and an unrelated Energy count; the two above are the whole of the
+// hand-COUNT family. **What the pattern cannot see**: a sentence that spells the
+// zone without the word *hand*, and a fold written *"damage times the number of…"*.
+// Zero such rows exist in this column today; that is the edge, stated rather than
+// assumed.
+//
+// 🛑 **WHY A COUNT OVER A HIDDEN ZONE IS LEGITIMATE AT ALL, AND THE TWO ROWS ANSWER
+// IT DIFFERENTLY — WHICH IS THE WHOLE REASON BOTH ARE BUILT IN ONE SLICE.** Every
+// other member of `DamageCountSource` reads something both seats can see; D440 wrote
+// that invariant down for the discard pile (*"ordered and public (§2), so the
+// opponent-side read leaks nothing"*). A HAND is hidden, and the damage number is
+// public — so a fold over the defender's hand hands the attacker a fact about it.
+//   • **Corpus 564 counts the WHOLE hand**, and a hand's SIZE is already public: the
+//     count shows on the board, and `cardplay.ts` relies on exactly that when it
+//     greys `bottomFromOpponentHand` on an empty opponent hand (*"an empty opponent
+//     hand is PUBLIC knowledge (the count shows)"*). The fold leaks nothing.
+//   • **Corpus 675 counts a FILTERED hand**, which is NOT public — and the printed
+//     sentence opens by REVEALING the hand. That reveal is load-bearing for the
+//     information model rather than decoration: without it, a public damage number
+//     would tell the attacker how many Trainers sit in a zone they may not look at.
+//     It is why this arm's sibling in `deriveAttackEffect` claims the same string
+//     (see `ATTACK_REVEAL_AND_TRAINER_SCALE`), and why a slice reading only the
+//     damage half would have shipped the leak while `BUILT.attack` stepped.
+// ⚠️ **SO THE INVARIANT IS NOT "the zone is public" BUT "the sentence makes the
+// COUNTED FACT public".** The falsifier is executable and is pinned on the
+// POPULATION rather than on a specimen (D423): `opponentHandScaling.test.ts` §6
+// asserts that no corpus sentence carries a FILTERED hand count without a printed
+// reveal. The day one is printed, that rung goes RED and this paragraph stops being
+// true loudly.
+//
+// 🛑 **TWO ANCHORS AND NOT ONE ALTERNATION, D441's rule.** The two rows differ in
+// whole CLAUSES — a leading reveal sentence, and *"you find there"* against *"in
+// your opponent's hand"* — not in one token, so a pattern wide enough to hold both
+// would make the sentence break, the possessive and the prepositional phrase all
+// optional together and would match strings no set prints. And a new anchor breaks
+// no shipped mutant row where an in-place widening rots every one that quotes the
+// regex (D414's lesson, avoided rather than paid).
+//
+// 🛑 **THE NOUN CAPTURE IS `[^.]+`, D439/D440's guard verbatim**: a class that cannot
+// cross a `.` cannot span a sentence break, so neither anchor can swallow a
+// compound's second clause. ⚠️ **AND THE REVEAL ROW NEEDS IT MOST**, because its own
+// text already contains one sentence break — the `^`-anchored literal head is what
+// fixes where that break is, and the capture sits strictly after it.
+//
+// ⚠️ **NO SEAT CAPTURE AND NO `seat` FIELD, WHICH IS D439's CALL AND NOT D440's.**
+// `cardsInDiscardPile` carries a seat because the column prints BOTH piles;
+// `yourPokemonInPlay` carries none because it prints one side. Here the column
+// prints the OPPONENT's hand on both rows and YOUR OWN hand on none — measured with
+// the loose pattern above — so a seat field would have exactly one reachable value
+// and its other arm would be a member no board drives (D104's minimal shape). The
+// side is spelled into the member NAME, D168's convention. **THE FALSIFIER IS
+// EXECUTABLE**: `opponentHandScaling.test.ts` §6 pins the zero as a census row, so
+// the day the column prints a fold over YOUR hand it goes RED and this member gains
+// a sibling.
+//
+// ⚠️ **THE POSSESSIVE IS SPELLED `['’]` AND THE CORPUS BYTE IS U+0027, MEASURED
+// RATHER THAN REMEMBERED** (D421's byte): corpus row 564 carries exactly one
+// apostrophe, `opponent's` at index 57, read with `codePointAt` over
+// `legalAttackCorpus()` and not by eye. Row 675 carries none at all. The class is
+// D137's standing insurance against a punctuation-normalising re-ingest.
+const OPPONENT_HAND_COUNT_MULTIPLY =
+  /^This attack does (\d+) damage for each ([^.]+) in your opponent['’]s hand\.$/;
+const ATTACK_REVEAL_AND_TRAINER_SCALE =
+  /^Your opponent reveals their hand\. This attack does (\d+) damage for each ([^.]+) you find there\.$/;
+/** The two printed nouns, mapped to the `CardFilter` members that already spell
+    them. **ZERO new `CardFilter` members** — D440's test applied rather than copied,
+    and it matters for the same two consumers: `retrieveNoun`'s exhaustive switch
+    (interpreter.ts) and `BENCHABLE_RETRIEVAL_KINDS` (effects.ts), where D222's
+    closed-world hazard means an omission from the `Set` compiles silently. D439
+    refused its largest countable on exactly that cost.
+
+    A CLOSED MAP and not a capture, `DISCARD_PILE_NOUNS`' argument one zone over: the
+    tempting `^(.+) card$` → `byName` would spell any printed proper name without this
+    file learning one, and would also claim nouns that match nothing in the catalog —
+    a filter counting 0 on every board, scoring a card's printed base forever while
+    `BUILT.attack` stepped for it (D190b/D199 at the instrument layer). **What does
+    the refusing is the map, not the regex.**
+
+    Read through `literalClauseRow` (D137) rather than a bare `.get` — neither key
+    spells an apostrophe today (checked: `Trainer card` and `card` are both ASCII),
+    so this is insurance rather than a live population, and it is the same call
+    `DISCARD_PILE_NOUNS` makes for a key that does. */
+const OPPONENT_HAND_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, CardFilter>([
+  // Corpus 675's printed noun. `trainerCard` is the catalog's `category: "Trainer"`
+  // — Item, Supporter, Stadium and Tool alike, which is what the printed word means
+  // and what `matchesFilter` already answers.
+  ["Trainer card", { kind: "trainerCard" }],
+  // Corpus 564's printed noun: the BARE "each card", every card in the zone.
+  // `anyCard` is the member that already spells "no narrowing at all", and it is a
+  // real member rather than an absent filter because this count's payload is
+  // REQUIRED — see the union member's own block for why.
+  ["card", { kind: "anyCard" }],
+]);
+/** 🆕🆕 D445 — the printed noun in an opponent-hand count, resolved to the
+    `CardFilter` that already answers it, or `null` when this file has no way to
+    spell it — which keeps the sentence on the loud ATTACK_EFFECT_SKIPPED path.
+
+    ONE lookup and no fall-through branches, `discardPileFilter`'s shape: neither of
+    this family's nouns is parameterised, so there is no branch ORDER here to be
+    right or wrong about. */
+function opponentHandFilter(noun: string): CardFilter | null {
+  return literalClauseRow(OPPONENT_HAND_NOUNS, noun) ?? null;
 }
 // D193 — THE OPPONENT'S ATTACHED ENERGY, over two zones and with an OPTIONAL type
 // filter: the first member of this family whose payload is not a condition, and
@@ -16256,6 +16402,38 @@ const ATTACK_REVEAL_AND_BOTTOM =
 const ATTACK_REVEAL_AND_BENCH_UP_TO =
   /^Your opponent reveals their hand\. Put up to (\d+) Basic Pokémon you find there onto your opponent['’]s Bench\.$/;
 
+// 🆕🆕 **D445 — THE FAMILY'S SEVENTH SENTENCE SHAPE, AND ITS FIRST DESTINATION
+// OUTSIDE THE OWNER'S DECK AND BENCH.** *"Your opponent reveals their hand. Discard
+// a card you find there."* — **2 legal printings** (corpus row 672, the whole
+// population of the phrase; the carrier ids are UNRESOLVED and are stated as such
+// rather than invented, this checkout having no D1 — D425).
+//
+// 🛑 **A SEPARATE ANCHOR AND A `dest` VALUE, NOT A NEW OP — D294's ARGUMENT, ONE
+// NOUN OVER.** Reveal the whole hand FIRST, then pick ONE card matching a printed
+// filter out of the OPPONENT's hand, then move it into a zone THEY own. Ortega,
+// Greavard, N's Purrloin, Mandibuzz and Lickitung differ from this printing in
+// exactly the destination noun, and every other part — the reveal's ordering, the
+// interchangeable-class collapse in the offer, the live-hand re-read in the apply,
+// the one-representative park, `recordAs` — is shared line for line.
+//
+// ⚠️ **THE PICK IS MANDATORY AND EXACTLY ONE**, so NO `upTo`: the sentence prints
+// *"Discard **a** card"*, the article and not a number, which is the unmarked op's
+// M5 shape (`min === max === 1`). D135's rule — an absent field means what the
+// sentence means.
+//
+// ⚠️ **AND NO `filter`**, for the same rule: the printed noun is the bare *"a
+// card"*. Contrast Greavard's `supporter`, which is a printed word.
+//
+// ⚠️ **THE SEPARATE-ANCHOR CALL IS D297's, RE-DERIVED RATHER THAN COPIED.** D232's
+// rule collapses a family to one arm when the sentences differ in a NOUN and splits
+// it when they differ in a VERB. This one differs from Lickitung's in BOTH the verb
+// (*Discard* against *Put … onto*) and the sentence's whole tail, and from Ortega's
+// in sentence COUNT as well — so an alternation holding them would have to make the
+// comma, the conjunction, the pronoun, the verb form AND the destination phrase
+// optional together.
+const ATTACK_REVEAL_AND_DISCARD =
+  /^Your opponent reveals their hand\. Discard a card you find there\.$/;
+
 // 🆕🆕 **D426 — THE OPPONENT-CHOOSES HAND DISCARD, AND IT IS THE FAMILY'S SIXTH
 // SENTENCE SHAPE AND ITS FIRST OPPONENT-ANSWERED PARK.** Two printed sentences,
 // **6 legal printings**, measured over the committed `legal_standard = 1` attack
@@ -20350,6 +20528,67 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
   }
+  // 🆕🆕 D445 — the SIXTH arm on this op, and the cheapest of the six: one printed
+  // destination word against machinery that already reveals, offers, parks and moves.
+  // No filter and no `upTo` — both absent because both are absent from the print.
+  if (ATTACK_REVEAL_AND_DISCARD.test(effect)) {
+    return [{ op: "bottomFromOpponentHand", dest: "discard" }];
+  }
+  // 🆕🆕 D445 — **THE REVEAL HALF OF A SENTENCE WHOSE OTHER HALF IS A DAMAGE FOLD,
+  // AND THE FIRST STRING IN THE 640-ROW COLUMN CLAIMED BY TWO READERS.** *"Your
+  // opponent reveals their hand. This attack does 50 damage for each Trainer card you
+  // find there."* (3 legal printings) is read here for the REVEAL and by
+  // `deriveAttackDamageMultiplier` for the COUNT.
+  //
+  // 🛑 **WHY BOTH AND NOT EITHER.** The count alone would have been enough for
+  // `resolvedByAnyReader`, `effectSimulated` and `BUILT.attack` — and it would have
+  // shipped a public damage number computed off a zone nobody was shown, which is the
+  // leak the printed reveal exists to close (see `DamageCountSource.cardsInOpponentHand`).
+  // The reveal alone would deal the printed base and drop the fold. **That is D444's
+  // half-a-sentence defect, and the only build that does not have it claims both halves.**
+  //
+  // 🛑 **WHY NOT THE TRAILING SPLITTER, WHICH LOOKS LIKE THE SAME SHAPE.**
+  // `splitAttackTrailingClause` requires the TAIL to be a clause `deriveAttackEffect`
+  // claims, and says so at the guard: *"a tail claimed only by a damage reader would
+  // be a fold the caller has no place to put (the damage readers all read the HEAD)"*.
+  // This compound is that predicate's mirror image — an EFFECT head and a DAMAGE tail
+  // — so the splitter refuses it by construction and would have to be inverted rather
+  // than reused. Two whole-sentence anchors over the same string cost two arms; a
+  // second composition path costs a mechanism.
+  //
+  // ⚠️ **AND THE OP IS THE ONE THAT ALREADY EXISTS.** D232's `revealOpponentHand` is
+  // the bare sentence standing alone; here the same op stands in front of a fold that
+  // is not an op at all, so the reveal cannot be *inside* the consequence the way it
+  // is inside `bottomFromOpponentHand`. **That is the family's rule, derived rather
+  // than chosen: the reveal is embedded when what follows READS the revealed hand as
+  // its candidate set, and standalone when what follows is not an op.**
+  //
+  // ⚠️ **IT RUNS AT THE TAIL, AFTER THE DAMAGE, AND THAT IS A DECISION RATHER THAN AN
+  // OVERSIGHT** — pinned in `opponentHandScaling.test.ts` §4 so a successor meets a
+  // test rather than an apparent accident (D426). An effect program runs after §8.5
+  // (attack.ts), so the log row order is damage-then-reveal where the card reads
+  // reveal-then-damage. **No number moves**: the reveal mutates no zone, so the fold
+  // reads the identical hand either way, and both rows land in ONE action batch. The
+  // pre-damage seam (`AttackPreDamage`) would give printed order and is refused — every
+  // one of its four members exists because it MOVES A NUMBER before §8.5, and a fifth
+  // that moves none would buy row order for a union member. **The falsifier is
+  // executable**: the day a printed sentence reveals AND changes something the §8.5
+  // pipeline reads, it needs that seam and this arm is the wrong home for it.
+  // 🛑 **GATED ON THE SAME TWO GUARDS THE FOLD ARM CARRIES, AND THAT IS NOT
+  // BELT-AND-BRACES — A BARE `.test()` HERE SHIPS HALF A SENTENCE.** The anchor's noun
+  // group is `[^.]+`, so it matches *"…for each Ancient card you find there."* too; a
+  // reveal returned for a string whose FOLD the vocabulary refuses would resolve the
+  // reveal, mark the sentence simulated, and silently drop the damage — D190b's
+  // exact-map-or-flag rule, in the direction that looks like it works.
+  // ⚠️ **THIS WAS FOUND BY THE SUITE AND NOT BY READING**: the first draft was a bare
+  // `.test()` and `opponentHandScaling.test.ts` §2's vocabulary rung went red on it.
+  match = ATTACK_REVEAL_AND_TRAINER_SCALE.exec(effect);
+  if (match !== null) {
+    const per = Number(match[1]);
+    if (per >= 1 && opponentHandFilter(match[2] ?? "") !== null) {
+      return [{ op: "revealOpponentHand" }];
+    }
+  }
   // ⚠️⚠️ D234 — the discard-pile attach, backlog row 9. ONE arm for twelve printed
   // sentences and 12 of the row's 17 legal printings; the census, the five it
   // refuses and the count-versus-expansion split are on the constants above.
@@ -21246,7 +21485,78 @@ export interface AttackDamageBonus {
     `discard` is a uid LIST, so an unresolvable uid contributes 0 rather than throwing —
     `cardOfUid` returns undefined and `matchesFilter`'s own first line answers false. An
     EMPTY pile is 0, which on the `×` fold (printed base dropped) means no
-    `DAMAGE_DEALT` row at all, and on the `+` fold means the printed base alone. */
+    `DAMAGE_DEALT` row at all, and on the `+` fold means the printed base alone.
+
+    🆕🆕 ⚠️ **THE SEVENTEENTH IS THE FIRST MEMBER THAT READS A ZONE THE OTHER PLAYER
+    CANNOT SEE** (D445). `cardsInOpponentHand` tallies the cards in the DEFENDER's hand
+    matching a printed noun — *"This attack does 30 damage for each card in your
+    opponent's hand."* and *"Your opponent reveals their hand. This attack does 50 damage
+    for each Trainer card you find there."* — **2 sentences / 4 legal printings**,
+    measured over `legalAttackCorpus()` at D445's head with the two anchors run against
+    all 640 rows.
+
+    🛑 **AND THAT IS A REAL DIFFERENCE, NOT A NEW ADDRESS FOR AN OLD ONE.** D440's block
+    twelve lines up justifies the opponent-side pile read with *"a discard pile is ordered
+    and PUBLIC (§2), so the opponent-side read leaks nothing"* — the union's standing
+    public-state invariant. A HAND is hidden and the damage number is not, so the fold
+    itself is a channel. **The two printed rows keep the invariant by two DIFFERENT
+    routes**, which is why they are built together:
+      · the BARE count reads hand SIZE, which the board already shows (`cardplay.ts`
+        greys a Trainer-path `bottomFromOpponentHand` on an empty opponent hand for
+        exactly that reason: *"an empty opponent hand is PUBLIC knowledge — the count
+        shows"*);
+      · the FILTERED count is preceded by a printed REVEAL, and the reveal is what makes
+        the counted fact public. The same sentence is therefore claimed by
+        `deriveAttackEffect` as well — the first string in the whole corpus claimed by
+        two readers — and the reveal is not decoration: without it the public damage
+        number would report a private fact.
+    ⚠️ **THE RULE IS NOT "the zone is public" BUT "the sentence makes the COUNTED FACT
+    public"**, and it is pinned on the POPULATION rather than on a specimen (D423):
+    `opponentHandScaling.test.ts` §6 asserts no corpus sentence carries a FILTERED hand
+    count without a printed reveal.
+
+    ⚠️ **THE FILTER IS REQUIRED, WHERE `bottomFromOpponentHand`'s IS OPTIONAL** — and the
+    two are right for opposite reasons. There, an absent filter means *"a card"* and the
+    op's own note reads the absence as the printed article (D135). Here a count with no
+    filter is not a different sentence, it is the SAME question with the widest answer,
+    and the noun map already spells that answer as `anyCard`. An optional field would put
+    two spellings of one board fact in the union — D159's second answer — where a required
+    one makes every author state the noun they read.
+
+    🛑 **NO `seat` FIELD, AND THAT IS D439's CALL RATHER THAN D440's** — the two differ
+    because their columns do. `cardsInDiscardPile` carries a seat because the pool prints
+    both piles; `yourPokemonInPlay` carries none because it prints one side. This column
+    prints the OPPONENT's hand on both rows and YOUR OWN hand on NONE, so a seat here
+    would have one reachable value and an arm no board drives (D104). The side is spelled
+    into the member NAME, D168's convention, and the falsifier is executable:
+    `opponentHandScaling.test.ts` §6 pins the zero as a census row, so the day the column
+    prints a fold over your own hand it goes RED and this member gains a sibling.
+
+    🛑 **THE WALK IS `countCardsInHand` (interpreter.ts) — D420's OWN LOOP, GENERALISED
+    IN PLACE**, which is the move D440 made for the pile and explicitly deferred for the
+    hand (*"folding it in would mean … a rewrite of a shipped arm for a family this slice
+    does not print"*). This slice prints it. `BoardCondition.yourBasicEnergyInHandAtLeast`
+    is now a delegation, so *"how many cards in this hand match this filter"* has exactly
+    ONE implementation whichever vocabulary asks (D159/D222).
+
+    ⚠️ **THE READING IS THE PRINT AND NEVER THE PROVISION (§6.5)**, which D420's arm had
+    already settled for this zone in flatter terms than the pile's: a card sitting in hand
+    is attached to nothing and pays for nothing, so `energyProvidesOf` has no board reading
+    to give — and `matchesFilter`'s `providesEnergy` arm answers `false` unconditionally,
+    so the filter union could not express a provision reading of a hand even if a successor
+    asked it to. Verified at the predicate rather than inherited from prose (D440's rule).
+
+    ⚠️ **REACHABLE FROM ONE READER ONLY.** Both printed rows spell the MULTIPLY fold (no
+    *"more"*), so the printed base is dropped on both and `deriveAttackDamageBonus` never
+    sees this member. The additive cell is empty in the column, and it is left empty
+    rather than filled speculatively — `discardPileScaling.test.ts`'s constructed-text
+    posture is what would be needed to drive it, and a member arm nothing prints is an arm
+    no board reaches.
+
+    `hand` is a uid LIST, so an unresolvable uid contributes 0 rather than throwing —
+    `cardOfUid` returns undefined and `matchesFilter`'s own first line answers false. An
+    EMPTY hand is 0, which on this fold (printed base dropped) means no `DAMAGE_DEALT` row
+    at all. */
 export type DamageCountSource =
   | { kind: "damageCountersOnSelf" }
   | { kind: "opponentPrizesTaken" }
@@ -21271,7 +21581,8 @@ export type DamageCountSource =
   | { kind: "toolsOnYourBoard" }
   | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
   | { kind: "yourPokemonInPlay"; filter: CardFilter }
-  | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter };
+  | { kind: "cardsInDiscardPile"; seat: DiscardPileSeat; filter: CardFilter }
+  | { kind: "cardsInOpponentHand"; filter: CardFilter };
 
 /** WHOSE discard pile a `cardsInDiscardPile` count walks (D440). CONTROLLER-RELATIVE,
     like every other side-valued field in this vocabulary — `you` is the seat that
@@ -21761,6 +22072,43 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const seat: DiscardPileSeat = foeDiscard[3] === "your" ? "you" : "opponent";
     if (per >= 1 && filter !== null) {
       return { per, count: { kind: "cardsInDiscardPile", seat, filter } };
+    }
+  }
+  // 🆕🆕 D445 — the OPPONENT'S HAND, on the only fold the column prints it with.
+  // Placed directly after the discard-pile count it is the other-ZONE reading of, so
+  // the three filtered counts (`in play`, `discard pile`, `hand`) sit together on the
+  // page; every pattern in this chain is whole-sentence anchored and mutually
+  // exclusive, so this is legibility and not behaviour.
+  //
+  // TWO arms and not one, because the two printed rows are two SENTENCES rather than
+  // one sentence with a token varying (D441): the reveal row carries a whole leading
+  // clause. They share the noun map and the member, which is where the family
+  // actually is. Both carry the same two guards for the same two reasons — `per >= 1`
+  // is the printed-zero guard every arm in both families carries, and `filter !== null`
+  // is the VOCABULARY, so a noun this file cannot spell leaves the sentence LOUD.
+  //
+  // ⚠️ THE REVEAL ROW IS ALSO CLAIMED BY `deriveAttackEffect`, and that is deliberate
+  // rather than an accident of two anchors: the printed reveal is what makes the
+  // counted fact public (see the union member's block), so a build that read only this
+  // half would have marked the sentence simulated while silently dropping the half
+  // that keeps the fold honest — D444's silent-half defect, authored on purpose. It is
+  // the FIRST sentence in the 640-row column claimed by two readers, and
+  // `attack.ts`'s two locals (`scaling` and `program`) are what let it be: the fold
+  // lands before §8.5 and the reveal runs at the tail.
+  const foeHand = OPPONENT_HAND_COUNT_MULTIPLY.exec(effect);
+  if (foeHand !== null) {
+    const per = Number(foeHand[1]);
+    const filter = opponentHandFilter(foeHand[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "cardsInOpponentHand", filter } };
+    }
+  }
+  const revealedHand = ATTACK_REVEAL_AND_TRAINER_SCALE.exec(effect);
+  if (revealedHand !== null) {
+    const per = Number(revealedHand[1]);
+    const filter = opponentHandFilter(revealedHand[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "cardsInOpponentHand", filter } };
     }
   }
   // D193 — the opponent's attached Energy, BOTH ZONES on this fold. The zone is

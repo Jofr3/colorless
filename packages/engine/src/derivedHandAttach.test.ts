@@ -604,7 +604,7 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(68);
+    expect(attacks()).toHaveLength(71);
     expect(attacks()[WRAPPED_IN_WIND]?.effect).toBe(CLAUSES[WRAPPED_TEXT].text);
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);

@@ -1717,7 +1717,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D232-reveal-anchor-drops-the-tail",
     decision: "D232",
-    what: 'the bare-reveal anchor loses its `$`. The witness is PRINTED and legal: five sentences in this family open with "Your opponent reveals their hand." and continue ("…Discard a card you find there.", "…This attack does 50 damage for each Trainer card you find there."), so an unanchored pattern would implement the first clause of nine legal printings and silently drop the rest',
+    what: 'the bare-reveal anchor loses its `$`. The witness is PRINTED and legal: five sentences in this family open with "Your opponent reveals their hand." and continue ("…Discard a card you find there.", "…This attack does 50 damage for each Trainer card you find there."), so an unanchored pattern would implement the first clause and silently drop the rest. ⚠️ **RE-STATED AT D445, WHICH BUILT TWO OF THOSE FIVE AND THEREFORE HAD TO ASK WHETHER THIS ROW STILL DISCRIMINATES (D436\'s GAP).** It does, and the arithmetic moved rather than the verdict: the old text said NINE legal printings and the honest figure is now SIX. Row 675 became EQUIVALENT under this mutant — the bare arm sits first, so it returns the same `revealOpponentHand` D445\'s arm returns — while row 672 (2), the sweep (1), the copy (1) and Lickitung\'s pair (2) are all still observable, and D445\'s own §2 rung reddens on 672 beside the DEFERRED `toBeNull()` loop that has always killed it',
     file: "packages/engine/src/effects.ts",
     find: "const ATTACK_REVEAL_OPPONENT_HAND = /^Your opponent reveals their hand\\.$/;",
     replace: "const ATTACK_REVEAL_OPPONENT_HAND = /^Your opponent reveals their hand\\./;",
@@ -5205,7 +5205,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5711,7 +5711,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5722,7 +5722,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.346.0";',
+    find: 'export const engineVersion = "0.347.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18240,9 +18240,29 @@ export const MUTANTS: Mutant[] = [
     decision: "D420",
     what: "🛑 C1 — **THE ZONE MIRROR MIRRORED BACK**: the new member scans the DISCARD PILE, which is the sibling it was copied from, one identifier away, in a doc block that says *\"the arm DIRECTLY ABOVE with ONE zone name changed\"*. **THE ATTACK STILL CANCELS AND STILL RESOLVES** — it simply asks whether you have already spent six Grass rather than whether you can spend them now, so the printed cost is checkable against the wrong pile. ⚠️ **THE TWO ZONES AGREE ON MOST MID-GAME BOARDS**, which is what makes it survivable: only a board with the Energy in ONE of the two can tell them apart",
     file: "packages/engine/src/interpreter.ts",
-    find: "      for (const uid of state.players[seat].hand) {",
-    replace: "      for (const uid of state.players[seat].discard) {",
-    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+    // ⚠️ RE-TRANSCRIBED AT D445 (0-space → 2-space indent) — **THE ANCHOR MOVED AND THE
+    //    MEANING GOT STRONGER, WHICH IS THE OUTCOME D440's ROW ARGUES FOR.** D445 pulled
+    //    this loop out of the `yourBasicEnergyInHandAtLeast` arm into the shared
+    //    `countCardsInHand`, so the arm is now a delegation and the line this row quotes
+    //    sits at file scope. **The original killer keeps the kill** (D416) — the cancel
+    //    gate still runs through the same loop — and `opponentHandScaling.test.ts` joins
+    //    it, which is the PROOF that the walk is genuinely shared rather than merely
+    //    factored: ONE mutation now reddens TWO suites through TWO vocabularies (D420's
+    //    `BoardCondition` THRESHOLD and D445's `DamageCountSource` COUNT), exactly as
+    //    `D440-shared-walk-reads-the-hand` does one function up. `precheck` caught the
+    //    stale anchor in seconds; a sweep would have cost ninety minutes.
+    //    ⚠️ **AND THE FIRST RE-TRANSCRIPTION WAS WRONG, WHICH `precheck` SAID IN SECONDS.**
+    //    At two-space indentation the line is byte-identical to `handCostCandidates`'
+    //    own first loop, so the bare needle occurred `2×` — D437's converse trap, where a
+    //    NEWLY WRITTEN line breaks a row nobody touched. The `let held = 0;` above it is
+    //    what the shared walk uniquely owns (the sibling counts into `kept`/`out`), and it
+    //    is the same repeated-idiom fix D443 made with an indentation-prefixed JSX badge.
+    find: "  let held = 0;\n  for (const uid of state.players[seat].hand) {",
+    replace: "  let held = 0;\n  for (const uid of state.players[seat].discard) {",
+    expectKilledBy: [
+      "packages/engine/src/handEnergyCancel.test.ts",
+      "packages/engine/src/opponentHandScaling.test.ts",
+    ],
   },
   {
     id: "D420-cost-arm-drops-its-energy-filter",
@@ -20993,5 +21013,140 @@ export const MUTANTS: Mutant[] = [
       reason:
         "D444: every registry `attackGate` value either IS the gate its printed clause derives (the 14 leading-clause printings) or derives nothing at all (Sylveon ex's 3 trailing-clause printings, where the derivation answers undefined and the `??` falls through to the row either way). So both orders return the same gate on every id in the registry and every body in the pool. `derivedAttackGate.test.ts` §2 pins that agreement by VALUE; the day it breaks, this row is KILLED and reports STALE-SURVIVOR.",
     },
+  },
+  // ── 🆕🆕 D445 — "YOUR OPPONENT REVEALS THEIR HAND", AND WHAT HAPPENS NEXT.
+  //    Fourteen rows over three sentences / six legal printings, and the SHAPE of the
+  //    set is the finding: FIVE of them (C2, C6, C9, C10, C11, C12) leave every NUMBER
+  //    on the board correct and change only WHERE a card went, WHO the log says did it,
+  //    or WHETHER the printed reveal happened at all — which is the axis this family is
+  //    actually about and the one no damage assertion can see. ⚠️ **C2 IS THE ROW WORTH
+  //    READING**: it drops the reveal and keeps the fold, and EVERY CENSUS FIGURE IN THE
+  //    REPO IS IDENTICAL UNDER IT, because `resolvedByAnyReader` is satisfied by the
+  //    damage reader alone. A census cannot catch a half-built sentence; only a board can.
+  {
+    id: "D445-reveal-arm-drops-the-vocabulary-guard",
+    decision: "D445",
+    what: "🛑 C1 — **THE REVEAL ARM GOES BACK TO A BARE `.test()`, AND IT SHIPS HALF A SENTENCE.** ⚠️ **THIS IS THE DEFECT THIS SLICE ACTUALLY WROTE ON ITS FIRST DRAFT** — the anchor's noun group is `[^.]+`, so it matches *\"…This attack does 50 damage for each Ancient card you find there.\"* too, and a reveal returned for a string whose FOLD the vocabulary refuses resolves the reveal, marks the sentence SIMULATED and silently drops the damage. D190b's exact-map-or-flag rule, in the direction that looks like it works: the board changes (a hand goes face up), the log prints a row, and `ATTACK_EFFECT_SKIPPED` never fires for a card the engine cannot score. Found by the suite and not by reading",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = ATTACK_REVEAL_AND_TRAINER_SCALE.exec(effect);\n  if (match !== null) {\n    const per = Number(match[1]);\n    if (per >= 1 && opponentHandFilter(match[2] ?? \"\") !== null) {",
+    replace: "  match = ATTACK_REVEAL_AND_TRAINER_SCALE.exec(effect);\n  if (match !== null) {\n    const per = Number(match[1]);\n    if (per >= 0) {",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-reveal-compound-derives-no-effect",
+    decision: "D445",
+    what: "🛑 C2 — **THE REVEAL HALF IS DROPPED AND ONLY THE FOLD IS CLAIMED**, which is what a slice that read the census instead of the card would have built: `resolvedByAnyReader`, `effectSimulated` and `BUILT.attack` are all satisfied by the damage reader alone, so **every census figure in the repo is IDENTICAL under this mutant**. What is gone is the printed reveal — and with it the only reason a public damage number may report a filtered count of a HIDDEN zone. D444's half-a-sentence defect, authored deliberately as a row because no census can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1 && opponentHandFilter(match[2] ?? \"\") !== null) {\n      return [{ op: \"revealOpponentHand\" }];",
+    replace: "    if (per >= 1 && opponentHandFilter(match[2] ?? \"\") === null) {\n      return [{ op: \"revealOpponentHand\" }];",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-trainer-noun-maps-to-item",
+    decision: "D445",
+    what: "🛑 C3 — **THE PRINTED NOUN MAPS TO THE NEIGHBOURING MEMBER**: `Trainer card` → `{ kind: \"item\" }`, which is `DISCARD_PILE_NOUNS`' own row one vocabulary up and the mistake an author copying that map makes. A Pokémon Tool is not an Item and a Supporter is not an Item, so the canonical seven-card hand answers 3 where the print says 5 and the attack deals 150 instead of 250 — a plausible number on a board that still reveals, still ends the turn and still logs correctly",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Trainer card\", { kind: \"trainerCard\" }],",
+    replace: "  [\"Trainer card\", { kind: \"item\" }],",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-noun-map-loses-the-bare-card",
+    decision: "D445",
+    what: "🛑 C4 — **THE BARE `card` ROW IS DROPPED FROM THE CLOSED MAP**, so corpus row 564 (*\"This attack does 30 damage for each card in your opponent's hand.\"*) falls silently off the built set and back onto the loud `ATTACK_EFFECT_SKIPPED` path. ⚠️ **THE INTERESTING HALF IS THAT THE SLICE STILL LOOKS FINE**: the reveal sentence keeps working, the member keeps its arm, and only the census and the ONE printing move. It is the observable direction of D442's row-can-be-unkillable-one-way finding: a map that DROPS a printed noun is visible where a map that ADMITS an unprinted one is not",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"card\", { kind: \"anyCard\" }],",
+    replace: "  [\"card\", { kind: \"supporter\" }],",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-fold-arm-hardcodes-the-widest-filter",
+    decision: "D445",
+    what: "🛑 C5 — **THE REVEAL FOLD STOPS READING ITS CAPTURE AND ALWAYS COUNTS EVERY CARD** — `D439-additive-arm-drops-the-filter`'s shape, on the arm one zone over. The attack deals 350 instead of 250 on the canonical hand, and it is right on a hand where every card happens to be a Trainer, which is exactly the board a careless fixture would build",
+    file: "packages/engine/src/effects.ts",
+    find: "    const filter = opponentHandFilter(revealedHand[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"cardsInOpponentHand\", filter } };",
+    replace: "    const filter = opponentHandFilter(revealedHand[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"cardsInOpponentHand\", filter: { kind: \"anyCard\" } } };",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-discard-anchor-derives-the-bottom",
+    decision: "D445",
+    what: "🛑 C6 — **THE `dest` IS DROPPED FROM THE DERIVED OP**, which is the neighbouring arm's REAL code (N's Purrloin's unfiltered reveal-and-bottom, four lines up) and the whole content of the one field these two sentences differ by. The card goes UNDER the opponent's deck instead of into their discard pile: the reveal still happens, the same prompt still parks, the same hand still shrinks by one, and only WHERE the card landed can see it — D294's stated shape at a third destination",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [{ op: \"bottomFromOpponentHand\", dest: \"discard\" }];",
+    replace: "    return [{ op: \"bottomFromOpponentHand\" }];",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-hand-arm-delegates-to-the-pile-walk",
+    decision: "D445",
+    what: "🛑 C7 — **THE DELEGATION POINTS AT THE WRONG ZONE'S WALK**: D420's `BoardCondition` arm calls `countCardsInDiscardPile` instead of `countCardsInHand`, which is the sibling function three screens up and one identifier away in an arm whose own doc block says it is *\"the arm DIRECTLY ABOVE with ONE zone name changed\"*. Distinct from `D420-hand-member-reads-the-discard-pile`, which mutates the shared WALK: this one leaves the walk correct and misroutes ONE caller, so D445's damage fold keeps working and only the hand-cost cancel gate asks the wrong pile",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return countCardsInHand(state, seat, handFilter) >= cond.count;",
+    replace: "      return countCardsInDiscardPile(state, seat, handFilter) >= cond.count;",
+    expectKilledBy: ["packages/engine/src/handEnergyCancel.test.ts"],
+  },
+  {
+    id: "D445-discard-arm-lands-in-the-actors-pile",
+    decision: "D445",
+    what: "🛑 C8 — **THE CARD GOES INTO THE ACTOR'S OWN DISCARD PILE RATHER THAN THE OWNER'S** — `ctx.seat` where `owner` belongs, the seat slip this whole function exists in one place to make unrepeatable, and `D232-random-take-lands-in-the-actors-discard`'s defect at the CHOSEN twin. The hand still shrinks, the event still fires, the log still reads correctly; the card simply joins the wrong player's pile, where it is now a legal retrieval target for the player who took it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      state: withSide(state, owner, {\n        ...side,\n        hand: side.hand.filter((uid) => !kept.has(uid)),\n        discard: [...side.discard, ...landing],\n      }),",
+    replace: "      state: withSide(state, ctx.seat, {\n        ...side,\n        hand: side.hand.filter((uid) => !kept.has(uid)),\n        discard: [...side.discard, ...landing],\n      }),",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-discard-row-swaps-seat-and-actor",
+    decision: "D445",
+    what: "🛑 C9 — **THE EVENT'S TWO SEATS ARE SWAPPED**, so the log reads as the DEFENDER choosing a card out of the attacker's hand. `D428-event-swaps-owner-and-actor`'s row at a new event, and a pure INFORMATION defect: the board is byte-identical either way, which is precisely the class a count-based suite cannot reach. ⚠️ It is also the row that makes the required `actor` field worth having — a build that derived it would be green here",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      events.push({ type: \"CARD_DISCARDED_FROM_HAND\", seat: owner, uid, actor: ctx.seat });",
+    replace: "      events.push({ type: \"CARD_DISCARDED_FROM_HAND\", seat: ctx.seat, uid, actor: owner });",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-note-falls-through-to-the-bottom-form",
+    decision: "D445",
+    what: "🛑 C10 — **THE CAPTION FALLS THROUGH TO THE BOTTOM-OF-DECK WORDING**, so the dialog tells the player their pick is going under the opponent's deck while the engine puts it in their discard pile. `D350-any-caption-falls-through-to-up-to` and `D294-prompt-lies-about-the-destination`, one destination later: **NO BOARD MOVES, no candidate set changes, no event differs** — the only observable is the string, which is why the note is asserted as a round trip to the catalog text rather than argued in a doc block",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.dest === \"discard\") {\n    return \"Your opponent reveals their hand. Discard a card you find there.\";",
+    replace: "  if (op.dest === \"never\") {\n    return \"Your opponent reveals their hand. Discard a card you find there.\";",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-log-row-derives-the-actor",
+    decision: "D445",
+    what: "🛑 C11 — **THE LOG DERIVES THE ACTOR FROM THE OWNER INSTEAD OF READING IT**, `otherSeat(event.seat)` where `event.actor` belongs. `D433-log-row-derives-the-actor` verbatim, at the row D426's block predicted would need an `actor` — and it is TRUE TODAY BY CONSTRUCTION OF ONE OP, which is exactly what makes it D425's `DAMAGE_DEALT` defect waiting to happen rather than a harmless equivalence. The row renders identically on every board this op can reach and would flip the moment a same-seat producer arrives",
+    file: "packages/engine/src/log.ts",
+    find: "      return row(event.actor, [\n        plain(\"chose \"),",
+    replace: "      return row(otherSeat(event.seat), [\n        plain(\"chose \"),",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-log-row-drops-the-word-chose",
+    decision: "D445",
+    what: "🛑 C12 — **THE ROW COLLAPSES INTO ITS RANDOM TWIN**: *\"discarded X from Tide's hand\"* instead of *\"chose X from Tide's hand and discarded it\"*. `D232-log-row-drops-the-word-random` is this row's mirror and states the rule — the distinguishing word is what lets a player tell a card their opponent PICKED from one the engine took at random, and the two are materially different things to have happened to you. **No board differs**, so only a string assertion can see it",
+    file: "packages/engine/src/log.ts",
+    find: "        plain(\"chose \"),\n        strong(cardName(state, event.uid)),\n        plain(` from ${names[event.seat]}'s hand and discarded it`),",
+    replace: "        plain(\"discarded \"),\n        strong(cardName(state, event.uid)),\n        plain(` from ${names[event.seat]}'s hand`),",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-fold-reads-the-attackers-hand",
+    decision: "D445",
+    what: "🛑 C13 — **THE SEAT INVERTED: the fold counts the ATTACKER's own hand.** The member spells `Opponent` in its NAME and this arm is the only place that name is turned into a seat, so the mistake is one identifier and the sibling arm directly above it (`cardsInDiscardPile`) really does read `attackerSeat` on one of its two values. The canonical board deals 50 and 120 instead of 250 and 210",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countCardsInHand(state, defenderSeat, bonus.count.filter) * bonus.per;",
+    replace: "      return countCardsInHand(state, attackerSeat, bonus.count.filter) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  {
+    id: "D445-fold-reads-the-discard-pile",
+    decision: "D445",
+    what: "🛑 C14 — **THE ZONE: the fold scans the DEFENDER's DISCARD PILE instead of their hand** — the neighbouring arm's REAL function, imported into the same file, two `case`s apart, and the mistake an author copying `cardsInDiscardPile` makes. ⚠️ **AND IT IS THE ROW THAT PROVES THE BOARD IS SHAPED FOR THIS**: the defender's pile is stocked with two Trainers on purpose, so the mutant deals 100 and 60 — plausible non-zero numbers — where an empty pile would have produced an obviously broken 0 that any board would catch",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countCardsInHand(state, defenderSeat, bonus.count.filter) * bonus.per;",
+    replace: "      return countCardsInDiscardPile(state, defenderSeat, bonus.count.filter) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
   },
 ];

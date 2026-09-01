@@ -1305,6 +1305,31 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(cardName(state, event.uid)),
         plain(` on the bottom of ${names[event.seat]}'s deck`),
       ]);
+    case "CARD_DISCARDED_FROM_HAND":
+      // 🆕🆕 D445 — the CHOSEN pick out of the opponent's revealed hand, discarded.
+      // NAMED, for the arm above's reason and by both of its routes at once: the hand
+      // was revealed a moment ago and the pick was made in the open, AND the §2 discard
+      // pile is public the instant the card lands. The module header's rule is "never
+      // name a card that is STILL hidden"; this one is not hidden by either measure.
+      //
+      // ⚠️ **"chose" IS IN THE ROW ON PURPOSE**, and it is the sibling of the word
+      // "random" three rows down. `RANDOM_CARD_TAKEN`'s `discard` route puts a card from
+      // the same hand into the same pile and the two are materially different things to
+      // have happened to you — one of them you could have played around. The log is the
+      // only place a player can tell them apart after the fact, and a row that said
+      // merely "discarded" would collapse them.
+      //
+      // Filed under the ACTOR (the ENERGY_DISCARDED / CARD_TO_BOTTOM_OF_DECK rule) with
+      // the owner named OUTRIGHT rather than by a possessive, so a mirror match cannot
+      // print an identical row from both seats. ⚠️ It derives NOTHING: `actor` is read,
+      // never computed as `otherSeat(event.seat)` — the derivation D426's block warned
+      // the first consumer of a cross-seat hand discard against, and D425's
+      // `DAMAGE_DEALT` defect in one line.
+      return row(event.actor, [
+        plain("chose "),
+        strong(cardName(state, event.uid)),
+        plain(` from ${names[event.seat]}'s hand and discarded it`),
+      ]);
     case "RANDOM_CARD_TAKEN":
       // ⚠️⚠️ D232 — the random pick out of the opponent's hand. NAMED, and it is
       // the second row in this file (after HAND_REVEALED) that names a card which

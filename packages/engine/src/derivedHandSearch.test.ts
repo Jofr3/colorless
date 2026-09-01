@@ -726,7 +726,7 @@ describe("PROVENANCE — the demonstrator carries five of the forms at 20-24", (
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(68);
+    expect(attacks()).toHaveLength(71);
     expect(attacks()[MEAL_TIME]?.effect).toBe(CLAUSES[0].text);
     expect(attacks()[BIG_MEAL]?.effect).toBe(CLAUSES[1].text);
     expect(attacks()[ENERGY_SEARCH]?.effect).toBe(CLAUSES[9].text);

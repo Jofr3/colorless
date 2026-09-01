@@ -331,7 +331,7 @@ describe("PROVENANCE — both printed shapes on one body, and NEITHER prints bas
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(68);
+    expect(attacks).toHaveLength(71);
     expect(attacks[GOAD_N_GRAB]?.effect).toBe(CLAUSES[GATED].text);
     expect(attacks[DRAG_OFF]?.effect).toBe(CLAUSES[GUST_30].text);
     // The indices this file and its two siblings address by constant did not move.

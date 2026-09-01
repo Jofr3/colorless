@@ -93,6 +93,7 @@ import {
   conditionHolds,
   conditionNote,
   countCardsInDiscardPile,
+  countCardsInHand,
   countPokemonInPlay,
   effectRefused,
   runProgram,
@@ -421,6 +422,39 @@ function scaledAttackDamage(
       const pileSeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;
       return countCardsInDiscardPile(state, pileSeat, bonus.count.filter) * bonus.per;
     }
+    case "cardsInOpponentHand":
+      // 🆕🆕 D445 — the cards in the DEFENDER's HAND matching the printed noun
+      // ("This attack does 30 damage for each card in your opponent's hand.";
+      // "Your opponent reveals their hand. This attack does 50 damage for each
+      // Trainer card you find there.").
+      //
+      // 🛑 **`defenderSeat` IS THE MEMBER'S NAME AND NOT A DERIVATION, WHICH IS WHY
+      // THERE IS NO `seat` LOCAL HERE LIKE THE ARM ABOVE HAS.** `cardsInDiscardPile`
+      // needs one because the column prints both piles; this column prints the
+      // OPPONENT's hand on both rows and your own on none, so the side lives in the
+      // member's name (D168) and the day a "your hand" printing arrives it gains a
+      // sibling member rather than this arm gaining a branch — the falsifier
+      // `opponentHandScaling.test.ts` §6 pins on the population.
+      //
+      // ⚠️ **THIS IS THE ONE ARM IN THE SWITCH WHOSE ZONE THE OTHER PLAYER CANNOT
+      // SEE**, and the damage it produces IS public — so the fold is an information
+      // channel in a way none of its sixteen siblings is. What keeps it honest is the
+      // PRINT: the bare row counts hand SIZE (already public — the count shows), and
+      // the filtered row is preceded by a printed reveal that this engine actually
+      // performs (`deriveAttackEffect` claims the same string). The argument is in
+      // `DamageCountSource.cardsInOpponentHand`'s own block; this line is where it
+      // would be silently untrue if a successor widened the vocabulary onto an
+      // unrevealed sentence.
+      //
+      // The walk is `countCardsInHand` (interpreter.ts) — D420's own loop, GENERALISED
+      // at its site rather than copied here, so the `BoardCondition` threshold over a
+      // hand and this count cannot disagree about what a printed noun admits (D159).
+      // It owns the EMPTY hand (0) and the unresolvable uid (0) too.
+      //
+      // Read at DECLARATION like every other member. A hand that matches nothing is 0,
+      // and on this fold (printed base dropped) that is no DAMAGE_DEALT row at all,
+      // which is the printed floor.
+      return countCardsInHand(state, defenderSeat, bonus.count.filter) * bonus.per;
     case "extraEnergyUnitsBeyondCost":
       // 🆕🆕 D436 — the 0-or-1 INDICATOR again, but read against the DECLARATION.
       // "…at least N extra Energy attached (in addition to this attack's cost)".

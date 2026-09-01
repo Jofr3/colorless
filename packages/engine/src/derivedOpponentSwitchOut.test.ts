@@ -348,7 +348,7 @@ describe("PROVENANCE — the demonstrator carries all three of this slice's sent
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(68);
+    expect(attacks).toHaveLength(71);
     expect(attacks[KICK_AWAY]?.effect).toBe(CLAUSES[BARE].text);
     expect(attacks[WINDING_WAVES]?.effect).toBe(CLAUSES[MAY].text);
     expect(attacks[INTERJET]?.effect).toBe(CLAUSES[COMPOUND].text);

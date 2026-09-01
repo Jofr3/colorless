@@ -2376,6 +2376,119 @@ claiming a sentence is unbuilt, run `splitAttackGateClause` and
 `splitAttackTrailingClause` on it and check the registry. If any of the three
 answers, the sentence is built and the census already knows.
 
+## A count over a HIDDEN zone is an information channel (D445)
+
+`DamageCountSource` had a standing invariant nobody had written as a rule: every one
+of its sixteen members counts something both seats can see. D440 stated it for the
+discard pile — *"ordered and public (§2), so the opponent-side read leaks nothing"*.
+**D445's member counts the opponent's HAND, and the damage number it produces is
+public**, so the fold itself is a channel: a public number reporting a private fact.
+
+The engine does not get to decide that. **The PRINT does**, and the two printed rows
+keep the invariant by two different routes:
+
+- *"…for each **card** in your opponent's hand."* counts hand SIZE, which the board
+  already shows (`cardplay.ts` greys a Trainer-path reveal on an empty opponent hand
+  for exactly that reason);
+- *"Your opponent **reveals their hand**. …for each **Trainer card** you find there."*
+  counts a narrower set, and the printed reveal is what makes it public.
+
+**So the rule is not "the zone is public" but "the sentence makes the COUNTED FACT
+public"** — and it is pinned on the POPULATION (no corpus sentence carries a filtered
+hand count without a printed reveal), never on a specimen (D423). ⚠️ **Build only the
+filtered row and the claim is unfalsifiable**; the unfiltered row is the control that
+makes the reveal's role provable rather than asserted.
+
+## Two readers may own one sentence, and `attack.ts` said otherwise (D445)
+
+`attack.ts` carried *"a card carries at most one scaling clause OR a program: the
+whole-sentence anchor means a scaling sentence never also derives an op."* **Measured
+across all 640 corpus sentences at D444's head: ZERO were claimed by more than one
+reader — a HABIT, not a property** (D431's test), and the locals were already separate
+(`program` runs at the TAIL, `scaling` folds before §8.5), so the code was fine and
+only the sentence was wrong.
+
+A compound whose halves land at two different SEAMS needs both readers. Claiming only
+one is D444's half-a-sentence defect with the census green: `resolvedByAnyReader`,
+`effectSimulated` and `BUILT.attack` are all satisfied by whichever half you took.
+**When a printed sentence carries an effect AND a fold, count the seams, not the
+anchors** — and pin "this is the only dual-claimed sentence" as a population rung, so
+the next one arrives on purpose.
+
+## The trailing splitter's mirror image is not the trailing splitter (D445)
+
+`splitAttackTrailingClause` composes HEAD-claimed-by-any-reader + TAIL-claimed-by
+-`deriveAttackEffect`, and says so at the guard: *"a tail claimed only by a damage
+reader would be a fold the caller has no place to put."* D445's compound is exactly
+that predicate reflected — an EFFECT head and a DAMAGE tail — so it is refused by
+construction and would need the splitter INVERTED, not reused.
+
+**Two whole-sentence anchors over the same string cost two arms; a second composition
+path costs a mechanism.** Check which way round the compound runs before reaching for
+D409.
+
+## `.test()` where the sibling does `.exec()` ships half a sentence (D445)
+
+D445's first draft claimed the reveal with a bare `ATTACK_REVEAL_AND_TRAINER_SCALE
+.test(effect)` while the damage arm over the SAME anchor carried `per >= 1 && filter
+!== null`. The anchor's noun group is `[^.]+`, so *"…for each Ancient card you find
+there."* matched: the reveal resolved, the sentence was marked SIMULATED, and the
+damage was silently dropped. **D190b's exact-map-or-flag rule, in the direction that
+looks like it works** — a board changes, a log row prints, and the loud channel never
+fires for a card the engine cannot score.
+
+**When two arms share an anchor, they share its GUARDS.** A `.test()` beside an
+`.exec()` on one regex is the tell.
+
+## A deferral that names a MECHANISM has a trigger too (D445)
+
+D413's rule is about refusals; this is the same shape at a helper. `countCardsInDiscard
+Pile` recorded *"the `hand` twin one arm down is DELIBERATELY LEFT INLINE … folding it
+in would mean a `zone` parameter and a rewrite of a shipped arm **for a family this
+slice does not print**"*. D445 prints that family, so the deferral expired exactly
+where it said it would, and D440's own move (generalise in place, make the old arm a
+delegation, re-transcribe the rows) was the whole implementation.
+
+**Grep your own source comments for deferrals, not only `decisions.md` for refusals.**
+A note that states its trigger is a note somebody can act on; one that states a
+preference is not.
+
+## D437's converse trap, hit through a WHOLE FUNCTION (D445)
+
+Extracting an inline loop into a top-level function re-indents it — and at two spaces
+`for (const uid of state.players[seat].hand) {` became byte-identical to
+`handCostCandidates`' first loop. The re-transcribed row reported `find occurs 2×`,
+**a row broken by a function it does not describe**. The fix is D443's: include the
+line the new function uniquely owns (`let held = 0;`, where the sibling counts into
+`kept`/`out`).
+
+⚠️ **`precheck` caught both the 0× and the 2× in seconds, on consecutive attempts.**
+Run it after every edit round, not once at the end.
+
+## A mirror board is not a seat inversion (D445)
+
+A `board(by)` helper that assigns "the attacker's hand" and "the defender's hand"
+gives the SAME numbers from either chair — which is a real claim (the fold is
+seat-relative, not hard-wired to p2) and is NOT the claim that reading the wrong seat
+is visible. The inversion evidence has to come off ONE board: *on this table, the
+attacker's own hand answers 1 and 4 where the defender's answers 5 and 7.*
+
+**Two rungs, two claims.** A suite with only the mirror passes on a build that reads
+`attackerSeat` on a symmetric fixture.
+
+## A brief's printing count is a FLOOR (D445)
+
+D445's work order named four sentences / seven printings, measured with the canonical
+subtraction and correct as far as it went. The buildable family was **three sentences
+/ six printings** — two of the four were refused, and a FIFTH sentence the brief's own
+family pattern could not see (*"This attack does 30 damage for each card in your
+opponent's hand."*, no reveal, corpus row 564) joined it and turned out to be the
+control the whole information argument rests on.
+
+**A family enumerated by one literal is as narrow as that literal** (D310 at a
+catalog, D419 at an instrument, here at a work order). Re-sweep with the MECHANISM's
+vocabulary — *hand* × *does N damage* — not with the sentence's opening words.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

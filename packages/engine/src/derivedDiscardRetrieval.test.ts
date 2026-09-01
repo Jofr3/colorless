@@ -907,7 +907,7 @@ describe("the fixture prints what the catalog prints", () => {
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(68);
+    expect(attacks).toHaveLength(71);
   });
 
   it("🆕 D238 — `Tidal Recall` was fielded UNREAD by D237 and READS on this commit", () => {

@@ -3974,6 +3974,54 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon.",
       },
+      /** 🆕🆕 **D445 — 68-70: WHAT HAPPENS AFTER THE HAND GOES FACE UP.**
+          Three printed sentences, **6 legal printings**, appended HERE because this
+          card is the reveal family's demonstrator since D232 (25-28) and the whole
+          point of these three is how they sit beside the bare reveal at 25.
+          ⚠️ **THE APPEND STEPS TWELVE PROVENANCE RUNGS** — twelve suites pin
+          `fix-trainerops`' `attacks.length` and all twelve are stepped 68 → 71 in one
+          pass (D431/D442: a green run after fixing the one that reddened is evidence
+          the runner stopped early, not that the round is done).
+            68 "Hand Read" — *"Your opponent reveals their hand. This attack does 50
+               damage for each Trainer card you find there."* (**3 legal**, corpus row
+               675). 🛑 **THE ONE SENTENCE IN THE 640-ROW COLUMN CLAIMED BY TWO
+               READERS**: `deriveAttackEffect` takes the reveal, `deriveAttack…Multiplier`
+               takes the fold. The printed `50×` marker is the multiply family's, so the
+               base is DROPPED and the whole hit is 50 × the Trainer count.
+            69 "Snatch and Toss" — *"Your opponent reveals their hand. Discard a card
+               you find there."* (**2 legal**, corpus row 672). ⚠️ NO `damage`, which
+               is the corpus row: this sentence is the whole printed effect.
+            70 "Hand Count" — *"This attack does 30 damage for each card in your
+               opponent's hand."* (**1 legal**, corpus row 564). 🛑 **THE CONTROL FOR
+               68, AND THE REASON BOTH ARE BUILT IN ONE SLICE**: it counts the same
+               hidden zone with NO printed reveal, which is legitimate only because a
+               hand's SIZE is already public. Without it the suite could not tell
+               "the fold needs a reveal" from "the fold happens to have one".
+          ⚠️ **THE CARRIER IDS ARE UNRESOLVED AND ARE STATED AS SUCH RATHER THAN
+          INVENTED** — this checkout has no D1 (D425). The sentences are the committed
+          corpus's bytes, character for character; the attack NAMES are this fixture's
+          own, as D426's 61/62 are. ⚠️ **ONLY 70 CARRIES AN APOSTROPHE** (`opponent's`,
+          U+0027 at index 57, measured with `codePointAt` over `legalAttackCorpus()`),
+          so it is the only one of the three `clauseApostrophe`'s re-ingest sweep can
+          see and it steps that census by 1. Its anchor spells `['’]`. */
+      {
+        cost: ["Colorless"],
+        name: "Hand Read",
+        damage: "50×",
+        effect:
+          "Your opponent reveals their hand. This attack does 50 damage for each Trainer card you find there.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Snatch and Toss",
+        effect: "Your opponent reveals their hand. Discard a card you find there.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Hand Count",
+        damage: "30×",
+        effect: "This attack does 30 damage for each card in your opponent's hand.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
