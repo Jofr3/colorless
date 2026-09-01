@@ -2341,6 +2341,41 @@ producers agree everywhere, no board can tell `a ?? b` from `b ?? a`; that mutan
 is `equivalent` and should be DECLARED as such, with the agreement rung named as
 the thing that would make it killable again.
 
+### Prefer the NON-MONOTONE sweep prediction (D444)
+
+D440-D443 each committed to a sweep delta before the sweep ran, and each was of
+the form `+N killed, +0 declared` — which follows from counting the rows you
+added. That arithmetic survives being sloppy: a slice that only ADDS rows can
+hardly land anywhere else, so hitting it confirms the practice more than it
+confirms the slice.
+
+D444's prediction was **non-monotone in both columns at once**: 8 new rows (7
+killed, 1 declared) *and* one pre-existing killed row converting to a declared
+survivor, giving `1752 + 7 − 1 = 1758` and `27 + 1 + 1 = 29`. That number could
+only be produced by knowing **which** existing row was about to change class and
+why. It tests comprehension rather than addition.
+
+**So when a slice changes the class of an existing row, say which row and write
+the subtraction out** — do not fold it into a net figure. A slice that turns a
+killed row into a declared survivor is exactly the shape that gets read as a
+regression by whoever diffs the two totals, and the only defence is having named
+it in advance.
+
+### `!resolvedByAnyReader` is not the unbuilt set (D444, re-earned)
+
+The reader surface is one of four ways a printed sentence gets simulated; the
+others are a registry row, the gate splitter and the trailing splitter. Measuring
+"what is left" with `!resolvedByAnyReader` alone therefore over-counts, and
+`censusAtHead.test.ts` has a canonical residue predicate precisely so nobody has
+to re-derive the subtraction.
+
+**This was already a convention and a work order broke it anyway**, calling three
+sentences unbuilt that had been simulated since D282/D307 — because the loose
+predicate is one call and the right one is four. ⚠️ **The tell is cheap**: before
+claiming a sentence is unbuilt, run `splitAttackGateClause` and
+`splitAttackTrailingClause` on it and check the registry. If any of the three
+answers, the sentence is built and the census already knows.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
