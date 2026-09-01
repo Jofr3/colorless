@@ -5131,7 +5131,8 @@ import type { GameState, Seat } from "./types";
     own printed penalty stand.
 
     ⚠️ **NOT `damageChosen.ignoreWR`, VERIFIED BEFORE CONCLUDING.** ONE writer
-    (`CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400: group 3 now, the count having taken 2 —
+    (`CHOSEN_ANY_TARGET`'s group 2 — 🆕🆕 D400: group 3 now, the count having taken 2;
+    🆕🆕🆕 D448: group 4 now, the count clause having taken 3 —
     Umbreon "Feint Attack") and TWO read paths
     (`snipeActive`, `placeSnipe`'s `deals` arm); it is a member of an OP and the
     main hit has NO op, and it is one boolean where three are needed. Sibling, not
@@ -19088,7 +19089,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.349.0";
+export const engineVersion = "0.350.0";
 
 export type {
   ApplyResult,

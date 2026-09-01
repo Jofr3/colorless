@@ -5210,7 +5210,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5716,7 +5716,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5727,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.349.0";',
+    find: 'export const engineVersion = "0.350.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -16946,8 +16946,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D400",
     what: "🛑 C3 — **THE ANCHOR'S COUNT CAPTURE BECOMES THE LITERAL `1` AGAIN**, i.e. the whole slice undone at its source. This is the LOUD half of the pair above: both printed count-2 sentences fall off the derived path onto `ATTACK_EFFECT_SKIPPED`, so nine printings re-enter the unbuilt remainder and every census instrument in the repo moves at once. The row exists so the corpus has one mutant on the anchor and one on each arm — a reader can be right about which sentences it ACCEPTS and wrong about what it BUILDS from them, and only the pair separates those",
     file: "packages/engine/src/effects.ts",
-    find: "  `^This attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon\\\\.` +",
-    replace: "  `^This attack does (\\\\d+) damage to 1 of your opponent['’]s Pokémon\\\\.` +",
+    // ⚠️ RE-TRANSCRIBED AT D448 — the anchor's first line lost its trailing `\\.` when
+    // the count clause `( for each Energy attached to this Pokémon)?` took the position
+    // between the noun and the printed period. **THE CLAIM IS UNCHANGED**: the arity
+    // capture goes back to the literal `1`. Shortened onto the line the row is about
+    // (D446); the leading `^This` is what keeps it off `SELF_DISCARD_THEN_ANY_TARGET`'s
+    // byte-similar line, which opens `attack does` with no `^This` in front of it.
+    find: "  `^This attack does (\\\\d+) damage to (\\\\d+) of your opponent['’]s Pokémon` +",
+    replace: "  `^This attack does (\\\\d+) damage to 1 of your opponent['’]s Pokémon` +",
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts", "packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
   {
@@ -16971,10 +16977,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D400-ignorewr-branch-reads-the-old-group",
     decision: "D400",
-    what: "🛑 C6 — **THE ignoreWR BRANCH KEEPS READING GROUP 2**, which is EXACTLY the mistake this slice's own edit risks: inserting a capture renumbers every group after it, and group 2 is now the COUNT. `match[2]` is never `undefined` on a match, so the reader takes the `ignoreWR` arm for EVERY any-target snipe — Rotom, Fezandipiti and both count-2 spellings alike — and silently strips Weakness from a sentence whose printed parenthetical exists to say W/R applies on the Active. ⚠️ **EVERY SENTENCE STILL RESOLVES, SO EVERY CENSUS FIGURE IS UNMOVED**; the flag is visible only in the derived op and on a board with a WEAK Active, which §3's first rung and the 0.39.0 Rotom rungs both drive",
+    what: "🛑 C6 — **THE ignoreWR BRANCH KEEPS READING THE GROUP IT READ BEFORE THE ANCHOR GREW ONE**, which is EXACTLY the mistake an inserted capture invites: it renumbers every group after it, and neither the compiler nor a type sees a `match[n]` (D447). 🆕🆕🆕 **RE-POINTED AT D448 ONTO THE SHIFT D448 ITSELF CAUSED** — the tail moved 3 → 4 when the count clause took 3, so the un-re-indexed read is `match[3]`, which is now the COUNT CLAUSE. The arm above returns early whenever that group is present, so the ternary only ever sees it ABSENT: `match[3] === undefined` is then always TRUE and the reader takes the FLAT arm for every any-target snipe — Umbreon `sv03-130` included — silently RESTORING Weakness to the one sentence whose printed tail exists to remove it. ⚠️ **EVERY SENTENCE STILL RESOLVES, SO EVERY CENSUS FIGURE IS UNMOVED**; the flag is visible only in the derived op and on a board with a WEAK Active, which §3's first rung and the 0.39.0 Rotom rungs both drive. The row's SPECIES is unchanged and only its digits moved: a group index left behind by a widening one line up",
     file: "packages/engine/src/effects.ts",
-    find: "      return match[3] === undefined",
-    replace: "      return match[2] === undefined",
+    find: "      return match[4] === undefined",
+    replace: "      return match[3] === undefined",
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
   },
   {
@@ -16986,10 +16992,14 @@ export const MUTANTS: Mutant[] = [
     // rider's guard grew an `agrees` conjunct of its own, so this `find` began matching
     // TWO sites. Anchored on THIS arm's own preceding line (the number-word agreement,
     // which the benched arm spells differently). **THE CLAIM IS UNCHANGED**.
-    find:
-      '    const agrees = number === undefined || (number === "those") === (count > 1);\n    if (amount >= 1 && count >= 1 && agrees) {',
-    replace:
-      '    const agrees = number === undefined || (number === "those") === (count > 1);\n    if (amount >= 1 && agrees) {',
+    // 🆕🆕🆕 RE-TRANSCRIBED AGAIN AT D448 — the guard gained a `&& !bothRiders` conjunct
+    // (the unprinted count-clause + W/R-tail pair, refused loudly). That makes the guard
+    // line UNIQUE on its own again, so the D437 anchoring on the preceding line is no
+    // longer needed and the row is SHORTENED back onto the line it is about (D446).
+    // **THE CLAIM IS UNCHANGED**: the count's positivity guard is dropped and the
+    // amount's is left alone.
+    find: "    if (amount >= 1 && count >= 1 && agrees && !bothRiders) {",
+    replace: "    if (amount >= 1 && agrees && !bothRiders) {",
     expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
   },
   {
@@ -21378,5 +21388,95 @@ export const MUTANTS: Mutant[] = [
     find: '  const owner = target === "yourBench" ? "your" : "your opponent\'s";',
     replace: '  const owner = "your opponent\'s";',
     expectKilledBy: ["packages/engine/src/ownBenchSnipe.test.ts"],
+  },
+  // ── 🆕🆕🆕 D448 — A COUNT SOURCE ON THE SNIPE'S OWN AMOUNT. Nine rows, and the
+  //    SHAPE of the set is the finding: FOUR of the nine are SILENT IN EVERY CENSUS
+  //    (C3, C5, C7, C8). The sentence still matches and still resolves, so
+  //    `BUILT.attack`, the reader instrument and the residue all stay green while the
+  //    board deals the wrong number — the shape this family keeps producing, and the
+  //    reason a reader rung is never enough on its own. ⚠️ TWO of them (C4, C7) are
+  //    the SAME defect at two seams — the reader forgetting the rider and the
+  //    interpreter forgetting to honour it — and they are two rows because a hand-edit
+  //    reaches one file at a time (D400's C1/C2 precedent, verbatim).
+  {
+    id: "D448-anchor-drops-the-count-clause",
+    decision: "D448",
+    what: "🛑 C1 — **THE ANCHOR GOES BACK TO D447's BYTES**, i.e. the whole slice undone at its source. This is the LOUD half: both printed sentences fall off the derived path onto `ATTACK_EFFECT_SKIPPED`, three printings re-enter the unbuilt remainder and every census instrument in the repo moves at once. The row exists so the corpus has one mutant on the anchor and one on each arm — a reader can be right about which sentences it ACCEPTS and wrong about what it BUILDS from them, and only the pair separates those",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"( for each Energy attached to this Pokémon)?\\\\.\" +",
+    replace: "    \"\\\\.\" +",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D448-count-clause-made-mandatory",
+    decision: "D448",
+    what: "🛑 C2 — **THE `?` IS LOST FROM THE NEW GROUP**, which is the single character an author forgets when they add an optional clause to a shipped pattern, and it breaks the slice in the OTHER direction: every BARE any-target snipe — Rotom `sv01-069`, Fezandipiti ex `sv06.5-038`, Umbreon `sv03-130` and both count-2 spellings — now requires a count clause it does not print, and falls off. ⚠️ **IT IS THE MORE EXPENSIVE DEFECT OF THE TWO AND THE LESS OBVIOUS ONE**: a suite written FOR this slice passes it completely, because every sentence this slice is about still resolves. Only the neighbours it was never about go red, which is why `anyTargetSnipe.test.ts` is named first here",
+    file: "packages/engine/src/effects.ts",
+    find: "    \"( for each Energy attached to this Pokémon)?\\\\.\" +",
+    replace: "    \"( for each Energy attached to this Pokémon)\\\\.\" +",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D448-reader-drops-the-scale-rider",
+    decision: "D448",
+    what: "⚠️ C3 — **THE READER BUILDS THE OP WITHOUT `perEnergyOnSelf`**, which is the flat literal two lines down copied verbatim (D190b's neighbour-copy shape, and the edit an author reaches for after widening an anchor and half-finishing the arm). ⚠️ **SILENT IN EVERY CENSUS**: the sentence still MATCHES and still resolves, so `BUILT.attack`, the thirteen-reader instrument and the residue are ALL UNMOVED. What is wrong is only the BOARD — a card printed to do 60 does 20 — and only where the attacker holds more than one Energy, which is exactly the board a natural \"the snipe works\" fixture does not field (D279's rule)",
+    file: "packages/engine/src/effects.ts",
+    find: "            source: \"attack\",\n            deals: true,\n            perEnergyOnSelf: true,",
+    replace: "            source: \"attack\",\n            deals: true,",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
+  },
+  {
+    id: "D448-reader-reads-the-shifted-group",
+    decision: "D448",
+    what: "🛑 C4 — **THE COUNT CLAUSE IS READ OFF GROUP 4 INSTEAD OF GROUP 3**, i.e. the index this slice's own widening moved, off by exactly the one it shifted. D447's rule: neither the compiler nor a type sees a `match[n]`. Under it group 4 is the W/R TAIL, so the two scaled sentences lose their rider ENTIRELY (silent — they still resolve) while Umbreon `sv03-130` now sets BOTH riders and is refused by the unprinted-pair guard (loud — a shipped sentence leaves the built set). **One character, two failure modes with opposite visibility**, which is why both suites are named",
+    file: "packages/engine/src/effects.ts",
+    find: "    const perEnergyOnSelf = match[3] !== undefined;",
+    replace: "    const perEnergyOnSelf = match[4] !== undefined;",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts", "packages/engine/src/anyTargetSnipe.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D448-unprinted-pair-guard-dropped",
+    decision: "D448",
+    what: "⚠️ C5 — **THE UNPRINTED-PAIR GUARD GOES**, leaving the amount's and the arity's. The reader then resolves *\"…for each Energy attached to this Pokémon. This attack's damage isn't affected by Weakness or Resistance.\"* — a sentence the legal column prints ZERO times — as a SCALED snipe that silently drops the printed W/R clause. That is authoring rather than reading (D190b), and **NO CENSUS FIGURE MOVES** because no printed sentence changes its answer: only a rung that drives an UNPRINTED near-miss can reach it, which is what `scaledAnySnipe.test.ts` §2 exists for. ⚠️ Its `find` is byte-identical to `D400-count-positivity-guard-dropped`'s line and the two rows mutate it differently, which is the point — one guard per claim",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && count >= 1 && agrees && !bothRiders) {",
+    replace: "    if (amount >= 1 && count >= 1 && agrees) {",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
+  },
+  {
+    id: "D448-fold-ignores-the-rider",
+    decision: "D448",
+    what: "🛑 C6 — **THE FOLD'S TEST IS INVERTED IN `snipeAmount`**, the `!==`/`===` slip on a line whose two neighbours both spell `=== true`. It is the loudest row in the set and it breaks BOTH families at once: a SCALED op returns the printed amount unmultiplied, and every UNSCALED `damageChosen` in the engine — Rotom, Fezandipiti, Hawlucha's Ability, every derived bench snipe — is suddenly multiplied by the attacker's attached Energy. **The census does not move at all**, because nothing about which sentences RESOLVE changes; the whole defect is in what the board does",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perEnergyOnSelf !== true) return op.amount;",
+    replace: "  if (op.perEnergyOnSelf === true) return op.amount;",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts", "packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D448-fold-counts-the-defenders-energy",
+    decision: "D448",
+    what: "🛑 C7 — **THE FOLD READS THE OTHER SEAT'S ACTIVE**, which is the line DIRECTLY ABOVE IT copied verbatim: `perTakenPrize` genuinely counts `otherSeat(ctx.seat)`, because Prizes taken are the OPPONENT's fact, and Energy attached to *\"this Pokémon\"* is the ATTACKER's. **A neighbour-copy across a seat boundary inside one nine-line function** — D190b's shape at its sharpest, and the same defect class D447 found in `placeSnipe`. The defender fields no Energy on any board in this suite, so the amount folds to 0 and the attack asks nothing and deals nothing; the sentence still resolves and every census figure is green",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const thisPokemon = activeTop(state, ctx.seat);",
+    replace: "  const thisPokemon = activeTop(state, otherSeat(ctx.seat));",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
+  },
+  {
+    id: "D448-fold-counts-a-type-instead-of-cards",
+    decision: "D448",
+    what: "⚠️ C8 — **THE COUNT IS FILTERED TO A TYPE**, which is what `SELF_ENERGY_MULTIPLY`'s fold does ONE READER OVER for the same printed noun — so it is not a straw, it is the neighbouring arm's real code. The printed clause is UNTYPED and `countAttachedEnergy`'s own doc says it counts CARDS, so this is a narrowing with no sentence behind it. 🛑 **IT IS THE ROW `SCALED_SNIPE_DECK`'s SECOND ENERGY PRINT EXISTS FOR**: on an all-{L} board the typed and untyped answers are the SAME NUMBER and this mutant survives, reporting a suite gap that is really a FIXTURE gap (D437's confound rule). One Colorless card on the attacker is the whole difference between a green table and a meaningless one",
+    file: "packages/engine/src/interpreter.ts",
+    find: "op.amount * countAttachedEnergy(state, thisPokemon.active, null)",
+    replace: "op.amount * countAttachedEnergy(state, thisPokemon.active, \"Lightning\")",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
+  },
+  {
+    id: "D448-caption-quotes-the-unfolded-amount",
+    decision: "D448",
+    what: "⚠️ C9 — **THE PROMPT QUOTES `op.amount` INSTEAD OF THE FOLDED ONE**, so the dialog says *\"(20 damage each)\"* over a hit that is about to do 60 — the dialog contradicting the board, which is `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule and the same class D447's caption row is about. 🛑 **THE CALL SITE IS OLDER THAN THIS SLICE AND WAS UNPINNED BY ANY MUTANT UNTIL NOW**, which is a finding rather than an oversight: with `perTakenPrize` alone the folded and printed amounts differ only when the opponent has taken Prizes AND the bench is big enough to park, and no shipped board fielded both. This rider makes the divergence ordinary — it is the DEFAULT the moment a second Energy is attached — so the seam is worth a row the day it becomes reachable, and this is that day",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          note: snipeNote(\n            amount,",
+    replace: "          note: snipeNote(\n            op.amount,",
+    expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
   },
 ];

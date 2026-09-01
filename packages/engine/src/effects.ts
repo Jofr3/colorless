@@ -4667,6 +4667,81 @@ export type EffectOp =
           The multiply "×" of the benched-snipe family, evaluated in the interpreter
           rather than folded pre-W/R (the target is benched, never the defender). */
       perTakenPrize?: true;
+      /** 🆕🆕🆕 **D448 — THE SECOND SCALED SNIPE, AND THE SIBLING OF `perTakenPrize`
+          ONE LINE UP**: *"This attack does {20|30} damage to 1 of your opponent's
+          Pokémon **for each Energy attached to this Pokémon**. (Don't apply Weakness
+          and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts` lines 552
+          and 570, **2 sentences / 3 legal printings**. The effective amount is
+          `amount × the Energy CARDS attached to the attacker`, read from state at the
+          moment the op runs and again at the pick, exactly as `perTakenPrize` is.
+
+          🛑 **THE WORK ORDER THAT ORDERED THIS SAID THE SNIPE'S AMOUNT CANNOT SCALE
+          TODAY AND THAT WAS FALSE.** `snipeAmount` (interpreter.ts) has been a SECOND,
+          PARALLEL fold since Covetous Ivy — the `AttackDamageBonus{per, count}` fold in
+          `attack.ts` §8.5 is the other one, and the two have never shared a line. This
+          field reaches the fold that already exists; it does not build one.
+
+          🛑 **WHY A SECOND BOOLEAN RATHER THAN `scale?: DamageCountSource`, PRICED
+          RATHER THAN ASSUMED.** The general shape is spellable — this printed phrase
+          IS `{kind: "energyOnSelf", energyType: null}` and the Prize one IS
+          `{kind: "opponentPrizesTaken"}` — and collapsing the pair was measured at
+          **24 sites across 10 files** plus a `MATCH_RECORD_VERSION` bump, because
+          `perTakenPrize` is a PERSISTED key (this op parks) and dropping its name is
+          D359's RENAME rather than D125's widening: a stored v29 record would resume
+          with the rider unread and deal `amount` where the card prints `amount × N`.
+          That is D362/D369's own arithmetic — *"a RENAME of a shipped member … 31
+          sites across 7 files against 4 for the addition"* — and it buys **0 further
+          printings TODAY**, which is the only figure a price may quote.
+
+          🛑 **AND THE TRIGGER IS ALREADY PRINTED, WHICH IS WORTH SAYING RATHER THAN
+          ROUNDING OFF.** The residue holds ONE more chosen-target hit whose amount
+          scales — *"Put 2 damage counters on 1 of your opponent's Pokémon **for each
+          Basic {G} Energy card in your discard pile**. Then, shuffle those Energy cards
+          into your deck."*, corpus line 412, **3 legal printings** — and its count is
+          `{kind: "cardsInDiscardPile", seat: "you", filter: <a typed Basic Energy>}`,
+          a PAYLOAD that cannot be spelled as a boolean at all. **It is refused THREE
+          ways over, and the first reason is upstream of the count entirely**: no anchor
+          claims the put-counter chosen-target VERB at all — its own unscaled twin, line
+          413, *"Put 2 damage counters on 1 of your opponent's Pokémon."* at 1 printing,
+          is unbuilt too — and then the tail *"Then, shuffle those Energy cards into your
+          deck."* is a second mechanism at a different seam (D442: two riders independent
+          in the print need two rows). So collapsing the riders would collect NOTHING,
+          and the price above stands. ⚠️ **THE DAY THAT VERB BECOMES READABLE THE
+          COLLAPSE IS OWED, AND THIS COMMENT IS ITS EXPIRY DATE (D413)** — the falsifier
+          is pinned executably in `scaledAnySnipe.test.ts` §1(d), on BOTH lines, so the
+          rung reddens rather than the note rotting.
+
+          ⚠️ **THE SPELLING IS WHY THE FIRST MEASUREMENT MISSED IT**: it says *"put
+          damage counters on"* where this pair says *"does N damage to"*, so a family
+          grep over `damage to ` cannot see it. A census is as narrow as its literal
+          (D310), and this one was re-asked with the noun shortened.
+
+          ⚠️ **NO ENERGY-TYPE GROUP, AND THAT IS A READING RATHER THAN A SIMPLIFICATION.**
+          `SELF_ENERGY_MULTIPLY` carries `(?:(.+) )?` because the DEFENDER-side fold
+          prints typed variants; over all 640 corpus sentences the CHOSEN-target fold
+          prints **zero** — a typed group here would resolve a sentence nobody prints
+          (D190b), which is the same measured call `CHOSEN_ANY_TARGET`'s two-way vs
+          three-way tail already makes one anchor over.
+
+          🛑 **DOES THE `{per, count}` INTERFACE FIT HERE? NO, AND THE BLOCKER IS A NAME
+          COLLISION RATHER THAN A SHAPE.** `AttackDamageBonus` is `{per: number; count:
+          DamageCountSource}` with `per` always positive and the direction carried by
+          WHICH READER answered. Two of its three properties transfer cleanly: the `per`
+          role is played by `damageChosen.amount` (the `BENCHED_SNIPE_TAKEN_PRIZES` arm
+          even names its capture `per`), and the value is always positive. **The third
+          does not: `damageChosen.count` is ALREADY TAKEN and means the ARITY** — how
+          many bodies the park asks for — so a literal `{per, count}` embed would put two
+          unrelated quantities behind one word on one record, which is D159's second
+          answer to one question at its worst. ⚠️ **And the DIRECTION axis is degenerate
+          here rather than carried**: a scaled snipe is always a MULTIPLY (the amount is
+          the whole hit, there is no printed base to add to or subtract from), and ONE
+          reader answers every one of them, so *"the direction is carried by which reader
+          answered"* has nothing to carry. **The interface fits in spirit and not in
+          spelling**, which is why the rider is named for its printed phrase.
+
+          ⚠️ **`true` AND NOT `boolean`**, the riders around it: an absent key and
+          `false` are two spellings of one board and this op is compared by value. */
+      perEnergyOnSelf?: true;
       /** Umbreon "Feint Attack" (sv03-130): "This attack's damage isn't affected by
           Weakness or Resistance, or by any effects on that Pokémon." — the snipe's
           hit skips BOTH the target's Weakness/Resistance AND its `damageReductionAfterWR`
@@ -11092,7 +11167,8 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 // tell: the target may be the Active, where Weakness/Resistance DO apply (§8.5), so
 // the op is `target: "opponentAny"`. The tail is an ALTERNATION: the SAME Benched
 // clarifier (true only for a Benched pick, no op change), OR — captured as group 2
-// (🆕🆕 D400: group 3 now, the count having taken 2) —
+// (🆕🆕 D400: group 3 now, the count having taken 2; 🆕🆕🆕 D448: group 4 now, the
+// count clause having taken 3) —
 // Umbreon "Feint Attack"'s "This attack's damage isn't affected by Weakness or
 // Resistance[, or by any effects on that Pokémon]." (sv03-130), which sets `ignoreWR`.
 // The ", or by any effects on that Pokémon" clause is optional so both the modern SV
@@ -11137,8 +11213,26 @@ const CONDITIONAL_BENCH_SNIPE = new RegExp(`^If (.+), this ${ALSO_BENCHED_SNIPE_
 // copies of the whole skeleton with the count written twice — the duplication D399's
 // shared fragment exists to prevent, one anchor over. One anchor, one capture, one
 // comparison below, and a disagreeing sentence is left exactly where a printed 0 is.
+// 🆕🆕🆕 D448 — AND THE SNIPE'S AMOUNT CAN CARRY A COUNT, WHICH IS GROUP 3 AND
+// THEREFORE SHIFTS THE TWO BEHIND IT. *"This attack does {20|30} damage to 1 of your
+// opponent's Pokémon **for each Energy attached to this Pokémon**. (Don't apply …)"*,
+// corpus lines 552 and 570 — 2 sentences / 3 legal printings. ⚠️ NOT the whole of the
+// scaled family: five more sentences scale a `damage to` hit and are refused for five
+// different reasons, enumerated in `scaledAnySnipe.test.ts` §1 — and a SIXTH is spelled
+// *"put N damage counters on"* and is invisible to any `damage to ` grep at all. The
+// clause sits BETWEEN the noun and the printed
+// period, so D437's append-after-the-parens trick is unavailable and the index shift
+// is forced (D447's rule): `ignoreWR` moves 3 → 4 and the number word 4 → 5, and the
+// ONE read site below is re-indexed in the same edit.
+//
+// 🛑 THE TWO RIDERS ARE NEVER CO-PRINTED, AND THE READ SITE REFUSES THE PAIR RATHER
+// THAN SILENTLY PREFERRING ONE. Structurally this pattern admits a string carrying
+// both the count clause and Umbreon's W/R tail; the legal column prints **zero** such
+// sentences, so resolving one would be authoring (D190b). It falls to the loud
+// `ATTACK_EFFECT_SKIPPED` path exactly as a printed 0 and a disagreeing number word do.
 const CHOSEN_ANY_TARGET = new RegExp(
-  `^This attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
+  `^This attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon` +
+    "( for each Energy attached to this Pokémon)?\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\)` +
     `|( This attack['’]s damage isn['’]t affected by Weakness or Resistance` +
     "(?:, or by any effects on (that|those) Pokémon)?\\.))?$",
@@ -18754,7 +18848,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     (Fezandipiti ex "Cruel Arrow", Rotom "Linear Attack"): the WHOLE attack is a
   //     chosen hit on the Active OR a Bench, `target: "opponentAny"` so a hit that
   //     lands on the Active takes W/R (§8.5). A printed 0 is not a real card. When
-  //     group 2 (🆕🆕 D400: group 3) caught Umbreon "Feint Attack"'s "…isn't affected
+  //     group 2 (🆕🆕 D400: group 3; 🆕🆕🆕 D448: group 4) caught Umbreon "Feint Attack"'s "…isn't affected
   //     by Weakness or Resistance, or by any effects on that Pokémon." tail, the hit
   //     sets `ignoreWR`.
   //     🆕🆕 D400 — THE COUNT IS READ RATHER THAN ASSUMED, on the same evidence D399
@@ -18770,10 +18864,33 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const amount = Number(match[1]);
     const count = Number(match[2]);
-    const number = match[4];
+    // 🆕🆕🆕 D448 — group 3 is the count clause and the two behind it have SHIFTED.
+    const perEnergyOnSelf = match[3] !== undefined;
+    const ignoreWR = match[4] !== undefined;
+    const number = match[5];
     const agrees = number === undefined || (number === "those") === (count > 1);
-    if (amount >= 1 && count >= 1 && agrees) {
-      return match[3] === undefined
+    // 🆕🆕🆕 D448 — the pair is unprinted, so it is refused rather than resolved on
+    // whichever rider is tested first; see the anchor's block for the measurement.
+    const bothRiders = perEnergyOnSelf && ignoreWR;
+    if (amount >= 1 && count >= 1 && agrees && !bothRiders) {
+      // 🆕🆕🆕 D448 — a THIRD whole literal rather than a spread, and the two below it
+      // are BYTE-IDENTICAL to the ones this arm has returned since D400: an absent key
+      // and a key set to `undefined` are different wire values and this op is persisted
+      // (it parks), which is the reason the arm was written this way in the first place.
+      if (perEnergyOnSelf) {
+        return [
+          {
+            op: "damageChosen",
+            target: "opponentAny",
+            amount,
+            count,
+            source: "attack",
+            deals: true,
+            perEnergyOnSelf: true,
+          },
+        ];
+      }
+      return match[4] === undefined
         ? [
             {
               op: "damageChosen",

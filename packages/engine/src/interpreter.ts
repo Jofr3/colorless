@@ -8202,18 +8202,51 @@ function reactToAttackDamage(
   };
 }
 
-/** The effective snipe amount — `amount`, or `amount × the opponent's TAKEN
-    Prizes` when the op scales by them (Wo-Chien "Covetous Ivy"). Read from state
-    at the moment the op runs (and again at the pick, unchanged — no KO intervenes),
-    the interpreter's counterpart to attack.ts's pre-W/R Prize fold. */
+/** The effective snipe amount — `amount`, or `amount × <a board count>` when the op
+    scales by one. Read from state at the moment the op runs (and again at the pick,
+    unchanged — no KO and no attachment intervenes), the interpreter's counterpart to
+    attack.ts's pre-W/R fold over `AttackDamageBonus{per, count}`.
+
+    🛑 **THIS IS THE SECOND, PARALLEL FOLD AND IT HAS BEEN SINCE WO-CHIEN.** The §8.5
+    fold in `attack.ts` reaches the DEFENDING Active only and speaks
+    `DamageCountSource`; this one reaches a CHOSEN body and speaks the op's own
+    riders. `scaledAttackDamage` is not reachable from here in either sense —
+    `attack.ts` imports this module, so the import would be a cycle, and its signature
+    needs the attack's printed `cost` (for `extraEnergyUnitsBeyondCost`), which
+    `EffectContext` does not carry. **Saying "the count reaches a new consumer" would
+    be wrong: what this slice does is give the fold that already exists a second
+    inhabitant.** See `damageChosen.perEnergyOnSelf` (effects.ts) for the price of
+    collapsing the two riders into one `DamageCountSource` field, and for the trigger
+    that overturns that refusal.
+
+    🆕🆕🆕 **D448 — `perEnergyOnSelf`, THE SECOND RIDER.** *"…for each Energy attached
+    to this Pokémon"* counts Energy CARDS on the ATTACKER (`countAttachedEnergy` with a
+    null filter — the same reading `scaledAttackDamage`'s `energyOnSelf` arm gives, and
+    the same helper), read off `activeTop(state, ctx.seat)` because only the Active
+    attacks (§8). ⚠️ **A null Active yields 0 and therefore no pick and no damage**, the
+    same ending a 0-taken-Prizes Covetous Ivy has: an attacker that has left the Active
+    Spot before its own program runs is a board no printed sentence in this family can
+    reach, and the alternative — treating "no attacker" as an unscaled hit — would be
+    the plausible degradation D421 says to design against.
+
+    ⚠️ **THE TWO RIDERS ARE MUTUALLY EXCLUSIVE BY CONSTRUCTION AT EVERY WRITER**, and
+    the `if` order below is therefore not a precedence: `deriveAttackEffect` refuses the
+    string that spells both, and no other producer sets either alongside the other. */
 function snipeAmount(
-  op: { amount: number; perTakenPrize?: true },
+  op: { amount: number; perTakenPrize?: true; perEnergyOnSelf?: true },
   state: GameState,
   ctx: EffectContext,
 ): number {
-  return op.perTakenPrize === true
-    ? op.amount * takenPrizes(state, otherSeat(ctx.seat))
-    : op.amount;
+  if (op.perTakenPrize === true) return op.amount * takenPrizes(state, otherSeat(ctx.seat));
+  if (op.perEnergyOnSelf !== true) return op.amount;
+  // ⚠️ NAMED FOR THE PRINTED NOUN AND NOT `attacker`, WHICH IS D446's RULE AND WAS
+  // EARNED HERE: `const attacker = activeTop(state, ctx.seat);` is `snipeActive`'s line
+  // verbatim, three hundred lines up, and writing it here made a mutant `find` occur
+  // TWICE the moment it was authored — D437's converse trap, caught by `precheck` in
+  // seconds. The repair is the NAME rather than a wider anchor, so the two sites cannot
+  // be tidied back into twins.
+  const thisPokemon = activeTop(state, ctx.seat);
+  return thisPokemon === null ? 0 : op.amount * countAttachedEnergy(state, thisPokemon.active, null);
 }
 
 /** The choosePokemonMulti prompt string. For the put-counter snipe, counters are

@@ -2793,6 +2793,126 @@ and to plan repairs; run `precheck` to know whether the corpus is runnable. It
 costs seconds and it is the only one that catches a collision you created at a
 distance.
 
+## The parallel fold may already exist — ask the CONSUMER, not the type (D448)
+
+🛑 **A work order that says "today only X can do this" is a claim about a CONSUMER, and
+the type is the wrong place to check it.** D448's brief said a `DamageCountSource`
+"folds into the attack's own damage in `attack.ts`'s §8.5 pipeline" and that a snipe's
+amount cannot carry a count today, so the slice would be either *"a fold reaching a new
+consumer"* or *"a second, parallel fold"* — and priced the second as much bigger.
+
+**Both were wrong, and one grep settled it.** `snipeAmount` (interpreter.ts) has
+multiplied `damageChosen.amount` by a board fact since Wo-Chien "Covetous Ivy", at both
+call sites — the inline run and the resumed pick. The second parallel fold was already
+there; the slice gave it a second inhabitant and cost one optional field and four lines.
+
+⚠️ **THE REASON THE DOCS POINTED THE WRONG WAY IS WORTH KNOWING**: the shipped rider is
+a BOOLEAN (`perTakenPrize?: true`), so it does not mention `DamageCountSource` anywhere
+and no grep for the union's name reaches it. **Grep the VERB, not the vocabulary** —
+`grep -n "op.amount \*"` finds a fold whatever it is spelled in.
+
+⚠️ **AND THE TWO FOLDS GENUINELY CANNOT BE MERGED HERE**, which is a cost worth
+recording rather than a preference: `scaledAttackDamage` lives in `attack.ts`, which
+imports `interpreter.ts` (so the reverse import is a cycle), and its signature takes the
+attack's printed `cost` for `extraEnergyUnitsBeyondCost`, which `EffectContext` does not
+carry. A "just reuse the evaluator" note would have been a recipe that ships a defect —
+D420's rule, one module over.
+
+## A boolean rider is a union member with the discriminator erased (D448)
+
+**When a second boolean rider answers the same question as the first, say so, price the
+collapse, and name the trigger** — but then **check that the trigger's row is not
+blocked upstream of the thing you are pricing.**
+
+D448 added `perEnergyOnSelf?: true` beside `perTakenPrize?: true` rather than replacing
+both with `scale?: DamageCountSource`. The collapse was measured at **24 sites across 10
+files** plus a `MATCH_RECORD_VERSION` bump — the rider is persisted, so dropping its name
+is D359's RENAME, not D125's widening — which is D362/D369's arithmetic exactly.
+
+🛑 **THE FIRST DRAFT OF THE TRIGGER WAS WRONG AND IS THE POINT OF THIS ENTRY.** It named
+a printed row whose count needs a PAYLOAD (a filtered discard-pile count, 3 printings) as
+the case that would force the collapse. Then its CONTROL was checked — the *unscaled*
+twin one corpus line below it — and that is unbuilt too: **no anchor claims the verb at
+all**, so the payload is not the blocker and collecting the row is a different slice.
+**A refusal's reason must be the FIRST one in the chain, and the way to find it is to
+strip the thing you are pricing and re-ask** (D399's one-axis rule, applied to a price).
+
+## A family grep over a VERB misses the family's biggest member (D448)
+
+⚠️ D310's census rule — *a census is as narrow as BOTH the columns its query names and the
+literal it matches* — bites a FAMILY the same way. D448 enumerated "a chosen-target hit
+whose amount scales" as *every sentence carrying `for each` and `damage to `*: ten rows,
+and it wrote *"what this pattern cannot see"* beside them **from memory**. Re-running the
+shortened query found an eleventh — *"**Put 2 damage counters on** 1 of your opponent's
+Pokémon for each Basic {G} Energy card in your discard pile…"*, **3 printings**, the
+LARGEST single count in the class — because the same mechanism is printed with a
+different verb.
+
+**So: write the "cannot see" sentence as a QUERY YOU RAN, never as a list you thought
+of.** Two of the three negatives in that comment were true; the one that was not was
+about the family's biggest row. (The case-sensitivity half is the same lesson at one
+character: `t.includes("for each")` reports NINE where `/for each/i` reports TEN, because
+one member opens the sentence with *"For each…"*.)
+
+## A one-print fixture makes a filter unfalsifiable (D448)
+
+🛑 **When the thing under test is "count X regardless of Y", the board must contain a Y
+that differs — otherwise the narrowed and un-narrowed answers are the same number and
+the mutant survives against a suite that looks thorough.** D448's fold counts Energy
+CARDS with no type filter; the neighbouring reader (`SELF_ENERGY_MULTIPLY`, one file
+over, same printed noun) counts them WITH one, so passing a type is the nearest wrong
+edit there is. On an all-{L} deck it is invisible. One Colorless card on the attacker is
+the whole difference between a green mutant table and a meaningless one — and the row
+that needs it says so in its own `what`, so the fixture cannot be "simplified" later.
+
+## A NEW local can be a DISTANT neighbour's byte-twin (D448)
+
+⚠️ D437's converse trap and D447's blind spot have a third face, and it fires on code you
+are **writing** rather than editing. D448 wrote `const attacker = activeTop(state,
+ctx.seat);` into a new nine-line function; that is `snipeActive`'s line **verbatim**,
+three hundred lines up in the same file, and the mutant row authored against it reported
+`find occurs 2×` immediately.
+
+- The region-overlap audit cannot see it: the twin is nowhere near the edit.
+- `precheck` sees it in seconds, which is the whole argument for running it **after
+  writing new code**, not only after editing quoted code.
+- **The repair is the NAME, not a wider anchor** (D446): the local became `thisPokemon`,
+  which is what the sentence prints, and a comment says why so the two are not tidied
+  back into twins. A wider anchor would have left the collision in the source for the
+  next author to re-create.
+
+## A corpus row number is a FILE LINE, and one handoff used array indices (D448)
+
+⚠️ `censusAtHead.test.ts`, `decisions.md` and every slice note cite *"corpus row N"*
+meaning **line N of `censusAttackCorpus.ts`**. D447's resume point §5 cited the same
+sentences by their **1-based index into the parsed 640-entry array**, which is
+`fileLine - 52` at that head — and mixed the two conventions **inside one section**
+(*"(535/row 587)"*). D448's work order inherited the array numbers and they resolved to
+entirely different sentences.
+
+**Cite the line number, and cross-check the PRINTING COUNT before acting on a cited
+row** — the count is what tells the two conventions apart in one look. This is D432's
+*"line numbers in a brief are claims"* arriving at a data file instead of a source file.
+
+### `--decision` matches by SUBSTRING, so D443's row-count check is wrong (D448)
+
+⚠️ D443 wrote the probe discipline as *"check the row count against
+`MUTANTS.filter(m => m.decision === d).length` read off the module"*, and five slices
+have followed it. **The runner does not use equality.** `scripts/mutation/run.ts` filters
+with `m.decision.includes(decision)`, so:
+
+- a row whose `decision` is a COMPOUND like `"D204/D205"` is run by `--decision D205`
+  **and** by `--decision D204`, while the equality count sees neither. D448 hit exactly
+  this: the module says D205 has **2** rows, the runner ran **3**, and by the equality
+  check that reads as an unexplained extra row;
+- and the match is a plain substring, so **`--decision D44` would run every row from
+  D440 to D449 at once** — a probe that looks narrow and is not.
+
+**The correct counter is `MUTANTS.filter(m => m.decision.includes(d)).length`**, and it
+differs from the equality count on exactly the compound rows. Report the `includes`
+figure; if the two disagree, say so — the disagreement names a compound row and is worth
+a line.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

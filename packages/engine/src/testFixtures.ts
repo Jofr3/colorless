@@ -13939,6 +13939,76 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕🆕 **D448 — THE SCALED ANY-TARGET SNIPE: A COUNT SOURCE ON THE SNIPE'S OWN
+      AMOUNT.** The body carrying *"This attack does {20|30} damage to 1 of your
+      opponent's Pokémon **for each Energy attached to this Pokémon**. (Don't apply
+      Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts` lines
+      552 and 570, **2 sentences / 3 legal printings**, transcribed byte for byte off
+      the committed `legal_standard = 1` attack column.
+
+      ⚠️ **THE THREE CARRIERS CANNOT BE RESOLVED IN THIS CHECKOUT** — no local D1, no
+      remote credentials, and the corpus is grouped BY SENTENCE — so they are stated
+      unresolved rather than invented (D425). What is measured is the text and the count.
+
+      **FOUR ATTACKS, AND THE LAST TWO ARE CONTROLS RATHER THAN CONTENT:**
+        · index 0 — the printed 20 (line 552, 2 legal printings);
+        · index 1 — the printed 30 (line 570, 1 legal printing). The pair differs at
+          exactly ONE character position, so a board that reads the amount off the
+          wrong capture is visible on one body;
+        · index 2 — the ONE-AXIS CONTROL: index 0 with the count clause DELETED, which
+          is the shipped bare any-target snipe. It is the only thing that can say the
+          scale — rather than the anchor, the arity or the target — is what moved
+          (D399's rule: a near-miss proves nothing about a guard it never reaches);
+        · index 3 — the UNPRINTED PAIR, the count clause AND Umbreon's W/R tail on one
+          sentence. `deriveAttackEffect` refuses it, so the loud `ATTACK_EFFECT_SKIPPED`
+          path has a witness on the SAME body as the two that resolve.
+
+      **{L} for a reason**: `fix-lightning-weak` is ×2 Lightning at 130 HP, so a scaled
+      hit that lands on the ACTIVE is doubled by §8.5 and the same hit on the BENCH is
+      not — the discriminating pair the whole "does the snipe skip a step" question
+      rests on, on one board with one op. A {C} cost so `fix-lightning-energy` pays it
+      AND supplies the count: at 3 attached the 20 reads 60 flat and 120 doubled, and
+      130 HP survives both, so no KO tail interferes with the arithmetic.
+
+      🛑 **NO `damage` FIELD ON ANY OF THE FOUR.** These sentences are the WHOLE attack
+      (`CHOSEN_ANY_TARGET`'s standing reading), so a printed base would make "did the
+      snipe land" answerable by the main hit and hide exactly the defect this suite is
+      about. It prints no Resistance and no Ability either, so `Card.resistances` and
+      the FIGHTING count stand still — a fixture added for a SCALING claim has no
+      business moving a Resistance census (D427's rule about `fix-drainwall`). */
+  "fix-scaledsnipe": battler("fix-scaledsnipe", {
+    name: "fix-scaledsnipe",
+    types: ["Lightning"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Charged Arrow",
+        effect:
+          "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Heavy Charged Arrow",
+        effect:
+          "This attack does 30 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Plain Arrow",
+        effect:
+          "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Impossible Arrow",
+        effect:
+          "This attack does 20 damage to 1 of your opponent's Pokémon for each Energy attached to this Pokémon. This attack's damage isn't affected by Weakness or Resistance.",
+      },
+    ],
+  }),
   /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
 
       🛑 **THE CARD IS SYNTHETIC AND THE SENTENCE IS NOT.** The effect on all three
@@ -16324,6 +16394,36 @@ export const TWIN_SNIPE_DECK = deckOf({
     copies of one print would never park on the cost and the sequence this file is about
     would be invisible. `fix-lightning-energy` and `fix-energy` are two prints that both
     pay a {C}, which makes "which 2 of these 3 go" a real decision. */
+/** 🆕🆕🆕 **D448's deck (`scaledAnySnipe.test.ts`) — the SCALED any-target snipe.** Its
+    own rather than `ANY_SNIPE_DECK`'s or `TWIN_SNIPE_DECK`'s, for those decks' own
+    stated reason: both pin seed-sensitive opening hands and both pin BOTH setup
+    Actives, and growing either would reshuffle suites this slice has no business
+    touching (D412 reddened three of D409's boards with one card).
+
+    `fix-lightning-weak` is DOMINANT so BOTH setup Actives pin to it — ×2 Lightning,
+    130 HP, empty Bench, a deterministic W/R target that SURVIVES the doubled 120 this
+    suite's biggest scaled hit produces, so the arithmetic stands alone with no KO in
+    it. `fix-lightning-energy` is both the cost AND the count, which is what makes the
+    board's Energy total a dial rather than a constant. `sv01-197` (Vitality Band) is
+    the ATTACKER's own pre-W/R +10, kept because `snipeActive` applies it and a scaled
+    amount is exactly where an author would expect it to get lost.
+
+    🛑 **TWO ENERGY PRINTS, AND THAT IS THE DECK'S SHARPEST JOB.** The printed clause is
+    UNTYPED — *"for each Energy attached to this Pokémon"* — and `countAttachedEnergy`'s
+    own doc says it counts CARDS, so a Special Energy demoted to {C} is still one Energy
+    and a wildcard is still one. On an all-{L} board the untyped count and a `{L}` count
+    are the SAME NUMBER, so a build that passed a TYPE where this one passes `null` —
+    which is exactly what `SELF_ENERGY_MULTIPLY` does one reader over, and therefore the
+    mistake nearest to hand — would be INVISIBLE. `fix-energy` (Colorless) makes the two
+    answers differ, which is D437's confound rule applied before it could cost anything. */
+export const SCALED_SNIPE_DECK = deckOf({
+  "fix-scaledsnipe": 4, // the scaled any-target snipe at 20 and 30, + two controls
+  "fix-lightning-weak": 30, // ×2 Lightning, 130 HP — DOMINANT pinned Active + bench targets
+  "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 through the SCALED amount
+  "fix-lightning-energy": 20, // pays the {C} cost AND is the thing being counted
+  "fix-energy": 4, // 🛑 a SECOND print, Colorless — the count is CARDS and not a TYPE
+});
+
 export const COST_SNIPE_DECK = deckOf({
   "fix-costsnipe": 4, // "Discard 2 Energy…" + a count-2 snipe — PARKS TWICE
   "fix-allsnipe": 4, // "Discard all Energy…" + a count-3 snipe — the ZERO-park control
