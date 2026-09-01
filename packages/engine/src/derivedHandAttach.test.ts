@@ -597,11 +597,14 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
+    // 🆕🆕 **68 AT D443**, which appended **66-67** — the OPPONENT-BOARD pair
+    // (`derivedOpponentEnergyMove.test.ts` owns them). TWELVE sibling suites carry
+    // this pin and all twelve were stepped in one pass, as D442 stepped eleven.
     // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(66);
+    expect(attacks()).toHaveLength(68);
     expect(attacks()[WRAPPED_IN_WIND]?.effect).toBe(CLAUSES[WRAPPED_TEXT].text);
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);

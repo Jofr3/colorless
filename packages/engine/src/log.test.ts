@@ -1040,6 +1040,7 @@ describe("logFromEvents — moveEnergy (M5): ENERGY_MOVED", () => {
     const moved: GameEvent = {
       type: "ENERGY_MOVED",
       seat: "p1",
+      actor: "p1", // 🆕 D443 — the own-board reading; the cross-board row is `derivedOpponentEnergyMove.test.ts` §5.
       uids: ["p1#0", "p1#1"],
       from: { spot: "active" },
       to: { spot: "bench", index: 0 },

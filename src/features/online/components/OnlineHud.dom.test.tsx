@@ -92,6 +92,7 @@ const YOU_ACTIVE = { seat: "p1", spot: { spot: "active" } } as const;
 const OPP_ACTIVE = { seat: "p2", spot: { spot: "active" } } as const;
 const YOU_BENCH0 = { seat: "p1", spot: { spot: "bench", index: 0 } } as const;
 const YOU_BENCH1 = { seat: "p1", spot: { spot: "bench", index: 1 } } as const;
+const OPP_BENCH0 = { seat: "p2", spot: { spot: "bench", index: 0 } } as const;
 
 describe("OnlineHud — turn:action attack panel", () => {
   const ATTACKS: Extract<RedactedPhase, { kind: "turn:action" }>["attacks"] = [
@@ -789,6 +790,68 @@ describe("OnlineHud — effect:choose public-ref prompts (2b-iii-b)", () => {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "moveEnergy", picks: [{ uid: "e1", dest: YOU_BENCH0 }] },
+    });
+  });
+
+  it("🆕🆕 D443 moveEnergy: rows on the OPPONENT's board carry the side marker", () => {
+    // D443 — this dialog now serves BOTH boards. The wire ref's `seat` is ABSOLUTE
+    // (the schema's own doc says so), so the marker is `ref.seat !== seat` exactly
+    // as `ChoosePokemonDialog` and `DiscardEnergyDialog` have spelled it for a long
+    // time — all four moveEnergy dialogs were the only public-ref ones without it.
+    // ⚠️ THE BOARD IS DELIBERATELY A MIRROR: both bodies are named "Mareep", so the
+    // marker is the ONLY thing distinguishing the two rows. Without it the dialog
+    // asks the player to pick between two identical buttons on two different boards.
+    const onAction = vi.fn();
+    render(
+      <OnlineHud
+        game={game({
+          phase: {
+            kind: "effect:choose",
+            prompt: {
+              kind: "moveEnergy",
+              movable: [{ uid: "e1", from: OPP_ACTIVE }],
+              // ⚠️ A MIXED DESTINATION LIST, CONSTRUCTED AND LABELLED SO (D440's
+              // rule: a rung over a prompt the engine never emits is a claim about
+              // the READER, not about the pool). No `moveEnergy` op can offer both
+              // boards at once — `moveEndpoints` reads ONE seat — and that is
+              // exactly why the control has to be built: a same-render pair is the
+              // only way to show the marker follows `ref.seat` rather than firing
+              // on every row, and this dialog is a pure function of its prompt.
+              destinations: [OPP_BENCH0, YOU_BENCH0],
+              max: 1,
+              note: "Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon.",
+            },
+          },
+          you: { active: inPlay("a", "Mareep"), bench: [inPlay("b0", "Mareep")] },
+          opponent: {
+            active: inPlay("oa", "Mareep", {
+              attached: { tools: [], energies: [energy("e1", "Water Energy")] },
+            }),
+            bench: [inPlay("ob0", "Mareep")],
+          },
+        })}
+        waitingOn="you"
+        activePlaced={false}
+        onAction={onAction}
+      />,
+    );
+    // ⚠️ THE ACCESSIBLE NAME CONCATENATES WITHOUT A SPACE ("Mareepopponent") — the
+    // shipped markup of the two sibling dialogs verbatim, matched rather than
+    // re-spelled — so the query is a regex about the MARKER, not about the spacing.
+    // 🛑 THE PAIR, IN ONE RENDER: two destination rows, two identically-named
+    // bodies, and exactly ONE marker. Either half alone proves nothing — "every row
+    // says opponent" and "no row says opponent" both satisfy a one-sided assertion.
+    expect(screen.getByRole("button", { name: /^Mareep\s*opponent$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Mareep$/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Mareep\s*opponent$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Water Energy" }));
+    fireEvent.click(screen.getByRole("button", { name: /Move 1/ }));
+    // …and the marked row is the one that built the frame, so the marker and the
+    // ref it describes cannot have drifted apart.
+    expect(onAction).toHaveBeenCalledWith({
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "moveEnergy", picks: [{ uid: "e1", dest: OPP_BENCH0 }] },
     });
   });
 

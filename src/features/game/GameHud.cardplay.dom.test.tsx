@@ -27,12 +27,14 @@ import {
   RARE_CANDY_DECK,
   SNIPE_DECK,
   SPECIAL_ENERGY_DECK,
+  OPPONENT_ENERGY_MOVE_DECK,
   SPREAD_ENERGY_MOVE_DECK,
   STADIUM_TOOL_DECK,
   TRAINER_DECK,
   attachBenchFromDeck,
   attachFromDeck,
   benchFromDeck,
+  clearBench,
   driveSetup,
   handUid,
   handFromDeck,
@@ -2304,5 +2306,76 @@ describe("MoveEnergySpreadDialog — the printed 'in any way you like' (D442)", 
     );
     expect(screen.getByRole("button", { name: "fix-basic-1 · Bench 1" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "fix-trainerops · Active" })).toBeNull();
+  });
+});
+
+describe("MoveEnergyDialog on the OPPONENT's board (D443)", () => {
+  const STATIC_FLICK = 66; // fix-trainerops — "Move an Energy from 1 of your opponent's Pokémon…"
+  const SELF_TO_BENCH = 14; // fix-trainerops — D229's own-board sentence, the CONTROL
+
+  /** p1 attacks; the offer is entirely on p2's board. Both of p2's benched bodies
+      are `fix-basic-1`, and p1's bench holds one too — which is the whole point:
+      in a mirror match the rows are same-named across the table, so the ONLY thing
+      that tells a player which board they are picking on is the side marker. */
+  function parkedCross(index: number): GameState {
+    let state = p1Turn2(0x5c43, { p1: OPPONENT_ENERGY_MOVE_DECK, p2: OPPONENT_ENERGY_MOVE_DECK });
+    state = setActiveFromDeck(state, "p1", "fix-trainerops");
+    state = attachFromDeck(state, "p1", "fix-energy", 2);
+    state = clearBench(state, "p1");
+    state = benchFromDeck(state, "p1", "fix-basic-1");
+    state = setActiveFromDeck(state, "p2", "fix-bigbody");
+    state = clearBench(state, "p2");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = benchFromDeck(state, "p2", "fix-basic-1");
+    state = attachFromDeck(state, "p2", "fix-energy", 2);
+    state = attachBenchFromDeck(state, "p2", 0, "fix-energy", 1);
+    state = mustApply(state, { type: "attack", seat: "p1", index }).state;
+    if (state.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    return state;
+  }
+
+  it("🛑 marks every row that is not the viewer's, and the answer still applies", () => {
+    // D412's SHAPE, AND THE ONE THE ENGINE HALF CANNOT SEE: the board is right, the
+    // prompt is right, the wire is right — and the dialog offers `fix-basic-1` twice
+    // over two boards with nothing to tell them apart. Every OTHER public-ref dialog
+    // in this file's component has carried `ref.seat !== viewerSeat` for a long time;
+    // all four moveEnergy dialogs lacked it until D443.
+    const state = parkedCross(STATIC_FLICK);
+    const dispatch = vi.fn();
+    renderHud(state, dispatch);
+    // ⚠️ THE ACCESSIBLE NAME CONCATENATES WITHOUT A SPACE ("fix-bigbodyopponent"),
+    // because the marker is a sibling `<span>` with no text node between it and the
+    // name — which is the shipped markup of `ChoosePokemonDialog` and
+    // `ChoosePokemonMultiDialog` verbatim, so this dialog matches its siblings
+    // rather than inventing a third spelling. Queried by regex so the assertion is
+    // about the MARKER being present, not about that spacing.
+    // The source stage: p2's Active and their bench 0 both hold movable Energy, so
+    // the dialog asks WHICH source first — and both rows are the opponent's.
+    expect(screen.getByRole("button", { name: /^fix-bigbody\s*opponent$/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^fix-bigbody\s*opponent$/ }));
+    // …then the destinations, which are also all theirs.
+    fireEvent.click(
+      screen.getAllByRole("button", { name: /^fix-basic-1\s*opponent$/ })[0] as Element,
+    );
+    fireEvent.click(screen.getAllByRole("button", { name: "fix-energy" })[0] as Element);
+    fireEvent.click(screen.getByRole("button", { name: "Move 1" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "moveEnergy") {
+      throw new Error("expected a moveEnergy resolveEffect");
+    }
+    // The answer the marked rows built is APPLIED to the real state — the half that
+    // ties the marker to a legal frame rather than to a string in the DOM.
+    expect(call.choice.picks[0]?.dest.seat).toBe("p2");
+    expect(applyAction(state, call).ok).toBe(true);
+  });
+
+  it("THE CONTROL: the own-board sentence marks nothing", () => {
+    // Without this, "the rows say opponent" would pass on a dialog that says it on
+    // every row (D424 — a refusal rung owes an admission on the same axis, read the
+    // other way round). Same component, same board, same attacker; D229's sentence.
+    const state = parkedCross(SELF_TO_BENCH);
+    renderHud(state, vi.fn());
+    expect(screen.getByRole("button", { name: "fix-basic-1" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /opponent/ })).toBeNull();
   });
 });

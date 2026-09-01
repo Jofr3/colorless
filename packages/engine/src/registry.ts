@@ -6320,6 +6320,12 @@ const HYDREIGON: CardProgram = {
 //    ({R} benched→Active, Armarouge) / opponent-side (Mismagius) / on-KO Tool
 //    (Exp. Share) riders layer later ops. (verified vs the local catalog
 //    2026-07-20). ──
+//    🆕🆕 **D443 — THE OPPONENT-SIDE RIDER LANDED, AND IT IS `side?: "opponent"`
+//    ON THE OP RATHER THAN A ROUTE.** The two printings are ATTACK text and derive
+//    (`deriveAttackEffect`, D443's two anchors), so nothing in THIS file moved —
+//    but the note above named the layer and the layer exists now, which is worth
+//    recording where the prediction was written (D422: a stale forecast reads as a
+//    criterion). The two rows below are still own→own and still registry-authored.
 
 /** Energy Switch — "Move a Basic Energy from 1 of your Pokémon to another of
     your Pokémon." (Item) — a single Basic Energy, own → own. */

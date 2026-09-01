@@ -485,9 +485,30 @@ export type EffectPrompt =
   /** Move up to `max` Energy from ONE source Pokémon (all picks share a source)
       to ONE destination — the compound moveEnergy decision (Energy Switch /
       Poppy). `movable` pairs each takeable Energy uid with the Pokémon it sits
-      on (`from`); `destinations` are the eligible destination Pokémon (all the
-      controller's own in-play — the source-exclusion is per-pick, validated
-      against the chosen source). Declinable (pick none).
+      on (`from`); `destinations` are the eligible destination Pokémon — the
+      source-exclusion is per-pick, validated against the chosen source.
+      Declinable (pick none).
+
+      🆕🆕 **D443 — THE REFS CAN NOW BE THE OPPONENT'S, AND THIS PROMPT NEEDED NO
+      FIELD TO SAY SO.** Every `PokemonRef` here carries its own ABSOLUTE `seat`
+      (the wire twin says so in as many words: *"its `seat` is ABSOLUTE (p1/p2), NOT
+      viewer-relative … the client resolves a ref to a board Pokémon by comparing
+      `ref.seat` to that own seat"*), so the two opponent-board printings park on a
+      prompt whose bytes differ from an own-board one only in the seats already
+      inside the refs. That is why `side` rides the OP and NOT the prompt where
+      `anySource` and `anyDest` ride both: those two are COUPLINGS, invisible in
+      the candidate lists, and this one is spelled by every candidate.
+
+      ⚠️ **NO `answerer`, AND THAT IS THE RULE RATHER THAN AN OMISSION.**
+      `ptcg-rules.md` §9.4: *"Almost every printed effect is decided by the player
+      resolving it, even when it reaches across the table … the target is theirs,
+      the choice is yours. A small family inverts that, and the wording is the tell:
+      'your opponent may …'."* Neither sentence prints a chooser, so the CONTROLLER
+      answers — the same call `knockOutChosen` (D416) and `discardEnergy`'s
+      `opponentChosen` arm already make about picks on the other seat's board.
+      Nothing crosses that should not: attached Energy uids and in-play refs are
+      PUBLIC on the redacted board for both seats (`redactedInPlayOf` emits
+      `attached` unconditionally), which is what makes this the public-ref family.
 
       `anySource` (D226 — N's Plan's printed "from your Benched **Pokémon**")
       lifts the first clause of that sentence: the picks may come off SEVERAL of
@@ -2483,7 +2504,47 @@ function stepOp(
       // Pokémon this card is attached to" from it. D244 — and for `othersToSelf`,
       // where it resolves BOTH ends ("your other Pokémon" → "this Pokémon"). The
       // two free routes ignore it.
-      const { movable, destinations, needed } = moveEndpoints(state, ctx.seat, op, ctx.sourceUid);
+      // 🆕🆕 D443 — THE BOARD IS RESOLVED FIRST AND EVERYTHING BELOW READS IT.
+      // `side: "opponent"` puts BOTH endpoints on the other seat, so the endpoints
+      // funnel, the apply and the event all take this one answer rather than each
+      // asking `op.side` again (D222 — one helper, one answer).
+      const board = moveBoardSeat(op, ctx.seat);
+      const offer = moveEndpoints(state, board, op, ctx.sourceUid);
+      const needed = offer.needed;
+      let movable = offer.movable;
+      let destinations = offer.destinations;
+      // 🛑 §11 (D142/D259) — THE REFUSAL GATE, ASKED BY THIS OP FOR THE FIRST TIME,
+      // BECAUSE UNTIL D443 IT COULD NOT NAME A BODY ITS CONTROLLER DOES NOT OWN.
+      // Moving Energy off a Pokémon and moving Energy onto one are both effects of
+      // an attack DONE TO that Pokémon, and the shields carry no valence — every
+      // printing in the family says "prevent all … effects of attacks done to this
+      // Pokémon", never "all harmful effects" — so the model answers both ends with
+      // one question and a harm/benefit split would be a rule invented here (D424:
+      // prefer the refusal the model re-derives over the one listed against it).
+      //
+      // A FILTER AND NOT A GUARD, which is D259's placement rule: this op CHOOSES
+      // its endpoints from a set, so one shielded body must remove itself and leave
+      // the rest pickable — refusing the whole op would make one Mist Energy on a
+      // five-body Bench protect the Bench, a rule no printing states. And it is
+      // asked AFTER the printed narrowing (D433): `moveEndpoints` has already run,
+      // so a body this route never offered files no row.
+      //
+      // ⚠️ ONE ROW PER BODY, NOT ONE PER ENERGY AND NOT ONE PER ENDPOINT LIST. A
+      // `movable` entry is an ENERGY, and on the free route the same body is both a
+      // source and a destination, so the named set is deduped through a Map before
+      // the funnel is asked — three Energy on one shielded Fraxure that is also an
+      // offered destination is ONE refusal. The Map (rather than the sibling
+      // discard arm's `bodies.some(...)` scan) is deliberate: writing that line a
+      // second time would make `D259`'s row match twice, which is D437's converse
+      // trap and what `precheck` exists to catch.
+      if (board !== ctx.seat) {
+        const named = new Map<string, PokemonRef>();
+        for (const entry of movable) named.set(refKeyOf(entry.from), entry.from);
+        for (const ref of destinations) named.set(refKeyOf(ref), ref);
+        const live = new Set(unshieldedRefs(state, [...named.values()], ctx, events).map(refKeyOf));
+        movable = movable.filter((entry) => live.has(refKeyOf(entry.from)));
+        destinations = destinations.filter((ref) => live.has(refKeyOf(ref)));
+      }
       const cap = moveCap(op, movable.length);
       if (movable.length === 0 || destinations.length < needed || cap <= 0) {
         return { done: state };
@@ -2514,6 +2575,7 @@ function stepOp(
           done: moveEnergyApply(
             state,
             movable.map((entry) => ({ uid: entry.uid, dest })),
+            op,
             ctx,
             events,
           ),
@@ -5594,8 +5656,12 @@ export function applyChoice(
       return attached.state;
     }
     case "moveEnergy":
+      // 🆕 D443 — the OP is threaded so the apply can ask `moveBoardSeat` rather
+      // than re-deriving the side from the answer's refs. The refs came off the
+      // WIRE; the op is the engine's own value, and which board this move happens
+      // on is a fact about the card, not about the frame.
       return choice.kind === "moveEnergy"
-        ? moveEnergyApply(state, choice.picks, ctx, events)
+        ? moveEnergyApply(state, choice.picks, op, ctx, events)
         : state;
     case "preventChosenAttack":
       // D157 — the parked half of the opponent-side per-attack lock. Same shape as
@@ -11570,7 +11636,8 @@ function attachFromTopApply(
 }
 
 /** Move each chosen Energy off the Pokémon it sits on and onto the destination
-    THAT PICK NAMES (Energy Switch / Poppy / N's Plan / Kilowattrel).
+    THAT PICK NAMES, on the board the OP names (Energy Switch / Poppy / N's Plan /
+    Kilowattrel — and, 🆕 D443, the two opponent-board printings).
     validateChoice already proved every uid was offered, appears once, and names a
     destination that is an offered ref other than its own host — on ONE source
     unless the prompt carried `anySource` (D226) and onto ONE destination unless it
@@ -11594,10 +11661,16 @@ function attachFromTopApply(
 function moveEnergyApply(
   state: GameState,
   picks: readonly { uid: string; dest: PokemonRef }[],
+  op: Extract<EffectOp, { op: "moveEnergy" }>,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
-  const side = state.players[ctx.seat];
+  // 🆕🆕 D443 — THE BOARD, ASKED OF THE OP AND NOT DERIVED FROM THE ANSWER. Every
+  // `state.players[ctx.seat]` and every `ctx.seat` comparison below became a
+  // `board` one in a single edit, because this function walks exactly ONE side and
+  // that side is the op's, not the controller's.
+  const board = moveBoardSeat(op, ctx.seat);
+  const side = state.players[board];
   // ⚠️ THE DESTINATION IS REBUILT FIELD BY FIELD, NEVER SPREAD OFF THE PICK — that
   // object came from the WIRE. `validateChoice` proves it `refEquals` an offered
   // ref, but refEquals compares only seat/spot/index, so any extra key a client
@@ -11618,7 +11691,12 @@ function moveEnergyApply(
   // failure D429 named, read forwards: a card that leaves one zone and enters none.
   const destOf = new Map<string, PokemonTarget>();
   for (const { uid, dest } of picks) {
-    if (typeof uid !== "string" || dest.seat !== ctx.seat || destOf.has(uid)) continue;
+    // 🆕 D443 — `dest.seat !== board` WHERE THIS READ `!== ctx.seat`, AND IT IS THE
+    // ONE EXECUTABLE OWN-BOARD REFUSAL THE WHOLE PIPELINE HAD. It is still a
+    // refusal, just of a different seat: a pick aimed at the side this op does NOT
+    // act on is dropped silently, which keeps the wire belt (`validateChoice`
+    // already proved the ref was OFFERED) underneath a cross-board frame.
+    if (typeof uid !== "string" || dest.seat !== board || destOf.has(uid)) continue;
     const to = targetOf(dest);
     if (bodyAt(to) === undefined) continue;
     destOf.set(uid, to);
@@ -11686,14 +11764,22 @@ function moveEnergyApply(
   for (const group of groups) {
     events.push({
       type: "ENERGY_MOVED",
-      seat: ctx.seat,
+      // 🆕🆕 D443 — `seat` IS THE BOARD AND `actor` IS THE CAUSE, which is
+      // `ENERGY_DISCARDED`'s shipped pair one op over and this file's stated
+      // convention for "a row whose seat is the target rather than the cause". The
+      // two are EQUAL on every board this event could reach before D443, so no
+      // existing row moves; they differ exactly on the two opponent-board
+      // sentences, and `log.ts` forks on the comparison rather than on a flag
+      // (`DECK_TOP_DISCARDED`'s rule, verbatim).
+      seat: board,
+      actor: ctx.seat,
       uids: [...group.uids],
       from: group.from,
       ...(group.fromUid === undefined ? {} : { fromUid: group.fromUid }),
       to: group.to,
     });
   }
-  return withSide(state, ctx.seat, { ...side, active, bench });
+  return withSide(state, board, { ...side, active, bench });
 }
 
 /** Discard the chosen Energy `uids` off the VICTIM's Pokémon into the VICTIM's
@@ -12061,6 +12147,44 @@ function moveFloor(op: Extract<EffectOp, { op: "moveEnergy" }>, cap: number): nu
   return op.max === "all" ? cap : 0;
 }
 
+/** 🆕🆕 **D443 — WHOSE BOARD A `moveEnergy` OP ACTS ON**: the controller's own for
+    every printing this family had before this slice, the OTHER seat's for the two
+    that name it (`side: "opponent"`).
+
+    ⚠️ **THE SHAPE IS NOT INVENTED — `reorderTopOwner` (D341, ~490 lines down) IS
+    THE SAME HELPER FOR THE SAME OPTIONAL `side?: "opponent"` RIDER**, and its doc
+    states this one's reason before the fact: *"the park and the apply must not each
+    decide it … a resolve that read `ctx.seat` while the park read the opponent
+    would reorder the wrong deck with the right uids."* Read `moveEnergy` for
+    `reorderTop` and it is this slice's defect exactly. `discardVictimSeat` is the
+    third instance of the pattern, on a REQUIRED seat field.
+
+    ⚠️ **ONE HELPER WITH THREE READERS, WHICH IS `discardVictimSeat`'s JOB ONE OP
+    OVER AND `moveCap`'s ARGUMENT ON A DIFFERENT AXIS.** The park, the
+    `programPlayable` gate and the APPLY all have to agree about which side of the
+    table this is, and D222's rule is the whole reason it is a function: the moment
+    a second member joins `side`, a hand-spelled `op.side === "opponent"` at one of
+    the three read sites is a closed-world test with no compiler behind it. It is
+    also what keeps `moveEndpoints` free of the question — that helper answers
+    "endpoints on THIS board", and its `seat` parameter is now the BOARD rather than
+    the controller, which is the only thing its body has ever actually used.
+
+    ⚠️ **CONTROLLER-RELATIVE, LIKE EVERY OTHER SEAT FIELD IN THIS VOCABULARY**
+    (`reorderTop.side`, `returnBenched.whose`, `handRefresh.who`,
+    `discardEnergy.from`): a program is authored against "you"/"your opponent" and
+    never against `p1`/`p2`, so the same object is correct for either seat. */
+function moveBoardSeat(op: Extract<EffectOp, { op: "moveEnergy" }>, seat: Seat): Seat {
+  // ⚠️ SPELLED OFF THE **ABSENT** KEY RATHER THAN OFF THE PRESENT ONE, AND FOR TWO
+  // REASONS. (1) It is the sentence `MATCH_RECORD_VERSION` turns on: a v29 record
+  // carries no `side` at all, and this line is where "absent means the controller's
+  // own board" is asserted rather than assumed. (2) `reorderTopOwner`'s body, ~490
+  // lines down, is `op.side === "opponent" ? otherSeat(seat) : seat;` — writing that
+  // BYTE-IDENTICALLY here made `D341-reorder-owner-ignores-the-side-field` match 2×
+  // (D437's converse trap, caught by `precheck` in seconds), so the copy is spelled
+  // differently ON PURPOSE and this comment is why nobody should "tidy" it back.
+  return op.side === undefined ? seat : otherSeat(seat);
+}
+
 /** A moveEnergy op does something iff the controller has ≥1 Energy the filter
     admits AND ≥2 of their own Pokémon in play (a source WITH a distinct
     destination). Exported for programPlayable: a play that could only whiff can't
@@ -12079,7 +12203,16 @@ export function moveEnergyPlayable(
   op: Extract<EffectOp, { op: "moveEnergy" }>,
   sourceUid?: string,
 ): boolean {
-  const { movable, destinations, needed } = moveEndpoints(state, seat, op, sourceUid);
+  // 🆕 D443 — THE BOARD, NOT THE CONTROLLER. The gate must refuse on exactly the
+  // set the park would offer, and for an opponent-board op that set is on the other
+  // side of the table (`switchActiveTargets`' one-funnel rule, reached through the
+  // seat instead of through the filter). ⚠️ IT DELIBERATELY DOES NOT ASK THE §11
+  // SHIELD: `unshieldedRefs` needs `ctx`/`events` to ANNOUNCE its refusals and a
+  // playability question has neither and must not emit — `gustTargets`' and
+  // `knockOutChosenTargets`' stated reason, verbatim. So the gate can say "playable"
+  // on a board where every candidate is shielded, exactly as the gust gate can.
+  const board = moveBoardSeat(op, seat);
+  const { movable, destinations, needed } = moveEndpoints(state, board, op, sourceUid);
   return moveCap(op, movable.length) > 0 && movable.length > 0 && destinations.length >= needed;
 }
 
@@ -12130,7 +12263,35 @@ export function moveEnergyPlayable(
     the two answers coincide on every board this route can reach; resolving the
     printed "this Pokémon" through `ctx.sourceUid` would add a distinction no test
     could ever kill. Stated in the op's own doc too, with the condition that would
-    change it (a benched body's Ability printing the sentence). */
+    change it (a benched body's Ability printing the sentence).
+
+    🆕🆕 **D443 — `seat` IS THE BOARD, NOT THE CONTROLLER, AND THAT IS A RENAME OF
+    THE CONTRACT RATHER THAN A CHANGE TO ONE LINE OF THE BODY.** Every route below
+    already reads its endpoints off whatever seat it is handed — `attachedEnergies`,
+    `ownInPlayRefs` and the bench map are all pure functions of it — so the widening
+    is entirely at the two CALL SITES, which now pass `moveBoardSeat(op, ctx.seat)`.
+    Nothing here branches on `side`, and that is deliberate on two counts: the
+    endpoint rules are identical on either board (a Pokémon still may not move Energy
+    onto itself; the free route still needs two bodies; `selfToBench` still runs
+    Active → Bench), and keeping the branch out of this function is what lets the
+    `programPlayable` gate and the park share one answer about a question that now
+    has two possible boards.
+
+    ⚠️ **THE TWO UID-ANCHORED ROUTES THEREFORE WHIFF ON THE OTHER BOARD, AND THAT IS
+    THE SAFE DIRECTION.** `koedActiveToToolHolder` looks for `sourceUid` among
+    `seat`'s Tools and `othersToSelf` resolves `sourceRef` on `seat` — the card
+    running the program is always on the CONTROLLER's board, so on the opponent's it
+    is not found, `destinations` is empty and the op is a no-op. The alternative —
+    anchoring those ends on the controller while the other end crosses — would build
+    a move from one board onto the other, which no printing spells and which the
+    apply's own `dest.seat !== board` guard would then have to admit. No printed card
+    combines `side` with either route; the whiff is recorded rather than blocked,
+    exactly as this op's other representable-but-unprinted combinations are.
+
+    ⚠️ **AND THE §11 SHIELD IS NOT ASKED HERE.** It is a FILTER at the `stepOp` arm
+    (D259's placement rule), outside this funnel, because `unshieldedRefs` announces
+    its refusals and needs `ctx`/`events` — which the `programPlayable` reader has
+    neither of and must not emit. `gustTargets` states the identical division. */
 function moveEndpoints(
   state: GameState,
   seat: Seat,
@@ -12885,7 +13046,16 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
   // kill). `koedActiveToToolHolder` names its source with a demonstrative and so
   // takes no article at all.
   const one = op.anySource === true ? "" : "1 of ";
-  const where =
+  // 🆕🆕 D443 — `let`, AND THE OPPONENT-BOARD CLAUSE IS AN OVERRIDE BELOW THE CHAIN
+  // RATHER THAN A FIFTH ARM INSIDE IT. Wrapping the chain in an outer ternary would
+  // re-indent every line of it, and three shipped mutant rows quote those lines
+  // verbatim (`D226-note-hardcodes-article`, `D229-note-names-the-free-route`,
+  // `D441-note-numbers-a-sentence-that-prints-none`) — D414's lesson, avoided rather
+  // than paid. It is also the honest shape: the two opponent sentences share no
+  // clause with the five own-board ones. *"another of THEIR Pokémon"* is not
+  // *"another of YOUR Pokémon"* with a word swapped; the possessive changes at both
+  // ends, which is precisely what the anchors refuse to fold into one alternation.
+  let where =
     op.route === "benchToActive"
       ? `from ${one}your Benched Pokémon to your Active Pokémon`
       : op.route === "koedActiveToToolHolder"
@@ -12923,6 +13093,25 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
               op.anyDest === true
               ? `from ${one}your Pokémon to your other Pokémon in any way you like`
               : `from ${one}your Pokémon to another of your Pokémon`;
+  // 🆕🆕 D443 — THE OTHER BOARD, IN THE TWO FORMS THE POOL PRINTS. The chain above
+  // is computed and discarded on these two sentences, which is a string ternary and
+  // costs nothing; what it buys is that every own-board caption's BYTES are
+  // untouched by this slice. The article still rides `one` on the free route, so
+  // the source half reads as the card does ("from 1 of your opponent's Pokémon");
+  // `selfToBench` names its source with the SPOT, exactly as the print does, so it
+  // takes no article at all — the same reason `koedActiveToToolHolder` takes none.
+  //
+  // ⚠️ THE PRINTED "You may" IS DROPPED, WHICH IS THIS FUNCTION'S STANDING RULE
+  // (`attachFromHandNote`'s: a prompt that has appeared IS the offer, so restating
+  // the option is the dialog talking about itself) AND NOT A CLAIM THAT THE FLOOR
+  // HONOURS IT. `moveFloor` answers 0 for both of these ops; the family's
+  // declinability gap is recorded at the deriver arms.
+  if (op.side === "opponent") {
+    where =
+      op.route === "selfToBench"
+        ? "from your opponent's Active Pokémon to 1 of their Benched Pokémon"
+        : `from ${one}your opponent's Pokémon to another of their Pokémon`;
+  }
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is

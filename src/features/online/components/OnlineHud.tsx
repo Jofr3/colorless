@@ -727,6 +727,16 @@ function MoveEnergyDialog({
                   className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
                 >
                   <span className="truncate">{refName(board, seat, ref)}</span>
+                  {/* 🆕🆕 D443 — THE SIDE MARKER, the twin of the one the local HUD
+                      grew in the same edit. `moveEnergy` now serves both boards and
+                      this was the only public-ref dialog family without it; the
+                      wire ref's `seat` is ABSOLUTE, which is what makes the test
+                      meaningful on a viewer-relative board. */}
+                  {ref.seat !== seat && (
+                    <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                      opponent
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -793,6 +803,12 @@ function MoveEnergyDialog({
                     className={`${ROW_BUTTON_BASE} ${selected ? ROW_BUTTON_SELECTED : ROW_BUTTON_ENABLED}`}
                   >
                     <span className="truncate">{refName(board, seat, ref)}</span>
+                    {/* 🆕 D443 — the destination list's half of the same marker. */}
+                    {ref.seat !== seat && (
+                      <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                        opponent
+                      </span>
+                    )}
                   </button>
                 </li>
               );
@@ -892,6 +908,12 @@ function MoveEnergySpreadDialog({
     const host = hostOf(uid);
     return prompt.destinations.filter((ref) => host === undefined || refKey(ref) !== refKey(host));
   };
+  /** 🆕🆕 **D443 — NO SIDE MARKER HERE, THE LOCAL SPREAD DIALOG'S REFUSAL VERBATIM.**
+      This dialog renders only under `prompt.anyDest`, and no printed sentence carries
+      `anyDest` and `side: "opponent"` at once, so a marker would be a line no board
+      can reach. `derivedOpponentEnergyMove.test.ts` §1 sweeps the corpus for that
+      pair; the day it goes red, copy the coupled twin's marker into both spread
+      dialogs. */
   const destLabel = (ref: RedactedPokemonRef) => `${refName(board, seat, ref)} · ${spotLabel(ref)}`;
 
   const tapEnergy = (uid: string) => {

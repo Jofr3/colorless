@@ -1588,9 +1588,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       ]);
     }
     case "ENERGY_MOVED": {
-      // Energy Switch / Poppy (moveEnergy) — moved own-board Energy between two of
-      // the player's Pokémon. `to` names a Pokémon that stayed put (no compaction),
-      // so targetName resolves it off the post-state.
+      // Energy Switch / Poppy (moveEnergy) — moved Energy between two of ONE
+      // player's Pokémon. `to` names a Pokémon that stayed put (no compaction),
+      // so targetName resolves it off the post-state. 🆕 D443 — that player is
+      // `event.seat` and is no longer necessarily the one who did it.
       //
       // ⚠️ THE SOURCE IS NAMED BY UID WHEN THE EVENT CARRIES ONE (D171). Exp. Share
       // moves Energy off a body the same reduction then Knocks Out, so the SPOT is
@@ -1604,11 +1605,34 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         event.fromUid === undefined
           ? targetName(state, event.seat, event.from)
           : cardName(state, event.fromUid);
-      return row(event.seat, [
-        plain(`moved ${n} energy from `),
+      const destination = targetName(state, event.seat, event.to);
+      // 🆕🆕 D443 — THE ROW READS FROM `actor` AND RESOLVES BOTH TARGETS AGAINST
+      // `seat`, WHERE IT USED TO DO BOTH OFF ONE FIELD. `targetName` looks a ref up
+      // on the seat it is handed, so the board half MUST be `event.seat`; the "who
+      // did it" half must be `event.actor`, and the two are the same value on every
+      // row this event has emitted since M4 — `ENERGY_DISCARDED`'s split, one op
+      // over. D425's rule read forwards: the consumer stops DERIVING a fact it can
+      // now READ, and it stops the moment a second producer exists rather than the
+      // moment somebody notices.
+      if (event.actor === event.seat) {
+        return row(event.seat, [
+          plain(`moved ${n} energy from `),
+          strong(source),
+          plain(" to "),
+          strong(destination),
+        ]);
+      }
+      // 🆕 D443 — THE CROSS-BOARD ROW NAMES THE OWNER OUTRIGHT, which is
+      // ENERGY_DISCARDED's rule verbatim and for its stated reason: the `who` chip
+      // is VIEWER-relative ("you"/"opponent") while these segments are fixed text,
+      // so in a mirror match a bare "from Pikachu to Pikachu" is true from neither
+      // seat. `DECK_TOP_DISCARDED`'s `actor === seat` fork is what keeps the arm
+      // above byte-identical — a per-op flag would have owed both arms a case.
+      return row(event.actor, [
+        plain(`moved ${n} energy on ${names[event.seat]}'s board, from `),
         strong(source),
         plain(" to "),
-        strong(targetName(state, event.seat, event.to)),
+        strong(destination),
       ]);
     }
     case "ENERGY_DISCARDED": {

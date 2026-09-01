@@ -7734,9 +7734,11 @@ export type EffectOp =
       to?: never;
       recordAs?: never;
     }
-  /** Move up to `max` Energy from ONE of the controller's own in-play Pokémon
-      to ANOTHER of their own in-play Pokémon — the §6 manual Energy-movement
-      family (Energy Switch: a Basic Energy; Poppy: up to 2 any Energy). `filter`
+  /** Move up to `max` Energy from ONE in-play Pokémon to ANOTHER on the SAME
+      board — the §6 manual Energy-movement family (Energy Switch: a Basic Energy;
+      Poppy: up to 2 any Energy). 🆕 D443 — WHICH board is `side`'s question and
+      the controller's own is the absent default; every sentence in the paragraphs
+      below is own-board unless it says otherwise. `filter`
       narrows which Energy may move (`basicEnergy` / `anyEnergy`). BOTH the taken
       Energy AND the destination are the player's choice, and every taken Energy
       comes from the SAME source Pokémon (the printed "from 1 of your Pokémon to
@@ -7757,8 +7759,16 @@ export type EffectOp =
       the dialog and the wire validator both read the prompt, so neither needs to
       know a route exists. Source and destination are disjoint by construction,
       which is why the "two Pokémon in play" rule relaxes here to "an Active and
-      a benched source". Still own→own; the OPPONENT-side move (Mismagius's
-      on-evolve flick) layers on later.
+      a benched source".
+
+      🆕🆕 **D443 — "the OPPONENT-side move layers on later" IS THE SENTENCE THAT
+      USED TO CLOSE THIS PARAGRAPH, AND THIS SLICE IS THE LAYER.** It is `side`
+      (below), not a route: the two printed opponent-board sentences are the FREE
+      route and `selfToBench` read off the other seat's board, so the endpoints
+      needed nothing new. What DID need something new is the §11 shield — a
+      `moveEnergy` op had never named a body its controller does not own — and the
+      `ENERGY_MOVED` event, whose `seat` now means the BOARD and which carries an
+      `actor` beside it (the `ENERGY_DISCARDED` pair, one op over).
 
       `koedActiveToToolHolder` (D171) is Exp. Share sv01-174's "move a Basic Energy
       from that Pokémon [your Active, being Knocked Out] to the Pokémon this card is
@@ -7977,6 +7987,51 @@ export type EffectOp =
           `min`. Absent floor = the family's standing decline. */
       max: number | "any" | "all";
       route?: "benchToActive" | "koedActiveToToolHolder" | "selfToBench" | "othersToSelf";
+      /** 🆕🆕 **D443 — WHICH SIDE OF THE TABLE THE MOVE HAPPENS ON.** Absent is the
+          controller's own board — every printing this family has had since M4, and
+          what every `pendingOp` a pre-D443 deploy persisted meant. `"opponent"` is
+          the OTHER seat's board, at BOTH ends: the sources are theirs and so are the
+          destinations, which is what the two printed sentences say.
+
+          🛑 **A RIDER AND NOT A `route`, WHICH IS `anySource`'s AND `anyDest`'s OWN
+          ARGUMENT READ ON A THIRD AXIS.** A `route` fixes WHICH ENDPOINTS are
+          offered (bench→Active, Active→bench, …); `side` fixes WHOSE BOARD those
+          endpoints are read off. It is independent of `route` and the two printed
+          sentences prove it: *"Move an Energy from 1 of your opponent's Pokémon to
+          another of their Pokémon."* (**2 legal printings**) is the FREE route on
+          the other board, and *"You may move an Energy from your opponent's Active
+          Pokémon to 1 of their Benched Pokémon."* (**3 legal printings**) is
+          `selfToBench` on it. Folding the seat into `route` would have needed a
+          fifth AND a sixth value spelling endpoints that already exist.
+
+          ⚠️ **`selfToBench` IS REUSED RATHER THAN RENAMED, AND THE REFUSAL IS
+          PRICED.** With `side: "opponent"` that route reads *"the board's Active →
+          that board's Bench"*, which is exactly what its code has always computed;
+          only the NAME says "self". D438's rule (*rename when the second inhabitant
+          arrives*) points at a rename, and it is refused because a `route` VALUE is
+          a persisted byte inside `phase.cont.pendingOp`: renaming it is D359's case
+          and would bump `MATCH_RECORD_VERSION`, retiring every live match for a
+          word. **The falsifier is executable: the day this constant bumps for any
+          other reason, rename it in the same edit.** Its own doc paragraph carries
+          the generalisation — the SPOT reading it justified by *"§8 lets only the
+          Active attack"* is justified twice over here, because the print names the
+          opponent's Active outright.
+
+          ⚠️ **THE TWO UID-ANCHORED ROUTES DEGRADE TO A WHIFF UNDER IT, DELIBERATELY.**
+          `koedActiveToToolHolder` and `othersToSelf` resolve an endpoint from
+          `ctx.sourceUid` — the card running the program, which is always on the
+          CONTROLLER's board — so on the other seat's board they find no such body
+          and `moveEndpoints` returns no destination. That is the safe direction: the
+          alternative (anchoring those two on the controller while the other end moves)
+          would build a cross-BOARD move, taking Energy off the opponent and putting it
+          on your own body, which no printing spells. No card combines them; the
+          degradation is written down rather than blocked, exactly as the op's other
+          representable-but-unprinted combinations are.
+
+          🛑 **AND IT IS WHAT MAKES THIS OP ASK THE §11 SHIELD FOR THE FIRST TIME.**
+          The refusal gate has never been reached from here because the op has never
+          named a body it did not control; see the `moveEnergy` arm in `stepOp`. */
+      side?: "opponent";
       /** Let ONE answer take Energy off SEVERAL of the offered sources (N's Plan's
           printed "from your Benched Pokémon", plural). Absent = the single-source
           coupling every other printed member of this family carries. */
@@ -8691,8 +8746,10 @@ export type EffectOp =
       program that exists — but this vocabulary already contains three ops that
       would separate them if one were sequenced in between, and none of them is
       exotic: `switchActive` (a different Pokémon is now the Active, so the filed
-      uids are on a BENCHED one), `moveEnergy` (own → own, which can take the
-      filed card off the Active), and `discardEnergy`'s `yourActive` arm (the
+      uids are on a BENCHED one), `moveEnergy` (which can take the filed card off
+      the Active — 🆕 D443: on either board now, which does not change this
+      argument, since the hazard is the card MOVING and not whose it is), and
+      `discardEnergy`'s `yourActive` arm (the
       card is gone entirely). No printed card puts any of them between an attach
       and its "in this way" clause, and the one consumer — Janine's Secret Art —
       runs attach → shuffle → gate. So this is safe as authored and unsafe as a
@@ -15584,6 +15641,48 @@ const ATTACK_MOVE_ALL_ENERGY_SELF_TO_BENCH_SPREAD =
 const ATTACK_MOVE_ANY_AMOUNT_SPREAD = new RegExp(
   `^You may move any amount of (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy from your Pokémon to your other Pokémon in any way you like\\.$`,
 );
+/** 🆕🆕 **D443 — THE OTHER SIDE OF THE TABLE: TWO SENTENCES, FIVE LEGAL PRINTINGS,
+    AND THE FIRST `moveEnergy` TEXT THAT NAMES A BODY ITS CONTROLLER DOES NOT OWN.**
+
+      • *"Move an Energy from 1 of your opponent's Pokémon to another of their
+        Pokémon."* — **2 legal printings** (`censusAttackCorpus.ts` row 409). The
+        FREE route with `side: "opponent"`: sources are every body on their board,
+        destinations are the same set, and the printed *"another"* is the per-pick
+        self-move rule `validateChoice` has enforced since M4 — the identical
+        structure Energy Switch's *"to another of your Pokémon"* has always had, one
+        board over. `needed: 2` is that "another" made structural.
+      • *"You may move an Energy from your opponent's Active Pokémon to 1 of their
+        Benched Pokémon."* — **3 legal printings** (row 646). `selfToBench` with the
+        same rider: the board's Active to that board's Bench.
+
+    🛑 **TWO ANCHORS AND NOT ONE ALTERNATION, AND THE REASON IS D441's VERBATIM.**
+    The two sentences differ in their SOURCE clause (*"1 of your opponent's Pokémon"*
+    vs *"your opponent's Active Pokémon"*), in their DESTINATION clause and in the
+    *"You may"* prefix — three axes, and the source clause is the one that decides
+    the `route`. An alternation over it would have to be read back out to pick
+    between the free route and `selfToBench`, which is the *"two kinds, two anchors"*
+    rule this family already applies to its quantifier and to its destination.
+
+    ⚠️ **BOTH APOSTROPHE CLASSES ON BOTH, AND IT IS THIS FILE'S STANDING RULE FOR
+    `opponent's` RATHER THAN A JUDGEMENT** (D189/D227, the gust anchors 160 lines up).
+    The corpus bytes are U+0027 — MEASURED with `codePointAt`, at index 38 and index
+    41 respectively, never by eye (D421/D440) — so a punctuation-normalising re-ingest
+    at U+2019 must derive the same program, and `clauseApostrophe.test.ts`'s sweep is
+    what checks it. These are the FIRST two apostrophe-bearing sentences this family
+    has ever carried; its five own-board printings contain no apostrophe at all.
+
+    ⚠️ **WHAT THE `$` AND THE LITERAL POSSESSIVES REFUSE, STATED.** The near miss is
+    the OWN-board twin one word away (*"…from 1 of your Pokémon to another of your
+    Pokémon."*, Energy Switch's registry sentence) — a build whose anchor read
+    `your (?:opponent's )?Pokémon` would claim it and move Energy on the wrong board
+    while every existing rung stayed green. The possessives are spelled literally on
+    both ends for exactly that reason: *"their"* in the destination clause is as
+    load-bearing as *"opponent's"* in the source clause, and a sentence carrying one
+    without the other is not printed. */
+const ATTACK_MOVE_ENERGY_OPPONENT_FREE =
+  /^Move an Energy from 1 of your opponent['’]s Pokémon to another of their Pokémon\.$/;
+const ATTACK_MOVE_ENERGY_OPPONENT_ACTIVE_TO_BENCH =
+  /^You may move an Energy from your opponent['’]s Active Pokémon to 1 of their Benched Pokémon\.$/;
 // ⚠️⚠️ D202 — THE FIRST TWO PRODUCERS OF `optional`, AND THE `You may` PREFIX IS
 // THE WHOLE DIFFERENCE FROM THE TWO BARE DRAW ANCHORS 70 LINES ABOVE. D186 landed
 // the op, the `confirm` prompt, the wire arm, the redact arm, the projection arm
@@ -19882,6 +19981,44 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         max: "all",
         route: "selfToBench",
         anyDest: true,
+      },
+    ];
+  }
+  // 🆕🆕 D443 — THE OTHER SIDE OF THE TABLE. TWO SENTENCES, FIVE LEGAL PRINTINGS,
+  // and ONE new field between them: `side`. The endpoints are two ALREADY-SHIPPED
+  // readings — the FREE route and `selfToBench` — read off the opponent's board, so
+  // neither arm names a `route` value that did not exist and neither adds one.
+  //
+  // ⚠️ THESE TWO ARMS SIT AT THE HEAD OF THE FAMILY FOR D442's MECHANICAL REASON,
+  // NOT AN AESTHETIC ONE: `D441-arm-emits-the-mirror-route` quotes the `max: "all"`
+  // arm TOGETHER WITH the `// ⚠️⚠️ D230` comment that follows it, so inserting
+  // between them would rot that row to `find occurs 0×`. Order is otherwise free —
+  // every anchor here is `^…$` over a distinct printed sentence.
+  if (ATTACK_MOVE_ENERGY_OPPONENT_FREE.test(effect)) {
+    return [{ op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, side: "opponent" }];
+  }
+  // ⚠️ THE PRINTED "You may" BUYS NOTHING HERE, AND SAYING SO IS THE POINT. D441
+  // established that the printed determiner answers the quantity AND the
+  // declinability at once, and `moveFloor` returns 0 for every `max` that is not
+  // `"all"` — so this sentence's *"You may"* lands on a family that has been
+  // declinable since M4 and the op is byte-identical to the arm above but for the
+  // route. 🛑 THE COROLLARY IS A LIVE GAP AND IT IS THIS SLICE'S TO NAME, NOT TO
+  // FIX: the arm ABOVE prints NO "you may" and no "up to", so §9.1 makes its
+  // printed number EXACT and it is offered as declinable anyway. That is the
+  // family's standing approximation (the op's own doc has recorded it since D229 —
+  // Energy Switch prints a bare *"Move a Basic Energy…"* and has been declinable
+  // since M4), it already applies to 13 shipped own-board printings, and closing it
+  // needs a mandatory-EXACT spelling on `max` that D441 deliberately refused. A
+  // slice about the SEAT is the wrong place to move 13 printings' declinability, so
+  // the gap is written down with its falsifier rather than pinned as a decision.
+  if (ATTACK_MOVE_ENERGY_OPPONENT_ACTIVE_TO_BENCH.test(effect)) {
+    return [
+      {
+        op: "moveEnergy",
+        filter: { kind: "anyEnergy" },
+        max: 1,
+        route: "selfToBench",
+        side: "opponent",
       },
     ];
   }

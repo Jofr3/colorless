@@ -740,6 +740,11 @@ describe("the voice", () => {
         {
           type: "ENERGY_MOVED",
           seat: "p1",
+          // 🆕 D443 — `actor === seat` is the own-board reading, and this rung is
+          // now also the CONTROL for the cross-board arm: it pins that the row a
+          // same-seat move renders is byte-identical to the one it rendered before
+          // the field existed.
+          actor: "p1",
           uids: ["e1"],
           from: { spot: "bench", index: 0 },
           to: { spot: "active" },

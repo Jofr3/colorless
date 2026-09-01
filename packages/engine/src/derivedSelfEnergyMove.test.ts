@@ -391,6 +391,9 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // was last written at D241 and was already one append behind by D246, which is
     // exactly how a count in a comment rots. The LENGTH is the executable half and
     // it is the line below.
+    // 🆕🆕 **68 AT D443**, which appended **66-67** — the OPPONENT-BOARD pair
+    // (`derivedOpponentEnergyMove.test.ts` owns them). TWELVE sibling suites carry
+    // this pin and all twelve were stepped in one pass, as D442 stepped eleven.
     // 🆕🆕 **66 AT D442**, which appended **63-65** — the destination-side SPREAD
     // (*"Move all Energy from this Pokémon to your Benched Pokémon in any way you
     // like."* / *"You may move any amount of [{M}] Energy from your Pokémon to your
@@ -398,7 +401,7 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // them, and the append-never-insert discipline held again: 0-62 are addressed by
     // constant in a dozen sibling suites and every one still means what it meant —
     // which THIS rung is what proves, and it is the rung that caught the append.
-    expect(attacks).toHaveLength(66);
+    expect(attacks).toHaveLength(68);
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

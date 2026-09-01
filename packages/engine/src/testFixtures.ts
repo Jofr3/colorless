@@ -3944,6 +3944,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "You may move any amount of {M} Energy from your Pokémon to your other Pokémon in any way you like.",
       },
+      /** 🆕🆕 **D443 — 66/67: THE OTHER SIDE OF THE TABLE.** Two printed sentences,
+          **5 legal printings**, appended HERE for the reason 63-65 were: this card
+          is the family's demonstrator and the `moveEnergy` cases all read one
+          attack economy. ⚠️ **THE APPEND STEPS TWELVE PROVENANCE RUNGS** — twelve
+          suites pin `fix-trainerops`' `attacks.length` and all twelve are stepped
+          66 → 68 in one pass (D431/D442: a green run after fixing the one that
+          reddened is evidence the runner stopped early, not that the round is done).
+            66 "Static Flick" — *"Move an Energy from 1 of your opponent's Pokémon
+               to another of their Pokémon."* (**2 legal**). The FREE route with
+               `side: "opponent"`; the printed *"another"* is the per-pick
+               self-move rule, and `needed: 2` is that word made structural.
+            67 "Draining Sap" — *"You may move an Energy from your opponent's Active
+               Pokémon to 1 of their Benched Pokémon."* (**3 legal**). `selfToBench`
+               on the other board — the ONE route value reused rather than renamed.
+          ⚠️ **BOTH CARRY AN APOSTROPHE, WHICH NO EARLIER MEMBER OF THIS FAMILY
+          DOES**, so they are the first `moveEnergy` sentences `clauseApostrophe`'s
+          re-ingest sweep can see and they step its `derivable` census by 2. The
+          bytes are U+0027 at index 38 and 41 (measured with `codePointAt`), and
+          both anchors carry `['’]` so the curled re-ingest derives the same op. */
+      {
+        cost: ["Colorless"],
+        name: "Static Flick",
+        effect: "Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Draining Sap",
+        effect:
+          "You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
@@ -21136,6 +21166,33 @@ export const SPREAD_ENERGY_MOVE_DECK = deckOf({
   "fix-bigbody": 16, // 200 HP control body / setup starter
   "fix-energy": 16, // Colorless Basic — every attack here costs {C}
   "fix-metal-energy": 8, // the `providesEnergy {Metal}` filter's only discriminator
+});
+
+/** 🆕🆕 **D443 — the OPPONENT-board move.** `SPREAD_ENERGY_MOVE_DECK`'s shape with
+    the Metal line replaced by `fix-mist-energy`, and **A SEPARATE DECK RATHER THAN
+    AN EDIT OF EITHER**, which is this file's standing rule and the one D412 paid
+    for: `deckOf` order feeds the shuffle, so moving one card in a seed-pinned deck
+    reshuffles every board in every suite that reads it.
+
+    ⚠️ **BOTH SEATS DRAW FROM THIS ONE DECK, AND THAT IS WHAT THE LINE DEPTHS ARE
+    FOR.** These sentences act on the OPPONENT's board, so the boards below have to
+    put bodies AND Energy on p2 as well as p1 — every count here is sized for two
+    sides, not one. `fix-basic-1` is the Bench population on both.
+
+    ⚠️ **`fix-mist-energy` IS THE §11 DISCRIMINATOR AND IT IS AN ENERGY, WHICH IS
+    WHY IT IS IN THIS DECK RATHER THAN A SHIELDED POKÉMON.** It prints *"Prevent all
+    effects of attacks used by your opponent's Pokémon done to the Pokémon this card
+    is attached to"* and provides {C}, so one card both raises the shield on a chosen
+    opponent body and is itself a movable Energy — which is the only way to drive
+    "the shielded body is dropped from BOTH endpoint lists" without changing the
+    board's shape between the shielded and unshielded runs (D424's control rule: the
+    refusal case alone passes on a build that offers nobody). */
+export const OPPONENT_ENERGY_MOVE_DECK = deckOf({
+  "fix-trainerops": 6,
+  "fix-basic-1": 18, // the Bench population on BOTH boards — sources and destinations
+  "fix-bigbody": 12, // 200 HP control body / setup starter, both seats
+  "fix-energy": 18, // Colorless Basic — every attack here costs {C}, and the Energy that moves
+  "fix-mist-energy": 6, // the §11 shield, and a movable {C} Energy in its own right
 });
 
 /** D230 — the deck search onto your own Bench. `SELF_ENERGY_MOVE_DECK`'s shape

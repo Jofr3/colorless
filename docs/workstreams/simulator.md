@@ -26935,3 +26935,73 @@ D383's C11 spanned the two-line `yourActive` caption, this slice made it three-l
 edited — before the commit — and re-transcribed inside it, with the new `putBack` arm kept in both
 halves so the row stays ONE defect. **ANY TERNARY OR CHAIN A ROW SPANS IS AN ADJACENCY CLAIM, AND
 INSERTING AN ARM FALSIFIES IT WITHOUT TOUCHING A CHARACTER OF THE QUOTED TEXT.**
+
+## D443 — the move-Energy family reaches the other side of the table
+
+**2 sentences / 5 legal printings** on **one optional field**, `moveEnergy.side?: "opponent"`:
+*"Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon."* (corpus row 409,
+2 legal) is the FREE route on the other board, and *"You may move an Energy from your opponent's
+Active Pokémon to 1 of their Benched Pokémon."* (row 646, 3 legal) is `selfToBench` on it. Zero new
+ops, prompt kinds, `route` values or `CardFilter` members; reader surface unmoved at 13.
+
+### The endpoints were free; three things the work order did not name were not
+
+`moveEndpoints`' body is **byte-identical**. Every route in it already read its endpoints off
+whatever seat it was handed (`attachedEnergies`, `ownInPlayRefs`, the bench map are all pure
+functions of the seat), so the widening is two CALL SITES passing `moveBoardSeat(op, ctx.seat)` —
+and none of the five shipped mutant rows that quote those lines was re-transcribed. **Before
+rewriting a function to take a new fact, check whether it already takes it and the CALLERS are the
+ones deciding wrongly.**
+
+What the seat actually cost:
+
+- **§11.** The refusal gate had never been asked about this op, because the op had never named a
+  body its controller does not own. It is a FILTER over BOTH endpoint lists (D259's placement rule
+  — this op chooses from a set), asked after the printed narrowing (D433), and deduped through a
+  `Map` so a body that is both a source and a destination files ONE `ATTACK_EFFECT_PREVENTED`.
+  **The shields carry no valence**: every printing says *"prevent all … effects of attacks done to
+  this Pokémon"*, none says "harmful", and `effectRefusedOn` takes a body rather than a valence —
+  so gaining an Energy is filtered exactly as losing one is.
+- **`ENERGY_MOVED`.** Its `seat` meant the controller AND the board — true for all four producers
+  **by accident** — and `log.ts` resolved both refs against it. D425's derived-fact defect one event
+  over: a cross-board row would have named the ATTACKER's Pokémon at the DEFENDER's spots, on a
+  board that looks entirely normal. Fixed with a **required `actor`** (free: no `GameEvent` is in a
+  `MatchRecord`) and an `actor === seat` fork, so every own-board row is byte-identical.
+- **Both HUDs.** All four `moveEnergy` dialogs lacked the `ref.seat !== viewerSeat` marker that
+  `ChoosePokemonDialog`, `ChoosePokemonMultiDialog` and `DiscardEnergyDialog` all carry. In a mirror
+  match that is two identically-named rows on two boards with nothing between them — D412's
+  third-read-site shape, found by grepping the siblings rather than by a red test.
+
+### The two costs that did not exist, and why the enumeration went wrong
+
+- **No fifth `route`.** `selfToBench` already computes *the board's Active → that board's Bench*;
+  only its NAME says "self". The rename D438 would ask for is **refused because a `route` VALUE is a
+  persisted byte** inside `phase.cont.pendingOp` — D359's case, a `MATCH_RECORD_VERSION` bump, every
+  live match retired for a word. Falsifier: rename it in the same edit as the next bump.
+- **No `decider`.** `docs/reference/ptcg-rules.md` §9.4 states the doctrine and names the
+  discriminator: *"Almost every printed effect is decided by the player resolving it, even when it
+  reaches across the table … A small family inverts that, and the wording is the tell: **'your
+  opponent may …'**."* The work order counted the three shipped `decider` producers — **a set
+  defined by the field it was asking about, so it could only contain things that already had it.**
+  The right class is *picks on the other seat's board*, and `knockOutChosen` (D416),
+  `discardEnergy`'s `opponentChosen` arm, `gust` and `returnBenched { whose: "opponent" }` are
+  unanimous the other way.
+
+### The version question, per change rather than per slice
+
+Three shape changes, three addresses. `side` on the OP is persisted and its ABSENCE means what every
+v29 writer meant (v29 had no opponent-board move to write) → **D334, no bump**. `ENERGY_MOVED.actor`
+is a `GameEvent` field and no `GameEvent` is in a `MatchRecord` → not persisted, so **required was
+free** (D425's call). The PROMPT did not move at all: every `PokemonRef` already carries an ABSOLUTE
+seat, so `side` rides the op ALONE where `anySource`/`anyDest` ride both — those two are COUPLINGS,
+invisible in the candidate lists, and this one is spelled by every candidate. **On a slice with
+several shape changes, "the version question" is not one question.**
+
+### The declinability gap, restated because it got weaker
+
+`moveFloor` answers 0 for every `max` that is not `"all"`, so the sentence printing *"You may"* and
+the sentence printing no quantifier at all are both declinable — and §9.1 makes the second EXACT.
+D441 refused a mandatory-exact spelling on the grounds that `max: N` + mandatory spells combinations
+nothing prints. **That argument is weaker now**: `max: 1` + mandatory is printed many times over
+(this slice's first sentence, Energy Switch, and eight `selfToBench` attacks). A slice that revisits
+it must re-read D441's reasoning rather than inherit it, and must expect to move 13+ printings.

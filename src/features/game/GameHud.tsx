@@ -2109,7 +2109,9 @@ function ChoosePokemonMultiDialog({
   );
 }
 
-/** moveEnergy (§6) — move up to `max` Energy from ONE of your Pokémon to ANOTHER
+/** moveEnergy (§6) — move up to `max` Energy from ONE Pokémon to ANOTHER on the
+    same board (🆕 D443: the CONTROLLER's board, or the opponent's — the refs say
+    which, and the rows carry the `opponent` marker when they do)
     (Energy Switch / Poppy). A compound decision the engine parks in one prompt
     (which Energy + where), so it is a staged dialog like Rare Candy: pick the
     source Pokémon (auto when only one has movable Energy), then its Energy and a
@@ -2242,6 +2244,17 @@ function MoveEnergyDialog({
                   className={`${ROW_BUTTON_BASE} ${ROW_BUTTON_ENABLED}`}
                 >
                   <span className="truncate">{refName(game, ref)}</span>
+                  {/* 🆕🆕 D443 — THE SIDE MARKER, which every OTHER public-ref dialog
+                      in this file has carried for a long time and all four moveEnergy
+                      dialogs lacked. This op now serves both boards, and in a mirror
+                      match two same-named bodies give two identical rows — D412's
+                      shape exactly: the third read site still spelling the old world
+                      by hand, found by grep rather than by a red test. */}
+                  {ref.seat !== viewerSeat && (
+                    <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                      opponent
+                    </span>
+                  )}
                 </button>
               </li>
             ))}
@@ -2321,6 +2334,12 @@ function MoveEnergyDialog({
                     }`}
                   >
                     <span className="truncate">{refName(game, ref)}</span>
+                    {/* 🆕 D443 — the destination list's half of the same marker. */}
+                    {ref.seat !== viewerSeat && (
+                      <span className="ml-2 shrink-0 text-[10px] uppercase tracking-wide text-white/40">
+                        opponent
+                      </span>
+                    )}
                   </button>
                 </li>
               );
@@ -2434,7 +2453,17 @@ function MoveEnergySpreadDialog({
     ref.spot.spot === "active" ? "Active" : `Bench ${ref.spot.index + 1}`;
   /** A row's readback: the Pokémon AND its spot — `AttachCardsDialog`'s rule, and
       it bites harder here, because a Bench of same-named bodies is exactly the
-      board these three sentences are printed for. */
+      board these three sentences are printed for.
+
+      🆕🆕 **D443 — NO SIDE MARKER HERE, AND IT IS A REFUSAL WITH AN EXECUTABLE
+      FALSIFIER RATHER THAN AN OVERSIGHT.** The coupled twin above gained one,
+      because `side: "opponent"` parks THERE. This dialog renders only when
+      `prompt.anyDest === true`, and **no printed sentence carries `anyDest` and
+      `side` at once** — so a marker here would be a line no board can reach, which
+      is what D205/D420 say to write DOWN rather than to write. The falsifier is a
+      corpus sweep in `derivedOpponentEnergyMove.test.ts` §1: the day any reader
+      emits an op with both riders, that rung goes red and this dialog owes the
+      marker (copy the coupled twin's, ~180 lines up). */
   const destLabel = (ref: PokemonRef) => `${refName(game, ref)} · ${spotOf(ref)}`;
 
   const tapEnergy = (uid: string) => {

@@ -218,9 +218,19 @@ describe("§1 — the deriver: two anchors, three sentences, and the edges they 
     // ships half the card.
     expect(deriveAttackEffect(`${SPREAD_ALL} Then, shuffle your deck.`)).toBeNull();
     expect(deriveAttackEffect(`${SPREAD_ANY} Then, shuffle your deck.`)).toBeNull();
-    // The OPPONENT-side twin: same verb, same quantifier, same spread — and the op
-    // is own-board on all five `moveEndpoints` branches, so claiming it would move
-    // Energy on the wrong board. Refused on its own bytes.
+    // The OPPONENT-side twin: same verb, same quantifier, same spread.
+    // 🆕🆕 **D443 CORRECTED THIS COMMENT'S REASON AND LEFT THE RUNG ALONE.** It read
+    // *"the op is own-board on all five `moveEndpoints` branches, so claiming it
+    // would move Energy on the wrong board"* — TRUE when written and FALSE from
+    // D443, which gave `moveEnergy` a `side?: "opponent"` rider. The refusal
+    // SURVIVES for a different and stronger reason: **nothing prints this
+    // sentence.** The corpus's opponent-board Energy movers are the two `max: 1`
+    // sentences D443 built; the opponent-board SPREAD exists only for damage
+    // COUNTERS (corpus row 686, `moveCountersChosen`), so the string below is
+    // constructed and no anchor claims it. ⚠️ D413's rule, applied to this file's
+    // own rung: a refusal names the condition that would overturn it, that
+    // condition BECAME TRUE, and the refusal has to be re-read rather than
+    // inherited. Its falsifier is now a population fact, not a mechanism one.
     expect(
       deriveAttackEffect(
         "You may move any amount of Energy from your opponent's Pokémon to their other Pokémon in any way you like.",
@@ -501,8 +511,16 @@ describe("§4 — validateChoice: the coupling is now ASSERTED where it used to 
       seat: "p1" as const,
       choice: { kind: "moveEnergy" as const, picks },
     });
-    // The OPPONENT's board is never a destination — the op is own-board on every
-    // branch, and this is the wire belt underneath that.
+    // The OPPONENT's board is never a destination FOR THIS PROMPT.
+    // 🆕🆕 **D443 CORRECTED THIS COMMENT AND THE RUNG STILL PASSES UNCHANGED**, which
+    // is the finding: it read *"the op is own-board on every branch"*, and since D443
+    // the op has a `side` rider. What actually refuses the frame below has never been
+    // the op — `validateChoice`'s `moveEnergy` arm is entirely PROMPT-relative and
+    // carries NO seat test of its own, so a `p2` destination is refused here because
+    // THIS park did not OFFER one. That is why the widening cost the validator
+    // nothing, and `derivedOpponentEnergyMove.test.ts` §3 drives the mirror (a `p1`
+    // destination refused by an opponent-board park) so the pair shows the refusal
+    // follows the OFFER rather than a hard-coded side.
     expectErr(
       state,
       answer([{ uid: first, dest: { seat: "p2", spot: { spot: "bench", index: 0 } } }]),
@@ -710,6 +728,6 @@ describe("§9 — the version block", () => {
     // are one fact with two spellings, and the pin is authored HERE rather than
     // inherited (D427 — every note counts the pins it inherited and never the one it
     // is about to author; this is D442's own).
-    expect(engineVersion).toBe("0.344.0");
+    expect(engineVersion).toBe("0.345.0");
   });
 });

@@ -1213,11 +1213,36 @@ export type GameEvent =
       of its own — those cards never left the deck, and the trailing SHUFFLE row is
       the whole story. */
   | { type: "DECK_TOP_DISCARDED"; seat: Seat; actor: Seat; uids: string[] }
-  /** An effect moved `uids` (Energy cards) from one of `seat`'s own in-play
-      Pokémon (`from`) to another (`to`) — the §6 manual Energy movement (Energy
-      Switch: a Basic Energy; Poppy: up to 2 any Energy). All moved Energy shares
-      the one source; the Pokémon stay put (no bench compaction), so both targets
-      resolve against the post-state. Own-board only — a public table fact.
+  /** An effect moved `uids` (Energy cards) between two of `seat`'s in-play Pokémon
+      (`from` → `to`) — the §6 manual Energy movement (Energy Switch: a Basic
+      Energy; Poppy: up to 2 any Energy). All moved Energy shares the one source;
+      the Pokémon stay put (no bench compaction), so both targets resolve against
+      the post-state. A public table fact on either board.
+
+      🆕🆕 **D443 — `seat` NAMES THE BOARD AND `actor` NAMES THE CAUSE, AND THIS
+      BLOCK USED TO SAY "Own-board only".** It was true of all four producers and
+      true by accident, exactly as D425 found `DAMAGE_DEALT`'s dealer-from-victim
+      derivation to be: the op could not reach the other side of the table, so
+      `ctx.seat` answered both questions and `log.ts` resolved BOTH targets against
+      it. The two opponent-board printings make the two questions different, and a
+      renderer deriving one from the other would name the ATTACKER's Pokémon at the
+      DEFENDER's spots — the same row, entirely wrong, on a board that looks normal.
+
+      **`actor` IS REQUIRED, AND THAT IS D425's CALL RATHER THAN D421's.** An
+      optional `actor` forgotten at a future producer reads as `undefined` and the
+      renderer falls back to the seat, which reproduces precisely the attribution
+      bug this field exists to remove — a plausible-looking wrong answer. Required
+      makes the next producer a compile error instead. It costs nothing at the
+      version boundary because **no `GameEvent` is persisted**: `MatchRecord` is
+      `{version, seed, startedAt, names, state, log}`, `state` is a `GameState`
+      (which holds no events), and `log` is the RENDERED `SeatLogEntry[]`.
+
+      This is the FOURTH event carrying an owner/actor pair — `ENERGY_DISCARDED`,
+      `DECK_TOP_DISCARDED` and `CARD_TO_BOTTOM_OF_DECK` are the others — so the
+      shape is this file's convention for "a row whose seat is the target rather
+      than the cause", and `log.ts` forks on the COMPARISON (`actor === seat`),
+      which is `DECK_TOP_DISCARDED`'s stated rule and what keeps every own-board
+      row byte-identical to the one it has always rendered.
 
       ⚠️ `fromUid` NAMES THE SOURCE POKÉMON BY UID, AND IT EXISTS BECAUSE THE
       "resolves against the post-state" GUARANTEE ABOVE STOPPED BEING TRUE (D171).
@@ -1231,7 +1256,11 @@ export type GameEvent =
       OPTIONAL only so the type stays additive for a record written before it. */
   | {
       type: "ENERGY_MOVED";
+      /** The board the Energy moved ON — both endpoints are this seat's. */
       seat: Seat;
+      /** 🆕 D443 — the seat whose card caused it. Equal to `seat` for every
+          own-board printing, the other one for the two that name it. */
+      actor: Seat;
       uids: string[];
       from: PokemonTarget;
       fromUid?: string;

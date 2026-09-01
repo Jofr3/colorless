@@ -2072,6 +2072,142 @@ as *a process check that can match the checker is not a process check*, one laye
 up: an instrument that samples a transient state is reporting the instrument, not
 the tree.
 
+## A brief's "this would be the first X" is a claim about a CLASS (D443)
+
+D443's work order asked the `decider` question by naming the three shipped
+`RunResult.decider` producers and observing that all three hand the choice to the
+opponent — so an attacker-decided pick on the opponent's board "would be the first
+of its kind."
+
+**The comparison set was wrong, not the reading.** The class is not *parks that
+file a `decider`*; it is *picks on the other seat's board*, and that class is
+large and unanimous the other way: `knockOutChosen` (D416), `discardEnergy`'s
+`opponentChosen` arm, `gust`, `returnBenched { whose: "opponent" }` all park on
+the opponent's board with **no** `decider`. D416's own comment states the rule —
+*"Only two ops in this switch file one and both print the chooser explicitly"*.
+
+**When a brief says "this would be the first X", derive the class X before
+counting its members.** A set enumerated from the FIELD you are about to add is a
+set of things that already have it, which tells you nothing about whether you
+need it.
+
+## The reference states the doctrine; the code shows the habit (D443)
+
+Three shipped producers agreeing is a habit (D431). `docs/reference/ptcg-rules.md`
+§9.4 settles the same question outright, in one grep:
+
+> *"Almost every printed effect is decided by the player resolving it, even when
+> it reaches across the table … the target is theirs, the choice is yours. A small
+> family inverts that, and the wording is the tell: **"your opponent may …"**."*
+
+**Ask the rules doc for the rule before generalising from the engine's cases.**
+The doc names the discriminator (a printed chooser) where the cases only exhibit
+one.
+
+## Widen a parameter's MEANING at the call sites, not in the body (D443)
+
+`moveEndpoints` had to start answering about the OPPONENT's board. Rewriting its
+body — five `seat`s → `board` — would have rotted **five** shipped mutant rows
+(`D229-source-scope-is-the-whole-board`, `D229-destinations-include-the-active`,
+`D229-destinations-are-the-other-seat`, `D229-needed-is-two`,
+`D244-othersToSelf-is-benchToActive`), every one of which quotes those lines.
+
+Every route in that function already read its endpoints off whatever seat it was
+handed, so the widening was **two call sites** passing `moveBoardSeat(op, seat)`
+and a doc paragraph. Body byte-identical, zero rows re-transcribed.
+
+**Before rewriting a function to take a new fact, check whether it already takes
+it and the CALLERS are the ones deciding wrongly.** This is D441's *a new anchor
+breaks no existing row* one layer up — D414's lesson avoided rather than paid, on
+a parameter instead of a regex.
+
+## Price the NAME when the name is a persisted byte (D443)
+
+D438's rule is *rename when the second inhabitant arrives*. `selfToBench` gained
+one: with `side: "opponent"` it reads *the board's Active → that board's Bench*,
+which is what its code always computed, and only the word "self" is now wrong.
+
+**It is refused, and the reason is the address.** A `route` VALUE lives inside
+`phase.cont.pendingOp`, which is inside `state`, which is inside `MatchRecord` —
+so renaming it is D359's case and bumps `MATCH_RECORD_VERSION`, retiring every
+live match for a word. The refusal carries an executable falsifier: **the day the
+constant bumps for any other reason, rename it in the same edit.**
+
+D438's rule still holds for names that are not persisted. **Check the address
+before you apply it.**
+
+## A shield has no valence — do not invent one (D443)
+
+`moveEnergy` reaching the opponent's board asks §11 for the first time, at BOTH
+endpoints: a body that would LOSE Energy and a body that would GAIN it are both
+filtered. Every printing in the family says *"prevent all … effects of attacks
+done to this Pokémon"*; **none says "harmful effects"**, and the engine's own
+model (`effectRefusedOn` takes a body, not a valence) has no place to put the
+distinction.
+
+**A harm/benefit split would have been a rule invented at the call site** — D424's
+*prefer the refusal the model re-derives over the one listed against it*, arriving
+at a gate instead of at a blocklist.
+
+## Three shape changes, one persisted address (D443)
+
+D443 changed an op field, a `GameEvent` field and (not) a prompt. Only the op
+lands in `MatchRecord` bytes:
+
+- **`moveEnergy.side`** — inside `phase.cont.pendingOp`. **PERSISTED.** Optional,
+  and ABSENT means what every v29 writer meant (v29 had no opponent-board move to
+  write) → D334, no bump.
+- **`ENERGY_MOVED.actor`** — a `GameEvent`, and **no `GameEvent` is in a
+  `MatchRecord` at all** (`{version, seed, startedAt, names, state, log}`; `state`
+  is a `GameState`, which holds no events; `log` is rendered). Not persisted, so
+  **REQUIRED was free** — D425's call, and the next producer is a compile error.
+- **the prompt** — unmoved. Every `PokemonRef` already carries an ABSOLUTE seat,
+  so `side` rides the OP alone where `anySource` and `anyDest` ride both. Those
+  two are COUPLINGS, invisible in the candidate lists; this one is spelled by
+  every candidate.
+
+**Enumerate your slice's shape changes and give each its own address.** D442's
+rule (*not every shape change is at a persisted address*) generalises: on a slice
+with several, the answer differs per change and "the version question" is not one
+question.
+
+## A one-sided marker rung is green under BOTH defects (D443)
+
+*"The opponent's rows say `opponent`"* passes on a build that says it on **every**
+row. *"My rows say nothing"* passes on a build that says it on **none**. The
+killing case is the same-render **pair**: two identically-named bodies, two rows,
+exactly one marker — and one mutant per direction, each the other's control.
+
+⚠️ **And check the control is reachable.** D443's first online control asserted
+that no unmarked row rendered — vacuously true, because on a sole-source prompt
+the viewer's own bodies are never offered as buttons at all. The fix was a
+constructed mixed-board prompt, **labelled as constructed** (D440: a rung over a
+prompt the engine never emits is a claim about the READER, not about the pool).
+
+## An indentation-prefixed mutant anchor is ambiguous (D443)
+
+`find` is a SUBSTRING search, so a needle beginning with 18 spaces **matches
+inside a line indented 20**. Two JSX badges at different depths are not
+disambiguated by their indentation, and `precheck` reported `find occurs 2×` for
+both HUD rows on the first try.
+
+**Include a neighbouring line when the line you want is a repeated idiom.** This
+is D416/D437's copied-line trap reached through whitespace rather than through a
+copied function.
+
+## The version tax appears in PROSE as well as in assertions (D443)
+
+A blanket replace of `0.344.0` → `0.345.0` across 30 files stepped 27 assertions
+correctly **and corrupted two historical claims**: a suite header recording
+`0.343.0 → 0.344.0` became `0.343.0 → 0.345.0`, and the new suite's own header
+became `0.345.0 → 0.345.0`.
+
+D435 already said *grep the assertion, not the string*. This is the failure that
+rule predicts, arriving from the WRITE side rather than the count side: **a
+mechanical version bump must exclude the prose that records what a PREVIOUS bump
+was.** Re-grep the old version string afterwards; the hits that remain should be
+exactly the historical ones.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
