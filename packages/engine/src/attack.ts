@@ -1129,6 +1129,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // printed string and stays loud — the pre-D282 behaviour, byte for byte, and
   // the direction a "too loose" build fails in (D278/D279's standing lesson).
   //
+  // 🆕🆕 **D444 — AND THAT PRECONDITION IS NOW A TAUTOLOGY, WHICH IS DECLARED RATHER
+  // THAN DISCOVERED.** `attackGateOf` became `registry ?? timingGateFromAttackText`
+  // and the clause→gate map is TOTAL over `ATTACK_GATE_CLAUSES`, so
+  // `splitAttackGateClause(printedEffect) !== null` now IMPLIES
+  // `attackGateOf(…) !== undefined`: no printed string can reach this line, split,
+  // and find no gate behind it. **THE CHECK IS KEPT ANYWAY, AS DEFENCE IN DEPTH**,
+  // because it is the only thing that keeps the split honest if the derivation is
+  // ever narrowed — a `Partial` map, a clause deliberately left unclassified, a
+  // second caller that splits without asking. `D282-split-fires-without-a-gate` is
+  // therefore re-declared `survives: equivalent` with exactly that argument, and a
+  // declared survivor that gets KILLED reports `STALE-SURVIVOR` and fails the run —
+  // so narrowing the derivation is loud rather than quiet (D427).
+  //
   // ⚠️ Through `attackGateOf` rather than `programFor(attacker.id)?.attackGate`:
   // that function is the ONE answer to "what gate is on this body at this index"
   // (D159), it reads the TOP card the same way `authored` below does, and it is

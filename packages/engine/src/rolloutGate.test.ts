@@ -77,6 +77,41 @@ import {
 // too-loose build `D282-split-fires-without-a-gate` exists to refuse. §5 drives
 // the check on an UNGATED twin printing the identical bytes.
 //
+// ── 🆕🆕 **D444 REVERSED THAT REFUSAL. THE PARAGRAPHS ABOVE ARE KEPT AS WRITTEN;
+//    WHAT THEY GOT RIGHT AND WHAT THEY MISSED IS RECORDED HERE.** (conventions.md:
+//    annotate provenance, never overwrite it — and never reverse a decision
+//    silently.) ─────────────────────────────────────────────────────────────────
+//
+// **RIGHT, AND STILL TRUE, RE-MEASURED AT D444's HEAD.** A deriver buys **ZERO
+// additional `legal_standard = 1` printings**: `splitAttackGateClause` claims 6
+// corpus sentences / 14 printings and all 14 are registry-authored (17 registry
+// ids carry `attackGate`; the other 3 are Sylveon ex's TRAILING clause). D444
+// claims **0 new printings** and says so in its own decision row.
+//
+// **RIGHT, AND PAID RATHER THAN ARGUED AWAY.** The two-key check IS a tautology
+// now — the clause→gate map is TOTAL over `ATTACK_GATE_CLAUSES`, so a split that
+// fires implies a gate that exists. `D282-split-fires-without-a-gate` is
+// re-declared `survives: equivalent` on exactly that argument, which means the day
+// anyone makes the derivation partial the harness reports `STALE-SURVIVOR` and
+// fails the run (D427: prefer a declaration a future change breaks loudly).
+//
+// 🛑 **WHAT BOTH PARAGRAPHS MISSED: THE FAILURE MODE, WHICH WAS SILENT.** Neither
+// asked what happens to the RULE on a body with no row — only what happens to the
+// SPLIT. MEASURED at D444's head, on §5's own `UNGATED_TWIN` and on a fixture
+// printing Terapagos ex's clause byte for byte: `attackGateOf` → `undefined`,
+// `attackTimingBlocked` → `undefined`, and the attack **DECLARES SUCCESSFULLY on
+// exactly the turn the card forbids it**. The damage half of the same sentence was
+// loudly withheld the whole time. **Two halves of one sentence failing in opposite
+// directions, and only the loud half was ever driven.**
+//
+// 🛑 **AND THE ZERO WAS SCOPED WHERE THE ENGINE IS NOT (D413).** "Zero additional
+// LEGAL printings" counts `legal_standard = 1`; the builder ships an `expanded`
+// format keyed on `legal_expanded` (`src/features/builder/cards.ts` `legalFlag`),
+// and `effects.ts`'s own clause-table block records that the pool-wide query
+// returns **15** where the legal one returns 13 — the 2 extras being Bombirdier ex
+// `sv04-156`/`-234`, which print the BAN clause and carry **no registry row**.
+// Two populations, two answers, biting a REFUSAL instead of a census.
+//
 // ⚠️ **AND THE ONE ARGUMENT FOR A DERIVER IS D394's, WHICH DOES NOT SURVIVE THE
 // MOVE.** D394 refused a template over the same open-ended ATTACK NAME because
 // its seam (the clause table) is handed a sentence with no card in scope, so
@@ -150,6 +185,33 @@ const MILTANK = "sv08.5-081";
     this body is the only thing that tells those apart from the real behaviour. */
 const UNGATED_TWIN = "fix-moomoo-ungated";
 
+/** 🆕🆕 **D444 — THE NEAR-MISS BODY, AND IT IS THE CONTROL THE DERIVED GATE OWES.**
+    The identical printed SHAPE with one token changed — the quoted attack name —
+    and that string is NOT a row of `ATTACK_GATE_CLAUSES`. It exists to say, on a
+    board, that D444's derivation is a CLOSED LITERAL TABLE and not the template
+    `^You can use this attack only if (.+)\.$` that D394 and D395 both refuse: this
+    body derives NO gate, keeps its whole printed string, and stays on the loud
+    `ATTACK_EFFECT_SKIPPED` path.
+
+    🛑 **IT IS ALSO THE DISCRIMINATION THE OLD `UNGATED_TWIN` RUNGS PROVIDED (D418).**
+    Before D444, §5's twin carried the claim *"the split fires only where the clause
+    is REPRESENTED"* — a claim the derivation makes vacuous, because a table clause is
+    now always represented. Re-pointing the twin onto *"it is gated too"* would have
+    been TRUE and would have dropped that discrimination entirely. This body carries
+    it instead, and carries it at the only place it can still fail: a build that
+    templated the clause instead of tabling it gates this card FOREVER (its
+    "Nuzzle" is never used, so `yourActiveUsedAttackLastTurn` answers false forever)
+    — which is the exact failure D395's block calls *"an attack the player can never
+    use, which no board in the suite would look wrong on"*. */
+const NEAR_MISS_TWIN = "fix-moomoo-near-miss";
+
+/** The near-miss sentence, one token off `ROLLOUT_GATE`: the quoted attack NAME.
+    ⚠️ Differs from the anchor on EXACTLY ONE AXIS (D427) — same case, same
+    punctuation, same word order — so a green refusal here can only be about the
+    name, and not about a rewording the table would have missed anyway. */
+const NEAR_MISS_GATE =
+  "You can use this attack only if this Pokémon used Nuzzle during your last turn.";
+
 /** Miltank `sv08.5-081`, transcribed WHOLE off the printing (D306/D146: a fixture
     that claims to BE the printing gets every scalar re-read, not only the ones the
     assertions touch) — the 130 HP, the {C} type, the ×2 {F} weakness, the retreat
@@ -182,7 +244,28 @@ const LOCAL_CARDS: Record<string, Card> = {
   // Byte-identical to the row above except for the id, which is exactly what
   // makes it a control: the ONLY difference between the two bodies is that one
   // is represented in the registry and the other is not.
+  // 🆕🆕 **D444 — AND THAT DIFFERENCE IS NO LONGER OBSERVABLE, WHICH IS THE SLICE.**
+  // `attackGateOf` is `registry ?? derived` from this head, so this body now gates
+  // itself off its own printed clause. The rungs below say so rather than asserting
+  // the old `undefined`, and `NEAR_MISS_TWIN` carries the discrimination they used
+  // to carry.
   [UNGATED_TWIN]: miltank(UNGATED_TWIN),
+  [NEAR_MISS_TWIN]: battler(NEAR_MISS_TWIN, {
+    name: "Miltank",
+    hp: 130,
+    retreat: 2,
+    types: ["Colorless"],
+    weaknesses: [{ type: "Fighting", value: "×2" }],
+    attacks: [
+      { cost: ["Colorless"], name: "Rollout", damage: 20 },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Moomoo Rolling",
+        damage: 100,
+        effect: NEAR_MISS_GATE,
+      },
+    ],
+  }),
 };
 
 /** D275's idiom: a LOCAL pool, so nothing lands in `FIXTURE_POOL`. `sv08.5` is
@@ -197,10 +280,14 @@ const POOL: Record<string, Card> = { ...FIXTURE_POOL, ...LOCAL_CARDS };
 const ROLLOUT_DECK = deckOf({
   [MILTANK]: 4,
   [UNGATED_TWIN]: 4,
+  // 🆕🆕 D444 — the near-miss control, and `fix-energy` drops 34 → 30 to keep the
+  // 60 honest. ⚠️ THE DECK IS A SHARED FIXTURE ONLY WITHIN THIS FILE (D275's local
+  // pool), so no other suite's seeds move (conventions.md, D412's rule).
+  [NEAR_MISS_TWIN]: 4,
   "sv01-096": 2, // Klefki — the §9 Ability-lock control
   "fix-titan": 8,
   "fix-basic-1": 8,
-  "fix-energy": 34, // Basic {C} — pays both printed costs
+  "fix-energy": 30, // Basic {C} — pays both printed costs
 });
 
 /** Four seeds, so nothing below rests on one shuffle (D270). */
@@ -403,8 +490,49 @@ describe("D395 §1 — the census, and the per-INDEX claim checked against the p
     expect(attackGateOf(state, body, 0)).toBeUndefined();
     expect(attackGateOf(state, body, 99)).toBeUndefined();
     expect(attackGateOf(state, body, -1)).toBeUndefined();
+  });
+
+  // 🆕🆕 **D444 — THE RUNG ABOVE USED TO END `expect(attackGateOf(twin, …, 1))
+  // .toBeUndefined()`, AND THAT LINE IS NOW FALSE.** `attackGateOf` became
+  // `registry ?? timingGateFromAttackText`, so the twin gates itself off its own
+  // printed clause with no registry row anywhere. ⚠️ **RE-POINTED ONTO A SHAPE
+  // CLAIM, NOT A BOOLEAN (D438), AND ONTO THREE BODIES RATHER THAN ONE (D418)** —
+  // "no registry row" was the old claim's whole content, so replacing it with
+  // "the twin is gated" would be true and would test nothing. The triple is what
+  // carries it: the registry body and the unregistered body agree EXACTLY, the
+  // near-miss body derives NOTHING, and the index is still the address.
+  it("🆕🆕 D444 — the UNREGISTERED twin derives the SAME gate, and the NEAR-MISS derives none", () => {
+    const registered = board(SEEDS[0], "p1", "p1", MILTANK);
     const twin = board(SEEDS[0], "p1", "p1", UNGATED_TWIN);
-    expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toBeUndefined();
+    const nearMiss = board(SEEDS[0], "p1", "p1", NEAR_MISS_TWIN);
+
+    // ① THE PRECONDITION, so the pair below cannot be two reads of one row.
+    expect(programFor(MILTANK)?.attackGate?.[1]).toBeDefined();
+    expect(programFor(UNGATED_TWIN)).toBeUndefined();
+    expect(programFor(NEAR_MISS_TWIN)).toBeUndefined();
+
+    // ② THE AGREEMENT, by VALUE and not by "defined": a derivation that answered
+    // some other gate would satisfy `toBeDefined()` and bar the wrong turn.
+    const authored = attackGateOf(registered, activeOf(registered, "p1"), 1);
+    expect(authored).toEqual({
+      kind: "onlyIf",
+      condition: { kind: "yourActiveUsedAttackLastTurn", attack: "Rollout" },
+    });
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 1)).toEqual(authored);
+
+    // ③ THE CLOSED TABLE. One token off the anchor — the quoted attack name — and
+    // the derivation refuses, because it is a literal lookup and not the template
+    // D394/D395 refuse. A templated build answers a gate here that can never open.
+    expect(splitAttackGateClause(NEAR_MISS_GATE)).toBeNull();
+    expect(attackGateOf(nearMiss, activeOf(nearMiss, "p1"), 1)).toBeUndefined();
+
+    // ④ THE ADDRESS IS STILL THE INDEX, on the body where the registry cannot be
+    // supplying it. Idx 0 ("Rollout") prints no effect text, so the derivation has
+    // nothing to read there — an `Object.values(…)[0]` or per-BODY build gates the
+    // one attack that can ever satisfy the gate, exactly as it would with a row.
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 0)).toBeUndefined();
+    expect(attackGateOf(twin, activeOf(twin, "p1"), 99)).toBeUndefined();
+    expect(attackGateOf(twin, activeOf(twin, "p1"), -1)).toBeUndefined();
   });
 });
 
@@ -602,24 +730,53 @@ describe("D395 §5 — the clause-only split and the report it silences", () => 
     );
     expect(skipped).toEqual([]);
 
-    // The twin carries the identical printed bytes and no registry row, so the
-    // whole string reaches the readers, every one refuses it, and the report fires
-    // naming the sentence — the pre-D282 behaviour, byte for byte.
-    const twin = untilTurnOf(board(SEEDS[0], "p1", "p1", UNGATED_TWIN), "p1");
-    const twinSkipped = declareEvents(twin, "p1", 1).filter(
+    // 🆕🆕 **D444 — THE SECOND HALF USED TO BE `UNGATED_TWIN`, AND IT HAS MOVED TO
+    // `NEAR_MISS_TWIN`.** The twin now derives the same gate the registry authors,
+    // so its clause IS accounted for and it correctly emits no report — which is a
+    // strictly better board and a strictly worse CONTROL, because "the report is
+    // driven by whether the clause is represented" needs a body whose clause is
+    // NOT. That is the near-miss: one token off the table, no gate, whole string to
+    // the readers, every one refuses it, report fires naming the sentence — the
+    // pre-D282 behaviour, byte for byte, on the only body that can still show it.
+    const nearMiss = untilTurnOf(board(SEEDS[0], "p1", "p1", NEAR_MISS_TWIN), "p1");
+    const nearMissSkipped = declareEvents(nearMiss, "p1", 1).filter(
       (e) => e.type === "ATTACK_EFFECT_SKIPPED",
     );
-    expect(twinSkipped).toHaveLength(1);
-    expect(twinSkipped[0]).toMatchObject({ effect: ROLLOUT_GATE, damageModifier: null });
+    expect(nearMissSkipped).toHaveLength(1);
+    expect(nearMissSkipped[0]).toMatchObject({ effect: NEAR_MISS_GATE, damageModifier: null });
+
+    // …and the twin, on the same board, emits NONE — the payoff stated beside the
+    // control rather than in place of it.
+    const twin = untilTurnOf(afterRollout(SEEDS[0], "p1", "p1", UNGATED_TWIN), "p1");
+    expect(
+      declareEvents(twin, "p1", 1).filter((e) => e.type === "ATTACK_EFFECT_SKIPPED"),
+    ).toEqual([]);
   });
 
-  it("🛑 the twin is UNGATED on the board where the real printing is barred", () => {
-    // The other half of the same control, on the DECLARATION seam rather than on
-    // the report: the text alone gates nothing, and it must not.
+  // 🆕🆕 **D444 — THIS RUNG HAS FLIPPED, AND THE FLIP IS THE WHOLE SLICE.** It read
+  // *"the twin is UNGATED on the board where the real printing is barred — the text
+  // alone gates nothing, and it must not."* That WAS the behaviour and it was a
+  // printed rule silently deleted: an unregistered body could declare an attack its
+  // own text forbids, on exactly the turn it forbids it, with no report anywhere.
+  // Every other unread sentence in this engine fails LOUD. ⚠️ **THE PAIR IS STILL
+  // THE ASSERTION** — the near-miss body keeps the "text alone gates nothing" half
+  // alive, on the only text that can still show it.
+  it("🆕🆕 D444 — the UNREGISTERED twin is BARRED, and the near-miss is not", () => {
     for (const seat of ["p1", "p2"] as const) {
-      const state = untilTurnOf(board(SEEDS[0], "p1", seat, UNGATED_TWIN), seat);
-      expect(declare(state, seat, 1), seat).toBe("OK");
-      expect(wirePlayable(state, seat, 1), seat).toBe(true);
+      const barred = untilTurnOf(board(SEEDS[0], "p1", seat, UNGATED_TWIN), seat);
+      expect(declare(barred, seat, 1), seat).toBe("ATTACK_PREVENTED");
+      expect(wirePlayable(barred, seat, 1), seat).toBe(false);
+      // …and it OPENS on the board its own clause opens on, so the bar is a gate
+      // and not a refusal of everything (D424: a refusal rung owes an admission).
+      const opened = afterRollout(SEEDS[0], "p1", seat, UNGATED_TWIN);
+      expect(declare(opened, seat, 1), seat).toBe("OK");
+      expect(wirePlayable(opened, seat, 1), seat).toBe(true);
+
+      // THE CONTROL: one token off the table and the declaration seam sees nothing
+      // at all — no gate, no bar, on the same board that bars the twin.
+      const nearMiss = untilTurnOf(board(SEEDS[0], "p1", seat, NEAR_MISS_TWIN), seat);
+      expect(declare(nearMiss, seat, 1), seat).toBe("OK");
+      expect(wirePlayable(nearMiss, seat, 1), seat).toBe(true);
     }
   });
 });

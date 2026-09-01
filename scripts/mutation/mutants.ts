@@ -5205,7 +5205,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5711,7 +5711,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5722,7 +5722,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.345.0";',
+    find: 'export const engineVersion = "0.346.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6378,9 +6378,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D281",
     what: "the printed ATTACK clause is read through the §9 SUPPRESSION the passive fold applies, so a Klefki `sv01-096` Ability-lock silences it — Terapagos ex may suddenly use the attack its own text bars and Volbeat suddenly may not use the one its own text licenses, in the same call. 🛑 THE INVERSE OF `attackFirstTurnExempt`'s RULE, and the easiest thing in this slice to get wrong by copying the field one line over. ⚠️ SPELLED AS THE `disabled` DROP `passivesOf` ITSELF MAKES (`disabledAbilityUids`) AND NOT AS AN `attackFirstTurnExempt` READ — the first draft of this row did the latter, precheck passed it, and it SURVIVED because not one of the 13 bodies carries that flag: the mutant changed nothing. A `find` that occurs is not a mutant that mutates",
     file: "packages/engine/src/continuous.ts",
-    find: "  return programFor(top.id)?.attackGate?.[index];",
+    // ⚠️ **RE-ANCHORED AT D444, NOT SKIPPED (D414's re-transcription rule).**
+    // `attackGateOf` became `registry ?? derived`, so the single `return` line this
+    // row quoted is now two lines and the old `find` stopped occurring. 🛑 **THE
+    // CLAIM IS UNCHANGED AND THE MUTATION IS CONFINED TO THE SAME DEFECT (D416)**:
+    // the §9 drop is installed at the TOP of the read, so it silences the registry
+    // row AND the derivation together — which is what "read through the passive
+    // fold" means and is exactly what it meant before. `attackIndexGate.test.ts`
+    // keeps the kill for the same reason it always had: its bodies are REAL ids
+    // whose gates come off the row.
+    find: "  const authored = programFor(top.id)?.attackGate?.[index];",
     replace:
-      "  const holder = topUid(pokemon);\n  if (holder !== undefined && disabledAbilityUids(state).has(holder)) return undefined;\n  return programFor(top.id)?.attackGate?.[index];",
+      "  const holder = topUid(pokemon);\n  if (holder !== undefined && disabledAbilityUids(state).has(holder)) return undefined;\n  const authored = programFor(top.id)?.attackGate?.[index];",
     expectKilledBy: ["packages/engine/src/attackIndexGate.test.ts"],
   },
   {
@@ -6655,6 +6664,25 @@ export const MUTANTS: Mutant[] = [
     find: "    printedEffect === null || attackGateOf(state, active, index) === undefined",
     replace: "    printedEffect === null",
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
+    // 🆕🆕 **D444 — DECLARED `equivalent`, AND THIS IS THE PRICE D395's REFUSAL
+    // NAMED IN ADVANCE.** D444 made `attackGateOf` `registry ?? derived` over a map
+    // that is TOTAL across `ATTACK_GATE_CLAUSES`, so
+    // `splitAttackGateClause(printedEffect) !== null` now IMPLIES
+    // `attackGateOf(…) !== undefined` and the second disjunct can no longer change
+    // an answer on ANY input: a string the splitter refuses is unchanged either way,
+    // and a string it claims has a gate either way. The check is KEPT in the source
+    // as defence in depth (see the block at that line), so the row is declared rather
+    // than deleted. 🛑 **AND THE DECLARATION SELF-INVALIDATES, WHICH IS WHY IT IS
+    // WORTH MORE THAN A DELETION (D427)**: narrow the derivation — a `Partial` map, a
+    // clause deliberately left unclassified, a second splitter caller — and this
+    // mutant becomes killable again, the harness reports `STALE-SURVIVOR`, and the
+    // run FAILS. The `benchBodySelfScaling.test.ts` killer is kept in
+    // `expectKilledBy` on purpose: it is the suite that would find it.
+    survives: {
+      kind: "equivalent",
+      reason:
+        "D444: `ATTACK_GATE_CLAUSE_GATES` is a total `Record<AttackGateClause, AttackTimingGate>`, so a split that fires implies a gate that resolves and the removed disjunct cannot change any answer. Killable again — and therefore STALE-SURVIVOR — the moment the derivation stops being total.",
+    },
   },
   {
     id: "D282-split-clause-floats",
@@ -16506,8 +16534,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D395",
     what: "🔑 THE DEADLOCK, FROM THE READER SIDE: `attackGateOf` takes the FIRST gate on the body instead of the one at `index` - the per-BODY reading of a per-INDEX field, and the shape D281's own comment warned was indistinguishable on today's pool. Miltank's idx 0 \"Rollout\" then inherits idx 1's gate, and since \"Rollout\" is the ONLY way to satisfy that gate the card can never be used again. ⚠️ GREEN ON ALL 13 PRINTINGS THAT EXISTED BEFORE THIS SLICE, because every one of their gates IS the first one",
     file: "packages/engine/src/continuous.ts",
-    find: "  return programFor(top.id)?.attackGate?.[index];",
-    replace: "  return Object.values(programFor(top.id)?.attackGate ?? {})[0];",
+    // ⚠️ **RE-ANCHORED AT D444 for the reason above, and the CONFINEMENT matters
+    // more here.** The index-blind read is installed on the REGISTRY half alone, so
+    // the `?? derived` tail is left intact — which keeps the mutant expressing D395's
+    // defect (Miltank's idx 0 inherits idx 1's row and "Rollout" can never be used)
+    // rather than accidentally expressing D444's. `rolloutGate.test.ts` §2 keeps the
+    // kill: on the REGISTERED Miltank the authored gate is non-undefined at idx 0
+    // under the mutation, so the `??` never reaches the derivation.
+    find: "  const authored = programFor(top.id)?.attackGate?.[index];",
+    replace: "  const authored = Object.values(programFor(top.id)?.attackGate ?? {})[0];",
     expectKilledBy: ["packages/engine/src/rolloutGate.test.ts"],
   },
   {
@@ -20865,5 +20900,98 @@ export const MUTANTS: Mutant[] = [
     find: "                    {/* \ud83c\udd95 D443 \u2014 the destination list's half of the same marker. */}\n                    {ref.seat !== seat && (",
     replace: "                    {/* \ud83c\udd95 D443 \u2014 the destination list's half of the same marker. */}\n                    {true && (",
     expectKilledBy: ["src/features/online/components/OnlineHud.dom.test.tsx"],
+  },
+  // ── 🆕🆕 D444 · THE FIRST DERIVED `attackGate`. Eight rows, and the SHAPE of the
+  //    set is the finding: FIVE of the eight are on the clause→gate MAP, because the
+  //    map is where a printed sentence becomes a rule and it is the ONE place in this
+  //    slice where a wrong answer is SILENT. Everything else here fails loudly — an
+  //    unread body reports `ATTACK_EFFECT_SKIPPED` — but a gate authored at the wrong
+  //    polarity produces a legal board on which a player simply cannot do something
+  //    the card says they can, or can do something it says they cannot, with no event
+  //    naming either.
+  //
+  //    ⚠️ **THREE PRE-EXISTING ROWS WERE REPAIRED RATHER THAN LEFT TO ROT**, and each
+  //    is annotated at its own site: `D281-gate-read-through-the-ability-fold` and
+  //    `D395-gate-read-ignores-the-index` are RE-ANCHORED (the line they quoted became
+  //    two lines) with their mutations CONFINED to the registry half so the original
+  //    killers keep the kill (D416); `D282-split-fires-without-a-gate` is DECLARED
+  //    `survives: equivalent`, which is the price D395's refusal predicted and it is
+  //    paid in the open rather than argued away.
+  {
+    id: "D444-ban-clause-mapped-to-the-licence-gate",
+    decision: "D444",
+    what: "🛑 C1 — THE HEADLINE, AND THE MISTAKE AN AUTHOR ACTUALLY MAKES: the BAN clause is mapped to `firstTurnExempt`. The two `If you go …` rows are ONE PRINTED WORD apart (\"can\" / \"can't\") and modify OPPOSITE standing rules — one ADDS a restriction, one LIFTS §4's turn-1 ban — so a build that read the family as one kind is green on every board anyone writes naturally, because the natural board for each is the turn its own card is about. Under this mutation Terapagos ex's clause becomes a PERMISSION and \"Unified Beatdown\" is usable on exactly the turn its own text forbids. ⚠️ NOTHING IN THE ENGINE COMPLAINS — no event, no report, no log row: the attack simply resolves",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"If you go second, you can't use this attack during your first turn.\": {\n    kind: \"barredIf\",\n    condition: ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN,\n  },",
+    replace: "  \"If you go second, you can't use this attack during your first turn.\": {\n    kind: \"firstTurnExempt\",\n  },",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-licence-clause-mapped-to-the-ban-gate",
+    decision: "D444",
+    what: "🛑 C2 — C1's OTHER DIRECTION, AND IT IS A SEPARATE ROW BECAUSE THE TWO FAIL ON DIFFERENT BOARDS: the LICENCE clause is mapped to the BAN's `barredIf` over the shared condition. Volbeat's \"Quick Sign\" is then §4-banned on turn 1 — the one turn the card is printed for — which is D278/D279's TOO-STRICT failure, the half nobody writes a test for. ⚠️ A SUITE THAT ONLY DROVE C1's BOARD IS GREEN HERE AND VICE VERSA; the pair is what says the map has two directions",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"If you go first, you can use this attack during your first turn.\": {\n    kind: \"firstTurnExempt\",\n  },",
+    replace: "  \"If you go first, you can use this attack during your first turn.\": {\n    kind: \"barredIf\",\n    condition: ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN,\n  },",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-gate-row-polarity-copied-from-the-ban-row",
+    decision: "D444",
+    what: "🛑 C3 — THE NEIGHBOUR'S REAL CODE COPIED VERBATIM (D190b's rule for what a mutant must be): the GATE row takes the BAN row's `barredIf` over the identical condition, which is the line immediately above it in the same object. D281 built TWO polarity members precisely because these two clauses share a condition and differ only in sign; this is that field shape's whole purpose, inverted. Illumise's \"Slowing Perfume\" then works on every turn EXCEPT the one it is printed for",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"You can use this attack only if you go second, and only during your first turn.\": {\n    kind: \"onlyIf\",",
+    replace: "  \"You can use this attack only if you go second, and only during your first turn.\": {\n    kind: \"barredIf\",",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-rollout-row-names-the-neighbouring-attack",
+    decision: "D444",
+    what: "🛑 C4 — THE QUOTED NAME TAKEN FROM THE WRONG INDEX: the Rollout row's condition names \"Moomoo Rolling\" — the attack the clause is printed ON — instead of \"Rollout\", the attack the clause NAMES. That is the transcription error the printed layout invites, and its consequence is total: the gate can then only be satisfied by using the very attack it bars, so the card can never be used again. ⚠️ **A RUNG THAT ONLY ASSERTS THE ATTACK IS BARRED IS GREEN UNDER IT** — the barred direction is unchanged; only the board where the window OPENS can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Rollout\" },",
+    replace: "    condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Moomoo Rolling\" },",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-shared-condition-drops-the-turn-term",
+    decision: "D444",
+    what: "⚠️ C5 — THE `allOf` LOSES ITS SECOND TERM, so both the BAN and the GATE row read as \"whenever you go second\" rather than \"on your first turn going second\". 🛑 **GREEN ON A ONE-SEAT SUITE**: every board that drives the going-FIRST player fails `youGoSecond` and answers identically, so the ONLY thing that can see it is the going-second player on a LATER turn — which is why §3's admission rung is written on two seats and two turn numbers rather than one",
+    file: "packages/engine/src/effects.ts",
+    find: "  conditions: [{ kind: \"youGoSecond\" }, { kind: \"yourFirstTurn\" }],\n};",
+    replace: "  conditions: [{ kind: \"youGoSecond\" }],\n};",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-derivation-dropped",
+    decision: "D444",
+    what: "🛑 C6 — THE WHOLE SLICE REMOVED: `attackGateOf` goes back to reading the registry alone. This is HEAD one commit before D444 and it is the defect the slice exists to close — a body printing one of the four clauses with no registry row declares its attack on exactly the turn its own text forbids, with no event, no report and no log row. ⚠️ **EVERY OTHER ASSERTION IN EVERY OTHER GATE SUITE STAYS GREEN**, because they all drive REAL ids whose gates come off the row",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return authored ?? timingGateFromAttackText(attacksOf(top)[index]?.effect);",
+    replace: "  return authored;",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-derivation-reads-index-zero",
+    decision: "D444",
+    what: "🛑 C7 — THE LEAK THIS DESIGN INVITES: the derivation reads the printed text of attack 0 rather than of attack `index`, which is the per-BODY reading of a per-INDEX fact and the shape D281's own comment warned was indistinguishable on the pool of its day. A derived gate has no registry row to key off, so the INDEX is carried entirely by which attack's text is read — this row is what makes that a claim rather than a coincidence. Volbeat's idx 1 \"Coordinated Strike\" is then licensed on turn 1 alongside the \"Quick Sign\" the card actually names, and Miltank's idx 1 loses its gate to an idx 0 that prints no text at all",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return authored ?? timingGateFromAttackText(attacksOf(top)[index]?.effect);",
+    replace: "  return authored ?? timingGateFromAttackText(attacksOf(top)[0]?.effect);",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts"],
+  },
+  {
+    id: "D444-derivation-wins-over-the-registry",
+    decision: "D444",
+    what: "⚠️ C8 — THE PRECEDENCE INVERTED: `derived ?? authored` instead of D8's `authored ?? derived`. 🛑 **DECLARED, AND THE DECLARATION IS THE FINDING**: the two producers agree on EVERY printed row today — `derivedAttackGate.test.ts` §2 asserts exactly that, over the live registry's five distinct gate values — so the order is currently unobservable and no board can tell them apart. That is not an argument for removing the `??`; it is the reason the agreement rung exists. The day a registry row disagrees with its own printed clause (the drift §2 was written to catch) this becomes killable and the harness reports STALE-SURVIVOR",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const authored = programFor(top.id)?.attackGate?.[index];\n  return authored ?? timingGateFromAttackText(attacksOf(top)[index]?.effect);",
+    replace: "  const authored = programFor(top.id)?.attackGate?.[index];\n  return timingGateFromAttackText(attacksOf(top)[index]?.effect) ?? authored;",
+    expectKilledBy: ["packages/engine/src/derivedAttackGate.test.ts", "packages/engine/src/rolloutGate.test.ts", "packages/engine/src/attackIndexGate.test.ts", "packages/engine/src/angeliteCancel.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "D444: every registry `attackGate` value either IS the gate its printed clause derives (the 14 leading-clause printings) or derives nothing at all (Sylveon ex's 3 trailing-clause printings, where the derivation answers undefined and the `??` falls through to the row either way). So both orders return the same gate on every id in the registry and every body in the pool. `derivedAttackGate.test.ts` §2 pins that agreement by VALUE; the day it breaks, this row is KILLED and reports STALE-SURVIVOR.",
+    },
   },
 ];

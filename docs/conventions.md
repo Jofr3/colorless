@@ -2240,6 +2240,107 @@ always had. When a slice redefines what a shipped name MEANS rather than what it
 holds, say so beside the zero — the zero is the measurement that the redefinition
 did not leak.
 
+## A NAME can enrol a function in a mechanism (D444)
+
+🛑 **`censusAttackCorpus.ts` derives the whole-sentence reader surface off
+`effects.ts` by NAME PREFIX (`deriveAttack…`) plus `typeof === "function"`. That
+makes `deriveAttack` a RESERVED NAMESPACE with nothing but a string behind the
+decision.** D444 added a new export called `deriveAttackTimingGate`, which
+enrolled itself as a reader — and because `resolvedByAnyReader` tests
+`read(text) !== null` while that function answers `undefined`, the predicate
+claimed **every sentence in the corpus**. 22 rungs across 5 files went red in one
+run.
+
+That is the exact failure `resolvedByAnyReader`'s own doc block predicts for a
+mis-named reader, and it fired for a function that was never meant to be one.
+**Before naming a new `effects.ts` export, ask whether the name puts it inside a
+surface that is derived by pattern.** The membership test is the name; there is no
+type, no registration, and no compile error. It is also the good news: the surface
+guard caught it in one run, loudly, which is exactly what D417 built it for.
+
+⚠️ **A derived surface is a two-sided contract, and only one side is usually
+tested.** The rungs everyone writes say *"every reader is in the surface"*. The
+one that catches this says *"every member of the surface is a reader"* — and the
+cheapest form is to assert the two SETS are equal, which reddens on an accidental
+member as well as on a missing one.
+
+## Re-pointing a rung whose PREMISE your slice removes (D444)
+
+D418's rule — *after re-pointing, ask what the OLD claim could catch that the new
+one cannot* — has a second shape, and D444 hit it twice in one slice.
+
+`benchBodySelfScaling.test.ts` §4 and `rolloutGate.test.ts` §5 both pinned *"a
+body printing the clause with NO registry row keeps its whole string and stays
+LOUD"*. D444 made every table clause represented BY CONSTRUCTION, so those bodies
+stopped being unrepresented. **Re-pointing the rungs onto the same bodies would
+have produced two TRUE assertions that nothing can falsify** — the split fires
+either way now.
+
+**The move is to find the body that STILL has the old property**, not to relax the
+claim. Here that is a NEAR-MISS: the same printed shape with one token changed, so
+it is genuinely outside the table, genuinely ungated, and genuinely loud. The old
+discrimination survives intact on a new subject, and the mutant that depended on it
+(`D282-split-fires-without-a-gate` at the split; the polarity rows at the map) still
+dies. ⚠️ **And the near-miss must differ on exactly ONE axis (D427)**, or it says
+nothing about which feature did the refusing.
+
+## Half a sentence can fail loudly while the other half fails in silence (D444)
+
+🛑 **This engine's coverage strategy is "flag loudly rather than guess", and it has
+one hole: a printed RULE that nobody authored is simply absent.** A body printing
+Terapagos ex's *"If you go second, you can't use this attack during your first
+turn. This attack does 30 damage for each of your Benched Pokémon."* with no
+registry row was — measured on a board — **loud about the damage and silent about
+the restriction**: `ATTACK_EFFECT_SKIPPED` fired naming the whole sentence and the
+fold was withheld, while `attackGateOf` answered `undefined` and the attack
+declared successfully on exactly the turn the card forbids.
+
+A rung had pinned that body since D282, and it pinned the LOUD half. **When a
+printed sentence carries a rule AND an effect, a guard about the effect is not a
+guard about the rule** — they resolve at different seams (the §8 declaration gate
+versus the §8.5 pipeline) and they fail in opposite directions. Ask what happens to
+each half separately, and drive each on its own board.
+
+## A refusal can be right about its measurement and wrong about its QUESTION (D444)
+
+D395 refused a derived `attackGate` on two measured grounds, and D444 reversed it
+without either ground turning out to be false:
+
+- *"a deriver buys ZERO additional legal printings"* — **still true at D444's
+  head.** ⚠️ And scoped to `legal_standard = 1`, while the app ships an
+  **`expanded`** format keyed on `legal_expanded` (`src/features/builder/cards.ts`
+  `legalFlag`). effects.ts's own block already recorded that the pool-wide query
+  returns 15 where the legal one returns 13. **D413's two populations, two answers
+  — biting a refusal one level above a census.**
+- *"a deriver makes `attack.ts`'s two-key check a tautology"* — **also true, and it
+  is a price rather than a blocker.** It was paid: the check is kept as defence in
+  depth with the argument written at the line, and the mutant that check earned is
+  re-declared `survives: equivalent` with a reason that self-invalidates.
+
+**What the refusal never asked was what happens to the RULE on an unrepresented
+body.** It reasoned entirely about the SPLIT. ⚠️ **So the check on a refusal is not
+only "are its numbers still true" (D413/D422) — it is "did it ask the whole
+question".** A refusal can be arithmetically perfect and still be about the wrong
+half of the mechanism, and re-running its query will never tell you.
+
+## Registry ?? derived: keep the row, and assert the two against each other (D444)
+
+D402's finding, re-earned one field over. When a hand-authored registry row gains a
+DERIVATION behind it, the honest move is `authored ?? derived` and **keeping every
+row**: the row still wins, no board moves, and the two producers become assertable
+against each other — which is a stronger rung than either had alone.
+
+D444's form: every DISTINCT `attackGate` value in the live registry must be either
+a value the printed clause derives, or a named exception (the one trailing-clause
+family). That single rung is what ties the clause table to 17 hand-authored rows,
+and it reddens by VALUE the day a row is authored at the wrong polarity — the
+failure D281's own doc block calls the easiest thing there to get wrong.
+
+⚠️ **And be honest when the PRECEDENCE itself is unobservable.** If the two
+producers agree everywhere, no board can tell `a ?? b` from `b ?? a`; that mutant
+is `equivalent` and should be DECLARED as such, with the agreement rung named as
+the thing that would make it killable again.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

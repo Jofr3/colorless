@@ -14,6 +14,11 @@
 
 import { BASIC_ENERGY_TYPES, type BasicEnergyType } from "@luminous/schema";
 import type { StatusName } from "./events";
+// 🆕🆕 D444 — the ONE edge this file takes back to `registry.ts`, and it is
+// TYPE-ONLY, so it is erased wholesale and no runtime cycle exists (registry.ts
+// imports `searchTopOrderProgram` from here by VALUE). `interpreter.ts` takes the
+// identical edge for the identical reason and says so at its import.
+import type { AttackTimingGate } from "./registry";
 // D297 — the ONE value import this file takes from `types.ts`, and it is the
 // §4 Bench ceiling used as a printed-number guard (see
 // `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
@@ -23025,12 +23030,84 @@ export function discardScaledBoostProgram(
     mis-parsed condition is an attack the player can never use, which no board in
     the suite would look wrong on. A literal row lands on the loud unresolved path
     instead. */
-const ATTACK_GATE_CLAUSES: readonly string[] = [
+const ATTACK_GATE_CLAUSES = [
   "If you go second, you can't use this attack during your first turn.",
   "If you go first, you can use this attack during your first turn.",
   "You can use this attack only if you go second, and only during your first turn.",
   "You can use this attack only if this Pokémon used Rollout during your last turn.",
-];
+] as const;
+
+/** 🆕🆕 D444 — the four printed spellings, AS A TYPE. `as const` above turns the
+    list into a tuple of string LITERALS, and this union is what makes
+    `ATTACK_GATE_CLAUSE_GATES` below a total map the compiler enforces rather than
+    a lookup table that can quietly miss a row. */
+export type AttackGateClause = (typeof ATTACK_GATE_CLAUSES)[number];
+
+/** The condition 10 of the 14 printings share, spelled once: the going-SECOND
+    player's own first turn (which is turn 2 — `yourFirstTurn` is a per-seat fact,
+    not `state.turn === 1`; see its own doc block above). D281 authored this
+    object identically at BOTH polarities in registry.ts, which is the whole
+    argument for one field with a polarity token instead of two index maps. */
+const ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN: BoardCondition = {
+  kind: "allOf",
+  conditions: [{ kind: "youGoSecond" }, { kind: "yourFirstTurn" }],
+};
+
+/** 🆕🆕 **D444 — THE PRINTED CLAUSE → THE `AttackTimingGate` IT MEANS.** The second
+    column of the table above, and the reason the two live in one place: until this
+    slice the clause LIST (here) and the gate VALUES (registry.ts, 17 hand-authored
+    rows across 7 consts) were two independent transcriptions of the same four
+    printed sentences with nothing tying them, and D281's own doc block names the
+    polarity confusion as *"the easiest thing here to get wrong"*.
+
+    🛑 **THE TWO `If you go …` ROWS POINT IN OPPOSITE DIRECTIONS AND ONE OF THEM IS
+    A PERMISSION, NOT A GATE.** *"If you go second, you can't use this attack during
+    your first turn."* ADDS a restriction the rules do not otherwise impose —
+    `barredIf`, read by `attackTimingBlocked` (interpreter.ts) at the §8 declaration
+    seam. *"If you go first, you can use this attack during your first turn."*
+    REMOVES one the rules DO impose — `ptcg-rules.md` §4: *"**P1 may NOT attack** on
+    their first turn"* — so it is `firstTurnExempt`, carries no `BoardCondition` at
+    all, and is read by `firstTurnAttackBanned` (continuous.ts) and by nothing else.
+    ⚠️ **A BUILD THAT MAPPED BOTH TO ONE KIND IS GREEN ON EVERY BOARD ANYONE WRITES
+    NATURALLY**, because the natural board for each is the turn its own card is
+    about: swap them and the BAN body becomes usable on exactly the turn its text
+    forbids while the LICENCE body becomes barred on exactly the turn its text
+    permits, and each defect is invisible from the other's suite. `derivedAttackGate.test.ts`
+    §1 drives the four rows against each other, and §3 drives both directions on a
+    board (D278/D279's standing lesson: the too-strict half is the one nobody writes).
+
+    🛑 **THE ROLLOUT ROW IS DERIVED TOO, AND THAT IS NOT A TEMPLATE.** The block
+    above refuses `^You can use this attack only if (.+)\.$` because the quoted
+    ATTACK NAME is open-ended and a mis-parsed condition bars a legal attack forever
+    and silently. **That refusal is untouched.** This map is keyed on the CLOSED
+    literal list, so the attack name is a constant inside a row someone transcribed
+    from the catalog by hand — there is no parse to get wrong, and a fifth spelling
+    does not silently become a gate, it fails to compile.
+
+    ⚠️ **`Record<AttackGateClause, …>` AND NOT A `Partial` OR AN ARRAY OF PAIRS**
+    (D424's rule: prefer a refusal the type system re-derives). Adding a row to
+    `ATTACK_GATE_CLAUSES` without deciding what it MEANS does not typecheck, so this
+    map cannot drift from the list it is the second column of. A `Partial` would
+    have let a clause split off the front of a printed string with no gate behind
+    it — which is exactly the "the caller must have accounted for the clause" hazard
+    the split's own doc block warns about, arriving through the accounting. */
+const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
+  "If you go second, you can't use this attack during your first turn.": {
+    kind: "barredIf",
+    condition: ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN,
+  },
+  "If you go first, you can use this attack during your first turn.": {
+    kind: "firstTurnExempt",
+  },
+  "You can use this attack only if you go second, and only during your first turn.": {
+    kind: "onlyIf",
+    condition: ATTACK_GATE_SECOND_PLAYERS_FIRST_TURN,
+  },
+  "You can use this attack only if this Pokémon used Rollout during your last turn.": {
+    kind: "onlyIf",
+    condition: { kind: "yourActiveUsedAttackLastTurn", attack: "Rollout" },
+  },
+};
 
 /** 🛑 D282 — THE SPLIT ANCHOR: take a printed timing-gate clause off the FRONT of
     an attack's effect text and hand back the body sentence behind it, or `null`
@@ -23098,7 +23175,9 @@ const ATTACK_GATE_CLAUSES: readonly string[] = [
 
     Returns the clause and the body separately rather than the body alone, so a
     caller that wants to assert WHICH clause it accounted for can. */
-export function splitAttackGateClause(text: string): { clause: string; body: string } | null {
+export function splitAttackGateClause(
+  text: string,
+): { clause: AttackGateClause; body: string } | null {
   const trimmed = text.trim();
   for (const clause of ATTACK_GATE_CLAUSES) {
     // 🆕🆕 D395 — THE CLAUSE-ONLY PRINTING, AND THIS BRANCH IS THE REVERSAL OF A
@@ -23132,6 +23211,75 @@ export function splitAttackGateClause(text: string): { clause: string; body: str
     return { clause, body };
   }
   return null;
+}
+
+/** 🆕🆕 **D444 — THE FIRST DERIVED `attackGate`: the printed timing clause an
+    attack opens with → the gate it means, or `undefined` when it opens with none.**
+    The `deriveAttackEffect` half of `attackGateOf` (continuous.ts), which resolves
+    `registry ?? derived` with the registry ABOVE the derivation exactly as
+    `attack.ts` does for `CardProgram.attack` (D8, `authored ?? derived`).
+
+    🛑 **WHAT THIS FIXES IS NOT A CENSUS FIGURE — IT IS A SILENT NON-ENFORCEMENT, AND
+    IT IS THE ONLY SILENT FAILURE IN THIS ENGINE'S COVERAGE STRATEGY.** Everywhere
+    else an unread printed sentence fails LOUD (`ATTACK_EFFECT_SKIPPED`, naming the
+    string). A printed TIMING CLAUSE on a body with no registry row failed the other
+    way: MEASURED at D444's head on a fixture printing Terapagos ex's sentence byte
+    for byte, `attackGateOf` answered `undefined`, `attackTimingBlocked` answered
+    `undefined`, and `applyAction({type:"attack"})` **succeeded on exactly the turn
+    the card forbids it** — the printed rule deleted, in silence, while the DAMAGE
+    half of the same sentence was loudly withheld. Two halves of one sentence
+    failing in opposite directions. `derivedAttackGate.test.ts` §3 is that board.
+
+    🛑 **THIS REVERSES D395's REFUSAL, WHICH IS WRITTEN OUT IN `rolloutGate.test.ts`,
+    AND THE REVERSAL IS ARGUED RATHER THAN ASSUMED.** That refusal settled
+    *"registry row"* on two grounds, and BOTH are re-measured here:
+      ① *"a deriver buys ZERO additional legal printings"* — **STILL TRUE, re-measured
+        at this head**: `splitAttackGateClause` claims 6 corpus sentences / 14
+        printings, and all 14 are registry-authored today (17 registry ids carry
+        `attackGate`; the other 3 are Sylveon ex's TRAILING clause, which is not in
+        this table). **This slice claims 0 new printings and says so.** ⚠️ But the
+        count is scoped to `legal_standard = 1`, and **the engine is not**: the
+        builder ships an `expanded` format keyed on `legal_expanded`
+        (`src/features/builder/cards.ts` `legalFlag`), and the block above this
+        table already records that the pool-wide query returns **15** where the legal
+        one returns 13 — the 2 extras being Bombirdier ex `sv04-156`/`-234`, which
+        print the BAN clause and carry **no registry row**. That is D413's
+        two-populations-two-answers biting a REFUSAL, one level up from a census.
+      ② *"a deriver makes `attack.ts`'s two-key check a tautology and re-installs the
+        too-loose build"* — **CORRECT, AND PAID RATHER THAN ARGUED AWAY.** It is now
+        a tautology: this map is TOTAL over the clause list, so
+        `splitAttackGateClause(t) !== null` implies `attackGateOf(…) !== undefined`.
+        The check is kept as defence in depth (it is what keeps the split honest if
+        the derivation is ever made partial), `D282-split-fires-without-a-gate` is
+        re-declared `survives: equivalent` with that argument, and the two rungs that
+        rested on the un-gated body staying loud are re-pointed onto the strictly
+        stronger claim — that the un-gated body is now ENFORCED. A declared survivor
+        that gets killed reports `STALE-SURVIVOR`, so making the derivation partial
+        again fails the run rather than passing quietly (D427).
+
+    ⚠️ **TAKES THE PRINTED TEXT AND NOT A CARD**, so it composes with the one caller
+    that holds the card and the index. D394's refusal turns on what is IN SCOPE, and
+    this function deliberately keeps the card OUT of scope: it has no open-ended
+    parse to resolve, only a closed table to look up.
+
+    🛑 **THE NAME IS LOAD-BEARING AND IT IS NOT `deriveAttack…`, WHICH THIS SLICE
+    LEARNED BY BREAKING IT.** `censusAttackCorpus.ts` derives the whole-sentence
+    READER SURFACE off this module by the `deriveAttack` NAME PREFIX plus
+    `typeof === "function"` — so `deriveAttack` is a RESERVED namespace here meaning
+    *"whole-sentence reader, `T | null`"*, and this function is neither: it reads a
+    LEADING CLAUSE, not a whole sentence, and it answers `undefined`. The first draft
+    was called `deriveAttackTimingGate`, enrolled itself as a 13th reader, and
+    `resolvedByAnyReader` — which tests `read(text) !== null` — then claimed **every
+    sentence in the corpus**, because `undefined !== null`. That is the exact failure
+    `resolvedByAnyReader`'s own doc block predicts for a mis-named reader, and it
+    reddened 22 rungs across 5 files in one run rather than moving a figure quietly.
+    ⚠️ **A NEW `effects.ts` EXPORT IS INSIDE OR OUTSIDE THAT NAMESPACE BY ITS NAME
+    ALONE, WITH NO TYPE BEHIND THE DECISION.** `derivedAttackGate.test.ts` §5 pins the
+    surface at 12 and asserts this function is not in it. */
+export function timingGateFromAttackText(text: string | undefined): AttackTimingGate | undefined {
+  if (text === undefined) return undefined;
+  const split = splitAttackGateClause(text);
+  return split === null ? undefined : ATTACK_GATE_CLAUSE_GATES[split.clause];
 }
 
 /** Every whole-sentence attack reader this module exports, in the order

@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-01 — build session #383 (**P3-M5 — D443, *the seat axis of the move-Energy family — the op reaches the other side of the table, and two of the work order's three stated costs did not exist.*** Engine **0.344.0 → 0.345.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over reconstructed v29 bytes in BOTH directions, and asked at the right address for the second slice running.** *"Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon."* (**2 legal**) and *"You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon."* (**3 legal**) — **2 sentences / 5 legal printings** — now SIMULATE over the SHIPPED `moveEnergy` op: **zero new `route` values, zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **THE SLICE IS ONE OPTIONAL FIELD, `side?: "opponent"`** — the endpoints are the FREE route and `selfToBench` read off the other seat's board, and `moveEndpoints`' BODY is untouched: its `seat` parameter became the BOARD and the two CALL SITES pass `moveBoardSeat(op, ctx.seat)`, which rots none of the five shipped mutant rows that quote its lines. 🛑 **TWO OF THE WORK ORDER'S THREE STATED COSTS WERE FALSE, AND CHECKING THEM IS THE BIGGEST FINDING.** There is no fifth `route` (`selfToBench` already computes *the board's Active → that board's Bench*; the RENAME D438 would ask for is refused because a `route` value is a persisted byte). There is no `decider` (`ptcg-rules.md` §9.4: *"almost every printed effect is decided by the player resolving it, even when it reaches across the table"*, and the tell for the inverting family is the printed *"your opponent may …"*, which neither sentence prints) — the three shipped `decider` producers were the WRONG comparison set, and the right one (`knockOutChosen`, `discardEnergy`'s `opponentChosen`) is unanimous the other way. And the *"dependent narrowing"* is neither new nor needed: the printed *"another"* is the per-pick self-move rule `validateChoice` has enforced since M4, and `moveCountersChosen` (D216) has done a real two-park dependent narrowing since D216. 🛑 **WHAT THE SEAT ACTUALLY COST IS THE THREE THINGS THE WORK ORDER DID NOT NAME**: §11 (the refusal gate had never been asked about this op — now a FILTER over BOTH endpoint lists), `ENERGY_MOVED` (its `seat` meant the controller AND the board, true for four producers BY ACCIDENT — D425's derived-fact defect, fixed with a REQUIRED `actor`), and BOTH HUDs (all four `moveEnergy` dialogs lacked the `opponent` marker every sibling public-ref dialog carries — D412's third-read-site shape). **Mutants 1,761 → 1,779; 18/18 KILLED.** Census **454 → 456 / 1,454 → 1,459**; residue sentences 160 → 158; `BUILT.attack` 1,504 → 1,509; `clauseApostrophe` **167 → 169**, the first time that census and the reader census have agreed in this family. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1752 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,892.5s`** — `+18 killed, +0 declared`, **the fourth slice running whose delta was committed to before the sweep launched**, and the strongest `+0` yet: three shipped meanings changed under it (a `GameEvent` field, a helper's parameter, a `route` value) and nothing pre-existing moved. Completeness structural: **1,779 listed / 1,779 run / 1,779 matched / 0 unmatched**.)
+**Last updated:** 2026-09-01 — build session #384 (**P3-M5 — D444, *the first DERIVED `attackGate` — a printed rule that was silently absent, and a work order whose premise was false.*** Engine **0.345.0 → 0.346.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over serialized bytes in BOTH directions, and asked at the right address for the third slice running.** `attackGateOf` becomes **`registry ?? derived`** over `ATTACK_GATE_CLAUSE_GATES` — the SECOND COLUMN of the `ATTACK_GATE_CLAUSES` table that has shipped since D282 — read by one new export, `timingGateFromAttackText`. **ZERO new `BoardCondition` members, ops, events, error codes, prompt kinds, readers, regexes, `packages/schema` bytes or `redact.ts` bytes; ZERO census figures move.** 🛑🛑 **IT CLAIMS 0 NEW PRINTINGS AND SAYS SO.** The work order named *"three unbuilt legal sentences, 10 printings"*; **all three are BUILT** and have been since D282/D307 — `splitAttackGateClause` claims **6 sentences / 14 printings**, ALL 14 registry-authored, 13 already inside `BUILT.attack`'s SPLIT summand. They read as unbuilt only under `!resolvedByAnyReader`, which conventions.md D422 records as the wrong subtraction. 🛑🛑 **WHAT IT BUYS IS A FAILURE MODE.** MEASURED on a board at D443's head: a body printing Terapagos ex's sentence byte for byte with no registry row **declares its attack on exactly the turn the card forbids** — `attackGateOf` `undefined`, `attackTimingBlocked` `undefined`, `applyAction` ok — while the DAMAGE half of the same sentence was loudly withheld. **Two halves of one sentence failing in opposite directions, and a rung had pinned the loud half since D282 without ever asking about the rule.** ✅ **Reverses D395's refusal explicitly, with BOTH of its grounds re-measured and neither found false** — the reversal turns on a question that refusal never asked, plus D413's two-populations bite (`legal_standard = 1` vs the app's `expanded` format). 📊 **8 mutants: 7 KILLED + 1 DECLARED `equivalent`**; **three pre-existing rows repaired** (two re-anchored with confined mutations, one re-declared); **69 rows re-probed across 11 decisions, all accounted.**)
+
+**Last updated (was):** 2026-09-01 — build session #383 (**P3-M5 — D443, *the seat axis of the move-Energy family — the op reaches the other side of the table, and two of the work order's three stated costs did not exist.*** Engine **0.344.0 → 0.345.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over reconstructed v29 bytes in BOTH directions, and asked at the right address for the second slice running.** *"Move an Energy from 1 of your opponent's Pokémon to another of their Pokémon."* (**2 legal**) and *"You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon."* (**3 legal**) — **2 sentences / 5 legal printings** — now SIMULATE over the SHIPPED `moveEnergy` op: **zero new `route` values, zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **THE SLICE IS ONE OPTIONAL FIELD, `side?: "opponent"`** — the endpoints are the FREE route and `selfToBench` read off the other seat's board, and `moveEndpoints`' BODY is untouched: its `seat` parameter became the BOARD and the two CALL SITES pass `moveBoardSeat(op, ctx.seat)`, which rots none of the five shipped mutant rows that quote its lines. 🛑 **TWO OF THE WORK ORDER'S THREE STATED COSTS WERE FALSE, AND CHECKING THEM IS THE BIGGEST FINDING.** There is no fifth `route` (`selfToBench` already computes *the board's Active → that board's Bench*; the RENAME D438 would ask for is refused because a `route` value is a persisted byte). There is no `decider` (`ptcg-rules.md` §9.4: *"almost every printed effect is decided by the player resolving it, even when it reaches across the table"*, and the tell for the inverting family is the printed *"your opponent may …"*, which neither sentence prints) — the three shipped `decider` producers were the WRONG comparison set, and the right one (`knockOutChosen`, `discardEnergy`'s `opponentChosen`) is unanimous the other way. And the *"dependent narrowing"* is neither new nor needed: the printed *"another"* is the per-pick self-move rule `validateChoice` has enforced since M4, and `moveCountersChosen` (D216) has done a real two-park dependent narrowing since D216. 🛑 **WHAT THE SEAT ACTUALLY COST IS THE THREE THINGS THE WORK ORDER DID NOT NAME**: §11 (the refusal gate had never been asked about this op — now a FILTER over BOTH endpoint lists), `ENERGY_MOVED` (its `seat` meant the controller AND the board, true for four producers BY ACCIDENT — D425's derived-fact defect, fixed with a REQUIRED `actor`), and BOTH HUDs (all four `moveEnergy` dialogs lacked the `opponent` marker every sibling public-ref dialog carries — D412's third-read-site shape). **Mutants 1,761 → 1,779; 18/18 KILLED.** Census **454 → 456 / 1,454 → 1,459**; residue sentences 160 → 158; `BUILT.attack` 1,504 → 1,509; `clauseApostrophe` **167 → 169**, the first time that census and the reader census have agreed in this family. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1752 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,892.5s`** — `+18 killed, +0 declared`, **the fourth slice running whose delta was committed to before the sweep launched**, and the strongest `+0` yet: three shipped meanings changed under it (a `GameEvent` field, a helper's parameter, a `route` value) and nothing pre-existing moved. Completeness structural: **1,779 listed / 1,779 run / 1,779 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-08-31 — build session #382 (**P3-M5 — D442, *the destination axis of the move-Energy family — the answer becomes a MAP, and the version question the brief asked was at the wrong address.*** Engine **0.343.0 → 0.344.0**; **`MATCH_RECORD_VERSION` STAYS 29 — driven over the serialized bytes in BOTH directions, and the rename it was asked about turns out not to be at a persisted address at all.** *"Move all Energy from this Pokémon to your Benched Pokémon in any way you like."* and the two *"You may move any amount of [{M}] Energy from your Pokémon to your other Pokémon in any way you like."* printings — **3 sentences / 3 legal printings** — now SIMULATE over the SHIPPED `moveEnergy` op: **zero new ops, zero new prompt kinds, zero new `CardFilter` members, reader surface unmoved at 13.** 🛑 **The slice is ONE FACT: the answer `{ uids: string[]; dest: PokemonRef }` becomes `{ picks: { uid, dest }[] }`** — `attachCards`' shipped map, which D441's refusal named by name. 🛑 **The additive `picks?:` road is refused on D359's own rule four lines up in the same union**: two spellings of one answer. 🛑 **`EffectChoice` IS NEVER SERIALIZED** — `MatchRecord` holds `state` + a rendered `log`, and a choice rides one action — so the constant reaches the two OPTIONAL `anyDest` riders (op + prompt) and not the rename; both read ABSENT as the pre-D442 coupling, which is D334 twice. 🛑 **A coupling expressed by a SHAPE becomes an assertion the moment the shape widens** — and `validateChoice` is the only thing holding it. 🛑 **Two GAPs found at authoring time, both findings**: a missing `anyDest` arm in `projection.test.ts`'s round-trip table, and a row that was unkillable because the arm's own guard makes the ADMIT direction unobservable. **Mutants 1,745 → 1,761; 16/16 KILLED; 100 neighbour rows re-probed, all KILLED. `bun run check` GREEN — 440 files / 9,716 tests.** Archive ratchet **111 → 112**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1734 killed · 27 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 6,797.6s`** — `+16 killed, +0 declared`, **the third slice running whose delta was committed to before the sweep launched**, and the one that earned its `+0` hardest: a renamed wire member, an apply generalised in place, and six neighbours' rows re-transcribed. Completeness structural: **1,761 listed / 1,761 run / 1,761 matched / 0 unmatched**.)
 
@@ -512,6 +514,112 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-01, after D444)
+>
+> ✅ **`bun run check` IS GREEN — 442 files / 9,767 tests, `CHECK_EXIT=0`**, measured after the
+> ritual, not before it. Engine **0.346.0**, **`MATCH_RECORD_VERSION` 29**, mutation corpus
+> **1,787**, archive ratchet **114**.
+>
+> 🛑 **(0) D444 IS UNCOMMITTED AND ITS WHOLE-CORPUS SWEEP HAS NOT RUN.** The tree carries the
+> slice; the user commits and sweeps. Read `precheck` as clean over all 1,787 (it is), and read
+> nothing else into it.
+>
+> 🔮 **(1) THE PREDICTED SWEEP DELTA, COMMITTED TO BEFORE ANY SWEEP — FIVE SLICES RUNNING.**
+>
+> > **`1758 killed · 29 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 1,787 — i.e. `+6 killed, +2 declared` off D443's `1752 · 27` over 1,779.**
+>
+> ⚠️ **THE ARITHMETIC IS NOT `+8 killed` AND THAT IS THE POINT.** D444 adds 8 rows (7 KILLED, 1
+> declared `equivalent`) **and converts one PRE-EXISTING killed row into a declared survivor**:
+> `D282-split-fires-without-a-gate` is now genuinely equivalent, because the clause→gate map is
+> total and a split that fires implies a gate that resolves. So killed goes `1752 + 7 − 1 = 1758`
+> and declared goes `27 + 1 + 1 = 29`. **A slice that turns a killed row into a declared one is
+> exactly the kind that quietly gets reported as a regression**, which is why the subtraction is
+> written out here rather than left to be inferred from a table.
+>
+> ▶ **(2) THE RESIDUE, RE-MEASURED AT THIS HEAD — and always name the subtraction set (D425).**
+> **UNMOVED BY THIS SLICE, WHICH IS ITSELF THE MEASUREMENT**: `!resolvedByAnyReader` alone
+> **184 sentences / 273 printings**; `residueSentences` (− registry − gate − trailing) **158**;
+> `BUILT.attack` **1509**; unbuilt attack units **223**; reader surface **13**. D444 claimed 0
+> new printings by construction — every clause it derives was already registry-authored — so
+> every one of those five figures is byte-identical to D443's. Read them off
+> `censusAtHead.test.ts`, never off this paragraph; it rots by construction.
+>
+> ▶ **(3) WHAT D444 ACTUALLY LEFT BEHIND, AND IT IS A CLASS RATHER THAN A CARD.** The slice
+> closed the ONE silent failure in the engine's coverage strategy: a printed sentence the engine
+> cannot read fails LOUD everywhere except a timing CLAUSE on an unauthored body, where the rule
+> was simply absent. **That class is now closed for the LEADING clause family and open for the
+> TRAILING one.** Sylveon ex `sv08-086`/`sv08.5-041`/`sv08.5-156` prints
+> *"…If 1 of your Pokémon used Angelite during your last turn, this attack can't be used."* — a
+> gate at the END of the sentence, served by D409's `splitAttackTrailingClause` and by three
+> hand-authored registry rows. **An unregistered body printing that sentence today is exactly
+> where the BAN family was before D444: loud about the effect, silent about the rule.** ⚠️ Price
+> it properly before building: the trailing splitter's contract is different (it composes only
+> when `deriveAttackEffect` already reads the TAIL — D426), so this is NOT a copy of D444.
+>
+> ▶ **(4) THE MOVE-ENERGY COMPOUND IS STILL THE FAMILY'S LAST ROW** (D443 §7, unchanged and
+> re-stated rather than re-derived): *"Search your deck for a Basic Pokémon and put it onto your
+> Bench. Then, shuffle your deck. If you put any Pokémon onto your Bench in this way, move an
+> Energy from this Pokémon to the new Benched Pokémon."* — **1 printing**. The blocker is that
+> `searchDeck { dest: "bench" }` puts a body on the Bench and the following `moveEnergy` must name
+> THAT body, which no `route` can. The shipped machinery that fits is `EffectRecord` (§9.2's slot
+> list, already `string[]` uids, already gating a tail through `recordGate`), so the price is *one
+> `recordAs` on `searchDeck`'s bench arm* + *one route/rider that reads a recorded uid as its
+> destination* + the compound splitter question.
+>
+> ⚠️ **(5) THINGS THIS SLICE LEARNED THAT A SUCCESSOR SHOULD NOT RE-LEARN.**
+> · 🛑 **A WORK ORDER'S RESIDUE MEASUREMENT IS A CLAIM, AND THIS ONE WAS FALSE.** D444's brief
+>   named three sentences / 10 printings as unbuilt. All three had been built for 150+ decisions.
+>   The brief had computed `!resolvedByAnyReader` and **not subtracted the gate splitter** —
+>   which conventions.md has said in so many words since D422. **The cost of checking was one
+>   `bun` script; the cost of not checking would have been a slice built on a lie.**
+> · 🛑 **A NAME CAN ENROL A FUNCTION IN A MECHANISM.** `censusAttackCorpus.ts` derives the reader
+>   surface off `effects.ts` by the `deriveAttack` NAME PREFIX. A new export called
+>   `deriveAttackTimingGate` became a 13th reader by nothing but its name, and because
+>   `resolvedByAnyReader` tests `!== null` while it answers `undefined`, the predicate claimed
+>   EVERY sentence. **22 rungs across 5 files, one run.** `deriveAttack` is reserved; check the
+>   namespace before you name an export in that file.
+> · 🛑 **RE-POINTING A RUNG WHOSE PREMISE YOUR SLICE REMOVES NEEDS A NEW SUBJECT, NOT A NEW
+>   CLAIM.** Two rungs pinned *"an unrepresented clause stays LOUD"*. D444 made every table clause
+>   represented, so those bodies stopped being unrepresented — and re-pointing onto them would
+>   have produced TRUE assertions nothing can falsify. The fix is a NEAR-MISS body (one token off
+>   the table), which still has the old property. D418's rule with a subject swap.
+> · 🛑 **HALF A SENTENCE CAN FAIL LOUDLY WHILE THE OTHER HALF FAILS IN SILENCE.** A sentence
+>   carrying a RULE and an EFFECT resolves at two seams (§8 declaration, §8.5 pipeline) and can
+>   fail in opposite directions at once. A guard about the effect is not a guard about the rule.
+> · 🛑 **A REFUSAL CAN BE RIGHT ABOUT ITS MEASUREMENT AND WRONG ABOUT ITS QUESTION.** D395's two
+>   grounds were both still true at D444's head. It had reasoned entirely about the SPLIT and
+>   never asked what happens to the RULE. **Re-running a refusal's query will never tell you it
+>   asked the wrong question** — that is a different check from D413's and D422's.
+> · ⚠️ **AND ITS "ZERO" WAS SCOPED WHERE THE ENGINE IS NOT.** *"Zero additional LEGAL printings"*
+>   counts `legal_standard = 1`; the builder ships an `expanded` format keyed on `legal_expanded`.
+>   D413's two populations, biting a refusal instead of a census.
+> · ⚠️ **NEVER INHERIT A SUITE FIGURE FROM PROSE — INCLUDING A TEST TITLE.** The reader surface is
+>   **13**; `censusAtHead.test.ts`'s rung is still titled *"the TWELVE readers"* and D444's first
+>   draft copied the 12 out of it. The title is stale prose sitting on a live derivation.
+> · ⚠️ **`state.cardPool` IS PART OF THE PERSISTED RECORD.** D444's version rung first asserted the
+>   printed effect text was ABSENT from the serialized state; it is present, because `GameState`
+>   embeds the catalog. That turned out to STRENGTHEN the version answer — the byte the derivation
+>   reads has been in every record since long before v29 and means exactly what it meant — but the
+>   first draft was wrong about the bytes and only driving them found it.
+> · ⚠️ **WHEN THE PRECEDENCE IN `a ?? b` IS UNOBSERVABLE, DECLARE IT.** Both producers agree on
+>   every printed row, so no board can tell `registry ?? derived` from `derived ?? registry`. The
+>   mutant is `equivalent` and is declared with the agreement rung named as its falsifier.
+>
+> ⚠️ **(6) PROCESS, UNCHANGED AND STILL TRUE.** `bun run mutants --precheck` is NOT a flag — it
+> silently starts a full sweep; the precheck is `bun scripts/mutation/precheck.ts` and costs
+> seconds. **`--decision` takes ONE value** — passing it repeatedly runs only the last, so re-probe
+> one decision per run and **check the row count, not the colour**. `--allow-dirty` is REQUIRED on
+> an uncommitted slice or every row returns SKIPPED-DIRTY and the run exits 1. Check for a live
+> sweep with an argv[0]-anchored `ps -eo args | grep -E '^bun scripts/mutation/run\.ts'` plus the
+> journal's pid. **Never run a formatter on this tree.** ⚠️ And a blanket version `sed` corrupts
+> historical prose (D443): D444 stepped **28 assertion lines in 27 files** by matching
+> `expect(engineVersion).toBe("…")` exactly, then re-grepped `0.345.0` and confirmed the five
+> remaining hits are all historical. **The version tax is now 29 assertions / 28 files, plus
+> `package.json`, the declaration and the mutant `find` — 32 sites.**
+
+### Prior resume point (P3-M5 — D443, the seat axis of the move-Energy family, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-01, after D443)
 >
@@ -13997,8 +14105,9 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D443, *the seat axis of the move-Energy family — the op reaches the other side of the table.*** Engine **0.344.0 → 0.345.0**; `MATCH_RECORD_VERSION` **STAYS 29** (one optional `side` on the persisted op; the event is not persisted and the prompt did not move). 2 sentences / **5 legal printings** on ONE optional field. Mutants 1,761 → 1,779, 18/18 KILLED.) |
-| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D442, *the destination axis of the move-Energy family — the answer becomes a MAP.*** Engine **0.343.0 → 0.344.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes both ways — and the RENAME it was asked about is not at a persisted address (`EffectChoice` is never serialized; the PROMPT and the persisted OP are, and both new keys are optional with the old coupling as their absent arm). **3 sentences / 3 legal printings**, TWO anchors, ZERO new ops/prompt kinds/`CardFilter` members, reader surface **13**. Mutants **1,745 → 1,761**, 16/16 killed; `bun run check` **440 files / 9,716 tests**.) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D444, *the first DERIVED `attackGate` — a printed rule that was silently absent.*** Engine **0.345.0 → 0.346.0**; `MATCH_RECORD_VERSION` **STAYS 29 — driven over serialized bytes both ways**. `attackGateOf` is now **`registry ?? derived`** over the clause table's new second column; **0 new printings claimed and 0 census figures moved** — the slice closes a SILENT non-enforcement: an unregistered body printing a timing clause could declare its attack on exactly the turn the card forbids, measured on a board. Reverses D395's refusal explicitly, both grounds re-measured. **8 mutants: 7 KILLED + 1 declared `equivalent`**, 3 pre-existing rows repaired.) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D443, *the seat axis of the move-Energy family — the op reaches the other side of the table.*** Engine **0.344.0 → 0.345.0**; `MATCH_RECORD_VERSION` **STAYS 29** (one optional `side` on the persisted op; the event is not persisted and the prompt did not move). 2 sentences / **5 legal printings** on ONE optional field. Mutants 1,761 → 1,779, 18/18 KILLED.) |
+| ~~simulator~~ | ~~P3~~ | ~~(was D442)~~  🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D442, *the destination axis of the move-Energy family — the answer becomes a MAP.*** Engine **0.343.0 → 0.344.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes both ways — and the RENAME it was asked about is not at a persisted address (`EffectChoice` is never serialized; the PROMPT and the persisted OP are, and both new keys are optional with the old coupling as their absent arm). **3 sentences / 3 legal printings**, TWO anchors, ZERO new ops/prompt kinds/`CardFilter` members, reader surface **13**. Mutants **1,745 → 1,761**, 16/16 killed; `bun run check` **440 files / 9,716 tests**.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D441)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D441, *the declinability axis of the move-Energy family — a third quantifier that answers two questions.*** Engine **0.342.0 → 0.343.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes in both directions. *"Move all Energy from this Pokémon to 1 of your Benched Pokémon."* — 1 sentence / 2 legal printings — on ONE new anchor over the shipped `moveEnergy` op; `max` gains `"all"`, the prompt gains an optional `min`, and the op gains its FIRST forced arm. Three sentences refused with three distinct reasons. 17 mutants / 17 killed; `bun run check` 439 files / 9,689 tests.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D440)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D440, *damage scaled by a filtered discard-pile count — the first seat this union carries as a FIELD.*** Engine **0.341.0 → 0.342.0**; `MATCH_RECORD_VERSION` **stays 29**, driven over the serialized bytes. 4 sentences / 8 legal printings on ONE `DamageCountSource` and ZERO new `CardFilter` members. Fold and seat are perfectly confounded in the buildable core and the confound is broken by CONSTRUCTED text, with an attribution control proving the constructed rungs are the only killers. 13 mutants / 13 KILLED / 0 GAPs; corpus 1,728. `bun run check` GREEN 438 files / 9,669 tests.) |
 | ~~simulator~~ | ~~P3~~ | ~~(was D408)~~ 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D408, *the bare attack lock on both seats — and a repair of a program that resolved, was counted BUILT, and did nothing.*** Engine **0.312.0 → 0.313.0**, `MATCH_RECORD_VERSION` **stays 25**. 3 sentences / 11 legal printings on ONE alternation anchor, ONE `[A-Z]` narrowing and TWO arms; ZERO new ops, fields, readers, members or registry rows. The mis-read sentence moves NO census figure — only a program comparison and a BOARD can see it, and both were measured red before the arm was written.; **whole-corpus sweep 1463 · 1439 killed · 24 known · 0 GAPs · 0 stale · 0 skipped · 0 clobbers · 0 ERRORs, `SWEEP_EXIT=0` read**, verified by id both directions, survivor set identical to D407's for a twenty-sixth sweep, `HEAD` re-checked independently at exit 0.) |
@@ -14085,6 +14194,73 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-01 — build session #384 (P3-M5 — D444, the first DERIVED `attackGate`)
+
+- **D444** — `attackGateOf` (continuous.ts) becomes **`registry ?? derived`**, over one new
+  total map `ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate>` — the
+  **second column of the `ATTACK_GATE_CLAUSES` table that has shipped since D282** — read by
+  one new export, `timingGateFromAttackText`. **ZERO new `BoardCondition` members, ops,
+  events, error codes, prompt kinds, readers, regexes, `packages/schema` bytes or `redact.ts`
+  bytes.** Engine **0.345.0 → 0.346.0**; **`MATCH_RECORD_VERSION` STAYS 29**.
+- 🛑🛑 **THE WORK ORDER'S PREMISE WAS FALSE, AND CHECKING IT IS THE FIRST FINDING.** It named
+  *"three unbuilt legal sentences, 10 printings"* (Terapagos ex ×7, Exeggcute ×2, Volbeat ×1).
+  **All three are BUILT** and have been since D282/D307. MEASURED at HEAD:
+  `splitAttackGateClause` claims **6 corpus sentences / 14 printings**; **all 14 are
+  registry-authored** (17 registry ids carry `attackGate` — the extra 3 are Sylveon ex's
+  TRAILING clause); **13 of the 14 already sit inside `BUILT.attack`'s SPLIT summand**
+  (`censusAtHead.test.ts`, *"the SPLIT half"*). They read as unbuilt only under
+  `!resolvedByAnyReader`, which conventions.md's D422 entry names as the wrong subtraction
+  (it misses a registry row, the gate splitter and the trailing splitter). **This slice
+  claims 0 new printings and moves 0 census figures**, and says so in its own header.
+- 🛑🛑 **WHAT IT DOES BUY IS A FAILURE MODE, AND IT WAS DRIVEN BEFORE A LINE WAS WRITTEN.**
+  On a fixture printing Terapagos ex's sentence byte for byte with no registry row, at D443's
+  head, on turn 2 as the going-SECOND player: `attackGateOf` → `undefined`,
+  `attackTimingBlocked` → `undefined`, `applyAction({type:"attack"})` → **ok**. The printed
+  restriction was **silently absent**, while the DAMAGE half of the SAME sentence was loudly
+  withheld (`ATTACK_EFFECT_SKIPPED`, flat 30 instead of 90). **Two halves of one sentence
+  failing in opposite directions.** `benchBodySelfScaling.test.ts` §4 had pinned that exact
+  body since D282 — and pinned the LOUD half, never asking about the rule.
+- ✅ **IT REVERSES D395's REFUSAL EXPLICITLY, AND NEITHER OF THAT REFUSAL'S GROUNDS TURNED OUT
+  TO BE FALSE.** ① *"a deriver buys ZERO additional legal printings"* — **still true**, and
+  the new suite's §2 re-derives it live; ⚠️ it is scoped to `legal_standard = 1` while the app
+  ships an **`expanded`** format keyed on `legal_expanded`, and effects.ts's own clause block
+  already recorded that the **pool-wide query returns 15 where the legal one returns 13** —
+  the 2 extras being Bombirdier ex `sv04-156`/`-234`, printing the BAN clause with no
+  registry row. ② *"a deriver makes `attack.ts`'s two-key check a tautology"* — **correct, and
+  PAID**: the check is kept as defence in depth with the argument written at the line, and
+  `D282-split-fires-without-a-gate` is re-declared `survives: equivalent` with a reason that
+  **self-invalidates** (narrow the derivation and the row is KILLED → `STALE-SURVIVOR` → the
+  run fails). The annotation is written into `rolloutGate.test.ts` **beside** the original.
+- 🛑 **THE TWO `If you go …` CLAUSES POINT IN OPPOSITE DIRECTIONS AND ONE IS A PERMISSION.**
+  *"you can't"* ADDS a restriction (`barredIf`, `attackTimingBlocked`); *"you can"* LIFTS the
+  standing §4 ban (`firstTurnExempt`, `firstTurnAttackBanned` and nothing else —
+  `ptcg-rules.md:112` *"**P1 may NOT attack** on their first turn."*). One printed word apart.
+  Two mutants, one per direction, both KILLED — and the boards are different, which is the
+  whole reason they are two rows.
+- 🛑 **THE INDEX SURVIVES HAVING NO ROW TO KEY OFF.** The derivation's address IS
+  `attacksOf(top)[index].effect`, so the leak this design invites is unconstructible rather
+  than untested: Volbeat `sv06-009`'s shape (licence at idx 0, no effect text at idx 1) driven
+  on an UNREGISTERED twin, **denied direction first** (D278/D279), plus Miltank's inverted
+  layout. `D444-derivation-reads-index-zero` KILLED.
+- ⚠️ **THE ROLLOUT ROW DERIVES AND THAT IS NOT A TEMPLATE**; the trailing-clause family
+  (Sylveon ex) is REFUSED with its own named reason — it belongs to D409's splitter.
+- 🛑 **THE MISTAKE THIS SLICE MADE.** The function was first called
+  `deriveAttackTimingGate`, which enrolled it in `censusAttackCorpus.ts`'s reader surface **by
+  NAME PREFIX alone**; since `resolvedByAnyReader` tests `read(text) !== null` and it answers
+  `undefined`, the predicate claimed **every sentence in the corpus** and **22 rungs across 5
+  files went red in one run**. Renamed; §5 now pins the surface **by name, both directions**.
+  (And the first draft of that pin said **12**, inherited from a neighbouring test TITLE — the
+  real figure is **13**. conventions.md's *"never inherit a suite figure from prose"*, earned
+  twice inside one slice.)
+- 📊 **8 mutants: 7 KILLED + 1 DECLARED `equivalent`** — `D444-derivation-wins-over-the-registry`,
+  because the two producers agree on every printed row and no board can tell `a ?? b` from
+  `b ?? a`. **Three pre-existing rows repaired rather than left to rot**:
+  `D281-gate-read-through-the-ability-fold` and `D395-gate-read-ignores-the-index` RE-ANCHORED
+  with their mutations **confined to the registry half** so the original killers keep the kill
+  (D416); `D282-split-fires-without-a-gate` re-declared. **69 rows re-probed across 11
+  decisions (D444/D281/D282/D395/D396/D275/D277/D394/D409/D417/D274), all accounted.**
+- ✅ `bun run check` GREEN. `precheck` clean over **1,787**.
 
 ### 2026-09-01 — build session #383 (P3-M5 — D443, the opponent-board Energy move)
 

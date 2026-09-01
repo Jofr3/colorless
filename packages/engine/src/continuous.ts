@@ -1,5 +1,6 @@
 import {
   ANY_ENERGY,
+  attacksOf,
   cardOfUid,
   energyProvidesOf,
   hasRuleBox,
@@ -24,6 +25,10 @@ import type {
   PokemonPlayAct,
   PokemonType,
 } from "./effects";
+// 🆕🆕 D444 — the ONE value import this file takes from `effects.ts`: the second
+// producer behind `attackGateOf` below. No cycle — `effects.ts` takes nothing from
+// this file, and its only edge back to `registry.ts` is type-only.
+import { timingGateFromAttackText } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import { flipCoin } from "./rng";
 import type {
@@ -2001,7 +2006,33 @@ export function firstTurnAttackBanned(
     gate at a different index gets `undefined` — the index is a plain record
     lookup, so a non-integer or out-of-range address simply prints no clause
     rather than throwing, and the §8 gate's own `BAD_ATTACK_INDEX` check still
-    owns the complaint about a bogus address. */
+    owns the complaint about a bogus address.
+
+    🆕🆕 **D444 — `registry ?? derived`, AND THE ORDER IS `attack.ts`'s VERBATIM.**
+    The registry row wins and the derivation is never asked (D8's precedence, spelled
+    `authored ?? derived` at the `CardProgram.attack` seam); a body with no row falls
+    through to `timingGateFromAttackText` over the printed effect text of the attack AT
+    THIS INDEX. **Before this slice the second half was missing and the failure was
+    SILENT**: a body printing Terapagos ex's clause byte for byte with no registry row
+    could declare the attack on exactly the turn the card forbids it, because
+    `attackGateOf` had only one producer and it was keyed by card id. Every other
+    unread sentence in this engine fails LOUD; this one deleted a printed rule.
+
+    🛑 **THE ADDRESS IS THE PRINTED TEXT AT `index`, WHICH IS WHY THE INDEX KEY IS
+    STILL MEANINGFUL WITH NO ROW TO KEY OFF.** A derived gate has no registry entry,
+    so the question "what is it keyed by" has to be answered from somewhere — and the
+    answer is that `attacksOf(top)[index]` IS the key: the clause is read off the very
+    attack it governs. That makes the leak this design invites unconstructible rather
+    than merely untested. **Volbeat `sv06-009` is the board**: its idx 0 "Quick Sign"
+    prints the licence and its idx 1 "Coordinated Strike" prints no effect text at all,
+    so the derivation answers `undefined` at idx 1 by construction — a per-BODY read
+    (`Object.values(...)[0]`, or a flag) is the defect D281 named and the derivation
+    cannot express it. `derivedAttackGate.test.ts` §4 drives both indices on an
+    UNREGISTERED twin of that card, where the registry cannot be masking the answer.
+
+    ⚠️ **AND IT IS STILL READ OFF `topCardOf` AND NOT THROUGH `passivesOf`** — the
+    §9 argument above is unchanged by the new producer, and is in fact stronger for
+    it: the derivation reads printed ATTACK text, which no Ability-lock touches. */
 export function attackGateOf(
   state: GameState,
   pokemon: InPlayPokemon,
@@ -2009,7 +2040,8 @@ export function attackGateOf(
 ): AttackTimingGate | undefined {
   const top = topCardOf(state, pokemon);
   if (top === undefined) return undefined;
-  return programFor(top.id)?.attackGate?.[index];
+  const authored = programFor(top.id)?.attackGate?.[index];
+  return authored ?? timingGateFromAttackText(attacksOf(top)[index]?.effect);
 }
 
 /** §8/§11 (D154; PLURAL since D165) — WHICH of `pokemon`'s attacks are barred

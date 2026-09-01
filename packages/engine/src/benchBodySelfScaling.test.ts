@@ -106,6 +106,15 @@ import {
 //    Terapagos sentence VERBATIM with NO `attackGate`, and asserts it keeps its
 //    whole string and stays loud. A text-only split is green on every other line
 //    in this file.
+//    🆕🆕 **D444 — AND THAT RUNG WAS PINNING HALF A DEFECT.** "Keeps its whole
+//    string and stays loud" is a claim about the DAMAGE. The RULE on the same body
+//    was never asked about, and it was **silently absent**: measured before D444,
+//    `UNGATED_TWIN` could declare "Unified Beatdown" on exactly the turn its own
+//    printed sentence forbids. `attackGateOf` is `registry ?? derived` from that
+//    head, so §4 now drives the rule on `UNGATED_TWIN` and keeps the "text alone
+//    gates nothing" half on `NEAR_MISS_TWIN`, whose clause is one token off the
+//    table and therefore genuinely unrepresented. The suite is now 24 rungs, not
+//    23, because the two halves are two claims.
 // 2. **THE THREE COUNT SOURCES DISAGREE ON ONE BOARD** (§5). 3 mine / 1 theirs
 //    makes `yourBenchCount` 3, `opponentBenchCount` 1 and `bothSidesBenchCount` 4
 //    — three distinct numbers on one setup, so an arm that answered its
@@ -152,8 +161,27 @@ const TERAPAGOS_IDS = [
 /** 🛑 THE CONTROL THIS WHOLE SUITE RESTS ON: the Terapagos sentence, VERBATIM,
     on a body with NO registry row and therefore NO `attackGate`. A split keyed on
     TEXT rather than on the authored gate resolves this card's damage and deletes
-    its printed restriction — and would be green on every other assertion here. */
+    its printed restriction — and would be green on every other assertion here.
+
+    🆕🆕 **D444 — "AND THEREFORE NO `attackGate`" IS NO LONGER TRUE, AND THE OLD
+    RUNG THIS BODY CARRIED WAS PINNING A SILENT DEFECT.** `attackGateOf` is
+    `registry ?? timingGateFromAttackText` from D444's head, so this body derives the
+    same `barredIf` its registered twins author. What §4 used to assert — that the
+    body keeps its whole string and stays LOUD — was TRUE about the damage half and
+    said nothing about the RULE half, which was **silently absent**: MEASURED before
+    the change, this body could declare "Unified Beatdown" on exactly the turn its own
+    printed sentence forbids. §4 now drives the rule. The "text alone gates nothing"
+    discrimination moves to `NEAR_MISS_TWIN` below (D418: after re-pointing, ask what
+    the OLD claim could catch that the new one cannot). */
 const UNGATED_TWIN = "fix-d282-ungated-twin";
+/** 🆕🆕 **D444 — THE NEAR-MISS, AND IT IS WHAT KEEPS §4 A PAIR.** One token off the
+    printed clause ("next" for "first"), so it is not a row of `ATTACK_GATE_CLAUSES`,
+    derives no gate, keeps its whole printed string and stays on the loud path. ⚠️
+    Differs on EXACTLY ONE AXIS (D427) — a near-miss that were also re-worded or
+    re-cased could not show WHICH feature did the refusing. */
+const NEAR_MISS_TWIN = "fix-d444-near-miss-twin";
+const NEAR_MISS_TEXT =
+  "If you go second, you can't use this attack during your next turn. This attack does 30 damage for each of your Benched Pokémon.";
 /** A plain benchable body, and the Basic the deck search may fetch. */
 const FILLER = "fix-d282-filler";
 const ENERGY = "fix-d282-energy";
@@ -236,6 +264,20 @@ const LOCAL_CARDS: Record<string, Card> = {
       },
     ],
   }),
+  [NEAR_MISS_TWIN]: battler(NEAR_MISS_TWIN, {
+    name: "Near-Miss Twin",
+    hp: 230,
+    retreat: 2,
+    types: ["Colorless"],
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Unified Beatdown",
+        damage: "30×",
+        effect: NEAR_MISS_TEXT,
+      },
+    ],
+  }),
   [FILLER]: battler(FILLER, {
     name: "D282 Filler",
     hp: 60,
@@ -261,8 +303,10 @@ const DECK = deckOf({
   "sv06-018": 4,
   "sv09-051": 4,
   [UNGATED_TWIN]: 4,
+  // 🆕🆕 D444 — the near-miss control; `ENERGY` drops 24 → 20 to keep the 60 honest.
+  [NEAR_MISS_TWIN]: 4,
   [FILLER]: 8,
-  [ENERGY]: 24,
+  [ENERGY]: 20,
 });
 
 /** Two seeds — nothing below rests on one shuffle (D270). */
@@ -604,13 +648,18 @@ describe("D282 §3 — splitAttackGateClause", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D282 §4 — the split fires ONLY where the gate is already accounted for", () => {
-  it("🛑 an UNGATED body printing the SAME sentence keeps its whole string and stays LOUD", () => {
-    // The dangerous direction, and the only assertion in this file that a
-    // text-only split fails. `UNGATED_TWIN` prints Terapagos's effect verbatim and
-    // has no registry row, so its printed restriction is NOT represented anywhere
-    // — resolving its damage would silently delete a rule.
-    expect(programFor(UNGATED_TWIN)).toBeUndefined();
-    const state = board(SEEDS[0], "p1", "p1", UNGATED_TWIN, 3);
+  // 🆕🆕 **D444 — THIS RUNG HAS MOVED FROM `UNGATED_TWIN` TO `NEAR_MISS_TWIN`, AND
+  // THE MOVE IS THE ONLY WAY TO KEEP WHAT IT WAS FOR.** It asserted that a body
+  // whose clause is NOT represented keeps its whole string — the discrimination that
+  // makes `D282-split-fires-without-a-gate` killable. D444 made every clause in the
+  // table represented BY CONSTRUCTION (`attackGateOf` is `registry ?? derived`), so
+  // `UNGATED_TWIN` is no longer such a body and re-pointing this at it would assert
+  // something TRUE that nothing can falsify. `NEAR_MISS_TWIN` is such a body: one
+  // token off the printed clause, no table row, no gate, no split.
+  it("🛑 a NEAR-MISS clause keeps its whole string and stays LOUD — the split is a TABLE, not a pattern", () => {
+    expect(programFor(NEAR_MISS_TWIN)).toBeUndefined();
+    expect(splitAttackGateClause(NEAR_MISS_TEXT)).toBeNull();
+    const state = board(SEEDS[0], "p1", "p1", NEAR_MISS_TWIN, 3);
     const { events } = swing(state, "p1", 0);
     // ⚠️ THE FOLD NEVER RAN, so the printed "30×" lands as an UNEXPLAINED flat 30
     // — not the 90 the gated twin below deals off the identical Bench. That is the
@@ -619,8 +668,39 @@ describe("D282 §4 — the split fires ONLY where the gate is already accounted 
     // …and the engine SAYS SO, with the WHOLE printed compound in the report and
     // the unexplained "×" beside it.
     const skipped = find(events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe(TERAPAGOS_TEXT);
+    expect(skipped?.effect).toBe(NEAR_MISS_TEXT);
     expect(skipped?.damageModifier).toBe("×");
+  });
+
+  // 🆕🆕 **D444 — THE DEFECT THE OLD RUNG WAS PINNING, NOW DRIVEN THE OTHER WAY.**
+  it("🆕🆕 D444 — the UNGATED twin is now GATED off its own printed clause, with no registry row", () => {
+    expect(programFor(UNGATED_TWIN)).toBeUndefined();
+    // ① THE RULE. `passes = 1` lands on TURN 2 with `first = "p1"`, which is p2's
+    // OWN FIRST TURN as the going-SECOND player — the one board the printed clause
+    // names. 🛑 **BEFORE D444 THIS DECLARATION SUCCEEDED**: `attackGateOf` had one
+    // producer, keyed by card id, and an unregistered printing lost its rule in
+    // silence while the damage half of the same sentence was loudly withheld.
+    const barred = board(SEEDS[0], "p1", "p2", UNGATED_TWIN, 3, 0, 1);
+    expect(barred.turn).toBe(2);
+    const refused = applyAction(deepFreeze(barred), { type: "attack", seat: "p2", index: 0 });
+    expect(refused.ok).toBe(false);
+    expect(refused.ok === false && refused.error.code).toBe("ATTACK_PREVENTED");
+    // …and the REGISTERED twin answers identically on the identical board, which is
+    // the agreement claim: `registry ?? derived` must not fork the behaviour.
+    const registered = board(SEEDS[0], "p1", "p2", "sv07-128", 3, 0, 1);
+    const refusedReal = applyAction(deepFreeze(registered), {
+      type: "attack",
+      seat: "p2",
+      index: 0,
+    });
+    expect(refusedReal.ok).toBe(false);
+    expect(refusedReal.ok === false && refusedReal.error.code).toBe("ATTACK_PREVENTED");
+    // ② THE ADMISSION (D424: a refusal rung owes one on the same axis). On a turn
+    // the clause does NOT name, the same body resolves the fold to 90 — so the bar
+    // is a GATE and not a build that refuses everything.
+    const { events } = swing(board(SEEDS[0], "p1", "p1", UNGATED_TWIN, 3), "p1", 0);
+    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(90);
+    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
   it("…while the GATED printing of that same sentence resolves it", () => {

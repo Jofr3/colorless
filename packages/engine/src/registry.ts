@@ -2841,7 +2841,28 @@ export interface CardProgram {
       reason and one more of its own: nothing is persisted (the gate is a CATALOG
       fact re-derived from the board on every read), and the value carries **no
       `EffectOp`**, so unlike a `conditionGate.cond` it cannot ride a parked
-      `EffectContinuation.pendingOp` into a record. Both halves are swept. */
+      `EffectContinuation.pendingOp` into a record. Both halves are swept.
+
+      🆕🆕 **D444 — THIS FIELD IS NO LONGER THE ONLY PRODUCER, AND A ROW HERE IS NO
+      LONGER REQUIRED FOR THE CLAUSE TO BITE.** `attackGateOf` (continuous.ts) is
+      `registry ?? timingGateFromAttackText`, so a body printing one of the four
+      `ATTACK_GATE_CLAUSES` rows is gated whether or not anybody authored it here.
+      The rows below are KEPT and still WIN — D8's precedence, and D402's argument
+      verbatim: "authored" and "derivable" stopped being exclusive at the `attack`
+      seam one field up and the `??` is what makes that a non-event. What the rows
+      buy now is that the two producers can be asserted AGAINST each other, which is
+      a stronger rung than either had alone: `derivedAttackGate.test.ts` §2 ties every
+      DISTINCT gate value in this registry to the clause that derives it, so a row
+      authored at the wrong POLARITY — which this block's own §4/§8 comment calls the
+      easiest thing here to get wrong — reddens by value.
+
+      ⚠️ **AND THE 17 IDS ARE NOT 14 PRINTINGS, WHICH IS WHY BOTH NUMBERS ARE HERE.**
+      `splitAttackGateClause` claims 14 legal printings (6 corpus sentences); this
+      field is authored on **17 ids**, the extra 3 being Sylveon ex
+      `sv08-086`/`sv08.5-041`/`sv08.5-156`, whose clause is printed at the END of its
+      sentence and belongs to D409's TRAILING splitter. **The derivation reaches the
+      LEADING family and nothing else** — a trailing gate stays registry-only, and
+      that refusal is named rather than implied. */
   attackGate?: { readonly [attackIndex: number]: AttackTimingGate };
   /** Activated Abilities printed on this card. */
   abilities?: AbilityProgram[];
