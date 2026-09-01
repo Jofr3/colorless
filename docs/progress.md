@@ -14540,12 +14540,18 @@ Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅
   four-way subtraction rather than with `!resolvedByAnyReader` alone (D444).
 - 🛑 **THE WORK ORDER'S CENTRAL PREMISE DID NOT SURVIVE, AND IT IS THE FINDING.** The
   brief argued the refusal could be reopened because *"the consumer cost is largely
-  FIXED, and paying it once for two members changes the arithmetic."* **Measured: the
-  second member cost 7 of the first's 9 marginal sites** — its own `matchesFilter` arm,
-  its own `retrieveNoun` arm, its own `BENCHABLE_RETRIEVAL_KINDS` entry, its own
-  anchor, its own reader arm, its own fixture and its own board. What is genuinely
-  shared is the FILE set (three), the audit and one census step. **The cost is linear
-  in ARMS and fixed only in FILES.** Both members were built anyway, because each pays
+  FIXED, and paying it once for two members changes the arithmetic."* **Measured: 8 of the first
+  member's 9 marginal SITE KINDS recurred for the second** — its own union member and doc
+  block, its own `matchesFilter` arm, its own `retrieveNoun` arm, its own
+  `BENCHABLE_RETRIEVAL_KINDS` entry, its own anchor, its own reader arm, its own deck
+  slots and its own board with its own rungs. **The ONE kind that did not recur is a new
+  FIXTURE** — `fix-attacker-ex`, `fix-pokemon-v` and `fix-pokemon-vmax` were already in
+  the pool, where the attack-name member needed a body nothing in the pool had.
+  ⚠️ **AND THE SECOND MEMBER COST MORE, NOT LESS**: it alone forced the
+  `DamageCountSource` rename plus a required `seat` — 16 executable sites and 5 shipped
+  mutant rows re-transcribed — which the first needed none of. What is genuinely shared
+  is the FILE set (three), the audit and one census step. **The cost is linear in ARMS
+  and fixed only in FILES.** Both members were built anyway, because each pays
   on its own — but the arithmetic that justified the slice is not the one claimed.
 - 🛑 **THE CONSUMER SET IS FOUR, NOT THE TWO EVERY DOC BLOCK NAMES, AND THE TWO NOBODY
   COUNTS ARE THE SAFE ONES.** Re-derived by grepping every read of the discriminant:
