@@ -433,8 +433,15 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
     // Not a vocabulary miss: the sentence does not END at "discard pile.", because its
     // noun is split around the zone phrase. An `^…$` anchor cannot see it however wide
     // the map grows, so it is a different refusal from the two above and is stated as
-    // one. (Its filter would also need a `CardFilter` member reading `attacksOf` —
-    // D439's refused widening one zone over — so it is blocked twice.)
+    // one. 🆕🆕 **D446 — IT IS BLOCKED ONCE NOW, WHERE THIS COMMENT SAID TWICE.**
+    // The second block was *"its filter would also need a `CardFilter` member reading
+    // `attacksOf` — D439's refused widening one zone over"*; D446 built that member
+    // (`attackNamePokemon`, for the IN-PLAY twin of this very noun), so the FILTER is
+    // spellable and only the ANCHOR still refuses. Corrected in place rather than left
+    // to rot, because a reader acting on the old sentence would price this row at two
+    // mechanisms when it costs one. ⚠️ **AND THE RUNG IS UNCHANGED AND STILL THE RIGHT
+    // ONE** — its subject was always the structural refusal, so it keeps its
+    // discrimination and needed no re-pointing (D418: ask what the old claim caught).
     expect(UNITED_WINGS_PILE.endsWith("discard pile.")).toBe(false);
     expect(deriveAttackDamageBonus(UNITED_WINGS_PILE)).toBeNull();
     expect(deriveAttackDamageMultiplier(UNITED_WINGS_PILE)).toBeNull();
@@ -824,6 +831,6 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.347.0");
+    expect(engineVersion).toBe("0.348.0");
   });
 });

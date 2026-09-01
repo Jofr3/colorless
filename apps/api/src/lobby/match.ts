@@ -1093,7 +1093,44 @@ export interface MatchRecord {
     gains `"delayed"`, which is a WIDENING and not a shape change (the enum's own
     note above says so), and the RENDERED `SeatLogEntry[]` gains one new row type
     (`COUNTERS_SCHEDULED`) plus one new rendering of an existing one — text in NEW
-    records only, D141's already-settled case. */
+    records only, D141's already-settled case.
+
+    🆕🆕 **STAYS 29 AT D446, AND THE QUESTION WAS ASKED AT THREE ADDRESSES BECAUSE
+    THE SLICE HAS THREE SHAPE CHANGES (D443).** The FILTERED IN-PLAY BODY COUNT on
+    both seats — 5 sentences / 9 legal printings — moves:
+
+      · **`CardFilter` gains two members** (`attackNamePokemon`, `suffixPokemon`).
+        ⚠️ **THIS IS THE ONE AT A PERSISTED ADDRESS AND IT IS NOT THE ONE THAT
+        LOOKS LIKE IT.** Nine `EffectOp` fields carry a `CardFilter`, and an op
+        rides `state.phase.cont.pendingOp` — so this union really is inside
+        `MatchRecord.state`, where D285's `abilityPokemon` note above is careless
+        in saying a `CardFilter` member *"reaches no record"* (true of THAT member,
+        which is registry-only; not true of the union). **It costs nothing anyway,
+        and the reason is D333's, quoted in this block already: a WIDENING is free.**
+        No v29 byte string can hold either new member — nothing produces them into
+        an op, only into a parse-time `DamageCountSource` — and every pre-existing
+        inhabitant reads identically, because the two arms are two new `case`s in
+        two exhaustive switches and two new entries in one `Set`. **Driven over the
+        bytes** in `bodiesInPlayScaling.test.ts` §6 DIRECTION 3, over a
+        COMPILE-ENFORCED `Record<CardFilter["kind"], CardFilter>` — all 21 members
+        written out, read back, and `matchesFilter` required to answer identically
+        across a five-card cast.
+      · **`DamageCountSource.yourPokemonInPlay` → `pokemonInPlay` with a required
+        `seat`.** A RENAME plus a REQUIRED key is D359's + D386's case and would
+        owe a bump AT A PERSISTED ADDRESS — this one is not at one. The type is
+        PARSE-TIME: derived from card text and consumed in the same tick by
+        `scaledAttackDamage`; no `EffectOp` carries one, no `GameState` field
+        stores one, no `GameEvent` names one. Driven as a property of the
+        SERIALIZED bytes (§6 DIRECTION 2 asserts BOTH spellings absent from the
+        wire, the old one as well as the new — a rung naming only the current
+        spelling stops discriminating the moment somebody reverts).
+      · **`DiscardPileSeat` → `CountSeat`.** A TYPE ALIAS. There is no runtime
+        value and no byte; the old name is kept as an alias so three shipped mutant
+        rows keep their anchors.
+
+    ⚠️ Nothing else moved: no `GameState` field, no `InPlayPokemon` key, no
+    `EffectOp` inhabitant or field, no prompt kind, no `GameEvent`, no `route`
+    value, no error code, no `SeatLogEntry` row and no `packages/schema` byte. */
 export const MATCH_RECORD_VERSION = 29;
 
 /** How a persisted match read back: absent, usable, or written by an

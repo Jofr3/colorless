@@ -364,7 +364,7 @@ function scaledAttackDamage(
       // empty board is 0 and, with the printed "30×" base dropped, that is no
       // DAMAGE_DEALT row at all.
       return countToolsInPlay(state, attackerSeat) * bonus.per;
-    case "yourPokemonInPlay":
+    case "pokemonInPlay": {
       // 🆕🆕 D439 — the ATTACKER's BODIES IN PLAY matching the printed noun
       // ("This attack does 30 damage for each of your {G} Pokémon in play.").
       //
@@ -392,7 +392,23 @@ function scaledAttackDamage(
       // `opponentBenchCount`. Read at DECLARATION like every other member; a board
       // matching nothing is 0, and on the `×` fold (printed base dropped) that is
       // no DAMAGE_DEALT row at all, which is the printed floor.
-      return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;
+      // 🆕🆕 D446 — THE SEAT IS READ OFF THE MEMBER AND IS NEVER DERIVED FROM THE
+      // FOLD. The expression is `cardsInDiscardPile`'s one case down, BYTE FOR BYTE
+      // apart from the local's name, because it is the same question about a
+      // different zone (D159) — and it is spelled differently ONLY because two
+      // identical lines in one file break a mutant `find` into a `2×` (D437's
+      // converse trap, D442's rule). Do not "tidy" the two into one helper: they
+      // read different members and `precheck` is what would catch the collapse.
+      //
+      // 🛑 **UNLIKE THE PILE, THE CONFOUND HERE IS NOT EVEN AVAILABLE.** D440 had to
+      // argue that a fold-derived seat would read all eight printed printings
+      // correctly; this member's two seats sit on the SAME fold (`×`), so a build
+      // that hard-coded `attackerSeat` scores the opponent's three printings off the
+      // attacker's board on every board that differs — which is what §4's rungs
+      // drive, one seat per board rather than one mirrored pair.
+      const bodySeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;
+      return countPokemonInPlay(state, bodySeat, bonus.count.filter) * bonus.per;
+    }
     case "cardsInDiscardPile": {
       // 🆕🆕 D440 — the cards in a DISCARD PILE matching the printed noun, on the seat
       // the sentence NAMED ("…for each Item card in your opponent's discard pile.").

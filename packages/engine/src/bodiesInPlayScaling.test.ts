@@ -23,6 +23,7 @@ import { engineVersion, programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
 import { countOwnerPokemonInPlay, countPokemonInPlay } from "./interpreter";
+import { matchesFilter } from "./cards";
 import {
   FIXTURE_POOL,
   IN_PLAY_BODIES_DECK,
@@ -223,6 +224,70 @@ function canonical(by: Seat = "p1"): GameState {
   return state;
 }
 
+/** 🆕🆕 D446 — **THE ROUND BOARD.** The canonical board is left EXACTLY as it was
+    (every number in §3-§5 is a population figure and a body added there would move
+    all five silently), so the two new members get boards of their own.
+
+      attacker's side                        defender's side
+        Active  fix-inplaybodies ("Round")     fix-titan   (no attacks)
+        Bench   fix-roundbody ×2               fix-roundbody
+                fix-attacker-ex ("Bite")       fix-benchfiller
+                fix-benchfiller
+
+    `attackNamePokemon { attack: "Round" }` answers **3** on the attacker's side and
+    **1** on the defender's, and every wrong build reads a different number on this
+    one board:
+      • a BENCH-ONLY walk (D439's `benchBodies`, three cases up in the evaluator)
+        drops the Active and reads **2**;
+      • a SEAT INVERSION reads **1**;
+      • `attacksOf(card).length > 0` instead of the NAME counts `fix-attacker-ex`
+        and reads **4**;
+      • an unfiltered `anyPokemon` reads **5**.
+    Five distinguishable answers, one setup. */
+function roundBoard(by: Seat = "p1"): GameState {
+  const foe: Seat = by === "p1" ? "p2" : "p1";
+  const state = benched(bare(by), by, [
+    "fix-roundbody",
+    "fix-roundbody",
+    "fix-attacker-ex",
+    "fix-benchfiller",
+  ]);
+  return benched(state, foe, ["fix-roundbody", "fix-benchfiller"]);
+}
+
+/** 🆕🆕 D446 — **THE RULE-BOX BOARD.**
+
+      attacker's side                        defender's side
+        Active  fix-inplaybodies               fix-titan        (no suffix)
+        Bench   fix-attacker-ex  ("Fixmon ex")  fix-attacker-ex ×2
+                fix-benchfiller                fix-pokemon-v    ("Fixmon V")
+                                               fix-pokemon-vmax ("Fixmon VMAX")
+                                               fix-benchfiller
+
+    `suffixPokemon { suffix: "ex" }` answers **2** on the defender's side and **1**
+    on the attacker's; the `anyOf` pair answers **3** and **1**. The wrong builds:
+      • a SEAT INVERSION reads 1 for both attacks, collapsing the pair's difference;
+      • `hasRuleBox` (or `isExOrV` on the BARE-ex row) counts the VMAX and reads
+        **3** where the bare noun means 2 — which is the whole reason the member is
+        an equality on `pokemonSuffixOf` rather than either wider neighbour;
+      • an `every` reading of `anyOf` (D245's shipped mutant) reads **0**, because no
+        body is both an ex and a V.
+    ⚠️ The defender's Active is deliberately NOT a rule box, so a build that read
+    only the Active Spot reads 0 and a build that skipped it reads the same as the
+    right one — which is why §7 drives the Bench figures against the pair rather
+    than against a single number. */
+function ruleBoxBoard(by: Seat = "p1"): GameState {
+  const foe: Seat = by === "p1" ? "p2" : "p1";
+  const state = benched(bare(by), by, ["fix-attacker-ex", "fix-benchfiller"]);
+  return benched(state, foe, [
+    "fix-attacker-ex",
+    "fix-attacker-ex",
+    "fix-pokemon-v",
+    "fix-pokemon-vmax",
+    "fix-benchfiller",
+  ]);
+}
+
 function swing(state: GameState, index: number, seat: Seat = "p1") {
   return mustApply(state, { type: "attack", seat, index });
 }
@@ -271,7 +336,7 @@ describe("§1 — the five printed sentences, their population, and the fixture"
     expect(family).toHaveLength(9);
   });
 
-  it("carries fix-inplaybodies's five printed attacks, `×` and `+` markers included", () => {
+  it("carries fix-inplaybodies's eight printed attacks, `×` and `+` markers included", () => {
     // The whole list, so the fixture cannot be wrong by OMISSION (D156's failure
     // mode). ⚠️ THE TRAILING MARKERS ARE LOAD-BEARING: `×` is what tells attack.ts
     // to DROP the printed base and `+` is what tells it to keep it, and four of
@@ -282,6 +347,41 @@ describe("§1 — the five printed sentences, their population, and the fixture"
       ["30×", TR_BODIES],
       ["30×", GRASS_BODIES],
       ["40+", EVOLUTION_BODIES],
+      // 🆕🆕 D446 — the three this slice adds, all on the `×` fold, which is the
+      // whole census: the column prints the "more" form of neither new noun.
+      ["20×", ROUND_BODIES],
+      ["60×", FOE_EX_BODIES],
+      ["60×", FOE_EX_V_BODIES],
+    ]);
+    // 🆕🆕 D446 — THE HOLDER'S OWN SIXTH ATTACK IS NAMED "Round", WHICH IS WHAT
+    // MAKES THE ACTIVE SPOT'S PARTICIPATION OBSERVABLE FROM THIS ONE CARD (§7), and
+    // it is the print rather than a trick: the real Round attacks count Pokémon
+    // that have the Round attack, the attacker included.
+    expect(FIXTURE_POOL["fix-inplaybodies"]?.attacks?.map((a) => a.name)).toEqual([
+      "Full House",
+      "Rookie Rush",
+      "Syndicate Strike",
+      "Verdant Tally",
+      "Lineage Press",
+      "Round",
+      "Rule Breaker",
+      "Class Action",
+    ]);
+    // …and the bodies the two new filters are read against carry exactly the fields
+    // the filters read and nothing else — a rule-box marker in the NAME
+    // (`pokemonSuffixOf`) and an attack NAME (`attacksOf`).
+    expect(FIXTURE_POOL["fix-roundbody"]?.attacks?.map((a) => a.name)).toEqual(["Round"]);
+    expect(FIXTURE_POOL["fix-attacker-ex"]?.name).toBe("Fixmon ex");
+    expect(FIXTURE_POOL["fix-pokemon-v"]?.name).toBe("Fixmon V");
+    expect(FIXTURE_POOL["fix-pokemon-vmax"]?.name).toBe("Fixmon VMAX");
+    // 🛑 THE TWO NEGATIVES OF `attackNamePokemon`, AND THEY ARE DIFFERENT NEGATIVES:
+    // the filler has NO attacks and is false through the empty list, `fix-attacker-ex`
+    // has two and is false through the NAME — which is the one a build reading
+    // `attacksOf(card).length > 0` gets wrong.
+    expect(FIXTURE_POOL["fix-benchfiller"]?.attacks).toBeNull();
+    expect(FIXTURE_POOL["fix-attacker-ex"]?.attacks?.map((a) => a.name)).toEqual([
+      "Bite",
+      "Spread Shot",
     ]);
     // The prefixed NAME is the load-bearing field for the owner filter, and it is a
     // SECOND prefixed body distinct from `fix-tr-stage1`.
@@ -304,23 +404,25 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
   it("reads each printed noun as the `CardFilter` member that already spelled it", () => {
     expect(deriveAttackDamageMultiplier(ANY_BODIES)).toEqual({
       per: 20,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "anyPokemon" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "anyPokemon" } },
     });
     expect(deriveAttackDamageMultiplier(BASIC_BODIES)).toEqual({
       per: 20,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "basicPokemon" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "basicPokemon" } },
     });
     expect(deriveAttackDamageMultiplier(TR_BODIES)).toEqual({
       per: 30,
       count: {
-        kind: "yourPokemonInPlay",
+        kind: "pokemonInPlay",
+        seat: "you",
         filter: { kind: "ownerPokemon", owner: "Team Rocket" },
       },
     });
     expect(deriveAttackDamageMultiplier(GRASS_BODIES)).toEqual({
       per: 30,
       count: {
-        kind: "yourPokemonInPlay",
+        kind: "pokemonInPlay",
+        seat: "you",
         filter: { kind: "typedPokemon", pokemonType: "Grass" },
       },
     });
@@ -328,7 +430,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     // "more". The adjective picks the fold, exactly as it does for the Bench trio.
     expect(deriveAttackDamageBonus(EVOLUTION_BODIES)).toEqual({
       per: 40,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "evolutionPokemon" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "evolutionPokemon" } },
     });
   });
 
@@ -369,55 +471,126 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       ),
     ).toEqual({
       per: 30,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "evolutionPokemon" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "evolutionPokemon" } },
     });
   });
 
-  it("🛑 the `(?!opponent)` lookahead refuses the two REAL opponent-side printings", () => {
+  it("🛑 the `(?!opponent)` lookahead keeps the ATTACKER's anchor off the foe's rows", () => {
     // 🛑 **D407's DEFECT, REACHED FROM THE CAPTURE SIDE.** `for each of your ` is
     // also the head of "for each of your opponent's …", so without the lookahead
     // the noun would capture as `opponent's Pokémon ex` and the sentence would be
-    // scored off the ATTACKER's board. Today the vocabulary would refuse that noun
-    // anyway; the lookahead is what stops the refusal turning into a WRONG CARD
-    // the day a rule-box `CardFilter` member lands.
+    // scored off the ATTACKER's board.
+    //
+    // 🆕🆕 **D446 — AND THE DAY D439 NAMED HAS ARRIVED, WHICH PROMOTES THIS GUARD
+    // FROM PROSPECTIVE TO LIVE.** D439 wrote here that *"today the vocabulary would
+    // refuse that noun anyway; the lookahead is what stops the refusal turning into
+    // a WRONG CARD the day a rule-box `CardFilter` member lands."* That member has
+    // landed. The two printed rows are still not the sharpest witness — their noun
+    // (`opponent's Pokémon ex`) misses `inPlayBodyFilter` on every branch, so a
+    // lookahead-free build would fall THROUGH the attacker arm and reach the foe
+    // anchor anyway — but a noun the map DOES hold no longer does, and that
+    // sentence is the one below.
     for (const text of [FOE_EX_BODIES, FOE_EX_V_BODIES]) {
-      expect(deriveAttackDamageMultiplier(text)).toBeNull();
+      expect(deriveAttackDamageMultiplier(text)).toEqual({
+        per: 60,
+        count: {
+          kind: "pokemonInPlay",
+          seat: "opponent",
+          filter:
+            text === FOE_EX_BODIES
+              ? { kind: "suffixPokemon", suffix: "ex" }
+              : {
+                  kind: "anyOf",
+                  filters: [
+                    { kind: "suffixPokemon", suffix: "ex" },
+                    { kind: "suffixPokemon", suffix: "V" },
+                  ],
+                },
+        },
+      });
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
-    // ⚠️ **THE ONE-AXIS CONTROL, AND ITS ADMITTED TWIN**: the same sentence with
-    // `opponent's ` deleted and NOTHING else changed is a constructed string (the
-    // catalog prints no own-side "Pokémon ex" count), so it is labelled as
-    // constructed — and it is still refused, because `Pokémon ex` is not in the
-    // vocabulary either. So this rung proves the lookahead is reached, and the
-    // rung above proves the map is what answers.
+    // 🛑 **THE WITNESS THAT MAKES THE LOOKAHEAD OBSERVABLE, and it is CONSTRUCTED
+    // and labelled so** (D440's posture — a reader is a function of TEXT, so a rung
+    // over text the column does not print is a claim about the READER, and that is
+    // exactly what is needed when no printed row can separate two builds).
+    // `opponent's Pokémon` DOES resolve through `IN_PLAY_OWNER_NOUN`
+    // (`^(.+)['’]s Pokémon$`, owner = "opponent"), so a build without the lookahead
+    // returns a NON-NULL reading here — `{ seat: "you", ownerPokemon "opponent" }`,
+    // scoring the opponent's sentence off the attacker's board against a subgroup
+    // no card is in, i.e. 0 forever. With the lookahead the attacker arm cannot
+    // match and the foe anchor reads it correctly.
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 60 damage for each of your opponent's Pokémon in play.",
+      ),
+    ).toEqual({
+      per: 60,
+      count: { kind: "pokemonInPlay", seat: "opponent", filter: { kind: "anyPokemon" } },
+    });
+    // ⚠️ **THE ONE-AXIS CONTROL, AND IT IS NOW AN ADMITTED TWIN RATHER THAN A
+    // SECOND REFUSAL.** The same sentence with `opponent's ` deleted and NOTHING
+    // else changed is a constructed string (the column prints no own-side
+    // "Pokémon ex" count, measured over all 640 rows) — and it is CLAIMED, on the
+    // attacker's seat, because `IN_PLAY_BODY_NOUNS` is shared whole between the two
+    // anchors (D159). So the pair separates the two anchors on exactly the seat
+    // token and on nothing else: same noun, same filter, different `seat`.
     expect(
       deriveAttackDamageMultiplier("This attack does 60 damage for each of your Pokémon ex in play."),
-    ).toBeNull();
-    // …while the same edit on a noun the map DOES hold is claimed, which is what
-    // makes "the lookahead is doing the refusing" a testable claim rather than a
-    // description: `opponent's` in front of a KNOWN noun is refused, the noun
-    // alone is taken.
+    ).toEqual({
+      per: 60,
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "suffixPokemon", suffix: "ex" } },
+    });
+    // …and the same edit on a noun the map has held since D439 reads the same way,
+    // which is what makes "one vocabulary, two seats" a testable claim rather than
+    // a description.
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 30 damage for each of your opponent's {G} Pokémon in play.",
       ),
-    ).toBeNull();
-    expect(deriveAttackDamageMultiplier(GRASS_BODIES)).not.toBeNull();
+    ).toEqual({
+      per: 30,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "opponent",
+        filter: { kind: "typedPokemon", pokemonType: "Grass" },
+      },
+    });
+    expect(deriveAttackDamageMultiplier(GRASS_BODIES)).toEqual({
+      per: 30,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "typedPokemon", pokemonType: "Grass" },
+      },
+    });
     // 🛑 **THE STRING THE LOOKAHEAD ACTUALLY SAVES US FROM, AND IT IS THE OWNER
     // PATTERN THAT MAKES IT DANGEROUS.** `IN_PLAY_OWNER_NOUN` captures its owner
     // rather than listing it — deliberately, so a sixth prefix printing needs no
-    // code — which means the noun `opponent's Pokémon` RESOLVES, to
-    // `{ kind: "ownerPokemon", owner: "opponent" }`, scored off the ATTACKER's
-    // board. Without the lookahead this constructed sentence derives instead of
-    // staying null, and the card it authors counts bodies whose names begin
-    // "opponent's ". ⚠️ STATED AS CONSTRUCTED (D121/D420): the catalog prints no
-    // such row, so no board and no census figure moves either way — this rung is
-    // the ONLY place the lookahead is observable, and it is where its mutant dies.
+    // code — which means the noun `opponent's Team Rocket's Pokémon` RESOLVES,
+    // to `{ kind: "ownerPokemon", owner: "opponent's Team Rocket" }`, scored off the
+    // ATTACKER's board against a subgroup no card is in. 🆕🆕 **D446 — THE OWNER
+    // HERE IS DOUBLED WHERE D439's WITNESS WAS BARE, AND THAT IS THE REPAIR RATHER
+    // THAN A FLOURISH.** D439's witness was `opponent's Pokémon`, asserted null;
+    // that string is now CLAIMED by the foe anchor (correctly, as the opponent's
+    // `anyPokemon`), so re-pointing it to `.not.toBeNull()` would have produced a
+    // true assertion that is true under the lookahead-free build as well — D418's
+    // disarmed-tripwire shape exactly. This subject still HAS the old property:
+    // with the lookahead it reads the opponent's `Team Rocket's` subgroup, and
+    // without it the attacker's `opponent's Team Rocket's` one, so the two builds
+    // disagree and the rung can still go red. ⚠️ CONSTRUCTED, and labelled so.
     expect(
       deriveAttackDamageMultiplier(
-        "This attack does 30 damage for each of your opponent's Pokémon in play.",
+        "This attack does 30 damage for each of your opponent's Team Rocket's Pokémon in play.",
       ),
-    ).toBeNull();
+    ).toEqual({
+      per: 30,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "opponent",
+        filter: { kind: "ownerPokemon", owner: "Team Rocket" },
+      },
+    });
   });
 
   it("🛑 the `[^.]+` capture cannot cross a sentence break — the COMPOUND stays whole", () => {
@@ -458,23 +631,54 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     expect(resolvedByAnyReader(DRIFLOON_COMPOUND)).toBe(false);
   });
 
-  it("🛑 the MID-SENTENCE noun cannot ride these anchors — the Round family stays LOUD", () => {
-    // 3 sentences / 6 printings, the largest countable record in this family and
-    // the one this slice does NOT take. Its " in play" sits in the MIDDLE of the
-    // noun phrase, so the trailing ` in play\.$` cannot match it at all — it needs
-    // its OWN anchor AND a `CardFilter` member reading `attacksOf`, and a
-    // `CardFilter` member is a widening of a union with two other consumers
-    // (`retrieveNoun`'s switch and `BENCHABLE_RETRIEVAL_KINDS`).
-    expect(deriveAttackDamageMultiplier(ROUND_BODIES)).toBeNull();
-    expect(deriveAttackDamageBonus(ROUND_BODIES)).toBeNull();
-    // ⚠️ **THE FALSIFIER IS EXECUTABLE**: the day the Round family is claimed this
-    // rung goes RED and the refusal above has to be rewritten rather than trusted.
-    expect(resolvedByAnyReader(ROUND_BODIES)).toBe(false);
+  it("🛑 the MID-SENTENCE noun rides its OWN anchor — the Round family, and its zone twin", () => {
+    // 3 sentences / 6 printings, the largest countable record this family's residue
+    // held. 🆕🆕 **D446 — D439 REFUSED IT AND THIS SLICE TAKES IT**, and the refusal
+    // was right about its own measurement: the " in play" sits in the MIDDLE of the
+    // noun phrase, so the trailing ` in play\.$` cannot match it and it needed its
+    // OWN anchor AND a `CardFilter` member reading `attacksOf`. Both were paid.
+    //
+    // ⚠️ **THE OLD RUNG WAS `resolvedByAnyReader(ROUND_BODIES) === false` — A
+    // THIRTEEN-WAY NEGATIVE — AND IT IS NOT REPLACED BY ITS `=== true`** (D438, the
+    // shape that produced D436's GAP). What replaces it is the NAMED owner plus the
+    // twelve kept refusals, which is strictly stronger in both directions.
+    for (const per of [20, 40, 70]) {
+      const text = `This attack does ${per} damage for each of your Pokémon in play that has the Round attack.`;
+      expect(deriveAttackDamageMultiplier(text)).toEqual({
+        per,
+        count: {
+          kind: "pokemonInPlay",
+          seat: "you",
+          filter: { kind: "attackNamePokemon", attack: "Round" },
+        },
+      });
+      expect(deriveAttackDamageBonus(text)).toBeNull();
+    }
     const round = legalAttackCorpus().filter(
       ([, s]) => s.includes("in play that has the Round attack"),
     );
     expect(round).toHaveLength(3);
     expect(round.reduce((sum, [n]) => sum + n, 0)).toBe(6);
+    // …and all three are the CORPUS rows, not three strings this rung built: the
+    // constructed loop above and the census below name the same set.
+    expect(round.map(([, text]) => deriveAttackDamageMultiplier(text)?.per).sort()).toEqual([
+      20, 40, 70,
+    ]);
+    // 🛑 **THE NEW SUBJECT FOR THE OLD DISCRIMINATION (D444), AND IT IS A REAL
+    // PRINTING RATHER THAN A CONSTRUCTED NEAR-MISS.** *"This attack does 20 damage
+    // for each Pokémon in your discard pile that has the United Wings attack."*
+    // (1 legal) differs from the Round rows on exactly ONE axis — the ZONE — and it
+    // is STILL unclaimed by every reader, because the discard-pile anchors end at
+    // `discard pile\.$` and its noun is split around the zone phrase. Its filter is
+    // now spellable (`attackNamePokemon` is exactly what D440 said it needed), so it
+    // is blocked ONCE where it used to be blocked twice, and this rung is what
+    // reddens the day somebody widens that anchor.
+    const unitedWings =
+      "This attack does 20 damage for each Pokémon in your discard pile that has the United Wings attack.";
+    expect(legalAttackCorpus().filter(([, text]) => text === unitedWings)).toHaveLength(1);
+    expect(resolvedByAnyReader(unitedWings)).toBe(false);
+    expect(deriveAttackDamageMultiplier(unitedWings)).toBeNull();
+    expect(deriveAttackDamageBonus(unitedWings)).toBeNull();
   });
 
   it("the whole-sentence anchor holds at both ends and on the leading capital", () => {
@@ -507,8 +711,35 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       deriveAttackDamageMultiplier("This attack does 70 damage for each of your {G} Pokémon in play."),
     ).toEqual({
       per: 70,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
     });
+  });
+
+  it("🆕🆕 the SAME anchor discipline on both new anchors — a `$` each, driven", () => {
+    // 🛑 **THIS RUNG EXISTS BECAUSE A MUTANT SURVIVED**, which is the honest reason
+    // and the one worth writing down: `D446-foe-anchor-loses-its-terminator` was
+    // authored, probed, and came back SURVIVED — a real gap in the suite, not a
+    // wrong tally (D439's rule: a surviving mutant is a claim about your prose as
+    // often as about your tests). The rung above drives the `$` on D439's anchor
+    // and nothing drove it on either of D446's. ⚠️ **AND THE `[^.]+` CAPTURE IS
+    // WHAT MAKES THE `$` THE ONLY THING REFUSING**: a class that cannot cross a `.`
+    // stops the noun at the sentence break by itself, so without the terminator the
+    // pattern is a clean PREFIX match and the tail is silently unread — the card
+    // scores, the compound's second clause never runs, and nothing is loud.
+    for (const head of [FOE_EX_BODIES, ROUND_BODIES]) {
+      expect(deriveAttackDamageMultiplier(head)).not.toBeNull();
+      // …the SAME string with a second sentence appended, one axis apart.
+      expect(
+        deriveAttackDamageMultiplier(`${head} Discard an Energy from this Pokémon.`),
+      ).toBeNull();
+      // …and the other three discipline axes, each one axis from the head.
+      expect(deriveAttackDamageMultiplier(head.replace("This", "this"))).toBeNull();
+      expect(deriveAttackDamageMultiplier(head.slice(0, -1))).toBeNull();
+      expect(deriveAttackDamageMultiplier(`Flip a coin. ${head}`)).toBeNull();
+      // …and the printed-zero guard, which is a SEPARATE guard from the anchor:
+      // these strings carry a noun both readers hold, so only `per >= 1` refuses.
+      expect(deriveAttackDamageMultiplier(head.replace(/does \d+ damage/, "does 0 damage"))).toBeNull();
+    }
   });
 
   it("🛑 the vocabulary's three branches are PAIRWISE DISJOINT, over the whole of it", () => {
@@ -532,7 +763,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
         deriveAttackDamageMultiplier(`This attack does 10 damage for each of your ${type} Pokémon in play.`),
       ).toEqual({
         per: 10,
-        count: { kind: "yourPokemonInPlay", filter: { kind: "typedPokemon", pokemonType: type } },
+        count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: type } },
       });
     }
     // …and the three EXACT nouns carry no apostrophe either, so they cannot reach
@@ -542,7 +773,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     }
     expect(deriveAttackDamageMultiplier(TR_BODIES)).toEqual({
       per: 30,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "ownerPokemon", owner: "Team Rocket" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "ownerPokemon", owner: "Team Rocket" } },
     });
     // The owner is CAPTURED, not listed — a second prefix is admitted the day it is
     // ingested and this file never learns a card name. Constructed, and labelled so.
@@ -550,7 +781,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       deriveAttackDamageMultiplier("This attack does 30 damage for each of your Ethan's Pokémon in play."),
     ).toEqual({
       per: 30,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "ownerPokemon", owner: "Ethan" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "ownerPokemon", owner: "Ethan" } },
     });
     // …and the SPELLED-OUT type notation resolves through the same shared map, so a
     // token meaning Grass in one clause of this file means Grass in every other.
@@ -558,7 +789,7 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       deriveAttackDamageMultiplier("This attack does 30 damage for each of your Grass Pokémon in play."),
     ).toEqual({
       per: 30,
-      count: { kind: "yourPokemonInPlay", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
+      count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "typedPokemon", pokemonType: "Grass" } },
     });
   });
 
@@ -600,9 +831,33 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     expect(deriveAttackDamageMultiplier(EVOLUTION_BODIES)).toBeNull();
     for (const reader of OTHERS) expect(reader(EVOLUTION_BODIES)).toBeNull();
     expect(resolvedByAnyReader(EVOLUTION_BODIES)).toBe(true);
-    // …and the four the family leaves behind are refused by EVERY reader, which is
-    // the thirteen-way negative kept rather than replaced.
-    for (const text of [ANCIENT_BODIES, STAGE1_BODIES, FOE_EX_BODIES, FOE_EX_V_BODIES]) {
+    // 🆕🆕 **D446 — THE TWO FOE ROWS AND THE THREE ROUND ROWS JOIN THE CLAIMED
+    // SIDE, ON THE SAME READER AND WITH THE SAME ELEVEN REFUSALS KEPT.** They are
+    // added to the loop above's shape rather than merely deleted from the one
+    // below, which is the whole of D438's rule: the discrimination the negative
+    // provided is preserved by naming the owner, not by relaxing the claim.
+    for (const text of [FOE_EX_BODIES, FOE_EX_V_BODIES, ROUND_BODIES]) {
+      expect(deriveAttackDamageMultiplier(text)).not.toBeNull();
+      expect(deriveAttackDamageBonus(text)).toBeNull();
+      for (const reader of OTHERS) expect(reader(text)).toBeNull();
+      expect(resolvedByAnyReader(text)).toBe(true);
+    }
+    // …and the TWO the family still leaves behind are refused by EVERY reader,
+    // which is the thirteen-way negative kept rather than replaced. ⚠️ **THEY ARE
+    // ALSO THE CONTROL THAT KEEPS THE LOOP ABOVE HONEST** (D424: every "X is
+    // refused" owes a neighbouring "Y is admitted", and the converse holds too —
+    // a suite in which every corpus row is claimed proves nothing about the
+    // vocabulary). `Ancient` is DATA-BLOCKED (the banner is in no catalog column,
+    // so nothing in `effects.ts` can be the fix); `Stage 1` is UNBUILT (no
+    // `CardFilter` member reads a printed STAGE ORDINAL — `basicPokemon` and
+    // `evolutionPokemon` partition the pool into two and "Stage 1" is a proper
+    // subset of the second). ⚠️ **AND D446 DID NOT COLLECT IT, WHICH IS A REFUSAL
+    // WITH ITS OWN REASON**: the slice's two members are read off `attacksOf` and
+    // `pokemonSuffixOf`, two fields the catalog persists; a stage ORDINAL is not a
+    // persisted field either — `Card.stage` is a free-text column and the engine's
+    // own `isBasicPokemon` / `evolveFromOf` read it as a BINARY. Spelling "Stage 1"
+    // would mean a third reading of that column, and the row is ONE printing.
+    for (const text of [ANCIENT_BODIES, STAGE1_BODIES]) {
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
@@ -798,7 +1053,7 @@ describe("§5 — the same five numbers from the other chair", () => {
 // §6 — persistence, purity, and the census this row moves.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", () => {
+describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses", () => {
   // ⚠️ THE CONSTANT LIVES IN `apps/api/src/lobby/match.ts` and is not exported from
   // this package; what is driven HERE is the engine-side fact it is about — whether
   // anything this slice produces reaches a persisted board.
@@ -817,8 +1072,19 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     const before = canonical();
     const after = swing(before, 0).state;
     const wire = JSON.stringify(after);
+    // 🆕🆕 D446 — the member's NAME changed (`yourPokemonInPlay` → `pokemonInPlay`),
+    // so this rung's subject moved with it. **BOTH SPELLINGS ARE ASSERTED ABSENT**:
+    // the new one because it is what a leak would say today, the old one because a
+    // rung naming only the current spelling stops discriminating the moment somebody
+    // reverts it. And a rename is exactly the change that would have owed a
+    // `MATCH_RECORD_VERSION` bump had this type reached a persisted byte — it does
+    // not, and this line is where that is measured rather than reasoned.
+    expect(wire).not.toContain("pokemonInPlay");
     expect(wire).not.toContain("yourPokemonInPlay");
     expect(wire).not.toContain("anyPokemon");
+    // 🆕🆕 D446 — and neither new `CardFilter` member reaches the wire either.
+    expect(wire).not.toContain("suffixPokemon");
+    expect(wire).not.toContain("attackNamePokemon");
     expect(wire).not.toContain("ownerPokemon");
     // …and no body gained a key: the attacker's key set equals the untouched
     // defender's and equals its own from before the swing, which is the shape a new
@@ -829,6 +1095,96 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(Object.keys(activeOf(after, "p1")).sort()).toEqual(
       Object.keys(activeOf(before, "p1")).sort(),
     );
+  });
+
+  it("🛑 DIRECTION 3 — the `CardFilter` WIDENING, over the bytes, at its own address", () => {
+    // 🆕🆕 **D446 — THE SLICE HAS THREE SHAPE CHANGES AND THEY DO NOT SHARE AN
+    // ADDRESS (D443), SO THE VERSION QUESTION IS ASKED THREE TIMES.**
+    //   · `DamageCountSource.pokemonInPlay` — RENAMED and gains a REQUIRED `seat`.
+    //     A parse-time type: no `EffectOp` carries one, no `GameState` field stores
+    //     one, no `GameEvent` names one. NOT PERSISTED — Directions 1 and 2 above.
+    //   · `CountSeat` — a TYPE ALIAS. There is no runtime value and no byte.
+    //   · **`CardFilter` gains two members, and THAT one IS at a persisted address**:
+    //     `searchDeck.filter`, `discardPileRetrieval.filter`, `chooseCards.filter`
+    //     and six more op fields carry one, and an op rides
+    //     `state.phase.cont.pendingOp`, which is inside `MatchRecord.state`. D442's
+    //     rule pointed the other way — *a shape that is NOT persisted must not be
+    //     priced as though it were* — and this is the half where the address is real.
+    //
+    // 🛑 **AND IT IS D333's CASE, WHICH IS WHY IT COSTS NOTHING: A UNION THAT GAINS
+    // AN INHABITANT.** *"A WIDENING is free; a GENERALISATION is not"* — no v29 byte
+    // string can hold `suffixPokemon` or `attackNamePokemon` (no producer puts either
+    // into an op; §7's sweep drives that over the whole derived column), and every
+    // pre-existing inhabitant reads EXACTLY as it read before, because the two new
+    // arms are two new `case`s in two switches and two new entries in one `Set`.
+    //
+    // ⚠️ **THE ENUMERATION IS COMPILE-ENFORCED RATHER THAN HAND-KEPT** (D424: prefer
+    // a refusal the model re-derives). `Record<CardFilter["kind"], CardFilter>` does
+    // not compile with a member missing, so this list cannot fall behind the union
+    // the way a literal array would — and the count beside it is what catches a
+    // member being DELETED from the union and from the list together (D417's rule:
+    // pin the diff AND the count).
+    const EVERY_KIND: Record<CardFilter["kind"], CardFilter> = {
+      basicPokemon: { kind: "basicPokemon" },
+      anyPokemon: { kind: "anyPokemon" },
+      evolutionPokemon: { kind: "evolutionPokemon" },
+      typedPokemon: { kind: "typedPokemon", pokemonType: "Grass" },
+      anyOf: {
+        kind: "anyOf",
+        filters: [
+          { kind: "suffixPokemon", suffix: "ex" },
+          { kind: "suffixPokemon", suffix: "V" },
+        ],
+      },
+      ownerPokemon: { kind: "ownerPokemon", owner: "Team Rocket" },
+      abilityPokemon: { kind: "abilityPokemon" },
+      attackNamePokemon: { kind: "attackNamePokemon", attack: "Round" },
+      suffixPokemon: { kind: "suffixPokemon", suffix: "ex" },
+      toolCard: { kind: "toolCard" },
+      basicEnergy: { kind: "basicEnergy" },
+      byName: { kind: "byName", name: "Fixmon ex" },
+      supporter: { kind: "supporter" },
+      item: { kind: "item" },
+      stadium: { kind: "stadium" },
+      trainerCard: { kind: "trainerCard" },
+      anyCard: { kind: "anyCard" },
+      pokemonOrBasicEnergy: { kind: "pokemonOrBasicEnergy" },
+      anyEnergy: { kind: "anyEnergy" },
+      specialEnergy: { kind: "specialEnergy" },
+      providesEnergy: { kind: "providesEnergy", energyType: "Grass" },
+    };
+    // **NINETEEN BEFORE THIS SLICE, TWENTY-ONE AFTER.** The count is the second half
+    // of the guard: a diff alone stays green when a member is dropped from the union
+    // and from this list in one edit.
+    expect(Object.keys(EVERY_KIND)).toHaveLength(21);
+    // 🛑 **THE BYTES.** Each filter is written out and read back the way
+    // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
+    // a cast that spans every category the catalog has — a Pokémon with a rule box
+    // and attacks, a plain Pokémon with none, a Trainer and an Energy. A widening
+    // that changed what an old member MEANT would move one of these cells.
+    const CAST = ["fix-attacker-ex", "fix-roundbody", "fix-benchfiller", "fix-item", "fix-energy"];
+    for (const [kind, filter] of Object.entries(EVERY_KIND)) {
+      const readBack = JSON.parse(JSON.stringify(filter)) as CardFilter;
+      expect(readBack).toEqual(filter);
+      for (const id of CAST) {
+        expect([kind, id, matchesFilter(FIXTURE_POOL[id], readBack)]).toEqual([
+          kind,
+          id,
+          matchesFilter(FIXTURE_POOL[id], filter),
+        ]);
+      }
+    }
+    // …and the control that keeps the sweep above from being vacuous (D424): the
+    // cast really does separate the members, so a `matchesFilter` that answered a
+    // constant would not survive this line.
+    const answers = Object.values(EVERY_KIND).map((f) =>
+      CAST.filter((id) => matchesFilter(FIXTURE_POOL[id], f)).length,
+    );
+    expect(new Set(answers).size).toBeGreaterThan(1);
+    expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.suffixPokemon)).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.suffixPokemon)).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.attackNamePokemon)).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.attackNamePokemon)).toBe(false);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {
@@ -845,23 +1201,158 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
     expect(activeOf(after.state, "p2").damage).toBe(120);
   });
 
-  it("🛑 the OPPONENT-SIDE sibling is an ABSENCE, pinned on the POPULATION", () => {
-    // ⚠️ **THIS IS THE FALSIFIER FOR "NO `side` FIELD"** and it is pinned on the
-    // corpus rather than on a specimen (D423): the union spells a side into the
-    // member NAME, and the three opponent-side printings this family holds are
-    // refused for their FILTER — no `CardFilter` member reads a rule-box class —
-    // and not for their side. The day one does, these rows become buildable and
-    // this member gains an `opponentPokemonInPlay` sibling; this rung goes RED then
-    // and not before.
+  it("🛑 the OPPONENT-SIDE reading is a `seat` FIELD — D439's falsifier, FIRED", () => {
+    // 🆕🆕🆕 **D446 — THIS RUNG WENT RED, BY DESIGN, AND IT IS RE-POINTED ONTO A
+    // SHAPE RATHER THAN ONTO A BOOLEAN.** D439 wrote it as the executable falsifier
+    // for *"no `side` field"*: *"the three opponent-side printings this family holds
+    // are refused for their FILTER — no `CardFilter` member reads a rule-box class —
+    // and not for their side. The day one does, these rows become buildable and this
+    // member gains an `opponentPokemonInPlay` sibling; this rung goes RED then and
+    // not before."* `CardFilter.suffixPokemon` reads `pokemonSuffixOf`, so the day
+    // arrived and the rung fired.
+    //
+    // 🛑 **THE MEASUREMENT WAS RIGHT AND THE PREDICTED SHAPE WAS NOT**, which is why
+    // this rung asserts the SHAPE and not `resolvedByAnyReader === true` (D438: the
+    // positive form of a thirteen-way negative is a claim about no reader at all).
+    // There is NO `opponentPokemonInPlay` sibling — D440 re-derived this union's rule
+    // one slice after D439 wrote the prediction, and *identical payload ⇒ one member
+    // with the discriminator as a FIELD*. So what is pinned is: the population is
+    // still exactly these two rows, they are claimed by the reader NAMED here, they
+    // read the OPPONENT's seat, and the union carries no seat-named sibling.
     const foeSide = legalAttackCorpus().filter(
       ([, s]) => s.includes("for each of your opponent's") && s.endsWith(" in play."),
     );
     expect(foeSide.map(([, s]) => s).sort()).toEqual([FOE_EX_BODIES, FOE_EX_V_BODIES].sort());
     expect(foeSide.reduce((sum, [n]) => sum + n, 0)).toBe(3);
-    for (const [, s] of foeSide) expect(resolvedByAnyReader(s)).toBe(false);
+    for (const [, text] of foeSide) {
+      const reading = deriveAttackDamageMultiplier(text);
+      expect(reading?.count.kind).toBe("pokemonInPlay");
+      // …and the SEAT is the field, read off the printed noun phrase.
+      expect(reading?.count).toMatchObject({ seat: "opponent" });
+    }
+    // 🛑 **AND THE SIBLING'S ABSENCE IS PINNED FROM THE MODULE, NOT FROM PROSE.** A
+    // `kind` this union does not carry cannot appear on any reading of any corpus
+    // row, so the sweep below is what would redden if somebody added the sibling
+    // beside the field — the two spellings of one fact D159 forbids.
+    // ⚠️ **`Set<string>` AND NOT `Set<DamageCountSource["kind"]>`, AND THE REASON IS
+    // THE FINDING**: with the narrow element type, `kinds.has("opponentPokemonInPlay")`
+    // does not COMPILE — the union has no such member, so `tsc` refuses the argument.
+    // That is D424's *prefer a refusal the model re-derives* arriving at a rung: the
+    // strongest form of "there is no sibling" is already enforced by the type, and
+    // this widened sweep is the RUNTIME half, which catches the other direction (a
+    // sibling added to the union AND produced by a reader).
+    const kinds = new Set<string>(
+      legalAttackCorpus()
+        .map(([, text]) => deriveAttackDamageMultiplier(text)?.count.kind as string | undefined)
+        .filter((k): k is string => k !== undefined),
+    );
+    expect(kinds.has("pokemonInPlay")).toBe(true);
+    expect(kinds.has("opponentPokemonInPlay")).toBe(false);
+    expect(kinds.has("yourPokemonInPlay")).toBe(false);
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.347.0");
+    expect(engineVersion).toBe("0.348.0");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 §7 (D446) — the two new `CardFilter` members on real boards, and the SEAT.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zone, the seat", () => {
+  it("🛑 `attackNamePokemon` reads the NAME — 3 attacker bodies, 1 defender body", () => {
+    const state = roundBoard();
+    const round: CardFilter = { kind: "attackNamePokemon", attack: "Round" };
+    // ACTIVE + BENCH, §4's "in play": the attacker's Active is the holder itself and
+    // its sixth attack IS called Round, so a Bench-only walk reads 2 and this reads
+    // 3. The two are different numbers on ONE board, which is D439's own reason for
+    // driving the zone rather than arguing it.
+    expect(countPokemonInPlay(state, "p1", round)).toBe(3);
+    expect(countPokemonInPlay(state, "p2", round)).toBe(1);
+    // 🛑 THE TWO NEGATIVES, SEPARATED. `fix-attacker-ex` sits on the attacker's Bench
+    // and HAS attacks — a build reading "has any attack" reads 5 here, and the
+    // unfiltered noun reads 5 too, so the sharp figure is the one in between.
+    expect(countPokemonInPlay(state, "p1", { kind: "anyPokemon" })).toBe(5);
+    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Bite" })).toBe(1);
+    // …and a name nothing prints is a genuine ZERO rather than a data gap, which is
+    // the property that made a CAPTURE safe here where D440 refused one.
+    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Rounds" })).toBe(0);
+    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "round" })).toBe(0);
+    // 🛑 **EQUALITY AND NOT A SUBSTRING, DRIVEN FROM BOTH SIDES.** "Rounds" is longer
+    // than the printed name and "Roun" is a PREFIX of it, so a `.includes` or a
+    // `.startsWith` reading answers 3 on one of these two where the printed equality
+    // answers 0 on both — and `"round"` catches the case-insensitive reading. Three
+    // near-misses, each differing from "Round" on exactly ONE axis (D427).
+    expect(countPokemonInPlay(state, "p1", { kind: "attackNamePokemon", attack: "Roun" })).toBe(0);
+  });
+
+  it("🛑 `suffixPokemon` is an EQUALITY — the VMAX is a rule box and is NOT counted", () => {
+    const state = ruleBoxBoard();
+    const ex: CardFilter = { kind: "suffixPokemon", suffix: "ex" };
+    const v: CardFilter = { kind: "suffixPokemon", suffix: "V" };
+    const pair: CardFilter = { kind: "anyOf", filters: [ex, v] };
+    expect(countPokemonInPlay(state, "p2", ex)).toBe(2);
+    expect(countPokemonInPlay(state, "p2", v)).toBe(1);
+    expect(countPokemonInPlay(state, "p2", pair)).toBe(3);
+    // 🛑 THE VMAX IS THE CONTROL AND IT IS WHY THE MEMBER IS NOT `hasRuleBox` AND THE
+    // BARE-EX ROW IS NOT `isExOrV`: it has a rule box, it is neither an ex nor a V,
+    // and it is counted by NEITHER filter. A `hasRuleBox` build reads 4 for the pair
+    // and 4 for the bare ex; an `isExOrV` build reads 3 for the bare ex.
+    expect(countPokemonInPlay(state, "p2", { kind: "suffixPokemon", suffix: "VMAX" })).toBe(1);
+    expect(countPokemonInPlay(state, "p2", { kind: "anyPokemon" })).toBe(6);
+    // …and the attacker's side answers 1 for all three, which is what makes the seat
+    // the only thing separating this member's two printed sentences from a build
+    // that reads the wrong board.
+    expect([ex, v, pair].map((f) => countPokemonInPlay(state, "p1", f))).toEqual([1, 0, 1]);
+  });
+
+  it("🛑 the FOLD: three attacks, three numbers, on the boards that separate them", () => {
+    // Attack 5 is Round (20×), 6 is the bare ex (60×), 7 is the ex-and-V pair (60×).
+    expect(dealt(roundBoard(), 5)).toBe(60);
+    expect(dealt(ruleBoxBoard(), 6)).toBe(120);
+    expect(dealt(ruleBoxBoard(), 7)).toBe(180);
+    // 🛑 **THE SEAT INVERSION, OFF ONE BOARD RATHER THAN OFF A MIRROR** (D445): a
+    // build reading `attackerSeat` for the two opponent-side rows scores 60 and 60
+    // here — the same number twice, because the attacker's Bench holds one ex and no
+    // V — where the printed reading scores 120 and 180. And the Round row, whose
+    // seat IS the attacker's, is the control that the seat is read off the MEMBER
+    // rather than hard-coded either way: it scores 60 (3 bodies) where a
+    // defender-seat build scores 20.
+    const rb = ruleBoxBoard();
+    expect(countPokemonInPlay(rb, "p1", { kind: "suffixPokemon", suffix: "ex" }) * 60).toBe(60);
+    expect(
+      countPokemonInPlay(roundBoard(), "p2", { kind: "attackNamePokemon", attack: "Round" }) * 20,
+    ).toBe(20);
+  });
+
+  it("🛑 the same three numbers from the other chair", () => {
+    // The fold is seat-RELATIVE, not hard-wired to p1 — the mirror claim, which is a
+    // different claim from the inversion above and needs its own rung (D445).
+    expect(dealt(roundBoard("p2"), 5, "p2")).toBe(60);
+    expect(dealt(ruleBoxBoard("p2"), 6, "p2")).toBe(120);
+    expect(dealt(ruleBoxBoard("p2"), 7, "p2")).toBe(180);
+  });
+
+  it("🛑 `retrieveNoun` owes both members a phrase, and NO board can render one", () => {
+    // ⚠️ **THE ANSWER TO "IS A WRONG CAPTION A TEST FAILURE OR INVISIBLE" IS
+    // INVISIBLE, AND IT IS MEASURED HERE RATHER THAN ASSERTED.** Every caller of
+    // `retrieveNoun` reads an `op.filter`; the only producer of these two members is
+    // `deriveAttackDamageMultiplier`, which builds a `DamageCountSource` and never an
+    // op. So the two new arms are reachability arms — `abilityPokemon`'s own posture
+    // since D285 — owed by the exhaustive switch and by the fact that a REGISTRY
+    // author can hand-write either filter into an op tomorrow.
+    //
+    // The function is not exported, so what is driven is the property that makes the
+    // arms unreachable: no op in the whole derived attack column carries either
+    // member. `deriveAttackEffect` is the only reader that produces ops.
+    const ops = legalAttackCorpus().flatMap(([, text]) => deriveAttackEffect(text) ?? []);
+    const wire = JSON.stringify(ops);
+    expect(wire).not.toContain("attackNamePokemon");
+    expect(wire).not.toContain("suffixPokemon");
+    // …and the control: this sweep DOES see the filters ops really carry, so it is
+    // not vacuous (D424 — every "X is absent" owes a "Y is present" on the same axis).
+    expect(ops.length).toBeGreaterThan(0);
+    expect(wire).toContain("kind");
   });
 });

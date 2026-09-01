@@ -2505,6 +2505,160 @@ available**. That is different from noticing nothing obvious had moved.
 establish that.** Otherwise "monotone" is indistinguishable from "did not look",
 and the two produce the same number right up until the sweep disagrees.
 
+## An amortization argument is a claim about MARGINAL sites (D446)
+
+D439 refused a `CardFilter` widening *for its consumers* — "the cost is measured in
+files, not in the member" — and D446's work order reopened it on the ground that
+**the consumer cost is largely FIXED, so paying it once for two members changes the
+arithmetic.** That premise did not survive.
+
+Measured at D446's head, **8 of the first member's 9 marginal SITE KINDS recurred
+for the second**: its own union member and doc block, its own `matchesFilter` arm,
+its own `retrieveNoun` arm, its own `BENCHABLE_RETRIEVAL_KINDS` entry, its own
+anchor, its own reader arm, its own deck slots and its own board with its own rungs.
+The one kind that did NOT recur is a new FIXTURE. ⚠️ **And the second member cost
+MORE than the first, not less** — it alone forced a rename of a shipped
+`DamageCountSource` member plus a required field (16 executable sites, 5 mutant rows
+re-transcribed), which the first needed none of. What is genuinely shared is the
+**FILE set** (three), the audit, and the single census step. **The cost is linear in ARMS and fixed only in
+FILES**, so a "pay it once" argument is only true of whatever the union's consumers
+happen to do per-file rather than per-member.
+
+Both members were built anyway, because each pays on its own — which is the point:
+**the arithmetic that justified the slice was not the arithmetic the brief named,
+and saying so is worth more than the slice.** D424's rule (*cheapness is marginal
+sites, not mechanisms*) is the same test; this is its converse — **when a brief
+argues that a cost AMORTIZES, count the marginal sites of the SECOND item, not the
+files of the first.**
+
+## Enumerate a union's consumers by what they DO, not by what breaks (D446)
+
+D439 and D440 both name *"the two other consumers of that union"* (`retrieveNoun`
+and `BENCHABLE_RETRIEVAL_KINDS`). Re-derived at D446, `CardFilter` has **four**
+non-test consumers plus the predicate itself, and the two nobody counts are the safe
+ones:
+
+| consumer | shape | omission is |
+|---|---|---|
+| `cards.ts matchesFilter` | exhaustive `switch`, declared return type | a TYPE ERROR |
+| `interpreter.ts retrieveNoun` | exhaustive `switch`, declared return type | a TYPE ERROR |
+| `effects.ts BENCHABLE_RETRIEVAL_KINDS` | a `Set<CardFilter["kind"]>` | **SILENT** |
+| `interpreter.ts energyNoun` | if-chain with a `return "Energy"` fall-through | silent and CORRECT |
+| `interpreter.ts matchesAttached` | one member by name, then delegates | nothing |
+
+**A list of "the consumers" that only names the ones that break is a list of
+hazards, not a census** — and a successor pricing a widening off it will
+under-count the surface and over-count the risk. Derive it by grepping every read
+of the discriminant (`grep -n "filter\.kind\|Filter\[.kind.\]"`), then classify
+each hit by what an omission DOES.
+
+## A silent consumer can be unreachable, and that is a THIRD answer (D446)
+
+`BENCHABLE_RETRIEVAL_KINDS` is the `Set` D439 refused a widening over, and its
+hazard is real in general. For D446's two members it is **unreachable in both
+directions**: the Set has ONE call site, whose `filter` can only come from
+`HAND_SEARCH_NOUNS` / `typedNounFilter` / a bare `byName`, and none of those can
+produce either new member. Omitting them refuses nothing; admitting them benches
+nothing.
+
+So the answer to *"what breaks if the Set is wrong"* was **neither direction is
+observable today** — which is not "it does not matter". The lines are still owed
+(the day `HAND_SEARCH_NOUNS` gains a row for either noun, the Set is what decides),
+and the decision is recorded **at the site** with its unobservability stated.
+⚠️ **AND NO MUTANT ROW IS WRITTEN FOR IT** — D420's rule (*a row that survives
+because it changes nothing reports a suite gap that does not exist*) plus D442's
+(*write the row for the observable direction and record the other at the guard*).
+Here there is no observable direction, so the record is the comment.
+
+## A caption arm can be owed and unrenderable (D446)
+
+`retrieveNoun`'s exhaustive switch means a new `CardFilter` member owes a
+singular/plural noun phrase, and the natural question is whether a wrong one is a
+test failure or invisible. **Measured: invisible.** Every caller reads an
+`op.filter`; D446's two members are produced only into a parse-time
+`DamageCountSource` and never into an op, so no board can render either phrase.
+`abilityPokemon` has been in exactly that state since D285 and says so.
+
+The arms are still owed, for two reasons worth separating: the switch is exhaustive
+(so the member cannot be added without answering the question), and a **registry
+author can hand-write the filter into an op tomorrow**. What can be driven is the
+property that makes them unreachable — a sweep of every op the derived attack column
+produces, asserting neither member appears — and that is what the suite pins instead
+of a caption nothing emits.
+
+## A predicted SHAPE is not the measurement that predicted it (D446)
+
+D428's rule is *a refusal's falsifier should be executable*, and D439 wrote a good
+one: a census rung that reddens *"the day a `CardFilter` member reads
+`pokemonSuffixOf`"*. D446 was that day and the rung fired exactly as designed.
+
+**But the same sentence also predicted the SHAPE of the fix** — *"this member gains
+an `opponentPokemonInPlay` sibling"* — and that half was wrong, because D440
+re-derived the union's rule **one slice after the prediction was written** and found
+the seat-in-the-name convention was a habit: *nullary or asymmetric payload ⇒ two
+members; identical payload ⇒ one member with the discriminator as a field.*
+
+**A falsifier should name the CONDITION that reverses the refusal, not the build
+that will follow it.** The condition is checkable and ages well; the build is a
+forecast (D427) and ages like one. When you fire an inherited falsifier, re-derive
+the shape from today's rules rather than implementing the prediction.
+
+## A guard can graduate from prospective to live, and its witness must move (D446)
+
+D439's `(?!opponent)` lookahead was defended with *"today the vocabulary would refuse
+that noun anyway; the lookahead is what stops the refusal turning into a WRONG CARD
+the day an ex/V filter member lands."* Correct, and its witness was
+`"…for each of your opponent's Pokémon in play." → null`.
+
+D446 landed that member **and added the opponent-side anchor**, which claims that
+very string — correctly. Re-pointing the witness to `.not.toBeNull()` would have
+produced an assertion that is **true under the lookahead-free build as well**
+(D418's disarmed tripwire, D438's polarity rule). The repair is D444's: find the
+subject that still HAS the old property. Here it is the **doubled owner** —
+*"your opponent's Team Rocket's Pokémon"* — which the attacker's anchor would
+resolve to `ownerPokemon { owner: "opponent's Team Rocket" }` and the foe anchor
+resolves to the opponent's `Team Rocket` subgroup. Two builds, two answers, one axis.
+
+## A CAPTURE is safe when the datum is a COLUMN (D446)
+
+D440 refused `^(.+) card$` → `byName` because it would claim *"Ancient card"* — a
+banner in **no** column of the persisted catalog — so the filter would count 0 on
+every board forever while `BUILT.attack` stepped for it (D190b/D199 at the
+instrument layer). That refusal reads as *"prefer a closed map to a capture"*, and
+it is narrower than that.
+
+D446 captures a printed **attack name** and the capture is safe, for one reason: an
+attack name is `attacks_json[].name`, a persisted column this engine already reads
+at every declaration. **Any printed attack noun is answerable by construction, and a
+name that matches nothing is a genuine zero rather than a data gap.**
+
+**Classify the DATUM before choosing between a map and a capture.** The question is
+not "how open is the token set" but "does a column answer it" — and the two
+questions give different answers on the same-looking pattern.
+
+## Re-transcribe by SHORTENING onto the line the row is about (D446)
+
+Five shipped mutant rows broke when D446 renamed a union member and gave an arm a
+new local. Four of them quoted six-line blocks that included the very `return`
+statement the rename touched.
+
+The repair that keeps D416's guarantee — *confine the mutation so the original
+killer keeps the kill* — is to **shorten the `find` onto the line the row is
+actually about** and leave the rest of the block out of it. `D439-*-arm-drops-the-
+filter` is about the vocabulary lookup, not about the `return`; re-anchored on the
+lookup it survives every future edit to the arm's tail, and its mutation is
+byte-identical in meaning. ⚠️ **A row whose `find` is longer than its claim rots on
+every neighbouring edit** — length is not strictness, it is surface area.
+
+## Name a new local so it is not its neighbour's twin (D446)
+
+D446's evaluator arm needed `const <x>Seat = bonus.count.seat === "you" ? attackerSeat
+: defenderSeat;` — a line the sibling arm four `case`s down already owns verbatim as
+`pileSeat`. Naming it `bodySeat` (and saying at the site why) is what keeps
+`D440-evaluator-crosses-the-seat` at `1×`. This is D442's rule applied *before*
+`precheck` reports the `2×` rather than after — the cheaper order, and the comment is
+what stops the next author "tidying" the two into one helper.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

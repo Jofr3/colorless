@@ -13511,6 +13511,48 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
     // serves refuses a play and never opens a chooser.
     case "abilityPokemon":
       return { singular: "a Pokémon that has an Ability", plural: "Pokémon that have an Ability" };
+    case "attackNamePokemon":
+      // 🆕🆕 D446 — the printed *"Pokémon … that has the Round attack"*, and it is
+      // `abilityPokemon`'s pair one line up with the printed name interpolated: the
+      // same HAS/HAVE swap between the numbers, and the same invariant "Pokémon".
+      // The name is interpolated for `basicPokemon.maxHp`'s reason — the printed
+      // attack differs per card and a hard-coded "Round" would caption the next
+      // sentence wrong while filtering it right.
+      //
+      // ⚠️ **THE ARTICLE IS A LITERAL "a" AND `ownerPokemon`'s `/^[AEIOU]/` RULE IS
+      // NOT COPIED**, `typedPokemon`'s call verbatim: the phrase always OPENS with
+      // "Pokémon" whatever the attack is called, so the vowel branch is a line no
+      // board could reach and no mutant could kill.
+      //
+      // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, which
+      // makes it a reachability arm exactly like `abilityPokemon`'s above rather than
+      // a caption any board renders — the member's only producer is
+      // `deriveAttackDamageMultiplier`, which builds a `DamageCountSource` and never
+      // an op, and every caller of this function reads an `op.filter`. The arm exists
+      // because this switch is exhaustive over `CardFilter`, which is what makes a
+      // new member impossible to add without answering the noun question — and
+      // because a REGISTRY author can hand-write the filter into an op tomorrow.
+      return {
+        singular: `a Pokémon that has the ${filter.attack} attack`,
+        plural: `Pokémon that have the ${filter.attack} attack`,
+      };
+    case "suffixPokemon":
+      // 🆕🆕 D446 — the printed rule-box class, whole: "a Pokémon ex", "a Pokémon V".
+      // INVARIANT IN NUMBER like the bare "Basic Pokémon" two arms down — the suffix
+      // is part of the printed name and takes no "s" — so only the article moves, and
+      // the article is a literal "a" for the arm above's reason: `PokemonSuffix` is
+      // CLOSED at five values and the phrase opens with "Pokémon" under every one of
+      // them, so no vowel branch is reachable.
+      //
+      // ⚠️ THE PAIR *"Pokémon ex and Pokémon V"* IS NOT SPELLED HERE and must not be:
+      // it is an `anyOf` of two of these, and that arm joins its members' phrases —
+      // with " or ", where the card prints "and", which is that arm's own documented
+      // and deliberate disagreement (the predicate is a union). A second phrase here
+      // would be the second answer to one question.
+      //
+      // Reachability is `attackNamePokemon`'s above, verbatim: no op carries this
+      // filter today and the arm is owed by the exhaustive switch.
+      return { singular: `a Pokémon ${filter.suffix}`, plural: `Pokémon ${filter.suffix}` };
     case "toolCard":
       return { singular: "a Pokémon Tool card", plural: "Pokémon Tool cards" };
     case "basicEnergy": {

@@ -2282,8 +2282,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D238",
     what: '🛑 THE SILENT-LOSS SHAPE, and the reason that one line is commented. `typedPokemon` drops out of `BENCHABLE_RETRIEVAL_KINDS`, so "Put up to 3 {W} Pokémon … onto your Bench." — the family\'s LARGEST single sentence, 3 legal printings — matches the anchor, resolves its filter, and is then refused at the guard. It lands on the skipped path looking exactly like an unread sentence: every derive test that only checks OTHER sentences stays green',
     file: "packages/engine/src/effects.ts",
-    find: '  "typedPokemon",\n  "byName",\n]);',
-    replace: '  "byName",\n]);',
+    // ⚠️ RE-TRANSCRIBED AT D446: `BENCHABLE_RETRIEVAL_KINDS` gained two rows
+    //    (`suffixPokemon`, `attackNamePokemon`) BELOW `byName`, so the `]);` tail is
+    //    no longer adjacent. The mutation is CONFINED to the deletion it always was —
+    //    `typedPokemon` out of the Set — so `derivedDiscardRetrieval.test.ts` keeps
+    //    the kill for the reason it always had (D416).
+    find: '  "typedPokemon",\n  "byName",',
+    replace: '  "byName",',
     expectKilledBy: ["packages/engine/src/derivedDiscardRetrieval.test.ts"],
   },
   {
@@ -5205,7 +5210,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5711,7 +5716,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5722,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.347.0";',
+    find: 'export const engineVersion = "0.348.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20194,8 +20199,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "🛑 C1 — **THE SIDE INVERTS**: the printed word is \"for each of YOUR … in play\" and the attack damages the opponent, so `attackerSeat` and `defenderSeat` are opposite ends of one swing. `opponentBenchCount` reads `defenderSeat` three `case`s up in this same `switch`, so this is a neighbouring arm's REAL seat copied verbatim (D190b). §3's canonical board is shaped so that BOTH sides answer all five filters and NO pair of answers collides — 6/2/1/3/4 against 5/3/2/1/2 — which is what stops the inversion passing on a symmetric board",
     file: "packages/engine/src/attack.ts",
-    find: "      return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;",
-    replace: "      return countPokemonInPlay(state, defenderSeat, bonus.count.filter) * bonus.per;",
+    // ⚠️ RE-TRANSCRIBED AT D446: the arm's seat became a LOCAL when the member
+    //    gained `seat`, so the row quotes the TERNARY rather than the call and the
+    //    mutation is the same inversion — `bodiesInPlayScaling.test.ts` §4/§5/§7 keep
+    //    the kill (D416). ⚠️ The local is `bodySeat` and NOT `pileSeat`, deliberately:
+    //    two byte-identical lines in one file is D437's converse trap, and
+    //    `D440-evaluator-crosses-the-seat` quotes the `pileSeat` one just below.
+    find: '      const bodySeat = bonus.count.seat === "you" ? attackerSeat : defenderSeat;',
+    replace: '      const bodySeat = bonus.count.seat === "you" ? defenderSeat : attackerSeat;',
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -20203,8 +20214,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "🛑 C2 — **THE ZONE NARROWS TO THE BENCH**, which is the mistake this whole member exists to be distinguishable from: `yourBenchCount` / `opponentBenchCount` / `bothSidesBenchCount` all read the printed word \"Benched\" and all three deliberately skip the Active Spot, and they sit three `case`s up. ⚠️ **THE SUBTLE PART IS THAT IT IS RIGHT ABOUT TWO OF THE FIVE FILTERS**: the canonical attacker's Active is neither a Basic nor Grass, so `basicPokemon` and `typedPokemon` are UNCHANGED (2 and 3) and only `anyPokemon`, `ownerPokemon` and `evolutionPokemon` move (6→5, 1→0, 4→3). A suite that drove one filter would have had a 2-in-5 chance of proving nothing. §4's ACTIVE-ALONE board is the killer: with the Bench empty the owner count goes 1 → 0 and the attack files NO DAMAGE_DEALT at all",
     file: "packages/engine/src/attack.ts",
-    find: "      return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;",
-    replace: "      return countPokemonInPlay({ ...state, players: { ...state.players, [attackerSeat]: { ...state.players[attackerSeat], active: null } } }, attackerSeat, bonus.count.filter) * bonus.per;",
+    // ⚠️ RE-TRANSCRIBED AT D446 (the seat became a local `bodySeat`).
+    find: "      return countPokemonInPlay(state, bodySeat, bonus.count.filter) * bonus.per;",
+    replace: "      return countPokemonInPlay({ ...state, players: { ...state.players, [bodySeat]: { ...state.players[bodySeat], active: null } } }, bodySeat, bonus.count.filter) * bonus.per;",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -20212,8 +20224,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "⚠️ C3 — **THE NEAREST NEIGHBOUR'S ARM, COPIED BYTE FOR BYTE.** `return benchBodies(state, attackerSeat) * bonus.per;` is D282's `yourBenchCount` line verbatim, three `case`s up in the same `switch`, and it is what a slice that priced this sentence off its structural resemblance rather than off its printed noun would actually have shipped. It is wrong TWICE — the zone (Bench, not in play) and the filter (dropped entirely) — so on the canonical board every one of the five attacks reads 5 bodies: 100/100/150/150/240 against the truth's 120/40/30/90/200",
     file: "packages/engine/src/attack.ts",
-    find: "      return countPokemonInPlay(state, attackerSeat, bonus.count.filter) * bonus.per;",
-    replace: "      return benchBodies(state, attackerSeat) * bonus.per;",
+    // ⚠️ RE-TRANSCRIBED AT D446 (the seat became a local `bodySeat`).
+    find: "      return countPokemonInPlay(state, bodySeat, bonus.count.filter) * bonus.per;",
+    replace: "      return benchBodies(state, bodySeat) * bonus.per;",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -20221,8 +20234,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "🛑 C4 — **THE `×` ARM STOPS PASSING THE PARSED NOUN AND COUNTS EVERY BODY.** The filter is the whole of what this member adds over `anyPokemon`, and dropping it is silent on exactly one of the four `×` sentences (\"for each of your Pokémon in play\", whose filter IS `anyPokemon`) — so a suite driving only the bare noun would stay green while three printed cards started scoring off the wrong population. The canonical board reads 6 for every filter under the mutant against 6/2/1/3, and §2's derivation rungs name the member as well as the number",
     file: "packages/engine/src/effects.ts",
-    find: "  const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"yourPokemonInPlay\", filter } };",
-    replace: "  const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"yourPokemonInPlay\", filter: { kind: \"anyPokemon\" } } };",
+    // ⚠️ RE-TRANSCRIBED AT D446: the member is `pokemonInPlay` now and the arm
+    //    gained a `seat` and a doc block, so the row is SHORTENED onto the head plus
+    //    the vocabulary lookup — the two lines it is actually about. The mutation is
+    //    the one it always was (the printed noun replaced by the widest filter),
+    //    CONFINED so `bodiesInPlayScaling.test.ts` §2 keeps the kill (D416).
+    find: "  const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");",
+    replace: "  const inPlayBodies = IN_PLAY_BODY_MULTIPLY.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter: CardFilter | null = { kind: \"anyPokemon\" };",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -20230,8 +20248,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D439",
     what: "🛑 C5 — **THE SAME DEFECT ON THE OTHER FOLD, AND IT IS A SEPARATE ROW BECAUSE IT IS A SEPARATE ARM.** The two readers over one `{per, count}` interface are byte-identical apart from the anchor name, which is precisely the shape where a fix lands on one and not the other (D241's two-site rule). Under the mutant the Evolution sentence counts all 6 bodies rather than the 4 Evolutions, so the additive attack deals 40 + 240 = 280 instead of 200",
     file: "packages/engine/src/effects.ts",
-    find: "  const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"yourPokemonInPlay\", filter } };",
-    replace: "  const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");\n    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"yourPokemonInPlay\", filter: { kind: \"anyPokemon\" } } };",
+    // ⚠️ RE-TRANSCRIBED AT D446: the member is `pokemonInPlay` now and the arm
+    //    gained a `seat` and a doc block, so the row is SHORTENED onto the head plus
+    //    the vocabulary lookup — the two lines it is actually about. The mutation is
+    //    the one it always was (the printed noun replaced by the widest filter),
+    //    CONFINED so `bodiesInPlayScaling.test.ts` §2 keeps the kill (D416).
+    find: "  const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter = inPlayBodyFilter(inPlayBodies[2] ?? \"\");",
+    replace: "  const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);\n  if (inPlayBodies !== null) {\n    const per = Number(inPlayBodies[1]);\n    const filter: CardFilter | null = { kind: \"anyPokemon\" };",
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -21148,5 +21171,116 @@ export const MUTANTS: Mutant[] = [
     find: "      return countCardsInHand(state, defenderSeat, bonus.count.filter) * bonus.per;",
     replace: "      return countCardsInDiscardPile(state, defenderSeat, bonus.count.filter) * bonus.per;",
     expectKilledBy: ["packages/engine/src/opponentHandScaling.test.ts"],
+  },
+  // ── D446 — THE FILTERED IN-PLAY BODY COUNT, ON BOTH SEATS. Eleven rows over TWO new
+  //    `CardFilter` members, THREE new anchors and one RENAMED `DamageCountSource`
+  //    member. 🛑 **TWO DECISIONS THIS SLICE MADE HAVE NO ROW, AND SAYING SO IS THE
+  //    POINT (D420/D442).** `BENCHABLE_RETRIEVAL_KINDS` gained both new members and the
+  //    choice is UNOBSERVABLE IN BOTH DIRECTIONS — that Set has one call site, whose
+  //    `filter` can only come from `HAND_SEARCH_NOUNS` / `typedNounFilter` / `byName`,
+  //    none of which can produce either member — so a row either way would report a
+  //    suite gap that does not exist. `retrieveNoun`'s two new arms are the same case
+  //    for the same reason (no op carries either filter, and every caller reads an
+  //    `op.filter`); both are recorded at their guards instead, and
+  //    `bodiesInPlayScaling.test.ts` §7 drives the property that makes them
+  //    unreachable rather than the captions nothing can render. —
+  {
+    id: "D446-suffix-filter-reads-the-rule-box",
+    decision: "D446",
+    what: "🛑 **THE PREDICATE WIDENED FROM THE PRINTED SUFFIX TO ANY RULE BOX** — `hasRuleBox` is `cards.ts`'s real neighbour two predicates down, it is what the printed parenthetical *«Pokémon ex, Pokémon V, etc. have Rule Boxes»* describes, and it is the shortest thing an author reaches for. It also matches VMAX/VSTAR/GX and the «Radiant » prefix, so the rule-box board's `Fixmon VMAX` starts counting and the bare-ex sentence deals 180 where it prints 120",
+    file: "packages/engine/src/cards.ts",
+    find: "      return pokemonSuffixOf(card) === filter.suffix;",
+    replace: "      return hasRuleBox(card);",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-suffix-filter-widens-to-ex-or-v",
+    decision: "D446",
+    what: "🛑 **THE NARROWER WRONG ANSWER, AND THE ONE THE SLICE'S OWN PAIR INVITES**: `isExOrV` — D107's function, reused verbatim by four shipped sites — reads *«ex OR V»*, which is exactly the OTHER printed sentence. An author who has just written the pair row reaches for it, and the BARE-ex sentence silently starts counting Pokémon V: 180 where the card prints 120. ⚠️ This is `cards.ts`'s own documented hazard at `PREVENTED_ATTACKER_CLASSES` (*«reusing `isExOrV` would silently widen all five printings»*) arriving on a filter",
+    file: "packages/engine/src/cards.ts",
+    find: "      return pokemonSuffixOf(card) === filter.suffix;",
+    replace: "      return isExOrV(card);",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-attack-name-filter-counts-any-attack",
+    decision: "D446",
+    what: "🛑 **THE PRESENCE READ INSTEAD OF THE NAME READ.** `abilityPokemon` one arm up is exactly `hasPrintedAbility(card)` — a bare presence test with no name in it — so an author copying the neighbouring arm's SHAPE writes this. Every Pokémon with any printed attack counts: the Round board answers 4 where it prints 3, and `fix-attacker-ex` (two attacks, neither named Round) is the body that separates them",
+    file: "packages/engine/src/cards.ts",
+    find: "      return attacksOf(card).some((attack) => attack.name === filter.attack);",
+    replace: "      return attacksOf(card).length > 0;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-attack-name-filter-matches-a-substring",
+    decision: "D446",
+    what: "🛑 **EQUALITY → SUBSTRING, WHICH IS THE ONE READING THIS UNION HAS NEVER HAD.** `matchesFilter`'s `byName` arm is an exact `===` and D440 recorded that *«no `CardFilter` member does substring matching at any width»*; a `.includes` here would make that sentence false while every printed Round row still scored correctly. The `Roun` PREFIX near-miss in §7 is what separates them — 3 under the mutant, 0 under the print",
+    file: "packages/engine/src/cards.ts",
+    find: "      return attacksOf(card).some((attack) => attack.name === filter.attack);",
+    replace: "      return attacksOf(card).some((attack) => attack.name.includes(filter.attack));",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-foe-arm-hardcodes-the-attacker",
+    decision: "D446",
+    what: "🛑 **THE SEAT, ON THE ARM THAT READS THE OPPONENT.** Every other arm in this reader chain spells `seat: \"you\"` and this is the only one that does not, so the mistake is one token copied from the line 25 rows up. The rule-box board deals 60 and 60 — two plausible numbers, and the SAME number twice — where the two printed sentences deal 120 and 180",
+    file: "packages/engine/src/effects.ts",
+    find: '      return { per, count: { kind: "pokemonInPlay", seat: "opponent", filter } };',
+    replace: '      return { per, count: { kind: "pokemonInPlay", seat: "you", filter } };',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-foe-anchor-drops-the-possessive-class",
+    decision: "D446",
+    what: "🛑 **THE `['’]` CLASS COLLAPSED TO A BARE U+0027, AND IT IS UNOBSERVABLE ON EVERY BOARD AND IN EVERY CENSUS.** The corpus byte is U+0027 at index 52 on both printed rows (measured with `codePointAt`), so no fold, no printing count and no residue figure can tell the two builds apart. The ONLY instrument that can is `clauseApostrophe.test.ts`'s re-ingest sweep, which rewrites every derivable apostrophe-bearing fixture sentence at U+2019 and requires reader-for-reader EQUALITY — which is precisely why this row's `expectKilledBy` is that suite and not this family's own",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each of your opponent['’]s ([^.]+) in play\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each of your opponent's ([^.]+) in play\\.$/;",
+    expectKilledBy: ["packages/engine/src/clauseApostrophe.test.ts"],
+  },
+  {
+    id: "D446-foe-anchor-loses-its-terminator",
+    decision: "D446",
+    what: "🛑 D234's dropped-`$`, re-inherited on the new anchor: without it the pattern is a PREFIX match and a compound whose first clause is this sentence gets claimed head-first, with the tail silently unread. The family's own printed compound is two sentences of exactly this shape. ⚠️ **THIS ROW SURVIVED ITS FIRST PROBE AND THE GAP WAS REAL** — the suite drove the `$` on D439's anchor and on neither of D446's; `bodiesInPlayScaling.test.ts`'s *«the SAME anchor discipline on both new anchors»* rung was written FOR this row and it is the only thing that kills it. A surviving mutant is a claim about the suite as often as about the prose (D439)",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each of your opponent['’]s ([^.]+) in play\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each of your opponent['’]s ([^.]+) in play\\./;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-round-anchor-captures-the-head-noun",
+    decision: "D446",
+    what: "🛑 **THE LITERAL `Pokémon` REPLACED BY A CAPTURE, WHICH IS WHAT THE TWO ANCHORS ABOVE DO AND IS WRONG HERE.** The head noun is spelled into this pattern precisely because the union has no `allOf`: with a capture the arm would read a noun it cannot conjoin with the attack name, and «for each of your Basic Pokémon in play that has the Round attack.» would score as though the stage word were not printed. Under the mutant the group shifts and `match[2]` becomes the head noun rather than the attack name, so every Round printing derives a filter for an attack called «Pokémon» — 0 on every board, and the sentence scores its printed base forever",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each of your Pokémon in play that has the ([^.]+) attack\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each of your ([^.]+) in play that has the ([^.]+) attack\\.$/;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-round-arm-reads-the-defenders-board",
+    decision: "D446",
+    what: "🛑 **THE SEAT ON THE ARM THAT READS THE ATTACKER, i.e. the mirror of `D446-foe-arm-hardcodes-the-attacker` and its control** (D442: two riders on one member need one row each, each the other's control). The printed word is «your», and the arm sits immediately below one that legitimately spells `\"opponent\"`. The Round board deals 20 where it prints 60",
+    file: "packages/engine/src/effects.ts",
+    find: '          seat: "you",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
+    replace: '          seat: "opponent",\n          filter: { kind: "attackNamePokemon", attack: attackName },',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-pair-noun-drops-the-second-suffix",
+    decision: "D446",
+    what: "🛑 **THE `anyOf` PAIR REDUCED TO ITS FIRST DISJUNCT** — the printed «Pokémon ex and Pokémon V» reading as «Pokémon ex», which is the row an author writes by copying the line above it. It is green on every board with no Pokémon V and deals 120 where the card prints 180. ⚠️ It is also the reason the rule-box board fields exactly one V: with none, this mutant would be EQUIVALENT",
+    file: "packages/engine/src/effects.ts",
+    find: '        { kind: "suffixPokemon", suffix: "ex" },\n        { kind: "suffixPokemon", suffix: "V" },',
+    replace: '        { kind: "suffixPokemon", suffix: "ex" },',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D446-noun-map-loses-the-bare-ex-row",
+    decision: "D446",
+    what: "🛑 **THE VOCABULARY ROW DELETED, WHICH IS THE SILENT DIRECTION.** The anchor still matches, `inPlayBodyFilter` returns null, the guard refuses and the sentence lands on the loud `ATTACK_EFFECT_SKIPPED` path — so no board is WRONG and only the census moves: `BUILT.attack` steps back by 2 printings and the residue steps forward. It is D238's own `BENCHABLE_RETRIEVAL_KINDS` row one table over — *«forgetting this line is the mistake that costs those printings silently»* — and it is why the census suite is a named killer beside the family's own",
+    file: "packages/engine/src/effects.ts",
+    find: '  ["Pokémon ex", { kind: "suffixPokemon", suffix: "ex" }],',
+    replace: "",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
   },
 ];

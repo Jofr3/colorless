@@ -485,6 +485,33 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // (a §9 Ability lock silences an Ability; it does not remove it) is that
       // function's own documented judgement, inherited here rather than re-made.
       return hasPrintedAbility(card);
+    case "attackNamePokemon":
+      // 🆕🆕 D446 — a Pokémon that HAS a printed attack of that NAME ("your Pokémon
+      // in play that has the Round attack"). ONE conjunct and no category test of
+      // its own, which is `abilityPokemon`'s arm directly above BYTE FOR BYTE one
+      // card field over: `attacksOf` reads `Card.attacks`, which the catalog leaves
+      // null on every Trainer and every Energy, so a non-Pokémon is false through
+      // the same read rather than through a guard that could drift away from it.
+      //
+      // ⚠️ `.some` AND AN EXACT `===`, AND BOTH ARE DELIBERATE. A card may print
+      // two attacks and the sentence names ONE, so the question is membership and
+      // not `attacks[0]`; and the comparison is `byName`'s exact equality rather
+      // than a substring, because no member of this union does substring matching
+      // at any width and the printed noun does not ask for one. A misspelled name
+      // matches the empty set — a loud zero on every board, never a wrong card.
+      return attacksOf(card).some((attack) => attack.name === filter.attack);
+    case "suffixPokemon":
+      // 🆕🆕 D446 — a Pokémon of a printed RULE-BOX CLASS ("your opponent's Pokémon
+      // ex in play"). An EQUALITY on `pokemonSuffixOf` and deliberately NOT
+      // `isExOrV`, which is D255's own call at the prevention aura re-read here:
+      // `isExOrV` is the ex-OR-V disjunction, so reusing it for the bare "Pokémon
+      // ex" noun would silently widen that sentence to count Pokémon V as well.
+      // The pool prints the PAIR too, and the pair is spelled where it is printed —
+      // as an `anyOf` of two suffixes (effects.ts `IN_PLAY_BODY_NOUNS`), which is
+      // the combinator's stated purpose and keeps this arm a single equality.
+      // `pokemonSuffixOf` returns null for a non-Pokémon, so the category question
+      // is answered inside the read, exactly as it is one arm up.
+      return pokemonSuffixOf(card) === filter.suffix;
     case "ownerPokemon":
       // An owner-prefixed subgroup Pokémon (Cynthia's Gabite "Champion's Call").
       // THREE conjuncts, and each one is load-bearing:

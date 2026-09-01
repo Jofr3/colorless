@@ -10323,6 +10323,39 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "40+",
         effect: "This attack does 40 more damage for each of your Evolution Pokémon in play.",
       },
+      // 🆕🆕 D446 — THE THREE ATTACKS THIS FIXTURE GAINS, and all three are on the
+      // `×` fold because all five printed rows they stand for are (measured over
+      // `legalAttackCorpus()`; the column prints the "more" form of neither noun).
+      //
+      // 🛑 **THE FIRST ONE IS NAMED "Round" ON PURPOSE, AND IT IS THE PRINT RATHER
+      // THAN A TRICK.** The real cards' Round attack counts Pokémon that have the
+      // Round attack — including the attacker itself — so a holder that did NOT
+      // carry the name would make the Active Spot's participation untestable from
+      // this card. With it, the ATTACKER counts itself and the "in play" reading
+      // (Active + Bench, §4) is separable from the Bench-only one on a single board.
+      {
+        cost: ["Colorless"],
+        name: "Round",
+        damage: "20\u00d7",
+        effect:
+          "This attack does 20 damage for each of your Pokémon in play that has the Round attack.",
+      },
+      // The two OPPONENT-side rule-box rows. They differ on exactly one axis — the
+      // bare "Pokémon ex" against the "Pokémon ex and Pokémon V" pair — so the
+      // `anyOf` and the bare suffix are each other's control on one board (D427).
+      {
+        cost: ["Colorless"],
+        name: "Rule Breaker",
+        damage: "60\u00d7",
+        effect: "This attack does 60 damage for each of your opponent's Pok\u00e9mon ex in play.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Class Action",
+        damage: "60\u00d7",
+        effect:
+          "This attack does 60 damage for each of your opponent's Pok\u00e9mon ex and Pok\u00e9mon V in play.",
+      },
     ],
   }),
 
@@ -11625,6 +11658,27 @@ export const FIXTURE_POOL: Record<string, Card> = {
       filler is what stops the count from being confusable with
       `yourBenchHasNamed`'s reading. */
   "fix-benchfiller": battler("fix-benchfiller", { hp: 60 }),
+  /** 🆕🆕 D446 — FIXTURE. A body whose printed attack is NAMED "Round", for the
+      `CardFilter.attackNamePokemon` count (`bodiesInPlayScaling.test.ts` §7).
+
+      🛑 **THE ATTACK'S NAME IS THE WHOLE FIXTURE AND ITS TEXT IS DELIBERATELY
+      EMPTY-ISH.** `attackNamePokemon` reads `attacksOf(card)[].name` and nothing
+      else, so what makes this body countable is one string; the attack is given a
+      harmless printed damage and NO effect text so that benching this card can
+      never introduce a second reader into a suite whose every number is `per ×
+      count`. It is a Basic with `battler`'s default Colorless type for the same
+      reason — it must differ from the bodies around it in EXACTLY the axis under
+      test (D427: a near-miss that differs on more than one axis tests neither).
+
+      ⚠️ **`fix-benchfiller` AND `fix-attacker-ex` ARE ITS TWO NEGATIVES, AND THEY
+      ARE DIFFERENT NEGATIVES.** The filler carries NO attacks at all, so it is
+      false through the empty list; `fix-attacker-ex` carries two ("Bite", "Spread
+      Shot") and is false through the NAME — which is the one a build reading
+      `attacksOf(card).length > 0` gets wrong. */
+  "fix-roundbody": battler("fix-roundbody", {
+    hp: 60,
+    attacks: [{ cost: ["Colorless"], name: "Round", damage: 10 }],
+  }),
   /** 🆕🆕 D367 — THE FOUR NAMED BENCH BODIES, and the two ATTACKERS among them are
       the same cards as the names their own clauses ask about.
 
@@ -15042,14 +15096,33 @@ export const OPPONENT_BENCH_COUNT_DECK = deckOf({
 
     4 + 4 + 4 + 4 + 4 + 4 + 8 + 28 = **60**. */
 export const IN_PLAY_BODIES_DECK = deckOf({
-  "fix-inplaybodies": 4, // the five-attack holder: any / Basic / TR's / {G} / Evolution
+  "fix-inplaybodies": 4, // the EIGHT-attack holder: any / Basic / TR's / {G} / Evolution / Round / their ex / their ex+V
   "fix-grass-stage1": 4, // Grass AND Evolution — the body two filters share
   "fix-stage1": 4, // Colorless Evolution — the Evolution that is not Grass
   "fix-grass-basic": 4, // Grass Basic — the Grass that is not an Evolution
-  "fix-benchfiller": 4, // Colorless Basic — matches only `anyPokemon` / `basicPokemon`
+  "fix-benchfiller": 4, // Colorless Basic — matches only `anyPokemon` / `basicPokemon`, and carries NO attacks
   "fix-tr-stage1": 4, // "Team Rocket's Persian" — the second prefixed body
   "fix-titan": 8, // 340 HP, no attacks — the defender, and the only opener
-  "fix-energy": 28, // Basic {C} — the one printed symbol of all five attacks
+  // 🆕🆕 D446 — the four bodies the two new `CardFilter` members are read against.
+  // Every one of them is a control for a DIFFERENT wrong build, which is D439's own
+  // rule for this deck ("the cast is chosen so that the filters answer different
+  // numbers on one board") extended by two axes rather than relaxed:
+  //   • `fix-roundbody` — the only body besides the Active whose attack is NAMED
+  //     "Round", so the Active's participation and the Bench's are separable;
+  //   • `fix-attacker-ex` ("Fixmon ex") — the suffix the bare noun names, AND the
+  //     `attackNamePokemon` near-miss: it HAS attacks ("Bite", "Spread Shot") and
+  //     none of them is Round, so a build reading `attacksOf(card).length > 0`
+  //     counts it and a build reading the NAME does not;
+  //   • `fix-pokemon-v` ("Fixmon V") — in for the `anyOf` pair, OUT for the bare ex;
+  //   • `fix-pokemon-vmax` ("Fixmon VMAX") — a RULE BOX that is neither, so a build
+  //     reaching for `hasRuleBox` (or for `isExOrV` on the bare-ex row) counts it and
+  //     the printed equality does not. It is the reason `suffixPokemon` is an
+  //     equality on `pokemonSuffixOf` rather than either of its two wider neighbours.
+  "fix-roundbody": 4, // attack NAMED "Round" — the `attackNamePokemon` positive
+  "fix-attacker-ex": 4, // "Fixmon ex" — the suffix positive AND the has-attacks near-miss
+  "fix-pokemon-v": 4, // "Fixmon V" — in for the pair, out for the bare ex
+  "fix-pokemon-vmax": 4, // "Fixmon VMAX" — a rule box that is NEITHER; the `hasRuleBox` control
+  "fix-energy": 12, // Basic {C} — the one printed symbol of all eight attacks
 });
 
 /** 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT's board. Every card in it is in the
