@@ -2208,6 +2208,38 @@ mechanical version bump must exclude the prose that records what a PREVIOUS bump
 was.** Re-grep the old version string afterwards; the hits that remain should be
 exactly the historical ones.
 
+### `--decision` takes ONE value, and passing more fails silently (D443)
+
+Repeating the flag does not union the selections — the last one wins and the
+earlier ones are discarded without a warning. D443's "six-decision neighbour
+re-probe" was quietly a one-decision re-probe until it was re-run per decision.
+
+**The output looks like a pass either way**, which is what makes it worth a rule:
+a green line naming a smaller row count than you expected is the only tell, so
+**check the row count against the number of rows you meant to probe**. Run the
+decisions separately and report each.
+
+This is the same family as the `--allow-dirty` trap (`0 killed · N
+skipped(dirty)`, exit 1) and the `--precheck` non-flag (which silently starts a
+full sweep): **the harness's argv handling is not forgiving, and its failures are
+verdict-shaped.** Read the count, not the colour.
+
+### The strongest `+0` is the one on a slice that changed a MEANING (D443)
+
+A whole-corpus sweep's `+0 declared` is worth stating in proportion to what could
+have flipped under it. D442 earned one by renaming a shipped wire member. D443
+earned a stronger one: it changed **three shipped meanings** — a `GameEvent`
+field (`ENERGY_MOVED.seat` had meant controller *and* board, true for all four
+producers by accident), a helper's parameter (`moveEndpoints`' `seat`), and a
+`route` value (`selfToBench`). None of those is a type error anywhere; every
+reader still compiled and still ran.
+
+**That is precisely when a pre-existing row flips without anyone noticing**, and
+1,752 rows that knew nothing about the slice still died for the same reasons they
+always had. When a slice redefines what a shipped name MEANS rather than what it
+holds, say so beside the zero — the zero is the measurement that the redefinition
+did not leak.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
