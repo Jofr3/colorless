@@ -4620,8 +4620,30 @@ export type EffectOp =
           (flat, no W/R). `opponentAny` — 1 of ALL the opponent's Pokémon (Active
           OR Bench): a target that lands on the Active takes Weakness/Resistance
           (§8.5), a Benched one does not (Fezandipiti ex "Cruel Arrow", Rotom
-          "Linear Attack"). */
-      target: "opponentBench" | "opponentAny";
+          "Linear Attack").
+
+          🆕🆕🆕 **D447 — `yourBench`, THE THIRD MEMBER: the chosen snipe aimed at the
+          ATTACKER's OWN Bench.** *"This attack also does {10|40} damage to 1 of your
+          Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+          — corpus rows 514 and 525, **2 sentences / 2 legal printings**. Flat, no W/R,
+          exactly like `opponentBench`: §8.5 scopes Weakness and Resistance to the
+          Active/Defending Pokémon and says nothing about WHOSE Bench, which is the
+          same reading `spreadDamage.yourBench` has carried since D425.
+
+          🛑 **AND IT IS `damageChosen` RATHER THAN A SPREAD FOR THE PRINTED
+          QUANTIFIER'S SAKE.** *"1 of"* opens a CHOICE and *"each of"* does not —
+          `SPREAD_EACH_BENCH`'s own doc block states that as the family's dividing line,
+          and D425 named this very pair as the shape it was deliberately NOT taking.
+          The pick is offered to `ctx.seat`, the attacker, on both sides of the table:
+          you choose which of your own bodies takes it.
+
+          ⚠️ **A WIDENING AT A PERSISTED ADDRESS, AND `MATCH_RECORD_VERSION` STAYS 29.**
+          This op PARKS, so the literal rides `GameState.phase.cont.pendingOp` — but no
+          record ever written can contain the new value, and both old values still name
+          the sets they always named. D125's distinction: a widening is free, a rename
+          is not. Driven over the serialized bytes in BOTH directions in
+          `ownBenchSnipe.test.ts` §3 rather than argued here. */
+      target: "opponentBench" | "opponentAny" | "yourBench";
       amount: number;
       count: number;
       /** What is placing these counters — the provenance the `COUNTERS_PLACED`
@@ -10948,6 +10970,11 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // "1 of" separates it from SPREAD_EACH_BENCH's "each of". Refuses Flamigo's "If
 // Flamigo is on your Bench, …" (a board-condition gate, off the `^This` anchor),
 // "2 of" (count ≠ 1), and "1 of YOUR Benched" (self-target) by the exact phrase.
+// 🆕🆕 **D447 — ALL THREE OF THOSE REFUSALS ARE NOW STALE, AND THE PARAGRAPH IS
+// CORRECTED IN PLACE RATHER THAN LEFT AS HISTORY (D442).** D399 retired the first two
+// (see the ✅ note directly below); the SELF-TARGET one is retired here — *"1 of YOUR
+// Benched"* is READ, as group 3, and the op it returns is `damageChosen` with
+// `target: "yourBench"`. **This anchor refuses no side any more.**
 // ✅ 🆕🆕 D399 — **THE SENTENCE ABOVE IS KEPT VERBATIM WITH TWO OF ITS THREE REFUSALS
 // NOW STALE** (D178). *"2 of"* is READ — the count is a capture and the column prints
 // it on FOUR legal printings — and Flamigo's sentence is refused by its CLAUSE rather
@@ -10999,8 +11026,39 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 //
 // ⚠️ **THE CLAUSE IS SINGULAR AND THE ARITY IS CHECKED AGAINST IT** — see arm 6c's
 // `agrees` test, D400's number-agreement rule verbatim one anchor over.
+// 🆕🆕🆕 **D447 — THE FRAGMENT LOSES TWO OVER-SPECIFICATIONS AND GAINS A FOURTH
+// CAPTURE, AND BOTH LOSSES ARE ONES ITS SPREAD SIBLING HAS NOT CARRIED SINCE D425.**
+// `SPREAD_EACH_BENCH`, one screen up, spells `(?:also )?` and reads the possessive as a
+// CAPTURE; this fragment demanded the literal word "also" and the literal owner "your
+// opponent's". The catalog prints both of the spellings that refused:
+//   · *"This attack does 40 damage to 1 of your opponent's Benched Pokémon. (Don't
+//     apply …)"* — corpus row 587, **1 legal printing**, the ONLY bare (no-"also")
+//     benched snipe in the whole attack column, refused by ONE WORD; and
+//   · *"This attack also does {10|40} damage to 1 of your Benched Pokémon. (Don't
+//     apply …)"* — corpus rows 514 and 525, **2 sentences / 2 legal printings**, the
+//     own-side twin, refused by the literal possessive.
+//
+// 🛑 **THE "also" IS DROPPED ON `SPREAD_EACH_BENCH`'s ARGUMENT VERBATIM, AND THAT IS
+// THE WHOLE JUSTIFICATION**: the word marks only that a main hit precedes this one, which
+// the attack's own `damage` field already carries either way, so the bare and the "also"
+// wording derive to the SAME op. ⚠️ **AND IT WAS NEVER WHAT SEPARATED THIS ANCHOR FROM
+// `BENCHED_SNIPE_TAKEN_PRIZES`** — that separation is the whole-sentence `\.` right after
+// the noun, which Covetous Ivy's *"… for each Prize card …"* continues past. The
+// paragraph below said so in those words BEFORE this slice removed the word, which is
+// why removing it costs no new admission (§2 of `ownBenchSnipe.test.ts` drives it).
+//
+// 🛑 **THE GROUP INDICES SHIFT, AND UNLIKE D437's WIDENING THAT IS UNAVOIDABLE.** D437
+// could append its narrowing AFTER the two existing groups' opening parens; a possessive
+// capture sits WHERE THE POSSESSIVE IS PRINTED, which is before the narrowing. So the
+// body holds FOUR groups now — `[1]` amount, `[2]` count, **`[3]` side**, `[4]` narrowing
+// — and **all three callers were re-indexed rather than left to coincidence**.
+// `optionalCostPayoff` reads `[3]` to REFUSE on it, for the exact reason it refuses
+// `[4]`: `AttackOptionalCostPayoff.benchSnipe` is `{amount, count}` and has no slot for a
+// side, so honouring the own-side spelling there would aim a shipped payoff at the wrong
+// half of the table. **No card prints that composition** — the own-side twin is printed
+// bare, never behind *"You may {cost}. If you do, …"*.
 const ALSO_BENCHED_SNIPE_BODY =
-  `attack also does (\\d+) damage to (\\d+) of your opponent['’]s Benched Pokémon` +
+  `attack (?:also )?does (\\d+) damage to (\\d+) of (your opponent['’]s|your) Benched Pokémon` +
   "( that has any damage counters on it)?\\." +
   `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
 const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
@@ -18577,19 +18635,27 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const amount = Number(match[1]);
     const count = Number(match[2]);
-    const damagedOnly = match[3] !== undefined;
+    // 🆕🆕🆕 D447 — THE SIDE IS READ OFF THE PRINTED POSSESSIVE, group 3, and it is
+    // the one thing in this arm a reader cannot see from the outside — D425's line
+    // one family over, verbatim. A build that returned `"opponentBench"`
+    // unconditionally still derives, still passes every shipped opponent-side case,
+    // and turns the two own-side printings into a snipe aimed ACROSS the table
+    // instead of at the attacker's own Bench. Hence `D447-snipe-side-flips`.
+    const snipeSide = match[3] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
+    const damagedOnly = match[4] !== undefined;
     const agrees = !damagedOnly || count === 1;
     if (amount >= 1 && count >= 1 && agrees) {
       // ⚠️ TWO WHOLE LITERALS AND NOT A CONDITIONAL SPREAD — `CHOSEN_ANY_TARGET`'s
       // `ignoreWR` arm four anchors down, spelled the same way for D135's reason:
       // an ABSENT key and a key set to `undefined` are different wire values, and
       // this op is persisted (it parks). The un-narrowed literal is byte-identical
-      // to the one this arm has returned since D399.
+      // to the one this arm has returned since D399 whenever the side is the
+      // opponent's, which is what keeps the twenty-five shipped printings still.
       return damagedOnly
         ? [
             {
               op: "damageChosen",
-              target: "opponentBench",
+              target: snipeSide,
               amount,
               count,
               source: "attack",
@@ -18600,7 +18666,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         : [
             {
               op: "damageChosen",
-              target: "opponentBench",
+              target: snipeSide,
               amount,
               count,
               source: "attack",
@@ -18633,15 +18699,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     const cond = boardConditionForClause(match[1] ?? "");
     const amount = Number(match[2]);
     const count = Number(match[3]);
+    // 🆕🆕🆕 D447 — THE SHARED BODY'S **FOURTH** CAPTURE, READ HERE FOR THE REASON
+    //     THE FRAGMENT EXISTS (D383/D437's rule, at its third application): a widening
+    //     one caller honours and another drops is two opinions about one printed
+    //     clause. **NO CARD PRINTS THIS COMPOSITION EITHER** — the gated skeleton has
+    //     one legal printing (Wo-Chien `sv08-015`) and it is opponent-side — so this is
+    //     the reading the deriver WOULD give, not a claim that it is printed. The
+    //     antecedent's `(.+)` opens first, so the body's four groups are `[2]`..`[5]`.
+    const gatedSide = match[4] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
     // 🆕🆕 D437 — THE SHARED BODY'S THIRD CAPTURE, READ HERE FOR THE REASON THE
     //     FRAGMENT EXISTS: a widening that one caller honours and another drops is
     //     two opinions about one printed clause, which is precisely what D383 made
     //     this fragment shared to prevent. **NO CARD PRINTS THIS COMPOSITION TODAY**
     //     — the gated skeleton has one legal printing (Wo-Chien `sv08-015`) and it
     //     carries no narrowing — so this is a reading the deriver would give if the
-    //     sentence were printed, not a claim that it is. The group is `[4]`: the
-    //     antecedent's `(.+)` opens first, then the body's three.
-    const damagedOnly = match[4] !== undefined;
+    //     sentence were printed, not a claim that it is. 🆕 D447 — the group is `[5]`,
+    //     not `[4]`: the antecedent's `(.+)` opens first, then the body's FOUR.
+    const damagedOnly = match[5] !== undefined;
     if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {
       return [
         {
@@ -18652,7 +18726,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             ? [
                 {
                   op: "damageChosen",
-                  target: "opponentBench",
+                  target: gatedSide,
                   amount,
                   count,
                   source: "attack",
@@ -18663,7 +18737,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             : [
                 {
                   op: "damageChosen",
-                  target: "opponentBench",
+                  target: gatedSide,
                   amount,
                   count,
                   source: "attack",
@@ -23355,7 +23429,18 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
     // never offered — and a registry-shaped defect is what D190b/D199 rank strictly
     // below an unbuilt sentence, which at least fails loudly. So: null, and the whole
     // sentence stays on the `ATTACK_EFFECT_SKIPPED` path.
-    if (snipe[3] !== undefined) return null;
+    if (snipe[4] !== undefined) return null;
+    // 🆕🆕🆕 **D447 — THE FOURTH CAPTURE IS REFUSED HERE TOO, ON THE THIRD CAPTURE'S
+    // REASON VERBATIM AND NOT ON A NEW ONE.** `AttackOptionalCostPayoff.benchSnipe` is
+    // `{amount, count}` — no side, no narrowing — so an own-side payoff would have to
+    // widen that record and `costSnipeProgram` with it, for a composition **no card
+    // prints** (*"You may {cost}. If you do, this attack also does N damage to 1 of
+    // YOUR Benched Pokémon."* is absent from all 640 corpus sentences; the own-side
+    // twin is printed bare, at rows 514 and 525). Dropping the side silently would aim
+    // a shipped payoff at the OPPOSITE half of the table — a wrong-but-plausible
+    // program, which D190b/D199 rank strictly below an unbuilt sentence that at least
+    // fails loudly. So: null, and the whole sentence stays on `ATTACK_EFFECT_SKIPPED`.
+    if (snipe[3] === "your") return null;
     // The same guard on the same reason — and it is the guard `deriveAttackEffect`'s
     // own benched-snipe arm carries on this clause's other spelling.
     return amount < 1 || count < 1 ? null : { kind: "benchSnipe", amount, count };

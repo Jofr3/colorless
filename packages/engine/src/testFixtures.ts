@@ -13874,6 +13874,71 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕🆕 **D447 — THE CHOSEN BENCH SNIPE ON BOTH SEATS AND IN BOTH WORDINGS.**
+
+      🛑 **THE CARD IS SYNTHETIC AND ALL THREE SENTENCES ARE NOT.** Each is
+      transcribed byte-for-byte off `censusAttackCorpus.ts` — the committed
+      `legal_standard = 1` attack column, 640 sentences / 1,732 printings:
+
+        · index 0 — *"This attack also does 10 damage to 1 of your Benched Pokémon.
+          (Don't apply Weakness and Resistance for Benched Pokémon.)"* (corpus line
+          514, **1 legal printing**) — the OWN-side snipe, the smaller of the two
+          amounts the column prints for it;
+        · index 1 — *"This attack also does 40 damage to 1 of your Benched Pokémon.
+          (Don't apply Weakness and Resistance for Benched Pokémon.)"* (corpus line
+          525, **1 legal printing**) — the same shape at the amount that can KNOCK
+          OUT a 40 HP body in one hit, which is what §5 needs;
+        · index 2 — *"This attack does 40 damage to 1 of your opponent's Benched
+          Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*
+          (corpus line 587, **1 legal printing**) — the BARE (no-"also") wording,
+          the only one in the whole column, and an OPPONENT-side control at the
+          SAME amount as index 1.
+
+      🛑🛑 **THE CATALOG PRINTS NO SIDE-ONLY MINIMAL PAIR FOR THIS FAMILY, AND
+      THAT IS A MEASUREMENT RATHER THAN A FIXTURE-DESIGN CHOICE.** D425's `fix-tremor`
+      could put the two possessives of the SPREAD on one body at one amount because the
+      column prints *"each of your …"* and *"each of your opponent's …"* both at 10.
+      The SNIPE's amounts do not overlap: own-side prints {10, 40} with "also", and
+      opponent-side prints {20, 30, 50} with "also" and {40} bare — measured over all
+      640 sentences, not remembered. So indices 1 and 2 differ in TWO tokens (the
+      possessive and the "also"), and the suite does not pretend otherwise: the side
+      discrimination is carried by asserting the damaged body's SEAT together with the
+      amount, and by `D447-snipe-side-flips`, rather than by a one-token board.
+
+      Fighting for `fix-tremor`'s reason — `fix-fighting-weak` (200 HP, ×2 Fighting)
+      is a Weakness witness for both halves of the parenthetical on ONE board.
+      `damage: 30` on all three, so the main hit is never zero and "did the snipe
+      land" is never answered by the main hit's absence. */
+  "fix-pinpoint": battler("fix-pinpoint", {
+    name: "fix-pinpoint",
+    types: ["Fighting"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Home Pinpoint",
+        effect:
+          "This attack also does 10 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Heavy Pinpoint",
+        effect:
+          "This attack also does 40 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Bare Pinpoint",
+        effect:
+          "This attack does 40 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        damage: 30,
+      },
+    ],
+  }),
   /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
 
       🛑 **THE CARD IS SYNTHETIC AND THE SENTENCE IS NOT.** The effect on all three
@@ -20297,6 +20362,18 @@ export const OWN_BENCH_SPREAD_DECK = deckOf({
   "fix-fighting-energy": 6, // {F}{F} — Krookodile's whole cost
   "fix-darkness-energy": 6, // {D}{D} — Tyranitar's typed half
   "fix-energy": 18, // Colorless — every {C} slot on this list
+});
+
+/** 🆕🆕🆕 D447's deck (`ownBenchSnipe.test.ts`). Its own rather than
+    `OWN_BENCH_SPREAD_DECK`'s for that deck's own stated reason: every number this suite
+    measures is a POPULATION over a bench, and adding `fix-pinpoint` to a shared list
+    would move every seeded board in `ownBenchSpread.test.ts`. */
+export const OWN_BENCH_SNIPE_DECK = deckOf({
+  "fix-pinpoint": 4, // the three printed sentences, indices 0, 1 and 2
+  "fix-fighting-weak": 6, // 200 HP ×2 Fighting — the W/R witness and its Active control
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — filler, defender, un-KO-able body
+  "fix-onko": 6, // 30 HP — the body index 1's 40 Knocks Out in one hit, on either bench
+  "fix-energy": 28, // Colorless — every {C} slot on this list
 });
 
 export const BENCH_COUNTER_DECK = deckOf({

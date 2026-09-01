@@ -2677,6 +2677,101 @@ its diff seconds later confirmed by coming back empty. **During a sweep,
 `git status` reports the harness as often as it reports you.** Staging a file the
 harness owns is how a mutant gets committed as source.
 
+## A marker that co-occurs with a family is not its blocker (D447)
+
+🛑 **A surface token shared by every member of a refused family looks like the
+gate and usually is not. The test is one line: STRIP THE TOKEN AND RE-ASK THE
+READERS.** D446's resume point named the trailing *"(Don't apply Weakness and
+Resistance for Benched Pokémon.)"* as *"the whole family's gatekeeper"* and said
+it *"should be priced once"*. Priced:
+
+- it sits on **19 residue sentences / 26 printings** — the largest trailing
+  marker in the residue, which is what made the claim plausible;
+- **stripping it and re-asking `resolvedByAnyReader` unlocks 0 / 0.** Every one
+  of the 19 bodies is refused on its own merits;
+- adding a *mirror* trailing splitter on top of the strip unlocks **1 sentence /
+  2 printings** across the whole residue, which does not pay for a splitter.
+
+⚠️ **AND THE DECISIVE MEASUREMENT NEEDED NO EXPERIMENT AT ALL. Count the marker
+on BOTH sides of the predicate before you count it on one.** That parenthetical
+is on **43 corpus sentences / 88 printings**, and **24 sentences / 62 printings
+of them already RESOLVE** — every shipped anchor in the family spells it as an
+optional trailing group. A token that appears on the built side in the majority
+of its printings cannot be what refuses the rest. The reminder appears on 26
+residue printings *because* bench damage is unbuilt, not the other way round.
+
+⚠️ The corollary bites REFUSAL PROSE too, and it did here: D446 §5 explained a
+refusal as *"the sentence ENDS IN `)` against an `^…$` anchor"*, which is false
+for every anchor in that family. **A refusal reason is a claim; a co-occurring
+token is the easiest wrong one to write down**, because it is visible in the
+sentence and the true reason usually is not.
+
+## Sibling anchors drift apart in the direction of MORE specificity (D447)
+
+⚠️ **When two anchors read the same shape on two seats or two zones, the
+generalisations one of them gains do NOT propagate — and the gap shows up as
+printings nobody has priced.** `SPREAD_EACH_BENCH` has spelled `(?:also )?` since
+it was written and took a possessive CAPTURE at D425. Its snipe sibling
+`ALSO_BENCHED_SNIPE_BODY`, twenty lines away in the same file and sharing the same
+printed noun, demanded the literal word `also` and the literal owner *"your
+opponent's"* until D447. Cost of the gap: **3 sentences / 3 printings** refused
+for two tokens, one of them (row 587, the only bare benched snipe in the column)
+refused **by a single word**.
+
+**So: when you generalise an anchor, list its siblings over the same noun and say
+for each whether the generalisation applies.** A "no" is a finding worth a line;
+silence is how a one-word refusal survives twenty slices. The doc block over the
+snipe fragment had even ARGUED that "also" was not load-bearing — *"the
+LOAD-BEARING separator from Covetous Ivy is the whole-sentence `\.$`, not the word
+also"* — and the word stayed in the regex anyway. **A comment saying a token is
+not load-bearing is a candidate for deletion, not a justification for keeping it.**
+
+## A group index shifts when the capture must sit where the print puts it (D447)
+
+⚠️ D437 widened a shared regex fragment and kept every caller's indices stable by
+**appending** its new group after the existing ones. That trick is available only
+for a group at the END of the pattern. A POSSESSIVE capture sits where the
+possessive is printed — before the narrowing — so D447's widening shifted
+`damagedOnly` from `[3]` to `[4]` at all three callers and in two mutant rows.
+
+**Neither the compiler nor a type sees a `match[3]`, so an index shift is a silent
+defect at every caller you forget.** What caught it here was: (1) each caller
+re-read and re-indexed by hand as part of the edit, and (2) `precheck`, which
+reported both mutant rows as `0×` immediately. **After changing a shared regex's
+group count, grep the fragment's name and re-index every caller in the same edit
+— and expect the mutation corpus to name the ones you missed.**
+
+## A total `switch` is the only thing that sees a new union member (D447)
+
+🛑 `snipeTargets` chose its candidate scope with `op.target === "opponentAny" ? … :
+…`. Adding a THIRD member to `damageChosen.target` compiled cleanly and fell out
+of the `else`, aiming the own-side snipe across the table. **`tsc` reported
+nothing, and no test existed yet to fail.** D222's rule and D425's line in
+`spreadDamage` — *"a `switch` rather than a negated test, so a third member stops
+compiling here instead of falling silently out of the wrong side of a `!==`"* —
+were both already written down, one file apart, and this site had neither.
+
+⚠️ **The second half is worse and is the part to generalise: a funnel BELOW the
+switch can be written in terms of the old members' shared property.** `placeSnipe`
+filtered its bench refs on `ref.seat === opponent` — true of both pre-existing
+members and of neither new one — so the widened op would have parked a real
+prompt, taken a real answer and **dealt nothing**. **When you widen a union, walk
+every function the widened value flows INTO and ask what each one assumed about
+the members that existed before**, not just the ones that dispatch on it.
+
+## Adding a fixture makes an existing mutant row occur twice (D447)
+
+⚠️ D437's converse trap has a third face: it fires when you REMOVE a comment.
+`placeSnipe`'s `DAMAGE_DEALT` literal carried a distinguishing comment line above
+`by: ctx.seat`; rewriting that comment made the literal BYTE-IDENTICAL to
+`spreadDamage`'s from `by:` down, and `D425-damage-row-names-the-victim-as-the-dealer`
+— whose `find` is exactly that run of lines — started occurring **2×**.
+
+**The repair is a trailing comment that says why it is there**, so the next editor
+does not "tidy" the two sites back into twins. `precheck` is what found it, in
+seconds, and it is the reason to run `precheck` after every edit to a file the
+corpus targets rather than only before the sweep.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

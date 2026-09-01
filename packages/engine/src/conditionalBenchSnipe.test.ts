@@ -569,11 +569,30 @@ describe("§4 — the DISCRIMINATION, on both axes, so neither saturation can im
     for (const consequent of [
       "this attack also does 30 damage to each of your opponent's Benched Pokémon.",
       "this attack also does 30 damage to 2 of your opponent's Pokémon.",
-      "this attack also does 30 damage to 2 of your Benched Pokémon.",
       "this attack also does 30 damage to 2 of your opponent's Benched Pokémon that has any damage counters on it.",
     ]) {
       expect(deriveAttackEffect(`If ${TAKEN_CLAUSE}, ${consequent}`), consequent).toBeNull();
     }
+    // 🛑🛑 **D447 — THE THIRD ROW LEFT THIS LOOP, AND THE REASON IS THE PARAGRAPH
+    // ABOVE HAPPENING A SECOND TIME.** *"2 of YOUR Benched Pokémon"* was refused as a
+    // SELF-TARGET; the shared body reads the possessive as its group 3 now, so the
+    // gated arm returns the same `conditionGate` with `target: "yourBench"`. Keeping
+    // `toBeNull()` would have pinned a refusal the engine no longer makes (D444), and
+    // deleting the row outright would have thrown away the only place the gated
+    // caller's SIDE is observable. It is an ADMISSION now, with the side asserted —
+    // which is what re-arms it against `D447-gated-caller-drops-the-side`.
+    expect(
+      deriveAttackEffect(`If ${TAKEN_CLAUSE}, this attack also does 30 damage to 2 of your Benched Pokémon.`),
+    ).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "yourDeckAtMost", count: 3 },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "damageChosen", target: "yourBench", amount: 30, count: 2, source: "attack", deals: true },
+        ],
+      },
+    ]);
     // 🆕🆕 D437 — THE ADMISSION, one axis from the fourth row above: the same clause at
     // the arity it is printed against IS read, through the shared fragment's new
     // capture, and the op carries the narrowing. No card prints this composition; the

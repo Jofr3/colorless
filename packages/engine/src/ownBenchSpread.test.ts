@@ -318,7 +318,17 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // possessive: an owner word this sentence never prints ↔ the two it does
       ["a THIRD possessive", "This attack also does 10 damage to each of my Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // quantifier: "1 of" is a CHOICE and a different op ↔ "each of" is this one
-      ["`1 of` (a choice, `damageChosen`'s shape)", "This attack also does 10 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      // 🆕🆕🆕 **D447 CHANGED THIS ROW'S SENTENCE WITHOUT CHANGING ITS AXIS, AND THE FIRST
+      // REPLACEMENT WAS ALSO WRONG.** *"1 of your Benched Pokémon"* is BUILT now, as
+      // `damageChosen {target: "yourBench"}`, so asserting null would pin a refusal the
+      // engine does not make (D444). The obvious substitute — *"2 of"* — is ALSO read:
+      // D399 made the count a CAPTURE, so every numeral on that axis resolves, and the
+      // rung went red a second time before this comment was written. What genuinely
+      // refuses is a quantifier WORD neither anchor spells: `SPREAD_EACH_BENCH` is keyed
+      // on the literal "each of" and the snipe fragment on `\d+ of`, and "all of" is
+      // neither. ⚠️ **THE AXIS IS UNCHANGED — a quantifier this family is not keyed on —
+      // and that is the only thing that had to survive the substitution.**
+      ["`all of` (a quantifier neither anchor spells)", "This attack also does 10 damage to all of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // scope: the both-sides form names no possessive at all ↔ the one-sided form
       ["`each Benched Pokémon (both yours and your opponent's)`", "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // a trailing clause continues the sentence past the anchor's `\.`
@@ -347,12 +357,42 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     //     two-board fold, and the filtered one needs a per-body predicate as well.
     // Their marginal SITE cost is not near zero (D424's test), so they are left and
     // named. If a later slice claims one, this rung goes RED, which is the point.
+    // 🛑🛑 **D447 FIRED THE FALSIFIER THIS RUNG PROMISED, AND IT WENT RED EXACTLY AS
+    // THE PARAGRAPH ABOVE SAID IT WOULD** — *"If a later slice claims one, this rung goes
+    // RED, which is the point."* Two of the four were claimed: the `1 of your Benched`
+    // pair, at 10 and 40, is now `damageChosen {target: "yourBench", count: 1}`, read
+    // through the SHARED snipe fragment's new possessive capture rather than through any
+    // new anchor. ⚠️ **AND THE PRICE D425 QUOTED WAS WRONG IN ONE DIRECTION AND RIGHT IN
+    // THE OTHER**: the `parkOrForce` doctrine really is a different mechanism from a
+    // spread (right), but its marginal SITE cost was NOT the barrier — `snipeTargets`,
+    // `ownBenchRefs` and the whole `damageChosen` park already existed, and the slice
+    // cost one union member, one ternary, one funnel arm, one caption arm and a
+    // seat-parametric `placeSnipe`. **THE TWO SURVIVING ROWS ARE UNTOUCHED AND KEEP
+    // THEIR ORIGINAL REASON** (a THIRD `target` value plus a two-board fold, and a
+    // per-body predicate on top for the filtered one), which is what stops this rung
+    // decaying into a list of whatever is unbuilt today.
     const stillUnbuilt = [
-      "This attack also does 10 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "This attack also does 40 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ];
+    // 🆕🆕🆕 D447 — the two that LEFT, pinned on the other side of the same predicate
+    // so this rung records the transition rather than quietly shrinking (D444).
+    for (const s of [
+      "This attack also does 10 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "This attack also does 40 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
+      expect(resolvedByAnyReader(s), `claimed at D447: ${s}`).toBe(true);
+      expect(deriveAttackEffect(s), s).toEqual([
+        {
+          op: "damageChosen",
+          target: "yourBench",
+          amount: Number(/does (\d+) damage/.exec(s)?.[1]),
+          count: 1,
+          source: "attack",
+          deals: true,
+        },
+      ]);
+    }
     const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
     for (const s of stillUnbuilt) {
       expect(rows.get(s), `is a real corpus row: ${s}`).toBeGreaterThanOrEqual(1);
@@ -420,7 +460,7 @@ describe("§3 — `target` is a union now, and the record version does not move"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.348.0");
+    expect(engineVersion).toBe("0.349.0");
   });
 });
 

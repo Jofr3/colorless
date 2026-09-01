@@ -101,7 +101,12 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
       // the two and `conditionalBenchSnipe.test.ts` §4 owns the discrimination.
       "If Flamigo is on your Bench, this attack also does 60 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // "1 of YOUR Benched" — a self-target, not the opponent's.
-      "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      // 🆕🆕🆕 **D447 RE-POINTED THIS RUNG RATHER THAN DELETING IT (D444), BECAUSE THE
+      // SLICE REMOVED ITS PREMISE.** The own-side spelling is READ now — the shared body
+      // takes the possessive as group 3 and arm 6c returns `target: "yourBench"` — so
+      // asserting null here would pin a refusal the engine no longer makes. The sentence
+      // moved DOWN into the admissions rung below, where it is driven with the SIDE
+      // asserted; what stays here is what this anchor still genuinely refuses.
       // A printed 0-rider adds nothing — left on the loud path.
       "This attack also does 0 damage to 1 of your opponent's Benched Pokémon.",
       // 🆕🆕 D399 — and a printed 0-COUNT is not a real card either: the second
@@ -111,6 +116,56 @@ describe("deriveAttackEffect — the flat benched-snipe rider ('also does N to M
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+  });
+
+  it("🆕🆕🆕 D447 — the two spellings this anchor STOPPED refusing, with the SIDE asserted", () => {
+    // ⚠️ **THE ADMISSION THE RUNG ABOVE POINTS AT (D424: every refusal owes a
+    // neighbouring admission on the same axis).** Both sentences below were `null`
+    // at D446's head and both are read now; the sentence that stayed refused beside
+    // each is in the loop above, one token away on the SAME axis.
+    //
+    // · the POSSESSIVE axis — "1 of YOUR Benched" is a `yourBench` snipe, and the
+    //   opponent-side twin beside it is byte-identical apart from the owner;
+    expect(
+      deriveAttackEffect(
+        "This attack also does 20 damage to 1 of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([
+      { op: "damageChosen", target: "yourBench", amount: 20, count: 1, source: "attack", deals: true },
+    ]);
+    expect(
+      deriveAttackEffect(
+        "This attack also does 20 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([
+      { op: "damageChosen", target: "opponentBench", amount: 20, count: 1, source: "attack", deals: true },
+    ]);
+    // · the "also" axis — the BARE wording derives to the SAME op as the "also" one,
+    //   which is the whole argument for dropping the word (`SPREAD_EACH_BENCH`'s).
+    expect(
+      deriveAttackEffect("This attack does 20 damage to 1 of your opponent's Benched Pokémon."),
+    ).toEqual(
+      deriveAttackEffect("This attack also does 20 damage to 1 of your opponent's Benched Pokémon."),
+    );
+    // 🛑 …AND THE SEPARATOR THAT KEPT COVETOUS IVY OFF THIS PATH IS STILL THE `\.`,
+    // NOT THE WORD. Dropping "also" must NOT let the Prize-scaled sentence through this
+    // arm — it continues past the noun, so the body's literal `\.` refuses it here and
+    // `BENCHED_SNIPE_TAKEN_PRIZES` (arm 6b, which runs FIRST) owns it instead.
+    expect(
+      deriveAttackEffect(
+        "This attack does 40 damage to 1 of your opponent's Benched Pokémon for each Prize card your opponent has taken.",
+      ),
+    ).toEqual([
+      {
+        op: "damageChosen",
+        target: "opponentBench",
+        amount: 40,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perTakenPrize: true,
+      },
+    ]);
   });
 
   it("🆕🆕 D399 — '2 of' is a COUNT-2 snipe now, and both printings come off the corpus", () => {

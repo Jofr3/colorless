@@ -7683,12 +7683,30 @@ function placeSnipe(
   }
   // Bench targets — flat (no W/R). Batched in one map so a count-N snipe (Hawlucha)
   // still lands as before.
+  //
+  // 🆕🆕🆕 **D447 — THE BENCH VICTIM IS READ OFF THE REFS, NOT ASSUMED TO BE THE
+  // OPPONENT, AND THAT IS THE WHOLE INTERPRETER HALF OF THIS SLICE.** Until this slice
+  // the filter below was `ref.seat === opponent`, so an own-side ref was DROPPED and
+  // `targeted` came back empty — `damageChosen {target:"yourBench"}` would have parked
+  // a real prompt, taken a real answer and then dealt NOTHING, with `tsc` green and no
+  // event to say so. **A silent no-op is the failure mode this function had, and it is
+  // the one a union widening reaches without touching a line of arithmetic.**
+  //
+  // ⚠️ **ONE SEAT PER CALL, AND THAT IS A PROPERTY OF THE FUNNEL RATHER THAN A
+  // SIMPLIFICATION.** `snipeTargets` returns `oppAnyRefs`, `oppBenchRefs` or
+  // `ownBenchRefs`, and every one of the three is single-seated; `validateChoice`
+  // matches the answer against the parked candidates, so a pick spanning both benches
+  // cannot arrive here. The seat is therefore taken from the FIRST benched ref and the
+  // rest are filtered against it, which is exactly as wide as the sets that exist.
+  // ⚠️ The ACTIVE arm above stays `opponent`-only: no printing aims a chosen hit at
+  // the attacker's own Active, and `oppAnyRefs` is the only producer of an Active ref.
+  const benchVictim = refs.find((r) => r.spot.spot === "bench")?.seat ?? opponent;
   const targeted = new Set<number>();
   for (const ref of refs) {
-    if (ref.seat === opponent && ref.spot.spot === "bench") targeted.add(ref.spot.index);
+    if (ref.seat === benchVictim && ref.spot.spot === "bench") targeted.add(ref.spot.index);
   }
   if (targeted.size === 0) return next;
-  const side = next.players[opponent];
+  const side = next.players[benchVictim];
   // Mimikyu "Safeguard" — an ex/V attacker's Benched-target attack damage is
   // prevented too (the deals arm only; a placed counter below is not "damage").
   const attackerTop = activeTop(next, ctx.seat);
@@ -7731,7 +7749,7 @@ function placeSnipe(
       // and since 0.89.0 Ting-Lu ex's "Land Scoop"): flat, no W/R and no reduction
       // passive (a placed counter is not "damage from an attack"). `source` is the
       // producer's, never this function's — see the doc block.
-      events.push({ type: "COUNTERS_PLACED", seat: opponent, uid, amount, source });
+      events.push({ type: "COUNTERS_PLACED", seat: benchVictim, uid, amount, source });
       bench.push({ ...pokemon, damage: pokemon.damage + amount });
       continue;
     }
@@ -7843,7 +7861,9 @@ function placeSnipe(
     const [flipPrevented, nextRng] = coinFlipShieldPrevents(
       { ...next, rngState: rng },
       pokemon,
-      opponent,
+      // 🆕 D447 — the SHIELDED body's seat, which is the sniped side and not
+      // necessarily the opponent's. The flip belongs to the Pokémon being damaged.
+      benchVictim,
       preventedBeforeFlip || ignoreWR ? 0 : wouldDeal,
       events,
     );
@@ -7859,10 +7879,22 @@ function placeSnipe(
     // So the clamp goes exactly where the pipeline goes and no further.
     const clamped = koSurvivalClamp(next, pokemon, dealt);
     const damage = clamped ?? pokemon.damage + dealt;
+    // 🆕🆕 D425 said of the row below: *"placeSnipe's `deals` arm aims across the
+    // table."* 🆕🆕🆕 **D447 CORRECTS THAT SENTENCE IN PLACE (D442): IT NO LONGER
+    // ALWAYS DOES.** `by` is the ATTACKER on every board — unchanged, and what makes the
+    // row read "p1 dealt …" — but `seat` is the DAMAGED body's, and under
+    // `target: "yourBench"` the two are the SAME seat. `ownBenchSpread.test.ts` §8 states
+    // the general rule for the spread; the snipe inhabits it now too.
+    //
+    // ⚠️ **THE TRAILING COMMENT ON `by` IS LOAD-BEARING AND NOT DECORATION (D437's
+    // converse trap, D446's rule).** Without it this object literal is BYTE-IDENTICAL to
+    // `spreadDamage`'s from `by:` down, and `D425-damage-row-names-the-victim-as-the-dealer`
+    // — whose `find` is that run of lines — starts occurring TWICE and the row breaks.
+    // `precheck` said so before this comment was written.
     events.push({
       type: "DAMAGE_DEALT",
-      seat: opponent,
-      by: ctx.seat, // 🆕🆕 D425 — placeSnipe's `deals` arm aims across the table.
+      seat: benchVictim,
+      by: ctx.seat, // 🆕🆕🆕 D447 — the ATTACKER, which is `seat` too on the own-side arm.
       uid,
       base: amount,
       debuff: attackerDebuff > 0 ? attackerDebuff : undefined,
@@ -7876,7 +7908,7 @@ function placeSnipe(
     });
     bench.push({ ...pokemon, damage });
   }
-  return withSide({ ...next, rngState: rng }, opponent, { ...side, bench });
+  return withSide({ ...next, rngState: rng }, benchVictim, { ...side, bench });
 }
 
 /** The Active-target arm of an `opponentAny` snipe (Fezandipiti ex "Cruel Arrow"
@@ -8195,7 +8227,7 @@ function snipeNote(
   count: number,
   optional: boolean,
   deals: boolean,
-  target: "opponentBench" | "opponentAny" = "opponentBench",
+  target: "opponentBench" | "opponentAny" | "yourBench" = "opponentBench",
   /** 🆕🆕 D437 — `op.damagedOnly`. The caption must name exactly the set the funnel
       offers or the dialog contradicts its own validator (`gustTargetNoun`'s and
       `knockOutChosenNote`'s stated rule), and here that matters more than usual:
@@ -8210,6 +8242,14 @@ function snipeNote(
     : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
   // `opponentAny` offers the Active too, so the heading drops "Benched".
   const zone = target === "opponentAny" ? "Pokémon" : "Benched Pokémon";
+  // 🆕🆕🆕 **D447 — THE HEADING NAMES WHOSE BENCH IT IS, BECAUSE THE CANDIDATE SET
+  // NOW DEPENDS ON THAT.** `snipeTargets` offers the ATTACKER's own Bench under
+  // `yourBench`, and a dialog that still read *"Choose 1 of your opponent's Benched
+  // Pokémon"* over a list of the player's OWN bodies would contradict its own
+  // validator — `gustTargetNoun`'s and `knockOutChosenNote`'s stated rule, and D437's
+  // reason for the window below. The printed sentence is *"1 of YOUR Benched
+  // Pokémon"*, so the caption quotes it.
+  const owner = target === "yourBench" ? "your" : "your opponent's";
   // 🆕🆕 D437 — the window rides AFTER the noun because that is where the print puts
   // it, `knockOutChosenNote`'s line verbatim. ⚠️ **SINGULAR ONLY, AND THAT IS NOT AN
   // OVERSIGHT**: the clause is printed *"that has … on it"*, and `ALSO_BENCHED_SNIPE`
@@ -8217,7 +8257,7 @@ function snipeNote(
   // spelling here would be a branch no build can reach — the unreachable arm D205
   // says to remove rather than test around.
   const window = damagedOnly ? " that has any damage counters on it" : "";
-  return `${verb} ${count} of your opponent's ${zone}${window} (${each} each).`;
+  return `${verb} ${count} of ${owner} ${zone}${window} (${each} each).`;
 }
 
 /** The heading for healChosen's "up to N" park. Quotes the card (Saguaro:
@@ -12586,7 +12626,26 @@ export function snipeTargets(
   seat: Seat,
   op: Extract<EffectOp, { op: "damageChosen" }>,
 ): PokemonRef[] {
-  const scope = op.target === "opponentAny" ? oppAnyRefs(state, seat) : oppBenchRefs(state, seat);
+  // 🆕🆕🆕 **D447 — A `switch` RATHER THAN THE TERNARY THAT WAS HERE, AND THE SWAP IS
+  // THE POINT.** The ternary read `=== "opponentAny" ? oppAny : oppBench`, so the third
+  // member added to the union this slice would have fallen SILENTLY out of its `else`
+  // and aimed the own-side snipe across the table — `tsc` reported nothing, and the
+  // suite would have been green on a wrong board. That is D222's rule and D425's line
+  // in `spreadDamage` verbatim: a total `switch` stops compiling instead.
+  const scope = ((): PokemonRef[] => {
+    switch (op.target) {
+      case "opponentAny":
+        return oppAnyRefs(state, seat);
+      case "opponentBench":
+        return oppBenchRefs(state, seat);
+      // 🛑 THE ATTACKER'S OWN BENCH, and `seat` is the ATTACKER's on every attack
+      // program (attack.ts sets `ctx.seat`), so this is the same board the pick is
+      // offered to. `ownBenchRefs` is the helper `moveCountersToDefender` and the
+      // switch-out family already share — one reading of "your Bench", not a fourth.
+      case "yourBench":
+        return ownBenchRefs(state, seat);
+    }
+  })();
   if (op.damagedOnly !== true) return scope;
   // A ref that resolves to no body is DROPPED rather than admitted — the narrowed
   // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule

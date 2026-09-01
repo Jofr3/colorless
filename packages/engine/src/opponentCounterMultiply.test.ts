@@ -813,7 +813,7 @@ describe("§7 — the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.348.0");
+    expect(engineVersion).toBe("0.349.0");
   });
 });
 
