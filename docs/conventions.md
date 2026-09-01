@@ -2659,6 +2659,24 @@ D446's evaluator arm needed `const <x>Seat = bonus.count.seat === "you" ? attack
 `precheck` reports the `2×` rather than after — the cheaper order, and the comment is
 what stops the next author "tidying" the two into one helper.
 
+### A docs file can be a mutation target, so a late edit can void a sweep (D446)
+
+`docs/progress.md` is the target of eight `D318-*` rows that guard the
+end-of-session ritual. A prose correction landed in it **after** a whole-corpus
+sweep had launched, which under D215's dirty-file refusal would have made all
+eight report `SKIPPED-DIRTY` — and **skips take the exit code with them**, so the
+run would have printed a plausible table and meant nothing.
+
+**The repair is to commit that path alone, early**, while the sweep is far from
+the rows in question. Check how far along it is first: the row order is by id, so
+you can see whether the guarded rows have already run.
+
+⚠️ **And classify every dirty path before staging any of them.** At that moment a
+second file was also dirty — and it was a **mutant in flight**, which re-reading
+its diff seconds later confirmed by coming back empty. **During a sweep,
+`git status` reports the harness as often as it reports you.** Staging a file the
+harness owns is how a mutant gets committed as source.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
