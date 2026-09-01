@@ -2772,6 +2772,27 @@ does not "tidy" the two sites back into twins. `precheck` is what found it, in
 seconds, and it is the reason to run `precheck` after every edit to a file the
 corpus targets rather than only before the sweep.
 
+### The region-overlap audit and `precheck` answer different questions (D447)
+
+The mechanical audit — for every file you will edit, find every mutant row whose
+`find` lies in a region you change — has been the strongest pre-build instrument
+in this run (51 in-region rows at D443, 19 at D444, 15 at D446). **It has a
+structural blind spot**, and D447 hit it: a row broke in a region the slice did
+**not** touch, because an edit elsewhere made one event literal a **byte-twin** of
+another, so the row's `find` began occurring twice.
+
+The audit examined 1,055 rows, flagged 27, and this was not among them —
+correctly, because by its own question it was not near the edit.
+
+- **The region audit answers**: *did I edit near this row?*
+- **`precheck` answers**: *does this row's `find` still occur exactly once?*
+
+**The second question is the one the corpus actually rests on, and the first is
+not a substitute for it.** Run the audit to know what you are about to disturb
+and to plan repairs; run `precheck` to know whether the corpus is runnable. It
+costs seconds and it is the only one that catches a collision you created at a
+distance.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
