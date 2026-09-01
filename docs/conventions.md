@@ -2489,6 +2489,22 @@ control the whole information argument rests on.
 catalog, D419 at an instrument, here at a work order). Re-sweep with the MECHANISM's
 vocabulary — *hand* × *does N damage* — not with the sentence's opening words.
 
+### A monotone prediction arrived at by CHECKING is not the same object (D445)
+
+D444 established: prefer the non-monotone sweep prediction, because it tests
+comprehension rather than addition. D445's was monotone — `+14 killed, +0
+declared` — and the honest version of that claim required saying *why*.
+
+The builder enumerated every pre-existing row that could plausibly have changed
+class (a re-transcribed row whose killer set had been widened, a tripwire the
+slice had to check, both rows of a neighbouring decision, a shared-walk row, and
+five more) and read each one, establishing that **no non-monotone prediction was
+available**. That is different from noticing nothing obvious had moved.
+
+**So when the prediction comes out monotone, say which rows you checked to
+establish that.** Otherwise "monotone" is indistinguishable from "did not look",
+and the two produce the same number right up until the sweep disagrees.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
