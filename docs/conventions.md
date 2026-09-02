@@ -3454,3 +3454,105 @@ to come in at least two sizes in one pass: `censusAtHead.test.ts`'s chains count
 `opponentResistanceBonus.test.ts`'s eleven-deep ladder counts FIXTURE IDS (`- 1`). Three
 sizes, one commit — and a slice that assumed one number would have been wrong in two of
 the three places.
+
+## A coverage predicate is an INSTRUMENT, and an uncommitted one is a number nobody can re-run (D454)
+
+D453 published **`758 producer-side · 358 implementation-side · 24 producer-ONLY · ZERO
+implementation-ONLY`** over the `EffectOp` union and shipped **no script**. `tmp/` held its
+four pass scripts and not its op audit, so the numbers on the page were unfalsifiable by
+construction — which is D211's whole complaint about mutant tallies, arriving one level up
+at the tallies' own measuring device.
+
+Re-derived at D454, the structural conclusion **does not survive**. D453 measured PRODUCER
+regions wide (two brace levels out from each `op: "K"` literal) and IMPLEMENTATION regions
+narrow (the `case "K":` arm body only). Following the CALL GRAPH out of the arm — every
+top-level `interpreter.ts` function transitively reachable from it whose fan-in over the 74
+kinds is ≤ 4 — returns **665 producer / 811 implementation** and **6 implementation-ONLY
+kinds, not zero**. And the NON-transitive variant that attributes only EXCLUSIVE helpers,
+which reproduces D453's own totals to ~2% (**744 / 337** against its 758 / 358 on the same
+corpus), returns **5**. **Two predicates, one conclusion: zero was never the number.**
+
+🛑 **AN ASYMMETRIC PREDICATE MANUFACTURES A DIRECTIONAL LAW.** Wide on one side and narrow
+on the other, "coverage is a strict chain from producer to implementation" is what you get
+whatever the corpus looks like. **State the region definition for BOTH sides in the same
+sentence, and if the two are not the same shape, say why before you draw a conclusion from
+the asymmetry.**
+
+⚠️ **AND THE SLICE THAT STATED THE LAW BROKE IT.** D453's own 18 rows are **17
+implementation-side and 1 producer-side**, so "zero implementation-only" was false in its
+own commit and its resume point did not say so. **Re-run your structural claim against the
+corpus you are about to write, not the one you measured.**
+
+## A shared helper is the implementation of EVERY op that calls it (D454)
+
+Attributing only EXCLUSIVE helpers reported `scheduleCounters`, `scheduleDiscard` and
+`scheduleKnockOut` as having **zero implementation rows** when they have **six** — five D434
+rows on `scheduleDelayed`, the one function the three arms delegate to, and one D435 row on
+`sameSchedule`, the private helper `scheduleDelayed` itself calls.
+D453's recommendation named all three as the next slice's targets on exactly that blindness.
+
+⚠️ **THE SIXTH ROW IS ONE CALL FURTHER OUT THAN THE FIFTH**, which is why "attribute the
+shared helper" is not enough on its own: the attribution has to be **transitive**, and what
+stops it swallowing the whole file is a FAN-IN cap (`withActive` and `topUid` are reachable
+from nearly every arm; `sameSchedule` from three). **Cap on fan-in, not on call depth.**
+
+**Any op-level coverage claim owes an answer to "what does this do with a helper called by
+three arms".** The two honest answers are *attribute it to all three* (what D454 does) and
+*exclude it and say the figure is a floor*; silently dropping it is the third, and it
+produces a work order for work that is already done.
+
+## Measure the op's LIVE POPULATION before choosing which line to pin (D454)
+
+Every op D454 touched had its printings counted first — by walking `deriveAttackEffect`
+(plus both composing splitters) over `legalAttackCorpus()` and every `programFor(id)` in
+`registryCardIds()`, and counting sentences, printings and registry cards separately. That
+is what makes `unreachable-population` a **declaration** instead of a sweep verdict ninety
+minutes later, and it is cheap: one script, one run, all 74 kinds at once.
+
+⚠️ **AND IT CATCHES DOC ROT ON THE WAY PAST.** `installRecoil`'s header in `interpreter.ts`
+quotes *"put 10 damage counters on the Attacking Pokémon."* at *"2 printings"*; the live
+family is corpus line 178 at **8 counters / 5 printings**, and `Attacking Pokémon` returns
+exactly **3** corpus rows, none of them a ten.
+
+## Needle EVENT and FIELD names, not only op names (D454)
+
+`STATUS_PREVENTED` had **zero rows in the whole corpus** before D454. So did
+`statusImmunities`, `HAND_DISCARDED` and `installedRecoil`. D172's entire §12 immunity gate
+— four printings, `passivesOf`, three source classes, a whole slice — was executable by
+nothing, and every op-name search said `applyStatus` was well covered (eleven rows, all on
+the producer side).
+
+**An op NAME is metadata; an EVENT name is what the implementation writes.** The semantic
+pass's needle list should carry the event types and the state field names an op touches,
+because those are the strings a row about the implementation will actually quote.
+
+## A stopping rule you can re-run beats an adjective (D454)
+
+*"358 implementation-side rows over 53 kinds"* is not obviously enough or short. D454's
+proposal, stated so it can be re-computed and argued with:
+
+> **An op's implementation is COVERED when every code line in its implementation region that
+> RESOLVES A SEAT — `ctx.seat`, `otherSeat(`, `state.players[` — is quoted by at least one
+> mutant row's `find` span.**
+
+Measured at D454: the corpus moved **178/470 = 0.379 → 190/470 = 0.404**, and the five ops
+pinned went from **0/n** to 3/3, 3/3, 3/3, 2/2 and 1/2. The rule is chosen because the two
+worst defects of this run were both seat crossings that no test caught (D447), and because
+it is **per line, so a `find` spanning a whole function cannot inflate it** — the weaker
+rows-per-decision-point ratio (0.628 → 0.637) can.
+
+🛑 **AND DO NOT WIDEN A `find` TO BUY A DIGIT.** `applyStatus`'s uncovered second seat line
+reads an ALREADY-RESOLVED seat; extending the row by one line would have scored 2/2 and
+added no guard. **A metric you can move without adding a defect is a metric you have started
+gaming.**
+
+## When a comment tells you there are TWO of something, go and look at the other one (D454)
+
+`preventAttackUse`'s doc block says *"the bare ternary occurs TWICE in this file (an
+unrelated op shares the expression)"* — written so a mutant would be anchored on the comment
+rather than the line. D412 pinned its own copy. **The unrelated op is `applyStatus`, and its
+copy sat with eleven producer rows and zero implementation rows for 42 decisions.**
+
+A comment that names a duplicate is a free survey result somebody already paid for. This is
+D414's *"grep the vocabulary the invariant is phrased in"* with the grep already written into
+the source.

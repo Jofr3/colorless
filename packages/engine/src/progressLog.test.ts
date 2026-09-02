@@ -593,9 +593,13 @@ describe("docs/progress.md — the archived resume points are still there (D318)
   //    D420's resume point. The two-site edit is what keeps this a ratchet.
   // 🆕🆕 D420 — 89 -> 90, ARCHIVED DELIBERATELY AND SAID SO, in the same commit as
   // the demotion of D419's live resume point.
-  const ARCHIVES = 123; // 🆕 D453 — the D452 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D452 — the D451 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D451 — the D450 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D450 — the D449 resume point was demoted to a `### Prior resume point (` block. // 🆕 D449 — the D448 resume point was demoted to a `### Prior resume point (` block. // 🆕 D448 — the D447 resume point was demoted to a `### Prior resume point (` block. // 🆕 D447 — the D446 resume point was demoted to a `### Prior resume point (` block. // 🆕 D446 — the D445 resume point was demoted to a `### Prior resume point (` block.
+  const ARCHIVES = 124; // 🆕 D454 — the D453 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D453 — the D452 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D452 — the D451 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D451 — the D450 resume point was demoted to a `### Prior resume point (` block, in the same commit that writes the new live one. // 🆕 D450 — the D449 resume point was demoted to a `### Prior resume point (` block. // 🆕 D449 — the D448 resume point was demoted to a `### Prior resume point (` block. // 🆕 D448 — the D447 resume point was demoted to a `### Prior resume point (` block. // 🆕 D447 — the D446 resume point was demoted to a `### Prior resume point (` block. // 🆕 D446 — the D445 resume point was demoted to a `### Prior resume point (` block.
 
-  it("the page still holds all 109 archived resume points, and they still live in the span a range-replace targets", () => {
+  // 🆕 D454 — THE TITLE USED TO SPELL A LITERAL **109** WHILE `ARCHIVES` READ 123, AND HAD
+  // BEEN WRONG BY FOURTEEN SINCE the ratchet passed it. A test NAME is prose, so nothing
+  // asserts it and nothing could go red; D417's repair is the one that applies — derive the
+  // figure from the constant instead of keeping a second copy of it.
+  it(`the page still holds all ${ARCHIVES} archived resume points, and they still live in the span a range-replace targets`, () => {
     const all = [...PROGRESS.matchAll(ARCHIVE_HEADING)];
     expect(
       all.length,

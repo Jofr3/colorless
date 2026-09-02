@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-02 — build session #393 (**P3-M5 — D453, *the op-union absence audit — eleven shipped `EffectOp` kinds no mutant row had ever touched, and a predicate that is wrong in both directions.*** **NO ENGINE CHANGE: engine STAYS 0.354.0, `MATCH_RECORD_VERSION` STAYS 29, zero bytes of `packages/engine/src/**`** — the whole slice is **18 rows in `scripts/mutation/mutants.ts`** plus docs, and the version was NOT bumped on purpose (D429's reflexive tax: no engine behaviour moved, and a bump would drag `D275`'s anchor across 37 sites for a slice that changes nothing). 🛑 **BOTH OF THE WORK ORDER'S COUNTS DIED ON THE FIRST MEASUREMENT** — *"69 kinds declared"* is **74 distinct over 76 union members** (`damageDefender` and `discardEnergy` are each declared twice), and *"6 have zero rows"* is **8** under the brief's own substring measure, two of which (`attachFromHand`, `counterUntilRemainingHp`) are thoroughly pinned. 🛑 **"NO ROW NAMES IT" IS THE WRONG PREDICATE AND D451 DISPROVES IT ONE SLICE LATER**: `counterUntilRemainingHp` carries **13 D451 rows** and not one spells its name. The predicate used instead — *does any row's `find` SPAN land inside a region that implements or produces the op* — returns **11 unpinned**, overlapping the brief's six exactly. 🛑 **WHY ELEVEN ESCAPED, MEASURED**: **758 producer-side rows vs 358 implementation-side; 24 kinds producer-ONLY, ZERO implementation-ONLY, 11 neither** — coverage is a strict chain, because a row is written by the slice that BUILDS a sentence and is a row about the ARM it just wrote. **The predictor is FIELD COUNT**: mean declared fields **1.00** (11 unpinned) / **1.60** (10 thin) / **3.00** (53 covered). `reduceDamage` has **29 legal printings** and one field. **PROBE 17 KILLED · 1 declared · 0 GAP**; the one undeclared survivor was **not a suite hole but my own over-narrowed `expectKilledBy`** — `--full` killed it in 121s and `revealBottom.test.ts` alone is the killer. `bun run check` **449 files / 9,975 tests, GREEN — unchanged, which is the point**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1870 killed · 30 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 7,811.8s`** — `+17 killed, +1 declared`, the **fourteenth** consecutive slice to name its number first and hit it, and the **first non-monotone prediction since D444**. Completeness structural: **1,900 listed / 1,900 run / 1,900 matched / 0 unmatched**.)
+**Last updated:** 2026-09-02 — build session #394 (**P3-M5 — D454, *the implementation seat of the op corpus — twelve rows on five ops whose implementation no row had ever quoted, and D453's structural claim re-derived and falsified.*** **NO ENGINE BEHAVIOUR CHANGE: engine STAYS 0.354.0, `MATCH_RECORD_VERSION` STAYS 29**; the slice is **12 rows in `scripts/mutation/mutants.ts`** (corpus **1,900 → 1,912**), the archive ratchet 123 → 124, and docs. 🛑 **D453's *"ZERO KINDS IMPLEMENTATION-ONLY"* IS AN ARTEFACT OF AN ASYMMETRIC PREDICATE** — wide producer regions, implementation regions stopping at the `case` arm. Widening the implementation region reproduces its totals to ~2% (**744 / 337** against its 758/358, on the same pre-D453 corpus) and returns **5 implementation-ONLY kinds**; following the CALL GRAPH transitively (fan-in ≤ 4) returns **665 / 811** and **6**. **Under BOTH, zero is wrong** — measured with two predicates on purpose, because one of them was reconstructed to match D453's numbers and the other to be right. 🛑 **AND D453's OWN 18 ROWS ARE 17 IMPLEMENTATION-SIDE**, so the slice that stated the chain is the one that broke it. 🛑 **THREE OF D453's FIVE RECOMMENDED TARGETS ARE ALREADY PINNED** — `scheduleCounters`/`scheduleDiscard`/`scheduleKnockOut` share `scheduleDelayed`, which carries FIVE D434 rows plus one D435 row on its private helper `sameSchedule` — SIX in the region; the fourth, `attachFromTop`, measures prod=1/impl=3 and was never thin. **Only `damageSelf` survived; `installRecoil` joined it.** ▶ **THE HONEST TARGET SET IS THE PRODUCER-ONLY KINDS — 13 at HEAD, of which 4 are a predicate artefact (`runProgram` splices them), so NINE.** Pinned five: **`applyStatus`** (20 sentences / 131 legal printings + 32 registry cards — seat ternary inverted, immunity gate losing its `return`, Burn writing the Poison slot), **`damageSelf`** (10 / 66), **`installRecoil`** (1 / 5), **`discardHand`** (1 / 7 + 14 cards), **`drawUntilHandSize`** (2 / 11 + 15 cards). 🛑 **FIELD COUNT PREDICTS THE *PRODUCER* SEAT AND POINTS THE WRONG WAY FOR THE IMPLEMENTATION ONE**: mean declared keys beyond `op` is **0.92** for implementation-ONLY kinds and **1.92** for producer-ONLY ones, against a 1.65 mean — and `shuffleDeck` falsifies the rule outright with **zero fields and 104 producer rows**. 🛑 **`STATUS_PREVENTED`, `statusImmunities`, `HAND_DISCARDED` AND `installedRecoil` HAD ZERO ROWS IN THE WHOLE CORPUS** — D172's entire immunity gate was executable by nothing. ▶ **A STOPPING RULE, PROPOSED AND MEASURED**: seat-line coverage **178/470 = 0.379 → 190/470 = 0.404**, and the five ops pinned here go 0/n → 3/3, 3/3, 3/3, 2/2, 1/2. **PROBE 12 KILLED · 0 survivors · 0 GAP, 70.8s.** `bun run check` **449 files / 9,975 tests, GREEN — unchanged, which is the point**. ⛔ **NOT COMMITTED AND NOT SWEPT (the work order forbade both); the predicted delta is `1882 killed · 30 known survivor(s)` over 1,912 = `+12 killed, +0 declared`, written out in the resume point before any sweep.**
+
+**Last updated (was):** 2026-09-02 — build session #393 (**P3-M5 — D453, *the op-union absence audit — eleven shipped `EffectOp` kinds no mutant row had ever touched, and a predicate that is wrong in both directions.*** **NO ENGINE CHANGE: engine STAYS 0.354.0, `MATCH_RECORD_VERSION` STAYS 29, zero bytes of `packages/engine/src/**`** — the whole slice is **18 rows in `scripts/mutation/mutants.ts`** plus docs, and the version was NOT bumped on purpose (D429's reflexive tax: no engine behaviour moved, and a bump would drag `D275`'s anchor across 37 sites for a slice that changes nothing). 🛑 **BOTH OF THE WORK ORDER'S COUNTS DIED ON THE FIRST MEASUREMENT** — *"69 kinds declared"* is **74 distinct over 76 union members** (`damageDefender` and `discardEnergy` are each declared twice), and *"6 have zero rows"* is **8** under the brief's own substring measure, two of which (`attachFromHand`, `counterUntilRemainingHp`) are thoroughly pinned. 🛑 **"NO ROW NAMES IT" IS THE WRONG PREDICATE AND D451 DISPROVES IT ONE SLICE LATER**: `counterUntilRemainingHp` carries **13 D451 rows** and not one spells its name. The predicate used instead — *does any row's `find` SPAN land inside a region that implements or produces the op* — returns **11 unpinned**, overlapping the brief's six exactly. 🛑 **WHY ELEVEN ESCAPED, MEASURED**: **758 producer-side rows vs 358 implementation-side; 24 kinds producer-ONLY, ZERO implementation-ONLY, 11 neither** — coverage is a strict chain, because a row is written by the slice that BUILDS a sentence and is a row about the ARM it just wrote. **The predictor is FIELD COUNT**: mean declared fields **1.00** (11 unpinned) / **1.60** (10 thin) / **3.00** (53 covered). `reduceDamage` has **29 legal printings** and one field. **PROBE 17 KILLED · 1 declared · 0 GAP**; the one undeclared survivor was **not a suite hole but my own over-narrowed `expectKilledBy`** — `--full` killed it in 121s and `revealBottom.test.ts` alone is the killer. `bun run check` **449 files / 9,975 tests, GREEN — unchanged, which is the point**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1870 killed · 30 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 7,811.8s`** — `+17 killed, +1 declared`, the **fourteenth** consecutive slice to name its number first and hit it, and the **first non-monotone prediction since D444**. Completeness structural: **1,900 listed / 1,900 run / 1,900 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-09-02 — build session #392 (**P3-M5 — D452, *the two per-heads consequents that need no park — and a work-order premise that died on the first grep, plus two shipped refusals and a rung pinned against a sentence no card prints.*** Engine **0.353.0 → 0.354.0**; **`MATCH_RECORD_VERSION` STAYS 29** — and for once the argument does **not** rest on reachability: both byte strings this slice can write are ones a v29 deploy **already writes**, because each consequent is a sentence the catalog also prints ALONE. Driven over the SERIALIZED BYTES in THREE directions including LOSS. **2 sentences / 2 legal printings** — `censusAttackCorpus.ts` line **201** (*“Flip 2 coins. For each heads, discard the top card of your opponent's deck.”*, 1 printing) and line **216** (*“Flip 3 coins. For each heads, discard a random card from your opponent's hand.”*, 1) — claimed WHOLE by `deriveAttackCoinFlip` through TWO new anchors and **ZERO new vocabulary**: no op, no field, no reader (surface unmoved at **13**), no event, no prompt, no registry row, no `packages/schema` byte and no `redact.ts` byte. 🛑 **THE BRIEF'S CENTRAL PREMISE DID NOT SURVIVE**: it priced this as *“a count that multiplies an op's amount”*, D448's second parallel fold one zone over. **IT IS NOT A FOLD AT ALL.** `programPerHeads` has spent the heads count into a LONGER PROGRAM since D130 — `heads` copies of the member's ops, appended at the flip site in `attack.ts`, run by the existing tail — so nothing multiplies and no op ever reads a coin. 🛑 **AND THE UNBOUNDED FLIP IS NOT A DIFFERENT MECHANISM EITHER**: `AttackFlipCount.untilTails` ships and `programPerHeads` already has an arm using it; what makes corpus line 234 expensive is its CONSEQUENT, not its flip count. **(Q1)** the flip happens BEFORE the program at `takeFlips`, and the result crosses the gap as program LENGTH. **(Q2)** ONE source — `state.rngState` — for the flips and for the hand picks (`randomIndex`, D232), in that order, recomputed end to end. **(Q3)** zero heads needs **no guard**, so no fourth zero-shape is added. **(Q4)** the FACE axis is refused on one printing. 🛑 **TWO SHIPPED REFUSALS AND ONE PIN DID NOT SURVIVE** — see the resume point §4. **12 mutants, 12 KILLED**, two of them D130's, because the semantic audit found `programPerHeads` had been **unpinned by the corpus since D130**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1853 killed · 29 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 7,686.5s`** — `+12 killed, +0 declared`, the **thirteenth** consecutive slice to name its number first and hit it. Completeness structural: **1,882 listed / 1,882 run / 1,882 matched / 0 unmatched**.)
 
@@ -532,6 +534,234 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-02, after D454)
+>
+> ✅ **`bun run check` IS GREEN — 449 files / 9,975 tests, `CHECK_EXIT=0`**, measured after
+> the ritual and not before it. ⚠️ **THE FIGURES ARE IDENTICAL TO D453's AND D452's, AND THAT
+> IS THE MEASUREMENT**: D454 adds no test and no engine byte, so a moved count would have
+> meant it was building something. Engine **0.354.0 (NOT BUMPED — see §6)**,
+> **`MATCH_RECORD_VERSION` 29**, mutation corpus **1,900 → 1,912**, archive ratchet **124**.
+>
+> ⛔ **(0) THE DEBT: THE WHOLE-CORPUS SWEEP HAS NOT RUN AND THE SLICE IS NOT COMMITTED.**
+> The work order forbade both. The next session's first act is `git add` with EXPLICIT
+> PATHS (five files: `scripts/mutation/mutants.ts`, `packages/engine/src/progressLog.test.ts`,
+> `docs/decisions.md`, `docs/progress.md`, `docs/conventions.md`) and then the sweep.
+>
+> 🔮 **(1) THE EXPECTED SWEEP DELTA, COMMITTED TO BEFORE ANY SWEEP RAN — the FIFTEENTH
+> consecutive slice to name its number first, and this one is MONOTONE.**
+>
+> > **`1882 killed · 30 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) ·
+> > 0 clobber(s) · 0 error(s)` over 1,912 — i.e. `+12 killed, +0 declared` off D453's
+> > `1870 · 30` over 1,900.**
+>
+> **THE SUBTRACTION, WRITTEN OUT** (D440's rule: name the arithmetic, not the totals):
+> · killed: `1870 + 12 = 1882`.
+> · declared: `30 + 0 = 30` — **monotone**, and D444 prefers a non-monotone prediction *when
+>   one is available*. None is: all twelve rows were KILLED on their first probe, so this
+>   slice declares nothing and removes no other row's premise.
+> · population: `1900 + 12 = 1912`, and `1882 + 30 = 1912` closes it.
+>
+> ⚠️ **WHICH ROWS WERE CHECKED TO ESTABLISH THAT IT IS MONOTONE (D445).**
+> · **THE 30 DECLARED SURVIVORS WERE ENUMERATED FROM THE MODULE** (`m.survives !== undefined`),
+>   not copied from D453: `attack.ts` (6), `continuous.ts` (5), `effects.ts` (4), `flow.ts` (2),
+>   `interpreter.ts` (11), `redact.ts` (1), `GameHud.tsx` (1). **This slice edits ZERO bytes of
+>   all seven**, so every one is ruled out **by FILE** and that is said rather than assumed.
+> · **TWO WERE RE-DERIVED BY HAND ANYWAY, BECAUSE THEIR SUBJECTS SIT BESIDE THIS SLICE'S.**
+>   `D345-self-ko-overwrites-existing-damage` reads like `D454-self-damage-overwrites-the-counters`
+>   and is a different function (`doomBodyAt`'s `Math.max(body.damage, hp)`, lethal either way);
+>   `D259-trainer-channel-ignores-owner` quantifies over which ops consult `effectRefused`'s
+>   trainer channel, and **D454 adds no op**, so its population is untouched.
+> · **NO ROW WAS RE-POINTED AND NONE NEEDED TO BE.** `precheck` clean at **1,912/1,912** at
+>   every edit round.
+> · **THE ONLY FILE THIS SLICE EDITS THAT THE CORPUS QUOTES IS `docs/progress.md`** (8
+>   `D318-*` rows). `docs/decisions.md`, `docs/conventions.md`, `scripts/mutation/mutants.ts`
+>   and `packages/engine/src/progressLog.test.ts` carry **ZERO** rows — measured from the
+>   module, not assumed. `scripts/mutation/run.ts` carries 4 (`D411-*`) and is not edited.
+>
+> ▶ **(2) THE PROBES.** **D454 12 KILLED / 0 known survivor / 0 GAP / 0 stale / 0 skipped /
+> 0 clobber / 0 error, 70.8s.** ⚠️ **THE COUNT IS 12 BY `m.decision.includes("D454")` AND 12
+> BY `===`** — measured, per D448, because `--decision` matches by `String.includes`.
+> ✅ **`D318` MUST BE RUN LAST** — after every doc edit and after the final `bun run check`,
+> for D446's reason — and `precheck` re-run at the committed bytes afterwards.
+> ⚠️ **AND THIS IS A PROBE, NOT A SWEEP (D433)**: it says these twelve rows discriminate and
+> nothing whatever about the other 1,900.
+>
+> ▶ **(3) THE RESIDUE, RE-MEASURED AT THIS HEAD — unchanged, and that is a measurement.**
+> `!resolvedByAnyReader` alone **161 sentences / 240 printings**; the canonical FOUR-way
+> `residueSentences` (− registry − gate − trailing) **135 / 190**; `BUILT.attack` **1542**;
+> reader surface **13**. D454 claims no sentence. Read them off `censusAtHead.test.ts`, never
+> off this paragraph — it rots by construction.
+>
+> 🛑 **(4) THE PREMISES THAT DID NOT SURVIVE — THREE OF THE WORK ORDER'S, TWO OF D453's, AND
+> ONE SHIPPED DOC BLOCK.**
+> · 🛑 **"ZERO KINDS IMPLEMENTATION-ONLY" IS AN ARTEFACT OF AN ASYMMETRIC PREDICATE, NOT A
+>   FACT ABOUT THE CORPUS.** D453 measured producer regions WIDE (two brace levels out from
+>   each `op: "K"` literal) and implementation regions NARROW (the `case "K":` arm body only).
+>   ⚠️ **TWO REPLACEMENT PREDICATES WERE RUN, NOT ONE, BECAUSE ONE OF THEM IS A
+>   RECONSTRUCTION OF D453's AND THE OTHER IS THE ONE I THINK IS RIGHT.**
+>   · **(A) NON-TRANSITIVE — arm + EXCLUSIVE helpers only.** Reproduces D453's totals to ~2%
+>     (**744 producer / 337 implementation** against its 758 / 358, same pre-D453 corpus) and
+>     returns **5** implementation-ONLY kinds: `devolveEach`, `healChosen`, `installNoWeakness`,
+>     `moveCountersChosen`, `moveCountersToDefender`.
+>   · **(B) TRANSITIVE — arm + every reachable `interpreter.ts` function with fan-in ≤ 4.**
+>     Returns **665 / 811** and **6** implementation-ONLY kinds pre-D453 (A's five plus
+>     `preventChosenAttack`), and **13** today. This is the one D454 picks targets with,
+>     because it is the only one that can see `scheduleDelayed`.
+>   **Zero is wrong under BOTH. The chain was never strict; the instrument could not see the
+>   other end of it.**
+> · 🛑 **D453's OWN 18 ROWS ARE 17 IMPLEMENTATION-SIDE AND 1 PRODUCER-SIDE**, so the slice
+>   that named the chain is the slice that broke it, and its resume point did not say so.
+> · 🛑 **THREE OF D453's FIVE RECOMMENDED TARGETS ARE THOROUGHLY PINNED.**
+>   `scheduleCounters`, `scheduleDiscard` and `scheduleKnockOut` share ONE implementation —
+>   `scheduleDelayed` — carrying `D434-installs-on-the-wrong-seat`, `-stamp-is-off-by-one`,
+>   `-no-section-11-gate`, `-merge-sums-instead-of-maxing` and `-schedule-never-written`, plus
+>   `D435-a-second-payload-is-suppressed` on `sameSchedule`, the private helper
+>   `scheduleDelayed` itself calls. **SIX in the region, FIVE in the function** — measured,
+>   because I wrote SIX for the function first and one grep said otherwise, and the sixth
+>   being one call further out is exactly why the attribution has to be TRANSITIVE. **A predicate that stops at the arm cannot see a
+>   shared helper, and three of the five nominees were nominated by that blindness.** The
+>   fourth, `attachFromTop`, measures **prod=1 / impl=3** and was never thin. Only
+>   `damageSelf` survived, and `installRecoil` joined it.
+> · 🛑 **A SHIPPED DOC BLOCK NAMES A SENTENCE THE CATALOG DOES NOT PRINT.** `installRecoil`'s
+>   header in `interpreter.ts` quotes *"put 10 damage counters on the Attacking Pokémon."* at
+>   *"2 printings … Lycanroc ex sv02-117/-241"*. The live family is corpus line **178** —
+>   *"…put **8** damage counters on the Attacking Pokémon."* — at **5** legal printings, and
+>   `\bAttacking Pokémon\b` over all 640 corpus sentences returns three rows, none of them a
+>   ten. **NOT corrected in place this slice** (an `interpreter.ts` edit rots anchors and this
+>   slice's whole point was to write rows, not move them); it is the cheapest open item below.
+>
+> ▶ **(5) THE RE-DERIVED SETS, WITH THE PREDICATE STATED SO ITS EDGES ARE VISIBLE (D419).**
+> **PREDICATE:** an op K's *implementation region* is its `case "K":` arm in any of
+> `interpreter.ts`'s three `switch (op.op)` blocks, PLUS the body of every top-level function
+> in that file transitively reachable from the arm whose FAN-IN over the 74 kinds is ≤ 4
+> (the cap is what keeps `withActive`/`topUid` out and lets `scheduleDelayed` in). Its
+> *producer region* is the brace-block two levels out from each `op: "K"` literal in
+> `effects.ts`/`registry.ts`. A row HITS a region when its `find`'s character span intersects
+> it. **WHAT THIS CANNOT SEE:** implementations in `flow.ts`, `continuous.ts`, `attack.ts`,
+> `turn.ts` and `cardplay.ts` (D434's Checkup half is there and is pinned); control-flow ops
+> spliced by `runProgram` rather than dispatched by `stepOp`; and any op whose real work sits
+> behind a helper with fan-in > 4.
+>
+> | | pre-D453 (1,882) | at HEAD (1,900) | after D454 (1,912) |
+> |---|---|---|---|
+> | producer-side row·kind pairs | 665 | 666 | 666 |
+> | implementation-side row·kind pairs | 811 | 829 | **841** |
+> | kinds producer-ONLY (zero implementation rows) | 12 | 13 | **8** |
+> | kinds implementation-ONLY | 6 | 13 | 13 |
+> | kinds with NEITHER | 8 | 0 | 0 |
+>
+> **THE EIGHT STILL PRODUCER-ONLY, AND THE NEXT SLICE IS AMONG THEM:** `payFromHand`
+> (18 decision points, 104 code lines, **0 rows** — by far the largest), `preventAttack` (8),
+> `discardDeckTop` (5), `shuffleDeck` (2 — and **104 producer rows**, the most lopsided op in
+> the corpus), and the four control-flow ops `coinFlipGate` / `conditionGate` / `recordGate` /
+> `optional`, whose bodies are one line each because `runProgram`'s queue loop does the work.
+> (`shuffleDeck`'s 104 is the largest producer-ONLY count in the corpus; at LEV=1 it is still 30.)
+> ⚠️ **THE LAST FOUR ARE A PREDICATE ARTEFACT AND NOT A GAP** — their implementation is
+> `runProgram`, whose fan-in is 74 — **so the honest producer-ONLY figure is FOUR**, and that
+> distinction is the difference between a work order and a wild goose chase.
+>
+> 🛑 **(5b) FIELD COUNT IS NOT THE PREDICTOR OF COVERAGE — IT IS THE PREDICTOR OF *PRODUCER*
+> COVERAGE, AND FOR THE IMPLEMENTATION SEAT IT POINTS THE OTHER WAY.** Mean declared keys
+> beyond `op`, counted at depth 1 of each union member with comments stripped (74 kinds,
+> mean **1.65**):
+>
+> | set | n | mean fields |
+> |---|---|---|
+> | D453's own 11 "unpinned" | 11 | 1.18 |
+> | kinds implementation-ONLY (13) | 13 | **0.92** |
+> | kinds producer-ONLY at HEAD (13) | 13 | **1.92** |
+> | the 5 this slice pinned | 5 | 1.20 |
+> | producer-ONLY after D454 (8) | 8 | 2.38 |
+>
+> **The ops whose IMPLEMENTATION nobody pinned are FIELD-RICH (1.92 against a 1.65 mean); the
+> ops whose PRODUCER nobody pinned are FIELD-POOR (0.92).** D453's inference — *"the next gap
+> is predicted, not guessed: the field-poor members of the thin set"* — is right about the
+> mechanism (a derivation-arm row is a row about a FIELD) and **backwards about the seat**.
+> ⚠️ **AND ONE OP FALSIFIES THE RULE OUTRIGHT: `shuffleDeck` DECLARES ZERO FIELDS AND CARRIES
+> 104 PRODUCER ROWS.** A row lands on a producer because the ARM was written, not because the
+> op has a field to vary; `shuffleDeck` is appended to every search program in the engine.
+>
+> ▶ **(6) `MATCH_RECORD_VERSION` 29 AND ENGINE 0.354.0, BOTH WITH THEIR ARGUMENTS.**
+> · **VERSION 29 STAYS, ON REACHABILITY RATHER THAN ON A SKIP.** An `EffectOp` reaches storage
+>   only through a continuation's `pendingOp` and its `rest`, written only on a park (D450).
+>   This slice writes **zero bytes of any file `tsc -b` compiles into the engine**:
+>   `scripts/mutation/mutants.ts` is outside the project references and outside vitest's
+>   include globs, `progressLog.test.ts` is a TEST (compiled, never deployed), and the three
+>   `docs/*.md` are data. The set of byte strings a v29 deploy can write is identical before
+>   and after, **element for element**.
+> · **ENGINE NOT BUMPED, AND THE REASON IS STATED (D429).** No engine behaviour moved, and a
+>   bump is not free: `D275`'s row anchors the version string and D452 measured the move at
+>   **37 sites**. Paying that for a slice that changes no behaviour makes `0.355.0` mean nothing.
+>
+> ⚠️ **(7) THINGS THIS SLICE LEARNED THAT A SUCCESSOR SHOULD NOT RE-LEARN.**
+> · 🛑 **A COVERAGE PREDICATE IS AN INSTRUMENT, AND AN UNCOMMITTED ONE IS A NUMBER NOBODY CAN
+>   RE-RUN.** D453 published `758 / 358 / 24 / 0 / 11` and shipped no script; `tmp/` holds its
+>   four pass scripts and NOT its op audit. Reconstructing a predicate that reproduces its
+>   totals to ~2% took most of this slice, and the reconstruction **disagrees with its
+>   structural conclusion**. `tmp/d454/{ops,span,stop}.ts` are this slice's, and are equally
+>   uncommitted — **if the next slice wants these numbers, it must re-derive them too, and
+>   the honest fix is to land the predicate as a test rather than to publish more figures.**
+> · 🛑 **A SHARED HELPER IS THE IMPLEMENTATION OF EVERY OP THAT CALLS IT.** Attributing only
+>   EXCLUSIVE helpers reported `scheduleCounters`/`scheduleDiscard`/`scheduleKnockOut` as
+>   having zero implementation rows when they have six. **Any op-level coverage claim must
+>   say what it does with a helper called by three arms.**
+> · ⚠️ **A STOPPING RULE THAT IS A RATIO BEATS ONE THAT IS AN ADJECTIVE — AND SEAT-LINE
+>   COVERAGE IS THE ONE THAT MATCHES THE DEFECTS THIS RUN ACTUALLY SHIPPED.** Defined as
+>   *"every code line in an op's implementation region that RESOLVES A SEAT (`ctx.seat`,
+>   `otherSeat(`, `state.players[`) is quoted by at least one row's `find` span"*, the corpus
+>   moved **178/470 = 0.379 → 190/470 = 0.404**, and the five ops pinned here moved from
+>   **0/n** to **3/3, 3/3, 3/3, 2/2 and 1/2**. The one that is not 1.00 is `applyStatus`, whose
+>   second seat line (`const active = state.players[seat].active;`) reads an ALREADY-RESOLVED
+>   seat — **left uncovered on purpose rather than widening a `find` by one line to buy a
+>   digit, which would be metric-gaming and adds no guard.**
+> · ⚠️ **THE OTHER RATIO, FOR CONTEXT:** rows per DECISION POINT (a code line carrying `if (`,
+>   a ternary, `??`, `Math.max/min`, `case "`, `return state;`, `events.push(` or `otherSeat(`)
+>   moved **829/1321 = 0.628 → 841/1321 = 0.637**. It is the weaker of the two because a
+>   `find` spanning a whole function scores every line it covers; the seat rule is per-line
+>   and cannot be inflated that way.
+> · ⚠️ **`preventAttackUse`'s DOC BLOCK NAMED ITS OWN TWIN AND NOBODY FOLLOWED THE POINTER.**
+>   It says *"the bare ternary occurs TWICE in this file (an unrelated op shares the
+>   expression)"* — that unrelated op is `applyStatus`, D412 pinned its own copy, and the
+>   twin sat with **eleven producer rows and zero implementation rows** for 42 decisions.
+>   **When a comment tells you there are two of something, go and look at the other one.**
+> · ⚠️ **`STATUS_PREVENTED` HAD ZERO ROWS IN THE WHOLE CORPUS BEFORE THIS SLICE.** So did
+>   `statusImmunities`, `HAND_DISCARDED` and `installedRecoil`. D172's entire immunity gate —
+>   *"This Pokémon can't be Burned"*, four printings, `passivesOf`, three source classes —
+>   was executable by nothing. **Run the semantic pass's needles over EVENT NAMES and FIELD
+>   NAMES, not only over op names**: an op name is metadata, but an event name is what the
+>   implementation writes.
+>
+> ▶ **(8) THE NEXT SLICE, NAMED RATHER THAN IMPLIED — AND THE OLD NOMINEE IS NOW OVERDUE BY
+> FIVE.** D450's put-counter PICK asymmetry (`placeSnipe`'s bench branch consults no §11
+> shield while both folds one file over gate every body) has been named as "next" by D450,
+> D451, D452, D453 and now this one. **D453 measured why it keeps losing** — every work order
+> arrives pointing at an instrument, and a correctness asymmetry has no census delta to
+> advertise itself with — and D418's move is still the only one left: **write the failing
+> board (a Rabsca-shielded Bench under Ting-Lu ex's "Land Scoop") as an `it.fails` so the
+> deferral stops being free.**
+> The priced alternatives, cheapest first: **(a)** correct `installRecoil`'s doc block in
+> `interpreter.ts` (§4's last bullet — one dated paragraph, and `precheck` immediately after,
+> because three D454 rows quote that function); **(b)** `payFromHand`'s implementation, the
+> largest remaining producer-ONLY op at 18 decision points and 104 lines with zero rows;
+> **(c)** `shuffleDeck`, 104 producer rows against 2 decision points and zero implementation
+> rows, whose whole content is a seat and an `rngState` thread — `D335-shuffle-is-spent-and-
+> thrown-away` is the nearest existing row and it is on a DIFFERENT function.
+>
+> ⚠️ **(9) PROCESS, UNCHANGED AND STILL TRUE.** `bun run mutants --precheck` is NOT a flag —
+> it silently starts a full sweep; the precheck is `bun scripts/mutation/precheck.ts`.
+> **`--decision` matches by `String.includes`** (D448), so `--decision D45` would run
+> D450–D459. **`--only <id>` takes the row id and `--full` runs the whole suite for it.**
+> `--allow-dirty` is REQUIRED on an uncommitted slice. Check for a live sweep with
+> `ps -eo args | grep -E '^bun scripts/mutation/run\.ts'`. **Never run a formatter on this
+> tree.** ⚠️ **A DOCS FILE IS A MUTATION TARGET** (8 `D318-*` rows sit in `docs/progress.md`),
+> so a late edit to it during a sweep voids the run (D446). ⚠️ **`bunx vitest run <path>` MUST
+> BE RUN FROM THE REPO ROOT** — the include globs are root-relative and a run started from
+> `packages/engine/src` reports *"No test files found"* rather than an error.
+> ⚠️ **AND `bun run check` TAKES LONGER THAN A TWO-MINUTE TOOL TIMEOUT** — run it to a log in
+> the background and poll for the exit line, or you will read a truncated log as a failure.
+
+### Prior resume point (P3-M5 — D453, the op-union absence audit, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-02, after D453)
 >
@@ -15929,7 +16159,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D453, *the op-union absence audit — 18 mutant rows over 11 shipped `EffectOp` kinds that no row had ever touched, and ZERO engine bytes.*** **Engine STAYS 0.354.0**, **`MATCH_RECORD_VERSION` STAYS 29**; corpus **1,882 → 1,900**. 74 distinct kinds over 76 union members (the brief said 69); "no row names it" returns 8 and is wrong in BOTH directions — `counterUntilRemainingHp` is pinned by 13 D451 rows that never spell its name, while `reduceDamage`/`weakenDefenderAttacks`/`installRecoil`/`damageActive`/`healEachAll` "have rows" that are all prose. The span predicate returns **11 unpinned**, all pinned here. **758 producer-side rows vs 358 implementation-side; 24 producer-ONLY, ZERO implementation-ONLY** — coverage is a chain, and the predictor is FIELD COUNT (1.00 / 1.60 / 3.00). Probe **17 KILLED · 1 declared · 0 GAP**; the survivor was an over-narrowed `expectKilledBy`, not a hole. `bun run check` **449 files / 9,975 tests GREEN — unchanged**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D454, *the implementation seat of the op corpus — 12 mutant rows over 5 ops with producer rows and zero implementation rows, and D453's structural claim falsified.*** **Engine STAYS 0.354.0**, **`MATCH_RECORD_VERSION` STAYS 29**; corpus **1,900 → 1,912**. D453's *"ZERO implementation-ONLY"* is a predicate artefact — a call-graph implementation region returns **6** implementation-ONLY kinds pre-D453 and **13** today, and a NON-transitive reconstruction that matches D453's own totals to ~2% (744/337 against 758/358) returns **5** — zero is wrong under both; and D453's own 18 rows are 17 implementation-side. Three of its five recommended targets (`scheduleCounters`/`scheduleDiscard`/`scheduleKnockOut`) are pinned by SIX rows in the shared `scheduleDelayed` region — five in that function, one in its private helper `sameSchedule`. Pinned instead: `applyStatus`, `damageSelf`, `installRecoil`, `discardHand`, `drawUntilHandSize`. Field count predicts the PRODUCER seat only (implementation-ONLY 0.92 fields, producer-ONLY 1.92, mean 1.65; `shuffleDeck` has 0 fields and 104 producer rows). Seat-line coverage **0.379 → 0.404**. Probe **12 KILLED · 0 survivors · 0 GAP**; `bun run check` **449 files / 9,975 tests GREEN — unchanged**) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D453, *the op-union absence audit — 18 mutant rows over 11 shipped `EffectOp` kinds that no row had ever touched, and ZERO engine bytes.*** **Engine STAYS 0.354.0**, **`MATCH_RECORD_VERSION` STAYS 29**; corpus **1,882 → 1,900**. 74 distinct kinds over 76 union members (the brief said 69); "no row names it" returns 8 and is wrong in BOTH directions — `counterUntilRemainingHp` is pinned by 13 D451 rows that never spell its name, while `reduceDamage`/`weakenDefenderAttacks`/`installRecoil`/`damageActive`/`healEachAll` "have rows" that are all prose. The span predicate returns **11 unpinned**, all pinned here. **758 producer-side rows vs 358 implementation-side; 24 producer-ONLY, ZERO implementation-ONLY** — coverage is a chain, and the predictor is FIELD COUNT (1.00 / 1.60 / 3.00). Probe **17 KILLED · 1 declared · 0 GAP**; the survivor was an over-narrowed `expectKilledBy`, not a hole. `bun run check` **449 files / 9,975 tests GREEN — unchanged**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D452, *the two per-heads consequents that need no park — 2 sentences / 2 printings through TWO new anchors over ZERO new vocabulary, and a work-order premise that died on the first grep.*** Engine **0.353.0 → 0.354.0**; **`MATCH_RECORD_VERSION` STAYS 29** — both byte strings are ones a v29 deploy already writes, so the argument does not rest on reachability. 🛑 The mechanism is D130's PROGRAM REPEAT, not an amount fold. Two shipped refusals corrected (D130's *"first op to read `state.rngState`"*, met by D232; D130's *"a park is the one thing this cannot express"*, false at `resumeProgram`) and ONE refusal rung found pinned against a sentence **no card prints**. 12 mutants, 12 KILLED, two of them D130's — the family had been unpinned since D130.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D451, *the placement whose amount is not printed — 3 sentences / 5 printings through TWO new anchors over ONE new op, and the amount is computed per body rather than captured.*** Engine **0.352.0 → 0.353.0**; **`MATCH_RECORD_VERSION` STAYS 29** — a new `EffectOp` inhabitant is a WIDENING (D383–D385) on an op that never parks, driven over the serialized bytes in THREE directions including the LOSS direction, where a dropped `remainingHp` is **NaN damage on a body that can then never be Knocked Out**. `counterUntilRemainingHp{target, remainingHp, source}`: the amount is `effectiveMaxHp − damage − remainingHp` **inside the per-body closure**, which is the printed distributive *"its"*; the floor is `healEachAll`'s per-body skip; §11 is asked PER BODY and AFTER the amount; and the op **cannot Knock anything Out**, guarded rather than assumed. **The work order said the ACTIVE pair near-misses arm 23e and it is the BENCH sentence that does.** Mutants 1,851 → **1,870**, 19/19 KILLED. `bun run check` GREEN — **448 files / 9,944 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1841 killed · 29 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 7,656.7s`** — `+19 killed, +0 declared`, the **twelfth** consecutive slice to name its number first and hit it. Completeness structural: **1,870 listed / 1,870 run / 1,870 matched / 0 unmatched**.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D449, *the put-counter verb with a chosen target — 2 sentences / 2 printings through TWO new anchors over a SHIPPED op literal, and a refusal measured on the wrong population for 106 decisions.*** Engine **0.350.0 → 0.351.0**, `MATCH_RECORD_VERSION` **29** (no key, no union member — a new PRODUCER of a literal v29 already admitted, driven over the bytes in three directions). ZERO new ops, ZERO new op fields, ZERO new readers, ZERO registry rows. `bun run check` GREEN at **446 files / 9,878 tests**; mutation corpus **1,839**, D449 **10/10 KILLED**, 158 neighbour rows probed. FOUR shipped `toBeNull` rungs re-pointed onto op inequalities.) |
@@ -16026,6 +16257,94 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-02 — build session #394 (P3-M5 — D454, the implementation seat of the op corpus)
+
+- **D454** — **NO ENGINE CHANGE.** Engine **STAYS 0.354.0**, **`MATCH_RECORD_VERSION` STAYS
+  29**, and `packages/engine/src/**` gains **zero bytes of behaviour** (the one engine file
+  touched is `progressLog.test.ts`'s archive ratchet, 123 → 124). The slice is **12 rows in
+  `scripts/mutation/mutants.ts`** (corpus **1,900 → 1,912**) plus this ritual, all twelve on
+  `interpreter.ts`, all twelve on ops whose *implementation* no row had ever quoted.
+- 🛑 **D453's HEADLINE STRUCTURAL CLAIM DID NOT SURVIVE RE-DERIVATION, AND THE CAUSE IS THE
+  PREDICATE RATHER THAN THE CORPUS.** *"758 producer-side · 358 implementation-side · 24
+  producer-ONLY · ZERO implementation-ONLY"* was measured with WIDE producer regions and
+  NARROW implementation ones — the `case "K":` arm body only. Following the CALL GRAPH out of
+  the arm (top-level `interpreter.ts` functions reachable from it, fan-in over the 74 kinds
+  ≤ 4) returns **665 producer / 811 implementation** and **6 implementation-ONLY kinds**, not
+  zero: `devolveEach`, `healChosen`, `installNoWeakness`, `moveCountersChosen`,
+  `moveCountersToDefender`, `preventChosenAttack`. ⚠️ **TWO PREDICATES WERE RUN, NOT ONE, AND
+  THE CONCLUSION SURVIVES BOTH**: a NON-transitive variant that attributes only EXCLUSIVE
+  helpers reproduces D453's totals to ~2% (**744 / 337** against its 758 / 358 on the same
+  corpus) and returns **5** implementation-ONLY kinds. **The chain was never strict under
+  either reading.** ⚠️ **AND D453's OWN ROWS ARE 17 IMPLEMENTATION-SIDE AND 1 PRODUCER-SIDE**, so the
+  slice that stated the law is also the slice that broke it, and its resume point did not say so.
+- 🛑 **THREE OF D453's FIVE RECOMMENDED TARGETS ARE THOROUGHLY PINNED, BY ROWS ON A SHARED
+  HELPER.** `scheduleCounters`, `scheduleDiscard` and `scheduleKnockOut` all delegate to
+  `scheduleDelayed`, which carries `D434-installs-on-the-wrong-seat`, `-stamp-is-off-by-one`,
+  `-no-section-11-gate`, `-merge-sums-instead-of-maxing` and `-schedule-never-written`, plus
+  `D435-a-second-payload-is-suppressed` on its private helper `sameSchedule` — **SIX in the
+  region, FIVE in the function**, measured after I first wrote six for the function and one
+  grep said otherwise. A predicate that stops at the arm cannot see a helper
+  called by three arms. The fourth nominee, `attachFromTop`, measures **prod=1 / impl=3** and
+  was never thin. **Only `damageSelf` survived the re-derivation; `installRecoil` joined it.**
+- ▶ **THE RE-DERIVED TARGET SET IS NOT "THE THIN OPS" — IT IS THE PRODUCER-ONLY ONES.** At
+  HEAD, **13 kinds carry producer rows and zero implementation rows**: `applyStatus`,
+  `coinFlipGate`, `conditionGate`, `damageSelf`, `discardDeckTop`, `discardHand`,
+  `drawUntilHandSize`, `installRecoil`, `optional`, `payFromHand`, `preventAttack`,
+  `recordGate`, `shuffleDeck`. Four of those (`coinFlipGate`/`conditionGate`/`recordGate`/
+  `optional`) are a **predicate artefact** — their arms return `{ done: state }` because
+  `runProgram`'s queue loop splices them, and `runProgram`'s fan-in is 74 — **so the honest
+  figure is nine**, and saying which four are artefacts is the difference between a work
+  order and a wild goose chase.
+- ▶ **PINNED: FIVE OPS, TWELVE ROWS, ALL KILLED ON THE FIRST PROBE (0 GAP, 70.8s).**
+  · **`applyStatus`** (20 sentences / 131 legal printings + 32 registry cards — the largest
+    producer-ONLY population): the seat ternary INVERTED; the §12 immunity gate losing its
+    `return state;` so it announces STATUS_PREVENTED *and then applies the condition*; the
+    Burn arm writing the Poison arm's `poisonDamage` slot while its event still says `burned`.
+  · **`damageSelf`** (10 / 66): the recoil placed on the DEFENDER; the placement becoming an
+    ASSIGNMENT (`damage: amount`), silent on a fresh body and 120 HP wrong on a damaged one.
+  · **`installRecoil`** (1 / 5): armed on the defender; `Math.max` → `Math.min` on the stack
+    merge; `state.turn + 1` → `+ 2`.
+  · **`discardHand`** (1 / 7 + 14 registry cards): the opponent's hand discarded instead of
+    your own; the discard pile losing the append so the cards leave the game entirely.
+  · **`drawUntilHandSize`** (2 / 11 + 15 registry cards): the subtraction dropped so the op
+    becomes `drawCards`; the hand measured on the opponent's side of the table.
+- 🛑 **`preventAttackUse`'s DOC BLOCK NAMED ITS OWN TWIN AND NOBODY FOLLOWED THE POINTER.** It
+  says *"the bare ternary occurs TWICE in this file (an unrelated op shares the expression)"*.
+  The unrelated op is `applyStatus`. D412 pinned its own copy at D412; the twin sat with
+  **eleven producer rows and zero implementation rows** for 42 decisions.
+- 🛑 **`STATUS_PREVENTED` HAD ZERO ROWS IN THE ENTIRE CORPUS BEFORE THIS SLICE**, and so did
+  `statusImmunities`, `HAND_DISCARDED` and `installedRecoil`. D172's whole immunity gate was
+  executable by nothing. **The semantic pass must needle EVENT and FIELD names, not only op
+  names** — an op name is metadata, an event name is what the implementation writes.
+- 🛑 **FIELD COUNT PREDICTS THE PRODUCER SEAT AND POINTS THE WRONG WAY FOR THE IMPLEMENTATION
+  ONE.** Mean declared keys beyond `op` (74 kinds, mean 1.65): **implementation-ONLY kinds
+  0.92**, **producer-ONLY kinds 1.92**. D453's *"the next gap is predicted: the field-poor
+  members of the thin set"* is right about the mechanism and backwards about the seat. And
+  `shuffleDeck` falsifies the rule outright: **zero declared fields, 104 producer rows, zero
+  implementation rows.**
+- ▶ **A STOPPING RULE, PROPOSED AND MEASURED (the work order's Q3).** *An op's implementation
+  is covered when every code line in its implementation region that RESOLVES A SEAT
+  (`ctx.seat`, `otherSeat(`, `state.players[`) is quoted by at least one row's `find` span.*
+  Corpus **178/470 = 0.379 → 190/470 = 0.404**; the five ops pinned here moved from 0/n to
+  **3/3, 3/3, 3/3, 2/2 and 1/2**. `applyStatus`'s second seat line reads an ALREADY-RESOLVED
+  seat and was **left uncovered on purpose** rather than widening a `find` to buy a digit.
+- ⚠️ **A SHIPPED DOC BLOCK QUOTES A SENTENCE THE CATALOG DOES NOT PRINT.** `installRecoil`'s
+  header claims *"put 10 damage counters on the Attacking Pokémon."* at *"2 printings"*; the
+  live family is corpus line 178 at **8 counters / 5 printings**, and `Attacking Pokémon`
+  returns exactly **3** corpus rows, none of them a ten. Recorded, not corrected — an
+  `interpreter.ts` edit rots anchors and three new rows quote that function.
+- ⚠️ **THE FOUR PRE-PROBE PASSES, WITH COUNTS.** Semantic: 18 needles over `find`+`replace`+
+  `what`+`id`+`decision`, which is how the four zero-row event names above were found.
+  Mechanical region: **1 touched file, 0 corpus rows in it, 0 rows whose `find` does not occur
+  exactly once** over all 1,912. `precheck`: clean **1,912/1,912** at every edit round.
+  `find`-vs-`replace` diff: read line by line for all 12, and the whitespace-normalised
+  equality test run over the **whole corpus** — **0 inert rows of 1,912**, plus 0 byte-identical.
+- ⛔ **NOT COMMITTED AND NOT SWEPT — the work order forbade both.** The predicted whole-corpus
+  delta is written out in the resume point and was committed to before any sweep: **`1882
+  killed · 30 known survivor(s)` over 1,912**, i.e. `+12 killed, +0 declared` off D453's
+  `1870 · 30` over 1,900. `bun run check` **449 files / 9,975 tests, exit 0** — identical to
+  D453's, which is the measurement.
 
 ### 2026-09-02 — build session #393 (P3-M5 — D453, the op-union absence audit)
 
