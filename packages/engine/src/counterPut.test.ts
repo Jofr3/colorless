@@ -434,11 +434,18 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
       // -7 would HEAL the defender.
       "Put 7.5 damage counters on your opponent's Active Pokémon.",
       "Put -7 damage counters on your opponent's Active Pokémon.",
-      // THE TARGET, re-aimed four ways. Every one is a real reading elsewhere in the
-      // pool and none of them is this one; the Benched and own-side rewrites are the
+      // THE TARGET, re-aimed THREE ways here. Every one is a real reading elsewhere in
+      // the pool and none of them is this one; the Benched and own-side rewrites are the
       // catastrophic misses, since the op has no target field to be wrong in.
+      // 🆕🛑 **D449 — THE FOURTH REWRITE MOVED OUT OF THIS LOOP AND INTO A CASE OF ITS
+      // OWN, BECAUSE IT STOPPED BEING NULL.** *"Put 7 damage counters on **1 of** your
+      // opponent's Pokémon."* is the bare any-zone spelling, which D449 claimed with
+      // `COUNTER_PUT_ON_OPPONENT_ANY` (arm 23b) — a real legal printing at corpus line
+      // 413 that a D143 doc block had said was not printed at all. **RE-POINTED, NOT
+      // DELETED** (the standing note above), and re-pointed onto the claim the old one
+      // was really making: this anchor's target is a SPOT and that one's is a PICK, so
+      // the two derive DIFFERENT OPS. See the case directly below the loop.
       "Put 7 damage counters on your opponent's Benched Pokémon.",
-      "Put 7 damage counters on 1 of your opponent's Pokémon.",
       "Put 7 damage counters on each of your opponent's Pokémon.",
       "Put 7 damage counters on your Active Pokémon.",
       // THE SEAT, dropped. "your Active Pokémon" above is the controller's; this one
@@ -464,6 +471,27 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // Outer whitespace SURVIVES by design (the deriver trims), so this states which
     // drift is tolerated and which is not.
     expect(deriveAttackEffect(`\t  ${clauseText(7)}\n`)).toEqual([putOp(GHOST_EYE_HP)]);
+  });
+
+  it("🆕 D449 — the ANY-ZONE rewrite derives a DIFFERENT OP, which is the claim it always made", () => {
+    // The determiner *"1 of"* is the whole difference between a SPOT and a PICK, and
+    // until D449 this file made that point with a `toBeNull` because nothing read the
+    // any-zone sentence. It does now (arm 23b), so the point is made as an inequality
+    // instead — which is strictly the stronger form: a reader that swallowed the
+    // determiner would derive `damageActive` here and go red, where the old `toBeNull`
+    // would have gone red for that AND for the unrelated fact that nobody read it.
+    const anyZone = "Put 7 damage counters on 1 of your opponent's Pokémon.";
+    expect(deriveAttackEffect(anyZone)).toEqual([
+      { op: "damageChosen", target: "opponentAny", amount: GHOST_EYE_HP, count: 1, source: "attack" },
+    ]);
+    expect(deriveAttackEffect(anyZone)).not.toEqual(deriveAttackEffect(clauseText(7)));
+    expect(deriveAttackEffect(anyZone)).not.toContainEqual(
+      expect.objectContaining({ op: "damageActive" }),
+    );
+    // …and the AMOUNT agrees across the two anchors, so the inequality above is about
+    // the TARGET and nothing else — the one-axis discipline this file already uses for
+    // its `DEFENDER_PUT_CLAUSE` pair.
+    expect(deriveAttackEffect(clauseText(7))).toEqual([putOp(GHOST_EYE_HP)]);
   });
 
   it("refuses a printed ZERO but ACCEPTS the ungrammatical singular count", () => {

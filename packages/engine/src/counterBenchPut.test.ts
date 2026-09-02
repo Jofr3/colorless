@@ -419,8 +419,14 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
       // "opponent's" would place counters on the attacker's own board with nothing
       // downstream to notice.
       "Put 2 damage counters on 1 of your Benched Pokémon.",
-      // THE ZONE, re-aimed three ways — every one a real reading elsewhere in the pool.
-      "Put 2 damage counters on 1 of your opponent's Pokémon.",
+      // THE ZONE, re-aimed TWO ways here — each a real reading elsewhere in the pool.
+      // 🆕🛑 **D449 — THE THIRD REWRITE LEFT THIS LOOP BECAUSE IT STOPPED BEING NULL.**
+      // *"Put 2 damage counters on 1 of your opponent's Pokémon."* — this sentence with
+      // the word **Benched** deleted — is a real legal printing (corpus line 413, 1
+      // printing) and is claimed by `COUNTER_PUT_ON_OPPONENT_ANY` (arm 23b) as of D449.
+      // RE-POINTED, not deleted: the claim was always *"the ZONE is what tells these two
+      // anchors apart"*, and it is now made as an inequality of derived ops below, which
+      // still goes red on a reader that dropped the word and cannot go green by accident.
       "Put 2 damage counters on each of your opponent's Benched Pokémon.",
       "Put 2 damage counters on your opponent's Benched Pokémon.",
       // THE COUNT OF TARGETS. "2 of" is a different pick and the op's `count` field
@@ -445,6 +451,21 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     // Outer whitespace SURVIVES by design (the deriver trims), so this states which
     // drift is tolerated and which is not.
     expect(deriveAttackEffect(`\t  ${CLAUSE}\n`)).toEqual([putOp(LAND_SCOOP_HP)]);
+  });
+
+  it("🆕 D449 — dropping the word Benched gives the ANY-ZONE op, not this one and not null", () => {
+    // The one-axis pair this file's whole target claim rests on, now that both sides
+    // are read: the SAME verb, the SAME count, the SAME amount, one word apart, two
+    // different `target` members. A reader that lost the word would produce the first
+    // program where the second is printed, and place counters on the opponent's ACTIVE
+    // for a card whose sentence names their Bench.
+    const anyZone = CLAUSE.replace(" Benched", "");
+    expect(anyZone).not.toBe(CLAUSE);
+    expect(deriveAttackEffect(anyZone)).toEqual([
+      { op: "damageChosen", target: "opponentAny", amount: LAND_SCOOP_HP, count: 1, source: "attack" },
+    ]);
+    expect(deriveAttackEffect(CLAUSE)).toEqual([putOp(LAND_SCOOP_HP)]);
+    expect(deriveAttackEffect(anyZone)).not.toEqual(deriveAttackEffect(CLAUSE));
   });
 
   it("refuses a printed ZERO but ACCEPTS the ungrammatical singular count", () => {

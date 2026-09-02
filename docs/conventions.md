@@ -2924,3 +2924,66 @@ a line.
 2. Record any decision in `decisions.md`.
 3. Write anything learned into the right workstream/reference doc so the next
    session doesn't rediscover it.
+
+## A refusal carries a POPULATION, and a doc block's "which is why" is a refusal (D449)
+
+🛑 **`grep -rn "which is why there is no" packages/engine/src` — and read every hit against
+the population the ENGINE runs on.** D143 wrote, at a shipped anchor, *"it is NOT printed as
+a standalone sentence ANYWHERE in the pool … so the compound is the ONLY form this sentence
+takes, **which is why there is no bare any-zone anchor**"*. The census behind it was run on
+the LOCAL D1 (978 cards / 6 sets); the engine's population is `legal_standard = 1`, where the
+sentence carries 1 printing and had since the corpus column was committed. **The claim was
+wrong on the day it was written, on the population that matters — and it then stood as the
+stated reason not to build, for 106 decisions.**
+
+This is D413's two-populations failure (*"a refusal measured on the local pool while the
+engine runs on the legal column"*) reaching a **doc block at a source site** rather than a
+`toBeNull` in a suite. The two forms need the same audit and only one of them is grep-able
+by its assertion. ⚠️ **A refusal phrased as an explanation — *"which is why we did not"*, *"so
+there is no"*, *"this is the ONLY form"* — is the hardest kind to find**, because it reads as
+a description of the code rather than as a claim about the catalog.
+
+**Corollary, and it is the cheap half:** when you correct such a claim, DATE it (D423) —
+"wrong when written" and "true then, rotted since" are different faults — and say which
+population each half was measured on.
+
+## A `toBeNull` on a sentence the catalog PRINTS is a liability (D449)
+
+**A near-miss rung that asserts a REAL printed sentence derives to `null` goes red the day
+somebody builds it, and its replacement is not "delete it".** D449 flipped four at once
+(`attackLock.test.ts`, `counterPut.test.ts`, `counterBenchPut.test.ts`,
+`scaledAnySnipe.test.ts`). Every one of them was really making a claim about DISJOINTNESS —
+*"the zone word is what tells these two anchors apart"*, *"the anchor is not a prefix"* — and
+nullity was only the cheapest way to spell it while nothing read the other sentence.
+
+**Re-point onto an INEQUALITY of derived programs.** `expect(deriveAttackEffect(a)).not.toEqual(deriveAttackEffect(b))`
+plus the two positive programs is strictly stronger than `toBeNull`: it still goes red on the
+defect the old rung was about, and it cannot go green by accident when a sibling anchor
+lands. That is D418's second half applied before the re-point rather than after it.
+
+⚠️ **AND FIND THEM BEFORE YOU WRITE A LINE.** Run the new anchor over every string literal in
+the package — twenty lines of script, and it names every rung that will flip, with its file
+and line. State what the scan cannot see (template literals, strings built by `.replace`).
+
+## Stepping a census: grep the chain heads FIRST (D449, re-earning D431)
+
+Three `check` rounds went on sibling chains again. The shapes that hid:
+
+- **A PAIR EXPRESSION whose two halves sit on ONE line** — `[resolving.length - …, units(resolving) - …]`.
+  Patching "the first occurrence of the head" fixes half of it and the assertion still reddens.
+- **An ELEVEN-DEEP LADDER** (`opponentResistanceBonus.test.ts`), where fixing rung one just
+  moves the failure to rung two, once per `check`.
+- 🛑 **`BUILT.attack` IS A RECORDED CONSTANT, and `censusAtHead`'s chains SUBTRACT FROM IT.**
+  Adding your front term before bumping the constant OVER-subtracts, and the rung reddens
+  with a number that looks like the opposite defect. **Bump the constant first, then step the
+  chains.**
+
+The procedure that works: `grep -n "<head> -"` for every head spelling in every file the
+delta touches, list the sites, patch them in one pass, then run.
+
+## The catalog-scope guard reads ONE line (D449)
+
+`catalogManifest.test.ts` matches `\b(\d{3,4}) cards(?: \/ (\d+) sets)?` — a single regex over
+the source text — so **wrapping "978 cards / 6 sets" across two comment lines makes it an
+offender**. It fired twice on the author in one slice, which is the guard doing its job; know
+it before it costs a `check` round, and keep the phrase on one line.

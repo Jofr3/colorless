@@ -5210,7 +5210,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5716,7 +5716,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5727,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.350.0";',
+    find: 'export const engineVersion = "0.351.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -21478,5 +21478,112 @@ export const MUTANTS: Mutant[] = [
     find: "          note: snipeNote(\n            amount,",
     replace: "          note: snipeNote(\n            op.amount,",
     expectKilledBy: ["packages/engine/src/scaledAnySnipe.test.ts"],
+  },
+  // ── D449 — THE PUT-COUNTER VERB WITH A CHOSEN TARGET. Ten rows over TWO anchors and
+  //    TWO arms, one per CLAIM. ⚠️ **THE SHAPE OF THE SET IS THE FINDING AGAIN**: FIVE of
+  //    the ten are SILENT IN EVERY CENSUS — the sentence still resolves whole,
+  //    `BUILT.attack` is unmoved and every residue figure stays green — while the derived
+  //    program aims at the wrong zone, doubles a placed counter on a Weakness, prints the
+  //    literal word Ability in the log for an attack, or places 2 counters on 3 bodies
+  //    where the card prints 3 on 2. D400 measured this ratio at 4/8, D401 at 6/8 and
+  //    D402 at 9/12; a fourth family reproduces it.
+  {
+    id: "D449-any-anchor-loses-its-tail-anchor",
+    decision: "D449",
+    what: "🛑 THE `$` DROPPED FROM THE BARE ANY-ZONE ANCHOR, which makes it a PREFIX MATCH — and this anchor's whole string is `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s prefix, so arm 23b would claim Ninetales sv03-029/-199 \"Nine-Tailed Dance\" before arm 25 ever ran and ship an attack that places nine counters and SILENTLY DROPS its printed drawback. Not a straw: the anchor two lines up (`COUNTER_SPREAD_ON_OPPONENT`) is the only sibling in this block whose sentence has no continuation in the pool, so an author tidying the family could plausibly copy its shape. **This is the row `attackLock.test.ts`'s re-pointed rung exists to kill**, and the reason that rung became an op-inequality rather than a `toBeNull` when D449 made the bare sentence readable",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon\\./;",
+    expectKilledBy: [
+      "packages/engine/src/attackLock.test.ts",
+      "packages/engine/src/counterPutChosen.test.ts",
+    ],
+  },
+  {
+    id: "D449-any-anchor-gains-the-zone-word",
+    decision: "D449",
+    what: "⚠️ THE ANCHOR GAINS THE WORD **Benched**, which is arm 23's REAL anchor copied verbatim one noun phrase over (D190b's rule: a mutant is a neighbour's real code). The bare sentence then falls to the loud skip path and arm 23 keeps its own, so the ZONE — the only thing that tells the two apart — stops being read. SILENT except through the census: the sentence stops resolving, which is exactly what `censusAtHead`'s live sum is for",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on 1 of your opponent['’]s Benched Pokémon\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/counterPutChosen.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D449-any-arm-targets-the-bench",
+    decision: "D449",
+    what: "🛑 **THE ARM AIMS AT THE BENCH**, which is arm 23's real literal one arm up. On a board where the opponent has a Bench this is INVISIBLE in every census — the sentence resolves, the op parks, the counters land — and it is wrong only in that the printed *\"1 of your opponent's Pokémon\"* stops offering the ACTIVE at all. On a bare-Active board the candidate set is EMPTY and the attack silently does nothing, which is D447's own `placeSnipe` failure mode reached from the reader instead of the interpreter",
+    file: "packages/engine/src/effects.ts",
+    find: "          // \"1 of your opponent's POKÉMON\" — the Active OR a Bench, so `oppAnyRefs`\n          // and never empty during an attack.\n          target: \"opponentAny\",",
+    replace: "          // \"1 of your opponent's POKÉMON\" — the Active OR a Bench, so `oppAnyRefs`\n          // and never empty during an attack.\n          target: \"opponentBench\",",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-any-arm-deals-damage",
+    decision: "D449",
+    what: "🛑🛑 **`deals: true` ADDED TO THE PLACEMENT** — the flag every OTHER any-target arm in this deriver sets, so it is the single most likely wrong edit in the slice. It routes the Active pick through `snipeActive`'s full §8.5 pipeline instead of `damageActive`, so a placed counter DOUBLES on a Weakness and is cut by a Resistance, against this engine's standing D138/D139 ruling. It also flips the emitted event from COUNTERS_PLACED to DAMAGE_DEALT and re-admits every reduction passive. **SILENT IN EVERY CENSUS**: the sentence still resolves whole",
+    file: "packages/engine/src/effects.ts",
+    find: "          count: 1,\n          // 🛑 D449 — THESE FOUR LINES ARE DELIBERATELY NOT ARM 25's BYTES.",
+    replace: "          count: 1,\n          deals: true,\n          // 🛑 D449 — THESE FOUR LINES ARE DELIBERATELY NOT ARM 25's BYTES.",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-any-arm-drops-the-times-ten",
+    decision: "D449",
+    what: "⚠️ **THE §12 CONVERSION DROPPED** — the printed number is COUNTERS and the op's `amount` is HP, so the whole factor-of-ten risk of the slice sits on this one expression. A build that forgot it places 2 HP where the card places 20. Its twin one arm up (`counters * 10`) is what makes the omission plausible rather than a straw. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/effects.ts",
+    find: "          amount: anyZoneCounters * 10,",
+    replace: "          amount: anyZoneCounters,",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-any-arm-source-back-to-ability",
+    decision: "D449",
+    what: "🛑 **THE PROVENANCE FLIPS TO `\"ability\"`**, which is the value the three REGISTRY producers of this op really carry and the literal `placeSnipe` hardcoded until 0.89.0 — D136's finding 1, which this repo has now caught three times (D138, D139, D140). The `COUNTERS_PLACED` row then prints the literal word **Ability** in the log for a card that has none. **SILENT IN EVERY CENSUS AND IN EVERY DAMAGE TOTAL**: the counters land on the right body in the right amount and only the label lies",
+    file: "packages/engine/src/effects.ts",
+    find: "          // not and a row anchored here cannot drift onto the compound.\n          source: \"attack\",",
+    replace: "          // not and a row anchored here cannot drift onto the compound.\n          source: \"ability\",",
+    expectKilledBy: [
+      "packages/engine/src/counterPutChosen.test.ts",
+      "packages/engine/src/counterBenchPut.test.ts",
+    ],
+  },
+  {
+    id: "D449-any-arm-positivity-guard-relaxed",
+    decision: "D449",
+    what: "⚠️ **THE POSITIVITY GUARD ADMITS A PRINTED ZERO**, the guard every arm in this deriver carries. A `Put 0 damage counters` sentence would then PARK the attacker on a prompt with no possible outcome instead of staying on the loud `ATTACK_EFFECT_SKIPPED` path — worse than an unread sentence, which is why the guard is there rather than for tidiness",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (anyZoneCounters >= 1) {",
+    replace: "    if (anyZoneCounters >= 0) {",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-chosen-arm-transposes-the-captures",
+    decision: "D449",
+    what: "🛑🛑 **THE ARITY AND THE AMOUNT ARE SWAPPED** — group 1 is *\"Choose {M} of\"* and group 2 is *\"{N} damage counters\"*, and nothing in the type tells them apart because both are `number`. The build places **2 counters on 3 bodies** where the card prints **3 counters on 2**. ⚠️ **THIS IS THE ROW THE PRINTED PAIR EXISTS FOR**: on a card printing the same number twice the mutant is EQUIVALENT and unkillable, so the fixture prints 2 and 3 deliberately (D437's confound rule). **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/effects.ts",
+    find: "          amount: chosenCounters * 10,\n          count: chosenBodies,",
+    replace: "          amount: chosenBodies * 10,\n          count: chosenCounters,",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-chosen-arm-arity-back-to-the-literal",
+    decision: "D449",
+    what: "⚠️ **THE ARITY REVERTS TO THE LITERAL 1**, which is what arm 23b one arm up genuinely writes and therefore the neighbour-copy an author makes while moving between the two. The pick then asks for ONE body where the card says *\"Choose 2\"*, so the attack does half of what it prints and the prompt's caption agrees with itself the whole way — `snipeNote` is handed the same wrong `count`. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/effects.ts",
+    find: "          count: chosenBodies,",
+    replace: "          count: 1,",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D449-chosen-arm-guards-only-the-amount",
+    decision: "D449",
+    what: "⚠️ **THE ARITY'S OWN POSITIVITY GUARD DROPPED**, leaving only the amount's. The two guards answer DIFFERENT questions — a 0 amount parks a real pick that places nothing, a 0 ARITY parks a prompt asking for nothing at all — and a conjunction that loses one half is precisely the shape D222 names (a hand-spelled test over members going quiet rather than red). The `&&` is what makes the pair one decision",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (chosenBodies >= 1 && chosenCounters >= 1) {",
+    replace: "    if (chosenCounters >= 1) {",
+    expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
   },
 ];

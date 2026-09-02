@@ -4699,17 +4699,34 @@ export type EffectOp =
           Basic {G} Energy card in your discard pile**. Then, shuffle those Energy cards
           into your deck."*, corpus line 412, **3 legal printings** — and its count is
           `{kind: "cardsInDiscardPile", seat: "you", filter: <a typed Basic Energy>}`,
-          a PAYLOAD that cannot be spelled as a boolean at all. **It is refused THREE
-          ways over, and the first reason is upstream of the count entirely**: no anchor
-          claims the put-counter chosen-target VERB at all — its own unscaled twin, line
-          413, *"Put 2 damage counters on 1 of your opponent's Pokémon."* at 1 printing,
-          is unbuilt too — and then the tail *"Then, shuffle those Energy cards into your
-          deck."* is a second mechanism at a different seam (D442: two riders independent
-          in the print need two rows). So collapsing the riders would collect NOTHING,
-          and the price above stands. ⚠️ **THE DAY THAT VERB BECOMES READABLE THE
-          COLLAPSE IS OWED, AND THIS COMMENT IS ITS EXPIRY DATE (D413)** — the falsifier
-          is pinned executably in `scaledAnySnipe.test.ts` §1(d), on BOTH lines, so the
-          rung reddens rather than the note rotting.
+          a PAYLOAD that cannot be spelled as a boolean at all. It was refused THREE ways
+          over here at D448.
+          🆕🛑 **D449 — THE EXPIRY DATE FIRED, THE TRIGGER WAS RE-ASKED, AND THE PRICE
+          IS UNCHANGED.** This block said *"the day that verb becomes readable the
+          collapse is owed"*, and D449 made it readable: the unscaled twin, corpus line
+          **413**, is claimed by arm 23b (`COUNTER_PUT_ON_OPPONENT_ANY`). **Reason (i)
+          is SPENT and is recorded as spent rather than quietly dropped (D346).** The
+          other two were RE-MEASURED at D449's head rather than inherited, and both
+          hold — so the collapse still buys **0 printings**:
+            · (ii) the count is `{kind: "cardsInDiscardPile", seat: "you", filter: <a
+              typed Basic Energy>}`, a payload no boolean carries. Unchanged;
+            · (iii) the tail *"Then, shuffle those Energy cards into your deck."* has
+              NO reader and the sentence has NO splitter — measured, not assumed:
+              `splitAttackTrailingClause` and `splitAttackGateClause` both return
+              `null` on the whole sentence, and `deriveAttackEffect` returns `null` on
+              the tail alone, on the tail with "Then, " stripped, AND on the head
+              alone. So even a collapsed rider leaves the sentence unclaimed, because
+              a whole-sentence anchor must read both halves.
+          ⚠️ **AND (iii) IS THE SAME REFUSAL AS D448's OWN (a), ONE FAMILY OVER**: the
+          tail's *"those Energy cards"* is a CROSS-CLAUSE REFERENCE to the cards the
+          COUNT measured — cards nothing moved and no slot recorded — where (a)'s was
+          to cards the head DISCARDED. `discardPileRetrieval { filter, dest, max }`
+          is the op that would carry it and it is a different op on a different seam.
+          **The collapse remains priced at 24 sites / 10 files plus a
+          `MATCH_RECORD_VERSION` bump for 0 printings, and its NEW expiry date is the
+          tail rather than the verb.** The falsifier moved with it:
+          `scaledAnySnipe.test.ts` §1(d) now pins the head, the tail and the whole
+          sentence as unread, and `counterPutChosen.test.ts` §1 pins the twin as BUILT.
 
           ⚠️ **THE SPELLING IS WHY THE FIRST MEASUREMENT MISSED IT**: it says *"put
           damage counters on"* where this pair says *"does N damage to"*, so a family
@@ -10005,6 +10022,86 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // The possessive carries the `['’]` class (D136/D137) in its ONE marked slot.
 const COUNTER_SPREAD_ON_OPPONENT =
   /^Put (\d+) damage counters on your opponent['’]s (Benched )?Pokémon in any way you like\.$/;
+// 🆕🆕🆕 **D449 — THE BARE ANY-ZONE PUT, AND THE DOC BLOCK BELOW SAID IT WAS NOT
+// PRINTED.** *"Put {N} damage counters on 1 of your opponent's Pokémon."* —
+// `censusAttackCorpus.ts` line **413**, **1 sentence / 1 legal printing**, and the
+// FOURTH anchor on this printed noun phrase: arm 22 names the opponent's ACTIVE,
+// arm 23 names *"1 of"* their BENCH, arm 23a drops the determiner and distributes,
+// and this one is arm 23's sentence with the word **Benched** deleted.
+//
+// 🛑 **THE REFUSAL THIS ANCHOR OVERTURNS WAS MEASURED ON THE WRONG POPULATION, AND
+// THAT IS THE PART TO CARRY (D413).** `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s block
+// below has said since D143 that this sentence *"is NOT printed as a standalone
+// sentence ANYWHERE in the pool"* and drew the conclusion *"which is why there is
+// no bare any-zone anchor"*. D143's census was run against the LOCAL D1
+// (978 cards / 6 sets, 2026-08-02); the engine's own population is `legal_standard = 1`,
+// the committed column has carried this sentence at 1 printing since D274. **Two
+// populations, two answers, biting a REFUSAL rather than a census** — the exact
+// shape D413 paid for once already. The block below is corrected in place, dated,
+// and says which of the two it was.
+//
+// ⚠️ **THE CARRIER CANNOT BE RESOLVED IN THIS CHECKOUT and is stated unresolved
+// rather than invented (D425)**: no local sqlite, no remote credentials, and the
+// corpus is grouped BY SENTENCE. What is measured is the text and the count 1.
+//
+// D132's INVENTORY RULE, for the seventh time on this family: the op is
+// `damageChosen { target: "opponentAny", count: 1 }` with `deals` ABSENT — the
+// exact literal arm 25's first op has emitted since D143 — so this arm buys a
+// READER and NOTHING else. No new op, no new op FIELD, no new prompt kind, no new
+// park, no `interpreter.ts` / `attack.ts` / `flow.ts` / `continuous.ts` /
+// `redact.ts` diff, and no `MATCH_RECORD_VERSION` move.
+//
+// THE NEAR MISSES IT MUST REFUSE, all real catalog rows and all still unread: the
+// SCALED twin one line above it in the sorted column (line **412**, 3 printings,
+// *"…for each Basic {G} Energy card in your discard pile. Then, shuffle those
+// Energy cards into your deck."* — the `$` is what keeps it loud), *"each of"*
+// (line 415, a fold with no pick), the same fold behind a per-target FILTER (line
+// 414) and every lowercase mid-sentence ABILITY printing of this identical action
+// — Dusclops `sv06.5-019`/`-069`/`sv08.5-036` and Dusknoir `sv06.5-020`/`-070`/
+// `sv08.5-037` "Cursed Blast", **six printings**, kept off by the capitalised
+// "Put" plus `^…$` with no /i, exactly as its three siblings. ⚠️ **AND THE
+// COMPOUND ONE ARM DOWN IS THE SHARPEST OF THEM**: this anchor's whole string is
+// `COUNTER_PUT_ANY_THEN_SELF_LOCK`'s PREFIX, so the `$` here is the only thing
+// standing between a bare read and an attack that places the counters and silently
+// drops its printed drawback. Asserted in BOTH directions rather than reasoned
+// about (`counterPutChosen.test.ts` §2).
+//
+// The count is a bare `(\d+)` for D139's reason — a count has no CLOSED vocabulary
+// to be rejected against. ONE apostrophe slot, classed `['’]` (D136/D137): the
+// sentence carries two possessives and only "opponent's" is written with a mark.
+const COUNTER_PUT_ON_OPPONENT_ANY =
+  /^Put (\d+) damage counters on 1 of your opponent['’]s Pokémon\.$/;
+// 🆕🆕🆕 **D449 — THE SAME ACTION WITH THE PICK PRINTED FIRST.** *"Choose {M} of
+// your opponent's Pokémon and put {N} damage counters on each of them."* —
+// `censusAttackCorpus.ts` line **83**, **1 sentence / 1 legal printing**, carrier
+// UNRESOLVED (D425).
+//
+// 🛑 **A SECOND ANCHOR AND NOT A SECOND MECHANISM, WHICH IS THE ONLY REASON IT IS
+// IN THIS SLICE.** The sentence above spells `count: 1` as *"1 of"* and puts the
+// verb first; this one spells `count: M` as *"Choose M of"* and puts the verb
+// last. Same op, same `target: "opponentAny"`, same absent `deals`, same
+// `source: "attack"`, same park — `snipeNote` already quotes this card's own word
+// order (*"Choose 2 of your opponent's Pokémon (3 damage counters each)."*)
+// because it was written from the printed quantifier in the first place. The
+// marginal cost is one regex and one arm and it moves no site the anchor above
+// does not already move, which is D424's cheapness test.
+//
+// ⚠️ **BOTH NUMBERS ARE CAPTURES AND THEY ARE NOT INTERCHANGEABLE**: group 1 is
+// the ARITY (how many bodies) and group 2 is the AMOUNT (counters on each). One
+// printing fixes them at 2 and 3, which is what makes a transposition observable
+// at all — a build that swapped them would place 2 counters on 3 bodies and pass
+// every board where the two numbers agree. Driven on the printed pair.
+//
+// THE NEAR MISSES, all real catalog rows sharing this opening: *"Choose 2 of your
+// opponent's **Benched** Pokémon. Shuffle those Pokémon…"* (line 82, 3 printings —
+// the zone word plus a different verb), *"Choose 3 of your opponent's Benched
+// Pokémon. If you do, …"* (line 84, 2) and *"Choose 1 of your opponent's Pokémon 6
+// times. …"* (line 81, 2 — a pick WITH REPLACEMENT, which `choosePokemonMulti`
+// refuses by validating distinctness). All three are refused by this anchor's tail
+// rather than by its head, which is why it is a whole-sentence `^…$` like every
+// sibling. ONE apostrophe slot, classed `['’]`.
+const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
+  /^Choose (\d+) of your opponent['’]s Pokémon and put (\d+) damage counters on each of them\.$/;
 // The SELF-LOCK (D143) — "During your next turn, this Pokémon can't attack.", the
 // whole printed effect on TWENTY printings, and the same sentence again as the
 // SECOND half of Ninetales sv03-029/-199 "Nine-Tailed Dance" (the compound anchor
@@ -10091,14 +10188,29 @@ const SELF_CANT_ATTACK_NEXT_TURN = /^During your next turn, this Pokémon can['�
 // "opponentAny" }` — the op `CHOSEN_ANY_TARGET` has produced since 0.x, but with
 // `deals` ABSENT, which is the combination nothing had ever produced: see
 // `placeSnipe`'s Active arm (interpreter.ts), which had to be written for it.
-// It is NOT printed as a standalone sentence ANYWHERE in the pool — every other
-// printing of that noun phrase is an ABILITY (Dusclops sv06.5-019/-069/sv08.5-036
-// and Dusknoir sv06.5-020/-070/sv08.5-037 "Cursed Blast" — **SIX printings, not
-// the four this line said until D345**; the Prismatic Evolutions reprints had been
-// missing from every prose enumeration of this family in the repo, and a prose
-// count rots exactly like an asserted one), refused by the capitalised "Put"
-// plus `^…$` exactly as D139/D140's anchors refuse theirs. So the compound is the
-// ONLY form this sentence takes, which is why there is no bare any-zone anchor.
+// 🛑🛑🛑 **D449 — THIS PARAGRAPH SAID THE BARE SENTENCE IS NOT PRINTED, AND IT IS.**
+// It read: *"It is NOT printed as a standalone sentence ANYWHERE in the pool …
+// So the compound is the ONLY form this sentence takes, which is why there is no
+// bare any-zone anchor."* **That claim was TRUE WHEN WRITTEN AND ABOUT THE WRONG
+// POPULATION** — D143 measured it against the LOCAL D1 (978 cards / 6 sets,
+// 2026-08-02) and the engine's own population is `legal_standard = 1`, where
+// `censusAttackCorpus.ts` line **413** carries *"Put 2 damage counters on 1 of your
+// opponent's Pokémon."* at **1 legal printing** and has since the column was
+// committed at D274. **Two populations, two answers, biting a REFUSAL instead of a
+// census (D413), and the refusal then stood as the stated reason not to build.**
+// Dated rather than called "rotted" (D423's corollary): the sentence was wrong on
+// the day it was written, on the population the engine runs on.
+// ✅ **THE BARE ANCHOR EXISTS AS OF D449** — `COUNTER_PUT_ON_OPPONENT_ANY`, arm 23b,
+// above. What survives of the paragraph is its ABILITY enumeration, unchanged and
+// still exact: every other printing of that noun phrase is an ABILITY (Dusclops
+// sv06.5-019/-069/sv08.5-036 and Dusknoir sv06.5-020/-070/sv08.5-037 "Cursed Blast"
+// — **SIX printings, not the four this line said until D345**; the Prismatic
+// Evolutions reprints had been missing from every prose enumeration of this family
+// in the repo, and a prose count rots exactly like an asserted one), refused by the
+// capitalised "Put" plus `^…$` exactly as D139/D140's anchors refuse theirs.
+// ⚠️ **AND THIS ANCHOR IS NOW THE ONE THAT MUST STAY LONGER THAN ITS PREFIX.** Arm
+// 23b's whole string is this one's prefix, so the two are told apart by the second
+// sentence alone; both directions are asserted in `counterPutChosen.test.ts` §2.
 //
 // THREE apostrophe slots, all classed (D136/D137): the possessive "opponent's"
 // and the contraction "can't", plus the one inside the reused half — and the
@@ -19832,6 +19944,84 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         count: 1,
         source: "attack" as const,
       }));
+    }
+  }
+
+  // 23b. "Put {N} damage counters on 1 of your opponent's Pokémon." — 🆕 D449's BARE
+  //      ANY-ZONE PUT, corpus line **413**, **1 sentence / 1 legal printing**. Arm 23's
+  //      sentence with the word "Benched" deleted, and therefore arm 25's FIRST OP with
+  //      arm 25's second sentence deleted — the same op literal, reached by a reader
+  //      that has never existed because a D143 doc block said this sentence is not
+  //      printed. It is (see the anchor: two populations, two answers).
+  //
+  //      🛑 **THE `$` IS THE WHOLE SAFETY PROPERTY HERE, MORE THAN ANYWHERE ELSE IN
+  //      THIS FAMILY.** This anchor's string is a strict PREFIX of arm 25's, so an
+  //      unanchored read would claim Ninetales sv03-029/-199 "Nine-Tailed Dance" and
+  //      ship an attack that places nine counters and silently drops its printed
+  //      drawback. Arm 25 still runs, still returns TWO ops, and that is asserted from
+  //      both sides rather than argued (`counterPutChosen.test.ts` §2).
+  //
+  //      ⚠️ IT MUST NOT SET `deals`, arm 23's reason verbatim and with more teeth on
+  //      this target: these are PLACED counters, so an Active pick routes through
+  //      `damageActive` (flat, §11-gated) instead of `snipeActive`'s full §8.5
+  //      pipeline. A `deals: true` here would double the placement on a Weakness and
+  //      cut it on a Resistance, against this engine's standing D138/D139 ruling — and
+  //      the board that shows it is one op on one ×2 Active.
+  match = COUNTER_PUT_ON_OPPONENT_ANY.exec(effect);
+  if (match !== null) {
+    // ⚠️ COUNTERS → HP (one counter = 10, §12), at the PRODUCER — arms 22, 23, 23a
+    // and 25 all convert here, and the interpreter never sees the printed unit.
+    const anyZoneCounters = Number(match[1]);
+    // `>= 1`, the guard every arm here carries: a printed 0 would PARK the attacker on
+    // a choice with no possible outcome. Leave it loud.
+    if (anyZoneCounters >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          // "1 of your opponent's POKÉMON" — the Active OR a Bench, so `oppAnyRefs`
+          // and never empty during an attack.
+          target: "opponentAny",
+          amount: anyZoneCounters * 10,
+          // EXACT at one body, not a ceiling: the print says "1 of" and carries no
+          // "up to", so §8.6 is the only thing that softens the pick.
+          count: 1,
+          // 🛑 D449 — THESE FOUR LINES ARE DELIBERATELY NOT ARM 25's BYTES. The first
+          // draft copied that arm's comments verbatim and `precheck` reported this
+          // slice's own new mutant row matching TWICE (D437's converse trap, D446's
+          // repair: rename, never widen the anchor). The CODE is identical because the
+          // op is identical; the PROSE is not, so each arm owns a line the other does
+          // not and a row anchored here cannot drift onto the compound.
+          source: "attack",
+        },
+      ];
+    }
+  }
+
+  // 23c. "Choose {M} of your opponent's Pokémon and put {N} damage counters on each of
+  //      them." — 🆕 D449, corpus line **83**, **1 sentence / 1 legal printing**. Arm
+  //      23b's action with the pick printed FIRST and the arity printed as a word of
+  //      its own, which is the whole difference: one op, two captures, and the arity
+  //      is the one this family has never read off anything but a literal "1 of".
+  //
+  //      ⚠️ **GROUP 1 IS THE ARITY AND GROUP 2 IS THE AMOUNT**, and the printed pair
+  //      (2 bodies, 3 counters) is what makes a transposition observable — on a card
+  //      printing the same number twice it would be invisible.
+  match = COUNTER_PUT_ON_CHOSEN_OPPONENTS.exec(effect);
+  if (match !== null) {
+    const chosenBodies = Number(match[1]);
+    const chosenCounters = Number(match[2]);
+    // BOTH numbers are guarded, and for two different failure modes: a 0 ARITY parks a
+    // prompt asking for nothing, a 0 AMOUNT parks a real pick that places nothing.
+    if (chosenBodies >= 1 && chosenCounters >= 1) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: chosenCounters * 10,
+          count: chosenBodies,
+          source: "attack",
+        },
+      ];
     }
   }
 

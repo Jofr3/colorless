@@ -14009,6 +14009,74 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕🆕 **D449 — THE PUT-COUNTER CHOSEN TARGET, BOTH PRINTED WORD ORDERS.** The
+      body carrying `censusAttackCorpus.ts` lines **413** (*"Put 2 damage counters on 1
+      of your opponent's Pokémon."*, 1 legal printing) and **83** (*"Choose 2 of your
+      opponent's Pokémon and put 3 damage counters on each of them."*, 1 legal
+      printing), transcribed byte for byte off the committed `legal_standard = 1`
+      attack column.
+
+      ⚠️ **NEITHER CARRIER CAN BE RESOLVED IN THIS CHECKOUT** — no local D1, no remote
+      credentials, and the corpus is grouped BY SENTENCE — so they are stated
+      unresolved rather than invented (D425). What is measured is the text and the 1.
+
+      **THREE ATTACKS, AND THE THIRD IS THE ATTRIBUTION CONTROL RATHER THAN CONTENT:**
+        · index 0 — the bare any-zone PUT at its printed 2 counters (20 HP);
+        · index 1 — the choose-first spelling at its printed 2 bodies × 3 counters (30
+          HP each). The two printed numbers DIFFER, which is the only reason a build
+          that transposed the arity and the amount is observable at all;
+        · index 2 — **THE CONTROL, AND IT IS THE WHOLE OF WHAT MAKES §4's W/R CLAIM
+          NON-VACUOUS.** *"This attack does 20 damage to 1 of your opponent's Pokémon.
+          (Don't apply Weakness and Resistance for Benched Pokémon.)"* is the shipped
+          `deals: true` any-target snipe at the SAME amount, the SAME target set and
+          the SAME attacker, so *"the placement reads 20 on a ×2 Active"* is only a
+          claim about the placement if *"the hit reads 40 on that same body"* is true
+          beside it. A board where the Weakness is dead would pass the first assertion
+          and mean nothing (D200/D214: name the change that turns the check RED).
+          ⚠️ The sentence is printed by `fix-scaledsnipe` too, so it enters no census
+          twice — `clauseApostrophe`'s sweep is keyed on the SENTENCE, not the card.
+
+      **{L} FOR A REASON, AND IT IS THE ATTACKER'S TYPE THAT MATTERS HERE.**
+      `fix-lightning-weak` is ×2 Lightning at 130 HP, so a Lightning attacker's real
+      damage doubles on it and a placed counter must not. `sv03-078` **Bellibolt**
+      prints *"Prevent all damage done to this Pokémon by attacks from your opponent's
+      {L} Pokémon."* — a shield this attacker's TYPE arms, which refuses the control
+      and must NOT refuse the placement (a placed counter is not damage — D138/D139,
+      and the catalog prints the rule on Bronzong sv03-145). `fix-unaware` prints the
+      EFFECTS spelling and must refuse BOTH. Three defenders, one attacker, one axis
+      each.
+
+      🛑 **NO `damage` FIELD ON ANY OF THE THREE.** These sentences are the WHOLE
+      printed attack, so a printed base would make *"did the placement land"*
+      answerable by the main hit. No Ability, no Resistance row and no Rule Box, so
+      this fixture inhabits none of the declared-survivor populations that key on
+      those (D427's rule about `fix-drainwall`). */
+  "fix-counterput": battler("fix-counterput", {
+    name: "fix-counterput",
+    types: ["Lightning"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Grudge Placement",
+        effect: "Put 2 damage counters on 1 of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Twin Grudge",
+        effect:
+          "Choose 2 of your opponent's Pokémon and put 3 damage counters on each of them.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Grudge Bolt",
+        effect:
+          "This attack does 20 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      },
+    ],
+  }),
   /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
 
       🛑 **THE CARD IS SYNTHETIC AND THE SENTENCE IS NOT.** The effect on all three
@@ -16422,6 +16490,41 @@ export const SCALED_SNIPE_DECK = deckOf({
   "sv01-197": 2, // Vitality Band — the attacker's pre-W/R +10 through the SCALED amount
   "fix-lightning-energy": 20, // pays the {C} cost AND is the thing being counted
   "fix-energy": 4, // 🛑 a SECOND print, Colorless — the count is CARDS and not a TYPE
+});
+
+/** 🆕🆕🆕 **D449's PUT-COUNTER CHOSEN-TARGET deck (`counterPutChosen.test.ts`).** Its
+    own 60, on D412's rule: widening `SCALED_SNIPE_DECK` — the nearest neighbour, and
+    the one that already fields `fix-lightning-weak` as a pinned Active — would reshuffle
+    every board D448 seeded, and this suite needs two shield bodies that deck has no use
+    for. Nothing here flips a coin, so the seed describes a shuffle and nothing else.
+
+    The cast, and the ONE question each body exists to answer about a PLACED counter:
+      · `fix-counterput` — the attacker: both printed word orders plus the `deals: true`
+        control at the same amount;
+      · `fix-lightning-weak` — ×2 Lightning, 130 HP: the placement reads **20** on it and
+        the control reads **40**, which is the Weakness claim and its attribution control
+        on one body. DOMINANT so both setup Actives pin to it;
+      · `sv03-078` **Bellibolt** — *"Prevent all damage done to this Pokémon by attacks
+        from your opponent's {L} Pokémon."*: refuses the CONTROL and must not refuse the
+        PLACEMENT. The sharper half of §11, because it is the spelling that says "damage";
+      · `fix-unaware` — *"Prevent all effects of attacks … (Damage is not an effect.)"*:
+        refuses the PLACEMENT and files `ATTACK_EFFECT_PREVENTED`. The two shields are one
+        axis apart and the pair is what makes either assertion mean anything;
+      · `sv03-197` **Vengeful Punch** — *"If the Pokémon this card is attached to is
+        Knocked Out **by damage** from an attack …, put 4 damage counters on the
+        Attacking Pokémon."* This is `koRecoilOf`'s (flow.ts) read site and therefore
+        the ONE place D414's `koByEffect` marker is observable from a board: a body
+        made lethal by an EFFECT does not pay it, and a body made lethal by a PLACED
+        COUNTER does. Its own fixture comment already says a BENCHED holder finished
+        off by a snipe retaliates, which is exactly the case;
+      · `fix-lightning-energy` — pays the {C} cost and arms Bellibolt's {L} clause. */
+export const COUNTER_PUT_CHOSEN_DECK = deckOf({
+  "fix-counterput": 4, // the two printed word orders + the deals:true control
+  "fix-lightning-weak": 30, // ×2 Lightning, 130 HP — DOMINANT pinned Active + bench targets
+  "sv03-078": 4, // Bellibolt — prevents all DAMAGE from {L}, and NOT a placed counter
+  "fix-unaware": 4, // prevents all EFFECTS — and a placed counter IS one
+  "sv03-197": 2, // Vengeful Punch — the KO-BY-DAMAGE recoil, D414's own read site
+  "fix-lightning-energy": 16, // pays the {C} cost AND arms Bellibolt's {L} clause
 });
 
 export const COST_SNIPE_DECK = deckOf({

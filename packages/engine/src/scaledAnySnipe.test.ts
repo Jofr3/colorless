@@ -179,20 +179,23 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     //     1, `opponentAny`, `deals` absent because counters are the printed unit) and
     //     its count IS a `DamageCountSource` this engine already ships
     //     (`cardsInDiscardPile` with a typed Basic Energy filter).
-    //     🛑 **IT IS REFUSED THREE WAYS OVER, AND THE FIRST ONE WAS FOUND BY CHECKING
-    //     THE CONTROL RATHER THAN BY ASSUMING IT** (D399/D447): (i) NO ANCHOR CLAIMS
-    //     THE VERB AT ALL — the *unscaled* twin one line below it, corpus line 413,
-    //     *"Put 2 damage counters on 1 of your opponent's Pokémon."* at 1 printing, is
-    //     ALSO unbuilt, so the put-counter chosen-target spelling has no reader before
-    //     the count is even considered; (ii) the count needs a PAYLOAD, which no
-    //     boolean rider can carry; (iii) the tail *"Then, shuffle those Energy cards
-    //     into your deck."* shuffles back the very cards the count read — a second
-    //     mechanism at a different seam, and two riders independent in the print need
-    //     two rows (D442).
-    //     ⚠️ **SO IT IS NOT THE COLLAPSE'S TRIGGER YET, AND THE FIRST DRAFT OF THIS
-    //     COMMENT SAID IT WAS.** The payload is real, but reason (i) is upstream of it
-    //     and is a whole slice of its own. Both halves are pinned here, so the day the
-    //     verb becomes readable this rung goes RED and the price is re-asked.
+    //     It was refused THREE ways over at D448: (i) NO ANCHOR CLAIMS THE VERB AT ALL —
+    //     the *unscaled* twin one line below it, corpus line 413, at 1 printing, was
+    //     unbuilt too; (ii) the count needs a PAYLOAD no boolean rider can carry; (iii)
+    //     the tail *"Then, shuffle those Energy cards into your deck."* shuffles back the
+    //     very cards the count read — a second mechanism at a different seam (D442).
+    //     🆕🛑 **D449 — THIS RUNG WAS BUILT TO REDDEN THE DAY THE VERB BECAME READABLE,
+    //     AND IT DID: reason (i) IS SPENT.** `deriveAttackEffect` claims the unscaled
+    //     twin through arm 23b. **RE-POINTED, NOT DELETED** (D418), and re-pointed onto
+    //     the two reasons that survive — which is why the assertions below now say the
+    //     twin is BUILT and the scaled row is not, rather than saying both are unread.
+    //     ⚠️ **THE DISCRIMINATION THE OLD CLAIM PROVIDED IS KEPT AND SHARPENED**: the
+    //     old pair could only say "nobody reads either"; the new pair says "the reader
+    //     stops exactly at the count clause", which goes red on a reader that widened
+    //     past it — a state the old assertion could not distinguish from correctness.
+    //     ⚠️ **AND THE NEW EXPIRY DATE IS THE TAIL RATHER THAN THE VERB**: the head
+    //     ALONE and the tail ALONE are both asserted unread here, so a slice that builds
+    //     either one reddens this rung and re-asks the collapse's price.
     const COUNTER_SCALED =
       "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
     const COUNTER_PLAIN = "Put 2 damage counters on 1 of your opponent's Pokémon.";
@@ -200,7 +203,20 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(rows2.get(COUNTER_SCALED)).toBe(3);
     expect(rows2.get(COUNTER_PLAIN)).toBe(1);
     expect(resolvedByAnyReader(COUNTER_SCALED)).toBe(false);
-    expect(resolvedByAnyReader(COUNTER_PLAIN)).toBe(false);
+    // 🆕 D449 — was `false`; the twin is BUILT, and it derives to the op this whole
+    // family would have to scale, which is what makes the refusal above a PRICE and no
+    // longer a blockage.
+    expect(resolvedByAnyReader(COUNTER_PLAIN)).toBe(true);
+    expect(deriveAttackEffect(COUNTER_PLAIN)).toEqual([
+      { op: "damageChosen", target: "opponentAny", amount: 20, count: 1, source: "attack" },
+    ]);
+    // the two halves of the scaled row, each unread on its own — reason (iii), executable
+    expect(
+      deriveAttackEffect(
+        "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile.",
+      ),
+    ).toBeNull();
+    expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
   });
 });
 
@@ -399,7 +415,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.350.0");
+    expect(engineVersion).toBe("0.351.0");
   });
 });
 

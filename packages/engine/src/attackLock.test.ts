@@ -57,9 +57,21 @@ import {
 const BARE_TEXT = "During your next turn, this Pokémon can't attack.";
 const COMPOUND_TEXT =
   "Put 9 damage counters on 1 of your opponent's Pokémon. During your next turn, this Pokémon can't attack.";
-/** The compound's first sentence ALONE. Printed nowhere in the pool as an attack
-    (every other printing of that noun phrase is an Ability), which is why there is
-    no bare any-zone anchor and why this must stay null. */
+/** The compound's first sentence ALONE.
+    🛑🛑 **D449 — THE DOC BLOCK HERE WAS FALSE AND THE ASSERTION BELOW HAS BEEN
+    RE-POINTED.** It read: *"Printed nowhere in the pool as an attack (every other
+    printing of that noun phrase is an Ability), which is why there is no bare any-zone
+    anchor and why this must stay null."* The first clause was measured on the LOCAL D1
+    (978 cards / 6 sets, D143); on `legal_standard = 1` the sentence is printed as an
+    attack at **1 legal printing** (`censusAttackCorpus.ts` line 413) and has been since
+    the column was committed. D449 built the bare anchor (`COUNTER_PUT_ON_OPPONENT_ANY`,
+    arm 23b), so this string now DERIVES — to the compound's FIRST OP and nothing else.
+    ⚠️ **THE CLAIM THIS CONSTANT CARRIES IS UNCHANGED AND IS STILL THE ONE THAT MATTERS**
+    (D418's second half — after re-pointing, ask what the old claim could catch that the
+    new one cannot): the point was never *"nothing reads this string"*, it was *"arm 25
+    is not a PREFIX MATCH"*. A prefix reader would place the counters and silently drop
+    the drawback, and the assertion below now says exactly that — one op here, TWO there
+    — which goes red on a prefix reader where a bare `toBeNull` no longer could. */
 const PUT_HALF_ONLY = "Put 9 damage counters on 1 of your opponent's Pokémon.";
 
 /** Ninetales' 9 counters in HP (§12 — one counter = 10). */
@@ -188,12 +200,23 @@ describe("the self-lock — derived, not authored", () => {
     expect(compound[1]).toEqual((deriveAttackEffect(BARE_TEXT) as EffectOp[])[0]);
   });
 
-  it("refuses the compound's FIRST SENTENCE alone — the anchor is not a prefix", () => {
+  it("reads the compound's FIRST SENTENCE alone as ONE op — the anchor is not a prefix", () => {
     // The whole safety property of this family is that an unrecognised remainder
     // stays LOUD. A reader that matched sentence one as a prefix would place the
     // counters and silently drop the drawback, which is strictly worse than not
     // reading the card: it would ship an attack the catalog does not print.
-    expect(deriveAttackEffect(PUT_HALF_ONLY)).toBeNull();
+    // 🆕🛑 **D449 — THIS WAS `toBeNull` UNTIL THE BARE ANCHOR EXISTED.** The bare
+    // sentence is a real legal printing and is now claimed by arm 23b, so nullity
+    // stopped being the true statement. The DISCRIMINATION is preserved rather than
+    // dropped: the bare string yields ONE op, the compound yields TWO, and the first of
+    // the two is byte-identical to the bare one — which is precisely what a prefix
+    // reader would break, and precisely what a `toBeNull` could no longer detect.
+    expect(deriveAttackEffect(PUT_HALF_ONLY)).toHaveLength(1);
+    expect(deriveAttackEffect(COMPOUND_TEXT)).toHaveLength(2);
+    expect((deriveAttackEffect(PUT_HALF_ONLY) as EffectOp[])[0]).toEqual(
+      (deriveAttackEffect(COMPOUND_TEXT) as EffectOp[])[0],
+    );
+    expect(deriveAttackEffect(PUT_HALF_ONLY)).not.toContainEqual({ op: "preventAttack" });
     // …and that sentence is not a hypothetical — the pool prints it SIX times,
     // every one an ABILITY (Dusclops sv06.5-019/-069/sv08.5-036, Dusknoir
     // sv06.5-020/-070/sv08.5-037 "Cursed Blast"), lowercase and mid-sentence, which
