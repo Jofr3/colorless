@@ -15556,6 +15556,94 @@ const ATTACK_COIN_MILL_PRINTED =
 const ATTACK_COIN_MILL_UNTIL_TAILS =
   /^Flip a coin until you get tails\. For each heads, discard the top (\d+) cards of your opponent['’]s deck\.$/;
 
+// 🆕🆕 D452 — THE TWO PER-HEADS CONSEQUENTS THAT NEED NO PARK, AND ZERO NEW
+// VOCABULARY. Both produce `programPerHeads` over an `AttackFlipCount` shipped
+// since D128, carrying ops `deriveAttackEffect` already emits off the BARE
+// sentence — D405's rule that a new COMBINATION of a shipped vocabulary is not a
+// new shape, and the reason this slice adds no op, no field, no reader and no
+// `MATCH_RECORD_VERSION` byte.
+//
+// ⚠️ MEASURED AT THIS HEAD (2026-09-02) OVER `legalAttackCorpus()`, which is the
+// `legal_standard = 1` column and NOT the local D1 the block above was measured
+// on (D449's two-populations rule). The family is every corpus sentence matching
+// /For each (heads|tails),/ that is not a "This attack does" fold: FIVE sentences,
+// ONE legal printing each, at `censusAttackCorpus.ts` lines 200, 201, 216, 217 and
+// 234. TWO are claimed here (201, 216); THREE are refused below, each on its own
+// count.
+//
+// 🛑 AND THE BLOCK ABOVE'S CENSUS HAS ROTTED IN THE DIRECTION NOBODY CHECKS. The
+// two sentences D130 BUILT — "…discard the top 2 cards" and "…the top 3 cards of
+// your opponent's deck." — carry **ZERO** legal printings at this head; Wugtrio
+// sv01-057 and Gyarados swsh10.5-022 have rotated out of Standard. The arms still
+// derive and both cards are still fielded, per D358: rotation decides who may PLAY
+// a card, not what the card SAYS. Recorded rather than left silent, because "2
+// printings" reads as a live figure everywhere that block is quoted.
+//
+// • THE SINGULAR MILL (corpus line 201) — "Flip 2 coins. For each heads, discard
+//   the top card of your opponent's deck." It is `ATTACK_COIN_MILL_PRINTED` with
+//   ONE token changed, and it gets its OWN anchor rather than an optional group
+//   because D451's rule bites exactly here: the digits and the plural `s` CO-VARY,
+//   so a single `the top (?:(\d+) )?cards?` would additionally accept "the top 3
+//   card" and "the top cards" — two strings the catalog does not print and whose
+//   readings nobody has decided. Two anchors say the two printed things and refuse
+//   the crossings.
+//   ⚠️ IT CARRIES NO `count >= 1` GUARD, AND THAT IS NOT AN OMISSION: the plural
+//   arm's guard exists because a printed digit could be 0, and this sentence has no
+//   digit to be zero. The count is the word "card", which is 1 by grammar.
+//   ⚠️ THE UNBOUNDED TWIN IS DELIBERATELY ABSENT. "Flip a coin until you get
+//   tails. For each heads, discard the top card…" is printed by NOTHING in this
+//   column, and an anchor for it would author a card — the refusal
+//   `FLIP_OPPONENT_ACTIVE_DISCARD` makes below, verbatim. A parameterised COUNT
+//   inside a printed shape is a different thing from a printed SHAPE nobody prints.
+//
+// • THE RANDOM HAND DISCARD (corpus line 216) — "Flip 3 coins. For each heads,
+//   discard a random card from your opponent's hand." The bare sentence ("Discard a
+//   random card from your opponent's hand.", 8 legal printings) has derived to
+//   `{op: "randomFromOpponentHand", to: "discard"}` since D232, so this arm emits an
+//   op that already ships and already never parks.
+//   🛑 THE BLOCK ABOVE REFUSED THIS SENTENCE BECAUSE ITS OP "would be the first
+//   EffectOp in the engine to consume `state.rngState`". THAT REFUSAL NAMED THE
+//   CONDITION THAT WOULD OVERTURN IT AND D232 MET IT (D413's rule: a refusal with a
+//   stated trigger carries its own expiry date, so go back and check the trigger).
+//   The seed argument was settled where the op lives: `MatchRecord` persists the
+//   whole `GameState`, `rngState` is a field of it, and every consumer in this
+//   engine advances that ONE integer — so the flips taken at the attack site and
+//   the picks taken inside the ops are one sequence, and a replay reproduces both.
+//   A second source of randomness would desync a replay; there is no second source.
+//
+// 🛑 THE THREE THAT ARE REFUSED, EACH ON ITS OWN COUNT — and one refusal already
+// on record turns out to be FALSE, which is worth more than the row it blocked:
+//   · LINES 200 AND 234 ("…discard an Energy from your opponent's Active Pokémon.",
+//     over a printed 2 and over until-tails) — `discardEnergy` PARKS on a genuine
+//     choice, so N heads is N sequential `effect:choose` phases.
+//     ⚠️ `testFixtures.ts` and the block above have said since D130 that this is
+//     "the one thing D130's expansion cannot express". IT IS EXPRESSIBLE, AND THE
+//     CODE SAYS SO: `resumeProgram` ends in `runProgram(applied, rest, …)`, so an op
+//     sitting in `rest` that parks simply parks again, and the expansion puts its
+//     copies in `rest` like any other program. The honest refusal is a COST rather
+//     than a capability — Krookodile sv01-117 is this suite's FIELDED "stays LOUD"
+//     end-to-end witness (nine sites in `untilTailsFlip.test.ts` alone, plus a
+//     refusal comment in three more files), and D418's rule is that a re-pointed
+//     rung must be asked what the OLD claim caught that the new one cannot. That is
+//     a slice of its own, and it is the next one.
+//   · LINE 217 ("Flip 3 coins. For each tails, discard an Energy from this
+//     Pokémon.") — the same park PLUS a second axis this union does not have.
+//     `programPerHeads` counts HEADS in its name and in its expansion; a FACE
+//     parameter is a shape decision (a fifth member, or a rider on the fourth) and
+//     the pool offers exactly ONE printing to weigh it against. D442's rule for a
+//     boolean rider and D448's for a discriminator-erased union member disagree
+//     about which is right here, and one printing decides it badly.
+//
+// Disjoint from the two anchors above by their own noun phrases — "the top (\d+)
+// cards" cannot span "the top card", and neither mill pattern can span "a random
+// card from your opponent's hand" — so the order among the four is free. Both
+// carry `['’]` on "opponent's" for the family's standing reason, and neither
+// carries /i, for the family's other standing reason.
+const ATTACK_COIN_MILL_ONE_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard the top card of your opponent['’]s deck\.$/;
+const ATTACK_COIN_HAND_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard a random card from your opponent['’]s hand\.$/;
+
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
     one); the ceiling exists because the digits are read out of THIRD-PARTY
@@ -15807,6 +15895,52 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "untilTails" },
           ops: [{ op: "discardDeckTop", whose: "opponent", count }],
+        }
+      : null;
+  }
+  // 🆕🆕 D452 — THE SINGULAR MILL, corpus line 201. The consequent's count is the
+  // WORD "card" rather than a digit, so there is nothing to read and nothing to
+  // guard: the op is built at a literal 1 and the only validation left is the flip
+  // count's, which is the plural arm's `flips >= 2` (the regex's own "coins" is
+  // PLURAL) and its `MAX_PRINTED_FLIPS` ingested-text ceiling, copied deliberately
+  // and for the twin's reasons. The two arms differ in ONE token of the sentence and
+  // in ZERO members of the result, and anywhere else they diverge is a bug.
+  const millOnePrinted = ATTACK_COIN_MILL_ONE_PRINTED.exec(effect);
+  if (millOnePrinted !== null) {
+    const flips = Number(millOnePrinted[1]);
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "printed", count: flips },
+          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+        }
+      : null;
+  }
+  // 🆕🆕 D452 — THE RANDOM HAND DISCARD, corpus line 216. A SECOND consequent for
+  // `programPerHeads`, which is what makes this arm more than a fifth spelling of
+  // the mill: D128's doc block has claimed since it was written that the flip COUNT
+  // and the flip CONSEQUENT are independent axes, D130 demonstrated the count half
+  // (one consequent, two counts), and this is the first printing to demonstrate the
+  // other half (one count, two consequents).
+  //
+  // 🛑 THE OP CARRIES NO COUNT AT ALL, so `heads` is expressed ONLY by how many
+  // copies the flip site appends — and that is the right reading rather than a
+  // convenience. "For each heads, discard a random card" is N INDEPENDENT random
+  // picks out of a hand that SHRINKS between them, which a single op taking a count
+  // could only get right by re-deriving the shrink internally. Each copy calls
+  // `randomIndex` over the live hand and advances `rngState` once, so the sequence
+  // is the same one the flips came out of.
+  //
+  // The flip guards are the family's, unchanged; there is no consequent payload to
+  // validate, which is the same reason D129's unbounded arms carry only `per >= 1`.
+  const handPrinted = ATTACK_COIN_HAND_PRINTED.exec(effect);
+  if (handPrinted !== null) {
+    const flips = Number(handPrinted[1]);
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "printed", count: flips },
+          ops: [{ op: "randomFromOpponentHand", to: "discard" }],
         }
       : null;
   }

@@ -19133,8 +19133,30 @@ import type { GameState, Seat } from "./types";
     unresolved rather than invented (D425).
 
     engineVersion 0.335.0 → **0.336.0**
-    (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.353.0";
+    (`packages/engine/package.json` in the same commit).
+
+    🛑🛑 **D452 — THIS BLOCK IS STALE AND IS DATED RATHER THAN REWRITTEN (D423).**
+    Everything above describes **D435 / 0.336.0**; the constant below has moved
+    eighteen times since and no slice has rewritten the paragraph. Two of its figures
+    are therefore historical rather than live, and reading them as current is exactly
+    the failure D425 names:
+      · *"20 assertions / 23 sites"* was the version tax at D435. **RE-MEASURED AT
+        D452 IT IS 34 ASSERTIONS / 37 SITES** — 33 `expect(engineVersion).toBe(…)`
+        pins across 33 test files, ONE `expect(manifest.version).toBe(…)` pin
+        (`legacyEnergy.test.ts`, which carries both), `packages/engine/package.json`,
+        this declaration, and `D275`'s mutant `find` (re-pointed in the SAME edit as
+        the bump, every slice).
+      · the *"three sentences / six printings"* family count is D435's measurement of
+        D435's family and says nothing about any later one.
+    **The block is kept because its REASONING is still the reasoning** — an optional
+    key that degrades into silent corruption, a reader that is undefensive on purpose,
+    a carrier that cannot be resolved without a D1. What rots is the numbers, and the
+    repair for a number in a doc block is to say when it was taken.
+
+    engineVersion 0.353.0 → **0.354.0** (D452 — two per-heads consequents, no new
+    vocabulary; `MATCH_RECORD_VERSION` STAYS 29, driven in
+    `perHeadsConsequent.test.ts` §3). */
+export const engineVersion = "0.354.0";
 
 export type {
   ApplyResult,

@@ -2958,6 +2958,137 @@ undeclared survivor found later is the same defect discovered at ten times the
 cost, and it invites the wrong repair (writing a test to kill a mutant that
 cannot be killed, which is a vacuous guard by construction).
 
+## The consequent may not be a fold at all — ask the SITE what it spends (D452)
+
+🛑 **D448 taught "the parallel fold may already exist — ask the CONSUMER, not the type".
+D452 is the next question: ask whether there is a fold.** The work order priced
+*"For each heads, ⟨do something⟩"* as *"a count that multiplies an op's amount"* and asked
+only whether the fold was D448's or a second one. **Neither.** `programPerHeads` has spent
+the heads count into a LONGER PROGRAM since D130 — `heads` copies of the member's ops,
+appended at the flip site, run by the existing tail — so nothing multiplies, `op.amount *`
+reaches the family nowhere, and **no op ever sees the coin result**. The value that crosses
+the gap is program LENGTH.
+
+**So the grep discipline needs a third question.** D448's rule says grep the VERB and the
+state mutation, not the vocabulary; that is necessary and it is not sufficient, because a
+grep for `op.amount *` returning nothing reads as *"the fold is missing"* when the truth
+may be *"there is no fold and never was"*. **Read the SITE that produces the count and ask
+what it spends the count INTO** — a number, a program, or a park. Three answers, and only
+the first is a fold.
+
+⚠️ **AND REPETITION IS OFTEN THE CORRECT READING RATHER THAN THE CHEAP ONE.** *"For each
+heads, discard a random card"* is N INDEPENDENT picks over a hand that SHRINKS between them;
+an op carrying a count could only get that right by re-deriving the shrink internally. The
+testable difference is DISTINCTNESS: N repeats can never name one card twice, where a
+snapshot-then-index build repeats one most of the time.
+
+## A refusal that names a FIRST is a refusal with an expiry date (D452, re-earning D413)
+
+D130 refused a printing because its op *"would be the FIRST EffectOp in the engine to consume
+`state.rngState`"*. **D232 built exactly that op** and the refusal stood for 220 decisions
+anyway. D413's rule already covers it — *a refusal that says what it is waiting for carries
+its own expiry date, so go back and check the trigger* — and this is the shape that makes the
+trigger hardest to notice: **an ordinal**. *"The first X"*, *"the only Y"*, *"nothing else
+does Z"* are all claims that a later slice can falsify without ever reading the refusal.
+
+⚠️ **`grep -rn "would be the first\|the ONLY\|nothing (else )?in this engine" packages/engine/src`**
+and re-read each hit against today's module. An ordinal in a refusal is a countdown.
+
+## "Cannot express" is a claim about the MACHINERY; check the machinery (D452)
+
+🛑 D130 refused two printings because a park is *"the one thing D130's expansion cannot
+express"*. **`resumeProgram` ends in `runProgram(applied, rest, …)`**, so an op sitting in
+`rest` that parks simply parks again — the expansion puts its copies in `rest` like any
+other program, and N sequential parks are a shipped capability. One line of the interpreter
+answers it; the refusal had stood since 0.81.0.
+
+**The honest refusal was a COST**, and it is a real one: the printing's fixture is the
+suite's FIELDED "stays LOUD" end-to-end witness across five files, so building it re-points
+a rung with no other candidate to re-point onto (D418). **Write the cost, never the
+impossibility** — a cost invites a successor to pay it, and an impossibility tells them not
+to look. This is D451's *"a refusal names TWO things and only one of them may be true"*
+arriving at the difference between *can't* and *won't*.
+
+## A byte pin on an invented string is green by construction (D452)
+
+🛑 **A refusal rung pinned `OUT_OF_SCOPE[1].length` at 97 against a sentence NO CARD PRINTS**
+— one card's opening glued to another's consequent, documented as *"verbatim off the local
+D1"*, and green since D130. The file's own doc blocks name NBSP and U+2019 as escapes because
+*"a hand-retyped near-miss is the only way one can enter the codebase"*; the near-miss that
+entered was a hand-retyped OPENING, which **no byte pin on the whole string can catch** —
+the pin measures the invention as faithfully as it would measure the truth.
+
+**The repair is the SOURCE, not the pin.** Every entry in a refusal set should be asserted to
+be a row of the committed corpus (`legalAttackCorpus().some(…)` or a `Map` lookup), and its
+PRINTING COUNT asserted off the corpus too — the count is what tells two conventions and two
+populations apart in one look (D448). A set that is merely byte-pinned is a set that can
+drift onto a sentence nobody prints and take a refusal with it.
+
+## The semantic audit's most valuable output can be an ABSENCE (D452)
+
+The pre-build semantic audit exists to find rows that COLLIDE with what you are changing.
+D452's found something else: needling the corpus for `ATTACK_COIN_MILL_PRINTED` and
+`ATTACK_COIN_MILL_UNTIL_TAILS` returned **ZERO rows** — a whole shipped slice (two anchors,
+two arms, a 1,459-line suite) pinned by nothing since D130. Two rows were written for it and
+**one SURVIVED on the first probe**.
+
+⚠️ **So needle the NEIGHBOURS you are copying, not only the lines you edit.** A slice that
+copies an arm's guards is a slice that has just read that arm carefully — it is the cheapest
+moment there will ever be to notice the arm is untested. And when the audit comes back clean
+**on a name you expected to find**, that is a finding (D431), not a pass.
+
+## A "leading text pins `^`" rung must vary ONLY the anchor (D452)
+
+The mutant above survived because every leading-text rung in the file read
+*"Before doing damage, **f**lip 3 coins…"*. The lowercase `f` means the string is refused by
+the family's case-sensitivity, so the rung is green with the `^` deleted — it pinned the case
+and its comment claimed it pinned the anchor.
+
+**When a rung's comment names the mechanism it pins, check that the string varies ONLY that
+mechanism.** This is D399's one-axis rule applied to a refusal string rather than to a
+near-miss sentence, and it is easy to hit because a capitalised word mid-sentence looks wrong
+to write ("Before doing damage, Flip 3 coins.") — which is exactly why the correct probe uses
+a prefix that ENDS a sentence.
+
+## A bare integer operand, for the FIFTH slice (D452)
+
+`censusAtHead.test.ts` carries the residue-printings figure twice: once as
+`expect(unbuiltAttack).toBe(192)` and once as a bare `242` inside an arithmetic expression a
+thousand lines away. D449, D450, D451 and D452 each stepped the first and missed the second,
+and each found it by running the suite. **Grep for the OLD VALUE as a bare token, not only
+inside `toBe(`** — `grep -n '\b242\b'` costs nothing and closes it.
+
+⚠️ **And budget FIVE `bun run check` rounds for a census step, not three.** D452's rounds
+found 12 files, then 11, then 5, then 3, then green — and every round's failures were a
+different SPELLING of the same figure (`toHaveLength(N)`, `toBe(N)`, `resolvedP`,
+`p(resolved)`, `units - built`, `residueP`, `rawHead`, `head`, a bare operand). **The
+spelling is the thing that varies, so a spelling-keyed pass will always be short.**
+
+## A file-local `cardPool` costs the fixture-id ladders nothing (D452)
+
+Worth knowing before pricing a slice whose card ids are unresolvable (D425). D414's idiom —
+`createGame({ seed, decks, cardPool: { ...FIXTURE_POOL, ...LOCAL_CARDS } })` with `fix-*` keys
+— keeps a demonstrator out of `FIXTURE_POOL` entirely. So `opponentResistanceBonus.test.ts`'s
+eleven-deep FIXTURE-ID ladder takes a **0** term, and `counterBenchPut.test.ts`'s shared-pool
+`source` sweep stays quiet. The census still steps by the full sentence and printing counts,
+because those are keyed on the CORPUS and the READERS, not on the pool.
+
+## `MATCH_RECORD_VERSION`: the strongest argument is "this byte already ships" (D452)
+
+D450 established the question for a NON-PARKING op: reachability — an op reaches storage only
+via a continuation's `pendingOp` and its `rest`, written only on a park. **D452 is the case
+where reachability is not needed at all**, and it is a better argument: each new arm emits an
+op the catalog ALSO prints as a standalone sentence, so `JSON.stringify` of what the new arm
+produces is byte-identical to what a v29 deploy already writes. **There is no new byte, so
+there is nothing for a version to be about.**
+
+⚠️ **State BOTH halves anyway.** The reachability half was still driven (neither op parks; no
+other op shares the program; 80 declarations, zero `effect:choose` phases) and so was the LOSS
+direction — a lost `count` is a silent whiff, a lost `to` routes the card to the DECK and
+SHUFFLES, which burns an extra `rngState` step and desyncs every later flip. Reachability
+alone reads as an excuse (D450); "this byte already ships" alone leaves the loss hazard
+unnamed even though it is pre-existing.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

@@ -5716,7 +5716,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D452 (0.353.0 → 0.354.0), at D451 (0.352.0 → 0.353.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5727,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.353.0";',
+    find: 'export const engineVersion = "0.354.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -21874,5 +21874,135 @@ export const MUTANTS: Mutant[] = [
     find: "    if (max === null) return pokemon;",
     replace: "    if (max === null) return { ...pokemon, damage: pokemon.damage + 10 };",
     expectKilledBy: ["packages/engine/src/counterUntilHp.test.ts"],
+  },
+  // ── D452 — THE TWO PER-HEADS CONSEQUENTS THAT NEED NO PARK. Ten rows over TWO
+  //    anchors and TWO arms in `effects.ts`, and the SHAPE of the set is the point:
+  //    this slice adds no op, no field and no reader, so every defect it can ship is
+  //    a defect of TEXT MATCHING or of the LITERAL the arm hands back. There is no
+  //    interpreter row because there is no new interpreter code — the ops the arms
+  //    emit are `discardDeckTop` and `randomFromOpponentHand`, both already pinned by
+  //    their own decisions.
+  //
+  //    ⚠️ THE TWO ARMS' GUARD LINES ARE BYTE-IDENTICAL TO EACH OTHER
+  //    (`return flips >= 2 && flips <= MAX_PRINTED_FLIPS`), which is D448's
+  //    distant-byte-twin hazard arriving inside ONE slice's own new code. Every guard
+  //    row below therefore anchors THROUGH to its arm's `ops:` line, which is the one
+  //    thing that differs — a wider anchor rather than a rename, because the two lines
+  //    are byte twins ON PURPOSE (the arms share the family's guards deliberately, and
+  //    renaming one would hide that).
+  {
+    id: "D452-singular-mill-drops-to-a-gate",
+    decision: "D452",
+    what: "\ud83d\udee1 **THE REPEAT BECOMES A GATE** — `For each heads,` swapped for `If heads,`, which is Wiglett sv01-056's real printed sentence and the exact confusion D130's three-count refusal exists to prevent. A GATE is one flip and one conditional run; a REPEAT is N flips and N runs. Under this row corpus line 201 stops deriving entirely and falls to the loud skip path",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each heads, discard the top card of your opponent['\u2019]s deck\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. If heads, discard the top card of your opponent['\u2019]s deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-singular-anchor-loses-its-caret",
+    decision: "D452",
+    what: "\u26a0 **THE UNANCHORED SINGULAR MILL** — without `^` the pattern matches mid-sentence, so a compound printing whose TAIL happens to read like this sentence would be claimed whole by the coin reader and its head silently dropped. The family's standing anchor rule (D207's phantom-survivor lesson, in a deriver)",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_MILL_ONE_PRINTED =\n  /^Flip",
+    replace: "const ATTACK_COIN_MILL_ONE_PRINTED =\n  /Flip",
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-singular-mill-count-is-the-neighbours",
+    decision: "D452",
+    what: "\ud83d\udee1 **ONE CARD BECOMES THREE** — the literal the singular arm hands back takes the PLURAL arm's shipped count. Every total in the census is unmoved (the sentence still derives, `BUILT.attack` still steps), the flip rows are identical, and the only thing that is wrong is how many cards leave the opponent's deck per heads. A neighbouring arm's real code, copied verbatim, which is what a mutant is supposed to be",
+    file: "packages/engine/src/effects.ts",
+    find: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],',
+    replace: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-singular-mill-hits-the-wrong-deck",
+    decision: "D452",
+    what: "\u26a0 **THE ATTACKER MILLS ITSELF** — `whose: \"opponent\"` becomes `\"self\"`, the op's other member and the one D131 widened the field for. The event count, the flip rows and every census figure are identical; the cards come off the wrong side of the table",
+    file: "packages/engine/src/effects.ts",
+    find: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n        }\n      : null;\n  }',
+    replace: '          ops: [{ op: "discardDeckTop", whose: "self", count: 1 }],\n        }\n      : null;\n  }',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-singular-mill-hardcodes-two-flips",
+    decision: "D452",
+    what: "\u26a0 **THE FLIP COUNT STOPS BEING A PARAMETER** — the arm returns a literal 2 instead of the captured digit, which is right for the ONE sentence the column prints and wrong for the shape. `AttackFlipCount.printed` is parameterised on purpose (D127/D128), and a build that pinned it to today's printing would derive `Flip 3 coins.` as two flips",
+    file: "packages/engine/src/effects.ts",
+    find: '          kind: "programPerHeads",\n          flips: { kind: "printed", count: flips },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],',
+    replace: '          kind: "programPerHeads",\n          flips: { kind: "printed", count: 2 },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-singular-mill-loses-the-plural-floor",
+    decision: "D452",
+    what: "\u26a0 **`Flip 1 coins.` STARTS DERIVING** — the arm's `flips >= 2` is what keeps the one-flip form on D126's `Flip a coin.` reading, because the regex's own \"coins\" is PLURAL. Anchored through to the arm's `ops:` line because the guard line is byte-identical to the hand arm's",
+    file: "packages/engine/src/effects.ts",
+    find: '    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: "programPerHeads",\n          flips: { kind: "printed", count: flips },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],',
+    replace: '    return flips >= 1 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: "programPerHeads",\n          flips: { kind: "printed", count: flips },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-hand-anchor-reads-your-own-hand",
+    decision: "D452",
+    what: "\ud83d\udee1 **THE VICTIM IS THE WRONG PLAYER** — `your opponent's hand` becomes `your hand` in the anchor, so corpus line 216 stops deriving and falls loud. The pattern still compiles, still matches a grammatical English sentence, and matches NOTHING the column prints",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each heads, discard a random card from your opponent['\u2019]s hand\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. For each heads, discard a random card from your hand\\.$/;",
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-hand-arm-shuffles-the-card-back",
+    decision: "D452",
+    what: "\ud83d\udee1 **THE CARD GOES TO THE DECK INSTEAD OF THE DISCARD** — `to: \"discard\"` swapped for the union's other member, which D232 built for the *\"reveals that card and shuffles it into their deck\"* printing. It is the same op, the same seat and the same pick; the card survives, the deck is SHUFFLED and `rngState` takes an extra step per heads, so two replays that did the same thing diverge on every later flip. The `to` key's silent-corruption direction, shipped by an arm rather than lost by a record (\u00a73 direction 3)",
+    file: "packages/engine/src/effects.ts",
+    find: '          ops: [{ op: "randomFromOpponentHand", to: "discard" }],',
+    replace: '          ops: [{ op: "randomFromOpponentHand", to: "deck" }],',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-hand-arm-is-the-mill",
+    decision: "D452",
+    what: "\u26a0 **THE HAND ARM EMITS THE MILL** — the neighbouring arm's literal, copied verbatim, which is the single likeliest mistake in a file where the two arms were written in one pass and differ only in their `ops:` line. The flips, the sentence, the census and every version figure are identical; the wrong ZONE is emptied",
+    file: "packages/engine/src/effects.ts",
+    find: '          ops: [{ op: "randomFromOpponentHand", to: "discard" }],\n        }\n      : null;\n  }',
+    replace: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n        }\n      : null;\n  }',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  {
+    id: "D452-hand-arm-loses-the-printed-ceiling",
+    decision: "D452",
+    what: "\u26a0 **THE INGESTED-TEXT CEILING GOES** — `flips <= MAX_PRINTED_FLIPS` is what stops one malformed third-party row spinning the flip loop AND the expansion, which grows one copy of the program per heads. Dropping it is invisible on every printing the column carries and is exactly the defect the constant exists for. Anchored through to this arm's `ops:` line, the guard line being the singular arm's byte twin",
+    file: "packages/engine/src/effects.ts",
+    find: '    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: "programPerHeads",\n          flips: { kind: "printed", count: flips },\n          ops: [{ op: "randomFromOpponentHand", to: "discard" }],',
+    replace: '    return flips >= 2\n      ? {\n          kind: "programPerHeads",\n          flips: { kind: "printed", count: flips },\n          ops: [{ op: "randomFromOpponentHand", to: "discard" }],',
+    expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
+  },
+  // ⚠ D452's SEMANTIC AUDIT FOUND A GAP THAT WAS NOT THIS SLICE'S: needling the
+  //    corpus for `ATTACK_COIN_MILL_PRINTED` and `ATTACK_COIN_MILL_UNTIL_TAILS`
+  //    returned **ZERO ROWS**, so the whole `programPerHeads` family — two anchors, two
+  //    arms and 1,459 lines of suite — has been unpinned since D130. That is a clean
+  //    audit reporting a finding (D431), and the repair is two rows rather than a note:
+  //    the audit that found it is the cheapest instrument there is, and leaving the gap
+  //    named-but-open is how a defect survives 179 commits (D418).
+  {
+    id: "D452-d130-printed-mill-anchor-was-unpinned",
+    decision: "D452",
+    what: "\u26a0 **D130's PRINTED MILL ANCHOR LOSES ITS `^`** — the sibling of D452's own caret row, and it is here because the semantic audit found D130's two anchors carried NO mutant row at all. Unanchored, the pattern matches mid-sentence, so a compound printing whose tail reads like Wugtrio's would be claimed whole by the coin reader and its head silently dropped",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_MILL_PRINTED =\n  /^Flip",
+    replace: "const ATTACK_COIN_MILL_PRINTED =\n  /Flip",
+    expectKilledBy: ["packages/engine/src/perHeadsProgram.test.ts"],
+  },
+  {
+    id: "D452-d130-until-tails-mill-count-hardcoded",
+    decision: "D452",
+    what: "\u26a0 **D130's UNBOUNDED ARM STOPS READING ITS COUNT** — `count` becomes the literal 2, which is right for Gyarados swsh10.5-022 and wrong for the shape. The second half of the D130 gap the audit found: the arm is parameterised on purpose, and a build pinned to the one printing that reaches it derives every other count as 2",
+    file: "packages/engine/src/effects.ts",
+    find: '          flips: { kind: "untilTails" },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count }],',
+    replace: '          flips: { kind: "untilTails" },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],',
+    expectKilledBy: ["packages/engine/src/perHeadsProgram.test.ts"],
   },
 ];

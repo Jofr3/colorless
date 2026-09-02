@@ -8,6 +8,7 @@ import {
   parseAttackDamage,
   programFor,
 } from "./index";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
 import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails } from "./rng";
 import {
@@ -109,17 +110,53 @@ const FOR_EACH_HEADS_TAIL = "For each heads, discard the top ";
     instead of an accident. */
 const DIG_A_LITTLE = "Flip a coin. If heads, discard the top card of your opponent's deck.";
 
-/** The three "For each heads"-adjacent printings D130 deliberately did NOT build,
-    verbatim off the local D1 (2026-08-01) — Krookodile sv01-117 "Chomp Chomp Bite",
-    Masquerain sv03-007 "Panic-Prompting Pattern" and Oinkologne sv03-184 "Finest
-    Selection". The first two are refused for a MECHANISM (a park; an rng read); the
-    third does not even share the shape. They are this file's "stays LOUD" witnesses,
-    and better ones than a null-only witness would be: each is one clause away from a
-    sentence the two new regexes read. */
+/** 🛑🛑 **D452 — RE-MEASURED OFF `censusAttackCorpus.ts` AND CORRECTED, AND ONE OF
+    THE THREE WAS A SENTENCE NO CARD PRINTS.** D130 wrote these as *"verbatim off the
+    local D1 (2026-08-01)"* — Krookodile sv01-117, Masquerain sv03-007 and Oinkologne
+    sv03-184. Two of the three were verbatim. **The Masquerain entry was not**: it
+    carried KROOKODILE'S leading sentence (*"Flip a coin until you get tails."*) glued
+    to Masquerain's consequent, a 97-character string the `legal_standard = 1` column
+    prints ZERO times. Masquerain's real sentence is 78 characters and opens *"Flip 3
+    coins."* — it is corpus line 216, and **D452 BUILDS IT**, so it leaves this set
+    through the front door rather than being quietly corrected in place.
+
+    ⚠️ **THE BYTE PIN WAS GREEN AND FALSE FOR THE WHOLE OF THAT TIME** (`.length` 97,
+    which the invented string really is). This file's own doc blocks name NBSP and
+    U+2019 as escapes precisely because *"a hand-retyped near-miss is the only way one
+    can enter the codebase"*; the near-miss that entered was a hand-retyped OPENING,
+    which no byte pin on the whole string can catch. **The repair is the source, not
+    the pin**: every entry below is now a `legalAttackCorpus()` row, cited by its
+    corpus LINE (which is a file line in `censusAttackCorpus.ts`, D448's convention),
+    and §1 asserts each one is really in that corpus rather than merely plausible.
+
+    **THE FOUR THAT STAY LOUD AFTER D452, each refused on its own count:**
+      · line **200** — *"Flip 2 coins. For each heads, discard an Energy from your
+        opponent's Active Pokémon."* (1 printing). `discardEnergy` PARKS on a genuine
+        choice, so N heads is N sequential `effect:choose` phases.
+      · line **217** — *"Flip 3 coins. For each tails, discard an Energy from this
+        Pokémon."* (1). The same park PLUS a FACE axis this union does not have:
+        `programPerHeads` counts heads in its name and in its expansion.
+      · line **219** — *"Flip 3 coins. Put a number of cards up to the number of heads
+        from your discard pile into your hand."* (2). Shares WUGTRIO'S OPENING verbatim
+        and nothing else — a heads COUNT read as an "up to" ceiling by ONE op, not a
+        repeat. Refused by the consequent rather than by the count.
+      · line **234** — *"Flip a coin until you get tails. For each heads, discard an
+        Energy from your opponent's Active Pokémon."* (1). Line 200's consequent over
+        D129's flip count; Krookodile sv01-117, and this suite's FIELDED end-to-end
+        loud witness.
+
+    ⚠️ **AND D130's STATED REASON FOR THE TWO `discardEnergy` ROWS IS WRONG WHERE IT IS
+    ABSOLUTE.** It says a park is *"the one thing D130's expansion cannot express"*.
+    `resumeProgram` ends in `runProgram(applied, rest, …)`, so an op in `rest` that
+    parks parks again, and the expansion puts its copies in `rest` like any other
+    program. The refusal is a COST — a fielded witness re-pointed across five files
+    (D418's rule), and an N-park end-to-end drive — not a capability. Corrected and
+    dated here (D423), and priced in the D452 block in effects.ts. */
 const OUT_OF_SCOPE = [
-  "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
-  "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
+  "Flip 2 coins. For each heads, discard an Energy from your opponent's Active Pokémon.",
+  "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
   "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
+  "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
 ] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. A non-breaking space is
@@ -402,14 +439,25 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
   });
 
   it("pins Wiglett sv01-056's near-miss sentence too — the pre-evolution one card away", () => {
+    // ⚠️ D452 — this sentence is NOT in `legalAttackCorpus()`: Wiglett sv01-056 has
+    // rotated out of Standard, like both cards this file fields. It is kept as a
+    // hand-transcribed near-miss for the reason the block below gives, and the fact
+    // that it is off-column is stated rather than left to be assumed.
+    expect(legalAttackCorpus().some(([, sentence]) => sentence === DIG_A_LITTLE)).toBe(false);
     // Not fielded (it is not in this deck) but pinned, because the refusal case below
     // is a claim about THIS string and a hand-typed near-miss nobody pinned is a
     // near-miss that can drift into agreement with the pattern.
     expect(DIG_A_LITTLE.length).toBe(68);
     expect(utf8Bytes(DIG_A_LITTLE)).toBe(68);
     expect(DIG_A_LITTLE).not.toContain(RSQUO);
-    // THE THREE COUNTS IT IS REFUSED ON, each stated as a property of the string:
-    //   1. SINGULAR — "the top card", no digits at all;
+    // THE COUNTS IT IS REFUSED ON, each stated as a property of the string.
+    //   1. 🛑 SINGULAR — "the top card", no digits at all. **THIS COUNT IS SPENT AS
+    //      OF D452**, which builds the singular mill: the property below is still
+    //      true of the string and no longer refuses anything, so it is kept as a
+    //      BYTE fact and the refusal now rests on 2 and 3 alone. Keeping it and
+    //      saying so is D418's rule — a re-pointed rung must name what the old claim
+    //      caught that the new one cannot, and what this one caught is now caught by
+    //      the "Flip a coin." anchor instead.
     expect(DIG_A_LITTLE).toContain("the top card of your opponent's deck");
     expect(DIG_A_LITTLE).not.toContain("cards");
     //   2. a BARE one-flip count, which is D126's sentence and not either of ours;
@@ -424,30 +472,52 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv01-057"]?.evolveFrom).toBe("Wiglett");
   });
 
-  it("pins the THREE out-of-scope printings — one clause away, each for its own reason", () => {
+  it("pins the FOUR out-of-scope printings — each in the CORPUS, each for its own reason", () => {
+    // 🛑 THE SOURCE RUNG, AND IT IS THE ONE D130 DID NOT HAVE. Every entry is a
+    // row of `legalAttackCorpus()` — the `legal_standard = 1` column — so a
+    // hand-retyped opening cannot survive here the way the old Masquerain entry did
+    // for 322 decisions. A byte pin on an invented string is green by construction;
+    // membership in the measured corpus is not.
+    const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
     for (const sentence of OUT_OF_SCOPE) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
-      // NONE of them mills a deck, which is the single word the built regexes turn
-      // on past "For each heads,".
+      expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
+      // NONE of them mills a deck, which is the word the two D130 regexes turn on
+      // past "For each heads,", and none of them takes a random card from a hand,
+      // which is the phrase D452's second arm turns on.
       expect(sentence).not.toContain("cards of your opponent's deck");
+      expect(sentence).not.toContain("card of your opponent's deck");
+      expect(sentence).not.toContain("random card from your opponent's hand");
     }
-    // Krookodile: D129's leading sentence and D130's repeat — refused for a MECHANISM
-    // (its op parks), not for a missing regex. It names a Pokémon, so it carries this
-    // group's only é and its bytes exceed its length by one.
-    expect(OUT_OF_SCOPE[0].length).toBe(103);
-    expect(utf8Bytes(OUT_OF_SCOPE[0])).toBe(104);
-    expect(OUT_OF_SCOPE[0]).toContain(FOR_EACH_HEADS_TAIL.slice(0, "For each heads, ".length));
-    // Masquerain: the same, refused because its op would read `state.rngState`.
-    expect(OUT_OF_SCOPE[1].length).toBe(97);
-    expect(utf8Bytes(OUT_OF_SCOPE[1])).toBe(97);
-    // Oinkologne: shares WUGTRIO'S OPENING verbatim — "Flip 3 coins." — and nothing
-    // else. A heads COUNT read as an "up to" ceiling by one op, not a repeat, which
-    // is why it is refused by the consequent rather than by the count.
+    // The printing counts, off the corpus rather than off this file: three singletons
+    // and one pair. A set that drifted onto a different sentence would move these.
+    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([1, 1, 2, 1]);
+
+    // [0] line 200 — the PRINTED-count `discardEnergy`. It names a Pokémon, so its
+    // bytes exceed its length by one (the é).
+    expect(OUT_OF_SCOPE[0].length).toBe(84);
+    expect(utf8Bytes(OUT_OF_SCOPE[0])).toBe(85);
+    expect(OUT_OF_SCOPE[0].startsWith("Flip 2 coins. For each heads, ")).toBe(true);
+    // [1] line 217 — the FACE axis. The ONLY corpus sentence in this whole family
+    // that counts TAILS, which is why the axis has one printing to weigh it against.
+    expect(OUT_OF_SCOPE[1].length).toBe(66);
+    expect(utf8Bytes(OUT_OF_SCOPE[1])).toBe(67);
+    expect(OUT_OF_SCOPE[1]).toContain("For each tails,");
+    expect(OUT_OF_SCOPE.filter((s) => s.includes("For each tails,"))).toHaveLength(1);
+    // [2] Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3 coins." —
+    // and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
+    // repeat, which is why it is refused by the consequent rather than by the count.
     expect(OUT_OF_SCOPE[2].startsWith("Flip 3 coins. ")).toBe(true);
     expect(UNDERSEA_TUNNEL.startsWith("Flip 3 coins. ")).toBe(true);
     expect(OUT_OF_SCOPE[2]).not.toContain("For each heads");
     expect(OUT_OF_SCOPE[2].length).toBe(100);
+    // [3] line 234 — Krookodile: D129's leading sentence and D130's repeat, and the
+    // SAME consequent as [0]. The pair is the count axis again, both halves unbuilt.
+    expect(OUT_OF_SCOPE[3].length).toBe(103);
+    expect(utf8Bytes(OUT_OF_SCOPE[3])).toBe(104);
+    expect(OUT_OF_SCOPE[3]).toContain(FOR_EACH_HEADS_TAIL.slice(0, "For each heads, ".length));
+    expect(OUT_OF_SCOPE[3].endsWith(OUT_OF_SCOPE[0].slice("Flip 2 coins. ".length))).toBe(true);
   });
 });
 
@@ -653,37 +723,60 @@ describe("deriver DISJOINTNESS — one reader owns each sentence", () => {
 });
 
 describe("constructed near-misses stay NULL", () => {
-  it("refuses Wiglett sv01-056's real sentence — on all three counts", () => {
+  it("refuses Wiglett sv01-056's real sentence — on the TWO counts D452 leaves it", () => {
     // The live near-miss, and the only one in this file taken verbatim off a printed
-    // card. It is refused by the SINGULAR count, by the bare flip count and by the
-    // GATE consequent; each of the three would be enough on its own, which is what
-    // the constructed variants below take apart.
+    // card. D130 refused it on THREE counts — a SINGULAR "the top card", a bare
+    // "Flip a coin." count, and a GATE consequent ("If heads,") rather than a repeat.
+    // 🆕🆕 D452 BUILT THE SINGULAR, so that count is spent: the sentence
+    // "Flip 2 coins. For each heads, discard the top card of your opponent's deck."
+    // now derives (corpus line 201, 1 legal printing). TWO counts remain and each is
+    // still sufficient on its own — which is what the rungs below take apart, one
+    // token at a time.
+    //
+    // ⚠️ THE REFUSAL IS NARROWER, NOT WEAKER (D450's rule). The claim it makes is
+    // unchanged in kind: a GATE is one flip and one conditional run, a REPEAT is N
+    // flips and N runs, and nothing in this family may confuse the two.
     expect(deriveAttackCoinFlip(DIG_A_LITTLE)).toBeNull();
     // …and it is not quietly picked up by anything else either, so it stays on the
     // loud path rather than being half-resolved somewhere.
     expect(deriveAttackDamageBonus(DIG_A_LITTLE)).toBeNull();
     expect(deriveAttackDamageMultiplier(DIG_A_LITTLE)).toBeNull();
     expect(deriveAttackRequirement(DIG_A_LITTLE)).toBeNull();
-    // ONE COUNT AT A TIME. Give it a plural digit and a repeat consequent and it
-    // becomes a sentence this deriver reads — but only when BOTH move, because a
-    // single flip is D126's "Flip a coin." and this member's printed arm requires
-    // the plural "coins".
+    // COUNT 1 — THE BARE FLIP COUNT. Give it the repeat consequent and leave the
+    // "Flip a coin." opening, and it is still null: D126 owns that opening, and both
+    // printed arms of this member require the plural "coins".
+    expect(
+      deriveAttackCoinFlip("Flip a coin. For each heads, discard the top card of your opponent's deck."),
+    ).toBeNull();
     expect(
       deriveAttackCoinFlip("Flip a coin. For each heads, discard the top 1 cards of your opponent's deck."),
+    ).toBeNull();
+    // COUNT 2 — THE GATE CONSEQUENT. Give it the plural flip count and leave "If
+    // heads,", and it is still null on BOTH mill spellings.
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. If heads, discard the top card of your opponent's deck."),
     ).toBeNull();
     expect(
       deriveAttackCoinFlip("Flip 2 coins. If heads, discard the top 1 cards of your opponent's deck."),
     ).toBeNull();
+    // 🆕 BOTH REMAINING COUNTS MOVED — and the SINGULAR spelling is now a
+    // sentence this deriver reads, at a literal count of 1. This is corpus line 201.
     expect(
       deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
-    ).toBeNull();
-    expect(
-      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top 1 cards of your opponent's deck."),
     ).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
     });
+    // 🛑 AND THE TWO SPELLINGS ARE THE SAME VALUE AT COUNT 1, which is the whole
+    // argument for two anchors rather than one optional group: they agree where the
+    // catalog prints both readings of "one card" and they refuse the crossings the
+    // catalog prints neither of (see the four rungs in the D452 block below).
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top 1 cards of your opponent's deck."),
+    ).toEqual(
+      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
+    );
   });
 
   it("refuses `Flip 1 coins.` and `Flip 11 coins.` — the two printed-count guards", () => {
@@ -794,7 +887,13 @@ describe("constructed near-misses stay NULL", () => {
       // The OPENING alone — flips with nothing to spend them on.
       "Flip 3 coins.",
       "Flip a coin until you get tails.",
-      // Leading text pins `^`.
+      // Leading text — ⚠️ **AND THIS ROW DOES NOT PIN `^`, WHICH IS WHAT ITS COMMENT
+      // CLAIMED UNTIL D452.** The `f` here is LOWERCASE, so the string is refused by
+      // the case-sensitivity of "Flip" and would stay refused with the anchor gone.
+      // The real anchor rungs are in the case directly below, and they were added
+      // because a D452 mutant that deleted the `^` from `ATTACK_COIN_MILL_PRINTED`
+      // SURVIVED against this whole file (D418: after re-pointing a rung, ask what the
+      // old claim could catch that the new one cannot — here the claim was never true).
       "Before doing damage, flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
       // A missing space after the first sentence — invisible in a diff.
       "Flip 3 coins.For each heads, discard the top 3 cards of your opponent's deck.",
@@ -841,6 +940,33 @@ describe("constructed near-misses stay NULL", () => {
     });
   });
 
+  it("\U0001f6d1 the `^` REALLY pins the front — a CAPITALISED leading clause, on both arms", () => {
+    // \U0001f6d1 **THE GAP D452's MUTANT FOUND.** Every "leading text" rung in this file used
+    // a LOWERCASE "flip", so all of them were refused by case rather than by the
+    // anchor and a build with no `^` passed the file. These four keep the printed
+    // capital and vary only the prefix, which is the one axis the anchor owns.
+    //
+    // The prefixes are real printed openings (a self-discard cost, a pre-damage
+    // clause), so each string is a plausible COMPOUND rather than a constructed
+    // oddity — and claiming one whole would silently drop its head.
+    for (const prefix of ["Discard an Energy from this Pokémon. ", "Before doing damage, ", "Then, "]) {
+      expect(
+        deriveAttackCoinFlip(`${prefix}Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.`),
+        prefix,
+      ).toBeNull();
+      expect(
+        deriveAttackCoinFlip(
+          `${prefix}Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.`,
+        ),
+        prefix,
+      ).toBeNull();
+    }
+    // …and the unprefixed sentences still derive, which is what makes the six nulls a
+    // fence rather than a regression.
+    expect(deriveAttackCoinFlip(UNDERSEA_TUNNEL)).not.toBeNull();
+    expect(deriveAttackCoinFlip(WREAK_HAVOC)).not.toBeNull();
+  });
+
   it("ACCEPTS the U+2019 spelling of `opponent's` on both arms — the class, not a near-miss", () => {
     // This pair was pinned as REFUSED until the D135 review, on the reasoning that the
     // pool holds zero U+2019 so only a hand-retype could produce one. True, and beside
@@ -867,13 +993,13 @@ describe("constructed near-misses stay NULL", () => {
     }
   });
 
-  it("leaves the THREE out-of-scope printings on the loud path, on every reader", () => {
-    // Krookodile sv01-117, Masquerain sv03-007, Oinkologne sv03-184. The first two
-    // share D129's leading sentence AND D130's "For each heads," repeat and are
-    // refused only by what comes after it; the third shares Wugtrio's opening
-    // verbatim. Refused by EVERY reader in the family, so each null is a genuine gap
-    // on the loud path and not a hand-off to something that would resolve it quietly.
+  it("leaves the FOUR out-of-scope printings on the loud path, on EVERY reader", () => {
+    // 🆕 D452 — and the strong form: not "on the five readers this file imports"
+    // but on the WHOLE live surface, taken off the module. A refusal rung that names
+    // its own reader list is a rung that goes QUIET when a thirteenth reader claims
+    // the sentence (D418), and this is the file where that would be least visible.
     for (const sentence of OUT_OF_SCOPE) {
+      expect(resolvedByAnyReader(sentence), `newly resolved: ${sentence}`).toBe(false);
       expect(deriveAttackCoinFlip(sentence)).toBeNull();
       expect(deriveAttackEffect(sentence)).toBeNull();
       expect(deriveAttackDamageBonus(sentence)).toBeNull();
@@ -882,12 +1008,34 @@ describe("constructed near-misses stay NULL", () => {
     }
     // …and swapping each one's consequent for a mill turns it into a sentence this
     // deriver reads, which is what makes the nulls above a claim about which half of
-    // the string was refused.
+    // the string was refused. Both `discardEnergy` rows are checked, because they are
+    // the pair whose refusal is a COST rather than a missing pattern: the OPENING of
+    // each is fine and it is the tail that is unbuilt.
+    for (const refused of [OUT_OF_SCOPE[0], OUT_OF_SCOPE[3]]) {
+      const head = refused.slice(0, refused.indexOf("For each heads"));
+      expect(
+        deriveAttackCoinFlip(`${head}For each heads, discard the top 2 cards of your opponent's deck.`),
+      ).not.toBeNull();
+    }
+    // The PRINTED-count opening reaches both D452 arms; the UNTIL-TAILS opening
+    // reaches neither, because neither of D452's sentences is printed that way and an
+    // anchor for one would author a card.
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard the top card of your opponent's deck."),
+    ).not.toBeNull();
+    expect(
+      deriveAttackCoinFlip("Flip 2 coins. For each heads, discard a random card from your opponent's hand."),
+    ).not.toBeNull();
     expect(
       deriveAttackCoinFlip(
-        `${OUT_OF_SCOPE[0].slice(0, OUT_OF_SCOPE[0].indexOf("For each heads"))}For each heads, discard the top 2 cards of your opponent's deck.`,
+        "Flip a coin until you get tails. For each heads, discard the top card of your opponent's deck.",
       ),
-    ).not.toBeNull();
+    ).toBeNull();
+    expect(
+      deriveAttackCoinFlip(
+        "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
+      ),
+    ).toBeNull();
   });
 });
 
