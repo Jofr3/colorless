@@ -3089,6 +3089,26 @@ SHUFFLES, which burns an extra `rngState` step and desyncs every later flip. Rea
 alone reads as an excuse (D450); "this byte already ships" alone leaves the loss hazard
 unnamed even though it is pre-existing.
 
+### Audit for ABSENCE, not only for collision (D452)
+
+The four pre-probe passes all ask what an edit might **break**: which rows
+mention what you are changing, which rows sit in an edited span, which rows'
+`find` no longer occurs once, which rows changed nothing. **None asks what was
+never covered.**
+
+D452's semantic pass found that `programPerHeads` — a shipped mechanism with its
+own 1,459-line suite — had **zero mutant rows for 322 decisions**. Every green
+sweep since 0.81.0 had said nothing whatever about it, because a corpus reports
+only on the rows it contains, and **a family with no rows is indistinguishable
+from a family that passes.** The two rows written for it were the first evidence
+it discriminates at all, and one of them **survived its first probe** — so the
+family was not merely unpinned, it had a live hole.
+
+**A green sweep is a statement about coverage, not about correctness.** When you
+touch a mechanism, grep the corpus for rows naming it *before* assuming the
+sweep's history covers it — an empty result is a finding, and it is the cheapest
+one available.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
