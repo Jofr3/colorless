@@ -2936,6 +2936,28 @@ about the suite.** The reflex is to hunt for the missing assertion; check that
 the `replace` actually changes behaviour before writing one, because a test
 written to kill an inert mutant is a vacuous guard by construction (D205/D208).
 
+### Diff every row's `find` against its `replace` before probing (D451)
+
+D450 discovered that a mutant row can be **inert** — its `replace` compiles
+byte-equivalent behaviour, so the harness reports `SURVIVED (undeclared)` for a
+row that expresses no defect. D451 re-entered the same trap **one slice later**,
+with two of its nineteen rows inert on the first draft (one prepended a comment
+instead of changing the field; one returned a value-equal object).
+
+The difference is that D451 caught them **before the probe**, with a mechanical
+diff of each row's `find` against its `replace`. That is the missing instrument:
+
+- the **semantic audit** finds rows that mention what you are changing;
+- the **mechanical region audit** finds rows whose `find` sits in an edited span;
+- **`precheck`** finds rows whose `find` no longer occurs exactly once;
+- **a `find`-vs-`replace` diff** finds rows that change nothing at all.
+
+Only the fourth catches an inert row at authoring time, and it costs one pass
+over the rows you just wrote. Run it as the last step before probing — an
+undeclared survivor found later is the same defect discovered at ten times the
+cost, and it invites the wrong repair (writing a test to kill a mutant that
+cannot be killed, which is a vacuous guard by construction).
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
