@@ -3109,6 +3109,121 @@ touch a mechanism, grep the corpus for rows naming it *before* assuming the
 sweep's history covers it — an empty result is a finding, and it is the cheapest
 one available.
 
+### "No row names it" is the WRONG coverage predicate, in both directions (D453)
+
+D452's absence rule needs an instrument, and the obvious one — *grep the corpus
+for the op's name* — is wrong twice over. D453 ran it over all **74**
+`EffectOp` kinds and then ran a better one beside it.
+
+**FALSE NEGATIVES.** `counterUntilRemainingHp` is pinned by **thirteen** D451
+rows — four on its `effects.ts` arms, nine inside its interpreter function — and
+**not one spells the op's name** in `id`, `what`, `find` or `replace`. A good row
+quotes the FIELD it crosses (`remainingHp`, `target`, `source`) or the LINE it
+deletes. **The name is metadata; the SPAN is the fact.**
+
+**FALSE POSITIVES, which are the dangerous half.** Five kinds "have rows" under
+substring and every hit is PROSE in some *other* row's `what`, or a `replace`
+that emits the op as a NEIGHBOUR's wrong answer
+(`D432-arm-emits-the-neighbours-op` hands `installNoWeakness`'s arm a
+`reduceDamage`). **A measure that reports coverage which is not there is worse
+than one that misses coverage which is** — the first stops you looking.
+
+**THE PREDICATE TO USE INSTEAD, and it is cheap enough for the standing set.**
+For each kind, build the regions that IMPLEMENT or PRODUCE it — the same-named
+top-level function in `interpreter.ts`, every `case "<kind>":` block, every
+helper typed `Extract<EffectOp, { op: "<kind>" }>`, every `op: "<kind>"` producer
+statement in `effects.ts`/`registry.ts` — then ask whether any row's `find`
+**span** intersects one. ⚠️ **STATE ITS LIMIT (D425):** it cannot see a row that
+changes an op's behaviour from outside those regions (a shared helper —
+`effectRefused`, `parkOrForce`, `withActive` — or the dispatcher's shape), and it
+says nothing about whether an in-range row expresses a defect worth catching. It
+is a tripwire, not a proof.
+
+## Coverage is a CHAIN, and the predictor is FIELD COUNT (D453)
+
+Why eleven shipped ops had never been touched by a row is not eleven accidents.
+Tagging every op-region hit as PRODUCER-side (`effects.ts`/`registry.ts`) or
+IMPLEMENTATION-side (`interpreter.ts`) over the pre-D453 corpus:
+
+> **758 producer-side · 358 implementation-side · 24 kinds producer-ONLY ·
+> ZERO kinds implementation-ONLY · 11 with neither.**
+
+**No op has ever gained an implementation row without already having a producer
+row.** The mechanism is the authoring habit: **a mutant row is written by the
+slice that BUILDS a sentence, and that slice's row is a row about the ARM it just
+wrote.** An implementation is reached only when a later slice returns to it for
+some other reason.
+
+⚠️ **So the predictor of coverage is the op's FIELD COUNT, not its importance or
+its printings.** Mean declared keys beyond `op`: **1.00** over the unpinned,
+**1.60** over the thin (1–2 rows), **3.00** over the well-covered.
+`reduceDamage` has **29 legal printings** — more than most of the covered set —
+and one field. A derivation-arm row is a row about a FIELD, so a one-field op
+offers the habitual shape exactly one target and a **field-free op offers none**,
+however much behaviour its implementation carries.
+
+**This predicts rather than explains**: the field-poor members of the thin set
+are the next gap, and you can name them before looking.
+
+## An undeclared survivor has a FOURTH cause: your own `expectKilledBy` (D453)
+
+D450 named three — a real suite hole, a genuinely equivalent mutant, an inert row
+whose `replace` compiles the same program. D453 hit a fourth: **the defect IS
+caught, by a suite the row does not name.** `D453-may-draw-is-answered-by-the-controller`
+survived `optionalDraw.test.ts` + `aquaWash.test.ts`, was **KILLED by `--full` in
+121s**, and the real killer was `revealBottom.test.ts` alone.
+
+⚠️ **RUN `--full` ON ANY UNDECLARED SURVIVOR BEFORE YOU BELIEVE IT.** Two minutes
+buys the difference between *"the suite has a hole"* and *"I named the wrong
+suites"*, and the wrong answer leads you to write a test for a defect that is
+already caught — a vacuous guard by construction (D205/D208). Over-narrowing
+`expectKilledBy` is already called a lie in this file; this is what the lie looks
+like from the reader's side.
+
+⚠️ **And the specific trap: name the suite the op's CARD lives in, not the suite
+its KIND suggests.** `opponentMayDraw` is a "may draw" op, so `optionalDraw.test.ts`
+reads right and never loads the line. The op ships on exactly one card, and that
+card's suite is the killer. **For a registry-only op, `expectKilledBy` is a
+question about the card.**
+
+## A doc block that says "recorded as a mutant" names a FILE (D453)
+
+D216 wrote into `interpreter.ts` that a `=== 1` / `<= 1` comparison was
+*"recorded as an equivalent mutant rather than passed off as a tested
+comparison"*, and `counterSourceAnswered`'s block said the same of its spot test.
+**The corpus contained zero rows for that op, and had for 237 decisions.**
+
+This is D449's rule with a sharper edge: a refusal carries a population, and a
+claim of the form *"recorded as X"* carries a **file you can grep**. It is the
+cheapest false claim there is to check and one of the easiest to write. **When you
+write "recorded as", write the row in the same edit** — and when you read one,
+grep it.
+
+## An arm can be LIVE and claim nothing (D453)
+
+`deriveAttackEffect`'s `COUNTER_PUT_ON_DEFENDER` arm matches **zero**
+`legal_standard = 1` sentences today; the loosest grep returns five rows and all
+five belong to other families. So `damageActive`'s entire live population is one
+registry row, and a mutant on the ARM would measure an empty set while a mutant
+on the interpreter seat line measures the whole thing.
+
+**Measure an op's printings before choosing which SEAT to pin** — producer or
+implementation. It is a different question from "is the op reachable", and the
+answers can point opposite ways.
+
+## "1–2 rows" is not shallow, it is ONE-SIDED (D453)
+
+Eight rows across seven thinly-covered ops were read in full and **every one
+expresses a real defect** — a printed field crossed, a neighbouring op emitted
+verbatim, an amount pinned to one printing, the counters→HP conversion dropped.
+None was an anchor-shape row. But **seven of the eight sit in `effects.ts`
+derivation arms**, which is the producer-ONLY shape above.
+`scheduleDiscard`'s single row proves the reader emits `scheduleDiscard` and not
+`scheduleKnockOut`; it proves nothing about what the op then does.
+
+**Count a family's rows by SEAT, not by total.** A thin count is a question about
+which half is missing, not about quality.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

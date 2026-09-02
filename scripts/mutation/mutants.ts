@@ -22005,4 +22005,204 @@ export const MUTANTS: Mutant[] = [
     replace: '          flips: { kind: "untilTails" },\n          ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],',
     expectKilledBy: ["packages/engine/src/perHeadsProgram.test.ts"],
   },
+  // ══════════════════════════════════════════════════════════════════════════
+  // 🆕🆕 D453 — THE OP-UNION ABSENCE AUDIT, RUN OVER ALL 74 `EffectOp` KINDS.
+  //
+  // D452 found ONE shipped mechanism with zero rows by needling the corpus for the
+  // neighbours it was copying. D453 asks the same question of the whole union, with
+  // a predicate that does not depend on anyone having written the op's NAME into a
+  // row: for each kind, take every region that IMPLEMENTS or PRODUCES it — the
+  // same-named function in `interpreter.ts`, its `case` arms, any helper typed
+  // `Extract<EffectOp, { op: "…" }>`, and every `op: "…"` producer in `effects.ts`
+  // and `registry.ts` — and ask whether ANY row's `find` span lands inside one.
+  //
+  // ⚠ THE TWO PREDICATES DISAGREE IN BOTH DIRECTIONS, WHICH IS THE FINDING.
+  // "No row mentions the name" returns 8 kinds; the region predicate returns 11,
+  // and the two sets overlap in only 6. `counterUntilRemainingHp` is pinned by
+  // THIRTEEN D451 rows that never spell its name once, and `attachFromHand` by two
+  // of D247's — so the cheap substring measure produces false alarms. Going the
+  // other way, `reduceDamage`, `weakenDefenderAttacks`, `installRecoil`,
+  // `damageActive` and `healEachAll` each appear in a row's PROSE (or in a
+  // `replace` that emits them as some OTHER op's wrong neighbour) while nothing
+  // touches their code — a coverage the substring measure reports and that is not
+  // there.
+  //
+  // The eleven pinned below, with their `legal_standard = 1` attack printings:
+  // `reduceDamage` 6/29 · `weakenDefenderAttacks` 4/8 · `boostAttack` 3/6 ·
+  // `installRecoil` 1/5 · `preventChosenAttack` 1/3 · `clearStatus` 1/2 ·
+  // `moveCountersChosen` 1/2 · `moveCountersToDefender` 1/2 — and three whose
+  // attack-corpus population is ZERO and whose live producers are registry rows:
+  // `damageActive` (Trevenant), `healEachAll` (Picnic Basket), `opponentMayDraw`
+  // (Ortega).
+  // ══════════════════════════════════════════════════════════════════════════
+  {
+    id: "D453-reduce-damage-window-is-the-holders-own-turn",
+    decision: "D453",
+    what: "⚠ **`reduceDamage`'s WINDOW BECOMES `boostAttack`'s** — `state.turn + 2` is the byte `boostAttack` fourteen hundred lines up genuinely writes, and it is right THERE and wrong here: the printed sentence is *\"During your **opponent's** next turn, this Pokémon takes N less damage\"*, so the window is the turn immediately after this one. At `+ 2` the shield is installed for the holder's OWN next turn, when nothing is attacking it, and the opponent's swing lands in full. 6 sentences / 29 legal printings, the largest population in D453's unpinned set",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 1;\n  const existing = active.damageReduction;",
+    replace: "  const turn = state.turn + 2;\n  const existing = active.damageReduction;",
+    expectKilledBy: ["packages/engine/src/damageReduction.test.ts", "packages/engine/src/alwaysOnReduction.test.ts"],
+  },
+  {
+    id: "D453-reduce-damage-installs-on-the-defender",
+    decision: "D453",
+    what: "⚠ **THE SHIELD CROSSES THE SEAT** — `otherSeat(ctx.seat)` is `weakenDefenderAttacks`'s real opening line one hundred lines down, and the two functions are otherwise byte-twins (read the Active, read the uid, `state.turn + 1`, `Math.max` merge, one event, one `withActive`). Copied here it installs *\"this Pokémon takes 10 less damage\"* on the PLAYER BEING ATTACKED— the printed holder is *\"this Pokémon\"*, the attacker's own Active",
+    file: "packages/engine/src/interpreter.ts",
+    find: "): GameState {\n  const active = state.players[ctx.seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.damageReduction;",
+    replace: "): GameState {\n  const active = state.players[otherSeat(ctx.seat)].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  const turn = state.turn + 1;\n  const existing = active.damageReduction;",
+    expectKilledBy: ["packages/engine/src/damageReduction.test.ts", "packages/engine/src/alwaysOnReduction.test.ts"],
+  },
+  {
+    id: "D453-reduce-damage-merge-takes-the-smaller",
+    decision: "D453",
+    what: "⚠ **THE STACKING MERGE TAKES THE MINIMUM** — two reductions installed on the same body for the same turn must resolve to the STRONGER shield; `Math.min` makes a second 10-less printing overwrite an existing 30-less one and the log row announces the downgrade as though it were an install. D434's `Math.max`-becomes-`+` defect on the delayed-counter merge, one function over and in the other direction",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const merged = stacking ? Math.max(existing.amount, amount) : amount;\n  if (stacking && merged === existing.amount) return state;\n  events.push({ type: \"DAMAGE_REDUCTION_APPLIED\"",
+    replace: "  const merged = stacking ? Math.min(existing.amount, amount) : amount;\n  if (stacking && merged === existing.amount) return state;\n  events.push({ type: \"DAMAGE_REDUCTION_APPLIED\"",
+    expectKilledBy: ["packages/engine/src/damageReduction.test.ts", "packages/engine/src/alwaysOnReduction.test.ts"],
+  },
+  {
+    id: "D453-weaken-installs-on-the-actor",
+    decision: "D453",
+    what: "⚠ **THE DEBUFF CROSSES THE SEAT** — the mirror of D453's `reduceDamage` seat row and the same copy in the other direction: `ctx.seat` is `reduceDamage`'s real line. The printed sentence is *\"attacks used by the **Defending** Pokémon do N less damage\"*, so `otherSeat` is the whole target of the op; at `ctx.seat` the attacker weakens ITSELF and the defender swings at full. 4 sentences / 8 legal printings",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const seat = otherSeat(ctx.seat);\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 (D142) — checked BEFORE the idempotence early-return",
+    replace: "  const seat = ctx.seat;\n  const active = state.players[seat].active;\n  if (active === null) return state;\n  const uid = topUid(active);\n  if (uid === undefined) return state;\n  // §11 (D142) — checked BEFORE the idempotence early-return",
+    expectKilledBy: ["packages/engine/src/attackDebuff.test.ts", "packages/engine/src/damageReduction.test.ts"],
+  },
+  {
+    id: "D453-weaken-drops-the-section-11-gate",
+    decision: "D453",
+    what: "⚠ **§11 IS NEVER ASKED** — the op reaches across the seat line to write a record onto the OPPONENT's Active, which is exactly the population `effectRefused` exists for; without it a body under a printed effect-block takes the debuff silently and no ATTACK_EFFECT_PREVENTED row is filed. The comment on the deleted line names its own ordering rule (announced even on an already-debuffed body), so the deletion also erases the ordering it documents",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, seat, ctx, events)) return state;\n  const turn = state.turn + 1;\n  const existing = active.attackDamageDebuff;",
+    replace: "  const turn = state.turn + 1;\n  const existing = active.attackDamageDebuff;",
+    expectKilledBy: ["packages/engine/src/attackDebuff.test.ts", "packages/engine/src/preventBlock.test.ts"],
+  },
+  {
+    id: "D453-boost-window-is-the-opponents-turn",
+    decision: "D453",
+    what: "⚠ **`boostAttack`'s WINDOW BECOMES `reduceDamage`'s** — the exact converse of D453's first row, and the byte `reduceDamage` really writes. The doc block one line above states the rule the `+ 2` encodes: the printed window is *\"During YOUR next turn\"*, declaring an attack ends the turn (§5.3), so the turn after this one belongs to the opponent and the holder's is the one after THAT. At `+ 1` the boost is armed for a turn the holder cannot attack in and has expired by the time it could",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const turn = state.turn + 2;\n  const existing = active.boostedAttack;",
+    replace: "  const turn = state.turn + 1;\n  const existing = active.boostedAttack;",
+    expectKilledBy: ["packages/engine/src/perAttackBuff.test.ts"],
+  },
+  {
+    id: "D453-boost-stacks-across-different-attacks",
+    decision: "D453",
+    what: "⚠ **THE STACKING TEST FORGETS WHICH ATTACK IT BOOSTED** — `boostedAttack` is a single record carrying an `attackIndex`, so without that conjunct a second boost printing on the same turn is treated as a re-install of the FIRST and `Math.max` keeps the larger amount under the NEW index's identity. The printed effect names one attack by name (*\"this Pokémon's Echoed Voice attack does 80 more damage\"*); merging across two names hands the bonus to an attack no card printed it on",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    existing !== null && existing.turn === turn && existing.attackIndex === attackIndex;",
+    replace: "    existing !== null && existing.turn === turn;",
+    expectKilledBy: ["packages/engine/src/perAttackBuff.test.ts", "packages/engine/src/lockedAttackMerge.test.ts"],
+  },
+  {
+    id: "D453-recoil-counters-are-not-converted-to-hp",
+    decision: "D453",
+    what: "⚠ **THE COUNTERS→HP FACTOR OF TEN GOES** — `installRecoil.amount` is HP and the printed number is COUNTERS (*\"put 8 damage counters on the Attacking Pokémon\"*), so the `* 10` is §12's whole conversion at this site. Dropped, the reactive recoil arms at 8 HP instead of 80 and a printing that should trade a Knock Out for a Knock Out trades it for a scratch. D434's identical defect on `scheduleCounters`, on the op that owns the same conversion. 1 sentence / 5 legal printings",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (counters >= 1) return [{ op: \"installRecoil\", amount: counters * 10 }];",
+    replace: "    if (counters >= 1) return [{ op: \"installRecoil\", amount: counters }];",
+    expectKilledBy: ["packages/engine/src/installedRecoil.test.ts", "packages/engine/src/counterattack.test.ts"],
+  },
+  {
+    id: "D453-chosen-lock-forces-at-two-candidates",
+    decision: "D453",
+    what: "⚠ **THE NO-CHOICE SHORTCUT FIRES AT TWO** — M1's rule is that ONE candidate prompts for nothing; at `=== 2` a defender printing two attacks silently has its FIRST one locked and the attacker is never asked, while a one-attack defender falls through to a `chooseAttack` park with a single candidate. Both endings are wrong and neither is loud: the printed sentence is *\"**Choose** 1 of your opponent's Active Pokémon's attacks\"*. This is D416's shape — a park whose forced arm is the only one a one-candidate board exercises — read from the other side. 1 sentence / 3 legal printings",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (printed.length === 1) return { done: lockDefenderAttack(state, 0, ctx, events) };",
+    replace: "  if (printed.length === 2) return { done: lockDefenderAttack(state, 0, ctx, events) };",
+    expectKilledBy: ["packages/engine/src/perAttackLock.test.ts", "packages/engine/src/opponentAttackLock.test.ts", "packages/engine/src/attackLock.test.ts"],
+  },
+  {
+    id: "D453-chosen-lock-drops-the-section-11-gate",
+    decision: "D453",
+    what: "⚠ **§11 IS NEVER ASKED, AND THIS ONE ALSO COSTS A PROMPT** — the gate sits in FRONT of the candidate scan on purpose (`discardEnergy`'s placement, named in the comment above it). Deleted, a shielded defender is not merely locked in silence: the attacker is handed a `chooseAttack` park for a lock that §11 has already refused, so the defect spends a WIRE ROUND TRIP as well as the rule",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (effectRefused(state, victim, ctx, events)) return { done: state };\n  const active = state.players[victim].active;",
+    replace: "  const active = state.players[victim].active;",
+    expectKilledBy: ["packages/engine/src/perAttackLock.test.ts", "packages/engine/src/preventBlock.test.ts"],
+  },
+  {
+    id: "D453-recover-announces-a-clean-body",
+    decision: "D453",
+    what: "⚠ **THE WHIFF BECOMES A LOG ROW** — *\"This Pokémon recovers from all Special Conditions.\"* on a body carrying none is a silent no-op; without the early return `clearStatus` files a STATUS_CLEARED event with an EMPTY `statuses` array and rewrites the body with a fresh `noConditions()`, so the log claims a recovery that did not happen and the state identity is broken for no reason. The single-arm whiff rule `healChosen` and `moveCountersToDefender` both follow. 1 sentence / 2 legal printings, plus Blissey's \"Busybody Nurse\" registry row",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cleared = presentStatuses(active.conditions);\n  if (cleared.length === 0) return state;",
+    replace: "  const cleared = presentStatuses(active.conditions);",
+    expectKilledBy: ["packages/engine/src/clearStatus.test.ts", "packages/engine/src/therapeuticEnergy.test.ts"],
+  },
+  {
+    id: "D453-counter-move-destination-is-your-own-active",
+    decision: "D453",
+    what: "⚠ **THE COUNTERS COME BACK TO YOUR OWN ACTIVE** — the printed sentence is *\"Move all damage counters from 1 of your Benched Team Rocket's Pokémon to **your opponent's** Active Pokémon\"*, and `otherSeat(ctx.seat)` in the destination ref is the only place that direction is written down (the source half is guarded one line up, and the mover is a shared helper that takes the destination as data). At `ctx.seat` the attack heals the opponent's board — it moves the counters from your Bench onto your OWN Active. 1 sentence / 2 legal printings",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const dest: PokemonRef = { seat: otherSeat(ctx.seat), spot: { spot: \"active\" } };",
+    replace: "  const dest: PokemonRef = { seat: ctx.seat, spot: { spot: \"active\" } };",
+    expectKilledBy: ["packages/engine/src/counterMove.test.ts", "packages/engine/src/ownerTargetOps.test.ts"],
+  },
+  {
+    id: "D453-chosen-destination-loses-the-active",
+    decision: "D453",
+    what: "⚠ **QUESTION 2's ZONE NARROWS TO THE BENCH** — `oppBenchRefs` is the sibling helper the tails arm of the coin sentence really uses, and the comment on the deleted line says why it is wrong here: *\"1 of your opponent's Pokémon\" — the Active TOO*. Narrowed, a board whose opponent has an Active and an empty Bench offers ZERO destinations, so `parkOrForce` resolves the sentence to nothing and the counters stay where they were — a silent whiff on a board the printing always reaches during a §8 attack. 1 sentence / 2 legal printings",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        oppAnyRefs(state, ctx.seat),\n        (ref) => moveCountersFromBench(state, chosen, ref, ctx, events),",
+    replace: "        oppBenchRefs(state, ctx.seat),\n        (ref) => moveCountersFromBench(state, chosen, ref, ctx, events),",
+    expectKilledBy: ["packages/engine/src/counterMoveChosen.test.ts"],
+  },
+  {
+    id: "D453-chosen-source-prompts-on-a-clean-body",
+    decision: "D453",
+    what: "⚠ **THE SILENT WHIFF BUYS A SECOND PROMPT** — a chosen source carrying no counters is answered HERE, before question 2, precisely so the whiff costs no prompt (the comment on the line says so). Without `source.damage <= 0` the engine asks *\"move the damage counters onto which of your opponent's Pokémon?\"* about ZERO counters — a question with no answer, a wire round trip, and a `moveCountersFromBench` call that moves nothing",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (source === undefined || source.damage <= 0) return { done: state };",
+    replace: "      if (source === undefined) return { done: state };",
+    expectKilledBy: ["packages/engine/src/counterMoveChosen.test.ts"],
+  },
+  {
+    id: "D453-chosen-source-forces-at-most-one",
+    decision: "D453",
+    what: "⚠ **THE `=== 1` / `<= 1` COMPARISON THIS ARM'S OWN COMMENT CLAIMS IS \"recorded as an equivalent mutant\" — AND WAS NOT.** D216 wrote that sentence into `interpreter.ts` and no row was ever written, so the claim had been false for 237 decisions. It is true now, and it is DECLARED rather than killed: `sources.length === 0` has already returned two lines above, so the empty set never reaches this line and `<= 1` can only ever mean `=== 1`",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        const forced = sources.length === 1 ? sources[0] : undefined;",
+    replace: "        const forced = sources.length <= 1 ? sources[0] : undefined;",
+    expectKilledBy: ["packages/engine/src/counterMoveChosen.test.ts"],
+    survives: {
+      kind: "unreachable-shape",
+      reason: "The `if (sources.length === 0) return { done: state };` two lines above makes the empty set unreachable here, so `<= 1` and `=== 1` select the same candidate on every board. ⚠ SELF-INVALIDATING: this stops being true the moment that early return is deleted, narrowed, or moved below this line — `sources[0]` would then be `undefined` and the forced ending would schedule `counterSourceAnswered` on a body that is not there. If this row is ever KILLED, read the early return first, not the suite.",
+    },
+  },
+  {
+    id: "D453-checkup-counters-land-on-your-own-active",
+    decision: "D453",
+    what: "⚠ **THE PLACEMENT CROSSES THE SEAT** — `damageActive` is reached from Trevenant's \"Forest Miasma\" Checkup trigger, whose printed text is *\"put 1 damage counter on **your opponent's** Active Pokémon\"*. `ctx.seat` makes the ability damage its own holder once per Checkup, which on a mandatory between-turns trigger is a self-Knock-Out clock. ⚠ THIS OP'S DERIVED ARM HAS ZERO LEGAL PRINTINGS (`COUNTER_PUT_ON_DEFENDER` matches no `legal_standard = 1` sentence, measured), so the registry row is the whole live population and this row is its only pin",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (amount <= 0) return state;\n  const opponent = otherSeat(ctx.seat);\n  const active = state.players[opponent].active;",
+    replace: "  if (amount <= 0) return state;\n  const opponent = ctx.seat;\n  const active = state.players[opponent].active;",
+    expectKilledBy: ["packages/engine/src/counterPut.test.ts", "packages/engine/src/freezingShroud.test.ts"],
+  },
+  {
+    id: "D453-board-heal-overheals-past-zero",
+    decision: "D453",
+    what: "⚠ **THE HEAL IS NOT CLAMPED TO THE DAMAGE PRESENT** — Picnic Basket heals 30 from EVERY body on BOTH boards, and `Math.min(amount, pokemon.damage)` is what stops a body carrying 10 going to `damage: -20`. Dropped, the HEALED event reports 30 on a body that had 10, and negative damage propagates into every remaining-HP read in the engine. The whiff guard on the next line (`healed <= 0`) does not save it: 30 is positive on a clean body too, so an undamaged Pokémon is \"healed\" as well",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const healed = Math.min(amount, pokemon.damage);",
+    replace: "      const healed = amount;",
+    expectKilledBy: ["packages/engine/src/picnicBasket.test.ts", "packages/engine/src/boardHeal.test.ts"],
+  },
+  {
+    id: "D453-may-draw-is-answered-by-the-controller",
+    decision: "D453",
+    what: "⚠ **THE OPPONENT'S PRINTED \"may\" IS ANSWERED BY THE PLAYER WHO PLAYED THE CARD** — Ortega's second sentence gives the OPPONENT the choice, and `decider: drawer` is the only byte that says so; `settleProgram` files it as `phase.answerer` and `redact.ts` gates the prompt on it. Crossed to `ctx.seat` the controller decides whether their opponent draws — the same class of defect the `opponentDiscardsFromHand` block twenty lines up says is \"driven\" for its own park",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        park: { kind: \"mayDraw\", count: op.count, note: mayDrawNote(op) },\n        decider: drawer,",
+    replace: "        park: { kind: \"mayDraw\", count: op.count, note: mayDrawNote(op) },\n        decider: ctx.seat,",
+    expectKilledBy: [
+      "packages/engine/src/revealBottom.test.ts",
+      "packages/engine/src/redact.test.ts",
+      "packages/engine/src/optionalDraw.test.ts",
+    ],
+  },
 ];
