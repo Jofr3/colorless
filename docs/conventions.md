@@ -2913,6 +2913,29 @@ differs from the equality count on exactly the compound rows. Report the `includ
 figure; if the two disagree, say so — the disagreement names a compound row and is worth
 a line.
 
+### A mutant row can be INERT, and `precheck` cannot see it (D450)
+
+`precheck` answers exactly one question: does each row's `find` occur exactly
+once in its target file? It says nothing about whether the `replace` expresses a
+**different program**. D450 wrote a row whose `replace` prepended a comment
+instead of deleting the field it named — so the harness applied it, compiled
+**byte-equivalent behaviour**, and reported `SURVIVED (undeclared)`.
+
+**That is a third distinct blind spot, and the three instruments do not cover
+each other:**
+
+- the **region-overlap audit** cannot see a collision you create at a distance
+  (D447) — it asks *did I edit near this row?*
+- **`precheck`** cannot see an inert row (D450) — it asks *does this `find` occur
+  exactly once?*
+- only a **probe or the sweep** asks *does this row express a defect the suite
+  catches?*
+
+**So read an undeclared survivor as a question about the ROW first, not only
+about the suite.** The reflex is to hunt for the missing assertion; check that
+the `replace` actually changes behaviour before writing one, because a test
+written to kill an inert mutant is a vacuous guard by construction (D205/D208).
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
