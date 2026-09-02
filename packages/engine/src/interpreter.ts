@@ -1254,8 +1254,19 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         // one, so `parkOrForce` forces it), so no prompt can be waiting on it to
         // describe. Spelling "1 of your Benched Pokémon" for a printed PRONOUN
         // would be the lie this function refuses; refusing to describe is the
-        // honest answer, and it is recorded as an equivalent mutant, not as a
-        // tested line.
+        // honest answer, and it was said here to be recorded as an equivalent
+        // mutant rather than as a tested line.
+        //
+        // 🆕🆕 D455 CHECKED BOTH OF THOSE SENTENCES AND NEITHER IS TRUE: the
+        // corpus holds ZERO rows whose `find` span touches this condition, and
+        // twelve declared survivors on this file, none of them here. The
+        // unreachability argument is unchanged and is still the reason the
+        // conjuncts are written the way they are; the claim that a mutant records
+        // it is withdrawn until somebody writes one. D453 found the identical
+        // false claim on `moveCountersChosen` and D455 on the `optional` apply
+        // arm — three of the four "recorded as an equivalent mutant" sentences in
+        // shipped source were false, which is now a convention entry rather than
+        // an anecdote.
         //
         // 🆕 D273 — `targetType` and `exceptNamed` join them, and this is the
         // grep the standing lesson asks for: THIS LINE'S CORRECTNESS RESTED ON
@@ -7016,10 +7027,28 @@ function sameSchedule(a: ScheduledEffect, b: ScheduledEffect): boolean {
   }
 }
 
-/** §9/§11 (D152) — ARM the printed REACTIVE RECOIL on the CONTROLLER's own Active
-    ("During your opponent's next turn, if this Pokémon is damaged by an attack
-    (even if it is Knocked Out), put 10 damage counters on the Attacking Pokémon.",
-    2 printings of one sentence — Lycanroc ex sv02-117/-241 "Scary Fangs").
+/** §9/§11 (D152) — ARM the printed REACTIVE RECOIL on the CONTROLLER's own Active.
+
+    🆕🆕 **D455 CORRECTED THIS PARAGRAPH IN PLACE. IT QUOTED A SENTENCE THE CATALOG
+    DOES NOT PRINT** — *"…put **10** damage counters on the Attacking Pokémon."* at
+    *"2 printings … Lycanroc ex sv02-117/-241"*. D454 found it; this is the
+    correction, measured off `censusAttackCorpus.ts` rather than remembered.
+    `\bAttacking Pokémon\b` over all 640 corpus sentences returns exactly THREE
+    rows and none of them is a ten:
+
+    | corpus line | printings | the number |
+    |---|---|---|
+    | 178 | **5** | *"…put **8** damage counters on the Attacking Pokémon."* |
+    | 179 | 1 | *"…put **6** damage counters…"* (and "even if **this Pokémon** is") |
+    | 180 | 2 | *"…put damage counters … **equal to the damage done to this Pokémon**"* |
+
+    Line 178 is the family this op serves; lines 179 and 180 are a different amount
+    and a scaled amount and are NOT claimed here. ⚠️ **THE CARD IDS ARE STATED AS
+    UNRESOLVED, NOT REPAIRED** (D425): this checkout has no D1, so the sentence text
+    and the printing counts are measurable off the committed corpus and the ids
+    behind them are not. "Lycanroc ex sv02-117/-241" is left in the history rather
+    than re-asserted — it was quoted against a sentence that does not exist, so it
+    cannot be trusted to name the printings of the one that does.
 
     `reduceDamage`'s SIBLING rather than `weakenDefenderAttacks`'s mirror, and
     written beneath the pair on purpose so all three read as one design:

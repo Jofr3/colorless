@@ -1054,9 +1054,25 @@ export function resolveMidTurnKnockOuts(
     flip and the no-effect-program tail — all sit STRICTLY BEFORE any effect
     program has run, so on every one of them the declared attacker is still
     `players[attackerSeat].active` and the parameter provably equals the lookup it
-    replaced. Mutating those four to re-read the spot fails NOTHING, and that is
-    recorded as an equivalent mutant rather than papered over with a case that
-    asserts nothing. The fifth site — `advance`'s `attackEpilogue` stage — is the
+    replaced. Mutating those four to re-read the spot fails NOTHING, and that was
+    said here to be recorded as an equivalent mutant rather than papered over with
+    a case that asserts nothing.
+    🆕🆕 **D455 CHECKED THAT SENTENCE AND IT IS FALSE — THE ROW DOES NOT EXIST.**
+    `scripts/mutation/mutants.ts` holds SIX declared survivors on `attack.ts`
+    (`D196-live-active`, `D228-base-damage-is-suppressed`,
+    `D282-split-fires-without-a-gate`, `D317-program-assigned-not-appended`,
+    `D318-boost-program-not-appended`, `D427-whiffed-attack-heals-the-base`) and
+    TWO on this file (`D312-attack-seam-scans-only-the-attacker`,
+    `D435-ko-marker-not-stamped`); **not one of them mutates a direct
+    `finishAttack` call site to re-read `players[attackerSeat].active`.** The nine
+    corpus rows that quote `attackerUid` at all are about the THREADING, the seat
+    and the KO cause. The equivalence argument above stands on its own reasoning
+    and is unchanged; only the claim that somebody recorded it is withdrawn.
+    ⚠️ **A DOC BLOCK'S "recorded as X" NAMES A FILE AND IS ONE GREP FROM BEING
+    CHECKED** — D453 found the same false claim on `moveCountersChosen`, D455 found
+    it again on `interpreter.ts`'s `optional` apply arm and here. Three of the four
+    such claims in shipped source were false; the true one is `effects.ts`'s
+    `D382-join-operands-swapped`. **Writing the row is what closes this.** The fifth site — `advance`'s `attackEpilogue` stage — is the
     only one a program has run before, and it is the whole reason the field exists.
     The four keep passing the uid anyway: uniform, and a future reordering that put
     a program in front of any of them would then be correct by construction rather

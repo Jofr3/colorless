@@ -3579,3 +3579,114 @@ copy sat with eleven producer rows and zero implementation rows for 42 decisions
 A comment that names a duplicate is a free survey result somebody already paid for. This is
 D414's *"grep the vocabulary the invariant is phrased in"* with the grep already written into
 the source.
+
+## A committed instrument is a convention, not a courtesy (D455)
+
+D454 made "commit the instrument" a rule after D453's audit script went missing. D455 is the
+first slice to pay it, and it cost **one lint fix and one comment block** —
+`scripts/mutation/opcoverage.ts`, `bun scripts/mutation/opcoverage.ts`, no arguments, which
+reproduces D454's headline figures EXACTLY at the base commit (74 kinds · 666 producer / 841
+implementation · seat lines **190/470 = 0.404** · decision points **841/1321 = 0.637**).
+That exact reproduction is the point: **a successor can now falsify the number in one
+command instead of rebuilding the predicate**, which is what D454 spent most of a slice on.
+
+Three requirements make it an instrument rather than a script:
+
+- **It states its own predicate in a comment, including WHAT IT CANNOT SEE** (D419). Here:
+  implementations outside `interpreter.ts`; the three `runProgram`-spliced gates; anything
+  reachable only from the RESUME side; producers outside `effects.ts`/`registry.ts`; and
+  that it counts incidences, never whether a row is any good.
+- **It answers the default question with no arguments.** Env knobs are for the variants,
+  not for the headline.
+- ⚠️ **A NEW FILE UNDER `scripts/` IS INSIDE `bun run check` AND OUTSIDE `tsc -b`, AND BOTH
+  HALVES MATTER.** `tsconfig.node.json` includes `vite.config.ts` and nothing else, so the
+  script is not in the app's build graph (`mutants.ts`'s reason: a harness that measures the
+  suite has no business inside it). But `biome.json`'s `files.include` carries `scripts/**`
+  and `bun run lint:coverage` requires every source file to be countable — so the file is
+  held to `noExplicitAny`, `noNonNullAssertion` and `--error-on-warnings` from the moment it
+  lands, untracked or not. D455's first `bun run check` went RED on `lint/style/useTemplate`.
+  **Write it to the repo's lint rules, not to a throwaway's.**
+
+## An instrument that scans a type union must strip COMMENTS first (D455)
+
+Scanning `effects.ts`'s `EffectOp` union for `op: "…"` returns **76** kinds. Two of them do
+not exist: `{ op: "knockOut"; target: … }` at **6248** and `{ op: "takePrizes"; count: number }`
+at **6379** are PROSE inside doc blocks — shapes that were considered and refused — and they
+report with rows on neither seat, which reads exactly like a coverage gap. Stripping block
+and line comments returns the **74** that are declared.
+
+D454's script got 74 by taking only the FIRST `op:` per union member, which is correct here
+by accident and would break on any member whose discriminator is not its first field.
+**When you scan source text for a declaration, say whether comments are in or out** — a doc
+block that DISCUSSES a shape is indistinguishable from one that declares it, to a regex.
+
+## "Predicate artefact" is a claim about ONE op, and it does not distribute (D455)
+
+D454 excluded four ops from its own target set as *"a predicate artefact — `runProgram`
+splices them"*. Three of them are: `coinFlipGate`, `conditionGate` and `recordGate` have
+dead `case` arms marked *"never reach here"*, and their real work is the queue loop.
+
+**`optional` is not**, and grouping it with them hid a real gap. It has a live park arm
+(`{ kind: "confirm" }`), a live apply arm, and its yes/no splice is `continuationOps` —
+invisible to an arm-rooted predicate for a **different reason** (that function is reachable
+from no `case` arm at all), and pinned the whole time by `D316-decline-buys-nothing`.
+
+⚠️ **AN EXCLUSION LIST IS AS DANGEROUS AS AN ENUMERATION AND ROTS THE SAME WAY.** A set of
+things you have decided not to look at is exactly where a real gap survives, because nothing
+downstream re-checks it. **Name the mechanism per member, not per group** — if the sentence
+that justifies the exclusion is not true of every member individually, the group is wrong.
+
+## The two survivor diagnoses need DIFFERENT commands, so run both (D455)
+
+Two `shuffleDeck` rows survived their first probe and they were different faults:
+
+- **Over-narrow `expectKilledBy`** (D453's fourth cause) — `--full` KILLED it in 119s. The
+  repair is a killer set, not a test.
+- **A real suite hole** — `--full` SURVIVED it across 449 files / 9,975 tests. The repair is
+  a test.
+
+⚠️ **`--full` IS THE DISCRIMINATOR AND IT IS THE FIRST THING TO RUN**, before writing either
+repair. Guessing wrong in one direction ships a test nobody needed; guessing wrong in the
+other ships a killer set that hides a hole.
+
+⚠️ **AND WHEN `--full` KILLS IT, HUNT THE KILLER ONE SUITE AT A TIME.** D455 ran the row
+against twelve candidates individually: only **two** kill it, and the ten that do not are the
+finding — **the entire derived-search family drives `shuffleDeck` and none of it checks whose
+deck was shuffled.** A killer set assembled by plausibility would have named four suites,
+been green, and said nothing true.
+
+## A thread that is only observable on the SECOND use (D455)
+
+`shuffleDeck`'s last line threads the advanced `rngState` back onto the state. Dropping it
+leaves the deck genuinely shuffled and **every board assertion in this repo green** — the
+cards move, the SHUFFLE row is filed, the zones balance — while the generator never advances,
+so the next shuffle replays the same permutation and the next coin flip repeats a face. The
+whole suite could not tell the two builds apart, on the op that nearly every search program
+in the engine ENDS with.
+
+**A resource that is CONSUMED and written back is invisible to any assertion about one use.**
+The rung has to compare two states across the consumption, and it owes a control on the same
+axis (D424): D455 asserts the generator MOVED on the yes and STOOD STILL on the no, same
+board, same seed — because *"rngState moved"* alone is satisfied by any action that touches
+the generator for any reason.
+
+⚠️ `D335-shuffle-is-spent-and-thrown-away` had recorded this exact defect on a DIFFERENT
+function since D335. **A row on one function is not coverage of the rule** — grep for the
+other consumers of the same resource the day you write it.
+
+## "Recorded as X" in a doc block, for the SECOND slice running (D453, D455)
+
+D453 found `interpreter.ts`'s `moveCountersChosen` arm claiming *"recorded as an equivalent
+mutant"* with **zero** rows in the corpus for that op — false for 237 decisions. D455 found
+the identical sentence on the `optional` APPLY arm, in the same file, also with zero rows
+intersecting it by character span.
+
+**Two instances in three slices is a pattern, not an accident.** The mechanism: a slice
+writes a claim about `scripts/mutation/mutants.ts` into `packages/engine/src/*.ts`, and
+nothing anywhere reads the two together. ⚠️ **GREP `"recorded as"` / `"as an equivalent
+mutant"` / `"pinned by"` ACROSS `packages/` WHENEVER YOU TOUCH THE CORPUS**, and check each
+hit against the module. It is one command and it has paid twice.
+
+The repair is a DECLARED row, not a deleted claim: `survives: { kind: "equivalent" }` with a
+self-invalidating reason (D427) makes the sentence true *and* makes it go loud the day it
+stops being true.

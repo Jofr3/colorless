@@ -700,6 +700,43 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
     expect(done.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
+  it.each(SEEDS)(
+    "seed %i — 🛑 the SHUFFLE is SPENT: `rngState` advances on the yes and stands still on the no",
+    (seed) => {
+      // 🆕🆕 D455 — A REAL SUITE HOLE, FOUND BY A MUTANT AND CONFIRMED UNDER `--full`.
+      // `shuffleDeck`'s implementation is four lines, the last of which threads the
+      // advanced `rngState` back onto the state. Dropping that thread leaves the deck
+      // genuinely shuffled and EVERY board assertion in this repo green — the cards
+      // move, the SHUFFLE row is filed, the zones balance — while the generator never
+      // advances, so the next shuffle in the match replays the same permutation and
+      // the next coin flip repeats a face it has already produced. The whole suite
+      // (449 files / 9,975 tests at D455's base) could not tell the two builds apart:
+      // `D455-the-shuffle-never-advances-the-rng` SURVIVED a full-suite run.
+      //
+      // ⚠️ THE CONTROL IS THE HALF THAT MAKES THIS MEAN ANYTHING (D424). "rngState
+      // moved" is satisfied by any action that touches the generator for any reason,
+      // so the decline — which splices nothing, files no SHUFFLE, and is driven three
+      // rungs down — must leave it EXACTLY where it was. One rung asserting movement
+      // and one asserting stillness, on the same board and the same seed, is what
+      // ties the movement to the printed *"Shuffle"* rather than to the turn.
+      //
+      // `D335-shuffle-is-spent-and-thrown-away` is this defect on a DIFFERENT
+      // function (`lookAtTopN`'s shuffled-bottom leftovers, pinned by
+      // reconDirective.test.ts). The op that every search program in the engine ends
+      // with had no such rung anywhere.
+      const parked = attack(board(seed, { bench: 1 }));
+      expect(parked.state.phase.kind).toBe("effect:choose");
+
+      const yes = say(parked.state, true);
+      expect(types(yes.events)).toContain("SHUFFLE");
+      expect(yes.state.rngState).not.toBe(parked.state.rngState);
+
+      const no = say(parked.state, false);
+      expect(types(no.events)).not.toContain("SHUFFLE");
+      expect(no.state.rngState).toBe(parked.state.rngState);
+    },
+  );
+
   it.each(SEEDS)("seed %i — TWO hits and never one: the rows are 100 and 120", (seed) => {
     // 🛑 THE ROW COUNT IS THE OBSERVATION A DROPPED-OR-DOUBLED BASE MOVES. D381's
     // reader owns its printed number and emits ONE row; this one emits TWO, and a
