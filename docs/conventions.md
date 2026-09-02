@@ -3224,6 +3224,29 @@ derivation arms**, which is the producer-ONLY shape above.
 **Count a family's rows by SEAT, not by total.** A thin count is a question about
 which half is missing, not about quality.
 
+### Publish the instrument, not only the number (D454)
+
+D453 measured `758 producer-side / 358 implementation-side / zero kinds
+implementation-only` and drew a structural conclusion from it. **Its audit script
+was never committed**, so the numbers could not be re-run — and when D454 rebuilt
+the measurement, `zero` turned out to be an artefact of an asymmetric predicate
+(wide producer regions, implementation regions stopping at the `case` arm). A
+predicate built to match D453's totals reproduces them to ~2% and still returns
+five implementation-only kinds; the call-graph predicate returns six.
+
+**A measurement whose script is not in the tree is a claim, not a measurement.**
+When a slice's finding is a number about the repo, commit the script that
+produced it — or state the query inline in a form the next slice can paste. This
+run has now had one unfalsifiable claim survive four days (D453's tally) and one
+survive 237 decisions (a doc block asserting a mutant row in a file that did not
+contain it).
+
+⚠️ **And a green sweep cannot audit its own corpus.** D453's and D454's sweeps
+were both green and both predictions landed, while the question of whether the
+rows were the *right* rows was settled only by re-derivation. A sweep answers
+*do these rows still discriminate*; it is silent on *is this the set that should
+exist*.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
