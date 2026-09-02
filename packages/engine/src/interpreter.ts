@@ -1664,7 +1664,7 @@ function stepOp(
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
     case "counterEachAll":
-      return { done: counterEachAll(state, op.amount, op.filter, events, op.exceptNamed) };
+      return { done: counterEachAll(state, op, ctx, events) };
     case "damageActive":
       return { done: damageActive(state, op.amount, op.source, ctx, events) };
     case "damageSubject":
@@ -8427,33 +8427,86 @@ function healEachAll(state: GameState, amount: number, events: GameEvent[]): Gam
     refused whole — the guard every placement arm carries — so a malformed row is a
     loud no-op rather than a board's worth of silent ones.
 
-    ONLY RAISES DAMAGE, NEVER KOs: the Checkup's own KO sweep (flow.ts) resolves
-    any Knock Out a placed counter caused, which is `damageActive`'s contract for
-    the same trigger and the reason `runCheckupTriggers`' stable-bench-length
-    precondition still holds — nothing is removed here. Never parks. */
+    ONLY RAISES DAMAGE, NEVER KOs: the sweep that resolves any Knock Out a placed
+    counter caused belongs to the CALLER — the Checkup's for the triggered Ability
+    (`runCheckupTriggers`' stable-bench-length precondition still holds, because
+    nothing is removed here) and, since D450, `finishAttack`'s for the attack.
+    Never parks.
+
+    🆕🆕🆕 **D450 — THE THREE SEAMS BETWEEN AN ABILITY CALLER AND AN ATTACK ONE,
+    ALL THREE OF THEM IN THIS BODY.**
+
+    · **`op.side`** picks the seat list. `"both"` is `SEATS`, byte-for-byte the walk
+      this function has always done; `"opponent"` is `otherSeat(ctx.seat)` alone,
+      which is the ONLY thing corpus lines 414 and 415 needed and did not have.
+      A `switch` on `spreadDamage`'s own rule (D222): a third member stops compiling
+      here rather than falling out of the wrong branch of a negated test.
+
+    · **`op.source`** rides the op instead of being hardcoded `"ability"`, D136's
+      finding 1 for the fourth time on this axis (D138, D139, D140 paid for the
+      first three). `log.ts`'s `COUNTERS_PLACED` switch renders `"ability"` as
+      *"Ability: N damage to X"* — a row naming a mechanism an attack never used.
+      ⚠️ **AND THE `"attack"` ARM'S OWN STATED REASON NARROWS HERE (D433's
+      second-producer rule).** That arm says the row is SYSTEM-voiced because
+      *"`seat` owns the DAMAGED Pokémon, which for an attack is the attacker's
+      OPPONENT"* — no longer universal, because `side: "both"` damages the
+      ATTACKER's own bodies too. The row is still right, and for a WIDER reason
+      than the one written: a system row names no actor at all, so it cannot credit
+      the wrong one whichever seat owns the body.
+
+    · **§11 IS ASKED PER BODY, NOT PER OP**, through `effectRefused`'s D259 `target`
+      parameter — `unshieldedRefs`' judgement reached by a walk instead of by a
+      candidate list. A spread placer that refused WHOLE would let one shielded
+      Fraxure protect an entire board, a rule no printing states; asking per body
+      means a shield on one silences exactly one and files exactly one
+      ATTACK_EFFECT_PREVENTED row. It is asked AFTER the noun, the exemption and the
+      window (D433: narrow, then ask), so a body the sentence never reached files no
+      prevention row. ⚠️ **AND THE ABILITY CALLER IS BYTE-IDENTICAL ACROSS THIS
+      CHANGE**: `effectRefusedOn` returns `false` at `ctx.invokedBy !== "attack"`,
+      and a triggered Ability leaves `invokedBy` ABSENT — so Froslass asks the gate,
+      is never refused, and pushes no event. ⚠️ **AND THE OWN-SIDE HALF OF
+      `side: "both"` IS ANSWERED BY THE GATE RATHER THAN BY THIS FUNCTION**:
+      D430's `seat === ctx.seat` line returns `false`, because every §11 shield in
+      the pool names the ATTACK'S SOURCE and the source it names is the holder's
+      opponent. A Mist Energy on the attacker's own Bench does not stop the
+      attacker's own sentence, and that is measured at the gate, not assumed here.
+
+    ⚠️ **THE LOCAL IS `board` AND NOT `side`** — the op now HAS a `side`, and two
+    different things under one name three lines apart is how a reader mis-attributes
+    a seat (D448's naming rule, arriving as a rename rather than as a collision). */
 function counterEachAll(
   state: GameState,
-  amount: number,
-  filter: CardFilter,
+  op: Extract<EffectOp, { op: "counterEachAll" }>,
+  ctx: EffectContext,
   events: GameEvent[],
-  exceptNamed?: string,
 ): GameState {
+  const { amount, filter, exceptNamed } = op;
   if (amount <= 0) return state;
+  const walked = ((): readonly Seat[] => {
+    switch (op.side) {
+      case "both":
+        return SEATS;
+      case "opponent":
+        return [otherSeat(ctx.seat)];
+    }
+  })();
   let next = state;
-  for (const seat of SEATS) {
-    const side = next.players[seat];
+  for (const seat of walked) {
+    const board = next.players[seat];
     const counterOne = (pokemon: InPlayPokemon): InPlayPokemon => {
       const card = topCardOf(next, pokemon);
       if (!matchesFilter(card, filter)) return pokemon;
       if (exceptNamed !== undefined && card?.name === exceptNamed) return pokemon;
+      if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;
       const uid = topUid(pokemon);
       if (uid === undefined) return pokemon;
-      events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: "ability" });
+      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;
+      events.push({ type: "COUNTERS_PLACED", seat, uid, amount, source: op.source });
       return { ...pokemon, damage: pokemon.damage + amount };
     };
-    const active = side.active === null ? null : counterOne(side.active);
-    const bench = side.bench.map(counterOne);
-    next = withSide(next, seat, { ...side, active, bench });
+    const active = board.active === null ? null : counterOne(board.active);
+    const bench = board.bench.map(counterOne);
+    next = withSide(next, seat, { ...board, active, bench });
   }
   return next;
 }

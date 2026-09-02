@@ -2987,3 +2987,90 @@ delta touches, list the sites, patch them in one pass, then run.
 the source text — so **wrapping "978 cards / 6 sets" across two comment lines makes it an
 offender**. It fired twice on the author in one slice, which is the guard doing its job; know
 it before it costs a `check` round, and keep the phrase on one line.
+
+## A "permanent boundary of the vocabulary" is a claim about ONE CARRIER (D450)
+
+D450's brief refused a printed sentence because *"`matchesFilter` takes a catalog card,
+never an `InPlayPokemon` — this is a permanent boundary of the filter vocabulary rather
+than a missing member."* **The premise was true and measured** (the function's own
+`basicPokemon` arm states it as the reason the *"HP or less REMAINING"* printings are
+unreachable) **and the conclusion was false**, because a board fact does not have to
+travel through `CardFilter` at all. `damageChosen.damagedOnly` (D437) had been reading
+the sentence's exact eight printed words — *"that has any damage counters on it"* — off
+an `InPlayPokemon` for eleven decisions. The rider was reused verbatim on the other op
+and the sentence was built.
+
+🛑 **THE PROCEDURE IS TO GREP THE PRINTED PHRASE, NOT THE VOCABULARY THAT WOULD EXPRESS
+IT.** "Which union member would say this?" finds nothing when the shipped answer is a
+rider on an op. `grep -rn "any damage counters" packages/engine/src` costs seconds and
+names the surface that already reads the fact.
+
+**A boundary is a property of a FUNCTION; a refusal is a claim about the ENGINE.** The
+two are only the same when that function is the engine's only door to the fact — which
+is exactly the thing to check, and exactly the thing a brief that names the function
+will not have checked.
+
+## A doc block that refuses a SHAPE has refused that shape, not the axis (D450)
+
+`counterEachAll`'s declaration has said since D340 that *"modelling this as a seat-scoped
+op with a **'both' boolean** would put the printed subject of the sentence into a
+modifier"*. That is correct, and it does not reach a two-member **ENUM** whose values ARE
+the printed subjects (`"both"` is *"(both yours and your opponent's)"*, `"opponent"` is
+*"each of your opponent's Pokémon"*) — the shape `disableAbilities.side` and
+`handRefresh.who` already ship. **Read the refusal's NOUN before inheriting it.**
+
+⚠️ And it had a POPULATION as well as a noun (D449): D340 measured on the one sentence in
+reach, and the `legal_standard = 1` column prints two more that are one-seat. Both halves
+had to be checked, and only one of them is grep-able.
+
+## A mutant row can be INERT, and the harness reports it as a survivor (D450)
+
+⚠️ The runner's own message on an undeclared survivor is *"either the suite has a real gap,
+or the decision row's tally was wrong. Both are findings."* **There is a third.** D450
+authored a row whose `replace` prepended a comment to the line ABOVE the field it meant to
+delete: the harness compiled byte-equivalent behaviour, every suite passed, and the verdict
+was `SURVIVED(undeclared)` — which reads as a suite hole and is not one.
+
+**Before believing a GAP, diff `find` against `replace` and name the SEMANTIC token that
+moved.** If the only difference is inside a comment or a string that nothing reads, the row
+never mutated anything. `precheck` cannot see this either: the `find` occurs exactly once
+and the row is perfectly runnable — it just does nothing.
+
+## The consumer's stated REASON can narrow while its behaviour stays right (D450)
+
+D425 says: when you add a producer to a shipped event, grep every consumer for facts it
+DERIVES rather than reads. **The twin is: grep every consumer for the REASONS it
+asserts.** `log.ts`'s `COUNTERS_PLACED` `"attack"` arm justifies its system voice with
+*"`seat` owns the DAMAGED Pokémon, which for an attack is the attacker's OPPONENT"*. A
+both-seats placement makes that sentence false and leaves the ROW correct — for a wider
+reason than the one written (a system row names no actor, so it cannot credit the wrong
+one). Nothing goes red; a successor reads a justification that its own board contradicts,
+and "fixes" the row.
+
+**Correct the reason at the site in the same commit that falsifies it**, and say which
+half of it survived.
+
+## `MATCH_RECORD_VERSION` for a NON-PARKING op: the question is REACHABILITY (D450)
+
+An `EffectOp` reaches storage by exactly one route — `EffectContinuation` carries
+`{pendingOp, rest, ctx, record}` and lives at `GameState.phase.cont`, which
+`MatchRecord.state` persists. **`rest` is the second door and it is the one that gets
+forgotten**: a program that parks writes every op AFTER the parking one into `rest`, so an
+op that never parks is still persisted if any shipped program places it behind one.
+
+So "does this op park?" is not the question. The question is **"can any producer put this
+op into a written continuation?"**, and it is answered off the PRODUCERS — walk
+`registryCardIds()`' four program-bearing keys plus the deriver's arms — not off the op.
+D450 added TWO REQUIRED fields to a shipped op for free on exactly this argument, and the
+argument is a measurement rather than a shape claim.
+
+## A bare integer operand in an arithmetic census expression, for the third slice (D450)
+
+D365 wrote it and D423 re-earned it; D450 paid it again. `censusAtHead.test.ts` carries the
+unbuilt-printings figure at THREE sites, and one of them is a bare `250` inside
+`expect(250 - REGISTRY_ATTACKS.length - SPLIT_ATTACK_UNITS - COMPOUND_ATTACK_UNITS)`. A
+line-targeted grep for `toBe(250)` steps the other two and leaves this one, and the failure
+that follows quotes a number that looks like an unrelated defect.
+
+**The comment at that site already said so.** Reading it was not enough; running the suite
+was. **Step the census, then run — and expect the run to find a site the grep could not.**

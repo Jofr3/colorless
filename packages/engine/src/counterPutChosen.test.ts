@@ -156,10 +156,18 @@ describe("§1 — the two printed sentences, and what the placement family still
     expect(family).toHaveLength(19);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(38);
     const unbuilt = family.filter(([, t]) => !resolvedByAnyReader(t)).map(([, t]) => t);
-    expect(unbuilt).toHaveLength(10);
+    // 🆕🆕🆕 **D450 — TEN BECAME SEVEN, AND THE THREE THAT LEFT ARE (b), (c) AND (d)
+    // BELOW.** All three were refused HERE on the OP rather than on the vocabulary, and
+    // D450 spent every reason this section gave: the SEAT became `counterEachAll.side`,
+    // the *"reads the BODY where the filter reads the CARD"* window became D437's
+    // `damagedOnly` rider (a board fact never needed to travel through `CardFilter` at
+    // all), and the provenance became `counterEachAll.source` beside a per-body
+    // `effectRefused` call. **Their bullets are kept and annotated rather than deleted**,
+    // because a refusal that was SPENT is the most useful kind to be able to read back.
+    expect(unbuilt).toHaveLength(7);
     expect(
       family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(15);
+    ).toBe(12);
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -187,12 +195,26 @@ describe("§1 — the two printed sentences, and what the placement family still
     //     Pokémon."* has no pick at all, so the op is `counterEachAll` and not this
     //     one — and `counterEachAll` walks BOTH SEATS with no seat field to narrow it.
     //     Refused on the SIDE, which is a field the op does not have.
-    expect(unbuilt).toContain("Put 2 damage counters on each of your opponent's Pokémon.");
+    // 🆕🆕🆕 SPENT AT D450 — the seat became `counterEachAll.side: "both" | "opponent"`,
+    // a two-member enum whose values are the printed subjects, and this sentence is arm
+    // 23e. The claim below is the INEQUALITY it was really making (D449's own rule
+    // applied to this file's own rung): the fold is not this slice's PICK.
+    expect(unbuilt).not.toContain("Put 2 damage counters on each of your opponent's Pokémon.");
+    expect(
+      deriveAttackEffect("Put 2 damage counters on each of your opponent's Pokémon."),
+    ).not.toEqual(deriveAttackEffect(BARE));
     // (c) THE SAME FOLD BEHIND A PER-TARGET FILTER — line 414, 1 printing. Everything in
     //     (b) plus a window that reads the BODY (*"that has any damage counters on it"*)
     //     where `counterEachAll.filter` is a `CardFilter` and reads the CARD. TWO
     //     missing things, which is a different refusal from (b)'s one.
-    expect(unbuilt).toContain(
+    // 🆕🆕🆕 SPENT AT D450, AND THE SECOND HALF OF THIS BULLET WAS THE WRONG BOUNDARY.
+    // *"`counterEachAll.filter` is a `CardFilter` and reads the CARD"* is TRUE and is
+    // not a reason to refuse the sentence: `damageChosen.damagedOnly` (D437) has read
+    // these exact eight printed words off an `InPlayPokemon` since it shipped, so the
+    // board fact never had to travel through the filter union. Arm 23f reuses the rider
+    // verbatim. **TWO missing things really were two; one of them was in the wrong
+    // place.**
+    expect(unbuilt).not.toContain(
       "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
     );
     // (d) THE BOTH-SEATS ABILITY FOLD — line 418, 1 printing. 🛑 **THIS ONE IS EXPRESSIBLE
@@ -208,7 +230,14 @@ describe("§1 — the two printed sentences, and what the placement family still
     //     (iii) it reaches the ATTACKER'S OWN BOARD, so a placement can Knock Out your
     //     own body and owe the opponent a Prize (D425's own-side seam). Refused on the
     //     OP'S PROVENANCE, not on the vocabulary.
-    expect(unbuilt).toContain(
+    // 🆕🆕🆕 SPENT AT D450, ALL THREE SEAMS AT ONCE — and the count of them was RIGHT.
+    // (i) `source` rides the op; (ii) `effectRefused` is called PER BODY, after the
+    // narrowing; (iii) `side` picks the seat list. A fourth difference the bullet did
+    // not name was found by reading the CONSUMER rather than the op: `log.ts`'s
+    // `"attack"` arm justified its system voice with *"`seat` is the attacker's
+    // OPPONENT"*, which `side: "both"` makes untrue. The row is still right; the reason
+    // is wider. See `counterFold.test.ts`.
+    expect(unbuilt).not.toContain(
       "Put 6 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
     );
     // (e) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**, the biggest
@@ -482,7 +511,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.351.0");
+    expect(engineVersion).toBe("0.352.0");
   });
 });
 

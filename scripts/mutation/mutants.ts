@@ -5210,7 +5210,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5716,7 +5716,7 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5727,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.351.0";',
+    find: 'export const engineVersion = "0.352.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -12183,13 +12183,16 @@ export const MUTANTS: Mutant[] = [
     ],
   },
   {
+    // ⚠️ RE-POINTED AT D450 — the registry row gained the two REQUIRED keys `side`
+    // and `source`, so the old whole-`program` anchor no longer matched. SHORTENED
+    // onto the three lines the row is actually about (D446) rather than re-quoting
+    // the block: the claim, the mutation and the killer are all unchanged.
     id: "D340-exemption-deleted",
     decision: "D340",
     what: "\ud83d\uded1 THE `exceptNamed` RIDER IS DELETED \u2014 THE MUTANT OF THIS SLICE. Froslass HAS an Ability, so it satisfies `abilityPokemon` and is removed from the sweep ONLY by this rider; without it the aura counters its own source and every other Froslass on the table. It compiles (the field is optional), the op still runs, every body that SHOULD take a counter still does, and the only observable difference is on the cards the sentence names \u2014 which is exactly why the suite drives a self-exempting source, a second copy and a cross-table copy rather than one board",
     file: "packages/engine/src/registry.ts",
-    find: '      program: [\n        {\n          op: "counterEachAll",\n          amount: 10,\n          filter: { kind: "abilityPokemon" },\n          exceptNamed: "Froslass",\n        },\n      ],',
-    replace:
-      '      program: [\n        {\n          op: "counterEachAll",\n          amount: 10,\n          filter: { kind: "abilityPokemon" },\n        },\n      ],',
+    find: '          side: "both",\n          source: "ability",\n          exceptNamed: "Froslass",\n        },',
+    replace: '          side: "both",\n          source: "ability",\n        },',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -12249,13 +12252,17 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
+    // ⚠️ RE-POINTED AT D450 — the bare `for (const seat of SEATS)` became a `switch`
+    // on the new `side` field, so the collapse now lives in the `"both"` arm. The
+    // mutation is SHARPER than the one it replaces: it returns `[ctx.seat]`, which
+    // is the defect this row is NAMED for, where the old bytes returned `[SEATS[0]]`
+    // and only coincided with it on p1's boards.
     id: "D340-walk-collapses-to-the-controllers-seat",
     decision: "D340",
     what: "\ud83d\uded1 THE SEAT-BLIND WALK BECOMES A ONE-SEAT WALK \u2014 `healEach` where the printing says `healEachAll`. The parenthetical *\"(both yours and your opponent's)\"* is the whole reason this op exists beside `damageActive`; the mutant leaves the controller's own board exactly right and silently spares the opponent's, which is the half a single-seat fixture could never see",
     file: "packages/engine/src/interpreter.ts",
-    find: "  for (const seat of SEATS) {\n    const side = next.players[seat];\n    const counterOne =",
-    replace:
-      "  for (const seat of [SEATS[0]] as const) {\n    const side = next.players[seat];\n    const counterOne =",
+    find: '      case "both":\n        return SEATS;\n      case "opponent":',
+    replace: '      case "both":\n        return [ctx.seat];\n      case "opponent":',
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -12278,23 +12285,26 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
+    // ⚠️ RE-POINTED AT D450 — the local `side` was renamed `board` (the op now HAS a
+    // `side`), which moved two bytes of this anchor's tail. Same line, same claim.
     id: "D340-counters-assign-instead-of-accumulate",
     decision: "D340",
     what: "`damage: amount` instead of `damage: pokemon.damage + amount`, so each Checkup RESETS a body to one counter rather than adding one. Green on the first Checkup of every board and wrong on the second, and it also silently HEALS anything already damaged past 10 \u2014 a placement op that removes damage is the quiet-wrong-answer direction",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return { ...pokemon, damage: pokemon.damage + amount };\n    };\n    const active = side.active === null ? null : counterOne(side.active);",
+    find: "      return { ...pokemon, damage: pokemon.damage + amount };\n    };\n    const active = board.active === null ? null : counterOne(board.active);",
     replace:
-      "      return { ...pokemon, damage: amount };\n    };\n    const active = side.active === null ? null : counterOne(side.active);",
+      "      return { ...pokemon, damage: amount };\n    };\n    const active = board.active === null ? null : counterOne(board.active);",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
+    // ⚠️ RE-POINTED AT D450 for the `side` → `board` rename above. Same two lines.
     id: "D340-bench-is-skipped-by-the-walk",
     decision: "D340",
     what: "only each seat's ACTIVE is swept and the Bench is left alone. The sentence says \"each Pokemon\" with no spot word, and the aura's own SOURCE is usually benched; the mutant keeps every Active-spot assertion green and silently spares every benched body on both boards",
     file: "packages/engine/src/interpreter.ts",
-    find: "    const bench = side.bench.map(counterOne);\n    next = withSide(next, seat, { ...side, active, bench });",
+    find: "    const bench = board.bench.map(counterOne);\n    next = withSide(next, seat, { ...board, active, bench });",
     replace:
-      "    const bench = side.bench;\n    next = withSide(next, seat, { ...side, active, bench });",
+      "    const bench = board.bench;\n    next = withSide(next, seat, { ...board, active, bench });",
     expectKilledBy: ["packages/engine/src/freezingShroud.test.ts"],
   },
   {
@@ -21585,5 +21595,113 @@ export const MUTANTS: Mutant[] = [
     find: "    if (chosenBodies >= 1 && chosenCounters >= 1) {",
     replace: "    if (chosenCounters >= 1) {",
     expectKilledBy: ["packages/engine/src/counterPutChosen.test.ts"],
+  },
+  {
+    id: "D450-opponent-scope-walks-both-seats",
+    decision: "D450",
+    what: "🛑 **THE ONE-SEAT SCOPE COLLAPSES BACK INTO THE SEAT-BLIND WALK** — `side: \"opponent\"` returns `SEATS`, so arms 23e and 23f place counters on the ATTACKER'S OWN BOARD as well as the defender's. This is the whole of what D449 refused these two sentences for, and it is invisible on any board fielding bodies on one side only: every assertion about the opponent's damage stays green and the attacker quietly poisons itself. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      case \"opponent\":\n        return [otherSeat(ctx.seat)];",
+    replace: "      case \"opponent\":\n        return SEATS;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-source-hardcoded-back-to-ability",
+    decision: "D450",
+    what: "🛑 **THE PROVENANCE REVERTS TO THE HARDCODE THIS SLICE REMOVED** — D136's finding 1, re-injected at the exact line that carried it for a hundred and ten decisions. `log.ts` then renders an ATTACK's placement as *\"Ability: N damage to X\"*, a row naming a mechanism the board never used, and every damage number on every board is unchanged. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: op.source });",
+    replace: "      events.push({ type: \"COUNTERS_PLACED\", seat, uid, amount, source: \"ability\" });",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-shield-never-consulted",
+    decision: "D450",
+    what: "🛑 **THE §11 GATE IS NOT CONSULTED AT ALL** — the state this op was in before D450, and correct then because every producer was a triggered Ability. With an attack producer it means a printed *\"Prevent all effects of attacks … done to this Pokémon\"* does nothing against a fold, and no ATTACK_EFFECT_PREVENTED row is filed to say so. Killed twice over: on the board and in `preventBlock`'s classified sweep",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts", "packages/engine/src/preventBlock.test.ts"],
+  },
+  {
+    id: "D450-shield-asked-of-the-active-only",
+    decision: "D450",
+    what: "🛑 **THE PER-BODY TARGET IS DROPPED AND THE GATE FALLS BACK TO ITS DEFAULT**, which is `state.players[seat].active` (D259's optional parameter). A fold then asks *\"is the ACTIVE shielded\"* once per body: a shielded Active protects the whole board, and a shielded BENCHED body is countered in full. It compiles, it files plausible-looking rows, and it is the exact defect D259 named for a candidate set. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;",
+    replace: "      if (effectRefused(next, seat, ctx, events)) return pokemon;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-shield-asked-before-the-window",
+    decision: "D450",
+    what: "⚠️ **THE GATE MOVES ABOVE THE PRINTED WINDOW**, so a body the sentence never names files a prevention row anyway. Every BOARD is identical under both orderings — the only casualty is a false log row — which is precisely why D433 had to pay for this once already and why it is written as a row rather than as a comment",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;\n      const uid = topUid(pokemon);\n      if (uid === undefined) return pokemon;\n      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;",
+    replace: "      const uid = topUid(pokemon);\n      if (uid === undefined) return pokemon;\n      if (effectRefused(next, seat, ctx, events, pokemon)) return pokemon;\n      if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-window-narrowing-dropped",
+    decision: "D450",
+    what: "🛑 **THE PRINTED PER-BODY WINDOW IS IGNORED** — arm 23f then counters every one of the opponent's Pokémon where the card says *\"that has any damage counters on it\"*. The op still carries the rider, so a reader inspecting the literal sees a correct program; only the WALK is wrong. **SILENT IN EVERY CENSUS**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-window-threshold-is-a-full-counter",
+    decision: "D450",
+    what: "⚠️ **`damage > 0` BECOMES `damage >= 10`** — D437's spelling decision, re-asked one op over. A body carrying 5 damage from a halved hit HAS damage counters on it and is a candidate; this build skips it. Unreachable off any printing and constructible as a fixture, which is exactly the class of claim a comment gets wrong and a board settles",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.damagedOnly === true && !hasAnyDamageCounters(pokemon)) return pokemon;",
+    replace: "      if (op.damagedOnly === true && pokemon.damage < 10) return pokemon;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-bare-fold-anchor-drops-the-dollar",
+    decision: "D450",
+    what: "🛑🛑 **THE `$` COMES OFF THE BARE OPPONENT FOLD, AND THE PREFIX PAIR COLLAPSES.** `COUNTER_FOLD_ON_OPPONENT_ALL`'s whole string is `COUNTER_FOLD_ON_OPPONENT_DAMAGED`'s prefix, and arm 23e runs FIRST — so the windowed sentence is swallowed by the bare arm and silently loses its printed *\"that has any damage counters on it\"*, countering the opponent's whole board. This is the sharpest single-character defect in the slice",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on each of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on each of your opponent['’]s Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-ability-fold-parenthetical-optional",
+    decision: "D450",
+    what: "⚠️ **THE PRINTED SUBJECT BECOMES OPTIONAL** — *\"(both yours and your opponent's)\"* is what the `side` field HOLDS, so a pattern that tolerates its absence reads a seat scope off nothing and claims a sentence the catalog does not print. D440's rule at an anchor rather than at a vocabulary: ask what the looser pattern CLAIMS",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Put (\\d+) damage counters on each Pokémon that has an Ability \\(both yours and your opponent['’]s\\)\\.$/;",
+    replace: "  /^Put (\\d+) damage counters on each Pokémon that has an Ability(?: \\(both yours and your opponent['’]s\\))?\\.$/;",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-windowed-arm-drops-the-rider",
+    decision: "D450",
+    what: "🛑 **ARM 23f STOPS EMITTING `damagedOnly`** — ⚠️ **AND THE FIRST DRAFT OF THIS ROW WAS AN INERT MUTATION**: its `replace` prepended a comment to the line ABOVE the field instead of deleting the field, so the harness compiled byte-equivalent code and reported SURVIVED(undeclared). A GAP whose cause is neither a suite hole nor a wrong tally but a row that never mutated anything — re-anchored onto the FIELD. , so corpus line 414 derives to line 415's program exactly. The two anchors stay disjoint and the two SENTENCES stop being: the windowed printing counters the opponent's whole board. Killed by the inequality rung the anchors' prefix hazard exists for",
+    file: "packages/engine/src/effects.ts",
+    find: "          damagedOnly: true,\n        },\n      ];\n    }\n  }\n\n  // 24. \"During your next turn, this Pokémon can't attack.\" — D143's SELF-LOCK,",
+    replace: "        },\n      ];\n    }\n  }\n\n  // 24. \"During your next turn, this Pokémon can't attack.\" — D143's SELF-LOCK,",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-ability-arm-filters-any-pokemon",
+    decision: "D450",
+    what: "🛑 **THE PRINTED NOUN IS DROPPED** — *\"each Pokémon **that has an Ability**\"* becomes every Pokémon, on both boards. The parenthetical still scopes the seats so every seat assertion stays green, and the fold hits three or four extra bodies. The negative witnesses (`fix-bigbody` on both sides, and the attacker itself) are what make this killable at all — a board where every body carried an Ability would be identical under both builds (D448)",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter: { kind: \"abilityPokemon\" },\n          // The printed \"(both yours and your opponent's)\", said as the enum value",
+    replace: "          filter: { kind: \"anyPokemon\" },\n          // The printed \"(both yours and your opponent's)\", said as the enum value",
+    expectKilledBy: ["packages/engine/src/counterFold.test.ts"],
+  },
+  {
+    id: "D450-registry-row-claims-the-attack-source",
+    decision: "D450",
+    what: "⚠️ **FROSLASS'S TRIGGERED ABILITY FILES AN ATTACK'S PROVENANCE** — the mirror of the hardcode row above, and the reason `source` is REQUIRED rather than defaulted: with two producers the field is the only thing keeping the two log labels apart, and the Checkup row would print *\"Put:\"* for something the card spells as an Ability. Killed in two files, because both the registry literal and the derived one are pinned",
+    file: "packages/engine/src/registry.ts",
+    find: "          side: \"both\",\n          source: \"ability\",",
+    replace: "          side: \"both\",\n          source: \"attack\",",
+    expectKilledBy: ["packages/engine/src/freezingShroud.test.ts", "packages/engine/src/counterFold.test.ts"],
   },
 ];

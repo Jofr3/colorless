@@ -152,7 +152,12 @@ const REAL_NEAR_MISSES = [
   // already reads** — sv10.5w-040/-123 "Extended Damagriiigus" is the mapped
   // chosen-destination MOVE (D216). Same card NAME, different printing, different
   // family, and naming both here is the point: the near miss is one printing away.
-  "Put 6 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
+  // ⚠️ RE-POINTED AT D450 — this slot held the both-seats Ability fold (corpus line 418), which D450 MAPPED (arms 23d/23e/23f
+  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
+  // note above). The replacement is the HP-TARGET row at 50, **2 legal printings** and still unread: a PUT rather than a MOVE (this anchor's verb difference, which is what the slot is for) whose amount is read off the TARGET rather than printed. The sentence it replaced is not gone from this
+  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
+  // which is D418's second half and strictly stronger than the `toBeNull` it had.
+  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
 ] as const;
 

@@ -142,6 +142,10 @@ function putOp(hp: number): EffectOp {
     STANDING NOTE: when a later slice maps one of these, RE-POINT the entry at
     another still-unmapped clause — never delete it. The claim is that an unread
     sentence stays LOUD, and that claim needs a live witness to be about. */
+/** 🆕🆕🆕 D450 — the row that used to sit in `NEAR_MISSES` and is now MAPPED (arm 23f).
+    Kept as a named constant so the claim about it reads beside the list it left. */
+const WINDOWED_FOLD =
+  "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.";
 const NEAR_MISSES = [
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   // ⚠️ RE-POINTED AT D143. This slot held Ninetales sv03-029/-199's "Nine-Tailed
@@ -162,7 +166,12 @@ const NEAR_MISSES = [
   // rather than printed. Neither is a number this anchor could capture.
   "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
-  "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+  // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
+  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
+  // note above). The replacement is the CONFUSION SUBSTITUTION, 1 legal printing and still unread: it prints this anchor's verb and a count, and is refused on the VERB — the counters RAISE the Checkup's per-condition amount rather than being placed at all. The sentence it replaced is not gone from this
+  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
+  // which is D418's second half and strictly stronger than the `toBeNull` it had.
+  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
   "You must discard a Basic {G} Energy card from your hand in order to use this Ability. Once during your turn, you may put 3 damage counters on 1 of your opponent's Benched Pokémon.",
   "You must discard a Water Energy card from your hand in order to use this Ability. Once during your turn, you may put 2 damage counters on 1 of your opponent's Benched Pokémon.",
@@ -366,6 +375,18 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     // Vespiquen ex's is the nearest by ZONE — same Bench, same verb, a per-target
     // filter and "each of" instead of "1 of".
     expect(deriveAttackEffect(NEAR_MISSES[0])).toBeNull();
+
+    // 🆕🆕🆕 **D450 — THE ROW THAT LEFT THIS LIST, AND THE CLAIM IT WAS REALLY MAKING.**
+    // *"Put 2 damage counters on each of your opponent's Pokémon that has any damage
+    // counters on it."* (corpus line 414) was a `toBeNull` here until D450 built it as
+    // arm 23f. A `toBeNull` on a sentence the catalog PRINTS is a liability rather than
+    // a guard (D449), so the slot was re-pointed above and the claim moved here as an
+    // INEQUALITY of derived programs — which still goes RED on the defect this rung was
+    // about (an anchor loose enough to swallow the "each of" fold) and cannot go green
+    // by accident when a sibling arm lands.
+    expect(deriveAttackEffect(WINDOWED_FOLD)).not.toEqual(deriveAttackEffect(CLAUSE));
+    expect(deriveAttackEffect(WINDOWED_FOLD)?.[0]?.op).toBe("counterEachAll");
+    expect(deriveAttackEffect(CLAUSE)?.[0]?.op).toBe("damageChosen");
   });
 
   it("stays disjoint from the SIBLING anchor in BOTH directions", () => {
@@ -537,7 +558,11 @@ describe("⚠️ the guard, ASSERTED rather than relied on — no derived op say
     // and an UNCLASSIFIED one fails here. That keeps the totality (a new
     // provenance-carrying op cannot slip past by not being on a list) while making
     // the assertion true of what it is actually about.
-    const PROVENANCE_SOURCE = new Set(["damageActive", "damageChosen"]);
+    // 🆕🆕🆕 D450 — `counterEachAll` is the THIRD op on the provenance side, and it
+    // arrives here for the same reason the other two did: its `source` was a
+    // HARDCODED `"ability"` in the interpreter until an attack reached it. The row
+    // below is what makes this guard bite on the three fold arms.
+    const PROVENANCE_SOURCE = new Set(["damageActive", "damageChosen", "counterEachAll"]);
     const ZONE_SOURCE = new Set(["attachEnergyFrom"]);
     for (const row of sourced) {
       expect(

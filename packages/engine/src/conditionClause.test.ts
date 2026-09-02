@@ -428,11 +428,20 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
       "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.";
     expect(deriveAttackDamageBonus(yveltal)).toBeNull();
     expect(deriveAttackDamageBonus(vespiquen)).toBeNull();
-    // Checked, and reported as found: NEITHER derives to a program on the op path
-    // today either. The `Put N damage counters on EACH …` spread with a per-target
-    // filter is an unbuilt shape, so both cards stay wholly on the loud skipped
-    // path — this is not a claim that they are simulated elsewhere.
-    expect(deriveAttackEffect(yveltal)).toBeNull();
+    // 🆕🆕🆕 **D450 CORRECTED THE PARAGRAPH THAT USED TO SIT HERE, AND THE CORRECTION IS
+    // THE POINT.** It read: *"NEITHER derives to a program on the op path today either.
+    // The `Put N damage counters on EACH …` spread with a per-target filter is an
+    // unbuilt shape, so both cards stay wholly on the loud skipped path."* That was
+    // TRUE when written and is now half false: `deriveAttackEffect` claims the first of
+    // the two through arm 23f (`counterEachAll` with `side: "opponent"` and D437's
+    // `damagedOnly` rider). The SECOND — the Bench-scoped spelling — is still unread and
+    // carries **0 Standard-legal printings**, so it is refused by the anchor and by the
+    // population both. ⚠️ **THIS RUNG'S OWN CLAIM IS UNTOUCHED BY EITHER FACT**: it is
+    // about `deriveAttackDamageBonus`, and a sentence that reaches a DIFFERENT reader
+    // has not reached this one. Stated as an inequality of READERS rather than deleted,
+    // which is what keeps the disjointness assertion doing its job.
+    expect(deriveAttackDamageBonus(yveltal)).toBeNull();
+    expect(deriveAttackEffect(yveltal)?.[0]?.op).toBe("counterEachAll");
     expect(deriveAttackEffect(vespiquen)).toBeNull();
   });
 

@@ -339,6 +339,13 @@ describe("D340 §1 — the registry row, read off the LIVE registry", () => {
         op: "counterEachAll",
         amount: 10,
         filter: { kind: "abilityPokemon" },
+        // 🆕🆕🆕 D450 — TWO REQUIRED FIELDS ARRIVED WITH THE OP'S FIRST ATTACK PRODUCER,
+        // and this row's values are the ones that were HARDCODED in the interpreter
+        // until then: the printed parenthetical is `side: "both"`, and the provenance
+        // the COUNTERS_PLACED row prints is `source: "ability"` — true of this trigger
+        // and false of every one of `deriveAttackEffect`'s three fold arms.
+        side: "both",
+        source: "ability",
         exceptNamed: "Froslass",
       },
     ]);

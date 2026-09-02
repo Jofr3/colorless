@@ -12091,11 +12091,17 @@ import type { GameState, Seat } from "./types";
         Shroud", **3 legal of 3**, 192-char `abilities_json`) — *"During Pokémon
         Checkup, put 1 damage counter on each Pokémon that has an Ability (both
         yours and your opponent's), except any Froslass."*
-      • `counterEachAll{amount, filter, exceptNamed?}` — `healEachAll`'s COUNTER
-        TWIN, and the printed parenthetical is the argument for the seat-blind
-        `SEATS` walk rather than a `ctx.seat` one: Picnic Basket prints *"each
-        Pokémon (both yours and your opponent's)"* and this card prints the same
-        six words.
+      • `counterEachAll{amount, filter, side, source, exceptNamed?, damagedOnly?}` —
+        `healEachAll`'s COUNTER TWIN, and the printed parenthetical is the argument
+        for the seat scope: Picnic Basket prints *"each Pokémon (both yours and your
+        opponent's)"* and this card prints the same six words.
+        🆕🆕🆕 **D450 — THE WALK IS NO LONGER UNCONDITIONALLY SEAT-BLIND, AND THE
+        FIELD HOLDS THE PRINTED SUBJECT RATHER THAN A MODIFIER.** `side: "both"` is
+        this row's parenthetical; `side: "opponent"` is *"each of your opponent's
+        Pokémon"* (corpus lines 415 and 414), which the op could not say until this
+        slice. `source` stopped being a hardcoded `"ability"` in the same edit — the
+        op's first ATTACK producer would otherwise have filed D136's finding 1 for
+        the fourth time — and `damagedOnly` is D437's rider reused verbatim.
       • `filter: abilityPokemon` reuses D285's existing `CardFilter` member whole;
         `exceptNamed` reuses **D273's rider spelling verbatim**. The only NEW thing
         is the op.
@@ -18706,10 +18712,20 @@ import type { GameState, Seat } from "./types";
     printings, every hit read) and the looser `/any damage counters/i` (13 / 17, the
     other 8 being `If …` board-condition gates, 7 of them built). This slice claims ONE
     of the five. The other four each need a different CONSEQUENT, and none of them
-    needs another predicate — `hasAnyDamageCounters` is now there for three of the four:
+    needs another predicate — `hasAnyDamageCounters` is now there for three of the four.
+    🆕🆕🆕 **D450 TOOK THE FIRST OF THE THREE AND THE FAMILY IS NOW 2 BUILT / 3 UNREAD**
+    (`filteredBenchSnipe.test.ts` §1 asserts the split on the population). **The predicate
+    really was the reusable half and the consequent really was the cost**, which is the
+    claim this paragraph made and could not check:
       • *"Put 2 damage counters on each of your opponent's Pokémon that has…"* (1) —
-        `counterEachAll` walks BOTH seats and filters by `CardFilter`, which never sees
-        the board (D307), so it needs a seat scope AND a board rider, or a new op.
+        🆕🆕🆕 **SPENT AT D450, AND THIS BULLET WAS RIGHT ABOUT `matchesFilter` AND WRONG
+        ABOUT THE ENGINE.** `counterEachAll` gained `side: "both" | "opponent"` (the seat
+        scope this bullet priced) and — instead of the "board rider" it priced as new —
+        **`damagedOnly`, D437's own rider one op over, reused verbatim on the identical
+        eight printed words**. A board fact never had to travel through `CardFilter` at
+        all: the filter union's boundary is real (`matchesFilter` is handed a `Card` and
+        never an `InPlayPokemon`) and it is not the engine's only door to the fact.
+        **Arm 23f, 1 printing, NO new op and no new `CardFilter` member.**
       • *"…also does 40 damage to each Benched Pokémon that has… (both yours and your
         opponent's)"* (1) — `spreadDamage.target` is one side per op; a both-benches
         member (or two ops) plus the rider.
@@ -19089,7 +19105,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.351.0";
+export const engineVersion = "0.352.0";
 
 export type {
   ApplyResult,

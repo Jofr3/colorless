@@ -868,6 +868,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     applyStatus: "blocked", // §12 condition on the defender (the "self" arm is inert)
     preventRetreat: "blocked", // the §11 rider
     damageActive: "blocked", // a PLACED counter — an effect, not damage
+    // 🆕🆕🆕 D450 — the FOLD, and it is `blocked` for `damageActive`'s reason with
+    // one extra edge: it reaches every body it names, so the block refuses THAT
+    // BODY and the rest of the fold still lands. The probe below empties p1's Bench
+    // so the shielded Active is the whole of the walk and "did not land" is exact;
+    // the per-body half is driven on a three-body board in `counterFold.test.ts` §7.
+    counterEachAll: "blocked",
     damageChosen: "blocked", // put-counter arm an effect; `deals` arm damage
     moveCountersToDefender: "blocked", // the destination half of a printed MOVE
     // ⚠️ D216 — THE FIRST VERDICT IN THIS TABLE THAT IS TRUE OF A DESTINATION THE
@@ -1678,6 +1684,27 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     },
     damageActive: {
       op: { op: "damageActive", amount: 30, source: "attack" },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    counterEachAll: {
+      // 🆕🆕🆕 D450 — `side: "opponent"` and an EMPTY opponent Bench, so the walk is
+      // exactly the shielded Active and `landed` is a total answer about it. The
+      // `anyPokemon` noun is the printed one for corpus line 415 and admits the probe
+      // body whatever it is, which keeps this probe about the BLOCK and not the filter.
+      op: {
+        op: "counterEachAll",
+        amount: 30,
+        filter: { kind: "anyPokemon" },
+        side: "opponent",
+        source: "attack",
+      },
+      board: () => {
+        const state = probeBoard();
+        return {
+          ...state,
+          players: { ...state.players, p1: { ...state.players.p1, bench: [] } },
+        };
+      },
       landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
     },
     damageChosen: {

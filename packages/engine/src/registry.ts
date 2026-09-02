@@ -4588,6 +4588,13 @@ const FREEZING_SHROUD: CardProgram = {
           op: "counterEachAll",
           amount: 10,
           filter: { kind: "abilityPokemon" },
+          // 🆕🆕🆕 D450 — both REQUIRED as of this slice, and both were the helper's
+          // hardcodes until it gained an attack producer. `side: "both"` is the
+          // printed parenthetical *"(both yours and your opponent's)"* said out
+          // loud; `source: "ability"` is the provenance the COUNTERS_PLACED row
+          // prints, true of this trigger and false of the three attack arms.
+          side: "both",
+          source: "ability",
           exceptNamed: "Froslass",
         },
       ],

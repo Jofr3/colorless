@@ -14077,6 +14077,91 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
+  /** 🆕🆕🆕 **D450 — THE THREE COUNTER *FOLDS*, ONE BODY, ONE ATTACK EACH.** The
+      sentences at indices 0, 1 and 2 are transcribed byte-for-byte off
+      `censusAttackCorpus.ts` lines **418**, **415** and **414** — the committed
+      `legal_standard = 1` column — where each carries **1 printing**. `fix-counterput`
+      one entry up is the family's CHOSEN-target attacker; this one is its fold twin,
+      and the two are deliberately separate bodies because a fold and a pick answer
+      different questions on the same board (D436's unit rule).
+
+      🛑 **CARRIERS UNRESOLVED AND SAID TO BE (D425).** No D1 in this checkout, and the
+      corpus is grouped by SENTENCE and records the COUNT rather than the ids. What is
+      measured is the three strings and the three 1s.
+
+      🛑 **NO PRINTED ABILITY ON THE ATTACKER, AND THAT IS THE WHOLE DESIGN OF INDEX
+      0.** `abilityPokemon` is `hasPrintedAbility`, so an attacker carrying one would
+      counter ITSELF on a `side: "both"` fold and the own-side reach would then be
+      unfalsifiable — the board could not tell "walks my board" from "walks the body it
+      is standing on". The own-side witness is `fix-idlebody` on the BENCH instead, and
+      the attacker's own untouched damage is the control beside it.
+
+      · index 0 **"Ability Blight"** — the both-seats fold, 6 counters (60 HP);
+      · index 1 **"Board Blight"** — the opponent-side fold, 2 counters (20 HP);
+      · index 2 **"Wounded Blight"** — index 1 behind the printed per-body window, at
+        the SAME 2 counters, so the only difference any board can read is WHICH bodies
+        took them (D448's rule: a control that varies two things measures neither);
+      · index 3 **"Plain Bolt"** — 🛑 **NOT A PLACEMENT AT ALL, AND IT IS THE §11
+        ATTRIBUTION CONTROL.** A printed 20 with no effect text, so it is ordinary
+        attack DAMAGE. `sv03-078` Bellibolt prevents it ({L} attacker) and does NOT
+        prevent the three placements; `fix-unaware` prevents the three placements and
+        does NOT prevent it. The two printed shield spellings divide the file exactly,
+        and neither direction is readable without this index.
+
+      **{L}, 140 HP, retreat 1, and NO printed `damage` on indices 0–2** — those three
+      sentences are the whole printed attack, so *"did the placement land"* can never be
+      answered by a main hit. No Resistance row and no Rule Box either, so this body
+      inhabits none of the declared-survivor populations that key on those (D427). */
+  "fix-counterfold": battler("fix-counterfold", {
+    name: "fix-counterfold",
+    types: ["Lightning"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Ability Blight",
+        effect:
+          "Put 6 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Board Blight",
+        effect: "Put 2 damage counters on each of your opponent's Pokémon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Wounded Blight",
+        effect:
+          "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+      },
+      { cost: ["Colorless"], name: "Plain Bolt", damage: 20 },
+    ],
+  }),
+  /** 🆕🆕🆕 **D450 — A BODY WHOSE ONLY LOAD-BEARING FIELD IS THAT IT HAS AN ABILITY.**
+      The `abilityPokemon` half of the fold at index 0 needs a body that satisfies the
+      noun and does NOTHING else; every Ability-bearing fixture already in this pool
+      carries a live passive (`fix-unaware` blocks effects, `sv03-078` blocks {L}
+      damage), and either would confound "the filter admitted it" with "the shield
+      answered". 200 HP so 60 HP of counters never reaches a Knock Out unless the board
+      asks for one, and Colorless so no Weakness can ever be read off it — which
+      matters because a PLACED counter must be flat and a board that could double is
+      the board that proves it (§8.5).
+
+      ⚠️ **THE ABILITY IS INERT AND ITS TEXT SAYS SO.** It is not in `registry.ts`, so
+      `programFor` returns nothing for this id and the Ability is a printed FACT with no
+      behaviour — which is exactly what `hasPrintedAbility` reads. */
+  "fix-idlebody": battler("fix-idlebody", {
+    name: "fix-idlebody",
+    types: ["Colorless"],
+    stage: "Basic",
+    hp: 200,
+    retreat: 1,
+    abilities: [
+      { type: "Ability", name: "D450 Idle", effect: "This Ability does nothing." },
+    ],
+  }),
   /** 🆕🆕 **D427 — THE SELF-HEAL WHOSE AMOUNT IS THE DAMAGE THE ATTACK JUST DEALT.**
 
       🛑 **THE CARD IS SYNTHETIC AND THE SENTENCE IS NOT.** The effect on all three
@@ -16525,6 +16610,23 @@ export const COUNTER_PUT_CHOSEN_DECK = deckOf({
   "fix-unaware": 4, // prevents all EFFECTS — and a placed counter IS one
   "sv03-197": 2, // Vengeful Punch — the KO-BY-DAMAGE recoil, D414's own read site
   "fix-lightning-energy": 16, // pays the {C} cost AND arms Bellibolt's {L} clause
+});
+
+/** 🆕🆕🆕 **D450 — the three counter FOLDS.** A separate deck from
+    `COUNTER_PUT_CHOSEN_DECK` and not a widening of it: this suite needs bodies that
+    differ on the ABILITY axis (`fix-idlebody` vs `fix-bigbody`) where that one is
+    pinned around a ×2 Lightning body, and adding either to the other's deck would
+    move a seeded board that suite reads. `fix-bigbody` is DOMINANT so setup never
+    mulligans. */
+export const COUNTER_FOLD_DECK = deckOf({
+  "fix-counterfold": 4, // the three printed folds + the printed-damage §11 control
+  "fix-bigbody": 26, // 200 HP, NO printed Ability — the filter's negative witness
+  "fix-idlebody": 8, // 200 HP WITH one — the filter's positive witness, both seats
+  "fix-lightning-weak": 4, // ×2 Lightning, 130 HP — the flat-placement witness
+  "sv03-078": 4, // Bellibolt — prevents all DAMAGE from {L}, and NOT a placed counter
+  "fix-unaware": 4, // prevents all EFFECTS — and a placed counter IS one
+  "sv03-197": 2, // Vengeful Punch — the KO-BY-DAMAGE recoil, D414's own read site
+  "fix-lightning-energy": 8, // pays the {C} cost AND arms Bellibolt's {L} clause
 });
 
 export const COST_SNIPE_DECK = deckOf({

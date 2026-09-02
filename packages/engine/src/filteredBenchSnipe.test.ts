@@ -177,14 +177,24 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     const family = corpus().filter(([, s]) => /that ha[sv]e? any damage counters/i.test(s));
     expect(family).toHaveLength(5);
     expect(units(family)).toBe(7);
-    // …and the split is 1 built / 4 refused, asserted on the POPULATION rather than
-    // on a hand-written specimen (D423). The four are a spread over the opponent's
-    // Pokémon, a both-sides benched spread, a COUNT/scaler, and a both-sides spread
-    // with a self-exclusion — four different consequents behind one predicate, and
-    // each needs its own consequent machinery, not another predicate.
+    // 🆕🆕🆕 **D450 — THE SPLIT IS 2 BUILT / 3 REFUSED, AND THE ROW THAT MOVED IS THE ONE
+    // THIS FILE'S OWN NOTE PREDICTED.** D437 wrote that the four unbuilt members each
+    // need a different CONSEQUENT and that `hasAnyDamageCounters` was "now there for
+    // three of the four"; the first of those three — *"Put 2 damage counters on each of
+    // your opponent's Pokémon that has any damage counters on it."*, corpus line 414 —
+    // is built by arm 23f, which reuses THIS SLICE'S rider verbatim on `counterEachAll`
+    // instead of on `damageChosen`. **The predicate really was the reusable half and the
+    // consequent really was the cost**, which is the claim D437 made and could not check.
+    // The THREE that remain each still need their own consequent: a both-sides benched
+    // spread, a COUNT/scaler, and a both-sides spread with a self-exclusion.
     const built = family.filter(([, s]) => resolvedByAnyReader(s));
-    expect(built.map(([, s]) => s)).toEqual([PRINTED]);
-    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(4);
+    expect(built.map(([, s]) => s).sort()).toEqual(
+      [
+        PRINTED,
+        "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+      ].sort(),
+    );
+    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(3);
     // The unread sibling this suite's demonstrator carries at index 2 is one of the
     // four, so the `ATTACK_EFFECT_SKIPPED` control in §2 is a REAL printed sentence
     // rather than an invented one — and this rung is its tripwire.
@@ -734,6 +744,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.351.0");
+    expect(engineVersion).toBe("0.352.0");
   });
 });

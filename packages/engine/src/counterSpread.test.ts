@@ -87,7 +87,12 @@ const NEAR_MISSES = [
   "Put 2 damage counters on 1 of your opponent's Benched Pokémon.",
   "Put 6 damage counters on 1 of your opponent's Benched Pokémon.",
   // A per-target FILTER and a fold — no pick anywhere in it.
-  "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+  // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
+  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
+  // note above). The replacement is the SCALED TWIN, **3 legal printings** and still unread: it shares this anchor's whole opening noun phrase and is refused on its count payload and its tail. The sentence it replaced is not gone from this
+  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
+  // which is D418's second half and strictly stronger than the `toBeNull` it had.
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   // The amount read off the TARGET rather than printed.
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",

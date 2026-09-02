@@ -4212,6 +4212,23 @@ export type EffectOp =
       printed subject of the sentence into a modifier (`gust`/`opponentSwitchOut`'s
       lesson, one op family over).
 
+      🆕🆕🆕 **D450 SPENT THE SECOND HALF OF THAT SENTENCE AND KEPT THE FIRST, AND
+      THE DIFFERENCE BETWEEN THEM IS A BOOLEAN VERSUS AN ENUM.** The refusal above
+      is correct about what it refuses — a *boolean* rider would demote the printed
+      subject to a modifier and is still refused — and it was written when the only
+      producer in reach printed the six-word parenthetical. It is now `side`, a TWO-
+      MEMBER ENUM whose values ARE the printed subjects: `"both"` is *"(both yours
+      and your opponent's)"* and `"opponent"` is *"each of your opponent's
+      Pokémon"*. Nothing is demoted, because the sentence's subject is what the
+      field holds. ⚠️ **AND THE POPULATION IS THE PART TO CARRY (D449).** D340
+      measured on Froslass's one sentence; `censusAttackCorpus.ts` (the
+      `legal_standard = 1` column the engine runs on) prints TWO more at lines
+      **414** and **415**, both one-seat, both `Put`-first, and both refused by
+      D449 on the SIDE — *a field this op did not have*. Wrong when the second
+      printing landed rather than wrong when written (D423), and the spelling is
+      `disableAbilities.side: "both" | "opponent"` copied verbatim rather than
+      invented (`handRefresh.who` copies the same two words one op family over).
+
       ⚠️ **`amount` IS HP, NOT COUNTERS.** The printed *"1 damage counter"* is
       converted at the REGISTRY, exactly as `TREVENANT`'s `amount: 10` is (§12), so
       this helper never sees the printed unit and cannot convert twice.
@@ -4258,8 +4275,47 @@ export type EffectOp =
         HAS an Ability and therefore satisfies the noun, escapes counters it
         otherwise earns. `preventOpponentPokemonPlay`'s two riders are the same
         subtraction one file over, and the suite drives that exact body: an `&&` of
-        both would counter every Froslass on the table. */
-  | { op: "counterEachAll"; amount: number; filter: CardFilter; exceptNamed?: string }
+        both would counter every Froslass on the table.
+
+      • 🆕🆕🆕 `side` (D450) — **WHOSE bodies the walk reaches, REQUIRED.** `"both"`
+        is `SEATS`, the walk this op has always done; `"opponent"` is
+        `otherSeat(ctx.seat)` alone. **Required and not optional-defaulting-to-
+        `"both"`** on D425's own test: a producer that dropped the key would place
+        counters on the ATTACKER's own board and read as a plausible board rather
+        than as a fault, which is exactly the attribution defect D425 paid for.
+        A required key makes the next producer a compile error instead.
+
+      • 🆕🆕🆕 `source` (D450) — **the provenance the `COUNTERS_PLACED` row prints,
+        REQUIRED**, spelled `"ability" | "attack"` because `damageActive` and
+        `damageChosen` both spell it exactly that way and nothing in the pool
+        disagrees. It was HARDCODED `"ability"` in the helper until this slice, and
+        the first attack producer is D136's finding 1 for the fourth time (D138,
+        D139, D140 paid for the first three): `log.ts` renders `"ability"` as
+        *"Ability: N damage to X"* and `"attack"` as *"Put: N damage onto X"*, so a
+        hardcode is a row that names a mechanism the board never used.
+
+      • 🆕🆕🆕 `damagedOnly` (D450) — the printed per-body window *"…that has any
+        damage counters on it"* (corpus line **414**, 1 printing), **D437's rider
+        spelling reused verbatim** from `damageChosen.damagedOnly` and reading the
+        same `hasAnyDamageCounters` (interpreter.ts). `true` and not `boolean`, the
+        riders above it: an absent key and `false` are two spellings of one board.
+        🛑 **IT IS A RIDER RATHER THAN A `CardFilter` MEMBER BECAUSE THE FILTER
+        UNION CANNOT ASK THE QUESTION AT ALL** — `matchesFilter(card, filter)` is
+        handed a catalog `Card` and never an `InPlayPokemon`, which its own
+        `basicPokemon` arm states as the reason the *"HP or less REMAINING"*
+        printings are unreachable from it. A board fact is read where the BODY is,
+        which is here; `healEach.pokemonType` makes the same move six ops up for the
+        same stated reason. It composes with `side` in principle and only
+        `"opponent"` is printed with it today. */
+  | {
+      op: "counterEachAll";
+      amount: number;
+      filter: CardFilter;
+      side: "both" | "opponent";
+      source: "ability" | "attack";
+      exceptNamed?: string;
+      damagedOnly?: true;
+    }
   /** Place `amount` HP of damage on the OPPONENT's Active Pokémon. A COUNTER
       placement, not attack damage: no Weakness/Resistance (§8.5) and no
       `damageReductionAfterWR` passive. Never parks; can KO — the caller sweeps
@@ -10102,6 +10158,73 @@ const COUNTER_PUT_ON_OPPONENT_ANY =
 // sibling. ONE apostrophe slot, classed `['’]`.
 const COUNTER_PUT_ON_CHOSEN_OPPONENTS =
   /^Choose (\d+) of your opponent['’]s Pokémon and put (\d+) damage counters on each of them\.$/;
+// 🆕🆕🆕 **D450 — THE THREE *FOLDS*, WHICH ARE THIS FAMILY'S OTHER HALF: NO PICK
+// ANYWHERE IN THEM.** Every anchor above names bodies the player CHOOSES; these
+// three name bodies the BOARD chooses, and the op behind them is `counterEachAll`
+// rather than `damageChosen`. `censusAttackCorpus.ts` lines **418**, **415** and
+// **414**, **3 sentences / 3 legal printings**, one printing each.
+//
+// 🛑 **ALL THREE WERE EXPRESSIBLE-BUT-REFUSED AT HEAD, AND THE REFUSAL WAS ABOUT
+// THE OP RATHER THAN ABOUT THE VOCABULARY** — `counterPutChosen.test.ts` §1(b),
+// (c) and (d) name them one by one as D449 left them. What they were missing was
+// a `side` (two of them), a `source` that is not hardcoded (all three) and a §11
+// call (all three); the nouns were already in the union. The declaration in this
+// file carries the three seams and the argument for each.
+//
+// THE SHAPE OF THE FAMILY, MEASURED RATHER THAN RECALLED. `/put \d* ?damage
+// counters/i` over `legalAttackCorpus()` is 19 sentences / 38 printings at head,
+// of which 10 sentences / 15 printings are unread; these three are three of the
+// ten and the family closes to **7 sentences / 12 printings** unread. The /i and
+// the OPTIONAL count are both load-bearing (D449) — a case-sensitive `Put \d+`
+// reports 16 and drops three of the ten.
+//
+// ⚠️ **THE TWO OPPONENT ANCHORS ARE A PREFIX PAIR, WHICH IS THE SHARPEST HAZARD
+// IN THIS BLOCK.** `COUNTER_FOLD_ON_OPPONENT_ALL`'s whole string is
+// `COUNTER_FOLD_ON_OPPONENT_DAMAGED`'s PREFIX up to the final `\.`, so the `$` is
+// the ONLY thing standing between the bare fold and a build that swallows the
+// windowed sentence and silently drops its printed *"that has any damage counters
+// on it"*. Asserted in BOTH directions rather than reasoned about — the same
+// hazard D449 recorded one arm up between arm 23b and the compound arm 25.
+//
+// NO /i ANYWHERE, the standing reason for all six siblings: the capitalised "Put"
+// plus `^…$` is the entire mechanism keeping the lowercase mid-sentence ABILITY
+// printings of these same actions off the attack path — including Froslass's own
+// *"During Pokémon Checkup, put 1 damage counter on each Pokémon that has an
+// Ability (both yours and your opponent's), except any Froslass."*, which is the
+// registry row this op was born for and which arm 23d must NOT claim.
+//
+// 🆕 THE BOTH-SEATS ABILITY FOLD — line **418**, 1 printing. The parenthetical is
+// the printed SUBJECT and it is matched literally rather than tolerated: a pattern
+// that made it optional would read the seat scope off nothing. ONE apostrophe slot
+// (`opponent's` inside the parenthetical); "yours" carries no mark, so the D137
+// hazard of classing one slot and not the other cannot arise.
+const COUNTER_FOLD_ON_ABILITY_BODIES =
+  /^Put (\d+) damage counters on each Pokémon that has an Ability \(both yours and your opponent['’]s\)\.$/;
+// 🆕 THE OPPONENT-SIDE FOLD — line **415**, 1 printing. Refused by D449 on "the
+// SIDE, which is a field the op does not have"; it has one now. The near miss it
+// must refuse is one word long and REAL: *"Put 1 damage **counter** on each of
+// your opponent's Pokémon for each of your Maushold in play."* is kept off by the
+// plural noun AND by the `$`, and it is a scaled twin whose count needs a payload
+// this arm has nowhere to put (`counterPut.test.ts`'s near-miss list holds it).
+const COUNTER_FOLD_ON_OPPONENT_ALL =
+  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon\.$/;
+// 🆕 THE SAME FOLD BEHIND THE PRINTED PER-BODY WINDOW — line **414**, 1 printing,
+// and the one D449 refused for TWO reasons where its siblings had one. The second
+// reason was *"a window that reads the BODY where `counterEachAll.filter` is a
+// `CardFilter` and reads the CARD"*, which is true of `matchesFilter` and NOT a
+// reason to refuse the sentence: `damageChosen.damagedOnly` (D437) has read this
+// exact printed phrase off an `InPlayPokemon` since it shipped, so the board fact
+// has a spelling and it never needed to be a filter member. **Reused verbatim, one
+// op over, on the identical eight printed words.**
+//
+// THE NEAREST UNREAD ROW IS THE BENCH-SCOPED TWIN and it stays unread: *"Put 3
+// damage counters on each of your opponent's **Benched** Pokémon that has any
+// damage counters on it."* is not in the `legal_standard = 1` column at all (the
+// corpus carries five sentences matching `/that ha[sv]e? any damage counters/i`
+// — lines 414, 526, 528, 596, 601 — and no Bench-scoped `Put` fold among them),
+// so the zone word is refused here by the anchor and by the population both.
+const COUNTER_FOLD_ON_OPPONENT_DAMAGED =
+  /^Put (\d+) damage counters on each of your opponent['’]s Pokémon that has any damage counters on it\.$/;
 // The SELF-LOCK (D143) — "During your next turn, this Pokémon can't attack.", the
 // whole printed effect on TWENTY printings, and the same sentence again as the
 // SECOND half of Ninetales sv03-029/-199 "Nine-Tailed Dance" (the compound anchor
@@ -20020,6 +20143,100 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           amount: chosenCounters * 10,
           count: chosenBodies,
           source: "attack",
+        },
+      ];
+    }
+  }
+
+  // 23d. "Put {N} damage counters on each Pokémon that has an Ability (both yours and
+  //       your opponent's)." — 🆕🆕🆕 D450, corpus line **418**, **1 sentence / 1 legal
+  //       printing**. THE FIRST ATTACK PRODUCER OF `counterEachAll`, an op the
+  //       registry has owned alone since D340.
+  //
+  //       D132's INVENTORY RULE: the noun is `abilityPokemon`, a `CardFilter` member
+  //       D285 built for the play-bar; the seat scope is the printed parenthetical;
+  //       the op is the one Froslass already runs. What this arm buys that the
+  //       registry row did not is `source: "attack"` — the row `log.ts` prints, and
+  //       the whole of D136's finding 1 on this op.
+  //
+  //       ⚠️ NO `exceptNamed` AND NO `damagedOnly`: this sentence prints neither, and
+  //       an absent key is the only honest spelling of a rider the card does not
+  //       carry (both are `?`-optional for exactly that).
+  match = COUNTER_FOLD_ON_ABILITY_BODIES.exec(effect);
+  if (match !== null) {
+    // COUNTERS → HP at the PRODUCER (§12), where every sibling arm converts.
+    const abilityFoldCounters = Number(match[1]);
+    // `>= 1` — a printed 0 would walk both boards emitting nothing; the interpreter
+    // refuses it again at `amount <= 0`, and this is the loud half of that pair.
+    if (abilityFoldCounters >= 1) {
+      return [
+        {
+          op: "counterEachAll",
+          amount: abilityFoldCounters * 10,
+          filter: { kind: "abilityPokemon" },
+          // The printed "(both yours and your opponent's)", said as the enum value
+          // it is rather than as a modifier on a one-seat op.
+          side: "both",
+          source: "attack",
+        },
+      ];
+    }
+  }
+
+  // 23e. "Put {N} damage counters on each of your opponent's Pokémon." — 🆕🆕🆕 D450,
+  //       corpus line **415**, **1 sentence / 1 legal printing**. Arm 23d's fold with
+  //       the seat scope narrowed to one side and the noun dropped to bare "Pokémon".
+  //
+  //       ⚠️ **THE FILTER IS `anyPokemon` AND THAT IS THE PRINT, NOT A PLACEHOLDER.**
+  //       The sentence names no noun beyond "Pokémon", `anyPokemon` is
+  //       `card.category === "Pokemon"` and every in-play body satisfies it — so this
+  //       is a filter that claims exactly what the card claims, which is D440's test
+  //       for a vocabulary choice ("ask what it claims that the map refuses"). The
+  //       field is REQUIRED on the op and a bespoke "no noun" spelling would be a
+  //       second answer to one question.
+  match = COUNTER_FOLD_ON_OPPONENT_ALL.exec(effect);
+  if (match !== null) {
+    const oppFoldCounters = Number(match[1]);
+    if (oppFoldCounters >= 1) {
+      return [
+        {
+          op: "counterEachAll",
+          amount: oppFoldCounters * 10,
+          filter: { kind: "anyPokemon" },
+          // `otherSeat(ctx.seat)` alone — their Active AND their Bench, which is what
+          // "each of your opponent's Pokémon" prints and what the ZONE-scoped
+          // siblings (arm 23, the Bench snipe) deliberately do not say.
+          side: "opponent",
+          source: "attack",
+        },
+      ];
+    }
+  }
+
+  // 23f. "Put {N} damage counters on each of your opponent's Pokémon that has any
+  //       damage counters on it." — 🆕🆕🆕 D450, corpus line **414**, **1 sentence /
+  //       1 legal printing**. Arm 23e plus the printed window, and the ONLY difference
+  //       in the emitted op is `damagedOnly: true`.
+  //
+  //       ⚠️ **IT MUST SIT BELOW ARM 23e AND BE UNREACHABLE BY IT** — the two anchors
+  //       are a prefix pair and only the `$` separates them, so the ordering here is
+  //       legibility while the `$` is the mechanism. Both directions are driven.
+  match = COUNTER_FOLD_ON_OPPONENT_DAMAGED.exec(effect);
+  if (match !== null) {
+    const damagedFoldCounters = Number(match[1]);
+    if (damagedFoldCounters >= 1) {
+      return [
+        {
+          op: "counterEachAll",
+          amount: damagedFoldCounters * 10,
+          filter: { kind: "anyPokemon" },
+          side: "opponent",
+          source: "attack",
+          // D437's rider, one op over and unchanged: `pokemon.damage > 0`, so a body
+          // carrying 5 damage from a halved hit IS a candidate. The narrowing is read
+          // at the WALK here rather than where a candidate list is built, which is the
+          // only structural difference from its first inhabitant.
+          damagedOnly: true,
         },
       ];
     }

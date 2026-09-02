@@ -133,9 +133,19 @@ const NEAR_MISSES = [
   // same printed count, refused on the determiner alone — "each of your opponent's
   // Pokémon" is a fold over the whole board where this anchor names ONE body. It is
   // the closest an unread row gets to this sentence without being it.
-  "Put 2 damage counters on each of your opponent's Pokémon.",
+  // ⚠️ RE-POINTED AT D450 — this slot held the bare opponent-side fold (corpus line 415), which D450 MAPPED (arms 23d/23e/23f
+  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
+  // note above). The replacement is the SCALED TWIN, **3 legal printings** and the largest unread row left in the placement family: this anchor's verb and count at an any-zone PICK, refused on a count payload no rider carries and on a tail with no reader. The sentence it replaced is not gone from this
+  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
+  // which is D418's second half and strictly stronger than the `toBeNull` it had.
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
-  "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+  // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
+  // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
+  // note above). The replacement is the CONFUSION SUBSTITUTION, 1 legal printing and still unread, refused on the VERB rather than on the target. The sentence it replaced is not gone from this
+  // file: the claim about it is now an INEQUALITY of derived programs below the loop,
+  // which is D418's second half and strictly stronger than the `toBeNull` it had.
+  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
   // ⚠️ RE-POINTED AT D345 — this slot held Dusclops/Dusknoir's "Cursed Blast",
@@ -346,6 +356,22 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // sentence, which is the standing argument for the flag's absence.
     expect(deriveAttackEffect(NEAR_MISSES[7])).toBeNull();
     expect(deriveAttackEffect(NEAR_MISSES[8])).toBeNull();
+    // 🆕🆕🆕 **D450 — THE TWO ROWS THAT LEFT THIS LIST, AND THE CLAIM THEY WERE REALLY
+    // MAKING.** Corpus lines 415 and 414 were `toBeNull` here until D450 built them as
+    // arms 23e and 23f. A `toBeNull` on a sentence the catalog PRINTS is a liability
+    // rather than a guard (D449), so both slots were re-pointed above and the claim
+    // moved here as an INEQUALITY of derived programs. It still goes RED on the defect
+    // the old rungs were about — this anchor names ONE SPOT and both of those FOLD over
+    // a board — and it cannot go green by accident when a sibling arm lands.
+    for (const fold of [
+      "Put 2 damage counters on each of your opponent's Pokémon.",
+      "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+    ]) {
+      expect(deriveAttackEffect(fold), fold).not.toEqual(deriveAttackEffect(clauseText(2)));
+      expect(deriveAttackEffect(fold)?.[0]?.op, fold).toBe("counterEachAll");
+    }
+    expect(deriveAttackEffect(clauseText(2))?.[0]?.op).toBe("damageActive");
+
     // 🆕 D345 — AND THE RE-POINTED WITNESS IS STILL UNMAPPED, DRIVEN RATHER THAN
     // WRITTEN DOWN. `NEAR_MISSES[8]` was Dusknoir's "Cursed Blast" until this slice
     // BUILT it (a registry ABILITY row — this anchor's refusal is unaffected, since
@@ -445,8 +471,13 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
       // DELETED** (the standing note above), and re-pointed onto the claim the old one
       // was really making: this anchor's target is a SPOT and that one's is a PICK, so
       // the two derive DIFFERENT OPS. See the case directly below the loop.
+      // 🆕🛑 **D450 — THE FIFTH REWRITE MOVED OUT OF THIS LOOP FOR D449's REASON, ONE
+      // ARM LATER.** *"Put {N} damage counters on **each of** your opponent's
+      // Pokémon."* is corpus line 415, which D450 claimed with
+      // `COUNTER_FOLD_ON_OPPONENT_ALL` (arm 23e). RE-POINTED, NOT DELETED: this
+      // anchor names ONE SPOT and that one FOLDS OVER A BOARD, so the two derive
+      // different ops on different targets. See the case directly below the loop.
       "Put 7 damage counters on your opponent's Benched Pokémon.",
-      "Put 7 damage counters on each of your opponent's Pokémon.",
       "Put 7 damage counters on your Active Pokémon.",
       // THE SEAT, dropped. "your Active Pokémon" above is the controller's; this one
       // names no seat at all.
@@ -492,6 +523,34 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // the TARGET and nothing else — the one-axis discipline this file already uses for
     // its `DEFENDER_PUT_CLAUSE` pair.
     expect(deriveAttackEffect(clauseText(7))).toEqual([putOp(GHOST_EYE_HP)]);
+  });
+
+  it("🆕 D450 — the EACH-OF rewrite derives a FOLD, which is the claim it always made", () => {
+    // The same repair one determiner over, and for the same reason: *"each of"* is a
+    // FOLD over a whole board where this anchor names ONE SPOT, and until D450 that was
+    // said with a `toBeNull` because nothing read the fold. Arm 23e reads it now.
+    // ⚠️ **AND THE INEQUALITY IS SHARPER HERE THAN IT WAS FOR THE PICK**: the fold's op
+    // is not even in the same family — `counterEachAll` takes no target and parks
+    // nowhere — so a reader that let this sentence reach arm 22 would place counters on
+    // ONE body where the card names a board, which no assertion about the amount could
+    // catch.
+    const fold = "Put 7 damage counters on each of your opponent's Pokémon.";
+    expect(deriveAttackEffect(fold)).toEqual([
+      {
+        op: "counterEachAll",
+        amount: GHOST_EYE_HP,
+        filter: { kind: "anyPokemon" },
+        side: "opponent",
+        source: "attack",
+      },
+    ]);
+    expect(deriveAttackEffect(fold)).not.toEqual(deriveAttackEffect(clauseText(7)));
+    expect(deriveAttackEffect(fold)).not.toContainEqual(
+      expect.objectContaining({ op: "damageActive" }),
+    );
+    // …and the AMOUNT agrees across the two anchors, so the inequality is about the
+    // TARGET alone — this file's standing one-axis discipline.
+    expect(deriveAttackEffect(fold)?.[0]).toMatchObject({ amount: GHOST_EYE_HP });
   });
 
   it("refuses a printed ZERO but ACCEPTS the ungrammatical singular count", () => {
