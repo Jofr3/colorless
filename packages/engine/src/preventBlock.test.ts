@@ -874,6 +874,12 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
     // so the shielded Active is the whole of the walk and "did not land" is exact;
     // the per-body half is driven on a three-body board in `counterFold.test.ts` §7.
     counterEachAll: "blocked",
+    // 🆕🆕🆕 D451 — the HP-TARGET placement, `blocked` for the same reason and asked
+    // at the same seam: §11 is consulted PER BODY and AFTER the amount, so a shielded
+    // body files one row and takes nothing while its Bench-mates still fill. The probe
+    // below aims at the ACTIVE (one body, so "did not land" is exact); the per-body
+    // half over a Bench is driven in `counterUntilHp.test.ts` §8.
+    counterUntilRemainingHp: "blocked",
     damageChosen: "blocked", // put-counter arm an effect; `deals` arm damage
     moveCountersToDefender: "blocked", // the destination half of a printed MOVE
     // ⚠️ D216 — THE FIRST VERDICT IN THIS TABLE THAT IS TRUE OF A DESTINATION THE
@@ -1705,6 +1711,15 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
           players: { ...state.players, p1: { ...state.players.p1, bench: [] } },
         };
       },
+      landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
+    },
+    counterUntilRemainingHp: {
+      // 🆕🆕🆕 D451 — `opponentActive`, so the walk IS the shielded body and `landed`
+      // is a total answer about it with no board surgery at all. `remainingHp: 10` is
+      // a printed destination and it is far below this Active's remaining HP, so the
+      // UNBLOCKED run places a large positive amount — the probe must not be one where
+      // "nothing happened" and "already at the destination" look the same.
+      op: { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 10, source: "attack" },
       landed: (r) => (p1Active(r.after)?.damage ?? 0) > (p1Active(r.before)?.damage ?? 0),
     },
     damageChosen: {

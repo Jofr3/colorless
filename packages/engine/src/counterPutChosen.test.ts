@@ -164,10 +164,18 @@ describe("§1 — the two printed sentences, and what the placement family still
     // all), and the provenance became `counterEachAll.source` beside a per-body
     // `effectRefused` call. **Their bullets are kept and annotated rather than deleted**,
     // because a refusal that was SPENT is the most useful kind to be able to read back.
-    expect(unbuilt).toHaveLength(7);
+    // 🆕🆕🆕 **D451 — SEVEN BECAME FOUR AND TWELVE BECAME SEVEN, AND THE THREE THAT LEFT
+    // ARE ALL OF BULLET (e).** That bullet refused them on the AMOUNT'S SOURCE and said
+    // *"nothing in the engine subtracts to a target"*, which was true of the engine and
+    // not a reason: `effectiveMaxHp − damage` is the phrase's ONE shipped definition and
+    // the subtraction is three characters longer. The bullet is kept and annotated.
+    // ⚠️ **THE PRINTINGS FALL BY 5 WHERE THE SENTENCES FALL BY 3**, which is the first
+    // time these two numbers have disagreed in this section — the HP rows carry 2, 1 and
+    // 2 printings where D449's and D450's carried one each.
+    expect(unbuilt).toHaveLength(4);
     expect(
       family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(12);
+    ).toBe(7);
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -240,20 +248,32 @@ describe("§1 — the two printed sentences, and what the placement family still
     expect(unbuilt).not.toContain(
       "Put 6 damage counters on each Pokémon that has an Ability (both yours and your opponent's).",
     );
-    // (e) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**, the biggest
-    //     single refusal here. *"…until its remaining HP is N"* computes the amount from
-    //     the TARGET's current HP, where every op in this family takes a printed number
-    //     the anchor captured. `remainingHpWithin` (continuous.ts) is a PREDICATE — "is
-    //     this body at or under N" — and answers a different question; nothing in the
-    //     engine subtracts to a target. Refused on the AMOUNT'S SOURCE, and it is one
-    //     mechanism serving all three rows, which is why they are one bullet.
+    // (e) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**.
+    //     🆕🆕🆕 **SPENT AT D451, AND THIS BULLET WAS RIGHT ABOUT `remainingHpWithin` AND
+    //     WRONG ABOUT THE ENGINE.** It said the amount is computed from the TARGET's
+    //     current HP (true), that `remainingHpWithin` is a PREDICATE answering a
+    //     different question (true — it returns a boolean and D451 does not call it),
+    //     and therefore that *"nothing in the engine subtracts to a target"* (a
+    //     non-sequitur). *Remaining HP* has had exactly ONE definition in this engine
+    //     since D349 — `effectiveMaxHp − damage` — written at three shipped sites, and
+    //     the whole slice is subtracting the printed destination from it PER BODY inside
+    //     a walk. **One mechanism really did serve all three rows**, which is the half
+    //     the bullet got right: `counterUntilRemainingHp`, two anchors, arms 23g/23h.
+    //     🛑 **AND A `toBeNull`-SHAPED CLAIM WOULD HAVE GONE GREEN ON A BROKEN BUILD**,
+    //     so the rung is an INEQUALITY of derived programs: the three sentences are OUT
+    //     of `unbuilt`, they derive to the new op, and they are told apart by the two
+    //     fields that carry the print.
     for (const s of [
       "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
     ]) {
-      expect(unbuilt).toContain(s);
+      expect(unbuilt, s).not.toContain(s);
+      expect(deriveAttackEffect(s)?.[0]?.op, s).toBe("counterUntilRemainingHp");
     }
+    expect(deriveAttackEffect(BARE)).not.toEqual(
+      deriveAttackEffect("Put damage counters on your opponent's Active Pokémon until its remaining HP is 10."),
+    );
     // (f) THE CONFUSION SUBSTITUTION — 1 printing. *"Your opponent's Active Pokémon is
     //     now Confused. Put 8 damage counters instead of 3 on that Pokémon for this
     //     Special Condition."* is not a placement at all: it RAISES the Checkup's own
@@ -511,7 +531,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.352.0");
+    expect(engineVersion).toBe("0.353.0");
   });
 });
 

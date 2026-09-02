@@ -1665,6 +1665,8 @@ function stepOp(
       return { done: healEachAll(state, op.amount, events) };
     case "counterEachAll":
       return { done: counterEachAll(state, op, ctx, events) };
+    case "counterUntilRemainingHp":
+      return { done: counterUntilRemainingHp(state, op, ctx, events) };
     case "damageActive":
       return { done: damageActive(state, op.amount, op.source, ctx, events) };
     case "damageSubject":
@@ -8509,6 +8511,99 @@ function counterEachAll(
     next = withSide(next, seat, { ...board, active, bench });
   }
   return next;
+}
+
+/** 🆕🆕🆕 D451 — PUT damage counters on the opponent's bodies in `op.target` UNTIL
+    each one's REMAINING HP is `op.remainingHp`. Alolan Raticate's and Palossand ex's
+    sentences: *"Put damage counters on your opponent's Active Pokémon until its
+    remaining HP is {10|50}."* and *"…on each of your opponent's Benched Pokémon until
+    its remaining HP is 100."* (`censusAttackCorpus.ts` lines 426/427/425 — 3 sentences
+    / 5 legal printings).
+
+    🛑 **THE AMOUNT IS COMPUTED PER BODY AND THE OP CARRIES NONE.** `remaining` is
+    `effectiveMaxHp − damage` — the engine's ONE definition of the printed phrase, the
+    same one `remainingHpWithin` (continuous.ts) reads for the catalog's other three
+    *"remaining HP"* printings — and the placement is `remaining − op.remainingHp`. So
+    the maximum is the CONTINUOUS one: a Bravery Charm on a Benched body raises the
+    destination it is filled to, and Gravity Mountain lowers it. The printed `hpOf`
+    would get both wrong on the same board.
+
+    🛑 **THE DISTRIBUTIVE *"its"*, WHICH IS THE WHOLE OF THE BENCH ARM.** The subtraction
+    happens INSIDE the per-body closure, so each body is filled to `op.remainingHp`
+    independently. There is no shared total and no `amount` to hoist — a build that
+    computed one figure above the walk would place the first body's number on every
+    body, and the board that shows it is a Bench whose two bodies carry different damage.
+
+    ⚠️ **THE FLOOR IS PER BODY AND IT IS `healEachAll`'s, NOT `counterEachAll`'s.**
+    Those two ops guard `amount <= 0` ONCE, above the walk, because their amount is a
+    constant handed in by the producer. This one's varies per body, so the guard has to
+    vary with it: a body already AT or BELOW the destination takes zero, files no
+    `COUNTERS_PLACED` and leaves its neighbours alone — exactly the way an undamaged
+    body heals 0 and emits nothing two ops up. Never negative.
+
+    🛑 **IT CANNOT KNOCK ANYTHING OUT, AND `op.remainingHp <= 0` IS THE GUARD THAT MAKES
+    THAT A PROPERTY OF THIS FUNCTION RATHER THAN OF TODAY'S CATALOG.** A body that takes
+    counters ends at `damage = max − op.remainingHp`, which is `>= max` — i.e. lethal —
+    exactly when `op.remainingHp <= 0`. Every printed destination is 10, 50 or 100, so
+    the guard is unreachable from the deriver (arms 23g/23h refuse `< 1` first); it is
+    written anyway for D324's reason verbatim, because the alternative is an invariant
+    stated in three doc blocks and asserted by no line of code. **A future *"until its
+    remaining HP is 0"* deletes this line and owes a Knock Out, a Prize and a
+    `koByEffect` marker in the same slice** — this op emits none of the three, and
+    `finishAttack`'s two-seat sweep (flow.ts) is the caller that would resolve one.
+
+    ⚠️ **NO ROUNDING TO WHOLE COUNTERS.** §12 makes a counter 10 HP, but `damage` need
+    not be a multiple of ten (a halved hit leaves 5) and neither need `effectiveMaxHp`
+    once a Tool or a Stadium is on the board. The printed word is *"until"*, so the exact
+    difference is placed and the destination is hit on the nose; `Math.ceil(x / 10) * 10`
+    would overshoot past it and could reach `max`, which is the one thing this op must
+    never do.
+
+    ⚠️ **A `null` MAXIMUM PLACES NOTHING** — the catalog data gap `effectiveMaxHp` owns,
+    refused in the same direction `remainingHpWithin` refuses it: an unknown maximum
+    cannot be subtracted from, and a data gap is never damaged by default.
+
+    ⚠️ **§11 IS ASKED PER BODY AND AFTER THE AMOUNT (D433: narrow, then ask).** A shield
+    on one Benched body silences exactly that body and files exactly one
+    ATTACK_EFFECT_PREVENTED; refusing the op whole would let one Rabsca protect a Bench,
+    a rule no printing states. A body that was going to take ZERO is never asked, so a
+    body the sentence did not reach files no prevention row — `counterEachAll`'s
+    ordering, one op up, on a window that is arithmetic instead of a rider. */
+function counterUntilRemainingHp(
+  state: GameState,
+  op: Extract<EffectOp, { op: "counterUntilRemainingHp" }>,
+  ctx: EffectContext,
+  events: GameEvent[],
+): GameState {
+  if (op.remainingHp <= 0) return state;
+  const victim = otherSeat(ctx.seat);
+  const board = state.players[victim];
+  const fillOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+    const max = effectiveMaxHp(state, pokemon);
+    if (max === null) return pokemon;
+    // THE SUBTRACTION, INSIDE THE CLOSURE — this is the distributive "its".
+    const placed = max - pokemon.damage - op.remainingHp;
+    if (placed <= 0) return pokemon;
+    const uid = topUid(pokemon);
+    if (uid === undefined) return pokemon;
+    if (effectRefused(state, victim, ctx, events, pokemon)) return pokemon;
+    events.push({
+      type: "COUNTERS_PLACED",
+      seat: victim,
+      uid,
+      amount: placed,
+      source: op.source,
+    });
+    return { ...pokemon, damage: pokemon.damage + placed };
+  };
+  // The ZONE is the printed noun and nothing else: "Active Pokémon" is one body (or
+  // none, between a Knock Out and a promotion), "each of your opponent's Benched
+  // Pokémon" is the whole Bench and never the Active.
+  if (op.target === "opponentActive") {
+    if (board.active === null) return state;
+    return withActive(state, victim, fillOne(board.active));
+  }
+  return withSide(state, victim, { ...board, bench: board.bench.map(fillOne) });
 }
 
 /** PUT `amount` HP of damage counters on the OPPONENT's Active Pokémon —

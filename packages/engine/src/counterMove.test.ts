@@ -141,7 +141,14 @@ const REAL_NEAR_MISSES = [
   // duration, same body, same §9 site, and an amount read off the damage done.
   // It is neither this anchor's verb nor its target either way.
   "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
-  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
+  // Active Pokémon until its remaining HP is 10."*, which D451 MAPPED (arm 23g over
+  // the new op `counterUntilRemainingHp`), so the witness MOVED rather than being
+  // deleted. The replacement is the SCALED TWIN — 3 legal printings, still unread and
+  // still the family's largest single refusal: a PUT rather than a MOVE (this anchor's
+  // verb difference, which is what the slot is for) whose count is a `cardsInDiscardPile`
+  // PAYLOAD no rider carries, and whose tail no reader claims.
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
   // ⚠️ RE-POINTED AT D348 — the slot's THIRD occupant after Ninetales (D143) and
   // Lycanroc ex (D152). It held "Put 8 damage counters on your opponent's Pokémon in
   // any way you like." (sv01-090/sv04.5-156), which D348 MAPPED as arm 23a; the
@@ -157,7 +164,16 @@ const REAL_NEAR_MISSES = [
   // note above). The replacement is the HP-TARGET row at 50, **2 legal printings** and still unread: a PUT rather than a MOVE (this anchor's verb difference, which is what the slot is for) whose amount is read off the TARGET rather than printed. The sentence it replaced is not gone from this
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
+  // ⚠️ RE-POINTED A SECOND TIME AT D451, ONE SLICE AFTER D450 FILLED IT. This slot
+  // held the HP-TARGET row at 50, which D451 MAPPED (arm 23g), so the witness MOVED
+  // again. The replacement is the CONFUSION SUBSTITUTION, 1 legal printing and still
+  // unread: a PUT rather than a MOVE, and refused on the VERB twice over — the counters
+  // RAISE the Checkup's per-condition amount rather than being placed or moved at all.
+  // 🛑 A SLOT RE-POINTED IN TWO CONSECUTIVE SLICES IS A SIGNAL, NOT A CHORE: this
+  // anchor's near-miss population is being consumed faster than the catalog refills it,
+  // and the claim about both departed sentences now lives below the loop as an
+  // INEQUALITY of derived programs (D418's second half).
+  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
 ] as const;
 
@@ -341,6 +357,19 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     // Slowbro's text to an op that damages the opponent — the widest possible miss.
     expect(deriveAttackEffect(REAL_NEAR_MISSES[0])).toBeNull();
     expect(deriveAttackEffect(REAL_NEAR_MISSES[1])).toBeNull();
+    // 🆕🆕🆕 **D451 — THE TWO HP-TARGET ROWS THAT LEFT THIS LIST, AS AN INEQUALITY.**
+    // Both share this anchor's noun phrase (*"your opponent's Active Pokémon"*) and its
+    // DESTINATION, and differ on the verb: a MOVE takes counters off one body to put
+    // them on another, where these PUT new ones. An anchor keyed on the destination
+    // rather than on the whole sentence would claim both, so the claim is made in the
+    // form that still goes red on that defect.
+    for (const hp of [
+      "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+      "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
+    ]) {
+      expect(deriveAttackEffect(hp)?.[0]?.op, hp).toBe("counterUntilRemainingHp");
+      expect(deriveAttackEffect(hp), hp).not.toEqual(deriveAttackEffect(CLAUSE));
+    }
     // VESPIQUEN EX'S FILTERED BENCH SPREAD — unmapped, and the slot Ting-Lu ex's
     // "Land Scoop" vacated when D140 mapped it. A re-point, never a deletion.
     expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toBeNull();

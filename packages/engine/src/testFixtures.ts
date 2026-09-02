@@ -14152,6 +14152,67 @@ export const FIXTURE_POOL: Record<string, Card> = {
       ⚠️ **THE ABILITY IS INERT AND ITS TEXT SAYS SO.** It is not in `registry.ts`, so
       `programFor` returns nothing for this id and the Ability is a printed FACT with no
       behaviour — which is exactly what `hasPrintedAbility` reads. */
+  /** 🆕🆕🆕 **D451 — THE PLACEMENT WHOSE AMOUNT IS NOT PRINTED.** The sentences at
+      indices 0, 1 and 2 are transcribed byte-for-byte off `censusAttackCorpus.ts`
+      lines **425**, **427** and **426** — the committed `legal_standard = 1` column —
+      where they carry **2**, **2** and **1** printings, **5 in all**. They are the
+      whole of that column's `\bHP\b` rows: the class is CLOSED at this head, not
+      sampled.
+
+      🛑 **CARRIERS UNRESOLVED AND SAID TO BE (D425).** No D1 in this checkout, and the
+      corpus is grouped by SENTENCE and records the COUNT rather than the ids. Two
+      shipped doc blocks (D139's, in `effects.ts` and `index.ts`) name *"Alolan Raticate
+      swsh10.5-042"* and *"Claydol sv03-095"* against the LOCAL six-set D1, a different
+      population; those ids are quoted as history and are NOT used as fixture keys.
+
+      🛑 **140 HP AND NO PRINTED ABILITY, WHICH KEEPS TWO OTHER SUITES' POPULATIONS
+      OUT OF THIS ONE.** No Ability means `abilityPokemon` never admits this body, so a
+      board here can never be confused with `counterFold.test.ts`'s; no `resistances`
+      row and no Rule Box means it inhabits none of the declared-survivor populations
+      that key on those (D427).
+
+      · index 0 **"Bench Sap"** — the BENCH fold to 100, corpus line 425. The only one
+        of the three that walks more than one body, and therefore the only one that can
+        show the distributive *"its"*;
+      · index 1 **"Deep Sap"** — the ACTIVE to 50, line 427;
+      · index 2 **"Shallow Sap"** — the ACTIVE to 10, line 426. TWO destinations on one
+        target so *"which number did it fill to"* is answerable at all — a fixture
+        printing one destination measures the zone and not the arithmetic (D448);
+      · index 3 **"Plain Bolt"** — 🛑 **NOT A PLACEMENT, AND IT IS THE §11 ATTRIBUTION
+        CONTROL**, `fix-counterfold`'s index 3 reused for its stated reason: a printed
+        20 with no effect text is ordinary attack DAMAGE, which `sv03-078` Bellibolt
+        prevents ({L} attacker) and `fix-unaware` does not, exactly inverting the three
+        placements. Neither shield's direction is readable without it.
+
+      **NO printed `damage` on indices 0–2**: those three sentences are the whole
+      printed attack, so *"did the placement land"* can never be answered by a main
+      hit. */
+  "fix-hptarget": battler("fix-hptarget", {
+    name: "fix-hptarget",
+    types: ["Lightning"],
+    stage: "Basic",
+    hp: 140,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Bench Sap",
+        effect:
+          "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Deep Sap",
+        effect: "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Shallow Sap",
+        effect: "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+      },
+      { cost: ["Colorless"], name: "Plain Bolt", damage: 20 },
+    ],
+  }),
   "fix-idlebody": battler("fix-idlebody", {
     name: "fix-idlebody",
     types: ["Colorless"],
@@ -16627,6 +16688,42 @@ export const COUNTER_FOLD_DECK = deckOf({
   "fix-unaware": 4, // prevents all EFFECTS — and a placed counter IS one
   "sv03-197": 2, // Vengeful Punch — the KO-BY-DAMAGE recoil, D414's own read site
   "fix-lightning-energy": 8, // pays the {C} cost AND arms Bellibolt's {L} clause
+});
+
+/** 🆕🆕🆕 **D451 — the three HP-TARGET placements.** Its own 60, on D412's rule and
+    for `COUNTER_FOLD_DECK`'s stated reason one deck up: this suite is pinned around
+    bodies whose MAXIMUM HP differs from their printed HP (the Bravery Charm board),
+    and adding a Tool to a deck another suite seeds would reshuffle boards this slice
+    has nothing to do with.
+
+    ⚠️ **SEED-FREE BY CONSTRUCTION** — nothing here flips a coin, and every Active,
+    benched body and damage total is placed by surgery.
+
+    The cast, and the arithmetic each body exists to produce:
+      · `fix-hptarget` — the attacker, three destinations + the §11 damage control;
+      · `fix-bigbody` — 200 HP, Colorless, no Ability: the ARITHMETIC body. 200 − 100
+        is a bench placement of 100 undamaged and 70 at 30 damage, which is the two
+        numbers the distributive *"its"* needs on ONE bench;
+      · `fix-lightning-weak` — 130 HP, ×2 Lightning. TWO jobs: at 40 damage its
+        remaining 90 is already BELOW the printed 100, so it is the ZERO-placement
+        floor sitting beside bodies that do take counters; and its Weakness is what
+        makes "a placed counter is flat" falsifiable (§8.5 never runs over one);
+      · `sv02-173` **Bravery Charm** — +50 HP on a Basic, and the ONE thing that
+        separates `effectiveMaxHp` from the printed `hpOf` on this board: a charmed
+        `fix-bigbody` is filled to a maximum of 250 rather than 200;
+      · `sv03-078` **Bellibolt** — prevents all DAMAGE from {L}, and NOT a placed
+        counter: it stops index 3 and none of the placements;
+      · `fix-unaware` — prevents all EFFECTS, so it stops the placements and not
+        index 3. The two shields divide the file exactly;
+      · `fix-lightning-energy` — pays the {C} cost AND arms Bellibolt's {L} clause. */
+export const COUNTER_UNTIL_HP_DECK = deckOf({
+  "fix-hptarget": 4, // the three printed destinations + the printed-damage §11 control
+  "fix-bigbody": 26, // 200 HP, Colorless — DOMINANT (mulligan-free) and the arithmetic body
+  "fix-lightning-weak": 8, // 130 HP ×2 Lightning — the below-target floor and the flatness witness
+  "sv02-173": 4, // Bravery Charm — +50 HP: `effectiveMaxHp` vs the printed `hpOf`
+  "sv03-078": 4, // Bellibolt — prevents all DAMAGE from {L}, and NOT a placed counter
+  "fix-unaware": 4, // prevents all EFFECTS — and a placed counter IS one
+  "fix-lightning-energy": 10, // pays the {C} cost AND arms Bellibolt's {L} clause
 });
 
 export const COST_SNIPE_DECK = deckOf({

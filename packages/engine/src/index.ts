@@ -1795,7 +1795,19 @@ import type { GameState, Seat } from "./types";
     Active Pokémon": **4 / 4**, and this anchor takes 2. The other two read the
     amount off the TARGET ("…until its remaining HP is 10." — Alolan Raticate
     swsh10.5-042 bare, Claydol sv03-095 with a self-damage rider) and no capture
-    can express that. ZERO printings in the whole PUT family are coin-scaled, and
+    can express that.
+    🆕🆕🆕 **CORRECTED IN PLACE AT D451 (D423): THE CLAUSE AFTER THE DASH WAS A
+    NON-SEQUITUR AND IT STOOD FOR 312 DECISIONS.** No capture can express the
+    AMOUNT — true, and it is why these rows are not this anchor's. The
+    DESTINATION is printed, is a bare integer, and a capture expresses it
+    exactly; what was missing was an op that computes at the BODY, which is
+    `counterUntilRemainingHp` (arms 23g/23h, corpus lines 425/426/427, 3
+    sentences / 5 legal printings). ⚠️ AND THE CENSUS ABOVE IS THE LOCAL D1's
+    (978 cards / 6 sets), so the two card ids it names belong to a population
+    this engine does not run on and are NOT claimed by the new arms — what the
+    `legal_standard = 1` column measures is the three sentences. The
+    self-damage-rider compound remains unread and is the near miss the two new
+    anchors' `$` exists for. ZERO printings in the whole PUT family are coin-scaled, and
     exactly one carries "up to" (Annihilape ex sv02-242, on ITSELF).
 
     A BARE `(\d+)` IS NOT A D120 TEMPLATE — that rule licenses a lookup table only
@@ -12102,6 +12114,23 @@ import type { GameState, Seat } from "./types";
         slice. `source` stopped being a hardcoded `"ability"` in the same edit — the
         op's first ATTACK producer would otherwise have filed D136's finding 1 for
         the fourth time — and `damagedOnly` is D437's rider reused verbatim.
+      • 🆕🆕🆕 `counterUntilRemainingHp{target, remainingHp, source}` (**D451**) — the
+        SAME VERB WITH NO PRINTED COUNT. *"Put damage counters on your opponent's
+        Active Pokémon until its remaining HP is {10|50}."* and *"…on each of your
+        opponent's Benched Pokémon until its remaining HP is 100."* (corpus lines
+        **426**, **427** and **425** — **3 sentences / 5 legal printings**; `\bHP\b` over
+        all 640 corpus sentences returns exactly these three). The amount is
+        `effectiveMaxHp − damage − remainingHp`, computed **per body inside the walk**
+        — which is the printed distributive *"its"* — so the op carries no `amount`
+        at all and the number it does carry is HP RATHER THAN COUNTERS (no × 10, the
+        one place this family's §12 conversion runs the other way). A body already
+        at or below the destination takes ZERO and files no event: `healEachAll`'s
+        per-body skip, because the amount is per body. **IT CANNOT KNOCK ANYTHING
+        OUT** — a filled body lands at `damage = max − remainingHp < max` for every
+        `remainingHp >= 1`, and the interpreter refuses `<= 0` whole so the property
+        belongs to the FUNCTION and not to today's printings. `target` reuses
+        `damageChosen.target`'s vocabulary; `source` is required for D136's
+        finding 1, the fifth time on this axis.
       • `filter: abilityPokemon` reuses D285's existing `CardFilter` member whole;
         `exceptNamed` reuses **D273's rider spelling verbatim**. The only NEW thing
         is the op.
@@ -19105,7 +19134,7 @@ import type { GameState, Seat } from "./types";
 
     engineVersion 0.335.0 → **0.336.0**
     (`packages/engine/package.json` in the same commit). */
-export const engineVersion = "0.352.0";
+export const engineVersion = "0.353.0";
 
 export type {
   ApplyResult,

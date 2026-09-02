@@ -160,8 +160,13 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     expect(family).toHaveLength(19);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(38);
     const unread = family.filter(([, t]) => !resolvedByAnyReader(t));
-    expect(unread.map(([, t]) => t)).toHaveLength(7);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(12);
+    // 🆕🆕🆕 **D451 — SEVEN BECAME FOUR AND TWELVE BECAME SEVEN**, and the three that
+    // left are the whole of bullet (c) below. ⚠️ **THE TWO NUMBERS DISAGREE FOR THE
+    // FIRST TIME IN THIS SECTION'S LIFE**: the HP rows carry 2, 1 and 2 printings where
+    // every sentence D449 and D450 claimed carried exactly one, so a slice that stepped
+    // both figures by the same 3 would have been wrong in one of them.
+    expect(unread.map(([, t]) => t)).toHaveLength(4);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(7);
     const unbuilt = unread.map(([, t]) => t);
     // …and the three this slice claims are OUT of it, which is the delta stated as an
     // identity rather than as arithmetic in a comment.
@@ -197,21 +202,39 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       legalAttackCorpus().some(([, t]) => t.includes("for each of your Maushold in play")),
     ).toBe(false);
 
-    // (c) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**, now the biggest
-    //     single refusal in the family. *"…until its remaining HP is N"* computes the
-    //     amount FROM THE TARGET; `remainingHpWithin` (continuous.ts) is a PREDICATE and
-    //     answers a different question, and nothing in this engine subtracts to a
-    //     target. ONE mechanism serves all three rows, which is why they are one bullet.
-    //     ⚠️ **AND THE FIRST OF THEM IS NOW A ONE-AXIS NEAR MISS OF ARM 23e**: this
-    //     slice supplied the seat scope it also needed, so the amount is the whole of
-    //     what is left. That is the refusal getting SHARPER, not weaker.
+    // (c) THE HP-TARGET ROWS — lines 425, 426 and 427, **5 printings**.
+    //     🆕🆕🆕 **SPENT AT D451, AND THIS BULLET GOT THE PREDICATE RIGHT, THE MECHANISM
+    //     RIGHT AND THE CONCLUSION WRONG.** *"…until its remaining HP is N"* does compute
+    //     the amount FROM THE TARGET; `remainingHpWithin` is a PREDICATE and D451 does
+    //     not call it; ONE mechanism does serve all three rows. What does not follow is
+    //     *"nothing in this engine subtracts to a target"* — `koSurvivalClamp`
+    //     (continuous.ts) has computed `effectiveMaxHp − KO_SURVIVAL_REMAINING_HP` since
+    //     D208, which is this arithmetic under another name, and *remaining HP* has had
+    //     exactly one definition (`effectiveMaxHp − damage`) since D349. The op is
+    //     `counterUntilRemainingHp`; the arms are 23g and 23h.
+    //     🛑 **AND THE ONE-AXIS CLAIM THIS BULLET MADE WAS ABOUT THE WRONG SENTENCE.**
+    //     It said *"the FIRST of them is now a one-axis near miss of arm 23e"*, meaning
+    //     line 425 — the BENCH fold, which really is a fold and really does differ from
+    //     arm 23e on the amount alone plus a zone. Lines 426/427 are not folds at all:
+    //     they name ONE body, and their near sibling is arm 22 (`damageActive`), not
+    //     23e. D451 inherited the seat scoping from neither — the direction lives in
+    //     `target`, `damageChosen`'s spelling, and the walk is the op's own.
     for (const s of [
       "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
       "Put damage counters on your opponent's Active Pokémon until its remaining HP is 50.",
     ]) {
-      expect(unbuilt).toContain(s);
+      expect(unbuilt, s).not.toContain(s);
+      expect(deriveAttackEffect(s)?.[0]?.op, s).toBe("counterUntilRemainingHp");
     }
+    // …and the FOLD really is the near miss, driven rather than asserted in prose: arm
+    // 23e's sentence and line 425 differ on the amount AND on the zone, so the two
+    // programs are unequal and neither is null.
+    expect(deriveAttackEffect(BOARD_FOLD)).not.toEqual(
+      deriveAttackEffect(
+        "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
+      ),
+    );
 
     // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
     //     Checkup's own per-condition amount, which is a status field reached by a status
@@ -460,7 +483,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.352.0");
+    expect(engineVersion).toBe("0.353.0");
   });
 });
 

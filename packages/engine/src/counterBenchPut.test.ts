@@ -164,7 +164,16 @@ const NEAR_MISSES = [
   // legal, same Bench, same verb, and refused on TWO axes at once — an "each of"
   // fold with no pick in it, and an amount read off the TARGET's remaining HP
   // rather than printed. Neither is a number this anchor could capture.
-  "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.",
+  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on each of your
+  // opponent's Benched Pokémon until its remaining HP is 100."*, which D451 MAPPED
+  // (arm 23h over the new op `counterUntilRemainingHp`), so the witness MOVED rather
+  // than being deleted (the standing note above). The replacement is the nearest
+  // still-unread row by VERB: the DELAYED retaliation, 1 legal printing, refused on
+  // the TIMING (a durated "During your opponent's next turn" window this anchor's
+  // `^Put` cannot open) and on the TARGET (*"the Attacking Pokémon"*, a body no zone
+  // in this op names). The sentence it replaced is not gone from this file: the claim
+  // about it is now an INEQUALITY of derived programs below the loop.
+  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
   // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
@@ -172,10 +181,24 @@ const NEAR_MISSES = [
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
   "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
-  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+  // ⚠️ RE-POINTED AT D451, for the row above's reason and onto that row's twin: the
+  // SAME delayed retaliation with its amount read off *"the damage done to this
+  // Pokémon"* instead of printed, 2 legal printings. It is this file's closest
+  // remaining neighbour on the axis D451 opened — an amount that is computed rather
+  // than captured — and it stays unread because the quantity is a HISTORY of the
+  // opponent's turn where D451's is a fact about the body standing there.
+  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
   "You must discard a Basic {G} Energy card from your hand in order to use this Ability. Once during your turn, you may put 3 damage counters on 1 of your opponent's Benched Pokémon.",
   "You must discard a Water Energy card from your hand in order to use this Ability. Once during your turn, you may put 2 damage counters on 1 of your opponent's Benched Pokémon.",
 ] as const;
+
+/** 🆕🆕🆕 D451's two printed HP targets. NOT in `NEAR_MISSES` for D450's stated
+    reason: both are MAPPED, so the claim about them is an INEQUALITY of derived
+    programs rather than a `toBeNull` that would go green the day an arm lands. */
+const BENCH_HP_TARGET =
+  "Put damage counters on each of your opponent's Benched Pokémon until its remaining HP is 100.";
+const ACTIVE_HP_TARGET =
+  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
 
 /** The SIBLING anchor, one noun phrase apart — D139's PUT on the DEFENDER. NOT in
     `NEAR_MISSES`, because it is MAPPED: the claim about it is not `toBeNull` but
@@ -387,6 +410,18 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     expect(deriveAttackEffect(WINDOWED_FOLD)).not.toEqual(deriveAttackEffect(CLAUSE));
     expect(deriveAttackEffect(WINDOWED_FOLD)?.[0]?.op).toBe("counterEachAll");
     expect(deriveAttackEffect(CLAUSE)?.[0]?.op).toBe("damageChosen");
+
+    // 🆕🆕🆕 **D451 — THE TWO ROWS THAT LEFT THIS LIST THIS SLICE, AND THE SAME REPAIR.**
+    // The Bench-scoped HP target is the sharpest of the pair: it shares this anchor's
+    // ZONE and its verb and differs only in where the amount comes from, so an anchor
+    // loose enough to swallow it would place a flat `N × 10` where the card prints a
+    // subtraction. Asserted as an INEQUALITY plus both positives, never as a nullity.
+    expect(deriveAttackEffect(BENCH_HP_TARGET)).not.toEqual(deriveAttackEffect(CLAUSE));
+    expect(deriveAttackEffect(BENCH_HP_TARGET)?.[0]?.op).toBe("counterUntilRemainingHp");
+    expect(deriveAttackEffect(ACTIVE_HP_TARGET)?.[0]?.op).toBe("counterUntilRemainingHp");
+    // …and the two HP targets are told apart by their TARGET and by nothing else,
+    // which is what makes this anchor's zone word load-bearing one file over.
+    expect(deriveAttackEffect(BENCH_HP_TARGET)).not.toEqual(deriveAttackEffect(ACTIVE_HP_TARGET));
   });
 
   it("stays disjoint from the SIBLING anchor in BOTH directions", () => {
@@ -562,7 +597,17 @@ describe("⚠️ the guard, ASSERTED rather than relied on — no derived op say
     // arrives here for the same reason the other two did: its `source` was a
     // HARDCODED `"ability"` in the interpreter until an attack reached it. The row
     // below is what makes this guard bite on the three fold arms.
-    const PROVENANCE_SOURCE = new Set(["damageActive", "damageChosen", "counterEachAll"]);
+    // 🆕🆕🆕 D451 — `counterUntilRemainingHp` is the FOURTH op on the provenance side,
+    // and it arrives here for the reason the other three did: `source` is a log label
+    // whose wrong value is a row saying "Ability:" about an attack, and nothing but this
+    // sweep would have noticed. It is the first one to arrive with the field REQUIRED
+    // from birth rather than after a hardcode was caught.
+    const PROVENANCE_SOURCE = new Set([
+      "damageActive",
+      "damageChosen",
+      "counterEachAll",
+      "counterUntilRemainingHp",
+    ]);
     const ZONE_SOURCE = new Set(["attachEnergyFrom"]);
     for (const row of sourced) {
       expect(

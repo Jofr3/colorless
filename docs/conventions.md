@@ -3097,3 +3097,72 @@ that follows quotes a number that looks like an unrelated defect.
 
 **The comment at that site already said so.** Reading it was not enough; running the suite
 was. **Step the census, then run — and expect the run to find a site the grep could not.**
+
+## A refusal names TWO things and only one of them may be true (D451)
+
+D450 found a refusal whose BOUNDARY was real and whose CONCLUSION did not follow. D451
+found the same shape one slice later, in a sentence that has stood since 0.88.0: these
+rows *"read their amount off the TARGET rather than off the text … which is a different
+mechanism and **no capture can express it**"*.
+
+Both halves were checked and they answer differently. **The AMOUNT is genuinely
+unprintable** — the sentence carries no count. **The DESTINATION is printed, is a bare
+integer, and a capture expresses it exactly.** The refusal named the quantity the reader
+must PRODUCE and concluded something about the quantity the reader must READ, and the two
+are not the same quantity.
+
+**When a doc block refuses on "X cannot be expressed", write down which X**: the thing the
+sentence prints, or the thing the op needs. A sentence that prints a destination and needs
+an amount is expressible the moment something computes between them.
+
+## The floor for a PER-BODY computed amount is `healEachAll`'s, not the whole-op guard (D451)
+
+This engine has THREE shipped shapes for "refuse a non-positive amount" and they are not
+interchangeable:
+
+- **above the walk** (`counterEachAll`, `damageActive`: `if (amount <= 0) return state;`) —
+  correct when the amount is a CONSTANT the producer handed in;
+- **before the park is built** (D449's `damageChosen` arms) — same case, one seam earlier;
+- **inside the per-body closure** (`healEach`, `healEachAll`: `if (healed <= 0) return
+  pokemon;`) — the only correct one when the amount is COMPUTED PER BODY.
+
+A whole-op guard on a per-body amount lets ONE body already at the target cancel the fold
+for every other body. **Ask where the amount is computed, not what the neighbouring op
+does**, and drive a board where one body's answer is zero and its neighbour's is not.
+
+## A "cannot kill" property is worth a guard, not a coincidence (D451)
+
+`counterUntilRemainingHp` fills a body to `damage = max − remainingHp`, which is lethal
+exactly when `remainingHp <= 0`. Every printed destination is positive, so the property
+holds for free on today's catalog — which is precisely D324's situation with
+`effectiveMaxHp`'s floor, and D324's answer applies: **write the guard anyway, because the
+alternative is an invariant stated in three doc blocks and asserted by no line of code.**
+
+The guard is what lets the op ship with **no `KNOCKED_OUT`, no `takePrizes`, no
+`koByEffect` marker and no Prize argument at all** — and it is the single line a future
+*"until its remaining HP is 0"* has to delete, which makes the cost of that printing
+visible at the site instead of discovered by a board.
+
+## Two printed tokens that CO-VARY need two anchors, not two optional groups (D451)
+
+`COUNTER_SPREAD_ON_OPPONENT` gets away with one optional `(Benched )?` because exactly one
+token varies. When TWO vary **together** — *"each of … Benched"* or neither and *"Active"*
+— a single regex with two optional groups additionally accepts the CROSS PRODUCT, which is
+two sentences the catalog does not print and whose readings nobody has decided.
+
+**Count the varying tokens before reaching for an optional group, and if there is more than
+one, ask whether they are independent.** Two anchors say the two printed things and refuse
+the crossings; the crossings are then a driven refusal rather than an accident.
+
+## A census delta has TWO cardinalities and they can move by different amounts (D451)
+
+Three consecutive slices (D448, D449, D450) claimed sentences that each carried exactly ONE
+printing, so "+N sentences" and "+N printings" were the same number and every ladder took
+the same front term. D451's three sentences carry 2, 1 and 2.
+
+**Read both figures off the corpus before stepping anything**, and expect the front terms
+to come in at least two sizes in one pass: `censusAtHead.test.ts`'s chains count PRINTINGS
+(this slice: `- 5`), the sentence-keyed ladders count SENTENCES (`- 3`), and
+`opponentResistanceBonus.test.ts`'s eleven-deep ladder counts FIXTURE IDS (`- 1`). Three
+sizes, one commit — and a slice that assumed one number would have been wrong in two of
+the three places.

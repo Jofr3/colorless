@@ -4316,6 +4316,91 @@ export type EffectOp =
       exceptNamed?: string;
       damagedOnly?: true;
     }
+  /** 🆕🆕🆕 **D451 — PUT DAMAGE COUNTERS UNTIL A BODY'S *REMAINING HP* IS `remainingHp`.**
+      *"Put damage counters on each of your opponent's Benched Pokémon until its
+      remaining HP is 100."* (`censusAttackCorpus.ts` line **425**, 2 legal printings),
+      *"…on your opponent's Active Pokémon until its remaining HP is 10."* (line **426**,
+      1) and *"…is 50."* (line **427**, 2) — **3 sentences / 5 legal printings**, and
+      `\bHP\b` over all 640 corpus sentences returns exactly these three, so the class is
+      CLOSED at this head rather than sampled.
+
+      🛑 **THE AMOUNT IS NOT PRINTED AND THAT IS THE WHOLE OP.** Every sibling in the
+      placement family reads a printed COUNT (`Put {N} damage counters …`) and multiplies
+      it by ten at the producer (§12). This sentence prints no count at all: it prints a
+      DESTINATION, and the amount is `effectiveMaxHp − damage − remainingHp`, computed
+      per body at the moment the op runs. So the field holds the printed **10 / 50 / 100**
+      exactly as printed — no × 10 anywhere, because the number is already HP and not
+      counters, which is the one place a reader of this op can be off by a factor of ten
+      in the OPPOSITE direction from every neighbour.
+
+      🛑 **`effectiveMaxHp`, NEVER THE PRINTED `hpOf` — AND THAT IS THE ENGINE'S OWN
+      DEFINITION OF THE PHRASE RATHER THAN A CHOICE MADE HERE.** *Remaining HP is
+      `effectiveMaxHp − damage`* is written at three shipped sites
+      (`remainingHpWithin`'s doc block in continuous.ts, `registry.ts`'s `KO_SURVIVAL`
+      note and index.ts's D349 paragraph), and `remainingHpWithin` — the ONE predicate
+      the catalog's other three *"remaining HP"* printings go through — spells it that
+      way. A Bravery Charm (+50) on a Benched body raises the destination it is being
+      filled to; Gravity Mountain (−30) lowers it. Reading the printed number would get
+      both wrong on the same board, and the suite drives the Charm rather than arguing it.
+
+      ⚠️ **A `null` MAXIMUM PLACES NOTHING.** `effectiveMaxHp` owns the catalog data gap
+      and an unknown maximum cannot be subtracted from — `remainingHpWithin`'s refuse
+      direction one file over, for the same reason: a data gap is never damaged by
+      default.
+
+      🛑 **IT CANNOT KNOCK ANYTHING OUT, AND THE GUARANTEE IS ARITHMETIC RATHER THAN
+      LUCK.** A body that takes counters ends at `damage = max − remainingHp`, so it is
+      lethally damaged (`damage >= max`) exactly when `remainingHp <= 0`. Every printed
+      destination is 10, 50 or 100, and the interpreter refuses `remainingHp <= 0` whole
+      — so the property is maintained by an explicit guard rather than by the absence of
+      a printing (D324's floor, same move). **A future *"until its remaining HP is 0"*
+      would delete that guard and owe a Knock Out, a Prize and a cause marker in the same
+      slice.** No `deals`, no KO, no `koByEffect` marker, no `takePrizes`: this op raises
+      damage and nothing else, and `finishAttack`'s two-seat sweep is the caller that
+      would resolve one if there were one.
+
+      ⚠️ **NO ROUNDING TO WHOLE COUNTERS.** §12 makes a counter 10 HP, but `damage` is
+      not guaranteed to be a multiple of ten (a halved hit leaves 5), and the printed
+      word is *"until"*: the placement stops AT the destination. `Math.ceil(x / 10) * 10`
+      would overshoot past it and — on a body whose maximum is not a multiple of ten —
+      could reach `max` and make the op lethal, which is exactly the property above. The
+      exact difference is placed and the destination is hit on the nose.
+
+      • `target` — the printed noun phrase, and `damageChosen.target`'s vocabulary
+        reused verbatim rather than a new spelling of one axis. `"opponentActive"` is
+        *"your opponent's Active Pokémon"* (lines 426/427); `"opponentBench"` is *"each
+        of your opponent's Benched Pokémon"* (line 425). **REQUIRED** — both members have
+        printings, and the DIRECTION stays in the value the way `damageChosen`'s does
+        (D104's minimal shape, D138's `discardOpponentDeckTop` precedent): all three
+        sentences say *"your opponent's"*, so there is no seat left to field.
+      • `remainingHp` — the printed destination, in HP. **REQUIRED**: it is the whole
+        sentence, and an absent one has no honest default.
+      • `source` — the provenance the `COUNTERS_PLACED` row prints, spelled exactly as
+        `damageActive`, `damageChosen` and `counterEachAll` spell it. **REQUIRED even
+        though only `"attack"` has a producer today**, which is D136's finding 1 refused
+        at the front for the fifth time on this axis (D138, D139, D140 and D450 paid the
+        first four, every one of them a hardcode that was true until it wasn't). The
+        wrong value here is not a wrong board — it is a `log.ts` row saying *"Ability:"*
+        about an attack, which is the failure mode that has never announced itself.
+
+      ⚠️ **THE DISTRIBUTIVE *"its"* IS PER BODY.** *"each of your opponent's Benched
+      Pokémon until **its** remaining HP is 100"* fills each body to 100 INDEPENDENTLY —
+      the possessive binds to the walked body, not to a total shared across the Bench. A
+      build that computed one amount and applied it to all is killed by any board whose
+      bench bodies carry different damage, which is the board the suite drives.
+
+      ⚠️ **NO `filter`, NO `exceptNamed`, NO `damagedOnly`.** The printed noun is the
+      ZONE and nothing more; an absent key is the only honest spelling of a rider no
+      card carries (`counterEachAll`'s own rule one member up). A body already at or
+      below the destination takes ZERO and files no event — `healEachAll`'s per-body
+      `<= 0` skip, which is the shipped shape for a per-body COMPUTED amount and not a
+      third answer beside the two whole-op guards this family also has. */
+  | {
+      op: "counterUntilRemainingHp";
+      target: "opponentActive" | "opponentBench";
+      remainingHp: number;
+      source: "ability" | "attack";
+    }
   /** Place `amount` HP of damage on the OPPONENT's Active Pokémon. A COUNTER
       placement, not attack damage: no Weakness/Resistance (§8.5) and no
       `damageReductionAfterWR` passive. Never parks; can KO — the caller sweeps
@@ -9918,6 +10003,14 @@ const COUNTER_MOVE_TO_CHOSEN =
 // the text ("…until its remaining HP is 10." — Alolan Raticate swsh10.5-042 bare,
 // Claydol sv03-095 with a self-damage rider), which is a different mechanism and
 // no capture can express it.
+// 🆕🆕🆕 **CORRECTED IN PLACE AT D451 (D423), AND IT IS THE SAME HALF-TRUTH INDEX.TS
+// CARRIES.** A different mechanism — yes, and it is `counterUntilRemainingHp` (arms
+// 23g/23h below). "No capture can express it" is a claim about the AMOUNT and the
+// sentence does not print one; it prints a DESTINATION, which is a bare integer and
+// captures like any other. ⚠️ The census in this block was run on the LOCAL D1
+// (978 cards / 6 sets); on `legal_standard = 1` the family is 3 sentences / 5
+// printings and the two ids above are not resolvable in this checkout, so neither
+// is claimed.
 //
 // THE QUANTITY SLOT IS A BARE `(\d+)` AND THEREFORE NOT A D120 TEMPLATE. That
 // rule licenses a lookup TABLE only when the varying token has a CLOSED
@@ -10071,8 +10164,11 @@ const COUNTER_PUT_ON_OPPONENT_BENCH =
 // real catalog rows: "Put N damage counters on **1 of** your opponent's Benched
 // Pokémon." (arm 23 — the determiner), "Put N damage counters on **each of** your
 // opponent's Pokémon that has any damage counters on it." (a per-target FILTER and
-// a fold, no pick at all), "Put damage counters on your opponent's Active Pokémon
-// **until its remaining HP is 10**." (a number read off the TARGET), and every
+// a fold, no pick at all — MAPPED at D450, arm 23f, and still a near miss for THIS
+// anchor), "Put damage counters on your opponent's Active Pokémon **until its
+// remaining HP is 10**." (a number read off the TARGET — MAPPED at D451, arm 23g,
+// and likewise still a near miss here: a row this anchor must refuse does not stop
+// being one when another anchor claims it), and every
 // lowercase mid-sentence ABILITY printing of the same action — kept off by the
 // capitalised "Put" plus `^…$`, with no /i anywhere, exactly as its two siblings.
 // The possessive carries the `['’]` class (D136/D137) in its ONE marked slot.
@@ -10225,6 +10321,62 @@ const COUNTER_FOLD_ON_OPPONENT_ALL =
 // so the zone word is refused here by the anchor and by the population both.
 const COUNTER_FOLD_ON_OPPONENT_DAMAGED =
   /^Put (\d+) damage counters on each of your opponent['’]s Pokémon that has any damage counters on it\.$/;
+// 🆕🆕🆕 **D451 — THE TWO HP-TARGET ANCHORS: THE ONLY PLACEMENT SENTENCES IN THE
+// COLUMN THAT PRINT NO COUNT.** *"Put damage counters on your opponent's Active
+// Pokémon until its remaining HP is {10|50}."* (`censusAttackCorpus.ts` lines
+// **426** and **427**, 1 + 2 printings) and *"Put damage counters on each of your
+// opponent's Benched Pokémon until its remaining HP is 100."* (line **425**, 2) —
+// **3 sentences / 5 legal printings**, and the largest single refusal this family
+// carried at D450's head.
+//
+// 🛑 **THE REFUSAL THEY OVERTURN IS *"no capture can express it"*, WHICH IS HALF
+// TRUE AND HALF A NON-SEQUITUR (D450's shape, one slice later).** `COUNTER_PUT_ON_
+// DEFENDER`'s block above and index.ts's D139 paragraph have both said since 0.88.0
+// that these rows *"read their amount off the TARGET rather than off the text …
+// which is a different mechanism and no capture can express it"*. The AMOUNT really
+// is unprintable — there is no count in the sentence to capture. **The DESTINATION
+// is printed, it is a bare integer, and a capture expresses it exactly.** What was
+// missing was never a capture: it was an op whose amount is computed at the BODY,
+// which is the same place `damagedOnly`, `healEach.pokemonType` and
+// `gust.remainingHpAtMost` already read board facts `matchesFilter` cannot. Both
+// doc blocks are corrected in place and dated (D423). ⚠️ **AND THE CENSUS BEHIND
+// THE REFUSAL WAS THE LOCAL D1's (978 cards / 6 sets, 2026-08-02), not
+// `legal_standard = 1`** — the two populations disagree on the CARRIERS (it names
+// "Alolan Raticate swsh10.5-042" and "Claydol sv03-095", neither of which this
+// checkout can resolve and neither of which is claimed here) while agreeing on the
+// sentences. D413's two-populations trap, noted rather than re-entered.
+//
+// 🛑 **TWO ANCHORS AND NOT ONE OPTIONAL GROUP, AND THE REASON IS CO-VARIANCE.**
+// `COUNTER_SPREAD_ON_OPPONENT` gets away with a single `(Benched )?` capture
+// because exactly one token varies. Here TWO do — the determiner *"each of"* and
+// the zone word — and they vary TOGETHER: the printed pair is `each of` + `Benched`
+// or neither + `Active`. One regex with two optional groups would additionally
+// accept *"…on each of your opponent's Active Pokémon until…"* and *"…on your
+// opponent's Benched Pokémon until…"*, two sentences the catalog does not print and
+// whose readings nobody has decided. Two anchors say the two printed things and
+// refuse the cross product, which is D104's minimal shape at the regex.
+//
+// ⚠️ **THE DESTINATION IS ALREADY HP AND IS NOT MULTIPLIED (§12).** Every other
+// anchor in this family captures COUNTERS and the arm does the × 10. These two
+// capture *"remaining HP is 100"* — HP as printed — so the arm passes the number
+// through untouched. It is the same conversion question as its six siblings and
+// the opposite answer, which is why it is stated at both ends.
+//
+// THE NEAR MISS THE `$` EXISTS FOR IS REAL AND IS A STRICT PREFIX: the Active
+// sentence at 10 is printed again with a consequent riding it — *"…until its
+// remaining HP is 10. If you placed any damage counters in this way, this attack
+// also does 120 damage to this Pokémon."* — which the D139 block names as
+// "Claydol sv03-095 with a self-damage rider" and which `counterPut.test.ts` has
+// carried as a near-miss row since 0.88.0. It is NOT in the `legal_standard = 1`
+// column (the corpus's three `\bHP\b` rows are the whole of it), so the anchor
+// refuses it on the tail and the population both. NO /i, the family's standing
+// reason: the capitalised "Put" plus `^…$` is what keeps the lowercase
+// mid-sentence Ability printings of the same action off the attack path.
+// ONE apostrophe slot each, classed `['’]` (D136/D137).
+const COUNTER_UNTIL_REMAINING_HP_ACTIVE =
+  /^Put damage counters on your opponent['’]s Active Pokémon until its remaining HP is (\d+)\.$/;
+const COUNTER_UNTIL_REMAINING_HP_BENCH =
+  /^Put damage counters on each of your opponent['’]s Benched Pokémon until its remaining HP is (\d+)\.$/;
 // The SELF-LOCK (D143) — "During your next turn, this Pokémon can't attack.", the
 // whole printed effect on TWENTY printings, and the same sentence again as the
 // SECOND half of Ninetales sv03-029/-199 "Nine-Tailed Dance" (the compound anchor
@@ -20237,6 +20389,71 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           // at the WALK here rather than where a candidate list is built, which is the
           // only structural difference from its first inhabitant.
           damagedOnly: true,
+        },
+      ];
+    }
+  }
+
+  // 23g. "Put damage counters on your opponent's Active Pokémon until its remaining
+  //       HP is {N}." — 🆕🆕🆕 D451, corpus lines **426** and **427**, **2 sentences /
+  //       3 legal printings**. Arm 22's target and arm 22's verb with the printed
+  //       COUNT replaced by a printed DESTINATION, which is the whole slice.
+  //
+  //       🛑 **NO × 10 HERE, AND THAT IS THE ONE LINE THIS ARM COULD HAVE COPIED FROM
+  //       ITS SIBLINGS AND BEEN WRONG.** Every other arm in this family captures
+  //       counters and converts at the producer (§12); this capture is already HP,
+  //       because the printed phrase is *"remaining HP is 100"* and not *"100 damage
+  //       counters"*. A `* 10` would fill a 200 HP body to a remaining 1000 — i.e.
+  //       place nothing at all — and read as a silently inert attack.
+  //
+  //       ⚠️ **`>= 1` AND NOT `>= 0`, AND THE BOUNDARY IS THE NO-KNOCK-OUT PROPERTY.**
+  //       A destination of 0 is the one value at which this op becomes lethal
+  //       (`damage = max − 0 >= max`), so it is refused at the producer AND again at
+  //       the interpreter — the loud half of the pair every placement arm carries, on
+  //       a guard that here defends a documented invariant rather than an empty park.
+  match = COUNTER_UNTIL_REMAINING_HP_ACTIVE.exec(effect);
+  if (match !== null) {
+    const activeRemainingHp = Number(match[1]);
+    if (activeRemainingHp >= 1) {
+      return [
+        {
+          op: "counterUntilRemainingHp",
+          // "your opponent's ACTIVE Pokémon" — one body, and `damageChosen.target`'s
+          // vocabulary rather than a second spelling of the same axis.
+          target: "opponentActive",
+          remainingHp: activeRemainingHp,
+          // D136's finding 1 refused at the front for the fifth time: an attack that
+          // filed `"ability"` would render as *"Ability: 150 damage to X"*.
+          source: "attack",
+        },
+      ];
+    }
+  }
+
+  // 23h. "Put damage counters on each of your opponent's Benched Pokémon until its
+  //       remaining HP is {N}." — 🆕🆕🆕 D451, corpus line **425**, **1 sentence / 2
+  //       legal printings**. Arm 23g's sentence with the determiner *"each of"* and the
+  //       zone word *"Benched"* co-varying in, which is why it is a SECOND anchor and
+  //       not an optional group on the first (the anchor block above states that).
+  //
+  //       🛑 **THE POSSESSIVE *"its"* IS DISTRIBUTIVE AND THE OP EXPRESSES IT BY
+  //       CARRYING NO AMOUNT AT ALL.** Each Benched body is filled to `remainingHp`
+  //       INDEPENDENTLY, so a Bench holding a 200 HP body at 30 damage beside an
+  //       undamaged one takes 70 on the first and 100 on the second. The one shape
+  //       that gets this wrong computes a single amount and applies it to every body —
+  //       unconstructible here, because there is no `amount` field to compute into.
+  match = COUNTER_UNTIL_REMAINING_HP_BENCH.exec(effect);
+  if (match !== null) {
+    const benchRemainingHp = Number(match[1]);
+    if (benchRemainingHp >= 1) {
+      return [
+        {
+          op: "counterUntilRemainingHp",
+          // The printed zone: their BENCH only, so a defender at 200 remaining HP is
+          // untouched by this sentence and touched by arm 23g's.
+          target: "opponentBench",
+          remainingHp: benchRemainingHp,
+          source: "attack",
         },
       ];
     }

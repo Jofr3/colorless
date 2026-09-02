@@ -94,8 +94,18 @@ const NEAR_MISSES = [
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
   "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
-  // The amount read off the TARGET rather than printed.
-  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
+  // Active Pokémon until its remaining HP is 10."* — "the amount read off the TARGET
+  // rather than printed" — which D451 MAPPED (arm 23g over the new op
+  // `counterUntilRemainingHp`), so the witness MOVED rather than being deleted and the
+  // claim about it is an INEQUALITY of derived programs below the loop. The replacement
+  // is the SCALED FOLD: *"Put 1 damage counter on each of your opponent's Pokémon for
+  // each of your Maushold in play."* — a real catalog row with **0 Standard-legal
+  // printings**, refused on the SINGULAR noun and on a `pokemonInPlay` scale, and the
+  // nearest thing this family has to a fold with no pick in it. 🛑 It is named here as
+  // a CATALOG row and never through `legalAttackCorpus()`, which would be a claim about
+  // the wrong population (D413/D449).
+  "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // The distribution tail on a MOVE rather than a PUT, and behind a status clause —
   // the one row in the catalog that carries this file's phrase and is NOT its arm.
   "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
@@ -349,6 +359,17 @@ describe("the SPREAD anchor — N repeated ops, not a new prompt kind", () => {
     for (const text of NEAR_MISSES.slice(2, 6)) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+    // 🆕🆕🆕 **D451 — THE ROW THAT LEFT THIS LIST, AS AN INEQUALITY.** It shares this
+    // anchor's verb and its opponent-side possessive and differs on the TAIL: *"in any
+    // way you like"* opens a distribution where *"until its remaining HP is N"* closes
+    // an arithmetic. An anchor that dropped its tail would claim both, so the claim is
+    // made in the form that still goes red on that defect.
+    const HP_TARGET = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
+    expect(deriveAttackEffect(HP_TARGET)?.[0]?.op).toBe("counterUntilRemainingHp");
+    expect(deriveAttackEffect(HP_TARGET)).not.toEqual(spread(2, "opponentBench"));
+    // …and it derives to ONE op where this anchor unrolls to N, which is the structural
+    // difference the two readings turn on.
+    expect(deriveAttackEffect(HP_TARGET)).toHaveLength(1);
   });
 
   it("refuses case, punctuation and token rewrites — no /i anywhere on this path", () => {

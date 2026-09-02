@@ -118,7 +118,22 @@ function putOp(hp: number): EffectOp {
     another still-unmapped clause — never delete it. The claim is that an unread
     sentence stays LOUD, and that claim needs a live witness to be about. */
 const NEAR_MISSES = [
-  "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.",
+  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
+  // Active Pokémon until its remaining HP is 10."* — the sentence this file's own doc
+  // block called the whole reason the regex captures `(\d+)` instead of making the
+  // count optional. D451 MAPPED it (arm 23g over the new op
+  // `counterUntilRemainingHp`), so the witness MOVED rather than being deleted, and
+  // the claim about it is now an INEQUALITY of derived programs below the loop.
+  // 🛑 THE REPLACEMENT IS THE NEAREST ROW ON THE AXIS D451 OPENED and it stays unread:
+  // *"…put damage counters on the Attacking Pokémon **equal to the damage done to this
+  // Pokémon**."* (2 legal printings) also declines to print its amount — but that
+  // amount is a HISTORY of the opponent's turn where D451's is a fact about the body
+  // standing there, and it rides a durated window this anchor's `^Put` cannot open.
+  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+  // ⚠️ **STILL NULL AND STILL A CATALOG ROW** — the HP target at 10 with a consequent
+  // riding it. D451 built the bare sentence and this compound is a STRICT PREFIX
+  // extension of it, so it is the near miss the two new anchors' `$` exists for, and
+  // it stays in this list rather than moving out with its own prefix.
   "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10. If you placed any damage counters in this way, this attack also does 120 damage to this Pokémon.",
   // ⚠️ RE-POINTED AT D143 — this slot held Ninetales sv03-029/-199's "Nine-Tailed
   // Dance", which D143 mapped; the witness moved rather than being deleted. Its
@@ -345,12 +360,17 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
-    // THE TWO THAT MATTER MOST are the other printings aimed at the SAME target.
-    // Their amount is read off the TARGET ("until its remaining HP is 10"), which is
-    // a mechanism no capture expresses — so a reader that made the count optional
-    // would map them to a placement of nothing at all, silently.
-    expect(deriveAttackEffect(NEAR_MISSES[0])).toBeNull();
+    // 🆕🆕🆕 **D451 — THIS PARAGRAPH SAID "no capture expresses it" AND HALF OF THAT
+    // WAS A NON-SEQUITUR.** It used to read: the other two printings aimed at the SAME
+    // target have an amount read off the TARGET, "a mechanism no capture expresses", so
+    // a reader that made the count optional would map them to a placement of nothing at
+    // all. The AMOUNT is indeed unprintable; the DESTINATION is printed and captures
+    // like any other, and D451 built both rows on exactly that. What survives whole is
+    // the operational half: **this anchor's `(\d+)` must stay REQUIRED**, because an
+    // optional count would let it claim a sentence whose number means remaining HP
+    // rather than counters — a 10 read as a placement of 100. Driven below, both ways.
     expect(deriveAttackEffect(NEAR_MISSES[1])).toBeNull();
+    expect(deriveAttackEffect(NEAR_MISSES[0])).toBeNull();
     // The two ABILITY printings are refused by the CAPITAL "Put" plus `^…$` alone,
     // with no /i anywhere in this file — both spell the action lowercase and mid
     // sentence, which is the standing argument for the flag's absence.
@@ -371,6 +391,23 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
       expect(deriveAttackEffect(fold)?.[0]?.op, fold).toBe("counterEachAll");
     }
     expect(deriveAttackEffect(clauseText(2))?.[0]?.op).toBe("damageActive");
+
+    // 🆕🆕🆕 **D451 — THE HP TARGET, AS AN INEQUALITY, AND IT IS THE SHARPEST ONE THIS
+    // FILE HAS.** Its noun phrase is byte-identical to this anchor's — *"your
+    // opponent's Active Pokémon"* — so nothing but the QUANTITY tells them apart, and
+    // an anchor whose count went optional would claim it and place 10 HP where the card
+    // means "fill to 10 remaining". Both positives are asserted beside the inequality.
+    const HP_TARGET = "Put damage counters on your opponent's Active Pokémon until its remaining HP is 10.";
+    expect(deriveAttackEffect(HP_TARGET)).toEqual([
+      { op: "counterUntilRemainingHp", target: "opponentActive", remainingHp: 10, source: "attack" },
+    ]);
+    expect(deriveAttackEffect(HP_TARGET)).not.toEqual(deriveAttackEffect(clauseText(1)));
+    // …and the printed 10 is HP, NOT counters: `damageActive` at a printed 10 carries
+    // `amount: 100` and the HP target carries `remainingHp: 10`. The two numbers read
+    // the same on the page and mean different things, which is the whole §12 hazard.
+    expect(deriveAttackEffect("Put 10 damage counters on your opponent's Active Pokémon.")).toEqual([
+      { op: "damageActive", amount: 100, source: "attack" },
+    ]);
 
     // 🆕 D345 — AND THE RE-POINTED WITNESS IS STILL UNMAPPED, DRIVEN RATHER THAN
     // WRITTEN DOWN. `NEAR_MISSES[8]` was Dusknoir's "Cursed Blast" until this slice
