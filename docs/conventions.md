@@ -3271,6 +3271,31 @@ So when you meet a shipped refusal: re-read it as naming a **carrier**, identify
 which carrier would actually serve the sentence, and re-measure the population
 against *that* one rather than the one that refused it.
 
+### The sweep measures the corpus; a classifier measures the work left (D459)
+
+A whole-corpus sweep costs ~2.3 hours and answers *do these rows still
+discriminate*. It cannot answer *which row should I build next*, and every
+targeting failure in this run went undetected by twenty consecutive green
+sweeps: three slices cited corpus rows by array index against a convention
+written to forbid it; one family mis-priced its own blocker twice; a
+handed-forward list was wrong three slices running.
+
+**So when targeting is the weak step, build an instrument for targeting.**
+`scripts/residue-census.ts` classifies every residue sentence by the single
+deletion or substitution that reaches a built string, and its first run produced
+the number none of the prose had: **`OPAQUE` is 68% of the residue**, so the
+cheap drawer is nearly empty.
+
+Two requirements make such an instrument trustworthy, both learned the hard way:
+
+- **Print the VALUE, not only the verdict.** Ten rows were one-token deletions
+  and nine lost the token's meaning in the derived value — a spelling blocker
+  against nine semantic ones. A count cannot separate those; the value can.
+- **A class is a LOWER BOUND on the work, never an estimate.** The instrument's
+  own blind spot fires on the record's rows: one "cheap substitution" was priced
+  at three mechanisms by an earlier slice, and two rows' readable half is a rider
+  while the head is unbuilt. Say *which half* survived.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
