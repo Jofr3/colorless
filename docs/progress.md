@@ -556,16 +556,15 @@
 > (BUMPED — see §6)**, **`MATCH_RECORD_VERSION` 29**, mutation corpus **1,974 → 1,991**, archive
 > ratchet **130**.
 >
-> 🛑 **(0) THE DEBT, AND IT IS THE WHOLE OF IT.** D460 was **NOT COMMITTED** and the whole-corpus
-> sweep was **NOT RUN** — the work order forbade both, explicitly. So the FIRST action of the next
-> session is the §0 ordering rule, in this order and no other:
-> 1. `git add` **explicit paths** (never `-A`) — the 61 dirty paths include one UNTRACKED file,
->    `packages/engine/src/coinThreshold.test.ts`, which a path-less commit will silently miss;
-> 2. `bun scripts/mutation/precheck.ts` **at the committed bytes** (expect `1991 / 1991` clean);
-> 3. `bun run mutants --decision D318 --allow-dirty` LAST, after every doc edit — expect the
->    baseline `10 killed · 1 known survivor(s)`, the survivor being `D318-boost-program-not-appended`;
-> 4. only THEN launch the whole-corpus sweep. ⚠️ **`docs/progress.md` CARRIES EIGHT `D318-*` ROWS**,
->    so a late edit to it during a sweep voids the run (D446) — and this slice edited it four times.
+> ✅ **(0) THE DEBT IS PAID, AND THE §0 ORDERING WAS FOLLOWED AS WRITTEN.** D460 is committed
+> (`f86448cb`) with explicit paths — the untracked `packages/engine/src/coinThreshold.test.ts` was
+> named, as this block warned it must be, along with `biome.json` and both instruments — `precheck`
+> was re-run at the committed bytes (clean, **1,991 / 1,991**), and only then did the whole-corpus
+> sweep launch against a clean tree, so the eight `D318-*` rows in `docs/progress.md` ran against
+> committed bytes (D446). The sweep is green: `1960 killed · 31 known survivor(s) · 0 GAP(s) ·
+> 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 8,421.2s`, `SWEEP_EXIT=0`, tree clean at
+> exit. Completeness structural, from the module: **1,991 listed / 1,991 run / 1,991 MATCHED /
+> 0 missing / 0 unmatched**, 17 of them D460's — **twenty-second consecutive clean run**.
 >
 > ✅🔮 **(1) THE EXPECTED WHOLE-CORPUS SWEEP DELTA, COMMITTED HERE BEFORE ANY SWEEP RUNS.**
 > D459 closed at `1943 killed · 31 known survivor(s)` over 1,974. **Twenty have landed in a row;
