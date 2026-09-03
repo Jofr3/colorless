@@ -1652,6 +1652,13 @@ function stepOp(
     case "scheduleKnockOut":
       return { done: scheduleKnockOut(state, ctx, events) };
     case "installRecoil":
+      // 🆕🆕 D456 — `op.amount` IS `number | "damageTaken"` and it is passed STRAIGHT
+      // THROUGH, which is the whole difference from the `case "heal"` arm five lines
+      // down. That one resolves its own string against `ctx.dealt` HERE, because
+      // `heal`'s "dealt" is the hit the attacker is landing right now. This op's
+      // string is the hit the HOLDER will take on the OPPONENT's next turn, which no
+      // context reachable from this line has ever heard of; resolving it here would
+      // stamp the trap with the damage of the attack that ARMED it.
       return { done: installRecoil(state, op.amount, ctx, events) };
     case "heal":
       // 🆕🆕 D427 — `amount` IS `number | "dealt"`, and this line is the whole of the
@@ -7087,7 +7094,7 @@ function sameSchedule(a: ScheduledEffect, b: ScheduledEffect): boolean {
     the two above (D140/D142/D146). */
 function installRecoil(
   state: GameState,
-  amount: number,
+  amount: number | "damageTaken",
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -7098,10 +7105,43 @@ function installRecoil(
   const turn = state.turn + 1;
   const existing = active.installedRecoil;
   const stacking = existing !== null && existing.turn === turn;
-  const merged = stacking ? Math.max(existing.amount, amount) : amount;
-  if (stacking && merged === existing.amount) return state;
-  events.push({ type: "RECOIL_ARMED", seat: ctx.seat, uid, amount: merged });
-  return withActive(state, ctx.seat, { ...active, installedRecoil: { turn, amount: merged } });
+  // 🆕🆕 D456 — the op's TWO inhabitants collapse into the record's TWO fields here,
+  // and this is the only place that knows the mapping. The printed floor of the
+  // unprinted member is 0: line 180 promises nothing but the hit.
+  const floor = amount === "damageTaken" ? 0 : amount;
+  const merged = stacking ? Math.max(existing.amount, floor) : floor;
+  // 🛑 BOTH READS OF `existing` ARE GATED ON `stacking`, AND THE FLAG'S GATE IS THE
+  // ONE THAT IS EASY TO DROP. A record whose window has PASSED is still sitting on the
+  // body — D124's expiry is by arithmetic and nothing sweeps it — so an ungated
+  // `existing.ofDamageTaken === true` would let a spent line-180 stamp turn a fresh FLAT
+  // install into a scaled one two turns later. The `amount` read one line up has carried
+  // that gate since D152; this one is new and needs it for the same reason.
+  const wasTaken = stacking && existing.ofDamageTaken === true;
+  const taken = amount === "damageTaken" || wasTaken;
+  // ⚠️ THE SUPPRESSION NOW HAS TWO CONJUNCTS AND BOTH ARE LOAD-BEARING. D152's rule
+  // is *say nothing when the merge says nothing new*; a flat 60 arriving on a body
+  // already holding 100 moves no number and prints no row. But a `"damageTaken"`
+  // install arriving on a body holding a flat 100 moves the FLAG while leaving the
+  // floor alone, and that is emphatically news — the trap stops being capped.
+  if (stacking && merged === existing.amount && taken === wasTaken) return state;
+  events.push({
+    type: "RECOIL_ARMED",
+    seat: ctx.seat,
+    uid,
+    amount: merged,
+    // ⚠️ THE SAME SPELLING AND THE SAME OMISSION RULE AS THE RECORD BELOW (D421's
+    // "same fact, same spelling, every surface"), because the row would otherwise
+    // announce a 0-damage counterattack on the one printing whose amount is unknown
+    // until it fires. `log.ts` has the second arm.
+    ...(taken ? { ofDamageTaken: true } : {}),
+  });
+  return withActive(state, ctx.seat, {
+    ...active,
+    // ⚠️ THE KEY IS OMITTED RATHER THAN WRITTEN `false` — `ofDamageTaken?: true` has
+    // exactly two inhabitants and `undefined` is one of them, so a `false` would be a
+    // second spelling of absent in a PERSISTED record (types.ts).
+    installedRecoil: { turn, amount: merged, ...(taken ? { ofDamageTaken: true } : {}) },
+  });
 }
 
 /** §11 (D142) — is an ATTACK's effect aimed at `seat`'s Active refused by that
@@ -8157,7 +8197,7 @@ function snipeActive(
   // the stage it queues only makes sense inside an attack's epilogue queue. An
   // Ability that ever derives one of these ops damages nobody "by an attack".
   return dealt > 0 && ctx.invokedBy === "attack"
-    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, events)
+    ? reactToAttackDamage(hit, opponent, target.uid, ctx.seat, target.active, dealt, events)
     : hit;
 }
 
@@ -8192,12 +8232,17 @@ function reactToAttackDamage(
   damagedUid: string,
   attackerSeat: Seat,
   damagedBody: InPlayPokemon,
+  // 🆕🆕 D456 — `dealt` from the caller, for `installedRecoilOf`'s unprinted amount
+  // (corpus line 180). It is the SAME number the caller's own `dealt > 0` gate reads,
+  // passed rather than recomputed so the gate and the amount can never disagree.
+  damageTaken: number,
   events: GameEvent[],
 ): GameState {
   let next = state;
   const attacker = activeTop(next, attackerSeat);
   const recoil =
-    passivesOf(next, damagedBody).damageAttacker + installedRecoilOf(next, damagedBody);
+    passivesOf(next, damagedBody).damageAttacker +
+    installedRecoilOf(next, damagedBody, damageTaken);
   if (attacker !== null && recoil > 0) {
     next = withActive(next, attackerSeat, {
       ...attacker.active,

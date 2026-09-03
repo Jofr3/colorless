@@ -132,15 +132,25 @@ const CENSUS_IDS = ["sv02-093", "sv02-239"] as const;
 const REAL_NEAR_MISSES = [
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
   "As often as you like during your turn, you may move 1 damage counter from 1 of your other Pokémon to this Pokémon.",
-  // ⚠️ RE-POINTED A SECOND TIME AT D152 — the slot has now held three sentences:
-  // Ninetales sv03-029/-199's "Nine-Tailed Dance" until D143 mapped it, then
-  // Lycanroc ex sv02-117/-241 "Scary Fangs" until D152 mapped THAT. A near-miss
-  // list is a claim about THIS anchor's reach, not about what is unread, so a
-  // mapped sentence is REPLACED rather than deleted — and the replacement is
-  // Mabosstiff sv02-143 "Comeuppance", which is Scary Fangs's own sibling: same
-  // duration, same body, same §9 site, and an amount read off the damage done.
-  // It is neither this anchor's verb nor its target either way.
-  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+  // 🛑 **RE-POINTED A THIRD TIME AT D456 — AND THE OCCUPANT IT REPLACES WAS NOT A
+  // CATALOG ROW AT ALL, WHICH IS THE FINDING.** The slot has held four sentences:
+  // Ninetales sv03-029/-199's "Nine-Tailed Dance" (mapped D143), Lycanroc ex's "Scary
+  // Fangs" (mapped D152), then the retaliation-with-an-unprinted-amount — spelled here
+  // with *"(even if **it** is Knocked Out)"*. **The catalog prints that sentence with
+  // *"(even if **this Pokémon** is Knocked Out)"* and nothing else.** Corpus line 180 is
+  // the only printing of it, and this string was one parenthetical away from it, so the
+  // rung asserted a hand-written paraphrase stayed null while the real printing was
+  // never asked about — D183's defect (*"an arm written from a paraphrased sentence
+  // passes a test written against the same paraphrase and matches no real card"*)
+  // reaching a REFUSAL instead of an arm. FOUR files carried the same paraphrase; D456
+  // found all four by grepping the phrase rather than the vocabulary.
+  //
+  // The replacement is a REAL corpus row (1 legal printing) and is this anchor's nearest
+  // unread neighbour by a distance no other candidate comes close to: the SAME verb, the
+  // SAME quantifier, the SAME destination, and ONE inserted adjective in the source noun
+  // phrase. It is refused on that adjective alone — a `Benched Ancient Pokémon` filter
+  // this anchor has no capture for — which is exactly what a near-miss slot is for.
+  "Move all damage counters from 1 of your Benched Ancient Pokémon to your opponent's Active Pokémon.",
   // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on your opponent's
   // Active Pokémon until its remaining HP is 10."*, which D451 MAPPED (arm 23g over
   // the new op `counterUntilRemainingHp`), so the witness MOVED rather than being

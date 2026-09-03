@@ -124,12 +124,25 @@ const NEAR_MISSES = [
   // count optional. D451 MAPPED it (arm 23g over the new op
   // `counterUntilRemainingHp`), so the witness MOVED rather than being deleted, and
   // the claim about it is now an INEQUALITY of derived programs below the loop.
-  // 🛑 THE REPLACEMENT IS THE NEAREST ROW ON THE AXIS D451 OPENED and it stays unread:
-  // *"…put damage counters on the Attacking Pokémon **equal to the damage done to this
-  // Pokémon**."* (2 legal printings) also declines to print its amount — but that
-  // amount is a HISTORY of the opponent's turn where D451's is a fact about the body
-  // standing there, and it rides a durated window this anchor's `^Put` cannot open.
-  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+  // 🆕🆕 **RE-POINTED AGAIN AT D456, AND THE REASON THE OLD OCCUPANT GAVE IS HALF
+  // FALSE.** The slot held *"…put damage counters on the Attacking Pokémon **equal to the
+  // damage done to this Pokémon**."* (corpus line 180, 2 legal printings) with the note
+  // *"that amount is a HISTORY of the opponent's turn where D451's is a fact about the
+  // body standing there, and it rides a durated window this anchor's `^Put` cannot
+  // open."* The SECOND half is exactly right and is why the sentence never belonged to
+  // this anchor. The FIRST half is not: at the §9 recoil site the figure is a LOCAL
+  // named `dealt`, two lines above the read, so nothing is recorded and nothing is
+  // carried. D456 claimed it over `installRecoil` with a widened
+  // `amount: number | "damageTaken"`, and the witness MOVED rather than being deleted.
+  //
+  // The replacement is corpus line 433, 1 legal printing and still unread — this
+  // anchor's verb, this anchor's noun, this anchor's count position, and refused twice:
+  // the bound sits BETWEEN the verb and the count (*"Put **up to** 9 damage counters"*,
+  // which `^Put (\d+) damage counters` structurally cannot admit) and the second sentence
+  // counts what the first placed. It is also the row D449's published `/put \d* ?damage
+  // counters/i` family pattern cannot see, so keeping it here is the one place in this
+  // file that hole is visible.
+  "Put up to 9 damage counters on this Pokémon. This attack does 20 damage for each damage counter you placed in this way.",
   // ⚠️ **STILL NULL AND STILL A CATALOG ROW** — the HP target at 10 with a consequent
   // riding it. D451 built the bare sentence and this compound is a STRICT PREFIX
   // extension of it, so it is the near miss the two new anchors' `$` exists for, and

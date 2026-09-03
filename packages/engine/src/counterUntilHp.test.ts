@@ -186,7 +186,7 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 the PLACEMENT family closes from SEVEN rows to FOUR, each refusal by name", () => {
+  it("🛑 the PLACEMENT family closes from SEVEN rows to FOUR to TWO, each refusal by name", () => {
     // D449's pattern re-run rather than re-imagined: `/put \d* ?damage counters/i`, case
     // INSENSITIVE with the count OPTIONAL. The optional count is what catches these
     // three rows at all — they print no number before the noun — so the family figure
@@ -200,30 +200,73 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     // Every sentence D449 and D450 claimed carried exactly one printing, so three
     // consecutive slices stepped both figures by the same number and a fourth that
     // assumed it would have been wrong in one of them.
-    expect(unread).toHaveLength(4);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(7);
+    // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR**, and the two that left are
+    // bullets (a) and (b) below, both re-pointed rather than deleted. ⚠️ **THE TWO FIGURES
+    // DISAGREE AGAIN, −2 AND −3**: line 179 carries 1 printing and line 180 carries 2.
+    expect(unread).toHaveLength(2);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(4);
     const unbuilt = unread.map(([, t]) => t);
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(unbuilt).not.toContain(s);
 
-    // THE FOUR THAT REMAIN, ENUMERATED WHOLE AND EACH WITH ITS OWN REASON.
+    // THE TWO THAT REMAIN, ENUMERATED WHOLE AND EACH WITH ITS OWN REASON — plus the two
+    // this slice's SUCCESSOR claimed, kept here as inequalities (D418: re-point, never
+    // delete, and then ask what the old claim could catch that the new one cannot).
     //
-    // (a) THE DELAYED RETALIATION AT A PRINTED COUNT — 1 printing. Refused on the
-    //     TIMING (a durated *"During your opponent's next turn"* window, which is
-    //     `scheduleEffect`'s territory and not a `^Put` anchor's) and on the TARGET
-    //     (*"the Attacking Pokémon"*, a body no zone in this family names).
-    expect(unbuilt).toContain(
+    // (a) THE DELAYED RETALIATION AT A PRINTED COUNT — 1 printing. 🆕🆕 **CLAIMED AT D456,
+    //     AND THIS BULLET'S REFUSAL WAS EXACT ABOUT THIS FILE'S ANCHOR AND SAID NOTHING
+    //     ABOUT THE SENTENCE.** It was refused here on the TIMING (a durated *"During your
+    //     opponent's next turn"* window, which no `^Put` anchor can open) and on the TARGET
+    //     (*"the Attacking Pokémon"*, a body no zone in this family names). Both are still
+    //     true of THIS family — and D152's `installRecoil` had opened that window and named
+    //     that body since long before D451 was written. The sentence needed ONE token: the
+    //     shipped anchor demanded *"(even if **it** is Knocked Out)"* and this printing
+    //     spells *"(even if **this Pokémon** is Knocked Out)"*.
+    //     ⚠️ **THE OLD CLAIM CAUGHT "NO READER TAKES THIS"; THE NEW ONE PINS *WHICH* OP AND
+    //     *WHICH* AMOUNT**, which is strictly the stronger rung here — a reader that took
+    //     the sentence with the wrong number would have passed the `toContain` the day it
+    //     stopped being unbuilt, and cannot pass this.
+    expect(unbuilt).not.toContain(
       "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
     );
-    // (b) 🛑 **ITS TWIN WITH THE AMOUNT UNPRINTED — 2 printings, AND IT IS THIS SLICE'S
-    //     NEAREST NEIGHBOUR ON THE AXIS THIS SLICE OPENED.** *"…equal to the damage done
-    //     to this Pokémon."* also declines to print its amount, so a reader of this file
-    //     might reasonably expect it to fall out for free. It does not, and the reason is
-    //     worth having in writing: D451's quantity is a fact about the BODY STANDING
-    //     THERE, readable at the instant the op runs, where this one is a HISTORY of what
-    //     happened during the opponent's turn — it needs a durated watcher and a recorded
-    //     figure, neither of which this op has. Two unprinted amounts, two mechanisms.
-    expect(unbuilt).toContain(
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+      ),
+    ).toEqual([{ op: "installRecoil", amount: 60 }]);
+    // (b) 🛑 **ITS TWIN WITH THE AMOUNT UNPRINTED — 2 printings, CLAIMED AT D456, AND
+    //     THIS IS THE BULLET WHOSE REASONING DID NOT SURVIVE.** It read: *"D451's quantity
+    //     is a fact about the BODY STANDING THERE, readable at the instant the op runs,
+    //     where this one is a HISTORY of what happened during the opponent's turn — it
+    //     needs a durated watcher and a recorded figure, neither of which this op has."*
+    //     🛑 **THE FIRST HALF IS EXACT AND THE SECOND HALF IS FALSE OF THE FAMILY, THOUGH
+    //     TRUE OF THIS OP.** The durated watcher is `InstalledRecoil` and has existed since
+    //     D152. And the figure never becomes a HISTORY at all: the §9 recoil site
+    //     (`attack.ts`) and the interpreter's `reactToAttackDamage` each hold the number in
+    //     a local named `dealt` — the same local their own `dealt > 0` gate reads — two
+    //     lines above the call that now consumes it. **Nothing is recorded and nothing is
+    //     carried**; `installedRecoilOf` gained a REQUIRED third parameter and that is the
+    //     whole of the channel. The refusal was right about `counterUntilRemainingHp` and
+    //     wrong as a statement about the sentence, which is the difference a refusal
+    //     scoped to an OP has to keep making (D422/D428: write the falsifier, and scope it).
+    expect(unbuilt).not.toContain(
       "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+    );
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      ),
+    ).toEqual([{ op: "installRecoil", amount: "damageTaken" }]);
+    // …and the two are NOT the same program, which is the discrimination the pair of
+    // `toContain`s above could never provide: one anchor with a looser amount slot would
+    // have claimed both sentences with one op and passed every rung in this block.
+    expect(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+      ),
+    ).not.toEqual(
+      deriveAttackEffect(
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      ),
     );
     // (c) THE SCALED TWIN — 3 printings, and now the largest unread row in the family
     //     again. RE-MEASURED at this head rather than inherited: the count is a
@@ -494,7 +537,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.354.0");
+    expect(engineVersion).toBe("0.355.0");
   });
 });
 

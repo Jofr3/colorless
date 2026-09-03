@@ -143,7 +143,7 @@ describe("§1 — the two printed sentences, and what the placement family still
     expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 the PLACEMENT family, and the ten rows it still refuses, each for its own reason", () => {
+  it("🛑 the PLACEMENT family, and the TWO rows it still refuses, each for its own reason", () => {
     // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425): every corpus sentence
     // whose ACTION is putting damage counters — `/put \d* ?damage counters/i`, case
     // INSENSITIVE and with the count OPTIONAL, which is the loosest plausible shape.
@@ -172,10 +172,18 @@ describe("§1 — the two printed sentences, and what the placement family still
     // ⚠️ **THE PRINTINGS FALL BY 5 WHERE THE SENTENCES FALL BY 3**, which is the first
     // time these two numbers have disagreed in this section — the HP rows carry 2, 1 and
     // 2 printings where D449's and D450's carried one each.
-    expect(unbuilt).toHaveLength(4);
+    // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR, AND THE TWO THAT LEFT ARE
+    // BOTH OF BULLET (f).** That bullet refused them as *"`installRecoil`'s family (a
+    // durated stamp read at the §9 recoil), not a placement"* — which was exact, and is
+    // exactly why they landed: they went to `installRecoil`, not to this op. The bullet is
+    // kept and annotated rather than deleted.
+    // ⚠️ **THE PRINTINGS FALL BY 3 WHERE THE SENTENCES FALL BY 2** for the second slice
+    // running, and for the same reason: corpus line 179 carries 1 printing and line 180
+    // carries 2.
+    expect(unbuilt).toHaveLength(2);
     expect(
       family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(7);
+    ).toBe(4);
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -297,18 +305,35 @@ describe("§1 — the two printed sentences, and what the placement family still
     expect(bounded).toHaveLength(1);
     expect(bounded[0]?.[0]).toBe(1);
     expect(resolvedByAnyReader(bounded[0]?.[1] as string)).toBe(false);
-    // (g) THE TWO REACTIVE INSTALLERS — lines 179 and 180, 3 printings between them. Both
-    //     are `installRecoil`'s family (a durated stamp read at the §9 recoil), not a
-    //     placement now, and each is refused for its own reason: 179 is the SHIPPED
-    //     sentence at line 178 with *"even if IT is Knocked Out"* re-spelled *"even if
-    //     THIS POKÉMON is"* — a near miss on a parenthetical — and 180 reads its amount
-    //     off the damage just taken, which is (e)'s refusal at a different referent.
-    expect(unbuilt).toContain(
-      "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
-    );
-    expect(unbuilt).toContain(
-      "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
-    );
+    // (g) THE TWO REACTIVE INSTALLERS — lines 179 and 180, 3 printings between them.
+    //     🆕🆕 **CLAIMED AT D456, AND THIS BULLET NAMED THE EXACT PRICE OF BOTH.** It read:
+    //     *"Both are `installRecoil`'s family (a durated stamp read at the §9 recoil), not
+    //     a placement now, and each is refused for its own reason: 179 is the SHIPPED
+    //     sentence at line 178 with 'even if IT is Knocked Out' re-spelled 'even if THIS
+    //     POKÉMON is' — a near miss on a parenthetical — and 180 reads its amount off the
+    //     damage just taken."* Every clause of that survived: 179 cost ONE alternation in
+    //     D152's anchor, and 180 cost one anchor plus a widened `amount` on the same op.
+    //     🛑 **AND IT IS WORTH SAYING WHAT THAT MAKES THIS BULLET.** A refusal that names
+    //     the family, the read site, the exact varying token AND the exact channel is not a
+    //     refusal, it is a work order — and it sat here for five slices while the residue
+    //     was ranked by printing count (D413's finding, at a bullet instead of a doc block).
+    //     The bullet is kept and annotated rather than deleted (D418).
+    for (const [text, program] of [
+      [
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+        [{ op: "installRecoil", amount: 60 }],
+      ],
+      [
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+        [{ op: "installRecoil", amount: "damageTaken" }],
+      ],
+    ] as const) {
+      expect(unbuilt, text).not.toContain(text);
+      // …and they are NOT this file's op, which is the claim the bullet was ever making
+      // and the one the `toContain` could not survive the sentences being claimed.
+      expect(deriveAttackEffect(text), text).toEqual(program);
+      expect(deriveAttackEffect(text), text).not.toEqual(deriveAttackEffect(BARE));
+    }
     // 2 + 3 + 1 + 1 + 1 + 5 + 1 + 1 = 15, which is the printing total asserted above.
     // ⚠️ The bullets are SEVEN and the rows are TEN because (e) is three rows on one
     // mechanism and (g) is two — stated so a successor does not read a miscount into the
@@ -531,7 +556,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.354.0");
+    expect(engineVersion).toBe("0.355.0");
   });
 });
 

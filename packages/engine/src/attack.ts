@@ -2744,7 +2744,13 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // survives it unchanged and is in fact strengthened: the row can now be an
     // Ability's, a Tool's AND an attack's HP in one number, so a provenance label
     // is wrong on a THIRD axis and the mechanism label needs no new member.
-    const recoil = defenderPassives.damageAttacker + installedRecoilOf(next, defender);
+    // 🆕🆕 D456 — `dealt` reaches `installedRecoilOf` for corpus line 180's unprinted
+    // amount (*"…equal to the damage done to this Pokémon."*). It is the SAME local
+    // the `if` on the next line gates on and the SAME number `DAMAGE_DEALT.dealt`
+    // published one push up, so the row, the gate and the retaliation cannot disagree.
+    // ⚠️ `dealt` AND NOT `clamped`: a KO-survival clamp is a damage TOTAL, and this
+    // sentence asks what the attack DID (D427's identical choice one field over).
+    const recoil = defenderPassives.damageAttacker + installedRecoilOf(next, defender, dealt);
     if (dealt > 0 && recoil > 0) {
       const retaliated = { ...attackerBody, damage: attackerBody.damage + recoil };
       next = withActive(next, action.seat, retaliated);

@@ -972,20 +972,41 @@ describe("the §9 recoil family, closed on its always-on half", () => {
     expect(programFor("sv03-197")?.passive?.damageAttackerOnKo).toEqual({ amount: PUNCH_HP });
   });
 
-  it("Mabosstiff sv02-143 'Comeuppance' stays LOUD — the family's LAST printing", () => {
-    // ⚠️ THE ONE THAT IS STILL BLOCKED, and deliberately not attempted here. It is
-    // Scary Fangs's sibling — same duration, same body, same §9 site — with the
-    // amount read off the damage done to the holder, so what it needs is the
-    // damage-dealt CHANNEL (the Iron Moth sv06.5-009 / Camerupt sv03-032
-    // neighbourhood), which does not exist. Do it AFTER that channel, never
-    // before: a prefix-happy anchor would ship a 0-HP trap under a card that
-    // prints a real one.
+  it("the family's LAST printing — LANDED at D456, on the channel this rung named", () => {
+    // 🛑 **THIS RUNG WAS A REFUSAL WITH AN EXECUTABLE FALSIFIER, AND THE FALSIFIER HAD
+    // BEEN TRUE FOR ~29 SLICES BEFORE ANYBODY CHECKED IT (D413's rule, re-paid).** It
+    // read: *"what it needs is the damage-dealt CHANNEL … which does not exist. Do it
+    // AFTER that channel, never before."* **`EffectContext.dealt` and `heal.amount:
+    // "dealt"` landed at D427.** The channel this rung was waiting for existed, was
+    // named, and the rung went on saying it did not — which is exactly the shape D422
+    // measured at ~195 decisions and D413 at a whole population.
+    //
+    // ⚠️ **AND THE PRICE THIS RUNG QUOTED WAS THE WRONG PRICE ANYWAY.** D456 did not use
+    // `EffectContext` at all: the §9 recoil site has the figure as a LOCAL (`dealt`, the
+    // one its own `dealt > 0` gate reads), so the cost was ONE required parameter on
+    // `installedRecoilOf` — not a channel, not a record, not a version bump. **A refusal
+    // that names a PRICE hands its successor a number to inherit instead of measure**
+    // (D427's "mark a price AS a price"), and this one over-quoted by a whole mechanism.
+    //
+    // ⚠️ **THE STRING IT ASSERTED WAS ALSO A PARAPHRASE**: it spelled *"(even if **it**
+    // is Knocked Out)"* and corpus line 180 prints *"(even if **this Pokémon** is)"*.
+    // Both are asserted below, the printed one first.
+    // 🆕 And the WARNING it gave was correct and was heeded: *"a prefix-happy anchor
+    // would ship a 0-HP trap under a card that prints a real one."* D456 used a SECOND
+    // whole-sentence anchor with no capture rather than loosening the first.
     expect(programFor("sv02-143")).toBeUndefined();
-    expect(
-      deriveAttackEffect(
-        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
-      ),
-    ).toBeNull();
+    for (const text of [
+      "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+      "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+    ]) {
+      expect(deriveAttackEffect(text), text).toEqual([
+        { op: "installRecoil", amount: "damageTaken" },
+      ]);
+    }
+    // …and the always-on KO-conditioned Tool one screen up is STILL a different field,
+    // which is this file's own claim and the control that keeps the rung discriminating.
+    expect(programFor("sv03-197")?.passive?.damageAttacker).toBeUndefined();
+    expect(programFor("sv03-197")?.passive?.damageAttackerOnKo).toEqual({ amount: PUNCH_HP });
   });
 
   it("the KO-condition NEIGHBOURS are a different consequent, and stay unmapped", () => {

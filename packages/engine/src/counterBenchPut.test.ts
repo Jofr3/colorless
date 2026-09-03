@@ -164,16 +164,20 @@ const NEAR_MISSES = [
   // legal, same Bench, same verb, and refused on TWO axes at once — an "each of"
   // fold with no pick in it, and an amount read off the TARGET's remaining HP
   // rather than printed. Neither is a number this anchor could capture.
-  // ⚠️ RE-POINTED AT D451. This slot held *"Put damage counters on each of your
-  // opponent's Benched Pokémon until its remaining HP is 100."*, which D451 MAPPED
-  // (arm 23h over the new op `counterUntilRemainingHp`), so the witness MOVED rather
-  // than being deleted (the standing note above). The replacement is the nearest
-  // still-unread row by VERB: the DELAYED retaliation, 1 legal printing, refused on
-  // the TIMING (a durated "During your opponent's next turn" window this anchor's
-  // `^Put` cannot open) and on the TARGET (*"the Attacking Pokémon"*, a body no zone
-  // in this op names). The sentence it replaced is not gone from this file: the claim
-  // about it is now an INEQUALITY of derived programs below the loop.
-  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+  // 🆕🆕 **RE-POINTED AGAIN AT D456**, and the occupant it replaces is corpus line 179
+  // — the DELAYED retaliation at a printed count, 1 legal printing, refused here on the
+  // TIMING (a durated *"During your opponent's next turn"* window this anchor's `^Put`
+  // cannot open) and on the TARGET (*"the Attacking Pokémon"*, a body no zone in this op
+  // names). **Both reasons were and remain true of THIS anchor**; the sentence went to
+  // `installRecoil`, whose window and whose target those two clauses describe exactly —
+  // and it cost ONE alternation, because D152's anchor demanded *"(even if **it** is
+  // Knocked Out)"* and this printing spells *"(even if **this Pokémon** is)"*.
+  //
+  // The replacement is corpus line 526, 1 legal printing and still unread: this anchor's
+  // exact noun phrase and quantifier with the DAMAGE verb instead of the placement verb,
+  // and a per-target count. Refused on the VERB alone, which is the tightest axis this
+  // slot has ever held.
+  "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
   "Put 1 damage counter on each of your opponent's Pokémon for each of your Maushold in play.",
   // ⚠️ RE-POINTED AT D450 — this slot held the windowed opponent-side fold (corpus line 414), which D450 MAPPED (arms 23d/23e/23f
   // over `counterEachAll`), so the witness MOVED rather than being deleted (the standing
@@ -181,13 +185,22 @@ const NEAR_MISSES = [
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
   "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
-  // ⚠️ RE-POINTED AT D451, for the row above's reason and onto that row's twin: the
-  // SAME delayed retaliation with its amount read off *"the damage done to this
-  // Pokémon"* instead of printed, 2 legal printings. It is this file's closest
-  // remaining neighbour on the axis D451 opened — an amount that is computed rather
-  // than captured — and it stays unread because the quantity is a HISTORY of the
-  // opponent's turn where D451's is a fact about the body standing there.
-  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+  // 🆕🆕 **RE-POINTED AGAIN AT D456.** The slot held the delayed retaliation with its
+  // amount read off *"the damage done to this Pokémon"* (corpus line 180, 2 legal
+  // printings), refused here on the ground that *"the quantity is a HISTORY of the
+  // opponent's turn"*. D456 claimed it: the quantity is a LOCAL at the §9 recoil site
+  // (`attack.ts`'s own `dealt`, the same one its `dealt > 0` gate reads), so no history
+  // and no recorded figure were ever needed — only a durated watcher, which `D152`'s
+  // `InstalledRecoil` had been since before the refusal was written. Witness MOVED
+  // rather than deleted (the standing note above).
+  //
+  // The replacement is corpus line 412, **3 legal printings** and the largest unread row
+  // left in the placement family. It keeps the axis this slot is for — an amount that is
+  // COMPUTED rather than captured (*"for each Basic {G} Energy card in your discard
+  // pile"*) — and it is refused on this anchor's own ZONE besides: it names *"1 of your
+  // opponent's Pokémon"* where this anchor requires the printed word **Benched**, so it
+  // is one adjective and one count-source away in two different directions.
+  "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
   "You must discard a Basic {G} Energy card from your hand in order to use this Ability. Once during your turn, you may put 3 damage counters on 1 of your opponent's Benched Pokémon.",
   "You must discard a Water Energy card from your hand in order to use this Ability. Once during your turn, you may put 2 damage counters on 1 of your opponent's Benched Pokémon.",
 ] as const;

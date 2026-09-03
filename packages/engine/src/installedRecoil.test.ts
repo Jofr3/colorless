@@ -1,9 +1,16 @@
 import { describe, expect, it } from "vitest";
+import {
+  attackReaderSurface,
+  legalAttackCorpus,
+  resolvedByAnyReader,
+} from "./censusAttackCorpus";
 import { installedRecoilOf, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, programFor } from "./index";
+import { registryCardIds } from "./registry";
 import { runProgram } from "./interpreter";
 import type { GameEvent, GameState, Seat } from "./index";
+import type { InstalledRecoil } from "./types";
 import { type LogContext, logFromEvents } from "./log";
 import {
   FIXTURE_POOL,
@@ -70,21 +77,58 @@ const SCARY_FANGS =
     at the deriver; every consumer downstream speaks HP. */
 const COUNTERS = 10;
 const ARMED_HP = COUNTERS * 10;
-/** Mabosstiff sv02-143 "Comeuppance" — the same duration, the same body, the same
-    read site, and an amount this anchor's `(\d+)` structurally cannot admit
-    because it is a CHANNEL rather than a number. Kept LOUD on purpose. */
+/** 🆕🆕 D456 — corpus line **180**, **2 legal printings**: the same duration, the same
+    body, the same read site, and an amount D152's `(\d+)` structurally cannot admit
+    because it is a CHANNEL rather than a number. Kept LOUD from D152 to D455 and CLAIMED
+    at D456 by a second whole-sentence anchor.
+
+    ⚠️ **THE STRING BELOW IS THE ONE D152 WROTE AND IT IS A PARAPHRASE.** It spells
+    *"(even if **it** is Knocked Out)"*; the catalog prints *"(even if **this Pokémon**
+    is Knocked Out)"* and nothing else on this sentence. It is KEPT at that spelling on
+    purpose — the widened anchor admits both, so keeping the historical string here and
+    asserting the PRINTED one beside it (`COMEUPPANCE_PRINTED`) is what makes the
+    difference visible instead of quietly corrected. FOUR test files carried this
+    paraphrase; all four are re-pointed at D456. */
 const COMEUPPANCE =
   "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.";
+/** …and the byte string the CATALOG carries, read off `censusAttackCorpus.ts` line 180
+    rather than typed from memory (D421's rule about remembered bytes). */
+const COMEUPPANCE_PRINTED = COMEUPPANCE.replace(
+  "(even if it is Knocked Out)",
+  "(even if this Pokémon is Knocked Out)",
+);
+/** Corpus line **179**, **1 legal printing**: D152's own sentence with a different
+    printed count AND the other parenthetical spelling — the whole of what kept it
+    unread for 304 decisions. */
+const SIX_COUNTERS =
+  "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.";
+/** D152's anchor STILL refuses the unprinted-amount sentence — asserted as a property of
+    the DERIVED PROGRAM rather than by importing a private regex: the flat anchor's op
+    always carries a NUMBER, so an `amount` that is not a number cannot have come from
+    it. That is the strongest statement this file can make about a module-private
+    constant, and it is stronger than a source scan (D210). */
+const SELF_INSTALLED_RECOIL_REFUSES_IT =
+  typeof (deriveAttackEffect(COMEUPPANCE)?.[0] as { amount?: unknown } | undefined)?.amount !==
+  "number";
 /** Rocky Helmet's own contribution, read off the registry so a data change moves
     every expectation in this file at once (D141's move). */
 const HELMET = programFor("sv01-193")?.passive?.damageAttacker?.amount ?? 0;
 /** …and Cacnea's, the always-on ABILITY control. */
 const QUILLS = programFor("sv01-005")?.passive?.damageAttacker?.amount ?? 0;
 
-/** One seed for the whole suite: nothing in this family flips a coin — neither
-    printing carries one — so a seed table would describe a shuffle rather than a
-    rule (D143's move, inherited by every durated slice since). */
+/** One seed for the whole suite: nothing in this family flips a coin — none of the
+    three printings carries one — so a seed table would describe a shuffle rather than
+    a rule (D143's move, inherited by every durated slice since). */
 const SEED = 13;
+
+/** 🆕🆕 D456 — the `damageTaken` argument every direct `installedRecoilOf` call in
+    this file passes, and it is a CONTROL rather than a placeholder. Each of those
+    four calls asserts a FLAT record's answer, so a reader that had lost the
+    `ofDamageTaken` discrimination — and answered `Math.max(amount, damageTaken)`
+    unconditionally — would return this instead of the flat number and every one of
+    them would go RED. A `0` here would have been the same assertion with none of the
+    discrimination (D424's "a refusal owes a control on the same axis"). */
+const PROBE_TAKEN = 9999;
 
 function find<T extends GameEvent["type"]>(
   events: GameEvent[],
@@ -191,6 +235,38 @@ function withRecoil(state: GameState, seat: Seat, amount: number, turn = state.t
   };
 }
 
+/** 🆕🆕 D456 — the same surgery taking a WHOLE record, so a case can write bytes
+    `withRecoil`'s `(amount, turn)` signature cannot express: a v29 literal with no
+    rider, a round-tripped one, and a rider-stripped one. Kept BESIDE `withRecoil`
+    rather than replacing it — the four-argument helper is what every D152 case reads,
+    and re-pointing them all to build a record object would move numbers this slice has
+    nothing to do with (D418's rule, applied in the direction that keeps the diff small). */
+function withRawRecoil(state: GameState, seat: Seat, record: InstalledRecoil): GameState {
+  const side = state.players[seat];
+  const active = side.active;
+  if (active === null) throw new Error("no Active to stamp");
+  return {
+    ...state,
+    players: { ...state.players, [seat]: { ...side, active: { ...active, installedRecoil: record } } },
+  };
+}
+
+/** 🆕🆕 D456 — a live §11 ATTACK BLOCK written straight onto a body, for Q3's
+    reachability claim: the gate this placement does NOT ask is asked here anyway, on the
+    only turn a block can legally be stamped for. */
+function withBlock(state: GameState, seat: Seat, turn: number): GameState {
+  const side = state.players[seat];
+  const active = side.active;
+  if (active === null) throw new Error("no Active to shield");
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [seat]: { ...side, active: { ...active, attackBlock: { turn, effects: true } } },
+    },
+  };
+}
+
 function withReduction(state: GameState, seat: Seat, amount: number, turn = state.turn): GameState {
   const side = state.players[seat];
   const active = side.active;
@@ -256,13 +332,18 @@ describe("the printed datum — re-queried per printing, not inherited", () => {
     expect(programFor("sv02-117")).toBeUndefined();
   });
 
-  it("refuses the NEIGHBOURING sentence, which differs only in its amount SLOT", () => {
-    // ⚠️ THE SAFETY PROPERTY, DRIVEN. Mabosstiff sv02-143 "Comeuppance" prints this
-    // family's other sentence: same duration, same body, same read site, and an
-    // amount that is a CHANNEL from the §8.5 result rather than a number. `^…$`
-    // refuses it in both directions and it stays LOUD — a prefix match would have
-    // shipped a 0-HP trap under a card that prints a real one.
-    expect(deriveAttackEffect(COMEUPPANCE)).toBeNull();
+  it("🆕🆕 D456 — CLAIMS the neighbouring sentence, which differs only in its amount SLOT", () => {
+    // 🛑 **RE-POINTED RATHER THAN DELETED (D418), AND THE OLD RUNG WAS RIGHT ABOUT THE
+    // ANCHOR AND WRONG ABOUT THE FAMILY.** It read: *"`^…$` refuses it in both
+    // directions and it stays LOUD — a prefix match would have shipped a 0-HP trap
+    // under a card that prints a real one."* Both halves survive: `SELF_INSTALLED_RECOIL`
+    // still refuses this sentence in both directions, and D456 did NOT loosen it. What
+    // changed is that a SECOND whole-sentence anchor claims it, over the same op with a
+    // widened `amount`. The warning was heeded exactly as written.
+    expect(SELF_INSTALLED_RECOIL_REFUSES_IT).toBe(true);
+    expect(deriveAttackEffect(COMEUPPANCE)).toEqual([
+      { op: "installRecoil", amount: "damageTaken" },
+    ]);
     expect(programFor("sv02-143")).toBeUndefined();
     // …and Vengeful Punch sv03-197, the KO-conditioned TOOL, likewise — but the
     // reason has CHANGED and the witness is re-pointed rather than deleted. It
@@ -395,7 +476,7 @@ describe("⚠️ the §9 SUM — the armed stamp beside the catalog fold, in ONE
     // The whole slice in one case: P1 arms on its turn, P2 swings on the NEXT turn,
     // and the counters land on P2's attacker.
     const state = armed();
-    expect(installedRecoilOf(state, mustActive(state, "p1"))).toBe(ARMED_HP);
+    expect(installedRecoilOf(state, mustActive(state, "p1"), PROBE_TAKEN)).toBe(ARMED_HP);
     const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
 
     expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p1", dealt: 30 });
@@ -495,11 +576,11 @@ describe("⚠️ the §9 SUM — the armed stamp beside the catalog fold, in ONE
     // A body with no printed passive of its own — so the catalog half is 0 and the
     // whole retaliation is the installation's, which is the claim.
     expect(passivesOf(state, mustActive(state, "p1")).damageAttacker).toBe(0);
-    expect(installedRecoilOf(state, mustActive(state, "p1"))).toBe(ARMED_HP);
+    expect(installedRecoilOf(state, mustActive(state, "p1"), PROBE_TAKEN)).toBe(ARMED_HP);
     state = withRecoil(state, "p1", ARMED_HP, state.turn + 5);
     // …and the SAME record on the wrong turn answers 0, with nobody having cleared
     // it — D124's expiry-by-arithmetic, pinned on this field too.
-    expect(installedRecoilOf(state, mustActive(state, "p1"))).toBe(0);
+    expect(installedRecoilOf(state, mustActive(state, "p1"), PROBE_TAKEN)).toBe(0);
   });
 });
 
@@ -586,7 +667,7 @@ describe("the lifetime — one turn, and the three §10 early endings", () => {
     state = must(applyAction(state, { type: "endTurn", seat: "p2" })); // back to P1
     const stamp = state.players.p1.active?.installedRecoil;
     expect(stamp).not.toBeNull();
-    expect(installedRecoilOf(state, mustActive(state, "p1"))).toBe(0); // …and answers 0
+    expect(installedRecoilOf(state, mustActive(state, "p1"), PROBE_TAKEN)).toBe(0); // …and answers 0
     state = mustApply(state, { type: "attack", seat: "p1", index: 0 }).state; // Rock Throw
     // The record is STILL there, untouched, and still silent.
     expect(state.players.p1.active?.installedRecoil).toEqual(stamp);
@@ -666,5 +747,543 @@ describe("the lifetime — one turn, and the three §10 early endings", () => {
       next = must(applyAction(next, { type: "promote", seat: "p1", benchIndex: 0 }));
     }
     expect(next.players.p1.active?.installedRecoil).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 D456 — the UNPRINTED amount: corpus lines 179 and 180, 3 legal printings.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Arm the line-180 trap from the armer's own chair. Corpus line 180 has no fixture
+    card in this pool (the ids are unresolvable here — D425), so the op is fed to
+    `runProgram` exactly as D152's own two-installs case is: this drives the REAL
+    install path, the real merge and the real event, and only the printed sentence's
+    delivery is simulated. ⚠️ `runProgram` does not END the turn, so the caller must —
+    the record is stamped `state.turn + 1` and the window is the opponent's. */
+function armScaled(state: GameState): { state: GameState; events: GameEvent[] } {
+  const events: GameEvent[] = [];
+  const result = runProgram(
+    state,
+    [{ op: "installRecoil", amount: "damageTaken" }],
+    { seat: "p1", invokedBy: "attack" },
+    events,
+  );
+  return { state: result.state, events };
+}
+
+/** …and then hand the turn over, so the stamp's window is NOW. */
+function intoWindow(state: GameState): GameState {
+  return must(applyAction(state, { type: "endTurn", seat: "p1" }));
+}
+
+describe("🆕🆕 D456 §1 — the datum, and the family CLOSED over the corpus", () => {
+  it("🛑 `Attacking Pokémon` over all 640 sentences returns THREE rows — and none is a ten", () => {
+    // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425): the printed noun
+    // phrase that names the retaliation's TARGET, which is the only token this family
+    // owns outright. It is not `/damage counters/` (38 printings, most of them
+    // placements) and not `/During your opponent's next turn/` (17 sentences, most of
+    // them bars) — the target noun is what makes the set exactly this family.
+    // ⚠️ **WHAT IT CANNOT SEE**: the ALWAYS-ON printings of the same mechanism, which
+    // live in `abilities_json` / Trainer `effect` and are outside `legalAttackCorpus()`
+    // entirely (Cacnea, Cacturne, Stunfisk, Rocky Helmet, Vengeful Punch — five
+    // printings this file already drives from the registry). This pattern is a census of
+    // the ATTACK column, and the family is bigger than the column.
+    const family = legalAttackCorpus().filter(([, t]) => /Attacking Pokémon/.test(t));
+    expect(family).toHaveLength(3);
+    expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(8);
+    // 🛑 **THE PRINTED COUNTS, AND THEY FALSIFY A CLAIM THAT WAS LIVE IN SEVEN PLACES.**
+    // `types.ts`, `effects.ts` (twice), `index.ts`, `interpreter.ts`, this file and
+    // `apps/api/src/lobby/match.ts` all quoted *"put 10 damage counters … 2 printings,
+    // Lycanroc ex sv02-117/-241"*. D454 found it, D455 corrected `interpreter.ts` and
+    // reported *"corrected in place"* — one of seven. **No corpus row prints a ten.**
+    expect(family.map(([n, t]) => [n, /put (\d+) damage counters/.exec(t)?.[1] ?? "—"])).toEqual([
+      [5, "8"],
+      [1, "6"],
+      [2, "—"],
+    ]);
+    expect(family.some(([, t]) => t.includes("10 damage counters"))).toBe(false);
+    // …and ALL THREE now resolve, so the ATTACK column's half of this family is CLOSED.
+    for (const [, t] of family) expect(resolvedByAnyReader(t), t).toBe(true);
+    expect(attackReaderSurface()).toHaveLength(13); // no fourteenth reader
+  });
+
+  it("the parenthetical varies BY PRINTING, which is why the alternation is not invented", () => {
+    // The whole of line 179's price. Lines 178 and 179 differ on exactly TWO tokens —
+    // the counter count (which D152's `(\d+)` already captured) and the pronoun — so the
+    // sentence was ONE alternation away from being read for 304 decisions.
+    const family = legalAttackCorpus()
+      .map(([, t]) => t)
+      .filter((t) => /Attacking Pokémon/.test(t));
+    const spellings = new Set(
+      family.map((t) => /\(even if ([^)]*) is Knocked Out\)/.exec(t)?.[1] ?? "?"),
+    );
+    expect([...spellings].sort()).toEqual(["it", "this Pokémon"]);
+    // …and it really is the ONLY difference between 178 and 179, driven by rewriting one
+    // into the other rather than asserted (D428's "quote the text beside the number").
+    const eight = family.find((t) => t.includes("8 damage counters")) as string;
+    const six = family.find((t) => t.includes("6 damage counters")) as string;
+    expect(eight.replace("even if it is", "even if this Pokémon is").replace(" 8 ", " 6 ")).toBe(
+      six,
+    );
+  });
+
+  it("both new sentences derive, to the SAME op and to DIFFERENT amounts", () => {
+    expect(deriveAttackEffect(SIX_COUNTERS)).toEqual([{ op: "installRecoil", amount: 60 }]);
+    expect(deriveAttackEffect(COMEUPPANCE_PRINTED)).toEqual([
+      { op: "installRecoil", amount: "damageTaken" },
+    ]);
+    // ⚠️ ONE OP, TWO INHABITANTS — not two ops. `heal.amount`'s `number | "dealt"` at a
+    // second address (D427), and the reason is the same: the read site already sums,
+    // already gates on `dealt > 0` and already labels its row, so a second op would
+    // restate three rules with three chances to drift.
+    expect(deriveAttackEffect(SIX_COUNTERS)?.[0]?.op).toBe(
+      deriveAttackEffect(COMEUPPANCE_PRINTED)?.[0]?.op,
+    );
+    expect(deriveAttackEffect(SIX_COUNTERS)).not.toEqual(deriveAttackEffect(COMEUPPANCE_PRINTED));
+    // …and the ALWAYS-ON spelling is STILL refused, which is D152's control and the rung
+    // that keeps the widened anchor from being a prefix match (D424: every refusal owes
+    // an admission on the same axis, and every admission owes a refusal).
+    expect(
+      deriveAttackEffect(
+        "If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), put 3 damage counters on the Attacking Pokémon.",
+      ),
+    ).toBeNull();
+    // …as is the same sentence with the DURATION but a different window.
+    expect(
+      deriveAttackEffect(
+        "During your next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+      ),
+    ).toBeNull();
+  });
+});
+
+describe("🆕🆕 D456 §2 — the record, the row and the merge", () => {
+  it("stores a FLOOR of 0 with the flag, and says so in words rather than in a 0", () => {
+    const before = ready();
+    const { state, events } = armScaled(before);
+    expect(state.players.p1.active?.installedRecoil).toEqual({
+      turn: before.turn + 1,
+      amount: 0,
+      ofDamageTaken: true,
+    });
+    // ⚠️ `false` IS NEVER WRITTEN — the key has exactly two inhabitants and `undefined`
+    // is one of them, which is what keeps a PERSISTED record from having two spellings
+    // of absent.
+    expect(Object.keys(state.players.p1.active?.installedRecoil ?? {})).toEqual([
+      "turn",
+      "amount",
+      "ofDamageTaken",
+    ]);
+    expect(find(events, "RECOIL_ARMED")).toEqual({
+      type: "RECOIL_ARMED",
+      seat: "p1",
+      uid: activeUid(state, "p1"),
+      amount: 0,
+      ofDamageTaken: true,
+    });
+    // 🛑 **THE LOG ROW IS WHY THE EVENT CARRIES THE FLAG AT ALL.** Without it this row
+    // rendered *"…will counterattack for 0 damage during your opponent's next turn"* — a
+    // claim that nothing will happen, printed at the instant a real trap is armed. D421:
+    // a log row is a claim with the same standing as a predicate.
+    const rows = render(events, state).filter((r) => r.text.includes("counterattack"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.who).toBe("p1");
+    expect(rows[0]?.text).toBe(
+      "Lycanroc ex will counterattack for the damage it takes during your opponent's next turn",
+    );
+    expect(rows[0]?.text).not.toContain("for 0 damage");
+    // …and the FLAT row is untouched, which is the control that keeps the arm honest.
+    const flat = mustApply(ready(), { type: "attack", seat: "p1", index: 1 });
+    expect(
+      render(flat.events, flat.state).find((r) => r.text.includes("counterattack"))?.text,
+    ).toBe("Lycanroc ex will counterattack for 100 damage during your opponent's next turn");
+  });
+
+  it("MERGES the two inhabitants: the flag STICKS and the flat amount is the FLOOR", () => {
+    // Unreachable off any printing — one attack per turn, and no card prints two of
+    // these — so CONSTRUCTED and pinned, D152's own two-installs case extended by one
+    // axis. The rule the merge keeps is D152's, restated for a channel: *a second
+    // installation may never leave the holder with less than one of them printed*, so
+    // the flat number survives as a FLOOR and the channel survives as a flag.
+    const state = ready();
+    const events: GameEvent[] = [];
+    const result = runProgram(
+      state,
+      [
+        { op: "installRecoil", amount: 40 },
+        { op: "installRecoil", amount: "damageTaken" },
+        { op: "installRecoil", amount: 20 },
+      ],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
+    expect(result.state.players.p1.active?.installedRecoil).toEqual({
+      turn: state.turn + 1,
+      amount: 40,
+      ofDamageTaken: true,
+    });
+    // TWO rows, not three: the third install merged to the same floor AND the same flag,
+    // so it changed nothing and announcing it would announce a non-event (D140/D146).
+    // 🛑 **AND THE SECOND ROW IS THE CONJUNCT THAT WOULD OTHERWISE BE SILENT.** Its
+    // FLOOR is unchanged at 40 — under D152's one-conjunct suppression it would have
+    // been swallowed — but the trap has just stopped being capped, which is emphatically
+    // news. That is why the guard has two conjuncts.
+    expect(findAll(events, "RECOIL_ARMED").map((r) => [r.amount, r.ofDamageTaken ?? false])).toEqual(
+      [
+        [40, false],
+        [40, true],
+      ],
+    );
+    // …and the answer honours the floor: a 20 hit still retaliates for 40. Read INSIDE
+    // the window (the stamp is `turn + 1` and `installedRecoilOf` compares it to
+    // `state.turn`), which is the same expiry-by-arithmetic every case in this file is
+    // subject to and is asserted directly below.
+    const live = intoWindow(result.state);
+    expect(installedRecoilOf(live, mustActive(live, "p1"), 20)).toBe(40);
+    // …while a 90 hit retaliates for 90, which is the whole point of the flag.
+    expect(installedRecoilOf(live, mustActive(live, "p1"), 90)).toBe(90);
+    // …and OUTSIDE the window it answers 0 whatever the hit was, floor and flag alike.
+    expect(installedRecoilOf(result.state, mustActive(result.state, "p1"), 90)).toBe(0);
+  });
+
+  it("🛑 a SPENT stamp does not lend its flag to the next install — the stale-record read", () => {
+    // 🛑 **FOUND BY READING THE MERGE RATHER THAN BY A FAILING BOARD, AND IT IS THE ONE
+    // DEFECT THIS SLICE INTRODUCED AND CAUGHT ITSELF.** `existing` is the record sitting
+    // on the body, which D124's expiry-by-arithmetic leaves there after its window has
+    // passed — nothing sweeps it. The AMOUNT read has been gated on `stacking` since
+    // D152; the first draft of the FLAG read was not, so a spent line-180 stamp turned a
+    // fresh FLAT install into a scaled one two turns later. The two reads must carry the
+    // same gate, and the asymmetry is exactly what a reader skims past.
+    //
+    // ⚠️ **UNREACHABLE OFF ANY PRINTING AND PINNED ANYWAY** (D144/D146's precedent, and
+    // the same argument the two-installs case above makes): it takes ONE body arming the
+    // unprinted member and then the flat one, and no card prints both. Constructed from
+    // the armer's chair across a real turn boundary, so the STALENESS is produced by the
+    // clock rather than written by hand.
+    let state = ready();
+    state = armScaled(state).state; // line 180: {turn: T+1, amount: 0, ofDamageTaken}
+    const spent = state.players.p1.active?.installedRecoil;
+    expect(spent).toEqual({ turn: state.turn + 1, amount: 0, ofDamageTaken: true });
+    // …a full round later the stamp is SPENT and still on the body.
+    state = intoWindow(state);
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    expect(state.players.p1.active?.installedRecoil).toEqual(spent);
+    expect(installedRecoilOf(state, mustActive(state, "p1"), 999)).toBe(0);
+    // …and a FLAT install now must produce a FLAT record, with no inherited flag.
+    const events: GameEvent[] = [];
+    const again = runProgram(
+      state,
+      [{ op: "installRecoil", amount: 60 }],
+      { seat: "p1", invokedBy: "attack" },
+      events,
+    );
+    expect(again.state.players.p1.active?.installedRecoil).toEqual({
+      turn: state.turn + 1,
+      amount: 60,
+    });
+    expect(find(events, "RECOIL_ARMED")?.ofDamageTaken).toBeUndefined();
+    const live = intoWindow(again.state);
+    expect(installedRecoilOf(live, mustActive(live, "p1"), 999)).toBe(60);
+    // …and the CONTROL on the same axis (D424): inside ONE window the flag DOES stick,
+    // which is the behaviour the gate must not break while it fixes the stale read.
+    expect(
+      runProgram(
+        ready(),
+        [
+          { op: "installRecoil", amount: "damageTaken" },
+          { op: "installRecoil", amount: 60 },
+        ],
+        { seat: "p1", invokedBy: "attack" },
+        [],
+      ).state.players.p1.active?.installedRecoil,
+    ).toEqual({ turn: ready().turn + 1, amount: 60, ofDamageTaken: true });
+  });
+});
+
+describe("🆕🆕 D456 §3 — the §9 read: the amount IS the hit", () => {
+  it("retaliates for exactly what the hit did — TWO different attacks, ONE trap", () => {
+    const state = intoWindow(armScaled(ready()).state);
+    // "Bite" — a flat 30 into a 260 HP body.
+    const bite = swing(state, "fix-attacker", [...BITE]);
+    expect(find(bite.events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(find(bite.events, "COUNTERS_PLACED")).toEqual({
+      type: "COUNTERS_PLACED",
+      seat: "p2",
+      uid: activeUid(bite.state, "p2"),
+      amount: 30,
+      source: "counterattack",
+    });
+    expect(bite.state.players.p2.active?.damage).toBe(30);
+    // …and "Rage", whose damage SCALES off counters already on the attacker, so the same
+    // trap answers a different number on the same board. A fixed amount cannot do this,
+    // which is what makes the pair a real discrimination rather than one board twice.
+    let raging = setActiveFromDeck(state, "p2", "fix-attacker");
+    raging = attachFromDeck(raging, "p2", "fix-energy", 1);
+    raging = withDamage(raging, "p2", 60);
+    const rage = mustApply(raging, { type: "attack", seat: "p2", index: 3 });
+    expect(find(rage.events, "DAMAGE_DEALT")?.dealt).toBe(70); // 10 + 10 × 6 counters
+    expect(find(rage.events, "COUNTERS_PLACED")?.amount).toBe(70);
+    // 🛑 THE IDENTITY, ASSERTED AS ONE: the retaliation is the SAME number
+    // `DAMAGE_DEALT.dealt` publishes one push up, so the row and the trap can never
+    // disagree. `dealt` and not `clamped` (a KO-survival TOTAL) and not `wouldDeal`
+    // (which ignores prevention) — D427's identical choice one field over.
+    for (const r of [bite, rage]) {
+      expect(find(r.events, "COUNTERS_PLACED")?.amount).toBe(find(r.events, "DAMAGE_DEALT")?.dealt);
+    }
+  });
+
+  it("SUMS with the always-on fold, in ONE row — the channel joins D141's judgement", () => {
+    // The armed body wears Rocky Helmet: the catalog half is 20 and the installed half
+    // is now *the hit*, so a 30 Bite retaliates for 50 in one row labelled by MECHANISM.
+    // ⚠️ D141's stake, re-run with an amount that is not even a NUMBER at install time,
+    // and it STILL needs no new `COUNTERS_PLACED.source` member.
+    let state = equip(ready(), "p1", "sv01-193");
+    state = intoWindow(armScaled(state).state);
+    const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
+    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(1);
+    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30 + HELMET);
+    expect(find(events, "COUNTERS_PLACED")?.source).toBe("counterattack");
+    expect(done.players.p2.active?.damage).toBe(30 + HELMET);
+    const rows = render(events, done).filter((r) => r.text.includes("Counterattack"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.who).toBe("system");
+    expect(rows[0]?.text).toBe(`Counterattack: ${String(30 + HELMET)} damage to fix-attacker`);
+  });
+
+  it("🛑 the `dealt > 0` boundary — a PREVENTED hit arms nothing and the stamp SURVIVES", () => {
+    // The channel's zero case is the read site's own gate and needs no `>= 1` guard on
+    // the op (the flat arm has one because a printed 0 is a real sentence to refuse; a
+    // channel has no printed number to refuse). "Growl" prints no damage at all.
+    const state = intoWindow(armScaled(ready()).state);
+    let growling = setActiveFromDeck(state, "p2", "sv02-062");
+    growling = attachFromDeck(growling, "p2", "fix-lightning-energy", 1);
+    const window = state.turn;
+    const { state: done, events } = mustApply(growling, { type: "attack", seat: "p2", index: 0 });
+    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    // …and the trap is still armed, because nothing consumed it — the stamp is compared,
+    // never swept (D124), so it is still on the body after its window has passed.
+    expect(done.turn).toBe(window + 1);
+    expect(done.players.p1.active?.installedRecoil).toEqual({
+      turn: window,
+      amount: 0,
+      ofDamageTaken: true,
+    });
+  });
+});
+
+describe("🆕🆕 D456 §4 — the four questions the printed clause raises", () => {
+  it("Q1 — fires from a body being REMOVED in the same step, for the LETHAL hit's own damage", () => {
+    // 🛑 **"(EVEN IF THIS POKÉMON IS KNOCKED OUT)" IS THE LOAD-BEARING CLAUSE AND IT IS
+    // DRIVEN, NOT REASONED ABOUT.** §9 runs BEFORE `finishAttack`'s §8.1 both-board
+    // sweep, so the install is still readable when the KO is collected — and for THIS
+    // member the clause does more work than it does for D152's, because the AMOUNT is
+    // read at the same instant: a design that captured the figure after the sweep would
+    // have nothing to read it off, the body being gone.
+    let state = clearBench(ready(), "p1");
+    state = benchFromDeck(state, "p1", "fix-titan");
+    state = withDamage(state, "p1", 250); // 260 HP; a 30 Bite is lethal
+    const { state: done, events } = swing(intoWindow(armScaled(state).state), "fix-attacker", [
+      ...BITE,
+    ]);
+    const order = types(events);
+    expect(order).toContain("KNOCKED_OUT");
+    expect(order.indexOf("COUNTERS_PLACED")).toBeGreaterThan(-1);
+    expect(order.indexOf("COUNTERS_PLACED")).toBeLessThan(order.indexOf("KNOCKED_OUT"));
+    // ⚠️ **AND THE AMOUNT IS THE UNCLAMPED HIT.** The holder had 10 HP left and took 30;
+    // the retaliation is 30, not 10. `dealt` is deliberately not clamped — *"the attack
+    // really did deal it"* (attack.ts §8.1) — and the printed words are *"the damage
+    // done to this Pokémon"*, which is what was done and not what fitted.
+    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(30);
+    expect(done.players.p2.active?.damage).toBe(30);
+  });
+
+  it("Q2 — 'the Attacking Pokémon' is the body that dealt it, on the OTHER seat", () => {
+    // The retaliating body's OWNER is not the attacker, and the reference is resolved at
+    // the read site rather than carried: `attack.ts` uses the binding it rebinds at the
+    // pre-damage seam (D429) and the interpreter's twin re-reads `activeTop` live, so
+    // neither can name a body that has left. The observable claim is the pair of seats.
+    const state = intoWindow(armScaled(ready()).state);
+    const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
+    const placed = find(events, "COUNTERS_PLACED");
+    // `seat` is the ATTACKER's — it OWNS the damaged Pokémon, which is this event's
+    // contract (D136's finding 1) — while the CAUSER is the armer, which is why the log
+    // row is SYSTEM-voiced.
+    expect(placed?.seat).toBe("p2");
+    expect(placed?.uid).toBe(activeUid(done, "p2"));
+    expect(placed?.uid).not.toBe(activeUid(done, "p1"));
+    // …and the armer takes nothing: this is not a mirror, it is a cross-table placement.
+    expect(done.players.p1.active?.damage).toBe(30);
+    expect(render(events, done).find((r) => r.text.includes("Counterattack"))?.who).toBe("system");
+    // 🛑 **THE STALE-REFERENCE CLASS (D447) CANNOT ARISE HERE AND THE REASON IS
+    // STRUCTURAL, NOT LUCK.** The §9 block sits INSIDE the §8.5 damage branch, ahead of
+    // the attack's own effect program — the only thing in an attack that can move the
+    // attacker — so there is no window between the install being read and the counters
+    // landing. Pinned as an ordering over the event stream, which is the only place it
+    // is observable: nothing runs between the hit and the retaliation.
+    expect(types(events).slice(0, 3)).toEqual([
+      "ATTACK_DECLARED",
+      "DAMAGE_DEALT",
+      "COUNTERS_PLACED",
+    ]);
+  });
+
+  it("Q3 — counters are NOT damage: no Weakness, no Resistance, and no §11 ask", () => {
+    // D449's finding, inherited rather than re-derived, and CHECKED at this member: the
+    // §9 site adds flat HP to the attacker's `damage` outside the §8.5 pipeline. The
+    // observable form is the arithmetic — `dealt` in, `dealt` out, with a Weakness on the
+    // board that would have doubled it had the number gone through §8.5.
+    const state = intoWindow(armScaled(ready()).state);
+    const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
+    const attacker = FIXTURE_POOL["fix-attacker"];
+    expect(attacker?.weaknesses ?? null).toBeNull(); // …so this board cannot show it, and says so
+    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(30);
+    // 🛑 **SO THE CLAIM IS MADE WHERE IT IS OBSERVABLE: the EVENT TYPE.** A retaliation
+    // that went through §8.5 would file `DAMAGE_DEALT` with `weakness`/`resistance`
+    // fields; this files `COUNTERS_PLACED`, which has no such fields to carry. There is
+    // exactly ONE `DAMAGE_DEALT` in the stream and it is the attacker's own hit.
+    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(find(events, "DAMAGE_DEALT")?.seat).toBe("p1");
+    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(1);
+    // ⚠️ **AND THE §11 PREVENTION GATE IS NOT ASKED, WHICH IS D450's QUESTION ANSWERED
+    // BY REACHABILITY RATHER THAN BY A GATE.** A §11 attack block is installed on the
+    // INSTALLER's own Active stamped `state.turn + 1`, so a block on P2's body is live
+    // during P1's turn — and this placement happens during P2's own turn. No legal
+    // sequence puts a live block on the body being retaliated against. Driven: the
+    // retaliation lands on a board where P2's Active carries a block stamped for the
+    // turn it CAN be stamped for, and the number is unchanged.
+    const shielded = withBlock(state, "p2", state.turn + 1);
+    const guarded = swing(shielded, "fix-attacker", [...BITE]);
+    expect(find(guarded.events, "COUNTERS_PLACED")?.amount).toBe(30);
+    expect(findAll(guarded.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
+    expect(done.players.p2.active?.damage).toBe(30);
+  });
+
+  it("Q4 — it CAN kill, the Prize IS paid, and the cause marker is NOT stamped", () => {
+    // A 120 HP attacker already carrying 60 uses "Rage" for 70 and retaliates into its
+    // own death: 60 + 70 = 130 ≥ 120. §9 runs before §8.1, so the sweep collects it.
+    let state = intoWindow(armScaled(ready()).state);
+    state = setActiveFromDeck(state, "p2", "fix-attacker");
+    state = attachFromDeck(state, "p2", "fix-energy", 1);
+    state = withDamage(state, "p2", 60);
+    const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: 3 });
+    expect(find(events, "COUNTERS_PLACED")?.amount).toBe(70);
+    expect(find(events, "KNOCKED_OUT")?.seat).toBe("p2");
+    // 🛑 **THE PRIZE GOES TO THE ARMER**, which is the half a retaliation could get
+    // wrong in a way no damage assertion would notice.
+    expect(find(events, "PRIZES_OWED")).toEqual({ type: "PRIZES_OWED", seat: "p1", count: 1 });
+    expect(done.phase.kind).toBe("ko:takePrizes");
+    // ⚠️ **AND D414's `koByEffect` MARKER IS NOT STAMPED — D449's answer, re-derived at
+    // a placer that is a RETALIATION rather than an attack clause.** The marker means
+    // *"this body's lethality is an EFFECT's doing rather than damage's"*, and it denies
+    // the KO-conditioned recoil family (`damageAttackerOnKo`, flow.ts). This site adds
+    // to `damage`, so the Knock Out genuinely IS by damage and stamping it would deny a
+    // recoil that is owed. Driven on the SURVIVING board, because a stamped body is
+    // discarded before anything can read it.
+    // ⚠️ **WHAT THIS CONTROL CANNOT SEE, STATED**: a successor that stamped the marker
+    // only on the lethal branch would pass it. No board in this pool can show that half
+    // — reading a marker off a body §8.1 has already discarded is not possible from
+    // `applyAction` — and inventing a fixture to reach it is a bigger change than the
+    // claim is worth. The half that IS checked is the one a copy-paste from
+    // `devolveEach`/`knockOutChosen` would break.
+    const survivor = swing(intoWindow(armScaled(ready()).state), "fix-attacker", [...BITE]);
+    expect(survivor.state.players.p2.active?.damage).toBe(30);
+    expect(survivor.state.players.p2.active?.markers).toEqual([]);
+    expect(
+      survivor.state.players.p2.active?.markers.some((m) => m.startsWith("koByEffect")),
+    ).toBe(false);
+  });
+});
+
+describe("🆕🆕 D456 §5 — `MATCH_RECORD_VERSION` 29, driven over the SERIALIZED BYTES", () => {
+  it("🛑 the version PREDICTION in THREE directions, LOSS included", () => {
+    // 🛑 **WHICH SITUATION THIS IS, ASKED RATHER THAN INHERITED (D386/D443) — AND THE
+    // ARGUMENT THE LAST THREE SLICES USED DOES NOT APPLY AT ALL.** D453, D454 and D455
+    // each held 29 partly on *"an `EffectOp` reaches storage only through a park"*.
+    // `InPlayPokemon.installedRecoil` is a `GameState` field: it is persisted DIRECTLY,
+    // every turn, park or no park. So the question has to be answered on `match.ts`'s own
+    // discriminator instead — *"does the OLD byte string still mean what it meant"* — and
+    // it is answered TWICE, because this slice changes shape at two addresses.
+
+    const before = ready();
+    const armed = armScaled(before).state;
+    const record = armed.players.p1.active?.installedRecoil;
+    expect(record).toEqual({ turn: before.turn + 1, amount: 0, ofDamageTaken: true });
+
+    // **DIRECTION 1 — BACKWARD: a v29 record written BEFORE this slice.** The literal
+    // bytes an earlier deploy wrote, parsed and read by TODAY's reader. `{turn, amount}`
+    // with no rider must mean exactly what it meant: a flat trap, indifferent to the hit.
+    // ⚠️ **EVERY DIRECTION IS READ INSIDE THE WINDOW**, i.e. after the turn has been
+    // handed over, because `installedRecoilOf` gates on `installed.turn === state.turn`
+    // FIRST. A direction read outside the window answers 0 for the CLOCK's reason and
+    // says nothing whatever about the bytes — which is exactly how a bytes rung passes
+    // for the wrong reason (D416's shape at a serialisation boundary).
+    const inWindow = intoWindow(armed);
+    expect(inWindow.turn).toBe(before.turn + 1);
+    const v29 = JSON.parse(
+      `{"turn":${String(before.turn + 1)},"amount":100}`,
+    ) as InstalledRecoil;
+    const legacy = withRawRecoil(inWindow, "p1", v29);
+    expect(installedRecoilOf(legacy, mustActive(legacy, "p1"), 0)).toBe(100);
+    expect(installedRecoilOf(legacy, mustActive(legacy, "p1"), 999)).toBe(100);
+    expect(Object.keys(v29)).toEqual(["turn", "amount"]);
+
+    // **DIRECTION 2 — FORWARD: the bytes this deploy writes, whole and round-tripped.**
+    // Key sets asserted rather than eyeballed, because "the object looked right" is how a
+    // key goes missing. ⚠️ **AND THE OP's STRING IS ABSENT FROM THE WIRE**, which is the
+    // one claim that separates the two surfaces: `EffectOp.installRecoil.amount` is
+    // `number | "damageTaken"` and the RECORD's `amount` is a `number`. A persisted
+    // `"damageTaken"` would be a string in the field `attack.ts` SUMS with
+    // `passivesOf().damageAttacker`, so a deploy that did not know the inhabitant would
+    // compute `20 + "damageTaken"` → `"20damageTaken"` → `> 0` false, and would silently
+    // drop the ALWAYS-ON Rocky Helmet share along with the installed one.
+    const wire = JSON.stringify(armed.players.p1.active?.installedRecoil);
+    expect(wire).toBe(`{"turn":${String(before.turn + 1)},"amount":0,"ofDamageTaken":true}`);
+    expect(wire).not.toContain("damageTaken\":\"");
+    expect(JSON.stringify(armed)).not.toContain('"amount":"damageTaken"');
+    const round = JSON.parse(wire) as InstalledRecoil;
+    const revived = withRawRecoil(inWindow, "p1", round);
+    expect(installedRecoilOf(revived, mustActive(revived, "p1"), 45)).toBe(45);
+    expect(installedRecoilOf(revived, mustActive(revived, "p1"), 0)).toBe(0);
+
+    // **DIRECTION 3 — LOSS: a build that DROPS the rider, which is D421's criterion
+    // applied rather than copied (D425).** The criterion is *choose the REST of the
+    // record so that losing the key is DETECTABLE*, and the answer here is in the bytes:
+    // the residue is `{turn, amount: 0}`, and **no flat install can author that**.
+    const lost = JSON.parse(
+      JSON.stringify(round, (k, v) => (k === "ofDamageTaken" ? undefined : v)),
+    ) as InstalledRecoil;
+    expect(Object.keys(lost)).toEqual(["turn", "amount"]);
+    const degraded = withRawRecoil(inWindow, "p1", lost);
+    // The degradation is INERT — the trap simply does not fire — and NOT D435's silent
+    // corruption (`damage + undefined` → NaN → a body that can never be Knocked Out
+    // again), which is the reason the optional road is taken here and was refused there.
+    expect(installedRecoilOf(degraded, mustActive(degraded, "p1"), 999)).toBe(0);
+    const quiet = swing(degraded, "fix-attacker", [...BITE]);
+    expect(findAll(quiet.events, "COUNTERS_PLACED")).toHaveLength(0);
+    // 🛑 **AND THE RESIDUE IS UNAUTHORABLE BY THE SURVIVING PATH — MEASURED OVER THE
+    // WHOLE CORPUS AND THE WHOLE REGISTRY, not asserted.** The deriver's `counters >= 1`
+    // guard is the only producer of a FLAT `installRecoil` in the engine, so a
+    // `{turn, amount: 0}` with no rider is a byte string this deploy cannot write. A
+    // reader who finds one has found the dropped key, which is what "detectable" means.
+    const flatAmounts: number[] = [];
+    for (const [, text] of legalAttackCorpus()) {
+      for (const op of deriveAttackEffect(text) ?? []) {
+        if (op.op === "installRecoil" && typeof op.amount === "number") flatAmounts.push(op.amount);
+      }
+    }
+    expect(flatAmounts.length).toBeGreaterThan(0);
+    expect(flatAmounts.every((n) => n >= 10)).toBe(true);
+    for (const id of registryCardIds()) {
+      const card = programFor(id);
+      if (card === undefined) continue;
+      const programs = [
+        ...Object.values(card.attack ?? {}),
+        ...(card.abilities ?? []).map((a) => a.program),
+        ...(card.triggered ?? []).map((t) => t.program),
+        ...(card.trainer === undefined ? [] : [card.trainer]),
+      ];
+      for (const op of programs.flat()) expect(op.op, id).not.toBe("installRecoil");
+    }
   });
 });

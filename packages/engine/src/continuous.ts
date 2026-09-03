@@ -1822,6 +1822,23 @@ export function installedAttackDebuffOf(state: GameState, pokemon: InPlayPokemon
     window has passed simply stops answering without anyone having cleared it
     (D124's rule).
 
+    🆕🆕 **D456 — IT TAKES `damageTaken`, THE HIT THAT IS TRIGGERING IT.** Corpus line
+    180 (*"…put damage counters on the Attacking Pokémon equal to the damage done to
+    this Pokémon."*, **2 legal printings**) declines to print its amount, so the
+    number is the §8.5 figure of the hit currently landing on `pokemon`. Both call
+    sites already have it as a local named `dealt` — `attack.ts`'s §9 block gates on
+    `dealt > 0` two lines above the call, and `interpreter.ts`'s `reactToAttackDamage`
+    is only reached from a `dealt > 0` arm — so **NOTHING IS RECORDED AND NOTHING IS
+    CARRIED**. D451 refused this sentence on the ground that its quantity *"is a
+    HISTORY of what happened during the opponent's turn — it needs a durated watcher
+    and a recorded figure, neither of which this op has"*. That refusal was exact
+    about `counterUntilRemainingHp` and does not survive at THIS address: the durated
+    watcher is `InstalledRecoil` and has existed since D152, and the figure never
+    becomes a history because the read happens in the same expression that computes
+    it. **The parameter is REQUIRED rather than optional for D425's reason** — an
+    optional one would let a third call site forget it and silently retaliate for the
+    floor.
+
     ⚠️ IT RETURNS A NUMBER TO BE SUMMED, NOT A RECORD TO BE INSPECTED, and the
     number it is summed into is one FOUR always-on printings already feed. Cacnea
     sv01-005 / Cacturne sv01-006 "Counterattack Quills" (3 counters), Stunfisk
@@ -1850,12 +1867,24 @@ export function installedAttackDebuffOf(state: GameState, pokemon: InPlayPokemon
     things depending on whether they carry a duration. (Checked rather than
     assumed: the §9 recoil site is in `attack.ts` and is reached only by an attack
     — no Ability or Trainer path damages an Active through it.) */
-export function installedRecoilOf(state: GameState, pokemon: InPlayPokemon): number {
+export function installedRecoilOf(
+  state: GameState,
+  pokemon: InPlayPokemon,
+  damageTaken: number,
+): number {
   // No defensive `=== undefined` arm, for `attackBlockOf`'s reason above: the
   // field is REQUIRED and a record written before it existed is retired by
   // MATCH_RECORD_VERSION rather than read benignly here (D124's rule).
   const installed = pokemon.installedRecoil;
-  return installed === null || installed.turn !== state.turn ? 0 : installed.amount;
+  if (installed === null || installed.turn !== state.turn) return 0;
+  // 🆕🆕 D456 — the UNPRINTED amount, resolved here and nowhere else. `Math.max` and
+  // not a bare `damageTaken`: `amount` is the record's FLOOR, so a body carrying both
+  // printings in one window never retaliates for less than the flat one promised —
+  // which is `installRecoil`'s own `Math.max` merge rule stated at the read end. A
+  // record installed by line 180 alone carries floor 0, so the max is the hit.
+  return installed.ofDamageTaken === true
+    ? Math.max(installed.amount, damageTaken)
+    : installed.amount;
 }
 
 /** §8/§11 (D143) — is `pokemon` under an attack-installed SELF-LOCK right now

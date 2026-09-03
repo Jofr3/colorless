@@ -795,10 +795,25 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
     // The verb names the MECHANISM ("counterattack"), matching D141's
     // COUNTERS_PLACED label, so the arming row and the row it eventually produces
     // use the same word for the same thing.
+    //
+    // 🆕🆕 **D456 — THE SECOND ARM, AND IT EXISTS BECAUSE THE FIRST ONE WOULD LIE.**
+    // Corpus line 180 arms a trap whose amount is *"equal to the damage done to this
+    // Pokémon"*, so its record carries floor 0 and the wording above would render
+    // *"will counterattack for 0 damage"* — announcing that nothing will happen at the
+    // instant something will. The number is genuinely unknown at arming time, so the row
+    // names the RULE instead of a figure, which is what this whole family's rows do when
+    // the figure IS the rule. A FLOOR is mentioned only when there is one (two
+    // installations in one window, unreachable off any printing and constructed).
     case "RECOIL_ARMED":
       return row(event.seat, [
         strong(cardName(state, event.uid)),
-        plain(` will counterattack for ${event.amount} damage during your opponent's next turn`),
+        plain(
+          event.ofDamageTaken === true
+            ? ` will counterattack for the damage it takes${
+                event.amount > 0 ? ` (at least ${event.amount})` : ""
+              } during your opponent's next turn`
+            : ` will counterattack for ${event.amount} damage during your opponent's next turn`,
+        ),
       ]);
     // §8.5/§11 — the attack-installed PER-ATTACK DAMAGE BUFF (D155). ACTIVE voice
     // for RECOIL_ARMED's reason verbatim: `seat` owns the boosted Pokémon AND that

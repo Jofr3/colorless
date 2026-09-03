@@ -19153,10 +19153,29 @@ import type { GameState, Seat } from "./types";
     a carrier that cannot be resolved without a D1. What rots is the numbers, and the
     repair for a number in a doc block is to say when it was taken.
 
+    🆕🆕 **RE-MEASURED AT D456: 36 ASSERTIONS / 42 SITES** — 35
+    `expect(engineVersion).toBe(…)` pins across 35 test files, ONE
+    `expect(manifest.version).toBe(…)` pin (`legacyEnergy.test.ts`, which carries both),
+    `packages/engine/package.json`, this declaration, and `D275`'s mutant `find`. It has
+    grown by 2 assertions / 5 sites since D452, and the mechanism D427 named is still the
+    whole of it: **every note counts the pins it INHERITED and never the one it is about
+    to AUTHOR.** Counted with BOTH greps, `engineVersion` and `manifest.version`.
+
     engineVersion 0.353.0 → **0.354.0** (D452 — two per-heads consequents, no new
     vocabulary; `MATCH_RECORD_VERSION` STAYS 29, driven in
-    `perHeadsConsequent.test.ts` §3). */
-export const engineVersion = "0.354.0";
+    `perHeadsConsequent.test.ts` §3).
+
+    🆕🆕 engineVersion 0.354.0 → **0.355.0** (D456 — the RETALIATION family's other two
+    printed amounts, corpus lines 179 and 180, **2 sentences / 3 legal printings**.
+    Engine behaviour MOVED — a widened `SELF_INSTALLED_RECOIL` parenthetical, a new
+    anchor `SELF_INSTALLED_RECOIL_TAKEN`, `installRecoil.amount: number | "damageTaken"`,
+    an optional `InstalledRecoil.ofDamageTaken`, a REQUIRED third parameter on
+    `installedRecoilOf`, an optional `RECOIL_ARMED.ofDamageTaken` and a second `log.ts`
+    arm. `MATCH_RECORD_VERSION` **STAYS 29** — and NOT on the reachability argument
+    D453–D455 used, which does not apply to a `GameState` field; on `match.ts`'s own
+    discriminator, driven over the serialized bytes in three directions in
+    `installedRecoil.test.ts` §5). */
+export const engineVersion = "0.355.0";
 
 export type {
   ApplyResult,

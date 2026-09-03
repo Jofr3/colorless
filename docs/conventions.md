@@ -3690,3 +3690,165 @@ hit against the module. It is one command and it has paid twice.
 The repair is a DECLARED row, not a deleted claim: `survives: { kind: "equivalent" }` with a
 self-invalidating reason (D427) makes the sentence true *and* makes it go loud the day it
 stops being true.
+
+## A refusal is scoped to whatever its LAST clause names (D456)
+
+D451 refused *"…put damage counters on the Attacking Pokémon equal to the damage done to this
+Pokémon."* with this reason: *"D451's quantity is a fact about the BODY STANDING THERE,
+readable at the instant the op runs, where this one is a HISTORY of what happened during the
+opponent's turn — **it needs a durated watcher and a recorded figure, neither of which this op
+has**."*
+
+Every word of that is true **of `counterUntilRemainingHp`**, and the last clause says so. The
+sentence still read as a statement about the family, and it was quoted forward that way into
+three more files. The durated watcher had existed since **D152** (`InstalledRecoil`), and the
+figure never becomes a history at all: both §9 read sites hold it as a local named `dealt` —
+the same local their own `dealt > 0` gate reads — two lines above the call. The whole channel
+was one **required** parameter.
+
+- **A refusal's scope is the op it was measured on, and its GENERALITY is a separate claim
+  that nobody checks.** Write *"this op cannot"*, never *"the engine cannot"*, unless you have
+  grepped the engine.
+- ⚠️ **Before inheriting a refusal, ask where the sentence would be READ, not where it was
+  refused.** D451 refused it at a `^Put` anchor whose read site runs inside the attacker's own
+  program; the sentence's read site is the §9 recoil, a turn later, in a different file. Two
+  addresses, two answers — and only one of them was ever measured.
+- **Three shipped refusals have now fallen in seven slices, and every one named its own
+  trigger.** D413's (a population), D428's (an executable rung), and this one (an op scope).
+
+## A refusal that names the varying token IS a work order (D456)
+
+`counterPutChosen.test.ts`'s bullet (g) said, in full: *"179 is the SHIPPED sentence at line
+178 with 'even if IT is Knocked Out' re-spelled 'even if THIS POKÉMON is' — a near miss on a
+parenthetical — and 180 reads its amount off the damage just taken."* It named the family, the
+read site, the exact varying token and the exact channel. **It cost one regex alternation to
+collect, and it sat unread for five slices** while the residue was ranked by printing count.
+
+D413 made this point about a doc block. It is truer of a test bullet, which nobody greps.
+⚠️ **When you write a refusal that names ONE token, say so in its first line** — *"one
+alternation away"* is a price, and a price is the only part of a refusal a successor acts on.
+
+## The specimen in a refusal rung must be the PRINTED bytes (D456)
+
+Four test files pinned the retaliation sentence as still-unread using a string spelling *"(even
+if **it** is Knocked Out)"*. The catalog prints *"(even if **this Pokémon** is)"* and nothing
+else on that sentence. So four rungs were green about a byte string no card carries — D183's
+paraphrase defect (*"an arm written from a paraphrased sentence passes a test written against
+the same paraphrase"*) arriving at a **refusal**, where it is harder to see because nothing
+downstream consumes the specimen.
+
+**Derive the specimen from `legalAttackCorpus()` where you can**, and where you keep a
+historical string, assert the printed one BESIDE it so the difference is visible rather than
+quietly corrected. This is D423's rule (*pin an absence on the POPULATION, not on a specimen*)
+with the specimen shown to be wrong rather than merely narrow.
+
+## "Corrected in place" is a claim with a population (D456)
+
+D455 found a doc block quoting a printed sentence the catalog does not carry, corrected it in
+`interpreter.ts`, and closed out with ✅ *"`installRecoil`'s PHANTOM SENTENCE, CORRECTED IN
+PLACE"*. The identical quote was live in **six** more places at that commit — `effects.ts`
+(twice), `types.ts`, `index.ts`, `installedRecoil.test.ts` and `apps/api/src/lobby/match.ts`.
+
+D415's rule (*before correcting a comment, grep for its first distinctive clause; if it appears
+more than once, the correction is a SWEEP and its cost is the sweep*) is written in this file,
+**by the run that then did not run the grep.** ⚠️ **A close-out that says "in place" owes the
+count of places**, and the count costs one `grep`.
+
+## When a persisted record gains a second field, both reads need the same gate (D456)
+
+`InstalledRecoil` went from `{turn, amount}` to `{turn, amount, ofDamageTaken?}`. The `amount`
+read has been gated on `stacking` (*"is this record's window the one I am writing"*) since
+D152, because D124's expiry is by **arithmetic** — a spent record is still sitting on the body
+and nothing sweeps it. The first draft of the FLAG read was ungated, so a spent stamp would
+have turned a fresh FLAT install into a scaled one two turns later.
+
+This is D412's *"one fact gains a second field, find every read site"* pointed inward: the two
+reads are four lines apart in one function, and the asymmetry is exactly what a reader skims
+past. ⚠️ **Write the gate on the new read by COPYING the old read's line, not by re-deriving
+it** — and drive it across a real turn boundary so the staleness is produced by the clock
+rather than written by hand.
+
+## A log row cannot print a number it does not have (D456)
+
+When an amount becomes a CHANNEL rather than a literal, the row that announces the
+installation has nothing to say. `RECOIL_ARMED` rendered *"will counterattack for **0 damage**
+during your opponent's next turn"* — a claim that nothing will happen, printed at the instant
+a real trap is armed. The fix is a flag on the event and a second `log.ts` arm that names the
+RULE instead of a figure.
+
+**This site is invisible from the engine.** Nothing about the board, the record, the census or
+the mutants points at it; only rendering the row does. ⚠️ **When you widen an amount to a
+source, render the row before you call the slice done** (D421's rule, and the second time it
+has caught a row that was false rather than stilted).
+
+## A mutant with nowhere to die is a coverage finding (D456)
+
+*"The interpreter's §9 funnel passes 0 for the hit"* would have survived 449 files. The funnel
+(D328's re-homed main hit) reaches `installedRecoilOf` exactly as `attack.ts` does, and every
+board that drives it used the CATALOG half of the recoil — Rocky Helmet's flat 20 — which is
+indifferent to the new argument. The header of the very suite that drives it LISTS the
+installed half among the reactions it is about, and no board there drove it.
+
+**When you thread a new argument through two call sites, write the mutant for BOTH before you
+write either killer set.** The site with no board is the finding; D455 said the same thing
+about `shuffleDeck` one slice earlier, and the two together are the rule: **a row on one call
+site is not coverage of the function.**
+
+## Census chains: two more ways to get the term wrong (D456)
+
+D428 said *step every nested chain, not the one that reddened*. Two new failure modes, both
+found by the suite after a pass that looked complete:
+
+- ⚠️ **TWO CHAINS CAN SHARE ONE PHYSICAL LINE.** `opponentBenchCount.test.ts` and
+  `retreatCostBonus.test.ts` spell `expect([resolving.length - … , units(resolving) - …])` on a
+  single line, and a per-line pass steps only the first of them. **A chain is a chain whether
+  or not it starts a line.**
+- ⚠️ **A CHAIN'S UNIT IS NOT ALWAYS READABLE OFF ITS HEAD EXPRESSION.**
+  `precociousEvolution.test.ts`'s chain is headed `head`, which counts **printings** despite
+  not being spelled `units(...)`. A pass that classified chains by their head text gave it the
+  sentence term and was off by one.
+
+And the bare `240` operand inside `censusAtHead.test.ts`'s arithmetic — the one
+`grep 'toBe(N)'` cannot see — **bit for the sixth consecutive slice, inside a comment block
+that has warned about it each time**. That is D418's shape reaching a COMMENT: the note is read
+only by someone already standing there, and nobody stands there until the assertion has failed.
+
+## Two surfaces, two spellings, and the reason written down (D456)
+
+D421's rule is *same fact, same spelling, every surface*. D456 breaks it once, deliberately, and
+that is the interesting case:
+
+- the **op** carries `amount: number | "damageTaken"` — parse-time, reaches storage only behind
+  a park, and this op never parks;
+- the **persisted record** keeps `amount: number` and carries a separate `ofDamageTaken?: true`.
+
+A persisted `amount: "damageTaken"` would put a STRING in the numeric field `attack.ts` SUMS
+with `passivesOf().damageAttacker`, so a deploy that did not know the inhabitant would compute
+`20 + "damageTaken"` → `"20damageTaken"` → `> 0` false, and would silently drop the ALWAYS-ON
+share as well as the installed one. **When you split a spelling, write the failure the unified
+spelling would have produced** — otherwise the next reader "unifies" them.
+
+⚠️ **And the sibling spelling was refused for a second reason worth keeping.** `heal.amount`
+already uses `"dealt"` for a §8.5 figure, and reusing that word here would have invited the
+`case "heal"` arm's own resolution (`ctx.dealt ?? 0`, five lines away) to be copied onto this
+op — a real answer about the wrong hit. **A name that invites the neighbouring arm's code is a
+worse name than an inconsistent one.**
+
+## `MATCH_RECORD_VERSION`: the reachability argument has a precondition (D456)
+
+D453, D454 and D455 all held 29 partly on *"an `EffectOp` reaches storage only through a
+continuation's `pendingOp` and its `rest`, written only on a park"*. That argument is about
+**`EffectOp`s** and says nothing about a `GameState` field. `InPlayPokemon.installedRecoil` is
+persisted directly, every save, park or no park.
+
+⚠️ **Before reusing the reachability argument, name the ADDRESS the shape changed at.** If it is
+a `GameState` field, the only argument available is `match.ts`'s own discriminator — *does the
+OLD byte string still mean what it meant* — and the optional-vs-required question has to be
+asked with D421's criterion **applied**, not copied. The sequence of refusals now reads: D432
+*no rest*, D434 *rest not old*, D435 *rest old but the loss is `NaN` corruption*, and D456
+*rest old, loss inert, and the residue is a byte string the surviving path cannot author*.
+
+**"Detectable" can live in the BYTES rather than on the board.** D456's dropped rider leaves
+`{turn, amount: 0}`, and the deriver's `counters >= 1` guard is the only producer of a flat
+`installRecoil` in the engine — measured over the whole corpus and the whole registry, in the
+suite, rather than asserted.

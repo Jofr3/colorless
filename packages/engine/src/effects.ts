@@ -3814,10 +3814,23 @@ export type EffectOp =
 
       ⚠️ **FIELD-FREE**, and a widening for `scheduleDiscard`'s reasons verbatim. */
   | { op: "scheduleKnockOut" }
-  /** §9/§11 (D152) — ARM a durated REACTIVE RECOIL on the controller's own Active
-      ("During your opponent's next turn, if this Pokémon is damaged by an attack
-      (even if it is Knocked Out), put 10 damage counters on the Attacking
-      Pokémon." — 2 printings, Lycanroc ex sv02-117/-241 "Scary Fangs").
+  /** §9/§11 (D152, WIDENED D456) — ARM a durated REACTIVE RECOIL on the controller's
+      own Active. THREE printed sentences, **8 legal printings**, measured off
+      `legalAttackCorpus()` rather than quoted from a doc block:
+
+        "During your opponent's next turn, if this Pokémon is damaged by an attack
+         (even if it is Knocked Out), put 8 damage counters on the
+         Attacking Pokémon."                                      (line 178, **5**)
+        "…(even if this Pokémon is Knocked Out), put 6 damage
+         counters…"                                               (line 179, **1**)
+        "…(even if this Pokémon is Knocked Out), put damage counters on the
+         Attacking Pokémon equal to the damage done to this
+         Pokémon."                                                (line 180, **2**)
+
+      🛑 **THE OLD HEADER HERE QUOTED A SENTENCE THE CATALOG DOES NOT CARRY** — *"put
+      10 damage counters … 2 printings, Lycanroc ex sv02-117/-241 'Scary Fangs'"* —
+      which is the phantom D454 found and D455 corrected in `interpreter.ts` alone.
+      The ids are stated as UNRESOLVED rather than repaired (D425: no D1 here).
 
       `reduceDamage`'s SIBLING and not its mirror: same holder ("this Pokémon"),
       same `state.turn + 1` window, same absence of a `target` field, same no-park,
@@ -3825,11 +3838,49 @@ export type EffectOp =
       feeds — that one is subtracted at §8.5 step 5, this one is added at the §9
       reactive recoil, the site that already sums `passivesOf().damageAttacker`.
 
-      ⚠️ `amount` IS HP, NOT COUNTERS. The printed sentence says "10 damage
-      counters"; the deriver multiplies by 10 once (effects.ts
-      `SELF_INSTALLED_RECOIL`) so this op speaks the same unit as the registry's
-      four always-on printings of the same clause, which is what makes the two
-      halves summable at one read site instead of two.
+      ⚠️ `amount` IS HP, NOT COUNTERS. The printed sentence counts DAMAGE COUNTERS;
+      the deriver multiplies by 10 once (effects.ts `SELF_INSTALLED_RECOIL`) so this
+      op speaks the same unit as the registry's four always-on printings of the same
+      clause, which is what makes the two halves summable at one read site instead
+      of two.
+
+      🆕🆕 **D456 — `amount` IS `number | "damageTaken"`, AND THE STRING IS THE
+      SECOND PRINTED MEMBER OF THE FAMILY.** Corpus line 180 (*"…put damage counters
+      on the Attacking Pokémon equal to the damage done to this Pokémon."*, **2 legal
+      printings**) declines to print a number: the amount is the §8.5 figure of the
+      hit that TRIGGERS the trap, a whole turn after the op ran. `"damageTaken"` names
+      it, and the resolution is one expression at the ONE read site
+      (`installedRecoilOf`, continuous.ts), which is handed that site's own `dealt`.
+
+      🛑 **A WIDENED FIELD RATHER THAN A SECOND OP, WHICH IS `heal`'s D427 CASE
+      VERBATIM** — the read site already sums, already gates on `dealt > 0` and
+      already labels its row `"counterattack"`, so a second op would restate three
+      rules with three chances to drift (D222's shape).
+
+      ⚠️ **AND THE UNION IS WHAT MAKES FORGETTING THE NEW INHABITANT A COMPILE ERROR,
+      BUT NOT AT THE ADDRESS `heal`'s BLOCK NAMES — MEASURED RATHER THAN COPIED.**
+      `heal` has ONE read site and the union stopped it compiling directly. Here the
+      only consumer of `op.amount` is `installRecoil` (interpreter.ts), and the error
+      lands one line further in: the record's `amount` is still `number`, so the
+      string cannot reach `installedRecoil: {…}` until the arm narrows it. A build
+      that widened the op and forgot the arm does not typecheck. **The claim is about
+      the STORE, not about the read**, and saying so is the point — the parallel is
+      real and the address is not.
+
+      ⚠️ **NOT SPELLED `"dealt"`, AND THE REFUSAL IS THE POINT.** `heal.amount`'s
+      `"dealt"` is the damage the ATTACKER did, read from `EffectContext.dealt` in the
+      attacker's own program. This is the damage the HOLDER TOOK, read a turn later at
+      a site `EffectContext` never reaches. Same word, two reference frames; the
+      `case "heal"` arm one screen up in `interpreter.ts` resolves its own with
+      `ctx.dealt ?? 0`, and copying that line onto this op would be a real answer about
+      the wrong hit.
+
+      ⚠️ **`MATCH_RECORD_VERSION` STAYS 29 FOR THIS FIELD** — an `EffectOp` reaches
+      storage only through `phase.cont.pendingOp`/`rest`, this op never parks, and a
+      new UNION INHABITANT on an existing field is D125's WIDENING (D383–D385, D426,
+      and `heal`'s own block above). The PERSISTED half of this slice is
+      `InstalledRecoil` (types.ts), where the question is asked again and answered
+      differently — the record does NOT take the string.
 
       ⚠️ IT NEEDS NO CONDITION FIELD FOR "if this Pokémon is damaged by an attack".
       That clause is not a gate the op evaluates — it is the description of the
@@ -3841,7 +3892,7 @@ export type EffectOp =
       pipeline. Never parks, consumes no rng, refusable by no §11 block (it writes
       to the actor's own body — `reduceDamage`'s verdict verbatim, and the §11
       classification table drives it). */
-  | { op: "installRecoil"; amount: number }
+  | { op: "installRecoil"; amount: number | "damageTaken" }
   /** §8/§11 (D143, widened D148, spellings closed D408) — LOCK a Pokémon out of
       attacking on ITS OWN controller's NEXT turn. SIX printed sentences, on both
       sides of the table and in both printed verbs:
@@ -9833,15 +9884,34 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 //    (even if it is Knocked Out), put 10 damage counters on the Attacking
 //    Pokémon."
 //
-// TWO printings on ONE anchor at ONE amount (local D1, 2026-08-02, 978 cards / 6 sets,
-// whole effect string, checked PER PRINTING — ids, NAMES, costs, printed damage
-// and INDEX, D144's rule extended to NAMES by D146):
+// 🛑 **D456 — THE PRINTED SENTENCE AND THE COUNTS ABOVE WERE THE PHANTOM D454
+// FOUND, AND THIS IS THE SECOND COPY OF IT.** The block used to read *"TWO printings
+// on ONE anchor at ONE amount … 10 counters — Lycanroc ex sv02-117 (Double rare) /
+// sv02-241 (Special illustration rare) 'Scary Fangs' ({F}{C}{C}, 140, INDEX 1)"*.
+// `Attacking Pokémon` over all 640 `legalAttackCorpus()` sentences returns exactly
+// THREE rows and **none of them is a ten**:
 //
-//   10 counters — Lycanroc ex sv02-117 (Double rare) / sv02-241 (Special
-//                 illustration rare) "Scary Fangs" ({F}{C}{C}, 140, INDEX 1)
+//   | corpus line | legal printings | sentence |
+//   |---|---|---|
+//   | 178 | **5** | *"…(even if **it** is Knocked Out), put **8** damage counters…"* |
+//   | 179 | **1** | *"…(even if **this Pokémon** is Knocked Out), put **6** damage counters…"* |
+//   | 180 | **2** | *"…put damage counters … **equal to the damage done to this Pokémon**"* |
 //
-// One attack in two rarities, so D121's second-printing warrant is met by the
-// card rather than by a family count.
+// This anchor claims 178 and 179 — **6 legal printings across the two parenthetical
+// spellings** — and `SELF_INSTALLED_RECOIL_TAKEN` below claims 180.
+//
+// ⚠️ **D455 CORRECTED THIS CLAIM IN `interpreter.ts` AND NOWHERE ELSE, AND ITS
+// CLOSE-OUT SAID "CORRECTED IN PLACE".** The identical quote was live in SIX more
+// places at that commit (`effects.ts` twice, `types.ts`, `index.ts`,
+// `installedRecoil.test.ts`, `apps/api/src/lobby/match.ts`) — D415's rule *"before
+// correcting a comment, grep for its first distinctive clause"*, written into
+// `conventions.md` by the very run that then did not run the grep. D456 corrects the
+// two copies in the files it was already editing and NAMES the rest rather than
+// sweeping them inside a build slice.
+//
+// ⚠️ **THE CARD IDS ARE STATED AS UNRESOLVED, NOT REPAIRED (D425).** This checkout
+// has no D1; the sentence text and the printing counts are measurable off the
+// committed corpus and the ids behind them are not.
 //
 // ⚠️ THE CAPTURE IS IN DAMAGE COUNTERS AND THE OP CARRIES HP, converted once here
 // (`× 10`). Every other anchor in this tail captures HP directly because every
@@ -9851,7 +9921,8 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 // (`damageAttacker: { amount: 30 }` for Cacnea's THREE counters), so converting
 // at the deriver is what makes the two halves summable at all.
 //
-// ⚠️ "(even if it is Knocked Out)" IS INSIDE THE ANCHOR AND NEEDS NO OP FIELD.
+// ⚠️ "(even if {it|this Pokémon} is Knocked Out)" IS INSIDE THE ANCHOR AND NEEDS NO
+// OP FIELD.
 // It is the printed restatement of an ordering the §9 site has had since 0.x —
 // the recoil runs before finishAttack's §8.1 sweep — so a reader that dropped the
 // words would still be right and a reader that captured them would carry a field
@@ -9859,15 +9930,40 @@ const ATTACKS_BY_DEFENDER_WEAKENED =
 // family's safety property (an unrecognised remainder stays LOUD), not because
 // anything downstream consumes it.
 //
-// ⚠️ AND THE NEIGHBOURING SENTENCE IS DELIBERATELY LEFT LOUD. Mabosstiff sv02-143
-// "Comeuppance" prints this sentence with "10 damage counters" replaced by
-// "damage counters … equal to the damage done to this Pokémon" — the same
-// duration, the same body, the same read site, and an AMOUNT this anchor's
-// `(\d+)` structurally cannot admit, because it is not a number but a channel
-// from the §8.5 result (the resume point's item 5). `^…$` refuses it in both
-// directions and counterattack.test.ts pins it still-null.
+// 🛑 **THE NEIGHBOURING SENTENCE WAS DELIBERATELY LEFT LOUD AT D152 AND IS
+// CLAIMED AT D456.** Corpus line 180 prints this sentence with the counter count
+// replaced by *"equal to the damage done to this Pokémon"* — the same duration, the
+// same body, the same read site, and an AMOUNT this anchor's `(\d+)` structurally
+// cannot admit, because it is not a number but a channel from the §8.5 result. D152
+// wrote *"`^…$` refuses it in both directions"*, which is still true of THIS anchor
+// and is exactly why the second one below exists rather than a looser first.
 const SELF_INSTALLED_RECOIL =
-  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if it is Knocked Out\), put (\d+) damage counters on the Attacking Pokémon\.$/;
+  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put (\d+) damage counters on the Attacking Pokémon\.$/;
+// 🆕🆕 D456 — the SAME family with its amount UNPRINTED, and the anchor that
+// D152 wrote three screens up as the sentence it deliberately left LOUD:
+//
+//   "During your opponent's next turn, if this Pokémon is damaged by an attack
+//    (even if this Pokémon is Knocked Out), put damage counters on the Attacking
+//    Pokémon equal to the damage done to this Pokémon."
+//
+// ⚠️ **NO CAPTURE AT ALL, WHICH IS WHY IT IS A SECOND ANCHOR AND NOT A WIDER
+// ALTERNATION ON THE ONE ABOVE.** The flat member's `(\d+)` is the whole of its
+// amount; this member's amount is a CHANNEL — the §8.5 figure of the hit that
+// triggers it — and the two cannot share a capture group without one of them
+// carrying `undefined` through the arm. Two printed strings, two anchors (D136/D137),
+// one op with a widened `amount` field, exactly as `heal` took `number | "dealt"`.
+//
+// ⚠️ **AND THE `(?:it|this Pokémon)` ALTERNATION IS PRINTED, NOT INVENTED.** Over
+// all 640 `legalAttackCorpus()` sentences, `Attacking Pokémon` returns exactly THREE
+// rows — 8 counters / 5 printings with "even if **it** is", 6 counters / 1 printing
+// with "even if **this Pokémon** is", and this one with "even if **this Pokémon**
+// is". So the parenthetical varies BY PRINTING inside the flat member itself, and a
+// reader that admitted one spelling on one member and refused it on the other would
+// be drawing a distinction the pool does not draw. The alternation is the same on
+// both anchors for that reason, and this member's "it" spelling is admitted though
+// no printing carries it TODAY — stated rather than hidden.
+const SELF_INSTALLED_RECOIL_TAKEN =
+  /^During your opponent['’]s next turn, if this Pokémon is damaged by an attack \(even if (?:it|this Pokémon) is Knocked Out\), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon\.$/;
 // The COUNTER MOVE (D138) — "Move all damage counters from 1 of your Benched
 // Pokémon to your opponent's Active Pokémon.", the whole printed effect. TWO
 // printings, both Dedenne ex "Tail Swap" (sv02-093 Double rare / sv02-239 Ultra
@@ -20111,6 +20207,34 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // emit a row announcing it, which is worse than an unread sentence — it
     // claims a threat that does not exist. Leave it LOUD.
     if (counters >= 1) return [{ op: "installRecoil", amount: counters * 10 }];
+  }
+  // 🆕🆕 19h. THE SAME TRAP WITH ITS AMOUNT UNPRINTED (D456) — corpus line 180,
+  //      2 legal printings, ONE new anchor and ZERO new ops. The whole slice on
+  //      this side is that `installRecoil.amount` became `number | "damageTaken"`,
+  //      which is `heal.amount`'s `number | "dealt"` widening (D427) at a second
+  //      address and for the same three reasons: the read site is already written
+  //      and already clamped, a second op would restate its rules, and a UNION on
+  //      the existing field makes forgetting to resolve the new inhabitant a
+  //      COMPILE ERROR rather than a silent zero.
+  //
+  //      🛑 **A DIFFERENT SPELLING FROM `heal`'s `"dealt"`, DELIBERATELY, AND THAT
+  //      IS THE ONE PLACE THIS SLICE REFUSES D421's "SAME FACT, SAME SPELLING".**
+  //      They are NOT the same fact. `heal`'s `"dealt"` is the damage the ATTACKER
+  //      just did, resolved from `EffectContext.dealt` inside the attacker's own
+  //      program on the attacker's own turn. This one is the damage the HOLDER just
+  //      TOOK, resolved a whole turn later at the §9 recoil site from that site's
+  //      own `dealt` local. Spelling both `"dealt"` would invite the resolution one
+  //      `case` arm up (`ctx.dealt ?? 0`) to be copied onto this one, which is a
+  //      real prompt with a real answer about the wrong hit — the mutant
+  //      `D456-taken-resolved-from-ctx-dealt` is exactly that build.
+  //
+  //      UNGATED like arms 19c–19g and for the same reason — no coin is printed —
+  //      so the derived program is the bare op.
+  if (SELF_INSTALLED_RECOIL_TAKEN.test(effect)) {
+    // No `>= 1` guard and nothing to guard: there is no capture. The amount is a
+    // channel and its zero case is the read site's own `dealt > 0` gate, which has
+    // stood since 0.x — an attack that deals nothing triggers no recoil at all.
+    return [{ op: "installRecoil", amount: "damageTaken" }];
   }
 
   // 20. "Heal {N|all} damage from 1 of your [Benched] Pokémon." — D135's CHOSEN

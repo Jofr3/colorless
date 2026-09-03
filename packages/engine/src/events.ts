@@ -640,6 +640,23 @@ export type GameEvent =
       turn", which is the wording D149 could NOT copy because its row renders
       under the victim's name (see log.ts).
 
+      🆕🆕 **D456 — `ofDamageTaken` IS PRESENT WHEN THE ARMED TRAP READS ITS AMOUNT
+      OFF THE HIT** (corpus line 180, *"…put damage counters on the Attacking Pokémon
+      equal to the damage done to this Pokémon."*, 2 legal printings). `amount` is then
+      the FLOOR rather than the whole answer, and `log.ts` has a second arm rather than
+      a second row. 🛑 **THE FLAG EXISTS BECAUSE THE ROW WOULD OTHERWISE BE FALSE, NOT
+      BECAUSE THE FIELD IS TIDY.** A pure line-180 install carries floor 0, and the
+      unwidened row rendered *"…will counterattack for 0 damage during your opponent's
+      next turn"* — a claim that a trap does nothing, printed at the exact moment a real
+      one is armed. D421's rule (*a log row is a claim with the same standing as a
+      predicate*) makes that a defect and not a wording preference, and it is the ONE
+      site in this slice that a purely engine-side reading would have missed.
+
+      ⚠️ **IT IS A WIDENING AND MOVES NO `MATCH_RECORD_VERSION` BYTE**: a `GameEvent` is
+      not persisted — `MatchRecord.log` holds the RENDERED `SeatLogEntry[]` — so this is
+      new TEXT in NEW records only, D141's already-settled case (see match.ts's own
+      block, which says exactly this about `RECOIL_ARMED`'s original row).
+
       No `…_ENDED` twin, for ATTACK_BLOCK_APPLIED's reasons verbatim (a turn stamp
       expires by arithmetic, with no boundary walk to announce it from), and the
       EARLY endings — being Switched out, evolving — are already told by their own
@@ -652,7 +669,7 @@ export type GameEvent =
       and this installation are SUMMED into one number before the site sees it
       (attack.ts §9). A second row here, or a member on that one, would be a claim
       about which card supplied HP that no longer exists as a distinction. */
-  | { type: "RECOIL_ARMED"; seat: Seat; uid: string; amount: number }
+  | { type: "RECOIL_ARMED"; seat: Seat; uid: string; amount: number; ofDamageTaken?: true }
   /** §8.5/§11 (D155) — an attack INSTALLED a durated PER-ATTACK DAMAGE BUFF on the
       CONTROLLER's own Active ("During your next turn, this Pokémon's {AttackName}
       attack does {N} more damage (before applying Weakness and Resistance).").

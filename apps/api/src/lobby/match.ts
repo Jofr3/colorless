@@ -1130,7 +1130,49 @@ export interface MatchRecord {
 
     ⚠️ Nothing else moved: no `GameState` field, no `InPlayPokemon` key, no
     `EffectOp` inhabitant or field, no prompt kind, no `GameEvent`, no `route`
-    value, no error code, no `SeatLogEntry` row and no `packages/schema` byte. */
+    value, no error code, no `SeatLogEntry` row and no `packages/schema` byte.
+
+    🆕🆕 **STAYS 29 AT D456 — AND THIS IS THE FIRST SLICE IN FOUR WHERE THE REACHABILITY
+    ARGUMENT DOES NOT APPLY AT ALL, SO IT IS NOT USED.** D453, D454 and D455 each held 29
+    partly on *"an `EffectOp` reaches storage only through a continuation's `pendingOp`
+    and its `rest`, written only on a park"*. D456 changes shape at **three** addresses
+    and only one of them is an `EffectOp`:
+
+      · **`InstalledRecoil` gains `ofDamageTaken?: true`** (types.ts) — the printed
+        *"…put damage counters on the Attacking Pokémon equal to the damage done to this
+        Pokémon."* (corpus line 180, 2 legal printings). 🛑 **THIS ONE IS AT A PERSISTED
+        ADDRESS AND THERE IS NO PARK IN FRONT OF IT**: `InPlayPokemon.installedRecoil` is
+        a `GameState` field and rides `MatchRecord.state` on every save. So the question
+        is answered on THIS BLOCK'S OWN DISCRIMINATOR — *"does the OLD byte string still
+        mean what it meant"* — and it does: a v29 record's `{turn, amount}` carries no
+        rider, absence reads as the flat family, and the flat family is exactly what a
+        v29 writer meant by those bytes. **A WIDENING IS FREE AND A RENAME IS NOT**, and
+        this is a widening at the one address where that had to be argued rather than
+        inherited.
+        ⚠️ **AND THE OPTIONAL-VS-REQUIRED QUESTION WAS ASKED WITH D421's CRITERION
+        APPLIED RATHER THAN COPIED (D425).** The criterion is *choose the REST of the
+        record so that LOSING the key is DETECTABLE*. D432/D142/D143/D147/D412 all made
+        their key REQUIRED because there WAS no rest — a one-key record whose loss is a
+        benign soft landing. D435 had a rest and still refused, because the loss produced
+        `NaN` and a body that could never be Knocked Out again. **This one has an OLD rest
+        (`turn` and `amount` were both written by the v29 deploy) and its loss is neither
+        of those**: the residue is `{turn, amount: 0}`, the trap is inert, and that byte
+        string is UNAUTHORABLE by the surviving path — the deriver's `counters >= 1` guard
+        is the only producer of a flat `installRecoil` in the engine, measured over the
+        whole corpus and the whole registry rather than asserted. Detectable in the bytes,
+        inert on the board. Driven in `installedRecoil.test.ts` §5, three directions.
+      · **`EffectOp.installRecoil.amount` becomes `number | "damageTaken"`** — a new
+        UNION INHABITANT on an existing field, which is D125's WIDENING and `heal.amount`'s
+        D427 case verbatim; the op never parks, so it never reaches `phase.cont` either.
+      · **`GameEvent.RECOIL_ARMED` gains `ofDamageTaken?: true`** — a `GameEvent` is NOT
+        persisted (`MatchRecord.log` holds the RENDERED `SeatLogEntry[]`), so this is new
+        TEXT in NEW records only, D141's already-settled case. It exists because the row
+        would otherwise render *"will counterattack for 0 damage"* at the instant a real
+        trap is armed, which is a false claim rather than a wording preference (D421).
+
+    ⚠️ Nothing else moved: no other `GameState` field, no other `InPlayPokemon` key, no
+    prompt kind, no choice kind, no `route` value, no error code, no `CardFilter` member,
+    no registry row, no `packages/schema` byte and no `redact.ts` byte. */
 export const MATCH_RECORD_VERSION = 29;
 
 /** How a persisted match read back: absent, usable, or written by an

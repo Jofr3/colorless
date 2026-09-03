@@ -499,12 +499,24 @@ describe("the family this label must still cover — three printings, none an Ab
     ).toEqual([{ op: "installRecoil", amount: 100 }]);
   });
 
-  it("Mabosstiff sv02-143 'Comeuppance' — the same, with the amount read off the hit", () => {
-    expect(programFor("sv02-143")).toBeUndefined();
-    expect(
-      deriveAttackEffect(
-        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
-      ),
-    ).toBeNull();
+  it("the SCALED twin — LANDED at D456, and it joins THIS label too", () => {
+    // 🆕🆕 **RE-POINTED RATHER THAN DELETED (D418), AND THE OLD RUNG WAS ASSERTING A
+    // STRING THE CATALOG DOES NOT PRINT.** Until D456 this case asserted the sentence
+    // derived to NOTHING — spelled with *"(even if **it** is Knocked Out)"*. Corpus line
+    // 180 spells it *"(even if **this Pokémon** is Knocked Out)"* and is its only
+    // printing, so the rung was a claim about a hand-written paraphrase (D183's defect
+    // reaching a refusal). BOTH strings are asserted below: the printed one for what it
+    // now derives to, the paraphrase for the fact that the widened anchor admits it too
+    // — stated rather than hidden, since no printing carries that spelling today.
+    expect(programFor("sv02-143")).toBeUndefined(); // no registry row: it derives from the TEXT
+    expect(deriveAttackEffect("During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.")).toEqual([
+      { op: "installRecoil", amount: "damageTaken" },
+    ]);
+    expect(deriveAttackEffect("During your opponent's next turn, if this Pokémon is damaged by an attack (even if it is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.")).toEqual([
+      { op: "installRecoil", amount: "damageTaken" },
+    ]);
+    // …and this is the claim the file is really making, D141's stake for the FOURTH
+    // time: an attack whose amount is not even a NUMBER feeds this row, and it STILL
+    // needs no new `COUNTERS_PLACED.source` member.
   });
 });

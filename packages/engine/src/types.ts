@@ -503,18 +503,28 @@ export interface AttackDamageDebuff {
   amount: number;
 }
 
-/** §9/§11 (D152) — an attack-installed REACTIVE RECOIL on one Pokémon, with the
-    printed DURATION baked in as a turn STAMP exactly as `AttackBlock`,
-    `DamageReduction` and `AttackDamageDebuff` above bake theirs. One printed
-    sentence, two printings:
+/** §9/§11 (D152, WIDENED D456) — an attack-installed REACTIVE RECOIL on one
+    Pokémon, with the printed DURATION baked in as a turn STAMP exactly as
+    `AttackBlock`, `DamageReduction` and `AttackDamageDebuff` above bake theirs.
+    THREE printed sentences, **8 legal printings**, measured off
+    `legalAttackCorpus()`:
 
       "During your opponent's next turn, if this Pokémon is damaged by an attack
-       (even if it is Knocked Out), put 10 damage counters on the Attacking
-       Pokémon."                                                          (2)
+       (even if it is Knocked Out), put 8 damage counters on the Attacking
+       Pokémon."                                            (corpus line 178, 5)
+      "…(even if this Pokémon is Knocked Out), put 6 damage
+       counters…"                                           (corpus line 179, 1)
+      "…(even if this Pokémon is Knocked Out), put damage counters on the
+       Attacking Pokémon equal to the damage done to this
+       Pokémon."                                            (corpus line 180, 2)
 
-    — Lycanroc ex sv02-117 (Double rare) / sv02-241 (Special illustration rare)
-    "Scary Fangs" ({F}{C}{C}, printed 140, attack INDEX 1), one attack in two
-    rarities, so D121's second-printing warrant is met by the card.
+    🛑 **THE HEADER HERE USED TO SAY "One printed sentence, two printings … put 10
+    damage counters … Lycanroc ex sv02-117 / sv02-241 'Scary Fangs'".** That is the
+    phantom sentence D454 found; D455 corrected the copy in `interpreter.ts` and
+    reported *"corrected in place"*, and this was one of six live copies it did not
+    reach. The card ids are stated as UNRESOLVED rather than repaired (D425 — this
+    checkout has no D1), because ids quoted against a sentence that does not exist
+    cannot be trusted to name the printings of the one that does.
 
     ⚠️ IT IS `DamageReduction`'s SIBLING ON EVERY AXIS BUT THE READ SITE, and that
     is the whole shape of the slice. Same holder ("this Pokémon" — the installer's
@@ -552,16 +562,61 @@ export interface AttackDamageDebuff {
 export interface InstalledRecoil {
   /** The single turn number this recoil is live on (the installing turn + 1). */
   turn: number;
-  /** HP put on the Attacking Pokémon when the holder is damaged — the printed
-      COUNTERS × 10, converted once at the deriver (effects.ts) so every reader
-      downstream speaks the engine's one damage unit.
+  /** The GUARANTEED FLOOR in HP put on the Attacking Pokémon when the holder is
+      damaged — the printed COUNTERS × 10, converted once at the deriver
+      (effects.ts) so every reader downstream speaks the engine's one damage unit.
 
-      ⚠️ THE PRINTED CLAUSE "(even if it is Knocked Out)" NEEDS NO FIELD, and
-      saying so is the point: the §9 site already runs BEFORE finishAttack's §8.1
-      both-board sweep, so a lethal retaliation from a body that was itself KO'd
-      is the behaviour the always-on printings have had since 0.x. The duration
-      is the only thing this sentence adds to the four already read. */
+      ⚠️ THE PRINTED CLAUSE "(even if {it|this Pokémon} is Knocked Out)" NEEDS NO
+      FIELD, and saying so is the point: the §9 site already runs BEFORE
+      finishAttack's §8.1 both-board sweep, so a lethal retaliation from a body that
+      was itself KO'd is the behaviour the always-on printings have had since 0.x.
+      The duration is the only thing this sentence adds to the four already read.
+
+      🆕🆕 **D456 — IT IS A FLOOR RATHER THAN "THE AMOUNT" SINCE THE UNPRINTED
+      MEMBER LANDED**, and for the flat printings the two readings are the same
+      number. See `ofDamageTaken` below. */
   amount: number;
+  /** 🆕🆕 D456 — present and `true` iff this record was installed by corpus line 180,
+      *"…put damage counters on the Attacking Pokémon equal to the damage done to
+      this Pokémon."* (**2 legal printings**). The recoil then answers
+      `Math.max(amount, <the damage this hit just did to the holder>)` instead of
+      `amount`, resolved at the ONE read site (`installedRecoilOf`, continuous.ts)
+      from that site's own `dealt` local.
+
+      🛑 **OPTIONAL, AND `MATCH_RECORD_VERSION` STAYS 29 — BUT NOT ON THE
+      REACHABILITY ARGUMENT THE LAST THREE SLICES USED.** That argument (*"an
+      `EffectOp` reaches storage only through a park"*) does not apply here at all:
+      `InPlayPokemon.installedRecoil` is a `GameState` field and is persisted
+      DIRECTLY. The argument that does apply is `match.ts`'s own discriminator —
+      *"does the OLD byte string still mean what it meant"* — and it does: a v29
+      record's `{turn, amount}` carries no `ofDamageTaken`, absence reads as the flat
+      family, and the flat family is what a v29 writer meant by those bytes. A
+      WIDENING is free; a RENAME and a new REQUIRED key are not.
+
+      🛑 **AND THE OPTIONAL ROAD IS TAKEN ON D421's CRITERION APPLIED RATHER THAN
+      COPIED (D425).** The criterion is *choose the REST of the record so that LOSING
+      the key is DETECTABLE*. Losing it here leaves `{turn, amount: 0}` — and a flat
+      install can never author that, because the deriver's `counters >= 1` guard is
+      the only producer of a flat `installRecoil` in the engine. So the loss does not
+      degrade into a plausible neighbouring record the way D435's dropped `kind` did
+      (`damage + undefined` → `NaN` → a body that can never be Knocked Out again); it
+      degrades into a shape that is unauthorable by the surviving path, visible in the
+      bytes, and inert on the board. Driven in `installedRecoil.test.ts` §7 over the
+      serialized bytes in three directions, LOSS included, rather than argued.
+
+      ⚠️ **`true` RATHER THAN `boolean`, so `false` is not a second spelling of
+      absent** — the field has exactly two inhabitants and `undefined` is one of them.
+
+      ⚠️ **THE RECORD DOES NOT TAKE THE OP's STRING.** `EffectOp`'s
+      `installRecoil.amount` is `number | "damageTaken"` (effects.ts, `heal`'s D427
+      widening at a second address); this record keeps `amount: number` and carries
+      the channel as a separate flag. A persisted `amount: "damageTaken"` would be a
+      STRING in the numeric field that `attack.ts` SUMS with `passivesOf().
+      damageAttacker`, so a deploy that did not know the inhabitant would compute
+      `20 + "damageTaken"` → `"20damageTaken"` → `> 0` false, and would silently drop
+      the ALWAYS-ON Rocky Helmet share as well as the installed one. Two surfaces, two
+      spellings, and the reason is written here so a successor does not "unify" them. */
+  ofDamageTaken?: true;
 }
 
 /** §8/§11 (D154) — an attack-installed PER-ATTACK lock on one Pokémon, with the

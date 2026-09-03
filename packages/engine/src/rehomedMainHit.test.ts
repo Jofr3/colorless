@@ -484,3 +484,87 @@ describe("§6 — the boundary: no damage, no reaction", () => {
     expect(burned(events)).toBe(false);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────────────
+describe("🆕🆕 §6 (D456) — the INSTALLED half of the recoil, through this same funnel", () => {
+  // 🛑 **THIS SECTION EXISTS BECAUSE A MUTANT HAD NOWHERE TO DIE.** The header of
+  // this file lists *"D152's installed half"* among the reactions the re-homed hit
+  // used to walk past — and every board in §2–§5 drives the CATALOG half (Rocky
+  // Helmet's flat 20) and no board anywhere drove the INSTALLED one through this
+  // funnel. That was invisible while `installedRecoilOf` took two arguments and
+  // returned a constant; D456 gave it a third (the hit that triggers it), and the
+  // mutant *"the interpreter's funnel passes 0"* would have SURVIVED the whole
+  // suite. **A row on one call site is not coverage of the function** — D455's
+  // finding about `shuffleDeck`, one function over and one slice later.
+  //
+  // ⚠️ THE RECORD IS WRITTEN BY SURGERY, and that is a smaller claim than §2–§5's:
+  // it drives the READ site, not the install. The install is driven end to end in
+  // `installedRecoil.test.ts`, where the armer is a real declaration. What only this
+  // file can drive is the re-homed route, because the three re-homing cards live in
+  // ITS deck and adding one to a shared `*_DECK` would reshuffle every seeded board
+  // in the suite that owns it (D412's rule).
+  function armScaledOn(state: GameState, seat: Seat): GameState {
+    const side = state.players[seat];
+    const body = side.active;
+    if (body === null) throw new Error(`${seat} has no Active`);
+    return {
+      ...state,
+      players: {
+        ...state.players,
+        [seat]: {
+          ...side,
+          active: {
+            ...body,
+            installedRecoil: { turn: state.turn, amount: 0, ofDamageTaken: true },
+          },
+        },
+      },
+    };
+  }
+
+  for (const [label, defender, expected] of [
+    ["the NO arm, a Basic defender", ARMAROUGE, 140],
+    ["the YES arm, an Evolution defender", EVOLVED, 280],
+  ] as const) {
+    it(`${label} — the retaliation is the RE-HOMED hit's own number`, () => {
+      const state = armScaledOn(
+        board({ attacker: OGERPON, energy: FIRE, count: 3, defender }),
+        "p2",
+      );
+      const { events } = must2(applyAction(state, BLAZE));
+      expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: expected });
+      // The installed half is the hit itself; Rocky Helmet's 20 is summed into the
+      // same row, exactly as it is at `attack.ts`'s site (D141: ONE row, MECHANISM
+      // label, no provenance surviving the addition).
+      expect(recoil(events), label).toMatchObject({ seat: "p1", amount: expected + 20 });
+      // ⚠️ COUNTED BY `source`, NOT BY TYPE. The Armarouge board also Burns the
+      // attacker, and the Burn's Checkup files its own `COUNTERS_PLACED` at the turn
+      // boundary — so a bare type count says 2 on one board and 1 on the other and
+      // would be measuring the Ability rather than the recoil.
+      expect(
+        events.filter((e) => e.type === "COUNTERS_PLACED" && e.source === "counterattack"),
+        label,
+      ).toHaveLength(1);
+    });
+  }
+
+  it("🛑 the CONTROL on the same axis — a FLAT installed record is unmoved by the hit", () => {
+    // D424's rule: an assertion that the amount FOLLOWS the hit is worth nothing
+    // without one showing it does not follow when the record does not say so. Same
+    // board, same 280, a flat 50 record.
+    let state = board({ attacker: OGERPON, energy: FIRE, count: 3, defender: EVOLVED });
+    const side = state.players.p2;
+    const body = side.active;
+    if (body === null) throw new Error("p2 has no Active");
+    state = {
+      ...state,
+      players: {
+        ...state.players,
+        p2: { ...side, active: { ...body, installedRecoil: { turn: state.turn, amount: 50 } } },
+      },
+    };
+    const { events } = must2(applyAction(state, BLAZE));
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", dealt: 280 });
+    expect(recoil(events)).toMatchObject({ seat: "p1", amount: 50 + 20 });
+  });
+});

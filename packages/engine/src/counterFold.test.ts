@@ -149,7 +149,7 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 the PLACEMENT family closes from TEN rows to SEVEN, each refusal by name", () => {
+  it("🛑 the PLACEMENT family closes from TEN rows to SEVEN to TWO, each refusal by name", () => {
     // THE PATTERN, PUBLISHED SO ITS EDGES ARE VISIBLE (D424/D425), and it is D449's
     // pattern re-run rather than re-imagined: `/put \d* ?damage counters/i`, case
     // INSENSITIVE with the count OPTIONAL. The /i catches the lowercase mid-sentence
@@ -165,8 +165,30 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // FIRST TIME IN THIS SECTION'S LIFE**: the HP rows carry 2, 1 and 2 printings where
     // every sentence D449 and D450 claimed carried exactly one, so a slice that stepped
     // both figures by the same 3 would have been wrong in one of them.
-    expect(unread.map(([, t]) => t)).toHaveLength(4);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(7);
+    // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR.** The two that left are the
+    // RETALIATION rows, corpus lines 179 and 180 (1 printing and 2), claimed by
+    // `deriveAttackEffect` over `installRecoil` — line 179 through D152's anchor with its
+    // parenthetical widened to `(?:it|this Pokémon)`, line 180 through the new anchor
+    // `SELF_INSTALLED_RECOIL_TAKEN` and the op's widened `amount: number | "damageTaken"`.
+    // ⚠️ **THE TWO FIGURES DISAGREE AGAIN, −2 SENTENCES AND −3 PRINTINGS.**
+    // They are named here as INEQUALITIES rather than dropped (D418), and the inequality
+    // is the stronger rung: a single looser anchor would have claimed both sentences with
+    // ONE op and passed any `toContain`-shaped successor to this block.
+    expect(unread.map(([, t]) => t)).toHaveLength(2);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(4);
+    for (const [text, program] of [
+      [
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
+        [{ op: "installRecoil", amount: 60 }],
+      ],
+      [
+        "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put damage counters on the Attacking Pokémon equal to the damage done to this Pokémon.",
+        [{ op: "installRecoil", amount: "damageTaken" }],
+      ],
+    ] as const) {
+      expect(unread.map(([, t]) => t), text).not.toContain(text);
+      expect(deriveAttackEffect(text), text).toEqual(program);
+    }
     const unbuilt = unread.map(([, t]) => t);
     // …and the three this slice claims are OUT of it, which is the delta stated as an
     // identity rather than as arithmetic in a comment.
@@ -483,7 +505,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.354.0");
+    expect(engineVersion).toBe("0.355.0");
   });
 });
 
