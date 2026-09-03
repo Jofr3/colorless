@@ -35,6 +35,12 @@ import type { PokemonSuffix } from "./cards";
 // `ATTACK_REVEAL_AND_BENCH_UP_TO`). No runtime cycle: `types.ts`'s only
 // non-type import is `@luminous/schema`.
 import { BENCH_MAX, type PokemonTarget, type SpecialConditions } from "./types";
+// 🆕🆕 D460 — the THIRD type-only edge out of this file, and the cheapest of
+// the three: `rng.ts` imports NOTHING AT ALL (checked, not assumed), so this edge
+// cannot close a cycle even if it were a value import. `CoinFace` is the vocabulary
+// every coin event in `events.ts` already carries, and `AttackFlipThreshold.face`
+// reuses it rather than re-spelling `"heads" | "tails"` a second time.
+import type { CoinFace } from "./rng";
 
 /** A declarative card predicate for deck searches (§15.E). Deliberately tiny
     — the representative cards need only "a Basic Pokémon", "any Pokémon", "a
@@ -15610,6 +15616,67 @@ const ATTACK_COIN_MULTI = /^Flip (\d+) coins\. This attack does (\d+) damage for
 const ATTACK_COIN_MULTI_BONUS =
   /^Flip (\d+) coins\. This attack does (\d+) more damage for each heads\.$/;
 
+// 🆕🆕 D460 — THE MULTIPLY ARM TWO LINES UP WITH A THRESHOLD OVER THE SAME
+// FACES BEHIND IT. "Flip {N} coins. This attack does {D} damage for each heads. If
+// {threshold}, your opponent's Active Pokémon is now {Status}." — **3 sentences /
+// 4 legal printings**, measured off `legalAttackCorpus()` at this head (file lines
+// 213, 214, 228 of `censusAttackCorpus.ts`):
+//   · 213 (1p) "Flip 2 coins. … 90 damage for each heads. If BOTH of them are
+//     TAILS,  your opponent's Active Pokémon is now Confused."
+//   · 214 (2p) "Flip 2 coins. … 90 damage for each heads. If EITHER of them is
+//     HEADS, your opponent's Active Pokémon is now Paralyzed."
+//   · 228 (1p) "Flip 4 coins. … 60 damage for each heads. If AT LEAST 2 of them
+//     are HEADS, your opponent's Active Pokémon is now Paralyzed."
+//
+// 🛑 THE HEAD IS `ATTACK_COIN_MULTI`'s SENTENCE VERBATIM AND THE TAIL IS ONE
+// MECHANISM, WHICH IS WHY THIS IS ONE ANCHOR AND NOT A COMPOSITION. D409's trailing
+// splitter cannot reach it: its tail test is `deriveAttackEffect(tail) !== null`, and
+// that reader has no channel to the faces this sentence's tail quantifies over — the
+// only shape it could produce is a `coinFlipGate`, which takes its OWN coin inside
+// `runProgram` and would flip the attack's coins TWICE. That is the hazard
+// `ATTACK_COIN_BONUS`'s doc block names one screen up ("It must never be read here
+// too, or the attack would flip twice"), reached from the other direction.
+//
+// ⚠️ THREE PRINTED PREDICATES, ONE PARAMETERISED COMPARISON — D440's rule, applied
+// rather than copied. "either … is heads", "both … are tails" and "at least 2 … are
+// heads" carry the IDENTICAL payload (a face and a minimum count), so they are one
+// shape with the discriminator (`face`) as a FIELD, not three members. Every one of
+// them is `count(face) >= atLeast`.
+//
+// ⚠️ "BOTH … ARE TAILS" IS **NOT** NORMALISED TO "ZERO HEADS", AND THE REASON IS
+// STRUCTURAL RATHER THAN AESTHETIC. Over two coins the two are the same event, and a
+// derive-time rewrite would need `flips` to know its own cardinality — which
+// `AttackFlipCount`'s `printed` member does and its `attachedEnergy` and `untilTails`
+// members do NOT. Normalising would therefore be a rule that fires on ONE of three
+// flip-count members, coupling the two axes D128's doc block has called independent
+// since it was written. Counting the PRINTED face at the flip site is total over all
+// three and is one expression.
+//
+// THE ENGLISH QUANTIFIERS ARE TWO-COIN WORDS AND THE GUARD SAYS SO. "either of them"
+// and "both of them" are only English for a flip of exactly two, which is why the
+// 4-coin printing spells the numeric form instead — measured across all four "of
+// them" rows in the corpus that carry a printed flip count (202, 213, 214 are 2-coin
+// and spell "both"/"either"; 228 is 4-coin and spells "at least 2"). So the word
+// branch demands `flips === 2`, which is `ATTACK_COIN_MULTI`'s own plural guard
+// ("the regex's own `coins` is PLURAL") one step further into the grammar.
+//
+// ⚠️ WHAT THE PATTERN CANNOT SEE, PUBLISHED (D425). The verb is `(?:is|are)` rather
+// than agreed per branch, so it also admits "either of them are heads" — a spelling
+// no card prints and which means exactly what the grammatical one means, so the
+// looseness cannot produce a WRONG reading, only an extra right one. `\s+` after the
+// comma is not decoration: file line 213 prints TWO spaces there (`cat -A`-checked),
+// and a single literal space would silently drop that printing.
+const ATTACK_COIN_MULTI_THRESHOLD_STATUS = new RegExp(
+  `^Flip (\\d+) coins\\. This attack does (\\d+) damage for each heads\\. If (?:(either|both)|at least (\\d+)) of them (?:is|are) (heads|tails),\\s+your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
+);
+
+/** The two printed English quantifiers this family spells, as the minimum number of
+    matching faces each demands. A CLOSED MAP rather than a capture (D440's rule): both
+    words are only English for a two-coin flip, and `both` means "all of them" only
+    because there are two — a capture would happily read "several of them" into a
+    number nothing printed. */
+const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };
+
 // The BOARD-COUNTED FLIP COUNT (D128) — "Flip a coin for each [{X}] Energy attached
 // to this Pokémon. This attack does D damage for each heads." — 3 printings, and
 // the shape where the board vocabulary finally earns its place in the coin family.
@@ -15868,6 +15935,30 @@ export type AttackFlipCount =
   | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null }
   | { kind: "untilTails" };
 
+/** 🆕🆕 **D460 — A PREDICATE OVER THE FACES, PARAMETERISED IN BOTH OF ITS AXES.**
+    `count(face) >= atLeast` — and every printed spelling in the column is an instance
+    of it: *"if either of them is heads"* is `{ face: "heads", atLeast: 1 }`, *"if both
+    of them are tails"* is `{ face: "tails", atLeast: 2 }`, *"if at least 2 of them are
+    heads"* is `{ face: "heads", atLeast: 2 }`.
+
+    🛑 **ONE SHAPE AND NOT THREE MEMBERS, BY D440's RULE READ RATHER THAN COPIED:**
+    *nullary or asymmetric payload ⇒ two members; identical payload ⇒ one member with
+    the discriminator as a field.* The three predicates carry the IDENTICAL payload — a
+    face and a count — so a member apiece would duplicate the field that answers "how
+    many is enough", which is exactly the second answer to one question D159 forbids.
+
+    ⚠️ **AND THE SAME RULE CUTS THE OTHER WAY ONE TYPE DOWN**, which is why this slice
+    pays it twice: `perHeads` and `perHeadsThenThreshold` carry ASYMMETRIC payloads
+    (there is nothing for `perHeads` to put in `threshold`/`ops`), so those ARE two
+    members. One rule, two opposite verdicts, decided by the payload rather than by
+    which one looks like a widening.
+
+    ⚠️ **`face` IS A `CoinFace` AND NOT A LOCAL `"heads" | "tails"`.** The engine has
+    spelled that vocabulary once since rng.ts's first line and every coin event carries
+    it; a second spelling here would be a union that could drift from the faces
+    `takeFlips` actually returns. */
+export type AttackFlipThreshold = { face: CoinFace; atLeast: number };
+
 /** What the pre-damage coin flip printed on an attack DOES with its faces. A
     union rather than a record, because a printing is exactly one of these and
     never two:
@@ -15935,7 +16026,14 @@ export type AttackCoinFlip =
   | { kind: "bonusOnHeads"; flips: AttackFlipCount; per: number }
   | { kind: "cancelOnTails" }
   | { kind: "perHeads"; flips: AttackFlipCount; per: number }
-  | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] };
+  | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] }
+  | {
+      kind: "perHeadsThenThreshold";
+      flips: AttackFlipCount;
+      per: number;
+      threshold: AttackFlipThreshold;
+      ops: EffectOp[];
+    };
 
 /** The coin flip an attack's printed text calls for, or null when the text is not
     one of the six recognised whole sentences — null keeps the attack on the loud
@@ -15990,6 +16088,59 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     const per = Number(multiBonus[2]);
     return flips >= 2 && flips <= MAX_PRINTED_FLIPS && per >= 1
       ? { kind: "bonusOnHeads", flips: { kind: "printed", count: flips }, per }
+      : null;
+  }
+  // 🆕🆕 D460 — THE MULTIPLY ARM WITH A THRESHOLD BEHIND IT, and the FIFTH member
+  // of a union that has been four since D130. See `ATTACK_COIN_MULTI_THRESHOLD_STATUS`
+  // for the three printed sentences and for why this is one anchor rather than a
+  // composition seam.
+  //
+  // 🛑 IT HANDS BACK BOTH HALVES OF THE SENTENCE, WHICH IS THE UNION'S OWN
+  // STANDING RULE AND NOT A NEW ONE: *"The string is read once, by
+  // `deriveAttackCoinFlip`, and hands back both halves of what the sentence says."*
+  // `programPerHeads` established that an `ops` payload may ride a coin member so that
+  // no invariant has to be held between two derivers reading one printing; this member
+  // is that payload GATED instead of REPEATED.
+  //
+  // ⚠️ THE GUARDS ARE ITS TWINS', COPIED DELIBERATELY AND FOR THEIR REASONS —
+  // `flips >= 2` because the regex's own "coins" is PLURAL, `flips <=
+  // MAX_PRINTED_FLIPS` as the ingested-text ceiling, `per >= 1` because a printed 0
+  // would spend a flip (and an `rngState` step) to add nothing. Two are this member's
+  // OWN, and both are the same argument about a consequent that cannot happen:
+  //   · `atLeast >= 1` — a threshold of zero is met by EVERY outcome, so the printed
+  //     "if" would decide nothing and the sentence would not be a conditional at all.
+  //     This is `per >= 1` asked of the other number.
+  //   · `atLeast <= flips` — a threshold ABOVE the flip count can never be met, so the
+  //     ops would be dead on every board this engine can build. Refusing it keeps the
+  //     printing on the loud ATTACK_EFFECT_SKIPPED path, which is where a sentence
+  //     whose consequent is unreachable belongs; admitting it would ship a Paralysis
+  //     that silently never lands.
+  // And `flips === 2` for the WORD branch, because "either of them" / "both of them"
+  // are two-coin words — the grammar guard the anchor's block derives from the column.
+  const multiThreshold = ATTACK_COIN_MULTI_THRESHOLD_STATUS.exec(effect);
+  if (multiThreshold !== null) {
+    const flips = Number(multiThreshold[1]);
+    const per = Number(multiThreshold[2]);
+    const word = multiThreshold[3];
+    // Exactly one of the two capture groups is defined — the alternation guarantees it
+    // — so this is a resolution and not a default: the WORD branch goes through the
+    // closed map, the NUMERIC branch through the digits the card printed.
+    const atLeast = word === undefined ? Number(multiThreshold[4]) : FLIP_THRESHOLD_WORDS[word];
+    const face = multiThreshold[5] === "tails" ? "tails" : "heads";
+    if (atLeast === undefined) return null;
+    return flips >= 2 &&
+      flips <= MAX_PRINTED_FLIPS &&
+      per >= 1 &&
+      atLeast >= 1 &&
+      atLeast <= flips &&
+      (word === undefined || flips === 2)
+      ? {
+          kind: "perHeadsThenThreshold",
+          flips: { kind: "printed", count: flips },
+          per,
+          threshold: { face, atLeast },
+          ops: [{ op: "applyStatus", target: "defender", status: statusOf(multiThreshold[6]) }],
+        }
       : null;
   }
   const perEnergy = ATTACK_COIN_PER_ENERGY.exec(effect);

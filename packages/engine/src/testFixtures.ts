@@ -2933,6 +2933,59 @@ export const FIXTURE_POOL: Record<string, Card> = {
       tail out of the way, so a test about WHICH Energy came off is only ever
       about that. fix-wall (120) and fix-bigbody (200) both die to Bright Flame. */
   "fix-titan": battler("fix-titan", { hp: 340, retreat: 4 }),
+  /** FIXTURE — 🆕🆕 D460's COIN-COUNT THRESHOLD ATTACKER. All THREE printed
+      sentences of the family on ONE body, at indices 0, 1 and 2, so the axes that
+      vary between them are the only things a case can credit a difference to: the
+      QUANTIFIER (`either` / `both` / `at least 2`), the FACE (`heads` / `tails`), the
+      FLIP COUNT (2 / 2 / 4) and the STATUS (Paralyzed / Confused / Paralyzed). Three
+      separate fixtures would have varied the HP, the cost and the type as well.
+
+      🛑 **THE THREE EFFECT STRINGS ARE CORPUS ROWS, ASSERTED RATHER THAN TRUSTED**
+      (D452's rule: a byte pin on an invented string is green by construction). Every
+      one of them is looked up in `legalAttackCorpus()` by `coinThreshold.test.ts` §1,
+      WITH its printing count, so a hand-retyped near-miss reddens instead of passing.
+      ⚠️ **INDEX 1's SENTENCE CARRIES TWO SPACES AFTER `tails,`** — that is what the
+      catalog prints (`cat -A`-checked at `censusAttackCorpus.ts` file line 213), and a
+      normalising edit here would silently move the fixture off the printed row.
+
+      ⚠️ **THE PRINTED MARKERS ARE `90×` AND `60×`, AND THAT IS LOAD-BEARING.** The
+      head of each sentence is `ATTACK_COIN_MULTI`'s own sentence verbatim, so the
+      printed digits ARE the per-heads amount and `attack.ts` must DROP the base
+      (D127's rule, reached through a fifth union member). A `90` flat marker here
+      would make the leaked-base cases pass for the wrong reason.
+
+      ⚠️ **SYNTHETIC ID, AND THE REASON IS STATED RATHER THAN PAPERED OVER** (D425):
+      this checkout has no D1, so the printing ids behind corpus file lines 213, 214
+      and 228 CANNOT BE RESOLVED and are deliberately not guessed. The SENTENCES and
+      the PRINTING COUNTS are measurable off the committed corpus and are what the
+      suite pins; the card ids are not, and an invented one would be indistinguishable
+      from a real one to every later reader. */
+  "fix-threshflip": battler("fix-threshflip", {
+    hp: 200,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Twin Shock",
+        damage: "90×",
+        effect:
+          "Flip 2 coins. This attack does 90 damage for each heads. If either of them is heads, your opponent's Active Pokémon is now Paralyzed.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Twin Muddle",
+        damage: "90×",
+        effect:
+          "Flip 2 coins. This attack does 90 damage for each heads. If both of them are tails,  your opponent's Active Pokémon is now Confused.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Quad Shock",
+        damage: "60×",
+        effect:
+          "Flip 4 coins. This attack does 60 damage for each heads. If at least 2 of them are heads, your opponent's Active Pokémon is now Paralyzed.",
+      },
+    ],
+  }),
   /** — D239's ATTACKER-CLASS EXCLUSION cast (`typedClassBlock.test.ts`). —
 
       SYNTHETIC BY NECESSITY, exactly as `fix-trainerops` below is. The printed
@@ -18630,6 +18683,31 @@ export const UNTIL_TAILS_FLIP_DECK = deckOf({
     control is declared on the same board and simply costs a Water this deck does
     not hold, so it is exercised at the deriver level instead. (Headbutt is fielded
     via fix-water-energy, which is here for that one attach.) */
+/** 🆕🆕 D460's COIN-COUNT THRESHOLD deck (`coinThreshold.test.ts`). **ITS OWN 60,
+    ON D412's RULE** — `MULTI_COIN_FLIP_DECK` is swept over 24 measured seeds and its
+    own doc block explains that a dominant filler is what keeps every one of them
+    mulligan-free, so adding a line there would reshuffle every board in a sweep this
+    slice has nothing to do with. D412 paid exactly that price (one card added to
+    `COMPOUND_COMPOSE_DECK` reddened three of D409's boards).
+
+    `fix-titan` is BOTH the mulligan-free dominant starter AND the defender, and its
+    340 HP is chosen rather than inherited: index 2 deals `60 × 4 = 240` on an
+    all-heads sweep, so a 200 HP body would be Knocked Out on the outcome this suite
+    most needs to read a landed Special Condition off. No case here is ever about a
+    Knock Out, and none is about Weakness — `fix-titan` has none and the attacker is
+    Colorless.
+
+    `sv02-193` (Therapeutic Energy) is the IMMUNITY control and covers BOTH printed
+    statuses in this family: its passive lists `asleep`, `confused` and `paralyzed`,
+    so ONE attached card drives the §12 immunity gate against index 0's Paralysis
+    AND index 1's Confusion. It is attached to the DEFENDER by surgery, never dealt. */
+export const COIN_THRESHOLD_DECK = deckOf({
+  "fix-threshflip": 4, // all three printed sentences, at indices 0, 1 and 2
+  "fix-energy": 8, // Basic {C} — pays every one of the three {C}{C} costs
+  "sv02-193": 4, // Therapeutic Energy — the §12 immunity control on the DEFENDER
+  "fix-titan": 44, // 340 HP neutral Basic — DOMINANT starter and the never-KO'd defender
+});
+
 export const PER_HEADS_PROGRAM_DECK = deckOf({
   "sv01-057": 4, // Wugtrio — "Undersea Tunnel" at index 1: programPerHeads, printed 3, mill 3
   "swsh10.5-022": 4, // Gyarados — "Wreak Havoc" at index 0: programPerHeads, untilTails, mill 2

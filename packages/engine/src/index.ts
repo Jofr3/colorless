@@ -19226,6 +19226,18 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.358.0 → **0.359.0** (D460 — THE COIN-COUNT THRESHOLD,
+    `censusAttackCorpus.ts` file lines 213, 214 and 228: 3 sentences / 4 legal
+    printings that derived to `null` now fold `per × heads` AND apply a Special
+    Condition off a predicate over the same faces. ONE new anchor, ONE new
+    `AttackCoinFlip` member (`perHeadsThenThreshold`, the union's fifth), ONE new
+    exported type (`AttackFlipThreshold`). ZERO new `EffectOp`s, op fields, prompt
+    fields, events, `packages/schema` bytes, `redact.ts` bytes or registry rows —
+    the consequent is the shipped `applyStatus` op, so §11's refusal gate and §12's
+    immunity gate are asked ONCE in the engine and not twice. `MATCH_RECORD_VERSION`
+    STAYS 29 on D450's reachability rule: the op inhabitant is not new AND
+    `applyStatus` is on the interpreter's synchronous path, so nothing can reach
+    `phase.cont`.)
     🆕🆕 engineVersion 0.357.0 → **0.358.0** (D459 — THE PRINTED NOUN `Energy card`,
     `censusAttackCorpus.ts` **file line 618** (*"This attack does 70 damage for each
     Special **Energy card** attached to this Pokémon."*), **1 sentence / 2 legal
@@ -19254,7 +19266,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.358.0";
+export const engineVersion = "0.359.0";
 
 export type {
   ApplyResult,
@@ -19356,6 +19368,7 @@ export type {
   AttackGateClause,
   AttackDamageSuppression,
   AttackFlipCount,
+  AttackFlipThreshold,
   AttackOptionalBoost,
   BoardCondition,
   CardFilter,

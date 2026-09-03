@@ -45,7 +45,13 @@
  * `raw`, `residue` and residue-printings must equal the three literals
  * `censusAtHead.test.ts` pins in its `residueSentences` rung. They did at
  * D459's head BEFORE this slice's own build (156 / 130 / 182) and they do
- * after it (155 / 129 / 180). **If they ever disagree, one of the two
+ * after it (155 / 129 / 180). 🆕🆕 **D460 MOVED THEM AGAIN — 152 / 126 / 176** (the
+ * COIN-COUNT THRESHOLD, 3 sentences / 4 printings, `censusAttackCorpus.ts` file
+ * lines 213, 214 and 228). ⚠️ **THAT IS THIS INSTRUMENT'S FIRST USE AS A TARGET
+ * RATHER THAN AS A PRODUCT, AND THE RELATION HELD**: the three rows it classified
+ * `COMPOUND-head` are exactly the three that left, `COMPOUND-head` fell 13 → 10
+ * sentences and 16 → 12 printings, and the three pinned literals still agree with
+ * `censusAtHead.test.ts` to the digit. **If they ever disagree, one of the two
  * transcriptions of the four-way subtraction has drifted, and this file is the
  * one with no test behind it — read the suite first.**
  *

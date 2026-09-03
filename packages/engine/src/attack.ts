@@ -1640,7 +1640,8 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     bonusConsequent !== null ||
     costBoostOwnsTheBase ||
     discardScaledBoost !== null ||
-    coinFlip?.kind === "perHeads"
+    coinFlip?.kind === "perHeads" ||
+    coinFlip?.kind === "perHeadsThenThreshold"
       ? 0
       : base;
   // The "+"/"×" modifier is SIMULATED iff a scaling reader consumed it OR the
@@ -2025,6 +2026,47 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
       program = expanded.length > 0 ? expanded : null;
     } else {
       coinBonus = heads * coinFlip.per;
+    }
+    // 🆕🆕 D460 — THE THRESHOLD, AND IT IS A SECOND READ OF FACES THIS BLOCK
+    // ALREADY HOLDS RATHER THAN A SECOND CHANNEL. `takeFlips` returns the SEQUENCE for
+    // every member (D129's widening, restated by D452), so the faces are already in
+    // scope here; the damage fold above spends them into a NUMBER and this spends the
+    // same array into a PREDICATE. Nothing new crosses the gap between the flip site
+    // and the program tail — the value that crosses is the PROGRAM, which is D130's
+    // carry paid a second time and the reason no `EffectOp` had to learn to read a
+    // coin it did not take.
+    //
+    // 🛑 IT IS ITS OWN `if` RATHER THAN A BRANCH OF THE CHAIN ABOVE, AND THAT IS
+    // NOT TIDINESS. This member folds `per × heads` EXACTLY as `perHeads` does, and the
+    // union's doc block says that arithmetic is computed with one expression on
+    // purpose; a fourth `else if` would have had to copy `coinBonus = heads *
+    // coinFlip.per` and the two copies could then disagree. So the fold rides the
+    // existing `else` (all three members that reach it carry a `per`) and only the
+    // half that is genuinely new is written here.
+    //
+    // THE COUNT IS OVER THE PRINTED FACE AND NOT OVER `heads`. `faces.length - heads`
+    // would be the same number for `face: "tails"` today, and it is the normalisation
+    // `AttackFlipThreshold`'s doc block refuses at DERIVE time — reaching for it here
+    // would put the arithmetic back one layer down and make `face` a flag on a
+    // heads-shaped count instead of the field it is.
+    //
+    // APPENDED, NEVER ASSIGNED — D130's rule, verbatim and for its reason: `program` is
+    // the registry row or the derived one, and overwriting it would let an authored
+    // program be silently dropped by a coin sentence on the same attack. For these
+    // three printings it is always null (`deriveAttackCoinFlip` claims the sentence
+    // WHOLE, so it is a sentence `deriveAttackEffect` refused), which makes the append
+    // behaviour-identical today and honest tomorrow.
+    //
+    // A FAILED THRESHOLD APPENDS NOTHING AT ALL, which is the same ending zero heads
+    // takes on `programPerHeads`: `program` stays null, the tail's `program !== null`
+    // test is false, and the attack finishes through the no-program path. There is no
+    // "empty program" board and so no second ending with the same result.
+    if (coinFlip.kind === "perHeadsThenThreshold") {
+      let matching = 0;
+      for (const face of faces) if (face === coinFlip.threshold.face) matching += 1;
+      if (matching >= coinFlip.threshold.atLeast) {
+        program = [...(program ?? []), ...coinFlip.ops];
+      }
     }
   }
   // 🆕 D316 — THE OPTIONAL BOOST, ASSEMBLED HERE FOR D130's REASON AND NOWHERE

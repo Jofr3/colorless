@@ -4166,3 +4166,85 @@ earlier was silently gone, and the only thing that caught it was a follow-up pro
 number of lines, because the slice's own comment blocks were still there. **Wrap the patch
 in `try/finally`, and re-assert the built behaviour (not the line count) after any probe
 that writes to the tree.**
+
+## A union rule can cut both ways inside one slice (D460)
+
+D440's rule — *nullary or asymmetric payload ⇒ two members; identical payload ⇒ one member
+with the discriminator as a field* — was applied twice in D460 and gave **opposite** answers
+one type apart:
+
+- the three printed threshold predicates (*either … is heads*, *both … are tails*, *at least 2
+  … are heads*) carry the identical payload (a face and a count) ⇒ **ONE shape, `face` as a
+  field**;
+- `perHeads` and `perHeadsThenThreshold` carry asymmetric payloads ⇒ **TWO members**.
+
+**The tell is the PAYLOAD, never "which one looks like a widening".** The second question is
+the one that reads like a widening and is not: adding optional `threshold?`/`ops?` to
+`perHeads` would have saved four lines in `attack.ts` and made every `perHeads` value carry
+two keys it must ignore.
+
+## A normalisation that is sound at the EVALUATOR can be wrong at the DERIVER (D460)
+
+*"If both of them are tails"* over two coins is exactly *"zero heads"*, and at the flip site
+the rewrite is total — `faces.length` is in scope. **At derive time it is not.** The rewrite
+needs `flips` to know its own cardinality, which `AttackFlipCount`'s `printed` member does and
+its `attachedEnergy` and `untilTails` members do not, so the normalisation would be a rule that
+fires on one of three members and couples two axes the union's own doc block calls independent.
+
+**Ask WHERE the arithmetic is available, not whether it is correct.** A rewrite that is only
+expressible for one inhabitant of a field is a coupling, not a simplification.
+
+## The version tax has a FOURTH class of site and no prescribed grep sees it (D460)
+
+D459 measured the tax as 37 assertions / 41 sites and named the greps: `engineVersion` and
+`manifest.version`. **Both miss the `it()` TITLE.** Three test files name the version in the
+test's own name (`it("engineVersion is 0.359.0 and \`manifest.version\` agrees")`), and at
+D460's head **two of the three were stale** — one of them since D459, because the assertion
+inside it had been stepped by a targeted replacement and the title had not.
+
+A stale title is not green-by-construction the way a stale doc block is; it is worse, because
+the test REPORTS under that name and a run log then says a version the suite does not assert.
+**Step the titles in the same pass, and count them: 38 assertions / 3 titles / 4 other sites.**
+
+## The mutation corpus is a source file and Biome refuses it above `files.maxSize` (D460)
+
+`scripts/mutation/mutants.ts` crossed **2,097,152 bytes** during D460 (2,112,246 after its
+rows). Biome answers a file over `files.maxSize` with an `internalError/io` diagnostic **and
+still counts it as checked**, so every lint step exits 0 while the repo's largest source file
+is linted by nothing.
+
+**The first symptom was `bun run check` failing on D212's `lint-coverage` guard**, 248 slices
+after that guard was written — the guard reads the limit out of `biome.json` rather than
+hard-coding it, so raising the limit raises the check with it. Raised 2 MiB → 4 MiB, and the
+raise now carries its own mutation row (`D460-maxsize-refuses-the-corpus`, killed by
+`bun scripts/lint-coverage.ts`), which is D212's `include` pair applied to the other field of
+the same object. **Expect this again around 4 MiB; a corpus that grows ~20 KB a slice reaches
+it in roughly a hundred.**
+
+## A new fixture is a census delta in FOUR places, not one (D460)
+
+D425's rule says a fixture moves `clauseApostrophe`'s sweep. D460 measured the full set for one
+fixture card carrying three printed sentences:
+
+| rung | move | why |
+|---|---|---|
+| `clauseApostrophe` derivable | 185 → 188 | three sentences, each with a possessive, all now derivable |
+| `opponentResistanceBonus` id floor | 554 → 555 | one new `FIXTURE_POOL` id |
+| that file's ELEVEN-deep `ids.length - N` ladder | +1 at the front of all eleven | same id, eleven rungs |
+| the 21 frozen-tail chains in 8 files | `- 3` / `- 4` at the FRONT | the READER; ⚠️ `grep -n` reports 18 — three share a physical line |
+| the reader/residue chains in 12 files | +3 / +4 | the READER, not the fixture |
+
+**The first three are invisible to any forecast made from the reader side**, and the fourth
+wave arrived only after the first three were green. Four full suite runs to converge, which is
+D428/D431's "a clean run after one round of fixes is not evidence the round was complete"
+holding for the fourth consecutive slice.
+
+## Refuse a consequent that can never fire, and say which end you are refusing (D460)
+
+The threshold family owes TWO guards and they are the same argument from opposite ends:
+`atLeast >= 1` (a threshold of zero is met by every outcome, so the printed `if` decides
+nothing) and `atLeast <= flips` (a threshold above the flip count is met by no outcome, so the
+printed consequent never lands). **The second is the dangerous one**: admitting it silences
+`ATTACK_EFFECT_SKIPPED` — the only thing that would tell a reader the sentence is unread —
+while shipping a status that can never be applied. Two mutation rows, not one, because a slice
+that kept only one guard leaves the other end open and nothing says so.

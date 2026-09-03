@@ -5736,6 +5736,13 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
+    // ⚠ RE-POINTED AT D460 (0.358.0 → 0.359.0) — the question was ASKED again, not
+    // inherited: engine behaviour moved (three printed sentences that derived to null now
+    // fold `per × heads` and apply a Special Condition off a threshold over the same
+    // faces), and unlike D459 this diff DOES carry a vocabulary a reader would find — a
+    // fifth `AttackCoinFlip` member and one exported type. The bump is still argued from
+    // BEHAVIOUR rather than from the vocabulary, because the vocabulary is the thing that
+    // was absent last time and the argument must not depend on it.
     // ⚠ RE-POINTED AT D459 (0.357.0 → 0.358.0) — the question was ASKED again, not
     // inherited: engine behaviour moved (a printed sentence that derived to null now
     // derives to a typed count), on the SMALLEST vocabulary yet — ONE optional group
@@ -5756,7 +5763,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.358.0";',
+    find: 'export const engineVersion = "0.359.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23107,5 +23114,168 @@ export const MUTANTS: Mutant[] = [
     find: "        name: \"Special Draw\",\n        effect: \"This attack does 70 damage for each Special Energy card attached to this Pokémon.\",\n        damage: \"70×\",",
     replace: "        name: \"Special Draw\",\n        effect: \"This attack does 70 damage for each Special Energy card attached to this Pokémon.\",\n        damage: \"70+\",",
     expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
+  },
+  // ── 🆕🆕 D460 — THE COIN-COUNT THRESHOLD. Sixteen rows, ONE PER CLAIM. The
+  //    SHAPE of the set is the finding and it is a two-file split: SIX rows
+  //    (C1-C4, and C4's own overlap argument) live in `attack.ts` and are invisible to
+  //    every deriver assertion and to every census rung — the sentence still resolves,
+  //    `485 → 488` is unmoved, and only a BOARD separates them. The other ten live in
+  //    `effects.ts` / `testFixtures.ts` and die at the deriver. ⚠️ **C2 AND C6 ARE THE
+  //    SAME MISTAKE IN THE TWO HALVES** — the reader capturing the wrong face and the
+  //    evaluator ignoring the captured one — and they are two rows because a suite that
+  //    killed only one would leave the other half of the field unguarded.
+  {
+    id: "D460-threshold-boundary-excluded",
+    decision: "D460",
+    what: "\ud83d\uded1 C1 \u2014 **THE COMPARISON LOSES ITS BOUNDARY**: `>=` becomes `>`, so the printed *\"if at least 2 of them are heads\"* fires on THREE and *\"if either of them is heads\"* fires on TWO. \u26a0\ufe0f **IT IS INVISIBLE TO EVERY DERIVER ASSERTION AND TO EVERY CENSUS RUNG** \u2014 the value is byte-identical, the sentence still resolves, `485 \u2192 488` is unmoved \u2014 and it is invisible to two of the three board sweeps as well, because on 0 heads and on the maximum the two readings agree. Only the EXACT-BOUNDARY outcome separates them, which is why every sweep in \u00a75 asserts it SAW every heads count rather than trusting the loop",
+    file: "packages/engine/src/attack.ts",
+    find: "      if (matching >= coinFlip.threshold.atLeast) {",
+    replace: "      if (matching > coinFlip.threshold.atLeast) {",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-counts-heads-not-the-printed-face",
+    decision: "D460",
+    what: "\ud83d\uded1 C2 \u2014 **THE FACE FIELD IS IGNORED AND THE COUNT IS HARDCODED TO HEADS.** This is the normalisation `AttackFlipThreshold`'s doc block refuses, written as a bug: over two coins *\"if both of them are tails\"* becomes *\"if at least 2 of them are HEADS\"* \u2014 the exact inverse of what the card says, so the Confusion lands on the outcome that deals 180 and never on the outcome that deals nothing. **THE TWO READINGS AGREE ON NOTHING AND YET NO DERIVER ASSERTION CAN SEE IT**: the derived value is unchanged and only a board reads `face`",
+    file: "packages/engine/src/attack.ts",
+    find: "      for (const face of faces) if (face === coinFlip.threshold.face) matching += 1;",
+    replace: "      for (const face of faces) if (face === \"heads\") matching += 1;",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-counts-every-face",
+    decision: "D460",
+    what: "\u26a0\ufe0f C3 \u2014 **THE PREDICATE COUNTS FLIPS INSTEAD OF FACES**, so `matching` is always the flip count and every threshold in the family is met on every outcome. The printed `if` becomes decoration: Paralysis lands on a ZERO-HEADS Twin Shock, which is the one board where the attack does nothing at all and the status arriving anyway is the loudest possible wrong answer. Distinct from C2 \u2014 that one reads the wrong FACE, this one reads no face at all",
+    file: "packages/engine/src/attack.ts",
+    find: "      let matching = 0;\n      for (const face of faces) if (face === coinFlip.threshold.face) matching += 1;",
+    replace: "      let matching = 0;\n      for (const face of faces) matching += 1;",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-base-is-not-dropped",
+    decision: "D460",
+    what: "\ud83d\uded1 C4 \u2014 **THE `scaledBase` CLAIMANT IS DELETED, SO THE PRINTED BASE IS DEALT TWICE.** The head of every sentence in this family is `ATTACK_COIN_MULTI`'s own, so the printed `90\u00d7` digits ARE the per-heads amount; without this term `attack.ts` also lands them in the pre-program pipeline and one head deals `90 + 90 = 180` where the card says 90. \u26a0\ufe0f **IT OVERLAPS THE CORRECT ANSWER AT TWO OF THREE OUTCOMES** (90/180/270 against 0/90/180), so only the ZERO-HEADS board settles it \u2014 and that board cannot be faked by a seed, which is why \u00a75 sweeps and asserts it saw 0",
+    file: "packages/engine/src/attack.ts",
+    find: "    coinFlip?.kind === \"perHeads\" ||\n    coinFlip?.kind === \"perHeadsThenThreshold\"",
+    replace: "    coinFlip?.kind === \"perHeads\"",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-word-map-flattens-both",
+    decision: "D460",
+    what: "\u26a0\ufe0f C5 \u2014 **THE CLOSED QUANTIFIER MAP SAYS `both` MEANS ONE.** *\"If both of them are tails\"* becomes *\"if EITHER of them is tails\"*, so the Confusion lands on one tail as well as on two \u2014 the map is the whole of the two English words' meaning and nothing else in the file re-derives it. \u26a0\ufe0f **AND THE `either` ENTRY IS LEFT ALONE ON PURPOSE**, so the row is a claim about ONE word rather than about the map's existence",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };",
+    replace: "const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 1 };",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-face-capture-inverted",
+    decision: "D460",
+    what: "\u26a0\ufe0f C6 \u2014 **THE FACE TERNARY IS SWAPPED**, so every printed `heads` threshold reads `tails` and vice versa. Unlike C2 this IS visible in the derived value, which is the point of having both rows: one says the READER got the face wrong and dies at the deriver, the other says the EVALUATOR ignored it and dies only on a board. A slice that kept only the deriver row would leave the flip site's own read unguarded",
+    file: "packages/engine/src/effects.ts",
+    find: "    const face = multiThreshold[5] === \"tails\" ? \"tails\" : \"heads\";",
+    replace: "    const face = multiThreshold[5] === \"tails\" ? \"heads\" : \"tails\";",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-anchor-loses-its-whitespace-class",
+    decision: "D460",
+    what: "\ud83d\uded1 C7 \u2014 **THE ANCHOR DEMANDS EXACTLY ONE SPACE AFTER THE COMMA**, and ONE of the three printed sentences then stops deriving: `censusAttackCorpus.ts` file line 213 prints TWO (`cat -A`-checked), so *\"If both of them are tails,  your opponent's\u2026\"* falls back to the loud ATTACK_EFFECT_SKIPPED path while the other two stay green. \u26a0\ufe0f **THIS IS THE ROW THAT MAKES THE DOUBLE SPACE A MEASUREMENT RATHER THAN A TYPO** \u2014 every census rung in the slice would move by 2/3 instead of 3/4, and the printings term by 3 instead of 4",
+    file: "packages/engine/src/effects.ts",
+    find: "(heads|tails),\\\\s+your opponent['\u2019]s Active Pok\u00e9mon",
+    replace: "(heads|tails), your opponent['\u2019]s Active Pok\u00e9mon",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-status-hardcoded",
+    decision: "D460",
+    what: "\u26a0\ufe0f C8 \u2014 **THE CAPTURED STATUS WORD IS REPLACED BY THE MAJORITY ONE.** Three of the four printings say Paralyzed, so a hardcoded `paralyzed` is right on 3 of 4 and silently wrong on the Confusion printing \u2014 the shape of defect a spot check reproduces and a sweep does not. `statusOf` is the shipped vocabulary map and this row is what says the arm actually calls it",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"applyStatus\", target: \"defender\", status: statusOf(multiThreshold[6]) }],",
+    replace: "          ops: [{ op: \"applyStatus\", target: \"defender\", status: \"paralyzed\" }],",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-status-hits-the-attacker",
+    decision: "D460",
+    what: "\ud83d\uded1 C9 \u2014 **THE CONSEQUENT AIMS AT THE WRONG SIDE OF THE TABLE**: `target: \"defender\"` becomes `\"self\"`, so the attacker Paralyses ITSELF for winning its own coin flips. \u26a0\ufe0f **`applyStatus`'s SEAT TERNARY IS THE SHIPPED ONE AND IT WILL HAPPILY DO THIS** \u2014 D454 pinned that arm as the one that can write the wrong slot \u2014 so reuse buys the gates and NOT the aim, and the aim is this arm's own claim to make",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"applyStatus\", target: \"defender\", status: statusOf(multiThreshold[6]) }],\n        }\n      : null;",
+    replace: "          ops: [{ op: \"applyStatus\", target: \"self\", status: statusOf(multiThreshold[6]) }],\n        }\n      : null;",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-drops-the-unreachable-guard",
+    decision: "D460",
+    what: "\u26a0\ufe0f C10 \u2014 **`atLeast <= flips` IS DROPPED**, so *\"if at least 3 of them are heads\"* over TWO coins is CLAIMED and simulated as a conditional that can never be met. The sentence stops being loud, `ATTACK_EFFECT_SKIPPED` goes quiet, and the printed Special Condition silently never lands on any board this engine can build \u2014 the exact failure mode D127's `per >= 1` guard exists to prevent, asked of the other number",
+    file: "packages/engine/src/effects.ts",
+    find: "      atLeast >= 1 &&\n      atLeast <= flips &&",
+    replace: "      atLeast >= 1 &&",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-drops-the-zero-guard",
+    decision: "D460",
+    what: "\u26a0\ufe0f C11 \u2014 **`atLeast >= 1` IS DROPPED**, the mirror of C10: a printed *\"if at least 0 of them are heads\"* is met by EVERY outcome, so the reader claims a sentence whose `if` decides nothing and ships an unconditional status wearing a conditional. Both guards are about a consequent that cannot vary, from the two opposite ends, and they are two rows because a slice that kept only one would leave the other end open",
+    file: "packages/engine/src/effects.ts",
+    find: "      per >= 1 &&\n      atLeast >= 1 &&",
+    replace: "      per >= 1 &&",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-drops-the-two-coin-word-guard",
+    decision: "D460",
+    what: "\u26a0\ufe0f C12 \u2014 **THE GRAMMAR GUARD IS DROPPED**, so *\"Flip 4 coins. \u2026 If both of them are tails, \u2026\"* derives with `atLeast: 2` over four faces \u2014 a sentence no card prints and whose meaning the reader would have INVENTED. The guard is `ATTACK_COIN_MULTI`'s plural argument one step further in: \"either of them\" and \"both of them\" are TWO-COIN WORDS, measured across every `of them` row in the corpus that carries a printed flip count (file lines 202, 213, 214 are 2-coin and spell them; 228 is 4-coin and spells the numeric form)",
+    file: "packages/engine/src/effects.ts",
+    find: "      atLeast <= flips &&\n      (word === undefined || flips === 2)",
+    replace: "      atLeast <= flips",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-arm-loses-its-plural-floor",
+    decision: "D460",
+    what: "\u26a0\ufe0f C13 \u2014 **`flips >= 2` BECOMES `flips >= 1`**, so \"Flip 1 coins.\" is admitted \u2014 not English, not in the pool, and the guard is what keeps that a FACT about the column rather than an assumption. Copied deliberately from the arm two above it (D127/D413), and this row is what says the copy is live rather than decorative",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 &&\n      flips <= MAX_PRINTED_FLIPS &&\n      per >= 1 &&",
+    replace: "    return flips >= 1 &&\n      flips <= MAX_PRINTED_FLIPS &&\n      per >= 1 &&",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-arm-loses-the-printed-ceiling",
+    decision: "D460",
+    what: "\u26a0\ufe0f C14 \u2014 **THE INGESTED-TEXT CEILING IS DROPPED.** The digits come from THIRD-PARTY text, so an unbounded `\\d+` lets one malformed row spin the flip loop \u2014 and a hang is the one failure mode that is not loud, where a refusal drops the card onto ATTACK_EFFECT_SKIPPED, which is. `MAX_PRINTED_FLIPS` is the family's shared answer and this arm shares it rather than re-choosing a number",
+    file: "packages/engine/src/effects.ts",
+    find: "      flips <= MAX_PRINTED_FLIPS &&\n      per >= 1 &&\n      atLeast >= 1 &&",
+    replace: "      per >= 1 &&\n      atLeast >= 1 &&",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-threshold-flip-count-hardcodes-the-printed-two",
+    decision: "D460",
+    what: "\u26a0\ufe0f C15 \u2014 **THE CAPTURED FLIP COUNT IS REPLACED BY THE MAJORITY LITERAL.** Two of the three sentences flip 2, so a hardcoded 2 is right on 3 of the 4 printings and silently wrong on the 4-coin one \u2014 which then takes two flips, folds `60 \u00d7 heads` over the wrong sample and asks a threshold of 2 against it. The value is the only place this shows: the sentence still resolves and every census rung is unmoved",
+    file: "packages/engine/src/effects.ts",
+    find: "          kind: \"perHeadsThenThreshold\",\n          flips: { kind: \"printed\", count: flips },",
+    replace: "          kind: \"perHeadsThenThreshold\",\n          flips: { kind: \"printed\", count: 2 },",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-fixture-normalises-the-double-space",
+    decision: "D460",
+    what: "\u26a0\ufe0f C16 \u2014 **THE FIXTURE TIDIES THE CATALOG'S TWO SPACES INTO ONE**, which is the same defect as C7 approached from the fixture instead of the anchor and is the one D452 wrote its rule about: a byte pin on an invented string is green by construction, so the guard is not the pin but the SOURCE \u2014 \u00a71 looks the sentence up in `legalAttackCorpus()` WITH its printing count, so a hand-normalised near-miss reddens instead of passing",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "          \"Flip 2 coins. This attack does 90 damage for each heads. If both of them are tails,  your opponent's Active Pok\u00e9mon is now Confused.\",",
+    replace: "          \"Flip 2 coins. This attack does 90 damage for each heads. If both of them are tails, your opponent's Active Pok\u00e9mon is now Confused.\",",
+    expectKilledBy: ["packages/engine/src/coinThreshold.test.ts"],
+  },
+  {
+    id: "D460-maxsize-refuses-the-corpus",
+    decision: "D460",
+    what: "\ud83d\uded1 C17 \u2014 **THE LIMIT GOES BACK TO 2 MiB AND BIOME SILENTLY STOPS LINTING THE MUTATION CORPUS.** `scripts/mutation/mutants.ts` crossed 2,097,152 bytes DURING this slice (2,112,246 after its sixteen rows), and Biome's answer to a file over `files.maxSize` is an `internalError/io` diagnostic that **still counts the file as checked** \u2014 so every lint step exits 0 while the repo's largest source file is linted by NOTHING. \u26a0\ufe0f **THE FIRST SYMPTOM WAS `bun run check` FAILING ON D212's GUARD RATHER THAN ON A LINT ERROR**, which is that guard earning its keep 248 slices after it was written; without it the corpus would simply have gone unlinted and nothing would have said so. This row is D212's `include` pair with the other field of the same config object, and it is owed the moment the raise becomes load-bearing",
+    file: "biome.json",
+    find: "    \"maxSize\": 4194304,",
+    replace: "    \"maxSize\": 2097152,",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/lint-coverage.ts"],
   },
 ];
