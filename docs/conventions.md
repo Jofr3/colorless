@@ -3247,6 +3247,30 @@ rows were the *right* rows was settled only by re-derivation. A sweep answers
 *do these rows still discriminate*; it is silent on *is this the set that should
 exist*.
 
+### A refusal that names a SENTENCE is usually a claim about a CARRIER (D457/D458)
+
+The deck-search family mis-priced its own blocker **twice in two slices**, and
+both notes were written by the slice that refused the row:
+
+- D457's said a rule was *"unrepresentable here, representable one op over"* — true
+  of the neighbouring op's field, false of the op that would serve it, because
+  that one answers with a map and the printed rule is a constraint on the map.
+- D458's said a row needed *"its own arm by D232's rule"* — and D232's rule, opened
+  rather than cited, says the opposite: a family collapses to **one** arm when its
+  sentences differ in a NOUN and splits on a VERB.
+
+Both were phrased as facts about **what the sentence needs** and were claims about
+**what one carrier happens to hold today** — an op's fields, an anchor's shape, a
+rule's summary. One had stood 222 decisions.
+
+**The cheap disproof is one line: delete one axis from the printed string and
+re-ask the readers.** D458 ran it and found the remainder had derived since D235,
+which located the blocker exactly and cost nothing.
+
+So when you meet a shipped refusal: re-read it as naming a **carrier**, identify
+which carrier would actually serve the sentence, and re-measure the population
+against *that* one rather than the one that refused it.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
