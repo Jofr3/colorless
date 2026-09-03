@@ -13906,6 +13906,59 @@ export const FIXTURE_POOL: Record<string, Card> = {
       {R} with NO `damage` key at all. A reader keyed on anything but the TEXT — a
       cost, a type, a stage, the presence of damage — satisfies one and fails the
       other, which is the whole reason both are here. */
+  /** 🆕🆕 **D462 — the THREE-STATUS OXFORD LIST's carrier, and it is SYNTHETIC BY
+      NECESSITY.** Corpus FILE LINE 679 — *"Your opponent's Active Pokémon is now
+      Burned, Confused, and Poisoned."* — has **2 legal printings** and this checkout
+      has no D1, so the two carriers cannot be resolved and are stated UNRESOLVED
+      rather than invented (D425, whose whole lesson was a made-up id). The STRING is
+      the corpus row byte for byte; everything else about this body is declared
+      fixture, not transcription.
+
+      THREE indices, each present for a claim no other index can make:
+        • **0 "Triple Bloom"** ({C}{C}, **50**) — the sentence with printed damage. The
+          ordinary board, and the one that proves the three conditions survive a §8.5
+          hit landing on the same body in the same attack.
+        • **1 "Bare Bloom"** ({C}, **no `damage` key at all**) — the SAME sentence with
+          no §8.5 hit. A reader keyed on anything but the TEXT — a cost, a type, the
+          PRESENCE OF DAMAGE — satisfies index 0 and fails here, which is the reason
+          D424 insisted on two unalike bodies and the reason two unalike INDICES are
+          the honest substitute when the bodies cannot be resolved.
+        • **2 "Comma Bloom"** ({C}, **10**) — corpus FILE LINE 264, *"Flip a coin. If
+          heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy
+          from that Pokémon."*, a REAL legal printing (2) that NO reader claims. It is
+          the `ATTACK_EFFECT_SKIPPED` control AND the new anchor's one printed near
+          miss: it opens exactly like a coin-flipped Oxford list and puts an OP where
+          the second status word would go.
+
+      130 HP and retreat 1 are ordinary; no Weakness, no Resistance, no Ability, so
+      every number in the suite is the printed one. */
+  "fix-oxford": battler("fix-oxford", {
+    name: "fix-oxford",
+    types: ["Psychic"],
+    hp: 130,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Triple Bloom",
+        effect: "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.",
+        damage: 50,
+      },
+      {
+        cost: ["Colorless"],
+        name: "Bare Bloom",
+        effect: "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Comma Bloom",
+        effect:
+          "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.",
+        damage: 10,
+      },
+    ],
+  }),
+
   "fix-ninetales": battler("fix-ninetales", {
     name: "fix-ninetales",
     types: ["Fire"],
@@ -23040,6 +23093,41 @@ export const OPPONENT_COUNTER_MULTIPLY_DECK = deckOf({
 
     ⚠️ `fix-accelgor` needs a BENCH to switch into, so the switch tail has somewhere
     to land; every other board in the suite clears its bench deliberately. */
+/** 🆕🆕 **D462 — the three-status Oxford list's own deck.** A NEW deck and not a
+    widened neighbour, on D412's rule: adding ONE card to a shared `*_DECK` reddened
+    three of D409's boards, because deck composition is load-bearing for every suite
+    seeded off it. `DEFENDER_STATUS_PAIR_DECK` is the obvious neighbour and is
+    deliberately left alone for exactly that reason. Nothing else reads this list.
+
+      • `fix-oxford` — the attacker. THREE indices, and the third is the control:
+        idx 0 "Triple Bloom" ({C}{C}, 50) and idx 1 "Bare Bloom" ({C}, NO `damage`
+        key) both print corpus FILE LINE 679; idx 2 "Comma Bloom" ({C}, 10) prints
+        corpus FILE LINE 264, a REAL legal printing no reader claims, so a suite
+        asserting *"no `ATTACK_EFFECT_SKIPPED` row"* on 0 and 1 has a neighbouring
+        index that DOES emit one (D424's rule: every *"X is refused"* owes a
+        neighbouring *"Y is admitted"*, read in the other direction).
+      • `fix-titan` (340 HP, NO attacks, no Weakness or Resistance) — the
+        mulligan-free starter, the bench filler, and a defender no printed number in
+        this suite can Knock Out, so a status can never be lost to a §8.1 tail.
+      • `fix-energy` — Colorless Basic. Every cost on this list is {C}-only.
+
+    🛑 **NOT SEED-FREE, AND THE SUITE SAYS SO RATHER THAN INHERITING D143's
+    BOILERPLATE.** Indices 0 and 1 open no choice and their own program takes no coin —
+    but the sentence they derive lands BURN, and §12's burn RECOVERY is a coin at the
+    Checkup that an attack's turn end runs immediately (`flow.ts`, `CHECKUP_COIN_FLIP`).
+    At SEED 11 it comes up TAILS, which is why `burned: true` is observable after the
+    swing; `defenderStatusTriple.test.ts` §4 asserts that flip in its own rung so the
+    dependency reddens with an explanation instead of reddening two board assertions
+    without one. The Checkup TICK itself is unconditional (counters are placed before
+    the flip), so the damage totals — 50 + 20 + 10 = 80 on index 0, 0 + 30 on index 1 —
+    do not depend on the seed at all. Index 2's sentence is unread, so its printed coin
+    is never taken. */
+export const DEFENDER_STATUS_TRIPLE_DECK = deckOf({
+  "fix-oxford": 4, // the Oxford list — idx 0 (50), idx 1 (no damage), idx 2 (loud control)
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, filler, clean defender
+  "fix-energy": 40, // Colorless Basic — every cost here is {C}-only
+});
+
 export const DEFENDER_STATUS_PAIR_DECK = deckOf({
   "fix-ninetales": 4, // the bare pair — {R}{R} for 90
   "fix-tr-houndoom": 4, // the bare pair on a second body — {R}, no damage

@@ -4361,3 +4361,135 @@ ex `sv01-123`/`-230`/`-246` is the same species with and without it).
 **The falsifier is an INGEST change** (a per-printing column plus a `CardFilter` member). Nothing in
 `packages/engine` can be it. Priced here so successors stop re-deriving it: `Future` is the same
 shape one banner over and blocks two more `PHRASE-1` rows.
+
+## A refusal that names a SENTENCE is usually a claim about a WARRANT, not about a carrier (D462)
+
+D424 measured *"Your opponent's Active Pokémon is now Burned, Confused, and Poisoned."* (corpus
+FILE LINE 679, 1 sentence / 2 legal printings), named it, and left it LOUD:
+
+> the ONLY 3-status row in the column, so a 3-list template would be D121's literal over a pool of
+> one
+
+Every word of the measurement is true and the conclusion does not follow. **D121 prices a NEW
+parameter.** The third slot is `STATUS_WORDS` — D424's own vocabulary, warranted in the same doc
+block on three distinct printed pairs with both slots varying — at one more position. The pool of
+one was the SENTENCE's and never the parameter's, and the sentence cost ONE anchor and ONE arm over
+a helper that already existed.
+
+**When a refusal cites a warrant rule, ask which THING the rule is about.** "Two printings before a
+parameter" is about the parameter. A sentence that reuses an existing parameter at a new position
+introduces none, so the rule has nothing to say about it. D462 is the second slice in four to find
+a shipped refusal that priced the wrong noun (D457's was "unrepresentable here" about the wrong
+op's vocabulary).
+
+## Choose a TEMPLATE over a LITERAL when the captures are what keep a refusal REACHABLE (D462)
+
+The usual argument for a template is generality and the usual argument against it is D121. D462
+found a third axis that beats both when they tie on cost.
+
+`DEFENDER_STATUS_TRIPLE` could have been a literal — `Burned, Confused, and Poisoned` — for the
+same one regex and the same one arm. It is a template because those three words are **provably
+slot-disjoint**, so `defenderStatusOps`' collision refusal would be UNREACHABLE from the literal
+arm: dead code that can only rot, and exactly the "declared but not live" defect D424 avoided by
+driving its own refusal synthetically. With the slots open, a constructed *"…is now Asleep,
+Confused, and Poisoned."* reaches the refusal the way the pair's six collisions do.
+
+**A template that can never be WRONG and keeps a guard reachable beats a literal that cannot be
+wrong and makes the guard dead.** Check the second half explicitly: enumerate what the open slots
+admit (here 18 sentences, one printed, every one deriving a correct program) before claiming it.
+
+## A red test run reports the ENDPOINT; D426/D437 says to edit the HEAD (D462)
+
+D461 wrote down that a frozen tail and a live head are edited in opposite places. D462 broke that
+rule anyway, six times in one pass, and the reason is worth more than the rule:
+
+**The assertion that throws is the endpoint, so the endpoint is what the tool names.** A vitest
+failure reads `expected [372, 1271] to deeply equal [373, 1273]` and the obvious edit — the one at
+the reported line — is precisely the forbidden one. A tail that moves with the head asserts
+`head === head` and no sweep can tell.
+
+**When a subtraction chain reddens, do not edit the line the runner named.** Find the chain's HEAD
+(`resolving.length - N /* …`, `units(resolving) - N /* …`, `ids.length - N /* …`) by a string count
+over the file, put the new term there, and leave the endpoint alone. D462 reverted all six and
+stepped 22 heads instead.
+
+## Vitest stops an `it` at its first throw, so COUNT THE FILE — do not re-run the suite (D462)
+
+D462 needed **three** rounds of `bun run check` to make eleven files green, and no round was wrong
+about what it reported. Round 1 named 12 files / 16 tests. Round 2 found **11 sites that had been
+quiet behind them**, two in files that had not been red at all. Round 3 found **8 more**.
+
+A census `it` in this repo routinely carries three or four assertions over the same corpus — a
+sentence count, a printing count, a residue count and a chain. **Fixing the reported one makes the
+next one reportable and nothing more.** The instrument that sees all of them at once is a string
+count over the file:
+
+- `s.split(pattern).length - 1` sees every occurrence, including several on one line;
+- `grep -c` counts LINES and under-reports (D462's version tax: 52 occurrences in 43 files, so
+  seven files were under-reported by nine);
+- a line-anchored regex under-reports too — D462's first head scan required the head to start the
+  line and found **15 of 22**.
+
+## `String.replace(find, replacementString)` interprets `$` in the REPLACEMENT (D462)
+
+`$&`, `` $` ``, `$'`, `$n` and `$$` are directives inside a replacement STRING. D462's new anchor
+ends `\\.$` immediately before a backtick, so `` $` `` — "everything before the match" — spliced
+19,000 lines of `effects.ts` into itself on the very first patch. The file went from 25,970 to
+45,031 lines and nothing but a line count noticed.
+
+**Always pass a function: `s.replace(find, () => replace)`.** A throwaway patch script must also
+(a) assert the `find` occurs exactly the MEASURED number of times, (b) refuse `find === replace`,
+and (c) restore every touched file from an in-memory backup in a `finally`. D462's did all three
+and still needed the line count, because a `$`-splice is a successful replacement.
+
+## `opcoverage.ts` cannot see a reader ARM, and that is its universe rather than a gap (D462)
+
+D462 moved `residue-census.ts` (residue 124/172 → 123/170) and left `opcoverage.ts`
+**byte-identical in every column** except the corpus size — seat lines 206/470 = 0.438, decision
+points 878/1326 = 0.662, `applyStatus` 1/2 = 0.50 before and after.
+
+That is correct by construction. The instrument's universe is `EffectOp` KINDS and the producer /
+implementation regions that mention them; a slice whose whole subject is a new ANCHOR and a new
+deriver ARM producing an **already-produced** op adds no kind, no arm in the interpreter, and no
+row whose `find` span lands within `FANIN`/`LEV` of a literal `"applyStatus"`.
+
+**Say which instrument is blind to your subject BEFORE you run it**, so a flat column reads as a
+prediction met rather than as a slice that did nothing.
+
+## The `Ancient`/`Future` banner is 12 sentences / 16 printings, and it is FOUR carriers (D462)
+
+D461's entry above says 7 / 10 for `Ancient` alone. Re-measured over the census output at HEAD, the
+residue holds **12 sentences / 16 printings** mentioning `Ancient` or `Future` — 8 non-`OPAQUE`
+(`COMPOUND-head` ×1, `SUBST-2` ×3, `SUBST-3` ×1, `PHRASE-1` ×3) and 4 `OPAQUE`.
+
+**The data refusal stands** (`effects.ts`, `PREVENT_DAMAGE_FROM_CLASS`'s doc block): the banner is a
+per-PRINTING fact and no ingested column carries it. **But it is not one mechanism even if the data
+arrives.** The eight non-`OPAQUE` rows want the predicate in at least four different carriers — a
+`CardFilter` kind, `preventDamage.fromClass` (a one-member union), an op FIELD in the
+`moveCountersToDefender.ownerPokemon` shape, and a SUPPORTER-CARD predicate for *"If you played an
+Ancient Supporter card…"*, which is not about a Pokémon at all. **Price the CARRIERS, not the
+token.**
+
+## The `?suffix=` filter fails CLOSED, and the ingest MAPPER is not what is missing (D462)
+
+Answered from the code, as far as a checkout with no database allows:
+
+- **`?suffix=` returns an EMPTY page, not the unfiltered one.** `apps/api/src/catalog/query.ts`
+  pushes `inArray(cards.suffix, query.suffix)` and SQL `NULL IN (…)` is never true. Failing closed
+  is the better of the two modes and is worth recording as a property rather than an accident.
+- **`/facets` `suffixes` serves `[]`** while the column is empty (`selectDistinct` under
+  `isNotNull`), so the rail renders no chip and the filter is unreachable from the UI.
+- 🛑 **The bigger fact is already recorded and is worse than "vacuous":** migration `0006`, which
+  ADDS the column, **has never been applied to the remote database**, so production has no `suffix`
+  column at all — and `/facets` selects it inside a shared `db.batch`, so deploying ahead of the
+  migration fails the WHOLE endpoint (`apps/api/src/db/catalog.ts`; runbook
+  `docs/workstreams/backend-data.md §3.7`).
+- ⚠️ **The ingest CODE is not missing.** `apps/api/src/ingest/map.ts` maps
+  `suffix: normalizeSentinel(card.suffix)` on the Pokémon arm and `apps/api/src/ingest/upserts.ts`
+  writes the column. "The fix is an INGEST change" is imprecise wherever it appears: what is
+  missing is a MIGRATION on the remote and an ingest RUN.
+- ⚠️ **And it would not classify `Ancient` anyway** — `suffix` is the rule-box marker
+  (`ex`/`V`/`VMAX`). `packages/schema/src/tcgdex/card.ts` declares no banner field. 🛑 **The limit of
+  that check, said out loud: the schema is NOT strict** (no `.strict()`, no `.passthrough()`, no
+  catchall), so zod strips unknown upstream keys silently — this repo's transcription having no
+  banner field is not evidence that tcgdex has none.

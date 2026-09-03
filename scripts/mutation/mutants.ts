@@ -5769,7 +5769,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.360.0";',
+    find: 'export const engineVersion = "0.361.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -18629,9 +18629,17 @@ export const MUTANTS: Mutant[] = [
     decision: "D424",
     what: "🛑 THE WHOLE DEFECT THIS SLICE EXISTS TO PREVENT, AND IT IS THE NAIVE READING RATHER THAN A STRAW: the coherence test becomes `a === b` — \"the two printed words must differ\" — which is what an author who had not read `SpecialConditions` would write, and which is TRUE of every pair a card actually prints, so all 5 printings still resolve, `BUILT.attack` still steps by 6, both census sweeps still agree and every model assertion in §4 still passes. What it admits is *\"Asleep and Confused\"*: two ops whose second overwrites the first on the shared `rotation` field, emitting two STATUS_APPLIED rows for a board that ends up carrying ONE condition. **A LIE THAT RESOLVES** — and only a test that drives a sentence NO CARD PRINTS can see it",
     file: "packages/engine/src/effects.ts",
-    find: "  if (CONDITION_SLOT[a] === CONDITION_SLOT[b]) return null;",
-    replace: "  if (a === b) return null;",
-    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+    // ⚠ RE-POINTED AT D462 (0.360.0 → 0.361.0) — `defenderStatusPair(first, second)`
+    // became `defenderStatusOps(words)` and the one `===` became a pairwise
+    // set-size test, so the D424 line no longer exists to mutate. The DEFECT is
+    // identical and now covers three slots as well as two: compare the WORDS rather
+    // than the FIELDS they land in. Re-transcribed, not dropped (D418).
+    find: "  if (new Set(slots).size !== slots.length) return null;",
+    replace: "  if (new Set(statuses).size !== statuses.length) return null;",
+    expectKilledBy: [
+      "packages/engine/src/defenderStatusPair.test.ts",
+      "packages/engine/src/defenderStatusTriple.test.ts",
+    ],
   },
   {
     id: "D424-slot-map-misfiles-confused",
@@ -18647,9 +18655,18 @@ export const MUTANTS: Mutant[] = [
     decision: "D424",
     what: "the two `applyStatus` ops come back in the OTHER order. ⚠️ **THE MODEL CANNOT SEE THIS AND THAT IS THE POINT**: the pair is refused unless its two words occupy DIFFERENT `SpecialConditions` fields, so the two writes are disjoint and either order reaches a byte-identical board — every field assertion in §4, every census count, the STATUS_APPLIED pair's membership and the whole of §5 agree with the mutant. Only the printed-ORDER rung and the STATUS_APPLIED row SEQUENCE go red. Arm 5c's ops-in-printed-order rule is a faithfulness claim, and this is the row that proves something still checks it",
     file: "packages/engine/src/effects.ts",
-    find: "    { op: \"applyStatus\", target: \"defender\", status: a },\n    { op: \"applyStatus\", target: \"defender\", status: b },",
-    replace: "    { op: \"applyStatus\", target: \"defender\", status: b },\n    { op: \"applyStatus\", target: \"defender\", status: a },",
-    expectKilledBy: ["packages/engine/src/defenderStatusPair.test.ts"],
+    // ⚠ RE-POINTED AT D462 (0.360.0 → 0.361.0) — the two hand-written op literals
+    // became one `.map` over the word list, so the swap is now a `.reverse()`. The
+    // defect is the same faithfulness claim and it reaches the THREE-word list too,
+    // where the reversal is visible in a way the pair's is not: the pair reverses to
+    // a byte-identical board, and so does the triple, so only the printed-ORDER rung
+    // and the STATUS_APPLIED sequence can see either. Re-transcribed, not dropped.
+    find: "  return statuses.map((status): EffectOp => ({ op: \"applyStatus\", target: \"defender\", status }));",
+    replace: "  return statuses.reverse().map((status): EffectOp => ({ op: \"applyStatus\", target: \"defender\", status }));",
+    expectKilledBy: [
+      "packages/engine/src/defenderStatusPair.test.ts",
+      "packages/engine/src/defenderStatusTriple.test.ts",
+    ],
   },
   {
     id: "D424-pair-anchor-loses-its-end-anchor",
@@ -23447,5 +23464,51 @@ export const MUTANTS: Mutant[] = [
     find: "  const bench = side.bench.map(healOne);\n  return withSide(state, ctx.seat, { ...side, active, bench });\n}",
     replace: "  const bench = side.bench.map(healOne);\n  return withSide(state, otherSeat(ctx.seat), { ...side, active, bench });\n}",
     expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  // ── D462 — THE THREE-STATUS OXFORD LIST. FOUR rows, and the SHAPE of the set is
+  //    the finding again: TWO OF THE FOUR ARE SILENT IN EVERY CENSUS. The sentence
+  //    still matches, `BUILT.attack` still steps by 2, every census sweep still agrees
+  //    and no loud row appears — while the program drops one of the three printed
+  //    conditions, or claims a compound whole, or lands three conditions with no coin.
+  //    The two anchor rows are drivable only by strings NO CARD PRINTS, which is the
+  //    same argument D424 made for BUILDING a refusal rather than discovering it.
+  //    ⚠️ The COLLISION rows and the printed-ORDER row are NOT here: they are D424's,
+  //    RE-POINTED onto the generalised helper in this same commit, which is where the
+  //    shared code's coverage belongs (D418 — re-point, don't duplicate).
+  {
+    id: "D462-triple-drops-the-third-status",
+    decision: "D462",
+    what: "🛑 SILENT IN EVERY CENSUS, AND THE WHOLE DEFECT THIS SLICE CAN HAVE: arm 2c hands the helper TWO of its three captures — the index slip an author makes when the arm above it takes two. The printed sentence still MATCHES, still derives to a non-null program, still resolves, still reports nothing skipped; `BUILT.attack` still steps by exactly 2 and every one of the ten census sites still agrees, because a sentence that resolves is BUILT no matter how much of it the program forgot. What the board loses is POISON — the defender takes 20 of Checkup tick instead of 30 and carries `poisonDamage: 0` while the card says Poisoned. **A LIE THAT RESOLVES**, and only the ops-equality rung, the STATUS_APPLIED sequence and the damage arithmetic can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "    return defenderStatusOps([match[1], match[2], match[3]]);",
+    replace: "    return defenderStatusOps([match[1], match[2]]);",
+    expectKilledBy: ["packages/engine/src/defenderStatusTriple.test.ts"],
+  },
+  {
+    id: "D462-triple-anchor-loses-its-end-anchor",
+    decision: "D462",
+    what: "`DEFENDER_STATUS_TRIPLE` drops the closing `$` — the one-character version of the \"too loose\" failure D278/D279 cost two slices, and the exact row D424 wrote for the PAIR anchor, one slot wider. The anchor then claims any sentence whose HEAD is this list and whose tail is anything at all, shipping the three statuses and SILENTLY DROPPING the rest, and in doing so shadows `splitAttackTrailingClause`, whose refusal is \"no reader claims this string as a whole\". ⚠️ NO LEGAL PRINTING carries such a compound, so this row is about the REFUSAL rather than about a board — which is why it is driven from a constructed tail",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\\\.$`,",
+    replace: "  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\\\.`,",
+    expectKilledBy: ["packages/engine/src/defenderStatusTriple.test.ts"],
+  },
+  {
+    id: "D462-triple-anchor-loses-its-start-anchor",
+    decision: "D462",
+    what: "🛑 SILENT IN EVERY CENSUS, AND IT IS THE REFUSAL THIS SLICE WROTE DOWN AND DID NOT BUILD. `DEFENDER_STATUS_TRIPLE` drops its `^`, so the anchor floats. The column prints no flipped Oxford list — measured, ZERO of 640 — so every census figure is byte-identical under this build. What the float admits is *\"Flip a coin. If heads, your opponent's Active Pokémon is now Burned, Confused, and Poisoned.\"*: the three conditions land **with no `coinFlipGate` at all**, on TAILS as much as on heads, because the arm returns the helper's ops bare and the words *\"Flip a coin. If heads,\"* were simply not looked at. D424 took the pair's flip twin because the column PRINTS it; this slice refused to write a flip arm because it does not — and this row is what keeps the `^` doing that refusal's work",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\\\.$`,",
+    replace: "  `Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\\\.$`,",
+    expectKilledBy: ["packages/engine/src/defenderStatusTriple.test.ts"],
+  },
+  {
+    id: "D462-refused-list-becomes-an-empty-program",
+    decision: "D462",
+    what: "🛑 SILENT IN EVERY CENSUS, AND DRIVABLE ONLY BY A SENTENCE NO CARD PRINTS. Arm 2c coalesces the helper's `null` to `[]` — a nullish habit an author reaches for without noticing, since an empty program \"does nothing\" and reads harmless. Every printed sentence is unaffected and every count is identical. What changes is that a COLLIDING list — two `rotation` words, which the helper refuses precisely because the second op would eat the first — now derives to a NON-NULL program, so `attack.ts` stops emitting `ATTACK_EFFECT_SKIPPED` and the table is told the engine understood a sentence it explicitly did not. It is D424's `flip-pair-nullish-check-never-fires` defect one arm over, and the row that proves the collision refusal is still LOUD rather than merely `null`",
+    file: "packages/engine/src/effects.ts",
+    find: "    return defenderStatusOps([match[1], match[2], match[3]]);",
+    replace: "    return defenderStatusOps([match[1], match[2], match[3]]) ?? [];",
+    expectKilledBy: ["packages/engine/src/defenderStatusTriple.test.ts"],
   },
 ];

@@ -9397,8 +9397,11 @@ const STATUS_OF_WORD: Record<StatusWord, StatusName> = {
 
 /** 🆕🆕 D424 — WHICH FIELD OF `SpecialConditions` EACH STATUS WORD LANDS IN.
     Asleep/Paralyzed/Confused are three values of ONE field; Poison and Burn are
-    each their own. It exists for `defenderStatusPair` below, and it is the whole
-    of that anchor's coherence test.
+    each their own. It exists for `defenderStatusOps` below, and it is the whole
+    of that helper's coherence test. (🆕🆕 D462 — the helper was `defenderStatusPair`
+    and took two words; it takes a LIST now, and the test is PAIRWISE over it. The
+    table did not move, which is the point of deriving the refusal from the model's
+    own field layout rather than from a hand-kept list of forbidden pairs.)
 
     🛑 **THE COLLISION THIS EXISTS TO REFUSE.** A bare `(X) and (Y)` over the five
     status words admits *"Asleep and Confused"*, whose two `applyStatus` ops both
@@ -9458,7 +9461,7 @@ const FLIP_DEFENDER_NOW = new RegExp(
 // 🆕🆕 D424 — THE TWO-STATUS PAIR, and its coin-flipped twin. `DEFENDER_NOW` and
 // `FLIP_DEFENDER_NOW` one line up with a second `(${STATUS_WORDS})` slot; the
 // vocabulary is UNNARROWED on both sides and the coherence test is
-// `defenderStatusPair`'s, not the regex's (see `CONDITION_SLOT`).
+// `defenderStatusOps`', not the regex's (see `CONDITION_SLOT`).
 //
 // ⚠️ **A TEMPLATE AND NOT A LITERAL, ON A WARRANT THAT WAS MEASURED.** D121 wants
 // two printings with one token varying before a parameter is justified. Over the
@@ -9480,6 +9483,12 @@ const FLIP_DEFENDER_NOW = new RegExp(
 //     — THREE statuses in an Oxford list. A different printed shape, and the only
 //     3-status row in the column, so a 3-list template would be D121's literal
 //     over a pool of one. Left LOUD.
+//     ✅ **CLAIMED AT D462 — `DEFENDER_STATUS_TRIPLE` below.** The paragraph above
+//     is kept VERBATIM (D178) because it is wrong in an instructive way: D121
+//     prices a NEW PARAMETER, and the third slot is `STATUS_WORDS` — this anchor's
+//     OWN vocabulary, already warranted here on three distinct printed pairs — at
+//     one more position. "A pool of one" was true of the SENTENCE and never of the
+//     parameter. 1 sentence / 2 legal printings, and it now derives.
 //   • "…is now Confused and Poisoned. Switch this Pokémon with 1 of your Benched
 //     Pokémon."                                                       (1 printing)
 //     — refused WHOLE on purpose: its head is this anchor's and its tail is
@@ -9490,6 +9499,53 @@ const DEFENDER_STATUS_PAIR = new RegExp(
 );
 const FLIP_DEFENDER_STATUS_PAIR = new RegExp(
   `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
+);
+// 🆕🆕 D462 — THE THREE-STATUS OXFORD LIST. *"Your opponent's Active Pokémon is now
+// Burned, Confused, and Poisoned."* — `censusAttackCorpus.ts` **FILE LINE 679**,
+// **1 sentence / 2 legal printings**, and the one row of this family D424 measured,
+// named and left LOUD.
+//
+// 🛑 **THE REFUSAL NAMED A SENTENCE AND PRICED A PARAMETER, AND THE TWO ARE NOT THE
+// SAME THING.** D121 prices a NEW parameter; this anchor adds none. `STATUS_WORDS`
+// is the pair anchor's own vocabulary, warranted there on THREE distinct printed
+// pairs with BOTH slots varying, and the third slot is that SAME parameter at one
+// more position. "A pool of one" was true of the SENTENCE and never of the
+// parameter — and D424's own decisive rule points the same way: it took the flip
+// twin because *"a second anchor that moves no new site is nearly free"*, and this
+// anchor moves no new site either.
+//
+// ⚠️ **THE CAPTURES ARE WHAT KEEP THE COHERENCE TEST ALIVE, AND THAT IS WHY THIS IS
+// NOT A LITERAL.** A literal `Burned, Confused, and Poisoned` costs the same one
+// regex and the same one arm — but those three words are provably slot-disjoint, so
+// `defenderStatusOps`' refusal would be UNREACHABLE from this arm and could only
+// rot. With the slots open, a constructed *"…is now Asleep, Confused, and
+// Poisoned."* reaches the refusal exactly as the pair's six collisions do. D424
+// drove its own refusal synthetically for precisely this reason.
+//
+// ⚠️ **DISJOINT FROM ALL THREE OLDER ANCHORS BY CONSTRUCTION, NOT BY POSITION.**
+// `(${STATUS_WORDS})` admits no comma and no space, so `DEFENDER_NOW`,
+// `FLIP_DEFENDER_NOW` and `DEFENDER_STATUS_PAIR` cannot claim a string this anchor
+// matches, and this anchor cannot claim theirs. Arms 1 and 2 already carry that
+// argument; it is restated because it is exactly what a fourth anchor could fail to
+// have.
+//
+// 🛑 **NO FLIPPED TWIN, AND THE COUNT IS THE REASON.** D424 took the pair's
+// coin-flipped twin because the column PRINTS it (2 printings). It prints **ZERO**
+// `Flip a coin. If heads, …is now (X), (Y), and (Z).` — measured over all 640 rows
+// and asserted on the POPULATION in `defenderStatusTriple.test.ts` — so a flip arm
+// here would be a reading nothing prints, which is the trade this file refuses
+// everywhere else.
+//
+// ⚠️ **AND THE NEAR MISS IS A REAL PRINTING RATHER THAN A CONSTRUCTED ONE.** The
+// column's OTHER `is now (X),` row is FILE LINE 264 — *"Flip a coin. If heads, your
+// opponent's Active Pokémon is now Paralyzed, and discard an Energy from that
+// Pokémon."* (2 printings) — which opens exactly like a flipped Oxford list and then
+// puts an OP where the second status word would go. It is refused by the SECOND
+// capture group and by nothing else: drop `(${STATUS_WORDS})` to `(.+)` and this
+// anchor eats a sentence whose Energy discard it would silently throw away. That is
+// the one row that makes the vocabulary load-bearing rather than decorative.
+const DEFENDER_STATUS_TRIPLE = new RegExp(
+  `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\.$`,
 );
 const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
@@ -19233,8 +19289,8 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // 2b. 🆕🆕 D424 — "Your opponent's Active Pokémon is now {X} and {Y}." (3
   //     printings) and its coin-flipped twin (2). TWO `applyStatus` ops in printed
   //     order, `null` when the two words share a `SpecialConditions` field — see
-  //     `defenderStatusPair`, which both arms share so the collision is refused in
-  //     ONE place rather than once per arm.
+  //     `defenderStatusOps`, which all THREE arms share (2b's two and 2c's) so the
+  //     collision is refused in ONE place rather than once per arm.
   //
   //     ⚠️ ORDER AGAINST ARMS 1 AND 2 IS A REFACTOR, NOT BEHAVIOUR. All four
   //     anchors are `^…$` and the single-status pair demand `\.$` immediately after
@@ -19250,12 +19306,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     keeps the refusal at the site that made the decision.
   match = DEFENDER_STATUS_PAIR.exec(effect);
   if (match !== null) {
-    return defenderStatusPair(match[1], match[2]);
+    return defenderStatusOps([match[1], match[2]]);
   }
 
   match = FLIP_DEFENDER_STATUS_PAIR.exec(effect);
   if (match !== null) {
-    const then = defenderStatusPair(match[1], match[2]);
+    const then = defenderStatusOps([match[1], match[2]]);
     return then === null
       ? null
       : [
@@ -19264,6 +19320,28 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
             then,
           },
         ];
+  }
+
+  // 2c. 🆕🆕 D462 — "Your opponent's Active Pokémon is now {X}, {Y}, and {Z}." — the
+  //     THREE-status OXFORD LIST, `censusAttackCorpus.ts` FILE LINE 679, 1 sentence /
+  //     2 legal printings, and the row D424 measured and left LOUD. THREE
+  //     `applyStatus` ops in printed order on the SAME shared helper, whose slot
+  //     check is now PAIRWISE over the whole list rather than a comparison of two.
+  //     ZERO new ops, ZERO new fields, ZERO new op values: the program is three of an
+  //     op shipped since 0.x, and `MATCH_RECORD_VERSION` cannot move on bytes that
+  //     already existed.
+  //
+  //     ⚠️ ORDER AGAINST ARMS 1, 2 AND 2b IS A REFACTOR, NOT BEHAVIOUR — the same
+  //     statement 2b makes, one slot wider. `(${STATUS_WORDS})` admits neither a
+  //     comma nor a space, so no string can be claimed by two of these four anchors.
+  //
+  //     🛑 A REFUSED LIST RETURNS `null` FROM THE WHOLE READER RATHER THAN FALLING
+  //     THROUGH, arm 2b's rule verbatim and for its reason: no arm below reads a
+  //     shape this anchor could have matched, so a fall-through reaches the same
+  //     `null` by a longer road and loses the refusal's site.
+  match = DEFENDER_STATUS_TRIPLE.exec(effect);
+  if (match !== null) {
+    return defenderStatusOps([match[1], match[2], match[3]]);
   }
 
   // 3. "This Pokémon is now {X}." — {X} excludes Paralyzed (see
@@ -25744,6 +25822,18 @@ function statusOf(word: string | undefined): StatusName {
 /** 🆕🆕 D424 — the TWO printed status words as TWO `applyStatus` ops in PRINTED
     ORDER, or `null` when the pair cannot coexist on `SpecialConditions`.
 
+    🆕🆕 **D462 — IT TAKES A LIST NOW, AND THE COHERENCE TEST IS PAIRWISE.** The
+    signature was `(first, second)` and the test was one `===`; the Oxford-list
+    anchor (`DEFENDER_STATUS_TRIPLE`) needs three, and "all three must occupy
+    DIFFERENT fields" is the same claim at a third position. `Set(slots).size !==
+    slots.length` is that claim for any arity, INCLUDING the pair's — it is exactly
+    `CONDITION_SLOT[a] === CONDITION_SLOT[b]` when the list has two members, which is
+    why both pair arms keep their behaviour to the byte. ⚠️ **AND IT STILL REFUSES A
+    REPEATED WORD FOR FREE**, on the same invariant D424 named: a word shares a slot
+    with itself, so *"…is now Burned, Burned, and Poisoned."* is `null` without a
+    second rule. The paragraphs below are D424's, kept verbatim (D178); everywhere
+    they say "the pair" the claim now holds of the LIST.
+
     TWO ops and not one op with a list: `applyStatus`'s `status` is a single
     `StatusName` and the printed conjunction is two applications. That is Dangerous
     Laser `sv06.5-058`'s program in `registry.ts` — the SAME printed sentence in the
@@ -25755,21 +25845,19 @@ function statusOf(word: string | undefined): StatusName {
     only for a pair sharing a `SpecialConditions` field — two rotation words, or one
     word doubled — and **ZERO of the 1,732 printings in the legal attack column
     carry either shape** (measured over the corpus, asserted on the POPULATION in
-    `defenderStatusPair.test.ts` rather than on a specimen string, per D423). So it
+    `defenderStatusPair.test.ts` rather than on a specimen string, per D423 — and at
+    D462 over the THREE-slot shape too, in `defenderStatusTriple.test.ts`). So it
     is driven SYNTHETICALLY, from constructed sentences, and this comment is that
     admission: the arm is correct, deliberate, and has no printing behind it — the
     same standing as arm 5d's pronoun clause, which no card prints alone either.
     Refusing at the reader is what keeps *"Asleep and Confused"* on the loud
     `ATTACK_EFFECT_SKIPPED` path instead of shipping a program whose second op eats
     its first. */
-function defenderStatusPair(first: string | undefined, second: string | undefined): EffectOp[] | null {
-  const a = statusOf(first);
-  const b = statusOf(second);
-  if (CONDITION_SLOT[a] === CONDITION_SLOT[b]) return null;
-  return [
-    { op: "applyStatus", target: "defender", status: a },
-    { op: "applyStatus", target: "defender", status: b },
-  ];
+function defenderStatusOps(words: (string | undefined)[]): EffectOp[] | null {
+  const statuses = words.map(statusOf);
+  const slots = statuses.map((s) => CONDITION_SLOT[s]);
+  if (new Set(slots).size !== slots.length) return null;
+  return statuses.map((status): EffectOp => ({ op: "applyStatus", target: "defender", status }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

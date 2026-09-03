@@ -75,10 +75,23 @@ const LEFT_LOUD = {
       narrow. */
   headsTails:
     "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.",
-  /** 2 printings. THREE statuses in an Oxford list — a different printed shape, and
-      the ONLY 3-status row in the column, so a 3-list template would be D121's
-      literal over a pool of one. */
-  oxfordThree: "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.",
+  /** 2 printings, corpus FILE LINE 264. 🆕🆕 **RE-POINTED AT D462** — this slot held
+      the Oxford list *"…is now Burned, Confused, and Poisoned."* (2 printings), which
+      D462 CLAIMED through `DEFENDER_STATUS_TRIPLE`. Re-pointed rather than deleted
+      (D418), and onto the row of the same legal column that keeps this list's whole
+      job: a REAL printing whose extra mechanic is unbuilt, in the same family, that
+      must still take the loud path.
+
+      ⚠️ **AND IT IS THE STRONGEST MEMBER THIS SLOT HAS EVER HELD, BECAUSE IT IS THE
+      ONE NEAR MISS OF THE NEW ANCHOR.** *"Flip a coin. If heads, your opponent's
+      Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*
+      opens EXACTLY like a coin-flipped Oxford list and then puts an OP where the
+      second status word would go. `FLIP_DEFENDER_NOW` refuses it because a COMMA sits
+      where its `\.$` demands a period; the pair and triple anchors refuse it because
+      `(${STATUS_WORDS})` admits no comma and no verb. Loosen any one of those three
+      and this sentence is claimed with its Energy discard silently thrown away. */
+  paralyzedComma:
+    "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.",
 } as const;
 
 /** 🛑 THE COLLISION SENTENCES, AND THEY ARE CONSTRUCTED — SAID OUT LOUD. No card
@@ -288,7 +301,7 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     expect(rows.get(FLIP_PARALYZE_POISON)).toBe(1);
     expect(rows.get(CONFUSE_POISON_SWITCH)).toBe(1);
     expect(rows.get(LEFT_LOUD.headsTails)).toBe(2);
-    expect(rows.get(LEFT_LOUD.oxfordThree)).toBe(2);
+    expect(rows.get(LEFT_LOUD.paralyzedComma)).toBe(2);
     // The apostrophe byte, asserted rather than eyeballed.
     for (const s of [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON]) {
       expect(s.includes("opponent's")).toBe(true);
@@ -405,7 +418,7 @@ describe("§2 — the derivation, parameterised on both axes", () => {
   it("🛑 the three REAL near misses stay on the loud path, and `\\.$` is why", () => {
     // Each is a printing in the same legal column, not a constructed string.
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
-    expect(deriveAttackEffect(LEFT_LOUD.oxfordThree)).toBeNull();
+    expect(deriveAttackEffect(LEFT_LOUD.paralyzedComma)).toBeNull();
     // The compound is refused WHOLE — deliberately, so the SPLITTER claims it (§5)
     // rather than a hand-written anchor shadowing the composition path.
     expect(deriveAttackEffect(CONFUSE_POISON_SWITCH)).toBeNull();
@@ -795,7 +808,7 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     // because the marker stopped being emitted at all. These are real printings the
     // slice deliberately did not claim, and they must still be announced.
     const b = board("ninetales", "fix-titan");
-    for (const text of [LEFT_LOUD.headsTails, LEFT_LOUD.oxfordThree]) {
+    for (const text of [LEFT_LOUD.headsTails, LEFT_LOUD.paralyzedComma]) {
       const doctored = withEffect(b, "fix-ninetales", text);
       expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
@@ -860,6 +873,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.360.0");
+    expect(engineVersion).toBe("0.361.0");
   });
 });

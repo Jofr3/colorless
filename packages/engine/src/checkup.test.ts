@@ -843,7 +843,13 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // loosened pair anchor (a dropped `\.$`, or an Oxford-comma third slot),
       // which is exactly what the deleted entry used to catch.
       "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.", // sv03-010's TAILS twin — coinFlipGate has no tails branch
-      "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.", // the THREE-status Oxford list — a different printed shape
+      // 🆕🆕 D462 — this slot held the THREE-status Oxford list, which
+      // `DEFENDER_STATUS_TRIPLE` now BUILDS. RE-POINTED rather than dropped (D418),
+      // onto corpus FILE LINE 264 — the same legal column, still a real print with an
+      // unbuilt extra, and the near miss BOTH the flip anchor and the two list anchors
+      // refuse: a comma sits where `FLIP_DEFENDER_NOW`'s `\.$` wants a period, and
+      // `(${STATUS_WORDS})` admits neither the comma nor the verb that follows it.
+      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.", // corpus line 264 — an OP where the second status word would go
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",

@@ -19226,6 +19226,40 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.360.0 → **0.361.0** (D462 — THE THREE-STATUS OXFORD LIST,
+    `censusAttackCorpus.ts` FILE LINE 679: *"Your opponent's Active Pokémon is now
+    Burned, Confused, and Poisoned."*, **1 sentence / 2 legal printings** that derived
+    to `null` and now derives to THREE `applyStatus` ops in printed order. ONE new
+    anchor (`DEFENDER_STATUS_TRIPLE`), ONE new deriver arm, and D424's pair helper
+    generalised from two words to a LIST with a PAIRWISE slot test. **ZERO new
+    `EffectOp` members, op FIELDS, op VALUES, readers (surface unmoved at 13),
+    prompts, events, error codes, registry rows, `packages/schema` bytes or
+    `redact.ts` bytes** — which is also the whole `MATCH_RECORD_VERSION` argument:
+    the serialized ALPHABET does not move, because a program of three `applyStatus`
+    ops was already authorable before this slice (arm 2b authors two, arm 5c authors
+    one beside a `preventRetreat`), and no op in the program can park.
+    🛑 **THE FINDING IS THAT D424'S REFUSAL PRICED A PARAMETER AND NAMED A SENTENCE.**
+    It read *"the ONLY 3-status row in the column, so a 3-list template would be
+    D121's literal over a pool of one"* — but D121 prices a NEW parameter and this
+    anchor adds none: `STATUS_WORDS` is D424's own vocabulary, warranted there on
+    three distinct printed pairs, at one more position. The pool of one was the
+    SENTENCE's and never the parameter's.
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT HEAD BY AN EXACT STRING COUNT RATHER THAN BY
+    `grep -c` (which counts LINES): 46 LIVE sites / 39 assertions across 52 total
+    occurrences of the literal, the remaining 6 being HISTORY that must not move.**
+    38 `expect(engineVersion).toBe(…)` pins + 1 `expect(manifest.version).toBe(…)`
+    (`legacyEnergy.test.ts`, which carries both) = 39 assertions; plus 4 `it(…)`
+    TITLES that spell the version, `packages/engine/package.json`, this declaration
+    and D275's mutant `find`. **D462 AUTHORS THE 40th ASSERTION**
+    (`defenderStatusTriple.test.ts` §7), so a successor inherits **40 assertions / 47
+    live sites**. ⚠️ The figure recorded three slices ago was "36 assertions / 40
+    sites" and it is now 39/46 BEFORE this slice's own pin — the tax grows by one
+    assertion and one site per slice that adds a suite, and it was under-quoted
+    because the old measurement used `grep -c`, which counts LINES: the 52 occurrences
+    at HEAD lived in **43 files**, so SEVEN files spell the version more than once and
+    a line-count under-reports each of them (nine occurrences in all). **RE-MEASURE
+    WITH A STRING COUNT, NEVER `grep -c`.**
+
     🆕🆕 engineVersion 0.359.0 → **0.360.0** (D461 — THE SCOPED BOARD HEAL,
     `censusAttackCorpus.ts` file lines 273 and 274: *"Heal 100 damage from each of your
     {Basic|Benched} Pokémon."*, **2 sentences / 4 legal printings** that derived to
@@ -19298,7 +19332,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.360.0";
+export const engineVersion = "0.361.0";
 
 export type {
   ApplyResult,
