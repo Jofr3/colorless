@@ -19224,8 +19224,37 @@ import type { GameState, Seat } from "./types";
     and D275's mutant `find` in `scripts/mutation/mutants.ts`, re-pointed in the SAME
     edit. **D458 AUTHORS THE 35th ASSERTION** (`derivedDeckSearchAttach.test.ts` §5), so
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
-    stated as the arithmetic rather than as a warning. */
-export const engineVersion = "0.357.0";
+    stated as the arithmetic rather than as a warning.
+
+    🆕🆕 engineVersion 0.357.0 → **0.358.0** (D459 — THE PRINTED NOUN `Energy card`,
+    `censusAttackCorpus.ts` **file line 618** (*"This attack does 70 damage for each
+    Special **Energy card** attached to this Pokémon."*), **1 sentence / 2 legal
+    printings**, through `SELF_ENERGY_MULTIPLY`'s own anchor. Engine behaviour MOVED — a
+    sentence that derived to `null` derives to `{per: 70, count: {kind: "energyOnSelf",
+    energyType: "special"}}` — and it moved on the SMALLEST vocabulary any slice in this
+    run has spent: **ONE optional group `(?: card)?` inside ONE regex. ZERO new anchors,
+    ZERO new readers (surface unmoved at 13), ZERO new ops, ZERO new op FIELDS, ZERO new
+    `DamageCountSource` members, ZERO new prompt fields, ZERO `packages/schema` bytes,
+    ZERO `redact.ts` bytes and ZERO EVALUATOR BYTES** — `attack.ts`'s `energyOnSelf` arm
+    calls `countAttachedEnergy` at a shape it has had since D159, and the inhabitant
+    `{energyOnSelf, "special"}` has been produced by D407's board-zone arm since then.
+    🛑 **SO A READER LOOKING FOR A VOCABULARY DIFF WOULD FIND LITERALLY NONE.** D458 said
+    a bump can be owed with no op and no field; D459 is the same finding with no UNION
+    INHABITANT either — the diff is one optional group in one pattern.
+    `MATCH_RECORD_VERSION` **STAYS 29**, on D450's REACHABILITY rule in its strongest
+    available form: this slice adds nothing that could appear in a saved record, so the
+    LOSS direction D458 drove has no subject here and that is the point rather than a gap
+    (`selfEnergyScaling.test.ts`, "the record-shape derivation"). ⚠️ THE VERSION TAX,
+    RE-MEASURED THIS SLICE BY `grep -c` OVER BOTH SPELLINGS AT HEAD AND NOT INHERITED:
+    **36 assertions / 40 sites** BEFORE this slice's own pin — 35
+    `expect(engineVersion).toBe(…)` pins across 35 test files, ONE
+    `expect(manifest.version).toBe(…)` in `legacyEnergy.test.ts` (which carries both),
+    `packages/engine/package.json`, this declaration, this doc block and D275's mutant
+    `find`, re-pointed in the SAME edit. That reproduces D458's forecast of "36 / 40" TO
+    THE DIGIT — the first time in this series the inherited figure has been checked and
+    found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
+    successor inherits **37 assertions / 41 sites**. */
+export const engineVersion = "0.358.0";
 
 export type {
   ApplyResult,

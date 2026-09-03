@@ -27039,3 +27039,90 @@ constraint on the map — how many TARGETS an answer may name — and it cost on
 refused for 222 decisions because every successor greps for the missing FIELD, finds it genuinely
 missing, and re-derives the refusal.
 
+
+---
+
+## D459 — THE BLOCKER CENSUS, AND THE FIRST MEASURED STATEMENT THAT THE CHEAP DRAWER IS EMPTY
+
+⚠️ **FIRST, A CORRECTION TO THE TABLE DIRECTLY ABOVE (D442 — the instrument wins and the doc is
+corrected in place).** Its "corpus line" column carries **ARRAY INDICES into `legalAttackCorpus()`,
+not FILE LINES of `censusAttackCorpus.ts`** — the convention D448 wrote after D447 made the same
+slip. The offset at this head is **+53**. The rows are, correctly:
+
+| cited | ACTUAL file line | p | sentence (the discriminator that always works) |
+|---:|---:|---:|---|
+| 387 | **440** | 1 | *"Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any Pokémon onto your Bench in this way, move an Energy…"* |
+| 401 | **454** | 1 | *"…for a number of cards up to the number of your Benched Pokémon…"* |
+| 403 | **456** | 2 | *"…up to 2 Basic Energy cards and attach them to 1 of your Pokémon…"* |
+| 404 | **457** | 2 | *"…attach them to your Future Pokémon in any way you like…"* |
+| 410 | **463** | 2 | *"…up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards…"* |
+| 412 | **465** | 1 | *"…up to 2 Basic {P} Energy cards and attach them to 1 of your Benched Pokémon…"* |
+| 419 | **472** | 1 | *"…of different types and attach them to your Tera Pokémon…"* |
+| 420 | **473** | 1 | *"…of different types, reveal them, and put them into your hand…"* |
+| 430 | **483** | 1 | *"…up to 5 Pokémon that are the same type as any Basic Energy attached to this Pokémon…"* |
+
+🛑 **AND D448's PRESCRIBED TIE-BREAKER DOES NOT DISCRIMINATE.** It says *"cross-check the PRINTING
+COUNT — the count is what tells the two conventions apart in one look."* Four of those nine have the
+**same printing count under both readings** (401 1p/1p, 403 2p/2p, 404 2p/2p, 420 1p/1p), so the
+check passes on wrong data 44% of the time. **Cite the file line AND quote the sentence text.**
+
+### The instrument
+
+`scripts/residue-census.ts` — `bun scripts/residue-census.ts`, no arguments — classifies **every**
+sentence of the canonical unbuilt residue by the single deletion or substitution that reaches a
+built string, over the FOUR-WAY subtraction (reader · **registry** · gate splitter · trailing
+splitter). It reproduces `censusAtHead.test.ts`'s three pinned literals to the digit, which is the
+check that it measures the same object. One optional argument (a substring) prints full evidence for
+matching rows — that is how a recorded refusal gets cross-checked against it.
+
+### The table a successor should target from
+
+At D459's head, AFTER the build (129 sentences / 180 printings; 130 / 182 before):
+
+| class | s | p | meaning |
+|---|---:|---:|---|
+| `COMPOSE` | 1 | 2 | both halves build; only the JOIN is missing |
+| `COMPOUND-head` | 13 | 16 | the HEAD builds; the removed tail does not |
+| `COMPOUND-mid` | 1 | 2 | a middle segment removed, the rest builds |
+| `COMPOUND-tail` | 2 | 4 | the TAIL builds — ⚠️ and in both rows the tail is a RIDER |
+| `SUBST-n` | 10 | 12 | one contiguous region differs from a BUILT corpus sentence |
+| `PHRASE-n` | 14 | 18 | one contiguous span deleted and it builds |
+| **`OPAQUE`** | **88** | **126** | **no single deletion or substitution reaches a built string** |
+
+🛑 **`OPAQUE` is 68% of the residue by sentence.** Every earlier "cheapest next sentence" list in
+this run was a hand-ranked guess and three of them were wrong; this is the first time the shape of
+what is left has a number.
+
+### The three things it teaches, none of which is a count
+
+1. **PRINT THE VALUE, NOT ONLY THE VERDICT.** Ten residue rows were one-token deletions. NINE lose
+   the deleted token's meaning in the derived value (`Basic`, `Benched`, `Ancient`, `Future`, `{L}`,
+   `{F}`, `Iono's`); the tenth, `card`, derives with `energyType: "special"` INTACT. That is a
+   SPELLING blocker against nine SEMANTIC ones and **no count can carry the difference.**
+2. **A CLASS IS A LOWER BOUND ON THE WORK, NEVER A PRICE.** *"This attack does 30 damage to each of
+   your opponent's Pokémon."* is `SUBST-2` (`each` → `1`) and D447 priced it at a third
+   `spreadDamage.target` plus a §8.5 asymmetry. Both are true.
+3. **A DELETION THAT DERIVES CAN POINT AT THE WRONG HALF.** The two `COMPOUND-tail` rows survive by
+   their W/R-immunity RIDER while their heads are filtered spreads with no mechanism. The probe
+   therefore re-asks the predicate on the REMOVED half and the class name says which half survived.
+
+### What it confirmed about the record
+
+* **D447's price for a mirror compound splitter — *"1 sentence / 2 printings, which does not pay"* —
+  is exactly the size of the `COMPOSE` class**: one row, 2 printings, in the whole residue.
+* **D458 §5's deck-search residue (6 sentences / 7 printings, five mechanisms) reproduced exactly.**
+* **File line 472 is `OPAQUE`**, independently reproducing D457's minimal-pair measurement that
+  neither the Tera banner nor the distinctness filter unlocks it alone. A two-axis row looks like
+  `OPAQUE` to a one-axis instrument, and that is the correct answer rather than a gap.
+
+### The build it picked
+
+Corpus **file line 618** — *"This attack does 70 damage for each Special **Energy card** attached to
+this Pokémon."*, **1 sentence / 2 legal printings** — through **ONE optional group `(?: card)?` on
+`SELF_ENERGY_MULTIPLY`**, the smallest edit in this run: zero new anchors, readers, ops, op fields,
+`DamageCountSource` members and **zero evaluator bytes**. `fix-selfenergy` gains index 4 ("Special
+Draw"), the minimal pair of index 3's `Basic Energy` refusal — one body, one index apart, one board.
+
+⚠️ **AND THE FAMILY'S REMAINING ONE-TOKEN ROWS ARE THE NINE THAT LOSE THEIR TOKEN'S MEANING**:
+data-blocked subtypes (`Ancient`, `Future`), refused subgroups (`Iono's`, `{F}` — D120's rule), or a
+filter no member expresses (`Basic`, `Benched`, `{L}`). **There is no second `card` in the drawer.**

@@ -7343,6 +7343,23 @@ export const FIXTURE_POOL: Record<string, Card> = {
                               UNFILTERED total. That is the one mistake
                               `attachedEnergyFilter` exists to prevent, and index 3
                               is where it is driven on the self side.
+        4 "Special Draw" 70×  🆕🆕 D459 — MULTIPLY, `Special`-FILTERED, and the
+                              MINIMAL PAIR OF INDEX 3. Both print a card CATEGORY
+                              where the other indices print a type or nothing;
+                              `Basic` is absent from CLAUSE_ENERGY_TOKENS and stays
+                              LOUD, `Special` is in it and resolves. The two sit
+                              adjacent so the difference between "a category I
+                              cannot read" and "a category I can" is one index
+                              apart on one body rather than an argument.
+                              ⚠️ The SENTENCE is the catalog's, char for char
+                              (`censusAttackCorpus.ts` line 618, 2 legal
+                              printings); the NAME and the printed marker are
+                              SYNTHETIC and said so — this checkout has no D1, the
+                              card behind that line cannot be resolved, and D425
+                              forbids inventing one. `70×` is not a guess either:
+                              the `×` fold drops the printed base, so the marker is
+                              determined by the sentence's own `70 damage for each`
+                              and carries no catalog claim.
 
       FIRE, so `fix-pokemon-v-weak` (210 HP, ×2 Fire) is the pre-W/R ordering
       witness for indices 0 and 1 — the additive fold KEEPS the printed base, so
@@ -7381,6 +7398,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
         name: "Basic Draw",
         effect: "This attack does 40 damage for each Basic Energy attached to this Pokémon.",
         damage: "40×",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Special Draw",
+        effect: "This attack does 70 damage for each Special Energy card attached to this Pokémon.",
+        damage: "70×",
       },
     ],
   }),
@@ -16558,10 +16581,11 @@ export const DAMAGE_SUPPRESSION_DECK = deckOf({
     members and D196's on ONE board where all four give different answers, which is
     the only way a reader that started answering two of them would be caught. */
 export const SELF_ENERGY_DECK = deckOf({
-  "fix-selfenergy": 4, // energyOnSelf — indices 0-3 (ADD untyped/{R}, MULT untyped, the refusal)
+  "fix-selfenergy": 4, // energyOnSelf — indices 0-4 (ADD untyped/{R}, MULT untyped, the refusal, D459's `Special`)
+  "fix-special": 4, // 🆕 D459 — a PLAIN Special Energy (no effect, Colorless provision), so index 4's `Special` filter counts something the untyped arms also count and the `{R}` arm does not
   "fix-bothactives": 4, // bothActivesEnergyCount — index 0, plus two printed refusals
-  "fix-oppenergy": 4, // D193's mirror attacker — the SAME resource off the other end
-  "fix-benchcount": 4, // D193's body counts — the mirror that counts bodies, not Energy
+  "fix-oppenergy": 2, // D193's mirror attacker — the SAME resource off the other end (🆕 D459 4 → 2: the list is 60 EXACTLY and `createGame` rejects any other size, so `fix-special`'s four slots are PAID FOR here rather than added; one copy is ever fielded, by `setActiveFromDeck`)
+  "fix-benchcount": 2, // D193's body counts — the mirror that counts bodies, not Energy (🆕 D459 4 → 2, same payment, same one-copy argument)
   "fix-titan": 12, // 340 HP — the neutral defender AND the Bench filler (5 a side + 1)
   "fix-pokemon-v-weak": 4, // 210 HP, ×2 Fire — the pre-W/R ordering witness
   "fix-energy": 4, // Colorless provision — the "what pays is not what counts" card

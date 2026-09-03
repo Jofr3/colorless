@@ -13193,10 +13193,42 @@ const OPPONENT_ENERGY_MULTIPLY =
 // zone. The alternative is the literal "all of your Pokémon" and nothing else, so
 // that row stays LOUD — a widening spelled `all of your .* Pokémon` would score it
 // off the whole board and author a card the catalog does not print (D120).
+//
+// 🆕🆕 D459 — THE PRINTED NOUN CARRIES AN OPTIONAL ` card`, ON THE `×` FOLD ONLY,
+// AND IT IS A SPELLING RATHER THAN A MEANING. The column prints
+//
+//     "This attack does 70 damage for each Special Energy card attached to this
+//      Pokémon."      (`censusAttackCorpus.ts` line 618, 1 sentence / 2 LEGAL, `×`)
+//
+// and the ONLY thing separating it from the nine printings this arm already reads
+// is the word `card`. **That is measurable rather than asserted**: deleting that
+// one token from the printed string makes `deriveAttackDamageMultiplier` answer
+// `{per: 70, count: {kind: "energyOnSelf", energyType: "special"}}` — the type
+// filter INTACT — so the deleted token carries no information the derived value
+// lacks. `scripts/residue-census.ts` is what says so, and it is the reason this
+// row and not one of the other nine one-token blockers in the residue: every one
+// of those loses its token's meaning when the token goes (`Basic`, `Benched`,
+// `Ancient`, `Future`, `{L}`, `{F}`, `Iono's`), and this one does not.
+//
+// ⚠️ THE WIDENING IS EXACT AND ITS POPULATION IS ONE. `Energy card attached` is
+// printed on exactly ONE line of the whole legal attack column (line 618, grepped
+// at this head), so `(?: card)?` claims that sentence and nothing else. The
+// ADDITIVE twin is NOT widened: no `more damage for each … Energy card attached`
+// spelling is printed anywhere in the column, so a `SELF_ENERGY_SCALE` group
+// would be a field no printing could ever set — D196's own reason for refusing
+// `energyOnSelf` a zone, and D193's for refusing `OPPONENT_ENERGY_SCALE` one.
+// That absence is pinned by a test rather than left to this paragraph.
+//
+// ⚠️ AND THE OPTIONAL GROUP CANNOT BE SWALLOWED BY THE GREEDY `(.+)` BEFORE IT.
+// On "…for each Special Energy card attached to this Pokémon.", `(.+)` first
+// tries the longest run and backtracks to `Special`, because the literal `Energy`
+// that follows the group is required and `card` is not it. The `{C}`/`Basic
+// Energy` refusals are untouched: they fail in `attachedEnergyFilter`, one step
+// LATER than this anchor, and the token they hand it is unchanged.
 const SELF_ENERGY_SCALE =
   /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
 const SELF_ENERGY_MULTIPLY =
-  /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to this Pokémon\.$/;
+  /^This attack does (\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\.$/;
 // D196 — THE THIRD ZONE, and the first thing this family counts that BOTH SEATS
 // contribute to: the Energy attached to the two Active Pokémon, added together.
 // `OpponentEnergyZone` deliberately does not reach it (D193 said so), and no
@@ -23715,11 +23747,21 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   }
   // D196 — the ATTACKER'S OWN attached Energy, `×` fold. Placed after the arm it
   // mirrors, so both readers over one `{per, count}` interface read the same way
-  // down the page. The legal rows here are ALL UNTYPED (9 of 9), but the optional
-  // token is kept rather than dropped: the additive twin really does print five
+  // down the page. The legal rows here were ALL UNTYPED (9 of 9), but the optional
+  // token was kept rather than dropped: the additive twin really does print five
   // different type filters, and one pattern per fold that admits both spellings
   // is what stops "for each {W} Energy attached to this Pokémon." (printed, 0
   // legal on this fold) being read as the unfiltered total if it ever comes back.
+  //
+  // 🆕🆕 D459 — AND THE OPTIONAL TOKEN IS NOW LOAD-BEARING ON THIS FOLD: **9 of 11
+  // untyped, 2 of 11 `special`**, because the ` card` spelling widened into the
+  // anchor above brings line 618's two printings here with `Special` in the
+  // group. The paragraph that said "ALL UNTYPED (9 of 9)" is left standing beside
+  // this correction rather than overwritten (D178) — what changed is the anchor,
+  // not the reading, and D196's argument for keeping a group nothing could set is
+  // exactly why nothing had to move at THIS site to accept it. ZERO evaluator
+  // bytes: `attack.ts`'s `energyOnSelf` arm delegates to `countAttachedEnergy`,
+  // which has answered `"special"` since D159.
   //
   // ⚠️ NO both-Actives arm here, and that is MEASURED. "This attack does 30 damage
   // for each Energy attached to both Active Pokémon." is 1 printing and 0 LEGAL,

@@ -860,6 +860,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.357.0");
+    expect(engineVersion).toBe("0.358.0");
   });
 });

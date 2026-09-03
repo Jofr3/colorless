@@ -15,7 +15,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
-import { applyAction } from "./index";
+import { applyAction, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -144,6 +144,16 @@ const OVERFLOW = "This attack does 30 damage for each Energy attached to this Po
     category, not a type; it is absent from `CLAUSE_ENERGY_TOKENS` and resolves to
     nothing, so the reader must stay LOUD rather than score the unfiltered total. */
 const BASIC_DRAW = "This attack does 40 damage for each Basic Energy attached to this Pokémon.";
+/** 🆕🆕 D459 — THE OTHER CATEGORY ROW, and the minimal pair of the one above: 1
+    sentence / **2 LEGAL** printings (`censusAttackCorpus.ts` line **618**), printed
+    with the noun `Energy card` where every other row in this family prints `Energy`.
+    `Special` IS in `CLAUSE_ENERGY_TOKENS`, so the only thing that ever blocked it
+    was the word `card` — measured, not argued: deleting that one token from the
+    printed string made `deriveAttackDamageMultiplier` answer with `energyType:
+    "special"` INTACT, which is what `scripts/residue-census.ts` prints for this row
+    and what separates it from the residue's nine other one-token blockers. */
+const SPECIAL_DRAW =
+  "This attack does 70 damage for each Special Energy card attached to this Pokémon.";
 /** ⚠️ THE TWO-SENTENCE ROW — 1 LEGAL printing, and NOT buildable. Its second
     sentence ATTACHES Energy before damage, which is the one thing in this family
     that could make "read at DECLARATION" observable; the anchor refuses it. */
@@ -188,7 +198,7 @@ const COIN_PER_ENERGY =
 const SEED = 5;
 
 /** The attack indices, keyed by name so no case addresses a fold by number. */
-const SELF = { power: 0, flare: 1, overflow: 2, basic: 3 } as const;
+const SELF = { power: 0, flare: 1, overflow: 2, basic: 3, special: 4 } as const;
 const TWIN = { surge: 0, blast: 1, flip: 2 } as const;
 const OPP = { drain: 0, siphon: 1, field: 2, flare: 3 } as const;
 const BENCH = { herd: 0, crowd: 1, flank: 2 } as const;
@@ -294,6 +304,10 @@ describe("the fixture pool — swept first, and this time it was NOT empty", () 
       { cost: ["Colorless"], name: "Flare Draw", effect: FLARE_DRAW, damage: "40+" },
       { cost: ["Colorless"], name: "Overflow", effect: OVERFLOW, damage: "30×" },
       { cost: ["Colorless"], name: "Basic Draw", effect: BASIC_DRAW, damage: "40×" },
+      // 🆕🆕 D459 — index 4. The SENTENCE is the catalog's char for char; the NAME and
+      // the `70×` marker are SYNTHETIC and the fixture's doc block says so (D425: an
+      // unresolvable card is stated as unresolved, never invented).
+      { cost: ["Colorless"], name: "Special Draw", effect: SPECIAL_DRAW, damage: "70×" },
     ]);
     // Fire, because the ordering witness needs a ×2-Fire defender.
     expect(FIXTURE_POOL["fix-selfenergy"]?.types).toEqual(["Fire"]);
@@ -885,6 +899,153 @@ describe("the EXCLUSIONS — neighbourhoods that route elsewhere or stay loud", 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 D459 — THE PRINTED NOUN `Energy card`, AND THE MINIMAL PAIR IT MAKES WITH
+// INDEX 3.
+//
+// ONE optional group on `SELF_ENERGY_MULTIPLY` (`Energy(?: card)?`), on the `×`
+// fold only. ZERO new ops, op fields, `DamageCountSource` members, readers
+// (surface unmoved at 13), prompt kinds, error codes, registry rows,
+// `packages/schema` bytes, `redact.ts` bytes and **ZERO evaluator bytes** —
+// `attack.ts`'s `energyOnSelf` arm delegates to `countAttachedEnergy`, which has
+// answered `"special"` since D159, so the whole build is a regex and a fixture.
+//
+// 🛑 **WHY THIS ROW AND NOT ANOTHER: THE INSTRUMENT PICKED IT, AND THE REASON IS
+// PRINTABLE.** `scripts/residue-census.ts` (D459) classifies all 130 residue
+// sentences by the single deletion or substitution that reaches a built string.
+// TEN of them were one-token deletions. NINE lose the deleted token's meaning
+// when it goes — `Basic`, `Benched`, `Ancient`, `Future`, `{L}`, `{F}`, `Iono's`
+// — and their derived values say so, dropping the filter entirely. THIS one does
+// not: the remainder derives to `{per: 70, count: {kind: "energyOnSelf",
+// energyType: "special"}}`, with the filter intact, so the deleted token carries
+// no information the derived value lacks. That is a SPELLING blocker rather than
+// a SEMANTIC one, and it is the difference between a `(?: card)?` and a new
+// mechanism. **The instrument prints the VALUE, not only the verdict, and that is
+// the whole of the targeting decision.**
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The D459 board: FOUR cards attached to the attacker, of THREE kinds, chosen so
+    every plausible misreading is a different number. 2 Special → 140; unfiltered
+    would be 4 → 280; `{R}` would be 1 → 70; `{W}` would be 1 → 70. `fix-titan`
+    (340 HP, no W/R) absorbs all of them, so no KO truncates a comparison. */
+function specialBoard(): GameState {
+  let state = board("fix-selfenergy", "fix-titan");
+  state = attachFromDeck(state, "p1", "fix-special", 2);
+  state = attachFromDeck(state, "p1", "fix-fire-energy", 1);
+  return attachFromDeck(state, "p1", "fix-water-energy", 1);
+}
+
+describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
+  it("the printed sentence resolves, and the `Special` filter survives the widening", () => {
+    // The whole build in one assertion: the sentence that answered `null` at
+    // D458's head answers a typed count now, and `special` is IN the answer. A
+    // widening that had let the optional group swallow the type token would show
+    // up here as `energyType: null` and score every attached card.
+    expect(deriveAttackDamageMultiplier(SPECIAL_DRAW)).toEqual({
+      per: 70,
+      count: { kind: "energyOnSelf", energyType: "special" },
+    });
+    // …and the sentence is the FIXTURE's printed bytes, not a string this test
+    // built (D456: the specimen in a rung must be the printed bytes).
+    expect(FIXTURE_POOL["fix-selfenergy"]?.attacks?.[SELF.special]?.effect).toBe(SPECIAL_DRAW);
+  });
+
+  it("⚠️ THE MINIMAL PAIR: `Basic Energy` is STILL LOUD, and it fails one step LATER", () => {
+    // The two rows differ in the category token alone. `Special` is in
+    // `CLAUSE_ENERGY_TOKENS` and `Basic` is not, so the ANCHOR admits both and
+    // `attachedEnergyFilter` is what tells them apart — which is why widening the
+    // anchor could not have made the refusal quieter. Driven with the ` card`
+    // spelling too, so the new optional group is shown not to rescue it.
+    expect(deriveAttackDamageMultiplier(BASIC_DRAW)).toBeNull();
+    expect(deriveAttackDamageMultiplier(BASIC_DRAW.replace("Energy", "Energy card"))).toBeNull();
+    expect(deriveAttackDamageBonus(BASIC_DRAW)).toBeNull();
+  });
+
+  it("⚠️ PINS THE ABSENCE: the ADDITIVE twin is NOT widened, and the column is why", () => {
+    // `more damage for each … Energy card attached to this Pokémon.` is printed
+    // NOWHERE in the legal attack column, so a `SELF_ENERGY_SCALE` group would be
+    // a field no printing could ever set — D196's own reason for refusing
+    // `energyOnSelf` a zone and D193's for refusing `OPPONENT_ENERGY_SCALE` one.
+    // The absence is pinned here rather than left to a comment.
+    const additive = SPECIAL_DRAW.replace(" damage", " more damage");
+    expect(deriveAttackDamageBonus(additive)).toBeNull();
+    expect(deriveAttackDamageMultiplier(additive)).toBeNull();
+    // The board-wide tail is not widened either — one spelling, one fold.
+    expect(
+      deriveAttackDamageMultiplier(
+        SPECIAL_DRAW.replace("attached to this Pokémon", "attached to all of your Pokémon"),
+      ),
+    ).toBeNull();
+  });
+
+  it("⚠️ the optional group is a SPELLING, so the ` card`-less form still reads the same", () => {
+    // Both spellings of one noun produce the same value — which is the claim that
+    // makes this a widening rather than a second reading. The untyped ` card`
+    // form is UNPRINTED and reads as the untyped total; that is a deliberate
+    // consequence of an optional group and is pinned rather than discovered.
+    expect(deriveAttackDamageMultiplier(SPECIAL_DRAW.replace("Energy card", "Energy"))).toEqual({
+      per: 70,
+      count: { kind: "energyOnSelf", energyType: "special" },
+    });
+    expect(deriveAttackDamageMultiplier(OVERFLOW.replace("Energy", "Energy card"))).toEqual({
+      per: 30,
+      count: { kind: "energyOnSelf", energyType: null },
+    });
+  });
+
+  it("refuses the near-misses by the anchor alone — leading text, lowercase, no period", () => {
+    const read = (t: string) => deriveAttackDamageBonus(t) ?? deriveAttackDamageMultiplier(t);
+    expect(read(`Flip a coin. If heads, ${SPECIAL_DRAW.toLowerCase()}`)).toBeNull();
+    expect(read(SPECIAL_DRAW.replace(/^This/, "this"))).toBeNull();
+    expect(read(SPECIAL_DRAW.slice(0, -1))).toBeNull();
+    expect(read(`${SPECIAL_DRAW} Then, shuffle your deck.`)).toBeNull();
+    // ⚠️ AND THE GROUP IS A LITERAL, NOT A WILDCARD: one other noun in its place
+    // is refused, so `(?: card)?` cannot be read as "anything may sit here".
+    expect(read(SPECIAL_DRAW.replace("Energy card", "Energy cards"))).toBeNull();
+    expect(read(SPECIAL_DRAW.replace("Energy card", "Energy Tool"))).toBeNull();
+  });
+
+  it("counts SPECIALS on a real board — 2 × 70 = 140, never 280, 70 or 0", () => {
+    // The four numbers a wrong reading gives on this identical board: 280 if the
+    // filter were dropped, 70 if it counted `{R}` or `{W}`, 0 if it counted a
+    // category it cannot resolve. Only one of them is 140.
+    const row = find(swing(specialBoard(), SELF.special).events, "DAMAGE_DEALT");
+    expect(row?.scaled).toBe(140);
+    expect(row?.dealt).toBe(140);
+    // The `×` fold drops the printed base, exactly as index 2's does.
+    expect(row?.base).toBe(0);
+    expect(row?.dealt).not.toBe(280);
+    expect(row?.dealt).not.toBe(70);
+  });
+
+  it("⚠️ THE MINIMAL PAIR ON ONE BOARD: index 4 folds, index 3 stays LOUD", () => {
+    // Two adjacent indices on ONE body, differing in the category token, driven
+    // through the same board in the same `it`. Index 3 keeps its printed 40 with
+    // no `scaled` field; index 4 folds to 140 with no printed base. A reader that
+    // had collapsed "no filter printed" into "a filter I could not read" would
+    // make these two rows agree.
+    const state = specialBoard();
+    const loud = swing(state, SELF.basic).events;
+    expect(find(loud, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+      attack: "Basic Draw",
+      damageModifier: "×",
+    });
+    expect(find(loud, "DAMAGE_DEALT")?.scaled).toBeUndefined();
+    expect(find(swing(state, SELF.special).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+  });
+
+  it("the census sees it: the sentence LEAVES the residue by the READER arm", () => {
+    // `resolvedByAnyReader` is the census's first summand, and this sentence moves
+    // through it — no registry row, no gate split, no trailing split. The
+    // whole-corpus figures `censusAtHead.test.ts` pins are what record the size of
+    // the move (485 / 1502 resolved, residue 129 / 180); this rung is what says
+    // WHICH arm moved.
+    expect(resolvedByAnyReader(SPECIAL_DRAW)).toBe(true);
+    expect(resolvedByAnyReader(BASIC_DRAW)).toBe(false);
+    expect(attackReaderSurface()).toHaveLength(13);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // The record shape, derived rather than inherited.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -918,5 +1079,56 @@ describe("the record-shape derivation, made rather than inherited", () => {
     expect(deriveAttackEffect(TWIN_SURGE)).toBeNull(); // no op, so nothing can park
     expect(deriveAttackEffect(POWER_DRAW)).toBeNull();
     expect(deriveAttackEffect(OVERFLOW)).toBeNull();
+  });
+
+  it("🆕🆕 D459 — `MATCH_RECORD_VERSION` STAYS 29, and this is the STRONGEST form of the argument", () => {
+    // D450's rule for a non-parking change is REACHABILITY: can the thing this
+    // slice touched ever appear inside a saved record? Here it cannot, and the
+    // reason is one step stronger than the block above's — that one argued a NEW
+    // `DamageCountSource` member is parse-time; **this slice adds no member at
+    // all.** `{kind: "energyOnSelf", energyType: "special"}` is an inhabitant the
+    // union has carried since D196, produced by `boardWideEnergyScaling`'s zone
+    // arm already; the only byte that moved is one optional group inside a regex
+    // in `effects.ts`. A regex is not a field.
+    //
+    //   • NO new `EffectOp` inhabitant, so nothing new can park in
+    //     `GameState.phase` — D189's stated bump condition, untouched.
+    //   • NO new op FIELD, prompt key, `packages/schema` byte or `redact.ts` byte.
+    //   • The derived value is consumed by `scaledAttackDamage` in the SAME TICK
+    //     it is produced and appears in no `GameState` field, no `PendingStage`
+    //     and no projection.
+    //   • The evaluator is UNCHANGED: `attack.ts`'s `energyOnSelf` arm calls
+    //     `countAttachedEnergy` at a shape it already had.
+    //
+    // 🛑 AND THE LOSS DIRECTION IS VACUOUS HERE, WHICH IS THE POINT AND NOT A GAP
+    // (D458's finding, one slice on): "is losing the new information detectable?"
+    // has no subject, because NOTHING NEW IS STORED. The only observable change is
+    // that a v29 record replayed against this engine now folds a sentence it used
+    // to flag — a REPLAY difference the version gate is not for and cannot express.
+    expect(deriveAttackDamageMultiplier(SPECIAL_DRAW)).not.toBeNull();
+    expect(deriveAttackEffect(SPECIAL_DRAW)).toBeNull(); // no op, so nothing can park
+    // The inhabitant is not new: the board-zone arm has produced `special` since D407.
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 30 more damage for each Special Energy attached to all of your Pokémon.",
+      ),
+    ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
+  });
+
+  it("engineVersion is 0.358.0 and `manifest.version` agrees", () => {
+    // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
+    // nothing else, which is the same shape D458's was: no op, no field, no prompt
+    // key, no wire byte and no vocabulary diff moved, so a reader looking for one
+    // would find none and conclude wrongly. What moved is that a printed sentence
+    // that derived to `null` at 0.357.0 derives to a typed count at 0.358.0.
+    // ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD BY `grep -c` OVER BOTH SPELLINGS
+    // RATHER THAN INHERITED: **36 assertions / 40 sites** before this rung — 35
+    // `expect(engineVersion).toBe(…)` across 35 test files, ONE
+    // `expect(manifest.version).toBe(…)` in `legacyEnergy.test.ts`, `package.json`,
+    // the declaration, its doc block and `D275`'s mutant `find`. That is D458's
+    // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
+    // this series to be checked and found right. This rung is the 37th assertion,
+    // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
+    expect(engineVersion).toBe("0.358.0");
   });
 });

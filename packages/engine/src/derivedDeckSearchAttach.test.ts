@@ -1733,7 +1733,7 @@ describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("🆕🆕 D458 §5 — the engine version moved and the record version did not", () => {
-  it("engineVersion is 0.357.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.358.0 and `manifest.version` agrees", () => {
     // 🛑 **THE PIN THIS SLICE AUTHORS**, which is the one every version-tax note in
     // this repo has forgotten to count (D427's mechanism): a slice counts the pins
     // it INHERITED and never the one it is about to write. 34 assertions existed
@@ -1743,7 +1743,7 @@ describe("🆕🆕 D458 §5 — the engine version moved and the record version 
     // `null` at 0.356.0 derives to a three-op program at 0.357.0. It is owed for
     // that alone — no new op, no new field and no new prompt key were spent, so a
     // reader looking for a vocabulary diff would find none and conclude wrongly.
-    expect(engineVersion).toBe("0.357.0");
+    expect(engineVersion).toBe("0.358.0");
     expect(manifest.version).toBe(engineVersion);
     // …and the historical values never come back, the shape every sibling pin uses.
     expect(engineVersion).not.toBe("0.355.0");

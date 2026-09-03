@@ -4050,3 +4050,94 @@ explaining it after. D457 found the same op reading `0/7` through a slice that r
 park, caption, validator, wire key and both HUDs; D458 is the second receipt. **Read a flat
 figure as "this slice moved no seat lines", never as "this slice added no safety" — and if you
 can name why from the diff alone, say it in the resume point.**
+
+## Print the VALUE, not only the verdict (D459)
+
+`scripts/residue-census.ts` classifies every unbuilt residue sentence by the single
+deletion or substitution that reaches a built string. **Ten of the 130 residue rows at
+D459's head were ONE-TOKEN deletions**, and a verdict-only instrument would have called
+all ten equally cheap. Nine of them lose the deleted token's meaning: delete `Basic`,
+`Benched`, `Ancient`, `Future`, `{L}`, `{F}` or `Iono's` and the remainder derives with
+the filter GONE. The tenth — `card` in *"…for each Special Energy **card** attached to
+this Pokémon."* — derives to `{per: 70, count: {kind: "energyOnSelf", energyType:
+"special"}}`, filter INTACT.
+
+**That one difference is the whole targeting decision, and no count can carry it.** So
+every probe reports what the remainder derives TO, beside the string. The instrument does
+not classify SPELLING vs SEMANTIC for you; it puts the two derived values side by side so
+the judgement takes one look instead of a doc block. This is D454's "a stopping rule you
+can re-run beats an adjective" one level down: **a re-runnable rule beats an adjective,
+and a re-runnable rule that shows its working beats a re-runnable rule.**
+
+## A one-axis deletion is a LOWER BOUND on the work, never an estimate (D459)
+
+The census's classes are assigned by the CHEAPEST probe that fires, so a sentence with a
+compound structure AND an unrepresentable filter lands on the structure. Measured at
+D459's head, with the recorded refusals beside them:
+
+| class | sentences | printings | what it means |
+|---|---:|---:|---|
+| `COMPOSE` | 1 | 2 | both halves build; only the JOIN is missing |
+| `COMPOUND-*` | 16 | 22 | one half builds, the other does not |
+| `SUBST-n` | 10 | 12 | differs from a BUILT corpus sentence in one contiguous region |
+| `PHRASE-n` | 15 | 20 | one contiguous deletion builds, and no built sibling exists |
+| `OPAQUE` | 88 | 126 | no single deletion or substitution reaches a built string |
+
+⚠️ **`SUBST-2` contains *"This attack does 30 damage to each of your opponent's Pokémon."*,
+one token (`each` → `1`) from a sentence this engine builds — and D447 priced that row as a
+THIRD `spreadDamage.target` plus a §8.5 asymmetry between the Active and the Bench.** Both
+are true. **Read the class as "at least this much is missing", never as a price.**
+
+## A deletion that derives can point at the WRONG HALF (D459)
+
+Two residue rows (*"This attack does {60|100} damage to each of your opponent's Pokémon ex
+[and Pokémon V]. This attack's damage isn't affected by Weakness or Resistance."*) drop
+their FIRST segment and the remainder builds — because the remainder is the W/R-immunity
+RIDER, which every reader already claims, while the head is a filtered spread that no
+mechanism exists for. A classifier that reported "one deletion away" would have pointed at
+the cheap half of a row D447 priced at three mechanisms. **So the probe re-asks the build
+predicate on the REMOVED half too, and the class name says which half survived
+(`COMPOUND-head` / `COMPOUND-tail` / `COMPOSE`).** `COMPOSE` — both halves build — is the
+only class whose price is actually known, and there is exactly **one** such row in the
+whole residue, 2 printings. ⚠️ **That reproduces D447's own price for a mirror compound
+splitter — *"unlocks 1 sentence / 2 printings, which does not pay"* — mechanically and from
+the other end, which is the strongest kind of agreement between an instrument and a
+record.**
+
+## A corpus row number: the convention was broken TWICE after it was written (D459, about D448)
+
+D448 wrote *"a corpus row number is a FILE LINE"* after D447's resume point cited array
+indices. **D446, D457 and D458 all cite ARRAY INDICES anyway** — `fileLine − 53` at this
+head. Every number in D457's and D458's blocker tables (`387 401 403 404 410 412 419 420
+430`) resolves to a different, unrelated sentence when read as the file line the convention
+mandates.
+
+🛑 **AND D448's OWN TIE-BREAKER DOES NOT WORK.** It says *"cross-check the PRINTING COUNT
+before acting on a cited row — the count is what tells the two conventions apart in one
+look."* Measured over those nine citations, the printing count is **the same under both
+readings for four of them** (401: 1p/1p, 403: 2p/2p, 404: 2p/2p, 420: 1p/1p). A check that
+passes 44% of the time on wrong data is not a check. **Cite the file line AND quote the
+sentence text; the text is the only discriminator that always works** — which is D456's
+"the specimen in a rung must be the PRINTED bytes" arriving at a citation instead of a test.
+
+## A mutant with nowhere to die can ACQUIRE one (D459, refining D456)
+
+`D459-multiply-fold-drops-its-type-filter` replaces the `×` fold's captured `energyType`
+with `null`. **Before this slice it was equivalent on the legal pool**: all NINE legal
+`×`-fold printings were untyped, so the captured filter was `null` on every one of them
+and no board could tell the two apart. D459's two printings are the first that discriminate
+it. D456 said a mutant with nowhere to die is a coverage finding; the converse is a
+BUILDING finding — **when a slice adds the first printing that inhabits an existing field,
+go back and ask which old mutations it has just made killable.** Look for them at the arm
+you widened, not at the bytes you wrote.
+
+## A probe that patches a source file must restore it in a `finally` (D459)
+
+A throwaway script that wrote a mutation into `effects.ts`, imported the module and crashed
+on a bad import left the mutation in the tree. **The next script read that file as its
+baseline and "restored" the mutated version** — so a build that had been verified minutes
+earlier was silently gone, and the only thing that caught it was a follow-up probe printing
+`FIND OCCURS 0x`. `git diff --stat` did NOT catch it: the file was still dirty by the right
+number of lines, because the slice's own comment blocks were still there. **Wrap the patch
+in `try/finally`, and re-assert the built behaviour (not the line count) after any probe
+that writes to the tree.**

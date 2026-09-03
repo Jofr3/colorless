@@ -5736,6 +5736,12 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
+    // ⚠ RE-POINTED AT D459 (0.357.0 → 0.358.0) — the question was ASKED again, not
+    // inherited: engine behaviour moved (a printed sentence that derived to null now
+    // derives to a typed count), on the SMALLEST vocabulary yet — ONE optional group
+    // inside one regex, ZERO evaluator bytes, ZERO new union inhabitants. **That is the
+    // case where a reader looking for a vocabulary diff would find literally none and
+    // conclude wrongly**, which is why the bump is argued from BEHAVIOUR both times.
     // ⚠ RE-POINTED AT D458 (0.356.0 → 0.357.0) — the question was ASKED again, not
     // inherited: engine behaviour moved (a sentence that derived to null now derives), so
     // the bump is owed even though the slice spends NO new vocabulary.
@@ -5750,7 +5756,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.357.0";',
+    find: 'export const engineVersion = "0.358.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -17512,8 +17518,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D407",
     what: "\u26a0\ufe0f C8 \u2014 **THE `\u00d7` READER IS WIDENED \"FOR SYMMETRY\"**, which is the mistake the two-fold shape of this family invites every time a zone lands on one side of it. The bare-fold board-wide OWN-Energy spelling is printed NOWHERE in the legal attack column, so this buys an evaluator path for a sentence no legal deck can play \u2014 the mirror of the refusal `SELF_ENERGY_BOTH_ACTIVES_SCALE` and `YOUR_TOOLS_MULTIPLY` each make from the other fold. The second row a census can see",
     file: "packages/engine/src/effects.ts",
-    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to this Pok\u00e9mon\\.$/;",
-    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to (?:this Pok\u00e9mon|all of your Pok\u00e9mon)\\.$/;",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pok\u00e9mon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to (?:this Pok\u00e9mon|all of your Pok\u00e9mon)\\.$/;",
     expectKilledBy: [
       "packages/engine/src/boardWideEnergyScaling.test.ts",
       "packages/engine/src/selfEnergyScaling.test.ts",
@@ -23029,5 +23035,77 @@ export const MUTANTS: Mutant[] = [
     find: "      return match[7] === undefined\n        ? [...searches, { op: \"shuffleDeck\" }]",
     replace: "      return match[5] === undefined\n        ? [...searches, { op: \"shuffleDeck\" }]",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D459-card-group-deleted",
+    decision: "D459",
+    what: "🛑 C1 — **THE DEFECT ITSELF, PUT BACK**: the optional ` card` goes and corpus **file line 618** (*\"This attack does 70 damage for each Special Energy card attached to this Pokémon.\"*, 2 legal printings) stops deriving, exactly as it did at D458's head. CENSUS-VISIBLE and MEASURED rather than assumed: resolved 485 / 1502 → 484 / 1500, residue 129 / 180 → 130 / 182. The whole slice in one deletion",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy attached to this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D459-card-group-made-required",
+    decision: "D459",
+    what: "⚠️ C2 — **THE `?` GOES AND THE GROUP BECOMES MANDATORY**, which is the slip an optional group invites: the widening then REPLACES the reading it was meant to extend. **MEASURED: resolved 485 / 1502 → 482 / 1493 — THREE sentences and NINE printings lost, four and a half times the delta this slice bought.** The mutation is bigger in the wrong direction than the build is in the right one, which is the shape a `(?: X)?` row exists to catch",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy card attached to this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D459-card-group-becomes-a-wildcard",
+    decision: "D459",
+    what: "🛑 C3 — **THE LITERAL BECOMES `.+`**, so `Energy cards attached`, `Energy Tool attached` and every other noun in that slot are claimed. ⚠️ **CENSUS-SILENT, MEASURED**: resolved stays 485 / 1502 and the residue stays 129 / 180, because no LEGAL printing changes its answer — the mutant authors readings for strings the column does not print (D120). Only the near-miss rung in `selfEnergyScaling.test.ts` (\"refuses the near-misses by the anchor alone\", which drives `Energy cards` and `Energy Tool` on purpose) can reach it, and that rung was written for this row",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: .+)? attached to this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
+  },
+  {
+    id: "D459-card-group-put-before-the-noun",
+    decision: "D459",
+    what: "⚠️ C4 — **THE TRANSCRIPTION SLIP**: the group is spelled `(?: card)?Energy` rather than `Energy(?: card)?`, which reads identically at a glance and matches `card Energy`. D446/D458's re-transcription lesson at the smallest possible scale. CENSUS-VISIBLE and MEASURED: 485 / 1502 → 484 / 1500 — the SAME pair of numbers C1 produces, which is why these are two rows with one claim each rather than one row with two",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each (?:(.+) )?(?: card)?Energy attached to this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D459-additive-fold-widened-for-symmetry",
+    decision: "D459",
+    what: "⚠️ C5 — **THE `+` READER IS WIDENED \"FOR SYMMETRY\"**, the exact mistake `D407-multiply-widens-for-symmetry` names one fold over, arriving from the other side. `more damage for each … Energy card attached to this Pokémon.` is printed NOWHERE in the legal column, so this buys a reading for a sentence no legal deck can play — D196's own reason for refusing `energyOnSelf` a zone and D193's for refusing `OPPONENT_ENERGY_SCALE` one. ⚠️ **CENSUS-SILENT, MEASURED**: 485 / 1502 unmoved. Only the ABSENCE pin can reach it",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each (?:(.+) )?Energy(?: card)? attached to (this Pokémon|all of your Pokémon)\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
+  },
+  {
+    id: "D459-multiply-fold-drops-its-type-filter",
+    decision: "D459",
+    what: "🛑 C6 — **THE `×` FOLD SCORES THE UNFILTERED TOTAL**, and this row is the coverage finding of the slice. The arm's captured `energyType` is replaced by `null`, so the sentence still resolves and only the NUMBER is wrong — 2 Specials on a body holding 4 cards folds 4 × 70 = 280 instead of 2 × 70 = 140. 🛑 **BEFORE D459 THIS MUTATION HAD NOWHERE TO DIE**: all NINE legal `×` printings were UNTYPED, so the captured filter was `null` on every one of them and the mutant was EQUIVALENT ON THE LEGAL POOL — D456's \"a mutant with nowhere to die is a coverage finding\", and this slice's two printings are the first that discriminate it. ⚠️ CENSUS-SILENT, MEASURED: 485 / 1502 unmoved, because the sentence still derives. Only a BOARD can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "      return { per, count: { kind: \"energyOnSelf\", energyType } };",
+    replace: "      return { per, count: { kind: \"energyOnSelf\", energyType: null } };",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
+  },
+  {
+    id: "D459-fixture-drops-the-printed-noun",
+    decision: "D459",
+    what: "⚠️ C7 — **THE FIXTURE STOPS PRINTING THE CATALOG'S BYTES**: index 4's effect loses ` card`, so the demonstrator prints a string the legal column does NOT print and the anchor's new group is exercised by nothing on a board. D456's rule (the specimen in a rung must be the PRINTED bytes) as a mutation. Killed by the whole-attack-list pin AND by the `.effect` identity rung, which is deliberate — D156's omission failure mode needs both",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "        effect: \"This attack does 70 damage for each Special Energy card attached to this Pokémon.\",",
+    replace: "        effect: \"This attack does 70 damage for each Special Energy attached to this Pokémon.\",",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
+  },
+  {
+    id: "D459-fixture-marker-goes-additive",
+    decision: "D459",
+    what: "⚠️ C8 — **THE PRINTED MARKER FLIPS `×` → `+`** on index 4, so the fold KEEPS the printed base and the board deals 70 + 140 = 210 rather than 140. The marker is the only field on that index this slice could not read off the catalog (D425: the card is unresolvable and the fixture's doc block says so rather than inventing one), which is exactly what makes it worth a row",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "        name: \"Special Draw\",\n        effect: \"This attack does 70 damage for each Special Energy card attached to this Pokémon.\",\n        damage: \"70×\",",
+    replace: "        name: \"Special Draw\",\n        effect: \"This attack does 70 damage for each Special Energy card attached to this Pokémon.\",\n        damage: \"70+\",",
+    expectKilledBy: ["packages/engine/src/selfEnergyScaling.test.ts"],
   },
 ];
