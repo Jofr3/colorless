@@ -358,7 +358,7 @@ describe("the anchor — one printed sentence, one new op", () => {
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks).toHaveLength(71);
+    expect(attacks).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect(attacks[TROPICAL_FRENZY_IDX]?.name).toBe("Tropical Frenzy");
     expect(attacks[TROPICAL_FRENZY_IDX]?.effect).toBe(TROPICAL_FRENZY);
     // ⚠️ AND THE PRINTED 150 IS STILL ABSENT — D236's divergence, inherited rather

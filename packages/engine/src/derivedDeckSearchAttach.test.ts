@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
+import { programFor, registryCardIds } from "./registry";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import { POKEMON_TYPE_BY_CODE, POKEMON_TYPES, deriveAttackEffect } from "./effects";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import type { EffectPrompt } from "./interpreter";
@@ -12,6 +14,7 @@ import {
   clearBench,
   deepFreeze,
   driveSetup,
+  expectErr,
   mustApply,
   setActiveFromDeck,
 } from "./testFixtures";
@@ -209,6 +212,37 @@ const CLAUSES = [
     printings: 3,
     legalPrintings: 3,
   },
+  /** 🆕🆕 **D457 — THE TWO SENTENCES D235 REFUSED, APPENDED LAST.**
+      *"attach **them** to **1 of** your Pokémon"*: the batch is pinned to ONE
+      chosen body by `attachFromDeck.oneTarget`, the field D235 measured as missing
+      and priced on `attachEnergyFrom`'s vocabulary. APPENDED rather than filed
+      beside their singular twins, because every index constant below is a position
+      in this array and §2's PROVENANCE rungs read the demonstrator's rows in this
+      order — the `FAMILIAL_MARCH` rule (D339), one file over. */
+  {
+    text: "Search your deck for up to 2 Basic Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.",
+    program: [
+      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 2, oneTarget: true },
+      { op: "shuffleDeck" },
+    ] as EffectOp[],
+    printings: 2,
+    legalPrintings: 2,
+  },
+  {
+    text: "Search your deck for up to 2 Basic {P} Energy cards and attach them to 1 of your Benched Pokémon. Then, shuffle your deck.",
+    program: [
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Psychic" },
+        max: 2,
+        benchOnly: true,
+        oneTarget: true,
+      },
+      { op: "shuffleDeck" },
+    ] as EffectOp[],
+    printings: 1,
+    legalPrintings: 1,
+  },
 ] as const;
 
 const SELF_BARE = 0;
@@ -219,26 +253,32 @@ const ANY_WAY_THREE = 4;
 const BENCH_ANY_WAY = 6;
 const ONE_OF_WATER = 7;
 const POISON_TAIL = 11;
+// D457's two, appended last (see the rows themselves for why they are appended).
+const ONE_OF_TWO = 12;
+const ONE_OF_BENCH_TWO = 13;
 
-/** 🛑 THE RESIDUE, MEASURED. Eight legal printings over five sentences, each
-    refused for a DIFFERENT reason, each pinned derived-to-null. `[text, legal,
-    why]` — and the `why` is what the backlog sub-row carries, because "the rest
-    of row 10" is how a row acquires a count nobody can reproduce.
+/** 🛑 THE RESIDUE, MEASURED. 🆕🆕 **D457 — FIVE legal printings over THREE
+    sentences** (was eight over five), each refused for a DIFFERENT reason, each
+    pinned derived-to-null. `[text, legal, why]` — and the `why` is what the
+    backlog sub-row carries, because "the rest of row 10" is how a row acquires a
+    count nobody can reproduce.
 
-    ⚠️ TWO OF THE FIVE WERE PRICED BY THE ROW UP FRONT AND TWO WERE NOT, which is
-    itself the measurement: a row that prices its blockers is still only as good
-    as the op vocabulary the pricer had in mind. */
+    ⚠️ TWO OF THE ORIGINAL FIVE WERE PRICED BY THE ROW UP FRONT AND TWO WERE NOT,
+    which is itself the measurement: a row that prices its blockers is still only
+    as good as the op vocabulary the pricer had in mind.
+
+    🛑 **AND THE TWO THAT LEFT ARE THE TWO THE ROW DID NOT PRICE — BOTH OF THEM,
+    ON ONE FIELD.** `oneTarget` (D457) is the batch-onto-one-body gap, and D235's
+    own words for it were *"UNREPRESENTABLE here"*: true of `attachEnergyFrom`'s
+    `count`, false of this op, which needed a flag on the MAP rather than a count
+    beside it. **A refusal that names the wrong carrier reads as a fact about the
+    sentence** — so what expired here is a PRICE, not a census.
+
+    ⚠️ THE THREE THAT REMAIN ARE UNCHANGED AND RE-MEASURED BY MINIMAL PAIR at
+    D457's head: for `sv08-161` (the Tera row) dropping EITHER blocker alone still
+    derives to null, which is what makes it two blockers on one printing rather
+    than one wearing two names. */
 const UNREAD = [
-  [
-    "Search your deck for up to 2 Basic Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.",
-    2,
-    "batch onto ONE body — `attachFromDeck` has no `attachEnergyFrom.count`; NOT priced by the row",
-  ],
-  [
-    "Search your deck for up to 2 Basic {P} Energy cards and attach them to 1 of your Benched Pokémon. Then, shuffle your deck.",
-    1,
-    "the same gap wearing a `benchOnly`; NOT priced by the row",
-  ],
   [
     "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
     2,
@@ -362,32 +402,45 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
     }
   });
 
-  it("adds up: 20 of the row's 28 legal printings, and the residue is 8", () => {
+  it("adds up: 23 of the row's 28 legal printings, and the residue is 5", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one destination row would still pass every accept case above.
-    expect(CLAUSES).toHaveLength(12);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(20);
-    expect(UNREAD).toHaveLength(5);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(8);
+    // 🆕 D457 — 12 → 14 sentences and 20 → 23 printings; the DENOMINATORS did not
+    // move, because this slice read two sentences the row always counted and
+    // ingested nothing.
+    expect(CLAUSES).toHaveLength(14);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(23);
+    expect(UNREAD).toHaveLength(3);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 20 + 8 = 28 and 12 + 5 = 17: exactly the census this row was measured with.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 8).toBe(28);
+    // 23 + 5 = 28 and 14 + 3 = 17: exactly the census this row was measured with.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 5).toBe(28);
     expect(CLAUSES.length + UNREAD.length).toBe(17);
   });
 
-  it("🛑 the PREDICTION was 23 and the answer is 20 — the gap has ONE cause", () => {
-    // ⚠️ THE GRADE, DRIVEN RATHER THAN NARRATED. The three printings the
-    // prediction over-counted are exactly the two "attach THEM to 1 OF your …"
-    // sentences, and the reason is that the same printed phrase means something
-    // `attachEnergyFrom` can say and `attachFromDeck` cannot.
-    const missed = UNREAD.slice(0, 2);
-    expect(missed.reduce((sum, [, legal]) => sum + legal, 0)).toBe(3);
-    for (const [text] of missed) {
+  it("🛑 D235's PREDICTION WAS 23, ITS ANSWER WAS 20, AND D457 MAKES THE ANSWER 23 — for the reason the grade named", () => {
+    // ⚠️ THE GRADE, DRIVEN RATHER THAN NARRATED — and now the REPAIR is driven on
+    // the same three printings. D235 over-counted by exactly the two "attach THEM
+    // to 1 OF your …" sentences (3 legal), on the ground that the printed phrase
+    // *"means something `attachEnergyFrom` can say and `attachFromDeck` cannot"*.
+    // The first half was true and the second was about a FIELD rather than about
+    // the op: `oneTarget` says it on the map, so the same three printings now
+    // derive — and they derive WITH the coupling, which is the whole difference
+    // between reading the sentence and reading past it.
+    const repaired = [CLAUSES[ONE_OF_TWO], CLAUSES[ONE_OF_BENCH_TWO]] as const;
+    expect(repaired.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(3);
+    for (const { text, program } of repaired) {
       expect(text).toContain("attach them to 1 of your");
-      expect(deriveAttackEffect(text), text).toBeNull();
+      expect(deriveAttackEffect(text), text).toEqual(program);
+      // 🛑 THE RUNG THAT REPLACES THE OLD REFUSAL, AND IT HAS TO ASSERT THE RIDER
+      // RATHER THAN NON-NULLNESS: "this sentence now derives" is true under a
+      // build that dropped the coupling as well as under this one, and only the
+      // coupling is what the card prints (the re-pointing rule, D418).
+      expect(deriveAttackEffect(text)?.[0]).toHaveProperty("oneTarget", true);
     }
-    // …and the SIBLING op reads the same destination phrase at the same count,
-    // which is what makes this a fact about the op rather than about the anchor.
+    // …and the SIBLING op still reads the same destination phrase at the same
+    // count through its OWN field, which is what makes the two readings a pair
+    // rather than one mechanism spelled twice.
     expect(
       deriveAttackEffect(
         "Attach up to 2 Basic Energy cards from your discard pile to 1 of your Pokémon.",
@@ -395,23 +448,37 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
     ).toEqual([{ op: "attachEnergyFrom", source: "discard", count: 2 }]);
   });
 
-  it("🛑 the BATCH rule: the SAME destination phrase is read at 1 and refused at 2", () => {
-    // ⚠️ THE FALSIFIABILITY PAIR (D231). Both sentences are printed AND legal, and
-    // they differ by the number alone. A build that dropped the rule derives the
-    // second to `max: 2` with no target coupling — two Energy free to land on two
-    // different Pokémon off a card that prints "1 of". It passes every generic
-    // attach assertion in this repo.
+  it("🛑 the BATCH rule: the SAME destination phrase is read BARE at 1 and COUPLED at 2", () => {
+    // ⚠️ THE FALSIFIABILITY PAIR (D231), re-pointed by D457 rather than deleted.
+    // Both sentences are printed AND legal and they differ by the NUMBER alone,
+    // so the pair still isolates one axis — what moved is the answer at the
+    // plural: it used to be `null` and it is now the same program wearing
+    // `oneTarget`. A build that dropped the rider derives the second to `max: 2`
+    // with no target coupling — two Energy free to land on two different Pokémon
+    // off a card that prints "1 of" — and it passes every generic attach
+    // assertion in this repo, which is exactly what made the old refusal worth
+    // keeping and what makes this rung its replacement rather than its deletion.
     expect(deriveAttackEffect(CLAUSES[ONE_OF_WATER].text)).toEqual(CLAUSES[ONE_OF_WATER].program);
-    expect(deriveAttackEffect(UNREAD[0][0])).toBeNull();
+    expect(CLAUSES[ONE_OF_WATER].program[0]).not.toHaveProperty("oneTarget");
+    expect(deriveAttackEffect(CLAUSES[ONE_OF_TWO].text)).toEqual(CLAUSES[ONE_OF_TWO].program);
+    expect(CLAUSES[ONE_OF_TWO].program[0]).toHaveProperty("oneTarget", true);
     expect(CLAUSES[ONE_OF_WATER].legalPrintings).toBeGreaterThan(0);
-    expect(UNREAD[0][1]).toBeGreaterThan(0);
-    // …and it is the DESTINATION that decides, not the count: the same "up to 2"
-    // is read when the phrase admits a batch.
-    expect(deriveAttackEffect(CLAUSES[SELF_WATER_TWO].text)).not.toBeNull();
-    expect(deriveAttackEffect(CLAUSES[BENCH_ANY_WAY].text)).not.toBeNull();
-    // The benched twin of the refusal, so the rule is not read as "un-narrowed
-    // destinations only".
-    expect(deriveAttackEffect(UNREAD[1][0])).toBeNull();
+    expect(CLAUSES[ONE_OF_TWO].legalPrintings).toBeGreaterThan(0);
+    // …and it is the DESTINATION that decides whether the rider is owed, not the
+    // count: the same "up to 2" carries NO coupling when the phrase admits a
+    // batch, which is the half of the rule a `count > 1` build alone would lose.
+    expect(deriveAttackEffect(CLAUSES[SELF_WATER_TWO].text)).toEqual(
+      CLAUSES[SELF_WATER_TWO].program,
+    );
+    expect(CLAUSES[SELF_WATER_TWO].program[0]).not.toHaveProperty("oneTarget");
+    expect(deriveAttackEffect(CLAUSES[ANY_WAY_THREE].text)?.[0]).not.toHaveProperty("oneTarget");
+    expect(deriveAttackEffect(CLAUSES[BENCH_ANY_WAY].text)?.[0]).not.toHaveProperty("oneTarget");
+    // The benched twin on both sides, so the rule is not read as "un-narrowed
+    // destinations only": the rider rides beside `benchOnly` at 2 and is absent
+    // at 1.
+    expect(deriveAttackEffect(CLAUSES[ONE_OF_BENCH_TWO].text)).toEqual(
+      CLAUSES[ONE_OF_BENCH_TWO].program,
+    );
     expect(
       deriveAttackEffect(
         "Search your deck for a Basic {P} Energy card and attach it to 1 of your Benched Pokémon. Then, shuffle your deck.",
@@ -543,11 +610,25 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
     for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
-  it("carries NO new op and NO new op FIELD — the honest price of the arm", () => {
-    // `attachFromDeck` has run since M5-D50 with every key any arm here sets;
+  it("carries NO new op, and ONE new op FIELD — the honest price, D457's half included", () => {
+    // `attachFromDeck` has run since M5-D50 with every key any arm here sets
+    // EXCEPT `oneTarget` (D457, the batch-onto-one-body coupling);
     // `shuffleDeck`, `recordGate` and `applyStatus` are all older still.
+    // ⚠️ THE TITLE IS PART OF THE ASSERTION. D235's read "NO new op FIELD" and was
+    // true when it was written; leaving it there while adding a key to the list
+    // below would be a doc-block justification outliving its measurement (D425),
+    // and the list is what the successor greps.
     const known: Record<string, readonly string[]> = {
-      attachFromDeck: ["op", "filter", "max", "toSelf", "benchOnly", "targetType", "recordAs"],
+      attachFromDeck: [
+        "op",
+        "filter",
+        "max",
+        "toSelf",
+        "benchOnly",
+        "targetType",
+        "recordAs",
+        "oneTarget",
+      ],
       shuffleDeck: ["op"],
       recordGate: ["op", "slot", "then"],
     };
@@ -584,15 +665,24 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
         { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 2, targetType: type },
         { op: "shuffleDeck" },
       ]);
-      // …and the "1 of" form is still refused at the plural, generated rows
+      // 🆕 D457 — …and the "1 of" form now COUPLES at the plural, generated rows
       // included: the `batch` rule is a property of the TABLE, not of five
-      // hand-written rows.
+      // hand-written rows, and so is the rider it now selects.
       expect(
         deriveAttackEffect(
           `Search your deck for up to 2 Basic Energy cards and attach them to 1 of your {${code}} Pokémon. Then, shuffle your deck.`,
         ),
         code,
-      ).toBeNull();
+      ).toEqual([
+        {
+          op: "attachFromDeck",
+          filter: { kind: "basicEnergy" },
+          max: 2,
+          targetType: type,
+          oneTarget: true,
+        },
+        { op: "shuffleDeck" },
+      ]);
     }
     // …and a code in NEITHER map is refused rather than silently dropped.
     expect(
@@ -637,7 +727,7 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(71);
+    expect(attacks()).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect(attacks()[ENERGY_ASSIST]?.effect).toBe(CLAUSES[SELF_BARE].text);
     expect(attacks()[ZAP_CHARGE]?.effect).toBe(CLAUSES[SELF_LIGHTNING].text);
     expect(attacks()[AQUA_SUPPLY]?.effect).toBe(CLAUSES[SELF_WATER_TWO].text);
@@ -645,9 +735,13 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     expect(attacks()[BENCH_CHARGE]?.effect).toBe(CLAUSES[BENCH_ANY_WAY].text);
     expect(attacks()[TOXIC_RESERVE]?.effect).toBe(CLAUSES[POISON_TAIL].text);
     expect(attacks()[WATER_DRAW]?.effect).toBe(CLAUSES[ONE_OF_WATER].text);
-    // …and the one that is DELIBERATELY UNREAD, fielded so the refusal has a live
-    // subject on a real board rather than a comment (D181's `Strafe` precedent).
-    expect(attacks()[SPLIT_SUPPLY]?.effect).toBe(UNREAD[0][0]);
+    // 🆕🆕 D457 — the row that used to be *"the one that is DELIBERATELY
+    // UNREAD, fielded so the refusal has a live subject"* (D181's `Strafe`
+    // precedent). It is the same fixture bytes and it is now READ: `Split Supply`
+    // prints CLAUSES[ONE_OF_TWO], so the live subject stopped serving a refusal
+    // and started serving the coupling — see §3's end-to-end pair. **The fixture
+    // did not move; what it demonstrates did.**
+    expect(attacks()[SPLIT_SUPPLY]?.effect).toBe(CLAUSES[ONE_OF_TWO].text);
     // The indices the sibling suites address by constant did not move.
     expect(attacks()[2]?.effect).toBe(
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
@@ -686,7 +780,13 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     expect(deriveAttackEffect(attacks()[TOXIC_RESERVE]?.effect ?? "")).toEqual(
       CLAUSES[POISON_TAIL].program,
     );
-    expect(deriveAttackEffect(attacks()[SPLIT_SUPPLY]?.effect ?? "")).toBeNull();
+    // 🆕 D457 — the round trip on the sentence this slice built, off the
+    // FIXTURE bytes rather than off the constant, which is the whole point of the
+    // rung: an arm authored against a paraphrase would pass against the same
+    // paraphrase and match no printed card.
+    expect(deriveAttackEffect(attacks()[SPLIT_SUPPLY]?.effect ?? "")).toEqual(
+      CLAUSES[ONE_OF_TWO].program,
+    );
   });
 });
 
@@ -877,23 +977,85 @@ describe("end to end — an ATTACK searching its own deck for Energy", () => {
     expect(programPlayable(state, CLAUSES[SELF_WATER_TWO].program, "p1")).toBe(true);
   });
 
-  it("🛑 the UNREAD sentence is on the board and resolves to NOTHING", () => {
-    // The refusal with a live subject. `Split Supply` is a real printed attack on
-    // the demonstrator, over a deck full of Basic Energy and two Benched bodies —
-    // and the effect is SKIPPED, because no reader resolves it. A slice that
-    // dropped the `batch` rule turns this green while letting the two cards land
-    // apart, which is precisely the bug it cannot otherwise be caught doing.
+  it("🆕🛑 D457 — the ONE-OF sentence parks, and BOTH cards may land on one body", () => {
+    // The rung this replaces asserted the same board resolved to NOTHING, and it
+    // was the refusal's live subject (D181's `Strafe` precedent). The subject did
+    // not change — `Split Supply` is the same printed attack on the same
+    // demonstrator over the same deck full of Basic Energy — only the verdict did.
+    // ⚠️ **THE PARK IS THE FIRST HALF AND THE ANSWER IS THE SECOND**: a build
+    // that read the sentence and dropped the coupling parks here too, so the
+    // discriminating half is the pair of ANSWERS below, not the park.
     const state = ready(13);
     deepFreeze(state);
-    const { state: done, events } = mustApply(state, {
+    const { state: parked, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
       index: SPLIT_SUPPLY,
     });
     expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
     expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
-    expect(done.phase.kind).not.toBe("effect:choose");
-    expect(done.players.p1.bench.every((p) => p.energy.length === 0)).toBe(true);
+    const prompt = promptOf(parked);
+    expect(prompt.oneTarget).toBe(true);
+    expect(prompt.max).toBe(2);
+    // ⚠️ THE OFFER IS NOT NARROWED BY THE RIDER, and that is the asymmetry with
+    // `maxPerTarget`: one body may take the whole batch, so the board term never
+    // reduces `max` (interpreter.ts `attachFromDeckOffer`). More than one target is
+    // OFFERED — the constraint is on the ANSWER, not on the list.
+    expect(prompt.targets.length).toBeGreaterThan(1);
+    // …and the printed phrase is what the dialog says, not "in any way you like".
+    expect(prompt.note).toContain("attach them to 1 of your Pokémon");
+    expect(prompt.note).not.toContain("in any way you like");
+    const [first, second] = prompt.candidates as [string, string];
+    const { state: done, events: attached } = attach(parked, [
+      { uid: first, to: benchRef(0) },
+      { uid: second, to: benchRef(0) },
+    ]);
+    expect(all(attached, "ENERGY_ATTACHED")).toHaveLength(2);
+    expect(done.players.p1.bench[0]?.energy).toHaveLength(2);
+    expect(done.players.p1.bench[1]?.energy ?? []).toHaveLength(0);
+  });
+
+  it("🆕🛑 D457 — the SPLIT the card does not print is refused on the wire", () => {
+    // The other direction of the same pair, and the one a build without the rider
+    // cannot pass: two Energy off a card that prints "1 of" landing on two
+    // different Pokémon. It is refused by `validateEffectChoice` (cardplay.ts),
+    // which is where every other coupling on this prompt lives — the apply
+    // re-derives none of them.
+    const state = ready(13);
+    deepFreeze(state);
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_SUPPLY,
+    });
+    const [first, second] = promptOf(parked).candidates as [string, string];
+    expectErr(
+      parked,
+      {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: {
+          kind: "attachCards",
+          assignments: [
+            { uid: first, to: benchRef(0) },
+            { uid: second, to: benchRef(1) },
+          ],
+        },
+      },
+      "BAD_EFFECT_CHOICE",
+    );
+    // ⚠️ AND THE DECLINE IS STILL LEGAL — the rider caps the targets an answer
+    // may NAME, and an empty answer names none. "Up to 2" includes none (§9.1),
+    // so a build that read `oneTarget` as "exactly one" would break the printed
+    // right to take fewer.
+    const { state: declined, events } = attach(parked, []);
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(declined.phase.kind).not.toBe("effect:choose");
+    // ⚠️ …and ONE card on one body is legal too, which is the other end of
+    // "up to": the constraint is on distinct TARGETS, never on the count.
+    const { state: one, events: oneEvents } = attach(parked, [{ uid: first, to: benchRef(1) }]);
+    expect(all(oneEvents, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(one.players.p1.bench[1]?.energy).toHaveLength(1);
   });
 
   it("the search is the ATTACKER's own deck and own board, on both ends", () => {
@@ -922,5 +1084,120 @@ describe("end to end — an ATTACK searching its own deck for Energy", () => {
     expect(opponentDeck - done.players.p2.deck.length).toBe(1);
     expect(done.players.p2.bench.every((p) => p.energy.length === 0)).toBe(true);
     expect(done.players.p2.active?.energy).toHaveLength(0);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. 🆕🆕 D457 — `MATCH_RECORD_VERSION` 29, DRIVEN OVER THE SERIALIZED BYTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the SERIALIZED BYTES", () => {
+  it("🛑 the version PREDICTION in THREE directions, LOSS included", () => {
+    // 🛑 **WHICH SITUATION THIS IS, ASKED RATHER THAN INHERITED (D386/D443).** D456
+    // held 29 on `match.ts`'s discriminator because its field was a `GameState` one,
+    // and explicitly NOT on *"an `EffectOp` reaches storage only through a park"*.
+    // **THIS SLICE IS THE PARK CASE, AND THE PARK IS NOT A REASON TO SKIP THE
+    // QUESTION — IT IS THE ROAD TO STORAGE.** `attachFromDeck.oneTarget` rides
+    // `EffectContinuation.pendingOp` and `attachCards.oneTarget` rides the persisted
+    // `effect:choose` phase, so BOTH addresses are in a saved record and the
+    // discriminator is the same one either way: *does the OLD byte string still mean
+    // what it meant?*
+    const state = ready(13);
+    deepFreeze(state);
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_SUPPLY,
+    });
+    if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "attachCards") {
+      throw new Error("expected an attachCards park");
+    }
+    const prompt = parked.phase.prompt;
+    const [first, second] = prompt.candidates as [string, string];
+    const split = [
+      { uid: first, to: benchRef(0) },
+      { uid: second, to: benchRef(1) },
+    ];
+
+    // **DIRECTION 1 — BACKWARD: a v29 record written BEFORE this slice.** Every
+    // `attachCards` park a v29 deploy could write carries NO `oneTarget`, and its
+    // absence has to keep meaning exactly "in any way you like". ⚠️ THE LITERAL BYTES
+    // ARE PARSED RATHER THAN THE OBJECT SPREAD, because a spread that dropped a key
+    // and a wire that never had one are the same object and NOT the same claim.
+    const v29 = JSON.parse(
+      JSON.stringify(prompt, (k, v) => (k === "oneTarget" ? undefined : v)),
+    ) as Extract<EffectPrompt, { kind: "attachCards" }>;
+    expect(Object.keys(v29)).toEqual(["kind", "candidates", "targets", "max", "note"]);
+    const legacy: GameState = { ...parked, phase: { ...parked.phase, prompt: v29 } };
+    const { state: spread } = mustApply(legacy, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "attachCards", assignments: split },
+    });
+    expect(spread.players.p1.bench[0]?.energy).toHaveLength(1);
+    expect(spread.players.p1.bench[1]?.energy).toHaveLength(1);
+
+    // **DIRECTION 2 — FORWARD: the bytes this deploy writes, whole and round-tripped.**
+    // The key set is asserted rather than eyeballed — "the object looked right" is how
+    // a key goes missing — and the wire spells `true` and never `false`, the schema's
+    // `z.literal(true).optional()` read back off the engine side.
+    const wire = JSON.stringify(prompt);
+    expect(wire).toContain('"oneTarget":true');
+    expect(wire).not.toContain('"oneTarget":false');
+    expect(Object.keys(prompt)).toEqual([
+      "kind",
+      "candidates",
+      "targets",
+      "max",
+      "oneTarget",
+      "note",
+    ]);
+    const round = JSON.parse(wire) as Extract<EffectPrompt, { kind: "attachCards" }>;
+    const revived: GameState = { ...parked, phase: { ...parked.phase, prompt: round } };
+    expectErr(
+      revived,
+      { type: "resolveEffect", seat: "p1", choice: { kind: "attachCards", assignments: split } },
+      "BAD_EFFECT_CHOICE",
+    );
+
+    // **DIRECTION 3 — LOSS: a build (or an older deploy) that DROPS the key.** The
+    // degradation is a RELAXATION and not a corruption — the answer is accepted, the
+    // Energy attach, nothing is `NaN` and no body becomes un-Knock-Outable (D435's
+    // failure, the reason an optional key is safe here). Direction 1 IS that state, so
+    // the behaviour is already driven above; what this half adds is D421's criterion:
+    // **is losing the key DETECTABLE?**
+    //
+    // 🛑 **IT IS, AND THE DETECTOR IS THE REST OF THE RECORD.** `note` is built from
+    // the SAME field (`attachFromDeckNote` branches on `op.oneTarget`), so a park whose
+    // note says *"attach them to 1 of your Pokémon"* while carrying no rider is a byte
+    // string this deploy cannot write — the two halves would have to disagree at the
+    // moment of writing. A reader who finds one has found the dropped key.
+    expect(v29.note).toContain("attach them to 1 of your Pokémon");
+    expect(v29).not.toHaveProperty("oneTarget");
+    expect(round.note).toBe(v29.note);
+
+    // …and the converse, MEASURED over the whole corpus rather than asserted: every
+    // `attachFromDeck` this deploy can derive whose printed sentence spells the plural
+    // "1 of" carries the rider, and every one that does not spell it does not.
+    let coupled = 0;
+    for (const [, text] of legalAttackCorpus()) {
+      for (const op of deriveAttackEffect(text) ?? []) {
+        if (op.op !== "attachFromDeck") continue;
+        const printed = text.includes("attach them to 1 of your");
+        expect(op.oneTarget === true, text).toBe(printed);
+        if (printed) coupled++;
+      }
+    }
+    expect(coupled).toBe(2);
+    // …and NO registry row authors the field at all, so the reader is its only
+    // producer and the corpus sweep above is the whole population (D135's rule: these
+    // programs are compared by value against hand-authored ones).
+    for (const id of registryCardIds()) {
+      for (const program of Object.values(programFor(id)?.attack ?? {})) {
+        for (const op of program) {
+          if (op.op === "attachFromDeck") expect(op.oneTarget, id).toBeUndefined();
+        }
+      }
+    }
   });
 });

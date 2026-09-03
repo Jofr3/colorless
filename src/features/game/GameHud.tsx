@@ -2851,8 +2851,25 @@ function AttachCardsDialog({
       rows already follow at the cap. */
   const assignedTo = (ref: PokemonRef) =>
     assignments.filter((a) => keyOf(a.to) === keyOf(ref)).length;
+  /** 🆕 D457 — `oneTarget` is the printed "attach them to 1 of your Pokémon": once
+      one body holds a card, every OTHER body is full, because the answer may name
+      a single target. It rides the same predicate rather than a second one so the
+      target row disables for the same reason in both cases — the alternative is a
+      row that looks tappable, is tapped, and is refused by the server. */
   const targetFull = (ref: PokemonRef) =>
-    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;
+    (prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget) ||
+    (prompt.oneTarget === true && assignments.length > 0 && assignedTo(ref) === 0);
+  /** WHY a row is closed, in the row's own words. 🆕 D457 — the two rules close a
+      row for OPPOSITE reasons and one sentence cannot serve both: `maxPerTarget`
+      closes a body because it ALREADY HAS its share, `oneTarget` closes it because
+      the Energy are going somewhere ELSE. Rendering "already has one" over a
+      Pokémon holding NOTHING would be the dialog stating a fact about the board
+      that is false — the caption rule `attachFromDeckNote` follows on the engine
+      side, at the surface the player actually reads. */
+  const fullReason = (ref: PokemonRef) =>
+    prompt.oneTarget === true && assignedTo(ref) === 0
+      ? "they all go on 1 Pokémon"
+      : "already has one";
   /** No Pokémon can legally take another card — reachable only under a
       per-target cap (Janine, whose Energy go one apiece). On every offer the
       ENGINE builds this is never the DECIDING term: `attachFromDeckOffer` clamps
@@ -3022,7 +3039,7 @@ function AttachCardsDialog({
                 <li key={keyOf(ref)}>
                   <button
                     type="button"
-                    aria-label={full ? `${destLabel(ref)} — already has one` : destLabel(ref)}
+                    aria-label={full ? `${destLabel(ref)} — ${fullReason(ref)}` : destLabel(ref)}
                     aria-disabled={full || undefined}
                     onClick={() => assign(ref)}
                     className={`${ROW_BUTTON_BASE} ${full ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}
@@ -3157,7 +3174,11 @@ function promptKey(prompt: EffectPrompt): string {
       // as-often-as-you-like Ability makes this the likeliest dialog to park
       // twice in one turn, and a second Tri Howl looking at three new cards must
       // not inherit a pick keyed to the last three.
-      return `attach:${prompt.max}:${prompt.maxPerTarget ?? "any"}:${prompt.targets
+      // 🆕 D457 — `oneTarget` rides it too, on that same argument taken literally:
+      // an assignment gathered under "in any way you like" — two cards on two
+      // bodies — is not a legal answer to a "1 of your Pokémon" prompt either, so
+      // two parks that differ only in this flag are different questions.
+      return `attach:${prompt.max}:${prompt.maxPerTarget ?? "any"}:${prompt.oneTarget === true ? "one" : "many"}:${prompt.targets
         .map((t) => `${t.seat}-${t.spot.spot === "bench" ? t.spot.index : "active"}`)
         .join(",")}:${prompt.candidates.join(",")}`;
     case "choosePokemonMulti":

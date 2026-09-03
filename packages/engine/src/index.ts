@@ -19174,8 +19174,28 @@ import type { GameState, Seat } from "./types";
     arm. `MATCH_RECORD_VERSION` **STAYS 29** — and NOT on the reachability argument
     D453–D455 used, which does not apply to a `GameState` field; on `match.ts`'s own
     discriminator, driven over the serialized bytes in three directions in
-    `installedRecoil.test.ts` §5). */
-export const engineVersion = "0.355.0";
+    `installedRecoil.test.ts` §5).
+
+    🆕🆕 engineVersion 0.355.0 → **0.356.0** (D457 — the BATCH ONTO ONE BODY, corpus
+    lines 403 and 412, **2 sentences / 3 legal printings**, through D235's OWN anchor.
+    Engine behaviour MOVED — ONE new op field `attachFromDeck.oneTarget?: true`, ONE new
+    prompt field `attachCards.oneTarget`, one key on the redacted wire schema, a sixth
+    coupling in `validateEffectChoice` and a new `attachFromDeckNote` branch. ZERO new
+    anchors, ZERO new readers, ZERO new ops. `MATCH_RECORD_VERSION` **STAYS 29** — and
+    this is the PARK case D453–D455 waved through rather than argued: the op rides
+    `EffectContinuation.pendingOp` and the prompt rides the persisted `effect:choose`
+    phase, so **a park is the road to storage**. Driven over the serialized bytes in
+    three directions in `derivedDeckSearchAttach.test.ts` §4, where the LOSS direction is
+    detectable in the REST of the record — `note` is built from the same field. ⚠️ THE
+    VERSION TAX, RE-MEASURED THIS SLICE: **35 assertions / 39 sites** — 34
+    `expect(engineVersion)` pins across 34 test files, ONE `expect(manifest.version)` in
+    `legacyEnergy.test.ts`, `package.json`, this declaration, this doc block and D275's
+    mutant `find` in `scripts/mutation/mutants.ts`, re-pointed in the SAME edit. D456
+    measured 36/42 by counting the doc-block prose lines it was about to write; this
+    count is `grep -c` over the two spellings at HEAD, which is why it is LOWER rather
+    than higher — **the tax is a measurement of the tree, and how you count it is part of
+    the number** (D430's `grep -c` rule biting a figure D427 said only grows). */
+export const engineVersion = "0.356.0";
 
 export type {
   ApplyResult,

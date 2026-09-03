@@ -27005,3 +27005,37 @@ D441 refused a mandatory-exact spelling on the grounds that `max: N` + mandatory
 nothing prints. **That argument is weaker now**: `max: 1` + mandatory is printed many times over
 (this slice's first sentence, Energy Switch, and eight `selfToBench` attacks). A slice that revisits
 it must re-read D441's reasoning rather than inherit it, and must expect to move 13+ printings.
+
+## D457 — the deck-search family, every unread row measured (and four of them already built)
+
+The `/^Search your deck/` family over `legalAttackCorpus()`: **48 sentences / 90 printings**, of
+which **37 / 75 resolve** at D457's head and **11 / 15** do not. Each of the thirteen rows that did
+not resolve at D456's head was blocked by MEASUREMENT — all 13 readers null, all FOUR splitters
+null, and a minimal pair per row isolating the axis — never by reading the sentence.
+
+| corpus line | p | blocker | state |
+|---|---|---|---|
+| 403 / 412 | 2 / 1 | the batch pinned to ONE body | ✅ **BUILT at D457** (`attachFromDeck.oneTarget`) |
+| 404 / 419 | 2 / 1 | the Future / Tera SUBGROUP | **DATA-BLOCKED** — `cardSchema` has no subtype column |
+| 419 | (1) | *"of different types"* AND the Tera banner | two blockers on ONE printing, measured by minimal pair |
+| 420 | 1 | *"of different types"* — a DISTINCTNESS constraint | open |
+| 410 | 2 | a SECOND printed noun (`{G}` … and `{L}` …) | open — **cheapest row left: two `attachFromDeck` ops, ZERO new fields** |
+| 401 | 1 | a DYNAMIC max (*"up to the number of your Benched Pokémon"*) | open — the widening precedent is `attachFromTop.max: number \| "any"` |
+| 430 | 1 | a filter computed from BOARD STATE | open — no `CardFilter` member can read the board |
+| 387 | 1 | a §9.2 tail whose destination is *the body this program just benched* | open — `searchDeck` files no record and `moveEnergy` has no such destination |
+| 408 / 416 / 425 / 427 | 1 / 1 / 2 / 2 | — | **ALREADY BUILT via the REGISTRY** (`SUMMONING_SIGN`, `FAMILIAL_MARCH`, `SWIM_TOGETHER`, `LICKING_CATCH`) |
+
+🛑 **The last row is the finding.** "Unread by every reader" and "unbuilt" are different claims
+(D314), and here they differ by **4 sentences / 6 printings** — a third of the family. Worse, they
+are not merely different: `censusAtHead.test.ts`'s `registryUnits` rung asserts
+`resolvedByAnyReader(text) === false` for every registry sentence, so **writing a reader arm for one
+of those four turns the census RED** until the registry row is retired. A successor ranking this
+family by printings must run `programFor` over it first.
+
+🛑 **And D235's refusal of 403/412 was a price in the wrong op's vocabulary.** *"Unrepresentable
+here at count > 1, and representable one op over"* is true of `attachEnergyFrom.count` and false of
+`attachFromDeck`: this park's answer is a MAP from card to target, so the printed *"1 of"* is a
+constraint on the map — how many TARGETS an answer may name — and it cost one optional flag. It sat
+refused for 222 decisions because every successor greps for the missing FIELD, finds it genuinely
+missing, and re-derives the refusal.
+

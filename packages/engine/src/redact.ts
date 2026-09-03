@@ -386,6 +386,10 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         // Absent = "in any way you like" (no per-target cap); passed through as
         // undefined, which the wire drops and the schema's optional accepts.
         maxPerTarget: prompt.maxPerTarget,
+        // 🆕 D457 — the printed "1 of your Pokémon", carried the same way and for
+        // the same reason: the client dialog must not offer a second body its own
+        // server would refuse. `true` or absent; there is no `false` to send.
+        oneTarget: prompt.oneTarget,
         note: prompt.note,
       };
     case "chooseAttack":

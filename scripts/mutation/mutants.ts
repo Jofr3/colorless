@@ -1981,10 +1981,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D235-batch-rule-dropped",
     decision: "D235",
-    what: '🛑 THE MUTANT THIS SLICE EXISTS TO KILL. The `destination.batch || count === 1` guard is removed, so "…attach THEM to 1 OF your Pokémon" derives to `max: 2` with no target coupling — two Energy free to land on two different bodies off a card that prints "1 of". It attaches the right number of cards, emits the right number of ENERGY_ATTACHED rows, and is invisible on a Bench of one. Three legal printings are wrong and nothing else moves',
+    what: '🆕 **D457 RE-POINTED THIS ROW RATHER THAN RETIRING IT, AND THE CLAIM IS THE SAME ONE**: the guard this row used to delete is GONE (the sentences derive now), so the mutation is spelled at the address the coupling moved to — the rider spread. What it produces is byte-for-byte the old defect: the sentence derives to `max: 2` with no coupling. A NEW D457 row for it would have been a second row for one mutation, and the row id belongs to the slice whose claim it is. 🛑 THE ORIGINAL TEXT: THE MUTANT THIS SLICE EXISTS TO KILL. The `destination.batch || count === 1` guard is removed, so "…attach THEM to 1 OF your Pokémon" derives to `max: 2` with no target coupling — two Energy free to land on two different bodies off a card that prints "1 of". It attaches the right number of cards, emits the right number of ENERGY_ATTACHED rows, and is invisible on a Bench of one. Three legal printings are wrong and nothing else moves',
     file: "packages/engine/src/effects.ts",
-    find: "      (destination.batch || count === 1)",
-    replace: "      (destination.batch || count >= 1)",
+    find: "        ...(destination.batch || count === 1 ? {} : { oneTarget: true as const }),",
+    replace: "        ...(destination.batch || count === 1 ? {} : {}),",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -5727,7 +5727,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.355.0";',
+    find: 'export const engineVersion = "0.356.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -22793,6 +22793,116 @@ export const MUTANTS: Mutant[] = [
     replace: "        false",
     expectKilledBy: [
       "packages/engine/src/installedRecoil.test.ts",
+    ],
+  },
+  {
+    id: "D457-one-target-rider-written-at-every-count",
+    decision: "D457",
+    what: "⚠ **THE `count === 1` HALF OF THE RIDER TEST IS DROPPED** — the mistake an author makes reading the destination table as the whole rule. The four SINGULAR *\"attach **it** to 1 of your Pokémon\"* printings gain a key that means nothing (one card has one destination either way), and these rows are compared BY VALUE against hand-authored registry ones (D135), so a decorative key is a mismatch rather than a nicety. It is also the mutant that says the omission is a RULE and not an accident",
+    file: "packages/engine/src/effects.ts",
+    find: "        ...(destination.batch || count === 1 ? {} : { oneTarget: true as const }),",
+    replace: "        ...(destination.batch ? {} : { oneTarget: true as const }),",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-park-drops-the-rider",
+    decision: "D457",
+    what: "\U0001F6D1 **THE OP CARRIES THE COUPLING AND THE PROMPT DOES NOT** — the neighbouring spread one line up, copied without its key. The program is right, every derivation rung is green, and the RULE evaporates at the one boundary that enforces it: `validateEffectChoice` reads the PROMPT, so a split answer is accepted, while the caption still says \"1 of\" — the dialog and its validator disagreeing, which is the failure the caption branch exists to prevent",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          ...(op.oneTarget === undefined ? {} : { oneTarget: op.oneTarget }),",
+    replace: "          ...(op.oneTarget === undefined ? {} : {}),",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-validator-ignores-the-rider",
+    decision: "D457",
+    what: "⚠ **THE SIXTH COUPLING IS NOT CHECKED** — the wire accepts what the card does not print. The park still carries `oneTarget`, the caption still says \"1 of your Pokémon\", `redact.ts` still ships it and both HUDs still grey the second body out; only the SERVER stops caring, so a hand-written client (or a P4 message a UI never composed) attaches two Energy to two Pokémon and is told nothing. This is the one mutant that no UI test can catch",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (prompt.oneTarget === true && perTarget.size > 1) {",
+    replace: "        if (false && prompt.oneTarget === true && perTarget.size > 1) {",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-validator-caps-the-cards-not-the-targets",
+    decision: "D457",
+    what: "\U0001F6D1 **THE RULE IS READ AS \"ONE CARD\" RATHER THAN \"ONE BODY\"** — `assignments.length` instead of the map's SIZE, which is the misreading the field's own name invites. It refuses the answer the card prints (two Energy onto ONE Pokémon) while accepting nothing extra, so it fails in the direction no generic \"the split is refused\" assertion can see: a suite that only drove the illegal split would be GREEN under it",
+    file: "packages/engine/src/cardplay.ts",
+    find: "        if (prompt.oneTarget === true && perTarget.size > 1) {",
+    replace: "        if (prompt.oneTarget === true && choice.assignments.length > 1) {",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-offer-clamps-max-to-one-target",
+    decision: "D457",
+    what: "⚠ **THE RIDER IS READ AS A FOURTH CEILING** — `maxPerTarget`'s `Math.min(op.max, targets.length * op.maxPerTarget)` two lines up, generalised to the key beside it by an author who saw a symmetry that is not there. One target may take EVERY card in the batch, so a cap of 1 offers one card off a card that prints two: the park reads `max: 1`, the dialog counts \"0/1\", and the second Energy the card promises simply never appears",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const cap =\n    op.maxPerTarget === undefined ? op.max : Math.min(op.max, targets.length * op.maxPerTarget);",
+    replace: "  const cap =\n    op.oneTarget === true\n      ? Math.min(op.max, 1)\n      : op.maxPerTarget === undefined\n        ? op.max\n        : Math.min(op.max, targets.length * op.maxPerTarget);",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-caption-keeps-in-any-way-you-like",
+    decision: "D457",
+    what: "⚠ **THE CAPTION BRANCH IS REMOVED AND THE PROMPT LIES** — the state `attachFromDeckNote`'s own doc block forbids one branch up (*\"saying 'in any way you like' over a prompt that rejects two on one Pokémon would be the dialog contradicting the validator\"*), reached from the other side: here the dialog invites a split the validator refuses. Nothing about the ENGINE moves, which is why the rung that catches it asserts the note's bytes rather than the board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.oneTarget === true) {\n    return `Search your deck for up to ${op.max} ${plural} and attach them to 1 of your ${where}.`;\n  }",
+    replace: "",
+    expectKilledBy: [
+      "packages/engine/src/derivedDeckSearchAttach.test.ts",
+    ],
+  },
+  {
+    id: "D457-redact-drops-the-rider",
+    decision: "D457",
+    what: "\U0001F6D1 **THE WIRE MIRROR LOSES THE KEY** — the online client is never told, so its dialog offers a second body and the server refuses the answer the player built. `maxPerTarget` one line up has been mirrored since M5 for exactly this reason; this is that omission at the new key, and it is invisible to every engine-side rung because the ENGINE still enforces the rule",
+    file: "packages/engine/src/redact.ts",
+    find: "        oneTarget: prompt.oneTarget,",
+    replace: "",
+    expectKilledBy: [
+      "packages/engine/src/redact.test.ts",
+    ],
+  },
+  {
+    id: "D457-projection-drops-the-rider",
+    decision: "D457",
+    what: "⚠ **THE CLIENT-SIDE PROJECTION LOSES THE KEY ON THE WAY BACK IN** — the same omission one hop later, where it is even quieter: the wire carries the constraint, `projectionFromRedacted` drops it, and the ONLINE HUD alone (which reads the projected prompt) starts offering a second body while the local one does not. The round-trip identity is the only thing that can see it",
+    file: "src/features/game/projection.ts",
+    find: "          ...(prompt.oneTarget !== undefined ? { oneTarget: prompt.oneTarget } : {}),",
+    replace: "",
+    expectKilledBy: [
+      "src/features/game/projection.test.ts",
+    ],
+  },
+  {
+    id: "D457-hud-target-full-ignores-one-target",
+    decision: "D457",
+    what: "⚠ **THE DIALOG STOPS CLOSING THE SECOND BODY** — the predicate goes back to its pre-D457 line, which is the shape an author restores when the two rules look like one. Every engine rung stays green (the SERVER still refuses the split); what breaks is the surface: the player builds a pairing the dialog offered, taps Confirm, and gets BAD_EFFECT_CHOICE surfaced as a pill that says nothing about WHICH pairing was illegal — the exact failure the `maxPerTarget` half of this predicate was written to prevent",
+    file: "src/features/game/GameHud.tsx",
+    find: "    (prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget) ||\n    (prompt.oneTarget === true && assignments.length > 0 && assignedTo(ref) === 0);\n  /** WHY a row is closed",
+    replace: "    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;\n  /** WHY a row is closed",
+    expectKilledBy: [
+      "src/features/game/GameHud.attachFromDeck.dom.test.tsx",
+    ],
+  },
+  {
+    id: "D457-hud-badge-says-already-has-one",
+    decision: "D457",
+    what: "\U0001F6D1 **THE CLOSED ROW IS GIVEN THE WRONG REASON** — one badge for two opposite rules, which is what the code said before this slice and what an author writes who sees only that both rules close a row. A Pokémon holding NOTHING is told it \"already has one\": the dialog stating a false fact about the board, on the surface the player reads. Nothing else moves — the row is disabled either way, the answer dispatched is identical, and only the badge lies",
+    file: "src/features/game/GameHud.tsx",
+    find: "      ? \"they all go on 1 Pokémon\"\n      : \"already has one\";",
+    replace: "      ? \"already has one\"\n      : \"already has one\";",
+    expectKilledBy: [
+      "src/features/game/GameHud.attachFromDeck.dom.test.tsx",
     ],
   },
 ];

@@ -1437,8 +1437,18 @@ function AttachCardsDialog({
   const cardName = (uid: string) => prompt.candidates.find((c) => c.id === uid)?.name ?? uid;
   const assignedTo = (ref: RedactedPokemonRef) =>
     assignments.filter((a) => refKey(a.to) === refKey(ref)).length;
+  // 🆕 D457 — the printed "1 of your Pokémon": with one card placed, every other
+  // body is full. GameHud.tsx carries the same predicate for the same reason.
   const targetFull = (ref: RedactedPokemonRef) =>
-    prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget;
+    (prompt.maxPerTarget !== undefined && assignedTo(ref) >= prompt.maxPerTarget) ||
+    (prompt.oneTarget === true && assignments.length > 0 && assignedTo(ref) === 0);
+  // The two rules close a row for OPPOSITE reasons — "already has its share" vs
+  // "the Energy are going elsewhere" — and a body holding NOTHING must not be
+  // told it already has one. GameHud.tsx carries the argument.
+  const fullReason = (ref: RedactedPokemonRef) =>
+    prompt.oneTarget === true && assignedTo(ref) === 0
+      ? "they all go on 1 Pokémon"
+      : "already has one";
   // No Pokémon can take another card — reachable only under a per-target cap.
   const noRoom = prompt.targets.length > 0 && prompt.targets.every(targetFull);
   const atCap = assignments.length >= prompt.max || noRoom;
@@ -1541,7 +1551,7 @@ function AttachCardsDialog({
                 <li key={refKey(ref)}>
                   <button
                     type="button"
-                    aria-label={full ? `${destLabel(ref)} — already has one` : destLabel(ref)}
+                    aria-label={full ? `${destLabel(ref)} — ${fullReason(ref)}` : destLabel(ref)}
                     aria-disabled={full || undefined}
                     onClick={() => assign(ref)}
                     className={`${ROW_BUTTON_BASE} ${full ? ROW_BUTTON_DISABLED : ROW_BUTTON_ENABLED}`}

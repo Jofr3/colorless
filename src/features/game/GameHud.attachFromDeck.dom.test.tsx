@@ -330,6 +330,54 @@ describe("the one-apiece cap in the dialog", () => {
     });
     expect(stale.ok).toBe(false);
   });
+
+  it("🆕 D457 — under `oneTarget` the SECOND body closes, and it is told the right reason", () => {
+    // The dual rule at the dialog: `maxPerTarget` closes a body that already has
+    // its share, `oneTarget` closes every body the batch is NOT going to. Both
+    // ride one predicate, so this is the case that says the predicate reads the
+    // right field — and the BADGE is the half a shared predicate would get wrong:
+    // "already has one" over a Pokémon holding nothing is the dialog stating a
+    // false fact about the board.
+    //
+    // Hand-built off one real park (the belt's technique, and the file's): no
+    // catalog card in this pool prints the "1 of your Pokémon" search, and the
+    // dialog's job is not to depend on that.
+    const parked = parkedJanine(1);
+    if (parked.phase.kind !== "effect:choose" || parked.phase.prompt.kind !== "attachCards") {
+      throw new Error("expected an attachCards prompt");
+    }
+    const oneOf: GameState = {
+      ...parked,
+      phase: {
+        ...parked.phase,
+        prompt: { ...parked.phase.prompt, maxPerTarget: undefined, oneTarget: true },
+      },
+    };
+    const dispatch = vi.fn();
+    renderHud(oneOf, dispatch);
+    fireEvent.click(cardRows()[0] as HTMLElement);
+    fireEvent.click(screen.getByRole("button", { name: `${DARK_BODY} · Active` }));
+    fireEvent.click(cardRows()[1] as HTMLElement);
+    // The Bench body has taken NOTHING and is closed anyway — and says why.
+    const elsewhere = screen.getByRole("button", {
+      name: `${DARK_BODY} · Bench 1 — they all go on 1 Pokémon`,
+    });
+    expect(elsewhere.getAttribute("aria-disabled")).toBe("true");
+    // …while the body the batch IS going to stays open for the second card.
+    const chosen = screen.getByRole("button", { name: `${DARK_BODY} · Active` });
+    expect(chosen.getAttribute("aria-disabled")).toBeNull();
+    fireEvent.click(chosen);
+    fireEvent.click(screen.getByRole("button", { name: "Attach 2" }));
+    const call = dispatch.mock.calls[0]?.[0] as GameAction;
+    if (call.type !== "resolveEffect" || call.choice.kind !== "attachCards") {
+      throw new Error("expected an attachCards resolveEffect");
+    }
+    // 🛑 AND THE ENGINE AGREES — the dialog offered exactly what the validator
+    // accepts, which is the whole property this rung exists for (a HUD that
+    // merely greyed rows out could still compose a refused answer).
+    expect(call.choice.assignments.map((a) => a.to.spot.spot)).toEqual(["active", "active"]);
+    expect(applyAction(oneOf, call).ok).toBe(true);
+  });
 });
 
 describe("the prompt the player actually reads", () => {

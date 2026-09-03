@@ -1629,7 +1629,7 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // Electric Generator / Hydreigon / Charizard ex / Janine's Secret Art —
       // "attach … in any way you like", so each pick carries its OWN destination
       // and the answer is a list of PAIRS rather than the flat uid list every
-      // other card prompt takes. Five couplings: at most `max` of them; every uid
+      // other card prompt takes. SIX couplings: at most `max` of them; every uid
       // one the prompt offered (which is what keeps a client off a card DEEPER in
       // the deck than the look reached — the lookAtTopN rule — and off a card the
       // filter or the interchangeable collapse excluded, and it also keeps a hand
@@ -1637,13 +1637,18 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
       // one physical card cannot land on two Pokémon and the apply would otherwise
       // be asked to duplicate it; every destination an offered target (the printed
       // "your Benched {L} Pokémon" — the opponent's board is never among them);
-      // and, when the prompt sets it, at most `maxPerTarget` on any ONE Pokémon.
+      // and, when the prompt sets it, at most `maxPerTarget` on any ONE Pokémon;
+      // and, when the prompt sets THAT, exactly one Pokémon in the whole answer
+      // (`oneTarget` — D457's printed "attach them to 1 of your Pokémon").
       //
-      // That last one is the printed "for each of those Pokémon" (Janine's Secret
-      // Art: up to 2 Basic {D} Energy, one apiece). It is enforced HERE and only
-      // here, like every other coupling above — the apply re-derives none of them,
-      // so a rule that lived in both places could drift and let one path attach
-      // what the other refuses.
+      // The fifth is the printed "for each of those Pokémon" (Janine's Secret
+      // Art: up to 2 Basic {D} Energy, one apiece) and the sixth is its dual, the
+      // printed "1 of your Pokémon" (`censusAttackCorpus.ts` lines 403 and 412 —
+      // up to 2 Basic Energy, both onto the SAME body; NO CARD NAMED, because the
+      // ids behind those corpus rows are unresolvable in this checkout, D425). Both are enforced HERE and only here,
+      // like every other coupling above — the apply re-derives none of them, so a
+      // rule that lived in both places could drift and let one path attach what
+      // the other refuses.
       //
       // An empty list is a legal DECLINE ("up to" / "any number"), and it is not
       // the same as nothing happening: the op's leftovers clause still runs.
@@ -1675,16 +1680,29 @@ function validateChoice(prompt: EffectPrompt, choice: EffectChoice): ApplyResult
         if (!isPokemonRef(to) || !prompt.targets.some((t) => refEquals(t, to))) {
           return err("BAD_EFFECT_CHOICE", "that Pokémon is not a legal attach target");
         }
-        if (prompt.maxPerTarget !== undefined) {
-          const key = refKey(to);
-          const count = (perTarget.get(key) ?? 0) + 1;
-          if (count > prompt.maxPerTarget) {
-            return err(
-              "BAD_EFFECT_CHOICE",
-              `attach at most ${prompt.maxPerTarget} card(s) to any one Pokémon`,
-            );
-          }
-          perTarget.set(key, count);
+        const key = refKey(to);
+        const count = (perTarget.get(key) ?? 0) + 1;
+        if (prompt.maxPerTarget !== undefined && count > prompt.maxPerTarget) {
+          return err(
+            "BAD_EFFECT_CHOICE",
+            `attach at most ${prompt.maxPerTarget} card(s) to any one Pokémon`,
+          );
+        }
+        perTarget.set(key, count);
+        // 🆕🆕 D457 — the SIXTH coupling and the dual of the fifth: the printed
+        // "attach them to 1 of your Pokémon" (`attachFromDeck.oneTarget`), where
+        // every card in the batch shares ONE destination. Counted off the SAME
+        // map, which is why the `perTarget` bookkeeping above moved out from under
+        // `maxPerTarget`'s `if` — a second tally keyed the same way could disagree
+        // with the first one about what "a target" is.
+        //
+        // ⚠️ IT IS THE MAP'S SIZE AND NOT THE FIRST ENTRY'S REF, deliberately:
+        // comparing each `to` against `assignments[0].to` would give the same
+        // verdict on every answer a client can send and a DIFFERENT one on an
+        // empty list, where there is no first entry to compare against. The
+        // decline stays legal here (size 0), exactly as it is under `max`.
+        if (prompt.oneTarget === true && perTarget.size > 1) {
+          return err("BAD_EFFECT_CHOICE", "attach every card to the same Pokémon");
         }
       }
       return null;

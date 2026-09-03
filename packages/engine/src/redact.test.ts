@@ -877,6 +877,53 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
     expect(opp.phase.prompt).toBeNull();
     const oppIds = new Set(allIds(opp));
     for (const uid of deckUids) expect(oppIds.has(uid)).toBe(false);
+    // 🆕 D457 — `oneTarget` is ABSENT on this prompt, and absence is asserted
+    // rather than assumed: the key has exactly two inhabitants on the wire
+    // (`true` and missing), so a mirror that wrote `false` would be spelling
+    // "no constraint" a second way.
+    expect(phase.prompt).not.toHaveProperty("oneTarget", true);
+  });
+
+  it("🆕 D457 — carries attachCards.oneTarget through to the controller, and only to them", () => {
+    // The printed *"attach them to 1 of your Pokémon"*: the constraint is on the
+    // ANSWER, so the client that composes the answer has to be told. Without this
+    // mirror the online dialog offers a second body and the SERVER refuses the
+    // result — a dialog contradicting its own validator, which is the failure the
+    // `maxPerTarget` mirror above exists to prevent one key over.
+    const base = turnOneState();
+    const deckUids = base.players.p1.deck.slice(0, 2);
+    const state: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "attachCards",
+          candidates: deckUids,
+          targets: [
+            { seat: "p1", spot: { spot: "active" } },
+            { seat: "p1", spot: { spot: "bench", index: 0 } },
+          ],
+          max: 2,
+          oneTarget: true,
+          note: "Search your deck for up to 2 Basic Energy cards and attach them to 1 of your Pokémon.",
+        },
+        cont: CONT,
+      },
+    };
+    const phase = redactGame(state, "p1").phase;
+    if (phase.kind !== "effect:choose" || phase.prompt?.kind !== "attachCards") {
+      throw new Error("expected an attachCards prompt");
+    }
+    expect(phase.prompt.oneTarget).toBe(true);
+    // ⚠️ AND IT DOES NOT DRAG THE SIBLING KEY WITH IT — a mirror that wrote both
+    // from one source would cap the batch at one CARD as well as one BODY, which
+    // is `max: 1` and not what the card prints.
+    expect(phase.prompt.maxPerTarget).toBeUndefined();
+    // The opponent still sees nothing at all: a constraint is not a leak channel.
+    const opp = redactGame(state, "p2");
+    if (opp.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(opp.phase.prompt).toBeNull();
   });
 });
 

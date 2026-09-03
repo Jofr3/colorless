@@ -590,6 +590,9 @@ function effectDecisionFromPrompt(
           // Absent stays absent (the engine arm omits it for "no per-target cap");
           // spreading avoids writing an explicit `maxPerTarget: undefined` key.
           ...(prompt.maxPerTarget !== undefined ? { maxPerTarget: prompt.maxPerTarget } : {}),
+          // 🆕 D457 — `maxPerTarget`'s dual, spread for the identical reason: the
+          // engine omits it unless the card prints "1 of your Pokémon".
+          ...(prompt.oneTarget !== undefined ? { oneTarget: prompt.oneTarget } : {}),
           note: prompt.note,
         },
       };

@@ -846,7 +846,16 @@ describe("§7 — no ATTACK_EFFECT_SKIPPED on ANY branch, and no log row a decli
     // it. So the loud row is DRIVEN on this same fixture. Index 42 is the ONE index
     // of `fix-trainerops`'s 61 that no reader claims (measured at this head — index
     // 7 used to be the other one, and D422 is why it no longer is).
-    const UNREAD = 42;
+    // 🆕🛑 **D457 — 42 → 71, AND THE RE-POINT WAS FORCED BY THE DEMONSTRATOR
+    // RUNNING OUT.** D422 moved this constant off index 7 when that sentence was
+    // built; D457 built index 42, and unlike D422 there was NO other unread index
+    // to move to — all 71 of `fix-trainerops`' attacks were claimed by a live
+    // reader at this head (measured over `resolvedByAnyReader`). So the fixture
+    // gained index 71, the Future-banner attach (corpus line 404), which is
+    // DATA-BLOCKED rather than merely unbuilt: no ingested column classifies the
+    // banner, so this control cannot be silently disarmed by the next slice that
+    // writes an anchor. `testFixtures.ts` carries the whole argument.
+    const UNREAD = 71;
     const unread = (FIXTURE_POOL["fix-trainerops"]?.attacks ?? [])[UNREAD]?.effect ?? "";
     expect(unread).not.toBe("");
     expect(deriveAttackEffect(unread)).toBeNull();
@@ -1006,7 +1015,7 @@ describe("§8 — `MATCH_RECORD_VERSION` stays 26, and BOTH parks are driven thr
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.355.0");
+    expect(engineVersion).toBe("0.356.0");
   });
 });
 

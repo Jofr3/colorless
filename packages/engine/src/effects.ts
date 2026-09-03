@@ -7796,6 +7796,55 @@ export type EffectOp =
           the printed "for each of those Pokémon" (Janine's Secret Art). Absent =
           "in any way you like", no per-target limit. */
       maxPerTarget?: number;
+      /** 🆕🆕 **D457 — THE PRINTED *"attach them to **1 of** your Pokémon"*: every
+          card in the batch lands on the SAME chosen body.** The dual of
+          `maxPerTarget`, and the two bound opposite ends of the same map — that
+          one caps how many cards may share a target, this one caps how many
+          TARGETS the answer may name. Absent = the printed *"in any way you
+          like"*, every split legal.
+
+          🛑 **THIS IS THE FIELD D235 MEASURED AS MISSING AND PRICED ON THE WRONG
+          OP'S VOCABULARY.** Its block above says the phrase *"is UNREPRESENTABLE
+          here at count > 1, and it is representable one op over" —
+          `attachEnergyFrom.count` (D205), which pins a batch onto the ONE body
+          that op always picks. The mistake was reading `count` as the FIELD
+          rather than as the shape: this op's park is a MAP, so the constraint has
+          to be spelled on the map rather than on a count. Two sentences / **3
+          legal printings** (`censusAttackCorpus.ts` lines **403** and **412**)
+          were refused to the loud `ATTACK_EFFECT_SKIPPED` path for it.
+
+          ⚠️ **A `?: true` FLAG AND NOT A `maxTargets?: number`, WHICH IS THE
+          PRINT RATHER THAN A PREFERENCE.** MEASURED over all **640**
+          `legalAttackCorpus()` sentences: `attach (it|them) to …` prints **nine
+          distinct destination phrases**, and the only COUNTED one is *"1 of"* —
+          *"attach it to 1 of your Pokémon"* (4 sentences), *"attach them to 1 of
+          your Pokémon"* (1) and *"attach them to 1 of your Benched Pokémon"* (1);
+          the other three phrases name a set (*"this Pokémon"*, *"your {…}
+          Pokémon in any way you like"*, *"your Benched Pokémon in any way you
+          like"*). **No printing spells a second number.** ⚠️ What that pattern
+          CANNOT see: the ability (`abilities_json`) and Trainer (`effect`)
+          columns are outside `legalAttackCorpus()` entirely. So a numeric axis
+          would have exactly one reachable value in the column this reader serves,
+          and a caption branch for *"2 of your Pokémon"* would be a line no
+          printing here can reach. `attachFromDeckNote`'s own
+          doc states the rule it would break: *an unreachable branch is removed
+          rather than worded* (D205's `count <= 1`). The day a card prints a
+          second number this widens the way `attachFromTop.max` did — one key, not
+          two (D335/D352).
+
+          ⚠️ **OMITTED AT `max: 1`, WHERE IT IS UNOBSERVABLE.** One card has one
+          destination whatever this says, so the singular printings of the very
+          same destination phrase (*"a Basic {W} Energy card and attach it to 1 of
+          your Pokémon"*, 4 legal) keep the byte-identical programs they have had
+          since D235 — D104's minimal-shape rule, and the reason every pinned
+          program in `derivedDeckSearchAttach.test.ts` is unmoved by this slice.
+
+          Never printed beside `maxPerTarget` (that pair reads "at most 1 card, on
+          1 body", which is `max: 1`) and never beside `toSelf` (a batch aimed at
+          this Pokémon already has exactly one body — the op resolves it to a
+          0-or-1 ref list). Authoring it alone is the rule; this doc is the
+          enforcement, exactly as it is for `toSelf` below. */
+      oneTarget?: true;
       /** The printed "attach it to THIS Pokémon" (Pawmot "Electrogenesis"): the
           sole target is the Pokémon whose effect this is (`ctx.sourceUid`). No
           card prints it beside another target rule, and this member does not
@@ -17725,11 +17774,38 @@ const DISCARD_ATTACH = attachFromZoneAnchor(SOURCE_ZONE_PHRASE, "");
 // Basic {L} …"* (2), which is a different sentence SHAPE and therefore its own
 // arm by D232's rule.
 //
+// 🆕🆕 **D457 — 23 OF THE 28, AND THE 5 LEFT ARE THREE BLOCKERS.** The
+// batch-onto-one-body gap is CLOSED by `attachFromDeck.oneTarget` (see the op's
+// doc): corpus lines **403** (2 legal) and **412** (1 legal) now derive, the arm's
+// `destination.batch || count === 1` guard is gone, and the `UNREAD` table in
+// `derivedDeckSearchAttach.test.ts` steps 5 rows / 8 printings → 3 rows / 5.
+// ⚠️ **D235's PRICE OF THAT GAP WAS THE ONE FIGURE ON THIS PAGE THAT DID NOT
+// SURVIVE, AND IT WAS NOT THE COUNT.** It said the phrase *"is UNREPRESENTABLE
+// here"* — true of a `count` field on a MAP-answering park, false of the op,
+// which needed one flag on the map instead. **A "cannot" that names the wrong
+// carrier reads as a fact about the sentence** (D456's lesson, one family over).
+// The three that remain are unchanged and each keeps its own reason: the
+// Future/Tera SUBGROUP rider (3 printings — DATA-BLOCKED, no ingested column
+// classifies either banner: `packages/schema/src/catalog/card.ts` `cardSchema`
+// carries `stage`/`types`/`trainerType`/`energyType` and no subtype column), the
+// "of different types" distinctness `CardFilter` (1, on the same `sv08-161` as
+// the Tera one — BOTH blockers on one printing, re-measured by minimal pair:
+// dropping either one alone still derives to null), and the SECOND printed noun
+// (2).
+//
 // ✅ EVERY READ SITE PRICED BY GREPPING THE FIELDS, NOT THE OPS. `programPlayable`
 // is ZERO by the op's own doc (cardplay.ts:759 — `attachFromDeck` is deliberately
 // ungated, every carrier prints a shuffle); `redact.ts`, `log.ts`, both HUD
 // mirrors and `projection.ts` are ZERO because the park is the EXISTING
 // `attachCards` prompt Charizard ex has produced since M5;
+// 🆕 ⚠️ **AND D457 IS THE SLICE THAT MAKES THAT PARAGRAPH'S ZEROES STOP BEING
+// ZERO, WHICH IS THE COST OF THE FIELD RATHER THAN OF THE ARM.** D235 added no
+// prompt field, so every mirror of the `attachCards` park was free; `oneTarget`
+// is a prompt field, so `redact.ts`, `src/features/game/projection.ts` and BOTH
+// HUDs (`GameHud.tsx`, `OnlineHud.tsx`) carry one line each — the same five sites
+// `maxPerTarget` already occupies, found by grepping THAT field rather than by
+// trusting this list. `log.ts` stays ZERO (it logs the attachment, not the
+// prompt) and `programPlayable` stays ZERO (the op is still ungated).
 // `counterBenchPut.test.ts` (the guard D234 was surprised by) is ZERO because
 // this op carries no `source` field at all. **`preventBlock.test.ts`'s §11 table
 // is NOT zero** — `attachFromDeck` was absent from it, and both the verdict and
@@ -17765,11 +17841,17 @@ const DECK_SEARCH_POISON_TAIL =
     brace-coded rows are D234's shape and are copied on purpose.
 
     `batch: false` is the "attach **them** to **1 of** your …" rule: every card
-    in the batch lands on ONE chosen body, which `attachFromDeck` cannot say. At
-    count 1 the distinction is not observable — one card has one destination
-    either way — so those phrases are read at the singular and REFUSED at the
-    plural, rather than being dropped from the table and losing 4 legal printings
-    that are perfectly expressible.
+    in the batch lands on ONE chosen body. At count 1 the distinction is not
+    observable — one card has one destination either way — so those phrases were
+    read at the singular and REFUSED at the plural, rather than being dropped from
+    the table and losing 4 legal printings that are perfectly expressible.
+    🆕🆕 **D457 — THE PLURAL HALF IS NO LONGER A REFUSAL.** *"which
+    `attachFromDeck` cannot say"* was true of the op D235 shipped and is false of
+    this one: `oneTarget` says exactly that, so `batch: false` now selects a RIDER
+    at count > 1 instead of a fall-through, and the flag's meaning narrows from
+    "may this phrase be read at all above 1" to "does this phrase constrain the
+    map". The count-1 sentence is unchanged in both readings, which is why no
+    program in this family moved.
 
     `toSelf` is `batch: true` because the op resolves it to a 0-or-1 ref list
     (`sourceRef`): a batch aimed at "this Pokémon" has exactly one body to land
@@ -22049,20 +22131,30 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // rather than re-picked so the two attach families cannot disagree about
       // what counts as a printed number.
       count >= 1 &&
-      count <= MAX_PRINTED_ATTACH_COUNT &&
-      // 🛑 THE BATCH RULE, AND THE ONE CONDITION IN THIS ARM THAT IS ABOUT THE OP
-      // RATHER THAN THE TEXT: "attach them to 1 of your Pokémon" pins every card
-      // onto ONE chosen body, and `attachFromDeck`'s `attachCards` park hands back
-      // a MAP from card to target — so at count > 1 the program would silently
-      // permit a split the card does not print. Refused to the loud
-      // ATTACK_EFFECT_SKIPPED path instead (3 legal printings, measured).
-      (destination.batch || count === 1)
+      count <= MAX_PRINTED_ATTACH_COUNT
     ) {
       const attach: Extract<EffectOp, { op: "attachFromDeck" }> = {
         op: "attachFromDeck",
         filter: { kind: "basicEnergy", ...(energyType === undefined ? {} : { energyType }) },
         max: count,
         ...destination.riders,
+        // 🆕🆕 D457 — THE BATCH RULE, WHICH USED TO BE A REFUSAL AND IS NOW A
+        // RIDER. "attach them to 1 of your Pokémon" pins every card onto ONE
+        // chosen body; `attachFromDeck`'s `attachCards` park hands back a MAP
+        // from card to target, so until `oneTarget` existed the program would
+        // have silently permitted a split the card does not print, and D235
+        // refused these sentences to the loud ATTACK_EFFECT_SKIPPED path
+        // instead (3 legal printings, measured — corpus lines 403 and 412).
+        //
+        // ⚠️ THE `count > 1` HALF IS WHAT KEEPS EVERY PROGRAM D235 AUTHORED
+        // BYTE-IDENTICAL. At `max: 1` one card has one destination whatever
+        // this rider says, so writing it would be a field with no observable
+        // meaning (D104) on the FOUR legal singular printings of the same
+        // destination phrase — and these rows are compared BY VALUE against
+        // hand-authored registry ones (D135), where a decorative key is a
+        // mismatch. The table keeps `batch` as the axis it always was: a
+        // destination that admits a batch needs no rider at any count.
+        ...(destination.batch || count === 1 ? {} : { oneTarget: true as const }),
         // The §9.2 filing exists ONLY when the gate that reads it does — an
         // unread `recordAs` would be a field with no observable meaning, and
         // these rows are compared by value against hand-authored registry ones

@@ -317,7 +317,7 @@ describe("§1 — the three printed sentences, their population, and the fixture
     // same paraphrase and matches no real card. The strings above are asserted to be the
     // FIXTURE's bytes, and the fixture is asserted to be the CORPUS's.
     const attacks = FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
-    expect(attacks).toHaveLength(71);
+    expect(attacks).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect([HAND_READ, SNATCH, HAND_COUNT_IDX].map((i) => attacks[i]?.effect)).toEqual([
       ...CLAIMED,
     ]);

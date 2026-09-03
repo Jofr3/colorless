@@ -610,6 +610,12 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       — they are hidden deck cards the effect reveals); `targets` are the eligible
       own in-play refs (public board); `max` is how many may attach; `maxPerTarget`
       caps per-target ("for each of those Pokémon"), absent = no per-target limit.
+      🆕 `oneTarget` is that key's DUAL (D457) — the printed "attach them to
+      **1 of** your Pokémon", where every card in the answer must name the SAME
+      target; absent = "in any way you like", any split. A LITERAL `true` rather
+      than a boolean, so absence is the only way to spell "no constraint": a
+      `false` on the wire would be a second encoding of the same state, which is
+      the optional-key rule this file keeps everywhere.
       DECLINABLE (attach none). The answer pairs each picked `id` with a target
       ref. Controller-only. */
   z.object({
@@ -618,6 +624,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     targets: z.array(redactedPokemonRefSchema),
     max: z.number(),
     maxPerTarget: z.number().optional(),
+    oneTarget: z.literal(true).optional(),
     note: z.string(),
   }),
   /** Pick exactly ONE of another Pokémon's printed ATTACKS, to bar it for that

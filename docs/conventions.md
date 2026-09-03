@@ -3852,3 +3852,83 @@ asked with D421's criterion **applied**, not copied. The sequence of refusals no
 `{turn, amount: 0}`, and the deriver's `counters >= 1` guard is the only producer of a flat
 `installRecoil` in the engine — measured over the whole corpus and the whole registry, in the
 suite, rather than asserted.
+
+## A refusal names a CARRIER, and the carrier can be wrong (D457)
+
+D235 refused *"attach them to **1 of** your Pokémon"* at count > 1 with: *"`attachFromDeck` has
+`max` but no `attachEnergyFrom.count`, so the phrase is UNREPRESENTABLE here and it is
+representable one op over."* Every clause of that is true, and the conclusion is false. `count`
+pins a batch to the ONE body `attachEnergyFrom` always picks; this op's park answers with a MAP
+from card to target, so the same printed rule is a constraint **on the map** — how many TARGETS
+the answer may name — and needs a flag, not a count. It cost **one optional field** and it sat
+refused for 222 decisions.
+
+⚠️ **When a refusal says "unrepresentable", ask *in what*:** in the OP, in a FIELD, or in the
+shape of the ANSWER the park collects? A price written in a sibling op's vocabulary is a price
+for the sibling. And the reason this one survived so long is that it was RIGHT in its own terms:
+the successor greps for a missing field, finds the field genuinely missing, and re-derives the
+refusal instead of the mechanism.
+
+**Its dual is worth stating too:** when you add a per-X cap, ask whether the print also spells a
+cap on the number of Xs. `maxPerTarget` (cards per body) and `oneTarget` (bodies per answer)
+bound opposite ends of one map, and neither can be recovered from the other.
+
+## "Unread by every reader" is not "unbuilt" — measure the registry BEFORE pricing (D457)
+
+D457's brief handed over a measured family: 13 sentences / 18 printings that no
+`deriveAttack*` reader resolves. **Four of the thirteen (6 printings) are BUILT**, through the
+registry summand — and `censusAtHead.test.ts` requires the two summands to be DISJOINT
+(`registryUnits` asserts `resolvedByAnyReader(text) === false` for every registry sentence). So
+for those four, writing a reader arm does not *add* a build: it **redens the census until the
+registry row is retired**, and the honest delta is zero printings for two files of churn.
+
+⚠️ **Run `programFor`/`registryCardIds` over a family's sentences before ranking it by
+printings.** `resolvedByAnyReader` is a reader instrument and answers a reader question; D314
+said "refused by the deriver" and "unbuilt" are different claims, and at family scale they can
+differ by a third.
+
+## A demonstrator can run out of unread sentences (D457)
+
+`fix-trainerops` fields one attack per family so refusals have a live subject on a real board
+(D181's `Strafe` precedent). `optionalSelfSwitch.test.ts` drives the loud `ATTACK_EFFECT_SKIPPED`
+row off it as an ATTRIBUTION control (D214) — without one, a suite that only asserts
+`toHaveLength(0)` on that row is green on a build that stopped emitting it. D457 built index 42,
+which was **the last unread index of 71** (measured with `resolvedByAnyReader`, not assumed).
+
+- **The control must be re-pointed at a sentence a successor cannot casually build.** Index 71 is
+  the Future-banner attach: DATA-BLOCKED, because no ingested column classifies the banner
+  (`packages/schema/src/catalog/card.ts` `cardSchema` carries `stage`/`types`/`trainerType`/
+  `energyType` and no subtype column). A merely-unbuilt sentence would disarm the control the
+  next time somebody writes an anchor.
+- **The fixture is APPENDED and the length pin steps in every suite that carries it** — thirteen
+  of them at D457 — in one pass (D431: a green run after fixing the one that reddened is evidence
+  the runner stopped early).
+
+## A PROMPT field costs five mirrors; an OP field costs none (D457)
+
+D235 priced `redact.ts`, `projection.ts`, both HUDs and `log.ts` at **ZERO** because it added no
+prompt field — the park was an existing shape. D457 adds one, and the same list is non-zero:
+`packages/schema/src/match/redacted.ts`, `packages/engine/src/redact.ts`,
+`src/features/game/projection.ts`, `GameHud.tsx` and `OnlineHud.tsx`, plus the prompt KEY that
+decides remounting. Find them by grepping the SIBLING FIELD (`maxPerTarget`), never by trusting
+a list a previous slice wrote for a different shape.
+
+⚠️ **And a shared UI predicate needs unshared WORDS.** Both rules close a target row, so they
+ride one predicate — but `maxPerTarget` closes a body that *already has its share* and
+`oneTarget` closes a body *the Energy are not going to*. Rendering "already has one" over a
+Pokémon holding nothing is the dialog stating a false fact about the board, and no engine test
+can see it.
+
+## The park IS the road to storage (D457, refining D456)
+
+D453–D455 held `MATCH_RECORD_VERSION` partly on *"an `EffectOp` reaches storage only through a
+park"*; D456 found that argument inapplicable to a `GameState` field. D457 is the case where the
+op **does** park — and the lesson is that this is a reason to ASK the question, not to skip it:
+`attachFromDeck.oneTarget` rides `EffectContinuation.pendingOp` and `attachCards.oneTarget` rides
+the persisted `effect:choose` phase, so both are in a saved record.
+
+**The detectability argument came from the REST of the record again, and this time from a
+caption.** `attachFromDeckNote` builds the prompt's `note` from the same field, so a park whose
+note says *"attach them to 1 of your Pokémon"* while carrying no rider is a byte string this
+deploy cannot write: the two halves would have to disagree at the moment of writing. **When a
+field also decides a string, that string is the witness that the field was there.**

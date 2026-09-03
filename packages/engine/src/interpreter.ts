@@ -624,6 +624,20 @@ export type EffectPrompt =
       cards spread one-per-Pokémon is `max: 3, maxPerTarget: 1`, and neither
       number can be recovered from the other.
 
+      🆕🆕 **D457 — `oneTarget` IS THAT FIELD'S DUAL AND BOUNDS THE OTHER END OF
+      THE SAME MAP**: the printed *"attach them to **1 of** your Pokémon"*, where
+      every card in the batch shares ONE destination. `maxPerTarget` caps the
+      cards per target; this caps the TARGETS the answer may name, at the one
+      number the catalog prints (see `attachFromDeck.oneTarget` for the census
+      that makes it a flag rather than a count). Absent is "in any way you like"
+      again — so the two absences say the same thing from opposite ends, and a
+      prompt setting BOTH would be describing `max: 1`, which no printing spells.
+
+      ⚠️ **IT IS ENFORCED IN `cardplay.ts` AND MIRRORED, NEVER RE-DERIVED.** The
+      wire validator is the only place the rule lives (every other coupling on
+      this prompt is), and `redact.ts` / `projection.ts` / both HUDs carry it so
+      the dialog cannot offer a second body the validator will refuse.
+
       DECLINABLE: attaching none is a legal answer ("up to" / "any number"), and
       the op's leftovers clause still runs. */
   | {
@@ -632,6 +646,7 @@ export type EffectPrompt =
       targets: PokemonRef[];
       max: number;
       maxPerTarget?: number;
+      oneTarget?: true;
       note: string;
     }
   /** A yes/no: the answering seat may draw `count` cards (opponentMayDraw —
@@ -2490,6 +2505,13 @@ function stepOp(
           targets,
           max,
           ...(op.maxPerTarget === undefined ? {} : { maxPerTarget: op.maxPerTarget }),
+          // 🆕 D457 — the printed "attach them to 1 of your Pokémon", carried to
+          // the prompt the same way `maxPerTarget` is: spread rather than written
+          // as `oneTarget: undefined`, so a park that does not constrain the map
+          // serializes without the key at all (D104, and the reason the parked
+          // continuations of every program authored before this slice are
+          // byte-identical).
+          ...(op.oneTarget === undefined ? {} : { oneTarget: op.oneTarget }),
           note: attachFromDeckNote(op),
         },
       };
@@ -11634,6 +11656,15 @@ function attachFromTopOffer(
         second pick the validator then refuses. Without a per-target rule this
         ceiling does not exist (one Pokémon can take every card), which is why it
         reads as `op.max` when the rider is absent rather than as `targets.length`.
+      • 🆕 **`oneTarget` ADDS NO FOURTH CEILING, AND THAT IS THE ASYMMETRY WORTH
+        STATING** (D457). Its sibling caps cards PER target, so a short target list
+        shortens the pick; this one caps TARGETS, and one target may take every
+        card in the batch — *"attach them to 1 of your Pokémon"* on a one-Pokémon
+        board still attaches two. The board term is `targets.length >= 1`, which
+        the empty-target dead end above already answers, so the arithmetic here is
+        deliberately unmoved. A `Math.min(op.max, 1)` here would be the mistake
+        this bullet exists to name: it would offer ONE card off a card that prints
+        two.
 
     The board ceiling is taken BEFORE the collapse and the collapse runs at that
     cap, so the offer holds no representative the pick could not use: a pick that
@@ -13417,6 +13448,16 @@ function attachFromDeckNote(op: Extract<EffectOp, { op: "attachFromDeck" }>): st
     // reader noticed, which is the one thing this branch exists to say.
     const each = op.maxPerTarget === 1 ? "1" : `up to ${op.maxPerTarget}`;
     return `Search your deck for up to ${op.max} ${plural} and attach ${each} to each of up to ${op.max} of your ${where}.`;
+  }
+  // 🆕🆕 D457 — the printed "attach them to **1 of** your Pokémon", and the same
+  // rule that governs the branch above governs this one: "in any way you like"
+  // would be a LIE over a prompt whose validator refuses a second body, so the
+  // phrase is dropped and replaced by the card's own words. ⚠️ NO `max === 1`
+  // branch, because the op omits the rider there (a single card has a single
+  // destination) — an unreachable caption is removed rather than worded, D205's
+  // rule and this function's own.
+  if (op.oneTarget === true) {
+    return `Search your deck for up to ${op.max} ${plural} and attach them to 1 of your ${where}.`;
   }
   return op.max > 1
     ? `Search your deck for up to ${op.max} ${plural} and attach them to your ${where} in any way you like.`

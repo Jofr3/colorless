@@ -537,7 +537,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.355.0");
+    expect(engineVersion).toBe("0.356.0");
   });
 });
 

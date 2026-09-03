@@ -1146,6 +1146,18 @@ describe("projectionFromRedacted — the wire round-trip equals the local projec
         max: 2,
         note: "Attach anywhere.",
       },
+      // 🆕 D457 — the THIRD shape: `oneTarget` present, `maxPerTarget` absent. The
+      // two keys are spread independently on both sides of the wire, so a mirror
+      // that carried one and dropped the other round-trips for every prompt above
+      // and fails here — which is the only place that difference is observable.
+      {
+        kind: "attachCards",
+        candidates: deckUids,
+        targets: [active, bench0],
+        max: 2,
+        oneTarget: true,
+        note: "Attach them to 1 of your Pokémon.",
+      },
     ];
     for (const prompt of prompts) {
       const state: GameState = {

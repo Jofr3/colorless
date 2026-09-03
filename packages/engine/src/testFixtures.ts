@@ -4022,6 +4022,37 @@ export const FIXTURE_POOL: Record<string, Card> = {
         damage: "30×",
         effect: "This attack does 30 damage for each card in your opponent's hand.",
       },
+      /** 🆕🆕 **D457 — INDEX 71, AND IT IS FIELDED FOR A REASON NO EARLIER APPEND
+          HAD: THE DEMONSTRATOR RAN OUT OF UNREAD SENTENCES.** Every one of indices
+          0-70 is claimed by a live reader at this head (measured over
+          `resolvedByAnyReader`, not assumed) — index 42 was the last one, and D457
+          built it. `optionalSelfSwitch.test.ts` §7's ATTRIBUTION CONTROL (D214)
+          drives the loud `ATTACK_EFFECT_SKIPPED` row off THIS body, so with no
+          unread index left it had no subject at all: a suite that only ever
+          asserts `toHaveLength(0)` on that row is green on a build that stopped
+          emitting it.
+
+          ⚠️ **THE SENTENCE IS THIS FAMILY'S OWN NEXT RESIDUE ROW, NOT AN
+          ARBITRARY ONE** — `censusAttackCorpus.ts` line **404** (2 legal
+          printings), the Future-banner attach that `derivedDeckSearchAttach.test.ts`
+          `UNREAD` still refuses. It is DATA-BLOCKED rather than merely unbuilt: no
+          ingested column classifies the banner (`packages/schema/src/catalog/card.ts`
+          `cardSchema` carries `stage`/`types`/`trainerType`/`energyType` and no
+          subtype column), so it will not be built by a successor slice deciding to
+          write one anchor, which is exactly what a control needs.
+
+          ⚠️ **APPENDED, NEVER INSERTED** — 0-70 are addressed by constant in a
+          dozen sibling suites, and the length pin steps 71 → 72 in all THIRTEEN files
+          that carry it, in one pass (D431: a green run after fixing the one that
+          reddened is evidence the runner stopped early). The carrier id is
+          UNRESOLVED and is stated as such rather than invented (D425); the attack
+          NAME is this fixture's own, as 61/62 and 68-70 are. */
+      {
+        cost: ["Colorless"],
+        name: "Future Charge",
+        effect:
+          "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
