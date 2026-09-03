@@ -45,13 +45,28 @@
  * `raw`, `residue` and residue-printings must equal the three literals
  * `censusAtHead.test.ts` pins in its `residueSentences` rung. They did at
  * D459's head BEFORE this slice's own build (156 / 130 / 182) and they do
- * after it (155 / 129 / 180). 🆕🆕 **D460 MOVED THEM AGAIN — 152 / 126 / 176** (the
+ * after it (155 / 129 / 180). D460 MOVED THEM AGAIN — 152 / 126 / 176 (the
  * COIN-COUNT THRESHOLD, 3 sentences / 4 printings, `censusAttackCorpus.ts` file
- * lines 213, 214 and 228). ⚠️ **THAT IS THIS INSTRUMENT'S FIRST USE AS A TARGET
- * RATHER THAN AS A PRODUCT, AND THE RELATION HELD**: the three rows it classified
- * `COMPOUND-head` are exactly the three that left, `COMPOUND-head` fell 13 → 10
- * sentences and 16 → 12 printings, and the three pinned literals still agree with
- * `censusAtHead.test.ts` to the digit. **If they ever disagree, one of the two
+ * lines 213, 214 and 228). 🆕🆕 **D461 MOVES THEM TO 150 / 124 / 172** (the SCOPED
+ * BOARD HEAL, 2 sentences / 4 printings, `censusAttackCorpus.ts` file lines 273 and
+ * 274 — *"Heal 100 damage from each of your {Basic|Benched} Pokémon."*, the two
+ * `PHRASE-1` rows this instrument's own class table pointed at).
+ * ⚠️ **D460 WAS THIS INSTRUMENT'S FIRST USE AS A TARGET RATHER THAN AS A PRODUCT,
+ * AND THE RELATION HELD**: the three rows it classified `COMPOUND-head` are exactly
+ * the three that left, `COMPOUND-head` fell 13 → 10 sentences and 16 → 12
+ * printings, and the three pinned literals still agree with `censusAtHead.test.ts`
+ * to the digit.
+ * 🆕🆕 **D461 IS THE SECOND, AND IT IS THE SHARPER TEST OF THE TWO** — because a
+ * `PHRASE-1` row is the class this instrument is MOST LIKELY TO UNDERPRICE. Its
+ * evidence for the class is that deleting ONE token reaches a built string, which
+ * says WHERE the blocker is and says nothing about what the derived value LOSES.
+ * Here it lost the whole subject of the sentence in both rows — dropping `Basic`
+ * heals every evolved body, dropping `Benched` heals the attacker — so the slice
+ * cost an anchor, a map, a deriver arm, two op fields, two fixtures and an
+ * interpreter diff, against a class whose name says "one token". `PHRASE-1` fell
+ * **9 → 7 sentences and 13 → 9 printings**, the two rows it named are exactly the
+ * two that left, and the three pinned literals still agree to the digit. **READ A
+ * CLASS AS A LOWER BOUND ON THE WORK, NEVER AS AN ESTIMATE OF IT.** **If they ever disagree, one of the two
  * transcriptions of the four-way subtraction has drifted, and this file is the
  * one with no test behind it — read the suite first.**
  *

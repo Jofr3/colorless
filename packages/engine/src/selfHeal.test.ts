@@ -156,15 +156,18 @@ const REAL_NEAR_MISSES = [
   "Heal 60 damage from 1 of your Benched Pokémon.",
   "Heal all damage from 1 of your Benched Pokémon.",
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
-  // 🆕🆕 RE-POINTED AT D427 (0.328.0 → 0.329.0). This slot held *"Heal from this
-  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."* until
-  // D427 BUILT it (6 legal printings, `deriveAttackEffect` arm 45, `heal.amount: "dealt"`).
-  // Re-pointed rather than deleted, per the STANDING NOTE above, onto a row that is
-  // unmapped by every one of the twelve readers TODAY (measured, not assumed) and that
-  // is a NEARER miss for this anchor than the old one was: it prints this anchor's exact
-  // verb, its exact `(\d+)` slot and its exact `damage from` — and then a board-wide
-  // target where the anchor demands `this Pokémon`. 2 legal printings, corpus line 274.
-  "Heal 100 damage from each of your Benched Pokémon.",
+  // 🆕🆕 RE-POINTED AT D461 (0.359.0 → 0.360.0), FOR THE SECOND TIME. This slot held
+  // *"Heal from this Pokémon the same amount of damage you did to your opponent's Active
+  // Pokémon."* until D427 BUILT it, then *"Heal 100 damage from each of your Benched
+  // Pokémon."* until **D461 BUILT THAT TOO** (2 legal printings, corpus file line 274;
+  // `deriveAttackEffect` arm 17b over `healEach.benchOnly`). Re-pointed rather than
+  // deleted, per the STANDING NOTE above, onto the last row of the printed heal family
+  // that no reader claims — and the reason it is unclaimed is DATA rather than shape:
+  // the banner `Ancient` is in NO column of the persisted catalog, so the falsifier is
+  // an INGEST change. It is a NEARER miss for THIS anchor than either predecessor on
+  // the amount and the verb, and a farther one on the target, which is what the anchor
+  // is anchored against. 1 legal printing, corpus file line 272.
+  "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
   "This Pokémon is now Asleep. Heal 30 damage from it.",
   "Flip a coin. If heads, this attack does 30 more damage, and heal 30 damage from this Pokémon.",
 ] as const;
@@ -183,12 +186,21 @@ const REAL_NEAR_MISSES = [
     NOTHING reads are Iron Moth's damage-echo and Floette's compound gate" — is false in
     both halves as of D427 and was already false in one: the damage-echo is BUILT here,
     and Floette's gate is claimed by `deriveAttackBonusConsequent` (D317) and has been
-    for a long time. What the two slots hold now is the honest, MEASURED statement: index
-    4 is *"Heal 100 damage from each of your Benched Pokémon."*, refused by all twelve
-    readers today; index 6 is Floette's, refused by THIS anchor, which is the only claim
-    the assertion below ever made about it. The suite's claim — an unread sentence stays
-    LOUD on this reader — needs a live witness to keep being about anything, and index 4
-    is that witness. */
+    for a long time.
+
+    🆕🆕 **IT IS STILL TWO AT D461, AND INDEX 4 CHANGED IDENTITY AGAIN — FOR THE SAME
+    REASON AND ONE FAMILY OVER.** *"Heal 100 damage from each of your Benched Pokémon."*
+    was the live witness here for 34 decisions and D461 BUILT it, so the slot moves to
+    the one heal sentence whose blocker no arm in this package can reach: *"Heal 100
+    damage from 1 of your Benched **Ancient** Pokémon."* (corpus file line 272, 1 legal
+    printing). ⚠️ **AND THE NEW WITNESS IS A DIFFERENT KIND OF WITNESS, WHICH IS WORTH
+    SAYING RATHER THAN LETTING A READER ASSUME.** Its predecessors were unbuilt because
+    no slice had priced them; this one is unbuilt because the datum the sentence names
+    is in NO column of the persisted catalog, so it cannot be built by a reader at any
+    width. That makes it the most STABLE witness this slot has ever held — and if it
+    ever goes green, the thing that changed is the INGEST, which is exactly what a
+    witness should be able to tell you. Index 6 is Floette's, refused by THIS anchor,
+    which is the only claim the assertion below ever made about it. */
 const UNMAPPED_NEAR_MISSES = [REAL_NEAR_MISSES[4], REAL_NEAR_MISSES[6]] as const;
 
 /** U+00A0, spelled as an ESCAPE rather than typed. Byte-different from an ASCII

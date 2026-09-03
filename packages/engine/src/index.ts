@@ -19226,6 +19226,38 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.359.0 → **0.360.0** (D461 — THE SCOPED BOARD HEAL,
+    `censusAttackCorpus.ts` file lines 273 and 274: *"Heal 100 damage from each of your
+    {Basic|Benched} Pokémon."*, **2 sentences / 4 legal printings** that derived to
+    `null` now heal a NARROWED set. ONE new anchor (`OWN_BOARD_HEAL_NARROWED`), ONE new
+    noun MAP (`OWN_BOARD_HEAL_NOUNS`, two rows), ONE new deriver arm and **TWO new
+    OPTIONAL FIELDS on the shipped `healEach` op** — `basicOnly` and `benchOnly`, both
+    named verbatim off `AttachTargetRiders` (D204). ZERO new `EffectOp` MEMBERS, readers
+    (surface unmoved at 13), `CardFilter` members, prompts, events, error codes,
+    registry rows, `packages/schema` bytes or `redact.ts` bytes.
+    🛑 **THE FINDING IS THAT ONE PRINTED ADJECTIVE SLOT HOLDS TWO DIFFERENT KINDS OF
+    FACT.** *"Basic"* is a CARD read (`matchesFilter`'s `basicPokemon` arm, on the body's
+    TOP card) and *"Benched"* is a BOARD read (which spot the body occupies) — and
+    `matchesFilter` is never handed an `InPlayPokemon`, so no `CardFilter` can express
+    the second at any width. The union's rule then settles the shape: identical payload
+    ⇒ ONE member; two axes ⇒ TWO fields, not one `scope` enum, which could not spell the
+    unprinted crossing *"each of your Benched Basic Pokémon"* at all.
+    `MATCH_RECORD_VERSION` **STAYS 29** on D450's reachability rule, in the form D383's
+    WIDENING gives it: both fields are OPTIONAL and ABSENT is the unnarrowed reading, so
+    every v29 byte string spelling `{"op":"healEach","amount":N}` still parses and still
+    means what it meant; and `healEach` never parks, while the only producer of either
+    field returns a program of length ONE, so nothing reaches `phase.cont.pendingOp` or
+    `cont.rest`. Driven over the SERIALIZED BYTES in three directions including LOSS
+    (`scopedBoardHeal.test.ts` §7). ⚠️ THE VERSION TAX, RE-MEASURED AT HEAD BY EXACT
+    STRING COUNT OVER ALL THREE SPELLINGS AND NOT INHERITED: **38 assertions / 3 `it()`
+    TITLES / 42 sites** BEFORE this slice's own pin — 37 `expect(engineVersion).toBe(…)`
+    pins across 37 test files, ONE `expect(manifest.version).toBe(…)` in
+    `legacyEnergy.test.ts` (which carries both), THREE `it()` titles that spell the
+    version (`coinThreshold`, `derivedDeckSearchAttach`, `selfEnergyScaling`),
+    `packages/engine/package.json`, this declaration, this doc block and D275's mutant
+    `find`. That reproduces D460's inherited forecast of "38 assertions / 3 titles" TO
+    THE DIGIT. **D461 AUTHORS THE 39th ASSERTION** (`scopedBoardHeal.test.ts` §7), so a
+    successor inherits **39 assertions / 3 titles / 43 sites**.)
     🆕🆕 engineVersion 0.358.0 → **0.359.0** (D460 — THE COIN-COUNT THRESHOLD,
     `censusAttackCorpus.ts` file lines 213, 214 and 228: 3 sentences / 4 legal
     printings that derived to `null` now fold `per × heads` AND apply a Special
@@ -19266,7 +19298,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.359.0";
+export const engineVersion = "0.360.0";
 
 export type {
   ApplyResult,

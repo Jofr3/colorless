@@ -108,18 +108,19 @@ const REAL_NEAR_MISSES = [
   "Heal 60 damage from 1 of your Benched Pokémon.",
   "Heal all damage from 1 of your Benched Pokémon.",
   "Flip a coin. If heads, heal 30 damage from this Pokémon.",
-  // 🆕🆕 RE-POINTED AT D427 (0.328.0 → 0.329.0). This slot held *"Heal from this
-  // Pokémon the same amount of damage you did to your opponent's Active Pokémon."* — the
-  // row the doc block below calls *"an amount read off the damage just dealt"* — until
-  // D427 BUILT it (6 legal printings; `deriveAttackEffect` arm 45 over
-  // `heal.amount: number | "dealt"`). Re-pointed rather than deleted, per the STANDING
-  // NOTE above, onto a row refused by every one of the twelve readers TODAY (measured,
-  // not assumed) and a NEARER miss for THIS anchor than the old one: it prints this
-  // arm's exact `Heal (\d+) damage from each of your` head and then NARROWS the board
-  // with `Basic`, which is the one word between it and a whole-board heal. A build that
-  // dropped the adjective from the anchor would heal a Bench the card does not name.
-  // 2 legal printings, corpus line 273.
-  "Heal 100 damage from each of your Basic Pokémon.",
+  // 🆕🆕 RE-POINTED AT D461 (0.359.0 → 0.360.0), FOR THE SECOND TIME. This slot held
+  // *"Heal from this Pokémon the same amount of damage you did to your opponent's Active
+  // Pokémon."* until D427 BUILT it, then *"Heal 100 damage from each of your **Basic**
+  // Pokémon."* until **D461 BUILT THAT TOO** (2 legal printings, corpus file line 273;
+  // `deriveAttackEffect` arm 17b over `healEach.basicOnly`). Re-pointed rather than
+  // deleted, per the STANDING NOTE above, onto the one row of the printed heal family
+  // that is STILL refused by every reader — and refused for a reason no arm can fix:
+  // the banner `Ancient` is in NO column of the persisted catalog (`PREVENT_DAMAGE_FROM_CLASS`,
+  // re-read at D439/D451/D461), so the falsifier is an INGEST change. It is a NEARER
+  // miss for this anchor than either predecessor on the zone word and a FARTHER one on
+  // the determiner, which is exactly the pair of axes this anchor is anchored against.
+  // 1 legal printing, corpus file line 272.
+  "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
   "Choose up to 2 of your Pokémon and heal 50 damage from each of them.",
   "Heal 30 damage from each Pokémon (both yours and your opponent's).",
 ] as const;
@@ -338,10 +339,6 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
       `Heal${NBSP}30 damage from each of your Pokémon.`,
       // An INTERIOR double space is not trimmable.
       "Heal  30 damage from each of your Pokémon.",
-      // THE ZONE WORD. "Benched" EXCLUDES the Active (D120's rule: honour the printed
-      // zone), so it is a different target and a different op — and nothing in the
-      // pool prints this spread form at all today.
-      "Heal 30 damage from each of your Benched Pokémon.",
       // THE OTHER SIDE. Healing the opponent's board is not a thing this arm can do,
       // and a reader that dropped the possessive would do it silently.
       "Heal 30 damage from each of your opponent's Pokémon.",
@@ -372,6 +369,25 @@ describe("the anchor — 7 printings, 2 clauses, one sentence", () => {
     ]) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
+    // 🆕🆕 THE ZONE WORD MOVED OUT OF THAT LIST AT D461, AND THE COMMENT IT CARRIED
+    // WAS FALSE BEFORE IT MOVED. It read *"nothing in the pool prints this spread form
+    // at all today"* — and the pool prints it TWICE (corpus file line 274, *"Heal 100
+    // damage from each of your Benched Pokémon."*, 2 legal printings). The rest of that
+    // comment was right and is what D461 built: "Benched" EXCLUDES the Active (D120's
+    // rule, honour the printed zone), so it is a different target — but it is the SAME
+    // op with a rider rather than "a different op", which is the other half the old
+    // comment guessed at. Corrected in place and dated (D423) rather than deleted.
+    //
+    // The claim this rung makes now is STRONGER than the null it replaces: the zone
+    // word derives, and it derives to something that is NOT the unnarrowed board heal.
+    // A build that let the narrowed anchor fall through to arm 17 passes a `toBeNull`
+    // and fails here.
+    expect(deriveAttackEffect("Heal 30 damage from each of your Benched Pokémon.")).toEqual([
+      { op: "healEach", amount: 30, benchOnly: true },
+    ]);
+    expect(deriveAttackEffect("Heal 30 damage from each of your Benched Pokémon.")).not.toEqual(
+      deriveAttackEffect("Heal 30 damage from each of your Pokémon."),
+    );
     // Outer whitespace SURVIVES by design (the deriver trims), so this pair states
     // which drift is tolerated and which is not.
     expect(deriveAttackEffect("  Heal 30 damage from each of your Pokémon.\n")).toEqual([

@@ -4246,8 +4246,72 @@ export type EffectOp =
       IN-PLAY bodies and compares their TOP card's `types`, which is why it is a
       field on the op beside `attachEnergyTargets`' `targetType` rider and NOT a
       `CardFilter` member — `typedPokemon` is the deck/hand/discard half of the
-      same axis and would be the wrong instrument here. */
-  | { op: "healEach"; amount: number; pokemonType?: PokemonType }
+      same axis and would be the wrong instrument here.
+
+      🆕🆕 **D461 — THE PRINTED SET IS NARROWED BY ONE ADJECTIVE, AND IT COSTS TWO
+      FIELDS BECAUSE IT IS TWO AXES.** *"Heal 100 damage from each of your **Basic**
+      Pokémon."* (2 legal printings, corpus file line 273) and *"Heal 100 damage from
+      each of your **Benched** Pokémon."* (2, file line 274). That is the WHOLE
+      narrowed population of this sentence, measured rather than sampled: running
+      `/^Heal (\d+) damage from each of your (.+) Pokémon\.$/` over all 640 rows of
+      `legalAttackCorpus()` returns exactly these two and nothing else, so the printed
+      adjective vocabulary is closed at two words today.
+
+      🛑 **ONE MEMBER, TWO FIELDS — NOT TWO MEMBERS, AND NOT ONE ENUM.** The union's
+      rule is *nullary or asymmetric payload ⇒ two members; identical payload ⇒ one
+      member with the discriminator as a field*, and the payload is identical: both
+      sentences print ONE amount and nothing else. So it is one member. But the two
+      adjectives are not one FIELD, because they are not one axis: *"Basic"* is a CARD
+      fact (the stage printed on the body's top card) and *"Benched"* is a BOARD fact
+      (which spot the body occupies). A single `scope: "basic" | "bench"` enum would
+      put two axes in one slot — `attachFromTop.restTo`'s standing refusal, *"two keys
+      on one axis can be set to contradict each other"*, pointed the other way — and
+      would be UNABLE TO SPELL the crossing *"each of your Benched Basic Pokémon"* at
+      any width. The catalog does not print that crossing today; the shape must not be
+      the reason it could never be read.
+
+      🛑 **THE NAMES ARE `AttachTargetRiders`' NAMES, VERBATIM, AND THAT INTERFACE IS
+      THE PRECEDENT RATHER THAN A COINCIDENCE.** D204 named it *"the engine's in-play
+      target filter"* and it already carries TWO CARD FACTS (`targetType`,
+      `basicOnly`) and TWO BOARD FACTS (`benchOnly`, `notIfKO`) as flat riders on one
+      op, for the stated reason that the READ SITE reads a BOARD BODY and not a card.
+      `healEach` reads the same kind of thing at the same kind of site.
+
+      🛑 **AND `filter?: CardFilter` IS REFUSED HERE ON D204's ARGUMENT, RE-READ AT
+      HEAD RATHER THAN INHERITED.** `matchesFilter`'s signature is
+      `(card: Card | undefined, filter: CardFilter)` — it is NEVER handed an
+      `InPlayPokemon` — so no `CardFilter` member can express *"Benched"* at any
+      width, and a filter field would carry only half the sentence while admitting
+      seven members that are false for every board top card by construction. It would
+      also give TWO ways to say "Basic" on one object, which is the exact sentence
+      `knockOutChosen.basicOnly` quotes: *"`gust.basicOnly` verbatim, read through
+      `matchesFilter`'s `basicPokemon` arm so board-side 'Basic' stays ONE
+      predicate"*. This op asks that question through that same call.
+
+      ⚠️ **BEHAVIOUR-PRESERVING WHEN ABSENT**, `gust.basicOnly`'s contract verbatim:
+      every producer that predates D461 — Garganacl's "Blessed Salt", Fennel, Clemont's
+      Quick Wit and the bare `OWN_BOARD_HEAL` arm — spells neither field and reads
+      exactly as it did. */
+  | {
+      op: "healEach";
+      amount: number;
+      pokemonType?: PokemonType;
+      /** 🆕🆕 D461 — *"each of your **Basic** Pokémon"*. Only bodies whose TOP card is
+          a Basic Pokémon, asked through `matchesFilter(card, { kind: "basicPokemon" })`
+          so board-side "Basic" stays ONE predicate (`gust` / `knockOutChosen` /
+          `AttachTargetRiders` all spell it this way). A body whose top card cannot be
+          resolved is SKIPPED, never healed — `matchesFilter` answers false for
+          `undefined`, its conservative direction, and a data gap is never healed by
+          default (the `pokemonType` gate one paragraph up takes the same direction).
+          Absent = every body in scope. */
+      basicOnly?: true;
+      /** 🆕🆕 D461 — *"each of your **Benched** Pokémon"*. The Active is not in the set
+          at all. Absent = the Active AND the whole Bench, which is D133's reading of
+          the unnarrowed print (§1.1 — the Active is one of your Pokémon) and which the
+          printed word "Benched" is the only thing that removes. It is a BOARD fact and
+          therefore a rider rather than a filter; see the block above. */
+      benchOnly?: true;
+    }
   /** Heal `amount` HP from EVERY in-play Pokémon on BOTH boards (Picnic Basket
       "Heal 30 damage from each Pokémon (both yours and your opponent's)"). The
       seat-blind twin of `healEach` — the whole table heals, not just the
@@ -9514,6 +9578,68 @@ const SELF_HEAL_DEALT =
 // this path. (That one is a Supporter and never reaches this reader anyway, but
 // the guard should not depend on which reader a card happens to route through.)
 const OWN_BOARD_HEAL = /^Heal (\d+) damage from each of your Pokémon\.$/;
+// 🆕🆕 D461 — THE SAME BOARD HEAL WITH THE SET NARROWED BY ONE PRINTED ADJECTIVE.
+// *"Heal N damage from each of your <ADJ> Pokémon."* — measured over
+// `legalAttackCorpus()` (the committed `legal_standard = 1` attack column, 640 rows)
+// by running the pattern below against every row, ALL HITS PRINTED WHOLE:
+//
+//   • "Heal 100 damage from each of your Basic Pokémon."     2 legal, file line 273
+//     → `basicOnly` (a CARD fact, `matchesFilter`'s `basicPokemon` arm)
+//   • "Heal 100 damage from each of your Benched Pokémon."   2 legal, file line 274
+//     → `benchOnly` (a BOARD fact, and one no `CardFilter` can express at any width)
+//
+// So the anchor reaches 2 sentences / 4 printings and the VOCABULARY claims all of
+// them. There is no third adjective and no residual fall-through — stated because
+// D439's twin split 7 hits into 5 claimed and 2 refused, and this one does not.
+//
+// 🛑 A SEPARATE ANCHOR AND NOT AN OPTIONAL GROUP INSIDE `OWN_BOARD_HEAL`, on D441's
+// rule and for its second payoff: a new anchor breaks no existing row. The two are
+// DISJOINT BY CONSTRUCTION rather than by luck — this one requires `your ` + at least
+// one captured character + ` Pokémon.`, and the bare sentence has nothing between
+// `your ` and `Pokémon.` for the capture to take, so neither pattern can match the
+// other's text. Measured both ways in `scopedBoardHeal.test.ts` §1 rather than argued,
+// which is what makes the ORDER of the two arms immaterial.
+//
+// 🛑 THE ADJECTIVE IS A CAPTURE READ THROUGH A MAP AND NOT A `(Basic|Benched)`
+// ALTERNATION — `CLAUSE_ENERGY_TOKENS`' and `IN_PLAY_BODY_NOUNS`' reason verbatim:
+// the accepted vocabulary is a single list rather than something somebody edits by
+// hand in two places, and an adjective the map does not know falls to the LOUD
+// `ATTACK_EFFECT_SKIPPED` path instead of being read as the unnarrowed total. That
+// direction matters more here than in most families: the unnarrowed reading heals a
+// SUPERSET of the printed bodies, so a permissive miss is a quiet wrong answer.
+//
+// 🛑 THE `(?!opponent)` LOOKAHEAD IS LOAD-BEARING AND IS D439's GUARD VERBATIM.
+// Without it the capture would take `opponent's` out of a hypothetical *"Heal N
+// damage from each of your opponent's Pokémon."* and hand it to the map. Today the
+// map would refuse that string and the card would merely be LOUD; the lookahead is
+// what stops the refusal turning into a WRONG SEAT the day an opponent-side heal
+// noun lands. `boardHeal.test.ts` has pinned that exact sentence as a refusal since
+// D133 and it stays pinned, now against two anchors instead of one.
+//
+// 🛑 THE CAPTURE IS `[^.]+` AND NOT `(.+)`, D439's guard verbatim: a class that
+// cannot cross a `.` cannot span a sentence break, so this anchor can never swallow a
+// compound's second clause the way D207 paid for three times. `Pokémon` carries the
+// real é (U+00E9). No /i, whole-sentence anchored with a required trailing period and
+// a capital `Heal`, for the family's stated reason (Saguaro's mid-sentence tail).
+const OWN_BOARD_HEAL_NARROWED =
+  /^Heal (\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\.$/;
+/** The two riders the printed adjective can set, taken OFF the op with `Pick` rather
+    than re-declared, so a field rename cannot leave this map behind still compiling. */
+type HealEachScope = Pick<Extract<EffectOp, { op: "healEach" }>, "basicOnly" | "benchOnly">;
+/** The printed adjectives this reader accepts, mapped to the riders that ARE them. A
+    MAP and not a regex alternation, for `IN_PLAY_BODY_NOUNS`' stated reason — the map
+    is what refuses, so the anchor stays loose and the vocabulary stays in one place.
+
+    ⚠️ THE TWO VALUES ARE DIFFERENT KINDS OF FACT AND THAT IS THE WHOLE FINDING OF
+    D461: `Basic` narrows by a CARD property, `Benched` by a BOARD POSITION. They can
+    share a map because they land in different FIELDS of one op — see the `healEach`
+    member for why that is one member rather than two, and why it is two fields rather
+    than one enum. A future *"Benched Basic"* crossing needs a map ROW and no
+    vocabulary at all, which is the test that the shape is the right one. */
+const OWN_BOARD_HEAL_NOUNS: ReadonlyMap<string, HealEachScope> = new Map<string, HealEachScope>([
+  ["Basic", { basicOnly: true }],
+  ["Benched", { benchOnly: true }],
+]);
 // The CHOSEN heal (D135) — "Heal {N|all} damage from 1 of your [Benched]
 // Pokémon.", the whole printed effect, 10 printings across 7 distinct clauses
 // and the third heal shape the pool prints. Census run 2026-08-01 against the
@@ -20260,6 +20386,32 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // clamps PER POKÉMON to the damage actually present, so a malformed large
     // amount heals the board to full and stops — a legal state.
     if (amount >= 1) return [{ op: "healEach", amount }];
+  }
+
+  // 17b. 🆕🆕 D461 — "Heal {N} damage from each of your {Basic|Benched} Pokémon."
+  //      The SAME action over a NARROWED set: 2 sentences / 4 legal printings
+  //      (corpus file lines 273 and 274), claimed by a SECOND anchor over the SAME
+  //      op through two new optional riders. Neither the verb, the amount nor the
+  //      destination is new — the blocker census said so before this arm was
+  //      written, by deleting the one adjective and watching the remainder derive
+  //      to `[{ op: "healEach", amount: 100 }]` — so the whole slice is WHICH BODIES.
+  //
+  //      🛑 THE DERIVED VALUE LOSES A DIFFERENT THING IN EACH CASE, WHICH IS WHY
+  //      "delete one token and it builds" is a statement about the BLOCKER and not
+  //      about the price. Dropping "Basic" heals every EVOLVED body on the side;
+  //      dropping "Benched" heals the ATTACKER. Both are supersets of the printed
+  //      set, so both mis-readings are QUIET — the log is longer, never shorter.
+  //
+  //      ⚠️ AN UNKNOWN ADJECTIVE FALLS THROUGH rather than defaulting: the arm only
+  //      returns when the map ANSWERS, so a future "each of your Ancient Pokémon"
+  //      reaches the loud ATTACK_EFFECT_SKIPPED path instead of healing the whole
+  //      board. The `amount >= 1` guard is the one every arm here carries and is
+  //      checked beside it, in the same expression, for arm 17's stated reason.
+  match = OWN_BOARD_HEAL_NARROWED.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    const scope = OWN_BOARD_HEAL_NOUNS.get(match[2] ?? "");
+    if (amount >= 1 && scope !== undefined) return [{ op: "healEach", amount, ...scope }];
   }
 
   // 18/19. "Flip a coin. If heads, <action>." — D134's FLIP-GATED OP family, the

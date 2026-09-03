@@ -2960,6 +2960,79 @@ export const FIXTURE_POOL: Record<string, Card> = {
       the PRINTING COUNTS are measurable off the committed corpus and are what the
       suite pins; the card ids are not, and an invented one would be indistinguishable
       from a real one to every later reader. */
+  /** FIXTURE — 🆕🆕 D461's SCOPED BOARD-HEAL ATTACKER, a BASIC. Both printed
+      sentences of the family on ONE body, at indices 0 and 1, so the only thing
+      that varies between the cases is the printed ADJECTIVE — two separate
+      fixtures would have varied the HP, the cost and the stage with it.
+
+      🛑 **BOTH EFFECT STRINGS ARE CORPUS ROWS, ASSERTED RATHER THAN TRUSTED**
+      (D452's rule: a byte pin on an invented string is green by construction).
+      Each is looked up in `legalAttackCorpus()` by `scopedBoardHeal.test.ts` §1,
+      WITH its printing count, so a hand-retyped near-miss reddens instead of
+      passing.
+
+      ⚠️ **NO PRINTED `damage` ON EITHER**, so the heal is the entire visible result
+      and a case can count HEALED rows without a damage epilogue interleaving
+      anything. The committed corpus records the EFFECT column only, so what the
+      real printings put in their `damage` field is not knowable in this checkout;
+      omitting it is the honest fixture and is stated rather than implied.
+
+      ⚠️ **340 HP AND NO WEAKNESS**, `fix-titan`'s figures, because every case here
+      parks 100+ damage on a body and then asserts what it heals — a body that
+      could be Knocked Out mid-walk would take its own assertion off the board.
+
+      ⚠️ **SYNTHETIC ID, AND THE REASON IS STATED RATHER THAN PAPERED OVER**
+      (D425): this checkout has no D1, so the printing ids behind corpus file
+      lines 273 and 274 CANNOT BE RESOLVED and are deliberately not guessed. The
+      SENTENCES and the PRINTING COUNTS are measurable off the committed corpus
+      and are what the suite pins; the card ids are not. */
+  "fix-scopedheal": battler("fix-scopedheal", {
+    hp: 340,
+    retreat: 4,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Basic Salve",
+        effect: "Heal 100 damage from each of your Basic Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Bench Salve",
+        effect: "Heal 100 damage from each of your Benched Pokémon.",
+      },
+    ],
+  }),
+  /** FIXTURE — 🆕🆕 D461's EVOLVED twin of the body above: the SAME two attacks at
+      the SAME two indices on a **Stage 1**, which is the only thing that differs.
+
+      🛑 **IT EXISTS BECAUSE THE TWO RIDERS DISAGREE ABOUT THE ATTACKER.** Under
+      the `benchOnly` sentence the Active is out of the set whatever it is; under
+      the `basicOnly` one the Active is IN the set when it is a Basic and OUT when
+      it is not. A suite with only a Basic attacker can see the first and cannot
+      see the second, and the second is the case where the card excludes ITSELF.
+
+      ⚠️ **IT IS NEVER EVOLVED INTO — IT IS FIELDED BY SURGERY**, exactly as
+      `boardHeal.test.ts` fields a Stage 2 Skeledirge ex as an opening Active. The
+      `evolveFrom` names this fixture's own Basic twin so the datum is coherent if
+      anything ever reads it; nothing in this slice does. */
+  "fix-scopedheal-evo": battler("fix-scopedheal-evo", {
+    stage: "Stage1",
+    evolveFrom: "fix-scopedheal",
+    hp: 340,
+    retreat: 4,
+    attacks: [
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Basic Salve",
+        effect: "Heal 100 damage from each of your Basic Pokémon.",
+      },
+      {
+        cost: ["Colorless", "Colorless"],
+        name: "Bench Salve",
+        effect: "Heal 100 damage from each of your Benched Pokémon.",
+      },
+    ],
+  }),
   "fix-threshflip": battler("fix-threshflip", {
     hp: 200,
     attacks: [
@@ -18706,6 +18779,27 @@ export const COIN_THRESHOLD_DECK = deckOf({
   "fix-energy": 8, // Basic {C} — pays every one of the three {C}{C} costs
   "sv02-193": 4, // Therapeutic Energy — the §12 immunity control on the DEFENDER
   "fix-titan": 44, // 340 HP neutral Basic — DOMINANT starter and the never-KO'd defender
+});
+
+/** 🆕🆕 D461's SCOPED BOARD-HEAL deck (`scopedBoardHeal.test.ts`). **ITS OWN 60, ON
+    D412's RULE** — `BOARD_HEAL_DECK` is D133's and every board in `boardHeal.test.ts`
+    is drawn off it, so adding two lines there would reshuffle a suite this slice
+    must leave alone (D412 paid exactly that price once already).
+
+    `fix-titan` is BOTH the mulligan-free dominant starter AND the neutral BASIC body
+    every bench case counts on, and its 340 HP is chosen rather than inherited:
+    nothing here deals damage at all, but every case parks 100+ on a body and then
+    asserts what it heals, so no body may be near a Knock Out for an unrelated
+    reason. `fix-scopedheal-evo` carries the same 340 for the same reason on the
+    other side of the stage line.
+
+    NO SEED SWEEP: the two sentences take no coin and consume no rng, so one
+    deterministic board is the whole account (D133's own call, one family over). */
+export const SCOPED_HEAL_DECK = deckOf({
+  "fix-scopedheal": 4, // both printed sentences, at indices 0 and 1 — the BASIC attacker
+  "fix-scopedheal-evo": 4, // the same two attacks on a Stage 1 — the evolved body/attacker
+  "fix-energy": 8, // Basic {C} — pays both {C}{C} costs
+  "fix-titan": 44, // 340 HP neutral BASIC — dominant starter, bench filler, defender
 });
 
 export const PER_HEADS_PROGRAM_DECK = deckOf({

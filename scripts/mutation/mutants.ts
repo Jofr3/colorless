@@ -5736,6 +5736,12 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
+    // ⚠ RE-POINTED AT D461 (0.359.0 → 0.360.0) — the question was ASKED again, not
+    // inherited: engine behaviour moved (two printed sentences that derived to null now
+    // heal a NARROWED set of the controller's own bodies), and the vocabulary this time
+    // is TWO OPTIONAL FIELDS on a shipped op rather than a new member — which is the
+    // third distinct vocabulary size in three slices (D459 none, D460 a union member,
+    // D461 two fields). The bump is argued from BEHAVIOUR in all three, deliberately.
     // ⚠ RE-POINTED AT D460 (0.358.0 → 0.359.0) — the question was ASKED again, not
     // inherited: engine behaviour moved (three printed sentences that derived to null now
     // fold `per × heads` and apply a Special Condition off a threshold over the same
@@ -5763,7 +5769,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.359.0";',
+    find: 'export const engineVersion = "0.360.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23277,5 +23283,169 @@ export const MUTANTS: Mutant[] = [
     replace: "    \"maxSize\": 2097152,",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/lint-coverage.ts"],
+  },
+  // ── D461 — THE SCOPED BOARD HEAL. Sixteen rows, and the split is the one the
+  //    slice's own finding predicts: SEVEN on the PRODUCER (`effects.ts` — the
+  //    anchor, the noun map and the arm) and NINE on the IMPLEMENTATION
+  //    (`interpreter.ts` — the two riders and the fold's three seat lines).
+  //    🛑 EVERY ONE OF THE THIRTEEN BEHAVIOURAL ROWS IS A CLAIM ABOUT **WHICH
+  //    BODIES**, because that is the entire content of the slice: the verb, the
+  //    amount and the destination all shipped before it. So none of them can be
+  //    killed by a derived-value assertion alone except the two that change the
+  //    op's KEY SET, and the rest need a board on which the two printed sets
+  //    DIFFER AND ARE NOT NESTED — a Basic Active, a Basic bench body and an
+  //    EVOLVED bench body, which §3 and §4 share on purpose.
+  //    ⚠️ AND THE QUIET DIRECTION IS THE COMMON ONE HERE. Every mis-reading of a
+  //    narrowing is a SUPERSET of the printed set, so the log grows rows and never
+  //    loses them; there is no ATTACK_EFFECT_SKIPPED to catch and no count that
+  //    goes down. C3, C8 and C10 are that shape three different ways.
+  //    ⚠️ THE LAST THREE ARE D452's ABSENCE AUDIT rather than D461's own claims:
+  //    `opcoverage` reports `healEach` at **0/3 seat lines** at D460's head — four
+  //    producer-side rows since D266 and not one line of the walk — and this is
+  //    the slice editing the walk. Stated so a later reader can tell a coverage
+  //    row from a slice row. ──
+  {
+    id: "D461-narrowed-heal-map-swaps-the-two-adjectives",
+    decision: "D461",
+    what: "🛑 C1 — **THE TWO MAP ROWS TRADE VALUES**: the printed *\"Basic\"* sets the BENCH scope and the printed *\"Benched\"* sets the BASIC filter. Both sentences still derive, still to `healEach`, still at 100, and still with exactly one rider — every shape assertion in this file stays green. What changes is WHICH BODIES, and the two printed sets are NOT NESTED (the Basic sentence takes the Active and bench 0; the Benched one takes bench 0 and bench 1), so the only witness is a board carrying a Basic Active, a Basic bench body and an EVOLVED bench body at once. That board is §3 and §4 sharing one fixture, and it exists for this mutant",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Basic\", { basicOnly: true }],\n  [\"Benched\", { benchOnly: true }],",
+    replace: "  [\"Basic\", { benchOnly: true }],\n  [\"Benched\", { basicOnly: true }],",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-narrowed-heal-map-drops-the-bench-row",
+    decision: "D461",
+    what: "🛑 C2 — **THE MAP LOSES ITS SECOND ROW**, so *\"Heal 100 damage from each of your Benched Pokémon.\"* falls through the arm and out of the reader entirely. This is the LOUD direction and it is the one the map exists to take: the arm only returns when the map ANSWERS, so an adjective it does not know reaches ATTACK_EFFECT_SKIPPED rather than being read as the unnarrowed total. Killed twice over — by the derive rung in §1 and by the census ledger rung, which asserts that exactly ONE row of the printed heal family is still unbuilt",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Benched\", { benchOnly: true }],\n]);",
+    replace: "]);",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-unknown-adjective-falls-through-to-the-whole-board",
+    decision: "D461",
+    what: "🛑 C3 — **THE `scope !== undefined` GUARD GOES, AND AN UNKNOWN ADJECTIVE BECOMES THE UNNARROWED BOARD HEAL.** `...undefined` spreads nothing, so *\"Heal 100 damage from each of your Ancient Pokémon.\"* — and every other noun the vocabulary refuses — derives to `[{op:\"healEach\", amount:100}]` and heals the WHOLE side. **The quiet direction, and the worst one available in this family**: the unnarrowed reading is a SUPERSET of every narrowed one, so the log grows rows and never loses them, and no board that only checks the two BUILT sentences can see it. §1's map-refusal rung is the whole guard",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && scope !== undefined) return [{ op: \"healEach\", amount, ...scope }];",
+    replace: "    if (amount >= 1) return [{ op: \"healEach\", amount, ...scope }];",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-narrowed-heal-drops-the-scope-at-the-producer",
+    decision: "D461",
+    what: "🛑 C4 — **THE RIDER IS COMPUTED AND THEN NOT SPREAD**, so both printed sentences derive to the bare `healEach` the UNNARROWED sentence derives to. This is exactly what the blocker census produces when you delete the printed adjective, which is the whole reason that census reading is a statement about WHERE the blocker is and not about what the fix costs. Killed by the KEY-SET rung in §1 (`Object.keys` on the derived op) before any board is reached, and again by §3 and §4 on the board",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && scope !== undefined) return [{ op: \"healEach\", amount, ...scope }];",
+    replace: "    if (amount >= 1 && scope !== undefined) return [{ op: \"healEach\", amount }];",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-narrowed-heal-takes-a-printed-zero",
+    decision: "D461",
+    what: "⚠️ C5 — **THE `amount >= 1` GUARD BECOMES `>= 0`** on the narrowed arm alone, so a printed *\"Heal 0 damage from each of your Basic Pokémon.\"* derives to a set's worth of silent no-ops: the attack reports a SIMULATED effect and moves nothing, which is indistinguishable at the log from the all-whiffed board §5 also drives and means something completely different. The guard every arm of this reader carries, asserted on BOTH new sentences because one `>=` serves them both",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && scope !== undefined) return [{ op: \"healEach\", amount, ...scope }];",
+    replace: "    if (amount >= 0 && scope !== undefined) return [{ op: \"healEach\", amount, ...scope }];",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-narrowed-heal-anchor-loses-its-head",
+    decision: "D461",
+    what: "🛑 C6 — **THE `^` GOES AND THE ANCHOR STARTS TAKING TAILS.** *\"This Pokémon is now Asleep. Heal 100 damage from each of your Basic Pokémon.\"* would resolve to a whole-set heal with the Sleep half silently dropped — D133's Saguaro defect, one family over. ⚠️ **THE WITNESS HAS TO CARRY A CAPITAL `Heal` AND §1's LIST WAS EXTENDED TO GIVE IT ONE**: every lowercase mid-sentence form (Saguaro's own tail, a coin gate) is refused by the CASE of the verb before the anchor is consulted, so a suite that only held those would have been green for the wrong reason",
+    file: "packages/engine/src/effects.ts",
+    find: "const OWN_BOARD_HEAL_NARROWED =\n  /^Heal (\\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\\.$/;",
+    replace: "const OWN_BOARD_HEAL_NARROWED =\n  /Heal (\\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-narrowed-heal-anchor-loses-its-tail",
+    decision: "D461",
+    what: "🛑 C7 — **THE `$` GOES**, so *\"Heal 100 damage from each of your Basic Pokémon. Then, shuffle your deck.\"* resolves to the heal alone and the shuffle is never seen. The `[^.]+` capture still cannot cross the period — it is the `$` and not the capture that refuses a trailing clause here — which is why BOTH guards are pinned and neither is left to the other",
+    file: "packages/engine/src/effects.ts",
+    find: "const OWN_BOARD_HEAL_NARROWED =\n  /^Heal (\\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\\.$/;",
+    replace: "const OWN_BOARD_HEAL_NARROWED =\n  /^Heal (\\d+) damage from each of your ((?!opponent)[^.]+) Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-basic-gate-stops-narrowing",
+    decision: "D461",
+    what: "🛑 C8 — **THE `basicOnly` CONJUNCT STOPS NARROWING**, so *\"each of your Basic Pokémon\"* heals every EVOLVED body on the side as well. D266's shape one rider over, and the same quiet direction: the derived op still carries the field, every registry and deriver assertion still passes, and only a board holding a NON-Basic body can tell. §4's evolved bench body is that board",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!matchesFilter(card, { kind: \"basicPokemon\" })) return pokemon;",
+    replace: "      if (false) return pokemon;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-basic-gate-is-inverted",
+    decision: "D461",
+    what: "🛑 C9 — **THE GATE KEEPS EXACTLY THE BODIES IT SHOULD SKIP**: the evolved bench body heals and the Basic Active and Basic bench body do not. Killed by the damage assertions AND by the uid assertions on the HEALED rows, which is the point of asserting both — a build that healed the WRONG SET would otherwise be told apart only by which numbers moved",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!matchesFilter(card, { kind: \"basicPokemon\" })) return pokemon;",
+    replace: "      if (matchesFilter(card, { kind: \"basicPokemon\" })) return pokemon;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-basic-gate-becomes-any-pokemon",
+    decision: "D461",
+    what: "⚠️ C10 — **THE `CardFilter` MEMBER BECOMES ITS OWN SUPERSET.** `anyPokemon` is the member directly above `basicPokemon` in the union and the one an author reaches for when the printed noun is *\"Pokémon\"*; it is TRUE for every body in play, so the gate compiles, reads as gated, and narrows nothing. **D264's finding pointed the other way** — there the wide noun was needed and the narrow one would have been wrong — and it is the same pair of members either way: **read the ARMS, not the field name**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (!matchesFilter(card, { kind: \"basicPokemon\" })) return pokemon;",
+    replace: "      if (!matchesFilter(card, { kind: \"anyPokemon\" })) return pokemon;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-bench-scope-heals-the-attacker",
+    decision: "D461",
+    what: "🛑 C11 — **THE D447 DEFECT CLASS, EXACTLY.** The bench scope stops applying, so *\"each of your **Benched** Pokémon\"* heals the ACTIVE — which from an attack is the ATTACKER, the one body the printed word exists to exclude. Every bench assertion in §3 stays green under it; the mutant dies on ONE line, the one that says the attacker came back with its damage untouched. This is also precisely what the blocker census produces when the printed adjective is deleted",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healsActive = op.benchOnly !== true;",
+    replace: "  const healsActive = true;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-bench-scope-is-inverted",
+    decision: "D461",
+    what: "🛑 C12 — **THE SCOPE READS BACKWARDS**: the bench-scoped sentence heals the Active and nothing else about it changes, while the UNNARROWED board heal — D133's, shipped since 0.84.0 and asserted end to end in `boardHeal.test.ts` — stops healing the Active at all. The second half is what makes this row worth writing separately from C11: a rider whose ABSENT reading has drifted breaks cards that predate it, and the only thing that can see that is a suite for the older sentence",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const healsActive = op.benchOnly !== true;",
+    replace: "  const healsActive = op.benchOnly === true;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-bench-scope-empties-the-active-spot",
+    decision: "D461",
+    what: "🛑 C13 — **THE ACTIVE IS NULLED INSTEAD OF SKIPPED**, which is the mis-authoring this rider actually invites: the ternary already has a `null`-shaped branch in the shipped `healEachAll` twin four lines down. A seat whose Active Spot empties mid-attack has no Knock Out, no Prize and no promotion behind it — *\"not in the set\"* silently becomes *\"not on the board\"*. §3 asserts the body is still there rather than only that its damage is unchanged, which is the difference between catching this and not",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const active = side.active !== null && healsActive ? healOne(side.active) : side.active;",
+    replace: "  const active = side.active !== null && healsActive ? healOne(side.active) : null;",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-scoped-heal-walks-the-opponents-side",
+    decision: "D461",
+    what: "🛑 C14 — **THE FOLD READS THE OTHER SEAT'S BOARD.** `healEach` is seat-scoped through `ctx.seat` and `healEachAll` (Picnic Basket) is the seat-BLIND twin; this mutant makes the first behave like a broken version of the second. ⚠️ **IT IS ALSO D452's ABSENCE AUDIT PAID ON THIS FUNCTION**: `opcoverage` reports `healEach` at **0/3 seat lines** at D460's head — four producer-side rows since D266 and not one line of the walk itself — so the three seat rows here are owed by the slice that is editing the walk, not by the slice that wrote it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const side = state.players[ctx.seat];\n  const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {",
+    replace: "  const side = state.players[otherSeat(ctx.seat)];\n  const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-scoped-heal-logs-the-wrong-seat",
+    decision: "D461",
+    what: "⚠️ C15 — **THE BOARD IS RIGHT AND THE LOG IS A LIE.** Every body heals exactly as printed and the HEALED rows are attributed to the OPPONENT. No `damage` assertion anywhere in this repo can see it; the only thing that can is a suite that asserts the WHOLE event object rather than its count, which is why §3 compares `all(events, \"HEALED\")` to a literal array carrying `seat` and `uid` on every row. A log-only defect on a synchronous op is the quietest thing this family can produce",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    events.push({ type: \"HEALED\", seat: ctx.seat, uid, amount: healed });\n    return healedBody(pokemon, healed, state.turn);\n  };",
+    replace: "    events.push({ type: \"HEALED\", seat: otherSeat(ctx.seat), uid, amount: healed });\n    return healedBody(pokemon, healed, state.turn);\n  };",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
+  },
+  {
+    id: "D461-scoped-heal-writes-back-to-the-wrong-seat",
+    decision: "D461",
+    what: "🛑 C16 — **THE WALK READS THE RIGHT SIDE AND WRITES IT ONTO THE WRONG ONE**, so the attacker's healed board is copied over the opponent's and the attacker's own is left as it was. The third and last seat line of this function, and the one whose failure mode is a STATE corruption rather than a wrong number: two seats end the turn holding the same bodies. §6 damages the opponent on purpose precisely so this is visible",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const bench = side.bench.map(healOne);\n  return withSide(state, ctx.seat, { ...side, active, bench });\n}",
+    replace: "  const bench = side.bench.map(healOne);\n  return withSide(state, otherSeat(ctx.seat), { ...side, active, bench });\n}",
+    expectKilledBy: ["packages/engine/src/scopedBoardHeal.test.ts"],
   },
 ];

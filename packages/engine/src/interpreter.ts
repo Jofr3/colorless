@@ -1693,7 +1693,7 @@ function stepOp(
         done: healSelf(state, op.amount === "dealt" ? (ctx.dealt ?? 0) : op.amount, ctx, events),
       };
     case "healEach":
-      return { done: healEach(state, op.amount, ctx, events, op.pokemonType) };
+      return { done: healEach(state, op, ctx, events) };
     case "healEachAll":
       return { done: healEachAll(state, op.amount, events) };
     case "counterEachAll":
@@ -8444,16 +8444,56 @@ function healedBody(pokemon: InPlayPokemon, healed: number, turn: number): InPla
     `attachEnergyTargets`' `targetType` rider reads one seam over, so a board's
     "{L} Pokémon" cannot mean two things in one engine. `types` is a LIST, so a
     dual-type body satisfies either half. A card the pool cannot resolve reads as
-    an EMPTY list and is REFUSED: a data gap is never healed by default. */
+    an EMPTY list and is REFUSED: a data gap is never healed by default.
+
+    🆕🆕 **D461 — TWO MORE NARROWINGS, AND THEY ARE READ AT TWO DIFFERENT PLACES IN
+    THIS FUNCTION BECAUSE THEY ARE TWO DIFFERENT KINDS OF FACT.** `basicOnly`
+    (*"each of your **Basic** Pokémon"*, 2 legal printings) is a CARD fact and so it
+    is a conjunct INSIDE the walk, beside `pokemonType` and for the same reason: the
+    op names a SET, so a non-Basic body is skipped as silently as an undamaged one
+    while its neighbours still heal. `benchOnly` (*"each of your **Benched**
+    Pokémon"*, 2) is a BOARD fact about ONE named spot, so it is not a conjunct at
+    all — it decides whether the walk visits the Active, and the Active's body is
+    carried through UNCHANGED when it does not.
+
+    🛑 **THE ZERO QUESTION IS ANSWERED BY THE SHIPPED GUARD AND THIS SLICE ADDS NO
+    FOURTH ONE** (D451's finding, applied). This project has three zero-shapes: a
+    guard before a PARK, a whole-op `amount <= 0` refusal, and this function's
+    PER-BODY `healed <= 0` skip. The right one is decided by whether the amount is
+    a producer's constant or varies per body — a heal clamps to each body's OWN
+    damage (`Math.min(amount, pokemon.damage)`), so it varies, and the per-body skip
+    is the shipped answer. Both new riders SHRINK the set the skip runs over; they
+    do not change what zero means. An EMPTY set (a `benchOnly` heal on an empty
+    Bench, a `basicOnly` heal on an all-evolved side) is therefore the all-whiffed
+    board with no bodies rather than a new case: zero HEALED rows, no park, no
+    ATTACK_EFFECT_SKIPPED, and the attack still reports as SIMULATED. */
 function healEach(
   state: GameState,
-  amount: number,
+  op: Extract<EffectOp, { op: "healEach" }>,
   ctx: EffectContext,
   events: GameEvent[],
-  pokemonType?: PokemonType,
 ): GameState {
+  // 🆕🆕 D461 — the op arrives WHOLE rather than field by field, because the printed
+  // set is now narrowed on two independent axes and a sixth positional parameter is
+  // how a call site starts passing the wrong one. The two locals below are the two
+  // fields that were already parameters, kept under their own names so the reads
+  // inside the walk are byte-identical to the ones D266 pinned.
+  const { amount, pokemonType } = op;
   const side = state.players[ctx.seat];
   const healOne = (pokemon: InPlayPokemon): InPlayPokemon => {
+    // 🆕🆕 D461 — the printed *"Basic"*, and it is READ FIRST because that is the
+    // printed order: a hypothetical *"each of your Basic {L} Pokémon"* prints the
+    // stage word ahead of the type code. Asked through `matchesFilter`'s OWN
+    // `basicPokemon` arm so board-side "Basic" stays ONE predicate — `gust`,
+    // `knockOutChosen` and `attachEnergyTargets` all ask this question the same way.
+    // ⚠️ AN UNRESOLVABLE TOP CARD IS SKIPPED, NEVER HEALED: `matchesFilter` answers
+    // false for `undefined`, its conservative direction, which is the same direction
+    // the `pokemonType` gate below takes for the same reason (a data gap is never
+    // healed by default).
+    if (op.basicOnly === true) {
+      const card = topCardOf(state, pokemon);
+      if (!matchesFilter(card, { kind: "basicPokemon" })) return pokemon;
+    }
     if (pokemonType !== undefined) {
       const card = topCardOf(state, pokemon);
       if (!(card?.types ?? []).includes(pokemonType)) return pokemon;
@@ -8464,7 +8504,14 @@ function healEach(
     events.push({ type: "HEALED", seat: ctx.seat, uid, amount: healed });
     return healedBody(pokemon, healed, state.turn);
   };
-  const active = side.active === null ? null : healOne(side.active);
+  // 🆕🆕 D461 — the printed *"Benched"* removes the ACTIVE from the set entirely, and
+  // the spot KEEPS ITS BODY: `side.active` is carried through unchanged rather than
+  // nulled, which is the difference between "not in the set" and "not on the board".
+  // Absent, this is D133's reading — the Active is one of your Pokémon (§1.1) — and
+  // from an ATTACK the Active is the ATTACKER, which is the body a bench-scoped
+  // sentence must leave damaged.
+  const healsActive = op.benchOnly !== true;
+  const active = side.active !== null && healsActive ? healOne(side.active) : side.active;
   const bench = side.bench.map(healOne);
   return withSide(state, ctx.seat, { ...side, active, bench });
 }

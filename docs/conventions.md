@@ -4248,3 +4248,116 @@ printed consequent never lands). **The second is the dangerous one**: admitting 
 `ATTACK_EFFECT_SKIPPED` — the only thing that would tell a reader the sentence is unread —
 while shipping a status that can never be applied. Two mutation rows, not one, because a slice
 that kept only one guard leaves the other end open and nothing says so.
+
+## A `PHRASE-1` row is a LOWER BOUND on the work and often a bad estimate of it (D461)
+
+`scripts/residue-census.ts` classifies a residue sentence `PHRASE-1` when deleting ONE token
+reaches a string some reader builds. **That is a statement about WHERE the blocker is. It says
+nothing about what the derived value LOSES**, and D459 already measured that nine of ten
+one-token deletions lose the token's meaning.
+
+D461 is the priced case. Both its rows derived to `[{op:"healEach", amount:100}]` after the
+deletion — and dropping `Basic` heals every EVOLVED body on the side, while dropping `Benched`
+heals the ATTACKER. The slice cost one anchor, one noun map, one deriver arm, two op fields, two
+fixtures, a deck, an interpreter diff and a 30-test suite.
+
+**Before pricing a `PHRASE-1` row, print the derived value beside the printed sentence and say
+what the deletion lost.** If the answer is "which objects the sentence is about", the class name
+is measuring the wrong thing.
+
+⚠️ **And the mis-reading direction is usually QUIET.** Deleting a narrowing yields a SUPERSET, so
+the engine does MORE than the card says: more log rows, never fewer, no `ATTACK_EFFECT_SKIPPED`,
+and no count that goes down. Every assertion written against the built rows stays green.
+
+## One printed adjective slot can hold two different KINDS of fact (D461)
+
+*"each of your **Basic** Pokémon"* narrows by a CARD property. *"each of your **Benched**
+Pokémon"* narrows by a BOARD position. They occupy the same slot in the same template and they
+are not the same axis.
+
+**The decisive test is `matchesFilter`'s signature**, not intuition: it is
+`(card: Card | undefined, filter: CardFilter)` and is never handed an `InPlayPokemon`, so a board
+position is inexpressible as a `CardFilter` **at any width**, while a printed stage is exactly
+`{kind: "basicPokemon"}`. Verified at D204, D264, D265, D331, D450 and again here.
+
+The shape then follows from the union's own rule with no judgement left over:
+
+| the printed rows differ in | the shape |
+|---|---|
+| PAYLOAD (nullary vs carrying, or different fields) | two MEMBERS |
+| a discriminator only, identical payload | ONE member, discriminator as a FIELD |
+| a discriminator on TWO axes, identical payload | ONE member, **TWO fields** — never one enum |
+
+A single `scope: "basic" \| "bench"` enum fails twice: it puts two axes in one slot
+(`attachFromTop.restTo`'s standing refusal — *"two keys on one axis can be set to contradict each
+other"*, pointed the other way) and it cannot spell the CROSSING. The catalog need not print the
+crossing today; **the vocabulary must not be the reason it could never be read.**
+
+**`AttachTargetRiders` (D204) is the shipped precedent and the names are ITS names** — `basicOnly`,
+`benchOnly`, `targetType`, `ownerPokemon`, `notIfKO`, two card facts and two board facts as flat
+riders on one op. Reach for it before inventing a field name.
+
+## A frozen tail and a live head look identical and are edited in OPPOSITE places (D461)
+
+D426/D437: a census chain is edited at the FRONT, never at the END, because a tail that moves with
+the head asserts `head === head`. D461 stepped SEVEN tails at the end before re-reading the rule.
+
+**The tell is the left-hand side of the assertion:**
+
+| left-hand side | what it is | how to step it |
+|---|---|---|
+| `expect(live)` — a bare live expression | a LIVE HEAD | change the literal |
+| `expect(live - 3 /* … */ - 2 - 1 - … - 922)` | a CHAIN with a FROZEN TAIL | add a term at the FRONT |
+
+`precociousEvolution.test.ts` carries **one of each within sixty lines**, so the file is not the
+unit and neither is the number. ⚠️ Reverting the tails is what exposed the live head — it went red
+on its own, which is the cheapest possible way to be told the difference.
+
+## A fixture's census delta depends on what it PRINTS, not on the fact that it exists (D461)
+
+D460's table lists `clauseApostrophe` first among the rungs a new fixture moves. D461 added two
+fixtures and **that rung did not move**: neither sentence carries a possessive. What did move was
+the `FIXTURE_POOL` id floor (555 → 557), its eleven-deep `ids.length - N` ladder, and
+`stage1Bonus`'s Stage-1 count (83 → 84, because one fixture is a Stage 1).
+
+**Read the fixture's own fields against each rung's predicate rather than stepping the whole
+table.** ⚠️ And a synthetic Stage 1 must carry a NON-NULL `evolveFrom` — `stage1Bonus`'s chainless
+rung is a singleton finding that a careless fixture turns into an artefact (D390, honoured at
+D391/D393/D421/D424/D432/D439 and now here).
+
+## "Every printing site moves by the same delta" is false (D461)
+
+`compoundCompose.test.ts` §4's `claimedWhole` is a PRINTINGS figure that did not move when four
+claimed printings arrived, because it carries a SECOND predicate: it counts printings that are
+MULTI-CLAUSE **and** claimed whole, and both new sentences hold zero `. ` joiners.
+
+**A census site is its predicate, not its unit.** Step by analogy and a site with a second
+conjunct goes red; the cheap disproof is running the suite rather than reasoning about it.
+
+## A refusal list is a claim with an expiry date, and re-pointing it is owed twice over (D461)
+
+D461 built a sentence that **two** shipped `toBeNull` lists held as live witnesses
+(`boardHeal.test.ts`'s `REAL_NEAR_MISSES[4]`, `selfHeal.test.ts`'s `UNMAPPED_NEAR_MISSES[0]`), and
+one of them carried the comment *"nothing in the pool prints this spread form at all today"* while
+the pool printed it twice.
+
+Two rules, and the second is new:
+1. **Grep every refusal list for the sentence before you build it** — the STANDING NOTE in those
+   files already says re-point rather than delete.
+2. 🆕 **Prefer a witness whose blocker is DATA over one whose blocker is a mechanism.** A sentence
+   unbuilt because a column does not exist cannot be built by any reader at any width, so the slot
+   stops needing re-pointing every few slices — and if it ever goes green, the thing that changed
+   is the ingest, which is exactly what a witness should be able to tell you.
+
+## The `Ancient` banner is the residue's largest non-mechanism blocker: 7 sentences / 10 printings (D461)
+
+Measured over all 640 rows of `legalAttackCorpus()`, not sampled. The persisted `Card`
+(`packages/schema/src/catalog/card.ts`) carries **no** banner column — `id, setId, localId, name,
+category, image, illustrator, rarity, regulationMark, hp, stage, evolveFrom, types, retreat,
+abilities, attacks, weaknesses, resistances, trainerType, energyType, effect, legal, variants` —
+and the banner is a per-PRINTING fact, so a name-keyed species table is refused forever (Great Tusk
+ex `sv01-123`/`-230`/`-246` is the same species with and without it).
+
+**The falsifier is an INGEST change** (a per-printing column plus a `CardFilter` member). Nothing in
+`packages/engine` can be it. Priced here so successors stop re-deriving it: `Future` is the same
+shape one banner over and blocks two more `PHRASE-1` rows.
