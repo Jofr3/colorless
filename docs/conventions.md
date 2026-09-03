@@ -3932,3 +3932,97 @@ caption.** `attachFromDeckNote` builds the prompt's `note` from the same field, 
 note says *"attach them to 1 of your Pokémon"* while carrying no rider is a byte string this
 deploy cannot write: the two halves would have to disagree at the moment of writing. **When a
 field also decides a string, that string is the witness that the field was there.**
+
+## A CITED rule is a claim, and it rots faster than a count (D458)
+
+**Two consecutive slices in one family spent a blocker whose stated reason named the wrong
+carrier, and both reasons read as facts about the SENTENCE.** D457's was *"UNREPRESENTABLE
+here"* — true of `attachEnergyFrom.count`, false of the op. D458's was *"a different sentence
+SHAPE, so its own arm **by D232's rule**"* — and D232's rule, opened and read, says the
+opposite: *a family collapses to ONE arm when its sentences differ in a NOUN and splits when
+they differ in a VERB*, and it splits only where an alternation would have to loosen the
+punctuation, the conjunction, the pronoun AND the verb form together. The sentence differed in
+the NOUN COUNT. The build was one optional group and zero new anchors.
+
+⚠️ **A citation is the cheapest thing in a doc block to write and the most expensive to check,
+because it looks already-checked.** *"By D-NNN's rule"* is not a warrant; it is a pointer, and
+the pointer is what rots. **Open the rule. `grep` for the decision id and read the paragraph the
+rule actually lives in** — it costs one command, and in this family it was worth two slices.
+
+## Decomposing one printed sentence into N ops (D458)
+
+*"Search your deck for up to 2 Basic {G} Energy cards **and up to 2 Basic {L} Energy cards** and
+attach them to your Pokémon in any way you like."* is TWO `attachFromDeck` ops and ONE trailing
+shuffle. The decomposition is sound — and **only under preconditions the estimate did not
+name**, which is D420's rule (*when you write a "just do X" note, write the condition under
+which X is enough*) arriving at a program shape.
+
+**Name what would COUPLE the pieces, then refuse the couplings you cannot honour.** Two
+sequential searches carry two answer MAPS and two §9.2 FILINGS, so:
+- a `batch: false` destination (*"attach them to **1 of** your Pokémon"*) would let one batch
+  land on one body and the other on another — a split the card does not print;
+- the §9.2 tail's `recordAs` slot would be OVERWRITTEN by the second op, so a board where the
+  first search attached and the second whiffed files `[]` and the printed gate answers NO about
+  an attach that happened.
+
+Both are **0 printings**. Both are refused rather than mis-built (D190b/D199), **both are read
+off the MODEL** — the destination table's own flag, the tail's own capture group — rather than
+listed as bad pairs (D424), and each ships beside the admission that differs from it on ONE axis
+(D427).
+
+**And the equivalence argument is worth writing down, because it is what a successor will want:**
+N ops reach the same end boards as one N-quota question exactly when the pools are DISJOINT,
+every target stays eligible after each step, and nothing constrains the answer map. Drive both
+extremes — everything on one body, and the batches apart.
+
+## A recurring miss is a missing NAME, not a missing warning (D458)
+
+`censusAtHead.test.ts` pinned its raw-unbuilt figure twice: once as a greppable `toBe(N)` and
+once as a **bare operand inside an arithmetic expression**. **SEVEN CONSECUTIVE SLICES (D449,
+D450, D451, D452, D456, D457, D458) stepped the first, missed the second, and were told by the
+suite** — with a comment warning them about it sitting directly above the operand every time,
+each slice adding a new paragraph to that comment saying the streak had grown.
+
+That is D418's shape reaching a COMMENT: **the note is read only by someone already standing
+there, and nobody stands there until the assertion has already failed.** The repair is not a
+louder warning; it is `const RAW_UNBUILT_ATTACK_UNITS = N`, so one `grep` finds both sites.
+**When the same figure is missed N times, stop describing it and name it.**
+
+## Inserting a capture group is a re-transcription event (D458)
+
+Adding ONE optional group to a shipped regex shifted its later groups by two — the destination
+from `match[4]` to `match[6]`, the §9.2 tail from `match[5]` to `match[7]` — and broke **four**
+mutant `find`s that quoted the old indices. **Every off-by-two spelling COMPILES**, and two of
+them still derive a plausible-looking program: reading the destination from the wrong group is
+loud (the whole family stops deriving), reading the tail from the wrong group is silent (one
+sentence quietly loses its gate). **Write a mutant for each direction; the quiet one is the
+reason the pair exists.**
+
+⚠️ **And then the lint fix broke a fifth (D414 again, at authoring time for once).** The new
+group left a template literal with no interpolation, `bun run check` flagged
+`noUnusedTemplateLiteral`, and merging that fragment moved the anchor's tail line.
+**`precheck` reported it in seconds; a sweep would have reported it after ninety minutes.**
+
+## When "is the loss detectable?" answers NO (D458)
+
+D421/D425 say: choose the shape so that losing the new information is detectable. D457 satisfied
+it with a caption built from the same field. **D458 satisfies it by having nothing to lose** —
+zero new op fields, zero new prompt fields, so a saved record gains only a LONGER
+`EffectContinuation.rest`, not a wider one. Driven honestly, the LOSS direction answers **NO**:
+a truncated `rest` degrades into a sentence the catalog does print and nothing else in the frame
+contradicts it (the truncated park's PROMPT is byte-identical to the whole one).
+
+**That is an argument FOR the shape, not a defect in it** — a truncated required list is data
+corruption, which no `MATCH_RECORD_VERSION` protects against and which the slice does not make
+newly possible. **Report the NO rather than hiding it: a slice that cannot answer the
+detectability question is different from one for which the question does not arise.**
+
+## A flat coverage reading can be predicted from the file list (D458)
+
+`opcoverage`'s SEAT-LINE denominator lives in `interpreter.ts` alone. A slice that touches no
+`interpreter.ts` bytes and whose mutants are all producer-side on `effects.ts` **cannot** move
+it — so the flat reading is forced, and saying so BEFORE running the instrument is stronger than
+explaining it after. D457 found the same op reading `0/7` through a slice that rewrote its arm,
+park, caption, validator, wire key and both HUDs; D458 is the second receipt. **Read a flat
+figure as "this slice moved no seat lines", never as "this slice added no safety" — and if you
+can name why from the diff alone, say it in the resume point.**

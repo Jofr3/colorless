@@ -2010,8 +2010,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: "the §9.2 gate is emitted whether or not the printed tail matched, so eleven sentences that print no second clause start poisoning their own attacker. The `recordGate` still gates on the attach, so it is silent on a whiff — which is exactly why only a board where the attach SUCCEEDS can catch it",
     file: "packages/engine/src/effects.ts",
-    find: '      return match[5] === undefined\n        ? [attach, { op: "shuffleDeck" }]',
-    replace: '      return false\n        ? [attach, { op: "shuffleDeck" }]',
+    // ⚠ RE-TRANSCRIBED AT D458 (`match[5]` → `match[7]`, `[attach, …]` → `[...searches, …]`):
+    // the anchor gained ONE capture group for the second printed noun, which shifted the
+    // §9.2 tail two places, and the arm now spreads a 1-or-2 element `searches` list.
+    // 🛑 **THE CLAIM IS UNCHANGED AND THAT WAS CHECKED RATHER THAN ASSUMED (D418's
+    // second half)**: the old `find` could catch "the tail branch is taken unconditionally"
+    // and so can this one — same discriminator, same branch, same defect. Nothing the old
+    // spelling could see is invisible to the new one.
+    find: '      return match[7] === undefined\n        ? [...searches, { op: "shuffleDeck" }]',
+    replace: '      return false\n        ? [...searches, { op: "shuffleDeck" }]',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -2019,8 +2026,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: "the other direction: the tail is matched by the anchor and then IGNORED, so Skuntank's printed second sentence vanishes and the card under-performs. ⚠️ THE QUIET ONE — the attack still attaches, still shuffles and still passes every count assertion; only the card's second sentence is gone",
     file: "packages/engine/src/effects.ts",
-    find: '      return match[5] === undefined\n        ? [attach, { op: "shuffleDeck" }]',
-    replace: '      return true\n        ? [attach, { op: "shuffleDeck" }]',
+    // ⚠ RE-TRANSCRIBED AT D458 for its twin's reason, one line above; the claim is the
+    // same proposition on the same branch and loses no discrimination.
+    find: '      return match[7] === undefined\n        ? [...searches, { op: "shuffleDeck" }]',
+    replace: '      return true\n        ? [...searches, { op: "shuffleDeck" }]',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -2028,7 +2037,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: '`recordAs: "moved"` is set on every arm rather than only where a gate reads it. Behaviourally inert on every board — and WRONG, because these ops are compared BY VALUE against Janine\'s hand-authored registry row (D135: an absent field means what the sentence means), so a derived program would stop equalling the authored one that means the same thing',
     file: "packages/engine/src/effects.ts",
-    find: '        ...(match[5] === undefined ? {} : { recordAs: "moved" as const }),',
+    // ⚠ RE-TRANSCRIBED AT D458 (`match[5]` → `match[7]`) — the group index moved, the
+    // spread did not. Same claim, same killer.
+    find: '        ...(match[7] === undefined ? {} : { recordAs: "moved" as const }),',
     replace: '        ...{ recordAs: "moved" as const },',
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
@@ -2037,9 +2048,15 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: "the anchor loses its `$`. ⚠️ AND HERE THE `$` IS LOAD-BEARING FOR A REASON D234's WAS NOT: with an OPTIONAL tail group after the shuffle clause, a sentence carrying an UNRECOGNISED trailing clause matches with the group simply unmatched — so the clause is silently thrown away rather than refused. D234's dropped-`$` mutant survived because a greedy capture refused tails by accident; this one cannot, because the capture is bounded on both sides",
     file: "packages/engine/src/effects.ts",
-    find: "    ` to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,",
+    // ⚠ RE-TRANSCRIBED AT D458, AND THE REASON IS D414's RULE CAUGHT IN THE ACT: this
+    // slice's new optional group left ` and attach them)` as a template literal with no
+    // interpolation, `bun run check` flagged `noUnusedTemplateLiteral`, and merging that
+    // fragment into the line below moved the anchor's tail. `precheck` reported the row
+    // BROKEN in seconds. **The claim is untouched — the `$` is still what this row
+    // deletes**, and it is still the only thing it deletes.
+    find: "    ` and attach them) to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,",
     replace:
-      "    ` to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?`,",
+      "    ` and attach them) to ([^.]+)\\\\. Then, shuffle your deck\\\\.(?: (${DECK_SEARCH_POISON_TAIL}))?`,",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   {
@@ -2075,8 +2092,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D235",
     what: 'the trailing `shuffleDeck` is dropped from the tail-less branch, so a card that prints "Then, shuffle your deck" leaves the deck in the order the player just read. ⚠️ INVISIBLE ON EVERY BOARD ASSERTION IN THIS SUITE — the Energy still attaches — and caught only by the by-value program comparison, which is why that comparison is the first case in the file',
     file: "packages/engine/src/effects.ts",
-    find: '        ? [attach, { op: "shuffleDeck" }]',
-    replace: "        ? [attach]",
+    // ⚠ RE-TRANSCRIBED AT D458 (`[attach, …]` → `[...searches, …]`): the tail-less
+    // branch now spreads the 1-or-2 element search list. The claim is unchanged — the
+    // printed shuffle is dropped and only the by-value program comparison sees it.
+    find: '        ? [...searches, { op: "shuffleDeck" }]',
+    replace: "        ? [...searches]",
     expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
   // ── D236 — attach from the HAND (backlog row 12). Seven mutants over the two
@@ -5716,7 +5736,10 @@ export const MUTANTS: Mutant[] = [
     // other's last entry, and the row's own history could be read two ways. D439 brings
     // BOTH current rather than picking one, and records the drift instead of quietly
     // tidying it. The `find` itself was correct throughout; only the prose disagreed.
-    // ⚠ RE-POINTED AT D452 (0.353.0 → 0.354.0), at D451 (0.352.0 → 0.353.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
+    // ⚠ RE-POINTED AT D458 (0.356.0 → 0.357.0) — the question was ASKED again, not
+    // inherited: engine behaviour moved (a sentence that derived to null now derives), so
+    // the bump is owed even though the slice spends NO new vocabulary.
+    // ⚠ RE-POINTED AT D457 (0.355.0 → 0.356.0), at D456 (0.354.0 → 0.355.0), at D452 (0.353.0 → 0.354.0), at D451 (0.352.0 → 0.353.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0) and at D428 (0.329.0 → 0.330.0) — the
     // question was ASKED again rather than inherited both times.
     // `MATCH_RECORD_VERSION` STAYS 26 at D429: the pre-damage seam's return widened
     // from `GameState` to `{state, tools, cancelled}`, which is a LOCAL value the
@@ -5727,7 +5750,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.356.0";',
+    find: 'export const engineVersion = "0.357.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -22904,5 +22927,107 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [
       "src/features/game/GameHud.attachFromDeck.dom.test.tsx",
     ],
+  },
+  // ── 🆕🆕 D458 — THE SECOND PRINTED NOUN (corpus line 410, 1 sentence / 2 legal
+  //    printings). TEN rows, and the SHAPE of the set is the finding again: this
+  //    slice spent ZERO new op fields, so there is no vocabulary a census could
+  //    watch — `BUILT.attack` moves by 2 whether the second search filters
+  //    correctly, honours the destination, runs in the right order or shuffles
+  //    twice. SEVEN of the ten are SILENT IN EVERY CENSUS.
+  //
+  //    ⚠ **THE RENUMBERING IS THE REAL AUTHORING HAZARD AND THREE ROWS ARE ABOUT
+  //    IT.** Inserting one capture group into `DECK_SEARCH_ATTACH` shifted the
+  //    destination from `match[4]` to `match[6]` and the §9.2 tail from `match[5]`
+  //    to `match[7]`. Every one of those three off-by-two spellings COMPILES, and
+  //    two of them still derive a plausible-looking program.
+  {
+    id: "D458-second-noun-summed-into-one-op",
+    decision: "D458",
+    what: "\U0001F6D1 **THE TWO PRINTED QUOTAS ARE SUMMED INTO ONE SEARCH** — `max: 4` over an UNTYPED Basic Energy filter, one park instead of two. The mistake an author makes who reads *\"up to 2 and up to 2\"* as *\"up to 4\"*, and it is the single most plausible wrong build of this sentence: the sentence still derives, `BUILT.attack` still steps by 2, the census is unmoved, the player still attaches four Energy in any way they like — and the card's printed per-TYPE caps are gone, so a deck holding four {G} and no {L} gives up four {G}",
+    file: "packages/engine/src/effects.ts",
+    find: '      const searches: EffectOp[] =\n        secondCount === undefined\n          ? [attach]\n          : [\n              attach,\n              {\n                op: "attachFromDeck",\n                filter: {\n                  kind: "basicEnergy",\n                  ...(secondType === undefined ? {} : { energyType: secondType }),\n                },\n                max: secondCount,\n                ...destination.riders,\n              },\n            ];',
+    replace: '      const searches: EffectOp[] =\n        secondCount === undefined\n          ? [attach]\n          : [{ ...attach, filter: { kind: "basicEnergy" }, max: count + secondCount }];',
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-search-copies-the-first-type",
+    decision: "D458",
+    what: "the SECOND `attachFromDeck` filters on the FIRST printed brace code — the copy-paste slip, and the one every board that stocks only one of the two types is blind to. *\"up to 2 Basic {G} … and up to 2 Basic {L} …\"* becomes *\"up to 4 Basic {G}\"* spread over two parks: the park count is right, the caps are right, the shuffle is right, and the second search offers the wrong card",
+    file: "packages/engine/src/effects.ts",
+    find: "                  ...(secondType === undefined ? {} : { energyType: secondType }),",
+    replace: "                  ...(energyType === undefined ? {} : { energyType }),",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-search-drops-the-destination",
+    decision: "D458",
+    what: "\U0001F6D1 **THE SECOND SEARCH IGNORES THE PRINTED DESTINATION** — no `...destination.riders`, so a two-noun sentence spelling *\"attach them to **this Pokémon**\"* lands its first batch on the source and its second anywhere on the board, and a `{R}`-narrowed destination narrows only half the cards. Invisible on the one sentence the catalog actually prints (its riders are empty), which is exactly why the admitted GENERATED rows are in the suite beside it",
+    file: "packages/engine/src/effects.ts",
+    find: "                max: secondCount,\n                ...destination.riders,",
+    replace: "                max: secondCount,",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-shuffle-between-the-two-searches",
+    decision: "D458",
+    what: "a `shuffleDeck` is emitted BETWEEN the two searches as well as after them — the build an author writes who reads each search as its own printed sentence. Both parks still appear, both filters still bite, all four Energy still attach; what changes is that the deck is scrambled at a moment no printed sentence names, and `rngState` advances twice for one printed *\"Then, shuffle your deck.\"*",
+    file: "packages/engine/src/effects.ts",
+    find: "                max: secondCount,\n                ...destination.riders,\n              },\n            ];",
+    replace: "                max: secondCount,\n                ...destination.riders,\n              },\n            ].flatMap((op, i) => (i === 0 ? [op, { op: \"shuffleDeck\" } as EffectOp] : [op]));",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-noun-ignores-the-batch-rule",
+    decision: "D458",
+    what: "\U0001F6D1 **THE `destination.batch` PRECONDITION IS DROPPED** — the refusal D458 states rather than assumes. *\"…and up to 2 Basic {L} Energy cards and attach them to **1 of** your Pokémon\"* now derives to TWO `oneTarget` ops, and two maps mean two bodies: the {G} batch on one Pokémon and the {L} batch on another, off a card that prints ONE destination. The deriver reports success and the wire validator agrees, because each op is individually legal — the coupling the card prints spans the two ops and nothing can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "          destination.batch &&\n          match[7] === undefined))",
+    replace: "          match[7] === undefined))",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-noun-ignores-the-poison-tail",
+    decision: "D458",
+    what: "the §9.2 precondition is dropped, so a two-noun sentence with the printed poison tail derives — and the SECOND `attachFromDeck` overwrites the FIRST's `recordAs: \"moved\"` filing. A board where the {G} search attached and the {L} search whiffed files `[]`, the `recordGate` reads false, and the printed *\"If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned.\"* silently does nothing about an attach that happened",
+    file: "packages/engine/src/effects.ts",
+    find: "          destination.batch &&\n          match[7] === undefined))",
+    replace: "          destination.batch))",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-cap-loses-its-range-guard",
+    decision: "D458",
+    what: "the SECOND printed count is not range-checked — the guard duplicated deliberately, and the one an author skips because *\"the first count is already checked\"*. A printed 0 derives to a second search that offers nothing and a printed 11 past the shared ingested-text ceiling derives to a search wider than any card prints. Both are ingest-shaped defects: the text is what varies, and no census can see either",
+    file: "packages/engine/src/effects.ts",
+    find: "        (secondCount >= 1 &&\n          secondCount <= MAX_PRINTED_ATTACH_COUNT &&",
+    replace: "        (secondCount >= -99 &&\n          secondCount <= 99 &&",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-second-noun-group-becomes-repeatable",
+    decision: "D458",
+    what: "\U0001F6D1 **THE OPTIONAL GROUP BECOMES A REPEATABLE ONE** (`)?` → `)*`) — the regex an author writes who thinks *\"more nouns cannot hurt\"*. A THIRD printed noun then MATCHES and its cap is SILENTLY DROPPED, because only the LAST repetition's capture groups survive: the sentence derives, two ops come out of three printed quotas, and the deriver reports success on a sentence it read two thirds of. The exactly-once refusal is what keeps an unread clause loud",
+    file: "packages/engine/src/effects.ts",
+    find: "    `(?: and up to (\\\\d+) Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy cards)?` +",
+    replace: "    `(?: and up to (\\\\d+) Basic (?:\\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")}])\\\\} )?Energy cards)*` +",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-destination-read-off-the-old-group-index",
+    decision: "D458",
+    what: "\U0001F6D1 **THE RENUMBERING SLIP, DIRECTION ONE** — the destination is still read from `match[4]`, which after this slice's insertion is the SECOND printed COUNT. It compiles, it type-checks, and it makes the whole family stop deriving: `\"2\"` is in no destination table, so every one of the fifteen sentences this anchor reads falls to the loud `ATTACK_EFFECT_SKIPPED` path at once. The loudest failure of the three, and it is here because the other two are quiet",
+    file: "packages/engine/src/effects.ts",
+    find: "    const destination = DECK_SEARCH_ATTACH_DESTINATIONS.get(match[6] ?? \"\");",
+    replace: "    const destination = DECK_SEARCH_ATTACH_DESTINATIONS.get(match[4] ?? \"\");",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
+  },
+  {
+    id: "D458-record-gate-read-off-the-old-group-index",
+    decision: "D458",
+    what: "\U0001F6D1 **THE RENUMBERING SLIP, DIRECTION TWO, AND IT IS THE QUIET ONE** — the §9.2 tail is still tested at `match[5]`, which is now the SECOND brace code. Fourteen of the fifteen sentences are unaffected; the ONE that prints the poison clause loses BOTH its `recordAs` and its trailing `recordGate`, so Toxic Reserve attaches exactly as before and never poisons. Nothing in any census moves, the program is one op shorter, and only a board that drives the gate can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "      return match[7] === undefined\n        ? [...searches, { op: \"shuffleDeck\" }]",
+    replace: "      return match[5] === undefined\n        ? [...searches, { op: \"shuffleDeck\" }]",
+    expectKilledBy: ["packages/engine/src/derivedDeckSearchAttach.test.ts"],
   },
 ];

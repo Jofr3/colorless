@@ -17887,13 +17887,31 @@ const DECK_SEARCH_ATTACH_DESTINATIONS: ReadonlyMap<string, DeckSearchAttachDesti
   ),
 ]);
 // Groups: 1 the SINGULAR branch's brace code, 2 the printed count, 3 the PLURAL
-// branch's brace code, 4 the destination phrase, 5 the §9.2 poison tail. The
+// branch's brace code, 🆕 4 the SECOND printed count and 5 its brace code, 6 the
+// destination phrase, 7 the §9.2 poison tail. The
 // PRONOUN is welded to the grammatical number on both halves ("a … Energy card
 // and attach **it**" / "up to N … Energy cards and attach **them**"), so the
 // crossed forms no card prints cannot match — `ATTACK_HAND_SEARCH`'s and
 // `DISCARD_ATTACH`'s weld, for the third time. The code class is built FROM
 // `ENERGY_TYPE_BY_CODE`'s keys so the regex cannot admit a code the map will not
 // resolve.
+//
+// 🆕🆕 **D458 — THE SECOND PRINTED NOUN IS ONE OPTIONAL GROUP ON THIS ANCHOR, NOT
+// A SECOND ANCHOR, AND D235's NOTE POINTING THE OTHER WAY DID NOT SURVIVE.** That
+// note said *"a different sentence SHAPE and therefore its own arm by D232's
+// rule"*. D232's rule as written is *"a family collapses to ONE arm when the
+// sentences differ in a NOUN and splits when they differ in a VERB"*, and it
+// splits a family only when an alternation wide enough to hold both would have to
+// loosen the punctuation, the conjunction, the pronoun AND the verb form together
+// (see the `ATTACK_OPPONENT_HAND_BENCH` block for the case that earned it). Corpus
+// line **410** differs from line **404** in the NOUN COUNT and in nothing else:
+// same verb, same pronoun, same destination vocabulary, same trailing shuffle. The
+// group below welds `and up to N Basic {c} Energy cards` as a UNIT — it cannot
+// admit a bare `and up to N`, cannot cross the singular branch (the pronoun stays
+// welded), and matches exactly one string the catalog prints. **A second anchor
+// would have duplicated the destination lookup, the count guard, the shuffle tail
+// and the §9.2 group into a place that could come to disagree with this one**
+// (D416: copying a function copies its mutants' anchors).
 //
 // ⚠️ THE DESTINATION CLASS IS `[^.]` AND THE TRAILING `$` IS SEPARATELY
 // LOAD-BEARING — which is D234's surviving-mutant lesson applied rather than
@@ -17904,8 +17922,9 @@ const DECK_SEARCH_ATTACH_DESTINATIONS: ReadonlyMap<string, DeckSearchAttachDesti
 // the unread clause would be silently dropped. A dropped-`$` mutant is driven.
 const DECK_SEARCH_ATTACH = new RegExp(
   `^Search your deck for (?:a Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy card and attach it` +
-    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards and attach them)` +
-    ` to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
+    `|up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards` +
+    `(?: and up to (\\d+) Basic (?:\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} )?Energy cards)?` +
+    ` and attach them) to ([^.]+)\\. Then, shuffle your deck\\.(?: (${DECK_SEARCH_POISON_TAIL}))?$`,
 );
 
 // ⚠️⚠️ D236 — ATTACH FROM THE **HAND** (backlog row 12), THE EXACT MIRROR OF
@@ -22116,22 +22135,58 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // said it answers.
   match = DECK_SEARCH_ATTACH.exec(effect);
   if (match !== null) {
-    const destination = DECK_SEARCH_ATTACH_DESTINATIONS.get(match[4] ?? "");
+    const destination = DECK_SEARCH_ATTACH_DESTINATIONS.get(match[6] ?? "");
     // Exactly one of the two branches matched, so at most one code group is set.
     const code = match[1] ?? match[3];
     const energyType = code === undefined ? undefined : ENERGY_TYPE_BY_CODE[code];
     // The absent count IS the article — `ATTACK_DRAW`'s reading for the sixth
     // slice running.
     const count = match[2] === undefined ? 1 : Number(match[2]);
+    // 🆕🆕 D458 — THE SECOND PRINTED NOUN. Absent on 23 of the family's 24 read
+    // sentences; present on corpus line 410 alone (2 legal printings), which is
+    // the ONLY sentence in all 640 of `legalAttackCorpus()` that spells "up to"
+    // twice.
+    const secondCount = match[4] === undefined ? undefined : Number(match[4]);
+    const secondCode = match[5];
+    const secondType = secondCode === undefined ? undefined : ENERGY_TYPE_BY_CODE[secondCode];
     if (
       destination !== undefined &&
       (code === undefined || energyType !== undefined) &&
+      (secondCode === undefined || secondType !== undefined) &&
       // A printed 0 derives to a search that moves nothing and shuffles anyway;
       // the ceiling is the ingested-text guard `DISCARD_ATTACH` carries, shared
       // rather than re-picked so the two attach families cannot disagree about
       // what counts as a printed number.
       count >= 1 &&
-      count <= MAX_PRINTED_ATTACH_COUNT
+      count <= MAX_PRINTED_ATTACH_COUNT &&
+      (secondCount === undefined ||
+        (secondCount >= 1 &&
+          secondCount <= MAX_PRINTED_ATTACH_COUNT &&
+          // 🛑 **THE TWO PRECONDITIONS THAT MAKE TWO OPS EQUAL ONE PRINTED
+          // SENTENCE, STATED RATHER THAN ASSUMED (D420: write the condition under
+          // which "just add a second op" is enough).** Two sequential
+          // `attachFromDeck` ops reach exactly the outcomes one two-quota search
+          // reaches — but ONLY while nothing couples the two batches:
+          //
+          //   · `destination.batch === false` is *"attach them to **1 of** your
+          //     Pokémon"*, which D457 spells as `oneTarget` — a constraint on the
+          //     MAP. Two ops carry two maps, so a naive build would let the {G}
+          //     batch land on one body and the {L} batch on another, a split the
+          //     card does not print. 0 legal printings spell this pair, and a
+          //     wrong-but-plausible program is strictly worse than an unbuilt one
+          //     (D190b/D199), so it is REFUSED here rather than mis-built.
+          //   · the §9.2 poison tail files `recordAs: "moved"`, and TWO ops filing
+          //     one slot means the second OVERWRITES the first — a board where the
+          //     {G} search attached and the {L} search whiffed would file `[]` and
+          //     the printed *"If you attached Energy … in this way"* gate would
+          //     answer NO about an attach that happened. Also 0 legal printings,
+          //     also refused rather than mis-built.
+          //
+          // Both are read OFF THE MODEL (the table's own `batch` flag; the tail's
+          // own capture group) rather than listed as bad pairs — D424's rule, so a
+          // destination row added to the table above is classified by construction.
+          destination.batch &&
+          match[7] === undefined))
     ) {
       const attach: Extract<EffectOp, { op: "attachFromDeck" }> = {
         op: "attachFromDeck",
@@ -22159,15 +22214,46 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // unread `recordAs` would be a field with no observable meaning, and
         // these rows are compared by value against hand-authored registry ones
         // (D135).
-        ...(match[5] === undefined ? {} : { recordAs: "moved" as const }),
+        ...(match[7] === undefined ? {} : { recordAs: "moved" as const }),
       };
+      // 🆕🆕 D458 — THE SECOND PRINTED NOUN IS A SECOND OP, AND ZERO NEW FIELDS.
+      // The printed cap is PER NOUN ("up to 2 Basic {G} … **and** up to 2 Basic
+      // {L} …"), so the two quotas are two `max`es, not one. The sequential model
+      // is this file's own, already shipped and already driven one zone over —
+      // `DISCARD_ATTACH`'s `anyWay` branch emits one `attachEnergyFrom` per
+      // printed unit and `derivedDiscardAttach.test.ts` §"asks TWICE" drives both
+      // parks — and under the two preconditions checked above it is observably
+      // equivalent to one search with two quotas: the pools are disjoint by
+      // PRINT (`energyType` reads the card, not what it provides), every target
+      // stays eligible after an attach, and nothing constrains the map, so the
+      // reachable end boards are the same set.
+      //
+      // ⚠️ ONE `shuffleDeck`, AT THE END, BECAUSE THE CARD PRINTS ONE. The second
+      // search reads a deck the first has already taken from, which is what the
+      // printed single search does too; a shuffle between them would scramble the
+      // deck at a moment no sentence names.
+      const searches: EffectOp[] =
+        secondCount === undefined
+          ? [attach]
+          : [
+              attach,
+              {
+                op: "attachFromDeck",
+                filter: {
+                  kind: "basicEnergy",
+                  ...(secondType === undefined ? {} : { energyType: secondType }),
+                },
+                max: secondCount,
+                ...destination.riders,
+              },
+            ];
       // "Then, shuffle your deck" is the trailing op on every printing in this
       // family, and it runs on the whiff and the decline alike — the Nest Ball
       // pattern, read off text rather than authored per card.
-      return match[5] === undefined
-        ? [attach, { op: "shuffleDeck" }]
+      return match[7] === undefined
+        ? [...searches, { op: "shuffleDeck" }]
         : [
-            attach,
+            ...searches,
             { op: "shuffleDeck" },
             {
               op: "recordGate",

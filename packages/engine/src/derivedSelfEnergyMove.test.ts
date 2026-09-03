@@ -401,7 +401,7 @@ describe("PROVENANCE — the demonstrator carries all three sentences at 14-16",
     // them, and the append-never-insert discipline held again: 0-62 are addressed by
     // constant in a dozen sibling suites and every one still means what it meant —
     // which THIS rung is what proves, and it is the rung that caught the append.
-    expect(attacks).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
+    expect(attacks).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect(attacks[VOLT_CYCLONE]?.effect).toBe(CLAUSES[ANY].text);
     expect(attacks[JET_CYCLONE]?.effect).toBe(CLAUSES[THREE].text);
     expect(attacks[HURRICANE]?.effect).toBe(CLAUSES[BASIC].text);

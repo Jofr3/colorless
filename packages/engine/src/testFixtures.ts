@@ -4053,6 +4053,36 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
       },
+      /** 🆕🆕 **D458 — INDEX 72, THE SECOND PRINTED NOUN.**
+          `censusAttackCorpus.ts` line **410** (**2 legal printings**) — the ONLY
+          sentence in all 640 of `legalAttackCorpus()` that spells *"up to"* twice
+          (measured: `awk` over the committed corpus returns this line and no
+          other). It is the family's cheapest remaining row and
+          `derivedDeckSearchAttach.test.ts` §3 drives it end to end, which is what
+          this index is for: the program is TWO `attachFromDeck` ops in sequence,
+          and a suite with no board would be asserting about a shape it never ran.
+
+          ⚠️ **THE TWO PARKS ARE THE WHOLE REASON A FIXTURE IS OWED.** Every other
+          sentence in this family derives to ONE park, so every board in that suite
+          resolves one prompt and finishes; a build that emitted a single op with a
+          summed cap would pass all of them. Only a board that answers TWICE can
+          tell the two builds apart.
+
+          ⚠️ **APPENDED, NEVER INSERTED** — 0-71 are addressed by constant in a
+          dozen sibling suites, and the length pin steps 72 → 73 in all THIRTEEN
+          files that carry it, in one pass (D431: a green run after fixing the one
+          that reddened is evidence the runner stopped early). Index 71 keeps its
+          job unchanged: it is still the demonstrator's one sentence no reader
+          claims, so `optionalSelfSwitch.test.ts` §7's attribution control still has
+          its subject. The carrier id is UNRESOLVED and is stated as such rather
+          than invented (D425); the attack NAME is this fixture's own, as 61/62 and
+          68-71 are. */
+      {
+        cost: ["Colorless"],
+        name: "Split Harvest",
+        effect:
+          "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      },
     ],
   }),
   /** ⚠️ D238 — FIXTURE. A Basic **{W}** Pokémon: `typedPokemon`'s only positive
@@ -21974,6 +22004,36 @@ export const DECK_SEARCH_ATTACH_DECK = deckOf({
   "fix-water-energy": 6, // {W} — Aqua Supply's and Water Draw's filter
   "fix-lightning-energy": 6, // {L} — Zap Charge's and Bench Charge's filter
   "fix-darkness-energy": 6, // {D} — Toxic Reserve's filter, and NOTHING else's
+});
+
+/** 🆕🆕 **D458 — THE SECOND PRINTED NOUN'S OWN DECK**, and it is a separate
+    constant for the reason `HAND_ATTACH_DECK`'s block states two paragraphs down
+    rather than a new one: `deckOf` order feeds the shuffle, so adding one
+    `fix-grass-energy` line to `DECK_SEARCH_ATTACH_DECK` above would reshuffle
+    every seed-pinned board in `derivedDeckSearchAttach.test.ts` §3 — a suite whose
+    boards are pinned at seeds 3, 5, 7, 9, 11, 13 and 15. D412 paid exactly that
+    price by adding ONE card to a shared `*_DECK` and reddening three unrelated
+    slices' boards.
+
+    What it has to make possible, each line answering one risk:
+
+    * **BOTH printed types, deep enough that each "up to 2" finds 2** — {G} and
+      {L}. A deck holding one of them could not tell a two-op build from a build
+      that read only the first noun;
+    * **a {W} line that NEITHER noun names**, so "the second search filtered" is
+      distinguishable from "the second search took whatever was left";
+    * two Benched bodies, so a batch can be observed landing APART as well as
+      together (the destination is *"in any way you like"*);
+    * `fix-bigbody` is p2's Active, set explicitly so nothing reaches it by
+      accident. */
+export const TWO_NOUN_SEARCH_DECK = deckOf({
+  "fix-trainerops": 6, // the attacker
+  "fix-basic-1": 16, // the setup starters and the Benched targets
+  "fix-bigbody": 2, // p2's Active — set explicitly, so nothing reaches it by accident
+  "fix-energy": 18, // Colorless Basic — the attack's cost, and NEITHER noun's filter
+  "fix-grass-energy": 6, // {G} — Split Harvest's FIRST printed noun
+  "fix-lightning-energy": 6, // {L} — Split Harvest's SECOND printed noun
+  "fix-water-energy": 6, // {W} — named by NEITHER noun, so the filters are falsifiable
 });
 
 /** ⚠️⚠️ D236 — ATTACH FROM THE HAND. The mirror of `DISCARD_ATTACH_DECK` with the

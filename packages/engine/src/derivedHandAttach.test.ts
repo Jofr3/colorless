@@ -604,7 +604,7 @@ describe("PROVENANCE — the demonstrator carries five of the sentences at 43-47
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
+    expect(attacks()).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect(attacks()[WRAPPED_IN_WIND]?.effect).toBe(CLAUSES[WRAPPED_TEXT].text);
     expect(attacks()[LUCKY_ATTACHMENT]?.effect).toBe(CLAUSES[LUCKY_TEXT].text);
     expect(attacks()[FULL_HEART]?.effect).toBe(CLAUSES[FULL_HEART_TEXT].text);

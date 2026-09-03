@@ -19194,8 +19194,38 @@ import type { GameState, Seat } from "./types";
     measured 36/42 by counting the doc-block prose lines it was about to write; this
     count is `grep -c` over the two spellings at HEAD, which is why it is LOWER rather
     than higher — **the tax is a measurement of the tree, and how you count it is part of
-    the number** (D430's `grep -c` rule biting a figure D427 said only grows). */
-export const engineVersion = "0.356.0";
+    the number** (D430's `grep -c` rule biting a figure D427 said only grows).
+
+    🆕🆕 engineVersion 0.356.0 → **0.357.0** (D458 — THE SECOND PRINTED NOUN, corpus
+    line **410** (*"Search your deck for up to 2 Basic {G} Energy cards **and up to 2
+    Basic {L} Energy cards** and attach them to your Pokémon in any way you like. Then,
+    shuffle your deck."*), **1 sentence / 2 legal printings**, through D235's OWN anchor
+    once more. Engine behaviour MOVED — a sentence that derived to `null` now derives —
+    and it moved on the SMALLEST vocabulary any slice in this family has spent: **ONE
+    optional group on `DECK_SEARCH_ATTACH` and a second `attachFromDeck` op in the arm.
+    ZERO new anchors, ZERO new readers (surface unmoved at 13), ZERO new ops, ZERO new op
+    FIELDS, ZERO new prompt fields, ZERO `packages/schema` bytes and ZERO `redact.ts`
+    bytes** — the whole difference from D457, which paid a field and its five mirrors.
+    `MATCH_RECORD_VERSION` **STAYS 29**, and the argument is NOT D457's: nothing optional
+    was added, so there is no key whose absence a v29 reader could misread. What a saved
+    record newly holds is an `EffectContinuation.rest` carrying a SECOND `attachFromDeck`
+    — a LONGER op list, not a wider one, and `deriveAttackEffect`'s discard-attach arm has
+    written N sequential ops into one continuation since D234. Driven over the serialized
+    bytes in three directions in `derivedDeckSearchAttach.test.ts` §4. 🛑 **AND THE LOSS
+    DIRECTION ANSWERS "NO" HERE, DELIBERATELY**: a truncated `rest` is NOT detectable from
+    the rest of the record, because no caption or twin is built from the queued op — which
+    is an argument FOR having added nothing optional (D421/D425: choose the shape so that
+    losing the new information is detectable; the shape with nothing losable satisfies it
+    trivially) rather than a defect in this one. ⚠️ THE VERSION TAX, RE-MEASURED THIS
+    SLICE BY `grep -c` OVER THE TWO SPELLINGS AT HEAD, NOT INHERITED: **35 assertions /
+    39 sites** BEFORE this slice's own pin — 34 `expect(engineVersion).toBe(…)` pins
+    across 34 test files, ONE `expect(manifest.version).toBe(…)` in `legacyEnergy.test.ts`
+    (which carries both), `packages/engine/package.json`, this declaration, this doc block
+    and D275's mutant `find` in `scripts/mutation/mutants.ts`, re-pointed in the SAME
+    edit. **D458 AUTHORS THE 35th ASSERTION** (`derivedDeckSearchAttach.test.ts` §5), so
+    the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
+    stated as the arithmetic rather than as a warning. */
+export const engineVersion = "0.357.0";
 
 export type {
   ApplyResult,

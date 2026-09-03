@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import manifest from "../package.json" with { type: "json" };
+import { engineVersion } from "./index";
 import { programPlayable } from "./cardplay";
 import { programFor, registryCardIds } from "./registry";
 import { legalAttackCorpus } from "./censusAttackCorpus";
@@ -8,6 +10,7 @@ import type { EffectPrompt } from "./interpreter";
 import {
   DECK_SEARCH_ATTACH_DECK,
   FIXTURE_POOL,
+  TWO_NOUN_SEARCH_DECK,
   activeUid,
   attachFromDeck,
   benchFromDeck,
@@ -51,6 +54,16 @@ import {
 // 🛑 20 OF THE 28 ON 12 OF THE 14 READABLE SENTENCES; the 8 left are FOUR
 // SEPARATE BLOCKERS (`UNREAD` below), two of which the backlog row priced up
 // front and two of which it did not. A residue is a measurement, not a remainder.
+//
+// 🆕🆕 **D457 MADE IT 23 OF 28 ON 14 SENTENCES AND D458 MAKES IT 25 OF 28 ON 15**
+// — read those figures off the `adds up` rung below, never off this paragraph,
+// which rots by construction. **BOTH SLICES SPENT A BLOCKER THIS FILE HAD
+// MIS-PRICED RATHER THAN ONE IT HAD MEASURED**: D457's was a field priced on the
+// wrong op's vocabulary, D458's an arm priced on D232's rule pointing the other
+// way when the rule is read instead of cited. The TWO that remain are DATA-blocked
+// (no ingested column classifies the Future or Tera banner), which is the first
+// kind of refusal in this family whose falsifier is an INGEST change rather than
+// an anchor.
 //
 // ⚠️ WHAT THIS FILE IS FOR, AND IT IS NOT "did an Energy attach".
 // `attachFromDeck` has run since M5 with Charizard ex and Janine's Secret Art
@@ -243,6 +256,26 @@ const CLAUSES = [
     printings: 1,
     legalPrintings: 1,
   },
+  /** 🆕🆕 **D458 — THE SECOND PRINTED NOUN, AND THE FAMILY'S ONLY MULTI-SEARCH
+      PROGRAM.** Corpus line **410**. The printed cap is PER NOUN — *"up to 2 Basic
+      {G} … **and** up to 2 Basic {L} …"* — so the two quotas are two `max`es and
+      the sentence derives to TWO `attachFromDeck` ops in sequence plus ONE trailing
+      `shuffleDeck`, because the card prints one shuffle.
+
+      🛑 **ZERO NEW OP FIELDS, WHICH THE `known` RUNG BELOW EXECUTES RATHER THAN
+      CLAIMS.** Both ops carry only keys `attachFromDeck` has had since M5-D50.
+      APPENDED rather than filed beside its {G}/{L} single-noun neighbours, for
+      D457's reason: every index constant below is a position in this array. */
+  {
+    text: "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+    program: [
+      { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Grass" }, max: 2 },
+      { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Lightning" }, max: 2 },
+      { op: "shuffleDeck" },
+    ] as EffectOp[],
+    printings: 2,
+    legalPrintings: 2,
+  },
 ] as const;
 
 const SELF_BARE = 0;
@@ -256,10 +289,12 @@ const POISON_TAIL = 11;
 // D457's two, appended last (see the rows themselves for why they are appended).
 const ONE_OF_TWO = 12;
 const ONE_OF_BENCH_TWO = 13;
+// D458's one, appended last for the same reason.
+const TWO_NOUNS = 14;
 
-/** 🛑 THE RESIDUE, MEASURED. 🆕🆕 **D457 — FIVE legal printings over THREE
-    sentences** (was eight over five), each refused for a DIFFERENT reason, each
-    pinned derived-to-null. `[text, legal, why]` — and the `why` is what the
+/** 🛑 THE RESIDUE, MEASURED. 🆕🆕 **D458 — THREE legal printings over TWO
+    sentences** (D457: five over three; D235: eight over five), each refused for a
+    DIFFERENT reason, each pinned derived-to-null. `[text, legal, why]` — and the `why` is what the
     backlog sub-row carries, because "the rest of row 10" is how a row acquires a
     count nobody can reproduce.
 
@@ -277,7 +312,25 @@ const ONE_OF_BENCH_TWO = 13;
     ⚠️ THE THREE THAT REMAIN ARE UNCHANGED AND RE-MEASURED BY MINIMAL PAIR at
     D457's head: for `sv08-161` (the Tera row) dropping EITHER blocker alone still
     derives to null, which is what makes it two blockers on one printing rather
-    than one wearing two names. */
+    than one wearing two names.
+
+    🛑🛑 **D458 — THE THIRD ROW LEFT, AND D235's PRICE FOR IT DID NOT SURVIVE
+    EITHER.** The second printed noun was filed here as *"a different sentence
+    SHAPE, so its own arm by D232's rule"*. **D232's rule says the opposite when it
+    is read rather than cited**: a family collapses to ONE arm when its sentences
+    differ in a NOUN and splits when they differ in a VERB, and it splits a family
+    only where an alternation would have to loosen the punctuation, the
+    conjunction, the pronoun AND the verb form together. Corpus line 410 differs
+    from its neighbours in the NOUN COUNT alone — same verb, same pronoun, same
+    destination vocabulary, same trailing shuffle — so it cost **one optional group
+    on the anchor already here, ZERO new anchors and ZERO new op fields**. **That is
+    now TWO consecutive slices in which this table's stated blocker named the wrong
+    carrier**: D457's was a field priced on the wrong op, this one an arm priced on
+    a rule pointing the other way. ⚠️ **THE TWO THAT REMAIN ARE BOTH
+    DATA-BLOCKED** — the ingested `cardSchema` carries no column that classifies the
+    Future or Tera banner — which is a different KIND of refusal from either
+    expired one, and the condition that would reverse it is an INGEST change, not an
+    arm. */
 const UNREAD = [
   [
     "Search your deck for up to 2 Basic Energy cards and attach them to your Future Pokémon in any way you like. Then, shuffle your deck.",
@@ -288,11 +341,6 @@ const UNREAD = [
     "Search your deck for up to 3 Basic Energy cards of different types and attach them to your Tera Pokémon in any way you like. Then, shuffle your deck.",
     1,
     "BOTH blockers on one printing (sv08-161): the Tera subgroup AND a distinctness `CardFilter`; priced by the row",
-  ],
-  [
-    "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
-    2,
-    "a SECOND printed noun — a different sentence SHAPE, so its own arm by D232's rule; NOT priced by the row",
   ],
 ] as const;
 
@@ -334,6 +382,10 @@ const BENCH_CHARGE = 39;
 const TOXIC_RESERVE = 40;
 const WATER_DRAW = 41;
 const SPLIT_SUPPLY = 42;
+// 🆕🆕 D458 — index 72, appended by this slice: the second printed noun, and the
+// only row in this family whose program parks TWICE. See `testFixtures.ts` for why
+// it needed an index of its own rather than a reused one.
+const SPLIT_HARVEST = 72;
 
 function board(seed: number): GameState {
   const state = driveSetup(
@@ -357,6 +409,46 @@ function ready(seed: number, bench: readonly string[] = ["fix-basic-1", "fix-bas
   state = clearBench(state, "p2");
   state = benchFromDeck(state, "p2", "fix-basic-1");
   return state;
+}
+
+/** 🆕🆕 **D458 — THE SAME BOARD OVER `TWO_NOUN_SEARCH_DECK`**, which is a
+    SEPARATE deck constant rather than an edit to the one above: `deckOf` order
+    feeds the shuffle, so a card added to a shared deck moves every seed-pinned
+    board that reads it (D412 reddened three unrelated slices that way). The
+    {G}/{L} pair Split Harvest prints is not in `DECK_SEARCH_ATTACH_DECK` at all —
+    it stocks {W}/{L}/{D} — so this is an addition, not a duplication. */
+function readyTwoNoun(
+  seed: number,
+  bench: readonly string[] = ["fix-basic-1", "fix-basic-1"],
+): GameState {
+  const start = mustApply(
+    driveSetup(seed, { p1: TWO_NOUN_SEARCH_DECK, p2: TWO_NOUN_SEARCH_DECK }, { first: "p2" }),
+    { type: "endTurn", seat: "p2" },
+  ).state;
+  let state = setActiveFromDeck(start, "p1", "fix-trainerops");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  state = clearBench(state, "p1");
+  for (const id of bench) state = benchFromDeck(state, "p1", id);
+  state = setActiveFromDeck(state, "p2", "fix-bigbody");
+  state = clearBench(state, "p2");
+  state = benchFromDeck(state, "p2", "fix-basic-1");
+  return state;
+}
+
+/** p1's deck with every printing of `id` removed — the shape the "no matching
+    Energy" rungs need, lifted out of one of them so D458's ZERO-OF-ONE-TYPE board
+    reads the same rule rather than a second copy of it. */
+function withoutCard(state: GameState, id: string): GameState {
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      p1: {
+        ...state.players.p1,
+        deck: state.players.p1.deck.filter((uid) => state.cardIdByUid[uid] !== id),
+      },
+    },
+  };
 }
 
 function all<T extends GameEvent["type"]>(
@@ -395,27 +487,183 @@ const idsOf = (state: GameState, uids: readonly string[]) => uids.map((u) => sta
 // 1. THE ANCHOR
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("the anchor — twelve printed sentences, ONE arm and one optional group", () => {
+describe("the anchor — fifteen printed sentences, ONE arm and TWO optional groups", () => {
   it("derives each printed sentence to its program", () => {
     for (const { text, program } of CLAUSES) {
       expect(deriveAttackEffect(text), text).toEqual(program);
     }
   });
 
-  it("adds up: 23 of the row's 28 legal printings, and the residue is 5", () => {
+  it("adds up: 25 of the row's 28 legal printings, and the residue is 3", () => {
     // The arithmetic stated rather than described — a slice that quietly dropped
     // one destination row would still pass every accept case above.
     // 🆕 D457 — 12 → 14 sentences and 20 → 23 printings; the DENOMINATORS did not
     // move, because this slice read two sentences the row always counted and
     // ingested nothing.
-    expect(CLAUSES).toHaveLength(14);
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(23);
-    expect(UNREAD).toHaveLength(3);
-    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(5);
+    // 🆕🆕 D458 — 14 → 15 and 23 → 25, and the denominators are unmoved for the
+    // same reason: one more sentence the row always counted, nothing ingested.
+    expect(CLAUSES).toHaveLength(15);
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0)).toBe(25);
+    expect(UNREAD).toHaveLength(2);
+    expect(UNREAD.reduce((sum, [, legal]) => sum + legal, 0)).toBe(3);
     for (const [text] of UNREAD) expect(deriveAttackEffect(text), text).toBeNull();
-    // 23 + 5 = 28 and 14 + 3 = 17: exactly the census this row was measured with.
-    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 5).toBe(28);
+    // 25 + 3 = 28 and 15 + 2 = 17: exactly the census this row was measured with.
+    expect(CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) + 3).toBe(28);
     expect(CLAUSES.length + UNREAD.length).toBe(17);
+  });
+
+  it("🆕🛑 D458 — the SECOND printed noun is ONE optional group, and the axis is the NOUN COUNT", () => {
+    // 🛑 **THE MINIMAL PAIRS THAT ISOLATE THE BLOCKER, DRIVEN RATHER THAN
+    // ASSERTED (D457's method, one row over).** Deleting EITHER printed noun from
+    // line 410 leaves a sentence this anchor has read since D235 — so the whole of
+    // what was missing was the second noun, and nothing about the destination, the
+    // pronoun, the count or the shuffle was ever in question.
+    const both = CLAUSES[TWO_NOUNS].text;
+    const grassOnly =
+      "Search your deck for up to 2 Basic {G} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.";
+    const lightningOnly =
+      "Search your deck for up to 2 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.";
+    // The pairs are TEXTUAL deletions of the printed sentence, not hand-written
+    // neighbours — a near-miss that differs on more than one axis tests nothing
+    // about either (D427).
+    expect(both.replace(" and up to 2 Basic {L} Energy cards", "")).toBe(grassOnly);
+    expect(both.replace("up to 2 Basic {G} Energy cards and ", "")).toBe(lightningOnly);
+    // …and each half derives to exactly the op the two-noun program's own half is.
+    expect(deriveAttackEffect(grassOnly)).toEqual([
+      CLAUSES[TWO_NOUNS].program[0],
+      { op: "shuffleDeck" },
+    ]);
+    expect(deriveAttackEffect(lightningOnly)).toEqual([
+      CLAUSES[TWO_NOUNS].program[1],
+      { op: "shuffleDeck" },
+    ]);
+    // 🛑 **THE TWO QUOTAS ARE TWO `max`es, NOT ONE SUM.** A build that read the
+    // sentence as one search for four Energy passes every "the sentence derives"
+    // assertion; it fails here, and the merged spelling is a real corpus shape
+    // (line 418, *"up to 3 Basic Energy cards"* at one cap).
+    expect(deriveAttackEffect(both)).toHaveLength(3);
+    expect(
+      deriveAttackEffect(
+        "Search your deck for up to 4 Basic Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 4 },
+      { op: "shuffleDeck" },
+    ]);
+    // 🛑 **AND ONE `shuffleDeck`, AT THE END, BECAUSE THE CARD PRINTS ONE.** A
+    // two-op build that shuffled after each search is the mistake this asserts
+    // against — it would scramble the deck at a moment no sentence names.
+    expect(deriveAttackEffect(both)?.filter((op) => op.op === "shuffleDeck")).toHaveLength(1);
+    expect(deriveAttackEffect(both)?.at(-1)).toEqual({ op: "shuffleDeck" });
+  });
+
+  it("🆕🛑 D458 — the second noun is REFUSED beside a coupling it cannot honour, and ADMITTED without one", () => {
+    // 🛑 **THE TWO PRECONDITIONS THAT MAKE TWO OPS EQUAL ONE PRINTED SENTENCE.**
+    // Two sequential searches carry two maps and two §9.2 filings, so any printed
+    // rule that couples the two batches would be silently broken by the
+    // decomposition. Both are refused rather than mis-built (D190b/D199: a
+    // wrong-but-plausible program is strictly worse than an unbuilt one), and
+    // **each refusal is paired with the admission that differs from it on ONE
+    // axis** — without the pair, a reader that refused everything would pass
+    // (D424).
+    const twoNounRefusals = [
+      // (a) `destination.batch === false`: "attach them to **1 of** your Pokémon"
+      // is D457's `oneTarget`, a constraint on the MAP. Two maps could put the
+      // {G} batch on one body and the {L} batch on another.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.",
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to 1 of your Benched Pokémon. Then, shuffle your deck.",
+      // (b) the §9.2 poison tail files `recordAs: "moved"`, and two ops filing one
+      // slot means the second OVERWRITES the first — a board where the {G} search
+      // attached and the {L} search whiffed would file `[]` and the printed gate
+      // would answer NO about an attach that happened.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, this Pokémon is now Poisoned.",
+    ];
+    for (const text of twoNounRefusals) expect(deriveAttackEffect(text), text).toBeNull();
+    // ⚠️ THE CONTROLS, one axis each. Drop the second noun and both derive; keep
+    // the second noun and drop the coupling and it derives.
+    for (const text of twoNounRefusals) {
+      expect(
+        deriveAttackEffect(text.replace(" and up to 2 Basic {L} Energy cards", "")),
+        text,
+      ).not.toBeNull();
+    }
+    // "this Pokémon" is a `batch: true` row — the op resolves it to a 0-or-1 ref
+    // list — so the second noun IS admitted there once the §9.2 tail is gone.
+    expect(
+      deriveAttackEffect(
+        "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to this Pokémon. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Grass" },
+        max: 2,
+        toSelf: true,
+      },
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Lightning" },
+        max: 2,
+        toSelf: true,
+      },
+      { op: "shuffleDeck" },
+    ]);
+    // ⚠️ **THE REFUSALS ARE READ OFF THE MODEL, NOT LISTED** (D424): the `batch`
+    // flag is the table's own, so a destination row added there is classified by
+    // construction. The GENERATED brace-coded rows prove it — the "1 of your {c}"
+    // spelling is refused and the "your {c} … in any way you like" spelling is
+    // admitted, on rows nobody wrote by hand.
+    expect(
+      deriveAttackEffect(
+        "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to 1 of your {R} Pokémon. Then, shuffle your deck.",
+      ),
+    ).toBeNull();
+    expect(
+      deriveAttackEffect(
+        "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and attach them to your {R} Pokémon in any way you like. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Grass" },
+        max: 2,
+        targetType: "Fire",
+      },
+      {
+        op: "attachFromDeck",
+        filter: { kind: "basicEnergy", energyType: "Lightning" },
+        max: 2,
+        targetType: "Fire",
+      },
+      { op: "shuffleDeck" },
+    ]);
+  });
+
+  it("🆕 D458 — the second noun's own grammar rewrites are refused", () => {
+    // The optional group is welded as a UNIT, which is what stops it loosening the
+    // anchor for every OTHER sentence in the family. Each rewrite is one token off
+    // the printed line.
+    const rewrites = [
+      // The SINGULAR branch cannot take the group — the pronoun stays welded.
+      "Search your deck for a Basic {G} Energy card and up to 2 Basic {L} Energy cards and attach it to your Pokémon in any way you like. Then, shuffle your deck.",
+      // "Basic" is not optional on the second noun either.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      // A brace code the ENERGY map refuses, on the SECOND noun this time.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {C} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      // A printed 0 and the shared ingested-text ceiling, both on the SECOND cap —
+      // the guards are duplicated deliberately, because a build that checked only
+      // the first count passes every accept case in this file.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 0 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 11 Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      // A THIRD noun. The group is optional, not repeatable — no printing spells
+      // one, and an unbounded build would silently drop the third cap.
+      "Search your deck for up to 2 Basic {G} Energy cards and up to 2 Basic {L} Energy cards and up to 2 Basic {W} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+      // The `in any combination of` UNION shape — ONE pool with a SHARED cap,
+      // which is a different printed rule and is registry-built where the catalog
+      // spells it (corpus lines 416 and 427). It must not fall into this arm.
+      "Search your deck for up to 2 in any combination of Basic {G} Energy cards and Basic {L} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.",
+    ];
+    for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
   it("🛑 D235's PREDICTION WAS 23, ITS ANSWER WAS 20, AND D457 MAKES THE ANSWER 23 — for the reason the grade named", () => {
@@ -610,10 +858,15 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
     for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
   });
 
-  it("carries NO new op, and ONE new op FIELD — the honest price, D457's half included", () => {
+  it("carries NO new op, and ONE new op FIELD — the honest price, D457's and D458's halves included", () => {
     // `attachFromDeck` has run since M5-D50 with every key any arm here sets
     // EXCEPT `oneTarget` (D457, the batch-onto-one-body coupling);
     // `shuffleDeck`, `recordGate` and `applyStatus` are all older still.
+    // 🆕🆕 **D458 ADDS ZERO KEYS TO THIS LIST AND THIS RUNG IS THE PROOF, NOT THE
+    // CLAIM.** The second printed noun is a second `attachFromDeck` op, so the
+    // `known` map is unchanged and the loop below simply walks one program longer.
+    // A build that reached for a `secondFilter`/`maxTwo` field instead would redden
+    // here.
     // ⚠️ THE TITLE IS PART OF THE ASSERTION. D235's read "NO new op FIELD" and was
     // true when it was written; leaving it there while adding a key to the list
     // below would be a doc-block justification outliving its measurement (D425),
@@ -697,7 +950,7 @@ describe("the anchor — twelve printed sentences, ONE arm and one optional grou
 // 2. THE FIXTURE — the printings, present and pinned
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-42", () => {
+describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-42, and D458's at 72", () => {
   const attacks = () => FIXTURE_POOL["fix-trainerops"]?.attacks ?? [];
 
   it("fields the family at indices 35-42, appended and not inserted", () => {
@@ -727,7 +980,7 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // (`derivedSpreadEnergyMove.test.ts` owns them). ELEVEN sibling suites carry this
     // same length pin and ALL of them were stepped in one pass (D431): a green run
     // after fixing the one that reddened is evidence the runner stopped early.
-    expect(attacks()).toHaveLength(72); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
+    expect(attacks()).toHaveLength(73); // 🆕🆕 **72 AT D457**, which appended **71** — and NOT to field a new family: index 42 was the demonstrator's LAST unread sentence and D457 built it, leaving `optionalSelfSwitch.test.ts` §7's loud-path attribution control with no subject at all. 71 is corpus line 404 (the Future-banner attach, DATA-BLOCKED rather than merely unbuilt), and `testFixtures.ts` carries the argument. THIRTEEN suites carry this pin and all thirteen were stepped in one pass (D431).
     expect(attacks()[ENERGY_ASSIST]?.effect).toBe(CLAUSES[SELF_BARE].text);
     expect(attacks()[ZAP_CHARGE]?.effect).toBe(CLAUSES[SELF_LIGHTNING].text);
     expect(attacks()[AQUA_SUPPLY]?.effect).toBe(CLAUSES[SELF_WATER_TWO].text);
@@ -742,6 +995,15 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // and started serving the coupling — see §3's end-to-end pair. **The fixture
     // did not move; what it demonstrates did.**
     expect(attacks()[SPLIT_SUPPLY]?.effect).toBe(CLAUSES[ONE_OF_TWO].text);
+    // 🆕🆕 D458 — index 72, OUTSIDE the 35-42 block and deliberately so: the
+    // append discipline is what every sibling suite's constants depend on, and a
+    // family's rows do not have to be contiguous to be its rows.
+    expect(attacks()[SPLIT_HARVEST]?.effect).toBe(CLAUSES[TWO_NOUNS].text);
+    // ⚠️ …and index 71 still prints the sentence NO reader claims, which is
+    // `optionalSelfSwitch.test.ts` §7's attribution-control subject. D458 appends
+    // beside it rather than over it, and this rung is what would go red if a
+    // successor "tidied" the two together.
+    expect(deriveAttackEffect(attacks()[71]?.effect ?? "")).toBeNull();
     // The indices the sibling suites address by constant did not move.
     expect(attacks()[2]?.effect).toBe(
       "Switch in 1 of your opponent's Benched Pokémon to the Active Spot.",
@@ -765,6 +1027,7 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
       TOXIC_RESERVE,
       WATER_DRAW,
       SPLIT_SUPPLY,
+      SPLIT_HARVEST,
     ]) {
       expect(attacks()[index]?.damage, `index ${index}`).toBeUndefined();
     }
@@ -786,6 +1049,12 @@ describe("PROVENANCE — the demonstrator carries eight of the sentences at 35-4
     // paraphrase and match no printed card.
     expect(deriveAttackEffect(attacks()[SPLIT_SUPPLY]?.effect ?? "")).toEqual(
       CLAUSES[ONE_OF_TWO].program,
+    );
+    // 🆕 D458 — the same round trip on the two-noun sentence, off the FIXTURE
+    // bytes. This is the rung that would catch an arm written against a
+    // paraphrase of the second noun (D183).
+    expect(deriveAttackEffect(attacks()[SPLIT_HARVEST]?.effect ?? "")).toEqual(
+      CLAUSES[TWO_NOUNS].program,
     );
   });
 });
@@ -1058,6 +1327,167 @@ describe("end to end — an ATTACK searching its own deck for Energy", () => {
     expect(one.players.p1.bench[1]?.energy).toHaveLength(1);
   });
 
+  it("🆕🛑 D458 — the second printed noun asks TWICE, and the two searches are FILTERED apart", () => {
+    // 🛑 **QUESTION 1, DRIVEN: TWO OPS MEANS TWO PARKS.** Every other sentence in
+    // this family resolves ONE prompt, so a build that summed the two printed caps
+    // into a single `max: 4` search passes every board in this file except this
+    // one. The observable is that the second decision EXISTS — `derivedDiscardAttach`
+    // §"asks TWICE" is the same assertion one op and one zone over.
+    const state = readyTwoNoun(3);
+    deepFreeze(state);
+    const { state: parked, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
+    // PARK ONE is the FIRST printed noun, and only it: the deck holds {L} and {W}
+    // too, so a build that dropped either `filter` offers them here.
+    const grass = promptOf(parked);
+    expect(new Set(idsOf(parked, grass.candidates))).toEqual(new Set(["fix-grass-energy"]));
+    expect(grass.max).toBe(2);
+    expect(grass.note).toContain("in any way you like");
+    const { state: mid, events: firstEvents } = attach(parked, [
+      { uid: grass.candidates[0] as string, to: benchRef(0) },
+      { uid: grass.candidates[1] as string, to: benchRef(0) },
+    ]);
+    expect(all(firstEvents, "ENERGY_ATTACHED")).toHaveLength(2);
+    // 🛑 **THE SECOND PARK. A one-op build has finished by now.**
+    expect(mid.phase.kind).toBe("effect:choose");
+    const lightning = promptOf(mid);
+    expect(new Set(idsOf(mid, lightning.candidates))).toEqual(new Set(["fix-lightning-energy"]));
+    expect(lightning.max).toBe(2);
+    const { state: done, events: secondEvents } = attach(mid, [
+      { uid: lightning.candidates[0] as string, to: benchRef(1) },
+      { uid: lightning.candidates[1] as string, to: benchRef(1) },
+    ]);
+    expect(all(secondEvents, "ENERGY_ATTACHED")).toHaveLength(2);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    // 🛑 **QUESTION 2, DRIVEN: THE DESTINATION IS SHARED ACROSS THE TWO PARKS.**
+    // The printed clause is one *"attach **them** to your Pokémon in any way you
+    // like"*, and the two answers land on DIFFERENT bodies here — a distribution a
+    // single park would also reach, and one that proves the second search is not
+    // pinned to whatever the first chose.
+    expect(idsOf(done, done.players.p1.bench[0]?.energy ?? [])).toEqual([
+      "fix-grass-energy",
+      "fix-grass-energy",
+    ]);
+    expect(idsOf(done, done.players.p1.bench[1]?.energy ?? [])).toEqual([
+      "fix-lightning-energy",
+      "fix-lightning-energy",
+    ]);
+    // ⚠️ …and FOUR cards left p1's deck and no more — the two printed caps, both
+    // spent. Resolving the last park ends p1's turn, so the only other movement
+    // §3 permits is p2's turn-start draw, which comes off the OTHER deck.
+    expect(state.players.p1.deck.length - done.players.p1.deck.length).toBe(4);
+  });
+
+  it("🆕🛑 D458 — …and ALL FOUR may land on ONE body, which is the other end of the shared destination", () => {
+    // The pair that makes the split load-bearing. Nothing about the sequential
+    // model narrows the second park's targets, so the printed *"in any way you
+    // like"* still reaches the all-on-one distribution across BOTH searches.
+    const state = readyTwoNoun(3);
+    deepFreeze(state);
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    const grass = promptOf(parked);
+    // ⚠️ The ACTIVE is offered on both parks — the destination is un-narrowed, so
+    // `benchOnly` would show up here as a missing target rather than as a wrong
+    // attach.
+    expect(grass.targets).toContainEqual(ACTIVE_REF);
+    const { state: mid } = attach(
+      parked,
+      grass.candidates.slice(0, 2).map((uid) => ({ uid, to: ACTIVE_REF })),
+    );
+    const lightning = promptOf(mid);
+    expect(lightning.targets).toContainEqual(ACTIVE_REF);
+    const { state: done } = attach(
+      mid,
+      lightning.candidates.slice(0, 2).map((uid) => ({ uid, to: ACTIVE_REF })),
+    );
+    expect(idsOf(done, done.players.p1.active?.energy ?? [])).toEqual([
+      "fix-energy",
+      "fix-grass-energy",
+      "fix-grass-energy",
+      "fix-lightning-energy",
+      "fix-lightning-energy",
+    ]);
+    expect(done.players.p1.bench.every((b) => b.energy.length === 0)).toBe(true);
+  });
+
+  it("🆕🛑 D458 — a deck with ZERO of the SECOND type still resolves the FIRST", () => {
+    // 🛑 **QUESTION 3, DRIVEN, AND NO NEW ZERO-SHAPE WAS ADDED.** `attachFromDeck`
+    // has answered an empty candidate set since M5 by returning the board and
+    // filing an empty §9.2 record (`interpreter.ts`, the dead end above
+    // `attachFromDeckOffer`) — the same shape the "no matching Energy" rung above
+    // drives on a ONE-noun sentence. The two-op program inherits it: the second
+    // search whiffs, does not park, and the printed shuffle still runs.
+    const state = withoutCard(readyTwoNoun(5), "fix-lightning-energy");
+    expect(state.players.p1.deck.filter((u) => state.cardIdByUid[u] === "fix-grass-energy").length)
+      .toBeGreaterThan(1);
+    deepFreeze(state);
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    const grass = promptOf(parked);
+    expect(new Set(idsOf(parked, grass.candidates))).toEqual(new Set(["fix-grass-energy"]));
+    const { state: done, events } = attach(
+      parked,
+      grass.candidates.slice(0, 2).map((uid) => ({ uid, to: benchRef(0) })),
+    );
+    // 🛑 THE WHOLE POINT: ONE park, and the attack FINISHES. A build that parked
+    // on an empty second search would hang the turn on a prompt with no candidates.
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(2);
+    expect(done.players.p1.bench[0]?.energy).toHaveLength(2);
+  });
+
+  it("🆕🛑 D458 — …and ZERO of the FIRST type does not stop the SECOND", () => {
+    // The mirror, and the one a build that ran the searches in the wrong order — or
+    // that abandoned the program on the first whiff — cannot pass. The FIRST search
+    // has nothing to offer, so the FIRST park is the {L} one.
+    const state = withoutCard(readyTwoNoun(5), "fix-grass-energy");
+    deepFreeze(state);
+    const { state: parked, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    const lightning = promptOf(parked);
+    expect(new Set(idsOf(parked, lightning.candidates))).toEqual(new Set(["fix-lightning-energy"]));
+    const { state: done } = attach(parked, [
+      { uid: lightning.candidates[0] as string, to: benchRef(1) },
+    ]);
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(idsOf(done, done.players.p1.bench[1]?.energy ?? [])).toEqual(["fix-lightning-energy"]);
+  });
+
+  it("🆕🛑 D458 — a deck with NEITHER type is a silent whiff on BOTH searches", () => {
+    // The zero-shape at its far end: no park at all, no `ATTACK_EFFECT_SKIPPED`
+    // (the sentence IS read — that row is the loud path for a sentence no reader
+    // claims), and the attack still resolves because §8 already paid for it.
+    const state = withoutCard(
+      withoutCard(readyTwoNoun(7), "fix-grass-energy"),
+      "fix-lightning-energy",
+    );
+    deepFreeze(state);
+    const { state: done, events } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    expect(done.phase.kind).not.toBe("effect:choose");
+    expect(all(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(all(events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    expect(all(events, "ATTACK_DECLARED")).toHaveLength(1);
+  });
+
   it("the search is the ATTACKER's own deck and own board, on both ends", () => {
     // The one-`otherSeat`-apart pairing every op in this family owes: a build that
     // read the opponent's deck, or attached on their side, would pass every count
@@ -1199,5 +1629,124 @@ describe("🆕🆕 D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the
         }
       }
     }
+  });
+
+  it("🆕🛑 D458 — `MATCH_RECORD_VERSION` STAYS 29 for the TWO-PARK continuation, driven over the bytes", () => {
+    // 🛑 **WHICH SITUATION THIS IS, RE-DERIVED AND NOT INHERITED.** D457 held 29
+    // for a PARK carrying a new optional key. **D458 adds no key anywhere**: zero
+    // new op fields, zero new prompt fields, zero new phase keys. What is new in a
+    // saved record is that `EffectContinuation.rest` holds a SECOND
+    // `attachFromDeck` — a LONGER list of ops the union already spelled, not a
+    // wider one — and that shape is not new either: `deriveAttackEffect`'s
+    // discard-attach arm has written N sequential `attachEnergyFrom` ops into one
+    // continuation since D234. **A v29 reader parsing this record meets no token it
+    // did not already have to understand.**
+    const state = readyTwoNoun(3);
+    deepFreeze(state);
+    const { state: parked } = mustApply(state, {
+      type: "attack",
+      seat: "p1",
+      index: SPLIT_HARVEST,
+    });
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected a park");
+    const cont = parked.phase.cont;
+
+    // **DIRECTION 1 — FORWARD: the bytes this deploy writes.** The pending op is
+    // the FIRST printed noun and the SECOND is queued in `rest` beside the printed
+    // shuffle. Key sets are asserted rather than eyeballed: "the object looked
+    // right" is how a key goes missing.
+    expect(Object.keys(cont).sort()).toEqual(["ctx", "pendingOp", "rest"]);
+    expect(cont.pendingOp).toEqual({
+      op: "attachFromDeck",
+      filter: { kind: "basicEnergy", energyType: "Grass" },
+      max: 2,
+    });
+    expect(cont.rest).toEqual([
+      { op: "attachFromDeck", filter: { kind: "basicEnergy", energyType: "Lightning" }, max: 2 },
+      { op: "shuffleDeck" },
+    ]);
+    // ⚠️ NO `oneTarget` ANYWHERE IN THE RECORD — this destination is *"in any way
+    // you like"*, so a v29 record written by this program is byte-identical in
+    // vocabulary to one a pre-D457 deploy could write.
+    const wire = JSON.stringify(cont);
+    expect(wire).not.toContain("oneTarget");
+    expect(wire).not.toContain("recordAs");
+
+    // **DIRECTION 2 — BACKWARD / ROUND TRIP: the record parsed back and resumed.**
+    // The bytes are PARSED rather than the object spread, because a spread that
+    // preserved a key and a wire that carried one are the same object and not the
+    // same claim.
+    const revived: GameState = {
+      ...parked,
+      phase: { ...parked.phase, cont: JSON.parse(wire) as typeof cont },
+    };
+    const grass = promptOf(revived);
+    const { state: mid } = attach(revived, [{ uid: grass.candidates[0] as string, to: ACTIVE_REF }]);
+    expect(mid.phase.kind).toBe("effect:choose");
+    const { state: done } = attach(mid, [
+      { uid: promptOf(mid).candidates[0] as string, to: ACTIVE_REF },
+    ]);
+    expect(idsOf(done, done.players.p1.active?.energy ?? [])).toEqual([
+      "fix-energy",
+      "fix-grass-energy",
+      "fix-lightning-energy",
+    ]);
+
+    // **DIRECTION 3 — LOSS, AND THE ANSWER IS THE UNCOMFORTABLE ONE.** There is no
+    // optional rider to drop here, so the loss to test is a record whose `rest`
+    // lost its second op. It degrades into a sentence the catalog DOES print (the
+    // single-noun {G} search, corpus line 405-shaped) and:
+    //
+    // 🛑 **IT IS NOT DETECTABLE FROM THE RECORD.** Nothing else in the frame is
+    // built from the op list — there is no `note` twin the way `oneTarget` has one
+    // (D457 §4), because the second search's caption is only written when its park
+    // is. **That is an argument FOR having added no optional key rather than a
+    // defect in this one**: D421's rule is to choose the rest of the record so that
+    // losing the new information is detectable, and the shape that satisfies it
+    // here is the shape with nothing losable in it. A truncated `rest` is data
+    // corruption, which no `MATCH_RECORD_VERSION` protects against and which this
+    // slice does not make newly possible.
+    const truncated: GameState = {
+      ...parked,
+      phase: { ...parked.phase, cont: { ...cont, rest: [{ op: "shuffleDeck" as const }] } },
+    };
+    const { state: short } = attach(truncated, [
+      { uid: promptOf(truncated).candidates[0] as string, to: ACTIVE_REF },
+    ]);
+    expect(short.phase.kind).not.toBe("effect:choose");
+    expect(idsOf(short, short.players.p1.active?.energy ?? [])).toEqual([
+      "fix-energy",
+      "fix-grass-energy",
+    ]);
+    // …and "not detectable from the record" stated as an ASSERTION rather than as
+    // prose: the PROMPT — the half a client renders and a log row quotes — is
+    // byte-identical in the truncated record and the whole one. Everything a reader
+    // could compare the op list against says the same thing in both.
+    expect(JSON.stringify(truncated.phase)).not.toBe(JSON.stringify(parked.phase));
+    if (truncated.phase.kind !== "effect:choose") throw new Error("expected a park");
+    expect(JSON.stringify(truncated.phase.prompt)).toBe(JSON.stringify(parked.phase.prompt));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. 🆕🆕 D458 — THE VERSION PINS
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("🆕🆕 D458 §5 — the engine version moved and the record version did not", () => {
+  it("engineVersion is 0.357.0 and `manifest.version` agrees", () => {
+    // 🛑 **THE PIN THIS SLICE AUTHORS**, which is the one every version-tax note in
+    // this repo has forgotten to count (D427's mechanism): a slice counts the pins
+    // it INHERITED and never the one it is about to write. 34 assertions existed
+    // before this line; there are 35 after it.
+    //
+    // ⚠️ **THE BUMP IS OWED BECAUSE BEHAVIOUR MOVED.** A sentence that derived to
+    // `null` at 0.356.0 derives to a three-op program at 0.357.0. It is owed for
+    // that alone — no new op, no new field and no new prompt key were spent, so a
+    // reader looking for a vocabulary diff would find none and conclude wrongly.
+    expect(engineVersion).toBe("0.357.0");
+    expect(manifest.version).toBe(engineVersion);
+    // …and the historical values never come back, the shape every sibling pin uses.
+    expect(engineVersion).not.toBe("0.355.0");
+    expect(engineVersion).not.toBe("0.356.0");
   });
 });
