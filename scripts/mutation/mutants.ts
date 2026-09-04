@@ -5769,7 +5769,10 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.364.0";',
+    // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
+    // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
+    // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
+    find: 'export const engineVersion = "0.365.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -6688,9 +6691,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "🛑 THE SEAT SWAP, AND IT IS THE WHOLE MEMBER: `yourBenchCount` returns the DEFENDER's Bench population, which is `opponentBenchCount`'s answer one `case` up. Every symmetric board stays green — the suite's 3-mine/1-theirs board is the only place the two numbers differ (90 vs 30)",
     file: "packages/engine/src/attack.ts",
-    find: '      return benchBodies(state, attackerSeat) * bonus.per;\n    case "bothSidesBenchCount":',
+    // 🆕 D466 — RE-POINTED: `yourBenchCount` gained an OPTIONAL `filter` and the
+    // evaluator now passes `bonus.count.filter` through to `benchBodies`. The DEFECT
+    // is unchanged (the seat), and the row is re-probed under `--only` because
+    // `--decision D466` matches by `String.includes` and "D282" does not contain it.
+    find: '      return benchBodies(state, attackerSeat, bonus.count.filter) * bonus.per;\n    case "bothSidesBenchCount":',
     replace:
-      '      return benchBodies(state, defenderSeat) * bonus.per;\n    case "bothSidesBenchCount":',
+      '      return benchBodies(state, defenderSeat, bonus.count.filter) * bonus.per;\n    case "bothSidesBenchCount":',
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
@@ -6698,9 +6705,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D282",
     what: "`yourBenchCount` collapses into `bothSidesBenchCount` — the OTHER neighbour, and the other direction the same board tells apart (120 vs 90). Two mutants rather than one because a build that answered its left-hand neighbour and one that answered its right-hand neighbour are different defects and only a board where all three disagree kills both",
     file: "packages/engine/src/attack.ts",
-    find: '      return benchBodies(state, attackerSeat) * bonus.per;\n    case "bothSidesBenchCount":',
+    // 🆕 D466 — RE-POINTED for `D282-your-bench-reads-the-DEFENDER`'s reason, verbatim.
+    find: '      return benchBodies(state, attackerSeat, bonus.count.filter) * bonus.per;\n    case "bothSidesBenchCount":',
     replace:
-      '      return (benchBodies(state, attackerSeat) + benchBodies(state, defenderSeat)) * bonus.per;\n    case "bothSidesBenchCount":',
+      '      return (benchBodies(state, attackerSeat, bonus.count.filter) + benchBodies(state, defenderSeat, bonus.count.filter)) * bonus.per;\n    case "bothSidesBenchCount":',
     expectKilledBy: ["packages/engine/src/benchBodySelfScaling.test.ts"],
   },
   {
@@ -20369,7 +20377,7 @@ export const MUTANTS: Mutant[] = [
     survives: {
       kind: "equivalent",
       reason:
-        "The three branches of `inPlayBodyFilter` are PAIRWISE DISJOINT, measured exhaustively rather than argued: the vocabulary is 25 nouns — the 3 exact keys of `IN_PLAY_BODY_NOUNS`, the 11 `POKEMON_TYPES` names and the 11 `{X}` codes — and NOT ONE matches `IN_PLAY_OWNER_NOUN`, because no Pokémon type name ends in a possessive and no exact key carries an apostrophe. So no noun can resolve down two branches and any permutation of the three lookups computes the identical function. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON: the day a type name gains a `'s`, or an exact key gains one, the branches overlap, this mutation becomes observable, the row reports STALE-SURVIVOR and the run FAILS. The property it rests on is also pinned directly, over the whole of `POKEMON_TYPES`, by `bodiesInPlayScaling.test.ts` §2 — so the same change reddens a suite AND invalidates this reason, which is two independent alarms on one fact.",
+        "The three branches of `inPlayBodyFilter` are PAIRWISE DISJOINT, measured exhaustively rather than argued: the vocabulary is 29 nouns — the 7 exact keys of `IN_PLAY_BODY_NOUNS`, the 11 `POKEMON_TYPES` names and the 11 `{X}` codes — and NOT ONE matches `IN_PLAY_OWNER_NOUN`, because no Pokémon type name ends in a possessive and no exact key carries an apostrophe. So no noun can resolve down two branches and any permutation of the three lookups computes the identical function. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON: the day a type name gains a `'s`, or an exact key gains one, the branches overlap, this mutation becomes observable, the row reports STALE-SURVIVOR and the run FAILS. The property it rests on is also pinned directly, over the whole of `POKEMON_TYPES`, by `bodiesInPlayScaling.test.ts` §2 — so the same change reddens a suite AND invalidates this reason, which is two independent alarms on one fact. 🆕 **D466 — THE REASON'S ARITHMETIC WAS STALE AND IS RE-DERIVED HERE RATHER THAN LEFT STANDING (D442).** It said *“25 nouns — the 3 exact keys”*, which was D439's count and was already wrong at D446 (which added `Pokémon ex` and `Pokémon ex and Pokémon V`); D466 adds `Stage 1 Pokémon` and `Stage 2 Pokémon`, so the exact keys are **7** and the vocabulary is **29**. ⚠️ **THE PROPERTY IS UNCHANGED AND WAS RE-CHECKED KEY BY KEY, NOT INFERRED**: none of the seven carries an apostrophe, so none can reach `IN_PLAY_OWNER_NOUN`; and the exact-map lookup sits AHEAD of both permuted branches in the `find` AND in the `replace`, so the two new keys resolve before either branch runs in both worlds. The row still SURVIVES, and it survives for the reason as corrected rather than for the reason as written.",
     },
     file: "packages/engine/src/effects.ts",
     find: "  const owner = IN_PLAY_OWNER_NOUN.exec(noun);\n  if (owner !== null && owner[1] !== undefined) {\n    return { kind: \"ownerPokemon\", owner: owner[1] };\n  }\n  const typed = IN_PLAY_TYPED_NOUN.exec(noun);\n  if (typed !== null) {\n    const pokemonType = literalClauseRow(CLAUSE_POKEMON_TYPES, typed[1] ?? \"\");\n    if (pokemonType !== undefined) return { kind: \"typedPokemon\", pokemonType };\n  }\n  return null;",
@@ -23954,4 +23962,114 @@ export const MUTANTS: Mutant[] = [
     replace: '    if (amount >= 0) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];',
     expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
   },
+
+  // ── D466 · THE PRINTED EVOLUTION-STAGE ORDINAL AS A `CardFilter` ─────────────
+  //    TEN rows over THREE files, ONE PER CLAIM rather than one per line. The slice
+  //    has two seams — the VOCABULARY (a `CardFilter` member plus two noun rows, which
+  //    is the whole of corpus file line 586 and costs no anchor at all) and the BENCH
+  //    ANCHOR (one new pattern plus one optional field on the shipped `yourBenchCount`,
+  //    which is the whole of file line 589) — and the rows are grouped that way.
+  //
+  //    🛑 TWO LINES THIS SLICE WROTE GET NO ROW, AND THE REASON IS THE SAME ONE D446
+  //    RECORDED AT THE SAME ADDRESS: `BENCHABLE_RETRIEVAL_KINDS` gains `"stagePokemon"`
+  //    and `retrieveNoun` gains a `stagePokemon` arm, and NEITHER DIRECTION IS
+  //    OBSERVABLE — no producer can put the member into an `EffectOp`, so omitting the
+  //    Set entry refuses nothing and adding it benches nothing, and no board can render
+  //    the noun phrase. A row that changes nothing reports a suite gap that does not
+  //    exist (D420/D450). The record is the comment at each site, plus the executable
+  //    reachability rungs in `bodiesInPlayScaling.test.ts` §8.
+  {
+    id: "D466-stage-noun-loses-the-ordinal",
+    decision: "D466",
+    what: "🛑 **THE VOCABULARY ROW READS THE WRONG ORDINAL.** *\"Stage 1 Pokémon\"* resolves to `{ kind: \"stagePokemon\", stage: \"Stage2\" }`, so corpus file line 586 still BUILDS and still steps `BUILT.attack` — it just counts the wrong bodies. ⚠️ **THE CENSUS CANNOT SEE THIS AT ALL**: the sentence is claimed either way, the residue figure is identical, and every rung keyed on `resolvedByAnyReader` stays green. Only the derived VALUE and the board number move — which is why §8 asserts the whole `{ kind, stage }` object and drives a board where Stage 1 answers 4 and Stage 2 answers 1.",
+    file: "packages/engine/src/effects.ts",
+    find: '  ["Stage 1 Pokémon", { kind: "stagePokemon", stage: "Stage1" }],',
+    replace: '  ["Stage 1 Pokémon", { kind: "stagePokemon", stage: "Stage2" }],',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-stage-arm-swaps-the-ordinals",
+    decision: "D466",
+    what: "The `matchesFilter` arm answers `isStage2Pokemon` for a `Stage1` filter and vice versa — the same defect as the row above, one layer down and reachable from EVERY consumer of the member rather than from one map row. Killed by §6 DIRECTION 3's byte sweep (`fix-stage2body` true / `fix-stage1` false) as well as by §8's boards, which is deliberate: the two rungs answer different questions about the same line.",
+    file: "packages/engine/src/cards.ts",
+    find: "      return filter.stage === \"Stage1\" ? isStage1Pokemon(card) : isStage2Pokemon(card);",
+    replace: "      return filter.stage === \"Stage1\" ? isStage2Pokemon(card) : isStage1Pokemon(card);",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-stage-arm-widens-to-any-evolution",
+    decision: "D466",
+    what: "⚠️ **THE MISTAKE THE MEMBER EXISTS TO PREVENT, WRITTEN AS THE NEIGHBOUR'S REAL CODE.** The arm becomes `evolveFromOf(card) !== null` — `evolutionPokemon`'s line VERBATIM, three `case`s up — so a Stage 1, a VSTAR and a VMAX all satisfy \"Stage 2\". 🛑 **IT IS INVISIBLE ON THE CANONICAL BOARD**, where every Evolution is a Stage 1: that is exactly why D466 built its own stage boards rather than reusing D439's, and it is why this row is here rather than in a comment.",
+    file: "packages/engine/src/cards.ts",
+    find: "      return filter.stage === \"Stage1\" ? isStage1Pokemon(card) : isStage2Pokemon(card);\n    case \"typedPokemon\": {",
+    replace: "      return evolveFromOf(card) !== null;\n    case \"typedPokemon\": {",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-anchor-loses-its-terminator",
+    decision: "D466",
+    what: "The new Bench anchor drops its `\\.$`, so *\"…on your Bench\"* with nothing after it — and any longer sentence whose noun class happens to reach — is claimed. The `[^.]+` class means the pattern cannot span a sentence break, so what this actually admits is the terminator-less string; §8 drives exactly that.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each ([^.]+) on your Bench\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each ([^.]+) on your Bench/;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-anchor-loses-its-head",
+    decision: "D466",
+    what: "The `^` goes, so *\"Flip a coin. This attack does 40 more damage for each Stage 2 Pokémon on your Bench.\"* is claimed as though the leading clause were not there — the anchor-swallows-a-compound defect D207 paid for three times, at a fourth address. Driven in §8 with a prefix that ENDS A SENTENCE, so the capital `T` is untouched and the `^` is the only axis under test (D452).",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each ([^.]+) on your Bench\\.$/;",
+    replace: "  /This attack does (\\d+) more damage for each ([^.]+) on your Bench\\.$/;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-noun-skips-the-vocabulary",
+    decision: "D466",
+    what: "🛑 **THE VOCABULARY GUARD IS BYPASSED**: the captured noun is not resolved at all and every Bench sentence counts every body. *\"…for each Ancient Pokémon on your Bench.\"* — a real catalog banner nothing in this repo can classify — would BUILD and score the unfiltered total, which is the quiet-wrong-answer direction the loud ATTACK_EFFECT_SKIPPED path exists to prevent (D440's `\"Ancient card\"` refusal, at a second address).",
+    file: "packages/engine/src/effects.ts",
+    find: '    const filter = inPlayBodyFilter(yourBenchFiltered[2] ?? "");',
+    replace: '    const filter: CardFilter | null = { kind: "anyPokemon" };',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-printed-zero-derives",
+    decision: "D466",
+    what: "The family's printed-zero guard goes on the new arm (`per >= 1` → `per >= 0`), so *\"This attack does 0 more damage for each Stage 2 Pokémon on your Bench.\"* is marked SIMULATED while the engine does nothing about it. A SEPARATE guard from the vocabulary one on the same line, and neither subsumes the other — §8 drives them apart with a noun the map HOLDS, so only the arithmetic can refuse.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (per >= 1 && filter !== null) {\n      return { per, count: { kind: \"yourBenchCount\", filter } };",
+    replace: "    if (per >= 0 && filter !== null) {\n      return { per, count: { kind: \"yourBenchCount\", filter } };",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-filter-not-carried",
+    decision: "D466",
+    what: "The arm builds the SHIPPED unfiltered member — `{ kind: \"yourBenchCount\" }` with no `filter` — so file line 589 derives to D282's object and scores every Benched body. ⚠️ **`resolvedByAnyReader` STILL SAYS TRUE AND EVERY CENSUS FIGURE IS IDENTICAL**, which is the whole reason §8 asserts the derived OBJECT and then the board number: a slice that only counted sentences would ship this.",
+    file: "packages/engine/src/effects.ts",
+    find: '      return { per, count: { kind: "yourBenchCount", filter } };',
+    replace: '      return { per, count: { kind: "yourBenchCount" } };',
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-fold-ignores-the-filter",
+    decision: "D466",
+    what: "The EVALUATOR half of the row above: the derived value carries its `filter` and `scaledAttackDamage` drops it on the floor, so the fold counts every Benched body. Two rows rather than one because the two ends fail independently — a reader that never emitted the field and an evaluator that never read it are different defects with the same number on the board, and each has its own suite rung.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return benchBodies(state, attackerSeat, bonus.count.filter) * bonus.per;",
+    replace: "      return benchBodies(state, attackerSeat) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D466-bench-walk-loses-the-unfiltered-path",
+    decision: "D466",
+    what: "⚠️ **THE WIDENING'S OWN GUARD, DELETED — AND IT BREAKS THE TEN SHIPPED PRINTINGS RATHER THAN THE NEW ONE.** `filter === undefined ||` goes, so an unfiltered `benchBodies` call asks `matchesFilter(card, undefined)` and TypeScript's narrowing is gone: every D282 / D193 body count collapses. This is the row that says the optional field is a WIDENING and not a replacement, and it is killed by the suites that own the OLD member — which is why its `expectKilledBy` names them and not §8.",
+    file: "packages/engine/src/attack.ts",
+    find: "      (p !== null && (filter === undefined || matchesFilter(topCardOf(state, p), filter)) ? 1 : 0),",
+    replace: "      (p !== null && matchesFilter(topCardOf(state, p), filter as CardFilter) ? 1 : 0),",
+    expectKilledBy: [
+      "packages/engine/src/benchBodySelfScaling.test.ts",
+      "packages/engine/src/opponentBenchCount.test.ts",
+    ],
+  },
+
 ];

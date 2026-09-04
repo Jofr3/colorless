@@ -27321,3 +27321,171 @@ the row out of it. That is the reverse of D463's and D464's close-outs, which bo
 `OPAQUE` step as the receipt for their build, and it is the general rule: **a class-table delta is a
 statement about the INSTRUMENT, and it is only a statement about the work when the instrument stood
 still.**
+
+
+## D466 — the printed evolution-stage ordinal as a body filter (engine 0.365.0)
+
+*"This attack does 40 damage for each of your **Stage 1** Pokémon in play."* —
+`censusAttackCorpus.ts` **file line 586**, 1 legal printing.
+*"This attack does 40 more damage for each **Stage 2** Pokémon on your Bench."* —
+`censusAttackCorpus.ts` **file line 589**, 2 legal printings.
+**2 sentences / 3 legal printings.** Residue **119/165 → 117/162**.
+
+### (a) The target, and how the classifier priced it against what it actually cost
+
+`bun scripts/residue-census.ts` at head read `RESIDUE 119 / 165`, `OPAQUE` 81/116, and the class
+table named the two rows in two DIFFERENT classes: file line 586 in **`PHRASE-2`** (delete two
+tokens — *"Stage 1"* — and the remainder builds) and file line 589 in **`OPAQUE`** (no deletion and
+no substitution the instrument can make reaches a built string).
+
+🛑 **THE TWO CLASSES WERE BOTH TRUE AND BOTH MISLEADING ABOUT THE PRICE, IN OPPOSITE DIRECTIONS.**
+`PHRASE-2` said "two tokens away", and the two tokens were a whole `CardFilter` member. `OPAQUE`
+said nothing at all — and the row it said nothing about turned out to ride the SAME member plus one
+anchor. **`OPAQUE` is UNCLASSIFIED, never EXPENSIVE**, and this slice is the cheapest possible
+demonstration: the `OPAQUE` row cost one anchor more than the classified one, not one mechanism more.
+
+⚠️ **AND THE TWO ROWS WERE FOUND BY GREPPING THE POOL FOR THE PRINTED WORD, NOT BY READING THE CLASS
+TABLE.** `grep Stage censusAttackCorpus.ts` returns **seven** rows, every one read: two devolve verbs
+(*"the highest Stage Evolution card"*), two `boardCondition` antecedents already built through
+`opponentActiveIsStage1` / `opponentActiveIsStage2`, one op TARGET already built through
+`conditionGate`, and the two body-count nouns this slice took. **The four already-built rows are what
+proved the predicate existed before the filter did** — and no class in the table could have said so.
+
+### (b) The finding: D446's refusal, whose MEASUREMENT was right and whose REASON was false
+
+`bodiesInPlayScaling.test.ts` §2 carried this, written at D446 and re-read at D466:
+
+> *"a stage ORDINAL is not a persisted field either — `Card.stage` is a free-text column and the
+> engine's own `isBasicPokemon` / `evolveFromOf` read it as a BINARY. Spelling 'Stage 1' would mean a
+> third reading of that column, and the row is ONE printing."*
+
+**Every clause of the reason is wrong, and the price at the end is right.**
+
+· `Card.stage` is **not free-text**: its vocabulary is CLOSED at `Basic | Stage1 | Stage2 | VSTAR |
+  VMAX`, queried against the remote D1 at **D262** and written into `isStage2Pokemon`'s own doc block.
+· The engine does **not** read it as a binary: `isStage2Pokemon` has read the ORDINAL since **D262**
+  and `isStage1Pokemon` since **D387** — both shipped 59 and 59+ decisions before D446 — and both are
+  cited by name in `interpreter.ts`'s `opponentActiveIsStage1` / `opponentActiveIsStage2` arms.
+· So D466's member is **not a third reading** of anything. It is the FIRST reading, reused at a second
+  address, which is D159's rule rather than a violation of it.
+· What D446 got right was *"the row is ONE printing"* — a fact about the pool, still true, and the
+  actual reason the slice was not worth taking THEN.
+
+🛑 **THE TRANSFERABLE RULE: A MEASUREMENT AND A CONCLUSION ARE TWO CLAIMS AND EACH NEEDS ITS OWN
+CHECK.** A refusal that survives on a false reason is the expensive kind — it reads like a wall when
+it is a door, and nothing goes red, because a refusal is not an assertion. The cheap disproof here was
+**one grep of `cards.ts` for the word the refusal said did not exist**, and it would have taken a
+minute at D446. Both halves are now recorded at the site, separately, so the next reader can see which
+one is load-bearing.
+
+### (c) What it cost, by seam
+
+**FILE LINE 586 — ZERO ANCHORS.** D439's `IN_PLAY_BODY_MULTIPLY` / `IN_PLAY_BODY_SCALE` already
+MATCHED the sentence; `inPlayBodyFilter` returned `null` and the row stayed loud. Two `Map` rows and a
+union member were the whole of it, and both readers picked the noun up for free. **That is the shape a
+vocabulary-shaped family has, and it is the one `PHRASE-N` cannot express**: the class counts TOKENS
+DELETED, and a token can be worth a map row or a whole mechanism.
+
+**FILE LINE 589 — ONE ANCHOR AND ONE OPTIONAL FIELD.** The printed noun is scoped by a trailing
+*"on your Bench."*, which no shipped pattern spells:
+
+· `YOUR_BENCH_FILTERED_SCALE` — a NEW anchor rather than a widening of `YOUR_BENCH_SCALE` (D441). The
+  two sentences are not one sentence with an optional adjective: the shipped one puts the noun LAST
+  behind a possessive (*"of your **Benched Pokémon**"*), this one puts the noun FIRST with the zone as
+  a trailing prepositional phrase. One relaxed pattern would also accept the two crossed forms the
+  catalog prints nowhere (D451), **and a new anchor breaks no shipped mutant row where an in-place
+  widening rots every row that quotes the regex.**
+· `yourBenchCount` gains `filter?: CardFilter` — **D407's `energyOnSelf.zone` shape**, at the other end
+  of the same union. `undefined` is every body, so the ten shipped printings emit a filter-less object
+  byte for byte and the evaluator's one `if` is the entire widening. Two members would have duplicated
+  `benchBodies`' zone walk, which is the hazard that function's own doc block names.
+· The noun is resolved through **`inPlayBodyFilter`**, name unchanged. *"Which bodies does this printed
+  noun name"* is ONE question with ONE answer (D159, and `IN_PLAY_BODY_NOUNS`' own Pokémon-ex note);
+  the ZONE is the anchor's business. The name is not fixed because a RENAME is not free — a declared
+  `equivalent` survivor quotes that function's body (D359).
+
+### (d) The board the old suite could not have used
+
+🛑 **EVERY EVOLUTION ON `bodiesInPlayScaling`'s CANONICAL BOARD IS A STAGE 1.** So
+`stagePokemon{Stage1}` and `evolutionPokemon` both answer **4** there — the neighbouring member and
+the new one are INDISTINGUISHABLE, and a rung driven on that board would pass on the wrong filter. Two
+new boards were built rather than the canonical one widened (D446's own call, for D412's reason):
+
+· `stage1Board` — Stage 1 in play **4**, and the five wrong builds read 3 (bench-only) / 1 (the other
+  ordinal) / 5 (`evolutionPokemon`) / 6 (`anyPokemon`) / 2 (seat inversion). Six answers, one setup.
+· `stage2Board` — your Bench Stage 2 **1**, and the wrong builds read 2 / 3 / 4 / 5 / 0.
+  ⚠️ **THE ATTACKER IS ITSELF A STAGE 2, AND THAT IS THE WHOLE FIXTURE**: the printed noun is
+  Bench-scoped, so the "in play" misread — `countPokemonInPlay`, three `case`s away in the same
+  evaluator — is unobservable unless the ACTIVE satisfies the noun. It does, and it reads one MORE.
+
+⚠️ **A BOARD CANNOT ASK FOR MORE THAN TWO COPIES OF A FOUR-COPY ID, AND THE FIRST DRAFT DID.**
+`benchFromDeck` pulls from the seat's DECK, and setup has already moved 7 cards to hand and 6 to
+prizes before any surgery runs, so a board wanting 4 of a 4-copy id threw *"p2 deck has no
+fix-stage1"* at SEED 1. Every board above it in that file asks for at most 2; both new ones now do too.
+
+⚠️ **AND ADDING A CARD TO A `*_DECK` IS ALSO A SUBTRACTION.** `setup.ts` requires *"exactly 60 catalog
+card ids per seat"*, so `fix-stage2body: 4` was paid for by dropping `fix-energy` 12 → 8. The deck has
+exactly ONE reader (measured: 3 hits for `IN_PLAY_BODIES_DECK` — the export, the import, the one
+`driveSetup` call), which is what made the change containable; D412 added one card to a SHARED deck
+and reddened three of another slice's boards.
+
+### (e) `MATCH_RECORD_VERSION` STAYS 29 — two addresses, two different arguments
+
+· **`CardFilter` gains `stagePokemon` — THIS ONE IS AT A PERSISTED ADDRESS.** D446 measured it: nine
+  `EffectOp` fields carry a `CardFilter` and an op rides `state.phase.cont.pendingOp`, which is inside
+  `MatchRecord.state`. It costs nothing anyway, because a UNION THAT GAINS AN INHABITANT is D333's
+  WIDENING: no v29 byte string can hold the new member (nothing produces it into an op — driven), and
+  every pre-existing inhabitant reads identically, because the change is two new `case`s in two
+  exhaustive switches and one new entry in one `Set`. **Driven over the bytes** through the
+  compile-enforced `Record<CardFilter["kind"], CardFilter>` in §6 DIRECTION 3 — **21 → 22**.
+  🆕 **AND THE ALPHABET GATE FIRED FOR REAL**: `tsc -b` refused to compile with `TS2741: Property
+  'stagePokemon' is missing` before any test ran. That is why the enumeration is compile-enforced
+  rather than hand-kept — a new member cannot reach the bytes without passing that line.
+· **`DamageCountSource.yourBenchCount` gains `filter?` — NOT at a persisted address.** The type is
+  PARSE-TIME: derived from card text and consumed in the same tick by `attack.ts`'s module-private
+  `scaledAttackDamage`. No `EffectOp` carries one, no `GameState` field stores one, no `GameEvent`
+  names one. Driven in three directions: (1) the old spelling still derives byte-for-byte
+  (`{"per":20,"count":{"kind":"yourBenchCount"}}`, asserted as a STRING); (2) NEITHER spelling is on
+  the wire, the old one asserted absent as well as the new (a rung naming only the new one stops
+  discriminating the moment somebody reverts); (3) the LOSS — a record that drops `filter` degrades to
+  the shipped unfiltered member, which is a benign soft landing and not D435's `NaN`, and is
+  DETECTABLE because the number moves (1 → 5 on the stage board).
+
+⚠️ **THE LOSS DIRECTION HAD TO BE SPELLED AS A SERIALISATION REPLACER, NOT AS `delete` AND NOT AS
+`= undefined`.** `biome`'s `lint/performance/noDelete` refuses the first (it was the only thing this
+slice's `bun run check` went red on), and the second models NOTHING — a `filter: undefined` property
+is indistinguishable from an absent one under `toEqual`. `JSON.stringify(v, (k, v) => k === "filter" ?
+undefined : v)` produces the byte string a pre-D466 writer would actually have written, and the rung
+asserts that STRING.
+
+### (f) The negative-control cost, measured rather than estimated
+
+D463's method: make the ENGINE change alone and read the runner. **15 files / 19 assertions** went red
+on the engine edit by itself. But the runner is not the population — a string count over the loosest
+shape found **36 pinned sites** in 14 files (13 × `495`, 14 × `1517`, plus the `494`/`1515`/`493`/`1516`
+"without-this-sentence" twins, `145`, `165`, `119`, `1567`, `215`, `1972`, `411`) and **32 chain FRONT
+terms** in 9 files, of which vitest ever named 11. **Grep the loosest shape; never treat the runner's
+list as the population** — three physical lines carried TWO chains each.
+
+⚠️ **THREE DIFFERENT UNITS MOVED IN ONE COMMIT**: sentence chains by **2**, printing chains by **3**,
+and `opponentResistanceBonus.test.ts`'s eleven-deep ladder by **1** — because its unit is FIXTURE IDS.
+A pass that inferred any one from another would have been wrong at two thirds of the sites.
+
+⚠️ **AND THE FIXTURE-POOL TAX WAS READ AGAINST EACH RUNG'S OWN PREDICATE.** `stage1Bonus.test.ts`
+moved (26 → 27) because `fix-stage2body` is an Evolution that is NOT a Stage 1 — a rung with no
+connection to this slice's subject. `clauseApostrophe.test.ts` did NOT move, because the fixture's
+name is `battler`'s default (the id) and carries no possessive. Neither could have been predicted from
+"a fixture was added".
+
+### (g) What the three instruments cannot see, for this subject
+
+· **`residue-census.ts`** measures SENTENCES in the attack column. It cannot see whether the derived
+  program is CORRECT — only that a reader claims it. `D466-stage-noun-loses-the-ordinal` (the map row
+  reading the wrong ordinal) leaves every census figure IDENTICAL, and so does
+  `D466-bench-filter-not-carried`. **A census step is not evidence that the build is right.**
+· **`residue-census-gate.ts`** pins the classifier's three literals against `censusAtHead.test.ts`'s
+  SOURCE and confines the tail repair. It moved with the residue (145/119/165 → 143/117/162) and says
+  nothing else about this slice; it cannot see `CardFilter`, `yourBenchCount` or any board.
+· **`opcoverage.ts`** is keyed on `EffectOp` KINDS. This slice adds no op member, no op field and no op
+  line, so the instrument is **blind to it by construction** — and that was measured rather than
+  asserted: the whole report is byte-identical before and after except `corpus=2053 → 2063`.

@@ -23,7 +23,7 @@ import { engineVersion, programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { applyAction } from "./index";
 import { countOwnerPokemonInPlay, countPokemonInPlay } from "./interpreter";
-import { matchesFilter } from "./cards";
+import { matchesFilter, topCardOf } from "./cards";
 import {
   FIXTURE_POOL,
   IN_PLAY_BODIES_DECK,
@@ -106,10 +106,24 @@ const EVOLUTION_BODIES = "This attack does 40 more damage for each of your Evolu
 /** The five, in fixture-attack order. */
 const CLAIMED = [ANY_BODIES, BASIC_BODIES, TR_BODIES, GRASS_BODIES, EVOLUTION_BODIES] as const;
 
-/** 🛑 THE TWO SENTENCES THE ANCHORS REACH AND THE VOCABULARY REFUSES, AND THEY ARE
-    REFUSED FOR TWO DIFFERENT REASONS. Both are real catalog rows. */
+/** 🛑 THE TWO SENTENCES THE ANCHORS REACH AND THE VOCABULARY REFUSED, AND THEY WERE
+    REFUSED FOR TWO DIFFERENT REASONS. Both are real catalog rows.
+    🆕🆕 **D466 — ONE OF THE TWO HAS NOW LEFT, WHICH IS WHAT THE TWO REASONS PREDICTED.**
+    `STAGE1_BODIES` is BUILT (`censusAttackCorpus.ts` file line 586, 1 legal printing) and
+    the constant is KEPT under its own name because §1's family enumeration and §2's
+    named-owner rung both still need the bytes; `ANCIENT_BODIES` has not moved and cannot,
+    for the reason recorded at its refusal. */
 const ANCIENT_BODIES = "This attack does 30 damage for each of your Ancient Pokémon in play.";
 const STAGE1_BODIES = "This attack does 40 damage for each of your Stage 1 Pokémon in play.";
+/** 🆕🆕 D466 — the OTHER printed stage row, and it is a DIFFERENT ANCHOR, a DIFFERENT
+    FOLD and a DIFFERENT ZONE from every constant above: `censusAttackCorpus.ts` **file
+    line 589**, **2 legal printings**, the ONLY row in the whole column whose noun is
+    scoped by a trailing *"on your Bench."* (measured — `grep "on your Bench"` over the
+    corpus returns nine rows, eight of them `^If …, this attack does N more damage\.$`
+    antecedents the clause table already reads).
+    The bytes are taken from the corpus rather than retyped (D183/D456) — §8's first rung
+    asserts exactly that. */
+const BENCH_STAGE2 = "This attack does 40 more damage for each Stage 2 Pokémon on your Bench.";
 
 /** 🛑 THE OPPONENT-SIDE ROWS — real printings, refused by the `(?!opponent)`
     lookahead before the vocabulary is ever consulted. */
@@ -146,6 +160,12 @@ const FILTERS: readonly CardFilter[] = [
   { kind: "typedPokemon", pokemonType: "Grass" },
   { kind: "evolutionPokemon" },
 ];
+
+/** 🆕 D466 — printings, summed. The house `units` helper, local because this suite
+    had no census rung until §8 and did not need one. */
+function units(rows: readonly (readonly [number, string])[]): number {
+  return rows.reduce((sum, [n]) => sum + n, 0);
+}
 
 function activeOf(state: GameState, seat: Seat): InPlayPokemon {
   const body = state.players[seat].active;
@@ -276,6 +296,107 @@ function roundBoard(by: Seat = "p1"): GameState {
     only the Active Spot reads 0 and a build that skipped it reads the same as the
     right one — which is why §7 drives the Bench figures against the pair rather
     than against a single number. */
+/** 🆕🆕 D466 — **THE STAGE BOARDS.** TWO of them, for D446's stated reason: the canonical
+    board is left EXACTLY as it was (every number in §3-§5 is a population figure and a
+    body added there would move all five silently), and the two printed stage rows ask
+    questions at two different ZONES, so one board cannot answer both without a
+    coincidence.
+
+    ⚠️ **AND THE CANONICAL BOARD COULD NOT HAVE ANSWERED EITHER, WHICH IS THE CONFOUND
+    THIS PAIR EXISTS TO BREAK.** Every Evolution on it is a Stage 1 (`fix-grass-stage1`,
+    `fix-stage1`, the Active `fix-inplaybodies`), so `stagePokemon{Stage1}` and
+    `evolutionPokemon` both answer **4** there — the two members would be
+    indistinguishable and the rung would pass on the wrong filter.
+
+    ── `stage1Board` — file line 586, the `×` fold, ZONE = in play ──────────────────
+
+      attacker's side                          defender's side
+        Active  fix-inplaybodies (Stage 1)       fix-titan  (Basic)
+        Bench   fix-stage2body                   fix-grass-stage1 ×2
+                fix-grass-stage1 ×2              (nothing else)
+                fix-stage1
+                fix-benchfiller
+
+    `stagePokemon{Stage1}` in play answers **4** on the attacker's side, and every wrong
+    build reads a different number on this ONE board:
+      • a BENCH-ONLY walk drops the Active and reads **3**;
+      • `stagePokemon{Stage2}` — the OTHER ordinal — reads **1**;
+      • `evolutionPokemon` — the neighbouring member, and the one a build reaching for
+        the nearest thing would use — reads **5**;
+      • `anyPokemon` reads **6**;
+      • a SEAT INVERSION reads **2**.
+    Six distinguishable answers, one setup, and ×40 makes them 160 / 120 / 40 / 200 /
+    240 / 80.
+
+    ⚠️ **NO ID IS ASKED FOR MORE THAN TWICE PER SEAT, AND THAT IS A CONSTRAINT RATHER
+    THAN A STYLE.** `benchFromDeck` pulls from the seat's DECK, and setup has already
+    moved 7 cards to hand and 6 to prizes before any surgery runs — so a board that
+    wanted 4 of a 4-copy id threw *"p2 deck has no fix-stage1"* at SEED 1. Every board
+    above it in this file asks for at most 2, and this pair now does too.
+
+    ── `stage2Board` — file line 589, the `+` fold, ZONE = your Bench ───────────────
+
+      attacker's side                          defender's side
+        Active  fix-stage2body  (Stage 2)        fix-titan  (Basic)
+        Bench   fix-stage2body                   fix-grass-stage1 ×2
+                fix-stage1 ×2                    fix-benchfiller ×2
+                fix-grass-stage1
+                fix-benchfiller
+
+    `yourBenchCount{stagePokemon Stage2}` answers **1**, and:
+      • an "IN PLAY" walk counts the Active — which IS a Stage 2, deliberately — and
+        reads **2**;
+      • `stagePokemon{Stage1}` over the same Bench reads **3**;
+      • `evolutionPokemon` reads **4**;
+      • the UNFILTERED `yourBenchCount` (i.e. the optional field ignored) reads **5**;
+      • a SEAT INVERSION reads **0**.
+    Six distinguishable answers again. ⚠️ **THE SEAT CONTROL IS A ZERO AND THAT IS SAID
+    OUT LOUD RATHER THAN GLOSSED**: the defender's Bench holds no Stage 2, so a seat
+    inversion lands the printed base ALONE (40). It is distinguishable — the additive
+    fold KEEPS its base, so a `DAMAGE_DEALT` of 40 is still filed — and §8 also drives
+    the whole board from the OTHER CHAIR, where the same inversion reads 1 instead of 0.
+    A defender count of 1..5 was checked and every value collides with one of the five
+    wrong builds above; 0 is the only free number on a five-slot Bench. */
+function stage1Board(by: Seat = "p1"): GameState {
+  const foe: Seat = by === "p1" ? "p2" : "p1";
+  const state = benched(bare(by), by, [
+    "fix-stage2body",
+    "fix-grass-stage1",
+    "fix-grass-stage1",
+    "fix-stage1",
+    "fix-benchfiller",
+  ]);
+  return benched(state, foe, ["fix-grass-stage1", "fix-grass-stage1"]);
+}
+
+/** The Stage 2 board — see `stage1Board`'s block. The Active is REPLACED rather than
+    left as `bare()` put it, because the sentence is printed on `fix-stage2body` and
+    `attack()` reads the sentence off the attacking card. */
+function stage2Board(by: Seat = "p1"): GameState {
+  const foe: Seat = by === "p1" ? "p2" : "p1";
+  // ⚠️ `setActiveFromDeck` DISPLACES the sitting Active onto the Bench rather than
+  // discarding it, so the `clearBench` is not tidiness — without it `bare()`'s
+  // `fix-inplaybodies` occupies a Bench slot, the five below overflow to six and the
+  // helper throws. The Energy is re-attached because `bare()` attached it to the body
+  // that just left the Active Spot.
+  let state = setActiveFromDeck(bare(by), by, "fix-stage2body");
+  state = clearBench(state, by);
+  state = attachFromDeck(state, by, "fix-energy", 1);
+  state = benched(state, by, [
+    "fix-stage2body",
+    "fix-stage1",
+    "fix-stage1",
+    "fix-grass-stage1",
+    "fix-benchfiller",
+  ]);
+  return benched(state, foe, [
+    "fix-grass-stage1",
+    "fix-grass-stage1",
+    "fix-benchfiller",
+    "fix-benchfiller",
+  ]);
+}
+
 function ruleBoxBoard(by: Seat = "p1"): GameState {
   const foe: Seat = by === "p1" ? "p2" : "p1";
   const state = benched(bare(by), by, ["fix-attacker-ex", "fix-benchfiller"]);
@@ -331,12 +452,38 @@ describe("§1 — the five printed sentences, their population, and the fixture"
         FOE_EX_V_BODIES,
       ].sort(),
     );
-    // …so the family is NINE sentences, of which this slice claims FIVE. The other
-    // four are the two data/vocabulary refusals and the two opponent-side rows.
+    // …so the family is NINE sentences, of which D439/D446 claimed FIVE. The other
+    // four were the two data/vocabulary refusals and the two opponent-side rows.
     expect(family).toHaveLength(9);
+    // 🆕🆕 **D466 — SIX OF THE NINE ARE CLAIMED NOW, AND THE LIST ITSELF DID NOT MOVE.**
+    // `STAGE1_BODIES` is still a member of this population — the anchor always reached
+    // it — and what changed is the VOCABULARY behind it, which is exactly why the
+    // classification is asserted separately from the enumeration. The partition is
+    // re-derived live rather than decremented, so a reader that widened past its noun
+    // moves the CLAIMED half and this rung names which row.
+    const claimedNow = family.filter((s) => resolvedByAnyReader(s)).sort();
+    expect(claimedNow).toEqual(
+      [
+        ANY_BODIES,
+        BASIC_BODIES,
+        TR_BODIES,
+        GRASS_BODIES,
+        EVOLUTION_BODIES,
+        STAGE1_BODIES,
+        FOE_EX_BODIES,
+        FOE_EX_V_BODIES,
+      ].sort(),
+    );
+    // 🛑 **EIGHT OF THE NINE, AND THE TWO FOE ROWS ARE IN THE CLAIMED HALF — WHICH THE
+    // FIRST DRAFT OF THIS RUNG GOT WRONG.** They are refused by the `(?!opponent)`
+    // lookahead on the ATTACKER's two anchors and claimed by `IN_PLAY_FOE_BODY_MULTIPLY`
+    // in the `×` reader (D446), so "refused by an anchor" and "unclaimed" are different
+    // propositions and this population answers the second. ⚠️ **ONE is still LOUD, by
+    // name**: ANCIENT, which is DATA-blocked forever.
+    expect(family.filter((s) => !resolvedByAnyReader(s))).toEqual([ANCIENT_BODIES]);
   });
 
-  it("carries fix-inplaybodies's eight printed attacks, `×` and `+` markers included", () => {
+  it("carries fix-inplaybodies's nine printed attacks, `×` and `+` markers included", () => {
     // The whole list, so the fixture cannot be wrong by OMISSION (D156's failure
     // mode). ⚠️ THE TRAILING MARKERS ARE LOAD-BEARING: `×` is what tells attack.ts
     // to DROP the printed base and `+` is what tells it to keep it, and four of
@@ -352,6 +499,10 @@ describe("§1 — the five printed sentences, their population, and the fixture"
       ["20×", ROUND_BODIES],
       ["60×", FOE_EX_BODIES],
       ["60×", FOE_EX_V_BODIES],
+      // 🆕🆕 D466 — the ninth, on the `×` fold, and the fold is a MEASUREMENT: the
+      // column prints file line 586 with no "more" and prints the additive form of
+      // this noun ZERO times (D435 — not incrementing is also a measurement).
+      ["40×", STAGE1_BODIES],
     ]);
     // 🆕🆕 D446 — THE HOLDER'S OWN SIXTH ATTACK IS NAMED "Round", WHICH IS WHAT
     // MAKES THE ACTIVE SPOT'S PARTICIPATION OBSERVABLE FROM THIS ONE CARD (§7), and
@@ -366,7 +517,21 @@ describe("§1 — the five printed sentences, their population, and the fixture"
       "Round",
       "Rule Breaker",
       "Class Action",
+      "Second Rung",
     ]);
+    // 🆕🆕 D466 — and the STAGE-2 holder, whose own stage is the load-bearing field:
+    // it is the ATTACKER of file line 589 AND a body that satisfies the printed noun,
+    // which is what makes the "in play" misread (Active + Bench) a DIFFERENT number
+    // from the printed Bench-only one on §8's board.
+    expect(FIXTURE_POOL["fix-stage2body"]?.stage).toBe("Stage2");
+    expect(FIXTURE_POOL["fix-stage2body"]?.evolveFrom).toBe("fix-stage1");
+    expect(FIXTURE_POOL["fix-stage2body"]?.attacks?.map((a) => [a.damage, a.effect])).toEqual([
+      ["40+", BENCH_STAGE2],
+    ]);
+    // …and the holder of file line 586 is ITSELF a Stage 1, which is the same trick
+    // one zone over: the Active participates in an "in play" count and does not
+    // participate in a Bench one.
+    expect(FIXTURE_POOL["fix-inplaybodies"]?.stage).toBe("Stage1");
     // …and the bodies the two new filters are read against carry exactly the fields
     // the filters read and nothing else — a rule-box marker in the NAME
     // (`pokemonSuffixOf`) and an attack NAME (`attacksOf`).
@@ -447,19 +612,33 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
     expect(deriveAttackEffect(EVOLUTION_BODIES)).toBeNull();
   });
 
-  it("🛑 the two LOUD sentences are refused by the VOCABULARY, not by the anchor", () => {
-    // ⚠️ **TWO REFUSALS, TWO REASONS, AND THE DISTINCTION IS THE POINT.**
+  it("🛑 the ONE remaining LOUD sentence is refused by the VOCABULARY, not by the anchor", () => {
+    // ⚠️ **TWO REFUSALS, TWO REASONS, AND THE DISTINCTION WAS THE POINT — AND D466 IS
+    // WHAT PROVED THE DISTINCTION WAS REAL.**
     //   • `Ancient` is DATA-BLOCKED and permanently so — the banner is in no
     //     catalog column and no tcgdex field, and a name-keyed species table is
     //     refused at `PREVENT_DAMAGE_FROM_CLASS`'s own site because the banner is a
     //     per-PRINTING fact. Nothing in effects.ts can ever be the fix.
-    //   • `Stage 1` is merely UNBUILT: `isBasicPokemon` and `evolveFromOf` both
-    //     exist, but no `CardFilter` member reads a printed stage ORDINAL.
-    // Both must stay on the loud ATTACK_EFFECT_SKIPPED path.
-    for (const text of [ANCIENT_BODIES, STAGE1_BODIES]) {
+    //   • `Stage 1` was merely UNBUILT: *"`isBasicPokemon` and `evolveFromOf` both
+    //     exist, but no `CardFilter` member reads a printed stage ORDINAL"* — and
+    //     ✅ **D466 WROTE THAT MEMBER** (`stagePokemon`), so this row LEFT the loud
+    //     path while its neighbour did not move an inch. The two-reason split is kept
+    //     as the record of a prediction that came true.
+    // Only `Ancient` must stay on the loud ATTACK_EFFECT_SKIPPED path.
+    for (const text of [ANCIENT_BODIES]) {
       expect(deriveAttackDamageMultiplier(text)).toBeNull();
       expect(deriveAttackDamageBonus(text)).toBeNull();
     }
+    // 🆕🆕 **D466 — AND THE ROW THAT LEFT IS PINNED ON THE OTHER SIDE OF THE SAME
+    // PREDICATE** (D444/D447: record the transition rather than quietly shrinking).
+    expect(deriveAttackDamageMultiplier(STAGE1_BODIES)).toEqual({
+      per: 40,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "stagePokemon", stage: "Stage1" },
+      },
+    });
     // ⚠️ **AND THE ADMISSION THAT MAKES THE REFUSAL MEAN SOMETHING** (D424): the
     // anchors really do reach both strings, so what refuses them is the map. The
     // near-miss differs from `ANCIENT_BODIES` on exactly ONE axis — the noun —
@@ -842,27 +1021,44 @@ describe("§2 — the two anchors and the `inPlayBodyFilter` vocabulary", () => 
       for (const reader of OTHERS) expect(reader(text)).toBeNull();
       expect(resolvedByAnyReader(text)).toBe(true);
     }
-    // …and the TWO the family still leaves behind are refused by EVERY reader,
-    // which is the thirteen-way negative kept rather than replaced. ⚠️ **THEY ARE
-    // ALSO THE CONTROL THAT KEEPS THE LOOP ABOVE HONEST** (D424: every "X is
+    // 🆕🆕 **D466 — `STAGE1_BODIES` JOINS THE CLAIMED SIDE, ON THE `×` READER AND WITH
+    // THE SAME ELEVEN REFUSALS KEPT**, which is D438's rule applied for the second time
+    // in this `it`: the negative is not relaxed, it is replaced by a NAMED owner plus
+    // the eleven-way refusal it always carried.
+    expect(deriveAttackDamageMultiplier(STAGE1_BODIES)).not.toBeNull();
+    expect(deriveAttackDamageBonus(STAGE1_BODIES)).toBeNull();
+    for (const reader of OTHERS) expect(reader(STAGE1_BODIES)).toBeNull();
+    expect(resolvedByAnyReader(STAGE1_BODIES)).toBe(true);
+    // …and the ONE the family still leaves behind is refused by EVERY reader,
+    // which is the thirteen-way negative kept rather than replaced. ⚠️ **IT IS
+    // ALSO THE CONTROL THAT KEEPS THE LOOPS ABOVE HONEST** (D424: every "X is
     // refused" owes a neighbouring "Y is admitted", and the converse holds too —
     // a suite in which every corpus row is claimed proves nothing about the
     // vocabulary). `Ancient` is DATA-BLOCKED (the banner is in no catalog column,
-    // so nothing in `effects.ts` can be the fix); `Stage 1` is UNBUILT (no
-    // `CardFilter` member reads a printed STAGE ORDINAL — `basicPokemon` and
-    // `evolutionPokemon` partition the pool into two and "Stage 1" is a proper
-    // subset of the second). ⚠️ **AND D446 DID NOT COLLECT IT, WHICH IS A REFUSAL
-    // WITH ITS OWN REASON**: the slice's two members are read off `attacksOf` and
-    // `pokemonSuffixOf`, two fields the catalog persists; a stage ORDINAL is not a
-    // persisted field either — `Card.stage` is a free-text column and the engine's
-    // own `isBasicPokemon` / `evolveFromOf` read it as a BINARY. Spelling "Stage 1"
-    // would mean a third reading of that column, and the row is ONE printing.
-    for (const text of [ANCIENT_BODIES, STAGE1_BODIES]) {
-      expect(deriveAttackDamageMultiplier(text)).toBeNull();
-      expect(deriveAttackDamageBonus(text)).toBeNull();
-      for (const reader of OTHERS) expect(reader(text)).toBeNull();
-      expect(resolvedByAnyReader(text)).toBe(false);
-    }
+    // so nothing in `effects.ts` can be the fix), and D461's rule is why it is the
+    // right survivor to lean on: a DATA-blocked witness cannot be casually built by
+    // a successor, where a mechanism-blocked one can — as this very rung just found
+    // out.
+    //
+    // 🛑🛑 **D466 — THE REASON D446 GAVE FOR NOT COLLECTING `Stage 1` WAS FALSE WHEN IT
+    // WAS WRITTEN, AND THE MEASUREMENT BESIDE IT WAS RIGHT.** The paragraph that used to
+    // stand here said *"a stage ORDINAL is not a persisted field either — `Card.stage` is
+    // a free-text column and the engine's own `isBasicPokemon` / `evolveFromOf` read it as
+    // a BINARY. Spelling 'Stage 1' would mean a third reading of that column."* Every
+    // clause of that is wrong: `Card.stage` IS a persisted column with a CLOSED
+    // vocabulary (`Basic | Stage1 | Stage2 | VSTAR | VMAX`, queried at D262), and
+    // `cards.ts` had ALREADY been reading it as the ordinal for 59 decisions —
+    // `isStage2Pokemon` since **D262** and `isStage1Pokemon` since **D387**, both of them
+    // shipped before D446 and both cited by `interpreter.ts`'s `opponentActiveIsStage1` /
+    // `opponentActiveIsStage2` arms. So D466's member is not a third reading of anything;
+    // it is the FIRST reading reused at a second address. ⚠️ **WHAT D446 GOT RIGHT WAS THE
+    // PRICE — "the row is ONE printing"** — which is a fact about the pool and is still
+    // true; what it got wrong was the reason, and the two are recorded separately here
+    // because a refusal that survives on a false reason is the expensive kind (D442).
+    expect(deriveAttackDamageMultiplier(ANCIENT_BODIES)).toBeNull();
+    expect(deriveAttackDamageBonus(ANCIENT_BODIES)).toBeNull();
+    for (const reader of OTHERS) expect(reader(ANCIENT_BODIES)).toBeNull();
+    expect(resolvedByAnyReader(ANCIENT_BODIES)).toBe(false);
   });
 });
 
@@ -1128,6 +1324,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       basicPokemon: { kind: "basicPokemon" },
       anyPokemon: { kind: "anyPokemon" },
       evolutionPokemon: { kind: "evolutionPokemon" },
+      stagePokemon: { kind: "stagePokemon", stage: "Stage2" },
       typedPokemon: { kind: "typedPokemon", pokemonType: "Grass" },
       anyOf: {
         kind: "anyOf",
@@ -1153,16 +1350,33 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
       specialEnergy: { kind: "specialEnergy" },
       providesEnergy: { kind: "providesEnergy", energyType: "Grass" },
     };
-    // **NINETEEN BEFORE THIS SLICE, TWENTY-ONE AFTER.** The count is the second half
-    // of the guard: a diff alone stays green when a member is dropped from the union
-    // and from this list in one edit.
-    expect(Object.keys(EVERY_KIND)).toHaveLength(21);
+    // **NINETEEN BEFORE D446, TWENTY-ONE AFTER, TWENTY-TWO AFTER D466.** The count is
+    // the second half of the guard: a diff alone stays green when a member is dropped
+    // from the union and from this list in one edit.
+    // 🆕🆕 **D466 — AND THIS `Record` IS THE ALPHABET GATE, WHICH WAS OBSERVED RATHER
+    // THAN ASSUMED**: adding `stagePokemon` to the union made `tsc -b` fail HERE, with
+    // `TS2741: Property 'stagePokemon' is missing`, before any test ran. That is the
+    // whole reason the enumeration is compile-enforced instead of hand-kept (D424) —
+    // a new `CardFilter` member cannot reach the bytes without passing this line.
+    expect(Object.keys(EVERY_KIND)).toHaveLength(22);
     // 🛑 **THE BYTES.** Each filter is written out and read back the way
     // `MatchRecord.state` is, and `matchesFilter` must give the IDENTICAL answer over
     // a cast that spans every category the catalog has — a Pokémon with a rule box
     // and attacks, a plain Pokémon with none, a Trainer and an Energy. A widening
     // that changed what an old member MEANT would move one of these cells.
-    const CAST = ["fix-attacker-ex", "fix-roundbody", "fix-benchfiller", "fix-item", "fix-energy"];
+    // 🆕🆕 D466 — the CAST gains `fix-stage2body`, which is what keeps the sweep
+    // non-vacuous for the new member: without an actual Stage 2 in the cast,
+    // `stagePokemon` would answer false to all five and be indistinguishable from a
+    // member that answered false to everything (D424's anti-vacuity rule, applied to
+    // the byte sweep rather than to a reader).
+    const CAST = [
+      "fix-attacker-ex",
+      "fix-roundbody",
+      "fix-benchfiller",
+      "fix-item",
+      "fix-energy",
+      "fix-stage2body",
+    ];
     for (const [kind, filter] of Object.entries(EVERY_KIND)) {
       const readBack = JSON.parse(JSON.stringify(filter)) as CardFilter;
       expect(readBack).toEqual(filter);
@@ -1185,6 +1399,20 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
     expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.suffixPokemon)).toBe(false);
     expect(matchesFilter(FIXTURE_POOL["fix-roundbody"], EVERY_KIND.attackNamePokemon)).toBe(true);
     expect(matchesFilter(FIXTURE_POOL["fix-attacker-ex"], EVERY_KIND.attackNamePokemon)).toBe(false);
+    // 🆕🆕 D466 — the new member's positive and its THREE different negatives, each a
+    // different reason to be false: a Stage 1 (the other ordinal), a Basic (the wrong
+    // end of the chain) and a Trainer (not a Pokémon at all, refused inside the
+    // delegated helper rather than by a guard beside it).
+    expect(matchesFilter(FIXTURE_POOL["fix-stage2body"], EVERY_KIND.stagePokemon)).toBe(true);
+    expect(matchesFilter(FIXTURE_POOL["fix-stage1"], EVERY_KIND.stagePokemon)).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-benchfiller"], EVERY_KIND.stagePokemon)).toBe(false);
+    expect(matchesFilter(FIXTURE_POOL["fix-item"], EVERY_KIND.stagePokemon)).toBe(false);
+    // …and the NEIGHBOUR the member must not be: `evolutionPokemon` admits the Stage 1
+    // that `stagePokemon{Stage2}` refuses, on the same card, in the same run.
+    expect(matchesFilter(FIXTURE_POOL["fix-stage1"], EVERY_KIND.evolutionPokemon)).toBe(true);
+    expect(
+      matchesFilter(FIXTURE_POOL["fix-stage2body"], { kind: "stagePokemon", stage: "Stage1" }),
+    ).toBe(false);
   });
 
   it("the FROZEN board is handed back untouched — the purity pair", () => {
@@ -1252,7 +1480,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.364.0");
+    expect(engineVersion).toBe("0.365.0");
   });
 });
 
@@ -1354,5 +1582,311 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
     // not vacuous (D424 — every "X is absent" owes a "Y is present" on the same axis).
     expect(ops.length).toBeGreaterThan(0);
     expect(wire).toContain("kind");
+  });
+});
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 🆕🆕 §8 (D466) — the PRINTED EVOLUTION-STAGE ORDINAL as a `CardFilter`: the two
+// printed rows, the two zones, the two folds, and the seat.
+//
+// *"This attack does 40 damage for each of your Stage 1 Pokémon in play."*   1 legal
+//                                          — `censusAttackCorpus.ts` FILE LINE 586
+// *"This attack does 40 more damage for each Stage 2 Pokémon on your Bench."* 2 legal
+//                                          — `censusAttackCorpus.ts` FILE LINE 589
+//
+// ⚠️ ZERO new `EffectOp` members, op FIELDS, op VALUES, readers (the surface stands
+// still at 13), prompts, events, error codes, registry rows, `packages/schema` bytes
+// or `redact.ts` bytes. NOT zero, said out loud: ONE new `CardFilter` member
+// (`stagePokemon`), ONE new optional FIELD on the shipped `DamageCountSource` member
+// `yourBenchCount`, ONE new anchor (`YOUR_BENCH_FILTERED_SCALE`), TWO new
+// `IN_PLAY_BODY_NOUNS` rows, ONE new FIXTURE id (`fix-stage2body`) and ONE new attack
+// on `fix-inplaybodies`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§8 — `stagePokemon`: the printed ordinal, at two zones and two folds", () => {
+  it("both rows are REAL corpus rows at their measured printing counts", () => {
+    // D183/D456: the specimen is the printed bytes, taken off the committed column,
+    // never retyped — and the printing counts are asserted off the corpus too, because
+    // a byte pin on an invented string is green by construction (D452).
+    const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
+    expect(rows.get(STAGE1_BODIES)).toBe(1);
+    expect(rows.get(BENCH_STAGE2)).toBe(2);
+    // ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 2 vs 3, AND BOTH ARE READ
+    // HERE RATHER THAN INFERRED FROM EACH OTHER** (D451/D461/D465: measure each site).
+    expect([2, (rows.get(STAGE1_BODIES) ?? 0) + (rows.get(BENCH_STAGE2) ?? 0)]).toEqual([2, 3]);
+  });
+
+  it("🛑 the WHOLE printed `Stage` vocabulary of the column, enumerated, not counted", () => {
+    // ⚠️ **THE ENUMERATION IS THE UNRELIABLE PART** (D424/D428), so this takes the
+    // LOOSEST plausible shape — every corpus row containing the bare word "Stage" — and
+    // asserts the WHOLE list. It is what makes "two rows reach a body-count noun, and
+    // there is no third" a measurement instead of a claim, and it is why the vocabulary
+    // has TWO map rows rather than a `^Stage ([12]) Pokémon$` capture over five values.
+    const stageRows = legalAttackCorpus()
+      .filter(([, s]) => s.includes("Stage"))
+      .map(([, s]) => s)
+      .sort();
+    expect(stageRows).toEqual(
+      [
+        "Devolve 1 of your opponent's evolved Pokémon by putting the highest Stage Evolution card on it into your opponent's hand.",
+        "Devolve each of your opponent's evolved Pokémon by shuffling the highest Stage Evolution card on it into your opponent's deck.",
+        "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.",
+        "If your opponent's Active Pokémon is a Stage 2 Pokémon, this attack does 140 more damage.",
+        STAGE1_BODIES,
+        BENCH_STAGE2,
+        "You may put 2 Energy attached to your opponent's Active Stage 2 Pokémon into their hand.",
+      ].sort(),
+    );
+    // …and the column prints NO "VSTAR Pokémon" / "VMAX Pokémon" noun at all, which is
+    // the other half of the two-values decision (D446's own rule: arms no sentence
+    // drives are not written). ⚠️ This pattern cannot see a stage word spelled any
+    // other way — "Stage2" without the space, or a lowercase "stage" — and both were
+    // checked by the same sweep returning the same seven rows.
+    expect(legalAttackCorpus().some(([, s]) => /VSTAR Pokémon|VMAX Pokémon/.test(s))).toBe(false);
+  });
+
+  it("🛑 the two sentences derive to the two values, and each is ONE axis from a refusal", () => {
+    expect(deriveAttackDamageMultiplier(STAGE1_BODIES)).toEqual({
+      per: 40,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "stagePokemon", stage: "Stage1" },
+      },
+    });
+    expect(deriveAttackDamageBonus(BENCH_STAGE2)).toEqual({
+      per: 40,
+      count: { kind: "yourBenchCount", filter: { kind: "stagePokemon", stage: "Stage2" } },
+    });
+    // 🛑 **THE ORDINAL IS READ AND NOT DEFAULTED** — the two printed values land on the
+    // two members, and the crossed forms (which the column prints nowhere but the
+    // vocabulary now spells, deliberately: see `IN_PLAY_BODY_NOUNS`) prove the noun is
+    // what decides, not the anchor.
+    expect(
+      deriveAttackDamageMultiplier("This attack does 40 damage for each of your Stage 2 Pokémon in play."),
+    ).toEqual({
+      per: 40,
+      count: {
+        kind: "pokemonInPlay",
+        seat: "you",
+        filter: { kind: "stagePokemon", stage: "Stage2" },
+      },
+    });
+    expect(
+      deriveAttackDamageBonus("This attack does 40 more damage for each Stage 1 Pokémon on your Bench."),
+    ).toEqual({
+      per: 40,
+      count: { kind: "yourBenchCount", filter: { kind: "stagePokemon", stage: "Stage1" } },
+    });
+    // 🛑 **THE FILTER IS OPTIONAL AND ITS ABSENCE IS THE SHIPPED OBJECT, BYTE FOR
+    // BYTE.** This is the whole of the widening claim and it is driven rather than
+    // argued: D282's ten printings still derive an object with NO `filter` key at all,
+    // so a v29 record's bytes still mean what they meant.
+    const unfiltered = deriveAttackDamageBonus(
+      "This attack does 20 more damage for each of your Benched Pokémon.",
+    );
+    expect(unfiltered).toEqual({ per: 20, count: { kind: "yourBenchCount" } });
+    expect(JSON.stringify(unfiltered)).toBe('{"per":20,"count":{"kind":"yourBenchCount"}}');
+    expect(Object.hasOwn((unfiltered as { count: object }).count, "filter")).toBe(false);
+  });
+
+  it("🛑 the VOCABULARY refuses on the BENCH anchor exactly as it does on the `in play` one", () => {
+    // ⚠️ **ONE AXIS EACH** (D427). Each of these differs from a claimed sentence by
+    // exactly one thing, and the thing is named.
+    // …the NOUN, and it is the DATA-blocked banner rather than an invented word, so
+    // this refusal cannot be casually built away by a successor (D461).
+    expect(
+      deriveAttackDamageBonus("This attack does 40 more damage for each Ancient Pokémon on your Bench."),
+    ).toBeNull();
+    // …the printed ZERO, which is a SEPARATE guard from the vocabulary: the noun here
+    // is one the map holds, so only `per >= 1` can be doing the refusing.
+    expect(
+      deriveAttackDamageBonus("This attack does 0 more damage for each Stage 2 Pokémon on your Bench."),
+    ).toBeNull();
+    // …the leading CAPITAL, and the prefix ENDS A SENTENCE so the lowercase `t` is the
+    // only thing that moved (D452's finding: a leading-text near-miss that also
+    // lowercases tests neither axis).
+    expect(deriveAttackDamageBonus(BENCH_STAGE2.replace("This", "this"))).toBeNull();
+    // …the trailing PERIOD.
+    expect(deriveAttackDamageBonus(BENCH_STAGE2.slice(0, -1))).toBeNull();
+    // …a LEADING clause, which the `^` refuses.
+    expect(deriveAttackDamageBonus(`Flip a coin. ${BENCH_STAGE2}`)).toBeNull();
+    // …and the ADMISSION that makes all five mean something (D424): the near-miss one
+    // axis from the Ancient row is claimed.
+    expect(
+      deriveAttackDamageBonus("This attack does 40 more damage for each Basic Pokémon on your Bench."),
+    ).toEqual({ per: 40, count: { kind: "yourBenchCount", filter: { kind: "basicPokemon" } } });
+  });
+
+  it("🛑 the new anchor claims exactly ONE corpus row, and no shipped anchor loses one", () => {
+    // The disjointness claim, driven over the whole column rather than argued from the
+    // patterns (D439's own rule, and the one D439's doc block got WRONG about order).
+    const hits = legalAttackCorpus().filter(([, s]) => / on your Bench\.$/.test(s));
+    expect(hits.map(([, s]) => s)).toEqual([BENCH_STAGE2]);
+    // …and the five shipped Bench sentences still land on their own members, unfiltered.
+    expect(deriveAttackDamageBonus("This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).")).toEqual(
+      { per: 20, count: { kind: "bothSidesBenchCount" } },
+    );
+    expect(deriveAttackDamageBonus("This attack does 20 more damage for each of your opponent's Benched Pokémon.")).toEqual(
+      { per: 20, count: { kind: "opponentBenchCount" } },
+    );
+    expect(deriveAttackDamageMultiplier("This attack does 20 damage for each of your Benched Pokémon.")).toEqual(
+      { per: 20, count: { kind: "yourBenchCount" } },
+    );
+    expect(deriveAttackDamageMultiplier("This attack does 20 damage for each damage counter on all of your Benched Pokémon.")).toEqual(
+      { per: 20, count: { kind: "damageCountersOnYourBench" } },
+    );
+    // 🛑 **AND BOTH NEW SENTENCES ARE CLAIMED BY EXACTLY ONE READER EACH.** A named
+    // owner plus the refusals, never `resolvedByAnyReader === true` alone (D438).
+    expect(deriveAttackDamageBonus(STAGE1_BODIES)).toBeNull();
+    expect(deriveAttackDamageMultiplier(BENCH_STAGE2)).toBeNull();
+    expect(resolvedByAnyReader(STAGE1_BODIES)).toBe(true);
+    expect(resolvedByAnyReader(BENCH_STAGE2)).toBe(true);
+  });
+
+  it("🛑 the STAGE-1 board answers 4 in play, and every wrong build reads another number", () => {
+    const state = stage1Board();
+    const S1: CardFilter = { kind: "stagePokemon", stage: "Stage1" };
+    const S2: CardFilter = { kind: "stagePokemon", stage: "Stage2" };
+    expect(countPokemonInPlay(state, "p1", S1)).toBe(4);
+    // the five wrong answers, each a different number on this ONE board
+    expect(countPokemonInPlay(state, "p1", S2)).toBe(1);
+    expect(countPokemonInPlay(state, "p1", { kind: "evolutionPokemon" })).toBe(5);
+    expect(countPokemonInPlay(state, "p1", { kind: "anyPokemon" })).toBe(6);
+    expect(countPokemonInPlay(state, "p2", S1)).toBe(2);
+    // …and the BENCH-ONLY walk, which is the one the printed word "in play" excludes.
+    expect(state.players.p1.bench.filter((p) => matchesFilter(topCardOf(state, p), S1))).toHaveLength(3);
+  });
+
+  it("🛑 the STAGE-1 fold: 160 dealt, and the printed base is DROPPED", () => {
+    // `40×` — the multiply marker. 4 × 40 = 160, and a build that kept the printed base
+    // would deal 200 here — which is `evolutionPokemon`'s wrong answer times forty, so
+    // the two are told apart by §8's count rung above and not by this number alone.
+    expect(dealt(stage1Board(), 8)).toBe(160);
+    // 🛑 **THE MIRROR IS THE SAME NUMBER AND THAT IS THE CLAIM** — §5's shape, verbatim.
+    // `stage1Board("p2")` builds the identical board with the seats swapped, so a
+    // seat-RELATIVE count answers 160 from either chair and a p1-hard-coded one answers
+    // the DEFENDER's 2 × 40 = 80 when p2 swings. The asymmetric half of the seat claim
+    // is the count rung above, where p1 reads 4 and p2 reads 2 on ONE board.
+    expect(dealt(stage1Board("p2"), 8, "p2")).toBe(160);
+  });
+
+  it("🛑 the STAGE-2 board answers 1 on the BENCH and 2 in play — the zone, exposed", () => {
+    const state = stage2Board();
+    const S2: CardFilter = { kind: "stagePokemon", stage: "Stage2" };
+    const benchS2 = state.players.p1.bench.filter((p) => matchesFilter(topCardOf(state, p), S2));
+    expect(benchS2).toHaveLength(1);
+    // 🛑 **THE ACTIVE IS A STAGE 2, WHICH IS THE WHOLE FIXTURE**: the "in play" walk —
+    // the wrong build three `case`s away in the same evaluator — reads ONE MORE.
+    expect(countPokemonInPlay(state, "p1", S2)).toBe(2);
+    // the rest of the wrong answers, all different, all on this one board
+    expect(
+      state.players.p1.bench.filter((p) =>
+        matchesFilter(topCardOf(state, p), { kind: "stagePokemon", stage: "Stage1" }),
+      ),
+    ).toHaveLength(3);
+    // (fix-stage1 ×2 + fix-grass-stage1 — three Stage 1 bodies, two of them different
+    // ids, so a build that counted by ID rather than by stage reads 2 and not 3.)
+    expect(
+      state.players.p1.bench.filter((p) =>
+        matchesFilter(topCardOf(state, p), { kind: "evolutionPokemon" }),
+      ),
+    ).toHaveLength(4);
+    expect(state.players.p1.bench).toHaveLength(5);
+    expect(
+      state.players.p2.bench.filter((p) => matchesFilter(topCardOf(state, p), S2)),
+    ).toHaveLength(0);
+  });
+
+  it("🛑 the STAGE-2 fold: 80 dealt, the printed base KEPT, and the seat control is a ZERO", () => {
+    // `40+` — the additive marker. 40 + 1 × 40 = 80. An "in play" walk deals 120, an
+    // unfiltered Bench count deals 240, the Stage 1 reading deals 160 and the Evolution
+    // reading deals 200 — five wrong numbers, none of them 80.
+    expect(dealt(stage2Board(), 0)).toBe(80);
+    // 🛑 **THE SEAT INVERSION READS 0 AND WOULD LAND THE BASE ALONE** — 40, still a
+    // `DAMAGE_DEALT` because the additive fold keeps its base, so the control is a
+    // number and not a silence. Said out loud rather than glossed: a zero control is
+    // weaker than a nonzero one, which is why BOTH halves of the seat claim are driven
+    // — the mirror here, and the asymmetric count in the board rung above (p1's Bench
+    // holds 1 Stage 2, p2's holds 0).
+    // 🛑 **THE MIRROR IS THE SAME NUMBER**: `stage2Board("p2")` is the identical board
+    // with the seats swapped, so a seat-RELATIVE count answers 80 from either chair and
+    // a p1-hard-coded one answers 40 when p2 swings.
+    expect(dealt(stage2Board("p2"), 0, "p2")).toBe(80);
+  });
+
+  it("🛑 no ATTACK_EFFECT_SKIPPED is filed for either row, in either direction", () => {
+    for (const [state, index, seat] of [
+      [stage1Board(), 8, "p1"],
+      [stage2Board(), 0, "p1"],
+    ] as const) {
+      const { events } = mustApply(state, { type: "attack", seat, index });
+      expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(find(events, "DAMAGE_DEALT")).toBeDefined();
+    }
+    // …and the control: the LOUD row still files one, so the assertion above is not a
+    // claim that this engine never files the event (D424).
+    expect(resolvedByAnyReader(ANCIENT_BODIES)).toBe(false);
+  });
+
+  it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the `DamageCountSource` half, three directions", () => {
+    // 🛑 **THIS HALF IS NOT AT A PERSISTED ADDRESS AND IS NOT PRICED AS THOUGH IT WERE**
+    // (D442). `DamageCountSource` is a PARSE-TIME type: derived from card text and
+    // consumed in the same tick by `attack.ts`'s module-private `scaledAttackDamage`.
+    // No `EffectOp` carries one, no `GameState` field stores one, no `GameEvent` names
+    // one — so the optional `filter` cannot reach `MatchRecord.state` at all.
+    //
+    // DIRECTION 1 — the OLD spelling is untouched: a filter-less `yourBenchCount` is
+    // still exactly what the shipped sentences derive (driven three rungs up).
+    // DIRECTION 2 — NEITHER spelling is on the wire. Both are asserted absent, the old
+    // as well as the new, because a rung naming only the new one stops discriminating
+    // the moment somebody reverts (D446's rule at this address).
+    const ops = legalAttackCorpus().flatMap(([, text]) => deriveAttackEffect(text) ?? []);
+    const wire = JSON.stringify(ops);
+    expect(wire).not.toContain("yourBenchCount");
+    expect(wire).not.toContain("stagePokemon");
+    expect(ops.length).toBeGreaterThan(0);
+    // DIRECTION 3 — the LOSS. A `{ kind: "yourBenchCount", filter }` that is written out
+    // and read back WITHOUT its `filter` key degrades to the shipped unfiltered member,
+    // which is a benign soft landing rather than a `NaN` (D435's discriminator) and is
+    // exactly what a pre-D466 writer meant by those bytes. It is also DETECTABLE: the
+    // number moves on any board that holds a body the filter would exclude — 5 instead
+    // of 1 on §8's stage board — so the loss is loud where it matters and silent
+    // nowhere.
+    const full = deriveAttackDamageBonus(BENCH_STAGE2);
+    // ⚠️ **THE KEY IS DROPPED AT SERIALISATION AND NOT SET TO `undefined`.** A
+    // `filter: undefined` property is INDISTINGUISHABLE from an absent one under
+    // `toEqual`, so an assignment would have modelled nothing; a replacer that omits
+    // the key produces the byte string a pre-D466 writer would actually have written.
+    // (`delete` is the obvious spelling and `biome`'s `lint/performance/noDelete`
+    // refuses it — the first thing this slice's `bun run check` went red on, and a
+    // reminder that a lint rule is part of the contract, not a style note.)
+    const wireBytes = JSON.stringify(full, (key, value) => (key === "filter" ? undefined : value));
+    expect(wireBytes).toBe('{"per":40,"count":{"kind":"yourBenchCount"}}');
+    const lossy = JSON.parse(wireBytes) as { per: number; count: { kind: string } };
+    expect(lossy).toEqual({ per: 40, count: { kind: "yourBenchCount" } });
+    expect(Object.hasOwn(lossy.count, "filter")).toBe(false);
+    const board = stage2Board();
+    const S2: CardFilter = { kind: "stagePokemon", stage: "Stage2" };
+    expect(board.players.p1.bench.filter((p) => matchesFilter(topCardOf(board, p), S2))).toHaveLength(1);
+    expect(board.players.p1.bench).toHaveLength(5);
+  });
+
+  it("🛑 `retrieveNoun` owes the new member a phrase too, and NO board can render one", () => {
+    // `attackNamePokemon`'s and `suffixPokemon`'s posture, verbatim, one member over:
+    // the only producer of `stagePokemon` is `inPlayBodyFilter`, which feeds a
+    // `DamageCountSource` and never an op, so the arm is owed by the exhaustive switch
+    // and by the fact that a REGISTRY author can hand-write the filter tomorrow. What
+    // is driven is the PROPERTY that makes it unreachable, not a caption nothing emits.
+    const ops = legalAttackCorpus().flatMap(([, text]) => deriveAttackEffect(text) ?? []);
+    expect(JSON.stringify(ops)).not.toContain("stagePokemon");
+  });
+
+  it("🛑 the census steps by exactly TWO sentences and THREE printings, attributably", () => {
+    const rows = legalAttackCorpus();
+    const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
+    const without = resolved.filter(([, s]) => s !== STAGE1_BODIES && s !== BENCH_STAGE2);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([2, 3]);
   });
 });

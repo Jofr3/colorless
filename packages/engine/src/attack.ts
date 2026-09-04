@@ -15,6 +15,7 @@ import {
   hasPrintedAbility,
   isExOrV,
   isSpecialEnergy,
+  matchesFilter,
   parseAttackDamage,
   preventsAttackerClass,
   resistanceOf,
@@ -75,7 +76,13 @@ import {
   splitAttackTrailingClause,
   splitAttackRequirementClause,
 } from "./effects";
-import type { AttackDamageBonus, AttackFlipCount, AttackPreDamage, EffectOp } from "./effects";
+import type {
+  AttackDamageBonus,
+  AttackFlipCount,
+  AttackPreDamage,
+  CardFilter,
+  EffectOp,
+} from "./effects";
 import type { GameEvent } from "./events";
 import {
   advance,
@@ -267,7 +274,22 @@ function scaledAttackDamage(
       // `damage` read it deliberately does not. An empty Bench is 0, and on the
       // `×` fold (with the printed base dropped) that means no DAMAGE_DEALT at
       // all — rules-correct, and the board the suite drives first.
-      return benchBodies(state, attackerSeat) * bonus.per;
+      //
+      // 🆕🆕 D466 — AND THE OPTIONAL PRINTED NOUN ("for each Stage 2 Pokémon on your
+      // Bench", corpus file line 589). ⚠️ **THE FILTER IS OPTIONAL AND `undefined`
+      // IS EVERY BODY, SO THE ARGUMENT IS THE WHOLE WIDENING**: every sentence that
+      // reached this arm before D466 passes `undefined` and `benchBodies` walks the
+      // zone exactly as it did — D407's `energyOnSelf.zone` shape, three arms down,
+      // for its stated reason. The filtered walk is `benchBodies`' own, not a second
+      // one (D159): the two readings of "how many Benched Pokémon" cannot drift
+      // because there is only one of them, and `bodiesInPlayScaling.test.ts` §8
+      // drives BOTH on ONE board to pin that.
+      //
+      // 🛑 **AND IT IS THE BENCH AND ONLY THE BENCH** — the Active is not consulted,
+      // which is the printed word ("on your Bench") and is the axis §8's stage board
+      // is built to expose: its Active IS a Stage 2, so an "in play" walk reads one
+      // more than this arm does and lands a different number.
+      return benchBodies(state, attackerSeat, bonus.count.filter) * bonus.per;
     case "bothSidesBenchCount":
       // D193 — BOTH Benches, the first member whose answer spans the table and so
       // the first that could not be expressed as a `side` on another member. Read
@@ -513,8 +535,23 @@ function scaledAttackDamage(
     no damage and no `DAMAGE_DEALT` at all. Shared by the two body-count members
     so that "how many Benched Pokémon" has ONE answer no matter which side asks —
     the mirror pair's only real hazard is drifting into two. */
-function benchBodies(state: GameState, seat: Seat): number {
-  return state.players[seat].bench.reduce((total, p) => total + (p !== null ? 1 : 0), 0);
+function benchBodies(state: GameState, seat: Seat, filter?: CardFilter): number {
+  // 🆕🆕 D466 — the OPTIONAL printed noun. `undefined` counts every body, which is
+  // the shape D282 and D193 shipped and is what keeps this function's three shipped
+  // callers (`opponentBenchCount`, `yourBenchCount`, `bothSidesBenchCount`) byte-
+  // identical in behaviour. The read is the **TOP card** (§1.2) through `topCardOf`,
+  // not the bottom of the stack: a Basic that has evolved twice IS a Stage 2 now,
+  // which is what makes the §10 evolve a real line of play here rather than a rule
+  // written for symmetry — `opponentActiveIsStage2`'s own reading (interpreter.ts),
+  // reached from the Bench. `matchesFilter` takes `Card | undefined` and answers
+  // false for a missing card, so an unresolvable uid is counted OUT rather than
+  // throwing; the `p !== null` guard is still needed and still D193's.
+  return state.players[seat].bench.reduce(
+    (total, p) =>
+      total +
+      (p !== null && (filter === undefined || matchesFilter(topCardOf(state, p), filter)) ? 1 : 0),
+    0,
+  );
 }
 
 /** One flip-count member's worth of faces, IN ORDER, plus the advanced rngState

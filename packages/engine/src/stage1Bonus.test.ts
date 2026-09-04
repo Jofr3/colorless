@@ -241,7 +241,16 @@ describe("§1 — the SHAPE question, settled from the catalog before the price 
     // named `evolveFrom`, so the SUBSTRING NAME READ's demonstrator lands in this
     // population exactly as D388's did. The rung keeps saying what it always said — the
     // subset is a catalog coincidence — at a number the pool decides.
-    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(26);
+    // 🆕🆕 D466 — 26 → **27**: `fix-stage2body` (the Stage 2 carrier of
+    // `censusAttackCorpus.ts` file line 589) is an Evolution — its `evolveFrom` is set
+    // deliberately, so `evolutionPokemon` and `stagePokemon{Stage2}` are DIFFERENT
+    // members on `bodiesInPlayScaling.test.ts` §8's board — and it is NOT a Stage 1.
+    // ⚠️ **THE FIXTURE-POOL TAX IS READ AGAINST THIS RUNG'S OWN PREDICATE, NOT STEPPED
+    // BY ANALOGY** (D465): the pool-SIZE rung in `opponentResistanceBonus.test.ts` moves
+    // for ANY new id, this one moves only for an Evolution that is not a Stage 1, and
+    // `clauseApostrophe.test.ts`'s sweep does NOT move at all because the fixture's name
+    // is `battler`'s default (the id) and carries no possessive.
+    expect(evolutions.filter((c) => !isStage1Pokemon(c))).toHaveLength(27);
   });
 
   it("🛑 …and the BUILD is not a narrowing: the wide member keeps all NINE printings", () => {

@@ -13890,6 +13890,30 @@ function retrieveNoun(filter: CardFilter): { singular: string; plural: string } 
         : { singular: "a Basic Pokémon", plural: "Basic Pokémon" };
     case "evolutionPokemon":
       return { singular: "an Evolution Pokémon", plural: "Evolution Pokémon" };
+    case "stagePokemon":
+      // 🆕🆕 D466 — the printed STAGE ORDINAL, whole: "a Stage 1 Pokémon",
+      // "Stage 2 Pokémon". INVARIANT IN NUMBER, exactly like the bare "Basic
+      // Pokémon" two arms up and the "Evolution Pokémon" one arm up — the ordinal
+      // is part of the printed noun and takes no "s" — so only the article moves,
+      // and the article is a literal "a" for `suffixPokemon`'s reason: `stage` is
+      // CLOSED at two values and BOTH spell "Stage", so no vowel branch is
+      // reachable and `ownerPokemon`'s `/^[AEIOU]/` rule is deliberately not copied.
+      //
+      // ⚠️ **NO PRINTED RETRIEVAL, PROMPT OR ATTACH NAMES THIS FILTER TODAY**, which
+      // makes it a reachability arm exactly like `attackNamePokemon`'s and
+      // `suffixPokemon`'s below rather than a caption any board renders: the
+      // member's only producer is `inPlayBodyFilter`, which feeds a
+      // `DamageCountSource` and never an op, and every caller of this function reads
+      // an `op.filter`. The arm exists because this switch is exhaustive over
+      // `CardFilter` — which is what makes a new member impossible to add without
+      // answering the noun question — and because a REGISTRY author can hand-write
+      // the filter into an op tomorrow. The property that makes it unreachable is
+      // pinned in `bodiesInPlayScaling.test.ts` §8 rather than a caption asserted
+      // against a board that cannot emit one (D446's call, verbatim).
+      {
+        const ordinal = filter.stage === "Stage1" ? "Stage 1" : "Stage 2";
+        return { singular: `a ${ordinal} Pokémon`, plural: `${ordinal} Pokémon` };
+      }
     case "typedPokemon": {
       // D238 — and this is the ONE place in the vocabulary where the caption
       // DELIBERATELY does not reproduce the printed bytes. The card prints a

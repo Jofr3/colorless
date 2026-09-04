@@ -10581,6 +10581,19 @@ export const FIXTURE_POOL: Record<string, Card> = {
         effect:
           "This attack does 60 damage for each of your opponent's Pok\u00e9mon ex and Pok\u00e9mon V in play.",
       },
+      // 🆕🆕 D466 — THE NINTH, and it is on THIS body rather than on a new one for the
+      // reason the block above gives about the Round attack, one axis over: this
+      // fixture is ITSELF a Stage 1, so the Active's participation in an "in play"
+      // count is observable from the card that prints the sentence. `40×` — the
+      // MULTIPLY marker, because the printed row (`censusAttackCorpus.ts` file line
+      // 586) carries no "more" and the column prints the additive form of this noun
+      // ZERO times.
+      {
+        cost: ["Colorless"],
+        name: "Second Rung",
+        damage: "40\u00d7",
+        effect: "This attack does 40 damage for each of your Stage 1 Pok\u00e9mon in play.",
+      },
     ],
   }),
 
@@ -11903,6 +11916,46 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-roundbody": battler("fix-roundbody", {
     hp: 60,
     attacks: [{ cost: ["Colorless"], name: "Round", damage: 10 }],
+  }),
+  /** 🆕🆕 D466 — FIXTURE. A **Stage 2** body carrying the printed *"…for each Stage 2
+      Pokémon on your Bench."* attack (`censusAttackCorpus.ts` file line 589, 2 legal
+      printings; `bodiesInPlayScaling.test.ts` §8).
+
+      🛑 **IT IS THE ATTACKER *AND* THE COUNTED BODY, AND THAT IS THE WHOLE FIXTURE.**
+      The printed noun is scoped to the BENCH, so the one wrong build this family
+      invites is the "in play" walk that also counts the Active — and that walk is
+      unobservable unless the ACTIVE itself satisfies the noun. Putting the sentence on
+      a Stage 2 makes the attacker its own confound: §8's stage board answers **1** on
+      the Bench and **2** in play, which are different damage numbers rather than the
+      same one by luck. A holder that was a Stage 1 (`fix-inplaybodies` is one, and was
+      the obvious place to hang a ninth attack) would have left the zone axis silent.
+
+      🛑 **`evolveFrom` IS SET, WHICH MAKES IT AN `evolutionPokemon` TOO — DELIBERATELY.**
+      `evolutionPokemon` is `evolveFromOf(card) !== null` and is the member a build
+      reaching for the nearest neighbour would use; with this body IN that wider set,
+      §8's board separates the two (Bench Stage 2 = 1, Bench Evolution = 4). A Stage 2
+      with a null `evolveFrom` would have made the two members agree and tested neither.
+
+      `hp: 200` so no board in the suite can Knock it out (its own attack's largest
+      total there is 40 + 5×40 = 240 against the 340 HP `fix-titan`, never against
+      itself), `types: ["Colorless"]` so it is OUT of the `{G}` filter and OUT of the
+      owner prefix — it must differ from the bodies around it in EXACTLY the axis under
+      test (D427) — and ONE printed {C} cost, so `bare()`'s single attachment arms it.
+      The name is `battler`'s default (the id), so it carries no possessive and no
+      apostrophe: `clauseApostrophe.test.ts`'s re-ingest sweep and D242's prefixed-name
+      enumeration both stand still, checked rather than assumed. */
+  "fix-stage2body": battler("fix-stage2body", {
+    stage: "Stage2",
+    evolveFrom: "fix-stage1",
+    hp: 200,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Deep Lineage",
+        damage: "40+",
+        effect: "This attack does 40 more damage for each Stage 2 Pok\u00e9mon on your Bench.",
+      },
+    ],
   }),
   /** 🆕🆕 D367 — THE FOUR NAMED BENCH BODIES, and the two ATTACKERS among them are
       the same cards as the names their own clauses ask about.
@@ -15800,7 +15853,19 @@ export const IN_PLAY_BODIES_DECK = deckOf({
   "fix-attacker-ex": 4, // "Fixmon ex" — the suffix positive AND the has-attacks near-miss
   "fix-pokemon-v": 4, // "Fixmon V" — in for the pair, out for the bare ex
   "fix-pokemon-vmax": 4, // "Fixmon VMAX" — a rule box that is NEITHER; the `hasRuleBox` control
-  "fix-energy": 12, // Basic {C} — the one printed symbol of all eight attacks
+  // 🆕🆕 D466 — the STAGE-2 body, and the SIXTY IS HELD BY TAKING FOUR OFF THE ENERGY
+  // COUNT rather than by growing the deck: `setup.ts` requires *"exactly 60 catalog
+  // card ids per seat"*, so an addition is always also a subtraction here. Twelve
+  // Energy were four more than any board needs — `bare()` attaches exactly ONE, and
+  // every printed cost in this deck is a single {C} — so eight is the same board with
+  // a different shuffle, and every count in this suite is placed by SURGERY after
+  // `clearBench`, never drawn.
+  // ⚠️ **THIS DECK HAS EXACTLY ONE READER** (`bodiesInPlayScaling.test.ts`, measured
+  // with `grep -rn IN_PLAY_BODIES_DECK packages/engine/src`, 3 hits: the export, the
+  // import and the one `driveSetup` call), which is why the change is contained —
+  // D412 added ONE card to a SHARED deck and reddened three of another slice's boards.
+  "fix-stage2body": 4, // Stage 2 AND an Evolution — the ordinal that is not `evolutionPokemon`
+  "fix-energy": 8, // Basic {C} — the one printed symbol of all nine attacks
 });
 
 /** 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT's board. Every card in it is in the

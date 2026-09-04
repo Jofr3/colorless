@@ -117,6 +117,40 @@ export type CardFilter =
       for non-Pokémon, so this is the exact complement of `basicPokemon` inside
       `anyPokemon`. */
   | { kind: "evolutionPokemon" }
+  /** 🆕🆕 D466 — a Pokémon of a printed EVOLUTION STAGE ORDINAL: *"your **Stage 1**
+      Pokémon in play"* (`censusAttackCorpus.ts` file line 586, 1 legal printing) and
+      *"each **Stage 2** Pokémon on your Bench"* (file line 589, 2 legal printings).
+
+      🛑 **IT IS NOT `evolutionPokemon` NARROWED BY A RIDER, AND THE MEMBER ONE LINE
+      UP IS THE ONE IT MUST NOT BE CONFUSED WITH.** `evolutionPokemon` is
+      `evolveFromOf(card) !== null` — *any* Evolution — which a Stage 2, a VSTAR and a
+      VMAX satisfy exactly as a Stage 1 does. Reading the printed ordinal as "any
+      Evolution" would score file line 586 against every evolved body on the board,
+      and `bodiesInPlayScaling.test.ts` §8's stage board is built so that the two
+      answers are DIFFERENT NUMBERS rather than the same one by luck.
+
+      🛑 **AND IT IS NOT `ownerPokemon.stage` / `typedPokemon.stage` WIDENED EITHER**,
+      which was checked before this member was written (D262's own check, one
+      vocabulary over). That rider's type is `"basic" | "evolution"` and its else-arm
+      is `evolveFromOf(card) !== null`; it CANNOT express a stage ordinal and never
+      could. A third value on it would also have to be answered by every noun that
+      carries it, where the printed phrase here is a whole noun of its own.
+
+      **THE PREDICATE IS `cards.ts` `isStage1Pokemon` / `isStage2Pokemon`, REUSED
+      VERBATIM** rather than re-spelled as `card.stage === "Stage1"` — D159's rule,
+      and the same one those two functions apply to each other: one reading of
+      "Stage 1", one implementation, so this filter and `opponentActiveIsStage1`
+      (interpreter.ts, D387) can never disagree about a card. The catalog's `stage`
+      vocabulary is `Basic | Stage1 | Stage2 | VSTAR | VMAX`, so a VSTAR — two
+      evolutions deep, and a `evolveFromOf` non-null — is NEITHER value here, which is
+      the printed reading (D262).
+
+      ⚠️ **TWO VALUES AND NOT FIVE.** `Basic` has a member already (`basicPokemon`) and
+      the column prints no *"VSTAR Pokémon"* / *"VMAX Pokémon"* noun at all — measured
+      over all 640 rows of `legalAttackCorpus()`, `grep Stage` returning seven rows of
+      which exactly two reach a body-count noun. `IN_PLAY_BODY_NOUNS`' own rule
+      (D446/D440): arms no sentence drives are not written. */
+  | { kind: "stagePokemon"; stage: "Stage1" | "Stage2" }
   /** A Pokémon of a printed TYPE — the brace-coded *"{W} Pokémon"*, *"up to 3 {D}
       Pokémon"*, *"a Basic {G} Pokémon"* (D238).
 
@@ -12824,6 +12858,42 @@ const OPPONENT_BENCH_MULTIPLY =
 // in `benchBodySelfScaling.test.ts` rather than argued.
 const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
 const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
+/** 🆕🆕 D466 — THE ATTACKER'S BENCH COUNTED AS BODIES AND **NARROWED BY A PRINTED
+    NOUN**: *"This attack does 40 more damage for each Stage 2 Pokémon on your
+    Bench."* — `censusAttackCorpus.ts` **file line 589**, 1 sentence / **2 legal
+    printings**, the only row in the column that spells this shape.
+
+    🛑 **A NEW ANCHOR RATHER THAN A WIDENING OF `YOUR_BENCH_SCALE`, ON D441's RULE,
+    AND THE KINDS REALLY DO DIFFER.** The two sentences are not one sentence with an
+    optional adjective: the shipped one says *"for each of your **Benched** Pokémon"*
+    (possessive + attributive adjective, noun LAST) and this one says *"for each
+    ⟨noun⟩ **on your Bench**"* (bare noun FIRST, zone as a trailing prepositional
+    phrase). Relaxing the shipped pattern into `for each (?:of your Benched )?(.+?)
+    (?: on your Bench)?\.` would also accept the two crossed forms the catalog prints
+    NOWHERE, which is D451's refusal verbatim. **And a new anchor breaks no shipped
+    mutant row, where an in-place widening rots every row that quotes the regex.**
+
+    ⚠️ **THE NOUN IS `[^.]+` AND IT IS RESOLVED BY `inPlayBodyFilter`, NOT BY THIS
+    PATTERN.** The class cannot cross a `.`, so it cannot span a sentence break
+    (`IN_PLAY_BODY_MULTIPLY`'s stated reason, and the Drifloon compound is why); and
+    what REFUSES is the map, so *"for each Ancient Pokémon on your Bench."* would
+    reach this line and leave it LOUD exactly as its "in play" twin does.
+
+    ⚠️ **DISJOINT FROM ALL FIVE BENCH PATTERNS ABOVE AND FROM BOTH "in play" ONES,
+    MEASURED RATHER THAN ARGUED**: every one of them is `^…$`-anchored and ends
+    `Benched Pokémon\.` / `opponent's\)\.` / ` in play\.`, and this one ends
+    ` on your Bench\.`. A string cannot end two ways. Driven over the whole of
+    `legalAttackCorpus()` in `bodiesInPlayScaling.test.ts` §8 rather than asserted.
+
+    ⚠️ **NO `×` TWIN, AND NOT INCREMENTING IS ALSO A MEASUREMENT (D435).** The column
+    prints the bare `for each ⟨noun⟩ on your Bench.` form **ZERO** times — the whole
+    of `grep "on your Bench" censusAttackCorpus.ts` is nine rows, of which eight are
+    `^If …, this attack does N more damage\.$` antecedents already read by the clause
+    table and one is line 589. The `×` cell is left EMPTY rather than filled
+    speculatively. `Pokémon` carries the real é (U+00E9); no /i, whole-sentence
+    anchored with a required trailing period and a capital `This`. */
+const YOUR_BENCH_FILTERED_SCALE =
+  /^This attack does (\d+) more damage for each ([^.]+) on your Bench\.$/;
 // 🆕🆕 D439 — THE SAME BODY COUNT OVER "IN PLAY" RATHER THAN "BENCHED", AND
 // FILTERED BY A PRINTED NOUN. *"This attack does N damage for each of your <noun>
 // Pokémon in play."* — measured over `legalAttackCorpus()` (the committed
@@ -12836,13 +12906,19 @@ const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Ben
 //     • "This attack does 30 damage for each of your Ancient Pokémon in play."    2  → 🛑 NO FILTER (below)
 //     • "This attack does 30 damage for each of your Team Rocket's Pokémon in play."  2 → ownerPokemon
 //     • "This attack does 30 damage for each of your {G} Pokémon in play."        2  → typedPokemon
-//     • "This attack does 40 damage for each of your Stage 1 Pokémon in play."    1  → 🛑 NO FILTER (below)
+//     • "This attack does 40 damage for each of your Stage 1 Pokémon in play."    1  → stagePokemon (🆕 D466)
 //   ADDITIVE ("more") — 1 sentence / 2 printings reaches the anchor:
 //     • "This attack does 40 more damage for each of your Evolution Pokémon in play." 2 → evolutionPokemon
 //
 // So the ANCHORS reach 7 sentences / 11 printings and the VOCABULARY claims
 // **5 sentences / 8 printings**; the other two fall through `inPlayBodyFilter` to
-// null and stay on the loud ATTACK_EFFECT_SKIPPED path. That split is deliberate
+// null and stay on the loud ATTACK_EFFECT_SKIPPED path.
+// 🆕🆕 **D466 CORRECTS THAT SPLIT WHERE IT IS WRITTEN, AND ONLY THE STAGE HALF OF IT
+// (D442's rule — a FALSEHOOD is corrected at its site; a mere disagreement is not).**
+// The vocabulary now claims **6 sentences / 9 printings** and exactly ONE row still
+// falls through to null: Ancient (2 printings). "Stage 1 Pokémon" is a
+// `stagePokemon` map row from D466 on, so the second bullet below is history and is
+// marked as such rather than deleted. That split is deliberate
 // and is `CLAUSE_POKEMON_TYPES`' own stated design — *"the clause pattern is
 // unchanged and still loose, so 'Stage 1', 'Tera' and 'Evolution' still reach this
 // lookup and still MISS it … that is what makes the map, and not the regex, the
@@ -12856,11 +12932,16 @@ const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Ben
 //     per-PRINTING fact (Great Tusk ex sv01-123/-230/-246 is the same species with
 //     no banner). Re-read at D439 and it holds word for word. The fix is an INGEST
 //     change; nothing in this file can be the fix.
-//   • **Stage 1** (1 printing) is UNBUILT, which is a different thing. The
-//     predicates exist in cards.ts (`isBasicPokemon`, `evolveFromOf`) but no
-//     `CardFilter` member reads a printed STAGE ORDINAL — `basicPokemon` and
-//     `evolutionPokemon` between them partition the pool into two, and "Stage 1"
-//     is a proper subset of the second. It needs a member; Ancient needs a column.
+//   • **Stage 1** (1 printing) was UNBUILT, which is a different thing — and it is
+//     ✅ **BUILT AS OF D466**, so this bullet is kept as the RECORD of why the two
+//     refusals were never one refusal. The reason it gave was right and it was also
+//     the price: *"the predicates exist in cards.ts but no `CardFilter` member reads
+//     a printed STAGE ORDINAL — `basicPokemon` and `evolutionPokemon` between them
+//     partition the pool into two, and 'Stage 1' is a proper subset of the second.
+//     It needs a member; Ancient needs a column."* D466 wrote the member
+//     (`stagePokemon`, reading cards.ts `isStage1Pokemon` / `isStage2Pokemon`, which
+//     D387/D262 had already written for the `boardCondition` antecedents). **Ancient
+//     still needs a column and nothing in this file can be the fix.**
 //
 // 🛑 THE `(?!opponent)` LOOKAHEAD IS LOAD-BEARING AND THE BENCH TRIO ABOVE DOES
 // NOT NEED ONE — the difference is `[^.]+` versus a literal noun. Those four
@@ -13011,6 +13092,33 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
       ],
     },
   ],
+  // 🆕🆕 D466 — THE TWO STAGE-ORDINAL NOUNS, and they are MAP ROWS rather than a
+  // `^Stage ([12]) Pokémon$` capture for D440's stated reason one row up: the map is
+  // what refuses, and a capture over the catalog's whole `stage` vocabulary would
+  // spell two more nouns ("VSTAR Pokémon", "VMAX Pokémon") that this column prints
+  // NOWHERE — arms no sentence drives.
+  //
+  // 🛑 **BOTH ROWS ARE PRINTED, AND THE MEASUREMENT IS THE WHOLE OF `grep Stage` OVER
+  // THE COLUMN — SEVEN ROWS, EVERY ONE READ.** File lines 87 and 88 spell *"the
+  // highest Stage Evolution card"* (a devolve verb, not a noun); 380 and 381 are
+  // `boardCondition` antecedents already built through `opponentActiveIsStage1` /
+  // `opponentActiveIsStage2`; 651 is *"your opponent's Active Stage 2 Pokémon"*, an
+  // op TARGET already built through `conditionGate`. The two that reach a body-count
+  // noun are **586** (*"…for each of your Stage 1 Pokémon in play."*, 1 legal) and
+  // **589** (*"…for each Stage 2 Pokémon on your Bench."*, 2 legal) — one per
+  // ordinal, which is why neither row is speculative and why there is no third.
+  //
+  // ⚠️ **THE STAGE 2 ROW IS REACHED BY THE BENCH ANCHOR AND NOT BY EITHER "in play"
+  // ONE, AND THE ROW LIVES HERE ANYWAY.** `YOUR_BENCH_FILTERED_SCALE` resolves its
+  // captured noun through `inPlayBodyFilter` on D159's rule and this table's own
+  // (see `IN_PLAY_BODY_NOUNS`' Pokémon-ex note): *"which bodies does this printed
+  // noun name"* is ONE question and gets ONE answer, so the ZONE is the anchor's
+  // business and the NOUN is this table's. The consequence, stated: *"…for each of
+  // your Stage 2 Pokémon in play."* and *"…for each Stage 1 Pokémon on your Bench."*
+  // are now readable too, and the column prints neither — a reader is a function of
+  // TEXT, and a noun the column does not print simply never arrives.
+  ["Stage 1 Pokémon", { kind: "stagePokemon", stage: "Stage1" }],
+  ["Stage 2 Pokémon", { kind: "stagePokemon", stage: "Stage2" }],
 ]);
 /** The OWNER-PREFIXED noun ("Team Rocket's Pokémon"). The `['’]` class is D137's
     fix and is needed here because this pattern spells the apostrophe, unlike the
@@ -13027,8 +13135,19 @@ const IN_PLAY_OWNER_NOUN = /^(.+)['’]s Pokémon$/;
 const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
 /** 🆕🆕 D439 — the printed noun between "for each of your " and " in play.",
     resolved to the `CardFilter` that already answers it, or `null` when this file
-    has no way to spell it (Ancient, Stage 1) — which keeps the sentence on the loud
+    has no way to spell it (Ancient) — which keeps the sentence on the loud
     ATTACK_EFFECT_SKIPPED path.
+
+    🆕🆕 **D466 — IT RESOLVES A BENCH NOUN NOW TOO, AND THE NAME IS DELIBERATELY NOT
+    CHANGED.** `YOUR_BENCH_FILTERED_SCALE` captures the noun in *"…for each ⟨noun⟩ on
+    your Bench."* and hands it here: *"which bodies does this printed noun name"* is
+    ONE question and gets ONE answer (D159, and `IN_PLAY_BODY_NOUNS`' own Pokémon-ex
+    note), so the ZONE is the anchor's business and the NOUN is this function's. The
+    name stays `inPlayBodyFilter` because a RENAME is not free — `D439-vocabulary-
+    order-loses-the-owner` is a declared `equivalent` survivor quoting this function's
+    body, and D359's discriminator is *"a WIDENING is free and a RENAME is not"*.
+    ⚠️ **AND "Stage 1" IS NO LONGER AN EXAMPLE OF THE `null` PATH** — it is a map row
+    as of D466. The paragraph below still names it as one and is corrected there.
 
     🛑 **THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, AND THAT PARAGRAPH IS HERE
     BECAUSE THE FIRST DRAFT OF IT SAID THE OPPOSITE.** This block originally
@@ -13054,9 +13173,13 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
     stops being true LOUDLY.
 
     ⚠️ **WHAT DOES THE REFUSING IS THE MAP AND NOT THE REGEX**: `(.+) Pokémon` also
-    matches "Ancient Pokémon" and "Stage 1 Pokémon", and both MISS
-    `CLAUSE_POKEMON_TYPES`, fall past the owner pattern too, and reach the trailing
-    `return null`. That is the vocabulary. */
+    matches "Ancient Pokémon", which MISSES `CLAUSE_POKEMON_TYPES`, falls past the
+    owner pattern too, and reaches the trailing `return null`. That is the vocabulary.
+    🆕 **D466 — "Stage 1 Pokémon" USED TO BE THE SECOND EXAMPLE HERE AND IS NOT ONE
+    ANY MORE**: it is an EXACT KEY now, so it never reaches the typed branch at all.
+    The example is replaced rather than the sentence relaxed, because the claim it
+    makes ("the map refuses, not the regex") is still true and still needs a witness
+    the pool actually prints. */
 function inPlayBodyFilter(noun: string): CardFilter | null {
   const exact = IN_PLAY_BODY_NOUNS.get(noun);
   if (exact !== undefined) return exact;
@@ -19059,6 +19182,27 @@ const BENCHABLE_RETRIEVAL_KINDS: ReadonlySet<CardFilter["kind"]> = new Set<CardF
   // omission would compile.
   "suffixPokemon",
   "attackNamePokemon",
+  // 🆕🆕 D466 — THE THIRD MEMBER ADMITTED ON THE SAME DECISION, AND IT IS
+  // DOCUMENTATION RATHER THAN BEHAVIOUR FOR THE SAME MEASURED REASON. A Stage 1 /
+  // Stage 2 Pokémon is a Pokémon — `isStage1Pokemon` and `isStage2Pokemon` both
+  // carry the `category === "Pokemon"` conjunct — so on this set's stated rule
+  // ("every sentence that benches names a Pokémon noun") it belongs here, beside
+  // `evolutionPokemon`, which has been in the set since D232 and names the same
+  // bodies one ordinal wider.
+  //
+  // 🛑 **NEITHER DIRECTION IS OBSERVABLE TODAY, MEASURED RATHER THAN ASSUMED.** This
+  // Set has exactly ONE call site (the `ATTACK_DISCARD_RETRIEVAL` arm below), the
+  // `filter` it guards can only come from `HAND_SEARCH_SINGULAR` /
+  // `HAND_SEARCH_PLURAL` / `typedNounFilter` / a bare `byName`, and NONE of those can
+  // produce `stagePokemon` — `HAND_SEARCH_NOUNS` carries no row for either ordinal
+  // (the corpus prints the two Stage nouns only in BODY-COUNT sentences: file lines
+  // 586 and 589). So omitting it refuses nothing and admitting it benches nothing.
+  // ⚠️ **THAT IS WHY NO MUTANT ROW IS WRITTEN FOR THIS LINE** — D442/D420's rule, and
+  // D446's call at this exact address: a row that changes nothing reports a suite gap
+  // that does not exist. The line is still owed, because the day `HAND_SEARCH_NOUNS`
+  // gains a Stage row this Set decides whether the printed sentence benches, and an
+  // omission would compile.
+  "stagePokemon",
 ]);
 /** The two printed noun ALTERNATIONS, built FROM `HAND_SEARCH_NOUNS` rather than
     listed beside it — so a row added to that table is admitted here by
@@ -23783,7 +23927,7 @@ export type DamageCountSource =
   | { kind: "damageCountersOnYourBench" }
   | { kind: "bothSidesBenchCount" }
   | { kind: "opponentBenchCount" }
-  | { kind: "yourBenchCount" }
+  | { kind: "yourBenchCount"; filter?: CardFilter }
   | {
       kind: "energyOnOpponent";
       zone: OpponentEnergyZone;
@@ -23929,6 +24073,32 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
     const per = Number(yourBench[1]);
     if (per >= 1) return { per, count: { kind: "yourBenchCount" } };
   }
+  // 🆕🆕 D466 — THE SAME BENCH BODY COUNT, NARROWED BY A PRINTED NOUN, placed
+  // directly after the unfiltered arm it narrows so a reader meeting one meets the
+  // other. TWO guards and not one, and they refuse for two different reasons —
+  // `IN_PLAY_BODY_SCALE`'s pair four arms down, verbatim: `per >= 1` is the family's
+  // printed-zero guard, and `filter !== null` is the VOCABULARY, which is what keeps
+  // *"for each Ancient Pokémon on your Bench."* on the loud ATTACK_EFFECT_SKIPPED
+  // path.
+  //
+  // 🛑 **THE FIELD IS OPTIONAL AND `undefined` IS EVERY BODY, SO THIS ARM IS THE
+  // WHOLE WIDENING**: the ten printings already reading `{ kind: "yourBenchCount" }`
+  // (D282's three raw + Terapagos ex's seven behind the gate splitter, plus the `×`
+  // arm one reader down) emit a filter-less object byte for byte as before and take
+  // the evaluator's untouched path. That is D407's `energyOnSelf.zone` at this
+  // union's other end — *"the zone is OPTIONAL and `undefined` is the ATTACKING
+  // BODY, so this `if` is the whole widening"* — rather than D369's two-member
+  // split, which that member refused for the same reason: a second member would
+  // duplicate the zone walk that answers "how many Benched Pokémon", and the mirror
+  // pair's only real hazard is drifting into two (`benchBodies`' own doc block).
+  const yourBenchFiltered = YOUR_BENCH_FILTERED_SCALE.exec(effect);
+  if (yourBenchFiltered !== null) {
+    const per = Number(yourBenchFiltered[1]);
+    const filter = inPlayBodyFilter(yourBenchFiltered[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "yourBenchCount", filter } };
+    }
+  }
   // 🆕🆕 D439 — the ATTACKER's bodies IN PLAY (Active + Bench), FILTERED by the
   // printed noun. Placed directly after the Bench trio it is the "in play" reading
   // of, so the two nouns sit together on the page and a reader meeting one meets
@@ -23938,8 +24108,12 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // TWO guards and not one, and they refuse for two different reasons: `per >= 1`
   // is the family's printed-zero guard (a printed 0 does nothing, so claiming it
   // would mark a sentence SIMULATED that the engine does nothing about), and
-  // `filter !== null` is the VOCABULARY — "Ancient Pokémon" and "Stage 1 Pokémon"
-  // reach this line and must leave it LOUD. Neither subsumes the other.
+  // `filter !== null` is the VOCABULARY — "Ancient Pokémon" reaches this line and
+  // must leave it LOUD. Neither subsumes the other.
+  // 🆕 **D466 — "Stage 1 Pokémon" WAS THE SECOND NAME IN THIS SENTENCE AND IS NOW A
+  // MAP ROW**, so the vocabulary guard is down to ONE witness on this anchor. It is
+  // still not vacuous: `bodiesInPlayScaling.test.ts` §2 drives `ANCIENT_BODIES` to
+  // null against a claimed near-miss one axis away (D424's admission rule).
   const inPlayBodies = IN_PLAY_BODY_SCALE.exec(effect);
   if (inPlayBodies !== null) {
     const per = Number(inPlayBodies[1]);

@@ -4967,3 +4967,96 @@ op was last. D465's is unreachable for the mirror reason: the only producer retu
 both must be **DRIVEN**, not asserted: pin `program.length`, and pin that `phase.cont` is absent
 after the swing — **on a board where the op WHIFFS as well as one where it fires**, because a whiff
 is not a park and the two are easy to confuse in a `stepOp` arm.
+
+
+## A REFUSAL IS NOT AN ASSERTION, so its REASON can be false for years and nothing goes red (D466)
+
+D466 built the row D446 had refused, and found D446's stated reason false in every clause:
+
+> *"a stage ORDINAL is not a persisted field either — `Card.stage` is a free-text column and the
+> engine's own `isBasicPokemon` / `evolveFromOf` read it as a BINARY. Spelling 'Stage 1' would mean a
+> third reading of that column, and the row is ONE printing."*
+
+`Card.stage` is a **persisted column with a CLOSED vocabulary** (`Basic | Stage1 | Stage2 | VSTAR |
+VMAX`, queried against the remote D1 at **D262**), and `cards.ts` had been reading it as the **ORDINAL**
+for 59 decisions — `isStage2Pokemon` since D262, `isStage1Pokemon` since D387, both cited by name in
+`interpreter.ts`'s own `opponentActiveIsStage1` / `opponentActiveIsStage2` arms. The new member was
+therefore **not a third reading of anything**; it was the FIRST reading reused at a second address.
+
+🛑 **THE MEASUREMENT BESIDE IT WAS RIGHT.** *"The row is ONE printing"* is a fact about the pool and is
+still true — and it was the real reason not to take the slice at D446. **A measurement and a
+conclusion are two separate claims and each needs its own check.** This is the third slice in a row
+where the measurement was right and the conclusion was not (D457 and D458 each mis-priced their own
+blocker by reading a doc block instead of asking the code).
+
+⚠️ **WHY THIS CLASS OF ERROR SURVIVES SO LONG: A REFUSAL IS NOT AN ASSERTION.** A `toBeNull` rung goes
+red when the refusal STOPS being true; nothing anywhere goes red when the REASON stops being true, or
+was never true. So the reason accumulates rot at the exact rate nobody re-reads it.
+
+**THE RULE.** Before inheriting a refusal:
+1. **grep for the thing the reason says does not exist.** D466's whole disproof was
+   `grep -n "isStage1Pokemon\|isStage2Pokemon" packages/engine/src/cards.ts` — one command.
+2. **Separate the reason from the price**, and record them separately at the site, so the next reader
+   can see which one is load-bearing.
+3. When you falsify a reason, **correct it where it lives and say which slice corrected it and how it
+   was measured** (D442) — do not simply delete it. D466 kept D446's bullet as the record of a
+   prediction that came true, with the false clauses marked as history.
+
+## A `COMPOUND-*` class names the EDIT that reaches a built string, NOT a composition path (D466)
+
+`residue-census.ts` classifies a residue row `COMPOUND-tail` when removing segment 1 leaves a segment
+some reader claims. **That does NOT mean "build the head and the row leaves the residue."**
+
+Measured at D466, with a head that ALREADY builds:
+
+```
+"This attack does 50 damage to each of your opponent's Benched Pokémon."          → spreadDamage ✅
+"This attack's damage isn't affected by Weakness or Resistance."                  → suppression  ✅
+both, joined by ". "                                                             → splitter: null
+```
+
+`splitAttackTrailingClause` requires the TAIL to be a **`deriveAttackEffect`** clause specifically
+(it is the half the caller appends to the program), and a W/R suppression tail is a DAMAGE reader's.
+So the two `COMPOUND-tail` rows in the residue (corpus file lines 539 and 616, 4 printings) need the
+head **and** a composition path, and the `SUBST-2` row beside them (line 572) needs the head too.
+
+**THE RULE: before pricing any `COMPOUND-*` row, drive `splitAttackTrailingClause` on the printed
+string with a head you know builds.** It costs one probe. D466 nearly took that family as its target
+on the strength of the class name and a 5-printing count.
+
+⚠️ The general form: **a classifier class is a lower bound on the work stated in the classifier's own
+vocabulary, and its vocabulary is DELETIONS AND SUBSTITUTIONS — not seams, not carriers, not
+composition.** `PHRASE-2` and `OPAQUE` were equally misleading at D466 in OPPOSITE directions: the
+`PHRASE-2` row's "two tokens" were a whole `CardFilter` member, and the `OPAQUE` row cost that same
+member plus ONE anchor. **`OPAQUE` is UNCLASSIFIED, never EXPENSIVE.**
+
+## A declared survivor's `reason` is a DOC FIGURE and rots like one (D466)
+
+`D439-vocabulary-order-loses-the-owner` is a declared `equivalent` survivor whose reason reads *"the
+vocabulary is 25 nouns — the **3 exact keys** of `IN_PLAY_BODY_NOUNS`, the 11 `POKEMON_TYPES` names and
+the 11 `{X}` codes"*. D446 added two exact keys and did not update it; D466 added two more. The map
+holds **7**, and the vocabulary is **29**.
+
+🛑 **THE HARNESS CANNOT SEE THIS.** A `survives` declaration is checked in exactly one direction — the
+run FAILS if the row is KILLED (`STALE-SURVIVOR`). A row that still survives passes with any reason at
+all, including a wrong one, including one whose arithmetic contradicts the file it describes.
+
+**THE RULE: when you edit the structure a declared survivor's reason DESCRIBES, re-derive the reason in
+the same commit**, even when the row still survives. The pre-probe semantic pass is where to catch it —
+needle the corpus for the STRUCTURE name (`IN_PLAY_BODY_NOUNS` returned 2 hits at D466, both inside
+this row's prose), not only for the code lines you are editing.
+
+⚠️ **AND THE PROPERTY IS RE-CHECKED KEY BY KEY, NOT BY DISTANCE.** The row sits 4 lines from a D466
+hunk; the mechanical region-overlap pass flagged nothing (the `find` is outside the hunk) and would
+have said "safe". What actually settles it is reading the mutation: the exact-map lookup sits AHEAD of
+both permuted branches in the `find` AND in the `replace`, and neither new key carries an apostrophe,
+so neither can reach `IN_PLAY_OWNER_NOUN` in either world.
+
+## Run every repo script FROM THE REPO ROOT — a `cd` into the package breaks `tsc` and `bun` alike (D466)
+
+`bunx tsc -b` from `packages/engine/src` fails with `TS5083: Cannot read file
+'…/packages/engine/src/tsconfig.json'`, and `bun scripts/mutation/precheck.ts` from the same directory
+fails with `Module not found "scripts/mutation/precheck.ts"`. **Both look like a broken config and
+neither is.** Every path in this repo's tooling — `tsconfig` project references, `vitest`'s `include`
+globs, `lint-coverage.ts`'s file list, every mutant row's `file` — is repo-root-relative. D466 lost two
+rounds to this. Use absolute paths in `sed`/`grep`, and invoke tools from the root.

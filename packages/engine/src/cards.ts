@@ -432,6 +432,24 @@ export function matchesFilter(card: Card | undefined, filter: CardFilter): boole
       // `evolveFromOf` returns null for non-Pokémon and for a Basic, so a
       // non-null result is the exact complement of `basicPokemon`.
       return evolveFromOf(card) !== null;
+    case "stagePokemon":
+      // 🆕🆕 D466 — the printed STAGE ORDINAL ("your Stage 1 Pokémon in play",
+      // "each Stage 2 Pokémon on your Bench"). DELEGATED to `isStage1Pokemon` /
+      // `isStage2Pokemon` rather than spelled as `card.stage === filter.stage`,
+      // which is D159's rule and those two functions' own: one reading of "Stage 1",
+      // one implementation, so this arm and `opponentActiveIsStage1`
+      // (interpreter.ts, D387) cannot drift about a card. Both helpers carry the
+      // `category === "Pokemon"` conjunct, so a Trainer named "Stage 2" is false
+      // through the same read rather than through a guard beside it.
+      //
+      // 🛑 IT IS DELIBERATELY **NOT** THE ARM ONE LINE UP NARROWED. A VSTAR and a
+      // VMAX satisfy `evolveFromOf(card) !== null` and are NEITHER ordinal, which is
+      // the whole reason this member exists; the printed word is the datum.
+      //
+      // A TERNARY rather than a nested `switch`: `stage` is closed at two values by
+      // the union, so an `else` cannot be reached by a third and the exhaustiveness
+      // question is answered one level up.
+      return filter.stage === "Stage1" ? isStage1Pokemon(card) : isStage2Pokemon(card);
     case "typedPokemon": {
       // D238 — a Pokémon of a printed TYPE ("up to 3 {D} Pokémon", "a Basic {G}
       // Pokémon"). THREE conjuncts, and the middle one is the whole member:
