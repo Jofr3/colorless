@@ -3455,6 +3455,30 @@ naming the wrong byte — was found *before* the sweep began. The sweep's job is
 certify that the surrounding two thousand rows still discriminate; it is not
 where your own slice's defects should surface.
 
+### An instrument that measures the repo must be killable by the corpus (D465)
+
+`scripts/**` sits outside the vitest globs and outside `tsc -b`'s references, so
+a committed measurement there is checked by **nothing**: neither `bun run check`
+nor a full whole-corpus sweep can tell a correct classifier from a plausible one.
+Its only guarantee is that its author read it.
+
+D465 changed such a file — repairing a span probe whose blind spot had hidden
+five residue rows — and shipped `scripts/residue-census-gate.ts` beside it, a
+`killedByCommand` killer (D212's precedent). Three properties make it worth
+having:
+
+- it compares the pinned literals **read out of the suite's source**, so the gate
+  holds no number of its own and cannot drift alongside the thing it checks;
+- it pins the **blind spot that remains**, not only the one that was fixed;
+- it totals a population (32,154 spans), so a silent narrowing shows up as a
+  count rather than as an absence.
+
+Five mutant rows die through it, which is the point: **the instrument is now as
+falsifiable as the engine it reports on.** When you commit a measurement, commit
+the thing that can kill it — otherwise the next slice inherits a number nobody
+can contradict, which this run has already seen survive four days and 237
+decisions in two separate cases.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
