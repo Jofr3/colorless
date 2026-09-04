@@ -3479,6 +3479,25 @@ the thing that can kill it — otherwise the next slice inherits a number nobody
 can contradict, which this run has already seen survive four days and 237
 decisions in two separate cases.
 
+### A declared survivor's REASON rots like a count (D466)
+
+A declared survivor carries a verdict and a reason. The sweep re-checks the
+verdict every run; **nothing ever re-checks the reason.** So a row can go on
+surviving for a reason that quietly stopped being true, and that state is
+indistinguishable from surviving for the right reason until someone re-derives
+it.
+
+D466 edited an exact-key map that a declared survivor's reason quantifies over —
+the row sits **four lines** from an edited hunk. Ruling it out key by key kept the
+`+0` honest, and in the process found the reason's arithmetic **already wrong two
+slices earlier**: it claimed three exact keys where there are seven.
+
+**So when a slice edits the structure a declared survivor's reason quantifies
+over, re-derive the reason and not only the verdict.** The cheap majority can
+still be dismissed by file — D466 dismissed nine that way in seconds and checked
+twenty-three individually — but the whole value of the exercise sits in the rows
+that cannot be, and those are exactly the ones a file-level argument hides.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
