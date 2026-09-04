@@ -3296,6 +3296,29 @@ Two requirements make such an instrument trustworthy, both learned the hard way:
   at three mechanisms by an earlier slice, and two rows' readable half is a rider
   while the head is unbuilt. Say *which half* survived.
 
+### A patch script must assert its own file's SIZE after writing (D462)
+
+D459 added `try/finally` to throwaway scripts that patch a source file, after one
+crashed before its restore line and a later script adopted the mutated file as
+its baseline. D462 found the other half: a `String.replace(find, replacementString)`
+where the pattern ended `\.$` before a backtick. **`$` is special in a
+replacement string** — `` $` `` inserts everything *before* the match — so the
+call spliced **19,000 lines of `effects.ts` into itself**.
+
+Nothing in the standing apparatus sees this. The whole-corpus sweep cannot;
+`precheck` cannot (the `find` still occurs once); none of the four pre-probe
+passes can. It was caught by a **line count** — 25,970 → 45,031 — and undone from
+the HEAD blob.
+
+So a script that writes a source file must, before it exits:
+
+- use a **function** replacement (`(m) => …`), which never interprets `$`; and
+- **assert the file's size or line count** against what it expected to change.
+
+Every instrument in this repo reads these files assuming they are source. A
+corrupted one is not a failed edit — it is a false baseline for everything that
+runs next.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
