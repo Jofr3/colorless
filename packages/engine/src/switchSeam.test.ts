@@ -758,8 +758,28 @@ describe("the width of `ownerPokemon`, measured by what it cannot say", () => {
     expect(wattrel.types).toEqual(["Lightning"]);
     expect(matchesFilter(wattrel, { kind: "ownerPokemon", owner: "{L}" })).toBe(false);
     expect(matchesFilter(wattrel, { kind: "ownerPokemon", owner: "Lightning" })).toBe(false);
-    // The DERIVER refuses the sentence outright, so nothing half-builds it.
-    expect(deriveAttackEffect(VOLT_SWITCH)).toBeNull();
+    // 🆕🆕 **D468 RE-POINTED THE NEXT LINE RATHER THAN DELETING IT**, and the two
+    // rules that decide how are worth naming at the site.
+    //
+    // It used to read `expect(deriveAttackEffect(VOLT_SWITCH)).toBeNull()` — a
+    // `toBeNull` on a sentence the catalog PRINTS, which D449 calls a liability
+    // precisely because it goes red the day somebody builds it. D468 built it
+    // (`ATTACK_SELF_SWITCH_TYPED`, `typedSelfSwitch.test.ts`), and this is that day.
+    //
+    // ⚠️ **THE REPLACEMENT IS NOT `.not.toBeNull()`.** That would be TRUE under this
+    // build and equally true under a build that pointed `ownerPokemon` at "{L}" —
+    // D438's polarity rule, and the exact move that disarmed D368's tripwire and
+    // produced this run's only GAP. What this rung was ever really claiming is
+    // DISJOINTNESS: *the energy type is a different axis from the owner prefix*. So
+    // it is re-pointed onto the derived VALUE, which still reddens on that defect
+    // and cannot go green by accident.
+    expect(deriveAttackEffect(VOLT_SWITCH)).toEqual([
+      { op: "switchActive", targetType: "Lightning" },
+    ]);
+    // …and the field this file is about is still ABSENT from that program, which is
+    // the half that carries the original claim: an `ownerPokemon` build would have
+    // put "{L}" (or "Lightning") in this slot.
+    expect(deriveAttackEffect(VOLT_SWITCH)?.[0]).not.toHaveProperty("ownerPokemon");
     expect(programFor("sv07-053")?.attack).toBeUndefined();
   });
 

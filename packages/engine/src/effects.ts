@@ -5882,6 +5882,21 @@ export type EffectOp =
       ENERGY-TYPE subgroup, on the attack surface, which `ownerPokemon` must
       refuse rather than approximate (asserted in `switchSeam.test.ts`).
 
+      🆕🆕 **D468 BUILT THAT ATTACK-SURFACE PRINTING, AND THIS PARAGRAPH STILL
+      HOLDS WORD FOR WORD — WHICH IS THE POINT OF KEEPING IT.** `ownerPokemon`
+      still cannot say `{L}` and still must not try; what changed is that the
+      OTHER field can and now does. `ATTACK_SELF_SWITCH_TYPED` (this file) reads
+      Vikavolt's sentence into `targetType`, so the row is served by D273's rider
+      rather than by this one, and `switchSeam.test.ts` §4's rung is RE-POINTED
+      onto the derived VALUE rather than deleted (D449: a `toBeNull` on a sentence
+      the catalog PRINTS is a liability, and its replacement is an INEQUALITY of
+      programs, never a `.not.toBeNull()` — D438).
+      ⚠️ **THE COST OF THE NOTE BEING PHRASED AS A REFUSAL IS WORTH RECORDING**
+      (D457): `docs/workstreams/simulator.md`'s work-order table carried this row
+      as ⏹️ REFUSED for the whole of D273's life, priced against the field that
+      REFUSED it instead of the field that would SERVE it — and the serving field
+      was named three paragraphs down, in this same block, the entire time.
+
       `recordAs` files the uid of the Pokémon that ACTUALLY BECAME ACTIVE, and
       files `[]` when the switch did not happen — which is exactly what the
       printed *"If you do"* asks, so `recordGate` needs no arm. The empty filing
@@ -17425,6 +17440,61 @@ const ATTACK_FLIP_SELF_SWITCH = new RegExp(
     not the anchor" measured that dropping the `^` does NOT reach this sentence and
     dropping the CAPITAL does, which is why the two mutants are not redundant. */
 const ATTACK_MAY_SELF_SWITCH = new RegExp(`^You may switch ${SELF_SWITCH_CLAUSE}$`);
+/** 🆕🆕 **D468 — THE SELF-SWITCH SENTENCE NARROWED BY A PRINTED BRACE TYPE CODE.**
+    Vikavolt `sv07-053` "Volt Switch" ({L}{C}, 70): *"Switch this Pokémon with 1
+    of your Benched {L} Pokémon."* — `censusAttackCorpus.ts` **file line 499**,
+    **1 Standard-legal printing** — and the sentence this op's OWN doc block has
+    named as its refused second axis since D206: *"A SECOND NARROWING AXIS EXISTS
+    AND THIS FIELD IS NOT IT … an ENERGY-TYPE subgroup, which `ownerPokemon` must
+    refuse rather than approximate."*
+
+    🛑 **THE FIELD IS NOT NEW AND NEITHER IS THE NARROWING.** D273 built
+    `switchActive.targetType?: PokemonType` for the ABILITY surface (Pecharunt ex,
+    5 legal printings), `switchBenchNarrowing` (interpreter.ts) already filters the
+    Bench end through `matchesFilter`'s `typedPokemon`, and `switchTargetNoun`
+    already spells the type into the prompt caption. **The whole cost of this
+    printing is this anchor and the arm below it** — which is why it is built here
+    rather than priced as a rider: the op MEANS something at runtime already, and
+    a reader that emitted `targetType` into a field nothing narrowed would be the
+    parses-but-never-narrows build conventions.md forbids.
+
+    ⚠️ **A SEPARATE WHOLE-STRING ANCHOR AND NOT A WIDENING OF `SELF_SWITCH_CLAUSE`.**
+    That constant is spelled by FIVE anchors (`ATTACK_SELF_SWITCH`,
+    `ATTACK_FLIP_SELF_SWITCH`, `ATTACK_MAY_SELF_SWITCH` and the two compounds at
+    `ATTACK_SELF_SWITCH_THEN_OPPONENT_SWITCH_OUT` /
+    `ATTACK_SELF_SWITCH_THEN_HAND_ATTACH`), so an in-place `(?:\{([A-Z])\} )?`
+    group would put an OPTIONAL capture into all five and rot every mutant row that
+    quotes them — D441's *a new anchor breaks no existing row, where an in-place
+    widening rots every mutant that quotes the regex*, avoided rather than paid.
+    It would also be wrong on the merits: the four siblings' arms read no capture
+    at all, so the group's index would be dead in four of five places.
+
+    ⚠️ **THE DISJOINTNESS IS STRUCTURAL, SO THE ARM CARRIES NO GUARD AND ITS
+    PLACEMENT IS LEGIBILITY — AND D467 REQUIRES SAYING WHICH KIND IT IS.** Both
+    patterns are `^…$` over the whole sentence and they disagree on a MANDATORY
+    run of bytes (`Benched Pokémon.` against `Benched {X} Pokémon.`), so no string
+    can match both: a lookahead here would be a guard nothing could ever turn red,
+    which is D205/D208's vacuous guard by construction. Contrast D467's
+    `YOUR_BENCHED_NOUN_SCALE`, whose bare-token capture genuinely overlaps its
+    sibling and therefore had to be placed FIRST.
+
+    ⚠️ **THE CAPTURE IS `([A-Z])`, A SINGLE CHARACTER, AND AN UNREADABLE CODE STAYS
+    LOUD.** Every key of `POKEMON_TYPE_BY_CODE` is one uppercase letter; a `(.+)`
+    would let the anchor swallow a clause between the braces, the mistake this
+    file's anchors are audited for. A letter the map does not spell falls through
+    to `ATTACK_EFFECT_SKIPPED` rather than defaulting to a type — a refusal by
+    CONSTRUCTION rather than by a hand-kept exclusion list (D239's rule at
+    `PREVENT_DAMAGE_FROM_CLASS`).
+
+    ⚠️ **NO APOSTROPHE CLASS, MEASURED AND NOT INHERITED.** The sentence carries
+    neither U+0027 nor U+2019 — the subject is *this Pokémon* and *your* Bench —
+    so there is no character for a re-ingest to curl, and `clauseApostrophe.test.ts`'s
+    derivable-sentence census does NOT step for this slice. Asserted on the BYTES
+    in `typedSelfSwitch.test.ts` §1 rather than reasoned from the neighbours,
+    because D227 and D421 each got exactly this call wrong by reasoning from a
+    sibling's. */
+const ATTACK_SELF_SWITCH_TYPED =
+  /^Switch this Pokémon with 1 of your Benched \{([A-Z])\} Pokémon\.$/;
 // ⚠️⚠️ D227 — THE OPPONENT-CHOSEN SWITCH-OUT, AND ITS PARENTHETICAL IS PART OF THE
 // ANCHOR RATHER THAN NOISE TRIMMED OFF THE END. "(Your opponent chooses the new
 // Active Pokémon.)" is printed reminder text, but it is the ONLY thing that tells
@@ -22316,6 +22386,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     `validateChoice` accepted, on either seam.
   if (ATTACK_SELF_SWITCH.test(effect)) {
     return [{ op: "switchActive" }];
+  }
+  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt
+  // `sv07-053` "Volt Switch", 1 legal). STRUCTURALLY disjoint from the bare arm
+  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one
+  // string — so this arm needs no lookahead and its position is legibility, which
+  // D467 requires stating rather than leaving to the reader. The narrowing itself
+  // is D273's shipped `targetType`, read by `switchBenchNarrowing` and spelled by
+  // `switchTargetNoun`; only the ATTACK-surface reader was missing.
+  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);
+  if (typedSwitch !== null) {
+    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? ""];
+    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:
+    // dropping the rider would silently offer the WHOLE Bench, a superset the
+    // card does not print, and every board assertion would stay green (D461).
+    if (targetType !== undefined) return [{ op: "switchActive", targetType }];
   }
   if (ATTACK_FLIP_SELF_SWITCH.test(effect)) {
     return [

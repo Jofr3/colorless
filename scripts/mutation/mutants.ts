@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.366.0";',
+    find: 'export const engineVersion = "0.367.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -24197,5 +24197,64 @@ export const MUTANTS: Mutant[] = [
     find: "  [\"Charjabug\", { kind: \"byName\", name: \"Charjabug\" }],",
     replace: "  [\"Charjabug\", { kind: \"byName\", name: \"Grubbin\" }],",
     expectKilledBy: ["packages/engine/src/benchNounScaling.test.ts", "packages/engine/src/bodiesInPlayScaling.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-anchor-loses-its-caret",
+    decision: "D468",
+    what: "🛑 THE `^` GOES, so the anchor claims any sentence ENDING in the printed clause. Real shape: every compound in this family puts a whole mechanic in front of the switch, so a build without the caret reads *\"Draw a card. Switch this Pokémon with 1 of your Benched {L} Pokémon.\"* as the switch alone and SILENTLY THROWS THE DRAW AWAY. `SELF_SWITCH_CLAUSE`'s own doc block names this as the reason the four sibling anchors are whole-string and case-committed. §2's refusal loop kills it.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_SELF_SWITCH_TYPED =\n  /^Switch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\.$/;",
+    replace: "const ATTACK_SELF_SWITCH_TYPED =\n  /Switch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-anchor-loses-its-dollar",
+    decision: "D468",
+    what: "🛑 THE `\\.$` GOES — and D464's rule is why this row is worth writing SEPARATELY from its caret twin. Once a sentence DERIVES, its `$`-end near-miss no longer stays on the LOUD path: `splitAttackTrailingClause` sees a claimed HEAD and a claimed TAIL and composes them, so *\"⟨the sentence⟩ Draw a card.\"* is a TWO-op program under the real build and a ONE-op program under this mutant — the draw silently dropped. The killing rung asserts the SPLIT (§2's `splitAttackTrailingClause` pair), because a `toBeNull` on that compound would be RED at HEAD.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_SELF_SWITCH_TYPED =\n  /^Switch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\.$/;",
+    replace: "const ATTACK_SELF_SWITCH_TYPED =\n  /^Switch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-anchor-folds-the-case",
+    decision: "D468",
+    what: "🛑 THE VERB'S CASE IS FOLDED (`^Switch` → `^[Ss]witch`), the exact mistake `SELF_SWITCH_CLAUSE`'s doc block forbids: two of the family's five spellings print a LOWERCASE \"switch\" mid-sentence (after *\"If heads,\"* and after *\"If you do,\"*), so an `[Ss]` lets a clause that merely BEGINS mid-string derive as a whole-string match. A real author's edit — it reads as tolerance and it is a hole. §2's refusal loop drives the lowercase string.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_SELF_SWITCH_TYPED =\n  /^Switch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\.$/;",
+    replace: "const ATTACK_SELF_SWITCH_TYPED =\n  /^[Ss]witch this Pokémon with 1 of your Benched \\{([A-Z])\\} Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-arm-drops-the-printed-narrowing",
+    decision: "D468",
+    what: "🛑🛑 THE ROW THIS SLICE EXISTS FOR: the arm emits the BARE sibling's program verbatim — a neighbouring arm's REAL code, eleven lines up — so the printed `{L}` is parsed and thrown away. ⚠️ THE DEFECT IS QUIET IN THE DANGEROUS DIRECTION (D461): dropping a narrowing yields a SUPERSET, so the engine offers the WHOLE Bench, does MORE than the card says, emits more log rows and never fewer, and fires no `ATTACK_EFFECT_SKIPPED`. ⚠️ **THE KILLER SET IS MEASURED, NOT ASSERTED** (D440's attribution control, D464's \"ask which assertion caught it\"): the mutation was applied by hand and each candidate run ALONE. FOUR independent killers — §2's derived-VALUE rung (3 failed), §3's parked candidate list (2 failed), §4's ZERO-MATCH board (3 failed, where the real build ends silently on a four-body Bench and this one parks a prompt and swaps the Active) and `switchSeam.test.ts`'s re-pointed rung (1 failed). 🛑 **AND THE MEASUREMENT CORRECTED THE FIRST DRAFT OF THIS SENTENCE**, which claimed §3 stayed green: §3 reads the PROMPT, not the end state, so it sees the widened candidate list immediately. The end-state half of the claim is the one that holds — §3's promotion rung and the §8.5 damage assertions pass under both builds — and it is §4 that carries it.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];",
+    replace: "    if (targetType !== undefined) return [{ op: \"switchActive\" }];",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts", "packages/engine/src/switchSeam.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-arm-defaults-an-unreadable-code",
+    decision: "D468",
+    what: "🛑 THE VOCABULARY GUARD DEFAULTS INSTEAD OF STAYING LOUD. An unresolvable brace code becomes Colorless, so a constructed *\"…Benched {Q} Pokémon.\"* derives to a narrowing no card prints. This is the failure `PREVENT_DAMAGE_FROM_CLASS`'s block calls a refusal by CONSTRUCTION rather than by a hand-kept exclusion list (D239). ⚠️ AND IT IS THE OBSERVABLE DIRECTION (D442): the arm cannot ADMIT a code the map refuses in any way a board could see — an unmatched anchor already yields the same `null` — so DEFAULTING is the only half worth a row. §2's unreadable-code rung kills it.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];",
+    replace: "    return [{ op: \"switchActive\", targetType: targetType ?? (\"Colorless\" as const) }];",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts"],
+  },
+  {
+    id: "D468-typed-switch-arm-moves-behind-the-bare-one",
+    decision: "D468",
+    what: "C — THE TYPED ARM IS MOVED BEHIND THE BARE ONE. Written to test the placement claim in `ATTACK_SELF_SWITCH_TYPED`'s block: that the ORDER is legibility HERE because the disjointness is STRUCTURAL rather than guarded. Paired with `D468-typed-switch-arm-drops-the-printed-narrowing` (KILLED), the two rows are the two halves of one claim — the ORDER is legibility and the RIDER is behaviour.",
+    survives: {
+      kind: "equivalent",
+      reason:
+        "The two anchors are STRUCTURALLY disjoint, so either order computes the identical function and no string can tell them apart: both are `^…$` over the whole sentence and they disagree on a MANDATORY run of bytes — `ATTACK_SELF_SWITCH` spells the literal `Benched Pokémon\\.` and `ATTACK_SELF_SWITCH_TYPED` demands `Benched \\{([A-Z])\\} Pokémon\\.` at the same position — and a string cannot both have and not have `{X} ` there. ⚠️ THE DECLARATION IS PREFERRED OVER DELETING THE ROW FOR D427's REASON, AND ITS TRIGGER IS THE EDIT A SUCCESSOR IS ACTUALLY LIKELY TO MAKE: the moment either pattern's `{X}` group becomes OPTIONAL — the `(?:\\{([A-Z])\\} )?` widening this slice deliberately refused, because it would put a dead capture into all five spellings of `SELF_SWITCH_CLAUSE` and rot every mutant row that quotes them (D441) — the two overlap, this mutation becomes observable and the row reports STALE-SURVIVOR. 🛑 IT IS ALSO THE HALF THAT MAKES D467's RULE CHECKABLE HERE: D467 earned *a disjointness guard is only killable where the pattern that needs it runs FIRST*, and this pair is the OTHER case that rule distinguishes — structural disjointness, so there is no guard to be vacuous and the placement is legibility. A slice that copied D467's placement rule without asking WHICH mechanism supplied the disjointness would have moved this arm for no reason.",
+    },
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: \"switchActive\" }];\n  }\n  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` \"Volt Switch\", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273's shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? \"\"];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];\n  }",
+    replace: "  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` \"Volt Switch\", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273's shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? \"\"];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];\n  }\n  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: \"switchActive\" }];\n  }",
+    expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts", "packages/engine/src/optionalSelfSwitch.test.ts"],
   },
 ];

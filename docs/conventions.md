@@ -3520,6 +3520,59 @@ ahead of what it narrows — that is the only order in which the guard is testab
 at all. And when a guard-deletion row survives, check the order before writing
 `equivalent`: a vacuous guard and a redundant one produce the same verdict.
 
+### A one-token blocker is one token WIDE — it does not mean the token is a column
+
+The residue classifier reports the smallest edit that reaches a built string. When
+that edit is a single word, it is tempting to read "one token from buildable". D468
+is the case that shows the reading is unsound: `Ancient` and `Future` were the
+largest single token in the residue (12 sentences / 17 printings) and reachable in
+one substitution — and the buildable subset was **empty**, because `cardSchema` has
+21 keys and none of them classifies the banner. Six of the seven one-token edits
+*delete or replace the class word and derive with the class gone*, which measures
+the sentence's shape without the blocker rather than the blocker's cost.
+
+**Before writing a brief around a census row, open the schema and ask which column
+the printed adjective reads.** `{L}` is `Card.types` and cost one anchor and one
+arm. `Ancient` is in no column at all, and building it would have shipped a filter
+that counts 0 on every board forever while `BUILT.attack` stepped for it — strictly
+worse than leaving the sentence unbuilt. The census picks a TOKEN, not a SLICE.
+
+### A refusal re-proposed three times is one `expect` away from self-checking
+
+The Ancient/Future family had been re-derived from source and refused at least three
+times, each time costing a full investigation, because the refusal lived only in
+prose — a doc block, a conventions entry, a decisions row. Prose does not fail.
+
+D468 wrote it as a test instead: a section that pins the schema key set read **off
+`cardSchema.shape`**, plus the blocked population and the claim that no reader,
+splitter or registry row takes any of it. **The rung goes red the day ingest lands
+the column, and names it.** When a refusal survives its third re-litigation, stop
+writing the paragraph better and spend the same effort on the assertion.
+
+Two corollaries D468 also paid for:
+- **A refusal can be load-bearing.** One of the blocked sentences was already
+  fielded as an attribution control *because* it was data-blocked. Building it
+  would have left that control green while it stopped testing anything. Before
+  building a sentence that has been refused before, grep the suites for it.
+- **Price a row against the field that would SERVE it, not the field that refused
+  it.** The work-order table had this row down as refused on `ownerPokemon` — while
+  `targetType`, which serves it exactly, was named three paragraphs down in the same
+  doc block. That is the second slice in a row to find a stale refusal of this shape.
+
+### A "just bump X" instruction owes the condition under which X is enough
+
+D468's work order told the builder to step the archive ratchet 137 → 138. The
+builder refused and was right: the ratchet counts `### Prior resume point (` blocks
+in `docs/progress.md`, there were 137, and the step only becomes true in the *same
+edit that demotes the resume point* — a ritual edit the slice does not perform.
+Following the instruction would have turned `bun run check` red for a reason
+unrelated to the slice's own work.
+
+**A counter that tracks an artefact must be stepped by whoever creates the artefact,
+never by whoever is merely nearby.** And when a brief hands down a mechanical bump,
+it owes the precondition; a builder who cannot see the precondition cannot tell a
+ratchet from a typo.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
