@@ -3432,6 +3432,29 @@ D463 moved `+2 / +2` and could use one number everywhere; D464 moved `+1 sentenc
 so a `resolved.length` chain takes `- 1` and a `units(resolved)` chain takes `- 2` — on the SAME
 LINE, twice, in three files. Read the head name, not the neighbouring term.
 
+### A slice that never sees a GAP has not proved its rows discriminate (D464)
+
+D464's first probe reported one GAP and it was **real**: the suite drove the
+ASCII apostrophe everywhere and the U+2019 fold nowhere, so an entire character
+class was executable by nothing. A rung closed it and the second probe returned
+12/12.
+
+That is the normal, healthy shape. A first probe that comes back clean has shown
+that the rows **compile and run**; it has not shown that the suite can tell the
+mutated build from the real one, because nothing forced the question.
+
+**So read a first-probe GAP as the instrument working, not as a setback** — and
+when a first probe is clean on rows you have just written, spend a moment asking
+which assertion would have caught each one, rather than treating the clean line
+as the finish.
+
+⚠️ And note where it was found: **the probe costs ~50 seconds, the whole-corpus
+sweep 2.4 hours.** Every defect D464 found — the GAP, a mutation whose `replace`
+changed a different character than its own description claimed, and a doc block
+naming the wrong byte — was found *before* the sweep began. The sweep's job is to
+certify that the surrounding two thousand rows still discriminate; it is not
+where your own slice's defects should surface.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
