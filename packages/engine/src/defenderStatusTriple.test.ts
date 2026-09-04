@@ -47,7 +47,19 @@ const OXFORD = "Your opponent's Active Pokémon is now Burned, Confused, and Poi
 
 /** Corpus FILE LINE 264 — a REAL legal printing (2) that NO reader claims, and the
     one printed NEAR MISS of the new anchor: it opens exactly like a coin-flipped
-    Oxford list and puts an OP where the second status word would go. */
+    Oxford list and puts an OP where the second status word would go.
+
+    🆕🆕 **D464 — BOTH HALVES OF THAT SENTENCE ARE NOW STALE, AND THE SECOND ONE WAS
+    NEVER TRUE.** It is no longer unclaimed: `FLIP_DEFENDER_STATUS_THEN_DISCARD` builds
+    it, into a `coinFlipGate` carrying the `applyStatus` AND the `discardEnergy`. And it
+    was never a near miss OF THIS ANCHOR — measured over all 640 rows,
+    `DEFENDER_STATUS_TRIPLE` claims exactly one row / 2 printings under every single-axis
+    loosening it has (any slot widened to `(.+)`, the `^` dropped, the `\.$` dropped), and
+    this string is in none of them: after *"is now Paralyzed"* the anchor demands a SECOND
+    comma this sentence never prints, and the `^Your opponent` prefix refuses the flip
+    clause besides. The anchor that really refused it was `FLIP_DEFENDER_NOW`, by its
+    `\.$`. The name is kept so the provenance is readable; the claims are corrected in
+    §2. */
 const COMMA_NEAR_MISS =
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.";
 
@@ -71,6 +83,17 @@ const COLLISIONS = [
     slot-disjoint words in an order NO card prints: it must be ADMITTED, so
     *"refuse every three-word list"* cannot pass this suite. */
 const UNPRINTED_BUT_COHERENT = "Your opponent's Active Pokémon is now Poisoned, Confused, and Burned.";
+
+/** 🆕🆕 D464 — corpus FILE LINES 685, 686 and 690, one printing each. The set
+    `DEFENDER_NOW`'s `\.$` MEASURABLY refuses: strict it claims 4 rows / 74 printings,
+    and with that one byte gone it claims 16 / 96 — these three among the twelve it
+    gains, each with a second clause the engine cannot run. They carry §5's attribution
+    control now that `COMMA_NEAR_MISS` derives. */
+const DOT_ANCHOR_TRIO = [
+  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+  "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
+  "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
+] as const;
 
 const SEED = 11;
 
@@ -226,13 +249,63 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     );
   });
 
-  it("🛑 the printed NEAR MISS stays on the loud path, and the vocabulary is why", () => {
-    // Corpus line 264 is a REAL printing, not a constructed string. It must derive to
-    // `null` through every one of the four `is now` anchors.
-    expect(deriveAttackEffect(COMMA_NEAR_MISS)).toBeNull();
-    expect(resolvedByAnyReader(COMMA_NEAR_MISS)).toBe(false);
-    // …and no splitter reaches it either, so "unread" is the whole answer.
+  it("🆕🆕 D464 — the printed NEAR MISS is BUILT now, and this anchor is untouched by it", () => {
+    // 🛑 RE-POINTED, NOT DELETED (D418). The old rung asserted three nullities on corpus
+    // line 264 and titled them *"the vocabulary is why"*. D464 built the sentence, so the
+    // nullities had to go — and re-deriving the reason showed the title was false besides:
+    // this anchor cannot reach line 264 under ANY single-axis loosening (§2's next rung
+    // measures that), so its capture groups were never what refused it.
+    //
+    // What replaces the nullities is STRICTLY STRONGER than they were (D449's rule): the
+    // sentence must derive to the TWO-op program in PRINTED ORDER. That goes red under the
+    // drift the old rung caught — an anchor loosening that claims line 264 and drops its
+    // Energy discard now yields a WRONG program instead of a null — and it also goes red
+    // under a drift that lands the ops in the wrong order, which `toBeNull` never could.
+    expect(deriveAttackEffect(COMMA_NEAR_MISS)).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "applyStatus", target: "defender", status: "paralyzed" },
+          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+        ],
+      },
+    ]);
+    expect(resolvedByAnyReader(COMMA_NEAR_MISS)).toBe(true);
+    // …and it is still the DERIVER that answers, not a splitter — the half of the old
+    // rung that survives the inversion unchanged.
     expect(splitAttackTrailingClause(COMMA_NEAR_MISS)).toBeNull();
+  });
+
+  it("🛑 D462's stated reason was wrong, and this is the regex that says so", () => {
+    // 🛑 D462's doc block: *"It is refused by the SECOND capture group and by nothing
+    // else: drop `(${STATUS_WORDS})` to `(.+)` and this anchor eats a sentence whose
+    // Energy discard it would silently throw away."* MEASURED over the POPULATION, this
+    // anchor claims ONE row / 2 printings under every loosening available to it, and line
+    // 264 is in none of them. A doc block that names the byte doing a refusal is one regex
+    // from being checked; this is that regex, kept so the claim cannot rot back.
+    const W = "(?:Asleep|Burned|Confused|Paralyzed|Poisoned)";
+    const rows = legalAttackCorpus();
+    const hit = (re: RegExp) => rows.filter(([, s]) => re.test(s));
+    for (const re of [
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (${W})\\.$`),
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (.+), (${W}), and (${W})\\.$`),
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (.+), and (${W})\\.$`),
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (.+)\\.$`),
+      new RegExp(`Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (${W})\\.$`),
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (${W})`),
+    ]) {
+      expect(hit(re).map(([, s]) => s)).toEqual([OXFORD]);
+      expect(re.test(COMMA_NEAR_MISS)).toBe(false);
+    }
+    // The anchor that DID refuse it, and the size of the drift it holds back: 2 rows / 29
+    // printings strict, 6 / 35 with the `\.$` gone — line 264 among the four gained.
+    const flipStrict = new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W})\\.$`);
+    const flipDrift = new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W})`);
+    expect([hit(flipStrict).length, hit(flipStrict).reduce((a, [n]) => a + n, 0)]).toEqual([2, 29]);
+    expect([hit(flipDrift).length, hit(flipDrift).reduce((a, [n]) => a + n, 0)]).toEqual([6, 35]);
+    expect(flipStrict.test(COMMA_NEAR_MISS)).toBe(false);
+    expect(flipDrift.test(COMMA_NEAR_MISS)).toBe(true);
   });
 
   it("🛑 the FLIPPED Oxford list is refused — there is no flip arm, by choice", () => {
@@ -414,12 +487,23 @@ describe("§5 — the printed text stops being flagged, and the loud path still 
     }
   });
 
-  it("🛑 index 2's REAL printing is still flagged — the attribution control (D214)", () => {
-    // Without this, "no skip marker" could be true because the marker stopped being
-    // emitted at all. Corpus line 264 is a real legal printing this slice deliberately
-    // did not claim, on the SAME body, and it must still be announced.
-    const skipped = find(swing(board(), 2).events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe(COMMA_NEAR_MISS);
+  it("🆕 D464 — index 2 stops being flagged too, because D464 built it", () => {
+    // The rung this replaces asserted index 2 was STILL skipped, as this suite's
+    // attribution control. D464 built corpus line 264, so the assertion inverts (D418) —
+    // and the control it provided is re-pointed one rung down rather than dropped.
+    expect(find(swing(board(), 2).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+  });
+
+  it("🛑 THE ATTRIBUTION CONTROL, RE-POINTED: three REAL printings are still flagged (D214)", () => {
+    // Without a control, "no skip marker" could be true because the marker stopped being
+    // emitted at all. These are corpus FILE LINES 685, 686 and 690 — real legal printings,
+    // one each, whose second clause is an unbuilt mechanic — and they are the set
+    // `DEFENDER_NOW`'s `\.$` measurably refuses, which is what the old control was
+    // believed to be and was not (see §2).
+    for (const text of DOT_ANCHOR_TRIO) {
+      const doctored = withEffect(board(), text);
+      expect(find(swing(doctored, 0).events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
+    }
   });
 
   it("…and a CONSTRUCTED colliding list is announced too — the refusal is loud", () => {
@@ -445,7 +529,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     // of site would be wrong at EVERY site (D451/D461's finding, paid here).
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([493, 1514]);
+    expect([resolved.length, units(resolved)]).toEqual([494, 1516]);  // 🆕🆕 D464 +1 sentence / +2 printings (THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY — `censusAttackCorpus.ts` **file line 264**, *"Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*, **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackEffect` arm 2d through ONE new anchor (`FLIP_DEFENDER_STATUS_THEN_DISCARD`) whose program is arm 2's `applyStatus` followed by `FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy` inside ONE `coinFlipGate`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2** — one file line carrying two legal printings, so a pass that copied one number into the other kind of site would be wrong at EVERY site (D463's agreed at 2 and 2, which is the trap in the other direction). RAW summand ALONE: no registry row, no gate split and no trailing split is involved, and the reader surface stands still at 13. ZERO new `EffectOp` members, op FIELDS, op VALUES or FIXTURE ids — `fix-oxford` index 2 ALREADY printed this sentence, as D462's loud control. 🛑 **`OPAQUE` MOVES FOR THE SECOND SLICE RUNNING** (87/125 → 86/123), and this row sat in it: no deletion and no substitution `residue-census.ts` can make reaches a built string, because the edit that would — deleting the trailing consequent — must take the sentence-final period with it.)
     // …and the step is attributable: remove THIS sentence from the resolved set and the
     // pair falls by exactly 1 and 2.
     // 🛑🛑 **D463 — THE SECOND LITERAL IS NO LONGER "THE PRE-SLICE PAIR", AND
@@ -457,7 +541,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     // sides are absolute pins re-derived from the corpus, not a tail computed off the head, so a
     // mutation that moved `resolved` without moving `withoutOxford` still reddens one of them.
     const withoutOxford = resolved.filter(([, s]) => s !== OXFORD);
-    expect([withoutOxford.length, units(withoutOxford)]).toEqual([492, 1512]);
+    expect([withoutOxford.length, units(withoutOxford)]).toEqual([493, 1514]);  // 🆕🆕 D464 +1 sentence / +2 printings (THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY — `censusAttackCorpus.ts` **file line 264**, *"Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*, **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackEffect` arm 2d through ONE new anchor (`FLIP_DEFENDER_STATUS_THEN_DISCARD`) whose program is arm 2's `applyStatus` followed by `FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy` inside ONE `coinFlipGate`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2** — one file line carrying two legal printings, so a pass that copied one number into the other kind of site would be wrong at EVERY site (D463's agreed at 2 and 2, which is the trap in the other direction). RAW summand ALONE: no registry row, no gate split and no trailing split is involved, and the reader surface stands still at 13. ZERO new `EffectOp` members, op FIELDS, op VALUES or FIXTURE ids — `fix-oxford` index 2 ALREADY printed this sentence, as D462's loud control. 🛑 **`OPAQUE` MOVES FOR THE SECOND SLICE RUNNING** (87/125 → 86/123), and this row sat in it: no deletion and no substitution `residue-census.ts` can make reaches a built string, because the edit that would — deleting the trailing consequent — must take the sentence-final period with it.)
   });
 
   it("the population itself did not move — 640 sentences / 1,732 printings", () => {
@@ -542,10 +626,10 @@ describe("§7 — purity and the structural answers", () => {
     }
   });
 
-  it("engineVersion is 0.362.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.363.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D462 — 0.360.0 → **0.361.0**. One printed sentence that derived to `null`
     // now derives to a program: an OBSERVABLE change to what the engine does with a
     // real catalog row, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.362.0");
+    expect(engineVersion).toBe("0.363.0");
   });
 });

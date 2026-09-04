@@ -75,23 +75,35 @@ const LEFT_LOUD = {
       narrow. */
   headsTails:
     "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.",
-  /** 2 printings, corpus FILE LINE 264. 🆕🆕 **RE-POINTED AT D462** — this slot held
-      the Oxford list *"…is now Burned, Confused, and Poisoned."* (2 printings), which
-      D462 CLAIMED through `DEFENDER_STATUS_TRIPLE`. Re-pointed rather than deleted
-      (D418), and onto the row of the same legal column that keeps this list's whole
-      job: a REAL printing whose extra mechanic is unbuilt, in the same family, that
-      must still take the loud path.
+  /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
+      VERBATIM BELOW BECAUSE IT WAS WRONG IN AN INSTRUCTIVE WAY (D178).**
 
-      ⚠️ **AND IT IS THE STRONGEST MEMBER THIS SLOT HAS EVER HELD, BECAUSE IT IS THE
-      ONE NEAR MISS OF THE NEW ANCHOR.** *"Flip a coin. If heads, your opponent's
-      Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*
-      opens EXACTLY like a coin-flipped Oxford list and then puts an OP where the
-      second status word would go. `FLIP_DEFENDER_NOW` refuses it because a COMMA sits
-      where its `\.$` demands a period; the pair and triple anchors refuse it because
-      `(${STATUS_WORDS})` admits no comma and no verb. Loosen any one of those three
-      and this sentence is claimed with its Energy discard silently thrown away. */
-  paralyzedComma:
-    "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.",
+      D462 wrote, of corpus FILE LINE 264: *"`FLIP_DEFENDER_NOW` refuses it because a
+      COMMA sits where its `\.$` demands a period; the pair and triple anchors refuse it
+      because `(${STATUS_WORDS})` admits no comma and no verb. **Loosen any one of those
+      three and this sentence is claimed with its Energy discard silently thrown away.**"*
+
+      🛑 **TWO OF THE THREE ARE FALSE, AND ONE REGEX EACH DISPROVES THEM.** MEASURED over
+      the whole 640-row column: loosening `FLIP_DEFENDER_STATUS_PAIR`'s second slot to
+      `(.+)`, or dropping its `\.$`, claims line 263 and NOT line 264; and
+      `DEFENDER_STATUS_TRIPLE` claims exactly one row under EVERY single-axis loosening it
+      has, line 264 in none of them — it demands a SECOND comma that sentence never prints,
+      and its `^Your opponent` prefix refuses the flip clause besides. **The
+      `FLIP_DEFENDER_NOW` half was right**: dropping that `\.$` takes it from 2 rows / 29
+      printings to 6 / 35, line 264 among the four gained.
+
+      D464 then BUILT line 264 (`FLIP_DEFENDER_STATUS_THEN_DISCARD`), so this slot had to
+      move regardless — and it moves onto the set the same probe NAMES rather than onto
+      another guess. These are the THREE real printings that `DEFENDER_NOW`'s own `\.$`
+      refuses: corpus FILE LINES 685, 686 and 690, one printing each, every one a real
+      print whose second clause is an unbuilt mechanic. Drop that one byte and all three
+      are claimed with that clause silently thrown away — which is exactly the job this
+      slot has held since D424, pointed for the first time at an anchor that has it. */
+  dotAnchorTrio: [
+    "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+    "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
+    "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
+  ],
 } as const;
 
 /** 🛑 THE COLLISION SENTENCES, AND THEY ARE CONSTRUCTED — SAID OUT LOUD. No card
@@ -301,7 +313,9 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     expect(rows.get(FLIP_PARALYZE_POISON)).toBe(1);
     expect(rows.get(CONFUSE_POISON_SWITCH)).toBe(1);
     expect(rows.get(LEFT_LOUD.headsTails)).toBe(2);
-    expect(rows.get(LEFT_LOUD.paralyzedComma)).toBe(2);
+    // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
+    // each (FILE LINES 685, 686, 690), and the transcription is asserted the same way.
+    for (const text of LEFT_LOUD.dotAnchorTrio) expect(rows.get(text)).toBe(1);
     // The apostrophe byte, asserted rather than eyeballed.
     for (const s of [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON]) {
       expect(s.includes("opponent's")).toBe(true);
@@ -415,13 +429,51 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     expect(hits.reduce((sum, [units]) => sum + units, 0)).toBe(5);
   });
 
-  it("🛑 the three REAL near misses stay on the loud path, and `\\.$` is why", () => {
+  it("🛑 the five REAL near misses stay on the loud path, and `\\.$` is why", () => {
     // Each is a printing in the same legal column, not a constructed string.
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
-    expect(deriveAttackEffect(LEFT_LOUD.paralyzedComma)).toBeNull();
+    for (const text of LEFT_LOUD.dotAnchorTrio) expect(deriveAttackEffect(text)).toBeNull();
     // The compound is refused WHOLE — deliberately, so the SPLITTER claims it (§5)
     // rather than a hand-written anchor shadowing the composition path.
     expect(deriveAttackEffect(CONFUSE_POISON_SWITCH)).toBeNull();
+  });
+
+  it("🆕🆕 D464 — and the byte is MEASURED: `DEFENDER_NOW` minus its `\\.$` claims all three", () => {
+    // 🛑 THE RUNG D462's PROSE NEEDED AND DID NOT HAVE. A doc block that names the byte
+    // refusing a sentence is one regex from being checked, and D462's named the wrong
+    // anchor for two of its three claims. This drives the claim instead of asserting it:
+    // the strict anchor takes 4 rows / 74 printings, and dropping ONE byte takes it to 16
+    // rows / 96 — the trio above among the twelve it gains, each with a second clause the
+    // engine cannot run. Both numbers come off the POPULATION, not off a specimen.
+    const W = "(?:Asleep|Burned|Confused|Paralyzed|Poisoned)";
+    const strict = new RegExp(`^Your opponent['’]s Active Pokémon is now (${W})\\.$`);
+    const drifted = new RegExp(`^Your opponent['’]s Active Pokémon is now (${W})`);
+    const rows = legalAttackCorpus();
+    const hit = (re: RegExp) => rows.filter(([, s]) => re.test(s));
+    expect([hit(strict).length, hit(strict).reduce((a, [n]) => a + n, 0)]).toEqual([4, 74]);
+    expect([hit(drifted).length, hit(drifted).reduce((a, [n]) => a + n, 0)]).toEqual([16, 96]);
+    for (const text of LEFT_LOUD.dotAnchorTrio) {
+      expect(strict.test(text)).toBe(false);
+      expect(drifted.test(text)).toBe(true);
+    }
+    // …and the row this slot used to hold is NOT reachable from the list anchors at all,
+    // under any single-axis loosening — which is the half of D462's reason that was false.
+    const CLAIMED_AT_D464 =
+      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.";
+    for (const re of [
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (.+), and (${W})\\.$`),
+      new RegExp(`^Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (.+)\\.$`),
+      new RegExp(`Your opponent['’]s Active Pokémon is now (${W}), (${W}), and (${W})\\.$`),
+      new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W}) and (.+)\\.$`),
+    ]) {
+      expect(re.test(CLAIMED_AT_D464)).toBe(false);
+    }
+    // …while the one anchor D462 named correctly DOES reach it once its `\.$` is gone.
+    expect(
+      new RegExp(`^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${W})`).test(
+        CLAIMED_AT_D464,
+      ),
+    ).toBe(true);
   });
 
   it("the single-status arms are untouched — the four anchors are disjoint", () => {
@@ -803,12 +855,14 @@ describe("§7 — the printed text stops being flagged, on every carrier", () =>
     expect(find(swing(flipBoard("ekans", false), "ekans").events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
   });
 
-  it("the two sentences this slice LEFT are still flagged — the loud path still works", () => {
+  it("the four sentences this slice LEFT are still flagged — the loud path still works", () => {
     // 🛑 THE ATTRIBUTION CONTROL (D214). Without it, "no skip marker" could be true
     // because the marker stopped being emitted at all. These are real printings the
     // slice deliberately did not claim, and they must still be announced.
+    // 🆕 D464 — `paralyzedComma` was BUILT and is replaced by `dotAnchorTrio`; the
+    // control keeps its job and gains two members rather than losing one (D418).
     const b = board("ninetales", "fix-titan");
-    for (const text of [LEFT_LOUD.headsTails, LEFT_LOUD.paralyzedComma]) {
+    for (const text of [LEFT_LOUD.headsTails, ...LEFT_LOUD.dotAnchorTrio]) {
       const doctored = withEffect(b, "fix-ninetales", text);
       expect(find(swing(doctored, "ninetales").events, "ATTACK_EFFECT_SKIPPED")?.effect).toBe(text);
     }
@@ -873,6 +927,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.362.0");
+    expect(engineVersion).toBe("0.363.0");
   });
 });

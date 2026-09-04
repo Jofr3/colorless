@@ -849,7 +849,25 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // unbuilt extra, and the near miss BOTH the flip anchor and the two list anchors
       // refuse: a comma sits where `FLIP_DEFENDER_NOW`'s `\.$` wants a period, and
       // `(${STATUS_WORDS})` admits neither the comma nor the verb that follows it.
-      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon.", // corpus line 264 — an OP where the second status word would go
+      //
+      // 🆕🆕 **D464 — RE-POINTED A SECOND TIME, AND THE REASON IN THE PARAGRAPH ABOVE WAS
+      // TWO-THIRDS WRONG.** `FLIP_DEFENDER_STATUS_THEN_DISCARD` now BUILDS corpus line 264,
+      // so the entry had to move again — and re-deriving it showed that only the
+      // `FLIP_DEFENDER_NOW` half of D462's reason was ever true. MEASURED over all 640
+      // rows: neither list anchor can reach line 264 under ANY single-axis loosening
+      // (`DEFENDER_STATUS_TRIPLE` demands a SECOND comma that line never prints, and its
+      // `^Your opponent` prefix refuses the flip clause besides). Dropping
+      // `FLIP_DEFENDER_NOW`'s `\.$`, by contrast, took it from 2 rows / 29 printings to
+      // 6 / 35 — which is the drift this list exists to catch.
+      //
+      // So the slot is re-pointed onto the set that probe actually NAMES: the THREE real
+      // printings `DEFENDER_NOW`'s own `\.$` refuses, each a real print with an unbuilt
+      // extra, each 1 printing. Drop that `\.$` and all three are claimed with their
+      // second clause silently thrown away — the exact defect the deleted entry was
+      // believed to guard, now pointed at the anchor that has it.
+      "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.", // corpus FILE LINE 685 — `DEFENDER_NOW` minus its `\.$` claims it
+      "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.", // corpus FILE LINE 686 — same drift, same anchor
+      "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.", // corpus FILE LINE 690 — same drift, same anchor
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010
       "The Defending Pokémon is now Asleep.", // old-era phrasing
       "Flip a coin. If tails, your opponent's Active Pokémon is now Asleep.",

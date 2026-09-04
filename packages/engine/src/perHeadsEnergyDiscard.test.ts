@@ -645,11 +645,11 @@ describe("§6 — the census moves in exactly ONE summand", () => {
   it("🛑 the resolving corpus gains TWO sentences and TWO printings", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([493, 1514]);
+    expect([resolved.length, units(resolved)]).toEqual([494, 1516]);  // 🆕🆕 D464 +1 sentence / +2 printings (THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY — `censusAttackCorpus.ts` **file line 264**, *"Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*, **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackEffect` arm 2d through ONE new anchor (`FLIP_DEFENDER_STATUS_THEN_DISCARD`) whose program is arm 2's `applyStatus` followed by `FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy` inside ONE `coinFlipGate`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2** — one file line carrying two legal printings, so a pass that copied one number into the other kind of site would be wrong at EVERY site (D463's agreed at 2 and 2, which is the trap in the other direction). RAW summand ALONE: no registry row, no gate split and no trailing split is involved, and the reader surface stands still at 13. ZERO new `EffectOp` members, op FIELDS, op VALUES or FIXTURE ids — `fix-oxford` index 2 ALREADY printed this sentence, as D462's loud control. 🛑 **`OPAQUE` MOVES FOR THE SECOND SLICE RUNNING** (87/125 → 86/123), and this row sat in it: no deletion and no substitution `residue-census.ts` can make reaches a built string, because the edit that would — deleting the trailing consequent — must take the sentence-final period with it.)
     // …and the step is attributable: remove THESE TWO from the resolved set and the pair
     // falls by exactly 2 and 2, re-derived rather than remembered.
     const without = resolved.filter(([, s]) => s !== PRINTED_TWO && s !== UNTIL_TAILS);
-    expect([without.length, units(without)]).toEqual([491, 1512]);
+    expect([without.length, units(without)]).toEqual([492, 1514]);  // 🆕🆕 D464 +1 sentence / +2 printings (THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY — `censusAttackCorpus.ts` **file line 264**, *"Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*, **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackEffect` arm 2d through ONE new anchor (`FLIP_DEFENDER_STATUS_THEN_DISCARD`) whose program is arm 2's `applyStatus` followed by `FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy` inside ONE `coinFlipGate`. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 2** — one file line carrying two legal printings, so a pass that copied one number into the other kind of site would be wrong at EVERY site (D463's agreed at 2 and 2, which is the trap in the other direction). RAW summand ALONE: no registry row, no gate split and no trailing split is involved, and the reader surface stands still at 13. ZERO new `EffectOp` members, op FIELDS, op VALUES or FIXTURE ids — `fix-oxford` index 2 ALREADY printed this sentence, as D462's loud control. 🛑 **`OPAQUE` MOVES FOR THE SECOND SLICE RUNNING** (87/125 → 86/123), and this row sat in it: no deletion and no substitution `residue-census.ts` can make reaches a built string, because the edit that would — deleting the trailing consequent — must take the sentence-final period with it.)
   });
 
   it("the population itself did not move — 640 sentences / 1,732 printings", () => {
@@ -752,11 +752,11 @@ describe("§7 — purity and the structural answers", () => {
     expect(activeEnergy(truncated.state, "p2")).toHaveLength(2);
   });
 
-  it("engineVersion is 0.362.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.363.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D463 — 0.361.0 → **0.362.0**. Two printed sentences that derived to `null` now
     // derive to a program, and a fielded card (Krookodile sv01-117) that took no flip at
     // all now takes an unbounded sequence of them: an OBSERVABLE change to what the engine
     // does with real catalog rows, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.362.0");
+    expect(engineVersion).toBe("0.363.0");
   });
 });

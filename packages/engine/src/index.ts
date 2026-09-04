@@ -19226,6 +19226,65 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.362.0 → **0.363.0** (D464 — THE FLIP-GATED STATUS THAT ALSO
+    STRIPS AN ENERGY, `censusAttackCorpus.ts` FILE LINE 264: *"Flip a coin. If heads, your
+    opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*,
+    **1 sentence / 2 legal printings** that derived to `null` and now derives to ONE
+    `coinFlipGate` whose `then` is arm 2's `applyStatus` followed by
+    `FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy{from:"opponentActive",
+    filter:{kind:"anyEnergy"}}`. ONE new anchor (`FLIP_DEFENDER_STATUS_THEN_DISCARD`), ONE
+    new deriver arm, and NOTHING else: **ZERO new `EffectOp` members, op FIELDS, op VALUES,
+    readers (surface unmoved at 13), prompts, events, error codes, registry rows,
+    `FIXTURE_POOL` ids, `packages/schema` bytes or `redact.ts` bytes.**
+
+    🛑 **THE `MATCH_RECORD_VERSION` ARGUMENT IS THE SERIALIZED ALPHABET (D462/D463's shape),
+    AND REACHABILITY (D461's shape) IS AGAIN FALSE HERE** — `discardEnergy` PARKS on a
+    genuine choice, so `phase.cont` really is written and really is persisted. What is true
+    is narrower: every op in this program, every op FIELD and every op VALUE already ships,
+    and both already ship inside this exact gate (arm 2 authors the `applyStatus`, the
+    `FLIP_OPPONENT_ACTIVE_DISCARD` arm authors the `discardEnergy`). **No byte a v29 record
+    can hold after this slice that it could not hold before it.** ⚠️ AND THE PARK'S `rest`
+    IS EMPTY BY POSITION, not by luck — the discard is the LAST op of the only program this
+    reader returns — so the continuation this slice persists is `rest: []`, a shape the
+    record has held since M5. Driven over the SERIALIZED BYTES in three directions including
+    LOSS at `flipStatusEnergyDiscard.test.ts` §7. **`MATCH_RECORD_VERSION` STAYS 29.**
+
+    🛑 **THE FINDING IS THAT D462'S OWN DOC BLOCK NAMED THE WRONG BYTE, AND ONE REGEX
+    DISPROVES IT.** It wrote that line 264 *"is refused by the SECOND capture group and by
+    nothing else: drop `(${STATUS_WORDS})` to `(.+)` and this anchor eats a sentence whose
+    Energy discard it would silently throw away"*. MEASURED over all 640 rows,
+    `DEFENDER_STATUS_TRIPLE` claims exactly ONE row / 2 printings under EVERY single-axis
+    loosening it has — any slot widened to `(.+)`, the `^` dropped, the `\.$` dropped — and
+    line 264 is in none of them. The anchor demands a SECOND comma line 264 never prints.
+    What really refused it is `FLIP_DEFENDER_NOW`'s `\.$` (dropping that one takes it from 2
+    rows / 29 printings to **6 / 35**, line 264 among the gained). **A refusal that names the
+    byte doing the work is a claim about ONE anchor, and folding three anchors into one
+    reason gets two of them wrong.**
+
+    ⚠️ **THE BUMP IS OWED FOR BEHAVIOUR, AND THE NEGATIVE-CONTROL COST WAS MEASURED BEFORE IT
+    WAS PAID (D463's rule): the engine change ALONE reddened 22 assertions across 16 files,
+    of which FIVE in THREE files are the negative control** (`defenderStatusTriple.test.ts`
+    §2 and §5, `defenderStatusPair.test.ts` §2 and §7, `checkup.test.ts`'s refusal list) and
+    the other seventeen are the census tax. All five re-pointed, none deleted (D418), and
+    onto the set the same probe MEASURED: the three real printings `DEFENDER_NOW`'s `\.$`
+    actually does refuse.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT HEAD BY AN EXACT STRING COUNT: 50 LIVE sites / 41
+    assertions across 60 total occurrences of the literal, the remaining 10 being HISTORY
+    that must not move** (7 in `docs/`, one in this block's D463 paragraph, two in
+    `perHeadsEnergyDiscard.test.ts`). 40 `expect(engineVersion).toBe(…)` pins + 1
+    `expect(manifest.version).toBe(…)` (`legacyEnergy.test.ts`, which carries both) = 41
+    assertions; plus 6 `it(…)` TITLES that spell the version, `packages/engine/package.json`,
+    this declaration and D275's mutant `find`. **D464 AUTHORS THE 42nd ASSERTION**
+    (`flipStatusEnergyDiscard.test.ts` §8), so a successor inherits **42 assertions / 52 live
+    sites across 62 occurrences** — MEASURED at this head after the bump, not forecast: 41
+    `expect(engineVersion)` + 1 `expect(manifest.version)` = 42 assertions, plus **7** `it(…)`
+    titles (the new suite adds one), this declaration, `package.json` and D275's `find`; the
+    remaining 10 occurrences are PROSE that must not move (7 in `docs/`, this paragraph, and two
+    in the new suite's own header). D462's forecast of "40 assertions / 47 live sites" was one slice stale by
+    construction — D463 added an assertion AND three sites — which is D427's mechanism again:
+    the tax grows with the number of suites, not with the number of slices.)
+
     🆕🆕 engineVersion 0.361.0 → **0.362.0** (D463 — THE PER-HEADS CONSEQUENT THAT
     PARKS, `censusAttackCorpus.ts` FILE LINES 200 and 234: *"Flip {2 coins|a coin until
     you get tails}. For each heads, discard an Energy from your opponent's Active
@@ -19364,7 +19423,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.362.0";
+export const engineVersion = "0.363.0";
 
 export type {
   ApplyResult,

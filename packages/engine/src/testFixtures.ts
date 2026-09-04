@@ -23152,6 +23152,25 @@ export const DEFENDER_STATUS_TRIPLE_DECK = deckOf({
   "fix-energy": 40, // Colorless Basic — every cost here is {C}-only
 });
 
+/** 🆕🆕 D464 — the FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY (corpus FILE LINE 264).
+    ⚠️ **NO NEW FIXTURE ID**: the sentence already sits on `fix-oxford` index 2, where D462
+    put it as its loud attribution control, so this deck is a new ARRANGEMENT of ids that
+    already ship — and the census deltas a new card would force (D460's four places) are all
+    zero for this slice.
+
+    🛑 **THE TWO ENERGY TYPES ARE LOAD-BEARING AND NOT DECORATION.** `discardEnergy` collapses
+    INTERCHANGEABLE candidates before it decides whether to park (`interchangeableCandidates`
+    + `forcedDiscards`), so a defender holding three identical {C} presents ONE candidate,
+    the pick is forced, and the op resolves INLINE with no prompt at all. One {C} plus one
+    {W} is the smallest board on which the same op PARKS. The suite drives both, because the
+    two are different code paths through the same printed sentence. */
+export const FLIP_STATUS_ENERGY_DISCARD_DECK = deckOf({
+  "fix-oxford": 4, // idx 2 prints corpus line 264 — the sentence this slice builds
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — a clean defender that survives
+  "fix-energy": 30, // Colorless Basic — every cost here is {C}-only
+  "fix-water-energy": 10, // {W} — the SECOND distinguishable Energy, so the discard can park
+});
+
 export const DEFENDER_STATUS_PAIR_DECK = deckOf({
   "fix-ninetales": 4, // the bare pair — {R}{R} for 90
   "fix-tr-houndoom": 4, // the bare pair on a second body — {R}, no damage

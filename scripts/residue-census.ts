@@ -65,7 +65,33 @@
  * D461 were HEAD for a whole slice. It is a doc figure with no test behind it, which is
  * exactly the class D425 is about; recorded rather than silently corrected, because the
  * interesting fact is that the rot is one slice deep every time and nothing reddens.
- * 🛑 **D463 IS THE FIRST SLICE IN FOUR TO MOVE `OPAQUE` — 88/126 → 87/125.** Line 234 was
+ * 🆕🆕 **D464 MOVES THEM TO 146 / 120 / 166** (THE FLIP-GATED STATUS THAT ALSO STRIPS AN
+ * ENERGY, 1 sentence / 2 printings, `censusAttackCorpus.ts` file line 264 — *"Flip a coin.
+ * If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that
+ * Pokémon."*).
+ * 🛑🛑 **AND D464 FOUND A BLIND SPOT IN THIS INSTRUMENT'S SPAN PROBE, WHICH IS WHY ITS ROW
+ * SAT IN `OPAQUE`.** `spanProbe` tokenises with `text.split(" ")` and rejoins with `" "`, so
+ * a deletion that reaches the LAST token takes the sentence-final period with it and the
+ * remainder can never build. Corpus line 264 is one such row: deleting *"and discard an
+ * Energy from that Pokémon."* leaves a built string ONLY if the `.` is re-attached, which
+ * this probe cannot do. **Measured over the residue at D464's head: a tail-aware span probe
+ * — same deletion, terminal punctuation re-attached — reaches 18 sentences / 24 printings,
+ * of which SIX (9 printings) are rows this instrument classified `OPAQUE` — enumerated in
+ * full rather than summarised (D428), by corpus FILE LINE: **126** (1p, *"Discard the top 3
+ * cards of your deck, and this attack does 80 damage for each Energy card you discarded in
+ * this way."*), **129** (1p, the Misty's twin), **143** (1p, *"Draw 3 cards from the bottom
+ * of your deck."* — one deletion from D43's `drawCards`), **264** (2p, THIS SLICE's row),
+ * **412** (3p, *"Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G}
+ * Energy card in your discard pile. Then, shuffle those Energy cards into your deck."*) and
+ * **500** (1p, *"This Pokémon also does 10 damage to itself for each damage counter on
+ * it."*). The other twelve the SEGMENT probe already reaches, so they are already
+ * classified. With line 264 built, FIVE rows / 7 printings of that set remain. **So `OPAQUE`
+ * was over-populated by six rows for a purely mechanical reason, and the fix is one
+ * `if` in `spanProbe` — deliberately NOT made here, because changing the instrument in the
+ * same slice that uses it to pick a target would leave nothing to check the pick against.
+ * It is the next slice's cheapest instrument work, and the six rows are its own test.**
+ * 🛑 **D463 IS THE FIRST SLICE IN FOUR TO MOVE `OPAQUE` — 88/126 → 87/125. D464 IS THE
+ * SECOND, 87/125 → 86/123.** Line 234 was
  * classified `OPAQUE` and line 200 `SUBST-7`, and the two are ONE shape reached by two
  * shipped `AttackFlipCount` members. **`OPAQUE` is a statement about how far THIS
  * INSTRUMENT can edit a sentence before it reaches a built string, and not a statement

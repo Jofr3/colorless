@@ -5769,7 +5769,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.362.0";',
+    find: 'export const engineVersion = "0.363.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23674,5 +23674,129 @@ export const MUTANTS: Mutant[] = [
     find: "s Active Pokémon\\.$/;\n// The reveal-and-bottom attack sentence",
     replace: "s Active Pokémon\\./;\n// The reveal-and-bottom attack sentence",
     expectKilledBy: ["packages/engine/src/attackDiscards.test.ts"],
+  },
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🆕🆕 D464 — THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY. TWELVE rows: NINE
+  //    over the one new anchor and one new arm in `effects.ts`, TWO from an ABSENCE
+  //    AUDIT, and ONE on the deck that makes the park reachable.
+  //
+  //    🛑 THE ABSENCE AUDIT, NEEDLED AT THIS HEAD AND REPORTED AS A FINDING (D431/D452):
+  //    `FLIP_DEFENDER_NOW` / `DEFENDER_NOW` / `FLIP_DEFENDER_STATUS_PAIR` /
+  //    `STATUS_OF_WORD` / `CONDITION_SLOT` — **0 hits each**. The two `is now` anchors
+  //    D424 shipped have been unpinned for forty decisions, and this slice MEASURED that
+  //    one of them carries the byte a doc block credited to two other anchors. D463 hit
+  //    the identical shape one anchor over (`FLIP_OPPONENT_ACTIVE_DISCARD`, 0 rows) and
+  //    its rule was to CLOSE the gap rather than note it; two rows here do that.
+  //
+  //    ⚠ THE ARM ROWS ALL ANCHOR ON THE WHOLE GATE LITERAL rather than on a line of it,
+  //    because the two op lines are byte-close to their siblings elsewhere in the file
+  //    and `precheck` is what proves each `find` still occurs exactly once.
+  {
+    id: "D464-anchor-loses-its-caret",
+    decision: "D464",
+    what: "⚠ **THE UNANCHORED NEW ANCHOR** — without `^` the pattern matches mid-sentence, so a printing whose TAIL reads like corpus line 264 would be claimed WHOLE and its head silently dropped. The family's standing anchor rule (D207's phantom-survivor lesson, in a deriver). ⚠ AND THE `^` END IS THE ONE THIS ANCHOR CAN DEMONSTRATE ON THE LOUD PATH: nothing claims a leading clause, so the constructed leading-text near miss really does reach `ATTACK_EFFECT_SKIPPED` — unlike its trailing twin, which D409's splitter composes",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(\n  `^Flip a coin",
+    replace: "const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(\n  `Flip a coin",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-anchor-loses-its-end-anchor",
+    decision: "D464",
+    what: "⚠ **THE OTHER END OF THE SAME ANCHOR, AND IT FAILS DIFFERENTLY.** Without `\\\\.$` the pattern claims any sentence that BEGINS with corpus line 264 and continues, so half a printed card would be implemented silently. ⚠ **IT IS NOT KILLED ON THE LOUD PATH**: under this build *\"… from that Pokémon. Draw a card.\"* derives to the flip program with the draw thrown away, whereas at HEAD it derives to `null` and D409's trailing splitter composes it correctly. The two ends of one anchor need two rows because their observable consequences differ",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\\\.$`,",
+    replace: "  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\\\.`,",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-anchor-loses-its-apostrophe-class",
+    decision: "D464",
+    what: "⚠ **D136/D137's HARDENING, DROPPED.** The catalog prints BOTH the ASCII apostrophe and U+2019, so an anchor spelling only one silently un-derives every printing of the sentence the day a punctuation-normalising re-ingest runs — and it fails SILENTLY, because the sentence simply stops resolving. Every neighbouring possessive anchor in this file carries the class",
+    file: "packages/engine/src/effects.ts",
+    find: "your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard",
+    replace: "your opponent[']s Active Pokémon is now (${STATUS_WORDS}), and discard",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-arm-drops-the-energy-discard",
+    decision: "D464",
+    what: "🛑 **HALF THE PRINTED SENTENCE, SILENTLY.** The gate keeps the `applyStatus` and loses the `discardEnergy`, so the card Paralyzes and takes nothing — which is EXACTLY what `FLIP_DEFENDER_NOW` did to this row before D464 built it, and exactly the defect D462's doc block feared while naming the wrong anchor for it. The program still resolves and the census still counts the sentence as read, so only a rung that asserts the WHOLE program can see it",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n        ],\n      },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts", "packages/engine/src/defenderStatusTriple.test.ts"],
+  },
+  {
+    id: "D464-arm-drops-the-status",
+    decision: "D464",
+    what: "🛑 **THE OTHER HALF, AND IT IS THE HALF A DISCARD-SHAPED TEST WOULD MISS.** The gate keeps the `discardEnergy` and loses the `applyStatus`, so the Energy comes off and the defender is never Paralyzed. Two rows rather than one because the two consequents are independent in the PRINT (D442) and a suite can pass on either alone",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-arm-reverses-printed-order",
+    decision: "D464",
+    what: "⚠ **THE TWO OPS OUT OF PRINTED ORDER.** Both still run and the board ENDS the same, so no end-state assertion can see it — but the discard parks and the paralysis lands only after the pick is answered, which is an observable PHASE difference: under this build the parked board is not yet Paralyzed. D424's `pair-ops-not-in-printed-order` one arm over, and the reason §4 asserts the condition ON the parked state rather than on the resolved one",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n        ],\n      },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-arm-discards-the-attackers-own-energy",
+    decision: "D464",
+    what: "🛡 **THE VICTIM IS THE WRONG PLAYER.** `opponentActive` becomes `yourActive`, so the printed *\"that Pokémon\"* — bound by the first clause to the DEFENDER — strips the attacker instead. The program still resolves, the census is unmoved, and the defender is still Paralyzed; only a rung that reads BOTH boards after the resume can tell",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-arm-drops-the-coin-gate",
+    decision: "D464",
+    what: "🛑 **THE COIN IS GONE AND BOTH CONSEQUENTS BECOME UNCONDITIONAL.** The printed *\"Flip a coin. If heads\"* stops being a gate, so the card Paralyzes and discards on TAILS as well — a strictly stronger card than the one printed, with no coin flip event at all. D424's `flip-pair-drops-the-coin-gate` on the new arm",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n      { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-arm-hardcodes-the-printed-status",
+    decision: "D464",
+    what: "⚠ **THE TEMPLATE COLLAPSES TO ITS ONE PRINTED VALUE.** `statusOf(match[1])` becomes the literal `\"paralyzed\"`, so every printed printing still derives correctly and NOTHING in the column moves — the slot has one printed value. It is the row that makes the template a claim rather than a habit: §2 drives all five status words through the anchor, and D460's two `statusOf` rows are the precedent for pinning a captured status this way",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: statusOf(match[1]) },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    replace: "      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          { op: \"applyStatus\", target: \"defender\", status: \"paralyzed\" },\n          { op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } },\n        ],\n      },",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D464-audit-flip-status-anchor-was-unpinned",
+    decision: "D464",
+    what: "🛑 **`FLIP_DEFENDER_NOW` HAD ZERO ROWS — needled at this head, 0 hits for both `FLIP_DEFENDER_NOW` and `DEFENDER_NOW`** — and D464 MEASURED that this anchor's `\\\\.$` is the ONE byte that was really refusing corpus line 264, against a doc block that named two other anchors instead. Without it this pattern goes from 2 rows / 29 printings to **6 / 35**, it sits BEFORE arm 2d in `deriveAttackEffect`, and it therefore claims line 264 first — landing the paralysis and throwing the printed Energy discard away in silence. An anchor shipped at D424 and unpinned for forty decisions, found by an ABSENCE audit (D452) and closed rather than noted",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_DEFENDER_NOW = new RegExp(\n  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\\\.$`,\n);",
+    replace: "const FLIP_DEFENDER_NOW = new RegExp(\n  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})`,\n);",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts", "packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  {
+    id: "D464-audit-defender-now-anchor-was-unpinned",
+    decision: "D464",
+    what: "🛑 **THE SAME ABSENCE, ONE ANCHOR OVER, AND IT IS THE ONE THIS SLICE'S RE-POINTED CONTROL NOW GUARDS.** `DEFENDER_NOW` had zero rows too. Strict it claims 4 rows / 74 printings; without `\\\\.$` it claims **16 / 96**, and the twelve it gains include the three real printings D464 re-pointed the family's loud control onto (corpus FILE LINES 685, 686, 690) — each claimed with its second clause silently thrown away. It also swallows the pair and triple sentences, since arm 1 runs first. The row that turns the re-point from a claim into a measurement",
+    file: "packages/engine/src/effects.ts",
+    find: "const DEFENDER_NOW = new RegExp(`^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\\\.$`);",
+    replace: "const DEFENDER_NOW = new RegExp(`^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS})`);",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts", "packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  {
+    id: "D464-deck-loses-its-second-energy-type",
+    decision: "D464",
+    what: "⚠ **THE PARK STOPS BEING REACHABLE AND EVERY END-STATE ASSERTION STAYS GREEN.** `discardEnergy` collapses INTERCHANGEABLE candidates before deciding whether to park, so a defender holding only {C} presents ONE candidate, `forcedDiscards` answers, and the op resolves INLINE. Under this build the suite's mixed board is uniform, the prompt never appears, and the whole persisted-continuation argument in §7 has no subject — while the sentence still derives, the census still moves and the card still ends Paralyzed with one Energy gone. A fixture row because the DECK is what makes the two code paths distinguishable (D460's fixture-row precedent)",
+    file: "packages/engine/src/testFixtures.ts",
+    find: "  \"fix-water-energy\": 10, // {W} — the SECOND distinguishable Energy, so the discard can park",
+    replace: "  \"fix-water-energy\": 0, // {W} — the SECOND distinguishable Energy, so the discard can park",
+    expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
   },
 ];

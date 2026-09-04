@@ -27134,3 +27134,38 @@ Draw"), the minimal pair of index 3's `Basic Energy` refusal — one body, one i
 ⚠️ **AND THE FAMILY'S REMAINING ONE-TOKEN ROWS ARE THE NINE THAT LOSE THEIR TOKEN'S MEANING**:
 data-blocked subtypes (`Ancient`, `Future`), refused subgroups (`Iono's`, `{F}` — D120's rule), or a
 filter no member expresses (`Basic`, `Benched`, `{L}`). **There is no second `card` in the drawer.**
+
+## D464 — the flip-gated status that also strips an Energy, and the drawer the repo keeps in its `toBeNull` lists
+
+Corpus **FILE LINE 264** — *"Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed,
+and discard an Energy from that Pokémon."*, **1 sentence / 2 legal printings** — through **ONE new
+anchor and ONE new deriver arm** whose program is arm 2's `applyStatus` followed by
+`FLIP_OPPONENT_ACTIVE_DISCARD`'s `discardEnergy`, inside the `coinFlipGate` both already ship in.
+Zero new ops, op fields, op values, readers (13), prompts, events, registry rows or fixture ids.
+
+### What the classifier could not say, and why
+
+`residue-census.ts` filed this row as `OPAQUE`, and the reason is mechanical rather than semantic:
+`spanProbe` tokenises with `text.split(" ")` and rejoins with `" "`, so a deletion reaching the LAST
+token takes the sentence-final period with it. **A tail-aware variant reaches 18 sentences / 24
+printings of the residue, SIX of them (9 printings) currently `OPAQUE`** — corpus FILE LINES 126,
+129, 143, 264, 412 and 500. That is D463's *"`OPAQUE` means UNCLASSIFIED, never EXPENSIVE"* with a
+named cause, and the fix is one `if` with five remaining rows as its test.
+
+### The drawer nobody had read
+
+The sentence was the LOUD attribution control in three suites and already had a fixture. That is the
+third slice running whose subject came out of a `toBeNull` list: D424 pointed its slot at the Oxford
+list, D462 built the Oxford list and re-pointed onto line 264, D464 built line 264 and re-pointed
+onto FILE LINES 685/686/690. **A loud-control slot is filled by looking for a real printing, in the
+same family, whose extra mechanic is unbuilt, that a small drift of the anchor would claim — which
+is a description of the cheapest next slice.**
+
+### And the reason the control gave was wrong
+
+D462's doc block said line 264 was *"refused by the SECOND capture group and by nothing else"*.
+Measured over all 640 rows, `DEFENDER_STATUS_TRIPLE` claims exactly one row under every single-axis
+loosening it has and line 264 is in none of them; `FLIP_DEFENDER_STATUS_PAIR` loosened gains a
+different row; **only `FLIP_DEFENDER_NOW`'s `\.$` was ever doing the work** (2 rows / 29 printings
+strict, 6 / 35 drifted). Both `FLIP_DEFENDER_NOW` and `DEFENDER_NOW` had **zero mutant rows** — an
+absence audit closed both. The re-pointed controls now sit on the set the same probe NAMES.

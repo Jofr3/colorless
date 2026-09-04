@@ -9544,8 +9544,99 @@ const FLIP_DEFENDER_STATUS_PAIR = new RegExp(
 // capture group and by nothing else: drop `(${STATUS_WORDS})` to `(.+)` and this
 // anchor eats a sentence whose Energy discard it would silently throw away. That is
 // the one row that makes the vocabulary load-bearing rather than decorative.
+//
+// 🛑🛑 **D464 — THE PARAGRAPH ABOVE IS KEPT VERBATIM (D178) AND ITS LAST THREE SENTENCES
+// ARE FALSE. THEY WERE FALSE ON THE DAY THEY WERE WRITTEN, AND ONE REGEX DISPROVES THEM.**
+// *"It is refused by the SECOND capture group and by nothing else"* is a claim about THIS
+// anchor, and it was never tested against this anchor. MEASURED over the whole 640-row
+// column, `DEFENDER_STATUS_TRIPLE` claims **exactly one row / 2 printings** under EVERY
+// single-axis loosening available to it — slot 1, slot 2 or slot 3 widened to `(.+)`, the
+// `^` dropped, the `\.$` dropped — and line 264 is in NONE of them. It cannot be: after
+// *"is now Paralyzed"* this anchor demands a SECOND comma before its `, and `, and line 264
+// prints only one. **The capture group is not what refuses line 264; the missing second
+// comma and the `^Your opponent` prefix are, twice over.**
+//
+// What DOES refuse line 264 is `FLIP_DEFENDER_NOW`'s `\.$`, and that half was right:
+// measured, dropping it takes that anchor from 2 rows / 29 printings to **6 rows / 35
+// printings**, and line 264 is one of the four it gains — with its Energy discard silently
+// thrown away, exactly as the paragraph feared, from a different anchor than it named.
+// (`FLIP_DEFENDER_STATUS_PAIR` loosened the same two ways gains line 263 and NOT line 264.)
+// The sibling copy of this claim in `defenderStatusPair.test.ts`'s `paralyzedComma` doc
+// block — *"loosen any one of those three and this sentence is claimed"* — is wrong in the
+// same place and for the same reason, and is corrected there.
+//
+// ⚠️ **THE RULE: A DOC BLOCK THAT NAMES THE BYTE THAT REFUSES A SENTENCE IS ONE REGEX FROM
+// BEING CHECKED, AND IT IS A CLAIM ABOUT A SPECIFIC ANCHOR RATHER THAN ABOUT A FAMILY.**
+// The three anchors here refuse line 264 for three DIFFERENT reasons and only one of them
+// is the vocabulary; writing "the pair and triple anchors refuse it because
+// `(${STATUS_WORDS})` admits no comma" folded three refusals into the one that happened to
+// be under the cursor. Line 264 DERIVES as of D464 (see
+// `FLIP_DEFENDER_STATUS_THEN_DISCARD` below), so the `\.$` claim is now asserted from the
+// other side — the sentence must derive to the TWO-op program, which goes red under the
+// same drift the old `toBeNull` caught and ALSO under a drift that claims it wrongly.
 const DEFENDER_STATUS_TRIPLE = new RegExp(
   `^Your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), (${STATUS_WORDS}), and (${STATUS_WORDS})\\.$`,
+);
+// 🆕🆕 D464 — THE FLIP-GATED STATUS THAT ALSO STRIPS AN ENERGY. *"Flip a coin. If heads,
+// your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that
+// Pokémon."* — `censusAttackCorpus.ts` **FILE LINE 264**, **1 sentence / 2 legal
+// printings**, and the row D462 named as this family's printed near miss and left LOUD.
+//
+// 🛑 **ZERO NEW MECHANISM: BOTH OPS ALREADY SHIP, BOTH ALREADY SHIP INSIDE THIS EXACT
+// GATE, AND THE PROGRAM IS THE CONCATENATION OF TWO ARMS THIS FILE ALREADY HAS.** Arm 2
+// (`FLIP_DEFENDER_NOW`, 29 printings) authors `coinFlipGate{then:[applyStatus]}`; the
+// `FLIP_OPPONENT_ACTIVE_DISCARD` arm (12 printings) authors
+// `coinFlipGate{then:[discardEnergy{from:"opponentActive", filter:{kind:"anyEnergy"}}]}`.
+// The printed *", and "* is the JOIN of those two `then` lists and nothing else — no new
+// `EffectOp` member, no new op FIELD, no new op VALUE, no new reader (the surface stands
+// still at 13), no prompt, no event, no error code, no registry row, no `packages/schema`
+// byte and no `redact.ts` byte.
+//
+// ⚠️ **THE ANAPHOR IS RESOLVED BY THE GATE'S OWN SUBJECT, NOT BY A NEW FIELD.** *"that
+// Pokémon"* can only be the noun phrase the first clause just named — your opponent's
+// Active — and `discardEnergy`'s `from: "opponentActive"` is that resolution, already
+// spelled by the sibling arm for the same body. A `target: "defender"` `applyStatus`
+// beside an `opponentActive` `discardEnergy` is the SAME Pokémon under two vocabularies,
+// which is the pre-existing asymmetry of those two ops rather than anything this row adds.
+//
+// ⚠️ **A TEMPLATE OVER `STATUS_WORDS` AND NOT A LITERAL `Paralyzed`, ON D462's WARRANT AND
+// WITH ITS WEAKER HALF SAID OUT LOUD.** D121 prices a NEW parameter; this anchor adds none
+// — `STATUS_WORDS` is this family's own vocabulary, warranted at four positions already in
+// the same noun phrase, and this is a fifth. **What does NOT carry over is D462's
+// reachability argument**: an Oxford list can COLLIDE on `SpecialConditions`, so opening its
+// slots kept `defenderStatusOps`' refusal reachable; ONE status word can collide with
+// nothing, so there is no refusal here for the slot to keep alive. The template is
+// justified by "no new parameter" alone, and it is worth less here than it was there.
+//
+// 🛑 **THIS ANCHOR HAS NO PRINTED NEAR MISS, WHICH IS THE OPPOSITE OF THE ROW IT CLAIMS AND
+// IS MEASURED RATHER THAN ASSUMED.** Over all 640 rows, EVERY single-axis loosening of this
+// anchor — `^` dropped, `\.$` dropped, the status slot widened to `(.+)`, the consequent
+// widened to `, and (.+)\.$` — still claims **exactly this one row / 2 printings**. So its
+// `^…$` discipline can only ever be driven SYNTHETICALLY, which is D462's standing for its
+// collision list and is stated here for the reason it is stated there: an assertion with no
+// printing behind it is a deliberate choice, and an undeclared one reads as an accident.
+// **The one loosening that DOES over-claim is a TWO-axis one** — `is now (${STATUS_WORDS})(.*)\.$`
+// takes 6 rows / 35 printings — and that is `FLIP_DEFENDER_NOW`'s `\.$` failure seen from
+// this side of the family, not this anchor's own.
+//
+// ⚠️ **DISJOINT FROM ALL FIVE OLDER `is now` ANCHORS BY CONSTRUCTION.** Every one of them
+// demands a `.`, a ` and `, or a `, ` immediately after its LAST status word; this one
+// demands `, and discard`. `(${STATUS_WORDS})` admits no comma and no space, so no string
+// can be claimed by two of the six, and the arm ORDER below is a refactor rather than
+// behaviour — the same statement arms 2b and 2c make, one anchor wider.
+//
+// 🛑 **AND THE TWO ENDS OF THIS ANCHOR HAVE DIFFERENT OBSERVABLE CONSEQUENCES, WHICH IS A
+// FINDING RATHER THAN A CHOICE.** Prepend text and the sentence stays LOUD, because nothing
+// claims the head. APPEND a claimed clause — *"… from that Pokémon. Draw a card."* — and it
+// does NOT stay loud: `deriveAttackEffect` still refuses it, `resolvedByAnyReader` is still
+// false, and D409's TRAILING SPLITTER composes this newly-claimable head with that claimed
+// tail. **Building a sentence builds every `<it>. <claimed tail>` compound with it**, through
+// a path that is neither this anchor nor this arm. No such compound PRINTS today (measured
+// over all 640 rows), so nothing is authored — but a `$` cannot be demonstrated by a
+// trailing-text near miss the way a `^` can be demonstrated by a leading-text one, and
+// `flipStatusEnergyDiscard.test.ts` §3 keeps that asymmetry executable rather than assumed.
+const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\.$`,
 );
 const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
@@ -19453,6 +19544,41 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = DEFENDER_STATUS_TRIPLE.exec(effect);
   if (match !== null) {
     return defenderStatusOps([match[1], match[2], match[3]]);
+  }
+
+  // 2d. 🆕🆕 D464 — "Flip a coin. If heads, your opponent's Active Pokémon is now {X},
+  //     and discard an Energy from that Pokémon." — `censusAttackCorpus.ts` FILE LINE
+  //     264, 1 sentence / 2 legal printings, and the row D462 named as this family's
+  //     printed near miss and left LOUD.
+  //
+  //     THE PROGRAM IS ARM 2's `then` LIST WITH `FLIP_OPPONENT_ACTIVE_DISCARD`'s OP
+  //     APPENDED TO IT, in printed order and inside ONE gate — one coin, both
+  //     consequents, which is what the printed ", and" says. ZERO new ops, op FIELDS or
+  //     op VALUES: `MATCH_RECORD_VERSION` cannot move on bytes that already existed, and
+  //     the discard's PARK writes an EMPTY `cont.rest` because the discard is last.
+  //
+  //     ⚠️ ORDER AGAINST ARMS 1, 2, 2b AND 2c IS A REFACTOR, NOT BEHAVIOUR. Arm 2's
+  //     `\.$` sits immediately after ONE status word and this anchor puts a COMMA there,
+  //     so neither can claim the other's string — and that disjointness is the byte the
+  //     old `toBeNull` control was really about (see `DEFENDER_STATUS_TRIPLE`'s block).
+  //
+  //     🛑 NO REFUSAL PATH, AND THE ABSENCE IS THE POINT. Arms 2b and 2c return `null`
+  //     from the whole reader when `defenderStatusOps` refuses a slot collision; ONE
+  //     status word can collide with nothing, so this arm has no way to fail after its
+  //     anchor matched. Said out loud because a reader arm with no `null` return looks
+  //     like an omission beside its two neighbours.
+  match = FLIP_DEFENDER_STATUS_THEN_DISCARD.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          { op: "applyStatus", target: "defender", status: statusOf(match[1]) },
+          { op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } },
+        ],
+      },
+    ];
   }
 
   // 3. "This Pokémon is now {X}." — {X} excludes Paralyzed (see

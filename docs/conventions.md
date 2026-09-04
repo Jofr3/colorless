@@ -3349,6 +3349,89 @@ the mutation and running the suite*, never by argument: a declared survivor
 asserted from reasoning is a claim, and one asserted from a green full-suite run
 is a measurement a successor can re-check.
 
+## A doc block that names the BYTE doing a refusal is one regex from being checked (D464)
+
+D462 left a printed row LOUD and wrote why, at the anchor it had just shipped: *"It is refused by
+the SECOND capture group and by nothing else: drop `(${STATUS_WORDS})` to `(.+)` and this anchor
+eats a sentence whose Energy discard it would silently throw away."* **Two thirds of that is false,
+and one regex each disproves it.** Measured over the whole 640-row column, `DEFENDER_STATUS_TRIPLE`
+claims exactly ONE row / 2 printings under EVERY single-axis loosening it has — slot 1, 2 or 3
+widened to `(.+)`, the `^` dropped, the `\.$` dropped — and the row in question is in NONE of them.
+It cannot be: the anchor demands a SECOND comma that sentence never prints, and its `^Your opponent`
+prefix refuses the leading flip clause besides. Its sibling `FLIP_DEFENDER_STATUS_PAIR` is wrong the
+same way (loosened, it gains a DIFFERENT row). The anchor that really refused it was a third one the
+paragraph did not name — `FLIP_DEFENDER_NOW`, by its `\.$`, which drifts from **2 rows / 29
+printings** to **6 / 35**.
+
+**The failure is a FOLD.** Three anchors refuse one sentence for three different reasons, and the
+author wrote the reason of the anchor under the cursor as if it were the family's. That is D463's
+*"a refusal that groups N rows under ONE reason is N refusals"* with the quantifier on the other
+side: **one row refused by N anchors is N claims, and only one of them may be true.**
+
+Two rules:
+
+1. **Run the loosening you are about to claim, over the POPULATION, before writing the sentence.**
+   It is five lines of script and it answers exactly.
+2. **Keep the result as a RUNG, not as prose.** A near-miss doc block ages into a `toBeNull` whose
+   title says why, and the title is the part nothing checks. The executable form is a rung that
+   pins both cardinalities of the strict anchor and both of the drifted one.
+
+## A `LEFT_LOUD` list is a targeting instrument in disguise (D464)
+
+D424 pointed its loud-control slot at *"…is now Burned, Confused, and Poisoned."*; D462 BUILT that
+sentence and re-pointed the slot onto corpus line 264; D464 built line 264 and re-pointed onto three
+more. **Three slices, three builds, and every subject was already sitting in a `toBeNull` list
+somebody had written to prove a refusal was loud.**
+
+That is not a coincidence. A loud-control slot is filled by looking for *a real printing, in the
+same family, whose extra mechanic is unbuilt, that a small drift of this anchor would claim* — which
+is a description of the cheapest next slice. **The repo has been maintaining a shortlist of buildable
+sentences under a name that reads like the opposite.**
+
+`grep -rn "LEFT_LOUD\|STILL_LOUD\|returns null for anything but" packages/engine/src/*.test.ts`
+before running the census, and price what it names.
+
+## The `$` end and the `^` end of an anchor fail differently (D464)
+
+A constructed near miss with LEADING text stays on the loud path: nothing claims its head, so
+`ATTACK_EFFECT_SKIPPED` fires and a rung can assert it. **Its TRAILING twin does not.** Once the
+sentence itself derives, D409's trailing splitter sees a claimed HEAD and a claimed TAIL and
+composes them — so *"⟨the printed sentence⟩. Draw a card."* derives, while `deriveAttackEffect`
+still returns `null` for it and `resolvedByAnyReader` is still false.
+
+**Building a sentence builds every `⟨it⟩. ⟨claimed tail⟩` compound with it, through a path that is
+neither the anchor nor the arm.** Nothing is authored while no such compound prints — check that
+over the whole column and say so — but the consequence for a suite is immediate: a `$`-end refusal
+cannot be demonstrated on the loud path the way a `^`-end refusal can, and a rung that tries will go
+red on its first run. Assert the SPLIT instead (`splitAttackTrailingClause(x)` equals the head/tail
+pair) and say why the two ends differ.
+
+D464 found this from a RED test, not from any audit. None of the four pre-probe passes can see it.
+
+## `discardEnergy` collapses interchangeable candidates BEFORE it decides to park (D464)
+
+`interchangeableCandidates` + `forcedDiscards` run in front of the park, so a body holding three
+identical `{C}` presents **one** candidate, the pick is forced, and the op resolves INLINE with no
+prompt at all. One `{C}` plus one `{W}` is the smallest board on which the same op PARKS.
+
+**A suite that only ever builds a uniform board tests half the op** — no `EFFECT_PENDING`, no
+`phase.cont`, and therefore no subject for a `MATCH_RECORD_VERSION` argument that leans on the
+persisted continuation. Build both boards and drive both paths, and pin the DECK that makes them
+distinguishable with a mutant row: with the second Energy type removed every end-state assertion
+stays green and the park simply stops existing.
+
+## Four `check` rounds, and the fifth site that only a string count can find (D464)
+
+D462's rule — *vitest stops an `it` at its first throw, so COUNT THE FILE* — held again, and the
+round count was **four**, not three: 17 census sites, then 7, then 3, then a `tsc` narrowing error
+that only appears once the suite compiles at all. **Five `toBe(1514)` assertions were sitting behind
+a `toHaveLength(493)` in the same `it`** and no test run would ever have reported them.
+
+⚠️ **And when the SENTENCE step and the PRINTING step disagree, every chain term disagrees too.**
+D463 moved `+2 / +2` and could use one number everywhere; D464 moved `+1 sentence / +2 printings`,
+so a `resolved.length` chain takes `- 1` and a `units(resolved)` chain takes `- 2` — on the SAME
+LINE, twice, in three files. Read the head name, not the neighbouring term.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
