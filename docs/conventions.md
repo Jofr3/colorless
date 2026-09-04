@@ -3498,6 +3498,28 @@ still be dismissed by file — D466 dismissed nine that way in seconds and check
 twenty-three individually — but the whole value of the exercise sits in the rows
 that cannot be, and those are exactly the ones a file-level argument hides.
 
+### A narrowing guard is only killable where the narrow pattern runs first
+
+D467 added a second regex arm that matches a strict subset of what an older arm
+matches, and guarded the overlap with a lookahead. Two corpus rows quantify over
+the same disjointness fact and the sweep returned **opposite verdicts**: deleting
+the lookahead is **KILLED**, while swapping the two arms with the lookahead intact
+**SURVIVES as equivalent**.
+
+Both readings are correct, and they disagree only about order. Ship the narrow arm
+FIRST and its guard is the only thing between it and a string the broad arm owns —
+removing it changes an answer, so the corpus can see it. Ship it SECOND and the
+broad arm consumes those strings before the narrow one is reached: the guard still
+compiles, still reads as careful, and is **unobservable** — its deletion row would
+survive, and survive for a reason ("no input distinguishes them") that is
+indistinguishable in the log from a genuine equivalence.
+
+**So killability of a narrowing predicate is a property of the dispatch order, not
+of the predicate.** When adding an arm that narrows an existing one, place it
+ahead of what it narrows — that is the only order in which the guard is testable
+at all. And when a guard-deletion row survives, check the order before writing
+`equivalent`: a vacuous guard and a redundant one produce the same verdict.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
