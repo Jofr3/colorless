@@ -3573,6 +3573,26 @@ never by whoever is merely nearby.** And when a brief hands down a mechanical bu
 it owes the precondition; a builder who cannot see the precondition cannot tell a
 ratchet from a typo.
 
+### `equivalent` is a verdict, not a reason — two kinds share it and their obligations differ
+
+The corpus now holds one order-swap survivor of each kind, written a slice apart,
+and the sweep log prints them identically as `SURVIVES(known) — equivalent`:
+
+- **Guarded disjointness** (D467): two patterns overlap, and a lookahead is what
+  keeps the shipped order from mattering. The equivalence is CONTINGENT on a
+  deletable byte, so a companion row exists that goes red when the byte goes —
+  and it is KILLED, which is what makes the guard worth having.
+- **Structural disjointness** (D468): the two patterns are both `^…$` and disagree
+  on a mandatory run of bytes at the same position, so no string can match both.
+  No guard exists, and correctly none does — one would be unkillable by
+  construction, which the conventions already call a vacuous guard.
+
+**The maintenance obligations are opposite.** A guarded equivalence must be
+re-derived whenever either pattern moves; a structural one cannot be broken
+without changing the sentence the anchor spells. **So write which kind the row
+has into its `survives` reason.** The verdict column will not preserve the
+distinction, and the next reader has no way to recover it from the log.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
