@@ -1,0 +1,411 @@
+import { describe, expect, it } from "vitest";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
+import type { EffectOp } from "./effects";
+import { applyAction, engineVersion } from "./index";
+import type { GameEvent, GameState, Seat } from "./index";
+import {
+  FIXTURE_POOL,
+  SELF_DAMAGE_PER_COUNTER_DECK,
+  attachFromDeck,
+  clearBench,
+  deepFreeze,
+  driveSetup,
+  must,
+  mustApply,
+  setActiveFromDeck,
+  setDamage,
+} from "./testFixtures";
+
+// 0.363.0 → 0.364.0 — 🆕🆕 D465, THE RECOIL THAT SCALES OFF ITS OWN COUNTERS.
+// *"This Pokémon also does 10 damage to itself for each damage counter on it."* —
+// `censusAttackCorpus.ts` FILE LINE 500, **1 sentence / 1 legal printing** — one new anchor
+// (`SELF_DAMAGE_PER_COUNTER`) beside `SELF_DAMAGE`, one new OPTIONAL FIELD on the SHIPPED
+// `damageSelf` op (`perDamageCounterOnSelf`) and one fold (`recoilAmount`) in `interpreter.ts`.
+//
+// 🛑 **THE SLICE'S FIRST HALF WAS AN INSTRUMENT FIX, AND THIS ROW IS ITS TEST.** D464 found
+// that `scripts/residue-census.ts`'s span probe tokenises on `" "` and rejoins on `" "`, so a
+// deletion reaching the LAST token takes the sentence-final period with it and the remainder
+// can never build — no corpus sentence ends without its terminator. It measured the cost and
+// deliberately did not pay it: SIX residue rows / 9 printings sat in `OPAQUE` for that purely
+// mechanical reason. D465 fixed the probe FIRST, re-ran the classifier, and only then chose a
+// target from the corrected table. **This row was `OPAQUE` before the fix and `PHRASE-6`
+// after it, and it was chosen because of that reclassification.** §7 keeps the relation
+// executable: deleting the six-token tail *"for each damage counter on it."* and re-attaching
+// the period reaches the BUILT bare twin, which is exactly what the probe now does.
+//
+// ⚠️ **`OPAQUE` DID NOT MOVE FOR THIS BUILD — 81/116 BEFORE AND AFTER** — because the fix had
+// already taken the row out of it. That is the opposite of D463's and D464's close-outs and it
+// is not an oversight: a class is a statement about the INSTRUMENT's reach, and the instrument
+// changed in the same slice.
+//
+// ⚠️ **ZERO NEW `EffectOp` MEMBERS, `DamageCountSource` KINDS, READERS (the surface stands
+// still at 13, asserted in §6), PROMPTS, EVENTS, ERROR CODES, REGISTRY ROWS, `packages/schema`
+// BYTES or `redact.ts` BYTES.** ⚠️ **ONE new op FIELD and ONE new FIXTURE id, both said out
+// loud** — nothing in `FIXTURE_POOL` printed this sentence (D464 could write "no new fixture
+// id"; this slice cannot, and the difference is measured in `testFixtures.ts`'s own block).
+//
+// 🛑 **`damageCountersOnSelf` ALREADY SHIPS AND IS DELIBERATELY NOT USED.** `effects.ts`
+// declares it as a `DamageCountSource` member, and that type says of itself that it is a
+// PARSE-TIME type consumed in the same tick by `scaledAttackDamage` — **no `EffectOp` carries
+// one**. Reaching for it would have meant either exporting `attack.ts`'s module-private fold
+// (which needs a defender seat and an effective cost array, neither on `EffectContext`) or
+// collapsing every boolean rider into a `scale?: DamageCountSource` field — a collapse D448
+// and D449 PRICED at 24 sites across 10 files plus a `MATCH_RECORD_VERSION` bump, for zero
+// extra printings. The rider is that measured refusal re-applied, not re-argued.
+
+/** Corpus FILE LINE 500, byte for byte — asserted off `legalAttackCorpus()` in §1 rather than
+    eyeballed. The `é` is U+00E9; the sentence prints no apostrophe, which is why this anchor
+    needs no `['’]` class (D136/D137's rule stated where it does NOT apply). */
+const PRINTED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
+
+/** The BARE twin, corpus FILE LINE 501 at 21 printings — the most reprinted recoil rider in
+    the column, shipped since 0.x. It is the string the fixed span probe reaches, and the
+    one-axis control on every board below. */
+const BARE = "This Pokémon also does 10 damage to itself.";
+
+/** 🛑 CONSTRUCTED, AND SAID OUT LOUD (D462's standing). The corpus prints exactly ONE scaled
+    recoil, so this anchor has no printed near miss at all and its discipline can only be
+    driven synthetically. Each entry moves exactly ONE axis off `PRINTED`. */
+const CONSTRUCTED_MISSES = [
+  // the printed "also" — the family's stated guard, kept on the new anchor
+  "This Pokémon does 10 damage to itself for each damage counter on it.",
+  // a lowercase "this": no /i, and the capital is half of what keeps a mid-sentence clause
+  // off the derived path (the family's Krookodile convention)
+  "this Pokémon also does 10 damage to itself for each damage counter on it.",
+  // ASCII "Pokemon" — the é is load-bearing
+  "This Pokemon also does 10 damage to itself for each damage counter on it.",
+  // a printed 0 is not a real card; left loud rather than derived to a silent no-op
+  "This Pokémon also does 0 damage to itself for each damage counter on it.",
+  // the terminator: `\.$` is what makes this anchor and `SELF_DAMAGE` mutually exclusive
+  "This Pokémon also does 10 damage to itself for each damage counter on it",
+  // a DIFFERENT count — the anaphor "it" is the attacker, and no other body is meant
+  "This Pokémon also does 10 damage to itself for each damage counter on your opponent's Active Pokémon.",
+  // leading text pins `^`
+  "Draw a card. This Pokémon also does 10 damage to itself for each damage counter on it.",
+  // the subject changed: "This attack" is a different sentence family entirely
+  "This attack does 10 damage to itself for each damage counter on it.",
+] as const;
+
+function find<T extends GameEvent["type"]>(
+  events: GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }> | undefined {
+  return events.find((e) => e.type === type) as Extract<GameEvent, { type: T }> | undefined;
+}
+const types = (events: GameEvent[]) => events.map((e) => e.type);
+const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
+
+const IDX = { scaled: 0, flat: 1 } as const;
+
+/** P1 fields `fix-recoil-scale` with one {C} attached, P2 fields the 340 HP `fix-titan`, both
+    benches cleared. `damage` is the counters already on the ATTACKER when the attack runs. */
+function board(seed: number, damage: number): GameState {
+  const setup = driveSetup(
+    seed,
+    { p1: SELF_DAMAGE_PER_COUNTER_DECK, p2: SELF_DAMAGE_PER_COUNTER_DECK },
+    { first: "p2" },
+  );
+  let state = must(applyAction(setup, { type: "endTurn", seat: "p2" }));
+  state = setActiveFromDeck(state, "p1", "fix-recoil-scale");
+  state = setActiveFromDeck(state, "p2", "fix-titan");
+  state = clearBench(state, "p1");
+  state = clearBench(state, "p2");
+  state = attachFromDeck(state, "p1", "fix-energy", 1);
+  return deepFreeze(setDamage(state, "p1", damage));
+}
+
+const swing = (state: GameState, index: number) =>
+  mustApply(state, { type: "attack", seat: "p1" as Seat, index });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §1 — the reader, and the sentence is a real printed row rather than an invention.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§1 — the printed sentence, the op it derives to, and the one axis that moves", () => {
+  it("🛑 both strings are REAL corpus rows at the printings the docs claim (D425)", () => {
+    // D463's rule, paid before anything is built on top of the string: a suite that invents a
+    // sentence tests its own typing. `rows` is the committed `legal_standard = 1` column.
+    const rows = new Map(legalAttackCorpus().map(([n, s]) => [s, n]));
+    expect(rows.get(PRINTED)).toBe(1);
+    expect(rows.get(BARE)).toBe(21);
+    // …and the FIXTURE prints them byte for byte, so nothing below is transcription.
+    expect(FIXTURE_POOL["fix-recoil-scale"]?.attacks?.[IDX.scaled]?.effect).toBe(PRINTED);
+    expect(FIXTURE_POOL["fix-recoil-scale"]?.attacks?.[IDX.flat]?.effect).toBe(BARE);
+  });
+
+  it("derives the scaled recoil as the SHIPPED op plus one rider", () => {
+    expect(deriveAttackEffect(PRINTED)).toEqual([
+      { op: "damageSelf", amount: 10, perDamageCounterOnSelf: true },
+    ]);
+  });
+
+  it("🛑 the ONE-AXIS control: deleting the clause gives the shipped BARE op, unchanged", () => {
+    // The rider, and not the anchor or the amount, is what moved. This is also the exact
+    // string the fixed span probe reaches — see §7.
+    expect(deriveAttackEffect(BARE)).toEqual([{ op: "damageSelf", amount: 10 }]);
+  });
+
+  it("🛑 the two anchors are MUTUALLY EXCLUSIVE BY `\\.$`, not by their order", () => {
+    // `SELF_DAMAGE` requires the string to END at "itself.", so it cannot match a sentence
+    // that continues. Stated in `effects.ts` and executable here: the scaled sentence carries
+    // the bare one as a PREFIX up to the period, and the bare anchor still refuses it.
+    expect(PRINTED.startsWith(BARE.slice(0, -1))).toBe(true);
+    expect(/^This Pokémon also does (\d+) damage to itself\.$/.test(PRINTED)).toBe(false);
+    // …and the converse: the scaled anchor refuses the bare sentence.
+    expect(
+      /^This Pokémon also does (\d+) damage to itself for each damage counter on it\.$/.test(BARE),
+    ).toBe(false);
+  });
+
+  it("refuses every constructed near miss — each moves exactly one axis", () => {
+    for (const text of CONSTRUCTED_MISSES) {
+      expect(deriveAttackEffect(text), text).toBeNull();
+    }
+    // ⚠️ AND NONE OF THEM IS A PRINTED ROW, which is what makes them constructions rather
+    // than measurements — said out loud rather than left to be assumed.
+    const printed = new Set(legalAttackCorpus().map(([, s]) => s));
+    for (const text of CONSTRUCTED_MISSES) expect(printed.has(text), text).toBe(false);
+  });
+
+  it("🛑 the amount is CAPTURED, not hard-coded to the one printed 10", () => {
+    expect(
+      deriveAttackEffect("This Pokémon also does 40 damage to itself for each damage counter on it."),
+    ).toEqual([{ op: "damageSelf", amount: 40, perDamageCounterOnSelf: true }]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §2 — the census moves in exactly ONE summand.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§2 — the census moves in exactly ONE summand, and the step is 1 and 1", () => {
+  it("🛑 the resolving corpus gains ONE sentence and ONE printing", () => {
+    const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
+    expect([resolved.length, units(resolved)]).toEqual([495, 1517]);
+    // …and the step is THIS sentence and nothing else: remove it and the pair is D464's.
+    const without = resolved.filter(([, s]) => s !== PRINTED);
+    expect([without.length, units(without)]).toEqual([494, 1516]);
+  });
+
+  it("🛑 the move is READER-keyed: no registry row, no gate clause, no trailing split", () => {
+    // The three summands `censusAtHead.test.ts` splits `BUILT.attack` into, RE-MEASURED
+    // rather than assumed — a move that arrived through any of them would be a different
+    // claim about what this slice did (D312/D338's shape).
+    expect(splitAttackGateClause(PRINTED)).toBeNull();
+    expect(splitAttackTrailingClause(PRINTED)).toBeNull();
+    // The reader SURFACE does not move: the arm rides `deriveAttackEffect`, which already ships.
+    expect(attackReaderSurface()).toHaveLength(13);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §3 — the board: the fold is real, and ZERO counters is SILENT.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§3 — the recoil scales off the attacker's own counters", () => {
+  it("🛑 the multiplier is the COUNTER count — 3 counters → 30, 7 → 70, on one sentence", () => {
+    // §12: one counter is 10 HP. 30 damage on the body is 3 counters, so the printed 10
+    // becomes 30 — and the attacker ends at 30 + 30 = 60.
+    const three = swing(board(1, 30), IDX.scaled);
+    expect(find(three.events, "COUNTERS_PLACED")).toMatchObject({ amount: 30, source: "self" });
+    expect(three.state.players.p1.active?.damage).toBe(60);
+    // A second, different multiplier so "30" cannot be a hard-coded number: 7 counters → 70,
+    // and 70 + 70 = 140 on a 200 HP body, which still does not KO.
+    const seven = swing(board(2, 70), IDX.scaled);
+    expect(find(seven.events, "COUNTERS_PLACED")).toMatchObject({ amount: 70, source: "self" });
+    expect(seven.state.players.p1.active?.damage).toBe(140);
+  });
+
+  it("🛑 THE LOSS DIRECTION — an UNDAMAGED attacker takes NO recoil and emits NO event", () => {
+    // "For each" means EACH, not "at least one". Zero counters × 10 is 0, and `damageSelf` is
+    // silent on a non-positive amount, so there is no `COUNTERS_PLACED` row at all — not a
+    // row saying nothing happened. This is the plausible degradation D421 says to design
+    // against, and it is the direction a reader who thinks "scaling implies a minimum" gets
+    // wrong.
+    const { state, events } = swing(board(3, 0), IDX.scaled);
+    expect(state.players.p1.active?.damage).toBe(0);
+    expect(find(events, "COUNTERS_PLACED")).toBeUndefined();
+    // ⚠️ AND THE ATTACK ITSELF STILL HAPPENED — the defender took the printed 20. Without
+    // this half, "no recoil" is indistinguishable from "the attack did nothing".
+    expect(find(events, "DAMAGE_DEALT")).toMatchObject({ dealt: 20 });
+    expect(state.players.p2.active?.damage).toBe(20);
+  });
+
+  it("🛑 the CONTROL on the same body: index 1 stays at the printed 10 with 3 counters", () => {
+    // Same fixture, same board, same printed amount, clause deleted → 10 and not 30. Without
+    // this rung "the recoil was 30" is equally consistent with a build that scales EVERY
+    // recoil, and with one that reads the amount off the body's damage directly.
+    const { state, events } = swing(board(4, 30), IDX.flat);
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 10, source: "self" });
+    expect(state.players.p1.active?.damage).toBe(40);
+  });
+
+  it("🛑 the count is FLOORED, and a non-multiple of 10 proves the division is there", () => {
+    // 25 HP of damage is TWO counters, not two and a half: `Math.floor(damage / 10)`, the same
+    // arithmetic `scaledAttackDamage`'s `damageCountersOnSelf` arm does. A fold written as
+    // `damage / 10` reads 2.5 here and places 25; a fold written as `damage` places 250.
+    const { state, events } = swing(board(5, 25), IDX.scaled);
+    expect(find(events, "COUNTERS_PLACED")).toMatchObject({ amount: 20, source: "self" });
+    expect(state.players.p1.active?.damage).toBe(45);
+  });
+
+  it("🛑 THE FOLD READS THE BODY BEFORE IT WRITES IT — the recoil is not self-referential", () => {
+    // The single most likely wrong build: fold AFTER the placement, or fold twice. At 3
+    // counters the right answer is 30 (3 × 10) and the board ends at 60; a fold that saw its
+    // own placement would read 6 counters and end at 90. The two are distinguished by ONE
+    // number, and only a board can distinguish them — no reader test can.
+    const { state, events } = swing(board(6, 30), IDX.scaled);
+    const placed = events.filter((e) => e.type === "COUNTERS_PLACED");
+    expect(placed).toHaveLength(1); // one read, one write, no fixed point
+    expect(state.players.p1.active?.damage).toBe(60);
+    expect(state.players.p1.active?.damage).not.toBe(90);
+  });
+
+  it("🛑 the recoil is OUTSIDE the §8.5 pipeline — COUNTERS_PLACED, not DAMAGE_DEALT", () => {
+    // Inherited from `damageSelf` and re-asserted here because the rider is new: self-damage
+    // takes no Weakness, no Resistance and no reduction (you have no Weakness to your own
+    // attack), so it lands as a counter placement on the attacker's own seat. The defender's
+    // hit is the DAMAGE_DEALT row, and the two must not be confused.
+    const { events } = swing(board(7, 30), IDX.scaled);
+    expect(types(events)).toContain("COUNTERS_PLACED");
+    const self = find(events, "COUNTERS_PLACED");
+    expect(self?.seat).toBe("p1");
+    expect(find(events, "DAMAGE_DEALT")?.dealt).toBe(20);
+    // …and the recoil's 30 never appears as dealt damage anywhere.
+    expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §4 — the derived bytes, driven in THREE directions including LOSS.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§4 — the op's bytes, three directions, and why none of them is persisted", () => {
+  it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the argument is REACHABILITY, and it is DRIVEN", () => {
+    // ⚠️ D461's shape, NOT D462/D463's SERIALIZED ALPHABET shape, and the difference matters:
+    // the alphabet argument says "these bytes already ship", which is FALSE here — the key
+    // `perDamageCounterOnSelf` has never appeared in an op before. The reachability argument
+    // says the bytes can never reach a record at all, and that is what is asserted below.
+    //
+    // An `EffectOp` reaches a `MatchRecord` through exactly one door: `phase.cont.rest`, the
+    // ops left parked behind an op that asked a question. So a new field is unreachable when
+    // (a) its own op never parks and (b) no producer can put it AFTER a parking op.
+    const program = deriveAttackEffect(PRINTED);
+    // (b) — the only producer returns a program of LENGTH ONE, so there is no earlier op at
+    // all, let alone a parking one. This is D464's "EMPTY BY POSITION" read from the front.
+    expect(program).toHaveLength(1);
+    // (a) — resolving the attack leaves NO continuation: the phase is back to a normal turn
+    // and nothing was persisted. A parking op would leave `phase.cont` behind instead.
+    const { state } = swing(board(8, 30), IDX.scaled);
+    expect("cont" in state.phase).toBe(false);
+    // ⚠️ AND THE SAME IS TRUE ON THE ZERO-COUNTER BOARD, where the op is a silent no-op —
+    // a whiff is not a park, and the two are easy to confuse in a `stepOp` arm.
+    expect("cont" in swing(board(9, 0), IDX.scaled).state.phase).toBe(false);
+  });
+
+  it("🛑 DIRECTION 1 — the OLD spelling is untouched: the bare op gains no key", () => {
+    // D125's widening test. The rider's ABSENCE still means what it meant before this slice,
+    // byte for byte — a build that made the key required, or that defaulted it to `false`
+    // rather than omitting it, fails here.
+    expect(JSON.stringify(deriveAttackEffect(BARE)?.[0])).toBe(
+      '{"op":"damageSelf","amount":10}',
+    );
+  });
+
+  it("🛑 DIRECTION 2 — the NEW value round-trips byte for byte, key order kept", () => {
+    const fresh = deriveAttackEffect(PRINTED)?.[0];
+    expect(JSON.stringify(fresh)).toBe(
+      '{"op":"damageSelf","amount":10,"perDamageCounterOnSelf":true}',
+    );
+    expect(JSON.parse(JSON.stringify(fresh))).toEqual(fresh);
+  });
+
+  it("🛑 DIRECTION 3 — a record that LOSES the key degrades LOUDLY (D421's criterion)", () => {
+    // A dropped rider makes the recoil place the printed 10 where the card places 10 × N.
+    // That is a strictly SMALLER number off by a factor the board can read, not a plausible
+    // neighbouring behaviour. ⚠️ IT IS INVISIBLE AT EXACTLY ONE COUNTER, and that exposure is
+    // stated rather than claimed away — it is why §3 drives the fold at 3, 7 and 2 and never
+    // at 1.
+    const fresh = deriveAttackEffect(PRINTED)?.[0];
+    const dropped = JSON.parse(
+      JSON.stringify(fresh, (k, v) => (k === "perDamageCounterOnSelf" ? undefined : v)),
+    ) as EffectOp;
+    expect(dropped).toEqual(deriveAttackEffect(BARE)?.[0]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §5 — the corpus neighbourhood: what this anchor buys, and what it leaves loud.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§5 — the family, measured over the whole column rather than described", () => {
+  it("🛑 FOURTEEN rows / 72 printings, and exactly ONE of them scales the RECOIL", () => {
+    // The loosest plausible shape for "a recoil": every corpus sentence containing
+    // `to itself`. ⚠️ **WHAT IT CANNOT SEE**: a recoil spelled without those two words —
+    // *"put N damage counters on this Pokémon"* is a different op and a different family, and
+    // is deliberately outside this claim.
+    const family = legalAttackCorpus().filter(([, s]) => s.includes("to itself"));
+    expect([family.length, units(family)]).toEqual([14, 72]);
+    // 🛑 **AND THE OBVIOUS NARROWING OVER-INCLUDES, MEASURED RATHER THAN ASSUMED.** TWO of
+    // the fourteen contain `for each` — and only one of them scales the RECOIL. The other's
+    // `for each` belongs to the ATTACK's own damage clause and its recoil is flat at 30.
+    // This is the same mistake `scaledAnySnipe.test.ts`'s family grep makes one file over
+    // (`t.includes("damage to ")` matches "damage to ITSELF"), found here by writing the
+    // narrow claim first and letting the count disagree.
+    const anyForEach = family.filter(([, s]) => /for each/.test(s));
+    expect(anyForEach).toHaveLength(2);
+    const scaledRecoil = family.filter(([, s]) => /damage to itself for each/.test(s));
+    expect(scaledRecoil.map(([, s]) => s)).toEqual([PRINTED]);
+    // …so this anchor buys the whole scaled-recoil class and leaves NO printed twin refused
+    // for want of the same mechanism — the check that `OPAQUE`-as-EXPENSIVE keeps getting
+    // wrong in the other direction.
+  });
+
+  it("🛑 the family's UNBUILT remainder is TWO rows, NAMED, and neither wants this rider", () => {
+    const unbuilt = legalAttackCorpus()
+      .filter(([, s]) => s.includes("to itself") && !resolvedByAnyReader(s))
+      .map(([, s]) => s);
+    expect(unbuilt).toHaveLength(2);
+    // (a) corpus FILE LINE 202, 2 printings — a recoil behind a TWO-COIN threshold. Blocked
+    //     on the coin structure (`AttackFlipCount` + a both-tails gate), not on any scaling:
+    //     its amount is the flat printed 90.
+    expect(unbuilt).toContain(
+      "Flip 2 coins. If both of them are tails, this Pokémon also does 90 damage to itself.",
+    );
+    // (b) corpus FILE LINE 607, 4 printings — a COMPOUND whose head is a taken-Prize damage
+    //     multiplier and whose tail is the shipped flat recoil. Blocked on the JOIN, and its
+    //     `for each` is the one this file's other rung shows the loose pattern over-includes.
+    expect(unbuilt).toContain(
+      "This attack does 50 more damage for each Prize card your opponent has taken. This Pokémon also does 30 damage to itself.",
+    );
+    // …and NEITHER is blocked on the counter rider, which is the claim that makes this slice
+    // a closed one rather than the first of a family.
+    for (const s of unbuilt) expect(s.includes("damage to itself for each"), s).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// §6 — the instrument that picked this row, kept executable.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("§6 — the span probe's tail repair, which is why this row was visible at all", () => {
+  it("🛑 deleting the six-token tail and RE-ATTACHING the period reaches the BUILT twin", () => {
+    // This is `scripts/residue-census.ts`'s `keptAfterDeletion`, transcribed as the relation
+    // it asserts rather than imported (the script is outside `tsc -b`'s project references and
+    // outside vitest's include globs, so importing it here would break the typecheck —
+    // `scripts/residue-census-gate.ts` is where the function itself is driven).
+    const tok = PRINTED.split(" ");
+    const plain = tok.slice(0, tok.length - 6).join(" ");
+    // ⚠️ THE PLAIN JOIN IS THE DEFECT: it loses the period and builds nothing.
+    expect(plain).toBe("This Pokémon also does 10 damage to itself");
+    expect(deriveAttackEffect(plain)).toBeNull();
+    // …and the repair — re-attach the sentence terminator — reaches the shipped bare twin.
+    expect(`${plain}.`).toBe(BARE);
+    expect(resolvedByAnyReader(`${plain}.`)).toBe(true);
+  });
+
+  it("the engine version moved and the two spellings agree", () => {
+    expect(engineVersion).toBe("0.364.0");
+  });
+});

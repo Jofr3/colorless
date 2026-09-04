@@ -65,12 +65,40 @@
  * D461 were HEAD for a whole slice. It is a doc figure with no test behind it, which is
  * exactly the class D425 is about; recorded rather than silently corrected, because the
  * interesting fact is that the rot is one slice deep every time and nothing reddens.
+ * 🆕🆕 **D465 MOVES THEM TO 145 / 119 / 165** (THE RECOIL THAT SCALES OFF ITS OWN COUNTERS,
+ * 1 sentence / 1 printing, `censusAttackCorpus.ts` file line 500 — *"This Pokémon also does
+ * 10 damage to itself for each damage counter on it."*). ⚠️ **AND THE RELATION IS NOW A
+ * COMMAND RATHER THAN THIS PARAGRAPH.** `scripts/residue-census-gate.ts` §A reads the three
+ * literals OUT OF `censusAtHead.test.ts`'s SOURCE and compares them with this script's own
+ * three figures, so the rot recorded two paragraphs down — one slice deep, four times, with
+ * nothing reddening — can no longer happen silently. The gate holds no number of its own.
  * 🆕🆕 **D464 MOVES THEM TO 146 / 120 / 166** (THE FLIP-GATED STATUS THAT ALSO STRIPS AN
  * ENERGY, 1 sentence / 2 printings, `censusAttackCorpus.ts` file line 264 — *"Flip a coin.
  * If heads, your opponent's Active Pokémon is now Paralyzed, and discard an Energy from that
  * Pokémon."*).
- * 🛑🛑 **AND D464 FOUND A BLIND SPOT IN THIS INSTRUMENT'S SPAN PROBE, WHICH IS WHY ITS ROW
- * SAT IN `OPAQUE`.** `spanProbe` tokenises with `text.split(" ")` and rejoins with `" "`, so
+ * ✅🆕🆕 **D465 FIXED THE SPAN PROBE'S TERMINAL-PUNCTUATION BLIND SPOT, AND THE FIVE ROWS
+ * D464 NAMED ARE EXACTLY THE FIVE THAT MOVED.** `keptAfterDeletion` now offers a SECOND
+ * candidate remainder when — and only when — the deleted span reaches the last token: the
+ * dangling clause separator (`,` `;` `:`) is dropped and the sentence's own terminator is
+ * re-attached, unless the remainder already ends in one. ⚠️ **IT IS A WIDENING, NOT A
+ * REPLACEMENT**: the unrepaired join is still asked first, so no span this probe used to
+ * reach can be lost — MEASURED, not argued, by diffing the whole printed report before and
+ * after (all 29 pre-existing `SPAN` evidence lines are byte-identical; the only new output
+ * is five rows and their five `[TAIL REPAIR]` lines).
+ * **THE CLASS TABLE, BEFORE → AFTER, AT D465's HEAD BEFORE ANYTHING WAS BUILT:** `OPAQUE`
+ * **86/123 → 81/116**, `PHRASE-6` 0/0 → **2/2**, `PHRASE-15` 0/0 → **1/1**, `PHRASE-16`
+ * 0/0 → **1/1**, `PHRASE-18` 0/0 → **1/3**. **NOTHING ELSE MOVED**, and the residue itself
+ * did not move at all (120 / 166 both sides) — `builds()` is untouched, so the three pinned
+ * literals still agreed to the digit across the fix. The five rows, by corpus FILE LINE:
+ * **126** `OPAQUE`→`PHRASE-15`, **129** →`PHRASE-16`, **143** →`PHRASE-6`,
+ * **412** →`PHRASE-18`, **500** →`PHRASE-6`. **D465 THEN BUILT 500**, which is why
+ * `PHRASE-6` reads 1/1 at head and `OPAQUE` did NOT move for the build — a class is a
+ * statement about the INSTRUMENT's reach, and the instrument changed in the same slice.
+ * ⚠️ **WHAT IS STILL BLIND**: a sentence whose last character is `)` — a parenthetical
+ * rider — has no terminator to re-attach and gets none. Asserted as a REFUSAL in
+ * `scripts/residue-census-gate.ts` §B ⑤, because a blind spot that is only written down is
+ * a claim (D212).
+ * 🛑🛑 **THE BLIND SPOT AS D464 FOUND IT, KEPT FOR THE RECORD.** `spanProbe` tokenises with `text.split(" ")` and rejoins with `" "`, so
  * a deletion that reaches the LAST token takes the sentence-final period with it and the
  * remainder can never build. Corpus line 264 is one such row: deleting *"and discard an
  * Energy from that Pokémon."* leaves a built string ONLY if the `.` is re-attached, which
@@ -90,6 +118,14 @@
  * `if` in `spanProbe` — deliberately NOT made here, because changing the instrument in the
  * same slice that uses it to pick a target would leave nothing to check the pick against.
  * It is the next slice's cheapest instrument work, and the six rows are its own test.**
+ * ✅ **D465 PAID IT, AND D464's TWO FIGURES BOTH REPRODUCED EXACTLY.** At D465's head the
+ * tail-aware probe reaches **17 sentences / 22 printings** — D464 measured 18 / 24 with line
+ * 264 still in the residue, and `18 − 1 = 17`, `24 − 2 = 22`. Of those 17, **12 are already
+ * reached by the SEGMENT probe** (D464's "the other twelve") and **5 / 7 printings are
+ * reachable ONLY with the repair** — the five it named, to the row. ⚠️ **THE FIX IS NOT ONE
+ * `if`**: the period alone is not enough, because two of the five leave a dangling comma.
+ * D464's estimate of the SIZE was wrong in the cheap direction while both of its MEASUREMENTS
+ * were exact, which is the ordinary shape — a measurement survives a slice, a guess does not.
  * 🛑 **D463 IS THE FIRST SLICE IN FOUR TO MOVE `OPAQUE` — 88/126 → 87/125. D464 IS THE
  * SECOND, 87/125 → 86/123.** Line 234 was
  * classified `OPAQUE` and line 200 `SUBST-7`, and the two are ONE shape reached by two
@@ -256,7 +292,7 @@ const { sentences: REGISTRY, pairs: REGISTRY_PAIRS } = registryAttackSentences()
 // ─── 2. THE BUILD PREDICATE ──────────────────────────────────────────────────
 /** ① reader ② registry ③ gate splitter ④ trailing splitter. The transcription of
     `censusAtHead.test.ts`'s `residueSentences` filter, negated. */
-function builds(text: string): boolean {
+export function builds(text: string): boolean {
   if (resolvedByAnyReader(text)) return true;
   if (REGISTRY.has(text)) return true;
   const gate = splitAttackGateClause(text);
@@ -349,19 +385,57 @@ function segmentProbe(text: string): SegmentHit | null {
   return best;
 }
 
-type SpanHit = { span: string; at: number; len: number; ties: number; kept: string };
+type SpanHit = {
+  span: string;
+  at: number;
+  len: number;
+  ties: number;
+  kept: string;
+  repaired: boolean;
+};
 
-function spanProbe(text: string): SpanHit | null {
+/** 🆕 D465 — THE TAIL REPAIR. `spanProbe` tokenises on `" "` and rejoins on
+    `" "`, so a deletion that reaches the LAST token takes the sentence-final
+    period with it and the remainder can never build: no corpus sentence ends
+    without its terminator. D464 measured the cost of that and did not pay it —
+    SIX residue rows / 9 printings sat in `OPAQUE` for this purely mechanical
+    reason. The repair, applied ONLY when the deleted span reaches the last
+    token: drop a dangling clause separator (`,` `;` `:`) off the remainder,
+    then re-attach the original sentence terminator unless the remainder already
+    ends in one. ⚠️ IT IS A WIDENING, NOT A REPLACEMENT — the unrepaired join is
+    still asked, so no span this probe used to reach can be lost. ⚠️ AND IT IS
+    STILL BLIND to a sentence whose last character is `)` (a parenthetical
+    rider), because there is no terminator to re-attach. */
+export const TERMINATOR = /[.!?]$/;
+export function keptAfterDeletion(text: string, tok: readonly string[], i: number, len: number): string[] {
+  const plain = [...tok.slice(0, i), ...tok.slice(i + len)].join(" ");
+  if (i + len !== tok.length || i === 0) return [plain];
+  const term = TERMINATOR.exec(text)?.[0] ?? "";
+  if (term === "") return [plain];
+  const trimmed = plain.replace(/[,;:]$/, "");
+  const repaired = /[.!?)]$/.test(trimmed) ? trimmed : trimmed + term;
+  return repaired === plain ? [plain] : [plain, repaired];
+}
+
+export function spanProbe(text: string): SpanHit | null {
   const tok = text.split(" ");
   for (let len = 1; len < tok.length; len++) {
     let first: SpanHit | null = null;
     let ties = 0;
     for (let i = 0; i + len <= tok.length; i++) {
-      const kept = [...tok.slice(0, i), ...tok.slice(i + len)].join(" ");
-      if (!builds(kept)) continue;
+      const candidates = keptAfterDeletion(text, tok, i, len);
+      const hit = candidates.findIndex((c) => builds(c));
+      if (hit < 0) continue;
       ties++;
       if (first === null) {
-        first = { span: tok.slice(i, i + len).join(" "), at: i, len, ties: 0, kept };
+        first = {
+          span: tok.slice(i, i + len).join(" "),
+          at: i,
+          len,
+          ties: 0,
+          kept: candidates[hit] ?? "",
+          repaired: hit > 0,
+        };
       }
     }
     if (first !== null) return { ...first, ties };
@@ -410,7 +484,7 @@ for (const [units, text] of corpus) {
 }
 const builtSentences = corpus.filter(([, t]) => builds(t)).map(([, t]) => t);
 
-type Row = {
+export type Row = {
   units: number;
   text: string;
   cls: string;
@@ -419,7 +493,7 @@ type Row = {
   sub: SubstHit | null;
 };
 
-const rows: Row[] = residue.map(([units, text]) => {
+export const rows: Row[] = residue.map(([units, text]) => {
   const seg = segmentProbe(text);
   const span = spanProbe(text);
   const sub = substProbe(text, builtSentences);
@@ -437,7 +511,7 @@ const rows: Row[] = residue.map(([units, text]) => {
 
 const P = (n: number) => String(n).padStart(3);
 
-if (NEEDLE === null) {
+if (import.meta.main && NEEDLE === null) {
   console.log("=== THE BLOCKER CENSUS (D459) ===");
   console.log(
     `readers: ${attackReaderSurface().length}   REGISTRY_ATTACKS: ${REGISTRY_PAIRS} pairs / ${REGISTRY.size} distinct sentences   SUBMAX=${SUBMAX}`,
@@ -479,7 +553,7 @@ if (NEEDLE === null) {
       report(r, "     ");
     }
   }
-} else {
+} else if (import.meta.main) {
   const hits = rows.filter((r) => r.text.includes(NEEDLE));
   console.log(`=== ${hits.length} residue row(s) matching ${JSON.stringify(NEEDLE)} ===`);
   for (const r of hits) {
@@ -505,8 +579,11 @@ function report(r: Row, pad: string): void {
   }
   if (r.span !== null) {
     console.log(
-      `${pad}SPAN  delete ${r.span.len} token(s) at ${r.span.at} (${r.span.ties} minimal span(s) build): «${r.span.span}»`,
+      `${pad}SPAN  delete ${r.span.len} token(s) at ${r.span.at} (${r.span.ties} minimal span(s) build)${r.span.repaired ? " [TAIL REPAIR]" : ""}: «${r.span.span}»`,
     );
+    // D465: a repaired remainder is NOT the sentence minus the span — the
+    // terminator moved — so it is printed rather than left to be reconstructed.
+    if (r.span.repaired) console.log(`${pad}      KEPT  ${r.span.kept}`);
     if (r.seg === null) console.log(`${pad}      ${derivation(r.span.kept)}`);
   }
   if (r.seg === null && r.sub === null && r.span === null) {

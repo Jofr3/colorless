@@ -27097,6 +27097,14 @@ At D459's head, AFTER the build (129 sentences / 180 printings; 130 / 182 before
 | `PHRASE-n` | 14 | 18 | one contiguous span deleted and it builds |
 | **`OPAQUE`** | **88** | **126** | **no single deletion or substitution reaches a built string** |
 
+> 🆕🛑 **D465 — THIS TABLE WAS PRODUCED BY A PROBE WITH A KNOWN BLIND SPOT, AND THE CORRECTED
+> INSTRUMENT DISAGREES WITH IT.** `spanProbe` could not delete a span reaching the last token, so
+> `OPAQUE` was over-populated by six rows throughout D459–D464. The snapshot above is kept as what
+> was reported, not corrected in place, because the residue it measures is five slices gone; what is
+> corrected is the READING. At D465's head, with the probe fixed and before anything was built, the
+> table reads `OPAQUE` **81/116** of a 120/166 residue — and the *"68% of the residue"* line below
+> happens to survive (81/119 = 68% at head), which is a coincidence and not a defence.
+
 🛑 **`OPAQUE` is 68% of the residue by sentence.** Every earlier "cheapest next sentence" list in
 this run was a hand-ranked guess and three of them were wrong; this is the first time the shape of
 what is left has a number.
@@ -27152,6 +27160,12 @@ printings of the residue, SIX of them (9 printings) currently `OPAQUE`** — cor
 129, 143, 264, 412 and 500. That is D463's *"`OPAQUE` means UNCLASSIFIED, never EXPENSIVE"* with a
 named cause, and the fix is one `if` with five remaining rows as its test.
 
+> ✅🆕 **D465 PAID IT, AND BOTH FIGURES ABOVE REPRODUCED EXACTLY.** At D465's head the tail-aware
+> probe reaches **17 sentences / 22 printings** — `18 − 1` and `24 − 2`, this row's own — and the
+> five remaining `OPAQUE` rows are the five named, to the row. ⚠️ **THE ONE THING THAT DID NOT
+> SURVIVE IS *"one `if`"***: the period alone is not enough, because FILE LINES 126 and 129 leave a
+> dangling comma. Two measurements held for a slice and one estimate did not, in the same paragraph.
+
 ### The drawer nobody had read
 
 The sentence was the LOUD attribution control in three suites and already had a fixture. That is the
@@ -27169,3 +27183,141 @@ loosening it has and line 264 is in none of them; `FLIP_DEFENDER_STATUS_PAIR` lo
 different row; **only `FLIP_DEFENDER_NOW`'s `\.$` was ever doing the work** (2 rows / 29 printings
 strict, 6 / 35 drifted). Both `FLIP_DEFENDER_NOW` and `DEFENDER_NOW` had **zero mutant rows** — an
 absence audit closed both. The re-pointed controls now sit on the set the same probe NAMES.
+
+
+## D465 — the span probe's terminal-punctuation blind spot, fixed and GATED, and the row the corrected table named
+
+Two artefacts, deliberately in this order: **fix the instrument, re-run it, and only then pick a
+target** — D464 refused to do both in one slice on the ground that changing the instrument inside
+the slice that uses it leaves nothing to check the pick against.
+
+### (a) The probe, and what "the fix must not silently widen anything else" means mechanically
+
+`spanProbe` did `text.split(" ")` → drop a span → `join(" ")`. Every corpus sentence ends with its
+terminator, so a deletion reaching the LAST token took the period with it and the remainder **could
+never build**. `keptAfterDeletion` now returns a SECOND candidate on a tail span only: drop a
+dangling `,`/`;`/`:`, re-attach the sentence's own terminator, and decline when the remainder already
+ends in one.
+
+⚠️ **IT IS A WIDENING, NOT A REPLACEMENT.** The unrepaired join is still asked first, so no span the
+probe used to reach can be lost — and that is checked rather than argued: the whole printed report
+was diffed before and after, and **all 29 pre-existing `SPAN` evidence lines are byte-identical**.
+The only new output is five rows and their five `[TAIL REPAIR]` lines.
+
+**THE CLASS TABLE, BEFORE → AFTER, WITH NOTHING BUILT:**
+
+| class | before (s/p) | after (s/p) |
+|---|---:|---:|
+| `OPAQUE` | 86 / 123 | **81 / 116** |
+| `PHRASE-6` | — | **2 / 2** |
+| `PHRASE-15` | — | **1 / 1** |
+| `PHRASE-16` | — | **1 / 1** |
+| `PHRASE-18` | — | **1 / 3** |
+| every other class | unchanged | unchanged |
+| RESIDUE | 120 / 166 | **120 / 166** |
+
+**EXACTLY FIVE ROWS CHANGED CLASS**, measured by joining the two full row dumps on the sentence
+text: corpus FILE LINE **126** `OPAQUE`→`PHRASE-15`, **129** →`PHRASE-16`, **143** →`PHRASE-6`,
+**412** →`PHRASE-18`, **500** →`PHRASE-6`. D464 named six; the sixth (264) it built itself. The
+residue did not move at all, because `builds()` is untouched — so the three literals
+`censusAtHead.test.ts` pins still agreed to the digit across the fix, which is the check that says
+the instrument still measures the same object.
+
+### (b) The gate, because a committed figure with nothing behind it rots
+
+`scripts/residue-census-gate.ts` — a `killedByCommand` KILLER on D212's precedent, **not** a step of
+`bun run check`. ⚠️ A `*.test.ts` cannot do this: `scripts/**` is outside vitest's include globs AND
+outside `tsc -b`'s project references, so importing the probe from a suite breaks the typecheck. The
+probe's printing is now behind `if (import.meta.main)` and its pieces are exported.
+
+* **§A — the transcription is the same object.** The three literals are read out of
+  `censusAtHead.test.ts`'s SOURCE and compared with the instrument's own three figures. **The gate
+  holds no number of its own**, which is the whole point: a figure copied into a second file is
+  exactly what rotted one slice deep, four separate times, with nothing reddening.
+* **§B — the tail repair as a pure function on literal inputs**, seven claims, one per axis, and
+  **including the blind spot that remains**: a `)`-terminated sentence has no terminator to
+  re-attach and must not be given an invented one.
+* **§C — confinement, TOTAL over the residue**: 32,154 spans, a second candidate offered iff the
+  span reaches the last token. This is the section that catches a repair firing EVERYWHERE, which a
+  "the five named rows moved" check would pass.
+
+Five mutation rows, all KILLED by the gate: the defect restored, the vacuity flip, the comma strip
+removed, the double terminator, and the invented terminator on a paren.
+
+### (c) The target, chosen from the corrected table — and the three refused with prices
+
+Corpus **FILE LINE 500** — *"This Pokémon also does 10 damage to itself for each damage counter on
+it."*, **1 sentence / 1 legal printing**, `OPAQUE` before the fix and `PHRASE-6` after — now derives
+to `[{op:"damageSelf", amount:10, perDamageCounterOnSelf:true}]`.
+
+Refused, with the price that refused them:
+
+* **FILE LINE 143** *"Draw 3 cards from the bottom of your deck."* (1p) — the resume point's own
+  pick. `deck` is ordered with index 0 as the top and `drawToHand` takes `deck.slice(0, count)` at
+  **all nine call sites**; the bottom END is a first-class concept for PUTTING cards under
+  (`bottomDeckTop`, `restTo: "bottom"`, `reorderTop.from`) but **nothing removes from the bottom
+  into a hand**. So: a new mover, a `recordAs` residue that currently reads `slice(0, …)`, and a
+  pinned negative control at `optionalDraw.test.ts:140` to re-point. Three mechanisms for one
+  printing against this row's one.
+* **FILE LINES 126 / 129** (1p each) — *"…for each Energy card you discarded in this way"* counts a
+  quantity the sentence's OWN HEAD produced. That is a cross-clause referent, and `snipeAmount` is
+  handed `(op, state, ctx)` with no state field, `EffectSlot` or `EffectContext` key that carries
+  "how many cards the previous op moved". The same refusal `scaledAnySnipe.test.ts` (a) already
+  records.
+* **FILE LINE 412** (3p, the largest) — a scaled counter-put AND *"Then, shuffle those Energy cards
+  into your deck."*, which shuffles back the very cards the count read. Two mechanisms at two seams.
+
+### (d) `damageCountersOnSelf` ships and is deliberately unused
+
+`DamageCountSource` has seventeen members and one of them is exactly *"damage counters on this
+Pokémon"*. It is a **PARSE-TIME type** — *"no `EffectOp` carries one"*, its own words — consumed in
+the same tick by `attack.ts`'s module-private `scaledAttackDamage`, which needs a defender seat and
+an effective cost array `EffectContext` does not have. The shipped way to scale an op's own amount is
+a boolean rider folded by an `(op, state, ctx)` function; `snipeAmount` has two, and `recoilAmount`
+is the third. **The general collapse into `scale?: DamageCountSource` was PRICED at D448/D449 — 24
+sites across 10 files plus a `MATCH_RECORD_VERSION` bump, for zero extra printings.**
+
+### (e) The negative control an exact-sentence grep could not find
+
+`scaledAnySnipe.test.ts` §1 pins `unbuilt` at 8 over a population built by
+`/for each/i.test(t) && t.includes("damage to ")`. An exact grep of every `*.test.ts` for this
+slice's sentence returned **ZERO hits** — and the rung still reddened, because the row was
+**counted, never named**. Re-pointed to 7 (D418) with two assertions naming it and pinning the fact
+that makes it a non-member: its op is `damageSelf`, not `damageChosen`. ⚠️ And the same loose
+pattern is now recorded as OVER-including a self-hit (`"damage to "` matches *"damage to ITSELF"*)
+as well as MISSING a counter-spelled snipe, which its own block already knew about.
+
+### (f) `MATCH_RECORD_VERSION` STAYS 29 — REACHABILITY, in its FIRST-position form
+
+The ALPHABET shape (D462/D463) is **unavailable**: `perDamageCounterOnSelf` is a key no op has ever
+carried, so *"these bytes already ship"* is simply false. D461's REACHABILITY shape holds instead,
+and in the mirror of D464's: that slice's op reached `cont.rest` and was safe because `rest` was
+**EMPTY BY POSITION** (the op was last); this one is unreachable because the only producer returns a
+program of **LENGTH ONE**, so there is no earlier op at all, let alone a parking one. Driven rather
+than asserted — program length, and `phase.cont` absent after the swing on a scaled board **and on a
+zero-counter board where the op whiffs**, because a whiff is not a park — plus the derived bytes in
+three directions including LOSS.
+
+### (g) The two zeros, which are different zeros
+
+* A printed `0` in the sentence stays on the LOUD path (`amount >= 1`), because a card that prints
+  it does not exist.
+* A ZERO-COUNTER board is real and is **SILENT**: `0 × 10 = 0`, `damageSelf` returns unchanged, and
+  **no `COUNTERS_PLACED` row is emitted at all** — not a row saying nothing happened. *"For each"*
+  means EACH, not "at least one", and that is the LOSS direction a reader who thinks scaling implies
+  a minimum gets wrong.
+
+### (h) What it cost, and the two rounds that were not visible
+
+`bun run check` needed **FOUR rounds**. Round 3's finding is the one worth carrying: a sweep for
+chain heads anchored at `^\s*<subject> - N /*` found sixteen and **missed three**, because those
+sit MID-LINE inside a two-operand `toEqual([…, …])` — and the runner then showed only **two of the
+three**, the third being behind a passing assertion in the same `it`. A new FIXTURE id cost twelve
+assertions in `opponentResistanceBonus.test.ts` alone (the pool size 558 → 559 plus eleven nested
+chains), in a file with no connection to this slice's subject.
+
+🛑 **`OPAQUE` DID NOT MOVE FOR THE BUILD — 81/116 both sides** — because the FIX had already taken
+the row out of it. That is the reverse of D463's and D464's close-outs, which both reported an
+`OPAQUE` step as the receipt for their build, and it is the general rule: **a class-table delta is a
+statement about the INSTRUMENT, and it is only a statement about the work when the instrument stood
+still.**

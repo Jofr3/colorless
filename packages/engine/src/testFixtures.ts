@@ -13974,6 +13974,57 @@ export const FIXTURE_POOL: Record<string, Card> = {
     ],
   }),
 
+  /** 🆕🆕 **D465 — THE RECOIL THAT SCALES OFF ITS OWN COUNTERS.** `censusAttackCorpus.ts`
+      FILE LINE 500, *"This Pokémon also does 10 damage to itself for each damage counter on
+      it."*, **1 legal printing**. ⚠️ **A NEW FIXTURE ID, AND D464's BLOCK IS THE REASON THIS
+      IS SAID OUT LOUD**: that slice could write *"NO NEW FIXTURE ID"* because `fix-oxford`
+      index 2 already printed its sentence. Nothing in `FIXTURE_POOL` prints THIS one —
+      MEASURED with a TOTAL grep for `damage to itself` over this file: **EIGHT** effect
+      strings, none scaled — five FLAT (`This Pokémon also does {30|30|50|50|90} damage to
+      itself.`), one behind a coin (`Flip a coin. If tails, …60…`), one as the TAIL of a
+      compound (`…50 more damage for each Prize card…`) and one inside an optional-boost
+      gate (`You may do 30 more damage. If you do, …`). ⚠️ **THE FIRST COUNT WRITTEN HERE
+      SAID SEVEN, AND IT WAS WRONG BECAUSE THE GREP WAS ANCHORED ON `effect:`** — one of the
+      eight is a string that wraps onto its own line, so the anchored pattern could not see it
+      (D419: grep the LOOSEST plausible shape and state what the pattern cannot see). Re-run
+      unanchored it reads eight. So the id is new and the census deltas a new card forces were
+      paid rather than claimed away.
+
+      🛑 **TWO INDICES, AND THE SECOND IS THE ONE-AXIS CONTROL.** idx 0 "Counter Toll" prints
+      the scaled sentence; idx 1 "Flat Toll" prints the BARE twin (corpus FILE LINE 501, 21
+      printings) at the SAME printed 10 and the SAME 20 damage. On a board carrying three
+      counters the two read 30 and 10, so "the recoil was 30" cannot be confused with "the
+      recoil is the printed number" — which is the only thing that makes the fold observable
+      (D399: a near miss proves nothing about a guard it never reaches, read from the other
+      side).
+
+      ⚠️ **200 HP, NO Weakness, NO Resistance, NO Ability, and a {C} cost** — every number the
+      suite reads is a printed number, and the largest recoil it drives (7 counters → 70) does
+      not KO the attacker, so the §8.1 tail never runs and cannot explain a missing counter.
+      ⚠️ **THE CARRIER IS UNRESOLVED AND SAID SO (D425).** This checkout has no D1, so the
+      BODY is synthetic; only the two effect STRINGS are transcription, asserted off
+      `legalAttackCorpus()` in the suite rather than eyeballed. */
+  "fix-recoil-scale": battler("fix-recoil-scale", {
+    name: "fix-recoil-scale",
+    types: ["Fighting"],
+    hp: 200,
+    retreat: 1,
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Counter Toll",
+        effect: "This Pokémon also does 10 damage to itself for each damage counter on it.",
+        damage: 20,
+      },
+      {
+        cost: ["Colorless"],
+        name: "Flat Toll",
+        effect: "This Pokémon also does 10 damage to itself.",
+        damage: 20,
+      },
+    ],
+  }),
+
   "fix-ninetales": battler("fix-ninetales", {
     name: "fix-ninetales",
     types: ["Fire"],
@@ -23169,6 +23220,27 @@ export const FLIP_STATUS_ENERGY_DISCARD_DECK = deckOf({
   "fix-titan": 16, // 340 HP neutral Basic, NO attacks — a clean defender that survives
   "fix-energy": 30, // Colorless Basic — every cost here is {C}-only
   "fix-water-energy": 10, // {W} — the SECOND distinguishable Energy, so the discard can park
+});
+
+/** 🆕🆕 D465 — the SCALED RECOIL's own deck (corpus FILE LINE 500). A NEW deck rather than
+    a widened neighbour, on D412's rule: adding ONE card to a shared `*_DECK` reddened three
+    of D409's boards, because deck composition is load-bearing for every suite seeded off it.
+    `SELF_DAMAGE_DECK` is the obvious neighbour and is deliberately left alone.
+
+      • `fix-recoil-scale` — the attacker. TWO indices: idx 0 the scaled recoil, idx 1 the
+        BARE twin at the same printed 10, which is the one-axis control.
+      • `fix-titan` (340 HP, NO attacks) — the mulligan-free starter, the bench filler, and a
+        defender no printed number here can Knock Out, so the attacker's own counters are
+        never disturbed by a §8.1 promotion.
+      • `fix-energy` — Colorless Basic. Both costs are {C}.
+
+    ⚠️ **SEED-FREE, AND THAT IS A PROPERTY OF THE SENTENCE RATHER THAN OF THE DECK**: neither
+    printed effect takes a coin and neither opens a choice, and no Special Condition is
+    applied, so no Checkup flip can move a number this suite reads. */
+export const SELF_DAMAGE_PER_COUNTER_DECK = deckOf({
+  "fix-recoil-scale": 4, // idx 0 prints corpus line 500; idx 1 the bare twin, line 501
+  "fix-titan": 16, // 340 HP neutral Basic, NO attacks — starter, filler, clean defender
+  "fix-energy": 40, // Colorless Basic — both costs here are {C}-only
 });
 
 export const DEFENDER_STATUS_PAIR_DECK = deckOf({

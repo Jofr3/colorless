@@ -19226,6 +19226,52 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.363.0 → **0.364.0** (D465 — THE RECOIL THAT SCALES OFF ITS OWN
+    COUNTERS, `censusAttackCorpus.ts` FILE LINE 500: *"This Pokémon also does 10 damage to
+    itself for each damage counter on it."*, **1 sentence / 1 legal printing** that derived
+    to `null` and now derives to `[{op:"damageSelf", amount:10, perDamageCounterOnSelf:true}]`.
+    ONE new anchor (`SELF_DAMAGE_PER_COUNTER`, beside `SELF_DAMAGE` and mutually exclusive
+    with it by `\.$` rather than by order), ONE new OPTIONAL FIELD on the SHIPPED
+    `damageSelf` op, ONE new fold (`recoilAmount` in `interpreter.ts`, `snipeAmount`'s
+    `(op, state, ctx)` shape) and ONE new `FIXTURE_POOL` id — **ZERO new `EffectOp`
+    members, `DamageCountSource` kinds, readers (surface unmoved at 13), prompts, events,
+    error codes, registry rows, `packages/schema` bytes or `redact.ts` bytes.**
+
+    🛑 **THE `MATCH_RECORD_VERSION` ARGUMENT IS REACHABILITY (D461's shape), AND THE
+    ALPHABET SHAPE (D462/D463's) IS NOT AVAILABLE HERE.** `perDamageCounterOnSelf` is a key
+    no op has ever carried, so "these bytes already ship" is simply false. What is true is
+    that they can never be WRITTEN: an `EffectOp` reaches a `MatchRecord` through exactly
+    one door, `phase.cont.rest`, the ops parked behind an op that asked a question —
+    `damageSelf` does not park, and the only producer of the rider returns a program of
+    **LENGTH ONE**, so there is no earlier op at all, let alone a parking one. D464's row was
+    "EMPTY BY POSITION" because its discard was LAST; this one is unreachable because it is
+    FIRST and alone. Both halves are DRIVEN in `selfDamagePerCounter.test.ts` §4 (program
+    length, and `phase.cont` absent after the swing on both a scaled board and a
+    zero-counter one — a whiff is not a park), and the derived bytes are driven in three
+    directions including LOSS. **STAYS 29.**
+
+    ⚠️ **`damageCountersOnSelf` ALREADY SHIPS AS A `DamageCountSource` AND IS DELIBERATELY
+    NOT USED.** That type says of itself that it is PARSE-TIME — consumed in the same tick by
+    `scaledAttackDamage` — and **no `EffectOp` carries one**. Using it meant either
+    exporting `attack.ts`'s module-private fold (which needs a defender seat and an
+    effective cost array, neither on `EffectContext`) or collapsing every boolean rider into
+    a `scale?: DamageCountSource` field, which D448/D449 PRICED at 24 sites across 10 files
+    plus a `MATCH_RECORD_VERSION` bump for zero extra printings. The rider is that measured
+    refusal re-applied, not re-argued.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT HEAD BY AN EXACT STRING COUNT AFTER THE BUMP AND
+    WITH THE HISTORY HALF ENUMERATED: 53 LIVE sites / 43 assertions across 54 occurrences of
+    `0.364.0`, plus 11 occurrences of `0.363.0` that are HISTORY and must not move.** The
+    53: 42 `expect(engineVersion).toBe(…)` pins + 1 `expect(manifest.version).toBe(…)`
+    (`legacyEnergy.test.ts`, which carries both) = **43 assertions**; plus 7 `it(…)` TITLES
+    that spell the version, `packages/engine/package.json`, this declaration and D275's
+    mutant `find`. The 54th occurrence is PROSE — `selfDamagePerCounter.test.ts`'s own
+    header, which spells the transition. The 11 stale-by-design: 7 in `docs/`, the D464
+    paragraph below, and two in `flipStatusEnergyDiscard.test.ts` (its header and its §8
+    comment). **D465 AUTHORS THE 43rd ASSERTION** (`selfDamagePerCounter.test.ts` §6), so a
+    successor inherits 43 assertions / 53 live sites — D464 forecast "42 / 52" and it was
+    right, which is the first time this forecast has survived a slice unamended.
+
     🆕🆕 engineVersion 0.362.0 → **0.363.0** (D464 — THE FLIP-GATED STATUS THAT ALSO
     STRIPS AN ENERGY, `censusAttackCorpus.ts` FILE LINE 264: *"Flip a coin. If heads, your
     opponent's Active Pokémon is now Paralyzed, and discard an Energy from that Pokémon."*,
@@ -19423,7 +19469,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.363.0";
+export const engineVersion = "0.364.0";
 
 export type {
   ApplyResult,

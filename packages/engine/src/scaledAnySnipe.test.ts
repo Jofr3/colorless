@@ -141,9 +141,33 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     );
     expect(family).toHaveLength(10);
     const unbuilt = family.filter(([, t]) => !resolvedByAnyReader(t)).map(([, t]) => t);
-    // EIGHT remain, and each is refused for a reason of its own rather than for one
-    // reason eight times (D447 §6: never assume one shape has one refusal).
-    expect(unbuilt).toHaveLength(8);
+    // 🆕🛑 **D465 — EIGHT → SEVEN, AND THE ROW THAT LEFT WAS NEVER A MEMBER OF THIS
+    // FAMILY AT ALL.** This is the SECOND thing the grep above cannot see, and it is
+    // the opposite failure from the one already recorded: that block says the pattern
+    // MISSES a real member (corpus line 412, spelled with counters). This one says it
+    // OVER-INCLUDES a non-member — `t.includes("damage to ")` matches *"damage to
+    // ITSELF"*, so corpus line 500, a RECOIL on the attacker's own body, has been
+    // sitting in this "chosen-target hit" population since the rung was written.
+    // ⚠️ **RE-POINTED, NOT DELETED (D418), AND NOT MERELY DECREMENTED.** A count that
+    // silently steps 8 → 7 records that something left and says nothing about WHAT;
+    // the two assertions below name it, pin what it derives to, and pin the ONE fact
+    // that makes it a non-member — its op is `damageSelf`, not `damageChosen`, so
+    // nothing about it bears on whether the scaled CHOSEN-hit family is closed.
+    // ⚠️ **AND THE DISCRIMINATION IS SHARPER THAN THE COUNT IT REPLACES**: the old
+    // `toHaveLength(8)` could not tell "D465 built the self-hit" from "a reader
+    // widened past the count clause and ate a chosen-target row". The pair below can —
+    // it goes red on the second and stays green only on the first.
+    expect(unbuilt).toHaveLength(7);
+    // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
+    //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
+    const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
+    expect(family.map(([, t]) => t)).toContain(SELF_RECOIL_SCALED);
+    expect(unbuilt).not.toContain(SELF_RECOIL_SCALED);
+    // …and the op it derives to is the one that says it was never this family's: a
+    // `damageSelf` on the ATTACKER, with no `target`, no `count` and no arity.
+    expect(deriveAttackEffect(SELF_RECOIL_SCALED)).toEqual([
+      { op: "damageSelf", amount: 10, perDamageCounterOnSelf: true },
+    ]);
     // (a) THE DISCARD-COUNT HEAD — corpus line 138, 2 printings. *"…for each Energy
     //     card you discarded in this way"* counts a quantity the sentence's OWN HEAD
     //     produced. That is a CROSS-CLAUSE REFERENCE, not a board fact: `snipeAmount`
@@ -415,7 +439,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.363.0");
+    expect(engineVersion).toBe("0.364.0");
   });
 });
 

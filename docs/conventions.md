@@ -4820,3 +4820,126 @@ alphabet** — an array that already accepts N members does not gain a shape by 
 ⚠️ And when the slice DOES park, the LOSS direction stops being a formality: empty `rest` in the
 persisted bytes and the resumed board must take a **different, observable** ending. That is what
 turns "N parks" into a claim about a BOARD rather than about a log.
+## An instrument that produces a COMMITTED figure needs a KILLER, not a doc block (D465)
+
+`scripts/residue-census.ts` shipped at D459 as *"the instrument that produces a coverage figure is
+committed beside the corpus it measures"*. It then ran for six slices with **nothing behind it**,
+and the bill arrived twice:
+
+- The three literals it transcribes from `censusAtHead.test.ts` **rotted by exactly one slice, four
+  separate times**, and its own doc block says so — *"the rot is one slice deep every time and
+  nothing reddens."*
+- Its span probe had a **mechanical blind spot** that over-populated `OPAQUE` by six rows for six
+  slices. A wrong classifier does not go red. It just points at the wrong target.
+
+`scripts/residue-census-gate.ts` is the repair, on D212's precedent (`lint-coverage.ts`) and D411's
+(`recovery-gate.ts`): a `killedByCommand` killer, not a `bun run check` step. ⚠️ **A `*.test.ts`
+CANNOT do this job** — `scripts/**` is outside vitest's include globs *and* outside `tsc -b`'s
+project references, so importing the probe from a suite breaks the typecheck instead of guarding
+anything. The gate needs the module importable, which means guarding the printing with
+`if (import.meta.main)` — a two-line change that costs nothing and is the whole difference between
+a script and a library.
+
+⚠️ **THE GATE HOLDS NO NUMBER OF ITS OWN.** Its §A reads the pinned literals out of the suite's
+SOURCE and compares them with the instrument's own computation. A figure copied into a second file
+is the exact thing that rotted four times; a gate that copies it rots the same way and takes the
+alarm with it.
+
+## A tokeniser that splits and rejoins on `" "` cannot delete the LAST token (D465)
+
+`spanProbe` did `text.split(" ")`, dropped a span, and `join(" ")`. Every corpus sentence ends with
+its terminator, so a deletion reaching the last token took the period with it and the remainder
+**could never build** — not "rarely", never. Six residue rows / 9 printings sat in `OPAQUE` for that
+reason alone.
+
+The repair is not one `if`, which is what the guess said:
+
+1. re-attach the sentence terminator when the span reaches the last token, **and**
+2. drop a dangling clause separator (`,` `;` `:`) first — two of the five rows leave `…of your
+   deck,` and a period alone yields `deck,.`, and
+3. do **not** re-terminate a remainder that already ends in `.` — that is a NARROWING dressed as a
+   widening, and it silently costs hits the probe already had.
+
+⚠️ **KEEP THE UNREPAIRED CANDIDATE AND ASK BOTH.** Replacing the plain join with the repaired one
+makes the fix a change; asking both makes it a widening, and "no span this probe used to reach can
+be lost" becomes a property rather than a hope. It is checkable in one diff: every pre-existing
+`SPAN` evidence line must come out byte-identical.
+
+## D464's MEASUREMENTS survived the slice; its ESTIMATE of the fix did not (D465)
+
+D464 wrote three things about the blind spot. Two were measurements and reproduced exactly a slice
+later (`18 − 1 = 17` sentences, `24 − 2 = 22` printings once its own row was built; the six named
+FILE LINES were the six, to the row). The third — *"the fix is one `if` in `spanProbe`"* — was a
+guess and was wrong in the cheap direction. **A measurement survives a slice. A size estimate does
+not, and the two sit in the same paragraph looking alike.**
+
+## A CLASS TABLE is a statement about the INSTRUMENT, so fixing the probe moves it with no build (D465)
+
+D465 moved `OPAQUE` **86/123 → 81/116 before building anything**, and then built a row and `OPAQUE`
+**did not move at all** — the reverse of the previous two slices, which both reported an `OPAQUE`
+step as the receipt for their build. Both facts are correct and neither is about the work:
+
+- the fix moved five rows out of `OPAQUE` because the probe could suddenly reach them;
+- the build then took one of those five, so it left `PHRASE-6` and not `OPAQUE`.
+
+**Never read a class-table delta as a measure of what a slice did unless the instrument stood
+still.** Say which of the two moved.
+
+## A FIXTURE_POOL id is a CENSUS entry, and adding one has a tax of its own (D465)
+
+D464 could write *"NO NEW FIXTURE ID"* because its sentence already sat on a shipped fixture. D465
+could not, and the id cost twelve assertions in one file that has nothing to do with the slice's
+subject: `opponentResistanceBonus.test.ts` pins the pool SIZE (558 → 559) and carries **eleven
+nested `ids.length - N` chains** that all take a front term. Check `Card.resistances` and the
+weakness column in the same pass and say they stood still — a fixture added for a damage-number
+claim has no business moving a Resistance census (D427).
+
+## A chain head can sit MID-LINE, and an anchored grep cannot see it (D465)
+
+The census tax is paid by stepping chain heads at the FRONT. A sweep for
+`^\s*<subject> - [0-9]+ /\*` found sixteen and missed three, because those three sit inside a
+two-operand `toEqual([…, …])` on one line. The runner then showed **two of the three** — the third
+was behind a passing assertion in the same `it`. Re-grepped without the `^` anchor it reads
+nineteen. **Grep the loosest plausible shape and state what the pattern cannot see (D419), and never
+treat the runner's list as the population.**
+
+## An `expect(...).toHaveLength(N)` over a FILTERED corpus is a negative control (D465)
+
+`scaledAnySnipe.test.ts` §1 builds its population with
+`/for each/i.test(t) && t.includes("damage to ")` and pins `unbuilt` at 8. An exact-sentence grep of
+every `*.test.ts` for the row D465 built returned **ZERO hits** — and the rung still reddened,
+because the row was never named: it was *counted*. ⚠️ **GREPPING FOR THE SENTENCE DOES NOT FIND
+EVERY CONTROL THAT HOLDS IT.** A filter-built population holds sentences nobody typed.
+
+Re-pointed rather than decremented (D418): the count now says 7, and two new assertions name the row
+that left and pin the ONE fact that makes it a non-member — its op is `damageSelf`, not
+`damageChosen`. A count that steps 8 → 7 records that something left and says nothing about what;
+the pair goes red on *"a reader widened past the count clause"* and green only on *"D465 built the
+self-hit"*, which the old count could not distinguish.
+
+⚠️ **AND THE SAME LOOSE PATTERN OVER-INCLUDES IN BOTH DIRECTIONS.** `t.includes("damage to ")`
+matches *"damage to ITSELF"* — a recoil on the attacker's own body has been sitting in a
+"chosen-target hit" population since that rung was written. Its own block already recorded that the
+pattern MISSES a member (a counter-spelled snipe); it took a slice to notice it also holds one that
+was never a member.
+
+## `damageCountersOnSelf` ships and is NOT usable from an `EffectOp` (D465)
+
+`DamageCountSource` has seventeen members including `damageCountersOnSelf`, and reaching for it is
+the obvious move. It is a **PARSE-TIME type** — its own doc block says *"no `EffectOp` carries
+one"* — consumed in the same tick by `attack.ts`'s module-private `scaledAttackDamage`, which needs
+a defender seat and an effective cost array that `EffectContext` does not have. The shipped way to
+scale an OP's own amount is a boolean rider folded by an `(op, state, ctx)` function
+(`snipeAmount`'s `perTakenPrize`, `perEnergyOnSelf`, now `recoilAmount`'s
+`perDamageCounterOnSelf`). **The general collapse into `scale?: DamageCountSource` was PRICED at
+D448/D449 — 24 sites across 10 files plus a `MATCH_RECORD_VERSION` bump for zero extra printings —
+so a third rider is that refusal re-applied, not a new decision.**
+
+## The REACHABILITY argument has a FIRST-position form as well as a LAST-position one (D465)
+
+D464's op reached `phase.cont.rest` and was safe because its `rest` was **EMPTY BY POSITION** — the
+op was last. D465's is unreachable for the mirror reason: the only producer returns a program of
+**LENGTH ONE**, so there is no earlier op at all, let alone a parking one. Both are D461's shape and
+both must be **DRIVEN**, not asserted: pin `program.length`, and pin that `phase.cont` is absent
+after the swing — **on a board where the op WHIFFS as well as one where it fires**, because a whiff
+is not a park and the two are easy to confuse in a `stepOp` arm.

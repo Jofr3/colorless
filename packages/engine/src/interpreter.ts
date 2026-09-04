@@ -1805,7 +1805,12 @@ function stepOp(
       // omission a type error rather than a silent one.
       return { done: spreadDamage(state, op.target, op.amount, ctx, events) };
     case "damageSelf":
-      return { done: damageSelf(state, op.amount, ctx, events) };
+      // 🆕🆕 D465 — the amount is FOLDED HERE rather than inside `damageSelf`, so
+      // that the helper stays "place this many HP on my own Active" and every
+      // scaling rider is visible at the dispatch. `recoilAmount` is
+      // `snipeAmount`'s shape (`(op, state, ctx) => number`), which is the fold
+      // this file has already chosen twice for a rider on an op's own amount.
+      return { done: damageSelf(state, recoilAmount(op, state, ctx), ctx, events) };
     case "damageDefender": {
       // Chien-Pao ex "Hail Blade": `per` (60) HP per card an earlier op filed
       // under `count` — its own leading discardEnergy's `discarded` slot. This is
@@ -9036,6 +9041,37 @@ function moveCountersFromBench(
     this runs. Only raises damage; the resulting self-KO is caught by the attack
     epilogue's TWO-seat sweep (flow.ts finishAttack) and prizes to the defender,
     so this — like every op — never KOs or touches the flow tail. */
+/** 🆕🆕 D465 — THE RECOIL'S SCALING FOLD. `perDamageCounterOnSelf` multiplies the
+    printed `amount` by the damage counters ALREADY on the attacker — §12's unit, so
+    `Math.floor(damage / 10)`, the same arithmetic `scaledAttackDamage`'s
+    `damageCountersOnSelf` arm does in `attack.ts` (the two are deliberately NOT
+    shared: that one is module-private, takes a defender seat and an effective cost
+    array, and neither is on `EffectContext`).
+
+    ⚠️ **IT READS THE SAME BODY `damageSelf` IS ABOUT TO WRITE, AND IT READS IT
+    FIRST.** The recoil therefore never counts the counters it places — one read,
+    one write, no fixed point. A fold done AFTER the placement would double every
+    printing of this card.
+
+    ⚠️ **ZERO COUNTERS YIELDS ZERO, AND ZERO IS SILENT.** An undamaged attacker takes
+    no recoil and emits NO `COUNTERS_PLACED` (`damageSelf` returns `state` on a
+    non-positive amount). "For each" means EACH, not "at least one" — the plausible
+    degradation D421 says to design against.
+
+    ⚠️ **A NULL ACTIVE YIELDS ZERO**, `snipeAmount`'s ending verbatim: an attacker
+    that has left the Active Spot before its own program runs is a board no printed
+    sentence in this family can reach, and `damageSelf` whiffs on the same null one
+    line later regardless. */
+function recoilAmount(
+  op: { amount: number; perDamageCounterOnSelf?: true },
+  state: GameState,
+  ctx: EffectContext,
+): number {
+  if (op.perDamageCounterOnSelf !== true) return op.amount;
+  const recoilingPokemon = state.players[ctx.seat].active;
+  return recoilingPokemon === null ? 0 : op.amount * Math.floor(recoilingPokemon.damage / 10);
+}
+
 function damageSelf(
   state: GameState,
   amount: number,

@@ -4807,7 +4807,29 @@ export type EffectOp =
       DEFENDER (the opponent of the KO'd side, as collectKnockOuts always owes it).
       "itself" is the source, which for a §8 attack is the attacking Active — no
       single-op derived program relocates it before this runs. */
-  | { op: "damageSelf"; amount: number }
+  /** 🆕🆕 D465 — `perDamageCounterOnSelf` MULTIPLIES `amount` BY THE DAMAGE
+      COUNTERS ALREADY ON THE ATTACKER (§12: one counter = 10 HP), for
+      `censusAttackCorpus.ts` FILE LINE 500 *"This Pokémon also does 10 damage to
+      itself for each damage counter on it."*. It is a BOOLEAN RIDER rather than a
+      `scale?: DamageCountSource` field, which is D448/D449's measured refusal
+      re-applied rather than re-argued: the general collapse was priced at 24 sites
+      across 10 files plus a `MATCH_RECORD_VERSION` bump for zero extra printings,
+      and `snipeAmount` already carries two riders of exactly this shape
+      (`perTakenPrize`, `perEnergyOnSelf`).
+      ⚠️ **THE COUNTERS ARE READ WHEN THE RECOIL RESOLVES, NOT WHEN THE ATTACK
+      DECLARED**, and the difference is printed on the card: the recoil is an
+      epilogue clause, so the attacker's counters at that instant are what "on it"
+      names. The recoil is NOT self-referential — it never counts the counters it is
+      about to place, because it reads the body once and writes once.
+      ⚠️ **AN UNDAMAGED ATTACKER TAKES NO RECOIL AT ALL.** Zero counters × any
+      `amount` is 0, and `damageSelf` is silent on a non-positive amount, so the
+      op emits NO `COUNTERS_PLACED`. That is the LOSS direction and it is the one a
+      "scaling means at least once" reading gets wrong.
+      ⚠️ **IT NEVER REACHES A PERSISTED BYTE.** `damageSelf` does not park, and the
+      only producer of this rider returns a program of LENGTH ONE, so the op can
+      never sit in `phase.cont.rest` behind an earlier park — D461's REACHABILITY
+      shape, not D462/D463's alphabet shape. `MATCH_RECORD_VERSION` stays 29. */
+  | { op: "damageSelf"; amount: number; perDamageCounterOnSelf?: true }
   /** Put `amount` HP of damage counters on `count` CHOSEN Benched Pokémon of
       the opponent (Hawlucha "Flying Entry" — 2 × 1 counter; Meowscarada ex
       "Bouquet Magic" — 1 × 3 counters; Ting-Lu ex sv02-127 "Land Scoop" — 1 × 2
@@ -12264,6 +12286,23 @@ const REVEAL_BOTTOM_SUPPORTER =
 // string's "this" is lowercase and mid-sentence, which is the same second guard
 // the rest of this file leans on.
 const SELF_DAMAGE = /^This Pokémon also does (\d+) damage to itself\.$/;
+// 🆕🆕 D465 — THE RECOIL THAT SCALES OFF THE ATTACKER'S OWN COUNTERS.
+// `censusAttackCorpus.ts` FILE LINE 500, *"This Pokémon also does 10 damage to
+// itself for each damage counter on it."*, **1 sentence / 1 legal printing** —
+// the ONLY sentence in the whole 640-row column that spells "to itself" with a
+// scaling rider (MEASURED with a TOTAL grep for `to itself`: 13 rows, twelve of
+// them flat or gated, this one scaled). So the anchor buys one printing and
+// leaves no twin refused.
+// ⚠️ **MUTUALLY EXCLUSIVE WITH `SELF_DAMAGE` BY `\.$`, NOT BY ORDER.**
+// `SELF_DAMAGE` requires the string to END at "itself.", so it cannot match a
+// sentence that continues — the two `if`s below may be written in either order
+// and the arm is not an ordering. Stated because the opposite is the ordinary
+// case in this file and a reader will assume it.
+// ⚠️ No `/i`, for the family's stated reason (capital "This" + `^…$` are the
+// two guards that keep a mid-sentence clause off the derived path), and the
+// possessive class `['’]` is NOT needed: the sentence prints no apostrophe.
+const SELF_DAMAGE_PER_COUNTER =
+  /^This Pokémon also does (\d+) damage to itself for each damage counter on it\.$/;
 
 // 🆕🆕 D414 — §8.1, THE KNOCK OUT THAT REACHES THE OTHER SIDE OF THE TABLE.
 // Three sentences / four legal printings, all resolving to the field-free
@@ -20636,6 +20675,19 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   //     damages its OWN board: the resulting self-KO is why the attack epilogue
   //     now sweeps both seats (flow.ts finishAttack). Never parks — placing the
   //     damage is not a decision.
+  // 🆕🆕 D465 — the SCALED member of the same family (`censusAttackCorpus.ts`
+  //     FILE LINE 500, 1 printing). ⚠️ NOT AN ORDERING: `SELF_DAMAGE`'s `\.$`
+  //     cannot match a sentence that continues past "itself", so these two `if`s
+  //     are mutually exclusive by their anchors and either order derives the same
+  //     640 rows. The printed-0 guard is the flat arm's, verbatim, for the same
+  //     reason — and here it also refuses a card that would place nothing on any
+  //     board, which the ZERO-COUNTER case already does at run time.
+  match = SELF_DAMAGE_PER_COUNTER.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    if (amount >= 1) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];
+  }
+
   match = SELF_DAMAGE.exec(effect);
   if (match !== null) {
     const amount = Number(match[1]);

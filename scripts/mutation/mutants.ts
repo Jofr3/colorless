@@ -5769,7 +5769,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.363.0";',
+    find: 'export const engineVersion = "0.364.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23798,5 +23798,160 @@ export const MUTANTS: Mutant[] = [
     find: "  \"fix-water-energy\": 10, // {W} — the SECOND distinguishable Energy, so the discard can park",
     replace: "  \"fix-water-energy\": 0, // {W} — the SECOND distinguishable Energy, so the discard can park",
     expectKilledBy: ["packages/engine/src/flipStatusEnergyDiscard.test.ts"],
+  },
+  // ── D465 — THE INSTRUMENT FIX AND THE ROW IT PICKED. FIFTEEN rows in TWO
+  //    populations, and the split is the point. FIVE of them mutate
+  //    `scripts/residue-census.ts` — a COMMITTED MEASUREMENT that had nothing behind it
+  //    for six slices — and are killed by `scripts/residue-census-gate.ts` through
+  //    `killedByCommand`, D212's precedent: `scripts/**` is outside vitest's include
+  //    globs AND outside `tsc -b`'s project references, so a `*.test.ts` importing the
+  //    probe would break the typecheck rather than guard anything. The other TEN are
+  //    ordinary engine rows.
+  //
+  //    🛑 **THE FIVE INSTRUMENT ROWS EXIST BECAUSE D464 MEASURED WHAT THE ABSENCE COST.**
+  //    The span probe tokenised on `" "` and rejoined on `" "`, so a deletion reaching
+  //    the LAST token took the sentence-final period with it and the remainder could never
+  //    build — SIX residue rows / 9 printings sat in `OPAQUE` for that purely mechanical
+  //    reason, and the class table said nothing about it. A wrong classifier does not
+  //    redden anything; it just picks the wrong target.
+  {
+    id: "D465-tail-repair-never-fires",
+    decision: "D465",
+    what: "🛑 **THE DEFECT ITSELF, RESTORED AS ONE DELETED LINE.** The tail-span branch is removed and `keptAfterDeletion` returns the plain join for every span — exactly the probe D459 shipped and D464 measured. The class table goes back to over-populating `OPAQUE` by five rows / 7 printings and NOTHING ELSE CHANGES: the residue is the same 119 sentences, the three pinned literals still agree, `bun run check` is still green. **This is what an unguarded instrument looks like** — it is wrong in the one direction nobody reads",
+    file: "scripts/residue-census.ts",
+    find: "  if (i + len !== tok.length || i === 0) return [plain];",
+    replace: "  return [plain];",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D465-tail-repair-fires-on-every-span",
+    decision: "D465",
+    what: "🛑 **THE VACUITY MUTANT, AND IT IS THE REASON §C IS TOTAL RATHER THAN A SPOT CHECK.** One flipped operator (`!==` → `===`) and the repair is offered on every span EXCEPT a tail one — so the probe silently re-terminates interior deletions, reaching built strings no deletion of the printed sentence can reach, and rows land in `PHRASE-n` for reasons that are not true. **A gate that only asserted \"the five named rows are no longer OPAQUE\" would pass this**; only the over-the-whole-residue confinement check (32,154 spans) can see it",
+    file: "scripts/residue-census.ts",
+    find: "  if (i + len !== tok.length || i === 0) return [plain];",
+    replace: "  if (i + len === tok.length || i === 0) return [plain];",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D465-dangling-separator-survives",
+    decision: "D465",
+    what: "⚠ **THE HALF OF THE REPAIR THAT IS NOT THE PERIOD.** Corpus FILE LINES 126 and 129 leave `…of your deck,` when their tail is deleted — a comma no printed sentence ends on — so re-attaching the period alone yields `…deck,.` and builds nothing. Without the strip the fix reclassifies THREE rows instead of five and the two Misty's/Energy discard-count rows stay `OPAQUE`. ⚠️ **IT IS INVISIBLE ON THE ROW THIS SLICE BUILT** (corpus line 500 leaves no separator), which is why §B pins the comma case on its own literal rather than trusting the class table",
+    file: "scripts/residue-census.ts",
+    find: '  const trimmed = plain.replace(/[,;:]$/, "");',
+    replace: "  const trimmed = plain;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D465-terminator-doubles",
+    decision: "D465",
+    what: "⚠ **THE REPAIR STOPS ASKING WHETHER IT IS NEEDED.** A remainder that already ends in `.` gets a second one — `Flip a coin..` — so every multi-segment sentence whose tail deletion lands on a segment boundary LOSES a hit the probe used to have. This is a NARROWING dressed as a widening, and it is the direction the fix was most likely to get wrong: the author is thinking about the rows that gain, not the rows that already worked",
+    file: "scripts/residue-census.ts",
+    find: "  const repaired = /[.!?)]$/.test(trimmed) ? trimmed : trimmed + term;",
+    replace: "  const repaired = trimmed + term;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D465-terminator-invented-on-a-paren",
+    decision: "D465",
+    what: "🛑 **THE STATED BLIND SPOT, TURNED INTO A COMMAND.** A sentence ending in `)` — a parenthetical rider like `(Don't apply Weakness and Resistance for Benched Pokémon.)` — has NO terminator to re-attach, and the doc block says so. Under this build one is INVENTED: the probe appends a `.` the sentence never printed and reports a deletion that reaches a string no card prints. **A blind spot that is written down and not asserted is a claim** (D212's whole subject), so §B ⑤ pins the refusal as tightly as the repair",
+    file: "scripts/residue-census.ts",
+    find: '  const term = TERMINATOR.exec(text)?.[0] ?? "";',
+    replace: '  const term = TERMINATOR.exec(text)?.[0] ?? ".";',
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/residue-census-gate.ts"],
+  },
+  {
+    id: "D465-recoil-fold-never-scales",
+    decision: "D465",
+    what: "🛑 **THE FOLD IS DEAD AND THE SENTENCE STILL DERIVES.** `recoilAmount` returns the printed `amount` unconditionally, so the op, its bytes, the census, the class table and every reader rung are UNTOUCHED — only the board is wrong, and only by a factor. This is the row that says a reader test is not a board test: §1, §2, §4 and §5 all pass under it",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perDamageCounterOnSelf !== true) return op.amount;",
+    replace: "  return op.amount;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-recoil-fold-always-scales",
+    decision: "D465",
+    what: "🛑 **THE INVERSE, AND IT IS THE ONE THE ONE-AXIS CONTROL EXISTS FOR.** The guard is flipped, so the SCALED sentence resolves flat and the BARE twin — 21 printings shipped since 0.x — starts scaling off the attacker's counters. **A suite that only drove the new sentence would go green on a build that broke twenty-one old ones**, which is why §3 drives index 1 on the same body, same board, same printed 10",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perDamageCounterOnSelf !== true) return op.amount;",
+    replace: "  if (op.perDamageCounterOnSelf === true) return op.amount;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-counter-unit-lost",
+    decision: "D465",
+    what: "⚠ **§12's UNIT DROPS OUT: HP IS COUNTED WHERE COUNTERS ARE PRINTED.** The card says \"for each damage COUNTER\", one counter is 10 HP, and without the division a body at 30 damage takes 300 rather than 30 — a self-KO on every board this suite drives. The number is so wrong it is easy to assume some assertion must catch it; the row exists because \"obviously caught\" is what D444 says to stop asserting and start measuring",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return recoilingPokemon === null ? 0 : op.amount * Math.floor(recoilingPokemon.damage / 10);",
+    replace: "  return recoilingPokemon === null ? 0 : op.amount * recoilingPokemon.damage;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-floor-becomes-exact",
+    decision: "D465",
+    what: "⚠ **THE FLOOR GOES AND THE DEFECT IS INVISIBLE ON EVERY MULTIPLE OF TEN.** `Math.floor(d/10)` becomes `d/10`, so a body at 30 still takes 30 and only a NON-multiple tells them apart: at 25 damage the card places 20 and this build places 25. **The suite drives 25 for exactly this row** — a fixture that only ever set damage in tens would leave it alive and nothing would say why",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return recoilingPokemon === null ? 0 : op.amount * Math.floor(recoilingPokemon.damage / 10);",
+    replace: "  return recoilingPokemon === null ? 0 : op.amount * (recoilingPokemon.damage / 10);",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-fold-counts-its-own-placement",
+    decision: "D465",
+    what: "🛑 **THE SELF-REFERENTIAL READ — the single most plausible wrong build.** The fold adds the printed `amount` to the body before dividing, i.e. it counts the counter it is about to place: at 3 counters the card places 30 and this build places 40. **No reader test can see it and no event-type assertion can either** — the op still emits exactly one `COUNTERS_PLACED` with source \"self\", on the right seat, on the right uid. Only the NUMBER on a board distinguishes them, which is what §3's read-before-write rung is",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return recoilingPokemon === null ? 0 : op.amount * Math.floor(recoilingPokemon.damage / 10);",
+    replace: "  return recoilingPokemon === null ? 0 : op.amount * Math.floor((recoilingPokemon.damage + op.amount) / 10);",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-fold-reads-the-wrong-seat",
+    decision: "D465",
+    what: "⚠ **\"ON IT\" BECOMES \"ON THEM\".** The fold counts the DEFENDER's counters instead of the attacker's. ⚠️ **IT IS NOT A NO-OP AND THAT IS THE TRAP**: the defender has just taken this attack's printed 20, so the recoil is 20 rather than 30 — a plausible neighbouring number on a board where both bodies are damaged, and one that a suite driving an UNDAMAGED defender could not tell from correct. The 340 HP `fix-titan` is what makes the two seats hold different counts",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const recoilingPokemon = state.players[ctx.seat].active;",
+    replace: "  const recoilingPokemon = state.players[otherSeat(ctx.seat)].active;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-anchor-loses-its-terminator",
+    decision: "D465",
+    what: "⚠ **THE `\\.$` THAT MAKES THE TWO RECOIL ANCHORS MUTUALLY EXCLUSIVE.** Drop it and the anchor claims any sentence CONTINUING past \"on it\" — the printed corpus has none, so this is the row that says the discipline is driven synthetically and says why (D462's standing for a constructed near miss). It also re-opens the exact hole D409's trailing splitter exists to close",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This Pokémon also does (\\d+) damage to itself for each damage counter on it\\.$/;",
+    replace: "  /^This Pokémon also does (\\d+) damage to itself for each damage counter on it/;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-anchor-loses-its-head",
+    decision: "D465",
+    what: "⚠ **THE `^` GOES AND THE CLAUSE IS EATEN MID-SENTENCE.** \"Draw a card. This Pokémon also does 10 damage to itself for each damage counter on it.\" would derive to the recoil ALONE, silently discarding the draw — the family's stated reason for anchoring rather than substring-matching, and the failure mode is a card that does less than it prints",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This Pokémon also does (\\d+) damage to itself for each damage counter on it\\.$/;",
+    replace: "  /This Pokémon also does (\\d+) damage to itself for each damage counter on it\\.$/;",
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-rider-not-set",
+    decision: "D465",
+    what: "🛑 **THE ARM DERIVES THE RIGHT OP WITHOUT THE RIDER, AND THE CENSUS STILL MOVES.** `BUILT.attack` goes to 1567, the residue falls to 119, every census rung in fourteen files stays green, and the card places its printed 10 forever. **The census cannot see a wrong VALUE — only a wrong CLAIM** — which is this repo's oldest recorded blind spot and the reason §4's byte assertions exist beside §2's counts",
+    file: "packages/engine/src/effects.ts",
+    find: '    if (amount >= 1) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];',
+    replace: '    if (amount >= 1) return [{ op: "damageSelf", amount }];',
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
+  },
+  {
+    id: "D465-printed-zero-derives",
+    decision: "D465",
+    what: "⚠ **THE PRINTED-0 GUARD, COPIED FROM THE FLAT ARM AND THEREFORE WORTH ITS OWN ROW.** `amount >= 1` becomes `>= 0`, so a hypothetical \"does 0 damage to itself for each…\" derives to a silent no-op instead of staying on the loud skipped path. ⚠️ **THE ZERO-COUNTER BOARD IS A DIFFERENT ZERO** and this row keeps the two separate: one is a card that does not exist, the other is a real board this slice deliberately makes silent",
+    file: "packages/engine/src/effects.ts",
+    find: '    if (amount >= 1) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];',
+    replace: '    if (amount >= 0) return [{ op: "damageSelf", amount, perDamageCounterOnSelf: true }];',
+    expectKilledBy: ["packages/engine/src/selfDamagePerCounter.test.ts"],
   },
 ];
