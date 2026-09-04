@@ -250,10 +250,34 @@ function scaledAttackDamage(
       // second opinion about it. An EMPTY Bench sums to 0 — the same 0 a pristine
       // one gives, and with the printed "10×" base dropped that means no
       // DAMAGE_DEALT at all, which is rules-correct.
+      //
+      // 🆕🆕 D467 — AND THE OPTIONAL PRINTED NOUN ("for each damage counter on all of
+      // your Benched {F} Pokémon", corpus file line 544). ⚠️ **THE FILTER IS OPTIONAL
+      // AND `undefined` IS EVERY BODY, SO THE ARGUMENT IS THE WHOLE WIDENING** —
+      // D407's `energyOnSelf.zone` shape, D466's `yourBenchCount` one, third address.
+      //
+      // 🛑 **THE PREDICATE IS `benchBodies`' AND THE FOLD IS NOT, WHICH IS WHY THIS IS
+      // AN INLINE GUARD AND NOT A CALL.** *"Which bodies on this Bench does the printed
+      // noun name"* is ONE question (D159) and it is answered here by the SAME
+      // expression `benchBodies` uses — `matchesFilter(topCardOf(state, p), filter)`,
+      // the TOP card (§1.2) so a body that has evolved twice IS a Stage 2 now. What
+      // differs is what is summed: that walk counts 1 per body, this one sums
+      // `damage ÷ 10`. Sharing the walk would mean a `benchBodies` that returns a LIST,
+      // which changes a function three shipped members call and whose exact bytes
+      // `D466-bench-walk-loses-the-unfiltered-path` quotes — D359's discriminator (a
+      // widening is free, a rename is not) says the cheaper honest thing is two folds
+      // over one predicate, stated here.
       const bench = state.players[attackerSeat].bench;
+      const filter = bonus.count.filter;
       return (
-        bench.reduce((total, p) => total + (p !== null ? Math.floor(p.damage / 10) : 0), 0) *
-        bonus.per
+        bench.reduce(
+          (total, p) =>
+            total +
+            (p !== null && (filter === undefined || matchesFilter(topCardOf(state, p), filter))
+              ? Math.floor(p.damage / 10)
+              : 0),
+          0,
+        ) * bonus.per
       );
     }
     case "opponentBenchCount":

@@ -11896,6 +11896,53 @@ export const FIXTURE_POOL: Record<string, Card> = {
       filler is what stops the count from being confusable with
       `yourBenchHasNamed`'s reading. */
   "fix-benchfiller": battler("fix-benchfiller", { hp: 60 }),
+  /** 🆕🆕 D467 — FIXTURE. The ATTACKER for `benchNounScaling.test.ts`: the two
+      printed sentences that narrow the attacker's OWN Bench by a printed noun,
+      one on each counting axis.
+
+        idx 0  "20×"  `censusAttackCorpus.ts` FILE LINE 544, 2 legal printings —
+               the damage COUNTERS on a `{F}`-filtered Bench.
+        idx 1  "80+"  `censusAttackCorpus.ts` FILE LINE 622, 1 legal printing —
+               the BODIES on a name-filtered Bench.
+
+      🛑 **A NEW BODY RATHER THAN TWO MORE ATTACKS ON `fix-inplaybodies`, AND THE
+      REASON IS THE DECK AND NOT THE CARD.** That holder is reachable only through
+      `IN_PLAY_BODIES_DECK`, which fields no Fighting body and no `fix-charjabug` —
+      so serving these two sentences from it would mean editing a 60 whose every
+      seed-pinned board is a POPULATION figure, which is the rule this pool has paid
+      ten times (`HAND_ATTACH_DECK`'s block states it). The bytes of both attacks are
+      transcribed off the committed corpus column, never retyped by hand, and
+      `benchNounScaling.test.ts` §1 asserts that against `legalAttackCorpus()`.
+
+      🛑 **FIGHTING, AND THAT IS THE ZONE AXIS RATHER THAN FLAVOUR.** This body sits
+      in the ACTIVE SPOT on every board in that suite and both printed nouns are
+      BENCH-scoped — so making the attacker MATCH the `{F}` filter is what lets an
+      "in play" walk read a different number from a Bench walk on one board
+      (`bodiesInPlayScaling.test.ts` §8's confound, at the other zone). The name
+      filter cannot be exposed the same way and that is said out loud in
+      `benchNounScaling.test.ts` §4: an attacker named "Charjabug" is not available,
+      because the sentence is printed on THIS card and the Active Spot holds exactly
+      one body. 200 HP so the 9 counters the counter board places on it are a
+      population figure and never a KO. */
+  "fix-benchnoun": battler("fix-benchnoun", {
+    hp: 200,
+    types: ["Fighting"],
+    attacks: [
+      {
+        cost: ["Colorless"],
+        name: "Static Tally",
+        damage: "20\u00d7",
+        effect:
+          "This attack does 20 damage for each damage counter on all of your Benched {F} Pok\u00e9mon.",
+      },
+      {
+        cost: ["Colorless"],
+        name: "Grub Rally",
+        damage: "80+",
+        effect: "This attack does 80 more damage for each of your Benched Charjabug.",
+      },
+    ],
+  }),
   /** 🆕🆕 D446 — FIXTURE. A body whose printed attack is NAMED "Round", for the
       `CardFilter.attackNamePokemon` count (`bodiesInPlayScaling.test.ts` §7).
 
@@ -15866,6 +15913,50 @@ export const IN_PLAY_BODIES_DECK = deckOf({
   // D412 added ONE card to a SHARED deck and reddened three of another slice's boards.
   "fix-stage2body": 4, // Stage 2 AND an Evolution — the ordinal that is not `evolutionPokemon`
   "fix-energy": 8, // Basic {C} — the one printed symbol of all nine attacks
+});
+
+/** 🆕🆕 D467 — the BENCH-NOUN board (`benchNounScaling.test.ts`). ITS OWN 60, on
+    the rule this pool has now paid eleven times: `deckOf` order feeds the shuffle,
+    so moving one card in a shared deck reshuffles every seed-pinned board that
+    reads it. `IN_PLAY_BODIES_DECK` above would nearly serve — it already fields the
+    Evolution/Basic/typed cast — and it fields NO Fighting body and NO
+    `fix-charjabug`, which are the two nouns this slice reads.
+
+    The cast is chosen so the two printed filters and every wrong build answer
+    DIFFERENT numbers on one board (D439's rule for `IN_PLAY_BODIES_DECK`, at the
+    Bench):
+
+    * `fix-fighting-1` — the `{F}` body the counter filter KEEPS;
+    * `fix-benchfiller` — Colorless, no attacks: the damaged body the same filter
+      must DROP, differing from the one above in exactly the axis under test (D427);
+    * `fix-charjabug` — a STAGE 1 named "Charjabug", the `byName` target, and D230's
+      own discriminator: a build matching on STAGE instead of NAME finds it and a
+      build emitting `basicPokemon` does not;
+    * `fix-duskull` — a BASIC named "Duskull", D237's pair-mate: `byName` is
+      unfalsifiable on a Bench with one named body, and a build that emitted
+      `anyPokemon` for the named sentence would count this one too;
+    * `fix-stage1` — a Colorless EVOLUTION that is not a Charjabug, and it is here
+      for one reason: without it every Evolution on the named board IS a Charjabug,
+      so `evolutionPokemon` and `byName {Charjabug}` answer the same number and the
+      rung passes on the wrong filter — `stage1Board`'s confound, arriving from the
+      other side;
+    * `fix-titan` — 340 HP, no attacks: the opener and the defender, and it survives
+      every number this suite deals so the fold is read off `DAMAGE_DEALT` rather
+      than off a KO.
+
+    ⚠️ **NO ID IS ASKED FOR MORE THAN TWICE PER SEAT** — `benchFromDeck` pulls from
+    the seat's DECK and setup has already moved 7 cards to hand and 6 to prizes
+    before any surgery runs, which is the constraint `stage1Board`'s block records
+    after a board threw at SEED 1. */
+export const BENCH_NOUN_DECK = deckOf({
+  "fix-benchnoun": 4, // the attacker — two attacks, one per counting axis
+  "fix-fighting-1": 4, // {F} Basic — the counter filter's positive
+  "fix-benchfiller": 4, // Colorless Basic, no attacks — the counter filter's negative
+  "fix-charjabug": 4, // "Charjabug", a STAGE 1 — the `byName` positive
+  "fix-duskull": 4, // "Duskull", a BASIC — the `byName` negative
+  "fix-stage1": 4, // Colorless Evolution — the Evolution that is NOT a Charjabug
+  "fix-titan": 8, // 340 HP, no attacks — the opener and the defender
+  "fix-energy": 28, // Basic {C} — the one printed symbol of both attacks
 });
 
 /** 🆕🆕 D440 — the FILTERED DISCARD-PILE COUNT's board. Every card in it is in the

@@ -27489,3 +27489,89 @@ name is `battler`'s default (the id) and carries no possessive. Neither could ha
 · **`opcoverage.ts`** is keyed on `EffectOp` KINDS. This slice adds no op member, no op field and no op
   line, so the instrument is **blind to it by construction** — and that was measured rather than
   asserted: the whole report is byte-identical before and after except `corpus=2053 → 2063`.
+
+---
+
+## D467 — the attacker's own Bench, narrowed by a printed noun, on BOTH counting axes
+
+**`censusAttackCorpus.ts` file lines 544 and 622 — 2 sentences / 3 legal printings.**
+
+    544  2p  "This attack does 20 damage for each damage counter on all of your Benched {F} Pokémon."
+    622  1p  "This attack does 80 more damage for each of your Benched Charjabug."
+
+Engine **0.365.0 → 0.366.0**; `MATCH_RECORD_VERSION` **STAYS 29** on the SERIALIZED-ALPHABET shape at
+**ONE** address (D466 needed two, because it added a `CardFilter` MEMBER and `CardFilter` is persisted;
+D467 adds none). Residue **117/162 → 115/159**, `OPAQUE` **80/114 → 78/112**, mutation corpus
+**2,063 → 2,076**.
+
+### (a) The build, and what it did NOT cost
+
+TWO new anchors (`BENCH_COUNTER_FILTERED_MULTIPLY`, `YOUR_BENCHED_NOUN_SCALE`), ONE new OPTIONAL field
+on the shipped `damageCountersOnYourBench` member (`filter?: CardFilter` — D407's `energyOnSelf.zone`
+shape at this union's THIRD address), ONE new `IN_PLAY_BODY_NOUNS` row (`Charjabug` → `byName`, the
+map's FIRST card-name key). **ZERO new `CardFilter` members, ops, op fields, op values, prompts,
+events, error codes, registry rows, `packages/schema` bytes or `redact.ts` bytes.**
+
+⚠️ **FILE LINE 622 COSTS ZERO ENGINE-FOLD BYTES.** D466 built `yourBenchCount.filter` and `benchBodies`
+already reads it, so the whole of that row is one anchor and one map row. **That is why the `OPAQUE`
+row was the CHEAPER of the two** — the `PHRASE-1` row needed an anchor, a field AND an evaluator arm.
+`OPAQUE` means UNCLASSIFIED, never EXPENSIVE, for the second consecutive slice.
+
+### (b) The finding — a guard is only a guard at one placement
+
+The two anchors are disjoint from their shipped siblings for two DIFFERENT reasons, and only one of
+them is testable at the house placement:
+
+- the COUNTER anchor captures `([^.]+ Pokémon)` — a character, a SPACE, then the head noun — so
+  `…on all of your Benched Pokémon.` cannot match it. **Structural. No guard.**
+- the BODY anchor captures a BARE token, so nothing in its shape excludes `Pokémon`. Its only defence
+  is `(?!Pokémon\.)` — and **behind the arm it narrows, deleting that lookahead is reader-INERT**
+  (the shipped arm claims the sentence first) **and the regexes are module-private, so no suite can
+  see the pattern.** A guard nothing can kill is D205/D208's vacuous guard.
+
+So the filtered arm is placed **AHEAD** of the one it narrows, against this file's habit, and the
+deletion then breaks D282's three SHIPPED printings — killed by `benchBodySelfScaling.test.ts` and
+`bodiesInPlayScaling.test.ts`, the suites that own the OLD member.
+`D467-benched-noun-arm-moves-behind-the-shipped-one` pins the other half as a declared `equivalent`
+SURVIVOR: **the ORDER is legibility, the LOOKAHEAD is behaviour.**
+
+### (c) Two named negative controls expired, in two unrelated suites
+
+`scaledDamage.test.ts` and `selfEnergyScaling.test.ts` both pinned *"This attack does 20 more damage
+for each of your Benched {L} Pokémon."* → `toBeNull` as the *"count source with no reader at all"*
+witness. D466 + D467 read it now, with the `{L}` resolved. Re-pointed to the other side rather than
+deleted; witness re-homed a THIRD time onto corpus **file line 534** (the OPPONENT's whole board of
+damage counters — one sentence, one fold, so the count source is the only ground).
+⚠️ **THE NEW WITNESS IS LOAD-BEARING: a successor that builds file line 534 owes it a fourth home.**
+
+### (d) A doc figure that rotted in two files at once
+
+`inPlayBodyFilter`'s doc block said *"25 nouns — the 3 exact keys"* from D439 to D467. D466 corrected
+the COPY inside `D439-vocabulary-order-loses-the-owner`'s `reason` (to 7/29) and left the original.
+D467 fixes both (8/30) **and deletes the problem**: `benchNounScaling.test.ts` §5 derives the count
+through the reader. `D439-vocabulary-defaults-instead-of-staying-loud`'s `what` had rotted the same way
+(*"steps by 3"*) and is re-MEASURED to **2**.
+
+### (e) The instrument reported the refusal without being asked
+
+Corpus **file line 529** (*"…on all of your Benched Cynthia's Pokémon. This attack's damage isn't
+affected by Weakness."*) migrated `OPAQUE` → `COMPOUND-head`, because its HEAD now builds through
+`IN_PLAY_OWNER_NOUN` for free. The census now PRINTS the remaining blocker instead of shrugging. Both
+remaining mechanisms were driven at the code (§10): `DAMAGE_SUPPRESSION` has four arms and **no
+Weakness-ONLY arm**, and `splitAttackTrailingClause` requires an EFFECT tail.
+⚠️ **THAT IS A CLASS-TABLE DELTA CAUSED BY THE WORK — `residue-census.ts` is byte-unchanged this
+slice**, which is the condition D465's rule attaches to reading the table at all.
+
+### (f) What the three instruments cannot see, for this subject
+
+· **`residue-census.ts`** cannot see a sentence that derives to the WRONG object. Both new rows are
+  `resolvedByAnyReader === true` under every mutant that drops the `filter`, so
+  `counter-arm-builds-the-unfiltered-member` and `benched-noun-builds-the-unfiltered-member` leave
+  every census figure IDENTICAL. A census step is not evidence that the build is right.
+· **`precheck`** cannot see a row re-pointed by POSITION. It caught two of this slice's three
+  re-points (both at `2×`, on the first edit round) and missed `D282-additive-arm-goes-missing`, whose
+  `find` is unchanged but which now has a new arm directly above it. The REGION audit is what caught
+  that one — the two instruments really do not cover each other (D450's rule, third instance).
+· **`opcoverage.ts`** is keyed on `EffectOp` KINDS and this slice authors no op, so it is **blind by
+  construction** — measured, not asserted: `SEAT LINES 207/471` and `DECISION POINTS 884/1329` are
+  identical before and after.

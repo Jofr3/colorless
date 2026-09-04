@@ -365,10 +365,25 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
     expect(
       deriveAttackDamageSuppression("This attack's damage isn't affected by Weakness or Resistance."),
     ).toEqual({ weakness: true, resistance: true });
-    // REASON 2 — the count source is a TYPED count of BODIES on the attacker's own
-    // Bench, and no member answers it. Driven on the count half ALONE, so this
-    // assertion is about the count source and not about the sentence count.
-    expect(deriveAttackDamageBonus(EVERYONE_DISCHARGE_COUNT_HALF)).toBeNull();
+    // REASON 2 — 🆕🆕 **D467: THIS REASON HAS EXPIRED, AND IT IS RECORDED HERE
+    // RATHER THAN DELETED (D444/D447).** It used to read *"the count source is a
+    // TYPED count of BODIES on the attacker's own Bench, and no member answers
+    // it"*. `yourBenchCount` gained an optional `filter` at D466 and the attacker's
+    // Bench gained a CAPTURING anchor at D467, so the count half is READ now — with
+    // the `{L}` resolved to Lightning, which is the half that says the noun is
+    // parsed rather than matched. **The witness survives on REASON 1 and REASON 3,
+    // which is exactly why it was written as three independent facts** ("any one of
+    // them alone would keep it standing") — and this is the first time that
+    // construction has had to pay out.
+    expect(deriveAttackDamageBonus(EVERYONE_DISCHARGE_COUNT_HALF)).toEqual({
+      per: 20,
+      count: {
+        kind: "yourBenchCount",
+        filter: { kind: "typedPokemon", pokemonType: "Lightning" },
+      },
+    });
+    // …and the `×` fold still refuses it, because the adjective picks the fold and
+    // the column prints no filtered `×` Bench sentence at all (D435).
     expect(deriveAttackDamageMultiplier(EVERYONE_DISCHARGE_COUNT_HALF)).toBeNull();
     // …and the whole printing is unread by every reader in the family, which is
     // what makes it a witness at all.
@@ -1115,7 +1130,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.365.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.366.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1129,6 +1144,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.365.0");
+    expect(engineVersion).toBe("0.366.0");
   });
 });

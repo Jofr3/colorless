@@ -35,10 +35,19 @@ import {
 // from 0.35.0: an additive "+" whose count source no reader simulated. D196 built
 // `energyOnSelf` (21 legal printings, the family's largest member), so Blaze Ball
 // is SIMULATED now and witnesses the opposite thing — it is the family's only
-// real-card positive case with a TYPE FILTER. The unsimulated-"+" witness is
+// real-card positive case with a TYPE FILTER. The unsimulated-"+" witness was
 // Pachirisu sv01-068 "Everyone Discharge", unread for two independent reasons (a
 // two-sentence printing, and a TYPED body count no member answers) where Entei was
-// unread for one. Wo-Chien ex (benched-target) and Chien-Pao ex (discarded-Energy
+// unread for one.
+// ⚠️ 🆕🆕 **D467 — AND THE SECOND OF PACHIRISU'S TWO REASONS HAS NOW EXPIRED TOO,
+// WHICH IS THE THIRD TIME THIS WITNESS HAS MOVED.** `yourBenchCount` took an
+// optional `filter` at D466 and the attacker's Bench took a CAPTURING anchor at
+// D467, so a TYPED body count on that Bench IS answered now. Pachirisu's PRINTING
+// is still unread — the two-sentence ground is untouched — but the COUNT-SOURCE
+// ground is gone, so the "count source with no reader at all" claim is re-homed a
+// third time, onto `censusAttackCorpus.ts` FILE LINE 534 (`UNREAD_COUNT_SOURCE`
+// below): one sentence, the additive fold, and the OPPONENT's whole board of damage
+// counters, which no `DamageCountSource` member answers. Wo-Chien ex (benched-target) and Chien-Pao ex (discarded-Energy
 // count) are the multiply deriver's.
 
 function find<T extends GameEvent["type"]>(
@@ -79,6 +88,12 @@ function matchup(
   if (opts.damage !== undefined) state = setDamage(state, "p1", opts.damage);
   return setActiveFromDeck(state, "p2", opts.defender);
 }
+
+/** 🆕🆕 D467 — the "count source with no reader at all" witness, third home.
+    `censusAttackCorpus.ts` FILE LINE 534, 1 legal printing. See the rung below
+    for why the Pachirisu form stopped being one. */
+const UNREAD_COUNT_SOURCE =
+  "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.";
 
 describe("deriveAttackDamageBonus — the additive counter-scaling reader", () => {
   it("reads the anchored sentence for any N, as damageCountersOnSelf", () => {
@@ -126,18 +141,39 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         "This attack does 60 damage for each Prize card your opponent has taken.",
       ),
     ).toBeNull();
-    // And a count source with no reader at all — RE-HOMED (D196). Entei's
-    // attached-Energy scaler used to sit here; `energyOnSelf` reads it now, so the
-    // "count source with no reader" claim moved to Pachirisu sv01-068 "Everyone
-    // Discharge", whose count is a TYPED count of BODIES on the attacker's own
-    // Bench. Its printing is two sentences, so the anchor refuses it on that ground
-    // too; the single-sentence form below isolates the count-source ground alone,
-    // which is what this assertion is actually about.
+    // And a count source with no reader at all — RE-HOMED TWICE. D196 moved the
+    // claim off Entei (whose scaler `energyOnSelf` then read) onto Pachirisu
+    // sv01-068 "Everyone Discharge", a TYPED count of BODIES on the attacker's own
+    // Bench.
+    //
+    // 🆕🆕 **D467 — AND THAT WITNESS HAS NOW GONE THE SAME WAY, SO THE TRANSITION IS
+    // RECORDED RATHER THAN THE RUNG QUIETLY SHRUNK (D444/D447).** D466 gave
+    // `yourBenchCount` an optional `filter` and D467 gave the attacker's Bench a
+    // capturing anchor, so the single-sentence count half is READ now — with the
+    // `{L}` resolved to Lightning, which is the half that says the noun is parsed
+    // and not merely matched. **The count source is no longer unread**, and pinning
+    // the OLD side would be pinning a falsehood.
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each of your Benched {L} Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual({
+      per: 20,
+      count: {
+        kind: "yourBenchCount",
+        filter: { kind: "typedPokemon", pokemonType: "Lightning" },
+      },
+    });
+    // 🆕🆕 **THE REPLACEMENT WITNESS, AND IT IS A REAL CORPUS ROW RATHER THAN A
+    // CONSTRUCTED ONE** — `censusAttackCorpus.ts` FILE LINE 534, **1 legal
+    // printing**, ONE sentence, the ADDITIVE fold: the count is every damage counter
+    // on the OPPONENT's whole board, and no `DamageCountSource` member answers it
+    // (`damageCountersOnOpponentActive` reads the Active alone,
+    // `damageCountersOnYourBench` the attacker's Bench). One sentence and one fold,
+    // so the count source is the ONLY ground — which is what this assertion is
+    // actually about, and what the Pachirisu form had to be cut down to provide.
+    expect(deriveAttackDamageBonus(UNREAD_COUNT_SOURCE)).toBeNull();
+    expect(deriveAttackDamageMultiplier(UNREAD_COUNT_SOURCE)).toBeNull();
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",

@@ -12772,6 +12772,57 @@ const OPPONENT_COUNTER_MULTIPLY =
 // `This`, and `Pokémon` carries the real é (U+00E9) — the family's stated reason.
 const BENCH_COUNTER_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on all of your Benched Pokémon\.$/;
+/** 🆕🆕 D467 — THE SAME BENCH-WIDE COUNTER TALLY, NARROWED BY A PRINTED NOUN:
+    *"This attack does 20 damage for each damage counter on all of your Benched {F}
+    Pokémon."* — `censusAttackCorpus.ts` **file line 544**, 1 sentence / **2 legal
+    printings**, the only row in the column that spells this shape.
+
+    🛑 **DISJOINT FROM THE LINE DIRECTLY ABOVE BY STRUCTURE AND NOT BY A LOOKAHEAD,
+    WHICH IS WHY THERE IS NO LOOKAHEAD HERE.** The capture is `([^.]+ Pokémon)` —
+    at least one character, a SPACE, then the head noun — so *"…on all of your
+    Benched Pokémon."* cannot match it at all: there is no space to spend. Measured
+    over `legalAttackCorpus()` in `benchNounScaling.test.ts` §4 rather
+    than argued, in BOTH directions. A `(?!Pokémon\.)` lookahead would have bought
+    the same disjointness and would have been **VACUOUS**: this arm sits AFTER the
+    unfiltered one, these regexes are module-private, and no suite can reach a
+    pattern the reader never lets it observe — so the guard could not be killed and
+    a guard nothing can kill is D205/D208's vacuous guard by construction. The
+    sibling anchor `YOUR_BENCHED_NOUN_SCALE` below DOES carry a lookahead, and its
+    block says why the two shapes differ.
+
+    ⚠️ **THE CAPTURE IS THE WHOLE NOUN, NOT THE ADJECTIVE, AND IT IS RESOLVED BY
+    `inPlayBodyFilter` RATHER THAN BY THIS PATTERN** (D159, and `IN_PLAY_BODY_NOUNS`'
+    own rule): *"which bodies does this printed noun name"* is ONE question and gets
+    ONE answer, so the ZONE and the FOLD are the anchor's business and the NOUN is
+    the map's. Capturing the adjective alone would mean re-forming `${adj} Pokémon`
+    here — a SECOND place where a printed noun is assembled, and the one thing that
+    lets two readings of one noun drift apart. So *"…on all of your Benched Ancient
+    Pokémon."* reaches this line and leaves it LOUD, exactly as its "in play" twin
+    does, and *"…on all of your Benched Cynthia's Pokémon."* resolves through
+    `IN_PLAY_OWNER_NOUN` for free.
+
+    🛑 **AND THAT LAST ONE IS THE FAMILY'S NEGATIVE CONTROL, WHICH IS COUNTED AND NOT
+    NAMED (D465).** `censusAttackCorpus.ts` **file line 529** prints *"This attack
+    does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon.
+    **This attack's damage isn't affected by Weakness.**"* — its HEAD builds through
+    this anchor as of D467 and the PRINTED SENTENCE still does not, because the
+    whole-sentence anchor sees the tail. It is blocked on TWO further mechanisms,
+    both measured at this head rather than inherited: `DAMAGE_SUPPRESSION` has no
+    **Weakness-only** arm (four arms, and `AttackDamageSuppression.weakness` is a
+    field with no writer that sets it alone), and `splitAttackTrailingClause`
+    requires the TAIL to be a `deriveAttackEffect` clause. attack.ts's own standing
+    deferral list names this exact row; D467 removes ONE of its three blockers and
+    says so rather than claiming the row.
+
+    ⚠️ **NO `+` TWIN, AND NOT INCREMENTING IS A MEASUREMENT (D435).** The column
+    spells *"more damage for each damage counter on all of your Benched ⟨noun⟩"*
+    ZERO times — the whole of `grep "damage counter on all of"` over the corpus is
+    THREE rows: 529 and 544 (both `×`, both here) and 534, which is the OPPONENT's
+    whole board on the `+` fold and a different member entirely. The additive cell
+    is left EMPTY. `Pokémon` carries the real é (U+00E9); no /i, whole-sentence
+    anchored with a required trailing period and a capital `This`. */
+const BENCH_COUNTER_FILTERED_MULTIPLY =
+  /^This attack does (\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\.$/;
 // D193 — THE BENCH COUNTED AS BODIES, the mirror-image question to the line
 // directly above and the first thing this family tallies that is not a damage
 // counter, a Prize, a Retreat Cost or a 0-or-1 indicator. Two sentences, three
@@ -12857,6 +12908,66 @@ const OPPONENT_BENCH_MULTIPLY =
 // require the possessive `opponent's`), and all `^…$`-anchored — driven both ways
 // in `benchBodySelfScaling.test.ts` rather than argued.
 const YOUR_BENCH_SCALE = /^This attack does (\d+) more damage for each of your Benched Pokémon\.$/;
+/** 🆕🆕 D467 — THE SAME BENCH BODY COUNT, NARROWED BY A PRINTED NOUN THAT IS A BARE
+    CARD NAME: *"This attack does 80 more damage for each of your Benched
+    Charjabug."* — `censusAttackCorpus.ts` **file line 622**, 1 sentence / **1 legal
+    printing**, and the only row in the column whose Bench noun carries no head word.
+
+    🛑 **THE `(?!Pokémon\.)` LOOKAHEAD IS LOAD-BEARING, AND THAT IS WHY THIS ARM IS
+    PLACED *AHEAD* OF `YOUR_BENCH_SCALE`'s IN `deriveAttackDamageBonus` INSTEAD OF
+    AFTER IT.** The two patterns differ only in their noun, and this one CAPTURES
+    where the shipped one spells a literal — so without the lookahead this pattern
+    also matches *"This attack does 20 more damage for each of your Benched
+    Pokémon."* (3 legal printings, file line 556) with the noun `Pokémon`, which
+    `inPlayBodyFilter` resolves to `anyPokemon`, and those three printings would
+    start emitting `{ kind: "yourBenchCount", filter: { kind: "anyPokemon" } }`
+    where D282 emits a filter-less object. **At the OTHER placement the same
+    lookahead is unkillable**: the shipped arm would claim the sentence first, the
+    deletion would be reader-INERT (D450), and these regexes are module-private so
+    no suite can observe the pattern directly. A disjointness guard is only a guard
+    where the pattern that needs it runs FIRST — so the placement is not free here,
+    where every other arm in this chain says its order is legibility.
+
+    ⚠️ **SO THE ORDER IS BEHAVIOUR ONLY IN THE MUTATED WORLD.** With the lookahead
+    present the two patterns are disjoint and either order computes the same
+    function; that disjointness is driven over the whole of `legalAttackCorpus()` in
+    `benchNounScaling.test.ts` §4, and `D467-benched-noun-loses-the-
+    lookahead` is the row that says so from the other side — it is killed by
+    `benchBodySelfScaling.test.ts`, the suite that owns the OLD member, and NOT by
+    this slice's own suite.
+
+    ⚠️ **THE NOUN GOES TO `inPlayBodyFilter` WHOLE, AND `Charjabug` IS AN EXACT MAP
+    ROW RATHER THAN A `(.+)` → `byName` TEMPLATE.** The template is D440's refusal
+    verbatim and `yourBenchHasNamed`'s (*"four literal rows rather than one
+    template"*): the slot after *"Benched"* is measurably NOT a name slot in this
+    column — it also holds `Ancient` (2), `Team Rocket's` (1), `Cynthia's` (1),
+    `{F}` (1), `{L}` (1), `Cubone` (1) and `Basic` (1) — and an exact-name equality
+    fed any of those succeeds against nothing, silently. What makes THIS anchor safe
+    is that its slot is CLOSED by the terminator: over the whole 640-sentence column
+    the token that follows *"Benched "* takes THIRTEEN values and only THREE of them
+    carry a terminator — `Benched Pokémon.` (46 rows), `Benched Pokémon.)` (43) and
+    `Benched Charjabug.` (1). The middle one is the *"(Don't apply Weakness and
+    Resistance for Benched Pokémon.)"* rider and this anchor's `\.$` cannot reach it
+    (the string ends in a paren), so the lookahead has exactly one form to remove and
+    the map is asked exactly one question here today.
+
+    ⚠️ **THAT COUNT WAS FIRST MEASURED AS "TWO VALUES, ONE OF THEM AT 89" AND THE
+    ERROR WAS THE INSTRUMENT, NOT THE ARITHMETIC.** `grep -oP "Benched [^ .]+\."`
+    stops the class before the period, so it matched the rider's prefix as well and
+    SUMMED two distinct printed forms into one key. The corrected figures are taken
+    with a tokeniser over `legalAttackCorpus()` in `benchNounScaling.test.ts` §1,
+    which asserts the WHOLE thirteen-entry multiset rather than a count — so the next
+    printed Bench noun reddens a rung instead of quietly joining a total.
+    **The map still refuses; the regex still does not.**
+
+    ⚠️ **NO `×` TWIN, AND NOT INCREMENTING IS A MEASUREMENT (D435).** The column
+    spells *"This attack does N damage for each of your Benched ⟨noun other than
+    Pokémon⟩."* ZERO times (`YOUR_BENCH_MULTIPLY`'s three printings all spell the
+    bare noun), so the `×` cell is left EMPTY rather than filled speculatively.
+    `Pokémon` carries the real é (U+00E9); no /i, whole-sentence anchored with a
+    required trailing period and a capital `This`. */
+const YOUR_BENCHED_NOUN_SCALE =
+  /^This attack does (\d+) more damage for each of your Benched (?!Pokémon\.)([^.]+)\.$/;
 const YOUR_BENCH_MULTIPLY = /^This attack does (\d+) damage for each of your Benched Pokémon\.$/;
 /** 🆕🆕 D466 — THE ATTACKER'S BENCH COUNTED AS BODIES AND **NARROWED BY A PRINTED
     NOUN**: *"This attack does 40 more damage for each Stage 2 Pokémon on your
@@ -13119,6 +13230,28 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // TEXT, and a noun the column does not print simply never arrives.
   ["Stage 1 Pokémon", { kind: "stagePokemon", stage: "Stage1" }],
   ["Stage 2 Pokémon", { kind: "stagePokemon", stage: "Stage2" }],
+  // 🆕🆕 D467 — THE FIRST ROW IN THIS MAP WHOSE KEY IS A CARD NAME, and it is a
+  // LITERAL row for the reason `yourBenchHasNamed` is four literal rows rather than
+  // one template (D118/D440): a `(.+)` capture handed to an exact-name equality
+  // succeeds against nothing, silently, on every one of the seven other tokens this
+  // column prints in a Bench noun slot. `YOUR_BENCHED_NOUN_SCALE` asks it exactly one
+  // question today (corpus file line 622, 1 legal printing), because that anchor's
+  // slot is closed by its terminator. ⚠️ The CARD is deliberately not named here: the
+  // corpus row carries a printing COUNT and a TEXT and no id, and D425's rule is that
+  // an id nobody measured is an invention.
+  //
+  // ⚠️ **THE CONSEQUENCE, STATED RATHER THAN DISCOVERED**: this map is also
+  // `IN_PLAY_BODY_MULTIPLY`/`_SCALE`'s and `YOUR_BENCH_FILTERED_SCALE`'s vocabulary,
+  // so *"…for each of your Charjabug in play."* and *"…for each Charjabug on your
+  // Bench."* are readable too, and the column prints NEITHER. That is D466's own
+  // stated consequence one ordinal up, verbatim — a reader is a function of TEXT, and
+  // a noun the column does not print simply never arrives.
+  //
+  // ⚠️ **AND IT CARRIES NO APOSTROPHE**, which is the whole of what
+  // `inPlayBodyFilter`'s disjointness argument (and `D439-vocabulary-order-loses-the-
+  // owner`'s declared reason) needs from a new exact key. Re-derived here rather than
+  // assumed: the exact keys are now **8** and the vocabulary **30**.
+  ["Charjabug", { kind: "byName", name: "Charjabug" }],
 ]);
 /** The OWNER-PREFIXED noun ("Team Rocket's Pokémon"). The `['’]` class is D137's
     fix and is needed here because this pattern spells the apostrophe, unlike the
@@ -13164,9 +13297,19 @@ const IN_PLAY_TYPED_NOUN = /^(.+) Pokémon$/;
 
     ⚠️ **WHAT IS ACTUALLY TRUE IS THAT THE THREE BRANCHES ARE PAIRWISE DISJOINT,
     AND IT IS MEASURED EXHAUSTIVELY RATHER THAN ARGUED.** The whole vocabulary is
-    25 nouns — the 3 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
+    30 nouns — the 8 exact keys, the 11 `POKEMON_TYPES` names and the 11 `{X}`
     codes — and NOT ONE of them matches `IN_PLAY_OWNER_NOUN`, because no Pokémon
-    type name ends in a possessive and no exact key carries an apostrophe. So no
+    type name ends in a possessive and no exact key carries an apostrophe.
+    🆕🆕 **D467 — THIS ARITHMETIC WAS `25 nouns — the 3 exact keys` UNTIL NOW, AND IT
+    HAD BEEN WRONG SINCE D446** (which added two keys and did not update it) and
+    wronger since D466 (which added two more). ⚠️ **D466 CORRECTED THE COPY OF THIS
+    SENTENCE THAT LIVES IN `D439-vocabulary-order-loses-the-owner`'s `reason` AND
+    LEFT THE ORIGINAL — HERE — UNTOUCHED**, so the mutant row and the doc block it
+    was transcribed from disagreed by four keys for a whole slice. A figure that
+    lives in two files rots in two places and reddens in neither; the count is now
+    derived from `IN_PLAY_BODY_NOUNS.size` in
+    `benchNounScaling.test.ts` §5, so the next key to land reddens
+    instead of lying. So no
     noun can resolve down two branches, and the order is free. Pinned in
     `bodiesInPlayScaling.test.ts` §2 over the whole of `POKEMON_TYPES`, so the day
     a type name gains a `'s` the disjointness rung goes RED and this paragraph
@@ -23924,7 +24067,18 @@ export type DamageCountSource =
   | { kind: "opponentActiveRetreatCost" }
   | { kind: "boardCondition"; cond: BoardCondition }
   | { kind: "damageCountersOnOpponentActive" }
-  | { kind: "damageCountersOnYourBench" }
+  /** 🆕🆕 D467 — the OPTIONAL printed noun, the same shape `yourBenchCount` two
+      members down took at D466 and `energyOnSelf.zone` took at D407: `undefined`
+      is EVERY body on the Bench, so every sentence that reached this member before
+      D467 emits a filter-less object byte for byte and takes the evaluator's
+      untouched path. ⚠️ **AND THE UNFILTERED SPELLING HAS ZERO LEGAL PRINTINGS AT
+      THIS HEAD** — `BENCH_COUNTER_MULTIPLY`'s Tyranitar `swsh10.5-043` has rotated
+      out (measured over `legalAttackCorpus()`, not remembered), so the FILTERED
+      arm is the only live one and the `undefined` path is carried by the type and
+      by `benchCounterMultiply.test.ts`'s constructed text alone. That is D367's
+      situation, and the anchor is KEPT for D364's reason: it is keyed on printed
+      text, the reading is still correct, and a reprint restores it for free. */
+  | { kind: "damageCountersOnYourBench"; filter?: CardFilter }
   | { kind: "bothSidesBenchCount" }
   | { kind: "opponentBenchCount" }
   | { kind: "yourBenchCount"; filter?: CardFilter }
@@ -24068,6 +24222,24 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // it completes so the trio reads down the page in the order its noun is
   // printed. Same `per >= 1` guard, same shape; the seat is the only difference
   // and it is settled in the evaluator, not here.
+  // 🆕🆕 D467 — THE SAME BENCH BODY COUNT NARROWED BY A BARE PRINTED NAME (corpus
+  // file line 622, 1 legal printing), and ⚠️ **IT SITS AHEAD OF THE ARM IT NARROWS
+  // RATHER THAN BEHIND IT, WHICH IS THE OPPOSITE OF EVERY OTHER FILTERED PAIR IN
+  // THIS FILE.** `YOUR_BENCHED_NOUN_SCALE`'s own block carries the reason in full:
+  // its `(?!Pokémon\.)` lookahead is the ONLY thing keeping D282's three printings
+  // off this pattern, and at the house placement (behind) the shipped arm would
+  // claim them first, making the lookahead's deletion reader-INERT (D450) and the
+  // guard VACUOUS — module-private regexes give a suite no other way to see it.
+  // Here the deletion is observable on the SHIPPED sentence, so the guard is killed
+  // by the suite that owns the OLD member.
+  const yourBenchNoun = YOUR_BENCHED_NOUN_SCALE.exec(effect);
+  if (yourBenchNoun !== null) {
+    const per = Number(yourBenchNoun[1]);
+    const filter = inPlayBodyFilter(yourBenchNoun[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "yourBenchCount", filter } };
+    }
+  }
   const yourBench = YOUR_BENCH_SCALE.exec(effect);
   if (yourBench !== null) {
     const per = Number(yourBench[1]);
@@ -24426,6 +24598,34 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   if (benchCounters !== null) {
     const per = Number(benchCounters[1]);
     if (per >= 1) return { per, count: { kind: "damageCountersOnYourBench" } };
+  }
+  // 🆕🆕 D467 — THE SAME BENCH-WIDE COUNTER TALLY, NARROWED BY A PRINTED NOUN
+  // (corpus file line 544, 2 legal printings). Placed directly after the unfiltered
+  // arm it narrows, so a reader meeting one meets the other; the two patterns are
+  // disjoint BY STRUCTURE (the capture demands a space the bare noun cannot spend),
+  // so the order here is legibility exactly as this chain's other arms claim, and
+  // unlike the additive pair one reader down.
+  //
+  // TWO guards and not one, and they refuse for two different reasons —
+  // `IN_PLAY_BODY_SCALE`'s pair verbatim: `per >= 1` is the family's printed-zero
+  // guard, and `filter !== null` is the VOCABULARY, which is what keeps *"…on all of
+  // your Benched Ancient Pokémon."* on the loud ATTACK_EFFECT_SKIPPED path. Neither
+  // subsumes the other.
+  //
+  // 🛑 **THE FIELD IS OPTIONAL AND `undefined` IS EVERY BODY, SO THIS ARM IS THE
+  // WHOLE WIDENING** — D407's `energyOnSelf.zone` shape and D466's `yourBenchCount`
+  // one, at this union's third address. ⚠️ **AND THE `undefined` PATH HAS NO LEGAL
+  // PRINTING LEFT** (the arm above is a rotated-out spelling at this head), so the
+  // widening is carried by `benchCounterMultiply.test.ts`'s constructed text rather
+  // than by a card — which is why that suite, and not this slice's, is what
+  // `D467-bench-counter-walk-loses-the-unfiltered-path` names.
+  const benchCountersFiltered = BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect);
+  if (benchCountersFiltered !== null) {
+    const per = Number(benchCountersFiltered[1]);
+    const filter = inPlayBodyFilter(benchCountersFiltered[2] ?? "");
+    if (per >= 1 && filter !== null) {
+      return { per, count: { kind: "damageCountersOnYourBench", filter } };
+    }
   }
   // D193 — the opponent's Bench counted as BODIES. Placed after the counter arm
   // it mirrors, so the two readers over one `{per, count}` interface read the same

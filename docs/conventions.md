@@ -5079,3 +5079,101 @@ fails with `Module not found "scripts/mutation/precheck.ts"`. **Both look like a
 neither is.** Every path in this repo's tooling — `tsconfig` project references, `vitest`'s `include`
 globs, `lint-coverage.ts`'s file list, every mutant row's `file` — is repo-root-relative. D466 lost two
 rounds to this. Use absolute paths in `sed`/`grep`, and invoke tools from the root.
+
+## A disjointness GUARD is only killable where the pattern that needs it runs FIRST (D467)
+
+D467 added two anchors that narrow a shipped one by a printed noun, and they are disjoint from their
+siblings for two DIFFERENT reasons:
+
+- `BENCH_COUNTER_FILTERED_MULTIPLY` captures `([^.]+ Pokémon)` — at least one character, a SPACE, then
+  the head noun — so the shipped `…on all of your Benched Pokémon.` **cannot match it at all**. That is
+  STRUCTURAL disjointness and it carries no guard.
+- `YOUR_BENCHED_NOUN_SCALE` captures a BARE token (`…for each of your Benched Charjabug.`), so nothing
+  in its shape excludes `Pokémon`. Its only defence is a `(?!Pokémon\.)` lookahead.
+
+**The second kind has a trap.** Place the narrowed arm at the house position — BEHIND the arm it
+narrows — and deleting the lookahead changes NOTHING the reader can observe: the shipped arm claims the
+sentence first, so the mutation is INERT (D450). And these regexes are **module-private `const`s**, so
+no suite can assert the pattern directly either. **The guard becomes unkillable, which is D205/D208's
+vacuous guard by construction** — a `(?!…)` nobody can turn red is a comment with syntax.
+
+**THE RULE, in order of preference:**
+
+1. **Prefer STRUCTURAL disjointness.** A string cannot end two ways; a capture that demands a space
+   cannot match a noun without one. No guard, nothing to rot.
+2. **Where only a guard will do, place the guarded arm FIRST** and say why in the block. The deletion
+   then breaks the SHIPPED printings, and the row that proves it is killed by the suites that own the
+   OLD member — not by your own suite.
+3. **Then pin the order from the other side** with an ORDER-PERMUTATION mutant declared `equivalent`
+   (D439's shape). The pair is the claim: *the ORDER is legibility and the GUARD is behaviour*, and the
+   day the guard weakens, the survivor reports `STALE-SURVIVOR`.
+
+⚠️ **AND SAY WHICH KIND YOU HAVE.** "Disjoint, so the order is legibility" is true of both and useful
+about neither — the placement decision follows from WHICH mechanism supplies the disjointness.
+
+## A `toBeNull` negative control is a claim with an EXPIRY DATE, and its suite may not be yours (D467)
+
+D467 read two sentences and turned two unrelated suites red. Both pinned *"This attack does 20 more
+damage for each of your Benched {L} Pokémon."* → `toBeNull` as the **"count source with no reader at
+all"** witness — `scaledDamage.test.ts` (re-homed there off Entei at D196) and
+`selfEnergyScaling.test.ts` (as one of three independent reasons a printing stays unread).
+
+Neither was found by grep. Both were found by `bun run check` going red, which is the good outcome —
+but the repair is not "delete the assertion":
+
+- **Re-point it to the OTHER side and say so** (D444/D447): assert the value it derives to NOW, with a
+  note naming the decision that moved it. A rung that quietly shrinks loses the transition.
+- **Find the witness a NEW HOME.** A suite that says "no member answers this count" is asserting a
+  property of the UNION, and the property is still worth pinning — it just needs a different sentence.
+  D467's third home is corpus **file line 534** (the opponent's whole board of damage counters), chosen
+  because it is ONE sentence on ONE fold, so the count source is the only ground.
+- **Note in the resume point that the new witness is load-bearing**, or the next slice builds it
+  without knowing it owes a fourth home.
+
+⚠️ **AND A WITNESS WRITTEN AS *N INDEPENDENT REASONS* IS THE ONE THAT SURVIVES THIS.**
+`selfEnergyScaling.test.ts` wrote its refusal as three facts and said out loud that *"any one of them
+alone would keep it standing"*. D467 is the first time that construction had to pay out: reason 2 died
+and the witness stands on 1 and 3.
+
+## A doc figure can rot in TWO files at once, and fixing one copy makes it worse (D467)
+
+D466 followed the rule above and re-derived `D439-vocabulary-order-loses-the-owner`'s `reason` from
+*"25 nouns — the 3 exact keys"* to 7/29. It did **not** touch `inPlayBodyFilter`'s own doc block, which
+is where that sentence was transcribed FROM and which still said 25/3. For a whole slice the mutant row
+and the comment disagreed by four keys, and nothing anywhere went red.
+
+**THE RULE: when you correct a transcribed figure, correct the SOURCE in the same commit — and prefer
+to DELETE the figure and derive it.** D467 does both: the two prose copies now agree at 8/30, and
+`benchNounScaling.test.ts` §5 computes the vocabulary through the READER (every exact key must resolve,
+every one of the 22 type tokens must resolve, none may match `IN_PLAY_OWNER_NOUN`, and the three sizes
+must sum to 30). The next key to land reddens a rung instead of quietly disagreeing with two comments.
+
+⚠️ The same slice found the same rot in a `what` string: `D439-vocabulary-defaults-instead-of-staying-loud`
+said the defaulting mutation *"steps `BUILT.attack` by 3"*, which was true until D466 built the Stage
+member. Re-MEASURED to **2** by enumerating every unbuilt corpus row that reaches any `inPlayBodyFilter`
+anchor. **A `what` is a doc figure too.**
+
+## `grep -oP` with a negated class can MERGE two printed forms into one key (D467)
+
+D467 measured the corpus slot after *"Benched "* with `grep -oP "Benched [^ .]+\."` and got ONE
+sentence-final value at **89**. The truth is two: `Benched Pokémon.` at **46** and `Benched Pokémon.)`
+at **43** — the negated class stops before the period, so the *"(Don't apply Weakness and Resistance for
+Benched Pokémon.)"* rider's prefix matched as well and the two forms summed into one count.
+
+The wrong figure was already written into an `effects.ts` doc block before the suite caught it.
+**`grep -c` counts TEXT, not structure, and `grep -oP` with a negated class counts a PREFIX, not a
+token.** When a count is going into a doc block or a refusal, enumerate it with a tokeniser over the
+committed corpus and assert the WHOLE multiset — D467's §1 asserts all thirteen keys with their
+multiplicities, so a new printed Bench noun reddens a rung instead of joining a total.
+
+## Three small harness facts D467 paid for
+
+- **A mutant row with `survives` STILL needs `expectKilledBy`.** Omitting it crashes the runner with
+  `TypeError: undefined is not an object (evaluating 'files.join')`. The field is optional in `Mutant`,
+  so `tsc` is silent; the row is the suites the survivor is RUN against to confirm it survives.
+- **Never start a second `bun scripts/mutation/run.ts` while one is in flight.** D411's journal-liveness
+  gate refuses correctly (exit 3, "its journal is not wreckage, it is that run's net"), but both
+  processes write the same redirect and the transcript interleaves into nonsense.
+- **`echo "X=$?"` after a PIPE reports the pipe's last stage, not the script.**
+  `bun scripts/residue-census-gate.ts 2>&1 | tail` printed three §A disagreements while the transcript
+  said `GATE_EXIT=0`. Redirect to a file and read the exit there.

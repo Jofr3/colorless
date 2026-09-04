@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
@@ -422,7 +423,30 @@ describe("the census — discovered from the population, not enumerated", () => 
         }
       }
     }
-    expect(found).toEqual(["swsh10.5-043[0] Raging Crash"]);
+    // 🆕🆕 **D467 — A SECOND PRODUCER, AND IT IS THE FILTERED ARM.** `fix-benchnoun`
+    // carries `censusAttackCorpus.ts` file line 544 (*"…on all of your Benched {F}
+    // Pokémon."*, 2 legal printings) and derives the SAME member with an optional
+    // `filter` on it. The sweep is what caught the addition, which is exactly what
+    // D145's move is for — a second printing added without a case fails HERE.
+    //
+    // 🛑 **AND THE ROW ABOVE IS NOW A ZERO-LEGAL SPELLING, MEASURED RATHER THAN
+    // ASSUMED.** `BENCH_COUNTER_MULTIPLY`'s bare noun reaches **no printing at all**
+    // in `legalAttackCorpus()` at this head — Tyranitar `swsh10.5-043` has rotated
+    // out, D367's situation a third time — so this fixture is the only surviving
+    // driver of the unfiltered path and the FILTERED arm is the only live one. The
+    // anchor and the fixture are both KEPT, on D364's rule: they are keyed on
+    // printed text, the reading is still correct, and a reprint restores it free.
+    expect(found).toEqual([
+      "swsh10.5-043[0] Raging Crash",
+      "fix-benchnoun[0] Static Tally",
+    ]);
+    expect(
+      legalAttackCorpus().filter(
+        ([, text]) =>
+          text ===
+          "This attack does 10 damage for each damage counter on all of your Benched Pokémon.",
+      ),
+    ).toEqual([]);
   });
 
   it("…and the SELF-side multiply producers are asserted beside them, unmoved", () => {
