@@ -445,11 +445,19 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     // of site would be wrong at EVERY site (D451/D461's finding, paid here).
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([491, 1512]);
-    // …and the step is attributable: remove THIS sentence from the resolved set and
-    // the pair is the pre-slice one, re-derived rather than remembered.
+    expect([resolved.length, units(resolved)]).toEqual([493, 1514]);
+    // …and the step is attributable: remove THIS sentence from the resolved set and the
+    // pair falls by exactly 1 and 2.
+    // 🛑🛑 **D463 — THE SECOND LITERAL IS NO LONGER "THE PRE-SLICE PAIR", AND
+    // SAYING SO IS THE POINT.** It was [490, 1510] when D462 wrote it, which was D461's head;
+    // D463 then added 2 sentences / 2 printings to the SAME resolved set (the per-heads Energy
+    // discard, corpus file lines 200 and 234), so the difference this rung measures is still
+    // exactly 1 and 2 while neither endpoint is a historical constant any more. ⚠️ **BOTH
+    // LITERALS MOVED TOGETHER HERE AND THAT IS NOT THE `head === head` TRAP** (D426/D437): both
+    // sides are absolute pins re-derived from the corpus, not a tail computed off the head, so a
+    // mutation that moved `resolved` without moving `withoutOxford` still reddens one of them.
     const withoutOxford = resolved.filter(([, s]) => s !== OXFORD);
-    expect([withoutOxford.length, units(withoutOxford)]).toEqual([490, 1510]);
+    expect([withoutOxford.length, units(withoutOxford)]).toEqual([492, 1512]);
   });
 
   it("the population itself did not move — 640 sentences / 1,732 printings", () => {
@@ -534,10 +542,10 @@ describe("§7 — purity and the structural answers", () => {
     }
   });
 
-  it("engineVersion is 0.361.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.362.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D462 — 0.360.0 → **0.361.0**. One printed sentence that derived to `null`
     // now derives to a program: an OBSERVABLE change to what the engine does with a
     // real catalog row, which is the bump's whole trigger.
-    expect(engineVersion).toBe("0.361.0");
+    expect(engineVersion).toBe("0.362.0");
   });
 });

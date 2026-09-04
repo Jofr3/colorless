@@ -151,11 +151,29 @@ const DIG_A_LITTLE = "Flip a coin. If heads, discard the top card of your oppone
     parks parks again, and the expansion puts its copies in `rest` like any other
     program. The refusal is a COST — a fielded witness re-pointed across five files
     (D418's rule), and an N-park end-to-end drive — not a capability. Corrected and
-    dated here (D423), and priced in the D452 block in effects.ts. */
+    dated here (D423), and priced in the D452 block in effects.ts.
+    🆕🆕 **D463 PAID EXACTLY THAT PRICE** — two anchors, two arms, the fielded witness
+    re-pointed, and `perHeadsEnergyDiscard.test.ts` driving the N parks on a board.
+
+    🆕🆕 **D463 — THE SET IS NOW TWO, AND THE TWO THAT LEFT ARE THE TWO THIS BLOCK
+    NAMED AS ONE REFUSAL.** Lines 200 and 234 were refused above on ONE shared count
+    (*"`discardEnergy` PARKS"*) and D463 built both. 🛑 **A REFUSAL THAT GROUPS N ROWS UNDER
+    ONE REASON IS N REFUSALS UNTIL EACH HAS BEEN PRICED**: the shared reason was a COST, which
+    the paragraph below already said in prose while this array still asserted it as a fact.
+    What is left is refused on two DIFFERENT counts and neither is about parking — line 217 by
+    a FACE axis, line 219 by its consequent. */
 const OUT_OF_SCOPE = [
-  "Flip 2 coins. For each heads, discard an Energy from your opponent's Active Pokémon.",
   "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
   "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
+] as const;
+
+/** 🆕🆕 **D463 — THE TWO ROWS THIS FILE REFUSED AND NOW DERIVES**, verbatim off
+    `censusAttackCorpus.ts` file lines 200 and 234, in that order. Kept as a NAMED SET rather
+    than deleted, for the reason a witness is re-pointed rather than removed: every rung below
+    that used to say "these stay loud" now says the opposite about these two, and a deleted
+    array says nothing at all. Line 234 is Krookodile sv01-117 "Chomp Chomp Bite". */
+const BUILT_AT_D463 = [
+  "Flip 2 coins. For each heads, discard an Energy from your opponent's Active Pokémon.",
   "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
 ] as const;
 
@@ -472,14 +490,14 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(FIXTURE_POOL["sv01-057"]?.evolveFrom).toBe("Wiglett");
   });
 
-  it("pins the FOUR out-of-scope printings — each in the CORPUS, each for its own reason", () => {
+  it("pins the TWO out-of-scope printings and the TWO D463 built — each in the CORPUS", () => {
     // 🛑 THE SOURCE RUNG, AND IT IS THE ONE D130 DID NOT HAVE. Every entry is a
     // row of `legalAttackCorpus()` — the `legal_standard = 1` column — so a
     // hand-retyped opening cannot survive here the way the old Masquerain entry did
     // for 322 decisions. A byte pin on an invented string is green by construction;
     // membership in the measured corpus is not.
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
-    for (const sentence of OUT_OF_SCOPE) {
+    for (const sentence of [...OUT_OF_SCOPE, ...BUILT_AT_D463]) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
       expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
@@ -492,32 +510,35 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     }
     // The printing counts, off the corpus rather than off this file: three singletons
     // and one pair. A set that drifted onto a different sentence would move these.
-    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([1, 1, 2, 1]);
+    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([1, 2]);
+    expect(BUILT_AT_D463.map((sentence) => corpus.get(sentence))).toEqual([1, 1]);
 
-    // [0] line 200 — the PRINTED-count `discardEnergy`. It names a Pokémon, so its
-    // bytes exceed its length by one (the é).
-    expect(OUT_OF_SCOPE[0].length).toBe(84);
-    expect(utf8Bytes(OUT_OF_SCOPE[0])).toBe(85);
-    expect(OUT_OF_SCOPE[0].startsWith("Flip 2 coins. For each heads, ")).toBe(true);
-    // [1] line 217 — the FACE axis. The ONLY corpus sentence in this whole family
-    // that counts TAILS, which is why the axis has one printing to weigh it against.
-    expect(OUT_OF_SCOPE[1].length).toBe(66);
-    expect(utf8Bytes(OUT_OF_SCOPE[1])).toBe(67);
-    expect(OUT_OF_SCOPE[1]).toContain("For each tails,");
+    // OUT_OF_SCOPE[0] — line 217, the FACE axis. The ONLY corpus sentence in this whole
+    // family that counts TAILS, which is why the axis has one printing to weigh it against.
+    expect(OUT_OF_SCOPE[0].length).toBe(66);
+    expect(utf8Bytes(OUT_OF_SCOPE[0])).toBe(67);
+    expect(OUT_OF_SCOPE[0]).toContain("For each tails,");
     expect(OUT_OF_SCOPE.filter((s) => s.includes("For each tails,"))).toHaveLength(1);
-    // [2] Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3 coins." —
-    // and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
+    // OUT_OF_SCOPE[1] — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
+    // coins." — and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
     // repeat, which is why it is refused by the consequent rather than by the count.
-    expect(OUT_OF_SCOPE[2].startsWith("Flip 3 coins. ")).toBe(true);
+    expect(OUT_OF_SCOPE[1].startsWith("Flip 3 coins. ")).toBe(true);
     expect(UNDERSEA_TUNNEL.startsWith("Flip 3 coins. ")).toBe(true);
-    expect(OUT_OF_SCOPE[2]).not.toContain("For each heads");
-    expect(OUT_OF_SCOPE[2].length).toBe(100);
-    // [3] line 234 — Krookodile: D129's leading sentence and D130's repeat, and the
-    // SAME consequent as [0]. The pair is the count axis again, both halves unbuilt.
-    expect(OUT_OF_SCOPE[3].length).toBe(103);
-    expect(utf8Bytes(OUT_OF_SCOPE[3])).toBe(104);
-    expect(OUT_OF_SCOPE[3]).toContain(FOR_EACH_HEADS_TAIL.slice(0, "For each heads, ".length));
-    expect(OUT_OF_SCOPE[3].endsWith(OUT_OF_SCOPE[0].slice("Flip 2 coins. ".length))).toBe(true);
+    expect(OUT_OF_SCOPE[1]).not.toContain("For each heads");
+    expect(OUT_OF_SCOPE[1].length).toBe(100);
+    // 🆕🆕 D463 — BUILT_AT_D463[0], line 200: the PRINTED-count `discardEnergy`. It names a
+    // Pokémon, so its bytes exceed its length by one (the é). The byte pins are KEPT after the
+    // build, for D452's reason read the other way round: they were never evidence the sentence
+    // was refused, they are evidence it is the sentence the CORPUS prints.
+    expect(BUILT_AT_D463[0].length).toBe(84);
+    expect(utf8Bytes(BUILT_AT_D463[0])).toBe(85);
+    expect(BUILT_AT_D463[0].startsWith("Flip 2 coins. For each heads, ")).toBe(true);
+    // 🆕🆕 D463 — BUILT_AT_D463[1], line 234: Krookodile. D129's leading sentence over the SAME
+    // consequent as [0], which is the count axis a third time and now with BOTH halves built.
+    expect(BUILT_AT_D463[1].length).toBe(103);
+    expect(utf8Bytes(BUILT_AT_D463[1])).toBe(104);
+    expect(BUILT_AT_D463[1]).toContain(FOR_EACH_HEADS_TAIL.slice(0, "For each heads, ".length));
+    expect(BUILT_AT_D463[1].endsWith(BUILT_AT_D463[0].slice("Flip 2 coins. ".length))).toBe(true);
   });
 });
 
@@ -993,7 +1014,7 @@ describe("constructed near-misses stay NULL", () => {
     }
   });
 
-  it("leaves the FOUR out-of-scope printings on the loud path, on EVERY reader", () => {
+  it("leaves the TWO out-of-scope printings on the loud path, on EVERY reader", () => {
     // 🆕 D452 — and the strong form: not "on the five readers this file imports"
     // but on the WHOLE live surface, taken off the module. A refusal rung that names
     // its own reader list is a rung that goes QUIET when a thirteenth reader claims
@@ -1006,12 +1027,28 @@ describe("constructed near-misses stay NULL", () => {
       expect(deriveAttackDamageMultiplier(sentence)).toBeNull();
       expect(deriveAttackRequirement(sentence)).toBeNull();
     }
-    // …and swapping each one's consequent for a mill turns it into a sentence this
-    // deriver reads, which is what makes the nulls above a claim about which half of
-    // the string was refused. Both `discardEnergy` rows are checked, because they are
-    // the pair whose refusal is a COST rather than a missing pattern: the OPENING of
-    // each is fine and it is the tail that is unbuilt.
-    for (const refused of [OUT_OF_SCOPE[0], OUT_OF_SCOPE[3]]) {
+    // 🆕🆕 **D463 — THE SAME RUNG, INVERTED, AND IT IS STRONGER THAN THE ONE IT REPLACES.**
+    // It used to say: swap the `discardEnergy` consequent for a mill and the sentence starts
+    // deriving, so the null above was about the TAIL and not about the opening. Both halves of
+    // that pair now derive on their own, so the claim becomes a DISCRIMINATION rather than an
+    // existence proof — one opening over two different consequents must yield two DIFFERENT
+    // `ops` and the SAME `flips`, which is what says each anchor reads its whole sentence.
+    for (const builtSentence of BUILT_AT_D463) {
+      const opening = builtSentence.slice(0, builtSentence.indexOf("For each heads"));
+      const asMill = deriveAttackCoinFlip(
+        `${opening}For each heads, discard the top 2 cards of your opponent's deck.`,
+      );
+      const asEnergy = deriveAttackCoinFlip(builtSentence);
+      expect(asEnergy, builtSentence).not.toBeNull();
+      expect(JSON.stringify(asEnergy)).not.toBe(JSON.stringify(asMill));
+      expect(asEnergy).toMatchObject({
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      });
+      expect(JSON.stringify((asEnergy as { flips: unknown }).flips)).toBe(
+        JSON.stringify((asMill as { flips: unknown } | null)?.flips),
+      );
+    }
+    for (const refused of [BUILT_AT_D463[0], BUILT_AT_D463[1]]) {
       const head = refused.slice(0, refused.indexOf("For each heads"));
       expect(
         deriveAttackCoinFlip(`${head}For each heads, discard the top 2 cards of your opponent's deck.`),

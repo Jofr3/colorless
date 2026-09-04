@@ -56,6 +56,22 @@
  * the three that left, `COMPOUND-head` fell 13 → 10 sentences and 16 → 12
  * printings, and the three pinned literals still agree with `censusAtHead.test.ts`
  * to the digit.
+ * 🆕🆕 **D463 MOVES THEM TO 147 / 121 / 168** (THE PER-HEADS ENERGY DISCARD, 2 sentences /
+ * 2 printings, `censusAttackCorpus.ts` file lines 200 and 234 — *"Flip {2 coins|a coin
+ * until you get tails}. For each heads, discard an Energy from your opponent's Active
+ * Pokémon."*).
+ * ⚠️ **AND THE LINE ABOVE WAS STALE BY ONE SLICE WHEN D463 READ IT.** D462 moved the three
+ * literals to **149 / 123 / 170** and did not say so here, so this block read as though
+ * D461 were HEAD for a whole slice. It is a doc figure with no test behind it, which is
+ * exactly the class D425 is about; recorded rather than silently corrected, because the
+ * interesting fact is that the rot is one slice deep every time and nothing reddens.
+ * 🛑 **D463 IS THE FIRST SLICE IN FOUR TO MOVE `OPAQUE` — 88/126 → 87/125.** Line 234 was
+ * classified `OPAQUE` and line 200 `SUBST-7`, and the two are ONE shape reached by two
+ * shipped `AttackFlipCount` members. **`OPAQUE` is a statement about how far THIS
+ * INSTRUMENT can edit a sentence before it reaches a built string, and not a statement
+ * about how much work the sentence is.** A row can be `OPAQUE` and cost one regex; the
+ * class table's own `SUBST-7` row named the twin of this one at one substitution, which is
+ * how the pair was found at all. Read `OPAQUE` as UNCLASSIFIED, never as EXPENSIVE.
  * 🆕🆕 **D461 IS THE SECOND, AND IT IS THE SHARPER TEST OF THE TWO** — because a
  * `PHRASE-1` row is the class this instrument is MOST LIKELY TO UNDERPRICE. Its
  * evidence for the class is that deleting ONE token reaches a built string, which

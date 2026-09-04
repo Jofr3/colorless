@@ -15963,7 +15963,12 @@ const ATTACK_COIN_UNTIL_TAILS_MULTI =
 // PARKS on a choice, so N heads is N sequential parks across a serialized
 // continuation) and Masquerain sv03-007 discards a RANDOM card from the hand
 // (which would be the first EffectOp in the engine to consume `state.rngState`).
-// Both are real slices with costs of their own; neither is this one. Oinkologne
+// Both are real slices with costs of their own; neither is this one.
+// 🆕🆕 **D463 — BOTH OF THOSE SLICES HAVE NOW LANDED (D452 and D463), so the
+// paragraph above is history rather than a live refusal.** It is kept because the
+// REASONS it gives are still the right ones and were still costs when it was
+// written; what it got wrong is only the word "cannot", which the D452 block
+// below corrects at length. Oinkologne
 // sv03-184 "Flip 3 coins. Put a number of cards up to the number of heads from
 // your discard pile into your hand." shares the opening and not the shape at all
 // — a heads COUNT read as an "up to" ceiling by ONE op, not a repeat.
@@ -16052,6 +16057,17 @@ const ATTACK_COIN_MILL_UNTIL_TAILS =
 //     refusal comment in three more files), and D418's rule is that a re-pointed
 //     rung must be asked what the OLD claim caught that the new one cannot. That is
 //     a slice of its own, and it is the next one.
+//     🆕🆕 **D463 IS THAT SLICE, AND BOTH LINES ARE BUILT** — two anchors, two arms,
+//     Krookodile re-pointed from "stays LOUD" to "flips and still lands its flat 50",
+//     and the N parks driven on a board in `perHeadsEnergyDiscard.test.ts`. ⚠️ **WHAT
+//     THE OLD CLAIM CAUGHT AND THE NEW ONE MUST NOT LOSE**: that `deriveAttackEffect`
+//     STILL refuses line 234, because the sentence ENDS in
+//     `FLIP_OPPONENT_ACTIVE_DISCARD`'s exact words. That assertion is kept in all four
+//     files, and the coin reader's claim is added beside it rather than in place of
+//     it. 🛑 **AND THE THREE-ROW REFUSAL ABOVE WAS REALLY TWO REFUSALS AND A COST**:
+//     lines 200 and 234 were grouped with line 217 under "the park", and only 217 was
+//     ever refused for a reason of its own (a FACE axis). **A refusal that groups N
+//     rows under one reason is N refusals until each has been priced separately.**
 //   · LINE 217 ("Flip 3 coins. For each tails, discard an Energy from this
 //     Pokémon.") — the same park PLUS a second axis this union does not have.
 //     `programPerHeads` counts HEADS in its name and in its expansion; a FACE
@@ -16069,6 +16085,56 @@ const ATTACK_COIN_MILL_ONE_PRINTED =
   /^Flip (\d+) coins\. For each heads, discard the top card of your opponent['’]s deck\.$/;
 const ATTACK_COIN_HAND_PRINTED =
   /^Flip (\d+) coins\. For each heads, discard a random card from your opponent['’]s hand\.$/;
+
+// 🆕🆕 D463 — THE PER-HEADS CONSEQUENT THAT PARKS, IN BOTH OF THE FLIP COUNTS THE
+// COLUMN PRINTS IT WITH. `discardEnergy { from: "opponentActive", filter: { kind:
+// "anyEnergy" } }` is the op D43's BARE sentence ("Discard an Energy from your
+// opponent's Active Pokemon.") already derives, and it is the op `residue-census.ts`
+// PRINTS inside a `coinFlipGate` for corpus line 200 when it substitutes D126's gate
+// opening for the per-heads one. ZERO new `EffectOp` members, op FIELDS, op VALUES,
+// readers or `AttackCoinFlip` members: this is `programPerHeads` over a THIRD
+// consequent, which is D405's rule that a new COMBINATION of a shipped vocabulary is
+// not a new shape.
+//
+// ⚠️ MEASURED AT THIS HEAD OVER `legalAttackCorpus()` — the `legal_standard = 1` column
+// and NOT the local D1 the D130 block above was measured on (D449's two-populations
+// rule). `censusAttackCorpus.ts` FILE LINES 200 and 234, ONE legal printing each.
+// Line 234 is Krookodile sv01-117 "Chomp Chomp Bite".
+//
+// 🛑 TWO ANCHORS BECAUSE THE COLUMN PRINTS TWO FLIP COUNTS, and this is the third
+// time this family has paid that price — D130 for the plural mill, D452 for the
+// singular one, here for the Energy discard. The consequent is byte-identical between
+// them, so the two patterns differ ONLY in their leading sentence, and both leading
+// sentences are `AttackFlipCount` members that shipped at D127/D129.
+// ⚠️ THE UNTIL-TAILS TWIN IS BUILT HERE AND D452 REFUSED THE SINGULAR MILL'S, AND THE
+// TWO DECISIONS AGREE RATHER THAN CONFLICT. D452 refused its twin because NOTHING IN
+// THE COLUMN PRINTS IT ("an anchor for it would author a card"); the test is what the
+// column prints, not symmetry between the counts. This consequent is printed at both.
+//
+// 🛑 WHAT THIS SLICE ACTUALLY BOUGHT IS THE DRIVE, NOT THE EXPRESSION. D130 wrote
+// that a parking op is "the one thing D130's expansion cannot express" and D423
+// corrected that in prose; the CODE always said so — `resumeProgram` ends in
+// `runProgram(applied, rest, ...)`, so an op sitting in `rest` that parks simply parks
+// again, and the expansion puts its copies in `rest` like any other program. The cost
+// was never a capability: it is N heads = N sequential `effect:choose` phases across a
+// serialized continuation, and Krookodile sv01-117 — this repo's FIELDED "stays LOUD"
+// witness in five suites — being re-pointed onto it (D418).
+//
+// 🛑 N COPIES OF A COUNTLESS OP, NEVER ONE OP CARRYING `count: N`, and the reason is
+// the ORDER OF EVENTS rather than taste: `ops` is fixed at DERIVE time and the heads
+// count does not exist until the flip site runs, so there is no N to put in a `count`
+// field — the expansion is the only place the number can live. It is also the right
+// reading, which D452's random hand discard argues from the other side: N INDEPENDENT
+// picks out of a set that SHRINKS between them, not one pick of N out of the original.
+//
+// Disjoint from the four anchors above by the consequent's own noun phrase — neither
+// mill pattern nor the hand pattern can span "an Energy from your opponent's Active
+// Pokemon" — so the order among the six is free. `['’]` on "opponent's" for the
+// family's standing reason, and no /i, for its other one.
+const ATTACK_COIN_ENERGY_PRINTED =
+  /^Flip (\d+) coins\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+const ATTACK_COIN_ENERGY_UNTIL_TAILS =
+  /^Flip a coin until you get tails\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
@@ -16454,6 +16520,39 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
         }
       : null;
   }
+  // 🆕🆕 D463 — THE PRINTED COUNT, corpus line 200. The flip guards are the
+  // family's, verbatim: `flips >= 2` because the regex's own "coins" is PLURAL (the
+  // one-flip form is printed "Flip a coin." and is D126's gate), and
+  // `flips <= MAX_PRINTED_FLIPS` because the digits come from THIRD-PARTY ingested
+  // text and the expansion now grows one copy per heads. There is no consequent
+  // payload to validate — the op takes no count — which is why this arm carries the
+  // flip guards and nothing else, exactly as D452's two do.
+  const energyPrinted = ATTACK_COIN_ENERGY_PRINTED.exec(effect);
+  if (energyPrinted !== null) {
+    const flips = Number(energyPrinted[1]);
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "printed", count: flips },
+          ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        }
+      : null;
+  }
+  // 🆕🆕 D463 — THE UNBOUNDED COUNT, corpus line 234 (Krookodile sv01-117). NO
+  // ceiling, which is D129's rule and the mill twin's comment verbatim: the bound that
+  // makes an unbounded sequence terminate belongs to the RNG that produces the faces
+  // (`MAX_UNTIL_TAILS_FLIPS`, rng.ts), not to the sentence that asks for them. With no
+  // payload to validate either, this arm has NOTHING left to guard and so returns
+  // unconditionally — the only arm in the family that does. That is the honest shape
+  // rather than a missing check: the mill twin's `count >= 1` exists because it reads a
+  // printed digit, and this sentence has no digit anywhere.
+  if (ATTACK_COIN_ENERGY_UNTIL_TAILS.test(effect)) {
+    return {
+      kind: "programPerHeads",
+      flips: { kind: "untilTails" },
+      ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+    };
+  }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
 }
 
@@ -16467,8 +16566,20 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
 // Krookodile (sv01-117) is the trap this pattern and its flip twin must not fall
 // into: "Flip a coin
 // UNTIL you get tails. For each heads, discard an Energy from your opponent's
-// Active Pokémon." — a repeat count this engine cannot express — ENDS in the
-// bare pattern's exact words, and deriving it would silently discard once.
+// Active Pokémon." — 🆕🆕 **D463: a repeat count that `deriveAttackCoinFlip` now
+// reads to `programPerHeads` over exactly the op below, so the parenthetical this
+// line used to carry ("a repeat count this engine cannot express") is gone** —
+// ENDS in the bare pattern's exact words, and deriving it HERE would silently
+// discard once instead of once per heads.
+// ⚠️ **THE TRAP IS STRICTLY WORSE NOW THAN IT WAS, WHICH IS WHY THE GUARD IS
+// UNCHANGED AND THE PARAGRAPH IS LONGER.** When the sentence was unread, this
+// pattern matching it would have turned a loud skip into one silent discard. Now
+// that a DIFFERENT reader claims the whole sentence, this pattern matching it
+// would put TWO readers on one printing — and `deriveAttackEffect` runs at a
+// different site from `deriveAttackCoinFlip` (the §8.5 tail against the flip site
+// in front of it), so the card would discard once flatly AND once per heads. The
+// four suites that assert `deriveAttackEffect(<that sentence>)` is null were kept
+// at D463 for this reason and not merely out of caution.
 // TWO things keep it out, and it takes both: the leading `^`, and the fact that
 // the clause reads lowercase "discard" mid-sentence where the pattern needs a
 // capital. Neither alone is enough (dropping `^` still misses on the capital;

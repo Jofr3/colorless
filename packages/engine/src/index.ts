@@ -19226,6 +19226,38 @@ import type { GameState, Seat } from "./types";
     the figure a successor inherits is **36 assertions / 40 sites** — D427's mechanism
     stated as the arithmetic rather than as a warning.
 
+    🆕🆕 engineVersion 0.361.0 → **0.362.0** (D463 — THE PER-HEADS CONSEQUENT THAT
+    PARKS, `censusAttackCorpus.ts` FILE LINES 200 and 234: *"Flip {2 coins|a coin until
+    you get tails}. For each heads, discard an Energy from your opponent's Active
+    Pokémon."*, **2 sentences / 2 legal printings** — ONE each — that derived to `null`
+    and now derive to `programPerHeads` carrying the SHIPPED `discardEnergy
+    {from:"opponentActive", filter:{kind:"anyEnergy"}}` op. TWO new anchors, TWO new arms
+    in `deriveAttackCoinFlip`, and NOTHING else: **ZERO new `EffectOp` members, op FIELDS,
+    op VALUES, `AttackCoinFlip` members, readers (surface unmoved at 13), prompts, events,
+    error codes, registry rows, FIXTURE_POOL ids, `packages/schema` bytes or `redact.ts`
+    bytes.**
+
+    🛑 **THE `MATCH_RECORD_VERSION` ARGUMENT IS THE SERIALIZED ALPHABET (D462's shape) AND
+    IT HAD TO BE, BECAUSE REACHABILITY (D461's shape) IS FALSE HERE.** D461 could say *"the
+    op never parks, so it can never reach `phase.cont.rest`"*. This slice's op DOES park —
+    N heads is N sequential `effect:choose` phases — so the continuation really is written
+    and really is persisted. What is true is narrower: `EffectContinuation.rest` has held
+    `EffectOp[]` since M5, and the only op this slice ever puts there is the SAME JSON D43's
+    bare sentence has produced for a hundred slices. No new op, no new op field, no new op
+    value ⇒ **no byte a v29 record can hold after this slice that it could not hold before
+    it**. The COUNT of copies is not a byte in the alphabet: an array that already accepts N
+    members does not gain a shape by holding two. Driven in three directions including LOSS
+    at `perHeadsEnergyDiscard.test.ts` §7, where dropping `rest` from the persisted bytes
+    produces a DIFFERENT, OBSERVABLE ending — which is what makes the "N parks" claim a
+    statement about a board rather than about a log. **`MATCH_RECORD_VERSION` STAYS 29.**
+
+    ⚠️ **THE BUMP IS OWED FOR BEHAVIOUR AND ONE OF THE TWO CARRIERS IS FIELDED.** Krookodile
+    `sv01-117` "Chomp Chomp Bite" took NO flip at all before this slice and now takes an
+    unbounded sequence of them; its end-to-end witness in `untilTailsFlip.test.ts` is
+    RE-POINTED from *"reaches ATTACK_EFFECT_SKIPPED"* to *"flips, announces every face, and
+    still lands its flat 50"* (D418), and the one assertion that survives the inversion
+    unchanged is the flat 50 — the half that was never about loudness.)
+
     🆕🆕 engineVersion 0.360.0 → **0.361.0** (D462 — THE THREE-STATUS OXFORD LIST,
     `censusAttackCorpus.ts` FILE LINE 679: *"Your opponent's Active Pokémon is now
     Burned, Confused, and Poisoned."*, **1 sentence / 2 legal printings** that derived
@@ -19332,7 +19364,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.361.0";
+export const engineVersion = "0.362.0";
 
 export type {
   ApplyResult,

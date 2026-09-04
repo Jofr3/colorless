@@ -6587,10 +6587,18 @@ it to duplicate).
 - **Masquerain `sv03-007`** — `…tails. For each heads, discard a random card from your
   opponent's hand.` Would be the **first `EffectOp` in the engine to consume
   `state.rngState`**; it must do so deterministically and survive a park.
-- **Krookodile `sv01-117`** — `…tails. For each heads, discard an Energy from your
-  opponent's Active Pokémon.` The op exists but **PARKS**, so N heads is N sequential
-  parks across a serialized continuation. D130's expansion carry is already correct for
-  it; the open question is N parks versus collapsing them.
+- ~~**Krookodile `sv01-117`**~~ — **DONE in D463, together with its PRINTED-count twin
+  (corpus file line 200, *"Flip 2 coins. For each heads, …"*), which the residue census
+  had classified `SUBST-7` while Krookodile's own row sat in `OPAQUE`. Two anchors, two
+  arms, `programPerHeads` over the SHIPPED `discardEnergy` op; 2 sentences / 2 legal
+  printings.** The open question above — *"N parks versus collapsing them"* — is answered
+  N PARKS, and the ORDER OF EVENTS decides it rather than taste: `ops` is fixed at DERIVE
+  time and the heads count does not exist until the flip site runs, so there is no N to
+  collapse into a `count` field. It is also the right reading (N independent picks out of
+  a set that SHRINKS between them). 🛑 **And "the op exists but PARKS" was never a
+  capability claim**: `resumeProgram` ends in `runProgram(applied, rest, …)`, so a parking
+  op in `rest` parks again — the cost was this card's FIELDED "stays LOUD" witness, which
+  D463 re-pointed across five suites (D418) rather than deleting.
 - **Oinkologne `sv03-184`** — `Flip 3 coins. Put a number of cards up to the number of
   heads from your discard pile into your hand.` A heads COUNT read as a **ceiling**, not
   a repeat: `discardPileRetrieval` already takes an "up to" `max`, so this wants a 5th

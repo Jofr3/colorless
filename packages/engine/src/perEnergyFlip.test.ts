@@ -943,22 +943,32 @@ describe("deriver disjointness — a fourth SHAPE that crosses none of the other
       expect(deriveAttackCoinFlip(text)).not.toHaveProperty("flips.energy");
       expect(deriveAttackCoinFlip(text)).toHaveProperty("flips.kind", "untilTails");
     }
-    // AND THE FAMILY'S LAST UNMAPPED FLIP SENTENCES STILL DERIVE NULL — the "For
-    // each heads, <effect>." printings that remain after D130 mapped the mill:
-    // Krookodile sv01-117 (below) and Masquerain sv03-007. They share D129's leading
-    // sentence VERBATIM and differ only in the consequent, which makes them the
-    // sentences the two new arms could most plausibly have swallowed on their way
-    // past this one. They fold no number at all — they run an EffectOp per heads —
-    // and D130's expansion cannot carry either of them (Krookodile's op PARKS,
-    // Masquerain's would consume `rngState`), so they stay on the loud
-    // ATTACK_EFFECT_SKIPPED path. Gyarados swsh10.5-022 was the third and is now
-    // `programPerHeads`; its witness moved to untilTailsFlip.test.ts's re-pointed
-    // block rather than being deleted.
+    // 🆕🆕 **D463 — THE LAST UNMAPPED SENTENCE OF THIS OPENING IS NOW MAPPED, AND THE
+    // WITNESS IS RE-POINTED RATHER THAN DELETED** (the rule this same rung applied to its
+    // own pair eleven lines above, applied to itself). Krookodile sv01-117 derives
+    // `programPerHeads` over `untilTails`, so the claim it carried — *"the board-counted
+    // arm must not swallow D129's opening"* — is now stated in the STRONG form: it is not
+    // that nothing reads the sentence, it is that what reads it reads the FACES and not the
+    // BOARD. A `null` could have been produced by the sentence being unreachable; this
+    // cannot.
+    // ⚠️ **AND THE DISCRIMINATION IS BETTER THAN THE ONE IT REPLACES.** `toBe(null)` was
+    // satisfied by every possible bug in this file's arm as well as by the correct
+    // behaviour. `flips.kind === "untilTails"` with no `flips.energy` is satisfied by
+    // exactly one of them.
+    const krookodile = deriveAttackCoinFlip(
+      "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
+    );
+    expect(krookodile).not.toBeNull();
+    expect(krookodile).toHaveProperty("kind", "programPerHeads");
+    expect(krookodile).toHaveProperty("flips.kind", "untilTails");
+    expect(krookodile).not.toHaveProperty("flips.energy");
+    // …and Masquerain's real sentence (corpus line 216, "Flip 3 coins.") is the one that
+    // still has nothing to do with this arm: a PRINTED count, not an unbounded one, and not
+    // an attached-Energy one either. D452 built it; the near-miss this file cares about is
+    // that neither of them reaches `attachedEnergy`.
     expect(
-      deriveAttackCoinFlip(
-        "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
-      ),
-    ).toBe(null);
+      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard a random card from your opponent's hand."),
+    ).toHaveProperty("flips.kind", "printed");
   });
 });
 

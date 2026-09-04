@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-04 — build session #402 (**P3-M5 — D462, *the three-status Oxford list: a refusal that named a sentence while pricing a parameter, and six frozen endpoints moved before being put back.*** Engine **0.360.0 → 0.361.0**; **`MATCH_RECORD_VERSION` STAYS 29 — and the argument is the SERIALIZED ALPHABET rather than reachability**: zero new `EffectOp` members, op FIELDS or op VALUES, so every byte a v29 record can hold after this slice could already be produced before it (arm 2b authors TWO `applyStatus` ops), and `applyStatus` returns `{done}` from `applyOp` so it can never reach `phase.cont.rest`; driven over the SERIALIZED BYTES in three directions including LOSS. *"Your opponent's Active Pokémon is now Burned, Confused, and Poisoned."* — **1 sentence / 2 legal printings**, `censusAttackCorpus.ts` **FILE LINE 679** — now derives. 🛑 **D424 MEASURED THIS ROW, NAMED IT AND LEFT IT LOUD ON A REASON THAT PRICES THE WRONG THING**: *"the ONLY 3-status row in the column, so a 3-list template would be D121's literal over a pool of one."* D121 prices a NEW parameter and this anchor adds none — `STATUS_WORDS` is D424's own vocabulary, already warranted on three distinct printed pairs, at one more position. **The pool of one was the SENTENCE's and never the parameter's.** 🛑 **A TEMPLATE AND NOT A LITERAL, FOR REACHABILITY RATHER THAN GENERALITY**: the two cost the same one regex and one arm, but a literal's three words are provably slot-disjoint, so `defenderStatusOps`' collision refusal would be UNREACHABLE from the new arm and could only rot. 🛑 **NO FLIPPED TWIN — the column prints ZERO of them (measured over all 640 rows), so the anchor's `^` does that refusal's work**, pinned by a mutant that is SILENT IN EVERY CENSUS. ⚠️ **THE ONE PRINTED NEAR MISS IS REAL**: corpus FILE LINE 264, *"…is now Paralyzed, and discard an Energy from that Pokémon."* (2 printings), now the attribution control in BOTH re-pointed suites. 🛑🛑 **THE FINDING ABOUT THE WORK: THIS SLICE MOVED SIX FROZEN ENDPOINTS AND PUT THEM BACK.** D426/D437 says edit a chain at the FRONT, never at the END — and a red test run REPORTS the endpoint, which is exactly why the wrong edit is the easy one. All six reverted; **15 chain heads stepped instead**, every count measured by a STRING COUNT. ⚠️⚠️ **AND `bun run check` NEEDED THREE ROUNDS FOR ELEVEN FILES BECAUSE VITEST STOPS AN `it` AT ITS FIRST THROW** — round 1 saw 16 tests, round 2 found 11 sites that had been quiet behind them, round 3 found 8 more. **COUNT THE FILE, DO NOT RE-RUN THE SUITE.** Cost: ONE anchor, ONE deriver arm, ONE helper generalised from two words to a LIST with a PAIRWISE slot test, ONE synthetic fixture (carriers UNRESOLVED — D425), ONE deck, a 29-test suite. **ZERO new `EffectOp` members, op FIELDS, op VALUES, readers (surface unmoved at 13), prompts, events, error codes, registry rows, `packages/schema` or `redact.ts` bytes.** Census: reader **490/1510 → 491/1512**, `BUILT.attack` **1560 → 1562**, residue **124/172 → 123/170**, `SUBST-5` **3/4 → 2/2**, `OPAQUE` **88/126 UNMOVED for the THIRD slice running**. `opcoverage` **BYTE-IDENTICAL in every column** (seat lines 206/470, decision points 878/1326) — correct by construction, since its universe is `EffectOp` kinds and this slice's subject is a reader ARM over an already-produced op. Mutation corpus **2,007 → 2,011**; probe **4 KILLED · 0 survivors · 0 GAP · 14.0s ON THE FIRST RUN**, plus the SIX re-pointed D424 rows **6 KILLED** and `D275` re-probed by `--only` **KILLED**. `bun run check` GREEN — **452 files / 10,108 tests**. Archive ratchet **131 → 132**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1980 killed · 31 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,531.4s`** — `+4 killed, +0 declared`, the **twenty-third** consecutive slice to name its number first and hit it. Completeness structural: **2,011 listed / 2,011 run / 2,011 matched / 0 unmatched**.)
+**Last updated:** 2026-09-04 — build session #403 (**P3-M5 — D463, *the per-heads consequent that parks: a refusal that grouped three rows under one reason, and an `OPAQUE` class that measured the instrument rather than the work.*** Engine **0.361.0 → 0.362.0**; **`MATCH_RECORD_VERSION` STAYS 29 — and the argument is the SERIALIZED ALPHABET (D462's shape), because REACHABILITY (D461's shape) IS FALSE HERE**: this slice's op DOES park, so `phase.cont.rest` really is written and really is persisted. What is true is narrower — `EffectContinuation.rest` has held `EffectOp[]` since M5 and the only op this slice ever puts there is the SAME JSON D43's bare sentence has produced for a hundred slices, so no new op, op FIELD or op VALUE ⇒ no byte a v29 record can hold after this slice that it could not hold before it; **the COUNT of copies is not a byte in the alphabet.** Driven over the serialized bytes in three directions including LOSS. *"Flip {2 coins|a coin until you get tails}. For each heads, discard an Energy from your opponent's Active Pokémon."* — `censusAttackCorpus.ts` **FILE LINES 200 and 234**, **2 sentences / 2 legal printings** (ONE each — ⚠️ the sentence step and the printing step AGREE at 2 and 2, the opposite of D461 and D462) — now derive. 🛑 **D452 REFUSED CORPUS LINES 200, 217 AND 234 UNDER ONE SHARED REASON (*"`discardEnergy` PARKS"*) AND THAT WAS THE REASON OF ITS CHEAPEST MEMBER AND THE COST OF ITS DEAREST** — two are built here and the third was never refused for that reason at all (a FACE axis), which is still unbuilt with the park shipped. **Read a refusal that groups N rows under one reason as N refusals until each has been priced separately.** 🛑 **THE MECHANISM WAS NEVER MISSING**: D130's *"the one thing D130's expansion cannot express"* was contradicted by `resumeProgram` from the first day, corrected in prose at D423, disproved executably at D452 — and four files went on asserting it for eleven more decisions. **A refusal is only as retired as its most confident test.** 🛑 **THE TARGETING FINDING: line 234 was `OPAQUE` and line 200 was `SUBST-7`, AND THE TWO ARE ONE SHAPE.** `OPAQUE` says only that no single edit this instrument can make reaches a built string; it says nothing about cost. **`OPAQUE` MEANS UNCLASSIFIED, NEVER EXPENSIVE** — and `OPAQUE` moves 88/126 → 87/125, **the first time in four slices**. ⚠️ **THE NEGATIVE CONTROL WAS REAL AND WAS PAID RATHER THAN USED AS A REASON** — Krookodile `sv01-117` was the fielded "stays LOUD" witness in five suites, and building line 200 alone would have left a printed twin refused for nothing but a test's convenience. Mutation corpus **2,011 → 2,026** (15 rows: **14 KILLED first probe, 1 DECLARED equivalent** — `expanded.length > 0 ? expanded : null`, measured by applying the mutation and running the whole engine suite green). `bun run check` GREEN at **453 files / 10,136 tests**.)
+
+**Last updated (was):** 2026-09-04 — build session #402 (**P3-M5 — D462, *the three-status Oxford list: a refusal that named a sentence while pricing a parameter, and six frozen endpoints moved before being put back.*** Engine **0.360.0 → 0.361.0**; **`MATCH_RECORD_VERSION` STAYS 29 — and the argument is the SERIALIZED ALPHABET rather than reachability**: zero new `EffectOp` members, op FIELDS or op VALUES, so every byte a v29 record can hold after this slice could already be produced before it (arm 2b authors TWO `applyStatus` ops), and `applyStatus` returns `{done}` from `applyOp` so it can never reach `phase.cont.rest`; driven over the SERIALIZED BYTES in three directions including LOSS. *"Your opponent's Active Pokémon is now Burned, Confused, and Poisoned."* — **1 sentence / 2 legal printings**, `censusAttackCorpus.ts` **FILE LINE 679** — now derives. 🛑 **D424 MEASURED THIS ROW, NAMED IT AND LEFT IT LOUD ON A REASON THAT PRICES THE WRONG THING**: *"the ONLY 3-status row in the column, so a 3-list template would be D121's literal over a pool of one."* D121 prices a NEW parameter and this anchor adds none — `STATUS_WORDS` is D424's own vocabulary, already warranted on three distinct printed pairs, at one more position. **The pool of one was the SENTENCE's and never the parameter's.** 🛑 **A TEMPLATE AND NOT A LITERAL, FOR REACHABILITY RATHER THAN GENERALITY**: the two cost the same one regex and one arm, but a literal's three words are provably slot-disjoint, so `defenderStatusOps`' collision refusal would be UNREACHABLE from the new arm and could only rot. 🛑 **NO FLIPPED TWIN — the column prints ZERO of them (measured over all 640 rows), so the anchor's `^` does that refusal's work**, pinned by a mutant that is SILENT IN EVERY CENSUS. ⚠️ **THE ONE PRINTED NEAR MISS IS REAL**: corpus FILE LINE 264, *"…is now Paralyzed, and discard an Energy from that Pokémon."* (2 printings), now the attribution control in BOTH re-pointed suites. 🛑🛑 **THE FINDING ABOUT THE WORK: THIS SLICE MOVED SIX FROZEN ENDPOINTS AND PUT THEM BACK.** D426/D437 says edit a chain at the FRONT, never at the END — and a red test run REPORTS the endpoint, which is exactly why the wrong edit is the easy one. All six reverted; **15 chain heads stepped instead**, every count measured by a STRING COUNT. ⚠️⚠️ **AND `bun run check` NEEDED THREE ROUNDS FOR ELEVEN FILES BECAUSE VITEST STOPS AN `it` AT ITS FIRST THROW** — round 1 saw 16 tests, round 2 found 11 sites that had been quiet behind them, round 3 found 8 more. **COUNT THE FILE, DO NOT RE-RUN THE SUITE.** Cost: ONE anchor, ONE deriver arm, ONE helper generalised from two words to a LIST with a PAIRWISE slot test, ONE synthetic fixture (carriers UNRESOLVED — D425), ONE deck, a 29-test suite. **ZERO new `EffectOp` members, op FIELDS, op VALUES, readers (surface unmoved at 13), prompts, events, error codes, registry rows, `packages/schema` or `redact.ts` bytes.** Census: reader **490/1510 → 491/1512**, `BUILT.attack` **1560 → 1562**, residue **124/172 → 123/170**, `SUBST-5` **3/4 → 2/2**, `OPAQUE` **88/126 UNMOVED for the THIRD slice running**. `opcoverage` **BYTE-IDENTICAL in every column** (seat lines 206/470, decision points 878/1326) — correct by construction, since its universe is `EffectOp` kinds and this slice's subject is a reader ARM over an already-produced op. Mutation corpus **2,007 → 2,011**; probe **4 KILLED · 0 survivors · 0 GAP · 14.0s ON THE FIRST RUN**, plus the SIX re-pointed D424 rows **6 KILLED** and `D275` re-probed by `--only` **KILLED**. `bun run check` GREEN — **452 files / 10,108 tests**. Archive ratchet **131 → 132**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1980 killed · 31 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,531.4s`** — `+4 killed, +0 declared`, the **twenty-third** consecutive slice to name its number first and hit it. Completeness structural: **2,011 listed / 2,011 run / 2,011 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-09-03 — build session #401 (**P3-M5 — D461, *the scoped board heal: one printed adjective, two kinds of fact, and a `PHRASE-1` row that cost far more than one token.*** Engine **0.359.0 → 0.360.0**; **`MATCH_RECORD_VERSION` STAYS 29** on TWO arguments — both new fields are OPTIONAL with ABSENT as the unnarrowed reading (D125/D383's WIDENING, so no v29 byte string changes meaning), and `healEach` never parks while the only producer of either field returns a program of LENGTH ONE, so nothing can reach `phase.cont.pendingOp` or `cont.rest`; driven over the SERIALIZED BYTES in three directions including LOSS. *"Heal 100 damage from each of your {Basic|Benched} Pokémon."* — **2 sentences / 4 legal printings**, `censusAttackCorpus.ts` **FILE LINES 273 and 274** — now derive. 🛑 **THE ANSWER TO *filter or scope* IS TWO AXES, AND IT IS A FACT ABOUT `matchesFilter` RATHER THAN A PREFERENCE**: its signature is `(card: Card | undefined, filter: CardFilter)` and it is never handed an `InPlayPokemon`, so *"Benched"* is inexpressible as a `CardFilter` at any width while *"Basic"* is exactly `{kind:"basicPokemon"}`. The union's rule then settles it — identical payload ⇒ **ONE member**; two axes ⇒ **TWO FIELDS** and not one `scope` enum, which could not spell the unprinted crossing *"each of your Benched Basic Pokémon"* at all. Both names are `AttachTargetRiders`' (D204) verbatim. 🛑 **THE WORK ORDER SAID REUSE `healEachAll` AND THE OP IS `healEach`** — a seat-scoped op and its seat-BLIND twin; the classifier's own printed derived value said so before the code did. 🛑 **`PHRASE-1` IS THE CLASS THE CLASSIFIER MOST UNDERPRICES**: deleting the one token said WHERE the blocker was and nothing about what the derived value LOST — dropping `Basic` heals every evolved body, dropping `Benched` heals the ATTACKER (the D447 defect class), and both mis-readings are SUPERSETS and therefore QUIET. Cost: ONE anchor, ONE two-row noun MAP, ONE deriver arm, **TWO optional op FIELDS**, TWO fixtures, ONE deck, an interpreter diff and a 30-test suite. **ZERO new `EffectOp` MEMBERS, readers (surface unmoved at 13), `CardFilter` members, prompts, events, error codes, registry rows, `packages/schema` or `redact.ts` bytes.** 🛑 **TWO SHIPPED REFUSAL LISTS HELD THE SENTENCE, AND ONE CARRIED A COMMENT THAT WAS ALREADY FALSE** (*"nothing in the pool prints this spread form at all today"* — it prints it twice); both re-pointed onto the `Ancient` row. 🛑 **THE `Ancient` BANNER IS DATA-BLOCKED AND BLOCKS 7 SENTENCES / 10 LEGAL PRINTINGS**, measured over all 640 corpus rows — the largest single blocker in the residue that is not a mechanism, and its falsifier is an INGEST change. Residue **126/176 → 124/172**, `PHRASE-1` **9/13 → 7/9**, `OPAQUE` **88/126 UNMOVED for the second slice running**. `opcoverage` seat lines **203/470 → 206/470** and decision points **869/1326 → 878/1326** — the first movement in four slices; `healEach` **0/3 → 3/3**. Mutation corpus **1,991 → 2,007**; archive ratchet **130 → 131**. Probe **16 KILLED · 0 survivors · 0 GAP · 55.4s ON THE FIRST RUN**. `bun run check` GREEN — **451 files / 10,079 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `1976 killed · 31 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,494.1s`** — `+16 killed, +0 declared`, the **twenty-second** consecutive slice to name its number first and hit it. Completeness structural: **2,007 listed / 2,007 run / 2,007 matched / 0 unmatched**.)
 
@@ -550,6 +552,176 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-04, after D463)
+>
+> ✅ **`bun run check` IS GREEN — 453 files / 10,136 tests, `CHECK_EXIT=0`**, measured after the
+> ritual and not before it. ⚠️ **BOTH COUNTS MOVED — 452 → 453 files and 10,108 → 10,136 tests
+> (+28)** — and ⚠️ **THE +28 IS NOT THE NEW SUITE'S COUNT, WHICH IS THE EASY THING TO WRITE HERE
+> AND IS WRONG.** `perHeadsEnergyDiscard.test.ts` is **26 tests, measured by running it alone**;
+> the other two come from rungs added to suites that already existed (`perHeadsConsequent.test.ts`
+> gains the INVERTED refusal rung, `untilTailsFlip.test.ts` gains the corpus-membership rung that
+> catches its invented sentence). `26 + 1 + 1 = 28`. This is the fourth slice running to write a
+> new suite rather than only adding rungs — and the first where BOTH happened, because the slice
+> re-pointed a witness as well as building one. Engine **0.361.0 →
+> 0.362.0 (BUMPED — reader behaviour moved, and one of the two carriers is FIELDED)**,
+> **`MATCH_RECORD_VERSION` 29**, mutation corpus **2,011 → 2,026**, archive ratchet **133**.
+>
+> ⛔ **(0) THE DEBT: D463 IS NOT COMMITTED AND NOT SWEPT — the work order forbade both.** The tree
+> is dirty in **65 paths** (measured with `git status --porcelain | wc -l`, not estimated — 64
+> modified + 1 untracked), and **ONE IS UNTRACKED**:
+> `packages/engine/src/perHeadsEnergyDiscard.test.ts`. **NAME IT EXPLICITLY IN THE COMMIT** — an
+> untracked file is invisible to `git commit -a`, and the standing rule here forbids `git add -A`,
+> so a path-listed `git add` is the only route.
+> **THE PARTITION, MEASURED BY SET MEMBERSHIP RATHER THAN BY EYE — `43 + 22 = 65`:** 43 of the 65
+> carry the `0.362.0` version pin (the untracked new suite is one of them, so the pin set is NOT a
+> subset of "files I did not otherwise touch"), and **22 do not**. ⚠️ **THE TWO SETS OVERLAP
+> HEAVILY, so a commit list built by ADDING "the pin files" to "the slice's files" double-counts**
+> — D462's block wrote `17` where the answer was `61` by forgetting the pin; the opposite mistake
+> is just as easy. The 22 NON-pin paths, named individually: `docs/decisions.md`,
+> `docs/progress.md`, `docs/conventions.md`, `docs/workstreams/simulator.md`,
+> `scripts/residue-census.ts`, `packages/engine/src/effects.ts`,
+> `packages/engine/src/testFixtures.ts`, `packages/engine/src/progressLog.test.ts`,
+> `packages/engine/src/perEnergyFlip.test.ts`, `packages/engine/src/perHeadsProgram.test.ts`,
+> `packages/engine/src/untilTailsFlip.test.ts`, `packages/engine/src/benchNamedBonus.test.ts`,
+> `packages/engine/src/censusAtHead.test.ts`, `packages/engine/src/clauseApostrophe.test.ts`,
+> `packages/engine/src/exOnlyActive.test.ts`, `packages/engine/src/inPlayTypeBonus.test.ts`,
+> `packages/engine/src/moreEnergyBonus.test.ts`, `packages/engine/src/opponentBenchCount.test.ts`,
+> `packages/engine/src/precociousEvolution.test.ts`,
+> `packages/engine/src/retreatCostBonus.test.ts`, `packages/engine/src/sameEnergyBonus.test.ts`,
+> `packages/engine/src/sawkRequirementSplit.test.ts`. ⚠️ **`scripts/mutation/mutants.ts`,
+> `packages/engine/package.json`, `packages/engine/src/index.ts`,
+> `packages/engine/src/perHeadsConsequent.test.ts`, `packages/engine/src/compoundCompose.test.ts`
+> and `packages/engine/src/defenderStatusTriple.test.ts` are in the PIN half, not here** — every
+> one of them was edited by this slice for its OWN reasons as well, which is exactly why the
+> partition has to be measured rather than reasoned about.
+> ⚠️ **`packages/engine/src/attack.ts` IS NOT IN THE LIST AND MUST NOT BE**: it was edited and
+> restored during this slice's equivalence measurement (§9 of the log), and `git status` confirms
+> it clean. **SEQUENCE: ① commit with explicit paths; ② re-run `bun scripts/mutation/precheck.ts`
+> AT THE COMMITTED BYTES (it must read 2,026 / 2,026); ③ only then launch the whole-corpus sweep
+> against a CLEAN tree** — D446's rule, so the eight `D318-*` rows quoted in this file run against
+> committed bytes rather than a dirty checkout.
+>
+> ✅🔮 **(1) THE EXPECTED WHOLE-CORPUS SWEEP DELTA, COMMITTED HERE BEFORE ANY SWEEP RUNS.**
+> D462 closed at `1980 killed · 31 known survivor(s)` over 2,011. **Twenty-three have landed in a
+> row; this is the twenty-fourth prediction.**
+>
+> > **`1994 killed · 32 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,026 — i.e. `+14 killed, +1 declared` off D462's `1980 · 31` over 2,011.**
+>
+> **THE SUBTRACTION, WRITTEN OUT** (D440's rule: name the arithmetic, not the totals):
+> · killed: `1980 + 14 = 1994`.
+> · declared: `31 + 1 = 32` — **NON-MONOTONE, and D444 prefers that when one is available.** One
+>   is: `D463-audit-d130-empty-program-survives-zero-heads` is declared `equivalent` after the
+>   probe reported it as a GAP and the mutation was then run against the WHOLE engine suite (341
+>   files / 8,888 tests, green). It is the first declared survivor added since D444's rule was
+>   written that came from a MEASUREMENT rather than from an argument.
+> · population: `2011 + 15 = 2026`, and `1994 + 32 = 2026` closes it.
+>
+> ⚠️ **THE ONE RE-POINTED ROW, NAMED, AND WHY IT DOES NOT RIDE `--decision D463`:**
+> · `D275-engine-version-drifts-again` — the version bump moved its `find`
+>   (`export const engineVersion = "0.361.0";` → `"0.362.0";`). ⚠️ **`--decision D463` does NOT
+>   cover it: `--decision` matches by `String.includes` and `D275` does not contain `D463`.**
+>   Re-probed by `--only D275-engine-version-drifts-again`, **KILLED, 6.3s.**
+> · **NO OTHER PRE-EXISTING ROW WAS RE-POINTED.** `precheck` reports **0 stale over 2,026**, which
+>   is the mechanical form of that claim and is stronger than reading the diff.
+>
+> ⚠️ **WHICH DECLARED SURVIVORS COULD PLAUSIBLY HAVE MOVED — 31 RULED OUT, 25 BY FILE AND 6 BY
+> REGION.**
+> · **THE 31 INHERITED ROWS BY FILE** (`m.survives !== undefined` at D462's close): `attack.ts` (6),
+>   `continuous.ts` (5), `effects.ts` (4), `flow.ts` (2), `interpreter.ts` (12), `redact.ts` (1),
+>   `GameHud.tsx` (1). `2026 − 32 = 1994` is the same arithmetic from the other end.
+> · **THE FILE ARGUMENT COVERS TWENTY-FIVE**: `continuous.ts`, `flow.ts`, `interpreter.ts`,
+>   `redact.ts` and `GameHud.tsx` carry **ZERO bytes from this slice** — checked by SET MEMBERSHIP
+>   over the `git status --porcelain` list, not by eye. ⚠️ **`interpreter.ts` is untouched for the
+>   second slice running**, worth saying out loud because it is the largest single block (12).
+> · ⚠️ **`attack.ts`'s SIX NEEDED A DIFFERENT ARGUMENT, BECAUSE `attack.ts` WAS EDITED AND PUT
+>   BACK.** It is CLEAN in `git status` at close — the equivalence measurement in §9 of the log
+>   restored it byte for byte from `/tmp/attack.ts.bak` — so the file argument applies after all,
+>   but only because the restore was verified rather than assumed. **If a successor finds
+>   `attack.ts` dirty, the two new `D463-audit-d130-*` rows are the first thing to re-read.**
+> · **THE FOUR `effects.ts` SURVIVORS WERE RULED OUT INDIVIDUALLY.** This slice's `effects.ts` edits
+>   sit in exactly five regions: the two new anchor constants and their doc block, the two new
+>   `deriveAttackCoinFlip` arms, the D130 block's closing paragraph, the D452 block's deferred-slice
+>   paragraph, and `FLIP_OPPONENT_ACTIVE_DISCARD`'s doc block. **None of the four declared
+>   `effects.ts` survivors sits in any of them** — verified by locating each row's `find` in the
+>   file and checking it is outside every edited span. The hardest to check is any row quoting a
+>   `deriveAttackCoinFlip` arm, since TWO arms were inserted before the final
+>   `ATTACK_COIN_CANCEL` return: `precheck` reports **0 stale over 2,026**, which is the mechanical
+>   form of that check.
+>
+> ▶ **(2) THE NEXT TARGET — AND THE DRAWER IS SMALLER AND HONESTER THAN IT WAS.**
+> `bun scripts/residue-census.ts` now reads `RESIDUE 121 sentences / 168 printings`, of which
+> **`OPAQUE` is 87 / 125 — 72%.** The 34 non-`OPAQUE` sentences left are, by class:
+> `COMPOUND-head` 10/12 · `COMPOUND-tail` 2/4 · `SUBST-2` 4/5 · `PHRASE-1` 7/9 · `COMPOSE` 1/2 ·
+> `COMPOUND-mid` 1/2 · `SUBST-3` 1/1 · `SUBST-4` 1/1 · `SUBST-5` 2/2 · `PHRASE-2` 1/1 ·
+> `PHRASE-7` 1/1 · `PHRASE-13` 1/1 · `PHRASE-24` 1/1 · `PHRASE-29` 1/1. **`SUBST-7` IS GONE.**
+> 🛑 **AND THE BIGGEST CHANGE IS NOT IN THE TABLE: `OPAQUE` IS NOW KNOWN TO BE MIS-READ RATHER THAN
+> MIS-CLASSIFIED.** D463 moved one of its members with two regexes. **Before pricing anything from
+> the class table, grep `OPAQUE` for SHAPES the cheap classes already name** — this slice's pair was
+> findable only because `SUBST-7` named the twin of an `OPAQUE` row. Read the rule in
+> `docs/conventions.md` (*"`OPAQUE` means UNCLASSIFIED, never EXPENSIVE"*) before re-deriving the
+> drawer.
+> · **`COMPOUND-tail` (2/4) + `SUBST-2`'s *"This attack does 30 damage to each of your opponent's
+>   Pokémon."* (1/1)** — still the largest coherent block, **3 sentences / 5 printings**, priced by
+>   D462 at **three mechanisms** and NOT re-priced here: `spreadDamage.target` is
+>   `"opponentBench" | "yourBench"` and these hit the ACTIVE too, so §8.5 must run for one body and
+>   flat placement for the rest, plus a `Pokémon ex` / `Pokémon V` filter on two of the three.
+>   **If you take it, take it as two slices**, and re-measure the price rather than inheriting it.
+> · **`SUBST-4`** *"Each player draws 3 cards."* (1/1) — ⛔ **STILL DO NOT BUILD IT**, and the
+>   reason is unchanged and was re-checked by grep this slice: it is load-bearing as an
+>   `ATTACK_EFFECT_SKIPPED` control in `fix-suction` index 3 and `fix-prizewheel` index 3, and
+>   `drawCards` is seat-fixed to the controller with every call site relying on it.
+> · **`PHRASE-1`'s four non-banner rows** — `{L}` on a `switchActive` target, `{F}` on
+>   `damageCountersOnYourBench`, `Iono's` on an `energyOnSelf` board read, `Basic` on an attached-
+>   Energy count. **Four rows, four DIFFERENT carriers.** A class is a lower bound and here a very
+>   loose one.
+> · 🆕 **THE ONE PER-FACE ROW LEFT, AND ITS PRICE IS NOW EXACT.** *"Flip 3 coins. For each tails,
+>   discard an Energy from this Pokémon."* (corpus file line 217, 1 printing, `OPAQUE`). The PARK is
+>   shipped and this row is still unbuilt — it needs a FACE axis `programPerHeads` does not have,
+>   which is either a fifth `AttackCoinFlip` member or a rider on the fourth. **D442's rule for a
+>   boolean rider and D448's for a discriminator-erased union member DISAGREE about which is right,
+>   and the pool offers ONE printing to settle it.** That is a real refusal with a stated trigger
+>   (a second printing), not a cost.
+>
+> 🛑 **(3) THE `Ancient`/`Future` BANNER — UNCHANGED BY THIS SLICE AND STILL DATA-BLOCKED.** The
+> residue still holds **12 sentences / 16 printings** mentioning `Ancient` or `Future`. The refusal
+> is written out in full at `effects.ts` `PREVENT_DAMAGE_FROM_CLASS`'s doc block: the banner is a
+> per-PRINTING fact, a species list would answer three real cards wrongly with no failure anywhere,
+> and no ingested column carries it. ⚠️ **IT IS NOT ONE MECHANISM EVEN IF THE DATA ARRIVES** — the
+> eight non-`OPAQUE` rows want it in at least FOUR carriers (a `CardFilter` kind, a
+> `preventDamage.fromClass` union member, an op FIELD in the `moveCountersToDefender`/`ownerPokemon`
+> shape, and a SUPPORTER-card predicate that is not about a Pokémon at all). **Price the CARRIERS,
+> not the token.** Not this slice; not the next one either, without the column.
+>
+> 🛑 **(4) SIX RULES THIS SLICE PAID FOR, AND TWO OF THEM COST A SOURCE FILE.** All six are written
+> out in `docs/conventions.md`; the two that would cost a successor the most time:
+> · ⚠️⚠️ **`open(p, "w")` TRUNCATES BEFORE `.write()` RUNS.** A throwaway generator emptied
+>   `scripts/mutation/mutants.ts` (23,514 lines → 0 bytes) because the string held **lone
+>   surrogates** (`\ud83d\udee1` instead of `\U0001f6e1` — emoji copied out of TS source, where the
+>   pair is legal). The repo's existing rule — *assert the file's size after writing, in a
+>   `try/finally`* — **did not catch it**: the `finally` ran and reported the damage. **ENCODE
+>   FIRST, WRITE SECOND**: `payload = s.encode("utf-8")` then `open(p, "wb")`. Repaired with
+>   `git show HEAD:<path> > <path>` plus a re-apply, which is inside the standing prohibition.
+> · ⚠️⚠️ **A FRONT-INSERT INTO A SUBTRACTION CHAIN ATE EIGHTEEN MINUS SIGNS.**
+>   `l.replace(head + "- ", head + TERM)` with a `TERM` ending `*/ ` leaves
+>   `units(x) - 2 /*new*/ 2 /*old*/ …`. Append to the head and keep the WHOLE tail. ⚠️ And the head
+>   marker is **not unique on the line** (`BUILT.attack - ` occurs twice on one `censusAtHead`
+>   line, once as code and once inside a comment): take the FIRST occurrence and assert its column
+>   is inside the code region, never `count(…) == 1`.
+> · ⚠️ **A PAIR OF ANCHORS NEEDS A PAIR OF PROBES** — the four pre-probe passes will not find a
+>   negative loop that varies the SENTENCE while holding the DEFECT fixed.
+>
+> ⚠️ **STANDING, RE-CONFIRMED THIS SLICE**: `bun run check` **TAKES LONGER THAN A TWO-MINUTE TOOL
+> TIMEOUT** — run it to a log with a trailing `echo "CHECK_EXIT=$?"`. ⚠️ **IT NEEDED THREE ROUNDS
+> AGAIN, and the third round's three sites were found by a STRING COUNT and could not have been
+> found by the runner** (vitest stops an `it` at its first throw; `retreatCostBonus.test.ts` line
+> 1128 was invisible behind line 1059). ⚠️ **CITE CORPUS ROWS BY FILE LINE, NOT ARRAY INDEX** — this
+> resume point cites FILE LINES **200**, **217** and **234**. ⚠️ **`bun scripts/mutation/precheck.ts`,
+> never `--precheck`.** ⚠️ **A CLASS FROM `residue-census.ts` IS A LOWER BOUND ON THE WORK, NEVER AN
+> ESTIMATE — AND `OPAQUE` IS NOT A PRICE AT ALL.**
+
+### Prior resume point (P3-M5 — D462, the three-status Oxford list, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-04, after D462)
 >
@@ -17848,7 +18020,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D462, *the three-status Oxford list — 1 sentence / 2 legal printings (corpus FILE LINE 679, "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.") through ONE new anchor (`DEFENDER_STATUS_TRIPLE`), ONE new deriver arm, and D424's pair helper generalised from two words to a LIST with a PAIRWISE `SpecialConditions`-slot test. A TEMPLATE and not a literal because the captures are what keep the collision refusal REACHABLE. NO flipped twin: the column prints ZERO of them, so the anchor's `^` does that refusal's work. D424 left this row LOUD on D121 — but D121 prices a NEW parameter and this anchor adds none. ZERO new `EffectOp` members, op FIELDS, op VALUES, readers (surface 13), prompts, events, registry rows, schema or redact bytes. Engine 0.360.0 → 0.361.0, `MATCH_RECORD_VERSION` 29, corpus 2,007 → 2,011, residue 124/172 → 123/170, `OPAQUE` 88/126 UNMOVED for the third slice running, `opcoverage` byte-identical, 452 files / 10,108 tests*** ) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D463, *the per-heads consequent that PARKS — 2 sentences / 2 legal printings (corpus FILE LINES 200 and 234, "Flip {2 coins|a coin until you get tails}. For each heads, discard an Energy from your opponent's Active Pokémon.") through TWO new anchors and TWO new arms in `deriveAttackCoinFlip`, over the SHIPPED `programPerHeads` member and the SHIPPED `discardEnergy` op — ZERO new ops, op fields, op values, coin members, readers or fixture ids.*** Engine **0.361.0 → 0.362.0**, `MATCH_RECORD_VERSION` **29** (serialized alphabet, driven in three directions including LOSS through a PARKED board), mutation corpus **2,011 → 2,026**, `bun run check` **453 files / 10,136 tests**. 🛑 First slice in four to move `OPAQUE` (88/126 → 87/125); Krookodile `sv01-117`'s fielded loud witness RE-POINTED across five suites.) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D462, *the three-status Oxford list — 1 sentence / 2 legal printings (corpus FILE LINE 679, "Your opponent's Active Pokémon is now Burned, Confused, and Poisoned.") through ONE new anchor (`DEFENDER_STATUS_TRIPLE`), ONE new deriver arm, and D424's pair helper generalised from two words to a LIST with a PAIRWISE `SpecialConditions`-slot test. A TEMPLATE and not a literal because the captures are what keep the collision refusal REACHABLE. NO flipped twin: the column prints ZERO of them, so the anchor's `^` does that refusal's work. D424 left this row LOUD on D121 — but D121 prices a NEW parameter and this anchor adds none. ZERO new `EffectOp` members, op FIELDS, op VALUES, readers (surface 13), prompts, events, registry rows, schema or redact bytes. Engine 0.360.0 → 0.361.0, `MATCH_RECORD_VERSION` 29, corpus 2,007 → 2,011, residue 124/172 → 123/170, `OPAQUE` 88/126 UNMOVED for the third slice running, `opcoverage` byte-identical, 452 files / 10,108 tests*** ) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D460, *the coin-count threshold — 3 sentences / 4 legal printings (corpus FILE LINES 213, 214, 228) through ONE new anchor and the coin union's FIFTH member `perHeadsThenThreshold`; the consequent is the SHIPPED `applyStatus` op, so ZERO new ops, op fields, prompt fields, schema or redact bytes, and the reader surface stands still at 13. Engine 0.358.0 → 0.359.0, `MATCH_RECORD_VERSION` 29, corpus 1,974 → 1,991, 450 files / 10,049 tests*** ) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D459, *the blocker census — `scripts/residue-census.ts` COMMITTED, classifying all 130 residue sentences / 182 printings by the one deletion or substitution that reaches a built string, plus the printed noun it picked: 1 sentence / 2 legal printings through ONE optional group `(?: card)?` on `SELF_ENERGY_MULTIPLY`; ZERO new anchors, readers, ops, op fields, union members and ZERO evaluator bytes.*** Engine **0.357.0 → 0.358.0**; `MATCH_RECORD_VERSION` **29**; 🛑 `OPAQUE` **88/126 — 68% of the residue**; three measured disagreements with the record, including **D446 / D457 / D458 citing corpus rows by ARRAY INDEX after D448 wrote the convention against it**. Mutation corpus **1,966 → 1,974**, 8 KILLED first run. `bun run check` GREEN, **449 files / 10,019 tests**. Archive ratchet **129**. ⛔ NOT committed, NOT swept — the work order forbade both.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D458, *the second printed noun — 1 sentence / 2 legal printings (corpus line 410) through ONE optional group on D235's OWN anchor and a second `attachFromDeck` op; ZERO new anchors, readers, ops or op fields; `BUILT.attack` 1548 → 1550; the deck-search family's true unbuilt residue 7 sentences / 9 printings → 6 / 7; mutation corpus 1,956 → 1,966, 10/10 killed; engine 0.357.0*) |
@@ -17952,6 +18125,217 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-04 — build session #403 (P3-M5 — D463)
+
+**THE PER-HEADS CONSEQUENT THAT PARKS — a refusal that grouped three corpus rows under one reason,
+and an `OPAQUE` class that was measuring the instrument rather than the work.** Engine **0.361.0 →
+0.362.0**, `MATCH_RECORD_VERSION` **29**, mutation corpus **2,011 → 2,026**, archive ratchet **132 →
+133**, `bun run check` GREEN at **453 files / 10,136 tests**. ⛔ **NOT COMMITTED AND NOT SWEPT — the
+work order forbade both.**
+
+**(1) THE TARGET WAS PICKED FROM THE INSTRUMENT, AND THE WORK ORDER NAMED NO FAMILY.**
+`bun scripts/residue-census.ts` before: `population 640/1732 − reader 491/1512 − registry 10/16 −
+gate 5/13 − trailing 11/21 = RESIDUE 123/170`, `OPAQUE` **88/126**. D462's resume point enumerated
+the non-`OPAQUE` candidates with measured prices and this slice started from that enumeration
+rather than re-deriving it — and then **verified the one it took, which is where the enumeration
+turned out to be right about the price and wrong about the SIZE**:
+
+· **`SUBST-7` *"Flip 2 coins. For each heads, discard an Energy from your opponent's Active
+  Pokémon."* (1/1)** — D462 called it *"the cheapest thing left"* and priced it at ONE anchor and
+  ONE arm. **That price is correct.** What it did not say is that the same consequent is printed a
+  SECOND time, over D129's unbounded flip count, at corpus file line **234** — and that that row
+  sits in `OPAQUE`. **TAKEN AS A PAIR: 2 sentences / 2 printings, two anchors, two arms.**
+· `COMPOUND-tail` (2/4) + `SUBST-2`'s *"…30 damage to each of your opponent's Pokémon."* (1/1) —
+  the largest coherent block, 3 sentences / 5 printings, priced by D462 at **three mechanisms**
+  (`spreadDamage.target` is Bench-only in both directions, so §8.5 must run for one body and flat
+  placement for the rest, plus a `Pokémon ex`/`Pokémon V` filter on two of the three). **NOT
+  RE-PRICED HERE AND NOT REFUSED — it is simply dearer than a pair that costs two regexes.**
+· `SUBST-4` *"Each player draws 3 cards."* (1/1) — **left alone.** D462's reason holds and was
+  re-checked by grep: it is load-bearing as an `ATTACK_EFFECT_SKIPPED` control in `fix-suction`
+  index 3 and `fix-prizewheel` index 3.
+· `PHRASE-1`'s four non-banner rows — four rows, four different carriers. **A class is a LOWER
+  BOUND**, and here a very loose one.
+
+**(2) THE `OPAQUE` FINDING, WHICH IS THE ONE THE WORK ORDER ASKED FOR AND DID NOT EXPECT.** The
+work order put `OPAQUE` out of scope *"unless you can show a member is mis-classified — which would
+itself be the finding"*. **A member is not mis-classified; the CLASS is being read wrongly, and
+this slice moved one anyway.** Corpus line 234 really is `OPAQUE` by the instrument's own
+definition — no single deletion or substitution reaches a built string, because the substitution
+that would («a coin until you get tails. For each» → «a coin. If») is seven tokens and lands on a
+different flip count. But that is a statement about **how far this instrument can edit a sentence**,
+never about **how much the sentence costs**: line 234 cost one regex and one arm, the same as its
+`SUBST-7` twin. **READ `OPAQUE` AS UNCLASSIFIED, NEVER AS EXPENSIVE.** The pair was findable only
+because the classifier's own `SUBST-7` row named the cheap twin — so the instrument pointed at the
+`OPAQUE` row without being able to classify it. `OPAQUE` **88/126 → 87/125, the first movement in
+four slices**, and the `SUBST-7` class is gone entirely.
+
+**(3) THE REFUSAL D452 LEFT BEHIND GROUPED THREE ROWS UNDER ONE REASON.** Its `OUT_OF_SCOPE` array
+held corpus lines 200, 217, 219 and 234; three of the four (200, 217, 234) were refused with one
+shared count — *"`discardEnergy` PARKS on a genuine choice, so N heads is N sequential
+`effect:choose` phases"*. **Two of those three are built here, and the third was never refused for
+that reason at all**: line 217 is *"Flip 3 coins. For each TAILS, …"*, a FACE axis
+`programPerHeads` does not have, which no amount of parking work would have touched. It is still
+unbuilt with the park shipped — asserted executably in the new suite's §1, which re-enumerates the
+whole per-face family and finds exactly one unbuilt row. **A REFUSAL THAT GROUPS N ROWS UNDER ONE
+REASON IS N REFUSALS UNTIL EACH HAS BEEN PRICED SEPARATELY: the group's REASON is the reason of its
+cheapest member and its COST is the cost of its dearest.**
+
+**(4) AND THE MECHANISM WAS NEVER MISSING — THE REFUSAL OUTLIVED ITS OWN CORRECTION BY ELEVEN
+DECISIONS.** D130 wrote that N sequential parks are *"the one thing D130's expansion cannot
+express"*. The code contradicted it from the first day: `resumeProgram` ends in
+`runProgram(applied, rest, …)`, so an op sitting in `rest` that parks simply parks again, and the
+expansion puts its copies in `rest` like any other program. D423 corrected it in prose. **D452
+disproved it EXECUTABLY** — its §9 builds the two-op program by hand and asserts the second copy is
+sitting in `cont.rest`. And the arrays in four files went on asserting the sentence unreadable
+anyway, because the correction and the assertion lived in different files. **A REFUSAL IS ONLY AS
+RETIRED AS ITS MOST CONFIDENT TEST.**
+
+**(5) WHAT WAS BUILT.** TWO anchors (`ATTACK_COIN_ENERGY_PRINTED`,
+`ATTACK_COIN_ENERGY_UNTIL_TAILS`) and TWO arms in `deriveAttackCoinFlip`, both returning
+`programPerHeads` over the SHIPPED `discardEnergy {from:"opponentActive",
+filter:{kind:"anyEnergy"}}` op — the byte-identical JSON D43's bare sentence produces, asserted as
+an equality rather than as an inventory. **ZERO new `EffectOp` members, op FIELDS, op VALUES,
+`AttackCoinFlip` members, readers (surface unmoved at 13), prompts, events, error codes, registry
+rows, FIXTURE_POOL ids, `packages/schema` bytes or `redact.ts` bytes.** ⚠️ **N COPIES OF A
+COUNTLESS OP, NEVER ONE OP CARRYING `count: N`, AND THE ORDER OF EVENTS SETTLES IT RATHER THAN
+TASTE**: `ops` is fixed at DERIVE time and the heads count does not exist until the flip site runs,
+so there is no N to put in a `count` field. It is also the right reading — N independent picks out
+of a set that SHRINKS between them, asserted in §5 (the second prompt offers one fewer candidate).
+
+**(6) THE NEGATIVE CONTROL WAS REAL, WAS MEASURED FIRST, AND WAS PAID RATHER THAN USED AS A
+REASON.** Krookodile `sv01-117` "Chomp Chomp Bite" prints corpus line 234 and was this repo's
+FIELDED *"stays LOUD"* end-to-end witness in five suites. **Building line 200 alone would have been
+cheaper and dishonest**: it would have left a PRINTED twin refused for no reason but a test's
+convenience — a refusal about a SUITE wearing a claim about a SENTENCE, which is precisely the
+failure mode the work order flagged. The measured cost of taking both was **22 failing assertions
+across 17 files**, established by making the engine change first and reading the runner. The
+witness is RE-POINTED (D418) from *"reaches ATTACK_EFFECT_SKIPPED and takes NO flip"* to *"flips,
+announces every face, and STILL lands its flat 50"*, and **the one assertion that survives the
+inversion unchanged is the flat 50** — the half that was never about loudness. ⚠️ **WHAT THE OLD
+CLAIM CAUGHT AND THE NEW ONE KEEPS**: `deriveAttackEffect` STILL refuses both sentences, because
+both END in `FLIP_OPPONENT_ACTIVE_DISCARD`'s exact words. **THAT TRAP GOT WORSE WHEN THE SENTENCES
+GOT BUILT** — a float there now puts TWO readers on ONE printing at TWO different sites, so the
+card would discard once flatly at the §8.5 tail AND once per heads at the flip site.
+
+**(7) A SECOND, UNRELATED CORRECTION THE RE-POINT UNCOVERED.** D452 measured that
+`perHeadsProgram.test.ts`'s refusal set carried a **97-character string the column prints ZERO
+times** — Krookodile's OPENING glued to Masquerain's consequent — and repaired its own file. **The
+identical invented string was still sitting in `untilTailsFlip.test.ts`'s `FOR_EACH_HEADS[1]`,
+under a doc block claiming both entries were *"verbatim off the local D1"*, with a GREEN
+`.length === 97` pin beside it.** It is RELABELLED rather than corrected or deleted: as a *printed*
+sentence it was never real, but as a **NEVER-PRINTED NEAR-MISS** it is the sharpest refusal witness
+that file has. A new rung asserts membership in `legalAttackCorpus()` for `[0]` and non-membership
+for `[1]` — **the repair is the SOURCE, not the pin** (D452's own rule, applied to the file it was
+never applied to).
+
+**(8) `MATCH_RECORD_VERSION` STAYS 29 — AND THE SHAPE OF THE ARGUMENT IS THE SERIALIZED ALPHABET
+(D462's), NOT REACHABILITY (D461's).** D461 could say *"the op never parks, so it can never reach
+`phase.cont.rest`"*. **That sentence is FALSE here and saying it would have been the easy mistake**:
+this slice's op parks, so the continuation really is written and really is persisted. The true
+argument is narrower and stronger — `EffectContinuation.rest` has held `EffectOp[]` since M5, and
+the ONLY op this slice ever puts there is the same JSON D43's bare sentence has produced for a
+hundred slices, so **no new op, no new op FIELD, no new op VALUE ⇒ no byte a v29 record can hold
+after this slice that it could not hold before it. The COUNT of copies is not a byte in the
+alphabet**; an array that already accepts N members does not gain a shape by holding two. Driven in
+THREE directions in `perHeadsEnergyDiscard.test.ts` §7: **(1) FORWARD** — round-trip a PARKED board
+through JSON and resume from the bytes, events and state identical; **(2) WIDENING/ABSENT** — the
+continuation's key set as a LITERAL (`["ctx","pendingOp","rest"]`, a diff being blind to a key that
+grew on both, D279) plus every op in `rest` pinned by its FULL JSON; **(3) LOSS** — empty `rest` in
+the persisted bytes and the resumed board takes a **different, observable ending** (one discard and
+`TURN_ENDED` instead of a second park), which is what makes "N parks" a claim about a BOARD rather
+than about a log.
+
+**(9) FOUR PRE-PROBE PASSES, AND THE PROBE STILL REPORTED TWO GAPS — BOTH FINDINGS.** 15 rows.
+**(a) SEMANTIC**: one row per claim over the two anchors and two arms. **(b) MECHANICAL REGION**:
+11 rows inside this slice's own four regions; 4 declared AUDIT rows on older code. **(c)
+`precheck`** after every edit round — and it caught 3 rows whose `find` was double-escaped (the
+regex literals' backslashes), 0 occurrences each, before any probe ran. **(d) `find`-vs-`replace`
+DIFF over every row**, computed as a longest-common-prefix/suffix strip and read: all 15 were the
+intended single change. **THE PROBE THEN FOUND TWO GAPS ANYWAY.**
+· **GAP 1 was a REAL SUITE GAP**: `D463-until-tails-anchor-loses-its-caret` SURVIVED, because the
+  new file's mid-sentence refusal loop prefixed only `PRINTED_TWO`. **A loop that varies the
+  SENTENCE while holding the DEFECT fixed only LOOKS symmetric. A PAIR OF ANCHORS NEEDS A PAIR OF
+  PROBES.** Closed with four more probes on the twin; re-probed KILLED.
+· **GAP 2 IS A FINDING ABOUT D130's COMMENT**: `D463-audit-d130-empty-program-survives-zero-heads`
+  SURVIVED, and the mutation was then applied to `attack.ts` and the **WHOLE engine suite run
+  against it — 341 files / 8,888 tests, all green.** So `expanded.length > 0 ? expanded : null` is
+  **unobservable at this head**: with no damaged-trigger and no KO-Tool stage, `epilogue` is
+  `[attackEpilogue]` alone, `advance` pops it and calls `finishAttack` itself, and `settleProgram`
+  draining an empty program reaches the same call — which a comment ten lines BELOW the guard calls
+  *"byte-identical to the pre-slice tail"* in so many words, contradicting the one above it.
+  **DECLARED `equivalent`, self-invalidating (D427), and NOT deleted** — it is written from the
+  rule, like the `cancelSplit === null` conjunct forty lines up that D420 also found undriven.
+
+**(10) THE ABSENCE AUDIT — TWO SHIPPED MECHANISMS WITH NO MUTANT ROWS AT ALL.** Needled at this
+head over `scripts/mutation/mutants.ts`: `repeated.push` **0**, `coinFlip.ops` **0**,
+`expanded.length > 0` **0**, `i < heads` **0**, `FLIP_OPPONENT_ACTIVE_DISCARD` **0**. So **D130's
+EXPANSION LOOP (shipped 0.81.0, the line that spends a heads count into a program) and D43/D361's
+flip-gated opponent-discard ANCHOR have been unpinned for their whole lives.** Four rows close both
+ends of both, following D452's rule that an audit finding is REPAIRED rather than noted. ⚠️ **The
+expansion rows are drivable only NOW**: every earlier `programPerHeads` consequent is deterministic
+and non-parking, so one copy and two copies differ only in a count buried in a log. D463's copies
+each PARK, so the number of them is a PHASE the board is sitting in.
+
+**(11) BOTH INSTRUMENTS, BEFORE AND AFTER.**
+· **`bun scripts/residue-census.ts`.** BEFORE: `population 640/1732 − reader 491/1512 − registry
+  10/16 − gate 5/13 − trailing 11/21 = RESIDUE 123/170`, `SUBST-7` **1/1**, `OPAQUE` **88/126**.
+  AFTER: `− reader 493/1514 … = RESIDUE 121/168`, **`SUBST-7` GONE**, `OPAQUE` **87/125 — MOVED,
+  for the first time in four slices.** The script's three pinned literals stepped to
+  **147 / 121 / 168** and still agree with `censusAtHead.test.ts` to the digit. ⚠️ **AND THAT DOC
+  BLOCK WAS STALE BY ONE SLICE**: it still read D461's `150 / 124 / 172` because D462 did not
+  update it. Recorded rather than silently corrected — it is a doc figure with no test behind it,
+  and the rot is one slice deep every time.
+  🛑 **WHAT THIS PREDICATE CANNOT SEE FOR THIS SUBJECT**: it asks only whether SOME reader claims
+  the sentence whole. It cannot see whether the derived value is RIGHT, it cannot see that the
+  program PARKS, and it cannot see that two rows of DIFFERENT classes were one shape — its class
+  table split them and had no way to join them.
+· **`bun scripts/mutation/opcoverage.ts`: SEAT LINES `206/470 = 0.438` and DECISION POINTS
+  `878/1326 = 0.662`, BEFORE AND AFTER — both FLAT**, and the implementation-side raw column is
+  flat too (`878 → 878`). The PRODUCER column moved `694 → 701`, and it is an ARTEFACT rather than
+  coverage: seven of this slice's rows quote `discardEnergy` in their `find`/`replace` because the
+  slice REUSES that op, but they sit in `effects.ts` and `attack.ts`, not in its implementation.
+  `discardEnergy`'s own seat-line row is **1/8 = 0.13, unmoved**.
+  🛑 **WHAT THIS PREDICATE CANNOT SEE FOR THIS SUBJECT**: its producer column is a set of OP KINDS,
+  not of producers, so `discardEnergy` gaining a THIRD producer is invisible to it — the kind was
+  already in the set. And its seat-line column counts INTERPRETER lines, so a slice that is entirely
+  deriver arms can only ever move it by artefact.
+
+**(12) `bun run check` NEEDED THREE ROUNDS, EXACTLY AS THE WORK ORDER WARNED.** Round 1 (engine
+change alone, taken deliberately as the MEASUREMENT of the negative-control cost): 17 files / 22
+tests red. Round 2: 2 TS errors in the new suite (`.attached` for `.energy`, `players[seat].cards`
+for `state.cardIdByUid`). Round 3: 4 files / 5 tests — and **three of those five were census chain
+heads a string count found and the runner could not**, because vitest stops an `it` at its first
+throw: `retreatCostBonus.test.ts` line 1128's units chain was invisible behind line 1059's. Final:
+**453 files / 10,136 tests, `CHECK_EXIT=0`** (452 → 453 files, 10,108 → 10,136 tests, +28).
+⚠️ **THE +28 IS NOT THE NEW SUITE'S COUNT**: `perHeadsEnergyDiscard.test.ts` is **26**, measured by
+running it alone, and the other two are rungs added to suites that already existed — the inverted
+refusal in `perHeadsConsequent.test.ts` and the corpus-membership rung in `untilTailsFlip.test.ts`.
+`26 + 1 + 1 = 28`.
+
+**(13) WHAT I GOT WRONG MID-SLICE, AND ONE OF THEM DESTROYED A FILE.**
+· ⚠️⚠️ **A THROWAWAY SCRIPT TRUNCATED `scripts/mutation/mutants.ts` TO ZERO BYTES.** The row
+  builder used `open(p, "w").write(new)` and the string held **lone surrogates** (`\ud83d\udee1`
+  typed as two escapes instead of `\U0001f6e1`). `open(p, "w")` **truncates before `.write()`
+  runs**, so the encoding error left a 23,514-line source file empty. Repaired with
+  `git show HEAD:scripts/mutation/mutants.ts > …` and the one version-pin edit re-applied — the
+  file was one line from HEAD, so nothing was lost. **THE RULE THE REPO ALREADY HAD WOULD NOT HAVE
+  CAUGHT IT**: it says assert the file's size AFTER writing, and the assertion never ran because
+  the exception was inside the write. **ENCODE FIRST, WRITE SECOND** — `payload = s.encode("utf-8")`
+  and then `open(p, "wb")`.
+· ⚠️⚠️ **THE FIRST CENSUS-CHAIN PASS ATE EIGHTEEN MINUS SIGNS.** Inserting a front term as
+  `l.replace(head + "- ", head + F)` where `F` ends `*/ ` left `units(x) - 2 /*D463*/ 2 /*D462*/ …`
+  — the D462 term's own `- ` consumed. It was caught by the `find`-vs-`replace` read of the result,
+  not by the runner, and repaired by a targeted `*/ N /* D462` → `*/ - N /* D462` pass with an
+  exact expected count of 18. **A front-insert must APPEND to the head and leave the tail byte-for-
+  byte; splicing at an offset computed from the marker length is where the sign goes.**
+· ⚠️ **THREE MUTANT ROWS SHIPPED DOUBLE-ESCAPED `find` STRINGS** — the regex literals' `\d` and
+  `\.` written with four backslashes in the generator instead of one, then escaped again on the
+  way out. `precheck` reported all three at `0×` before any probe ran, which is exactly what it is
+  for.
+· ⚠️ **THE FIRST DRAFT OF THE NEW SUITE PROBED ONE ANCHOR'S `^` AND NOT ITS TWIN'S** — see (9).
+· ⚠️ **TWO PREDICTED FILE-SIZE DELTAS WERE WRONG BY 8 AND 1**, both caught by the `try/finally`
+  assertion, both harmless. The assertion is worth keeping precisely because it fires on a guess.
 
 ### 2026-09-04 — build session #402 (P3-M5 — D462)
 

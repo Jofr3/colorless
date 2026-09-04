@@ -4516,3 +4516,171 @@ Answered from the code, as far as a checkout with no database allows:
   that check, said out loud: the schema is NOT strict** (no `.strict()`, no `.passthrough()`, no
   catchall), so zod strips unknown upstream keys silently — this repo's transcription having no
   banner field is not evidence that tcgdex has none.
+
+## `OPAQUE` in `residue-census.ts` means UNCLASSIFIED, never EXPENSIVE (D463)
+
+`OPAQUE` is the classifier's *no-verdict* bucket: **no single deletion and no single substitution
+this instrument can make reaches a string some reader already builds.** That is a statement about
+**how far the instrument can edit a sentence**, and it says nothing whatever about how much the
+sentence costs.
+
+D463's proof, measured: corpus file line **234** (*"Flip a coin until you get tails. For each heads,
+discard an Energy from your opponent's Active Pokémon."*) sat in `OPAQUE`, and its twin at line
+**200** (*"Flip 2 coins. …"*, byte-identical consequent) sat in `SUBST-7`. **They are ONE shape**,
+reached by two `AttackFlipCount` members that shipped at D127 and D129. Line 234 cost one regex and
+one arm — the same as the row the instrument had classified as cheap. It is `OPAQUE` only because
+the edit that would reach a built string is seven tokens and lands on a *different* flip count.
+
+Three rules follow:
+
+1. **A row in `OPAQUE` is not out of reach; it is out of the INSTRUMENT's reach.** Three slices in a
+   row read `OPAQUE 88/126, unmoved` as *"the cheap work is gone"*. It moved on the fourth, to a
+   pair that cost two regexes.
+2. **When a cheap class names a sentence, grep the corpus for its SHAPE, not for its class.** The
+   pair here was findable only because `SUBST-7` named the twin: the instrument pointed at an
+   `OPAQUE` row it could not classify.
+3. **The class table SPLITS one shape across classes and has no way to join it.** Two rows in
+   different classes may be one slice; the table cannot say so, and nothing in the output hints at
+   it.
+
+## A refusal that groups N rows under ONE reason is N refusals until each is priced (D463)
+
+D452's `OUT_OF_SCOPE` held four corpus rows and refused three of them (lines 200, 217, 234) with a
+single shared count — *"`discardEnergy` PARKS on a genuine choice"*. D463 built two of the three,
+and the third was **never refused for that reason at all**: line 217 is *"For each TAILS"*, a FACE
+axis `programPerHeads` does not have, which no amount of parking work would have touched. It is
+still unbuilt now that the park is shipped.
+
+**A grouped refusal takes its REASON from its cheapest member and its COST from its dearest**, and
+both numbers are wrong for every member in between. Split it before quoting it. The executable form
+of the split is worth writing: D463's §1 re-enumerates the whole per-face family off the corpus and
+asserts exactly ONE row is unbuilt, so the distinction reddens if it stops holding.
+
+## A refusal is only as retired as its most CONFIDENT test (D463)
+
+D130 wrote that N sequential parks are *"the one thing D130's expansion cannot express"*. The code
+contradicted it from the first day — `resumeProgram` ends in `runProgram(applied, rest, …)`, so an
+op in `rest` that parks parks again. D423 corrected it in prose. **D452 disproved it EXECUTABLY**,
+building the two-op program by hand and asserting the second copy sits in `cont.rest`.
+
+And for eleven more decisions, four separate files went on asserting the sentence was unreadable —
+because the correction and the assertion lived in different files. **A prose correction does not
+retire a refusal; the arrays do.** When a refusal is overturned, grep the whole repo for its
+SENTENCE, not for its decision number.
+
+## Check the negative-control cost FIRST, then pay it — it is not a reason to refuse (D463)
+
+Before building a residue row, grep the suites for its sentence. D462 found one (`"Each player draws
+3 cards."`) whose construction would have silently un-armed two attribution rungs; D463 found
+another — Krookodile `sv01-117`, the FIELDED *"stays LOUD"* end-to-end witness in five suites.
+
+**The two cases end differently and the difference is the point.** D462's row had a SEMANTIC reason
+to stay refused as well (`drawCards` is seat-fixed). D463's did not: refusing it would have left a
+PRINTED sentence unbuilt for no reason but a test's convenience — **a refusal about a SUITE wearing
+a claim about a SENTENCE**, which is the exact failure mode this file already warns about one
+section up.
+
+The cheap way to price it: **make the engine change alone and read the runner.** D463's negative-
+control cost measured 22 failing assertions across 17 files in one run, before a line of test work
+was written. And when the witness is re-pointed, D418's question is owed: *what did the OLD claim
+catch that the new one cannot?* Here — that `deriveAttackEffect` still refuses the sentence, which
+is kept in all four files, **because the trap it guards got WORSE when the sentence got built**: a
+float now puts TWO readers on ONE printing at TWO sites instead of turning a loud skip into one
+silent discard.
+
+## ENCODE FIRST, WRITE SECOND — `open(p, "w")` truncates before `.write()` runs (D463)
+
+D463 emptied `scripts/mutation/mutants.ts` (23,514 lines → 0 bytes) with
+
+```python
+open(p, "w", encoding="utf-8").write(text)   # text held lone surrogates
+```
+
+`open(p, "w")` **truncates the file when it opens it**. The `UnicodeEncodeError` was raised inside
+`.write()`, so the file was already empty and nothing was written. The repo's standing rule —
+*"assert its own file's size after writing, wrapped in try/finally"* — **would not have caught it**:
+the `finally` did run, and it reported the damage rather than preventing it.
+
+The rule that does:
+
+```python
+payload = text.encode("utf-8")     # fails here, with the file untouched
+with open(p, "wb") as fh:
+    fh.write(payload)
+```
+
+Repair, when it happens: `git show HEAD:<path> > <path>` and re-apply the slice's own edits. That is
+not `git checkout --` / `reset --hard` / `stash` and stays inside the standing prohibition.
+
+⚠️ **And the cause is worth naming separately: lone surrogates.** `"🛡"` in a Python
+string is two unpaired surrogates and is NOT encodable; the emoji is `"\U0001f6e1"`. Text copied out
+of a JS/TS source (where `🛡` is a valid pair) does not survive the trip.
+
+## A FRONT-INSERT must append to the head and leave the tail byte-for-byte (D463)
+
+Adding a term to the front of a census subtraction chain, D426/D437's rule, has a mechanical trap.
+This ate eighteen minus signs in one pass:
+
+```python
+l.replace(head + "- ", head + FRONT_TERM)      # FRONT_TERM ends "*/ "
+# result:  units(x) - 2 /*D463*/ 2 /*D462*/ …   ← D462's own "- " is gone
+```
+
+Splice by **appending to the head and keeping the whole tail**: `l[:at] + head + FRONT_TERM +
+l[at + len(head):]`. Any offset computed from the marker's length is where the sign goes.
+
+⚠️ **And the marker is not unique on the line.** `BUILT.attack - ` occurs twice on one
+`censusAtHead.test.ts` line — once as code, once inside a comment quoting the count. Take the FIRST
+occurrence and assert its column is inside the code region (`0 <= at < 80`), never `count(…) == 1`.
+
+## A PAIR of anchors needs a PAIR of probes (D463)
+
+D463's new suite had one mid-sentence refusal loop:
+
+```ts
+for (const text of [`This attack does 30 damage. ${PRINTED_TWO}`, …]) expect(…).toBeNull();
+```
+
+It varied the SENTENCE across its cases while holding the DEFECT fixed, which **looks** symmetric
+and left the twin anchor's `^` with nothing driving it — reported by the probe as a GAP on
+`D463-until-tails-anchor-loses-its-caret`. When a slice ships two anchors, the negative loop must
+run every probe against BOTH; the four pre-probe passes will not find this, because each row is
+individually well-formed and each sits in a region the slice really changed.
+
+## Two claims stronger than the code accumulated on ONE unpinned line (D463)
+
+`attack.ts`'s D130 expansion had **zero mutant rows for 333 decisions** (needled at D463:
+`repeated.push`, `coinFlip.ops`, `expanded.length > 0`, `i < heads` — 0 hits each), and it collected
+two comments that overstate what the code does:
+
+- *"the one thing D130's expansion cannot express"* — false from the first day, and the whole of
+  D463.
+- *"an empty `EffectOp[]` would route the attack through `settleProgram` … a different ending with
+  the same result … how a no-op grows a KO sweep it did not have"* — **measured false at this head**:
+  the mutation was applied and the WHOLE engine suite run against it (341 files / 8,888 tests,
+  green). With no damaged-trigger and no KO-Tool stage, `epilogue` is `[attackEpilogue]` alone,
+  `advance` pops it and calls `finishAttack` itself, and draining an empty program reaches the same
+  call — which a comment ten lines BELOW the guard already calls *"byte-identical to the pre-slice
+  tail"*, contradicting the one above it. Declared `equivalent` and kept, not deleted: it is written
+  from the rule, and it is self-invalidating (D427).
+
+**An unpinned line is where prose goes to stop being checked.** Needling `mutants.ts` for the
+identifiers in a region you are about to build on costs one grep and is the cheapest audit here.
+
+## `MATCH_RECORD_VERSION`: pick the argument SHAPE that is true, not the one you used last (D463)
+
+Three shapes are on record and they are not interchangeable:
+
+- **REACHABILITY (D461)** — *the op never parks, so it can never reach `phase.cont.rest`.*
+- **SERIALIZED ALPHABET (D462)** — *no new op, op FIELD or op VALUE, so no byte a v29 record can
+  hold after the slice that it could not hold before it.*
+- **NOTHING OPTIONAL ADDED (D458)** — *the widening is on a field that was already optional.*
+
+D463 is the alphabet, and **reachability is FALSE for it**: its op parks, so the continuation is
+written and persisted. Reusing the previous slice's sentence would have been a confident false
+claim about the one structure the version guards. **The COUNT of copies is not a byte in the
+alphabet** — an array that already accepts N members does not gain a shape by holding two.
+
+⚠️ And when the slice DOES park, the LOSS direction stops being a formality: empty `rest` in the
+persisted bytes and the resumed board must take a **different, observable** ending. That is what
+turns "N parks" into a claim about a BOARD rather than about a log.

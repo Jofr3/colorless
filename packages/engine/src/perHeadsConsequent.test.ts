@@ -92,11 +92,24 @@ const D130_PRINTED = "Flip 3 coins. For each heads, discard the top 3 cards of y
 const D130_UNTIL =
   "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.";
 
-/** The three corpus rows this slice REFUSES, verbatim. All three run `discardEnergy`,
-    which parks. Enumerated here so the refusal is executable rather than prose. */
-const REFUSED = [
+/** 🆕🆕 **D463 — TWO OF D452's THREE REFUSALS LEFT THROUGH THE FRONT DOOR, and
+    what is left is not a `discardEnergy` refusal at all any more.** D452 refused corpus lines
+    200, 217 and 234 on ONE shared count (*"`discardEnergy` PARKS"*) and D463 built two of the
+    three, so the shared count was never the reason: it was a COST, exactly as §9's second rung
+    disproved it in prose while this list still asserted it. **Read a refusal that groups N rows
+    under one reason as N refusals until each has been priced separately** — the two that left
+    are `programPerHeads` over the SHIPPED `discardEnergy` op, and the one that stayed is refused
+    by an axis (`For each TAILS`) that has nothing to do with parking.
+
+    What survives, verbatim, is corpus line 217 alone. */
+const REFUSED = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
+
+/** 🆕🆕 **D463 — the two rows this file used to refuse and now derives**, verbatim
+    off `censusAttackCorpus.ts` file lines 200 and 234. Kept in this suite (rather than only in
+    `perHeadsEnergyDiscard.test.ts`) because §1's family enumeration is a claim about the WHOLE
+    per-face population and would silently shrink by two if they were merely deleted. */
+const BUILT_AT_D463 = [
   "Flip 2 coins. For each heads, discard an Energy from your opponent's Active Pokémon.",
-  "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
   "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
 ] as const;
 
@@ -242,7 +255,7 @@ describe("§1 — two sentences, two printings, and the family enumerated", () =
       ([, s]) => /For each (heads|tails),/.test(s) && !s.includes("This attack does"),
     );
     expect(perFace.map(([, s]) => s).sort()).toEqual(
-      [SINGLE_MILL, HAND_PICK, ...REFUSED].sort(),
+      [SINGLE_MILL, HAND_PICK, ...BUILT_AT_D463, ...REFUSED].sort(),
     );
     expect(perFace).toHaveLength(5);
     expect(perFace.reduce((n, [units]) => n + units, 0)).toBe(5);
@@ -283,9 +296,18 @@ describe("§1 — two sentences, two printings, and the family enumerated", () =
   it("both resolve through the reader SURFACE, and the surface did not grow", () => {
     expect(resolvedByAnyReader(SINGLE_MILL)).toBe(true);
     expect(resolvedByAnyReader(HAND_PICK)).toBe(true);
-    // …and the three refusals stay unresolved on the WHOLE surface, not on a
+    // …and the ONE surviving refusal stays unresolved on the WHOLE surface, not on a
     // hand-kept list of readers (D418).
     for (const sentence of REFUSED) expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+    // 🆕🆕 **D463 — AND THE TWO THAT LEFT ARE ASSERTED RESOLVED ON THE SAME
+    // SURFACE, IN THE SAME RUNG.** A refusal that is deleted rather than inverted takes its
+    // discrimination with it: this pair asserts the reader surface answers OPPOSITELY for the
+    // two halves of what used to be one list, which no `toBe(false)` loop over a shorter array
+    // can say. The surface itself is still 13 — D463 adds anchors to `deriveAttackCoinFlip`, not
+    // a fourteenth reader.
+    for (const sentence of BUILT_AT_D463) {
+      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
+    }
   });
 });
 
@@ -528,7 +550,7 @@ describe("§3 — no new persisted byte, in three directions", () => {
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.361.0");
+    expect(engineVersion).toBe("0.362.0");
   });
 });
 
@@ -823,13 +845,33 @@ describe("§8 — purity", () => {
 // §9 — WHAT IS REFUSED, AND THE REFUSAL THAT DID NOT SURVIVE.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§9 — the three refused rows, each on its own count", () => {
-  it("all three stay LOUD on the whole reader surface", () => {
+describe("§9 — the ONE refused row that is left, on its own count", () => {
+  it("it stays LOUD on the whole reader surface", () => {
     for (const sentence of REFUSED) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(false);
       expect(deriveAttackCoinFlip(sentence)).toBeNull();
       expect(deriveAttackEffect(sentence)).toBeNull();
     }
+  });
+
+  it("🆕🆕 D463 — and the two that left derive `programPerHeads`, not `null`", () => {
+    // 🛑 THE INVERTED RUNG, WHICH IS WHAT A BUILT REFUSAL IS OWED (D418). The old claim
+    // caught "no reader touches this string"; the new one has to catch MORE than "some reader
+    // does", or the discrimination is weaker than what it replaced. So it names the member and
+    // the op: a mutation that swapped the consequent for the mill's `discardDeckTop`, or the
+    // count for `untilTails`, would pass a `not.toBeNull()` and reddens here.
+    for (const sentence of BUILT_AT_D463) {
+      const read = deriveAttackCoinFlip(sentence);
+      expect(read, sentence).toMatchObject({
+        kind: "programPerHeads",
+        ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      });
+      // …and `deriveAttackEffect` still refuses BOTH, which is the disjointness that keeps
+      // `FLIP_OPPONENT_ACTIVE_DISCARD` from claiming a sentence it only ENDS in.
+      expect(deriveAttackEffect(sentence), sentence).toBeNull();
+    }
+    expect(deriveAttackCoinFlip(BUILT_AT_D463[0])).toHaveProperty("flips.kind", "printed");
+    expect(deriveAttackCoinFlip(BUILT_AT_D463[1])).toHaveProperty("flips.kind", "untilTails");
   });
 
   it("🛑 the refusal is a COST, not a capability — D130's `cannot express` is FALSE", () => {
@@ -856,6 +898,12 @@ describe("§9 — the three refused rows, each on its own count", () => {
     // `{pendingOp, rest}` into `GameState.phase.cont`, and the expansion's later copies
     // are exactly what `rest` would hold — so the mechanism exists and the cost is
     // elsewhere (a fielded witness re-pointed across five files, and an N-park drive).
+    // 🆕🆕 **D463 PAID BOTH, AND THIS RUNG IS KEPT RATHER THAN DELETED.** It is
+    // now the DERIVER-FREE half of the claim: it builds the two-op program by hand out of the
+    // BARE sentence's op and shows it parks twice, which is true whatever
+    // `deriveAttackCoinFlip` does. `perHeadsEnergyDiscard.test.ts` drives the other half — the
+    // same program arrived at through the anchors, on a board, to `ATTACK_EFFECT_SKIPPED`'s
+    // replacement. Deleting this one would have moved the mechanism claim behind a regex.
     expect(run.cont.rest).toHaveLength(1);
     expect(JSON.stringify(run.cont.rest[0])).toBe(JSON.stringify(one));
     expect(JSON.stringify(run.cont.pendingOp)).toBe(JSON.stringify(one));

@@ -5769,7 +5769,7 @@ export const MUTANTS: Mutant[] = [
     // (`MatchRecord` stores the RENDERED `SeatLogEntry[]`). No `InPlayPokemon` field,
     // no `EffectOp` inhabitant. So `D326-record-version-not-bumped` is NOT owed and
     // was not touched — driven both directions in `preDamageFamily.test.ts` §8.
-    find: 'export const engineVersion = "0.361.0";',
+    find: 'export const engineVersion = "0.362.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -23510,5 +23510,169 @@ export const MUTANTS: Mutant[] = [
     find: "    return defenderStatusOps([match[1], match[2], match[3]]);",
     replace: "    return defenderStatusOps([match[1], match[2], match[3]]) ?? [];",
     expectKilledBy: ["packages/engine/src/defenderStatusTriple.test.ts"],
+  },
+  // ═══════════════════════════════════════════════════════════════════════
+  // 🆕🆕 D463 — THE PER-HEADS CONSEQUENT THAT PARKS. FIFTEEN rows: ELEVEN over the
+  //    two new anchors and two new arms in `effects.ts`, and FOUR from an ABSENCE
+  //    AUDIT that found two shipped mechanisms with no rows at all.
+  //
+  //    ⚠ THE THREE ARMS' GUARD LINES ARE BYTE-IDENTICAL (D452 flagged two; this
+  //    slice makes it three), so every guard row anchors THROUGH to its arm's `ops:`
+  //    line. And the two NEW arms' `ops:` lines are byte-identical to EACH OTHER apart
+  //    from INDENTATION — ten spaces inside the printed arm's ternary, six inside the
+  //    until-tails arm's bare `return` — which is thinner than a rename and is
+  //    deliberate: the arms carry the same op on purpose, and `precheck` proves each
+  //    `find` still occurs exactly once.
+  //
+  //    🛑 THE ABSENCE AUDIT, NEEDLED AT THIS HEAD AND REPORTED AS A FINDING (D431):
+  //    `repeated.push` / `coinFlip.ops` / `expanded.length > 0` / `i < heads` /
+  //    `FLIP_OPPONENT_ACTIVE_DISCARD` — **0 hits each** in this file. So D130's
+  //    EXPANSION (the line that spends a heads count into a program, shipped 0.81.0)
+  //    and D43/D361's flip-gated opponent discard ANCHOR have both been unpinned for
+  //    their whole lives. D452 found the identical shape one zone over and its rule
+  //    was to close the gap rather than note it; four rows here do that.
+  //    ⚠ THE EXPANSION ROWS ARE DRIVABLE ONLY NOW. Every earlier `programPerHeads`
+  //    consequent is deterministic and non-parking, so one copy and two copies differ
+  //    only in a count buried in a log. D463's copies each PARK, so the number of them
+  //    is a phase the board is sitting in.
+  {
+    id: "D463-printed-anchor-loses-its-caret",
+    decision: "D463",
+    what: "⚠ **THE UNANCHORED PRINTED ANCHOR** — without `^` the pattern matches mid-sentence, so a compound printing whose TAIL reads like corpus line 200 would be claimed WHOLE by the coin reader and its head silently dropped. The family's standing anchor rule (D207's phantom-survivor lesson, in a deriver), and the sibling of D452's own caret row",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_ENERGY_PRINTED =\n  /^Flip",
+    replace: "const ATTACK_COIN_ENERGY_PRINTED =\n  /Flip",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-printed-anchor-hits-your-own-active",
+    decision: "D463",
+    what: "🛡 **THE VICTIM IS THE WRONG PLAYER** — `your opponent's Active` becomes `your Active` in the PRINTED anchor, so corpus line 200 stops deriving and falls to the loud skip path. The pattern still compiles, still describes a grammatical English sentence, and matches NOTHING the column prints. The half of the reading a `not.toBeNull()` cannot see",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. For each heads, discard an Energy from your Active Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-until-tails-anchor-loses-its-caret",
+    decision: "D463",
+    what: "⚠ **THE UNANCHORED UNBOUNDED ANCHOR** — the same float on the twin, and it is the worse of the two because this anchor's flip count has no printed digit to disagree about: any compound sentence ending in these words would be read as an unbounded per-heads loop. Krookodile sv01-117 is the fielded printing behind it",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_ENERGY_UNTIL_TAILS =\n  /^Flip",
+    replace: "const ATTACK_COIN_ENERGY_UNTIL_TAILS =\n  /Flip",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-until-tails-anchor-waits-for-heads",
+    decision: "D463",
+    what: "🛡 **THE ONE-WORD DRIFT WITH A MECHANISM BEHIND IT** — `until you get tails` becomes `until you get heads`. No card prints it, and `flipUntilTails` stops on TAILS, so the anchor would be describing a loop this engine does not run while Krookodile sv01-117 — a REAL, fielded printing — falls silently back to the loud path. The leading sentence is spelled out in the pattern rather than matched as \"Flip a coin until …\" for exactly this reason (D129)",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip a coin until you get tails\\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\\.$/;",
+    replace: "  /^Flip a coin until you get heads\\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/untilTailsFlip.test.ts"],
+  },
+  {
+    id: "D463-printed-arm-hardcodes-two-flips",
+    decision: "D463",
+    what: "⚠ **THE FLIP COUNT STOPS BEING A PARAMETER** — the arm returns a literal 2 instead of the captured digit, which is right for the ONE sentence the column prints today and wrong for the shape. `AttackFlipCount.printed` is parameterised on purpose (D127/D128), and a build pinned to today's printing derives `Flip 4 coins.` as two flips. D452's identical row one arm over, and the reason the pair is a shape rather than a row",
+    file: "packages/engine/src/effects.ts",
+    find: "          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "          flips: { kind: \"printed\", count: 2 },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-printed-arm-loses-the-plural-floor",
+    decision: "D463",
+    what: "⚠ **`Flip 1 coins.` STARTS DERIVING** — `flips >= 2` is what keeps the one-flip form on D126's `Flip a coin.` reading, because the regex's own \"coins\" is PLURAL and \"Flip 1 coins.\" is not English and not in the pool. Anchored THROUGH to this arm's `ops:` line: the guard line is byte-identical to D452's two arms', which is D448's distant-byte-twin hazard now living three times over inside one file",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "    return flips >= 1 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-printed-arm-loses-the-printed-ceiling",
+    decision: "D463",
+    what: "⚠ **THE INGESTED-TEXT CEILING GOES** — `flips <= MAX_PRINTED_FLIPS` is what stops one malformed third-party row spinning the flip loop AND the expansion, which grows one copy of a PARKING op per heads. Under this build a `Flip 99 coins.` row would author up to 99 sequential `effect:choose` phases in one serialized continuation. Invisible on every printing the column carries, which is exactly the defect the constant exists for",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "    return flips >= 2\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-printed-arm-discards-the-attackers-own-energy",
+    decision: "D463",
+    what: "🛡 **SILENT IN EVERY CENSUS — THE ENERGY COMES OFF THE WRONG SIDE OF THE TABLE.** `from: \"opponentActive\"` becomes `\"yourActive\"`, the op's own shipped sibling and six of its eight derived arms' value. The sentence still derives, `BUILT.attack` still steps by 2, the reader surface is unmoved, the flip rows are identical and the prompt still says \"discard an Energy\" — and the attacker pays its own cost per heads. `discardVictimSeat` also stops routing it through §11, so a blocked defender no longer refuses it",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-printed-arm-is-the-hand-discard",
+    decision: "D463",
+    what: "⚠ **THE NEIGHBOURING ARM'S LITERAL, COPIED VERBATIM** — D452's `randomFromOpponentHand` where this arm's `discardEnergy` belongs, which is the single likeliest mistake in a file where four `programPerHeads` arms were written to the same skeleton and differ ONLY in their `ops:` line. Every flip, every census figure and every version figure is identical; the wrong ZONE is emptied, and the op that consumes `rngState` runs where an op that parks should have",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n        }\n      : null;\n  }",
+    replace: "          ops: [{ op: \"randomFromOpponentHand\", to: \"discard\" }],\n        }\n      : null;\n  }",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-until-tails-arm-becomes-a-printed-count",
+    decision: "D463",
+    what: "🛡 **SILENT IN EVERY CENSUS — THE UNBOUNDED COUNT BECOMES A BOUNDED ONE.** The until-tails arm hands back `{ kind: \"printed\", count: 2 }`. The sentence still derives, the op is right, the seat is right, and Krookodile sv01-117 flips exactly twice forever instead of until it draws tails — the D129 member erased by the D127 one, in the arm whose whole reason to exist is that the two are different. This is the count axis the family has now demonstrated three times, and the row that says the demonstration is real",
+    file: "packages/engine/src/effects.ts",
+    find: "      flips: { kind: \"untilTails\" },\n      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "      flips: { kind: \"printed\", count: 2 },\n      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/untilTailsFlip.test.ts"],
+  },
+  {
+    id: "D463-until-tails-arm-narrows-to-special-energy",
+    decision: "D463",
+    what: "🛡 **SILENT IN EVERY CENSUS — THE FILTER NARROWS TO D361's SIBLING.** `{ kind: \"anyEnergy\" }` becomes `{ kind: \"specialEnergy\" }`, a real value the same op takes on four other printed sentences and on Mawile's Ability. The sentence derives, the flips are right, the count is right — and a board holding only Basic Energy offers NOTHING, so the attack silently does nothing at all on the boards where it should do the most",
+    file: "packages/engine/src/effects.ts",
+    find: "      flips: { kind: \"untilTails\" },\n      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "      flips: { kind: \"untilTails\" },\n      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"specialEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/untilTailsFlip.test.ts"],
+  },
+  {
+    id: "D463-audit-d130-expansion-runs-per-flip",
+    decision: "D463",
+    what: "⚠ **D130's EXPANSION LOOP HAD ZERO ROWS — needled at this head and it came back EMPTY** (`repeated.push`, `coinFlip.ops`, `expanded.length > 0`: 0 hits each in this file), so the line that spends a heads count into a program has been unpinned since 0.81.0. Here it counts FACES instead of HEADS. Every sentence still derives, every literal is right, the coin rows are identical — and a two-flip attack that came up heads once runs its op TWICE. Drivable end to end only now, because D463 is the first consequent whose copies are individually observable (each one parks)",
+    file: "packages/engine/src/attack.ts",
+    find: "      for (let i = 0; i < heads; i += 1) repeated.push(...coinFlip.ops);",
+    replace: "      for (let i = 0; i < faces.length; i += 1) repeated.push(...coinFlip.ops);",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D463-audit-d130-empty-program-survives-zero-heads",
+    decision: "D463",
+    what: "⚠ **THE OTHER HALF OF THE SAME UNPINNED LINE.** `expanded.length > 0 ? expanded : null` is what keeps a ZERO-HEADS attack out of `settleProgram` — D130's own comment calls an empty `EffectOp[]` \"a different ending with the same result\", and says that is how a no-op grows a KO sweep it did not have. Under this build the coalesce goes and the empty program runs. The row exists because the comment claiming it matters had nothing asserting it",
+    file: "packages/engine/src/attack.ts",
+    find: "      program = expanded.length > 0 ? expanded : null;",
+    replace: "      program = expanded;",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "\ud83d\udd0e **DECLARED AFTER THE PROBE REPORTED IT AS A GAP, AND THE FINDING IS ABOUT D130's COMMENT RATHER THAN ABOUT THE SUITE.** That comment says an empty `EffectOp[]` \"would route the attack through `settleProgram` to say nothing at all, which is a different ending with the same result\", and that \"different ending is how a no-op grows a KO sweep it did not have\". **MEASURED AT THIS HEAD, THE TWO ENDINGS ARE BYTE-IDENTICAL AND NO BOARD IN THIS REPO DISTINGUISHES THEM**: the mutation was applied to `attack.ts` and the WHOLE engine suite run against it \u2014 341 files / 8,888 tests, all green. The reason is visible ten lines below the guard, in a comment that contradicts the one above it: with no damaged-trigger and no KO-Tool stage, `epilogue` is `[attackEpilogue]` alone, `advance` pops that stage and calls `finishAttack` itself, and `settleProgram` draining an empty program reaches the same call \u2014 which the no-program branch calls \"byte-identical to the pre-slice tail\" in so many words. So the coalesce is written FROM THE RULE, exactly like the `cancelSplit === null` conjunct forty lines up that D420 also found undriven. \u26a0\ufe0f **IT IS NOT DELETED, FOR THE REASON THAT CONJUNCT IS NOT**: a program-shaped null and an empty program are different states, and the day a stage runs BETWEEN the queue build and the drain, they stop agreeing. \ud83d\uded1 **THE ROW IS SELF-INVALIDATING (D427): the day any board tells the two endings apart, this is KILLED and the sweep fails with `STALE-SURVIVOR`** \u2014 which is the whole reason it is declared rather than dropped. \u26a0\ufe0f **AND IT IS THE SECOND OVERSTATEMENT ON THE SAME UNPINNED LINE.** D130's other claim about this expansion \u2014 that a parking op is \"the one thing D130's expansion cannot express\" \u2014 is what D463 spent the slice disproving. A line with no mutant row for 333 decisions accumulated two claims stronger than the code, and needling for it is what found both.",
+    },
+  },
+  {
+    id: "D463-audit-bare-flip-discard-anchor-was-unpinned",
+    decision: "D463",
+    what: "⚠ **`FLIP_OPPONENT_ACTIVE_DISCARD` HAD ZERO ROWS — needled at this head, 0 hits** — and D463 makes its `^` doubly load-bearing. Both of this slice's sentences END in this pattern's exact words apart from the capital. When they were unread, a float here turned a loud skip into ONE silent discard; now that `deriveAttackCoinFlip` claims the whole sentence, a float puts TWO readers on one printing at TWO different sites, so the card discards once FLATLY at the §8.5 tail and once per heads at the flip site",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_OPPONENT_ACTIVE_DISCARD =\n  /^Flip a coin",
+    replace: "const FLIP_OPPONENT_ACTIVE_DISCARD =\n  /Flip a coin",
+    expectKilledBy: ["packages/engine/src/attackDiscards.test.ts"],
+  },
+  {
+    id: "D463-audit-bare-flip-discard-terminator-was-unpinned",
+    decision: "D463",
+    what: "⚠ **THE SAME UNPINNED ANCHOR'S OTHER END.** Without `$` the pattern claims any sentence that BEGINS with D126's flip-gated discard and continues — *\"… Active Pokémon. Repeat.\"* is the constructed near-miss `attackDiscards.test.ts` has carried for the whole time this anchor had no row — so half a printed card would be implemented silently. Two rows on one anchor rather than one, because D452's precedent for an audit finding is to close BOTH ends rather than to note the gap",
+    file: "packages/engine/src/effects.ts",
+    find: "s Active Pokémon\\.$/;\n// The reveal-and-bottom attack sentence",
+    replace: "s Active Pokémon\\./;\n// The reveal-and-bottom attack sentence",
+    expectKilledBy: ["packages/engine/src/attackDiscards.test.ts"],
   },
 ];

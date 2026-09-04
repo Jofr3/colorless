@@ -9,6 +9,7 @@ import {
   programFor,
 } from "./index";
 import type { CoinFace, GameEvent, GameState, Seat } from "./index";
+import { legalAttackCorpus } from "./censusAttackCorpus";
 import { MAX_UNTIL_TAILS_FLIPS, flipCoin, flipUntilTails } from "./rng";
 import {
   FIXTURE_POOL,
@@ -72,6 +73,19 @@ import {
 // flip row, no bonus). One flip, one seed, two numbers that cannot be confused —
 // and the outcome a build that collapsed the members into one would get wrong on
 // every card in the file. It has its own case below and is asserted explicitly.
+//
+// 🆕🆕 **D463 — KROOKODILE sv01-117 IS BUILT, AND THE PARAGRAPH BELOW IS KEPT AS THE
+// RECORD OF WHAT IT USED TO CLAIM.** Its sentence (corpus file line 234) now derives
+// `programPerHeads` over `untilTails` carrying the shipped `discardEnergy` op, so this
+// file's end-to-end witness is RE-POINTED from "stays loud" to "derives, flips, and
+// still lands its flat 50" rather than deleted (D418) — what the old claim caught was
+// that the two D129 regexes are anchored on the WHOLE sentence, and the new one catches
+// that plus WHICH member the whole sentence reads to.
+// 🛑 **AND THE SECOND ENTRY OF `FOR_EACH_HEADS` IS A STRING NO CARD PRINTS.** D452
+// measured this and corrected it in `perHeadsProgram.test.ts`; the same invented string
+// — Krookodile's OPENING glued to Masquerain's consequent — was left standing here, and
+// is labelled rather than deleted below, because as a NEVER-PRINTED near-miss it is
+// still the sharpest refusal witness this file has.
 //
 // AND TWO PRINTINGS OF THE SAME LEADING SENTENCE STAY LOUD. Krookodile sv01-117
 // and Masquerain sv03-007 print "Flip a coin until you get tails. For each heads,
@@ -142,7 +156,27 @@ const DAMAGE_RUSH =
     `discardEnergy` PARKS on a choice (N heads is N sequential parks across a
     serialized continuation) and Masquerain's would be the first EffectOp in the
     engine to consume `state.rngState`. Their refusal is therefore no longer "no
-    regex yet" — it is a cost neither slice has paid. */
+    regex yet" — it is a cost neither slice has paid.
+
+    🆕🆕 **D463 — [0] IS BUILT AND [1] IS NOT A PRINTED SENTENCE AT ALL. BOTH HALVES OF
+    "verbatim off the local D1 (2026-08-01)" ABOVE ARE NOW KNOWN TO BE WRONG, in opposite
+    directions.**
+      · **[0], Krookodile sv01-117** — verbatim, and `censusAttackCorpus.ts` FILE LINE 234.
+        D463 built it: `programPerHeads` over `untilTails` carrying `discardEnergy
+        {from: "opponentActive", filter: {kind: "anyEnergy"}}`. The cost D452 priced (an
+        N-park drive, and this witness re-pointed across five files) was paid, not avoided.
+      · **[1], "Masquerain's"** — 97 characters that the `legal_standard = 1` column prints
+        **ZERO** times. It is Krookodile's OPENING glued to Masquerain's consequent;
+        Masquerain's real sentence is 78 characters and opens *"Flip 3 coins."* (corpus
+        file line 216, BUILT at D452). D452 found this and repaired its own file; this one
+        was missed, and the byte pin below was green and false for the whole of that time.
+    🛑 **[1] IS KEPT, RELABELLED, RATHER THAN CORRECTED IN PLACE OR DELETED.** As a
+    *printed* sentence it was never real; as a **NEVER-PRINTED NEAR-MISS** it is the best
+    refusal witness in this file — it shares D129's opening byte for byte and its
+    consequent is one this engine now derives at a DIFFERENT opening, so a regex that
+    dropped its leading anchor would read it. Correcting it to Masquerain's real sentence
+    would delete that; deleting it would delete it twice over. ⚠️ **DO NOT ASSERT IT IS IN
+    `legalAttackCorpus()` — IT IS NOT, AND §1 SAYS SO EXECUTABLY.** */
 const FOR_EACH_HEADS = [
   "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
   "Flip a coin until you get tails. For each heads, discard a random card from your opponent's hand.",
@@ -403,7 +437,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     );
   });
 
-  it("matches FIXTURE_POOL char-for-char for the UNMAPPED Krookodile sv01-117", () => {
+  it("matches FIXTURE_POOL char-for-char for the RE-POINTED Krookodile sv01-117", () => {
     const attack = FIXTURE_POOL["sv01-117"]?.attacks?.[FLIP_INDEX];
     expect(attack?.effect).toBe(FOR_EACH_HEADS[0]);
     expect(attack?.name).toBe("Chomp Chomp Bite");
@@ -604,6 +638,35 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     expect(WREAK_HAVOC.length).toBe(97);
     expect(utf8Bytes(WREAK_HAVOC)).toBe(97);
     expect(WREAK_HAVOC).not.toBe(FOR_EACH_HEADS[1]);
+  });
+
+  it("🆕🆕 D463 — [0] IS a corpus row and [1] is NOT, said off the measured column", () => {
+    // 🛑 **THE REPAIR IS THE SOURCE, NOT THE PIN** (D452's rule, paid here on the file it
+    // was never applied to). The byte pins above were green for the whole life of this
+    // array while [1] was a hand-retyped OPENING glued to another card's consequent — and
+    // no pin on a whole string can catch that, because the invented string really is 97
+    // characters. Membership in `legalAttackCorpus()` can, and this is the rung that says
+    // so. It is deliberately the LAST assertion about these two strings rather than the
+    // first, so that reading the file top to bottom reaches the pins and then the fact the
+    // pins could not establish.
+    const corpus = new Set(legalAttackCorpus().map(([, sentence]) => sentence));
+    expect(corpus.has(FOR_EACH_HEADS[0])).toBe(true);
+    expect(corpus.has(FOR_EACH_HEADS[1])).toBe(false);
+    // …and the sentence [1] was MEANT to be — Masquerain sv03-007's, corpus file line 216
+    // — is in the column, is 78 characters, and opens with a PRINTED count. Named so the
+    // absence above is attributable to the opening rather than to the consequent.
+    const masquerain = "Flip 3 coins. For each heads, discard a random card from your opponent's hand.";
+    expect(corpus.has(masquerain)).toBe(true);
+    expect(masquerain).toHaveLength(78);
+    expect(FOR_EACH_HEADS[1].endsWith(masquerain.slice("Flip 3 coins. ".length))).toBe(true);
+    // …and the corpus prints EXACTLY ONE `until you get tails. For each heads,` row: [0].
+    // A TOTAL check rather than a claim about two strings — if a re-ingest ever added a
+    // second, the anchors above would owe it an answer and this reddens instead of
+    // quietly covering it.
+    const untilTailsRepeats = legalAttackCorpus().filter(
+      ([, s]) => s.startsWith(UNTIL_TAILS_OPENING) && s.includes("For each heads,"),
+    );
+    expect(untilTailsRepeats.map(([, s]) => s)).toEqual([FOR_EACH_HEADS[0]]);
   });
 });
 
@@ -817,8 +880,8 @@ describe("the two new regexes are DISJOINT — from each other, and from all fou
   });
 });
 
-describe("the two `For each heads` printings stay LOUD — the suite's own unmapped witnesses", () => {
-  it("derives NULL for both, verbatim, on every reader in the family", () => {
+describe("the two `For each heads` sentences — one BUILT at D463, one never printed", () => {
+  it("🆕🆕 D463 — [0] derives programPerHeads/untilTails; [1] stays NULL on every reader", () => {
     // Krookodile sv01-117 and Masquerain sv03-007. They print D129's leading sentence
     // VERBATIM and differ only in the consequent, which makes them the sharpest
     // disjointness witnesses this file has: if the new regexes were anchored on the
@@ -832,18 +895,38 @@ describe("the two `For each heads` printings stay LOUD — the suite's own unmap
     // on a choice — N heads would be N sequential parks across a serialized
     // continuation — and Masquerain's would be the first EffectOp in the engine to
     // consume `state.rngState`. Both are real slices with costs of their own.
+    // 🆕🆕 **D463 — [0] IS READ, AND BY EXACTLY ONE READER.** The four SIBLING readers
+    // still refuse it, which is the disjointness claim this rung was always making and is
+    // now making about a sentence that is CLAIMED rather than unclaimed — a stronger
+    // statement, because a null everywhere is also what an unreachable string produces.
+    // ⚠️ `deriveAttackEffect` refusing it is the sharpest of the four: `Chomp Chomp Bite`
+    // ENDS in `FLIP_OPPONENT_ACTIVE_DISCARD`'s exact words, so that null is the leading `^`
+    // and the mid-sentence lowercase "discard" doing their job (effects.ts says so at the
+    // pattern), and a silent single discard is what it buys.
+    expect(deriveAttackCoinFlip(FOR_EACH_HEADS[0])).toEqual({
+      kind: "programPerHeads",
+      flips: { kind: "untilTails" },
+      ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+    });
     for (const sentence of FOR_EACH_HEADS) {
-      expect(deriveAttackCoinFlip(sentence)).toBeNull();
-      // …and by nothing else in the family either, so the null is a genuine gap on
-      // the loud path and not a hand-off to a reader that would resolve it quietly.
+      // …and by nothing else in the family either, so what reads [0] is ONE reader and
+      // what reads [1] is none.
       expect(deriveAttackEffect(sentence)).toBeNull();
       expect(deriveAttackDamageBonus(sentence)).toBeNull();
       expect(deriveAttackDamageMultiplier(sentence)).toBeNull();
       expect(deriveAttackRequirement(sentence)).toBeNull();
-      // The opening really is the mapped one, so the refusal is the CONSEQUENT doing
-      // the work and not the `^` anchor.
+      // The opening really is the mapped one, so what separates the two is the CONSEQUENT
+      // and not the `^` anchor.
       expect(sentence.startsWith(UNTIL_TAILS_OPENING)).toBe(true);
     }
+    // 🛑 **[1] STAYS NULL ON THE COIN READER TOO, AND IT IS THE ONE THAT MATTERS**: it is
+    // D129's opening over D452's PRINTED-count consequent, so a reader that read the
+    // consequent without its opening would claim a string the catalog prints zero times.
+    expect(deriveAttackCoinFlip(FOR_EACH_HEADS[1])).toBeNull();
+    // …while the same consequent at the opening the column really prints IS read (D452).
+    expect(
+      deriveAttackCoinFlip("Flip 3 coins. For each heads, discard a random card from your opponent's hand."),
+    ).not.toBeNull();
     // …and swapping each one's consequent for the mapped one turns it into a sentence
     // this deriver reads, which is what makes the three nulls above a claim about
     // which half of the string was refused.
@@ -856,17 +939,27 @@ describe("the two `For each heads` printings stay LOUD — the suite's own unmap
     }
   });
 
-  it("reaches ATTACK_EFFECT_SKIPPED and takes NO FLIP — Krookodile, end to end", () => {
-    // A null out of the deriver says the sentence is unread. Only a declared attack
-    // says what that COSTS, and the second half is the one that matters: an unmapped
-    // printing must not consume an rngState step or announce a coin row it has no
-    // business announcing.
-    //
-    // RE-POINTED FROM GYARADOS BY D130, which mapped that sentence. Krookodile is the
-    // better witness for a second reason once the case had to move: its "Chomp Chomp
-    // Bite" prints a FLAT 50, so the case can also assert that being loud is not the
-    // same as being broken — the printed number still lands, unmodified, on the same
-    // declaration that reports the sentence unread.
+  it("🆕🆕 D463 — FLIPS, announces every face, and STILL lands its flat 50 — Krookodile", () => {
+    // 🛑 **THE INVERTED WITNESS (D418), AND WHAT THE OLD CLAIM CAUGHT THAT THIS ONE MUST
+    // NOT LOSE.** It used to assert: `ATTACK_EFFECT_SKIPPED` names the attack and quotes
+    // the sentence IN FULL, zero coin rows, `rngState` UNMOVED, no Energy discarded, and
+    // the printed 50 lands unmodified. Four of those five were about being loud and one
+    // (the flat 50) was about not being broken. The build inverts the first four — and the
+    // *strong* forms survive rather than being dropped:
+    //   · no `ATTACK_EFFECT_SKIPPED` at all, which is a claim about an EVENT and not about
+    //     a deriver, so a regex that matched but produced nothing would still redden it;
+    //   · the coin rows are announced and their COUNT equals the sequence `flipUntilTails`
+    //     takes from the same seed — the old rung's "a flip taken and not announced would
+    //     pass the first and fail this one" argument, kept and pointed the other way;
+    //   · `rngState` lands exactly where taking that same sequence by hand leaves it;
+    //   · **the flat 50 still lands, unmodified** — the one assertion that was never about
+    //     loudness, and the reason Krookodile was chosen as the witness in the first place.
+    // ⚠️ **NO ENERGY IS DISCARDED HERE AND THAT IS THE BOARD, NOT THE READER.** `board()`
+    // gives p2 a bare `fix-titan` Active with nothing attached, so every expanded copy of
+    // `discardEnergy` finds an EMPTY candidate set and whiffs. The op firing on a board
+    // that HAS Energy — and PARKING on the choice — is driven in
+    // `perHeadsEnergyDiscard.test.ts`; this rung deliberately keeps the same board it
+    // always had, so the only thing that moved between the two versions is the reader.
     for (let seed = 0; seed < SEEDS; seed++) {
       const state = krookodileActive(board(seed), "p1");
       const before = state.rngState;
@@ -875,27 +968,22 @@ describe("the two `For each heads` printings stay LOUD — the suite's own unmap
         seat: "p1",
         index: FLIP_INDEX,
       });
-      // The attack WAS declared — this is a resolved attack on the loud path, not a
-      // rejected one.
+      // The attack WAS declared.
       expect(types(events)).toContain("ATTACK_DECLARED");
-      expect(find(events, "ATTACK_EFFECT_SKIPPED")).toEqual({
-        type: "ATTACK_EFFECT_SKIPPED",
-        seat: "p1",
-        attack: "Chomp Chomp Bite",
-        // The effect text is reported IN FULL, which is what makes the row loud
-        // rather than merely present: the sentence nobody read is in the log.
-        effect: FOR_EACH_HEADS[0],
-        // …and no modifier is unsimulated, because the card prints a FLAT 50 with no
-        // "+"/"×" marker at all.
-        damageModifier: null,
-      });
-      // ZERO ROWS and ZERO STEPS. The second is strictly stronger: a flip taken and
-      // not announced would pass the first and fail this one.
-      expect(all(events, "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(0);
-      expect(done.rngState).toBe(before);
-      expect(done.rngState).not.toBe(flipUntilTails(before, MAX_UNTIL_TAILS_FLIPS)[1]);
-      // …and no Energy left the defender either: the unread consequent did NOTHING,
-      // which is what "loud" has to mean.
+      // …and it is no longer on the loud path at all.
+      expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+      expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
+      // THE SEQUENCE, TAKEN BY HAND FROM THE SAME SEED, matches row for row and ends in
+      // TAILS — the same probe the mapped cases in this file use.
+      const [expectedFaces, expectedRng] = flipUntilTails(before, MAX_UNTIL_TAILS_FLIPS);
+      const announced = all(events, "ATTACK_EFFECT_COIN_FLIP").map((e) => e.result);
+      expect(announced).toEqual(expectedFaces);
+      expect(announced.length).toBeGreaterThanOrEqual(1);
+      expect(announced[announced.length - 1]).toBe("tails");
+      expect(done.rngState).toBe(expectedRng);
+      expect(done.rngState).not.toBe(before);
+      // …and no Energy left the defender, because it had none to lose: the expansion ran
+      // `announced.filter(heads).length` copies of an op whose candidate set was empty.
       expect(types(events)).not.toContain("ENERGY_DISCARDED");
       // The printed 50 lands unmodified (fix-titan has neither Weakness nor
       // Resistance), and the turn ends the ordinary way.

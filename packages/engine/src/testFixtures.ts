@@ -7831,7 +7831,22 @@ export const FIXTURE_POOL: Record<string, Card> = {
       { cost: ["Colorless"], name: "Gentle Slap", damage: 10 },
     ],
   }),
-  /** Krookodile sv01-117 — the "For each heads, <effect>." printing that stays
+  /** 🆕🆕 **D463 — KROOKODILE IS BUILT, AND EVERY "cannot express" IN THIS BLOCK IS
+      WRONG.** "Chomp Chomp Bite" derives `programPerHeads` over `untilTails` carrying
+      `discardEnergy {from: "opponentActive", filter: {kind: "anyEnergy"}}`, so the card is
+      no longer this repo's loud witness — it is its N-PARK witness, and
+      `untilTailsFlip.test.ts`'s end-to-end case is re-pointed (D418) from *"reaches
+      ATTACK_EFFECT_SKIPPED and takes NO flip"* to *"flips, announces every face, and still
+      lands its flat 50"*. The flat `damage: 50` is still what makes it the fieldable one of
+      the pair, for exactly the reason the paragraphs below give.
+      🛑 **AND THE MECHANISM CLAIM BELOW WAS NEVER TRUE.** *"the one thing D130's expansion
+      cannot express"* was written at D130, contradicted in the CODE from the beginning
+      (`resumeProgram` ends in `runProgram(applied, rest, …)`, so an op in `rest` that parks
+      parks again), corrected in prose at D423, and paid at D463. It is kept below rather
+      than rewritten, because a fixture doc that quietly loses its own wrong claim loses the
+      record of how long the claim survived — 333 decisions, in a comment nothing reddens.
+
+      Krookodile sv01-117 — the "For each heads, <effect>." printing that stayed
       UNMAPPED after D130, and the suite's re-pointed end-to-end LOUD witness (it
       took that job from Gyarados swsh10.5-022, which D130 maps).
 
@@ -18724,13 +18739,22 @@ export const PER_ENERGY_FLIP_DECK = deckOf({
     only to pay Damage Rush's {C}{C} and Egg Rolling's {C}{C}{C}. That is the whole
     difference from D128's deck, where which Energy was attached WAS the case.
 
-    sv01-117 (Krookodile) IS THE UNMAPPED WITNESS, fielded rather than merely
-    derived: "Flip a coin until you get tails. For each heads, discard an Energy from
-    your opponent's Active Pokémon." is D129's leading sentence with a consequent
-    NEITHER D129 nor D130 built, and it must still reach ATTACK_EFFECT_SKIPPED and
-    take NO flip at all. A null out of the deriver says the first half; only a
-    declared attack says the second. Its flat printed 50 must still land, which is
-    the other half of "loud, not broken".
+    🆕🆕 **D463 — sv01-117 (Krookodile) IS NOW THE BUILT WITNESS, and it is fielded for
+    exactly the reason it always was.** "Flip a coin until you get tails. For each heads,
+    discard an Energy from your opponent's Active Pokémon." derives `programPerHeads` over
+    `untilTails`, so the end-to-end case asserts the OPPOSITE of what it did: no
+    ATTACK_EFFECT_SKIPPED, the whole face sequence announced, `rngState` where
+    `flipUntilTails` leaves it — **and the flat printed 50 STILL LANDING, unmodified**,
+    which is the one assertion that survives the inversion unchanged and the reason this
+    card rather than Masquerain holds the job. ⚠️ **THE DECK IS UNTOUCHED AND THAT IS
+    DELIBERATE**: p2's Active here is a bare `fix-titan` with nothing attached, so every
+    expanded copy of `discardEnergy` finds an EMPTY candidate set and whiffs. The op firing
+    — and PARKING on a genuine choice — is driven in `perHeadsEnergyDiscard.test.ts` on its
+    own deck, so the only thing that moved in THIS suite is the reader.
+
+    (What this block used to say, kept because it is the record of a claim that was wrong
+    for 333 decisions: "sv01-117 IS THE UNMAPPED WITNESS … it must still reach
+    ATTACK_EFFECT_SKIPPED and take NO flip at all.")
 
     IT TOOK THAT JOB FROM GYARADOS swsh10.5-022, which D130 MAPPED (the per-heads
     PROGRAM — "discard the top 2 cards of your opponent's deck" — now expands at the
@@ -18765,7 +18789,7 @@ export const UNTIL_TAILS_FLIP_DECK = deckOf({
   "sv01-030": 4, // Growlithe — "Relentless Flames" (30×) at index 0: perHeads, untilTails, per 30
   "sv01-144": 4, // Chansey — "Egg Rolling" (60×) at index 1: perHeads, untilTails, per 60
   "sv03-174": 4, // Bouffalant — "Damage Rush" (50+) at index 0: bonusOnHeads, untilTails, per 30
-  "sv01-117": 3, // Krookodile — "Chomp Chomp Bite" (50): D129's leading sentence, UNMAPPED consequent (LOUD)
+  "sv01-117": 3, // Krookodile — "Chomp Chomp Bite" (50): D129's flip count, D463's per-heads discardEnergy
   "fix-fire-energy": 4, // Basic {R} — pays Relentless Flames' single symbol
   "fix-fighting-energy": 3, // Basic {F} — pays Chomp Chomp Bite's single symbol, and nothing else
   "fix-energy": 8, // Basic {C} — pays Damage Rush's {C}{C} and Egg Rolling's {C}{C}{C}
