@@ -3319,6 +3319,36 @@ Every instrument in this repo reads these files assuming they are source. A
 corrupted one is not a failed edit — it is a false baseline for everything that
 runs next.
 
+### `OPAQUE` means UNCLASSIFIED, never EXPENSIVE (D463)
+
+`scripts/residue-census.ts` classes a sentence `OPAQUE` when no deletion or
+substitution *it can make* reaches a built string. That is a statement about the
+**instrument's reach**, not about the work.
+
+D463's second printing proved it: the row sat in `OPAQUE` because the
+substitution that would reach a built string is seven tokens and lands on a
+different flip count — and it cost **one regex and one arm**, the same as its
+`SUBST-7` twin. It was findable only because the twin was classified.
+
+So when a slice takes a classified row, **check whether the same consequent is
+printed elsewhere in `OPAQUE`**. The class tells you where the instrument
+stopped; the corpus tells you what the sentence needs.
+
+### An unpinned line accumulates prose (D463)
+
+D130's expansion loop and D43's anchor had **zero mutant rows for their whole
+lives**, and both had acquired doc claims that were false: one said the
+expression produced *"a different ending"* — measured, it produces none, and the
+mutation runs the entire engine suite green.
+
+**Prose about a line is not evidence about the line.** A line no row quotes can
+carry any claim indefinitely, because nothing ever contradicts it — the same
+mechanism by which an unmeasured figure accumulates citations. When you touch
+such a line, expect its comment to be wrong, and settle equivalence by *applying
+the mutation and running the suite*, never by argument: a declared survivor
+asserted from reasoning is a claim, and one asserted from a green full-suite run
+is a measurement a successor can re-check.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
