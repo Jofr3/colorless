@@ -8901,7 +8901,26 @@ export type EffectOp =
       and pins: **no derived attack program may contain a `payFromHand` — at any depth
       — unless the same printed sentence also yields a cancel requirement.** It closes
       the hazard for the NEXT hand-cost sentence, not just for these four printings,
-      and it reddens on the arm rather than on the board. */
+      and it reddens on the arm rather than on the board.
+
+      🆕🆕 **D473 — THE NEXT HAND-COST SENTENCE ARRIVED, AND THE PARAGRAPH ABOVE IS NOW
+      NARROWER THAN THE GUARD. IT IS CORRECTED HERE RATHER THAN DELETED, BECAUSE IT WAS
+      A PREDICTION THAT CAME TRUE** (D466's rule). §4 has a **SECOND** escape as of
+      D473: a payment whose whole consequent sits behind a §9.2 `recordGate` on the very
+      slot it files. D473's rows — *"Discard a card from your hand. If you do, draw {N}
+      cards."*, corpus FILE LINES 101/102, 1 legal printing each — print no cancel and
+      are still honest, because an empty hand files an empty slot, `recordGateHolds`
+      answers **false**, and the draw does not happen: **nothing is bought when nothing
+      is paid.**
+
+      ⚠️ **THE EXEMPTION IS NARROW BY CONSTRUCTION AND THE OLD CLAIM STILL HOLDS OF
+      EVERYTHING ELSE** — exactly two ops, the gate's `slot` equal to the payment's
+      `recordAs`, and no nested payment; a bare op after the gate, a gate on another
+      slot, or a payment with no `recordAs` at all is still an offender and still forces
+      a decision. §4 drives all four of those near-misses on ONE axis each. So the rule
+      reads, in full: **an attack-borne `payFromHand` owes either a printed cancel in
+      front of §8.5 or a §9.2 gate on its own slot, and a build that has neither is
+      refused.** */
   | {
       op: "payFromHand";
       count: number;
@@ -20026,6 +20045,48 @@ const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
     that destroys the deck order the other sentence is printed to preserve. */
 const DISCARD_HAND_DRAW = /^Discard your hand and draw (\d+) cards\.$/;
 
+/** 🆕🆕 D473 — *"Discard a card from your hand. If you do, draw {N} cards."* — **2
+    sentences / 2 legal printings** (file lines 101 and 102, `N` = 2 and 3), and the
+    best sentences-per-anchor ratio left in the residue: ONE capture claims BOTH rows.
+
+    🛑 **THE PRINTED *"If you do,"* IS NOT A NEW MECHANISM, AND THAT IS THE WHOLE
+    PRICE OF THIS ARM.** It is §9.2's `recordGate` — an OP-RESULT branch that runs its
+    `then` when an earlier op in the same program filed at least one card under
+    `slot`, shipped since D148 and spelled by Miriam, Dendra and Kofu in
+    `registry.ts`. The head is `payFromHand`, the only op in this union that removes a
+    CHOSEN card from the controller's own hand (`discardHand` takes the whole hand;
+    `handRefresh` shuffles it into the deck; `opponentDiscardsFromHand` and
+    `bottomFromOpponentHand` act on the other seat's). So the program is three shipped
+    ops in the shipped order, and this slice writes no op, no op field and no op value.
+
+    🛑 **THE EMPTY HAND IS THE REASON THE GATE IS NOT DECORATION.** `payFromHand`'s
+    short-hand branch *"pays what there is"* (interpreter.ts: an offer no bigger than
+    the count resolves inline), so on an empty hand it discards nothing and files
+    nothing — and `recordGateHolds` answers **false** for a slot filed with zero uids,
+    so the draw does not happen. Without the gate the attack would draw for free off a
+    price the engine never collected, which is exactly the hazard D420's structural
+    guard in `handEnergyCancel.test.ts` §4 exists to forbid. See that guard's own block
+    for why the GATED shape is admitted there and the bare one still is not.
+
+    ⚠️ **THE SUBJECT AND THE CONSEQUENT ARE BOTH SPELLED OUT RATHER THAN CAPTURED, AND
+    BOTH WIDENINGS WERE MEASURED OVER ALL 640 ROWS (D472).**
+      • `^Discard (.+) from your hand\. If you do, draw (\d+) cards\.$` claims the
+        **IDENTICAL 2 sentences / 2 printings** — it buys nothing and costs a
+        wrong-but-plausible program, since a captured noun would derive a FILTERED
+        cost as this arm's unfiltered `payFromHand` (D190b/D199).
+      • `^Discard a card from your hand\. If you do, (.+)\.$` claims a **THIRD** row
+        — *"…If you do, your opponent discards a card from their hand."* (file line
+        103, 1 printing) — whose consequent is a different op that `describeBranch`
+        has no phrase for, so the park's caption would silently degrade to the bare
+        cost while the sentence read as claimed. That row is already tracked as a
+        named `DEFERRED` in `opponentHandDiscard.test.ts` with its own reason.
+
+    ⚠️ **THE COUNT IS CAPTURED FOR D404'S REASON**: the column prints 2 and 3 on the
+    same skeleton, which is D121's two-printings-one-token-varying warrant met inside
+    this single anchor rather than argued for across files. The `>= 1` guard is the one
+    every counted arm here carries. */
+const HAND_COST_THEN_DRAW = /^Discard a card from your hand\. If you do, draw (\d+) cards\.$/;
+
 /** Parse printed attack text into executable ops, or null when the text is
     ANYTHING but one of the recognized whole sentences (leading/trailing
     whitespace excepted) — null keeps the attack on the skipped-effect path. */
@@ -23879,6 +23940,38 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [
         { op: "discardHand" },
         { op: "drawCards", count },
+      ];
+    }
+  }
+
+  // 44a. 🆕🆕 D473 — "Discard a card from your hand. If you do, draw {N} cards." —
+  //      TWO sentences and TWO legal printings on ONE anchor, and the only new bytes
+  //      in the whole slice are this regex and these nine lines. See
+  //      `HAND_COST_THEN_DRAW` for the two widenings that were measured and refused,
+  //      and for why the `recordGate` is the sentence rather than a flourish.
+  //
+  //      🛑 THE GATE IS WHAT MAKES THE HAND COST SAFE AT THE ATTACK SEAM. `attack.ts`
+  //      never calls `handCostUnmet` — that gate belongs to the two PLAY paths — so a
+  //      `payFromHand` in an attack program pays what it finds and refuses nothing.
+  //      D420 answered that for the four printings that print a CANCEL; this sentence
+  //      prints none, and the answer here is the §9.2 gate instead: an empty hand
+  //      files an empty slot, `recordGateHolds` returns false, and the draw simply
+  //      does not happen. `handEnergyCancel.test.ts` §4 is widened by exactly that
+  //      shape and by nothing looser, so a build that drops the gate reddens THERE
+  //      rather than only in this slice's own suite.
+  //
+  //      ⚠️ THE LOCAL IS `drawn` AND NOT `count`, DELIBERATELY (D446/D448). Three
+  //      arms in this function already spell `const count = Number(match[1]);` above
+  //      `if (count >= 1) {`, and a fourth byte-identical copy is how a mutant row
+  //      that describes a DIFFERENT arm starts occurring twice. Do not "tidy" it.
+  match = HAND_COST_THEN_DRAW.exec(effect);
+  if (match !== null) {
+    const drawn = Number(match[1]);
+    if (drawn >= 1) {
+      return [
+        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: drawn }] },
       ];
     }
   }

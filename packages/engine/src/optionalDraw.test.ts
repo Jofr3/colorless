@@ -138,10 +138,19 @@ const NEAR_MISSES = [
   /** A draw from the WRONG END of the deck (1 legal). `drawCards` takes from the
       top; this is `deckBottom`'s dimension. */
   "Draw 3 cards from the bottom of your deck.",
-  /** A cost-gated draw (2 legal across two counts) — an "If you do" consequent,
-      not a "you may" wrapper, and its condition is a discard rather than an
-      answer. */
-  "Discard a card from your hand. If you do, draw 2 cards.",
+  /** ⚠️ 🆕🆕 **D473 — THE FOURTH ROW TO LEAVE `NEAR_MISSES`, AND ITS OLD NOTE WAS
+      A CORRECT DESCRIPTION OF A BUILDABLE SENTENCE.** It read: *"A cost-gated draw
+      (2 legal across two counts) — an 'If you do' consequent, not a 'you may'
+      wrapper, and its condition is a discard rather than an answer."* Every clause
+      of that is true and NONE of it is a blocker: the "If you do" is §9.2's
+      `recordGate` (shipped D148), the discard is `payFromHand` (shipped), and the
+      "2 legal across two counts" is D121's warrant for a captured `(\d+)` rather
+      than an argument against one. It sat here for the whole run.
+
+      🛑 **RE-POINTED, NOT DROPPED, AND ONTO A SHAPE RATHER THAN ONTO "IT DERIVES"**
+      (D418's second half, D438's polarity rule) — see `BUILT_AT_D473` below. What
+      this file owns about the sentence is that it is a GATE and not a WRAPPER, so
+      that is what the replacement rung asserts, in both directions. */
   /** A draw for BOTH seats (1 legal). The printed subject is not "you". */
   "Each player draws 3 cards.",
   /** A "You may put …" whose consequent contains a draw, and whose "if you don't"
@@ -214,6 +223,31 @@ const WRAPPED_ELSEWHERE =
  *  ⚠️ AND IT IS STILL A NEAR-MISS FOR THE `^…$` CLAIM, which is why the trailing-clause
  *  case below still builds a witness out of it. */
 const BUILT_AT_D404 = "Discard your hand and draw 6 cards.";
+
+/** ⚠️ 🆕🆕 **D473 — THE FOURTH ROW TO LEAVE `NEAR_MISSES`, THROUGH THE SAME DOOR AS
+    D404's AND FOR THE SHARPEST REASON YET.**
+ *
+ *  Its old note (kept verbatim in the list above) said the sentence is *"an 'If you
+ *  do' consequent, not a 'you may' wrapper, and its condition is a discard rather
+ *  than an answer."* That is a correct and complete description of the mechanism —
+ *  and the mechanism has shipped the whole time. `recordGate` IS the printed *"If
+ *  you do"* (§9.2, D148), `payFromHand` IS the discard, and D473's arm is those two
+ *  plus a `drawCards` in printed order.
+ *
+ *  🛑 **WHAT THIS FILE OWNS ABOUT IT IS THE GATE/WRAPPER DISTINCTION, AND THAT IS
+ *  WHAT IS ASSERTED — IN BOTH DIRECTIONS.** A rung saying only *"it derives now"*
+ *  would be true under a build that wrapped it in `optional` instead, which is
+ *  precisely the confusion this file exists to prevent: an `optional` gate asks the
+ *  CONTROLLER a question, a `recordGate` asks the BOARD what an earlier op did, and
+ *  on an empty hand the two give opposite answers (the wrapper would still offer the
+ *  draw). So the replacement rung pins the `recordGate` shape by value, pins that no
+ *  `optional` appears anywhere in the program, and keeps the refusal of the WRAPPED
+ *  spelling that nobody prints.
+ *
+ *  ⚠️ TWO SENTENCES, ONE ANCHOR — the count is captured, so the sibling at `draw 3
+ *  cards` is asserted beside it and the two must differ ONLY in that number. */
+const BUILT_AT_D473 = "Discard a card from your hand. If you do, draw 2 cards.";
+const BUILT_AT_D473_SIBLING = "Discard a card from your hand. If you do, draw 3 cards.";
 
 describe("the two anchors — 12 legal printings, and the four words in front of the op", () => {
   it("derives each printed sentence to the WRAPPED program", () => {
@@ -350,6 +384,38 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     // …and the WRAPPED spelling of it is nobody's sentence, so the anchors here must
     // still refuse it — which is the original entry's claim, kept.
     expect(deriveAttackEffect("You may discard your hand and draw 6 cards.")).toBeNull();
+  });
+
+  it("🆕🆕 D473's pair is BUILT as a §9.2 GATE and never as a `you may` WRAPPER", () => {
+    // See BUILT_AT_D473's block. The replacement for the `toBeNull` this row used to
+    // carry, and it is strictly stronger: it names the owner BY VALUE and keeps the
+    // refusal the old rung supplied (D438 — re-point a negative by naming what now
+    // owns it and keeping the refusals, never by flipping it to `.not.toBeNull()`).
+    for (const [text, count] of [
+      [BUILT_AT_D473, 2],
+      [BUILT_AT_D473_SIBLING, 3],
+    ] as const) {
+      const built = deriveAttackEffect(text);
+      expect(built, text).toEqual([
+        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count }] },
+      ]);
+      // 🛑 THE HALF THE OLD `toBeNull` WAS REALLY ABOUT: no `optional` anywhere. A
+      // wrapper would offer the draw on an EMPTY hand, where the printed sentence
+      // gives nothing, so this is a behavioural claim and not a shape preference.
+      const hasOptional = (value: unknown): boolean =>
+        Array.isArray(value)
+          ? value.some(hasOptional)
+          : typeof value === "object" && value !== null
+            ? (value as Record<string, unknown>).op === "optional" ||
+              Object.values(value as Record<string, unknown>).some(hasOptional)
+            : false;
+      expect(hasOptional(built), text).toBe(false);
+      // …and the WRAPPED spelling is nobody's sentence, so the anchors here must
+      // still refuse it — the original entry's claim, kept.
+      expect(deriveAttackEffect(`You may ${text.charAt(0).toLowerCase()}${text.slice(1)}`)).toBeNull();
+    }
   });
 
   it("D227's third producer wraps through the SAME gate, byte for byte", () => {

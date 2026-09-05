@@ -63,6 +63,18 @@ import {
 // cancel requirement — and it closes the hazard for the NEXT hand-cost sentence
 // rather than only for these four printings.
 //
+// 🆕🆕 **D473 WAS THAT NEXT SENTENCE, AND IT ARRIVED WITH A SECOND HONEST ANSWER.**
+// *"Discard a card from your hand. If you do, draw {N} cards."* (file lines 101/102,
+// 1 printing each) prints NO cancel and is still safe, because its whole consequent
+// sits behind the §9.2 `recordGate` that reads the payment's own slot: an empty hand
+// files an empty slot, `recordGateHolds` returns false, and nothing is bought. §4 now
+// admits exactly that shape — `handCostIsSlotGated`, two ops, matching slot, no
+// nested payment — and the paying population is **5 sentences / 6 printings**, split
+// by WHICH escape each one takes. ⚠️ **THE GUARD DID NOT GET WEAKER**: every case
+// D420 could catch, it still catches, because the exemption requires the purchase to
+// be conditional on the payment. The one-axis near-misses in §4 are the proof, and
+// `D473-arm-drops-the-record-gate` in `mutants.ts` is the receipt.
+//
 // ⚠️ **WHAT THIS SLICE IS NOT.** It is not `conditionGate` over the payment: a gate
 // is a SECOND reading of the affordability question, free to disagree with the
 // first, and it resolves at the program tail where the printed damage has already
@@ -97,6 +109,14 @@ const BARE_CLAUSE = "If you can't, this attack does nothing.";
 /** D417's own printing, unchanged by this slice — the CONTROL that says the
     widened anchor took nothing off the member that was already there. */
 const ETERNATUS = "Discard a Stadium in play. If you can't, this attack does nothing.";
+
+/** 🆕🆕 **D473 — the two rows that made §4's guard need a SECOND escape.** Corpus
+    FILE LINES 101 and 102, 1 legal printing each. They carry a `payFromHand` and no
+    cancel clause at all; what makes them honest is the §9.2 `recordGate` on the
+    payment's own slot. Transcribed byte-for-byte off `censusAttackCorpus.ts`, and
+    §4's partition rung asserts they are exactly the gated half. */
+const DRAW2 = "Discard a card from your hand. If you do, draw 2 cards.";
+const DRAW3 = "Discard a card from your hand. If you do, draw 3 cards.";
 
 /** The `payFromHand` the three heads derive, spelled once. */
 const pay = (count: number): EffectOp => ({
@@ -620,29 +640,133 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     return Object.values(record).some(carriesHandCost);
   }
 
-  it("🛑🛑 NO derived attack program carries a `payFromHand` without a CANCEL", () => {
+  /** 🆕🆕 **D473 — THE SECOND WAY AN ATTACK-BORNE HAND COST CAN BE HONEST, AND IT IS
+      A NARROW EXEMPTION RATHER THAN A RELAXATION.**
+
+      D420's guard below forbids a `payFromHand` whose sentence prints no cancel,
+      because the payment *"pays what there is"* and the effect it buys then resolves
+      on a price the engine never collected. That reasoning is about what happens
+      AFTER a SHORT payment — and it is only true when something after the payment
+      runs regardless.
+
+      D473's sentence (*"Discard a card from your hand. If you do, draw {N} cards."*,
+      2 printings) prints no cancel and is nonetheless safe, because the ONLY thing
+      after the payment is the §9.2 gate that reads the payment's own slot: an empty
+      hand files an empty slot and `recordGateHolds` answers **false**, so the draw
+      does not happen. Nothing is bought at all when nothing is paid.
+
+      🛑 **THE PREDICATE IS AS TIGHT AS THE PRINTED SHAPE AND NOT ONE BYTE LOOSER**
+      — exactly two ops, the gate's `slot` equal to the payment's `recordAs`, and no
+      further payment nested inside the gate. Everything a future card might print
+      that is merely *similar* (a bare op after the gate, a gate on a different slot,
+      a payment with no `recordAs` at all) still lands in `offenders` and still
+      forces a decision, which is what D420 built this guard to do. **A narrow
+      exemption makes the claim narrower, never false** (D419/D434).
+
+      ⚠️ **AND THE OLD DISCRIMINATION SURVIVES INTACT (D418's second half).** What
+      D420's rung could catch is *"a derived attack program pays a hand cost and buys
+      something anyway"*; this rung still catches every instance of that, because the
+      exemption requires the purchase to be gated on the payment. `mutants.ts` carries
+      the receipt: `D473-arm-drops-the-record-gate` deletes the gate from the arm and
+      is KILLED **here**, not in D473's own suite. */
+  function handCostIsSlotGated(program: readonly EffectOp[] | null): boolean {
+    if (program === null || program.length !== 2) return false;
+    const [cost, gate] = program;
+    if (cost === undefined || gate === undefined) return false;
+    if (cost.op !== "payFromHand" || cost.recordAs === undefined) return false;
+    if (gate.op !== "recordGate" || gate.slot !== cost.recordAs) return false;
+    // A payment nested inside the branch is a SECOND cost, and the gate says nothing
+    // about it — `handCostUnmet`'s own "not compositional" scope note, one seam over.
+    return !carriesHandCost(gate);
+  }
+
+  it("🛑🛑 NO derived attack program carries a `payFromHand` without a CANCEL or a SLOT GATE", () => {
     // 🛑 THE DECISION `effects.ts` SAID WAS OWED, AS A STRUCTURE RATHER THAN A
     // PARAGRAPH. `payFromHand` in an attack pays what it can and refuses nothing, and
     // `handCostUnmet` has no caller in `attack.ts` — so a hand cost with no cancel in
     // front of §8.5 is an effect bought at a price the engine never collects. This
     // walks the WHOLE legal attack column and forbids the shape.
+    //
+    // 🆕 D473 — the second escape, priced in `handCostIsSlotGated` above: a payment
+    // whose whole consequent sits behind a `recordGate` on the slot it files buys
+    // NOTHING when it pays nothing, so the hazard cannot arise.
     const offenders: string[] = [];
     for (const [n, text] of corpus()) {
-      if (!carriesHandCost(programOf(text))) continue;
+      const program = programOf(text);
+      if (!carriesHandCost(program)) continue;
       if (deriveAttackCancelRequirement(text) !== null) continue;
+      if (handCostIsSlotGated(program)) continue;
       offenders.push(`(${n}) ${text}`);
     }
     // Named rather than summed: the day this fires the message is the sentence.
     expect(offenders).toEqual([]);
   });
 
-  it("🛑 the guard is NOT VACUOUS — it is measured over 3 sentences / 4 printings", () => {
+  it("🛑 the guard is NOT VACUOUS — it is measured over 5 sentences / 6 printings, split by WHICH escape", () => {
     const paying = corpus().filter(([, text]) => carriesHandCost(programOf(text)));
-    expect([paying.length, units(paying)]).toEqual([3, 4]);
-    expect(paying.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1].sort());
-    // …and every one of them is claimed by the cancel reader, which is the guard's
-    // positive form: the cost and the cancel are the same sentence's two halves.
-    for (const [, s] of paying) expect(deriveAttackCancelRequirement(s), s).not.toBeNull();
+    // 🆕 D473 +2 sentences / +2 printings — the two `If you do, draw {N} cards.` rows.
+    expect([paying.length, units(paying)]).toEqual([5, 6]);
+    expect(paying.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1, DRAW2, DRAW3].sort());
+    // 🆕 D473 — SPLIT BY REASON rather than counted together (D463: a grouped claim
+    // takes its reason from its cheapest member and its cost from its dearest). Each
+    // paying sentence takes EXACTLY ONE of the two escapes, and the partition is
+    // asserted in both directions so a sentence that took neither — or somehow both —
+    // reddens here rather than in the offenders list alone.
+    const cancelled = paying.filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
+    const gated = paying.filter(([, s]) => handCostIsSlotGated(programOf(s)));
+    expect(cancelled.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1].sort());
+    expect(gated.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3].sort());
+    expect(cancelled.length + gated.length).toBe(paying.length);
+    for (const [, s] of cancelled) expect(handCostIsSlotGated(programOf(s)), s).toBe(false);
+    for (const [, s] of gated) expect(deriveAttackCancelRequirement(s), s).toBeNull();
+  });
+
+  it("🛑 the SLOT GATE exemption is not a hole — four near-misses on one axis each are still offenders", () => {
+    // D427's one-axis rule applied to a predicate rather than to a sentence: each of
+    // these differs from the admitted shape in exactly ONE way, and each must be
+    // refused, or the exemption would be the relaxation its doc block says it is not.
+    const admitted = deriveAttackEffect(DRAW2);
+    expect(handCostIsSlotGated(admitted)).toBe(true);
+    // (a) the payment files nothing, so the gate can never hold — a silent whiff
+    //     wearing a gated sentence's shape.
+    expect(
+      handCostIsSlotGated([
+        { op: "payFromHand", count: 1, to: "discard" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+      ]),
+    ).toBe(false);
+    // (b) the gate reads a DIFFERENT slot — it fires off some other op's filing, so
+    //     the draw is not gated on this payment at all.
+    expect(
+      handCostIsSlotGated([
+        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "moved", then: [{ op: "drawCards", count: 2 }] },
+      ]),
+    ).toBe(false);
+    // (c) an UNGATED op after the gate — the exact D420 hazard, bought free.
+    expect(
+      handCostIsSlotGated([
+        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        { op: "recordGate", slot: "paid", then: [{ op: "drawCards", count: 2 }] },
+        { op: "knockOutDefender" },
+      ]),
+    ).toBe(false);
+    // (d) a SECOND payment nested in the branch — the gate answers for the first
+    //     cost and says nothing whatever about the second.
+    expect(
+      handCostIsSlotGated([
+        { op: "payFromHand", count: 1, to: "discard", recordAs: "paid" },
+        {
+          op: "recordGate",
+          slot: "paid",
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [pay(6), { op: "knockOutDefender" }],
+        },
+      ]),
+    ).toBe(false);
   });
 
   it("🛑 the DEEP walk really is deep — a wrapped payment is still found", () => {

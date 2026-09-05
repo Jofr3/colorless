@@ -3874,6 +3874,52 @@ D472 needed step three exactly once, for a survivor whose reason counts vocabula
 entries; it was re-derived kind by kind and came out unmoved. A slice may delete
 freely and still close out in seconds, provided it deletes in the right places.
 
+### A doubt about EXPRESSIBILITY costs more than a doubt about COST
+
+D473's work order asked whether the printed `If you do,` construction was
+expressible, and warned that if it needed an op observing a prior op's success
+then "the pair is not cheap". That op had shipped since **D48**, its doc block
+names the printed phrase, and a test had been driving the exact op pair and
+asserting the exact printed caption since **D227** — the engine could DESCRIBE the
+sentence before it could READ it.
+
+The two kinds of doubt are not symmetric. A wrong price makes a slice look
+expensive and someone re-measures it. **A wrong expressibility doubt moves a row
+from the shortlist to the blocked list, and nothing re-examines the blocked list.**
+That is how a row two lines from shipped can sit unbuilt indefinitely.
+
+**So before writing "this may need a new mechanism", grep the op union and the
+describers for the printed phrase itself.** The engine's own vocabulary is the
+cheapest thing to check and the most expensive thing to get wrong.
+
+### A reader can be correct while its DESCRIBER is incomplete, and only the describer is user-visible
+
+D473 refused a consequent widening that would have claimed one extra row. The
+reader would have derived that row correctly. But the op in its consequent has no
+phrase in `describeBranch`, so the prompt caption would have **silently dropped the
+consequent** while the census recorded the sentence BUILT and the residue fell.
+
+Neither the census nor the mutation corpus can see a caption that quietly says
+less — the program is right, the tests pass, and the player is told something
+incomplete. **So for every op a widened anchor would newly admit, check that the
+describers have a phrase for it.** Coverage of the reader is not coverage of the
+description.
+
+### A rule that turns on persistence must be applied at an address that persists
+
+D472 decided `MATCH_RECORD_VERSION` on whether a change adds a new union MEMBER
+(costly) or a new INHABITANT of an existing union (free). D473's brief carried that
+test to `AttackFlipCount` — where it is meaningless, because that union is **never
+serialised at all**: it is a local `const` inside `attack()`, absent from
+`packages/schema` entirely. The member/inhabitant distinction has no version
+consequence there in either direction.
+
+**Before applying a persistence-based rule, establish that the thing persists.**
+The three arguments this repo uses are genuinely different: *no carrier at all*
+(D470, D472), *a byte string a current deploy already writes* (D473, where the op
+does park), and *a new member of a persisted union* (costly). Naming which one you
+are making is part of making it.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

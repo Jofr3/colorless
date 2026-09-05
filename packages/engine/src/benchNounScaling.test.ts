@@ -327,7 +327,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.370.0");
+    expect(engineVersion).toBe("0.371.0");
   });
 });
 
