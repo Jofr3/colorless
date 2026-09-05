@@ -3636,6 +3636,31 @@ to re-derive, and all of it decides what the *next* slice should be.
 price.** State which of the three shapes it is: bigger than it looks, smaller than
 its reputation, or version-costing.
 
+### Pure addition is a survivor-preservation argument, and `precheck` is its proof
+
+Before a sweep, the declared survivors have to be shown still valid. The cheap
+method is rule-out-by-file: a survivor in a file the slice does not touch cannot
+have been affected. D469 is the case where that method ran out — it edits three
+files housing 19 of the 35 survivors, so only 16 could be dismissed that way.
+
+The argument that carried the other 19 is worth reusing: **every hunk was a pure
+addition** — a new import line, a new anchor, a new union member, a new reader
+arm, a new switch case, a function appended after an existing one — and no
+existing line was modified. A survivor's reason can only be invalidated by bytes
+that MOVE. Bytes that are merely added cannot reach it, unless the reason
+quantifies over the very structure being extended.
+
+**And the claim is tool-checkable rather than eyeballed:** `precheck` re-finding
+all N `find` strings exactly once IS the proof that no existing line moved, since
+every corpus row anchors on a byte string in a real file. So the method is:
+rule out by file, then rule out by pure-addition with precheck as the witness,
+then hand-check only the reasons that quantify over the extended structure. D469
+had exactly one of those (a survivor whose reason turned on a damage figure being
+non-negative; the new arm returns a product of two non-negatives, so it held).
+
+This is materially cheaper than reading nineteen reasons, and it is available to
+any slice that adds without editing — which, for this codebase, is most of them.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
