@@ -3852,6 +3852,28 @@ for. **So when you touch a family, measure its central arm's coverage by SPAN
 rather than assuming the family's row count covers it** — an op-name grep will not
 find this, because the arm has no name of its own in any row.
 
+### "Is it a pure addition?" is the wrong question — ask "where the survivors live?"
+
+D469 established that pure addition preserves declared survivors, with `precheck`
+as the witness. D471 deleted nothing and cleared all 37 at step one. D472 deleted
+**124 lines across 61 files** and still cleared cheaply — because the deletions and
+the survivors were disjoint by construction: `effects.ts`, where 8 of the 37 live,
+was 118 insertions and **zero** deletions, and every deleted line sat in a test
+file housing no survivor's `find`.
+
+So the property that matters is not "did this slice delete anything" but **"did it
+delete anything where a declared survivor lives"** — which `git diff --numstat`
+answers per file, not per slice. The pre-clearance order is:
+
+1. **numstat per file** — which files have deletions at all?
+2. **file membership** — do any declared survivors live in those files?
+3. **reasons** — only for survivors in files with deletions, plus any whose reason
+   quantifies over a structure the slice extended (D466).
+
+D472 needed step three exactly once, for a survivor whose reason counts vocabulary
+entries; it was re-derived kind by kind and came out unmoved. A slice may delete
+freely and still close out in seconds, provided it deletes in the right places.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
