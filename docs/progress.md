@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-04 — build session #408 (**P3-M5 — D468, *the printed TYPE as the self-switch's Bench narrowing — and the Ancient/Future work order REFUSED at the schema, in a test rather than a paragraph.*** 🛑 **THE WORK ORDER'S TARGET WAS REFUSED AND THE REFUSAL IS THE SLICE'S HEADLINE.** The census named `Ancient`/`Future` as the largest residue token — **12 sentences / 17 printings**, not the 16 the brief inherited — and the coherent buildable subset is **EMPTY**: `cardSchema` has **21 keys and none classifies the banner**, so every one of them would be a filter counting 0 on every board forever while `BUILT.attack` stepped for it (D190b/D199's strictly-worse-than-unbuilt). Built instead the one residue row where the printed adjective slot holds a COLUMN rather than a banner: corpus **file line 499**, *"Switch this Pokémon with 1 of your Benched {L} Pokémon."*, **1 sentence / 1 legal printing** (Vikavolt `sv07-053`), reached for **ONE anchor and ONE arm** because `switchActive.targetType` has shipped since **D273** and the interpreter already narrows through `matchesFilter`. Engine **0.366.0 → 0.367.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** (no new op, no new op field, no new op VALUE), corpus **2,076 → 2,082**, archive ratchet **138**. `bun run check` GREEN, **457 files / 10,257 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2048 killed · 34 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,919.7s`** — `+5 killed, +1 declared`, the **twenty-ninth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,082 listed / 2,082 run / 2,082 matched / 0 unmatched**.)
+**Last updated:** 2026-09-05 — build session #409 (**P3-M5 — D469, *the opponent's WHOLE BOARD of damage counters — and a work order that put the same corpus line on its off-the-table list and its shortlist at once.*** Built corpus **file line 534**, *"This attack does 10 more damage for each damage counter on all of your opponent's Pokémon."*, **1 sentence / 1 legal printing**, the ADDITIVE fold — **D406's cost table verbatim at a second address**: 1 anchor, 1 reader arm, 1 NULLARY `DamageCountSource` member, 1 evaluator arm, 1 shared board counter beside `countEnergyInPlay`/`countToolsInPlay`. 🛑 **THE BRIEF CONTRADICTED ITSELF AND THE BUILDER RESOLVED IT RATHER THAN PICKING A SIDE**: file line 534 was on the off-the-table list (as `scaledDamage.test.ts`'s third negative-control home, *"a successor that builds it OWES a fourth"*) AND was the shortlist's top pick three paragraphs later. Both readings were honoured — it was built AND the fourth control was paid, re-pointed onto **file line 537** (2 legal printings, strictly better than the home it replaces), with the replaced row asserted LIVE in the same rung so the re-homing has a counter-example rather than a story. Engine **0.367.0 → 0.368.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** — argued in its strongest form, *there is no carrier at all*, and DRIVEN over `JSON.stringify(state)` across a lossless round-trip and a second live swing rather than reasoned from the type's name. Corpus **2,082 → 2,096**, archive ratchet **139**. `bun run check` GREEN, **458 files / 10,292 tests**. **PREDICTED SWEEP LINE COMMITTED BELOW BEFORE THE RUN.**)
+
+**Last updated (was):** 2026-09-04 — build session #408 (**P3-M5 — D468, *the printed TYPE as the self-switch's Bench narrowing — and the Ancient/Future work order REFUSED at the schema, in a test rather than a paragraph.*** 🛑 **THE WORK ORDER'S TARGET WAS REFUSED AND THE REFUSAL IS THE SLICE'S HEADLINE.** The census named `Ancient`/`Future` as the largest residue token — **12 sentences / 17 printings**, not the 16 the brief inherited — and the coherent buildable subset is **EMPTY**: `cardSchema` has **21 keys and none classifies the banner**, so every one of them would be a filter counting 0 on every board forever while `BUILT.attack` stepped for it (D190b/D199's strictly-worse-than-unbuilt). Built instead the one residue row where the printed adjective slot holds a COLUMN rather than a banner: corpus **file line 499**, *"Switch this Pokémon with 1 of your Benched {L} Pokémon."*, **1 sentence / 1 legal printing** (Vikavolt `sv07-053`), reached for **ONE anchor and ONE arm** because `switchActive.targetType` has shipped since **D273** and the interpreter already narrows through `matchesFilter`. Engine **0.366.0 → 0.367.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** (no new op, no new op field, no new op VALUE), corpus **2,076 → 2,082**, archive ratchet **138**. `bun run check` GREEN, **457 files / 10,257 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2048 killed · 34 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,919.7s`** — `+5 killed, +1 declared`, the **twenty-ninth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,082 listed / 2,082 run / 2,082 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-09-04 — build session #407 (**P3-M5 — D467, *the attacker's own Bench narrowed by a printed noun, on both of its counting axes — and a disjointness guard that is only a guard at ONE PLACEMENT.*** `censusAttackCorpus.ts` **file lines 544 and 622** — *"This attack does 20 damage for each damage counter on all of your Benched **{F}** Pokémon."* (2 legal, the `×` fold) and *"This attack does 80 more damage for each of your Benched **Charjabug**."* (1 legal, the `+` fold) — **2 sentences / 3 legal printings**. TWO new anchors, ONE new OPTIONAL field on the shipped `damageCountersOnYourBench` (`filter?: CardFilter`, D407's `energyOnSelf.zone` shape at this union's THIRD address), ONE new `IN_PLAY_BODY_NOUNS` row (`Charjabug` → `byName`, the map's FIRST card-name key), and **ZERO new `CardFilter` members** — file line 622 costs ZERO engine-fold bytes because D466 built `yourBenchCount.filter` and `benchBodies` already reads it. 🛑 **THE FINDING: A DISJOINTNESS GUARD IS ONLY KILLABLE WHERE THE PATTERN THAT NEEDS IT RUNS FIRST.** The counter anchor is disjoint from its shipped sibling BY STRUCTURE and needs no guard; the body anchor can only be disjoint by a `(?!Pokémon\.)` LOOKAHEAD, and behind the arm it narrows that lookahead's deletion is reader-INERT (D450) — the shipped arm claims the sentence first, and these regexes are module-private so no suite can see the pattern. **A guard nothing can kill is a vacuous guard by construction**, so the filtered arm is placed AHEAD of the one it narrows and the deletion then breaks D282's three shipped printings. 🛑 **TWO NAMED NEGATIVE CONTROLS EXPIRED** — `scaledDamage.test.ts` and `selfEnergyScaling.test.ts` both pinned the *"count source with no reader at all"* witness to a sentence this slice now reads; re-homed a THIRD time onto corpus **file line 534**. 🛑 **AND A DOC FIGURE THAT ROTTED IN TWO FILES AT ONCE**: D466 corrected `"25 nouns — the 3 exact keys"` inside a mutant's `reason` and left the doc block it was transcribed from standing, so the two disagreed by four keys for a whole slice with nothing red. Engine **0.365.0 → 0.366.0**, **`MATCH_RECORD_VERSION` 29**, mutation corpus **2,063 → 2,076**, archive ratchet **137**. `bun run check` GREEN, **456 files / 10,225 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2043 killed · 33 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,876.6s`** — `+12 killed, +1 declared`, **NON-MONOTONE and correct**, the **twenty-eighth** consecutive slice to name its number first and hit it. Completeness structural: **2,076 listed / 2,076 run / 2,076 matched / 0 unmatched**.).
 
@@ -562,6 +564,130 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-05, after D469)
+>
+> ✅ **`bun run check` IS GREEN — 458 files / 10,292 tests, `CHECK_EXIT=0`**, measured after the
+> ritual and not before it. **457 → 458 files (+1), 10,257 → 10,292 (+35)**, and the **+35 IS the
+> new suite's count exactly** (`opponentBoardCounterScaling.test.ts` is 35 tests, measured by
+> running it ALONE); every other edit added assertions inside existing `it`s. ⚠️ **That is the same
+> arithmetic shape as D467 and D468 — the FIRST repeat in three slices — and the repeat is itself a
+> measurement, not a licence to inherit it.** Re-derive it next slice anyway. Engine
+> **0.367.0 → 0.368.0**, **`MATCH_RECORD_VERSION` 29 UNCHANGED** — argued in its strongest form
+> (*there is no carrier at all*: an `AttackDamageBonus` is a parse-time LOCAL inside `attack()`) and
+> then DRIVEN over `JSON.stringify(state)` across a lossless round-trip and a second live swing off
+> the parsed bytes, rather than reasoned from the type's name. Corpus **2,082 → 2,096**, archive
+> ratchet **139**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP, AND THE PREDICTED LINE IS BELOW.**
+> The tree is dirty with **62 paths — 61 modified and ONE UNTRACKED**. ⚠️ **THE UNTRACKED PATH,
+> NAMED SO THAT NO `git commit -a` CAN MISS IT:
+> `packages/engine/src/opponentBoardCounterScaling.test.ts`.** `git add` with EXPLICIT PATHS ONLY;
+> never `git add -A`. The sweep must run against a CLEAN tree — `docs/progress.md` is itself the
+> target of eight `D318-*` rows, so a dirty copy during a sweep VOIDS them (D446), and
+> `--allow-dirty` on an uncommitted tree returns a verdict-shaped non-result.
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — thirtieth consecutive slice to name its number
+> first, and the twenty-ninth landed exactly:**
+>
+> > **`2061 killed · 35 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,096**
+>
+> Subtraction both directions: `2048 + 13 = 2061`, `34 + 1 = 35`, `2082 + 14 = 2096`, closing
+> `2061 + 35 = 2096`. **MONOTONE, and here is the work behind it (D445):** all 35 declared survivors
+> enumerated from the module; **16 ruled out BY FILE** (`flow.ts`, `interpreter.ts`, `redact.ts`,
+> `GameHud.tsx` carry zero bytes from this slice). The remaining 19 live in files this slice DOES
+> edit — `effects.ts` (7), `attack.ts` (7), `continuous.ts` (5) — and the argument there is
+> structural: **every hunk is a PURE ADDITION** (a new import line, a new anchor, a new union
+> member, a new reader arm, a new switch case, a new function appended after `countToolsInPlay`); no
+> existing line was modified, which `precheck` independently confirms by re-finding all 2,096
+> `find`s exactly once. Reasons re-derived rather than assumed (D466): the only survivor quantifying
+> over a structure this slice extended is **`D427-whiffed-attack-heals-the-base`**, whose reason
+> turns on `scaledAttackDamage(...)` being non-negative — the new arm returns
+> `countDamageCountersInPlay(...) * bonus.per`, both non-negative, so the reason holds unchanged.
+>
+> **(1) ALREADY VERIFIED INDEPENDENTLY — do not re-run it to "be sure", run the SWEEP.**
+> `bun run check` GREEN **458 / 10,292**; `precheck` clean at **2,096**;
+> `bun scripts/residue-census-gate.ts` **OK, §A 139 / 113 / 157**, `GATE_EXIT=0`; probe
+> `--decision D469 --allow-dirty` → **13 killed · 1 known survivor · 0 GAP · 0 stale · 0 clobber ·
+> 0 error**, `MUT_EXIT=0`, row count agreeing both ways (`includes` 14 = equality 14). Find-vs-replace
+> diff over all 14: **none inert**, all carry `expectKilledBy` including the `survives` row. The
+> declared survivor's reason **opens by naming its disjointness KIND (structural, no guard, and
+> correctly none)** — yesterday's convention, used the day after it was written.
+>
+> **(2) AFTER THE SWEEP: the close-out.** Verify completeness STRUCTURALLY from the module
+> (`listed / run / matched`, `missing 0`, `unmatched 0`), confirm the line equals the prediction
+> verbatim, update this stamp's tail and this `(0)` block, append the result to the `| **D469** |`
+> row in `docs/decisions.md`, add any convention BEFORE `## Git / commits`, re-run `check`, commit.
+>
+> **(3) THEN D470 — AND THE NEXT ROW IS ALREADY PRICED, so do not re-derive it.** Corpus **file line
+> 558**, *"This attack does 20 more damage for each {L} Energy attached to all of your Iono's
+> Pokémon."* — **genuinely buildable**: `CardFilter.ownerPokemon` has shipped since **D200** and
+> reads `Card.name`, a real column, so it survives D468's schema test. D469 left it only because it
+> is strictly larger than what D469 took: a new `filter?: CardFilter` on `energyOnSelf` **plus** a
+> widening of `countEnergyInPlay`, **which `energyOnOpponent` also calls** — D454's *a shared helper
+> is the implementation of every op that calls it*, so the blast radius is two ops, not one. Price
+> that widening before committing to it; if it opens further than two consumers, take file line 580
+> instead (see below) or let the census choose afresh.
+>
+> **(4) TWO MORE ROWS PRICED AND RECORDED, so the next brief does not re-derive them either.**
+> **File line 580**, *"…for each Basic Energy attached to this Pokémon."* — 🛑 **NOT state-blocked;
+> D469's brief guessed that it was and the guess was FALSE.** `InPlayPokemon.energy` is a `string[]`
+> of card uids and `specialEnergyUids` / `isSpecialEnergy` already tell Basic from Special off the
+> `energyType` column. It is a **vocabulary widening** of the shared
+> `BasicEnergyType | "special" | null` across `countAttachedEnergy`, `countEnergyInPlay`,
+> `hasAttachedEnergy` and `MaxHpScale.attachedEnergy` — **four consumers**. **File line 199**,
+> *"Each player draws 3 cards."* — 🛑 **this one DOES cost a record version.** `drawCards` is
+> `{op,count,recordAs?}` with **no seat field, deliberately**, and the refusal is written at
+> `effects.ts:9296-9298`. Building it reverses a recorded design decision AND adds an op field,
+> which IS a new byte a v29 record can hold → **`MATCH_RECORD_VERSION` 29 → 30**. The existing
+> opponent-draw routes (`opponentMayDraw`, a PARK; `handRefresh{who}`) both carry wrong semantics
+> for a mandatory automatic both-seats draw.
+>
+> **(5) THE TARGETING RULE, now with a second clause D469 paid for.** Keep letting
+> `bun scripts/residue-census.ts` choose; do not name a family from memory. **(a) D468's clause:**
+> the census picks a TOKEN, not a SLICE — open `packages/schema/src/catalog/card.ts` and ask which
+> of `cardSchema`'s 21 keys the printed word reads before writing any brief around a row. **(b)
+> D469's clause: a census measures whether a sentence is CLAIMED, never whether it is claimed
+> CORRECTLY.** D469's attribution control proved it — under
+> `board-counter-arm-emits-the-active-member` the sentence still reads, `resolvedByAnyReader` is
+> still true and RESIDUE still falls, **while the derived program answers the wrong scope**, and both
+> census suites stayed GREEN. Residue is now **113 sentences / 157 printings**; `OPAQUE` **78 / 112**,
+> unmoved for three slices.
+>
+> **(6) STILL OFF THE TABLE, and this is the FIFTH slice in which it has come up.** The
+> `Ancient`/`Future` family — 12 sentences / 17 printings, corpus file lines 134, 181, 182, 272, 287,
+> 345, 355, 406, 435, 457, 533, 565 — blocked on a schema column that does not exist; its falsifier
+> is an ingest MIGRATION and RUN, not engine code, and `typedSelfSwitch.test.ts` §9 already fails the
+> day that changes. Also off: **file line 412** (PHRASE-18, two mechanisms at two seams) and **file
+> lines 529 / 539 / 616 / 572** (COMPOUND-* — D466 measured that "build the head and the row leaves"
+> is FALSE for these). ✅ **File line 534's negative-control debt is PAID** — it moved to file line
+> 537 (2 legal printings), so it is no longer a reason to avoid 534, and 534 is now BUILT.
+>
+> **(7) A WORK-ORDER LESSON WORTH CARRYING, from D469's own brief.** It listed file line 534 on the
+> off-the-table list AND as the shortlist's top pick, three paragraphs apart. **That was not a
+> contradiction — one entry named a PRICE and the other named a VALUE** — and the builder was right
+> to honour both rather than pick a side. ⚠️ **When a brief names a row twice, check whether the
+> second entry is the INVOICE for the first before treating the pair as an error.** The brief was
+> also wrong in two mechanical places worth not repeating: `scripts/residue-census-gate.ts` holds
+> **no pinned literals of its own** (it reads them out of `censusAtHead.test.ts` and only checks
+> agreement), and the census tax is **not** confined to `censusAtHead.test.ts` — it was **54 edits
+> across 14 files** this time.
+>
+> **(8) THE STANDING HAZARDS, unchanged.** `--allow-dirty` is MANDATORY on an uncommitted tree.
+> `--decision` matches by `String.includes`, not equality — check the row count both ways. **A
+> version bump re-points `D275-engine-version-drifts-again`, which `--decision D46x` CANNOT see** —
+> probe it with `--only`. `bun run mutants --precheck` is NOT a flag; it silently starts a full
+> sweep. Never `String.replace(find, replacementString)` with a replacement read from a file (`$&` /
+> `` $` `` splice); use a function replacement and assert file size. Encode first, write second,
+> inside `try/finally`. `censusAtHead.test.ts` still holds two numerically-close quantities that must
+> not be swept together — `units - built` is now **403**, while
+> `BUILT.ability + BUILT.trainer + BUILT.specialEnergy` STAYS **405**; anchor on the whole
+> expression, never on the bare number. And 🛑 **`ARCHIVES` in `progressLog.test.ts` is the RITUAL's
+> to step, never the slice's** — it counts `### Prior resume point (` blocks and stepping it early
+> turns `check` RED.
+
+### Prior resume point (P3-M5 — D468, the printed type as the self-switch's Bench narrowing, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-04, after D468)
 >
@@ -18995,7 +19121,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D468, *the printed TYPE as the self-switch's Bench narrowing — 1 sentence / 1 legal printing, ONE anchor and ONE arm, `switchActive.targetType` shipped since D273* — and *the Ancient/Future work order REFUSED at the schema*: 12 sentences / 17 printings blocked on a banner `cardSchema`'s 21 keys do not carry, the refusal now pinned as `typedSelfSwitch.test.ts` §9 off `cardSchema.shape` so it goes RED the day ingest lands the column**; engine 0.367.0, `MATCH_RECORD_VERSION` 29, corpus 2,082, check GREEN 457/10,257) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D469, *the opponent's whole board of damage counters — 1 sentence / 1 legal printing, a NULLARY count-source member and a shared board counter, D406's cost table verbatim at a second address* — and *a work order that listed the same corpus line as off-the-table and as its top pick*, resolved by building it AND paying the fourth negative control onto a strictly better home**; engine 0.368.0, `MATCH_RECORD_VERSION` 29, corpus 2,096, check GREEN 458/10,292) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D468, *the printed TYPE as the self-switch's Bench narrowing — 1 sentence / 1 legal printing, ONE anchor and ONE arm, `switchActive.targetType` shipped since D273* — and *the Ancient/Future work order REFUSED at the schema*: 12 sentences / 17 printings blocked on a banner `cardSchema`'s 21 keys do not carry, the refusal now pinned as `typedSelfSwitch.test.ts` §9 off `cardSchema.shape` so it goes RED the day ingest lands the column**; engine 0.367.0, `MATCH_RECORD_VERSION` 29, corpus 2,082, check GREEN 457/10,257) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D467, *the attacker's own Bench narrowed by a printed noun, on BOTH counting axes — 2 sentences / 3 legal printings (corpus FILE LINES 544 and 622) through TWO new anchors, ONE new optional `filter` on the shipped `damageCountersOnYourBench`, ONE new `IN_PLAY_BODY_NOUNS` row (`Charjabug` → `byName`, the map's first card-name key) and ZERO new `CardFilter` members; the finding is that a DISJOINTNESS GUARD is only killable where the pattern that needs it runs FIRST, and two named `toBeNull` negative controls in two unrelated suites EXPIRED and were re-homed a third time.* Engine **0.365.0 → 0.366.0**, `MATCH_RECORD_VERSION` **29**, residue **117/162 → 115/159**, mutation corpus **2,063 → 2,076**, `bun run check` GREEN at **456 files / 10,225 tests**. ⛔ NOT COMMITTED AND NOT SWEPT — the work order forbade both.**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D466, *the printed evolution-stage ordinal as a body filter — 2 sentences / 3 legal printings (corpus FILE LINES 586 and 589), ONE new `CardFilter` member + TWO map rows + ONE new Bench anchor + ONE optional field on a SHIPPED `DamageCountSource` member; the row D446 refused on a reason that was false when written.*** Engine **0.365.0**, `MATCH_RECORD_VERSION` **29**, corpus **2,063**, residue **117/162**.) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D465, *the span probe's terminal-punctuation blind spot, fixed and GATED, and the row the corrected table named — `spanProbe` could not delete a span reaching the last token, so `OPAQUE` was over-populated by six rows / 9 printings since D459; the fix moved `OPAQUE` 86/123 → 81/116 with NOTHING built, exactly five rows changed class (corpus FILE LINES 126, 129, 143, 412, 500), the residue itself did not move, and `scripts/residue-census-gate.ts` now turns the whole claim into a `killedByCommand` COMMAND. Then FILE LINE 500 ("This Pokémon also does 10 damage to itself for each damage counter on it.", 1 sentence / 1 legal printing, `OPAQUE` before the fix and `PHRASE-6` after) built through ONE anchor, ONE arm, ONE optional op FIELD and ONE fold — three sibling rows refused with prices.* ** engine **0.364.0**, `MATCH_RECORD_VERSION` **29** on REACHABILITY in its FIRST-position form, mutation corpus **2,053**, `bun run check` GREEN at **455 files / 10,188 tests**) |
@@ -19105,6 +19232,111 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-05 — build session #409 (P3-M5 — D469)
+
+**THE OPPONENT'S WHOLE BOARD OF DAMAGE COUNTERS — and a work order that put the same corpus line
+on its off-the-table list and on its shortlist at once.** Engine **0.367.0 → 0.368.0**,
+`MATCH_RECORD_VERSION` **29**, mutation corpus **2,082 → 2,096**, archive ratchet **138 → 139**,
+`bun run check` GREEN at **458 files / 10,292 tests**.
+
+**(0) THE BRIEF CONTRADICTED ITSELF, AND THE RESOLUTION IS THE INTERESTING PART.** Corpus **file
+line 534** appeared twice in the same work order: on the OFF-THE-TABLE list, flagged as
+`scaledDamage.test.ts`'s third negative-control home with the note *"a successor that builds it
+OWES a fourth"*, and then three paragraphs later as the shortlist's TOP PICK — *"the cheapest true
+row in the residue. VERIFY IT."* **The builder did not pick a side; it honoured both.** The row was
+built AND the fourth control was paid. That is the right reading, because the two entries were
+never actually in conflict — one named a PRICE and the other named a VALUE, and the brief simply
+failed to notice it had written both. ⚠️ **A work order that lists a row twice is not necessarily
+inconsistent; check whether the second entry is the invoice for the first.**
+
+**(1) WHAT WAS BUILT — D406's COST TABLE VERBATIM AT A SECOND ADDRESS.** *"This attack does 10 more
+damage for each damage counter on all of your opponent's Pokémon."* — **1 sentence / 1
+Standard-legal printing**, the ADDITIVE fold. One whole-sentence anchor
+(`OPPONENT_BOARD_COUNTER_SCALE`), one reader arm in `deriveAttackDamageBonus`, one **nullary**
+`DamageCountSource` member (`damageCountersOnOpponentBoard`), one evaluator arm in
+`scaledAttackDamage`, and one shared board counter (`countDamageCountersInPlay`, placed beside
+`countEnergyInPlay` / `countToolsInPlay`). **Zero** new ops, op fields, op values, prompts, events,
+error codes, registry rows, `packages/schema` bytes, `redact.ts` bytes or `FIXTURE_POOL` ids.
+
+**(2) NULLARY, NOT A `zone` ON THE SHIPPED MEMBER — and the union's own rule decided it.** The
+split rule is written at `effects.ts:24230`: *nullary or asymmetric payload ⇒ two members;
+identical payload ⇒ one member with the discriminator as a field.* This payload is empty, which is
+the same ground on which `damageCountersOnSelf` and `damageCountersOnOpponentActive` are already
+two members. **Widening `…OnOpponentActive` with a zone would not be a widening but a RENAME of a
+member whose name asserts the Active** (D362/D369).
+
+**(3) THE DISJOINTNESS IS STRUCTURAL AND THE ROW SAYS SO — yesterday's convention, used the day
+after it was written.** Both anchors are `^…$` and disagree on a mandatory run of bytes at the same
+position (`on all of your opponent's Pokémon.` vs `on your opponent's Active Pokémon.`). No
+lookahead on either side, and correctly none — a guard here would be D205/D208's vacuous guard. The
+declared survivor's reason opens by naming the KIND, because the two kinds print the same verdict
+and carry opposite maintenance obligations. §2 checks the premise **over the whole legal column**,
+not on two specimens.
+
+**(4) THE SUITE MAKES SIX WRONG IMPLEMENTATIONS ANSWER SIX DIFFERENT NUMBERS ON ONE BOARD.**
+`opponentBoardCounterScaling.test.ts`, **35 tests / 9 sections**, file-local `cardPool` (D414) so
+`opponentResistanceBonus.test.ts`'s ladder takes a **0** term. The mixed board separates: correct
+(9 counters), defender-bench-only (4), defender-active-only (5), attacker board (11), attacker
+bench (7), and sum-then-floor (10) — the two 15-damage bodies exist **solely** to separate
+floor-per-body from floor-once. §4's ZERO-MATCH board carries three controls (a counter added on
+each half; a sibling clause that adds 40 on that very board, so silence is specific rather than
+global; and the clauseless attack on the mixed board, so the 90 is the clause and not the board),
+and drives a **swept opponent Bench with a damaged Active** — because **0-because-empty and
+0-because-pristine are the same number and not the same fact**.
+
+**(5) THE NEGATIVE-CONTROL DEBT WAS PAID, AND PAID UPWARD.** `scaledDamage.test.ts`'s
+`UNREAD_COUNT_SOURCE` was file line 534 itself. Re-pointed — not deleted, not flipped
+(D438/D444/D447) — onto **file line 537**, *"This attack does 100 damage for each Special Condition
+affecting your opponent's Active Pokémon."*, **2 legal printings**, which is strictly better than
+the 1-printing home it replaces. **The replaced row is now asserted LIVE in the same rung**, so
+"we re-homed it" has a counter-example rather than a story.
+
+**(6) THE ATTRIBUTION CONTROL FOUND THE ROW THE CENSUS CANNOT SEE.**
+`D469-board-counter-arm-emits-the-active-member` was applied by hand and each candidate killer run
+ALONE: the new suite KILLS, `scaledDamage.test.ts` KILLS, and **`censusAtHead.test.ts` and
+`opponentCounterScaling.test.ts` both stay GREEN**. That pair is the finding — under that mutant
+the sentence still reads, `resolvedByAnyReader` is still true, and RESIDUE still falls, **while the
+derived program answers the wrong scope**. A census measures whether a sentence is CLAIMED, never
+whether it is claimed CORRECTLY. Restore verified by size AND sha256 (`1792153 → 1792153`,
+`03d980214024 → 03d980214024`), byte-identical.
+
+**(7) `MATCH_RECORD_VERSION` STAYS 29, ARGUED IN ITS STRONGEST FORM AND THEN DRIVEN.** The argument
+is not "no new op field" but **there is no carrier at all**: an `AttackDamageBonus` is a parse-time
+LOCAL inside `attack()` and never reaches a record. §8 does not reason from the type's name — it
+drives `JSON.stringify(state)` before and after the swing, plus a lossless round-trip and a
+**second live swing off the parsed bytes**.
+
+**(8) THREE ROWS PRICED AND LEFT, with the pricing recorded so the next slice does not re-derive
+it.** *"Each player draws 3 cards."* (file line 199) — the brief's own third hypothesis is the true
+one: `drawCards` is `{op,count,recordAs?}` with **no seat field, deliberately**, and the refusal is
+written at `effects.ts:9296-9298`. Building it reverses a recorded design decision AND adds an op
+field, which **is** a new byte a v29 record can hold → **29 → 30**. *"…{L} Energy attached to all
+of your Iono's Pokémon."* (558) — **genuinely buildable**, `CardFilter.ownerPokemon` has shipped
+since D200 and reads `Card.name`, a real column; left only because it is strictly larger (a new
+`filter?` on `energyOnSelf` PLUS a widening of `countEnergyInPlay`, which `energyOnOpponent` also
+calls — D454's *a shared helper is the implementation of every op that calls it*). **A good next
+slice, now priced.** *"…for each Basic Energy attached to this Pokémon."* (580) — 🛑 **the brief's
+hypothesis here is FALSE**: attachments are NOT a type tally, `InPlayPokemon.energy` is a `string[]`
+of card uids and `specialEnergyUids`/`isSpecialEnergy` already tell Basic from Special off the
+`energyType` column. It is not state-blocked; it is a **vocabulary widening** across four consumers.
+
+**(9) THE BRIEF'S WORK LIST WAS WRONG IN TWO MECHANICAL PLACES.** 🛑 Item 7 told the builder to
+update pinned literals in `scripts/residue-census-gate.ts` — **the gate holds no literals of its
+own**. It reads them out of `censusAtHead.test.ts` by string search (`:64`, `:90-91`) and §A only
+checks that the instrument and that file AGREE. There is nothing there to update. ⚠️ Item 6 named
+only `censusAtHead.test.ts`, **which is a third of the census tax**: the real tax was **54 edits
+across 14 files** — 11 in `censusAtHead.test.ts`, **27 live heads across 13 other files in six
+spellings**, and **16 front `- 1` terms across 7 files on 12 physical lines** (three lines carry two
+chains each). Seven of the thirteen hid a SECOND failure behind vitest's first-throw and only
+reddened on the run after the first was fixed (D431/D464, paid again). The two-`405`s trap did not
+bite, but the neighbouring quantity moved: `units - built` **404 → 403** while
+`BUILT.ability + BUILT.trainer + BUILT.specialEnergy` stayed **405**.
+
+**(10) THE INSTRUMENT STOOD STILL (D465).** `residue-census.ts`, `residue-census-gate.ts` and
+`censusAttackCorpus.ts` byte-unchanged, so RESIDUE **114/158 → 113/157**, reader **500/1524 →
+501/1525**, `SUBST-5` **2/2 → 1/1** and `OPAQUE` **unmoved at 78/112** are statements about the
+WORK. Gate §A: **140/114/158 → 139/113/157**.
 
 ### 2026-09-04 — build session #408 (P3-M5 — D468)
 

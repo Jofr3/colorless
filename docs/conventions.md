@@ -3593,6 +3593,49 @@ without changing the sentence the anchor spells. **So write which kind the row
 has into its `survives` reason.** The verdict column will not preserve the
 distinction, and the next reader has no way to recover it from the log.
 
+### A census measures whether a sentence is CLAIMED, never whether it is claimed CORRECTLY
+
+D469's attribution control is the cleanest demonstration this repo has of the
+limit. With the reader arm mutated to emit the wrong member — the Active-only
+count source in place of the whole-board one — the derived program answers the
+wrong scope on every board. And **both census suites stayed green**: the sentence
+still reads, `resolvedByAnyReader` is still true, and RESIDUE still falls by one.
+
+So a falling residue is evidence that a sentence has an owner, and no evidence at
+all that the owner is right. **Every count that a census moves needs a behavioural
+suite underneath it that a wrong-but-plausible implementation fails.** When you
+add a reader arm, mutate it to the NEAREST WRONG SIBLING and check that something
+other than the census goes red; if nothing does, the sentence is claimed but not
+built, which is the failure mode the census was introduced to detect and is
+structurally blind to.
+
+### When a brief names a row twice, check whether the second entry is the invoice
+
+D469's work order listed corpus file line 534 on its off-the-table list — flagged
+as a negative control's home, "a successor that builds it owes a fourth" — and
+then, three paragraphs later, as its shortlist's top pick. That reads as a
+contradiction and is not one: **one entry named a PRICE and the other named a
+VALUE.** The builder honoured both, built the row and paid the fourth control onto
+a strictly better home (2 printings, up from 1).
+
+The general shape: an entry that says *"X is load-bearing / X costs Y"* is not a
+prohibition on X, it is the bill for X. Read it as one before discarding either
+entry, and prefer the resolution that pays the bill to the one that picks a side.
+
+### Price a left row and write the price down, so the next slice does not re-derive it
+
+D469 left three rows and recorded exactly what each would cost: one buildable but
+strictly larger (a shared helper widening whose blast radius is two ops, not one);
+one whose "state-blocked" reputation was **false** on inspection and is really a
+four-consumer vocabulary widening; and one that genuinely costs a
+`MATCH_RECORD_VERSION` bump because it reverses a recorded design decision and
+adds an op field. None of that is visible from the census, all of it is expensive
+to re-derive, and all of it decides what the *next* slice should be.
+
+**A row you decline is worth as much as a row you build, if you write down the
+price.** State which of the three shapes it is: bigger than it looks, smaller than
+its reputation, or version-costing.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

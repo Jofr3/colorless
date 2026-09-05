@@ -89,11 +89,12 @@ function matchup(
   return setActiveFromDeck(state, "p2", opts.defender);
 }
 
-/** 🆕🆕 D467 — the "count source with no reader at all" witness, third home.
-    `censusAttackCorpus.ts` FILE LINE 534, 1 legal printing. See the rung below
-    for why the Pachirisu form stopped being one. */
+/** 🆕🆕 **D469 — the "count source with no reader at all" witness, FOURTH home.**
+    `censusAttackCorpus.ts` FILE LINE 537, **2 legal printings** — one more than the
+    third home carried. See the rung below for why the OPPONENT-BOARD form stopped
+    being one, and D467's block above it for why the Pachirisu form did. */
 const UNREAD_COUNT_SOURCE =
-  "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.";
+  "This attack does 100 damage for each Special Condition affecting your opponent's Active Pokémon.";
 
 describe("deriveAttackDamageBonus — the additive counter-scaling reader", () => {
   it("reads the anchored sentence for any N, as damageCountersOnSelf", () => {
@@ -164,16 +165,34 @@ describe("deriveAttackDamageBonus — the additive counter-scaling reader", () =
         filter: { kind: "typedPokemon", pokemonType: "Lightning" },
       },
     });
-    // 🆕🆕 **THE REPLACEMENT WITNESS, AND IT IS A REAL CORPUS ROW RATHER THAN A
-    // CONSTRUCTED ONE** — `censusAttackCorpus.ts` FILE LINE 534, **1 legal
-    // printing**, ONE sentence, the ADDITIVE fold: the count is every damage counter
-    // on the OPPONENT's whole board, and no `DamageCountSource` member answers it
-    // (`damageCountersOnOpponentActive` reads the Active alone,
-    // `damageCountersOnYourBench` the attacker's Bench). One sentence and one fold,
-    // so the count source is the ONLY ground — which is what this assertion is
-    // actually about, and what the Pachirisu form had to be cut down to provide.
+    // 🛑🆕🆕 **D469 — AND THE D467 REPLACEMENT HAS NOW GONE THE SAME WAY, SO THE
+    // TRANSITION IS RECORDED RATHER THAN THE RUNG QUIETLY RE-POINTED (D444/D447).**
+    // D467 homed this witness on `censusAttackCorpus.ts` FILE LINE 534 — *"This attack
+    // does 10 more damage for each damage counter on all of your opponent's Pokémon."*,
+    // the OPPONENT's whole board on the additive fold — and D469 BUILT it: one anchor
+    // (`OPPONENT_BOARD_COUNTER_SCALE`), one nullary member
+    // (`damageCountersOnOpponentBoard`) and one evaluator arm delegating to
+    // `countDamageCountersInPlay`. **The count source is no longer unread**, and
+    // pinning the old side would be pinning a falsehood. It is asserted LIVE two lines
+    // down rather than merely dropped, which is what makes the move a measurement.
+    //
+    // 🆕🆕 **THE FOURTH HOME, AND IT IS A STRICTLY BETTER WITNESS THAN THE THIRD** —
+    // `censusAttackCorpus.ts` FILE LINE 537, **2 legal printings** against 534's one,
+    // ONE sentence, ONE fold: *"This attack does 100 damage for each Special Condition
+    // affecting your opponent's Active Pokémon."* The count is how many Special
+    // Conditions are on the DEFENDING Active — a 0..N tally of board state that no
+    // `DamageCountSource` member answers and that `boardCondition` (a 0-or-1 indicator)
+    // structurally cannot. One sentence and one fold, so the count source is the ONLY
+    // ground, which is what this assertion is actually about.
     expect(deriveAttackDamageBonus(UNREAD_COUNT_SOURCE)).toBeNull();
     expect(deriveAttackDamageMultiplier(UNREAD_COUNT_SOURCE)).toBeNull();
+    // …and the row this witness REPLACES is asserted from the other side, so "we
+    // re-homed it" is a claim with a live counter-example instead of a story.
+    expect(
+      deriveAttackDamageBonus(
+        "This attack does 10 more damage for each damage counter on all of your opponent's Pokémon.",
+      ),
+    ).toEqual({ per: 10, count: { kind: "damageCountersOnOpponentBoard" } });
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.",

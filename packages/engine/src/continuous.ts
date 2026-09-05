@@ -2644,6 +2644,35 @@ export function countToolsInPlay(state: GameState, seat: Seat): number {
   return total;
 }
 
+/** 🆕🆕 **D469 — HOW MANY DAMAGE COUNTERS ARE ON EVERYTHING `seat` HAS IN PLAY**
+    (§6.3 + §12), the third sibling of `countEnergyInPlay` / `countToolsInPlay` and
+    placed beside them for their own stated reason: *"all of your opponent's
+    Pokémon"* is the SAME printed scope those two already read at the other end of
+    the table, and D159 says one question gets one answer. "In play" is Active +
+    Bench and nothing else — the discard pile, the hand and the deck hold no
+    counters at all — and an empty board counts 0.
+
+    🛑 **FLOORED PER BODY AND SUMMED AFTER THE FLOOR, NOT SUMMED AND THEN FLOORED**,
+    which is `damageCountersOnYourBench`'s arithmetic in attack.ts and is a genuinely
+    different number: two bodies carrying 15 damage each are 1 + 1 = **2** counters
+    here and would be `floor(30/10)` = **3** the other way round. One counter is 10 HP
+    (§12) and `InPlayPokemon.damage` is HP-of-damage-taken, so the per-body floor is
+    what keeps a stray non-multiple — a mid-effect state, a test board — from rounding
+    its way into a neighbour's slot. `opponentBoardCounterScaling.test.ts` §3 drives
+    exactly that board rather than asserting the shape.
+
+    ⚠️ **SEAT-AGNOSTIC, and the CALLER picks the end of the swing.** The one shipped
+    caller passes `defenderSeat` because its printed word is *"your OPPONENT's"*; the
+    function itself names no side, exactly as its two neighbours do not, so the day a
+    *"…on all of your Pokémon"* counter sentence prints there is nothing to widen. */
+export function countDamageCountersInPlay(state: GameState, seat: Seat): number {
+  const side = state.players[seat];
+  const holders = side.active === null ? side.bench : [side.active, ...side.bench];
+  let total = 0;
+  for (const holder of holders) total += Math.floor(holder.damage / 10);
+  return total;
+}
+
 /** The attached Energy that are SPECIAL — the context Luminous's "any other
     Special Energy attached" clause is evaluated against. */
 function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {

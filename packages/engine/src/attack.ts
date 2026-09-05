@@ -33,6 +33,7 @@ import {
   boostedAttackDamage,
   coinFlipShieldPrevents,
   countAttachedEnergy,
+  countDamageCountersInPlay,
   countEnergyInPlay,
   countToolsInPlay,
   effectiveAttackCost,
@@ -280,6 +281,33 @@ function scaledAttackDamage(
         ) * bonus.per
       );
     }
+    case "damageCountersOnOpponentBoard":
+      // 🆕🆕 D469 — THE SAME TALLY AS THE ARM DIRECTLY ABOVE, AT THE OTHER SEAT AND
+      // OVER THE WHOLE BOARD ("This attack does 10 more damage for each damage counter
+      // on all of your opponent's Pokémon.", corpus file line 534). Delegated to
+      // `countDamageCountersInPlay`, which sits beside `countEnergyInPlay` and
+      // `countToolsInPlay` in continuous.ts: *"all of your opponent's Pokémon"* is the
+      // SAME printed scope those two already read, and D159's rule is that one question
+      // gets one answer. The per-body floor lives in the helper, so this member and
+      // `damageCountersOnYourBench` cannot come apart on a board carrying a
+      // non-multiple.
+      //
+      // `defenderSeat`, because the printed word is "your OPPONENT's Pokémon" and the
+      // seat that declared the attack is the other end of the swing — the same end as
+      // `damageCountersOnOpponentActive` five cases up and the exact OPPOSITE of
+      // `damageCountersOnYourBench` directly above, which is the substitution the
+      // suite's own-board control exists to catch.
+      //
+      // 🛑 **THIS IS THE ONLY DAMAGE-COUNTER ARM THAT NAMES NEITHER ACTIVE EXPLICITLY**
+      // — the Active is INSIDE the walk rather than beside it, which is what the printed
+      // "all of" means and what separates this from a Bench-only misread. A board whose
+      // counters are all on the Active and one whose counters are all on the Bench give
+      // the same number here and different numbers under either shipped neighbour, so the
+      // suite drives those two boards separately rather than one board that has both.
+      // Read at DECLARATION like every other member, so this attack's own hit cannot
+      // bootstrap the counters it is priced on; a pristine board is 0, and with the
+      // printed "10+" base kept that is the base alone.
+      return countDamageCountersInPlay(state, defenderSeat) * bonus.per;
     case "opponentBenchCount":
       // D193 — the DEFENDER's Bench counted as BODIES. The mirror-image question
       // to `damageCountersOnYourBench` above: the same zone walk with `damage`

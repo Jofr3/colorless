@@ -12736,6 +12736,38 @@ const OPPONENT_COUNTER_SCALE =
 // for the family's stated reason.
 const OPPONENT_COUNTER_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on your opponent['’]s Active Pokémon\.$/;
+/** 🆕🆕 D469 — THE OPPONENT'S WHOLE BOARD OF DAMAGE COUNTERS, on the ADDITIVE
+    fold: *"This attack does 10 more damage for each damage counter on all of your
+    opponent's Pokémon."* — `censusAttackCorpus.ts` **file line 534**, 1 sentence /
+    **1 Standard-legal printing**, and the cell D467 measured EMPTY at the other
+    seat. It is the SEAT MIRROR of `BENCH_COUNTER_MULTIPLY` two lines down widened
+    to the Active as well, which is what "all of your opponent's Pokémon" means:
+    §6.3's "in play" is Active + Bench, the same scope `energyOnOpponent`'s
+    `zone: "board"` and `toolsOnYourBoard` already read.
+
+    🛑 **DISJOINT FROM `OPPONENT_COUNTER_SCALE` BY STRUCTURE, NOT BY A GUARD, AND
+    D467/D468 REQUIRE SAYING WHICH.** Both patterns are `^…$` over the whole
+    sentence and disagree on a MANDATORY run of bytes at the same position —
+    `on all of your opponent's Pokémon\.` here against
+    `on your opponent's Active Pokémon\.` there — so no string can match both and
+    there is no lookahead on either side. A guard here would be D205/D208's vacuous
+    guard, unkillable by construction. **Placement is therefore LEGIBILITY ONLY**
+    (the opponent-side rows kept together, ahead of the Bench block), and the
+    corpus pins that from both ends: the arm-order row is a declared STRUCTURAL
+    `equivalent`, and the narrowing rows that would break the disjointness are
+    KILLED.
+
+    ⚠️ **NO `×` TWIN, AND NOT BUILDING ONE IS A MEASUREMENT (D435).** The column
+    spells this sentence WITHOUT "more" ZERO times — `opponentBoardCounterScaling
+    .test.ts` §6 asserts it over `legalAttackCorpus()` rather than arguing it — so
+    `deriveAttackDamageMultiplier` deliberately gains no arm, the same shape D196's
+    `bothActivesEnergyCount` absence takes. The possessive carries the `['’]` class
+    per D137 (the corpus row prints ASCII `0x27` today, byte-verified with `cat -A`,
+    not eyeballed) and `Pokémon` carries the real é (U+00E9). No /i, whole-sentence
+    anchored with a required trailing period and a capital `This`, for the family's
+    stated reason. */
+const OPPONENT_BOARD_COUNTER_SCALE =
+  /^This attack does (\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\.$/;
 // D170 — the BENCH-WIDE damage-counter count, and the FIRST count source in this
 // family that tallies over a ZONE rather than off a single body. "This attack
 // does 10 damage for each damage counter on all of your Benched Pokémon." — ONE
@@ -24164,6 +24196,17 @@ export type DamageCountSource =
       situation, and the anchor is KEPT for D364's reason: it is keyed on printed
       text, the reading is still correct, and a reprint restores it for free. */
   | { kind: "damageCountersOnYourBench"; filter?: CardFilter }
+  /** 🆕🆕 D469 — every damage counter on the OPPONENT's whole board (Active +
+      Bench), corpus file line 534. NULLARY, and the union's own split rule is what
+      chooses that over a `zone` on `damageCountersOnOpponentActive`: the block below
+      states it as *nullary or asymmetric payload ⇒ two members; identical payload ⇒
+      one member with the discriminator as a field*, and this payload is EMPTY, which
+      is the same ground on which `damageCountersOnSelf` and
+      `damageCountersOnOpponentActive` are already two members rather than one with a
+      side. The alternative — widening the shipped `…OnOpponentActive` with a zone —
+      is not a widening at all but a RENAME of a member whose name asserts the Active,
+      which D362/D369 priced at 31 sites against 4 for the addition. */
+  | { kind: "damageCountersOnOpponentBoard" }
   | { kind: "bothSidesBenchCount" }
   | { kind: "opponentBenchCount" }
   | { kind: "yourBenchCount"; filter?: CardFilter }
@@ -24289,6 +24332,18 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   if (opponentCounters !== null) {
     const per = Number(opponentCounters[1]);
     if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentActive" } };
+  }
+  // 🆕🆕 D469 — THE SAME SEAT, THE WHOLE BOARD. Corpus file line 534, 1 legal
+  // printing. Same fold and the same `per >= 1` printed-zero guard as every arm in
+  // this reader; what differs is one literal run of bytes in the anchored tail, and
+  // that literal is the ONLY thing separating this arm from the one directly above
+  // — which is why the two anchors are structurally disjoint and neither carries a
+  // lookahead. Arm ORDER here is legibility: no string reaches both `exec`s, and
+  // the corpus row that swaps them is a declared structural `equivalent`.
+  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);
+  if (opponentBoardCounters !== null) {
+    const per = Number(opponentBoardCounters[1]);
+    if (per >= 1) return { per, count: { kind: "damageCountersOnOpponentBoard" } };
   }
   // D193 — the two BODY counts, both on this fold because both sentences carry
   // "more". Same `per >= 1` guard, a different resource: these tally Pokémon, not

@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.367.0";',
+    find: 'export const engineVersion = "0.368.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -24256,5 +24256,147 @@ export const MUTANTS: Mutant[] = [
     find: "  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: \"switchActive\" }];\n  }\n  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` \"Volt Switch\", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273's shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? \"\"];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];\n  }",
     replace: "  // 🆕🆕 D468 — the same op with the printed BENCH-END narrowing (Vikavolt\n  // `sv07-053` \"Volt Switch\", 1 legal). STRUCTURALLY disjoint from the bare arm\n  // above — `Benched Pokémon.` and `Benched {X} Pokémon.` cannot both match one\n  // string — so this arm needs no lookahead and its position is legibility, which\n  // D467 requires stating rather than leaving to the reader. The narrowing itself\n  // is D273's shipped `targetType`, read by `switchBenchNarrowing` and spelled by\n  // `switchTargetNoun`; only the ATTACK-surface reader was missing.\n  const typedSwitch = ATTACK_SELF_SWITCH_TYPED.exec(effect);\n  if (typedSwitch !== null) {\n    const targetType = POKEMON_TYPE_BY_CODE[typedSwitch[1] ?? \"\"];\n    // An unreadable code returns null (LOUD) rather than an unnarrowed switch:\n    // dropping the rider would silently offer the WHOLE Bench, a superset the\n    // card does not print, and every board assertion would stay green (D461).\n    if (targetType !== undefined) return [{ op: \"switchActive\", targetType }];\n  }\n  if (ATTACK_SELF_SWITCH.test(effect)) {\n    return [{ op: \"switchActive\" }];\n  }",
     expectKilledBy: ["packages/engine/src/typedSelfSwitch.test.ts", "packages/engine/src/optionalSelfSwitch.test.ts"],
+  },
+  // ── D469 — THE OPPONENT'S WHOLE BOARD OF DAMAGE COUNTERS. Fourteen rows: SIX on the
+  //    anchor (the two ends of it separately, per D341/D464), THREE on the reader arm,
+  //    TWO on the evaluator arm and THREE on the shared board counter in continuous.ts.
+  //    ⚠️ ONE of the fourteen is DECLARED — the arm-order swap — and its reason names
+  //    STRUCTURAL disjointness explicitly, because D468's conventions entry records that
+  //    the guarded and the structural kind print the SAME verdict and owe OPPOSITE
+  //    maintenance. The structural kind has no companion guard-deletion row and correctly
+  //    has none; the KILLED companion here is the LITERAL row (`…drops-the-all-of`), which
+  //    is what makes the disjointness premise falsifiable rather than asserted.
+  //    🛑 `D469-board-counter-arm-emits-the-active-member` is the row that is SILENT IN
+  //    EVERY CENSUS: the sentence still reads and RESIDUE still falls while the derived
+  //    program answers the wrong scope. Only a board can see it.
+  {
+    id: "D469-board-counter-anchor-loses-the-more",
+    decision: "D469",
+    what: "A1 — THE ADDITIVE TELL IS DELETED, so the anchor spells the `×` sentence instead of the `+` one. This family splits by FOLD (D163) and \"more\" is the only word doing the splitting: without it the printed row stops reading AND the pattern claims a string the legal column prints ZERO times, which §6 measures rather than assumes. The likeliest honest-looking edit at this line and exactly what a `+`/`×` mix-up produces.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-anchor-drops-the-all-of",
+    decision: "D469",
+    what: "A2 — `all of your opponent's` NARROWS TO `your opponent's`, which is the SCOPE this member exists for. The printed row stops reading and the pattern now spells a sentence the column does not print. It is also the exact run of bytes that separates this anchor from `OPPONENT_COUNTER_SCALE` — so this row is the POSITIVE half of the structural-disjointness claim, the companion `D469-board-counter-arm-moves-behind-the-active-one` declares as a survivor.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each damage counter on your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-anchor-loses-its-head",
+    decision: "D469",
+    what: "A3 — THE `^` GOES. D341/D464: the two ends of an anchor fail differently and each needs its own row. Without the head the pattern claims a MID-SENTENCE clause — a two-clause row whose leading clause this reader has never seen would derive a bonus — which is the defect the family's anchors and its capital `This` refuse together.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-anchor-loses-the-trailing-dollar",
+    decision: "D469",
+    what: "A4 — THE `$` GOES, the OTHER end of A3 and a DIFFERENT defect: the pattern would claim the HEAD of a two-sentence row (`…Pokémon. This attack's damage isn't affected by Weakness.`) and fold a bonus for a card whose second clause is unread. ⚠️ §2's refusal list carries that specimen BECAUSE OF THIS ROW — D456's rule (a mutant with nowhere to die is a coverage finding) applied forwards: the near-miss list as first drafted could not kill it, so the specimen was added.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-anchor-hardcodes-the-amount",
+    decision: "D469",
+    what: "A5 — `(\\d+)` BECOMES THE LITERAL `(10)`, the one amount the column prints today. The corpus row still reads, `BUILT.attack` still steps and every board rung in §3/§4 stays green; only §2's 20/30/100 sweep can see it. D121's second-printing warrant at a member with ONE legal printing — the capture is carried by CONSTRUCTED text, which the suite says out loud rather than hiding.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^This attack does (10) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-anchor-loses-the-possessive-class",
+    decision: "D469",
+    what: "A6 — `['’]` COLLAPSES TO THE ASCII APOSTROPHE ALONE. D137's fix at this family's newest address: the corpus row prints U+0027 today (byte-verified with `cat -A` and pinned in §1), so every board rung stays green and only §2's U+2019 case reddens. A reprint carrying the typographic apostrophe would go silently unread.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent['’]s Pokémon\\.$/;",
+    replace: "  /^This attack does (\\d+) more damage for each damage counter on all of your opponent[']s Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-arm-drops-the-printed-zero-guard",
+    decision: "D469",
+    what: "B1 — `per >= 1` BECOMES `per >= 0`, the printed-zero guard every arm in both readers carries. A `0 more damage` sentence must stay on the LOUD skipped path rather than derive a bonus that adds nothing. Invisible on every printed row (the column prints 10) and visible only on §2's constructed zero.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentBoard\" } };\n  }",
+    replace: "  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 0) return { per, count: { kind: \"damageCountersOnOpponentBoard\" } };\n  }",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-arm-emits-the-active-member",
+    decision: "D469",
+    what: "B2 — THE ARM RETURNS THE SHIPPED `damageCountersOnOpponentActive` INSTEAD. 🛑 THIS IS THE ROW THAT IS SILENT IN EVERY CENSUS: the sentence still reads, `resolvedByAnyReader` still answers true, `BUILT.attack` still steps and RESIDUE still falls — the derived program is merely wrong about the SCOPE, reading the Active alone where the card says the whole board. §2 sees the shape and §3's two half-boards see the number: the Bench-only board falls 40 → 10 while the Active-only board does not move, which is precisely why those two boards are driven separately instead of as one board carrying both.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentBoard\" } };\n  }",
+    replace: "  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };\n  }",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts", "packages/engine/src/scaledDamage.test.ts"],
+  },
+  {
+    id: "D469-board-counter-arm-moves-behind-the-active-one",
+    decision: "D469",
+    what: "C — THE NEW ARM IS MOVED BEHIND THE SHIPPED ACTIVE-ONLY ARM. Written to test the placement claim in `OPPONENT_BOARD_COUNTER_SCALE`'s block: that the ORDER of these two arms is LEGIBILITY, because the disjointness is STRUCTURAL rather than guarded. Paired with `D469-board-counter-anchor-drops-the-all-of` (KILLED), the two rows are the two halves of one claim — the ORDER is legibility and the LITERAL is behaviour.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };\n  }\n  // 🆕🆕 D469 — THE SAME SEAT, THE WHOLE BOARD. Corpus file line 534, 1 legal\n  // printing. Same fold and the same `per >= 1` printed-zero guard as every arm in\n  // this reader; what differs is one literal run of bytes in the anchored tail, and\n  // that literal is the ONLY thing separating this arm from the one directly above\n  // — which is why the two anchors are structurally disjoint and neither carries a\n  // lookahead. Arm ORDER here is legibility: no string reaches both `exec`s, and\n  // the corpus row that swaps them is a declared structural `equivalent`.\n  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentBoard\" } };\n  }\n",
+    replace: "  // 🆕🆕 D469 — THE SAME SEAT, THE WHOLE BOARD. Corpus file line 534, 1 legal\n  // printing. Same fold and the same `per >= 1` printed-zero guard as every arm in\n  // this reader; what differs is one literal run of bytes in the anchored tail, and\n  // that literal is the ONLY thing separating this arm from the one directly above\n  // — which is why the two anchors are structurally disjoint and neither carries a\n  // lookahead. Arm ORDER here is legibility: no string reaches both `exec`s, and\n  // the corpus row that swaps them is a declared structural `equivalent`.\n  const opponentBoardCounters = OPPONENT_BOARD_COUNTER_SCALE.exec(effect);\n  if (opponentBoardCounters !== null) {\n    const per = Number(opponentBoardCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentBoard\" } };\n  }\n  const opponentCounters = OPPONENT_COUNTER_SCALE.exec(effect);\n  if (opponentCounters !== null) {\n    const per = Number(opponentCounters[1]);\n    if (per >= 1) return { per, count: { kind: \"damageCountersOnOpponentActive\" } };\n  }\n",
+    survives: {
+      kind: "equivalent",
+      reason: "🛑 STRUCTURAL DISJOINTNESS, NOT GUARDED — and D468's conventions entry requires the row to say WHICH, because the two kinds print the same verdict and carry OPPOSITE maintenance obligations. Both anchors are `^…$` over the whole sentence and disagree on a MANDATORY run of bytes AT THE SAME POSITION: `OPPONENT_COUNTER_SCALE` spells `on your opponent['’]s Active Pokémon\\.` and `OPPONENT_BOARD_COUNTER_SCALE` spells `on all of your opponent['’]s Pokémon\\.`, and no string can both begin that run with `all of ` and not. So NO LOOKAHEAD EXISTS ON EITHER SIDE and correctly none does — a guard nothing could turn red is D205/D208's vacuous guard, unkillable by construction — and therefore, unlike D467's GUARDED pair, THERE IS NO COMPANION GUARD-DELETION ROW TO BE KILLED, and its absence is not an omission. The equivalence is not contingent on any deletable byte; it can only be broken by changing the SENTENCE an anchor spells. ⚠️ THE TRIGGER THAT WOULD MAKE THIS ROW OBSERVABLE, i.e. the edit a successor is actually likely to make: folding the two into one anchor with an OPTIONAL `(?:all of )?` or an optional `Active `. The moment either scope token becomes optional the two patterns overlap, the order starts deciding answers, this mutation becomes killable and the row reports STALE-SURVIVOR. §2's whole-column rung (no legal sentence derives to BOTH members) is the standing check on the premise.",
+    },
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-reads-the-attacker-seat",
+    decision: "D469",
+    what: "D1 — `defenderSeat` BECOMES `attackerSeat`, the seat inversion this member's whole printed noun (\"your OPPONENT's Pokémon\") is about. Every derive-layer rung stays green because the seat is not in the parse at all; only a board with damage on BOTH sides can see it, which is why the mixed board carries 40 on the attacker and 70 on its Bench and why §4/§5 assert the zero-match board deals exactly its base.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countDamageCountersInPlay(state, defenderSeat) * bonus.per;",
+    replace: "      return countDamageCountersInPlay(state, attackerSeat) * bonus.per;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-counter-drops-the-per-multiplier",
+    decision: "D469",
+    what: "D2 — `* bonus.per` GOES, so the fold adds ONE PER COUNTER instead of `per` per counter. The clause still fires, `scaled` is still present and the pristine board is still 0 — so §4's zero-match rung and every refusal rung stay green. Only the counted boards move (100 → 19), which is the case D459's *print the VALUE, not only the verdict* is about.",
+    file: "packages/engine/src/attack.ts",
+    find: "      return countDamageCountersInPlay(state, defenderSeat) * bonus.per;",
+    replace: "      return countDamageCountersInPlay(state, defenderSeat);",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-walk-skips-the-active",
+    decision: "D469",
+    what: "E1 — THE WALK DROPS THE ACTIVE AND BECOMES A BENCH-ONLY TALLY. 🛑 The `find` deliberately spans the holders line PLUS the loop, because the holders idiom is spelled three times in this file (`countEnergyInPlay`, `countToolsInPlay`, `seatOfPokemon`) and an anchor on it alone would sit on the wrong function — the corpus's own rule that a row must be anchored on a symbol its slice owns. \"All of your opponent's Pokémon\" is §6.3's \"in play\" = Active + Bench; a Bench-only reading is the misread that stays plausible on every board where the Active happens to be pristine, and §3's two half-boards plus §4's swept-Bench rung are what refuse it.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  for (const holder of holders) total += Math.floor(holder.damage / 10);",
+    replace: "  const holders = side.bench;\n  let total = 0;\n  for (const holder of holders) total += Math.floor(holder.damage / 10);",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-walk-sums-before-flooring",
+    decision: "D469",
+    what: "E2 — THE PER-BODY FLOOR MOVES TO THE END: sum the raw damage, divide once. 🛑 IT IS GREEN ON EVERY BOARD WHOSE DAMAGE LANDS IN TENS, which is every board the ordinary rules can produce — so this is a SAFETY property and the only thing that can see it is a board carrying two non-multiples. §3's 15+15 rung and §7's mixed board (9 against 10) are that board, and the two 15s on the mixed setup exist for this row.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  for (const holder of holders) total += Math.floor(holder.damage / 10);",
+    replace: "  const holders = side.active === null ? side.bench : [side.active, ...side.bench];\n  let total = 0;\n  for (const holder of holders) total += holder.damage;\n  total = Math.floor(total / 10);",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
+  },
+  {
+    id: "D469-board-walk-counts-bodies-not-counters",
+    decision: "D469",
+    what: "E3 — THE WALK TALLIES DAMAGED BODIES INSTEAD OF DAMAGE COUNTERS, one per body rather than `damage ÷ 10`. The two nouns coincide on any board where every damaged body carries exactly one counter, so a thinner suite would never separate them; the mixed board answers 9 the right way and 4 this way. §12 (one counter = 10 HP) is what this row is quantifying over.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  for (const holder of holders) total += Math.floor(holder.damage / 10);",
+    replace: "  for (const holder of holders) total += holder.damage > 0 ? 1 : 0;",
+    expectKilledBy: ["packages/engine/src/opponentBoardCounterScaling.test.ts"],
   },
 ];
