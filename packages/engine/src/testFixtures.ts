@@ -5351,7 +5351,13 @@ export const FIXTURE_POOL: Record<string, Card> = {
       NO owner prefix in the key — the possessive fixture toll (`ownerPrefix.test.ts`)
       is not paid by this slice, which matters here because the pool's real near miss
       IS an owner-prefixed board ("… attached to all of your Iono's Pokémon.", 1 legal)
-      and the anchor refuses it. The ids that print this sentence are unknown to this
+      and the anchor refuses it. 🆕🆕 **D470 — THAT LAST CLAUSE ROTTED, AND IT ROTTED BY
+      BEING BUILT.** `SELF_ENERGY_FILTERED_SCALE` claims that sentence now, through a
+      SEPARATE anchor; this anchor still refuses it, so the sentence above is true of
+      `SELF_ENERGY_SCALE` and false of the family. The fixture is unchanged and stays
+      prefix-less deliberately — `ownerBoardEnergyScaling.test.ts` pays the possessive
+      toll in a FILE-LOCAL pool (D414) rather than here, so `FIXTURE_POOL` is
+      byte-unchanged by D470 and every pool-size ladder takes a 0 term. The ids that print this sentence are unknown to this
       container (no D1 credentials, D369), so the key is a `fix-*` one and every scalar
       except the effect text and the `+` marker is CHOSEN rather than transcribed. A
       Basic, 110 HP, so its own survival never gets in the way. */

@@ -19,6 +19,7 @@
 
 import { readFileSync } from "node:fs";
 import { MUTANTS } from "./mutants";
+import { spliceReport } from "./splice-gate";
 
 const sources = new Map<string, string>();
 function sourceOf(file: string): string {
@@ -45,10 +46,43 @@ for (const mutant of MUTANTS) {
   if (n !== 1) broken.push(`${mutant.id}: find occurs ${String(n)}× in ${mutant.file}`);
 }
 
+// 🆕🆕 **D470 — THE SECOND PROPERTY THAT MAKES A ROW RUNNABLE: THE MUTATION APPLIED
+// MUST EQUAL THE MUTATION DECLARED.** `run.ts` patches with `String.replace`, and a
+// STRING second argument makes `$&`, `` $` ``, `$'` and `$1` SPLICE DIRECTIVES rather
+// than literal bytes. Every anchor row in this corpus quotes its own pattern in a doc
+// comment, so a `replace` carrying a regex `…$` immediately followed by a backtick
+// writes the WHOLE PRECEDING FILE into the mutant. **Measured when this check was
+// written: 11 of 2,111 rows, ten of them standing since D234, each 0.6–1.7 MB larger
+// than declared.**
+//
+// 🛑 **AND THE CORRUPTION READS AS SUCCESS, WHICH IS WHY IT SURVIVED 236 DECISIONS**:
+// the spliced file does not parse, vitest exits non-zero, and the row reports KILLED —
+// D416's *a row that dies for the wrong reason is worth less than one that survives,
+// because it reports success*. A DECLARED SURVIVOR gets the mirror image, a spurious
+// `STALE-SURVIVOR` that fails the whole run. D470 fixed `run.ts` to a function
+// replacement, which makes the harness immune; this check is what stops the class
+// coming back through the DATA if that line is ever reverted, and it costs a string
+// compare per row.
+//
+// 🛑 **AND THE SECOND PROPERTY IS DELEGATED RATHER THAN SPELLED HERE (D159), FOR A
+// REASON THAT IS ABOUT ATTRIBUTION AND NOT ABOUT TIDINESS.** `spliceReport()` answers
+// *does the harness apply the mutation it declares* — see `splice-gate.ts`. It cannot
+// be this file's own `killedByCommand` killer, because the mutant that would test it
+// mutates `run.ts`, and mutating `run.ts` ALSO makes that row's own `find` occur zero
+// times, which the loop above already exits 1 for. The kill would be over-determined
+// and the guard would be untestable while looking guarded — D205/D208's vacuous guard,
+// arrived at through the checker rather than through the code. So the property lives in
+// a script with no `find` check in it, and this one calls it so that the command
+// everyone actually runs still reports it.
+const splice = spliceReport();
+
 console.log(`checked ${String(MUTANTS.length)} mutants`);
 if (broken.length > 0) {
   console.error(`\n${String(broken.length)} BROKEN ROW(S):`);
   for (const row of broken) console.error(`  ${row}`);
-  process.exit(1);
 }
-console.log("every `find` occurs exactly once in its target — corpus is runnable");
+if (!splice.ok) for (const line of splice.lines) console.error(line);
+if (broken.length > 0 || !splice.ok) process.exit(1);
+console.log(
+  `every \`find\` occurs exactly once in its target, and ${splice.lines[0] ?? ""} — corpus is runnable`,
+);

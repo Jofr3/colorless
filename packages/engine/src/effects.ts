@@ -13825,6 +13825,19 @@ const OPPONENT_ENERGY_MULTIPLY =
 // that row stays LOUD — a widening spelled `all of your .* Pokémon` would score it
 // off the whole board and author a card the catalog does not print (D120).
 //
+// 🆕🆕 **D470 — THAT ROW IS BUILT NOW, AND THE PARAGRAPH ABOVE IS KEPT RATHER THAN
+// OVERWRITTEN (D178) BECAUSE THE THING IT REFUSED IS STILL REFUSED.** What it named
+// was a WIDENING of this anchor's second alternative — `all of your .* Pokémon`
+// scoring the count off the WHOLE BOARD — and that is exactly as wrong today as it
+// was at D406: it would author a card the catalog does not print. D470 does the
+// other thing. `SELF_ENERGY_FILTERED_SCALE` below is a SEPARATE anchor that captures
+// the noun and NARROWS the count to the bodies it names, so this anchor's alternative
+// is still the literal `all of your Pokémon` and nothing else, and the four printings
+// that reach it are byte-identical. ⚠️ **What was false in the paragraph above is only
+// the last clause — *"so that row stays LOUD"* — and it was true when it was written
+// (D423: date a correction; "wrong when written" and "true then, rotted since" are
+// different faults). It rotted at D470, by being built, which is the good way.
+//
 // 🆕🆕 D459 — THE PRINTED NOUN CARRIES AN OPTIONAL ` card`, ON THE `×` FOLD ONLY,
 // AND IT IS A SPELLING RATHER THAN A MEANING. The column prints
 //
@@ -13858,6 +13871,52 @@ const OPPONENT_ENERGY_MULTIPLY =
 // LATER than this anchor, and the token they hand it is unchanged.
 const SELF_ENERGY_SCALE =
   /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
+/** 🆕🆕 **D470 — THE SAME BOARD-WIDE OWN-SIDE ENERGY COUNT, NARROWED BY THE PRINTED
+    NOUN THAT NAMES A SUBGROUP OF THE ZONE.** *"This attack does 20 more damage for
+    each {L} Energy attached to all of your Iono's Pokémon."* — `censusAttackCorpus.ts`
+    **file line 558**, 1 sentence / **1 Standard-legal printing**, and the row the
+    paragraph above has named as this family's *"real catalog near miss"* since D406.
+
+    🛑 **A SEPARATE ANCHOR AND NOT A THIRD ALTERNATIVE IN `SELF_ENERGY_SCALE`'s TAIL.**
+    D441's rule (*a separate anchor is cheaper than a wider alternation when the KINDS
+    differ*) and D468's (*an in-place widening puts a dead capture into every other
+    spelling and rots every row quoting them*): the shipped alternation is a pair of
+    LITERALS read by an equality (`selfEnergy[3] === "this Pokémon"`), and a third
+    alternative carrying a capture would make that equality a three-way test and add a
+    group index to the two arms that can never set it.
+
+    ⚠️ **DISJOINT FROM `SELF_ENERGY_SCALE` BY STRUCTURE, NOT BY THE LOOKAHEAD.** Both
+    are `^…$` over the whole sentence; this one demands `[^.]+ Pokémon` after
+    `all of your `, i.e. **a mandatory run of bytes ending in a SPACE** that the
+    shipped literal `all of your Pokémon` cannot spend, and `this Pokémon` does not
+    begin `all of your ` at all. No string matches both, so the arm ORDER below is
+    legibility (D467/D468: say which kind of disjointness you have, because the sweep
+    log cannot).
+
+    🛑 **THE `(?!opponent)` LOOKAHEAD IS A DIFFERENT GUARD DOING A DIFFERENT JOB, AND
+    IT IS KILLABLE.** It refuses *"…attached to all of your opponent's Pokémon."* —
+    which is a SEAT and not a subgroup, is printed on the `×` fold only (file lines
+    581/584/610/614), and would otherwise resolve through `inPlayBodyFilter`'s owner
+    branch to `{kind: "ownerPokemon", owner: "opponent"}`: a filter naming cards whose
+    NAME begins *"opponent's "*, of which the catalog has none, so the sentence would
+    score 0 on every board forever while the census recorded it BUILT (D190b/D199's
+    strictly-worse-than-unbuilt). `boardWideEnergyScaling.test.ts` §2 already asserts
+    that sentence derives to `null`, so deleting this lookahead turns an EXISTING rung
+    red — the guard is not vacuous (D205/D208) and D467's *a guard is only killable
+    where the pattern that needs it runs first* is satisfied here because no shipped
+    arm claims the string at all. `IN_PLAY_BODY_SCALE`'s own `(?!opponent)` is the
+    idiom, copied rather than invented.
+
+    ⚠️ **THE NOUN IS RESOLVED BY `inPlayBodyFilter` AND NOT BY A FRESH TABLE** (D159,
+    and `IN_PLAY_BODY_NOUNS`' own Pokémon-ex note): *"which bodies does this printed
+    noun name"* is ONE question and gets ONE answer, so the ZONE is this anchor's
+    business and the NOUN is that function's. The stated consequence, exactly as D466
+    and D467 stated theirs: *"…attached to all of your Basic Pokémon."*,
+    *"…attached to all of your {L} Pokémon."* and the other 28 nouns are readable too,
+    and the column prints NONE of them — a reader is a function of TEXT, and a noun the
+    column does not print simply never arrives. */
+const SELF_ENERGY_FILTERED_SCALE =
+  /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to all of your ((?!opponent)[^.]+ Pokémon)\.$/;
 const SELF_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each (?:(.+) )?Energy(?: card)? attached to this Pokémon\.$/;
 // D196 — THE THIRD ZONE, and the first thing this family counts that BOTH SEATS
@@ -24219,6 +24278,34 @@ export type DamageCountSource =
       kind: "energyOnSelf";
       zone?: "board";
       energyType: BasicEnergyType | "special" | null;
+      /** 🆕🆕 D470 — the OPTIONAL printed noun that narrows the BOARD zone to a
+          SUBGROUP of it (*"all of your Iono's Pokémon"*, corpus file line 558).
+          `undefined` is EVERY body in the zone, so all 25 printings that reached
+          this member before D470 — the 21 zone-less ones and D407's 4 board-wide
+          ones — emit a filter-less object byte for byte and take the evaluator's
+          untouched path. That is `yourBenchCount.filter` (D466) and
+          `damageCountersOnYourBench.filter` (D467) at this member's address, and it
+          is the shape `zone` itself took at D407 one field up.
+
+          🛑 **IT RIDES ON THE MEMBER RATHER THAN SPLITTING IT, AND THE UNION'S OWN
+          RULE IS WHAT DECIDES THAT** (the block below: *nullary or asymmetric
+          payload ⇒ two members; identical payload ⇒ one member with the
+          discriminator as a field*). A second member would have to carry
+          `energyType` and `zone` as well — duplicating the two fields that answer
+          *"which Energy counts"* and *"over which bodies"*, which is precisely the
+          second answer to one question D159 forbids and is `energyOnOpponent.zone`'s
+          own stated reason.
+
+          ⚠️ **IT IS MEANINGFUL ONLY WITH `zone: "board"`, AND THAT IS A PROPERTY OF
+          THE PRINTED COLUMN RATHER THAN OF THE TYPE.** The only anchor that sets it
+          also hard-codes `zone: "board"`; the zone-less spelling names ONE body (the
+          attacker) and a filter over one body it already named would be a noun with
+          nothing to narrow. Left unencoded here rather than spelled as a nested
+          shape, because the encoding costs a member split for a combination no
+          producer can reach — D441's *an arity doctrine can have a hole nothing has
+          ever reached* — and `ownerBoardEnergyScaling.test.ts` §2 pins the producer
+          side instead. */
+      filter?: CardFilter;
     }
   | { kind: "bothActivesEnergyCount" }
   | { kind: "toolsOnYourBoard" }
@@ -24508,6 +24595,38 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
       return selfEnergy[3] === "this Pokémon"
         ? { per, count: { kind: "energyOnSelf", energyType } }
         : { per, count: { kind: "energyOnSelf", zone: "board", energyType } };
+    }
+  }
+  // 🆕🆕 D470 — THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly
+  // after the unfiltered arm it narrows so a reader meeting one meets the other —
+  // `YOUR_BENCH_FILTERED_SCALE`'s placement at D466 and `IN_PLAY_BODY_SCALE`'s at
+  // D439, verbatim. ⚠️ **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS
+  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint
+  // (both `^…$`, and this one demands a run of bytes ending in a space where the
+  // shipped literal spends none), so a swap of the two blocks changes no answer. That
+  // is D468's kind of disjointness rather than D467's, and it is why the order row in
+  // the mutation corpus is a DECLARED survivor with no companion deletion row — a
+  // guard here would be unkillable by construction.
+  //
+  // THREE guards, and each refuses for its own reason — `DISCARD_PILE_COUNT_SCALE`'s
+  // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in
+  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so
+  // *"Basic Energy"* and *"{C}"* fall through to `return null` and stay LOUD exactly
+  // as they do one arm up; and `filter !== null` is the BODY vocabulary, so
+  // *"…attached to all of your Ancient Pokémon."* leaves this arm on the loud
+  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes
+  // another, and the middle one is the one a reader is likeliest to drop because the
+  // arm above already spells it.
+  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);
+  if (selfEnergyFiltered !== null) {
+    const per = Number(selfEnergyFiltered[1]);
+    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);
+    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? "");
+    if (per >= 1 && energyType !== undefined && filter !== null) {
+      // `zone: "board"` is HARD-CODED and the anchor's own literal is why — it spells
+      // `all of your ` and nothing else, so there is no second zone to capture. The
+      // same call `IN_PLAY_BODY_SCALE`'s arm makes about its seat, for the same reason.
+      return { per, count: { kind: "energyOnSelf", zone: "board", energyType, filter } };
     }
   }
   // D196 — BOTH Actives' attached Energy. On this fold ONLY: the no-adjective twin

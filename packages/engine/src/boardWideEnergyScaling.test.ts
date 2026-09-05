@@ -89,7 +89,18 @@ const SELF_ENERGY = "This attack does 30 more damage for each {G} Energy attache
 /** 🛑 **THE REAL CATALOG NEAR MISS, AND IT IS ONE WORD WIDER THAN THE ANCHOR.**
     1 legal printing, and it names a SUBGROUP of the same zone rather than the zone.
     A widening spelled `all of your .* Pokémon` scores it off the whole board and
-    authors a card the catalog does not print (D120). It must stay LOUD. */
+    authors a card the catalog does not print (D120).
+
+    🆕🆕 **D470 — IT IS BUILT NOW, AND THE RUNG BELOW IS RE-POINTED RATHER THAN
+    DELETED OR FLIPPED** (D438/D444/D447: a `toBeNull` on a sentence the catalog
+    PRINTS is a liability with an expiry date — D449/D467 — and the repair is a new
+    TRUE claim that keeps the old one's discrimination). What the old `toBeNull`
+    could catch was *"a widening of THIS anchor swallows the subgroup and scores it
+    off the whole board"*, and that is still exactly what must not happen. So the rung
+    now asserts the derived VALUE and, in particular, that it CARRIES A FILTER naming
+    `Iono` — a reading that scored the whole board would produce the same shape as
+    `BOARD_ENERGY` and fail here — while the three OTHER readers keep their nulls,
+    unchanged and still true. */
 const OWNER_PREFIXED_BOARD =
   "This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pokémon.";
 
@@ -262,10 +273,27 @@ describe("§2 — deriveAttackDamageBonus: the zone D196 refused", () => {
     expect(shipped?.count).not.toHaveProperty("zone");
   });
 
-  it("🛑 the OWNER-PREFIXED board stays LOUD — a subgroup is not the zone", () => {
-    // 1 real legal printing, and the near miss that a lazy widening swallows. It
-    // must be refused by EVERY reader in the family, not merely by this one.
-    expect(deriveAttackDamageBonus(OWNER_PREFIXED_BOARD)).toBeNull();
+  it("🛑 the OWNER-PREFIXED board is a SUBGROUP and not the zone — D470 builds it as one", () => {
+    // 1 real legal printing. ⚠️ **THE OLD CLAIM WAS `toBeNull` AND IT EXPIRED AT
+    // D470**; this is its re-pointing, and the discrimination it has to preserve is
+    // that the subgroup is NOT scored off the whole board. A widened
+    // `SELF_ENERGY_SCALE` would answer the shape `BOARD_ENERGY` answers — zone
+    // "board", NO filter — so the `filter` assertion is the one that goes red for it.
+    expect(deriveAttackDamageBonus(OWNER_PREFIXED_BOARD)).toEqual({
+      per: 20,
+      count: {
+        kind: "energyOnSelf",
+        zone: "board",
+        energyType: "Lightning",
+        filter: { kind: "ownerPokemon", owner: "Iono" },
+      },
+    });
+    // …and the sentence THIS anchor owns still carries NO filter, which is the other
+    // half of the same claim: one sentence names the zone, the other names a subgroup
+    // of it, and they must not derive to the same thing.
+    expect(deriveAttackDamageBonus(BOARD_ENERGY)?.count).not.toHaveProperty("filter");
+    // The three OTHER readers are unchanged and still refuse it — the original rung's
+    // "every reader in the family, not merely this one" half, kept verbatim.
     expect(deriveAttackDamageMultiplier(OWNER_PREFIXED_BOARD)).toBeNull();
     expect(deriveAttackDamagePenalty(OWNER_PREFIXED_BOARD)).toBeNull();
     expect(deriveAttackEffect(OWNER_PREFIXED_BOARD)).toBeNull();
@@ -558,6 +586,6 @@ describe("§5 — the persisted question, and the version pair", () => {
     expect(deriveAttackDamageBonus(BOARD_ENERGY)).not.toBeNull();
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.368.0");
+    expect(engineVersion).toBe("0.369.0");
   });
 });

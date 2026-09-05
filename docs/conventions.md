@@ -3661,6 +3661,62 @@ non-negative; the new arm returns a product of two non-negatives, so it held).
 This is materially cheaper than reading nineteen reasons, and it is available to
 any slice that adds without editing — which, for this codebase, is most of them.
 
+### A rule written for the users of a tool does not propagate into the tool
+
+Since D462 this file has required a **function** replacement in every hand-written
+probe — `text.replace(find, () => replacement)` — because `String.replace` with a
+string second argument interprets `$&`, `` $` ``, `$'` and `$1` as splice
+directives. That rule was written after a slice spliced 19,000 lines of a source
+file into itself.
+
+**The mutation harness itself was never checked against it.** `run.ts` applied
+every mutant with a string replacement for 236 slices. Eleven corpus rows carry a
+`$` directive in their `replace` — an anchor row quotes its own regex in a doc
+comment, and a pattern ending `…$` before a backtick spells `` $` `` — so those
+eleven had been applying a mutation nobody wrote.
+
+**When you write a convention because a class of bug is easy to author, grep the
+tooling for the same construct the same day.** The tools are written by the same
+hands and are not covered by the rule that the tools enforce.
+
+### A defect whose failure mode looks like success hides until it reaches a row where success is failure
+
+The splice corruption produced a file that does not parse. vitest exits non-zero.
+The runner reports **KILLED**. Ten rows had been reporting a kill for a file that
+was 0.6–1.7 MB of spliced garbage, and every sweep summary for 236 slices counted
+them as coverage — D416's *a row that dies for the wrong reason is worth less than
+one that survives, because it reports success*, at scale and undetected.
+
+It surfaced only when the same corruption landed on a **declared survivor**, where
+"the suite went red" is the anomaly rather than the goal: that row threw a
+spurious `STALE-SURVIVOR` and failed the run loudly.
+
+**So the declared survivors are not only documentation of what is unkillable —
+they are the only rows whose corruption is observable.** A corpus of pure kills
+cannot detect a harness that kills for the wrong reason. Keep declaring the
+survivors, and when a harness-level anomaly appears, look there first.
+
+### Guard the harness from OUTSIDE the checker, or the guard is over-determined
+
+The splice fix is guarded by a separate `scripts/mutation/splice-gate.ts` that
+`precheck.ts` imports — deliberately not implemented inside `precheck.ts` itself.
+The reason is the vacuous-guard trap reached one level up: the mutant that tests
+the guard mutates `run.ts`, which *also* makes that row's own `find` occur zero
+times, which `precheck` already exits 1 for. The kill would have been
+over-determined, and the guard untestable while looking guarded.
+
+The gate also checks a **conjunction** — a `$` in a `replace` is only a defect if
+the patcher interprets it — rather than banning `$` in the rows. That distinction
+matters: "repairing" the rows by doubling the `$` would write a literal `$$`. **The
+repair would be the defect.** When guarding a two-part invariant, assert the pair,
+not the half that is easier to see.
+
+### `--only` does not accumulate
+
+Passing `--only` several times in one invocation silently runs a single row and
+prints a green-looking total. To re-measure N rows, loop and invoke it N times.
+This was found while re-verifying ten rows at once and getting `1 killed`.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

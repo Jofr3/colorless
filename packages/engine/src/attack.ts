@@ -398,6 +398,21 @@ function scaledAttackDamage(
       // path — `attacker` is the declaring body and `countEnergyInPlay` handles an
       // absent Active inside its own walk.
       const { zone, energyType } = bonus.count;
+      // 🆕🆕 D470 — THE BOARD ZONE, NARROWED BY THE PRINTED NOUN ("all of your Iono's
+      // Pokémon", corpus file line 558). It is its own `if` rather than a fourth
+      // argument spliced into the line below, and that is deliberate on two counts.
+      // ⑴ **The unfiltered line stays byte-identical**, so the four mutation-corpus
+      // rows anchored on it keep their `find` and every declared survivor in this file
+      // is preserved by D469's pure-addition argument rather than by re-reading seven
+      // reasons. ⑵ **The polarity is spelled at the consumer**: `filter === undefined`
+      // takes the line below unchanged, which is what makes the field's absence mean
+      // "every body in the zone" here as well as at the producer.
+      //
+      // `attackerSeat` on BOTH lines, because the printed word is "all of YOUR …
+      // Pokémon" — the subgroup narrows WHICH of your bodies count, never WHOSE.
+      if (zone === "board" && bonus.count.filter !== undefined) {
+        return countEnergyInPlay(state, attackerSeat, energyType, bonus.count.filter) * bonus.per;
+      }
       if (zone === "board") return countEnergyInPlay(state, attackerSeat, energyType) * bonus.per;
       return countAttachedEnergy(state, attacker, energyType) * bonus.per;
     }

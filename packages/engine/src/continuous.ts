@@ -21,6 +21,7 @@ import type { BasicEnergyType, Card } from "@luminous/schema";
 import type {
   AttackerClass,
   BoardCondition,
+  CardFilter,
   HandPlayClass,
   PokemonPlayAct,
   PokemonType,
@@ -2594,16 +2595,42 @@ function maxHpScaleCount(state: GameState, pokemon: InPlayPokemon, scale: MaxHpS
     opponent's Pokémon."), so the per-body counter and the board-wide one must
     admit the same three answers or the two readings of one printed noun drift
     apart. It is a WIDENING and not a shape change: every existing caller passes a
-    concrete type or `"special"` and none can observe the new arm. */
+    concrete type or `"special"` and none can observe the new arm.
+
+    🆕🆕 **D470 — AND THE HOLDER LIST IS OPTIONALLY NARROWED BY A `CardFilter`, WHICH
+    IS THE SAME KIND OF WIDENING ONE PARAGRAPH UP AND ARRIVES FOR THE SAME REASON.**
+    The column prints the board-scoped noun with a SUBGROUP in it — *"…for each {L}
+    Energy attached to all of your Iono's Pokémon."* (`censusAttackCorpus.ts` file line
+    558, 1 legal printing) — so the zone and the SET OF BODIES IN IT are two questions,
+    and answering the second in the caller would mean a second walk of Active + Bench
+    living beside this one. `undefined` is EVERY body, so this function's THREE shipped
+    callers — `attack.ts`'s `energyOnOpponent` and `energyOnSelf` board arms and
+    `interpreter.ts`'s `yourEnergyInPlayAtLeast` — pass three arguments, are
+    byte-identical, and cannot observe the new parameter.
+
+    🛑 **THE READ IS THE TOP CARD (§1.2), NOT THE BOTTOM OF THE STACK**, which is
+    `benchBodies`' own reading in attack.ts and is a real line of play rather than
+    symmetry: an owner-prefixed Basic that has been evolved into a body WITHOUT the
+    prefix has stopped being one of *"your Iono's Pokémon"*, and the §10 evolve is what
+    makes that observable. `matchesFilter` takes `Card | undefined` and answers false
+    for a missing card, so an unresolvable uid is counted OUT rather than throwing.
+
+    ⚠️ **THE FILTER IS ASKED PER HOLDER AND BEFORE THE PROVISION QUESTION, NEVER PER
+    UID.** It names BODIES, not Energy cards — the `basicEnergy`/`toolCard` members of
+    the same union name cards, and handing one of those in here would ask whether the
+    Pokémon is a Basic Energy card and count 0 forever. Stated because the two
+    vocabularies share a type. */
 export function countEnergyInPlay(
   state: GameState,
   seat: Seat,
   energy: BasicEnergyType | "special" | null,
+  filter?: CardFilter,
 ): number {
   const side = state.players[seat];
   const holders = side.active === null ? side.bench : [side.active, ...side.bench];
   let total = 0;
   for (const holder of holders) {
+    if (filter !== undefined && !matchesFilter(topCardOf(state, holder), filter)) continue;
     if (energy === null) {
       total += holder.energy.length;
       continue;

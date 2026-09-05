@@ -530,7 +530,23 @@ async function runMutant(
     };
   }
 
-  const mutatedText = text.replace(mutant.find, mutant.replace);
+  // 🆕🆕 **D470 — A FUNCTION REPLACEMENT, BECAUSE `String.replace` INTERPRETS `$` IN THE
+  // REPLACEMENT AND THE CORPUS IS FULL OF `$`.** With a string second argument, `$&`,
+  // `` $` ``, `$'` and `$1` are SPLICE DIRECTIVES, so a row whose `replace` carries a
+  // regex `…$` immediately followed by a backtick — which is how every anchor row in this
+  // corpus quotes a pattern in its own doc comment — writes the ENTIRE PRECEDING FILE into
+  // the mutant. Measured at this head: **11 of 2,111 rows** were corrupted this way, ten of
+  // them since **D234**, each producing a file 0.6–1.7 MB larger than the declared mutation.
+  // 🛑 **AND THE CORRUPTION LOOKED LIKE SUCCESS**: the spliced file does not parse, vitest
+  // exits non-zero, and the row reports KILLED — D416's *a row that dies for the wrong
+  // reason is worth less than one that survives, because it reports success* — while a
+  // DECLARED SURVIVOR reports a spurious `STALE-SURVIVOR` and fails the run. All ten
+  // pre-existing rows were re-measured by applying their replacement LITERALLY and running
+  // their own `expectKilledBy`: all ten are genuinely KILLED, so this fix changes no
+  // verdict. `docs/conventions.md` has required a function replacement of every hand-written
+  // probe since D462; the harness itself never got the rule. `precheck.ts` now checks the
+  // property over the whole corpus so the class cannot come back silently.
+  const mutatedText = text.replace(mutant.find, () => mutant.replace);
   let mutated: SuiteResult;
   let clobberedTo: string | null = null;
   try {
