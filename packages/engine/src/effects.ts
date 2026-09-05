@@ -16482,6 +16482,67 @@ const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };
 const ATTACK_COIN_PER_ENERGY =
   /^Flip a coin for each (?:(.+) )?Energy attached to this Pokémon\. This attack does (\d+) damage for each heads\.$/;
 
+// 🆕🆕 D474 — THE BOARD-COUNTED FLIP COUNT OVER **BODIES** RATHER THAN ENERGY —
+// *"Flip a coin for each {D} Pokémon you have in play. This attack does 60 damage
+// for each heads."* — corpus FILE LINE 233, **1 sentence / 2 Standard-legal
+// printings**, measured over all 640 rows of `legalAttackCorpus()` rather than
+// sampled. It is the only row in the column that spells *"you have in play"* at
+// all, and the whole `/Flip a coin for each/` family is exactly three rows: this
+// one, D128's `Energy attached to this Pokémon` (built), and file line 231's
+// `Energy attached to both Active Pokémon` (still unbuilt, and NOT this arm's —
+// see below).
+//
+// 🛑 **STRUCTURALLY DISJOINT FROM `ATTACK_COIN_PER_ENERGY`, SO NO GUARD IS WRITTEN
+// AND CORRECTLY NONE IS** (D467/D468's first preference, and D468's second kind of
+// `equivalent`). Both patterns are `^…$` and both end with the identical run
+// `\. This attack does (\d+) damage for each heads\.$`; the byte immediately
+// before that run is mandatory in each and they disagree — `…in play` here,
+// `…this Pokémon` there. No string can end two ways, so no input reaches both and
+// the ORDER between them is legibility. A lookahead would be unkillable by
+// construction, which this repo calls a vacuous guard (D205/D208, D467). The
+// order-permutation row is declared `equivalent` with the STRUCTURAL kind named,
+// because a guarded equivalence and a structural one carry opposite maintenance
+// obligations and the sweep log cannot tell them apart.
+//
+// ⚠️ **EVERY WIDENING WAS MEASURED OVER THE WHOLE COLUMN AND EVERY ONE CLAIMS THE
+// IDENTICAL 1 SENTENCE / 2 PRINTINGS** (D472's rule, at its third address):
+// dropping `you have` to `^Flip a coin for each ([^.]+) in play\.`; opening the
+// consequent to `\. (.+)$`; admitting `more`; dropping the `^`; dropping the
+// `\.$`. All five: **1/2**. A wider anchor that claims the same rows buys nothing
+// and costs a wrong program, so the pattern spells what the card prints. And
+// because no widening admits a new row, none admits a new OP either, so D473's
+// describer question (*does `describeBranch` have a phrase for what a widened
+// anchor would newly claim?*) has an empty subject here — stated rather than
+// skipped.
+//
+// THE NOUN IS `([^.]+)` AND IT IS RESOLVED BY `inPlayBodyFilter`, NOT BY THIS
+// PATTERN — D159, and the same vocabulary `IN_PLAY_BODY_MULTIPLY` /
+// `IN_PLAY_BODY_SCALE` / `YOUR_BENCH_FILTERED_SCALE` hand their noun to. *"Which
+// bodies does this printed noun name"* is ONE question with ONE answer, so `{D}`
+// resolves through `CLAUSE_POKEMON_TYPES` to `{kind: "typedPokemon", pokemonType:
+// "Darkness"}` and *"Ancient Pokémon"* — which no `cardSchema` column classifies —
+// reaches the map, MISSES it, and leaves the sentence on the loud
+// ATTACK_EFFECT_SKIPPED path. That is the closed-map property D440 refused a
+// capture to keep: a filter that counts 0 on every board forever while
+// `BUILT.attack` steps for it is strictly worse than an unbuilt sentence.
+//
+// NO `(?!opponent)` LOOKAHEAD, unlike the `IN_PLAY_BODY_*` pair, and the reason is
+// that the literal `you have` already does the refusing: the opponent-side spelling
+// of this sentence would be *"your opponent has in play"*, which cannot reach this
+// pattern at any noun. A lookahead here would be a `(?!…)` nobody could turn red.
+//
+// ⚠️ **NO SEAT FIELD ON THE MEMBER, AND FILE LINE 231's SEAT DOES NOT RIDE THIS
+// MEMBER.** 231 is *"Flip a coin for each Energy attached to both Active
+// Pokémon."* — a count of ENERGY on two bodies, which is `attachedEnergy`'s
+// question with a scope, not a count of BODIES. No widening of `pokemonInPlay`
+// can reach an Energy count, so 231 rides the SHIPPED member (a scope field on
+// `attachedEnergy`, or a fourth member) and this slice neither helps nor blocks
+// it. The seat is therefore absent here because the column prints one seat for
+// THIS question, and the falsifier is executable: the day the column prints an
+// opponent-side body flip count, the field is owed in the same edit.
+const ATTACK_COIN_PER_BODY_IN_PLAY =
+  /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/;
+
 // The UNBOUNDED FOLD (D129) — "Flip a coin until you get tails. This attack does
 // D [more] damage for each heads." — the LAST damaging coin shape, and the only
 // one whose flip count is bounded by NEITHER the text NOR the board. Census
@@ -16749,12 +16810,39 @@ const ATTACK_COIN_ENERGY_UNTIL_TAILS =
 const MAX_PRINTED_FLIPS = 10;
 
 /** HOW MANY times an attack's printed sentence calls for the coin to be flipped
-    (D128). Three members, because the pool prints the count three ways and only
-    one of them is a number the deriver can read:
+    (D128). 🆕🆕 **FOUR members as of D474**, because the pool prints the count four
+    ways and only one of them is a number the deriver can read:
       • `printed` — the literal N of "Flip N coins." (D127), known at derivation.
       • `attachedEnergy` — "for each [{X}] Energy attached to this Pokémon", a
         BOARD fact resolved at the flip site. `energy` is the printed type filter,
         or null for the unfiltered form.
+      • 🆕🆕 `pokemonInPlay` (D474) — "for each ⟨noun⟩ you have in play", the OTHER
+        board fact the column counts coins by: BODIES rather than Energy, Active +
+        Bench, stack tops only, resolved at the flip site through the shipped
+        `countPokemonInPlay`. `filter` is the printed noun resolved by
+        `inPlayBodyFilter` — the same closed vocabulary the three
+        `DamageCountSource.pokemonInPlay` anchors use, so "which bodies does this
+        noun name" keeps ONE answer across two unions (D159).
+
+        🛑 **A SECOND MEMBER AND NOT A FIELD ON `attachedEnergy`, BY D440's RULE
+        READ RATHER THAN COPIED**: *nullary or asymmetric payload ⇒ two members;
+        identical payload ⇒ one member with the discriminator as a field.* The
+        payloads are asymmetric — `attachedEnergy` carries an ENERGY filter
+        (`BasicEnergyType | "special" | null`, read by PROVISION when typed and by
+        CARD when null) and this carries a `CardFilter` over BODIES. Collapsing
+        them would make one field answer two different questions about two
+        different populations, which is the second answer to one question D159
+        forbids, and would leave every `attachedEnergy` value carrying a key it
+        must ignore.
+
+        ⚠️ **NO SEAT, AND THAT IS A STATEMENT ABOUT THE PRINT.** The column spells
+        this count once, own-side (*"you have in play"*), so a seat field would
+        have exactly one inhabitant and would spell a card nobody printed (D441:
+        the test is how many INDEPENDENT questions the PRINT asks). The
+        `DamageCountSource` sibling carries `seat` because ONE of its anchors
+        spells each side; this family's does not. The falsifier is executable —
+        the day the column prints an opponent-side body flip count, the field is
+        owed in the same edit.
       • `untilTails` — "Flip a coin until you get tails." (D129). NOT A NUMBER AT
         ALL, at derivation OR at the flip site: the count is a property of the
         FACES, known only once they have been drawn. This is why the resolution
@@ -16777,6 +16865,7 @@ const MAX_PRINTED_FLIPS = 10;
 export type AttackFlipCount =
   | { kind: "printed"; count: number }
   | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null }
+  | { kind: "pokemonInPlay"; filter: CardFilter }
   | { kind: "untilTails" };
 
 /** 🆕🆕 **D460 — A PREDICATE OVER THE FACES, PARAMETERISED IN BOTH OF ITS AXES.**
@@ -17012,6 +17101,41 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     }
     return per >= 1
       ? { kind: "perHeads", flips: { kind: "attachedEnergy", energy: null }, per }
+      : null;
+  }
+  // 🆕🆕 D474 — the OTHER board-counted flip count: BODIES in play rather than
+  // Energy attached. Placed directly after the Energy arm it is the sibling of, so
+  // the two board-counted members sit together on the page and a reader meeting one
+  // meets the other — they answer DIFFERENT numbers on every board, and that is the
+  // one thing about this member worth being unable to miss. The placement is
+  // LEGIBILITY and not behaviour: the two anchors are STRUCTURALLY disjoint (see
+  // `ATTACK_COIN_PER_BODY_IN_PLAY`), so no input can reach both and swapping them
+  // changes no answer — which is why the swap row below is a DECLARED equivalent
+  // rather than a killed one.
+  //
+  // TWO guards and not one, and they refuse for two different reasons — the
+  // `IN_PLAY_BODY_SCALE` arm's verbatim, because they are the same two questions:
+  // `per >= 1` is the coin family's printed-zero guard (a printed 0 would spend a
+  // flip, and an `rngState` step, to add nothing), and `filter !== null` is the
+  // VOCABULARY — *"Ancient Pokémon"* reaches this line and must leave it LOUD,
+  // because no `cardSchema` column classifies the banner and a filter that counts 0
+  // forever while `BUILT.attack` steps for it is strictly worse than an unbuilt
+  // sentence (D190b/D199 at the instrument layer). Neither guard subsumes the other.
+  //
+  // ⚠️ **NO FLIP CEILING, and that is `MAX_PRINTED_FLIPS`' own stated rule rather
+  // than an omission**: a bound is owed to the SOURCE of the number, not to the loop
+  // it feeds. Printed digits come from third-party ingested text; this count is read
+  // off the engine's own board and is bounded by the six Bench slots plus the Active.
+  // The `attachedEnergy` arm above carries no ceiling for the identical reason.
+  const inPlayBodies = ATTACK_COIN_PER_BODY_IN_PLAY.exec(effect);
+  if (inPlayBodies !== null) {
+    const per = Number(inPlayBodies[2]);
+    // Through the SHARED vocabulary, not a local table — `inPlayBodyFilter` is the
+    // one place this file resolves a printed body noun, and an unresolvable noun
+    // answers `null` here exactly as it does for the three damage anchors.
+    const filter = inPlayBodyFilter(inPlayBodies[1] ?? "");
+    return filter !== null && per >= 1
+      ? { kind: "perHeads", flips: { kind: "pokemonInPlay", filter }, per }
       : null;
   }
   // D129 — the two unbounded arms. `untilTails` carries no payload to validate

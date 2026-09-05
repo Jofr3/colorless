@@ -3920,6 +3920,54 @@ The three arguments this repo uses are genuinely different: *no carrier at all*
 does park), and *a new member of a persisted union* (costly). Naming which one you
 are making is part of making it.
 
+### DRIVEN-BUT-UNPINNED is a different diagnosis from UNTESTED, and it changes the remedy
+
+D474's work order said a piece of machinery had "zero test rungs and zero mutant
+rows". The mutant-row half was true, measured with the span predicate. The test
+half was false by 1,668 lines: a suite drove that code hard on real boards, with a
+whole section on where three readings disagree.
+
+The two states need opposite work:
+
+- **Untested** code needs a SUITE. Nothing exercises it, so nothing can discriminate.
+- **Driven-but-unpinned** code needs ROWS — and those rows must name the **existing**
+  suites as their killers. The discrimination is already there; what is missing is
+  the measurement that it exists. D474's ten debt rows all named pre-existing suites,
+  all ten killed, and that was the first evidence on record that those suites
+  discriminate at all.
+
+**So before writing "this is uncovered", run both checks — the span predicate for
+rows and a grep for the suites.** They answer different questions, and conflating
+them prescribes the wrong fix: writing a new suite for driven code duplicates what
+exists, while writing rows for untested code produces GAPs.
+
+### A union's exhaustiveness may rest on a payload coincidence rather than its discriminator
+
+`takeFlips` dispatched `AttackFlipCount` with a ternary. Adding a member without an
+`energy` field was a loud type error — but only because the *field access* refused,
+not because the *discriminator* was checked. A member **carrying** an `energy` field
+of compatible type would have satisfied the access and fallen silently into the
+wrong reading.
+
+That distinction is not academic: the very next row in the same family is exactly
+such a member. **A union that type-checks today may be one compatibly-shaped member
+away from a silent wrong answer, and the compiler will not tell you which.**
+
+**Dispatch on the discriminator, in a `switch`.** Then the failure mode of a new
+member is a missing case, which is loud for every member shape rather than only for
+the ones whose payload happens to differ.
+
+### A line number that lands inside a doc block reads as correct
+
+A citation in D474's brief pointed at `effects.ts:~13448` for a function that begins
+at `:13467` — the cited line was inside the function's own doc comment. Anyone
+opening the file sees the right name on screen and moves on.
+
+That is how a wrong citation survives review, and it is the same hazard as citing
+the wrong decision number: **the reader's confirmation is visual, not semantic.**
+When citing a definition, cite the line the declaration is on, and prefer the symbol
+name over the number — the name survives every edit above it.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
