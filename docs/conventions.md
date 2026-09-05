@@ -3968,6 +3968,28 @@ the wrong decision number: **the reader's confirmation is visual, not semantic.*
 When citing a definition, cite the line the declaration is on, and prefer the symbol
 name over the number — the name survives every edit above it.
 
+### The only reliable done-signal for a sweep is the summary line
+
+Watching a whole-corpus sweep, two tempting signals are both wrong:
+
+- **The working tree.** A `git status` mid-sweep will show a source file MODIFIED,
+  because the runner is holding a mutant applied and has not reached its `finally`
+  yet. That is its normal working state, not damage. **A sweep is a program that
+  deliberately dirties the tree thousands of times**; reading that dirtiness as
+  failure inverts the meaning of the thing being watched.
+- **The process table.** A liveness check built on `ps` can race and report the
+  process absent while it is alive and mid-patch, turning a healthy run into an
+  apparent crash at 2,148 of 2,163 rows.
+
+**Poll for the summary line in the log.** It is written once, at the end, and it is
+the only artefact that means the run finished. If you must also check liveness, make
+the summary line the primary condition and `ps` the secondary one — never the
+reverse.
+
+This is the same fact that makes `--allow-dirty` necessary and makes a clean start
+mandatory: **the runner owns tree-dirtiness for the duration**, so anyone else's
+dirtiness is indistinguishable from its own.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
