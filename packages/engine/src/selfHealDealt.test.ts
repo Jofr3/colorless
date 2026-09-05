@@ -440,7 +440,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.369.0");
+    expect(engineVersion).toBe("0.370.0");
   });
 });
 

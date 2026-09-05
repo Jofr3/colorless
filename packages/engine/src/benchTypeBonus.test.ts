@@ -759,21 +759,32 @@ describe("§6 — the census, and a 2-printing sentence this slice found on the 
     expect(units(corpus())).toBe(1732);
   });
 
-  it("🛑 THE ANTECEDENT THIS FAMILY ALREADY READS IS PRINTED UNDER AN UNBUILT CONSEQUENT", () => {
+  it("🛑 THE ANTECEDENT THIS FAMILY ALREADY READS IS PRINTED UNDER A CONSEQUENT D472 BUILT", () => {
     // Found by widening §3's regex past the bonus skeleton, and it is the kind of
     // thing a successor should inherit MEASURED. *"If your opponent's Active Pokémon
     // is a {N} Pokémon, it is now Paralyzed."* — **2 legal printings** — carries the
     // SAME antecedent `OPPONENT_ACTIVE_TYPE_CLAUSE` has read since D120 and `{N}` is
     // a vocabulary entry `POKEMON_TYPE_BY_CODE` has held since D234 (`N` → Dragon).
-    // What it lacks is a CONSEQUENT: no skeleton in this family spells
-    // *"…, it is now <Special Condition>."*, so all nine readers refuse it.
+    // What it lacked was a CONSEQUENT: no skeleton in this family spelled
+    // *"…, it is now <Special Condition>."*, so all thirteen readers refused it.
     //
-    // ⚠️ **THIS IS NOT A CLAIM THAT IT IS CHEAP.** A status consequent is a
-    // different reader with its own anchor, and the price was NOT taken this
-    // session. What is measured is that the ANTECEDENT half costs zero new
-    // vocabulary — which is exactly the column D199 says to re-derive rather than
-    // inherit, recorded here so the next slice inherits a measurement instead of a
-    // guess.
+    // 🆕🆕 **D472 BUILT IT, AND THIS RUNG IS RE-POINTED RATHER THAN DELETED OR
+    // FLIPPED TO A BOOLEAN (D418/D438/D444/D447).** The old rung was
+    // `resolvedByAnyReader(…) === false` — a THIRTEEN-WAY refusal that reddens if any
+    // one of thirteen readers is ever widened onto this string. Re-pointing it to
+    // `=== true` would have discarded all thirteen at once, because that claim is
+    // satisfied by a mistaken widening and by the real build alike: **that is exactly
+    // how D436 disarmed D368's tripwire and produced this run's only GAP.** So the
+    // replacement is D438's: name the OWNER by name AND keep the other twelve
+    // refusing, which is strictly stronger in both directions than either boolean.
+    //
+    // ⚠️ **THE PRICE PARAGRAPH THAT STOOD HERE WAS RIGHT AND IS KEPT AS THE RECORD OF
+    // A PREDICTION (D466).** It said *"a status consequent is a different reader with
+    // its own anchor"* — it is one anchor and one arm on `deriveAttackEffect`, so the
+    // reader was named correctly and the surface still stands still at 13 — and it
+    // said the ANTECEDENT half costs zero new vocabulary, which is what made the row
+    // cheap: `boardConditionForClause` resolves the whole clause and D472 adds no map
+    // row, no `BoardCondition` member and no type token.
     const statusFamily = corpus().filter(([, s]) =>
       /^If your opponent's Active Pokémon is a .+ Pokémon, it is now /.test(s),
     );
@@ -782,8 +793,24 @@ describe("§6 — the census, and a 2-printing sentence this slice found on the 
       "If your opponent's Active Pokémon is a {N} Pokémon, it is now Paralyzed.",
     );
     expect(units(statusFamily)).toBe(2);
-    // Refused by all nine at this head — the tripwire that fires the day one reads it.
-    expect(resolvedByAnyReader(statusFamily[0]?.[1] ?? "")).toBe(false);
+    const printed = statusFamily[0]?.[1] ?? "";
+    // THE OWNER, BY NAME AND BY VALUE — not `not.toBeNull()`, which a wrong-but-shaped
+    // program satisfies too.
+    expect(deriveAttackEffect(printed)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "opponentActiveHasType", type: "Dragon" },
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [{ op: "applyStatus", target: "defender", status: "paralyzed" }],
+      },
+    ]);
+    // …AND THE TWELVE REFUSALS THE OLD BOOLEAN CARRIED, KEPT. Every reader other than
+    // the one named above still returns null on it, so a second reader widening onto
+    // this string reddens here exactly as it would have before D472.
+    for (const read of READERS) {
+      if (read === deriveAttackEffect) continue;
+      expect(read(printed)).toBeNull();
+    }
     // …and the antecedent inside it resolves TODAY, which is the half that is free.
     expect(
       deriveAttackDamageBonus(

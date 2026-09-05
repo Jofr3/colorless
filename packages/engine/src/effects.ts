@@ -9709,6 +9709,81 @@ const DEFENDER_STATUS_TRIPLE = new RegExp(
 const FLIP_DEFENDER_STATUS_THEN_DISCARD = new RegExp(
   `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}), and discard an Energy from that Pokémon\\.$`,
 );
+// 🆕🆕 D472 — THE BOARD-CLAUSE GATE OVER THIS FAMILY'S CONSEQUENT.
+// `censusAttackCorpus.ts` FILE LINE 384, *"If your opponent's Active Pokémon is a {N}
+// Pokémon, it is now Paralyzed."* — **1 sentence / 2 legal printings**, and the row
+// `benchTypeBonus.test.ts` §6 measured, named and deliberately left LOUD at D370 with
+// the words *"carries an antecedent this family ALREADY reads and a CONSEQUENT no
+// skeleton spells"*. That is a refusal naming its own varying token, which is a work
+// order (D456); this is it collected.
+//
+// 🛑 **ZERO NEW MECHANISM, AND THE PROGRAM IS TWO SHIPPED ARMS' HALVES JOINED.** The
+// consequent is arm 1's (`DEFENDER_NOW`, 21 printings) byte for byte —
+// `applyStatus { target: "defender", status }` — and the gate is arm 6a's
+// (`OPPONENT_ACTIVE_BASIC_KO`, D414) byte for byte: `conditionGate { cond, then }` over
+// a `BoardCondition` resolved from the printed clause. Arm 2 is the same composition
+// with a COIN in place of the board clause. No new `EffectOp` member, no new op FIELD,
+// no new op VALUE, no new `BoardCondition` member, no new `CardFilter` member, no new
+// reader (the surface stands still at 13), no prompt, no event, no error code, no
+// registry row, no `packages/schema` byte, no `redact.ts` byte and no `FIXTURE_POOL` id.
+//
+// 🛑 **THE CLAUSE IS RESOLVED THROUGH `boardConditionForClause`, WHICH IS THE WHOLE
+// POINT** (arm 6c-bis's rule, one consequent over): the vocabulary is the shared table
+// plus the five anchored patterns, so a clause means the same thing here as it does in
+// the two damage readers, and an UNMAPPED one returns null and leaves the sentence LOUD.
+// That is what makes `{N}` free — `POKEMON_TYPE_BY_CODE` has carried `N` → Dragon since
+// D234 and `CLAUSE_POKEMON_TYPES` has carried the brace half since D367 — and it is what
+// keeps `Tera` refused AT THE MAP rather than at this regex (D207: every occurrence of
+// that banner is DEMAND and the SUPPLY side is absent from every ingested column).
+// ⚠️ **THIS IS THE FIRST PRINTING TO INHABIT THE `{N}` ENTRY OF `CLAUSE_POKEMON_TYPES`.**
+// D367's own block says `{C}` and `{N}` are carried though no printing spells them in a
+// clause; that sentence was true when written and this row falsifies its `{N}` half.
+//
+// 🛑 **WHY THE SUBJECT IS SPELLED OUT AND NOT CAPTURED, AND THE HONEST HALF FIRST: IT
+// BUYS ZERO PRINTINGS.** Measured over all 640 corpus rows, widening the subject to a
+// bare `^If (.+), it is now (${STATUS_WORDS})\.$` claims **exactly this one row / 2
+// printings** — the same set. The narrowing is not there for the catalog. It is there
+// because the printed consequent is an ANAPHOR: *"it"* has exactly one antecedent, the
+// noun phrase the clause just named, and `applyStatus { target: "defender" }` is only
+// the right resolution when that noun phrase IS the opponent's Active Pokémon. Under
+// the wide anchor, a constructed *"If you have any {M} Pokémon on your Bench, it is now
+// Paralyzed."* resolves — `yourBenchHasType` is a real member and the clause is real —
+// and paralyses the DEFENDER on the strength of a pronoun pointing at the attacker's own
+// Bench. That is a wrong-but-plausible program, which is strictly worse than an unbuilt
+// one (D190b/D199), so the subject is part of the anchor and the refusal is driven
+// synthetically in `typedActiveStatusGate.test.ts` §5. Arm 6a resolves the identical
+// anaphor the identical way and spells its subject for the identical reason.
+//
+// 🛑 **NO PRINTED NEAR MISS ON ANY SINGLE AXIS, MEASURED RATHER THAN ASSUMED** (D462's
+// standing, D464's procedure). Over all 640 rows, EVERY single-axis loosening of this
+// anchor — `^` dropped, `\.$` dropped, the status slot widened to `(.+)`, the subject
+// widened to `(.+)`, the noun tail ` Pokémon` dropped, the `['’]` class narrowed to the
+// straight apostrophe — still claims **exactly this one row / 2 printings**, and so does
+// every TWO-axis pair of them. So this anchor's `^…$` discipline can only ever be driven
+// SYNTHETICALLY. Said out loud because an assertion with no printing behind it is a
+// deliberate choice, and an undeclared one reads as an accident.
+//
+// ⚠️ **DISJOINT FROM ARM 6a AND FROM ALL SIX OLDER `is now` ANCHORS BY CONSTRUCTION, AND
+// IT IS THE STRUCTURAL KIND** (D468): `OPPONENT_ACTIVE_BASIC_KO` is `^…$` and demands the
+// bytes `Knocked Out.` where this one demands `now ` at the same position, so no string
+// can match both; the six `is now` anchors either open `^Your opponent` / `^Flip a coin.`
+// where this one opens `^If your opponent`, or demand a `,`/` and `/`.` immediately after
+// their last status word. **No lookahead on either side and correctly none** — a guard
+// here would be unkillable by construction, which is a vacuous guard (D205/D208).
+//
+// 🛑 **AND THE TWO ENDS FAIL DIFFERENTLY, WHICH IS D464'S FINDING AND NOT A CHOICE.**
+// Prepend text and the sentence stays LOUD, because nothing claims the head. APPEND a
+// claimed clause — *"…, it is now Paralyzed. Draw a card."* — and it does NOT stay loud:
+// `deriveAttackEffect` still refuses the compound and `resolvedByAnyReader` is still
+// false on it, but D409's TRAILING SPLITTER now composes this newly-claimable head with
+// that claimed tail. **Building a sentence builds every `<it>. <claimed tail>` compound
+// with it**, through a path that is neither this anchor nor this arm. Measured over all
+// 640 rows: NO such compound prints, so nothing is authored — and §3 asserts the SPLIT
+// rather than a `toBeNull`, because a `$`-end refusal cannot be demonstrated on the loud
+// path the way a `^`-end one can.
+const CLAUSE_GATED_DEFENDER_NOW = new RegExp(
+  `^If (your opponent['’]s Active Pokémon is a .+ Pokémon), it is now (${STATUS_WORDS})\\.$`,
+);
 const SELF_NOW = new RegExp(`^This Pokémon is now (${SELF_STATUS_WORDS})\\.$`);
 const SELF_SLEEP_HEAL = /^This Pokémon is now Asleep\. Heal (\d+) damage from it\.$/;
 // The BARE self-heal (D132) — "Heal {N} damage from this Pokémon.", the whole
@@ -20066,6 +20141,49 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         ],
       },
     ];
+  }
+
+  // 2e. 🆕🆕 D472 — "If {clause}, it is now {X}." — `censusAttackCorpus.ts` FILE
+  //     LINE 384, *"If your opponent's Active Pokémon is a {N} Pokémon, it is now
+  //     Paralyzed."*, 1 sentence / 2 legal printings. **ARM 1's CONSEQUENT INSIDE
+  //     ARM 6a's GATE**: `conditionGate` over `applyStatus { target: "defender" }`,
+  //     which is arm 2 with the coin replaced by a printed board clause. See the
+  //     anchor's block for why the subject is spelled rather than captured (the
+  //     anaphor), for the single-axis loosening measurement over all 640 rows, and
+  //     for the structural disjointness from arm 6a.
+  //
+  //     ⚠️ **A REFUSED CLAUSE FALLS THROUGH RATHER THAN RETURNING `null`, WHICH IS
+  //     ARM 6c-bis's SHAPE AND NOT ARMS 2b/2c's.** The two are indistinguishable
+  //     here — no arm below can claim a string this `^…$` anchor matched, so a
+  //     fall-through reaches the same `null` by a longer road — and the tie is
+  //     broken the way it is because the refusal is the MAP's, not this arm's:
+  //     every other `boardConditionForClause` site in this file leaves the string to
+  //     its neighbours. §5 drives the refusal on the constructed strings either way,
+  //     so the observable claim does not depend on which shape was chosen.
+  match = CLAUSE_GATED_DEFENDER_NOW.exec(effect);
+  if (match !== null) {
+    // 🆕 D472 — THE LOCAL IS `gate` AND THE FIELD IS SPELLED LONG-HAND, ON PURPOSE
+    // (D446/D448), and this comment sits ABOVE the block rather than inside it so the
+    // rows that quote the block do not quote a paragraph (D446: a `find` longer than
+    // its claim rots on every neighbouring edit). Written as arm 6c-bis writes it —
+    // `const cond = …` and the shorthand `cond,` — the object literal below is
+    // BYTE-IDENTICAL to that arm's from `op:` down, and
+    // `D399-gate-gains-an-empty-decline-arm`'s `find` immediately starts occurring 2×
+    // (`precheck` reported it in seconds, which is the whole argument for running it
+    // after writing new code and not only after editing quoted code). The repair is
+    // the NAME rather than a wider anchor, so the collision leaves the source instead
+    // of waiting for the next author. **Do not "tidy" this back to `cond,`.**
+    const gate = boardConditionForClause(match[1] ?? "");
+    if (gate !== null) {
+      return [
+        {
+          op: "conditionGate",
+          cond: gate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "applyStatus", target: "defender", status: statusOf(match[2]) }],
+        },
+      ];
+    }
   }
 
   // 3. "This Pokémon is now {X}." — {X} excludes Paralyzed (see

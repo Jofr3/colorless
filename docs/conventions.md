@@ -3805,6 +3805,53 @@ join with a `len(parts) == 2` assertion.
 replacement literal and assert the substitution happened", and each language spells
 that differently.
 
+### A wider anchor that claims the same rows is not free — it is pure risk
+
+D472's sentence is *"If your opponent's Active Pokémon is a {N} Pokémon, it is now
+Paralyzed."* The obvious anchor captures the subject: `^If (.+), it is now
+(STATUS)\.$`. Measured over all 640 corpus rows, that wider form claims **exactly
+the same 1 sentence / 2 printings** as the form that spells the subject out.
+
+It buys nothing and costs a wrong program. The consequent is an **anaphor** — *it*
+— and its referent is fixed by the subject the sentence spells. Under the wide
+anchor, *"If you have any {M} Pokémon on your Bench, it is now Paralyzed."*
+resolves, because `yourBenchHasType` is a real condition, and paralyses the
+**defender** off a pronoun pointing at the attacker's own Bench.
+
+**So before generalising an anchor, measure what the generalisation would claim
+over the whole corpus.** If the answer is "the same rows", the generality is pure
+risk. And when the consequent contains a pronoun, the subject is not decoration:
+**an anchor that generalises the subject silently generalises the referent**, and
+no census can see it — the sentence still reads and the residue still falls.
+
+### A boolean consequent has no number, so build the signature instead
+
+The usual discriminating board makes N wrong implementations answer N different
+numbers. A status consequent has nothing to count: it lands or it does not.
+
+D472's answer is a **five-board signature read as five bits**: the correct build
+answers 17, the attacker-side reading 0, and eight plausible wrong builds answer
+eight distinct values. The technique generalises to any boolean or side-effecting
+consequent — pick a board family that each candidate implementation partitions
+differently, and read the pattern of fires as an integer.
+
+Two conditions make it honest: **every wrong value must be MEASURED**, by handing
+each real alternative to the real predicate over the real boards (not arithmetic
+written into a comment — D439); and the family must include a board where the
+correct build is silent, so *0* is a value in the signature rather than the
+absence of one.
+
+### An arm can be load-bearing for a whole family and still be uncovered
+
+`conditionHolds`'s `opponentActiveHasType` arm has shipped since D120 and is
+evaluated by every clause in its family. It had **zero mutant rows intersecting it
+by span, for 352 decisions**, while the arm immediately beside it carries five.
+
+Coverage accrues to whoever last edited nearby, not to what the code load-bears
+for. **So when you touch a family, measure its central arm's coverage by SPAN
+rather than assuming the family's row count covers it** — an op-name grep will not
+find this, because the arm has no name of its own in any row.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

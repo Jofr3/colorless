@@ -720,6 +720,6 @@ describe("§9 — purity and the version", () => {
     // `packages/engine/package.json`, `index.ts`'s declaration and `D275`'s mutant
     // anchor. ⚠️ D427 named the mechanism: **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR.** This line is the one being authored.
-    expect(engineVersion).toBe("0.369.0");
+    expect(engineVersion).toBe("0.370.0");
   });
 });
