@@ -3717,6 +3717,24 @@ Passing `--only` several times in one invocation silently runs a single row and
 prints a green-looking total. To re-measure N rows, loop and invoke it N times.
 This was found while re-verifying ten rows at once and getting `1 killed`.
 
+### When a silent-corruption class turns out to be harmless, the value recovered is meaning, not coverage
+
+All ten rows corrupted by the `$`-splice defect came back KILLED once the harness
+patched literally — each running its declared mutation for the first time in 236
+slices. It is tempting to file that as "no harm done."
+
+That is the wrong reading. **A surviving row would have been a coverage gap
+discovered; ten kills prove only that the corpus was accidentally sound where it
+could not see itself.** The cost of the class was never the verdicts — it was that
+for 236 slices a portion of the sweep's headline number was **unfalsifiable**, and
+no amount of green could have revealed it, because a corrupted row reports exactly
+what a healthy row reports.
+
+So when a silent-corruption class is fixed and nothing changes: record that
+nothing changed, and record that this was the *least informative* of the available
+outcomes. The recovered value is that those numbers now mean something. Do not let
+"it turned out fine" become the reason the next such class goes unlooked-for.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
