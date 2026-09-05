@@ -1105,7 +1105,10 @@ rather than reconstructing it from its description.
 
 ## A mechanism that launders the census (attack-copy refusal)
 
-The attack-copy family (7 sentences / 14 printings) is refused, and the reason
+The attack-copy family (**6 sentences / 13 printings** — ⚠️ this paragraph said
+*7 / 14* from its writing until D471, which measured it with a committed
+instrument over the very population the next sentence cites; an uncounted figure
+in a rule is still a claim) is refused, and the reason
 generalises. A copy op can only splice `deriveAttackEffect`'s output — 964 of
 1,732 printings — while 445 resolve through one of the other twelve readers into
 `attack()` locals no op can reach, and 323 resolve nowhere.
@@ -3734,6 +3737,73 @@ So when a silent-corruption class is fixed and nothing changes: record that
 nothing changed, and record that this was the *least informative* of the available
 outcomes. The recovered value is that those numbers now mean something. Do not let
 "it turned out fine" become the reason the next such class goes unlooked-for.
+
+### A residue class defined NEGATIVELY describes the instrument as much as the corpus
+
+`OPAQUE` means *no deletion and no substitution this instrument can make reaches a
+built string*. It sat at 78 sentences / 112 printings for four slices while every
+reachable class drained, and was read as "the hard ones". It is not.
+
+**All three probes in `residue-census.ts` are single-region** — one segment, one
+span, one contiguous substitution. A sentence differing from a built one at **two
+separated points** is invisible to all of them however small each difference is.
+Measured: `OPAQUE` is 33 REACHED / 45 FAR, and eleven of the reached are two small
+edits from a built string.
+
+**Before treating a class as a difficulty ranking, ask what the classifier can
+physically express.** A negative definition is a statement about the probe's
+vocabulary; only a positive one is a statement about the work. When a class refuses
+to move while its neighbours drain, suspect the instrument before the corpus.
+
+### A marker with any built-side hit is not an explanation
+
+D471 proposed six markers for *why* a sentence is opaque. Five were refuted by
+their own control: the most plausible one — that `OPAQUE` is the continuing-effect
+seam — is false by **49 built sentences / 217 printings** carrying that same marker.
+
+**So every proposed blocker needs a built-side control before it may label
+anything**, and a marker that appears on built sentences explains nothing. This is
+D464's fold defect with the quantifier moved from the row to the family: it is not
+enough that the marker appears on the opaque rows; it must be *absent* from the
+built ones. Publish both counts side by side, and let a marker with a live built
+side be a co-marker that labels nothing.
+
+### An uncounted figure inside a rule is still a claim
+
+This file's attack-copy rule said "7 sentences / 14 printings" from the day it was
+written. Measured over the very population the next sentence of the same paragraph
+cites, it is **6 / 13**. Nothing was checking it, because prose figures are not
+executable and no instrument had ever been pointed at that family.
+
+**Numbers inside conventions rot exactly like numbers inside code, and nothing
+reddens when they do.** When you write a figure into a rule, either derive it from
+a committed instrument or mark it as an estimate. When an instrument later covers
+that ground, re-measure the prose it supersedes.
+
+### Nothing in this repo can see a defect in a committed measurement except its own gate
+
+D469 and D470 asked that a mutated arm redden *something other than a census suite*.
+D471's attribution control came back inverted, and the inversion is worth keeping:
+with the new classifier's central function mutated to its nearest wrong sibling,
+its own gate went red and **`bun run check` at 459 files / 10,328 tests exited 0**,
+along with every other instrument, the linter and precheck.
+
+A measurement script is not covered by the test suite, the typechecker's project
+references, or any other instrument. **It is covered by exactly one thing: the gate
+you write for it.** That is why D465's rule is not a nicety — an ungated instrument
+is unfalsifiable by construction, and its numbers will be quoted for slices.
+
+### D462's "use a function replacement" rule is JavaScript-specific
+
+Python's `str.replace` **rejects** a function as its second argument with a
+`TypeError` — and a probe that swallows it silently measures the *unmutated* file,
+producing a green-looking non-result. Python's `str.replace` never interprets `$`
+at all, so the JS hazard does not exist there; the safe form is `find`-split and
+join with a `len(parts) == 2` assertion.
+
+**Carry the intent across languages, not the incantation.** The rule is "make the
+replacement literal and assert the substitution happened", and each language spells
+that differently.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.

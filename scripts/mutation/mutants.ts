@@ -24562,4 +24562,90 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/mutation/splice-gate.ts"],
   },
+  // ── D471 — THE `OPAQUE` ANATOMY. SEVEN rows, all on `scripts/opaque-anatomy.ts`,
+  //    all killed by `scripts/opaque-anatomy-gate.ts` through `killedByCommand` —
+  //    D212's precedent, and the fourth gate of this shape after `lint-coverage.ts`,
+  //    `recovery-gate.ts` and `residue-census-gate.ts`. `scripts/**` is outside
+  //    vitest's include globs AND outside `tsc -b`'s project references, so a
+  //    `*.test.ts` importing the instrument would break the typecheck rather than
+  //    guard anything.
+  //
+  //    🛑 **THE SLICE BUILDS NO SENTENCE, SO THERE IS NO ENGINE ROW HERE AND THAT IS
+  //    THE POINT.** D465's rule is that an instrument which measures the repo must be
+  //    killable by the corpus; this instrument classifies the `OPAQUE` class of
+  //    `residue-census.ts` — 78 sentences / 112 printings, unmoved for four slices —
+  //    and its central finding is that 33 of those 78 sit within a bounded
+  //    MULTI-REGION substitution of a built sentence and are `OPAQUE` only because
+  //    every probe in `residue-census.ts` is SINGLE-REGION. A wrong classifier
+  //    reddens nothing; it just picks the wrong target for the next four slices.
+  {
+    id: "D471-regions-never-separate",
+    decision: "D471",
+    what: "\ud83d\uded1 **THE REGION REDUCTION STOPS SEPARATING, so every sentence is ONE region from every other.** Dropping `cur = null` on a MATCH means the first edit opens a region that never closes: two differences with fifty matching tokens between them fold into one, `MULTI-2` empties, and every row reports `k = 1`. \u26a0\ufe0f **AND `k = 1` IS THE ONE VALUE THIS INSTRUMENT MAY NEVER REPORT** \u2014 a single bounded edit region is exactly what `residue-census.ts`'s `substProbe` computes, so a `k = 1` row is the two instruments contradicting each other. That is why \u00a7A is a RELATION between two probes and holds no number of its own (D465). Killed by \u00a7A and independently by \u00a7B \u2462, the literal case the whole file exists for.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    if (op === \"=\") {\n      cur = null;\n      continue;\n    }",
+    replace: "    if (op === \"=\") {\n      continue;\n    }",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-adjacent-edits-oversplit",
+    decision: "D471",
+    what: "\u26a0\ufe0f **THE OPPOSITE ERROR, AND IT IS THE ONE \u00a7A CANNOT SEE.** Every alignment operation opens its own region, so a substitution followed by a deletion counts TWO where the definition says ONE. Counts INFLATE rather than deflate: `k = 1` never appears, \u00a7A stays green, and `MULTI-2` silently drains into `MULTI-4` and `MULTI-5` \u2014 a NARROWING dressed as precision, which is the direction an author tuning a classifier is most likely to get wrong. Killed by \u00a7B \u2463 (`a b c d` \u2192 `a x y z d` is one 2\u21923 region, not three) and by \u00a7B \u2464's pure-deletion case.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    if (cur === null) {\n      cur = { alen: 0, blen: 0 };\n      regions.push(cur);\n    }",
+    replace: "    cur = { alen: 0, blen: 0 };\n    regions.push(cur);",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-region-bound-not-applied",
+    decision: "D471",
+    what: "\ud83d\uded1 **THE DEGENERATE PROBE, AND THE DOC BLOCK NAMES IT BEFORE THE GATE DOES.** With the per-region size bound gone, every OPAQUE sentence aligns to something in a single unbounded region and the table reads `MULTI-1` for all 78 \u2014 a partition that explains everything and therefore nothing. **This is what makes the bound the load-bearing byte rather than the Levenshtein**: the count is only meaningful because the regions are small. Killed by \u00a7A (k=1) and by \u00a7E, which re-derives the same minimum WITH the bound and disagrees; \u00a7E's grid total also reports 41,184 of 41,184 pairs admitted where 199 is the truth.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    if (regions.some((r) => r.alen > submax || r.blen > submax)) continue;",
+    replace: "    void submax;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-min-region-takes-the-first-hit",
+    decision: "D471",
+    what: "\ud83d\uded1 **THE CENTRAL ARM MUTATED TO ITS NEAREST WRONG SIBLING: the search keeps the FIRST admitted alignment instead of the SMALLEST.** The neighbour is real code one token away (`best === null` in place of `best === null || regions.length < best.k`), the class table still looks plausible, no row changes side between REACHED and FAR, and every k is silently too large. \u26a0\ufe0f **\u00a7A CANNOT SEE IT** \u2014 inflating k never produces the forbidden `k = 1` \u2014 **and it is the row that proves \u00a7E earns its place**: \u00a7E is the only section that goes red, because it asks the same question with an independent loop. Measured ALONE, and with every other observer measured alone beside it: `residue-census-gate`, `residue-census`, `precheck`, `lint-coverage`, `biome` and the whole of `bun run check` (459 files / 10,328 tests) are ALL GREEN under this mutant. **Nothing in the repo except this gate can see a defect in a committed measurement, which is D465's rule stated as a measurement rather than as a warning.**",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    if (best === null || regions.length < best.k) best = { k: regions.length, onto, regions };",
+    replace: "    if (best === null) best = { k: regions.length, onto, regions };",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-continuous-declared-a-blocker",
+    decision: "D471",
+    what: "\ud83d\uded1 **THE MISTAKE THIS FILE'S AUTHOR ACTUALLY MADE, FIVE TIMES, RESTORED AS ONE WORD.** `CONTINUOUS` is re-declared a `blocker`, so *\"it is the continuing-effect seam and `continuous.ts` cannot express these\"* becomes the published reason for 12 OPAQUE sentences. It is FALSE by a wide margin \u2014 the marker carries **49 BUILT sentences / 217 printings** \u2014 and it is the single most plausible story anyone tells about this class. **A marker verdict is a CLAIM, and the built side is the only thing that can refute it** (D464's fold defect with the quantifier on the family instead of the row). Killed by \u00a7C, which checks every declared verdict against its measured control rather than trusting the declaration.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    rx: /During your next turn|During your opponent's next turn|Until the end of/,\n    verdict: \"co-marker\",",
+    replace: "    rx: /During your next turn|During your opponent's next turn|Until the end of/,\n    verdict: \"blocker\",",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-built-side-control-inverted",
+    decision: "D471",
+    what: "\ud83d\uded1 **THE CONTROL ITSELF GOES VACUOUS \u2014 the most dangerous single byte in the file.** One `!` and `markerCount` files RESIDUE sentences under `built` and vice versa, so every marker's built side becomes its residue side: `COPY-ATTACK` reports 6/13 BUILT and `SCHEMA-BANNER` 16/21, and the entire second axis is measuring the population it is supposed to be controlled against. **The partition would still print, still sum, still look like a finding.** This is the row that says the built-side control is CHECKED and not merely computed \u2014 without \u00a7C it would survive, and a survivor here means the refutations of `CONTINUOUS`, `PRIZE-ZONE`, `BOTH-SIDES-BOARD`, `CARD-NAME-COUNT` and `OPP-HAND-CHOICE` rest on nothing.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    if (RESIDUE_TEXT.has(text)) {",
+    replace: "    if (!RESIDUE_TEXT.has(text)) {",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
+  {
+    id: "D471-co-marker-may-label",
+    decision: "D471",
+    what: "\u26a0\ufe0f **THE DISCIPLINE THE SECOND AXIS RESTS ON, DELETED.** Dropping `m.verdict === \"blocker\" &&` lets a refuted CO-MARKER label a row, so `BLOCKED-CONTINUOUS` and `BLOCKED-PRIZE-ZONE` appear in the class table and `UNEXPLAINED` shrinks from 31 to something that reads like progress. **A partition that explains more rows is not a better partition if the extra explanations are the ones its own control already refuted** \u2014 the whole value of the built-side column is that it DISQUALIFIES markers, and a marker that can label after being disqualified is a column nobody reads. Killed by \u00a7C's `a CO-MARKER labelled a row` claim, which is what stops that assertion from being decorative.",
+    file: "scripts/opaque-anatomy.ts",
+    find: "    MARKERS.find((m) => m.verdict === \"blocker\" && m.rx.test(r.text)) ?? null;",
+    replace: "    MARKERS.find((m) => m.rx.test(r.text)) ?? null;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/opaque-anatomy-gate.ts"],
+  },
 ];

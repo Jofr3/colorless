@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-05 — build session #410 (**P3-M5 — D470, *the board-wide own-side Energy count narrowed by a printed subgroup noun — and ELEVEN MUTANT ROWS THAT HAVE BEEN APPLYING A MUTATION NOBODY WROTE, TEN OF THEM SINCE D234.*** 🛑 **THE HARNESS ITSELF CARRIED THE `$`-SPLICE DEFECT THE CONVENTIONS HAVE FORBIDDEN IN HAND-WRITTEN PROBES SINCE D462.** `run.ts:533` patched with `text.replace(find, replace)` — a STRING second argument — so `` $` `` in a replacement splices the entire preceding file, and every anchor row here quotes its own regex in a doc comment, where a pattern ending `…$` before a backtick spells exactly that. **11 of 2,113 rows corrupted, each 0.6–1.7 MB larger than declared.** 🛑 **AND THE CORRUPTION READ AS SUCCESS** — the spliced file does not parse, vitest exits non-zero, the row reports KILLED (D416's *dies for the wrong reason*); it was found only because the MIRROR IMAGE is loud, a declared survivor throwing a spurious `STALE-SURVIVOR`. Fixed with a function replacement and gated by a new `scripts/mutation/splice-gate.ts` imported by `precheck.ts`. **All ten pre-existing rows were re-measured under the literal replacement and all ten are genuinely KILLED** (verified independently, one row at a time), so the fix changes no verdict — **it changes what the verdicts MEAN**. Built alongside it corpus **file line 558**, *"This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pokémon."*, **1 sentence / 1 legal printing** — 1 anchor, 1 reader arm, 1 OPTIONAL field on the shipped `energyOnSelf`, 1 evaluator branch, 1 optional parameter on the shared `countEnergyInPlay` whose **three** call sites are byte-identical after the slice. Engine **0.368.0 → 0.369.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** (no new `CardFilter` MEMBER — `ownerPokemon` has been an inhabitant a v29 record could hold since D242). Corpus **2,096 → 2,113**, archive ratchet **140**. `bun run check` GREEN, **459 files / 10,328 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2076 killed · 37 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,072.5s`** — `+15 killed, +2 declared`, the **thirty-first** consecutive slice to commit its number before the run and hit it. **All TEN formerly-spliced rows came back KILLED**, applying their declared mutation for the first time since D234 — **the defect hid no coverage gap**. Completeness structural: **2,113 listed / 2,113 run / 2,113 matched / 0 unmatched**.)
+**Last updated:** 2026-09-05 — build session #411 (**P3-M5 — D471, *the anatomy of `OPAQUE`: the largest class in the residue is TWO populations, and the larger one is an ARTEFACT OF THE INSTRUMENT.*** 🛑 **ALL THREE PROBES IN `residue-census.ts` ARE SINGLE-REGION** — one segment, one span, one contiguous substitution — so **a sentence differing from a built one at TWO SEPARATED POINTS is invisible to every one of them, however small each difference is.** New committed instrument **`scripts/opaque-anatomy.ts`** + its killer **`scripts/opaque-anatomy-gate.ts`** (the fourth `killedByCommand` gate, D212's shape) partition all **78 / 112** into 9 classes covering each exactly once: **MULTI-2 11/15**, MULTI-3 13/18, MULTI-4 8/12, MULTI-5 1/1, four BLOCKED-* classes, and **UNEXPLAINED 31/41 left deliberately visible**. **FIVE OF SIX CO-MARKERS THE BUILDER WROTE AS BLOCKERS WERE REFUTED BY THEIR OWN BUILT-SIDE CONTROL** — and the most plausible story about `OPAQUE`, that it is the continuing-effect seam, is **FALSE by 49 built sentences / 217 printings**. 🛑 **THE BRIEF'S DECISIVE ARGUMENT WAS ALSO FALSE**: the `"basic"`/Luminous question is NOT open — Luminous is a Special-class card whatever it provides, provision and printed class are kept apart on purpose, and TWO shipped derivers already read the printed word `Basic` to a class filter. (A) was declined **on PRICE, re-measured at 13 consumers / 21 production call sites for 1 printing**, not on semantics. Engine **0.369.0 UNCHANGED and `packages/engine` BYTE-UNCHANGED** — the builder REFUSED the brief's version-bump and census-pin instructions as inapplicable, correctly. `bun run check` GREEN, **459 files / 10,328 tests — the first slice in this run with IDENTICAL counts on both sides**. Corpus **2,113 → 2,120**, archive ratchet **141**. **PREDICTED SWEEP LINE COMMITTED BELOW BEFORE THE RUN.**)
+
+**Last updated (was):** 2026-09-05 — build session #410 (**P3-M5 — D470, *the board-wide own-side Energy count narrowed by a printed subgroup noun — and ELEVEN MUTANT ROWS THAT HAVE BEEN APPLYING A MUTATION NOBODY WROTE, TEN OF THEM SINCE D234.*** 🛑 **THE HARNESS ITSELF CARRIED THE `$`-SPLICE DEFECT THE CONVENTIONS HAVE FORBIDDEN IN HAND-WRITTEN PROBES SINCE D462.** `run.ts:533` patched with `text.replace(find, replace)` — a STRING second argument — so `` $` `` in a replacement splices the entire preceding file, and every anchor row here quotes its own regex in a doc comment, where a pattern ending `…$` before a backtick spells exactly that. **11 of 2,113 rows corrupted, each 0.6–1.7 MB larger than declared.** 🛑 **AND THE CORRUPTION READ AS SUCCESS** — the spliced file does not parse, vitest exits non-zero, the row reports KILLED (D416's *dies for the wrong reason*); it was found only because the MIRROR IMAGE is loud, a declared survivor throwing a spurious `STALE-SURVIVOR`. Fixed with a function replacement and gated by a new `scripts/mutation/splice-gate.ts` imported by `precheck.ts`. **All ten pre-existing rows were re-measured under the literal replacement and all ten are genuinely KILLED** (verified independently, one row at a time), so the fix changes no verdict — **it changes what the verdicts MEAN**. Built alongside it corpus **file line 558**, *"This attack does 20 more damage for each {L} Energy attached to all of your Iono's Pokémon."*, **1 sentence / 1 legal printing** — 1 anchor, 1 reader arm, 1 OPTIONAL field on the shipped `energyOnSelf`, 1 evaluator branch, 1 optional parameter on the shared `countEnergyInPlay` whose **three** call sites are byte-identical after the slice. Engine **0.368.0 → 0.369.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** (no new `CardFilter` MEMBER — `ownerPokemon` has been an inhabitant a v29 record could hold since D242). Corpus **2,096 → 2,113**, archive ratchet **140**. `bun run check` GREEN, **459 files / 10,328 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2076 killed · 37 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,072.5s`** — `+15 killed, +2 declared`, the **thirty-first** consecutive slice to commit its number before the run and hit it. **All TEN formerly-spliced rows came back KILLED**, applying their declared mutation for the first time since D234 — **the defect hid no coverage gap**. Completeness structural: **2,113 listed / 2,113 run / 2,113 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-09-05 — build session #409 (**P3-M5 — D469, *the opponent's WHOLE BOARD of damage counters — and a work order that put the same corpus line on its off-the-table list and its shortlist at once.*** Built corpus **file line 534**, *"This attack does 10 more damage for each damage counter on all of your opponent's Pokémon."*, **1 sentence / 1 legal printing**, the ADDITIVE fold — **D406's cost table verbatim at a second address**: 1 anchor, 1 reader arm, 1 NULLARY `DamageCountSource` member, 1 evaluator arm, 1 shared board counter beside `countEnergyInPlay`/`countToolsInPlay`. 🛑 **THE BRIEF CONTRADICTED ITSELF AND THE BUILDER RESOLVED IT RATHER THAN PICKING A SIDE**: file line 534 was on the off-the-table list (as `scaledDamage.test.ts`'s third negative-control home, *"a successor that builds it OWES a fourth"*) AND was the shortlist's top pick three paragraphs later. Both readings were honoured — it was built AND the fourth control was paid, re-pointed onto **file line 537** (2 legal printings, strictly better than the home it replaces), with the replaced row asserted LIVE in the same rung so the re-homing has a counter-example rather than a story. Engine **0.367.0 → 0.368.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED** — argued in its strongest form, *there is no carrier at all*, and DRIVEN over `JSON.stringify(state)` across a lossless round-trip and a second live swing rather than reasoned from the type's name. Corpus **2,082 → 2,096**, archive ratchet **139**. `bun run check` GREEN, **458 files / 10,292 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2061 killed · 35 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 8,974.3s`** — `+13 killed, +1 declared`, the **thirtieth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,096 listed / 2,096 run / 2,096 matched / 0 unmatched**.)
 
@@ -566,6 +568,113 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-05, after D471)
+>
+> ✅ **`bun run check` IS GREEN — 459 files / 10,328 tests, `CHECK_EXIT=0`.** ⚠️ **BOTH COUNTS ARE
+> IDENTICAL TO D470's, and that is CORRECT, not a missed edit** — D471 built no sentence, added no
+> vitest suite (`scripts/**` is outside vitest's globs and `tsc -b`'s references, so its gate IS its
+> suite), and left `packages/engine` **byte-unchanged**. Engine stays **0.369.0**,
+> `MATCH_RECORD_VERSION` stays **29**, `censusAtHead.test.ts` is byte-unchanged, RESIDUE stays
+> **112 / 156**, gate §A stays **138 / 112 / 156**. Corpus **2,113 → 2,120**, archive ratchet **141**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP, AND THE PREDICTED LINE IS BELOW.**
+> The tree is dirty with a **small** footprint this time. ⚠️ **THE TWO UNTRACKED PATHS, NAMED SO THAT
+> NO `git commit -a` CAN MISS THEM: `scripts/opaque-anatomy.ts` and
+> `scripts/opaque-anatomy-gate.ts`.** `git add` with EXPLICIT PATHS ONLY. The sweep must run against
+> a CLEAN tree — `docs/progress.md` is itself the target of eight `D318-*` rows (D446).
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — thirty-second consecutive slice to name its number
+> first, and the thirty-first landed exactly:**
+>
+> > **`2083 killed · 37 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,120**
+>
+> `2076 + 7 = 2083`, `37 + 0 = 37`, `2113 + 7 = 2120`, closing `2083 + 37 = 2120`. **No new declared
+> survivors.**
+>
+> **(1) SURVIVOR PRE-CLEARANCE IS TRIVIAL THIS TIME, AND THE REASON IS THE CONVENTION D469 WROTE.**
+> `git diff --numstat` is **`86 0 scripts/mutation/mutants.ts`** — **one tracked file, 86 insertions,
+> ZERO deletions, no existing line modified anywhere in the repo** — with `precheck` re-finding all
+> **2,120** `find` strings exactly once as the witness. All **37** declared survivors are ruled out
+> **BY FILE**: they live in `interpreter.ts` (12), `effects.ts` (8), `attack.ts` (7), `continuous.ts`
+> (5), `flow.ts` (2), `redact.ts` (1), `GameHud.tsx` (1), `splice-gate.ts` (1), **and this slice
+> touches none of them.**
+>
+> **(2) ALREADY VERIFIED INDEPENDENTLY — run the SWEEP, do not re-run these.** `check` GREEN
+> **459 / 10,328**; `precheck` clean at **2,120** *and still reporting that `run.ts` patches
+> LITERALLY (11 rows depend on it)*; `residue-census-gate` **OK, §A 138 / 112 / 156**;
+> `opaque-anatomy-gate` **OK** across §A–§E; probe `--decision D471 --allow-dirty` → **7 killed ·
+> 0 survivors · 0 GAP**, row count agreeing three ways (includes 7 = equality 7 = prefix 7);
+> `--only D275-engine-version-drifts-again` → **1 killed**. The attack-copy figure the new instrument
+> corrected (**6 / 13**, not the conventions' long-standing 7 / 14) was re-measured here before the
+> conventions edit was made.
+>
+> **(3) AFTER THE SWEEP: the close-out.** Verify completeness STRUCTURALLY from the module, confirm
+> the line equals the prediction verbatim, update this stamp's tail and this `(0)` block, append the
+> result to the `| **D471** |` row in `docs/decisions.md`, add any convention BEFORE
+> `## Git / commits`, re-run `check`, commit.
+>
+> **(4) THEN D472 — AND FOR THE FIRST TIME IN THIS RUN THERE IS A SHORTLIST THAT DID NOT EXIST
+> BEFORE.** D471's partition says `OPAQUE` is not one population: **33 REACHED / 45 FAR**, and the
+> reached half is the work. **Take the `MULTI-2` head: 11 sentences / 15 printings that are TWO SMALL
+> EDITS from a built string, of which 7 sentences / 10 printings carry NO blocker marker at all.**
+> That shortlist is `bun scripts/opaque-anatomy.ts`'s `── MULTI-2 ──` section; read it there rather
+> than from this paragraph. ⚠️ **One of the eleven is a trap: *"This attack does 100 damage for each
+> Special Condition affecting your opponent's Active Pokémon."* (2p) is corpus FILE LINE 537, where
+> D469 re-pointed `scaledDamage.test.ts`'s negative control — a successor that builds it OWES A
+> FOURTH HOME**, exactly as D469 owed a fourth for file line 534 and paid it.
+> ⚠️ **And `MULTI-k` is a LOWER BOUND on the work, never an estimate** — *"Discard a card from your
+> hand. If you do, draw 2 cards."* is `MULTI-2` by region count and holds two mechanisms. Read the
+> sentence, not the k.
+>
+> **(5) TWO ROWS REMAIN PRICED AND LEFT — and one price was corrected TWICE, so trust the latest.**
+> **File line 580** (*"…40 damage for each Basic Energy attached to this Pokémon."*) — **BIGGER THAN
+> IT LOOKS.** 🛑 The `"basic"`/Luminous semantic doubt is **FALSE and settled**: Luminous `sv02-191`
+> is a Special-class card whatever it provides, `isSpecialEnergy` reads
+> `card.energyType === "Special"`, and two shipped derivers (D402, D403) already read the printed
+> word `Basic` to a class filter. The real cost is **13 consumers across 21 production call sites for
+> 1 legal printing** — not D469's "four", not D470's "four plus three" — plus a uniformity bill:
+> three shipped comments assert the refusal holds across zones, so building only `energyOnSelf`'s arm
+> **ships an asymmetry three shipped comments deny**, and `selfEnergyScaling.test.ts`'s `BASIC_DRAW`
+> attribution control loses one of its two witnesses. **File line 199** (*"Each player draws 3
+> cards."*) — **VERSION-COSTING, unchanged**: `drawCards` is `{op,count,recordAs?}` with no seat
+> field deliberately (refusal at `effects.ts:9296-9298`) → **`MATCH_RECORD_VERSION` 29 → 30**.
+>
+> **(6) THE TARGETING RULES, four clauses now.** (a) **D468:** the census picks a TOKEN, not a SLICE
+> — check which of `cardSchema`'s 21 keys the printed word reads before building a brief around a
+> row. (b) **D469:** a census measures whether a sentence is CLAIMED, never whether it is claimed
+> CORRECTLY — mutate every new arm to its nearest wrong sibling and check that something OTHER than a
+> census goes red. (c) **D470:** enumerate a shared helper's call sites BEFORE deciding, and report
+> the number whether or not you build. (d) 🆕 **D471: a residue class defined NEGATIVELY describes
+> the instrument as much as the corpus.** `OPAQUE` stood still for four slices and was read as
+> *"the hard ones"*; it was mostly *"the ones with two separated edits"*, because all three probes
+> are single-region. **Before treating a class as a difficulty ranking, ask what the classifier can
+> physically express.**
+>
+> **(7) STILL OFF THE TABLE — eighth slice running.** The `Ancient`/`Future` family (12 sentences /
+> 17 printings), blocked on a schema column that does not exist — now also visible as
+> `BLOCKED-SCHEMA-BANNER` 3/4 within `OPAQUE`, i.e. **the same refusal reached independently by a
+> second instrument**; `typedSelfSwitch.test.ts` §9 fails the day ingest lands it. Also off: **file
+> line 412** and **file lines 529 / 539 / 616 / 572**.
+>
+> **(8) THE STANDING HAZARDS — one is NEW and it bit this slice.** 🆕 🛑 **D462's "use a function
+> replacement" rule is JS-SPECIFIC.** Python's `str.replace` **rejects** a function second argument
+> with a `TypeError`, and D471's first attribution run silently measured the **UNMUTATED** file as a
+> result — a green-looking non-result of exactly the shape D470 spent a slice eliminating. Python's
+> `str.replace` never interprets `$` anyway; the safe form there is `find`-split + join with a
+> `len(parts) == 2` assertion. And the unchanged ones: **`--only` does NOT accumulate** (several
+> flags silently run ONE row and print a green-looking total — loop instead); `--allow-dirty` is
+> MANDATORY on an uncommitted tree; `--decision` matches by `String.includes`, not equality; **a
+> version bump re-points `D275-engine-version-drifts-again`, which `--decision D47x` CANNOT see** —
+> probe it with `--only`; **`precheck` now reports that `run.ts` patches LITERALLY, and if that line
+> ever disappears, eleven rows are silently splicing megabytes again and ALL of them report KILLED**;
+> `censusAtHead.test.ts` holds two numerically-close quantities that must not be swept together
+> (`units - built` **402**, `BUILT.ability + BUILT.trainer + BUILT.specialEnergy` **405**); and 🛑
+> **`ARCHIVES` in `progressLog.test.ts` is the RITUAL's to step, never the slice's** — three work
+> orders running have said so and two builders have correctly refused the instruction anyway.
+
+### Prior resume point (P3-M5 — D470, the printed subgroup noun on a board-wide Energy count, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-05, after D470)
 >
@@ -19249,7 +19358,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D470, *the board-wide own-side Energy count narrowed by a printed subgroup noun — 1 sentence / 1 legal printing, an optional field on the shipped `energyOnSelf` and an appended optional parameter on a three-caller shared helper* — and 🛑 *ELEVEN MUTANT ROWS FOUND APPLYING A MUTATION NOBODY WROTE*: the harness patched with a STRING `String.replace`, so `` $` `` spliced the whole preceding file into 11 of 2,113 rows, ten of them since D234, **and every corruption reported KILLED**; fixed, gated by a new `splice-gate.ts`, and all ten re-measured genuinely killed**; engine 0.369.0, `MATCH_RECORD_VERSION` 29, corpus 2,113, check GREEN 459/10,328) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D471, *the anatomy of `OPAQUE` — the largest residue class is two populations and the larger one is an ARTEFACT: all three census probes are single-region, so a sentence differing at two separated points is invisible to every one of them*. New instrument `opaque-anatomy.ts` + its gate partition 78/112 into 9 classes; MULTI-2 is 11/15 and two small edits from built; the continuing-effect story is false by 49 built sentences. NO engine bytes, NO version bump, NO census move — a pure measurement slice**; corpus 2,120, check GREEN 459/10,328) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D470, *the board-wide own-side Energy count narrowed by a printed subgroup noun — 1 sentence / 1 legal printing, an optional field on the shipped `energyOnSelf` and an appended optional parameter on a three-caller shared helper* — and 🛑 *ELEVEN MUTANT ROWS FOUND APPLYING A MUTATION NOBODY WROTE*: the harness patched with a STRING `String.replace`, so `` $` `` spliced the whole preceding file into 11 of 2,113 rows, ten of them since D234, **and every corruption reported KILLED**; fixed, gated by a new `splice-gate.ts`, and all ten re-measured genuinely killed**; engine 0.369.0, `MATCH_RECORD_VERSION` 29, corpus 2,113, check GREEN 459/10,328) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D469, *the opponent's whole board of damage counters — 1 sentence / 1 legal printing, a NULLARY count-source member and a shared board counter, D406's cost table verbatim at a second address* — and *a work order that listed the same corpus line as off-the-table and as its top pick*, resolved by building it AND paying the fourth negative control onto a strictly better home**; engine 0.368.0, `MATCH_RECORD_VERSION` 29, corpus 2,096, check GREEN 458/10,292) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D468, *the printed TYPE as the self-switch's Bench narrowing — 1 sentence / 1 legal printing, ONE anchor and ONE arm, `switchActive.targetType` shipped since D273* — and *the Ancient/Future work order REFUSED at the schema*: 12 sentences / 17 printings blocked on a banner `cardSchema`'s 21 keys do not carry, the refusal now pinned as `typedSelfSwitch.test.ts` §9 off `cardSchema.shape` so it goes RED the day ingest lands the column**; engine 0.367.0, `MATCH_RECORD_VERSION` 29, corpus 2,082, check GREEN 457/10,257) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D467, *the attacker's own Bench narrowed by a printed noun, on BOTH counting axes — 2 sentences / 3 legal printings (corpus FILE LINES 544 and 622) through TWO new anchors, ONE new optional `filter` on the shipped `damageCountersOnYourBench`, ONE new `IN_PLAY_BODY_NOUNS` row (`Charjabug` → `byName`, the map's first card-name key) and ZERO new `CardFilter` members; the finding is that a DISJOINTNESS GUARD is only killable where the pattern that needs it runs FIRST, and two named `toBeNull` negative controls in two unrelated suites EXPIRED and were re-homed a third time.* Engine **0.365.0 → 0.366.0**, `MATCH_RECORD_VERSION` **29**, residue **117/162 → 115/159**, mutation corpus **2,063 → 2,076**, `bun run check` GREEN at **456 files / 10,225 tests**. ⛔ NOT COMMITTED AND NOT SWEPT — the work order forbade both.**) |
@@ -19361,6 +19471,103 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-05 — build session #411 (P3-M5 — D471)
+
+**THE ANATOMY OF `OPAQUE` — the largest class in the residue is two populations, and the larger one
+is an artefact of the instrument that named it.** Engine **0.369.0 UNCHANGED**,
+`MATCH_RECORD_VERSION` **29**, mutation corpus **2,113 → 2,120**, archive ratchet **140 → 141**,
+`bun run check` GREEN at **459 files / 10,328 tests** — **identical on both sides, a first for this
+run**, because no sentence was built and `packages/engine` is byte-unchanged.
+
+**(0) THE FINDING: ALL THREE PROBES IN `residue-census.ts` ARE SINGLE-REGION.** One segment, one
+span, one contiguous substitution. **A sentence that differs from a built one at TWO SEPARATED
+POINTS is invisible to every one of them, however small each difference is.** `OPAQUE` was defined
+only negatively — *no deletion and no substitution this instrument can make reaches a built string*
+— and for four slices that was read as *"these are the hard ones"*. It is not one population. It is
+**33 REACHED / 45 FAR**, and much of the reached half is two small edits from a built string.
+
+**(1) THE PARTITION, published as a committed instrument rather than a paragraph (D454's lesson).**
+`scripts/opaque-anatomy.ts` splits all **78 sentences / 112 printings** into **9 classes covering
+each exactly once**: `MULTI-2` **11/15**, `MULTI-3` 13/18, `MULTI-4` 8/12, `MULTI-5` 1/1,
+`BLOCKED-COPY-ATTACK` 6/13, `BLOCKED-NAMED-ATTACK` 3/6, `BLOCKED-SCHEMA-BANNER` 3/4,
+`BLOCKED-VARIABLE-MAX` 2/2, and **`UNEXPLAINED` 31/41, left deliberately visible** rather than
+folded into a neighbour to make the table look complete.
+
+**(2) FIVE OF SIX CO-MARKERS WERE WRITTEN AS BLOCKERS AND REFUTED BY THEIR OWN BUILT-SIDE CONTROL.**
+The single most plausible story about `OPAQUE` — that it is the continuing-effect seam — is **FALSE
+by 49 built sentences / 217 printings**. `PRIZE-ZONE` (7/21 built), `OPP-HAND-CHOICE` (5/16),
+`ANY-NUMBER-OF` (5/12), `BOTH-SIDES-BOARD` (2/6) and `CARD-NAME-COUNT` (1/1) fell the same way.
+**A marker with ANY built-side hit is not why anything is opaque and may never label a row** — that
+is D464's fold defect with the quantifier moved from the row to the family, and the gate enforces it.
+
+**(3) THE INSTRUMENT IS KILLABLE, WHICH IS THE WHOLE OF D465'S RULE.** `opaque-anatomy-gate.ts` is
+the **fourth** `killedByCommand` gate (D212's shape, after D411 and D470's splice gate). §A is a
+**relation, not a number** — over `OPAQUE`, `minRegionHit` may never return `k = 1`, because a
+single bounded region is exactly what the shipped probes already compute. §C checks every declared
+verdict against its measured control, **so the day someone builds an attack-copy sentence the gate
+goes RED and names it**. §E re-derives the minimum independently and totals the 41,184-pair grid.
+**The gate pins no class SIZE** — those are what a future build is supposed to move.
+
+**(4) THE ATTRIBUTION CONTROL CAME BACK INVERTED, AND THE INVERSION IS THE POINT.** D469/D470 asked
+for *something other than a census suite* to go red. Here, with `minRegionHit` mutated to its
+nearest wrong sibling and every observer run ALONE: the new gate **RED**; `residue-census-gate.ts`,
+`residue-census.ts`, `precheck.ts`, `lint-coverage`, `biome`, and **`bun run check` at 459 files /
+10,328 tests — ALL EXIT 0, completely blind.** 🛑 **Nothing in this repo except its own gate can see
+a defect in a committed measurement.** That is D465's rule restated as a measurement instead of a
+warning. Restored in a `finally`, verified by size (22,480 = 22,480) and sha256 (identical).
+
+**(5) 🛑 THE BRIEF'S DECISIVE ARGUMENT FOR ITS OWN RECOMMENDATION WAS FALSE.** It said the
+`"basic"`/Luminous question — *what does "Basic Energy" mean for a wildcard energy?* — was a
+provision-vs-printed-class question the codebase does not pose. **It is settled and shipped twice.**
+Luminous Energy `sv02-191` is a **Special-class card** that provides every type;
+`isSpecialEnergy` reads `card.energyType === "Special"`, so Luminous is never a Basic Energy card
+whatever it provides; provision and printed class are kept apart on purpose (`continuous.ts:2476`);
+and **two shipped derivers already read the printed word `Basic` straight to a class filter**
+(D402's `ENERGY_DISCARD_SCALED_DAMAGE`, 6 legal printings, and D403's
+`deriveAttackDiscardScaledBoost`), with the doc block saying it outright. **No rule needed
+inventing.** The recommendation was right and its reason was wrong — which is D456's shape again.
+
+**(6) (A) WAS DECLINED ON PRICE, RE-MEASURED — and the inherited price was wrong twice over.**
+Not "four consumers" (D469) and not "four plus three" (D470's correction): **13 consumers** — 6
+full-width `BasicEnergyType | "special" | null`, 6 narrow-width without `null`, and
+`MaxHpScale.attachedEnergy` narrower still at bare `BasicEnergyType` — across **21 production call
+sites**, for **1 legal printing**. `countEnergyInPlay` has **four** production call sites after
+D470, not three. Plus a uniformity bill no brief had priced: three shipped comments
+(`ownerBoardEnergyScaling.test.ts:129`, `benchBodyScaling.test.ts:366`,
+`boardWideEnergyScaling.test.ts:356`) assert the refusal holds across zones, **so building only
+`energyOnSelf`'s arm ships an asymmetry three shipped comments deny.**
+
+**(7) A STALE FIGURE IN THE CONVENTIONS, FOUND BY THE NEW INSTRUMENT AND CORRECTED IN PLACE.**
+`docs/conventions.md`'s attack-copy rule has said **7 sentences / 14 printings** since it was
+written. Measured over the very population the next sentence of that same paragraph cites
+(1,732 printings = `legalAttackCorpus()`), it is **6 / 13**. ⚠️ **An uncounted figure inside a rule
+is still a claim, and nothing was checking it.** Corrected with the correction's own history kept
+beside it (D178).
+
+**(8) THE BUILDER REFUSED TWO WORK-ORDER ITEMS AND WAS RIGHT BOTH TIMES.** *"Step the engine
+version"* — `packages/engine` is byte-unchanged; the version asserts engine behaviour moved, so
+stepping it would state something false and pay a 57-site tax for nothing. *"Update the census
+pins"* — `builds()` is untouched, no sentence was built, `censusAtHead.test.ts` is byte-unchanged,
+RESIDUE stays 112/156. **That is D468's *"a 'just bump X' instruction owes the condition under which
+X is enough"* at a second address, and the second time in four slices a builder has correctly
+declined a mechanical instruction from me.** A third item was impossible as written: `scripts/**` is
+outside vitest's globs and `tsc -b`'s references, so the new suite **cannot** be a vitest file —
+**the gate IS the suite**, which the brief's own §B knew and its requirements section did not.
+
+**(9) WHAT THE INSTRUMENT CANNOT SEE, checked rather than asserted.** The one single-region shape
+neither shipped probe covers is a **pure insertion** — §A's failure message says so, and that
+population is **empty at this head, measured**. `MULTI-k` is a **lower bound on the work, never an
+estimate** (*"Discard a card from your hand. If you do, draw 2 cards."* is `MULTI-3` and holds three
+mechanisms). The nearest neighbour is chosen by **region count, not meaning**, so an alignment is
+evidence for the class and not a work order.
+
+**(10) A HARNESS FACT WORTH CARRYING, found the hard way.** D462's *"use a function replacement"*
+rule is **JS-specific**. Python's `str.replace` **rejects** a function second argument with a
+`TypeError`, and the builder's first attribution run silently measured the **unmutated** file as a
+result — a green-looking non-result of exactly the shape D470 just spent a slice eliminating.
+Python's `str.replace` never interprets `$` anyway; the safe form there is `find`-split + join with
+a `len(parts) == 2` assertion.
 
 ### 2026-09-05 — build session #410 (P3-M5 — D470)
 
