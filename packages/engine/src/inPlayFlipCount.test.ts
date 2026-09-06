@@ -66,12 +66,20 @@ import { makeInPlay } from "./types";
 // TS2339 at `count.energy`, three times. So the ternary really was loud.
 //
 // **It was loud for a reason that does not generalise, which is why the `switch` is
-// owed anyway.** What refused was the FIELD ACCESS, not the discriminator: a fifth
-// member carrying an `energy` field of a compatible type — corpus file line 231's
-// *"for each Energy attached to both Active Pokémon"* is exactly that, and is the
-// next thing anyone will add here — would satisfy `count.energy` and fall SILENTLY
-// into the self-attached reading. D222/D447: a total `switch` is the only thing that
-// sees a new union member.
+// owed anyway.** What refused was the FIELD ACCESS, not the discriminator: a member
+// carrying an `energy` field of a compatible type would satisfy `count.energy` and
+// fall SILENTLY into the self-attached reading. D222/D447: a total `switch` is the
+// only thing that sees a new union member.
+//
+// 🆕🆕🛑 **D475 CORRECTS THE PREDICTION THIS PARAGRAPH USED TO CARRY.** It named
+// corpus file line 231 — *"for each Energy attached to both Active Pokémon"* — as
+// *"exactly that"* member. D475 built it and the member is **NULLARY**
+// (`{ kind: "bothActivesEnergy" }`), because the printed sentence carries no type
+// filter, so the old ternary would have answered TS2339 for it as well. Measured on
+// the real file: with the ternary restored and `pokemonInPlay` peeled off the `:`
+// branch, `tsc` names `{ kind: "bothActivesEnergy"; }` in the TS2339 text. **The rule
+// stands, the forecast did not** — see `attack.ts`'s `takeFlips` block, corrected in
+// place at the same commit.
 //
 // ── WHY THE ANCHOR SPELLS BOTH ENDS OUT (D472, MEASURED OVER ALL 640 ROWS) ────
 // §1 runs FIVE widenings against the committed column rather than describing them,
@@ -100,9 +108,12 @@ const SIBLING_ENERGY =
 
 /** The THIRD member of the printed `Flip a coin for each …` family (corpus file line
     231, 1 printing) — and it is NOT this member's business. It counts ENERGY on two
-    bodies, which is `attachedEnergy`'s question with a scope on it; no widening of a
-    BODY count can reach an Energy count. It stays LOUD, and §1 drives that. */
-const SIBLING_UNBUILT =
+    bodies, which no widening of a BODY count can reach. 🆕🆕 **D475 BUILT IT, on its
+    OWN anchor and its OWN nullary `bothActivesEnergy` member — which is what this
+    file predicted and is the reason the rung below was RE-POINTED rather than
+    deleted (D418/D438): the claim that survives is *"`pokemonInPlay` did not widen to
+    take it"*, and that is strictly stronger than the `toBeNull` it replaces.** */
+const SIBLING_BOTH_ACTIVES =
   "Flip a coin for each Energy attached to both Active Pokémon. This attack does 60 damage for each heads.";
 
 /** Every reader `censusAtHead.test.ts` sweeps with, so a sentence this file calls
@@ -144,17 +155,24 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     expect([rows.length, units(rows)]).toEqual([1, 2]);
   });
 
-  it("🛑 the whole `Flip a coin for each` family is THREE rows, and only two are read", () => {
+  it("🛑 the whole `Flip a coin for each` family is THREE rows, and D475 read the last", () => {
     // D448's rule: write the "cannot see" sentence as a QUERY YOU RAN. The loosest
     // shape that can hold this mechanism is the leading clause itself.
     const family = legalAttackCorpus().filter(([, s]) => /Flip a coin for each/.test(s));
     expect(family.map(([, s]) => s).sort()).toEqual(
-      [PRINTED, SIBLING_ENERGY, SIBLING_UNBUILT].sort(),
+      [PRINTED, SIBLING_ENERGY, SIBLING_BOTH_ACTIVES].sort(),
     );
     expect([family.length, units(family)]).toEqual([3, 4]);
-    expect(deriveAttackCoinFlip(PRINTED)).not.toBeNull();
-    expect(deriveAttackCoinFlip(SIBLING_ENERGY)).not.toBeNull();
-    expect(deriveAttackCoinFlip(SIBLING_UNBUILT)).toBeNull();
+    // 🆕🆕 D475 — all THREE now read, and each through a DIFFERENT `AttackFlipCount`
+    // member. Re-pointed onto the three derived VALUES rather than relaxed to three
+    // `not.toBeNull()`s, because "each row is claimed" is true under a build where one
+    // anchor swallowed its neighbour and the members collapsed (D438/D449).
+    expect(deriveAttackCoinFlip(PRINTED)?.kind).toBe("perHeads");
+    const members = [PRINTED, SIBLING_ENERGY, SIBLING_BOTH_ACTIVES].map((s) => {
+      const read = deriveAttackCoinFlip(s);
+      return read !== null && "flips" in read ? read.flips.kind : null;
+    });
+    expect(members).toEqual(["pokemonInPlay", "attachedEnergy", "bothActivesEnergy"]);
   });
 
   it("🛑 `deriveAttackCoinFlip` is its ONLY reader — the other TWELVE refuse it", () => {
@@ -236,14 +254,36 @@ describe("D474 §1 — the sentence, measured live over the legal column", () =>
     }
   });
 
-  it("🛑 file line 231 stays LOUD, and it is NOT this member's row", () => {
-    // The SEAT axis lives on the SHIPPED member, not on this one: 231 counts ENERGY on
-    // two bodies. Recorded as a rung so a successor meets the answer rather than
-    // re-deriving it (D428: a refusal written as a test cannot rot).
-    expect(resolvedByAnyReader(SIBLING_UNBUILT)).toBe(false);
-    for (const read of READERS) expect(read(SIBLING_UNBUILT), read.name).toBeNull();
-    expect(splitAttackTrailingClause(SIBLING_UNBUILT)).toBeNull();
-    expect(splitAttackGateClause(SIBLING_UNBUILT)).toBeNull();
+  it("🛑 file line 231 is D475's row and NOT this member's — `pokemonInPlay` did not widen", () => {
+    // 🆕🆕 **RE-POINTED, NOT FLIPPED (D438/D418).** The old rung said
+    // `resolvedByAnyReader === false` — a thirteen-way refusal that D475 makes false.
+    // Relaxing it to `=== true` would discard all thirteen refusals at once, which is
+    // how D436 disarmed D368's tripwire and produced this run's only GAP. So the
+    // replacement NAMES THE OWNER by value and KEEPS the other twelve refusals and
+    // both splitters, which is strictly stronger than either boolean.
+    expect(resolvedByAnyReader(SIBLING_BOTH_ACTIVES)).toBe(true);
+    expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "bothActivesEnergy" },
+      per: 60,
+    });
+    for (const read of READERS) {
+      if (read === deriveAttackCoinFlip) continue;
+      expect(read(SIBLING_BOTH_ACTIVES), read.name).toBeNull();
+    }
+    expect(splitAttackTrailingClause(SIBLING_BOTH_ACTIVES)).toBeNull();
+    expect(splitAttackGateClause(SIBLING_BOTH_ACTIVES)).toBeNull();
+    // 🛑 **THE DISCRIMINATION THE OLD CLAIM CARRIED, KEPT ON A NEW SUBJECT (D444).**
+    // What the `toBeNull` really pinned was *"no widening of a BODY count reaches an
+    // ENERGY count"*. That survives POSITIVELY and by VALUE: 231 derives through a
+    // member of its OWN, so a build in which `ATTACK_COIN_PER_BODY_IN_PLAY` had been
+    // loosened to swallow 231 reddens here — it would answer `pokemonInPlay` — where
+    // the old boolean could not have told that build from the real one. The two
+    // programs are UNEQUAL, which is D449's strictly-stronger form of a `toBeNull`.
+    expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).not.toEqual(deriveAttackCoinFlip(PRINTED));
+    expect(deriveAttackCoinFlip(SIBLING_BOTH_ACTIVES)).not.toEqual(
+      deriveAttackCoinFlip(SIBLING_ENERGY),
+    );
   });
 });
 
@@ -850,13 +890,13 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
     }
   });
 
-  it("engineVersion is 0.372.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.373.0 and `manifest.version` agrees", () => {
     // D460's FOURTH class of version-tax site is the `it()` TITLE, so this one names
     // both halves and BOTH are asserted — a title that reports a claim the body does
     // not make is worse than a stale doc block, because the run log then says a
     // version the suite never checked.
-    expect(engineVersion).toBe("0.372.0");
-    expect(manifest.version).toBe("0.372.0");
+    expect(engineVersion).toBe("0.373.0");
+    expect(manifest.version).toBe("0.373.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });

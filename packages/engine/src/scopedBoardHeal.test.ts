@@ -704,13 +704,13 @@ describe("§7 — the record-shape derivation, made rather than inherited", () =
     expect(roundTripped.players.p1.bench[1]?.healedTurn).toBeNull();
   });
 
-  it("engineVersion is 0.372.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.373.0 and the bump is owed for BEHAVIOUR", () => {
     // 🆕🆕 D461 — 0.359.0 → **0.360.0**. Two printed sentences that derived to `null`
     // and fell to the loud ATTACK_EFFECT_SKIPPED path now heal a NARROWED set, and
     // the narrowing is visible on the board rather than only in the type: the same
     // board under the two sentences heals two DIFFERENT, NON-NESTED sets of bodies
     // (§3 and §4 share one board and disagree about two of its three).
-    expect(engineVersion).toBe("0.372.0");
+    expect(engineVersion).toBe("0.373.0");
   });
 });
 

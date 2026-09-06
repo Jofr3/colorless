@@ -3990,6 +3990,47 @@ This is the same fact that makes `--allow-dirty` necessary and makes a clean sta
 mandatory: **the runner owns tree-dirtiness for the duration**, so anyone else's
 dirtiness is indistinguishable from its own.
 
+### A rule and its forecast can share one paragraph, and the true half lends the false half its authority
+
+D474 converted a union dispatch from a ternary to a `switch` and wrote, in one
+breath: *"dispatch on the discriminator"* — a **criterion**, and correct — and
+*"corpus file line 231 is exactly such a member"* — a **forecast**, and false.
+D475 built 231, found it nullary, and measured that the old ternary would have
+been type-loud for it too.
+
+The rule was right; the prediction about which row would test it was not. And
+because they arrived together, in the same voice, with the same confidence, the
+prediction inherited the rule's credibility.
+
+**When inheriting a paragraph, separate the criterion from the prediction and
+verify them independently.** A criterion is checkable against the code as it
+stands; a forecast is only checkable by building the thing it forecasts. Writing
+them adjacently is natural — the forecast is usually *why* the rule got written —
+but the reader downstream cannot tell which sentence is which unless you say so.
+
+### A mutation that cannot change an answer is not a weak row — it is not a row
+
+D475 deliberately did not write a `crossed-both-seats` mutant for a count of the
+form `a + b`: addition is commutative, so swapping both seats computes the
+identical number on every board. Such a row would report KILLED or SURVIVED
+according to nothing at all.
+
+The observable form was written instead (`reads-the-defender-twice`). **Before
+authoring a row, ask what board would distinguish the mutant from the original.**
+If none can, the row is not testing weakly, it is testing nothing — and it will sit
+in the corpus looking like coverage.
+
+### Demotion is not deletion — correct a falsified claim inside an archived block
+
+`docs/progress.md` keeps every prior resume point. When D475 falsified a claim
+written in D474's, the fix went **into the demoted block**, marked and dated, not
+only into the new one.
+
+Archived blocks are still read — they are the record of why things are the way they
+are, and a successor tracing a decision reads them precisely when the current text
+is silent. **A false claim in an archive is still a false claim**, and it is more
+dangerous there than in live text, because nothing downstream reddens when it rots.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

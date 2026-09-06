@@ -120,6 +120,17 @@ import {
 //     twin does not exist at all. Telling those two apart is the difference
 //     between "no pattern is owed" and "a pattern is owed and refused".
 //
+//   • 🆕🆕 **D475 — THE COIN FORM OF THIS NOUN IS BUILT, AND THE THIRD INDEX ON
+//     `fix-bothactives` IS NO LONGER A REFUSAL.** "Flip a coin for each Energy
+//     attached to both Active Pokémon. This attack does 60 damage for each heads."
+//     (corpus FILE LINE 231, 1 printing / 1 LEGAL) reads through
+//     `deriveAttackCoinFlip` and a NULLARY `AttackFlipCount.bothActivesEnergy`. The
+//     two facts this file recorded about it both HELD — it is not
+//     `attachedEnergy` (one body against two) and neither damage reader may take it —
+//     which is why every rung here was re-pointed by naming the new owner rather than
+//     deleted. **"Twin Blast" is still refused and is now the file's only both-Actives
+//     refusal**, so the "X refused / Y admitted" pair (D424) is one index apart.
+//
 //   • **The FIXTURE_POOL sweep found ONE reuse, and it is the load-bearing
 //     negative.** Five slices running found zero; this one found `sv03-030`
 //     carrying `energyOnSelf`'s exact sentence — which is the whole story of this
@@ -169,9 +180,14 @@ const TWIN_SURGE =
   "This attack does 30 more damage for each Energy attached to both Active Pokémon.";
 /** ⚠️ Its bare twin — 1 printing, **0 LEGAL**, and REFUSED. */
 const TWIN_BLAST = "This attack does 30 damage for each Energy attached to both Active Pokémon.";
-/** ⚠️ The coin near-miss — 1 printing, 1 LEGAL, and unread on BOTH sides: it is not
-    `AttackFlipCount.attachedEnergy` either, because that member reads "attached to
-    this Pokémon" (one body) and this names two. */
+/** The coin form of the same printed noun — 1 printing, 1 LEGAL. 🆕🆕 **D475 BUILT
+    IT**, and the two facts this file carried about it both held: it is NOT
+    `AttackFlipCount.attachedEnergy` (that member reads *"attached to this Pokémon"*,
+    one body, and this names two), and it is not either DAMAGE reader's either — it is
+    `deriveAttackCoinFlip` through a fifth, NULLARY `AttackFlipCount` member
+    `bothActivesEnergy`. The rungs below were RE-POINTED rather than deleted (D418):
+    what they were really pinning is that the DAMAGE readers still refuse it, and that
+    claim is untouched. */
 const TWIN_FLIP =
   "Flip a coin for each Energy attached to both Active Pokémon. This attack does 60 damage for each heads.";
 
@@ -717,16 +733,29 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
     expect(row?.dealt).not.toBe(120);
   });
 
-  it("the printed refusals on `fix-bothactives` stay LOUD on a real board", () => {
+  it("the printed refusal on `fix-bothactives` stays LOUD on a real board — and D475's does NOT", () => {
+    // 🆕🆕 **D475 SPLIT THIS RUNG IN TWO AND KEPT BOTH HALVES (D424: every "X is
+    // refused" owes a neighbouring "Y is admitted" on the same axis).** "Twin Blast"
+    // is still refused — it is the MULTIPLY twin of `bothActivesEnergyCount`, printed
+    // once and **0 LEGAL**, so no arm was built and the loud path is the right answer.
+    // "Twin Flip" is corpus file line 231 and D475 reads it, so it must NOT be loud,
+    // and asserting the absence of the row here is what stops a later slice quietly
+    // un-building it: an `ATTACK_EFFECT_SKIPPED` naming "Twin Flip" is now a defect.
     const state = mirrorBoard("fix-bothactives");
-    for (const [index, name] of [
-      [TWIN.blast, "Twin Blast"],
-      [TWIN.flip, "Twin Flip"],
-    ] as const) {
-      expect(find(swing(state, index).events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-        attack: name,
-      });
-    }
+    expect(find(swing(state, TWIN.blast).events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+      attack: "Twin Blast",
+    });
+    const flipped = swing(state, TWIN.flip);
+    expect(find(flipped.events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    // …and it really FLIPPED, once per Energy CARD on the two Actives. `mirrorBoard`
+    // gives P1's Active 2 Fire + 1 Water and P2's Active 5 Water, so the count is
+    // **3 + 5 = 8** — the same two piles the "Twin Surge" case above folds at 30 each
+    // for 30 + 8 x 30. That the DAMAGE fold and the FLIP count read the identical
+    // number off the identical board is the point: one printed noun, one counter
+    // (D159). Only the flip COUNT is asserted here — 8 heads would be 480 against
+    // `fix-titan`'s 340 HP, so the seed decides whether a Knock Out truncates the
+    // tail, and the count is the fact this rung is about.
+    expect(flipped.events.filter((e) => e.type === "ATTACK_EFFECT_COIN_FLIP")).toHaveLength(8);
   });
 });
 
@@ -859,12 +888,19 @@ describe("the EXCLUSIONS — neighbourhoods that route elsewhere or stay loud", 
     expect(deriveAttackCoinFlip(COIN_PER_ENERGY)).not.toBeNull();
     expect(deriveAttackDamageBonus(COIN_PER_ENERGY)).toBeNull();
     expect(deriveAttackDamageMultiplier(COIN_PER_ENERGY)).toBeNull();
-    // ⚠️ THE BOTH-ACTIVES COIN ROW IS UNREAD ON EVERY SIDE, AND THAT IS MEASURED.
-    // 1 printing / 1 LEGAL. It is NOT `AttackFlipCount.attachedEnergy` either:
-    // that member reads "attached to this Pokémon", one body, and this names two.
-    // So the pool's only legal both-Actives coin sentence stays LOUD, and the next
-    // slice can price it from here instead of rediscovering it.
-    expect(deriveAttackCoinFlip(TWIN_FLIP)).toBeNull();
+    // 🆕🆕 **D475 — THE BOTH-ACTIVES COIN ROW IS NOW READ, BY THE COIN READER AND
+    // BY NOTHING ELSE.** Re-pointed by NAMING THE OWNER rather than flipped to a bare
+    // `not.toBeNull()` (D438): the half of the old claim worth keeping is that the two
+    // DAMAGE readers still refuse it, and that half is asserted unchanged beneath the
+    // positive one. It is NOT `AttackFlipCount.attachedEnergy` — that member reads
+    // "attached to this Pokémon", one body, and this names two — so the member is a
+    // fifth, NULLARY one.
+    expect(deriveAttackCoinFlip(TWIN_FLIP)).toEqual({
+      kind: "perHeads",
+      flips: { kind: "bothActivesEnergy" },
+      per: 60,
+    });
+    expect(deriveAttackCoinFlip(TWIN_FLIP)).not.toEqual(deriveAttackCoinFlip(COIN_PER_ENERGY));
     expect(deriveAttackDamageBonus(TWIN_FLIP)).toBeNull();
     expect(deriveAttackDamageMultiplier(TWIN_FLIP)).toBeNull();
   });
@@ -1130,7 +1166,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.372.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.373.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1144,6 +1180,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.372.0");
+    expect(engineVersion).toBe("0.373.0");
   });
 });

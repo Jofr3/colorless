@@ -694,13 +694,37 @@ function takeFlips(
   // 🛑 **IT WAS LOUD FOR A REASON THAT DOES NOT GENERALISE, WHICH IS EXACTLY WHY
   // THE `switch` IS OWED ANYWAY.** The narrowing that saved it is the FIELD ACCESS,
   // not the discriminator: `count.energy` fails only because the new member has no
-  // `energy` key. A fifth member carrying an `energy` field of a compatible type —
-  // say a per-Energy count scoped to BOTH Actives, which is corpus file line 231 and
-  // is exactly the next thing anyone will add here — would satisfy `count.energy`
-  // and fall SILENTLY into the self-attached reading, computing a different number
-  // on every board with no compile error anywhere. The ternary's exhaustiveness
-  // rested on a payload coincidence; the `switch` rests on the discriminator, so the
-  // next member is a compile error whatever it carries.
+  // `energy` key. A member carrying an `energy` field of a compatible type would
+  // satisfy `count.energy` and fall SILENTLY into the self-attached reading,
+  // computing a different number on every board with no compile error anywhere. The
+  // ternary's exhaustiveness rested on a payload coincidence; the `switch` rests on
+  // the discriminator, so the next member is a compile error whatever it carries.
+  //
+  // 🆕🆕🛑 **D475 — THE RULE ABOVE HOLDS AND ITS PREDICTION DID NOT. THE PARAGRAPH
+  // NAMED THE WRONG ROW, AND THE CORRECTION IS THE MEASUREMENT.** D474 wrote that the
+  // hazardous member was *"a per-Energy count scoped to BOTH Actives, which is corpus
+  // file line 231 and is exactly the next thing anyone will add here"*. D475 built
+  // file line 231, and its member is `bothActivesEnergy` — **NULLARY**, because the
+  // printed sentence carries no type filter (measured over all 640 rows: the
+  // optional-filter loosening of the anchor claims the identical 1 sentence /
+  // 1 printing) and D440's rule therefore gives a second member rather than a field.
+  // **So the old ternary would have been LOUD for this member too.** Measured on THIS
+  // file rather than reasoned: with the ternary restored and `pokemonInPlay` peeled
+  // off the `:` branch — D473's three-member world plus D475's member, which is the
+  // exact world the prediction was about — `bunx tsc -b` answers
+  // *"TS2339: Property 'energy' does not exist on type '{ kind: "attachedEnergy"; … }
+  // | { kind: "bothActivesEnergy"; }'"*, naming the new member by hand. Restored in a
+  // `finally` and verified byte-identical.
+  //
+  // ⚠️ **WHAT THE `switch` DID BUY IS STILL MEASURED, AND IT IS A DIFFERENT FACT.**
+  // With the member added and this `case` withheld, `tsc` answers **TS2454 —
+  // *"Variable 'flips' is used before being assigned"*** at the loop below. That
+  // refusal is on the DISCRIMINATOR and holds for every member shape, where the
+  // ternary's held only for members whose payload happens to lack `energy`. **The
+  // conversion remains right (D222/D447) and the row that was supposed to demonstrate
+  // it does not.** ⚠️ The general lesson is D427's: *a price is a forecast; a rule is
+  // a criterion.* D474's criterion was sound and its forecast about which row would
+  // exercise it was a guess written in the same paragraph, in the same voice.
   let flips: number;
   switch (count.kind) {
     case "printed":
@@ -728,6 +752,41 @@ function takeFlips(
     case "pokemonInPlay":
       flips = countPokemonInPlay(state, attackerSeat, count.filter);
       break;
+    // 🆕🆕 D475 — the count BOTH SEATS contribute to: the Energy attached to the
+    // attacker's Active PLUS the Energy attached to the defender's, added and then
+    // flipped once per card. TWO calls to the SAME `countAttachedEnergy` the arm above
+    // uses, at the SAME `null` filter, because the printed sentence carries no type
+    // word — D159, and the identical delegation
+    // `scaledAttackDamage`'s `bothActivesEnergyCount` arm makes for the DAMAGE
+    // spelling of this noun (`attack.ts` ~line 419). One printed noun, one counter.
+    //
+    // ⚠️ **THE LOCALS ARE NAMED `ownActive`/`foeActive` AND NOT
+    // `defenderActive`, ON PURPOSE** (D446/D448): the damage arm four hundred lines up
+    // spells `const defenderActive = state.players[defenderSeat].active;` and a
+    // byte-twin here would make a mutant row match twice, in a function that row does
+    // not describe. Do not "tidy" the two into one helper.
+    //
+    // ⚠️ **THE ATTACKER SIDE IS THE LIVE ACTIVE, NOT THE DECLARING BODY, AND THAT
+    // IS THIS SITE'S CONVENTION RATHER THAN THE FOLD'S.** `takeFlips` reads its count
+    // off `state` AT THE FLIP SITE — the `attachedEnergy` arm above says so and spells
+    // it the same way — while `scaledAttackDamage` reads `attacker`, the Active as of
+    // DECLARATION. The two cannot disagree on any reachable board (`D196-live-active`
+    // is a declared equivalent for exactly that reason: the only pre-fold mutation of
+    // the attacker is the confusion self-damage, which carries `energy` across
+    // untouched), so the choice is unobservable and is made by matching the SITE.
+    //
+    // A missing defending Active cannot happen here — the attack gate required a
+    // Defending Pokémon and every path that removes one returns first — so the `0`
+    // keeps the arm TOTAL rather than covering a case, the same shape every
+    // cross-board arm in this file uses and the same one the damage twin states.
+    case "bothActivesEnergy": {
+      const ownActive = state.players[attackerSeat].active ?? attacker;
+      const foeActive = state.players[otherSeat(attackerSeat)].active;
+      flips =
+        countAttachedEnergy(state, ownActive, null) +
+        (foeActive === null ? 0 : countAttachedEnergy(state, foeActive, null));
+      break;
+    }
   }
   const faces: CoinFace[] = [];
   let rng = state.rngState;

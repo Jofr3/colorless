@@ -14043,8 +14043,14 @@ const SELF_ENERGY_MULTIPLY =
 // attached to both Active Pokémon. This attack does 60 damage for each heads." (1
 // printing, 1 LEGAL) — the same noun counted as FLIPS rather than damage, which is
 // D128's family and NOT `AttackFlipCount.attachedEnergy` either (that member reads
-// "attached to this Pokémon"). It is refused here by the capital-`This` head and
-// asserted to stay unread on both sides.
+// "attached to this Pokémon"). It is refused here by the capital-`This` head.
+// 🆕🆕 **D475 BUILT IT** — corpus FILE LINE 231, through
+// `ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY` and a fifth, NULLARY `AttackFlipCount`
+// member `bothActivesEnergy` — so *"asserted to stay unread on both sides"*, which
+// this paragraph used to end with, is no longer the claim. **What survives is the
+// half that was doing the work**: this DAMAGE anchor still refuses it, on the
+// capital-`This` head, and `selfEnergyScaling.test.ts` pins that by naming the coin
+// reader as the owner rather than by asserting a null (D438).
 //
 // No possessive and so no `['’]` class is needed — this is the only sentence in the
 // neighbourhood that names neither seat. `Pokémon` carries the real é (U+00E9); no
@@ -16482,6 +16488,57 @@ const FLIP_THRESHOLD_WORDS: Record<string, number> = { either: 1, both: 2 };
 const ATTACK_COIN_PER_ENERGY =
   /^Flip a coin for each (?:(.+) )?Energy attached to this Pokémon\. This attack does (\d+) damage for each heads\.$/;
 
+// 🆕🆕 D475 — THE THIRD AND LAST BOARD-COUNTED FLIP COUNT: ENERGY ON **BOTH
+// ACTIVES** — *"Flip a coin for each Energy attached to both Active Pokémon. This attack
+// does 60 damage for each heads."* — corpus FILE LINE 231, **1 sentence / 1
+// Standard-legal printing**, measured over all 640 rows of `legalAttackCorpus()`
+// rather than sampled. With it the whole `/^Flip a coin for each/` family is READ:
+// **three rows / four printings** — D128's self-attached Energy (file line 232),
+// D474's own-side BODIES (233), and this one.
+//
+// 🛑 **A THIRD ANCHOR AND NOT A WIDENING OF D128's, AND THE MEASUREMENT IS THE WHOLE
+// ARGUMENT** (D472's rule, at its fourth address). Every single-axis loosening was
+// RUN over the committed column rather than described:
+//   · an optional type filter, `(?:(.+) )?Energy attached to both Active Pokémon` — **1/1**
+//   · an open consequent, `\. (.+)$`                                                — **1/1**
+//   · admitting `more`                                                              — **0/0**
+//   · dropping the `^`                                                              — **1/1**
+//   · dropping the `\.$`                                                            — **1/1**
+//   · making `both ` optional                                                       — **1/1**
+// Not one of them buys a printing, so the generality would be pure risk. ⚠️ **And the
+// two loosenings that DO move a number move it the wrong way**: opening the
+// attachment noun to `attached to ([^.]+)\.` claims **2 sentences / 2 printings** and
+// opening the whole head to `for each ([^.]+)\.` claims **3 / 4** — in both cases the
+// extra rows are the SHIPPED siblings', so a widened D128 anchor would take this
+// sentence by EATING ITS NEIGHBOUR'S, which is exactly what the family's structural
+// disjointness exists to prevent. Because no widening admits a new ROW, none admits a
+// new OP either, so D473's describer question has an empty subject here — stated
+// rather than skipped.
+//
+// 🛑 **STRUCTURALLY DISJOINT FROM BOTH SIBLINGS, SO NO GUARD IS WRITTEN AND
+// CORRECTLY NONE IS** (D467/D468's FIRST preference, and D468's SECOND kind of
+// `equivalent`). All three patterns are `^…$` and all three end with the identical run
+// `\. This attack does (\d+) damage for each heads\.$`; the mandatory bytes
+// immediately before that run disagree three ways — `…attached to both Active
+// Pokémon` here, `…attached to this Pokémon` at D128, `… you have in play` at D474.
+// A string cannot end three ways, so no input reaches two of them and the ORDER among
+// them is LEGIBILITY. A lookahead would be unkillable by construction, which this
+// repo calls a vacuous guard (D205/D208/D467); the order-permutation row is declared
+// `equivalent` with the STRUCTURAL kind named, because the sweep log cannot tell a
+// guarded equivalence from a structural one and their maintenance obligations are
+// opposite.
+//
+// ⚠️ **NO TYPE FILTER, AND IT IS THE SAME ABSENCE THE DAMAGE TWIN ALREADY PINS.**
+// `selfEnergyScaling.test.ts` has asserted since D196 that the pool prints no typed
+// spelling of *"Energy attached to both Active Pokémon"* in any text column; the
+// first loosening above measures that again on the COIN side, over the whole 640-row
+// attack column. An optional capture here would be a group no printing could ever set
+// (D441: the test is how many INDEPENDENT questions the PRINT asks, not how many the
+// pattern could answer). The falsifier is executable — the day the column prints a
+// typed both-Actives flip count, the group is owed in the same edit.
+const ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY =
+  /^Flip a coin for each Energy attached to both Active Pokémon\. This attack does (\d+) damage for each heads\.$/;
+
 // 🆕🆕 D474 — THE BOARD-COUNTED FLIP COUNT OVER **BODIES** RATHER THAN ENERGY —
 // *"Flip a coin for each {D} Pokémon you have in play. This attack does 60 damage
 // for each heads."* — corpus FILE LINE 233, **1 sentence / 2 Standard-legal
@@ -16489,8 +16546,9 @@ const ATTACK_COIN_PER_ENERGY =
 // sampled. It is the only row in the column that spells *"you have in play"* at
 // all, and the whole `/Flip a coin for each/` family is exactly three rows: this
 // one, D128's `Energy attached to this Pokémon` (built), and file line 231's
-// `Energy attached to both Active Pokémon` (still unbuilt, and NOT this arm's —
-// see below).
+// `Energy attached to both Active Pokémon` — 🆕🆕 built at D475 on its own anchor
+// and its own NULLARY member, which is what the note at the foot of this block
+// predicted, and NOT this arm's.
 //
 // 🛑 **STRUCTURALLY DISJOINT FROM `ATTACK_COIN_PER_ENERGY`, SO NO GUARD IS WRITTEN
 // AND CORRECTLY NONE IS** (D467/D468's first preference, and D468's second kind of
@@ -16535,11 +16593,14 @@ const ATTACK_COIN_PER_ENERGY =
 // MEMBER.** 231 is *"Flip a coin for each Energy attached to both Active
 // Pokémon."* — a count of ENERGY on two bodies, which is `attachedEnergy`'s
 // question with a scope, not a count of BODIES. No widening of `pokemonInPlay`
-// can reach an Energy count, so 231 rides the SHIPPED member (a scope field on
-// `attachedEnergy`, or a fourth member) and this slice neither helps nor blocks
-// it. The seat is therefore absent here because the column prints one seat for
-// THIS question, and the falsifier is executable: the day the column prints an
-// opponent-side body flip count, the field is owed in the same edit.
+// can reach an Energy count, so 231 rides neither this member nor this anchor.
+// 🆕🆕 **D475 SETTLED WHICH OF THE TWO OFFERED SHAPES IT TOOK, AND IT WAS THE
+// SECOND**: not *"a scope field on `attachedEnergy`"* but a member of its own,
+// `bothActivesEnergy`, because the payloads are asymmetric (an ENERGY TYPE FILTER
+// against nothing at all) and D440's rule gives two members for that. The seat is
+// absent HERE because the column prints one seat for THIS question, and the
+// falsifier is executable: the day the column prints an opponent-side body flip
+// count, the field is owed in the same edit.
 const ATTACK_COIN_PER_BODY_IN_PLAY =
   /^Flip a coin for each ([^.]+) you have in play\. This attack does (\d+) damage for each heads\.$/;
 
@@ -16810,7 +16871,7 @@ const ATTACK_COIN_ENERGY_UNTIL_TAILS =
 const MAX_PRINTED_FLIPS = 10;
 
 /** HOW MANY times an attack's printed sentence calls for the coin to be flipped
-    (D128). 🆕🆕 **FOUR members as of D474**, because the pool prints the count four
+    (D128). 🆕🆕 **FIVE members as of D475**, because the pool prints the count five
     ways and only one of them is a number the deriver can read:
       • `printed` — the literal N of "Flip N coins." (D127), known at derivation.
       • `attachedEnergy` — "for each [{X}] Energy attached to this Pokémon", a
@@ -16840,9 +16901,61 @@ const MAX_PRINTED_FLIPS = 10;
         have exactly one inhabitant and would spell a card nobody printed (D441:
         the test is how many INDEPENDENT questions the PRINT asks). The
         `DamageCountSource` sibling carries `seat` because ONE of its anchors
-        spells each side; this family's does not. The falsifier is executable —
-        the day the column prints an opponent-side body flip count, the field is
-        owed in the same edit.
+        spells each side; this family's does not.
+
+        🆕🆕🛑 **D475 — THE FALSIFIER AS D474 WROTE IT WAS ALREADY SATISFIED ON THE
+        DAY IT WAS WRITTEN, AND NOBODY LOOKED.** It said *"the falsifier is
+        executable — the day the column prints an opponent-side body flip count,
+        the field is owed in the same edit."* The column prints one: corpus **FILE
+        LINE 669**, *"Your opponent flips a coin for each of their Benched Pokémon.
+        This attack does 80 damage to your opponent's Active Pokémon for each tails.
+        This attack's damage isn't affected by Weakness or Resistance."* — 1 legal
+        printing, unread by all thirteen readers and by both splitters, measured at
+        this head. That is D413/D452's shape at a FALSIFIER rather than at a
+        refusal: **an ordinal or a trigger is a countdown, and this one had already
+        expired.**
+
+        ⚠️ **AND THE FIELD IS STILL NOT OWED, WHICH IS WHY THE WORDING WAS THE
+        DEFECT RATHER THAN THE MEASUREMENT** (D446: a falsifier must name the
+        CONDITION that reverses the refusal, never the build that follows it).
+        Line 669 needs THREE more mechanisms this family does not have — the flip
+        is taken by the OPPONENT (`attack.ts` emits every `ATTACK_EFFECT_COIN_FLIP`
+        under `action.seat`), the fold is per **TAILS** (the FACE axis D463 measured
+        as missing at corpus line 217), and the tail is a W/R suppression that would
+        have to compose. So the honest trigger is narrower: **the day the column
+        prints an opponent-side body flip count whose OTHER axes this family already
+        reads.** D474's measurement — that the column spells THIS count once,
+        own-side, as *"you have in play"* — is still exactly true.
+      • 🆕🆕 `bothActivesEnergy` (D475) — "for each Energy attached to both Active
+        Pokémon", the LAST board fact the column counts coins by and the only one
+        BOTH SEATS contribute to: the Energy CARDS on the attacker's Active plus the
+        Energy CARDS on the defender's, resolved at the flip site through two calls
+        to the same `countAttachedEnergy`. It is the coin-side twin of
+        `DamageCountSource.bothActivesEnergyCount` (D196), and D159's rule is why the
+        two share a counter rather than each computing a sum: *"how much Energy is
+        attached to this body"* keeps ONE answer across two unions.
+
+        🛑 **NULLARY, AND THAT IS D440's RULE READ RATHER THAN COPIED — WHICH IS
+        ALSO WHY D474's PREDICTION ABOUT THIS MEMBER DID NOT HOLD.** D474's block in
+        `attack.ts` named this row as *"a fifth member carrying an `energy` field of a
+        compatible type"* — the shape whose payload would have satisfied the old
+        ternary's `count.energy` and fallen SILENTLY into the self-attached reading.
+        It is not that shape. *Nullary or asymmetric payload ⇒ two members*, and the
+        payload here is EMPTY: the printed sentence carries no type filter (measured
+        over all 640 rows — the optional-filter loosening claims the identical 1/1),
+        and the seat pair is spelled by the member's own name because the sentence
+        names both Actives rather than one side. So the old ternary would have
+        answered TS2339 for this member too, exactly as it did for `pokemonInPlay`.
+        **The `switch` is still what refuses it — TS2454 on `flips`, measured — and
+        it refuses on the DISCRIMINATOR, which is the property that generalises.**
+
+        ⚠️ **AND IT IS NOT A `scope` FIELD ON `attachedEnergy`.** Collapsing the two
+        would put an ENERGY TYPE FILTER and a BODY SCOPE in one member, so every
+        self-attached value would carry a scope it must ignore and every both-Actives
+        value a filter no printing sets — the asymmetric payload D440 forbids, and the
+        second answer to one question D159 forbids. It would also make
+        `ATTACK_COIN_PER_ENERGY` claim this sentence, which the disjointness note at
+        that anchor exists to prevent.
       • `untilTails` — "Flip a coin until you get tails." (D129). NOT A NUMBER AT
         ALL, at derivation OR at the flip site: the count is a property of the
         FACES, known only once they have been drawn. This is why the resolution
@@ -16866,6 +16979,7 @@ export type AttackFlipCount =
   | { kind: "printed"; count: number }
   | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null }
   | { kind: "pokemonInPlay"; filter: CardFilter }
+  | { kind: "bothActivesEnergy" }
   | { kind: "untilTails" };
 
 /** 🆕🆕 **D460 — A PREDICATE OVER THE FACES, PARAMETERISED IN BOTH OF ITS AXES.**
@@ -17137,6 +17251,35 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
     return filter !== null && per >= 1
       ? { kind: "perHeads", flips: { kind: "pokemonInPlay", filter }, per }
       : null;
+  }
+  // 🆕🆕 D475 — the THIRD board-counted flip count, and the only one BOTH SEATS
+  // contribute to. Placed after the two arms it is the sibling of, so the whole
+  // `Flip a coin for each …` family reads down the page in one block; the placement
+  // is LEGIBILITY and not behaviour, because all three anchors are STRUCTURALLY
+  // disjoint (see `ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY`) and no input can reach two
+  // of them — which is why the order-permutation row below it is a DECLARED
+  // equivalent rather than a killed one.
+  //
+  // ONE guard and not two, unlike the body arm directly above: that arm captures its
+  // noun and owes the VOCABULARY a refusal, while this anchor spells its subject out
+  // and has nothing to look up. So `per >= 1` — the coin family's printed-zero guard,
+  // carried by every arm in this function — is the whole check. NO flip ceiling, for
+  // `MAX_PRINTED_FLIPS`' own stated reason: a bound is owed to the SOURCE of the
+  // number, and this one is read off the engine's own board (at most two Actives'
+  // worth of attached cards), not out of third-party ingested text.
+  //
+  // ⚠️ **THE LOCAL IS `bothActivesFlip` AND NOT `bothActivesEnergy`, AND THE NAME IS
+  // LOAD-BEARING** (D446/D448). `deriveAttackDamageBonus`'s D196 arm — eight thousand
+  // lines down, over the SAME printed noun — already owns
+  // `const bothActivesEnergy = …;` and `const per = Number(bothActivesEnergy[1]);`
+  // verbatim, so the obvious name here made a mutant row's `find` occur 2× in a
+  // function that row does not describe. `precheck` reported it in seconds. Do not
+  // "tidy" the two back into twins: this one is a FLIP COUNT and that one is a DAMAGE
+  // fold, and the suffix is what says so.
+  const bothActivesFlip = ATTACK_COIN_PER_BOTH_ACTIVES_ENERGY.exec(effect);
+  if (bothActivesFlip !== null) {
+    const per = Number(bothActivesFlip[1]);
+    return per >= 1 ? { kind: "perHeads", flips: { kind: "bothActivesEnergy" }, per } : null;
   }
   // D129 — the two unbounded arms. `untilTails` carries no payload to validate
   // (there is no count and no filter), so `per >= 1` — the guard every arm of this
