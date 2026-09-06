@@ -4375,6 +4375,25 @@ audit read.
 instance in the same edit.** The copy you fix is the one that reddens; the copies
 that do not redden are the ones a successor will find.
 
+### When a slow tool is the sole guard over an untypechecked region, every defect there costs a full run
+
+`tsc -b` does not typecheck `scripts/` — every tsconfig `include` is `["src"]` or
+`["vite.config.ts"]`, so the mutation corpus and every instrument sit outside it.
+D480 proved it with a live witness: a survivor's reason keyed `survives.why` where
+the runner reads `survives.reason` **shipped green through `bun run check`**, and
+surfaced only when a probe printed `undefined`.
+
+The consequence is about economics, not correctness. **The mutation sweep is
+currently the only thing standing between a data error in `scripts/` and a green
+gate — and it is a ~2.7-hour instrument that runs once per slice**, where a
+typechecker runs in seconds. Every mis-keyed field in a 2,238-row corpus is
+invisible until a sweep, and a sweep is the most expensive feedback in the repo.
+
+Two things follow. **Treat a coverage hole in a fast tool as a cost multiplier on
+the slow one**, not merely as a gap. And when closing such a hole, **expect it to
+surface latent errors in proportion to how long it was open** — price that before
+committing, because "turn on the typechecker" is never the whole slice.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
