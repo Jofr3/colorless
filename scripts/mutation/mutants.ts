@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.374.0";',
+    find: 'export const engineVersion = "0.375.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -25404,5 +25404,166 @@ export const MUTANTS: Mutant[] = [
     find: "const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\\.$/;",
     replace: "const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\\./;",
     expectKilledBy: ["packages/engine/src/derivedSearchTopOrder.test.ts"],
+  },
+  // ── D477 — THE SELF-DISCARD COST IN FRONT OF A BENCHED SNIPE. Twelve rows over ONE
+  //    new anchor and ONE new arm, and the shape of the set is the finding: the arm adds
+  //    NO op, NO op field and NO op value, so every row here is about a FIELD VALUE the
+  //    arm chooses or a BYTE the anchor demands — the producer-side shape D453 predicts
+  //    for a slice that builds a sentence.
+  //
+  //    ⚠ **NINE OF THE TWELVE ARE SILENT IN EVERY CENSUS.** `BUILT.attack` counts
+  //    sentences a reader CLAIMS, never sentences a reader claims CORRECTLY (D469), so a
+  //    snipe aimed across the table, a cost that empties the wrong pile, a placed counter
+  //    where the card deals damage and an inverted printed order all leave RESIDUE at
+  //    103/143 and every census instrument green. Only the three anchor rows (`D477-anchor-*`)
+  //    move a census figure at all.
+  //
+  //    ⚠ **AND THE CENTRAL ROW IS A NEIGHBOUR'S REAL CODE, NOT A STRAW.**
+  //    `D477-snipe-aims-at-the-any-target` writes arm 9b's own literal — the arm sitting
+  //    twenty lines above, over the same printed head, whose four printings genuinely ARE
+  //    `opponentAny` — at arm 9b-bis's address. That is the mistake this file's own layout
+  //    invites (D190b's rule for what a mutant must be).
+  {
+    id: "D477-snipe-aims-at-the-any-target",
+    decision: "D477",
+    what: "🛑 **THE CENTRAL ROW.** The bench snipe emits arm 9b's `opponentAny` — the neighbouring compound's REAL literal, over the same printed head — so the five printings offer the opponent's ACTIVE as a candidate the card never names, and a hit that lands there goes through Weakness and Resistance (§8.5) where a benched one is flat. ⚠ EVERY CENSUS STAYS GREEN: the sentence still reads, RESIDUE still falls 3/5 and `BUILT.attack` still steps 5, which is exactly D469's limit.",
+    file: "packages/engine/src/effects.ts",
+    find: '    const benchSide = match[5] === "your" ? ("yourBench" as const) : ("opponentBench" as const);',
+    replace: '    const benchSide = match[5] === "your" ? ("yourBench" as const) : ("opponentAny" as const);',
+    expectKilledBy: [
+      "packages/engine/src/costBenchSnipe.test.ts",
+      "packages/engine/src/anyTargetSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D477-snipe-side-is-hardcoded-to-the-opponent",
+    decision: "D477",
+    what: "The shared fragment's POSSESSIVE capture (group 3, `[5]` at this caller) is dropped and the side is hard-coded, so the own-side spelling would be aimed across the table. ⚠ NO CARD PRINTS THE OWN-SIDE COMPOUND, so this row's only witness is `costBenchSnipe.test.ts` §3's CONSTRUCTED sentence — written for exactly this reason (D456: a mutant with nowhere to die is a coverage finding), and labelled constructed at the site (D440).",
+    file: "packages/engine/src/effects.ts",
+    find: '    const benchSide = match[5] === "your" ? ("yourBench" as const) : ("opponentBench" as const);',
+    replace: '    const benchSide = "opponentBench" as const;',
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-anchor-demands-the-period-join",
+    decision: "D477",
+    what: "The printed JOIN collapses to `. This` alone, so the two `, and this` printings (corpus file lines 109 and 121, 3 legal printings) fall back to the loud skipped path. D401 settled this alternation one anchor up for the ANY-target twin and the bench twin prints the same two spellings.",
+    file: "packages/engine/src/effects.ts",
+    find: "    ` Energy from this Pokémon(?:\\\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}$`,",
+    replace: "    ` Energy from this Pokémon\\\\. This ${ALSO_BENCHED_SNIPE_BODY}$`,",
+    expectKilledBy: [
+      "packages/engine/src/costBenchSnipe.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D477-anchor-type-slot-becomes-mandatory",
+    decision: "D477",
+    what: "The optional `{X}` group loses its `?`, so the anchor demands a typed cost and the two UNTYPED printings (corpus file lines 92 and 109, 4 legal printings) fall off the built set. The mirror of the row below it: one end of the optional group each.",
+    file: "packages/engine/src/effects.ts",
+    find: '  `^Discard (all|\\\\d+)(?: \\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\})?` +',
+    replace: '  `^Discard (all|\\\\d+)(?: \\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\})` +',
+    expectKilledBy: [
+      "packages/engine/src/costBenchSnipe.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D477-anchor-code-class-drops-the-map",
+    decision: "D477",
+    what: "The `{X}` character class stops being built from `ENERGY_TYPE_BY_CODE`'s keys and is hand-spelled one code SHORT — the OBSERVABLE direction of D442's pair, because a dropped code makes the printed sentence fall silently off the built set while the admit direction is invisible (the arm's own `energyType !== undefined` turns an unmapped code into the same `null` an unmatched anchor already gives).",
+    file: "packages/engine/src/effects.ts",
+    find: '  `^Discard (all|\\\\d+)(?: \\\\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\\\})?` +',
+    replace: "  `^Discard (all|\\\\d+)(?: \\\\{([GWLPFDMY])\\\\})?` +",
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-anchor-loses-its-terminator",
+    decision: "D477",
+    what: "The whole-sentence `$` goes, turning the anchor into a PREFIX match — the failure that LOOKS LIKE A COVERAGE WIN, because a compound that begins with this sentence and continues would be implemented half-way and silently. §4's terminator rung drives both stopping points, the clarifier being exactly where a prefix match would otherwise halt.",
+    file: "packages/engine/src/effects.ts",
+    find: "    ` Energy from this Pokémon(?:\\\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}$`,",
+    replace: "    ` Energy from this Pokémon(?:\\\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}`,",
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-cost-loses-its-type-filter",
+    decision: "D477",
+    what: "The TYPED cost (corpus file line 121, *\"Discard all {R} Energy\"*) discards with `anyEnergy`, so the attacker's whole pile goes where the card names one type. ⚠ INVISIBLE ON A UNIFORM BOARD (D448): the suite's attacker holds three DIFFERENT Energy classes precisely so the narrowed and un-narrowed answers are different numbers.",
+    file: "packages/engine/src/effects.ts",
+    find: "      const filter =\n        energyType === undefined\n          ? ({ kind: \"anyEnergy\" } as const)\n          : ({ kind: \"providesEnergy\", energyType } as const);",
+    replace: '      const filter = { kind: "anyEnergy" } as const;',
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-cost-count-is-not-the-printed-quantifier",
+    decision: "D477",
+    what: "The anchor's FIRST capture stops reaching the op, so every printing discards exactly one Energy — `Discard 2` becomes `Discard 1` and `Discard all` becomes `Discard an`, both of which are sentences the catalog really prints elsewhere. That is the shape of the error, not a straw: the bare `SELF_DISCARD_ONE` arm ten lines up emits precisely this op.",
+    file: "packages/engine/src/effects.ts",
+    find: '        { op: "discardEnergy", from: "yourActive", filter, count: cost },',
+    replace: '        { op: "discardEnergy", from: "yourActive", filter, count: 1 },',
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-snipe-becomes-a-placed-counter",
+    decision: "D477",
+    what: "`deals` is dropped from the un-narrowed literal, so the printed *\"this attack also does N damage\"* becomes a PLACED COUNTER — no `DAMAGE_DEALT` row, no benched reduction passive, no attacker debuff, and `COUNTERS_PLACED` instead. D138/D139's distinction, and the board still moves by the same number, which is why the rung reads the EVENT rather than the damage figure.",
+    file: "packages/engine/src/effects.ts",
+    find: '          : {\n              op: "damageChosen",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: "attack",\n              deals: true,\n            },',
+    replace: '          : {\n              op: "damageChosen",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: "attack",\n            },',
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-arm-drops-the-printed-zero-guard",
+    decision: "D477",
+    what: "The snipe's amount guard admits a printed 0, so *\"this attack also does 0 damage to 1 of your opponent's Benched Pokémon\"* would derive to a silent no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point. D145's standing rule for every captured amount in this file, at a fourth address.",
+    file: "packages/engine/src/effects.ts",
+    find: "      hit >= 1 &&",
+    replace: "      hit >= 0 &&",
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-arm-drops-the-number-agreement",
+    decision: "D477",
+    what: "D400's number AGREEMENT is dropped, so the SINGULAR narrowing clause (*\"…that has any damage counters on **it**\"*) would be resolved against a plural arity the catalog never prints — authoring rather than reading (D190b). Inherited from arm 6c with the shared fragment; a fourth caller that dropped it is exactly the drift D383 made the fragment shared to prevent.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const agrees = !damagedOnly || bodies === 1;",
+    replace: "    const agrees = true;",
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-the-printed-cost-is-not-emitted",
+    decision: "D477",
+    what: "The §8 COST vanishes and the arm returns the snipe alone, so all five printings deal their benched damage for FREE — the half of the printed sentence with nothing to do with the Bench, and therefore the half a suite written around the snipe would never miss. It is the ONE-SIDED read D444 names: half a sentence built loudly and half silently absent.",
+    file: "packages/engine/src/effects.ts",
+    find: '        { op: "discardEnergy", from: "yourActive", filter, count: cost },\n        damagedOnly\n          ? {',
+    replace: '        damagedOnly\n          ? {',
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D477-anchor-code-guard-is-redundant",
+    decision: "D477",
+    what: "The arm's `energyType !== undefined` conjunct is replaced by a check that is true for every string the anchor can capture. ⚠ **DECLARED SURVIVOR.** The guard cannot refuse anything today, because the `{X}` character class is BUILT FROM `ENERGY_TYPE_BY_CODE`'s own keys, so every code that reaches the arm resolves.",
+    file: "packages/engine/src/effects.ts",
+    find: "      (typeCode === undefined || energyType !== undefined)",
+    replace: "      (typeCode === undefined || typeCode.length === 1)",
+    expectKilledBy: [
+      "packages/engine/src/costBenchSnipe.test.ts",
+      "packages/engine/src/anyTargetSnipe.test.ts",
+    ],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "UNREACHABLE-BY-VALUE, and NOT either kind of disjointness (D468) — say which, because the log prints every `equivalent` identically. It is not STRUCTURAL disjointness (two `^…$` patterns disagreeing on a mandatory run of bytes) and it is not GUARDED disjointness (a lookahead keeping a shipped order from mattering); it is D427's shape, the summand argument: the character class is `Object.keys(ENERGY_TYPE_BY_CODE).join(\"\")`, so `ENERGY_TYPE_BY_CODE[typeCode]` is defined for every string the anchor can put in `typeCode`, and the guard is therefore true on every reachable input. SELF-INVALIDATING in the way D427 asks for: the day that class stops being map-built — the very mutation `D477-anchor-code-class-drops-the-map` writes from the other end — an unmapped code reaches the arm, the real guard REFUSES it and leaves the sentence loud while this mutant admits it and silently discards the attacker's WHOLE pile with `anyEnergy`. The row then reports STALE-SURVIVOR. ⚠ It is kept rather than deleted for exactly that reason, and the guard is kept rather than removed because the alternative is an invariant stated in a comment and asserted by no line of code (D324/D451).",
+    },
+  },
+  {
+    id: "D477-ops-are-emitted-in-the-wrong-order",
+    decision: "D477",
+    what: "The two ops SWAP, so the snipe's candidates are read BEFORE the cost has run and the player is asked which body to hit before paying for the attack. D431's rule at arm 9c, inherited here rather than restated: the order is LOAD-BEARING and it is visible to a player. ⚠ EVERY END BOARD IS IDENTICAL on all five printings — only the park ORDER and the continuation's `rest` differ — which is why §7 reads the FIRST prompt's kind and `phase.cont.rest` rather than a damage figure. ⚠ AND THE `find` IS LONG ON PURPOSE (D446 notes the cost): a swap cannot be spelled by a shorter span than the two elements it swaps.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [\n        // The cost, first, because that is the printed order — arm 9b's rule inherited,\n        // and load-bearing for the same reason: the snipe's candidates are read AFTER\n        // the discard has run.\n        { op: \"discardEnergy\", from: \"yourActive\", filter, count: cost },\n        damagedOnly\n          ? {\n              op: \"damageChosen\",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: \"attack\",\n              deals: true,\n              damagedOnly: true,\n            }\n          : {\n              op: \"damageChosen\",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: \"attack\",\n              deals: true,\n            },\n      ];",
+    replace: "      return [\n        damagedOnly\n          ? {\n              op: \"damageChosen\",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: \"attack\",\n              deals: true,\n              damagedOnly: true,\n            }\n          : {\n              op: \"damageChosen\",\n              target: benchSide,\n              amount: hit,\n              count: bodies,\n              source: \"attack\",\n              deals: true,\n            },\n        { op: \"discardEnergy\", from: \"yourActive\", filter, count: cost },\n      ];",
+    expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
   },
 ];

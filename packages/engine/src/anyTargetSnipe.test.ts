@@ -729,6 +729,16 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
     // …and nothing ELSE in the whole column derives to a self-discard followed by an
     // any-target snipe. The reach and the census are the same set, which is the
     // check D139 says a bare `(\d+)` cannot be trusted without.
+    //
+    // 🆕🆕🆕 **D477 — THIS IS A FILTER-BUILT POPULATION, AND IT GREW WITHOUT ANYONE
+    // NAMING A SENTENCE (D465).** The predicate below asks only for the op PAIR, so
+    // D477's bench twin joined it the moment that arm landed — three sentences nobody
+    // typed into this file. The repair is NOT to add them to `COMPOUNDS`, which would
+    // make this rung claim a family it is not about; it is to PARTITION the pair-shaped
+    // set by the field that tells the two anchors apart, so the rung still goes red on
+    // *"a reader widened past the zone word"* and is green only on *"D477 built the
+    // bench twin"* — the two states the old `toEqual(COMPOUNDS)` could not distinguish
+    // once either was possible (D418: after re-pointing, ask what the OLD claim caught).
     const reads = corpus().filter(([, t]) => {
       const ops = deriveAttackEffect(t);
       return (
@@ -738,8 +748,24 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
         ops[1]?.op === "damageChosen"
       );
     });
-    expect(reads.map(([, t]) => t).sort()).toEqual([...COMPOUNDS].sort());
-    expect(units(reads)).toBe(7);
+    expect(reads).toHaveLength(7);
+    expect(units(reads)).toBe(12);
+    const aimedAnywhere = reads.filter(([, t]) => {
+      const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
+      return snipe?.op === "damageChosen" && snipe.target === "opponentAny";
+    });
+    expect(aimedAnywhere.map(([, t]) => t).sort()).toEqual([...COMPOUNDS].sort());
+    expect(units(aimedAnywhere)).toBe(7);
+    // The complement is D477's, and it is asserted by CARDINALITY here rather than by
+    // sentence — `costBenchSnipe.test.ts` owns those three strings, and a second copy of
+    // them here is a claim that rots in two places (D415).
+    const aimedAtTheBench = reads.filter(([, t]) => {
+      const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
+      return snipe?.op === "damageChosen" && snipe.target === "opponentBench";
+    });
+    expect(aimedAtTheBench).toHaveLength(3);
+    expect(units(aimedAtTheBench)).toBe(5);
+    expect(aimedAnywhere.length + aimedAtTheBench.length).toBe(reads.length);
   });
 
   it("🛑 THE SHAPE QUESTION: the printed JOIN is 3 sentences on `. ` and 1 on `, and `", () => {
@@ -868,16 +894,42 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
   it("🛑 the printed NEAR-MISSES of the same family are all refused, and every one is real", () => {
     // Every string here is a sentence the legal column actually prints beside this
     // one, so none of them is a straw refusal. Each owes a mechanism this arm does
-    // not have: a zone (`Benched`), a rider verb (`also`), an `ex` filter, a typed
-    // discard, a discard from the HAND, or a scaling tail.
+    // not have: an `ex` filter on the candidate CLASS, or a discard from the HAND
+    // with a scaling tail.
+    //
+    // 🆕🆕🆕 **D477 SPLIT THIS LIST BY REASON RATHER THAN SHORTENING IT (D441).** It
+    // held FIVE strings under one sentence — *"a zone (`Benched`), a rider verb
+    // (`also`), an `ex` filter, a typed discard, a discard from the HAND, or a
+    // scaling tail"* — and three of the five were refused for the ZONE alone, which
+    // `SELF_DISCARD_THEN_BENCH_SNIPE` now reads. ⚠️ **THE STATED REASON WAS NEVER
+    // TRUE OF THE `also`**: `ALSO_BENCHED_SNIPE_BODY` has spelled `(?:also )?` since
+    // D447, so that clause of the comment was a co-occurring token written down as a
+    // blocker (D447's own rule, one family over).
     for (const text of [
-      "Discard 2 Energy from this Pokémon. This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "Discard all {R} Energy from this Pokémon, and this attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
+      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+    }
+    // 🆕🆕🆕 **D477 — THE THREE THAT LEFT, RE-POINTED ONTO WHAT NOW OWNS THEM RATHER
+    // THAN DELETED (D418/D438).** A bare `.not.toBeNull()` here would be TRUE under
+    // the build this rung existed to forbid — an any-target anchor loosened to
+    // swallow a Benched sentence — so the claim is the OP's `target`, which
+    // discriminates the two arms by value. `opponentAny` is what a widened arm 9b
+    // would answer; `opponentBench` is what arm 9b-bis answers, and no build can
+    // give both.
+    for (const text of [
+      "Discard 2 Energy from this Pokémon. This attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all Energy from this Pokémon, and this attack also does 90 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "Discard all {R} Energy from this Pokémon, and this attack does 180 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
+      const program = deriveAttackEffect(text) as EffectOp[];
+      expect(program, text).toHaveLength(2);
+      expect(program[0]?.op, text).toBe("discardEnergy");
+      const snipe = program[1];
+      if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
+      expect(snipe.target, text).toBe("opponentBench");
       expect(corpus().some(([, t]) => t === text), text).toBe(true);
     }
     // ⚠️ AND THE ONE NEAR-MISS THAT IS **NOT** IN THIS COLUMN, NAMED AS SUCH RATHER

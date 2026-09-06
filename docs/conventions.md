@@ -4130,6 +4130,51 @@ Two consequences worth keeping:
   as killed-plus-survived cannot distinguish a clean run from one where rows failed
   to compile, because ERROR rows fall outside both terms.
 
+### Two instruments over one population: reading one is a sample, not a survey
+
+This repo ships `residue-census.ts` and `opaque-anatomy.ts` over the same 640
+sentences. Their classes are **disjoint by construction** — the anatomy classifies
+only what the census left `OPAQUE` — so a row the census has already classified is
+*absent* from the anatomy's list, and vice versa.
+
+D477's work order enumerated three rows of a four-row family. The missing one was
+the largest tie and the residue's only `COMPOSE` row: fully classified by the
+census, invisible in the anatomy section the brief happened to read.
+
+**Run both before choosing, and prefer a published PATTERN to an enumeration.**
+D477 replaced the three-row list with a regex over all 640 rows and found eight
+rows / thirteen printings — a measurement anyone can re-run and disagree with,
+where a list is only as complete as the window it was read through.
+
+### Overriding a convention is legitimate only as a recorded rung
+
+D472's rule says a wider anchor that claims no additional rows is pure risk. D477
+measured exactly that — its generalisations claimed the same 3 sentences / 5
+printings as a literal spelling — and took the generality anyway, because the
+alternative was a second hundred-byte spelling of one printed clause, which is
+D416's copied-function hazard: the corpus goes **quiet** rather than red.
+
+That is a real trade and the right call. What makes it acceptable is that **the
+measurement is pinned as a test rung**, so the override is a decision a successor
+can find, re-run and reverse — rather than a habit that erodes the rule silently.
+
+**When you override a convention, leave the measurement that justified it in
+executable form.** A rule with recorded exceptions stays a rule; a rule with
+unrecorded ones is just a preference.
+
+### `find`-vs-`replace` diffing catches mis-described rows, not only inert ones
+
+The diff is usually justified as catching INERT rows — a `replace` that compiles to
+byte-equivalent code, which `precheck` cannot see. D477's caught something else: a
+row whose `what` described a **swap** while its `replace` performed a **deletion**.
+The row was live and would have been killed; its description was simply false.
+
+**No other gate reads the `what` against the `replace`.** `precheck` checks that
+`find` resolves; the runner checks that the suite reddens; nothing checks that the
+row does what it says. Read the three fields against each other, and note that a
+genuine swap's `find` must span both operands — a swap cannot be spelled by
+anything shorter.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

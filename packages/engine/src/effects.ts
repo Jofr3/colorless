@@ -17737,6 +17737,70 @@ const TYPED_SELF_DISCARD = new RegExp(
     `|(${Object.keys(ENERGY_TYPE_BY_NAME).join("|")})) Energy from this Pokémon\\.$`,
 );
 
+// 🆕🆕🆕 D477 — THE SELF-DISCARD COST IN FRONT OF A **BENCHED** SNIPE. The BENCH twin
+// of `SELF_DISCARD_THEN_ANY_TARGET` (D401), and the SEVENTH member of this file's
+// compound family. It lives HERE rather than beside its twin for the reason the note
+// at that anchor already gives: it is MAP-BUILT (`ENERGY_TYPE_BY_CODE`) and a
+// `new RegExp` built from a map must be evaluated after that map's own `const`.
+//
+// THREE SENTENCES / FIVE LEGAL PRINTINGS, measured over `legalAttackCorpus()` and
+// transcribed byte for byte (the tail elided here is the Benched clarifier):
+//   2 — "Discard 2 Energy from this Pokémon. This attack also does 120 damage to 1 of
+//        your opponent's Benched Pokémon. (Don't apply …)"        — corpus file line 92
+//   2 — "Discard all Energy from this Pokémon, and this attack also does 90 damage to
+//        1 of your opponent's Benched Pokémon. (Don't apply …)"   — corpus file line 109
+//   1 — "Discard all {R} Energy from this Pokémon, and this attack does 180 damage to
+//        1 of your opponent's Benched Pokémon. (Don't apply …)"   — corpus file line 121
+//
+// 🛑 **THE FOURTH CALLER OF `ALSO_BENCHED_SNIPE_BODY`, AND THAT IS THE WHOLE POINT
+// (D383/D399/D437/D447).** The snipe half of all three printings is byte-identical to
+// the standalone clause the shared fragment has read since D399 — including the word
+// `also`, which two of the three print and one does not. ⚠️ **THE `also` IS NOT WHAT
+// REFUSED THESE ROWS AND NEVER WAS**: that fragment has spelled `(?:also )?` since D447,
+// so the word costs nothing here; what refused them is the ZONE (`Benched`), which
+// `SELF_DISCARD_THEN_ANY_TARGET`'s bare `of your opponent['’]s Pokémon\.` cannot reach.
+//
+// 🛑 **AND THE GENERALITY BUYS NOTHING — MEASURED, AND TAKEN ANYWAY FOR A REASON THAT
+// IS NOT COVERAGE (D472).** Run over all 640 corpus rows, the shared fragment's three
+// generalisations (`(?:also )?`, the possessive CAPTURE, the `damagedOnly` narrowing)
+// claim EXACTLY the same 3 sentences / 5 printings as a literal that spells
+// `attack (?:also )?does … of your opponent['’]s Benched Pokémon\.` and nothing else.
+// By D472's rule that is pure risk, and it is taken regardless because the alternative
+// is a SECOND ~100-byte spelling of one printed clause — D416's copied-function hazard,
+// where the corpus goes QUIET rather than red. **The sharing is the argument; the
+// generality is its price, and this arm READS every group** (arms 6c and 6c-bis read
+// them; only `optionalCostPayoff` refuses them, because its record has no slot).
+//
+// 🛑 **THE TYPE SLOT IS `{X}` ONLY, AND THAT IS ALSO A MEASUREMENT.** `TYPED_SELF_DISCARD`
+// twelve lines up admits BOTH notations (`{R}` and the spelled-out `Fire`); adding the
+// `ENERGY_TYPE_BY_NAME` alternation here claims **the same 3 / 5** over the whole column,
+// so it is D472's case exactly and the name spelling is left out. `Basic` is left out for
+// D440's reason — it is a `basicEnergy` filter, a different member, not a type. The class
+// is built FROM the map's keys, so the observable direction (D442) is closed: the anchor
+// cannot DROP a code the map carries.
+//
+// ⚠️ **THE TYPE IS AN OPTIONAL GROUP AND NOT A SECOND ANCHOR.** D441 splits when the
+// alternatives produce different KINDS of value; here both branches produce a
+// `discardEnergy.filter` and differ only in which member — `anyEnergy` versus
+// `providesEnergy` — which is `ENERGY_DISCARD_SCALED_DAMAGE`'s shape one screen down. And
+// it introduces NO parameter: the energy type is a warranted slot on two shipped anchors
+// already, so D121 has nothing to say about reusing it at a new position (D462).
+//
+// ⚠️ MUTUALLY EXCLUSIVE WITH `SELF_DISCARD_THEN_ANY_TARGET` BY **STRUCTURAL**
+// DISJOINTNESS AND NOT BY A GUARD (D467): that anchor demands
+// `of your opponent['’]s Pokémon\.` and this one demands ` Benched Pokémon` between the
+// possessive and the period, so no string can match both. There is nothing to place
+// first and no lookahead to rot; the order-permutation row is declared `equivalent` with
+// the KIND written into its reason.
+//
+// SIX CAPTURES: `[1]` the discard's quantifier, `[2]` the optional energy CODE, then the
+// shared body's four — `[3]` amount, `[4]` arity, `[5]` side, `[6]` the damage narrowing.
+// No /i, on the family's standing reason.
+const SELF_DISCARD_THEN_BENCH_SNIPE = new RegExp(
+  `^Discard (all|\\d+)(?: \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\})?` +
+    ` Energy from this Pokémon(?:\\. This|, and this) ${ALSO_BENCHED_SNIPE_BODY}$`,
+);
+
 // 🆕🆕 D402 — THE DISCARD-COUNT-SCALED ATTACK: THE §9.2 RECORD READ AS A DAMAGE
 // MULTIPLIER, AND THE RE-PRICING OF A REFUSAL THAT WAS WRITTEN DOWN AT D96.
 //
@@ -21416,6 +21480,94 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // the cost knocked out of the picture is not a target this op may offer).
         { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: discard },
         { op: "damageChosen", target: "opponentAny", amount, count, source: "attack", deals: true },
+      ];
+    }
+  }
+
+  // 9b-bis. 🆕🆕🆕 D477 — "Discard {all|N} [{X}] Energy from this Pokémon[. |, and ]this
+  //     attack [also ]does A damage to C of your opponent's BENCHED Pokémon. (Don't
+  //     apply …)" — the §8 self-discard COST in front of the **BENCH** snipe, TWO OPS
+  //     IN PRINTED ORDER. 3 sentences / 5 legal printings; see the anchor's own census.
+  //
+  //     🛑 NOTHING BELOW THIS ARM MOVED, AND THAT IS A MEASUREMENT RATHER THAN A HOPE.
+  //     `snipeTargets` is a total `switch` and `placeSnipe` reads its bench victim off
+  //     the REFS — both since D447, which paid exactly D222's price for the third
+  //     `damageChosen.target` member. `opponentBench` is the OLDEST of the three and
+  //     twenty-five shipped printings already run through this funnel, so this slice
+  //     touches no interpreter byte at all.
+  //
+  //     ⚠️ THE SECOND HALF PARKS AND SO CAN THE FIRST — D401's *"the first compound
+  //     whose second half also parks"* holds here with a TYPED cost in front of it:
+  //     `EffectContinuation.rest` has carried the tail since M5 and `resumeProgram`
+  //     re-enters `runProgram` with it. No new persisted byte; see the suite's §7.
+  //
+  //     THREE printed numbers, THREE positivity guards, plus D400's number AGREEMENT on
+  //     the narrowing — arm 6c's `agrees`, inherited rather than restated, because the
+  //     clause it gates is the same shared fragment's fourth capture.
+  match = SELF_DISCARD_THEN_BENCH_SNIPE.exec(effect);
+  if (match !== null) {
+    const cost = match[1] === "all" ? ("all" as const) : Number(match[1]);
+    // An unmapped brace code cannot reach here (the class is built from the map's
+    // keys); the check satisfies `noUncheckedIndexedAccess` and, unlike the untyped
+    // branch, an UNREADABLE type must leave the sentence LOUD rather than count
+    // every attached card — `attachedEnergyFilter`'s two-nullish rule, one helper over.
+    // ⚠️ `typeCode` RATHER THAN THE `code` ITS TWO SIBLING ARMS SPELL, and the reason is
+    // mechanical rather than stylistic (D446/D448): `(code === undefined || energyType
+    // !== undefined)` is a line TWO other arms in this file already own verbatim, and a
+    // third copy makes a mutant `find` occur 2× — a row broken by a function it does not
+    // describe. The repair is the NAME, so the next author does not tidy the three back
+    // into one idiom. `precheck` reported the collision in seconds.
+    const typeCode = match[2];
+    const energyType = typeCode === undefined ? undefined : ENERGY_TYPE_BY_CODE[typeCode];
+    const hit = Number(match[3]);
+    const bodies = Number(match[4]);
+    // 🆕🆕🆕 D477 — THE SIDE IS READ OFF THE PRINTED POSSESSIVE, the shared body's group
+    // 3 (here `[5]`), for D425's and D447's reason verbatim: a build that returned
+    // `"opponentBench"` unconditionally derives, passes every one of this slice's three
+    // printed sentences, and aims the own-side spelling across the table. NO CARD PRINTS
+    // THAT COMPOSITION — the own-side bench snipe is printed bare, never behind a
+    // discard cost — so this is the reading the deriver WOULD give, exactly as arm
+    // 6c-bis's is, and it is a mutant row rather than a comment claiming care.
+    const benchSide = match[5] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
+    const damagedOnly = match[6] !== undefined;
+    const agrees = !damagedOnly || bodies === 1;
+    if (
+      (cost === "all" || cost >= 1) &&
+      hit >= 1 &&
+      bodies >= 1 &&
+      agrees &&
+      (typeCode === undefined || energyType !== undefined)
+    ) {
+      // TWO WHOLE LITERALS PER AXIS AND NOT A SPREAD (D135): an ABSENT key and a key set
+      // to `undefined` are different wire values, and both of these ops are persisted —
+      // the discard parks on a mixed pile and the snipe parks on a Bench of two or more.
+      const filter =
+        energyType === undefined
+          ? ({ kind: "anyEnergy" } as const)
+          : ({ kind: "providesEnergy", energyType } as const);
+      return [
+        // The cost, first, because that is the printed order — arm 9b's rule inherited,
+        // and load-bearing for the same reason: the snipe's candidates are read AFTER
+        // the discard has run.
+        { op: "discardEnergy", from: "yourActive", filter, count: cost },
+        damagedOnly
+          ? {
+              op: "damageChosen",
+              target: benchSide,
+              amount: hit,
+              count: bodies,
+              source: "attack",
+              deals: true,
+              damagedOnly: true,
+            }
+          : {
+              op: "damageChosen",
+              target: benchSide,
+              amount: hit,
+              count: bodies,
+              source: "attack",
+              deals: true,
+            },
       ];
     }
   }

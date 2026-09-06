@@ -19469,7 +19469,7 @@ import type { GameState, Seat } from "./types";
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
     successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.374.0";
+export const engineVersion = "0.375.0";
 
 export type {
   ApplyResult,
