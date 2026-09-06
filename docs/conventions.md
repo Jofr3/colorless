@@ -4311,6 +4311,26 @@ distinct defects in three consecutive slices, and only this check sees any of th
 **Nothing gates that the row means what it says**, so read all three fields before
 probing.
 
+### The danger of an unkillable row is not that it fails — it is that it PASSES
+
+D479 caught a mutant row that was live, correctly described, and separated from the
+original by **no rung in its named suite**. Left alone it would have reported
+SURVIVED.
+
+That is the failure mode worth naming, because it inverts the usual worry. A
+survivor is a verdict this corpus treats as *informative*: it gets declared, given
+a reason, and inherited by every later slice as a fact about the engine. **A row
+nothing can kill does not report its own defect — it reports a property of the code
+that is not there.**
+
+And the probe cannot tell the two apart. `survives because equivalent` and
+`survives because untested` produce the same line. Only the author, reading the
+rung list against the mutation before running anything, can distinguish them.
+
+**So the three-field read happens BEFORE the probe, not after** — and when a row is
+rescued by adding rungs, the whole-corpus run is what confirms the new rungs
+discriminate rather than merely exist.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
