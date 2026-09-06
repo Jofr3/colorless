@@ -61,6 +61,12 @@ const FLIP_CONFUSE_POISON =
 /** The coin-flipped twin at Paralyzed+Poisoned — Glimmora `sv06-109` "Stun Poison". */
 const FLIP_PARALYZE_POISON =
   "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned.";
+/** 🆕🆕 D478 — corpus FILE LINE 263, 2 printings: this family's pair on HEADS with a
+    SINGLE status on TAILS. It is here because it is a genuine member of §2's sweep — its
+    heads arm is `FLIP_DEFENDER_STATUS_PAIR`'s program byte for byte — and because the slot
+    that used to hold it in `LEFT_LOUD` was refusing it for a reason that was never true. */
+const HEADS_PAIR_TAILS_SINGLE =
+  "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.";
 /** The COMPOUND this slice claims WITHOUT writing an anchor for it — Accelgor
     `sv09-013` "Poisonous Ploy". Head is `DEFENDER_STATUS_PAIR`'s, tail is D189's. */
 const CONFUSE_POISON_SWITCH =
@@ -72,9 +78,28 @@ const CONFUSE_POISON_SWITCH =
 const LEFT_LOUD = {
   /** 2 printings. A heads/tails compound with a DIFFERENT tail: `coinFlipGate`
       carries no tails branch, so the mechanism is absent rather than the anchor
-      narrow. */
+      narrow.
+
+      🛑🛑 **D478 — THE PARAGRAPH ABOVE IS KEPT VERBATIM (D178) AND ITS SECOND CLAUSE WAS
+      FALSE ON THE DAY IT WAS WRITTEN.** `coinFlipGate.otherwise` shipped at **D269**
+      (`0.184.0 → 0.185.0`, Picnicker/Drasna), `interpreter.ts` splices it with the same
+      `unshift` that splices `then`, and `deriveAttackEffect` arm 6d has emitted a
+      two-armed gate since **D416** — three hundred lines below the anchor whose comment
+      said the mechanism was absent. What was missing was an ANCHOR and an ARM. D478 built
+      corpus FILE LINE 263; it derives to ONE gate with BOTH arms filled and is driven in
+      `flipStatusHeadsTails.test.ts`.
+
+      ⚠️ **THE SLOT IS RE-POINTED AND NOT DELETED (D418), ONTO THE SUBJECT THAT STILL HAS
+      THE OLD PROPERTY (D444).** The property is *a printed heads/tails compound whose
+      branches this reader does not claim*, and over all 640 corpus rows exactly **three**
+      sentences print both branches — file line 244 (built at D416), 263 (built here) and
+      **268**, which is what this slot now holds. Its tails branch is *"this attack does
+      nothing"*: an attack-level CANCEL resolving at the §8 declaration seam, which
+      `deriveAttackEffect` has nowhere to put, so it is blocked by a SEAM rather than by a
+      vocabulary and no widening of an anchor in this family can reach it.
+      ⚠️ It is now load-bearing in three files; a successor building it owes the re-point. */
   headsTails:
-    "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.",
+    "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
   /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
       VERBATIM BELOW BECAUSE IT WAS WRONG IN AN INSTRUCTIVE WAY (D178).**
 
@@ -422,15 +447,37 @@ describe("§2 — the derivation, parameterised on both axes", () => {
     // ⚠️ THE FALSE-POSITIVE SWEEP, over the WHOLE 640-sentence column rather than
     // over the rows this slice went looking for. A `^…$` anchor that had drifted
     // into a floating match would show up here and nowhere else.
+    // 🆕🆕 **D478 — 3 / 5 → 4 / 7, AND THE FOURTH IS A GENUINE MEMBER RATHER THAN A DRIFT.**
+    // `statusPairOf` reads the `then` list of a one-op `coinFlipGate`, and corpus FILE LINE
+    // 263's HEADS arm *is* this family's pair, byte for byte — so widening the expected set
+    // is the honest answer and narrowing the helper would have hidden a real inhabitant.
+    // ⚠️ **BUT THE WIDENING ALONE WOULD HAVE COST THIS SWEEP ITS GRIP ON THE NEW ROW**
+    // (D438): `statusPairOf` discards `otherwise`, so a build that dropped the tails branch
+    // entirely would still sit in this set and this rung would stay green. The second
+    // assertion is what keeps it — EXACTLY ONE of the four carries a second arm, and it is
+    // the one D478 built.
     const hits = legalAttackCorpus().filter(([, sentence]) => statusPairOf(sentence) !== null);
     expect(hits.map(([, s]) => s).sort()).toEqual(
-      [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON].sort(),
+      [BURN_CONFUSE, FLIP_CONFUSE_POISON, FLIP_PARALYZE_POISON, HEADS_PAIR_TAILS_SINGLE].sort(),
     );
-    expect(hits.reduce((sum, [units]) => sum + units, 0)).toBe(5);
+    expect(hits.reduce((sum, [units]) => sum + units, 0)).toBe(7);
+    const twoArmed = hits.filter(([, s]) => {
+      const ops = deriveAttackEffect(s);
+      const head = ops?.[0];
+      return ops?.length === 1 && head?.op === "coinFlipGate" && head.otherwise !== undefined;
+    });
+    expect(twoArmed.map(([, s]) => s)).toEqual([HEADS_PAIR_TAILS_SINGLE]);
+    expect(twoArmed.reduce((sum, [units]) => sum + units, 0)).toBe(2);
   });
 
   it("🛑 the five REAL near misses stay on the loud path, and `\\.$` is why", () => {
     // Each is a printing in the same legal column, not a constructed string.
+    // ⚠️ 🆕🆕 **D478 — `headsTails` IS THE ONE MEMBER THIS RUNG'S TITLE WAS NEVER ABOUT, AND
+    // SAYING SO IS THE POINT (D452).** The `dotAnchorTrio` really is refused by a `\.$`.
+    // The old `headsTails` was too, until D478 built it; its replacement (corpus FILE LINE
+    // 268) is refused by NO byte of any anchor here — it is refused because its tails
+    // branch resolves at a different SEAM. One rung, two mechanisms, and folding them
+    // under one title is exactly the mistake D464 corrected two anchors over.
     expect(deriveAttackEffect(LEFT_LOUD.headsTails)).toBeNull();
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(deriveAttackEffect(text)).toBeNull();
     // The compound is refused WHOLE — deliberately, so the SPLITTER claims it (§5)
@@ -927,6 +974,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.375.0");
+    expect(engineVersion).toBe("0.376.0");
   });
 });

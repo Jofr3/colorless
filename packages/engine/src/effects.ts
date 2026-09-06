@@ -9569,6 +9569,20 @@ const FLIP_DEFENDER_NOW = new RegExp(
 //   • "…is now Paralyzed and Poisoned. If tails, …is now Confused."   (2 printings)
 //     — a heads/tails compound with a DIFFERENT tail. `coinFlipGate` carries no
 //     tails branch, so this needs a mechanism neither anchor has.
+//     🛑🛑 **D478 — THE PARAGRAPH ABOVE IS KEPT VERBATIM (D178) AND ITS SECOND
+//     SENTENCE WAS FALSE ON THE DAY IT WAS WRITTEN.** `coinFlipGate.otherwise`
+//     shipped at **D269 / 0.184.0 → 0.185.0** — an OPTIONAL `EffectOp[]` beside
+//     `then`, spliced by the same `runProgram` `unshift` (`interpreter.ts`, the
+//     `?? []` line) — and by D424 it was already **produced inside this very
+//     function**: arm 6d (`FLIP_KO_ACTIVE_OR_BENCHED_BASIC`, D416, 4 printings)
+//     emits a two-armed gate three hundred lines below this comment. So the
+//     mechanism was not absent, it was shipped, produced and driven; what was
+//     really missing was an ANCHOR and an ARM, which is the cheap half rather
+//     than the dear one. ⚠️ **A refusal that names a MECHANISM is the expensive
+//     kind to get wrong (D473): a wrong price gets re-measured, a wrong
+//     expressibility doubt moves a row to the blocked list and nothing re-reads
+//     the blocked list.** Claimed at D478 — `FLIP_DEFENDER_PAIR_OR_TAILS_STATUS`
+//     below, 1 sentence / 2 legal printings, corpus FILE LINE 263.
 //   • "…is now Burned, Confused, and Poisoned."                       (2 printings)
 //     — THREE statuses in an Oxford list. A different printed shape, and the only
 //     3-status row in the column, so a 3-list template would be D121's literal
@@ -9589,6 +9603,58 @@ const DEFENDER_STATUS_PAIR = new RegExp(
 );
 const FLIP_DEFENDER_STATUS_PAIR = new RegExp(
   `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\.$`,
+);
+// 🆕🆕 D478 — THE OTHER BRANCH OF A GATE THAT ALREADY SHIPS. *"Flip a coin. If heads,
+// your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your
+// opponent's Active Pokémon is now Confused."* — `censusAttackCorpus.ts` **FILE LINE
+// 263**, **1 sentence / 2 legal printings**, and the row the block above measured,
+// named and left LOUD on a reason that was never true.
+//
+// 🛑 **ZERO NEW MECHANISM, AND THE FIELD IS 209 DECISIONS OLD.** The program is ONE
+// `coinFlipGate` with BOTH arms filled: `then` is `FLIP_DEFENDER_STATUS_PAIR`'s
+// program byte for byte, `otherwise` is `DEFENDER_NOW`'s single `applyStatus`.
+// `otherwise` shipped at D269 for Picnicker/Drasna, `interpreter.ts` splices it with
+// the same `unshift` that splices `then`, and arm 6d has produced a two-armed gate
+// from THIS function since D416. No new `EffectOp` member, op FIELD, op VALUE,
+// reader, prompt, event, error code, registry row, `FIXTURE_POOL` id,
+// `packages/schema` byte or `redact.ts` byte — and no `interpreter.ts` byte either.
+//
+// 🛑 **DISJOINT FROM ALL SIX OLDER `is now` ANCHORS BY CONSTRUCTION, NOT BY POSITION**
+// (D467 prefers structural disjointness precisely because it carries no guard that
+// could rot). `FLIP_DEFENDER_STATUS_PAIR` demands `\\.$` immediately after its SECOND
+// status word and this anchor puts `\\. If tails, ` there; `FLIP_DEFENDER_NOW` demands
+// it after the FIRST; the three bare `^Your opponent` anchors cannot match a string
+// opening `Flip a coin.` at all. So the arm ORDER below is a refactor rather than
+// behaviour, and no string can be claimed by two of the seven.
+//
+// ⚠️ **NO GENERALITY TAKEN, AND THAT IS A MEASUREMENT RATHER THAN A PREFERENCE**
+// (D472). Over all 640 corpus rows this anchor claims **1 row / 2 printings**, and so
+// does every single-axis loosening of it — the heads pair made optional, the tails
+// slot widened to a pair, the heads slot widened to `(.+)`, the tails consequent
+// widened to `(.+)`, the `^` dropped, the `\\.$` dropped. A wider form that claims the
+// same rows buys nothing and costs a wrong program, so the printed shape is spelled
+// exactly. (The face-swapped form — tails first — claims **0 rows**, so no printing
+// warrants reading the branches in either order.)
+//
+// ⚠️ **THE THREE SLOTS ARE `STATUS_WORDS` AND NOT LITERALS, ON D462's WARRANT AND FOR
+// D462's SECOND REASON RATHER THAN ITS FIRST.** No new parameter is introduced — this
+// is the family's own vocabulary at a sixth, seventh and eighth position — and,
+// decisively, the open HEADS slots keep `defenderStatusOps`' collision refusal
+// REACHABLE from this arm: a constructed *"…is now Asleep and Confused. If tails, …"*
+// reaches it exactly as the pair's six collisions do. A literal `Paralyzed and
+// Poisoned` would have cost the same one regex and the same one arm and left that
+// refusal dead code on this path. ⚠️ **The TAILS slot buys no such reachability** —
+// one status word can collide with nothing — and is a template only so the two
+// consequents are spelled in one vocabulary.
+//
+// ⚠️ **THE TWO ARMS ARE MUTUALLY EXCLUSIVE BY THE COIN, WHICH IS WHY A ROTATION
+// COLLISION ACROSS THEM IS NOT ONE.** The printed row lands Paralyzed+Poisoned on
+// heads and Confused on tails; Paralyzed and Confused share `CONDITION_SLOT`'s
+// `rotation`, and that is harmless because no board can reach both. `defenderStatusOps`
+// is therefore asked about the HEADS list alone, which is the list whose members are
+// applied together.
+const FLIP_DEFENDER_PAIR_OR_TAILS_STATUS = new RegExp(
+  `^Flip a coin\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\. If tails, your opponent['’]s Active Pokémon is now (${STATUS_WORDS})\\.$`,
 );
 // 🆕🆕 D462 — THE THREE-STATUS OXFORD LIST. *"Your opponent's Active Pokémon is now
 // Burned, Confused, and Poisoned."* — `censusAttackCorpus.ts` **FILE LINE 679**,
@@ -20640,6 +20706,48 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           {
             op: "coinFlipGate",
             then,
+          },
+        ];
+  }
+
+  // 2b-bis. 🆕🆕 D478 — "Flip a coin. If heads, your opponent's Active Pokémon is now
+  //     {X} and {Y}. If tails, your opponent's Active Pokémon is now {Z}." —
+  //     `censusAttackCorpus.ts` FILE LINE 263, 1 sentence / 2 legal printings, and the
+  //     row arm 2b's own doc block left LOUD saying `coinFlipGate` "carries no tails
+  //     branch". IT HAS CARRIED ONE SINCE D269, and arm 6d below has emitted a
+  //     two-armed gate since D416 — see the correction over the anchor.
+  //
+  //     ONE gate, BOTH arms: `then` is the line directly above this one, and
+  //     `otherwise` is arm 1's single op. ZERO new ops, op FIELDS or op VALUES, so
+  //     `MATCH_RECORD_VERSION` cannot move on bytes that already existed — and this
+  //     program cannot reach a saved record at all, because it is ONE op long and
+  //     neither `applyStatus` nor a gate ever parks.
+  //
+  //     🛑 THE COLLISION REFUSAL IS ASKED ABOUT THE HEADS LIST ALONE, AND THAT IS THE
+  //     WHOLE OF WHY. `defenderStatusOps` refuses two statuses sharing a
+  //     `SpecialConditions` field because the second would silently overwrite the
+  //     first; the two ARMS of one coin are never applied together, so the printed
+  //     Paralyzed+Poisoned / Confused row is not a collision even though Paralyzed and
+  //     Confused share `rotation`. Refusing across the arms would refuse the very
+  //     sentence this arm exists for.
+  //
+  //     🛑 A REFUSED HEADS PAIR RETURNS `null` FROM THE WHOLE READER RATHER THAN
+  //     FALLING THROUGH — arm 2b's rule verbatim and for its reason: no arm below
+  //     reads a shape this anchor could have matched, so a fall-through reaches the
+  //     same `null` by a longer road and loses the refusal's site.
+  match = FLIP_DEFENDER_PAIR_OR_TAILS_STATUS.exec(effect);
+  if (match !== null) {
+    const heads = defenderStatusOps([match[1], match[2]]);
+    return heads === null
+      ? null
+      : [
+          {
+            op: "coinFlipGate",
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: heads,
+            otherwise: [
+              { op: "applyStatus", target: "defender", status: statusOf(match[3]) },
+            ],
           },
         ];
   }

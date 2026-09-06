@@ -4194,6 +4194,41 @@ nothing. When the reason quantifies over inputs, values, or the corpus, **the pr
 is not weaker evidence of the same kind; it is evidence of a different claim**, and
 only the full run speaks to the one being made.
 
+### A refusal can be false on the day it is written — check its claim against the declaration it names
+
+D424 refused a row because *"`coinFlipGate` carries no tails branch"*. That field
+had shipped 155 decisions earlier at D269, the interpreter already spliced it, and
+another arm was already producing two-armed gates. The refusal was false when
+written, and it was then copied into two further sites, where it blocked the row
+for another fifty-odd decisions.
+
+**This is the second such finding in six slices** — D473 found `recordGate`'s "if
+you do" had shipped since D48 while a brief called it unbuildable. Both were
+**expressibility** claims, and both had been copied onward.
+
+The asymmetry is why it matters: a wrong **price** is re-measured by the next slice
+that considers the row. A wrong **expressibility** claim moves the row to the
+blocked list, and nothing re-reads the blocked list.
+
+**So before writing or trusting a refusal that names a type, open the declaration.**
+The check costs seconds. And when starting a slice, re-read two or three refusals in
+the target family the same way — the ones that are wrong are, by construction, the
+ones nobody has looked at.
+
+### "Is it a gate?" is the wrong question about describers — ask whether it parks through the call site
+
+D473 established that a widened anchor owes a check that `describeBranch` /
+`describeCondition` can phrase every op it newly admits. D478's brief applied that
+to a gate and was wrong: those functions are reached from **exactly one call site**,
+which returns early unless the **parking** op is a recording op with a matching
+`recordGate` in the queue. A `coinFlipGate` reaches neither, and one describer is
+typed to take a `recordGate` specifically.
+
+**Describer obligations follow the call path, not the op's category.** Trace the one
+site that calls them and ask whether your program reaches it; "it is a gate, so
+describers apply" is a category argument, and category arguments do not survive
+contact with a single-call-site helper.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

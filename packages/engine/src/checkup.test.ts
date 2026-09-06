@@ -842,7 +842,31 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // so this list keeps the discrimination it had. Both would go RED under a
       // loosened pair anchor (a dropped `\.$`, or an Oxford-comma third slot),
       // which is exactly what the deleted entry used to catch.
-      "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed and Poisoned. If tails, your opponent's Active Pokémon is now Confused.", // sv03-010's TAILS twin — coinFlipGate has no tails branch
+      // 🆕🆕 **D478 — RE-POINTED, AND THE OLD ENTRY'S STATED REASON WAS FALSE FROM THE DAY
+      // IT WAS WRITTEN.** This slot held *"Flip a coin. If heads, …is now Paralyzed and
+      // Poisoned. If tails, …is now Confused."* (corpus FILE LINE 263, 2 printings) with the
+      // note *"coinFlipGate has no tails branch"*. It has carried `otherwise` since **D269**,
+      // and `deriveAttackEffect` arm 6d has EMITTED a two-armed gate since **D416** — so the
+      // mechanism was never what refused the row; an anchor and an arm were. D478 built it.
+      //
+      // D418's question, answered rather than skipped: the OLD entry caught a drift of
+      // `FLIP_DEFENDER_STATUS_PAIR` that dropped its `\.$`, claimed line 263 and silently
+      // threw the tails branch away. **That drift is still caught, and by VALUE rather than
+      // by nullity** — arm 2b runs BEFORE arm 2b-bis, so the drifted anchor claims the
+      // sentence first and emits the HEADS arm alone, which `flipStatusHeadsTails.test.ts`
+      // §2's program equality reddens on (and `D478-pair-anchor-drift-eats-the-tails-branch`
+      // pins). A `toBeNull` could never have distinguished *heads-only* from *both arms*;
+      // the equality does, so the discrimination moved and grew.
+      //
+      // The slot itself is re-pointed onto the ONE remaining printed heads/tails compound in
+      // the whole 640-row column (corpus FILE LINE 268, 2 printings, measured in
+      // `flipStatusHeadsTails.test.ts` §3): its tails branch is *"this attack does
+      // nothing"*, an attack-level CANCEL that resolves at the §8 declaration seam and that
+      // `deriveAttackEffect` has no place to put — a blocker in a different SEAM rather than
+      // in this reader's vocabulary, which is why it cannot be built by widening any anchor
+      // here. ⚠️ It is load-bearing in three files now; a successor who builds it owes the
+      // re-point (D467).
+      "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.", // corpus FILE LINE 268 — the column's last printed heads/tails compound
       // 🆕🆕 D462 — this slot held the THREE-status Oxford list, which
       // `DEFENDER_STATUS_TRIPLE` now BUILDS. RE-POINTED rather than dropped (D418),
       // onto corpus FILE LINE 264 — the same legal column, still a real print with an
