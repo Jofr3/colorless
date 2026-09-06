@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.376.0";',
+    find: 'export const engineVersion = "0.377.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -25646,5 +25646,126 @@ export const MUTANTS: Mutant[] = [
     find: "  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})\\\\.$`,",
     replace: "  `^Flip a coin\\\\. If heads, your opponent['’]s Active Pokémon is now (${STATUS_WORDS}) and (${STATUS_WORDS})`,",
     expectKilledBy: ["packages/engine/src/flipStatusHeadsTails.test.ts", "packages/engine/src/defenderStatusPair.test.ts"],
+  },
+  // ── 🆕🆕 D479 — THE ATTACK-SIDE HAND REFRESH. Ten rows over ONE anchor and ONE
+  //    arm, and the SHAPE of the set is the finding: **FIVE of the ten are SILENT IN
+  //    EVERY CENSUS** — the sentence still matches, `BUILT.attack` still steps 1 and
+  //    both instrument gates still pass — while the derived program empties the wrong
+  //    seat's hand, into the wrong pile, at the wrong count, or resolves a printed 0.
+  //    D400 measured that ratio at 4/8, D401 at 6/8 and D402 at 9/12; a fourth anchor
+  //    reproduces it at 5/10.
+  //
+  //    ⚠ **SIX ROWS SHARE ONE `find`** — the arm's single `return` line — because the
+  //    six claims that line carries are independent: the OP (`handRefresh` vs
+  //    `discardHand`+`drawCards`), the SEAT (`you` vs `both` vs `opponent`), the DRAW
+  //    MEMBER (`fixed` vs `handPlus`) and the CAPTURE (`count: redrawn` vs a literal).
+  //    One row per line would have tested one of them. ⚠ The local is `redrawn` and
+  //    NOT `count` or `drawn` precisely so these finds can occur EXACTLY ONCE
+  //    (D446/D448 — `const count = Number(match[1]);` is spelled three times in this
+  //    file and `const drawn` twice, and D404 shipped a row that landed on the wrong
+  //    arm for exactly that reason and its probe reported two GAPs).
+  //
+  //    ⚠ **NO ORDER-PERMUTATION `equivalent` SURVIVOR, AND THE OMISSION IS DECLARED
+  //    RATHER THAN LEFT AS A GAP (D205).** D467's rule 3 asks for one where the arms
+  //    are kept disjoint by a GUARD, so that the day the guard weakens the row reports
+  //    STALE-SURVIVOR. These two arms are disjoint STRUCTURALLY — `^Discard …$` and
+  //    `^Shuffle …$` disagree on their first mandatory byte — which is D467's rule 1,
+  //    the case that carries no guard and has nothing to rot. What an order swap would
+  //    claim is already claimed more strongly from both ends by
+  //    `shuffleHandDraw.test.ts` §3 and `discardHandDraw.test.ts` §3, which assert the
+  //    two sentences derive to two DIFFERENT programs rather than that either is null.
+  //    ⚠ AND NO ROW FOR `(\\d+)` → `(.+)`: corpus line 487 does not end in `cards.`, so
+  //    no printed string changes hands and `Number(...)` would be `NaN`, failing the
+  //    `>= 1` guard — the mutation cannot change an answer, so it is not a weak row,
+  //    it is not a row (D475).
+  {
+    id: "D479-arm-emits-the-discard-sibling",
+    decision: "D479",
+    what: "🛑 **THE CENTRAL ROW, AND IT IS THE NEAREST WRONG SIBLING RATHER THAN A CONSTRUCTION**: arm 44b returns arm 44's program, byte for byte — `[{op:\"discardHand\"},{op:\"drawCards\",count}]`, the real code eighty lines up, on a sentence that prints a DIFFERENT verb into a DIFFERENT pile. Every count-shaped assertion stays green: the hand still empties, `CARDS_DRAWN` still carries six uids, the hand still ends at six, `ATTACK_EFFECT_SKIPPED` still does not fire and EVERY census figure moves by exactly the same 1/1. What changes is WHERE THE OLD HAND WENT — the discard instead of the deck — and whether the deck was reshuffled. ⚠ **AND IT REDDENS A SUITE THAT IS NOT THIS SLICE'S AND IS NOT A CENSUS**: `discardHandDraw.test.ts` §3's re-pointed rung asserts `deriveAttackEffect(SHUFFLED)` is NOT arm 44's program, so D404's own file catches the collapse it spent a doc block warning about.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "      return [{ op: \"discardHand\" }, { op: \"drawCards\", count: redrawn }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts", "packages/engine/src/discardHandDraw.test.ts"],
+  },
+  {
+    id: "D479-arm-refreshes-both-seats",
+    decision: "D479",
+    what: "`who: \"you\"` becomes `who: \"both\"` — Judge's and Iono's shipped value, not an invented one. The ATTACKER's board is byte-identical under both readings, so §4's whole hand/deck/discard reading is GREEN on it; the only difference is on the seat that is not attacking, whose hand is shuffled into their deck by an attack that never names it. §5 is the rung, and it reads the OPPONENT's zones for exactly this reason (a one-seat board cannot tell the op's three `who` values apart).",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "      return [{ op: \"handRefresh\", who: \"both\", draw: { kind: \"fixed\", count: redrawn } }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-arm-refreshes-the-opponent-instead",
+    decision: "D479",
+    what: "`who: \"you\"` becomes `who: \"opponent\"` — D268's Gothitelle value, the op's THIRD member and the one that reaches the other seat ALONE. A separate row from `both` and not a duplicate of it: `both` still refreshes the attacker and fails only on the opponent's side, this one fails on BOTH sides at once (the attacker's hand is untouched and the opponent's is emptied), so the two mutations are distinguished by different assertions and a suite that killed one could still miss the other. D463's pair rule: a pair of values needs a pair of probes.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "      return [{ op: \"handRefresh\", who: \"opponent\", draw: { kind: \"fixed\", count: redrawn } }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-arm-draws-hand-plus-instead-of-fixed",
+    decision: "D479",
+    what: "`draw: { kind: \"fixed\", count }` becomes `{ kind: \"handPlus\", delta }` — Brassius's shipped member with the captured number moved onto the WRONG field, so the printed *\"draw 6 cards\"* becomes *\"draw your old hand size plus 6\"*. `HandRefreshDraw` is a closed union and both shapes typecheck, so `tsc` is silent; the sentence still resolves, the census still steps and the event still fires. The board is what sees it: §4 pins the hand at exactly SIX and the conservation identity `hand ∪ deck` at the same multiset, and a hand of eleven fails both.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"handPlus\", delta: redrawn } }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-arm-hardcodes-the-printed-count",
+    decision: "D479",
+    what: "🛑 THE CAPTURE BECOMES A LITERAL `6`. **SILENT IN EVERY CENSUS AND ON EVERY BOARD IN THIS SUITE'S OWN §4**, because the attack column prints 6 and nothing else on this skeleton — measured in §1 and stated there rather than left implied (D400). The only thing that can see it is the argument the capture rests on, which comes from the OTHER column: §2 reads the arm at 5 against Youngster `sv01-198`'s hand-authored `trainer` program and at 8 against Katy `sv01-177`'s. That is why those two rungs exist and why they read `programFor(...)` instead of a re-typed literal.",
+    file: "packages/engine/src/effects.ts",
+    find: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: 6 } }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-arm-guard-admits-a-printed-zero",
+    decision: "D479",
+    what: "The `>= 1` guard becomes `>= 0`, so *\"…Then, draw 0 cards.\"* files a program that shuffles the hand into the deck and draws nothing — a deck reshuffle wearing a draw's sentence, resolved SILENTLY where the engine's contract is that it stays on the loud ATTACK_EFFECT_SKIPPED path. Every counted arm in `effects.ts` carries this guard; the row is the claim that this one is not decoration. §2's *\"a printed 0 stays LOUD, and 1 does not\"* is the rung, and it asserts BOTH directions so the mutation cannot be met by a guard that refuses everything.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (redrawn >= 1) {\n      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    replace: "    if (redrawn >= 0) {\n      return [{ op: \"handRefresh\", who: \"you\", draw: { kind: \"fixed\", count: redrawn } }];",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-anchor-loses-its-terminator",
+    decision: "D479",
+    what: "The anchor drops its trailing `$`, so it claims any string that OPENS with the printed sentence and silently discards the rest — *\"Shuffle your hand into your deck. Then, draw 6 cards. Your turn ends.\"* becomes a hand refresh with the turn-ending clause deleted, which is Katy's whole printed difference from Youngster. D234's dropped-`$` shape, inherited a fifth time. §3's whole-sentence rung is what reddens, and it drives the trailing-clause case rather than only the bare one.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\.$/;",
+    replace: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\./;",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-anchor-loses-its-caret",
+    decision: "D479",
+    what: "The anchor drops its leading `^`, so any sentence CONTAINING the printed clause is claimed and everything in front of it is silently dropped — *\"Draw a card. Shuffle your hand into your deck. Then, draw 6 cards.\"* resolves to the refresh alone. The `^` and the `$` are separate rows because they fail on DIFFERENT strings and a suite could pin one and not the other; §3 drives a leading clause and a trailing clause independently.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\.$/;",
+    replace: "const SHUFFLE_HAND_DRAW = /Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-anchor-reads-the-one-sentence-join",
+    decision: "D479",
+    what: "The printed TWO-SENTENCE join `\\. Then, ` becomes ` and `, which is the spelling arm 44's sentence uses and which NO printing of this family carries. The mutant refuses the real corpus row (the positive control in §1 and §3 goes red immediately) and admits a string nothing prints. It is here because the join is the one part of this anchor a reader would be tempted to \"normalise\": the two families really do spell the conjunction differently and the difference is printed, not stylistic.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\.$/;",
+    replace: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck and draw (\\d+) cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
+  },
+  {
+    id: "D479-anchor-drops-the-printed-possessive",
+    decision: "D479",
+    what: "Both printed `your`s become `(?:your|their)`, so the anchor admits *\"Shuffle their hand into their deck. Then, draw 6 cards.\"* while the arm keeps emitting `who: \"you\"` — a read that is WRONG ABOUT WHOSE ZONE IT NAMES and that no board in this suite's positive cases can reveal, because on the printed sentence the two spellings mean the same seat. The `RETURN_BENCHED` / `DAMAGE_SUPPRESSION` seat-widening shape (D467's own C6 row) at a third address. §3's SEAT rung is the one that refuses it.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\\. Then, draw (\\d+) cards\\.$/;",
+    replace: "const SHUFFLE_HAND_DRAW = /^Shuffle (?:your|their) hand into (?:your|their) deck\\. Then, draw (\\d+) cards\\.$/;",
+    expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
   },
 ];

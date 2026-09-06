@@ -1682,6 +1682,25 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // and NOT a sentence-list parser. The remaining 4 are each blocked on their own
   // LEADING half, which no split of this family removes, so they stay deferred.
   // A search-style pattern would still silently claim the whole compound.
+  //
+  // 🛑🛑 D479 — *"blocked on their own LEADING half"* IS NOW FALSE FOR ONE OF THE FOUR,
+  // AND IT ROTTED RATHER THAN BEING WRONG WHEN WRITTEN. Measured at this head by
+  // driving the derivers on each half: the Cynthia row's leading half — "This attack
+  // does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon."
+  // — BUILDS, `deriveAttackDamageMultiplier` → `{per:10,count:{kind:
+  // "damageCountersOnYourBench",filter:{kind:"ownerPokemon",owner:"Cynthia"}}}`, and
+  // the census reports it as a `COMPOUND-head` whose KEPT segment resolves. Its
+  // blocker is entirely on the TAIL and is `deriveAttackDamageSuppression`'s own
+  // (`DAMAGE_SUPPRESSION` has no bare-`Weakness` arm, and `splitAttackTrailingClause`
+  // demands a `deriveAttackEffect` tail) — which is what `effects.ts`'s block on that
+  // reader says, correctly, and this line contradicted it for a whole family.
+  // The other two named rows are unmoved and their leading halves really do refuse:
+  // "If you have 3 or more Energy in play, this attack does 70 more damage." → null,
+  // and "Your opponent flips a coin for each of their Benched Pokémon. This attack
+  // does 80 damage to your opponent's Active Pokémon for each tails." → null.
+  // ⚠️ D463's rule, paying out: A REFUSAL THAT GROUPS N ROWS UNDER ONE REASON IS N
+  // REFUSALS UNTIL EACH IS PRICED. Three of these four were priced by that sentence
+  // and one was not, and nothing went red when the un-priced one changed sides.
   // The absence is measured, asserted in damageSuppression.test.ts, and is also
   // the reason `weakness` below is its OWN boolean: two of those five print
   // "…isn't affected by Weakness." with no Resistance beside it.

@@ -4247,6 +4247,70 @@ audit (check a refusal's claim against the type it cites) are the same audit
 approached from two ends** — and when an absence audit turns something up, read its
 doc block before writing rows for it. The rows are the cheaper half of the finding.
 
+### Audit refusals from the zero-mutant-row set, not from the residue's class table
+
+D479 checked 15 expressibility refusals against the declarations they name. **Four
+were false — a 27% rate.** What found them was D478's corollary, not the residue:
+an absence audit over 96 module-level anchors turned up **38 with zero mutant
+rows**, and three of the four falsifications lived in that set. Only one lived
+where the residue clusters, and one lived in an *instrument* rather than the engine
+at all.
+
+That follows from the loop D478 named: a refusal stops a family being built, an
+unbuilt family attracts no rows, and no rows means nothing re-derives the refusal.
+**So the anchors with no rows are exactly where stale refusals accumulate.**
+
+**Start an audit there, and do not restrict it to the engine** — instruments carry
+refusals too, and theirs are the least likely to be re-read.
+
+### A refusal has three failure modes, and only two of them overturn anything
+
+D479's four falsifications were not all the same kind:
+
+- **False when written.** The claim was untrue on the day it was made — D270's
+  refusal named three things as absent that had shipped one decision later, and it
+  stood for 208 more.
+- **Rotted.** The claim was true and became false. D363 grouped four rows under one
+  reason; one of the four now builds.
+- **Reason-only.** The verdict survives but its stated reason does not. D247 refused
+  a shape as "a question no card asks" when a card does print it — and the refusal
+  still stands, because the *expressibility* clause beside it holds.
+
+**Say which kind you found.** Only the first two overturn a refusal; the third
+corrects it. Recording a reason-only correction as an overturn would put a row back
+on the shortlist that is still genuinely blocked.
+
+### A brief that cannot be followed literally is a brief that gets followed approximately
+
+D479's work order told its builder to read a 5,928-line file "ALL of it" — an
+instruction that contradicts this repo's own context-hygiene rule — and pointed at
+"the last three entries" of a file whose sections are not chronological, so the
+three it named were twelve decisions stale.
+
+Neither error was fatal, because the builder noticed. That is the problem: **an
+instruction that must be silently reinterpreted teaches the reader to reinterpret
+instructions.** The next one that needs following exactly gets the same treatment.
+
+**Name entries by title, ask for the index plus the named sections, and give
+instructions that are executable as written.**
+
+### The three defect classes a `find`/`replace`/`what` diff catches
+
+Reading a mutant row's three fields against each other has now caught three
+distinct defects in three consecutive slices, and only this check sees any of them:
+
+- **INERT** (D451) — the `replace` compiles to byte-equivalent code. `precheck`
+  cannot see it; the row reports KILLED for the wrong reason.
+- **MIS-DESCRIBED** (D477, D478) — the row is live and killable, but its `what`
+  describes a different mutation than its `replace` performs.
+- **UNKILLABLE-AS-WRITTEN** (D479) — the row is live and correctly described, but
+  **no rung in the named suite separates the mutant from the original**. It would
+  have shipped as a silent survivor.
+
+`precheck` gates that `find` resolves; the runner gates that the suite reddens.
+**Nothing gates that the row means what it says**, so read all three fields before
+probing.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

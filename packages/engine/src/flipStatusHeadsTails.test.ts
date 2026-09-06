@@ -728,11 +728,11 @@ describe("§5 — what this anchor refuses, and what it still admits", () => {
 describe("§6 — the census moves in exactly ONE summand", () => {
   it("🛑 the resolving corpus gains ONE sentence and TWO printings", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([512, 1541]);
+    expect([resolved.length, units(resolved)]).toEqual([513, 1542]); // (🆕🆕 D479 +1 sentence / +1 printing — THE ATTACK-SIDE HAND REFRESH, `censusAttackCorpus.ts` FILE LINE 486, *"Shuffle your hand into your deck. Then, draw {N} cards."*, claimed WHOLE by `deriveAttackEffect` arm 44b through ONE new anchor `SHUFFLE_HAND_DRAW` over `handRefresh { who: "you", draw: { kind: "fixed", count } }` — Youngster `sv01-198`'s hand-authored program at a second address. ZERO new op members/fields/values, reader surface still 13. ⚠️ SENTENCE STEP AND PRINTING STEP AGREE AT 1 AND 1.)
     // …and without this sentence it is one row and two printings smaller, which is what
     // makes the step THIS slice's rather than an inherited figure.
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([511, 1539]);
+    expect([without.length, units(without)]).toEqual([512, 1540]); // (🆕🆕 D479 — THE ATTACK-SIDE HAND REFRESH, `censusAttackCorpus.ts` FILE LINE 486, *"Shuffle your hand into your deck. Then, draw {N} cards."*, 1 sentence / 1 legal printing, `deriveAttackEffect` arm 44b through ONE new anchor `SHUFFLE_HAND_DRAW`. ZERO new op members/fields/values, reader surface still 13.)
   });
 
   it("the reader SURFACE stands still at 13 — this is an ARM, not a reader", () => {
@@ -748,8 +748,8 @@ describe("§6 — the census moves in exactly ONE summand", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", () => {
-  it("engineVersion is 0.376.0", () => {
-    expect(engineVersion).toBe("0.376.0");
+  it("engineVersion is 0.377.0", () => {
+    expect(engineVersion).toBe("0.377.0");
   });
 
   it("🛑 `MATCH_RECORD_VERSION` STAYS 29 — the SERIALIZED ALPHABET, and REACHABILITY too", () => {

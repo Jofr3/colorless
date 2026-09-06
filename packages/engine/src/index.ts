@@ -19468,8 +19468,32 @@ import type { GameState, Seat } from "./types";
     `find`, re-pointed in the SAME edit. That reproduces D458's forecast of "36 / 40" TO
     THE DIGIT — the first time in this series the inherited figure has been checked and
     found right. **D459 AUTHORS THE 37th ASSERTION** (`selfEnergyScaling.test.ts`), so a
-    successor inherits **37 assertions / 41 sites**. */
-export const engineVersion = "0.376.0";
+    successor inherits **37 assertions / 41 sites**.
+    🆕🆕 engineVersion 0.376.0 → **0.377.0** (D479 — THE ATTACK-SIDE HAND REFRESH,
+    `censusAttackCorpus.ts` **FILE LINE 486** (*"Shuffle your hand into your deck. Then,
+    draw {N} cards."*), **1 sentence / 1 legal printing**, through ONE new anchor
+    `SHUFFLE_HAND_DRAW` and ONE new `deriveAttackEffect` arm (44b). Engine behaviour
+    MOVED — a sentence that derived to `null` derives to `[{op: "handRefresh", who:
+    "you", draw: {kind: "fixed", count}}]` — and it moved on **ZERO new vocabulary**:
+    zero new `EffectOp` members, op FIELDS, op VALUES, readers (surface unmoved at 13),
+    prompts, choices, events, error codes, registry rows, `FIXTURE_POOL` ids,
+    `interpreter.ts` bytes, `redact.ts` bytes or `packages/schema` bytes. The op and both
+    its field values are Youngster `sv01-198`'s hand-authored trainer program at a second
+    address, and `shuffleHandDraw.test.ts` §2 reads the arm AGAINST that row and against
+    Katy `sv01-177` rather than against a re-typed expectation.
+    🛑 **THE SLICE'S FIRST DELIVERABLE WAS AN AUDIT, AND IT FOUND FOUR SHIPPED REFUSALS
+    FALSE** — the largest being `handRefresh`'s OWN doc block, which has said since D270
+    that *"a play gate no `BoardCondition` spells and `GameState` carries no datum for
+    (grepped at D270 — there is no last-turn-KO field)"*. `BoardCondition` has carried
+    `yourPokemonKoedOnOpponentsLastTurn` since **D271**, `GameState.lastKoMarks` since
+    **D326**, and `registry.ts` already authors that member as a `playableIf`. All four
+    are corrected in place with the falsification dated (D178/D442).
+    `MATCH_RECORD_VERSION` **STAYS 29**, on BOTH of D463's tests: the serialized alphabet
+    does not grow (no new member, field or value can appear in a persisted program) and
+    REACHABILITY (D450) is empty — `handRefresh` never parks, so no `phase.cont.pendingOp`
+    or `rest` can hold it. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN
+    INHERITED: see `shuffleHandDraw.test.ts` §7, which authors one more pin.) */
+export const engineVersion = "0.377.0";
 
 export type {
   ApplyResult,

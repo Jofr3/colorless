@@ -276,7 +276,33 @@ export const MARKERS: readonly Marker[] = [
     rx: /used (?:Angelite|Rollout)|Hyper Fang|United Wings/,
     verdict: "blocker",
     needs:
-      "a record of WHICH ATTACK a body used, keyed by the attack's printed NAME — a fact no state field carries and no CardFilter member spells",
+      // 🛑🛑 D479 — THE FIRST CLAUSE OF THIS `needs` WAS FALSE AND IS CORRECTED IN
+      //    PLACE (D442/D466); the original is kept below the corrected text as the
+      //    record (D178). `InPlayPokemon.usedAttack` (D394) IS a state field carrying
+      //    exactly "which attack this body used", `BoardCondition` spells it TWICE
+      //    (`yourActiveUsedAttackLastTurn { attack }` D394 and
+      //    `yourPokemonUsedAttackLastTurn { attack }` D396), and
+      //    `ATTACK_GATE_CLAUSE_GATES` in `effects.ts` already holds a SHIPPED row for
+      //    this marker's own corpus line 630 —
+      //    `{ kind: "onlyIf", condition: { kind: "yourActiveUsedAttackLastTurn",
+      //    attack: "Rollout" } }`. That row is ENFORCED at the §8 declaration seam
+      //    today; it sits in the residue only because `builds()` refuses a gate split
+      //    whose `body` is `""` (D395's clause-only case), which is a fact about the
+      //    CENSUS and not about expressibility.
+      //    ⚠️ The verdict stays `blocker` because the OTHER three rows still are —
+      //    but for three different reasons, none of them this one: line 82 is blocked
+      //    on its "Choose 2 … Shuffle those … into your opponent's deck" HEAD, line
+      //    166 on a named-attack BASE-DAMAGE override, line 542 on a `CardFilter` over
+      //    a card's printed attack list. D463: a refusal grouping N rows under ONE
+      //    reason is N refusals until each is priced.
+      "a mechanism per row, and NOT the one this marker used to name: line 82's head, " +
+      "line 166's named-attack base-damage override, line 542's `CardFilter` over a " +
+      "card's printed attack list — while line 630's named-attack fact is SHIPPED " +
+      "(`InPlayPokemon.usedAttack`, `BoardCondition.yourActiveUsedAttackLastTurn`, and " +
+      "an `ATTACK_GATE_CLAUSE_GATES` row for that very sentence). " +
+      "[D479 corrected. WAS: \u201Ca record of WHICH ATTACK a body used, keyed by the " +
+      "attack\u2019s printed NAME \u2014 a fact no state field carries and no CardFilter " +
+      "member spells\u201D]",
   },
   {
     name: "VARIABLE-MAX",

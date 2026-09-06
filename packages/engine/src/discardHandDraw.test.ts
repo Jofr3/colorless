@@ -93,8 +93,26 @@ const TAKEN = "Discard your hand and draw 6 cards.";
 /** THE REAL NEAR-MISS, and it is printed in the SAME column at the SAME count — which
     is what makes it worth more than any constructed one. Same zone emptied, same six
     cards drawn, DIFFERENT verb and DIFFERENT destination: this is `handRefresh`
-    (shuffled back INTO the deck, order destroyed) and not `discardHand`. */
+    (shuffled back INTO the deck, order destroyed) and not `discardHand`.
+
+    🆕🆕 **D479 BUILT IT, AND THE SENTENCE ABOVE IS WHY IT WAS BUILDABLE**: the
+    identification `handRefresh`-and-not-`discardHand` was already correct, so the row
+    cost ONE anchor (`SHUFFLE_HAND_DRAW`) and ONE arm (44b) and no op work at all. This
+    constant therefore stops being a `toBeNull` witness and becomes a DISJOINTNESS
+    witness — D444/D447's rule: a rung that quietly shrinks loses the transition, so the
+    two rungs below assert the value it derives to NOW and name the decision that moved
+    it. **The claim this file still makes about it is the one that matters**: the two
+    anchors are STRUCTURALLY disjoint (a string cannot begin two ways — *"Discard "*
+    versus *"Shuffle "*, both `^…$`), so neither can ever claim the other's sentence,
+    which is exactly what D404's *"a read that floated on 'draw 6 cards' would take
+    both"* was protecting. That is now asserted in BOTH directions instead of one. */
 const SHUFFLED = "Shuffle your hand into your deck. Then, draw 6 cards.";
+
+/** 🆕🆕 D479 — D404's PROGRAM for the sentence above, spelled once. `who: "you"` and
+    `draw: { kind: "fixed" }` are Youngster `sv01-198`'s own authored values. */
+const shuffledProgram = (count: number) => [
+  { op: "handRefresh", who: "you", draw: { kind: "fixed", count } },
+];
 
 /** The PROGRAM, spelled once and reused, so a case cannot pass against a hand-copied
     literal that has drifted from what the file means by it. */
@@ -145,17 +163,28 @@ describe("D404 §1 — the sentence, measured live over the legal column", () =>
     expect(units(family)).toBe(7);
   });
 
-  it("⚠️ the SHUFFLE spelling is a real printing and is still refused by all twelve", () => {
-    // It is a whole slice of its own (`handRefresh` with `toBottom` absent), and its
-    // being refused here is what stops this anchor from being widened toward it.
+  it("⚠️ 🆕🆕 D479 — the SHUFFLE spelling is a real printing and is now BUILT, by ONE OTHER reader", () => {
+    // 🛑 RE-POINTED, NOT DELETED (D444/D447/D467). Until D479 this rung asserted
+    // `resolvedByAnyReader(SHUFFLED) === false` and thirteen `toBeNull`s — the witness
+    // for "a whole slice of its own (`handRefresh` with `toBottom` absent)". D479 took
+    // that slice, so the rung asserts the OTHER side and names the decision that moved
+    // it; a witness that quietly shrinks to nothing loses the transition it recorded.
     const rows = legalAttackCorpus().filter(([, s]) => s === SHUFFLED);
     expect([rows.length, units(rows)]).toEqual([1, 1]);
-    // 🆕🆕 D419 — THE REFUSAL IS NOW ASSERTED OFF THE MODULE FIRST. The loop
-    // below names WHICH reader broke and is kept for that; but it can only ever
-    // walk the readers this file happens to list, which is the failure mode D418
-    // measured in 38 files. This line walks whatever `effects.ts` exports today.
-    expect(resolvedByAnyReader(SHUFFLED), SHUFFLED).toBe(false);
-    for (const read of READERS) expect(read(SHUFFLED), read.name).toBeNull();
+    // 🆕🆕 D419 — ASSERTED OFF THE MODULE FIRST. The loop below names WHICH reader
+    // claims it and is kept for that; but it can only ever walk the readers this file
+    // happens to list, which is the failure mode D418 measured in 38 files. This line
+    // walks whatever `effects.ts` exports today.
+    expect(resolvedByAnyReader(SHUFFLED), SHUFFLED).toBe(true);
+    // ⚠️ AND IT IS STILL A REFUSAL CLAIM — about the OTHER TWELVE. The property this
+    // file needs is not "nobody reads it" but "exactly one reader does, and it is not
+    // arm 44's", so a future widening that lets a second reader claim this sentence
+    // reddens here exactly as the old shape would have.
+    expect(deriveAttackEffect(SHUFFLED)).toEqual(shuffledProgram(6));
+    for (const read of READERS) {
+      if (read === deriveAttackEffect) continue;
+      expect(read(SHUFFLED), read.name).toBeNull();
+    }
   });
 });
 
@@ -197,7 +226,15 @@ describe("D404 §3 — the refusals, each pinned on ONE printed byte", () => {
     // nothing about the byte you meant to test. THE POSITIVE CONTROL FIRST.
     expect(deriveAttackEffect(TAKEN)).not.toBeNull();
     // …the VERB alone, and it is the REAL printing rather than a construction.
-    expect(deriveAttackEffect(SHUFFLED)).toBeNull();
+    // 🆕🆕 D479 RE-POINTED THIS ONE TOO, AND IN THE DIRECTION THAT MAKES IT STRONGER.
+    // `toBeNull` said only "arm 44 did not take it"; a wrong-program build would have
+    // passed it just as happily as no build at all. Asserting the OTHER program says
+    // "arm 44 did not take it AND the sentence went to the right reader", which is the
+    // claim §3 is about. The two anchors are structurally disjoint — a string cannot
+    // begin both *"Discard "* and *"Shuffle "* — so this pair can never both be true of
+    // one string, and that is the disjointness stated as behaviour rather than prose.
+    expect(deriveAttackEffect(SHUFFLED)).not.toEqual(program(6));
+    expect(deriveAttackEffect(SHUFFLED)).toEqual(shuffledProgram(6));
     // …the SEAT alone: the printed subject is "you", and the opponent's hand is neither
     // this op (which is keyed on `ctx.seat`) nor anything this engine can empty.
     expect(deriveAttackEffect("Discard your opponent's hand and draw 6 cards.")).toBeNull();

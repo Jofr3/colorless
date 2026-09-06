@@ -8671,6 +8671,35 @@ export type EffectOp =
       (5/2) and Team Rocket's Archer (5/3) ALL open *"Each player shuffles their
       hand into their deck"* — the seat set is `"both"`, unchanged; only the count
       splits. `who: "opponent"` still must not be authored onto any of them.
+      🛑🛑 **D479 — THE PARAGRAPH BELOW IS FALSE IN EVERY CLAUSE AND HAS BEEN SINCE
+      D271, THE VERY NEXT DECISION.** It is kept verbatim (D178) as the record, with
+      the falsification dated here. What was checked, and how:
+        • *"a play gate no `BoardCondition` spells"* — `BoardCondition` has carried
+          `{ kind: "yourPokemonKoedOnOpponentsLastTurn"; owner?: string; byAttack?: true }`
+          since **D271**, widened with its two narrowings at **D326**, and the
+          interpreter's own arm for it (`interpreter.ts case
+          "yourPokemonKoedOnOpponentsLastTurn"`) **names Unfair Stamp `sv06-165` by id**
+          as one of its three printings. The refusal and the member that refutes it cite
+          the same card.
+        • *"`GameState` carries no datum for … there is no last-turn-KO field"* —
+          `GameState.lastKoTurn` (D271) and `GameState.lastKoMarks:
+          Record<Seat, readonly KnockOutMark[]>` (**types.ts**, D326) are exactly that
+          datum, read by `koedDuringOpponentsLastTurn` and
+          `koedMarksOnOpponentsLastTurn`.
+        • the implied *"and there is nowhere to hang it"* — `registry.ts` has
+          `playableIf?: BoardCondition` and `trainerPlayableIf`, read by `cardplay.ts`'s
+          play gate, and a SHIPPED row already authors
+          `playableIf: { kind: "yourPokemonKoedOnOpponentsLastTurn" }`.
+      **So *"their GATE is not [expressible]"* was true for exactly one decision.** This
+      is the third shipped EXPRESSIBILITY refusal proved false in seven slices (D473's
+      `recordGate` *"if you do"*, D478's `coinFlipGate` tails branch, this) and it is the
+      tightest: the mechanism landed at D270 + 1 and the refusal stood 208 decisions.
+      ⚠️ The two cards are Trainers, so they are outside the ATTACK census this slice
+      steps and are **still unbuilt** — but they are now unbuilt for want of a registry
+      row, not for want of a mechanism, and that is a different entry on a different
+      list. D466's rule: the MEASUREMENT beside a refusal and its CONCLUSION are two
+      claims and each needs its own check.
+
       ⚠️ Unfair Stamp `sv06-165` and Team Rocket's Archer `sv10-170`/`-223` are
       STILL unbuilt after D270, and NOT for this reason: both print *"You can use
       this card only if any of your Pokémon were Knocked Out during your opponent's
@@ -19793,6 +19822,21 @@ const HAND_ATTACH = attachFromZoneAnchor(
     than reinterpreted — `toSelf`, "1 of your Pokémon" and the brace-coded
     singulars all derive to null, and each is driven.
 
+    🛑 **D479 — *"a question no card asks"* IS FALSE AGAINST THE COMMITTED CORPUS.**
+    It is kept above verbatim (D178) as the record. `censusAttackCorpus.ts` **file
+    line 569** prints *"This attack does 30 damage for each {W} Energy attached to
+    this Pokémon. **Before doing damage, you may attach any number of Basic {W}
+    Energy cards from your hand to this Pokémon.**"* — 1 legal printing, an
+    `anyWay: false` `toSelf` destination taking an unbounded batch, which is exactly
+    the shape the paragraph calls unasked.
+    ⚠️ **THE REFUSAL STANDS; ONLY ITS REASON MOVES.** The clause beside it is the one
+    doing the work and it survives the check: `attachEnergyFrom.count` is a `number`,
+    `attachFromHand` carries no `toSelf` rider, and the row is additionally a COMPOUND
+    whose head is a `deriveAttackDamageMultiplier` clause and whose tail must resolve
+    BEFORE the multiplier counts — a SEAM, not a vocabulary, so no widening of this
+    anchor reaches it. D466's rule: a measurement and a conclusion are two claims and
+    each needs its own check; here the conclusion held and the measurement rotted.
+
     ⚠️ THE `$` IS LOAD-BEARING AND THE `[^.]` CLASS IS WHAT MAKES IT OBSERVABLE
     (D234's dropped-`$` mutant, inherited a third time): with the class narrowed
     to the sentence, a build with no `$` MATCHES a trailing printed clause and
@@ -20607,6 +20651,44 @@ const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
     that floated on *"draw 6 cards"* would take both and give one of them a program
     that destroys the deck order the other sentence is printed to preserve. */
 const DISCARD_HAND_DRAW = /^Discard your hand and draw (\d+) cards\.$/;
+
+/** 🆕🆕 D479 — *"Shuffle your hand into your deck. Then, draw {N} cards."* — **1
+    sentence / 1 legal printing** (`censusAttackCorpus.ts` file line 486), and the
+    sentence the anchor DIRECTLY ABOVE has named as somebody else's since D404: its
+    own block says this is *"`handRefresh` and not `discardHand`"*, and this arm is
+    that identification cashed rather than re-derived.
+
+    🛑 **IT BUYS NO OP, NO OP FIELD AND NO OP VALUE.** `handRefresh { who, draw }` has
+    been an `EffectOp` since the M5 hand-refresh slice; `who: "you"` is Youngster's own
+    value and `draw: { kind: "fixed", count }` is Youngster's own draw. What this arm
+    adds is the first ATTACK-side producer of the op — `registry.ts` has authored it on
+    Supporters (Youngster, Judge, Brassius, Katy, Iono) and on one Ability (Skwovet)
+    and nowhere else. The op never parks, never KOs and is keyed on `ctx.seat`, so the
+    attack seat reads the printed *"your"* with no new plumbing (interpreter.ts's
+    `case "handRefresh"` is byte-unchanged).
+
+    ⚠️ **THE COUNT IS CAPTURED, NOT PINNED, AND THE ARGUMENT IS `DISCARD_HAND_DRAW`'s
+    VERBATIM AT A SECOND ADDRESS.** The legal attack column prints **6 and nothing
+    else** on this skeleton, so a literal `6` could never go red off the corpus — but
+    the trainer column carries **5** on Youngster `sv01-198` and **8** on Katy
+    `sv01-177`/`sv01-237`, both hand-authored in `registry.ts` years before this arm,
+    so the number is a printed PARAMETER of the family. §2 of the suite reads this arm
+    AGAINST those two rows rather than against a re-typed expectation.
+
+    🛑 **STRUCTURALLY DISJOINT FROM EVERY SIBLING, SO ITS PLACEMENT IS LEGIBILITY AND
+    NOT BEHAVIOUR** (D467's first preference — no guard, nothing to rot). A string
+    cannot begin two ways: this one begins *"Shuffle "*, `DISCARD_HAND_DRAW`'s begins
+    *"Discard "*, and both are `^…$`. The order is pinned from the other side by an
+    ORDER-PERMUTATION mutant declared `equivalent` (D439's shape).
+
+    ⚠️ **THE NEAR-MISS IS PRINTED IN THE SAME COLUMN ONE LINE AWAY AND IS REFUSED BY
+    THE `(\d+)`.** File line 487 prints *"Shuffle your hand into your deck. Then, draw
+    a card for each card in your opponent's hand."* — the identical head, a DERIVED
+    count. `HandRefreshDraw` has four members (`fixed`, `handPlus`, `prizeCount`,
+    `perSeat`) and **not one of them counts the opponent's HAND**, so that row needs a
+    fifth member and stays on the loud ATTACK_EFFECT_SKIPPED path. That refusal is
+    driven in the suite as this anchor's own falsifier. */
+const SHUFFLE_HAND_DRAW = /^Shuffle your hand into your deck\. Then, draw (\d+) cards\.$/;
 
 /** 🆕🆕 D473 — *"Discard a card from your hand. If you do, draw {N} cards."* — **2
     sentences / 2 legal printings** (file lines 101 and 102, `N` = 2 and 3), and the
@@ -24090,9 +24172,11 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // land on different bodies", which is the single question this op's compound
     // park asks. A phrase naming ONE body ("to this Pokémon", "to 1 of your
     // Benched Pokémon") pins an UNBOUNDED batch to a single target — a shape no
-    // card prints and `attachEnergyFrom.count` could not express either, since
+    // card prints — 🛑 D479: FALSE, corpus file line 569 prints exactly it; see
+    // `ATTACK_HAND_ANY_NUMBER_ATTACH`'s block for the measurement and for the clause
+    // that really refuses it — and `attachEnergyFrom.count` could not express either, since
     // that field is a number. Refused to the loud ATTACK_EFFECT_SKIPPED path
-    // (0 printings today), never reinterpreted.
+    // (1 printing today, blocked on a SEAM), never reinterpreted.
     // 🛑 AND THE SECOND CONDITION IS THE ONE A BUILD THAT ONLY READ `anyWay`
     // WOULD GET SILENTLY WRONG. "your **Benched** Pokémon in any way you like" is
     // an `anyWay` row too, and its riders carry `benchOnly` — a field
@@ -24634,6 +24718,47 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         { op: "discardHand" },
         { op: "drawCards", count },
       ];
+    }
+  }
+
+  // 44b. 🆕🆕 D479 — "Shuffle your hand into your deck. Then, draw {N} cards." — arm
+  //      44's sentence with the VERB and the DESTINATION changed, and the row arm 44's
+  //      own doc block has been pointing at since D404 (*"which is `handRefresh` and
+  //      not `discardHand`"*). ONE anchor, ONE op, ZERO new op members / fields /
+  //      values. See `SHUFFLE_HAND_DRAW` for the capture argument and for the printed
+  //      near-miss on the very next corpus line.
+  //
+  //      🛑 ONE OP AND NOT TWO, WHICH IS THE WHOLE DIFFERENCE FROM ARM 44. `handRefresh`
+  //      moves the hand AND draws inside one op, because the pile it moves into is the
+  //      pile it then draws off and the shuffle has to happen between them — there is no
+  //      separate `shuffleDeck` step to sequence. Arm 44's two ops are independent
+  //      (`discardHand` then `drawCards`), so the printed order is the program order
+  //      there and a single compound op here. Deriving `[{op:"shuffleDeck"},…]` instead
+  //      would shuffle the deck WITHOUT the hand in it and then draw off a pile the
+  //      hand never entered — a program that passes every "how many cards did I draw"
+  //      assertion and is wrong about where they came from.
+  //
+  //      🛑 `who: "you"` IS THE PRINTED SUBJECT AND NOT A DEFAULT. The sentence says
+  //      *"your hand"* and *"your deck"*; the op's other two values reach the opponent's
+  //      zones (`"opponent"`, D268) and both seats' (`"both"`, Judge/Iono), and either
+  //      would empty a hand this sentence never names. §3 drives all three apart.
+  //
+  //      🛑 EVERY EXPLANATORY LINE SITS ABOVE THE `match =` RATHER THAN INSIDE THE ARM,
+  //      arm 44's rule verbatim: the statements below are what this arm's mutant rows
+  //      have to name, and a comment spliced into the body would break every such row
+  //      without a character of the code moving (D403).
+  //
+  //      ⚠️ THE LOCAL IS `redrawn` AND NEITHER `count` NOR `drawn`, DELIBERATELY
+  //      (D446/D448). Three arms above already spell `const count = Number(match[1]);`
+  //      over `if (count >= 1) {`, and D473's arm 44a spells `drawn` for exactly that
+  //      reason — a fourth byte-identical copy of either is how a mutant row that
+  //      describes a DIFFERENT arm starts occurring twice and lands on the wrong one
+  //      (D404 shipped that and its probe reported two GAPs). Do not "tidy" it.
+  match = SHUFFLE_HAND_DRAW.exec(effect);
+  if (match !== null) {
+    const redrawn = Number(match[1]);
+    if (redrawn >= 1) {
+      return [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: redrawn } }];
     }
   }
 
