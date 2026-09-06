@@ -4229,6 +4229,24 @@ site that calls them and ask whether your program reaches it; "it is a gate, so
 describers apply" is a category argument, and category arguments do not survive
 contact with a single-call-site helper.
 
+### An anchor with zero mutant rows is evidence its doc block has never been re-read
+
+D478 found the same anchor at the centre of two independent findings: its refusal
+was **false on the day it was written**, and it had carried **zero mutant rows for
+fifty-four decisions**. Those are not two coincidences.
+
+They reinforce each other in a loop:
+
+1. A refusal stops the family from being built.
+2. An unbuilt family attracts no mutant rows — nobody is editing near it.
+3. No rows means nothing ever forces anyone to re-derive the refusal.
+
+The loop is only broken from outside, by someone opening the declaration the
+refusal names. **So the absence audit (find machinery with no rows) and the refusal
+audit (check a refusal's claim against the type it cites) are the same audit
+approached from two ends** — and when an absence audit turns something up, read its
+doc block before writing rows for it. The rows are the cheaper half of the finding.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
