@@ -4031,6 +4031,28 @@ are, and a successor tracing a decision reads them precisely when the current te
 is silent. **A false claim in an archive is still a false claim**, and it is more
 dangerous there than in live text, because nothing downstream reddens when it rots.
 
+### A tool that recovers silently from misuse teaches nothing about the misuse
+
+D475 caused a CLOBBER: the builder edited a source file while the mutation harness
+held a mutant applied. The harness did exactly the right thing — preserved the
+stray edit, restored its own baseline, and reported the collision. The edit was
+recovered by hand and the slice went on.
+
+The whole-corpus sweep then reported **`0 clobber(s)`**, correctly: a CLOBBER is
+scoped to the run that observes it, and the verdict column carries no memory of an
+earlier one. So the only record that it happened is the one written by hand into
+the session log.
+
+**That is why the standing rule is phrased as *never write to the tree while the
+harness is in flight*, not *clean up afterwards*.** Recovery is cheap and the
+incident is invisible a run later, which means nothing accumulates pressure against
+repeating it. When a tool contains a mistake perfectly, the mistake has to be
+recorded somewhere the tool does not reach — otherwise the next occurrence is
+equally cheap and equally uninstructive, indefinitely.
+
+A useful corollary for reading any green run: **the absence of a verdict is not the
+absence of the event.** Ask what the run could not have seen.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
