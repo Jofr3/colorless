@@ -4108,6 +4108,28 @@ adding a required field, `precheck` for `find` breakage and then read every
 dependent row's `replace` for the same omission; the first is automatic and the
 second is not.
 
+### `precheck` guarantees every `find` resolves; nothing guarantees every `replace` compiles
+
+A mutant row has two halves and they fail differently. `precheck` reads every
+`find` and proves it occurs exactly once in its target — that half is gated, and a
+break is reported in seconds. The `replace` half has no gate at all: it is never
+compiled until the row runs, and a `replace` that no longer type-checks reports
+**ERROR**, which is neither KILLED nor SURVIVED.
+
+That matters most when a change makes a field **required**. D476 did, and four
+pre-existing rows had `replace` strings that omitted the new field. `precheck`
+caught their `find` breakage; nothing would have caught the `replace` breakage
+except running them.
+
+Two consequences worth keeping:
+
+- **After adding a required field, read every dependent row's `replace`, not just
+  its `find`.** The first is automatic; the second is manual and easy to skip
+  precisely because the first passed.
+- **State `0 error(s)` explicitly in a sweep prediction.** A prediction phrased only
+  as killed-plus-survived cannot distinguish a clean run from one where rows failed
+  to compile, because ERROR rows fall outside both terms.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
