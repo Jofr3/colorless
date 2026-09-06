@@ -440,6 +440,7 @@ describe("the fixtures' printed text — the sentence is load-bearing", () => {
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+      face: "heads",
     });
   });
 

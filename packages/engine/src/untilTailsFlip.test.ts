@@ -907,6 +907,7 @@ describe("the two `For each heads` sentences — one BUILT at D463, one never pr
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      face: "heads",
     });
     for (const sentence of FOR_EACH_HEADS) {
       // …and by nothing else in the family either, so what reads [0] is ONE reader and

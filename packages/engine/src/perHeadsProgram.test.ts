@@ -161,11 +161,23 @@ const DIG_A_LITTLE = "Flip a coin. If heads, discard the top card of your oppone
     ONE REASON IS N REFUSALS UNTIL EACH HAS BEEN PRICED**: the shared reason was a COST, which
     the paragraph below already said in prose while this array still asserted it as a fact.
     What is left is refused on two DIFFERENT counts and neither is about parking — line 217 by
-    a FACE axis, line 219 by its consequent. */
+    a FACE axis, line 219 by its consequent.
+
+    🆕🆕 **D476 — THE SET IS NOW ONE, AND THE FACE AXIS IS BUILT.** Line 217 leaves through
+    `AttackCoinFlip.programPerHeads.face`; what is left is line 219 alone, refused by its
+    CONSEQUENT (a heads count read as an "up to" ceiling by one op, not a repeat) and by
+    nothing else. ⚠️ **THE BYTE PINS ON THE ROW THAT LEFT ARE KEPT, NOT DELETED** — D463's
+    rule read the other way round: they were never evidence the sentence was refused, they are
+    evidence it is the sentence the CORPUS prints. */
 const OUT_OF_SCOPE = [
-  "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",
   "Flip 3 coins. Put a number of cards up to the number of heads from your discard pile into your hand.",
 ] as const;
+
+/** 🆕🆕 **D476 — THE ROW THIS FILE REFUSED FOR TWENTY-FOUR DECISIONS AND NOW DERIVES**,
+    corpus file line 217 verbatim. A NAMED SET of one rather than a deletion, for the reason
+    `BUILT_AT_D463` is one: every rung below that used to say "this stays loud" now says the
+    opposite about it, and a deleted array says nothing at all (D418). */
+const BUILT_AT_D476 = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
 
 /** 🆕🆕 **D463 — THE TWO ROWS THIS FILE REFUSED AND NOW DERIVES**, verbatim off
     `censusAttackCorpus.ts` file lines 200 and 234, in that order. Kept as a NAMED SET rather
@@ -497,7 +509,7 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     // for 322 decisions. A byte pin on an invented string is green by construction;
     // membership in the measured corpus is not.
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
-    for (const sentence of [...OUT_OF_SCOPE, ...BUILT_AT_D463]) {
+    for (const sentence of [...OUT_OF_SCOPE, ...BUILT_AT_D476, ...BUILT_AT_D463]) {
       expect(sentence).toBe(sentence.trim());
       expect(sentence).not.toContain(RSQUO);
       expect(corpus.has(sentence), `not a corpus sentence: ${sentence}`).toBe(true);
@@ -510,22 +522,28 @@ describe("the printed sentences — the fixture-text-verbatim guards", () => {
     }
     // The printing counts, off the corpus rather than off this file: three singletons
     // and one pair. A set that drifted onto a different sentence would move these.
-    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([1, 2]);
+    expect(OUT_OF_SCOPE.map((sentence) => corpus.get(sentence))).toEqual([2]);
+    expect(BUILT_AT_D476.map((sentence) => corpus.get(sentence))).toEqual([1]);
     expect(BUILT_AT_D463.map((sentence) => corpus.get(sentence))).toEqual([1, 1]);
 
-    // OUT_OF_SCOPE[0] — line 217, the FACE axis. The ONLY corpus sentence in this whole
-    // family that counts TAILS, which is why the axis has one printing to weigh it against.
-    expect(OUT_OF_SCOPE[0].length).toBe(66);
-    expect(utf8Bytes(OUT_OF_SCOPE[0])).toBe(67);
-    expect(OUT_OF_SCOPE[0]).toContain("For each tails,");
-    expect(OUT_OF_SCOPE.filter((s) => s.includes("For each tails,"))).toHaveLength(1);
-    // OUT_OF_SCOPE[1] — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
+    // 🆕🆕 BUILT_AT_D476[0] — line 217, the FACE axis, BUILT. The ONLY corpus sentence in this
+    // whole family that counts TAILS, which is why the axis has exactly one printing — a fact
+    // about the column that is still true after the build and is asserted here for that reason.
+    expect(BUILT_AT_D476[0].length).toBe(66);
+    expect(utf8Bytes(BUILT_AT_D476[0])).toBe(67);
+    expect(BUILT_AT_D476[0]).toContain("For each tails,");
+    expect(
+      [...OUT_OF_SCOPE, ...BUILT_AT_D476, ...BUILT_AT_D463].filter((s) =>
+        s.includes("For each tails,"),
+      ),
+    ).toHaveLength(1);
+    // OUT_OF_SCOPE[0] — Oinkologne, line 219: shares WUGTRIO'S OPENING verbatim — "Flip 3
     // coins." — and nothing else. A heads COUNT read as an "up to" ceiling by one op, not a
     // repeat, which is why it is refused by the consequent rather than by the count.
-    expect(OUT_OF_SCOPE[1].startsWith("Flip 3 coins. ")).toBe(true);
+    expect(OUT_OF_SCOPE[0].startsWith("Flip 3 coins. ")).toBe(true);
     expect(UNDERSEA_TUNNEL.startsWith("Flip 3 coins. ")).toBe(true);
-    expect(OUT_OF_SCOPE[1]).not.toContain("For each heads");
-    expect(OUT_OF_SCOPE[1].length).toBe(100);
+    expect(OUT_OF_SCOPE[0]).not.toContain("For each heads");
+    expect(OUT_OF_SCOPE[0].length).toBe(100);
     // 🆕🆕 D463 — BUILT_AT_D463[0], line 200: the PRINTED-count `discardEnergy`. It names a
     // Pokémon, so its bytes exceed its length by one (the é). The byte pins are KEPT after the
     // build, for D452's reason read the other way round: they were never evidence the sentence
@@ -548,6 +566,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+      face: "heads",
     });
     // THE MEMBER IS THE POINT, not just the payload: a `perHeads` reading would fold
     // a number this sentence does not print, and a `bonusOnHeads` one would add it to
@@ -567,6 +586,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+      face: "heads",
     });
     // THE SLICE, IN ONE ASSERTION: same member, same op, DIFFERENT flip count. Count
     // and consequent are independent axes — D128's doc block has claimed it since it
@@ -598,6 +618,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+      face: "heads",
     });
     expect(
       deriveAttackCoinFlip(FIXTURE_POOL["swsh10.5-022"]?.attacks?.[HAVOC_INDEX]?.effect ?? ""),
@@ -605,6 +626,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+      face: "heads",
     });
   });
 
@@ -623,6 +645,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
           ops: [{ op: "discardDeckTop", whose: "opponent", count: mill }],
+          face: "heads",
         });
       }
     }
@@ -635,6 +658,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
         kind: "programPerHeads",
         flips: { kind: "untilTails" },
         ops: [{ op: "discardDeckTop", whose: "opponent", count: mill }],
+        face: "heads",
       });
     }
     // THE TWO NUMBERS ARE READ INDEPENDENTLY, stated on the one sentence where they
@@ -646,6 +670,7 @@ describe("deriveAttackCoinFlip — ONE consequent, TWO flip counts, ZERO table r
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 9 }],
+      face: "heads",
     });
     expect(swapped).not.toEqual(
       deriveAttackCoinFlip(
@@ -788,6 +813,7 @@ describe("constructed near-misses stay NULL", () => {
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+      face: "heads",
     });
     // 🛑 AND THE TWO SPELLINGS ARE THE SAME VALUE AT COUNT 1, which is the whole
     // argument for two anchors rather than one optional group: they agree where the
@@ -821,6 +847,7 @@ describe("constructed near-misses stay NULL", () => {
       kind: "programPerHeads",
       flips: { kind: "printed", count: 10 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+      face: "heads",
     });
     expect(
       deriveAttackCoinFlip("Flip 11 coins. For each heads, discard the top 3 cards of your opponent's deck."),
@@ -953,11 +980,13 @@ describe("constructed near-misses stay NULL", () => {
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 3 }],
+      face: "heads",
     });
     expect(deriveAttackCoinFlip(`  ${WREAK_HAVOC}\n`)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+      face: "heads",
     });
   });
 
@@ -1014,7 +1043,7 @@ describe("constructed near-misses stay NULL", () => {
     }
   });
 
-  it("leaves the TWO out-of-scope printings on the loud path, on EVERY reader", () => {
+  it("leaves the ONE out-of-scope printing on the loud path, on EVERY reader", () => {
     // 🆕 D452 — and the strong form: not "on the five readers this file imports"
     // but on the WHOLE live surface, taken off the module. A refusal rung that names
     // its own reader list is a rung that goes QUIET when a thirteenth reader claims
@@ -1026,6 +1055,29 @@ describe("constructed near-misses stay NULL", () => {
       expect(deriveAttackDamageBonus(sentence)).toBeNull();
       expect(deriveAttackDamageMultiplier(sentence)).toBeNull();
       expect(deriveAttackRequirement(sentence)).toBeNull();
+    }
+    // 🆕🆕 **D476 — THE OTHER HALF OF WHAT THIS LOOP USED TO COVER, INVERTED IN THE SAME
+    // RUNG.** Line 217 used to sit in the array above; the null it asserted is replaced by a
+    // reading that names the member, the FACE and the op, so a build that read the sentence at
+    // all would pass a `not.toBeNull()` and still redden here (D418). The FACE is what makes
+    // this stronger than the D463 inversion below: the two anchors that share this opening
+    // shape differ in one word of the sentence and one field of the value.
+    for (const built of BUILT_AT_D476) {
+      expect(resolvedByAnyReader(built), built).toBe(true);
+      expect(deriveAttackCoinFlip(built), built).toEqual({
+        kind: "programPerHeads",
+        flips: { kind: "printed", count: 3 },
+        ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
+        face: "tails",
+      });
+      // The FOUR other readers still refuse it, which is the "one reader owns the sentence"
+      // claim asserted rather than assumed — and `deriveAttackEffect`'s null is the one that
+      // matters, because the string ENDS in `SELF_DISCARD_ONE`'s exact bytes apart from the
+      // capital, so a float there would discard once flatly AND once per tails.
+      expect(deriveAttackEffect(built), built).toBeNull();
+      expect(deriveAttackDamageBonus(built), built).toBeNull();
+      expect(deriveAttackDamageMultiplier(built), built).toBeNull();
+      expect(deriveAttackRequirement(built), built).toBeNull();
     }
     // 🆕🆕 **D463 — THE SAME RUNG, INVERTED, AND IT IS STRONGER THAN THE ONE IT REPLACES.**
     // It used to say: swap the `discardEnergy` consequent for a mill and the sentence starts

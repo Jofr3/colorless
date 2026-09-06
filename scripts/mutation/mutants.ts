@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.373.0";',
+    find: 'export const engineVersion = "0.374.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -21989,8 +21989,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D452",
     what: "\u26a0 **THE ATTACKER MILLS ITSELF** — `whose: \"opponent\"` becomes `\"self\"`, the op's other member and the one D131 widened the field for. The event count, the flip rows and every census figure are identical; the cards come off the wrong side of the table",
     file: "packages/engine/src/effects.ts",
-    find: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n        }\n      : null;\n  }',
-    replace: '          ops: [{ op: "discardDeckTop", whose: "self", count: 1 }],\n        }\n      : null;\n  }',
+    // ⚠ RE-ANCHORED AT D476, AND NOT A CHARACTER OF WHAT IT MUTATES MOVED. The row
+    //    anchors THROUGH the arm's closing braces (that is its disambiguation from the
+    //    twin `ops:` lines elsewhere in this file), and `programPerHeads` gained a
+    //    REQUIRED `face` line between the two — so the `find` had to grow the new line
+    //    and the `replace` had to grow it too, or the mutant would not COMPILE and the
+    //    row would report ERROR instead of KILLED.
+    find: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n          face: "heads",\n        }\n      : null;\n  }',
+    replace: '          ops: [{ op: "discardDeckTop", whose: "self", count: 1 }],\n          face: "heads",\n        }\n      : null;\n  }',
     expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
   },
   {
@@ -22034,8 +22040,10 @@ export const MUTANTS: Mutant[] = [
     decision: "D452",
     what: "\u26a0 **THE HAND ARM EMITS THE MILL** — the neighbouring arm's literal, copied verbatim, which is the single likeliest mistake in a file where the two arms were written in one pass and differ only in their `ops:` line. The flips, the sentence, the census and every version figure are identical; the wrong ZONE is emptied",
     file: "packages/engine/src/effects.ts",
-    find: '          ops: [{ op: "randomFromOpponentHand", to: "discard" }],\n        }\n      : null;\n  }',
-    replace: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n        }\n      : null;\n  }',
+    // ⚠ RE-ANCHORED AT D476 for the sibling row's reason, verbatim: the `face` line the
+    //    required field added sits inside this row's brace anchor, and both halves grow it.
+    find: '          ops: [{ op: "randomFromOpponentHand", to: "discard" }],\n          face: "heads",\n        }\n      : null;\n  }',
+    replace: '          ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],\n          face: "heads",\n        }\n      : null;\n  }',
     expectKilledBy: ["packages/engine/src/perHeadsConsequent.test.ts"],
   },
   {
@@ -23620,8 +23628,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D463",
     what: "⚠ **THE NEIGHBOURING ARM'S LITERAL, COPIED VERBATIM** — D452's `randomFromOpponentHand` where this arm's `discardEnergy` belongs, which is the single likeliest mistake in a file where four `programPerHeads` arms were written to the same skeleton and differ ONLY in their `ops:` line. Every flip, every census figure and every version figure is identical; the wrong ZONE is emptied, and the op that consumes `rngState` runs where an op that parks should have",
     file: "packages/engine/src/effects.ts",
-    find: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n        }\n      : null;\n  }",
-    replace: "          ops: [{ op: \"randomFromOpponentHand\", to: \"discard\" }],\n        }\n      : null;\n  }",
+    // ⚠ RE-ANCHORED AT D476 for the two D452 rows' reason, verbatim.
+    find: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"heads\",\n        }\n      : null;\n  }",
+    replace: "          ops: [{ op: \"randomFromOpponentHand\", to: \"discard\" }],\n          face: \"heads\",\n        }\n      : null;\n  }",
     expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
   },
   {
@@ -23647,7 +23656,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D463",
     what: "⚠ **D130's EXPANSION LOOP HAD ZERO ROWS — needled at this head and it came back EMPTY** (`repeated.push`, `coinFlip.ops`, `expanded.length > 0`: 0 hits each in this file), so the line that spends a heads count into a program has been unpinned since 0.81.0. Here it counts FACES instead of HEADS. Every sentence still derives, every literal is right, the coin rows are identical — and a two-flip attack that came up heads once runs its op TWICE. Drivable end to end only now, because D463 is the first consequent whose copies are individually observable (each one parks)",
     file: "packages/engine/src/attack.ts",
-    find: "      for (let i = 0; i < heads; i += 1) repeated.push(...coinFlip.ops);",
+    // ⚠ RE-POINTED AT D476, AND THE CLAIM IS UNCHANGED WHILE THE BYTES MOVED. D476
+    //    made the expansion count the member's PRINTED FACE rather than `heads`, so the
+    //    loop bound is `onPrintedFace` now — the same line, saying the same thing about a
+    //    parameterised face. The mutation is still "expand once per FLIP", which on this
+    //    slice's board is three copies where the print says two, and it is still the only
+    //    row on D130's expansion loop.
+    find: "      for (let i = 0; i < onPrintedFace; i += 1) repeated.push(...coinFlip.ops);",
     replace: "      for (let i = 0; i < faces.length; i += 1) repeated.push(...coinFlip.ops);",
     expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
   },
@@ -25222,5 +25237,172 @@ export const MUTANTS: Mutant[] = [
     find: "      flips =\n        countAttachedEnergy(state, ownActive, null) +\n        (foeActive === null ? 0 : countAttachedEnergy(state, foeActive, null));",
     replace: "      flips =\n        providedEnergy(state, ownActive).length +\n        (foeActive === null ? 0 : providedEnergy(state, foeActive).length);",
     expectKilledBy: ["packages/engine/src/bothActivesFlipCount.test.ts"],
+  },
+  // ── 🆕🆕 D476 — THE FACE AXIS (corpus FILE LINE 217, *"Flip 3 coins. For each
+  //    tails, discard an Energy from this Pokémon."*, 1 legal printing). SIXTEEN rows:
+  //    FOUR over the new anchor, SIX over the new arm, TWO over the flip site's expansion,
+  //    TWO on the FACE the five pre-existing arms now say by hand, and TWO from an
+  //    ABSENCE AUDIT.
+  //
+  //    🛑 THE ABSENCE AUDIT, NEEDLED AT THIS HEAD AND REPORTED AS A FINDING (D431/D452/D463):
+  //    `SELF_DISCARD_ONE` / `coinFlip.face` / `ATTACK_COIN_SELF_ENERGY_PER_TAILS` /
+  //    `selfEnergyTails` — **0 hits each** in this file. The bare self-discard anchor has
+  //    been unpinned since 0.x, and D476 is the slice that makes both of its ends
+  //    load-bearing a second time. Two rows close it.
+  //
+  //    ⚠ **A ROW DELIBERATELY NOT WRITTEN, AND IT IS D475's RULE APPLIED**: there is no
+  //    `face` -> `face?` row. Making the field OPTIONAL changes no answer — every producer
+  //    still writes the key, every reader still reads it, and the mutant is byte-identical
+  //    in behaviour — so it is not a weak row, it is not a row. **The observable form of
+  //    that defect is `D476-arm-counts-heads`**, which is what a producer that dropped the
+  //    key under an optional field would have computed.
+  //
+  //    ⚠ THE ARM ROWS ANCHOR ON THE `ops:` LINE PLUS THE `face:` LINE rather than on
+  //    either alone: the op literal is `SELF_DISCARD_ONE`'s output byte for byte and occurs
+  //    elsewhere in the file, and `face: "tails"` is one token. The pair is unique and says
+  //    which arm it means (D448's byte-twin hazard, avoided by construction).
+  {
+    id: "D476-anchor-loses-its-caret",
+    decision: "D476",
+    what: "⚠ **THE UNANCHORED ANCHOR** — without `^` the pattern matches mid-sentence, so a compound printing whose TAIL reads like corpus line 217 would be claimed WHOLE by the coin reader and its head silently dropped. The family's standing anchor rule (D207's phantom-survivor lesson, in a deriver), and the sibling of D452's and D463's own caret rows.",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_COIN_SELF_ENERGY_PER_TAILS =\n  /^Flip",
+    replace: "const ATTACK_COIN_SELF_ENERGY_PER_TAILS =\n  /Flip",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-anchor-loses-its-terminator",
+    decision: "D476",
+    what: "⚠ **THE OTHER END OF THE SAME ANCHOR.** Without `$` the pattern claims any sentence that BEGINS with corpus line 217 and continues — a compound whose second clause the engine has never seen — so half a printed card would be implemented silently while the rider vanished. Both ends are closed rather than one, which is D452's precedent for an anchor row and D463's for an audit one.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each tails, discard an Energy from this Pokémon\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. For each tails, discard an Energy from this Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-anchor-waits-for-heads",
+    decision: "D476",
+    what: "🛡 **THE ONE-WORD DRIFT THAT IS THE WHOLE SLICE** — the anchor's own `tails` becomes `heads`, which is the pattern D463's printed twin would have been if its victim clause were the self one. It describes a sentence **the column does not print** (measured: the heads×self crossing is 0 rows over all 640), so corpus line 217 falls silently back to the loud `ATTACK_EFFECT_SKIPPED` path while every literal in the file still reads plausibly. The FACE lives in the pattern as well as in the value, and this row is the pattern half.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each tails, discard an Energy from this Pokémon\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. For each heads, discard an Energy from this Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-anchor-hits-the-wrong-body",
+    decision: "D476",
+    what: "🛡 **THE VICTIM IS SPELLED THE OTHER WAY** — `from this Pokémon` becomes `from your Active Pokémon`, which is the same BODY on every board an attack can reach and is nonetheless a string no card prints. The pattern still compiles, still describes a grammatical English sentence, and matches NOTHING in the column, so the printing falls to the loud path. The half of a reading a `not.toBeNull()` cannot see (D463's row one anchor over, on the other seat).",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Flip (\\d+) coins\\. For each tails, discard an Energy from this Pokémon\\.$/;",
+    replace: "  /^Flip (\\d+) coins\\. For each tails, discard an Energy from your Active Pokémon\\.$/;",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-counts-heads",
+    decision: "D476",
+    what: "🛑 **THE CENTRAL ROW, AND THE NEAREST WRONG SIBLING: `face: \"tails\"` BECOMES `face: \"heads\"`.** It is the value four of the member's five other arms carry, so it is a neighbour's REAL code and not a straw — and it is SILENT IN EVERY CENSUS: the sentence still derives, `resolvedByAnyReader` still answers true, `BUILT.attack` still steps 1, RESIDUE still falls 1/1, the reader surface is unmoved, the three coin rows are byte-identical and the prompt still says \"Discard an Energy from this Pokémon.\" The attacker simply discards once where the card says twice. ⚠ **IT IS KILLABLE ONLY ON A MIXED BOARD**: an all-heads or an all-tails board answers the same number under both builds, which is why §5's load-bearing case is 1 heads / 2 tails over an ODD flip count.",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    replace: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"heads\",",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-discards-the-opponents-energy",
+    decision: "D476",
+    what: "🛡 **SILENT IN EVERY CENSUS — THE ENERGY COMES OFF THE WRONG SIDE OF THE TABLE.** `from: \"yourActive\"` becomes `\"opponentActive\"`, which is the value the SAME op carries in D463's two arms directly above and in eight other derived arms. The sentence derives, the face is right, the count is right, the flips are identical — and the printed COST becomes a printed ATTACK. `discardVictimSeat` also starts routing it through §11, so a blocked defender would refuse what the attacker was supposed to pay.",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    replace: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-narrows-to-special-energy",
+    decision: "D476",
+    what: "🛡 **SILENT IN EVERY CENSUS — THE FILTER NARROWS TO D361's SIBLING.** `{ kind: \"anyEnergy\" }` becomes `{ kind: \"specialEnergy\" }`, a real value the same op takes on four other printed sentences and on Mawile's Ability. Everything else is right, and an attacker carrying only Basic Energy — which is every board in this suite and most boards anywhere — pays nothing at all, so the card's whole printed cost quietly disappears.",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    replace: "          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"specialEnergy\" } }],\n          face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-hardcodes-three-flips",
+    decision: "D476",
+    what: "⚠ **THE FLIP COUNT STOPS BEING A PARAMETER** — the arm returns a literal 3 instead of the captured digit, which is right for the ONE sentence the column prints today and wrong for the shape. `AttackFlipCount.printed` is parameterised on purpose (D127/D128), so a build pinned to today's printing derives `Flip 4 coins.` as three flips. D452's and D463's identical rows one arm over, and the reason §6 walks the count at a FIXED face rather than asserting the printed 3 alone.",
+    file: "packages/engine/src/effects.ts",
+    find: "          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],",
+    replace: "          flips: { kind: \"printed\", count: 3 },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-loses-the-plural-floor",
+    decision: "D476",
+    what: "⚠ **`Flip 1 coins.` STARTS DERIVING** — `flips >= 2` is what keeps the one-flip form on D126's `Flip a coin.` reading, because the regex's own \"coins\" is PLURAL and \"Flip 1 coins.\" is neither English nor in the pool. Anchored THROUGH this arm's `face:` line, because the guard line is byte-identical to D452's two arms' and D463's, which is D448's distant-byte-twin hazard now living four times over inside one function.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    replace: "    return flips >= 1 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-arm-loses-the-printed-ceiling",
+    decision: "D476",
+    what: "⚠ **THE INGESTED-TEXT CEILING GOES** — `flips <= MAX_PRINTED_FLIPS` is what stops one malformed third-party row spinning the flip loop AND the expansion, which grows one copy of a PARKING op per matching face. Under this build a `Flip 99 coins.` row would author up to 99 sequential `effect:choose` phases in one serialized continuation, on the ATTACKER's own board. Invisible on every printing the column carries, which is exactly the defect the constant exists for.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return flips >= 2 && flips <= MAX_PRINTED_FLIPS\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    replace: "    return flips >= 2\n      ? {\n          kind: \"programPerHeads\",\n          flips: { kind: \"printed\", count: flips },\n          ops: [{ op: \"discardEnergy\", from: \"yourActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-expansion-counts-heads-literally",
+    decision: "D476",
+    what: "🛑 **THE READER HALF OF THE FACE AXIS, AND IT IS A SEPARATE CLAIM FROM THE ARM'S.** The tally stops reading the member's field and hard-codes `\"heads\"` — the pre-D476 behaviour of this line, verbatim, which is what a build that added the FIELD and forgot the READER would look like. Every derived value is right, `face: \"tails\"` is sitting there in the object, and the expansion ignores it. Two rows on one axis because a field and its reader are two things that can each be wrong alone (D473-i: a reader can be correct while something one layer over is not).",
+    file: "packages/engine/src/attack.ts",
+    find: "      for (const drawn of faces) if (drawn === coinFlip.face) onPrintedFace += 1;",
+    replace: "      for (const drawn of faces) if (drawn === \"heads\") onPrintedFace += 1;",
+    expectKilledBy: ["packages/engine/src/perTailsSelfDiscard.test.ts"],
+  },
+  {
+    id: "D476-expansion-normalises-through-the-heads-count",
+    decision: "D476",
+    what: "🛑 **THE NORMALISATION THE CODE'S OWN COMMENT REFUSES, INSTALLED.** `faces.length - heads` is the same number as a tails tally on EVERY board, so this build is correct for corpus line 217 and inverts all four heads printings — it makes `face` a flag on a heads-shaped count instead of the field it is, which is exactly what `AttackFlipThreshold`'s block refuses one type up. ⚠ **IT IS THEREFORE NOT KILLED BY THIS SLICE'S OWN SUITE AT ALL**: the killer is D463's board, where the mill and the opponent-side discard must still run once per HEADS. The row exists because the refusal was written in prose and had nothing asserting it.",
+    file: "packages/engine/src/attack.ts",
+    find: "      let onPrintedFace = 0;\n      for (const drawn of faces) if (drawn === coinFlip.face) onPrintedFace += 1;",
+    replace: "      const onPrintedFace = faces.length - heads;",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D476-d463-printed-arm-counts-tails",
+    decision: "D476",
+    what: "🛡 **THE FACE INVERTED ON A NEIGHBOUR'S ARM, WHICH IS WHAT A REQUIRED FIELD BUYS.** D463's printed `discardEnergy` arm says `face: \"heads\"` by hand now, and here it says `\"tails\"` — corpus line 200 would strip the defender's Energy once per TAILS. Under an OPTIONAL field this defect would have had a second, quieter spelling (omit the key entirely) and this row could not have been written against it; the required field is what makes the wrong value the ONLY way to be wrong, and therefore the only thing to pin.",
+    file: "packages/engine/src/effects.ts",
+    find: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"heads\",",
+    replace: "          ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n          face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/perHeadsEnergyDiscard.test.ts"],
+  },
+  {
+    id: "D476-until-tails-arm-counts-tails",
+    decision: "D476",
+    what: "🛡 **THE SAME INVERSION ON THE OTHER COUNT MEMBER**, which is what makes the pair a statement about the GRID rather than about one arm: this is `untilTails × heads`, Krookodile sv01-117, and under this build it discards once per TAILS — and a sequence that stops AT the first tails has exactly ONE, so the card would strip exactly one Energy however long it flipped. The face and the count really are read independently, and two rows on two different count members are how that is asserted rather than argued.",
+    file: "packages/engine/src/effects.ts",
+    find: "      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n      face: \"heads\",",
+    replace: "      ops: [{ op: \"discardEnergy\", from: \"opponentActive\", filter: { kind: \"anyEnergy\" } }],\n      face: \"tails\",",
+    expectKilledBy: ["packages/engine/src/untilTailsFlip.test.ts"],
+  },
+  {
+    id: "D476-audit-bare-self-discard-anchor-was-unpinned",
+    decision: "D476",
+    what: "⚠ **`SELF_DISCARD_ONE` HAD ZERO ROWS — needled at this head and it came back EMPTY**, so the anchor that has read *\"Discard an Energy from this Pokémon.\"* since 0.x has been unpinned for its whole life. D476 makes its `^` doubly load-bearing, exactly as D463 made `FLIP_OPPONENT_ACTIVE_DISCARD`'s: corpus line 217 ENDS in this pattern's words apart from the capital, and a float here would put TWO readers on one printing at TWO different sites — a flat discard at the §8.5 tail AND one per tails at the flip site. D452's and D463's rule for an audit finding is to CLOSE the gap rather than note it; two rows here do that.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_DISCARD_ONE = /^Discard",
+    replace: "const SELF_DISCARD_ONE = /Discard",
+    expectKilledBy: ["packages/engine/src/anyTargetSnipe.test.ts"],
+  },
+  {
+    id: "D476-audit-bare-self-discard-terminator-was-unpinned",
+    decision: "D476",
+    what: "⚠ **THE SAME UNPINNED ANCHOR'S OTHER END.** Without `$` the pattern claims any sentence that BEGINS with the bare self-discard and continues — Raifort's real shape, which `derivedSearchTopOrder.test.ts` has carried as a constructed near-miss for the whole time this anchor had no row — so half a printed card would be implemented silently. Both ends closed, D463's precedent verbatim.",
+    file: "packages/engine/src/effects.ts",
+    find: "const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\\.$/;",
+    replace: "const SELF_DISCARD_ONE = /^Discard an Energy from this Pokémon\\./;",
+    expectKilledBy: ["packages/engine/src/derivedSearchTopOrder.test.ts"],
   },
 ];

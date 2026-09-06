@@ -16793,6 +16793,19 @@ const ATTACK_COIN_MILL_UNTIL_TAILS =
 //     the pool offers exactly ONE printing to weigh it against. D442's rule for a
 //     boolean rider and D448's for a discriminator-erased union member disagree
 //     about which is right here, and one printing decides it badly.
+//     🆕🆕 **D476 IS THAT SLICE AND THE ROW IS BUILT** — see
+//     `ATTACK_COIN_SELF_ENERGY_PER_TAILS` below for the anchor and
+//     `AttackCoinFlip.programPerHeads.face` for the axis. ⚠️ **THE REFUSAL WAS RIGHT
+//     TO REFUSE AND WRONG ABOUT THE DISAGREEMENT**: D442 and D448 do not in fact
+//     disagree here, because the two shapes they argue over are not the two shapes
+//     on offer. D440's rule decides it in one line — *identical payload plus a
+//     discriminator ⇒ a FIELD* — and a `programPerTails` MEMBER would carry
+//     `flips` and `ops` and nothing else, i.e. the fourth member's payload byte for
+//     byte. **The one printing was never what had to decide it; the PAYLOAD was**,
+//     and the payload is legible with zero printings (D440 at
+//     `AttackFlipThreshold`, D460, verbatim). What one printing genuinely could not
+//     decide is whether the field is OPTIONAL or REQUIRED, and that is decided by
+//     the degradation rather than by the count — see the member's own block.
 //
 // Disjoint from the two anchors above by their own noun phrases — "the top (\d+)
 // cards" cannot span "the top card", and neither mill pattern can span "a random
@@ -16853,6 +16866,69 @@ const ATTACK_COIN_ENERGY_PRINTED =
   /^Flip (\d+) coins\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
 const ATTACK_COIN_ENERGY_UNTIL_TAILS =
   /^Flip a coin until you get tails\. For each heads, discard an Energy from your opponent['’]s Active Pokémon\.$/;
+
+// 🆕🆕 D476 — THE FACE AXIS, AND THE LAST OPEN AXIS OF THE PRINTED
+// `For each ⟨face⟩, ⟨op⟩` FAMILY. "Flip 3 coins. For each tails, discard an Energy
+// from this Pokémon." — corpus FILE LINE 217, **1 sentence / 1 Standard-legal
+// printing**, the row D463 named when it named this axis and the row D452 refused
+// under a reason it shared with two others.
+//
+// ⚠️ MEASURED AT THIS HEAD OVER `legalAttackCorpus()` — the `legal_standard = 1`
+// column and NOT the local D1 (D449's two-populations rule). Over all **640 rows**:
+//   · this anchor as written  — **1 sentence / 1 printing** (line 217, exactly).
+//   · /For each tails,/ anywhere — **1 / 1**. The whole printed family of a
+//     per-TAILS CONSEQUENT is this one row; there is no second one to generalise to.
+//   · /for each tails/ anywhere — **1 / 1**, and it is a DIFFERENT row (line 669),
+//     a per-tails DAMAGE FOLD. See `AttackCoinFlip`'s block for why that one is not
+//     owed this field and what would make it owed.
+//
+// 🛑 THREE GENERALISATIONS WERE MEASURED BEFORE THE NARROW ANCHOR WAS WRITTEN
+// (D472: a wider anchor that claims the same rows is pure risk), and all three are
+// refused:
+//   · **Loosening D463's `ATTACK_COIN_ENERGY_PRINTED` to `(heads|tails)`** — claims
+//     **the identical 1/1 it claims today** (line 200 alone), because the tails
+//     printing names a different VICTIM. Pure risk by D472, and it would newly admit
+//     *"Flip N coins. For each tails, discard an Energy from your opponent's Active
+//     Pokémon."*, which the column does not print.
+//   · **One anchor over both face AND victim** (`(heads|tails)` ×
+//     `(?:your opponent['’]s Active|this)`) — claims **2/2**, so it is a real
+//     widening, and it is still refused: the face and the victim **CO-VARY** in this
+//     column (heads↔opponent, tails↔self), so one pattern spanning both would admit
+//     the two crossings nobody prints and author two cards (D451's co-variance rule
+//     at the singular mill, D190b). Two anchors say the two printed things and refuse
+//     the crossings — the fourth time this family has paid that price (D130, D452,
+//     D463, here).
+//   · **Admitting the one-flip spelling** (`Flip (?:a coin|(\d+) coins)\.`) — claims
+//     **the identical 1/1**. Pure risk again, and it would contradict the family's
+//     `flips >= 2` guard, which exists because the regex's own "coins" is PLURAL.
+//
+// ⚠️ **AND THE UNTIL-TAILS TWIN IS DELIBERATELY ABSENT, WHICH IS D452's CALL AND
+// NOT D463's.** *"Flip a coin until you get tails. For each tails, discard an Energy
+// from this Pokémon."* is printed by **ZERO** rows (measured), and an anchor for it
+// would author a card. D463 built BOTH counts because the column printed both; the
+// test is what the column prints, never symmetry between the counts — and the two
+// decisions agree rather than conflict.
+//
+// THE CONSEQUENT IS D43's OP AT `SELF_DISCARD_ONE`'s SPELLING, BYTE FOR BYTE:
+// `{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }`.
+// 🛑 **`yourActive` AND NOT `self`, AND THE TWO ARE NOT INTERCHANGEABLE.** The op's
+// own doc block says the three own-board members are a spot, a side and a body, and
+// `SELF_DISCARD_ONE`'s comment says why the spot is right for this exact printed
+// noun phrase: *"'this Pokémon' is the Active by §8 (only the Active attacks), which
+// is what `from: \"yourActive\"` encodes."* D222's `self` is the member for the
+// printed "this Pokémon" **everywhere §8 does not already make it the Active** — an
+// Ability on a benched host — and reaching for it here would be a SECOND spelling of
+// one printed clause, which is the invariant-between-two-derivers D130's block
+// exists to refuse. ZERO new `EffectOp` members, op FIELDS, op VALUES or readers.
+//
+// Disjoint from the six anchors above by its own noun phrase — no pattern in the
+// family can span "from this Pokémon" — and disjoint from D463's printed twin by the
+// FACE word as well, so the order among the seven is free. It carries **NO `['’]`
+// class**, and that is a measurement rather than an omission: the sentence contains
+// no apostrophe slot at all (D136/D137 class the slots a string HAS). No /i, for the
+// family's other standing reason.
+const ATTACK_COIN_SELF_ENERGY_PER_TAILS =
+  /^Flip (\d+) coins\. For each tails, discard an Energy from this Pokémon\.$/;
 
 /** The most flips a printed attack may call for before this deriver refuses the
     sentence. The pool's maximum is 4 (Unfezant swsh10.5-063, the family's only
@@ -17050,6 +17126,59 @@ export type AttackFlipThreshold = { face: CoinFace; atLeast: number };
         op repeated `heads` times, so the flip site EXPANDS it — `attack.ts`
         appends `heads` copies onto the attack's `program` and the existing tail
         runs them. Named for the contrast with `perHeads`, which folds a NUMBER.
+
+        🆕🆕 **D476 — `face` IS THE THIRD AXIS, AND IT IS A FIELD ON THIS MEMBER
+        RATHER THAN A SIXTH MEMBER, BY D440's RULE READ RATHER THAN COPIED**:
+        *nullary or asymmetric payload ⇒ two members; identical payload ⇒ one member
+        with the discriminator as a field.* A `programPerTails` member would carry
+        `flips` and `ops` and **nothing else** — this member's payload byte for byte
+        — so a member apiece would duplicate the pair that answers "how many flips,
+        and what runs", which is the second answer to one question D159 forbids.
+        **Exactly what D460 did one type up for `AttackFlipThreshold.face`.**
+
+        🛑 **REQUIRED AND NOT OPTIONAL, AND THE DEGRADATION IS MEASURED RATHER
+        THAN CLASSIFIED FROM THE SHAPE (D435).** An optional `face?` defaulting to
+        `"heads"` is genuinely available — nothing persists this union, so there is
+        no version boundary to buy — and it is refused on what a LOST key does: the
+        ops run once per HEADS, so on the only board that distinguishes the two
+        (1 heads / 2 tails over three flips, the board this member's suite is built
+        on) the attacker discards ONE Energy where the card says TWO. No throw, no
+        event difference — the flip rows are byte-identical either way — and a
+        perfectly normal-looking board. That is D425's *plausible-looking wrong
+        answer*, which D425 refused optional for, and NOT D124's benign soft landing.
+        A required field makes the next arm that forgets it a **compile error**.
+        ⚠️ **THE SIBLING ONE TYPE DOWN ALREADY MADE THIS CALL**:
+        `AttackFlipCount.attachedEnergy.energy` is REQUIRED-and-NULLABLE, and its
+        block says why in so many words — *"the difference is the whole reason the
+        field is nullable rather than defaulted"*. The habit is to make the
+        discriminator SAID, never omitted. The price is paid in full and named: the
+        five arms that print "For each heads" write `face: "heads"` by hand.
+
+        ⚠️ **THE MEMBER IS NOT RENAMED, AND THAT IS D438's TEST APPLIED RATHER THAN
+        ITS OUTCOME COPIED.** D438 says rename when a second inhabitant arrives. The
+        precedent that decides it is INSIDE THIS UNION: `perHeadsThenThreshold` has
+        carried a `threshold.face` that is `"tails"` on a real printing (corpus file
+        line 213, *"If both of them are tails"*) since D460, and D460 did not rename
+        it. "PerHeads" names the SHAPE of the fold — one consequent per matching
+        flip — not the face it matches, and the face is the field that says so.
+
+        ⚠️ **`face` SITS AFTER `ops` RATHER THAN AFTER `flips`, AND THE ORDER IS
+        CHOSEN.** The original pair is the two axes D128's block names (count ×
+        consequent), and keeping them adjacent keeps that reading visible.
+
+        🛑 **THE SECOND REASON GIVEN FOR THAT ORDER WAS MEASURED AND WAS HALF FALSE —
+        CORRECTED IN PLACE RATHER THAN QUIETLY (D178/D442).** It said appending the
+        third axis *"leaves five pre-existing mutant `find` strings byte-stable"*. Those
+        five really are stable — they anchor the `kind`/`flips`/`ops` triple and stop
+        there — but the enumeration was taken from a partial grep and the member carries
+        **NINE** rows, not five (D428: never truncate an enumeration; D431: the audit is
+        the finding). The other four anchor THROUGH the arm's closing braces, which is
+        how D452/D463 disambiguated twin `ops:` lines eight thousand lines apart, so the
+        new line lands INSIDE their anchors and all four had to be re-anchored — in
+        `find` **and** in `replace`, because a required field makes a `replace` that
+        omits it fail to COMPILE, and a row that cannot compile reports ERROR rather than
+        KILLED. `precheck` named all four in seconds. **The ordering is therefore justified
+        by the code reason alone; the mutant-corpus reason is withdrawn.**
     It carries no `per`, KEEPS the printed base (there is no damage marker to
     consume — both printings print no `damage` field at all), and explains no
     `+`/`×` modifier, which is the one place `attack.ts` has to name it explicitly
@@ -17073,7 +17202,7 @@ export type AttackCoinFlip =
   | { kind: "bonusOnHeads"; flips: AttackFlipCount; per: number }
   | { kind: "cancelOnTails" }
   | { kind: "perHeads"; flips: AttackFlipCount; per: number }
-  | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[] }
+  | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[]; face: CoinFace }
   | {
       kind: "perHeadsThenThreshold";
       flips: AttackFlipCount;
@@ -17319,6 +17448,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
           ops: [{ op: "discardDeckTop", whose: "opponent", count }],
+          face: "heads",
         }
       : null;
   }
@@ -17334,6 +17464,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "untilTails" },
           ops: [{ op: "discardDeckTop", whose: "opponent", count }],
+          face: "heads",
         }
       : null;
   }
@@ -17352,6 +17483,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
           ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+          face: "heads",
         }
       : null;
   }
@@ -17380,6 +17512,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
           ops: [{ op: "randomFromOpponentHand", to: "discard" }],
+          face: "heads",
         }
       : null;
   }
@@ -17398,6 +17531,7 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
           kind: "programPerHeads",
           flips: { kind: "printed", count: flips },
           ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+          face: "heads",
         }
       : null;
   }
@@ -17414,7 +17548,39 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+      face: "heads",
     };
+  }
+  // 🆕🆕 D476 — THE FACE AXIS, corpus FILE LINE 217. The flip guards are the
+  // family's, verbatim and for the family's reasons: `flips >= 2` because the regex's
+  // own "coins" is PLURAL (the one-flip form is printed "Flip a coin." and is D126's
+  // gate, so "Flip 1 coins." is not English and not in the pool), and
+  // `flips <= MAX_PRINTED_FLIPS` because the digits come from THIRD-PARTY ingested
+  // text and the expansion grows one copy of a PARKING op per matching face. There is
+  // no consequent payload to validate — the op takes no count — which is why this arm
+  // carries the flip guards and nothing else, exactly as D452's two and D463's do.
+  //
+  // 🛑 **`face: "tails"` IS THE WHOLE OF THE NEW READING, AND IT IS WRITTEN HERE
+  // RATHER THAN INFERRED AT THE FLIP SITE.** `attack.ts` counts the printed face
+  // directly; it does NOT compute `faces.length - heads`, which would agree with this
+  // value on every board and is the normalisation `AttackFlipThreshold`'s block
+  // refuses one type up — it would put the arithmetic a layer down and make `face` a
+  // flag on a heads-shaped count instead of the field it is.
+  //
+  // ⚠️ **THE LOCAL IS `selfEnergyTails`** (D446/D448): `perEnergy`, `flips`, `count`
+  // and `per` are already taken in this function, and a byte-twin local is how D475
+  // made a mutant `find` occur twice over a printed noun eight thousand lines away.
+  const selfEnergyTails = ATTACK_COIN_SELF_ENERGY_PER_TAILS.exec(effect);
+  if (selfEnergyTails !== null) {
+    const flips = Number(selfEnergyTails[1]);
+    return flips >= 2 && flips <= MAX_PRINTED_FLIPS
+      ? {
+          kind: "programPerHeads",
+          flips: { kind: "printed", count: flips },
+          ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
+          face: "tails",
+        }
+      : null;
   }
   return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
 }

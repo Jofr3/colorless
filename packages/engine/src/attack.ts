@@ -1574,8 +1574,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   const derived =
     derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
   // REASSIGNABLE since D130, and only from the flip block below: a
-  // `programPerHeads` coin member is expanded into `heads` copies of its ops and
-  // APPENDED here, so the attack's existing tail runs them with no new channel.
+  // `programPerHeads` coin member is expanded into one copy of its ops per flip that
+  // came up on the member's printed `face` (D476) and APPENDED here, so the attack's
+  // existing tail runs them with no new channel.
   // Nothing else in this function writes it.
   let program = authored ?? derived;
   // 🆕🆕 **D428 — THE PRE-DAMAGE READER, AND IT IS DELIBERATELY NOT `program`.**
@@ -2219,17 +2220,35 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         return finishAttack(next, events, action.seat, attackerUid, declared.name);
       }
     } else if (coinFlip.kind === "programPerHeads") {
-      // D130 — THE EXPANSION. One copy of the member's ops per heads, in flip
-      // order, appended to whatever program the attack already had. A `flat` over
-      // `heads` references to the SAME array is safe because `EffectOp`s are plain
+      // D130 — THE EXPANSION. One copy of the member's ops per matching face, in
+      // flip order, appended to whatever program the attack already had. A `flat` over
+      // repeated references to the SAME array is safe because `EffectOp`s are plain
       // frozen-by-convention data the interpreter never mutates — every op reads
       // its own fields and writes only the state it returns — so the copies share
       // structure rather than needing one.
+      //
+      // 🆕🆕 **D476 — THE COUNT IS OVER THE MEMBER'S PRINTED FACE, NOT OVER
+      // `heads`.** This is the FACE axis, the last of the three the family prints
+      // (count × consequent × face), and it is read the same way `perHeadsThenThreshold`
+      // reads its threshold forty lines down: a second spend of the `faces` array this
+      // block already holds, never a second channel. `faces.length - heads` would give
+      // the identical number for `face: "tails"` on every board and is refused for
+      // `AttackFlipThreshold`'s stated reason — it would make `face` a flag on a
+      // heads-shaped count instead of the field it is.
+      //
+      // ⚠️ **THE TALLY IS ITS OWN LOCAL AND NOT THE `heads` ABOVE**, because `heads`
+      // still means heads for the two members that reach the `else` below and for
+      // `cancelOnTails` above — D438's rule that a name describing one axis by accident
+      // becomes false the moment a second inhabitant arrives, applied to the tally
+      // rather than to the member.
+      let onPrintedFace = 0;
+      for (const drawn of faces) if (drawn === coinFlip.face) onPrintedFace += 1;
       const repeated: EffectOp[] = [];
-      for (let i = 0; i < heads; i += 1) repeated.push(...coinFlip.ops);
+      for (let i = 0; i < onPrintedFace; i += 1) repeated.push(...coinFlip.ops);
       const expanded = [...(program ?? []), ...repeated];
-      // Back to NULL when nothing came out of it (zero heads and no prior program),
-      // because null is what the tail below tests for: an empty `EffectOp[]` would
+      // Back to NULL when nothing came out of it (zero of the printed face and no
+      // prior program), because null is what the tail below tests for: an empty
+      // `EffectOp[]` would
       // route the attack through `settleProgram` to say nothing at all, which is a
       // different ending with the same result, and "different ending" is how a
       // no-op grows a KO sweep it did not have.
@@ -2267,9 +2286,9 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
     // WHOLE, so it is a sentence `deriveAttackEffect` refused), which makes the append
     // behaviour-identical today and honest tomorrow.
     //
-    // A FAILED THRESHOLD APPENDS NOTHING AT ALL, which is the same ending zero heads
-    // takes on `programPerHeads`: `program` stays null, the tail's `program !== null`
-    // test is false, and the attack finishes through the no-program path. There is no
+    // A FAILED THRESHOLD APPENDS NOTHING AT ALL, which is the same ending zero of the
+    // printed face takes on `programPerHeads`: `program` stays null, the tail's
+    // `program !== null` test is false, and the attack finishes through the no-program path. There is no
     // "empty program" board and so no second ending with the same result.
     if (coinFlip.kind === "perHeadsThenThreshold") {
       let matching = 0;

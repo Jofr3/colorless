@@ -67,10 +67,14 @@ import {
 // against a string **no card prints**: Krookodile's opening glued to Masquerain's
 // consequent. The real sentence is 78 bytes and is corpus line 216.
 //
-// 🛑 **WHAT IS REFUSED, AND IT IS THE PARK.** Corpus lines 200, 217 and 234 print the
-// same repeat over `discardEnergy`, which PARKS on a genuine choice. That is refused
-// here on COST — see §9, which also disproves D130's claim that a park is "the one
-// thing D130's expansion cannot express".
+// 🛑 **WHAT WAS REFUSED, AND IT WAS THE PARK — AND NOTHING IS REFUSED HERE ANY MORE.**
+// Corpus lines 200, 217 and 234 print the same repeat over `discardEnergy`, which PARKS
+// on a genuine choice. That was refused here on COST — see §9, which also disproves
+// D130's claim that a park is "the one thing D130's expansion cannot express". 🆕🆕
+// **D463 built 200 and 234; D476 built 217 on the FACE axis, so all three of D452's
+// grouped rows are now read, by three slices, on three different reasons.** The lists
+// are RENAMED and the rungs INVERTED rather than deleted (D418), which is why §1 still
+// enumerates five and §9 still exists.
 
 /** Corpus line 201, verbatim off `censusAttackCorpus.ts`. The card that prints it is
     UNRESOLVABLE in this checkout (no D1) and is stated unresolved rather than invented
@@ -101,8 +105,14 @@ const D130_UNTIL =
     are `programPerHeads` over the SHIPPED `discardEnergy` op, and the one that stayed is refused
     by an axis (`For each TAILS`) that has nothing to do with parking.
 
-    What survives, verbatim, is corpus line 217 alone. */
-const REFUSED = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
+    🆕🆕 **D476 BUILT THE LAST ONE, SO THIS FILE NOW REFUSES NOTHING AT ALL, AND THE LIST IS
+    RENAMED RATHER THAN DELETED (D418/D463's own precedent one slice up).** §1's enumeration is
+    a claim about the WHOLE per-face population and would silently shrink by one if the row
+    were merely dropped; §9 is INVERTED onto it instead, so the discrimination the old
+    `toBe(false)` bought is replaced by a stronger one rather than surrendered. **All three of
+    D452's grouped refusals are now built, by three different slices, on three different
+    reasons — which is the grouped-refusal rule's own receipt.** */
+const BUILT_AT_D476 = ["Flip 3 coins. For each tails, discard an Energy from this Pokémon."] as const;
 
 /** 🆕🆕 **D463 — the two rows this file used to refuse and now derives**, verbatim
     off `censusAttackCorpus.ts` file lines 200 and 234. Kept in this suite (rather than only in
@@ -255,7 +265,7 @@ describe("§1 — two sentences, two printings, and the family enumerated", () =
       ([, s]) => /For each (heads|tails),/.test(s) && !s.includes("This attack does"),
     );
     expect(perFace.map(([, s]) => s).sort()).toEqual(
-      [SINGLE_MILL, HAND_PICK, ...BUILT_AT_D463, ...REFUSED].sort(),
+      [SINGLE_MILL, HAND_PICK, ...BUILT_AT_D463, ...BUILT_AT_D476].sort(),
     );
     expect(perFace).toHaveLength(5);
     expect(perFace.reduce((n, [units]) => n + units, 0)).toBe(5);
@@ -296,9 +306,14 @@ describe("§1 — two sentences, two printings, and the family enumerated", () =
   it("both resolve through the reader SURFACE, and the surface did not grow", () => {
     expect(resolvedByAnyReader(SINGLE_MILL)).toBe(true);
     expect(resolvedByAnyReader(HAND_PICK)).toBe(true);
-    // …and the ONE surviving refusal stays unresolved on the WHOLE surface, not on a
-    // hand-kept list of readers (D418).
-    for (const sentence of REFUSED) expect(resolvedByAnyReader(sentence), sentence).toBe(false);
+    // 🆕🆕 **D476 — THE LAST REFUSAL IS INVERTED HERE TOO, AND THE RUNG IS NOW A
+    // FIVE-FOR-FIVE CLAIM.** This line used to assert `false` for the one row D452 left; the
+    // whole per-face population now resolves, and saying so on the SAME surface in the SAME
+    // rung is what keeps the discrimination the `false` bought (D418). The surface is still 13
+    // — D476 adds an anchor to `deriveAttackCoinFlip`, not a fourteenth reader.
+    for (const sentence of BUILT_AT_D476) {
+      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
+    }
     // 🆕🆕 **D463 — AND THE TWO THAT LEFT ARE ASSERTED RESOLVED ON THE SAME
     // SURFACE, IN THE SAME RUNG.** A refusal that is deleted rather than inverted takes its
     // discrimination with it: this pair asserts the reader surface answers OPPOSITELY for the
@@ -321,11 +336,13 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
       kind: "programPerHeads",
       flips: { kind: "printed", count: 2 },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+      face: "heads",
     });
     expect(deriveAttackCoinFlip(HAND_PICK)).toEqual({
       kind: "programPerHeads",
       flips: { kind: "printed", count: 3 },
       ops: [{ op: "randomFromOpponentHand", to: "discard" }],
+      face: "heads",
     });
   });
 
@@ -393,6 +410,7 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
         kind: "programPerHeads",
         flips: { kind: "printed", count: n },
         ops: [{ op: "discardDeckTop", whose: "opponent", count: 1 }],
+        face: "heads",
       });
     }
     // 🛑 THE SINGULAR ARM HAS NO `count >= 1` GUARD AND OWES NONE: its count is the
@@ -449,6 +467,7 @@ describe("§2 — the anchors derive their own ops, and the co-variance is fence
       kind: "programPerHeads",
       flips: { kind: "untilTails" },
       ops: [{ op: "discardDeckTop", whose: "opponent", count: 2 }],
+      face: "heads",
     });
   });
 });
@@ -550,7 +569,7 @@ describe("§3 — no new persisted byte, in three directions", () => {
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.373.0");
+    expect(engineVersion).toBe("0.374.0");
   });
 });
 
@@ -842,15 +861,31 @@ describe("§8 — purity", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §9 — WHAT IS REFUSED, AND THE REFUSAL THAT DID NOT SURVIVE.
+// §9 — WHAT WAS REFUSED, AND WHY NO REFUSAL SURVIVED.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§9 — the ONE refused row that is left, on its own count", () => {
-  it("it stays LOUD on the whole reader surface", () => {
-    for (const sentence of REFUSED) {
-      expect(resolvedByAnyReader(sentence), sentence).toBe(false);
-      expect(deriveAttackCoinFlip(sentence)).toBeNull();
-      expect(deriveAttackEffect(sentence)).toBeNull();
+describe("§9 — the last refused row, BUILT at D476, and its axis measured", () => {
+  it("🆕🆕 D476 — it is BUILT, and the inverted rung catches more than the `false` did", () => {
+    // 🛑 THE INVERTED RUNG, WHICH IS WHAT A BUILT REFUSAL IS OWED (D418), written to D463's
+    // own shape two `describe`s up. The old claim caught *"no reader touches this string"*;
+    // this one has to catch MORE than *"some reader does"*, so it names the member, the FACE
+    // and the op — a build that read the sentence to `face: "heads"`, or to the mill's
+    // `discardDeckTop`, or to `from: "opponentActive"`, would pass a `not.toBeNull()` and
+    // reddens here.
+    for (const sentence of BUILT_AT_D476) {
+      expect(resolvedByAnyReader(sentence), sentence).toBe(true);
+      expect(deriveAttackCoinFlip(sentence), sentence).toEqual({
+        kind: "programPerHeads",
+        flips: { kind: "printed", count: 3 },
+        ops: [{ op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" } }],
+        face: "tails",
+      });
+      // …and `deriveAttackEffect` STILL refuses it, which is the disjointness that keeps
+      // `SELF_DISCARD_ONE` from claiming a sentence it only ENDS in. That refusal is what the
+      // old rung's third line asserted, and it is the one line kept verbatim — the whole
+      // sentence is one reader's, and two readers on one printing would discard once flatly at
+      // the §8.5 tail AND once per tails at the flip site.
+      expect(deriveAttackEffect(sentence), sentence).toBeNull();
     }
   });
 
@@ -865,6 +900,7 @@ describe("§9 — the ONE refused row that is left, on its own count", () => {
       expect(read, sentence).toMatchObject({
         kind: "programPerHeads",
         ops: [{ op: "discardEnergy", from: "opponentActive", filter: { kind: "anyEnergy" } }],
+        face: "heads",
       });
       // …and `deriveAttackEffect` still refuses BOTH, which is the disjointness that keeps
       // `FLIP_OPPONENT_ACTIVE_DISCARD` from claiming a sentence it only ENDS in.
@@ -909,12 +945,15 @@ describe("§9 — the ONE refused row that is left, on its own count", () => {
     expect(JSON.stringify(run.cont.pendingOp)).toBe(JSON.stringify(one));
   });
 
-  it("the FACE axis has exactly ONE printing to weigh it against", () => {
+  it("the FACE axis has exactly ONE printing, and the PAYLOAD is what decided it", () => {
     // Corpus line 217 is the only sentence in the whole column that counts TAILS in a
-    // per-face REPEAT. `programPerHeads` counts heads in its name and in its
-    // expansion, and choosing between a fifth union member and a rider on the fourth
-    // on the evidence of one printing decides it badly (D442 and D448 disagree about
-    // which is right, which is itself the reason to wait).
+    // per-face REPEAT — measured here, and still exactly one after D476 built it.
+    // 🆕🆕 **THE OLD PROSE HERE SAID ONE PRINTING "DECIDES IT BADLY", AND THAT WAS THE
+    // WRONG QUESTION.** D440's rule needs no printings at all: *identical payload plus a
+    // discriminator ⇒ a FIELD*, and a `programPerTails` member would carry `flips` and
+    // `ops` and nothing else — the fourth member's payload byte for byte. What one
+    // printing genuinely could not settle is REQUIRED versus OPTIONAL, and that was
+    // settled on the measured degradation instead (see the member's block).
     const tails = legalAttackCorpus().filter(([, s]) => /For each tails,/.test(s));
     expect(tails.map(([, s]) => s)).toEqual([
       "Flip 3 coins. For each tails, discard an Energy from this Pokémon.",

@@ -4053,6 +4053,61 @@ equally cheap and equally uninstructive, indefinitely.
 A useful corollary for reading any green run: **the absence of a verdict is not the
 absence of the event.** Ask what the run could not have seen.
 
+### A citation is a claim about what the cited thing says
+
+D476's work order recommended an **optional** field and cited a precedent as its
+authority. That precedent's field is **required** — the recommendation was refuted
+by the thing it invoked, in the same sentence, and the check took seconds.
+
+This is D458's hazard from the other direction. There, a wrong decision number made
+a builder confident about the wrong code. Here the number was right and its
+*content* contradicted the sentence citing it, which is harder to catch: nothing
+about the citation looks wrong until you open it.
+
+**Open the citation before you rely on it, and open it again before you pass it
+on.** A brief that cites is making two claims — that the referent exists, and that
+it says what the sentence needs it to say — and only the first is self-evident.
+
+### A question about two axes needs a cell where both are printed
+
+D476 was asked whether a newly-added `face` field is orthogonal to the count
+members a previous slice had closed. It has no instances: all three of those
+members reach a fold that has no `face` field at all, so the two never co-occur on
+any printed row. The question could only have been answered about the type system,
+not about the corpus.
+
+The real grid — the one member family where both axes appear — is 2×2 with three
+cells printed, and orthogonality holds there, measured three ways including two
+face-flipped mutants killed by *different* suites.
+
+**Before asking whether two dimensions interact, find a printed row where both are
+present.** If none exists, the honest answer is "the corpus does not pose this
+question", and any other answer is about the code's shape rather than its
+behaviour.
+
+### A count taken from a grep is a claim about the grep
+
+D476's builder wrote, in code, that a field placement left "five pre-existing mutant
+`find` strings byte-stable". The member carried **nine** rows; four of them anchored
+*through* the region being edited, and all four broke. The number came from a
+partial grep and was recorded as though it came from the code.
+
+**When a count is load-bearing, derive it from the module rather than from a text
+search** — the corpus is importable, the type is enumerable, and the search is a
+convenience that silently answers a narrower question than the one asked.
+
+### A row whose `replace` omits a required field reports ERROR, not KILLED
+
+When D476 made a union field required, four pre-existing mutant rows whose `find`
+spanned the affected arm needed re-anchoring in **both** `find` and `replace` — not
+just `find`. A `replace` that omits a now-required field does not compile, and the
+harness reports ERROR rather than a verdict.
+
+**So making a field required is a corpus-wide edit, not a type-local one.** After
+adding a required field, `precheck` for `find` breakage and then read every
+dependent row's `replace` for the same omission; the first is automatic and the
+second is not.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
