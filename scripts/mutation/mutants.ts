@@ -25895,4 +25895,95 @@ export const MUTANTS: Mutant[] = [
     replace: "    ⚠️ **D480 — the phrase four lines up is a little loose about build state.**",
     expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
   },
+
+  // ── D481 · THE TYPECHECK-COVERAGE GUARD, D212's twin ───────────────────────
+  //    `tsc -b` typechecked NOTHING outside `src` until this slice: 15 of the
+  //    repo's 712 TypeScript files — the whole mutation corpus, every
+  //    instrument, both instrument gates, and three files under `apps/` and
+  //    `packages/` — were in no project. D480 proved it with a live witness
+  //    (`survives.why` for `survives.reason`, GREEN through `bun run check`).
+  //    ⚠️ THE KILLER IS A SCRIPT, not a suite (D212/D465's precedent), and for
+  //    ONE row it is `bun run typecheck` itself — the only row in this corpus
+  //    whose killer is the typechecker, and it is the row that could not have
+  //    existed one commit ago.
+  {
+    id: "D481-drop-the-scripts-project",
+    decision: "D481",
+    what: "🛑 **THE WHOLE DEV-TOOLING PROJECT LEAVES THE SOLUTION, AND `tsc -b` STILL EXITS 0** — the hole D480 found, restored by deleting one line of `references`. Seventeen files (the 2,238-row mutation corpus, the runner, both instruments, both instrument gates, `opcoverage`, `precheck`, `recovery-gate`, `splice-gate`, `lint-coverage`, `catalog-manifest`, the Bun shim, this guard itself, plus `drizzle.config.ts`, `ingest.ts` and `validate-live.ts`) go back to being typechecked by NOTHING. ⚠️ **NO OTHER STEP OF `bun run check` CAN SEE IT** — that is the entire finding: `tsc -b` over a project set that no longer contains the files is green, vitest never globs `scripts/`, and Biome does not typecheck. Measured ALONE: the guard names 17 of 714.",
+    file: "tsconfig.json",
+    find: "    { \"path\": \"./tsconfig.node.json\" },\n    { \"path\": \"./tsconfig.scripts.json\" },",
+    replace: "    { \"path\": \"./tsconfig.node.json\" },",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-scripts-project-drops-the-scripts-dir",
+    decision: "D481",
+    what: "The project stays listed, stays valid and still compiles — only `\"scripts\"` leaves its `include`, so `apps/api/scripts`, `packages/schema/scripts` and `drizzle.config.ts` are still checked and `tsc -b` is still green. ⚠️ **THIS IS THE ROW THAT MAKES THE GUARD'S ARITHMETIC LOAD-BEARING RATHER THAN ITS EXISTENCE** (D212's second row, one directory over): the row above deletes the project and this one merely narrows it, and a guard that only asked *\"is there a scripts project?\"* would be green here. Measured ALONE: 14 of 714 named, all under `scripts/`.",
+    file: "tsconfig.scripts.json",
+    find: "    \"scripts\",\n    \"apps/api/scripts\",",
+    replace: "    \"apps/api/scripts\",",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-check-drops-the-coverage-guard",
+    decision: "D481",
+    what: "🛑 **THE GUARD IS UN-RUN RATHER THAN BROKEN — the failure mode D212's `lint-coverage.ts` has been exposed to for 269 decisions.** Eight words leave `package.json`'s `check` and a perfect check stops being a step; every other step is untouched and green, and *a guard removed from the build is indistinguishable from a guard that passes*. It dies on this script's own wiring rung, which reads `scripts.check` out of `package.json` and requires its own path in it. ⚠️ **Nothing else in the repo asserts this** — the row exists because the rung does, and the rung exists because writing it cost one `includes`.",
+    file: "package.json",
+    find: "\"check\": \"bun scripts/typecheck-coverage.ts && tsc -b",
+    replace: "\"check\": \"tsc -b",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-coverage-predicate-inverts",
+    decision: "D481",
+    what: "`uncoveredIn` reports the files that ARE covered — one `!` — so the guard names 714 files as uncovered on a healthy repo and zero on a broken one. It dies on the SELF-CHECK rather than on the repo: the synthetic pair `([\"a.ts\",\"b.ts\"], {\"a.ts\"})` must answer `[\"b.ts\"]` and answers `[\"a.ts\"]`. ⚠️ **The self-check is the only reason this is a row at all.** A guard's own subject cannot falsify the guard — `tsc -b` is the thing being audited, and a sweep that mutated this file with no synthetic board would report SURVIVED and be believed (D479's unkillable-as-written class, at the one address in the repo where it is hardest to notice).",
+    file: "scripts/typecheck-coverage.ts",
+    find: "  return files.filter((f) => !covered.has(f));",
+    replace: "  return files.filter((f) => covered.has(f));",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-full-coverage-admits-one-hole",
+    decision: "D481",
+    what: "🛑 **THE DANGEROUS ONE, AND IT IS ONE KEYSTROKE: `=== 0` BECOMES `<= 1`.** The guard keeps working, keeps counting, keeps naming — and silently tolerates EXACTLY ONE file leaving the build, which is the shape every real instance of this defect has had (`catalog-manifest.ts` at D212, the repo-root `vite.config.ts` beside it, `mutants.ts` crossing `files.maxSize` at D360). A threshold that is off by one is invisible on a green repo and green on the only repo state that matters. It dies on the self-check's second rung — `isFullyCovered([\"a.ts\"], {})` must be `false` — because the verdict and the report are routed through the SAME comparison rather than through two copies of it.",
+    file: "scripts/typecheck-coverage.ts",
+    find: "  return uncoveredIn(files, covered).length === 0;",
+    replace: "  return uncoveredIn(files, covered).length <= 1;",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-project-base-collapses-to-the-repo-root",
+    decision: "D481",
+    what: "`--showConfig` prints each file relative to ITS OWN project directory, and the resolution base collapses from `base` to `REPO` — so `apps/api`'s `./src/index.ts` is recorded as `src/index.ts` and collides with the app's namespace instead of naming the api's file. ⚠️ **IT IS NOT A NO-OP FOR THE ROOT-LEVEL PROJECTS** (`tsconfig.app.json`, `tsconfig.node.json`, `tsconfig.scripts.json` all have `base === REPO`), which is why the mutant is green on exactly the part of the solution this slice added and red on the three nested packages: 486 of 714 named. **A path is only a fact relative to something, and the something is the config's own directory.**",
+    file: "scripts/typecheck-coverage.ts",
+    find: "    const files = new Set((cfg.files ?? []).map((f) => relative(REPO, resolve(base, f))));",
+    replace: "    const files = new Set((cfg.files ?? []).map((f) => relative(REPO, resolve(REPO, f))));",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-reference-path-test-inverts",
+    decision: "D481",
+    what: "`isDirectory()` becomes `isFile()` in `resolveProject`, so the two spellings a `references` entry may take (`./tsconfig.app.json` and `./apps/api` — both in use in this repo) swap places: a FILE gets `/tsconfig.json` appended and a DIRECTORY is handed to `tsc -p` bare. ⚠️ **THE KILL LANDS AT THE ROOT, NOT AT `apps/api`, AND THAT IS WHY THE ROW IS DESCRIBED FROM THE PROBE RATHER THAN FROM THE INTENT**: the very first resolution is `tsconfig.json` itself, which becomes `tsconfig.json/tsconfig.json` and does not exist, so the walk dies before any project is read. The directory-form entries never get their turn.",
+    file: "scripts/typecheck-coverage.ts",
+    find: "  if (existsSync(abs) && statSync(abs).isDirectory()) return join(abs, \"tsconfig.json\");",
+    replace: "  if (existsSync(abs) && statSync(abs).isFile()) return join(abs, \"tsconfig.json\");",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/typecheck-coverage.ts"],
+  },
+  {
+    id: "D481-survivor-reason-is-miskeyed",
+    decision: "D481",
+    what: "🛑 **D480's LIVE WITNESS, RE-RUN AS A ROW — the defect that motivated this whole slice, at the exact byte where it happened.** A declared survivor's reason is keyed `why` where the runner reads `reason`. At D480 this shipped GREEN through `bun run check` and surfaced only when a probe printed `undefined`, because `scripts/` was outside every tsconfig `include`; the mutation corpus is annotated `MUTANTS: Mutant[]`, so the excess-property check was always there and nothing was running it. ⚠️ **THE KILLER IS `bun run typecheck` AND IT COULD NOT HAVE BEEN, ONE COMMIT AGO** — that is the whole content of the row. `tsc -b` now answers TS2353 at `mutants.ts:25868` in 37 seconds, where the only instrument that could previously see it was a ~2.7-hour whole-corpus sweep.",
+    file: "scripts/mutation/mutants.ts",
+    find: "      reason: \"Every printed card id in this catalog",
+    replace: "      why: \"Every printed card id in this catalog",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "run", "typecheck"],
+  },
 ];

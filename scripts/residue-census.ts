@@ -471,7 +471,18 @@ function substProbe(text: string, built: readonly string[]): SubstHit | null {
 // ─── 5. RUN ──────────────────────────────────────────────────────────────────
 const corpus = legalAttackCorpus();
 const residue: (readonly [number, string])[] = [];
-const byArm = { reader: [0, 0], registry: [0, 0], gate: [0, 0], trailing: [0, 0] };
+// ⚠️ The pair type is LOAD-BEARING, not decoration (D481): inferred as
+// `number[]`, every read below is `number | undefined` under
+// `noUncheckedIndexedAccess` and the `?? 0` at the print site is doing work
+// it should never have had to do. A fixed-length tuple is exempt from that
+// rule, so `[sentences, printings]` is stated once here instead.
+type ArmTally = [sentences: number, printings: number];
+const byArm: Record<"reader" | "registry" | "gate" | "trailing", ArmTally> = {
+  reader: [0, 0],
+  registry: [0, 0],
+  gate: [0, 0],
+  trailing: [0, 0],
+};
 for (const [units, text] of corpus) {
   const a = arm(text);
   if (a === null) {
@@ -553,7 +564,13 @@ if (import.meta.main && NEEDLE === null) {
       report(r, "     ");
     }
   }
-} else if (import.meta.main) {
+// ⚠️ `NEEDLE !== null` IS REDUNDANT AT RUNTIME AND REQUIRED FOR THE TYPES
+// (D481). The branch above already consumed the `NEEDLE === null` case, so
+// this clause can never be false where it is reached — but TypeScript does
+// not narrow through the NEGATION of a conjunction, so without it `NEEDLE`
+// stays `string | null` and both `.includes(NEEDLE)` calls below are
+// errors. Stating the case the branch is FOR is cheaper than re-nesting it.
+} else if (import.meta.main && NEEDLE !== null) {
   const hits = rows.filter((r) => r.text.includes(NEEDLE));
   console.log(`=== ${hits.length} residue row(s) matching ${JSON.stringify(NEEDLE)} ===`);
   for (const r of hits) {

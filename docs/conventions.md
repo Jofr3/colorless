@@ -4394,6 +4394,53 @@ the slow one**, not merely as a gap. And when closing such a hole, **expect it t
 surface latent errors in proportion to how long it was open** — price that before
 committing, because "turn on the typechecker" is never the whole slice.
 
+### A coverage gap named by the directory where it was noticed will leave files behind
+
+D480 found an untypechecked file in `scripts/` and three separate documents — its
+decisions row, the resume point, and the next brief — all called it "the `scripts/`
+hole". D481 measured it: **15 files, three of them outside `scripts/` entirely**,
+in `apps/api/` and `packages/schema/`. Closing the directory would have left them
+behind a guard reporting OK, which is the same defect one level up.
+
+**Enumerate the region from the tool's own answer, never from the path in the bug
+report.** `git ls-files` for what exists, `tsc --showConfig` for what is covered,
+and the difference is the gap. A witness tells you a hole exists; it does not tell
+you where the hole ends.
+
+### "Defects in proportion to how long it was open" is not a law
+
+This file previously said to expect a long-open coverage hole to surface latent
+errors in proportion to its age. D481 closed one and found **six errors — four in
+a single file, and zero in the 2.3 MB, 2,238-row corpus** that had been unchecked
+the whole time.
+
+The earlier entry had two halves and only one survived. **The economics half is
+sound**: a defect in an unguarded region costs whatever the next-slowest tool
+costs to find, and D480 paid a 2.7-hour sweep for one mis-keyed field. **The volume
+half is not**: a region can be unguarded for months and still be nearly clean,
+because the people writing it were being careful without a tool to prove it.
+
+**So argue for closing a hole from cost-per-defect, not from expected yield** — and
+when the count comes back small, that is the guard working as intended, not the
+slice failing to justify itself.
+
+### A coverage guard needs a self-check, because its failure mode is going vacuous
+
+Any guard that asserts "the uncovered set is empty" can be defeated by making the
+set trivially empty — blank the predicate, widen a comparison, narrow the input.
+All of those stay **green forever**, and a mutation row against them reports
+SURVIVED, which this corpus treats as informative.
+
+D481's guard routes its verdict through drivable functions exercised on **synthetic
+pairs whose answer is known by construction**, before the real repo is consulted.
+That is what gives a mutant against it a board to die on.
+
+Two related rules earned at the same time: **a guard should assert its own wiring**
+(the older lint guard can be disabled by deleting eight words from `package.json`
+with nothing going red), and **a rung that cannot fire should be deleted, not kept
+for reassurance** — one was, once the compiler was found to catch that case an
+earlier call.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

@@ -1,0 +1,65 @@
+{
+  // THE DEV-TOOLING PROJECT (D481).
+  //
+  // WHY THIS FILE EXISTS. Until D481 `tsc -b` typechecked NOTHING outside
+  // `src`: every project's `include` was `["src"]` or `["vite.config.ts"]`, so
+  // 15 of the repo's 712 TypeScript files — the whole mutation corpus, every
+  // instrument, both instrument gates, the runner, and three files under
+  // `apps/` and `packages/` — were checked by no typechecker at all. D480
+  // proved it with a live witness rather than by inspection: a declared
+  // survivor's reason keyed `survives.why` where the runner reads
+  // `survives.reason`, and it shipped GREEN through `bun run check`, surfacing
+  // only when a probe printed `undefined`.
+  //
+  // ⚠️ THE COST WAS NEVER "an error slips through" — it was WHICH TOOL FINDS
+  // IT. With `scripts/` outside the typechecker the mutation sweep was the sole
+  // guard over the region, and the sweep is a ~2.7-hour instrument that runs
+  // once per slice where `tsc` runs in seconds. A coverage hole in a fast tool
+  // is a cost multiplier on the slow one.
+  //
+  // ⚠️ THIS FILE IS NOT THE FIX. A tsconfig with nothing checking it is exactly
+  // the defect this slice exists to close, one level up: the next config edit
+  // that drops `scripts` out of `include`, or drops this project out of
+  // `tsconfig.json`'s `references`, would restore the hole in silence. So the
+  // claim is a COMMAND — `scripts/typecheck-coverage.ts`, `bun run
+  // typecheck:coverage`, a step of `bun run check` (D212's precedent, D465's
+  // rule).
+  //
+  // ⚠️ WHY IT IS NOT A PROJECT REFERENCE ON `packages/engine`. The instruments
+  // import ENGINE SOURCES by relative path (`../packages/engine/src/effects`),
+  // not through the `@luminous/engine` entry point, and `tsc -b` can only route
+  // that through a reference if the referenced project is `composite` and emits
+  // declarations. `packages/engine` is `noEmit` and deliberately so. Ordinary
+  // module resolution pulls those sources into THIS program instead, which
+  // typechecks them a second time — measured at a few seconds, and the price of
+  // not turning the engine into an emitting project for the sake of a dev tool.
+  //
+  // ⚠️ `types: ["node"]` rather than the `[]` the app projects use: these are
+  // Bun/Node programs and every one of them reaches for `node:fs` or `process`.
+  // Bun's own globals are shimmed in `scripts/bun-runtime.d.ts` — see there for
+  // why that is a shim and not `@types/bun`.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noUncheckedIndexedAccess": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node"]
+  },
+  "include": [
+    "scripts",
+    "apps/api/scripts",
+    "packages/schema/scripts",
+    "apps/api/drizzle.config.ts"
+  ]
+}

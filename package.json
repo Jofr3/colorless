@@ -17,10 +17,11 @@
     "lint": "biome lint .",
     "lint:ci": "biome lint . --error-on-warnings",
     "lint:coverage": "bun scripts/lint-coverage.ts",
+    "typecheck:coverage": "bun scripts/typecheck-coverage.ts",
     "format": "biome format . --write",
     "test": "vitest",
     "test:run": "vitest run",
-    "check": "tsc -b && bun scripts/lint-coverage.ts && biome lint . --error-on-warnings && vitest run",
+    "check": "bun scripts/typecheck-coverage.ts && tsc -b && bun scripts/lint-coverage.ts && biome lint . --error-on-warnings && vitest run",
     "mutants": "bun scripts/mutation/run.ts",
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy"
