@@ -4175,6 +4175,25 @@ row does what it says. Read the three fields against each other, and note that a
 genuine swap's `find` must span both operands — a swap cannot be spelled by
 anything shorter.
 
+### A declared survivor's reason is a claim about a POPULATION; a probe is a claim about a SUITE
+
+D477 declared a survivor whose reason is *unreachable by value*: the guard it
+deletes is true on every input the code can actually receive, because the character
+class it tests is built from a map's own keys.
+
+That claim quantifies over the whole reachable population — and a `--decision`
+probe cannot sample it. The probe shows the row surviving against one suite. Only
+the whole-corpus run shows it surviving **while thousands of other mutations of the
+same file are being killed around it**, which is what distinguishes *unreachable*
+from merely *unwatched*.
+
+**So match the evidence to the shape of the reason.** When a survivor's reason is
+local — structural disjointness between two anchors, a commutative fold, an
+argument about two adjacent lines — a probe is sufficient and the sweep adds
+nothing. When the reason quantifies over inputs, values, or the corpus, **the probe
+is not weaker evidence of the same kind; it is evidence of a different claim**, and
+only the full run speaks to the one being made.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
