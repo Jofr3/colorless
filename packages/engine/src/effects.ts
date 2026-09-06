@@ -624,6 +624,16 @@ export type EffectSlot = "paid" | "moved" | "discarded";
     *whose hand goes back*, `draw` answers *how many they then take*, and this
     sentence is asymmetric on the second question only.
 
+    🛑 **D480 — THE WORD `unbuilt-but-same-shape` FOUR LINES UP IS FALSE, AND HAS
+    BEEN SINCE D271 / D326.** Kept verbatim (D178) with the falsification dated
+    here. `const UNFAIR_STAMP` (registry.ts, D271) and `const TEAM_ROCKETS_ARCHER`
+    (registry.ts, D326) both SHIP: both sit in the id table (`sv06-165`,
+    `sv10-170`, `sv10-223`), both are in `CENSUS_TRAINER_LEGAL` and
+    `TRAINER_TERMS`, and their three printings have been inside `BUILT.trainer`
+    since it stepped 71 → 74. Only the SHAPE half of the phrase survives — all
+    three cards really do print one `perSeat` pair. The guard that makes a claim
+    of this kind RE-RUNNABLE rather than re-readable is `refusedPrintings.ts`.
+
     ⚠️ **CONTROLLER-RELATIVE, LIKE EVERY OTHER FIELD IN THIS VOCABULARY.** `you`
     is the seat that played the card and `opponent` is the other one — the same
     reading `who: "you" | "opponent"` and `disableAbilities.side` already use — so
@@ -8699,6 +8709,33 @@ export type EffectOp =
       row, not for want of a mechanism, and that is a different entry on a different
       list. D466's rule: the MEASUREMENT beside a refusal and its CONCLUSION are two
       claims and each needs its own check.
+      🛑🛑 **D480 — THE PARAGRAPH DIRECTLY ABOVE IS D479'S OWN CORRECTION, AND ITS
+      LAST CLAUSE IS FALSE. THE CARDS WERE NEVER UNBUILT AT THAT HEAD.** Kept
+      verbatim (D178) with the falsification dated here. `const UNFAIR_STAMP` shipped
+      at **D271** — the SAME decision D479 correctly identified as the one that
+      refuted the expressibility clause — and `const TEAM_ROCKETS_ARCHER` at **D326**.
+      Both are in registry.ts's id table (`"sv06-165"`, `"sv10-170"`, `"sv10-223"`),
+      both are in `censusAtHead.test.ts`'s `CENSUS_TRAINER_LEGAL` and `TRAINER_TERMS`,
+      both are driven end-to-end on real boards by `lastTurnKo.test.ts` §3 and
+      `lastKoOwnerMark.test.ts` §7, and their three printings are inside
+      `BUILT.trainer`. ⚠️ **THE SHAPE OF THE ERROR IS THE FINDING, BECAUSE IT IS THE
+      ONE D479 WAS AUDITING FOR.** D479's method was *"every expressibility claim
+      settled by OPENING THE DECLARATION it names, never by reading the prose around
+      it"* — and it opened `BoardCondition`, `GameState` and `playableIf` and got all
+      three right. It did not open the ID TABLE, so the BUILD-STATE claim it wrote in
+      the same breath was inherited from the very paragraph it was falsifying. **A
+      refusal has TWO claims in it — "this cannot be expressed" and "this is not
+      built" — and D479 checked the first against a declaration and the second against
+      the prose.** ⚠️ **THIRD OCCURRENCE, NOT THE FIRST**: D330 wrote *"check whether
+      the piece has shipped before pricing it"*, D343 hit it again (*"THE ROW WAS
+      HANDED ON AS UNBUILT AND THE PROGRAM WAS ALREADY IN THE REGISTRY"*, index.ts
+      0.249.0) and named it *"D330's lesson at its second site"*, and D321's rule
+      (*"a backlog row that names an unbuilt card is a claim about the REGISTRY"*)
+      prescribed `git grep <id>`. **Three prose rules over 150 decisions, and the
+      fourth occurrence still happened** — which is the killer (D465) for turning the
+      rule into an instrument. It is `refusedPrintings.ts`: build-state claims about
+      REGISTRY-surface printings are declared as DATA and checked against
+      `programFor` on every `bun run check`, in both directions.
 
       ⚠️ Unfair Stamp `sv06-165` and Team Rocket's Archer `sv10-170`/`-223` are
       STILL unbuilt after D270, and NOT for this reason: both print *"You can use

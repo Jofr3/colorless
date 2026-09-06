@@ -4331,6 +4331,50 @@ rung list against the mutation before running anything, can distinguish them.
 rescued by adding rungs, the whole-corpus run is what confirms the new rungs
 discriminate rather than merely exist.
 
+### A refusal carries two claims with two different oracles — check build state first
+
+*"This cannot be expressed"* and *"this is not built"* are separate claims, and they
+are settled by different queries:
+
+- **Cannot be expressed** — settled by opening the declaration the refusal names.
+- **Is not built** — settled by `programFor`, or by grepping the registry.
+
+D479 audited a refusal, opened all three declarations it cited, was right about all
+three — and then re-asserted the build-state half **from the paragraph it was
+falsifying**. The cards had shipped 208 and 153 decisions earlier; the refusal in
+`registry.ts` is refuted by a declaration **52 lines below it in the same file**.
+
+**Check build state first.** It is the cheaper query, and an audit that checks only
+expressibility will confirm a refusal is *possible* to overturn without ever
+noticing it was overturned years ago.
+
+### Three prose rules over 150 decisions did not stop the fourth occurrence
+
+D330: *"check whether the piece has shipped before pricing it."* D343: the same
+lesson at its second site. D321: *"a backlog row that names an unbuilt card is a
+claim about the registry"*, with `git grep <id>` prescribed. **It happened a fourth
+time anyway.**
+
+Part of why is mechanical and worth knowing: **reprints are cited by suffix** —
+`` `sv10.5w-023`/`-107` `` — so a refusal written in shorthand never spells its id
+whole and **is invisible to the grep the rule prescribes.**
+
+The rest is D465's argument: a claim nothing executes is a claim nothing checks. So
+the build-state claim became a table asserted in both directions — refusals asserted
+*not built*, resolved ones asserted *built and corrected*. **When a prose rule has
+failed three times, the fourth response is not a better-worded rule.**
+
+### Correcting one copy of a claim leaves the others standing
+
+The refusal D480 overturned had been copied into three files. D271 built the thing
+it denied and corrected **one** copy — the one in the test that would have gone red.
+The copies in `registry.ts` and `effects.ts` stayed, and one of them is what a later
+audit read.
+
+**When you falsify a claim, grep for its distinctive phrase and correct every
+instance in the same edit.** The copy you fix is the one that reddens; the copies
+that do not redden are the ones a successor will find.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

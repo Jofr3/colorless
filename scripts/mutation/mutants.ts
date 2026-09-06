@@ -25768,4 +25768,131 @@ export const MUTANTS: Mutant[] = [
     replace: "const SHUFFLE_HAND_DRAW = /^Shuffle (?:your|their) hand into (?:your|their) deck\\. Then, draw (\\d+) cards\\.$/;",
     expectKilledBy: ["packages/engine/src/shuffleHandDraw.test.ts"],
   },
+  // ── 🆕🆕 D480 — THE BUILD-STATE CLAIM, MADE RE-RUNNABLE. Eleven rows over ONE new
+  //    module (`refusedPrintings.ts`) and THREE dated corrections, and the SHAPE of
+  //    the set is the finding: **every row here is silent in EVERY census**. No
+  //    literal moves, no reader is touched, `BUILT.*` cannot move and both instrument
+  //    gates pass under all eleven — because the thing being guarded is a CLAIM ABOUT
+  //    the built set rather than a member of it. D479 measured 5/10 silent; this
+  //    anchor is 11/11, which is what a documentation guard looks like from the
+  //    mutation side and is the reason it needed its own suite rather than a rung in
+  //    an existing one.
+  //
+  //    ⚠ **THREE ROWS SHARE ONE `find`** — `excerptNamesId`'s single `return` line —
+  //    because the three claims that line carries are independent: whether the WHOLE
+  //    id counts, whether the SET-plus-NUMBER shorthand counts, and whether the two
+  //    halves are conjoined or disjoined. One row per line would have tested one of
+  //    them.
+  //
+  //    ⚠ **AND TWO ROWS WERE READ AND NOT WRITTEN (D479's UNKILLABLE-AS-WRITTEN
+  //    class, caught by the find/replace/what diff BEFORE probing).** `surface: "tool"`
+  //    → `"trainer"` and `since: "D207"` → `"D208"` are both live, both correctly
+  //    describable, and both separated from the original by NO rung in the suite: §2
+  //    checks that `surface` is a member of the union and §5 that `since` matches
+  //    `/^D\d+$/`, and each mutant satisfies its own check. They would have reported
+  //    SURVIVED, been given a reason, and been inherited as facts about the engine.
+  //    They are declared here as NOT ROWS rather than added as weak ones (D475).
+  {
+    id: "D480-refused-row-names-the-built-sibling",
+    decision: "D480",
+    what: "🛑 **THE CENTRAL ROW, AND IT IS THE NEAREST WRONG SIBLING RATHER THAN A CONSTRUCTION**: the refused printing `sv02-192` becomes `sv04-266` — THE SAME CARD'S OTHER PRINTING, one set-legality apart, and the one D302 actually BUILT as `REVERSAL_ENERGY`. Every structural rung stays green: the table is still nine rows, the ids are still unique and still disjoint from `RESOLVED_REFUSALS`, the citation still occurs exactly once, the excerpt still names the id (the doc block spells both printings on that line), the surface is still `specialEnergy` and the reason still reads true. What changes is the only thing that matters — the table now asserts that a SHIPPED program does not exist, which is precisely the claim D270, D330, D343 and D479 each made and nothing checked. ⚠ **AND IT REDDENS A SUITE THAT IS NOT A CENSUS**: `refusedPrintings.test.ts` §2, naming the id.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "    id: \"sv02-192\",",
+    replace: "    id: \"sv04-266\",",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-refused-row-slides-to-the-built-neighbour",
+    decision: "D480",
+    what: "Survival Brace `sv06-164` becomes Unfair Stamp `sv06-165` — the ADJACENT printing in the same set, and the exact pair §5's oracle-is-wired case drives from the other end. This is the transposition D204 found six times in one flag table (*\"SIX OF TEN FLAGGED ROWS CARRY IDS BELONGING TO OTHER CARDS … Every COUNT was right, which is why nothing caught it\"*), reproduced by a single digit. Two rungs refuse it and they refuse it for two different reasons: §2 because `sv06-165` HAS a program, and §4's anti-typo case because the cited excerpt names Survival Brace and not the Stamp.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "    id: \"sv06-164\",",
+    replace: "    id: \"sv06-165\",",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-refused-row-transposes-a-printing-number",
+    decision: "D480",
+    what: "`sv08.5-100` becomes `sv08.5-101` — one digit, an id that is not printed in the cited doc block and (as far as this engine can tell) not printed at all. 🛑 **§2 CANNOT KILL THIS AND MUST NOT BE EXPECTED TO**: an id nothing registers is trivially \"not built\", so the build-state oracle answers the mutant exactly as it answers the original. That is D204's vacuous guard in miniature, and the ONLY thing that separates the two is §4's requirement that the excerpt NAME the id — which is why that rung exists and why this row is the one that proves it does work.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "    id: \"sv08.5-100\",",
+    replace: "    id: \"sv08.5-101\",",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-resolved-row-points-at-an-unbuilt-neighbour",
+    decision: "D480",
+    what: "The OTHER direction, and the one a revert reaches: Unfair Stamp `sv06-165` in `RESOLVED_REFUSALS` becomes `sv06-164`, its unbuilt shelf-mate. The table then claims D271 built Survival Brace. §3's build case refuses it by id, and §5's disjointness case refuses it a second way (`sv06-164` would sit in BOTH tables at once) — two independent rungs, because a totality claim that only holds in one direction is the defect this file was written about.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "    id: \"sv06-165\",",
+    replace: "    id: \"sv06-164\",",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-predicate-drops-the-suffix-reading",
+    decision: "D480",
+    what: "`excerptNamesId` collapses to `excerpt.includes(id)` — the obvious implementation, and the one a reader tidying this function would reach for first. It is WRONG about this repo's own prose: reprints are cited by SUFFIX (`` `sv10.5w-023`/`-107` ``, `Briar sv07-132/-163/-171`), so three of the nine rows are named by doc blocks that never spell their id whole. §4's suffix case measures that set to `[\"sv07-163\", \"sv07-171\", \"sv10.5w-107\"]` and then drives the predicate over it, so the mutant fails on all three rather than on a count.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "  return excerpt.includes(id) || (excerpt.includes(set) && excerpt.includes(number));",
+    replace: "  return excerpt.includes(id);",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-predicate-admits-any-set-mate",
+    decision: "D480",
+    what: "The conjunction in the shorthand reading becomes a DISJUNCTION, so naming the SET alone is enough. Every positive case in the suite still passes — that is the whole hazard — because the excerpts do name the right sets. What it admits is a fourth printing of a set the doc block mentions: `sv07-199` against `Briar sv07-132/-163/-171`, which §4's neighbouring-printing case drives for exactly this mutant. ⚠ It is the anti-typo rung's own weakening, not its removal, which is why the negative control had to be a same-set id and not `sv99-999`.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "  return excerpt.includes(id) || (excerpt.includes(set) && excerpt.includes(number));",
+    replace: "  return excerpt.includes(id) || (excerpt.includes(set) || excerpt.includes(number));",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-predicate-answers-yes-to-everything",
+    decision: "D480",
+    what: "The predicate becomes a check that its three arguments are non-empty — i.e. TRUE for every real row — which is what an anti-typo rung looks like when it has quietly stopped discriminating. Every positive case passes. 🛑 The rung that refuses it is §4's negative control (`sv99-999` against every cited excerpt), and the reason that control is in the file at all is D214's rule: a guard whose author cannot name the edit that makes it vacuous IS vacuous. This row is that edit, written down.",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "  return excerpt.includes(id) || (excerpt.includes(set) && excerpt.includes(number));",
+    replace: "  return excerpt.length > 0 && set.length > 0 && number.length > 0;",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-predicate-splits-at-the-first-hyphen",
+    decision: "D480",
+    what: "`id.lastIndexOf(\"-\")` becomes `id.indexOf(\"-\")`. ⚠ **DECLARED SURVIVOR, and the reason is a fact about the catalog rather than about the code**: a printed id carries EXACTLY ONE hyphen — the set's version is a DOT (`sv10.5w-107`, `sv08.5-100`), never a second dash — so the two reads agree on every id this repo can construct, including the synthetic `sv99-999` and `sv07-199` the controls use. The function's own doc block says it is written as `lastIndexOf` anyway, because \"exactly one\" is a fact about this catalog and not about the shape. 🛑 The day an id with two hyphens is added the two reads diverge and this row reports STALE-SURVIVOR by name, which is the point of declaring it rather than deleting the row (D467 rule 3).",
+    file: "packages/engine/src/refusedPrintings.ts",
+    find: "  const split = id.lastIndexOf(\"-\");",
+    replace: "  const split = id.indexOf(\"-\");",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason: "Every printed card id in this catalog contains exactly one hyphen — the set version is spelled with a dot (`sv06.5`, `sv08.5`, `sv10.5w`), so `indexOf` and `lastIndexOf` return the same index for every id either table can hold. The mutant computes the same answer on the whole reachable population; it is not a suite gap. It goes STALE-SURVIVOR the day a two-hyphen id is authored, which is exactly when the distinction starts to matter.",
+    },
+  },
+  {
+    id: "D480-registry-correction-becomes-a-hedge",
+    decision: "D480",
+    what: "The dated falsification in `registry.ts`'s `HARLEQUIN` block — the one that records that its own file refutes it 52 lines down — becomes a HEDGE (*\"may be out of date; check before pricing\"*). This is not a vandalism mutant: it is the exact edit a reader makes when they suspect a paragraph is stale and do not want to be the one who checked. The refusal above it is untouched and still false, so the file reads as if D270's price still stands — and D480 exists because a reader in that position was believed. §3's citation case refuses it, naming the id whose correction went missing.",
+    file: "packages/engine/src/registry.ts",
+    find: "    🛑🛑 **D480 — THE PARAGRAPH ABOVE IS FALSE AT HEAD, AND ITS REFUTATION IS IN",
+    replace: "    ⚠️ **D480 — the paragraph above may be out of date; check before pricing.**",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-handrefresh-correction-becomes-a-hedge",
+    decision: "D480",
+    what: "The same edit at the second site — `handRefresh`'s block, where D479's OWN correction carries the false build-state clause. ⚠ **THE TWO SITES NEED TWO ROWS BECAUSE THEY ARE TWO REFUSALS**: D271 corrected the copy of this paragraph in `censusAtHead.test.ts` and left the copies in `registry.ts` and `effects.ts` standing, which is how one true sentence became three claims and two of them rotted. D463's rule (a refusal grouping N rows under one reason is N refusals until each is priced) applied to the CORRECTIONS rather than to the refusals.",
+    file: "packages/engine/src/effects.ts",
+    find: "      🛑🛑 **D480 — THE PARAGRAPH DIRECTLY ABOVE IS D479'S OWN CORRECTION, AND ITS",
+    replace: "      ⚠️ **D480 — D479's correction above is probably fine as written.**",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
+  {
+    id: "D480-perseat-correction-becomes-a-hedge",
+    decision: "D480",
+    what: "The third site: `perSeat`'s block, which calls Unfair Stamp and Team Rocket's Archer *\"unbuilt-but-same-shape\"* in a single hyphenated adjective. 🛑 **THIS IS THE SITE THAT SHOWS WHY A GREP CANNOT REPLACE THE TABLE**: the build-state claim is not a sentence here, it is ONE WORD inside a compound modifier three lines from the ids it is about, and D321's prescribed `git grep <id>` returns it looking exactly like the two dozen legitimate historical mentions around it. §3's citation case refuses the hedge for `sv10-223`.",
+    file: "packages/engine/src/effects.ts",
+    find: "    🛑 **D480 — THE WORD `unbuilt-but-same-shape` FOUR LINES UP IS FALSE, AND HAS",
+    replace: "    ⚠️ **D480 — the phrase four lines up is a little loose about build state.**",
+    expectKilledBy: ["packages/engine/src/refusedPrintings.test.ts"],
+  },
 ];

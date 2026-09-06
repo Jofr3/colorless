@@ -10144,6 +10144,27 @@ const DRASNA: CardProgram = {
     a STATE change plus a condition member — two more mechanisms — so they are
     priced and declined here rather than forced.
 
+    🛑🛑 **D480 — THE PARAGRAPH ABOVE IS FALSE AT HEAD, AND ITS REFUTATION IS IN
+    THIS FILE, 52 LINES BELOW IT.** Kept verbatim (D178) with the falsification
+    dated here. `const UNFAIR_STAMP` (D271) and `const TEAM_ROCKETS_ARCHER` (D326)
+    are declared immediately after `HARLEQUIN`; `"sv06-165"`, `"sv10-170"` and
+    `"sv10-223"` are in this file's id table; `"fix-unfairstamp"`, `"fix-stamp"`
+    and `"fix-archer"` are in its fixture table. **The state change and the
+    condition member the paragraph prices as "two more mechanisms" both landed at
+    D271 — the decision AFTER the one that wrote it** (`GameState.lastKoTurn`, and
+    `BoardCondition`'s `yourPokemonKoedOnOpponentsLastTurn`, widened at D326 with
+    `lastKoMarks` for the owner prefix). ⚠️ **THE "five `BoardCondition` kinds"
+    CLAUSE WAS ALREADY CORRECTED ONCE, IN `censusAtHead.test.ts`, AND THIS COPY WAS
+    NOT** — D271 wrote *"the union held 23 members at D270, not five"* against its
+    own copy of this paragraph and left this one standing. **A refusal copied to a
+    second site is a second refusal, and correcting one does not correct the
+    other** (D463's rule about grouped rows, at a new address). D479's refusal audit
+    read the `handRefresh` doc block, correctly falsified the EXPRESSIBILITY clause
+    against the declarations, and then repeated this paragraph's BUILD-STATE claim
+    without opening the id table forty lines further down — which is what sent D480
+    to build two rows that had shipped 208 and 153 decisions earlier.
+    ✅ **THE BUILD-STATE HALF IS NOW DATA, NOT PROSE**: `refusedPrintings.ts`.
+
     ⚠️ THE FLIP IS TAKEN BEFORE THE SHUFFLE AND THE PRINT SAYS "Then", exactly as
     Drasna's block records: a LOG-ORDER difference, not a rules one. */
 const HARLEQUIN: CardProgram = {
