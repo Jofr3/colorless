@@ -4649,6 +4649,30 @@ differences give the implementation two ways to pass, and the rung then proves
 nothing about either — which is the unkillable-as-written class arriving in the
 guard that was written to prevent a related one.
 
+### Ask what the instrument assumes about itself that nothing asserts
+
+Twice now a guard has retroactively changed the standing of every measurement that
+came before it. D481 closed a typecheck hole and the next sweep's `0 error(s)` was
+the first one taken over a corpus anything had type-verified. D484 added an
+experiment-identity check and the next sweep was the first taken over rows anything
+had proven distinguishable from one another — for 46 decisions, two of them were
+not, and the column read identically throughout.
+
+In both cases **the number was unchanged and its warrant was not**, and in both
+cases nothing in the output could have shown the difference.
+
+Two of a kind is a pattern worth acting on: **when a corpus is the instrument,
+every property of the corpus that nothing checks is a silent qualifier on every
+number the corpus has ever produced.**
+
+So the productive question is not *"what might be wrong today"* — the sweep answers
+that, expensively. It is **"what does this instrument assume about itself that
+nothing asserts?"** For this corpus the answers found so far were: that `find`
+resolves uniquely (asserted early), that patching is literal (unasserted until
+D470), that rows are distinguishable experiments (unasserted until D484), and that
+the files holding it typecheck (unasserted until D481). The remaining ones are
+worth enumerating deliberately rather than waiting for each to surface as a defect.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
