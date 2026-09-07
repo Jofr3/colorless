@@ -1480,7 +1480,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.378.0");
+    expect(engineVersion).toBe("0.379.0");
   });
 });
 
@@ -1562,7 +1562,23 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
     expect(dealt(ruleBoxBoard("p2"), 7, "p2")).toBe(180);
   });
 
-  it("🛑 `retrieveNoun` owes both members a phrase, and NO board can render one", () => {
+  it("🛑 `retrieveNoun`: `attackNamePokemon` is still unrenderable, `suffixPokemon` is NOT", () => {
+    // 🆕🆕🆕 **D483 — HALF OF THIS RUNG'S CLAIM IS FALSE AT HEAD, AND THE RUNG IS THE
+    // THING THAT SAID SO.** The paragraph below is kept verbatim (D178); what expired is
+    // its scope. `damageChosen` gained an optional `filter: CardFilter` for the printed
+    // BENCHED-SNIPE class (*"…to 1 of your opponent's Benched Pokémon ex."*), so
+    // `suffixPokemon` — and the `anyOf` of two of them — is now carried by a DERIVED op,
+    // rendered by `snipeNote` into a live prompt heading, and asserted byte for byte in
+    // `classNarrowedBenchSnipe.test.ts` §4. **`attackNamePokemon` is untouched and its
+    // half of the claim still holds**, which is why the rung is SPLIT rather than
+    // deleted: an "X is absent" that has half expired is a rung that has stopped
+    // discriminating, and D424's control rule cuts both ways.
+    //
+    // ⚠️ **AND THE INTERESTING PART IS THAT NOTHING ELSE COULD HAVE CAUGHT IT.** D446
+    // wrote *"no op carries this filter today"* into three doc blocks; the only reason
+    // the sentence did not simply rot is that ONE of the three was an executable rung
+    // (D465/D212's rule at the address where it pays). This is the second consecutive
+    // slice caught by a predecessor's refusal witness rather than by its own author.
     // ⚠️ **THE ANSWER TO "IS A WRONG CAPTION A TEST FAILURE OR INVISIBLE" IS
     // INVISIBLE, AND IT IS MEASURED HERE RATHER THAN ASSERTED.** Every caller of
     // `retrieveNoun` reads an `op.filter`; the only producer of these two members is
@@ -1577,7 +1593,15 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
     const ops = legalAttackCorpus().flatMap(([, text]) => deriveAttackEffect(text) ?? []);
     const wire = JSON.stringify(ops);
     expect(wire).not.toContain("attackNamePokemon");
-    expect(wire).not.toContain("suffixPokemon");
+    // 🆕🆕🆕 D483 — the OTHER member is now carried, on exactly TWO derived ops, and the
+    // count is pinned rather than the mere presence: a `.toContain` alone would stay
+    // green under an anchor that widened past its two printed rows.
+    const suffixCarriers = legalAttackCorpus().filter(([, text]) =>
+      JSON.stringify(deriveAttackEffect(text) ?? []).includes("suffixPokemon"),
+    );
+    expect(suffixCarriers).toHaveLength(2);
+    expect(suffixCarriers.reduce((n, [units]) => n + units, 0)).toBe(2);
+    expect(wire).toContain("suffixPokemon");
     // …and the control: this sweep DOES see the filters ops really carry, so it is
     // not vacuous (D424 — every "X is absent" owes a "Y is present" on the same axis).
     expect(ops.length).toBeGreaterThan(0);

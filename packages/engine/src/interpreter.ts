@@ -1925,6 +1925,7 @@ function stepOp(
             op.deals === true,
             op.target,
             op.damagedOnly === true,
+            op.filter,
           ),
         },
       };
@@ -8371,13 +8372,34 @@ function snipeNote(
       still said "your opponent's Benched Pokémon" would read as a mis-built offer
       rather than as the card doing what it prints. */
   damagedOnly = false,
+  /** 🆕🆕🆕 **D483 — `op.filter`, the printed candidate CLASS, and it is owed for
+      `damagedOnly`'s reason one parameter up (D478: a describer obligation follows the
+      CALL PATH).** The narrowed prompt can offer ONE of a four-body Bench, and a heading
+      that still said *"your opponent's Benched Pokémon"* would read as a mis-built offer
+      rather than as the card doing what it prints — `gustTargetNoun`'s and
+      `knockOutChosenNote`'s stated rule.
+
+      🛑 **THE PHRASE IS `retrieveNoun`'s AND NOT A SECOND TABLE**, which is what makes
+      this the FIRST PROMPT EVER TO REACH that function's `suffixPokemon` arm: D446 wrote
+      it as an arm owed by an exhaustive switch and said in as many words that *"no op
+      carries this filter today"*. This op does, and the `anyOf` join above it renders the
+      pair.
+
+      ⚠️ **THE CAPTION SAYS *"Benched Pokémon ex or Pokémon V"* WHERE THE CARD PRINTS
+      *"Benched Pokémon ex or Benched Pokémon V"***, because the join is `retrieveNoun`'s
+      and the zone word is written once. Deliberate and NOT a rounding — `typedPokemon`'s
+      arm makes the same call one member over — and unambiguous inside a prompt whose
+      candidates are all Benched. A second spelling here would be the second answer to one
+      question (D159), and it is the answer `matchesFilter` does not have. */
+  narrowing?: CardFilter,
 ): string {
   const verb = optional ? "You may choose" : "Choose";
   const each = deals
     ? `${amount} damage`
     : `${Math.round(amount / 10)} damage counter${Math.round(amount / 10) === 1 ? "" : "s"}`;
   // `opponentAny` offers the Active too, so the heading drops "Benched".
-  const zone = target === "opponentAny" ? "Pokémon" : "Benched Pokémon";
+  const noun = narrowing === undefined ? "Pokémon" : retrieveNoun(narrowing).plural;
+  const zone = target === "opponentAny" ? noun : `Benched ${noun}`;
   // 🆕🆕🆕 **D447 — THE HEADING NAMES WHOSE BENCH IT IS, BECAUSE THE CANDIDATE SET
   // NOW DEPENDS ON THAT.** `snipeTargets` offers the ATTACKER's own Bench under
   // `yourBench`, and a dialog that still read *"Choose 1 of your opponent's Benched
@@ -13015,11 +13037,35 @@ export function snipeTargets(
         return ownBenchRefs(state, seat);
     }
   })();
-  if (op.damagedOnly !== true) return scope;
+  // 🆕🆕🆕 **D483 — THE PRINTED CANDIDATE CLASS, AT THE SAME SEAM AND FOR THE SAME THREE
+  // REASONS THE BLOCK ABOVE GIVES FOR `damagedOnly`** (an empty filtered set is the
+  // silent no-op, a filtered set of one is FORCED, and the §11 shield is asked AFTER the
+  // narrowing because every prevention lives inside `placeSnipe`'s loop). It is a CARD
+  // fact rather than a board fact — `matchesFilter` is handed the TOP CARD — which is
+  // the one axis on which it differs from its neighbour, and the reason it is a
+  // `CardFilter` rather than a rider.
+  //
+  // ⚠️ **THE TWO NARROWINGS ARE NEVER CO-PRINTED AND THE DERIVER REFUSES THE PAIR**, so
+  // the composition below is a reading rather than a claim about the catalog. It is
+  // written as a composition anyway, for `snipeTargets`' own stated rule: a funnel that
+  // applied one narrowing and skipped the other on some `target` would be a second
+  // opinion about which bodies a sentence names.
+  const narrowing = op.filter;
+  const classed =
+    narrowing === undefined
+      ? scope
+      : scope.filter((ref) => {
+          const pokemon = refPokemon(state, ref);
+          // Same conservative direction as the window below and as `matchesFilter`'s own:
+          // a ref that resolves to no body, or to a body whose top card cannot be read,
+          // is DROPPED rather than admitted.
+          return pokemon !== undefined && matchesFilter(topCardOf(state, pokemon), narrowing);
+        });
+  if (op.damagedOnly !== true) return classed;
   // A ref that resolves to no body is DROPPED rather than admitted — the narrowed
   // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule
   // one funnel over, and the same `refPokemon` behind it).
-  return scope.filter((ref) => {
+  return classed.filter((ref) => {
     const pokemon = refPokemon(state, ref);
     return pokemon !== undefined && hasAnyDamageCounters(pokemon);
   });

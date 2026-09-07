@@ -748,8 +748,15 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
         ops[1]?.op === "damageChosen"
       );
     });
-    expect(reads).toHaveLength(7);
-    expect(units(reads)).toBe(12);
+    // 🆕🆕🆕 **D483 — IT GREW AGAIN, BY THE SAME MECHANISM AND WITHOUT ANYONE TYPING A
+    // SENTENCE, WHICH IS THE SECOND CONSECUTIVE SLICE TO PROVE D477's PARAGRAPH ABOVE
+    // RIGHT.** The predicate asks only for the op PAIR, so corpus file line 111 — *"…and
+    // this attack does 210 damage to 1 of your opponent's Benched Pokémon **ex**."* —
+    // joined it the moment `damageChosen.filter` landed. 7 → **8** sentences, 12 → **13**
+    // printings, and the whole of the growth is on the BENCH side of the partition below,
+    // which is exactly what the partition exists to say.
+    expect(reads).toHaveLength(8);
+    expect(units(reads)).toBe(13);
     const aimedAnywhere = reads.filter(([, t]) => {
       const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
       return snipe?.op === "damageChosen" && snipe.target === "opponentAny";
@@ -763,8 +770,10 @@ describe("§4 — D401's price, and the SHAPE question settled from the catalog"
       const snipe = (deriveAttackEffect(t) as EffectOp[])[1];
       return snipe?.op === "damageChosen" && snipe.target === "opponentBench";
     });
-    expect(aimedAtTheBench).toHaveLength(3);
-    expect(units(aimedAtTheBench)).toBe(5);
+    // 🆕🆕🆕 D483 — 3 → **4** / 5 → **6**: `costBenchSnipe.test.ts` still owns the
+    // strings, and this file still owns only the cardinality (D415).
+    expect(aimedAtTheBench).toHaveLength(4);
+    expect(units(aimedAtTheBench)).toBe(6);
     expect(aimedAnywhere.length + aimedAtTheBench.length).toBe(reads.length);
   });
 
@@ -905,11 +914,32 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
     // TRUE OF THE `also`**: `ALSO_BENCHED_SNIPE_BODY` has spelled `(?:also )?` since
     // D447, so that clause of the comment was a co-occurring token written down as a
     // blocker (D447's own rule, one family over).
+    // 🆕🆕🆕 **D483 — THE `ex` ROW LEFT THIS LIST AND IS RE-POINTED RATHER THAN DELETED
+    // (D438/D444/D477's own move one rung up).** It was the FIRST of the two strings
+    // above and its refusal was *"an `ex` filter on the candidate CLASS"*; that filter
+    // now ships as `damageChosen.filter`, so a bare `.not.toBeNull()` here would be TRUE
+    // under the build this rung exists to forbid — an ANY-target anchor loosened to
+    // swallow a Benched sentence. The claim is therefore the OP's `target`, which
+    // discriminates the two arms BY VALUE, exactly as D477 re-pointed the three rows it
+    // built. **The refusal that remains is a genuine one and it is the HAND discard with
+    // a scaling tail**, which owes a `discardPileRetrieval`-shaped count this arm has no
+    // slot for.
     for (const text of [
-      "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
       expect(deriveAttackEffect(text), text).toBeNull();
+      expect(corpus().some(([, t]) => t === text), text).toBe(true);
+    }
+    for (const text of [
+      "Discard all Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's Benched Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
+      const program = deriveAttackEffect(text) as EffectOp[];
+      expect(program, text).toHaveLength(2);
+      expect(program[0]?.op, text).toBe("discardEnergy");
+      const snipe = program[1];
+      if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
+      expect(snipe.target, text).toBe("opponentBench");
+      expect(snipe.filter, text).toEqual({ kind: "suffixPokemon", suffix: "ex" });
       expect(corpus().some(([, t]) => t === text), text).toBe(true);
     }
     // 🆕🆕🆕 **D477 — THE THREE THAT LEFT, RE-POINTED ONTO WHAT NOW OWNS THEM RATHER

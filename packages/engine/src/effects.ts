@@ -5120,6 +5120,59 @@ export type EffectOp =
           against `opponentAny` today, and `snipeTargets` applies it to whichever
           scope the op names rather than to the Bench by hand. */
       damagedOnly?: true;
+      /** 🆕🆕🆕 **D483 — THE PRINTED CANDIDATE **CLASS**, AND IT IS THE SECOND
+          NARROWING AT THE SAME SEAM RATHER THAN A SECOND MECHANISM.** *"…to 1 of your
+          opponent's Benched Pokémon **ex**."* (`censusAttackCorpus.ts` file line 111,
+          1 legal printing) and *"…to 1 of your opponent's Benched Pokémon **ex or
+          Benched Pokémon V**."* (file line 615, 1) — **2 sentences / 2 legal
+          printings**, and the two are the whole of the class over all 640 corpus rows.
+
+          🛑 **A `CardFilter` AND NOT A `suffix?: PokemonSuffix`, AND THE PRINTED PAIR
+          IS WHAT DECIDES IT.** One of the two sentences names TWO classes, so a scalar
+          suffix field cannot spell it at all without a second field or a repeat — where
+          `CardFilter` already carries the union as `anyOf`, and `effects.ts`'s own
+          `IN_PLAY_BODY_NOUNS` (D446) already maps these exact printed nouns onto
+          `suffixPokemon` / `anyOf` for the body-count family. D159's rule: *"which
+          bodies does this printed noun name"* is ONE question, so it gets one answer
+          and one vocabulary. **ZERO new `CardFilter` members** — `suffixPokemon` reads
+          `pokemonSuffixOf` and has shipped since D446.
+
+          🛑 **READ ONLY WHERE THE CANDIDATES ARE BUILT, WHICH IS WHY IT IS OPTIONAL AND
+          WHY `MATCH_RECORD_VERSION` STANDS STILL AT 29 — `damagedOnly`'s ARGUMENT, RE-RUN
+          RATHER THAN QUOTED.** `applyChoice`'s `damageChosen` arm hands `choice.refs`
+          straight to `placeSnipe` and never re-derives a candidate set, and
+          `validateChoice` matches the answer against the PARKED PROMPT rather than
+          against the op — so a resumed pick reads this field at NO site and a v29 record
+          that lost it resolves to the identical board. **The bump is owed the day
+          `applyChoice` re-derives `snipeTargets`**; that is the falsifier and it is one
+          grep, exactly as the rider above states it.
+
+          ⚠️ **OPTIONAL RATHER THAN REQUIRED, AND THE PRICE OF THAT IS NAMED (D334/D421).**
+          A dropped rider degrades into *"snipe any Benched body"* — D435's
+          plausible-looking wrong answer rather than a soft landing — which is the same
+          exposure `damagedOnly` carries and is covered the same way, by a mutant row
+          rather than by a comment claiming care. **REQUIRED would be a corpus-wide
+          edit**: every shipped `damageChosen` producer (three registry rows and eight
+          derived arms) would have to spell an `anyPokemon` filter, and a REQUIRED field
+          on a PARKING op is the costly side — D137's own `source` bump, `2 → 3`.
+
+          ⚠️ **NEVER CO-PRINTED WITH `damagedOnly`, AND THE READ SITES REFUSE THE PAIR
+          RATHER THAN SILENTLY PREFERRING ONE** — `CHOSEN_ANY_TARGET`'s D448 rule
+          verbatim. The anchor structurally admits *"Benched Pokémon ex that has any
+          damage counters on it"*; the legal column prints it ZERO times, so resolving
+          it would be authoring (D190b) and it falls to the loud
+          `ATTACK_EFFECT_SKIPPED` path instead.
+
+          ⚠️ **AND IT MOVES A DESCRIBER, WHICH FOLLOWS THE CALL PATH (D478).** The
+          candidate set is narrowed at `snipeTargets`, so `snipeNote` names the class —
+          a heading still reading *"your opponent's Benched Pokémon"* over two of a
+          five-body Bench would contradict its own validator (`gustTargetNoun`'s and
+          `knockOutChosenNote`'s stated rule, and `damagedOnly`'s reason for its own
+          window). 🛑 **THAT MAKES `retrieveNoun`'s `suffixPokemon` ARM REACHABLE FROM A
+          PROMPT FOR THE FIRST TIME** — D446 wrote it as an arm owed by an exhaustive
+          switch and said in as many words that *"no op carries this filter today"*.
+          This op does. */
+      filter?: CardFilter;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -12315,8 +12368,91 @@ const BENCHED_SNIPE_TAKEN_PRIZES = new RegExp(
 // side, so honouring the own-side spelling there would aim a shipped payoff at the wrong
 // half of the table. **No card prints that composition** — the own-side twin is printed
 // bare, never behind *"You may {cost}. If you do, …"*.
+// 🆕🆕🆕 **D483 — THE PRINTED CANDIDATE CLASS, AS A MAP AND NOT AS A CAPTURE OVER THE
+// SUFFIX VOCABULARY (D440's rule, `IN_PLAY_BODY_NOUNS`' call verbatim).** The two rows
+// this table admits are the whole of the class over `legalAttackCorpus()`:
+//   1 — "…to 1 of your opponent's Benched Pokémon **ex**. (Don't apply …)" behind a
+//       self-discard cost — corpus file line **111**, the row three records priced and
+//       left; and
+//   1 — "This attack does 60 damage to 1 of your opponent's Benched Pokémon **ex or
+//       Benched Pokémon V**. (Don't apply …)" — corpus file line **615**.
+//
+// 🛑 **A CAPTURE OVER `(?:ex|V|VMAX|VSTAR)` CLAIMS EXACTLY THE SAME 2 SENTENCES / 2
+// PRINTINGS, MEASURED OVER ALL 640 ROWS — SO IT IS PURE RISK AND IS REFUSED (D472).**
+// The wider form would spell six nouns this column prints NOWHERE (`Benched Pokémon V`
+// alone, `VMAX`, `VSTAR`, and their pairings), which is `IN_PLAY_BODY_NOUNS`' own stated
+// reason for being a map. ⚠️ **AND THE SATURATING FORM `( [^.]+)?` IS NOT MERELY UNPAID —
+// IT IS A KNOWN WRONG ANSWER**: it claims a THIRD sentence, *"…to 1 of your opponent's
+// Benched Pokémon **for each damage counter on that Pokémon**."* (file line 551), whose
+// per-body multiply this arm has no way to perform, so it would derive a FLAT hit where
+// the card prints a scaled one. D472's rule with the sign flipped, for the second slice
+// running.
+//
+// ⚠️ **THE PAIR IS AN `anyOf` AND NOT A NEW FILTER MEMBER**, D446's argument one table
+// over: the printed *"or"* names a SET each body is asked about one at a time, which is
+// what `matchesFilter`'s `anyOf` already means. **The printed word here is *"or"* where
+// `IN_PLAY_BODY_NOUNS`' twin prints *"and"*** — the same union, spelled two ways by the
+// catalog, which is why the two tables cannot share a KEY even though they share both
+// VALUES.
+//
+// ⚠️ **THE KEYS ARE THE NOUN AS PRINTED AFTER `Benched Pokémon`, WITHOUT ITS LEADING
+// SPACE**, and the alternation below is built FROM them longest-first, so the observable
+// direction is closed (D442, `SELF_DISCARD_THEN_BENCH_SNIPE`'s move): the anchor cannot
+// drop a noun this map carries, and a noun the map does not carry cannot reach a read
+// site.
+//
+// 🛑🛑 **THE SENTENCE THAT USED TO END THIS PARAGRAPH IS FALSE, AND IT IS KEPT HERE WITH THE
+// FALSIFICATION DATED (D178/D442) BECAUSE A SUCCESSOR WILL RE-DERIVE IT FROM THE SAME PREFIX
+// RELATION.** It read: *"Longest-first matters here and nowhere else in this file — `ex` is a
+// PREFIX of `ex or Benched Pokémon V`, so a shortest-first alternation would match `ex` and
+// leave ` or Benched Pokémon V` to be refused by the terminator."* That is how a POSSESSIVE
+// matcher behaves. **JavaScript alternation BACKTRACKS**: the short branch leaves bytes the
+// terminator cannot spend, so the engine returns and tries the long one, and both orders
+// claim exactly the same 2 sentences / 2 printings over all 640 rows. **MEASURED, not
+// reasoned** — `D483-class-alternation-shortest-first` is a DECLARED `equivalent` survivor
+// that exists to keep this measurement executable, and `classNarrowedBenchSnipe.test.ts` §3
+// pins both orders against the column. The sort stays for LEGIBILITY (longest-first is how
+// the printed nouns nest, and `TYPED_SELF_DISCARD` spells its own map the same way); it buys
+// nothing behavioural, and saying so out loud is the whole point of leaving it.
+const BENCHED_SNIPE_CLASS_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, CardFilter>([
+  ["ex", { kind: "suffixPokemon", suffix: "ex" }],
+  [
+    "ex or Benched Pokémon V",
+    {
+      kind: "anyOf",
+      filters: [
+        { kind: "suffixPokemon", suffix: "ex" },
+        { kind: "suffixPokemon", suffix: "V" },
+      ],
+    },
+  ],
+]);
+// 🆕🆕🆕 **D483 — THE FRAGMENT GAINS A FIFTH GROUP AND THE ONE BEHIND IT SHIFTS.** The
+// class sits where the print puts it — immediately after the noun and BEFORE the
+// damaged-body window — so D437's append-after-the-existing-groups trick is unavailable
+// and the index shift is forced (D447's rule, at its second application on this
+// fragment): `[4]` is the class and the narrowing window is `[5]`. **All four callers
+// are re-indexed in the same edit** (arms 6c and 6c-bis, arm 9b-bis, and
+// `optionalCostPayoff`, which REFUSES both riders because its record has no slot for
+// either).
+/** The class group itself, NAMED rather than spliced inline — which is a lint
+    constraint turned into the repo's own habit (D446: *"the repair is the NAME"*).
+    Built FROM the map's keys, LONGEST-FIRST, so the observable direction is closed
+    (D442) and the pair key — a strict extension of the singleton key — is tried
+    before it. */
+const BENCHED_SNIPE_CLASS_GROUP = `(?: (${[...BENCHED_SNIPE_CLASS_NOUNS.keys()]
+  .sort((a, b) => b.length - a.length)
+  .join("|")}))?`;
+// 🆕 D483 — THE FOUR PIECES ARE SEPARATELY COMMENTED AND FOUR MUTATION ROWS KEY ON THE
+// FIRST LINE ALONE, so the concatenation is kept and the style rule is suppressed on the
+// line it fires on. Biome's fix collapses all four operands into a single ~400-byte
+// template literal, which would take the fragment's structure and those anchors with it.
+// The rule only began firing when the class group introduced an INTERPOLATION into the
+// chain; the concatenation itself is unchanged since D383.
 const ALSO_BENCHED_SNIPE_BODY =
+  // biome-ignore lint/style/useTemplate: see the note above — collapsing this chain would destroy four mutation anchors.
   `attack (?:also )?does (\\d+) damage to (\\d+) of (your opponent['’]s|your) Benched Pokémon` +
+  BENCHED_SNIPE_CLASS_GROUP +
   "( that has any damage counters on it)?\\." +
   `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?`;
 const ALSO_BENCHED_SNIPE = new RegExp(`^This ${ALSO_BENCHED_SNIPE_BODY}$`);
@@ -21577,9 +21713,37 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // and turns the two own-side printings into a snipe aimed ACROSS the table
     // instead of at the attacker's own Bench. Hence `D447-snipe-side-flips`.
     const snipeSide = match[3] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
-    const damagedOnly = match[4] !== undefined;
+    // 🆕🆕🆕 D483 — THE SHARED BODY'S **FOURTH** CAPTURE IS THE PRINTED CLASS, and
+    // the window behind it is `[5]` now. An unmapped noun cannot reach here (the
+    // alternation is built from the map's keys), so the `undefined` this `get` can
+    // return is the one `noUncheckedIndexedAccess` insists on rather than a case the
+    // catalog produces — and it is treated as a REFUSAL rather than as "no narrowing",
+    // which is the direction `attachedEnergyFilter`'s two-nullish rule takes one helper
+    // over: an UNREADABLE noun must leave the sentence LOUD, never widen the hit.
+    const classNoun = match[4];
+    const narrowing = classNoun === undefined ? undefined : BENCHED_SNIPE_CLASS_NOUNS.get(classNoun);
+    const damagedOnly = match[5] !== undefined;
+    // 🛑 THE TWO RIDERS ARE NEVER CO-PRINTED AND THE PAIR IS REFUSED RATHER THAN
+    // SILENTLY RESOLVED — `CHOSEN_ANY_TARGET`'s D448 rule verbatim. `damageChosen`
+    // carries both fields and `snipeTargets` would apply both; the legal column prints
+    // the composition ZERO times, so resolving it is authoring (D190b).
+    const bothRiders = damagedOnly && classNoun !== undefined;
+    const readable = classNoun === undefined || narrowing !== undefined;
     const agrees = !damagedOnly || count === 1;
-    if (amount >= 1 && count >= 1 && agrees) {
+    if (amount >= 1 && count >= 1 && agrees && readable && !bothRiders) {
+      if (narrowing !== undefined) {
+        return [
+          {
+            op: "damageChosen",
+            target: snipeSide,
+            amount,
+            count,
+            source: "attack",
+            deals: true,
+            filter: narrowing,
+          },
+        ];
+      }
       // ⚠️ TWO WHOLE LITERALS AND NOT A CONDITIONAL SPREAD — `CHOSEN_ANY_TARGET`'s
       // `ignoreWR` arm four anchors down, spelled the same way for D135's reason:
       // an ABSENT key and a key set to `undefined` are different wire values, and
@@ -21650,8 +21814,45 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     //     carries no narrowing — so this is a reading the deriver would give if the
     //     sentence were printed, not a claim that it is. 🆕 D447 — the group is `[5]`,
     //     not `[4]`: the antecedent's `(.+)` opens first, then the body's FOUR.
-    const damagedOnly = match[5] !== undefined;
-    if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {
+    // 🆕🆕🆕 D483 — the class is the body's FOURTH group (here `[5]`) and the window
+    //     moves to `[6]`. Read for the reason the fragment exists (D383/D437/D447 at its
+    //     fourth application): a widening one caller honours and another drops is two
+    //     opinions about one printed clause. **NO CARD PRINTS THIS COMPOSITION** — the
+    //     gated skeleton has one legal printing (Wo-Chien `sv08-015`) and it carries no
+    //     class — so this is the reading the deriver WOULD give, not a claim that it is
+    //     printed.
+    const gatedClassNoun = match[5];
+    const gatedNarrowing =
+      gatedClassNoun === undefined ? undefined : BENCHED_SNIPE_CLASS_NOUNS.get(gatedClassNoun);
+    const damagedOnly = match[6] !== undefined;
+    if (
+      cond !== null &&
+      amount >= 1 &&
+      count >= 1 &&
+      (!damagedOnly || count === 1) &&
+      (gatedClassNoun === undefined || gatedNarrowing !== undefined) &&
+      !(damagedOnly && gatedClassNoun !== undefined)
+    ) {
+      if (gatedNarrowing !== undefined) {
+        return [
+          {
+            op: "conditionGate",
+            cond,
+            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+            then: [
+              {
+                op: "damageChosen",
+                target: gatedSide,
+                amount,
+                count,
+                source: "attack",
+                deals: true,
+                filter: gatedNarrowing,
+              },
+            ],
+          },
+        ];
+      }
       return [
         {
           op: "conditionGate",
@@ -21865,13 +22066,23 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // discard cost — so this is the reading the deriver WOULD give, exactly as arm
     // 6c-bis's is, and it is a mutant row rather than a comment claiming care.
     const benchSide = match[5] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
-    const damagedOnly = match[6] !== undefined;
+    // 🆕🆕🆕 D483 — the shared body's FOURTH capture (here `[6]`), which is what
+    // brings corpus file line 111 in: *"Discard all Energy from this Pokémon, and this
+    // attack does 210 damage to 1 of your opponent's Benched Pokémon **ex**."* The row
+    // was priced at a new op FIELD by D472 and re-confirmed by D477 — that price was
+    // right about the field and wrong about the anchor, which needed no new one at all.
+    const costClassNoun = match[6];
+    const costNarrowing =
+      costClassNoun === undefined ? undefined : BENCHED_SNIPE_CLASS_NOUNS.get(costClassNoun);
+    const damagedOnly = match[7] !== undefined;
     const agrees = !damagedOnly || bodies === 1;
     if (
       (cost === "all" || cost >= 1) &&
       hit >= 1 &&
       bodies >= 1 &&
       agrees &&
+      (costClassNoun === undefined || costNarrowing !== undefined) &&
+      !(damagedOnly && costClassNoun !== undefined) &&
       (typeCode === undefined || energyType !== undefined)
     ) {
       // TWO WHOLE LITERALS PER AXIS AND NOT A SPREAD (D135): an ABSENT key and a key set
@@ -21881,6 +22092,20 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         energyType === undefined
           ? ({ kind: "anyEnergy" } as const)
           : ({ kind: "providesEnergy", energyType } as const);
+      if (costNarrowing !== undefined) {
+        return [
+          { op: "discardEnergy", from: "yourActive", filter, count: cost },
+          {
+            op: "damageChosen",
+            target: benchSide,
+            amount: hit,
+            count: bodies,
+            source: "attack",
+            deals: true,
+            filter: costNarrowing,
+          },
+        ];
+      }
       return [
         // The cost, first, because that is the printed order — arm 9b's rule inherited,
         // and load-bearing for the same reason: the snipe's candidates are read AFTER
@@ -27126,6 +27351,21 @@ function optionalCostPayoff(payoff: string): AttackOptionalCostPayoff | null {
     // never offered — and a registry-shaped defect is what D190b/D199 rank strictly
     // below an unbuilt sentence, which at least fails loudly. So: null, and the whole
     // sentence stays on the `ATTACK_EFFECT_SKIPPED` path.
+    // 🆕🆕🆕 **D483 — THE PARAGRAPH ABOVE IS KEPT VERBATIM AND ITS ORDINAL IS NOW STALE
+    // (D442: correct the index in place, keep the claim).** The window is the shared
+    // body's FOURTH capture and reads `snipe[5]` here, the class having taken the slot
+    // before it. The CLAIM is unchanged.
+    if (snipe[5] !== undefined) return null;
+    // 🆕🆕🆕 **D483 — THE CLASS CAPTURE IS REFUSED HERE TOO, ON THE LINE ABOVE'S REASON
+    // VERBATIM AND NOT ON A NEW ONE.**
+    // `AttackOptionalCostPayoff.benchSnipe` is `{amount, count}` — no side, no window,
+    // no class — so honouring a narrowed payoff would mean widening that record and
+    // `costSnipeProgram` with it, for a composition **no card prints** (*"You may
+    // {cost}. If you do, this attack also does N damage to 1 of your opponent's Benched
+    // Pokémon ex."* is absent from all 640 corpus sentences). Dropping it silently would
+    // aim a shipped payoff at bodies the card never offered — a wrong-but-plausible
+    // program, which D190b/D199 rank strictly below an unbuilt sentence that at least
+    // fails loudly. So: null, and the whole sentence stays on `ATTACK_EFFECT_SKIPPED`.
     if (snipe[4] !== undefined) return null;
     // 🆕🆕🆕 **D447 — THE FOURTH CAPTURE IS REFUSED HERE TOO, ON THE THIRD CAPTURE'S
     // REASON VERBATIM AND NOT ON A NEW ONE.** `AttackOptionalCostPayoff.benchSnipe` is

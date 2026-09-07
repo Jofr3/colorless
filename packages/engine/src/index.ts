@@ -19493,7 +19493,58 @@ import type { GameState, Seat } from "./types";
     REACHABILITY (D450) is empty — `handRefresh` never parks, so no `phase.cont.pendingOp`
     or `rest` can hold it. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN
     INHERITED: see `shuffleHandDraw.test.ts` §7, which authors one more pin.)
-    🆕🆕🆕 engineVersion 0.377.0 → **0.378.0** (D482 — THE WHOLE-SIDE SPREAD,
+    🆕🆕🆕 engineVersion 0.378.0 → **0.379.0** (D483 — THE PRINTED CANDIDATE **CLASS**
+    ON THE BENCHED SNIPE. `censusAttackCorpus.ts` **FILE LINES 111 and 615** — *"Discard all
+    Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's
+    Benched Pokémon **ex**. (Don't apply …)"* and *"This attack does 60 damage to 1 of your
+    opponent's Benched Pokémon **ex or Benched Pokémon V**. (Don't apply …)"* —
+    **2 sentences / 2 legal printings**, and file line 111 is the row D472 priced, D477
+    re-priced and DECLINED, and `costBenchSnipe.test.ts` fielded as a refusal witness.
+    ONE new OPTIONAL op field `damageChosen.filter?: CardFilter`, ONE new private noun map
+    (`BENCHED_SNIPE_CLASS_NOUNS`, two rows), ONE new group on the SHARED fragment
+    `ALSO_BENCHED_SNIPE_BODY`, and ONE new `snipeNote` parameter. **ZERO** new `EffectOp`
+    members, op VALUES, `CardFilter` members, ANCHORS, readers (the surface stands still at
+    **13**), prompts, choice kinds, events, error codes, `GameState` fields, registry rows,
+    `packages/schema` bytes or `redact.ts` bytes.
+    🛑 **THE PRICE WAS RIGHT ABOUT THE FIELD AND WRONG ABOUT THE ANCHOR, AND THE ERROR
+    WAS ON THE CHEAP SIDE.** D472 called for *"a new op FIELD on a PARKING op"* — correct,
+    and it is exactly this field. What three records missed is that no new ANCHOR is
+    needed: the group goes on the fragment D383 made SHARED, so all FOUR of its callers
+    move in one edit and the two printed rows arrive through two DIFFERENT anchors for the
+    price of one capture. `costBenchSnipe.test.ts` §1 wrote *"the anchor above is ONE
+    `( ex)?` group away from claiming it"* as a concession; it was the literal truth.
+    🛑 **THE COMPOSITION QUESTION WAS ASKED FIRST (D482) AND ITS ANSWER SPLIT THE
+    WORK ORDER'S CLUSTER IN HALF.** The brief named FOUR residue rows behind *"ONE class
+    narrowing"* — these two snipes and two SPREADS (*"…to each of your opponent's Pokémon
+    ex [and Pokémon V]. This attack's damage isn't affected by Weakness or Resistance."*,
+    file lines 616/539, 2 sentences / 4 printings). D458's axis-deletion disproof separates
+    them: strip the class from either SNIPE and the same string resolves; strip it from
+    either SPREAD and it is STILL unread, and strip the W/R sentence instead and it is
+    still unread. **Two blockers, not one, so the cluster is TWO slices and not one.**
+    ⚠️ **AND THE SPREADS' COMPOSITION EXISTS, IS SPELLABLE TODAY, AND IS REFUSED ON THE
+    DAMAGE MODEL.** `counterEachAll` already walks one whole side under a REQUIRED
+    `filter: CardFilter` with `side: "opponent"` — the exact candidate set both spreads
+    name, with zero new anything — but it places FLAT COUNTERS and files `COUNTERS_PLACED`,
+    where *"does N damage"* has meant `DAMAGE_DEALT` through the post-W/R reduction fold
+    since D159/D161. **On a board with no reduction passive the two are byte-identical**,
+    which is D482's arithmetic-coincidence class arriving as a DESIGN trap rather than as a
+    test defect, and is why the spreads are priced and left.
+    `MATCH_RECORD_VERSION` **STAYS 29**, on `damagedOnly`'s argument RE-DRIVEN rather than
+    quoted: the field is read at exactly one site, `snipeTargets`, which `applyChoice`
+    never calls — so a v29 record that LOST the key resumes to the identical board, driven
+    over the serialized bytes in `classNarrowedBenchSnipe.test.ts` §8. The falsifier is one
+    grep: the bump is owed the day `applyChoice` re-derives `snipeTargets`.
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD AND HIGHER THAN THE FORECAST AGAIN:
+    58 assertions / 75 sites across 58 files, including 14 `it(…)` TITLES.** D482 forecast
+    *"a successor inherits 58"* and was right about the assertions and low on the other
+    three; a successor inherits **59 / 77 / 59 / 15**, this slice's own suite included.
+    🛑 **AND IT FALSIFIED A REACHABILITY REFUSAL D446 WROTE INTO THREE DOC BLOCKS.**
+    `retrieveNoun`'s `suffixPokemon` arm said *"no op carries this filter today"*; this op
+    does, and `snipeNote` renders it into a live prompt heading. The only reason the claim
+    did not simply rot is that ONE of the three copies was an executable rung
+    (`bodiesInPlayScaling.test.ts` §7) — the second consecutive slice caught by a
+    predecessor's refusal witness rather than by its own author.)
+    🆕🆕 engineVersion 0.377.0 → **0.378.0** (D482 — THE WHOLE-SIDE SPREAD,
     `censusAttackCorpus.ts` **FILE LINE 572** (*"This attack does 30 damage to each of your
     opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"*),
     **1 sentence / 1 legal printing**, through ONE new anchor `SPREAD_EACH_OPPONENT_POKEMON`
@@ -19562,7 +19613,7 @@ import type { GameState, Seat } from "./types";
     than the census literals do**, because every slice that authors a version pin raises it
     by one and no instrument reports the total. D482 authors one more, so a successor
     inherits **58 assertions**.) */
-export const engineVersion = "0.378.0";
+export const engineVersion = "0.379.0";
 
 export type {
   ApplyResult,

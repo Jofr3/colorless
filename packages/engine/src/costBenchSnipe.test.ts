@@ -341,11 +341,17 @@ describe("§1 — three printed rows, and the family they belong to", () => {
     // Four were already read by D401's `SELF_DISCARD_THEN_ANY_TARGET`; three are this
     // slice's; one is left. The partition is asserted so a ninth printed row cannot join
     // silently on either side.
+    // 🆕🆕🆕 **D483 — THE PARTITION IS NOW EMPTY ON THE `left` SIDE, AND THAT IS THE
+    // WHOLE OF THIS SLICE'S CLAIM ON THIS FAMILY.** The eighth row — `EX_THEN_210`, the
+    // one D477 priced and declined — is claimed by the same arm through the shared
+    // fragment's new class group. **The `left` rung is KEPT rather than deleted** (D438):
+    // an EMPTY complement is a stronger statement than a one-element one, and it is the
+    // rung that goes red the day a ninth printed row joins this family unclaimed.
     const claimed = family.filter(([, s]) => resolvedByAnyReader(s));
-    expect(claimed).toHaveLength(7);
-    expect(claimed.reduce((n, [units]) => n + units, 0)).toBe(12);
+    expect(claimed).toHaveLength(8);
+    expect(claimed.reduce((n, [units]) => n + units, 0)).toBe(13);
     const left = family.filter(([, s]) => !resolvedByAnyReader(s));
-    expect(left.map(([, s]) => s)).toEqual([EX_THEN_210]);
+    expect(left.map(([, s]) => s)).toEqual([]);
     // ⚠️ WHAT THE PATTERN CANNOT SEE, as a QUERY that was run and not a list: it requires
     // the head to end `from this Pokémon`, so a cost spelled `from your Pokémon` or a
     // discard from the HAND is invisible to it. Both exist in the column, and neither is
@@ -355,26 +361,45 @@ describe("§1 — three printed rows, and the family they belong to", () => {
     ).not.toHaveLength(0);
   });
 
-  it("🛑 the row LEFT is left for its CANDIDATE CLASS, and the price is written down", () => {
-    // D469's rule: a row you decline is worth as much as a row you build, if you write
-    // down the price. This one is *"bigger than it looks"*, and the reason is not the
-    // sentence's shape — the anchor above is ONE `( ex)?` group away from claiming it.
+  it("🛑 the row that WAS left is built, and D477's own price is graded here", () => {
+    // 🆕🆕🆕 **D483 — THE PARAGRAPH BELOW IS KEPT VERBATIM (D178) AND ITS VERDICT IS
+    // GRADED RATHER THAN DELETED.** D477 wrote it, D472 wrote it first, and both were
+    // RIGHT about the FIELD — `damageChosen.filter` is exactly the new op field on a
+    // parking op they named, and the optional-vs-required question was live and was
+    // answered OPTIONAL. **What both were wrong about is the ANCHOR**: *"the anchor above
+    // is ONE `( ex)?` group away"* reads as a concession and was the literal truth —
+    // there is no second anchor in this slice, and the group is the fragment's, so all
+    // FOUR of its callers moved at once. ⚠️ **AND THE COST OF NOT ASKING WAS ONE SLICE
+    // RATHER THAN THIRTY-FIVE**, which is the only reason this row is a footnote and
+    // D482's was a finding.
     //
-    // `damageChosen` carries five riders (`optional`, `deals`, `perTakenPrize`,
-    // `perEnergyOnSelf`, `damagedOnly`) and **not one of them narrows the candidate
-    // CLASS**: `damagedOnly` narrows on a BOARD fact read off an `InPlayPokemon`, where
-    // `ex` is a CARD fact (`Card.suffix`, the column D446's `suffixPokemon` filter
-    // reads). So it needs a NEW op FIELD on a PARKING op — D334/D421's
-    // optional-vs-required question live, with a DROPPED rider degrading into "snipe any
-    // Benched body", which is D435's plausible-looking wrong answer rather than a soft
-    // landing. That is a slice, not a capture, and it is refused here rather than
-    // smuggled in.
-    expect(deriveAttackEffect(EX_THEN_210)).toBeNull();
+    // > D469's rule: a row you decline is worth as much as a row you build, if you write
+    // > down the price. This one is *"bigger than it looks"*, and the reason is not the
+    // > sentence's shape — the anchor above is ONE `( ex)?` group away from claiming it.
+    // >
+    // > `damageChosen` carries five riders (`optional`, `deals`, `perTakenPrize`,
+    // > `perEnergyOnSelf`, `damagedOnly`) and **not one of them narrows the candidate
+    // > CLASS**: `damagedOnly` narrows on a BOARD fact read off an `InPlayPokemon`, where
+    // > `ex` is a CARD fact (`Card.suffix`, the column D446's `suffixPokemon` filter
+    // > reads). So it needs a NEW op FIELD on a PARKING op — D334/D421's
+    // > optional-vs-required question live, with a DROPPED rider degrading into "snipe any
+    // > Benched body", which is D435's plausible-looking wrong answer rather than a soft
+    // > landing. That is a slice, not a capture, and it is refused here rather than
+    // > smuggled in.
+    const program = deriveAttackEffect(EX_THEN_210) as EffectOp[];
+    expect(program).toHaveLength(2);
+    const snipe = program[1];
+    if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
+    expect(snipe.filter).toEqual({ kind: "suffixPokemon", suffix: "ex" });
     expect(corpusRows().some(([, s]) => s === EX_THEN_210)).toBe(true);
-    // …and the refusal is the `ex` token's ALONE, one axis (D399/D427): strip those three
-    // bytes and the same string resolves through the arm this slice shipped.
+    // …and the `ex` token is still the ONE axis (D399/D427), which is now asserted as an
+    // INEQUALITY OF PROGRAMS rather than as a null (D449): strip those three bytes and the
+    // same string resolves through the same arm, to an op that carries no `filter` at all.
     const stripped = EX_THEN_210.replace("Benched Pokémon ex.", "Benched Pokémon.");
-    expect(deriveAttackEffect(stripped)).not.toBeNull();
+    const bare = deriveAttackEffect(stripped) as EffectOp[];
+    expect(bare).not.toBeNull();
+    expect(bare[1]).not.toEqual(snipe);
+    expect((bare[1] as { filter?: unknown }).filter).toBeUndefined();
   });
 });
 
@@ -506,7 +531,19 @@ describe("§3 — the anchor's generalisations claim nothing extra, and that is 
         snipe.target === "opponentBench"
       );
     });
-    expect(byArm.map(([, s]) => s).sort()).toEqual([TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180].sort());
+    // 🆕🆕🆕 **D483 — THE TWO SETS COME APART FOR THE FIRST TIME, AND THAT IS THE
+    // MEASUREMENT RATHER THAN A BREAKAGE.** `NARROWEST` above is the literal WITHOUT the
+    // shared body's generalisations, so it still claims exactly three; the shipped ARM now
+    // claims a FOURTH, `EX_THEN_210`, through the class group this slice added to that
+    // body. **The gap between the two is precisely what the generality buys**, and it is
+    // ONE sentence / ONE printing — the first time in this file's history that the answer
+    // to D472's question is not "nothing".
+    expect(byArm.map(([, s]) => s).sort()).toEqual(
+      [TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180, EX_THEN_210].sort(),
+    );
+    const bought = byArm.filter(([, s]) => !NARROWEST.test(s));
+    expect(bought.map(([, s]) => s)).toEqual([EX_THEN_210]);
+    expect(bought.reduce((n, [units]) => n + units, 0)).toBe(1);
   });
 
   it("🛑 `also` is NOT what refused these rows, and stripping it changes no answer", () => {
@@ -923,7 +960,7 @@ describe("§8 — the surface, the version, and the mechanisms this slice did no
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 
-  it("engineVersion is 0.378.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.379.0 and `manifest.version` agrees", () => {
     // 🆕🆕🆕 D477 — 0.374.0 → **0.375.0**, and the bump is owed for BEHAVIOUR: five legal
     // printings that derived to `null` and fell to the loud `ATTACK_EFFECT_SKIPPED` path
     // now pay a §8 cost and park a benched snipe. **`MATCH_RECORD_VERSION` STAYS 29** on
@@ -934,7 +971,7 @@ describe("§8 — the surface, the version, and the mechanisms this slice did no
     // count}` is `SELF_DISCARD_N` / `TYPED_SELF_DISCARD`'s output and `damageChosen
     // {target:"opponentBench", …}` is `ALSO_BENCHED_SNIPE`'s. No new op, no new op FIELD,
     // no new op VALUE — so there is no byte for a version to be about.
-    expect(engineVersion).toBe("0.378.0");
+    expect(engineVersion).toBe("0.379.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

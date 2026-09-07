@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.378.0";',
+    find: 'export const engineVersion = "0.379.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -16959,9 +16959,14 @@ export const MUTANTS: Mutant[] = [
     // rows now carry their own PRECEDING line, which the two arms spell differently.
     // **THE CLAIM IS UNCHANGED**: the count's positivity guard is dropped and the
     // amount's is left alone, which is the asymmetry an author lands on.
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D483 — the flat arm's guard gained `&& readable && !bothRiders`
+    // (the printed CLASS must be a mapped noun, and the class and the damaged-body window are
+    // never co-printed). **THE CLAIM IS UNCHANGED**: the count's positivity guard is dropped
+    // and every other conjunct is left alone.
     find:
-      "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && count >= 1 && agrees) {",
-    replace: "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && agrees) {",
+      "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && count >= 1 && agrees && readable && !bothRiders) {",
+    replace:
+      "    const agrees = !damagedOnly || count === 1;\n    if (amount >= 1 && agrees && readable && !bothRiders) {",
     expectKilledBy: ["packages/engine/src/alsoBenchedSnipe.test.ts"],
   },
   {
@@ -20139,8 +20144,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D437",
     what: "🛑 C1 — **THE FUNNEL IGNORES `damagedOnly` AND RETURNS THE WHOLE SCOPE.** The sentence still resolves, the op still carries the flag, `BUILT.attack` still rises and `ATTACK_EFFECT_SKIPPED` never fires — the card simply snipes a body the print does not name. It is the build every one of this slice's three arity boards was written for: the empty-filtered board PARKS instead of whiffing silently, the forced board PARKS instead of forcing, and a SHIELDED UNDAMAGED body files a `DAMAGE_DEALT{prevented}` row for a hit that was never coming (D433's false log row, arriving here rather than at `unshieldedRefs`). ⚠️ It also breaks the D345 funnel contract in the direction nothing else can see: `programPlayable` greys off the same wide set, so the gate and the offer agree — WRONGLY — and no cross-check reddens",
     file: "packages/engine/src/interpreter.ts",
-    find: "  if (op.damagedOnly !== true) return scope;\n  // A ref that resolves to no body is DROPPED rather than admitted — the narrowed\n  // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule\n  // one funnel over, and the same `refPokemon` behind it).\n  return scope.filter((ref) => {\n    const pokemon = refPokemon(state, ref);\n    return pokemon !== undefined && hasAnyDamageCounters(pokemon);\n  });",
-    replace: "  return scope;",
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D483 — the funnel gained a CLASS narrowing above this window,
+    // so the window now filters `classed` rather than `scope`. **THE CLAIM IS UNCHANGED**: the
+    // damaged-body window is dropped and the class narrowing is deliberately LEFT STANDING,
+    // which makes this row about one narrowing rather than about two.
+    find: "  if (op.damagedOnly !== true) return classed;\n  // A ref that resolves to no body is DROPPED rather than admitted — the narrowed\n  // sentence must not offer a body it cannot read (`knockOutChosenTargets`' rule\n  // one funnel over, and the same `refPokemon` behind it).\n  return classed.filter((ref) => {\n    const pokemon = refPokemon(state, ref);\n    return pokemon !== undefined && hasAnyDamageCounters(pokemon);\n  });",
+    replace: "  return classed;",
     expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
   },
   {
@@ -20184,7 +20193,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D437",
     what: "🛑 C6 — **THE READER NEVER SETS THE FLAG**: the third capture is read and thrown away, so the printed clause is decoration. **THIS ROW IS SILENT IN EVERY CENSUS** — the sentence still resolves through the same anchor, `BUILT.attack` still rises by 3, the residue still falls by 3, `resolvedByAnyReader` is still true and `ATTACK_EFFECT_SKIPPED` never fires. The only thing that moves is which bodies the card can hit, which is the whole of what it prints. It is also the shape D190b ranks BELOW an unbuilt sentence: a wrong-but-plausible program that fails silently instead of loudly. ⚠️ It disarms the number agreement too (`agrees` becomes vacuously true), so §2's `2 of … that has …` refusal reddens beside §3's and §4's boards",
     file: "packages/engine/src/effects.ts",
-    find: "    const damagedOnly = match[4] !== undefined;", // ⚠️ group index shifted 3 -> 4 at D447 (the possessive capture opens before the narrowing)
+    find: "    const damagedOnly = match[5] !== undefined;", // ⚠️ group index shifted 3 -> 4 at D447 (the possessive capture opens before the narrowing), then 4 -> 5 at D483 (the printed CLASS opens before it in turn)
     replace: "    const damagedOnly = false;",
     expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
   },
@@ -20202,7 +20211,19 @@ export const MUTANTS: Mutant[] = [
     decision: "D437",
     what: "⚠️ C8 — **THE THIRD CALLER OF THE SHARED FRAGMENT SILENTLY DROPS THE WIDENING**: the gated arm reads the new capture and ignores it, so *\"If {clause}, this attack also does N damage to 1 of your opponent's Benched Pokémon that has any damage counters on it.\"* derives an UN-narrowed snipe. This is precisely the failure D383 made the fragment shared to prevent — one printed clause with two readings depending on what came before the comma — and it needs its own row for that row's own reason: a fragment with three callers owes three proofs, and the flat caller passing says nothing about the gated one",
     file: "packages/engine/src/effects.ts",
-    find: "    const damagedOnly = match[4] !== undefined;",
+    // 🛑🛑 **RE-POINTED AT D483, AND THE RE-POINTING IS A FINDING RATHER THAN A CHORE.**
+    // This row's `find` was `match[4]` and has been since D437 — but **D447 moved the GATED
+    // arm's read to `match[5]` and only the FLAT arm's row was re-transcribed**, so from
+    // D447 to D483 this row patched `D437-reader-drops-the-narrowing`'s line, not its own.
+    // Two rows, one `find`, one patch, and BOTH reported KILLED by the same suite every
+    // sweep for forty-six decisions. ⚠️ **THE GATED ARM HAD NO ROW AT ALL OVER THAT SPAN**,
+    // and nothing could say so: the corpus's own `find`-occurs-once check passes when two
+    // rows share one live line. It is D400-C6's species (*a group index left behind by a
+    // widening one line up*) at the address where it is hardest to notice — inside the
+    // MUTATION CORPUS rather than inside the reader — and it is exactly D469's
+    // `find`-vs-`replace` reading that catches it. **THE CLAIM IS UNCHANGED**; only the
+    // line it is about is now the line it names.
+    find: "    const damagedOnly = match[6] !== undefined;",
     replace: "    const damagedOnly = false;",
     expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
   },
@@ -20229,8 +20250,11 @@ export const MUTANTS: Mutant[] = [
     decision: "D437",
     what: "🛑 C11 — **THE GATED ARM'S NUMBER AGREEMENT IS DROPPED**, and this is the row that RE-ARMS D399's TRIPWIRE. `conditionalBenchSnipe.test.ts` §4 has asserted since D399 that *\"If {mapped clause}, this attack also does 30 damage to 2 of your opponent's Benched Pokémon that has any damage counters on it.\"* derives to NULL — and until this slice the shared fragment refused that string at its own literal `\\\\.`, so the rung's discrimination was the FRAGMENT's. D437 makes the string MATCH the fragment, which moves the refusal onto the gated arm's arity check and would otherwise leave the rung TRUE-BUT-TOOTHLESS. That is the exact shape of D436's GAP (a re-pointed claim that is true under the mutant and the real build alike), found by grepping the mutation corpus for the SENTENCE before building it — D384's rule, which D436 broke. **THE KILLER IS D399's OWN SUITE**, deliberately: the rung is re-armed where it lives rather than replaced by a new one over here",
     file: "packages/engine/src/effects.ts",
-    find: "    if (cond !== null && amount >= 1 && count >= 1 && (!damagedOnly || count === 1)) {",
-    replace: "    if (cond !== null && amount >= 1 && count >= 1) {",
+    // 🆕🆕🆕 RE-TRANSCRIBED AT D483 — the gated guard gained two class conjuncts and Biome
+    // broke it across lines. **THE CLAIM IS UNCHANGED**: the NUMBER AGREEMENT is dropped and
+    // everything else in the guard is left alone.
+    find: "      (!damagedOnly || count === 1) &&",
+    replace: "      true &&",
     expectKilledBy: ["packages/engine/src/conditionalBenchSnipe.test.ts"],
   },
   // ── 🆕🆕 D438 — THE RETREAT-COST PENALTY. 🛑 **THE FIRST MUTANT ROWS THIS READER
@@ -21365,8 +21389,14 @@ export const MUTANTS: Mutant[] = [
     decision: "D446",
     what: "🛑 **THE `anyOf` PAIR REDUCED TO ITS FIRST DISJUNCT** — the printed «Pokémon ex and Pokémon V» reading as «Pokémon ex», which is the row an author writes by copying the line above it. It is green on every board with no Pokémon V and deals 120 where the card prints 180. ⚠️ It is also the reason the rule-box board fields exactly one V: with none, this mutant would be EQUIVALENT",
     file: "packages/engine/src/effects.ts",
-    find: '        { kind: "suffixPokemon", suffix: "ex" },\n        { kind: "suffixPokemon", suffix: "V" },',
-    replace: '        { kind: "suffixPokemon", suffix: "ex" },',
+    // 🆕🆕🆕 RE-ANCHORED AT D483 — `BENCHED_SNIPE_CLASS_NOUNS` spells the SAME `anyOf` value
+    // for the SAME printed pair under a different KEY (the catalog prints *"ex and Pokémon V"*
+    // here and *"ex or Benched Pokémon V"* there), so the bare value became a `find` occurring
+    // 2× — a row broken by a table it does not describe. The repair is this row's own KEY,
+    // which is the one thing the two tables cannot share. **THE CLAIM IS UNCHANGED**, and the
+    // twin row on the other table is `D483-class-noun-map-pair-collapses-to-ex`.
+    find: '    "Pokémon ex and Pokémon V",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "suffixPokemon", suffix: "ex" },\n        { kind: "suffixPokemon", suffix: "V" },',
+    replace: '    "Pokémon ex and Pokémon V",\n    {\n      kind: "anyOf",\n      filters: [\n        { kind: "suffixPokemon", suffix: "ex" },',
     expectKilledBy: ["packages/engine/src/bodiesInPlayScaling.test.ts"],
   },
   {
@@ -25500,8 +25530,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D477",
     what: "The anchor's FIRST capture stops reaching the op, so every printing discards exactly one Energy — `Discard 2` becomes `Discard 1` and `Discard all` becomes `Discard an`, both of which are sentences the catalog really prints elsewhere. That is the shape of the error, not a straw: the bare `SELF_DISCARD_ONE` arm ten lines up emits precisely this op.",
     file: "packages/engine/src/effects.ts",
-    find: '        { op: "discardEnergy", from: "yourActive", filter, count: cost },',
-    replace: '        { op: "discardEnergy", from: "yourActive", filter, count: 1 },',
+    // 🆕🆕🆕 RE-ANCHORED AT D483 — the arm gained a class-narrowed early return that emits the
+    // SAME cost op at a deeper indent, and an 8-space `find` is a SUBSTRING of a 10-space line,
+    // so the row began matching 2×. **THE CLAIM IS UNCHANGED**; the anchor is this arm's own
+    // preceding comment line, which the narrowed branch does not carry.
+    find: '        // the discard has run.\n        { op: "discardEnergy", from: "yourActive", filter, count: cost },',
+    replace: '        // the discard has run.\n        { op: "discardEnergy", from: "yourActive", filter, count: 1 },',
     expectKilledBy: ["packages/engine/src/costBenchSnipe.test.ts"],
   },
   {
@@ -26095,5 +26129,131 @@ export const MUTANTS: Mutant[] = [
     find: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
     replace: "  `This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
     expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  // ── D483 — THE PRINTED CANDIDATE **CLASS** ON THE BENCHED SNIPE. Twelve rows, ONE
+  //    PER CLAIM, and the SHAPE of the set is the finding again: **TEN of the twelve are
+  //    SILENT IN EVERY CENSUS.** Both sentences still resolve, `BUILT.attack` stays at
+  //    1595 and both anchors still match — while the derived program offers bodies the
+  //    card never named, offers none at all, names the wrong set in its own heading, or
+  //    resolves a composition the catalog does not print. D400 measured this ratio at 4/8,
+  //    D401 at 6/8 and D402 at 9/12; a fifth anchor family reproduces it at 10/12.
+  //
+  //    \u26a0 THE TWO THAT ARE **NOT** SILENT ARE C6 and C7, and they are the pair worth
+  //    naming: a wrong ALTERNATION ORDER or a wrong GROUP INDEX makes a printed sentence
+  //    stop resolving, which the census sees. Everything that goes wrong INSIDE a
+  //    resolution is invisible to it — which is the standing shape of this corpus and the
+  //    reason a census suite is never the killer named on these rows.
+  {
+    id: "D483-snipe-targets-ignores-the-class",
+    decision: "D483",
+    what: "🛑 **C1 — THE CENTRAL ARM AT ITS NEAREST WRONG SIBLING: the funnel builds the narrowed set and then RETURNS THE UNNARROWED ONE.** One identifier — `classed` → `scope` on the un-windowed return — and every printed class narrowing evaporates while the op, the arity, the zone, the park, the amount and the caption all stay exactly right. ⚠️ **SILENT IN EVERY CENSUS**: both sentences still resolve, `BUILT.attack` is unmoved, both anchors still match and the derived op still carries its `filter` — the ONLY thing that moves is which bodies the prompt offers. It is D435's plausible-looking wrong answer at the address the whole slice turns on: an `ex`-only snipe that hits any Benched body, which is what the card would say if it did not print the word. §5 drives it as three DIFFERENT candidate lists on one board and §6 as the zero-match silence disappearing.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.damagedOnly !== true) return classed;",
+    replace: "  if (op.damagedOnly !== true) return scope;",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-class-filter-reads-no-card",
+    decision: "D483",
+    what: "⚠️ **C2 — THE FILTER IS ASKED OF NOTHING**: `topCardOf(state, pokemon)` becomes `undefined`, which `matchesFilter` answers FALSE for (its conservative direction, stated in `cards.ts`). Every narrowed set is then EMPTY on every board, so both printed sentences become silent no-ops that pay their cost and hit nobody — the *other* end of C1's failure, and the reason §5 asserts a non-empty candidate list before §6 asserts an empty one. **A build that got the card source wrong would look exactly like a board with no `ex` on it**, which is precisely what §6's controls exist to separate.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          return pokemon !== undefined && matchesFilter(topCardOf(state, pokemon), narrowing);",
+    replace: "          return pokemon !== undefined && matchesFilter(undefined, narrowing);",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-snipe-note-drops-the-class",
+    decision: "D483",
+    what: "🛑 **C3 — THE DIALOG CONTRADICTS ITS OWN VALIDATOR (D206/D331/D478).** The heading falls back to the bare noun while `snipeTargets` still narrows, so the prompt says *\"Choose 1 of your opponent's Benched Pokémon\"* over a list holding TWO of a four-body Bench. ⚠️ **THE BOARD IS CORRECT AND ONLY THE WORDS ARE WRONG**, which is the failure mode no state-shaped assertion can reach and the one D437 wrote its own window into this function for. It is also the row that keeps `retrieveNoun`'s `suffixPokemon` arm LIVE: under this mutation nothing in the engine renders that phrase again and `bodiesInPlayScaling.test.ts` §7's re-pointed rung still passes, so the caption is the only witness.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const noun = narrowing === undefined ? \"Pokémon\" : retrieveNoun(narrowing).plural;",
+    replace: "  const noun = \"Pokémon\";",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-class-noun-map-pair-collapses-to-ex",
+    decision: "D483",
+    what: "⚠️ **C4 — THE PRINTED PAIR IS READ AS THE SINGLETON.** *\"Benched Pokémon ex or Benched Pokémon V\"* maps to `suffixPokemon ex` alone, so the `V` stops being a candidate on a card that names it in so many words. 🛑 **THE SENTENCE STILL RESOLVES AND THE CENSUS DOES NOT MOVE** — this is a wrong CANDIDATE SET behind a correct-looking derivation, and it is the exact reason the load-bearing bench is `ex, V, plain, ex` rather than uniform: §5 reads three different candidate lists off one board and §6's CONTROL B watches the `V`-only board go silent.",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\n    \"ex or Benched Pokémon V\",\n    {\n      kind: \"anyOf\",\n      filters: [\n        { kind: \"suffixPokemon\", suffix: \"ex\" },\n        { kind: \"suffixPokemon\", suffix: \"V\" },\n      ],\n    },\n  ],",
+    replace: "  [\n    \"ex or Benched Pokémon V\",\n    { kind: \"suffixPokemon\", suffix: \"ex\" },\n  ],",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-class-noun-map-ex-widens-to-the-pair",
+    decision: "D483",
+    what: "⚠️ **C5 — C4's MIRROR, AND IT IS THE WIDENING RATHER THAN THE NARROWING**: the row that spells `ex` alone maps to the `anyOf`, so file line 111's *\"Benched Pokémon **ex**\"* offers `V` bodies the card never named. **The pair of rows is what makes each one a claim**; a single-direction row here would leave a build that resolved both nouns to one filter looking correct on half the evidence. §5's `[0, 3]` vs `[0, 1, 3]` is the whole discrimination and it is asserted as a set INEQUALITY rather than as two lengths.",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"ex\", { kind: \"suffixPokemon\", suffix: \"ex\" }],",
+    replace: "  [\"ex\", { kind: \"anyOf\", filters: [{ kind: \"suffixPokemon\", suffix: \"ex\" }, { kind: \"suffixPokemon\", suffix: \"V\" }] }],",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-class-alternation-shortest-first",
+    decision: "D483",
+    what: "⚠️ **C6 — THE ALTERNATION IS BUILT SHORTEST-FIRST**, which is the ordering an author writes without thinking and the one place in this file where order is load-bearing: `ex` is a strict PREFIX of `ex or Benched Pokémon V`, so the shorter key matches and ` or Benched Pokémon V` is left for the terminator to refuse. **Corpus file line 615 goes back to the loud `ATTACK_EFFECT_SKIPPED` path and the other printed row is untouched**, so exactly half the slice disappears — a census move of 1, which is small enough to look like a rounding and is why §3 pins the sort as a rung of its own.",
+    file: "packages/engine/src/effects.ts",
+    find: "  .sort((a, b) => b.length - a.length)",
+    replace: "  .sort((a, b) => a.length - b.length)",
+    survives: {
+      kind: "equivalent",
+      reason:
+        "\u26a0\ufe0f **THE CLAIM THIS ROW WAS WRITTEN FOR IS FALSE, AND THE ROW IS WHAT FOUND THAT OUT.** The author's reasoning — `ex` is a strict PREFIX of `ex or Benched Pokémon V`, so a shortest-first alternation matches the short key and strands ` or Benched Pokémon V` — is how a POSSESSIVE matcher would behave and is not how JavaScript regular expressions behave: alternation BACKTRACKS, so when the short branch leaves bytes the terminator cannot spend, the engine returns and tries the long one. **Both orders claim exactly the same 2 sentences / 2 printings over all 640 corpus rows** — MEASURED by this row surviving, and pinned as a rung in `classNarrowedBenchSnipe.test.ts` \u00a73 rather than left as a verdict here. 🛑 **IT IS KEPT AS A DECLARED SURVIVOR RATHER THAN DELETED** because deleting it deletes the measurement: the `.sort()` reads as load-bearing and a successor would re-derive the same wrong reason from the same prefix relation. The sort stays for LEGIBILITY (longest-first is how the catalog's nouns nest, and `TYPED_SELF_DISCARD` spells its own map the same way), and the corpus now records in one place that it buys nothing behavioural. This is D479's unkillable-as-written class caught BY a probe instead of by a sweep, and D482's arithmetic-coincidence lesson at a regex instead of at a damage box.",
+    },
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-flat-arm-reads-the-group-behind-the-class",
+    decision: "D483",
+    what: "🛑 **C7 — THE OFF-BY-ONE-GROUP MISTAKE AN INSERTED CAPTURE INVITES, AND IT IS D400/D447's OWN SPECIES AT A THIRD SITE.** The class is read from `match[5]`, which is now the DAMAGED-BODY WINDOW: neither the compiler nor a type sees a `match[n]`, the sentence still matches, and the arm looks up the window's captured text (`\" that has any damage counters on it\"`) in the noun map, misses, and refuses. **Both printed rows fall to the loud path through the `readable` conjunct** — the guard doing the job it was written for, on a defect it was not written for.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const classNoun = match[4];",
+    replace: "    const classNoun = match[5];",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-both-riders-resolved-rather-than-refused",
+    decision: "D483",
+    what: "⚠️ **C8 — THE UNPRINTED COMPOSITION IS RESOLVED, SILENTLY PREFERRING ONE RIDER OVER THE OTHER** (`CHOSEN_ANY_TARGET`'s D448 rule, dropped). With `bothRiders` gone, *\"Benched Pokémon ex that has any damage counters on it\"* derives to a `damageChosen` carrying the CLASS and NOT the window, because the class branch returns first — an op that narrows on one of the two printed axes and drops the other. 🛑 **NO CARD PRINTS IT, WHICH IS THE POINT**: the refusal is what keeps a half-honoured sentence off the derived path instead of relying on the catalog, and §7 drives it against BOTH single-rider spellings so the rung cannot pass by accident.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const bothRiders = damagedOnly && classNoun !== undefined;",
+    replace: "    const bothRiders = false;",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-selfdiscard-arm-drops-the-class",
+    decision: "D483",
+    what: "🛑 **C9 — ONE CALLER OF THE SHARED FRAGMENT HONOURS THE WIDENING AND ANOTHER DROPS IT, WHICH IS THE EXACT DRIFT D383 MADE THE FRAGMENT SHARED TO PREVENT.** Arm 9b-bis stops emitting the `filter`, so corpus file line 111 — the row D472 priced, D477 declined and `costBenchSnipe.test.ts` fielded as a refusal witness — derives to a snipe that hits ANY Benched body after discarding all its Energy. ⚠️ **THE SENTENCE STILL RESOLVES AND `BUILT.attack` STAYS AT 1595**, so every census figure in the repo is unmoved; the only witnesses are the derived op in §2 and the candidate list in §5.",
+    file: "packages/engine/src/effects.ts",
+    find: "      if (costNarrowing !== undefined) {\n        return [\n          { op: \"discardEnergy\", from: \"yourActive\", filter, count: cost },\n          {\n            op: \"damageChosen\",\n            target: benchSide,\n            amount: hit,\n            count: bodies,\n            source: \"attack\",\n            deals: true,\n            filter: costNarrowing,\n          },\n        ];\n      }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts", "packages/engine/src/costBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-gated-arm-drops-the-class",
+    decision: "D483",
+    what: "⚠️ **C10 — C9's TWIN AT THE THIRD CALLER, AND IT IS A ROW EVEN THOUGH NO CARD PRINTS THE COMPOSITION.** Arm 6c-bis stops reading the class inside its `conditionGate`, so a gated narrowed snipe would derive un-narrowed. **The catalog prints one gated bench snipe and it carries no class**, so this is the reading the deriver WOULD give rather than a claim that it is printed — which is why §7 drives it on a CONSTRUCTED sentence, labelled as such (D440). D437 and D447 each made this same call at this same arm; the row is what keeps the fragment's four callers from becoming three opinions.",
+    file: "packages/engine/src/effects.ts",
+    find: "      if (gatedNarrowing !== undefined) {\n        return [\n          {\n            op: \"conditionGate\",\n            cond,\n            // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n            then: [\n              {\n                op: \"damageChosen\",\n                target: gatedSide,\n                amount,\n                count,\n                source: \"attack\",\n                deals: true,\n                filter: gatedNarrowing,\n              },\n            ],\n          },\n        ];\n      }\n",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-payoff-honours-the-class-it-cannot-carry",
+    decision: "D483",
+    what: "🛑 **C11 — THE FOURTH CALLER STOPS REFUSING AND RETURNS THE UN-NARROWED PAYOFF**, which is strictly worse than an unbuilt sentence (D190b/D199): `AttackOptionalCostPayoff.benchSnipe` is `{amount, count}` with no slot for a class, so a narrowed payoff would aim a SHIPPED reader at bodies the card never offered. ⚠️ **AND IT LOOKS LIKE A COVERAGE WIN** — a sentence that was refused now resolves and no census figure falls, because the composition is not printed at all. `optionalCostPayoff` is `deriveAttackOptionalCostBoost`'s half, a DIFFERENT reader from the two arms above, which is why §7 drives it there rather than through `deriveAttackEffect`.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (snipe[4] !== undefined) return null;",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
+  },
+  {
+    id: "D483-payoff-refusals-swap-their-groups",
+    decision: "D483",
+    what: "⚠️ **C12 — THE TWO ADJACENT REFUSALS READ EACH OTHER'S GROUP.** `snipe[5]` (the damaged-body window, D437's) becomes `snipe[4]`, so the payoff refuses the CLASS twice and stops refusing the WINDOW at all — a doubled guard and a missing one, which is exactly what an inserted capture produces when only one of two adjacent index reads is re-pointed. 🛑 **THE CLASS RUNG ALONE CANNOT SEE IT**, because a class payoff is refused either way; it takes the WINDOW rung beside it, which is why §7 asserts both refusals and a live control between them.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (snipe[5] !== undefined) return null;",
+    replace: "    if (snipe[4] !== undefined) return null;",
+    expectKilledBy: ["packages/engine/src/classNarrowedBenchSnipe.test.ts"],
   },
 ];

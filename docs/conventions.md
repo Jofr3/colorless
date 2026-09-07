@@ -4513,6 +4513,57 @@ finally built (D438/D444), because the rung's value outlives the refusal; and
 **measure such a witness by the slices it catches, not by the row it was written
 for.**
 
+### `find` occurs exactly once ≠ one row per line
+
+`precheck` asserts that every mutant row's `find` occurs exactly once in its target
+file. D483 found two rows whose `find` strings both resolved to **the same line** —
+each occurring once, both patching it — for **46 decisions**. Both reported KILLED
+on every sweep, and the arm one of them names had **no row at all**.
+
+The check was true the whole time. **A per-row uniqueness property does not imply a
+per-line partition**, and nothing in the harness asserts the second.
+
+How it happened is ordinary: a slice re-indexed a capture group, and only one of the
+two rows quoting that line was re-transcribed. The surviving row then landed on its
+neighbour's line and stayed green.
+
+**When a check reports a property, write down what it does not imply.** Here the
+gap is worth its own guard — group rows by the (file, resolved-line) pair and assert
+no line carries two — and the count of existing collisions is the deliverable
+whether or not any are defects.
+
+### A shared printed word is not a shared blocker
+
+D483 was handed four residue rows that all print `Pokémon ex` in a target position
+and told they shared one blocker. Deleting each axis in turn and re-asking the
+readers (D458) split them **2 + 2**: the two snipes resolve at HEAD once the class
+token is stripped, while the two spreads stay unread with *either* the class or the
+trailing sentence removed.
+
+One slice became two, and the half that looked cheapest was cheap for a different
+reason than the half that did not.
+
+**Before pricing a cluster as one mechanism, delete each candidate axis separately
+and re-ask.** Rows that share vocabulary often do not share a blocker, and the
+disproof costs one probe per axis.
+
+### The arithmetic-coincidence class applies to designs, not only to assertions
+
+D482 found a test section that was vacuous because two implementations produced
+byte-identical boards at the chosen damage value. D483 found the same shape **in a
+design decision**: a shipped op walks exactly the candidate set a printed sentence
+names, with a required filter and the right side — and it places **flat counters**
+where the sentence says *"does N damage"*.
+
+**On any board without a damage-reduction passive, those two are byte-identical.**
+A suite that does not field such a passive cannot tell them apart, so the wrong
+composition would have looked correct indefinitely.
+
+**When a shipped op looks like it spells a sentence, name the boards on which the
+two would differ before adopting it.** If you cannot name one, you have not
+established that it spells the sentence — only that nothing you have tried
+distinguishes them.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
