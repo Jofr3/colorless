@@ -744,6 +744,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.377.0");
+    expect(engineVersion).toBe("0.378.0");
   });
 });

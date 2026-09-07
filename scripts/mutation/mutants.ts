@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.377.0";',
+    find: 'export const engineVersion = "0.378.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -25985,5 +25985,115 @@ export const MUTANTS: Mutant[] = [
     replace: "      why: \"Every printed card id in this catalog",
     expectKilledBy: [],
     killedByCommand: ["bun", "run", "typecheck"],
+  },
+  // ── 🆕🆕🆕 D482 — THE WHOLE-SIDE SPREAD. Nine rows over ONE new anchor and ONE new
+  //    arm, and the SHAPE of the set is the finding: **ALL NINE ARE SILENT IN EVERY
+  //    CENSUS — 9/9.** The sentence still resolves under every one of them,
+  //    `resolvedByAnyReader` is still true, `BUILT.attack` still steps by exactly 1 and both
+  //    instrument gates still pass — while the derived program hits the wrong side of the
+  //    table, misses the body the sentence names FIRST, places counters where the printed
+  //    parenthetical demands §8.5, deletes a main hit, or stops reading the printed number.
+  //    **Measured rather than assumed for the four ANCHOR rows**: each widening was run over
+  //    `legalAttackCorpus()` and none of them changes hands with a single one of the 640
+  //    rows, so no census can see them either. D479 measured 5/10 silent and D480 11/11.
+  //    **Eight of these nine are killable by ONE file** — this slice's own behavioural suite
+  //    — and only `anchor-loses-its-terminator` is caught anywhere else
+  //    (`derivedDrawAndGust.test.ts`, which is neither this slice's nor a census). That
+  //    concentration IS the argument for a driven suite over a census rung.
+  //
+  //    ⚠ **ONE MUTATION IS DECLARED NOT A ROW RATHER THAN SHIPPED WEAK (D475).** Making
+  //    the W/R clarifier MANDATORY — dropping the `(?: …)?` and requiring the
+  //    parenthetical — narrows the anchor to exactly the row it already claims, because
+  //    the single printed printing carries the clarifier (§1 measures all four variants and
+  //    they return the identical row set). **Nothing in this repo can kill it**, and a row
+  //    that cannot fail is not a weaker guard but not a guard. Named here as residual risk:
+  //    the day a reprint drops the reminder text, the narrowed anchor would refuse it
+  //    silently and the census would report the loss as a corpus change rather than as a
+  //    defect.
+  //
+  //    ⚠ **AND NO ROW FOR THE `é` OR THE `['’]` CLASS.** Both are shared with
+  //    `SPREAD_EACH_BENCH`'s line one screen up and are already carried by D425's rows; a
+  //    copy here would be two rows testing one byte, and §1 pins both code points
+  //    off the corpus with `codePointAt` rather than by eye.
+  {
+    id: "D482-arm-drops-the-active-half",
+    decision: "D482",
+    what: "\ud83d\uded1 **THE CENTRAL ROW, AND IT IS THE NEAREST WRONG SIBLING RATHER THAN A CONSTRUCTION**: arm 6a-bis returns arm 6's program, byte for byte \u2014 `[{op:\"spreadDamage\",target:\"opponentBench\",amount}]`, the real code ONE ARM up (arm 6, thirty-odd lines above it), on a sentence whose printed noun is the whole SIDE and not the Bench. **Silent in every census**: the sentence still resolves, `resolvedByAnyReader` is still true, `BUILT.attack` still steps by 1 and both instrument gates still pass \u2014 while the opponent's ACTIVE POK\u00c9MON, the body the sentence names first, takes nothing at all. \u26a0\ufe0f AND IT IS NOT MERELY \"three rows instead of four\": `attack.ts`'s `programDamage` stops firing with the `damageDefender` gone, so the printed base comes BACK and the Active is hit for the card's own number instead of the sentence's. \u00a74's row list, \u00a75's 60/30 pair and \u00a78's base-drop control each redden independently.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"damageDefender\", amount },\n      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    replace: "      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-arm-order-flips",
+    decision: "D482",
+    what: "The two ops swap places, so the Bench is walked before the Active. **The BOARD is identical and the WIRE is not** \u2014 every body ends on the same damage, no KO changes hands, and every census figure is untouched; what moves is the order of the four `DAMAGE_DEALT` rows a client and a replay read, and the order in which `spreadDamage`'s coin-flip-shield fold consumes `rngState` (D258: a spread into three holders is three flips, not one). \u00a74.1 pins the row order EXACTLY rather than as a set, which is the only assertion in the file that can see this. \u26a0\ufe0f Not an `equivalent` survivor: \u00a78.5 resolves the Active Spot before anything splashes, so the printed order is the rule and not a preference.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"damageDefender\", amount },\n      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    replace: "      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n      { op: \"damageDefender\", amount },\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-arm-active-half-places-counters",
+    decision: "D482",
+    what: "\ud83d\uded1 **D228's NAMED NEAR-MISS, MADE EXECUTABLE**: `damageDefender` becomes `damageActive` \u2014 the shipped op one screen up, which PLACES damage counters. Its own doc block says the difference in as many words: *\"no Weakness, no Resistance, no `damageReductionAfterWR` passive, a `COUNTERS_PLACED` row rather than `DAMAGE_DEALT`\"*. **This is the mutation the printed parenthetical exists to forbid** \u2014 *\"(Don't apply Weakness and Resistance for Benched Pok\u00e9mon.)\"* is only meaningful if W/R DOES apply to the Active. \u00a75 is the rung and it is a 60-versus-30 on ONE printed card in TWO spots; \u00a78 catches the second half (the op name changes, so `programDamage` stops firing and the printed base leaks back).",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"damageDefender\", amount },\n      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    replace: "      { op: \"damageActive\", amount, source: \"attack\" },\n      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-arm-spread-side-flips",
+    decision: "D482",
+    what: "`target: \"opponentBench\"` becomes `\"yourBench\"` \u2014 **D425's own `D425-spread-side-flips` at a second address**, and the reason this anchor spells the possessive instead of capturing it. The Active half still lands correctly, so \"the sentence was read\" and \"the defender took damage\" are both still true; what happens is that the ATTACKER's own Bench takes the spread, which under D425's `DAMAGE_DEALT.by` renders as the attacker damaging itself and can hand the OPPONENT a Prize. \u00a74.1 asserts P1's own board is untouched for exactly this row.",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"damageDefender\", amount },\n      { op: \"spreadDamage\", target: \"opponentBench\", amount },\n",
+    replace: "      { op: \"damageDefender\", amount },\n      { op: \"spreadDamage\", target: \"yourBench\", amount },\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-arm-hardcodes-the-printed-amount",
+    decision: "D482",
+    what: "\ud83d\uded1 THE CAPTURE BECOMES A LITERAL `30`. **SILENT IN EVERY CENSUS AND ON EVERY BOARD THIS SUITE DRIVES AT THE PRINTED AMOUNT**, because the column prints this skeleton exactly once and at 30 (\u00a71, measured rather than implied \u2014 D400). The only thing that can see it is \u00a72's amount rung, which drives the arm at 10, 30 and 120 and requires BOTH ops to take the same number \u2014 the distributive *\"each of\"* stated as behaviour. A row here is the claim that the capture is a parameter and not decoration on a population of one.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const amount = Number(match[1]);\n    return [\n      { op: \"damageDefender\", amount },\n",
+    replace: "    const amount = 30;\n    return [\n      { op: \"damageDefender\", amount },\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-anchor-admits-also",
+    decision: "D482",
+    what: "\ud83d\uded1 **THE ROW THE WHOLE ANCHOR IS SHAPED BY**: `(?:also )?` is added, which is `SPREAD_EACH_BENCH`'s own shape one screen up. The sibling admits it safely because a bench spread claims nothing; **this arm emits a `damageDefender`, which `attack.ts`'s `programDamage` reads to DROP the printed base** \u2014 so the mutant reads *\"This attack ALSO does N damage to each of your opponent's Pok\u00e9mon\"* as the whole hit and DELETES the main hit the word *\"also\"* exists to announce. \u26a0\ufe0f **Measured over all 640 corpus rows (\u00a71): the wider form claims the identical 1 sentence / 1 printing**, so the generality buys nothing and costs a wrong program \u2014 D472's rule with the sign flipped, the first time this family has met a widening that is a known wrong answer rather than unpaid risk. \u00a73's `also` rung is the killer.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    replace: "  `^This attack (?:also )?does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-anchor-captures-the-possessive",
+    decision: "D482",
+    what: "The spelled `your opponent['\u2019]s` becomes the alternation `SPREAD_EACH_BENCH` carries, while the arm keeps emitting `damageDefender` + `spreadDamage { target: \"opponentBench\" }`. So *\"This attack does 30 damage to each of your Pok\u00e9mon.\"* \u2014 the own-side wording, which this column does not print at all \u2014 is read as an attack on the OPPONENT's whole side: the wrong Active, the wrong Bench, and a `DAMAGE_DEALT.by` that credits the right seat for the wrong table. **The seat-widening shape (`RETURN_BENCHED` / `DAMAGE_SUPPRESSION`, D467's C6) at a third address**, and measured harmless-looking: \u00a71 shows the wider anchor claims the same 1 row, so no positive case can reveal it. \u00a73's own-side rung is the only thing that refuses it.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    replace: "  `^This attack does (\\\\d+) damage to each of (?:your opponent['\u2019]s|your) Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
+  },
+  {
+    id: "D482-anchor-loses-its-terminator",
+    decision: "D482",
+    what: "The anchor drops its trailing `$`, so it claims any string that OPENS with the printed sentence and silently discards the rest. \u26a0\ufe0f **AND THE SECOND KILLER IS A SUITE THAT IS NEITHER THIS SLICE'S NOR A CENSUS**: `derivedDrawAndGust.test.ts`'s `NEAR_MISSES` has carried *\"This attack does 10 damage to each of your opponent's Pok\u00e9mon. (Don't apply \u2026) Switch this Pok\u00e9mon with 1 of your Benched Pok\u00e9mon.\"* since D189 as a REAL row from the 14 remote sets, asserted `toBeNull` \u2014 so this mutant turns a compound into a spread with the whole self-switch clause deleted, and D189's own control catches the widening D482 performed near it. D234's dropped-`$` shape, inherited a sixth time.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    replace: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?`,\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts", "packages/engine/src/derivedDrawAndGust.test.ts"],
+  },
+  {
+    id: "D482-anchor-loses-its-caret",
+    decision: "D482",
+    what: "The anchor drops its leading `^`, so any sentence CONTAINING the printed clause is claimed and everything in front of it is silently dropped \u2014 *\"Draw a card. This attack does 30 damage to each of your opponent's Pok\u00e9mon.\"* resolves to the spread alone. A separate row from the `$` because the two fail on DIFFERENT strings and a suite could pin one and not the other; \u00a73 drives a leading clause and a trailing clause independently, which is the only reason both rows are killable.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    replace: "  `This attack does (\\\\d+) damage to each of your opponent['\u2019]s Pok\u00e9mon\\\\.` +\n    `(?: \\\\(Don['\u2019]t apply Weakness and Resistance for Benched Pok\u00e9mon\\\\.\\\\))?$`,\n",
+    expectKilledBy: ["packages/engine/src/boardWideSpread.test.ts"],
   },
 ];

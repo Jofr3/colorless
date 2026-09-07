@@ -12130,6 +12130,81 @@ const SPREAD_EACH_BENCH = new RegExp(
   `^This attack (?:also )?does (\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
+// 🆕🆕🆕 **D482 — THE WHOLE-SIDE SPREAD, AND IT NEEDS NO OP AT ALL.**
+// *"This attack does 30 damage to each of your opponent's Pokémon. (Don't apply
+// Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts` FILE
+// LINE **572**, **1 sentence / 1 legal printing**, the residue's `SUBST-2` row that
+// is one token (`each` → `1`) from a sentence this engine builds.
+//
+// 🛑 **THREE RECORDS PRICED THIS ROW AT A MECHANISM IT DOES NOT NEED, AND THE
+// CORRECTION IS THE SLICE.** D447 priced it as *"a THIRD `spreadDamage.target` plus a
+// §8.5 asymmetry between the Active and the Bench"*; D459 repeated that in
+// `conventions.md`; D462's resume point repeated it again and added *"three
+// mechanisms — if you take it, take it as two slices"*. **All three are false at this
+// head.** The printed sentence names TWO ZONES with TWO DIFFERENT §8.5 answers, and
+// this engine has shipped a separate op for each of them for 250 decisions:
+//
+//   · the ACTIVE half is `damageDefender`'s FLAT arm (D316) — `snipeActive`'s full
+//     pipeline (attacker pre-W/R bonus → debuff → Weakness → Resistance → the
+//     target's reduction → §11 → the §8.1 survival clamp), which is exactly what
+//     *"apply Weakness and Resistance"* means for the body in the Active Spot;
+//   · the BENCH half is `spreadDamage` (D189/D258/D425) — flat, no W/R, the fold
+//     that already owns every *"each of your opponent's Benched Pokémon"* printing.
+//
+// So the asymmetry the price was for **is the boundary between two shipped ops**, and
+// the sentence is a two-op PROGRAM rather than a third `target` member. ZERO new
+// `EffectOp` members, ZERO op fields, ZERO op values, ZERO `interpreter.ts` bytes.
+//
+// 🛑 **AND WIDENING `spreadDamage` WOULD HAVE COST AN INVARIANT, NOT JUST LINES.**
+// index.ts 0.327.0 records *"D189's invariant survives. `spreadDamage` only ever
+// touches `side.bench`, so it cannot move the actor off the Active Spot"* as the
+// reason an own-side spread is safe, and continuous.ts leans on the same fact twice
+// (`installedReductionOf`'s *"all three interpreter damage sites are attack-only"*,
+// and the `EffectContext` note that `snipeActive` and `spreadDamage` are DIFFERENT
+// addresses). A third `target` that reached the Active would falsify that sentence in
+// three files while D425's own measured price for widening this one op was **five
+// mechanisms across 94 sites in 34 files**. Composition keeps the invariant intact.
+//
+// ⚠️ **NO `(?:also )?`, AND THIS IS THE ONE PLACE THIS FAMILY MUST NOT COPY ITS
+// SIBLING.** `SPREAD_EACH_BENCH` one screen up admits the word because a bench spread
+// claims nothing: the main hit rides the attack's printed `damage` field either way.
+// **This arm is the opposite** — `attack.ts`'s `programDamage` is
+// `program?.some((step) => step.op === "damageDefender")`, so emitting the flat arm
+// DROPS the printed base. That is correct here (the printed hit IS this op) and would
+// be a silent deletion of a whole main hit on an *"also"* wording. Measured over
+// `legalAttackCorpus()`'s 640 sentences: **the `(?:also )?` form claims exactly the
+// same 1 sentence / 1 printing**, so refusing it costs nothing today and refuses the
+// one spelling this program would get wrong. D472's rule with the sign flipped — the
+// wider form is not merely unpaid-for risk here, it is a known wrong answer.
+//
+// ⚠️ **NO POSSESSIVE ALTERNATION EITHER, AND THE MEASUREMENT IS THE ARGUMENT.**
+// `(your opponent['’]s|your)` — the shape D425 gave the sibling — claims **the same
+// 1 sentence / 1 printing** over all 640 corpus rows. D472: *"before generalising an
+// anchor, measure what the generalisation would claim; if the answer is the same rows,
+// the generality is pure risk"*, and the risk has a name here — D425's own
+// `D425-spread-side-flips`, an attack that damages the wrong side of the table. The
+// own-side sentence is not printed at all in this column; when it is, it earns a
+// capture and a `damageSubject`/`spreadDamage` pair, not this arm.
+//
+// ⚠️ **THE W/R PARENTHETICAL STAYS OPTIONAL**, the sibling's shape verbatim: §8.5
+// makes the clarifier true whether or not it is printed, and the optional form claims
+// the same 1 row as the mandatory one (measured). All four variants — narrow, wide-
+// possessive, wide-"also", parenthetical-mandatory — return the identical row set, and
+// that whole measurement is pinned in `boardWideSpread.test.ts` §1 rather than
+// asserted here (D477: an override, or a deliberate refusal to override, is legitimate
+// only as a recorded rung).
+//
+// ⚠️ **THE TWO `ex`/`V`-FILTERED SIBLINGS ARE NOT CLAIMED AND MUST NOT BE.**
+// *"This attack does {60|100} damage to each of your opponent's Pokémon ex [and
+// Pokémon V]. This attack's damage isn't affected by Weakness or Resistance."*
+// (`COMPOUND-tail`, 2 sentences / 4 printings) are refused by the whole-sentence
+// `$`: they carry a second printed sentence and a per-body CLASS filter that no op in
+// this family can ask. They remain the rest of D447's family and are named here so the
+// next census greps the repo and finds them already counted (D171's Corviknight rule).
+const SPREAD_EACH_OPPONENT_POKEMON = new RegExp(
+  `^This attack does (\\d+) damage to each of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
 // The CHOSEN-single benched hit SCALED by the opponent's taken Prizes — Wo-Chien
 // ex sv02-027 "Covetous Ivy". The "×"/multiply sibling of the Prize-count family
 // (Pecharunt ex, effects.ts's OPPONENT_PRIZES_MULTIPLY), but its target is one
@@ -21398,6 +21473,40 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // its own (`D425-spread-side-flips`) rather than a comment saying it is careful.
     const side = match[2] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
     return [{ op: "spreadDamage", target: side, amount: Number(match[1]) }];
+  }
+
+  // 🆕🆕🆕 6a-bis. D482 — "This attack does {N} damage to each of your opponent's
+  //     Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)" — the
+  //     WHOLE-SIDE spread, and a two-op PROGRAM rather than a third
+  //     `spreadDamage.target`. The anchor's doc block has the argument; what this arm
+  //     owes is the ORDER and the two amounts.
+  //
+  //     🛑 **THE ACTIVE HALF IS FIRST, AND THE ORDER IS OBSERVABLE RATHER THAN
+  //     COSMETIC.** §8.5 resolves the Active Spot before anything splashes, both hits
+  //     emit `DAMAGE_DEALT`, and `spreadDamage` is a FOLD that carries `rngState`
+  //     (D258: a spread into three holders is three coin-flip-shield flips, not one),
+  //     so swapping the two ops re-orders the log AND re-draws every shield coin. The
+  //     mutant row `D482-whole-side-spread-order-flips` is what says so.
+  //
+  //     🛑 **THE SAME PRINTED NUMBER GOES TO BOTH, AND THAT IS THE POINT OF THE
+  //     SENTENCE.** *"each of"* is distributive: the Active is hit for `N` THROUGH
+  //     Weakness/Resistance and each benched body for `N` FLAT. A build that halved,
+  //     split or shared the number across bodies is killed by any board whose bench is
+  //     not exactly one body deep, which is the board §3 drives.
+  //
+  //     ⚠️ **NEITHER OP GUARDS THE OTHER'S EMPTY CASE AND NEITHER HAS TO.**
+  //     `spreadDamage` returns the state untouched on an empty Bench (its own early
+  //     return), and `damageDefender`'s flat arm refuses `amount <= 0`. A lone Active
+  //     therefore takes its W/R-applied hit and nothing else — driven in §4, because
+  //     "the Bench is empty" is the board on which a hit-everything build and a
+  //     hit-active-only build agree, and it is the only one.
+  match = SPREAD_EACH_OPPONENT_POKEMON.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    return [
+      { op: "damageDefender", amount },
+      { op: "spreadDamage", target: "opponentBench", amount },
+    ];
   }
 
   // 6b. "This attack does N damage to 1 of your opponent's Benched Pokémon for

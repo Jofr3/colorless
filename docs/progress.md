@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-07 — build session #421 (**P3-M5 — D481, *the typecheck hole over `scripts/` CLOSED — and the count refutes the forecast that justified taking it.*** 🛑 **THE MEASUREMENT FIRST: the untypechecked region held SIX errors in TWO files** — 2 environmental (`bun:sqlite` / `Bun`, no types package installed) and **4 real, ALL in one instrument** (`residue-census.ts`). 🛑 **AND THE SINGLE MOST IMPORTANT NUMBER IS A ZERO: `mutants.ts` — 2.30 MiB, 2,238 rows — HAD NO ERRORS.** The corpus is annotated `Mutant[]`, so excess-property checking was **always latent there and nothing was running it**. ⚠️ **THE HOLE WAS 15 FILES, NOT THE 12 THE BRIEF, D480's ROW AND THE RESUME POINT ALL NAMED** — three live OUTSIDE `scripts/` (`apps/api/drizzle.config.ts`, `apps/api/scripts/ingest.ts`, `packages/schema/scripts/validate-live.ts`), and framing it as a `scripts/` hole would have left them behind a guard reporting OK. **Closed with `tsconfig.scripts.json` (6th project) and guarded by `scripts/typecheck-coverage.ts`** — D212's twin, **269 decisions late** — which **holds no number of its own**, asserts **its own wiring** in `package.json`, and carries a **SELF-CHECK on synthetic pairs**, because a coverage guard's one unkillable failure mode is going VACUOUS. **Proof the close is real: D480's exact witness, re-run as a mutant, now dies to `bun run typecheck` in 38.2s where only a ~2.7-hour sweep could see it before.** Cost **+4.0s on a ~171s gate (+2.3%)**, and ⚠️ **the brief's suspect was innocent — `mutants.ts` typechecks in 0.99s**; the cost is re-typechecking engine sources. Engine **0.377.0 UNCHANGED** (`packages/`, `apps/`, `src/` byte-unchanged). Corpus **2,238 → 2,246**, archive ratchet **151**. `bun run check` GREEN, **468 files / 10,568 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2205 killed · 41 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,676.6s`** — `+8 killed, +0 declared`, the **forty-second** consecutive slice to commit its number before the run and hit it, and **the first sweep whose corpus was typechecked**. Completeness structural: **2,246 listed / 2,246 run / 2,246 matched / 0 unmatched**.)
+**Last updated:** 2026-09-07 — build session #422 (**P3-M5 — D482, *the whole-side spread — priced at three mechanisms by three separate records over 35 decisions, and the true price was ONE ANCHOR AND ONE ARM.*** Built corpus **file line 412**, *"This attack does 30 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **1 sentence / 1 legal printing**, `effects.ts` **109 insertions / ZERO deletions**, **`interpreter.ts` BYTE-UNCHANGED**, and **ZERO new `EffectOp` members, op fields, op values, prompts, events, registry rows or schema bytes**. 🛑 **THE ARM COMPOSES TWO SHIPPED OPS** — `damageDefender`'s flat arm for the Active half (which IS "apply Weakness and Resistance") and bench-only `spreadDamage` for the other — **so the §8.5 asymmetry the old price was for is the BOUNDARY BETWEEN TWO SHIPPED OPS.** ⚠️ **AND THE BRIEF ASKED THE WRONG QUESTION: *"does a spread op already exist?"* answers NO for a whole-side spread and leads straight back to the wrong price. The right question was whether a COMPOSITION of shipped ops spells the sentence — and NOTHING IN THIS REPO EXECUTES A CLAIM OF THAT FORM**, which is why the wrong price survived three restatements, each copying the last. **Candidate (B) was VERIFIED rather than trusted and its price moved a THIRD time and got worse**: the *"13 consumers"* is **not a count of anything in the source** (files = 4, functions = 8, sites = 32), the vocabulary has **no named alias** (12 inline declarations), and 🛑 **adding `"basic"` produces ZERO compile errors while 10 sites silently take the wrong branch.** Its *"three shipped comments assert the refusal across zones"* is **FALSE** — three comments, TWO zones, two restating the same one, and the discard and hand zones already resolve `Basic` the other way. Engine **0.377.0 → 0.378.0**, `MATCH_RECORD_VERSION` **29 UNCHANGED**. Corpus **2,246 → 2,255**, archive ratchet **152**. `bun run check` GREEN, **469 files / 10,594 tests**. **PREDICTED SWEEP LINE COMMITTED BELOW BEFORE THE RUN.**)
+
+**Last updated (was):** 2026-09-07 — build session #421 (**P3-M5 — D481, *the typecheck hole over `scripts/` CLOSED — and the count refutes the forecast that justified taking it.*** 🛑 **THE MEASUREMENT FIRST: the untypechecked region held SIX errors in TWO files** — 2 environmental (`bun:sqlite` / `Bun`, no types package installed) and **4 real, ALL in one instrument** (`residue-census.ts`). 🛑 **AND THE SINGLE MOST IMPORTANT NUMBER IS A ZERO: `mutants.ts` — 2.30 MiB, 2,238 rows — HAD NO ERRORS.** The corpus is annotated `Mutant[]`, so excess-property checking was **always latent there and nothing was running it**. ⚠️ **THE HOLE WAS 15 FILES, NOT THE 12 THE BRIEF, D480's ROW AND THE RESUME POINT ALL NAMED** — three live OUTSIDE `scripts/` (`apps/api/drizzle.config.ts`, `apps/api/scripts/ingest.ts`, `packages/schema/scripts/validate-live.ts`), and framing it as a `scripts/` hole would have left them behind a guard reporting OK. **Closed with `tsconfig.scripts.json` (6th project) and guarded by `scripts/typecheck-coverage.ts`** — D212's twin, **269 decisions late** — which **holds no number of its own**, asserts **its own wiring** in `package.json`, and carries a **SELF-CHECK on synthetic pairs**, because a coverage guard's one unkillable failure mode is going VACUOUS. **Proof the close is real: D480's exact witness, re-run as a mutant, now dies to `bun run typecheck` in 38.2s where only a ~2.7-hour sweep could see it before.** Cost **+4.0s on a ~171s gate (+2.3%)**, and ⚠️ **the brief's suspect was innocent — `mutants.ts` typechecks in 0.99s**; the cost is re-typechecking engine sources. Engine **0.377.0 UNCHANGED** (`packages/`, `apps/`, `src/` byte-unchanged). Corpus **2,238 → 2,246**, archive ratchet **151**. `bun run check` GREEN, **468 files / 10,568 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2205 killed · 41 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,676.6s`** — `+8 killed, +0 declared`, the **forty-second** consecutive slice to commit its number before the run and hit it, and **the first sweep whose corpus was typechecked**. Completeness structural: **2,246 listed / 2,246 run / 2,246 matched / 0 unmatched**.)
 
 **Last updated (was):** 2026-09-06 — build session #420 (**P3-M5 — D480, *the cards were already built, and the refusal that said otherwise had TWO claims with TWO ORACLES.*** 🛑 **D479's AUDIT WAS RIGHT ABOUT EXPRESSIBILITY AND WRONG ABOUT BUILD STATE.** Unfair Stamp `sv06-165` shipped at **D271**, Team Rocket's Archer `sv10-170`/`-223` at **D326** — both declared in `registry.ts`, both in `CENSUS_TRAINER_LEGAL`, and their printings inside `BUILT.trainer` since it stepped 71 → 74. **The true price of the row was ZERO registry rows**, 208 and 153 decisions before the work order was written. ⚠️ **THE GENERALISATION: A REFUSAL CARRIES TWO CLAIMS WITH DIFFERENT ORACLES.** *"Cannot be expressed"* is settled by opening a declaration — D479's method is exactly right about it. *"Is not built"* is settled by **`programFor`**, and NOTHING was checking it. `registry.ts`'s refusal is refuted by a declaration **52 lines below it in the same file**. **Fourth occurrence, not the first** — D330, D343 and D321 each wrote a prose rule for it over 150 decisions, and it happened again anyway, which is exactly D465's case for a killer. Built **`packages/engine/src/refusedPrintings.ts`** — the build-state claim **as data**, total in both directions: **9 printings asserted NOT built on their named surface**, **3 asserted BUILT with their dated corrections**, and an anti-typo rung, because **3 of 9 refusals are written in SUFFIX SHORTHAND and are invisible to the `git grep <id>` D321 prescribes.** 🛑 **BONUS FINDING: `scripts/` is outside every tsconfig `include`, so `tsc -b` NEVER TYPECHECKS the mutation corpus or any instrument** — proved by a live witness that shipped green through `bun run check`. D212 closed the LINT hole for `scripts/` in 2026-08; the TYPECHECK hole is still open. Engine **0.377.0 UNCHANGED** (no behaviour moved), `MATCH_RECORD_VERSION` **29**. **405 DID NOT MOVE** and `BUILT.attack`, RESIDUE and gate §A are all unmoved. Corpus **2,227 → 2,238**, archive ratchet **150**. `bun run check` GREEN, **468 files / 10,568 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2197 killed · 41 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,590.2s`** — `+10 killed, +1 declared`, the **forty-first** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,238 listed / 2,238 run / 2,238 matched / 0 unmatched**.)
 
@@ -588,6 +590,92 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-07, after D482)
+>
+> ✅ **`bun run check` IS GREEN — 469 files / 10,594 tests, `CHECK_EXIT=0`**, with
+> `typecheck-coverage: OK — all 715 TypeScript files in 6 project(s)` running FIRST. ⚠️ **The `it(`
+> derivation is +27 where the suite holds 26** — the extra is **one COMMENT line that mentions
+> `` `it(…)` ``**, and no existing test file's count moved. **Count the token, then explain the
+> discrepancy; do not round it away.** Engine **0.377.0 → 0.378.0**; **`MATCH_RECORD_VERSION` 29
+> UNCHANGED** on **both** of D463's tests, driven rather than argued. Corpus **2,246 → 2,255**,
+> archive ratchet **152**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP, AND THE PREDICTED LINE IS BELOW.**
+> ⚠️ **ONE UNTRACKED PATH, NAMED SO NO `git commit -a` CAN MISS IT:
+> `packages/engine/src/boardWideSpread.test.ts`.** `git add` with EXPLICIT PATHS ONLY.
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — forty-third consecutive slice to name its number
+> first, and the forty-second landed exactly:**
+>
+> > **`2214 killed · 41 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,255**
+>
+> `2205 + 9 = 2214`, `41 + 0 = 41`, `2246 + 9 = 2255`, closing `2214 + 41 = 2255`.
+>
+> **(1) ✅ PRE-CLEARANCE: NO SURVIVOR-HOUSING FILE HAS A DELETED LINE.** Eight of the nine are
+> **byte-unchanged and absent from `numstat` entirely**; the ninth, `effects.ts`, is **109 / 0**.
+> `numstat` totals 68 files, +416 / −128, and **every deletion is a mechanical 1-for-1 replacement**
+> — 73 version-bump lines across 57 files, the census literals, `index.ts` **71/2** (doc-block tail
+> + the old `engineVersion`), `mutants.ts` **111/1** (D275's `find:`, re-pointed in the same edit).
+> Witness: `precheck` re-finding all **2,255** `find` strings exactly once (D469).
+>
+> **(2) ALREADY VERIFIED INDEPENDENTLY — run the SWEEP.** `check` GREEN **469 / 10,594**; `precheck`
+> clean at **2,255**, ⚠️ **`patches LITERALLY` 18 → 21 (it ROSE — the hazard is falling)**;
+> `residue-census-gate` **OK, §A 126 / 100 / 139**; `opaque-anatomy-gate` **OK**, §E **37,260 = 69 ×
+> 540** with **178 admitted unchanged**; probe `--decision D482 --allow-dirty` → **9 killed · 0
+> survivors · 0 GAP · 0 error**, row count three ways. **The zero-new-ops claim was re-verified at
+> ritual time**: the arm emits `damageDefender` + `spreadDamage`, and `interpreter.ts` has zero
+> changed lines.
+> 🛑 **While watching: the ONLY reliable done-signal is the summary line in the log** (D474).
+>
+> **(3) AFTER THE SWEEP: the close-out.** Verify completeness STRUCTURALLY from the module, confirm
+> the line equals the prediction verbatim, update this stamp's tail and this `(0)` block, append the
+> result to the `| **D482** |` row in `docs/decisions.md`, add any convention BEFORE
+> `## Git / commits`, re-run `check`, commit.
+>
+> **(4) THEN D483 — AND THE FIRST THING TO ASK IS WHETHER A COMPOSITION SPELLS IT.** 🛑 **D482's
+> price was wrong for 35 decisions because three records each asked "does the OP exist?" and copied
+> the last answer.** A claim about one op is checkable by opening a declaration; **a claim about a
+> COMPOSITION of shipped ops is checkable by nothing in this repo**. Before pricing any residue row
+> at "needs a new op", **try to spell it as a sequence of shipped ops and drive the result** — that
+> is a ten-minute check that overturned a three-mechanism price. Then run **BOTH** instruments
+> (D477), prefer a **published PATTERN** to an enumeration, and **check build state with the RIGHT
+> ORACLE** — for attack sentences that is the 13 readers, not `programFor` (D482 chose correctly;
+> `refusedPrintings.ts`'s limit 1 says so).
+>
+> **(5) THE ROWS STILL OPEN, RE-PRICED AT D482.** **Candidate (B)** — *"…40 damage for each Basic
+> Energy attached to this Pokémon."* (1p) — **BIGGER THAN IT LOOKS, third pricing and worse**: 4
+> files / 32 call sites / 12 inline declarations with **no named alias**, **ZERO compile-error
+> protection**, and **10 sites that silently take the wrong branch**. ⚠️ **Its "uniformity bill" is
+> FALSE** — the discard and hand zones already resolve `Basic` the other way. **There is a cheaper
+> design nobody has priced**: a card-scoped `CardFilter` slot on the count members, reusing the
+> shipped `basicEnergy` matcher those zones already use. **Corpus 487** — version-costing (29 → 30).
+> **Corpus 529**, **569**, **file lines 268 / 111 / 537** — unchanged. 🆕 **The two `ex`/`V`-filtered
+> `COMPOUND-tail` siblings of D482's row (2 sentences / 4 printings)** need a per-body class filter
+> no op in that family can ask. 🛑 **`Ancient`/`Future`/`Tera` off the table, twentieth slice** — and
+> after D482, **`SUBST-2` is 3/4 and `PHRASE-1` is 4/5, all of them banner-blocked except (B)**.
+>
+> **(6) THE TARGETING RULES, seventeen clauses.** (a)–(q) as at D481, plus: (r) 🆕 **D482: "does the
+> op exist?" is a checkable question; "does a COMPOSITION of shipped ops spell it?" is not, and the
+> second is the one that decides most prices.** Ask it explicitly and DRIVE the answer — three
+> records restated a three-mechanism price that a ten-minute composition check overturned.
+>
+> **(7) THE STANDING HAZARDS.** 🛑 **NEVER WRITE TO THE TREE WHILE THE HARNESS IS IN FLIGHT.**
+> **`--only` does NOT accumulate.** `--allow-dirty` MANDATORY; `--decision` matches by
+> `String.includes` — check three ways. ⚠️ **`patches LITERALLY` is 21; the hazard is it FALLING.**
+> **Python's `str.replace` REJECTS a function second argument.** ⚠️ **A `replace` omitting a REQUIRED
+> field reports ERROR — `precheck` gates `find` only.** ⚠️ **READ EACH ROW'S `what` AGAINST ITS
+> `replace` BEFORE PROBING**, and 🆕 **the UNKILLABLE-AS-WRITTEN class is not confined to mutant
+> rows** — D482 found a SUITE section that was silently vacuous by arithmetic coincidence, and **the
+> symptom was a control passing.** ✅ **`scripts/` IS TYPECHECKED** — a mis-keyed field dies in ~38s.
+> **`BUILT.attack` is a RECORDED CONSTANT the chains subtract FROM — bump it FIRST** (D449).
+> ⚠️ **The VERSION TAX is 57 assertions / 73 sites across 57 files, including 13 `it(…)` TITLES** —
+> `index.ts` still forecasts D459's stale 37/41; a successor inherits **58**. **Step census literals
+> on a MEASUREMENT, never a prediction** — `405` was re-measured unmoved again. 🛑 **`ARCHIVES` is
+> the RITUAL's** — fourteen work orders, thirteen builders refusing.
+
+### Prior resume point (P3-M5 — D481, the typecheck hole closed, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-07, after D481)
 >
@@ -20608,7 +20696,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D481, *the typecheck hole over `scripts/` CLOSED, and the count refutes the forecast*: SIX errors, four real and all in one instrument, with ZERO in the 2,238-row corpus — the check was always latent there and nothing ran it. The hole was 15 files, not the 12 three documents named, three of them outside `scripts/`. Guarded by `typecheck-coverage.ts`, D212's twin 269 decisions late, with a self-check because a coverage guard's one unkillable failure is going vacuous. +2.3% on the gate**; engine 0.377.0 unchanged, corpus 2,246, check GREEN 468/10,568) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D482, *the whole-side spread — priced at three mechanisms by three records over 35 decisions, and the true price was one anchor and one arm with ZERO new ops and the interpreter byte-unchanged*. The arm composes two shipped ops, so the §8.5 asymmetry the price was for is the boundary between them — and the wrong price survived three restatements because *"does the op exist?"* is the wrong question and nothing here executes a claim about COMPOSITIONS**; engine 0.378.0, `MATCH_RECORD_VERSION` 29, corpus 2,255, check GREEN 469/10,594) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D481, *the typecheck hole over `scripts/` CLOSED, and the count refutes the forecast*: SIX errors, four real and all in one instrument, with ZERO in the 2,238-row corpus — the check was always latent there and nothing ran it. The hole was 15 files, not the 12 three documents named, three of them outside `scripts/`. Guarded by `typecheck-coverage.ts`, D212's twin 269 decisions late, with a self-check because a coverage guard's one unkillable failure is going vacuous. +2.3% on the gate**; engine 0.377.0 unchanged, corpus 2,246, check GREEN 468/10,568) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D480, *the cards were ALREADY BUILT — a refusal carries two claims with two oracles*: "cannot be expressed" is settled by a declaration, "is not built" by `programFor`, and only the first was ever checked. The row shipped at D271/D326, refuted by a declaration 52 lines below the refusal. Fourth occurrence in 150 decisions, so the claim is now DATA — `refusedPrintings.ts`, 9 refusals + 3 resolved, total both ways. Bonus: `scripts/` is outside every tsconfig, so `tsc -b` never typechecks the corpus**; engine 0.377.0 unchanged, corpus 2,238, check GREEN 468/10,568) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D479, *the refusal audit — 15 expressibility claims checked against the declarations they name, 11 survived, FOUR FALSE*, found by an absence audit over 96 anchors of which 38 carry zero mutant rows; the biggest claimed a `BoardCondition`, a `GameState` datum and a play gate all absent, and all three had shipped ONE decision later and stood false for 208 — plus the row the audit pointed at, 1 sentence / 1 printing for one anchor and one arm with six source files byte-unchanged**; engine 0.377.0, `MATCH_RECORD_VERSION` 29, corpus 2,227, check GREEN 467/10,550) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D478, *the other branch of a coin gate — 1 sentence / 2 legal printings for ONE anchor, ONE arm and ZERO field work, with six source files byte-unchanged* — and *a refusal FALSE ON THE DAY IT WAS WRITTEN*: it said the gate carried no tails branch, while the field was 209 decisions old and the family's largest member already shipped through it. Copied to three sites, corrected in all three**; engine 0.376.0, `MATCH_RECORD_VERSION` 29, corpus 2,217, check GREEN 466/10,531) |
@@ -20731,6 +20820,78 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-07 — build session #422 (P3-M5 — D482)
+
+**THE WHOLE-SIDE SPREAD — priced at three mechanisms by three separate records over 35 decisions,
+and the true price was ONE ANCHOR AND ONE ARM.** Engine **0.377.0 → 0.378.0**,
+`MATCH_RECORD_VERSION` **29**, mutation corpus **2,246 → 2,255**, archive ratchet **151 → 152**,
+`bun run check` GREEN at **469 files / 10,594 tests**.
+
+**(0) BUILD STATE FIRST (D480), AND THE ORACLE WAS CHOSEN RATHER THAN ASSUMED.** For an ATTACK
+sentence `programFor` is **not** the oracle — `refusedPrintings.ts`'s own limit 1 says so. The valid
+one was run programmatically instead: **all 13 readers from `attackReaderSurface()` against both
+printed strings**, both `resolvedByAnyReader === false`, both surviving the registry/gate/trailing
+subtraction. **No repeat of D480.** It also turned up something the brief did not: **(B) is already
+fielded as a refusal witness** on `fix-selfenergy` index 3 (D475's check), and **(A) is not**.
+
+**(1) 🛑 THE PRICE COLLAPSED TO ZERO NEW OPS, AND THE §8.5 ASYMMETRY IS A BOUNDARY BETWEEN TWO
+SHIPPED OPS.** The printed sentence names two zones with two different Weakness/Resistance answers,
+and this engine already has one op for each: the Active half through `damageDefender`'s flat arm —
+**which IS "apply Weakness and Resistance" for the Active** — and the Bench half through bench-only
+`spreadDamage`, flat and W/R-free. So `effects.ts` is **109 insertions / 0 deletions**,
+`interpreter.ts` is **byte-unchanged**, and there are **zero** new `EffectOp` members, op fields, op
+values, prompts, events, error codes, registry rows or schema bytes.
+
+**(2) 🛑 THE BRIEF ASKED THE WRONG QUESTION, AND THAT IS WHY THE WRONG PRICE SURVIVED THREE
+RESTATEMENTS.** *"Check whether a spread op already exists"* answers **no** for a whole-side spread —
+`spreadDamage` is bench-only — and that answer leads straight back to D447's price of *"a THIRD
+`spreadDamage.target` plus a §8.5 asymmetry"*. ⚠️ **The right question was whether a COMPOSITION of
+shipped ops spells the sentence, and NOTHING IN THIS REPO EXECUTES A CLAIM OF THAT FORM.** Three
+records (D447, D459, D462) each restated the price and **each copied the last**; a claim about a
+single op is checkable by opening a declaration, and a claim about compositions is checkable by
+nothing. Widening the op would also have cost an **invariant**, not lines — `index.ts` records
+*"`spreadDamage` only ever touches `side.bench`"* as the reason an earlier own-side spread is safe,
+and D425 measured that widening at **five mechanisms across 94 sites in 34 files**.
+
+**(3) CANDIDATE (B) WAS VERIFIED RATHER THAN TRUSTED, AND ITS PRICE MOVED A THIRD TIME — WORSE.**
+D469 said four consumers; D471 said 13 across 21 call sites; the independent measurement says the
+**13 is not a count of anything in the source** — files = 4, enclosing functions = 8, read sites =
+20, plus 8 producers, plus **12 inline declaration sites and no named alias**. 🛑 **And the headline
+D471 did not have: adding `"basic"` produces ZERO compile errors**, because nothing switches
+exhaustively on that vocabulary — **10 sites silently take the wrong branch** and one renders
+"basic Energy" into a note. That is D421's *degrades into plausible behaviour* at ten addresses with
+nothing to catch it, for 1 sentence / 1 printing. **And its "three shipped comments assert the
+refusal across zones" is FALSE**: three comments, **two** zones, two of them restating the same
+zone, and the discard and hand zones **already resolve the printed `Basic` the other way**.
+
+**(4) A WIDER ANCHOR THAT IS NOT MERELY RISK BUT A KNOWN WRONG ANSWER.** Six variants — shipped,
+`(?:also )?`, possessive-captured, no-`^`, no-`$`, mandatory-parenthetical — **all claim the
+identical 1 sentence / 1 printing** over 640 rows, so generality buys nothing (D472). But `also` is
+worse than unpaid: `attack.ts`'s `programDamage` is
+`program?.some(step => step.op === "damageDefender")`, and this arm **drops the printed base** —
+right when the printed hit *is* that op. **A silent deletion of a whole main hit, on an "also"
+wording.** The measurement is pinned as an executable rung (D477).
+
+**(5) 🛑 D479's UNKILLABLE-AS-WRITTEN CLASS ARRIVED IN A SUITE INSTEAD OF A MUTANT ROW.** At the
+demonstrator's printed `damage: 30`, hit-everything and bench-only-keeping-its-base produce
+**byte-identical boards** — so the discriminator the section existed for would have been **silently
+vacuous**, green for the wrong reason. Found by a control going green, fixed by re-printing the
+damage box to 90 on the same per-board clone, and the reason written into the code. ⚠️ **The class
+generalises past mutant rows: any assertion can be vacuous by arithmetic coincidence, and the
+symptom is a control that passes.**
+
+**(6) SOMETHING OTHER THAN A CENSUS SUITE WENT RED — AND SOMETHING OTHER THAN THIS SLICE'S OWN
+SUITE.** `anchor-loses-its-terminator` reports **two** killers: the new suite, and
+`derivedDrawAndGust.test.ts`'s `NEAR_MISSES`, which has asserted that exact compound `toBeNull`
+since **D189** — so D189's own control caught the widening D482 performed beside it. All nine rows
+are **census-silent, measured 9/9** by running each widening over `legalAttackCorpus()`.
+
+**(7) THE VERSION TAX HAS NEARLY DOUBLED SINCE ANYONE COUNTED IT.** `index.ts` still forecasts
+D459's *"37 assertions / 41 sites"*. Measured at this head: **57 assertions / 73 sites across 57
+files**, including **13 `it(…)` TITLES that spell the version — a class the old count did not have
+at all.** A successor inherits 58. ⚠️ **`patches LITERALLY` moved 18 → 21** — it **rose**, and the
+named hazard was it falling.
 
 ### 2026-09-07 — build session #421 (P3-M5 — D481)
 

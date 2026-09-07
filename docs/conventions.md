@@ -4460,6 +4460,41 @@ numbers — D481 found six errors, which badly understates what it bought — an
 the strongest available argument for closing such holes early rather than when they
 finally bite.
 
+### "Does the op exist?" is checkable; "does a composition of shipped ops spell it?" is not
+
+D482's row was priced at three mechanisms by three separate records over 35
+decisions. The true price was one anchor and one arm, with **zero new ops** — the
+sentence is spelled by composing two ops that already ship, and the awkward
+asymmetry the price was for turned out to be *the boundary between them*.
+
+The reason the wrong price survived three restatements is structural. A claim about
+one op — *"`spreadDamage` is bench-only"* — is checkable in seconds by opening a
+declaration, and it was true every time it was restated. **A claim about
+compositions is checkable by nothing in this repo**, so *"therefore this needs a
+third target and a new asymmetry"* was never tested by anyone; each record copied
+the last.
+
+**Before pricing a row at "needs a new op", try to spell it as a sequence of shipped
+ops and drive the result.** It is a ten-minute check, it is the question that
+decides most prices, and nothing in the tooling will prompt you to ask it.
+
+### The unkillable-as-written class is not confined to mutant rows
+
+D479 named the defect in a mutant row: live, correctly described, and separated
+from the original by no rung. D482 found the same shape **inside a test suite** —
+at the demonstrator's printed damage value, two different implementations produced
+**byte-identical boards**, so the section's discriminating assertion was silently
+vacuous.
+
+**The symptom was a control passing.** Nothing failed, nothing looked wrong, and
+the assertion would have gone on reporting a distinction it could not make.
+
+So the check generalises: **any assertion can be vacuous by arithmetic coincidence,
+not only by construction.** When a board is chosen to separate N implementations,
+compute what each of them would answer and confirm the answers differ — and prefer
+values that cannot collide (a printed 90 where 30 would have made two readings
+agree).
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
