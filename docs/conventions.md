@@ -4441,6 +4441,25 @@ with nothing going red), and **a rung that cannot fire should be deleted, not ke
 for reassurance** — one was, once the compiler was found to catch that case an
 earlier call.
 
+### Closing a verification hole changes the standing of every past measurement over it
+
+D481's sweep was the first in this run's history whose corpus had been typechecked.
+The line it printed — `0 error(s)` over 2,246 rows — reads identically to the
+forty-two before it. **The number is unchanged and its warrant is not.**
+
+Every prior sweep reported that column over rows no tool had type-verified. A row
+could carry a mis-keyed field, be read as `undefined` by the runner, and produce a
+verdict about nothing, while the column still read zero. Those measurements were
+not *wrong* — they were **unwarranted**, and nothing in the output distinguished
+the two.
+
+So the value of closing a coverage hole is not only the defects it prevents going
+forward. **It retroactively establishes what every past measurement over that
+region was entitled to claim.** That benefit is invisible in the slice's own
+numbers — D481 found six errors, which badly understates what it bought — and it is
+the strongest available argument for closing such holes early rather than when they
+finally bite.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
