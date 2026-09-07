@@ -9412,6 +9412,68 @@ export type EffectOp =
       `randomFromOpponentHand` has no line there either, for the same reason. The
       condition that would reverse it: a Trainer or Ability printing this sentence. */
   | { op: "opponentDiscardsFromHand"; count: number }
+  /** 🆕🆕 **D485 — THE MANDATORY FILTERED SWEEP OF THE OPPONENT'S HAND, AND
+      IT IS THE FAMILY'S FIRST CROSS-SEAT HAND MOVE WITH NO DECISION IN IT AT ALL.**
+      Every card in the OPPONENT's hand matching `filter` goes to the OPPONENT's
+      discard pile. No pick, no offer, no park, no `decider` — the printed
+      sentence names a PREDICATE and the board answers it.
+
+        "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool
+         cards you find there."   (`censusAttackCorpus.ts` FILE LINE 673, 1 legal
+                                   printing — the whole population of the shape)
+
+      🛑 **A NEW OP AND NOT A WIDENING, AND THE REFUSAL IT ANSWERS IS D445's OWN,
+      NAMED RATHER THAN RE-ARGUED.** `opponentHandScaling.test.ts` §6 refused this
+      sentence in exactly these words: *"`bottomFromOpponentHand`'s whole middle is
+      an OFFER — filtered, collapsed to one representative per interchangeable
+      class, then asked. A sweep has no offer to collapse and no question to ask, so
+      routing it through this op means disabling the collapse, the arity check and
+      the auto-resolve on a new field — five conditionals for one printing"*, and it
+      wrote its own falsifier: *"the day a mandatory-sweep op exists … that rung
+      goes RED."* This is that op. The refusal was re-read against the code before it
+      was inherited (D466) and every clause of it is still true.
+
+      ⚠️ **THE COMPOSITION QUESTION WAS ASKED FIRST AND DRIVEN (D482), AND THE
+      NEAR-MISS IS THE PART WORTH WRITING DOWN (D483).** Three shipped ops touch the
+      opponent's hidden hand and none of them spells this:
+        · `opponentDiscardsFromHand { count }` — a STATIC count, UNFILTERED, and
+          answered by the opponent. The printed count here is not a number at all.
+        · `randomFromOpponentHand { to }` — one card, chosen by the RNG.
+        · `bottomFromOpponentHand { filter, dest: "discard" }` — the near-miss, and
+          it takes the SAME `filter` this op takes into the SAME pile. 🛑 **On any
+          board whose opponent hand holds exactly ONE matching card the two are
+          BYTE-IDENTICAL** (a single-class offer auto-resolves, so there is not even
+          a park to tell them apart) — which is precisely the board a suite would
+          reach for first. **They differ the moment the hand holds TWO matches:**
+          this op takes both and asks nothing; that one takes exactly one and PARKS
+          to ask which. `opponentHandSweep.test.ts` §5 fields that board and drives
+          both readings rather than arguing them.
+
+      **THE FILTER IS REQUIRED, AND IT IS BUILT OUT OF MEMBERS THAT ALREADY SHIP.**
+      The printed *"Item cards and Pokémon Tool cards"* is `anyOf` over `item` and
+      `toolCard` — three shipped `CardFilter` members and no new one. They are
+      DISJOINT by construction (cards.ts: `trainerType` is `Item` xor `Tool`; D231
+      measured 116 Item rows and 60 Tool rows with no row both), which is why the
+      print names both and why `anyOf`'s `.some` is the right combinator. No
+      `count`, no `upTo` and no `to`: D135's rule that an absent field means what
+      the sentence means, and D231's that a field with one reachable value is an
+      unkillable mutant. A bare unfiltered sweep would be `discardHand` pointed at
+      the other seat, and no printing in this column asks for one.
+
+      ⚠️ **AN EMPTY MATCH IS A SILENT NO-OP** — the family's standing ending
+      (`randomFromOpponentHand`'s empty hand, `payFromHandApply`'s `paid.length === 0`,
+      `opponentDiscardsFromHand`'s `take === 0`). A row announcing a discard of zero
+      cards describes something that did not happen.
+
+      ⚠️ **NO `programPlayable` WHIFF GATE (cardplay.ts)**, the family's standing
+      answer: that gate exists so a CARD PLAY is not spent on a program that can only
+      whiff, attacks never consult it (§8), and this op has no registry row. The
+      condition that would reverse it is a Trainer or Ability printing this sentence
+      — and note that such a gate would have to read the FILTER against a HIDDEN
+      zone, which `bottomFromOpponentHand`'s own gate refuses to do for exactly that
+      reason (a filter's matches stay hidden knowledge; only the hand's LENGTH is
+      public). */
+  | { op: "discardFromOpponentHand"; filter: CardFilter }
   /** The OPPONENT of the controller may draw `count` cards — the printed "your
       opponent may draw a card" (Ortega), and the engine's first decision that
       belongs to the seat that did NOT make the play. The park carries a
@@ -19406,6 +19468,53 @@ const ATTACK_REVEAL_AND_BENCH_UP_TO =
 const ATTACK_REVEAL_AND_DISCARD =
   /^Your opponent reveals their hand\. Discard a card you find there\.$/;
 
+// 🆕🆕 **D485 — THE FAMILY'S EIGHTH SENTENCE SHAPE, AND ITS FIRST WITH NO PICK
+// IN IT.** *"Your opponent reveals their hand. Discard all Item cards and Pokémon
+// Tool cards you find there."* — **1 legal printing**, `censusAttackCorpus.ts` FILE
+// LINE 673, the whole population of the shape (the carrier id is UNRESOLVED and is
+// stated as such rather than invented, this checkout having no D1 — D425).
+//
+// 🛑 **A WHOLE-SENTENCE ANCHOR, AND THE CHEAPER ROUTE WAS DRIVEN AND THEN
+// REFUSED.** `residue-census.ts` classes this row `COMPOUND-head`, and D466's rule
+// is to drive `splitAttackTrailingClause` before pricing one. Driven: the printed
+// string splits at exactly this period into a head `deriveAttackEffect` already
+// claims (`revealOpponentHand`) and this tail, so **a TAIL-ONLY anchor would have
+// freed the row through the splitter with no compound anchor at all.** It is
+// refused anyway, on D472's ground:
+//
+//   ⚠️ ***"you find there"* IS AN ANAPHOR, AND ITS ANTECEDENT IS THE REVEAL.** A
+//   standalone `^Discard all … you find there\.$` arm would make
+//   `deriveAttackEffect` claim a fragment whose *there* points at nothing — and,
+//   worse, `splitAttackTrailingClause` would then compose it behind **any** head
+//   some reader claims. *"Draw 3 cards. Discard all Item cards and Pokémon Tool
+//   cards you find there."* would resolve into a program that empties half the
+//   opponent's hand off a sentence that never revealed it. **An anchor that
+//   generalises a pronoun's carrier silently generalises its REFERENT** (D472, the
+//   same defect one part of speech over), and it is the "too loose" direction
+//   D278/D279 refuse. `D485-tail-only-anchor-loses-the-reveal` arms that refusal.
+//
+// ⚠️ **AND IT IS THE FAMILY'S OWN IDIOM RATHER THAN A ONE-OFF**: every one of the
+// seven sentence shapes above is anchored WHOLE with its leading reveal
+// (`ATTACK_REVEAL_AND_BOTTOM`, `ATTACK_REVEAL_AND_BENCH_UP_TO`,
+// `ATTACK_REVEAL_AND_DISCARD`, `REVEAL_BOTTOM_SUPPORTER`,
+// `ATTACK_REVEAL_AND_TRAINER_SCALE`), for this reason at seven addresses.
+//
+// 🛑 **A LITERAL AND NOT A TEMPLATE, ON D121's MEASURED WARRANT.** That warrant
+// wants TWO printings with one token varying before a capture is justified. The two
+// printed nouns here vary against a population of **one sentence / one printing**,
+// and a `^Discard all (.+) cards and (.+) cards you find there\.$` template over a
+// printed-noun table would be a parameter with a single witness — D424's shape,
+// refused. Measured over all 640 corpus rows, the templated form claims the
+// IDENTICAL 1 sentence / 1 printing (`opponentHandSweep.test.ts` §2 runs both and
+// asserts the equality), so the wider form buys nothing and costs a noun table.
+//
+// **NO APOSTROPHE OF EITHER CLASS ON THIS ANCHOR, AND NONE IS OWED** — the sentence
+// says *their hand* and never *your opponent's hand*, so there is no `['’']` slot
+// for a punctuation-normalising re-ingest to curl (`clauseApostrophe.test.ts`'s
+// sweep, asserted in §2).
+const ATTACK_REVEAL_AND_SWEEP =
+  /^Your opponent reveals their hand\. Discard all Item cards and Pokémon Tool cards you find there\.$/;
+
 // 🆕🆕 **D426 — THE OPPONENT-CHOOSES HAND DISCARD, AND IT IS THE FAMILY'S SIXTH
 // SENTENCE SHAPE AND ITS FIRST OPPONENT-ANSWERED PARK.** Two printed sentences,
 // **6 legal printings**, measured over the committed `legal_standard = 1` attack
@@ -24409,6 +24518,27 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   // No filter and no `upTo` — both absent because both are absent from the print.
   if (ATTACK_REVEAL_AND_DISCARD.test(effect)) {
     return [{ op: "bottomFromOpponentHand", dest: "discard" }];
+  }
+  // 🆕🆕 D485 — the family's EIGHTH arm, and the first that reveals and then
+  // moves cards WITHOUT asking anybody anything. TWO ops in printed order: the
+  // shipped `revealOpponentHand` for the first sentence (the same op the head has
+  // derived to on its own since M5) and the new `discardFromOpponentHand` for the
+  // second. The reveal is not decoration — the sweep is a public fact about a
+  // hidden zone, and the printed reveal is what makes it one.
+  //
+  // 🛑 THE FILTER IS THE PRINTED NOUN PHRASE AND NOTHING MORE. *"Item cards and
+  // Pokémon Tool cards"* is `anyOf` of two SHIPPED members, and the `and` names a
+  // SET whose membership each card is asked about one at a time — `anyOf`'s `.some`,
+  // D245's reading, and the reading the catalog forces: `item` and `toolCard` are
+  // disjoint (cards.ts), so an intersection would sweep nothing at all.
+  if (ATTACK_REVEAL_AND_SWEEP.test(effect)) {
+    return [
+      { op: "revealOpponentHand" },
+      {
+        op: "discardFromOpponentHand",
+        filter: { kind: "anyOf", filters: [{ kind: "item" }, { kind: "toolCard" }] },
+      },
+    ];
   }
   // 🆕🆕 D445 — **THE REVEAL HALF OF A SENTENCE WHOSE OTHER HALF IS A DAMAGE FOLD,
   // AND THE FIRST STRING IN THE 640-ROW COLUMN CLAIMED BY TWO READERS.** *"Your

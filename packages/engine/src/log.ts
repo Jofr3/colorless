@@ -1246,6 +1246,18 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // belongs to the owner, and there is no possessive to disambiguate — this is
       // `HAND_DISCARDED`'s sentence with a different cause, and the
       // ATTACK_DECLARED row directly above is what names that cause.
+      //
+      // 🆕🆕🆕 **D485 — A SECOND PRODUCER, AND THE SENTENCE ABOUT WHO CHOSE IS THE
+      // ONLY CLAUSE IT FALSIFIES (corrected in place, D178/D442).**
+      // `discardFromOpponentHand` files this row for *"Discard all Item cards and
+      // Pokémon Tool cards you find there."*, where the card named a PREDICATE and
+      // NOBODY picked anything. The rendering is unchanged and correct for both: the
+      // row says a hidden hand got smaller and by how much, which is exactly as true
+      // of a sweep as of a pick. ⚠️ **THE COUNT IS NOW BOARD-DERIVED RATHER THAN
+      // PRINTED**, so `n` is the only honest source for it — a row that had rendered
+      // the op's printed number instead of `event.uids.length` would have had nothing
+      // to render here. `opponentHandSweep.test.ts` §5 drives this row on the
+      // load-bearing board (D478: describer obligations follow the CALL PATH).
       // ⚠️ **NOTHING IS DERIVED HERE.** The event carries no `actor` and this row
       // asks for none; `otherSeat(event.seat)` would have been true today and true
       // BY CONSTRUCTION OF ONE OP, which is D425's `DAMAGE_DEALT` defect exactly.

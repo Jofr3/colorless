@@ -992,6 +992,20 @@ export type GameEvent =
       player's card told them to, and **`seat` is the player who CHOSE them**
       (*"Your opponent discards 2 cards from their hand."*).
 
+      🛑🛑 **D485 — THE CLAUSE ABOVE IS NO LONGER TRUE OF EVERY PRODUCER, AND IT IS
+      CORRECTED IN PLACE RATHER THAN REWRITTEN (D178/D442).** `discardFromOpponentHand`
+      files this row too, and under it **nobody chose anything**: *"Discard all Item
+      cards and Pokémon Tool cards you find there."* names a PREDICATE, so the board
+      picks the cards and neither seat is asked. ⚠️ **THE ROW'S SHAPE AND ITS FILING
+      ARE UNCHANGED, AND THAT IS THE POINT** — everything the paragraph below argues
+      (`seat` is the owner, the destination is the owner's own pile, there is no
+      second seat for a segment to name, the LOG speaks in counts) is true of BOTH
+      producers, and only the sentence about WHO CHOSE is producer-specific. A row
+      that had derived a chooser would have had to be split; this one does not, which
+      is the reason the D426 shape absorbed a second producer for free. **The
+      condition that would buy an `actor` is still the one stated below**, and it is
+      now closer: two producers, one of which HAS a distinct causer.
+
       🛑 **THE ROW IS FILED UNDER THE DISCARDER AND NAMES NO ACTOR, WHICH IS WHERE
       THIS EVENT DIFFERS FROM EVERY OTHER CROSS-SEAT MOVE IN THIS FILE.**
       `RANDOM_CARD_TAKEN` and `CARD_TO_BOTTOM_OF_DECK` carry both `seat` (the

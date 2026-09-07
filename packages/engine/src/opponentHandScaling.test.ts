@@ -112,6 +112,19 @@ const CLAIMED = [REVEAL_TRAINER_SCALE, REVEAL_DISCARD, HAND_COUNT] as const;
 /** 🛑 THE TWO SENTENCES OF THIS FAMILY THIS SLICE **REFUSES**, each with its own
     reason and its own falsifier — never one reason applied twice (D441).
 
+    🛑🛑 **D485 — THE FIRST BULLET BELOW IS FALSE AT HEAD, AND ITS FALSIFIER IS THE
+    RUNG IT WROTE FOR ITSELF.** `REVEAL_SWEEP` is BUILT: `deriveAttackEffect` claims the
+    whole compound and emits `[{op:"revealOpponentHand"}, {op:"discardFromOpponentHand",
+    filter:{kind:"anyOf",filters:[{kind:"item"},{kind:"toolCard"}]}}]`. The refusal is kept
+    verbatim rather than deleted (D178), because **every clause of it turned out to be
+    true**: the filter really was free — ZERO new `CardFilter` members — and the shape
+    really did cost a new op rather than five conditionals inside
+    `bottomFromOpponentHand`. What D445 could not say is which of the two futures it named
+    would arrive; it was the first (*"the day a mandatory-sweep op exists"*), not the
+    second (*"a second printing"* — the column still prints one). §6's rung is re-pointed
+    onto the sentence this build must NOT claim, and the reason is in `effects.ts`'s anchor
+    and in `opponentHandSweep.test.ts` §7.
+
     · `REVEAL_SWEEP` (1 legal printing) is refused for its SHAPE, not its filter.
       `{ kind: "anyOf", filters: [item, toolCard] }` spells the printed noun with
       ZERO new `CardFilter` members, so the vocabulary is not what blocks it. What
@@ -917,26 +930,37 @@ describe("§6 — the population claims this slice rests on", () => {
     expect(yourHand).toEqual([]);
   });
 
-  it("🛑 REFUSAL 1 — the mandatory SWEEP is claimed by NO reader, and the reason is SHAPE", () => {
-    // ⚠️ **NOT A VOCABULARY REFUSAL, WHICH IS WHY THE FILTER IS SPELLED HERE.** The
-    // printed noun is `anyOf` two members that already exist, with ZERO new `CardFilter`
-    // members — so the union is not what blocks it. What blocks it is that *"Discard
-    // **all** … you find there"* is a mandatory TOTAL sweep with no pick, while
-    // `bottomFromOpponentHand`'s whole middle is an OFFER that is filtered, collapsed to
-    // one representative per interchangeable class, and then asked. Routing a sweep
-    // through a park-shaped op means disabling the collapse, the arity check and the
-    // auto-resolve on a field whose name (`upTo`) is the printed words of a CEILING.
-    // **The falsifier is this rung**: the day a mandatory-sweep op exists, or a second
-    // printing makes the shape worth its own op, this goes RED.
+  it("🆕 REFUSAL 1 IS SPENT — the mandatory SWEEP is BUILT, and its own falsifier fired", () => {
+    // 🛑 **THIS RUNG WAS `expect(resolvedByAnyReader(REVEAL_SWEEP)).toBe(false)` AND IT
+    // WENT RED AT D485, WHICH IS EXACTLY WHAT D445 WROTE IT FOR** (*"the day a
+    // mandatory-sweep op exists … this goes RED"*). A refusal witness is a tripwire whose
+    // blast radius is the whole family, so it is RE-POINTED rather than deleted
+    // (D438/D444/D475) — the assertion below is the same shape aimed at the string this
+    // build must NOT claim.
+    //
+    // ⚠️ **AND THE ORIGINAL REASON HELD IN BOTH HALVES, WHICH IS RARE ENOUGH TO SAY.**
+    // The filter was free (ZERO new `CardFilter` members — `anyOf` over the shipped `item`
+    // and `toolCard`, and it is the filter the shipped arm carries) and the SHAPE cost a
+    // new op, not five conditionals disabling a park inside `bottomFromOpponentHand`.
     expect(legalAttackCorpus().filter(([, s]) => s === REVEAL_SWEEP)).toHaveLength(1);
-    expect(resolvedByAnyReader(REVEAL_SWEEP)).toBe(false);
-    expect(splitAttackTrailingClause(REVEAL_SWEEP)).toBeNull();
+    expect(resolvedByAnyReader(REVEAL_SWEEP)).toBe(true);
+    expect(deriveAttackEffect(REVEAL_SWEEP)).toEqual([
+      { op: "revealOpponentHand" },
+      {
+        op: "discardFromOpponentHand",
+        filter: { kind: "anyOf", filters: [{ kind: "item" }, { kind: "toolCard" }] },
+      },
+    ]);
+    // 🛑 **THE SLOT, RE-POINTED: THE TAIL ALONE MUST STAY UNREAD.** *"you find there"* is
+    // an ANAPHOR whose antecedent is the printed reveal. A tail-only anchor would let
+    // `splitAttackTrailingClause` compose this effect behind ANY claimed head — a draw
+    // that empties half the opponent's hand — so the refusal that replaces the spent one
+    // is the fragment, and it is asserted in the same three directions the old rung used.
+    const TAIL = "Discard all Item cards and Pokémon Tool cards you find there.";
+    expect(REVEAL_SWEEP.endsWith(` ${TAIL}`)).toBe(true);
+    expect(resolvedByAnyReader(TAIL)).toBe(false);
+    expect(splitAttackTrailingClause(`Draw 3 cards. ${TAIL}`)).toBeNull();
     expect(splitAttackGateClause(REVEAL_SWEEP)).toBeNull();
-    // …and the FILTER really is expressible, which is the half that makes this a shape
-    // refusal rather than a vocabulary one. A rung that only asserted the refusal could
-    // not tell the two apart.
-    const printed: CardFilter = { kind: "anyOf", filters: [{ kind: "item" }, { kind: "toolCard" }] };
-    expect(printed.kind).toBe("anyOf");
   });
 
   it("🛑 REFUSAL 2 — the Supporter COPY, re-argued for a SUPPORTER rather than inherited", () => {
@@ -971,13 +995,18 @@ describe("§6 — the population claims this slice rests on", () => {
     expect(deriveAttackEffect("Your opponent reveals their hand.")).not.toBeNull();
   });
 
-  it("🛑 the family's arithmetic still adds up: 5 claimed, 2 refused, 17 printings", () => {
+  it("🛑 the family's arithmetic still adds up: 6 claimed, 1 refused, 17 printings", () => {
     const family = legalAttackCorpus().filter(([, s]) => s.includes("reveals their hand"));
     const claimed = family.filter(([, s]) => resolvedByAnyReader(s));
     const refused = family.filter(([, s]) => !resolvedByAnyReader(s));
-    expect([claimed.length, claimed.reduce((n, [u]) => n + u, 0)]).toEqual([5, 15]);
-    expect(refused.map(([, s]) => s).sort()).toEqual([REVEAL_SWEEP, REVEAL_COPY].sort());
-    expect(refused.reduce((n, [u]) => n + u, 0)).toBe(2);
+    // 🆕🆕🆕 D485 — **5 / 15 claimed and 2 / 2 refused becomes 6 / 16 and 1 / 1.** The
+    // mandatory sweep moved across; the Supporter COPY is the family's last refusal and
+    // is now alone in that column, which is stated so a future slice cannot read a
+    // one-element list as an empty one.
+    expect([claimed.length, claimed.reduce((n, [u]) => n + u, 0)]).toEqual([6, 16]);
+    expect(refused.map(([, s]) => s)).toEqual([REVEAL_COPY]);
+    expect(refused.reduce((n, [u]) => n + u, 0)).toBe(1);
+    expect(claimed.length + refused.length).toBe(family.length);
   });
 });
 

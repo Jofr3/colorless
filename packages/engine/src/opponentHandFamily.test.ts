@@ -171,11 +171,20 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   // disagrees with a sentence rather than with a total. And D441's rule was applied before
   // shortening the list — each surviving row's reason was re-read against the sentence it
   // is actually about, and neither inherited a departed row's justification.
-  [
-    "Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find there.",
-    "a MANDATORY TOTAL SWEEP with no pick at all — the FILTER is free (`anyOf` of two shipped members) and the SHAPE is not: `bottomFromOpponentHand`'s whole middle is an offer that is collapsed and then asked, and a sweep has neither. Refused by D445 with its own reason and its own falsifier (opponentHandScaling.test.ts §6)",
-    1,
-  ],
+  //
+  // 🆕🆕🆕 **D485 — A THIRD ROW LEFT, AND ITS STATED REASON WAS RIGHT IN BOTH HALVES.**
+  // *"Your opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you
+  // find there."* (1) was deferred here as *"a MANDATORY TOTAL SWEEP with no pick at all —
+  // the FILTER is free (`anyOf` of two shipped members) and the SHAPE is not:
+  // `bottomFromOpponentHand`'s whole middle is an offer that is collapsed and then asked,
+  // and a sweep has neither."* **Both clauses held at the build.** The filter cost ZERO new
+  // `CardFilter` members, exactly as written; and the shape cost exactly what the refusal
+  // said it would — a NEW op (`discardFromOpponentHand`) rather than five conditionals
+  // disabling a park inside the wrong one. ⚠️ **D445 also wrote the falsifier that fired**:
+  // *"the day a mandatory-sweep op exists … that rung goes RED"*, and it did. The row is
+  // `opponentHandSweep.test.ts`'s. **THE STEP IS TAKEN AS A TERM, NOT AS AN EDIT TO A
+  // NUMBER**: `builtElsewhere` gains 1 where `left` loses 1, so the family's 31 is
+  // re-derived rather than re-typed.
   [
     "Your opponent reveals their hand. You may use the effect of a Supporter card you find there as the effect of this attack.",
     "running another card's program as this one's — no seam exists. 🆕 D445 RE-ARGUED this refusal for a SUPPORTER rather than inheriting it from the attack-copy family (D436's defect is a refusal carried without re-argument), and the reasons hold in a STRONGER form: a Supporter's program is a REGISTRY row keyed by card id, so a copy op could reach only the 82 authored rows and would answer NOTHING for the rest — and `effectSimulated` is computed from the COPIER's sentence, so claiming this anchor would switch off `ATTACK_EFFECT_SKIPPED` for the attack forever. See opponentHandScaling.test.ts §6",
@@ -309,9 +318,13 @@ describe("D232 — the opponent-hand family's census", () => {
     // (1, refused by D445 on its SHAPE), the Supporter copy (1, refused by D445 as a member
     // of the attack-copy family, re-argued for a Supporter rather than inherited) and the
     // three-coin fold (1, the composition rather than the op).
-    expect(left).toBe(3);
-    const builtElsewhere = 7; // D297's Lickitung pair + D445's five
-    // 21 built here + 2 built later + 8 deferred = the family's 31 legal ATTACK
+    // 🆕🆕🆕 D485 — **3 → 2.** The mandatory sweep left (see the block on `DEFERRED`), built
+    // as `opponentHandSweep.test.ts`'s row on a new op that does what D445's refusal named.
+    // What is left is the Supporter copy (1, still refused as a member of the attack-copy
+    // family) and the three-coin fold (1, the composition rather than the op).
+    expect(left).toBe(2);
+    const builtElsewhere = 8; // D297's Lickitung pair + D445's five + D485's sweep
+    // 21 built here + 8 built later + 2 deferred = the family's 31 legal ATTACK
     // printings. The 35 the backlog row printed matches neither this nor the
     // all-columns 43.
     expect(left + 21 + builtElsewhere).toBe(31);

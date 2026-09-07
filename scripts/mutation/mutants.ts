@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.379.0";',
+    find: 'export const engineVersion = "0.380.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -26406,4 +26406,67 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/mutation/partition-gate.ts"],
   },
+  // ── D485 · the mandatory filtered sweep of the opponent's hand ─────────────
+  // "1 sentence / 1 legal printing; ONE new op, ONE new anchor, ZERO new CardFilter members."
+  // 🛑 THE PAIR C1/C2 IS WHAT MAKES EACH ONE A CLAIM (D483's C4/C5 shape): a single-
+  //    direction row would leave a build that collapsed the printed noun phrase to either
+  //    member looking correct on half the evidence.
+  {
+    id: "D485-sweep-filter-drops-the-tool",
+    decision: "D485",
+    what: "🛑 **C1 — THE CENTRAL ARM AT ITS NEAREST WRONG SIBLING: the printed noun PHRASE collapses to its FIRST member.** *\"Item cards and Pokémon Tool cards\"* derives to `item` alone, so every Pokémon Tool in the revealed hand survives an attack that names it in so many words. ⚠️ **SILENT IN EVERY CENSUS**: the sentence still resolves, `BUILT.attack` is unmoved, the anchor still matches, the program still carries two ops and the op still carries a `filter` — the ONLY thing that moves is WHICH cards leave the hand. That is D435's plausible-looking wrong answer at the address the whole slice turns on, and it is why the load-bearing hand holds THREE Items and TWO Tools: §5 computes six readings and gets six different numbers (5 / 8 / 3 / 2 / 7 / 0), so *items-only* answers 3 where the correct arm answers 5.",
+    file: "packages/engine/src/effects.ts",
+    find: "        filter: { kind: \"anyOf\", filters: [{ kind: \"item\" }, { kind: \"toolCard\" }] },",
+    replace: "        filter: { kind: \"item\" },",
+    expectKilledBy: ["packages/engine/src/opponentHandSweep.test.ts"],
+  },
+  {
+    id: "D485-sweep-filter-drops-the-item",
+    decision: "D485",
+    what: "⚠️ **C2 — C1's MIRROR, AND IT IS THE OTHER HALF OF THE SAME CLAIM.** The phrase collapses to its SECOND member instead, so the Items survive and the Tools go. **The two answers are 3 and 2 on the load-bearing hand and neither collides with the correct 5** — which is the whole reason that hand is 3 Items and 2 Tools rather than 2 and 2, and §5 asserts the near-miss arithmetic explicitly so the composition of the board is a MEASUREMENT rather than a preference. `item` and `toolCard` are DISJOINT in `cards.ts` (one `trainerType` column, D231: 116 Item rows, 60 Tool, no row both), so neither collapse can be masked by an overlap.",
+    file: "packages/engine/src/effects.ts",
+    find: "      {\n        op: \"discardFromOpponentHand\",\n        filter: { kind: \"anyOf\", filters: [{ kind: \"item\" }, { kind: \"toolCard\" }] },\n      },\n    ];",
+    replace: "      {\n        op: \"discardFromOpponentHand\",\n        filter: { kind: \"toolCard\" },\n      },\n    ];",
+    expectKilledBy: ["packages/engine/src/opponentHandSweep.test.ts"],
+  },
+  {
+    id: "D485-arm-drops-the-sweep",
+    decision: "D485",
+    what: "🛑 **C3 — HALF A SENTENCE, AND THE CENSUS CANNOT SEE IT (D444).** The arm keeps the reveal and drops the discard, so the printed compound STILL RESOLVES — `resolvedByAnyReader` is true, `BUILT.attack` is 1596, the residue is 97/136, `ATTACK_EFFECT_SKIPPED` never fires — and the attack reveals a hand and then does nothing to it. **Every census figure this slice moved stays exactly where it is**, which is precisely the reason §3 reads the derived program as a VALUE and §5 reads the discard pile off a real board rather than trusting the sentence to have resolved.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return [\n      { op: \"revealOpponentHand\" },\n      {\n        op: \"discardFromOpponentHand\",\n        filter: { kind: \"anyOf\", filters: [{ kind: \"item\" }, { kind: \"toolCard\" }] },\n      },\n    ];\n  }",
+    replace: "    return [{ op: \"revealOpponentHand\" }];\n  }",
+    expectKilledBy: ["packages/engine/src/opponentHandSweep.test.ts"],
+  },
+  {
+    id: "D485-sweep-asks-no-filter",
+    decision: "D485",
+    what: "⚠️ **C4 — THE FILTER IS CARRIED AND NEVER READ**: the interpreter's candidate line still calls `matchesFilter`, but asks it `anyCard` instead of `op.filter`, so the sweep takes the WHOLE revealed hand. The op's shape, its seat, its destination and its event are all still right; the printed predicate simply stops being a predicate. This is C1/C2's failure in the opposite direction — 8 where the correct arm answers 5 — and it is the reason §5's hand deliberately holds a Supporter, a Stadium and an Energy: a hand of Items and Tools alone could not tell *discard the matches* from *discard everything*.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        matchesFilter(cardOf(state, uid), op.filter),",
+    replace: "        matchesFilter(cardOf(state, uid), { kind: \"anyCard\" }),",
+    expectKilledBy: ["packages/engine/src/opponentHandSweep.test.ts"],
+  },
+  {
+    id: "D485-sweep-reads-the-controllers-hand",
+    decision: "D485",
+    what: "🛑 **C5 — THE CANDIDATE SET IS TAKEN FROM THE WRONG SIDE OF THE TABLE**, while the discard still writes to the right one: one identifier, `otherSeat(ctx.seat)` → `ctx.seat`, on the READ alone. The uids then belong to the controller's own hand, `discardChosenFromHand`'s membership belt refuses them all, and the attack reveals a hand and empties nothing — **a board indistinguishable from a legitimate zero-match one**. That is exactly the pair §6's controls exist to separate, and §4 fields it directly by loading the CONTROLLER's hand with an Item and a Tool: under this mutation those two are the cards a correct build must never touch.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const swept = state.players[otherSeat(ctx.seat)].hand.filter((uid) =>",
+    replace: "      const swept = state.players[ctx.seat].hand.filter((uid) =>",
+    expectKilledBy: ["packages/engine/src/opponentHandSweep.test.ts"],
+  },
+  {
+    id: "D485-tail-only-anchor-loses-the-reveal",
+    decision: "D485",
+    what: "🛑 **C6 — THE REFUSAL THIS SLICE WROTE, ARMED. The anchor drops its leading reveal clause and becomes TAIL-ONLY**, which is the CHEAPER build D466's rule surfaced and this slice declined: `deriveAttackEffect` then claims the bare fragment *\"Discard all Item cards and Pokémon Tool cards you find there.\"*, whose *\"there\"* has no antecedent, and `splitAttackTrailingClause` will compose it behind **ANY** head some reader claims — *\"Draw 3 cards. Discard all Item cards and Pokémon Tool cards you find there.\"* resolves into a program that empties half the opponent's hand off a sentence that never revealed it (D472's referent lesson, one part of speech over; D278/D279's *too loose* direction). ⚠️ **AND IT IS CAUGHT BY A PREDECESSOR'S SLOT AS WELL AS BY THIS SLICE'S OWN** — `opponentHandScaling.test.ts` §6 is D445's refusal witness, re-pointed at this exact fragment when its original claim was spent.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent reveals their hand\\. Discard all Item cards and Pokémon Tool cards you find there\\.$/;",
+    replace: "  /^Discard all Item cards and Pokémon Tool cards you find there\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/opponentHandSweep.test.ts",
+      "packages/engine/src/opponentHandScaling.test.ts",
+    ],
+  },
+
 ];

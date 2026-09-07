@@ -19493,6 +19493,55 @@ import type { GameState, Seat } from "./types";
     REACHABILITY (D450) is empty — `handRefresh` never parks, so no `phase.cont.pendingOp`
     or `rest` can hold it. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN
     INHERITED: see `shuffleHandDraw.test.ts` §7, which authors one more pin.)
+    🆕🆕🆕 engineVersion 0.379.0 → **0.380.0** (D485 — THE MANDATORY FILTERED SWEEP OF
+    THE OPPONENT'S HAND. `censusAttackCorpus.ts` **FILE LINE 673** — *"Your opponent reveals
+    their hand. Discard all Item cards and Pokémon Tool cards you find there."* — **1 sentence
+    / 1 legal printing**, and the row `opponentHandScaling.test.ts` §6 has refused since D445
+    with an EXECUTABLE falsifier (*"the day a mandatory-sweep op exists … that rung goes
+    RED"*). It did. ONE new `EffectOp` member `discardFromOpponentHand { filter: CardFilter }`,
+    ONE new anchor `ATTACK_REVEAL_AND_SWEEP`, ONE new `deriveAttackEffect` arm and ONE new
+    `interpreter.ts` op arm. **ZERO** new `CardFilter` members, op VALUES on any existing op,
+    readers (the surface stands still at **13**), prompts, choice kinds, events, error codes,
+    `GameState` fields, registry rows, `FIXTURE_POOL` ids (file-local `cardPool`, D414),
+    `redact.ts` bytes or `packages/schema` bytes.
+    🛑 **BUILD STATE WAS SETTLED FIRST AND WITH THE RIGHT ORACLE (D480/D482).** For an ATTACK
+    sentence `programFor` is not the oracle — `refusedPrintings.ts`'s limit 1 says so, and the
+    table carries no `"attack"` surface on purpose. The oracle is the THIRTEEN readers off
+    `attackReaderSurface()`, run programmatically: **13 / 13 null**, both splitters null, the
+    row surviving all four census subtractions.
+    🛑 **AND THE COMPOSITION QUESTION WAS DRIVEN, WITH D483's COUNTERWEIGHT AS THE ACTUAL
+    FINDING.** Three shipped ops touch the opponent's hidden hand and the third is a NEAR-MISS
+    that would have looked correct forever: `bottomFromOpponentHand { filter, dest: "discard" }`
+    takes the SAME filter into the SAME pile, and **on any board whose opponent hand holds
+    exactly ONE matching card the two are BYTE-IDENTICAL** — a single-class offer auto-resolves,
+    so there is not even a park to separate them. They diverge at TWO matches: the sweep takes
+    both and asks nothing, the near-miss takes one and PARKS. `opponentHandSweep.test.ts` §5
+    fields both boards and drives both readings; the eight-card hand is CHOSEN by computing all
+    six candidate readings first (5 / 8 / 3 / 2 / 7 / 0 — six different numbers).
+    🛑 **THE ROW IS `COMPOUND-head`, SO D466's RULE APPLIED — AND ITS ANSWER WAS THE OPPOSITE
+    OF D466's OWN CASE.** Driven: with a tail `deriveAttackEffect` claims, the same head composes
+    today, so a TAIL-ONLY anchor WOULD have freed the row through `splitAttackTrailingClause`
+    with no compound anchor at all. It is refused anyway, because *"you find there"* is an
+    ANAPHOR whose antecedent is the printed reveal: a standalone tail arm would let the splitter
+    compose the sweep behind ANY claimed head — *"Draw 3 cards. Discard all Item cards and
+    Pokémon Tool cards you find there."* would empty half the opponent's hand off a sentence
+    that never revealed it. **D472's referent lesson, one part of speech over**, and the family's
+    own idiom at seven prior addresses.
+    `MATCH_RECORD_VERSION` **STAYS 29**, DRIVEN rather than quoted. The only address an
+    `EffectOp` reaches in a `MatchRecord` is `state.phase.cont` (`{pendingOp, rest, ctx,
+    record?}`) on an `effect:choose` phase, so an op is persisted only if it parks or if
+    something ahead of it does. Neither op in this program parks — `revealOpponentHand` never
+    has, and the sweep is a predicate with one answer — and §8 drives every hand composition
+    this program can reach through both `runProgram` and the action API, getting `done` and
+    `turn:action` every time, then round-trips the post-attack state and asserts the serialized
+    bytes never contain the op's name.
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD: 59 assertions / 77 sites across 58 FILES,
+    including 15 `it(…)` TITLES.** D483 forecast *"a successor inherits 59 / 77 / 59 / 15"* and
+    was exact on three of the four and ONE HIGH on files — the count is 58 (57 `.ts` plus
+    `package.json`), not 59. A successor inherits **60 / 79 / 59 / 16**, this slice's own suite
+    included. ⚠️ **Two occurrences are HISTORY and must not be bumped** — the `0.378.0 →
+    0.379.0` lines in this file and in `classNarrowedBenchSnipe.test.ts` — which is why the tax
+    is 77 sites out of 78 occurrences.)
     🆕🆕🆕 engineVersion 0.378.0 → **0.379.0** (D483 — THE PRINTED CANDIDATE **CLASS**
     ON THE BENCHED SNIPE. `censusAttackCorpus.ts` **FILE LINES 111 and 615** — *"Discard all
     Energy from this Pokémon, and this attack does 210 damage to 1 of your opponent's
@@ -19613,7 +19662,7 @@ import type { GameState, Seat } from "./types";
     than the census literals do**, because every slice that authors a version pin raises it
     by one and no instrument reports the total. D482 authors one more, so a successor
     inherits **58 assertions**.) */
-export const engineVersion = "0.379.0";
+export const engineVersion = "0.380.0";
 
 export type {
   ApplyResult,

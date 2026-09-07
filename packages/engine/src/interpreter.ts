@@ -2995,6 +2995,32 @@ function stepOp(
         decider: owner,
       };
     }
+    case "discardFromOpponentHand": {
+      // 🆕🆕 D485 — the MANDATORY sweep, and the whole arm is four lines because
+      // every piece of it already shipped. `otherSeat(ctx.seat)` is the same
+      // re-derivation `opponentDiscardsFromHand` does one case up (the context is
+      // the PROGRAM's owner and never an answerer); `matchesFilter(cardOf(...))` is
+      // `bottomFromOpponentHand`'s own candidate line; and `discardChosenFromHand`
+      // is D426's helper, which files `FORCED_HAND_DISCARD` under the OWNER and
+      // emits nothing at all when the set is empty.
+      //
+      // 🛑 **THERE IS NO PARK AND NO `decider`, AND THAT IS THE OP RATHER THAN AN
+      // OMISSION.** The printed sentence names a PREDICATE — *"Discard **all** Item
+      // cards and Pokémon Tool cards"* — so there is exactly one answer to "which
+      // cards" on every board, and the M1 no-choice rule retires the question before
+      // it can be asked. Parking here would hand a player a dialog whose only legal
+      // answer is the whole offer. Contrast the case above, whose printed COUNT is
+      // smaller than the hand it is taken from and therefore IS a decision.
+      //
+      // 🛑 **AND THE HAND IS READ LIVE AND FILTERED HERE, NEVER AT DERIVE TIME.**
+      // The filter is a fact about CARDS; the hand is a fact about the BOARD. A build
+      // that resolved the candidate set anywhere but at the moment the op runs would
+      // be reading a zone the reveal one op earlier has only just made public.
+      const swept = state.players[otherSeat(ctx.seat)].hand.filter((uid) =>
+        matchesFilter(cardOf(state, uid), op.filter),
+      );
+      return { done: discardChosenFromHand(state, otherSeat(ctx.seat), swept, events) };
+    }
     case "opponentMayDraw": {
       // The opponent's printed "may" — the FIRST park whose ANSWERER is the other
       // seat (the decider below; settleProgram files it as phase.answerer).

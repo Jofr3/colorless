@@ -4673,6 +4673,97 @@ D470), that rows are distinguishable experiments (unasserted until D484), and th
 the files holding it typecheck (unasserted until D481). The remaining ones are
 worth enumerating deliberately rather than waiting for each to surface as a defect.
 
+### A `COMPOUND-head` row can come free the WRONG way, and the cheaper build is the trap
+
+D466's rule is *before pricing any `COMPOUND-*` row, drive `splitAttackTrailingClause`
+with a head you know builds.* D485 drove it and got the answer D466 did not: **the
+splitter composes this shape**, so building the tail alone would have freed the row with
+no compound anchor at all — strictly cheaper than what shipped.
+
+It was refused, and the reason generalises. The tail is *"Discard all Item cards and
+Pokémon Tool cards **you find there**."* — **an anaphor whose antecedent is the printed
+reveal in the other clause.** A tail-only arm makes `deriveAttackEffect` claim a fragment
+whose *there* points at nothing, and then the splitter will compose it behind **any** head
+some reader claims: *"Draw 3 cards. Discard all Item cards and Pokémon Tool cards you find
+there."* would resolve into a program that empties half the opponent's hand off a sentence
+that never revealed it.
+
+**So the splitter's admission test is not a licence.** It asks whether the two halves are
+each readable; it cannot ask whether the tail MEANS anything without its head. D472 found
+the same shape in a pronoun's SUBJECT (an anchor that generalises the subject silently
+generalises the referent); this is the same defect in a locative, and the family's own
+idiom — seven prior sentences all anchored WHOLE with their leading reveal — was already
+the right answer for this reason at seven addresses.
+
+**The rule: before taking a splitter composition, ask what the tail refers to. If any word
+in it points OUT of the clause, the anchor owes the whole sentence.**
+
+### The near-miss op that is byte-identical on the FIRST board you would write
+
+D483 stated the counterweight — *a composition that matches on the boards you happen to
+build is not a composition that matches* — and D485 is the case where it bit at the
+cheapest board rather than at an exotic one.
+
+`bottomFromOpponentHand { filter, dest: "discard" }` takes the **same** `CardFilter` into
+the **same** pile as the sweep D485 built. On an opponent hand holding **exactly one**
+matching card the two are byte-identical — and not merely in the board: a single-class
+offer auto-resolves under the M1 no-choice rule, so there is not even a park to notice.
+A suite whose fixture hand held one Item would have proved nothing and looked complete.
+
+They diverge at **two** matches: the sweep takes both and asks nothing, the near-miss takes
+one and parks to ask which.
+
+**Two things follow.** First, **name the board where they differ before adopting or
+refusing a composition, and drive both** — D485's §5 runs the near-miss program on both
+boards rather than describing it. Second, **the collision board is usually the SMALLEST
+one**, because the shipped op's shape degenerates there; so "I tested the simple case
+first" is exactly the habit that hides it.
+
+### Six readings, six numbers — compute the board before you choose it
+
+D482's arithmetic-coincidence class says compute what each candidate implementation would
+answer before picking a board. D485 did it as a table and the table paid twice: at
+2 Items / 2 Tools the *items-only* and *tools-only* readings both answer 2, and with only
+Energy as the non-matching filler the *every Trainer* reading collides with the correct one.
+The hand that separates all six is 3 Items, 2 Tools, and non-matches drawn from the OTHER
+two printed Trainer subtypes.
+
+**Assert the near-misses, not just the answer.** D485's §5 computes what the board would
+answer if one Item were dropped, and if the Supporter and Stadium were dropped, so the
+fixture's composition is a MEASUREMENT of what it has to be rather than a preference a
+successor can quietly erode.
+
+### A shared event's doc block is producer-specific in exactly one clause
+
+`FORCED_HAND_DISCARD` was written at D426 with *"`seat` is the player who CHOSE them"*.
+D485 added a second producer where **nobody chooses** — the printed sentence names a
+predicate — and every other clause of that doc block survived: the filing under the owner,
+the absence of an `actor`, the count-shaped log row, the argument for why no second seat
+is named.
+
+**When a second producer arrives at a shared event, read the doc block clause by clause
+rather than deciding whether it is "still right".** One sentence was false and the rest
+were load-bearing and true; deleting the block would have lost the argument, and leaving it
+would have left a false claim in the two files a successor reads (D178/D442 — correct in
+place, dated, in every copy). D478's rule pointed at the same address from the other side:
+**describer obligations follow the CALL PATH**, and the call path is where the stale clause
+was.
+
+### A brief's hard-rules list is a checklist, and omissions from it read as permission
+
+Every work order in this run has carried a hard-rules block. D485's omitted the one
+line its predecessors included — that the end-of-session ritual belongs to the
+caller — and the builder ran the full ritual: stamp, resume point, session log,
+decisions row, conventions entries, archive ratchet.
+
+It did the work correctly and consistently, and `check` was green. **The deviation
+was the brief's, not the builder's.** A rule that has held for fifteen consecutive
+work orders is not thereby implicit; it is only in force where it is written.
+
+**Keep the hard-rules block verbatim between briefs and edit it deliberately.** When
+a rule leaves the list, that is a decision — so make it one, rather than discovering
+after the fact that dropping a line was read as lifting it.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

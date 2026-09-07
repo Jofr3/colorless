@@ -302,10 +302,23 @@ describe("§1 — the sentences, measured live over the legal column", () => {
     // at D428's head), which is the honest residue this family leaves behind. The two
     // survivors are the parking *"up to 2"* row §8 refuses on the population and the
     // hand-reveal discard, neither of which carries the pre-damage head.
+    //
+    // 🆕🆕🆕 **D485 — TWO → ONE, AND IT IS THE SECOND OF THE TWO NAMED ABOVE.** *"Your
+    // opponent reveals their hand. Discard all Item cards and Pokémon Tool cards you find
+    // there."* (corpus FILE LINE 673) is now claimed WHOLE by `deriveAttackEffect`, so the
+    // `/Pokémon Tool/` sweep's unresolved remainder is the parking *"up to 2"* row ALONE.
+    // ⚠️ **THE FOUR THIS SLICE CLAIMS DOES NOT MOVE** — D485 built nothing on this reader,
+    // which is why the two figures are asserted separately rather than as one total, and
+    // the survivor is named by SENTENCE below so a future drop to zero cannot pass as an
+    // instrument change.
     const tools = CORPUS.filter(([, s]) => /Pokémon Tool/.test(s));
     expect(tools).toHaveLength(10);
     expect(tools.filter(([, s]) => deriveAttackPreDamage(s) !== null)).toHaveLength(4);
-    expect(tools.filter(([, s]) => !resolvedByAnyReader(s))).toHaveLength(2);
+    const stillLoud = tools.filter(([, s]) => !resolvedByAnyReader(s));
+    expect(stillLoud).toHaveLength(1);
+    expect(stillLoud.map(([, s]) => s)).toEqual([
+      "Discard up to 2 Pokémon Tools from your opponent's Pokémon.",
+    ]);
   });
 });
 
@@ -970,6 +983,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.379.0");
+    expect(engineVersion).toBe("0.380.0");
   });
 });
