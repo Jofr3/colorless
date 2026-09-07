@@ -19,6 +19,7 @@
 
 import { readFileSync } from "node:fs";
 import { MUTANTS } from "./mutants";
+import { partitionReport } from "./partition-gate";
 import { spliceReport } from "./splice-gate";
 
 const sources = new Map<string, string>();
@@ -76,13 +77,29 @@ for (const mutant of MUTANTS) {
 // everyone actually runs still reports it.
 const splice = spliceReport();
 
+// 🆕🆕 **D484 — THE THIRD PROPERTY, AND IT IS THE ONE THE CHECK ABOVE DOES NOT IMPLY:
+// NO TWO ROWS MAY BE THE SAME EXPERIMENT.** `find` occurring exactly once is a
+// PER-ROW property. D483 found two rows whose `find` strings both resolved to the
+// SAME LINE — each occurring once, both patching it — for **46 decisions**, with both
+// reporting KILLED every sweep while the arm one of them names had NO ROW AT ALL. The
+// loop above was true throughout and could never have said so.
+//
+// 🛑 **AND THE PREDICATE IS NOT "no line carries two rows", WHICH D484 MEASURED AND
+// REFUTED**: 383 lines carry more than one row, over 943 rows, and that is the corpus's
+// central idiom rather than a defect. What is never legitimate is two rows the RUNNER
+// CANNOT TELL APART — same file, find, replace, killers, survives — because that is one
+// experiment reported as two. See `partition-gate.ts`, which also carries the wiring
+// rung that asserts THIS call is here.
+const partition = partitionReport();
+
 console.log(`checked ${String(MUTANTS.length)} mutants`);
 if (broken.length > 0) {
   console.error(`\n${String(broken.length)} BROKEN ROW(S):`);
   for (const row of broken) console.error(`  ${row}`);
 }
 if (!splice.ok) for (const line of splice.lines) console.error(line);
-if (broken.length > 0 || !splice.ok) process.exit(1);
+if (!partition.ok) for (const line of partition.lines) console.error(line);
+if (broken.length > 0 || !splice.ok || !partition.ok) process.exit(1);
 console.log(
-  `every \`find\` occurs exactly once in its target, and ${splice.lines[0] ?? ""} — corpus is runnable`,
+  `every \`find\` occurs exactly once in its target, ${partition.lines[0] ?? ""}, and ${splice.lines[0] ?? ""} — corpus is runnable`,
 );

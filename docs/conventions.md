@@ -4527,10 +4527,29 @@ How it happened is ordinary: a slice re-indexed a capture group, and only one of
 two rows quoting that line was re-transcribed. The surviving row then landed on its
 neighbour's line and stayed green.
 
-**When a check reports a property, write down what it does not imply.** Here the
-gap is worth its own guard — group rows by the (file, resolved-line) pair and assert
-no line carries two — and the count of existing collisions is the deliverable
-whether or not any are defects.
+**When a check reports a property, write down what it does not imply.** The gap is
+worth its own guard, and the count of existing collisions is the deliverable whether
+or not any are defects.
+
+⚠️ **[CORRECTED AT D484, WHICH MEASURED IT.] The predicate this entry originally
+proposed — *group rows by (file, resolved-line) and assert no line carries two* — is
+FALSE, by a factor of hundreds.** Sharing a line is the corpus's **central idiom**:
+one anchor line, N different corruptions of it. Measured at D484: **383 lines carry
+943 rows (41.6% of the corpus)**, and **293 groups / 726 rows share a byte-identical
+`(file, find)`**. An exemption list for those would be the very artefact a coverage
+guard must not have.
+
+**The predicate that works is EXPERIMENT IDENTITY: no two rows may be
+indistinguishable to the runner** — same `file`, `find`, `replace`, `nameFilter`,
+killer set, `survives`. `id`, `decision` and `what` are excluded, because they are
+labels and a defect that renames itself is still a defect. Under that predicate the
+exempt set is **empty**, and a historical replay across six commits shows it firing
+on exactly one group — the real defect — **at D447, the commit that caused it**, and
+never falsely across 568 rows added since.
+
+⚠️ **The general lesson is about the shape of the first guess:** the obvious
+predicate keyed on *where a row points*, and the defect was about *what a row is*.
+Two rows on one line are a family; two rows the runner cannot tell apart are a bug.
 
 ### A shared printed word is not a shared blocker
 
@@ -4581,6 +4600,54 @@ verdict moves, the recovered value is meaning, not coverage.** Both cases share 
 moral worth stating once: a mutation corpus reports what its rows do, never what
 its rows *say* they do, and the gap between the two is invisible to every column it
 prints.
+
+### Validate a guard's predicate against history, not against argument
+
+D484 had to choose what a mutation-corpus partition guard should assert. Rather
+than reasoning about what *ought* to collide, it replayed the candidate predicate
+against six past commits of the corpus.
+
+The result decided the design: **0 collisions before the defect landed, exactly 1
+from the commit that caused it through every commit after, 0 once it was repaired
+by hand** — the real defect every time, and **nothing else ever, across 46
+decisions and 568 rows added**.
+
+That is stronger evidence than any argument could have been. It establishes the
+false-positive rate empirically, it names the commit the guard would have fired on,
+and it shows the predicate is neither too tight nor too loose **on the actual
+history the guard will run against**.
+
+**When a guard's predicate is not obvious, run it over the past.** The repository's
+own history is a labelled dataset: the defects are the ones someone eventually
+found by hand, and everything else is a negative example.
+
+### The obvious predicate often keys on WHERE something points, when the defect is about WHAT it is
+
+D483 found two mutant rows resolving to one line and the natural guard followed the
+symptom: *no line may carry two rows*. D484 measured it — **41.6% of the corpus
+shares a line, legitimately**, because one anchor line with N different corruptions
+is the corpus's central idiom.
+
+The defect was never about location. It was that two rows were **indistinguishable
+to the runner** — same file, find, replace, killers — so one of them could not
+possibly be testing anything the other wasn't. That predicate has an *empty* exempt
+set, where the location-based one would need a 383-entry exemption list.
+
+**When generalising from a single defect, separate the symptom from the property.**
+Two rows on one line are a family; two rows the runner cannot tell apart are a bug —
+and the first is what you see, while the second is what went wrong.
+
+### A rung that tests two fields at once cannot prove either
+
+D484's guard shipped with a self-check rung comparing *no command, a suite* against
+*a command, no suite* — two fields apart. The rung passed, and so did the mutant
+that removed one of those fields from the key: it **survived**, because the rung
+stayed green either way.
+
+**A discriminating rung must differ from its control in exactly one axis.** Two
+differences give the implementation two ways to pass, and the rung then proves
+nothing about either — which is the unkillable-as-written class arriving in the
+guard that was written to prevent a related one.
 
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
