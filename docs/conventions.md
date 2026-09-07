@@ -4830,6 +4830,23 @@ can cite the same words, and only the second is honest when nobody has looked.
 **Grep the row you are citing before you quote it** (D476), and when the provenance
 is a doc comment rather than a decision, say that.
 
+### Where two programs are extensionally equal, the corpus is PROVABLY blind
+
+D486 refused a sibling program equal to the shipped one by algebraic identity —
+`min(1,H) + min(2, H − min(1,H)) === min(3,H)` for every hand size. The sweep then
+ran 2,294 rows and **every one would have reported the same verdict under either
+build**.
+
+That is a stronger statement than "the suite happened to miss it". The blindness is
+**provable**, and the proof is an identity rather than a gap: no additional row, no
+better board, and no larger corpus can distinguish two programs that agree on the
+measured axis everywhere. Coverage is not the missing ingredient.
+
+**So when a design choice turns on an axis the corpus does not measure — parking,
+prompting, ordering, log text — say so explicitly in the decision, because the
+green run will otherwise be read as having endorsed it.** The number is silent on
+choices of that kind, and there is no version of the number that would not be.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
