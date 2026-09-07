@@ -4764,6 +4764,28 @@ work orders is not thereby implicit; it is only in force where it is written.
 a rule leaves the list, that is a decision — so make it one, rather than discovering
 after the fact that dropping a line was read as lifting it.
 
+### Three slices running, the decisive artefact was a board chosen from an argument
+
+D482 built a five-board signature so eight wrong implementations answered eight
+different numbers. D483 refused a shipped op because it places flat counters where
+the print says damage — identical on any board without a reduction passive. D485
+refused a near-miss that takes the same filter into the same pile — identical on
+any hand holding exactly one match, which is the first hand anyone would write.
+
+**In all three, the wrong choice would have been green.** No verdict column, no
+census figure and no sweep would have distinguished it; the discriminating board
+existed only because someone reasoned about where two candidates diverge *before*
+designing the suite.
+
+So the pattern is worth stating as practice: **when two implementations are
+available, name the board on which they differ before you write any board at all.**
+If you cannot name one, you have not chosen between them — you have picked the one
+you thought of first and collected evidence that cannot tell.
+
+And note what this implies about the sweep: it is excellent at catching a build
+that contradicts an assertion, and structurally blind to a build that satisfies
+every assertion anyone thought to write.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

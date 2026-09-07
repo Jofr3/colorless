@@ -609,7 +609,16 @@
 > is the ritual's" rule holds only when the slice archives nothing** — the guard's own message says
 > as much (*"UP means one was archived deliberately — say so and raise the number"*).
 >
-> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP.**
+> ✅ **(0) THE DEBT IS PAID.** D485 is committed (`77a8948e`) with explicit paths — the untracked
+> `packages/engine/src/opponentHandSweep.test.ts` was named and staged by name — and the
+> whole-corpus sweep ran against a CLEAN tree: `2244 killed · 42 known survivor(s) · 0 GAP(s) ·
+> 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 9,839.0s`, tree clean at exit. **EXACTLY
+> the predicted line — forty-sixth consecutive slice to name its number first and hit it.**
+> Completeness structural from the module: **2,286 listed / 2,286 run / 2,286 MATCHED / 0 missing /
+> 0 unmatched**, 6 of them D485's — **forty-seventh consecutive clean run**. The original
+> instruction is kept below.
+>
+> 🛑 **(0-prior) THE DEBT AS IT WAS WRITTEN: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP.**
 > ⚠️ **ONE UNTRACKED PATH: `packages/engine/src/opponentHandSweep.test.ts`.** `git add` with
 > EXPLICIT PATHS ONLY.
 >
