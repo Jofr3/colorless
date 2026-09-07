@@ -107,18 +107,27 @@ const CLAUSES = [
   index: number;
 }[];
 
-/** 🛑 THE THREE ROWS THE FAMILY SWEEP FINDS AND THIS SLICE DOES **NOT** TAKE,
+/** 🛑 THE ROWS THE FAMILY SWEEP FINDS AND D426 DID **NOT** TAKE — **THREE WHEN THIS
+    LIST WAS WRITTEN, TWO SINCE D486 BUILT THE SALANDIT COMPOUND** (see the note inside
+    the array, which keeps the retired reason rather than deleting it),
     each with the reason it is a different slice. Measured after the arm landed
     (§1 re-runs the measurement live), because D424 gained a printing by asking
     exactly this question of the composition path and getting a yes.
 
     `[printed sentence, why it is left, legal printings]`. */
 const DEFERRED: readonly (readonly [string, string, number])[] = [
-  [
-    "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
-    "the TAIL is an evolution-history gate over a MORE-cards fold — `deriveAttackEffect` claims neither, so `splitAttackTrailingClause` refuses it however readable the head becomes",
-    1,
-  ],
+  // 🆕🆕 **D486 REMOVED THIS LIST'S FIRST ROW — THE SALANDIT COMPOUND IS BUILT.** Its
+  // reason was *"the TAIL is an evolution-history gate over a MORE-cards fold —
+  // `deriveAttackEffect` claims neither, so `splitAttackTrailingClause` refuses it however
+  // readable the head becomes"*, and **every clause of that is still TRUE**: the tail is
+  // still claimed by nobody and the splitter still refuses the sentence. What was wrong is
+  // the INFERENCE — the row was never blocked on the splitter at all, and D486 claimed it
+  // WHOLE with a compound anchor in this very reader. ⚠️ **A refusal can be right about
+  // every fact it states and wrong about the only thing it is for.** The witness is
+  // RE-POINTED rather than deleted (D438/D444/D475): the tail fragment it named is now
+  // guarded below, and the sentence itself is driven in
+  // `evolvedDiscardCompound.test.ts`. The list is a TERM in the sums at the end of §1, so
+  // both of them move with it.
   [
     "Discard a card from your hand. If you do, your opponent discards a card from their hand.",
     "an §9.2 *If you do* whose CONSEQUENT is this op — the tail clause is unread, and the head (a bare hand cost with no destination printed) is unread too",
@@ -127,6 +136,22 @@ const DEFERRED: readonly (readonly [string, string, number])[] = [
   [
     "Your opponent chooses 3 cards from their hand and shuffles those cards into their deck.",
     "this mechanism with a DIFFERENT DESTINATION (§15.E deck, plus a shuffle), and the op prints no `to` field — D231's unkillable-singleton rule is what kept it off",
+    1,
+  ],
+];
+
+/** 🆕🆕 **D486 — THE THIRD TERM THIS PARTITION NEEDED THE MOMENT A ROW LEFT `DEFERRED`
+    WITHOUT LEAVING THE CORPUS.** The family sweep below is a statement about the whole
+    printed column, so its five rows have to be accounted for by SOME list; before this
+    slice, `CLAUSES ∪ DEFERRED` was that accounting because *built here* and *unbuilt*
+    exhausted it. A row built by a LATER slice belongs to neither, and deleting it from
+    `DEFERRED` alone would have made the sweep red for the right reason and the partition
+    wrong for a subtle one — the family would silently have become four rows.
+    `opponentHandFamily.test.ts`'s `builtElsewhere` term, at its second address. */
+const BUILT_ELSEWHERE: readonly (readonly [string, string, number])[] = [
+  [
+    "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
+    "D486 — the gated increment: this file's own head op, then a `conditionGate` on `yourActiveEvolvedFromThisTurn { name: \"Salandit\" }` over a second `opponentDiscardsFromHand`. ZERO new mechanism; driven in `evolvedDiscardCompound.test.ts`",
     1,
   ],
 ];
@@ -241,6 +266,9 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
   });
 
   it("🛑 the WHOLE opponent-side hand-discard family is these two plus THREE, and no more", () => {
+    // ⚠️ **THE TITLE'S "THREE" IS STILL RIGHT AND ITS PARTITION IS NOT** (D486): the
+    // three are now ONE built elsewhere and TWO still deferred, which is why the union
+    // below has three terms.
     // ⚠️ THE PUBLISHED PATTERN, RE-RUN LOOSER THAN THE HANDOFF'S (D424/D425).
     // The brief enumerated with `/opponent discards|opponent chooses|discards?
     // [0-9a-z]+ cards?/i`. This sweeps `/their hand|opponent's hand/i` — every
@@ -257,9 +285,24 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
       .filter(([, s]) => /^Your opponent (?:discards|chooses)|your opponent discards/.test(s))
       .map(([, s]) => s)
       .sort();
+    // 🆕🆕 **D486 — THREE TERMS, NOT TWO.** See `BUILT_ELSEWHERE`: the partition has to
+    // close over the printed column, and a row built by a later slice is in neither of
+    // the two original lists.
     expect(family).toEqual(
-      [...CLAUSES.map((c) => c.text), ...DEFERRED.map(([s]) => s)].sort(),
+      [
+        ...CLAUSES.map((c) => c.text),
+        ...DEFERRED.map(([s]) => s),
+        ...BUILT_ELSEWHERE.map(([s]) => s),
+      ].sort(),
     );
+    // …and the three lists are DISJOINT, which is what makes the union above a partition
+    // rather than a coincidence that happens to have the right length.
+    expect(new Set(family).size).toBe(family.length);
+    // 🛑 EVERY `BUILT_ELSEWHERE` ROW IS ACTUALLY BUILT — the half of the claim that rots
+    // silently if nobody executes it (D467's expiry-date rule, in the other direction).
+    for (const [sentence] of BUILT_ELSEWHERE) {
+      expect(deriveAttackEffect(sentence)).not.toBeNull();
+    }
     // ⚠️ THE EDGE, STATED: no printing in this column spells the destination as
     // "into the discard pile", and none names the discarder by anything but the
     // word "opponent". Both are asserted as ZERO on the population so the day one
@@ -271,10 +314,14 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // D190b's exact-map-or-flag rule: every deferred row lands on the loud
     // ATTACK_EFFECT_SKIPPED path rather than deriving half of what it prints.
     for (const [sentence] of DEFERRED) expect(deriveAttackEffect(sentence)).toBeNull();
-    // …and the three sum to 3 printings, so the family is 6 + 3 = 9 and this
+    // …and the remaining two sum to 2 printings, so the family is 7 + 2 = 9 and this
     // slice's share is named rather than implied.
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(3);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 6).toBe(9);
+    // 🆕🆕 **D486: THE DEFERRED SIDE LOST A ROW AND THE BUILT SIDE GAINED IT** — 3 → 2 and
+    // 6 → 7. The family TOTAL is unmoved at 9, which is the whole reason both halves are
+    // written: a count of the deferred rows alone cannot tell *"a row was built"* from
+    // *"a row left the corpus"*, and the closing sum can.
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(2);
+    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 7).toBe(9);
   });
 
   it("🛑 NEITHER COMPOUND COMPOSES FOR FREE — measured AFTER the arm landed", () => {
@@ -289,13 +336,27 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // readable (the Salandit compound opens with the bare printed sentence) and
     // a head is the half the splitter gives to the readers that were already
     // reading — it buys nothing on its own.
-    const SALANDIT = DEFERRED[0]?.[0] as string;
-    const IF_YOU_DO = DEFERRED[1]?.[0] as string;
-    // The HEAD of the Salandit compound is now claimed — this is the thing the
-    // slice actually changed, and it is asserted so the "no gain" verdict below
-    // cannot be confused with "nothing moved at all".
+    //
+    // 🆕🆕 **D486 RE-POINTED THIS RUNG, AND THE THING IT PROVES CHANGED WITHOUT
+    // ITS VERDICT MOVING.** The Salandit compound is now claimed WHOLE by
+    // `deriveAttackEffect`, so `splitAttackTrailingClause` still returns null for
+    // it — **but at its FIRST condition (`claimedByAnyReader`, the shadow refusal)
+    // rather than at its second.** A rung that stays green for a new reason is a
+    // rung that has stopped measuring what it says it measures, so the two
+    // sentences are now asked SEPARATELY: the `If you do` compound keeps the
+    // original claim, and the Salandit one is asserted at the new condition.
+    const SALANDIT =
+      "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.";
+    const IF_YOU_DO = DEFERRED[0]?.[0] as string;
+    // The HEAD of the Salandit compound is claimed — this is the thing D426
+    // actually changed, and it is asserted so the "no gain" verdict below cannot
+    // be confused with "nothing moved at all".
     expect(deriveAttackEffect("Your opponent discards a card from their hand.")).not.toBeNull();
-    // …and the TAILS are not, which is why neither compound composes.
+    // 🛑 **THE TAIL FRAGMENT IS STILL CLAIMED BY NOBODY, AND D486 KEPT IT THAT WAY
+    // ON PURPOSE** — *"2 more"* is an anaphor whose antecedent is the head's
+    // discard, so a standalone tail arm would let the splitter weld it behind any
+    // claimed head. This slot is the guard on that refusal, one file over from the
+    // suite that argues it.
     expect(
       deriveAttackEffect(
         "If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.",
@@ -307,11 +368,14 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     // Driven through the splitters themselves rather than inferred from their
     // conditions, and through BOTH of the two that serve unresolved sentences
     // (D425: the requirement and cancel splitters serve zero).
-    for (const sentence of [SALANDIT, IF_YOU_DO]) {
-      expect(splitAttackTrailingClause(sentence)).toBeNull();
-      expect(splitAttackGateClause(sentence)).toBeNull();
-      expect(resolvedByAnyReader(sentence)).toBe(false);
-    }
+    expect(splitAttackTrailingClause(IF_YOU_DO)).toBeNull();
+    expect(splitAttackGateClause(IF_YOU_DO)).toBeNull();
+    expect(resolvedByAnyReader(IF_YOU_DO)).toBe(false);
+    // …and the Salandit compound, at the OTHER condition: RESOLVED, and therefore
+    // never offered to a splitter at all.
+    expect(resolvedByAnyReader(SALANDIT)).toBe(true);
+    expect(splitAttackTrailingClause(SALANDIT)).toBeNull();
+    expect(splitAttackGateClause(SALANDIT)).toBeNull();
   });
 
   it("⚠️ NO APOSTROPHE ON EITHER SENTENCE, so the BEARING census stands still", () => {
@@ -994,6 +1058,6 @@ describe("§8 — the structural answers", () => {
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.380.0");
+    expect(engineVersion).toBe("0.381.0");
   });
 });

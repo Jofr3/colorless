@@ -132,10 +132,24 @@ const STAR =
   "If this Pokémon evolved from Misty's Staryu during this turn, this attack does 80 more damage.";
 const STAR_CLAUSE = "this Pokémon evolved from Misty's Staryu during this turn";
 
-/** THE THIRD PRINTING OF THE SAME BOARD FACT, WHICH THIS SLICE DELIBERATELY DOES
-    NOT BUY: its consequent is a DISCARD, not damage, so the outer skeleton refuses
-    it before the clause table is consulted. Named here so a successor prices it
-    from a measurement rather than rediscovering it. */
+/** THE THIRD PRINTING OF THE SAME BOARD FACT, WHICH **D393** DELIBERATELY DID NOT
+    BUY: its consequent is a DISCARD, not damage, so the outer skeleton refuses it
+    before the clause table is consulted. Named here so a successor prices it from a
+    measurement rather than rediscovering it.
+
+    🆕🆕 **D486 BUILT IT, AND THE HALF OF THIS NOTE THAT SAID *"nothing here has to
+    change when that day comes"* WAS FALSE** — corrected in place and dated
+    (D178/D442/D466) rather than deleted. The refusal's stated REASON still holds
+    exactly as written: the bonus skeleton `BONUS` below does still refuse this
+    sentence, and it always will. What was wrong is the implied repair. *"One
+    consequent away"* pointed at `deriveAttackBonusConsequent`, whose reading carries a
+    REQUIRED `bonus: number` this sentence prints no damage for; the row was in fact one
+    COMPOUND ANCHOR away in `deriveAttackEffect`, over a composition of ops that had all
+    shipped — and it also needed a THIRD `CONDITIONAL_DAMAGE_CLAUSES` row, which is
+    precisely the *"nothing here has to change"* that turned out to be wrong.
+    ⚠️ **A refusal can be right about every fact it states and wrong about which file
+    pays** (D479's REASON-ONLY class, one field over). Driven in
+    `evolvedDiscardCompound.test.ts`; this file keeps its half as a MEASUREMENT. */
 const SALANDIT =
   "Your opponent discards a card from their hand. If this Pokémon evolved from Salandit during this turn, your opponent discards 2 more cards.";
 
@@ -242,7 +256,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(new Set(pair.map(([, s]) => BONUS.exec(s)?.[2]))).toEqual(new Set(["90", "80"]));
   });
 
-  it("🛑 the FAMILY is THREE and the third is refused by its CONSEQUENT, not by its clause", () => {
+  it("🛑 the FAMILY is THREE and the third is refused by THIS file's SKELETON, not by its clause", () => {
     // The population that decides how wide this member has to be. The legal attack
     // column prints "evolved from" THREE times, and the third — Salandit's — carries
     // the SAME board fact under a DISCARD consequent, so the bonus skeleton refuses
@@ -253,13 +267,35 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     const shaped = family.filter(([, s]) => BONUS.test(s.trim()));
     expect(shaped).toHaveLength(2);
     expect(new Set(shaped.map(([, s]) => s))).toEqual(new Set([GOLD, STAR]));
-    // ⚠️ AND IT STAYS UNRESOLVED, which is what says this slice did not quietly
-    // widen a reader into a sentence it was never priced for. The member is ONE
-    // consequent away from serving it and nothing here has to change when that
-    // day comes — a refusal recorded as a measurement (D207's practice).
+    // 🆕🆕 **D486 RE-POINTED THE LAST THREE LINES OF THIS RUNG, AND THE MOVE IS THE
+    // POINT.** They used to read *"AND IT STAYS UNRESOLVED, which is what says this
+    // slice did not quietly widen a reader into a sentence it was never priced for.
+    // The member is ONE consequent away from serving it and nothing here has to
+    // change when that day comes"*. **The sentence is now RESOLVED — by
+    // `deriveAttackEffect`, through a compound anchor, and the clause table DID have
+    // to change** (a third literal row). ⚠️ **The refusal this file owns survives
+    // whole, and it is the one worth keeping executable:** `BONUS` — this file's copy
+    // of the bonus skeleton — still refuses the sentence, so D393's *"refused by its
+    // consequent, not by its clause"* is true today, was true when written, and is
+    // measured here rather than remembered. What is gone is only the inference about
+    // where the repair would land (D479's REASON-ONLY class).
     expect(corpus().some(([, s]) => s === SALANDIT)).toBe(true);
-    expect(resolvedByAnyReader(SALANDIT)).toBe(false);
     expect(BONUS.test(SALANDIT.trim())).toBe(false);
+    expect(deriveAttackBonusConsequent(SALANDIT)).toBeNull();
+    expect(deriveAttackDamageBonus(SALANDIT)).toBeNull();
+    // …and it is claimed by exactly ONE reader, which is not one of this file's two.
+    expect(resolvedByAnyReader(SALANDIT)).toBe(true);
+    expect(READERS.filter((read) => read(SALANDIT) !== null).map((read) => read.name)).toEqual([
+      "deriveAttackEffect",
+    ]);
+    // 🛑 **THE CLAUSE IS SHARED AND THE THIRD ROW IS THIS MEMBER'S THIRD NAME**, so the
+    // family the two rows above were priced as a PAIR for is now a TRIPLE — and one
+    // member still serves all three, which is D393's whole argument surviving a slice
+    // it did not anticipate.
+    expect(deriveAttackEffect(SALANDIT)?.[1]).toMatchObject({
+      op: "conditionGate",
+      cond: { kind: "yourActiveEvolvedFromThisTurn", name: "Salandit" },
+    });
   });
 
   it("🛑 the residue steps by exactly TWO sentences and TWO printings", () => {

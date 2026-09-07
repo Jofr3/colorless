@@ -15425,6 +15425,17 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   // its CONSEQUENT is a discard rather than damage, so the outer skeleton refuses it
   // before this table is consulted — the member is one consequent away from serving
   // it, and nothing here has to change when that day comes.
+  // 🛑 **D486 — THE LAST CLAUSE OF THAT PARAGRAPH IS FALSE AND WAS FALSE THE MOMENT
+  // A SECOND SKELETON EXISTED (corrected in place and dated, D178/D442/D466).** The
+  // sentence is built at D486 and the outer skeleton that took it is NOT the bonus
+  // one — it is `ATTACK_OPPONENT_DISCARDS_HAND_MORE` in `deriveAttackEffect`, which
+  // reaches `boardConditionForClause` exactly as arm 6c-bis does. So *"one consequent
+  // away"* named the wrong repair: nothing was ever owed to `deriveAttackBonus
+  // Consequent` (whose reading carries a REQUIRED `bonus: number` this sentence has
+  // no printed damage for), and what WAS owed here is the third row below. ⚠️ **The
+  // rest of the paragraph stands** — the bonus skeleton does still refuse it, and the
+  // member did serve it unchanged. **A refusal can name a true blocker and still be
+  // wrong about which file pays** (D479's REASON-ONLY class, one field over).
   [
     "this Pokémon evolved from Gimmighoul during this turn",
     { kind: "yourActiveEvolvedFromThisTurn", name: "Gimmighoul" },
@@ -15432,6 +15443,42 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
   [
     "this Pokémon evolved from Misty's Staryu during this turn",
     { kind: "yourActiveEvolvedFromThisTurn", name: "Misty's Staryu" },
+  ],
+  // 🆕🆕 D486 — the per-turn cluster's SIXTH entry and the THIRD on this member: the
+  // gate half of the printed compound below, which is this clause with the CARD NAME
+  // one row over. ⚠️ **NO CARD ID IS NAMED HERE AND NONE IS GUESSED** — this
+  // container has no catalog credentials, and D393's rule (*"no card ids were read
+  // from the catalog and none are guessed"*) is what keeps a plausible-looking
+  // wrong id out of a doc block nothing can check. The PRINTING COUNT (1) comes
+  // from `legalAttackCorpus()`, which is in the repo. THREE literal rows now share
+  // `yourActiveEvolvedFromThisTurn`, which is D393's pair argument paying out a
+  // second time: the varying token is a card NAME, so a template
+  // `^this Pokémon evolved from (.+) during this turn$` would resolve *"evolved from
+  // Rayquaza"* to a predicate answering FALSE forever and silently (D393's refusal,
+  // unchanged and now standing over three rows instead of two).
+  //
+  // 🛑 **THE ROW IS READ BY A DIFFERENT OUTER SKELETON FROM THE TWO ABOVE, AND THAT
+  // IS THE WHOLE POINT OF THE TABLE BEING SHARED.** Gimmighoul's and Misty's Staryu's
+  // clauses arrive from `deriveAttackDamageBonus`'s `CONDITIONAL_DAMAGE_BONUS`;
+  // this one arrives from `deriveAttackEffect`'s `ATTACK_OPPONENT_DISCARDS_HAND_MORE`
+  // through the same `boardConditionForClause`. A clause meaning *"if X"* means the
+  // same thing to every reader that asks, which is the reason this map is consulted
+  // by four call sites rather than copied into them.
+  //
+  // ⚠️ **AND THE ROW WIDENS THE BONUS READER TOO, MEASURED RATHER THAN WAVED AT.**
+  // With this row present, *"If this Pokémon evolved from Salandit during this turn,
+  // this attack does N more damage."* becomes readable — a sentence the legal column
+  // does NOT print (measured: 0 rows over all 640). That is the same free widening
+  // the two rows above give `deriveAttackEffect`'s gate arms, and it claims nothing
+  // new in the corpus: the whole-corpus delta of adding this row is exactly the ONE
+  // compound sentence below, asserted in `evolvedDiscardCompound.test.ts` §6.
+  //
+  // ⚠️ **NO APOSTROPHE ON THIS KEY**, unlike the row directly above it, so
+  // `literalClauseRow`'s U+2019 fold is inert on it and `clauseApostrophe.test.ts`'s
+  // BEARING half is predicted to stand still. Asserted rather than left as prose.
+  [
+    "this Pokémon evolved from Salandit during this turn",
+    { kind: "yourActiveEvolvedFromThisTurn", name: "Salandit" },
   ],
   // 🆕🆕 D394 — "this Pokémon used {AttackName} during your last turn": Falinks
   // `sv07-088` "All-Out Attack" ({C}{C}, 30+, +90, index 1 of TWO — its own index 0
@@ -19553,6 +19600,54 @@ const ATTACK_REVEAL_AND_SWEEP =
 // to stand still at 151. That prediction is asserted rather than left as prose.
 const ATTACK_OPPONENT_DISCARDS_HAND =
   /^Your opponent discards (?:(\d+) cards|a card) from their hand\.$/;
+
+// 🆕🆕 **D486 — THE SAME SENTENCE WITH A GATED INCREMENT WELDED TO IT, AND THE HEAD
+// HALF IS THE ANCHOR DIRECTLY ABOVE SPELLED OUT.** *"Your opponent discards a card
+// from their hand. **If this Pokémon evolved from Salandit during this turn, your
+// opponent discards 2 more cards.**"* — 1 sentence / 1 Standard-legal printing.
+//
+// 🛑 **WHY THIS IS A COMPOUND ANCHOR AND NOT A TAIL ARM, WHICH IS THE CHEAPER BUILD
+// AND WAS DRIVEN BEFORE IT WAS REFUSED (D466/D485-i).** `splitAttackTrailingClause`
+// needs three things: the sentence unclaimed, the HEAD claimed by some reader, and
+// the TAIL claimed by `deriveAttackEffect`. At D486's parent commit the first two
+// already held — the head is the anchor above, verbatim — so **one standalone arm
+// for the tail would have freed this row with no compound anchor at all**, and
+// `evolvedDiscardCompound.test.ts` §7 drives that rather than asserting it.
+//
+// It is refused because **"2 MORE" IS AN ANAPHOR AND ITS ANTECEDENT IS THE HEAD'S
+// DISCARD.** A tail-only arm carries no way to ask whether anything was discarded,
+// so the splitter would compose it behind ANY claimed head: *"Your opponent's Active
+// Pokémon is now Asleep. If this Pokémon evolved from Salandit during this turn,
+// your opponent discards 2 more cards."* would discard two cards off a sentence that
+// discarded none — *more* than nothing. D485 refused a tail arm for this shape one
+// part of speech over (*"you find there"*), and **THIS FAMILY MARKS ITS OWN ANAPHOR
+// IN PRINT**: the column's only other gated-increment compound is *"Discard the top
+// card of your opponent's deck. If you played an Ancient Supporter card from your
+// hand during this turn, discard 3 more cards **in this way**."* (2 printings,
+// `Ancient`-banner and unbuilt) — the §9.2 *"in this way"* is the same backward
+// reference written down. **The family is 2 sentences / 3 printings; this anchor
+// takes 1 / 1**, measured over all 640 rows rather than estimated.
+//
+// ⚠️ **THE HEAD IS SPELLED LITERALLY RATHER THAN REUSING THE ALTERNATION ABOVE**
+// (D231's rule about a capture with no witness in its own population): the numeric
+// branch *"Your opponent discards 2 cards from their hand."* is printed and built as
+// a STANDALONE sentence, but **zero** compound rows carry it, so an alternation here
+// would admit a range this anchor has no printing in. The `1` the arm emits is the
+// ARTICLE, exactly as the anchor above reads it — and §2 pins that by comparing the
+// arm's first op against `deriveAttackEffect` of the head sentence rather than
+// against a re-typed literal (D479's capture rule).
+//
+// ⚠️ **THE INCREMENT IS CAPTURED, AND ITS RANGE IS INHABITED BY A SHIPPED PROGRAM**
+// — `opponentDiscardsFromHand { count: 2 }` is what the standalone numeric printing
+// already derives to, which is the test for whether a capture is defensible (D479).
+// The `>= 1` floor is the guard every numeric arm in this file carries; the printed
+// plural makes `1` unspellable and `0` is what the floor is for.
+//
+// **NO APOSTROPHE OF EITHER CLASS**, the same prediction the anchor above records
+// and for the same reason: *their hand* throughout, and the clause names a bare
+// `Salandit`. `clauseApostrophe.test.ts`'s two censuses are predicted to stand still.
+const ATTACK_OPPONENT_DISCARDS_HAND_MORE =
+  /^Your opponent discards a card from their hand\. If (.+), your opponent discards (\d+) more cards\.$/;
 
 // ⚠️⚠️ D234 — ATTACH FROM THE DISCARD PILE (backlog row 9), AND THE ROW'S OWN
 // PREDICTION HELD: **ONE anchor, twelve printed sentences.** The row wrote the
@@ -24489,6 +24584,57 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = match[1] === undefined ? 1 : Number(match[1]);
     if (count >= 1) return [{ op: "opponentDiscardsFromHand", count }];
+  }
+  // 🆕🆕 **D486 — THE GATED INCREMENT, AND IT COSTS ZERO NEW MECHANISM.** See the
+  // anchor's block for why this is a compound arm and not a tail one. Everything
+  // below already ships: `opponentDiscardsFromHand` is D426's, `conditionGate` is
+  // the gate arm 6c-bis assembles thirty arms up, and `boardConditionForClause` is
+  // the SHARED clause vocabulary both of them read — so this arm is a COMPOSITION
+  // of shipped ops (D482's question, asked before the price was written down) and
+  // buys **no** op member, op field, op value, `BoardCondition` member, reader,
+  // prompt, event or error code. The one thing it does buy is the third
+  // `CONDITIONAL_DAMAGE_CLAUSES` row, which is where the printed name lives.
+  //
+  // 🛑 **TWO OPS IN PRINTED ORDER, NOT ONE OP UNDER A GATE — AND THE TWO CANDIDATES
+  // AGREE ON THE COUNT FOR EVERY HAND SIZE, WHICH IS WHY THE CHOICE HAD TO BE MADE
+  // FROM AN ARGUMENT (D482/D483/D485).** The sibling program
+  // `conditionGate { then: [discard 3], otherwise: [discard 1] }` is arithmetically
+  // identical: `min(1,H) + min(2, H − min(1,H)) === min(3,H)` for every `H`, so no
+  // board can separate them by cards discarded. They separate on the PARK, and the
+  // collision board is the SMALLEST one (D485-ii): at a hand of 0 or 1 both are
+  // byte-identical and neither asks anything. **They diverge at a TWO-card hand** —
+  // this program parks (*"Discard a card from your hand."*, 1 of 2) and then forces
+  // the last card, where the sibling discards both with no question at all. §5
+  // drives both hand sizes.
+  //
+  // The printed order is the reason to prefer this one, and it is checkable rather
+  // than aesthetic: the card prints two sentences and the opponent answers each,
+  // so the FIRST op here is byte-identical to `deriveAttackEffect(head)` — the
+  // compound's reading contains the standalone's reading, which the sibling's
+  // does not (its head op only exists on the gate's false arm).
+  //
+  // ⚠️ **`otherwise` IS OMITTED RATHER THAN SPELLED `[]`**, arm 6c-bis's shape
+  // exactly, and `D399-gate-gains-an-empty-decline-arm` is the declared-equivalent
+  // row that already says the two are the same program.
+  match = ATTACK_OPPONENT_DISCARDS_HAND_MORE.exec(effect);
+  if (match !== null) {
+    const gate = boardConditionForClause(match[1] ?? "");
+    const more = Number(match[2]);
+    // An UNMAPPED clause falls through to null and stays LOUD —
+    // `CONDITIONAL_DAMAGE_CLAUSES`' standing rule, and the floor is the numeric
+    // guard every count-bearing arm in this file carries (a printed *"0 more
+    // cards"* would derive to an attack claiming a simulated discard of nothing).
+    if (gate !== null && more >= 1) {
+      return [
+        { op: "opponentDiscardsFromHand", count: 1 },
+        {
+          op: "conditionGate",
+          cond: gate,
+          // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+          then: [{ op: "opponentDiscardsFromHand", count: more }],
+        },
+      ];
+    }
   }
   // The fourth arm, and the ONLY one in this slice that costs nothing but itself:
   // an op that has been in the union since M5, reached by a sentence nobody had

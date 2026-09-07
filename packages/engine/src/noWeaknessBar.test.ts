@@ -681,7 +681,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.380.0");
+    expect(engineVersion).toBe("0.381.0");
   });
 });
 

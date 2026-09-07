@@ -19493,6 +19493,93 @@ import type { GameState, Seat } from "./types";
     REACHABILITY (D450) is empty — `handRefresh` never parks, so no `phase.cont.pendingOp`
     or `rest` can hold it. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN
     INHERITED: see `shuffleHandDraw.test.ts` §7, which authors one more pin.)
+    🆕🆕🆕 engineVersion 0.380.0 → **0.381.0** (D486 — THE GATED INCREMENT ON THE
+    OPPONENT'S HAND DISCARD. `censusAttackCorpus.ts` **FILE LINE 668** — *"Your opponent
+    discards a card from their hand. If this Pokémon evolved from Salandit during this turn,
+    your opponent discards 2 more cards."* — **1 sentence / 1 legal printing**, and the row
+    D479's refusal audit examined, cleared for expressibility and PRICED.
+    🛑 **BUILD STATE FIRST, WITH THE ORACLE THIS SURFACE ACTUALLY HAS (D480/D482):** the
+    THIRTEEN readers off `attackReaderSurface()`, run programmatically against the printed
+    string — **13 / 13 null** at the parent commit, **all FOUR splitters null**, the row
+    surviving every census subtraction. `programFor` is not an oracle for an attack sentence
+    and `refusedPrintings.ts`'s own limit 1 says so in writing.
+    🛑 **THE PRICE THIS SLICE WAS TOLD TO VERIFY IS NOT D479's, AND FINDING THAT OUT WAS
+    THE FIRST THING THE VERIFICATION DID.** The work order attributed *"`yourActive
+    EvolvedFromThisTurn` exists; the row is one consequent away — this is a PRICE, not an
+    expressibility refusal"* to D479's refusal audit. **`docs/decisions.md`'s `D479` row does
+    not mention this sentence at all** — the claim is **D393's**, written in that decision's
+    row, in its resume point, in this file's clause table and in `evolvedFromBonus.test.ts`,
+    and it has stood unexamined for **93 decisions**. ⚠️ **A price attributed to a recent
+    audit is a price nobody re-derived recently**, which is the opposite of what the
+    attribution suggests, and it is worth checking the row before inheriting the sentence.
+    🛑 **THE PRICE HELD IN ITS EXPRESSIBILITY HALF AND DRIFTED IN ITS REPAIR SITE, WHICH IS A
+    THIRD SHAPE OF PRICE ERROR.** Both halves of the expressibility claim were re-verified by
+    opening the declaration. But *"one consequent away"* points at
+    `deriveAttackBonusConsequent`, whose reading carries a **REQUIRED `bonus: number`** this
+    sentence prints no damage for — a consequent skeleton there would have been authoring a
+    card rather than reading one. **D393's resume point went further and was measured wrong
+    in both directions**: *"what it needs is a THIRD consequent skeleton, which is a different
+    slice and a bigger one"* — it needed no consequent skeleton at all, and it is the
+    cheapest build of the run so far (`interpreter.ts` byte-unchanged). The row is spelled by `deriveAttackEffect` instead, and it
+    needed exactly the thing the same paragraph said would not be needed: the clause table's
+    doc block promised *"nothing here has to change when that day comes"* and a THIRD literal
+    `CONDITIONAL_DAMAGE_CLAUSES` row is what the day cost. ⚠️ **A refusal can name a true
+    blocker and still be wrong about which file pays** — D479's REASON-ONLY class one field
+    over, and the drift was on the CHEAP side both times.
+    🛑 **THE COMPOSITION QUESTION WAS DRIVEN BEFORE ANYTHING WAS PRICED (D482), AND ITS
+    ANSWER IS THAT NOTHING NEW WAS NEEDED AT ALL.** `opponentDiscardsFromHand` (D426),
+    `conditionGate` (arm 6c-bis's own gate) and `yourActiveEvolvedFromThisTurn` (D393) all
+    ship, and `boardConditionForClause` already reads that clause family off a PRINTED
+    sentence. **THE PRICE: ONE new anchor, ONE new `deriveAttackEffect` arm and ONE literal
+    clause row. ZERO** new `EffectOp` members, op FIELDS, op VALUES, `BoardCondition`
+    members, readers (the surface stands still at **13**), prompts, choice kinds, events,
+    error codes, `GameState` fields, registry rows, `FIXTURE_POOL` ids (file-local
+    `cardPool`, D414), `interpreter.ts` bytes, `redact.ts` bytes or `packages/schema` bytes.
+    🛑 **AND D483's COUNTERWEIGHT FIRED AS AN ARITHMETIC IDENTITY RATHER THAN AS A BOARD
+    COINCIDENCE.** The sibling composition `conditionGate { then: [discard 3], otherwise:
+    [discard 1] }` spells the same sentence and **agrees with the shipped program on the card
+    count for EVERY hand size**: `min(1,H) + min(2, H − min(1,H)) === min(3,H)` for all `H`,
+    so no board can separate them by what leaves the hand. They separate on the PARK, and —
+    D485-ii at its second address — **the collision board is the SMALLEST one**: at a hand of
+    0 or 1 the two are byte-identical and neither asks anything. **They diverge at a TWO-card
+    hand**, where the shipped program parks (*"Discard a card from your hand."*, 1 of 2) and
+    then forces the last card, and the sibling discards both with no question at all.
+    `evolvedDiscardCompound.test.ts` §5 drives BOTH programs across twelve boards and pins
+    the park-count gap per board rather than asserting its existence.
+    🛑 **THE ROW IS `COMPOUND-head`, SO D466's RULE APPLIED — AND IT CAME OUT D485's WAY FOR
+    THE SECOND SLICE RUNNING.** `splitAttackTrailingClause` wants the sentence unclaimed, the
+    HEAD claimed and the TAIL claimed by `deriveAttackEffect`; the first two already held, so
+    **a tail-only arm would have freed this row with no compound anchor at all** — cheaper
+    than what shipped. Refused, because *"2 MORE"* is an ANAPHOR whose antecedent is the
+    head's discard: a standalone tail arm has no way to ask whether anything was discarded,
+    so the splitter would weld it behind ANY claimed head and *"Your opponent's Active Pokémon
+    is now Asleep. If this Pokémon evolved from Salandit during this turn, your opponent
+    discards 2 more cards."* would discard two cards MORE THAN NOTHING. ⚠️ **AND THIS FAMILY
+    MARKS ITS OWN ANAPHOR IN PRINT, WHICH IS NEW EVIDENCE RATHER THAN A RE-ARGUMENT**: the
+    legal column's only other gated-increment compound is *"Discard the top card of your
+    opponent's deck. If you played an Ancient Supporter card from your hand during this turn,
+    discard 3 more cards **in this way**."* (2 printings, `Ancient`-banner and unbuilt) — the
+    §9.2 *"in this way"* this engine reads as `recordGate`. **The family is 2 sentences / 3
+    printings, measured over all 640 rows; this anchor takes 1 / 1.**
+    `MATCH_RECORD_VERSION` **STAYS 29**, DRIVEN rather than quoted, and the argument is
+    sharper than a bare "nothing serialized moved". The first op PARKS, so a `conditionGate`
+    carrying `yourActiveEvolvedFromThisTurn` reaches `state.phase.cont` — an address that
+    member had never reached before, because at HEAD it only fed `deriveAttackDamageBonus`'s
+    damage fold, which is not an op and is never persisted. **It is still 29 because a new
+    COMBINATION of shipped members is not a schema change**: `conditionGate` has been an
+    `EffectOp` member since long before v29 and that `BoardCondition` member since D393
+    (v23 → v24, the bump that paid for `InPlayPokemon.evolvedTurn`), so a v29 reader parses
+    the `cont` by the union it already has and evaluates it by the arm it already ships. §8
+    round-trips the parked state through JSON and answers the park on the REVIVED board.
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN INHERITED: 60 assertions /
+    79 sites across 60 FILES, including 16 `it(…)` TITLES**, out of 82 raw occurrences —
+    **THREE are HISTORY and must not be bumped**, the `0.379.0 → 0.380.0` lines in this file,
+    in `opponentHandSweep.test.ts` and in `scripts/mutation/mutants.ts`. D485 forecast
+    *"a successor inherits 60 / 79 / 59 / 16"* and was **exact on three of the four and ONE
+    LOW on FILES** — 60, not 59. ⚠️ **And its "two occurrences are HISTORY" was ONE LOW too**:
+    the third is `mutants.ts`'s own re-point ledger, which is a comment nobody's grep for
+    `expect(` reaches. A successor inherits **61 / 81 / 61 / 17**, this slice's own suite
+    included.)
     🆕🆕🆕 engineVersion 0.379.0 → **0.380.0** (D485 — THE MANDATORY FILTERED SWEEP OF
     THE OPPONENT'S HAND. `censusAttackCorpus.ts` **FILE LINE 673** — *"Your opponent reveals
     their hand. Discard all Item cards and Pokémon Tool cards you find there."* — **1 sentence
@@ -19662,7 +19749,7 @@ import type { GameState, Seat } from "./types";
     than the census literals do**, because every slice that authors a version pin raises it
     by one and no instrument reports the total. D482 authors one more, so a successor
     inherits **58 assertions**.) */
-export const engineVersion = "0.380.0";
+export const engineVersion = "0.381.0";
 
 export type {
   ApplyResult,

@@ -4786,6 +4786,50 @@ And note what this implies about the sweep: it is excellent at catching a build
 that contradicts an assertion, and structurally blind to a build that satisfies
 every assertion anyone thought to write.
 
+### Two candidate programs can agree by ARITHMETIC IDENTITY on every board
+
+D483 and D485 each found a near-miss that matched the right answer on the boards
+one would naturally write. D486 found something stronger: a sibling program whose
+card count equals the correct one **for every possible hand size**, because
+`min(1,H) + min(2, H − min(1,H))` is identically `min(3,H)`.
+
+**No board separates them by what leaves the hand.** They diverge only on what the
+program *asks* — one parks for a choice on a two-card hand, the other discards
+silently.
+
+So when two candidates look interchangeable, first check whether they are equal by
+*algebra* rather than by coincidence. **If they are, no amount of board design will
+help, and the separating axis is not a quantity at all** — look at parking,
+prompting, ordering, or what the log records. Those are the observable differences a
+quantity-shaped test can never reach.
+
+### A rung passing is not evidence it still tests its stated claim
+
+After D486's build, a neighbouring suite's compose rung was still green — **for a
+different reason than the one it names.** It had been passing because of the tail
+condition it describes; it now passes because of a shadow refusal in the splitter.
+Nothing failed, and nothing would have.
+
+**A build inside a family is the moment to re-read that family's rungs against
+their stated reasons.** A rung whose justification has silently moved is
+indistinguishable from a healthy one at the verdict level, and it will keep passing
+long after the thing it was written to catch has stopped being possible.
+
+### Prefer "an old doc block says X, unverified" to "D4xx priced it at X"
+
+D486's work order attributed a price to a recent refusal audit and quoted it as
+verbatim from that decision's row. The row never mentions the sentence: the audit
+had verified only the *expressibility* half, and the **price** came from a doc block
+**93 decisions old** — which turned out wrong in both directions, naming a repair
+site whose reader requires a field the sentence does not print.
+
+**Attribution changes how a claim is read.** "A recent audit priced it" implies
+someone re-derived it recently; "an old doc block says so" invites the check. Both
+can cite the same words, and only the second is honest when nobody has looked.
+
+**Grep the row you are citing before you quote it** (D476), and when the provenance
+is a doc comment rather than a decision, say that.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
