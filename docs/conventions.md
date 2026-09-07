@@ -4495,6 +4495,24 @@ compute what each of them would answer and confirm the answers differ — and pr
 values that cannot collide (a printed 90 where 30 would have made two readings
 agree).
 
+### A refusal witness is a tripwire whose blast radius is the whole family
+
+D482 widened an anchor next to a sentence D189 had refused. The widening was caught
+by two suites: D482's own, and **D189's `toBeNull` on that sentence — written 293
+decisions earlier**.
+
+D189 could not have known which slice would eventually reach too far in that
+direction. It only had to name the sentence and assert it stayed unread. That is
+what makes a refusal witness different from documentation: **a `toBeNull` naming a
+printed sentence is a live guard against every future anchor that overreaches
+toward it**, not merely a record of what was unbuilt at the time.
+
+Two things follow, both already practised here and now justified by a case:
+**re-point refusal witnesses rather than deleting them** when the sentence is
+finally built (D438/D444), because the rung's value outlives the refusal; and
+**measure such a witness by the slices it catches, not by the row it was written
+for.**
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
