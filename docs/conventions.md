@@ -4564,6 +4564,24 @@ two would differ before adopting it.** If you cannot name one, you have not
 established that it spells the sentence — only that nothing you have tried
 distinguishes them.
 
+### A corpus cannot self-report a row that tests its neighbour
+
+D483 repaired two mutant rows that had resolved to the same line for 46 decisions.
+Before the repair: both KILLED. After: both KILLED. **The verdict column is
+byte-identical across a defect that made one of the two rows meaningless.**
+
+So nothing in 46 sweeps could have distinguished this corpus from a correct one —
+and nothing in the sweep that followed the repair confirms the repair either. **The
+only evidence that the second arm is now covered is the row itself, read against
+the code.**
+
+This is the same shape as the formerly-spliced rows that all came back killed once
+the harness patched literally: **when a silent-corruption class is fixed and no
+verdict moves, the recovered value is meaning, not coverage.** Both cases share a
+moral worth stating once: a mutation corpus reports what its rows do, never what
+its rows *say* they do, and the gap between the two is invisible to every column it
+prints.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
