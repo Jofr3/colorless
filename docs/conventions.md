@@ -4847,6 +4847,61 @@ prompting, ordering, log text — say so explicitly in the decision, because the
 green run will otherwise be read as having endorsed it.** The number is silent on
 choices of that kind, and there is no version of the number that would not be.
 
+### Adding vocabulary is always a widening, so a residue row is essentially never blocked by a schema version
+
+Several rows were deferred across this run "because building them would bump
+`MATCH_RECORD_VERSION`". D487 measured it: **zero of 96 residue sentences are
+blocked only by a version-costing change**, and the reason is structural rather
+than fortunate.
+
+The record's own discriminator is *"would an old record MEAN something else"*, which
+admits three costing shapes: a new **required** key at a persisted address, a
+**rename** there, or a re-meaning of an existing byte string. **A residue sentence is
+by construction a distinction no shipped printing prints** — so the pre-change
+behaviour is always available as the absent-key default, and every repair that adds
+vocabulary (a new op, a new union member, a new value, a new optional field) is a
+widening.
+
+A bump can only be **forced** by a repair that RESHAPES something a record already
+holds — in this repo, the durated per-Pokémon and per-game records. So the whole
+test is: **does the sentence print a duration or a schedule?** If not, the version
+is not the blocker, whatever an old note says.
+
+### Price by witness load, not only by mechanism
+
+D487 compared three rows whose mechanisms looked comparable and chose on a cost no
+mechanism count predicts: **how many refusal-witness files name the sentence.** One
+carried six, one two, and the one built carried one. D485 had found a candidate
+fielded in nine.
+
+A witness re-point is real work — each is an executable claim that must stay true
+and keep discriminating — and it is invisible to every other estimate. **Count the
+files that name a sentence before pricing it**, and remember the count is a lower
+bound on the slices that will notice if you get the re-point wrong.
+
+### Confidence in a brief is not evidence, and the hedged claims are the derived ones
+
+Of three prices handed to D487, the two stated confidently — both with citations —
+were false, and the citations pointed at text that does not exist where they said.
+**The one marked "my read, unverified" was correct**, and is what shipped. That is
+the fifth consecutive slice where an inherited price was wrong and a flagged
+uncertainty was right.
+
+The pattern has a mundane cause: **a hedge is what a writer adds when they actually
+looked and were unsure**, while a confident restatement is usually a claim copied
+forward. So read the hedges as the load-bearing sentences, and treat the confident
+ones as the ones most in need of a grep.
+
+### A green run after fixing one site is evidence the runner stopped early
+
+D487's census tax landed in **five waves** — 19 sites, then 16, 9, 7, 2 — because
+an earlier failing `expect(` in the same `it` masks every later one. The same effect
+has appeared in every multi-site tax this run.
+
+**So when a mechanical pass touches many assertions, do not read the first green as
+done.** Re-run until a round changes nothing, and expect the count of remaining
+sites to be unknowable until the round before last.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

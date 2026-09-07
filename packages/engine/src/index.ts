@@ -19748,8 +19748,54 @@ import type { GameState, Seat } from "./types";
     the SAME edit. **The tax is not a constant and an inherited figure for it rots faster
     than the census literals do**, because every slice that authors a version pin raises it
     by one and no instrument reports the total. D482 authors one more, so a successor
-    inherits **58 assertions**.) */
-export const engineVersion = "0.381.0";
+    inherits **58 assertions**.)
+    🆕🆕🆕 engineVersion 0.381.0 → **0.382.0** (D487 — THE DECK'S OTHER END.
+    `censusAttackCorpus.ts` **FILE LINE 143** — *"Draw 3 cards from the bottom of your
+    deck."* — **1 sentence / 1 legal printing**, and the only printed draw in the whole
+    640-row attack column that names a SOURCE. One new anchor (`ATTACK_DRAW_BOTTOM`), one
+    new `deriveAttackEffect` arm, one new OPTIONAL key on the shipped `drawCards` op
+    (`from?: "bottom"`), one optional parameter on `drawToHand` and one widened
+    `describeBranch` case. **ZERO** new `EffectOp` members, prompts, choice kinds, parks,
+    events, error codes, `GameState`/`InPlayPokemon` fields,
+    `BoardCondition`/`CardFilter`/`DamageCountSource` members, readers (the surface stands
+    still at **13**), registry rows, `FIXTURE_POOL` ids (file-local `cardPool`, D414),
+    `redact.ts` bytes or `packages/schema` bytes.
+
+    🛑 **THE SLICE'S FIRST DELIVERABLE WAS A MEASUREMENT, AND IT KILLED THE PREMISE IT WAS
+    HANDED.** The work order carried three rows deferred *"specifically because building
+    them would move `MATCH_RECORD_VERSION`"*, on the rule *"a new member of a persisted
+    union, or a new field on a persisted op"*. **Both halves are false against this repo's
+    own discriminator**, which lives in `apps/api/src/lobby/match.ts` and reads *"WOULD AN
+    OLD RECORD MEAN SOMETHING ELSE, not IS THE TYPE STILL ASSIGNABLE"* (D335), *"a WIDENING
+    is free and a RENAME is not"* (D359), *"widening an enum is not a bump; adding a
+    required key always is"* (D326). A new union MEMBER cannot appear in any v29 record and
+    leaves every existing inhabitant reading identically; an OPTIONAL key whose absence
+    reproduces the pre-slice behaviour is the same widening one level down. **Measured over
+    all 640 rows: of the 96 residue sentences, 72 (103 printings) cannot reach a durated
+    persisted record at all — their repairs are op VOCABULARY, and vocabulary is a widening
+    by construction — and the other 24 (32 printings) print a duration, which is the only
+    door to `InPlayPokemon`/`GameState`, where D124's required-key trigger fired nine of
+    this constant's bumps. NOT ONE residue row is blocked ONLY by a version-costing
+    change.**
+
+    `MATCH_RECORD_VERSION` **STAYS 29, AND THIS TIME NEITHER OF D463's TESTS IS USED,
+    BECAUSE NEITHER APPLIES.** The serialized alphabet DOES grow — `from: "bottom"` is a
+    byte no v29 deploy writes — and REACHABILITY is NOT empty: `drawCards` never parks
+    itself, but D473's pair puts it inside `recordGate.then` behind `payFromHand`, which
+    does, so the op genuinely rides `phase.cont` into a saved `MatchRecord`. The claim is
+    therefore made on the harder ground and DRIVEN in the LOSS direction
+    (`deckBottomDraw.test.ts` §8): a v29 continuation holding `{op:"drawCards",count:3}`
+    with no `from` still draws the TOP three, which is exactly what the v29 writer meant by
+    those bytes. **D473-ii's rule applied in the direction that makes the argument harder
+    rather than the one that dissolves it.**
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD: 81 occurrences across 61 files, and
+    THREE history occurrences correctly left alone** — this changelog's own D486 heading,
+    `mutants.ts`'s D275 re-point ledger, and the new suite's `0.381.0 → 0.382.0` header
+    arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
+    paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
+    the same **81 / 61 / 17**.) */
+export const engineVersion = "0.382.0";
 
 export type {
   ApplyResult,

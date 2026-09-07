@@ -2568,22 +2568,48 @@ export function evolveOnto(
 
 /** Move up to `count` cards deck-top → hand and record a CARDS_DRAWN event.
     Callers that care about deck-out (the turn draw, §14.3) check emptiness
-    themselves — this helper just draws what is there. */
+    themselves — this helper just draws what is there.
+
+    🆕🆕 **D487 — `from` NAMES THE END, AND IT IS ONE HELPER RATHER THAN TWO.**
+    *"Draw 3 cards from the bottom of your deck."* is the only printed draw in the
+    attack column that names a source (`EffectOp.drawCards.from`), and the obvious
+    alternative — a second `drawFromBottom` beside this one — is refused for D222's
+    reason: the short-draw arithmetic, the empty-deck early return, the event and the
+    `withSide` write are ONE fact about drawing, and two copies of it can disagree
+    the day one of them is fixed. The parameter is OPTIONAL and defaults to `"top"`,
+    so all nine existing call sites are byte-unchanged.
+
+    ⚠️ **THE SHORT DRAW IS THE SAME ARITHMETIC AT BOTH ENDS, AND THAT IS THE
+    INTERESTING PROPERTY RATHER THAN A CONVENIENCE.** `Math.max(0, deck.length −
+    count)` is the cut in both directions; on a deck of `count` or fewer it is 0, the
+    slice is the WHOLE deck, and the two ends take **the same cards in the same
+    order**. So a shallow deck cannot tell a bottom draw from a top one — an
+    extensional identity, not a board this file happens not to write — and any suite
+    that means to separate them must deal a deck STRICTLY DEEPER than the count. */
 export function drawToHand(
   state: GameState,
   seat: Seat,
   count: number,
   reason: DrawReason,
   events: GameEvent[],
+  from: "top" | "bottom" = "top",
 ): GameState {
   if (count <= 0) return state;
   const side = state.players[seat];
-  const drawn = side.deck.slice(0, count);
+  // The cut: everything above it stays, everything at or after it is drawn when the
+  // draw comes off the bottom; the mirror image when it comes off the top.
+  const cut = Math.max(0, side.deck.length - count);
+  const drawn = from === "bottom" ? side.deck.slice(cut) : side.deck.slice(0, count);
   if (drawn.length === 0) return state;
   events.push({ type: "CARDS_DRAWN", seat, uids: drawn, reason });
   return withSide(state, seat, {
     ...side,
-    deck: side.deck.slice(count),
+    deck: from === "bottom" ? side.deck.slice(0, cut) : side.deck.slice(count),
+    // DECK ORDER, both ends — the bottom three enter the hand in the order they lay
+    // in the deck, not bottom-most first. A representation choice (a hand is an
+    // unordered zone and no printed rule distinguishes the two), but `CARDS_DRAWN`
+    // and the redacted hand both carry an order, so it is pinned rather than left to
+    // drift; see `drawCards`' doc block in effects.ts.
     hand: [...side.hand, ...drawn],
   });
 }

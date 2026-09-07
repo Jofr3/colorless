@@ -1250,7 +1250,19 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
   for (const op of ops) {
     switch (op.op) {
       case "drawCards":
-        parts.push(op.count === 1 ? "draw a card" : `draw ${op.count} cards`);
+        // 🆕 D487 — THE SOURCE IS SAID WHEN THE OP NAMES ONE (D478: a describer's
+        // obligation follows the CALL PATH, not the arm that happened to author the
+        // op). No shipped program spells a bottom draw inside a `recordGate.then`
+        // today — D487's anchor is `^…$` and produces a top-level program — but
+        // `drawCards` IS in this switch, so the day one is composed the caption
+        // would otherwise say "draw 3 cards" over a sentence that says where from.
+        // That is D473's finding exactly: a reader can be correct while its
+        // describer quietly says less, and only the describer is user-visible.
+        parts.push(
+          `${op.count === 1 ? "draw a card" : `draw ${op.count} cards`}${
+            op.from === "bottom" ? " from the bottom of your deck" : ""
+          }`,
+        );
         break;
       case "drawUntilHandSize":
         parts.push(`draw cards until you have ${op.size} cards in your hand`);
@@ -1937,8 +1949,19 @@ function stepOp(
       // a 1-card deck files ONE and an empty deck files NONE. Read off the deck
       // BEFORE the draw, by the same slice `drawToHand` performs, because the
       // returned state no longer says which cards moved.
-      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));
-      const done = drawToHand(state, ctx.seat, op.count, "effect", events);
+      //
+      // 🆕🆕 D487 — THE SLICE FOLLOWS THE END THE OP NAMES. `from: "bottom"` is the
+      // printed *"Draw 3 cards from the bottom of your deck."*, and the record has to
+      // read the SAME end the draw takes: a bottom draw whose record still slices the
+      // top files three cards that never moved, on every deck deeper than the count.
+      // Both slices share ONE cut (`deck.length − count`, floored at 0), which is why
+      // a deck of `count` or fewer takes the whole deck at either end — the two arms
+      // are extensionally identical there and the suite's boards are chosen for it.
+      const deck = state.players[ctx.seat].deck;
+      const wanted = Math.max(op.count, 0);
+      const drawn =
+        op.from === "bottom" ? deck.slice(Math.max(0, deck.length - wanted)) : deck.slice(0, wanted);
+      const done = drawToHand(state, ctx.seat, op.count, "effect", events, op.from ?? "top");
       recordMoved(record, op.recordAs, drawn);
       return { done };
     }

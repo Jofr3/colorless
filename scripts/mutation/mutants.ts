@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.381.0";',
+    find: 'export const engineVersion = "0.382.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8541,11 +8541,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D311-draw-record-is-read-after-the-draw",
     decision: "D311",
-    what: 'the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where "if you drew ANY cards" is doing work',
+    what: 'the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where "if you drew ANY cards" is doing work. RE-POINTED AT D487 (the case grew a `from` end and the slice moved onto a shared cut); the DEFECT is unchanged -- `deck` is now bound to the POST-draw deck, so both ends slice a zone the draw has already emptied by `count`',
     file: "packages/engine/src/interpreter.ts",
-    find: '      const drawn = state.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));\n      const done = drawToHand(state, ctx.seat, op.count, "effect", events);',
+    find: "      const deck = state.players[ctx.seat].deck;\n      const wanted = Math.max(op.count, 0);",
     replace:
-      '      const done = drawToHand(state, ctx.seat, op.count, "effect", events);\n      const drawn = done.players[ctx.seat].deck.slice(0, Math.max(op.count, 0));',
+      '      const deck = drawToHand(state, ctx.seat, op.count, "effect", []).players[ctx.seat].deck;\n      const wanted = Math.max(op.count, 0);',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -26555,6 +26555,73 @@ export const MUTANTS: Mutant[] = [
       "packages/engine/src/evolvedDiscardCompound.test.ts",
       "packages/engine/src/opponentHandDiscard.test.ts",
     ],
+  },
+
+  {
+    id: "D487-arm-drops-the-end",
+    decision: "D487",
+    what: "🛑 **C1 — THE CENTRAL ARM MUTATED TO ITS NEAREST WRONG SIBLING, AND THE SIBLING IS A REAL PRINTED SENTENCE.** The arm stops emitting `from: \"bottom\"`, so *\"Draw 3 cards from the bottom of your deck.\"* derives to the IDENTICAL program `ATTACK_DRAW`'s twelve printings emit — the row still leaves the residue, `BUILT.attack` still steps 1, every census figure in the repo is unmoved, and the card draws the WRONG THREE CARDS on every deck deeper than three. ⚠️ **NO CENSUS SUITE CAN SEE THIS**: it is not a question of WHICH strings are claimed but of what the claim SAYS, and the two programs differ by one key that no count reaches",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (count >= 1) return [{ op: \"drawCards\", count, from: \"bottom\" }];",
+    replace: "    if (count >= 1) return [{ op: \"drawCards\", count }];",
+    expectKilledBy: [
+      "packages/engine/src/deckBottomDraw.test.ts",
+      "packages/engine/src/optionalDraw.test.ts",
+    ],
+  },
+  {
+    id: "D487-interpreter-ignores-the-end",
+    decision: "D487",
+    what: "🛑 **C2 — THE READER IS RIGHT AND THE INTERPRETER IS NOT, WHICH IS THE HALF C1 CANNOT REACH.** `drawToHand`'s source argument is hard-wired to `\"top\"`, so the derived program still carries `from: \"bottom\"` — every arm assertion, every corpus figure and the whole of §2/§3 stay green — while the board takes the top three. The RECORD still slices the bottom, so this build also files three uids that never moved: **a program whose value and whose behaviour disagree, with only the board able to say so**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events, op.from ?? \"top\");",
+    replace: "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events, \"top\");",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
+  },
+  {
+    id: "D487-record-slices-the-wrong-end",
+    decision: "D487",
+    what: "⚠️ **C3 — D311's §9.2 SLOT STOPS FOLLOWING THE END THE OP NAMES.** The `drawn` slice ignores `op.from` and always takes the top, so the cards that MOVE are right and the cards FILED are three that never left the deck. Invisible to every board rung and to every gate: three filed is three filed, so any `recordGate` behind it fires exactly as before — **only the uids differ, which is why the suite reads the record BY VALUE rather than by its length**",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        op.from === \"bottom\" ? deck.slice(Math.max(0, deck.length - wanted)) : deck.slice(0, wanted);",
+    replace: "        deck.slice(0, wanted);",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
+  },
+  {
+    id: "D487-bottom-cut-loses-its-floor",
+    decision: "D487",
+    what: "🛑 **C4 — THE FLOOR COMES OFF THE CUT, AND NO DEEP BOARD CAN SEE IT.** `Math.max(0, deck.length - count)` becomes `deck.length - count`, which is a NEGATIVE index whenever the deck is shallower than the count — so `slice` counts from the other end and a two-card deck under a three-card draw takes ONE card instead of two. **On every deck at least as deep as the count the two expressions are BYTE-IDENTICAL**, so the eight-card board this file attacks on is blind to it and so is every rung about which three cards arrive. D486's arithmetic-identity shape in the mirror: the defect's only witness is the depth every other rung calls degenerate",
+    file: "packages/engine/src/types.ts",
+    find: "  const cut = Math.max(0, side.deck.length - count);",
+    replace: "  const cut = side.deck.length - count;",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
+  },
+  {
+    id: "D487-bottom-three-enter-the-hand-backwards",
+    decision: "D487",
+    what: "⚠️ **C5 — THE ORDER, WHICH IS THE ONE AXIS THE TWO HONEST READINGS OF THE PRINTED WORDS DIFFER ON.** The bottom slice is reversed, so the three cards are the right three and they enter the hand bottom-most first. No rule distinguishes the two (a hand is an unordered zone) — but `CARDS_DRAWN.uids`, `recordAs` and the redacted hand array all carry an order, and one of them is what the HUD renders. The slice PINS its choice rather than declaring an equivalent, so this row is a real killer and not a survivor",
+    file: "packages/engine/src/types.ts",
+    find: "  const drawn = from === \"bottom\" ? side.deck.slice(cut) : side.deck.slice(0, count);",
+    replace: "  const drawn = from === \"bottom\" ? [...side.deck.slice(cut)].reverse() : side.deck.slice(0, count);",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
+  },
+  {
+    id: "D487-anchor-admits-the-other-end",
+    decision: "D487",
+    what: "🛑 **C6 — THE ANCHOR IS WIDENED TO EITHER END WHILE THE ARM STILL EMITS ONE.** *\"Draw 3 cards from the top of your deck.\"* — a sentence NOTHING in the 640-row column prints — then derives to a BOTTOM draw. Measured rather than argued: this widening claims the identical 1 sentence / 1 printing over the whole corpus, so it buys nothing and costs a program that is wrong about the one word it just admitted (D473's rule, at a second address)",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_DRAW_BOTTOM = /^Draw (\\d+) cards from the bottom of your deck\\.$/;",
+    replace: "const ATTACK_DRAW_BOTTOM = /^Draw (\\d+) cards from the (?:top|bottom) of your deck\\.$/;",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
+  },
+  {
+    id: "D487-describer-drops-the-source",
+    decision: "D487",
+    what: "⚠️ **C7 — THE READER IS CORRECT AND THE CAPTION QUIETLY SAYS LESS, WHICH IS D473's FINDING AT A NEW ADDRESS.** `describeBranch` reverts to the flat *\"draw 3 cards\"*, so a §9.2 prompt whose gate draws off the bottom tells the player it will draw three cards and never says from where. **Neither the census nor any board rung sees it** — the program is right, the cards are right, and only the dialog is wrong. The obligation was found by following the CALL PATH (D478), not by looking at the arm that authored the op",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            op.from === \"bottom\" ? \" from the bottom of your deck\" : \"\"",
+    replace: "            \"\"",
+    expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
   },
 
 ];

@@ -5434,8 +5434,47 @@ export type EffectOp =
       shorten, so the equality is an accident of ordering rather than a fact about
       the sentence. The printed words are about what HAPPENED, and `recordGate`'s
       own doc block says exactly that ("the printed *in this way* / *if you do*").
-      A short draw is the case that separates them from any op that draws twice. */
-  | { op: "drawCards"; count: number; recordAs?: EffectSlot }
+      A short draw is the case that separates them from any op that draws twice.
+
+      🆕🆕 **D487 — `from` NAMES THE END OF THE DECK, AND ITS ABSENCE IS THE TOP.**
+      *"Draw 3 cards from the bottom of your deck."* (1 legal attack printing,
+      `censusAttackCorpus.ts` FILE LINE 143) is the only printed draw in the whole
+      640-row attack column that names a SOURCE. Every other producer in this engine
+      — the turn draw, `ATTACK_DRAW`'s twelve printings, `drawUntilHandSize`,
+      `opponentMayDraw`, `handRefresh`'s redraw — takes the top and says nothing, so
+      the ABSENT key is the twelve-printing reading and D135's absent-key rule writes
+      itself: every program authored before this slice reads back unchanged in
+      MEANING, not merely in type.
+
+      🛑 **`MATCH_RECORD_VERSION` STAYS 29, AND THE QUESTION WAS ASKED AT THE ADDRESS
+      RATHER THAN INHERITED FROM THE SHAPE.** An `EffectOp` *is* persisted — it rides
+      `EffectContinuation.pendingOp` and its `rest` into `state.phase`, and `drawCards`
+      genuinely reaches that: it never parks itself, but it sits in `recordGate.then`
+      behind `payFromHand` (D473's pair), which does. So this is NOT D470/D472's
+      no-carrier argument and it is not offered. It is `coinFlipGate.coins`' argument
+      (D144) at a second address: **an OPTIONAL field is a WIDENING (D125), a
+      continuation authored by the v29 deploy simply LACKS the key, and lacking it
+      reads as the top draw — which is exactly what the v29 writer meant by those
+      bytes.** This block's own discriminator (`apps/api/src/lobby/match.ts`) is
+      *"would an OLD RECORD MEAN SOMETHING ELSE"*, not *"is the type still
+      assignable"*, and the answer here is no.
+
+      ⚠️ **ONE VALUE, AND IT IS NOT D231's UNKILLABLE FIELD.** `to`'s rule — *"a field
+      with only one reachable value would be an unkillable mutant"* — is about
+      REACHABLE STATES, not about how many strings the union spells. This field has
+      two: `"bottom"` (1 printing, this arm) and ABSENT (12 printings, `ATTACK_DRAW`),
+      both authored, both driven, and a mutant that drops the key off this arm changes
+      which three cards leave the deck.
+
+      ⚠️ **THE HAND ORDER IS A REPRESENTATION CHOICE THIS SLICE MAKES AND PINS, NOT A
+      PRINTED FACT.** The bottom three enter the hand in DECK ORDER — the same relation
+      the top draw has, cards entering the hand in the order they lay in the deck —
+      rather than bottom-most-first. Nothing in §14 or on the card distinguishes the
+      two (a hand is an unordered zone), but `CARDS_DRAWN.uids`, `recordAs` and the
+      redacted hand array all carry an order, so one of the two readings is what the
+      HUD renders. It is asserted in the suite rather than left to drift, and the
+      REVERSED sibling is a real mutant rather than a declared equivalent. */
+  | { op: "drawCards"; count: number; recordAs?: EffectSlot; from?: "bottom" }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
       `size` or more (a bigger hand is never trimmed). Fully automatic like
@@ -18414,6 +18453,30 @@ const ENERGY_DISCARD_SCALED_DAMAGE = new RegExp(
 // site's `>= 1` guard, like every arm in this reader.
 const ATTACK_DRAW = /^Draw (?:(\d+) cards|a card)\.$/;
 const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.$/;
+// 🆕🆕 D487 — THE DECK'S OTHER END. *"Draw 3 cards from the bottom of your deck."*
+// (**1 legal printing**, `censusAttackCorpus.ts` FILE LINE 143) is the only sentence
+// in the whole 640-row attack column that names a draw SOURCE at all; every other
+// draw in this engine — the turn draw, `ATTACK_DRAW`'s twelve printings, Grusha's
+// `drawUntilHandSize`, `opponentMayDraw`, `handRefresh`'s redraw — takes the top,
+// silently, because the top is what "draw" means when nothing else is said.
+//
+// 🛑 STRUCTURALLY DISJOINT FROM `ATTACK_DRAW` AND CARRYING NO GUARD (D467's first
+// preference). Both are `^…$`; `ATTACK_DRAW`'s alternation ends at `\.$` right after
+// the count, so it cannot reach a string that continues " from the bottom…", and this
+// one cannot reach a string that stops. Neither ordering nor a precedence comment is
+// load-bearing, and the suite asserts the disjointness from BOTH sides rather than
+// asserting the order.
+//
+// ⚠️ NO SINGULAR BRANCH, AND THAT IS D104's MINIMAL-SHAPE RULE RATHER THAN AN
+// OVERSIGHT. `ATTACK_DRAW` carries `(?:(\d+) cards|a card)` because BOTH spellings
+// are printed (7 printings of *"Draw a card."*, 5 of *"Draw 2 cards."*). *"Draw a card
+// from the bottom of your deck."* is printed by NOTHING in this pool, so a singular
+// branch here would be a branch whose `1` no census can reach and no mutant can kill
+// — D231's unkillable-arm test applied to an alternation instead of to a field. The
+// COUNT stays captured for the reason D121 gives and `ATTACK_DRAW_UNTIL` already
+// lives by: a printed digit is READ, never invented, even when the pool prints one
+// value of it.
+const ATTACK_DRAW_BOTTOM = /^Draw (\d+) cards from the bottom of your deck\.$/;
 // ⚠️⚠️ THE SELF-SWITCH FAMILY WAS NOT HERE AT D181, AND ITS ABSENCE WAS THAT
 // SLICE'S REAL FINDING — D189 PAID THE PRICE AND BUILT TWO OF ITS THREE
 // SENTENCES. The backlog priced "Switch this Pokémon with 1 of your Benched
@@ -23898,6 +23961,25 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // deck-out is a turn-START rule), so a malformed large count empties a deck
     // and stops, which is a legal board state.
     if (count >= 1) return [{ op: "drawCards", count }];
+  }
+  // 🆕🆕 D487 — THE SAME OP, THE OTHER END OF THE DECK. One arm, one printed
+  //     sentence, and NO new op, prompt, park, event, error code, `GameState` field,
+  //     `BoardCondition`/`CardFilter` member, registry row or `packages/schema` byte
+  //     — the whole diff is an optional key on an op that has run since M4 and the
+  //     `else` branch of one slice in `drawToHand`.
+  //
+  //     ⚠️ THE `>= 1` GUARD IS THE FAMILY'S, VERBATIM, AND IT REFUSES THE SAME
+  //     THING: a printed "Draw 0 cards from the bottom of your deck." would file an
+  //     effect that reports a simulated draw and moves nothing. No CEILING either —
+  //     a bottom draw short-draws on a shallow deck by exactly the same arithmetic
+  //     the top draw does, and on a deck of `count` or fewer the two arms take the
+  //     SAME CARDS IN THE SAME ORDER (the whole deck), which is why the suite's
+  //     separating board is a deck of FOUR and its collision board is a deck of
+  //     THREE.
+  match = ATTACK_DRAW_BOTTOM.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    if (count >= 1) return [{ op: "drawCards", count, from: "bottom" }];
   }
   match = ATTACK_DRAW_UNTIL.exec(effect);
   if (match !== null) {

@@ -135,9 +135,22 @@ const NEAR_MISSES = [
       inner op. */
   "You may discard any number of cards from your hand until you have 4 or fewer. Draw cards until you have 5 cards in your hand.",
   // ── The plain-draw family, with something else in the sentence. ──
-  /** A draw from the WRONG END of the deck (1 legal). `drawCards` takes from the
-      top; this is `deckBottom`'s dimension. */
-  "Draw 3 cards from the bottom of your deck.",
+  /** ⚠️ 🆕🆕 **D487 — THE FIFTH ROW TO LEAVE `NEAR_MISSES`, AND ITS OLD NOTE
+      NAMED A DIMENSION THIS ENGINE ALREADY HAD.** It read: *"A draw from the WRONG END
+      of the deck (1 legal). `drawCards` takes from the top; this is `deckBottom`'s
+      dimension."* Both halves were true and neither was a blocker. The engine has had a
+      VOCABULARY for the deck's bottom on three shipped ops — `payFromHand.to:
+      "deckBottom"` (Dendra), `bottomFromOpponentHand` and `bottomDeckTop` — and what was
+      missing was that word on the op that DRAWS, which is one OPTIONAL key and one
+      `else` branch in `drawToHand`. ⚠️ The symmetric cut this build turns on
+      (`max(0, len − count)`) is D487's own work and was NOT already there; saying
+      otherwise would be this note repeating the mistake it is correcting.
+
+      🛑 **RE-POINTED, NOT DROPPED, AND ONTO A SHAPE RATHER THAN ONTO "IT DERIVES"**
+      (D418's second half, D438's polarity rule) — see `BUILT_AT_D487` below. What this
+      file owns about the sentence is that the bottom draw is NOT a `you may` wrapper
+      and NOT the bare `ATTACK_DRAW` program, so that is what the replacement rung
+      asserts, in both directions. */
   /** ⚠️ 🆕🆕 **D473 — THE FOURTH ROW TO LEAVE `NEAR_MISSES`, AND ITS OLD NOTE WAS
       A CORRECT DESCRIPTION OF A BUILDABLE SENTENCE.** It read: *"A cost-gated draw
       (2 legal across two counts) — an 'If you do' consequent, not a 'you may'
@@ -248,6 +261,11 @@ const BUILT_AT_D404 = "Discard your hand and draw 6 cards.";
  *  cards` is asserted beside it and the two must differ ONLY in that number. */
 const BUILT_AT_D473 = "Discard a card from your hand. If you do, draw 2 cards.";
 const BUILT_AT_D473_SIBLING = "Discard a card from your hand. If you do, draw 3 cards.";
+/** 🆕🆕 **D487 — the fifth `NEAR_MISSES` row to be built, `censusAttackCorpus.ts` FILE
+    LINE 143 (1 legal).** Kept here BY VALUE so this file's claim about it survives as a
+    shape: the bottom draw is a bare two-key `drawCards`, never wrapped and never the
+    un-keyed op the twelve `ATTACK_DRAW` printings emit. */
+const BUILT_AT_D487 = "Draw 3 cards from the bottom of your deck.";
 
 describe("the two anchors — 12 legal printings, and the four words in front of the op", () => {
   it("derives each printed sentence to the WRAPPED program", () => {
@@ -371,6 +389,25 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+  });
+
+  it("🆕🆕 D487's bottom draw is BUILT as a KEYED `drawCards`, never a wrapper", () => {
+    // See BUILT_AT_D487's block. The replacement for the `toBeNull` this row used to
+    // carry, and it is strictly stronger: it names the value the arm now emits and
+    // KEEPS the refusals the old rung supplied (D438 — re-point a negative by naming
+    // what now owns it, never by flipping it to `.not.toBeNull()`).
+    expect(deriveAttackEffect(BUILT_AT_D487)).toEqual([
+      { op: "drawCards", count: 3, from: "bottom" },
+    ]);
+    // …and it is NOT the bare `ATTACK_DRAW` program, which is the whole point of the
+    // key: the two sentences differ by which three cards leave the deck.
+    expect(deriveAttackEffect(BUILT_AT_D487)).not.toEqual([{ op: "drawCards", count: 3 }]);
+    // …and the WRAPPED spelling is nobody's sentence, so this file's anchors must still
+    // refuse it — the original entry's claim about the `you may` family, kept.
+    expect(deriveAttackEffect("You may draw 3 cards from the bottom of your deck.")).toBeNull();
+    // …and the SINGULAR spelling is nobody's sentence either, so no `(?:a card)`
+    // alternation crept onto the new anchor.
+    expect(deriveAttackEffect("Draw a card from the bottom of your deck.")).toBeNull();
   });
 
   it("🆕🆕 D404's row is BUILT and deliberately NOT wrapped", () => {
