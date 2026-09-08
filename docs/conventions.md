@@ -5039,6 +5039,26 @@ there are **four**. The fourth is *that paragraph itself*, which quotes the arro
 taken before the sentence exists. When inheriting a figure with an exception list: **re-derive the
 list, not just the total**. The total is the part that had a witness.
 
+### A progress grep is an instrument, and it needs the same literal check as any other (D488)
+
+D488's whole-corpus sweep was monitored mid-run with `grep -c 'SURVIVED'`. **The harness prints
+`SURVIVES(known)`.** The grep matched nothing for two and a half hours, and several interim status
+reports said *"zero survivors"* while 35 declared survivors had already been seen. The run was
+correct throughout; the instrument reading it was not.
+
+Two rules:
+
+- **Tally by the verdict COLUMN, not by a guessed literal.** `awk '{print $3}' … | sort | uniq -c`
+  enumerates the labels the harness actually emits and cannot silently return zero. If you must
+  grep, grep once for the label and confirm it is non-zero at a point where you know it should be.
+- ⚠️ **The final tally DOUBLES.** The harness prints each row once as a progress line and again as a
+  table row — the D488 probe showed 11 progress lines and 11 table rows for 11 mutants — so a
+  whole-log count of `KILLED` reads 4,536 for a 2,268-row result. **Derive the count from unique
+  ids**, not from label occurrences.
+
+🛑 **And the standing rule is unchanged: the summary line is the only reliable done-signal** (D474).
+An absent verdict, a dirty tree and a missing count are all normal mid-run states.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
