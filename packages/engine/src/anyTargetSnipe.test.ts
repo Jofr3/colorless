@@ -921,13 +921,38 @@ describe("§5 — the READING: two ops in printed order, and each half is the ba
     // under the build this rung exists to forbid — an ANY-target anchor loosened to
     // swallow a Benched sentence. The claim is therefore the OP's `target`, which
     // discriminates the two arms BY VALUE, exactly as D477 re-pointed the three rows it
-    // built. **The refusal that remains is a genuine one and it is the HAND discard with
-    // a scaling tail**, which owes a `discardPileRetrieval`-shaped count this arm has no
-    // slot for.
+    // built.
+    //
+    // 🆕🆕🆕 **D489 — THE LAST STRING ON THIS LIST LEFT IT, AND THE REASON WRITTEN
+    // BESIDE IT WAS WRONG.** The comment above used to end: *"The refusal that remains is
+    // a genuine one and it is the HAND discard with a scaling tail, which owes a
+    // `discardPileRetrieval`-shaped count this arm has no slot for."* Two errors in one
+    // clause, both corrected in place rather than deleted (D442/D466): the count is not
+    // `discardPileRetrieval`-shaped — the pile is not what it reads, the §9.2 RECORD is
+    // — and *"this arm has no slot for"* was a claim about THIS anchor read as a claim
+    // about the engine, where `damageChosen` gained the slot rider in four lines because
+    // `snipeAmount`'s two call sites already carried the record.
+    //
+    // 🛑 **IT IS RE-POINTED ONTO ITS OWN ARM'S REFUSAL, WHICH IS THE PROPERTY THIS RUNG
+    // WAS ALWAYS ABOUT** (D444: find the subject that still has the old property). The
+    // sentence is now read — by a DIFFERENT anchor — so what this list needs from it is
+    // no longer "nobody reads it" but *"`SELF_DISCARD_THEN_ANY_TARGET` does not"*, and
+    // that is exactly what a loosened head would break: this anchor demands
+    // `Discard (all|\d+) Energy from this Pokémon`, the D489 one demands
+    // `Discard up to \d+ Energy cards from your hand`, and the two are STRUCTURALLY
+    // disjoint with no guard between them. The pair below goes red on a widened head
+    // (the program would open with `discardEnergy`) and stays green only on the real
+    // build (it opens with `payFromHand`).
     for (const text of [
       "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ]) {
-      expect(deriveAttackEffect(text), text).toBeNull();
+      const program = deriveAttackEffect(text) as EffectOp[];
+      expect(program, text).toHaveLength(2);
+      expect(program[0]?.op, text).toBe("payFromHand");
+      expect(program[0], text).toMatchObject({ count: "any", cap: 3, recordAs: "discarded" });
+      const snipe = program[1];
+      if (snipe?.op !== "damageChosen") throw new Error(`not a damageChosen: ${text}`);
+      expect(snipe.perRecorded, text).toBe("discarded");
       expect(corpus().some(([, t]) => t === text), text).toBe(true);
     }
     for (const text of [

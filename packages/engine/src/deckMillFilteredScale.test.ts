@@ -423,15 +423,23 @@ describe("D488 §1 — the two printed rows, off the column rather than off this
     // sentences and 23 of the 27 printings. ⚠️ The two counts move by DIFFERENT amounts
     // (+2 and +2 here, but 6+2+2 against 13+8+2) and are asserted separately for that
     // reason — a single figure would hide which of them a re-ingest moved.
+    // 🆕🆕🆕 **D489 +1 sentence / +2 printings** — the HAND discard whose damage goes to
+    // a CHOSEN body, which the line below used to name as one of the two still refused.
+    // 10 / 23 → **11 / 25**, and the three arms of the resolved half now sum: D402's 6 /
+    // 13 (board discard) + D403's 2 / 8 (additive) + D488's 2 / 2 (mill) + D489's 1 / 2
+    // (hand) = 11 / 25.
     const read = family.filter(([, s]) => resolvedByAnyReader(s));
-    expect(read).toHaveLength(10);
-    expect(units(read)).toBe(23);
-    // The FOUR printings still refused: the two-deck additive mill (2) and the hand
-    // discard whose damage goes to a CHOSEN body (2). Named rather than left as a
-    // subtraction (D400).
+    expect(read).toHaveLength(11);
+    expect(units(read)).toBe(25);
+    // The TWO printings still refused: the two-deck additive mill alone. Named rather
+    // than left as a subtraction (D400), and the sentence is spelled out so the day it
+    // is built this rung says which one left rather than merely counting one fewer.
     const left = family.filter(([, s]) => !resolvedByAnyReader(s));
-    expect(left).toHaveLength(2);
-    expect(units(left)).toBe(4);
+    expect(left).toHaveLength(1);
+    expect(units(left)).toBe(2);
+    expect(left.map(([, s]) => s)).toEqual([
+      "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.",
+    ]);
   });
 
   it("the reader surface stands still at THIRTEEN — no reader was added", () => {

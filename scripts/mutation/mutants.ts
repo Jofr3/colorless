@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.383.0";',
+    find: 'export const engineVersion = "0.384.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -20161,8 +20161,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D437",
     what: "🛑 C2 — **THE THREE ARITY ENDINGS ARE DECIDED ON THE UNFILTERED SET AND THE NARROWING IS APPLIED ONLY TO WHAT IS OFFERED**, which is the defect this shape invites: an author who filters at the last moment, where the filter is most visible. `stepOp`'s zero-test, its `take` and its M1 no-choice test all read `wide`, while the prompt and `placeSnipe` still get the narrowed `candidates`. **THE DAMAGE THAT EVENTUALLY LANDS IS CORRECT IN EVERY CASE** — only the ARITY moves — so every damage-shaped assertion in this file passes and the rungs that kill it are the prompt-shaped ones: three UNDAMAGED benched bodies park a prompt over an EMPTY candidate list instead of whiffing silently (§3), and one damaged body among three parks instead of being forced (§4). This is the row the brief asked for by name, and it is the mirror of `D416-park-marker-never-written`: a narrowing that runs after the doctrine rather than before it",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const candidates = snipeTargets(state, ctx.seat, op);\n      if (candidates.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, candidates.length);\n      if (!declinable && candidates.length <= op.count) {",
-    replace: "      const candidates = snipeTargets(state, ctx.seat, op);\n      const wide = snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined });\n      if (wide.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, wide.length);\n      if (!declinable && wide.length <= op.count) {",
+    // 🆕 D489 RE-TRANSCRIBED (`snipeAmount` gained a fourth argument, the §9.2 record).
+    find: "      const candidates = snipeTargets(state, ctx.seat, op);\n      if (candidates.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, candidates.length);\n      if (!declinable && candidates.length <= op.count) {",
+    replace: "      const candidates = snipeTargets(state, ctx.seat, op);\n      const wide = snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined });\n      if (wide.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, wide.length);\n      if (!declinable && wide.length <= op.count) {",
     expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
   },
   {
@@ -22486,7 +22487,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D455",
     what: "⚠ **THE INTERCHANGEABLE-CLASS CAP DROPS TO A HARD 1** — the cap is `op.count` precisely so a hand holding TWO copies of one printed card can pay a cost of two, and `bottomFromOpponentHandOffer` 1,100 lines up carries D297's paragraph about the same cap being load-bearing there. At 1 the offer collapses both copies to one representative, `handCostUnmet` measures the SHORT list and refuses the play, so Ultra Ball is unplayable on a hand of two identical Basic Energy — a refusal, not a crash, and invisible to any board fielding two DIFFERENT cards. **0 attack-corpus sentences / 0 legal printings derived, and 28 registry cards** — measured this slice, so `expectKilledBy` here is a question about the CARDS and never about a deriver arm",
     file: "packages/engine/src/interpreter.ts",
-    find: "    const already = kept.get(key) ?? 0;\n    if (already >= op.count) continue;",
+    // 🆕 D489 RE-TRANSCRIBED, MEANING UNCHANGED: the ceiling is now read off whichever
+    // field carries it (`count` on the exact arm, `cap` on the declinable one), so the
+    // line spells `keepPer`. The mutation is still "collapse every interchangeable class
+    // to ONE candidate", and it is now observable on the declinable arm's boards too —
+    // three identical Basic Energy in hand must offer three pickable rows, because the
+    // COUNT is what the damage reads.
+    find: "    const already = kept.get(key) ?? 0;\n    if (already >= keepPer) continue;",
     replace: "    const already = kept.get(key) ?? 0;\n    if (already >= 1) continue;",
     expectKilledBy: [
       "packages/engine/src/payFromHand.test.ts",
@@ -22563,8 +22570,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D455",
     what: "⚠ **THE M1 NO-CHOICE SHORTCUT IS TURNED OFF BY ONE CHARACTER** — `<=` is what resolves an offer no bigger than the count INLINE, and the arm's own doc block spends a paragraph on it (Meowscarada's interchangeable {G} collapse to one candidate and must ask nothing at all). At `<` an offer of exactly `count` parks a `chooseCards` prompt with `min === max === candidates.length`, a question with exactly one answer; a SHORT hand — the arm's other documented case — parks a prompt asking for more cards than exist, which `validateChoice` can never admit, so the program deadlocks on a board where the printed cost was payable. **0 attack-corpus sentences / 0 legal printings derived, and 28 registry cards** — measured this slice, so `expectKilledBy` here is a question about the CARDS and never about a deriver arm",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const candidates = handCostCandidates(state, ctx.seat, op);\n      if (candidates.length <= op.count) {",
-    replace: "      const candidates = handCostCandidates(state, ctx.seat, op);\n      if (candidates.length < op.count) {",
+    // 🆕 D489 RE-TRANSCRIBED BY SHORTENING (D446): D489 inserted the declinable arm
+    // between the candidate scan and this comparison, so a `find` spanning both lines no
+    // longer resolves. The row is about the `<=`, not about the line above it — anchored
+    // on the comparison alone it survives every future edit to the scan.
+    find: "      if (candidates.length <= op.count) {",
+    replace: "      if (candidates.length < op.count) {",
     expectKilledBy: [
       "packages/engine/src/payFromHand.test.ts",
       "packages/engine/src/handEnergyCancel.test.ts",
@@ -26765,6 +26776,218 @@ export const MUTANTS: Mutant[] = [
     replace: "        { op: \"damageDefender\", per, count: \"moved\" as const, countFilter: filter },",
     expectKilledBy: [
       "packages/engine/src/deckMillFilteredScale.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-reads-the-shifted-group",
+    decision: "D489",
+    what: "\ud83d\uded1 A1 \u2014 **THE TWO CAPTURES ARE SWAPPED**, which is D447/D458's index defect at a two-capture anchor: the printed ceiling becomes the per-unit and the per-unit becomes the ceiling. Every off-by-one spelling of a capture index COMPILES and this one still derives a plausible-looking program \u2014 a `cap: 60` payment that offers the whole hand and a `3`-per-unit snipe \u2014 so the census, `resolvedByAnyReader` and `BUILT.attack` are all satisfied by it.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const cap = Number(match[1]);\n    const per = Number(match[2]);",
+    replace: "    const cap = Number(match[2]);\n    const per = Number(match[1]);",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-drops-the-payments-record-slot",
+    decision: "D489",
+    what: "\ud83d\uded1 A2 \u2014 **THE PAYMENT FILES NOTHING**, so the fold reads an empty slot on every board: the attack discards the cards the player picked and then deals ZERO and asks for no target. \u26a0\ufe0f **This is the QUIET direction of the pair** \u2014 no `ATTACK_EFFECT_SKIPPED`, no error, a real `HAND_COST_PAID` row, and a board that merely looks like the player declined. It also drives `handEnergyCancel.test.ts` \u00a74's third escape, whose predicate requires the payment to carry a `recordAs`.",
+    file: "packages/engine/src/effects.ts",
+    find: "          filter: { kind: \"anyEnergy\" },\n          recordAs: \"discarded\",",
+    replace: "          filter: { kind: \"anyEnergy\" },",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+      "packages/engine/src/handEnergyCancel.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-drops-the-scale-rider",
+    decision: "D489",
+    what: "\ud83d\uded1 A3 \u2014 **THE SNIPE STOPS SCALING** and deals its printed per-unit ONCE, whatever was discarded. The LOUD channel cannot see it (the sentence is still claimed) and neither can any census; only a board with two or three cards discarded separates 60 from 120 and 180. This is the mirror of A2 \u2014 that one empties the slot, this one stops reading it \u2014 and the two together are why the rider names an ADDRESS rather than being a boolean.",
+    file: "packages/engine/src/effects.ts",
+    find: "          deals: true,\n          perRecorded: \"discarded\",",
+    replace: "          deals: true,",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+      "packages/engine/src/handEnergyCancel.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-names-the-wrong-slot",
+    decision: "D489",
+    what: "\u26a0\ufe0f A4 \u2014 **THE RIDER READS `paid` WHERE THE PAYMENT FILES `discarded`.** `EffectSlot` has three inhabitants and `payFromHand`'s own shipped producers file under `paid` (D473's draw pair), so this is the neighbouring arm's REAL value copied onto this one \u2014 the single most likely mistake at a field whose whole point is that it is an address. Nothing files `paid` in this program, so the fold is 0 and the pick never happens.",
+    file: "packages/engine/src/effects.ts",
+    find: "          deals: true,\n          perRecorded: \"discarded\",\n        },",
+    replace: "          deals: true,\n          perRecorded: \"paid\",\n        },",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-drops-the-energy-filter",
+    decision: "D489",
+    what: "\u26a0\ufe0f A5 \u2014 **THE PRINTED NOUN IS DROPPED FROM THE PAYMENT**, so *\"Discard up to 3 **Energy cards**\"* offers every card in hand. The damage is unchanged on a hand of pure Energy, which is the hand a suite writes by default (D488); the fixture holds two Items precisely so the offer separates them, and the discard PILE's contents separate them again after the pick.",
+    file: "packages/engine/src/effects.ts",
+    find: "          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },",
+    replace: "          to: \"discard\",",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-ops-are-emitted-in-the-wrong-order",
+    decision: "D489",
+    what: "\ud83d\uded1 A6 \u2014 **THE SNIPE IS EMITTED BEFORE THE PAYMENT**, which is D401/D477's row at a compound whose halves are COUPLED rather than merely ordered: the fold reads a slot the payment has not filed yet, so the snipe scores 0, returns without parking, and the discard then happens for nothing. The printed order is load-bearing here in a way it is not for a cost-then-hit compound, and that is the difference this row measures.",
+    file: "packages/engine/src/effects.ts",
+    find: "        {\n          op: \"payFromHand\",\n          count: \"any\",\n          cap,\n          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },\n          recordAs: \"discarded\",\n        },\n        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,\n          count: 1,\n          source: \"attack\",\n          deals: true,\n          perRecorded: \"discarded\",\n        },",
+    replace: "        {\n          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,\n          count: 1,\n          source: \"attack\",\n          deals: true,\n          perRecorded: \"discarded\",\n        },\n        {\n          op: \"payFromHand\",\n          count: \"any\",\n          cap,\n          to: \"discard\",\n          filter: { kind: \"anyEnergy\" },\n          recordAs: \"discarded\",\n        },",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-snipe-targets-the-bench-only",
+    decision: "D489",
+    what: "\u26a0\ufe0f A7 \u2014 **THE PRINTED `1 of your opponent's Pok\u00e9mon` BECOMES BENCH-ONLY**, the neighbouring arm 9b-bis's real value (D477). The Active stops being offerable, so the attack can no longer hit the body \u00a78 aims at \u2014 and on a board with a Bench the DAMAGE is unchanged, which is why the killing rung reads the candidate list and the Active board rather than the number.",
+    file: "packages/engine/src/effects.ts",
+    find: "          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount: per,",
+    replace: "          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount: per,",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-arm-drops-the-cap-positivity-guard",
+    decision: "D489",
+    what: "\u26a0\ufe0f A8 \u2014 **THE CEILING'S POSITIVITY GUARD IS DROPPED**, so a printed *\"up to 0 Energy cards\"* derives to a payment that can never pay and a snipe that can never fire \u2014 a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing rule for every captured amount in this file). Two printed numbers, two guards; the per-unit's twin is asserted on the same axis in \u00a73.",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (cap >= 1 && per >= 1) {",
+    replace: "    if (per >= 1) {",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-anchor-loses-its-caret",
+    decision: "D489",
+    what: "\ud83d\uded1 A9 \u2014 **THE `^` IS DELETED**, so the anchor claims any sentence that ENDS with this one and the leading clause is silently dropped. \u26a0\ufe0f **UNOBSERVABLE ON THE PRINTED COLUMN AND OBSERVABLE ANYWAY** \u2014 measured over all 640 corpus rows, the caret-less pattern claims the identical 1 sentence / 2 printings, so no census, no residue figure and no `BUILT.attack` can see it. The rung that can is \u00a73's constructed leading-text refusal, whose prefix is itself a CLAIMED printed clause ending in a period, so the ONLY axis it varies is the anchor (D452's one-axis rule for a `^` rung).",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"^Discard up to (\\\\d+) Energy cards from your hand\\\\. \" +",
+    replace: "  \"Discard up to (\\\\d+) Energy cards from your hand\\\\. \" +",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-fold-ignores-the-slot-rider",
+    decision: "D489",
+    what: "\ud83d\uded1 B1 \u2014 **THE FOLD'S GUARD IS INVERTED**, `D448-fold-ignores-the-rider`'s row at the third rider: the slot is read only when the op does NOT carry the address, so every scaled snipe deals its bare printed amount and `snipeAmount` throws nothing. The two shipped riders one line up are untouched, so this row is about THIS fold and not about the function.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perRecorded !== undefined)\n    return op.amount * recorded(record, op.perRecorded).length;",
+    replace: "  if (op.perRecorded === undefined)\n    return op.amount * recorded(record, op.perRecorded ?? \"discarded\").length;",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-fold-adds-instead-of-multiplying",
+    decision: "D489",
+    what: "\u26a0\ufe0f B2 \u2014 **`\u00d7` BECOMES `+`.** The printed clause is *\"60 damage FOR EACH Energy card\"*, a multiply, and its two shipped siblings in this same function both multiply \u2014 so this is the arithmetic slip the family invites. It is invisible at a slot of exactly ONE (60 \u00d7 1 = 60 and 60 + 1 = 61 differ, but a suite asserting only \"the hit happened\" cannot tell), and the boards that separate it are the two- and three-card discards.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    return op.amount * recorded(record, op.perRecorded).length;",
+    replace: "    return op.amount + recorded(record, op.perRecorded).length;",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-collapse-ceiling-is-a-hard-one",
+    decision: "D489",
+    what: "\ud83d\uded1 B3 \u2014 **THE DECLINABLE ARM'S INTERCHANGEABLE CEILING DROPS TO ONE**, so a hand holding three identical Basic Energy offers ONE pickable row and the attack is capped at a single unit of damage on a hand that can pay for three. \u26a0\ufe0f **THE BOARD LOOKS ENTIRELY NORMAL** \u2014 every card that IS discarded moves correctly and the damage is a correct multiple of what was discarded; only the OFFER says the player was never allowed to spend what they held. `discardEnergy`'s own doc block states the rule this deletes: *\"the COUNT is what the damage reads, so three identical {W} must offer three pickable rows, not one.\"*",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  const keepPer = op.count === \"any\" ? op.cap : op.count;",
+    replace: "  const keepPer = op.count === \"any\" ? 1 : op.count;",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-declinable-cost-gates-the-wrong-arm",
+    decision: "D489",
+    what: "\ud83d\uded1 B4 \u2014 **THE `handCostUnmet` SKIP IS INVERTED**, so the DECLINABLE arm is gated and every EXACT one is not. This is the row that measures what the new arm did to a shipped safety gate on the two PLAY paths: Ultra Ball, Earthen Vessel, Tinkaton, Revavroom and Dendra stop being refused on a hand that cannot pay them, and each then pays what it finds and buys its effect anyway \u2014 D420's original hazard, re-opened at the Trainer seam this slice never touches. \u26a0\ufe0f **The killers are the SHIPPED suites, not this slice's**, which is the point: a widening's cost is measured where the old behaviour lives.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (op.count === \"any\") continue;\n    if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;",
+    replace: "    if (op.count !== \"any\") continue;\n    if (handCostCandidates(state, seat, op, excludeUid).length < 1) return op;",
+    expectKilledBy: [
+      "packages/engine/src/payFromHand.test.ts",
+      "packages/engine/src/cardplay.test.ts",
+    ],
+  },
+  {
+    id: "D489-declinable-note-drops-the-up-to",
+    decision: "D489",
+    what: "\u26a0\ufe0f B5 \u2014 **THE PARK'S HEADING LOSES THE PRINTED HEDGE** and reads *\"Discard 3 Energy cards from your hand.\"* over a prompt whose floor is ZERO \u2014 a dialog stating a false fact about the rule it is asking about, which no board and no census can see (D456's log-row finding at a caption). It is also the byte that makes the caption a WITNESS that the op carried its `cap` (D457): with the hedge gone, a park with no `cap` and a park with one read identically.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.count === \"any\") return `up to ${op.cap} ${other ? \"other \" : \"\"}${plural}`;",
+    replace: "  if (op.count === \"any\") return `${op.cap} ${other ? \"other \" : \"\"}${plural}`;",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-declinable-park-refuses-the-decline",
+    decision: "D489",
+    what: "\ud83d\uded1 B6 \u2014 **THE FLOOR BECOMES THE CEILING**, i.e. the declinable park is built with `min === max` \u2014 the EXACT arm's real shape, four lines down, copied onto this one. The printed *\"up to\"* stops being an up-to: the player must discard the full three or the frame is rejected, and on a hand of one Energy the pick is forced. D441's rule at the same field one op over (*a quantifier that answers two questions is ONE field*), read from the losing side.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            min: 0,\n            max: Math.min(op.cap, candidates.length),",
+    replace: "            min: Math.min(op.cap, candidates.length),\n            max: Math.min(op.cap, candidates.length),",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-declinable-ceiling-is-the-whole-offer",
+    decision: "D489",
+    what: "\u26a0\ufe0f B7 \u2014 **THE PRINTED CEILING IS DROPPED FROM THE PROMPT** and the player may discard every matching card in hand. `validateChoice` reads the PROMPT and nothing else, so this is not merely a caption defect: a crafted frame answering with five uids is ACCEPTED and the attack deals 300 where the card prints a maximum of 180. The op still carries its `cap`; only the prompt forgot it.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            max: Math.min(op.cap, candidates.length),",
+    replace: "            max: candidates.length,",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-lone-candidate-resolves-inline",
+    decision: "D489",
+    what: "\ud83d\uded1 B8 \u2014 **A SINGLE-CANDIDATE OFFER AUTO-RESOLVES INSTEAD OF ASKING**, the M1 no-choice shortcut applied where D297 says it must not be: under a printed *\"up to\"* the answers are *\"this card is discarded\"* and *\"nothing is\"*, which are two different boards and two different damage numbers. The mutation whiffs the payment silently, so the attack deals nothing and the card stays in hand \u2014 and it is exactly the shape `discardEnergy.count: \"any\"` parks on every non-empty board to avoid.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (op.count === \"any\") {\n        if (candidates.length === 0) {",
+    replace: "      if (op.count === \"any\") {\n        if (candidates.length <= 1) {",
+    expectKilledBy: [
+      "packages/engine/src/handDiscardScaledSnipe.test.ts",
+    ],
+  },
+  {
+    id: "D489-escape-drops-the-declinable-test",
+    decision: "D489",
+    what: "\ud83d\uded1 C1 \u2014 **D420's THIRD ESCAPE STOPS REQUIRING THE PAYMENT TO BE DECLINABLE**, so an EXACT hand cost with a slot-scaled consequent walks past the structural guard. The exemption's own doc block says it is *\"as tight as the printed shape and not one byte looser\"*; this row is what makes that sentence checkable rather than decorative, and it is killed by the one-axis near-miss (e) rather than by the offenders list \u2014 which is the D481 shape: a coverage guard's failure mode is going vacuous, so it needs synthetic pairs whose answer is known by construction.",
+    file: "packages/engine/src/handEnergyCancel.test.ts",
+    find: "    if (cost.op !== \"payFromHand\" || cost.count !== \"any\" || cost.recordAs === undefined) {",
+    replace: "    if (cost.op !== \"payFromHand\" || cost.recordAs === undefined) {",
+    expectKilledBy: [
+      "packages/engine/src/handEnergyCancel.test.ts",
+    ],
+  },
+  {
+    id: "D489-escape-drops-the-slot-match",
+    decision: "D489",
+    what: "\ud83d\uded1 C2 \u2014 **THE ESCAPE STOPS CHECKING THAT THE CONSEQUENT SCALES BY *THIS* PAYMENT'S SLOT** and accepts any slot at all. A sentence whose damage multiplies a slot some OTHER op filed would then be exempt from the cancel rule while buying an effect this payment did not pay for \u2014 D473's near-miss (b) at the third predicate. Killed by the one-axis pair in \u00a75 rather than by the corpus walk, because no printed sentence exhibits it.",
+    file: "packages/engine/src/handEnergyCancel.test.ts",
+    find: "      (scale.op === \"damageChosen\" && scale.perRecorded === cost.recordAs) ||\n      (scale.op === \"damageDefender\" && scale.count === cost.recordAs);",
+    replace: "      (scale.op === \"damageChosen\" && scale.perRecorded !== undefined) ||\n      (scale.op === \"damageDefender\" && scale.count !== undefined);",
+    expectKilledBy: [
+      "packages/engine/src/handEnergyCancel.test.ts",
     ],
   },
 ];

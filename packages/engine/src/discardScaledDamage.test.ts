@@ -255,35 +255,90 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(benchMultiply).toHaveLength(0);
   });
 
-  it("🆕 the remaining ONE sentence / 2 printings is a different MECHANISM, and stays loud", () => {
+  it("🆕🆕🆕 the MULTIPLY half is now COMPLETE — nothing is left, and each half is named", () => {
     // What is left of the 12 once the 6 and the 3 are taken out USED TO BE THREE: two
     // DECK MILLS whose record is cards off a deck rather than Energy off a board, and
     // one HAND discard whose damage goes to a CHOSEN opponent Pokémon instead of the
     // defender. The rung's stated reason was *"both would need a recording mill or a
     // `damageChosen` that reads a slot"*.
     //
-    // 🆕🆕🆕 **D488 BUILT THE RECORDING MILL, SO THE REFUSAL IS NOW ONE SENTENCE
-    // WIDE RATHER THAN THREE, AND THE RUNG ASSERTS THE SPLIT INSTEAD OF THE BLANKET**
-    // (D403's move at this file's other rung, kept verbatim in shape). 🛑 **THE SIZE OF
-    // WHAT WAS LEFT IS NOT WHAT MOVED — the reason list was right, and exactly one of
-    // its two reasons has been paid.** `discardDeckTop.recordAs` +
-    // `damageDefender.countFilter` is the recording mill this comment named; the
-    // `damageChosen` that reads a slot is still unbuilt, and it is what the one
-    // remaining sentence needs.
-    const rest = legalAttackCorpus().filter(
+    // 🆕🆕🆕 **D488 BUILT THE RECORDING MILL AND D489 BUILT THE `damageChosen` THAT
+    // READS A SLOT, SO BOTH NAMED REASONS ARE NOW PAID AND THE SET IS EMPTY.** D488's
+    // note said in as many words: *"the `damageChosen` that reads a slot is still
+    // unbuilt, and it is what the one remaining sentence needs."* That was a claim
+    // about a mechanism and it was correct — `damageChosen.perRecorded` is the field,
+    // `snipeAmount` is the fold it reaches, and both call sites already had the §9.2
+    // record in scope. **Leaving the second blocker NAMED rather than editing the
+    // comment down to what shipped is what made this slice one grep long** (D488's own
+    // rule, and the receipt for it).
+    //
+    // 🛑 **AN EMPTY SET IS A WEAK CLAIM, SO THE RUNG DOES NOT STOP THERE (D438/D444).**
+    // `toHaveLength(0)` is true under a reader widened to eat the whole column as well
+    // as under the real build. What replaces the refusal is the PARTITION: every member
+    // of the multiply half is claimed, by NAME, by the arm that owns it — a board
+    // discard (`discardEnergy`), a deck mill (`discardDeckTop`) or a HAND discard
+    // (`payFromHand`) — so a reader that widened past its own clause reddens here even
+    // though the emptiness would not.
+    const multiply = legalAttackCorpus().filter(
+      ([, s]) => s.includes("discarded in this way") && !s.includes("more damage for each"),
+    );
+    expect(multiply).toHaveLength(9);
+    expect(units(multiply)).toBe(17);
+    const rest = multiply.filter(([, s]) => deriveAttackEffect(s) === null);
+    expect(rest).toHaveLength(0);
+    expect(units(rest)).toBe(0);
+    // THE PARTITION, by the op each program opens with. Three arms, three heads, and
+    // the three counts sum to the whole half — so a sentence that moved between arms
+    // reddens, and so does one that left the family altogether.
+    const openedBy = (kind: string) =>
+      multiply.filter(([, s]) => deriveAttackEffect(s)?.[0]?.op === kind);
+    expect([openedBy("discardEnergy").length, units(openedBy("discardEnergy"))]).toEqual([6, 13]);
+    expect([openedBy("discardDeckTop").length, units(openedBy("discardDeckTop"))]).toEqual([2, 2]);
+    expect([openedBy("payFromHand").length, units(openedBy("payFromHand"))]).toEqual([1, 2]);
+    expect(
+      openedBy("discardEnergy").length + openedBy("discardDeckTop").length + openedBy("payFromHand").length,
+    ).toBe(multiply.length);
+    // 🆕🆕🆕 **D489's ROW, PINNED BY VALUE RATHER THAN BY MEMBERSHIP.** The old rung
+    // asserted this sentence STARTS with the hand-discard head and derives to null; a
+    // re-point onto `.not.toBeNull()` would be green under a reader that eats the whole
+    // column (D438's polarity rule). The claim is the two-op program, both quantifiers
+    // and the slot that joins them — the ONE thing a wrong build gets wrong.
+    const [handRow] = openedBy("payFromHand");
+    if (handRow === undefined) throw new Error("the hand-discard row left the family");
+    expect(handRow[1].startsWith("Discard up to 3 Energy cards from your hand."), handRow[1]).toBe(true);
+    expect(deriveAttackEffect(handRow[1])).toEqual([
+      {
+        op: "payFromHand",
+        count: "any",
+        cap: 3,
+        to: "discard",
+        filter: { kind: "anyEnergy" },
+        recordAs: "discarded",
+      },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perRecorded: "discarded",
+      },
+    ]);
+    // …and the REFUSALS the old rung carried are kept rather than discarded (D438's
+    // second half): the ADDITIVE half's leftover is still unread by every reader, and
+    // it is a different mechanism again — a mill of BOTH decks with a kept base.
+    const additiveLeft = legalAttackCorpus().filter(
       ([, s]) =>
         s.includes("discarded in this way") &&
-        !s.includes("more damage for each") &&
-        deriveAttackEffect(s) === null,
+        s.includes("more damage for each") &&
+        !readByAny(s),
     );
-    expect(rest).toHaveLength(1);
-    expect(units(rest)).toBe(2);
-    for (const [, s] of rest) {
+    expect(additiveLeft).toHaveLength(1);
+    expect(units(additiveLeft)).toBe(2);
+    for (const [, s] of additiveLeft) {
       expect(readByAny(s), s).toBe(false);
-      // …and it is the HAND discard, named rather than left as a subtraction (D400):
-      // its damage goes to a body the player has not chosen yet, so the count and the
-      // target are decided at different moments.
-      expect(s.startsWith("Discard up to 3 Energy cards from your hand."), s).toBe(true);
+      expect(s.startsWith("Discard the top card of each player's deck."), s).toBe(true);
     }
     // The two that LEFT this list, and BY WHAT — a re-point onto the shape rather than
     // a deletion (D178/D438), so the day either regresses this rung says which.

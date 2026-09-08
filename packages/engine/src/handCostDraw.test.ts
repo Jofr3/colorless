@@ -755,6 +755,6 @@ describe("D473 §6 — `MATCH_RECORD_VERSION` stays 29, and the argument is DRIV
     // D471 correctly REFUSED this step because `packages/engine` was byte-unchanged;
     // this slice adds an anchor and an arm, so a printed sentence the engine refused
     // yesterday resolves today and the bump is owed.
-    expect(engineVersion).toBe("0.383.0");
+    expect(engineVersion).toBe("0.384.0");
   });
 });

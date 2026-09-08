@@ -1944,7 +1944,7 @@ function stepOp(
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
       // 0 taken → 0 damage, so there is nothing to place OR to ask about.
-      const amount = snipeAmount(op, state, ctx);
+      const amount = snipeAmount(op, state, ctx, record);
       if (amount <= 0) return { done: state };
       const declinable = op.optional === true;
       // §8.6: with fewer candidates than the printed number, take them all.
@@ -2884,6 +2884,36 @@ function stepOp(
       // would leave the play half-resolved, where "do as much as you can" is the
       // rule this engine already applies to a short board (§8.6).
       const candidates = handCostCandidates(state, ctx.seat, op);
+      // 🆕🆕🆕 **D489 — THE DECLINABLE ARM, TAKEN AHEAD OF THE EXACT ONE BECAUSE ITS
+      // ENDINGS ARE DIFFERENT ENDINGS AND NOT A WIDER `min`.** *"Discard up to 3 Energy
+      // cards from your hand."* has a printed floor of ZERO, so:
+      //   • an EMPTY offer (no hand, or nothing matching the printed noun) is the whiff
+      //     every recording op takes — file `[]` so the damage clause reads an honest 0
+      //     rather than a stale slot, and resolve inline;
+      //   • ANY non-empty offer PARKS, including a single candidate. The M1 no-choice
+      //     rule retires a prompt whose answers are the same state, and under an *"up
+      //     to"* the answers are "this card is discarded" and "nothing is" — two
+      //     different boards and two different damage numbers. `discardEnergy`'s
+      //     `count: "any"` arm is the standing precedent and D297 is the rule.
+      // ⚠️ THE CEILING IS `cap` CLAMPED TO THE OFFER, `discardEnergy`'s own line: a cap
+      // above the number of matches would let a crafted frame answer with more uids
+      // than exist, and `validateChoice` reads the PROMPT.
+      if (op.count === "any") {
+        if (candidates.length === 0) {
+          recordMoved(record, op.recordAs, []);
+          return { done: state };
+        }
+        return {
+          park: {
+            kind: "chooseCards",
+            candidates,
+            min: 0,
+            max: Math.min(op.cap, candidates.length),
+            dest: op.to,
+            note: payFromHandNote(op),
+          },
+        };
+      }
       if (candidates.length <= op.count) {
         const paid = payFromHandApply(state, candidates, op, ctx, events);
         recordMoved(record, op.recordAs, paid.paid);
@@ -5827,7 +5857,7 @@ export function applyChoice(
         ? placeSnipe(
             state,
             choice.refs,
-            snipeAmount(op, state, ctx),
+            snipeAmount(op, state, ctx, record),
             op.deals === true,
             op.ignoreWR === true,
             // D140 — the provenance rides the PARKED op, so the row a resumed
@@ -8440,11 +8470,25 @@ function reactToAttackDamage(
     the `if` order below is therefore not a precedence: `deriveAttackEffect` refuses the
     string that spells both, and no other producer sets either alongside the other. */
 function snipeAmount(
-  op: { amount: number; perTakenPrize?: true; perEnergyOnSelf?: true },
+  op: { amount: number; perTakenPrize?: true; perEnergyOnSelf?: true; perRecorded?: EffectSlot },
   state: GameState,
   ctx: EffectContext,
+  record: EffectRecord,
 ): number {
   if (op.perTakenPrize === true) return op.amount * takenPrizes(state, otherSeat(ctx.seat));
+  // 🆕🆕🆕 **D489 — THE THIRD RIDER, AND THE ONLY ONE THAT NEEDS AN ARGUMENT THIS
+  // FUNCTION DID NOT TAKE.** *"…for each Energy card you discarded in this way"*
+  // counts a quantity the sentence's OWN HEAD produced, so the source is the run's
+  // §9.2 record rather than the board — `recorded` is the same reader
+  // `damageDefender`'s `scoredSlot` uses, one op over. Both call sites already had
+  // `record` in scope (`stepOp` takes it; `applyChoice` takes it), which is what
+  // makes this four lines instead of a channel: `resumeProgram` seeds its
+  // accumulator from `cont.record`, so the number the caption quoted and the number
+  // the hit deals are the same value on both sides of the park.
+  // ⚠️ **`undefined` AND NOT A BOOLEAN**: an `EffectSlot` is an ADDRESS and there
+  // are three of them, so the rider names the one it reads (see effects.ts).
+  if (op.perRecorded !== undefined)
+    return op.amount * recorded(record, op.perRecorded).length;
   if (op.perEnergyOnSelf !== true) return op.amount;
   // ⚠️ NAMED FOR THE PRINTED NOUN AND NOT `attacker`, WHICH IS D446's RULE AND WAS
   // EARNED HERE: `const attacker = activeTop(state, ctx.seat);` is `snipeActive`'s line
@@ -10930,6 +10974,12 @@ function handCostCandidates(
 ): string[] {
   const kept = new Map<string, number>();
   const out: string[] = [];
+  // 🆕🆕 **D489 — THE CEILING IS READ OFF WHICHEVER FIELD CARRIES IT.** The exact
+  // arm's is `count`; the declinable arm's is `cap`, which is the same quantity
+  // ("how many copies of one interchangeable class could a pick possibly want")
+  // spelled by the field the printed *"up to N"* lands in. `discardEnergy`'s own
+  // reason for keeping `count` copies rather than one, verbatim.
+  const keepPer = op.count === "any" ? op.cap : op.count;
   for (const uid of state.players[seat].hand) {
     if (uid === excludeUid) continue;
     const card = cardOf(state, uid);
@@ -10937,7 +10987,7 @@ function handCostCandidates(
     if (op.filter === undefined && card === undefined) continue;
     const key = cardIdentity(state, uid);
     const already = kept.get(key) ?? 0;
-    if (already >= op.count) continue;
+    if (already >= keepPer) continue;
     kept.set(key, already + 1);
     out.push(uid);
   }
@@ -10975,6 +11025,14 @@ export function handCostUnmet(
 ): Extract<EffectOp, { op: "payFromHand" }> | null {
   for (const op of program) {
     if (op.op !== "payFromHand") continue;
+    // 🆕🆕 **D489 — A DECLINABLE PAYMENT CANNOT BE UNMET, SO IT CANNOT REFUSE A
+    // PLAY.** The printed *"up to N"* floor is ZERO: paying nothing is a legal
+    // answer rather than a failure, and there is no threshold for a short hand to
+    // fall under. Unreachable from either play path today (no Trainer and no
+    // Ability prints a declinable cost — the arm's only producer is an attack), and
+    // written anyway, because the alternative is a gate that refuses every play of
+    // a card whose printed floor is zero.
+    if (op.count === "any") continue;
     if (handCostCandidates(state, seat, op, excludeUid).length < op.count) return op;
   }
   return null;
@@ -10993,6 +11051,14 @@ export function handCostPhrase(
 ): string {
   const { singular, plural } =
     op.filter === undefined ? { singular: "a card", plural: "cards" } : retrieveNoun(op.filter);
+  // 🆕🆕 **D489 — THE DECLINABLE ARM PRINTS ITS CEILING AND ITS HEDGE**, so the note
+  // this builds is *"Discard up to 3 Energy cards from your hand."* — the printed head
+  // sentence, byte for byte. That is not a coincidence to be tidied away: the caption
+  // is built from the very fields the op carries, so a park whose heading says "up to
+  // 3" while the op lost its `cap` is a byte string this deploy cannot write (D457).
+  // PLURAL unconditionally: the column prints no "up to 1", and inventing a singular
+  // branch for it would be a rung nothing can reach (D205).
+  if (op.count === "any") return `up to ${op.cap} ${other ? "other " : ""}${plural}`;
   if (op.count > 1) return `${op.count} ${other ? "other " : ""}${plural}`;
   // "a card" → "another card"; no printed card pairs `other` with a filter, but
   // the article strip keeps it reading correctly if one ever does.

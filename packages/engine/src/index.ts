@@ -19795,6 +19795,82 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.383.0 → **0.384.0** (D489 — THE HAND DISCARD WHOSE COUNT IS
+    THE SNIPE'S MULTIPLIER. `censusAttackCorpus.ts` **FILE LINE 138** — *"Discard up to 3
+    Energy cards from your hand. This attack does 60 damage to 1 of your opponent's
+    Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and
+    Resistance for Benched Pokémon.)"* — **1 sentence / 2 legal printings**. One new
+    anchor (`HAND_DISCARD_THEN_SCALED_ANY_TARGET`), one new `deriveAttackEffect` arm, ONE
+    new UNION ARM on a shipped op (`payFromHand` gains the declinable `{count: "any";
+    cap}` quantifier, `discardEnergy.count`'s D361 widening at the sibling op) and ONE
+    OPTIONAL key on a shipped op (`damageChosen.perRecorded`). **ZERO** new `EffectOp`
+    kinds, `EffectSlot` members, `BoardCondition`/`CardFilter`/`DamageCountSource`
+    members, prompts, choice kinds, events, error codes, `GameState`/`InPlayPokemon`
+    fields, readers (the surface stands still at **13**), registry rows, `FIXTURE_POOL`
+    ids (file-local `cardPool`, D414), `redact.ts` bytes or `packages/schema` bytes.
+
+    🛑 **AXIS DELETION FIRST, AND IT PRICED THE SLICE AT FIVE AXES RATHER THAN ONE.**
+    Every single-axis edit of this sentence — the SOURCE ZONE (`your hand` →
+    `your Pokémon`), the CHOSEN target, the SCALING tail, the count NOUN
+    (`Energy card` → `card`) and the W/R clarifier — leaves it refused by all 13
+    `deriveAttack*` readers, and so does every PAIR, TRIPLE and QUADRUPLE of them:
+    the full 2⁵ lattice was run and exactly ONE of its 32 points builds, the all-five
+    substitution, which lands on `ENERGY_DISCARD_SCALED_DAMAGE`. **No half of this
+    sentence already ships**, which is the opposite of what a look at the neighbouring
+    built rows suggests.
+
+    🛑 **`snipeAmount` COULD ALREADY REACH A SLOT AND NOBODY HAD ASKED.** The fold has
+    been a second, parallel one since Covetous Ivy (D448) and takes `(op, state, ctx)`;
+    `record` was in scope at BOTH its call sites — `stepOp` takes it as a parameter and
+    `applyChoice` takes it as a parameter — so the third rider cost a fourth argument and
+    four lines, not a channel. `resumeProgram` seeds its accumulator from `cont.record`,
+    which is what makes the number the caption quotes and the number the hit deals the
+    same value on both sides of the park.
+
+    🛑 **THE HEAD IS `payFromHand` AND NOT A SEVENTH `discardEnergy.from` MEMBER.** All
+    six `from` members are BOARD scopes and every machine below them takes a
+    `PokemonRef` — the candidate list, the §11 shield filter, the interchangeable
+    collapse and the `discardEnergy` PARK itself. A hand card has no ref, so a hand
+    member would have changed the PROMPT's candidate shape (D457's five mirrors) in order
+    to say what the `chooseCards` prompt already says. `payFromHand` already moves
+    filtered cards out of the controller's own hand into the discard, files their uids
+    under a §9.2 slot and parks through `chooseCards` with the hidden-information note a
+    hand offer owes; what it lacked was the printed QUANTIFIER.
+
+    🛑 **AND THE D420 STRUCTURAL GUARD GAINS A THIRD NAMED ESCAPE RATHER THAN A
+    RELAXATION.** An attack-borne `payFromHand` owes a printed cancel (D420) or a §9.2
+    gate on its own slot (D473); this sentence prints neither and is still honest,
+    because **a DECLINABLE payment cannot be short** — its printed floor is zero, so
+    paying nothing is a legal answer, and what it buys is a MULTIPLE of what it paid. An
+    empty answer files an empty slot, `snipeAmount` folds to 0, and `damageChosen`
+    returns before it builds a prompt: the attack asks for no target and deals nothing.
+
+    ⚠️ **`MATCH_RECORD_VERSION` STAYS 29, ON THE SERIALIZED-ALPHABET ARGUMENT (D462) AND
+    NOT ON REACHABILITY, WHICH IS FALSE HERE.** Both ops PARK, so both genuinely ride
+    `phase.cont.pendingOp` and `rest` into a saved `MatchRecord` — this is a TWO-PARK
+    program and the record rides between them. The claim is that no v29 record can hold
+    either new byte (`count: "any"` on a `payFromHand`, `perRecorded` on a
+    `damageChosen`) because no v29 deploy could write them, and that ABSENT still means
+    what the v29 writer meant: an exact payment, and an unscaled hit. Driven over
+    reconstructed v29 bytes in BOTH directions (`handDiscardScaledSnipe.test.ts` §7).
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD RATHER THAN INHERITED: 84 occurrences
+    across 62 files, and THREE history occurrences correctly left alone** — this
+    changelog's own D488 heading, `mutants.ts`'s D275 re-point ledger, and
+    `deckMillFilteredScale.test.ts`'s `0.382.0 → 0.383.0` header arrow — so **81 were
+    stepped**. ⚠️ The figure D487 handed forward was **81 / 61 / 17 with FOUR history
+    occurrences**; three of those four numbers had moved (D488 authored a suite) and the
+    FOURTH history occurrence was in `docs/progress.md`, which this count excludes by
+    construction. **17 of the 84 are `it(…)` TITLES that spell the version.**
+    🛑 **AND THE FORECAST OF WHAT A SUCCESSOR INHERITS IS A FORECAST, SO IT WAS
+    RE-MEASURED AFTER THE EDIT RATHER THAN PREDICTED (D427/D425).** The first draft of
+    this paragraph said **86 / 63 / 18**; measured over the tree this slice actually
+    leaves, it is **87 occurrences / 62 files / 18 `it(…)` titles**, with **FOUR history
+    occurrences of `0.384.0`** — this heading, this suite's header arrow, this suite's
+    own version-rung comment and `mutants.ts`'s ledger. The FILE count does not grow
+    because `deckMillFilteredScale.test.ts` now carries only its `0.383.0` history line
+    and drops out of the set as this slice's new suite joins it. **A version-tax figure
+    is arithmetic about a tree, and arithmetic about a tree done in advance is a guess.**)
     🆕🆕🆕 engineVersion 0.382.0 → **0.383.0** (D488 — MILL YOUR OWN DECK, THEN SCALE BY
     WHAT WAS MILLED. `censusAttackCorpus.ts` **FILE LINES 126 and 129** — *"Discard the top
     3 cards of your deck, and this attack does 80 damage for each **Energy card** you
@@ -19875,7 +19951,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.383.0";
+export const engineVersion = "0.384.0";
 
 export type {
   ApplyResult,

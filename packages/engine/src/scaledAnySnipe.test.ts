@@ -157,7 +157,14 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // `toHaveLength(8)` could not tell "D465 built the self-hit" from "a reader
     // widened past the count clause and ate a chosen-target row". The pair below can —
     // it goes red on the second and stays green only on the first.
-    expect(unbuilt).toHaveLength(7);
+    // 🆕🛑 **D489 — SEVEN → SIX, AND THE ROW THAT LEFT WAS THE ONE THIS RUNG'S FIRST
+    // BULLET REFUSED ON THE REFERENT.** Re-pointed rather than decremented, on the same
+    // reasoning D465 used one line up: a count that steps 7 → 6 records that something
+    // left and says nothing about WHAT, and cannot tell "D489 built the hand discard"
+    // from "a reader widened past the count clause and ate a chosen-target row". The
+    // pair below names the row, pins the op it derives to, and keeps every other
+    // refusal in this rung intact (D438: name what now owns it and keep the refusals).
+    expect(unbuilt).toHaveLength(6);
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -168,16 +175,51 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     expect(deriveAttackEffect(SELF_RECOIL_SCALED)).toEqual([
       { op: "damageSelf", amount: 10, perDamageCounterOnSelf: true },
     ]);
-    // (a) THE DISCARD-COUNT HEAD — corpus line 138, 2 printings. *"…for each Energy
-    //     card you discarded in this way"* counts a quantity the sentence's OWN HEAD
-    //     produced. That is a CROSS-CLAUSE REFERENCE, not a board fact: `snipeAmount`
-    //     is handed `(op, state, ctx)` and there is no state field, no `EffectSlot` and
-    //     no `EffectContext` key that carries "how many cards the previous op moved".
-    //     `damageDefender`'s `count: EffectSlot` is the shape that WOULD carry it, and
-    //     it is a different op on a different pipeline. Refused on the REFERENT.
-    expect(unbuilt).toContain(
-      "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-    );
+    // (a) THE DISCARD-COUNT HEAD — corpus line 138, 2 printings. **BUILT AT D489.**
+    //
+    //     🛑 **THE REFUSAL THIS BULLET CARRIED IS CORRECTED IN PLACE AND DATED (D442),
+    //     NOT DELETED, BECAUSE IT WAS FALSE ON THE DAY IT WAS WRITTEN AND SAYING SO IS
+    //     THE FINDING.** It read: *"…counts a quantity the sentence's OWN HEAD produced.
+    //     That is a CROSS-CLAUSE REFERENCE, not a board fact: `snipeAmount` is handed
+    //     `(op, state, ctx)` and there is no state field, no `EffectSlot` and no
+    //     `EffectContext` key that carries 'how many cards the previous op moved'."*
+    //     The premise is right and the conclusion does not follow (D450/D451's shape):
+    //     the quantity does not have to travel through `state` or `EffectContext` at
+    //     all, because the run's §9.2 `EffectRecord` already carries it and **both of
+    //     `snipeAmount`'s call sites already had that record in scope** — `stepOp` takes
+    //     it as a parameter and `applyChoice` takes it as a parameter. The whole channel
+    //     was a fourth argument. ⚠️ **The bullet was scoped to the FUNCTION'S SIGNATURE
+    //     and read as a statement about the ENGINE** — D456's rule verbatim, one file
+    //     over.
+    //
+    //     🛑 **AND THE CLAIM IS RE-POINTED ONTO THE OP RATHER THAN ONTO
+    //     `.not.toBeNull()`** (D438's polarity rule, D465's move in this same file): a
+    //     bare "it now resolves" is TRUE under a reader widened to swallow the whole
+    //     column, which is exactly the build the surrounding refusals exist to forbid.
+    //     What discriminates is the SLOT — the rider names the address the head files.
+    const HAND_SCALED_SNIPE =
+      "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(family.map(([, t]) => t)).toContain(HAND_SCALED_SNIPE);
+    expect(unbuilt).not.toContain(HAND_SCALED_SNIPE);
+    expect(deriveAttackEffect(HAND_SCALED_SNIPE)).toEqual([
+      {
+        op: "payFromHand",
+        count: "any",
+        cap: 3,
+        to: "discard",
+        filter: { kind: "anyEnergy" },
+        recordAs: "discarded",
+      },
+      {
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perRecorded: "discarded",
+      },
+    ]);
     // (b) THE TARGET-DEPENDENT COUNT — corpus line 551, 1 printing. *"…for each damage
     //     counter on THAT Pokémon"* counts on the body the player has not chosen yet,
     //     so the multiplier is unknown when `stepOp` builds the prompt. Every rung in
@@ -439,7 +481,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.383.0");
+    expect(engineVersion).toBe("0.384.0");
   });
 });
 

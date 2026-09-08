@@ -5173,6 +5173,61 @@ export type EffectOp =
           switch and said in as many words that *"no op carries this filter today"*.
           This op does. */
       filter?: CardFilter;
+      /** 🆕🆕🆕 **D489 — THE THIRD SCALE RIDER, AND THE FIRST THAT CANNOT BE A BARE
+          `true`.** *"Discard up to 3 Energy cards from your hand. This attack does 60
+          damage to 1 of your opponent's Pokémon **for each Energy card you discarded in
+          this way**. (Don't apply …)"* — `censusAttackCorpus.ts` FILE LINE 138,
+          **1 sentence / 2 legal printings**. The effective amount is `amount × the
+          number of uids an earlier op filed under this §9.2 slot`, folded by
+          `snipeAmount` exactly where `perTakenPrize` and `perEnergyOnSelf` are folded.
+
+          🛑 **WHY IT IS NAMED WHERE ITS TWO SIBLINGS ARE BOOLEANS, AND WHY THE NAME IS
+          NOT `count`.** `perTakenPrize` and `perEnergyOnSelf` name an IMPLICIT source —
+          the opponent's taken Prizes, the attacker's own attachments — which the fold
+          can find from `(state, ctx)` alone. **A §9.2 slot is an ADDRESS**, and
+          `EffectSlot` has three of them, so a boolean would have to hard-code one: on a
+          program that files `paid` AND `discarded` (D458 measured that two sequential
+          recording ops overwrite one slot, which is why the addresses exist at all) the
+          boolean reads whichever the author guessed. **And it cannot be spelled `count`,
+          because `count` on this op is ALREADY TAKEN and means the ARITY** — how many
+          bodies the park asks for — so `damageDefender`'s `{per, count}` interface fits
+          in spirit and not in spelling, exactly as the `perEnergyOnSelf` block above
+          says. The `per…` prefix is the rider family's; the noun is the slot's.
+
+          🛑 **NO `countFilter` TWIN, AND THAT IS D104's MINIMAL SHAPE RATHER THAN AN
+          OVERSIGHT.** `damageDefender.countFilter` (D488) exists because a DECK MILL
+          files three cards of any kind and only the Energy among them score. Here the
+          filing op is the discard itself and it is already narrowed by the printed noun
+          — *"Discard up to 3 **Energy cards**"* files nothing but Energy cards, so
+          *"for each **Energy card** you discarded"* scores every uid in the slot. A
+          filter field would be a second answer to a question the head already answered
+          (D159), unfalsifiable on every board this sentence can reach. **The day a
+          printing files a mixed set and scores a subset through a CHOSEN target, this
+          rider gains the twin `damageDefender` already carries** — that is the
+          falsifier, and it is one grep of the corpus for a chosen-target hit whose
+          count clause names a narrower noun than its filing clause.
+
+          🛑 **READ AT BOTH THE OP AND THE PICK, WHICH IS WHY `snipeAmount` TAKES THE
+          RECORD.** `perTakenPrize`'s own comment says the amount is recomputed in
+          `applyChoice` *"from state"*; a slot is not state, it is the run's
+          `EffectRecord`, and `resumeProgram` seeds that accumulator from
+          `cont.record` before calling `applyChoice`. So the value the caption quoted and
+          the value the hit deals are the same number **because the record rides the
+          continuation**, not because nothing moved. A build that dropped the record on
+          resume would caption N and deal 0.
+
+          ⚠️ **AN EMPTY SLOT IS NO DAMAGE AND NO PICK.** Zero recorded uids × any
+          `amount` is 0, and `stepOp` returns before it builds the prompt — the same
+          ending a 0-taken-Prizes Covetous Ivy takes, and the right one: the printed
+          *"up to"* floor is zero, so declining the discard declines the attack's whole
+          effect rather than asking which body to hit for nothing.
+
+          ⚠️ **A WIDENING AT A PERSISTED ADDRESS, AND `MATCH_RECORD_VERSION` STAYS 29.**
+          This op parks, so the key rides `phase.cont.pendingOp` — but no v29 record can
+          contain it (nothing wrote it), and ABSENT means what it has always meant: an
+          unscaled hit. D125's distinction, D334's precedent, driven over reconstructed
+          v29 bytes rather than argued here. */
+      perRecorded?: EffectSlot;
     }
   /** Deal `per × N` ATTACK damage to the DEFENDER (the opponent's Active), where
       N is how many cards an earlier op filed under the `count` §9.2 slot —
@@ -9130,10 +9185,81 @@ export type EffectOp =
           picked (Dendra). Required rather than optional so every author states
           it, the rule `chooseCards.min` set one slice earlier. */
       to: "discard" | "deckBottom";
+      /** 🆕 D489 — UNREPRESENTABLE ON THE EXACT ARM, `discardEnergy`'s idiom: a
+          ceiling on a count that is already exact would be silently ignored. */
+      cap?: never;
       filter?: CardFilter;
       /** File the uids actually paid under this slot, for a later op to read —
           Superior Energy Retrieval excludes them from its retrieval, Dendra
           gates its draw on them ("if you do"). */
+      recordAs?: EffectSlot;
+    }
+  /** 🆕🆕🆕 **D489 — THE DECLINABLE HAND DISCARD, SPLIT OUT SO THE UNPRINTED
+      COMBINATIONS STAY UNREPRESENTABLE (`discardEnergy`'s `opponentEach` idiom,
+      D361).** *"Discard **up to 3** Energy cards from your hand. This attack does 60
+      damage to 1 of your opponent's Pokémon for each Energy card you discarded in this
+      way. (Don't apply Weakness and Resistance for Benched Pokémon.)"* —
+      `censusAttackCorpus.ts` FILE LINE 138, **1 sentence / 2 legal printings**.
+
+      🛑 **A WIDENING OF THE QUANTIFIER AND NOT A NEW OP, AND THE PRECEDENT IS THE
+      SIBLING OP'S OWN WORD.** `discardEnergy.count` went `number` → `"all" | number | "any"`
+      at D361 on exactly this question and wrote the rule down: *a WIDENING is
+      free; a GENERALISATION is not.* `"any"` means the same thing here that it means
+      there — **0 up to every match, the player choosing HOW MANY as well as WHICH** —
+      and `cap` is the same printed *"up to N"* ceiling, spelled with the same word so
+      the two ops cannot drift. Everything else this op does is already the printed
+      sentence: the own hand as the source, `filter` as the printed noun, `recordAs` as
+      the §9.2 filing the damage clause reads, `payFromHandApply` as the move, and
+      `HAND_COST_PAID` as the row.
+
+      🛑 **`cap` IS REQUIRED HERE AND `to` IS NARROWED TO THE DISCARD, WHICH IS WHY THIS
+      IS A SECOND ARM RATHER THAN TWO OPTIONAL FIELDS.** An uncapped declinable hand
+      discard is *"Discard your hand"*, which `discardHand` already spells and no
+      printing spells this way; a declinable payment UNDER THE DECK is printed nowhere
+      at all. Admitting either would be authoring a card (D190b), and a flat widening
+      would admit both silently. Measured over `legalAttackCorpus()`'s 640 sentences
+      (the `legal_standard = 1` attack column, and NOT the ability or trainer columns —
+      D310's limit, stated): the only printed declinable hand discard in it is this one,
+      and it is capped and it discards.
+
+      🛑 **IT IS NOT A COST, AND THAT IS WHY IT NEEDS NO CANCEL.** D420's structural
+      guard (`handEnergyCancel.test.ts` §4) forbids an attack-borne `payFromHand` whose
+      sentence prints no cancel, because a SHORT hand *"pays what there is"* and then
+      buys the effect anyway. **A declinable payment cannot be short**: its printed floor
+      is ZERO, so paying nothing is a legal answer rather than a failure, and what it
+      buys is a MULTIPLE of what it paid — an empty answer files an empty slot,
+      `snipeAmount` folds to 0 and `damageChosen` returns before it asks anything. That
+      is D473's slot-GATE escape one seam over (a gate reads *whether* the payment
+      happened; this reads *how much*), and §4 carries it as a third named escape rather
+      than as a relaxation.
+
+      ⚠️ **`handCostUnmet` CAN NEVER FIRE FOR THIS ARM AND THE TWO PLAY PATHS ARE
+      UNMOVED.** No Trainer and no Ability prints a declinable cost, so the gate's
+      `continue` is reached by the attack channel alone today; it is written anyway,
+      because the alternative is a gate that would refuse every play of a card whose
+      printed floor is zero.
+
+      ⚠️ **NO INTERCHANGEABLE COLLAPSE BELOW `cap`, WHICH IS `discardEnergy`'s STATED
+      REASON VERBATIM**: *"the COUNT is what the damage reads, so three identical {W}
+      must offer three pickable rows, not one."* `handCostCandidates` keeps `cap` copies
+      per interchangeable class instead of `count`, which is the same expression with the
+      ceiling read off the field that carries it.
+
+      ⚠️ **AND IT ALWAYS PARKS ON A NON-EMPTY OFFER.** A lone candidate under a printed
+      *"up to"* is still a decision — take it or decline — which is D297's rule at
+      `bottomFromOpponentHand` and `discardEnergy.count: "any"`'s standing behaviour.
+      An EMPTY hand (or no match) files `[]` and resolves inline, the whiff every
+      recording op takes. */
+  | {
+      op: "payFromHand";
+      /** The declinable quantifier — `discardEnergy.count`'s word for the same fact. */
+      count: "any";
+      /** The printed *"up to N"* ceiling. REQUIRED on this arm (see the block above);
+          the pick is 0..min(cap, matches) and always declinable. */
+      cap: number;
+      /** Narrowed to the discard: no printed declinable payment goes under a deck. */
+      to: "discard";
+      filter?: CardFilter;
       recordAs?: EffectSlot;
     }
   /** REVEAL the opponent's hand, then the CONTROLLER chooses one card matching
@@ -12795,6 +12921,49 @@ const SELF_DISCARD_ALL = /^Discard all Energy from this Pokémon\.$/;
 const SELF_DISCARD_THEN_ANY_TARGET = new RegExp(
   "^Discard (all|\\d+) Energy from this Pokémon(?:\\. This|, and this) " +
     `attack does (\\d+) damage to (\\d+) of your opponent['’]s Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+
+// 🆕🆕🆕 D489 — THE **HAND** DISCARD IN FRONT OF A SNIPE WHOSE AMOUNT IS THE DISCARD'S
+// OWN COUNT. *"Discard up to 3 Energy cards from your hand. This attack does 60 damage
+// to 1 of your opponent's Pokémon for each Energy card you discarded in this way.
+// (Don't apply Weakness and Resistance for Benched Pokémon.)"* —
+// `censusAttackCorpus.ts` **FILE LINE 138**, **1 sentence / 2 legal printings**,
+// transcribed byte for byte off the committed column (both apostrophes are U+0027 at
+// indexes 91 and 152, measured with `codePointAt` and not by eye — D421/D440).
+//
+// 🛑 **EVERY BYTE OUTSIDE THE TWO CAPTURES IS A LITERAL, AND THAT IS A MEASUREMENT
+// RATHER THAN A PREFERENCE (D472).** Six single-axis generalisations of this pattern
+// were run over all 640 corpus sentences before it was written — the arity captured
+// (`(\d+) of`), the zone opened to `this Pokémon`/`your Pokémon`, the quantifier opened
+// to `all`/`any amount of`, the count noun captured as `([^.]+)`, the `Energy(?: cards)?`
+// alternation, and the clarifier made mandatory. **Every one claims the identical
+// 1 sentence / 2 printings.** A generality that buys no rows is pure risk, so none is
+// taken: the arity is the printed `1`, the noun is the printed `Energy card`.
+//
+// ⚠️ **THE ONE OPTIONAL GROUP IS THE BENCHED CLARIFIER, AND IT IS THE FAMILY'S RULE
+// RATHER THAN THIS ANCHOR'S CHOICE** — `SELF_DISCARD_THEN_ANY_TARGET`'s own block:
+// *"§8.5 makes it true regardless and older printings omit it, so every one of this
+// file's four snipe anchors spells it `(?: \(…\))?`; a mandatory copy here would be the
+// odd one out and would refuse on an ERA rather than on a mechanism."* Making it
+// mandatory claims the same row (measured, above), so this is a legibility call inside
+// a family, recorded as a rung in `handDiscardScaledSnipe.test.ts` §2.
+//
+// 🛑 **STRUCTURALLY DISJOINT FROM ALL THREE OF ITS NEIGHBOURS, WITH NO GUARD ANYWHERE
+// (D467's first preference).** `SELF_DISCARD_THEN_ANY_TARGET` demands
+// `Discard (all|\d+) Energy from this Pokémon`; `ENERGY_DISCARD_SCALED_DAMAGE` demands
+// `from (this|your) Pokémon`; `CHOSEN_ANY_TARGET` demands the sentence START at
+// *"This attack does"*. This one demands `Discard up to \d+ Energy cards from your
+// hand` at `^`. No string can match two of them, so nothing is placed first and there
+// is no lookahead to rot.
+//
+// TWO CAPTURES, BOTH FIELDS OF THE TWO OPS (D131's test for "is this one pattern"):
+// `[1]` the discard's printed ceiling (`payFromHand.cap`) and `[2]` the snipe's
+// per-unit (`damageChosen.amount`). No /i, on the family's standing reason.
+const HAND_DISCARD_THEN_SCALED_ANY_TARGET = new RegExp(
+  "^Discard up to (\\d+) Energy cards from your hand\\. " +
+    `This attack does (\\d+) damage to 1 of your opponent['’]s Pokémon` +
+    " for each Energy card you discarded in this way\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 
@@ -22434,6 +22603,73 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         // the cost knocked out of the picture is not a target this op may offer).
         { op: "discardEnergy", from: "yourActive", filter: { kind: "anyEnergy" }, count: discard },
         { op: "damageChosen", target: "opponentAny", amount, count, source: "attack", deals: true },
+      ];
+    }
+  }
+
+  // 9c. 🆕🆕🆕 D489 — "Discard up to N Energy cards from your hand. This attack does A
+  //     damage to 1 of your opponent's Pokémon for each Energy card you discarded in
+  //     this way. (Don't apply …)" — the **HAND** discard in front of a snipe whose
+  //     amount is the discard's OWN COUNT. 1 sentence / 2 legal printings.
+  //
+  //     🛑 THE HEAD IS `payFromHand` AND NOT A SEVENTH `discardEnergy.from` MEMBER, AND
+  //     THE REASON IS THE PROMPT RATHER THAN THE UNION. `discardEnergy`'s six `from`
+  //     members are all BOARD scopes — its own doc block calls them *"a spot, a side, a
+  //     body and the side MINUS the spot"* — and every machine below it takes a
+  //     `PokemonRef`: `discardableEnergies` yields `{uid, from: PokemonRef}`, the §11
+  //     shield filters those refs, `interchangeableCandidates` keys on the body, and the
+  //     `discardEnergy` PARK carries the refs across the wire. A hand card has no ref,
+  //     so a hand member would have changed the PROMPT's candidate shape — D457's five
+  //     mirrors — to say what the `chooseCards` prompt already says. `payFromHand` is
+  //     the op that already moves filtered cards out of the controller's own hand into
+  //     the discard, files their uids under a §9.2 slot, and parks through `chooseCards`
+  //     with the hidden-information note that a hand offer owes. What it lacked was the
+  //     printed QUANTIFIER, and that is a WIDENING of exactly the kind `discardEnergy`
+  //     itself took at D361 (see the op's own block).
+  //
+  //     🛑 THE TAIL IS `damageChosen.perRecorded` AND NOT `damageDefender`. The printed
+  //     target is *"1 of your opponent's Pokémon"* — a CHOSEN body, Active or Bench —
+  //     where `damageDefender` hits the defender and nothing else. `snipeAmount` is the
+  //     second, parallel fold this engine has had since Covetous Ivy; the rider reaches
+  //     it, and the slot is what it reads.
+  //
+  //     🛑 AND THE PRINTED FLOOR OF ZERO IS WHY THIS COMPOUND NEEDS NO CANCEL CLAUSE.
+  //     Discarding nothing files an empty slot, `snipeAmount` folds to 0, and
+  //     `damageChosen` returns BEFORE it builds a prompt — so the attack asks for no
+  //     target and deals nothing. That is the honest reading of an *"up to"* head whose
+  //     tail is a multiple of it, and it is the third named escape in
+  //     `handEnergyCancel.test.ts` §4.
+  //
+  //     TWO printed numbers, TWO positivity guards, asserted separately: a printed
+  //     "up to 0" is a discard that can never happen and a printed 0 per-unit is a
+  //     snipe that hits nothing — each a SILENT no-op where the loud
+  //     `ATTACK_EFFECT_SKIPPED` path is the whole point (D145's standing rule).
+  match = HAND_DISCARD_THEN_SCALED_ANY_TARGET.exec(effect);
+  if (match !== null) {
+    const cap = Number(match[1]);
+    const per = Number(match[2]);
+    if (cap >= 1 && per >= 1) {
+      return [
+        // The discard first, because that is the printed order AND because the fold
+        // reads the slot this op files — an op that ran second would score an empty
+        // record and deal nothing.
+        {
+          op: "payFromHand",
+          count: "any",
+          cap,
+          to: "discard",
+          filter: { kind: "anyEnergy" },
+          recordAs: "discarded",
+        },
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount: per,
+          count: 1,
+          source: "attack",
+          deals: true,
+          perRecorded: "discarded",
+        },
       ];
     }
   }

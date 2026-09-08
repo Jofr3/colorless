@@ -100,6 +100,11 @@ const COST1 = "Discard a Basic {G} Energy card from your hand. If you can't, thi
 const KO6_HEAD =
   "Discard 6 Basic {G} Energy cards from your hand, and Knock Out your opponent's Active Pokémon.";
 const COST2_HEAD = "Discard 2 Basic {G} Energy cards from your hand.";
+/** 🆕🆕🆕 D489 — the THIRD escape's subject, `censusAttackCorpus.ts` FILE LINE 138.
+    Asserted to be a real corpus row in §4 rather than merely byte-pinned (D452: a byte
+    pin on an invented string is green by construction). */
+const HAND_SCALED =
+  "Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const COST1_HEAD = "Discard a Basic {G} Energy card from your hand.";
 
 const NAMED_CLAUSE_6 = "If you can't discard 6 cards in this way, this attack does nothing.";
@@ -680,6 +685,55 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
     return !carriesHandCost(gate);
   }
 
+  /** 🆕🆕🆕 **D489 — THE THIRD WAY AN ATTACK-BORNE HAND COST CAN BE HONEST, AND IT IS
+      THE NARROWEST OF THE THREE.**
+
+      D420's guard forbids a `payFromHand` whose sentence prints no cancel, because the
+      payment *"pays what there is"* and the effect it buys then resolves on a price the
+      engine never collected. D473 exempted the case where the purchase is GATED on the
+      payment's own slot (*"if you do"*): nothing is bought when nothing is paid.
+
+      D489's sentence is the case where the purchase is **SCALED** by the payment's own
+      slot rather than gated on it — *"Discard up to 3 Energy cards from your hand. This
+      attack does 60 damage to 1 of your opponent's Pokémon **for each Energy card you
+      discarded in this way**."* — and the two facts that make it safe are separate and
+      both required:
+
+      1. the payment is **DECLINABLE** (`count: "any"`), so its printed floor is ZERO and
+         there is no threshold a short hand can fall under; and
+      2. the consequent's magnitude **is** the payment: the second op multiplies by the
+         number of uids filed under the very slot the payment writes, so paying nothing
+         buys nothing, paying one buys one unit, and no board can buy more than it paid.
+
+      🛑 **NEITHER FACT ALONE IS ENOUGH, AND THE SECOND IS THE ONE A LOOSE READING WOULD
+      DROP.** *"Discard up to 3 cards from your hand. Knock Out your opponent's Active
+      Pokémon."* is declinable and would be a FREE Knock Out — exactly D420's hazard —
+      so declinability by itself is not an escape. §5's near-misses drive that string.
+
+      🛑 **AS TIGHT AS THE PRINTED SHAPE AND NOT ONE BYTE LOOSER** (D473's rule verbatim):
+      exactly two ops, a DECLINABLE payment with a `recordAs`, and a second op whose
+      SCALE field names that same slot. An EXACT payment with a slot-scaled consequent is
+      arguably honest for the same reason and is still refused, because nothing prints it
+      and a guard that admits unprinted shapes has stopped forcing the decision D420
+      built it to force. **A narrow exemption makes the claim narrower, never false**
+      (D419/D434). */
+  function handCostIsSlotScaled(program: readonly EffectOp[] | null): boolean {
+    if (program === null || program.length !== 2) return false;
+    const [cost, scale] = program;
+    if (cost === undefined || scale === undefined) return false;
+    if (cost.op !== "payFromHand" || cost.count !== "any" || cost.recordAs === undefined) {
+      return false;
+    }
+    // The two shipped ops that read a §9.2 slot as a MULTIPLIER. Listed by op rather
+    // than probed structurally, so a third scale-by-slot op has to be classified here
+    // instead of inheriting an exemption written before it existed.
+    const readsSlot =
+      (scale.op === "damageChosen" && scale.perRecorded === cost.recordAs) ||
+      (scale.op === "damageDefender" && scale.count === cost.recordAs);
+    if (!readsSlot) return false;
+    return !carriesHandCost(scale);
+  }
+
   it("🛑🛑 NO derived attack program carries a `payFromHand` without a CANCEL or a SLOT GATE", () => {
     // 🛑 THE DECISION `effects.ts` SAID WAS OWED, AS A STRUCTURE RATHER THAN A
     // PARAGRAPH. `payFromHand` in an attack pays what it can and refuses nothing, and
@@ -696,29 +750,95 @@ describe("§4 — THE STRUCTURAL GUARD: a hand cost in an attack program owes a 
       if (!carriesHandCost(program)) continue;
       if (deriveAttackCancelRequirement(text) !== null) continue;
       if (handCostIsSlotGated(program)) continue;
+      // 🆕 D489 — the third escape: a DECLINABLE payment whose consequent is a
+      // MULTIPLE of what it paid.
+      if (handCostIsSlotScaled(program)) continue;
       offenders.push(`(${n}) ${text}`);
     }
     // Named rather than summed: the day this fires the message is the sentence.
     expect(offenders).toEqual([]);
   });
 
-  it("🛑 the guard is NOT VACUOUS — it is measured over 5 sentences / 6 printings, split by WHICH escape", () => {
+  it("🛑 the guard is NOT VACUOUS — it is measured over 6 sentences / 7 printings, split by WHICH escape", () => {
     const paying = corpus().filter(([, text]) => carriesHandCost(programOf(text)));
     // 🆕 D473 +2 sentences / +2 printings — the two `If you do, draw {N} cards.` rows.
-    expect([paying.length, units(paying)]).toEqual([5, 6]);
-    expect(paying.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1, DRAW2, DRAW3].sort());
+    // 🆕 D489 **+1 sentence / +2 printings** — the declinable Energy discard whose damage
+    // is a multiple of what it discarded. ⚠️ **THE TWO STEPS DISAGREE AND THE PAIR IS
+    // WRITTEN OUT RATHER THAN SHARED** (D451): the row carries 2 legal printings, so
+    // `paying.length` takes +1 and `units(paying)` takes +2. Measured off the corpus,
+    // not inferred from the previous line.
+    expect([paying.length, units(paying)]).toEqual([6, 8]);
+    expect(paying.map(([, s]) => s).sort()).toEqual(
+      [KO6, COST2, COST1, DRAW2, DRAW3, HAND_SCALED].sort(),
+    );
     // 🆕 D473 — SPLIT BY REASON rather than counted together (D463: a grouped claim
     // takes its reason from its cheapest member and its cost from its dearest). Each
-    // paying sentence takes EXACTLY ONE of the two escapes, and the partition is
-    // asserted in both directions so a sentence that took neither — or somehow both —
+    // paying sentence takes EXACTLY ONE of the three escapes, and the partition is
+    // asserted in both directions so a sentence that took none — or somehow two —
     // reddens here rather than in the offenders list alone.
     const cancelled = paying.filter(([, s]) => deriveAttackCancelRequirement(s) !== null);
     const gated = paying.filter(([, s]) => handCostIsSlotGated(programOf(s)));
+    const scaled = paying.filter(([, s]) => handCostIsSlotScaled(programOf(s)));
     expect(cancelled.map(([, s]) => s).sort()).toEqual([KO6, COST2, COST1].sort());
     expect(gated.map(([, s]) => s).sort()).toEqual([DRAW2, DRAW3].sort());
-    expect(cancelled.length + gated.length).toBe(paying.length);
-    for (const [, s] of cancelled) expect(handCostIsSlotGated(programOf(s)), s).toBe(false);
-    for (const [, s] of gated) expect(deriveAttackCancelRequirement(s), s).toBeNull();
+    expect(scaled.map(([, s]) => s)).toEqual([HAND_SCALED]);
+    expect(cancelled.length + gated.length + scaled.length).toBe(paying.length);
+    for (const [, s] of cancelled) {
+      expect(handCostIsSlotGated(programOf(s)), s).toBe(false);
+      expect(handCostIsSlotScaled(programOf(s)), s).toBe(false);
+    }
+    for (const [, s] of gated) {
+      expect(deriveAttackCancelRequirement(s), s).toBeNull();
+      expect(handCostIsSlotScaled(programOf(s)), s).toBe(false);
+    }
+    for (const [, s] of scaled) {
+      expect(deriveAttackCancelRequirement(s), s).toBeNull();
+      expect(handCostIsSlotGated(programOf(s)), s).toBe(false);
+    }
+  });
+
+  it("🛑 the SLOT SCALE exemption is not a hole — five near-misses on one axis each are still offenders", () => {
+    // D427's one-axis rule applied to the third predicate, exactly as §4 applies it to
+    // the second. Each of these differs from the admitted shape in ONE way.
+    const admitted = deriveAttackEffect(HAND_SCALED);
+    expect(handCostIsSlotScaled(admitted)).toBe(true);
+    const pay = (over: Record<string, unknown>): EffectOp =>
+      ({
+        op: "payFromHand",
+        count: "any",
+        cap: 3,
+        to: "discard",
+        filter: { kind: "anyEnergy" },
+        recordAs: "discarded",
+        ...over,
+      }) as EffectOp;
+    const hit = (over: Record<string, unknown>): EffectOp =>
+      ({
+        op: "damageChosen",
+        target: "opponentAny",
+        amount: 60,
+        count: 1,
+        source: "attack",
+        deals: true,
+        perRecorded: "discarded",
+        ...over,
+      }) as EffectOp;
+    // 🛑 (a) THE ONE THAT MATTERS — a DECLINABLE payment whose consequent is NOT a
+    //     multiple of it. This is a FREE Knock Out off a declined discard, i.e. D420's
+    //     original hazard wearing the new exemption's shape, and it is why the
+    //     predicate cannot be "the payment is declinable".
+    expect(handCostIsSlotScaled([pay({}), { op: "knockOutDefender" }])).toBe(false);
+    // (b) the payment files NOTHING, so the scale can only ever read a stale or empty
+    //     slot — the same axis §4's (a) drives on the gate.
+    expect(handCostIsSlotScaled([pay({ recordAs: undefined }), hit({})])).toBe(false);
+    // (c) the scale reads a DIFFERENT slot, so it is not this payment it multiplies.
+    expect(handCostIsSlotScaled([pay({}), hit({ perRecorded: "paid" })])).toBe(false);
+    // (d) an UNSCALED op after the pair — bought free, whatever the pair does.
+    expect(handCostIsSlotScaled([pay({}), hit({}), { op: "knockOutDefender" }])).toBe(false);
+    // (e) an EXACT payment with a slot-scaled consequent. Arguably honest for the same
+    //     reason and refused anyway: nothing prints it, and an exemption that admits
+    //     unprinted shapes has stopped forcing the decision D420 built the guard for.
+    expect(handCostIsSlotScaled([pay({ count: 2, cap: undefined }), hit({})])).toBe(false);
   });
 
   it("🛑 the SLOT GATE exemption is not a hole — four near-misses on one axis each are still offenders", () => {

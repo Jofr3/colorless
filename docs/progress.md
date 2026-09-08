@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-08 — build session #428 (**P3-M5 — D488, *the recording mill: two rows, one mechanism, and the pair-hood MEASURED BY AXIS DELETION rather than asserted.*** Built corpus **file lines 126 and 129**, *"Discard the top 3 cards of your deck, and this attack does 80 damage for each Energy card you discarded in this way."* and its `Misty's Pokémon` sibling at count 7 — **2 sentences / 2 legal printings through ONE anchor**. 🛑 **THE PAIR REALLY DOES SHARE ONE MECHANISM, AND THAT IS A MEASUREMENT.** Each axis deleted in turn and both rows re-run against all 13 readers: deleting the FILTER refuses both (**and collapses them to the SAME STRING at two counts**), deleting the MILL HEAD refuses both, deleting the SCALING builds both. **Two blockers — `discardDeckTop` filed nothing (`recordAs` absent) and `damageDefender.count` was read by `.length` with no filter — and both rows carry BOTH.** Unlike D483's 2+2 split this is one cluster; the filters differ in KIND (category vs owner-prefixed name) and that difference cost **ZERO**. Pair-hood is pinned in the corpus two ways: two rows are characters only row B can see, so a split would have left them with no killer. 🛑 **THE COMPOSITION NEAR-MISS IS REAL, DERIVABLE, AND CONSTRAINS THE BOARD RATHER THAN DISSOLVING THE QUESTION.** *"…for each Energy card in your discard pile."* IS claimed by `deriveAttackDamageMultiplier` — but it folds at DECLARATION, before the program runs, and counts the WHOLE pile. **On a pile that starts EMPTY the two are equal BY ALGEBRA for every deck, count and noun** — the pile afterwards *is* what the mill moved — so every board in the suite pre-seeds the pile. Board A separates 6 of 8 candidate readings, **board B separates all 8** (140 / 490 / 0 / 350 / 770 / 210 / 280 / 70), which is why the file fields two decks. ⚠️ **And ONE candidate no board can separate — a MILL-SIDE filter — is arithmetically identical forever on any deck whose top N all match, so §6 asserts the pile CONTENTS, not only its size.** 🛑 **WITNESS LOAD COUNTED BEFORE PRICING (D487-ii), AND IT DID NOT SCALE WITH ROW COUNT.** Neither sentence appears verbatim outside the census; the refusal witness is held BY PREDICATE in **one file, two rungs**, shared across the pair — **building both cost exactly what building one would have**, and no mechanism count predicts that. Both rungs re-pointed onto the SHAPE and one now discriminates the arms **by the op**, because a `.length` re-point would have gone on being right while the sentence it names stopped being true. ⚠️ **MY BRIEF'S HEDGED READ WAS HALF RIGHT AND THE WRONG HALF IS THE INTERESTING ONE**: `DamageCountSource` is **not involved at all** (it folds at declaration, off the board) — this family's count is an `EffectSlot` shipped since **D96** — and the brief **never named the other blocker at all**. **ZERO** new `EffectOp`/`EffectSlot`/`CardFilter`/`BoardCondition`/`DamageCountSource` members, readers (**13**), prompts, parks, events, state fields or schema bytes; two OPTIONAL op keys and one noun resolver that READS `DISCARD_PILE_NOUNS` without adding to it. **Describer obligation checked by CALL PATH and found EMPTY** — `recordAs` with no `recordGate` reaches no describer. `MATCH_RECORD_VERSION` **29 HELD and DRIVEN at the hard address**: a v29 `{op:"damageDefender",per:80,count:"discarded"}` still counts the whole slot — **240 vs the filtered 80**, a different number, so the rung cannot pass by accident. Engine **0.382.0 → 0.383.0**. Corpus **2,301 → 2,312**, archive ratchet **158**. `bun run check` GREEN, **474 files / 10,756 tests**, `it(` delta **+31 EXACT**. Residue **95/134 → 93/132**, `BUILT.attack` **1598 → 1600**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2270 killed · 42 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 9,569.7s`** — `+11 killed, +0 declared`, the **forty-ninth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,312 listed / 2,312 run / 2,312 matched / 0 unmatched**, **fiftieth** consecutive clean run.)
+**Last updated:** 2026-09-08 — build session #429 (**P3-M5 — D489, *the hand discard whose count is a §9.2 slot — and TWO CONFIDENT BRIEF CLAIMS FALSIFIED, ONE OF THEM A FALSE DICHOTOMY.*** Built corpus **file line 138**, *"Discard up to 3 Energy cards from your hand. This attack does 60 damage to 1 of your opponent's Pokémon for each Energy card you discarded in this way. (Don't apply Weakness and Resistance for Benched Pokémon.)"* — **1 sentence / 2 legal printings**. 🛑 **THE AXIS-DELETION LATTICE WAS RUN IN FULL — ALL 2⁵ POINTS × 13 READERS — AND NO PROPER SUBSET BUILDS.** Each axis was substituted onto its nearest BUILT spelling rather than deleted outright, so *"this axis is the blocker"* is not confounded with *"the remainder is not a sentence"*. 0 of 1 at zero axes, 0 of 5 at one, 0 of 10 at two, 0 of 10 at three, 0 of 5 at four, and **1 of 1 only when all five move**. ⚠️ **AND THERE IS A FIFTH AXIS MY BRIEF NEVER NAMED** — the printed noun is bare `Energy cards` with NO type token where the shipped anchor's filter group is mandatory. **The brief's verified-with-a-witness claim (*"the counting half of the head already ships; only the SOURCE ZONE is missing"*) was true of the VOCABULARY and false of the SENTENCE.** 🛑 **AND THE BRIEF'S CENTRAL FORK WAS A FALSE DICHOTOMY.** It asked *"a seventh `discardEnergy.from` member, or the own-side mirror of D485's op?"* — **neither.** The carrier is **`payFromHand`**, which already moves filtered cards out of the controller's own hand into the discard, files their uids under a §9.2 slot, and parks through `chooseCards`; **what it lacked was the QUANTIFIER**, shipped as a second union arm (`count:"any"; cap; to:"discard"`) on D361's `opponentEach` idiom so an uncapped declinable hand discard stays unrepresentable. **The `from`-member route was not one union member at all**: every machine under `discardEnergy` takes a `PokemonRef` and a hand card has none, so it changes the PROMPT's candidate shape — D457's five mirrors — to say what `chooseCards` already says. 🛑 **AND THE DESCRIBER OBLIGATION MY BRIEF CALLED *LIVE* WAS EMPTY AGAIN, FOR THE REASON D478 GIVES**: *"this op parks"* is a CATEGORY ARGUMENT; `withConsequence` returns the prompt unchanged unless the QUEUE holds a `recordGate` on the filed slot, and this queue holds one op. **Parking is not the trigger; a gate is.** The real describer work was elsewhere — `handCostPhrase` learns the printed *"up to N"*, so the park's heading is the printed head sentence **byte for byte**. **`damageChosen.perRecorded?: EffectSlot` is NAMED and not a boolean**, unlike its two sibling riders, because a slot is an ADDRESS with three inhabitants and D458 measured that two sequential recorders overwrite one; not `count`, which means the ARITY. `snipeAmount` reached the slot in **four lines** — `record` was already a parameter at both call sites — which is the hedged claim carrying again, **seventh slice running**. `MATCH_RECORD_VERSION` **29 HELD on the SERIALIZED ALPHABET, and the reachability half is FALSE here**: this is a TWO-PARK program and both new bytes genuinely reach a saved record, so §9 drives reconstructed v29 bytes in BOTH directions — an unridden snipe still deals its printed 60 where the new bytes answer 120. **ZERO** new `EffectOp` kinds, `EffectSlot`/`CardFilter`/`DamageCountSource`/`BoardCondition` members, readers (**13**), prompts, choice kinds, events, error codes, state fields, registry rows, `redact.ts` or `packages/schema` bytes; `effects.ts` **236/0, PURE ADDITION**. 🛑 **`censusAtHead` STAYING GREEN UNDER THE ATTRIBUTION CONTROL IS THE FINDING** — a build that strips Energy off the attacker's own BOARD instead of the player's HAND still reads the sentence, still steps `BUILT.attack`, and five behavioural suites are what discriminate: **D469's rule demonstrated exactly.** Engine **0.383.0 → 0.384.0**. Corpus **2,312 → 2,331**, archive ratchet **159**. `bun run check` GREEN, **475 files / 10,792 tests**, `it(` delta **+36 EXACT** (35 in the new suite + 1 in `handEnergyCancel`). Residue **93/132 → 92/130**, `OPAQUE` **67/98 → 66/96**, `BUILT.attack` **1600 → 1602**.)
+
+**Last updated (was):** 2026-09-08 — build session #428 (**P3-M5 — D488, *the recording mill: two rows, one mechanism, and the pair-hood MEASURED BY AXIS DELETION rather than asserted.*** Built corpus **file lines 126 and 129**, *"Discard the top 3 cards of your deck, and this attack does 80 damage for each Energy card you discarded in this way."* and its `Misty's Pokémon` sibling at count 7 — **2 sentences / 2 legal printings through ONE anchor**. 🛑 **THE PAIR REALLY DOES SHARE ONE MECHANISM, AND THAT IS A MEASUREMENT.** Each axis deleted in turn and both rows re-run against all 13 readers: deleting the FILTER refuses both (**and collapses them to the SAME STRING at two counts**), deleting the MILL HEAD refuses both, deleting the SCALING builds both. **Two blockers — `discardDeckTop` filed nothing (`recordAs` absent) and `damageDefender.count` was read by `.length` with no filter — and both rows carry BOTH.** Unlike D483's 2+2 split this is one cluster; the filters differ in KIND (category vs owner-prefixed name) and that difference cost **ZERO**. Pair-hood is pinned in the corpus two ways: two rows are characters only row B can see, so a split would have left them with no killer. 🛑 **THE COMPOSITION NEAR-MISS IS REAL, DERIVABLE, AND CONSTRAINS THE BOARD RATHER THAN DISSOLVING THE QUESTION.** *"…for each Energy card in your discard pile."* IS claimed by `deriveAttackDamageMultiplier` — but it folds at DECLARATION, before the program runs, and counts the WHOLE pile. **On a pile that starts EMPTY the two are equal BY ALGEBRA for every deck, count and noun** — the pile afterwards *is* what the mill moved — so every board in the suite pre-seeds the pile. Board A separates 6 of 8 candidate readings, **board B separates all 8** (140 / 490 / 0 / 350 / 770 / 210 / 280 / 70), which is why the file fields two decks. ⚠️ **And ONE candidate no board can separate — a MILL-SIDE filter — is arithmetically identical forever on any deck whose top N all match, so §6 asserts the pile CONTENTS, not only its size.** 🛑 **WITNESS LOAD COUNTED BEFORE PRICING (D487-ii), AND IT DID NOT SCALE WITH ROW COUNT.** Neither sentence appears verbatim outside the census; the refusal witness is held BY PREDICATE in **one file, two rungs**, shared across the pair — **building both cost exactly what building one would have**, and no mechanism count predicts that. Both rungs re-pointed onto the SHAPE and one now discriminates the arms **by the op**, because a `.length` re-point would have gone on being right while the sentence it names stopped being true. ⚠️ **MY BRIEF'S HEDGED READ WAS HALF RIGHT AND THE WRONG HALF IS THE INTERESTING ONE**: `DamageCountSource` is **not involved at all** (it folds at declaration, off the board) — this family's count is an `EffectSlot` shipped since **D96** — and the brief **never named the other blocker at all**. **ZERO** new `EffectOp`/`EffectSlot`/`CardFilter`/`BoardCondition`/`DamageCountSource` members, readers (**13**), prompts, parks, events, state fields or schema bytes; two OPTIONAL op keys and one noun resolver that READS `DISCARD_PILE_NOUNS` without adding to it. **Describer obligation checked by CALL PATH and found EMPTY** — `recordAs` with no `recordGate` reaches no describer. `MATCH_RECORD_VERSION` **29 HELD and DRIVEN at the hard address**: a v29 `{op:"damageDefender",per:80,count:"discarded"}` still counts the whole slot — **240 vs the filtered 80**, a different number, so the rung cannot pass by accident. Engine **0.382.0 → 0.383.0**. Corpus **2,301 → 2,312**, archive ratchet **158**. `bun run check` GREEN, **474 files / 10,756 tests**, `it(` delta **+31 EXACT**. Residue **95/134 → 93/132**, `BUILT.attack` **1598 → 1600**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2270 killed · 42 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 9,569.7s`** — `+11 killed, +0 declared`, the **forty-ninth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,312 listed / 2,312 run / 2,312 matched / 0 unmatched**, **fiftieth** consecutive clean run.)
 
 **Last updated (was):** 2026-09-08 — build session #427 (**P3-M5 — D487, *the version-costing cluster is EMPTY, and the reason is structural rather than lucky.*** 🛑 **ZERO of the 96 residue sentences are blocked only by a change that would move `MATCH_RECORD_VERSION`** — measured over all 640 rows against `match.ts`'s OWN discriminator (*"would an old record MEAN something else"*), which admits exactly three costing shapes: a new REQUIRED key at a persisted address, a RENAME there, or a re-meaning of an existing byte string. ⚠️ **THE BRIEF'S FRAMING RULE — *"a new member of a persisted union, or a new field on a persisted op"* — IS FALSE ON BOTH HALVES.** Both are WIDENINGS. **And the emptiness is structural: a residue sentence is by construction a distinction no shipped printing prints, so the pre-change behaviour is ALWAYS available as the absent-key default.** A bump can only be forced where a repair RESHAPES a durated record — the door nine of this constant's bumps went through — so the sweep is: does the sentence print a DURATION or a SCHEDULE at all. **24 of 96 even reach that door, and none is blocked only by the version.** 🛑 **AND MY TWO CONFIDENT INHERITED PRICES WERE BOTH FALSE CITATIONS — the second consecutive slice with this defect.** The `D473` row **never mentions** the sentence or `HandRefreshDraw` (0 matches, verified); the *"seat refusal at `effects.ts:9296-9298`"* is a **different op's "NO FIELDS" note**, and `drawCards` carries **no seat refusal anywhere**. Worse, `HandRefreshDraw` **is not persisted at all** — the brief's own D473-ii warning applied to its own headline claim. ⚠️ **The one claim hedged as *"my read, unverified"* was the only correct one**, and it is what shipped. Built corpus **file line 231**, *"Draw 3 cards from the bottom of your deck."*, **1 sentence / 1 legal printing** — one anchor, one arm, one OPTIONAL `drawCards.from`. `MATCH_RECORD_VERSION` **29 HELD and DRIVEN AT THE HARD ADDRESS**: the alphabet DOES grow and reachability is NOT empty, so §8 drives that a v29 byte string still draws the TOP three. Engine **0.381.0 → 0.382.0**. Corpus **2,294 → 2,301**, archive ratchet **157**. `bun run check` GREEN, **473 files / 10,725 tests**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2259 killed · 42 known survivor(s) · 0 GAP(s) · 0 stale · 0 clobber(s) · 0 error(s) · 9,948.5s`** — `+7 killed, +0 declared`, the **forty-eighth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,301 listed / 2,301 run / 2,301 matched / 0 unmatched**.)
 
@@ -600,6 +602,105 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-08, after D489)
+>
+> ✅ **`bun run check` IS GREEN — 475 files / 10,792 tests, `CHECK_EXIT=0`**, `typecheck-coverage`
+> **721 → 722**, `lint-coverage` **723 → 724**. **`it(` delta +36 and vitest delta +36 — EXACT**
+> (35 in the new suite + 1 rung added to `handEnergyCancel.test.ts`). Engine **0.383.0 → 0.384.0**.
+> **`MATCH_RECORD_VERSION` 29, HELD on the serialized alphabet.** Corpus **2,312 → 2,331**, archive
+> ratchet **159**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP.**
+> ⚠️ **ONE UNTRACKED PATH: `packages/engine/src/handDiscardScaledSnipe.test.ts`.** `git add` EXPLICIT
+> PATHS — it is not in any tracked-file glob and a path-less commit silently omits the only file that
+> witnesses the slice.
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — fiftieth consecutive slice to name its number first,
+> and the forty-ninth landed exactly:**
+>
+> > **`2289 killed · 42 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,331**
+>
+> `2270 + 19 = 2289`, `42 + 0 = 42`, `2312 + 19 = 2331`, closing `2289 + 42 = 2331`.
+>
+> **(1) PRE-CLEARANCE — 30 of 42 survivors clear by file, 12 by line.** `effects.ts` is **236 / 0,
+> pure addition**, and `attack.ts`, `redact.ts`, `GameHud.tsx`, `continuous.ts`, `flow.ts`,
+> `splice-gate.ts` and `refusedPrintings.ts` are byte-unchanged — 30 survivors housed with zero
+> deletions. The remaining 12 live in `interpreter.ts`, whose **four** deleted lines are
+> `snipeAmount`'s signature, its two call sites and `if (already >= op.count)`; **none of the twelve
+> quotes any of them**, checked row by row. Witness that no other anchor broke: `precheck` re-finds
+> all **2,331** `find` strings exactly once (D469). ⚠️ **Three pre-existing rows DID break and were
+> re-transcribed** — `D437-narrows-after-the-arity-doctrine`, `D455-hand-cost-collapses-every-copy-to-one`
+> and `D455-a-forced-payment-still-asks` — all three re-probed clean, the third **shortened onto the
+> line it is about** (D446).
+>
+> **(2) ALREADY VERIFIED INDEPENDENTLY — run the SWEEP.** `check` GREEN **475 / 10,792**; `precheck`
+> clean at **2,331**, `patches LITERALLY` **HELD at 21**, near-miss **HELD at 8**;
+> `residue-census-gate` **OK, §A 118 / 92 / 130**; `opaque-anatomy-gate` **OK**, §D **9 classes / 66
+> sentences / 96 printings**, §E **36,168** pairs, admitted **166**; `splice-gate` and
+> `partition-gate` **OK**; probe `--decision D489 --allow-dirty` → **19 killed · 0 survivors · 0 GAP
+> · 0 stale · 0 clobber · 0 error**. Plus **91 neighbour rows re-probed across 9 decisions, all
+> clean** (D437/D455/D448/D400/D401/D473/D420/D488/D275). ✅ **Hard-rules line held — `docs/`
+> untouched at agent exit, `progressLog.test.ts` byte-unchanged, `ARCHIVES` not stepped by the
+> slice.**
+>
+> **(3) AFTER THE SWEEP: the close-out.** Structural completeness from unique progress-line ids,
+> confirm the line, update this stamp's tail and this `(0)` block, append to the `| **D489** |` row,
+> add any convention BEFORE `## Git / commits`, re-run `check`, commit.
+>
+> **(4) THEN D490 — AND THE TARGETING LESSON IS THAT A BRIEF'S "A OR B?" IS ITSELF A CLAIM.** 🛑 **D489's
+> work order priced the head as *"a seventh `discardEnergy.from` member, or D485's op mirrored"* and
+> the answer was NEITHER** — `payFromHand` already had the source, the filter and the §9.2 filing and
+> lacked only the quantifier. ⚠️ **Before choosing between two named carriers, grep the op union for
+> the VERB THE SENTENCE PRINTS** (`grep -n 'from your hand' effects.ts`), not for the carriers the
+> brief named. 🆕 **And ask what the PARK carries before pricing a union member**: `discardEnergy`'s
+> six `from` members are board scopes and every machine under them takes a `PokemonRef`, so a hand
+> source there changes the prompt's candidate TYPE — D457's five mirrors — rather than adding a word.
+>
+> **(5) THE ROWS STILL OPEN, RE-PRICED AT D489.** 🆕 **The `discarded in this way` family now has
+> exactly ONE unbuilt member**: *"Discard the top card of each player's deck. This attack does 140
+> **more** damage for each Energy card discarded in this way."* (2 printings) — price is a
+> **both-decks** recording mill (`discardDeckTop.whose` has no *"each player"* member) **plus** the
+> additive `damageDefender.base` path, and it is pinned as the standing refusal in
+> `discardScaledDamage` §1. **`SUBST-4`** (*"Each player draws 3 cards."*) — a mandatory opponent
+> draw, a six-file witness re-point, a park/no-park call. **Corpus 487** — a fifth member plus a
+> widened anchor, two witness files. **The two `ex`/`V` SPREADS** (2 sentences / 4 printings). **529**,
+> **569**, **file lines 268 / 537**, **D482's (B)** — unchanged. 🛑 **`Ancient`/`Future`/`Tera` off
+> the table, 26th slice.**
+>
+> **(6) THE TARGETING RULES, thirty clauses.** (a)–(bb) as at D488, plus: (cc) 🆕 **D489-i: run the
+> axis-deletion LATTICE, not the axis list, and substitute each axis onto its nearest BUILT spelling
+> rather than deleting it** — deleting a clause outright confounds *"this axis is the blocker"* with
+> *"the remainder is not a sentence"*. D489 ran all 2⁵ points × 13 readers and found **no proper
+> subset builds**, which is strictly more than "one point builds". (dd) 🆕 **D489-ii: "this op parks,
+> so the describer obligation is live" is a CATEGORY ARGUMENT and D478 forbids it.** Two slices
+> running a brief predicted describer work from parking; both times it was empty. **Trace the one call
+> site**: `withConsequence` returns the prompt unchanged unless the QUEUE holds a `recordGate` on the
+> filed slot. (ee) 🆕 **D489-iii: a brief's "A or B?" fork is a claim, and the answer is often C.**
+>
+> **(7) THE STANDING HAZARDS.** 🛑 **NEVER WRITE TO THE TREE WHILE THE HARNESS IS IN FLIGHT.**
+> **`--only` does NOT accumulate.** `--allow-dirty` MANDATORY; `--decision` matches by
+> `String.includes`. ⚠️ **`patches LITERALLY` 21 — hazard is FALLING; near-miss population 8 — any
+> movement, read the rows.** **Python's `str.replace` REJECTS a function second argument.** ⚠️ **A
+> `replace` omitting a REQUIRED field reports ERROR — `precheck` gates `find` only.** ⚠️ **READ EACH
+> ROW'S `what` AGAINST ITS `replace` BEFORE PROBING**; **every rung differs from its control in
+> exactly ONE axis** (D484); **a rung passing is not evidence it still tests its stated claim**
+> (D486). ⚠️ **THE CENSUS TAX LANDS IN WAVES** — D487 five, D488 four, D489 four (20/23, 16/17, 5/6,
+> 1/1), **the last wave being a second chain sharing one physical line** (D456), which a per-line pass
+> steps only the first of. **`BUILT.attack` is a RECORDED CONSTANT the chains subtract FROM — bump it
+> FIRST** (D449); ⚠️ **the +1 sentence and +2 printings DISAGREE here**, so `.length` sites take +1
+> and `units(…)` sites take +2. ⚠️ **A `Math.round` numerator has a SOLUTION SET, not a solution** —
+> derive it by intersecting the green ranges at both denominators (D488). 🆕 🛑 **AND EVERY COUNTING
+> INSTRUMENT NEEDS ITS SCOPE CHECKED BEFORE ITS NUMBER IS QUOTED.** The version tax at this head is
+> **88 occurrences / 62 files / 18 `it(` titles** — but **`git grep` reports 84 / 61 / 17 because it
+> sees only TRACKED files, and every slice's new suite is untracked until the ritual commits it.**
+> That is exactly the 4 / 1 / 1 difference. The builder's own report quoted two mutually inconsistent
+> figures for this one number. **Re-measure with a scope that includes the untracked suite, and say
+> which instrument you used** (D488's `SURVIVES(known)` grep is the same failure at the sweep).
+> 🛑 **`ARCHIVES` is the RITUAL's, and the hard-rules block must SAY so every time.**
+
+### Prior resume point (P3-M5 — D488, the recording mill, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-08, after D488)
 >
@@ -21342,7 +21443,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D488, *the recording mill, and pair-hood MEASURED by axis deletion*: two residue rows share ONE mechanism and TWO blockers — a mill that filed nothing and a scaled count read by `.length` — proven by deleting each axis in turn and re-running all 13 readers, where D483's cluster split 2+2 under the same test. The composition near-miss is real and folds at declaration; on an EMPTY pile it is equal to the build BY ALGEBRA, so every board pre-seeds. Witness load was one file / two rungs for BOTH rows — per-mechanism, not per-row. 2 sentences / 2 printings, version HELD and driven**; engine 0.383.0, corpus 2,312, check GREEN 474/10,756) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D489, *the hand discard whose count is a §9.2 slot, and a brief whose central fork was a false dichotomy*: the full 2⁵ axis-deletion lattice × 13 readers shows NO proper subset of the sentence builds, and there was a fifth axis the work order never named. The carrier was neither of the two the brief offered — `payFromHand` already had the source, the filter and the §9.2 filing and lacked only the quantifier, while the `from`-member route would have changed the PROMPT's candidate type. The describer obligation called *live* was empty again: parking is not the trigger, a gate is. 1 sentence / 2 printings, version HELD on the serialized alphabet**; engine 0.384.0, corpus 2,331, check GREEN 475/10,792) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D486, *the gated increment — 1 sentence / 1 printing for one anchor, one arm and one clause row, with the interpreter byte-unchanged* — and *two candidate programs NO BOARD can separate by what they DO*: they agree on card count for every hand size by arithmetic identity, and diverge only on what they ASK. Five readings answer five distinct PAIRS and no single board separates them. The inherited price was mis-attributed by the brief and wrong in both directions**; engine 0.381.0, `MATCH_RECORD_VERSION` 29, corpus 2,294, check GREEN 472/10,691) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D485, *the mandatory filtered sweep of the opponent's hand — a refusal that wrote its own falsifier and then fired it*: corpus file line 673, 1 sentence / 1 legal printing, ONE new `EffectOp` member `discardFromOpponentHand { filter }` and ZERO new `CardFilter` members; 🛑 *the `COMPOUND-head` splitter DID compose and the cheaper tail-only anchor was REFUSED* — "you find there" is an anaphor whose antecedent is the reveal; 🛑 *the near-miss `bottomFromOpponentHand` is byte-identical on a one-match hand and neither parks*, so the collision board was the smallest one a suite would write; engine 0.379.0 → 0.380.0, `MATCH_RECORD_VERSION` 29 driven, residue 98/137 → 97/136, corpus 2,280 → 2,286**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D484, *the per-line partition audit — the predicate the work order proposed is FALSE by a factor of hundreds*: 383 lines carry 943 rows (41.6%), sharing a line is the corpus's central idiom, and defects at HEAD are ZERO. The predicate that works is EXPERIMENT IDENTITY, justified by a historical replay firing on the real defect at D447 — the commit that caused it — and never falsely across 568 rows since. The one defect fixed was in the guard's OWN self-check**; engine 0.379.0 unchanged, corpus 2,280, check GREEN 470/10,630) |
@@ -21471,6 +21572,147 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-08 — build session #429 (P3-M5 — D489)
+
+**THE HAND DISCARD WHOSE COUNT IS A §9.2 SLOT — AND TWO CONFIDENTLY-STATED BRIEF CLAIMS FALSIFIED,
+ONE OF THEM A FALSE DICHOTOMY.** Engine **0.383.0 → 0.384.0**, **`MATCH_RECORD_VERSION` 29
+UNCHANGED**, mutation corpus **2,312 → 2,331**, archive ratchet **158 → 159**, `bun run check` GREEN
+at **475 files / 10,792 tests**.
+
+**(0) BUILD STATE, OFF THE RIGHT ORACLE.** All 13 `deriveAttack*` exports called on the printed
+sentence: **REFUSED by 13 / 13**, all four splitters null, no registry row. `refusedPrintings.ts`
+re-checked and still silent by construction — `RefusalSurface` deliberately has no `"attack"` member
+(*"an attack sentence is built by a DERIVER, not by a row"*). Both printings' apostrophes measured as
+**U+0027** with `codePointAt`, not read by eye.
+
+**(1) 🛑 THE AXIS-DELETION LATTICE, RUN IN FULL — 2⁵ POINTS × 13 READERS — AND NO PROPER SUBSET
+BUILDS.** Each axis was substituted onto its nearest **BUILT** spelling rather than deleted outright,
+because deleting a clause confounds *"this axis is the blocker"* with *"the remainder is not a
+sentence"*. 0 of 1 at zero axes changed, **0 of 5** at one, **0 of 10** at two, **0 of 10** at three,
+**0 of 5** at four, and **1 of 1 only when all five move** — landing on
+`ENERGY_DISCARD_SCALED_DAMAGE`. ⚠️ **There is a FIFTH axis the brief never named**: the printed noun
+is bare `Energy cards` with no type token, where the shipped anchor's filter group is mandatory.
+**So the brief's verified-with-a-witness claim — *"the counting half of the head already ships in
+full; only the SOURCE ZONE is missing"* — was true of the VOCABULARY and false of the SENTENCE.**
+
+**(2) IS THE ROW ALONE? MEASURED, AND YES.** Residue at base 103 sentences / 148 printings. Exactly
+one other residue row opens with a hand discard (*"Discard a card from your hand. If you do, your
+opponent discards a card from their hand."*) and it does **not** share the blocker: its head is
+D473's shipped `payFromHand{count:1,recordAs:"paid"}`, its consequent **builds standalone**, and both
+splitters return null — it needs a whole-sentence anchor over a `recordGate`. Exactly one other row
+has a chosen-target hit whose amount scales, refused on the **arity of the fold**: *"for each damage
+counter on that Pokémon"* counts on a body not yet chosen, and a §9.2 slot is known **before** the
+pick. **D483's rule holds: a shared printed phrase is not a shared blocker.** Both pinned as rungs.
+
+**(3) 🛑 THE BRIEF'S CENTRAL FORK WAS A FALSE DICHOTOMY.** It asked *"a seventh `discardEnergy.from`
+member, or the own-side mirror of D485's `discardFromOpponentHand`?"* — **neither.** The carrier is
+**`payFromHand { count; to; filter?; recordAs? }`**, which already moves filtered cards out of the
+controller's own hand into the discard, files their uids under a §9.2 slot, and parks through
+`chooseCards` with the hidden-information note a hand offer owes. **What it lacked was the
+QUANTIFIER**, and that is `discardEnergy.count`'s own D361 widening at the sibling op — shipped as a
+**second union arm** (`{count:"any"; cap: number; to:"discard"}`) rather than two optional fields, on
+D361's `opponentEach` idiom, so an uncapped declinable hand discard and a declinable payment under
+the deck both stay unrepresentable. ⚠️ **And the `from`-member route was never one union member**:
+every machine under `discardEnergy` takes a `PokemonRef` — `discardableEnergies` yields
+`{uid, from: PokemonRef}`, the §11 shield filters those refs, `interchangeableCandidates` keys on the
+host, and the **park itself carries refs across the wire**. A hand card has no ref, so that route
+changes the **prompt's candidate shape** — D457's five mirrors (`packages/schema`, `redact.ts`,
+`projection.ts`, both HUDs) — to say what `chooseCards` already says.
+
+**(4) D420's STRUCTURAL GUARD GAINS A THIRD NAMED ESCAPE, NOT A RELAXATION.** An attack-borne
+`payFromHand` owes a printed cancel (D420) or a §9.2 gate on its slot (D473) — or, now, is
+**declinable AND scaled by its own slot**. Neither half alone suffices, and §5 drives it: *"Discard
+up to 3 cards from your hand. Knock Out your opponent's Active Pokémon."* is declinable and would be
+a **free Knock Out**. `handEnergyCancel` §4's population steps **5 sentences / 6 printings → 6 / 8**,
+partitioned three ways in both directions, with five one-axis near-misses.
+
+**(5) THE FIELD IS NAMED AND NOT A BOOLEAN, AND THE REASON IS MEASURED.** `perTakenPrize` and
+`perEnergyOnSelf` name an **implicit** source the fold finds from `(state, ctx)`; an `EffectSlot` is
+an **address** with three inhabitants, so a boolean must hard-code one, and the board that breaks it
+is a program filing both `paid` and `discarded` — **D458 measured that two sequential recorders
+overwrite one slot**. Not `count`, confirmed at the declaration (*"`damageChosen.count` is ALREADY
+TAKEN and means the ARITY"*). Shipped as `damageChosen.perRecorded?: EffectSlot`, with **no
+`countFilter` twin**: the filing op is already narrowed by the printed noun, so a filter would be
+unfalsifiable on every board this sentence reaches, and the falsifier is written at the site.
+
+**(6) THE FOLD ALREADY EXISTED AND THE HEDGED CLAIM CARRIED AGAIN — SEVENTH SLICE RUNNING.**
+`snipeAmount(op, state, ctx)` has been the second parallel fold since Covetous Ivy, and **`record`
+was already a parameter at both call sites** (`stepOp`, `applyChoice`): **one extra argument and four
+lines.** The double-read hazard is real and answered — `resumeProgram` seeds its accumulator from
+`cont.record` before `applyChoice`, so the caption and the hit are the same number **because the
+record rides the continuation**, driven in §7 with an empty-record board that must deal 0 rather than
+degrade to the unscaled hit.
+
+**(7) `MATCH_RECORD_VERSION` 29 HELD ON THE SERIALIZED ALPHABET — AND THE REACHABILITY HALF IS FALSE
+HERE.** This is a **two-park** program: the payment writes `phase.cont.pendingOp` with the snipe in
+`rest`, then the snipe writes its own continuation, and the record rides between them. **Both new
+bytes genuinely reach a saved `MatchRecord`.** The claim is that no v29 deploy could write either and
+that ABSENT still means what a v29 writer meant — driven in **both** directions over reconstructed
+v29 bytes: an exact `count: 2` payment still parks `min===max===2`, an unridden snipe still deals its
+printed **60**, and the new bytes on the same board answer **3** and **120**.
+
+**(8) THE DESCRIBER OBLIGATION MY BRIEF CALLED *LIVE* WAS EMPTY, FOR EXACTLY D478's REASON.** The
+brief said *"This op parks. Check the call path and expect real work."* — **a CATEGORY ARGUMENT,
+which is what D478 forbids.** `withConsequence` returns the prompt unchanged unless
+`queue.find(q => q.op === "recordGate" && q.slot === slot)`; this queue holds one op, the snipe, so
+`describeBranch`/`describeCondition` are **unreachable** — the same reason D488's was empty. **Two
+slices running, a brief predicted describer work from parking.** Pinned as §8. The real describer
+work was elsewhere: `handCostPhrase` learns the printed *"up to N"*, so the park's heading is
+**`"Discard up to 3 Energy cards from your hand."` byte for byte** — which makes the caption a D457
+witness that the op carried its `cap`.
+
+**(9) THE PROMPT, THE ORDERING AND THE ZERO.** Two parks in one program, ordering driven (payment
+first — an op that ran second scores an empty record). **Zero discarded ⇒ `snipeAmount` folds to 0 ⇒
+`damageChosen` returns before it builds a prompt: the attack asks for no target and deals nothing** —
+the existing `perTakenPrize` ending, and what the D420 escape rests on. An **empty offer** whiffs
+inline, files `[]`, never parks; a **single** candidate still parks (D297).
+
+**(10) BOARDS — SEVEN READINGS, SIX SEPARATED BY QUANTITY, TWO MORE ONLY BY CONTENTS.** Computed
+before the board was written: correct **120**, rider dropped **60**, count = printed cap **180**,
+count = whole pile afterwards **240**, count = hand size before **420**, wrong slot **0 and no pick
+at all**, record lost across the park **0**. The two zeroes collide by construction and are separated
+on a different axis (one parks and deals nothing, the other never parks). Two further readings — a
+dropped filter and a collapsed interchangeable class — are **indistinguishable by damage**, so the
+suite asserts the offer as an **id multiset** and the pile's contents. The board pre-empts two
+algebraic identities: the discard pile **starts non-empty** and the hand holds **five** Energy plus
+two non-Energy, so *"up to 3"*, *"discard all Energy"* and *"discard your hand"* are three different
+moves. ⚠️ **A real defect the first board hid**: `cardIdentity` keys a Basic Energy on **what it
+PROVIDES**, not its catalog id, so five unnamed `basicEnergy` fixtures are **one** interchangeable
+class and a cap of 3 would have measured the ceiling and said nothing about the collapse. Found by a
+red rung; fixed with three `typedEnergy` provisions.
+
+**(11) 🛑 `censusAtHead` STAYING GREEN UNDER THE ATTRIBUTION CONTROL IS THE FINDING.** The central arm
+was broken at its nearest wrong sibling — reading the printed **hand** head as a **board** discard
+(`discardEnergy{from:"yours"}`) — each killer run alone, restored in a `finally` with size **and**
+sha256 verified identical. **RED**: `handDiscardScaledSnipe`, `handEnergyCancel`,
+`discardScaledDamage`, `scaledAnySnipe`, `anyTargetSnipe`. **GREEN**: `censusAtHead`,
+`deckMillFilteredScale`, `payFromHand`. Under that wrong build the sentence still reads,
+`resolvedByAnyReader` is still true, the residue still falls by one and `BUILT.attack` still steps —
+**D469's rule demonstrated exactly: a census measures whether a sentence is CLAIMED, never whether it
+is claimed CORRECTLY.** Five behavioural suites are what discriminate.
+
+**(12) ANCHOR GENERALITY, MEASURED OVER ALL 640 ROWS BEFORE IT WAS WRITTEN (D472).** Six single-axis
+generalisations — arity captured, zone opened, quantifier opened, count noun captured,
+`Energy(?: cards)?`, W/R mandatory — each claims the **identical 1 sentence / 2 printings**. None
+taken; the measurement is a rung. The one optional group is the W/R clarifier, on the family's own
+stated rule, with the override recorded (D477).
+
+**(13) WITNESS LOAD: 3 NAMED + 2 FILTER-BUILT = 5, FOR THE 1 ROW IT FREES.** `scaledAnySnipe` §1(a)
+(reason **falsified** and corrected in place), `anyTargetSnipe` §5 (re-pointed onto the OP),
+`discardScaledDamage` §1 (rung rebuilt as a partition), plus two the sentence is *counted into*
+without being named — D465's finding. **The brief's guess was right on all three named files.**
+
+**(14) NUMBERS.** Census delta **+1 sentence / +2 printings** — and the two steps **DISAGREE**, so
+`.length` sites take +1 and `units(…)` sites take +2. `BUILT.attack` **1600 → 1602**; resolved
+**521/1550 → 522/1552**; `rawUnbuiltSentences` **119 → 118**; `residueSentences` **93 → 92**;
+`unbuiltAttack` **132 → 130**; `RAW_UNBUILT_ATTACK_UNITS` **182 → 180**; residue total **93/132 →
+92/130**; `OPAQUE` **67/98 → 66/96**. Tax in **four waves** (20/23, 16/17, 5/6, 1/1), the last being
+a **second chain sharing one physical line** (D456). ⚠️ **Version tax re-measured by the caller at
+88 occurrences / 62 files / 18 `it(` titles** — see the resume point: `git grep` reports 84 / 61 / 17
+because it sees only tracked files, and the builder's report quoted two mutually inconsistent
+figures. `it(` **+36 EXACT** (35 new suite + 1 `handEnergyCancel`), vitest **10,756 → 10,792**;
+`typecheck-coverage` **721 → 722**, `lint-coverage` **723 → 724**, files **474 → 475**.
 
 ### 2026-09-08 — build session #428 (P3-M5 — D488)
 
