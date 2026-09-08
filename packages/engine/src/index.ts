@@ -19794,8 +19794,88 @@ import type { GameState, Seat } from "./types";
     `mutants.ts`'s D275 re-point ledger, and the new suite's `0.381.0 → 0.382.0` header
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
-    the same **81 / 61 / 17**.) */
-export const engineVersion = "0.382.0";
+    the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.382.0 → **0.383.0** (D488 — MILL YOUR OWN DECK, THEN SCALE BY
+    WHAT WAS MILLED. `censusAttackCorpus.ts` **FILE LINES 126 and 129** — *"Discard the top
+    3 cards of your deck, and this attack does 80 damage for each **Energy card** you
+    discarded in this way."* and *"Discard the top 7 cards of your deck, and this attack
+    does 70 damage for each **Misty's Pokémon** that you discarded in this way."* — **2
+    sentences / 2 legal printings**. One new anchor (`DECK_MILL_FILTERED_SCALED_DAMAGE`),
+    one new `deriveAttackEffect` arm, one new noun resolver (`milledCardFilter`), TWO
+    OPTIONAL keys on two SHIPPED ops (`discardDeckTop.recordAs`,
+    `damageDefender.countFilter`) and one interpreter helper (`scoredSlot`). **ZERO** new
+    `EffectOp` members, `EffectSlot` members,
+    `BoardCondition`/`CardFilter`/`DamageCountSource` members, prompts, choice kinds,
+    parks, events, error codes, `GameState`/`InPlayPokemon` fields, readers (the surface
+    stands still at **13**), registry rows, `FIXTURE_POOL` ids (file-local `cardPool`,
+    D414), `redact.ts` bytes or `packages/schema` bytes.
+
+    🛑 **THE SLICE'S FIRST DELIVERABLE WAS AN AXIS DELETION, AND IT IS WHY THESE TWO ROWS
+    ARE ONE SLICE RATHER THAN TWO.** The work order handed over a pair that *looked*
+    alike and warned — correctly — that D483's four-row cluster split 2+2 under exactly
+    this test. Each axis was deleted in turn and both rows re-run against all 13 readers
+    of `attackReaderSurface()`: deleting the FILTER collapses both to the SAME string at
+    two counts and BOTH ARE STILL REFUSED; deleting the MILL HEAD (the shipped
+    Energy-discard head under the same filtered tail) is STILL REFUSED; deleting the
+    SCALING leaves two heads that have built since D131. **Two blockers, both rows carry
+    both, and the noun is neither** — so one mechanism serves both, and the two filters
+    (`anyEnergy`, `ownerPokemon`) were already in the vocabulary.
+
+    ⚠️ **THE BRIEF'S ONE HEDGED CLAIM WAS RIGHT AND ITS SHAPE WAS WRONG — the sixth
+    consecutive slice in which the flagged-as-uncertain read is the derived one.** It
+    guessed *"a damage count source that reads a record slot"*. `DamageCountSource` is
+    not involved at all: that union is folded at DECLARATION, off the board, and this
+    family's count lives on `damageDefender.count` — an `EffectSlot` read from INSIDE the
+    program, after the mill. The blocker was one optional field on that op and one on the
+    mill.
+
+    🛑 **THE COMPOSITION QUESTION WAS DRIVEN (D482) AND ITS COUNTERWEIGHT FIRED (D486).**
+    The nearest shipped spelling is real and derivable — rewrite the tail as *"…for each
+    Energy card in your discard pile."* and `deriveAttackDamageMultiplier` claims it,
+    producing `cardsInDiscardPile { seat: "you", filter: { kind: "anyEnergy" } }`. It
+    fails on two independent grounds: it is folded before the program runs, and it counts
+    the WHOLE pile. ⚠️ **On a board whose discard pile starts EMPTY the two are
+    arithmetically identical for every deck, every count and every noun**, so every board
+    in the new suite pre-seeds the pile; a suite that attacked from an empty pile would
+    have been green for nothing. **The one candidate no board separates is a MILL-SIDE
+    filter** — identical forever on any deck whose top N all match — and its separating
+    axis is not a quantity at all but WHICH CARDS LEFT THE DECK, which is why §6 asserts
+    the pile CONTENTS and not only its size.
+
+    `MATCH_RECORD_VERSION` **STAYS 29, ARGUED AT THE HARD ADDRESS RATHER THAN THE EASY
+    ONE.** Neither of D463's usual outs applies: the serialized alphabet DOES grow (two
+    bytes no v29 deploy writes) and reachability is NOT empty — `discardDeckTop` rides
+    `coinFlipGate.then` (D134) and `damageDefender` sits inside registry programs, so a
+    v29 continuation genuinely can hold either op. The claim is the narrow one and it is
+    DRIVEN in the LOSS direction (`deckMillFilteredScale.test.ts` §9): a v29
+    `{op:"discardDeckTop",whose:"self",count:3}` still mills three and files NOTHING, and
+    a v29 `{op:"damageDefender",per:80,count:"discarded"}` still counts the WHOLE slot —
+    3 × 80 = 240 against the filtered 80, which is a different number, so the rung cannot
+    pass by accident.
+
+    ⚠️ **THE WITNESS LOAD WAS ONE FILE AND TWO RUNGS, COUNTED BEFORE THE BUILD (D487's
+    rule).** `discardScaledDamage.test.ts` held both rows as refusals — one rung by
+    population (*"the remaining 3 sentences / 4 printings are a different MECHANISM"*) and
+    one by a predicate that stood in for D402's anchor. Both are re-pointed onto the
+    SHAPE rather than deleted (D178/D438): the first now discriminates the two arms BY
+    THE OP (`discardEnergy` against `discardDeckTop`), because a `.length` re-point would
+    have gone on being right while the sentence it names stopped being true. ⚠️ **The
+    refusal comment there named TWO reasons and exactly ONE has been paid** — the
+    recording mill; the `damageChosen` that reads a slot is still unbuilt and is what the
+    one remaining sentence needs.
+
+    ⚠️ **THE VERSION TAX LANDED AT EXACTLY THE PREDICTED 81 / 61 / 17**, but the sentence
+    beside that figure undercounts its own exception list: it says **THREE** history
+    occurrences and there are **FOUR** at that head — this changelog's D487 heading
+    (`engineVersion 0.381.0 → 0.382.0`), `mutants.ts`'s D275 re-point ledger,
+    `deckBottomDraw.test.ts`'s header arrow, **and the D487 version-tax paragraph itself,
+    which QUOTES the header arrow it is counting**. `grep` returns 85; minus those four
+    is 81, which is why the arithmetic was right while the word was wrong.
+    ⚠️ **A FIGURE AND ITS EXCEPTION LIST ARE TWO CLAIMS AND ONLY THE FIGURE HAD A
+    WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
+    A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
+    occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
+export const engineVersion = "0.383.0";
 
 export type {
   ApplyResult,

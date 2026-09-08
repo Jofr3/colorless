@@ -19,6 +19,7 @@ import {
   deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
+import type { EffectOp } from "./effects";
 import type { GameEvent, GameState } from "./index";
 import {
   DISCARD_SCALED_DECK,
@@ -162,11 +163,36 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     // catches an ATTACH sentence ("If you attached Energy to a Pokémon in this way…",
     // 3 legal printings) that has nothing to do with this family and was already read.
     // A census is as narrow as the literal it matches — measured, not assumed.
+    //
+    // 🆕🆕🆕 **D488 RE-POINTED THIS PREDICATE RATHER THAN THIS NUMBER, AND THE
+    // DISTINCTION IS THE WHOLE OF WHY THE RUNG SURVIVED (D438/D444/D477).** It used to
+    // ask *"does `deriveAttackEffect` claim it?"*, which was a faithful stand-in for
+    // *"does THIS ANCHOR claim it?"* only for as long as this anchor was the file's
+    // only claimant of the family. D488 built the DECK-MILL half — the two sentences
+    // the rung below has named as refused since D402 — through a second arm of the
+    // SAME reader, so the old predicate now answers 8 / 15 and would have made this
+    // file's headline figure a claim about someone else's work.
+    // 🛑 **THE CLAIM IS THE OP, WHICH DISCRIMINATES THE TWO ARMS BY VALUE**: D402's
+    // program opens with `discardEnergy` (Energy off a BOARD) and D488's with
+    // `discardDeckTop` (cards off a DECK). A `.length` re-point would have been the
+    // trap — the number would have gone on being right while the sentence it names
+    // stopped being true.
+    const takesEnergyOffTheBoard = (text: string): boolean => {
+      const program = deriveAttackEffect(text);
+      return program !== null && program[0]?.op === "discardEnergy";
+    };
     const taken = rows.filter(
-      ([, s]) => deriveAttackEffect(s) !== null && s.includes("discarded in this way"),
+      ([, s]) => takesEnergyOffTheBoard(s) && s.includes("discarded in this way"),
     );
     expect(taken).toHaveLength(6);
     expect(units(taken)).toBe(13);
+    // …and the two D488 took are claimed by the OTHER arm, named here so the 8 / 15 the
+    // old predicate now answers is attributable rather than merely different.
+    const mills = rows.filter(
+      ([, s]) => s.includes("discarded in this way") && deriveAttackEffect(s)?.[0]?.op === "discardDeckTop",
+    );
+    expect(mills).toHaveLength(2);
+    expect(units(mills)).toBe(2);
     // …and they are exactly the six transcribed above, at exactly those counts. A
     // sentence in `TAKEN` that the column does not print would make every parse rung
     // below it an assertion about a card nobody prints (D183).
@@ -229,21 +255,55 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     expect(benchMultiply).toHaveLength(0);
   });
 
-  it("the remaining 3 sentences / 4 printings are a different MECHANISM, and stay loud", () => {
-    // What is left of the 12 once the 6 and the 3 are taken out: two DECK MILLS whose
-    // record is cards off a deck rather than Energy off a board, and one HAND discard
-    // whose damage goes to a CHOSEN opponent Pokémon instead of the defender. Neither
-    // is this op pair at a different quantifier; both would need a recording mill or a
-    // `damageChosen` that reads a slot, so admitting them here would author a card.
+  it("🆕 the remaining ONE sentence / 2 printings is a different MECHANISM, and stays loud", () => {
+    // What is left of the 12 once the 6 and the 3 are taken out USED TO BE THREE: two
+    // DECK MILLS whose record is cards off a deck rather than Energy off a board, and
+    // one HAND discard whose damage goes to a CHOSEN opponent Pokémon instead of the
+    // defender. The rung's stated reason was *"both would need a recording mill or a
+    // `damageChosen` that reads a slot"*.
+    //
+    // 🆕🆕🆕 **D488 BUILT THE RECORDING MILL, SO THE REFUSAL IS NOW ONE SENTENCE
+    // WIDE RATHER THAN THREE, AND THE RUNG ASSERTS THE SPLIT INSTEAD OF THE BLANKET**
+    // (D403's move at this file's other rung, kept verbatim in shape). 🛑 **THE SIZE OF
+    // WHAT WAS LEFT IS NOT WHAT MOVED — the reason list was right, and exactly one of
+    // its two reasons has been paid.** `discardDeckTop.recordAs` +
+    // `damageDefender.countFilter` is the recording mill this comment named; the
+    // `damageChosen` that reads a slot is still unbuilt, and it is what the one
+    // remaining sentence needs.
     const rest = legalAttackCorpus().filter(
       ([, s]) =>
         s.includes("discarded in this way") &&
         !s.includes("more damage for each") &&
         deriveAttackEffect(s) === null,
     );
-    expect(rest).toHaveLength(3);
-    expect(units(rest)).toBe(4);
-    for (const [, s] of rest) expect(readByAny(s), s).toBe(false);
+    expect(rest).toHaveLength(1);
+    expect(units(rest)).toBe(2);
+    for (const [, s] of rest) {
+      expect(readByAny(s), s).toBe(false);
+      // …and it is the HAND discard, named rather than left as a subtraction (D400):
+      // its damage goes to a body the player has not chosen yet, so the count and the
+      // target are decided at different moments.
+      expect(s.startsWith("Discard up to 3 Energy cards from your hand."), s).toBe(true);
+    }
+    // The two that LEFT this list, and BY WHAT — a re-point onto the shape rather than
+    // a deletion (D178/D438), so the day either regresses this rung says which.
+    const built = legalAttackCorpus().filter(
+      ([, s]) =>
+        s.includes("discarded in this way") &&
+        !s.includes("more damage for each") &&
+        deriveAttackEffect(s)?.[0]?.op === "discardDeckTop",
+    );
+    expect(built).toHaveLength(2);
+    expect(units(built)).toBe(2);
+    for (const [, s] of built) {
+      const program = deriveAttackEffect(s) as EffectOp[];
+      expect(program, s).toHaveLength(2);
+      expect(program[0], s).toMatchObject({ op: "discardDeckTop", whose: "self", recordAs: "discarded" });
+      const scale = program[1];
+      if (scale?.op !== "damageDefender") throw new Error(`not a damageDefender: ${s}`);
+      expect(scale.count, s).toBe("discarded");
+      expect(scale.countFilter, s).not.toBeUndefined();
+    }
   });
 });
 

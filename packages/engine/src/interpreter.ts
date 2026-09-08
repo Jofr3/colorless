@@ -1111,6 +1111,28 @@ function recorded(record: EffectRecord, slot: EffectSlot): readonly string[] {
   return record[slot] ?? [];
 }
 
+/** 🆕🆕 D488 — how many of the uids filed under `slot` SCORE, once the printed noun
+    has narrowed them. An ABSENT `filter` is every uid, which is byte-for-byte the
+    `.length` this replaced, so the 13 printings already reading a slot do not move.
+
+    ⚠️ **A uid THE STATE CANNOT RESOLVE DOES NOT COUNT.** `cardOfUid` returns
+    `undefined` for a uid with no catalog id, and `matchesFilter`'s own `undefined` arm
+    answers FALSE — the direction `hpOf`'s null takes one file over: an unknown card is
+    not a match, never a free one. The unfiltered branch is deliberately NOT routed
+    through the same `filter` call with an "everything" predicate, because that would
+    make an unresolvable uid stop counting for the 13 shipped printings too. */
+function scoredSlot(
+  record: EffectRecord,
+  state: GameState,
+  slot: EffectSlot,
+  filter: CardFilter | undefined,
+): number {
+  const filed = recorded(record, slot);
+  return filter === undefined
+    ? filed.length
+    : filed.filter((uid) => matchesFilter(cardOfUid(state, uid), filter)).length;
+}
+
 /** The slot a parking op will file its answer under, if any. */
 function recordSlotOf(op: EffectOp): EffectSlot | undefined {
   return op.op === "payFromHand" ||
@@ -1848,7 +1870,25 @@ function stepOp(
       // mechanism D402 refused the family's additive half on. An ABSENT `base` is
       // zero, which is byte-for-byte what every `per`/`count` op meant before this
       // slice, so no board that existed moves.
-      const amount = op.amount ?? (op.base ?? 0) + recorded(record, op.count).length * op.per;
+      //
+      // 🆕🆕 D488 — AND THE SLOT CAN BE COUNTED THROUGH A FILTER. *"…for each
+      // **Energy card** you discarded in this way"* / *"…for each **Misty's Pokémon**
+      // that you discarded in this way"* score a SUBSET of what the earlier op filed;
+      // an ABSENT `countFilter` is every uid, which is byte-for-byte what this line
+      // did before, so none of the 13 printings that already reach here move.
+      // ⚠️ **A uid THE STATE CANNOT RESOLVE DOES NOT COUNT** — `matchesFilter`'s own
+      // `undefined` arm — which is the same direction `hpOf`'s null takes one file
+      // over: an unknown card is not a match, never a free one.
+      //
+      // ⚠️ **THE COUNT IS A CALL AND NOT AN INLINE TERNARY, AND THAT IS TYPE-SYSTEM
+      // MECHANICS RATHER THAN TASTE.** `op.amount ?? …` is what narrows `op` to the
+      // `{per, count}` arm at all (the `amount?: never` discriminant), and a `const`
+      // lifted ABOVE this line sits outside that narrowing — `op.count` reads back as
+      // `EffectSlot | undefined` and `tsc` refuses it. Keeping the whole computation
+      // inside the right operand preserves the narrowing; a named helper keeps it
+      // readable.
+      const amount =
+        op.amount ?? (op.base ?? 0) + scoredSlot(record, state, op.count, op.countFilter) * op.per;
       if (amount <= 0) return { done: state };
       return { done: snipeActive(state, amount, false, ctx, events) };
     }
@@ -2482,10 +2522,24 @@ function stepOp(
       // produce): the sibling producer's "only fires with ≥1" rule, and the reason
       // it matters here is that a heads-count of N on an empty deck would
       // otherwise announce N rows about nothing having happened.
+      //
+      // 🆕🆕 D488 — AND IT RECORDS NOW, WHICH IS THE ONE THING ABOVE THAT MOVED.
+      // *"Discard the top 3 cards of your deck, and this attack does 80 damage for
+      // each Energy card you discarded in this way."* files the milled uids under
+      // `recordAs` so the trailing `damageDefender` can count a SUBSET of them.
+      // ⚠️ **THE EMPTY ANSWER IS FILED BEFORE THE ZERO-CARD RETURN, NOT AFTER IT** —
+      // `discardPileRetrieval`'s rule, repeated at `attachFromDeck`: an op that RAN
+      // and moved nothing must OVERWRITE its slot, or a stale value from an earlier
+      // writer survives and the count answers for the wrong op. A milled-out deck is
+      // exactly that path, and it is the one the early `return` would have skipped.
       const victim = op.whose === "self" ? ctx.seat : otherSeat(ctx.seat);
       const side = state.players[victim];
       const milled = side.deck.slice(0, Math.max(0, op.count));
-      if (milled.length === 0) return { done: state };
+      if (milled.length === 0) {
+        recordMoved(record, op.recordAs, []);
+        return { done: state };
+      }
+      recordMoved(record, op.recordAs, milled);
       // `seat` is the deck's OWNER and `actor` the player whose card did it, so the
       // two coincide on `whose: "self"` and diverge on `whose: "opponent"` — the same
       // one ternary, read a second time. The log's voice hangs off that comparison

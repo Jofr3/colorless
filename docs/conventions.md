@@ -4922,6 +4922,123 @@ regression, and "does this still do X" — the sweep is the right instrument and
 green line is real support. For "which of these two equivalent designs is correct"
 — it is silent, and saying so explicitly is part of the decision.
 
+### Measure pair-hood by AXIS DELETION, never by sentence resemblance (D488)
+
+Two residue sentences that *look* like one mechanism may be one slice or several, and **the
+sentences cannot tell you which**. The test is cheap and it is the same cost either way: **delete
+each axis alone and re-run every reader on both rows.** Two rows are one slice iff they refuse and
+build **together on every axis**.
+
+D488's pair — *"Discard the top 3 cards of your deck, and this attack does 80 damage for each
+**Energy card** you discarded in this way."* and its *"…70 damage for each **Misty's Pokémon**…"*
+sibling at count 7 — ran four deletions against all 13 `deriveAttack*` exports:
+
+| axis deleted | row A | row B |
+|---|---|---|
+| FILTER (`→ card`) | refused | refused — **and both collapse to the SAME STRING at two counts** |
+| MILL HEAD (shipped Energy-discard head, same filtered tail) | refused | refused |
+| SCALING (tail dropped) | **builds** (`discardDeckTop count:3`) | **builds** (`count:7`) |
+| CONNECTIVE (comma → period) | refused | refused |
+
+**Two blockers, both rows carry both, and the noun is neither.** The filters differ in *kind* — a
+category (`anyEnergy`) versus an owner-prefixed name (`ownerPokemon`) — and that difference cost
+**zero**: both members shipped under one anchor. **D483 ran the identical test on a four-row cluster
+and got a 2+2 SPLIT.** Neither result was predictable from reading the sentences.
+
+**Pin the pair-hood in the mutant corpus, not only in prose.** D488 authored two rows
+(`D488-noun-group-goes-greedy`, `D488-noun-resolver-loses-the-owner`) that are characters **only row
+B can see** — had the pair actually been two mechanisms, those rows would have had no killer, and the
+sweep would have said so.
+
+### When a near-miss is an ALGEBRAIC identity on the natural board, the finding is WHICH BOARD to write (D488, refining D486)
+
+D486 established that a candidate can be indistinguishable from the build by arithmetic rather than
+by board coincidence. D488 shows the **useful** form of that: the identity was **conditional on a
+board property**, and naming the property is what made the suite say anything.
+
+*"Count what the mill recorded"* and *"count the discard pile afterwards"* are equal **for every
+deck, every count and every noun** — when the pile **starts empty**, because the pile afterwards *is*
+what the mill moved. That is the board a suite writes by default. **So every board in D488's suite
+pre-seeds the discard pile**, and the near-miss is separated on the first assertion instead of never.
+
+Two further rules fell out:
+
+- **Count how many candidate readings each board separates, and field as many boards as it takes.**
+  D488 enumerated **eight** readings; board A separated 6 (80 / 240 / 0 / 320 / 640 / 160), board B
+  separated **all 8** (140 / 490 / 0 / 350 / 770 / 210 / 280 / 70). The file fields two decks because
+  one deck would have left two readings alive.
+- ⚠️ **A candidate that NO board separates by quantity is separated by CONTENTS.** A mill-side filter
+  (filter as the cards leave the deck, rather than as the record is scored) is arithmetically
+  identical **forever** on any deck whose top N all match. Its separating axis is *which cards left*,
+  so the suite asserts the pile's **contents**, not only its size.
+
+### The near-miss that folds at DECLARATION is not a composition — check WHEN, not just WHAT (D488)
+
+`deriveAttackDamageMultiplier` really does claim *"…for each Energy card in your discard pile."*, and
+it really does produce a filtered count of exactly the right noun. It is still not a route to
+*"…for each Energy card you discarded in this way."*, on two independent grounds:
+
+1. **It folds at DECLARATION** — before the program runs, off the board — where this family's count
+   must be read *after* the mill, from inside the program.
+2. **It counts the WHOLE pile**, not the record.
+
+Ask of any candidate composition **when it evaluates**, not only what it computes. A multiplier
+resolved at declaration and a slot read mid-program are different machines that agree only on the
+empty-pile board (see above). `deriveAttackDamageMultiplier(MILL_ENERGY)` is null, so there was no
+composition to reach for — but the *shape* of the refutation is reusable.
+
+### Witness load is per-MECHANISM, not per-ROW (D488, refining D487-ii)
+
+D487 established: price a residue row by **witness load** — how many refusal-witness files name the
+sentence — not only by mechanism, because no mechanism count predicts it (one candidate had six
+files, another had one).
+
+D488 supplies the second data point, and it cuts the other way. Its two rows share **one file, two
+rungs** (`discardScaledDamage.test.ts` §1), because the witness is held **by predicate** — *"this
+anchor takes SIX… and only those"* — rather than by quoting either sentence. Neither sentence appears
+verbatim anywhere outside the corpus file. **Building both rows cost exactly what building one would
+have.**
+
+So: **count witness load against the MECHANISM you are about to build, then divide by the rows it
+frees.** A predicate-held witness amortises across every row in its cluster; a sentence-quoting
+witness does not. And check the neighbours are actually about your sentence —
+`benchDiscardBoost.test.ts` and `deckTopMill.test.ts` carry mill refusals that belong to a
+*different* (additive) row and cost nothing here.
+
+### Re-point a witness onto the OP, not onto the count (D488)
+
+When a refusal rung is re-pointed after its sentence ships (D178/D438), prefer a discriminator that
+**breaks when the claim stops being true**. D488's §1 rung had asserted an arm count; a `.length`
+re-point would have stayed green while the sentence it names moved to a different anchor. It now
+discriminates the two arms **by the op** (`discardEnergy` vs `discardDeckTop`).
+
+⚠️ **And read what the rung's comment still promises.** D488's names **two** blockers for its
+leftovers; exactly **one** was paid. Leaving the other named — rather than editing the comment down
+to what shipped — is what tells the next slice where the remaining sentence's price is.
+
+### A `Math.round` numerator can be DERIVED BY INTERSECTION rather than read (D488)
+
+A census rung of the form `round(inRows / unbuiltAttack * 100) === 18` is **green at more than one
+numerator**, so a slice that moves only the denominator can edit it blind and never find out.
+
+D488 measured instead of assuming: the rung is green at both denominators, `inRows ∈ {33,34}` at 184
+and `∈ {32,33}` at 182, and the intersection is **{33}** — unmoved. (33/184 = 17.93 %, 33/182 =
+18.13 %; the printed fraction held at 18 while only the denominator moved.) Confirm with `git diff`
+that the numerator's identifier is absent from every hunk in that file.
+
+**Generalisation: a rounded assertion has a solution SET, not a solution.** Any edit to one of its
+inputs must be justified against the whole set, or it is a guess that happens to pass.
+
+### A figure and its exception list are TWO claims, and usually only the figure has a witness (D488)
+
+D487 wrote: *"version tax measured at exactly 81 occurrences, with **three** history occurrences left
+alone."* The arithmetic was right — `grep` returns 85, `85 − 4 = 81` — and the **word was wrong**:
+there are **four**. The fourth is *that paragraph itself*, which quotes the arrow it is counting.
+
+**A prose census of exceptions is self-referential the moment it is written down**, and the count is
+taken before the sentence exists. When inheriting a figure with an exception list: **re-derive the
+list, not just the total**. The total is the part that had a witness.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

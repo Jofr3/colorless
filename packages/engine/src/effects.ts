@@ -5215,7 +5215,35 @@ export type EffectOp =
       nothing it was defending. An op carrying both `amount` and `per` would still
       make the interpreter pick one and ignore the other silently, and that is still
       refused below. */
-  | { op: "damageDefender"; per: number; count: EffectSlot; base?: number; amount?: never }
+  | {
+      op: "damageDefender";
+      per: number;
+      count: EffectSlot;
+      /** 🆕🆕 D488 — the OPTIONAL printed noun that narrows WHICH of the slot's
+          cards score, the same shape `yourBenchCount.filter` (D466),
+          `damageCountersOnYourBench.filter` (D467) and `energyOnSelf.filter`
+          (D470) took one union over. `undefined` is EVERY uid in the slot, so
+          all 13 printings that reached this arm before D488 emit a filter-less
+          object byte for byte and take the interpreter's untouched `.length`
+          path — which is what makes this a FIELD and not a second arm.
+
+          🛑 **IT IS A FILTER ON THE COUNT, NOT ON THE OP THAT FILLED THE SLOT,
+          AND THE TWO ARE GENUINELY DIFFERENT PROGRAMS.** Filtering the earlier
+          op would change WHAT MOVES — *"discard the top 3 cards"* discards
+          three cards whatever they are, and only the DAMAGE asks which of them
+          were Energy. `discardDeckTop`'s own doc block says it stays count-only
+          *"by D104's minimal-shape rule: no printing in the pool filters what
+          it mills"*, and that is still true at this head: the printed filter
+          lives on the scaling clause, and this is where it is spelled.
+
+          ⚠️ **IT IS MEANINGLESS BESIDE `amount`, WHICH THE UNION REFUSES RATHER
+          THAN A RUNTIME GUARD** (`countFilter?: never` on the flat arm below,
+          `discardEnergy`'s idiom, the same way `per`/`count` are already
+          refused there). */
+      countFilter?: CardFilter;
+      base?: number;
+      amount?: never;
+    }
   /** 🆕 D316 — THE SAME HIT WITH A **FLAT** AMOUNT, and the second answer to the
       paragraph above rather than a second op. *"You may do {N} more damage. If you
       do, …"* (5 legal printings, `deriveAttackOptionalBoost`) is the OTHER kind of
@@ -5236,7 +5264,7 @@ export type EffectOp =
       `per?: never`/`count?: never` here), `discardEnergy`'s idiom**: an op carrying
       both would make the interpreter pick one and ignore the other silently, and
       the union is where that is refused rather than in a runtime guard. */
-  | { op: "damageDefender"; per?: never; count?: never; amount: number }
+  | { op: "damageDefender"; per?: never; count?: never; countFilter?: never; amount: number }
   /** D228 — a FLAT §8.5 hit on whoever is the opponent's Active **at the moment
       this op runs**: *"This attack does {N} damage to the new Active Pokémon."*
       — **8 Standard-legal printings** across five sentences, every one of them
@@ -7923,6 +7951,21 @@ export type EffectOp =
       STILL COUNT-ONLY, by D104's minimal-shape rule: no printing in the pool filters
       what it mills, so there is no `CardFilter` here.
 
+      🆕🆕 **D488 — IT RECORDS NOW (`recordAs`), AND THE PARAGRAPH DIRECTLY ABOVE IS
+      STILL TRUE RATHER THAN SUPERSEDED.** *"Discard the top 3 cards of your deck, and
+      this attack does 80 damage for each **Energy card** you discarded in this way."*
+      prints a filter — and it prints it on the DAMAGE, not on the mill. Three cards
+      leave the deck whatever they are; only the scaling asks which of them counted. So
+      the filter is `damageDefender.countFilter` and this op gains the §9.2 slot alone,
+      which is `drawCards`', `discardEnergy`' and `switchActive`'s optional field at a
+      ninth address and changes no board that existed (absent ⇒ nothing is filed).
+
+      ⚠️ **AND THE EMPTY ANSWER IS FILED ON THE ZERO-CARD PATH TOO**, which is the rule
+      `discardPileRetrieval` states and `attachFromDeck` repeats: an op that RAN and
+      moved nothing must OVERWRITE its slot, or a stale value from an earlier writer
+      survives it and the count answers for the wrong op. A milled-out deck is exactly
+      that path here, and it is the one an early `return` would have skipped.
+
       MILLING YOUR OWN DECK IS A REAL COST, NOT A BUG — Tyranitar's "Dread Mountain"
       (230 for {D}{D}) pays 4 cards off its own deck for the number, and §14.3
       deck-out is checked at the DRAW, so the self-mill's danger lands on the
@@ -7938,7 +7981,7 @@ export type EffectOp =
       `FLIP_DECK_TOP_MILL` ("Flip a coin. If heads, discard the top card of your
       opponent's deck.", D134), which wraps the singular opponent-side reading in a
       `coinFlipGate` and changes nothing about the op. */
-  | { op: "discardDeckTop"; whose: "self" | "opponent"; count: number }
+  | { op: "discardDeckTop"; whose: "self" | "opponent"; count: number; recordAs?: EffectSlot }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -14081,6 +14124,113 @@ const DISCARD_PILE_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
     own three branches and a surviving mutant disproved it. */
 function discardPileFilter(noun: string): CardFilter | null {
   return literalClauseRow(DISCARD_PILE_NOUNS, noun) ?? null;
+}
+
+// 🆕🆕 D488 — MILL YOUR OWN DECK, THEN SCALE THE DAMAGE BY A **FILTERED** COUNT OF
+// WHAT WAS MILLED. *"Discard the top N cards of your deck, and this attack does P
+// damage for each <noun>[ that] you discarded in this way."* — **2 sentences / 2 legal
+// printings**, measured over `legalAttackCorpus()` (the committed `legal_standard = 1`
+// attack column, 640 sentences / 1,732 printings) by running the anchor below against
+// every row, and transcribed byte for byte:
+//
+//   1  "Discard the top 3 cards of your deck, and this attack does 80 damage for each
+//       Energy card you discarded in this way."                        (corpus line 126)
+//   1  "Discard the top 7 cards of your deck, and this attack does 70 damage for each
+//       Misty's Pokémon that you discarded in this way."               (corpus line 129)
+//
+// 🛑 **THEY ARE ONE MECHANISM AND THE CLAIM IS MEASURED BY AXIS DELETION RATHER THAN
+// ASSERTED** (D483's four-row cluster split 2+2 under exactly this test, so it is not a
+// formality). Three axes were deleted in turn and both rows were re-run against all 13
+// readers of `attackReaderSurface()`:
+//
+//   * delete the FILTER (`Energy card` / `Misty's Pokémon that` -> `card`): both rows
+//     collapse to the SAME string at two counts, and BOTH ARE STILL REFUSED. So the
+//     filter is not what blocks either of them.
+//   * delete the MILL HEAD (put the shipped Energy-discard head under the same filtered
+//     tail): STILL REFUSED. So the filtered count is a blocker on its own.
+//   * delete the SCALING (drop the tail): both heads build, and to the SAME op at two
+//     counts.
+//
+// **Two blockers, both rows carry both, neither is the noun.** The filters differ in
+// KIND — a card CATEGORY against an OWNER-PREFIXED name — and that difference costs
+// nothing, because `CardFilter` already spells both (`anyEnergy`, `ownerPokémon`).
+//
+// ⚠️ **THE HEAD IS SPELLED WITH A COMMA AND THE FAMILY ONE SCREEN UP SPELLS A PERIOD,
+// SO THIS ANCHOR IS STRUCTURALLY DISJOINT FROM `DECK_TOP_MILL` AND FROM
+// `ENERGY_DISCARD_SCALED_DAMAGE` WITHOUT A GUARD** (D467's kind of disjointness, and
+// the reason no ordering here can rot): `DECK_TOP_MILL` ends `of your deck\.$` and this
+// one demands `of your deck, and` at that offset, so no string matches both; and
+// `ENERGY_DISCARD_SCALED_DAMAGE` demands `from (this|your) Pokémon\.` before its tail,
+// which no deck mill prints. `deckTopMill.test.ts` already pins the period form's `$`
+// against a second sentence riding the same action, and that rung is untouched.
+//
+// ⚠️ **NARROW ON THREE PRINTED AXES ON PURPOSE, AND EACH IS A MEASUREMENT.** The mill
+// is OWN-DECK only (`whose: "self"`) and PLURAL-COUNTED only, because the column prints
+// no opponent-side and no singular spelling of this compound at all; and the fold is the
+// MULTIPLY one (`does P damage for each`, no printed *"more"*), which is
+// `ENERGY_DISCARD_SCALED_DAMAGE`'s own split reproduced one head over — the additive
+// twin of this very shape is Camerupt `sv03-032` (*"Discard the top card of each
+// player's deck. This attack does 100 more damage for each Energy card discarded in
+// this way."*, 2 printings), which `deckTopMill.test.ts` and `benchDiscardBoost.test.ts`
+// both hold as a named refusal and which this anchor still refuses on THREE independent
+// counts (two decks, the singular, and the `more`). Arms no sentence drives are not
+// written (`IN_PLAY_BODY_NOUNS`' rule).
+//
+// ⚠️ **THE OPTIONAL `that ` IS A SPELLING AND NOT AN AXIS** — the two printings differ
+// in whether the relative pronoun is written, exactly as `Energy(?: cards)?` one family
+// over covers the one printing that writes the plural noun. It rides an OPTIONAL group
+// rather than two anchors because everything downstream of it is byte-identical.
+//
+// 🛑 **AND THE NOUN GROUP IS LAZY, WHICH IS BEHAVIOUR RATHER THAN STYLE.** Greedy,
+// `(.+) (?:that )?you discarded` reads corpus line 129's noun as *"Misty's Pokémon
+// that"* — the pronoun swallowed INTO the noun — which resolves to `null` and drops a
+// printed row onto the loud path for a reason no reader could name. The lazy group takes
+// the shortest noun that lets the tail match, which is the printed one. ⚠️ The
+// difference is invisible on corpus line 126 (no pronoun to swallow), so ONE of the two
+// rows is the whole witness for it, and `deckMillFilteredScale.test.ts` §3 drives it.
+const DECK_MILL_FILTERED_SCALED_DAMAGE =
+  /^Discard the top (\d+) cards of your deck, and this attack does (\d+) damage for each (.+?) (?:that )?you discarded in this way\.$/;
+/** 🆕🆕 D488 — the printed noun between *"for each "* and *"[that ]you discarded in
+    this way."*, resolved to the `CardFilter` that already answers it, or `null` when
+    this file cannot spell it — which keeps the sentence on the loud
+    ATTACK_EFFECT_SKIPPED path.
+
+    🛑 **IT READS `DISCARD_PILE_NOUNS` AND DOES NOT ADD TO IT, AND THAT ASYMMETRY IS THE
+    WHOLE DESIGN.** Milled cards land in the discard pile, so *"which cards does this
+    printed noun name"* has the same answer here as it has for D440's pile count (D159),
+    and `discardPileFilter` is called rather than re-spelled. But the VOCABULARIES are
+    not shared in the other direction: adding a row to that map to reach corpus line 129
+    would widen D440's TWO anchors as well, claiming *"This attack does N damage for each
+    Misty's Pokémon in your discard pile."* — a sentence this column does not print.
+    **A shared answer is not a shared vocabulary**, and the cheap-looking move (one map
+    row) is the one that authors a card.
+
+    ⚠️ **THE OWNER BRANCH REUSES `IN_PLAY_OWNER_NOUN` RATHER THAN A SECOND COPY OF
+    `/^(.+)['’]s Pokémon$/`.** `ownerPokémon`'s own doc block is explicit that it **is a
+    card predicate** and that *"every consumer of `CardFilter` scans a deck / hand /
+    discard pile"* — so a discarded card is exactly what it was built to answer, and the
+    in-play family reaching it through a BODY is the indirect use, not this one. The
+    regex is a spelling of one printed possessive and is shared for `CLAUSE_ENERGY_TOKENS`'
+    reason: one list, not two that drift.
+
+    ⚠️ **AND `inPlayBodyFilter` IS DELIBERATELY *NOT* CALLED WHOLE.** It would admit
+    *"Pokémon"*, *"Basic Pokémon"*, *"Pokémon ex"*, both stage ordinals and 22 type
+    spellings — every one of them a filter `matchesFilter` answers correctly on a
+    discarded card, and not one of them printed on this shape. That is the matrix D361
+    refuses: not because the engine would invent a BEHAVIOUR (it would not) but because
+    a reader claiming sentences the column does not print cannot be falsified by the
+    column. The two branches below are the two nouns that are printed.
+
+    Two branches and they are DISJOINT by construction rather than by order:
+    `DISCARD_PILE_NOUNS`' four keys are *"Energy card"*, *"Basic Energy card"*, *"Item
+    card"* and *"Ethan's Adventure card"*, and not one of them ends in `'s Pokémon`. The
+    order is legibility (D439's correction to its own block, one vocabulary up). */
+function milledCardFilter(noun: string): CardFilter | null {
+  const zoneNoun = discardPileFilter(noun);
+  if (zoneNoun !== null) return zoneNoun;
+  const owner = IN_PLAY_OWNER_NOUN.exec(noun);
+  if (owner !== null && owner[1] !== undefined) return { kind: "ownerPokemon", owner: owner[1] };
+  return null;
 }
 // 🆕🆕 **D445 — THE OPPONENT'S HAND, COUNTED, AND IT IS THE FIRST DAMAGE FOLD IN
 // THIS ENGINE OVER A ZONE THAT IS NOT PUBLIC.** Two printed sentences / **4 legal
@@ -22512,6 +22662,46 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           recordAs: "discarded" as const,
         },
         { op: "damageDefender", per, count: "discarded" },
+      ];
+    }
+  }
+
+  // 10c. 🆕🆕 D488 — "Discard the top N cards of your deck, and this attack does
+  //      P damage for each <noun>[ that] you discarded in this way." — the MILL as the
+  //      §9.2 recorder and a FILTERED slot count as the multiplier. 2 sentences / 2
+  //      legal printings; see the anchor's own census and its axis-deletion argument.
+  //
+  //      🛑 THE TWO OPS ARE THE ONES 10b ALREADY EMITS, AT A DIFFERENT HEAD AND WITH
+  //      ONE OPTIONAL FIELD EACH. The head records instead of merely milling
+  //      (`recordAs`), and the damage counts a SUBSET of the slot instead of all of it
+  //      (`countFilter`) — both absent-is-the-old-behaviour widenings, so no board that
+  //      existed before this slice moves. ZERO new ops, ZERO new `EffectSlot` members,
+  //      ZERO new `CardFilter` members.
+  //
+  //      Mutually exclusive with 10b and with every mill arm by their own `^…$`: 10b
+  //      demands `from (this|your) Pokémon\.` before the tail and `DECK_TOP_MILL` ends
+  //      at `deck\.`, where this sentence carries `deck, and`.
+  match = DECK_MILL_FILTERED_SCALED_DAMAGE.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    const per = Number(match[2]);
+    const filter = milledCardFilter(match[3] ?? "");
+    // THREE printed things, THREE guards, and the third is the one that is not a
+    // number: a printed 0 mill is a silent no-op, a printed 0 per-unit is an attack
+    // that deals nothing however much comes off (D145's standing rule for every
+    // captured amount here), and an UNSPELLABLE noun must reach the loud
+    // `ATTACK_EFFECT_SKIPPED` path rather than derive to an unfiltered count —
+    // which would score every milled card and quietly multiply the damage.
+    if (count >= 1 && per >= 1 && filter !== null) {
+      return [
+        // The mill first, because that is the printed order — and because the damage
+        // READS what it filed: `recordAs: "discarded"` is the printed "in this way",
+        // an op→op §9.2 record and not a re-scan of the pile. The distinction is
+        // load-bearing rather than stylistic: a pile scan would also count what was
+        // already there, which is a different number on every board whose discard
+        // pile is not empty.
+        { op: "discardDeckTop", whose: "self" as const, count, recordAs: "discarded" as const },
+        { op: "damageDefender", per, count: "discarded" as const, countFilter: filter },
       ];
     }
   }
