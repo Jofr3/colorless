@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.384.0";',
+    find: 'export const engineVersion = "0.385.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -5924,8 +5924,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D403",
     what: "\ud83d\uded1 C1 \u2014 **THE ZONE WIDENED TO THE WHOLE OWN BOARD, WHICH IS HAIL BLADE'S REAL VALUE COPIED ONE FAMILY OVER.** `from: \"yours\"` is what the MULTIPLY half of this exact family emits and what `registry.ts` has spelled by hand since D96, so it is the single most likely edit an author makes here. The printed sentence says *\"your **Benched** Pok\u00e9mon\"*, and the board that separates them is the one every printing of this shape produces: the attacker's own cost Energy is attached to the ACTIVE, a cost is not spent, so the whole-board member lets the card fund its own boost with the Energy it just attacked with. \u00a74's first rung offers 3 uids under the mutant's 4 \u2014 and the extra one is the cost",
     file: "packages/engine/src/effects.ts",
-    find: "      from: \"yourBench\",\n      filter: reading.filter,",
-    replace: "      from: \"yours\",\n      filter: reading.filter,",
+    find: "          from: \"yourBench\",\n          filter: reading.filter,",
+    replace: "          from: \"yours\",\n          filter: reading.filter,",
     expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
   },
   {
@@ -5942,8 +5942,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D403",
     what: "\ud83d\uded1 C3 \u2014 **THE PRINTED CEILING DROPPED, WHICH IS HAIL BLADE'S UNCAPPED `any amount` ON A SENTENCE THAT PRINTS `up to 2`.** The op still parks and still records, so the shape is right and only the OFFER is wrong: a Bench holding four Energy would let the player discard all four and collect `50 + 60 \u00d7 4 = 290` off a card whose ceiling is `170`. \u26a0\ufe0f **IT IS SILENT ON A BENCH OF TWO OR FEWER**, which is why \u00a74's first rung fields THREE against a printed cap of two \u2014 a two-Energy board reads `max: 2` under both readings and would have been green",
     file: "packages/engine/src/effects.ts",
-    find: "      count: \"any\",\n      cap: reading.cap,\n      recordAs: \"discarded\",",
-    replace: "      count: \"any\",\n      recordAs: \"discarded\",",
+    find: "          count: \"any\",\n          cap: reading.cap,\n          recordAs: \"discarded\",",
+    replace: "          count: \"any\",\n          recordAs: \"discarded\",",
     expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
   },
   {
@@ -22630,8 +22630,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D455",
     what: "⚠ **THE MILL LANDS ON THE WRONG DECK** — the arm's own doc block says `whose` PICKS THE SEAT AND NOTHING ELSE, and that this one ternary is the entire difference between Gyarados swsh10.5-022's *\"Discard the top 5 cards of your deck\"* (its own printed cost) and its index-0 *\"…of your opponent's deck\"* (the mill). Inverted, a self-mill cost is paid by the OPPONENT — the attacker gets the effect for free and the defender pays for it — and the deck-out clock §14.3 checks at the draw step is moved to the wrong player. D131 widened the field rather than adding a member precisely so there would be ONE byte here, and nothing executed it. **5 attack-corpus sentences / 17 legal printings, plus 4 registry cards** — measured this slice",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const victim = op.whose === \"self\" ? ctx.seat : otherSeat(ctx.seat);\n      const side = state.players[victim];",
-    replace: "      const victim = op.whose === \"self\" ? otherSeat(ctx.seat) : ctx.seat;\n      const side = state.players[victim];",
+    find: "          case \"self\":\n            return [ctx.seat];\n          case \"opponent\":\n            return [otherSeat(ctx.seat)];",
+    replace: "          case \"self\":\n            return [otherSeat(ctx.seat)];\n          case \"opponent\":\n            return [ctx.seat];",
     expectKilledBy: [
       "packages/engine/src/deckTopMill.test.ts",
       "packages/engine/src/reconDirective.test.ts",
@@ -22662,8 +22662,8 @@ export const MUTANTS: Mutant[] = [
     // matching. 🛑 THE CLAIM IS UNCHANGED — deleting the block still lets the op announce
     // `DECK_TOP_DISCARDED` with `uids: []` on an empty deck, because the `recordMoved`
     // below it files the same empty list either way.
-    find: "      const milled = side.deck.slice(0, Math.max(0, op.count));\n      if (milled.length === 0) {\n        recordMoved(record, op.recordAs, []);\n        return { done: state };\n      }",
-    replace: "      const milled = side.deck.slice(0, Math.max(0, op.count));",
+    find: "        const milled = side.deck.slice(0, Math.max(0, op.count));\n        if (milled.length === 0) continue;",
+    replace: "        const milled = side.deck.slice(0, Math.max(0, op.count));",
     expectKilledBy: [
       "packages/engine/src/deckTopMill.test.ts",
       "packages/engine/src/perHeadsProgram.test.ts",
@@ -26694,8 +26694,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D488",
     what: "🛑 **C4 — THE MILL RUNS AND FILES NOTHING, WHICH IS C1's SYMPTOM FROM THE OTHER SIDE OF THE OP BOUNDARY.** The program is byte-perfect (`recordAs: \"discarded\"` is right there on the op) and the interpreter drops it on the floor, so the slot is empty on every board that milled anything and the attack deals zero. The 16 shipped `DECK_TOP_MILL` printings are untouched, so nothing outside this family reddens.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      recordMoved(record, op.recordAs, milled);",
-    replace: "",
+    find: "      recordMoved(record, op.recordAs, filed);\n      return { done: milledState };",
+    replace: "      return { done: milledState };",
     expectKilledBy: [
       "packages/engine/src/deckMillFilteredScale.test.ts",
     ],
@@ -26705,8 +26705,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D488",
     what: "⚠️ **C5 — THE OP RUNS, MOVES NOTHING AND LEAVES AN EARLIER WRITER'S UIDS STANDING, WHICH IS THE RULE `discardPileRetrieval` STATES AND `attachFromDeck` REPEATS.** On the shipped two-op program this is unreachable — nothing else writes `discarded` — so it is driven through a SEEDED record instead of a board, and the row exists to say so out loud (D200/D214: name the edit that breaks it). A milled-out deck then scales the damage off cards a PREVIOUS op discarded.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      if (milled.length === 0) {\n        recordMoved(record, op.recordAs, []);\n        return { done: state };\n      }",
-    replace: "      if (milled.length === 0) return { done: state };",
+    find: "      recordMoved(record, op.recordAs, filed);",
+    replace: "      if (filed.length > 0) recordMoved(record, op.recordAs, filed);",
     expectKilledBy: [
       "packages/engine/src/deckMillFilteredScale.test.ts",
     ],
@@ -26988,6 +26988,210 @@ export const MUTANTS: Mutant[] = [
     replace: "      (scale.op === \"damageChosen\" && scale.perRecorded !== undefined) ||\n      (scale.op === \"damageDefender\" && scale.count !== undefined);",
     expectKilledBy: [
       "packages/engine/src/handEnergyCancel.test.ts",
+    ],
+  },
+  {
+    id: "D490-anchor-loses-its-caret",
+    decision: "D490",
+    what: "⚠️ **THE `^` DROPPED, so a mid-sentence clause reaches a WHOLE-SENTENCE reader.** The family's standing guard is the pair `^…$` plus the capital first word; this is the half a leading rider defeats. With it gone, *\"Before doing damage, discard the top card of each player's deck. …\"* would derive — a compound whose leading clause nothing simulated, resolved silently instead of landing on the loud `ATTACK_EFFECT_SKIPPED` path. Killed by §3's one-axis refusal loop, which spells exactly that leading text.",
+    file: "packages/engine/src/effects.ts",
+    find: "const EACH_DECK_MILL_SCALED_BOOST =\n  /^Discard the top card",
+    replace: "const EACH_DECK_MILL_SCALED_BOOST =\n  /Discard the top card",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-anchor-loses-its-dollar",
+    decision: "D490",
+    what: "⚠️ **THE `\\\\.$` DROPPED — the OTHER half of the whole-sentence guard, and the one whose failure is quiet.** A trailing clause (*\"… Then, shuffle your deck.\"*) would be swallowed whole: the reader answers, the census counts the sentence BUILT, and the rider the engine never saw is simply absent. ⚠️ Note the asymmetry D464 names: the `^` end can be demonstrated on the loud path and the `$` end cannot, because once a head derives the trailing splitter may compose it — so §1 asserts the SPLIT is null as well.",
+    file: "packages/engine/src/effects.ts",
+    find: "more damage for each Energy card discarded in this way\\.$/;",
+    replace: "more damage for each Energy card discarded in this way\\./;",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-anchor-reads-the-wrong-noun",
+    decision: "D490",
+    what: "⚠️ **THE COUNTED NOUN IS A LITERAL AND THIS IS THE NEAREST WRONG ONE.** `Item card` is a real key of `DISCARD_PILE_NOUNS` — the map D488's sibling anchor resolves its captured noun through — so it is exactly the token an author reaching for the neighbouring family would write. The printed sentence then derives to NOTHING and falls to the loud path, which is the LOUD direction of the defect: `BUILT.attack` steps back by 2 and §1's owner rung names the reader that stopped answering.",
+    file: "packages/engine/src/effects.ts",
+    find: "more damage for each Energy card discarded in this way\\.$/;",
+    replace: "more damage for each Item card discarded in this way\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-anchor-drops-the-printed-more",
+    decision: "D490",
+    what: "🛑 **THE `more` DELETED, WHICH IS THE SPLIT THIS WHOLE FAMILY TURNS ON.** With `more` the fold is ADDITIVE and the printed base is KEPT; without it the printed N IS the per-unit and the base is DROPPED. The mutated anchor claims the MULTIPLY spelling of the same sentence — a string the column does not print — while `attack.ts` still re-homes the base through this reading, so a card printing the multiply form would be paid its base twice over. §3's one-axis loop drives the no-`more` spelling directly.",
+    file: "packages/engine/src/effects.ts",
+    find: "deck\\. This attack does (\\d+) more damage for each Energy card discarded",
+    replace: "deck\\. This attack does (\\d+) ?m?o?r?e? ?damage for each Energy card discarded",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-per-guard-admits-zero",
+    decision: "D490",
+    what: "⚠️ **THE POSITIVITY GUARD ADMITS A PRINTED ZERO** — D145's standing rule for every captured amount in this file. A printed *\"0 more damage for each…\"* would then derive a program that mills BOTH decks and deals exactly the printed base however many Energy come off: a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point of the coverage strategy. Unreachable from the pool today and written from the rule, like every sibling guard in the file.",
+    file: "packages/engine/src/effects.ts",
+    find: "    return perMilled < 1 ? null : { kind: \"eachDeckMill\", per: perMilled };",
+    replace: "    return perMilled < 0 ? null : { kind: \"eachDeckMill\", per: perMilled };",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-mills-the-attackers-deck-only",
+    decision: "D490",
+    what: "🛑 **THE CENTRAL ATTRIBUTION MUTANT: THE TWO-DECK WALK COLLAPSES TO THE NEAREST WRONG SIBLING.** `whose: \"self\"` is what the SHIPPED D488 mill compound emits one screen up and what `DECK_TOP_MILL` has emitted since D131, so it is the single most likely edit an author makes here. The opponent's deck is never touched and the count loses their card: board B deals 50 where the sentence deals 190, and the CONTENTS assertions catch it on every board. ⚠️ `censusAtHead` stays GREEN under it — the sentence still reads and the residue still falls — which is D469's rule and is why the behavioural rungs exist.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardDeckTop\", whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },",
+    replace: "        { op: \"discardDeckTop\", whose: \"self\", count: 1, recordAs: \"discarded\" },",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-mills-the-opponents-deck-only",
+    decision: "D490",
+    what: "🛑 **THE MIRROR, AND IT IS ITS TWIN'S CONTROL** (D443: a one-sided rung is green under BOTH defects). *\"Each player's deck\"* read as *\"your opponent's deck\"* is the other half of the same wrong reading, and on a suite whose boards all put the Energy on the attacker's side it is invisible. Board A deals 50 where the sentence deals 190; board B agrees with the correct build on the NUMBER and disagrees on which pile grew, which is why the pair needs both boards and the contents.",
+    file: "packages/engine/src/effects.ts",
+    find: "        { op: \"discardDeckTop\", whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },\n        // 🛑 THE PRINTED NOUN",
+    replace: "        { op: \"discardDeckTop\", whose: \"opponent\", count: 1, recordAs: \"discarded\" },\n        // 🛑 THE PRINTED NOUN",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-drops-the-count-filter",
+    decision: "D490",
+    what: "⚠️ **THE PRINTED NOUN DROPPED FROM THE COUNT, so every milled card scores rather than the Energy among them.** `countFilter` is D488's field and an ABSENT one is deliberately *every uid in the slot* — which is what makes the omission SILENT rather than a type error, and the reason this row exists at all. Board A then deals 330 where the sentence deals 190. The two decks are milled correctly and only the number is wrong, so no zone assertion anywhere can see it.",
+    file: "packages/engine/src/effects.ts",
+    find: "          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },\n        },\n      ];\n  }",
+    replace: "          count: \"discarded\",\n        },\n      ];\n  }",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-drops-the-printed-base",
+    decision: "D490",
+    what: "🛑 **THE ADDITIVE HALF COLLAPSES INTO THE MULTIPLY FAMILY'S FOLD.** An ABSENT `base` means something specific on this op — the multiply family's DROPPED base (D403) — so omitting it compiles, runs, and reads as the neighbouring family: the attack deals `per × N` and its printed 50 vanishes. On the board where NOTHING milled was an Energy it deals **zero**, which is the sharpest form: an attack that prints a damage number and does nothing at all.",
+    file: "packages/engine/src/effects.ts",
+    find: "          op: \"damageDefender\",\n          base,\n          per: reading.per,",
+    replace: "          op: \"damageDefender\",\n          per: reading.per,",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-drops-the-record",
+    decision: "D490",
+    what: "⚠️ **THE MILL STOPS FILING ITS §9.2 SLOT, so the printed *\"in this way\"* has nothing to refer to.** The mill still happens — both decks lose their top card and both log rows print — and only the DAMAGE collapses to the bare printed base on every board. This is `D488-arm-drops-the-record` one head over, and it is the direction that looks like a working card: the board is right, the log is right, the number is quietly the floor.",
+    file: "packages/engine/src/effects.ts",
+    find: "whose: \"eachPlayer\", count: 1, recordAs: \"discarded\" },",
+    replace: "whose: \"eachPlayer\", count: 1 },",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-assembler-reads-the-wrong-slot",
+    decision: "D490",
+    what: "⚠️ **THE FOLD READS `paid` WHERE THE MILL FILED `discarded`.** `EffectSlot` has three inhabitants and the two ops must agree on ONE address — which is exactly why `damageDefender.count` is a NAMED slot rather than a boolean (D489's argument at the sibling op). The mutation is invisible in the program's shape: both ops are present, both are well-formed, and the count is 0 on every board because nothing ever wrote `paid`.",
+    file: "packages/engine/src/effects.ts",
+    find: "          per: reading.per,\n          count: \"discarded\",\n          countFilter: { kind: \"anyEnergy\" },",
+    replace: "          per: reading.per,\n          count: \"paid\",\n          countFilter: { kind: \"anyEnergy\" },",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-eachplayer-walks-the-attacker-only",
+    decision: "D490",
+    what: "🛑 **THE NEW `switch` CASE COLLAPSES TO ITS `self` NEIGHBOUR — the defect the old TERNARY would have shipped SILENTLY.** Before D490 this arm read `op.whose === \"self\" ? ctx.seat : otherSeat(ctx.seat)`, so a third member fell out of the wrong side with `tsc` reporting nothing (D222/D425/D447). The switch makes an omission loud; this row is what proves the CASE BODY is checked and not merely present. Board B deals 50 against a printed 190, and the opponent's deck keeps its top card.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          case \"eachPlayer\":\n            return [ctx.seat, otherSeat(ctx.seat)];",
+    replace: "          case \"eachPlayer\":\n            return [ctx.seat];",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-eachplayer-walks-the-opponent-only",
+    decision: "D490",
+    what: "🛑 **THE MIRROR OF THE ROW ABOVE, AND ITS CONTROL** — the same collapse toward the other shipped member. A suite whose boards all put the Energy on one side is green under exactly one of the two, which is why both are written: each is the other's one-axis control (D443).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "            return [ctx.seat, otherSeat(ctx.seat)];\n        }\n      })();",
+    replace: "            return [otherSeat(ctx.seat)];\n        }\n      })();",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-eachplayer-walks-the-absolute-seats",
+    decision: "D490",
+    what: "🛑 **CONTROLLER-FIRST BECOMES ABSOLUTE SEAT ORDER, WHICH IS THE OTHER SHIPPED PRECEDENT AND IS WRONG HERE.** `counterEachAll`'s `side: \"both\"` walks `SEATS` (`[\"p1\",\"p2\"]`) and `handRefresh`'s `who: \"both\"` walks the controller first; D433's rule says a split set is a distinction nobody has found yet, and the distinction is that this op emits one row PER SEAT, so the seat order IS the log's order. ⚠️ **THE MUTATION IS INERT ON EVERY BOARD WHERE p1 ATTACKS**, which is every board a suite writes by default — the killing rung is the p2-controller run in §5, and without it this row would survive against a file that looks thorough.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          case \"eachPlayer\":\n            return [ctx.seat, otherSeat(ctx.seat)];\n        }",
+    replace: "          case \"eachPlayer\":\n            return [...SEATS];\n        }",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-walk-clobbers-the-first-mill",
+    decision: "D490",
+    what: "🛑 **D429's STALE WRITE-BACK, ON THE FIRST OP IN THIS ENGINE THAT WRITES TWO SEATS IN ONE WALK.** The second iteration's `withSide` is taken from the PRISTINE `state` rather than from the threaded `milledState`, so the attacker's milled card is put back on top of their deck ~one iteration after it left — one physical card in two zones. ⚠️ **EVERY DAMAGE FIGURE IS IDENTICAL UNDER BOTH BUILDS**, because the record is filed from `milled` and not from the board, so only a ZONE assertion can see it: a stale read is invisible-but-inert, a stale write-back is a resurrection.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        milledState = withSide(milledState, victim, {",
+    replace: "        milledState = withSide(state, victim, {",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-files-only-the-last-seat",
+    decision: "D490",
+    what: "🛑 **THE SLOT KEEPS ONLY THE LAST DECK'S CARD, WHICH IS EXACTLY WHAT TWO SEQUENTIAL MILLS WOULD HAVE PRODUCED** — the defect §7 drives by hand as the reason this is ONE op rather than two. `recordMoved` ASSIGNS, so a program spelling the sentence as two mills leaves one uid in `discarded`; this row reproduces that inside the single op. Both decks are still milled and both rows still print, so the board and the log are byte-perfect and only the number is halved: 190 where the sentence deals 330.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      recordMoved(record, op.recordAs, filed);\n      return { done: milledState };\n    }",
+    replace: "      recordMoved(record, op.recordAs, filed.slice(-1));\n      return { done: milledState };\n    }",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+      "packages/engine/src/deckMillFilteredScale.test.ts",
+    ],
+  },
+  {
+    id: "D490-empty-deck-aborts-the-whole-walk",
+    decision: "D490",
+    what: "⚠️ **THE `continue` BECOMES A RETURN, so one empty deck cancels the OTHER player's mill.** This is the shape the pre-D490 arm really had — an early `return` on the zero-card path — and it was correct for a one-seat walk and is a live defect for a two-seat one. §8.6's *\"do as much as you can\"*: an attacker who has milled themselves out still mills the opponent, and the count still scores their card. The board where the ATTACKER's deck is empty deals 50 under the mutant and 190 under the build.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (milled.length === 0) continue;",
+    replace: "        if (milled.length === 0) return { done: milledState };",
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+    ],
+  },
+  {
+    id: "D490-arm-order-swapped",
+    decision: "D490",
+    what: "⚠️ **THE TWO ANCHORS' ORDER PERMUTED, AND IT IS DECLARED `equivalent` RATHER THAN TESTED AROUND.** The pair is STRUCTURALLY disjoint in D468's sense: `BENCH_DISCARD_SCALED_BOOST` demands `^You may discard up to` and `EACH_DECK_MILL_SCALED_BOOST` demands `^Discard the top card of each player['’]s deck\\\\.`, both `^…$`, and the two disagree on a mandatory run of bytes at the same position — so NO string can match both and no input distinguishes the orders. D467's fork answered the other way: there is no lookahead here to delete, because none is needed, and writing one would be a vacuous guard by construction. 🛑 The declaration SELF-INVALIDATES (D427): the day either anchor is loosened at its leading literal, some string reaches both and this row reports `STALE-SURVIVOR`.",
+    file: "packages/engine/src/effects.ts",
+    find: "  const mill = EACH_DECK_MILL_SCALED_BOOST.exec(text.trim());\n  if (mill !== null) {",
+    replace: "  const mill = text.trim().startsWith(\"You may\") ? null : EACH_DECK_MILL_SCALED_BOOST.exec(text.trim());\n  if (mill !== null) {",
+    survives: {
+      kind: "equivalent",
+      reason: "STRUCTURAL disjointness, not guarded disjointness (D468). The two anchors are both `^…$` and disagree on a mandatory literal at position 0 — `You may discard up to ` against `Discard the top card of each player` — so no string matches both and pre-filtering the mill arm on the sibling's own leading words removes nothing. Measured over all 640 rows of `legalAttackCorpus()`: the two arms claim disjoint sets (2 and 1) under both orders. The row is kept rather than deleted because it goes STALE the day either anchor loosens its leading literal, which is the only change that could make the order observable.",
+    },
+    expectKilledBy: [
+      "packages/engine/src/eachDeckMillBoost.test.ts",
+      "packages/engine/src/benchDiscardBoost.test.ts",
     ],
   },
 ];

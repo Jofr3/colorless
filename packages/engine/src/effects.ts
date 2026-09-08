@@ -8031,12 +8031,48 @@ export type EffectOp =
       redact.ts arm would hide from the opponent exactly what the opponent can pick
       up and read.
 
-      THREE readers produce it: D130's per-heads expansion (`programPerHeads`, at
-      the flip site), D131's bare `DECK_TOP_MILL` sentence and — since 0.85.0 —
-      `FLIP_DECK_TOP_MILL` ("Flip a coin. If heads, discard the top card of your
-      opponent's deck.", D134), which wraps the singular opponent-side reading in a
-      `coinFlipGate` and changes nothing about the op. */
-  | { op: "discardDeckTop"; whose: "self" | "opponent"; count: number; recordAs?: EffectSlot }
+      🆕🆕 **D490 — `whose` GAINS A THIRD INHABITANT, `"eachPlayer"`, AND IT IS A
+      VALUE OF THE SHIPPED FIELD RATHER THAN A SECOND OP FOR THE REASON THE PARAGRAPH
+      ABOVE ALREADY GIVES**: *"Discard the top card of **each player's** deck. This
+      attack does 140 more damage for each Energy card discarded in this way."* (corpus
+      FILE LINE 130, **1 sentence / 2 legal printings**) names the same action on two
+      decks, and everything downstream of picking the seats is byte-identical.
+
+      🛑 **AND IT IS ONE OP RATHER THAN TWO SEQUENTIAL MILLS, WHICH THE §9.2 RECORD
+      DECIDES RATHER THAN TASTE.** `recordMoved` ASSIGNS (`record[slot] = [...uids]`)
+      — the rule `discardPileRetrieval` states and `attachFromDeck` repeats, so that an
+      op which ran and moved nothing overwrites a stale value. Two sequential
+      `discardDeckTop`s filing into `discarded` therefore leave only the SECOND deck's
+      card in the slot, and the trailing `damageDefender` scores one card where the
+      sentence counts two. D458 measured that overwrite on a different pair; this is the
+      first printing whose DAMAGE NUMBER depends on it. Filing into two different slots
+      is no escape either — `damageDefender.count` is ONE `EffectSlot`, so a two-slot
+      program would need the fold to sum two addresses.
+
+      ⚠️ **THE SEATS ARE WALKED CONTROLLER-FIRST, AND THE TWO SHIPPED "both seats"
+      PRECEDENTS DISAGREE ABOUT THAT** (D433: a split set is a distinction you have not
+      found yet). `counterEachAll`'s `side: "both"` walks the ABSOLUTE `SEATS`
+      (`["p1","p2"]`); `handRefresh`'s `who: "both"` walks `[ctx.seat,
+      otherSeat(ctx.seat)]` and says so. The distinction is what the walk EMITS:
+      `counterEachAll` files one event per BODY, so the seat order is not the row order,
+      while this op and `handRefresh` both emit one row PER SEAT — so here the seat
+      order IS the log's order, and the printed subject of *"this attack"* is the
+      attacker. Absolute seats would make one printed sentence read in two orders
+      depending on which chair the player sits in, off nothing the card prints.
+
+      THREE READERS PRODUCED IT UNTIL D490 AND FOUR DO NOW: D130's per-heads expansion
+      (`programPerHeads`, at the flip site), D131's bare `DECK_TOP_MILL` sentence,
+      — since 0.85.0 — `FLIP_DECK_TOP_MILL` ("Flip a coin. If heads, discard the top
+      card of your opponent's deck.", D134), which wraps the singular opponent-side
+      reading in a `coinFlipGate` and changes nothing about the op, and — since D490 —
+      `deriveAttackDiscardScaledBoost`'s mill arm, the ONLY producer of `"eachPlayer"`
+      and the only one that also files a §9.2 slot from this op. */
+  | {
+      op: "discardDeckTop";
+      whose: "self" | "opponent" | "eachPlayer";
+      count: number;
+      recordAs?: EffectSlot;
+    }
   /** SEARCH the controller's whole deck for up to `max` Energy cards matching
       `filter` and ATTACH them straight onto the controller's own in-play Pokémon
       — the deck-SEARCH sibling of `attachFromTop`, which reaches only a window on
@@ -13184,10 +13220,24 @@ const KO_EXACT_DAMAGE_COUNTERS =
 // Wugtrio sv01-057 / Gyarados swsh10.5-022 index 0 (D130's per-heads programs),
 // Whiscash sv03-109 ("For each {F} Energy attached to this Pokémon, discard…" —
 // a board-counted amount, and the sentence Krookodile's warning above is about),
-// and Camerupt sv03-032 ("Discard the top card of EACH PLAYER'S deck. This attack
-// does 100 more damage for each Energy card discarded in this way." — two decks
-// AND a damage bonus that reads what was discarded; a genuinely different slice
-// that must land loudly). No /i, for the family's stated reason.
+// and corpus FILE LINE 130 ("Discard the top card of EACH PLAYER'S deck. This attack
+// does 140 more damage for each Energy card discarded in this way." — two decks
+// AND a damage bonus that reads what was discarded). No /i, for the family's stated
+// reason.
+//
+// 🛑 **D490 CORRECTED TWO THINGS IN THAT LAST ENTRY AND ONLY ONE OF THEM WAS ROT.**
+// (a) The FIGURE was **wrong when written**: this block and `deckTopMill.test.ts`'s
+// `REAL_NEAR_MISSES[4]` both said *"100 more damage"* where the committed
+// `legal_standard = 1` column prints **140** — one row, measured with
+// `legalAttackCorpus().filter(([, t]) => t.includes("each player"))`, and the test's own
+// block called its copy *"verbatim off the local D1"*. A hand-retyped damage figure is
+// D452's phantom specimen, and no byte pin can catch one. The card id is dropped in
+// favour of the corpus FILE LINE because this checkout has no D1 and the id is
+// UNRESOLVABLE here (D425/D448). (b) The phrase *"a genuinely different slice that must
+// land loudly"* has **ROTTED**: D490 built it, through
+// `deriveAttackDiscardScaledBoost`'s `eachDeckMill` member and `whose: "eachPlayer"`. The
+// row is still a near-miss for THIS anchor and stays in the list — a `\.$` cannot reach
+// across the sentence break — but it is no longer LOUD.
 const DECK_TOP_MILL = /^Discard the top (?:(\d+) cards|card) of your (opponent['’]s )?deck\.$/;
 // The additive damage-scaling family — "This attack does N more damage for each
 // <resource>.", anchored end to end like every rule here. It is NOT a
@@ -14338,12 +14388,20 @@ function discardPileFilter(noun: string): CardFilter | null {
 // no opponent-side and no singular spelling of this compound at all; and the fold is the
 // MULTIPLY one (`does P damage for each`, no printed *"more"*), which is
 // `ENERGY_DISCARD_SCALED_DAMAGE`'s own split reproduced one head over — the additive
-// twin of this very shape is Camerupt `sv03-032` (*"Discard the top card of each
-// player's deck. This attack does 100 more damage for each Energy card discarded in
-// this way."*, 2 printings), which `deckTopMill.test.ts` and `benchDiscardBoost.test.ts`
-// both hold as a named refusal and which this anchor still refuses on THREE independent
+// twin of this very shape is corpus FILE LINE 130 (*"Discard the top card of each
+// player's deck. This attack does 140 more damage for each Energy card discarded in
+// this way."*, 2 printings), which this anchor still refuses on THREE independent
 // counts (two decks, the singular, and the `more`). Arms no sentence drives are not
 // written (`IN_PLAY_BODY_NOUNS`' rule).
+//
+// 🆕🆕🆕 **D490 CORRECTED THIS PARAGRAPH TWICE.** It quoted **100** where the column
+// prints **140** (a hand-retyped figure copied from `deckTopMill.test.ts`'s phantom
+// specimen — D452, and D415's *"a claim that is copied is a claim that rots in N
+// places"*: the correction was a three-site sweep), and it said the two test files *"both
+// hold it as a named refusal"*, which stopped being true in the same slice that corrected
+// the figure — `deriveAttackDiscardScaledBoost` claims it now and both files were
+// re-pointed onto the owner while keeping every refusal they carried (D438). The card id
+// is dropped for the corpus FILE LINE: this checkout has no D1 (D425/D448).
 //
 // ⚠️ **THE OPTIONAL `that ` IS A SPELLING AND NOT AN AXIS** — the two printings differ
 // in whether the relative pronoun is written, exactly as `Energy(?: cards)?` one family
@@ -28400,7 +28458,12 @@ function costSnipeProgram(
     keys. "Basic Energy" names the CARD and reads as `basicEnergy`, never as a
     provision — D402's paragraph on the same word, and `fix-special` is the witness
     both halves share. */
-export interface AttackDiscardScaledBoost {
+export interface AttackBenchDiscardScaledBoost {
+  /** 🆕🆕 D490 — the discriminator, and it is a `switch`ed FIELD rather than a
+      shape the assembler sniffs (D474): a third printed head must stop compiling in
+      `discardScaledBoostProgram` instead of falling into whichever arm its payload
+      happens to satisfy. */
+  kind: "benchDiscard";
   /** The printed ceiling of the declinable discard (the "up to N"), which rides the
       op's `cap` — the pick stays 0..min(cap, matches) and stays declinable. */
   cap: number;
@@ -28412,12 +28475,77 @@ export interface AttackDiscardScaledBoost {
   per: number;
 }
 
+/** 🆕🆕 D490 — THE SECOND PRINTED HEAD OF THE SAME ADDITIVE FOLD: a MANDATORY,
+    UNFILTERED mill of ONE card off **each player's** deck, whose damage counts only the
+    ENERGY among what the mill filed.
+
+    *"Discard the top card of each player's deck. This attack does 140 more damage for
+    each Energy card discarded in this way."* — **1 sentence / 2 legal printings**,
+    `censusAttackCorpus.ts` FILE LINE 130, transcribed byte for byte and verified
+    against `legalAttackCorpus()` rather than retyped (the apostrophe is U+0027 at index
+    35, measured with `codePointAt`; the whole committed column carries ZERO U+2019, so
+    the `['’]` class here is latent by design, as it is at every sibling anchor).
+
+    🛑 **IT IS A MEMBER OF *THIS* READING RATHER THAN A FOURTEENTH READER, AND THE
+    ARGUMENT IS MARGINAL SITES (D424) BACKED BY A MEASUREMENT.** A new `deriveAttack*`
+    export enrols itself in `attackReaderSurface()` by NAME (D444), which at this head
+    would move **75 `expect(attackReaderSurface()).toHaveLength(13)` assertions across 74
+    files** plus each of those files' hand-listed `READERS` array — D418's 12→13 step
+    cost 48 rungs and the surface has grown since. Riding this reader instead costs
+    **ZERO bytes in `attack.ts`**: the three terms that matter there
+    (`scaledBase`, `effectSimulated`, `modifierSimulated`) are all spelled
+    `discardScaledBoost !== null`, and the assembler is already called with the printed
+    `base` in scope.
+
+    🛑 **AND IT CANNOT BE A `deriveAttackEffect` ARM, WHICH IS D403's ARGUMENT
+    VERBATIM AND NOT A PREFERENCE.** The printed *"more"* KEEPS the attack's base;
+    `deriveAttackEffect` takes only a STRING, so an arm there would emit a
+    `damageDefender` whose `base` nothing could populate. The base is a field on the
+    attack and lives in `attack.ts`, so the value that crosses the gap is the PROGRAM.
+
+    ⚠️ **STRUCTURALLY DISJOINT FROM ITS SIBLING ANCHOR, SO THE ORDER IS LEGIBILITY AND
+    CARRIES NO GUARD** (D467's first preference). `BENCH_DISCARD_SCALED_BOOST` demands
+    `^You may discard up to` and this one demands `^Discard the top card of each
+    player['’]s deck\.`; no string can match both, so no lookahead exists here to rot
+    and no order-permutation can change an answer.
+
+    ⚠️ **EVERY TOKEN BUT THE AMOUNT IS A LITERAL, D121's RULE ON A POOL OF ONE
+    SENTENCE.** The count (*"the top card"*, singular, no digit), the seats (*"each
+    player's"*), the joiner (a PERIOD, where D488's mill compound prints a comma) and the
+    counted noun (*"Energy card"*) each vary in exactly ZERO printed rows, so capturing
+    any of them would author sentences the column does not print (D440/D361) — and the
+    refusals a capture would keep reachable are already reachable from D488's anchor,
+    which drives `milledCardFilter`'s null on a real board. `deckTopMill.test.ts` already
+    pins *"Discard the top 2 cards of each player's deck."* as a THIRD-PARTY reading
+    nothing prints, and this anchor leaves that refusal exactly where it was. */
+export interface AttackEachDeckMillScaledBoost {
+  kind: "eachDeckMill";
+  /** The printed extra damage each ENERGY card milled buys. The only capture in the
+      anchor, guarded `>= 1` like every captured amount in this file. */
+  per: number;
+}
+
+/** 🆕🆕 D490 — the additive §9.2 fold, read from either of its two printed heads.
+    Asymmetric payloads (a declinable ceiling and a movement filter against a bare
+    per-card amount) ⇒ TWO MEMBERS with the discriminator as a field, which is D440's
+    union rule and NOT the "one member, discriminator as a field" branch of it. */
+export type AttackDiscardScaledBoost =
+  | AttackBenchDiscardScaledBoost
+  | AttackEachDeckMillScaledBoost;
+
 // No /i, on this file's standing reason for every whole-sentence attack anchor: the
 // capital first word is half of what keeps a whole-sentence reader off a mid-sentence
 // clause, and the `^…$` is the other half. Two printed spellings of the filter and
 // nothing else — see the doc block above for why the type map is not admitted here.
 const BENCH_DISCARD_SCALED_BOOST =
   /^You may discard up to (\d+) (Basic )?Energy from your Benched Pokémon\. This attack does (\d+) more damage for each card you discarded in this way\.$/;
+// 🆕🆕 D490 — the same additive fold behind a MANDATORY two-deck mill. One capture (the
+// per-card amount) and every other token spelled out; see `AttackEachDeckMillScaledBoost`
+// for why. No /i, on this file's standing reason. `['’]` on the family's standing choice
+// — the printed byte is U+0027 and the column holds no U+2019, so the curly arm is latent
+// and `clauseApostrophe.test.ts`'s re-ingest sweep is what keeps it honest.
+const EACH_DECK_MILL_SCALED_BOOST =
+  /^Discard the top card of each player['’]s deck\. This attack does (\d+) more damage for each Energy card discarded in this way\.$/;
 
 /** Parse the Bench-discard additive boost into its ceiling, its filter and its
     per-card damage, or null for anything else.
@@ -28434,6 +28562,17 @@ const BENCH_DISCARD_SCALED_BOOST =
     clause followed by a printed `If you do,` which this sentence does not carry) and
     by their payoffs. attack.ts owns the read site, beside its three siblings'. */
 export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScaledBoost | null {
+  // 🆕🆕 D490 — the two-deck mill, asked FIRST purely for legibility: the two anchors
+  // are structurally disjoint (`^You may discard up to` against `^Discard the top card of
+  // each player`), so no string reaches both and no order here can change an answer.
+  const mill = EACH_DECK_MILL_SCALED_BOOST.exec(text.trim());
+  if (mill !== null) {
+    const perMilled = Number(mill[1]);
+    // ONE printed number, ONE positivity guard — D145's standing rule. A printed 0 per
+    // card is a clause that buys nothing however many Energy come off, which is a SILENT
+    // no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point.
+    return perMilled < 1 ? null : { kind: "eachDeckMill", per: perMilled };
+  }
   const match = BENCH_DISCARD_SCALED_BOOST.exec(text.trim());
   if (match === null) return null;
   const cap = Number(match[1]);
@@ -28444,6 +28583,7 @@ export function deriveAttackDiscardScaledBoost(text: string): AttackDiscardScale
   // a SILENT no-op where the loud `ATTACK_EFFECT_SKIPPED` path is the whole point.
   if (cap < 1 || per < 1) return null;
   return {
+    kind: "benchDiscard",
     cap,
     per,
     // The printed "Basic" names the CARD, not what it provides: a Special Energy
@@ -28477,21 +28617,50 @@ export function discardScaledBoostProgram(
   reading: AttackDiscardScaledBoost,
   base: number,
 ): EffectOp[] {
-  return [
-    {
-      op: "discardEnergy",
-      // The printed "your Benched Pokémon" — the own side MINUS the Active, which is
-      // why `yours` is the wrong member: the Active's Energy paid for this attack.
-      from: "yourBench",
-      filter: reading.filter,
-      // "You may discard up to N" is the declinable mode at a ceiling — `count: "any"`
-      // plus `cap`, D97's split, and it ALWAYS parks on a non-empty Bench.
-      count: "any",
-      cap: reading.cap,
-      recordAs: "discarded",
-    },
-    { op: "damageDefender", base, per: reading.per, count: "discarded" },
-  ];
+  // 🆕🆕 D490 — a `switch` ON THE DISCRIMINATOR and not a ternary over a payload
+  // (D474): a third printed head has to be a MISSING CASE here, which is loud for every
+  // member shape, rather than a field access that a compatibly-shaped member satisfies.
+  switch (reading.kind) {
+    case "benchDiscard":
+      return [
+        {
+          op: "discardEnergy",
+          // The printed "your Benched Pokémon" — the own side MINUS the Active, which is
+          // why `yours` is the wrong member: the Active's Energy paid for this attack.
+          from: "yourBench",
+          filter: reading.filter,
+          // "You may discard up to N" is the declinable mode at a ceiling — `count: "any"`
+          // plus `cap`, D97's split, and it ALWAYS parks on a non-empty Bench.
+          count: "any",
+          cap: reading.cap,
+          recordAs: "discarded",
+        },
+        { op: "damageDefender", base, per: reading.per, count: "discarded" },
+      ];
+    case "eachDeckMill":
+      return [
+        // The printed "the top card of each player's deck": ONE card, BOTH decks, and
+        // one §9.2 filing holding what came off both — see the op's own block for why
+        // two sequential mills cannot spell this (the slot is ASSIGNED, not appended).
+        // The mill itself is UNFILTERED, exactly as `discardDeckTop`'s block says it
+        // stays: the top card leaves whatever it is, and only the DAMAGE asks which of
+        // the two were Energy.
+        { op: "discardDeckTop", whose: "eachPlayer", count: 1, recordAs: "discarded" },
+        // 🛑 THE PRINTED NOUN IS ON THE COUNT, NOT ON THE MILL, AND `countFilter` IS THE
+        // SHIPPED FIELD FOR IT (D488). `base` is the attack's own printed number, KEPT
+        // because the marker is a "+" — a slot of two Energy deals `base + 2 × per` as
+        // ONE §8.5 pass, which is the whole reason `damageDefender.base` exists (D403).
+        // An empty slot deals the printed base by the same expression, so the "nothing
+        // was Energy" board needs no second arm.
+        {
+          op: "damageDefender",
+          base,
+          per: reading.per,
+          count: "discarded",
+          countFilter: { kind: "anyEnergy" },
+        },
+      ];
+  }
 }
 
 /** D282 — THE PRINTED SPELLINGS OF THE D281 TIMING GATE, as a LEADING clause.

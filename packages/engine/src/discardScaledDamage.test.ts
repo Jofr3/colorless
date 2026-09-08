@@ -217,17 +217,20 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
     );
     expect(more).toHaveLength(3);
     expect(units(more)).toBe(10);
-    // The two D403 took, by the reader that takes them — and by NOTHING ELSE in the
-    // eleven, which is what keeps "at most one reader fires" structural.
+    // 🆕🆕🆕 **D490 — THE SPLIT CLOSES: 2 / 8 TAKEN AND 1 / 2 LEFT BECOMES 3 / 10 AND
+    // NOTHING.** The half's SIZE is still unchanged at 3 / 10 — what moved a second time
+    // is how much of it is refused. ⚠️ The prose above says *"all ELEVEN readers"* and
+    // the surface has been THIRTEEN since D417; the count is corrected here and the
+    // claim is asserted off the MODULE (`readByAny`) rather than off a number.
     const taken = more.filter(([, s]) => deriveAttackDiscardScaledBoost(s) !== null);
-    expect(taken).toHaveLength(2);
-    expect(units(taken)).toBe(8);
-    // The one still refused, and it is refused by all ELEVEN readers rather than
-    // merely by this file's subject — D382's strong form, kept.
+    expect(taken).toHaveLength(3);
+    expect(units(taken)).toBe(10);
     const left = more.filter(([, s]) => deriveAttackDiscardScaledBoost(s) === null);
-    expect(left).toHaveLength(1);
-    expect(units(left)).toBe(2);
-    for (const [, s] of left) expect(readByAny(s), s).toBe(false);
+    expect(left).toEqual([]);
+    // …and the DISJOINTNESS the old rung really carried is kept: every one of the three
+    // is read by THIS reader and by no other, which is what makes "at most one reader
+    // fires per attack" structural rather than a rule attack.ts has to keep.
+    for (const [, s] of more) expect(readByAny(s), s).toBe(true);
   });
 
   it("🛑 the two NAMED FALSIFIERS interact: every Bench-only printing is ADDITIVE", () => {
@@ -325,21 +328,31 @@ describe("D402 §1 — the family, split by its FOLD, measured live over the col
         perRecorded: "discarded",
       },
     ]);
-    // …and the REFUSALS the old rung carried are kept rather than discarded (D438's
-    // second half): the ADDITIVE half's leftover is still unread by every reader, and
-    // it is a different mechanism again — a mill of BOTH decks with a kept base.
-    const additiveLeft = legalAttackCorpus().filter(
-      ([, s]) =>
-        s.includes("discarded in this way") &&
-        s.includes("more damage for each") &&
-        !readByAny(s),
+    // 🆕🆕🆕 **D490 — THE ADDITIVE HALF'S LEFTOVER IS BUILT, SO THE REFUSAL BECOMES A
+    // PARTITION RATHER THAN A SHORTER LIST.** D489 kept this as *"still unread by every
+    // reader … a mill of BOTH decks with a kept base"*, which was an exact description of
+    // the price and is now paid: `discardDeckTop.whose` gained `"eachPlayer"` and the
+    // additive reader gained a second member. Re-pointing to `toHaveLength(0)` alone would
+    // have been true under a build that stopped matching the population at all, so the
+    // POPULATION and its OWNER are both named (D438/D423).
+    const additive = legalAttackCorpus().filter(
+      ([, s]) => s.includes("discarded in this way") && s.includes("more damage for each"),
     );
-    expect(additiveLeft).toHaveLength(1);
-    expect(units(additiveLeft)).toBe(2);
-    for (const [, s] of additiveLeft) {
-      expect(readByAny(s), s).toBe(false);
-      expect(s.startsWith("Discard the top card of each player's deck."), s).toBe(true);
+    expect(additive).toHaveLength(3);
+    expect(units(additive)).toBe(10);
+    const additiveLeft = additive.filter(([, s]) => !readByAny(s));
+    expect(additiveLeft).toEqual([]);
+    // …and the OWNER is `deriveAttackDiscardScaledBoost` on all three, `deriveAttackEffect`
+    // on NONE — which is the refusal this rung has really carried since D402: the printed
+    // *"more"* keeps the attack's base, and `deriveAttackEffect` takes only a STRING, so an
+    // arm there could never populate it. That claim survives the build intact.
+    for (const [, s] of additive) {
+      expect(deriveAttackEffect(s), s).toBeNull();
+      expect(deriveAttackDiscardScaledBoost(s), s).not.toBeNull();
     }
+    expect(
+      additive.filter(([, s]) => s.startsWith("Discard the top card of each player's deck.")),
+    ).toHaveLength(1);
     // The two that LEFT this list, and BY WHAT — a re-point onto the shape rather than
     // a deletion (D178/D438), so the day either regresses this rung says which.
     const built = legalAttackCorpus().filter(

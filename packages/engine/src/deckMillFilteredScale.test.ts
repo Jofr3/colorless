@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import type { CardFilter, EffectOp } from "./effects";
-import { deriveAttackEffect } from "./effects";
+import { deriveAttackDiscardScaledBoost, deriveAttackEffect } from "./effects";
 import type { GameEvent } from "./events";
 import { applyAction, createGame } from "./index";
 import type { GameState, Seat } from "./index";
@@ -428,18 +428,35 @@ describe("D488 §1 — the two printed rows, off the column rather than off this
     // 10 / 23 → **11 / 25**, and the three arms of the resolved half now sum: D402's 6 /
     // 13 (board discard) + D403's 2 / 8 (additive) + D488's 2 / 2 (mill) + D489's 1 / 2
     // (hand) = 11 / 25.
+    // 🆕🆕🆕 **D490 +1 sentence / +2 printings — THE FAMILY IS NOW WHOLLY BUILT AND THE
+    // FOUR ARMS SUM EXACTLY**: D402's 6 / 13 (board discard) + D403's 2 / 8 (additive
+    // bench) + D488's 2 / 2 (own-deck mill) + D489's 1 / 2 (hand) + D490's 1 / 2 (the
+    // two-deck mill) = **12 / 27**, which is the whole family. The population figure
+    // above is what tells "D490 built the last one" from "the ingest changed".
     const read = family.filter(([, s]) => resolvedByAnyReader(s));
-    expect(read).toHaveLength(11);
-    expect(units(read)).toBe(25);
-    // The TWO printings still refused: the two-deck additive mill alone. Named rather
-    // than left as a subtraction (D400), and the sentence is spelled out so the day it
-    // is built this rung says which one left rather than merely counting one fewer.
+    expect(read).toHaveLength(12);
+    expect(units(read)).toBe(27);
+    // 🛑 **THE LEFTOVER RUNG IS RE-POINTED ONTO ITS OWNER RATHER THAN DECREMENTED TO
+    // ZERO** (D418's second half, D438's polarity rule). `left` being empty is TRUE under
+    // a build that widened some reader onto the whole column, so the emptiness is stated
+    // BESIDE the named owner and the two numbers above — the day a thirteenth member of
+    // this family is printed and unread, THIS rung names it.
     const left = family.filter(([, s]) => !resolvedByAnyReader(s));
-    expect(left).toHaveLength(1);
-    expect(units(left)).toBe(2);
-    expect(left.map(([, s]) => s)).toEqual([
-      "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.",
-    ]);
+    expect(left).toEqual([]);
+    const twoDeck = family.filter(
+      ([, s]) =>
+        s ===
+        "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.",
+    );
+    expect(twoDeck.map(([n]) => n)).toEqual([2]);
+    // …and it is `deriveAttackDiscardScaledBoost`'s, NOT this file's subject: a build
+    // that let `DECK_MILL_FILTERED_SCALED_DAMAGE` reach across the sentence break would
+    // pass a bare "it is read" rung and fail this one.
+    expect(deriveAttackEffect(twoDeck[0]?.[1] as string)).toBeNull();
+    expect(deriveAttackDiscardScaledBoost(twoDeck[0]?.[1] as string)).toEqual({
+      kind: "eachDeckMill",
+      per: 140,
+    });
   });
 
   it("the reader surface stands still at THIRTEEN — no reader was added", () => {

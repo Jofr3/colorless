@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus } from "./censusAttackCorpus";
+import { deriveAttackDiscardScaledBoost } from "./effects";
 import {
   deriveAttackCoinFlip,
   deriveAttackDamageBonus,
@@ -125,16 +127,34 @@ const CLAUSES = [
       • Whiscash sv03-109 — a BOARD-COUNTED amount ("For each {F} Energy attached to
         this Pokémon, discard the top card of your opponent's deck."). Genuinely
         unmapped, and the shape D128 would answer if anyone wanted it.
-      • Camerupt sv03-032 — "Discard the top card of EACH PLAYER'S deck. This attack
-        does 100 more damage for each Energy card discarded in this way." Two decks
+      • corpus FILE LINE 130 — "Discard the top card of EACH PLAYER'S deck. This attack
+        does 140 more damage for each Energy card discarded in this way." Two decks
         AND a damage bonus that reads WHAT was discarded. The dangerous one: a
-        loosened anchor would mill one deck and silently drop the bonus. */
+        loosened anchor would mill one deck and silently drop the bonus.
+
+    🛑🛑 **D490 — THE FIFTH ENTRY WAS A PHANTOM, AND THE BLOCK ABOVE CALLED IT
+    "verbatim off the local D1".** It read **100** more damage; the committed
+    `legal_standard = 1` column prints **140**, on the one and only row containing
+    *"each player's deck"* (measured by `legalAttackCorpus().filter(…)`, and the rung
+    below now asserts corpus membership rather than trusting the bytes). That is D452's
+    defect exactly — *a byte pin on an invented string is green by construction*, because
+    the pin measures the invention as faithfully as it would measure the truth — arriving
+    through a hand-retyped DAMAGE FIGURE rather than a hand-retyped opening. ⚠️ The
+    slice number is stated rather than the card: this checkout has no D1, so whether the
+    row is Camerupt `sv03-032` is UNRESOLVABLE here and the id has been replaced by the
+    corpus FILE LINE, which is (D448) the citation convention this repo mandates.
+
+    🛑 **AND THE ENTRY IS NO LONGER A "genuine gap": D490 BUILT IT.** It is kept in
+    this list, and the rung below is re-pointed rather than deleted (D444/D482), because
+    what it has always really guarded is DISJOINTNESS — that the bare `\.$`-anchored mill
+    does not reach across a sentence break — and that claim is STRONGER now that a
+    different reader owns the whole string. */
 const REAL_NEAR_MISSES = [
   "Flip a coin. If heads, discard the top card of your opponent's deck.",
   "Flip 3 coins. For each heads, discard the top 3 cards of your opponent's deck.",
   "Flip a coin until you get tails. For each heads, discard the top 2 cards of your opponent's deck.",
   "For each {F} Energy attached to this Pokémon, discard the top card of your opponent's deck.",
-  "Discard the top card of each player's deck. This attack does 100 more damage for each Energy card discarded in this way.",
+  "Discard the top card of each player's deck. This attack does 140 more damage for each Energy card discarded in this way.",
 ] as const;
 
 /** U+2019, the CURLY apostrophe, spelled as an ESCAPE rather than typed. The
@@ -305,11 +325,31 @@ describe("the anchor — 16 printings, 7 clauses, both directions", () => {
     // printed string, never two.
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[1])).not.toBeNull();
     expect(deriveAttackCoinFlip(REAL_NEAR_MISSES[2])).not.toBeNull();
-    // Camerupt's second sentence is a `+` clause, and the bonus reader does not claim
-    // the printing either (its subject is "each Energy card discarded in this way",
-    // which nothing counts). So the whole row stays loud on BOTH readers — a genuine
-    // gap, not a half-simulation.
+    // 🆕🆕🆕 **D490 — RE-POINTED, AND THE OLD CLAIM'S REFUSALS ARE ALL KEPT.** The
+    // old rung said the two-deck row *"stays loud on BOTH readers — a genuine gap"*. It
+    // is BUILT now, by `deriveAttackDiscardScaledBoost`'s `eachDeckMill` member, so the
+    // "genuine gap" half is false. The half that was load-bearing is not: this file's
+    // bare anchor still refuses it (`\.$` against a sentence break) and so does the
+    // ADDITIVE damage-bonus reader (its count sources are board facts read at
+    // DECLARATION, where a §9.2 record can only be read from inside the program). Both
+    // are kept, and the OWNER is named beside them — a bare `.not.toBeNull()` re-point
+    // would have been true under a build that widened THIS anchor across the break,
+    // which is exactly the defect the entry was written for (D438).
+    expect(deriveAttackEffect(REAL_NEAR_MISSES[4])).toBeNull();
     expect(deriveAttackDamageBonus(REAL_NEAR_MISSES[4])).toBeNull();
+    expect(deriveAttackDiscardScaledBoost(REAL_NEAR_MISSES[4])).toEqual({
+      kind: "eachDeckMill",
+      per: 140,
+    });
+    // 🛑 **AND THE SPECIMEN IS A ROW OF THE COMMITTED CORPUS, WITH ITS PRINTING COUNT
+    // READ OFF THE CORPUS TOO** (D452/D456/D448). This is the repair for the phantom the
+    // block at the top of the file describes: an entry that is merely byte-pinned can
+    // drift onto a sentence nobody prints and take a refusal with it.
+    expect(
+      legalAttackCorpus()
+        .filter(([, t]) => t === REAL_NEAR_MISSES[4])
+        .map(([n]) => n),
+    ).toEqual([2]);
   });
 
   it("leaves Wiglett's GATED printing to the flip anchor — and the mill inside it is THIS one", () => {
