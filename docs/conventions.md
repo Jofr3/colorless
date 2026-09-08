@@ -5184,6 +5184,34 @@ new one joins it. Re-measure after the edit; do not carry a predicted figure int
 delta **plus the previous slice's**. Re-run the instrument at HEAD; the gate's §A literals are the
 check that you did.
 
+### Launch a multi-hour sweep DETACHED with `setsid`, and poll it (D489)
+
+D489's whole-corpus sweep took **three launches**. Two runs as tracked background jobs were
+**SIGTERMed within a minute or two of the turn ending** — once at row ~200, once at row ~12. The
+third, launched with `setsid nohup … &` so the process reparented to **init (PPID 1)** and sat
+outside the session's process group, ran the full 9,653 s to completion.
+
+```
+setsid nohup bun scripts/mutation/run.ts > "$CLAUDE_JOB_DIR/tmp/sweep-DNNN.log" 2>&1 < /dev/null &
+disown
+```
+
+Verify it took: `ps -eo pid,ppid -p <pid>` must show **PPID 1**.
+
+⚠️ **A detached run sends no completion notification**, so the loop must poll — and the poll reads
+the **summary line**, never a verdict tally (D474, D488).
+
+🛑 **The interruptions were not a harness defect, and the harness's own behaviour is why they cost
+nothing.** Both times it trapped the signal and restored what it had applied —
+`[SIGTERM] restoring 1 file(s) before exit…`, then `restoring 0 file(s)` — leaving a clean tree, no
+`tmp/mutation-journal.json`, and no orphan process. That is D470's safety behaviour working under a
+signal nobody designed for.
+
+**Before relaunching an interrupted sweep, classify the state all three ways** (D446): `git status`
+clean, no journal file, and `ps` shows no surviving `mutation/run.ts`. A dirty tree after an
+interruption means a mutant is still applied and must be reverted at the site — never with
+`git checkout --` or `git stash`.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
