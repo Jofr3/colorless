@@ -4902,6 +4902,26 @@ has appeared in every multi-site tax this run.
 done.** Re-run until a round changes nothing, and expect the count of remaining
 sites to be unknowable until the round before last.
 
+### The corpus is blind to design equivalence and sharp on behavioural regression
+
+Two consecutive close-outs make the distinction cleanly, and it is worth holding
+onto rather than re-deriving.
+
+**D486's claim was a choice between two programs** that agree by arithmetic identity
+on every board. No verdict could settle it — the blindness was provable, not
+incidental, and the evidence had to be an argument about a non-quantitative axis.
+
+**D487's claim was that an old byte string still means what it meant.** That is a
+statement about a fixed input producing a fixed output, and it is exactly what a
+mutation corpus is competent to hold: the suite drives a v29 continuation with the
+new key absent, and the sweep confirms nothing mutates that rung away.
+
+So the instrument's competence has a shape. **Ask which kind of claim you are
+making before deciding what evidence the run provides.** For compatibility,
+regression, and "does this still do X" — the sweep is the right instrument and a
+green line is real support. For "which of these two equivalent designs is correct"
+— it is silent, and saying so explicitly is part of the decision.
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
