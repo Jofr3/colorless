@@ -14699,13 +14699,25 @@ export const FIXTURE_POOL: Record<string, Card> = {
         · index 3 "Loud Suction" — **NOT THIS SENTENCE AT ALL**, and it is here because
           a *"nothing was skipped"* rung is worthless without a board that skips (D424:
           every *"X is refused"* owes a neighbouring *"Y is admitted"*, read in the
-          other direction). It prints *"Each player draws 3 cards."* — a REAL corpus
-          row (1 legal printing) that **no** reader claims, that neither splitter
-          reaches and that no registry row serves, so it falls to `attack.ts`'s loud
+          other direction). It prints *"Heal 100 damage from 1 of your Benched Ancient
+          Pokémon."* — a REAL corpus row (`censusAttackCorpus.ts` FILE LINE 272, 1 legal
+          printing) that **no** reader claims, that neither splitter reaches and that no
+          registry row serves, so it falls to `attack.ts`'s loud
           `ATTACK_EFFECT_SKIPPED` path. Same body, same seat, the same printed 50 as
           index 0, so the ONLY difference between the quiet board and the loud one is
           which sentence the attack prints. No apostrophe and no possessive, so it
           moves `clauseApostrophe`'s discovered sweep not at all.
+
+          🛑 **D491 RE-POINTED THIS SLOT, AND THE NEW BLOCKER IS DATA RATHER THAN A
+          MECHANISM (D461).** It used to print *"Each player draws 3 cards."*; D491
+          BUILT that sentence, which would have left this control green while it
+          stopped testing anything (D462 predicted exactly that and was right). The
+          replacement is refused by the `Ancient` BANNER, which **no ingested column
+          classifies** — `cardSchema` carries no banner field, and the banner is a
+          per-PRINTING fact, so no reader at any width can ever claim it. A slot whose
+          blocker is data does not need re-pointing every few slices, and the day it
+          goes green the thing that changed is the INGEST, which is exactly what a
+          control should be able to tell you.
 
       **Fire**, because `fix-drainweak` below is ×2 Fire and `fix-drainwall` is its
       W/R-free twin. 200 HP so the healer survives every return hit and no §8.1 tail
@@ -14740,7 +14752,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless", "Colorless"],
         name: "Loud Suction",
         damage: 50,
-        effect: "Each player draws 3 cards.",
+        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
       },
     ],
   }),
@@ -14758,11 +14770,15 @@ export const FIXTURE_POOL: Record<string, Card> = {
         • **2 "Dry Drain"** ({C}, **no `damage` key**) — the SAME sentence with no §8.5
           hit at all. The prize is an effect, not a consequence of damage, and an
           attack that deals nothing still takes it.
-        • **3 "Idle Drain"** ({C}, 10, *"Each player draws 3 cards."*) — the
-          `ATTACK_EFFECT_SKIPPED` CONTROL. Its sentence is claimed by no reader (D427
-          used the same string for the same job), so a suite asserting "no SKIPPED row"
-          on indices 0–2 has a neighbouring index that DOES emit one — otherwise the
-          assertion passes on an engine that never emits the row at all.
+        • **3 "Idle Drain"** ({C}, 10, *"Heal 100 damage from 1 of your Benched
+          Ancient Pokémon."*) — the `ATTACK_EFFECT_SKIPPED` CONTROL. Its sentence is
+          claimed by no reader, so a suite asserting "no SKIPPED row" on indices 0–2
+          has a neighbouring index that DOES emit one — otherwise the assertion passes
+          on an engine that never emits the row at all. ⚠️ **D491 RE-POINTED IT**: the
+          slot used to print *"Each player draws 3 cards."* (D427's string for the same
+          job) and D491 built that sentence. The replacement's blocker is the `Ancient`
+          BANNER, which no ingested column carries, so it is DATA-blocked rather than
+          merely unbuilt (D461).
         • **4 "Pick Drain"** ({C}, 10, *"Discard an Energy from this Pokémon."*) — the
           PARKING sibling, and the only route to the version question. `takePrize` is an
           `EffectOp` and an `EffectOp` is PERSISTED (`phase.cont.rest`), but THIS slice's
@@ -14800,7 +14816,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
         cost: ["Colorless"],
         name: "Idle Drain",
         damage: 10,
-        effect: "Each player draws 3 cards.",
+        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
       },
       {
         cost: ["Colorless"],
@@ -14875,7 +14891,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
           "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon.",
       },
       { cost: ["Colorless", "Colorless"], name: "Plain Through", damage: 120 },
-      { cost: ["Colorless"], name: "Odd Job", damage: 10, effect: "Each player draws 3 cards." },
+      {
+        cost: ["Colorless"],
+        name: "Odd Job",
+        damage: 10,
+        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
+      },
     ],
   }),
   /** 🆕🆕 **D428 — THE TWO DEFENDERS, EACH CHOSEN FOR THE ONE TOOL FIELD IT CAN WEAR.**
@@ -14946,7 +14967,12 @@ export const FIXTURE_POOL: Record<string, Card> = {
           "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon. If you discarded a Pokémon Tool in this way, your opponent's Active Pokémon is now Paralyzed.",
       },
       { cost: ["Colorless", "Colorless"], name: "Plain Blow", damage: 100 },
-      { cost: ["Colorless"], name: "Odd Job", damage: 10, effect: "Each player draws 3 cards." },
+      {
+        cost: ["Colorless"],
+        name: "Odd Job",
+        damage: 10,
+        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
+      },
     ],
   }),
   /** 🆕🆕 **D429 — THE ONE DEFENDER, WEARING UP TO THREE ATTACHMENTS AT ONCE.**

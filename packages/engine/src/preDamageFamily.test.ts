@@ -21,6 +21,14 @@ import {
   setDamage,
 } from "./testFixtures";
 
+/** 🆕🆕 **D491 — THE LOUD CONTROL'S SENTENCE, and its blocker is DATA.**
+    `censusAttackCorpus.ts` FILE LINE 272, 1 legal printing. Refused by all 13
+    `deriveAttack*` readers, by all four splitters and by the registry — and it can
+    never stop being refused, because the `Ancient` banner is a per-PRINTING fact that
+    `cardSchema` carries no column for. Asserted against the corpus below rather than
+    merely byte-pinned. */
+const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
+
 // 0.330.0 → 0.331.0 — 🆕🆕 D429: CLOSING THE PRE-DAMAGE FAMILY.
 //
 //   71: "Before doing damage, discard all Pokémon Tools and Special Energy from your
@@ -795,8 +803,20 @@ describe("§7 — ATTACK_EFFECT_SKIPPED, both directions", () => {
     // Without this the rung above passes on a build where the report was broken
     // outright, which is the vacuous-guard shape this repo keeps finding (D200→D214).
     const skipped = find(swing(board(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe("Each player draws 3 cards.");
-    expect(resolvedByAnyReader("Each player draws 3 cards.")).toBe(false);
+    // 🆕🆕 D491 RE-POINTED THIS CONTROL. It used to name *"Each player draws 3
+    // cards."*; D491 BUILT that sentence, which would have left this rung GREEN while
+    // it stopped testing anything (D462 predicted exactly this slot). The replacement's
+    // blocker is the `Ancient` BANNER, which no ingested column classifies, so it is
+    // DATA-blocked rather than merely unbuilt (D461's rule 2) and cannot be built by
+    // any reader at any width.
+    expect(skipped?.effect).toBe(LOUD_SENTENCE);
+    expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
+    // ⚠️ D452/D490 — assert the specimen IS a row of the committed corpus and read its
+    // printing count OFF the corpus. A byte pin measures an invention as faithfully as
+    // it measures the truth, so pinning the string alone would be green on a phantom.
+    expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
+      [1, LOUD_SENTENCE],
+    ]);
   });
 });
 
@@ -983,6 +1003,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.385.0");
+    expect(engineVersion).toBe("0.386.0");
   });
 });

@@ -5556,8 +5556,67 @@ export type EffectOp =
       two (a hand is an unordered zone), but `CARDS_DRAWN.uids`, `recordAs` and the
       redacted hand array all carry an order, so one of the two readings is what the
       HUD renders. It is asserted in the suite rather than left to drift, and the
-      REVERSED sibling is a real mutant rather than a declared equivalent. */
-  | { op: "drawCards"; count: number; recordAs?: EffectSlot; from?: "bottom" }
+      REVERSED sibling is a real mutant rather than a declared equivalent.
+
+      🆕🆕 **D491 — `who` NAMES THE SEATS, AND ITS ABSENCE IS THE CONTROLLER ALONE.**
+      *"Each player draws 3 cards."* (`censusAttackCorpus.ts` FILE LINE 199, 1 legal
+      printing) is the only draw in the whole 640-row attack column whose SUBJECT is
+      not the controller. Every other printed draw is a bare imperative addressed to
+      the player resolving it, so the ABSENT key is the twelve-printing reading and
+      D135's absent-key rule writes itself.
+
+      🛑 **THIS IS A NARROWING OF `opponentMayDraw`'s REFUSAL BELOW, NOT A REVERSAL OF
+      IT, AND THAT BLOCK IS CORRECTED IN PLACE RATHER THAN LEFT (D442/D466).** That
+      block says a seat rider is *"deliberately NOT a rider on `drawCards`: that op is
+      fully automatic and seat-fixed to the controller, and every one of its call sites
+      relies on both."* Both halves are still true of what it refuses — a **MAY** draw
+      answered by the OTHER player needs a park, and a parking rider here would break
+      the "fully automatic" half at every one of `drawCards`' call sites. **This field
+      breaks neither.** It is MANDATORY (no park, no prompt, no decider), and it is
+      OPTIONAL, so every existing producer is byte-unchanged and still seat-fixed.
+      D450's rule exactly: *a doc block that refuses a SHAPE has refused that shape,
+      not the axis.*
+
+      ⚠️ **AND `handRefresh { who: "both" }` IS NOT THIS SENTENCE, WHICH WAS THE FIRST
+      THING CHECKED.** That op ALREADY draws for both seats and already walks the seat
+      list — but its hand move is UNCONDITIONAL and its shuffle is intrinsic
+      (`interpreter.ts` `handRefresh`, both arms write `hand: []` and spend
+      `rngState`), and `HandRefreshDraw` answers *how many*, never *whether the hand
+      moves*. A `noMove?` flag there would make the op's name false, would have to
+      suppress an `rngState` step that every one of its five shipped registry
+      programs depends on, and would silence the per-seat
+      `HAND_SHUFFLED_INTO_DECK` row. This sentence moves no hand at all, so the
+      carrier is the DRAW, not the refresh.
+
+      🛑 **THE SEAT ORDER IS CONTROLLER-FIRST AND IT IS DRIVEN, NOT PREFERRED.** The
+      two shipped both-seats precedents disagree — `counterEachAll`'s `side: "both"`
+      walks the ABSOLUTE `SEATS`, `handRefresh`'s `who: "both"` walks
+      `[ctx.seat, otherSeat(ctx.seat)]` — and D490's distinguishing test settles it:
+      this op emits one `CARDS_DRAWN` per **SEAT**, so the seat order IS the log's
+      order, exactly as it is for `handRefresh` and unlike `counterEachAll`, which
+      files one row per BODY. Absolute seats would render one printed sentence in two
+      different orders depending on which chair the player sits in, off nothing the
+      card prints. **The rung that pins it runs from p2's chair**, because the
+      distinction is inert on every board where p1 attacks.
+
+      ⚠️ **§14.3 DECK-OUT IS UNTOUCHED, AND THIS IS THE ONE OP THAT CAN EMPTY BOTH
+      DECKS AT ONCE.** `flow.ts` `startTurn` ends the game only for the seat whose
+      turn is STARTING (`players[seat].deck.length === 0`), so a both-seats draw that
+      decks BOTH players ends nothing on the spot: the DEFENDER loses first, at the
+      start of their next turn, and the attacker's own empty deck is not consulted.
+      §8.6 (*"do as much as you can"*) is what makes the shallow half legal —
+      `drawToHand` short-draws and emits no row at all for a seat whose deck is empty
+      — so the sentence resolves on any pair of decks. Driven in the suite on a
+      1-card/1-card table, where the loser is the seat the rules name and not the one
+      the program touched last.
+
+      ⚠️ **`recordAs` IS FILED ONCE, OVER BOTH SEATS' CARDS.** `recordMoved` ASSIGNS
+      (D458/D490 measured the overwrite), so filing per seat inside the walk would
+      leave only the SECOND seat's uids in the slot and a downstream *"for each card
+      drawn in this way"* would score half the sentence. Nothing prints that
+      combination today; the accumulate-then-assign shape is chosen so that the day
+      one does, the slot is right rather than plausibly wrong. */
+  | { op: "drawCards"; count: number; recordAs?: EffectSlot; from?: "bottom"; who?: "eachPlayer" }
   /** "Draw cards until you have `size` cards in your hand" (Grusha) — draw
       `size − hand.length`, i.e. nothing at all when the hand already holds
       `size` or more (a bigger hand is never trimmed). Fully automatic like
@@ -9741,7 +9800,20 @@ export type EffectOp =
       seat-fixed to the controller, and every one of its call sites relies on
       both. The name carries the printed words (the healChosen `upTo` rule) —
       a future self-side "you may draw" is a different sentence and gets its
-      own field when a card prints it. */
+      own field when a card prints it.
+
+      🛑 **D491 NARROWED THE SECOND HALF OF THAT SENTENCE AND LEFT THE FIRST
+      STANDING — read it as refusing a SHAPE, not an axis (D450).** `drawCards`
+      now carries `who?: "eachPlayer"`, so it is no longer true that the op has
+      no seat vocabulary at all. What is still true, and is what this block was
+      always about, is that **a MAY answered by the other player needs a PARK**:
+      this op files a `decider` and asks a question, and putting that on
+      `drawCards` would break the *fully automatic* half at all of its call
+      sites. D491's field breaks neither half — it is mandatory, it never parks,
+      and it is OPTIONAL, so every producer written before it is byte-unchanged
+      and still draws for the controller alone. Measured, not argued:
+      `grep -c '"drawCards"' packages/engine/src/registry.ts` and the deriver's
+      three arms all omit the key. */
   | { op: "opponentMayDraw"; count: number }
   /** A BOARD-CONDITION branch: run `then` when `cond` holds for the controller,
       else `otherwise` (nothing, if absent). The deterministic sibling of
@@ -18854,6 +18926,30 @@ const ATTACK_DRAW_UNTIL = /^Draw cards until you have (\d+) cards in your hand\.
 // lives by: a printed digit is READ, never invented, even when the pool prints one
 // value of it.
 const ATTACK_DRAW_BOTTOM = /^Draw (\d+) cards from the bottom of your deck\.$/;
+// 🆕🆕 D491 — THE ONLY DRAW IN THE COLUMN WHOSE SUBJECT IS NOT THE CONTROLLER.
+// *"Each player draws 3 cards."* — `censusAttackCorpus.ts` FILE LINE 199, 1 legal
+// printing, and the SECOND of exactly two corpus sentences containing `each player`
+// (the other is D490's mill at file line 130, built).
+//
+// 🛑 STRUCTURALLY DISJOINT FROM BOTH DRAW SIBLINGS AND CARRYING NO GUARD (D467's
+// first preference, D468's second kind of equivalence). All three are `^…$` and
+// this one demands the literal `Each player draws ` at position 0, which neither
+// `ATTACK_DRAW` (`^Draw `) nor `ATTACK_DRAW_BOTTOM` (`^Draw `) can spend — no string
+// matches two of them, so no ordering here can change an answer and no lookahead is
+// owed. The order-permutation row is a DECLARED survivor for exactly that reason.
+//
+// ⚠️ NO SINGULAR BRANCH, D104's minimal-shape rule as `ATTACK_DRAW_BOTTOM` states
+// it: *"Each player draws a card."* is printed by NOTHING in this pool, so a branch
+// whose `1` no census can reach and no mutant can kill would be D231's unkillable
+// arm at an alternation. The COUNT stays CAPTURED for the reason D121 gives and
+// both siblings already live by — a printed digit is READ, never invented, even
+// when the pool prints one value of it.
+//
+// ⚠️ THE MOOD IS PART OF THE ANCHOR, not of a guard. There is no printed
+// *"Each player may draw N cards."*, and the engine's only seat-crossing draw
+// (`opponentMayDraw`) is a MAY that PARKS — so an anchor loose enough to admit the
+// modal would file an automatic op for a sentence that owes a question.
+const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\d+) cards\.$/;
 // ⚠️⚠️ THE SELF-SWITCH FAMILY WAS NOT HERE AT D181, AND ITS ABSENCE WAS THAT
 // SLICE'S REAL FINDING — D189 PAID THE PRICE AND BUILT TWO OF ITS THREE
 // SENTENCES. The backlog priced "Switch this Pokémon with 1 of your Benched
@@ -24464,6 +24560,24 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   if (match !== null) {
     const count = Number(match[1]);
     if (count >= 1) return [{ op: "drawCards", count, from: "bottom" }];
+  }
+  // 🆕🆕 D491 — THE SAME OP, BOTH SEATS. One arm, one printed sentence, and NO new
+  //     op, prompt, park, decider, event, error code, `GameState` field,
+  //     `BoardCondition`/`CardFilter`/`EffectSlot` member, reader (the surface stands
+  //     still at 13), registry row or `packages/schema` byte — the whole diff is an
+  //     optional key on an op that has run since M4 and a seat WALK in its
+  //     interpreter arm.
+  //
+  //     ⚠️ THE `>= 1` GUARD IS THE FAMILY'S, VERBATIM, AND IT REFUSES THE SAME
+  //     THING: a printed "Each player draws 0 cards." would file an effect that
+  //     reports a simulated draw and moves nothing, for either seat. No CEILING
+  //     either — §8.6 ("do as much as you can") is what makes a count deeper than a
+  //     deck legal, and `drawToHand` short-draws PER SEAT, so the two players need
+  //     not have the same amount of deck left for the sentence to resolve.
+  match = ATTACK_EACH_PLAYER_DRAW.exec(effect);
+  if (match !== null) {
+    const count = Number(match[1]);
+    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];
   }
   match = ATTACK_DRAW_UNTIL.exec(effect);
   if (match !== null) {

@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.385.0";',
+    find: 'export const engineVersion = "0.386.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -8547,9 +8547,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D311",
     what: 'the drawn uids are read off the deck AFTER `drawToHand` has taken them, so the record holds the NEXT three cards instead of the three that moved. Identical on every deep deck -- the gate fires either way -- and wrong exactly at the boundary the printed clause is about: a one-card deck draws its last card and then files NOTHING, so the body does not run away on the one board where "if you drew ANY cards" is doing work. RE-POINTED AT D487 (the case grew a `from` end and the slice moved onto a shared cut); the DEFECT is unchanged -- `deck` is now bound to the POST-draw deck, so both ends slice a zone the draw has already emptied by `count`',
     file: "packages/engine/src/interpreter.ts",
-    find: "      const deck = state.players[ctx.seat].deck;\n      const wanted = Math.max(op.count, 0);",
+    find: "        const deck = done.players[drawSeat].deck;\n        const wanted = Math.max(op.count, 0);",
     replace:
-      '      const deck = drawToHand(state, ctx.seat, op.count, "effect", []).players[ctx.seat].deck;\n      const wanted = Math.max(op.count, 0);',
+      '        const deck = drawToHand(done, drawSeat, op.count, "effect", []).players[drawSeat].deck;\n        const wanted = Math.max(op.count, 0);',
     expectKilledBy: ["packages/engine/src/runAwayDraw.test.ts"],
   },
   {
@@ -26594,8 +26594,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D487",
     what: "🛑 **C2 — THE READER IS RIGHT AND THE INTERPRETER IS NOT, WHICH IS THE HALF C1 CANNOT REACH.** `drawToHand`'s source argument is hard-wired to `\"top\"`, so the derived program still carries `from: \"bottom\"` — every arm assertion, every corpus figure and the whole of §2/§3 stay green — while the board takes the top three. The RECORD still slices the bottom, so this build also files three uids that never moved: **a program whose value and whose behaviour disagree, with only the board able to say so**",
     file: "packages/engine/src/interpreter.ts",
-    find: "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events, op.from ?? \"top\");",
-    replace: "      const done = drawToHand(state, ctx.seat, op.count, \"effect\", events, \"top\");",
+    find: '        done = drawToHand(done, drawSeat, op.count, "effect", events, op.from ?? "top");',
+    replace: '        done = drawToHand(done, drawSeat, op.count, "effect", events, "top");',
     expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
   },
   {
@@ -26603,8 +26603,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D487",
     what: "⚠️ **C3 — D311's §9.2 SLOT STOPS FOLLOWING THE END THE OP NAMES.** The `drawn` slice ignores `op.from` and always takes the top, so the cards that MOVE are right and the cards FILED are three that never left the deck. Invisible to every board rung and to every gate: three filed is three filed, so any `recordGate` behind it fires exactly as before — **only the uids differ, which is why the suite reads the record BY VALUE rather than by its length**",
     file: "packages/engine/src/interpreter.ts",
-    find: "        op.from === \"bottom\" ? deck.slice(Math.max(0, deck.length - wanted)) : deck.slice(0, wanted);",
-    replace: "        deck.slice(0, wanted);",
+    find: '          ...(op.from === "bottom"\n            ? deck.slice(Math.max(0, deck.length - wanted))\n            : deck.slice(0, wanted)),',
+    replace: "          ...deck.slice(0, wanted),",
     expectKilledBy: ["packages/engine/src/deckBottomDraw.test.ts"],
   },
   {
@@ -27116,8 +27116,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D490",
     what: "🛑 **THE NEW `switch` CASE COLLAPSES TO ITS `self` NEIGHBOUR — the defect the old TERNARY would have shipped SILENTLY.** Before D490 this arm read `op.whose === \"self\" ? ctx.seat : otherSeat(ctx.seat)`, so a third member fell out of the wrong side with `tsc` reporting nothing (D222/D425/D447). The switch makes an omission loud; this row is what proves the CASE BODY is checked and not merely present. Board B deals 50 against a printed 190, and the opponent's deck keeps its top card.",
     file: "packages/engine/src/interpreter.ts",
-    find: "          case \"eachPlayer\":\n            return [ctx.seat, otherSeat(ctx.seat)];",
-    replace: "          case \"eachPlayer\":\n            return [ctx.seat];",
+    find: '          case "opponent":\n            return [otherSeat(ctx.seat)];\n          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];',
+    replace: '          case "opponent":\n            return [otherSeat(ctx.seat)];\n          case "eachPlayer":\n            return [ctx.seat];',
     expectKilledBy: [
       "packages/engine/src/eachDeckMillBoost.test.ts",
     ],
@@ -27192,6 +27192,138 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [
       "packages/engine/src/eachDeckMillBoost.test.ts",
       "packages/engine/src/benchDiscardBoost.test.ts",
+    ],
+  },
+  {
+    id: "D491-anchor-loses-its-caret",
+    decision: "D491",
+    what: "🛑 THE ANCHOR STOPS BEING WHOLE-SENTENCE AT ITS FRONT. Without `^`, `Draw a card. Each player draws 3 cards.` is claimed by `deriveAttackEffect` and its LEADING clause is silently thrown away — the sentence reads, `resolvedByAnyReader` goes true, `ATTACK_EFFECT_SKIPPED` never fires, and half the printed text does nothing. ⚠️ D452's one-axis rule is why the probe's prefix ENDS a sentence: a lowercased near-miss would be refused by the family's case-sensitivity and green with the caret gone",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
+    replace: "const ATTACK_EACH_PLAYER_DRAW = /Each player draws (\\d+) cards\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-anchor-loses-its-terminator",
+    decision: "D491",
+    what: "⚠️ THE ANCHOR STOPS BEING WHOLE-SENTENCE AT ITS TAIL. Without `\\.$` the arm claims `Each player draws 3 cards. Draw a card.` WHOLE and drops the second clause. The `$` end fails differently from the `^` end (D464): the compound already composes through `splitAttackTrailingClause`, so the two builds agree on the PROGRAM there and disagree on which mechanism produced it — the discriminating rung is `deriveAttackEffect` itself returning null for the compound",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
+    replace: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\./;",
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-anchor-admits-the-modal",
+    decision: "D491",
+    what: "🛑 THE ANCHOR EATS THE `may` SPELLING AND FILES AN AUTOMATIC OP FOR A SENTENCE THAT OWES A QUESTION. `Each player may draw 3 cards.` would derive to the same mandatory `drawCards`, with no park, no prompt and no `decider` — where the engine's ONE seat-crossing draw (`opponentMayDraw`) parks and asks. Nothing prints the modal, so the refusal is the anchor's literal `draws` and nothing else",
+    file: "packages/engine/src/effects.ts",
+    find: "const ATTACK_EACH_PLAYER_DRAW = /^Each player draws (\\d+) cards\\.$/;",
+    replace: "const ATTACK_EACH_PLAYER_DRAW = /^Each player (?:draws|may draw) (\\d+) cards\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-arm-drops-the-seat-key",
+    decision: "D491",
+    what: "🛑 THE ARM EMITS ITS ONE-AXIS SIBLING'S PROGRAM. `Draw 3 cards.` is a real printed sentence two anchors up, so this is the neighbouring arm's REAL code at this address (D190b) — and it is INVISIBLE to every census: the sentence still reads, `resolvedByAnyReader` is still true, `BUILT.attack` still steps and the residue still falls by one. Only a board that reads the OPPONENT's hand can tell the two apart (D469)",
+    file: "packages/engine/src/effects.ts",
+    find: '    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
+    replace: '    if (count >= 1) return [{ op: "drawCards", count }];',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-arm-invents-the-count",
+    decision: "D491",
+    what: "⚠️ THE CAPTURED DIGIT IS REPLACED BY THE PRINTED ONE. D121's rule is that a printed digit is READ, never invented, even when the pool prints one value of it — so this row is green against every board the CATALOG can reach and dies only on the constructed second count, which is exactly what D440 says a reader rung is for",
+    file: "packages/engine/src/effects.ts",
+    find: '    const count = Number(match[1]);\n    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
+    replace: '    const count = 3;\n    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-arm-admits-a-printed-zero",
+    decision: "D491",
+    what: "⚠️ THE FAMILY'S `count >= 1` GUARD GOES. A printed `Each player draws 0 cards.` would file an effect that reports a simulated draw and moves nothing — for BOTH seats, so the loud `ATTACK_EFFECT_SKIPPED` channel is switched off on a sentence the engine cannot act on. The guard is `ATTACK_DRAW`'s and `ATTACK_DRAW_BOTTOM`'s, verbatim",
+    file: "packages/engine/src/effects.ts",
+    find: '    if (count >= 1) return [{ op: "drawCards", count, who: "eachPlayer" }];',
+    replace: '    if (count >= 0) return [{ op: "drawCards", count, who: "eachPlayer" }];',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-walk-drops-the-opponent",
+    decision: "D491",
+    what: "🛑 THE `eachPlayer` CASE COLLAPSES TO THE CONTROLLER — the defect a TERNARY would have shipped silently (D222/D425/D447/D490). The derived PROGRAM is still right, every reader rung stays green and the census does not move; only the opponent's zones say otherwise. ⚠️ The `find` spans `case undefined:` because the two-line case body is BYTE-IDENTICAL to `discardDeckTop`'s (D437's converse trap, and D490's row had to be lengthened in the same commit)",
+    file: "packages/engine/src/interpreter.ts",
+    find: '          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];\n          case undefined:',
+    replace: '          case "eachPlayer":\n            return [ctx.seat];\n          case undefined:',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-walk-is-absolute-seats",
+    decision: "D491",
+    what: "🛑 THE WALK TAKES `counterEachAll`'s ABSOLUTE `SEATS` INSTEAD OF CONTROLLER-FIRST — the other shipped both-seats precedent's REAL code, which is why it is the mutation an author would actually make. Both players still draw the right cards off the right decks; only the ORDER of the two `CARDS_DRAWN` rows moves, and it moves only from p2's chair. ⚠️ INERT ON EVERY BOARD WHERE P1 ATTACKS, so the killing rung is the one that attacks from p2",
+    file: "packages/engine/src/interpreter.ts",
+    find: '          case "eachPlayer":\n            return [ctx.seat, otherSeat(ctx.seat)];\n          case undefined:',
+    replace: '          case "eachPlayer":\n            return SEATS;\n          case undefined:',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-draw-uses-the-controllers-seat",
+    decision: "D491",
+    what: "🛑 THE FUNNEL BELOW THE SWITCH IGNORES THE WALKED SEAT (D447's second half: a funnel written in terms of the old members' shared property). The walk is right, the loop runs twice, and both draws come off the CONTROLLER's deck — six cards into one hand and none into the other, on a board where every event count and every program assertion is unchanged",
+    file: "packages/engine/src/interpreter.ts",
+    find: '        done = drawToHand(done, drawSeat, op.count, "effect", events, op.from ?? "top");',
+    replace: '        done = drawToHand(done, ctx.seat, op.count, "effect", events, op.from ?? "top");',
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-record-slices-the-controllers-deck",
+    decision: "D491",
+    what: "⚠️ THE §9.2 SLICE READS THE CONTROLLER'S DECK WHILE THE DRAW TAKES THE WALKED SEAT'S. The cards that MOVE are right and the uids FILED are three that never left the opponent's deck — invisible to every board rung, every event count and every census, because a filed three is a filed three. D311's defect at the seat axis instead of at the deck end",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        const deck = done.players[drawSeat].deck;",
+    replace: "        const deck = done.players[ctx.seat].deck;",
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-record-files-only-the-last-seat",
+    decision: "D491",
+    what: "🛑 THE RECORD IS FILED PER SEAT INSTEAD OF ONCE OVER BOTH, WHICH IS `recordMoved`'s ASSIGN SEMANTICS ARRIVING AT A SECOND ADDRESS. D458 measured the overwrite and D490 measured a DAMAGE NUMBER that turned on it; here the slot ends up holding only the opponent's three uids, so a printed `for each card drawn in this way` would score half the sentence. Every board, every event and every hand is unchanged",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        drawn.push(",
+    replace: "        drawn.length = 0;\n        drawn.push(",
+    expectKilledBy: [
+      "packages/engine/src/eachPlayerDraw.test.ts",
+    ],
+  },
+  {
+    id: "D491-loud-control-keeps-the-built-sentence",
+    decision: "D491",
+    what: '🛑 THE RE-POINTED ATTRIBUTION CONTROL GOES BACK TO THE SENTENCE THIS SLICE BUILT. `fix-prizewheel` index 3 exists so a *"no ATTACK_EFFECT_SKIPPED"* rung has a neighbour that DOES skip; with the built sentence back in the slot the control is green and testing NOTHING — D462 predicted exactly this failure for exactly this string, and D468\'s *a refusal can be load-bearing* is the general form. ⚠️ This row is the tripwire that arms the re-point: without it, a successor could quietly restore the old text and no verdict would move',
+    file: "packages/engine/src/testFixtures.ts",
+    find: '        name: "Idle Drain",\n        damage: 10,\n        effect: "Heal 100 damage from 1 of your Benched Ancient Pokémon.",',
+    replace: '        name: "Idle Drain",\n        damage: 10,\n        effect: "Each player draws 3 cards.",',
+    expectKilledBy: [
+      "packages/engine/src/takePrizeAttack.test.ts",
     ],
   },
 ];

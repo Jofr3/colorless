@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
@@ -12,6 +12,14 @@ import {
   mustApply,
   setActiveFromDeck,
 } from "./testFixtures";
+
+/** 🆕🆕 **D491 — THE LOUD CONTROL'S SENTENCE, and its blocker is DATA.**
+    `censusAttackCorpus.ts` FILE LINE 272, 1 legal printing. Refused by all 13
+    `deriveAttack*` readers, by all four splitters and by the registry — and it can
+    never stop being refused, because the `Ancient` banner is a per-PRINTING fact that
+    `cardSchema` carries no column for. Asserted against the corpus below rather than
+    merely byte-pinned. */
+const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
 
 // 0.331.0 → 0.332.0 — 🆕🆕 D430: ROUTING THE PRE-DAMAGE SEAM THROUGH THE §11 GATE.
 //
@@ -541,8 +549,20 @@ describe("§5 — both seats, and nothing is reported as skipped", () => {
     // Without it the rung above passes on a build where the report is broken outright,
     // which is the vacuous-guard shape this repo keeps finding (D200→D214).
     const skipped = find(swing(shielded(), IDX.loud).events, "ATTACK_EFFECT_SKIPPED");
-    expect(skipped?.effect).toBe("Each player draws 3 cards.");
-    expect(resolvedByAnyReader("Each player draws 3 cards.")).toBe(false);
+    // 🆕🆕 D491 RE-POINTED THIS CONTROL. It used to name *"Each player draws 3
+    // cards."*; D491 BUILT that sentence, which would have left this rung GREEN while
+    // it stopped testing anything (D462 predicted exactly this slot). The replacement's
+    // blocker is the `Ancient` BANNER, which no ingested column classifies, so it is
+    // DATA-blocked rather than merely unbuilt (D461's rule 2) and cannot be built by
+    // any reader at any width.
+    expect(skipped?.effect).toBe(LOUD_SENTENCE);
+    expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
+    // ⚠️ D452/D490 — assert the specimen IS a row of the committed corpus and read its
+    // printing count OFF the corpus. A byte pin measures an invention as faithfully as
+    // it measures the truth, so pinning the string alone would be green on a phantom.
+    expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
+      [1, LOUD_SENTENCE],
+    ]);
   });
 });
 
@@ -656,6 +676,6 @@ describe("§7 — the version", () => {
     // `manifest.version`) plus `package.json`, the declaration and the mutant `find`.
     // The increment is this line — the pin being AUTHORED, which is the one D427 named
     // as the thing every note forgets.
-    expect(engineVersion).toBe("0.385.0");
+    expect(engineVersion).toBe("0.386.0");
   });
 });

@@ -19795,6 +19795,51 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.385.0 → **0.386.0** (D491 — THE ONLY DRAW IN THE COLUMN
+    WHOSE PRINTED SUBJECT IS NOT THE CONTROLLER. `censusAttackCorpus.ts` **FILE LINE 199** —
+    *"Each player draws 3 cards."*, **1 sentence / 1 legal printing**, claimed WHOLE by
+    `deriveAttackEffect` through ONE new anchor `ATTACK_EACH_PLAYER_DRAW` over the SHIPPED
+    `drawCards` op carrying ONE new OPTIONAL key `who?: "eachPlayer"`.
+
+    🛑 **THE BLOCKER WAS NOT THE SEAT VOCABULARY AND NOT THE COUNT — IT WAS THAT NO READER
+    ANYWHERE TAKES A DRAW ADDRESSED TO ANYONE BUT THE CONTROLLER.** The 2⁴ axis-substitution
+    lattice splits its 16 points on exactly one axis: all EIGHT points that keep the FINITE
+    CLAUSE (a spelled subject with an inflected verb) are refused, and all EIGHT that
+    substitute the bare imperative build. SCOPE, MOOD and COUNT are each INERT on the
+    verdict — *"Your opponent draws 3 cards."* is refused as flatly as *"Each player draws 3
+    cards."*, and *"Draw 3 cards."* has built since M4, so the COUNT is not an axis at all.
+
+    ⚠️ **`handRefresh { who: "both" }` ALREADY DRAWS FOR BOTH SEATS AND IS STILL NOT THIS
+    SENTENCE.** Its hand move is UNCONDITIONAL and its shuffle intrinsic (both interpreter
+    arms write `hand: []` and spend `rngState`), and `HandRefreshDraw` answers *how many*,
+    never *whether the hand moves*. This sentence moves no hand, so the carrier is the DRAW.
+
+    🛑 **§14.3 DECK-OUT IS UNTOUCHED, AND THIS IS THE FIRST OP THAT CAN EMPTY BOTH DECKS AT
+    ONCE.** `flow.ts` `startTurn` ends the game only for the seat whose turn is STARTING, so
+    a both-seats draw that decks BOTH players ends nothing on the spot: the DEFENDER loses
+    first, at the start of their next turn, and the attacker's own empty deck is never
+    consulted (`ptcg-rules.md` §5.1 and §14.3 — *"checked at the draw step"*). §8.6
+    (*"do as much as you can"*) is what makes the shallow half legal: `drawToHand`
+    short-draws PER SEAT and emits no row at all for an empty deck.
+
+    ⚠️ **THE SEAT ORDER IS CONTROLLER-FIRST, DRIVEN FROM P2's CHAIR.** The two shipped
+    both-seats precedents disagree — `counterEachAll` walks absolute `SEATS`, `handRefresh`
+    walks `[ctx.seat, otherSeat(ctx.seat)]` — and D490's test settles it: this op emits one
+    `CARDS_DRAWN` per SEAT, so the seat order IS the log's order.
+
+    **ZERO** new `EffectOp` members, op VALUES on any other field, `EffectSlot` /
+    `BoardCondition` / `CardFilter` / `DamageCountSource` members, readers (surface still
+    **13**), prompts, choice kinds, parks, deciders, events, error codes, `GameState` /
+    `InPlayPokemon` fields, registry rows, `redact.ts` bytes, `packages/schema` bytes or
+    `log.ts` bytes — the second player's log voice is FREE, because `CARDS_DRAWN` is filed
+    under `event.seat` and `viewLog.ts` maps each row to `you`/`opponent` per viewer.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 29 ON THE ABSENT-KEY DIRECTION (D441), AND THE ADDRESS
+    DOES PERSIST** — `drawCards` rides `recordGate.then` behind `payFromHand`'s park into
+    `state.phase`, so this is NOT a no-carrier argument. It is D125's WIDENING: a v29
+    continuation simply LACKS the key, and lacking it means the CONTROLLER ALONE, which is
+    what every v29 writer meant. DRIVEN in the loss direction on a reconstructed v29 record,
+    where the wrong default answers a different hand count.)
     🆕🆕🆕 engineVersion 0.384.0 → **0.385.0** (D490 — THE MILL OF **BOTH** DECKS,
     SCALED BY THE ENERGY AMONG WHAT IT MILLED. `censusAttackCorpus.ts` **FILE LINE 130** —
     *"Discard the top card of each player's deck. This attack does 140 more damage for each
@@ -20026,7 +20071,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.385.0";
+export const engineVersion = "0.386.0";
 
 export type {
   ApplyResult,

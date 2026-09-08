@@ -150,7 +150,17 @@ describe("§1 — one sentence, three printings, and one printed count in the wh
     expect(attacks.slice(0, 3).map((a) => a.effect)).toEqual([SENTENCE, SENTENCE, SENTENCE]);
     // …and the two siblings that are NOT this sentence, which is what makes the
     // "no ATTACK_EFFECT_SKIPPED" rungs in §4 mean anything.
-    expect(attacks[3]?.effect).toBe("Each player draws 3 cards.");
+    // 🆕🆕 D491 RE-POINTED index 3. It printed *"Each player draws 3 cards."* until D491
+    // BUILT that sentence; a loud control whose sentence has an owner is green and
+    // testing nothing. The replacement is DATA-blocked by the `Ancient` banner (no
+    // ingested column classifies it), asserted here as a real corpus row at its real
+    // printing count rather than byte-pinned (D452/D490).
+    expect(attacks[3]?.effect).toBe("Heal 100 damage from 1 of your Benched Ancient Pokémon.");
+    expect(
+      legalAttackCorpus().filter(
+        ([, text]) => text === "Heal 100 damage from 1 of your Benched Ancient Pokémon.",
+      ),
+    ).toEqual([[1, "Heal 100 damage from 1 of your Benched Ancient Pokémon."]]);
     expect(attacks[4]?.effect).toBe("Discard an Energy from this Pokémon.");
   });
 
@@ -348,7 +358,7 @@ describe("§3 — `MATCH_RECORD_VERSION` stays 26, and the prediction is DRIVEN"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.385.0");
+    expect(engineVersion).toBe("0.386.0");
   });
 });
 

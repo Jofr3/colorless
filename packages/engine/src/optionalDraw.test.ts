@@ -164,8 +164,20 @@ const NEAR_MISSES = [
       (D418's second half, D438's polarity rule) — see `BUILT_AT_D473` below. What
       this file owns about the sentence is that it is a GATE and not a WRAPPER, so
       that is what the replacement rung asserts, in both directions. */
-  /** A draw for BOTH seats (1 legal). The printed subject is not "you". */
-  "Each player draws 3 cards.",
+  /** ⚠️ 🆕🆕 **D491 — THE SIXTH ROW TO LEAVE `NEAR_MISSES`, AND ITS OLD NOTE WAS
+      A CORRECT DESCRIPTION WITH NO BLOCKER IN IT.** It read: *"A draw for BOTH seats
+      (1 legal). The printed subject is not 'you'."* Both clauses are true and neither
+      is a reason the sentence cannot be read: `handRefresh` has drawn for BOTH seats
+      since Judge, and the corpus already prints third-person subjects that readers
+      claim (*"Your opponent discards 2 cards from their hand."*). What was missing was
+      a seat axis on the op that draws WITHOUT moving a hand — one OPTIONAL key and a
+      seat walk in one interpreter arm.
+
+      🛑 **RE-POINTED, NOT DROPPED, AND ONTO A SHAPE RATHER THAN ONTO "IT DERIVES"**
+      (D418's second half, D438's polarity rule) — see `BUILT_AT_D491` below. What this
+      file owns about the sentence is that it is neither a `you may` WRAPPER nor the
+      bare `ATTACK_DRAW` program, so that is what the replacement rung asserts, in both
+      directions. */
   /** A "You may put …" whose consequent contains a draw, and whose "if you don't"
       branch is the one that draws — the inverted shape, and the only printing in
       the catalog where a decline does MORE than an accept. */
@@ -266,6 +278,13 @@ const BUILT_AT_D473_SIBLING = "Discard a card from your hand. If you do, draw 3 
     shape: the bottom draw is a bare two-key `drawCards`, never wrapped and never the
     un-keyed op the twelve `ATTACK_DRAW` printings emit. */
 const BUILT_AT_D487 = "Draw 3 cards from the bottom of your deck.";
+
+/** 🆕🆕 **D491 — the sixth `NEAR_MISSES` row to be built.** `censusAttackCorpus.ts`
+    FILE LINE 199, **1 legal printing**, and the only draw in the whole 640-row attack
+    column whose printed SUBJECT is not the controller. Claimed by `deriveAttackEffect`
+    through `ATTACK_EACH_PLAYER_DRAW`, which is structurally disjoint from both draw
+    siblings (all three are `^…$` and disagree on a mandatory literal at position 0). */
+const BUILT_AT_D491 = "Each player draws 3 cards.";
 
 describe("the two anchors — 12 legal printings, and the four words in front of the op", () => {
   it("derives each printed sentence to the WRAPPED program", () => {
@@ -389,6 +408,31 @@ describe("the near-misses — the population an over-wide anchor eats", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text), text).toBeNull();
     }
+  });
+
+  it("🆕🆕 D491's both-seats draw is BUILT as a KEYED `drawCards`, never a wrapper", () => {
+    // See `BUILT_AT_D491`'s block. The replacement for the `toBeNull` this row used to
+    // carry, and strictly stronger: it names the value the arm emits and KEEPS the
+    // refusals the old rung supplied (D438).
+    expect(deriveAttackEffect(BUILT_AT_D491)).toEqual([
+      { op: "drawCards", count: 3, who: "eachPlayer" },
+    ]);
+    // …and it is NOT the bare `ATTACK_DRAW` program: the key is the whole difference
+    // between one hand growing and two.
+    expect(deriveAttackEffect(BUILT_AT_D491)).not.toEqual([{ op: "drawCards", count: 3 }]);
+    // …and the WRAPPED spelling is nobody's sentence, so this file's anchors must still
+    // refuse it — the original entry's claim about the `you may` family, kept. There is
+    // no printed *"Each player may draw N cards."*, and the engine's one seat-crossing
+    // MAY (`opponentMayDraw`) PARKS, so an anchor that admitted the modal would file an
+    // automatic op for a sentence that owes a question.
+    expect(deriveAttackEffect("Each player may draw 3 cards.")).toBeNull();
+    // …and the SINGULAR spelling is nobody's sentence either, so no `(?:a card)`
+    // alternation crept onto the new anchor (D104's minimal-shape rule).
+    expect(deriveAttackEffect("Each player draws a card.")).toBeNull();
+    // …and the printed subject is the ONLY seat spelling read: a single-seat
+    // third-person draw is still refused, which is what keeps the axis honest.
+    expect(deriveAttackEffect("Your opponent draws 3 cards.")).toBeNull();
+    expect(deriveAttackEffect("Both players draw 3 cards.")).toBeNull();
   });
 
   it("🆕🆕 D487's bottom draw is BUILT as a KEYED `drawCards`, never a wrapper", () => {

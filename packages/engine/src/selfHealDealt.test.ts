@@ -17,6 +17,13 @@ import {
   types,
 } from "./testFixtures";
 
+/** 🆕🆕 **D491 — THE LOUD CONTROL'S SENTENCE, and its blocker is DATA.**
+    `censusAttackCorpus.ts` FILE LINE 272, 1 legal printing. Refused by all 13
+    `deriveAttack*` readers, by all four splitters and by the registry, and it cannot
+    stop being refused: the `Ancient` banner is a per-PRINTING fact and `cardSchema`
+    carries no column for it, so no reader at any width can classify it. */
+const LOUD_SENTENCE = "Heal 100 damage from 1 of your Benched Ancient Pokémon.";
+
 // 0.328.0 → 0.329.0 — 🆕🆕 D427: HEAL SELF BY THE DAMAGE THIS ATTACK DEALT.
 //
 //   "Heal from this Pokémon the same amount of damage you did to your opponent's
@@ -178,7 +185,12 @@ describe("§1 — one sentence, six printings, no sibling to generalise over", (
       SENTENCE,
       SENTENCE,
       SENTENCE,
-      "Each player draws 3 cards.",
+      LOUD_SENTENCE,
+    ]);
+    // 🆕🆕 D491 — the specimen is asserted to BE a corpus row at its printed count, not
+    // byte-pinned (D452/D490: a pin measures an invention as faithfully as the truth).
+    expect(legalAttackCorpus().filter(([, text]) => text === LOUD_SENTENCE)).toEqual([
+      [1, LOUD_SENTENCE],
     ]);
     // Every scalar around the sentence is CHOSEN and says so; only the TEXT is read
     // off the catalog. The printed damages are the suite's whole variable.
@@ -440,7 +452,7 @@ describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` sta
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.385.0");
+    expect(engineVersion).toBe("0.386.0");
   });
 });
 
@@ -638,11 +650,15 @@ describe("§7 — a Knocked Out defender changes nothing about what was dealt", 
       const { events } = swing(board(defender, healerDamage), index);
       expect(types(events), label).not.toContain("ATTACK_EFFECT_SKIPPED");
     }
-    // THE CONTROL, on the SAME BODY and the same printed 50: index 3 prints "Each
-    // player draws 3 cards.", which no reader claims, and the loud row still fires.
+    // THE CONTROL, on the SAME BODY and the same printed 50: index 3 prints an unread
+    // sentence and the loud row still fires. 🆕🆕 D491 RE-POINTED it — the slot used to
+    // print *"Each player draws 3 cards."* and D491 built that sentence, which would
+    // have left this rung green while it stopped testing anything. The replacement is
+    // blocked by DATA (the `Ancient` banner is in no ingested column), so unlike a
+    // merely-unbuilt sentence it cannot be claimed by any reader at any width (D461).
     const loud = swing(board("fix-drainwall", 150), IDX.loud);
     expect(types(loud.events)).toContain("ATTACK_EFFECT_SKIPPED");
-    expect(resolvedByAnyReader("Each player draws 3 cards.")).toBe(false);
+    expect(resolvedByAnyReader(LOUD_SENTENCE)).toBe(false);
   });
 });
 

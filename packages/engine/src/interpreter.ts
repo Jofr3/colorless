@@ -1997,11 +1997,42 @@ function stepOp(
       // Both slices share ONE cut (`deck.length − count`, floored at 0), which is why
       // a deck of `count` or fewer takes the whole deck at either end — the two arms
       // are extensionally identical there and the suite's boards are chosen for it.
-      const deck = state.players[ctx.seat].deck;
-      const wanted = Math.max(op.count, 0);
-      const drawn =
-        op.from === "bottom" ? deck.slice(Math.max(0, deck.length - wanted)) : deck.slice(0, wanted);
-      const done = drawToHand(state, ctx.seat, op.count, "effect", events, op.from ?? "top");
+      //
+      // 🆕🆕 D491 — `who` DECIDES THE SEAT LIST, AND IT IS A `switch` RATHER THAN THE
+      // TERNARY IT REPLACES. A second seat value would fall silently out of the wrong
+      // side of an `op.who === "eachPlayer" ? … : …` with `tsc` saying nothing — D447's
+      // `snipeTargets` defect, which D490 met at `discardDeckTop.whose` one slice ago.
+      // The `undefined` arm is written out for the same reason: it is the twelve-
+      // printing controller reading, not a default.
+      //
+      // 🛑 CONTROLLER-FIRST, AND THE TWO SHIPPED PRECEDENTS DISAGREE. `counterEachAll`
+      // walks the ABSOLUTE `SEATS`; `handRefresh` walks `[ctx.seat, otherSeat(ctx.seat)]`.
+      // The distinguishing fact (D490) is what the op emits per iteration: this one
+      // emits one `CARDS_DRAWN` per SEAT, so the seat order IS the log's order and
+      // `handRefresh` — the other per-seat-row draw — is the precedent that governs.
+      const drawSeats: readonly Seat[] = ((): readonly Seat[] => {
+        switch (op.who) {
+          case "eachPlayer":
+            return [ctx.seat, otherSeat(ctx.seat)];
+          case undefined:
+            return [ctx.seat];
+        }
+      })();
+      // ⚠️ ONE `recordMoved` OVER BOTH SEATS' CARDS, never one per seat: `recordMoved`
+      // ASSIGNS, so a per-seat filing would leave only the LAST seat's uids in the slot
+      // (D458 measured the overwrite, D490 measured a damage number that turned on it).
+      const drawn: string[] = [];
+      let done = state;
+      for (const drawSeat of drawSeats) {
+        const deck = done.players[drawSeat].deck;
+        const wanted = Math.max(op.count, 0);
+        drawn.push(
+          ...(op.from === "bottom"
+            ? deck.slice(Math.max(0, deck.length - wanted))
+            : deck.slice(0, wanted)),
+        );
+        done = drawToHand(done, drawSeat, op.count, "effect", events, op.from ?? "top");
+      }
       recordMoved(record, op.recordAs, drawn);
       return { done };
     }
