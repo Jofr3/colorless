@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.387.0";',
+    find: 'export const engineVersion = "0.388.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27462,6 +27462,72 @@ export const MUTANTS: Mutant[] = [
     replace: "      const ceiling = op.count === \"all\" ? 1 : op.count;",
     expectKilledBy: [
       "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D493-suppression-arm-drops-the-multiplier-gate",
+    decision: "D493",
+    what: "🛑 C1 — **THE PAIRING GATE GOES**, leaving a bare `.test()` where the sibling reader does an `.exec()` with two guards. D445's tell, and the exact defect it names: *\"…on all of your Benched **Ancient** Pokémon. …isn't affected by Weakness.\"* is then claimed by the suppression reader while `deriveAttackDamageMultiplier` refuses it for its vocabulary, so `resolvedByAnyReader` is TRUE, `BUILT.attack` steps, `ATTACK_EFFECT_SKIPPED` never fires and the printed fold is silently dropped. ⚠️ **NO CENSUS FIGURE CATCHES IT IN THE RIGHT DIRECTION** — the residue falls, which reads as progress (D469)",
+    file: "packages/engine/src/effects.ts",
+    find: "    BENCH_COUNTER_FILTERED_SUPPRESSED.test(trimmed) &&\n    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {",
+    replace: "    BENCH_COUNTER_FILTERED_SUPPRESSED.test(trimmed)\n  ) {",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D493-suppression-arm-emits-the-neighbouring-pair",
+    decision: "D493",
+    what: "🛑 C2 — **THE ARM RETURNS THE NEIGHBOURING VALUE VERBATIM**: `{ weakness: true, resistance: true }` is `DAMAGE_SUPPRESSION`'s arm 2, two lines below, and it is the value an author copies because it is the only shipped one that sets `weakness` at all (D190b: a mutant must be the mistake an author would actually make). The printed sentence names Weakness and NOT Resistance, so the defender's −30 stops applying. 🛑 **NO PRINTED BOARD SEPARATES THESE TWO** — the D1 holds ZERO cards listing one type in both the Weakness and the Resistance column — so the SYNTHETIC `d493-weak-tough` wall is the whole reason this row is killable: 90 against 120",
+    file: "packages/engine/src/effects.ts",
+    find: "  ) {\n    return { weakness: true };\n  }\n  const match = DAMAGE_SUPPRESSION.exec(trimmed);",
+    replace: "  ) {\n    return { weakness: true, resistance: true };\n  }\n  const match = DAMAGE_SUPPRESSION.exec(trimmed);",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D493-suppression-arm-sets-the-wrong-boolean",
+    decision: "D493",
+    what: "⚠️ C3 — C2's CONTROL and the other direction of the same slip: the arm sets `resistance` where the print says Weakness. `AttackDamageSuppression`'s three booleans are read at three DIFFERENT §8.5 steps, so this is not a rename — the ×2 comes back and the −30 goes, 90 → 240 on the same wall. **One row per boolean, each the other's control** (D442's rule at a field instead of at a rider); with only C2 the suite is green on a build that swapped the two",
+    file: "packages/engine/src/effects.ts",
+    find: "    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {\n    return { weakness: true };",
+    replace: "    deriveAttackDamageMultiplier(trimmed) !== null\n  ) {\n    return { resistance: true };",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D493-multiply-arm-never-reaches-the-compound",
+    decision: "D493",
+    what: "🛑 C4 — **THE `??` FALLBACK READS THE BARE ANCHOR TWICE**, which is the copy-paste this one-line shape invites and is byte-identical to the pre-slice line in effect. The suppression half then still claims the sentence — its own gate calls the multiplier, which now answers `null`, so BOTH halves fall — and the whole printed row goes back to the loud path with `BUILT.attack` one short. The row exists because the two readers are wired through ONE arm: a suite that only asserted the suppression would be green here",
+    file: "packages/engine/src/effects.ts",
+    find: "    BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect) ?? BENCH_COUNTER_FILTERED_SUPPRESSED.exec(effect);",
+    replace: "    BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect) ?? BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect);",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D493-compound-anchor-loses-its-caret",
+    decision: "D493",
+    what: "⚠️ C5 — **THE `^` GOES.** The anchor then claims any sentence ENDING with this compound, so *\"Discard an Energy from this Pokémon. ⟨the printed row⟩\"* resolves and both readers answer about a sentence whose leading clause the engine never ran. D464's rule is why this row is written SEPARATELY from its `$` twin: the `^` end is still demonstrable on the LOUD path, where the `$` end is not",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    replace: "  /This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D493-compound-anchor-loses-its-terminator",
+    decision: "D493",
+    what: "🛑 C6 — **THE `\\.$` GOES, and it is the QUIET one.** Once the printed sentence derives, its `$`-end near-miss is no longer on the loud path: `splitAttackTrailingClause` sees a claimed HEAD and a claimed TAIL and COMPOSES *\"⟨the printed row⟩ Draw a card.\"* correctly (D464). Under the mutant this anchor claims that string WHOLE instead, the shadow refusal fires, and the printed draw silently never runs — a board that looks entirely normal. Killed by the SPLIT assertion, never by a `toBeNull`",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\./;",
+    expectKilledBy: [
+      "packages/engine/src/benchCounterSuppressed.test.ts",
     ],
   },
 ];

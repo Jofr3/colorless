@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+// 🆕 D493 — the MODULE, so §10's eleven-way refusal is derived from the surface
+// rather than from a hand-kept list (D418/D419: a short list makes a claim NARROWER,
+// not false, and nothing ever reddens).
+import * as effectsModule from "./effects";
 import { matchesFilter, topCardOf } from "./cards";
 import {
   POKEMON_TYPE_BY_CODE,
@@ -327,7 +331,7 @@ describe("§1 — the two printed rows, their printing counts, and the fixture",
     // 🛑 The attacker is FIGHTING on purpose — it is what makes the ZONE axis
     // readable on the counter board (see `counterBoard`'s block).
     expect(card?.types).toEqual(["Fighting"]);
-    expect(engineVersion).toBe("0.387.0");
+    expect(engineVersion).toBe("0.388.0");
   });
 });
 
@@ -710,19 +714,80 @@ describe("§9 — `MATCH_RECORD_VERSION` STAYS 29, driven in THREE directions", 
   });
 });
 
-describe("§10 — the NEGATIVE CONTROL: corpus file line 529, and its TWO remaining blockers", () => {
-  it("🛑 the HEAD builds and the PRINTED SENTENCE does not", () => {
-    expect(deriveAttackDamageMultiplier(CYNTHIA_HEAD)).not.toBeNull();
-    expect(deriveAttackDamageMultiplier(CYNTHIA_PRINTED)).toBeNull();
-    expect(resolvedByAnyReader(CYNTHIA_PRINTED)).toBe(false);
+describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blockers became", () => {
+  // 🆕🆕🆕 **D493 — THIS SECTION WAS THIS FILE'S NEGATIVE CONTROL FROM D467 UNTIL NOW,
+  // AND IT IS RE-POINTED RATHER THAN DELETED (D438/D444/D447).** D467 removed the
+  // first of the row's three blockers (the printed owner noun) and wrote the other
+  // two down as executable rungs; D493 pays both. What is kept below is every
+  // discrimination the old rungs provided, each moved onto a subject that STILL has
+  // the property the rung was written for — because a `toBeNull` that is re-pointed
+  // onto its own newly-built subject is true under the mistaken build and under the
+  // real one alike (D418/D438), which is the shape that disarms tripwires.
+  it("🛑 the printed sentence is now RESOLVED, and by exactly TWO readers", () => {
+    // D438's shape: NAME the owners by VALUE and keep the other eleven refusals
+    // beside them. A bare `resolvedByAnyReader(...) === true` would be satisfied by
+    // any careless widening of any of the thirteen.
+    expect(deriveAttackDamageMultiplier(CYNTHIA_PRINTED)).toEqual({
+      per: 10,
+      count: { kind: "damageCountersOnYourBench", filter: { kind: "ownerPokemon", owner: "Cynthia" } },
+    });
+    expect(deriveAttackDamageSuppression(CYNTHIA_PRINTED)).toEqual({ weakness: true });
+    expect(resolvedByAnyReader(CYNTHIA_PRINTED)).toBe(true);
+    for (const name of attackReaderSurface()) {
+      if (name === "deriveAttackDamageMultiplier" || name === "deriveAttackDamageSuppression") continue;
+      const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
+      expect(read?.(CYNTHIA_PRINTED) ?? null, name).toBeNull();
+    }
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
-  it("🛑 BLOCKER 1 — `DAMAGE_SUPPRESSION` has no WEAKNESS-ONLY arm", () => {
+  it("🛑 …and the COMPOUND's fold is the HEAD's fold, by construction rather than by agreement", () => {
+    // The two anchors are separate literals, so the one thing that can go wrong is
+    // that they drift and the compound scores a different number from its own head.
+    // ⚠️ PINNED AS A POPULATION CLAIM AND NOT ON THIS SPECIMEN (D423): over the WHOLE
+    // 640-row column, every sentence this reader claims whose FIRST clause it also
+    // claims must derive the identical fold from both.
+    expect(deriveAttackDamageMultiplier(CYNTHIA_PRINTED)).toEqual(
+      deriveAttackDamageMultiplier(CYNTHIA_HEAD),
+    );
+    let compared = 0;
+    for (const [, text] of legalAttackCorpus()) {
+      const whole = deriveAttackDamageMultiplier(text);
+      if (whole === null) continue;
+      const firstClause = `${text.split(". ")[0] ?? ""}.`;
+      if (firstClause === text) continue;
+      const head = deriveAttackDamageMultiplier(firstClause);
+      if (head === null) continue;
+      compared += 1;
+      expect(whole, text).toEqual(head);
+    }
+    // The count is pinned separately from the comparison, because a comparison over
+    // an empty set passes (D417: pin the diff AND the count).
+    expect(compared).toBe(1);
+  });
+
+  it("🛑 BLOCKER 1 SURVIVES: `DAMAGE_SUPPRESSION` still has no WEAKNESS-ONLY arm", () => {
     // `AttackDamageSuppression.weakness` is a field with THREE readers in attack.ts
     // and no pattern arm that sets it alone: the four printed alternatives are
     // W+R+effects, W+R, R, and effects. So the tail of file line 529 does not build
     // even on its own, and this is checked at the reader rather than inherited from
     // attack.ts's deferral comment (D440/D466: check the reason, not only the price).
+    //
+    // 🆕🆕🆕 **D493 — THIS RUNG IS UNCHANGED AND STILL TRUE, AND THAT IS THE FINDING
+    // RATHER THAN AN OVERSIGHT.** D493 built file line 529 WITHOUT widening this
+    // vocabulary: the compound has its own anchor and `DAMAGE_SUPPRESSION` is
+    // BYTE-UNCHANGED. The reason is a measurement — the legal column prints
+    // *"This attack's damage isn't affected by Weakness."* as a STANDALONE sentence
+    // ZERO times (it occurs only as the tail of file lines 337 and 529), so a
+    // standalone arm would be vocabulary with no printing behind it, and three
+    // shipped `toBeNull` rungs across three files rest on this refusal
+    // (`damageSuppression.test.ts`, here, and `selfEnergyScaling.test.ts`'s REASON 3,
+    // one of the three independent reasons Pachirisu's fixture printing stays
+    // unread). ⚠️ **THE FALSIFIER, EXECUTABLE**: the day the column prints that
+    // sentence alone, the first assertion below is what has to change.
+    expect(
+      legalAttackCorpus().filter(([, t]) => t === CYNTHIA_TAIL),
+    ).toEqual([]);
     expect(deriveAttackDamageSuppression(CYNTHIA_TAIL)).toBeNull();
     expect(deriveAttackDamageSuppression("This attack's damage isn't affected by Resistance.")).toEqual(
       { resistance: true },
@@ -732,11 +797,30 @@ describe("§10 — the NEGATIVE CONTROL: corpus file line 529, and its TWO remai
     ).toEqual({ weakness: true, resistance: true });
   });
 
-  it("🛑 BLOCKER 2 — no splitter offers the two halves", () => {
-    // `splitAttackTrailingClause` requires the TAIL to be a `deriveAttackEffect`
-    // clause and this tail is `deriveAttackDamageSuppression`'s, so the splitter
-    // returns null even now that the HEAD builds — which is the mechanism D466
-    // measured for `COMPOUND-tail` and the reason a class name is not a price.
+  it("🛑 BLOCKER 2 — RE-POINTED, because this row now passes it for a DIFFERENT reason", () => {
+    // 🆕🆕🆕 **D493 — THE RUNG BELOW WOULD STILL BE GREEN ON `CYNTHIA_PRINTED`, AND IT
+    // WOULD NO LONGER MEAN WHAT ITS TITLE SAYS (D486).** Before this slice the
+    // splitter refused that string at its TAIL TEST (`deriveAttackEffect(tail) ===
+    // null`). It now refuses at the SHADOW REFUSAL one line EARLIER, because a string
+    // some reader claims whole never reaches composition at all. Two different
+    // refusals, one unmoved verdict — exactly D426's mechanism, and the reason a
+    // green rung is not evidence about its stated claim.
+    //
+    // **So the old discrimination is moved to a subject that STILL HAS THE PROPERTY**
+    // (D444), and there is one in the pool: Pachirisu `sv01-068`/`-208` "Everyone
+    // Discharge" (3 catalog / 0 legal, `FIXTURE_POOL`), whose HEAD builds through
+    // `deriveAttackDamageBonus` and whose TAIL is the same Weakness-only suppression
+    // clause. No reader claims it whole, so the shadow refusal does NOT fire and the
+    // TAIL TEST is the only thing between it and a composition — which is the claim
+    // this rung was written to make.
+    const poolRider =
+      "This attack does 20 more damage for each of your Benched {L} Pokémon. This attack's damage isn't affected by Weakness.";
+    expect(resolvedByAnyReader(poolRider)).toBe(false);
+    expect(deriveAttackDamageBonus("This attack does 20 more damage for each of your Benched {L} Pokémon.")).not.toBeNull();
+    expect(deriveAttackEffect("This attack's damage isn't affected by Weakness.")).toBeNull();
+    expect(splitAttackTrailingClause(poolRider)).toBeNull();
+    // …and the ORIGINAL subject, kept with its new reason stated, so the transition
+    // is recorded rather than lost (D467: a rung that quietly shrinks loses it).
     expect(splitAttackTrailingClause(CYNTHIA_PRINTED)).toBeNull();
     expect(splitAttackGateClause(CYNTHIA_PRINTED)).toBeNull();
     expect(deriveAttackEffect(CYNTHIA_TAIL)).toBeNull();

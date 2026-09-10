@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface } from "./censusAttackCorpus";
+import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -14,6 +14,7 @@ import {
   deriveAttackOptionalCostBoost,
   deriveAttackPreDamage,
   deriveAttackRequirement,
+  splitAttackRequirementClause,
 } from "./effects";
 import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -129,16 +130,43 @@ const S_RESISTANCE = "This attack's damage isn't affected by Resistance.";
 const S_WR_EFFECTS =
   "This attack's damage isn't affected by Weakness or Resistance, or by any effects on your opponent's Active Pokémon.";
 const S_WR = "This attack's damage isn't affected by Weakness or Resistance.";
+/** 🆕 D493 — the bare-`Weakness` clause, which this reader refuses and the column
+    never prints on its own. Named so its two claims (zero standalone rows, two
+    compound tails) are greppable from one identifier rather than retyped. */
+const WEAKNESS_ONLY_CLAUSE = "This attack's damage isn't affected by Weakness.";
 /** The printed ABILITY, char-for-char (Walking Wake ex "Azure Seas"). */
 const S_ABILITY =
   "Damage from attacks used by this Pokémon isn't affected by any effects on your opponent's Active Pokémon.";
 
-/** The FIVE deferred legal riders, verbatim. Carried as data so their refusal is
-    driven on real printed text rather than on a constructed near-miss. */
+/** The deferred legal riders, verbatim. Carried as data so their refusal is
+    driven on real printed text rather than on a constructed near-miss.
+
+    🆕🆕🆕 **D493 — THE LIST IS SPLIT BY REASON RATHER THAN SHORTENED (D441).** Two of
+    its four members have since been BUILT, by two different mechanisms and for two
+    different reasons, and shortening the list would have left the remaining two
+    carrying a justification nobody re-checked. What every member below still shares
+    — and what this file's rung actually asserts — is that `DAMAGE_SUPPRESSION`
+    itself, the four-arm whole-sentence pattern, refuses ALL of them. That claim is
+    true of the built ones too, and saying so is the point: neither was built by
+    loosening this pattern. */
 const DEFERRED_RIDERS = [
+  // BUILT at D363, and NOT by this reader: `splitAttackRequirementClause` strips the
+  // leading does-nothing clause and hands the BODY — which is a printed sentence
+  // `DAMAGE_SUPPRESSION` already claimed — to attack.ts's read site.
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
+  // STILL DEFERRED, and its blocker is its own LEADING half: the head derives to
+  // `null` under all thirteen readers, so no split and no compound anchor can reach
+  // it. That is the reason for THIS row and it was measured at D493's head rather
+  // than inherited (D463: a grouped refusal takes its reason from its cheapest member).
   "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
+  // BUILT at D493, and NOT by this reader either: a SECOND whole-sentence anchor
+  // spelling the head and the tail together, read by `deriveAttackDamageMultiplier`
+  // for the fold and by `deriveAttackDamageSuppression`'s own compound arm for the
+  // §8.5 step. `DAMAGE_SUPPRESSION` is byte-unchanged, which is why this row stays
+  // in the list below rather than leaving it.
   "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
+  // STILL DEFERRED, and its blocker is also its LEADING half — here a TWO-clause head
+  // (a per-Bench coin count and a per-tails snipe) that no reader claims.
   "Your opponent flips a coin for each of their Benched Pokémon. This attack does 80 damage to your opponent's Active Pokémon for each tails. This attack's damage isn't affected by Weakness or Resistance.",
 ] as const;
 /** The ZERO-LEGAL rider `FIXTURE_POOL` already carries (Pachirisu sv01-068/-208
@@ -342,18 +370,55 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     expect(deriveAttackDamageSuppression(S_WR.replace(/\.$/, ""))).toBeNull();
     expect(deriveAttackDamageSuppression(`Draw a card. ${S_WR}`)).toBeNull();
     expect(deriveAttackDamageSuppression(`${S_WR} Draw a card.`)).toBeNull();
-    // …and a plausible near-miss the pool does NOT print: the object swapped.
+    // …and the object swapped to bare `Weakness`. ⚠️ 🆕🆕🆕 **D493 — THE COMMENT HERE
+    // USED TO SAY "a plausible near-miss the pool does NOT print", AND THAT WAS
+    // IMPRECISE RATHER THAN FALSE.** The pool does not print this sentence STANDALONE
+    // (zero rows in the 640-row column, asserted below), and it DOES print the clause,
+    // twice, as the tail of `DEFERRED_RIDERS[1]` and `[2]`. The distinction is the
+    // whole of why D493 built file line 529 with a compound anchor instead of adding a
+    // fifth arm here: an arm would be vocabulary with no printing behind it (D440),
+    // and this rung plus two more in two other files rest on its absence.
+    expect(legalAttackCorpus().filter(([, t]) => t === WEAKNESS_ONLY_CLAUSE)).toEqual([]);
     expect(
-      deriveAttackDamageSuppression("This attack's damage isn't affected by Weakness."),
-    ).toBeNull();
+      legalAttackCorpus().filter(([, t]) => t.endsWith(` ${WEAKNESS_ONLY_CLAUSE}`)),
+    ).toHaveLength(2);
+    expect(deriveAttackDamageSuppression(WEAKNESS_ONLY_CLAUSE)).toBeNull();
   });
 
-  it("⚠️ refuses all FIVE deferred legal riders, on their printed text", () => {
-    for (const rider of DEFERRED_RIDERS) expect(deriveAttackDamageSuppression(rider)).toBeNull();
-    expect(deriveAttackDamageSuppression(POOL_RIDER)).toBeNull();
+  it("⚠️ `DAMAGE_SUPPRESSION` refuses every rider-on-compound, built or not", () => {
+    // 🆕🆕🆕 **D493 — THE CLAIM IS NARROWED TO THIS PATTERN AND WIDENED IN EVIDENCE.**
+    // Two of the four are now built (see the list's own comments), so *"refuses all
+    // five deferred riders"* had become a sentence about a set that no longer exists.
+    // What is still true, and is what the four arms were designed to guarantee, is
+    // that NONE of them reaches `DAMAGE_SUPPRESSION`: every deriver in this file is
+    // `^…$` anchored and leading text falls to the loud path. Both builds went round
+    // it — one through a SPLIT, one through a SECOND anchor — and this rung is what
+    // says so.
+    // (a) THE PATTERN ITSELF still refuses three of the four whole — every rider whose
+    // build did not come from this reader — and the POOL rider besides.
+    for (const rider of [DEFERRED_RIDERS[0], DEFERRED_RIDERS[1], DEFERRED_RIDERS[3], POOL_RIDER]) {
+      expect(deriveAttackDamageSuppression(rider), rider).toBeNull();
+    }
+    // …and the two that are BUILT are built by something else, asserted by NAME so a
+    // future loosening of this pattern cannot be mistaken for the real mechanism
+    // (D438: name the owner, keep the refusals).
+    expect(splitAttackRequirementClause(DEFERRED_RIDERS[0])).toEqual({
+      clause: "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing.",
+      body: S_WR,
+    });
+    expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[2])).toEqual({ weakness: true });
+    expect(deriveAttackDamageMultiplier(DEFERRED_RIDERS[2])).toEqual({
+      per: 10,
+      count: { kind: "damageCountersOnYourBench", filter: { kind: "ownerPokemon", owner: "Cynthia" } },
+    });
+    // …and the two that are NOT built are still refused by every one of the thirteen,
+    // which is the half that would go quiet if a later slice widened something.
+    for (const rider of [DEFERRED_RIDERS[1], DEFERRED_RIDERS[3]]) {
+      expect(resolvedByAnyReader(rider), rider).toBe(false);
+    }
   });
 
-  it("is DISJOINT from all ELEVEN sibling readers on all four sentences", () => {
+  it("is DISJOINT from all TWELVE sibling readers on all four sentences", () => {
     // The whole-sentence anchor is what makes "a card carries at most one" true,
     // and it is asserted rather than argued: no other reader may answer on this
     // text, and this reader may not answer on theirs.

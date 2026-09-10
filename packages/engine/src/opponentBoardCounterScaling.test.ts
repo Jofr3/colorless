@@ -585,7 +585,7 @@ describe("§6 — the cells this slice leaves EMPTY are measurements, not omissi
       .map(([, s]) => s);
     expect(rows).toHaveLength(3);
     expect(rows).toContain(BOARD_COUNTERS);
-    expect(rows.filter((s) => resolvedByAnyReader(s))).toHaveLength(2);
+    expect(rows.filter((s) => resolvedByAnyReader(s))).toHaveLength(3);
   });
 });
 
@@ -664,7 +664,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.387.0");
+    expect(engineVersion).toBe("0.388.0");
   });
 });
 

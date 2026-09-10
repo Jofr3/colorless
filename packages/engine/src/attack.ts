@@ -1694,6 +1694,24 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // (`DAMAGE_SUPPRESSION` has no bare-`Weakness` arm, and `splitAttackTrailingClause`
   // demands a `deriveAttackEffect` tail) — which is what `effects.ts`'s block on that
   // reader says, correctly, and this line contradicted it for a whole family.
+  //
+  // 🆕🆕🆕 D493 — THE CYNTHIA ROW IS BUILT, AND NOT BY A COMPOSITION SEAM. The paragraph
+  // above says admitting these means *"a COMPOSITION seam, not a looser regex"*. That
+  // is a claim about the FAMILY and it was false for this member, which is D463's rule
+  // again — a refusal that groups N rows under ONE reason is N refusals. Measured at
+  // D493's head: teaching `splitAttackTrailingClause` to take a suppression tail frees
+  // **0 sentences / 0 printings** on its own (this row's tail is refused by all
+  // thirteen readers, so there is nothing to compose), and freeing it needs the
+  // VOCABULARY as well — at which point the pair frees exactly **1 sentence / 1
+  // printing**, the same row a whole-sentence anchor frees for less. So the seam was
+  // priced against the anchor and the anchor won: `BENCH_COUNTER_FILTERED_SUPPRESSED`
+  // in effects.ts is read by `deriveAttackDamageMultiplier` for the fold and by
+  // `deriveAttackDamageSuppression` for the §8.5 step, both off THIS line's `effect`
+  // string, and this file is BYTE-UNCHANGED apart from these comments.
+  // ⚠️ AND THE OTHER THREE STAY DEFERRED, each for a reason measured separately rather
+  // than shared: Sawk's is BUILT (through `requirementSplit` above, since D363), and
+  // the remaining two are blocked on their own LEADING halves, which is the clause
+  // below and is still true of exactly those two.
   // The other two named rows are unmoved and their leading halves really do refuse:
   // "If you have 3 or more Energy in play, this attack does 70 more damage." → null,
   // and "Your opponent flips a coin for each of their Benched Pokémon. This attack

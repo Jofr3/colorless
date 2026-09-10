@@ -13767,6 +13767,19 @@ const BENCH_COUNTER_MULTIPLY =
     deferral list names this exact row; D467 removes ONE of its three blockers and
     says so rather than claiming the row.
 
+    🆕🆕🆕 **D493 — THE ROW IS BUILT AND THE PARAGRAPH ABOVE IS KEPT AS THE RECORD OF A
+    PREDICTION THAT CAME TRUE (D466's rule 3).** Both blockers it names were re-derived
+    at D493's head and BOTH were real, but they are not independent and the paragraph
+    reads as though they were: the SPLITTER blocker cannot be paid on its own (this
+    tail is refused by all thirteen readers, so a suppression-tail composition path
+    frees 0 sentences / 0 printings by itself), and the VOCABULARY blocker cannot be
+    paid on its own either (the column prints that clause STANDALONE zero times). Only
+    the PAIR frees the row — and a whole-sentence anchor frees the same 1 sentence /
+    1 printing for one constant. See `BENCH_COUNTER_FILTERED_SUPPRESSED` directly
+    below. ⚠️ **`DAMAGE_SUPPRESSION` IS BYTE-UNCHANGED**: the sentence *"This attack's
+    damage isn't affected by Weakness."* is still refused on its own, and three shipped
+    `toBeNull` rungs in three files rest on that.
+
     ⚠️ **NO `+` TWIN, AND NOT INCREMENTING IS A MEASUREMENT (D435).** The column
     spells *"more damage for each damage counter on all of your Benched ⟨noun⟩"*
     ZERO times — the whole of `grep "damage counter on all of"` over the corpus is
@@ -13776,6 +13789,59 @@ const BENCH_COUNTER_MULTIPLY =
     anchored with a required trailing period and a capital `This`. */
 const BENCH_COUNTER_FILTERED_MULTIPLY =
   /^This attack does (\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\.$/;
+/** 🆕🆕 D493 — THE SAME HEAD WITH ITS PRINTED **WEAKNESS-ONLY SUPPRESSION
+    RIDER**: *"This attack does 10 damage for each damage counter on all of your
+    Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness."*
+    — `censusAttackCorpus.ts` **file line 529**, 1 sentence / **1 legal printing**,
+    the row the block above named as this family's negative control from D467 until
+    this slice.
+
+    🛑 **A SECOND ANCHOR, NOT A WIDENING OF THE ONE ABOVE (D441).** The two are
+    STRUCTURALLY disjoint — the bare one demands `$` immediately after the head's
+    period, this one demands a space and a further whole sentence there, so no
+    string can match both (measured over all 640 corpus rows in
+    `benchCounterSuppressed.test.ts` §1, in both directions). D467's rule 1: prefer
+    structural disjointness, and then there is no guard to rot and no order to pin.
+    Widening the line above in place would additionally have rotted
+    `D467-counter-anchor-loses-its-terminator`, whose `find` IS that regex literal.
+
+    ⚠️ **THE TAIL IS SPELLED LITERALLY AND NOT AS THE SUPPRESSION ALTERNATION, AND
+    THAT IS D472's RULE APPLIED RATHER THAN A PREFERENCE.** Measured over the whole
+    column, this tight spelling, the five-object alternation and even a bare `(.+)`
+    tail all claim **exactly the same 1 sentence / 1 printing** — so the generality
+    buys nothing and costs a wrong program on the day a second object is printed
+    behind this head. The alternation is what `deriveAttackDamageSuppression`'s own
+    `DAMAGE_SUPPRESSION` is for, and it is unchanged by this slice.
+
+    🛑 **BOTH SEAMS READ THIS ONE ANCHOR, WHICH IS THE POINT (D445).** The printed
+    sentence carries a `per × count` fold AND a §8.5 step suppression — two SEAMS,
+    so two readers, and `attack.ts` already hands the same `effect` string to both.
+    `deriveAttackDamageMultiplier` reads the fold through the shared arm below;
+    `deriveAttackDamageSuppression` reads `{ weakness: true }` off this same
+    constant, GATED ON THE MULTIPLIER ALSO CLAIMING IT so the pair can never
+    half-build. A `.test()` beside an `.exec()` on one regex is D445's tell, and the
+    gate is what answers it here.
+
+    ⚠️ **`AttackDamageSuppression.weakness` HAS SHIPPED SINCE D192 AND THIS IS ITS
+    FIRST SOLO INHABITANT.** D192 kept it as its own boolean on a measurement rather
+    than a preference — *"the legal pool DOES print ‘…isn't affected by Weakness.’
+    alone, on 2 legal RIDER-ON-COMPOUND printings this slice DEFERS"* — and one of
+    those two is this row. On `fix-weak-tough` (×2 Fire Weakness AND −30 Fire
+    Resistance, the synthetic body the D1 has no real analogue of) `{ weakness }`
+    answers a number `{ weakness, resistance }` does not, which is what makes the
+    field's separateness observable for the first time (D459's converse: the slice
+    that adds the first printing inhabiting an existing field makes old mutations
+    killable).
+
+    ⚠️ **THE APOSTROPHE CLASS IS ON THE TAIL AND NOT ON THE HEAD.** `Cynthia's`
+    lives inside the `([^.]+ Pokémon)` capture and is resolved by `inPlayBodyFilter`
+    through `IN_PLAY_OWNER_NOUN`'s `literalClauseRow` (D137/D440), so the PATTERN
+    never sees it; `attack['’]s` and `isn['’]t` are the pattern's own and carry the
+    class D136/D137 requires. `clauseApostrophe.test.ts`'s re-ingest sweep is what
+    checks that, and it steps by one for this row (D428's third route into that
+    census: a previously-refused sentence becoming claimed). */
+const BENCH_COUNTER_FILTERED_SUPPRESSED =
+  /^This attack does (\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
 // D193 — THE BENCH COUNTED AS BODIES, the mirror-image question to the line
 // directly above and the first thing this family tallies that is not a damage
 // counter, a Prize, a Retreat Cost or a 0-or-1 indicator. Two sentences, three
@@ -27395,7 +27461,28 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
   // widening is carried by `benchCounterMultiply.test.ts`'s constructed text rather
   // than by a card — which is why that suite, and not this slice's, is what
   // `D467-bench-counter-walk-loses-the-unfiltered-path` names.
-  const benchCountersFiltered = BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect);
+  //
+  // 🆕🆕 D493 — THE SAME ARM NOW ALSO READS THE **SUPPRESSED COMPOUND** (corpus
+  // file line 529, 1 legal printing). The two anchors capture the SAME two groups in
+  // the SAME positions, so this is one `??` on the `exec` and the arm body below is
+  // BYTE-UNCHANGED — which is deliberate three ways. It keeps D467's three rows
+  // (`-counter-arm-builds-the-unfiltered-member`, `-counter-arm-skips-the-vocabulary`,
+  // `-counter-printed-zero-derives`) anchored on lines nothing moved; it stops the
+  // `return { per, count: { kind: "damageCountersOnYourBench", filter } };` line
+  // becoming a BYTE-TWIN of itself, which is what a copied arm would have done and
+  // what `precheck` reports as `find occurs 2×` (D437/D448); and it makes the fold
+  // the compound derives EQUAL to the fold its head derives by construction rather
+  // than by two patterns agreeing — asserted over the whole column in
+  // `benchCounterSuppressed.test.ts` §2, because two spellings of one head are
+  // exactly what drifts (D467's two-file doc-figure rot, at a regex).
+  //
+  // ⚠️ THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, and here that claim is
+  // STRUCTURAL rather than measured-and-hoped (D467): the two patterns disagree on a
+  // mandatory run of bytes at the same position — `$` against ` This attack…` — so no
+  // string can match both, and swapping the operands of the `??` answers every
+  // printed string identically.
+  const benchCountersFiltered =
+    BENCH_COUNTER_FILTERED_MULTIPLY.exec(effect) ?? BENCH_COUNTER_FILTERED_SUPPRESSED.exec(effect);
   if (benchCountersFiltered !== null) {
     const per = Number(benchCountersFiltered[1]);
     const filter = inPlayBodyFilter(benchCountersFiltered[2] ?? "");
@@ -27685,7 +27772,45 @@ const DAMAGE_SUPPRESSION = new RegExp(
     the reason every scaling reader is — this sentence runs INSIDE the pipeline,
     never after damage — and attack.ts owns the read site. */
 export function deriveAttackDamageSuppression(text: string): AttackDamageSuppression | null {
-  const match = DAMAGE_SUPPRESSION.exec(text.trim());
+  const trimmed = text.trim();
+  // 🆕🆕 D493 — THE ONE COMPOUND ARM, AND THE GATE IN FRONT OF IT IS THE WHOLE
+  // DESIGN. `censusAttackCorpus.ts` file line 529 prints a `per × count` fold AND
+  // this suppression in one attack's effect text; the two land at DIFFERENT SEAMS
+  // (the fold before §8.5, the suppression inside it), so the sentence needs TWO
+  // readers and `attack.ts` already hands the identical `effect` string to both
+  // (D445: *count the seams, not the anchors*). This is the corpus's SECOND
+  // dual-claimed sentence and the first was authored on purpose too — the
+  // population is pinned in `opponentHandScaling.test.ts` §2 so a THIRD cannot
+  // arrive by accident.
+  //
+  // 🛑 **THE GATE IS `deriveAttackDamageMultiplier`, NOT A SECOND COPY OF ITS
+  // GUARDS, AND WITHOUT IT THIS ARM SHIPS D445's DEFECT.** The shared anchor's noun
+  // group is `([^.]+ Pokémon)` and the multiplier arm refuses an unmapped noun
+  // (`filter !== null`) and a printed zero (`per >= 1`). A bare `.test()` here would
+  // claim *"…on all of your Benched Ancient Pokémon. …isn't affected by Weakness."*
+  // whole — `resolvedByAnyReader` TRUE, `BUILT.attack` stepped, the fold silently
+  // dropped and `ATTACK_EFFECT_SKIPPED` never fired. *A `.test()` beside an `.exec()`
+  // on one regex is the tell*, and the answer is to ask the arm that owns the guards
+  // rather than to restate them. No cycle: the multiplier reader never consults this
+  // one.
+  //
+  // ⚠️ **THE STANDALONE `…isn't affected by Weakness.` STAYS REFUSED, AND THAT IS A
+  // MEASUREMENT.** `DAMAGE_SUPPRESSION` below is BYTE-UNCHANGED: the legal column
+  // prints that sentence ZERO times on its own (it appears only as the tail of two
+  // compounds, file lines 337 and 529), so a standalone arm would be vocabulary with
+  // no printing behind it — and three shipped `toBeNull` rungs across three files
+  // rest on its refusal (`damageSuppression.test.ts`, `benchNounScaling.test.ts` §10,
+  // `selfEnergyScaling.test.ts`'s REASON 3, which is one of three independent reasons
+  // Pachirisu's fixture printing stays unread). All three are still GREEN after this
+  // slice, which is the difference between claiming a PRINTED ROW and widening a
+  // vocabulary.
+  if (
+    BENCH_COUNTER_FILTERED_SUPPRESSED.test(trimmed) &&
+    deriveAttackDamageMultiplier(trimmed) !== null
+  ) {
+    return { weakness: true };
+  }
+  const match = DAMAGE_SUPPRESSION.exec(trimmed);
   if (match === null) return null;
   if (match[1] !== undefined) return { weakness: true, resistance: true, targetEffects: true };
   if (match[2] !== undefined) return { weakness: true, resistance: true };

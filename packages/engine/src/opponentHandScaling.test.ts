@@ -376,7 +376,7 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     for (const read of OTHERS) expect(read(REVEAL_TRAINER_SCALE)).toBeNull();
   });
 
-  it("🛑 …and it is the ONLY sentence in the 640-row column with two owners", () => {
+  it("🛑 …and it is ONE of exactly TWO sentences in the column with two owners", () => {
     // ⚠️ THE CLAIM IS A POPULATION CLAIM, NOT A SPECIMEN ONE (D423). Before D445 the
     // count was ZERO — `attack.ts`'s own comment says *"a card carries at most one
     // scaling clause OR a program: the whole-sentence anchor means a scaling sentence
@@ -392,7 +392,30 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     const dual = legalAttackCorpus().filter(
       ([, text]) => readers.filter((read) => read(text) !== null).length > 1,
     );
-    expect(dual.map(([, s]) => s)).toEqual([REVEAL_TRAINER_SCALE]);
+    // 🆕🆕🆕 **D493 — THE SECOND MEMBER ARRIVED, AND THIS RUNG IS WHAT NAMED IT.** The
+    // paragraph above says the rung exists so a second dual claim *"would land here
+    // rather than in whichever suite happened to drive it"*, and that is exactly what
+    // happened: `censusAttackCorpus.ts` FILE LINE **529** — *"This attack does 10
+    // damage for each damage counter on all of your Benched Cynthia's Pokémon. This
+    // attack's damage isn't affected by Weakness."*, 1 legal printing — is claimed by
+    // `deriveAttackDamageMultiplier` for its `per × count` fold and by
+    // `deriveAttackDamageSuppression` for its §8.5 step.
+    //
+    // ⚠️ **THE MEMBER IS ADDED ON PURPOSE AND THE RUNG IS NOT RELAXED (D418/D465).** A
+    // widened claim (*"at most two"*, or a `.length` pin) would go green on a THIRD
+    // accidental dual claim; the LIST is what reddens by NAME. And the two members
+    // reach the state for the same structural reason, which is worth stating once:
+    // **a printed sentence needs two readers exactly when its clauses land at two
+    // SEAMS** (D445) — here a pre-§8.5 fold and an inside-§8.5 step, there an effect
+    // program and a fold. Sorted by sentence, so the Cynthia row leads.
+    expect(dual.map(([, s]) => s)).toEqual([
+      "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
+      REVEAL_TRAINER_SCALE,
+    ]);
+    // The COUNT beside the list, for the reason `censusAtHead.test.ts` pins both a
+    // diff and a count: a list assertion alone stays green if a member is dropped
+    // from the corpus and from the expectation in one commit.
+    expect(dual).toHaveLength(2);
   });
 
   it("the bare-reveal and bare-count sentences keep exactly ONE owner each", () => {

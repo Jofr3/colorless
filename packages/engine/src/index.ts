@@ -19795,6 +19795,90 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.387.0 → **0.388.0** (D493 — THE BENCH-COUNTER FOLD WITH ITS
+    PRINTED WEAKNESS-ONLY SUPPRESSION RIDER. `censusAttackCorpus.ts` **FILE LINE 529** —
+    *"This attack does 10 damage for each damage counter on all of your Benched Cynthia's
+    Pokémon. This attack's damage isn't affected by Weakness."*, **1 sentence / 1 legal
+    printing**, claimed by TWO readers over ONE new anchor
+    `BENCH_COUNTER_FILTERED_SUPPRESSED`: `deriveAttackDamageMultiplier` for the `per ×
+    count` fold and `deriveAttackDamageSuppression` for the §8.5 step. The corpus's
+    **SECOND** dual-claimed sentence, and the first solo inhabitant of
+    `AttackDamageSuppression.weakness`, a field shipped at D192 and never yet set alone.
+
+    🛑 **THE DESIGN FORK WAS PRICED IN BOTH DIRECTIONS AND THEY FREE THE SAME ONE ROW.**
+    D467 wrote the row's two remaining blockers as executable rungs — (A) `DAMAGE_
+    SUPPRESSION` has no bare-`Weakness` arm, (B) `splitAttackTrailingClause` demands a
+    `deriveAttackEffect` tail — and BOTH are real. **They are not independent, which is
+    what the price turns on.** Measured over all 640 corpus rows at this head: (B) alone
+    frees **0 sentences / 0 printings** (this tail is refused by all thirteen readers, so
+    there is nothing to compose); (A) alone frees **0 / 0** as a whole-sentence claim (the
+    column prints that clause STANDALONE zero times); (A)+(B) together free **1 / 1**,
+    which is exactly what the anchor frees. So the composition seam costs a fifth splitter,
+    an `attack.ts` seam and a 10-pair disjointness matrix — where D447 already refused a
+    mirror splitter at **1 sentence / 2 printings** as *"not paying"* — for a payoff
+    strictly smaller than the one it refused.
+
+    🛑 **AND THE COMPOSITION SEAM'S IN-PLACE FORM IS AN ARMED MUTANT.** The tripwire audit
+    over all 2,373 corpus rows found `D409-tail-guard-widened-to-any-reader`, whose
+    `replace` is `if (!claimedByAnyReader(tail)) return null;` — byte for byte the widening
+    the fork's second branch describes — and whose `what` states the defect it ships: *"a
+    tail claimed only by a DAMAGE reader would then be admitted, and the caller has nowhere
+    to put it… SILENT IN EVERY CENSUS"*. `attack.ts` appends `compoundSplit.tail`'s OPS to
+    the program, and a suppression has none. Building that branch would have disarmed the
+    tripwire that describes it (D436's GAP).
+
+    ⚠️ **THE PAIR IS GATED SO IT CANNOT HALF-BUILD.** The suppression arm reads
+    `BENCH_COUNTER_FILTERED_SUPPRESSED.test(t) && deriveAttackDamageMultiplier(t) !== null`,
+    so an unmapped noun (*"…Benched Ancient Pokémon."*) or a printed zero leaves the WHOLE
+    sentence on the loud `ATTACK_EFFECT_SKIPPED` path instead of marking it simulated with
+    the fold dropped — D445's `.test()`-beside-an-`.exec()` defect, answered by asking the
+    arm that owns the guards rather than by restating them.
+
+    **ZERO** new `EffectOp` members, op FIELDS, op VALUES, `EffectSlot`/`BoardCondition`/
+    `CardFilter`/`DamageCountSource` members, readers (surface still **13**), prompts,
+    choice kinds, parks, deciders, events, error codes, `GameState`/`InPlayPokemon` fields,
+    registry rows, `FIXTURE_POOL` ids (file-local `cardPool`, D414), `interpreter.ts`
+    bytes, `redact.ts` bytes or `packages/schema` bytes. `attack.ts` is byte-unchanged
+    apart from a corrected deferral comment.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 29 ON THE NO-CARRIER ARGUMENT (D470/D472/D473), AND
+    THE ADDRESS WAS NAMED BEFORE THE ARGUMENT WAS CHOSEN (D463).** `AttackDamageSuppression`
+    and `AttackDamageBonus` are PARSE-TIME types: they are `const` locals inside `attack()`,
+    absent from `packages/schema` entirely, and reached by no `EffectOp`, no prompt and no
+    event. A `MatchRecord` is `{version, seed, startedAt, state, log, names}` and holds
+    none of them at any depth — so this is NOT D450's reachability argument (which is about
+    `EffectOp`s and would be the wrong shape here) and NOT D125's widening (nothing widened).
+    Driven rather than asserted: a v29 record is round-tripped and the new reading is shown
+    to be absent from its bytes while the DAMAGE NUMBER it decides moves.
+
+    ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1**, MEASURED at this head
+    rather than carried (D451/D461/D465). RAW summand ALONE: registry 10/16, gate 5/13 and
+    trailing 11/21 all re-measured UNMOVED.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD WITH THE COMMAND STATED** (D490):
+    `grep -roE '0\.388\.0' src apps packages scripts --include=*.ts --include=*.tsx
+    --include=*.json | wc -l` reports the occurrences and `-rl` the files; the `it(` titles
+    with `grep -rnE 'it\("[^"]*0\.388\.0'`. Before this slice's own suite: **89
+    occurrences / 65 files / 20 titles**, with **TWO** history occurrences correctly left
+    alone — `classedBoardSpread.test.ts`'s `0.386.0 → 0.387.0` header arrow and this
+    changelog's own D492 heading. The exception list was RE-DERIVED, not inherited: D487's
+    note said THREE and named `mutants.ts`'s D275 ledger, which no longer carries the
+    string.
+
+    ⚠️ **RE-MEASURED AGAIN AFTER THE EDIT, WHICH IS THE HALF THE RULE IS ABOUT** (D490).
+    The live figure is now **92 occurrences / 66 files / 21 `it(` titles**; `git grep` says
+    **90 / 65 / 20**, and the difference is EXACTLY this slice's own untracked suite —
+    2 occurrences, 1 file, 1 title (D489: every slice creates one, so a tracked-only tax
+    figure is systematically short by one file's worth).
+
+    🛑 **AND THE EXCEPTION LIST FOR THE *NEXT* BUMP IS ONE, NOT TWO.** Derived rather
+    than carried: of the 92 live `0.388.0` occurrences exactly ONE is a historical ARROW —
+    this entry's own heading. ⚠️ **D488's SELF-REFERENCE RULE FIRED TWICE WRITING THIS
+    PARAGRAPH**: the sentence above added a `0.386.0 → 0.387.0` to this file, and the new
+    suite's own prose carries a `0.387.0` beside its live pin — so the count of RETIRED
+    `0.387.0` occurrences went 2 → 4 the moment the note existed. **A prose census of
+    exceptions is self-referential the moment it is written down; re-derive the LIST, never
+    only the total.**)
     🆕🆕🆕 engineVersion 0.386.0 → **0.387.0** (D492 — THE FILTERED WHOLE-SIDE SPREAD.
     `censusAttackCorpus.ts` **FILE LINES 616 and 539** — *"This attack does {60|100} damage
     to each of your opponent's Pokémon ex[ and Pokémon V]. This attack's damage isn't
@@ -20133,7 +20217,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.387.0";
+export const engineVersion = "0.388.0";
 
 export type {
   ApplyResult,
