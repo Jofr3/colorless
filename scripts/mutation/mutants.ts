@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.389.0";',
+    find: 'export const engineVersion = "0.390.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27668,6 +27668,117 @@ export const MUTANTS: Mutant[] = [
     replace: "",
     expectKilledBy: [
       "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D495-gate-dropped-lock-lands-unconditionally",
+    decision: "D495",
+    what: "🛑 C1 — **THE COIN GOES AND THE LOCK LANDS ON EVERY SWING**: the arm returns the BARE program, so a card that gives a 50% chance of stopping turns stops them 100% of the time. This is the build a slice that read the bare arm and stopped looking actually ships — it is `DEFENDER_CANT_ATTACK_NEXT_TURN`'s own return statement, verbatim, one arm over (D190b: a mutant is a neighbouring arm's REAL code). ⚠️ **SILENT IN EVERY CENSUS FIGURE**: the sentence still resolves, `BUILT.attack` is unmoved, the residue is unmoved and `resolvedByAnyReader` is still true — only a BOARD on the losing face can see it, which is what §4 is",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
+    replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [{ op: \"preventAttack\", target: \"defender\" }];\n  }",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-gated-lock-loses-its-seat",
+    decision: "D495",
+    what: "🛑 C2 — **D143's OWN ARM COPIED INSIDE THE GATE**: `target` is dropped, so the printed *\"your opponent's next turn\"* installs on the INSTALLER's own body at `state.turn + 2`. D408 caught exactly this on the UNGATED anchor (`D408-defender-lock-loses-its-seat`); the gated arm is a fresh address for it. The coin still flips, an `ATTACK_LOCKED` row is still filed, and the victim plays freely through a turn it is printed to be barred from. ⚠️ SILENT IN EVERY CENSUS: the sentence resolves either way",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
+    replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\" }],\n      },\n    ];\n  }",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+      "packages/engine/src/bareAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-gate-gains-ontails",
+    decision: "D495",
+    what: "🛑 C3 — **THE FACE IS INVERTED**: `onTails: true` is added, so the lock lands on the LOSING flip. D144's arm one screen up carries that exact field and this file has four heads-gated arms that must not, so copying the neighbour is the mistake an author makes here (`D317-coin-gate-reads-the-losing-face` and `D355-energycoin-gains-ontails` are the same defect at two other addresses). ⚠️ On a heads flip the board looks entirely normal — nothing installs and nothing is skipped — so only a PAIR of boards, one per face, separates it",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
+    replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        onTails: true,\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-arm-emits-the-neighbours-op",
+    decision: "D495",
+    what: "⚠️ C4 — the neighbouring arm's REAL op copied verbatim: `preventRetreat` where `preventAttack` belongs. Both are opponent-seat locks installed by a sentence carrying `during your opponent's next turn,`, and both write one field on one body, so nothing about the arm's SHAPE objects — only a board does. `D410-pronoun-lock-installs-the-attack-lock` is this same swap in the opposite direction, one family over",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventAttack\", target: \"defender\" }],\n      },\n    ];\n  }",
+    replace: "  if (FLIP_HEADS_DEFENDER_CANT_ATTACK.test(effect)) {\n    return [\n      {\n        op: \"coinFlipGate\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [{ op: \"preventRetreat\" }],\n      },\n    ];\n  }",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-anchor-loses-its-caret",
+    decision: "D495",
+    what: "⚠️ C5 — the `^` goes, so any sentence ENDING in this one is claimed and its leading matter is silently dropped. The `^` end and the `$` end of an anchor fail differently (D464): a LEADING near miss stays on the loud path and a rung can assert it, which is why this row's killer is §1's prefix refusal and not a board",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-anchor-loses-its-terminator",
+    decision: "D495",
+    what: "⚠️ C6 — the terminator goes, so the anchor stops demanding that the sentence END where the print ends and claims the TRUNCATED string as well. ⚠️ **The rung that kills this is the TRUNCATION, not a trailing compound** — D464's finding: once a sentence derives, `splitAttackTrailingClause` composes `⟨it⟩. ⟨claimed tail⟩` for free, so a `$`-end refusal written as a trailing near-miss would go RED on its first run",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack/;",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-anchor-widens-the-verb",
+    decision: "D495",
+    what: "🛑 C7 — **THE D472 WIDENING, INSTALLED AS A TRIPWIRE**: the verb becomes the `(?:attack|use attacks)` alternation the UNGATED sibling carries, because the pool prints both spellings ungated and copying the neighbour looks like completeness. Measured over all 640 corpus rows the wide form claims **exactly the same 1 sentence / 1 printing** as the tight one — so it buys nothing and costs a program for a sentence nobody prints (D472: a wider anchor that claims the same rows is pure risk). ⚠️ **THIS ROW EXISTS SO THE NEXT SLICE THAT CONSIDERS THE WIDENING FINDS IT BY GREPPING FOR THE CODE LINE**, not for a decision number (D493)",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t (?:attack|use attacks)\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-anchor-drops-the-possessive-apostrophe-class",
+    decision: "D495",
+    what: "⚠️ C8 — the apostrophe CLASS collapses to a bare `'` on the POSSESSIVE slot, so the sentence falls silently off the built set under a punctuation-normalising re-ingest. 🛑 **`clauseApostrophe.test.ts` CANNOT SEE THIS ROW** — its derivable sweep iterates `FIXTURE_POOL` and this slice's demonstrator is a per-board `cardPool` clone, so the file-wide re-ingest guard has no subject here. The killing rung is the slice's own U+2019 pair in §1, written BECAUSE this row would otherwise have been UNKILLABLE-AS-WRITTEN (D479)",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent's next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-anchor-drops-the-contraction-apostrophe-class",
+    decision: "D495",
+    what: "⚠️ C9 — C8's twin on the OTHER slot: the CONTRACTION's class collapses. Two rows and not one, because the slice's own rung varies the two slots SEPARATELY (D427: a near miss that differs on more than one axis tests neither), and because a class kept on one slot and lost on the other is exactly what a hand edit produces",
+    file: "packages/engine/src/effects.ts",
+    find: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can['’]t attack\\.$/;",
+    replace: "const FLIP_HEADS_DEFENDER_CANT_ATTACK =\n  /^Flip a coin\\. If heads, during your opponent['’]s next turn, the Defending Pokémon can't attack\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/flipDefenderAttackLock.test.ts",
+    ],
+  },
+  {
+    id: "D495-census-built-attack-not-stepped",
+    decision: "D495",
+    what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads",
+    file: "packages/engine/src/censusAtHead.test.ts",
+    find: "  attack: 1612,",
+    replace: "  attack: 1611,",
+    expectKilledBy: [
+      "packages/engine/src/censusAtHead.test.ts",
     ],
   },
 ];

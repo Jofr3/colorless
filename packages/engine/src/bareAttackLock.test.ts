@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { attackLocked } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effects";
-import { legalAttackCorpus } from "./censusAttackCorpus";
+import * as effectsModule from "./effects";
+import { attackReaderSurface, legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, engineVersion, programFor } from "./index";
 import type { GameEvent, GameState, InPlayPokemon, Seat } from "./index";
 import { runProgram } from "./interpreter";
@@ -413,19 +414,67 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
     }
   });
 
-  it("refuses the COIN-GATED defender lock, which this slice measured and left out", () => {
-    // "Flip a coin. If heads, during your opponent's next turn, the Defending
-    // Pokémon can't attack." — 1 legal printing, and the arm would be one regex and
-    // one `coinFlipGate` whose `then` is this slice's own program. It is OUT on the
-    // WITNESS rather than on the arm: this suite and both suites it sits between
-    // are deliberately SEED-FREE, and a coin-gated printing turns that determinism
-    // claim into a coincidence of one shuffle. One printing against a seed sweep
-    // and a fourth fixture is worse than the residue head it would be taken from.
+  it("🆕 D495 BUILT the COIN-GATED defender lock — re-pointed onto the OP, refusals kept", () => {
+    // D408 WROTE THIS RUNG AS A `toBeNull` AND SAID WHY, and the paragraph is kept
+    // rather than deleted because it is the record of a PRICE (D427/D466):
+    //
+    //   > "1 legal printing, and the arm would be one regex and one `coinFlipGate`
+    //   >  whose `then` is this slice's own program. It is OUT on the WITNESS rather
+    //   >  than on the arm: this suite and both suites it sits between are
+    //   >  deliberately SEED-FREE, and a coin-gated printing turns that determinism
+    //   >  claim into a coincidence of one shuffle. One printing against a seed sweep
+    //   >  and a fourth fixture is worse than the residue head it would be taken from."
+    //
+    // 🛑 D495 RE-DERIVED BOTH HALVES OF THAT PRICE AND ONLY ONE WAS REAL.
+    //   • the SEED half STANDS. The board is NOT here — it is in
+    //     `flipDefenderAttackLock.test.ts`, which owns the seeds. §5's own
+    //     "consumes no rng across a whole install" rung below is untouched, and it
+    //     stays true because DERIVING a program consumes nothing.
+    //   • the FOURTH FIXTURE half was WRONG. D452's file-local `cardPool` idiom keeps
+    //     the demonstrator out of `FIXTURE_POOL` entirely, so the pool-size pin, the
+    //     eleven-deep `ids.length` ladder in `opponentResistanceBonus.test.ts` and
+    //     `clauseApostrophe.test.ts`'s derivable sweep (which iterates `FIXTURE_POOL`,
+    //     not the corpus) all take a ZERO term. The quoted price was one fixture high.
+    //
+    // ⚠️ RE-POINTED ONTO THE OP AND NOT ONTO A BOOLEAN (D438/D488). A bare
+    // `.not.toBeNull()` would be true under a build that claims this string with the
+    // WRONG program, and it would silently discard the twelve-way refusal the old
+    // rung carried. So: the owner is named by VALUE, and every OTHER reader is still
+    // asserted to refuse — strictly stronger in both directions than either half.
+    const PRINTED =
+      "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't attack.";
+    // The specimen is a ROW OF THE COMMITTED CORPUS at its committed count, not a
+    // hand-typed string (D452/D490 — a byte pin measures an invention as faithfully
+    // as it measures the truth). Corpus FILE LINE 250; the card id is UNRESOLVABLE in
+    // this checkout (no local D1, D425) and is deliberately not invented.
+    expect(legalAttackCorpus().filter(([, s]) => s === PRINTED)).toEqual([[1, PRINTED]]);
+    expect(deriveAttackEffect(PRINTED)).toEqual([
+      {
+        op: "coinFlipGate",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable.
+        then: [{ op: "preventAttack", target: "defender" }],
+      },
+    ]);
+    // 🛑 THE `then` IS THE BARE ANCHOR'S WHOLE PROGRAM, BYTE FOR BYTE — the family's
+    // checkable claim since D134, and the reason the bare arm is this arm's control.
+    const gate = (deriveAttackEffect(PRINTED) as EffectOp[])[0] as { then: EffectOp[] };
+    expect(gate.then).toEqual(deriveAttackEffect(DEFENDER_BARE));
+    // …and the TAILS spelling is still refused: the pool prints no such row, and the
+    // anchor's `If heads,` is what refuses it. One axis, one difference (D427).
     expect(
       deriveAttackEffect(
-        "Flip a coin. If heads, during your opponent's next turn, the Defending Pokémon can't attack.",
+        "Flip a coin. If tails, during your opponent's next turn, the Defending Pokémon can't attack.",
       ),
     ).toBeNull();
+    // The TWELVE refusals the old rung carried, kept rather than traded away (D438).
+    for (const name of attackReaderSurface()) {
+      if (name === "deriveAttackEffect") continue;
+      const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
+      expect(read?.(PRINTED) ?? null, name).toBeNull();
+    }
+    // The surface COUNT beside the loop, because a loop over a shrinking surface
+    // stays green (D417: pin the diff AND the count).
+    expect(attackReaderSurface()).toHaveLength(13);
   });
 
   it("refuses both SIDE-WIDE spellings — they name a zone this op has no member for", () => {
@@ -513,7 +562,7 @@ describe("§6 — the persisted question, asked and DRIVEN", () => {
   it("the engine version moved with the behaviour", () => {
     // 🆕🆕 D416 — 0.319.0 → **0.320.0**, moved with the behaviour: THE PARKING KO PAIR (*"Flip a coin. If heads, Knock Out your opponent's Active Basic Pokémon. If tails, Knock Out 1 of your opponent's Benched Basic Pokémon."*, 4 printings, and *"Knock Out 1 of your opponent's Pokémon that has exactly 6 damage counters on it."*, 2 printings — **2 sentences / 6 printings**, both claimed WHOLE by `deriveAttackEffect`) is a WIDENING — ONE new PARKING `EffectOp` (`knockOutChosen`, required `target` plus two optional riders) reached through the EXISTING `choosePokemon` prompt and the EXISTING `KNOCKED_OUT` sweep, ZERO new persisted record fields — so the engine version moves and `MATCH_RECORD_VERSION` STAYS 26 (D307's paragraph: no v26 deploy can author `{ op: "knockOutChosen", … }` into a record THIS deploy reads).
     // 🆕🆕 D417 — 0.320.0 → **0.321.0**, moved with the behaviour: THE TRAILING CANCEL (*"Discard a Stadium in play. If you can't, this attack does nothing."*, Eternatus `sv08-141`, **1 legal printing**) gains a TWELFTH whole-sentence reader, `deriveAttackCancelRequirement` — the anaphoric cancel `deriveAttackRequirement`'s leading `^If` could never see. `MATCH_RECORD_VERSION` **STAYS 26**, asked rather than assumed: the reader returns an EXISTING `BoardCondition` through the EXISTING requirement channel and adds NO persisted field, so no v26 record gains a shape this deploy would not already read.
-    expect(engineVersion).toBe("0.389.0");
+    expect(engineVersion).toBe("0.390.0");
   });
 });
 

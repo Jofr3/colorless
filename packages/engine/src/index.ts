@@ -19795,6 +19795,84 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.389.0 → **0.390.0** (D495 — THE DEFENDER ATTACK LOCK BEHIND
+    THE WINNING FACE OF A COIN. `censusAttackCorpus.ts` **FILE LINE 250** — *"Flip a coin.
+    If heads, during your opponent's next turn, the Defending Pokémon can't attack."*,
+    **1 sentence / 1 legal printing**, claimed WHOLE by `deriveAttackEffect` through ONE
+    new anchor `FLIP_HEADS_DEFENDER_CANT_ATTACK` and ONE arm. The card id is UNRESOLVABLE
+    in this checkout (no local D1, D425) and is NOT invented; the row is cited by corpus
+    file line and by a printing count read off `legalAttackCorpus()`.
+
+    🛑 **THE 2² AXIS-SUBSTITUTION LATTICE COMES OUT THE OPPOSITE WAY ROUND FROM
+    D489/D490/D494, AND THAT IS THE WARRANT.** Substituting each axis onto its nearest
+    BUILT spelling that DIFFERS from the print (GATE → absent; CONSEQUENT → D142's gated
+    prevent clause): **w=0 REFUSED · w=1 BUILDS ON BOTH POINTS · w=2 REFUSED.** Every
+    SEGMENT of this sentence is already claimed and only the COMBINATION has no reader —
+    so there is no prerequisite half and nothing to compose from, where D489/D490 each had
+    exactly one built point at full weight. ⚠️ FACE is a VALUE in the GATE slot and not a
+    third axis (D494) — the slot's three inhabitants are absent / `If heads,` / `If tails,`
+    and the tails value refuses on BOTH consequents. SEAT and VERB are INERT on the verdict
+    (D491): all six GATE-present points of the 2 × 2 × 3 sub-lattice refuse and all six
+    GATE-absent points build.
+
+    🛑 **THE ANCHOR BEAT THE COMPOSITION FOR THE FOURTH CONSECUTIVE SLICE, AND BOTH
+    BRANCHES WERE PRICED ALONE** with the canonical residue predicate copied verbatim out
+    of `censusAtHead.test.ts` (D430): a general coin-gate composition seam — strip
+    `Flip a coin. If (heads|tails), ` and re-ask the readers — frees **1 sentence / 1
+    printing** over the WHOLE residue, which is exactly what the whole-sentence anchor
+    frees, for a fraction of the cost. ⚠️ **THE RESIDUE HOLDS THREE COIN-OPENING ROWS, NOT
+    TWO**: the third is *"Flip a coin. If tails, this attack does nothing. If heads, …"*
+    (2 printings), which a `^Flip a coin\. If heads,` pattern cannot see — and it frees
+    zero either way, as does the copy-attack row whose inner half is itself unbuilt.
+
+    D472's WIDENING MEASUREMENT, over all 640 corpus rows: the verb-widened
+    `can['’]t (?:attack|use attacks)` — the alternation the BARE anchor carries because the
+    pool prints both spellings ungated — claims **exactly the same 1 sentence / 1
+    printing**. It buys nothing, so the TIGHT spelling ships and the measurement is a rung.
+
+    **ZERO** new `EffectOp` members, op FIELDS, op VALUES, readers (surface still **13**),
+    `BoardCondition`/`CardFilter`/`DamageCountSource` members, prompts, parks, choice kinds,
+    events, error codes, `GameState`/`InPlayPokemon` fields, registry rows, `FIXTURE_POOL`
+    ids (file-local `cardPool`, D414/D452), `interpreter.ts`, `continuous.ts`, `log.ts`,
+    `redact.ts`, `turn.ts`, `types.ts` or `packages/schema` bytes.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 29, ON THE SERIALIZED-ALPHABET ARGUMENT (D462/D463),
+    DERIVED AT THE HARD ADDRESS RATHER THAN AT THE EASY ONE.** This is the durated-effect
+    family, where a bump genuinely can be forced (D487: only a repair that RESHAPES a
+    durated record forces one) — so the address was named first. The durated record is
+    `InPlayPokemon.attackLockedTurn`, a REQUIRED field persisted directly in
+    `MatchRecord.state` every save, park or no park (D456's precondition). It is
+    **UNRESHAPED**: this arm writes the same field, of the same type, at the same
+    `state.turn + 1` stamp, through the same `preventAttack` writer that D148's compound and
+    D408's bare anchor already use. And the op ALPHABET gains nothing — `coinFlipGate`,
+    its `then`, `preventAttack` and `target: "defender"` all ship, so no byte a v29 record
+    can hold after this slice is one it could not hold before it. ⚠️ **REACHABILITY IS THE
+    WEAKER HALF AND IS STATED SECOND** (D452's rule: state both): the program is length ONE
+    and neither op parks, so `phase.cont` is never written by it — but that is an argument
+    about `EffectOp`s and would say nothing about the `GameState` field, which is why the
+    alphabet argument is the one this bump rests on.
+
+    ⚠️ **NOT THE FIRST DURATED OP INSIDE A GATE, CHECKED BEFORE IT WAS CLAIMED** (D443 — a
+    "this would be the first X" is a claim about a CLASS). Arm 26 has emitted
+    `coinFlipGate { onTails: true, then: [{ op: "preventAttack" }] }` since **D144**.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD AFTER THE EDIT AND NOT INHERITED
+    (D490)**: `grep -rno "0\.390\.0" --include=*.ts --include=*.tsx --include=*.json .`
+    excluding `node_modules` returns **97 occurrences across 68 files**, of which **23 are
+    `it(…)` TITLES**. The figure was PREDICTED at 97 / 68 / 23 before the suite existed
+    and re-measured to 97 / 68 / 23 after it landed.
+
+    ⚠️ **THE EXCEPTION LIST IS RE-DERIVED, NOT INHERITED, AND IT IS TWO — WHICH IS ONE
+    MORE THAN THE PASS SAW** (D488/D490/D494). The mechanical bump left exactly ONE
+    `0.389.0` standing (D494's own heading). This slice then AUTHORED two new
+    arrow-form references to `0\.390\.0` (ESCAPED here on purpose, so this sentence does
+    not join the count it is about) — this heading, and the new suite's header at
+    `flipDefenderAttackLock.test.ts:21` — so the NEXT slice's exception list is those
+    **two**, and a pass that inherits "one" will corrupt a historical claim (D443).
+    ⚠️ **AND THE SELF-REFERENCE RULE'S PRECONDITION, CHECKED RATHER THAN ASSUMED**
+    (D494): the grep command above is written with an ESCAPED pattern, so this
+    paragraph does NOT contain the literal it counts and does NOT count itself. The
+    heading four lines up DOES, and is included in the 97.)
     🆕🆕🆕 engineVersion 0.388.0 → **0.389.0** (D494 — THE CONDITIONAL BONUS WITH ITS
     PRINTED WEAKNESS-ONLY SUPPRESSION RIDER. `censusAttackCorpus.ts` **FILE LINE 337** —
     *"If you have 3 or more Energy in play, this attack does 70 more damage. This attack's
@@ -20294,7 +20372,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.389.0";
+export const engineVersion = "0.390.0";
 
 export type {
   ApplyResult,
