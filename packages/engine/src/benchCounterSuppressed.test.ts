@@ -335,8 +335,30 @@ describe("§3 — the fork, measured over all 640 rows rather than argued", () =
     expect(other).toBe(
       "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
     );
-    expect(claimedByAny(other.slice(0, other.length - TAIL.length - 1))).toBe(false);
-    expect(claimedByAny(other)).toBe(false);
+    // 🆕🆕🆕 **D494 BUILT THAT ROW, SO THE OLD CLAIM'S SUBJECT IS GONE AND THE RUNG IS
+    // RE-POINTED RATHER THAN RELAXED (D444).** The two lines here used to read
+    // `claimedByAny(<the other row's head>) === false` and `claimedByAny(other) === false`,
+    // which is exactly what made *(A) alone frees nothing* true: the OTHER bare-Weakness
+    // tail sat behind a head no reader took. D494 taught `boardConditionForClause` the
+    // printed clause and added `CONDITIONAL_BONUS_SUPPRESSED`, so both are now claimed.
+    //
+    // 🛑 **THE CLAIM THIS RUNG IS ABOUT SURVIVES INTACT, AND IT IS STRONGER STATED
+    // THIS WAY**: the two rows were never one slice (D488's axis test), and the proof is
+    // that they were built by TWO DIFFERENT ANCHORS reading TWO DIFFERENT FOLDS —
+    // `deriveAttackDamageMultiplier` here, `deriveAttackDamageBonus` there — one slice
+    // apart. A `.not.toBeNull()` on `other` would have been true under a mistaken
+    // widening of THIS anchor as well (D418/D438), so the owner is named instead.
+    expect(deriveAttackDamageMultiplier(other)).toBeNull();
+    expect(deriveAttackDamageSuppression(other)).toEqual({ weakness: true });
+    expect(
+      (effectsModule as unknown as Record<string, (t: string) => unknown>).deriveAttackDamageBonus?.(
+        other,
+      ),
+    ).not.toBeNull();
+    // …and the ORIGINAL discrimination is kept on a subject that still has the property:
+    // this anchor's own head, with the tail removed, is claimed by nobody but the bare
+    // multiply sibling — so widening THIS pattern's tail is still visible here.
+    expect(claimedByAny(`${HEAD} Draw a card.`)).toBe(false);
   });
 
   it("🛑 (B) ALONE frees NOTHING: no residue compound has a head-claimed + suppression tail", () => {
@@ -374,8 +396,23 @@ describe("§3 — the fork, measured over all 640 rows rather than argued", () =
       const head = parts.slice(0, -1).join(" ");
       return tail === TAIL && claimedByAny(head);
     });
-    expect(pairWouldFree.map(([, s]) => s)).toEqual([PRINTED]);
-    expect(pairWouldFree.reduce((sum, [n]) => sum + n, 0)).toBe(1);
+    // 🆕🆕🆕 **D494 — THE POPULATION IS TWO NOW, AND IT IS THE SAME MEASUREMENT.**
+    // The other member is the row D493 measured as blocked on its own leading half;
+    // D494 unblocked that half, so the set this rung computes gained a member WITHOUT
+    // the seam ever being built. **That is the finding, not a regression**: the seam's
+    // whole payoff over the entire column is TWO sentences / TWO printings, and both of
+    // them were bought instead by one whole-sentence anchor apiece — a fifth splitter,
+    // an `attack.ts` seam and a 10-pair disjointness matrix cheaper (D447 refused a
+    // mirror splitter at 1 sentence / 2 printings as not paying; this is the same
+    // arithmetic reached from the other end). The list is corpus-sorted.
+    expect(pairWouldFree.map(([, s]) => s)).toEqual([
+      "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
+      PRINTED,
+    ]);
+    expect(pairWouldFree.reduce((sum, [n]) => sum + n, 0)).toBe(2);
+    // …and neither is served by the composition path today, which is what makes the
+    // rung above (`(B) ALONE frees NOTHING`) still true after both builds.
+    for (const [, s] of pairWouldFree) expect(splitAttackTrailingClause(s), s).toBeNull();
   });
 
   it("⚠️ the anchor's TIGHT tail buys the same rows a LOOSE one would (D472)", () => {
@@ -615,9 +652,9 @@ describe("§7 — `MATCH_RECORD_VERSION` stays 29: there is NO CARRIER", () => {
 });
 
 describe("§8 — the version", () => {
-  it("engineVersion is 0.388.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.389.0 and the bump is owed for BEHAVIOUR", () => {
     // A card can reach this: file line 529's printing scores a number it did not score
     // at 0.387.0, and skips a §8.5 step it did not skip.
-    expect(engineVersion).toBe("0.388.0");
+    expect(engineVersion).toBe("0.389.0");
   });
 });

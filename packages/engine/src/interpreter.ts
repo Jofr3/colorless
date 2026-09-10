@@ -5344,6 +5344,20 @@ export function conditionNote(cond: BoardCondition): string {
       // note that does NOT round-trip to the printed clause byte for byte
       // ("{D}" → "Darkness"). Deliberate: a reject message and a HUD tooltip are
       // read off the board by a person, and "{D}" is a card-face glyph.
+      //
+      // 🆕🆕🆕 **D494 — THE UNTYPED BRANCH, AND A WRONG ONE HERE IS SILENT.**
+      // `energy` gained `null` (every Energy card in play, no type asked), and
+      // `${null} Energy` interpolates to *"null Energy"* with `tsc` saying nothing —
+      // so the branch is OWED even though nothing can render it. ⚠️ **IT IS
+      // UNRENDERABLE FROM ANY PRINTED SENTENCE TODAY (D446):** the only clause row
+      // producing this value is *"you have 3 or more Energy in play"*, reached by
+      // `CONDITIONAL_DAMAGE_BONUS` and by `CONDITIONAL_BONUS_SUPPRESSED`, and neither
+      // builds a note — `conditionNote`'s five call sites are all attack/ability/play
+      // GATES. Driven directly in `energyInPlaySuppressed.test.ts` §6, with the
+      // unreachability asserted as a sweep over the derived attack column rather than
+      // claimed. ⚠️ And unlike its two neighbours this one DOES round-trip to the
+      // printed clause byte for byte, because the key carries no brace code.
+      if (cond.energy === null) return `you have at least ${cond.count} Energy in play`;
       return cond.energy === "special"
         ? `you have at least ${cond.count} Special Energy in play`
         : `you have at least ${cond.count} ${cond.energy} Energy in play`;

@@ -1712,10 +1712,28 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // than shared: Sawk's is BUILT (through `requirementSplit` above, since D363), and
   // the remaining two are blocked on their own LEADING halves, which is the clause
   // below and is still true of exactly those two.
-  // The other two named rows are unmoved and their leading halves really do refuse:
-  // "If you have 3 or more Energy in play, this attack does 70 more damage." → null,
-  // and "Your opponent flips a coin for each of their Benched Pokémon. This attack
+  //
+  // 🆕🆕🆕 **D494 — "EXACTLY THOSE TWO" IS NOW EXACTLY ONE, AND THE SENTENCE ABOVE IS
+  // KEPT AS THE RECORD OF A PRICE THAT CAME TRUE RATHER THAN DELETED (D442/D466).**
+  // The paragraph above was a MEASUREMENT and it was correct at D493's head: *"If you
+  // have 3 or more Energy in play, this attack does 70 more damage."* derived to `null`
+  // under all thirteen readers, so no split and no compound anchor could reach the row.
+  // D494 removed that blocker rather than working around it — one clause row
+  // (*"you have 3 or more Energy in play"* → `yourEnergyInPlayAtLeast` with the member's
+  // `energy` field widened to admit `null`, which is `countEnergyInPlay`'s own untyped
+  // arm) plus one SECOND whole-sentence anchor, `CONDITIONAL_BONUS_SUPPRESSED`, read by
+  // `deriveAttackDamageBonus` for the fold and by `deriveAttackDamageSuppression` for
+  // the §8.5 step, both off THIS line's `effect` string. **THIS FILE IS AGAIN
+  // BYTE-UNCHANGED apart from these comments**, for the same reason D493 was: the
+  // suppression is not chained onto the `damageBonus !== null` ladder, so a sentence
+  // both readers claim simply reaches both bindings.
+  //
+  // ⚠️ **THE ONE STILL DEFERRED IS THE COIN ROW, AND ITS LEADING HALF REALLY DOES
+  // REFUSE** — measured at D494's head, not carried:
+  // "Your opponent flips a coin for each of their Benched Pokémon. This attack
   // does 80 damage to your opponent's Active Pokémon for each tails." → null.
+  // The Energy-in-play row's head now derives (`deriveAttackDamageBonus`), and
+  // `energyInPlaySuppressed.test.ts` §3 is where that is asserted.
   // ⚠️ D463's rule, paying out: A REFUSAL THAT GROUPS N ROWS UNDER ONE REASON IS N
   // REFUSALS UNTIL EACH IS PRICED. Three of these four were priced by that sentence
   // and one was not, and nothing went red when the un-priced one changed sides.

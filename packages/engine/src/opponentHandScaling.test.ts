@@ -408,14 +408,30 @@ describe("§2 — two anchors, one noun map, and the first two-reader sentence",
     // **a printed sentence needs two readers exactly when its clauses land at two
     // SEAMS** (D445) — here a pre-§8.5 fold and an inside-§8.5 step, there an effect
     // program and a fold. Sorted by sentence, so the Cynthia row leads.
+    //
+    // 🆕🆕🆕 **D494 — THE THIRD MEMBER, AND IT ARRIVED ON PURPOSE, WHICH IS WHAT
+    // THIS RUNG EXISTS FOR.** `censusAttackCorpus.ts` FILE LINE 337 — *"If you have 3
+    // or more Energy in play, this attack does 70 more damage. This attack's damage
+    // isn't affected by Weakness."* — is `deriveAttackDamageBonus` (a pre-§8.5 fold)
+    // plus `deriveAttackDamageSuppression` (an inside-§8.5 step): the SAME two seams
+    // the D493 row below it reaches through a different fold reader. **All three
+    // members fit the one sentence stated above** — two seams, two readers, one string
+    // the caller already broadcasts — and the list is sorted, so this row now leads.
+    //
+    // 🛑 **AND THIS RUNG IS BLIND TO CORRECTNESS, WHICH D493 MEASURED AND THIS NOTE
+    // CARRIES FORWARD.** It asserts WHICH sentences have two owners, never WHAT those
+    // owners answer — a reader mutated to its neighbouring member leaves the list
+    // byte-identical. The behavioural suites are what cover that
+    // (`energyInPlaySuppressed.test.ts` §5, `benchCounterSuppressed.test.ts` §5).
     expect(dual.map(([, s]) => s)).toEqual([
+      "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
       "This attack does 10 damage for each damage counter on all of your Benched Cynthia's Pokémon. This attack's damage isn't affected by Weakness.",
       REVEAL_TRAINER_SCALE,
     ]);
     // The COUNT beside the list, for the reason `censusAtHead.test.ts` pins both a
     // diff and a count: a list assertion alone stays green if a member is dropped
     // from the corpus and from the expectation in one commit.
-    expect(dual).toHaveLength(2);
+    expect(dual).toHaveLength(3);
   });
 
   it("the bare-reveal and bare-count sentences keep exactly ONE owner each", () => {

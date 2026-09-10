@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import * as effectsModule from "./effects";
 import {
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
@@ -154,10 +155,18 @@ const DEFERRED_RIDERS = [
   // leading does-nothing clause and hands the BODY — which is a printed sentence
   // `DAMAGE_SUPPRESSION` already claimed — to attack.ts's read site.
   "If your opponent's Active Pokémon isn't a Pokémon ex, this attack does nothing. This attack's damage isn't affected by Weakness or Resistance.",
-  // STILL DEFERRED, and its blocker is its own LEADING half: the head derives to
-  // `null` under all thirteen readers, so no split and no compound anchor can reach
-  // it. That is the reason for THIS row and it was measured at D493's head rather
-  // than inherited (D463: a grouped refusal takes its reason from its cheapest member).
+  // 🛑 **BUILT AT D494, AND THE PARAGRAPH BELOW WAS TRUE WHEN WRITTEN AND IS NOW
+  // HISTORY.** It read: *"STILL DEFERRED, and its blocker is its own LEADING half: the
+  // head derives to `null` under all thirteen readers, so no split and no compound
+  // anchor can reach it."* Every clause of that was correct at D493's head and it was a
+  // MEASUREMENT rather than an inheritance — what changed is that D494 taught
+  // `boardConditionForClause` the printed clause *"you have 3 or more Energy in play"*
+  // (`yourEnergyInPlayAtLeast` with `energy: null`, the member's field widened from a
+  // narrowing to an optional one) and added a SECOND whole-sentence anchor,
+  // `CONDITIONAL_BONUS_SUPPRESSED`, spelling the head and this tail together. Kept and
+  // dated rather than deleted (D442/D466): the blocker really was the leading half, and
+  // a successor reading only the new state cannot see that the two halves were priced
+  // separately. `DAMAGE_SUPPRESSION` is byte-unchanged, so this row stays in the list.
   "If you have 3 or more Energy in play, this attack does 70 more damage. This attack's damage isn't affected by Weakness.",
   // BUILT at D493, and NOT by this reader either: a SECOND whole-sentence anchor
   // spelling the head and the tail together, read by `deriveAttackDamageMultiplier`
@@ -396,7 +405,7 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     // says so.
     // (a) THE PATTERN ITSELF still refuses three of the four whole — every rider whose
     // build did not come from this reader — and the POOL rider besides.
-    for (const rider of [DEFERRED_RIDERS[0], DEFERRED_RIDERS[1], DEFERRED_RIDERS[3], POOL_RIDER]) {
+    for (const rider of [DEFERRED_RIDERS[0], DEFERRED_RIDERS[3], POOL_RIDER]) {
       expect(deriveAttackDamageSuppression(rider), rider).toBeNull();
     }
     // …and the two that are BUILT are built by something else, asserted by NAME so a
@@ -411,9 +420,31 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
       per: 10,
       count: { kind: "damageCountersOnYourBench", filter: { kind: "ownerPokemon", owner: "Cynthia" } },
     });
+    // 🆕🆕🆕 **D494 — RIDER [1] IS BUILT NOW, AND NOT BY THIS READER EITHER.** A THIRD
+    // whole-sentence anchor, `CONDITIONAL_BONUS_SUPPRESSED`, spelling the printed
+    // conditional bonus and this exact tail together — read by `deriveAttackDamageBonus`
+    // for the fold and by `deriveAttackDamageSuppression`'s own compound arm for the
+    // §8.5 step. `DAMAGE_SUPPRESSION` is BYTE-UNCHANGED, which is why the row stays in
+    // the list above rather than leaving it, and why the loop below still refuses [3].
+    // ⚠️ **NAMED BY VALUE AND BY OWNER, WITH THE ELEVEN REFUSALS KEPT** (D438): a
+    // `.not.toBeNull()` re-point would be true under a mistaken widening of THIS
+    // pattern as well, which is the one thing the rung exists to catch.
+    expect(deriveAttackDamageSuppression(DEFERRED_RIDERS[1])).toEqual({ weakness: true });
+    expect(deriveAttackDamageBonus(DEFERRED_RIDERS[1])).toEqual({
+      per: 70,
+      count: {
+        kind: "boardCondition",
+        cond: { kind: "yourEnergyInPlayAtLeast", energy: null, count: 3 },
+      },
+    });
+    for (const name of attackReaderSurface()) {
+      if (name === "deriveAttackDamageBonus" || name === "deriveAttackDamageSuppression") continue;
+      const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
+      expect(read?.(DEFERRED_RIDERS[1]) ?? null, name).toBeNull();
+    }
     // …and the two that are NOT built are still refused by every one of the thirteen,
     // which is the half that would go quiet if a later slice widened something.
-    for (const rider of [DEFERRED_RIDERS[1], DEFERRED_RIDERS[3]]) {
+    for (const rider of [DEFERRED_RIDERS[3]]) {
       expect(resolvedByAnyReader(rider), rider).toBe(false);
     }
   });

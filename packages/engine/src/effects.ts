@@ -2426,8 +2426,42 @@ export type BoardCondition =
       `yourStadiumInPlay`. Counts CARDS, not units of provision, and reads
       provision rather than the printed name (continuous.ts `countEnergyInPlay`).
       An empty board is 0, so a printed `count` of 0 would be trivially true;
-      the pool prints 3. */
-  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special"; count: number }
+      the pool prints 3.
+
+      🆕🆕🆕 **D494 — `energy` GAINS `null`, WHICH IS *EVERY ENERGY CARD IN PLAY*,
+      AND IT IS A WIDENING OF THIS MEMBER RATHER THAN A SECOND ONE.** The column
+      prints the same three words with NO type token — *"If you have 3 or more
+      Energy in play, this attack does 70 more damage. This attack's damage isn't
+      affected by Weakness."*, `censusAttackCorpus.ts` **file line 337**, 1 sentence
+      / 1 legal printing — so the two rows differ in a NARROWING and not in a
+      payload. D440's union rule decides it with nothing left over: *identical
+      payload ⇒ ONE member with the discriminator as a FIELD*, and the paragraph
+      three lines up already refused the opposite move for the same reason
+      ("narrowing it here would fork one question into two").
+
+      🛑 **AND THE EVALUATOR ALREADY ANSWERED IT — ZERO INTERPRETER BYTES.**
+      `countEnergyInPlay(state, seat, energy)` has taken `BasicEnergyType |
+      "special" | null` since D470's sibling widening, and `null` is its
+      `holder.energy.length` arm: every attached Energy CARD, no provision question
+      asked. So `conditionHolds`'s line is BYTE-IDENTICAL under this widening
+      (D443 — check whether the function already takes the fact before rewriting
+      it). ⚠️ **THE TWO READINGS GENUINELY DIFFER AND THE BOARD THAT SEPARATES THEM
+      IS SMALL**: one {W} Energy on a Bench answers 1 here and 0 under `energy:
+      "Darkness"`.
+
+      ⚠️ **`null`, NOT AN OPTIONAL KEY.** `?energy` would make the interpreter line
+      read `cond.energy ?? null` — a byte change on a shipped line for no gain —
+      and the absent key would then be spelled two ways across a persisted address.
+      The explicit `null` is the same shape `countEnergyInPlay`'s own parameter
+      carries, which is the one this member delegates to.
+
+      ⚠️ **`conditionNote` OWES A THIRD BRANCH AND A WRONG ONE IS SILENT** —
+      `${null} Energy` interpolates to *"null Energy"* and `tsc` says nothing. It is
+      written, and it is UNRENDERABLE from any printed sentence today (D446): the
+      only clause row producing this value is reached by `CONDITIONAL_DAMAGE_BONUS`
+      and by D494's compound anchor, neither of which builds a note. Stated here
+      rather than discovered by a board. */
+  | { kind: "yourEnergyInPlayAtLeast"; energy: BasicEnergyType | "special" | null; count: number }
   /** 🆕🆕 **D376 — AT LEAST `count` Basic Energy CARDS of `energy` IN YOUR
       DISCARD PILE.** *"If you have 10 or more Basic {R} Energy cards in your discard
       pile, this attack does 100 more damage."* — Chandelure `sv10.5w-018`
@@ -15255,6 +15289,49 @@ const YOUR_TOOLS_MULTIPLY =
 const EXTRA_ENERGY_BONUS =
   /^If this Pokémon has at least (\d+) extra Energy attached \(in addition to this attack['’]s cost\), this attack does (\d+) more damage\.$/;
 const CONDITIONAL_DAMAGE_BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
+/** 🆕🆕🆕 D494 — THE SAME CONDITIONAL BONUS WITH ITS PRINTED **WEAKNESS-ONLY
+    SUPPRESSION RIDER**: *"If you have 3 or more Energy in play, this attack does 70
+    more damage. This attack's damage isn't affected by Weakness."* —
+    `censusAttackCorpus.ts` **file line 337**, 1 sentence / **1 legal printing**, the
+    row `attack.ts` and `damageSuppression.test.ts` have both carried as deferred
+    since D192.
+
+    🛑 **A SECOND ANCHOR, NOT AN OPTIONAL GROUP ON THE LINE ABOVE (D441/D493).** The
+    two are STRUCTURALLY disjoint — the bare one demands `$` immediately after the
+    consequent's period, this one demands a space and a further whole sentence there,
+    so no string can match both (D467's rule 1: prefer structural disjointness and
+    then there is no guard to rot and no order to pin). An optional group would also
+    have rotted every corpus row quoting the shipped regex literal, which is D414's
+    lesson avoided rather than paid.
+
+    ⚠️ **THE CAPTURE GROUPS ARE THE SIBLING'S, IN THE SIBLING'S ORDER** — `[1]` the
+    printed clause, `[2]` the amount — which is what lets ONE arm below read both
+    anchors through a single `??` and makes it impossible for the two to drift on the
+    clause vocabulary or on the printed-zero guard (D493's shape one reader over).
+
+    ⚠️ **THE TAIL IS SPELLED LITERALLY AND NOT AS `DAMAGE_SUPPRESSION`'s ALTERNATION,
+    AND THAT IS D472's RULE APPLIED RATHER THAN A PREFERENCE.** Measured over all 640
+    corpus rows in `energyInPlaySuppressed.test.ts` §3: this tight spelling, the
+    five-object alternation and a bare `(.+)` tail all claim **exactly the same 1
+    sentence / 1 printing** — except the bare one, which additionally eats *"If a
+    Stadium is in play, this attack does 60 more damage. Then, discard that
+    Stadium."*, a sentence whose trailing half is a real OP this reader has nowhere to
+    put. So the generality is not merely unpaid here, it is a live defect.
+
+    🛑 **BOTH SEAMS READ THIS ONE ANCHOR (D445/D493).** The printed sentence carries a
+    conditional `+N` fold AND a §8.5 step suppression — two seams, so two readers —
+    and `attack.ts` binds `damageBonus` and `damageSuppression` off the SAME `effect`
+    string, the suppression deliberately NOT chained onto the `damageBonus !== null`
+    ladder (its own block says so, and says that is "the one placement decision
+    here"). One new constant, ZERO caller bytes. `deriveAttackDamageSuppression` reads
+    `{ weakness: true }` off this same regex, GATED on `deriveAttackDamageBonus` also
+    claiming it so the pair can never half-build.
+
+    `Pokémon` is not in this pattern at all; `attack['’]s` and `isn['’]t` carry the
+    class D136/D137 requires. No /i, whole-sentence anchored, a capital `This` on the
+    rider and a required trailing period — the family's rule, unchanged. */
+const CONDITIONAL_BONUS_SUPPRESSED =
+  /^If (.+), this attack does (\d+) more damage\. This attack['’]s damage isn['’]t affected by Weakness\.$/;
 /** The printed clauses this family understands, keyed CHAR-FOR-CHAR on the text
     between the leading "If " and the ", this attack does" — a Map rather than an
     object literal on purpose: the key is arbitrary PRINTED text, and an object
@@ -15888,6 +15965,36 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "you have at least 3 {D} Energy in play",
     { kind: "yourEnergyInPlayAtLeast", energy: "Darkness", count: 3 },
   ],
+  // 🆕🆕🆕 D494 — THE SAME QUESTION WITH NO TYPE TOKEN AND THE OTHER PRINTED
+  // QUANTIFIER: *"If you have 3 or more Energy in play, this attack does 70 more
+  // damage. This attack's damage isn't affected by Weakness."* —
+  // `censusAttackCorpus.ts` **file line 337**, 1 sentence / **1 legal printing**. It
+  // sits directly under the row above because the two are the whole of
+  // `grep "Energy in play"` over the 640-row column, and the pair is the warning
+  // rather than a filing habit: the row above counts PROVISION of one type, this one
+  // counts Energy CARDS regardless of type, and one {W} on a Bench separates them.
+  //
+  // 🛑 **THE ROW ABOVE'S OWN BLOCK CALLED "at least" AND "Energy in play" HAPAXES AND
+  // SAID WHAT WOULD OVERTURN THAT** — *"the day a second threshold prints, a template
+  // can be added over both without re-interpreting this one."* That day is here and
+  // **the template is still refused**, on D472's measurement rather than on D119's
+  // rule: a two-slot template over ⟨quantifier⟩ × ⟨optional type⟩ claims **exactly
+  // these two sentences and no others** over the whole column, so the generality buys
+  // nothing and costs a wrong program the day a third spelling prints. Two literal
+  // rows, and `energyInPlaySuppressed.test.ts` §2 pins the count in both directions.
+  //
+  // ⚠️ **THE QUANTIFIERS ARE SYNONYMS OVER THIS COLUMN AND THAT IS MEASURED, NOT
+  // ASSUMED.** `>= count` is the reading of BOTH printed words — the row above spells
+  // "at least", `yourActiveEnergyAtLeast` and `yourBasicEnergyInDiscardAtLeast` both
+  // spell "N or more", and all three are `>=`. So this is a second SPELLING of a
+  // shipped quantifier, never a second quantifier.
+  //
+  // ⚠️ **THE AMOUNT IS NOT PART OF THIS KEY** — `CONDITIONAL_DAMAGE_BONUS` and
+  // D494's `CONDITIONAL_BONUS_SUPPRESSED` both capture it — so a reprint that moved
+  // the 70 would still land here. The key carries no brace code, so unlike its two
+  // neighbours it DOES round-trip from `conditionNote` byte for byte once the leading
+  // "If " and the trailing comma are put back.
+  ["you have 3 or more Energy in play", { kind: "yourEnergyInPlayAtLeast", energy: null, count: 3 }],
   // 🆕🆕 D376 — Chandelure sv10.5w-018 "Incendiary Pillar" (50+, **+100**) and its
   // Illustration-rare reprint sv10.5w-103, byte-identical in rules text, so one row
   // and one fixture serve both. It sits directly under the row above because the two
@@ -27264,7 +27371,15 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // the three "for each" arms above are exact. An UNMAPPED clause deliberately
   // falls through to `return null`: an unrecognised condition must stay LOUD
   // (ATTACK_EFFECT_SKIPPED), never silently score its bonus at 0.
-  const conditional = CONDITIONAL_DAMAGE_BONUS.exec(effect);
+  // 🆕🆕🆕 D494 — TWO ANCHORS, ONE ARM. `CONDITIONAL_BONUS_SUPPRESSED` is the same
+  // sentence with its printed Weakness-only suppression rider (corpus file line 337);
+  // its groups are this anchor's groups in this anchor's order, so the clause lookup,
+  // the printed-zero guard and the returned member are literally the same code and
+  // cannot drift. The bare anchor is tried FIRST and the two are structurally
+  // disjoint, so the order is legibility rather than behaviour (D467/D468) — a
+  // permutation row is declared `equivalent` in the corpus and says which kind it is.
+  const conditional =
+    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_BONUS_SUPPRESSED.exec(effect);
   if (conditional !== null) {
     const cond = boardConditionForClause(conditional[1] ?? "");
     if (cond !== null) {
@@ -27773,6 +27888,42 @@ const DAMAGE_SUPPRESSION = new RegExp(
     never after damage — and attack.ts owns the read site. */
 export function deriveAttackDamageSuppression(text: string): AttackDamageSuppression | null {
   const trimmed = text.trim();
+  // 🆕🆕🆕 D494 — THE SECOND COMPOUND ARM, AND IT IS D493's SHAPE WITH THE
+  // GATE POINTED AT A DIFFERENT READER. `censusAttackCorpus.ts` file line 337 prints a
+  // CONDITIONAL `+N` bonus AND this suppression in one attack's effect text; the two
+  // land at different seams (the bonus before §8.5, the suppression inside it), so
+  // the sentence needs two readers and `attack.ts` already hands the identical
+  // `effect` string to both — `damageBonus` at its own line and `damageSuppression`
+  // at a line its block says is deliberately NOT chained onto the bonus ladder.
+  //
+  // 🛑 **THE GATE IS `deriveAttackDamageBonus`, NOT A SECOND COPY OF ITS GUARDS.**
+  // `CONDITIONAL_BONUS_SUPPRESSED`'s clause group is `(.+)`, and the bonus arm refuses
+  // an UNMAPPED clause (`boardConditionForClause` returning null) and a printed zero
+  // (`per >= 1`). A bare `.test()` here would claim *"If ⟨a clause this engine has
+  // never read⟩, this attack does 70 more damage. This attack's damage isn't affected
+  // by Weakness."* whole — `resolvedByAnyReader` TRUE, `BUILT.attack` stepped,
+  // `ATTACK_EFFECT_SKIPPED` never fired and the printed bonus silently dropped. D445's
+  // *a `.test()` beside an `.exec()` on one regex is the tell*, answered by asking the
+  // arm that owns the guards. No cycle: the bonus reader never consults this one.
+  //
+  // ⚠️ **THIS ARM SITS AHEAD OF D493's AND THE ORDER IS LEGIBILITY.** The two anchors
+  // are structurally disjoint — `^If ` against `^This attack does ` — so no string
+  // reaches both `test`s, and a permutation row is declared `equivalent` with its KIND
+  // named (D468: structural, so no guard exists and correctly none does).
+  //
+  // ⚠️ **THE STANDALONE `…isn't affected by Weakness.` IS STILL REFUSED, AND THAT IS
+  // STILL A MEASUREMENT.** `DAMAGE_SUPPRESSION` below is BYTE-UNCHANGED and the legal
+  // column prints that sentence ZERO times on its own — it appears only as the tail of
+  // the two compounds, file lines 337 and 529, and both are now claimed WHOLE. The
+  // three shipped `toBeNull` rungs that rest on its refusal
+  // (`damageSuppression.test.ts`, `benchNounScaling.test.ts` §10,
+  // `selfEnergyScaling.test.ts`'s REASON 3) are all still GREEN after this slice.
+  if (
+    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed) &&
+    deriveAttackDamageBonus(trimmed) !== null
+  ) {
+    return { weakness: true };
+  }
   // 🆕🆕 D493 — THE ONE COMPOUND ARM, AND THE GATE IN FRONT OF IT IS THE WHOLE
   // DESIGN. `censusAttackCorpus.ts` file line 529 prints a `per × count` fold AND
   // this suppression in one attack's effect text; the two land at DIFFERENT SEAMS

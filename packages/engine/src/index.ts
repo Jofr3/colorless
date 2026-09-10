@@ -19795,6 +19795,83 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.388.0 → **0.389.0** (D494 — THE CONDITIONAL BONUS WITH ITS
+    PRINTED WEAKNESS-ONLY SUPPRESSION RIDER. `censusAttackCorpus.ts` **FILE LINE 337** —
+    *"If you have 3 or more Energy in play, this attack does 70 more damage. This attack's
+    damage isn't affected by Weakness."*, **1 sentence / 1 legal printing**, claimed by
+    **TWO** readers over ONE new anchor `CONDITIONAL_BONUS_SUPPRESSED` —
+    `deriveAttackDamageBonus` for the conditional `+70` fold (through the SHARED arm, one
+    `??` on its `exec`) and `deriveAttackDamageSuppression` for the §8.5 step (a new arm
+    GATED on the bonus also claiming it, so the pair cannot half-build). **The corpus's
+    THIRD dual-claimed sentence**, and D493's idiom one fold reader over — TRACED rather
+    than assumed: `attack.ts` binds `damageBonus` and `damageSuppression` off the same
+    `effect` local and its own block calls the suppression's placement *"the one placement
+    decision here"*, so this file's caller is BYTE-UNCHANGED apart from comments.
+
+    🛑 **THREE AXES, COUNTED FROM THE PRINT, AND THE 2 × 2 × 3 LATTICE HAS EXACTLY ONE
+    BUILT POINT.** Against the nearest built spelling (file line 341, *"If you have at
+    least 3 {D} Energy in play, this attack does 50 more damage."*) the print differs on
+    QUANTIFIER, on TYPE and on TAIL — and the fourth candidate axis, the printed AMOUNT,
+    is DEGENERATE (D491): 70 already builds under the shipped anchor, so a 2⁴ table would
+    be this one reported twice. The TAIL axis is three-valued, and that is the extra
+    dimension: the bare-`Weakness` clause is refused by all thirteen readers while its
+    `Weakness or Resistance` sibling builds. **No proper subset builds**, which is what
+    justifies a whole-sentence anchor rather than a composition (D489).
+
+    🛑 **EVERY BRANCH FREES 0 / 0 ALONE — THE FORK WAS NEVER A FORK** (D493's rule,
+    paying out a second time). Measured over all 640 corpus rows: the QUANTIFIER alone
+    **0 / 0** (no row prints *"N or more ⟨typed⟩ Energy in play"*), the TYPE alone
+    **0 / 0** (none prints *"at least N Energy in play"* untyped), the two together —
+    the printed HEAD as a standalone sentence — **0 / 0**, the TAIL alone **0 / 0** (the
+    bare clause is printed standalone ZERO times), and the COMPOSITION seam **0 / 0**.
+    All of them together free **1 / 1**, which is what one constant and one clause row
+    bought. ⚠️ **AND THE COMPOSITION SEAM IS AN ARMED MUTANT FOR THE SECOND SLICE
+    RUNNING**: `D409-tail-guard-widened-to-any-reader`'s `replace` IS that widening and
+    its `what` states the defect it ships (D436's GAP, avoided rather than paid).
+
+    ⚠️ **TWO SHAPE CHANGES, TWO ADDRESSES, TWO ARGUMENTS (D443).** The READING
+    (`AttackDamageBonus` / `AttackDamageSuppression`) has **NO CARRIER** — parse-time
+    types, `const` locals inside `attack()`, absent from `packages/schema`, driven over
+    the serialised post-attack `GameState`. The **`BoardCondition` field IS at a
+    persisted address** (`conditionGate.cond` → `phase.cont.pendingOp`), so the no-carrier
+    argument is UNAVAILABLE and is not used: `energy` gains `null` as a new INHABITANT of
+    an existing field, no v29 deploy could write it because no v29 producer existed, and
+    every old byte still means what it meant — D125/D333's WIDENING. `MATCH_RECORD_VERSION`
+    stays **29**.
+
+    ⚠️ **THE DESCRIBER OBLIGATION WAS TRACED, AND FOR THE EIGHTH SLICE RUNNING
+    `describeBranch`/`describeCondition` ARE EMPTY** — they are reached from exactly one
+    call site, `withConsequence`, which returns the prompt unchanged unless a parking op
+    files a slot a queued `recordGate` reads, and this program has no op at all. **The
+    describer work that DID exist is somewhere the category argument never looks** (D489):
+    `conditionNote`'s untyped branch, where a missing arm interpolates `${null}` into
+    *"null Energy"* with `tsc` silent. It is written, driven directly, and its
+    unrenderability from any printed sentence is asserted as a sweep rather than claimed
+    (D446).
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD AND WITH ITS EXCEPTION LIST RE-DERIVED
+    RATHER THAN INHERITED (D488/D490).** `grep -roE "0\.389\.0" --include=*.ts
+    --include=*.tsx --include=*.json . | wc -l` reads **94 occurrences / 67 files / 22
+    `it(` titles**; `git grep` reads **92 / 66**, and the difference is EXACTLY this
+    slice's own untracked suite (2 occurrences, 1 file, 1 title). 68 of the 94 are
+    `expect(engineVersion|manifest.version).toBe(…)` assertions, 22 are `it(` titles,
+    3 are the non-assertion sites (`package.json`, the `export const`, and `mutants.ts`'s
+    `D275` re-point `find`), and the 94th is this entry's heading. 🛑 **THE EXCEPTION
+    LIST FOR THE NEXT BUMP IS ONE — this entry's own heading — AND THE FIRST DRAFT OF
+    THIS PARAGRAPH SAID TWO.** It counted itself, on D488's rule, and was wrong: the
+    command above is written with an ESCAPED pattern (`0\.389\.0`), which is not the
+    literal it matches, so a paragraph that QUOTES ITS OWN GREP does not join the
+    population the way a paragraph that quotes the bare version string does. **D488's
+    self-reference rule has a precondition nobody had stated: it fires on the LITERAL,
+    never on the pattern.** Checked by running the command after writing the sentence,
+    which is the only way this class is ever caught (D490: re-measure the figure AND its
+    exception list AFTER the edit, and state the command).
+    🛑 **AND THE INHERITED FIGURE WAS SHORT BY EXACTLY ITS OWN SENTENCE, WHICH IS D488's
+    SELF-REFERENCE RULE FIRING A THIRD TIME — INSIDE THE PARAGRAPH THAT WARNS ABOUT IT.**
+    D493's note recorded *"92 live `0.388.0` occurrences"*; re-derived at this head with
+    the command above the truth was **93**, and the ninety-third is that note's own
+    sentence. A prose census of exceptions is self-referential the moment it is written
+    down, and the total is taken before the sentence exists.)
     🆕🆕🆕 engineVersion 0.387.0 → **0.388.0** (D493 — THE BENCH-COUNTER FOLD WITH ITS
     PRINTED WEAKNESS-ONLY SUPPRESSION RIDER. `censusAttackCorpus.ts` **FILE LINE 529** —
     *"This attack does 10 damage for each damage counter on all of your Benched Cynthia's
@@ -20217,7 +20294,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.388.0";
+export const engineVersion = "0.389.0";
 
 export type {
   ApplyResult,

@@ -987,9 +987,9 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D492 §10 — the residue this slice moved, and the engine version", () => {
-  it("engineVersion is 0.388.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.388.0");
-    expect(manifest.version).toBe("0.388.0");
+  it("engineVersion is 0.389.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.389.0");
+    expect(manifest.version).toBe("0.389.0");
   });
 
   it("🛑 the reader surface is still THIRTEEN, derived from the module", () => {
@@ -1001,7 +1001,7 @@ describe("D492 §10 — the residue this slice moved, and the engine version", (
 
   it("🛑 the RAW residue fell by exactly 2 sentences / 4 printings", () => {
     const unbuilt = corpusRows().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([113, 172]);
+    expect([unbuilt.length, units(unbuilt)]).toEqual([112, 171]);
     // …and neither of this slice's rows is in it any more, which is the only way this
     // rung reads as a measurement of THIS head (D483's move).
     expect(unbuilt.map(([, s]) => s)).not.toContain(EX_60);

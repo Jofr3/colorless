@@ -1166,7 +1166,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.388.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.389.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1180,6 +1180,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.388.0");
+    expect(engineVersion).toBe("0.389.0");
   });
 });

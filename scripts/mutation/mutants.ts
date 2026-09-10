@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.388.0";',
+    find: 'export const engineVersion = "0.389.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27528,6 +27528,146 @@ export const MUTANTS: Mutant[] = [
     replace: "  /^This attack does (\\d+) damage for each damage counter on all of your Benched ([^.]+ Pokémon)\\. This attack['’]s damage isn['’]t affected by Weakness\\./;",
     expectKilledBy: [
       "packages/engine/src/benchCounterSuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-compound-anchor-loses-its-terminator",
+    decision: "D494",
+    what: "🛑 C1 — **THE `\\.$` GOES, and it is the QUIET one.** Once the printed sentence derives, its `$`-end near-miss is no longer on the loud path: `splitAttackTrailingClause` sees a claimed HEAD and a `deriveAttackEffect` TAIL and COMPOSES *\"⟨the printed row⟩ Draw a card.\"* correctly (D464). Under the mutant this anchor claims that string WHOLE instead, BOTH readers answer about it, and the printed draw silently never runs — a board that looks entirely normal. Killed by the SPLIT assertion in §7, never by a `toBeNull`, because a `$`-end refusal cannot be demonstrated on the loud path once the sentence itself builds",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    replace: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\./;",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-compound-anchor-loses-its-caret",
+    decision: "D494",
+    what: "⚠️ C2 — **THE `^` GOES**, and it is the LOUD one, which is why the pair exists (D464: the two ends of an anchor fail differently). The anchor then claims any sentence ENDING with this compound, so *\"Draw a card. ⟨the printed row⟩\"* resolves and both readers answer about a sentence whose leading half nothing read. Leading text is claimed by nobody today, so `ATTACK_EFFECT_SKIPPED` fires and a `toBeNull` on BOTH readers can say so — the control for C1's split assertion, on the same anchor, differing on ONE axis (D427)",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    replace: "  /If (.+), this attack does (\\d+) more damage\\. This attack['’]s damage isn['’]t affected by Weakness\\.$/;",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-bonus-arm-never-reaches-the-compound",
+    decision: "D494",
+    what: "🛑 C3 — **THE `??` FALLBACK READS THE BARE ANCHOR TWICE**, the copy-paste this one-line shape invites and byte-identical to the pre-slice line in effect. The suppression half then falls TOO — its own gate calls `deriveAttackDamageBonus`, which now answers `null` — so the whole printed row goes back to the loud path with `BUILT.attack` one short. The row exists because the two readers are wired through ONE arm: a suite asserting only the suppression would be green here (D493's C4 at this address)",
+    file: "packages/engine/src/effects.ts",
+    find: "    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_BONUS_SUPPRESSED.exec(effect);",
+    replace: "    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_DAMAGE_BONUS.exec(effect);",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-bonus-arms-swapped",
+    decision: "D494",
+    what: "⚠️ C4 — C3's CONTROL and the ORDER half of the claim: the two `exec`s change places. The two anchors are STRUCTURALLY disjoint — a string cannot end two ways, the bare one demanding `$` immediately after the consequent's period and this one demanding a space and a further whole sentence there — so no string reaches both and the order is legibility rather than behaviour. **DECLARED, and the KIND is named because the log prints every `equivalent` identically (D468)**: STRUCTURAL disjointness, which carries NO guard and correctly none, since a lookahead here would be unkillable by construction (D205/D208/D467's vacuous guard). §4 asserts the disjointness over all 640 corpus rows, in both directions, which is what makes this declaration a measurement rather than an argument",
+    file: "packages/engine/src/effects.ts",
+    find: "    CONDITIONAL_DAMAGE_BONUS.exec(effect) ?? CONDITIONAL_BONUS_SUPPRESSED.exec(effect);",
+    replace: "    CONDITIONAL_BONUS_SUPPRESSED.exec(effect) ?? CONDITIONAL_DAMAGE_BONUS.exec(effect);",
+    survives: {
+      kind: "equivalent",
+      reason: "STRUCTURAL disjointness (D468's SECOND kind, the one that carries no guard). `CONDITIONAL_DAMAGE_BONUS` is `^If (.+), this attack does (\\d+) more damage\\.$` and `CONDITIONAL_BONUS_SUPPRESSED` is the same head followed by a SPACE and a further whole sentence before its own `\\.$`. Both are `^…$`; they disagree on a mandatory run of bytes at the same position, so NO string can match both and the `??` returns the same match object under either order. Asserted over all 640 corpus rows in `energyInPlaySuppressed.test.ts` §4 rather than argued. ⚠️ SELF-INVALIDATING (D427): the day either pattern loses an end anchor — which is exactly what C1 and C2 mutate — the two overlap and this row reports STALE-SURVIVOR.",
+    },
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-suppression-arm-drops-the-bonus-gate",
+    decision: "D494",
+    what: "🛑 C5 — **THE PAIRING GATE GOES**, leaving a bare `.test()` where the sibling reader does an `.exec()` with two guards. D445's tell, and the exact defect it names: the anchor's clause group is `(.+)`, so *\"If ⟨a clause this engine has never read⟩, this attack does 70 more damage. This attack's damage isn't affected by Weakness.\"* is then claimed by the suppression reader while `deriveAttackDamageBonus` refuses it for its VOCABULARY — `resolvedByAnyReader` TRUE, `BUILT.attack` stepped, `ATTACK_EFFECT_SKIPPED` never fired and the printed bonus silently dropped. ⚠️ **NO CENSUS FIGURE CATCHES IT IN THE RIGHT DIRECTION**: the residue FALLS, which reads as progress (D469)",
+    file: "packages/engine/src/effects.ts",
+    find: "    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed) &&\n    deriveAttackDamageBonus(trimmed) !== null\n  ) {",
+    replace: "    CONDITIONAL_BONUS_SUPPRESSED.test(trimmed)\n  ) {",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-suppression-arm-emits-the-neighbouring-pair",
+    decision: "D494",
+    what: "🛑 C6 — **THE ARM RETURNS THE NEIGHBOURING VALUE VERBATIM**: `{ weakness: true, resistance: true }` is `DAMAGE_SUPPRESSION`'s arm 2, and it is the value an author copies because it is the only shipped one that sets `weakness` at all (D190b: a mutant must be the mistake an author would actually make). The printed sentence names Weakness and NOT Resistance, so the defender's −30 stops applying: 140 becomes 170 on §5's board. 🛑 **NO PRINTED BOARD SEPARATES THESE TWO** — the D1 holds ZERO cards listing one type in both the Weakness and the Resistance column — so the SYNTHETIC `d494-wall` is the whole reason this row is killable",
+    file: "packages/engine/src/effects.ts",
+    find: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true };",
+    replace: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true, resistance: true };",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-suppression-arm-sets-the-wrong-boolean",
+    decision: "D494",
+    what: "⚠️ C7 — C6's CONTROL and the other direction of the same slip: the arm sets `resistance` where the print says Weakness. `AttackDamageSuppression`'s three booleans are read at three DIFFERENT §8.5 steps, so this is not a rename — the ×2 comes back and the −30 goes, 140 → 340 on the same wall. **One row per boolean, each the other's control** (D442's rule at a field instead of at a rider); with only C6 the suite is green on a build that swapped the two",
+    file: "packages/engine/src/effects.ts",
+    find: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { weakness: true };",
+    replace: "    deriveAttackDamageBonus(trimmed) !== null\n  ) {\n    return { resistance: true };",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-clause-row-narrows-to-the-neighbours-type",
+    decision: "D494",
+    what: "🛑 C8 — **THE ROW ANSWERS THE CARD WITH THE NEIGHBOURING ROW'S NARROWING**: the key keeps its printed clause and its VALUE gains `energy: \"Darkness\"`, which is the Absol row sitting DIRECTLY ABOVE it in the same table and is what an author copying the neighbour writes. The printed noun is a bare `Energy` — every Energy card in play, no type asked — so the mutant answers 1 where the print answers 3 on §5's board and the bonus is silently withheld: 140 → 70. **THE MUTANT COMPILES, THE CENSUS DOES NOT MOVE, AND EVERY RESIDUE RUNG IN TWENTY FILES STAYS GREEN** (D391's shape at this member); a row has no deriver behind it to refuse what it cannot parse (D190b/D199), so whatever is authored is what the card does forever. ⚠️ The board is 2 × {W} + 1 × {D} precisely so that EVERY type narrowing falls short, not just this one (D448)",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
+    replace: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: \"Darkness\", count: 3 }],",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-clause-row-key-takes-the-siblings-quantifier",
+    decision: "D494",
+    what: "⚠️ C9 — **THE KEY IS NORMALISED TO THE SIBLING'S PHRASING**: `3 or more` becomes `at least 3`, which is what `conditionNote` spells for this very member and is therefore the paraphrase an author writes from the NOTE rather than from the PRINT (D183's defect, arriving at a table key). `CONDITIONAL_DAMAGE_CLAUSES` is matched CHAR-FOR-CHAR, so the printed clause becomes unmapped, both readers fall silent and the whole row returns to the loud path. The pair with C8 is the point: one mutates the VALUE and one the KEY, and only a suite that drives both a value assertion and a board catches both",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"you have 3 or more Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
+    replace: "  [\"you have at least 3 Energy in play\", { kind: \"yourEnergyInPlayAtLeast\", energy: null, count: 3 }],",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-energy-threshold-reads-the-opponents-side",
+    decision: "D494",
+    what: "🛑 C10 — **THE SEAT IS INVERTED IN `conditionHolds`' OWN ARM.** ⚠️ **THIS SPAN HAD ZERO MUTANT ROWS FOR ITS WHOLE LIFE** — the member shipped at D193 and the pre-build absence audit (D452's rule, with D453's SPAN predicate) found nothing intersecting it, which is why the row is written here rather than only at the arm this slice authored. ⚠️ **THE DIAGNOSIS IS DRIVEN-BUT-UNPINNED, NOT UNTESTED (D474), AND THE KILLER SET IS MEASURED RATHER THAN PLAUSIBLE (D455).** Each candidate was run ALONE: `energyInPlay.test.ts` and `basicEnergyDiscard.test.ts` have been discriminating this line since D193/D376 and had never been credited with it, `clauseApostrophe.test.ts` does not, and **`typedEnergyThreshold.test.ts` does not either** — it was in the first draft of this set on the strength of its NAME and it carries zero references to this member. A killer set assembled by plausibility would have been green and said nothing true. The printed word is *\"YOU have\"*, so the attacker's own side is the subject; §5 fields ONE board where p1 holds 2 and p2 holds 5, because a mirror board proves nothing about a seat inversion (D445)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return countEnergyInPlay(state, seat, cond.energy) >= cond.count;",
+    replace: "      return countEnergyInPlay(state, otherSeat(seat), cond.energy) >= cond.count;",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlay.test.ts",
+      "packages/engine/src/basicEnergyDiscard.test.ts",
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-energy-threshold-is-strict",
+    decision: "D494",
+    what: "⚠️ C11 — C10's sibling on the same previously-unpinned span: `>=` becomes `>`. The printed words are *\"3 OR MORE\"* — a FLOOR — so the mutant refuses the board the sentence is written for, and it is invisible on every board holding four or more Energy, which is most boards a suite writes. §5 drives the BOUNDARY (exactly 3 in play) for this row and this row alone, and asserts the complementary direction (a threshold of 4 does NOT hold) beside it so the rung cannot pass by refusing everything. ⚠️ Killer set MEASURED one suite at a time like C10's, and it is the same three",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return countEnergyInPlay(state, seat, cond.energy) >= cond.count;",
+    replace: "      return countEnergyInPlay(state, seat, cond.energy) > cond.count;",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlay.test.ts",
+      "packages/engine/src/basicEnergyDiscard.test.ts",
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
+    ],
+  },
+  {
+    id: "D494-condition-note-loses-the-untyped-branch",
+    decision: "D494",
+    what: "⚠️ C12 — **THE UNTYPED CAPTION BRANCH GOES AND THE FAILURE IS SILENT**: `${null} Energy` interpolates to *\"you have at least 3 null Energy in play\"* and `tsc` says nothing, because `null` is a legal interpolation. The branch is OWED by the widened field even though nothing can render it from a printed sentence today (D446: a caption arm can be owed and unrenderable), so it is driven DIRECTLY in §6 rather than left to a board — which is the only instrument that can see this at all",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (cond.energy === null) return `you have at least ${cond.count} Energy in play`;\n",
+    replace: "",
+    expectKilledBy: [
+      "packages/engine/src/energyInPlaySuppressed.test.ts",
     ],
   },
 ];
