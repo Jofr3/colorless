@@ -136,9 +136,23 @@ const ALSO_FORM =
 const OWN_SIDE =
   "This attack does 30 damage to each of your Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 
-/** The two `COMPOUND-tail` siblings that stay in the residue — a per-body CLASS filter
-    no op in this family can ask, plus a second printed sentence. Named here so the next
-    census greps the repo and finds them already counted (D171's Corviknight rule). */
+/** The two `ex`/`V`-filtered siblings.
+
+    🛑 **[CORRECTED AT D492, WHICH BUILT THEM.]** This block used to read *"the two
+    `COMPOUND-tail` siblings that stay in the residue — a per-body CLASS filter no op in
+    this family can ask, plus a second printed sentence."* **Both halves were true of the
+    ops THIS anchor emits and false of the engine** (D450's boundary-versus-refusal
+    distinction, at a doc block): `damageChosen.filter` has asked exactly that per-body
+    class question since D483, and `snipeTargets` + `placeSnipe` already walk the Active
+    AND the Bench of one side under it. D492 spells both rows as ONE `damageChosen` with
+    `count: "all"`, `ignoreWR: true` and that filter — see `classedBoardSpread.test.ts`.
+    **What was right was the SECOND sentence being a real blocker**: substituting the
+    filter alone leaves a string all thirteen readers still refuse, because
+    `splitAttackTrailingClause` will not compose a damage reader's tail.
+
+    They are kept here, at their corpus printing counts, because §1's count rungs are
+    about the COLUMN and did not move. Named so the next census greps the repo and finds
+    them already counted (D171's Corviknight rule). */
 const EX_FILTERED =
   "This attack does 60 damage to each of your opponent's Pokémon ex. This attack's damage isn't affected by Weakness or Resistance.";
 const EX_V_FILTERED =
@@ -341,12 +355,31 @@ describe("D482 §1 — the printed data, measured live over the legal column", (
       if (read === deriveAttackEffect) continue;
       expect(read(PRINTED), read.name).toBeNull();
     }
-    // …and the two `ex`/`V`-filtered siblings are still refused by ALL THIRTEEN. That
-    // pair is what makes the rung above a claim about the ANCHOR rather than about the
-    // corpus: the family's other members did NOT come with it.
-    for (const text of [EX_FILTERED, EX_V_FILTERED]) {
+    // 🛑 **[RE-POINTED AT D492, WHICH BUILT THE OLD SUBJECTS.]** This loop ran over
+    // `EX_FILTERED` / `EX_V_FILTERED` and asserted all thirteen readers refused them.
+    // D492 claims both, so the OLD subjects no longer have the property — and D444's
+    // repair is to find a subject that still does rather than to relax the claim, D438's
+    // is to NAME the new owner instead of flipping a boolean. Both are done here.
+    //
+    // The subjects that still have it are the same two class nouns under **THIS
+    // anchor's own parenthetical tail** — one axis from `PRINTED` (the NOUN) and one axis
+    // from D492's rows (the TAIL), so a widening in either direction reddens this rung.
+    // The column prints neither; they are CONSTRUCTED and labelled so (D440).
+    for (const text of [
+      "This attack does 30 damage to each of your opponent's Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "This attack does 30 damage to each of your opponent's Pokémon ex and Pokémon V. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+    ]) {
       expect(resolvedByAnyReader(text), text).toBe(false);
       for (const read of READERS) expect(read(text), `${read.name} / ${text}`).toBeNull();
+    }
+    // …and the printed pair is now OWNED, by name, with every other reader still refusing
+    // — which is strictly stronger than the boolean this used to be (D438).
+    for (const text of [EX_FILTERED, EX_V_FILTERED]) {
+      expect(deriveAttackEffect(text), text).not.toBeNull();
+      for (const read of READERS) {
+        if (read === deriveAttackEffect) continue;
+        expect(read(text), `${read.name} / ${text}`).toBeNull();
+      }
     }
   });
 });
@@ -472,9 +505,14 @@ describe("D482 §3 — the refusals, and the sharpest one is a `not.toEqual`", (
       // build eats, and this slice's widening must not have admitted it — which is a
       // claim that file cannot make about THIS anchor, so it is made here.
       COMPOUND_NEAR_MISS,
-      // The `ex` / `ex and V` class filters — the rest of D447's family, still residue.
-      EX_FILTERED,
-      EX_V_FILTERED,
+      // 🛑 **[RE-POINTED AT D492.]** These two slots held `EX_FILTERED` / `EX_V_FILTERED`
+      // and asserted `deriveAttackEffect` refused them; D492 built both, so the subjects
+      // moved to the same two class nouns under THIS anchor's parenthetical tail. The
+      // claim is unchanged and is the one that matters here — **this anchor's noun slot is
+      // the literal `Pokémon` and admits no class narrowing** — and it now differs from a
+      // BUILT string on exactly one axis in each direction (D427).
+      "This attack does 30 damage to each of your opponent's Pokémon ex. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      "This attack does 30 damage to each of your opponent's Pokémon ex and Pokémon V. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       // Case is load-bearing: no reader in `effects.ts` carries an `/i`.
       PRINTED.toLowerCase(),
       PRINTED.toUpperCase(),
@@ -726,14 +764,14 @@ describe("D482 §9 — the surface, the version and what does NOT move", () => {
     expect(READERS).toHaveLength(13);
   });
 
-  it("engineVersion is 0.386.0 and the bump is owed for BEHAVIOUR", () => {
+  it("engineVersion is 0.387.0 and the bump is owed for BEHAVIOUR", () => {
     // A sentence that derived to `null` derives to a program: `packages/engine`
     // behaviour moved, so the version steps. ⚠️ THE VERSION TAX, RE-MEASURED AT THIS
     // HEAD RATHER THAN INHERITED — 57 assertions / 73 sites across 57 files, against the
     // "37 assertions / 41 sites" index.ts still forecast from D459. See the 0.378.0
     // block, which records the class the old count did not have at all: 13 `it(…)`
     // TITLES that spell the version.
-    expect(engineVersion).toBe("0.386.0");
+    expect(engineVersion).toBe("0.387.0");
   });
 
   it("🛑 `MATCH_RECORD_VERSION` does NOT move, and the argument is BOTH of D463's tests", () => {

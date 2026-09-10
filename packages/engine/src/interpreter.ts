@@ -1940,6 +1940,12 @@ function stepOp(
       // is never empty; the Bench-only snipes can be.
       // 🆕 D345 — through `snipeTargets`, the funnel `programPlayable` now shares,
       // so the grey-out and the offer cannot disagree (the `gust` precedent).
+      // 🆕🆕🆕 D492 — `count: "all"` (the printed *"each of"*) means the CANDIDATE SET IS
+      // THE CEILING, so §8.6's clamp below is the identity and the forced branch is taken
+      // on every board: the op never parks. A CEILING and not an early return, so
+      // `optional` keeps meaning what it means for a spelling nothing prints — see the
+      // field's own block in `effects.ts` for why the lie in the op's NAME is cheaper
+      // than renaming a persisted byte (D443).
       const candidates = snipeTargets(state, ctx.seat, op);
       if (candidates.length === 0) return { done: state };
       // Wo-Chien "Covetous Ivy" scales the amount by the opponent's TAKEN Prizes;
@@ -1947,9 +1953,10 @@ function stepOp(
       const amount = snipeAmount(op, state, ctx, record);
       if (amount <= 0) return { done: state };
       const declinable = op.optional === true;
+      const ceiling = op.count === "all" ? candidates.length : op.count;
       // §8.6: with fewer candidates than the printed number, take them all.
-      const take = Math.min(op.count, candidates.length);
-      if (!declinable && candidates.length <= op.count) {
+      const take = Math.min(ceiling, candidates.length);
+      if (!declinable && candidates.length <= ceiling) {
         return {
           done: placeSnipe(
             state,

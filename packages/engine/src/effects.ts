@@ -4973,7 +4973,41 @@ export type EffectOp =
           `ownBenchSnipe.test.ts` §3 rather than argued here. */
       target: "opponentBench" | "opponentAny" | "yourBench";
       amount: number;
-      count: number;
+      /** How many bodies the printed sentence names.
+
+          🆕🆕🆕 **D492 — `"all"`, THE PRINTED *"each of"*.** *"This attack does {60|100}
+          damage to each of your opponent's Pokémon ex[ and Pokémon V]. This attack's
+          damage isn't affected by Weakness or Resistance."* — `censusAttackCorpus.ts`
+          FILE LINES **616** and **539**, **2 sentences / 4 legal printings**. The
+          candidate set is the whole of it: every matching body takes the hit and there
+          is no decision left, so the op resolves INLINE and never parks.
+
+          🛑 **IT IS THE LIMIT CASE OF THE ARITY DOCTRINE THIS OP ALREADY HAS, NOT A
+          SECOND MECHANISM.** §8.6 *"do as much as you can"* already collapses a
+          `count: N` snipe over `N` or fewer candidates to a forced, promptless take
+          (`candidates.length <= op.count`), so `"all"` is that same reading with the
+          ceiling removed — `take` becomes the candidate count and the forced branch is
+          taken unconditionally. `discardEnergy.count` (D361) and `moveEnergy.max`
+          (D441) are the two shipped precedents for a determiner widening a numeric
+          quantifier on a persisted op, and both are spelled with this word.
+
+          🛑 **AND THE NAME IS A LIE THAT IS CHEAPER THAN THE TRUTH — SAID OUT LOUD
+          RATHER THAN LEFT FOR A SUCCESSOR TO FIND.** *"each of"* opens no choice, so
+          `damageChosen` names it badly, and `SPREAD_EACH_BENCH`'s block calls the
+          `1 of` / `each of` split this family's dividing line. **The rename is refused
+          on the ADDRESS (D443)**: the op KIND is a byte inside
+          `phase.cont.pendingOp`, so renaming it is D359's case and retires every live
+          match for a word. The falsifier is executable and is the one D443 wrote — the
+          day `MATCH_RECORD_VERSION` bumps for any other reason, rename it in that edit.
+
+          ⚠️ **WHY NOT `spreadDamage`, WHICH IS WHAT THE SENTENCE SOUNDS LIKE.** That op
+          has no filter and, by `index.ts` 0.327.0's claim in three files, *"only ever
+          touches `side.bench`"* — the claim D482 declined to falsify. This sentence
+          reaches the ACTIVE as well, CONDITIONALLY on the filter, and dealing FLAT: the
+          machinery for exactly that is `snipeTargets` + `placeSnipe`, which route an
+          Active ref through `snipeActive(…, ignoreWR)` and every benched ref through
+          the flat loop. One reading, one implementation (D131). */
+      count: number | "all";
       /** What is placing these counters — the provenance the `COUNTERS_PLACED`
           row may honestly print (see the block above). `"ability"` for the three
           registry rows (Hawlucha, Meowscarada ex, Radiant Blastoise), `"attack"`
@@ -14172,6 +14206,80 @@ const IN_PLAY_BODY_NOUNS: ReadonlyMap<string, CardFilter> = new Map<string, Card
   // assumed: the exact keys are now **8** and the vocabulary **30**.
   ["Charjabug", { kind: "byName", name: "Charjabug" }],
 ]);
+/** 🆕🆕🆕 **D492 — THE TWO CLASS NOUNS THIS COLUMN PRINTS IN A WHOLE-SIDE SPREAD'S
+    TARGET SLOT**, and they are a SHORTLIST OVER `IN_PLAY_BODY_NOUNS` rather than a
+    second map or a re-use of the whole map. Both halves of that are decisions:
+
+    🛑 **THE VALUES ARE THE MAP'S, BECAUSE "WHICH BODIES DOES THIS PRINTED NOUN NAME"
+    IS ONE QUESTION (D159).** The map's own doc block says so about its opponent-side
+    twin, and corpus FILE LINES **612** and **613** — *"…for each of your opponent's
+    Pokémon ex[ and Pokémon V] in play."* — are literally these two nouns one
+    PREPOSITION away from the rows this anchor claims. A private copy of the pair
+    would let the engine answer that one question two ways, which is what D467 found
+    rotting in two files at once.
+
+    🛑 **THE KEY SET IS THE TWO PRINTED ONES, BECAUSE THE WIDER SPELLING BUYS NOTHING
+    (D472).** Handing this anchor the whole 8-key map claims **exactly the same 2
+    sentences / 4 printings** over all 640 corpus rows — measured in
+    `classedBoardSpread.test.ts` §1, not argued — so the extra six keys would be pure
+    risk. ⚠️ **And the risk here is NOT a wrong card**: every one of the six resolves
+    to a filter that is correct for a sentence the column does not print, so the
+    override D477 would license is available and is declined anyway, because the
+    shortlist costs one line and the measurement is the same either way.
+
+    ⚠️ **THE SHORTLIST CANNOT DRIFT FROM THE MAP SILENTLY.** A key that stops being a
+    map row makes `IN_PLAY_BODY_NOUNS.get` answer `undefined` at the read site, and the
+    sentence falls to the LOUD `ATTACK_EFFECT_SKIPPED` path rather than resolving on a
+    guess (D190b). §1 pins the containment in both directions. */
+const SPREAD_EACH_CLASS_NOUNS: readonly string[] = ["Pokémon ex and Pokémon V", "Pokémon ex"];
+/** 🆕🆕🆕 **D492 — THE FILTERED WHOLE-SIDE SPREAD.** *"This attack does {60|100} damage
+    to each of your opponent's Pokémon ex[ and Pokémon V]. This attack's damage isn't
+    affected by Weakness or Resistance."* — `censusAttackCorpus.ts` FILE LINES **616**
+    (2 legal printings) and **539** (2), **2 sentences / 4 legal printings**.
+
+    🛑 **IT IS DECLARED HERE RATHER THAN BESIDE ITS SIBLINGS BECAUSE IT READS A MAP
+    DECLARED ABOVE IT.** `SPREAD_EACH_BENCH` and `SPREAD_EACH_OPPONENT_POKEMON` sit
+    ~1,600 lines up; a `const` reading `IN_PLAY_BODY_NOUNS.keys()` from there is a
+    temporal-dead-zone throw at module load, not a lint nit. The alternative — spelling
+    the two nouns into the pattern by hand — is the drift the block above refuses.
+
+    🛑 **STRUCTURALLY DISJOINT FROM BOTH SIBLINGS, SO NO GUARD AND NO ORDER DEPENDENCE
+    (D467's first kind).** `SPREAD_EACH_OPPONENT_POKEMON` ends after a bare `Pokémon.`
+    with an optional PARENTHETICAL and nothing else, so it cannot reach a string whose
+    next bytes are ` This attack's damage…`; `SPREAD_EACH_BENCH` demands the literal
+    `Benched `, which neither of these rows prints; `CHOSEN_ANY_TARGET` demands
+    `to (\d+) of` where this prints `to each of`. Measured over all 640 rows in §1: no
+    corpus sentence matches this anchor and any other.
+
+    🛑 **THE TRAILING SENTENCE IS PART OF THE ANCHOR AND IS NOT COMPOSED, AND THAT IS
+    THE HALF THE INSTRUMENT MIS-REPORTED.** `residue-census.ts` classes both rows
+    `COMPOUND-tail` — cut segment 1 and the remainder builds — which reads as *"the
+    head is the whole blocker"*. It is not: substituting the FILTER alone onto its
+    nearest BUILT spelling leaves *"…to each of your opponent's Pokémon. This attack's
+    damage isn't affected by Weakness or Resistance."*, and that is REFUSED too,
+    because `splitAttackTrailingClause` requires the TAIL to be a `deriveAttackEffect`
+    clause and a W/R suppression is a DAMAGE reader's (D466). **Two blockers, and the
+    2⁵ lattice in §1 shows the first BUILT point is at Hamming weight TWO.**
+
+    ⚠️ **THE BARE W/R WORDING SETS `ignoreWR`, WHICH IS `CHOSEN_ANY_TARGET`'s SHIPPED
+    READING AND NOT A NEW ONE.** That anchor's block states it outright — *"the ', or
+    by any effects on that Pokémon' clause is optional so both the modern SV wording
+    and the bare classic one derive the same flag"* — and corpus FILE LINE **620**
+    (*"…to 1 of your opponent's Pokémon. This attack's damage isn't affected by Weakness
+    or Resistance."*, 2 printings) has been deriving `ignoreWR: true` off the bare form
+    since D400. Following it is a READING with one shipped sibling, and the sibling is
+    named here so a successor who disagrees can find both sites at once.
+
+    ⚠️ **NO PARENTHETICAL ALTERNATIVE, AND NO OPTIONAL TAIL.** The W/R sentence is
+    MANDATORY in this pattern: made optional it would claim
+    *"…to each of your opponent's Pokémon ex."* — a string the column prints nowhere —
+    and, worse, would derive an `ignoreWR`-FREE program under a `deals` hit, which is a
+    different board on any Active carrying a Weakness. */
+const SPREAD_EACH_CLASSED_OPPONENT_POKEMON = new RegExp(
+  `^This attack does (\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(
+    "|",
+  )})\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\.$`,
+);
 /** The OWNER-PREFIXED noun ("Team Rocket's Pokémon"). The `['’]` class is D137's
     fix and is needed here because this pattern spells the apostrophe, unlike the
     outer capture which is a character class. The owner is captured rather than
@@ -22383,6 +22491,59 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       { op: "damageDefender", amount },
       { op: "spreadDamage", target: "opponentBench", amount },
     ];
+  }
+
+  // 🆕🆕🆕 6a-ter. D492 — "This attack does {60|100} damage to each of your opponent's
+  //     Pokémon ex[ and Pokémon V]. This attack's damage isn't affected by Weakness or
+  //     Resistance." — the FILTERED whole-side spread, corpus FILE LINES 616 and 539,
+  //     2 sentences / 4 legal printings. ONE `damageChosen` and NOT 6a-bis's two-op
+  //     program, and the two reasons are the two things that differ from D482's row.
+  //
+  //     🛑 **W/R KILLS THE COMPOSITION.** 6a-bis's Active leg is `damageDefender`'s
+  //     FLAT arm precisely BECAUSE that row applies Weakness and Resistance on the
+  //     Active — `snipeActive(state, amount, false, …)`, the full §8.5 pipeline, with
+  //     the `false` spelled at the call site. These rows print the opposite, and
+  //     `damageDefender` carries no `ignoreWR` and no way to acquire one that the
+  //     other 13 printings reaching that arm would not also have to answer.
+  //
+  //     🛑 **AND CONDITIONALITY KILLS IT INDEPENDENTLY.** 6a-bis hits the Active
+  //     UNCONDITIONALLY; *"each of your opponent's Pokémon ex"* includes the Active
+  //     ONLY IF the Active is itself an ex. `damageDefender` has no filter and no
+  //     predicate, so the composition would deal the hit to a non-ex Active — a
+  //     WRONG BOARD, not merely a missing narrowing. **Either one alone is fatal;
+  //     both are, and `classedBoardSpread.test.ts` §4 drives each on its own board.**
+  //
+  //     🛑 **WHAT IT IS INSTEAD IS THE MACHINERY THAT ALREADY SHIPS, REACHED THROUGH
+  //     ONE WIDENED QUANTIFIER.** `snipeTargets` walks `oppAnyRefs` (Active + Bench)
+  //     and narrows it by `op.filter` (D483); `placeSnipe` routes an Active ref
+  //     through `snipeActive(…, ignoreWR)` and every benched ref through its flat
+  //     loop, honouring `ignoreWR` at both. The printed *"each of"* is the only thing
+  //     that was missing, and it is `count: "all"` — see the field's own block.
+  //
+  //     ⚠️ **THE NOUN IS RESOLVED THROUGH THE SHARED MAP AND AN UNMAPPED ONE STAYS
+  //     LOUD.** The anchor's group is built from `SPREAD_EACH_CLASS_NOUNS`, so
+  //     `.get` cannot miss today; the guard is what keeps the two closed under each
+  //     other rather than by coincidence (D190b: exact map or flag).
+  match = SPREAD_EACH_CLASSED_OPPONENT_POKEMON.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    const classFilter = IN_PLAY_BODY_NOUNS.get(match[2] ?? "");
+    // A printed 0 is not a real card — left on the loud path, `BENCHED_SNIPE_TAKEN_
+    // PRIZES`' rule verbatim one arm down.
+    if (amount >= 1 && classFilter !== undefined) {
+      return [
+        {
+          op: "damageChosen",
+          target: "opponentAny",
+          amount,
+          count: "all",
+          source: "attack",
+          deals: true,
+          ignoreWR: true,
+          filter: classFilter,
+        },
+      ];
+    }
   }
 
   // 6b. "This attack does N damage to 1 of your opponent's Benched Pokémon for

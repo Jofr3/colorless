@@ -19795,6 +19795,68 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.386.0 → **0.387.0** (D492 — THE FILTERED WHOLE-SIDE SPREAD.
+    `censusAttackCorpus.ts` **FILE LINES 616 and 539** — *"This attack does {60|100} damage
+    to each of your opponent's Pokémon ex[ and Pokémon V]. This attack's damage isn't
+    affected by Weakness or Resistance."*, **2 sentences / 4 legal printings**, both claimed
+    WHOLE by `deriveAttackEffect` through ONE new anchor `SPREAD_EACH_CLASSED_OPPONENT_
+    POKEMON` over ONE `damageChosen` carrying ONE widened quantifier — `count: number |
+    "all"`.
+
+    🛑 **THE ROWS HAVE TWO BLOCKERS AND THE INSTRUMENT NAMED ONE.** `residue-census.ts`
+    classes both `COMPOUND-tail` — cut segment 1 and the W/R suppression remainder is
+    claimed — which reads as *"the head is the whole of it"*. Substituting the FILTER alone
+    onto its nearest BUILT spelling leaves *"…to each of your opponent's Pokémon. This
+    attack's damage isn't affected by Weakness or Resistance."*, and that is refused by all
+    thirteen readers too, because `splitAttackTrailingClause` requires the TAIL to be a
+    `deriveAttackEffect` clause (D466). The 2⁵ axis-substitution lattice was run in full on
+    each row and the FIRST BUILT POINT IS AT HAMMING WEIGHT **TWO** (FILTER + TAIL); the
+    two rows' tables are byte-identical, which is what makes them ONE slice by D488's test.
+    AMOUNT and SCOPE are INERT on the verdict — SCOPE for D491's degenerate reason, its
+    printed value having built at D482.
+
+    🛑 **D482's COMPOSITION DOES NOT TRANSFER, AND EITHER REASON IS FATAL ALONE.** That row
+    is `damageDefender`'s FLAT arm plus `spreadDamage { opponentBench }`. **W/R**: the
+    Active leg runs `snipeActive(state, amount, false, …)` — the full §8.5 pipeline, with
+    the `false` at the call site — and these rows print the opposite. **CONDITIONALITY**:
+    *"each of your opponent's Pokémon ex"* reaches the Active only if the Active IS one, and
+    `damageDefender` has no filter. Both are driven on their own boards rather than argued.
+    ⚠️ `index.ts` 0.327.0's *"`spreadDamage` only ever touches `side.bench`"* is UNTOUCHED —
+    that op gains nothing here.
+
+    🛑 **WHAT IT IS INSTEAD IS MACHINERY THAT ALREADY SHIPS.** `snipeTargets` walks
+    `oppAnyRefs` (Active AND Bench) under D483's `damageChosen.filter`, and `placeSnipe`
+    routes an Active ref through `snipeActive(…, ignoreWR)` and every benched ref through
+    its flat loop. The printed *"each of"* was the only gap, and it is `count: "all"` —
+    `discardEnergy.count` (D361) and `moveEnergy.max` (D441) are the precedents for that
+    word on that kind of quantifier. ⚠️ **THE OP'S NAME IS NOW A LIE AND THE RENAME IS
+    REFUSED ON THE ADDRESS (D443)**: the kind is a byte inside `phase.cont.pendingOp`, so
+    renaming it is D359's case; the falsifier is D443's own — rename it in the same edit as
+    the next `MATCH_RECORD_VERSION` bump.
+
+    **ZERO** new `EffectOp` members, `CardFilter` members, `DamageCountSource` members,
+    readers (surface still **13**), prompts, choice kinds, parks, deciders, events, error
+    codes, `GameState` / `InPlayPokemon` fields, registry rows, `FIXTURE_POOL` ids
+    (file-local `cardPool`, D414), `redact.ts` bytes, `packages/schema` bytes or `log.ts`
+    bytes. ONE conjunct in `cardplay.ts` (`count !== "all"` exempts the each-of form from
+    the empty-candidate grey-out) which is **unobservable in both directions today** and
+    carries no mutant row for that reason (D446/D420).
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 29 ON D125's WIDENING, AND THE ADDRESS DOES PERSIST.**
+    `damageChosen` parks, so it rides `phase.cont.pendingOp`. `count` is a REQUIRED field
+    gaining a new INHABITANT: every value a v29 writer could hold there is a NUMBER and
+    still names the arity it always named, so there is no absent-key direction to get wrong.
+    Driven over a reconstructed v29 op that still parks asking for ONE where the new byte
+    resolves inline over four. ⚠️ Reachability is TRUE as well — the only producer emits a
+    program of LENGTH ONE (D465's first-position form) — and is deliberately NOT the
+    argument, because that is a fact about today's arms rather than about the bytes.
+
+    ⚠️ **ONE READING WIDER THAN THE PRINT, RECORDED AND NOT PINNED (D429).** `ignoreWR`
+    nulls the target's reduction passives as well as Weakness and Resistance; these two rows
+    print only the W/R half. The engine has made that same call on the BARE wording since
+    D400 at corpus file line 620, so this follows a shipped sibling rather than deciding
+    afresh — and no rung pins it, because a guard that reddens when somebody separates the
+    two flags would defend the gap.)
     🆕🆕🆕 engineVersion 0.385.0 → **0.386.0** (D491 — THE ONLY DRAW IN THE COLUMN
     WHOSE PRINTED SUBJECT IS NOT THE CONTROLLER. `censusAttackCorpus.ts` **FILE LINE 199** —
     *"Each player draws 3 cards."*, **1 sentence / 1 legal printing**, claimed WHOLE by
@@ -20071,7 +20133,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.386.0";
+export const engineVersion = "0.387.0";
 
 export type {
   ApplyResult,

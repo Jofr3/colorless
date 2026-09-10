@@ -314,8 +314,8 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // and D446's two in-play body counts — so the printed word has never been a blocker
     // on its own, only in a TARGET position.
     const built = named.filter(([, s]) => resolvedByAnyReader(s));
-    expect(built).toHaveLength(16);
-    expect(units(built)).toBe(24);
+    expect(built).toHaveLength(18);
+    expect(units(built)).toBe(28);
   });
 
   it("🛑 the RESIDUE half of that pattern, and the brief's four-row cluster is 4 of 6", () => {
@@ -329,10 +329,13 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // is this cluster; both would have been swept in by a possessive-anchored grep.
     const CLASS = /Pokémon (ex|V|VMAX|VSTAR|V-UNION)\b/;
     const residue = corpusRows().filter(([, s]) => CLASS.test(s) && !resolvedByAnyReader(s));
-    expect(residue).toHaveLength(4);
-    // 4 sentences / **6** printings — the brief's number, and the two counts differ
-    // because both SPREAD rows are 2-printing sentences where both SNIPES were 1.
-    expect(units(residue)).toBe(6);
+    // 🆕🆕🆕 **D492 — 4 → 2 sentences and 6 → 2 printings.** The two that left are the
+    // SPREADS this rung's neighbour priced and declined (corpus FILE LINES 616 and 539),
+    // collected as ONE `damageChosen` with `count: "all"` — see
+    // `classedBoardSpread.test.ts`. **What is left is the pair that was never this
+    // cluster at all**: the source-side prevention and the parenthetical Rule-Box gloss.
+    expect(residue).toHaveLength(2);
+    expect(units(residue)).toBe(2);
     // …and the two this slice built have LEFT that residue, which is the only way this
     // rung can be read as a measurement of THIS head rather than of the brief's.
     expect(residue.map(([, s]) => s)).not.toContain(EX_OR_V_60);
@@ -369,6 +372,13 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     // (b) THE SPREADS. Strip the class — STILL unread. Strip the W/R sentence instead —
     //     STILL unread. Neither axis alone is the blocker, so no single field builds them
     //     and the cluster is not one slice.
+    //     🆕🆕🆕 **[STILL TRUE AT D492, WHICH BUILT THE SPREADS — and that is why it is
+    //     dated rather than left to be re-read as a refusal.]** Every assertion below
+    //     still holds at this head: the two-blocker finding is a fact about the PRINTED
+    //     axes and D492 paid BOTH (one anchor that spells the whole sentence, W/R tail
+    //     included, plus one widened quantifier). The `2 + 2` split this rung established
+    //     is also unchanged — the spreads really were a different slice from the snipes,
+    //     and they arrived nine decisions later.
     expect(resolvedByAnyReader(SPREAD_EX_60.replace(" ex", ""))).toBe(false);
     expect(
       resolvedByAnyReader(
@@ -406,13 +416,30 @@ describe("§1 — the printed `ex`/`V` class over the whole column, and what blo
     const snipe = narrowed[1];
     if (snipe?.op !== "damageChosen") throw new Error("expected a damageChosen");
     expect(snipe.filter).toEqual({ kind: "suffixPokemon", suffix: "ex" });
-    // …and the spreads themselves are STILL UNBUILT at this head, which is the refusal
-    // stated as a rung rather than as a paragraph (D465). Deleting either one of these
-    // without building it is what a successor must not do quietly.
-    expect(deriveAttackEffect(SPREAD_EX_60)).toBeNull();
-    expect(deriveAttackEffect(SPREAD_EX_V_100)).toBeNull();
-    expect(resolvedByAnyReader(SPREAD_EX_60)).toBe(false);
-    expect(resolvedByAnyReader(SPREAD_EX_V_100)).toBe(false);
+    // 🛑 **[RE-POINTED AT D492, WHICH BUILT BOTH SPREADS.]** These four lines asserted the
+    // two spreads were unbuilt. They are built now — and the paragraph above them is
+    // UNCHANGED and still load-bearing, because D492 refused `counterEachAll` for exactly
+    // the reason written there and drove it (`classedBoardSpread.test.ts` §8).
+    //
+    // ⚠️ **THE RE-POINT NAMES THE OWNER AND KEEPS THE DISCRIMINATION** (D438): the spreads
+    // are claimed by `deriveAttackEffect` and by NOTHING ELSE, and the op they derive to
+    // is a `damageChosen` — **not** the `counterEachAll` this section refuses. A boolean
+    // `resolvedByAnyReader(…) === true` would have been green under the refused
+    // composition as well, which is precisely the trip-wire D436's GAP disarmed.
+    for (const [text, amount] of [
+      [SPREAD_EX_60, 60],
+      [SPREAD_EX_V_100, 100],
+    ] as const) {
+      const spread = deriveAttackEffect(text) as EffectOp[];
+      expect(spread, text).toHaveLength(1);
+      const hit = spread[0];
+      if (hit?.op !== "damageChosen") throw new Error(`expected a damageChosen for ${text}`);
+      expect(hit.amount).toBe(amount);
+      expect(hit.count).toBe("all");
+      expect(hit.deals).toBe(true);
+      expect(hit.ignoreWR).toBe(true);
+      expect(hit.target).toBe("opponentAny");
+    }
   });
 });
 
@@ -974,10 +1001,10 @@ describe("§7 — what the class group refuses, and what it must not have moved"
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the persisted address, and why 29 does not move", () => {
-  it("engineVersion is 0.386.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.387.0 and `manifest.version` agrees", () => {
     // `packages/engine` behaviour moved (a new op field, a new candidate funnel branch and
     // a new caption arm), so the version steps.
-    expect(engineVersion).toBe("0.386.0");
+    expect(engineVersion).toBe("0.387.0");
     expect(manifest.version).toBe(engineVersion);
   });
 

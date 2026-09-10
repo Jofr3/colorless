@@ -1480,7 +1480,7 @@ describe("§6 — `MATCH_RECORD_VERSION` STAYS 29, driven at all THREE addresses
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.386.0");
+    expect(engineVersion).toBe("0.387.0");
   });
 });
 
@@ -1599,8 +1599,16 @@ describe("§7 — `attackNamePokemon` and `suffixPokemon`: the predicate, the zo
     const suffixCarriers = legalAttackCorpus().filter(([, text]) =>
       JSON.stringify(deriveAttackEffect(text) ?? []).includes("suffixPokemon"),
     );
-    expect(suffixCarriers).toHaveLength(2);
-    expect(suffixCarriers.reduce((n, [units]) => n + units, 0)).toBe(2);
+    // 🆕🆕🆕 D492 — 2 → **4** sentences and 2 → **6** printings. The two arrivals are the
+    // FILTERED WHOLE-SIDE SPREADS (corpus FILE LINES 616 and 539, 2 printings each), which
+    // put the same `suffixPokemon` / `anyOf` values on a `damageChosen.filter` rather than
+    // on a `DamageCountSource`. ⚠️ **THE STEP IS +2 SENTENCES / +4 PRINTINGS**, the same
+    // disagreement the rest of this slice carries — D483's two carriers are 1-printing
+    // sentences and D492's are 2-printing ones, so the totals land at 4 and 6 rather than
+    // at 4 and 4. Read off the corpus here rather than carried across from a neighbouring
+    // chain (D451/D461).
+    expect(suffixCarriers).toHaveLength(4);
+    expect(suffixCarriers.reduce((n, [units]) => n + units, 0)).toBe(6);
     expect(wire).toContain("suffixPokemon");
     // …and the control: this sweep DOES see the filters ops really carry, so it is
     // not vacuous (D424 — every "X is absent" owes a "Y is present" on the same axis).

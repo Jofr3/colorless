@@ -1140,7 +1140,33 @@ export function programPlayable(
     // first registry `opponentAny` row ("Cursed Blast") greyed out an Ability
     // whose own op offers the opponent's ACTIVE as a candidate. `snipeTargets` is
     // that op's own funnel, shared exactly as `gustTargets` is.
-    if (op.op === "damageChosen" && snipeTargets(state, seat, op).length === 0) return false;
+    // 🆕🆕🆕 **D492 — AND `count: "all"` IS EXEMPT, WHICH IS A CORRECTION RATHER THAN
+    // AN EXCEPTION.** This line exists so a pick with no candidates is never OFFERED:
+    // a park with an empty prompt is an afford-then-reject. The printed *"each of"*
+    // form asks nothing — it resolves inline over whatever the board holds and an
+    // empty set is a SILENT NO-OP, exactly as `spreadDamage`'s empty Bench is and as
+    // 6a-bis's whole-side pair is (neither of those ops is gated here at all). Left
+    // unexempted, this line would grey out a legal attack whenever the opponent
+    // happens to field no Pokémon of the printed class — a live afford-then-reject in
+    // the OTHER direction, and one no engine test would have seen because attacks do
+    // not reach this function (§8) and the only producers today are attacks.
+    // 🛑 **SO IT IS UNOBSERVABLE TODAY IN BOTH DIRECTIONS, AND THAT IS RECORDED HERE
+    // RATHER THAN GUARDED (D446).** `programPlayable` is module-private and gates §7
+    // Trainer play and §9 Ability activation only; the ONLY producer of `count: "all"`
+    // is `deriveAttackEffect`, and attacks do not reach this function. So no board can
+    // tell this conjunct from its absence — which is not "it does not matter": the day
+    // a registry row hand-writes `count: "all"` on an Ability, this line is what
+    // decides it, and getting it wrong then would be a live afford-then-reject.
+    // ⚠️ **AND NO MUTANT ROW IS WRITTEN FOR IT**, D420's rule plus D442's: a row that
+    // changes no answer reports a suite gap that does not exist, and here there is no
+    // observable direction at all, so the record IS this comment.
+    if (
+      op.op === "damageChosen" &&
+      op.count !== "all" &&
+      snipeTargets(state, seat, op).length === 0
+    ) {
+      return false;
+    }
     // 🆕🛑 D349 — THE THIRD OP TO GET ITS OWN FUNNEL HERE, AND THE FIRST WITH NO
     // PRIOR LINE TO CORRECT. `gust` (D331) and `damageChosen` (D345) each REPLACED
     // a raw bench-length test that a rider had made wrong; `healChosen` had no

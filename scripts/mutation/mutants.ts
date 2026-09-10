@@ -5772,7 +5772,7 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.386.0";',
+    find: 'export const engineVersion = "0.387.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -13069,9 +13069,12 @@ export const MUTANTS: Mutant[] = [
     decision: "D345",
     what: "🛑🛑 THE DEFECT THIS SLICE FOUND, RE-INSTALLED: `programPlayable`'s `damageChosen` arm goes back to reading the opponent's BENCH LENGTH for every op, which is the `opponentBench` reading and only that one. An opponent holding a bare Active greys out an Ability whose own op offers that Active as a candidate — a card that cannot be played on a board it is printed for. ⚠️ IT WAS ACCIDENTALLY RIGHT FOR TWO HUNDRED DECISIONS because every REGISTRY producer was a Bench snipe and every `opponentAny` producer was an ATTACK, and attacks never reach this function (§8). **A PREDICATE RE-IMPLEMENTED BESIDE ITS OP IS RIGHT UNTIL THE OP GROWS AN ARM**",
     file: "packages/engine/src/cardplay.ts",
-    find: '    if (op.op === "damageChosen" && snipeTargets(state, seat, op).length === 0) return false;',
-    replace:
-      '    if (op.op === "damageChosen" && state.players[otherSeat(seat)].bench.length === 0) return false;',
+    // 🆕🆕🆕 D492 RE-TRANSCRIBED: the one-line gate became a multi-line `if` when D492 added
+    // the `count !== "all"` conjunct. SHORTENED ONTO THE PREDICATE the row is about
+    // (D446) — the funnel call, not the `return` — so the mutation is byte-identical in
+    // meaning and `cursedBlast.test.ts` keeps the kill.
+    find: "      snipeTargets(state, seat, op).length === 0",
+    replace: "      state.players[otherSeat(seat)].bench.length === 0",
     expectKilledBy: ["packages/engine/src/cursedBlast.test.ts"],
   },
   {
@@ -20162,8 +20165,11 @@ export const MUTANTS: Mutant[] = [
     what: "🛑 C2 — **THE THREE ARITY ENDINGS ARE DECIDED ON THE UNFILTERED SET AND THE NARROWING IS APPLIED ONLY TO WHAT IS OFFERED**, which is the defect this shape invites: an author who filters at the last moment, where the filter is most visible. `stepOp`'s zero-test, its `take` and its M1 no-choice test all read `wide`, while the prompt and `placeSnipe` still get the narrowed `candidates`. **THE DAMAGE THAT EVENTUALLY LANDS IS CORRECT IN EVERY CASE** — only the ARITY moves — so every damage-shaped assertion in this file passes and the rungs that kill it are the prompt-shaped ones: three UNDAMAGED benched bodies park a prompt over an EMPTY candidate list instead of whiffing silently (§3), and one damaged body among three parks instead of being forced (§4). This is the row the brief asked for by name, and it is the mirror of `D416-park-marker-never-written`: a narrowing that runs after the doctrine rather than before it",
     file: "packages/engine/src/interpreter.ts",
     // 🆕 D489 RE-TRANSCRIBED (`snipeAmount` gained a fourth argument, the §9.2 record).
-    find: "      const candidates = snipeTargets(state, ctx.seat, op);\n      if (candidates.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, candidates.length);\n      if (!declinable && candidates.length <= op.count) {",
-    replace: "      const candidates = snipeTargets(state, ctx.seat, op);\n      const wide = snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined });\n      if (wide.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(op.count, wide.length);\n      if (!declinable && wide.length <= op.count) {",
+    // 🆕🆕🆕 D492 RE-TRANSCRIBED (the three arity reads went through a new `ceiling` local,
+    // `count` having gained the `"all"` inhabitant). The ZERO-TEST stays inside the span:
+    // it is what §3's "three UNDAMAGED bodies park over an EMPTY list" rung kills.
+    find: "      const candidates = snipeTargets(state, ctx.seat, op);\n      if (candidates.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      const ceiling = op.count === \"all\" ? candidates.length : op.count;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(ceiling, candidates.length);\n      if (!declinable && candidates.length <= ceiling) {",
+    replace: "      const candidates = snipeTargets(state, ctx.seat, op);\n      const wide = snipeTargets(state, ctx.seat, { ...op, damagedOnly: undefined });\n      if (wide.length === 0) return { done: state };\n      // Wo-Chien \"Covetous Ivy\" scales the amount by the opponent's TAKEN Prizes;\n      // 0 taken → 0 damage, so there is nothing to place OR to ask about.\n      const amount = snipeAmount(op, state, ctx, record);\n      if (amount <= 0) return { done: state };\n      const declinable = op.optional === true;\n      const ceiling = op.count === \"all\" ? wide.length : op.count;\n      // §8.6: with fewer candidates than the printed number, take them all.\n      const take = Math.min(ceiling, wide.length);\n      if (!declinable && wide.length <= ceiling) {",
     expectKilledBy: ["packages/engine/src/filteredBenchSnipe.test.ts"],
   },
   {
@@ -27324,6 +27330,138 @@ export const MUTANTS: Mutant[] = [
     replace: '        name: "Idle Drain",\n        damage: 10,\n        effect: "Each player draws 3 cards.",',
     expectKilledBy: [
       "packages/engine/src/takePrizeAttack.test.ts",
+    ],
+  },
+  {
+    id: "D492-anchor-loses-its-caret",
+    decision: "D492",
+    what: "🛑 THE ANCHOR STOPS BEING WHOLE-SENTENCE AT THE `^` END. Without it a leading clause is swallowed and the spread fires off a sentence whose head nobody read — D464's `^`-end failure, which stays on the LOUD path in the real build and silently resolves under the mutant. §3 drives `Draw a card. <the printed row>`",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack does (\\\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(",
+    replace: "  `This attack does (\\\\d+) damage to each of your opponent['’]s (${SPREAD_EACH_CLASS_NOUNS.join(",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-anchor-loses-its-terminator",
+    decision: "D492",
+    what: "🛑 THE `$` END GOES, so `<the printed row> Draw a card.` resolves into a program that damages four bodies off a sentence half of which nobody read. ⚠️ D464's asymmetry is exactly why this row exists and its `^` twin is not enough: a `$`-end overreach cannot be demonstrated on the loud path once the head derives, so it needs a rung of its own",
+    file: "packages/engine/src/effects.ts",
+    find: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
+    replace: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.`,",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-anchor-takes-the-parenthetical-tail-instead",
+    decision: "D492",
+    what: "🛑 THE W/R SENTENCE IS SWAPPED FOR D482's PARENTHETICAL — the neighbouring anchor's real bytes, copied verbatim, which is the mistake an author writing this family actually makes. Both printed rows stop deriving and the residue goes back up by 2 / 4. ⚠️ **THIS IS THE ROW THAT SAYS THE TAIL IS A BLOCKER**: the residue classifier calls both rows `COMPOUND-tail` and the work order read that as *the head is the whole of it*",
+    file: "packages/engine/src/effects.ts",
+    find: "  )})\\\\. This attack['’]s damage isn['’]t affected by Weakness or Resistance\\\\.$`,",
+    replace: "  )})\\\\.(?: \\\\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\\\.\\\\))?$`,",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-shortlist-widens-to-the-whole-map",
+    decision: "D492",
+    what: "🛑 THE TWO-KEY SHORTLIST BECOMES THE WHOLE `IN_PLAY_BODY_NOUNS` VOCABULARY. Measured over all 640 corpus rows it claims the SAME 2 sentences / 4 printings, so no census, no residue figure and no printed board can see it — D472's *a wider anchor that claims the same rows is pure risk* with the risk made executable. The only thing that reddens is the §2 rung that pins the six extra keys as refused HERE, which is why that rung exists",
+    file: "packages/engine/src/effects.ts",
+    find: "const SPREAD_EACH_CLASS_NOUNS: readonly string[] = [\"Pokémon ex and Pokémon V\", \"Pokémon ex\"];",
+    replace: "const SPREAD_EACH_CLASS_NOUNS: readonly string[] = [...IN_PLAY_BODY_NOUNS.keys()].sort(\n  (a, b) => b.length - a.length,\n);",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-drops-the-ignorewr",
+    decision: "D492",
+    what: "🛑 THE HIT GOES BACK THROUGH WEAKNESS AND RESISTANCE, which is `damageDefender`'s flat arm's reading and therefore what D482's COMPOSITION would have done. The printed sentence says the opposite. Every benched body answers the same number either way — §8.5 scopes W/R to the Active — so the ONLY board that can see it is one whose Active matches the filter AND carries a Weakness, which is §4's",
+    file: "packages/engine/src/effects.ts",
+    find: "          deals: true,\n          ignoreWR: true,\n          filter: classFilter,",
+    replace: "          deals: true,\n          filter: classFilter,",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-places-counters-instead-of-damage",
+    decision: "D492",
+    what: "🛑 `deals` GOES, so the sweep files `COUNTERS_PLACED` and becomes `counterEachAll`'s damage model — the composition D483 §1 named, priced and refused. ⚠️ **THE BOARD CANNOT TELL**: under `ignoreWR` the reduction passives that would normally separate a placed counter from attack damage are nulled anyway, so §8 drives a Rock Chestplate holder reading 100 under BOTH builds and the discriminator is the EVENT, not the number",
+    file: "packages/engine/src/effects.ts",
+    find: "          deals: true,\n          ignoreWR: true,\n          filter: classFilter,",
+    replace: "          ignoreWR: true,\n          filter: classFilter,",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-targets-the-bench-only",
+    decision: "D492",
+    what: "🛑 THE SCOPE COLLAPSES TO THE BENCH — arm 6b's real value one screen down, copied verbatim. The printed *each of your opponent's Pokémon ex* includes the Active when the Active is one, and this is the half of the sentence D482's `spreadDamage` leg could not have reached either. Every benched body still takes the printed number, so a suite that only read the bench would be green",
+    file: "packages/engine/src/effects.ts",
+    find: "          op: \"damageChosen\",\n          target: \"opponentAny\",\n          amount,\n          count: \"all\",",
+    replace: "          op: \"damageChosen\",\n          target: \"opponentBench\",\n          amount,\n          count: \"all\",",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-arity-back-to-one",
+    decision: "D492",
+    what: "🛑 THE PRINTED *\"each of\"* BECOMES *\"1 of\"* — the literal `CHOSEN_ANY_TARGET` has carried since D400, and the byte a v29 record really holds. The attack stops damaging four bodies and PARKS asking which one, which is a different action shape rather than a different number: `phase.kind` becomes `effect:choose` and `EFFECT_PENDING` fires. This is the row §9's version argument rests on from the other end",
+    file: "packages/engine/src/effects.ts",
+    find: "          target: \"opponentAny\",\n          amount,\n          count: \"all\",\n          source: \"attack\",",
+    replace: "          target: \"opponentAny\",\n          amount,\n          count: 1,\n          source: \"attack\",",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-drops-the-class-filter",
+    decision: "D492",
+    what: "🛑 THE PRINTED CLASS NARROWING GOES AND THE SPREAD HITS EVERY BODY ON THE SIDE — which is exactly D482's shipped row, so the mutant is a REAL neighbouring program rather than a straw. The one assertion that separates them is the no-rule-box benched body taking ZERO; every other number on the board is identical",
+    file: "packages/engine/src/effects.ts",
+    find: "          ignoreWR: true,\n          filter: classFilter,\n        },",
+    replace: "          ignoreWR: true,\n        },",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-noun-resolver-hardcodes-the-singleton",
+    decision: "D492",
+    what: "🛑 THE MAP LOOKUP STOPS READING THE CAPTURE AND ALWAYS ANSWERS `Pokémon ex`, so the printed PAIR noun silently loses its `V` half — the `anyOf` collapsing to its first member, which is `D446-pair-noun-drops-the-second-suffix`'s defect at a second address. Both rows still derive, both still hit the Active and both still hit every benched `ex`; only the `V` body moves",
+    file: "packages/engine/src/effects.ts",
+    find: "    const classFilter = IN_PLAY_BODY_NOUNS.get(match[2] ?? \"\");",
+    replace: "    const classFilter = IN_PLAY_BODY_NOUNS.get(\"Pokémon ex\");",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-arm-drops-the-amount-guard",
+    decision: "D492",
+    what: "🛑 THE PRINTED-ZERO GUARD GOES. A `does 0 damage` spelling resolves into a program that walks the whole filtered side and places nothing, instead of falling to the loud `ATTACK_EFFECT_SKIPPED` path — D190b's exact-map-or-flag rule at the amount rather than at the noun, and `BENCHED_SNIPE_TAKEN_PRIZES`' own `per >= 1` reading one arm down",
+    file: "packages/engine/src/effects.ts",
+    find: "    if (amount >= 1 && classFilter !== undefined) {",
+    replace: "    if (classFilter !== undefined) {",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
+    ],
+  },
+  {
+    id: "D492-interpreter-ceiling-is-one",
+    decision: "D492",
+    what: "🛑 THE INTERPRETER STOPS HONOURING `\"all\"` AND READS IT AS AN ARITY OF ONE. The op then parks over four candidates exactly as a v29 `count: 1` would — so this is the IMPLEMENTATION-side twin of `D492-arm-arity-back-to-one`, and the pair is what says the widening is honoured at BOTH seats (D453: an op-name grep finds a producer row and calls the family covered)",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      const ceiling = op.count === \"all\" ? candidates.length : op.count;",
+    replace: "      const ceiling = op.count === \"all\" ? 1 : op.count;",
+    expectKilledBy: [
+      "packages/engine/src/classedBoardSpread.test.ts",
     ],
   },
 ];
