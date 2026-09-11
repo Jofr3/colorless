@@ -245,7 +245,7 @@ function inPlayModelOf(state: GameState, pokemon: InPlayPokemon): CardModel | nu
     restatement (a field added to SpecialConditions would just be dropped
     here and silently never render), so the asserts below do. */
 function battleStateOf(state: GameState, pokemon: InPlayPokemon): BattleState {
-  const { rotation, poisonDamage, burned } = pokemon.conditions;
+  const { rotation, poisonDamage, burned, confusionDamage } = pokemon.conditions;
   // Mutual-assignability pin, both directions: `satisfies` = the rebuilt
   // copy is still a COMPLETE SpecialConditions (an added engine field errors
   // here); the annotation = it is an exact BattleConditions (playmat-side
@@ -254,6 +254,12 @@ function battleStateOf(state: GameState, pokemon: InPlayPokemon): BattleState {
     rotation,
     poisonDamage,
     burned,
+    // 🆕🆕 D501 — and the pin did its job: adding the engine field made THIS
+    // literal a compile error in both directions at once, which is exactly what
+    // the paragraph above promised and the reason the field is REQUIRED rather
+    // than optional on `SpecialConditions` (an optional key satisfies both halves
+    // while silently never reaching the playmat).
+    confusionDamage,
   } satisfies SpecialConditions;
   return {
     damage: pokemon.damage,

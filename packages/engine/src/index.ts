@@ -19799,7 +19799,7 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
-    🆕🆕🆕 engineVersion 0.391.0 → **0.392.0** (D500 — THE PRINTED CARD CATEGORY
+    🆕🆕🆕 engineVersion 0.391.0 → **0.393.0** (D500 — THE PRINTED CARD CATEGORY
     `Basic`, AND IT IS `Special`'s COMPLEMENT RATHER THAN A TENTH ENERGY TYPE.
     `censusAttackCorpus.ts` **FILE LINE 580** — *"This attack does 40 damage for each
     Basic Energy attached to this Pokémon."*, **1 sentence / 1 legal printing**, claimed
@@ -20509,7 +20509,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.392.0";
+export const engineVersion = "0.393.0";
 
 export type {
   ApplyResult,

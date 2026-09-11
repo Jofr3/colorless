@@ -938,6 +938,12 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
     const paralyzed = swing(tooled, IDX.lock).state.players.p2.active?.conditions;
     expect(Object.keys(paralyzed ?? {}).sort()).toEqual([
       "burned",
+      // 🆕🆕🆕 D501 — `confusionDamage`: THE FIRST KEY EVER ADDED TO
+      // `SpecialConditions` SINCE P3-M3, and these five shipped key-set rungs across five
+      // suites are exactly what was holding that fact. The sentence above stays TRUE of
+      // the slice that wrote it (it added none); only the COUNT moved, and it is
+      // annotated rather than rewritten (D442/D466). `MATCH_RECORD_VERSION` 29 -> 30.
+      "confusionDamage",
       "poisonDamage",
       "rotation",
     ]);
@@ -1003,6 +1009,6 @@ describe("§10 — purity and the version", () => {
     // anchor. ⚠️ D427 named the mechanism — **every note counts the pins it INHERITED
     // and never the one it is about to AUTHOR** — and D428 was the first note to get it
     // right. This line is the one being authored.
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });

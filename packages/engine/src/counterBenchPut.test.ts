@@ -184,7 +184,8 @@ const NEAR_MISSES = [
   // note above). The replacement is the CONFUSION SUBSTITUTION, 1 legal printing and still unread: it prints this anchor's verb and a count, and is refused on the VERB — the counters RAISE the Checkup's per-condition amount rather than being placed at all. The sentence it replaced is not gone from this
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+  // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+  // The positive that replaces it is pinned in `confusionDamage.test.ts` §3.
   // 🆕🆕 **RE-POINTED AGAIN AT D456.** The slot held the delayed retaliation with its
   // amount read off *"the damage done to this Pokémon"* (corpus line 180, 2 legal
   // printings), refused here on the ground that *"the quantity is a HISTORY of the
@@ -398,7 +399,7 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).source).toBe("attack");
   });
 
-  it("refuses the EIGHT real catalog rows that share its words", () => {
+  it("refuses the SEVEN real catalog rows that share its words", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -406,8 +407,14 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
     // Both already produce this op through the REGISTRY, so a reader that swallowed
     // them would author the same placement twice — and both are refused by the
     // capital "Put" plus `^…$` alone, with no /i anywhere in this file.
-    expect(deriveAttackEffect(NEAR_MISSES[6])).toBeNull();
-    expect(deriveAttackEffect(NEAR_MISSES[7])).toBeNull();
+    // 🆕🆕🆕 D501 — BY VALUE, NOT BY INDEX. Corpus FILE LINE 685 left this
+    //     array, which SHIFTED every index after it — and an index shift is silent at
+    //     every caller the compiler does not happen to catch (D447/D458). Spelling the
+    //     string makes the reference immune to the next departure.
+    for (const ability of NEAR_MISSES.filter((t) => t.startsWith("You must discard"))) {
+      expect(deriveAttackEffect(ability), ability).toBeNull();
+    }
+    expect(NEAR_MISSES.filter((t) => t.startsWith("You must discard"))).toHaveLength(2);
     // Vespiquen ex's is the nearest by ZONE — same Bench, same verb, a per-target
     // filter and "each of" instead of "1 of".
     expect(deriveAttackEffect(NEAR_MISSES[0])).toBeNull();

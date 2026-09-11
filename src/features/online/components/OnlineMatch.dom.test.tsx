@@ -25,7 +25,7 @@ function active(name: string): RedactedInPlay {
     category: "Pokemon",
     trainerType: null,
     hasImage: false,
-    battle: { damage: 0, hp: 60, conditions: { rotation: "none", poisonDamage: 0, burned: false } },
+    battle: { damage: 0, hp: 60, conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 } },
     attached: { tools: [], energies: [] },
   };
 }

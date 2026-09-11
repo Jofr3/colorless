@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.392.0";',
+    find: 'export const engineVersion = "0.393.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -10898,8 +10898,13 @@ export const MUTANTS: Mutant[] = [
     //    row, and a lint fix is only the smallest case of it).
     what: "the version is one behind the shape it describes, so this deploy accepts a record written before the newest breaking change instead of retiring it. At D326 that record THROWS on the first read of a missing required key; since D335 it resumes SILENTLY WRONG, and since D352 in two places at once - a v20 parked `attachFromTop` (and a v19 parked `lookAtTopN`) carries the old `discardRest` key, which reads as no leftovers clause at all, so the cards the card said to discard stay on top of the deck - and a quietly wrong resume is exactly what a version gate exists to prevent",
     file: "apps/api/src/lobby/match.ts",
-    find: "export const MATCH_RECORD_VERSION = 29;",
-    replace: "export const MATCH_RECORD_VERSION = 28;",
+    // 🆕🆕 D501 - RE-TRANSCRIBED, 29 -> 30, and found BEFORE `precheck` rather
+    //    than by it: the pre-build tripwire audit needled the corpus for
+    //    `MATCH_RECORD_VERSION` and returned exactly this row, whose `find` quotes the
+    //    constant line byte for byte. Seventh consecutive slice on which the bump rots
+    //    this row, and the first on which the rot was predicted rather than reported.
+    find: "export const MATCH_RECORD_VERSION = 30;",
+    replace: "export const MATCH_RECORD_VERSION = 29;",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
   // == D327 - THE COST SEAM'S SECOND AND THIRD COUNT SOURCES. Every row below is a
@@ -27789,8 +27794,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
-    find: "  attack: 1615,",
-    replace: "  attack: 1613,",
+    // 🆕🆕 D501 - RE-TRANSCRIBED, 1615 -> 1616 (and the replace 1613 -> 1614, keeping
+    //    the same two-step regression this row has always expressed). The constant moved
+    //    because D501 claimed corpus FILE LINE 685; `precheck` reported the `find` at 0x
+    //    in seconds, which is the whole argument for running it after every edit round
+    //    rather than once at the end (D414/D437/D445).
+    find: "  attack: 1616,",
+    replace: "  attack: 1614,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28373,5 +28383,175 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [
       "packages/engine/src/basicEnergyScaling.test.ts",
     ],
+  },
+  // == D501 - THE RAISED CONFUSION SELF-HIT. Corpus FILE LINE 685, 1 sentence / 1
+  //    legal printing. Every row below is a way of answering the WRONG NUMBER on a
+  //    missed §8 step-3 flip, or of losing the field the number rides on.
+  // ⚠️ THE ABSENCE THIS SLICE CLOSED, MEASURED BY SPAN RATHER THAN BY NAME (D453/D496):
+  //    before D501, `attack.ts`'s confusion block, `types.ts`'s `SpecialConditions` /
+  //    `noConditions`, and `DEFENDER_POISON_N`'s anchor AND arm had **ZERO** rows
+  //    intersecting them - the first two since 2026-07-17. C1-C3 and C14-C15 are the
+  //    first evidence on record that anything discriminates those lines.
+  {
+    id: "D501-flip-reads-the-rule-default-not-the-body",
+    decision: "D501",
+    what: "\ud83d\uded1 C1 \u2014 THE \u00a78 STEP-3 FLIP GOES BACK TO A HARD-CODED 30, which is the build this slice replaces and the one a careless successor 'tidies' back. Every board where the printing was never used is byte-identical, so only a board carrying the RAISED amount can tell the two apart \u2014 which is exactly why the demonstrator prints 8 counters and the victim has 100 HP. \u26a0\ufe0f THE BLOCK THIS MUTATES HAD **ZERO** MUTANT ROWS INTERSECTING IT BY SPAN for its whole life (04551439, 2026-07-17 \u2192 D501), so every green whole-corpus sweep in that span said precisely nothing about the confusion self-hit (D452/D463's absence rule).",
+    file: "packages/engine/src/attack.ts",
+    find: "      const confusionDamage = active.conditions.confusionDamage;",
+    replace: "      const confusionDamage = 30;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-counters-placed-row-keeps-the-old-literal",
+    decision: "D501",
+    what: "\u26a0\ufe0f C2 \u2014 THE BOARD TAKES THE RAISED HIT AND THE **ROW** ANNOUNCES 30. The damage still lands correctly, the KO maths is unchanged, and the only casualty is the number a player reads \u2014 D421's rule exactly (a log row is a claim with the same standing as a predicate). A suite that asserted only `active.damage` is green on this build, which is why \u00a75 reads the EVENT and the BOARD separately rather than one of them.",
+    file: "packages/engine/src/attack.ts",
+    find: "        amount: confusionDamage,\n        source: \"confusion\",",
+    replace: "        amount: 30,\n        source: \"confusion\",",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-flip-reads-the-defenders-body",
+    decision: "D501",
+    what: "\ud83d\uded1 C3 \u2014 THE FLIP READS THE **DEFENDER'S** CONFUSION AMOUNT INSTEAD OF THE ATTACKER'S \u2014 the seat crossing that is this engine's two worst shipped defects (D447), on the one line where the confused body and the body being attacked are different Pok\u00e9mon. On the suite's board the defender has never been Confused, so this answers the rule default and the raised hit silently disappears.",
+    file: "packages/engine/src/attack.ts",
+    find: "      const confusionDamage = active.conditions.confusionDamage;",
+    replace: "      const confusionDamage = defender.conditions.confusionDamage;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-apply-arm-drops-the-rider",
+    decision: "D501",
+    what: "\u26a0\ufe0f C4 \u2014 `applyStatus`'s CONFUSION ARM IGNORES THE OP'S RIDER and always writes the rule default, so the reader parses the 8 correctly, the census steps, `resolvedByAnyReader` is true, the residue falls by one \u2014 and the card does nothing it prints. D469's blindness exactly: a census measures whether a sentence is CLAIMED, never whether it is claimed CORRECTLY.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    const confusionDamage = op.confusionDamage ?? DEFAULT_CONFUSION_DAMAGE;",
+    replace: "    const confusionDamage = DEFAULT_CONFUSION_DAMAGE;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-apply-arm-writes-the-rider-only-when-present",
+    decision: "D501",
+    what: "\ud83d\uded1 C5 \u2014 THE WRITE BECOMES CONDITIONAL, which is the mistake an author actually makes (\"only write the field when the card raised it\") and the one the arm's own comment names as load-bearing. A body Confused at 80, cured, and Confused again by a BARE sentence keeps the 80 \u2014 a rule no printing carries, on a board that looks entirely normal. \u00a74's re-application case is the only thing that separates it; a suite that read the field back after the cure and stopped there is green.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      conditions: { ...active.conditions, rotation: \"confused\", confusionDamage },",
+    replace: "      conditions: {\n        ...active.conditions,\n        rotation: \"confused\",\n        ...(op.confusionDamage === undefined ? {} : { confusionDamage }),\n      },",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-apply-arm-forgets-the-rotation",
+    decision: "D501",
+    what: "\u26a0\ufe0f C6 \u2014 THE ARM WRITES THE AMOUNT AND FORGETS THE ROTATION, the copy-the-poison-arm slip: Poison's arm writes ONE field because `poisonDamage > 0` IS its flag, and Confusion's needs TWO because its flag is a different field. The body ends up carrying a raised confusion amount and no Confusion at all, and the STATUS_APPLIED row still fires.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      conditions: { ...active.conditions, rotation: \"confused\", confusionDamage },",
+    replace: "      conditions: { ...active.conditions, confusionDamage },",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-arm-drops-the-counters-to-hp-conversion",
+    decision: "D501",
+    what: "\u26a0\ufe0f C7 \u2014 THE \u00d710 IS DROPPED, so the printed 8 COUNTERS become 8 HP and the card deals 8 where it prints 80 \u2014 the one place a reader of this family can be off by a factor of ten, and the conversion `installRecoil`, `DELAYED_DEFENDER_COUNTERS` and `DEFENDER_POISON_N` all make at the producer for exactly this reason.",
+    file: "packages/engine/src/effects.ts",
+    find: "          confusionDamage: counters * 10,",
+    replace: "          confusionDamage: counters,",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-arm-emits-the-poison-rider",
+    decision: "D501",
+    what: "\ud83d\uded1 C8 \u2014 THE ARM EMITS THE **POISON** RIDER, its neighbour's real code copied verbatim from eleven lines up (D190b's neighbour-copy rule). `poisonDamage` is a legal optional key on this op, so `tsc` says nothing; the sentence derives, the census steps, the body is Confused \u2014 and it is silently Poisoned for 80 a Checkup instead of hitting itself for 80 on a missed flip.",
+    file: "packages/engine/src/effects.ts",
+    find: "          confusionDamage: counters * 10,",
+    replace: "          poisonDamage: counters * 10,",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-arm-hardcodes-the-printed-amount",
+    decision: "D501",
+    what: "\u26a0\ufe0f C9 \u2014 THE CAPTURE IS REPLACED BY THE PRINTED 80. Correct on the only legal printing today and wrong on the first reprint that raises a different number \u2014 D316/D317/D356's amount-pinned shape at a new address. It is killed by \u00a73's range case and by nothing else in the file, which is the reason that case enumerates five counts instead of asserting the one the corpus prints.",
+    file: "packages/engine/src/effects.ts",
+    find: "          confusionDamage: counters * 10,",
+    replace: "          confusionDamage: 80,",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-arm-drops-the-positive-guard",
+    decision: "D501",
+    what: "\u26a0\ufe0f C10 \u2014 THE `>= 1` GUARD GOES, so a printed `Put 0 damage counters instead of 3` derives to a Confusion whose missed flip costs NOTHING \u2014 a silent no-op where the family's rule is to stay on the loud ATTACK_EFFECT_SKIPPED path. The guard is `installRecoil`'s and `DELAYED_DEFENDER_COUNTERS`' verbatim.",
+    file: "packages/engine/src/effects.ts",
+    find: "    const counters = Number(match[1]);\n    if (counters >= 1) {\n      return [\n        {\n          op: \"applyStatus\",\n          target: \"defender\",\n          status: \"confused\",",
+    replace: "    const counters = Number(match[1]);\n    if (counters >= 0) {\n      return [\n        {\n          op: \"applyStatus\",\n          target: \"defender\",\n          status: \"confused\",",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-anchor-captures-the-printed-default",
+    decision: "D501",
+    what: "\ud83d\uded1 C11 \u2014 THE PRINTED DEFAULT `3` BECOMES A CAPTURE, the widening D472's rule refuses: measured over all 640 corpus rows it claims exactly the SAME 1 sentence / 1 printing, so the generality buys nothing and costs a wrong program \u2014 a printed `instead of 5` is a card misstating the rule and must stay LOUD rather than deriving as though the engine's default were 5.",
+    file: "packages/engine/src/effects.ts",
+    find: "  /^Your opponent['\u2019]s Active Pok\u00e9mon is now Confused\\. Put (\\d+) damage counters instead of 3 on that Pok\u00e9mon for this Special Condition\\.$/;",
+    replace: "  /^Your opponent['\u2019]s Active Pok\u00e9mon is now Confused\\. Put (\\d+) damage counters instead of \\d+ on that Pok\u00e9mon for this Special Condition\\.$/;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-anchor-loses-its-terminator",
+    decision: "D501",
+    what: "\u26a0\ufe0f C12 \u2014 THE `\\.$` GOES. \ud83d\uded1 AND THE OBSERVABLE CONSEQUENCE IS NOT THE ONE THE `^` HAS (D464): with the terminator gone the anchor eats `\u27e8the print\u27e9 \u27e8anything\u27e9`, so a compound whose tail is an unbuilt mechanic resolves with that tail SILENTLY THROWN AWAY and `ATTACK_EFFECT_SKIPPED` never fires for it. Killed by \u00a73's trailing-text case.",
+    file: "packages/engine/src/effects.ts",
+    find: "counters instead of 3 on that Pok\u00e9mon for this Special Condition\\.$/;",
+    replace: "counters instead of 3 on that Pok\u00e9mon for this Special Condition\\./;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-anchor-loses-its-caret",
+    decision: "D501",
+    what: "\u26a0\ufe0f C13 \u2014 THE `^` GOES, so any sentence ENDING in this string is claimed whole and its leading clause \u2014 a coin gate, a requirement, a pre-damage act \u2014 is silently discarded. The `^` end and the `$` end of one anchor fail in different directions and only a constructed near miss can see either (D464/D496/D499), which is why \u00a73 drives both and why D499 found a caret with zero rows intersecting it for 373 decisions.",
+    file: "packages/engine/src/effects.ts",
+    find: "const DEFENDER_CONFUSION_N =\n  /^Your opponent",
+    replace: "const DEFENDER_CONFUSION_N =\n  /Your opponent",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-fresh-conditions-seed-a-zero",
+    decision: "D501",
+    what: "\ud83d\uded1 C14 \u2014 `noConditions()` SEEDS 0 INSTEAD OF THE RULE DEFAULT. This is the `poisonDamage` shape copied one field over, and it is wrong precisely because the two fields are NOT the same shape: `poisonDamage: 0` means \"not Poisoned\", where `confusionDamage: 0` means \"Confused and the missed flip is free\". Every body that has never met a raising effect stops taking its 30, on a board where nothing else looks different \u2014 and the CURE path is the one that reaches it, so \u00a74's cure case is the killer.",
+    file: "packages/engine/src/types.ts",
+    find: "    confusionDamage: DEFAULT_CONFUSION_DAMAGE,\n  };",
+    replace: "    confusionDamage: 0,\n  };",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-default-confusion-damage-in-counters",
+    decision: "D501",
+    what: "\u26a0\ufe0f C15 \u2014 THE RULE CONSTANT IS SPELLED IN COUNTERS (3) RATHER THAN HP (30), the unit slip this whole family converts at the producer to avoid. Every untouched body's missed flip costs 3 instead of 30 and no printed sentence is involved at all, so no census and no reader rung can see it.",
+    file: "packages/engine/src/types.ts",
+    find: "export const DEFAULT_CONFUSION_DAMAGE = 30;",
+    replace: "export const DEFAULT_CONFUSION_DAMAGE = 3;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-redact-drops-the-new-condition",
+    decision: "D501",
+    what: "\ud83d\uded1 C16 \u2014 THE WIRE DROPS `confusionDamage`, which is the exact degradation an OPTIONAL field would have made LEGAL and SILENT (the whole argument for the key being REQUIRED). `GameHud.tsx` then has no number to render and falls back to a literal, telling the player \"tails: 30 damage to itself\" on a body that will take 80. \u26a0\ufe0f NOTE WHAT THIS ROW IS REALLY PINNING: with the field required, `copyConditions`' own `satisfies` makes the omission a COMPILE error, so this row's `replace` keeps the key in the destructure and drops it from the RETURN \u2014 the narrowest edit that still type-checks, which is what makes the mutation observable rather than an ERROR verdict.",
+    file: "packages/engine/src/redact.ts",
+    find: "  return { rotation, poisonDamage, burned, confusionDamage } satisfies SpecialConditions;",
+    replace: "  return { rotation, poisonDamage, burned, confusionDamage: 30 } satisfies SpecialConditions;",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-status-row-warns-on-every-confusion",
+    decision: "D501",
+    what: "\u26a0\ufe0f C17 \u2014 THE `> DEFAULT` COMPARISON BECOMES `>= DEFAULT`, so every ordinary Confusion in the game gains a parenthetical announcing the rulebook's own number \u2014 the rule the engine deliberately leaves implicit, on 31 legal printings of the bare sentence. The BARE board in \u00a76 is what separates it; a suite that only drove the raised sentence is green.",
+    file: "packages/engine/src/log.ts",
+    find: "        event.confusionDamage > DEFAULT_CONFUSION_DAMAGE",
+    replace: "        event.confusionDamage >= DEFAULT_CONFUSION_DAMAGE",
+    expectKilledBy: ["packages/engine/src/confusionDamage.test.ts"],
+  },
+  {
+    id: "D501-record-version-not-bumped",
+    decision: "D501",
+    what: "\ud83d\uded1 C18 \u2014 THE CONSTANT STAYS AT 29 WHILE THE SHAPE MOVES, so this deploy accepts a v29 record whose in-play Pok\u00e9mon carry no `confusionDamage` \u2014 and the failure is not D124's benign soft landing but D435's SILENT CORRUPTION: `active.damage + undefined` is `NaN`, `NaN >= hp` is false, and the body can never be Knocked Out again on a board that looks entirely normal. \u26a0\ufe0f THIS IS A SECOND ROW ON THE SAME LINE AS `D326-record-version-not-bumped` AND THEY ARE DIFFERENT EXPERIMENTS (D484): that one steps DOWN by one from whatever the head is and is killed by `match.test.ts`'s literal pin; this one asserts that THIS slice is the reason the head moved, and is killed by the engine-side rung that drives the v29 bytes.",
+    file: "apps/api/src/lobby/match.ts",
+    find: "export const MATCH_RECORD_VERSION = 30;\n",
+    replace: "export const MATCH_RECORD_VERSION = 29;\n",
+    expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
   },
 ];

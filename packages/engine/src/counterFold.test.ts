@@ -174,8 +174,13 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // They are named here as INEQUALITIES rather than dropped (D418), and the inequality
     // is the stronger rung: a single looser anchor would have claimed both sentences with
     // ONE op and passed any `toContain`-shaped successor to this block.
-    expect(unread.map(([, t]) => t)).toHaveLength(2);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(4);
+    // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE; the row that left is
+    // corpus FILE LINE 685, named as a POSITIVE below rather than subtracted away.
+    // ⚠️ THE TWO FIGURES DISAGREE BY ONE AGAIN, −1 SENTENCE AND −1 PRINTING — and this
+    // time they AGREE, because the row is 1/1. Verified off the corpus rather than
+    // assumed from the row being singular (D451/D461/D464).
+    expect(unread.map(([, t]) => t)).toHaveLength(1);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(3);
     for (const [text, program] of [
       [
         "During your opponent's next turn, if this Pokémon is damaged by an attack (even if this Pokémon is Knocked Out), put 6 damage counters on the Attacking Pokémon.",
@@ -261,9 +266,17 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
     //     Checkup's own per-condition amount, which is a status field reached by a status
     //     op. Refused on the VERB, which reads as this family's only because of one word.
-    expect(unbuilt).toContain(
+    // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+    expect(unbuilt).not.toContain(
       "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
     );
+    expect(
+      deriveAttackEffect(
+        "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+      ),
+    ).toEqual([
+      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
+    ]);
 
     // (e) THE BOUNDED SELF-PLACEMENT — 1 printing, and it is the row D449's published
     //     pattern could NOT see, carried forward here because a hole a predecessor named
@@ -505,7 +518,7 @@ describe("§3 — TWO REQUIRED fields on a shipped op, and the record version do
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

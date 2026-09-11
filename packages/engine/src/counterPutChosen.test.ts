@@ -180,10 +180,14 @@ describe("§1 — the two printed sentences, and what the placement family still
     // ⚠️ **THE PRINTINGS FALL BY 3 WHERE THE SENTENCES FALL BY 2** for the second slice
     // running, and for the same reason: corpus line 179 carries 1 printing and line 180
     // carries 2.
-    expect(unbuilt).toHaveLength(2);
+    // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE. Corpus FILE LINE 685 is
+    // 1 sentence / 1 printing, so the two figures AGREE this time after disagreeing in
+    // each of the two slices above — read off the corpus rather than assumed from the
+    // row being singular (D451/D461/D464).
+    expect(unbuilt).toHaveLength(1);
     expect(
       family.filter(([, t]) => !resolvedByAnyReader(t)).reduce((sum, [n]) => sum + n, 0),
-    ).toBe(4);
+    ).toBe(3);
 
     // (a) THE SCALED TWIN — corpus line 412, **3 printings**, the largest unbuilt row in
     //     this family and this slice's own nearest neighbour: `BARE` with a count clause
@@ -288,9 +292,21 @@ describe("§1 — the two printed sentences, and what the placement family still
     //     per-condition amount, which is `SpecialConditions`' raised-tick field
     //     (types.ts) reached by a status op, not by any op in this family. Refused on
     //     the VERB, which reads as this family's only because of one shared word.
-    expect(unbuilt).toContain(
+    // 🆕🆕🆕 D501 — IT LEFT, AND IT LEFT EXACTLY WHERE THIS BULLET SAID IT WOULD.
+    //     The bullet is kept and annotated rather than deleted (D466): it named the
+    //     carrier — `SpecialConditions`' raised-tick field reached by a STATUS op — and
+    //     that is the carrier the row went to, one field over (`confusionDamage`).
+    //     Re-pointed onto the OP rather than decremented (D465/D488).
+    expect(unbuilt).not.toContain(
       "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
     );
+    expect(
+      deriveAttackEffect(
+        "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+      ),
+    ).toEqual([
+      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
+    ]);
     // 🛑 **AND HERE IS WHAT THE PUBLISHED PATTERN CANNOT SEE, MEASURED RATHER THAN
     // IMAGINED (D425).** `/put \d* ?damage counters/i` requires the count to sit
     // immediately before the noun, so it misses the BOUNDED spelling — corpus line 433,
@@ -556,7 +572,7 @@ describe("§3 — a new PRODUCER of a shipped literal, and the record version do
   });
 
   it("the engine version moved", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

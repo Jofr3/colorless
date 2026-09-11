@@ -338,7 +338,7 @@ describe("moveCardOnBoard — battle state", () => {
         active: battlePoke("a1", {
           damage: 60,
           hp: 300,
-          conditions: { rotation: "none", poisonDamage: 20, burned: false },
+          conditions: { rotation: "none", poisonDamage: 20, burned: false, confusionDamage: 30 },
         }),
         bench: [poke("b1")],
       },
@@ -357,7 +357,7 @@ describe("moveCardOnBoard — battle state", () => {
         active: battlePoke("a1", {
           damage: 120,
           hp: 340,
-          conditions: { rotation: "asleep", poisonDamage: 0, burned: true },
+          conditions: { rotation: "asleep", poisonDamage: 0, burned: true, confusionDamage: 30 },
         }),
         bench: [poke("b1")],
       },

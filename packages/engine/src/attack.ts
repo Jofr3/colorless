@@ -1381,13 +1381,27 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
         uid: attackerUid,
         reason: "confusion",
       });
-      const hurt = { ...active, damage: active.damage + 30 };
+      // 🆕🆕🆕 **D501 — THE AMOUNT IS READ OFF THE BODY, NOT HARD-CODED.** This was a
+      // literal `30` in two places from P3-M3 (2026-07-17) until D501, and the two
+      // places are the whole of the observable behaviour: the DAMAGE and the ROW.
+      // `SpecialConditions.confusionDamage` carries the rulebook's 3 counters for
+      // every body that has never met a raising effect, so every pre-D501 board
+      // answers the identical number.
+      //
+      // ⚠️ **THE ATTACKER'S OWN CONDITIONS, AND `active` IS THE RIGHT BINDING HERE
+      // EVEN THOUGH IT IS THE DECLARATION SNAPSHOT (D429).** This block runs BEFORE
+      // §8.5 and before any pre-damage act — it is §8 step 3 — so nothing has
+      // rebound the body yet and `attackerBody` is still `active`. `rotation` on the
+      // line above is read off the same snapshot, so a read that reached elsewhere
+      // would be asking two questions of two boards.
+      const confusionDamage = active.conditions.confusionDamage;
+      const hurt = { ...active, damage: active.damage + confusionDamage };
       next = withActive(next, action.seat, hurt);
       events.push({
         type: "COUNTERS_PLACED",
         seat: action.seat,
         uid: attackerUid,
-        amount: 30,
+        amount: confusionDamage,
         source: "confusion",
       });
       // The self-hit can KO the attacker itself — prized to the DEFENDER

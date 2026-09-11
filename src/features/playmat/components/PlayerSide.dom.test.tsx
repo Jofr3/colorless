@@ -122,7 +122,7 @@ describe("status markers", () => {
 
   it("stacks coexisting conditions in one marker column (rotation, PSN, BRN)", () => {
     const container = renderSide(
-      conditioned({ rotation: "confused", poisonDamage: 20, burned: true }),
+      conditioned({ rotation: "confused", poisonDamage: 20, burned: true, confusionDamage: 30 }),
     );
     expect(statusStacksOf(container)).toHaveLength(1);
     expect(statusChipsOf(container).map((chip) => chip.textContent)).toEqual([

@@ -660,9 +660,16 @@ describe("D500 §6 — what the corpus looked like before, computed from what it
     // …so the corpus BEFORE this slice resolved exactly one sentence and one printing
     // fewer, and every one of those points was refused by all thirteen readers.
     const resolvedNow = legalAttackCorpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect([resolvedNow.length - moved.length, units(resolvedNow) - units(moved)]).toEqual([
-      530, 1564,
-    ]);
+    // 🆕🆕🆕 D501 — A FRONT TERM, NOT A STEPPED ENDPOINT (D426/D461/D462). This
+    // rung's claim is *the corpus BEFORE D500*, and the endpoint 530 / 1564 is the
+    // frozen historical value: bumping it would have turned the assertion into
+    // `head === head` and no sweep could tell. D501 claimed corpus FILE LINE 685
+    // (1 sentence / 1 printing), so the live head grew and a `- 1 / - 1` at the FRONT
+    // is what keeps the endpoint meaning what it says.
+    expect([
+      resolvedNow.length - 1 /* D501, corpus FILE LINE 685 */ - moved.length,
+      units(resolvedNow) - 1 /* D501, same row, 1 printing */ - units(moved),
+    ]).toEqual([530, 1564]);
     // ⚠️ **AND THE POINTS THE NEW ROW CLAIMS ARE EXACTLY THE ONES THAT MOVED** — the
     // second half of D491's rung, which is what reddens if a later slice widens the
     // vocabulary across a point this lattice recorded as refused.
@@ -724,7 +731,7 @@ describe("D500 §7 — the version stays 29, and the address is named before the
     });
     expect(produced).toEqual([]);
     // …and the engine version DID move, because a card can reach the behaviour change.
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

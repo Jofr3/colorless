@@ -78,6 +78,13 @@ export interface BattleConditions {
   /** HP placed at each Pokémon Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: number;
   burned: boolean;
+  /** 🆕🆕 D501 — HP a Confused Pokémon places on itself when the §8 step-3 attack
+      flip misses; 30 unless the inflicting effect raised it. Meaningful only
+      while `rotation === "confused"`. Added here because `projection.ts`'s
+      `battleStateOf` pins this interface MUTUALLY ASSIGNABLE with the engine's
+      `SpecialConditions`, so an engine field that did not arrive here would be a
+      compile error there rather than a silent drop. */
+  confusionDamage: number;
 }
 
 /** Public battle numbers for an in-play Pokémon, carried on its top-card
@@ -98,6 +105,11 @@ export const NO_CONDITIONS: BattleConditions = Object.freeze({
   rotation: "none",
   poisonDamage: 0,
   burned: false,
+  // 🆕🆕 D501 — the rulebook's 3 counters, NOT a zero: this constant is what a
+  // board with nothing afflicting a Pokémon says, and such a Pokémon's confusion
+  // flip would still cost 30 the moment something Confused it. It mirrors the
+  // engine's `noConditions()` exactly.
+  confusionDamage: 30,
 });
 
 /** What BoardState cannot carry about a side's piles: the deck size and the

@@ -714,7 +714,7 @@ function loaded(seed: number): { before: GameState; turn: number } {
         ...withEnergy.players.p2,
         active: {
           ...active,
-          conditions: { rotation: "asleep", poisonDamage: 10, burned: true },
+          conditions: { rotation: "asleep", poisonDamage: 10, burned: true, confusionDamage: 30 },
           retreatBlocked: true,
           retreatLockedTurn: turn + 2,
           attackBlock: { turn: turn + 1, effects: true },
@@ -744,7 +744,7 @@ describe("🛑 §7 — the carry-over set, decided field by field", () => {
     const { before } = loaded(13);
     const { state } = strike(before, "p1", CALL);
     const after = body(state.players.p2.active);
-    expect(after.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false });
+    expect(after.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
     expect(after.retreatBlocked).toBe(false);
     expect(after.retreatLockedTurn).toBeNull();
     expect(after.attackBlock).toBeNull();
@@ -1060,7 +1060,7 @@ describe("§11 — the version prediction is DRIVEN, not asserted", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

@@ -173,7 +173,8 @@ const NEAR_MISSES = [
   // note above). The replacement is the CONFUSION SUBSTITUTION, 1 legal printing and still unread, refused on the VERB rather than on the target. The sentence it replaced is not gone from this
   // file: the claim about it is now an INEQUALITY of derived programs below the loop,
   // which is D418's second half and strictly stronger than the `toBeNull` it had.
-  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+  // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+  // The positive that replaces it is pinned in `confusionDamage.test.ts` §3.
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
   "Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.",
   // ⚠️ RE-POINTED AT D345 — this slot held Dusclops/Dusknoir's "Cursed Blast",
@@ -369,7 +370,7 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     );
   });
 
-  it("refuses the NINE real catalog rows that share its words", () => {
+  it("refuses the EIGHT real catalog rows that share its words", () => {
     for (const text of NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -387,8 +388,13 @@ describe("the anchor — 2 printings, 2 clauses, one regex with one (\\d+) captu
     // The two ABILITY printings are refused by the CAPITAL "Put" plus `^…$` alone,
     // with no /i anywhere in this file — both spell the action lowercase and mid
     // sentence, which is the standing argument for the flag's absence.
-    expect(deriveAttackEffect(NEAR_MISSES[7])).toBeNull();
-    expect(deriveAttackEffect(NEAR_MISSES[8])).toBeNull();
+    // 🆕🆕🆕 D501 — BY VALUE, NOT BY INDEX. Corpus FILE LINE 685 left this array,
+    //     which SHIFTED every index after it — and an index shift is silent at every
+    //     caller the compiler does not happen to catch (D447/D458). The PREDICATE also
+    //     states what the two rows have in common, which an index never did.
+    const abilities = NEAR_MISSES.filter((t) => t.startsWith("Once during your turn"));
+    expect(abilities).toHaveLength(2);
+    for (const ability of abilities) expect(deriveAttackEffect(ability), ability).toBeNull();
     // 🆕🆕🆕 **D450 — THE TWO ROWS THAT LEFT THIS LIST, AND THE CLAIM THEY WERE REALLY
     // MAKING.** Corpus lines 415 and 414 were `toBeNull` here until D450 built them as
     // arms 23e and 23f. A `toBeNull` on a sentence the catalog PRINTS is a liability

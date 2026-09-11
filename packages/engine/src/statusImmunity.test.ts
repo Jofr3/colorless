@@ -854,7 +854,7 @@ describe("the structural questions", () => {
     if (active === null) throw new Error("no Active");
     expect(Object.keys(active)).not.toContain("statusImmunity");
     expect(Object.keys(active)).not.toContain("statusImmunities");
-    expect(active.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false });
+    expect(active.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
   });
 
   it("GATES NO ACTION — a Pokémon that refuses a condition is not harder to attack with", () => {

@@ -21,6 +21,7 @@ import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import type { AttackerClass } from "./effects";
 import type { GameEvent, StatusName } from "./events";
 import {
+  DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
   type GameOverReason,
   type GameState,
@@ -450,6 +451,19 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
       // spelling out; the engine default stays implicit like the rulebook's.
       if (event.poisonDamage !== undefined && event.poisonDamage > DEFAULT_POISON_DAMAGE) {
         segments.push(plain(` (${event.poisonDamage} damage per Checkup)`));
+      }
+      // 🆕🆕🆕 D501 — the CONFUSION twin, on the same rule: a RAISED amount is worth
+      // spelling out at the moment it is inflicted, because it is the only place a
+      // reader is told. The COUNTERS_PLACED row a turn later already renders the
+      // number ("Confusion: X hit itself for 80") — it reads `event.amount` and has
+      // since M3, so that row needed no change at all and is the reason this slice
+      // touches one log arm rather than four. What this row adds is the WARNING
+      // BEFORE the flip; without it a player meets the 80 only after paying for it.
+      if (
+        event.confusionDamage !== undefined &&
+        event.confusionDamage > DEFAULT_CONFUSION_DAMAGE
+      ) {
+        segments.push(plain(` (${event.confusionDamage} damage on a missed flip)`));
       }
       return row(event.seat, segments);
     }
@@ -978,8 +992,10 @@ function formatEvent(event: GameEvent, ctx: LogContext): SeatLogEntry[] | null {
         strong(event.result),
       ]);
     case "ATTACK_FAILED":
-      // Four reasons: "confusion" is §12's tails (the 30 self-damage follows as
-      // its own row), "requirement" is D125's printed "this attack does
+      // Four reasons: "confusion" is §12's tails (the self-damage follows as
+      // its own row — 🆕🆕 D501: this comment said "the 30 self-damage" until the
+      // amount became `SpecialConditions.confusionDamage`; the ROW below names no
+      // number and was correct throughout, so only the justification rotted), "requirement" is D125's printed "this attack does
       // nothing" with its clause held — nothing follows that one, so the row
       // must say so on its own or the attack reads as a silent no-op — and
       // "coinFlip" is D126's printed "If tails, this attack does nothing." The

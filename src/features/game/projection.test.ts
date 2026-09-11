@@ -157,7 +157,7 @@ function sweepContains(projectionJson: string, value: string): boolean {
 
 /** The battle row every pristine in-play fixture Pokémon projects. */
 function pristineBattle(hp: number) {
-  return { damage: 0, hp, conditions: { rotation: "none", poisonDamage: 0, burned: false } };
+  return { damage: 0, hp, conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 } };
 }
 
 describe("projectGameState — zones", () => {
@@ -741,7 +741,7 @@ describe("projectGameState — battle state", () => {
       expect(p2Board.active?.battle).toEqual({
         damage: 30,
         hp: 120,
-        conditions: { rotation: "none", poisonDamage: 0, burned: false },
+        conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 },
       });
       expect(p1Board.active?.battle).toEqual(pristineBattle(120));
       // Battle rides on exactly the in-play top cards: every active/bench
@@ -765,7 +765,7 @@ describe("projectGameState — battle state", () => {
   });
 
   it("copies special conditions into battle.conditions — a copy, never an alias", () => {
-    const conditioned = { rotation: "asleep", poisonDamage: 20, burned: true } as const;
+    const conditioned = { rotation: "asleep", poisonDamage: 20, burned: true, confusionDamage: 30 } as const;
     const state = setConditions(turnOneState(), "p1", conditioned);
 
     const mine = projectGameState(state, "p1");

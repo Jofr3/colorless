@@ -277,10 +277,26 @@ export type GameEvent =
   //   the affected Pokémon; `uid` is the stack-top uid of its Active.
   /** An attack effect inflicted `status` (§12). `poisonDamage` is present
       iff status === "poisoned": the damage placed at each Checkup (10 unless
-      the attack raised it). A rotation status (asleep/paralyzed/confused)
-      REPLACES any previous rotation — no separate cleared event fires for
-      the overwritten one. */
-  | { type: "STATUS_APPLIED"; seat: Seat; uid: string; status: StatusName; poisonDamage?: number }
+      the attack raised it). 🆕🆕 `confusionDamage` (D501) is its exact twin and is
+      present iff status === "confused": the HP the body places on ITSELF when the
+      §8 step-3 flip misses (30 unless the attack raised it). A rotation status
+      (asleep/paralyzed/confused) REPLACES any previous rotation — no separate
+      cleared event fires for the overwritten one.
+
+      ⚠️ BOTH AMOUNT KEYS ARE OPTIONAL ON THE EVENT AND ALWAYS WRITTEN BY THE ONE
+      PRODUCER, which is not a contradiction: the optionality is the UNION's (the
+      other three statuses carry neither), and `interpreter.ts`'s `applyStatus`
+      resolves the op's absent rider to the rule default before filing the row. So
+      a reader may rely on the key being present whenever the status matches, and
+      `log.ts` compares it against the default rather than testing for absence. */
+  | {
+      type: "STATUS_APPLIED"
+      seat: Seat
+      uid: string
+      status: StatusName
+      poisonDamage?: number
+      confusionDamage?: number
+    }
   /** §12 (D172) — a Special Condition was REFUSED by the target's own printed
       immunity ("This Pokémon can't be Burned." / "…can't be Paralyzed."). The
       exact negative of the row above it: same `seat`/`uid` contract (they own the
@@ -826,8 +842,15 @@ export type GameEvent =
   /** The declared attack did NOT resolve: no damage to the defender, no
       effects — and the turn still ends either way. Three reasons, and they differ
       only in what follows:
-        • "confusion" — §12, the step-3 flip came up tails; the 30 self-damage
-          follows as COUNTERS_PLACED.
+        • "confusion" — §12, the step-3 flip came up tails; the self-damage
+          follows as COUNTERS_PLACED. 🆕🆕 **CORRECTED AT D501, WHICH FALSIFIED IT.**
+          This line read *"the 30 self-damage"* from P3-M3 until D501 made the
+          amount a per-body field (`SpecialConditions.confusionDamage`), so the row
+          that follows now carries whatever the inflicting effect printed — 30 on
+          every board a bare Confusion reaches, and 80 on the one printing that
+          raises it. The ROW was never wrong (it reads `event.amount`); only this
+          sentence was, which is D450's *grep every consumer for the REASONS it
+          asserts* at a second address.
         • "requirement" — D125, the attack's printed "If <clause>, this attack
           does nothing." and the clause held (Palafin "Justice Kick" without the
           promotion, Lycanroc "Finishing Fang" into an undamaged Active). Nothing

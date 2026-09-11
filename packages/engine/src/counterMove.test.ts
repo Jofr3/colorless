@@ -183,7 +183,8 @@ const REAL_NEAR_MISSES = [
   // anchor's near-miss population is being consumed faster than the catalog refills it,
   // and the claim about both departed sentences now lives below the loop as an
   // INEQUALITY of derived programs (D418's second half).
-  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+  // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+  // The positive that replaces it is pinned in `confusionDamage.test.ts` §3.
   "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
 ] as const;
 
@@ -356,7 +357,7 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     );
   });
 
-  it("refuses the SIX real catalog rows that share its words", () => {
+  it("refuses the FIVE real catalog rows that share its words", () => {
     for (const text of REAL_NEAR_MISSES) {
       expect(deriveAttackEffect(text)).toBeNull();
     }
@@ -382,7 +383,15 @@ describe("the anchor — 2 printings, 1 clause, one regex with NO capture", () =
     }
     // VESPIQUEN EX'S FILTERED BENCH SPREAD — unmapped, and the slot Ting-Lu ex's
     // "Land Scoop" vacated when D140 mapped it. A re-point, never a deletion.
-    expect(deriveAttackEffect(REAL_NEAR_MISSES[5])).toBeNull();
+    // 🆕🆕🆕 D501 — BY VALUE, NOT BY INDEX. Corpus FILE LINE 685 left this
+    //     array, which SHIFTED every index after it — and an index shift is silent at
+    //     every caller the compiler does not happen to catch (D447/D458). Spelling the
+    //     string makes the reference immune to the next departure.
+    expect(
+      deriveAttackEffect(
+        "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",
+      ),
+    ).toBeNull();
     expect(
       deriveAttackEffect(
         "Put 3 damage counters on each of your opponent's Benched Pokémon that has any damage counters on it.",

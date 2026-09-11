@@ -268,7 +268,7 @@ describe("checkup: paralysis (§13.4)", () => {
 describe("checkup: the fixed §13 order, conditions coexisting (§12)", () => {
   it("poison, then burn + flip, then paralysis — one Pokémon, one batch", () => {
     let state = walls(TAILS); // the burn flip is tails — nothing cures
-    state = setConditions(state, "p1", { rotation: "paralyzed", poisonDamage: 10, burned: true });
+    state = setConditions(state, "p1", { rotation: "paralyzed", poisonDamage: 10, burned: true, confusionDamage: 30 });
     const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(types(events)).toEqual([
       "TURN_ENDED",
@@ -285,6 +285,7 @@ describe("checkup: the fixed §13 order, conditions coexisting (§12)", () => {
       rotation: "none",
       poisonDamage: 10,
       burned: true,
+      confusionDamage: 30,
     });
   });
 });
@@ -407,7 +408,7 @@ describe("confusion at attack time (§8 step 3, §12)", () => {
 describe("retreat clears conditions (§11/§12)", () => {
   it("emits one STATUS_CLEARED listing exactly what was present", () => {
     let board = attackerBoard(HEADS, { p1: 1 });
-    board = setConditions(board, "p1", { rotation: "confused", poisonDamage: 20, burned: true });
+    board = setConditions(board, "p1", { rotation: "confused", poisonDamage: 20, burned: true, confusionDamage: 30 });
     const uid = activeUid(board, "p1");
     const { state: done, events } = mustApply(board, retreatAction(board, "p1"));
     expect(types(events)).toEqual(["RETREATED", "STATUS_CLEARED"]);
@@ -422,6 +423,7 @@ describe("retreat clears conditions (§11/§12)", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
   });
 
@@ -591,7 +593,7 @@ describe("derived attack effects in play (effects.ts)", () => {
 
   it("a rotation status REPLACES the previous one; poison and burn ride along (§12)", () => {
     let board = statuserBoard(TAILS);
-    board = setConditions(board, "p2", { rotation: "confused", poisonDamage: 10, burned: true });
+    board = setConditions(board, "p2", { rotation: "confused", poisonDamage: 10, burned: true, confusionDamage: 30 });
     const { state: done, events } = mustApply(board, { type: "attack", seat: "p1", index: 0 }); // Hypnosis
     expect(events.find((e) => e.type === "STATUS_APPLIED")).toMatchObject({ status: "asleep" });
     // Asleep replaced Confused; the checkup then ticked poison 10 + burn 20
@@ -600,6 +602,7 @@ describe("derived attack effects in play (effects.ts)", () => {
       rotation: "asleep",
       poisonDamage: 10,
       burned: true,
+      confusionDamage: 30,
     });
     expect(done.players.p2.active?.damage).toBe(30);
   });
@@ -889,7 +892,8 @@ describe("deriveAttackEffect (effects.ts)", () => {
       // extra, each 1 printing. Drop that `\.$` and all three are claimed with their
       // second clause silently thrown away — the exact defect the deleted entry was
       // believed to guard, now pointed at the anchor that has it.
-      "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.", // corpus FILE LINE 685 — `DEFENDER_NOW` minus its `\.$` claims it
+      // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+      // (The sibling two lines below still carries the `\.$` claim, unchanged.)
       "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.", // corpus FILE LINE 686 — same drift, same anchor
       "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.", // corpus FILE LINE 690 — same drift, same anchor
       "Flip a coin. If heads, choose a Special Condition. Your opponent's Active Pokémon is now affected by that Special Condition.", // sv01-010

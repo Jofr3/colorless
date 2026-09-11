@@ -839,9 +839,19 @@ function TurnPanel(props: GameHudProps) {
             {STATUS_LABELS[rotation]} — cannot attack or retreat.
           </p>
         )}
+        {/* 🆕🆕🆕 **D501 — THE NUMBER IS READ OFF THE BOARD, AND IT USED TO BE A
+            LITERAL 30.** This hint is shown at the one moment it matters — while the
+            player is choosing whether to attack through a Confusion — so a hard-coded
+            amount is not a wording preference but a FALSE CLAIM on the board the
+            raised printing creates (D421: a rendered claim has the same standing as a
+            predicate). Found by D412's procedure: grep every read site of the fact
+            before fixing any of them. `confusionDamage` is REQUIRED on the projected
+            conditions, so the `?? ` fallback is unreachable and exists only to keep
+            the expression total while `conditions` itself may be undefined. */}
         {rotation === "confused" && (
           <p className="mt-2 text-[11px] text-white/45">
-            Confused: attacking flips a coin — tails: 30 damage to itself, turn ends.
+            Confused: attacking flips a coin — tails:{" "}
+            {conditions?.confusionDamage ?? 30} damage to itself, turn ends.
           </p>
         )}
         {abilityOptions.length > 0 && (

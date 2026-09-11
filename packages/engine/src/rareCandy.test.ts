@@ -145,6 +145,7 @@ describe("Rare Candy: carry-over (§7.1/§10 — 'counts as evolving')", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(types(events)).toEqual(["TRAINER_PLAYED", "POKEMON_EVOLVED", "STATUS_CLEARED"]);
     expect(events[2]).toMatchObject({

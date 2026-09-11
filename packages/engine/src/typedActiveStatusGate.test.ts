@@ -735,6 +735,7 @@ describe("§5 — the condition on a real board, and three routes to silence", (
       rotation: "paralyzed",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(every(events, "STATUS_APPLIED").map((e) => e.status)).toEqual(["paralyzed"]);
     // …and the ATTACKER is untouched, which is the `target: "self"` control.
@@ -910,7 +911,7 @@ describe("§7 — the persisted bytes, and why 29 does not move", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

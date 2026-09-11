@@ -58,7 +58,7 @@ const opponentCards = {
   active: battleCard("opponent-active-mega-zygarde", "me03-047", "Mega Zygarde ex", {
     damage: 120,
     hp: 340,
-    conditions: { rotation: "asleep", poisonDamage: 0, burned: true },
+    conditions: { rotation: "asleep", poisonDamage: 0, burned: true, confusionDamage: 30 },
   }),
   bench: [
     remoteCard("opponent-bench-yveltal", "me03-053", "Yveltal ex"),
@@ -77,7 +77,7 @@ const playerCards = {
   active: battleCard("you-active-mega-starmie", "me03-021", "Mega Starmie ex", {
     damage: 60,
     hp: 300,
-    conditions: { rotation: "none", poisonDamage: 20, burned: false },
+    conditions: { rotation: "none", poisonDamage: 20, burned: false, confusionDamage: 30 },
   }),
   bench: [
     // Damage only — bench Pokémon never carry conditions (engine invariant),

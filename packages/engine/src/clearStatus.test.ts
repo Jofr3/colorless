@@ -321,6 +321,7 @@ describe("the ATTACK half — Miracle Force", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     const cleared = find(done.events, "STATUS_CLEARED");
     expect(cleared).toMatchObject({ seat: "p1", statuses: ["poisoned", "burned"], reason: "recovered" });
@@ -403,6 +404,7 @@ describe("the ATTACK half — Miracle Force", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     // The sentence WAS read — a derived program ran and found nothing — so the
     // unsimulated-text row must not fire (D139's distinction).
@@ -414,7 +416,7 @@ describe("the ATTACK half — Miracle Force", () => {
     // ATTACKER's. The printed subject is "This Pokémon"; a `target` field guessed
     // at from one reading is what this case exists to refuse.
     let state = gardevoir({ burned: true });
-    state = setConditions(state, "p2", { rotation: "asleep", poisonDamage: 10, burned: true });
+    state = setConditions(state, "p2", { rotation: "asleep", poisonDamage: 10, burned: true, confusionDamage: 30 });
     const done = swing(state, "miracleForce");
     expect(conditionsOf(done.state, "p1")?.burned).toBe(false);
     const theirs = conditionsOf(done.state, "p2");
@@ -480,6 +482,7 @@ describe("the ABILITY half — Busybody Nurse", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(find(done.events, "STATUS_CLEARED")).toMatchObject({
       seat: "p1",
@@ -580,7 +583,7 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
     // inert. Driven with a rotation state, Poison AND Burn on one body at once,
     // which is the maximum §12 can hold (one rotation slot).
     const done = mustApply(
-      blisseyBoard("active", { rotation: "asleep", poisonDamage: 30, burned: true }),
+      blisseyBoard("active", { rotation: "asleep", poisonDamage: 30, burned: true, confusionDamage: 30 }),
       nurse(),
     );
     expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual([
@@ -592,6 +595,7 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
   });
 
@@ -678,7 +682,15 @@ describe("the structural questions", () => {
     const done = mustApply(blisseyBoard("active", { burned: true }), nurse());
     const active = done.state.players.p1.active;
     if (active === null) throw new Error("no Active");
-    expect(Object.keys(active.conditions).sort()).toEqual(["burned", "poisonDamage", "rotation"]);
+    // 🆕🆕🆕 D501 — `confusionDamage` is the FIRST key added to `SpecialConditions`
+    // since P3-M3; the rung is widened rather than relaxed, so it still reddens on a
+    // sixth key. `MATCH_RECORD_VERSION` 29 -> 30.
+    expect(Object.keys(active.conditions).sort()).toEqual([
+      "burned",
+      "confusionDamage",
+      "poisonDamage",
+      "rotation",
+    ]);
     expect(Object.keys(active)).not.toContain("statusRecovery");
     expect(programFor("sv01-145")?.abilities?.[0]?.program).toEqual([{ op: "clearStatus" }]);
   });

@@ -741,6 +741,7 @@ describe("the self-lock — the WINDOW, driven across four turn boundaries", () 
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(refusal(held, "p1", 1)).toBe("ATTACK_PREVENTED");
     // The §12 gate one line above it in `attack.ts` reports its own code, and the
@@ -947,7 +948,7 @@ describe("the self-lock — the §10 clear set is SWEPT, not listed", () => {
       // CONFUSED rather than Asleep: §12 lets a Confused Pokémon retreat, and
       // this case needs all three §10 routes to be legal on one board. It is shed
       // by exactly the same line.
-      conditions: { rotation: "confused", poisonDamage: 20, burned: true },
+      conditions: { rotation: "confused", poisonDamage: 20, burned: true, confusionDamage: 30 },
       // ⚠️ PARAMETERISED, and the reason is a structural fact worth stating: a
       // §11 retreat-blocked Pokémon CANNOT RETREAT, so the retreat route can
       // never be entered carrying that field set. Its clear of `retreatBlocked`

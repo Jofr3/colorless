@@ -3480,6 +3480,17 @@ export type EffectOp =
       status: StatusName;
       /** Only for "poisoned": HP placed per Checkup when raised above 10. */
       poisonDamage?: number;
+      /** 🆕🆕 D501 — only for "confused": HP the body places on ITSELF when the §8
+          step-3 flip misses, when raised above `DEFAULT_CONFUSION_DAMAGE` (30).
+          `poisonDamage`'s twin on the OP, and OPTIONAL for its reason verbatim:
+          absent means the rulebook's amount, which is what every program that
+          does not print the rider means. ⚠️ The PERSISTED half of this fact —
+          `SpecialConditions.confusionDamage` — is REQUIRED, and the two answers
+          differ because they are different questions (the op says "did the card
+          raise it", the board says "what is this body's amount"); `applyStatus`
+          resolves the first into the second with `?? DEFAULT_CONFUSION_DAMAGE`,
+          exactly as it already does for Poison. */
+      confusionDamage?: number;
     }
   /** §12 (D177) — the DISCRETE recovery: the CONTROLLER's own Active recovers
       from every Special Condition it is carrying, at the moment the op runs.
@@ -12447,6 +12458,49 @@ const FLIP_TAILS_SELF_DAMAGE =
   /^Flip a coin\. If tails, this Pokémon also does (\d+) damage to itself\.$/;
 const DEFENDER_POISON_N =
   /^Your opponent['’]s Active Pokémon is now Poisoned\. During Pokémon Checkup, put (\d+) damage counters on that Pokémon instead of 1\.$/;
+// 🆕🆕🆕 **D501 — THE CONFUSION TWIN OF THE ANCHOR DIRECTLY ABOVE.** Corpus FILE
+// LINE 685, *"Your opponent's Active Pokémon is now Confused. Put 8 damage
+// counters instead of 3 on that Pokémon for this Special Condition."* — 1
+// sentence / 1 legal printing, and the THIRD and last `instead of` row in the
+// column (the other two are the Poison pair at file lines 688 and 689, both built
+// since P3-M3).
+//
+// 🛑 **A WHOLE-SENTENCE ANCHOR, AND THE LATTICE IS THE WARRANT.** Substituting
+// each of the five live axes onto its nearest BUILT spelling (the 8-counter Poison
+// row) over all 2⁵ points × the 13-reader surface gives built-by-weight
+// **0/1 · 0/5 · 0/10 · 0/10 · 0/5 · 1/1** — D489/D490/D494's shape: **no proper
+// subset builds**, so nothing smaller than the whole sentence is claimed and there
+// is neither a prerequisite half nor a superset to compose from. ⚠️ A SIXTH
+// candidate axis — the printed COUNT `8` — is DEGENERATE (D491/D494/D500): the
+// Poison anchor's `(\d+)` already claims 8 and 2 alike, so substituting it changes
+// nothing on either side and a 2⁶ table would have been this table reported twice.
+//
+// 🛑 **AND THE CHEAPER BUILD IS THE TRAP (D485).** The head *"Your opponent's
+// Active Pokémon is now Confused."* has built since M3, and
+// `splitAttackTrailingClause` **does compose at this head** — driven, not assumed:
+// it returns a head/tail pair for `⟨this head⟩. Draw a card.` and for `⟨this
+// head⟩. During your opponent's next turn, that Pokémon can't retreat.` So a BARE
+// TAIL arm would have freed the row with no compound anchor at all, strictly
+// cheaper than what ships here. It is refused because the tail points OUT of its
+// clause **twice** — *"on **that Pokémon**"* (antecedent: the head's subject) and
+// *"for **this Special Condition**"* (antecedent: the head's *Confused*) — so the
+// splitter would compose it behind **any** head some reader claims. Measured over
+// the committed column: **492 claimed sentences end in a period**, and among them
+// are Paralyzed and Burned heads, which would raise a CONFUSION amount off a
+// sentence that never mentions Confusion.
+//
+// THE PRINTED DEFAULT `3` IS A LITERAL, NOT A CAPTURE, and the measurement is the
+// reason rather than taste: over all 640 corpus rows the widened form
+// `instead of (\d+)` claims **exactly the same 1 sentence / 1 printing**, so the
+// generality buys nothing and costs a wrong program — D472's rule verbatim. `3`
+// is `DEFAULT_CONFUSION_DAMAGE` stated back by the card (as Poison's `1` is
+// `DEFAULT_POISON_DAMAGE`), so a printed `instead of 5` would be a card that
+// misstates the rule, and leaving it LOUD is the honest answer.
+//
+// The apostrophe slot is spelled `['’]` for the family's standing D136/D137
+// reason. No `/i`: the capitalised `Your` plus `^…$` is the whole guard.
+const DEFENDER_CONFUSION_N =
+  /^Your opponent['’]s Active Pokémon is now Confused\. Put (\d+) damage counters instead of 3 on that Pokémon for this Special Condition\.$/;
 // §11 retreat lock. The pool prints it two ways and BOTH are whole sentences,
 // so both are anchored here rather than matched loosely: the bare rider (15
 // printings / 13 names — Espathra, Bombirdier ×2, Tarountula, Talonflame,
@@ -22468,6 +22522,42 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         poisonDamage: Number(match[1]) * 10,
       },
     ];
+  }
+
+  // 5a. 🆕🆕🆕 D501 — "Your opponent's Active Pokémon is now Confused. Put {N}
+  //     damage counters instead of 3 on that Pokémon for this Special
+  //     Condition." (corpus FILE LINE 685, 1 sentence / 1 legal printing).
+  //
+  //     ⚠️ COUNTERS → HP AT THE ARM (one counter = 10, §12) — arm 5's conversion
+  //     directly above, verbatim, so no code past the parse carries the counter
+  //     unit. `installRecoil`'s and `DELAYED_DEFENDER_COUNTERS`' too.
+  //
+  //     ⚠️ THE `>= 1` GUARD IS THE FAMILY'S: a printed 0 is not a real card and a
+  //     zeroed self-hit would be a silent no-op, so returning `null` keeps such a
+  //     string on the loud ATTACK_EFFECT_SKIPPED path. ⚠️ AND IT IS NOT A
+  //     `> DEFAULT` GUARD: a printed `instead of 3` that raised the amount to 3
+  //     would be a card restating the rule, which the anchor admits and which
+  //     derives to a program identical in effect to the bare head — correct, and
+  //     the alternative (refusing it) would mean the reader deciding that a real
+  //     printing is a mistake.
+  //
+  //     ⚠️ ORDER AGAINST EVERY ARM ABOVE AND BELOW IS A REFACTOR, NOT BEHAVIOUR:
+  //     the anchor is `^…$` over a sentence whose second clause opens `Put `, and
+  //     no other anchor in this reader spells that. Stated because it is exactly
+  //     what a future arm added here could fail to have.
+  match = DEFENDER_CONFUSION_N.exec(effect);
+  if (match !== null) {
+    const counters = Number(match[1]);
+    if (counters >= 1) {
+      return [
+        {
+          op: "applyStatus",
+          target: "defender",
+          status: "confused",
+          confusionDamage: counters * 10,
+        },
+      ];
+    }
   }
 
   // 5b. "During your opponent's next turn, the Defending Pokémon can't

@@ -139,6 +139,7 @@ describe("evolution: carry-over (§10)", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(next.players.p1.active?.markers).toEqual([]);
     expect(types(events)).toEqual(["POKEMON_EVOLVED", "STATUS_CLEARED"]);

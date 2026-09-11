@@ -616,7 +616,7 @@ describe("§5 — a body that is Poisoned, Burned and Asleep takes the delayed c
       the install and the moment being measured. */
   function loaded(): GameState {
     const installed = install("p1", DELAY, "fix-doom-tank").state;
-    return setConditions(installed, "p2", { poisonDamage: 10, burned: true, rotation: "asleep" });
+    return setConditions(installed, "p2", { poisonDamage: 10, burned: true, rotation: "asleep", confusionDamage: 30 });
   }
 
   it("🛑 the DELAYED row precedes poison, burn and the wake-up flip", () => {
@@ -651,6 +651,7 @@ describe("§5 — a body that is Poisoned, Burned and Asleep takes the delayed c
       poisonDamage: 10,
       burned: true,
       rotation: "asleep",
+      confusionDamage: 30,
     });
     const fired = mustApply(bare, { type: "endTurn", seat: "p2" });
     expect(all(fired.events, "COUNTERS_PLACED").map((e) => e.source)).toEqual(["poison", "burn"]);
@@ -1118,7 +1119,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

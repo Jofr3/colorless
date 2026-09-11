@@ -33,21 +33,65 @@ export const BENCH_MAX = 5;
     inflicting effect raised it ("put N damage counters … instead of 1"). */
 export const DEFAULT_POISON_DAMAGE = 10;
 
+/** 🆕🆕 §8 step 3 (D501) — the HP a Confused Pokémon places on ITSELF when the
+    attack flip comes up tails, unless the inflicting effect raised it
+    ("Put N damage counters instead of 3 on that Pokémon for this Special
+    Condition."). `DEFAULT_POISON_DAMAGE`'s twin, and the printed default is a
+    RULE constant rather than a per-card fact: the rulebook's 3 counters, ×10
+    (§12: one counter = 10 HP). Both printed "instead of" sentences in the legal
+    column state the engine's own default back to it — Poison's `instead of 1`
+    against `DEFAULT_POISON_DAMAGE`, Confusion's `instead of 3` against this one
+    — which is why both anchors spell the default LITERALLY rather than capturing
+    it (a printed `instead of 5` would be a card misstating the rule, and
+    refusing it keeps the sentence on the loud ATTACK_EFFECT_SKIPPED path). */
+export const DEFAULT_CONFUSION_DAMAGE = 30;
+
 /** §12 condition shape: {Asleep, Paralyzed, Confused} are mutually exclusive
     (one card rotation — applying one REPLACES the others), Poisoned/Burned
     coexist with each other and with the rotation. Set by M3's attack effects
     (effects.ts), ticked by the Pokémon Checkup (flow.ts runCheckup). Poison
     carries its counter amount rather than a bool because §12/§13.1 let
-    effects raise it ("Poisoned; put 2 damage counters instead of 1"). */
+    effects raise it ("Poisoned; put 2 damage counters instead of 1").
+
+    🆕🆕 **D501 — `confusionDamage` IS THE SECOND RAISED-AMOUNT FIELD HERE, AND IT
+    IS NOT `poisonDamage`'s SHAPE.** `poisonDamage` doubles as Poison's own FLAG
+    (`presentStatuses` reads `> 0`, so 0 means "not Poisoned"); Confusion's flag is
+    `rotation === "confused"`, a different field, so this one is a PURE AMOUNT with
+    a printed default and **0 is not a sentinel here**. It is read at exactly one
+    site — attack.ts's §8 step-3 flip — and only when the rotation is `confused`,
+    so a value left standing on a cured body is never consulted; `applyStatus`
+    rewrites it on every confusion, which is what keeps a raised amount from
+    surviving a cure into the next application (driven in
+    `confusionDamage.test.ts` §4 rather than asserted).
+
+    🛑 **REQUIRED, AND THE BUMP IS OWED — 29 → 30.** See
+    `MATCH_RECORD_VERSION`'s own block for the argument; the short form is that
+    this address is inside `MatchRecord.state` and the two shipped `satisfies
+    SpecialConditions` guards (redact.ts `copyConditions`, projection.ts
+    `battleStateOf`) exist so that an added engine field is a COMPILE ERROR rather
+    than a silent drop — and an OPTIONAL key defeats both of them silently. */
 export interface SpecialConditions {
   rotation: "none" | "asleep" | "paralyzed" | "confused";
   /** Damage placed on it at each Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: number;
   burned: boolean;
+  /** 🆕🆕 D501 — HP this Pokémon places on itself when the §8 step-3 Confusion
+      flip misses; `DEFAULT_CONFUSION_DAMAGE` unless the inflicting effect raised
+      it. Meaningful only while `rotation === "confused"`. */
+  confusionDamage: number;
 }
 
 export function noConditions(): SpecialConditions {
-  return { rotation: "none", poisonDamage: 0, burned: false };
+  return {
+    rotation: "none",
+    poisonDamage: 0,
+    burned: false,
+    // 🆕🆕 D501 — the DEFAULT, not a zero. This function is the whole CLEAR
+    // (retreat, evolve, benching, the "recovers from all Special Conditions"
+    // op), so a cured body must go back to the rulebook's 3 counters rather than
+    // to a value no printing means.
+    confusionDamage: DEFAULT_CONFUSION_DAMAGE,
+  };
 }
 
 /** §12 — Asleep and Paralyzed are the rotation states that prevent both

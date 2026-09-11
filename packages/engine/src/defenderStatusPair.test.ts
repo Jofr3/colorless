@@ -147,7 +147,15 @@ const LEFT_LOUD = {
       are claimed with that clause silently thrown away — which is exactly the job this
       slot has held since D424, pointed for the first time at an anchor that has it. */
   dotAnchorTrio: [
-    "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+    // 🆕🆕🆕 **D501 — corpus FILE LINE 685 LEFT THIS LIST, AND IT WAS REMOVED RATHER
+    //    THAN THE LIST BEING SHORTENED SILENTLY.** It is now claimed WHOLE by
+    //    `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, so it is no longer LOUD and
+    //    cannot carry an ATTACK_EFFECT_SKIPPED control. ⚠️ ONLY THE LOUDNESS HALF OF THE
+    //    CLAIM ABOVE MOVED: `DEFENDER_NOW`'s `\.$` still refuses this string, and the new
+    //    anchor is a different regex — so the drift measurement the doc block quotes is
+    //    unchanged and the two survivors carry it. `confusionDamage.test.ts` §3 pins the
+    //    positive (which reader owns it now) so the transition is recorded rather than
+    //    disappearing into a shorter array (D418/D444/D449/D465).
     "Your opponent's Active Pokémon is now Confused. You may move any number of damage counters from your opponent's Pokémon to their other Pokémon in any way you like.",
     "Your opponent's Active Pokémon is now Poisoned. During your opponent's next turn, Energy cards can't be attached from your opponent's hand to that Pokémon.",
   ],
@@ -668,6 +676,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       rotation: "confused",
       poisonDamage: 0,
       burned: true,
+      confusionDamage: 30,
     });
     // Two rows, one per op, in printed order.
     expect(all(events, "STATUS_APPLIED").map((e) => e.status)).toEqual(["burned", "confused"]);
@@ -679,6 +688,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       rotation: "confused",
       poisonDamage: 0,
       burned: true,
+      confusionDamage: 30,
     });
     expect(find(events, "DAMAGE_DEALT")).toBeUndefined();
   });
@@ -692,12 +702,14 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       rotation: "confused",
       poisonDamage: 0,
       burned: true,
+      confusionDamage: 30,
     });
     // …and the ATTACKER is untouched — `defender` is not `self`.
     expect(state.players.p2.active?.conditions).toEqual({
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
   });
 
@@ -718,6 +730,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       rotation: "paralyzed",
       poisonDamage: 10,
       burned: false,
+      confusionDamage: 30,
     });
     expect(all(headsEvents, "STATUS_APPLIED").map((e) => e.status)).toEqual([
       "paralyzed",
@@ -728,6 +741,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(all(tailsEvents, "STATUS_APPLIED")).toEqual([]);
     // 🛑 THE GATE IS ALL-OR-NOTHING, which is the assertion a one-op flip arm could
@@ -759,7 +773,7 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
         ...state.players,
         p2: {
           ...state.players.p2,
-          active: { ...defender, conditions: { rotation: "asleep", poisonDamage: 20, burned: false } },
+          active: { ...defender, conditions: { rotation: "asleep", poisonDamage: 20, burned: false, confusionDamage: 30 } },
         },
       },
     };
@@ -767,7 +781,8 @@ describe("§4 — both conditions land, asserted on the FIELDS", () => {
     expect(defenderConditions(after)).toEqual({
       rotation: "confused", // replaced Asleep — §12
       poisonDamage: 20, // untouched: a different field
-      burned: true, // newly set
+      burned: true, // newly set,
+      confusionDamage: 30,
     });
   });
 });
@@ -831,6 +846,7 @@ describe("§5 — the compound composes, without an anchor of its own", () => {
       rotation: "confused",
       poisonDamage: 10,
       burned: false,
+      confusionDamage: 30,
     });
     // the tail — a different body is Active now
     const activeCardId = (st: GameState) => st.cardIdByUid[st.players.p1.active?.stack[0] ?? ""] ?? null;
@@ -877,6 +893,7 @@ describe("§6 — a §11 effects block refuses the pair", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     // The DAMAGE half is refused by the other, silent gate — one sentence, two
     // mechanisms, and the counts do not borrow from each other.
@@ -984,6 +1001,12 @@ describe("§8 — purity and the structural answers", () => {
     // grew on both (D279). This slice reads all three and adds none.
     expect(Object.keys(liveRun.state.players.p2.active?.conditions ?? {}).sort()).toEqual([
       "burned",
+      // 🆕🆕🆕 D501 — `confusionDamage`: THE FIRST KEY EVER ADDED TO
+      // `SpecialConditions` SINCE P3-M3, and these five shipped key-set rungs across five
+      // suites are exactly what was holding that fact. The sentence above stays TRUE of
+      // the slice that wrote it (it added none); only the COUNT moved, and it is
+      // annotated rather than rewritten (D442/D466). `MATCH_RECORD_VERSION` 29 -> 30.
+      "confusionDamage",
       "poisonDamage",
       "rotation",
     ]);
@@ -998,6 +1021,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });

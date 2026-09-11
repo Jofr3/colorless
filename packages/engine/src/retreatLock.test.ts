@@ -235,6 +235,7 @@ describe("the retreat lock — applying it", () => {
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
   });
 

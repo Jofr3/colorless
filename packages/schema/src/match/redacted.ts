@@ -67,6 +67,17 @@ export const redactedConditionsSchema = z.object({
   /** HP placed each Checkup while Poisoned; 0 = not Poisoned. */
   poisonDamage: z.number(),
   burned: z.boolean(),
+  /** 🆕🆕 D501 — HP a Confused Pokémon places on ITSELF when the §8 step-3 attack
+      flip misses; 30 unless the inflicting effect raised it. Meaningful only
+      while `rotation === "confused"`.
+
+      ⚠️ IT CROSSES THE WIRE BECAUSE A HUD RENDERS IT. `GameHud.tsx` prints the
+      Confusion warning under the attack list off `rotation` alone, and that line
+      said "tails: 30 damage to itself" until D501 — a claim the raised printing
+      makes FALSE at the one moment a player is deciding whether to attack. A field
+      the board knows and the wire drops is D412's defect exactly (an engine gate
+      and a local panel disagreeing), so the fact rides every surface. */
+  confusionDamage: z.number(),
 });
 export type RedactedConditions = z.infer<typeof redactedConditionsSchema>;
 

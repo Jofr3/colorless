@@ -257,7 +257,7 @@ describe("placement", () => {
       energy: [],
       tools: [],
       damage: 0,
-      conditions: { rotation: "none", poisonDamage: 0, burned: false },
+      conditions: { rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 },
       retreatBlocked: false,
       // …and no SELF-installed retreat lock either (D412), read the same way as
       // the six stamps below rather than as the boolean above it: `retreatLocked`

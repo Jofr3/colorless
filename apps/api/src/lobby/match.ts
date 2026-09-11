@@ -1172,8 +1172,97 @@ export interface MatchRecord {
 
     ⚠️ Nothing else moved: no other `GameState` field, no other `InPlayPokemon` key, no
     prompt kind, no choice kind, no `route` value, no error code, no `CardFilter` member,
-    no registry row, no `packages/schema` byte and no `redact.ts` byte. */
-export const MATCH_RECORD_VERSION = 29;
+    no registry row, no `packages/schema` byte and no `redact.ts` byte.
+
+    🆕🆕🆕 **29 → 30 AT D501 — AND IT IS THE FIRST FIELD EVER ADDED TO
+    `SpecialConditions`, WHICH IS A NESTED STRUCTURE AT D386's ADDRESS RATHER THAN
+    D386's ADDRESS ITSELF.** D501 gave `InPlayPokemon.conditions` a required
+    `confusionDamage: number` — the raised §8 step-3 self-hit (*"Your opponent's
+    Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that
+    Pokémon for this Special Condition."*, `censusAttackCorpus.ts` FILE LINE 685,
+    1 sentence / 1 legal printing).
+
+    🛑 **THE ADDRESS, NAMED FIRST (D456's rule).** `SpecialConditions` sits inside
+    `InPlayPokemon.conditions`, inside `PlayerState.{active, bench[]}`, inside
+    `GameState.players`, inside `MatchRecord.state`. **PERSISTED ON EVERY SAVE**,
+    with no park anywhere in front of it — so the REACHABILITY argument (D450/D461)
+    and the SERIALIZED-ALPHABET argument (D462/D473) are both INAPPLICABLE here and
+    neither is used. D498's *no carrier at all* is inapplicable for the same reason.
+    ⚠️ **THE LAST FOUR SLICES ALL HELD 29 AND THREE OF THEM HELD IT ON EXACTLY
+    THOSE ARGUMENTS**, every one of which assumes the byte does not reach a
+    persisted required slot. The only discriminator available is this block's own:
+    *does the OLD byte string still mean what it meant*.
+
+    ⚠️ **AND THE SHIPPED SIBLING AT THIS EXACT ADDRESS IS NOT A PRECEDENT FOR THE
+    VERSION — RE-DERIVED RATHER THAN ASSUMED.** `SpecialConditions.poisonDamage` is
+    REQUIRED and is the same fact one status over, which reads like the strongest
+    possible citation. It is not: `git log -S "poisonDamage" -- packages/engine/src/types.ts`
+    bottoms out at **`04551439`, 2026-07-17 (P3-M3, D20/D21)**, and
+    `apps/api/src/lobby/match.ts` did not exist until **`bc91ea14`, 2026-07-23**,
+    with record versioning landing at `95ca679b` (D71–D74). **The sibling did not
+    bump because there was nothing to bump.** It is a precedent for the SHAPE — an
+    amount on the condition, counters→HP at the producer, an OPTIONAL op rider
+    resolved against a rule constant — and silent on the constant.
+
+    🛑 **REQUIRED RATHER THAN OPTIONAL, AND THE REASON IS A SHIPPED COMPILE-TIME
+    GUARD RATHER THAN A PREFERENCE.** D441's discriminator — *does the ABSENT key
+    still say what the old writer meant* — answers **YES** here, which is unusual
+    and is why the optional road had to be refused on other grounds rather than
+    dismissed: absent would read as `DEFAULT_CONFUSION_DAMAGE`, and every v29
+    confusion self-hit genuinely WAS 30. D434's *a rest must be OLD* is likewise
+    SATISFIED for only the second time on record (`rotation`, `poisonDamage` and
+    `burned` were all written by the v29 deploy). What decides it:
+
+      · **TWO SHIPPED `satisfies SpecialConditions` GUARDS EXIST SO THAT AN ADDED
+        ENGINE FIELD IS A COMPILE ERROR RATHER THAN A SILENT DROP**, and both say so
+        in their own doc blocks — `redact.ts`'s `copyConditions` (*"the `satisfies`
+        makes an added engine field a compile error here rather than a silent
+        drop"*) and `projection.ts`'s `battleStateOf` (*"the copy alone would NOT
+        pin that restatement — a field added to SpecialConditions would just be
+        dropped here and silently never render"*). **An OPTIONAL key satisfies both
+        guards while reaching neither surface.** It would have disarmed, silently,
+        the two instruments written to catch exactly this — D418's disarmed-tripwire
+        shape arriving at a type assertion. Both guards fired on the real edit,
+        which is the evidence rather than the claim.
+      · **D421's mitigation is unavailable even though the rest is old.** The rest
+        cannot witness the loss: `rotation: "confused"` is byte-identical on a body
+        at 30 and a body at 80, so a dropped optional rider degrades into a
+        plausible-looking wrong answer on the one board the printing is about. That
+        is a FOURTH position in the sequence — D432 *no rest*, D434 *rest not old*,
+        D435 *rest old and the degradation is `NaN`*, and now **D501 *rest old, the
+        option genuinely available, and the rest cannot witness the loss***.
+      · **D159/D421 — same fact, same spelling, every surface.** An optional twin
+        beside a required `poisonDamage` at one address is a second answer to one
+        question.
+
+    🛑 **AND A v29 RECORD IS NOT MERELY UNSAFE, IT IS SILENTLY CORRUPTING — WHICH IS
+    D435's OUTCOME AND THE SHARPEST RETIREMENT REASON IN THIS BLOCK.** Every in-play
+    Pokémon in a v29 record lacks a key this deploy's type says is always there, so
+    `attack.ts`'s §8 step-3 flip computes `active.damage + undefined` → **`NaN`**,
+    `isLethallyDamaged` answers `NaN >= hp` → **false**, and the body is not Knocked
+    Out, **can never be Knocked Out again**, and looks entirely normal on the board.
+    The `COUNTERS_PLACED` row renders *"Confusion: X hit itself for undefined"*.
+    This is NOT D124's benign soft landing: it is silent corruption, driven in
+    `confusionDamage.test.ts` §7 over a reconstructed v29 body rather than argued.
+    **A KEY THE WRITER NEVER WROTE IS NOT A KEY WITH A DEFAULT.**
+
+    ⚠️ Also moved, and neither is a second reason counted twice: **`EffectOp.applyStatus`
+    gains an OPTIONAL `confusionDamage?: number`** — a new optional field on a
+    persisted op, which is D334/D146's WIDENING (absent means the rule default,
+    which is what every v29 program meant), free on its own; and
+    **`redactedConditionsSchema` gains `confusionDamage: z.number()`** — the wire
+    shape, which is NOT in a `MatchRecord` at all (`state` is a `GameState`;
+    redaction is a per-request projection) and rides along because `GameHud.tsx`
+    renders the number.
+
+    ⚠️ Nothing else moved: no other `GameState` field, no other `InPlayPokemon` key,
+    no new `EffectOp` member, no prompt kind, no choice kind, no `route` value, no
+    error code, no `CardFilter` member, no `PendingStage` inhabitant and no registry
+    row. `GameEvent.STATUS_APPLIED` gains an optional `confusionDamage?: number`,
+    and a `GameEvent` is not persisted (`MatchRecord.log` holds the RENDERED
+    `SeatLogEntry[]`), so that is new TEXT in NEW records only — D141's
+    already-settled case. */
+export const MATCH_RECORD_VERSION = 30;
 
 /** How a persisted match read back: absent, usable, or written by an
     incompatible deploy (`stale` — the caller decides whether to retire it). */

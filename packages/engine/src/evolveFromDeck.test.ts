@@ -444,7 +444,7 @@ describe("D307 §2 — the printed attack on a real board", () => {
     // the attacker's turn (§5.3), so the board has already moved on by the time
     // this is read. The stamp is what stops the new body evolving again.
     expect(active?.turnPlayed).toBe(placedOn);
-    expect(active?.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false });
+    expect(active?.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
   });
 
   it("a POKEMON_EVOLVED event is filed, and no DECK_SEARCHED is", () => {

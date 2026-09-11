@@ -114,6 +114,7 @@ import type {
 } from "./types";
 import {
   BENCH_MAX,
+  DEFAULT_CONFUSION_DAMAGE,
   DEFAULT_POISON_DAMAGE,
   SEATS,
   drawToHand,
@@ -6140,6 +6141,25 @@ export function applyStatus(
     return withActive(state, seat, {
       ...active,
       conditions: { ...active.conditions, burned: true },
+    });
+  }
+  // 🆕🆕🆕 D501 — CONFUSION CARRIES AN AMOUNT, exactly as Poison does eleven lines
+  // up, and this arm exists for the same two reasons: the `?? DEFAULT` resolves
+  // the op's OPTIONAL rider into the board's REQUIRED field, and the write is
+  // UNCONDITIONAL. ⚠️ THE UNCONDITIONAL WRITE IS THE LOAD-BEARING HALF. It is what
+  // stops a raised amount outliving the Confusion that carried it: a body
+  // Confused at 80, cured (retreat / evolve / bench / `clearStatus`, all of which
+  // go through `noConditions()`) and Confused again by a bare sentence reads 30,
+  // because THIS line put it back. A `if (op.confusionDamage !== undefined)` guard
+  // would leave the 80 standing on a spread-clear path and the next bare
+  // Confusion would silently inherit it — driven in `confusionDamage.test.ts` §4
+  // rather than argued.
+  if (op.status === "confused") {
+    const confusionDamage = op.confusionDamage ?? DEFAULT_CONFUSION_DAMAGE;
+    events.push({ type: "STATUS_APPLIED", seat, uid, status: "confused", confusionDamage });
+    return withActive(state, seat, {
+      ...active,
+      conditions: { ...active.conditions, rotation: "confused", confusionDamage },
     });
   }
   events.push({ type: "STATUS_APPLIED", seat, uid, status: op.status });

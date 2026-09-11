@@ -1058,12 +1058,13 @@ describe("⚠️ THE RECOVERY — a condition already present, cleared by a cont
     // Asleep body attached to this Energy wakes up and keeps burning and keeps
     // being poisoned, and the STATUS_CLEARED row names only what came off.
     let state = myTurnWith();
-    state = setConditions(state, "p2", { rotation: "asleep", burned: true, poisonDamage: 10 });
+    state = setConditions(state, "p2", { rotation: "asleep", burned: true, poisonDamage: 10, confusionDamage: 30 });
     const done = attachFromHand(state, "sv02-193", ACTIVE);
     expect(done.state.players.p2.active?.conditions).toEqual({
       rotation: "none",
       burned: true,
       poisonDamage: 10,
+      confusionDamage: 30,
     });
     expect(find(done.events, "STATUS_CLEARED")?.statuses).toEqual(["asleep"]);
   });
@@ -1352,7 +1353,7 @@ describe("⚠️ the recovery's FOUR CALL SITES, all driven off printed cards", 
     const { state } = paralyzedThenMyTurnShared();
     for (const seat of ["p1", "p2"] as const) {
       for (const pokemon of state.players[seat].bench) {
-        expect(pokemon.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false });
+        expect(pokemon.conditions).toEqual({ rotation: "none", poisonDamage: 0, burned: false, confusionDamage: 30 });
       }
     }
   });
@@ -1456,6 +1457,7 @@ describe("⚠️ THE CHECKUP — D172's conclusion SURVIVES, its ARGUMENT NARROW
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
   });
 });
@@ -1519,7 +1521,15 @@ describe("the structural questions", () => {
     const done = attachFromHand(state, "sv02-193", ACTIVE);
     const active = done.state.players.p2.active;
     if (active === null) throw new Error("no Active");
-    expect(Object.keys(active.conditions).sort()).toEqual(["burned", "poisonDamage", "rotation"]);
+    // 🆕🆕🆕 D501 — `confusionDamage` is the FIRST key added to `SpecialConditions`
+    // since P3-M3; the rung is widened rather than relaxed, so it still reddens on a
+    // sixth key. `MATCH_RECORD_VERSION` 29 -> 30.
+    expect(Object.keys(active.conditions).sort()).toEqual([
+      "burned",
+      "confusionDamage",
+      "poisonDamage",
+      "rotation",
+    ]);
     expect(Object.keys(active)).not.toContain("statusImmunities");
     expect(Object.keys(active)).not.toContain("statusRecovery");
   });

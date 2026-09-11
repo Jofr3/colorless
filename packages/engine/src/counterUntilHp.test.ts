@@ -203,8 +203,11 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     // 🆕🆕 **D456 — FOUR BECAME TWO AND SEVEN BECAME FOUR**, and the two that left are
     // bullets (a) and (b) below, both re-pointed rather than deleted. ⚠️ **THE TWO FIGURES
     // DISAGREE AGAIN, −2 AND −3**: line 179 carries 1 printing and line 180 carries 2.
-    expect(unread).toHaveLength(2);
-    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(4);
+    // 🆕🆕🆕 D501 — TWO BECAME ONE AND FOUR BECAME THREE (corpus FILE LINE 685,
+    // 1 sentence / 1 printing, so the two steps AGREE this time — read off the corpus,
+    // not assumed from the row being singular).
+    expect(unread).toHaveLength(1);
+    expect(unread.reduce((sum, [n]) => sum + n, 0)).toBe(3);
     const unbuilt = unread.map(([, t]) => t);
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(unbuilt).not.toContain(s);
 
@@ -278,9 +281,17 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
     expect(deriveAttackEffect("Then, shuffle those Energy cards into your deck.")).toBeNull();
     // (d) THE CONFUSION SUBSTITUTION — 1 printing. Not a placement at all: it RAISES the
     //     Checkup's own per-condition amount, a status field reached by a status op.
-    expect(unbuilt).toContain(
+    // 🆕🆕🆕 D501 — corpus FILE LINE 685 LEFT THIS LIST. It is claimed WHOLE by `deriveAttackEffect` through `DEFENDER_CONFUSION_N`, into an `applyStatus` carrying the raised amount — a STATUS op, which is what this family's refusal always said it would be. Re-pointed onto the OP rather than decremented (D465/D488): a count that steps says something left and nothing about what, where naming the op reddens on a reader widened past the count clause and stays green only on the build that actually shipped.
+    expect(unbuilt).not.toContain(
       "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
     );
+    expect(
+      deriveAttackEffect(
+        "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.",
+      ),
+    ).toEqual([
+      { op: "applyStatus", target: "defender", status: "confused", confusionDamage: 80 },
+    ]);
     // …and the one the published pattern CANNOT see, carried forward from D450 because
     // a hole a predecessor named is a hole this slice inherits: `Put up to 9 …` puts the
     // bound between the verb and the count.
@@ -537,7 +548,7 @@ describe("§3 — a NEW `EffectOp` inhabitant, and the record version does not m
   });
 
   it("the engine version moved and the record version did not", () => {
-    expect(engineVersion).toBe("0.392.0");
+    expect(engineVersion).toBe("0.393.0");
   });
 });
 

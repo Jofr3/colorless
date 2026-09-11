@@ -1071,8 +1071,8 @@ function redactedInPlayOf(state: GameState, pokemon: InPlayPokemon): RedactedInP
     mutating a snapshot must not reach back into game state. The `satisfies`
     makes an added engine field a compile error here rather than a silent drop. */
 function copyConditions(conditions: SpecialConditions): SpecialConditions {
-  const { rotation, poisonDamage, burned } = conditions;
-  return { rotation, poisonDamage, burned } satisfies SpecialConditions;
+  const { rotation, poisonDamage, burned, confusionDamage } = conditions;
+  return { rotation, poisonDamage, burned, confusionDamage } satisfies SpecialConditions;
 }
 
 /** Face-down backs for the opponent's hand. Ids are positional

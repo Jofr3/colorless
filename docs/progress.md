@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-11 — build session #440 (**P3-M5 — D500, *the Basic Energy attached count — a FOURTH lattice shape, and THE BUILDER DIED BEFORE REPORTING YET THE SLICE WAS FULLY RECOVERABLE.*** Built corpus row *"This attack does 40 damage for each Basic Energy attached to this Pokémon."* — **1 sentence / 1 legal printing**. 🛑 **THE AGENT TERMINATED ON A SERVER-SIDE 500 MID-SLICE AND WROTE NO REPORT.** Its last words were that a surviving row was **inert on the board it had chosen** — not a killer-set problem — and that it was fixing the suite (D496/D499). **Everything below was verified and derived by the caller from the tree itself**, not from a report: `bun run check` GREEN **483 files / 11,024 tests**, `precheck` clean at **2,446**, `residue-census-gate` **OK §A 109 / 83 / 117**, `partition-gate` OK, and the probe **7 killed · 0 known survivors · 0 GAP · 0 error** — **so the repair had landed before the failure.** ✅ **AND THE REASONING WAS RECOVERABLE BECAUSE IT IS PINNED IN THE SUITE RATHER THAN NARRATED IN PROSE**, which is what this loop's own discipline is for: the lattice vector, the degeneracy argument and the separating board are all readable out of `basicEnergyScaling.test.ts` and the doc blocks. 🛑 **A FOURTH LATTICE SHAPE, READ OUT OF THE SUITE: `0/1 · 1/1`, a 2¹ TABLE**, because **three of four candidate axes are DEGENERATE** by D491/D494's test — each one's printed value already builds on an otherwise-built sentence, so substituting it changes nothing. That stands beside D489/D490/D494's *one built point at FULL weight*, D495's `0/1 · 2/2 · 0/1` *every segment builds*, and D499's `0/1 · 1/3 · 0/1` *prereq half*. **A single-axis sentence: the NOUN is the whole blocker.** 🛑 **AND THE CARDS-VERSUS-PROVISIONS QUESTION — the one I predicted would be the content — WAS DRIVEN, NOT ASSERTED.** A Special Energy may **PROVIDE** a basic type, so *"each Basic Energy attached"* must count **CARDS**, not provisions. The suite fields **`fix-blend`, a SPECIAL Energy whose registry `EnergyProgram` provides a basic type**, plus a control of the same card class with no basic provision — **so the two readings are separated by a real board and not by argument.** **SHIPPED**: one new value `"basic"` on the shipped energy-category axis (`BasicEnergyType | "special" | "basic" | null`) and one `basicEnergyUids` helper in `continuous.ts` that asks **`card.energyType === "Normal"` through `matchesFilter`'s ALREADY-SHIPPED `basicEnergy` arm** — **one noun, one answer** (D159), rather than a second reader of the same word. Engine **0.391.0 → 0.392.0**. Corpus **2,439 → 2,446**, declared survivors **48 UNCHANGED**, archive ratchet **170**. `it(` delta **+22 EXACT**, all in the new suite. Residue **84/118 → 83/117**, `BUILT.attack` **1614 → 1615**; the two steps **AGREE at 1 and 1**. ⚠️ **WHAT IS NOT RECOVERABLE AND IS NOT INVENTED HERE**: the builder's branch pricing, its tripwire audit, its witness-load count and its `MATCH_RECORD_VERSION` argument were never written down. **The version is UNCHANGED at 29 and the gates agree, but no argument for it is on record** — a successor touching this row should re-derive it rather than assume one was made. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2398 killed · 48 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,297.1s`** — `+7 killed, +0 declared`, the **sixty-first** consecutive slice to commit its number before the run and hit it **— and the first whose builder never wrote a report, the prediction having been derived from the tree instead.** Completeness structural: **2,446 unique progress-line ids / 2,446 rows / 0 unmatched**, **sixty-second** consecutive clean run. `setsid` held for the **eleventh** consecutive reuse.)
+**Last updated:** 2026-09-11 — build session #441 (**P3-M5 — D501, *the raised Confusion self-hit — THE FIRST `MATCH_RECORD_VERSION` BUMP OF THE RUN, OWED AND PAID, and a FALSE NUMBER THE HUD WAS SHOWING PLAYERS AT DECISION TIME.*** Built corpus **line 685**, *"Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition."* — **1 sentence / 1 legal printing**, and **all three `instead of` rows are now claimed**. 🛑 **`MATCH_RECORD_VERSION` 29 → 30 — THE FIRST BUMP SINCE BEFORE D470, AND IT IS OWED RATHER THAN CHOSEN.** Address named FIRST and DRIVEN, not grepped: `SpecialConditions` ⊂ `InPlayPokemon.conditions` ⊂ `PlayerState` ⊂ `GameState.players` ⊂ **`MatchRecord.state`**, persisted on every save **with no park in front** — so reachability (D450), serialized-alphabet (D462) and no-carrier (D498) are all **INAPPLICABLE and none was used**. ⚠️ **AND MY CENTRAL INSTRUCTION WAS UNANSWERABLE**: I wrote *"check what `poisonDamage` did about this — it is the shipped precedent at the same address, so whatever argument it made is the one to re-derive."* **`poisonDamage` MADE NO ARGUMENT.** Verified at ritual time: it landed **2026-07-14**, `apps/api/.../match.ts` did not exist until **07-23**, and `MATCH_RECORD_VERSION` first appeared **07-26** — **twelve days later.** It is a precedent for the SHAPE and silent on the CONSTANT, and my *"at the same address"* hid that: **a builder obeying the sentence hunts an argument that cannot exist, or infers "the sibling did not bump, so neither should I" from an absence that means nothing.** D476's hazard exactly — the citation's content contradicting the sentence citing it. 🛑 **THE OPTIONAL ROAD WAS AVAILABLE AND WAS REFUSED ON MEASURED GROUNDS, NOT REFLEX.** D441's discriminator says YES (absent would read as the default, and every v29 confusion hit WAS 30) and D434's *"rest must be OLD"* is **SATISFIED** — only the second time on record. **What decides it is a shipped COMPILE-TIME GUARD**: `redact.ts` and `projection.ts` each carry a `satisfies SpecialConditions` whose doc block exists so an added engine field is *a compile error rather than a silent drop* — **and an optional key satisfies both while reaching neither surface**, silently disarming the two instruments written to catch exactly this. **Both guards fired on the real edit; that is the evidence.** 🆕 **AND A FOURTH POSITION IN THE SEQUENCE**: D432 *no rest*, D434 *rest not old*, D435 *rest old but degradation is NaN*, **D501 *rest old, option available, REST CANNOT WITNESS*** — `rotation: "confused"` is byte-identical at 30 and at 80. **DRIVEN over a reconstructed v29 record with the key genuinely `delete`d**: the EVENT renders *"hit itself for undefined"* while the BOARD computes `damage + undefined` → **`NaN`**, `NaN >= hp` is **false**, and the body **can never be Knocked Out again on a board that looks entirely normal** — neither 80 nor 30, **D435's silent corruption at the sharpest address yet.** 🛑 **AND A LIVE FALSE CLAIM TO PLAYERS, FOUND BY GREPPING EVERY READ SITE BEFORE FIXING ANY** (D412): `GameHud.tsx` printed *"Confused: attacking flips a coin — tails: 30 damage to itself"* **off `rotation` alone** — wrong at the exact moment a player decides whether to attack. **Verified at ritual time: the hard-coded 30 is gone and it now reads the board.** Two more hard-coded *"the 30 self-damage"* prose claims in `events.ts` and `log.ts` were **falsified by this slice and corrected at the site.** The lattice is the **D489 full-weight shape** — vector `0/1 · 0/5 · 0/10 · 0/10 · 0/5 · 1/1`, **no proper subset builds** — with **one of six axes DEGENERATE** (the count `8`, already claimed by the Poison anchor's `(\d+)`). ⚠️ **A CHEAPER TAIL-ONLY ANCHOR WAS DRIVEN AND REFUSED** (D485): the splitter **does** compose at this head, but the tail points out of its clause **twice** and **492 claimed sentences end in a period**, so it would hang a Confusion amount off sentences that never mention Confusion. **Witness load 10 files / 1 row — the worst ratio of the run.** Engine **0.392.0 → 0.393.0**. Corpus **2,446 → 2,464**, declared survivors **48 UNCHANGED**, archive ratchet **171**. `bun run check` GREEN, **484 files / 11,064 tests** (+1 file, **+40 tests**). Residue **83/117 → 82/116**, `BUILT.attack` **1615 → 1616**.)
+
+**Last updated (was):** 2026-09-11 — build session #440 (**P3-M5 — D500, *the Basic Energy attached count — a FOURTH lattice shape, and THE BUILDER DIED BEFORE REPORTING YET THE SLICE WAS FULLY RECOVERABLE.*** Built corpus row *"This attack does 40 damage for each Basic Energy attached to this Pokémon."* — **1 sentence / 1 legal printing**. 🛑 **THE AGENT TERMINATED ON A SERVER-SIDE 500 MID-SLICE AND WROTE NO REPORT.** Its last words were that a surviving row was **inert on the board it had chosen** — not a killer-set problem — and that it was fixing the suite (D496/D499). **Everything below was verified and derived by the caller from the tree itself**, not from a report: `bun run check` GREEN **483 files / 11,024 tests**, `precheck` clean at **2,446**, `residue-census-gate` **OK §A 109 / 83 / 117**, `partition-gate` OK, and the probe **7 killed · 0 known survivors · 0 GAP · 0 error** — **so the repair had landed before the failure.** ✅ **AND THE REASONING WAS RECOVERABLE BECAUSE IT IS PINNED IN THE SUITE RATHER THAN NARRATED IN PROSE**, which is what this loop's own discipline is for: the lattice vector, the degeneracy argument and the separating board are all readable out of `basicEnergyScaling.test.ts` and the doc blocks. 🛑 **A FOURTH LATTICE SHAPE, READ OUT OF THE SUITE: `0/1 · 1/1`, a 2¹ TABLE**, because **three of four candidate axes are DEGENERATE** by D491/D494's test — each one's printed value already builds on an otherwise-built sentence, so substituting it changes nothing. That stands beside D489/D490/D494's *one built point at FULL weight*, D495's `0/1 · 2/2 · 0/1` *every segment builds*, and D499's `0/1 · 1/3 · 0/1` *prereq half*. **A single-axis sentence: the NOUN is the whole blocker.** 🛑 **AND THE CARDS-VERSUS-PROVISIONS QUESTION — the one I predicted would be the content — WAS DRIVEN, NOT ASSERTED.** A Special Energy may **PROVIDE** a basic type, so *"each Basic Energy attached"* must count **CARDS**, not provisions. The suite fields **`fix-blend`, a SPECIAL Energy whose registry `EnergyProgram` provides a basic type**, plus a control of the same card class with no basic provision — **so the two readings are separated by a real board and not by argument.** **SHIPPED**: one new value `"basic"` on the shipped energy-category axis (`BasicEnergyType | "special" | "basic" | null`) and one `basicEnergyUids` helper in `continuous.ts` that asks **`card.energyType === "Normal"` through `matchesFilter`'s ALREADY-SHIPPED `basicEnergy` arm** — **one noun, one answer** (D159), rather than a second reader of the same word. Engine **0.391.0 → 0.392.0**. Corpus **2,439 → 2,446**, declared survivors **48 UNCHANGED**, archive ratchet **170**. `it(` delta **+22 EXACT**, all in the new suite. Residue **84/118 → 83/117**, `BUILT.attack` **1614 → 1615**; the two steps **AGREE at 1 and 1**. ⚠️ **WHAT IS NOT RECOVERABLE AND IS NOT INVENTED HERE**: the builder's branch pricing, its tripwire audit, its witness-load count and its `MATCH_RECORD_VERSION` argument were never written down. **The version is UNCHANGED at 29 and the gates agree, but no argument for it is on record** — a successor touching this row should re-derive it rather than assume one was made. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2398 killed · 48 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,297.1s`** — `+7 killed, +0 declared`, the **sixty-first** consecutive slice to commit its number before the run and hit it **— and the first whose builder never wrote a report, the prediction having been derived from the tree instead.** Completeness structural: **2,446 unique progress-line ids / 2,446 rows / 0 unmatched**, **sixty-second** consecutive clean run. `setsid` held for the **eleventh** consecutive reuse.)
 
 **Last updated (was):** 2026-09-11 — build session #439 (**P3-M5 — D499, *the cancel and the shield on ONE coin — a THIRD lattice shape, a 57-decision refusal overturned, and a mutant that SURVIVED 11,001 tests.*** **The loop is back to building sentences.** Built corpus **file line 268**, *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon."* — **1 sentence / 2 legal printings**. 🛑 **A THIRD LATTICE SHAPE, AND MY PREDICTION OF D495's WAS WRONG.** Built-by-weight **`0/1 · 1/3 · 0/1`**: exactly one point builds, at **weight 1**, reached by **deleting the cancel arm** — and that arm's complement is itself **a printed 15-printing corpus row**. So there IS a prerequisite half, unlike D495's *every-segment-builds*, and it is not D489/D490/D494's *one built point at full weight* either. **The blocker is the JOIN — a SEAM question, which is why the answer was a coin member rather than an anchor.** Direction 2: the cancel held and the heads consequent varied over six printed alternatives — **all six build alone, none builds with the cancel in front, and all six mirrors refuse.** 🛑 **A 57-DECISION REFUSAL OVERTURNED, AND THE DISPROOF IS ONE QUESTION.** D142's block listed this row LOUD (*"a SECOND consequent on the same flip"*) and four suites carried it, one calling it *"a durable witness rather than a treadmill"* — and **every clause is TRUE of `deriveAttackEffect` and FALSE as a claim about the engine** (D456/D457). That reader's program runs at the TAIL, *after* §8.5, so an `otherwise` **cannot retract damage already dealt**; the carrier that CAN is `deriveAttackCoinFlip`, read ~1,000 lines earlier, in front of §8.5. **The question that disproves it: WHICH CARRIER IS READ AT THE SEAM THE RULE RESOLVES AT?** ✅ **And because the refusal was carrier-scoped, FIVE shipped `toBeNull` witnesses stayed GREEN and ARMED.** 🛑 **THE TWO-READER IDIOM DOES NOT TRANSFER, AND THE REASON IS A RESOURCE.** D493/D494 shipped sentences claimed by two readers because `attack.ts` broadcasts `effect` — but **both readers here consume `state.rngState`**, so a dual claim spends **two rng steps and emits two flip rows for ONE printed flip**, and the faces could disagree. **Before reaching for that idiom, ask what each reader SPENDS.** RNG driven: post-swing `rngState` is **byte-identical to the bare cancel's on the same seed, on both faces**, exactly one flip row, seeds **searched not stubbed**. 🛑 **AND A MUTANT SURVIVED 482 FILES / 11,001 TESTS — A REAL SUITE HOLE.** The first probe returned **1 GAP**; `--only … --full` discriminated it (D455) rather than a narrow killer set being blamed. `ATTACK_COIN_CANCEL`'s `^` had **ZERO rows intersecting it by SPAN for 373 decisions**, measured over all 2,427 pre-existing `find`s **by span, not by name** (D453). **The row was NOT tuned; the SUITE was** (D496's pattern, second use). **`MATCH_RECORD_VERSION` 29 on the SERIALIZED ALPHABET, address named FIRST** — `InPlayPokemon.attackBlock`, a `GameState` field persisted **directly** with no park in front, so D450's reachability is the wrong shape and is stated **second** as the weaker half; the record is `{"turn":3,"effects":true}` **either way**, driven against the sibling sentence on the same seed. **No bump owed, none contorted around.** ⚠️ **THREE OF MY CONFIDENT CLAIMS WERE WRONG AND BOTH MY HEDGES CARRIED** — D487's pattern, not D494's inverse. The lattice shape; *"the largest reachable row"* (it is **tied** at 2 printings with three others); and the family split — **verified at ritual time as 30 built / 12 unread pre-slice against my 27 / 15**, each half wrong by 3, **and they summed to 42, which is exactly what hid it.** Engine **0.390.0 → 0.391.0**. Corpus **2,427 → 2,439**, declared survivors **47 → 48**, archive ratchet **169**. `bun run check` GREEN, **482 files / 11,002 tests** (+1 file, +33 tests). Residue **85/120 → 84/118**, `BUILT.attack` **1612 → 1614**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED: `2391 killed · 48 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,250.4s`** — `+11 killed, +1 declared`, the **sixtieth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,439 unique progress-line ids / 2,439 rows / 0 unmatched**, **sixty-first** consecutive clean run. `setsid` held for the **tenth** consecutive reuse.)
 
@@ -624,6 +626,98 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-11, after D501)
+>
+> ✅ **`bun run check` IS GREEN — 484 files / 11,064 tests, `CHECK_EXIT=0`** (+1 file, **+40 tests**,
+> matching the new suite's line-anchored `it(` count exactly). Engine **0.392.0 → 0.393.0**.
+> 🛑 **`MATCH_RECORD_VERSION` 29 → 30 — THE FIRST BUMP OF THIS RUN.** Corpus **2,446 → 2,464**,
+> declared survivors **48 UNCHANGED**, archive ratchet **171**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP.**
+> ⚠️ **ONE UNTRACKED PATH: `packages/engine/src/confusionDamage.test.ts`.** `git add` EXPLICIT PATHS.
+> 🛑 **LAUNCH THE SWEEP DETACHED WITH `setsid`** (D489, held at D490–D500).
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — sixty-second consecutive slice to name its number
+> first:**
+>
+> > **`2416 killed · 48 known survivor(s) · 0 GAP(s) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,464**
+>
+> `2398 + 18 = 2416`, `48 + 0 = 48`, `2446 + 18 = 2464`, closing `2416 + 48 = 2464`.
+>
+> **(1) PRE-CLEARANCE.** **119 files / 935 insertions / 250 deletions**, the largest diff of the run —
+> a **required** field rippling through every fixture that constructs `SpecialConditions`. **9 of the
+> 48 survivors live in files with deletions; 39 ruled out by file.** All 9 reasons read individually,
+> and **one quantifies over the structure edited**: `D196-live-active`'s *"the only pre-fold mutation
+> of the attacker is the confusion self-damage…"* — **re-derived clause by clause, all three hold**,
+> since only the numeric addend moved. `precheck` re-finding all **2,464** `find`s exactly once is the
+> witness that no existing line moved into a survivor's anchor. **Two rows re-transcribed**
+> (`D326-record-version-not-bumped` 29→30, `D495-census-built-attack-not-stepped` 1615→1616), same
+> experiment, same killers, **class unchanged** — ⚠️ **and the D326 rot was PREDICTED by the pre-build
+> tripwire audit rather than discovered by `precheck` afterwards, the first time in seven bumps.**
+>
+> **(2) ALREADY VERIFIED INDEPENDENTLY — run the SWEEP.** `check` GREEN **484 / 11,064**; `precheck`
+> clean at **2,464**; `residue-census-gate` **OK, §A 108 / 82 / 116**; `splice-gate` and
+> `partition-gate` **OK**; probe `--decision D501 --allow-dirty` → **18 killed · 0 survivors · 0 GAP ·
+> 0 stale · 0 clobber · 0 error**. ✅ **`patches LITERALLY` HELD at 22.** ✅ **And two claims were
+> re-verified at ritual time**: the version constant reads **30**, and `GameHud.tsx`'s hard-coded
+> *"tails: 30 damage to itself"* is **gone**, replaced by a read of the board.
+>
+> **(3) AFTER THE SWEEP: the close-out.** Structural completeness from unique progress-line ids,
+> confirm the line, update this stamp's tail and this `(0)` block, append to the `| **D501** |` row,
+> add any convention BEFORE `## Git / commits`, re-run `check`, commit.
+>
+> **(4) 🛑 THEN D502 — AND THE VERSION LESSON IS THE ONE TO CARRY.** **A bump is owed when a REQUIRED
+> key lands at a persisted address and the REST CANNOT WITNESS its absence.** D501 is the fourth
+> position in that sequence (D432 *no rest*, D434 *rest not old*, D435 *rest old but degradation is
+> NaN*, **D501 *rest old, option available, rest cannot witness***). ⚠️ **And the deciding argument
+> was not a rule but a SHIPPED COMPILE-TIME GUARD** — two `satisfies SpecialConditions` sites exist so
+> an added engine field is a compile error rather than a silent drop, **and an optional key would have
+> disarmed both**. 🛑 **Ask what the OPTIONAL shape would disarm, not only what it would mean.**
+>
+> **(5) THE ROWS STILL OPEN.** Residue **82 / 116**; ceiling **~88 %**; about **68 sentences of
+> reachable work**. `COMPOUND-head` is down to **6**, and its remaining members were measured this
+> slice: the **Ancient Supporter** row is banner-blocked; **`Search deck … If you put any Pokémon onto
+> your Bench in this way, move an Energy`** needs a §9.2 record on `searchDeck`; the **pre-damage
+> optional attach** needs a park and a choice; **`use the effect of a Supporter card you find there`**
+> is copy-attack-shaped; the **second Confusion row** (*move any number of damage counters*) and the
+> **Poison + attach-bar** row both need new machinery — the latter a **per-body attach bar**, where
+> `StampedPlayLockKey` is per-SEAT and holds only `"Item" | "Supporter" | "evolve"`. 🛑
+> **`Ancient`/`Future`/`Tera` off the table, 38th slice.**
+>
+> **(6) 🆕 TWO THINGS LEFT UNDONE, PRICED BY THE BUILDER.** **`OnlineHud.tsx` has NO Confusion hint at
+> all** (zero occurrences of `Confused`) — so the local HUD now tells the truth and the online one
+> tells the player nothing. **Pre-existing, not created here, but this slice makes the asymmetry
+> matter for the first time**; the wire already carries the number, so the cost is one paragraph plus
+> a dom test. And `defenderStatusTriple.test.ts`'s loss loop still iterates **three** condition keys
+> where there are now four — a free strengthening, left because that rung is about its own slice's
+> three statuses.
+>
+> **(7) THE TARGETING RULES, seventy-three clauses.** (a)–(rrr) as at D500, plus: (sss) 🆕 **D501-i: a
+> precedent at the same ADDRESS is not a precedent for the same QUESTION** — `poisonDamage` predates
+> `MATCH_RECORD_VERSION` by twelve days, so *"re-derive what the sibling argued"* asked for an
+> argument that cannot exist, and an absence that means nothing reads as permission. **Date the
+> precedent before citing it.** (ttt) 🆕 **D501-ii: ask what the OPTIONAL shape would DISARM.** An
+> optional key can satisfy a `satisfies` guard while reaching neither surface it was written to
+> protect. (uuu) 🆕 **D501-iii: grep every READ SITE of a constant before changing it** (D412) — D501
+> found a live false claim in the HUD and two in prose that way.
+>
+> **(8) THE STANDING HAZARDS.** 🛑 **NEVER WRITE TO THE TREE WHILE THE HARNESS IS IN FLIGHT.**
+> **`--only` does NOT accumulate**; `--decision` takes ONE value (D443) and is a **FLOOR** with a
+> false-negative half (D496); **`--list` IGNORES `--decision`**; **`killedByCommand` REPLACES
+> `expectKilledBy`** (D498). ⚠️ **`patches LITERALLY` 22**; near-miss **8**. 🛑 **A BARE `toBe(N)`
+> REPLACEMENT IS NOT SAFE FOR SMALL LITERALS** (D492) — ⚠️ **D501 ran the bare-token census FIRST and
+> its output was the DECISION not to use a value-keyed pass at all**: `117` matched **186** times and
+> `167` **243** times repo-wide, so every literal was patched **by line number** with a
+> one-occurrence-in-region assertion. ⚠️ **D463's EATEN-MINUS-SIGN TRAP DOES NOT FAIL LOUDLY** — check
+> the **collected-test count** (D495); D501's rose 11,024 → 11,064, exactly the new suite's count.
+> ⚠️ **A FIRST-PROBE CLEAN RESULT IS THE WEAKER OUTCOME** (D464) — it shows the rows run, not that the
+> suite discriminates; each row's `what` must name the rung that catches it. ⚠️ **A FOREGROUND PROBE
+> CAN BE SIGTERM'd BEFORE ITS `finally` RUNS** — prefer `setsid`, verify by hash (D496).
+> 🛑 **`ARCHIVES` is the RITUAL's, and the hard-rules block must SAY so every time.**
+
+### Prior resume point (P3-M5 — D500, the Basic Energy attached count, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-11, after D500)
 >
@@ -22601,7 +22695,7 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D500, *the Basic Energy attached count — and the builder died mid-slice without reporting*: a FOURTH lattice shape (`0/1 · 1/1`, a 2¹ table, three of four axes degenerate), the cards-versus-provisions question driven with a Special Energy that provides a basic type, and one new value reusing the shipped `basicEnergy` arm. The agent terminated on a server-side 500 — the caller verified the whole state from the tree and found the repair had landed, and the REASONING was recoverable because it is pinned in the suite rather than narrated. 1 sentence / 1 printing**; engine 0.392.0, corpus 2,446, check GREEN 483/11,024) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D501, *the raised Confusion self-hit — THE FIRST `MATCH_RECORD_VERSION` BUMP OF THE RUN (29 → 30), owed rather than chosen*: a REQUIRED key at a persisted address whose REST CANNOT WITNESS its absence — a v29 record computes `damage + undefined` → NaN, so the body can never be Knocked Out again on a board that looks normal. The optional road was refused because it would have DISARMED two shipped `satisfies` guards. And the HUD was printing a false "30 damage" to players at decision time. 1 sentence / 1 printing**; engine 0.393.0, corpus 2,464, check GREEN 484/11,064) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D486, *the gated increment — 1 sentence / 1 printing for one anchor, one arm and one clause row, with the interpreter byte-unchanged* — and *two candidate programs NO BOARD can separate by what they DO*: they agree on card count for every hand size by arithmetic identity, and diverge only on what they ASK. Five readings answer five distinct PAIRS and no single board separates them. The inherited price was mis-attributed by the brief and wrong in both directions**; engine 0.381.0, `MATCH_RECORD_VERSION` 29, corpus 2,294, check GREEN 472/10,691) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D485, *the mandatory filtered sweep of the opponent's hand — a refusal that wrote its own falsifier and then fired it*: corpus file line 673, 1 sentence / 1 legal printing, ONE new `EffectOp` member `discardFromOpponentHand { filter }` and ZERO new `CardFilter` members; 🛑 *the `COMPOUND-head` splitter DID compose and the cheaper tail-only anchor was REFUSED* — "you find there" is an anaphor whose antecedent is the reveal; 🛑 *the near-miss `bottomFromOpponentHand` is byte-identical on a one-match hand and neither parks*, so the collision board was the smallest one a suite would write; engine 0.379.0 → 0.380.0, `MATCH_RECORD_VERSION` 29 driven, residue 98/137 → 97/136, corpus 2,280 → 2,286**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D484, *the per-line partition audit — the predicate the work order proposed is FALSE by a factor of hundreds*: 383 lines carry 943 rows (41.6%), sharing a line is the corpus's central idiom, and defects at HEAD are ZERO. The predicate that works is EXPERIMENT IDENTITY, justified by a historical replay firing on the real defect at D447 — the commit that caused it — and never falsely across 568 rows since. The one defect fixed was in the guard's OWN self-check**; engine 0.379.0 unchanged, corpus 2,280, check GREEN 470/10,630) |
@@ -22730,6 +22824,78 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-11 — build session #441 (P3-M5 — D501)
+
+**THE RAISED CONFUSION SELF-HIT — THE FIRST `MATCH_RECORD_VERSION` BUMP OF THE RUN, OWED AND PAID,
+AND A FALSE NUMBER THE HUD WAS SHOWING PLAYERS AT DECISION TIME.** Engine **0.392.0 → 0.393.0**,
+**`MATCH_RECORD_VERSION` 29 → 30**, corpus **2,446 → 2,464**, declared survivors **48 UNCHANGED**,
+archive ratchet **170 → 171**, `bun run check` GREEN at **484 files / 11,064 tests**.
+
+**(0) THE BUILD.** Corpus **line 685**, 1 printing: **REFUSED 13/13** with all four splitters null,
+now `[{applyStatus, defender, confused, confusionDamage: 80}]`. **All three `instead of` rows are now
+claimed** — the two Poison ones already built, carried by `applyStatus.poisonDamage`.
+
+**(1) 🛑 THE BUMP IS OWED RATHER THAN CHOSEN, AND THE ADDRESS WAS NAMED FIRST.** `SpecialConditions`
+⊂ `InPlayPokemon.conditions` ⊂ `PlayerState` ⊂ `GameState.players` ⊂ **`MatchRecord.state`** —
+persisted on every save **with no park in front**, driven rather than grepped (`JSON.stringify(state)`
+contains the key). **So reachability (D450), serialized-alphabet (D462) and no-carrier (D498) are all
+INAPPLICABLE, and none was used** — the three arguments that held 29 for the last four slices.
+
+**(2) ⚠️ AND MY CENTRAL INSTRUCTION WAS UNANSWERABLE.** I wrote: *"check what `poisonDamage` did about
+this — it is the shipped precedent at the same address, so whatever argument it made is the one to
+re-derive rather than reinvent."* **`poisonDamage` made no argument.** Verified at ritual time:
+`poisonDamage` landed **2026-07-14**, `apps/api/src/lobby/match.ts` did not exist until **07-23**, and
+`MATCH_RECORD_VERSION` first appeared **07-26** — **twelve days later.** It is a precedent for the
+**shape** and silent on the **constant**, and my *"at the same address"* concealed the difference.
+🛑 **A builder obeying that sentence hunts an argument that cannot exist — or, worse, infers *"the
+sibling didn't bump, so neither should I"* from an absence that means nothing.** D476's hazard
+exactly: the citation's content contradicting the sentence citing it. **Date a precedent before
+citing it.**
+
+**(3) 🛑 THE OPTIONAL ROAD WAS AVAILABLE AND WAS REFUSED ON MEASURED GROUNDS.** D441's discriminator
+answers **YES** (absent would read as the default, and every v29 confusion hit *was* 30), and D434's
+*"the rest must be OLD"* is **SATISFIED — only the second time on record.** **What decides it is a
+shipped COMPILE-TIME GUARD**: `redact.ts`'s `copyConditions` and `projection.ts`'s `battleStateOf`
+each carry a `satisfies SpecialConditions` whose own doc block says it exists so an added engine field
+is *a compile error rather than a silent drop* — **and an optional key satisfies both while reaching
+neither surface**, silently disarming the two instruments written to catch exactly this. **Both guards
+fired on the real edit; that is the evidence, not the argument.**
+
+**(4) 🆕 A FOURTH POSITION IN THE SEQUENCE, AND THE DEGRADATION IS THE SHARPEST YET.** D432 *no rest*,
+D434 *rest not old*, D435 *rest old but degradation is NaN*, **D501 *rest old, option available, and
+the REST CANNOT WITNESS*** — `rotation: "confused"` is byte-identical at 30 and at 80. Driven over a
+reconstructed v29 record with the key genuinely `delete`d: the **EVENT** renders *"hit itself for
+undefined"*, while the **BOARD** computes `damage + undefined` → **`NaN`**, `NaN >= hp` is **false**,
+and the body **is not Knocked Out and can never be Knocked Out again, on a board that looks entirely
+normal**. Neither 80 nor 30.
+
+**(5) 🛑 A LIVE FALSE CLAIM TO PLAYERS, FOUND BY GREPPING EVERY READ SITE BEFORE FIXING ANY** (D412).
+`GameHud.tsx` printed *"Confused: attacking flips a coin — tails: 30 damage to itself"* **off
+`rotation` alone** — wrong at the exact moment a player decides whether to attack. **Verified at
+ritual time: the hard-coded 30 is gone and it now reads the board.** Two further hard-coded *"the 30
+self-damage"* prose claims in `events.ts` and `log.ts` were **falsified by this slice and corrected at
+the site**.
+
+**(6) THE LATTICE — D489's FULL-WEIGHT SHAPE.** Vector `0/1 · 0/5 · 0/10 · 0/10 · 0/5 · 1/1`: **no
+proper subset builds**, so nothing smaller is claimed and there is no superset to compose from. **Six
+axes counted from the print, one DEGENERATE** — the count `8`, already claimed by the Poison anchor's
+`(\d+)` and driven at 1/2/8/40, so a 2⁶ table would have been this table twice.
+
+**(7) ⚠️ A CHEAPER TAIL-ONLY ANCHOR WAS DRIVEN AND REFUSED** (D485's trap, live). The trailing
+splitter **does** compose at this head — measured, not assumed. It is refused because the tail points
+**out of its clause twice** (*"on that Pokémon"*, *"for this Special Condition"*) and **492 claimed
+corpus sentences end in a period**, including Paralyzed and Burned heads, so a bare-tail arm would
+hang a *Confusion* amount off sentences that never mention Confusion.
+
+**(8) NUMBERS.** Residue **83/117 → 82/116**; `BUILT.attack` **1615 → 1616**; the two steps **AGREE at
+1 and 1**, verified off the corpus. **Witness load 10 files / 1 row — the worst ratio of the run**,
+with eight going red and three trios being byte-identical copies across three files. ⚠️ **The
+bare-token census ran FIRST and its output was the DECISION not to use a value-keyed pass**: `117`
+matched **186** times and `167` **243** times repo-wide, so every literal was patched **by line
+number** (D492). Collected-test count checked: **11,024 → 11,064**, exactly the new suite's count.
+**119 files / 935 insertions / 250 deletions** — the largest diff of the run, because a *required*
+field ripples through every fixture that builds `SpecialConditions`.
 
 ### 2026-09-11 — build session #440 (P3-M5 — D500)
 

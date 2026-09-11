@@ -592,6 +592,7 @@ describe("the tails gate — the WINDOW, driven across the turn boundary on both
       rotation: "none",
       poisonDamage: 0,
       burned: false,
+      confusionDamage: 30,
     });
     expect(refusal(held, "p1", 1)).toBe("ATTACK_PREVENTED");
     // The §12 gate one line above it in `attack.ts` reports its own code, and the

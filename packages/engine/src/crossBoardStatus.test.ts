@@ -836,7 +836,7 @@ describe("§5 — the §12 cluster: four rows, one board, and the NESTING swept"
     ["burned+confused", { burned: true, rotation: "confused" }],
     ["burned+asleep", { burned: true, rotation: "asleep" }],
     ["confused+poisoned", { rotation: "confused", poisonDamage: 10 }],
-    ["all three", { burned: true, rotation: "confused", poisonDamage: 10 }],
+    ["all three", { burned: true, rotation: "confused", poisonDamage: 10, confusionDamage: 30 }],
   ];
 
   it("🛑 the four members answer the WHOLE condition space, and none is an alias of another", () => {

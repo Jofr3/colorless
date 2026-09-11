@@ -126,14 +126,14 @@ describe("redactGame — the viewer's own side", () => {
   it("shows the viewer's active with its battle row (damage / max HP / conditions)", () => {
     let state = turnOneState();
     state = setDamage(state, "p1", 30);
-    state = setConditions(state, "p1", { rotation: "asleep", poisonDamage: 20, burned: true });
+    state = setConditions(state, "p1", { rotation: "asleep", poisonDamage: 20, burned: true, confusionDamage: 30 });
     const game = redactGame(state, "p1");
     const active = game.board.you.active;
     if (active === null) throw new Error("expected an active");
     expect(active.battle).toEqual({
       damage: 30,
       hp: expect.any(Number),
-      conditions: { rotation: "asleep", poisonDamage: 20, burned: true },
+      conditions: { rotation: "asleep", poisonDamage: 20, burned: true, confusionDamage: 30 },
     });
     // The conditions object is a COPY, never an alias into state.
     expect(active.battle?.conditions).not.toBe(state.players.p1.active?.conditions);
