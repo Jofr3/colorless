@@ -155,16 +155,48 @@ describe("the gated PREVENT clause — derived, not authored", () => {
   it("is anchored end to end", () => {
     // Leading text, a missing period, a lowercase opener — each keeps the attack
     // on the loud ATTACK_EFFECT_SKIPPED path rather than half-simulating.
-    expect(deriveAttackEffect(`Then, ${WIDE_TEXT}`)).toBeNull();
-    expect(deriveAttackEffect(WIDE_TEXT.slice(0, -1))).toBeNull();
-    expect(deriveAttackEffect(WIDE_TEXT.toLowerCase())).toBeNull();
+    //
+    // 🛑 D496 — SWEPT OVER BOTH SPELLINGS, WHICH IT WAS NOT UNTIL D496. Every
+    // probe here used to be spelled against `WIDE_TEXT` alone, so this family's
+    // two anchors shared ONE anchor's evidence and the NARROW one's `^` and
+    // terminator were pinned by nothing at all. Measured, not argued:
+    // `D496-narrow-anchor-loses-its-caret` and
+    // `D496-narrow-anchor-loses-its-terminator` each SURVIVED the WHOLE suite —
+    // 481 files / 10,969 tests green — while their WIDE twins died here on the
+    // first probe. A PAIR of anchors needs a PAIR of probes (D463).
+    //
+    // ⚠️ AND NO CENSUS COULD EVER HAVE CAUGHT IT. Measured over all 640 rows of
+    // `legalAttackCorpus()`, dropping the `^` or the terminator from either
+    // anchor claims exactly the SAME rows it claimed before (1/15 wide, 1/4
+    // narrow), so `BUILT.attack`, the residue and `resolvedByAnyReader` are
+    // byte-identical under both mutants. A constructed near-miss is the only
+    // instrument that separates the two builds.
+    //
+    // Written as a sweep rather than as six lines so a third printed spelling of
+    // this family arrives INSIDE the guard instead of needing a seventh.
+    for (const text of [WIDE_TEXT, NARROW_TEXT]) {
+      expect(deriveAttackEffect(`Then, ${text}`), `leading text — ${text}`).toBeNull();
+      expect(deriveAttackEffect(text.slice(0, -1)), `truncated — ${text}`).toBeNull();
+      expect(deriveAttackEffect(text.toLowerCase()), `lowercased — ${text}`).toBeNull();
+    }
+    // ⚠️ THE TERMINATOR IS PINNED BY THE TRUNCATION AND NEVER BY A TRAILING
+    // COMPOUND (D464/D495). Once a sentence derives, `splitAttackTrailingClause`
+    // composes `⟨it⟩. ⟨claimed tail⟩` for free — measured at this head, it splits
+    // `⟨WIDE⟩. Draw a card.` and `⟨NARROW⟩. Draw a card.` into head+tail pairs —
+    // so a trailing near-miss asserted `toBeNull` here would be RED on its first
+    // run, and the `$` end of these anchors cannot be demonstrated the way the
+    // `^` end can.
+    //
     // The UNGATED body alone is not this sentence — the coin is printed, and a
     // reader that matched the tail would flip nothing and install unconditionally.
-    expect(
-      deriveAttackEffect(
-        "During your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
-      ),
-    ).toBeNull();
+    // One body per spelling: the two differ, so a single line would leave the
+    // other's tail unprobed for exactly the reason the sweep above exists.
+    for (const body of [
+      "During your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+      "During your opponent's next turn, prevent all damage done to this Pokémon by attacks.",
+    ]) {
+      expect(deriveAttackEffect(body), `ungated body — ${body}`).toBeNull();
+    }
   });
 
   it("refuses the FOUR printings of this family it deliberately does not map", () => {
