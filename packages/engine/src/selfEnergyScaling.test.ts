@@ -504,12 +504,35 @@ describe("deriveAttackDamageBonus / …Multiplier — the two new members", () =
       kind: "energyOnSelf",
       energyType: null,
     });
-    expect(deriveAttackDamageMultiplier(BASIC_DRAW)).toBeNull();
-    expect(deriveAttackDamageBonus(BASIC_DRAW)).toBeNull();
+    // 🆕🆕 **D500 RE-POINTED THIS HALF RATHER THAN DELETING IT (D438/D444), AND THE
+    // RUNG'S DISCRIMINATION MOVED WITH IT.** `Basic` used to be this rung's
+    // unresolvable token; it is in `CLAUSE_ENERGY_TOKENS` now and resolves to the
+    // card CATEGORY `"basic"`, so the claim above it is that the reader answers the
+    // category rather than the unfiltered total — a build that collapsed the two
+    // nullish answers would answer `energyType: null` here and score every attached
+    // card.
+    //
+    // 🛑 **WHAT THE OLD CLAIM COULD CATCH THAT THIS ONE CANNOT** (D418's second
+    // half): a re-point onto a token that RESOLVES is true under the real build and
+    // under a build that quietly defaulted an unresolvable token, so it can no longer
+    // see the collapse on its own. The LOUD half is carried by the two lines below —
+    // `{C}`, which is deliberately absent from the table, and a junk token that never
+    // could be in it — and those are now the only rungs in this file that hold it.
+    expect(deriveAttackDamageMultiplier(BASIC_DRAW)).toEqual({
+      per: 40,
+      count: { kind: "energyOnSelf", energyType: "basic" },
+    });
     // `{C}` is deliberately absent from the token table — Colorless is the
     // conservative provision fallback for unauthored Special Energy, so a `{C}`
     // clause would quietly match cards nobody meant.
     expect(deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each {C} Energy"))).toBeNull();
+    // 🆕🆕 D500 — and a token that could never be in the table, so the LOUD half does
+    // not rest on one deliberately-omitted code. `{C}`'s absence is a DECISION and
+    // could in principle be revisited; `Fancy` is not a word the vocabulary has any
+    // reason to gain, so this is the half of the pair with no expiry date.
+    expect(
+      deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each Fancy Energy")),
+    ).toBeNull();
     // …while `Special` and the spelled-out names DO resolve, through the shared
     // token table rather than a local lookup (D118's dual notation).
     expect(deriveAttackDamageBonus(POWER_DRAW.replace("each Energy", "each Special Energy"))).toEqual(
@@ -711,26 +734,35 @@ describe("scaledAttackDamage — the MIRROR board, where all seven answers diffe
     expect(row?.dealt).toBe(90);
   });
 
-  it("the CATEGORY filter stays LOUD on a real board — the printed 40, never 3 × 40", () => {
-    // Index 3 is a real LEGAL printing whose filter resolves to nothing. The engine
-    // must flag it and fall back to the printed number, not score it: a reader that
-    // collapsed the two nullish answers would deal 3 × 40 = 120 here off an
-    // unfiltered count, on a board where the attacker holds no Basic-category
-    // Energy question the engine can even ask.
+  it("🆕🆕 D500 — the CATEGORY filter FOLDS on a real board, and this board cannot prove it right", () => {
+    // 🆕🆕 **D500 INVERTED THIS RUNG, AND THE HONEST FORM SAYS WHAT THE BOARD CANNOT
+    // SHOW.** Index 3 is a real LEGAL printing (`censusAttackCorpus.ts` file line
+    // 580, 1 legal) and `Basic` now resolves, so the loud path is gone and the `×`
+    // fold runs: `mirrorBoard` attaches 2 {R} + 1 {W} to the attacker, all three
+    // BASIC Energy cards, so the count is 3 and the row is 3 × 40 = 120 — the very
+    // number the old comment named as the *wrong* answer, because it was the
+    // unfiltered one.
+    //
+    // 🛑 **THAT COINCIDENCE IS THE POINT, AND IT IS WHY THIS RUNG IS NOT THE
+    // DISCRIMINATOR** (D482's arithmetic-coincidence class). With ZERO Special Energy
+    // on the body, `energyType: "basic"` and `energyType: null` are the same count on
+    // this board and would be the same number under either build. The board that
+    // separates them — and separates both from the `"special"` reading and from a
+    // PROVISION reading — is `basicEnergyScaling.test.ts` §2, which fields a Special
+    // that provides a basic type. This rung pins that the sentence is no longer loud
+    // and says plainly that it proves nothing further.
     const state = mirrorBoard("fix-selfenergy");
     const { events } = swing(state, SELF.basic);
-    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Basic Draw",
-      damageModifier: "×",
-    });
-    // ⚠️ THE UNREAD `×` KEEPS ITS PRINTED BASE, which is the conservative fallback
-    // and worth pinning: `base` is the printed 40 with NO `scaled` field at all, so
-    // the row cannot be mistaken for a fold that happened to come out at 40.
+    expect(find(events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    // ⚠️ THE `×` FOLD DROPS THE PRINTED BASE, which is the half that DOES discriminate
+    // here: the pre-D500 loud path kept the printed 40 with no `scaled` field at all,
+    // so a build that silently reverted the vocabulary would answer 40 and no `scaled`
+    // rather than 120 and a `scaled`.
     const row = find(events, "DAMAGE_DEALT");
-    expect(row?.base).toBe(40);
-    expect(row?.dealt).toBe(40);
-    expect(row?.scaled).toBeUndefined();
-    expect(row?.dealt).not.toBe(120);
+    expect(row?.base).toBe(0);
+    expect(row?.scaled).toBe(120);
+    expect(row?.dealt).toBe(120);
+    expect(row?.dealt).not.toBe(40);
   });
 
   it("the printed refusal on `fix-bothactives` stays LOUD on a real board — and D475's does NOT", () => {
@@ -1000,14 +1032,30 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
     expect(FIXTURE_POOL["fix-selfenergy"]?.attacks?.[SELF.special]?.effect).toBe(SPECIAL_DRAW);
   });
 
-  it("⚠️ THE MINIMAL PAIR: `Basic Energy` is STILL LOUD, and it fails one step LATER", () => {
-    // The two rows differ in the category token alone. `Special` is in
-    // `CLAUSE_ENERGY_TOKENS` and `Basic` is not, so the ANCHOR admits both and
-    // `attachedEnergyFilter` is what tells them apart — which is why widening the
-    // anchor could not have made the refusal quieter. Driven with the ` card`
-    // spelling too, so the new optional group is shown not to rescue it.
-    expect(deriveAttackDamageMultiplier(BASIC_DRAW)).toBeNull();
-    expect(deriveAttackDamageMultiplier(BASIC_DRAW.replace("Energy", "Energy card"))).toBeNull();
+  it("🆕🆕 D500 — THE MINIMAL PAIR RESOLVED: two card CATEGORIES, one vocabulary", () => {
+    // 🆕🆕 **D500 — THE PAIR IS NOW A PAIR OF ANSWERS RATHER THAN AN ANSWER AND A
+    // REFUSAL, AND THE OLD RUNG'S CLAIM IS KEPT AS THE REASON.** The two rows differ
+    // in the category token alone; the ANCHOR admitted both all along and
+    // `attachedEnergyFilter` was what told them apart. D459 recorded that as the
+    // reason widening the anchor could not have made the refusal quieter — and it is
+    // also the reason D500 cost no anchor byte: the blocker was one missing row in
+    // `CLAUSE_ENERGY_TOKENS`, and the map is where it was paid.
+    //
+    // ⚠️ Driven with the ` card` spelling too. D459's optional group was measured as
+    // claiming exactly `Special Energy card`; it now claims the `Basic` spelling as
+    // well, which is a consequence of the VOCABULARY and not of the anchor — the
+    // anchor is byte-identical to D459's.
+    expect(deriveAttackDamageMultiplier(BASIC_DRAW)).toEqual({
+      per: 40,
+      count: { kind: "energyOnSelf", energyType: "basic" },
+    });
+    expect(deriveAttackDamageMultiplier(BASIC_DRAW.replace("Energy", "Energy card"))).toEqual({
+      per: 40,
+      count: { kind: "energyOnSelf", energyType: "basic" },
+    });
+    // …and the ADDITIVE fold is STILL not widened, so the `+` twin of this sentence
+    // is refused for the anchor's reason rather than the vocabulary's. That absence
+    // is D459's and this slice did not touch it.
     expect(deriveAttackDamageBonus(BASIC_DRAW)).toBeNull();
   });
 
@@ -1068,20 +1116,32 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
     expect(row?.dealt).not.toBe(70);
   });
 
-  it("⚠️ THE MINIMAL PAIR ON ONE BOARD: index 4 folds, index 3 stays LOUD", () => {
-    // Two adjacent indices on ONE body, differing in the category token, driven
-    // through the same board in the same `it`. Index 3 keeps its printed 40 with
-    // no `scaled` field; index 4 folds to 140 with no printed base. A reader that
-    // had collapsed "no filter printed" into "a filter I could not read" would
-    // make these two rows agree.
+  it("🆕🆕 D500 — THE MINIMAL PAIR ON ONE BOARD: both fold, and they COMPLEMENT", () => {
+    // 🆕🆕 **D500 — INDEX 3 FOLDS NOW TOO, AND THE BOARD BECOMES A COMPLEMENT CHECK.**
+    // `specialBoard()` attaches 2 `fix-special` + 1 {R} + 1 {W}: two Special Energy
+    // CARDS and two Basic ones. So index 3 counts 2 and index 4 counts 2, and the two
+    // counts SUM to the unfiltered 4 — which is the property `"basic"` and
+    // `"special"` have that no type filter has, and the one a build that spelled the
+    // new arm as a PROVISION question would break.
+    //
+    // ⚠️ **THE TWO INDICES ANSWER DIFFERENT DAMAGE ONLY BECAUSE THEIR `per` DIFFERS
+    // (40 against 70), NOT BECAUSE THEIR COUNTS DO**, and that is said out loud so the
+    // numbers below are not read as separating the two readings. `2 × 40 = 80` and
+    // `2 × 70 = 140`; swap the two `energyType` values and this board answers 80 and
+    // 140 still. The board that separates the readings by COUNT is
+    // `basicEnergyScaling.test.ts` §2.
     const state = specialBoard();
-    const loud = swing(state, SELF.basic).events;
-    expect(find(loud, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
-      attack: "Basic Draw",
-      damageModifier: "×",
-    });
-    expect(find(loud, "DAMAGE_DEALT")?.scaled).toBeUndefined();
-    expect(find(swing(state, SELF.special).events, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    const basic = swing(state, SELF.basic).events;
+    expect(find(basic, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(find(basic, "DAMAGE_DEALT")?.scaled).toBe(80);
+    const special = swing(state, SELF.special).events;
+    expect(find(special, "ATTACK_EFFECT_SKIPPED")).toBeUndefined();
+    expect(find(special, "DAMAGE_DEALT")?.scaled).toBe(140);
+    // 🛑 THE COMPLEMENT: 2 + 2 = 4, and the unfiltered fold on the same body is 4
+    // (index 2, `30×`, so 120). A `"basic"` arm written as *"provides some basic
+    // type"* would answer 2 here as well — both Specials provide only Colorless — so
+    // this rung does NOT separate that reading either, and says so.
+    expect(find(swing(state, SELF.overflow).events, "DAMAGE_DEALT")?.scaled).toBe(4 * 30);
   });
 
   it("the census sees it: the sentence LEAVES the residue by the READER arm", () => {
@@ -1091,7 +1151,13 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
     // the move (485 / 1502 resolved, residue 129 / 180); this rung is what says
     // WHICH arm moved.
     expect(resolvedByAnyReader(SPECIAL_DRAW)).toBe(true);
-    expect(resolvedByAnyReader(BASIC_DRAW)).toBe(false);
+    // 🆕🆕 **D500 — THIS ONE FLIPPED, AND IT FLIPPED THROUGH THE SAME ARM.** The
+    // sentence left the residue by `deriveAttackDamageMultiplier` claiming it, with no
+    // registry row, no gate split and no trailing split — and with the reader surface
+    // standing still at 13, because the payment was a VOCABULARY row rather than a
+    // reader. That combination (residue falls, surface unmoved) is what says the cost
+    // was a map entry and not a parser.
+    expect(resolvedByAnyReader(BASIC_DRAW)).toBe(true);
     expect(attackReaderSurface()).toHaveLength(13);
   });
 });
@@ -1166,7 +1232,7 @@ describe("the record-shape derivation, made rather than inherited", () => {
     ).toEqual({ per: 30, count: { kind: "energyOnSelf", zone: "board", energyType: "special" } });
   });
 
-  it("engineVersion is 0.391.0 and `manifest.version` agrees", () => {
+  it("engineVersion is 0.392.0 and `manifest.version` agrees", () => {
     // 🆕🆕 D459 — 0.357.0 → **0.358.0**, and the bump is owed for BEHAVIOUR and for
     // nothing else, which is the same shape D458's was: no op, no field, no prompt
     // key, no wire byte and no vocabulary diff moved, so a reader looking for one
@@ -1180,6 +1246,6 @@ describe("the record-shape derivation, made rather than inherited", () => {
     // forecast of "36 / 40" reproduced TO THE DIGIT — the first inherited figure in
     // this series to be checked and found right. This rung is the 37th assertion,
     // so a successor inherits 37 / 41 (D427's mechanism as arithmetic).
-    expect(engineVersion).toBe("0.391.0");
+    expect(engineVersion).toBe("0.392.0");
   });
 });

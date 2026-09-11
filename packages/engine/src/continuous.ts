@@ -2486,8 +2486,12 @@ export function providesEnergyType(
 export function hasAttachedEnergy(
   state: GameState,
   pokemon: InPlayPokemon,
-  energy: BasicEnergyType | "special",
+  energy: BasicEnergyType | "special" | "basic",
 ): boolean {
+  // 🆕🆕 D500 — the OTHER card class, inserted ABOVE its complement so a reader meets
+  // the pair together. No printing spells *"has any Basic Energy attached"*; the value
+  // arrives because the clause resolves through the shared token map (D118).
+  if (energy === "basic") return basicEnergyUids(state, pokemon).length > 0;
   if (energy === "special") return specialEnergyUids(state, pokemon).length > 0;
   return pokemon.energy.some((uid) => providesEnergyType(state, pokemon, uid, energy));
 }
@@ -2511,9 +2515,15 @@ export function hasAttachedEnergy(
 export function countAttachedEnergy(
   state: GameState,
   pokemon: InPlayPokemon,
-  energy: BasicEnergyType | "special" | null,
+  energy: BasicEnergyType | "special" | "basic" | null,
 ): number {
   if (energy === null) return pokemon.energy.length;
+  // 🆕🆕 D500 — the printed CATEGORY `Basic`, and it sits between the unfiltered arm
+  // and its complement because those are the two readings it is most easily confused
+  // with: `null` counts a Special too, `"special"` counts ONLY the Special, and this
+  // one counts everything neither of them does. A board holding both tells all three
+  // apart, which is `basicEnergyScaling.test.ts` §2's whole job.
+  if (energy === "basic") return basicEnergyUids(state, pokemon).length;
   if (energy === "special") return specialEnergyUids(state, pokemon).length;
   return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, energy)).length;
 }
@@ -2623,7 +2633,7 @@ function maxHpScaleCount(state: GameState, pokemon: InPlayPokemon, scale: MaxHpS
 export function countEnergyInPlay(
   state: GameState,
   seat: Seat,
-  energy: BasicEnergyType | "special" | null,
+  energy: BasicEnergyType | "special" | "basic" | null,
   filter?: CardFilter,
 ): number {
   const side = state.players[seat];
@@ -2633,6 +2643,25 @@ export function countEnergyInPlay(
     if (filter !== undefined && !matchesFilter(topCardOf(state, holder), filter)) continue;
     if (energy === null) {
       total += holder.energy.length;
+      continue;
+    }
+    // 🆕🆕 D500 — the printed CATEGORY, delegating to the same `basicEnergyUids` the
+    // per-body counter above calls, so the board-wide and per-body readings of one
+    // printed noun cannot drift (this function's own standing reason).
+    //
+    // 🛑 **IT IS ITS OWN `continue` RATHER THAN A THIRD LIMB OF THE TERNARY BELOW**,
+    // which is deliberate on D470's two counts one parameter up: the ternary stays
+    // byte-identical, so the corpus rows anchored on it keep their `find` and every
+    // declared survivor in this file is preserved by D469's pure-addition argument.
+    //
+    // ⚠️ **AND THE `filter` ABOVE IS A DIFFERENT VOCABULARY POINTED AT DIFFERENT
+    // OBJECTS.** That one names BODIES and is asked per HOLDER; this names CARDS and
+    // is asked per UID. Handing `{kind: "basicEnergy"}` to the `filter` parameter
+    // would ask whether the POKÉMON is a Basic Energy card and count 0 forever — the
+    // hazard this function's own doc block names — which is why the card category
+    // rides the `energy` value and not the body filter.
+    if (energy === "basic") {
+      total += basicEnergyUids(state, holder).length;
       continue;
     }
     total +=
@@ -2708,6 +2737,46 @@ function specialEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
     return card !== undefined && isSpecialEnergy(card);
   });
 }
+
+/** 🆕🆕 **D500 — WHICH ATTACHED UIDS ARE *BASIC* ENERGY CARDS (§6.1), the EXACT
+    COMPLEMENT of `specialEnergyUids` directly above and placed beside it for that
+    function's own reason: the two answer one printed distinction and must not drift.**
+    The printed noun is *"Basic Energy"* — Blissey `censusAttackCorpus.ts` file line
+    580, *"This attack does 40 damage for each Basic Energy attached to this
+    Pokémon."*, 1 legal printing.
+
+    🛑 **IT DELEGATES TO `matchesFilter`'s `basicEnergy` ARM RATHER THAN RE-SPELLING
+    THE PREDICATE, AND THAT IS D159 AT A NOUN THAT ALREADY HAD AN ANSWER.** The same
+    printed words are read on a DIFFERENT count source — *"for each Basic Energy card
+    in your opponent's discard pile."* resolves to
+    `{kind: "cardsInDiscardPile", filter: {kind: "basicEnergy"}}` — so the question
+    *"is this card a Basic Energy card"* was already answered in `cards.ts`, and a
+    second `card.energyType === "Normal"` here would be two readers of one noun, free
+    to disagree. What the two count sources do NOT share is the VOCABULARY that
+    reaches them: a discard-pile count is narrowed by a `CardFilter` over cards, while
+    an attached count is narrowed by the energy-token value this function serves. One
+    predicate, two spellings of the route to it.
+
+    ⚠️ **CARDS, AND NOT "PROVIDES A BASIC TYPE" — THE TWO ARE DIFFERENT NUMBERS ON A
+    BOARD THIS REPO ALREADY FIELDS.** `fix-blend` is a Special Energy whose
+    `EnergyProgram` provides `["Fire", "Water"]`, so `providesEnergyType(…, "Water")`
+    is TRUE of it while it is not a Basic Energy card at all; and `fix-energy` is a
+    Basic Energy whose name does not parse, so it provides only Colorless and no typed
+    reading counts it. A build that spelled this arm as *"provides some member of
+    `BASIC_ENERGY_TYPES`"* is wrong in BOTH directions at once, and
+    `basicEnergyScaling.test.ts` §2 drives exactly that board.
+
+    ⚠️ **`matchesFilter` TAKES `Card | undefined` AND ANSWERS FALSE FOR A MISSING
+    CARD**, so an unresolvable uid is counted OUT rather than throwing — the sibling's
+    conservative direction, and this file's throughout. */
+function basicEnergyUids(state: GameState, pokemon: InPlayPokemon): string[] {
+  return pokemon.energy.filter((uid) => matchesFilter(cardOfUid(state, uid), BASIC_ENERGY_CARD));
+}
+
+/** The one `CardFilter` value `basicEnergyUids` asks with, hoisted to a module
+    constant so the allocation does not sit inside a `.filter` callback and so the
+    noun has exactly one spelling in this file. */
+const BASIC_ENERGY_CARD: CardFilter = { kind: "basicEnergy" };
 
 /** The units ONE attached energy provides ON `pokemon` — the whole of §6.3/§6.4's
     per-card reading, and the single funnel `providedEnergy` and `unitsProvidedBy`

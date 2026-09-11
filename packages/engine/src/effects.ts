@@ -1360,7 +1360,17 @@ export type BoardCondition =
       Active) and the CLAUSE TABLE resolves the printed "this Pokémon". Attached
       Energy sits face up, so the union's public-state invariant holds. False with
       an empty Active Spot. */
-  | { kind: "yourActiveHasEnergyAttached"; energy: BasicEnergyType | "special" }
+  | {
+      kind: "yourActiveHasEnergyAttached";
+      /** 🆕🆕 D500 — `"basic"`, off the shared `CLAUSE_ENERGY_TOKENS` this clause has
+          resolved through since D118. ⚠️ **ZERO printings set it** (no corpus row
+          spells *"has any Basic Energy attached"*), and the SEAT MIRROR below is
+          deliberately NOT widened with it: that member is produced by a LITERAL clause
+          row rather than by the token map, so nothing can hand it the value and a
+          wider type there would be a field no producer can set (D193/D196's own reason
+          for refusing their siblings a zone). */
+      energy: BasicEnergyType | "special" | "basic";
+    }
   /** 🆕🆕 D415 — §6.1, THE SEAT MIRROR OF THE MEMBER DIRECTLY ABOVE: the OPPONENT's
       Active Pokémon has at least one attached Energy of `energy`. Haxorus
       `sv06.5-046`, *"If your opponent's Active Pokémon has any Special Energy
@@ -14977,11 +14987,27 @@ function opponentHandFilter(noun: string): CardFilter | null {
 // an absent token is the UNTYPED reading (`energyType: null`, every attached card)
 // and an UNRESOLVABLE one falls through to the loud ATTACK_EFFECT_SKIPPED path
 // rather than quietly counting everything. That distinction is the whole guard —
-// `{C}` is deliberately absent from ENERGY_TYPE_BY_CODE (it is the conservative
+// {C} is deliberately absent from ENERGY_TYPE_BY_CODE (it is the conservative
 // provision fallback for unauthored Special Energy), and "Basic Energy" is a card
 // CATEGORY rather than a type and resolves to nothing at all, which is correct:
 // "This attack does 40 damage for each Basic Energy attached to this Pokémon."
 // (1 legal) asks a question `countEnergyInPlay` does not answer.
+//
+// 🆕🆕 **D500 — THE CLAUSE AFTER THE COLON WAS FALSE, AND IT STOOD FOR ~300
+// DECISIONS BECAUSE NOTHING EXECUTES A REASON (D466).** Kept rather than deleted
+// (D178), because the first half is still exactly right: `Basic` IS a card
+// CATEGORY rather than a type, and that is precisely why it now resolves — the
+// map has carried a card class since D118 (`Special`), and this is its
+// complement. What was wrong is the carrier and the claim about it:
+//   · `countEnergyInPlay` has answered a card-CATEGORY question since D159 —
+//     `"special"` reads `isSpecialEnergy` rather than provision — so the category
+//     was never outside its vocabulary; and
+//   · the sentence quoted does not reach `countEnergyInPlay` AT ALL. *"attached to
+//     this Pokémon"* is the ZONE-LESS path and delegates to `countAttachedEnergy`.
+// **A refusal names a CARRIER and the carrier can be wrong (D457/D499): ask WHICH
+// CARRIER IS READ AT THE SEAM THE RULE RESOLVES AT.** D479's THIRD class — the
+// verdict (unbuilt) was true, the reason was not — and the price the reason hid
+// was ONE ROW in `CLAUSE_ENERGY_TOKENS`.
 //
 // THE ZONE IS THE PRINTED NOUN PHRASE, CAPTURED WHOLE. Both alternatives are
 // complete printed phrases rather than a cross-product of optional fragments, so
@@ -15032,6 +15058,14 @@ const OPPONENT_ENERGY_MULTIPLY =
 //   {30|40|50} damage for each Energy attached to this Pokémon." (5 + 3 + 1
 //   legal, `30×` / `40×` / `50×`).
 //
+// 🆕🆕 **D500 — THE PARAGRAPH BELOW IS ONE ROW OUT OF DATE AND IS KEPT (D178).**
+// *"This attack does 40 damage for each Basic Energy attached to this Pokémon."*
+// (1 legal) is BUILT now, through ONE row in `CLAUSE_ENERGY_TOKENS` and zero
+// anchor bytes — the anchor's `(?:(.+) )?` group always admitted the token, and
+// `attachedEnergyFilter` one step later is what refused it. So of the TWO rows
+// named below, ONE remains unbuildable: the two-sentence `{W}` printing, whose
+// blocker is the whole-sentence anchor and is untouched. The sentence-sweep
+// figure is right and the BUILDABLE figure is 22 rather than 21.
 // ⚠️ TWO LEGAL ROWS ARE COUNTED BY THE RAW SENTENCE SWEEP AND ARE NOT BUILDABLE,
 // which is the whole difference between the 23 an earlier recon reported and the
 // 21 here. "This attack does 40 damage for each Basic Energy attached to this
@@ -15139,6 +15173,10 @@ const OPPONENT_ENERGY_MULTIPLY =
 // that follows the group is required and `card` is not it. The `{C}`/`Basic
 // Energy` refusals are untouched: they fail in `attachedEnergyFilter`, one step
 // LATER than this anchor, and the token they hand it is unchanged.
+// 🆕🆕 **D500 — AND THAT SENTENCE IS EXACTLY WHY THIS SLICE COST NO ANCHOR BYTE.**
+// `Basic` is no longer a refusal — the map gained the row — and the paragraph
+// above is what said, correctly and in advance, where the refusal actually lived.
+// `{C}` is still refused, at the same place, for its own unchanged reason.
 const SELF_ENERGY_SCALE =
   /^This attack does (\d+) more damage for each (?:(.+) )?Energy attached to (this Pokémon|all of your Pokémon)\.$/;
 /** 🆕🆕 **D470 — THE SAME BOARD-WIDE OWN-SIDE ENERGY COUNT, NARROWED BY THE PRINTED
@@ -16485,14 +16523,47 @@ export const POKEMON_TYPE_BY_CODE: Readonly<Record<string, PokemonType>> = {
     every unauthored Special Energy, so a `{C}` clause would quietly match cards
     nobody meant. An unresolvable token falls through to null and stays LOUD. */
 const SELF_ENERGY_ATTACHED_CLAUSE = /^this Pokémon has any (.+) Energy attached$/;
-const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special"> = new Map([
+const CLAUSE_ENERGY_TOKENS: ReadonlyMap<string, BasicEnergyType | "special" | "basic"> = new Map([
   ...Object.entries(ENERGY_TYPE_BY_CODE).map(
-    ([code, type]) => [`{${code}}`, type] as [string, BasicEnergyType | "special"],
+    ([code, type]) => [`{${code}}`, type] as [string, BasicEnergyType | "special" | "basic"],
   ),
   ...Object.entries(ENERGY_TYPE_BY_NAME).map(
-    ([name, type]) => [name, type] as [string, BasicEnergyType | "special"],
+    ([name, type]) => [name, type] as [string, BasicEnergyType | "special" | "basic"],
   ),
-  ["Special", "special"] as [string, BasicEnergyType | "special"],
+  ["Special", "special"] as [string, BasicEnergyType | "special" | "basic"],
+  /* 🆕🆕 D500 — `Basic`, THE OTHER PRINTED CARD CATEGORY, AND IT IS `Special`'s
+     COMPLEMENT RATHER THAN A TENTH TYPE. The row directly above has carried a card
+     CLASS in this map since D118, and its own doc block says so — *"`Special` is the
+     CARD CLASS, not a tenth type — a different axis, and the reason the parameter is
+     `BasicEnergyType | "special"` rather than a widened type union."* `Basic` is that
+     same axis's other value: `matchesFilter`'s `basicEnergy` arm is
+     `isEnergyCard(card) && card.energyType === "Normal"`, which is exactly
+     `isSpecialEnergy`'s complement inside `isEnergyCard`.
+
+     🛑 **IT IS A CARD QUESTION AND NOT A PROVISION QUESTION, AND THE TWO COME APART ON
+     A REAL FIXTURE.** A Special Energy may PROVIDE a basic type — `fix-blend`'s
+     `EnergyProgram` provides `["Fire", "Water"]` — so *"each Basic Energy attached"*
+     and *"each {W} Energy attached"* count different cards on one board, and the
+     evaluator arms below read the CARD (`card.energyType`) rather than
+     `providesEnergyType`. That is the D118 rule applied in the direction it was
+     written for: a TYPE is read by provision, a CATEGORY is read off the card.
+
+     ⚠️ **THE MAP IS SHARED BY THREE READERS AND THE TOKEN NOW RESOLVES AT ALL OF
+     THEM** — `SELF_ENERGY_ATTACHED_CLAUSE` (D118's conditional gate),
+     `ATTACK_COIN_PER_ENERGY` (D128's per-Energy flip) and `attachedEnergyFilter`'s
+     five scaling anchors. Measured over all 640 rows of `legalAttackCorpus()`, the
+     widening claims **exactly one** sentence that was refused before — corpus file
+     line 580, *"This attack does 40 damage for each Basic Energy attached to this
+     Pokémon."*, 1 legal printing — and nothing else; the other two readers print no
+     `Basic` token at all. That the other spellings become READABLE is D470's stated
+     consequence at this same family, verbatim: *"a reader is a function of TEXT, and
+     a noun the column does not print simply never arrives."*
+
+     ⚠️ **`{C}` IS STILL ABSENT AND FOR AN UNCHANGED REASON.** Colorless is the
+     conservative provision fallback for every unauthored Special Energy, so a `{C}`
+     filter would quietly match cards nobody meant. `Basic` has no such problem: it
+     names the printed category directly and answers off one column. */
+  ["Basic", "basic"] as [string, BasicEnergyType | "special" | "basic"],
 ]);
 
 /** The family's SECOND parameterised clause: "If your opponent's Active Pokémon
@@ -18386,7 +18457,20 @@ const MAX_PRINTED_FLIPS = 10;
     demoted Special. */
 export type AttackFlipCount =
   | { kind: "printed"; count: number }
-  | { kind: "attachedEnergy"; energy: BasicEnergyType | "special" | null }
+  | {
+      kind: "attachedEnergy";
+      /** 🆕🆕 D500 — `"basic"` arrives here because this member's `energy` is resolved
+          through the SAME `CLAUSE_ENERGY_TOKENS` the scaling family reads (D128 wrote
+          it that way so the flip family and the damage family could not disagree about
+          one printed token), and the map gained the row. ⚠️ **NO PRINTING SETS IT** —
+          *"Flip a coin for each Basic Energy attached to this Pokémon. …"* appears on
+          ZERO of the 640 corpus rows — and the value is admitted rather than guarded
+          out for D470's stated reason at this family: a reader is a function of TEXT,
+          and a noun the column does not print simply never arrives. Guarding it out
+          would be a second answer to what one shared token names (D159), and would
+          put a refusal in the flip reader that the damage reader does not have. */
+      energy: BasicEnergyType | "special" | "basic" | null;
+    }
   | { kind: "pokemonInPlay"; filter: CardFilter }
   | { kind: "bothActivesEnergy" }
   | { kind: "untilTails" };
@@ -27149,12 +27233,32 @@ export type DamageCountSource =
   | {
       kind: "energyOnOpponent";
       zone: OpponentEnergyZone;
-      energyType: BasicEnergyType | "special" | null;
+      /** 🆕🆕 D500 — `"basic"` joins `"special"` as the second printed card CATEGORY
+          this field admits. Reached from the same `attachedEnergyFilter` the sibling
+          member below reads, so the two ends of the table cannot disagree about what
+          one printed token names (D159). No LEGAL printing sets it on THIS member —
+          the column's only `Basic` energy-scaling row is the self-side one — and the
+          value is carried here rather than split off because both members resolve
+          through one helper and a narrower type at one end would make the helper's
+          answer unassignable at that end alone. */
+      energyType: BasicEnergyType | "special" | "basic" | null;
     }
   | {
       kind: "energyOnSelf";
       zone?: "board";
-      energyType: BasicEnergyType | "special" | null;
+      /** 🆕🆕 D500 — THE PRINTED CARD CATEGORY `Basic`, `"special"`'s complement, and
+          the value corpus file line 580 sets. *"This attack does 40 damage for each
+          Basic Energy attached to this Pokémon."* (1 legal printing) reached the
+          `SELF_ENERGY_MULTIPLY` anchor unchanged for the whole of this member's life
+          — the anchor's `(?:(.+) )?` group has always admitted the token — and was
+          refused one step LATER, by `CLAUSE_ENERGY_TOKENS` having no `Basic` key.
+          ⚠️ **IT IS A CARDS READING AND NOT A PROVISION ONE**: `countAttachedEnergy`'s
+          new arm asks `card.energyType === "Normal"` through `matchesFilter`'s shipped
+          `basicEnergy` arm, so a Special Energy that PROVIDES a basic type (`fix-blend`
+          provides `["Fire", "Water"]`) is counted OUT here and counted IN by a `{W}`
+          sentence. Those are different numbers on one board, which is why
+          `basicEnergyScaling.test.ts` fields both cards. */
+      energyType: BasicEnergyType | "special" | "basic" | null;
       /** 🆕🆕 D470 — the OPTIONAL printed noun that narrows the BOARD zone to a
           SUBGROUP of it (*"all of your Iono's Pokémon"*, corpus file line 558).
           `undefined` is EVERY body in the zone, so all 25 printings that reached
@@ -27452,8 +27556,12 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // D196 — the ATTACKER'S OWN attached Energy, the mirror of the arm directly
   // above and structurally identical to it: same `per >= 1` guard, same
   // `attachedEnergyFilter` so that an absent token is the UNTYPED reading and an
-  // unresolvable one ("Basic Energy", "{C}") falls through to `return null` and
-  // stays LOUD. The only thing separating the two arms is the literal tail of the
+  // unresolvable one ("{C}", or any word the map has no key for) falls through to
+  // `return null` and stays LOUD. 🆕🆕 **D500 — `"Basic Energy"` USED TO BE THE
+  // EXAMPLE HERE AND IS NOW THE COUNTEREXAMPLE**: the token resolves to the card
+  // CATEGORY `"basic"`, so this arm claims the bare `Basic` spelling on both of its
+  // tails. `{C}` is kept as the example because its absence is a DECISION with a
+  // stated reason, where `Basic`'s was an omission nobody had priced. The only thing separating the two arms is the literal tail of the
   // anchored sentence — "this Pokémon" instead of "your opponent's Active
   // Pokémon".
   //
@@ -27488,8 +27596,11 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
   // THREE guards, and each refuses for its own reason — `DISCARD_PILE_COUNT_SCALE`'s
   // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in
   // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so
-  // *"Basic Energy"* and *"{C}"* fall through to `return null` and stay LOUD exactly
-  // as they do one arm up; and `filter !== null` is the BODY vocabulary, so
+  // *"{C}"* falls through to `return null` and stays LOUD exactly as it does one arm
+  // up (🆕🆕 **D500 — *"Basic Energy"* WAS THE SECOND EXAMPLE HERE AND RESOLVES NOW**,
+  // to the card CATEGORY `"basic"`; the guard is unchanged and only its example set
+  // shrank, which `ownerBoardEnergyScaling.test.ts` §GUARD 3 now drives from the
+  // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so
   // *"…attached to all of your Ancient Pokémon."* leaves this arm on the loud
   // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes
   // another, and the middle one is the one a reader is likeliest to drop because the
@@ -29829,14 +29940,18 @@ export function splitAttackTrailingClause(text: string): { head: string; tail: s
     this is a helper rather than a `?? null` at each call site. "no filter" and "a
     filter I could not read" differ by exactly the failure that matters: the first
     must count everything, the second must count NOTHING and say so. Collapsing
-    them would make "for each {C} Energy attached…" or "for each Basic Energy
-    attached…" quietly score the unfiltered total — the mistake
+    them would make "for each {C} Energy attached…" quietly score the unfiltered
+    total (🆕🆕 **D500 — "for each Basic Energy attached…" WAS THE SECOND EXAMPLE
+    AND IS NOW A THIRD ANSWER RATHER THAN A NULLISH ONE**: `CLAUSE_ENERGY_TOKENS`
+    gained `["Basic", "basic"]`, the card CATEGORY that is `"special"`'s
+    complement, so the token resolves and the sentence folds. The two-nullish rule
+    is unchanged; what changed is which printed words reach it) — the mistake
     ATTACK_COIN_PER_ENERGY spells out inline (D128) and this shares rather than
     re-derives. Through `literalClauseRow` for D137's reason: the rule is the SITE
     of an exact lookup on printed text, not the need. */
 function attachedEnergyFilter(
   token: string | undefined,
-): BasicEnergyType | "special" | null | undefined {
+): BasicEnergyType | "special" | "basic" | null | undefined {
   return token === undefined ? null : literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
 }
 

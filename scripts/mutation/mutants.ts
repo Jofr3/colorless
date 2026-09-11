@@ -5772,7 +5772,12 @@ export const MUTANTS: Mutant[] = [
     // 🆕 D466 — RE-POINTED by the version bump, as at every slice that moves it.
     // ⚠️ `--decision D466` does NOT cover this row: `--decision` matches by
     // `String.includes` and "D275" does not contain "D466". Re-probed under `--only`.
-    find: 'export const engineVersion = "0.391.0";',
+    // 🆕🆕 D500 — RE-POINTED AGAIN, 0.391.0 → 0.392.0, and it was found by `precheck`
+    // rather than by the sweep. ⚠️ **THE VERSION-BUMP PASS IS AN EDIT TO A FILE THE
+    // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
+    // see it — this row's `find` spells the DECLARATION, not an assertion. Run
+    // `precheck` after every version bump, not after the sweep tells you.
+    find: 'export const engineVersion = "0.392.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -24597,12 +24602,21 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/ownerBoardEnergyScaling.test.ts"],
   },
   {
+    // 🆕🆕 D500 — RE-TRANSCRIBED IN **BOTH** `find` AND `replace`, BY THE SAME EDIT, SO
+    // THE EXPERIMENT IS BYTE-FOR-BYTE THE ONE D470 WROTE. What moved is a COMMENT this
+    // block quotes: the arm's three-guard note named *"Basic Energy"* as the ENERGY
+    // vocabulary's refusal, and D500 made that token resolve. ⚠️ **A COMMENT EDIT TO A
+    // FILE THE CORPUS QUOTES ROTS A ROW (D414/D415), AND `precheck` IS WHAT CAUGHT IT** —
+    // seconds, against the ninety minutes a sweep would have cost. The declared
+    // survivor's REASON is unaffected: it quantifies over the two anchors' STRUCTURAL
+    // disjointness (the tails `this Pokémon` / `all of your Pokémon` against a mandatory
+    // run of bytes), and the token vocabulary is a different question entirely.
     id: "D470-owner-board-arm-moves-ahead-of-the-shipped-one",
     decision: "D470",
     what: "E \u2014 THE NEW FILTERED ARM IS MOVED AHEAD OF THE UNFILTERED ONE IT NARROWS. Written to test the placement claim in `SELF_ENERGY_FILTERED_SCALE`'s block: that the ORDER of these two arms is LEGIBILITY, because the disjointness is STRUCTURAL rather than guarded. Paired with `D470-owner-board-anchor-loses-the-opponent-lookahead` (KILLED), the two rows are the two halves of one distinction \u2014 the ORDER is legibility, and the LOOKAHEAD is behaviour but is about a DIFFERENT pattern (a seat, not the sibling anchor).",
     file: "packages/engine/src/effects.ts",
-    find: "  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === \"this Pok\u00e9mon\"\n        ? { per, count: { kind: \"energyOnSelf\", energyType } }\n        : { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType } };\n    }\n  }\n  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`'s placement at D466 and `IN_PLAY_BODY_SCALE`'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468's kind of disjointness rather than D467's, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`'s\n  // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *\"Basic Energy\"* and *\"{C}\"* fall through to `return null` and stay LOUD exactly\n  // as they do one arm up; and `filter !== null` is the BODY vocabulary, so\n  // *\"\u2026attached to all of your Ancient Pok\u00e9mon.\"* leaves this arm on the loud\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? \"\");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: \"board\"` is HARD-CODED and the anchor's own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType, filter } };\n    }\n  }\n",
-    replace: "  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`'s placement at D466 and `IN_PLAY_BODY_SCALE`'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468's kind of disjointness rather than D467's, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`'s\n  // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *\"Basic Energy\"* and *\"{C}\"* fall through to `return null` and stay LOUD exactly\n  // as they do one arm up; and `filter !== null` is the BODY vocabulary, so\n  // *\"\u2026attached to all of your Ancient Pok\u00e9mon.\"* leaves this arm on the loud\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? \"\");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: \"board\"` is HARD-CODED and the anchor's own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType, filter } };\n    }\n  }\n  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === \"this Pok\u00e9mon\"\n        ? { per, count: { kind: \"energyOnSelf\", energyType } }\n        : { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType } };\n    }\n  }\n",
+    find: "  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === \"this Pok\u00e9mon\"\n        ? { per, count: { kind: \"energyOnSelf\", energyType } }\n        : { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType } };\n    }\n  }\n  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`'s placement at D466 and `IN_PLAY_BODY_SCALE`'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468's kind of disjointness rather than D467's, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`'s\n  // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *\"{C}\"* falls through to `return null` and stays LOUD exactly as it does one arm\n  // up (\ud83c\udd95\ud83c\udd95 **D500 \u2014 *\"Basic Energy\"* WAS THE SECOND EXAMPLE HERE AND RESOLVES NOW**,\n  // to the card CATEGORY `\"basic\"`; the guard is unchanged and only its example set\n  // shrank, which `ownerBoardEnergyScaling.test.ts` \u00a7GUARD 3 now drives from the\n  // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so\n  // *\"\u2026attached to all of your Ancient Pok\u00e9mon.\"* leaves this arm on the loud\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? \"\");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: \"board\"` is HARD-CODED and the anchor's own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType, filter } };\n    }\n  }\n",
+    replace: "  // \ud83c\udd95\ud83c\udd95 D470 \u2014 THE SAME BOARD ZONE, NARROWED BY THE PRINTED NOUN. Placed directly\n  // after the unfiltered arm it narrows so a reader meeting one meets the other \u2014\n  // `YOUR_BENCH_FILTERED_SCALE`'s placement at D466 and `IN_PLAY_BODY_SCALE`'s at\n  // D439, verbatim. \u26a0\ufe0f **AND HERE THE ORDER IS LEGIBILITY AND NOT BEHAVIOUR, WHICH IS\n  // SAID RATHER THAN LEFT TO BE INFERRED**: the two anchors are STRUCTURALLY disjoint\n  // (both `^\u2026$`, and this one demands a run of bytes ending in a space where the\n  // shipped literal spends none), so a swap of the two blocks changes no answer. That\n  // is D468's kind of disjointness rather than D467's, and it is why the order row in\n  // the mutation corpus is a DECLARED survivor with no companion deletion row \u2014 a\n  // guard here would be unkillable by construction.\n  //\n  // THREE guards, and each refuses for its own reason \u2014 `DISCARD_PILE_COUNT_SCALE`'s\n  // trio, at this family's address. `per >= 1` is the printed-zero guard every arm in\n  // both folds carries; `energyType !== undefined` is the ENERGY vocabulary, so\n  // *\"{C}\"* falls through to `return null` and stays LOUD exactly as it does one arm\n  // up (\ud83c\udd95\ud83c\udd95 **D500 \u2014 *\"Basic Energy\"* WAS THE SECOND EXAMPLE HERE AND RESOLVES NOW**,\n  // to the card CATEGORY `\"basic\"`; the guard is unchanged and only its example set\n  // shrank, which `ownerBoardEnergyScaling.test.ts` \u00a7GUARD 3 now drives from the\n  // ADMITTED side with `{C}` keeping the refused side); and `filter !== null` is the BODY vocabulary, so\n  // *\"\u2026attached to all of your Ancient Pok\u00e9mon.\"* leaves this arm on the loud\n  // ATTACK_EFFECT_SKIPPED path rather than counting zero forever. None subsumes\n  // another, and the middle one is the one a reader is likeliest to drop because the\n  // arm above already spells it.\n  const selfEnergyFiltered = SELF_ENERGY_FILTERED_SCALE.exec(effect);\n  if (selfEnergyFiltered !== null) {\n    const per = Number(selfEnergyFiltered[1]);\n    const energyType = attachedEnergyFilter(selfEnergyFiltered[2]);\n    const filter = inPlayBodyFilter(selfEnergyFiltered[3] ?? \"\");\n    if (per >= 1 && energyType !== undefined && filter !== null) {\n      // `zone: \"board\"` is HARD-CODED and the anchor's own literal is why \u2014 it spells\n      // `all of your ` and nothing else, so there is no second zone to capture. The\n      // same call `IN_PLAY_BODY_SCALE`'s arm makes about its seat, for the same reason.\n      return { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType, filter } };\n    }\n  }\n  const selfEnergy = SELF_ENERGY_SCALE.exec(effect);\n  if (selfEnergy !== null) {\n    const per = Number(selfEnergy[1]);\n    const energyType = attachedEnergyFilter(selfEnergy[2]);\n    if (per >= 1 && energyType !== undefined) {\n      return selfEnergy[3] === \"this Pok\u00e9mon\"\n        ? { per, count: { kind: \"energyOnSelf\", energyType } }\n        : { per, count: { kind: \"energyOnSelf\", zone: \"board\", energyType } };\n    }\n  }\n",
     survives: {
       kind: "equivalent",
       reason: "\ud83d\uded1 STRUCTURAL DISJOINTNESS, NOT GUARDED \u2014 and D468's conventions entry requires the row to say WHICH, because the two kinds print the same verdict and carry OPPOSITE maintenance obligations. Both anchors are `^\u2026$` over the whole sentence and disagree on a MANDATORY run of bytes AT THE SAME POSITION: `SELF_ENERGY_SCALE` spells the two LITERAL tails `this Pok\u00e9mon` / `all of your Pok\u00e9mon`, while `SELF_ENERGY_FILTERED_SCALE` demands `all of your ` followed by `[^.]+ Pok\u00e9mon` \u2014 a run that must END IN A SPACE, which the shipped literal spends nowhere and which `this Pok\u00e9mon` cannot even reach. No string matches both, so NO LOOKAHEAD SEPARATES THEM and correctly none does \u2014 a guard nothing could turn red is D205/D208's vacuous guard, unkillable by construction. \u26a0\ufe0f **THE `(?!opponent)` LOOKAHEAD THAT DOES EXIST IS NOT THAT GUARD AND MUST NOT BE READ AS ONE**: it separates this anchor from an UNCLAIMED seat spelling, not from its sibling, and it IS killable \u2014 `D470-owner-board-anchor-loses-the-opponent-lookahead` is KILLED. So this row is D468's kind and that row is D467's kind, in one slice, at one address. THE TRIGGER THAT WOULD MAKE THIS ROW OBSERVABLE, i.e. the edit a successor is actually likely to make: folding the two anchors into one with an OPTIONAL `(?:[^.]+ )?` before `Pok\u00e9mon`. The moment that noun slot becomes optional the two patterns overlap, the order starts deciding answers, this mutation becomes killable and the row reports STALE-SURVIVOR. `ownerBoardEnergyScaling.test.ts` \u00a72's whole-column rung \u2014 every legal additive Energy sentence is claimed by exactly one of the two readings, and carries a filter IFF it names a subgroup \u2014 is the standing check on the premise.",
@@ -27775,8 +27789,8 @@ export const MUTANTS: Mutant[] = [
     decision: "D495",
     what: "⚠️ C10 — the census constant is put back to its pre-slice value while the arm stays. This is the row that proves the CENSUS moved for this build rather than the suite merely agreeing with itself: `BUILT.attack`'s live sum is derived from the readers over the committed corpus, so a stale constant is the one thing that cannot be true at both heads. 🆕 RE-TRANSCRIBED AT D499 (1612→1614 / 1611→1612): the row is about the CONSTANT being one slice stale, not about a particular digit, so it follows the constant. Its MEANING is byte-identical — a re-transcription that changes the claim is worth less than a broken row (D498), and this one does not: D499's own step is +2 printings, so the mutated value is exactly this file's value at D498's head",
     file: "packages/engine/src/censusAtHead.test.ts",
-    find: "  attack: 1614,",
-    replace: "  attack: 1612,",
+    find: "  attack: 1615,",
+    replace: "  attack: 1613,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28265,5 +28279,99 @@ export const MUTANTS: Mutant[] = [
       kind: "equivalent",
       reason: "STRUCTURAL disjointness (D468's kind, not D467's guarded kind, and the distinction decides the maintenance obligation). Both anchors are `^...$` and disagree on a mandatory run of bytes at the same position: ATTACK_COIN_CANCEL demands the string END at `does nothing.` and ATTACK_COIN_CANCEL_THEN_PREVENT demands ` If heads, ` there, so NO string can match both and the dispatch order cannot decide an answer. Measured over all 640 legalAttackCorpus() rows: the two anchors claim disjoint sets of 1 sentence / 16 printings and 1 sentence / 2 printings. ⚠️ SELF-INVALIDATING, and its falsifier is a SIBLING ROW rather than an argument: the equivalence is contingent on ATTACK_COIN_CANCEL keeping its `\\.$`, and `D499-debt-bare-cancel-anchor-loses-its-terminator` is the row that deletes exactly that byte and is KILLED. The day anyone loosens either anchor so the two overlap, this row reports STALE-SURVIVOR and the corpus names the commit.",
     },
+  },
+  // ── 🆕🆕🆕 D500 — THE PRINTED CARD CATEGORY `Basic`. Seven rows over ONE vocabulary
+  //    row and THREE one-line evaluator arms, and the SHAPE of the set is the finding:
+  //    **FIVE of the seven are SILENT IN EVERY CENSUS.** The sentence still resolves
+  //    under C1, C3, C4, C5 and C7, `resolvedByAnyReader` is still true, `BUILT.attack`
+  //    still steps by exactly 1 and both instrument gates still pass — while the derived
+  //    program counts the Specials instead of the Basics, counts what an Energy PROVIDES
+  //    instead of what it IS, counts every attached card, double-counts the board, or
+  //    tells the player the wrong noun. Only C2 (the lowercased key) is census-visible,
+  //    and it is visible because it RESTORES the pre-slice refusal.
+  //
+  //    🛑 **C3 IS THE RULES ROW AND C6 IS THE COVERAGE ROW.** C3 is the cards-versus-
+  //    provisions distinction the whole slice turns on, and it is observable only because
+  //    `fix-blend` exists — a Special Energy whose registry program provides two basic
+  //    types. C6 had NOWHERE TO DIE until §4's `conditionHolds` rung was written for it
+  //    (D456/D479), because no printing spells the clause it lives in.
+  {
+    id: "D500-vocabulary-row-takes-the-neighbours-value",
+    decision: "D500",
+    what: "\ud83d\uded1 C1 \u2014 **THE NEW MAP ROW RESOLVES TO ITS NEIGHBOUR'S VALUE**, `\"basic\"` \u2192 `\"special\"`, which is the line directly above it copied verbatim (D190b/D199: a mutant must be the mistake an author would actually make, and the mistake here is one word in a two-word tuple). The sentence still resolves, `resolvedByAnyReader` is still true, `BUILT.attack` still steps and the residue still falls \u2014 **SILENT IN EVERY CENSUS** \u2014 while the printed *\"Basic Energy\"* counts the SPECIALS instead. On `basicEnergyScaling.test.ts` \u00a72's board that is 1 where the answer is 4, and the damage row reads 40 for 160.",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Basic\", \"basic\"] as [string, BasicEnergyType | \"special\" | \"basic\"],",
+    replace: "  [\"Basic\", \"special\"] as [string, BasicEnergyType | \"special\" | \"basic\"],",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+      "packages/engine/src/selfEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D500-map-key-is-lowercased",
+    decision: "D500",
+    what: "\u26a0\ufe0f C2 \u2014 **THE MAP KEY IS LOWERCASED**, `\"Basic\"` \u2192 `\"basic\"`, the slip an author makes writing a key that looks like its value. The matcher carries no `/i` and the printed token is capitalised, so the sentence falls back to the LOUD `ATTACK_EFFECT_SKIPPED` path \u2014 the pre-D500 behaviour restored by one character, which is the honest shape of \"the vocabulary row was silently reverted\". \u26a0\ufe0f **THIS ROW AND C1 SHARE A LINE**, which is this corpus's central idiom (D484: two rows on one line are a family; two rows the runner cannot tell apart are a bug) \u2014 they differ in `replace`, so they are distinguishable experiments.",
+    file: "packages/engine/src/effects.ts",
+    find: "  [\"Basic\", \"basic\"] as [string, BasicEnergyType | \"special\" | \"basic\"],\n]);",
+    replace: "  [\"basic\", \"basic\"] as [string, BasicEnergyType | \"special\" | \"basic\"],\n]);",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+      "packages/engine/src/censusAtHead.test.ts",
+    ],
+  },
+  {
+    id: "D500-category-arm-reads-provision",
+    decision: "D500",
+    what: "\ud83d\uded1 C3 \u2014 **THE ROW THE WHOLE SLICE IS ABOUT: the card CATEGORY is read as a PROVISION.** *\"Basic Energy\"* names the CARD, and a Special Energy may PROVIDE a basic type \u2014 `fix-blend`'s `EnergyProgram` provides `[\"Fire\", \"Water\"]` \u2014 so the two readings are different numbers rather than two spellings of one. This is D440's C6 (*the energy noun spelled as a provision filter*) at a new address and in its OBSERVABLE form: `matchesFilter`'s `providesEnergy` arm answers false unconditionally and would score 0, where this one scores a plausible-but-wrong 3 on `basicEnergyScaling.test.ts` \u00a72's board (the two Waters plus the Special that provides Water, missing the two Basics that provide only Colorless) \u2014 **wrong in BOTH directions at once**, 120 where the answer is 160. \u26a0\ufe0f **IT IS SPELLED AT ONE CONCRETE TYPE BECAUSE `BASIC_ENERGY_TYPES` IS NOT A VALUE IMPORT IN THIS FILE**, and a `replace` that does not compile reports ERROR rather than a verdict (D476); the single type stands in for the family and the board separates it either way. **SILENT IN EVERY CENSUS.**",
+    file: "packages/engine/src/continuous.ts",
+    find: "  return pokemon.energy.filter((uid) => matchesFilter(cardOfUid(state, uid), BASIC_ENERGY_CARD));",
+    replace: "  return pokemon.energy.filter((uid) => providesEnergyType(state, pokemon, uid, \"Water\"));",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D500-category-filter-widens-to-any-energy",
+    decision: "D500",
+    what: "\ud83d\uded1 C4 \u2014 **THE PRINTED WORD `Basic` IS DROPPED AND THE FILTER WIDENS TO `anyEnergy`**, which is the one-word edit `D402-basic-energy-read-as-any-energy` and `D440-noun-drops-the-printed-basic` each ship at their own address \u2014 the same mistake on the same printed noun, a third time, now on the ATTACHED counter. It makes the category reading the UNFILTERED total, which is precisely the collapse `attachedEnergyFilter`'s two-nullish rule exists to prevent one layer up. \u26a0\ufe0f **A PILE OF ONLY BASIC ENERGY CANNOT SEE IT**, which is nearly every board a suite writes by accident: \u00a72's board carries one Special so that 5 \u2260 4 and the damage row reads 200 for 160.",
+    file: "packages/engine/src/continuous.ts",
+    find: "const BASIC_ENERGY_CARD: CardFilter = { kind: \"basicEnergy\" };",
+    replace: "const BASIC_ENERGY_CARD: CardFilter = { kind: \"anyEnergy\" };",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D500-board-arm-forgets-its-continue",
+    decision: "D500",
+    what: "\u26a0\ufe0f C5 \u2014 **THE BOARD-WIDE ARM ADDS ITS COUNT AND FALLS THROUGH INTO THE TERNARY BELOW**, so the category count is summed with a PROVISION count of the same word. It is the slip a `continue`-shaped insertion invites. \ud83d\uded1 **THIS ROW SURVIVED ITS FIRST PROBE AND THE `what` YOU ARE READING IS THE CORRECTED ONE \u2014 THE ORIGINAL WAS WRONG ABOUT THE ARITHMETIC, WHICH IS D477's MIS-DESCRIBED CLASS AND NOTHING BUT A DIFF OF `find`/`replace`/`what` AGAINST THE CODE CATCHES IT.** It claimed the board answered 12 for 7 because *'three Water-providers'* would be double-counted. False: the fall-through evaluates `providesEnergyType(state, holder, uid, 'basic')`, and 'basic' is a card CATEGORY that NO card provides \u2014 so the extra term is `units.includes('basic') || units.includes(ANY_ENERGY)`, which is **0 unless a WILDCARD is attached**. The row was therefore INERT (D450) and SURVIVED **483 files / 11,023 tests** under `--only \u2026 --full` (D455/D499's discrimination, run before blaming the killer set). \u2705 **THE SUITE WAS FIXED AND THIS ROW'S `find`/`replace` WERE LEFT BYTE-FOR-BYTE** (D496): `basicEnergyScaling.test.ts` \u00a72 now benches Luminous Energy `sv02-191`, whose `ANY_ENERGY` provision makes `providesEnergyType` answer TRUE for every string including 'basic', so the mutant answers **8** where the truth is **7** \u2014 a separation exactly ONE CARD wide. **SILENT IN EVERY CENSUS** \u2014 no reader's return value moves.",
+    file: "packages/engine/src/continuous.ts",
+    find: "      total += basicEnergyUids(state, holder).length;\n      continue;",
+    replace: "      total += basicEnergyUids(state, holder).length;",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D500-clause-arm-tests-the-special-list",
+    decision: "D500",
+    what: "\u26a0\ufe0f C6 \u2014 **`hasAttachedEnergy`'s NEW ARM TESTS THE SPECIAL LIST**, the neighbouring line's real code copied one arm down. \ud83d\uded1 **THIS ROW HAD NOWHERE TO DIE UNTIL THE SUITE WAS WRITTEN FOR IT** (D456/D479): no printing spells *\"has any Basic Energy attached\"*, so the arm is reachable only from constructed text, and without \u00a74's `conditionHolds` rung the mutation would have been live, correctly described and separated from the original by nothing \u2014 the UNKILLABLE-AS-WRITTEN class, reporting SURVIVED and reading as a coverage finding that does not exist. The rung drives p2's Active, which holds two Specials and no Basic, so the mutant answers `true` where the truth is `false`.",
+    file: "packages/engine/src/continuous.ts",
+    find: "  if (energy === \"basic\") return basicEnergyUids(state, pokemon).length > 0;",
+    replace: "  if (energy === \"basic\") return specialEnergyUids(state, pokemon).length > 0;",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+    ],
+  },
+  {
+    id: "D500-describer-falls-through-to-the-template",
+    decision: "D500",
+    what: "\ud83d\uded1 C7 \u2014 **THE DESCRIBER ARM IS DELETED AND `tsc` SAYS NOTHING**, because the branch it falls into is a TEMPLATE STRING: `conditionNote` renders *\"your Active Pok\u00e9mon has basic Energy attached\"* \u2014 lowercase, and naming a card CATEGORY as though it were an energy type \u2014 on a reject pill and a HUD tooltip. The reader is correct, the census steps, every behavioural suite passes, and the only thing wrong is the sentence a player reads (D473). **This is the row that records that the describer obligation was found by TRACING THE CALL SITE rather than by a red compile** \u2014 and `withConsequence`, the other describer, is EMPTY here because a `conditionGate` is not a parking op and a `DamageCountSource` never parks at all (D478/D489: trace the path, do not argue from the op's category).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      if (cond.energy === \"basic\") return \"your Active Pok\u00e9mon has a Basic Energy attached\";",
+    replace: "      if (cond.energy === \"basic\") return `your Active Pok\u00e9mon has ${cond.energy} Energy attached`;",
+    expectKilledBy: [
+      "packages/engine/src/basicEnergyScaling.test.ts",
+    ],
   },
 ];

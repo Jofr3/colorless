@@ -987,9 +987,9 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D492 §10 — the residue this slice moved, and the engine version", () => {
-  it("engineVersion is 0.391.0 and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.391.0");
-    expect(manifest.version).toBe("0.391.0");
+  it("engineVersion is 0.392.0 and `manifest.version` agrees", () => {
+    expect(engineVersion).toBe("0.392.0");
+    expect(manifest.version).toBe("0.392.0");
   });
 
   it("🛑 the reader surface is still THIRTEEN, derived from the module", () => {
@@ -1001,7 +1001,7 @@ describe("D492 §10 — the residue this slice moved, and the engine version", (
 
   it("🛑 the RAW residue fell by exactly 2 sentences / 4 printings", () => {
     const unbuilt = corpusRows().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([110, 168]);
+    expect([unbuilt.length, units(unbuilt)]).toEqual([109, 167]);  // (🆕🆕🆕 **D500 +1 sentence / +1 printing — THE PRINTED CARD CATEGORY `Basic`, WHICH IS `Special`'s COMPLEMENT AND NOT A TENTH TYPE** — `censusAttackCorpus.ts` **FILE LINE 580**, *"This attack does 40 damage for each Basic Energy attached to this Pokémon."*, **1 sentence / 1 legal printing**, claimed by `deriveAttackDamageMultiplier` through **ONE ROW in `CLAUSE_ENERGY_TOKENS`** — the anchor `SELF_ENERGY_MULTIPLY` already admitted the token and the refusal lived one step later, in `attachedEnergyFilter`. **ZERO new anchors, ZERO new readers (surface unmoved at 13), ZERO new ops, ZERO new op FIELDS, ZERO new `DamageCountSource` members, ZERO new `FIXTURE_POOL` ids and ZERO `packages/schema` bytes.** ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP AGREE AT 1 AND 1** — the row is 1/1 — and that was VERIFIED at both kinds of site rather than assumed from the row being singular (D451/D461).) 
     // …and neither of this slice's rows is in it any more, which is the only way this
     // rung reads as a measurement of THIS head (D483's move).
     expect(unbuilt.map(([, s]) => s)).not.toContain(EX_60);

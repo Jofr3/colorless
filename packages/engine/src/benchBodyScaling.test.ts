@@ -366,20 +366,40 @@ describe("deriveAttackDamageMultiplier — the same two resources on the `×` fo
   it("⚠️ TELLS 'no filter' APART FROM 'a filter I could not read' — the second stays LOUD", () => {
     // The whole guard. Collapsing the two would make an unreadable token quietly
     // score the UNFILTERED total. `{C}` is deliberately absent from
-    // ENERGY_TYPE_BY_CODE (it is the conservative provision fallback for every
-    // unauthored Special Energy) and "Basic" is a card CATEGORY, not a type — the
-    // pool prints "for each Basic Energy attached to this Pokémon." (1 legal) and
-    // that sentence asks a question `countEnergyInPlay` does not answer.
+    // ENERGY_TYPE_BY_CODE — it is the conservative provision fallback for every
+    // unauthored Special Energy, so a `{C}` filter would quietly match cards nobody
+    // meant.
+    //
+    // 🆕🆕 **D500 CORRECTED THE PARAGRAPH THAT USED TO STAND HERE, AND THE CORRECTION
+    // IS THE INTERESTING PART.** It read: *"'Basic' is a card CATEGORY, not a type —
+    // the pool prints 'for each Basic Energy attached to this Pokémon.' (1 legal) and
+    // that sentence asks a question `countEnergyInPlay` does not answer."* The first
+    // clause is true and the second was false in two ways at once. `countEnergyInPlay`
+    // has answered a card-CATEGORY question since D159 — `"special"` is one, read off
+    // `isSpecialEnergy` rather than through provision — so the category was never
+    // outside its vocabulary; and the sentence it names does not reach
+    // `countEnergyInPlay` at all, because *"attached to this Pokémon"* is the
+    // ZONE-LESS path and delegates to `countAttachedEnergy`. A refusal names a
+    // CARRIER, and this one named the wrong carrier AND was wrong about it (D457/D499).
+    // The row cost one map entry.
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 60 damage for each {C} Energy attached to all of your opponent's Pokémon.",
       ),
     ).toBeNull();
+    // …and a bogus token, so the LOUD half does not rest on the one deliberately
+    // omitted code.
+    expect(
+      deriveAttackDamageMultiplier(
+        "This attack does 60 damage for each Fancy Energy attached to all of your opponent's Pokémon.",
+      ),
+    ).toBeNull();
+    // 🆕🆕 D500 — and `Basic` RESOLVES now, on this zone as on the self side.
     expect(
       deriveAttackDamageMultiplier(
         "This attack does 60 damage for each Basic Energy attached to all of your opponent's Pokémon.",
       ),
-    ).toBeNull();
+    ).toEqual({ per: 60, count: { kind: "energyOnOpponent", zone: "board", energyType: "basic" } });
   });
 
   it("KEEPS its four older count sources — no arm was stranded", () => {

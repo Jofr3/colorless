@@ -187,7 +187,24 @@
  * derives to `{per: 70, count: {kind: "energyOnSelf", energyType: "special"}}`
  * with the filter INTACT. That is the difference between a SPELLING blocker and
  * a SEMANTIC one, it cannot be read off any count, and it is why every probe
- * here reports what the remainder derives TO. ⚠️ The judgement is still a
+ * here reports what the remainder derives TO.
+ *
+ * 🆕🆕 **D500 — THE PARAGRAPH ABOVE IS KEPT AND ONE OF ITS NINE HAS SINCE BEEN
+ * BUILT, WHICH CHANGES WHAT THE CLASSIFICATION MEANT RATHER THAN WHETHER IT WAS
+ * RIGHT** (D178: correct in place, dated). The `Basic` that *"collapses to
+ * `energyType: null`"* is `censusAttackCorpus.ts` FILE LINE 580 — *"This attack
+ * does 40 damage for each Basic Energy attached to this Pokémon."* — and its
+ * one-token deletion really did lose the token's information, so the judgement
+ * this instrument supported was correct: it IS a semantic blocker, not a spelling
+ * one. What the judgement did NOT say, and what nobody re-derived for three
+ * hundred decisions, is how much the semantics COST: one row in
+ * `CLAUSE_ENERGY_TOKENS`, because the noun names a card CATEGORY and the shared
+ * energy vocabulary already carried the complementary category (`"special"`).
+ * ⚠️ **SO A SEMANTIC BLOCKER IS NOT A PRICE EITHER** — it is the same
+ * misreading `OPAQUE` invites one class over (D463/D494), and this is the first
+ * case on record where the SPELLING/SEMANTIC split was right and still said
+ * nothing useful about cost. The count above stands at nine; ONE of the nine is
+ * now built, and the remaining eight are unmeasured by this paragraph. ⚠️ The judgement is still a
  * judgement — this instrument does not classify SPELLING vs SEMANTIC for you, it
  * puts the two values side by side so the judgement takes one look instead of a
  * doc block.

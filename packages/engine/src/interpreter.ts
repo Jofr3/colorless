@@ -5129,6 +5129,20 @@ export function conditionNote(cond: BoardCondition): string {
       // energy reads as the printed NAME rather than the brace code — a
       // reject/tooltip fragment is prose, and half the pool prints it that way
       // anyway.
+      //
+      // 🆕🆕 **D500 — A THIRD LIMB, AND `tsc` SAID NOTHING ABOUT ITS ABSENCE.** The
+      // else branch is a TEMPLATE STRING, so a widened `cond.energy` type compiles and
+      // the missing arm renders *"…has basic Energy attached"* — lowercase, and naming
+      // a card CATEGORY as though it were a type. That is D473's defect exactly: the
+      // reader would be correct, the census would step, every suite would pass, and
+      // the only thing wrong would be the sentence a player reads off the pill. Found
+      // by tracing this call site rather than by a red compile, which is why the arm
+      // is spelled out instead of left to the fallback.
+      //
+      // ⚠️ The seat mirror directly below is deliberately NOT given the limb: its
+      // member is not widened, because no producer can hand it the value (the clause
+      // that sets it is a LITERAL row, not the token map).
+      if (cond.energy === "basic") return "your Active Pokémon has a Basic Energy attached";
       return cond.energy === "special"
         ? "your Active Pokémon has a Special Energy attached"
         : `your Active Pokémon has ${cond.energy} Energy attached`;

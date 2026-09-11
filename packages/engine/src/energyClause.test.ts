@@ -608,7 +608,16 @@ describe("deriveAttackDamageBonus — the near-misses that stay UNMAPPED (and th
     // back undefined. The Map (not an object literal) is why "constructor" and
     // "toString" are refused too: an object lookup on arbitrary printed text can
     // hit Object.prototype and hand back something that is not an energy type.
-    for (const token of ["{X}", "{RR}", "R", "Basic", "special", "constructor", "toString"]) {
+    // 🆕🆕 **D500 REMOVED `Basic` FROM THIS LIST, AND THE LIST IS WHY IT HAD TO SAY
+    // SO.** `Basic` is in `CLAUSE_ENERGY_TOKENS` now — it is the card CATEGORY
+    // `"basic"`, `Special`'s complement — so it is no longer a bogus token and the
+    // clause *"If this Pokémon has any Basic Energy attached, …"* resolves. That
+    // spelling is printed on ZERO corpus rows; it is readable rather than built, which
+    // is D470's stated consequence for a shared noun table. ⚠️ `"special"` STAYS in
+    // the list and is now doing more work than it was: it is the LOWERCASE half of a
+    // real vocabulary entry, so it proves the matcher has no `/i` while its
+    // neighbours prove the lookup happens at all.
+    for (const token of ["{X}", "{RR}", "R", "basic", "special", "constructor", "toString"]) {
       expect(
         deriveAttackDamageBonus(
           `If this Pokémon has any ${token} Energy attached, this attack does 30 more damage.`,

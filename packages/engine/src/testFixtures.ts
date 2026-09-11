@@ -7467,14 +7467,30 @@ export const FIXTURE_POOL: Record<string, Card> = {
                               filter is READ rather than ignored (1 legal).
         2 "Overflow"     30×  MULTIPLY, UNTYPED — the family's single biggest row
                               (5 legal), and the fold that DROPS the printed base.
-        3 "Basic Draw"   40×  ⚠️ THE REFUSAL, and it is a real legal printing (1
-                              legal), not constructed text. "Basic Energy" is a
+        3 "Basic Draw"   40×  🆕🆕 **D500 — BUILT, AND IT WAS THE REFUSAL.** A real
+                              legal printing (1 legal), not constructed text. The
+                              paragraph this replaces read: *"'Basic Energy' is a
                               card CATEGORY rather than a type; it is absent from
                               CLAUSE_ENERGY_TOKENS, resolves to nothing, and the
                               reader must stay LOUD rather than quietly scoring the
-                              UNFILTERED total. That is the one mistake
-                              `attachedEnergyFilter` exists to prevent, and index 3
-                              is where it is driven on the self side.
+                              UNFILTERED total."* ⚠️ **EVERY CLAUSE OF THAT WAS TRUE
+                              AND IT WAS READ AS A REASON TO REFUSE** — `Basic` IS a
+                              card category, and that is exactly why it belongs in
+                              the map beside `Special`, which has carried a card
+                              class there since D118. The absence was an omission,
+                              not a decision, and nothing ever re-derived it
+                              (D478's loop). The index now folds: `energyOnSelf`
+                              with `energyType: "basic"`, counting CARDS whose
+                              `energyType` is `Normal` through `matchesFilter`'s
+                              shipped `basicEnergy` arm. `basicEnergyScaling.test.ts`
+                              is where it is driven, on a board carrying a Special
+                              Energy that PROVIDES a basic type — because counting
+                              cards and counting provisions are different numbers
+                              and only that fixture separates them. The LOUD path is
+                              still driven on this body, by `{C}` and by a bogus
+                              token, which is what `attachedEnergyFilter` exists to
+                              prevent and is now the whole of what index 3 used to
+                              carry alone.
         4 "Special Draw" 70×  🆕🆕 D459 — MULTIPLY, `Special`-FILTERED, and the
                               MINIMAL PAIR OF INDEX 3. Both print a card CATEGORY
                               where the other indices print a type or nothing;

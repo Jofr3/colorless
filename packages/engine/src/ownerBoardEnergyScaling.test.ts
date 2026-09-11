@@ -126,8 +126,13 @@ const OPPONENT_SEAT_BOARD =
 const ANCIENT_NOUN =
   "This attack does 20 more damage for each {L} Energy attached to all of your Ancient Pokémon.";
 
-/** The ENERGY-vocabulary refusal, one guard over: `attachedEnergyFilter` refuses
-    "Basic Energy" exactly as it does for the two shipped arms above this one. */
+/** The ENERGY-vocabulary probe, one guard over. ⚠️ **D500 CHANGED ITS SIGN**: it was
+    the refusal — `attachedEnergyFilter` answered `undefined` for "Basic Energy" — and
+    `Basic` is in `CLAUSE_ENERGY_TOKENS` now, so it RESOLVES, exactly as it does for
+    the two shipped arms above this one. The name is kept (D438: re-point, do not
+    rename away the trail) and the assertion moved. **0 legal printings either way** —
+    this composition is constructed, and the refusal it used to carry was always about
+    the vocabulary rather than about this anchor. */
 const BASIC_ENERGY_NOUN =
   "This attack does 20 more damage for each Basic Energy attached to all of your Iono's Pokémon.";
 
@@ -535,8 +540,33 @@ describe("§2 — deriveAttackDamageBonus: the noun the zone did not have", () =
     expect(deriveAttackDamagePenalty(ANCIENT_NOUN)).toBeNull();
   });
 
-  it("🛑 GUARD 3 — the ENERGY vocabulary refuses, exactly as it does one arm up", () => {
-    expect(deriveAttackDamageBonus(BASIC_ENERGY_NOUN)).toBeNull();
+  it("🛑 GUARD 3 — the ENERGY vocabulary, and it refuses exactly what it cannot read", () => {
+    // 🆕🆕 **D500 — `Basic` MOVED FROM THE REFUSED SIDE TO THE ADMITTED SIDE, AND THE
+    // GUARD IS UNCHANGED.** `attachedEnergyFilter` gained no branch; the shared
+    // `CLAUSE_ENERGY_TOKENS` gained a row, so the token now resolves to the card
+    // CATEGORY `"basic"` here for the same reason it resolves on the two arms above.
+    // This composition is CONSTRUCTED and 0 legal — no printing spells a `Basic`
+    // energy count on an owner-prefixed subgroup — and it is admitted rather than
+    // guarded out for D470's own stated reason at this anchor: *a reader is a function
+    // of TEXT, and a noun the column does not print simply never arrives*.
+    //
+    // 🛑 **AND THE GUARD'S POLARITY IS STILL WHAT THIS RUNG TESTS.** Guard 3 is
+    // `energyType !== undefined`; `D470-owner-board-arm-confuses-null-with-undefined-in-the-energy-guard`
+    // flips it to `!== null`. That row's `what` names TWO halves and D500 retires one
+    // of them — `Basic` is no longer an unresolvable token — so the row is now killed
+    // by the UNTYPED half alone: `OWNER_BOARD` below carries no token, resolves to
+    // `null`, and `!== null` refuses it. The row's `find`/`replace` are byte-unchanged
+    // (D496/D499: fix the suite, not the row) and the `{C}` case beside this one is
+    // what keeps the unresolvable half of the guard driven at all.
+    expect(deriveAttackDamageBonus(BASIC_ENERGY_NOUN)).toEqual({
+      per: 20,
+      count: {
+        kind: "energyOnSelf",
+        zone: "board",
+        energyType: "basic",
+        filter: { kind: "ownerPokemon", owner: "Iono" },
+      },
+    });
     expect(
       deriveAttackDamageBonus(
         "This attack does 20 more damage for each {C} Energy attached to all of your Iono's Pokémon.",
@@ -871,7 +901,7 @@ describe("§8 — `MATCH_RECORD_VERSION` STAYS 29, driven over the bytes", () =>
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.391.0");
+    expect(engineVersion).toBe("0.392.0");
   });
 });
 

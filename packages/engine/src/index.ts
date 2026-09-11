@@ -5006,7 +5006,9 @@ import type { GameState, Seat } from "./types";
     ⚠️ **AND TWO OF THE RECON'S COUNTS WERE THE RAW SENTENCE COUNT, NOT THE
     BUILDABLE ONE.** `energyOnSelf`'s 23 is 21: one row is a two-sentence printing
     the anchor refuses, one filters on `Basic Energy` — a card CATEGORY, not a type,
-    which resolves to nothing and stays LOUD. `energyOnOpponent`'s 17 IS 17, because
+    which resolves to nothing and stays LOUD. (🆕🆕 **D500 — 21 IS 22 NOW**: the
+    `Basic Energy` row is BUILT, through one row in `CLAUSE_ENERGY_TOKENS` and zero
+    anchor bytes. The two-sentence printing is still refused, by the anchor.) `energyOnOpponent`'s 17 IS 17, because
     its category row filters on `Special`, which `CLAUSE_ENERGY_TOKENS` already
     resolves.
 
@@ -5258,7 +5260,9 @@ import type { GameState, Seat } from "./types";
     ⚠️ **TWO RECON NUMBERS RE-CHECKED, AND THE 21 IS RIGHT WHERE 23 IS NOT.** Both
     rows in the gap are LEGAL, which is why a raw sentence sweep cannot be a build
     estimate: "…for each **Basic Energy** attached to this Pokémon." (1 legal)
-    filters on a card CATEGORY that resolves to nothing and must stay LOUD, and
+    filters on a card CATEGORY that resolves to nothing and must stay LOUD (🆕🆕
+    **D500 — NOT ANY MORE, and the gap is ONE row rather than two**: the category
+    resolves, because the shared token map already carried its complement), and
     "…for each {W} Energy attached to this Pokémon. **Before doing damage, you may
     attach** …" (1 legal) is a two-sentence printing the anchor refuses. Both are
     carried as fixture indices and driven, not argued — and the second is the ONE
@@ -19795,6 +19799,46 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.391.0 → **0.392.0** (D500 — THE PRINTED CARD CATEGORY
+    `Basic`, AND IT IS `Special`'s COMPLEMENT RATHER THAN A TENTH ENERGY TYPE.
+    `censusAttackCorpus.ts` **FILE LINE 580** — *"This attack does 40 damage for each
+    Basic Energy attached to this Pokémon."*, **1 sentence / 1 legal printing**, claimed
+    by `deriveAttackDamageMultiplier` through **ONE ROW in `CLAUSE_ENERGY_TOKENS`**.
+    **ZERO new anchors, ZERO new readers (surface unmoved at 13), ZERO new ops, ZERO new
+    op fields, ZERO new `DamageCountSource`/`CardFilter` members, ZERO new `FIXTURE_POOL`
+    ids and ZERO `packages/schema` bytes.** The anchor `SELF_ENERGY_MULTIPLY` admitted
+    the token from the day it was written — its filter group is `(?:(.+) )?` — and the
+    refusal lived one step later, in `attachedEnergyFilter`.
+
+    🛑 **THE REFUSAL THIS OVERTURNS NAMED A CARRIER, AND THE CARRIER WAS WRONG
+    (D457/D499).** Two doc blocks here and a rung in `benchBodyScaling.test.ts` said the
+    sentence *"asks a question `countEnergyInPlay` does not answer"*. `countEnergyInPlay`
+    has answered a card-CATEGORY question since D159 — `"special"` is one, read off
+    `isSpecialEnergy` rather than through provision — and this sentence does not reach
+    that function at all, because *"attached to this Pokémon"* is the ZONE-LESS path and
+    delegates to `countAttachedEnergy`. D479's THIRD class: the verdict (unbuilt) was
+    true and the reason was false, which is why nothing ever re-derived the price.
+
+    ⚠️ **THE RULES QUESTION, DRIVEN RATHER THAN ASSERTED.** A Special Energy may PROVIDE
+    a basic type, so counting CARDS and counting PROVISIONS are different numbers.
+    `fix-blend`'s registry `EnergyProgram` provides `["Fire", "Water"]` while not being a
+    Basic Energy card, and `fix-energy` is a Basic Energy providing only Colorless — so
+    `basicEnergyScaling.test.ts` §2 fields both and the naive *"provides some basic
+    type"* reading is wrong in BOTH directions on one board (3 where the answer is 4).
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AT THIS HEAD AFTER THE EDIT, WITH THE COMMAND
+    STATED.** `grep -rno 'toBe("0\.392\.0")' --include=*.ts packages/ src/ apps/ | wc -l`
+    returns **71** across **67** files; `grep -rnoE 'it\("(the )?engine[ V]ersion is
+    0\.392\.0'` returns **24** `it(` titles. The exception list — occurrences of the OLD
+    literal deliberately left standing — is **THREE**: this changelog's own D499 heading
+    two paragraphs down, `cancelThenPrevent.test.ts`'s `0.390.0 → 0.391.0` header arrow,
+    and nothing else, because `mutants.ts`'s D275 ledger was RE-POINTED rather than left
+    (the row's `find` quotes the DECLARATION, so a value-keyed sweep over `toBe(…)` is
+    blind to it and `precheck` is what caught it — D414/D415). **The figures are spelled
+    in ESCAPED patterns above so this paragraph does not count itself** (D494/D499).
+    ⚠️ **AND THE SWEEP'S OWN PATTERN WAS ONE SHORT**: `it("engineVersion is …` missed
+    `cancelThenPrevent.test.ts`'s `it("the engine version is …`, a fourth spelling of one
+    title, found by re-grepping the old literal after the pass rather than before it.)
     🆕🆕🆕 engineVersion 0.390.0 → **0.391.0** (D499 — THE PRINTED CANCEL WITH A
     HEADS CONSEQUENT ON THE SAME FLIP. `censusAttackCorpus.ts` **FILE LINE 268** —
     *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's
@@ -20465,7 +20509,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.391.0";
+export const engineVersion = "0.392.0";
 
 export type {
   ApplyResult,
