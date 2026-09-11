@@ -78,6 +78,7 @@ import {
   splitAttackRequirementClause,
 } from "./effects";
 import type {
+  AttackCoinFlip,
   AttackDamageBonus,
   AttackFlipCount,
   AttackPreDamage,
@@ -804,6 +805,35 @@ function takeFlips(
     single `takeFlips` path, so the event rows and the rngState accounting are
     written once for the whole family. */
 const ONE_FLIP: AttackFlipCount = { kind: "printed", count: 1 };
+
+/** How many coins a printed flip DECISION spends — the ONE place the whole family's
+    count is resolved, so the event rows and the `rngState` accounting stay written
+    once (see `ONE_FLIP` above).
+
+    🆕🆕 **D499 — A `switch` ON THE DISCRIMINATOR WHERE A TERNARY STOOD, WHICH IS
+    D474's RULE ARRIVING AT THE FUNCTION IT WAS WRITTEN ABOUT.** The shipped line was
+    `coinFlip.kind === "cancelOnTails" ? ONE_FLIP : coinFlip.flips`, and it was safe
+    only by a PAYLOAD COINCIDENCE: the field access on the `else` side refused any
+    member without a `flips` key, so the compiler happened to be loud. D499 adds the
+    SECOND count-free member and a third would still compile under the ternary the
+    moment it carried a compatibly-typed `flips` it did not mean — the exact
+    silent-wrong-reading D474 named at `takeFlips`. A total `switch` makes a new
+    member a MISSING CASE instead, which is loud for every member shape rather than
+    only for the ones whose payload happens to differ. */
+function printedFlips(coinFlip: AttackCoinFlip): AttackFlipCount {
+  switch (coinFlip.kind) {
+    // The two CANCEL members are "flip once, then take the printed branch" — the
+    // count is the member, not a field on it.
+    case "cancelOnTails":
+    case "cancelOnTailsElseProgram":
+      return ONE_FLIP;
+    case "bonusOnHeads":
+    case "perHeads":
+    case "programPerHeads":
+    case "perHeadsThenThreshold":
+      return coinFlip.flips;
+  }
+}
 
 /** 🆕🆕🛑 **D429 — THE PRE-DAMAGE SEAM'S RESULT CHANNEL, AND KEEPING IT UNPARKABLE
     WAS THE DESIGN.**
@@ -2049,8 +2079,20 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // The exception LIST, named rather than inlined: two of the coin union's four
   // members explain a printed damage marker and two do not, and a bare
   // `coinFlip !== null` here would claim the modifier for all four.
+  // 🆕🆕 **D499 ADDS THE THIRD EXCEPTION, AND IT IS WRITTEN FROM THE RULE RATHER THAN
+  // FROM THE DATA.** `cancelOnTailsElseProgram` folds no damage — its heads branch is
+  // a durated `preventDamage` install and its tails branch is the cancel — so it
+  // explains no printed `+`/`×` whatever. Claiming the modifier for it would SUPPRESS
+  // a loud row the engine has not earned, which is `programPerHeads`'s argument one
+  // member over. ⚠️ This checkout has no D1, so the printed damage MARKER on the two
+  // printings is UNRESOLVED (D425) and deliberately not the reason: the default —
+  // riding the `!== "cancelOnTails"` test — would have been silently wrong the first
+  // time such a printing arrived with a marker, exactly as D130's note predicted.
   const coinExplainsModifier =
-    coinFlip !== null && coinFlip.kind !== "cancelOnTails" && coinFlip.kind !== "programPerHeads";
+    coinFlip !== null &&
+    coinFlip.kind !== "cancelOnTails" &&
+    coinFlip.kind !== "cancelOnTailsElseProgram" &&
+    coinFlip.kind !== "programPerHeads";
   // 🆕🆕 D383 adds NO term and NARROWS one, which is D130's rule applied to a
   // widened reading rather than to a new reader. The `moreDamage` payoff consumes a
   // printed "+" marker (`140+`) and is exactly what explains it; the `benchSnipe`
@@ -2251,17 +2293,14 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
   // is KEPT — see `scaledBase` above, where the rule is stated.
   let coinBonus = 0;
   if (coinFlip !== null) {
-    const [faces, rngState] =
-      coinFlip.kind === "cancelOnTails"
-        ? takeFlips(next, action.seat, active, ONE_FLIP)
-        : takeFlips(next, action.seat, active, coinFlip.flips);
+    const [faces, rngState] = takeFlips(next, action.seat, active, printedFlips(coinFlip));
     next = { ...next, rngState };
     let heads = 0;
     for (const face of faces) {
       events.push({ type: "ATTACK_EFFECT_COIN_FLIP", seat: action.seat, result: face });
       if (face === "heads") heads += 1;
     }
-    if (coinFlip.kind === "cancelOnTails") {
+    if (coinFlip.kind === "cancelOnTails" || coinFlip.kind === "cancelOnTailsElseProgram") {
       if (heads === 0) {
         // D125's ending, third caller: no damage, no W/R, no effect ops, no
         // triggers — and `finishAttack` still sweeps §8.1 and still ends the turn,
@@ -2273,6 +2312,19 @@ export function attack(state: GameState, action: AttackAction): ApplyResult {
           reason: "coinFlip",
         });
         return finishAttack(next, events, action.seat, attackerUid, declared.name);
+      }
+      // 🆕🆕 D499 — the HEADS branch of the same flip, and it is reached only on the
+      // fall-through above, so the two consequences can never both happen and can
+      // never disagree about the face. APPENDED, NEVER ASSIGNED — D130's rule at its
+      // fourth payment in this block: overwriting `program` would let a registry row
+      // be silently dropped by a coin sentence on the same attack. For these two
+      // printings `program` is always null (the derivers are whole-sentence anchored,
+      // so a sentence this coin reader claims is one `deriveAttackEffect` refused,
+      // and `programFor` is undefined for the ids — asserted over the whole registry
+      // in `cancelThenPrevent.test.ts` §4 rather than assumed), which makes the
+      // append behaviour-identical today and honest tomorrow.
+      if (coinFlip.kind === "cancelOnTailsElseProgram") {
+        program = [...(program ?? []), ...coinFlip.ops];
       }
     } else if (coinFlip.kind === "programPerHeads") {
       // D130 — THE EXPANSION. One copy of the member's ops per matching face, in

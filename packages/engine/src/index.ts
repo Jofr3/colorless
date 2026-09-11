@@ -19795,6 +19795,99 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
+    🆕🆕🆕 engineVersion 0.390.0 → **0.391.0** (D499 — THE PRINTED CANCEL WITH A
+    HEADS CONSEQUENT ON THE SAME FLIP. `censusAttackCorpus.ts` **FILE LINE 268** —
+    *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's
+    next turn, prevent all damage from and effects of attacks done to this Pokémon."*,
+    **1 sentence / 2 legal printings**, claimed WHOLE by `deriveAttackCoinFlip` through
+    ONE new anchor `ATTACK_COIN_CANCEL_THEN_PREVENT` and ONE new `AttackCoinFlip` member
+    `cancelOnTailsElseProgram { ops: EffectOp[] }`. The id in `effects.ts`'s D142 block
+    is Squawkabilly `sv01-162` "Fly"; this checkout has no local D1 (D425), so the id is
+    cited as that block's and the SENTENCE is the citation.
+
+    🛑 **THE REFUSAL THIS OVERTURNS WAS RIGHT ABOUT ITS OWN CARRIER AND WAS READ AS A
+    CLAIM ABOUT THE ENGINE (D456/D457).** D142 listed the row LOUD with *"a SECOND
+    consequent on the same flip"*, and four suites carried it — `flipStatusHeadsTails.test.ts`
+    most sharply: *"its blocker is a SEAM … no widening of any anchor in this family can
+    reach it, which is what makes it a durable witness rather than a treadmill."* Every
+    clause is TRUE **of `deriveAttackEffect`**, whose program runs at `attack()`'s TAIL
+    strictly after the §8.5 pipeline — so a `coinFlipGate {then, otherwise}` genuinely
+    cannot spell it, because the `otherwise` would have to RETRACT damage already dealt,
+    which `attack.ts` says at the flip site in those words. What nobody asked is which
+    carrier is read AT the §8 seam the cancel resolves at. `deriveAttackCoinFlip` is, and
+    it has carried a consequent PROGRAM on a coin member (`programPerHeads.ops`) since
+    **D130**. The row was priced against the wrong carrier for 57 decisions, and
+    `deriveAttackEffect` still refuses it — so all five shipped `toBeNull` witnesses on
+    that reader stayed GREEN and armed through the build.
+
+    🛑 **ONE READER, ONE FLIP — AND THE TWO-READER IDIOM D493/D494 SHIPPED IS REFUSED
+    ON A MEASUREMENT.** `attack.ts` hands `effect` to every reader, so a dual claim was
+    one constant away. It would spend **TWO** `rngState` steps and emit **TWO**
+    `ATTACK_EFFECT_COIN_FLIP` rows for ONE printed flip — the coin block's `takeFlips`
+    and `runProgram`'s `coinFlipGate` are two draws — and the two faces could disagree,
+    so *"If tails, this attack does nothing"* could fire beside *"If heads, prevent…"*.
+    `bonusConsequentProgram`'s block states that hazard for Floette; this is it at a
+    second address. Driven: the post-swing `rngState` is byte-identical to the BARE
+    cancel's on the same seed, on BOTH faces.
+
+    🛑 **THE 2³ AXIS-SUBSTITUTION LATTICE, BUILT-BY-WEIGHT `0/1 · 1/3 · 0/1` OVER FIVE
+    DISTINCT POINTS — A THIRD SHAPE.** D489/D490/D494 each produced one built point at
+    FULL weight (*no proper subset builds*); D495 produced *every segment built, only the
+    combination unread*. This one has a **PREREQUISITE HALF that is itself a printed,
+    15-printing corpus row** (line 249), while every point keeping the cancel arm refuses
+    whatever else is substituted — so the blocker is the JOIN, and the join is a SEAM
+    question. ⚠️ A fourth candidate axis was DEGENERATE (D491/D494): the heads
+    consequent's nearest BUILT spelling IS its printed value, so a 2⁴ table would have
+    been the 2³ reported twice. Direction 2 (D492) holds the cancel arm and varies the
+    consequent over six printed alternatives: all six build ALONE, none builds with the
+    cancel in front, and all six mirrors (cancel second) refuse.
+
+    ⚠️ **ZERO** new `EffectOp` members, op FIELDS, op VALUES,
+    `BoardCondition`/`CardFilter`/`DamageCountSource`/`EffectSlot` members, readers (the
+    surface stands still at **13**), prompts, choice kinds, parks, events, error codes,
+    `GameState`/`InPlayPokemon` fields, registry rows, `FIXTURE_POOL` ids (file-local
+    board surgery, D414/D452) — and **`interpreter.ts`, `log.ts`, `redact.ts`,
+    `types.ts`, `registry.ts`, `testFixtures.ts`, `censusAttackCorpus.ts` and every
+    `packages/schema` byte are byte-identical to HEAD**, verified per file rather than
+    asserted. The op this arm emits is `FLIP_PREVENT_DAMAGE_AND_EFFECTS`'s, byte for byte.
+
+    🛑 **`MATCH_RECORD_VERSION` STAYS 29, AND THE ADDRESS IS NAMED FIRST.** The row lands
+    in the DURATED family, at `InPlayPokemon.attackBlock` — a `GameState` field persisted
+    DIRECTLY in `MatchRecord.state` on every save, with no park in front of it, so D450's
+    reachability argument is the wrong shape and is **not** what holds 29. The argument
+    used is the **SERIALIZED ALPHABET** (D462/D463): there is no byte a v29 record can
+    hold after this slice that it could not hold before it — `{"op":"preventDamage",
+    "effects":true}` is what line 249's 15 printings already produce inside a
+    `coinFlipGate.then`, and the record is `{"turn":3,"effects":true}` either way, driven
+    as a board fact against the sibling sentence on the same seed. Reachability is stated
+    SECOND as the weaker half (D452): `AttackCoinFlip` is a PARSE-TIME union absent from
+    `packages/schema`, and the derived program is LENGTH ONE with a non-parking op, which
+    is D465's FIRST-POSITION form — driven on BOTH faces, because a whiff is not a park.
+
+    ⚠️ **THE VERSION TAX, RE-MEASURED AFTER THE EDIT — AND THIS PARAGRAPH IS WRITTEN SO
+    IT DOES NOT COUNT ITSELF (D488's rule, with D494's precondition applied).** Every
+    version string below is spelled as an ESCAPED PATTERN, so the paragraph contains the
+    pattern and not the literal, and the figure it quotes is therefore stable under its
+    own existence. The command:
+    `grep -roE '0\.391\.0' --include=*.ts --include=*.tsx --include=*.json packages/ apps/ src/ scripts/`
+    ⚠️ **THE COUNT IS NOT QUOTED HERE, BY CHOICE** — it moved 98 → 100 the moment the
+    heading above was written, which is exactly the self-reference this note is about, and
+    a figure that changes when its own note is edited is a figure nobody can check. Run
+    the command. What IS worth recording is the SHAPE: `git grep` is short by exactly this
+    slice's own untracked suite (D489/D490), and the `it(…)` TITLE class (D460) is a
+    quarter of the total.
+    🛑 **THE HISTORY EXCEPTIONS — the occurrences of the PREVIOUS version that a
+    mechanical bump must NOT step (D443) — SETTLED AT FOUR, AND THE PASS MEASURED THREE.**
+    The trajectory is the finding, not the number: the pass ran BEFORE this entry existed
+    and correctly found three (the D495 heading, `flipDefenderAttackLock.test.ts`'s suite
+    header, and the new suite's own header arrow). Writing the entry made it six, because
+    the first draft of this very paragraph spelled the literal twice while counting it —
+    D488's rule firing inside the paragraph that warns about it, for the third run in a row
+    (D494 found the same, one slice over). Spelling the paragraph with ESCAPED patterns
+    took it to **four**: the three above plus the heading's own left operand, which is
+    history the instant it is written. **Re-derive the list, never inherit the total**
+    (D488/D490/D494), with
+    `grep -rn '0\.390\.0' --include=*.ts packages/ apps/ src/ scripts/` and read every hit.)
     🆕🆕🆕 engineVersion 0.389.0 → **0.390.0** (D495 — THE DEFENDER ATTACK LOCK BEHIND
     THE WINNING FACE OF A COIN. `censusAttackCorpus.ts` **FILE LINE 250** — *"Flip a coin.
     If heads, during your opponent's next turn, the Defending Pokémon can't attack."*,
@@ -20372,7 +20465,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.390.0";
+export const engineVersion = "0.391.0";
 
 export type {
   ApplyResult,

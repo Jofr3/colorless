@@ -702,17 +702,17 @@ describe("§8 — the census moves in exactly ONE summand", () => {
     const units = (rs: readonly (readonly [number, string])[]): number =>
       rs.reduce((sum, [n]) => sum + n, 0);
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([529, 1562]);
+    expect([resolved.length, units(resolved)]).toEqual([530, 1564]);
     // …and the step is ATTRIBUTABLE: remove THIS sentence and both figures fall by
     // exactly one, so nothing else moved under the slice.
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([528, 1561]);
+    expect([without.length, units(without)]).toEqual([529, 1563]);
     // RAW SUMMAND ALONE — no registry row, no gate split, no trailing split.
     expect(programFor("fix-deflock")).toBeUndefined();
   });
 
-  it("engineVersion is 0.390.0", () => {
-    expect(engineVersion).toBe("0.390.0");
+  it("engineVersion is 0.391.0", () => {
+    expect(engineVersion).toBe("0.391.0");
   });
 
   it("the demonstrator costs ZERO `FIXTURE_POOL` ids (D414/D452)", () => {

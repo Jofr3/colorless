@@ -481,7 +481,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.390.0");
+    expect(engineVersion).toBe("0.391.0");
   });
 });
 

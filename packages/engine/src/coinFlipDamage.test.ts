@@ -108,6 +108,17 @@ import {
     ATTACK_EFFECT_SKIPPED path and lets a flat 30 land unconditionally. */
 const SURPRISE_ATTACK = "Flip a coin. If tails, this attack does nothing.";
 
+/** 🆕🆕 **D499** — Squawkabilly `sv01-162` "Fly" (the id is `effects.ts`'s D142 block's,
+    UNRESOLVABLE in this checkout, so the SENTENCE is the citation): corpus FILE LINE
+    268, **1 sentence / 2 legal printings**. `SURPRISE_ATTACK` is its literal prefix,
+    which is the whole point of the rung below — the two differ on exactly ONE axis,
+    the appended heads consequent (D427). ⚠️ The bare `SURPRISE_ATTACK` above says
+    **11 printings**; measured off `legalAttackCorpus()` at this head it is **16**, and
+    that figure is pinned in `cancelThenPrevent.test.ts` §1 rather than corrected into
+    prose in two places (D490: read a printing count off the corpus, never type it). */
+const SECOND_CONSEQUENT_BUILT =
+  "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.";
+
 /** Litwick sv03-036 "Firebreathing", verbatim. The smallest of the pool's seven
     printed N values, and the sentence whose "+" marker the reader consumes. */
 const FIREBREATHING = "Flip a coin. If heads, this attack does 10 more damage.";
@@ -448,21 +459,34 @@ describe("the rest of the coin family stays LOUD", () => {
       // first sentence pair is present verbatim; the third sentence is what the
       // `$` refuses, and it is a self-penalty the engine has no way to carry.
       "Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.",
-      // Squawkabilly sv01-162 — the CANCEL sentence verbatim, plus a heads branch
-      // that grants damage prevention. Refused for the same reason, from the
-      // other member: the first sentence pair IS Tarountula's, char-for-char.
-      "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
     ]) {
       expect(deriveAttackCoinFlip(text)).toBeNull();
       expect(text.startsWith("Flip a coin. ")).toBe(true); // reached the anchor
     }
+    // 🆕🆕🛑 **D499 — THE FOURTH ENTRY LEFT THIS LIST BECAUSE IT IS BUILT, AND THE
+    // CLAIM IT CARRIED IS RE-POINTED RATHER THAN DELETED (D418/D438).** It was
+    // Squawkabilly `sv01-162` "Fly" — corpus FILE LINE 268, *"Flip a coin. If tails,
+    // this attack does nothing. If heads, during your opponent's next turn, prevent
+    // all damage from and effects of attacks done to this Pokémon."* — and it sat
+    // here to prove that `ATTACK_COIN_CANCEL`'s `\.$` refuses a second consequent
+    // appended to the mapped sentence.
+    //
+    // ⚠️ **A `toBeNull` COULD NOT SURVIVE THE BUILD AND A BARE `not.toBeNull` WOULD
+    // HAVE DISARMED IT** — that is true under a loosened `$` and under the real build
+    // alike (D438's polarity rule). So the rung now names the OWNER by VALUE: the
+    // string must derive to `cancelOnTailsElseProgram`, which is the answer ONLY the
+    // compound arm gives. Drop `ATTACK_COIN_CANCEL`'s `\.$` and that anchor — read
+    // FIRST, deliberately (see its arm's block in effects.ts) — claims the compound
+    // as a bare `cancelOnTails`, and this line reddens with the old discrimination
+    // intact and a strictly sharper failure message.
+    expect(deriveAttackCoinFlip(SECOND_CONSEQUENT_BUILT)).toEqual({
+      kind: "cancelOnTailsElseProgram",
+      ops: [{ op: "preventDamage", effects: true }],
+    });
+    expect(deriveAttackCoinFlip(SECOND_CONSEQUENT_BUILT)).not.toEqual({ kind: "cancelOnTails" });
     // The two prefixes really are the mapped sentences, so the refusals above are
     // the `$` doing the work and not the `^` or the middle of the pattern.
-    expect(
-      "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.".startsWith(
-        SURPRISE_ATTACK,
-      ),
-    ).toBe(true);
+    expect(SECOND_CONSEQUENT_BUILT.startsWith(SURPRISE_ATTACK)).toBe(true);
     expect(
       "Flip a coin. If heads, this attack does 140 more damage. If tails, during your next turn, this Pokémon can't attack.".startsWith(
         "Flip a coin. If heads, this attack does 140 more damage.",

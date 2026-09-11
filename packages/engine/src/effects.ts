@@ -17640,6 +17640,43 @@ export function deriveAttackCancelRequirement(text: string): BoardCondition | nu
 // belong.
 const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
 const ATTACK_COIN_CANCEL = /^Flip a coin\. If tails, this attack does nothing\.$/;
+// 🆕🆕 D499 — THE CANCEL WITH A HEADS CONSEQUENT, corpus FILE LINE 268, 1 sentence /
+// 2 legal printings. D142's own block listed this row as LOUD with the warrant *"a
+// SECOND consequent on the same flip"*, and four suites then carried that refusal as
+// though the SENTENCE were unbuildable. ⚠️ **THE WARRANT WAS RIGHT ABOUT ITS OWN
+// CARRIER AND WRONG AS A CLAIM ABOUT THE ENGINE** (D456/D457): it is a refusal of
+// `deriveAttackEffect`, whose program runs at `attack()`'s TAIL strictly after the
+// §8.5 pipeline — which is why a `coinFlipGate { then, otherwise }` genuinely cannot
+// spell it, since the `otherwise` would have to retract damage already dealt. The
+// carrier that CAN is this one: `deriveAttackCoinFlip` is read in FRONT of §8.5, at
+// the seam the cancel already resolves at, and `programPerHeads` has carried a
+// consequent PROGRAM on a coin member since D130.
+//
+// 🛑 **ONE READER, ONE FLIP, AND THAT IS THE WHOLE ARGUMENT FOR THE MEMBER.** The
+// tempting alternative is the two-reader idiom D493/D494 shipped — let this string be
+// claimed by `deriveAttackCoinFlip` for its cancel AND by `deriveAttackEffect` for its
+// heads gate, since `attack.ts` hands `effect` to both. It is REFUSED here, and not on
+// taste: those two readers land at TWO SITES THAT EACH DRAW A COIN — the `coinFlip`
+// block's `takeFlips` and `runProgram`'s `coinFlipGate` — so a dual claim would spend
+// TWO `rngState` steps and emit TWO `ATTACK_EFFECT_COIN_FLIP` rows for ONE printed
+// flip, and the two faces could disagree. `bonusConsequentProgram`'s block in
+// `attack.ts` states exactly this hazard for Floette ("Reading Floragato with
+// `deriveAttackCoinFlip` AND a gate program would draw twice"); this is that rule at
+// its second address. The union's own doc block says the other half: the ops live on
+// the coin member so there is no invariant between two derivers to hold.
+//
+// SPELLED OUT IN FULL, NO CAPTURE, like `FLIP_PREVENT_DAMAGE_AND_EFFECTS` whose
+// consequent this repeats byte for byte. A capturing `If heads, (.+)\.$` form was
+// MEASURED over all 640 corpus rows and claims exactly the same 1 sentence / 2
+// printings — D472's case, where the generality buys nothing and costs a wrong
+// program (it would claim any future heads consequent and hand it to a table that
+// cannot answer it). Disjoint from `ATTACK_COIN_CANCEL` above STRUCTURALLY rather
+// than by a guard (D467): that anchor ends `does nothing\.$` and this string does
+// not end there. ⚠️ **THE PLACEMENT IS STILL LOAD-BEARING** — see the arm's own
+// block: structural disjointness holds only while that `$` is there, and the bare
+// anchor must be READ FIRST for its deletion to be observable at all.
+const ATTACK_COIN_CANCEL_THEN_PREVENT =
+  /^Flip a coin\. If tails, this attack does nothing\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
 
 // The MULTI-FLIP COUNT FOLD (D127) — "Flip N coins. This attack does D damage for
 // each heads." — 22 printings on ONE regex, N ∈ {2 (12 prints), 3 (9), 4 (1)},
@@ -18497,6 +18534,17 @@ export type AttackFlipThreshold = { face: CoinFace; atLeast: number };
 export type AttackCoinFlip =
   | { kind: "bonusOnHeads"; flips: AttackFlipCount; per: number }
   | { kind: "cancelOnTails" }
+  // 🆕🆕 D499 — the cancel with a HEADS CONSEQUENT riding the same flip. TWO
+  // members and not an optional `ops?` on `cancelOnTails`, by D440's rule as D460
+  // applied it one union over: the payloads are ASYMMETRIC (the bare cancel is
+  // nullary; this one carries a program), so a shared member would make every one
+  // of the bare cancel's 16 printings (corpus FILE LINE 267, measured at this
+  // head, NOT the "11" D126's block still quotes) carry a key it must ignore.
+  // Required `ops`, so a
+  // producer that forgets the consequent is a COMPILE ERROR rather than an attack
+  // that silently flips and installs nothing (D425's direction of the
+  // detectability rule).
+  | { kind: "cancelOnTailsElseProgram"; ops: EffectOp[] }
   | { kind: "perHeads"; flips: AttackFlipCount; per: number }
   | { kind: "programPerHeads"; flips: AttackFlipCount; ops: EffectOp[]; face: CoinFace }
   | {
@@ -18878,7 +18926,36 @@ export function deriveAttackCoinFlip(text: string): AttackCoinFlip | null {
         }
       : null;
   }
-  return ATTACK_COIN_CANCEL.test(effect) ? { kind: "cancelOnTails" } : null;
+  // 🛑 **D499 — THE BARE CANCEL RUNS FIRST, AND THE ORDER IS BEHAVIOUR RATHER THAN
+  // LEGIBILITY (D467).** Under the shipped build the two anchors are STRUCTURALLY
+  // disjoint — `ATTACK_COIN_CANCEL` ends `does nothing\.$` and the compound does not
+  // end there — so no input distinguishes the orders and neither needs a guard.
+  // ⚠️ **BUT THE `$` IS A DELETABLE BYTE, AND ONLY THIS ORDER MAKES ITS DELETION
+  // OBSERVABLE.** Drop it and `ATTACK_COIN_CANCEL` becomes a PREFIX matcher that
+  // claims the compound too; running it first means the compound's own rung reddens
+  // and reports it, where running it second would let the compound arm answer first
+  // and leave the loosened anchor unobservable — D418's disarmed tripwire, arriving
+  // at a dispatch order instead of at a re-point. `coinFlipDamage.test.ts`'s `$` rung
+  // is the one that had held that claim since D126, and it keeps holding it.
+  //
+  // The shape was previously spelled as a single `return … ? … : null` on the line
+  // below; it is an `if` now so a THIRD cancel reading can be added without moving
+  // this one, and so the two are read in the printed order a person would.
+  if (ATTACK_COIN_CANCEL.test(effect)) return { kind: "cancelOnTails" };
+  // 🆕🆕 D499 — the cancel WITH its heads consequent. The `ops` are BYTE-IDENTICAL to
+  // what `deriveAttackEffect`'s `FLIP_PREVENT_DAMAGE_AND_EFFECTS` arm puts inside its
+  // `coinFlipGate.then` for the same printed consequent — the GATE is what differs,
+  // not the action, and that identity is the family's checkable claim (D132's
+  // inventory rule). It is asserted in both directions in `cancelThenPrevent.test.ts`
+  // §2 rather than described here, because a prose claim about two arms is exactly
+  // the kind nothing re-checks.
+  if (ATTACK_COIN_CANCEL_THEN_PREVENT.test(effect)) {
+    return {
+      kind: "cancelOnTailsElseProgram",
+      ops: [{ op: "preventDamage", effects: true }],
+    };
+  }
+  return null;
 }
 
 // The OPPONENT-side twin of the self-discard, printed on attacks rather than

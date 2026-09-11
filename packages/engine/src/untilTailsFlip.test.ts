@@ -729,8 +729,25 @@ describe("deriveAttackCoinFlip — the FIFTH shape, on two regexes and ZERO tabl
       const flip = deriveAttackCoinFlip(text);
       if (flip === null) throw new Error("unreachable");
       expect(Object.keys(flip).sort()).toEqual(["flips", "kind", "per"]);
-      if (flip.kind === "cancelOnTails") throw new Error("unreachable");
-      expect(Object.keys(flip.flips)).toEqual(["kind"]);
+      // 🆕🆕 **D499 — A `switch` WHERE A ONE-MEMBER EXCLUSION STOOD (D222).** This
+      // line was `if (flip.kind === "cancelOnTails") throw`, which was equal to
+      // "narrow to the members carrying `flips`" only BY CONSTRUCTION, while
+      // `cancelOnTails` was the union's sole count-free member. D499 added a second
+      // (`cancelOnTailsElseProgram`) and the negated test fell out of the wrong side
+      // — loudly here, because the very next line reads `.flips`, which is the
+      // payload coincidence D474 warned is not a guarantee. A total `switch` makes
+      // the next member a MISSING CASE instead of a silent widening.
+      switch (flip.kind) {
+        case "bonusOnHeads":
+        case "perHeads":
+        case "programPerHeads":
+        case "perHeadsThenThreshold":
+          expect(Object.keys(flip.flips)).toEqual(["kind"]);
+          break;
+        case "cancelOnTails":
+        case "cancelOnTailsElseProgram":
+          throw new Error("unreachable: all three subjects carry a printed flip count");
+      }
       // No `cond` and no `count` source: D126's rule is untouched. The DAMAGE count
       // still comes from the faces, so `scaledAttackDamage` stays pure and no
       // `DamageCountSource` member was added for the fifth time running.

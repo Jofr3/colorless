@@ -97,9 +97,31 @@ const LEFT_LOUD = {
       nothing"*: an attack-level CANCEL resolving at the §8 declaration seam, which
       `deriveAttackEffect` has nowhere to put, so it is blocked by a SEAM rather than by a
       vocabulary and no widening of an anchor in this family can reach it.
-      ⚠️ It is now load-bearing in three files; a successor building it owes the re-point. */
+      ⚠️ It is now load-bearing in three files; a successor building it owes the re-point.
+
+      🛑🛑 **D499 — RE-POINTED A THIRD TIME, AND THE SLICE THAT DID IT IS THE ONE THE
+      PARAGRAPH ABOVE PREDICTED. THE D478 REASON IS KEPT VERBATIM AND IT WAS RIGHT ABOUT
+      ITS OWN CARRIER AND WRONG AS A CLAIM ABOUT THE ENGINE (D456/D457).** *"`deriveAttackEffect`
+      has nowhere to put a §8-seam cancel"* is TRUE and is still true — D499 does not
+      widen any anchor in this family, and `deriveAttackEffect(line 268)` is still
+      `null`. What the sentence does NOT say is the part that mattered: `deriveAttackCoinFlip`
+      is read IN FRONT of §8.5, at the very seam the cancel resolves at, and it has
+      carried a consequent PROGRAM on a coin member since D130. So the row was never
+      blocked by a seam — it was blocked by being priced against the wrong carrier, and
+      *"no widening of an anchor in this family can reach it"* was read as *"nothing can"*.
+
+      ⚠️ **THE OLD PROPERTY IS NOW EXHAUSTED, NOT MERELY MOVED.** All THREE printed
+      heads/tails compounds in the 640-row column (244, 263, 268) build, so D478's
+      subject class is EMPTY and there is nothing left to re-point onto inside it —
+      which is why this slot changes PROPERTY rather than subject, to D461's strictly
+      more durable one: **a witness whose blocker is DATA rather than a mechanism.** The
+      Ancient banner is printed on the card FACE and exists in no column of `cardSchema`
+      and no field of tcgdex's own model, so no reader at any width can claim this row;
+      the day it goes green, the thing that changed is the INGEST, which is exactly what
+      a witness should be able to tell you. Corpus FILE LINE 182, **1 printing** (not 2 —
+      the count is pinned off the corpus in §3 rather than carried). */
   headsTails:
-    "Flip a coin. If tails, this attack does nothing. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+    "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Ancient Pokémon.",
   /** 🆕🆕 **RE-POINTED A SECOND TIME AT D464, AND THE PARAGRAPH IT REPLACES IS KEPT
       VERBATIM BELOW BECAUSE IT WAS WRONG IN AN INSTRUCTIVE WAY (D178).**
 
@@ -337,7 +359,9 @@ describe("§1 — the printed data, transcribed rather than recognised", () => {
     expect(rows.get(FLIP_CONFUSE_POISON)).toBe(1);
     expect(rows.get(FLIP_PARALYZE_POISON)).toBe(1);
     expect(rows.get(CONFUSE_POISON_SWITCH)).toBe(1);
-    expect(rows.get(LEFT_LOUD.headsTails)).toBe(2);
+    // 🆕🆕 D499 — the slot moved to the DATA-blocked Ancient prevent (corpus FILE LINE
+    // 182) and the count moved WITH it, 2 → 1, read off the corpus rather than carried.
+    expect(rows.get(LEFT_LOUD.headsTails)).toBe(1);
     // 🆕 D464 — the trio replaces `paralyzedComma`; all three are corpus rows, 1 printing
     // each (FILE LINES 685, 686, 690), and the transcription is asserted the same way.
     for (const text of LEFT_LOUD.dotAnchorTrio) expect(rows.get(text)).toBe(1);
@@ -974,6 +998,6 @@ describe("§8 — purity and the structural answers", () => {
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.390.0");
+    expect(engineVersion).toBe("0.391.0");
   });
 });
