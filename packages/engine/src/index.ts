@@ -7190,11 +7190,22 @@ import type { GameState, Seat } from "./types";
     just benched* (`searchDeck` files no record, and no `moveEnergy` destination
     says "wherever the last op put it").
 
+    ✅ **`sv06-046` WAS COLLECTED AT D502 AND THE SENTENCE ABOVE WAS TRUE IN BOTH
+    CLAUSES WHEN IT WAS WRITTEN AND STILL TRUE WHEN D502 RE-DERIVED IT** — which is
+    why it is kept and dated rather than deleted (D178/D466). The price it named was
+    exactly the price paid: `searchDeck.recordAs` and `moveEnergy.destRecorded`, one
+    optional key each. **One legal printing left deferred here, `sv06-009`**, and its
+    blocker was never shared with this one.
+
     ⚠️ **AND BOTH ANCHOR MUTANTS HAVE A REAL PRINTED WITNESS FOR ONCE.** D227,
     D228 and D229 each had to construct the `^`/`$` case; here `sv06-009` is the
     leading clause and `sv06-046` is the trailing one, both Standard-legal, so the
     two anchor mutants are killed by catalog rows rather than by inventions —
-    D228's finding closed from the other side.
+    D228's finding closed from the other side. 🆕 **D502 KEPT THAT TRUE RATHER THAN
+    SPENDING IT**: its own anchor for `sv06-046` is read AFTER
+    `ATTACK_BENCH_SEARCH`, so a `$`-less `BENCH_SEARCH_TAIL` still claims that
+    sentence first and still drops its §9.2 tail. Had the new arm been placed ahead,
+    the `$` mutation would have gone INERT on the one card this paragraph cites.
 
     **`MATCH_RECORD_VERSION` UNCHANGED AT 12.** No op, no op field and no prompt
     field moved: the deriver emits two ops the Trainer path has emitted since M4,
@@ -20509,7 +20520,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.393.0";
+export const engineVersion = "0.394.0";
 
 export type {
   ApplyResult,

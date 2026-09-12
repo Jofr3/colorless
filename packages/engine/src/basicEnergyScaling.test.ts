@@ -667,8 +667,8 @@ describe("D500 §6 — what the corpus looked like before, computed from what it
     // (1 sentence / 1 printing), so the live head grew and a `- 1 / - 1` at the FRONT
     // is what keeps the endpoint meaning what it says.
     expect([
-      resolvedNow.length - 1 /* D501, corpus FILE LINE 685 */ - moved.length,
-      units(resolvedNow) - 1 /* D501, same row, 1 printing */ - units(moved),
+      resolvedNow.length - 1 /* D502, corpus FILE LINE 440, 1 sentence / 1 printing */ - 1 /* D501, corpus FILE LINE 685 */ - moved.length,
+      units(resolvedNow) - 1 /* D502, corpus FILE LINE 440, 1 sentence / 1 printing */ - 1 /* D501, same row, 1 printing */ - units(moved),
     ]).toEqual([530, 1564]);
     // ⚠️ **AND THE POINTS THE NEW ROW CLAIMS ARE EXACTLY THE ONES THAT MOVED** — the
     // second half of D491's rung, which is what reddens if a later slice widens the
@@ -731,7 +731,7 @@ describe("D500 §7 — the version stays 29, and the address is named before the
     });
     expect(produced).toEqual([]);
     // …and the engine version DID move, because a card can reach the behaviour change.
-    expect(engineVersion).toBe("0.393.0");
+    expect(engineVersion).toBe("0.394.0");
   });
 });
 

@@ -217,17 +217,37 @@ const NEAR_MISSES: readonly (readonly [string, string])[] = [
 
 /** The two legal printings this slice DEFERS, each on something that is not this
     sentence, pinned derived-to-null so the deferral is a fact about the code
-    rather than a note. */
+    rather than a note.
+
+    🆕🆕 **D502 COLLECTED THE SECOND ONE, SO THIS LIST IS ONE ROW — AND THE
+    DEFERRAL WAS SPLIT RATHER THAN SHORTENED (D441).** The stated reason was never
+    shared: `sv06-009` is blocked on the §4 going-first licence (a `CardProgram`
+    field plus the §8 declaration gate), `sv06-046` was blocked on
+    `searchDeck.recordAs` plus a record-pinned `moveEnergy` destination. Checking
+    that the surviving row's reason was never about the collected one is the whole
+    of D441's rule, and here it holds by inspection: the two share no clause.
+
+    🛑 **AND THE COLLECTED ROW IS RE-POINTED, NOT DELETED (D418/D438/D444).** A
+    `toBeNull` on a sentence the catalog PRINTS is a liability the day somebody
+    builds it, and its replacement is never "drop the assertion": `DEFERRED_BUILT`
+    below keeps `sv06-046` as a subject and asserts, by name, what now owns it AND
+    that **this file's own anchor still refuses it** — which is the claim
+    `D230-anchor-drops-the-tail` rests on. Re-pointing to a bare `.not.toBeNull()`
+    would have been true under a `$`-less `BENCH_SEARCH_TAIL` as well, and that row
+    would have gone quiet. */
 const DEFERRED: readonly (readonly [string, string])[] = [
   [
     "If you go first, you can use this attack during your first turn. Search your deck for up to 2 Basic Pokémon and put them onto your Bench. Then, shuffle your deck.",
     "sv06-009 Volbeat — the §4 licence, `trainerFirstTurnExempt`'s ATTACK twin",
   ],
-  [
-    "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any Pokémon onto your Bench in this way, move an Energy from this Pokémon to the new Benched Pokémon.",
-    "sv06-046 Jynx — a §9.2 tail whose destination is the body just benched",
-  ],
 ];
+
+/** 🆕🆕 **D502 — the row that LEFT `DEFERRED`, and the two halves of what replaced
+    its `toBeNull`.** `derivedBenchSearchMove.test.ts` owns the sentence; this slot
+    exists so the ARITHMETIC below still names every one of the family's 25
+    printings, and so the head anchor's refusal of it stays executable here. */
+const DEFERRED_BUILT =
+  "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any Pokémon onto your Bench in this way, move an Energy from this Pokémon to the new Benched Pokémon.";
 
 // ── The board. Indices 17-19 on `fix-trainerops`, appended by D230. ──
 const CALL_FOR_FAMILY = 17;
@@ -323,8 +343,36 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
     // `+2`, because that term is captioned "in NEAR_MISSES" and this id is in
     // `DEFERRED` — the two tables are different pins and merging the counts would
     // make the sum stop matching the tables it is a census OF. **Still `= 25`.**
+    // 🆕🆕 **D502 — THE LABEL ON THE LAST TERM MOVED AND THE ARITHMETIC DID NOT**,
+    // which is D339's move at a second term. `sv06-046` is no longer in `DEFERRED`;
+    // it is BUILT, by `ATTACK_BENCH_SEARCH_THEN_MOVE` in the same file as this
+    // anchor. It keeps its own term for D339's stated reason — the terms are a
+    // census OF the tables, so folding it into the `20` would make the sum stop
+    // matching the table it counts. **Still `= 25`.**
     expect(20 + 2 + 1 + 1 + 1).toBe(25);
     for (const [text] of DEFERRED) expect(deriveAttackEffect(text), text).toBeNull();
+    // 🛑 **THE RE-POINT, AND IT IS TWO CLAIMS RATHER THAN ONE** (D438: name what
+    // now owns it AND keep the refusal). Under a `$`-less `BENCH_SEARCH_TAIL` the
+    // head anchor above would claim this string and answer the BARE two-op program,
+    // silently dropping the §9.2 tail — so the second rung is what
+    // `D230-anchor-drops-the-tail` dies on, and it is a REAL printing rather than a
+    // construction, exactly as that row's `what` has claimed since D230.
+    expect(deriveAttackEffect(DEFERRED_BUILT)).not.toBeNull();
+    expect(deriveAttackEffect(DEFERRED_BUILT)).not.toEqual(CLAUSES[ONE].program);
+    expect((deriveAttackEffect(DEFERRED_BUILT) ?? []).map((o) => o.op)).toEqual([
+      "searchDeck",
+      "shuffleDeck",
+      "recordGate",
+    ]);
+    // ⚠️ **THE HONEST LIMIT OF THIS RE-POINT, MEASURED AT BOTH LAYERS (D490/D491).**
+    // It asserts the program's OP LIST, not its fields — so it is BLIND to the two
+    // mutations D502's own suite exists for: the arm dropping `destRecorded` (a READER
+    // mutation) and the interpreter's narrowing going vacuous (an EXECUTOR one) both
+    // leave this list byte-identical, and both were driven here and came back GREEN.
+    // What this rung DOES cover is the one thing `derivedBenchSearchMove.test.ts`
+    // cannot cover on its own behalf: a `$`-less `BENCH_SEARCH_TAIL`, under which the
+    // anchor ABOVE claims D502's sentence first and answers `["searchDeck",
+    // "shuffleDeck"]` — driven, and that is `D230-anchor-drops-the-tail`'s kill.
   });
 
   it("🆕 D238 — the TYPED noun derives, and the `stage` rider is in the program", () => {

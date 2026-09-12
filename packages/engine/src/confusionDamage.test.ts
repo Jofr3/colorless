@@ -207,7 +207,7 @@ describe("§2 — a WHOLE-SENTENCE anchor, and the two measurements that warrant
     const claimedEndingInPeriod = legalAttackCorpus().filter(
       ([, t]) => resolvedByAnyReader(t) && t.endsWith("."),
     );
-    expect(claimedEndingInPeriod.length).toBe(493);
+    expect(claimedEndingInPeriod.length).toBe(494);
     const burnedHead = "Flip a coin. If heads, your opponent's Active Pokémon is now Burned.";
     expect(resolvedByAnyReader(burnedHead)).toBe(true);
     expect(deriveAttackEffect(`${burnedHead} ${TAIL}`)).toBeNull();
@@ -820,8 +820,8 @@ describe("§7 — the bump, and the corruption it refuses", () => {
   });
 
   it("the engine version moved with the behaviour, and the manifest agrees", () => {
-    expect(engineVersion).toBe("0.393.0");
-    expect(manifest.version).toBe("0.393.0");
+    expect(engineVersion).toBe("0.394.0");
+    expect(manifest.version).toBe("0.394.0");
   });
 });
 

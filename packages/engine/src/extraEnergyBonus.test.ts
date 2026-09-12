@@ -465,6 +465,6 @@ describe("§7 — `MATCH_RECORD_VERSION` STAYS 29, driven in both directions", (
   });
 
   it("the engine version moved with the behaviour", () => {
-    expect(engineVersion).toBe("0.393.0");
+    expect(engineVersion).toBe("0.394.0");
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "@luminous/engine",
   "private": true,
-  "version": "0.393.0",
+  "version": "0.394.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

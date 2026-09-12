@@ -5895,6 +5895,43 @@ export type EffectOp =
           bump because a v19 `discardRest: true` kept its type and lost its
           meaning. */
       also?: readonly { filter: CardFilter; max: number }[];
+      /** 🆕🆕 **D502 — THE §9.2 FILING, AT THE TWELFTH OP AND THE FIRST SEARCH.**
+          File the uids this search ACTUALLY MOVED under `slot`, so a following
+          `recordGate` can read the printed *"If you put any Pokémon onto your Bench
+          in this way"* — Jynx `sv06-046` "Inviting Kiss" (`censusAttackCorpus.ts`
+          **FILE LINE 440**, **1 sentence / 1 legal printing**).
+
+          🛑 **D230's REFUSAL NAMED THIS FIELD AS ONE OF ITS TWO BLOCKERS AND WAS
+          STILL TRUE IN BOTH CLAUSES WHEN D502 RE-DERIVED IT** (*"`searchDeck` files
+          no record, and no `moveEnergy` destination says 'wherever the last op put
+          it'"*). That is D451's shape with the unusual answer: a refusal that names
+          TWO things and BOTH of them were true — so neither clause was stale and the
+          price was real. It is quoted, dated and paid at
+          `derivedBenchSearchMove.test.ts` §1 rather than deleted (D178/D466).
+
+          ⚠️ **ACTUALLY MOVED, NOT OFFERED AND NOT PICKED** — `retrieveMove`'s rule
+          on the sibling op, verbatim: a wire-dropped uid (one no longer in the deck)
+          never moved, and a Bench-bound answer is clamped to `benchSpace` INSIDE
+          `searchMove`, so the filing has to come off that function's own `moved`
+          rather than off `choice.uids`.
+
+          ⚠️ **AND THE WHIFF FILES `[]`, WHICH IS WHAT MAKES THE EMPTY-RECORD CASE
+          SILENT RATHER THAN A PARK WITH NO CANDIDATES.** Every recording op in this
+          file does it and the reason is `recordGateHolds`' first line: it asks
+          `filed.length === 0`, never whether the KEY is there — so a search that
+          found nothing, a search onto a full Bench, and a player who DECLINED all
+          file the empty array and the printed *"if you put ANY Pokémon"* answers NO
+          by itself, with no guard anywhere else in the program.
+
+          ⚠️ **`MATCH_RECORD_VERSION` DOES NOT MOVE FOR THIS**, and the address is
+          the one the paragraph above already names: `searchDeck` parks, so its
+          literal rides `EffectContinuation.pendingOp` inside `MatchRecord.state`. An
+          OPTIONAL key whose ABSENCE means *"file nothing"* is what every v30 writer
+          meant — no v30 program recorded a search — so D125's test answers NO,
+          exactly as D333's widened `max` and D334's added optional `exact` answered
+          it on the sibling op. Driven over reconstructed v30 bytes in
+          `derivedBenchSearchMove.test.ts` §7. */
+      recordAs?: EffectSlot;
     }
   /** 🆕 **D307 — "Search your deck for a card that evolves from this Pokémon and
       put it onto this Pokémon to evolve it. Then, shuffle your deck."** The
@@ -9032,6 +9069,109 @@ export type EffectOp =
           `validateChoice` requires them all equal, which is the same rule the old
           single `dest` field expressed and is now enforced per pick. */
       anyDest?: true;
+      /** 🆕🆕 **D502 — THE DESTINATION PINNED TO A §9.2 RECORD: *"move an Energy
+          from this Pokémon to **the new** Benched Pokémon"*.** The `destinations`
+          this op offers are narrowed to the in-play bodies whose `stack` carries a
+          uid filed under `slot` — for Jynx `sv06-046` exactly the Basic its own
+          `searchDeck` just benched. Absent = every destination the `route` offers,
+          which is what every printing of this family carried before D502.
+
+          🛑 **A RIDER AND NOT A `route` VALUE, AND THE TWO SHIPPED uid-PINNED
+          ROUTES ARE WHY THE QUESTION HAD TO BE ASKED RATHER THAN ASSUMED.**
+          `koedActiveToToolHolder` and `othersToSelf` both resolve an endpoint from a
+          uid, and both are `route` values — a two-member precedent pointing the
+          other way (D433: check whether a precedent's siblings agree). What
+          distinguishes them is the UID's PROVENANCE and the axis it lands on:
+          · both read `ctx.sourceUid`, *"this Pokémon"*, which every op already has,
+            where this reads the per-program §9.2 accumulator;
+          · a `route` names a PAIR of endpoint rules, and `selfToRecorded` would have
+            to re-spell `selfToBench`'s source rule (the Active alone) a second time
+            — two spellings of one question, which is D159 and D222's closed-world
+            hazard at an endpoint funnel;
+          · a `route` slot holds a STRUCTURAL position (Active / Bench / all / the
+            Tool's holder) and a recorded body is a RUNTIME IDENTITY, so folding it
+            in puts two kinds of fact in one slot and **cannot spell the crossing** —
+            D461's refusal verbatim. The crossing is printable: the FREE route plus
+            the pin is *"move an Energy from 1 of your Pokémon to the new Benched
+            Pokémon"*, which a fifth `route` value could not say.
+          **So it narrows ONE endpoint inside a route, which is `anySource`'s and
+          `anyDest`'s axis and therefore their shape.**
+
+          🛑 **AN `EffectSlot` AND NOT A BOOLEAN, WHICH IS D489's MEASUREMENT REUSED
+          RATHER THAN RE-DECIDED.** `damageChosen`'s two scaled-snipe riders are bare
+          `true` flags because each names an IMPLICIT source the fold finds from
+          `(state, ctx)`; a §9.2 record is an ADDRESS with three inhabitants, so a
+          boolean would have to hard-code one — and D458 measured the board that
+          breaks that, two sequential recorders overwriting one slot.
+
+          🛑 **IT IS NOT `discardPileRetrieval.exclude` INVERTED, AND THAT WAS
+          CHECKED RATHER THAN ASSUMED (D159: one noun, one answer).** `exclude` is
+          the only shipped op field that reads a slot to shape a CANDIDATE SET, and
+          it is the complement of this one, so reuse is the first thing to price. It
+          cannot be had, on three counts:
+          · **the polarity has no supply.** An inverted `exclude` needs the slot to
+            hold *everything except the new body*; `recordMoved` files what an op
+            MOVED, and no op in this file files the complement of its own answer.
+          · **the value kinds differ.** `exclude` drops uids from a set of uids of
+            the SAME kind (cards in a pile, compared by identity). This maps a
+            recorded CARD uid onto the BODY carrying it — a `stack` lookup `exclude`
+            has no analogue for.
+          · **the losses differ in direction.** A dropped `exclude` WIDENS a pile
+            offer (a player may take back what they paid); a dropped pin widens ONE
+            destination to the whole Bench. Both are defects and only the second
+            changes which body the printed sentence is about.
+
+          ⚠️ **`stack.includes` AND NOT `stack[0] ===`.** The recorded uid is the card
+          the search benched, so on every board this sentence reaches it is the
+          bottom card — and spelling the index would assert that it still IS the
+          bottom card, which is a stronger claim than the sentence makes. `includes`
+          is `toolHolderRef`'s idiom one field over and survives a §10 evolution
+          landing on that body, which nothing inside one program can do today.
+
+          ⚠️ **THE NARROWING IS TAKEN AT THE `stepOp` CALLER, NOT INSIDE
+          `moveEndpoints`, AND THAT IS A COST MEASUREMENT RATHER THAN A STYLE
+          CHOICE.** That funnel has two readers and the second — `moveEnergyPlayable`,
+          the `programPlayable` gate — HAS NO RECORD to hand it, so threading one
+          through would have added a parameter at both call sites (rotting
+          `D443-park-offers-the-controllers-board` and `D443-play-gate-reads-the-caller`,
+          measured) to answer a question the gate cannot ask. D443's rule: check
+          whether the CALLER already holds the fact. `stepOp` does.
+
+          ⚠️ **AND THE GATE CANNOT SEE THIS RIDER AT ALL, WHICH IS THE SAFE
+          DIRECTION AND IS STATED BECAUSE IT IS A READ SITE (D190).**
+          `programPlayable` walks TOP-LEVEL ops and descends only into
+          `coinFlipGate` arms, so an op inside `recordGate.then` is invisible to it —
+          and an ATTACK program never reaches that function at all (§8). A top-level
+          Trainer authored with this rider would therefore be called playable on a
+          board where the narrowing leaves no destination and would whiff, which is
+          exactly what `gustTargets`' and `knockOutChosenTargets`' shared reason
+          licenses: the gate may say "playable" where the offer is empty, never the
+          reverse.
+
+          ⚠️ **WITH `side: "opponent"` IT DEGRADES TO A WHIFF, DELIBERATELY.** The
+          record is filed by the CONTROLLER's own ops, so no body on the other seat's
+          board can carry a filed uid: `destinations` empties and the op is a silent
+          no-op. That is the same safe degradation the two uid-anchored routes take
+          under `side`, recorded rather than blocked because no printing combines
+          them.
+
+          ⚠️ **`MATCH_RECORD_VERSION` DOES NOT MOVE FOR THIS EITHER, AND THE ADDRESS
+          IS THE OTHER DOOR.** This op does not park on Jynx's board — it sits BEHIND
+          the parking `searchDeck`, inside a `recordGate.then`, so it rides
+          `EffectContinuation.rest` rather than `pendingOp`. D450's *"`rest` is the
+          second door and it is the one that gets forgotten"*, so it is named. Absent
+          means *"every destination the route offers"*, which is what every v30
+          writer meant. D125's test answers NO; driven over reconstructed v30 bytes
+          in `derivedBenchSearchMove.test.ts` §7.
+
+          ⚠️ **AND IT RIDES THE OP ALONE — ZERO PROMPT, SCHEMA, `redact.ts`,
+          `projection.ts` OR HUD BYTES — WHICH IS `side`'s ARGUMENT AND NOT
+          `anySource`'s.** Those two ride the PROMPT as well because they are
+          COUPLINGS, invisible in the candidate lists. A destination NARROWING is
+          spelled by every candidate the park carries: the wire validator matches the
+          answer against the PROMPT's `destinations`, and that list is already the
+          narrowed one. */
+      destRecorded?: EffectSlot;
     }
   /** Put the affected player(s)' whole hand back into their deck, then draw — the
       Iono/Judge hand-refresh Supporter family. `who: "you"` affects the controller
@@ -20169,6 +20309,16 @@ const ATTACK_MAY_DRAW_UNTIL = /^You may draw cards until you have (\d+) cards in
 //     the new Benched Pokémon."*) whose destination is *the body this program just
 //     benched*. `searchDeck` files no record and `moveEnergy` carries no
 //     "whatever the last op put there" destination; both are real additions.
+//     ✅ **COLLECTED AT D502, AND THE REFUSAL ABOVE WAS RIGHT IN BOTH CLAUSES** —
+//     re-derived at D502's head rather than inherited: `searchDeck` really had no
+//     `recordAs` (twelve declarations across eleven op kinds, and this was not one)
+//     and `moveEnergy.route` really had no recorded-uid destination (four values,
+//     two uid-pinned and both off `ctx.sourceUid`). **A refusal that names TWO
+//     things and has BOTH of them true is the unusual half of D451**, and it is
+//     what made the price real: one optional key on each op. The paragraph is kept
+//     verbatim (D178) as the record of a correct refusal, with the date of its
+//     expiry beside it. `ATTACK_BENCH_SEARCH_THEN_MOVE`, ~200 lines above, is what
+//     collected it, and it sits AFTER this arm on purpose — see its block.
 //
 // NO APOSTROPHE ON THE ANCHOR, and that is the printed bytes rather than D189's
 // call: the sentence contains none, so a U+2019 re-ingest has nothing to curl.
@@ -20301,6 +20451,59 @@ const BENCH_SEARCH_NOUN = `(?:(Basic Pokémon)|(${BENCH_TYPED_NOUN})|([A-Z][a-z�
 const BENCH_SEARCH_TAIL = " onto your Bench\\. Then, shuffle your deck\\.$";
 const ATTACK_BENCH_SEARCH = new RegExp(
   `^Search your deck for (?:a ${BENCH_SEARCH_NOUN} and put it|up to (\\d+) ${BENCH_SEARCH_NOUN} and put them)${BENCH_SEARCH_TAIL}`,
+);
+
+/** 🆕🆕 **D502 — THE SAME BENCH SEARCH WITH A §9.2 TAIL THAT MOVES AN ENERGY ONTO
+    WHAT IT JUST BENCHED.** Jynx `sv06-046` "Inviting Kiss" —
+    `censusAttackCorpus.ts` **FILE LINE 440**, *"Search your deck for a Basic
+    Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any
+    Pokémon onto your Bench in this way, move an Energy from this Pokémon to the new
+    Benched Pokémon."*, **1 sentence / 1 legal printing** — the last of D230's five
+    leftovers that this reader's column can reach.
+
+    🛑 **A SEPARATE ANCHOR AND NOT AN OPTIONAL TRAILING GROUP ON
+    `ATTACK_BENCH_SEARCH`, WHICH IS D441's RULE AND A MEASUREMENT.** The in-place
+    widening is what D235 did one family over, and here it would rot **three shipped
+    mutant rows** whose `find` quotes the very lines it edits —
+    `D230-anchor-drops-the-tail` (the whole `BENCH_SEARCH_TAIL` line),
+    `D230-anchor-drops-the-caret` (the whole template) and `D230-noun-is-a-wildcard`
+    (the whole `BENCH_SEARCH_NOUN` line) — and the programs differ in KIND, not in a
+    value: this one files a record and queues a gate. **A new anchor breaks no
+    existing row.**
+
+    🛑 **AND IT SITS *AFTER* `ATTACK_BENCH_SEARCH`'s ARM, WHICH IS LOAD-BEARING FOR
+    A ROW THAT HAS NOTHING TO DO WITH THIS SLICE.** The two are STRUCTURALLY
+    DISJOINT while both keep their terminators (D468: `BENCH_SEARCH_TAIL` demands the
+    string END after *"shuffle your deck."* where this demands more text), so no
+    string can match both and the order is legibility — *until the `$` goes*.
+    `D230-anchor-drops-the-tail`'s own `what` names **this printing** as its witness:
+    *"Jynx `sv06-046` carries a §9.2 rider after this exact sentence, so a dropped
+    `$` reads a card whose second clause the engine cannot run."* Reading the head
+    anchor FIRST is what keeps that true — under the mutation it claims this sentence
+    and silently drops the §9.2 tail, which `derivedBenchSearchMove.test.ts` §2
+    reddens on. Put this arm ahead of it and the mutation becomes INERT on the one
+    card its `what` cites (D467: killability is a property of the dispatch order),
+    and a shipped row's stated reason would have quietly become false.
+
+    ⚠️ **THE NOUN IS THE LITERAL `Basic Pokémon` AND NOT THE SHARED
+    `BENCH_SEARCH_NOUN`, MEASURED OVER ALL 640 CORPUS ROWS: the wider form claims
+    exactly the same 1 sentence / 1 printing**, so the generality is pure risk
+    (D472). And it is risk with a name: the shared group also spells the PLURAL head
+    (*"up to N … and put them"*), which would file N uids under one slot while the
+    printed destination is *"**the new** Benched Pokémon"* — singular and definite,
+    with no reading over N. That is D490's record-overwrite finding arriving at a
+    DESTINATION instead of at a count, and the refusal is by construction rather than
+    by a guard.
+
+    ⚠️ **NO CAPTURE GROUPS, SO THE ARM READS NOTHING AND USES `.test`.** The noun,
+    the count and the destination are all fixed by the print, so there is no group to
+    mis-index and no second arm to share guards with — which is the one condition
+    under which `.test` beside an `.exec` sibling is not D445's half-a-sentence
+    defect. */
+const ATTACK_BENCH_SEARCH_THEN_MOVE = new RegExp(
+  "^Search your deck for a Basic Pokémon and put it onto your Bench\\. Then, shuffle your deck\\." +
+    " If you put any Pokémon onto your Bench in this way, move an Energy from this Pokémon" +
+    " to the new Benched Pokémon\\.$",
 );
 
 // ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND: row 8 of
@@ -25742,6 +25945,56 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         return [{ op: "searchDeck", filter, dest: "bench", max }, { op: "shuffleDeck" }];
       }
     }
+  }
+  // ⚠️⚠️ D502 — JYNX `sv06-046` "INVITING KISS": D230's sentence with a §9.2 tail
+  // whose destination is THE BODY THIS PROGRAM JUST BENCHED. Reached only when the
+  // arm above did NOT match, which is what keeps `D230-anchor-drops-the-tail`'s
+  // real-printing witness true (see the anchor's block).
+  //
+  // 🛑 D230 REFUSED THIS ROW AND NAMED BOTH BLOCKERS, AND BOTH WERE STILL TRUE:
+  // *"`searchDeck` files no record, and no `moveEnergy` destination says 'wherever
+  // the last op put it'"*. One optional key on each op pays them; ZERO new ops,
+  // ZERO new `EffectSlot` members, ZERO new prompts, ZERO new choice kinds and ZERO
+  // `packages/schema` bytes. The `recordGate` + `searchDeck` + `shuffleDeck` shape
+  // is D235's program one op over, cited rather than reinvented.
+  //
+  // ⚠️ THE SLOT IS `"moved"`, WHICH IS D235's AND D206's WORD FOR THE SAME FACT —
+  // a card that changed zone. The gate reads the same slot the search writes, and
+  // nothing between them writes it (`shuffleDeck` takes `recordAs?: never`), so the
+  // overwrite D458 measured cannot arise on this program.
+  //
+  // ⚠️ AND THE WHOLE SENTENCE IS ONE ANCHOR RATHER THAN A TAIL-ONLY ARM COMPOSED BY
+  // `splitAttackTrailingClause`, WHICH IS THE CHEAPER BUILD AND IS REFUSED FOR
+  // D485's REASON, MEASURED. The splitter's only unmet condition on this string is
+  // that `deriveAttackEffect` refuse the tail: claim the tail alone and the row
+  // comes free with no compound anchor at all — 1 sentence / 1 printing, the same
+  // payoff this arm buys. It is refused because the tail carries TWO anaphors that
+  // point OUT of the clause — *"in this way"* (the search two sentences up) and
+  // *"the NEW Benched Pokémon"* (the body that search benched) — so the splitter
+  // would compose it behind ANY claimed head: *"Draw 3 cards. If you put any Pokémon
+  // onto your Bench in this way, move an Energy from this Pokémon to the new Benched
+  // Pokémon."* would read a `recordGate` on a slot nothing filed. That degrades
+  // SILENTLY here rather than loudly (the gate is simply false), which is worse than
+  // D485's case and is why the anchor owes the whole sentence.
+  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {
+    return [
+      { op: "searchDeck", filter: { kind: "basicPokemon" }, dest: "bench", max: 1, recordAs: "moved" },
+      { op: "shuffleDeck" },
+      {
+        op: "recordGate",
+        slot: "moved",
+        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).
+        then: [
+          {
+            op: "moveEnergy",
+            filter: { kind: "anyEnergy" },
+            max: 1,
+            route: "selfToBench",
+            destRecorded: "moved",
+          },
+        ],
+      },
+    ];
   }
   // ⚠️⚠️ D231 — THE DECK SEARCH INTO YOUR OWN HAND. D230's arm one word over, and
   // the arithmetic is on `ATTACK_HAND_SEARCH` above: 28 of the family's 42 legal

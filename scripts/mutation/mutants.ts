@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.393.0";',
+    find: 'export const engineVersion = "0.394.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27799,8 +27799,17 @@ export const MUTANTS: Mutant[] = [
     //    because D501 claimed corpus FILE LINE 685; `precheck` reported the `find` at 0x
     //    in seconds, which is the whole argument for running it after every edit round
     //    rather than once at the end (D414/D437/D445).
-    find: "  attack: 1616,",
-    replace: "  attack: 1614,",
+    // 🆕🆕 D502 - RE-TRANSCRIBED AGAIN, 1616 -> 1617 (replace 1614 -> 1615), same
+    //    two-step regression, same meaning. ⚠️ AND THE INTERESTING PART IS HOW IT WAS
+    //    FOUND: D502's pre-build tripwire audit needled the corpus on twelve NAMES
+    //    (`recordSlotOf`, `withConsequence`, `describeBranch`, `searchDeck`,
+    //    `BENCH_SEARCH`, `moveEnergy`, `destinations.length`, ...) and never needled the
+    //    CENSUS CONSTANT, so the reading missed this row outright and `precheck` reported
+    //    it in seconds. D441's rule paid again: the GAP question is answerable by
+    //    reading, the ROT question ONLY by `precheck`, and neither substitutes for the
+    //    other. A census step rots this row EVERY TIME - predict it next slice.
+    find: "  attack: 1617,",
+    replace: "  attack: 1615,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28553,5 +28562,236 @@ export const MUTANTS: Mutant[] = [
     find: "export const MATCH_RECORD_VERSION = 30;\n",
     replace: "export const MATCH_RECORD_VERSION = 29;\n",
     expectKilledBy: ["apps/api/src/lobby/match.test.ts"],
+  },
+  // ────────────────────────────────────────────────────────────────────────────
+  // D502 — THE DECK SEARCH THAT ENERGISES WHAT IT BENCHED (Jynx `sv06-046`,
+  // `censusAttackCorpus.ts` FILE LINE 440, 1 sentence / 1 legal printing).
+  //
+  // BY SEAT (D453): 14 PRODUCER-side rows on `effects.ts` (the anchor and the arm)
+  // and 8 IMPLEMENTATION-side rows on `interpreter.ts` (the narrowing, the record
+  // filing, `recordSlotOf`, `describeCondition`, `describeBranch`, `moveNote`,
+  // `searchMove`). Four of those interpreter regions had ZERO rows intersecting
+  // them by SPAN across all 2,464 pre-existing rows, which is the absence half of
+  // D452/D495 rather than a coverage claim.
+  //
+  // THREE CANDIDATE ROWS WERE DECLINED WITH THEIR MEASUREMENT RATHER THAN WRITTEN
+  // (D440/D475/D497 — a mutation that cannot change an answer is not a weak row, it
+  // is not a row):
+  //   · the WHIFF path's `recordMoved(record, op.recordAs, [])` — `recorded()`
+  //     defaults an ABSENT key to `[]`, so filing the empty array and not filing it
+  //     are the same input to `recordGateHolds`. The line is kept because it is the
+  //     family's convention and because it is what a SECOND recorder on the slot
+  //     would need; it is unobservable today and the site says so.
+  //   · the resume arm's `searched.moved` vs `choice.uids` — `validateChoice` proves
+  //     every answered uid was OFFERED and the bench clamp is applied upstream in
+  //     `stepOp`, so no board reachable through the action API separates them.
+  //   · `stack.includes(uid)` vs `stack[0] === uid` — the recorded uid IS the bottom
+  //     card on every board this sentence reaches, and nothing inside one program
+  //     can evolve the body between the park and the resolve.
+  {
+    id: "D502-anchor-loses-its-caret",
+    decision: "D502",
+    what: "⚠️ C1 — THE `^` GOES, so any sentence ENDING in this string is claimed whole and its leading clause — a coin gate, a requirement, the §4 going-first licence — is silently discarded. The two ends of an anchor fail in OPPOSITE directions (D464/D496/D499) and only a constructed near miss can see either, which is why §2 drives both. ⚠️ AND THE `^` WITNESS HERE IS THE FAMILY'S REAL ONE: `sv06-009` Volbeat prints the §4 licence in front of this sentence's HEAD, so the hazard is a catalog row rather than an invention.",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"^Search your deck for a Basic Pokémon and put it onto your Bench",
+    replace: "  \"Search your deck for a Basic Pokémon and put it onto your Bench",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-anchor-loses-its-terminator",
+    decision: "D502",
+    what: "⚠️ C2 — THE `$` GOES, so a compound whose FIRST clauses are this whole printed sentence is claimed and everything behind it is dropped. ⚠️ CONSTRUCTED WITNESS, AND SAID SO (D440): no printed sentence carries a tail behind this one, so the rung is a claim about the READER and not about the pool — which is exactly D228's finding, that a harness fed only real rows would let this one live.",
+    file: "packages/engine/src/effects.ts",
+    find: " to the new Benched Pokémon\\\\.$\",",
+    replace: " to the new Benched Pokémon\\\\.\",",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-anchor-noun-goes-wildcard",
+    decision: "D502",
+    what: "🛑 C3 — THE PRINTED NOUN BECOMES A WILDCARD, which is the shape a first draft writes and is the reason D472's measurement was run before a line shipped: the wider form claims the SAME 1 sentence / 1 printing over all 640 corpus rows, so it buys nothing and costs a wrong program. Under it the TYPED noun (*'a Basic {G} Pokémon'*) and a proper NAME both derive to `{kind:\"basicPokemon\"}` and the card searches for something it never named — D230's own `noun-is-a-wildcard` defect at a second anchor, and invisible to every census because the pool prints neither crossing.",
+    file: "packages/engine/src/effects.ts",
+    find: "  \"^Search your deck for a Basic Pokémon and put it onto your Bench\\\\.",
+    replace: "  \"^Search your deck for a .+ and put it onto your Bench\\\\.",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-anchor-destination-goes-wildcard",
+    decision: "D502",
+    what: "🛑 C4 — THE PRINTED DESTINATION BECOMES A WILDCARD, and this is the dangerous half of C3 because the destination is what the whole slice is ABOUT. Under it *'… move an Energy from this Pokémon to 1 of your Benched Pokémon.'* behind the same gate derives to a PINNED move — a sentence that grants a free choice among the Bench, read as a program that offers exactly one body. The census cannot see it (the sentence is not printed) and neither can any board this file fields; only the constructed rewrite in §2 can.",
+    file: "packages/engine/src/effects.ts",
+    find: "    \" to the new Benched Pokémon\\\\.$\",",
+    replace: "    \" to .+\\\\.$\",",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-drops-the-record",
+    decision: "D502",
+    what: "🛑 C5 — THE SEARCH STOPS FILING, which is the FIRST of D230's two named blockers deleted. The gate then reads an unfiled slot as FALSE, the `moveEnergy` never runs and there is no second park at all: the card benches a Basic and the printed Energy move silently does not happen. ⚠️ EVERY CENSUS FIGURE IS UNMOVED UNDER IT — the sentence still reads, `resolvedByAnyReader` is still true and the residue still falls by one — so §8's rungs are green and only §4's board discriminates it (D469/D489's layer map).",
+    file: "packages/engine/src/effects.ts",
+    find: "      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },",
+    replace: "      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1 },",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-drops-the-destination-pin",
+    decision: "D502",
+    what: "🛑 C6 — THE DESTINATION PIN GOES, which is D230's SECOND named blocker deleted and the single most important row in this decision. The printed *'to THE NEW Benched Pokémon'* becomes `selfToBench`'s whole Bench, so the player may put the Energy on any of the attacker's Benched Pokémon. 🛑 AND IT IS BYTE-IDENTICAL ON AN EMPTY BENCH (D485: the collision board is usually the SMALLEST one), which is why §4's board fields a pre-existing Bench body and §5 drives the empty-Bench case as the labelled control rather than as the main case.",
+    file: "packages/engine/src/effects.ts",
+    find: "            destRecorded: \"moved\",",
+    replace: "",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-drops-the-record-gate",
+    decision: "D502",
+    what: "🛑 C7 — THE §9.2 GATE GOES AND THE MOVE IS HOISTED TO THE TOP LEVEL, AND NO BOARD RUNG REDDENS. Driven rather than asserted: with the row applied, SEVEN `it` blocks fail and every one of them is a PROGRAM-SHAPE or CAPTION claim (§2, §3, §6, §7 ×2, §8) — §4's five board rungs and §5's four are GREEN throughout. Every board this printing can reach is IDENTICAL under it: with the destination pinned, an unfiled record already empties `destinations` and the op whiffs, so the gate is behaviourally redundant on every board this printing can reach — measured, not assumed. So the op-list rungs are the cheap kill and the CAPTION is the only USER-VISIBLE one, which is the half worth naming: `withConsequence` looks DOWN THE QUEUE for a `recordGate` on the slot the parking op files, so without one the search's prompt describes a deck search and says nothing about the Energy the answer buys (D473: a reader can be correct while its describer quietly says less, and only the describer is user-visible).",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },\n      { op: \"shuffleDeck\" },\n      {\n        op: \"recordGate\",\n        slot: \"moved\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",\n            filter: { kind: \"anyEnergy\" },\n            max: 1,\n            route: \"selfToBench\",\n            destRecorded: \"moved\",\n          },\n        ],\n      },\n    ];\n  }",
+    replace: "  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },\n      { op: \"shuffleDeck\" },\n      {\n        op: \"moveEnergy\",\n        filter: { kind: \"anyEnergy\" },\n        max: 1,\n        route: \"selfToBench\",\n        destRecorded: \"moved\",\n      },\n    ];\n  }",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-gate-reads-a-different-slot",
+    decision: "D502",
+    what: "⚠️ C8 — THE GATE READS `discarded` WHERE THE SEARCH WROTE `moved`. `EffectSlot` has three inhabitants and D458 measured the board that punishes a hard-coded one, so naming the wrong end of the wire is the mistake an author actually makes. The gate reads an empty slot, answers NO, and the Energy never moves — and `withConsequence` finds no gate on the slot the op files either, so the caption loses its clause as well. Two surfaces, one slip.",
+    file: "packages/engine/src/effects.ts",
+    find: "        slot: \"moved\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",",
+    replace: "        slot: \"discarded\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-pin-reads-a-different-slot",
+    decision: "D502",
+    what: "⚠️ C9 — THE PIN READS `discarded` WHERE THE SEARCH WROTE `moved`, which is C8's slip at the OTHER end of the same wire and fails differently: the GATE still holds (the record is filed), so the `moveEnergy` really runs — and then narrows its destinations against an empty slot, finds none, and whiffs. There is no second park and no log row, on a board where the search worked perfectly. Written as a SEPARATE row from C8 because the two are the two ends of one channel and a suite that caught only one would leave the other open (D442's one-row-per-rider rule).",
+    file: "packages/engine/src/effects.ts",
+    find: "            destRecorded: \"moved\",\n",
+    replace: "            destRecorded: \"discarded\",\n",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-emits-the-mandatory-quantifier",
+    decision: "D502",
+    what: "🛑 C10 — `max: 1` BECOMES `max: \"all\"`, AND THIS IS THE ARITY QUESTION AS A ROW. D441's forced arm is gated on `floor > 0 && destinations.length === 1`, and this printing is the FIRST to reach that gate with a PINNED destination: with the printed *'an Energy'* the floor is 0 and the op still PARKS, because a decline remains an answer. Under `\"all\"` the floor becomes the cap, the force fires, the player is never asked WHICH Energy, and EVERY Energy on the attacker moves. ⚠️ The mutation is observable three ways at once — no second park, two Energy instead of one, and the caption's *'Move all Energy'* — which is what a board-level rung should be able to say about a quantifier.",
+    file: "packages/engine/src/effects.ts",
+    find: "            max: 1,\n            route: \"selfToBench\",",
+    replace: "            max: \"all\",\n            route: \"selfToBench\",",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-narrows-the-energy-filter",
+    decision: "D502",
+    what: "⚠️ C11 — `anyEnergy` BECOMES `basicEnergy`, which is the sibling filter this family's other arm really carries (D190b: the mistake is a neighbouring arm's REAL code copied verbatim). The printed noun is a bare *'an Energy'*, so a Special Energy on the attacker must be movable. 🛑 INVISIBLE ON AN ALL-BASIC BOARD (D448: a one-print fixture makes a filter unfalsifiable) — the attacker in §4 holds one Basic and one SPECIAL Energy for exactly this row, and the offer falls from two candidates to one under it.",
+    file: "packages/engine/src/effects.ts",
+    find: "            filter: { kind: \"anyEnergy\" },\n            max: 1,",
+    replace: "            filter: { kind: \"basicEnergy\" },\n            max: 1,",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-emits-the-mirror-route",
+    decision: "D502",
+    what: "⚠️ C12 — THE ROUTE IS READ BACKWARDS (`benchToActive`), the mirror this whole op family's suites exist to guard against and the one D229 and D441 each wrote a row for. The sources become the BENCH and the sole destination the ACTIVE, so the card takes Energy OFF the body it just benched — and the pin then narrows a destination list that holds only the Active, which carries no filed uid, so the op whiffs entirely. ⚠️ THE WHIFF IS WHAT MAKES IT QUIET: no log row, no board change, and every census figure unmoved.",
+    file: "packages/engine/src/effects.ts",
+    find: "            route: \"selfToBench\",\n            destRecorded: \"moved\",",
+    replace: "            route: \"benchToActive\",\n            destRecorded: \"moved\",",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-arm-shuffles-after-the-gate",
+    decision: "D502",
+    what: "⚠️ C13 — THE PRINTED ORDER IS BROKEN: the shuffle moves BEHIND the §9.2 gate. The board is identical (the deck is shuffled either way and the move touches no deck), so nothing about the zones can see it — what can is the LOG, where *'shuffled their deck'* lands after *'moved 1 energy'* on a card that prints *'Then, shuffle your deck.'* as its SECOND sentence. ⚠️ This is the one row in the decision whose only observable is a ROW ORDER, and it is why §6 asserts the rendered sequence rather than the presence of each line.",
+    file: "packages/engine/src/effects.ts",
+    find: "  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },\n      { op: \"shuffleDeck\" },\n      {\n        op: \"recordGate\",\n        slot: \"moved\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",\n            filter: { kind: \"anyEnergy\" },\n            max: 1,\n            route: \"selfToBench\",\n            destRecorded: \"moved\",\n          },\n        ],\n      },\n    ];\n  }",
+    replace: "  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },\n      {\n        op: \"recordGate\",\n        slot: \"moved\",\n        // biome-ignore lint/suspicious/noThenProperty: `then` is the effect contract's gated-step list, not a thenable (arrays are not callable).\n        then: [\n          {\n            op: \"moveEnergy\",\n            filter: { kind: \"anyEnergy\" },\n            max: 1,\n            route: \"selfToBench\",\n            destRecorded: \"moved\",\n          },\n        ],\n      },\n      { op: \"shuffleDeck\" },\n    ];\n  }",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-narrowing-admits-every-body",
+    decision: "D502",
+    what: "🛑 C14 — THE NARROWING IS MADE VACUOUS AT THE IMPLEMENTATION SEAT: the `stack` membership test becomes a length test every body passes, so `destRecorded` is read, the field is honoured in the type system, and `destinations` comes back UN-NARROWED. This is C6's defect from the other seat and it is written as a SEPARATE row because D453's rule is to count a family's rows by SEAT rather than by total: C6 is a row about the ARM that emits the field, this is a row about the code that reads it, and a producer-only corpus proves nothing about the reader.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),",
+    replace: "          (refPokemon(state, ref)?.stack ?? []).length >= 0,",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-narrowing-is-inverted",
+    decision: "D502",
+    what: "🛑 C15 — THE NARROWING IS INVERTED, so the Energy may go anywhere EXCEPT the body the search just benched. The polarity slip is the realistic one here because the shipped field this rider is the complement of — `discardPileRetrieval.exclude` — really does subtract a slot from a candidate set, so an author who reached for that precedent writes exactly this. ⚠️ IT IS INVISIBLE ON AN EMPTY BENCH IN THE OTHER DIRECTION FROM C6: there `destinations` comes back EMPTY and the op whiffs silently, so only §4's board — which fields a pre-existing Bench body — can see the Energy land on the wrong Pokémon rather than on none.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),",
+    replace: "          !(refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-recordslot-forgets-the-search",
+    decision: "D502",
+    what: "🛑 C16 — `recordSlotOf` NAMES `drawCards` WHERE IT MEANT `searchDeck`, which is the slip an author makes reaching for the wrong recording op (`drawCards` carries a `recordAs` and is NOT in this list — checked). The omission is SILENT in exactly the way D206 named when it added `switchActive` as the sixth recorder: `withConsequence` simply drops the clause and the dialog describes half the card. 🛑 AND THE REGION HAD **ZERO MUTANT ROWS** BEFORE THIS ONE — a shipped seven-op list, span-audited against all 2,464 pre-existing rows, intersected by none (D452/D495: a family with no rows is indistinguishable from a family that passes).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    op.op === \"searchDeck\"\n    ? op.recordAs",
+    replace: "    op.op === \"drawCards\"\n    ? op.recordAs",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-describe-condition-falls-through-to-if-you-do",
+    decision: "D502",
+    what: "⚠️ C17 — THE PRINTED CONDITION IS LOST AND THE CAPTION SAYS *'If you do'*. The clause is printed LONG on this card (*'If you put any Pokémon onto your Bench in this way'*) exactly as it is on Ortega's, and `describeCondition`'s own rule is that the note is the printed text. A paraphrase in a dialog is not a wording preference: the player is told the consequence follows from the SEARCH rather than from a Pokémon actually landing, which is the misreading the printed *'any'* exists to prevent. 🛑 `describeCondition` ALSO HAD ZERO ROWS BEFORE THIS ONE.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (gate.contains === undefined && op.op === \"searchDeck\" && op.dest === \"bench\") {",
+    replace: "  if (gate.contains === undefined && op.op === \"searchDeck\" && op.dest === \"hand\") {",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-describe-condition-ignores-the-destination",
+    decision: "D502",
+    what: "⚠️ C18 — THE DESTINATION CONJUNCT GOES, so a `dest: \"hand\"` or `dest: \"deckTop\"` search with a `recordAs` and a gate would be announced as having *'put any Pokémon onto your Bench'*. That is the honesty guard `bottomFromOpponentHand`'s neighbouring arm carries for the same reason one line up, and it is DECLARED as a survivor rather than tested around: no printed sentence and no registry row pairs a non-Bench search with a §9.2 gate, so nothing can reach the difference. 🛑 IT SELF-INVALIDATES (D427): the day one does, this row is KILLED and the run reports STALE-SURVIVOR by name. ⚠️ AND IT IS THE HONEST OUTPUT RATHER THAN A SEVENTH ROW — D497's rule: the region is thinner than it looks, so say so with the measurement instead of filling a quota.",
+    file: "packages/engine/src/interpreter.ts",
+    find: " && op.op === \"searchDeck\" && op.dest === \"bench\") {",
+    replace: " && op.op === \"searchDeck\") {",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+    survives: {
+      kind: "unreachable-population",
+      reason: "No printed corpus sentence and no registry row pairs a `searchDeck` carrying a `recordAs` with a `recordGate`, except this decision's own — and that one is `dest: \"bench\"`, so the dropped conjunct is true on every board the engine can reach. Measured over all 640 rows of `legalAttackCorpus()` and every `programFor(id)`: exactly ONE `searchDeck` carries a `recordAs`, and its `dest` is `\"bench\"`. The row is KILLED — and reports STALE-SURVIVOR — the day a hand or deck-top search gains one.",
+    },
+  },
+  {
+    id: "D502-describe-branch-forgets-the-move",
+    decision: "D502",
+    what: "🛑 C19 — `describeBranch`'s NEW ARM REFUSES ITS OWN OP: the guard's polarity is flipped, so the pinned move — the one destination that is NOT a second question and therefore the only one this clause may state flat — is the one shape it turns away. `describeBranch` answers `null`, `withConsequence` returns the prompt unchanged, and the search's dialog names a deck search while the answer silently decides whether an Energy moves. ⚠️ EVERY BOARD ASSERTION IN THIS FILE IS GREEN UNDER IT — the program is untouched — which is D473's finding in its purest form.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "        if (op.destRecorded === undefined || op.route !== \"selfToBench\") return null;",
+    replace: "        if (op.destRecorded !== undefined || op.route !== \"selfToBench\") return null;",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-move-note-keeps-the-family-phrase",
+    decision: "D502",
+    what: "🛑 C20 — THE CAPTION OVERRIDE'S POLARITY IS FLIPPED, and it is wrong at BOTH ends at once, which is what makes it worth a row rather than a comment. THIS card's park goes back to reading *'to 1 of your Benched Pokémon'* over a dialog offering exactly ONE body — a caption promising a choice the prompt does not offer, on an attacker whose Bench holds another Pokémon (D421/D456: the test is not whether a row is stilted but whether it asserts something this path makes untrue). And EVERY shipped `selfToBench` printing — D229's eight, Castform's two — gets the PINNED phrase instead, which is why the killer set names the sibling suite as well as this one.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.destRecorded !== undefined) where = \"from this Pokémon to the new Benched Pokémon\";",
+    replace: "  if (op.destRecorded === undefined) where = \"from this Pokémon to the new Benched Pokémon\";",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts", "packages/engine/src/derivedSelfEnergyMove.test.ts"],
+  },
+  {
+    id: "D502-search-move-reports-nothing-moved",
+    decision: "D502",
+    what: "⚠️ C21 — `searchMove` REPORTS AN EMPTY MOVE while really moving the cards, so the §9.2 record is filed as `[]` on every search that succeeds and the printed *'if you put any Pokémon … in this way'* answers NO about a Pokémon that is standing on the Bench. The Bench, the deck and the `DECK_SEARCHED` row are all CORRECT under it — which is why this row sits on the function's RETURN rather than on its body: the three pre-existing rows in this span are about the bench clamp and the deck-top splice, and none of them could see a wrong `moved`.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  return { state: withSide(state, ctx.seat, updated), moved }; // searchMove",
+    replace: "  return { state: withSide(state, ctx.seat, updated), moved: [] }; // searchMove",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+  },
+  {
+    id: "D502-anchor-read-before-the-head-search",
+    decision: "D502",
+    what: "⚠️ C22 — THE ORDER PERMUTATION, DECLARED. A copy of this decision's arm is hoisted ABOVE `ATTACK_BENCH_SEARCH`'s, which is the placement a successor would reach for by habit (the narrow arm first). It SURVIVES, and the kind is D468's STRUCTURAL disjointness rather than D467's guarded kind: both anchors are `^…$` and they disagree on a mandatory run of bytes at the same position — `BENCH_SEARCH_TAIL` demands the string END after *'shuffle your deck.'* where this one demands eleven more words — so NO STRING CAN MATCH BOTH and no guard exists or should. 🛑 THE PAIR IS THE CLAIM (D467): the ORDER is legibility and the TERMINATOR is behaviour, and the behavioural half is `D230-anchor-drops-the-tail`, whose own `what` names THIS printing as its witness. The shipped order is what keeps that true: read the head anchor first and a `$`-less `BENCH_SEARCH_TAIL` claims this sentence and drops its §9.2 tail, which `derivedBenchSearchMove.test.ts` §2 reddens on; hoist this arm and the D230 mutation goes INERT on the one card it cites.",
+    file: "packages/engine/src/effects.ts",
+    find: "  match = ATTACK_BENCH_SEARCH.exec(effect);",
+    replace: "  if (ATTACK_BENCH_SEARCH_THEN_MOVE.test(effect)) {\n    return [\n      { op: \"searchDeck\", filter: { kind: \"basicPokemon\" }, dest: \"bench\", max: 1, recordAs: \"moved\" },\n      { op: \"shuffleDeck\" },\n      // biome-ignore lint/suspicious/noThenProperty: the effect contract's gated-step list.\n      { op: \"recordGate\", slot: \"moved\", then: [{ op: \"moveEnergy\", filter: { kind: \"anyEnergy\" }, max: 1, route: \"selfToBench\", destRecorded: \"moved\" }] },\n    ];\n  }\n  match = ATTACK_BENCH_SEARCH.exec(effect);",
+    expectKilledBy: ["packages/engine/src/derivedBenchSearchMove.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason: "STRUCTURAL disjointness (D468's kind, stated because the verdict column cannot preserve it): `ATTACK_BENCH_SEARCH` is `^…onto your Bench\\. Then, shuffle your deck\\.$` and `ATTACK_BENCH_SEARCH_THEN_MOVE` is `^…shuffle your deck\\. If you put any Pokémon…\\.$`, so a string matching either cannot match the other and dispatch order changes no answer. No guard exists and correctly none does — one would be unkillable by construction. ⚠️ IT SELF-INVALIDATES: the day either anchor loses its terminator, or either is generalised so the two overlap, the two orders answer differently and this row is KILLED, which the run reports as STALE-SURVIVOR.",
+    },
   },
 ];

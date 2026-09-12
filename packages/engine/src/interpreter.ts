@@ -1148,7 +1148,18 @@ function recordSlotOf(op: EffectOp): EffectSlot | undefined {
     // silent — `withConsequence` would simply drop the clause and the dialog
     // would describe half the card.
     op.op === "switchActive" ||
-    op.op === "gust"
+    op.op === "gust" ||
+    // 🆕🆕 D502 — `searchDeck` is the EIGHTH recorder and the first DECK search.
+    // Jynx `sv06-046` prints "Search your deck … onto your Bench. … If you put any
+    // Pokémon onto your Bench in this way, move an Energy …", so the search's park
+    // has to say what the answer buys exactly as Miriam's and the switch's do.
+    // Listed here rather than left out, because the omission is SILENT in precisely
+    // the D206 way: `withConsequence` would drop the clause and the dialog would
+    // describe a deck search while the answer quietly decides whether an Energy
+    // moves. ⚠️ AND IT IS ALSO THE FIELD'S ONLY READER BESIDES THE ARM THAT WRITES
+    // IT — an optional `recordAs` that nothing enrols here files a record and gets
+    // no caption, which is the half of this slice no board can see.
+    op.op === "searchDeck"
     ? op.recordAs
     : undefined;
 }
@@ -1255,6 +1266,21 @@ function describeCondition(
   // this function's own stated reason one line up.
   if (gate.contains === undefined && op.op === "bottomFromOpponentHand" && op.dest === undefined) {
     return "If you put a card on the bottom of your opponent's deck in this way";
+  }
+  // 🆕🆕 D502 — Jynx `sv06-046` prints its gate LONG too, so it takes the same
+  // treatment as Ortega's above for the same stated reason: the note is the printed
+  // text, and *"If you put any Pokémon onto your Bench in this way"* is the text
+  // printed. "If you do" would be a paraphrase of a clause the card spells out.
+  //
+  // ⚠️ THE `dest === "bench"` HALF IS THE HONESTY GUARD, AND IT IS THE NEIGHBOUR'S
+  // `dest === undefined` HALF READ ON THIS OP'S OWN DESTINATION UNION. A
+  // `dest: "hand"` or `dest: "deckTop"` search puts nothing onto anyone's Bench, and
+  // a gate announced in these words over one would promise a consequence on a move
+  // that did not happen. Unreachable today (no printing pairs the hand or deck-top
+  // arms with a §9.2 gate) and written anyway, for this function's own stated
+  // reason — silence beats a guess, and a wrong CONDITION is the quiet half.
+  if (gate.contains === undefined && op.op === "searchDeck" && op.dest === "bench") {
+    return "If you put any Pokémon onto your Bench in this way";
   }
   if (gate.contains === undefined) return "If you do";
   if (gate.contains === "yourActive" && op.op === "attachFromDeck") {
@@ -1411,6 +1437,26 @@ function describeBranch(ops: readonly EffectOp[]): string | null {
         parts.push(
           `attach ${op.count === undefined ? "the Energy" : `up to ${op.count} Energy`} to this Pokémon`,
         );
+        break;
+      case "moveEnergy":
+        // 🆕🆕 D502 — Jynx `sv06-046` "Inviting Kiss"'s consequent, in the card's
+        // own printed words minus its capital, exactly as the five arms above take
+        // theirs. Without this case `describeBranch` answers `null`,
+        // `withConsequence` returns the prompt unchanged, and the deck-search dialog
+        // names the search and says nothing about the Energy the answer buys —
+        // D473's finding verbatim: the reader is right and the describer quietly
+        // says less, and only the describer is user-visible.
+        //
+        // 🛑 ONLY THE RECORD-PINNED DESTINATION HAS WORDS HERE, and the refusal is
+        // `attachEnergyFrom`'s above rather than a gap: every other `moveEnergy`
+        // destination is a SECOND question (*"1 of your Benched Pokémon"*, *"your
+        // Benched Pokémon in any way you like"*, *"another of your Pokémon"*), so
+        // stating one in this clause would promise the player a decision the note's
+        // own prompt is not offering. The pinned destination is the one that is not a
+        // question, which is why it can be stated flat — and it is also the only
+        // combination a printed §9.2 gate reaches today.
+        if (op.destRecorded === undefined || op.route !== "selfToBench") return null;
+        parts.push("move an Energy from this Pokémon to the new Benched Pokémon");
         break;
       default:
         return null;
@@ -2102,6 +2148,15 @@ function stepOp(
       if (candidates.length === 0 || max <= 0) {
         // A search that can find nothing (or has nowhere to put it) is a
         // no-op — the trailing shuffleDeck op still fires.
+        //
+        // 🆕🆕 D502 — AND IT FILES THE EMPTY RECORD, which is the whiff every
+        // recording op in this file takes and is what makes the printed *"if you
+        // put ANY Pokémon onto your Bench in this way"* answer NO with no guard
+        // anywhere else in the program. `recordGateHolds` asks `filed.length === 0`
+        // rather than whether the KEY is there, so a search with an absent
+        // `recordAs` is untouched and a Jynx whose deck holds no Basic — or whose
+        // Bench is full — reaches the gate and stops there.
+        recordMoved(record, op.recordAs, []);
         return { done: state };
       }
       return {
@@ -2716,6 +2771,32 @@ function stepOp(
       const needed = offer.needed;
       let movable = offer.movable;
       let destinations = offer.destinations;
+      // 🆕🆕 D502 — THE PRINTED DESTINATION PIN, TAKEN HERE AND NOT IN
+      // `moveEndpoints`. Jynx `sv06-046`'s *"to THE NEW Benched Pokémon"* is the
+      // body its own `searchDeck` just filed, so the offer is narrowed to whichever
+      // in-play bodies carry a filed uid in their `stack`.
+      //
+      // ⚠️ AT THE CALLER BECAUSE THE FUNNEL'S SECOND READER HAS NO RECORD.
+      // `moveEndpoints` is shared with `moveEnergyPlayable` (the `programPlayable`
+      // gate), which is handed no `EffectRecord` and could not be — so threading one
+      // in would add a parameter at both call sites to answer a question one of them
+      // cannot ask. D443's rule: check whether the CALLER already holds the fact.
+      // This one does, and the funnel stays byte-identical.
+      //
+      // ⚠️ AND IT RUNS **BEFORE** THE §11 ASK BELOW, WHICH IS D433's ORDERING RULE
+      // AND NOT AN ACCIDENT OF PLACEMENT: this is a PRINTED narrowing, so a body the
+      // sentence never named must not file a prevention row. On this printing the
+      // shield block is skipped anyway (`side` is absent, so `board === ctx.seat`),
+      // which makes the order unobservable today — stated rather than relied on.
+      //
+      // ⚠️ `refPokemon` RATHER THAN A HAND-SPELLED SPOT TEST, so a ref whose body has
+      // left play drops out here as `undefined` instead of reaching the park.
+      if (op.destRecorded !== undefined) {
+        const filed = new Set(recorded(record, op.destRecorded));
+        destinations = destinations.filter((ref) =>
+          (refPokemon(state, ref)?.stack ?? []).some((uid) => filed.has(uid)),
+        );
+      }
       // 🛑 §11 (D142/D259) — THE REFUSAL GATE, ASKED BY THIS OP FOR THE FIRST TIME,
       // BECAUSE UNTIL D443 IT COULD NOT NAME A BODY ITS CONTROLLER DOES NOT OWN.
       // Moving Energy off a Pokémon and moving Energy onto one are both effects of
@@ -5744,10 +5825,21 @@ export function applyChoice(
   record: EffectRecord = {},
 ): GameState {
   switch (op.op) {
-    case "searchDeck":
-      return choice.kind === "cards"
-        ? searchMove(state, choice.uids, op.dest, op.reveal, ctx, events)
-        : state;
+    case "searchDeck": {
+      // 🆕🆕 D502 — THE §9.2 FILING, AND IT COMES OFF `searchMove`'s OWN `moved`
+      // RATHER THAN OFF `choice.uids` — `retrieveMove`'s rule one op over, verbatim:
+      // a wire-dropped uid (one no longer in the deck) never moved, and a
+      // Bench-bound answer is additionally clamped to `benchSpace` inside that
+      // function, so the answer and the movement are two different sets. A
+      // non-`cards` answer files `[]` for the same reason the whiff path does.
+      if (choice.kind !== "cards") {
+        recordMoved(record, op.recordAs, []);
+        return state;
+      }
+      const searched = searchMove(state, choice.uids, op.dest, op.reveal, ctx, events);
+      recordMoved(record, op.recordAs, searched.moved);
+      return searched.state;
+    }
     case "evolveFromDeck":
       return choice.kind === "cards"
         ? evolveFromDeckMove(state, choice.uids, ctx, events, op.onto, op.names)
@@ -9558,7 +9650,15 @@ function handRefreshDrawCount(
     `reveal` is the op's printed *"reveal it/them"* rider, forwarded onto the
     event so `log.ts` can name the cards (D225). It is passed through rather than
     consulted here: nothing about the MOVE changes, only what the log says about
-    it. */
+    it.
+
+    🆕🆕 **D502 — IT RETURNS WHAT ACTUALLY MOVED, WHICH IS `retrieveMove`'s SHAPE ONE
+    ZONE OVER AND NOT A NEW IDEA.** `searchDeck` gained a `recordAs`, and the set the
+    §9.2 gate has to be told about is neither the OFFER nor the ANSWER: a wire-dropped
+    uid never left the deck, and a Bench-bound answer is clamped to `benchSpace`
+    *inside this function*, so `moved` is the only place the truth exists. The state
+    half is returned unchanged in every other respect; a caller with no `recordAs`
+    reads `.state` and the board is byte-identical to what it was. */
 function searchMove(
   state: GameState,
   uids: readonly string[],
@@ -9566,7 +9666,7 @@ function searchMove(
   reveal: true | undefined,
   ctx: EffectContext,
   events: GameEvent[],
-): GameState {
+): { state: GameState; moved: readonly string[] } {
   const side = state.players[ctx.seat];
   // Bench-bound cards clamp to the remaining bench space HERE, before anything
   // leaves the deck — so the set removed from the deck is EXACTLY the set that
@@ -9574,7 +9674,7 @@ function searchMove(
   // card-destruction shape the M1 review called out). Hand has no cap.
   const inDeck = uids.filter((uid) => side.deck.includes(uid));
   const moved = dest === "bench" ? inDeck.slice(0, benchSpace(state, ctx.seat)) : inDeck;
-  if (moved.length === 0) return state;
+  if (moved.length === 0) return { state, moved };
   const picked = new Set(moved);
   const deck = side.deck.filter((uid) => !picked.has(uid));
   const updated: PlayerSide =
@@ -9615,7 +9715,12 @@ function searchMove(
       ? { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved], reveal: true }
       : { type: "DECK_SEARCHED", seat: ctx.seat, dest, uids: [...moved] },
   );
-  return withSide(state, ctx.seat, updated);
+  // ⚠️ D502 — THE TRAILING COMMENT IS D447's REPAIR AND NOT DECORATION. Giving this
+  // function a `{state, moved}` return made this line BYTE-IDENTICAL to
+  // `retrieveMove`'s last line ~190 lines down, which is D437's converse trap
+  // (writing a line that already exists elsewhere breaks a row you never touched).
+  // The two must stay distinguishable to `precheck`, so do not "tidy" this away.
+  return { state: withSide(state, ctx.seat, updated), moved }; // searchMove
 }
 
 /** 🆕 D307 — what an `evolveFromDeck` op is offering: the body the pronoun *"this
@@ -13994,6 +14099,22 @@ function moveNote(op: Extract<EffectOp, { op: "moveEnergy" }>): string {
         ? "from your opponent's Active Pokémon to 1 of their Benched Pokémon"
         : `from ${one}your opponent's Pokémon to another of their Pokémon`;
   }
+  // 🆕🆕 D502 — THE RECORD-PINNED DESTINATION, AS A SECOND OVERRIDE BELOW THE CHAIN
+  // FOR D443's REASON EXACTLY: wrapping the chain would re-indent lines that three
+  // shipped mutant rows quote verbatim, so this is D414's lesson avoided rather than
+  // paid, and every own-board caption's BYTES are untouched.
+  //
+  // 🛑 IT IS OWED BECAUSE THE INHERITED CAPTION WOULD BE FALSE ABOUT THE BOARD, NOT
+  // MERELY STILTED (D421/D456). Under `selfToBench` the chain answers *"from this
+  // Pokémon to 1 of your Benched Pokémon"* — which, on an attacker whose Bench holds
+  // three other bodies, promises a choice the dialog does not offer: the park carries
+  // exactly ONE destination, the one the search just benched.
+  //
+  // ⚠️ AND IT WINS OVER THE `side` OVERRIDE ABOVE, WHICH IS UNREACHABLE RATHER THAN
+  // CONTESTED: the record is filed by the controller's own ops, so under
+  // `side: "opponent"` the narrowing empties `destinations`, the op is a silent no-op
+  // and no park is ever built for this caption to head.
+  if (op.destRecorded !== undefined) where = "from this Pokémon to the new Benched Pokémon";
   // "an Energy", "a Basic Energy", "a Fire Energy" — the article follows the noun,
   // the same rule discardNote applies. Unreachable at max 1 today (the only
   // `anyEnergy` mover is Poppy at max 2, which takes the "up to" branch), which is
