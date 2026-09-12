@@ -19919,6 +19919,71 @@ import type { GameState, Seat } from "./types";
     ⚠️ **Heading written at D506.** D505's builder declined to hand-edit this
     ~1,480-line nested parenthetical and said so rather than risk corrupting it, which
     was right and is why the repair became a slice with the guard landing first.)
+    🆕🆕🆕 engineVersion 0.395.0 → **0.396.0** (D507 — THE SPREAD THAT HITS **BOTH** BENCHES,
+    AND THE OPTIONAL PRINTED CLAUSE THAT NARROWS IT TO THE ALREADY-DAMAGED BODIES.
+    `censusAttackCorpus.ts` **FILE LINES 515 and 526** — *"This attack also does 10 damage
+    to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and
+    Resistance for Benched Pokémon.)"* and *"This attack also does 40 damage to each
+    Benched Pokémon **that has any damage counters on it** (both yours and your
+    opponent's). (Don't apply…)"* — **2 sentences / 2 legal printings**, both claimed by
+    `deriveAttackEffect` arm **6-ii** over ONE new anchor `SPREAD_EACH_BOTH_BENCH` whose
+    OPTIONAL GROUP *is* the rider.
+    🛑 **THE DESIGN QUESTION WAS ANSWERED THE NARROW WAY AND THE BOTH-SIDES HALF COST NO
+    TYPE AT ALL.** `spreadDamage.target` gains **NO third member** and `counterEachAll`'s
+    `{ filter, side }` shape was REFUSED rather than copied: the printed *"(both yours and
+    your opponent's)"* is a TWO-OP PROGRAM of the op that already shipped —
+    `spreadDamage { yourBench }` then `spreadDamage { opponentBench }` — which is D482's
+    shipped answer to the identical question one zone over. The restructure would have
+    been D448/D449/D465's thrice-refused widening in a second place, and it points the
+    same way for a reason of its own: `counterEachAll` walks `board.active` too, so a
+    `side` here invites a `filter` that reaches the ACTIVE and falsifies 0.327.0's
+    *"`spreadDamage` only ever touches `side.bench`"* in three files.
+    **THE WHOLE ENGINE CHANGE IS ONE OPTIONAL BOOLEAN, ONE PARAMETER AND ONE `continue`**:
+    `spreadDamage` gains **`damagedOnly?: true`** — `counterEachAll`'s own name on its own
+    predicate `hasAnyDamageCounters`, D505's idiom one rider later — and the helper takes
+    it as a parameter rather than a folded number, because it decides WHICH bodies the
+    fold walks and only the fold can know that. `MATCH_RECORD_VERSION` **HELD at 30**, and
+    D505's version of that argument was RE-DERIVED rather than inherited: it closed the
+    `rest` door with *"a program of length ONE"* and **this arm returns a program of
+    length TWO**, so the door is shut by a property of the OP (both ops are the
+    never-parking one) instead of a property of the ARM.
+    **AN EIGHTH LATTICE SHAPE: A CONJUNCTIVE PAIR OF BLOCKING AXES × A FREE 2³** —
+    `0/1 · 0/5 · 1/10 · 3/10 · 3/5 · 1/1`, identical readers-only and splitter-inclusive,
+    both splitters null at 32/32; the SCOPE axis and the damage-counter axis each flip the
+    verdict at **8 of 16** cells and the other three at 0 of 16, which is the arithmetic
+    of a conjunction rather than D505's single 16-of-16 blocker. All 32 points are
+    distinct strings, so the three quiet axes are **INERT ON THE VERDICT** rather than
+    degenerate in D491's identity sense.
+    🛑 **AND ONE ROW OF THE SAME FAMILY WAS PRICED AND REFUSED** — corpus **FILE LINE
+    601**, *"…to each Pokémon that has any damage counters on it (both yours and your
+    opponent's), except for this Pokémon."*, 1 printing. Two plausible reasons are TRUE
+    and neither is the operative one: `exceptNamed` cannot spell a SELF exception (true,
+    and irrelevant — under a zone decomposition the exclusion is structural, since the
+    attacker IS the Active), and `spreadDamage` cannot reach an Active (true, and that is
+    D482's situation rather than a blocker). The measured reason is that composing it
+    needs a per-body board predicate on `damageDefender`'s FLAT arm — a **TWO-MEMBER**
+    union whose whole purpose is keeping `amount` and `per`/`count` apart, so the rider
+    owes a `damagedOnly?: never` on the sibling arm in the same edit — for ONE printing.
+    `bothBenchSpread.test.ts` §8 is the refusal, with its falsifier.
+    ⚠️ **THIS HEADING NAMES NO `D<nnn>` AND THAT IS DELIBERATE, NOT AN OMISSION.**
+    `engineVersionChangelog.test.ts`'s ATTRIBUTION case requires that EVERY heading naming
+    a slice have a matching `| **D<nnn>** |` row in `docs/decisions.md` recording the same
+    arrow — `adjudicated` is asserted equal to `LABELLED.length`, with no tolerance. This
+    slice was scoped NOT to touch `docs/decisions.md`, so a labelled heading would have
+    shipped `check` RED. **The label and the decisions row are ONE edit**: whoever writes
+    `| **D507** | … engine 0.395.0 → 0.396.0 … |` should rewrite this heading's opening
+    parenthesis as `(D507 — THE SPREAD…` in the same commit, and not before.
+    🛑 **VERSION-TAX EXCEPTION LIST FOR THIS BUMP, NAMING THE HEADING BEING WRITTEN THIS
+    SLICE (D506's rule (b), which is exactly what D500's list got wrong).** `0.395.0`
+    legitimately survives at SEVEN kinds of site and none of them may be swept: **THIS
+    HEADING'S OWN SOURCE, one line up**; D505's heading target at index.ts 19900;
+    `engineVersionChangelog.test.ts`'s four history lines about defects (a)–(c);
+    `preDamageAttachSeam.test.ts`'s header arrow and its *"stays 0.395.0"* sentence;
+    `scaledBenchSpread.test.ts`'s header arrow; `mutants.ts`'s D275 re-point ledger; and
+    the `docs/` history. The sweep was run as a WHITELIST over `expect(engineVersion)`,
+    `expect(manifest.version)`, `it(…)` titles, the declaration and `package.json` —
+    **not** as a value-keyed grep — because a value-keyed grep is precisely the mechanism
+    that ate D500's heading.)
     🆕🆕🆕 engineVersion 0.390.0 → **0.391.0** (D499 — THE PRINTED CANCEL WITH A
     HEADS CONSEQUENT ON THE SAME FLIP. `censusAttackCorpus.ts` **FILE LINE 268** —
     *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's
@@ -20589,7 +20654,7 @@ import type { GameState, Seat } from "./types";
     WITNESS** — the count was re-derived every slice and the word *"three"* was carried.
     A successor of this slice inherits **81 / 61 / 17** again, over **FIVE** history
     occurrences: those four plus `deckMillFilteredScale.test.ts`'s own header arrow.) */
-export const engineVersion = "0.395.0";
+export const engineVersion = "0.396.0";
 
 export type {
   ApplyResult,

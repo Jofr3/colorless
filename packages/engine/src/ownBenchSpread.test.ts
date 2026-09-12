@@ -329,8 +329,22 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // neither. ⚠️ **THE AXIS IS UNCHANGED — a quantifier this family is not keyed on —
       // and that is the only thing that had to survive the substitution.**
       ["`all of` (a quantifier neither anchor spells)", "This attack also does 10 damage to all of your Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
-      // scope: the both-sides form names no possessive at all ↔ the one-sided form
-      ["`each Benched Pokémon (both yours and your opponent's)`", "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
+      // scope: a noun that names NO owner and NO seat scope ↔ the one-sided form
+      // 🆕🆕🆕 **D507 RE-POINTED THIS ROW AND THE AXIS IS UNCHANGED (D178/D418/D438 —
+      // re-point, do not delete).** The sentence this row used to carry — *"each Benched
+      // Pokémon (both yours and your opponent's)"*, corpus FILE LINE 515 — is BUILT now,
+      // by `SPREAD_EACH_BOTH_BENCH` and arm 6-ii, so asserting null would pin a refusal
+      // the engine no longer makes (D444's rule, which has now caught three rows in this
+      // one `it(`). **THE BARE OWNERLESS NOUN IS STILL REFUSED, AND BY BOTH ANCHORS AT
+      // ONCE**: this one is keyed on the literal `each of ` plus a possessive, and the
+      // new one is keyed on the printed `(both yours and your opponent's)` parenthetical,
+      // which this string drops. ⚠️ **D438's SECOND HALF, ASKED RATHER THAN ASSUMED —
+      // what could the old claim catch that this one cannot?** The old string is claimed
+      // by arm 6-ii today, so a mutation to THIS anchor could not be seen through it in
+      // either direction; the new string is refused by a DIFFERENT byte of each anchor,
+      // so it discriminates both. The both-sides row's own near-miss ladder now lives in
+      // `bothBenchSpread.test.ts` §2.
+      ["`each Benched Pokémon` with no owner and no seat scope", "This attack also does 10 damage to each Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // a trailing clause continues the sentence past the anchor's `\.`
       // 🆕🆕🆕 **D505 RE-POINTED THIS ROW ONTO THE OWN SIDE, AND THE AXIS IS UNCHANGED
       // (D178/D418/D438 — re-point, do not delete).** The sentence this row used to
@@ -385,10 +399,51 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
     // THEIR ORIGINAL REASON** (a THIRD `target` value plus a two-board fold, and a
     // per-body predicate on top for the filtered one), which is what stops this rung
     // decaying into a list of whatever is unbuilt today.
+    // 🛑🛑🛑 **D507 FIRED THE FALSIFIER A SECOND TIME, AND IT ALSO FALSIFIED THE PRICE
+    // THIS PARAGRAPH HAD BEEN CARRYING SINCE D425.** The two surviving rows are claimed —
+    // and NOT by *"a THIRD `target` value plus a two-board fold"*. `spreadDamage.target`
+    // is still the same two-member union it has been since D425: the both-sides reading
+    // is a TWO-OP PROGRAM of the op that already shipped (D482's answer to the identical
+    // question one zone over), and the filtered row's per-body predicate is ONE OPTIONAL
+    // RIDER whose name and whose function both already shipped on `counterEachAll`
+    // (`damagedOnly`, `hasAnyDamageCounters`). ⚠️ **SO THE REFUSAL WAS RIGHT ABOUT THE
+    // ROWS AND WRONG ABOUT THE MECHANISM FOR 82 DECISIONS** — D466's rule at a third
+    // address: a refusal is not an assertion, so its REASON can be false for years and
+    // nothing goes red. Only the ROW LIST was ever checked.
+    // 🛑 **AND THE POPULATION IS RE-POINTED RATHER THAN EMPTIED**, because a `for` over
+    // `[]` is the vacuous guard `conventions.md` forbids (D226). What stands in its place
+    // is the row that is genuinely still refused on this axis, with the reason D507
+    // MEASURED rather than guessed — see `bothBenchSpread.test.ts` §8.
     const stillUnbuilt = [
-      "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      // corpus FILE LINE 601. FOUR ZONES, not two: it reaches both ACTIVES, where §8.5
+      // applies Weakness and Resistance, and `spreadDamage` is bench-only by name, by
+      // its `target` union and by its helper (`side.bench` — the invariant index.ts
+      // 0.327.0 records and three files lean on). Composing it is D482's shape plus a
+      // `damagedOnly` rider on `damageDefender`'s FLAT arm, which is this engine's
+      // most-produced damage op, for ONE printing.
+      "This attack does 50 damage to each Pokémon that has any damage counters on it (both yours and your opponent's), except for this Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     ];
+    // 🆕🆕🆕 D507 — the two that LEFT THIS SLICE, pinned on the other side of the same
+    // predicate with their WHOLE programs, so the transition is recorded and a successor
+    // that widened `spreadDamage.target` instead reddens here (D444).
+    for (const [text, amount, rider] of [
+      [
+        "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        10,
+        {},
+      ],
+      [
+        "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
+        40,
+        { damagedOnly: true },
+      ],
+    ] as const) {
+      expect(resolvedByAnyReader(text), `claimed at D507: ${text}`).toBe(true);
+      expect(deriveAttackEffect(text), text).toEqual([
+        { op: "spreadDamage", target: "yourBench", amount, ...rider },
+        { op: "spreadDamage", target: "opponentBench", amount, ...rider },
+      ]);
+    }
     // 🆕🆕🆕 D447 — the two that LEFT, pinned on the other side of the same predicate
     // so this rung records the transition rather than quietly shrinking (D444).
     for (const s of [
@@ -474,7 +529,7 @@ describe("§3 — `target` is a union now, and the record version does not move"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.395.0");
+    expect(engineVersion).toBe("0.396.0");
   });
 });
 

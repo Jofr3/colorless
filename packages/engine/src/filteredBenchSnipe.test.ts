@@ -187,14 +187,31 @@ describe("§1 — the price and the family, re-derived off the corpus rather tha
     // consequent really was the cost**, which is the claim D437 made and could not check.
     // The THREE that remain each still need their own consequent: a both-sides benched
     // spread, a COUNT/scaler, and a both-sides spread with a self-exclusion.
+    // 🆕🆕🆕 **D507 — THE SPLIT IS NOW 3 BUILT / 2 REFUSED, AND IT WAS THE FIRST OF THOSE
+    // THREE.** *"This attack also does 40 damage to each Benched Pokémon that has any
+    // damage counters on it (both yours and your opponent's). (Don't apply…)"* (corpus
+    // FILE LINE 526) is claimed by arm **6-ii**, which reuses this rider's NAME a third
+    // time — `spreadDamage.damagedOnly`, the same `hasAnyDamageCounters` predicate —
+    // over a TWO-OP program rather than a third `spreadDamage.target`. **So the
+    // predicate has now paid for THREE consequents on three different ops
+    // (`damageChosen`, `counterEachAll`, `spreadDamage`) and has never once been the
+    // cost**, which is D437's claim confirmed for the second time.
+    // 🛑 **THE TWO THAT REMAIN ARE NOT ALIKE, AND D507 PRICED THE SECOND RATHER THAN
+    // LEAVING IT AS A GROUP (D463: N rows under one reason is N refusals until each is
+    // priced).** `UNREAD_SIBLING` is a COUNT — a new `DamageCountSource` member folded
+    // in `attack.ts`, where this reader is not in scope (D436's shape). The other is
+    // corpus FILE LINE 601, *"…to each Pokémon that has any damage counters on it (both
+    // yours and your opponent's), except for this Pokémon."*, and the refusal that names
+    // its condition lives in `bothBenchSpread.test.ts` §8.
     const built = family.filter(([, s]) => resolvedByAnyReader(s));
     expect(built.map(([, s]) => s).sort()).toEqual(
       [
         PRINTED,
         "Put 2 damage counters on each of your opponent's Pokémon that has any damage counters on it.",
+        "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)",
       ].sort(),
     );
-    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(3);
+    expect(units(family.filter(([, s]) => !resolvedByAnyReader(s)))).toBe(2);
     // The unread sibling this suite's demonstrator carries at index 2 is one of the
     // four, so the `ATTACK_EFFECT_SKIPPED` control in §2 is a REAL printed sentence
     // rather than an invented one — and this rung is its tripwire.
@@ -744,6 +761,6 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
   });
 
   it("🛑 the engine version moved with `package.json`", () => {
-    expect(engineVersion).toBe("0.395.0");
+    expect(engineVersion).toBe("0.396.0");
   });
 });

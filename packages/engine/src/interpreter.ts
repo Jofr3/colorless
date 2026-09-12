@@ -1891,7 +1891,19 @@ function stepOp(
       // STRUCTURAL parameter, so it accepts this op unchanged — the fold gains a second
       // op, not a second implementation (D448's own words one rider earlier). A 0-taken
       // opponent folds to 0 and `spreadDamage`'s first line returns the state untouched.
-      return { done: spreadDamage(state, op.target, snipeAmount(op, state, ctx, record), ctx, events) };
+      // 🆕🆕🆕 D507 — AND THE TARGETING RIDER IS PASSED WHOLE, where the SCALING one is
+      // folded: `damagedOnly` decides WHICH benched bodies the fold walks, which only the
+      // fold can know, so it crosses the boundary as a parameter rather than as a number.
+      return {
+        done: spreadDamage(
+          state,
+          op.target,
+          snipeAmount(op, state, ctx, record),
+          op.damagedOnly === true,
+          ctx,
+          events,
+        ),
+      };
     case "damageSelf":
       // 🆕🆕 D465 — the amount is FOLDED HERE rather than inside `damageSelf`, so
       // that the helper stays "place this many HP on my own Active" and every
@@ -7897,6 +7909,7 @@ function spreadDamage(
   state: GameState,
   target: "opponentBench" | "yourBench",
   amount: number,
+  damagedOnly: boolean,
   ctx: EffectContext,
   events: GameEvent[],
 ): GameState {
@@ -7954,6 +7967,20 @@ function spreadDamage(
   for (const pokemon of side.bench) {
     const uid = topUid(pokemon);
     if (uid === undefined) {
+      bench.push(pokemon);
+      continue;
+    }
+    // 🆕🆕🆕 D507 — THE PRINTED *"that has any damage counters on it"*, AND IT IS A
+    // TARGETING TEST RATHER THAN AN AMOUNT ONE, which is why it lives here and not at
+    // the dispatch where `perTakenPrize` folds. An undamaged body is not hit at all:
+    // no shield coin is drawn for it, no prevention is asked about it and NO
+    // `DAMAGE_DEALT` row is filed — the same ending `counterEachAll`'s identical
+    // `op.damagedOnly === true && !hasAnyDamageCounters(pokemon)` line gives a body its
+    // filter refuses. ⚠️ AHEAD OF THE FOLD'S RNG, deliberately: `coinFlipShieldPrevents`
+    // advances `rng` for every body it is asked about (D258), so asking about a body
+    // this clause excludes would re-draw every LATER body's coin off a board fact the
+    // sentence says is none of its business.
+    if (damagedOnly && !hasAnyDamageCounters(pokemon)) {
       bench.push(pokemon);
       continue;
     }

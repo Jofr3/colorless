@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D507 (0.395.0 → 0.396.0), at D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.395.0";',
+    find: 'export const engineVersion = "0.396.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27820,8 +27820,8 @@ export const MUTANTS: Mutant[] = [
     //    divergence becomes visible**, so the replace is the genuine pre-slice value 1617
     //    and the claim is true again. ⚠️ PREDICTED BEFORE THE BUILD this time, off D502's
     //    own instruction two entries up - the audit needled the census constant first.
-    find: "  attack: 1620,",
-    replace: "  attack: 1617,",
+    find: "  attack: 1622,",
+    replace: "  attack: 1620,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28946,8 +28946,13 @@ export const MUTANTS: Mutant[] = [
     decision: "D505",
     what: "\ud83d\uded1 C4 — THE DISPATCH REVERTS TO THE PRE-SLICE BYTES, `op.amount` instead of `snipeAmount(op, …)`. This is the OTHER half of C1 and the two are different experiments (D484): C1 leaves a correct interpreter reading a program with no rider on it, this one leaves a correct program reaching an interpreter that ignores the rider. The derived program is byte-identical to the shipped one, so every `deriveAttackEffect` assertion in the repo passes and `JSON.stringify` of the op is unchanged — the defect is visible only on a BOARD, and only on one where the opponent has taken a number of Prizes other than 1. \u26a0\ufe0f It is also the row that would survive a suite built entirely out of derivation rungs, which is what the family's first three slices were.",
     file: "packages/engine/src/interpreter.ts",
-    find: "      return { done: spreadDamage(state, op.target, snipeAmount(op, state, ctx, record), ctx, events) };",
-    replace: "      return { done: spreadDamage(state, op.target, op.amount, ctx, events) };",
+    // ⚠️ RE-POINTED AT D507: the dispatch gained a fourth argument (`damagedOnly`) and
+    //    wrapped across six lines, so the one-line `find` stopped occurring. The AXIS is
+    //    unchanged (D178/D438 — re-point, do not delete): the fold is replaced by the bare
+    //    `op.amount` and the rider beside it is left alone, so this row still isolates the
+    //    SCALING fold and nothing else.
+    find: "      return {\n        done: spreadDamage(\n          state,\n          op.target,\n          snipeAmount(op, state, ctx, record),\n          op.damagedOnly === true,\n          ctx,\n          events,\n        ),\n      };",
+    replace: "      return {\n        done: spreadDamage(\n          state,\n          op.target,\n          op.amount,\n          op.damagedOnly === true,\n          ctx,\n          events,\n        ),\n      };",
     expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
   },
   {
@@ -28971,10 +28976,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D506-changelog-head-unnamed",
     decision: "D506",
-    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the newest heading's target, so the parser stops seeing it and the chain's head falls back to 0.394.0 while `package.json` says 0.395.0 — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, all 11,161 tests, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498).",
+    what: "🛑 C1 — THE DEFECT D502 AND D505 BOTH SHIPPED: a version goes out and NO HEADING CLAIMS IT. The edit un-bolds the NEWEST heading's target, so the parser stops seeing it and the chain's head falls back a release while `package.json` says otherwise — which is byte-for-byte the state of this file at D505's head, twice over. ⚠️ IT IS THE CHEAPEST WAY FOR THIS RECORD TO GO WRONG AND WAS INVISIBLE TO EVERY OTHER INSTRUMENT IN THE REPO: `tsc`, `biome`, every test, `precheck` and all five gates are green on both sides of it, because until D506 nothing read the headings at all. Killed by the HEAD case alone, which is the point — one tripwire, named (D453/D498). 🛑 RE-POINTED AT D507 ONTO THE 0.395.0 → 0.396.0 HEADING, AND THE RE-POINT WAS OWED RATHER THAN TIDY (D444): left on D505's heading it would have gone INERT ON THE VERDICT the moment a newer heading existed — un-bolding a heading that is no longer the head leaves NEWEST equal to HEAD, so the HEAD case stays green and the kill arrives, if at all, through the CHAIN case instead. The row's own stated reason (killed by the HEAD case alone) is exactly the sentence that would have quietly become false. THIS ROW IS PART OF THE VERSION TAX: every bump owes its re-point, in the same edit as the heading.",
     file: "packages/engine/src/index.ts",
-    find: "engineVersion 0.394.0 → **0.395.0** (D505",
-    replace: "engineVersion 0.394.0 → 0.395.0 (D505",
+    find: "engineVersion 0.395.0 → **0.396.0** (D507 — THE SPREAD",
+    replace: "engineVersion 0.395.0 → 0.396.0 (D507 — THE SPREAD",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
   },
   {
@@ -29021,5 +29026,91 @@ export const MUTANTS: Mutant[] = [
     find: "Engine **0.392.0 → 0.393.0**",
     replace: "Engine **0.392.0 → 0.394.0**",
     expectKilledBy: ["packages/engine/src/engineVersionChangelog.test.ts"],
+  },
+  // ── D507 — THE SPREAD THAT HITS BOTH BENCHES, AND THE OPTIONAL PRINTED CLAUSE THAT
+  //    NARROWS IT TO THE ALREADY-DAMAGED BODIES. Nine rows across three sites: the
+  //    ANCHOR (which rows it claims), the ARM (what program it emits, and in which
+  //    order) and the INTERPRETER (which benched bodies the fold walks). Every row names
+  //    ONE tripwire (D453/D498).
+  {
+    id: "D507-anchor-drops-the-both-sides-parenthetical",
+    decision: "D507",
+    what: "the seat scope stops being required: the printed `(both yours and your opponent's)` becomes an optional group, so an OWNERLESS bench noun — `This attack also does 10 damage to each Benched Pokémon.` — derives to a two-bench splash off a sentence that names no seat at all. 🛑 IT CLAIMS NO EXTRA CORPUS ROW, which is exactly why it needs a row rather than a census: the widened anchor is green on every count in the repo and is refuted only by a near-miss ladder that asserts the ownerless spelling is refused (§2, and `ownBenchSpread.test.ts`'s re-pointed scope pair). The parenthetical IS the seat scope; dropping it makes the anchor key on a noun the column never prints alone",
+    file: "packages/engine/src/effects.ts",
+    find: "` \\\\(both yours and your opponent['\u2019]s\\\\)\\\\.` +",
+    replace: "`(?: \\\\(both yours and your opponent['\u2019]s\\\\))?\\\\.` +",
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts", "packages/engine/src/ownBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-anchor-damaged-clause-goes-mandatory",
+    decision: "D507",
+    what: "the optional printed predicate becomes REQUIRED, so the UNFILTERED both-benches row (corpus FILE LINE 515) is stranded and the census steps back by 1 sentence / 1 printing while the filtered row at line 526 goes on deriving. The mirror image of the row above, on the same anchor and the same optional group — one direction over-claims and the other under-claims, and D441 says a widening owes both",
+    file: "packages/engine/src/effects.ts",
+    find: '"( that has any damage counters on it)?" +',
+    replace: '"( that has any damage counters on it)" +',
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts", "packages/engine/src/censusAtHead.test.ts"],
+  },
+  {
+    id: "D507-damaged-clause-is-ignored",
+    decision: "D507",
+    what: "the arm stops reading the printed clause and rides `damagedOnly` on EVERY point of the anchor, so corpus FILE LINE 515 — which prints no predicate at all — becomes an attack that spares every undamaged benched body on both sides. 🛑 THIS IS THE DEFECT D505 SPENT A SECOND ANCHOR TO AVOID, arriving through the arm instead of through the regex: the whole argument for ONE anchor with an optional group is that the group's PRESENCE is the rider's presence, and this row is that argument's falsifier",
+    file: "packages/engine/src/effects.ts",
+    find: "    const damagedOnly = match[2] !== undefined;",
+    replace: "    const damagedOnly = true;",
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-damaged-clause-never-read",
+    decision: "D507",
+    what: "the other direction of the same read: the rider is never set, so corpus FILE LINE 526's printed *that has any damage counters on it* enforces nothing and the attack splashes the clean bodies too. ⚠️ INVISIBLE ON EVERY BOARD WHOSE BENCHES ARE ENTIRELY DAMAGED OR ENTIRELY CLEAN, which is every board a spread suite fields by default — §5 seeds damage on ONE body per seat, at DIFFERENT indexes, for exactly this row",
+    file: "packages/engine/src/effects.ts",
+    find: "    const damagedOnly = match[2] !== undefined;",
+    replace: "    const damagedOnly = false;",
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-both-bench-order-flips",
+    decision: "D507",
+    what: "the two legs swap, so the OPPONENT's bench is walked before the attacker's own. 🛑 THE ORDER IS OBSERVABLE TWICE OVER AND NEITHER IS COSMETIC: `spreadDamage` is a FOLD carrying `rngState` (D258 — a spread into three holders is three coin-flip-shield flips, each drawn from the state the last one left), so the swap re-draws every shield coin on both benches; and it files one `DAMAGE_DEALT` per BODY, so the log reads in the other order. The printed order is *both yours and your opponent's* (D132) and the house's controller-first walk agrees with it (`handRefresh`, settled by D490); `counterEachAll`'s absolute `SEATS` is the precedent that does NOT apply, because that op's seat order is not its row order. D482's `-whole-side-spread-order-flips` is the same row one zone over",
+    file: "packages/engine/src/effects.ts",
+    find: '        ? { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true }\n        : { op: "spreadDamage", target: "yourBench", amount },\n      damagedOnly\n        ? { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true }\n        : { op: "spreadDamage", target: "opponentBench", amount },',
+    replace: '        ? { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true }\n        : { op: "spreadDamage", target: "opponentBench", amount },\n      damagedOnly\n        ? { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true }\n        : { op: "spreadDamage", target: "yourBench", amount },',
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-damagedonly-rides-one-leg-only",
+    decision: "D507",
+    what: "the rider is spelled on the OPPONENT's leg and dropped from the attacker's own, so the printed predicate narrows one bench and not the other. 🛑 THE HALF-APPLIED RIDER IS THE HARDEST OF THIS SET TO SEE: the opponent-side board — which is the one every spread suite fields — is answered exactly right, and only a board that fields the attacker's OWN bench with a CLEAN body on it goes red. D445's *half a sentence can fail loudly while the other half fails in silence*, at a second address",
+    file: "packages/engine/src/effects.ts",
+    find: '        ? { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true }',
+    replace: '        ? { op: "spreadDamage", target: "yourBench", amount }',
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-both-bench-collapses-to-one-side",
+    decision: "D507",
+    what: "both legs target the OPPONENT's bench, so the printed *(both yours and your opponent's)* hits one side TWICE for double the printed number and the attacker's own bench takes nothing. 🛑 THE PROGRAM STILL HAS TWO OPS AND STILL DERIVES, so every rung that counts the program's LENGTH is green and only a rung that reads the two `target` VALUES is not — which is why §9's zero-claim asserts the targets and not just the op names (D438: a boolean is true under the real build and under the near-misses alike)",
+    file: "packages/engine/src/effects.ts",
+    find: '        : { op: "spreadDamage", target: "yourBench", amount },\n      damagedOnly',
+    replace: '        : { op: "spreadDamage", target: "opponentBench", amount },\n      damagedOnly',
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-spread-damaged-test-inverted",
+    decision: "D507",
+    what: "the interpreter's per-body skip is inverted, so the fold walks exactly the bodies the sentence excludes: the CLEAN benched Pokémon take the hit and the already-damaged ones are spared. 🛑 THE DERIVER IS UNTOUCHED AND EVERY PROGRAM-EQUALITY RUNG STAYS GREEN — this is the half of the rider that only a BOARD can see, and it is the reason §5 asserts the damage vector per seat rather than asserting the op. The sibling line it copies is `counterEachAll`'s `op.damagedOnly === true && !hasAnyDamageCounters(pokemon)`, which has carried the same shape since D450",
+    file: "packages/engine/src/interpreter.ts",
+    find: "    if (damagedOnly && !hasAnyDamageCounters(pokemon)) {",
+    replace: "    if (damagedOnly && hasAnyDamageCounters(pokemon)) {",
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
+  },
+  {
+    id: "D507-dispatch-drops-the-rider",
+    decision: "D507",
+    what: "the dispatch hands the helper a hard `false`, so the op's `damagedOnly` key is written, persisted and never read — D407's built-but-dead defect at the boundary between the arm and the fold rather than inside either. ⚠️ IT IS A DIFFERENT SITE AND A DIFFERENT FAILURE FROM THE INVERSION ONE ROW UP: the deriver is right, the type is right, the record round-trips, and the LOSS direction is the one §7 drives over reconstructed v30 bytes — an attack that splashes the undamaged bodies the card says it does not touch",
+    file: "packages/engine/src/interpreter.ts",
+    find: "          snipeAmount(op, state, ctx, record),\n          op.damagedOnly === true,",
+    replace: "          snipeAmount(op, state, ctx, record),\n          false,",
+    expectKilledBy: ["packages/engine/src/bothBenchSpread.test.ts"],
   },
 ];

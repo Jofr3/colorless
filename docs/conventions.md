@@ -6636,6 +6636,145 @@ headings for 55 slices.** The guard (`engineVersionChangelog.test.ts`) now pins 
 uniqueness and attribution — see its own closing note for the five things it deliberately cannot see.
 
 
+## A labelled changelog heading and its `docs/decisions.md` row are ONE edit (D507)
+
+`engineVersionChangelog.test.ts`'s ATTRIBUTION case asserts `adjudicated === LABELLED.length` with
+**no tolerance**: every heading whose parenthesis opens `(D<nnn>` must have a matching
+`| **D<nnn>** |` row in `docs/decisions.md` recording the same arrow. So a slice that bumps the
+engine and writes `(D507 — …)` while `decisions.md` has no D507 row ships `bun run check` **RED**.
+
+D507 was scoped away from `docs/decisions.md` (the caller performs the ritual) and therefore could
+not write a labelled heading at all. It wrote an **unlabelled** one — which is the pre-D452 form,
+172 of the 202 headings carry it, and the ATTRIBUTION case skips it by construction — and said so
+inside the heading, naming the exact row the ritual owes and the exact rewrite that labels it.
+
+**The rule: bump, heading and decisions row move together, or the heading stays unlabelled and the
+debt is written into the heading itself.** Relabelling later is additive and safe; it is not the
+retarget D506 forbids, because the arrow does not move.
+
+## `D506-changelog-head-unnamed` is part of the version tax (D507)
+
+That row un-bolds **the newest heading's** target so the parser stops seeing it and `NEWEST` falls
+behind `HEAD`. Its stated reason is *"killed by the HEAD case alone"*.
+
+Leave it pointed at the previous slice's heading and it goes **INERT ON THE VERDICT** the moment a
+newer heading exists: un-bolding a heading that is no longer the head leaves `NEWEST === HEAD`, the
+HEAD case stays green, and the kill arrives — if at all — through the CHAIN case instead. The row
+would still report KILLED and its own sentence would be false (D450's inert row, D453's undeclared
+diagnosis).
+
+**Every engine bump owes this re-point, in the same edit as the heading and the constant.**
+
+## The version sweep is a WHITELIST, not a value-keyed grep (D507)
+
+D506 named the mechanism that ate D500's heading: the tax is paid by grepping the OUTGOING literal,
+and a changelog heading legitimately CONTAINS that literal as its target. D507 turned the finding
+into a procedure. Sweep only lines matching:
+
+- `expect(engineVersion).toBe("<old>")` and `expect(manifest.version).toBe("<old>")`
+- an `it(…)` title that spells the version (D460's fourth class — no prescribed grep sees it)
+- `export const engineVersion = "<old>";` and `"version": "<old>"` in `package.json`
+- `mutants.ts` rows whose `find` quotes one of those lines
+
+then **re-grep the old literal and check that what remains is exactly your written-down exception
+list.** At D507 that was 16 occurrences outside `docs/`: this slice's own heading SOURCE, the
+previous slice's heading TARGET, four history lines in the changelog guard, three header arrows in
+suites, the D275 re-point ledger and three lines of the `D506-changelog-head-unnamed` row. 101
+occurrences across 72 files moved; **none of the 16 did.**
+
+⚠️ A whitelist sweep can also move a line you did not plan for and be RIGHT: `mutants.ts`'s
+`find: 'export const engineVersion = "<old>";'` contains the declaration verbatim, so it is swept by
+the declaration rule and that is exactly where it had to land.
+
+## A both-sides printing is a COMPOSITION, not a union member (D507, re-earning D482)
+
+*"(both yours and your opponent's)"* names TWO ZONES. If the engine already has one op per zone, the
+sentence is a **program**, not a third member on somebody's `target`. D482 established this for
+`damageDefender` + `spreadDamage`; D507 applied it where BOTH zones are the same op
+(`spreadDamage { yourBench }` then `spreadDamage { opponentBench }`), and the both-sides half cost
+**zero** type bytes.
+
+🛑 **And the refusal it replaces was right about its rows and wrong about its mechanism for 82
+decisions.** `ownBenchSpread.test.ts` had carried *"a THIRD `target` value plus a two-board fold"*
+since D425. Only the ROW LIST was ever asserted, so the REASON was free to be false (D466). **When
+you inherit a priced refusal, price it again before you either pay it or quote it.**
+
+⚠️ The restructure that looks tempting — copying a sibling's `{ filter, side }` pair — is the same
+class of move as the thrice-refused `scale?: DamageCountSource` (D448/D449/D465). Check what the
+sibling's walk REACHES: `counterEachAll` walks `board.active` too, so a `side` on a bench-only op
+invites a `filter` that falsifies *"`spreadDamage` only ever touches `side.bench`"* in three files.
+
+## An eighth lattice shape: a CONJUNCTIVE PAIR of blocking axes (D507)
+
+D505's shape was ONE blocking axis flipping the verdict at 16/16 cells with four inert axes at 0/16.
+D507's 2⁵ lattice reads `0/1 · 0/5 · 1/10 · 3/10 · 3/5 · 1/1` and factorises as **two axes flipping
+at 8 of 16 cells each and three at 0 of 16** — the arithmetic signature of a CONJUNCTION: a
+pre-slice point builds only where BOTH blockers are substituted, so neither alone reaches a built
+string and each flips only the half of its cells where the other is already substituted.
+
+**Read the flip table, not just the weight vector.** `8/16 + 8/16` and `16/16 + 0/16` can produce
+similar-looking vectors and mean different things about the price.
+
+## D505's reachability argument had an ARM-shaped premise (D507, refining D456)
+
+D505 closed `EffectContinuation.rest` for `spreadDamage` by writing *"the arm below returns a program
+of **length one**"*. D507's arm returns a program of **length two**, so that sentence was simply not
+available and the question had to be re-derived rather than inherited.
+
+The door is still shut, and the reason is now a property of the OP instead of a property of the ARM:
+`rest` holds what sits BEHIND a park, and the op in front of it is itself the never-parking op.
+**State the reachability argument in terms of what the OPS can do, not in terms of how long today's
+program happens to be** — and when you inherit one, check which of the two it was.
+
+## A producer count measured AFTER your own build is a number you manufactured (D507, applying D427)
+
+D507's refusal of corpus line 601 wanted *"`damageDefender` has many more producers than
+`spreadDamage`"* as its price. Measured at the post-build head the figures were 9 against 7 — because
+the new arm's two ternary branches had added **four** `spreadDamage` producer sites of its own. The
+pre-slice figure was 3.
+
+The rung that decides was moved to a number the slice does not touch: the **union ARITY**.
+`spreadDamage` is one member, so an optional rider is one line; `damageDefender` is two members whose
+whole purpose is keeping `amount` and `per`/`count` apart, so a rider on the flat arm owes a
+`?: never` on the sibling in the same edit. **Prefer a comparand your own diff cannot move (D436),
+and when you report the movable one, report the confound beside it.**
+
+### Labelling a changelog heading touches THREE files, not two (D507, extending D506)
+
+D507 shipped its `0.395.0 → 0.396.0` heading **unlabelled**, because
+`engineVersionChangelog.test.ts`'s ATTRIBUTION case asserts `adjudicated === LABELLED.length` with no
+tolerance: a `(D507 —` label requires the `| **D507** |` row in `docs/decisions.md` to exist in the
+same commit. The builder named that debt and handed the caller "one atomic edit".
+
+**It was not one edit. It was three**, and the caller found the third the hard way:
+
+1. `packages/engine/src/index.ts` — add the `(D<nnn> —` label to the heading;
+2. `docs/decisions.md` — the matching `| **D<nnn>** |` row;
+3. 🆕 **`scripts/mutation/mutants.ts` — every row whose `find` quotes that heading.**
+
+`D506-changelog-head-unnamed` pins the head by quoting the newest heading verbatim:
+
+```
+find:    "engineVersion 0.395.0 → **0.396.0** (THE SPREAD"
+replace: "engineVersion 0.395.0 → 0.396.0 (THE SPREAD"
+```
+
+Inserting `D507 — ` after the parenthesis moved the heading out from under both strings, and
+`precheck` went red with `find occurs 0× in packages/engine/src/index.ts`.
+
+⚠️ **`bun run check` was GREEN throughout.** `precheck` is not part of `check` — it is a separate
+gate — so the only thing standing between a labelled heading and a corpus that cannot run is
+**remembering to run `precheck` after touching `index.ts`**. Had the sweep been launched on the
+commit, it would have died on row 1 of 2,517 after the commit was already made.
+
+**The rule:** after editing a changelog heading for any reason — labelling it, writing a new one,
+correcting one — **run `bun scripts/mutation/precheck.ts` before committing.** More generally:
+**a mutant row's `find` is a dependency on exact bytes in another file, and nothing type-checks it.**
+`precheck` is the only instrument that knows, and it is not in `check`.
+
+Cf. [[the version tax now has three parts]] — this is its fourth.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

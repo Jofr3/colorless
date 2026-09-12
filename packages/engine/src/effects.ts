@@ -4890,6 +4890,56 @@ export type EffectOp =
           than a throw — unreachable here by the two doors above, and driven in
           `scaledBenchSpread.test.ts` §7 over reconstructed v30 bytes. */
       perTakenPrize?: true;
+      /** 🆕🆕🆕 **D507 — HIT ONLY THE BENCHED BODIES THAT ALREADY CARRY DAMAGE, AND THE
+          NAME, THE PREDICATE AND THE SPELLING ALL SHIP ON A SIBLING.** *"This attack also
+          does 40 damage to each Benched Pokémon that has any damage counters on it (both
+          yours and your opponent's). (Don't apply Weakness and Resistance for Benched
+          Pokémon.)"* — `censusAttackCorpus.ts` **FILE LINE 526**, **1 sentence / 1 legal
+          printing**. `counterEachAll.damagedOnly` (D450, itself D437's rider reused
+          verbatim) is the same eight printed words on the same board fact, and the
+          predicate is literally the same function — `hasAnyDamageCounters`
+          (interpreter.ts), a pure read of one body's `damage` field. **This is D505's
+          idiom on this same op one rider later: spell a SHIPPED rider's name on a second
+          op rather than coin a second vocabulary for one question.**
+
+          `true` and not `boolean`, the rider above it and `counterEachAll`'s own rule: an
+          absent key and `false` are two spellings of one board, and only one of them can
+          be written.
+
+          🛑 **A RIDER AND NOT A `CardFilter` MEMBER, FOR `counterEachAll`'s REASON
+          VERBATIM RATHER THAN A FRESH ONE.** `matchesFilter(card, filter)` is handed a
+          catalog `Card` and never an `InPlayPokemon`, which its own `basicPokemon` arm
+          states as the reason the *"HP or less REMAINING"* printings are unreachable from
+          it. A BOARD fact is read where the BODY is, which is inside the fold.
+
+          🛑 **AND IT IS THE ONLY NEW BYTE ON THIS OP — THE BOTH-BENCHES HALF OF THE TWO
+          SENTENCES COSTS NO TYPE AT ALL.** `target` does **NOT** gain a third member: the
+          printed *"(both yours and your opponent's)"* is a two-op PROGRAM, which is
+          D482's shipped answer to the identical question one zone over. See
+          `SPREAD_EACH_BOTH_BENCH`'s block for the measurement, and for why the sibling
+          `counterEachAll`'s `filter` + `side` shape was refused rather than copied.
+
+          ⚠️ **`MATCH_RECORD_VERSION` HOLDS AT 30, ADDRESS FIRST (D456) — AND D505's
+          ARGUMENT ONE RIDER UP HAD A PRECONDITION THIS SLICE REMOVES, SO IT IS RE-DERIVED
+          RATHER THAN INHERITED.** The address an `EffectOp` persists into is
+          `MatchRecord.state.phase.cont.{pendingOp, rest}` (`EffectContinuation`,
+          interpreter.ts), written only on a PARK. D505 shut the `rest` door by saying
+          *"the arm below returns a program of **length one**"* — **and this arm returns a
+          program of length TWO**, so that sentence is no longer the reason. The door is
+          still shut, and the reason is now a property of the OP instead of a property of
+          the ARM: `rest` holds the ops BEHIND a park, and the op in front of them here is
+          itself a `spreadDamage`, whose `stepOp` arm returns `{ done }` unconditionally
+          and so never parks. **Both ops in this program are the never-parking op, so
+          neither door opens** — and a successor that puts a PARKING op in front of one of
+          these reopens `rest` and owes the question again. This is also an ADDED OPTIONAL
+          key (D125/D334's widening), so every record a v30 deploy has written stays valid
+          and means what it meant: ABSENT is the unconditional spread, which is what all
+          three older `spreadDamage` producers emit. The LOSS direction is named rather
+          than left implicit — a dropped rider splashes the UNDAMAGED benched bodies too,
+          a plausible wrong board rather than a throw — unreachable here by the two doors
+          above, and driven in `bothBenchSpread.test.ts` §7 over reconstructed v30 bytes.
+          */
+      damagedOnly?: true;
     }
   /** 🆕 D319 — Put `amount` HP of damage counters on **THAT POKÉMON**: the body
       the WATCHED action was just performed on, carried as `EffectContext.subjectUid`.
@@ -13003,6 +13053,84 @@ const SPREAD_EACH_BENCH = new RegExp(
 const SPREAD_EACH_BENCH_TAKEN_PRIZES = new RegExp(
   `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon ` +
     "for each Prize card your opponent has taken\\." +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+// 🆕🆕🆕 **D507 — THE SPREAD THAT HITS *BOTH* BENCHES, AND THE OPTIONAL CLAUSE THAT
+// NARROWS IT TO THE ALREADY-DAMAGED BODIES.** Two corpus rows on one anchor:
+//
+//   · `censusAttackCorpus.ts` **FILE LINE 515** — *"This attack also does 10 damage to
+//     each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and
+//     Resistance for Benched Pokémon.)"*, **1 sentence / 1 legal printing**;
+//   · **FILE LINE 526** — *"This attack also does 40 damage to each Benched Pokémon
+//     **that has any damage counters on it** (both yours and your opponent's). (Don't
+//     apply…)"*, **1 sentence / 1 legal printing**.
+//
+// 🛑 **THE DESIGN QUESTION, ANSWERED EXPLICITLY: NEITHER A THIRD `spreadDamage.target`
+// NOR THE SIBLING'S `filter` + `side` SHAPE. IT IS A TWO-OP PROGRAM.** The printed
+// *"(both yours and your opponent's)"* names TWO ZONES that the engine already has one
+// op for, and D482 answered the identical question one zone over — *"the sentence is a
+// two-op PROGRAM rather than a third `target` member"*, `damageDefender` + `spreadDamage`
+// for *"each of your opponent's Pokémon"*. **Here both zones are the SAME op**, so the
+// program is `spreadDamage { yourBench }` followed by `spreadDamage { opponentBench }`
+// and the type cost of the both-sides half is **ZERO**: no union member, no field, no
+// value, no `interpreter.ts` byte.
+//
+// 🛑 **AND THE RESTRUCTURE TOWARD `counterEachAll`'s `{ filter, side }` IS REFUSED, WITH
+// THE THREE PRECEDENTS IT WOULD HAVE TO OVERTURN NAMED.** That op answers *"which bodies
+// on which seats"* with a `CardFilter` and a `side`, and copying the pair onto this op
+// would be the SAME class of move D448, D449 and D465 refused three times for
+// `scale?: DamageCountSource` — replace a printed distinction that two shipped values
+// already spell with a general vocabulary, and pay for the generality at every consumer.
+// It differs from those three in exactly one way and the difference points the SAME
+// direction: `counterEachAll` walks the ACTIVE as well as the Bench (`board.active` then
+// `board.bench.map`), so giving this op a `side` would also invite a `filter` that
+// reaches the Active — and `index.ts` 0.327.0's *"`spreadDamage` only ever touches
+// `side.bench`, so it cannot move the actor off the Active Spot"* is leaned on in three
+// files (continuous.ts's `installedReductionOf` and its `EffectContext` note, plus
+// D425's own own-side argument). D482 measured what breaking it costs: **five mechanisms
+// across 94 sites in 34 files**. Composition keeps the invariant intact and the
+// vocabulary closed.
+//
+// 🛑 **ONE ANCHOR WITH AN OPTIONAL CAPTURE, NOT TWO ANCHORS — AND THIS IS THE OPPOSITE
+// CALL FROM D505 ONE SCREEN UP, SO THE DISCRIMINATOR IS SPELLED.** D505 refused an
+// optional group on `SPREAD_EACH_BENCH` because the widened anchor claimed **4 printings
+// it would have handed a `perTakenPrize` they do not print** — the group's presence was
+// not the rider's presence. **Here it is exactly that**: group 2 is the printed clause
+// and `damagedOnly` is set iff group 2 matched, so a point that matches without the
+// clause CANNOT be handed the rider. Measured over `legalAttackCorpus()`'s 640 sentences
+// (`bothBenchSpread.test.ts` §1): this anchor claims **2 sentences / 2 printings**, the
+// clause-mandatory form claims **1 / 1** and the clause-free form claims **1 / 1**, and
+// the two halves are exactly the two corpus rows. So the alternation is the family's
+// coupling (D222 — one reading of one sentence; widen this and both wordings widen
+// together) rather than an unpaid generality, and D416's copied-anchor drift never gets a
+// second regex to drift with.
+//
+// ⚠️ **THE SEAT ORDER IS `yourBench` FIRST AND IT IS OBSERVABLE RATHER THAN COSMETIC.**
+// `spreadDamage` is a FOLD that carries `rngState` (D258: a spread into three holders is
+// three coin-flip-shield flips, not one), so swapping the two ops re-orders the log AND
+// re-draws every shield coin on both benches. Two arguments agree and neither is taste:
+// the PRINTED ORDER is *"both **yours** and your opponent's"* (D132's inventory rule —
+// ops in printed order), and the house's CONTROLLER-FIRST walk (`handRefresh`'s
+// `[ctx.seat, otherSeat(ctx.seat)]`, D490's distinguishing test) puts the attacker's own
+// board first. ⚠️ `counterEachAll`'s `side: "both"` walks the ABSOLUTE `SEATS` instead,
+// and the two shipped precedents genuinely disagree (D433) — the tie-breaker D490 named
+// is *what the walk EMITS*, and this program files one `DAMAGE_DEALT` per BODY on each
+// side in turn, so the seat order IS the log's order here exactly as it is for
+// `handRefresh`. The mutant row `D507-both-bench-order-flips` is what says so.
+//
+// ⚠️ **NO POSSESSIVE CAPTURE AND NO SIDE TERNARY**, unlike `SPREAD_EACH_BENCH`: this
+// sentence names no possessive at all on its noun. ⚠️ **THE W/R PARENTHETICAL STAYS
+// OPTIONAL** and the `(?:also )?` IS ADMITTED, both for the family's stated reasons — the
+// arm emits `spreadDamage` ALONE, so the main hit rides the attack's own `damage` field
+// either way and the word claims nothing (D505's discriminator: which op the arm emits,
+// not which family it is in). All four variants are measured in §1 rather than asserted
+// here (D477). ⚠️ **BOTH APOSTROPHES IN BOTH PRINTS ARE U+0027**, measured with
+// `codePointAt` in §1 rather than remembered (D421/D425/D440); the `['’]` class is kept
+// on both slots for the family's standing reason.
+const SPREAD_EACH_BOTH_BENCH = new RegExp(
+  "^This attack (?:also )?does (\\d+) damage to each Benched Pokémon" +
+    "( that has any damage counters on it)?" +
+    ` \\(both yours and your opponent['’]s\\)\\.` +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 // 🆕🆕🆕 **D482 — THE WHOLE-SIDE SPREAD, AND IT NEEDS NO OP AT ALL.**
@@ -23298,6 +23426,51 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // its own (`D425-spread-side-flips`) rather than a comment saying it is careful.
     const side = match[2] === "your" ? ("yourBench" as const) : ("opponentBench" as const);
     return [{ op: "spreadDamage", target: side, amount: Number(match[1]) }];
+  }
+
+  // 🆕🆕🆕 6-ii. D507 — "This attack (also) does {N} damage to each Benched Pokémon[ that
+  //     has any damage counters on it] (both yours and your opponent's). (Don't apply
+  //     Weakness and Resistance for Benched Pokémon.)" — corpus FILE LINES 515 and 526,
+  //     2 sentences / 2 legal printings. TWO ops of the SAME kind, one per bench, and the
+  //     optional printed clause is the op's `damagedOnly` rider; see the anchor's block
+  //     for the design argument (no third `target`, no `filter`/`side` restructure) and
+  //     for why the seat order is the attacker's board first.
+  //
+  //     ⚠️ **THE PLACEMENT RELATIVE TO ARM 6 IS FREE, AND THAT IS MEASURED RATHER THAN
+  //     ASSUMED (D502's question, answered the other way).** The two anchors are
+  //     structurally DISJOINT on the token after `each`: arm 6 demands `of ` and this one
+  //     demands `Benched`, so neither can claim the other's strings in either order.
+  //     Neither mutation on either anchor closes the gap with a single edit — arm 6's
+  //     `D425-anchor-loses-the-bare-possessive` drops a `|your` branch this anchor does
+  //     not have, and `D507-anchor-drops-the-both-sides-parenthetical` widens this one to
+  //     `each Benched Pokémon.`, which is still not a string arm 6 owns. §1 asserts the
+  //     claimed row sets of both anchors over all 640 corpus sentences, which is the form
+  //     that stays true if a successor re-orders them.
+  //
+  //     ⚠️ **NEITHER OP GUARDS THE OTHER'S EMPTY CASE AND NEITHER HAS TO** — D482's line
+  //     verbatim, at the one address where both legs are the same op: `spreadDamage`
+  //     returns the state untouched on an empty Bench (its own early return), so an
+  //     attacker with no Bench splashes only the other side and files no row for its own.
+  //     ⚠️ **AND THE SAME PRINTED NUMBER GOES TO BOTH BENCHES**: *"each"* is
+  //     distributive, so a build that halved or shared the number across the two sides is
+  //     killed by any board whose two benches differ in depth, which is the board §4
+  //     drives.
+  match = SPREAD_EACH_BOTH_BENCH.exec(effect);
+  if (match !== null) {
+    const amount = Number(match[1]);
+    // 🛑 THE RIDER IS SET IFF THE PRINTED CLAUSE MATCHED, which is the whole reason this
+    // is ONE anchor with an optional group where D505 needed two anchors: the group's
+    // presence IS the rider's presence, so no point of this anchor can be handed a
+    // `damagedOnly` it does not print (`D507-damaged-clause-is-ignored` is the row).
+    const damagedOnly = match[2] !== undefined;
+    return [
+      damagedOnly
+        ? { op: "spreadDamage", target: "yourBench", amount, damagedOnly: true }
+        : { op: "spreadDamage", target: "yourBench", amount },
+      damagedOnly
+        ? { op: "spreadDamage", target: "opponentBench", amount, damagedOnly: true }
+        : { op: "spreadDamage", target: "opponentBench", amount },
+    ];
   }
 
   // 🆕🆕🆕 6a-bis. D482 — "This attack does {N} damage to each of your opponent's
