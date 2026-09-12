@@ -28830,4 +28830,69 @@ export const MUTANTS: Mutant[] = [
     replace: "  return { candidates, targets: attachEnergyTargets(state, seat, { benchOnly: true }), max: candidates.length };",
     expectKilledBy: ["packages/engine/src/derivedAnyNumberAttach.test.ts"],
   },
+
+  // ── D504 · the transcription guard (the quoted summary line) ───────────────
+  // 🛑 C1 IS THE SLICE, AND THE REST EXIST TO STOP IT PASSING FOR THE WRONG
+  //    REASON. `mutationSummaryQuote.test.ts` compares every summary line the
+  //    archive records against the template literal it PARSES OUT OF `run.ts` at
+  //    test time. The claim it makes is therefore not "the docs say GAP(S)" — it
+  //    is "the docs say whatever the harness says" — and the only way to test
+  //    that claim is to move the harness (C1–C3) and to move the archive (C4–C5)
+  //    and require the guard to notice both. C6 is the allowlist's other
+  //    direction. Every killer names the tripwire ALONE (D453/D498), so a kill
+  //    proves the tripwire discriminates rather than some neighbouring suite.
+  {
+    id: "D504-harness-gap-token-recased",
+    decision: "D504",
+    what: "🛑 C1 — THE ROW THE WHOLE SLICE TURNS ON: the harness starts printing the LOWERCASE token the archive spent 64 slices writing down. **If the guard held a hard-coded copy of the field list, THIS MUTATION IS INVISIBLE** — the private copy would still say `GAP(S)`, the archive would still say `GAP(S)`, the run would be green, and the guard would have inherited the exact defect it exists to catch (D503's rule: a guard over a quoted string must assert against the quoted THING). It is killed only because `mutationSummaryQuote.test.ts` parses `run.ts`'s own template literal at test time: 463 recorded lines and 468 census mentions go red at once. ⚠️ The mutated harness is still perfectly usable and its output still looks right — nothing else in the repo reads this token.",
+    file: "scripts/mutation/run.ts",
+    find: "${gaps.length} GAP(S) · ",
+    replace: "${gaps.length} GAP(s) · ",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  {
+    id: "D504-harness-known-field-renamed",
+    decision: "D504",
+    what: "C2 — THE ANTI-VACUITY HALF. A recorded line is recognised by the template's FIRST TWO field names, so renaming the second one means nothing on either page parses as a quotation any more — and a scanner that finds no lines reports no defects. The FLOOR case is what turns that from green into red. ⚠️ IT DOES NOT FALL TO ZERO, IT FALLS TO 243, and that is the reason the floor is a floor rather than a `> 0`: the paraphrase `known survivors` really is written on the page 243 times, so a `> 0` guard would pass this mutation on the strength of text that was never emitted either.",
+    file: "scripts/mutation/run.ts",
+    find: "${known.length} known survivor(s) · ",
+    replace: "${known.length} known survivors · ",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  {
+    id: "D504-summary-template-unfindable",
+    decision: "D504",
+    what: "C3 — THE TEMPLATE STOPS BEING FINDABLE AT ITS ANCHOR, so ZERO field labels are derived. Everything downstream is built from that parse — the candidate regex, the separator, the loud-token census, the exemption arithmetic — and EVERY ONE of them is satisfied by an empty label list, which is exactly the shape a renamed or deleted summary line leaves behind. The PARSE case is deliberately the first `it` in the file so it fails by name, ahead of any document being read, instead of the file reporting `0 defects` over `0 tokens`.",
+    file: "scripts/mutation/run.ts",
+    find: "`${killed.length} killed · ",
+    replace: "`${killed.length} mutants killed · ",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  {
+    id: "D504-archive-progress-line-recased",
+    decision: "D504",
+    what: "C4 — ONE ARCHIVED STAMP IN `docs/progress.md` SLIPS BACK TO THE LOWERCASE FORM. This is D503's defect reappearing the way it originally accumulated: one line at a time, in a file nothing executable reads, with `bun run check` green on both sides of it 455 times over. The row pins that the guard reads the PAGE and not only the harness — C1 moves the harness and this moves the archive, and the guard has to see both ends of the comparison.",
+    file: "docs/progress.md",
+    find: "1688 killed · 27 known survivor(s) · 0 GAP(S)",
+    replace: "1688 killed · 27 known survivor(s) · 0 GAP(s)",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  {
+    id: "D504-archive-decisions-line-recased",
+    decision: "D504",
+    what: "C5 — THE SAME EDIT IN THE OTHER SCANNED PAGE. `docs/decisions.md` held 144 of the 455 and is the file a successor greps for a tally, so a guard pointed only at `progress.md` would be green on it. This row pins the SCANNED list rather than the mechanism — the two pages are separate glob reads and separate scans, and nothing but a row on each says both are wired in.",
+    file: "docs/decisions.md",
+    find: "1150 killed · 23 known survivor(s) · 0 GAP(S)",
+    replace: "1150 killed · 23 known survivor(s) · 0 GAP(s)",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  {
+    id: "D504-meta-mention-command-reworded",
+    decision: "D504",
+    what: "🛑 C6 — THE EXEMPTION ROW, FAILING FROM THE OTHER SIDE. Five places spell the token lowercase ON PURPOSE, because the lowercase form is their subject; they are carried by two narrow context patterns with the count each must account for. This row rewords one of them — `git log -S 'GAP(s) ·'` loses its separator — and the exemption drops to 1 of 2. ⚠️ THE MUTATED TEXT IS STILL A VALID `git log -S` INVOCATION THAT STILL FINDS NOTHING, so the defect is invisible to a reader and to the shell; only the count sees it. D150's totality rule at an allowlist: a declaration that has stopped being true must fail as loudly as an undeclared instance, which is what stops the allowlist quietly widening into an excuse.",
+    file: "docs/conventions.md",
+    find: "git log -S 'GAP(s) ·' --",
+    replace: "git log -S 'GAP(s)' --",
+    expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
 ];

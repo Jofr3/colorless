@@ -6273,6 +6273,56 @@ unguarded by construction unless something compares the two.
    `precheck` after any bulk rewrite of it rather than assuming the rows are untouched.
 
 
+### The instrument that DEFINES a class must be the one that ENUMERATES it (D504)
+
+D503 found that the archive quoted the mutation harness's summary field with the wrong capitals,
+measured the damage by grepping that one token, and reported **455 places**. D504 then built a guard
+that parses `run.ts`'s template and compares every recorded line against it — and it immediately
+found **9 more defects of exactly the same class**: six `ERROR(s)` where the harness prints
+`error(s)`, one line spelling `KILLED`, and three bare `GAP`s.
+
+**The census was not careless; it was structurally blind.** Grepping one token can only ever report
+that token. Nothing in that method could report a *sibling* token being wrong, because the method
+never knew the field list existed.
+
+**The rule:** when you find a defect that belongs to a class — one wrong token out of seven, one
+stale citation out of forty, one unguarded reader out of thirteen — **do not measure the class with
+an instrument that can only see the member you happened to notice.** Derive the class from its
+definition (here: the harness's own format string) and enumerate against that. If you cannot, say
+that the number you are reporting is a **floor**, and say what it is a floor of.
+
+Corollary, learned the same day: `-harness-known-field-renamed`'s floor drops 474 → **243**, not 0.
+A floor that collapses to zero under a mutation was measuring the mutation; one that collapses
+partway is measuring something real.
+
+### Every reported count must name its unit (D504)
+
+D503's close-out reported **444** lowercase instances. The number was assembled from
+`grep -o … | wc -l` (**occurrences**) for one file and `grep -c` (**lines**) for another. The true
+figure was **455**.
+
+One slice later, inside the very work built to fix that, it happened again in a milder form: the
+builder reported **464** and the caller counted **465**. Both were right — **464 places, 465 token
+edits**, because one line carried two wrong tokens.
+
+**The rule:** a bare count is ambiguous between *occurrences*, *lines*, *places* and *edits*, and
+prose that says "444 instances" hides which one it means. **Name the unit in the number**
+("464 places / 465 token edits"), and **never sum two counts produced by different methods** — a
+total assembled that way is not a total. When the unit is genuinely places-with-possible-multiples,
+report both.
+
+### `grep` here is `ugrep`, and it returns nothing for an untracked file (D504)
+
+During D504's verification, searching the newly created suite returned **no output at all** — not an
+error, no match, silently. The file existed with 521 lines. `grep` in this environment is `ugrep`,
+which skips files git does not track.
+
+**A silent empty result from a search tool is not evidence of absence.** When a search over a file
+you just created comes back empty, check the file exists and is non-empty before concluding anything
+about its contents. Use Python (`io.open(...).read()`), or `git add` the file first. This matters
+most in exactly the situation it arose: verifying that a new guard does *not* contain something.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
