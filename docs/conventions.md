@@ -6226,6 +6226,46 @@ was **1617** at the time of writing and the entry was stale on arrival.
 the mechanism — *"it quotes the current `BUILT.attack` literal"* — and let the reader derive the
 value. D503 corrected D502's entry in place.
 
+### Quote the harness line VERBATIM — the token is `GAP(S)`, capital S (D503)
+
+`scripts/mutation/run.ts` prints its summary as:
+
+```
+<n> killed · <n> known survivor(s) · <n> GAP(S) · <n> stale · <n> skipped(dirty) · <n> clobber(s) · <n> error(s) · <n>s total
+```
+
+**`GAP(S)` has a capital S, and has since D211's first commit** — `git log -S 'GAP(s) ·' --
+scripts/mutation/run.ts` returns nothing, i.e. the lowercase form has never existed in the harness.
+
+At D503's close-out the archive was found to quote it lowercase **312 times in `progress.md`**
+(against **1** correct) and **132 times in `decisions.md`** — **444 in all**, spanning every
+"EXACTLY AS PREDICTED" claim on record.
+
+**Why this is more than a typo.** Each stamp presents a string as *the run's output*. That string
+was never the run's output. The **numbers** in those claims were right every time and are
+re-derivable from any log — but the **verbatim** claim was false, so **no recorded prediction could
+ever be checked against its log by string comparison**. And nothing caught it for 64 slices because
+nothing was looking: no mutant row quotes the token, no gate parses the summary line, no test
+compares a recorded prediction to an emitted one.
+
+**This is the D496–D498 blind spot one level up.** A census reports whether a sentence is claimed; a
+green sweep reports that every row which *exists* was killed; **neither reports that the prose
+DESCRIBING the run is accurate.** Instrument output that is transcribed by hand into prose is
+unguarded by construction unless something compares the two.
+
+**The rule:**
+
+1. **Copy the summary line out of the log — never retype it.** `grep -E '^[0-9]+ killed · '` the
+   log and paste what it prints.
+2. **A guard over recorded lines must assert against `run.ts`'s own format string**, not against a
+   hard-coded copy of it — a guard holding its own literal inherits exactly the defect it exists to
+   catch, and the two drift together silently.
+3. Nothing functional depends on the casing (verified at D503: no `find`/`replace`, no gate, no
+   test), so correcting the archive is a textual fix — but **land the guard first**, so it is seen to
+   fail and then pass. `progress.md` is itself the target of eight `D318-*` rows, so re-run
+   `precheck` after any bulk rewrite of it rather than assuming the rows are untouched.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.
