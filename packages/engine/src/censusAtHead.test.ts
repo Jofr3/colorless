@@ -1946,6 +1946,19 @@ const ROWS: readonly BacklogRow[] = [
     // 🆕 What is left of this row is ONE printing and it is the two-mechanism
     // outlier — an unbounded count AND an ORDERING clause no reader can honour.
     // The row is one printing from empty and that printing is the expensive one.
+    // ⚠️ **D503 CORRECTED THE FIRST HALF IN PLACE AND LEFT IT STANDING** (D442/D466:
+    // correct a falsified reason where it lives, say which slice did it and how it
+    // was measured). *"An unbounded count"* reads as a missing capability and is not
+    // one — `attachFromHand` has taken the printed *"any number"* since D247, and the
+    // brace-coded `{W}` form derives with its filter INTACT (measured: the reader
+    // answers `[{ op: "attachFromHand", filter: { kind: "basicEnergy", energyType:
+    // "Water" } }]`). The true first half is a PINCER across two ops: the op that
+    // takes an unbounded count carries no destination narrowing, and the op that
+    // carries `toSelf` takes a `count: number`. The SECOND half — the ordering clause
+    // — survives re-derivation unchanged and is the expensive one; it is now driven
+    // and pinned in `preDamageAttachSeam.test.ts`, which prices all three branches at
+    // 1 sentence / 1 printing EACH and names the 2,155-line straight-line `attack()`
+    // as the real cost.
     attack: [
       [
         1,

@@ -163,6 +163,21 @@ const UNREAD: readonly (readonly [string, number, string])[] = [
   [
     "This attack does 30 damage for each {W} Energy attached to this Pokémon. Before doing damage, you may attach any number of Basic {W} Energy cards from your hand to this Pokémon.",
     1,
+    // 🆕🆕 **D503 RE-DERIVED THIS CELL AND HALF OF IT WAS IMPRECISE** — kept in place
+    // and corrected beside rather than rewritten (D442/D466), because the cell's own
+    // header three paragraphs up says this page's `needs` strings have been wrong four
+    // times in five printings and the record of HOW is the point.
+    //   · *"an unbounded count"* reads as a missing capability and is not one:
+    //     `attachFromHand` has taken the printed *"any number"* since D247 (the very
+    //     row this table records losing), and the brace-coded `{W}` form derives with
+    //     its filter INTACT. The real blocker is a PINCER — the op that takes an
+    //     unbounded count carries no destination narrowing, and `attachEnergyFrom`,
+    //     which carries `toSelf`, takes a `count: number`. Measured, both directions.
+    //   · *"an ORDERING clause … the multiply fold reads the board at declaration"* is
+    //     CORRECT and is the expensive half. DRIVEN at D503's head on a real board: the
+    //     pre-damage hook runs ~780 lines AFTER the fold is computed, and the printed
+    //     clause additionally PARKS, which `applyAttackPreDamage`'s return type forbids
+    //     by construction. `preDamageAttachSeam.test.ts` owns the measurement.
     "two sentences, an unbounded count AND an ORDERING clause ('Before doing damage') that no reader in this engine can honour — the multiply fold reads the board at declaration",
   ],
 ] as const;
