@@ -6492,14 +6492,148 @@ sweep line to the emitted one; here nothing compares a changelog heading to the 
 commits actually record. Same class, same remedy: **the instrument that knows the truth must be the
 one that checks the claim.**
 
-**The guard is cheap and is not yet written** — assert that every engine version from the first
-heading to `engineVersion` has **exactly one** heading, and that each heading's target matches the
-`packages/engine/package.json` version at the commit that introduced it. Until it exists, treat the
-headings as **unverified prose**, and do not cite one as evidence of which slice shipped what.
+✅ **PAID AT D506 — the guard is `packages/engine/src/engineVersionChangelog.test.ts` and all three
+defects are repaired.** 202 headings, 30 of them naming a slice, five cases, six mutant rows. The
+guard was landed red first: it failed on exactly those three defects and named each one.
+⚠️ **But read the next two sections before citing it** — the authority it uses is NOT the commit
+history, and what that cannot see is written out in the file and below.
 
-⚠️ **Do not repair the changelog casually.** It is a ~1,480-line nested parenthetical; D505's builder
-declined to touch it for exactly that reason and said so rather than risking corruption. Fixing it
-is a slice, with the guard landing first.
+
+### A value-keyed version sweep will retarget a CHANGELOG HEADING, and that is how D501's defect happened (D506)
+
+D501's only edit to `packages/engine/src/index.ts` was **one line** —
+`git show 58f14838 -- packages/engine/src/index.ts` is a one-line diff — and that line was D500's
+heading arrow, moved from `**0.392.0**` to `**0.393.0**`. It was not carelessness, and the mechanism
+generalises:
+
+- the house version tax is paid by a **VALUE-KEYED sweep**: grep the outgoing literal, re-point
+  every hit, then re-grep to confirm none is left;
+- a changelog heading **legitimately contains the outgoing literal as its target** — that is what a
+  heading IS;
+- so the pass whose job is to move every pin forward also rewrites the one occurrence that must
+  stand still, and the re-grep confirms success.
+
+D500's own version-tax paragraph even prints an exception list for this exact class and names the
+**previous** heading. The sweep then ate the **current** one.
+
+**The rules:**
+
+1. **A version bump gets its OWN heading. Never retarget the last one.** If a slice declines to
+   write a heading (D502 and D505 both did), the version has no provenance at all — which is
+   defects (b) and (c) of the D505 note above, and is now red.
+2. **A version-tax exception list must name the CURRENT heading, not only the previous one.** The
+   heading a slice is about to write is itself a history occurrence the moment the next slice
+   sweeps.
+3. ⚠️ **`git show <commit> -- <file>` before believing a heading.** A one-line diff on a
+   1,480-line comment is invisible in a session log and in `git log --stat`.
+
+### An in-repo SECOND WITNESS can stand in for an authority that `bun run check` cannot reach (D506)
+
+D506's brief asked for the real authority for *"which version did slice D<nnn> ship?"* — the value of
+`version` in `packages/engine/package.json` at each commit — and it was **refused, on two
+measurements**:
+
+- `packages/engine/tsconfig.json` sets `"types": []` on purpose (the engine runs in a Worker and in
+  the browser), and that blocks an **explicit** import too, not just globals:
+  `import { execFileSync } from "node:child_process"` in `packages/engine/src` is
+  `error TS2591: Cannot find name 'node:child_process'`. Widening the engine's types so a doc guard
+  can shell out is the widening `progressLog.test.ts` and `mutationSummaryQuote.test.ts` both
+  refused.
+- 🛑 **the deciding one: `.github/workflows/ci.yml` uses `actions/checkout@v4` with no
+  `fetch-depth`, i.e. a SHALLOW clone of ONE commit.** `git log -- packages/engine/package.json`
+  returns one entry there. CI runs `bun run test:run`. So a git-reading vitest guard that hard-fails
+  when it cannot see the history is **red in CI the day it lands**, and one that SKIPS is the
+  anti-pattern (a guard that silently passes when it cannot verify is worse than none). There is no
+  third option inside `check`.
+
+**What was used instead: two authorities that are present in every checkout and are not copies held
+by the guard.** The chain's own 202 headings plus `manifest.version` for structure, and
+**`docs/decisions.md` for attribution** — it records `Engine <old> → <new>` on the row of 225
+decisions, including all 30 the headings name. A misattribution now has to be committed
+**identically in two files, by two different steps of the ritual**, to pass.
+
+⚠️ **AND THE WITNESS'S ACCURACY WAS MEASURED RATHER THAN ASSUMED.** Against
+`git log -p -- packages/engine/package.json`, `docs/decisions.md` agrees on **160 of 162 adjudicable
+slices** (the exceptions are D184's and D389's rows). Over the 27 labelled headings that existed at
+D505's head it agreed **26 of 27** — and the one disagreement *was* the defect.
+
+**The rule:** when the true authority is out of reach of the tool that must enforce the check, look
+for an **independent in-repo record** and **measure how often it agrees with the authority before
+relying on it**. Say the agreement rate in the guard. What such a guard cannot see is a defect
+committed to both records at once — for D506 that means **a uniform re-labelling**, and it is named
+in the file rather than left for a reader to discover.
+
+### A verifying regex must be at least as permissive as the one it checks (D506)
+
+Three slices running, this loop has been bitten by the same shape: **an instrument too narrow to see
+the whole class, reporting a number as though it bounded it.** D503 grepped one token and reported 455
+where the class held 464. D504 summed occurrences for one file against lines for another and reported
+444 for 455. At D506 it happened again — **in the caller's own verification of the guard built to
+catch it.**
+
+Checking the builder's "202 headings / 10 holes / 53 versions", the caller wrote
+
+```python
+re.finditer(r'engineVersion (0\.\d+\.\d+) → \*\*(0\.\d+\.\d+)\*\*', s)
+```
+
+and got **196 headings, 15 chain breaks, 58 missing versions** — then reported the disagreement as a
+discrepancy in the builder's figures. The builder's regex was
+`/engineVersion\s+(\d+\.\d+\.\d+)\s*→\s*\*\*(\d+\.\d+\.\d+)\*\*…/`. The difference is
+`\s*` versus a literal space: **`index.ts`'s headings live in a wrapped doc comment, so six of them
+break across lines.** Re-run with the builder's semantics: **202 / 9 minor breaks + one patch hole =
+10 / 53.** The builder was exact; the caller was wrong in three numbers at once.
+
+**The rule:** when you write a pattern to check someone else's count, **make it at least as
+permissive as theirs, or you are measuring a different set and your disagreement is yours.** In
+practice:
+
+1. **Read their matcher before writing yours.** If it tolerates whitespace, newlines, optional bold,
+   or an optional trailing group, yours must too.
+2. **Whitespace in a wrapped document is not incidental.** Any pattern run over prose — doc comments,
+   markdown, changelogs — must assume the text wraps, because it does.
+3. **A disagreement is a finding, not a verdict.** Resolve it to a cause before reporting either
+   number. Both times this run reported a count without doing that, the reported number was wrong.
+4. Corollary of [[the instrument that defines a class must enumerate it]]: **the verifier is also an
+   instrument, and it has the same failure mode as the thing it verifies.**
+
+### The version-bump ritual destroys the record of the previous bump, and its own check confirms success (D506)
+
+`packages/engine/src/index.ts` carries version provenance as
+`🆕🆕🆕 engineVersion <old> → **<new>** (D<nnn> …)` headings. At D506 it was found drifted in three
+places, and **the mechanism matters more than the defect.**
+
+`git show 58f14838 -- packages/engine/src/index.ts` is a **two-line diff** — D501's entire edit to
+that file:
+
+```
+- export const engineVersion = "0.392.0";                            → "0.393.0"   (correct)
+- 🆕🆕🆕 engineVersion 0.391.0 → **0.392.0** (D500 …)                 → **0.393.0**  (destroys it)
+```
+
+The house version tax is paid by a **value-keyed sweep** for the outgoing literal. But a changelog
+heading legitimately **contains the outgoing version as its target** — that is what records the
+previous bump. So the sweep rewrites the one occurrence that must stand still, and **the confirming
+re-grep reports success, because no `0.392.0` remains.** Worse, the unescaped string then appears
+nowhere in the file (it survived only as `toBe("0\.392\.0")` inside D500's own block), so a
+value-keyed search could never have found the loss either.
+
+D500's own version-tax paragraph prints an exception list for exactly this class — and it names the
+**previous** heading. The sweep then ate the current one.
+
+**The rules:**
+
+1. **One heading per bump; never retarget an existing heading.** A heading's `<new>` is a historical
+   fact and is never an occurrence to sweep.
+2. **A value-keyed sweep must exclude the changelog**, and the exclusion must name *the heading being
+   written this slice*, not merely the one before it.
+3. **A confirming re-grep for "no occurrences of the old value remain" cannot detect this class** —
+   it is satisfied *by* the damage. Check the count of headings and the chain, not the absence of a
+   literal.
+
+⚠️ And note what made this cheap to find and expensive to have missed: **nothing had checked the
+headings for 55 slices.** The guard (`engineVersionChangelog.test.ts`) now pins the chain, the head,
+uniqueness and attribution — see its own closing note for the five things it deliberately cannot see.
 
 
 ## Git / commits

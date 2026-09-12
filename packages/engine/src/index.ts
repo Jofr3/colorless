@@ -19810,7 +19810,7 @@ import type { GameState, Seat } from "./types";
     arrow. **17 of the 81 are `it(…)` TITLES that spell the version** — the class the
     paragraph above first noticed at 13. D487 authors no new pin, so a successor inherits
     the same **81 / 61 / 17**.)
-    🆕🆕🆕 engineVersion 0.391.0 → **0.393.0** (D500 — THE PRINTED CARD CATEGORY
+    🆕🆕🆕 engineVersion 0.391.0 → **0.392.0** (D500 — THE PRINTED CARD CATEGORY
     `Basic`, AND IT IS `Special`'s COMPLEMENT RATHER THAN A TENTH ENERGY TYPE.
     `censusAttackCorpus.ts` **FILE LINE 580** — *"This attack does 40 damage for each
     Basic Energy attached to this Pokémon."*, **1 sentence / 1 legal printing**, claimed
@@ -19850,6 +19850,75 @@ import type { GameState, Seat } from "./types";
     ⚠️ **AND THE SWEEP'S OWN PATTERN WAS ONE SHORT**: `it("engineVersion is …` missed
     `cancelThenPrevent.test.ts`'s `it("the engine version is …`, a fourth spelling of one
     title, found by re-grepping the old literal after the pass rather than before it.)
+    🆕🆕🆕 engineVersion 0.392.0 → **0.393.0** (D501 — THE RAISED CONFUSION SELF-HIT,
+    AND THE FIRST `MATCH_RECORD_VERSION` BUMP OF THE RUN. `censusAttackCorpus.ts`
+    **FILE LINE 685** — *"Your opponent's Active Pokémon is now Confused. Put 8 damage
+    counters instead of 3 on that Pokémon for this Special Condition."*, **1 sentence /
+    1 legal printing**, and with it all three *"instead of"* rows are claimed.
+    `MATCH_RECORD_VERSION` **29 → 30**, OWED RATHER THAN CHOSEN: `SpecialConditions`
+    sits inside `MatchRecord.state`, persisted on every save with no park in front, so
+    reachability, serialized-alphabet and no-carrier — the three arguments that had held
+    29 for four consecutive slices — are all INAPPLICABLE and not one of them was used.
+    The optional road was available and was refused on measured grounds: two shipped
+    `satisfies SpecialConditions` guards make an added engine field a compile error, and
+    an optional key satisfies both while reaching neither surface, silently disarming the
+    instruments written to catch exactly this. Both fired on the required-field edit.
+
+    🛑 **AND THIS HEADING WAS WRITTEN AT D506, NOT BY D501 — THE SLICE THAT SHIPPED THIS
+    VERSION EDITED THE PREVIOUS HEADING INSTEAD OF ADDING ITS OWN.** `git show 58f14838
+    -- packages/engine/src/index.ts` is a ONE-LINE diff: D500's arrow, moved from its own
+    target to this one. **The mechanism is the version tax itself, and it is not
+    carelessness.** The sweep is VALUE-KEYED — grep the outgoing literal, re-point every
+    hit — and a changelog heading legitimately CONTAINS the outgoing literal as its
+    target, so the pass that moves every pin forward also rewrites the one occurrence
+    that must stand still. The block above even prints an exception list for this class
+    and names the heading BEFORE it; the sweep then ate the heading it was standing in.
+    Nothing in the repo compared a heading to anything for 199 of them.
+    `engineVersionChangelog.test.ts` does now.)
+    🆕🆕🆕 engineVersion 0.393.0 → **0.394.0** (D502 — THE DECK SEARCH THAT ENERGISES
+    WHAT IT BENCHED. `censusAttackCorpus.ts` **FILE LINE 440** — *"Search your deck for a
+    Basic Pokémon and put it onto your Bench. Then, shuffle your deck. If you put any
+    Pokémon onto your Bench in this way, move an Energy from this Pokémon to the new
+    Benched Pokémon."*, **1 sentence / 1 legal printing**. Shipped as a RIDER on
+    `moveEnergy` rather than as a new route value, against a two-member unanimous
+    precedent that said route: a route holds a STRUCTURAL position where a recorded body
+    is a runtime identity, and the crossing is unspellable that way. `moveEnergy` already
+    pins destinations by uid at two route values, on the same op, which is what inverted
+    the work order's central claim. `MATCH_RECORD_VERSION` **HELD at 30** on D125's
+    widening, with both keys at two doors of `EffectContinuation` — including the one
+    inside `rest` that gets forgotten. **A SIXTH LATTICE SHAPE: EMPTY AT EVERY WEIGHT** —
+    the whole-sentence 2⁴ reads `0/1 · 0/4 · 0/6 · 0/4 · 0/1`, all four axes flipping a
+    verdict at 0 of 8 cells, which is a claim about the SEAM and not about the axes.
+
+    🛑 **AND THE SLICE'S OWN FINDING IS WHY THIS HEADING IS LATE.** D502 is where `tsc`
+    caught what no other instrument could — 21 mutant rows emitting a ONE-ELEMENT ARRAY
+    for `what`, with `precheck` clean and the probe green, because the runner reads
+    `what` only to print it. **The same slice shipped no changelog heading at all, for
+    the same reason one level up:** nothing read this record either, so the omission cost
+    nothing and was invisible, and D505 then followed the precedent. Heading written at
+    D506.)
+    🆕🆕🆕 engineVersion 0.394.0 → **0.395.0** (D505 — THE PRIZE-SCALED BENCH SPREAD.
+    `censusAttackCorpus.ts` **FILE LINE 517** — *"This attack also does 10 damage to each
+    of your opponent's Benched Pokémon for each Prize card your opponent has taken.
+    (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 3 legal
+    printings**, the cheapest real row in the residue at that head. **THE WHOLE ENGINE
+    CHANGE IS ONE OPTIONAL BOOLEAN AND ONE ARGUMENT LIST**: `spreadDamage` gains
+    **`perTakenPrize?: true`**, and `stepOp` passes `snipeAmount(op, state, ctx, record)`
+    where it passed `op.amount` — **ZERO bytes inside the helper**, because `snipeAmount`
+    takes a STRUCTURAL parameter and so the fold it has performed since D448 accepts a
+    second op unchanged. Folded AT THE DISPATCH rather than inside the helper, following
+    `damageSelf`/`recoilAmount` (D465) so the helper stays *"place this many HP"* and
+    every rider is visible where the op is read — which also bought the 0-taken board for
+    free. `scale?: DamageCountSource` stays refused a THIRD time and got cheaper to keep:
+    the general form would now have to be spelled on two ops. `MATCH_RECORD_VERSION`
+    **HELD at 30**. **A SEVENTH LATTICE SHAPE: ONE BLOCKING AXIS × A FREE 2⁴** —
+    `0/1 · 1/5 · 4/10 · 6/10 · 4/5 · 1/1`, identical readers-only and
+    splitter-inclusive, both splitters null at 32/32; one axis flips the verdict at 16 of
+    16 cells and the other four at 0 of 16 each, **INERT ON THE VERDICT** rather than
+    degenerate in D491's identity sense, since all 32 points are distinct strings.
+    ⚠️ **Heading written at D506.** D505's builder declined to hand-edit this
+    ~1,480-line nested parenthetical and said so rather than risk corrupting it, which
+    was right and is why the repair became a slice with the guard landing first.)
     🆕🆕🆕 engineVersion 0.390.0 → **0.391.0** (D499 — THE PRINTED CANCEL WITH A
     HEADS CONSEQUENT ON THE SAME FLIP. `censusAttackCorpus.ts` **FILE LINE 268** —
     *"Flip a coin. If tails, this attack does nothing. If heads, during your opponent's

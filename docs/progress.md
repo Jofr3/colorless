@@ -3,7 +3,9 @@
 > Update this at the **end of every session**: bump the status table, append a
 > session-log entry, and rewrite the **Resume point** to the next concrete action.
 
-**Last updated:** 2026-09-12 — build session #445 (**P3-M5 — D505, *the Prize-scaled Bench spread — a SEVENTH lattice shape, and the row the census's own default cap had been hiding.*** Built corpus **file line 517**, *“This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)”* — **1 sentence / 3 legal printings**, the cheapest real row in the residue. ✅ **THE WHOLE ENGINE CHANGE IS ONE OPTIONAL BOOLEAN AND ONE ARGUMENT LIST.** `spreadDamage` gains **`perTakenPrize?: true`**, and `stepOp` passes **`snipeAmount(op, state, ctx, record)`** where it passed `op.amount` — **zero bytes inside the helper**, because `snipeAmount` takes a **STRUCTURAL** parameter and folds a second op unchanged. 🛑 **AND THE BUILDER OVERRODE MY INSTRUCTION, CORRECTLY.** I said fold inside `spreadDamage`; the shipped idiom two `case`s down is `damageSelf`/`recoilAmount` (D465), whose own comment says the amount is folded **at the dispatch** so the helper stays *“place this many HP”* and every rider is visible there. **Following the precedent also bought the 0-taken board for free** — `spreadDamage`'s `amount <= 0` early return means arm 6-i needs no `per >= 1` guard where arm 6b has one. 🆕 **A SEVENTH LATTICE SHAPE: ONE BLOCKING AXIS × A FREE 2⁴.** Five axes, 32 points, **`0/1 · 1/5 · 4/10 · 6/10 · 4/5 · 1/1`** — and **identical readers-only and splitter-inclusive**, with both splitters null at **32/32**. **A1 (the scaling clause) flips the verdict at 16/16 cells and the other four at 0/16 each**: all 16 A1-on points build, not one of the 16 A1-off points does. ⚠️ **And the builder sharpened my vocabulary**: those four are **INERT ON THE VERDICT, not DEGENERATE** in D491's identity sense — all 32 points are *distinct strings* (asserted), unlike D500's byte-twin axis. 🛑 **D503's METHOD RULE IS NOW CHEAP TO APPLY RATHER THAN A BLANKET RE-RUN.** The splitter dimension can only diverge on a sentence with a leading `If …,` clause or ≥2 depth-0 segments whose tail a reader can claim; for a single-clause sentence with a parenthetical rider the two readings are **provably identical**. The scout also **reproduced D503's divergence independently** before applying the rule, so the premise was tested rather than inherited. 🛑 **MY BRIEF'S CENTRAL FRAMING WAS WRONG, AND IT TOOK A RED TEST TO FIND IT.** I sold the row as the missing cell of a 2×2 whose other three cells ship. **The scaled `1 of` cell has ZERO legal printings**: *“for each Prize card your opponent has taken”* sits on **5** corpus rows and **not one** is that spelling (caller-verified). So D448's arm is **BUILT, GREEN and census-complete while executable by nothing in the legal pool** — and L517 is the only scaled cell with printings behind it. The builder's first draft asserted the sibling's count and went red; **that is how it was found.** ⚠️ **AND I ASSERTED THE WRONG RESIDUE PREDICATE, WHICH THE REPO HAD ALREADY DOCUMENTED TWICE.** I briefed `resolvedByAnyReader` as canonical; it is `builds()` (four arms), and `conventions.md:2367` is literally titled *“`!resolvedByAnyReader` is not the unbuilt set (D444, **re-earned**)”*. Readers-only over-counts the residue by **26 sentences / 50 printings**. The scout used the right one and said so. 🆕 **THE CENSUS'S DEFAULT CAP HAD BEEN HIDING THIS ROW.** `OPAQUE` at `SUBMAX=4` is **63 / 92**; at 8 **51 / 74**, at 12 **33 / 51**, at 20 **12 / 21** — four fifths of the class is an artefact of the default. L517 is `OPAQUE` at 4 and **`SUBST-10` at 12**, one deletion onto a built reader string — **and the substituted span IS the single load-bearing axis**, two instruments agreeing without knowing of each other. D463 confirmed, now with a curve. ⚠️ **AND TWO FIGURES THE RESUME POINT HAS CARRIED FOR ~12 SLICES DO NOT SURVIVE CHECKING.** *“The practical ceiling is ~88 %”* is **not a ceiling** — it approximates the CURRENT built-sentence percentage (**559/640 = 87.3 %**, and 86.4 % when the wording was coined at D493). The real ceiling, blocked rows removed, is **626/640 = 97.8 %**; printings are **1,617/1,732 = 93.4 %**. And *“67 sentences of reachable work”* hides that **13 are banner rows**: reachable-and-not-banner is **54 sentences / 73 printings**. **Corrected here.** 🆕 **THREE UNPAID DEBTS FOUND IN PASSING**: `snipeAmount`'s `perTakenPrize` line had **no mutant row for 57 decisions** (invisible on every board where both seats have taken equally — which is every default spread board, since the victim is *also* `otherSeat`); D497's pair rule was **unpaid on a shipped switch since D425** (`opponentBench` had no row while `yourBench` did, and `opcoverage` had been reporting the consequence at 2/5 all along); and `D495-census-built-attack-not-stepped`'s **arithmetic had drifted from its own `what`** across two slices, visible only because D505's step is **+3** rather than +1. ⚠️ **NAMED, NOT FIXED — THE ENGINE CHANGELOG HAS NO GUARD AND HAS DRIFTED.** `index.ts`'s version headings are unchecked prose: **D501 edited D500's heading instead of adding its own**, so it reads `0.391.0 → 0.393.0 (D500 …)` and `0.392.0` no longer appears in the file; **0.394.0 and 0.395.0 have no heading at all.** Verified against `git log -- packages/engine/package.json`. **D504's finding one level further out**, and the guard is cheap but unwritten. Engine **0.394.0 → 0.395.0**, `MATCH_RECORD_VERSION` **HELD at 30** (reachability empty at both doors, driven; plus D125's widening, with the LOSS direction driven over reconstructed v30 bytes — 10 against 30 on the crux board). Corpus **2,496 → 2,502**, declared survivors **50 UNCHANGED**, archive ratchet **175**. `bun run check` GREEN, **488 files / 11,161 tests** (+1 file, **+32 = exactly the new suite's 32 `it(`**). Residue **81/115 → 80/112**, `BUILT.attack` **1617 → 1620**, `OPAQUE` **63/92 → 62/89**. `spreadDamage` op coverage **2/5 = 0.40 → 5/7 = 0.71**, the weakest damage op before this slice. Probe **6 killed · 0 survivors · 0 GAP · 0 error**, all six first try; all five gates OK. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2,452 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,527.4s`** — `+6 killed, +0 declared`, the **sixty-sixth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,502 unique progress-line ids / 2,502 rows / 0 unmatched**, **sixty-seventh** consecutive clean run. `setsid` held for the **sixteenth** consecutive reuse. ✅ **Second consecutive close-out whose line was extracted from the log by code rather than retyped, and re-checked against `run.ts`'s template by D504's guard** — the rule has now survived a slice that was not about it.)
+**Last updated:** 2026-09-12 — build session #446 (**P3-M5 — D506, *the changelog guard — and the version-bump ritual had been destroying the record of the previous bump, with its own check confirming success.*** 🛑 **NO SENTENCE BUILT — an INSTRUMENT slice, and ZERO engine source bytes changed**: both `index.ts` hunks are inside the `19043–20591` doc comment, `engineVersion` **0.395.0 UNMOVED**, `MATCH_RECORD_VERSION` **30 UNMOVED**. ✅ **THE GUARD**: `packages/engine/src/engineVersionChangelog.test.ts`, **545 lines / 5 cases** (PARSE, HEAD, CHAIN, UNIQUE, ATTRIBUTION), in D318/D504's idiom — eight red-making edits enumerated before any code, honest limits at the end. **It went RED FIRST, 3 of 5 cases failing**: the newest heading targeted **0.393.0** while the engine was on **0.395.0**; one heading advanced by **+0** releases; and one **disagreed with `docs/decisions.md`.** 🛑 **AND THE MECHANISM IS WORSE THAN THE DEFECT — THE RITUAL ATE ITS OWN RECORD.** `git show 58f14838 -- index.ts` is a **two-line diff**, D501's entire edit to that file: the constant `0.392.0 → 0.393.0` (correct) **and D500's heading target `0.392.0 → 0.393.0` (destroying it)**. The house version tax is a **value-keyed sweep** for the outgoing literal — but a changelog heading legitimately **contains the outgoing version as its target**, which is precisely what records the previous bump. **So the sweep rewrites the one occurrence that must stand still, and the confirming re-grep reports success because no `0.392.0` remains.** The unescaped string then existed nowhere in the file, surviving only as `toBe("0\\.392\\.0")` inside D500's own block, **so a value-keyed search could not have found the loss either.** D500's own version-tax paragraph carries an exception list for exactly this class — **and it names the PREVIOUS heading.** 🛑 **THE AUTHORITY IS NOT `git`, AND THAT WAS NOT A TRADE-OFF BUT A NON-OPTION — MY BRIEF HAD IT WRONG.** `packages/engine/tsconfig.json` sets `"types": []`, so `node:child_process` is **TS2591 in that directory** (measured), and `.github/workflows/ci.yml` uses `actions/checkout@v4` with **no `fetch-depth`** — a depth-1 clone — while running `bun run test:run`. **A git-reading guard is red on day one there, and one that skips is the anti-pattern.** Used instead: **two authorities present in every checkout, neither a copy** — the chain's own 202 headings plus `engineVersion`, and **`docs/decisions.md` as an INDEPENDENT in-repo attribution witness**, whose accuracy was *measured* not assumed (**160 of 162** adjudicable slices against `git log -p`, and **26 of 27** labelled headings — the one disagreement WAS the defect). ⚠️ **AND MY 'UNBROKEN CONTIGUOUS CHAIN' WAS IMPOSSIBLE AND ALWAYS HAD BEEN**: there are **ten historical holes covering 53 engine versions** (largest: 0.365–0.376, twelve slices). A naive contiguity assertion is red 53 times over. Declared by span **with set equality asserted in both directions**, so a stale declaration fails too. **Only 30 of 202 headings carry a slice label at all** — the labelled era begins at D452 — so attribution is structurally uncheckable for the other **172**, and the file says so. ⚠️ **MY VERIFICATION OF THE GUARD REPRODUCED THE VERY BUG THE GUARD EXISTS TO CATCH.** Checking “202 headings / 10 holes / 53 versions”, I wrote a regex with a **literal space** where the builder's had **`\\s*`** — and `index.ts`'s headings live in a **wrapped** doc comment, so six break across lines. I got **196 / 15 / 58** and called the builder's figures a discrepancy. **Re-run with the right semantics: 202 / 10 / 53 — the builder was exact and I was wrong in three numbers at once.** Third slice running for this shape (D503's one-token census, D504's occurrences-vs-lines), and **the first time it was the VERIFIER rather than the instrument.** Now a convention: **a verifying regex must be at least as permissive as the one it checks.** ✅ **THE REPAIR**: D500 restored to `0.391.0 → 0.392.0`, and headings added for **D501, D502 and D505**. Headings **199 → 202**, labelled **27 → 30**, and **all 30 verified against `git log -p -- packages/engine/package.json` with 0 mismatches.** 🆕 **SIX ROWS, AND THE BUILDER MEASURED WHICH CASE EACH KILLS RATHER THAN ASSERTING IT** — which caught its own forecast: the arrow-retarget row kills **THREE** cases, not the two predicted, because retargeting also makes `0.391.0` the source of two headings and trips UNIQUE. `what` corrected to the measured three. ⚠️ **And two directions deliberately carry NO row, stated rather than left implicit**: *“target runs ahead of `engineVersion`”* (every single-site edit that does it also breaks the chain, so a row would kill two tripwires and prove neither) and **PARSE** (no one `find`/`replace` can unfind 202 headings). Corpus **2,502 → 2,508**, declared survivors **50 UNCHANGED**, archive ratchet **176**. `bun run check` GREEN, **489 files / 11,166 tests** (+1 file, **+5 = exactly the suite's 5 `it(`**). Probe **6 killed · 0 survivors · 0 GAP · 0 error**; all five gates OK, §A **106 / 80 / 112** and `OPAQUE` **62 / 89**, both unmoved — residue untouched by design.)
+
+**Last updated (was):** 2026-09-12 — build session #445 (**P3-M5 — D505, *the Prize-scaled Bench spread — a SEVENTH lattice shape, and the row the census's own default cap had been hiding.*** Built corpus **file line 517**, *“This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)”* — **1 sentence / 3 legal printings**, the cheapest real row in the residue. ✅ **THE WHOLE ENGINE CHANGE IS ONE OPTIONAL BOOLEAN AND ONE ARGUMENT LIST.** `spreadDamage` gains **`perTakenPrize?: true`**, and `stepOp` passes **`snipeAmount(op, state, ctx, record)`** where it passed `op.amount` — **zero bytes inside the helper**, because `snipeAmount` takes a **STRUCTURAL** parameter and folds a second op unchanged. 🛑 **AND THE BUILDER OVERRODE MY INSTRUCTION, CORRECTLY.** I said fold inside `spreadDamage`; the shipped idiom two `case`s down is `damageSelf`/`recoilAmount` (D465), whose own comment says the amount is folded **at the dispatch** so the helper stays *“place this many HP”* and every rider is visible there. **Following the precedent also bought the 0-taken board for free** — `spreadDamage`'s `amount <= 0` early return means arm 6-i needs no `per >= 1` guard where arm 6b has one. 🆕 **A SEVENTH LATTICE SHAPE: ONE BLOCKING AXIS × A FREE 2⁴.** Five axes, 32 points, **`0/1 · 1/5 · 4/10 · 6/10 · 4/5 · 1/1`** — and **identical readers-only and splitter-inclusive**, with both splitters null at **32/32**. **A1 (the scaling clause) flips the verdict at 16/16 cells and the other four at 0/16 each**: all 16 A1-on points build, not one of the 16 A1-off points does. ⚠️ **And the builder sharpened my vocabulary**: those four are **INERT ON THE VERDICT, not DEGENERATE** in D491's identity sense — all 32 points are *distinct strings* (asserted), unlike D500's byte-twin axis. 🛑 **D503's METHOD RULE IS NOW CHEAP TO APPLY RATHER THAN A BLANKET RE-RUN.** The splitter dimension can only diverge on a sentence with a leading `If …,` clause or ≥2 depth-0 segments whose tail a reader can claim; for a single-clause sentence with a parenthetical rider the two readings are **provably identical**. The scout also **reproduced D503's divergence independently** before applying the rule, so the premise was tested rather than inherited. 🛑 **MY BRIEF'S CENTRAL FRAMING WAS WRONG, AND IT TOOK A RED TEST TO FIND IT.** I sold the row as the missing cell of a 2×2 whose other three cells ship. **The scaled `1 of` cell has ZERO legal printings**: *“for each Prize card your opponent has taken”* sits on **5** corpus rows and **not one** is that spelling (caller-verified). So D448's arm is **BUILT, GREEN and census-complete while executable by nothing in the legal pool** — and L517 is the only scaled cell with printings behind it. The builder's first draft asserted the sibling's count and went red; **that is how it was found.** ⚠️ **AND I ASSERTED THE WRONG RESIDUE PREDICATE, WHICH THE REPO HAD ALREADY DOCUMENTED TWICE.** I briefed `resolvedByAnyReader` as canonical; it is `builds()` (four arms), and `conventions.md:2367` is literally titled *“`!resolvedByAnyReader` is not the unbuilt set (D444, **re-earned**)”*. Readers-only over-counts the residue by **26 sentences / 50 printings**. The scout used the right one and said so. 🆕 **THE CENSUS'S DEFAULT CAP HAD BEEN HIDING THIS ROW.** `OPAQUE` at `SUBMAX=4` is **63 / 92**; at 8 **51 / 74**, at 12 **33 / 51**, at 20 **12 / 21** — four fifths of the class is an artefact of the default. L517 is `OPAQUE` at 4 and **`SUBST-10` at 12**, one deletion onto a built reader string — **and the substituted span IS the single load-bearing axis**, two instruments agreeing without knowing of each other. D463 confirmed, now with a curve. ⚠️ **AND TWO FIGURES THE RESUME POINT HAS CARRIED FOR ~12 SLICES DO NOT SURVIVE CHECKING.** *“The practical ceiling is ~88 %”* is **not a ceiling** — it approximates the CURRENT built-sentence percentage (**559/640 = 87.3 %**, and 86.4 % when the wording was coined at D493). The real ceiling, blocked rows removed, is **626/640 = 97.8 %**; printings are **1,617/1,732 = 93.4 %**. And *“67 sentences of reachable work”* hides that **13 are banner rows**: reachable-and-not-banner is **54 sentences / 73 printings**. **Corrected here.** 🆕 **THREE UNPAID DEBTS FOUND IN PASSING**: `snipeAmount`'s `perTakenPrize` line had **no mutant row for 57 decisions** (invisible on every board where both seats have taken equally — which is every default spread board, since the victim is *also* `otherSeat`); D497's pair rule was **unpaid on a shipped switch since D425** (`opponentBench` had no row while `yourBench` did, and `opcoverage` had been reporting the consequence at 2/5 all along); and `D495-census-built-attack-not-stepped`'s **arithmetic had drifted from its own `what`** across two slices, visible only because D505's step is **+3** rather than +1. ⚠️ **NAMED, NOT FIXED — THE ENGINE CHANGELOG HAS NO GUARD AND HAS DRIFTED.** `index.ts`'s version headings are unchecked prose: **D501 edited D500's heading instead of adding its own**, so it reads `0.391.0 → 0.393.0 (D500 …)` and `0.392.0` no longer appears in the file; **0.394.0 and 0.395.0 have no heading at all.** Verified against `git log -- packages/engine/package.json`. **D504's finding one level further out**, and the guard is cheap but unwritten. Engine **0.394.0 → 0.395.0**, `MATCH_RECORD_VERSION` **HELD at 30** (reachability empty at both doors, driven; plus D125's widening, with the LOSS direction driven over reconstructed v30 bytes — 10 against 30 on the crux board). Corpus **2,496 → 2,502**, declared survivors **50 UNCHANGED**, archive ratchet **175**. `bun run check` GREEN, **488 files / 11,161 tests** (+1 file, **+32 = exactly the new suite's 32 `it(`**). Residue **81/115 → 80/112**, `BUILT.attack` **1617 → 1620**, `OPAQUE` **63/92 → 62/89**. `spreadDamage` op coverage **2/5 = 0.40 → 5/7 = 0.71**, the weakest damage op before this slice. Probe **6 killed · 0 survivors · 0 GAP · 0 error**, all six first try; all five gates OK. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2,452 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,527.4s`** — `+6 killed, +0 declared`, the **sixty-sixth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,502 unique progress-line ids / 2,502 rows / 0 unmatched**, **sixty-seventh** consecutive clean run. `setsid` held for the **sixteenth** consecutive reuse. ✅ **Second consecutive close-out whose line was extracted from the log by code rather than retyped, and re-checked against `run.ts`'s template by D504's guard** — the rule has now survived a slice that was not about it.)
 
 **Last updated (was):** 2026-09-12 — build session #444 (**P3-M5 — D504, *the transcription guard — 64 slices of “EXACTLY AS PREDICTED” quoted a string the harness never printed, and now a test parses the harness's own template to say so.*** 🛑 **NO SENTENCE BUILT — an INSTRUMENT slice, for an instrument the run needed for 64 slices without knowing it.** **ZERO engine source bytes changed**: the whole diff is one new suite, six mutant rows and a recasing of the archive. ✅ **THE GUARD PARSES `run.ts` RATHER THAN HOLDING A COPY OF IT, WHICH IS THE ONLY VERSION WORTH SHIPPING.** `packages/engine/src/mutationSummaryQuote.test.ts` (**521 lines, 4 cases**) reads `scripts/mutation/run.ts` as **raw text** via `import.meta.glob` — never imports it, because `run.ts` has a top-level `await main()` — lifts the summary template literal out by its first slot, and **derives** the field labels, the separator and the time suffix at test time. **Verified by the caller: every occurrence of a harness token in that file sits inside a `/**…*/` doc block illustrating the parse; there is no hard-coded expectation anywhere.** A guard holding its own literal would drift with the defect it exists to catch and report green forever — so the crux row **`D504-harness-gap-token-recased`** recases the token in `run.ts` itself, which a private-copy guard could not see; it turns **463 recorded lines** red. ✅ **AND IT WENT RED BEFORE IT WENT GREEN**, which is the whole claim: **458 recorded summary lines did not match the harness's own template**, of which **455 were casing**. 🛑 **THE CENSUS THAT FOUND THE DEFECT UNDER-COUNTED IT, BECAUSE IT GREPPED ONE TOKEN.** D503 measured 455 places and that was right as far as it reached; the guard found **9 more of the same class** — **six `ERROR(s)` where the harness prints `error(s)`** (progress ×4, decisions ×2), one line spelling **`KILLED`** *and* a bare **`GAP`**, and two more bare **`GAP`**. **A census of ONE token cannot bound a CLASS of defects**, and nothing in D503's method would ever have said so. ✅ **THE REWRITE IS PROVABLY PURE RECASING, CHECKED CHARACTER BY CHARACTER RATHER THAN TRUSTED.** Across **445 changed line-pairs** there are exactly **four** kinds of character edit and no others: **455 `s`→`S`, 6 `ERROR`→`error`, 3 `→(S)`, 1 `KILLED`→`killed`** — **465 token edits across 464 places**, and every changed pair is identical once those spans are canonicalised. ⚠️ **The builder reported 464 and the caller counted 465; both are right on different units** — **places versus occurrences, the exact ambiguity that produced D503's wrong 444 two commits earlier.** 🛑 **AND THERE IS A SECOND, LARGER TRANCHE THAT IS DELIBERATELY LEFT UNGUARDED AND NAMED AS DEBT.** About **243** archived lines read `302 killed / 8 known survivors / 0 gaps / 0 clobbers / 0 errors`. **These are NOT an older harness format** — caller-verified with `git log -S` per token: `known survivors`, `gaps ·`, `clobbers ·`, `errors ·` and bare ` skipped ` have **never existed in `run.ts`**, and every token of today's line entered at **D211** except `skipped(dirty)` and `clobber(s)` at **D215**. **So those lines were never emitted either** — the same defect one level cruder. **The guard is narrowed to CASING on purpose**: an earlier draft that also flagged “the line continues with a wrong field” produced **61** findings mixing real defects with unadjudicable paraphrase, and **casing is the one divergence a machine can call without judgement.** The 3 paraphrase repairs made by hand stay unguarded; the 243-line family is untouched. **Named, not worked around.** 🆕 **ONE VARIANCE THE BRIEF MISSED, AND FOUR REAL DEFECTS HID BEHIND IT**: ~**40** archived stamps **elide `skipped(dirty)` out of the middle** of the line, so the field walk has to skip ahead over a missing field rather than stop — a walk that stopped would have reported those four as clean. ⚠️ **AND TWO OF THE FIVE EXEMPTIONS ARE NOT PROSE ABOUT THE SPELLING — THEY ARE A RUNNABLE COMMAND.** The `git log -S` incantation that *proves* the lowercase form never existed has the lowercase form as its **argument**; “correcting” it would make the documented reproduction wrong. The exemptions are **two named records with per-pattern expected counts, asserted in BOTH directions** — a sixth fails, and so does a deleted fifth. ⚠️ **One brief error**: `residue-census-gate.ts` and `opaque-anatomy-gate.ts` live at `scripts/`, not `scripts/mutation/`. Corpus **2,490 → 2,496**, declared survivors **50 UNCHANGED**, archive ratchet **174**. `bun run check` GREEN, **487 files / 11,129 tests** (+1 file, +4 tests). Probe **6 killed · 0 survivors · 0 GAP · 0 error**. All five gates OK, residue §A **unmoved at 107 / 81 / 115**. Residue **81/115 UNMOVED**, `BUILT.attack` **1617 UNMOVED**, engine **0.394.0 UNMOVED**, `MATCH_RECORD_VERSION` **30 UNMOVED**. ✅ **WHOLE-CORPUS SWEEP GREEN AND EXACTLY AS PREDICTED IN EVERY NUMBER: `2,446 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) · 0 error(s) · 10,505.0s`** — `+6 killed, +0 declared`, the **sixty-fifth** consecutive slice to commit its number before the run and hit it. Completeness structural: **2,496 unique progress-line ids / 2,496 rows / 0 unmatched**, **sixty-sixth** consecutive clean run. `setsid` held for the **fifteenth** consecutive reuse (verified PPID 1, PGID = SID = own pid). 🆕 **AND THIS IS THE FIRST SUMMARY LINE IN THE RUN'S HISTORY THAT WAS NOT RETYPED.** It was extracted from the log programmatically, thousands separators applied by code, and then — the part that matters — **the guard shipped four hours earlier re-read it out of this file and checked its spelling against `run.ts`'s own template.** The ritual's own output is now inside the instrument's reach: getting a token wrong here turns `bun run check` red instead of surviving 64 slices unnoticed.)
 
@@ -634,6 +636,122 @@
 **Not a slice — a review-fix session, and the first `/code-review` this branch has had since D96.** Scope `git diff origin/backend...HEAD`: **25 commits, 50 files, ~33k lines, D112–D135**, run at the USER's trigger (it is user-triggered; no autoloop session can launch it, and all 24 of them ended by saying so). **Three findings — one medium, two low; nothing structural.** The reviewer independently **re-derived D129's termination argument** by scanning the full 2³² mulberry32 cycle (longest heads run **31**, so `MAX_UNTIL_TAILS_FLIPS = 64` really is unreachable), and cleared: the retreat-block lifetime on all four turn orderings, all three bench→Active routes stamping `promotedTurn` with no stale-flag path, the inverted `ATTACK_REQUIREMENT_CLAUSES` polarity, no runtime cycle from the `phaseViewOf` import, disjointness of the four effect-text readers, and `MATCH_RECORD_VERSION = 2`. **⚠️ 1 (medium) — THE MILL LOG ROW CREDITED THE VICTIM.** `DECK_TOP_DISCARDED` files under the deck's OWNER (correct) but read ACTIVE, and rows render after their seat's name: P1's Chi-Yu ex produced "**P2** discarded 2 cards from the top of their deck". **D130 saw half of this and fixed the wrong half** — it dropped the false word "looked-at" and called the row provenance-neutral, but neutral wording addresses PROVENANCE and the VOICE carries the ACTOR. Now PASSIVE (`had {n} cards discarded …`); the seat is untouched. Chosen over `ENERGY_DISCARDED`'s `actor` field because it costs no event field and the producing `ATTACK_DECLARED` row already names the actor directly above. **⚠️ 2 (low) — THREE REGEXES MISSED THE `['’]` CLASS, AND TWO SUITES HAD PINNED THE GAP AS INTENDED.** `ATTACK_COIN_MILL_PRINTED`, `ATTACK_COIN_MILL_UNTIL_TAILS` (D130) and `OPPONENT_ACTIVE_TYPE_CLAUSE` (D120) spelled `opponent's` straight-only while every sibling on the SAME noun phrase carries the class `effects.ts` documents as existing "so a re-ingest changing only punctuation cannot silently un-derive" the sentence. **The ASYMMETRY is the defect**: a U+2019 re-ingest would keep D131's mills deriving while D130's two dropped to the loud path — a regression reading as "two cards broke". **AND THE TESTS ASSERTED THE BUG**: `perHeadsProgram.test.ts` listed both curly variants as must-be-REFUSED near-misses while commenting they "would silently drop both cards onto the loud path with no number to notice it by", and `typeNameClause.test.ts` pinned Wonder Flash's bytes while observing a curly apostrophe "would silently un-map the clause". Both moved to POSITIVE assertions of **equality with the straight form**; the byte-pins stay (they say what the catalog holds, the new tests say the reader does not depend on it). **⚠️ 3 (low, latent) — THE TRUNCATION GUARD HAD NO READER, AND CLOSING IT COST THE ENGINE'S FIRST `throw`.** `rng.ts` returns faces "precisely so a caller can detect the truncation" and no caller did, so a truncated all-heads sequence would quietly score **64 heads**. Guard placed in `takeFlips`, the single choke point for the `untilTails` arm. **The engine has zero other throws and is total by design** — taken because there is no honest value to return, and unreachable by construction so it cannot fire today. **Deliberately untested**: driving it needs `vi.mock` on the RNG, which this suite has never used and which breaks a stronger convention than the throw does. **⚠️ NOT DONE — the LITERAL CLAUSE-TABLE KEYS have the same U+2019 exposure** (~8 exact `Map` lookups); a Map key cannot carry a character class, so the fix is a normalisation pass at lookup — a design call, left out rather than expanded into silently. **THE GENERALISATION IS ABOUT THE LOOP, NOT THE CODE: A SUITE WRITTEN BY THE SESSION THAT WROTE THE CODE INHERITS ITS BLIND SPOT.** Both low findings are places where the author saw the hazard, wrote it down, and asserted the wrong side of it — which is why `/code-review` belongs on a CADENCE rather than at the end. Engine version UNCHANGED (no behaviour a card can reach moved); no `MATCH_RECORD_VERSION` bump, no web/API/DB/schema diff. Full `bun run check` **GREEN exit 0, 178 files / 2859 tests** (was 178 / 2857).
 
 ## NEXT (resume point)
+
+> ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-12, after D506)
+>
+> ✅ **`bun run check` IS GREEN — 489 files / 11,166 tests, `CHECK_EXIT=0`** (+1 file, **+5 tests**,
+> exactly the new suite's 5 `it(`). 🛑 **ZERO engine source bytes changed** — both `index.ts` hunks
+> are inside the `19043–20591` doc comment. `engineVersion` **0.395.0 UNMOVED**,
+> `MATCH_RECORD_VERSION` **30 UNMOVED**, residue **80 / 112 UNMOVED**, `OPAQUE` **62 / 89 UNMOVED**,
+> declared survivors **50 UNCHANGED**. Corpus **2,502 → 2,508**, archive ratchet **176**.
+>
+> 🛑 **(0) THE DEBT: COMMIT FIRST, THEN THE WHOLE-CORPUS SWEEP.**
+> ⚠️ **ONE UNTRACKED PATH: `packages/engine/src/engineVersionChangelog.test.ts`.** `git add`
+> EXPLICIT PATHS. 🛑 **LAUNCH THE SWEEP DETACHED WITH `setsid`** (D489, held at D490–D505).
+>
+> **THE PREDICTION, COMMITTED BEFORE THE RUN — sixty-seventh consecutive slice to name its number
+> first:**
+>
+> > **`2458 killed · 50 known survivor(s) · 0 GAP(S) · 0 stale · 0 skipped(dirty) · 0 clobber(s) ·
+> > 0 error(s)` over 2,508**
+>
+> `2452 + 6 = 2458`, `50 + 0 = 50`, `2502 + 6 = 2508`, closing `2458 + 50 = 2508`.
+> ⚠️ **PASTE THE RESULT OUT OF THE LOG, NEVER RETYPE IT** (D504) — `grep -E '^[0-9]+ killed · '`.
+> **No new lower-case meta-mention** in the close-out; D504's census case pins the count per file.
+>
+> **(1) ALREADY VERIFIED INDEPENDENTLY — run the SWEEP.** `check` GREEN **489 / 11,166**; `precheck`
+> clean at **2,508** (`patches LITERALLY` 22); `splice-gate` OK; `partition-gate` OK (2,508 / 8);
+> `residue-census-gate` **OK §A 106 / 80 / 112**; `opaque-anatomy-gate` **OK 62 / 89**; probe
+> `--decision D506 --allow-dirty` → **6 killed · 0 survivors · 0 GAP · 0 error**. Both hunks confirmed
+> inside the doc comment; the two-line D501 diff and both git-authority blockers re-derived.
+>
+> **(2) AFTER THE SWEEP: the close-out.** Structural completeness from unique progress-line ids,
+> confirm the line, update this stamp's tail and this `(0)` block, append to the `| **D506** |` row,
+> add any convention BEFORE `## Git / commits`, re-run `check`, commit.
+>
+> 🛑 **(3) 🆕 A NEW STANDING RULE THE VERSION TAX NOW OWES — READ BEFORE THE NEXT ENGINE BUMP.**
+> The bump ritual is a **value-keyed sweep** for the outgoing literal, and a changelog heading
+> **legitimately contains that literal as its target**. So the sweep rewrites the one occurrence that
+> must stand still, **and the confirming re-grep reports success because the literal is gone.** That
+> is how D501 destroyed D500's heading in a two-line diff.
+> **(a) One heading per bump; NEVER retarget an existing heading** — a heading's `<new>` is a
+> historical fact, not an occurrence to sweep.
+> **(b) The sweep's exception list must name THE HEADING BEING WRITTEN THIS SLICE**, not merely the
+> previous one — D500's list named the previous one, which is exactly why the current one was eaten.
+> **(c) `engineVersionChangelog.test.ts` now catches this**, so the next bump that gets it wrong is
+> red in `check` rather than invisible for 55 slices. **Write the heading in the same edit as the
+> constant.**
+>
+> **(4) 🆕 AND A RULE FOR VERIFICATION ITSELF, EARNED THE HARD WAY THIS SLICE.**
+> **A verifying regex must be at least as permissive as the one it checks.** Checking the builder's
+> "202 headings / 10 holes / 53 versions", the caller used a **literal space** where the builder had
+> **`\s*`** — and `index.ts`'s headings live in a wrapped doc comment, so six break across lines.
+> The caller reported **196 / 15 / 58** and called it a discrepancy; re-run correctly it is
+> **202 / 10 / 53**. **Third slice running for this shape** (D503's one-token census, D504's
+> occurrences-versus-lines) and **the first where the VERIFIER was the faulty instrument.**
+> **Resolve a disagreement to its cause before reporting either number.**
+>
+> **(5) THE FIGURES, CURRENT AND WITH THEIR UNITS.** (Unmoved by D506 — an instrument slice.)
+>
+> | figure | value |
+> |---|---|
+> | built attack **sentences** | **560 / 640 = 87.5 %** |
+> | built attack **printings** | **1,620 / 1,732 = 93.5 %** |
+> | residue | **80 sentences / 112 printings** |
+> | structurally blocked (`BLOCKED-*`) | **14 sentences / 25 printings** |
+> | **real ceiling**, blocked removed | **626 / 640 = 97.8 %** of sentences |
+> | **reachable AND not banner** | **53 sentences / ~70 printings** |
+>
+> **Always state what over what.** A number called a ceiling must say what it excludes to be one.
+>
+> **(6) 🆕 RUN THE CENSUS AT A LARGER `SUBMAX` BEFORE PICKING THE NEXT ROW.** `OPAQUE` falls
+> **62/89 → ~50/71 (8) → ~32/48 (12) → ~11/18 (20)** — **four fifths of the class is an artefact of
+> the default cap of 4.** D505's row was `OPAQUE` at 4 and **`SUBST-10` at 12**, and the substituted
+> span was exactly its single blocking axis. **`SUBMAX=12 bun scripts/residue-census.ts` and read the
+> `SUBST-n` classifications** — the cheap rows hide behind the cap, not behind their own depth.
+> ⚠️ Re-measure these four numbers rather than quoting them; they are D505-era and shift by one row.
+>
+> **(7) THE ROWS STILL OPEN, RE-PRICED AT D505 AND UNCHANGED BY D506.**
+> **(a)** the rest of the `spreadDamage` widening — `:515`, `:526`, `:601`, **3 sentences / 3
+> printings**, same op, blocked by `target` being a 2-member union with no both-sides member and by
+> having no `filter`/`damagedOnly`/`exceptSelf`. **The sibling `counterEachAll` already ships all of
+> it** (`{ amount, filter, side: "both", source, damagedOnly }`), and `(both yours and your
+> opponent's)` is already read on two built sentences. **Cheapest known continuation.**
+> **(b)** the name-fragment `CardFilter` — `:542` (**1p, ZERO new type members**: `cardsInDiscardPile`
+> × the shipped `attackNamePokemon` filter, reader vocabulary only), then `:543`/`:583` (2p each),
+> needing a name-**fragment** member (`CardFilter` has `byName` exact and `anyOf` union, **no
+> intersection combinator**) plus `pokemonInPlay.seat: "both"`.
+> **(c)** 🛑 **the copy-attack family — 5 sentences / 12 printings, the largest structural blocker in
+> the residue. Named, NOT recommended.** `BLOCKED-COPY-ATTACK 6 / 13`, falsifier on record:
+> *"`attack()` §8.5 as a callable function taking an attacker, a defender and a `declared` … plus a
+> bound on `runProgram`'s unbounded queue"*. Half the machinery ships — `preventChosenAttack` means
+> **the engine already parks the "pick one of the opponent's Active's attacks" choice**; only the
+> execution is missing.
+> **(d)** `:412` — **priced out with the measurement**: lattice **empty at every weight**, **all four
+> axes load-bearing**, its scale half lands on the thrice-refused `scale?: DamageCountSource`, and its
+> tail is a **referent** (*"shuffle **those** Energy cards"*).
+> ⚠️ The four rows this page named for several slices are **5 of 112 printings between them** —
+> `:134` (2p, banner), `:676`, `:686`, `:690` — **nothing in that list is where the printings are.**
+> 🛑 **`Ancient`/`Future`/`Tera` off the table, 43rd slice.**
+>
+> **(8) ⚠️ STILL-OPEN DEBT, UNCHANGED — THE SMALLEST REAL ITEM ON THE BOARD.**
+> **`OnlineHud.tsx` has NO Confusion hint at all** (D501), verified still true at D505: zero
+> occurrences of `confus`/`rotation`/`asleep`/`paralyz`/`poison`; the wire genuinely carries the
+> number (`redacted.ts:80`, `confusionDamage` **required**); and the render site is already in scope
+> (`:1733` destructures `battle`, `:1781` prints a sibling hint) — **about 6 lines plus a dom test**,
+> the last of D457's five mirrors. ⚠️ **Framing corrections**: the asleep/paralyzed half is
+> **cosmetic** (`redactedAttacksOf` folds `isImmobilized` into `banned`, so the server already greys
+> those buttons), and a `CNF` chip *does* render (`playmat/components/Card.tsx:45`) — but the
+> decision-relevant content (*attacking risks a flip; tails costs N and ends your turn*) is genuinely
+> absent, and N is exactly what D501 put on the wire. **Confusion is the only real gap.**
+>
+> ⚠️ **(9) TOOLING TRAPS, ALL CONFIRMED IN THE LAST TWO SLICES.** `grep` here is `ugrep` and
+> **silently returns nothing for a file git does not track**. **`OPAQUE` counts are meaningless
+> without naming their `SUBMAX`.** **`packages/engine` sets `"types": []`**, so node built-ins do not
+> compile there — a guard needing the filesystem or a subprocess cannot live in that package. And
+> **CI checks out at depth 1**, so nothing inside `check` may depend on git history.
+
+### Prior resume point (P3-M5 — D505, the Prize-scaled Bench spread, kept for continuity)
 
 > ### ▶ THE NEXT CONCRETE ACTION (written 2026-09-12, after D505)
 >
@@ -23128,7 +23246,8 @@ the next api deploy (D18).
 |---|---|---|
 | backend-data | P1 | ✅ M1–M9 + P2-M1 + task-17 api deployed (Worker `9b1ec1d1`, 2026-07-16); OAuth secrets pending (user) |
 | deck-builder | P2 | ✅ ALL 19 tasks closed (task 17 landed + e2e-verified locally); only follow-ups left |
-| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D505, *the Prize-scaled Bench spread — a seventh lattice shape, one optional boolean, and the row the census's own default cap had been hiding.*** Corpus **2,496 → 2,502**; `check` GREEN **488 files / 11,161 tests**; engine **0.394.0 → 0.395.0**, `MATCH_RECORD_VERSION` held at 30; residue **81/115 → 80/112**) |
+| simulator | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D506, *the changelog guard — the version-bump ritual had been destroying the record of the previous bump, and its own check confirmed success.*** Corpus **2,502 → 2,508**; `check` GREEN **489 files / 11,166 tests**; `engineVersion` **0.395.0 UNMOVED**, zero engine source bytes changed) |
+| simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D505, *the Prize-scaled Bench spread — a seventh lattice shape, one optional boolean, and the row the census's own default cap had been hiding.*** Corpus **2,496 → 2,502**; `check` GREEN **488 files / 11,161 tests**; engine **0.394.0 → 0.395.0**, `MATCH_RECORD_VERSION` held at 30; residue **81/115 → 80/112**) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D504, *the transcription guard — 64 slices of “EXACTLY AS PREDICTED” quoted a string the harness never printed; a test now parses `run.ts`'s own template and 464 places were recased.*** Corpus **2,490 → 2,496**; `check` GREEN **487 files / 11,129 tests**; engine **0.394.0 UNMOVED**, zero engine source bytes changed) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D503, *REFUSED, with the measurement — and the cheap road was completely unguarded*: the pre-damage attach cannot be counted by the multiplier because the scaling is fixed before the hook runs (DRIVEN), and parking the attach means cutting `attack()` at a seam with 703 lines and 20 live locals to carry. Payoff 1 sentence / 1 printing. The one-arm shortcut answers 60 where the card says 210 and switches off the loud channel — now guarded. And the readers-only lattice said "no path" where the splitter-inclusive one said "a path with one guard." NO sentence built, zero engine bytes changed**; corpus 2,490, check GREEN 486/11,125) |
 | simulator (prior) | P3 | 🚧 **M1–M3 + M4 done; M5 in progress** (latest: **P3-M5 — D486, *the gated increment — 1 sentence / 1 printing for one anchor, one arm and one clause row, with the interpreter byte-unchanged* — and *two candidate programs NO BOARD can separate by what they DO*: they agree on card count for every hand size by arithmetic identity, and diverge only on what they ASK. Five readings answer five distinct PAIRS and no single board separates them. The inherited price was mis-attributed by the brief and wrong in both directions**; engine 0.381.0, `MATCH_RECORD_VERSION` 29, corpus 2,294, check GREEN 472/10,691) |
@@ -23259,6 +23378,104 @@ the next api deploy (D18).
 Legend: 📝 backlog · 📋 specced · 🔎 research · 🚧 in progress · ✅ done
 
 ## Session log
+
+### 2026-09-12 — build session #446 (P3-M5 — D506)
+
+**THE CHANGELOG GUARD — AND THE VERSION-BUMP RITUAL HAD BEEN DESTROYING THE RECORD OF THE PREVIOUS
+BUMP, WITH ITS OWN CHECK CONFIRMING SUCCESS.** 🛑 **No sentence built — an instrument slice.** ZERO
+engine source bytes changed: both `index.ts` hunks sit inside the `19043–20591` doc comment.
+`engineVersion` **0.395.0 UNMOVED**, `MATCH_RECORD_VERSION` **30 UNMOVED**, residue **80 / 112
+UNMOVED**, `OPAQUE` **62 / 89 UNMOVED**, declared survivors **50 UNMOVED**; corpus **2,502 → 2,508**,
+archive ratchet **175 → 176**, `bun run check` GREEN at **489 files / 11,166 tests**.
+
+**(0) THE SHAPE.** `index.ts` carries engine-version provenance as
+`🆕🆕🆕 engineVersion <old> → **<new>** (D<nnn> …)` headings, and **nothing had checked them for 55
+slices.** D505 found three defects and named them rather than fixing them; D506 is the guard and then
+the repair, in that order.
+
+**(1) ✅ THE GUARD, AND IT WENT RED FIRST.**
+`packages/engine/src/engineVersionChangelog.test.ts` — **545 lines, 5 cases**: PARSE (anti-vacuity),
+HEAD, CHAIN, UNIQUE, ATTRIBUTION — a vitest suite, so it is inside `bun run check` (the five gate
+scripts are not). Eight red-making edits enumerated before any code (D200→D214), honest limits at the
+end. **Three of five cases failed before the repair**: the newest heading targeted **0.393.0** while
+the engine was on **0.395.0**; one heading advanced by **+0** releases; and one **disagreed with
+`docs/decisions.md`**. Pre-repair: 199 headings parsed, 27 labelled, 26/27 agreeing, 10 chain breaks.
+
+**(2) 🛑 THE MECHANISM IS WORSE THAN THE DEFECT — THE RITUAL ATE ITS OWN RECORD.**
+`git show 58f14838 -- packages/engine/src/index.ts` is a **two-line diff**, D501's entire edit to that
+file:
+
+```
+- export const engineVersion = "0.392.0";                      →  "0.393.0"    (correct)
+- 🆕🆕🆕 engineVersion 0.391.0 → **0.392.0** (D500 …)           →  **0.393.0**   (destroys it)
+```
+
+The house version tax is paid by a **value-keyed sweep** for the outgoing literal. But a changelog
+heading legitimately **contains the outgoing version as its target** — that is exactly what records
+the previous bump. **So the sweep rewrites the one occurrence that must stand still, and the
+confirming re-grep reports success, because no `0.392.0` remains.** The unescaped string then existed
+nowhere in the file — it survived only as `toBe("0\.392\.0")` inside D500's own block — **so a
+value-keyed search could not have found the loss either.** And D500's own version-tax paragraph
+carries an exception list for precisely this class: **it names the PREVIOUS heading**, and the sweep
+then ate the current one.
+
+**(3) 🛑 THE AUTHORITY IS NOT `git`, AND MY BRIEF WAS WRONG TO FRAME THAT AS A TRADE-OFF.** Two
+measurements make it a non-option, not a cost: `packages/engine/tsconfig.json` sets `"types": []`, so
+an explicit `import { execFileSync } from "node:child_process"` is **TS2591 in that directory**
+(measured with `tsc -p`); and `.github/workflows/ci.yml` uses `actions/checkout@v4` with **no
+`fetch-depth`** — a depth-1 clone — while running `bun run test:run`. **A git-reading guard is red on
+day one there, and one that silently skips is the anti-pattern the brief itself forbade.** There is no
+third option inside `check`.
+
+**What it uses instead — two authorities present in every checkout, neither a copy:** the chain's own
+202 headings plus `manifest.version`/`engineVersion` for structure, and **`docs/decisions.md` as an
+independent in-repo witness of the slice→version pair** for attribution. Its accuracy was *measured*,
+not assumed: **160 of 162** adjudicable slices agree with `git log -p` (exceptions D184, D389), and
+**26 of 27** labelled headings at D505's head — the single disagreement *was* the defect.
+
+**What the guard cannot see, stated in the file:** a **uniform re-labelling** committed to both files
+at once; every factual claim in a heading's prose; attribution for the **172** headings that name no
+slice; the **53** versions inside the ten declared holes; and heading order within the file.
+
+**(4) ⚠️ MY "UNBROKEN CONTIGUOUS CHAIN" WAS IMPOSSIBLE AND ALWAYS HAD BEEN.** There are **ten
+historical holes covering 53 engine versions** — 0.149.1, 0.188–0.189, 0.192, 0.196–0.204,
+0.208–0.209, 0.232, 0.260, 0.316–0.326, 0.341–0.353, and **0.365–0.376 (twelve slices)**. A naive
+contiguity assertion is red 53 times over. Declared by span and decision range, with **set equality
+asserted in both directions** (this repo's standing rule), so closing a hole without updating the
+declaration fails too — and that direction has its own row. **Only 30 of 202 headings carry a slice
+label**, the labelled era starting at D452 / 0.354.0.
+
+**(5) ⚠️ AND MY VERIFICATION REPRODUCED THE EXACT BUG THE GUARD EXISTS TO CATCH.** Checking the
+builder's "202 headings / 10 holes / 53 versions", I wrote a regex with a **literal space** where the
+builder's had **`\s*`**. `index.ts`'s headings live in a **wrapped** doc comment, so six of them
+break across lines. I measured **196 / 15 / 58** and reported the difference as a discrepancy in the
+builder's numbers. Re-run with the builder's semantics: **202 / 9 minor breaks + 1 patch hole = 10 /
+53.** **The builder was exact; I was wrong in three numbers at once.** That is the third slice running
+for this shape — D503's one-token census, D504's occurrences-versus-lines — and **the first where it
+was the VERIFIER rather than the instrument under test.** New convention: *a verifying regex must be
+at least as permissive as the one it checks.*
+
+**(6) ✅ THE REPAIR, SECOND AND SURGICAL.** Two hunks, both inside the doc comment: D500 restored to
+`0.391.0 → **0.392.0**`, and new headings for **D501** (`0.392.0 → 0.393.0`), **D502**
+(`0.393.0 → 0.394.0`) and **D505** (`0.394.0 → 0.395.0`), each marked *"written at D506"*. Headings
+**199 → 202**, labelled **27 → 30**, and **all 30 now verified against
+`git log -p -- packages/engine/package.json` with 0 mismatches.**
+
+**(7) 🆕 SIX ROWS, AND EACH KILLER WAS MEASURED RATHER THAN ASSERTED** — which caught the builder's
+own forecast. The arrow-retarget row kills **three** cases, not the two predicted: retargeting also
+makes `0.391.0` the source of two headings, so UNIQUE fires alongside CHAIN and ATTRIBUTION. The
+row's `what` was corrected to the measured three. ⚠️ **Two directions deliberately carry no row, said
+out loud rather than left implicit**: *"target runs ahead of `engineVersion`"* (every single-site edit
+that does it also breaks the chain, so a row would kill two tripwires and prove neither), and
+**PARSE** (no single `find`/`replace` can unfind 202 headings).
+
+**(8) VERIFIED INDEPENDENTLY BY THE CALLER.** `check` GREEN **489 / 11,166**; `precheck` clean at
+**2,508** (`patches LITERALLY` 22); `splice-gate` OK; `partition-gate` OK (2,508 / 8);
+`residue-census-gate` OK **§A 106 / 80 / 112**; `opaque-anatomy-gate` OK **62 / 89**; probe
+`--decision D506` → **6 killed · 0 survivors · 0 GAP · 0 error**. Both `index.ts` hunks confirmed
+inside the doc-comment span, with `engineVersion` at **20592** immediately after it closes — **zero
+engine source bytes**. The two-line D501 diff and both git-authority blockers were re-derived from
+scratch.
 
 ### 2026-09-12 — build session #445 (P3-M5 — D505)
 
