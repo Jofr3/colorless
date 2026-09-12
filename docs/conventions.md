@@ -6237,9 +6237,16 @@ value. D503 corrected D502's entry in place.
 **`GAP(S)` has a capital S, and has since D211's first commit** — `git log -S 'GAP(s) ·' --
 scripts/mutation/run.ts` returns nothing, i.e. the lowercase form has never existed in the harness.
 
-At D503's close-out the archive was found to quote it lowercase **312 times in `progress.md`**
-(against **1** correct) and **132 times in `decisions.md`** — **444 in all**, spanning every
-"EXACTLY AS PREDICTED" claim on record.
+At D503's close-out the archive was found to quote it lowercase **311 times in `progress.md`** and
+**144 times in `decisions.md`** — **455 in all**, spanning every "EXACTLY AS PREDICTED" claim on
+record. (Occurrences, excluding five deliberate meta-mentions that name the lowercase form as their
+subject.)
+
+⚠️ **The first close-out of D503 recorded 444, and that was wrong**: it summed `grep -o`
+OCCURRENCES for one file against `grep -c` LINES for the other. **A token that can appear more than
+once on a line must be counted with `grep -o | wc -l`, never `grep -c`** — and a total assembled
+from two different counting methods is not a total. Fixing a transcription defect with a miscounted
+census is the same class of error one level down.
 
 **Why this is more than a typo.** Each stamp presents a string as *the run's output*. That string
 was never the run's output. The **numbers** in those claims were right every time and are
