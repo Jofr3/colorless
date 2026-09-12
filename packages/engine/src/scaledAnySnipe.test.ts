@@ -164,7 +164,13 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
     // from "a reader widened past the count clause and ate a chosen-target row". The
     // pair below names the row, pins the op it derives to, and keeps every other
     // refusal in this rung intact (D438: name what now owns it and keep the refusals).
-    expect(unbuilt).toHaveLength(6);
+    // 🆕🛑 **D505 — SIX → FIVE, AND THE ROW THAT LEFT IS THE ONE BULLET (c)
+    // REFUSED ON THE OP.** Re-pointed rather than decremented, for the third time in this
+    // rung and on the same reasoning: a count that steps 6 → 5 records that something left
+    // and says nothing about WHAT, and cannot tell *"D505 gave `spreadDamage` the rider"*
+    // from *"a reader widened past the count clause and ate a chosen-target row"*. The pair
+    // under (c) names the row and pins the op and the rider it derives to.
+    expect(unbuilt).toHaveLength(5);
     // (e) THE SELF-HIT THE PATTERN OVER-INCLUDES — corpus line 500, 1 printing, BUILT
     //     at D465. Not a refusal at all: it is here so the 8 → 7 step is attributable.
     const SELF_RECOIL_SCALED = "This Pokémon also does 10 damage to itself for each damage counter on it.";
@@ -232,13 +238,42 @@ describe("§1 — the two printed sentences, and what they cost the residue", ()
       "This attack does 20 damage to 1 of your opponent's Benched Pokémon for each damage counter on that Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
     );
     // (c) THE SPREAD TWIN — corpus line 517, 3 printings, the largest unbuilt printing
-    //     count in the whole bench family. Its op is `spreadDamage`, which is
-    //     `{target, amount}` and carries NO scaling field at all and no park to hang
-    //     one on; `perTakenPrize` and `perEnergyOnSelf` are `damageChosen` riders and
-    //     do not transfer. Refused on the OP, which is neither (a) nor (b).
-    expect(unbuilt).toContain(
-      "This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-    );
+    //     count in the whole bench family. **BUILT AT D505.**
+    //
+    //     🛑 **THE REFUSAL THIS BULLET CARRIED WAS TRUE IN ITS PREMISE AND WRONG IN ITS
+    //     CONCLUSION, AND IT IS CORRECTED IN PLACE AND DATED (D442) RATHER THAN DELETED.**
+    //     It read: *"Its op is `spreadDamage`, which is `{target, amount}` and carries NO
+    //     scaling field at all and no park to hang one on; `perTakenPrize` and
+    //     `perEnergyOnSelf` are `damageChosen` riders and do not transfer."* Every clause
+    //     of that was a true description of the head it was written at. What does not
+    //     follow is *"and so the row is blocked"* (D450/D451's shape, and this rung's
+    //     third instance of it): a rider does not have to TRANSFER, it has to be SPELLED
+    //     on the second op — and `snipeAmount` takes a STRUCTURAL parameter
+    //     (`{ amount; perTakenPrize?; perEnergyOnSelf?; perRecorded? }`), so the fold
+    //     accepted the widened op UNCHANGED. ⚠️ **AND "no park to hang one on" READ A
+    //     PERSISTENCE FACT AS AN EXPRESSIVENESS ONE**: not parking is exactly what made
+    //     the rider FREE of `MATCH_RECORD_VERSION`, not what made it impossible.
+    //
+    //     🛑 **RE-POINTED ONTO THE OP AND THE RIDER, NOT ONTO `.not.toBeNull()`** (D438's
+    //     polarity rule, and this rung's own move at (a) and (d)): a bare *"it now
+    //     resolves"* is TRUE under a reader widened to swallow the whole column. What
+    //     discriminates is the RIDER — and the FLAT sibling beside it, which must NOT
+    //     have gained one.
+    const SPREAD_SCALED =
+      "This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(family.map(([, t]) => t)).toContain(SPREAD_SCALED);
+    expect(unbuilt).not.toContain(SPREAD_SCALED);
+    expect(deriveAttackEffect(SPREAD_SCALED)).toEqual([
+      { op: "spreadDamage", target: "opponentBench", amount: 10, perTakenPrize: true },
+    ]);
+    // …and the FLAT twin one corpus line down is UNMOVED and carries no rider, which is
+    // the control that keeps the assertion above a statement about the clause rather than
+    // about the anchor (D424).
+    expect(
+      deriveAttackEffect(
+        "This attack also does 10 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+      ),
+    ).toEqual([{ op: "spreadDamage", target: "opponentBench", amount: 10 }]);
     // (d) THE COUNTER-SPELLED SCALED SNIPE — corpus line 412, 3 printings, the member
     //     the family grep above cannot see and the largest single printing count in
     //     the whole scaled-chosen-hit class. Its OP is this one (`damageChosen`, arity
@@ -481,7 +516,7 @@ describe("§3 — a new optional rider on a PERSISTED op, and the record version
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.394.0");
+    expect(engineVersion).toBe("0.395.0");
   });
 });
 

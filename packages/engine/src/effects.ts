@@ -4842,7 +4842,55 @@ export type EffectOp =
       Prize to `otherSeat(entry.ref.seat)`, and `knockOut`'s benched branch already
       queues no promotion. All three are DRIVEN there rather than inherited from
       this paragraph. */
-  | { op: "spreadDamage"; target: "opponentBench" | "yourBench"; amount: number }
+  | {
+      op: "spreadDamage";
+      target: "opponentBench" | "yourBench";
+      amount: number;
+      /** 🆕🆕🆕 **D505 — THE MISSING CELL OF A SHIPPED 2×2, AND THE ONLY NEW BYTE THIS
+          SLICE ADDS.** *"This attack also does 10 damage to each of your opponent's
+          Benched Pokémon **for each Prize card your opponent has taken**. (Don't apply
+          Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts`
+          **FILE LINE 517**, **1 sentence / 3 legal printings**. The effective amount is
+          `amount × the opponent's TAKEN Prizes`, read from state at the moment the op
+          runs; 0 taken → 0 HP → `spreadDamage`'s own `amount <= 0` early return, so an
+          opponent who has taken nothing is hit by nothing and no row is filed.
+
+          🛑 **THE 2×2 THIS FILLS, AND WHY THE RIDER IS THE SHIPPED IDIOM RATHER THAN A
+          CHOICE.** The family crosses `1 of` / `each of` with flat / Prize-scaled:
+          `damageChosen` (D399's flat arm 6c) and `damageChosen { perTakenPrize }`
+          (D448's arm 6b, Wo-Chien ex "Covetous Ivy") ship the `1 of` row; this op's
+          flat arm (D189/D258/D425) shipped three quarters of the `each of` row. The
+          scaled quarter needed **the name `perTakenPrize` spelled on a second op** and
+          nothing else: `snipeAmount` (interpreter.ts) takes a STRUCTURAL parameter
+          (`{ amount; perTakenPrize?; perEnergyOnSelf?; perRecorded? }`), so the fold it
+          has performed since D448 accepts this op UNCHANGED — zero interpreter helper
+          bytes, one argument list at the dispatch.
+
+          🛑 **`scale?: DamageCountSource` IS STILL REFUSED, FOR THE THIRD TIME, AND THE
+          PRICE IS NOT RE-ESTIMATED HERE.** D448 measured the collapse at **24 sites
+          across 10 files plus a `MATCH_RECORD_VERSION` bump**, D449 re-applied it and
+          D465 re-applied it for exactly this shape. What D505 adds is that the general
+          form would now have to be spelled on TWO ops rather than one, so the refusal
+          got *cheaper to keep* rather than dearer: see `damageChosen.perEnergyOnSelf`
+          for the arithmetic and for the trigger that would overturn it.
+
+          ⚠️ **OPTIONAL, AND `MATCH_RECORD_VERSION` HOLDS AT 30 — BOTH HALVES STATED
+          (D452/D463), ADDRESS FIRST (D456).** The address an `EffectOp` persists into
+          is `MatchRecord.state.phase.cont.{pendingOp, rest}` (`EffectContinuation`,
+          interpreter.ts), written only on a PARK. `spreadDamage` cannot reach either
+          door: its `stepOp` arm returns `{ done }` unconditionally so it is never a
+          `pendingOp`, and `rest` holds only the ops BEHIND a park, which needs an
+          earlier op in the same program — the arm below returns a program of **length
+          one**. That is reachability (D450), and it is not the whole argument: this is
+          also an ADDED OPTIONAL key (D125/D334's widening), so every record a v30
+          deploy has written stays valid and means exactly what it meant — ABSENT is the
+          flat spread, which is what both older `spreadDamage` producers emit. The LOSS
+          direction is named rather than left implicit: a dropped rider would deal
+          `amount` where the card prints `amount × N`, a plausible wrong answer rather
+          than a throw — unreachable here by the two doors above, and driven in
+          `scaledBenchSpread.test.ts` §7 over reconstructed v30 bytes. */
+      perTakenPrize?: true;
+    }
   /** 🆕 D319 — Put `amount` HP of damage counters on **THAT POKÉMON**: the body
       the WATCHED action was just performed on, carried as `EffectContext.subjectUid`.
       Team Rocket's Ampharos sv10-074 "Darkest Impulse" (*"…put 4 damage counters on
@@ -12906,6 +12954,55 @@ const SELF_RECOVERS_ALL = /^This Pokémon recovers from all Special Conditions\.
 // which is exactly what D421 got wrong from memory and D425 checked.
 const SPREAD_EACH_BENCH = new RegExp(
   `^This attack (?:also )?does (\\d+) damage to each of (your opponent['’]s|your) Benched Pokémon\\.` +
+    `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
+);
+// 🆕🆕🆕 **D505 — THE SAME SPREAD, SCALED BY THE OPPONENT'S TAKEN PRIZES: THE MISSING
+// CELL OF A SHIPPED 2×2.** *"This attack also does 10 damage to each of your
+// opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply
+// Weakness and Resistance for Benched Pokémon.)"* — `censusAttackCorpus.ts` **FILE LINE
+// 517**, **1 sentence / 3 legal printings**, the largest single row left in the residue's
+// spread family.
+//
+// 🛑 **A SEPARATE ANCHOR AND NOT AN OPTIONAL GROUP ON THE SIBLING ABOVE, AND THE
+// MEASUREMENT IS THE ARGUMENT.** Written as an optional group on `SPREAD_EACH_BENCH` the
+// anchor claims **3 sentences / 7 printings** over `legalAttackCorpus()`'s 640 rows —
+// this row plus *"…to each of your opponent's Benched Pokémon."* at 10 (1 printing) and
+// at 50 (3 printings) — and it would hand all four of those printings a `perTakenPrize`
+// they do not print. **That is not a widening, it is a wrong program for 4 printings**,
+// and it is this file's `D505-anchor-scaling-clause-goes-optional` row. The shipped
+// precedent is one screen down: D448's `BENCHED_SNIPE_TAKEN_PRIZES` is a SEPARATE anchor
+// from the flat `1 of` rider for exactly this reason (D441 — a separate anchor is cheaper
+// than a wider alternation when the KINDS differ), and the two anchors here are
+// structurally disjoint on ONE byte: the sibling demands `Benched Pokémon\.` and this one
+// demands ` for each`.
+//
+// ⚠️ **THE POSSESSIVE IS SPELLED, NOT CAPTURED — D482's ARGUMENT AT A THIRD ADDRESS.**
+// `(your opponent['’]s|your)` — the shape the sibling carries — claims the IDENTICAL
+// 1 sentence / 3 printings over all 640 rows (measured, §1), so the generality buys
+// nothing and its risk has a name: `D425-spread-side-flips`, an attack that damages the
+// wrong side of the table. The own-side scaled spelling is not printed in this column;
+// when it is, it earns the capture and a ternary, not this arm (D472).
+//
+// ⚠️ **AND THE `(?:also )?` IS ADMITTED, WHERE `SPREAD_EACH_OPPONENT_POKEMON` REFUSES IT
+// — THE DISCRIMINATOR IS WHICH OP THE ARM EMITS, NOT THE FAMILY.** D482 had to refuse the
+// word because its arm emits a `damageDefender`, which `attack.ts`'s `programDamage`
+// reads to DROP the printed base. This arm emits `spreadDamage` ALONE, exactly as the
+// sibling above does, so the main hit rides the attack's own `damage` field either way
+// and the word claims nothing. ⚠️ Refusing it would cost the row outright: the
+// `also`-less form claims **0 sentences / 0 printings** (measured, §1), because *"also"*
+// is what the one printed sentence carries. The `also`-MANDATORY form claims the same
+// 1 / 3, so admitting the optional group is the family's coupling (D222 — one reading of
+// one sentence, widen this and the sibling widens with it) rather than an unpaid
+// generality.
+//
+// ⚠️ **THE W/R PARENTHETICAL STAYS OPTIONAL**, the sibling's shape verbatim: §8.5 makes
+// the clarifier true whether or not it is printed, and the mandatory form claims the same
+// 1 / 3 (measured, §1). ⚠️ **BOTH APOSTROPHES IN THE PRINT ARE U+0027** — measured with
+// `codePointAt` in §1 rather than remembered (D421/D425/D440) — and the `['’]` class is
+// kept on both slots for the family's standing reason (a re-ingest could curl them).
+const SPREAD_EACH_BENCH_TAKEN_PRIZES = new RegExp(
+  `^This attack (?:also )?does (\\d+) damage to each of your opponent['’]s Benched Pokémon ` +
+    "for each Prize card your opponent has taken\\." +
     `(?: \\(Don['’]t apply Weakness and Resistance for Benched Pokémon\\.\\))?$`,
 );
 // 🆕🆕🆕 **D482 — THE WHOLE-SIDE SPREAD, AND IT NEEDS NO OP AT ALL.**
@@ -23135,6 +23232,48 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   match = SELF_RECOVERS_ALL.exec(effect);
   if (match !== null) {
     return [{ op: "clearStatus" }];
+  }
+
+  // 🆕🆕🆕 6-i. D505 — "This attack (also) does {N} damage to each of your opponent's
+  //     Benched Pokémon FOR EACH PRIZE CARD your opponent has taken. (Don't apply
+  //     Weakness and Resistance for Benched Pokémon.)" — corpus FILE LINE 517, 1
+  //     sentence / 3 legal printings. The SAME op as arm 6 one line down, carrying the
+  //     rider D448 put on `damageChosen`: the amount is folded by `snipeAmount` at the
+  //     dispatch, so 0 taken Prizes is 0 HP and `spreadDamage`'s own `amount <= 0`
+  //     early return makes that a silent whiff with no row filed.
+  //
+  //     🛑 **READ AHEAD OF ARM 6 DELIBERATELY, AND THE REASON IS ANOTHER DECISION'S
+  //     ROW (D502).** The two anchors are structurally DISJOINT — arm 6 demands
+  //     `Benched Pokémon\.` where this one demands ` for each` — so today's verdicts are
+  //     the same in either order and the placement is not about which sentence derives.
+  //     It is about which MUTATION stays observable: `D505-anchor-scaling-clause-goes-
+  //     optional` widens this anchor to admit the flat spelling too, and from AHEAD of
+  //     arm 6 that steals 2 sentences / 4 printings and hands them a `perTakenPrize`
+  //     they do not print. Behind arm 6 the same mutation goes INERT on every one of
+  //     those rows, because arm 6 claims them first — a shipped row's stated reason
+  //     quietly becoming false, which is exactly what D502 declined to spend.
+  //     ⚠️ **AND IT COSTS ARM 6's OWN ROWS NOTHING**, checked rather than assumed:
+  //     `D425-anchor-loses-the-bare-possessive` drops the `|your` branch and this
+  //     anchor spells `your opponent['’]s` with no alternation, so it cannot rescue the
+  //     three own-side printings that row exists to strand; `D425-spread-side-flips`
+  //     inverts a ternary this arm does not have.
+  //
+  //     ⚠️ **NO `per >= 1` GUARD, WHERE THE `1 of` SIBLING AT ARM 6b HAS ONE.** The
+  //     guard there keeps `damageChosen` from building a PROMPT over a 0-damage pick;
+  //     this op asks nothing and `spreadDamage` already refuses `amount <= 0` on its
+  //     first line, so a printed 0 (not a real card either way) is a silent whiff
+  //     through the shipped early return rather than through a second test nothing can
+  //     reach. Arm 6, the same op, carries no guard for the same reason.
+  match = SPREAD_EACH_BENCH_TAKEN_PRIZES.exec(effect);
+  if (match !== null) {
+    return [
+      {
+        op: "spreadDamage",
+        target: "opponentBench",
+        amount: Number(match[1]),
+        perTakenPrize: true,
+      },
+    ];
   }
 
   // 6. "This attack (also) does {N} damage to each of your opponent's Benched

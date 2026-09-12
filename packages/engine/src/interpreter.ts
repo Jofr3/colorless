@@ -1884,7 +1884,14 @@ function stepOp(
       // since the op existed and was a SINGLETON, so this arm passed `op.amount`
       // alone and the field was documentation. Widening the union is what makes the
       // omission a type error rather than a silent one.
-      return { done: spreadDamage(state, op.target, op.amount, ctx, events) };
+      // 🆕🆕🆕 D505 — AND THE AMOUNT IS FOLDED HERE, NOT INSIDE `spreadDamage`. That is
+      // `damageSelf`/`recoilAmount`'s line two cases down, verbatim and for its stated
+      // reason: the helper stays *"place this many HP on each benched body of that
+      // side"* and every scaling rider is visible at the dispatch. `snipeAmount` takes a
+      // STRUCTURAL parameter, so it accepts this op unchanged — the fold gains a second
+      // op, not a second implementation (D448's own words one rider earlier). A 0-taken
+      // opponent folds to 0 and `spreadDamage`'s first line returns the state untouched.
+      return { done: spreadDamage(state, op.target, snipeAmount(op, state, ctx, record), ctx, events) };
     case "damageSelf":
       // 🆕🆕 D465 — the amount is FOLDED HERE rather than inside `damageSelf`, so
       // that the helper stays "place this many HP on my own Active" and every
@@ -7846,7 +7853,12 @@ function unshieldedRefs(
 
 /** Spread damage: place `amount` HP on EACH Benched Pokémon of the side `target`
     names (§8.5 — Weakness/Resistance never apply on the Bench, so it is flat
-    there). A benched Pokémon's own continuous damage REDUCTION still applies
+    there). ⚠️ **D505 — `amount` ARRIVES ALREADY FOLDED.** `stepOp` passes
+    `snipeAmount(op, …)` rather than `op.amount`, so the Prize-scaled printing
+    (*"…for each Prize card your opponent has taken"*) reaches this function as a
+    plain number and nothing below this line knows the rider exists — `damageSelf`'s
+    division of labour, and the reason the early return one screen down covers the
+    0-taken board for free. A benched Pokémon's own continuous damage REDUCTION still applies
     though (Bouffalant "Bouffer" / a defending Tool — the passive that is not
     Active-only), floored at 0; the attacker's pre-W/R bonus (Vitality Band) is
     Active-target-only and does NOT reach the Bench. One DAMAGE_DEALT per benched

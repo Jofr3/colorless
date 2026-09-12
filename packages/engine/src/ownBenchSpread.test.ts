@@ -332,7 +332,21 @@ describe("§2 — one anchor, two possessives, three amounts", () => {
       // scope: the both-sides form names no possessive at all ↔ the one-sided form
       ["`each Benched Pokémon (both yours and your opponent's)`", "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // a trailing clause continues the sentence past the anchor's `\.`
-      ["a SCALED tail", "This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)", opp(10)],
+      // 🆕🆕🆕 **D505 RE-POINTED THIS ROW ONTO THE OWN SIDE, AND THE AXIS IS UNCHANGED
+      // (D178/D418/D438 — re-point, do not delete).** The sentence this row used to
+      // carry — the OPPONENT-side scaled tail, corpus FILE LINE 517 — is BUILT now, by
+      // `SPREAD_EACH_BENCH_TAKEN_PRIZES` and arm 6-i, so asserting null would pin a
+      // refusal the engine no longer makes (D444's rule, which is how this row's
+      // predecessors were caught twice before). **THE OWN-SIDE SCALED SPELLING IS NOT
+      // PRINTED IN THIS COLUMN AND IS STILL REFUSED** — by both anchors at once: this
+      // one's whole-sentence `\.` right after `Pokémon`, and the new one's SPELLED
+      // `your opponent['’]s`. ⚠️ **AND D438's SECOND HALF, ASKED RATHER THAN ASSUMED:
+      // what could the old claim catch that this one cannot?** The old string is claimed
+      // by arm 6-i today, so a mutation that dropped this anchor's `\.` could not be
+      // seen through it either way — the discrimination that genuinely moved is
+      // *"which arm owns the scaled sentence"*, and it lives in
+      // `scaledBenchSpread.test.ts` §2 as a program equality rather than a null.
+      ["a SCALED tail, own side — refused by BOTH anchors", "This attack also does 10 damage to each of your Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)", own(10)],
       // the lookalike é falls off the path silently, which is the family's reason
       ["a lookalike `Pokemon`", own(10).replace(/Pokémon/g, "Pokemon"), own(10)],
       // no leading `This attack`: a mid-sentence clause must not reach this path
@@ -460,7 +474,7 @@ describe("§3 — `target` is a union now, and the record version does not move"
   });
 
   it("the engine version moved and the two spellings agree", () => {
-    expect(engineVersion).toBe("0.394.0");
+    expect(engineVersion).toBe("0.395.0");
   });
 });
 

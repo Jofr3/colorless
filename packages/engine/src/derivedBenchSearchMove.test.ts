@@ -168,7 +168,7 @@ describe("§1 — the sentence, the corpus row, and D230's refusal paid", () => 
   });
 
   it("engineVersion stepped for a behaviour a card can reach, and `manifest.version` agrees", () => {
-    expect(engineVersion).toBe("0.394.0");
+    expect(engineVersion).toBe("0.395.0");
     expect(manifest.version).toBe(engineVersion);
   });
 });
@@ -1201,9 +1201,9 @@ describe("§8 — the census this row moves, and the summands it does not", () =
     // VERIFIED at the corpus rather than assumed from the row being singular
     // (D451/D461/D464): the file line reads `1 <sentence>`.
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([533, 1567]);
+    expect([resolved.length, units(resolved)]).toEqual([534, 1570]);  // (🆕🆕🆕 **D505 +1 sentence / +3 printings — THE PRIZE-SCALED BENCH SPREAD, THE MISSING CELL OF A SHIPPED 2×2** — `censusAttackCorpus.ts` **FILE LINE 517**, *"This attack also does 10 damage to each of your opponent's Benched Pokémon for each Prize card your opponent has taken. (Don't apply Weakness and Resistance for Benched Pokémon.)"*, **1 sentence / 3 legal printings**, claimed by `deriveAttackEffect` arm **6-i** over ONE new anchor (`SPREAD_EACH_BENCH_TAKEN_PRIZES`) and ONE OPTIONAL BOOLEAN RIDER on the SHIPPED `spreadDamage` (`perTakenPrize` — D448's own name spelled on a second op, so `snipeAmount`'s structural parameter folds it UNCHANGED). **ZERO** new `EffectOp` members, op KINDS, readers (surface unmoved at **13**), prompts, choice kinds, parks, events, `GameState`/`InPlayPokemon` fields, registry rows, `FIXTURE_POOL` ids or `MATCH_RECORD_VERSION` bytes. ⚠️ **THE SENTENCE STEP AND THE PRINTING STEP DISAGREE, 1 vs 3**, so a `.length` site takes +1 where a `units(…)` site takes +3 — the largest single printing step left in the residue's spread family, and the reason this row was worth taking before smaller ones (D451, re-paid again).)
     const without = resolved.filter(([, s]) => s !== SENTENCE);
-    expect([without.length, units(without)]).toEqual([532, 1566]);
+    expect([without.length, units(without)]).toEqual([533, 1569]);  // 🆕🆕🆕 **D505 +1 sentence / +3 printings — THE PRIZE-SCALED BENCH SPREAD (corpus FILE LINE 517).** This pair is the resolving set MINUS this file's own sentence, so it steps by exactly what the line above it steps by — which is the point of measuring both: a slice that moved only one of the two would be visible here (D451/D465).
   });
 
   it("🛑 the move is READER-keyed — no registry row, no splitter, no gate clause", () => {

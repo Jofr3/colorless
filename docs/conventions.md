@@ -6323,6 +6323,185 @@ about its contents. Use Python (`io.open(...).read()`), or `git add` the file fi
 most in exactly the situation it arose: verifying that a new guard does *not* contain something.
 
 
+### A seventh lattice shape: ONE BLOCKING AXIS × A FREE 2⁴ (D505)
+
+D505's five-axis sentence read the same vector under both predicates:
+
+> `0/1 · 1/5 · 4/10 · 6/10 · 4/5 · 1/1` — **16 of 32 points build**, and the two readings
+> agree at every weight with **0 divergent points** (both splitters null at **32/32**).
+
+**Read the arithmetic, not the table.** Exactly half building is the signature of a lattice that
+FACTORISES: one axis flips the verdict at **16 of 16** cells and the other four at **0 of 16**
+each, so the bit set is 32 and the meaningful point set is **2**. That is distinct from all six
+shapes on record (full-weight-only D489/D490/D494/D501; every-segment D495; prerequisite-half
+D499; single-axis 2¹ D500; empty-at-every-weight D502; D503's opposite-conclusions).
+
+🛑 **AND IT IS A CLAIM ABOUT THE PRICE.** A single blocking axis on an otherwise free lattice is
+the shape of a row whose mechanism already ships — the blocker is a NAME, not a machine. D505's
+cost was one anchor, one arm, one optional boolean and one argument list; the four inert axes were
+already spelled by the sibling anchor one screen up. **When a lattice halves, look for the
+missing cell of a table rather than for a new op.**
+
+⚠️ **INERT IS NOT DEGENERATE, AND THE DISTINCTION IS WORTH ASSERTING.** D491's degeneracy is
+identity — the axis's two values are the SAME STRING, so the table is a smaller one reported
+twice. D505's four are distinct strings (all 32 points are distinct, asserted) that never move
+the verdict. The second is a statement about the READER; the first is a statement about the
+instrument.
+
+### A lattice run in the same commit as the build must subtract the build by its RIDER, not its ANCHOR (D505, sharpening D491)
+
+D491 established that a post-build lattice is not the lattice. The executable form needs a
+predicate for *"the points my new arm claims"*, and the obvious one is the anchor. **Key it on the
+derived VALUE instead** — D505 used *"the program is a `spreadDamage` carrying `perTakenPrize`"*.
+Two reasons: the anchor is usually module-private and not importable, and a successor who widens
+the anchor across a point the lattice recorded as refused is caught by the same rung rather than
+slipping past a name. Pair it with the converse assertion — *the claimed set is EXACTLY these N
+points* — or the subtraction is circular.
+
+### A price that cites a sibling's PRINTING COUNT is a claim about today's column (D505)
+
+D448 built the `1 of … Benched Pokémon for each Prize card your opponent has taken` arm for
+Wo-Chien ex `sv02-027`. At D505's head **that sentence is not a row of the `legal_standard = 1`
+column at all** — the clause appears on five corpus rows and none is that spelling. So a shipped,
+green, census-complete arm was executable by nothing in the legal pool (D495's shape), and any
+price reading *"the scaled snipe already ships at 3 printings"* was counting a rotation ago.
+
+**An arm transfers across sets and a registry row does not (D180/D187), so this is not dead code.**
+What rots is the *number* beside it. ⚠️ **Before leaning on a sibling row's size, re-run the
+membership** — `legalAttackCorpus()` is one call, and a `Map.get` returning `undefined` where a
+count was expected is the whole check.
+
+### A refusal can be true in every clause and still wrong, when one clause reads a PERSISTENCE fact as an EXPRESSIVENESS one (D505, extending D450/D451)
+
+`scaledAnySnipe.test.ts` refused D505's row with: *"its op is `spreadDamage`, which is
+`{target, amount}` and carries NO scaling field at all **and no park to hang one on**;
+`perTakenPrize` and `perEnergyOnSelf` are `damageChosen` riders and do not transfer."* Every
+clause described the head correctly. Two of them do not support the conclusion:
+
+- **"do not transfer"** — a rider does not have to transfer, it has to be SPELLED on the second op.
+  `snipeAmount` takes a STRUCTURAL parameter, so the fold accepted the widened op unchanged.
+- **"no park to hang one on"** — not parking is exactly what made the rider FREE of
+  `MATCH_RECORD_VERSION`. The clause named the reason the row was CHEAP and filed it as the
+  reason the row was blocked.
+
+⚠️ **The tell is a refusal whose clauses are all about SHAPE and none about the machine that reads
+the shape.** Ask what the consumer's signature actually takes before believing that a field cannot
+reach it.
+
+### A mutant row's ARITHMETIC and its stated CLAIM can drift, and only a step of a different SIZE makes it visible (D505)
+
+`D495-census-built-attack-not-stepped` says it puts `BUILT.attack` *"back to its pre-slice value"*.
+D499's note spells that out in arithmetic. D501 and D502 both stepped the constant by **+1** and
+both re-transcribed a **two-step** regression, so for two slices the row's arithmetic and its own
+`what` disagreed and nothing could tell — at a step of 1 the difference between *"pre-slice"* and
+*"two back"* is one digit that reads like a convention. **D505's step is +3, which is the head
+where the divergence shows**, and the replace was corrected to the genuine pre-slice value.
+
+**A row whose `replace` is derived from its `find` by a fixed offset has stopped being about what
+it says it is about.** When re-transcribing, re-derive the offset from the row's `what`, not from
+the previous transcription.
+
+### D497's pair rule, paid on a SHIPPED switch (D505)
+
+`spreadDamage`'s victim `switch` has two arms. D425 wrote a mutant for `yourBench` — the arm ONE
+producer takes — and none for `opponentBench`, which every other producer takes, and the corpus
+carried that asymmetry for eighty decisions. `opcoverage.ts` had been reporting the consequence
+all along (**2/5 seat-line coverage, the weakest of the damage ops**) without anyone reading it as
+*"one arm of a two-arm switch"*.
+
+⚠️ **When you widen an op, diff its mutant rows against its BRANCHES, not against its fields.** The
+missing row is usually the branch the shipped producers all take, because that is the branch every
+existing board already exercises — so its absence never shows up as a red test.
+
+### `OPAQUE` is a function of `SUBMAX`, not of the sentence — re-run the census before calling a row deep (D505, confirming D463 with a curve)
+
+`scripts/residue-census.ts` classifies a residue row `OPAQUE` when no bounded multi-region edit
+reaches a built string. The bound is `SUBMAX`, an env override that **defaults to 4**. Measured at
+D505's head:
+
+| `SUBMAX` | OPAQUE |
+|---:|---|
+| 4 (default) | **63 sentences / 92 printings** |
+| 8 | 51 / 74 |
+| 12 | 33 / 51 |
+| 20 | **12 / 21** |
+
+**Four fifths of the OPAQUE class is an artefact of the default cap.** D463's rule — *"`OPAQUE`
+means UNCLASSIFIED, never EXPENSIVE"* — now has a measured curve behind it.
+
+**This is not academic: the default hid the cheapest row in the residue.** D505's row
+(`censusAttackCorpus.ts:517`, 3 legal printings) is `OPAQUE`/`UNEXPLAINED` at `SUBMAX=4`. At
+`SUBMAX=12` the census classifies it itself:
+
+```
+SUBST 10 token(s): «Pokémon for each Prize card your opponent has taken.» → «Pokémon.»
+  onto BUILT (reader): This attack also does 10 damage to each of your opponent's Benched Pokémon.
+```
+
+One substitution onto an already-built reader string — a deletion with the period re-attached. And
+the substituted span **is exactly the lattice's single load-bearing axis**: two instruments that know
+nothing of each other isolate the same lone blocker.
+
+**The rule:** before concluding a row is structurally deep, re-run the census at a larger `SUBMAX`.
+A row that is `OPAQUE` at 4 and `SUBST-n` at 12 is **cheap and mislabelled**, not hard. When
+reporting an OPAQUE count, **name the cap it was measured at** — the bare number means nothing
+without it.
+
+### A figure called a "ceiling" must carry its derivation and its unit (D505)
+
+For roughly twelve consecutive resume points the loop carried *"the practical ceiling is ~88 %"*.
+At D505 it was checked and **could not be re-derived from any instrument**. What it approximates is
+the **current built-sentence percentage** — 559/640 = **87.3 %** at D505's head, and 86.4 % at D493
+where the wording was coined. It is a *current value*, mislabelled as a *limit*, copied forward and
+slowly diverging from both.
+
+The honest figures, each with its unit:
+
+- built attack **sentences** 559/640 = **87.3 %**
+- built attack **printings** 1617/1732 = **93.4 %**
+- the real **ceiling** — structurally-blocked rows removed (`BLOCKED-*`, 14 sentences / 25
+  printings) — is 626/640 = **97.8 %** of sentences
+
+Likewise *"about 67 sentences of reachable work"* is arithmetically right (81 − 14) and materially
+misleading: **13 of those 67 are `Ancient`/`Future`/`Tera` banner rows** that have been off the table
+for 41 slices. **Reachable-and-not-banner is 54 sentences / 73 printings.**
+
+**The rule:** a percentage in a resume point must say **what over what**, and a number called a
+ceiling must state **what it excludes to be one**. A current value that drifts while its label says
+"limit" is worse than no number, because it silently answers "how much is left?" with the wrong
+quantity. Cf. [[the instrument that defines a class must enumerate it]] — same failure, one level up:
+a figure nothing re-derives is a figure nothing can correct.
+
+### Nothing guards the engine changelog, and it has drifted for three slices (D505)
+
+`packages/engine/src/index.ts` carries the version provenance as headings of the form
+`🆕🆕🆕 engineVersion <old> → **<new>** (D<nnn> — …)`. **No gate, test or mutant row checks them**,
+and at D505's head the record is wrong in three places, verified against
+`git log -- packages/engine/package.json`:
+
+- **D501 edited D500's heading instead of adding its own.** It now reads
+  `0.391.0 → **0.393.0** (D500 …)`, which swallows D501's bump and attributes it to D500. D500
+  actually went 0.391.0 → **0.392.0** (commit `233324aa`), D501 → **0.393.0** (`58f14838`). The
+  string `0.392.0` no longer appears in the file at all.
+- **0.394.0 (D502, `3c91f6d5`) has no heading.**
+- **0.395.0 (D505) has no heading** — deliberately, following D502's precedent, with provenance put
+  in the new suite's header and the op's doc block instead.
+
+**This is D504's finding one level further out.** D504 established that nothing compared a quoted
+sweep line to the emitted one; here nothing compares a changelog heading to the version history the
+commits actually record. Same class, same remedy: **the instrument that knows the truth must be the
+one that checks the claim.**
+
+**The guard is cheap and is not yet written** — assert that every engine version from the first
+heading to `engineVersion` has **exactly one** heading, and that each heading's target matches the
+`packages/engine/package.json` version at the commit that introduced it. Until it exists, treat the
+headings as **unverified prose**, and do not cite one as evidence of which slice shipped what.
+
+⚠️ **Do not repair the changelog casually.** It is a ~1,480-line nested parenthetical; D505's builder
+declined to touch it for exactly that reason and said so rather than risking corruption. Fixing it
+is a slice, with the guard landing first.
+
+
 ## Git / commits
 - Branch off `main` for non-trivial work; commit/push only when asked.
 - Commit trailer per global config: `Co-Authored-By: Claude ...`.

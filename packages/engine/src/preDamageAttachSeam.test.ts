@@ -11,7 +11,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 
-// 0.394.0 — 🛑 **D503: THE REFUSAL OF THE PRE-DAMAGE ATTACH, WRITTEN AS RUNGS.**
+// 0.395.0 — 🛑 **D503: THE REFUSAL OF THE PRE-DAMAGE ATTACH, WRITTEN AS RUNGS.**
 //
 // `censusAttackCorpus.ts` **FILE LINE 569**, 1 sentence / **1 legal printing**:
 //
@@ -28,7 +28,7 @@ import {
 // 🛑 **NOTHING HERE BUILDS ANYTHING.** No reader, no anchor, no op, no op field, no
 // `FIXTURE_POOL` id, no `packages/schema` byte, no engine source at all. So (D496): the
 // residue does not move, `BUILT.attack` does not move, the census stands still, there is
-// no census tax, `engineVersion` stays 0.394.0 and `MATCH_RECORD_VERSION` stays 30.
+// no census tax, `engineVersion` stays 0.395.0 and `MATCH_RECORD_VERSION` stays 30.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 // 🛑 THE PRICE, MEASURED AT THIS HEAD — three costs, and only the third is large.

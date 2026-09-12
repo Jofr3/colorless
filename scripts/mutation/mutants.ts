@@ -5230,7 +5230,7 @@ export const MUTANTS: Mutant[] = [
     decision: "D275",
     what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
     file: "packages/engine/src/index.ts",
-    // ⚠️ RE-POINTED AT D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
+    // ⚠️ RE-POINTED AT D505 (0.394.0 → 0.395.0), at D490 (0.384.0 → 0.385.0), at D489 (0.383.0 → 0.384.0), at D488 (0.382.0 → 0.383.0), at D487 (0.381.0 → 0.382.0), at D486 (0.380.0 → 0.381.0), at D485 (0.379.0 → 0.380.0), at D450 (0.351.0 → 0.352.0), at D449 (0.350.0 → 0.351.0), at D448 (0.349.0 → 0.350.0), at D447 (0.348.0 → 0.349.0), at D446 (0.347.0 → 0.348.0), at D445 (0.346.0 → 0.347.0), at D444 (0.345.0 → 0.346.0), at D443 (0.344.0 → 0.345.0), at D442 (0.343.0 → 0.344.0), at D441 (0.342.0 → 0.343.0), at D440 (0.341.0 → 0.342.0), at D439 (0.340.0 → 0.341.0), at D438 (0.339.0 → 0.340.0), at D437 (0.338.0 → 0.339.0), at D436 (0.337.0 → 0.338.0), at D435 (0.336.0 → 0.337.0), at D434 (0.335.0 → 0.336.0), at D433 (0.334.0 → 0.335.0), at D432 (0.333.0 → 0.334.0), at D431 (0.332.0 → 0.333.0), at D430 (0.331.0 → 0.332.0), at D429 (0.330.0 → 0.331.0), at D428 (0.329.0 → 0.330.0), at D427 (0.328.0 → 0.329.0), at D426 (0.327.0 → 0.328.0), at D425 (0.326.0 → 0.327.0), at D424 (0.325.0 → 0.326.0), at D423 (0.324.0 → 0.325.0), at D422 (0.323.0 → 0.324.0), at D421 (0.322.0 → 0.323.0), at D420 (0.321.0 → 0.322.0), at D417 (0.320.0 → 0.321.0), at D416 (0.319.0 → 0.320.0), at D415 (0.318.0 → 0.319.0), at D414 (0.317.0 → 0.318.0), at D413 (0.316.0 → 0.317.0), at D412 (0.315.0 → 0.316.0), at D410 (0.314.0 → 0.315.0), at D409 (0.313.0 → 0.314.0), at D408 (0.312.0 → 0.313.0), at D407 (0.311.0 → 0.312.0), at D402 (0.306.0 → 0.307.0), at D401 (0.305.0 → 0.306.0), at D400 (0.304.0 → 0.305.0), at D399 (0.303.0 → 0.304.0), at D398 (0.302.0 → 0.303.0), at D397 (0.301.0 → 0.302.0), at D396 (0.300.0 → 0.301.0), at D395 (0.299.0 → 0.300.0), at D394 (0.298.0 → 0.299.0), at D393 (0.297.0 → 0.298.0), at D392 (0.296.0 → 0.297.0), at D391 (0.295.0 → 0.296.0), at D390 (0.294.0 → 0.295.0), at D389 (0.293.0 → 0.294.0), at D388 (0.292.0 → 0.293.0), at D387 (0.291.0 → 0.292.0), at D386 (0.290.0 → 0.291.0),
     //    each in the SAME COMMIT as the bump —
     // the TENTH slice running to do it that way, and the practice is now the one
     // thing about this row that has never cost an ERROR since it started.
@@ -5777,7 +5777,7 @@ export const MUTANTS: Mutant[] = [
     // CORPUS QUOTES** (D414/D415), so a value-keyed sweep over `toBe("0.391.0")` cannot
     // see it — this row's `find` spells the DECLARATION, not an assertion. Run
     // `precheck` after every version bump, not after the sweep tells you.
-    find: 'export const engineVersion = "0.394.0";',
+    find: 'export const engineVersion = "0.395.0";',
     replace: 'export const engineVersion = "0.193.0";',
     expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
   },
@@ -27808,8 +27808,20 @@ export const MUTANTS: Mutant[] = [
     //    it in seconds. D441's rule paid again: the GAP question is answerable by
     //    reading, the ROT question ONLY by `precheck`, and neither substitutes for the
     //    other. A census step rots this row EVERY TIME - predict it next slice.
-    find: "  attack: 1617,",
-    replace: "  attack: 1615,",
+    // 🆕🆕🆕 D505 - RE-TRANSCRIBED AGAIN, 1617 -> 1620, **AND THE REGRESSION IS
+    //    CORRECTED FROM TWO STEPS BACK TO THE PRE-SLICE VALUE (D442: correct a falsified
+    //    claim in place).** This row's `what` says the constant is *"put back to its
+    //    pre-slice value"*, and D499's note says so in arithmetic: *"D499's own step is +2
+    //    printings, so the mutated value is exactly this file's value at D498's head"*.
+    //    D501 and D502 both stepped by +1 and both kept a **two-step** regression, so for
+    //    two slices the row's arithmetic and the row's stated claim have disagreed and
+    //    nothing could see it - a +1 step makes 1616->1614 and 1617->1615 look like a
+    //    convention rather than an error. **D505's step is +3, which is the head where the
+    //    divergence becomes visible**, so the replace is the genuine pre-slice value 1617
+    //    and the claim is true again. ⚠️ PREDICTED BEFORE THE BUILD this time, off D502's
+    //    own instruction two entries up - the audit needled the census constant first.
+    find: "  attack: 1620,",
+    replace: "  attack: 1617,",
     expectKilledBy: [
       "packages/engine/src/censusAtHead.test.ts",
     ],
@@ -28894,5 +28906,66 @@ export const MUTANTS: Mutant[] = [
     find: "git log -S 'GAP(s) ·' --",
     replace: "git log -S 'GAP(s)' --",
     expectKilledBy: ["packages/engine/src/mutationSummaryQuote.test.ts"],
+  },
+  // ─────────────────────────────────────────────────────────────────────────
+  // D505 — THE PRIZE-SCALED BENCH SPREAD. Six rows: two on the ANCHOR (one of
+  // them the placement decision), one on the ARM, one on the DISPATCH, one on
+  // the FOLD's seat and one on the victim switch's OTHER arm — the half D497's
+  // pair rule says D425 owed and did not write. Every killer names the new
+  // suite ALONE (D453/D498), so a kill proves that suite discriminates rather
+  // than some neighbouring census agreeing with itself.
+  {
+    id: "D505-arm-drops-the-scaling-rider",
+    decision: "D505",
+    what: "\ud83d\uded1 C1 — THE ROW THE WHOLE SLICE TURNS ON: arm 6-i emits arm 6's REAL program, one line down, and loses `perTakenPrize`. The sentence still derives, still to ONE op, still `spreadDamage`, still `opponentBench`, still at the captured amount — so `BUILT.attack` still steps by 3, the residue still falls by 1/3, `ATTACK_EFFECT_SKIPPED` never fires and every census figure in the repo is green. What changes is that a card printing *\"10 damage … for each Prize card your opponent has taken\"* deals a flat 10 for the rest of the game. \u26a0\ufe0f AND IT IS INVISIBLE ON HALF THE BOARDS A SUITE WOULD NATURALLY FIELD: at exactly ONE taken Prize the two readings are the same vector, which is why \u00a75 asserts that coincidence rather than avoiding it by luck (D488).",
+    file: "packages/engine/src/effects.ts",
+    find: '        op: "spreadDamage",\n        target: "opponentBench",\n        amount: Number(match[1]),\n        perTakenPrize: true,\n',
+    replace: '        op: "spreadDamage",\n        target: "opponentBench",\n        amount: Number(match[1]),\n',
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
+  },
+  {
+    id: "D505-anchor-scaling-clause-goes-optional",
+    decision: "D505",
+    what: "\ud83d\uded1 C2 — THE ANCHOR IS FOLDED BACK INTO ITS SIBLING'S SHAPE: the mandatory scaling clause becomes an optional group, which is the cheaper design a slice that never measured it would ship. Measured over all 640 corpus rows (\u00a71): the wider anchor claims **3 sentences / 7 printings** instead of 1 / 3, so it STEALS the two flat opponent-side rows — *\"…to each of your opponent's Benched Pok\u00e9mon.\"* at 10 (1 printing) and at 50 (3) — and hands all FOUR of those printings a `perTakenPrize` they do not print. That is not a widening, it is a wrong program for 4 printings, and every census total is unmoved by it. \u26a0\ufe0f THIS ROW IS ALSO THE ARM'S PLACEMENT ARGUMENT (D502): arm 6-i is read AHEAD of arm 6 precisely so this mutation stays observable at the deriver; behind arm 6 the flat rows are claimed first and the mutation goes INERT on every one of them.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack (?:also )?does (\\\\d+) damage to each of your opponent['\u2019]s Benched Pok\u00e9mon ` +\n    \"for each Prize card your opponent has taken\\\\.\" +",
+    replace: "  `^This attack (?:also )?does (\\\\d+) damage to each of your opponent['\u2019]s Benched Pok\u00e9mon` +\n    \"(?: for each Prize card your opponent has taken)?\\\\.\" +",
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
+  },
+  {
+    id: "D505-anchor-captures-the-possessive",
+    decision: "D505",
+    what: "C3 — THE SPELLED `your opponent['\u2019]s` BECOMES THE ALTERNATION `SPREAD_EACH_BENCH` CARRIES, while the arm keeps emitting `target: \"opponentBench\"`. So the own-side scaled wording — which this column does not print at all — is read as an attack on the OPPONENT's Bench: the wrong half of the table, credited to the right seat. **D425's `-spread-side-flips` and D482's `-anchor-captures-the-possessive` at a THIRD address**, and measured harmless-looking: \u00a71 shows the wider anchor claims the same 1 sentence / 3 printings, so NO positive case can reveal it. \u26a0\ufe0f THE GROUP IS NON-CAPTURING ON PURPOSE — a capturing one would shift `match[1]` and the row would die on a `NaN` amount rather than on the side it is about (D416: a row that dies for the wrong reason reports success). \u00a72's own-side refusal rung is the only thing that refuses it.",
+    file: "packages/engine/src/effects.ts",
+    find: "  `^This attack (?:also )?does (\\\\d+) damage to each of your opponent['\u2019]s Benched Pok\u00e9mon ` +",
+    replace: "  `^This attack (?:also )?does (\\\\d+) damage to each of (?:your opponent['\u2019]s|your) Benched Pok\u00e9mon ` +",
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
+  },
+  {
+    id: "D505-dispatch-drops-the-fold",
+    decision: "D505",
+    what: "\ud83d\uded1 C4 — THE DISPATCH REVERTS TO THE PRE-SLICE BYTES, `op.amount` instead of `snipeAmount(op, …)`. This is the OTHER half of C1 and the two are different experiments (D484): C1 leaves a correct interpreter reading a program with no rider on it, this one leaves a correct program reaching an interpreter that ignores the rider. The derived program is byte-identical to the shipped one, so every `deriveAttackEffect` assertion in the repo passes and `JSON.stringify` of the op is unchanged — the defect is visible only on a BOARD, and only on one where the opponent has taken a number of Prizes other than 1. \u26a0\ufe0f It is also the row that would survive a suite built entirely out of derivation rungs, which is what the family's first three slices were.",
+    file: "packages/engine/src/interpreter.ts",
+    find: "      return { done: spreadDamage(state, op.target, snipeAmount(op, state, ctx, record), ctx, events) };",
+    replace: "      return { done: spreadDamage(state, op.target, op.amount, ctx, events) };",
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
+  },
+  {
+    id: "D505-fold-counts-your-own-taken-prizes",
+    decision: "D505",
+    what: "\ud83d\uded1 C5 — THE FOLD READS THE ATTACKER'S OWN TAKEN PRIZES, which is the seat the line DIRECTLY BELOW IT reads (`activeTop(state, ctx.seat)` — *\"Energy attached to THIS Pok\u00e9mon\"*): a neighbour-copy across a seat boundary inside one nine-line function, D448's `-fold-counts-the-defenders-energy` in the opposite direction. \ud83d\uded1 **THIS LINE HAD NO MUTANT ROW FOR FIFTY-SEVEN DECISIONS** — D448 wrote four rows on `snipeAmount` and not one on the rider it was built beside (D452: a family with no rows is indistinguishable from a family that passes). \u26a0\ufe0f AND IT IS INVISIBLE ON EVERY BOARD WHERE BOTH SEATS HAVE TAKEN THE SAME NUMBER OF PRIZES, which is every board a spread suite would field by default, because `spreadDamage`'s victim is ALSO `otherSeat(ctx.seat)`: \u00a76 exists to give the two reads different answers (p1 has taken 5, p2 has taken 3 \u2014 30 against 50).",
+    file: "packages/engine/src/interpreter.ts",
+    find: "  if (op.perTakenPrize === true) return op.amount * takenPrizes(state, otherSeat(ctx.seat));",
+    replace: "  if (op.perTakenPrize === true) return op.amount * takenPrizes(state, ctx.seat);",
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
+  },
+  {
+    id: "D505-spread-victim-opponent-arm-flips",
+    decision: "D505",
+    what: "C6 — THE OTHER ARM OF `spreadDamage`'s VICTIM SWITCH, AND THE PAIR IS THE FINDING (D497). D425 added the switch and wrote `D425-interpreter-ignores-the-own-side-target` for the `yourBench` arm — the arm ONE producer takes — and left the `opponentBench` arm, which EVERY other producer takes, with no row at all. This is that half: the opponent-side spread splashes the ATTACKER's own Bench, so under D425's `DAMAGE_DEALT.by` it renders as the attacker damaging itself and can hand the OPPONENT a Prize. Every event stays truthful and every amount stays right; only a board that fields BOTH benches and reads WHICH one moved goes red. \u26a0\ufe0f It also raises this op's interpreter seat-line coverage, which `opcoverage.ts` reported at 2/5 — the weakest of the damage ops — before this slice.",
+    file: "packages/engine/src/interpreter.ts",
+    find: '      case "opponentBench":\n        return otherSeat(ctx.seat);',
+    replace: '      case "opponentBench":\n        return ctx.seat;',
+    expectKilledBy: ["packages/engine/src/scaledBenchSpread.test.ts"],
   },
 ];
