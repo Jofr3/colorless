@@ -29412,4 +29412,119 @@ export const MUTANTS: Mutant[] = [
     replace: 'const PILE_SUPPORTER_NAME_FRAGMENT = /^Supporter card that has "([^"]*)" in its name$/;',
     expectKilledBy: ["packages/engine/src/pileByNameFragment.test.ts"],
   },
+  // ── D511 — THE HARNESS REJECTS A COMMAND LINE IT DOES NOT UNDERSTAND. Eleven rows,
+  //    and every one of them is about an argument being DROPPED rather than an
+  //    argument being wrong. D510's `--id <row>` was not refused, it was IGNORED —
+  //    both selectors stayed `undefined`, `undefined` is spelled "no filter" in the
+  //    selector, and the probe became a ~3-hour sweep of all 2,541 rows that left
+  //    fourteen mutant patches on a tree `bun run check` then called GREEN.
+  //    ⚠️ FIVE ROWS PUNCH A HOLE IN THE PREDICATE (C1–C4, C6) AND ONE OVER-FIRES IT
+  //    (C5), because a guard that can only fail in one direction is a guard someone
+  //    switches off the first time it refuses a legitimate line. THREE ROWS ARE
+  //    ABOUT THE WIRING (C7–C9): the predicate can be perfect and unreachable, and
+  //    an order-only assertion is green on a guard disabled in place. ONE (C10) is
+  //    the flag-set DRIFT this guard is built not to have, and the last (C11) is the
+  //    `--decision` substring hazard this slice evaluated and deliberately did NOT
+  //    fix — the row is what keeps that a decision rather than an oversight.
+  //    Every killer names `mutationArgvGuard.test.ts` ALONE (D453/D498), so a kill
+  //    proves that suite discriminates rather than some neighbouring census.
+  {
+    id: "D511-unknown-double-dash-flag-ignored-again",
+    decision: "D511",
+    what: "🛑 C1 — THE ROW THE WHOLE SLICE TURNS ON: the validator stops looking at arguments that begin `--`, so `--id <row>` is silently accepted again and the harness is back to the exact state that cost D510 three sweeps and fourteen stray patches. ⚠️ THE MUTATED HARNESS IS PERFECTLY USABLE AND ITS OUTPUT LOOKS RIGHT — that is the whole difficulty of this defect, and the reason it stood from D211 to D511: `--id D470-…` prints a banner, starts running rows, and only the ROW COUNT in that banner distinguishes it from the probe you asked for. Note the mutation leaves single-dash arguments (`-v`) still refused, so the kill is attributable to the `--` class rather than to argument checking having been removed wholesale.",
+    file: "scripts/mutation/argv.ts",
+    find: "    if (!KNOWN_FLAGS.includes(arg)) {",
+    replace: '    if (!KNOWN_FLAGS.includes(arg) && !arg.startsWith("--")) {',
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-missing-value-invents-one",
+    decision: "D511",
+    what: "C2 — PATH 2, WHICH IS THE SAME DEFECT WITH NO TYPO IN IT. A TRAILING `--only` makes `argv[index + 1]` `undefined`, and `undefined` is how the selector spells *no filter* — so a command line containing nothing but recognised flags runs the whole corpus. The mutation substitutes a value where none was given, which is the shape any `?? default` repair would take, and the guard's missing-value case is the only thing that sees it. ⚠️ IT IS NOT REACHED THROUGH THE UNKNOWN-FLAG RULE: every token here is a known flag, so C1's mutation and this one fail different assertions.",
+    file: "scripts/mutation/argv.ts",
+    find: "    const value = argv[i + 1];",
+    replace: '    const value = argv[i + 1] ?? "x";',
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-flag-shaped-value-taken-as-a-value",
+    decision: "D511",
+    what: 'C3 — THE THIRD WRONG ANSWER, AND IT IS A DIFFERENT ONE. `--only --full` does not run the whole corpus; it takes the literal string `"--full"` as a row id, selects nothing and exits 2. That is LOUD, which is why it is the least dangerous of the three — and it is still wrong, because the message a reader gets (*No mutants selected*) points at the corpus rather than at the command line, and `--full` is silently consumed on top. The row pins that the validator distinguishes *an absent value* from *a value that is obviously another flag*, which C2\'s mutation cannot reach.',
+    file: "scripts/mutation/argv.ts",
+    find: '    if (value.startsWith("-")) {',
+    replace: "    if (false) {",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-bare-positional-dropped-silently",
+    decision: "D511",
+    what: "C4 — THE STRANDED ROW ID. `run.ts` reads no positional argument anywhere, so one can only ever be a mistake — and the mistake it is usually made by is the one this slice exists for: an unknown or mistyped value-flag leaves its row id sitting on the command line with nothing to consume it. Ignoring it is the same silent drop as C1, one token to the right, and it fails the same way (the run does more than asked while its output looks like the run you wanted). The mutation keeps the `--`-flag rule intact, so C1's assertion stays green and the kill is attributable to the positional case alone.",
+    file: "scripts/mutation/argv.ts",
+    find: "    if (!KNOWN_FLAGS.includes(arg)) {",
+    replace: '    if (!KNOWN_FLAGS.includes(arg) && arg.startsWith("-")) {',
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-value-rule-over-fires-on-any-dash",
+    decision: "D511",
+    what: '🛑 C5 — THE ROW THAT FAILS FROM THE OTHER SIDE, AND AN ARGUMENT-VALIDATING GUARD IS WORTHLESS WITHOUT ONE. `value.startsWith("-")` becomes `value.includes("-")`, which is the over-general form the rule is one keystroke away from — and it refuses `--only D192-weakness`, i.e. NEARLY EVERY ROW ID IN THIS CORPUS, since the ids are dash-separated by construction. A guard that refuses legitimate input is not a stricter guard, it is a guard someone disables, which puts the tree back where D510 found it. D150\'s totality rule at a predicate: the ACCEPTS case has to be as real as the REJECTS cases, and this row is the only thing that proves it is.',
+    file: "scripts/mutation/argv.ts",
+    find: '    if (value.startsWith("-")) {',
+    replace: '    if (value.includes("-")) {',
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-repeated-flag-discarded-silently",
+    decision: "D511",
+    what: "C6 — THE DISCARD NOBODY EVER SAW. `--only` does not accumulate and `--decision` takes one value; `indexOf` therefore throws away every occurrence after the first, so `--only a --only b` has always quietly meant `--only a`. ⚠️ THE ROW DOES NOT CHANGE THOSE SEMANTICS AND MUST NOT BE READ AS PROPOSING TO — `--only` taking ONE comma-separated list is documented behaviour and load-bearing. What it pins is that the DISCARD is announced rather than performed in silence, which is the same class as C1 and C4 and the only one of the three that is not reachable by a typo.",
+    file: "scripts/mutation/argv.ts",
+    find: "    if (seen.has(arg)) {",
+    replace: "    if (false) {",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-validator-perfect-and-unreachable",
+    decision: "D511",
+    what: "🛑 C7 — THE VALIDATOR IS NEVER CALLED, AND EVERY ONE OF C1–C6's ASSERTIONS IS STILL GREEN ON THIS TREE. This is D205/D208's vacuous guard at a fresh address: a pure function with a complete test suite over it proves the PREDICATE, and proves nothing at all about the program. `problems` becomes a hard-coded empty list, the rejection branch stays exactly where it was and simply never fires, and `bun scripts/mutation/run.ts --id something` runs the whole corpus again. Only the WIRING case sees it, because the wiring is the one part that cannot be tested by driving the function and has to be read out of `run.ts` as text.",
+    file: "scripts/mutation/run.ts",
+    find: "  const problems = argvProblems(argv);",
+    replace: "  const problems: string[] = [];",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-recovery-write-moves-ahead-of-validation",
+    decision: "D511",
+    what: "🛑 C8 — D369's DEFECT REACHED THROUGH A TYPO INSTEAD OF THROUGH `--list`. A `recoverFromJournal()` call is inserted ABOVE the validation, so a command line the harness is about to reject has already performed a WRITE — and D369's finding, measured rather than reasoned, is that this particular write can restore a LIVE run's target file out from under it and make that run report CLOBBER against a phantom process. The rule in `run.ts`'s own comment is *the recovery path is a WRITE, so the only command that may precede it is one that never writes*; validation qualifies, which is exactly why it goes FURTHER FORWARD than `--list` rather than beside it. ⚠️ THE MUTANT COMPILES, RUNS AND BEHAVES CORRECTLY ON EVERY WELL-FORMED COMMAND LINE — the only thing that changes is what a MISTYPED one costs.",
+    file: "scripts/mutation/run.ts",
+    find: "  const problems = argvProblems(argv);",
+    replace: "  recoverFromJournal();\n  const problems = argvProblems(argv);",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-rejection-branch-disabled-in-place",
+    decision: "D511",
+    what: "⚠️ C9 — THE ROW THAT EXISTS BECAUSE AN ORDER IS NOT A BEHAVIOUR. `&& false` leaves the call site, the exit and every offset the wiring case measures EXACTLY where they were, so an assertion that only compared positions would be green on a guard that has been switched off. It is killed by the one assertion in that case which pins the branch's SHAPE rather than its address. ⚠️ AND THAT ASSERTION IS THE NARROWEST THING IN THE SUITE — it is a regex over source text, and a reformat could break it honestly. The instruction written beside it is to widen the pattern, never to delete the case, because deleting it is how this row goes inert while looking covered (D444).",
+    file: "scripts/mutation/run.ts",
+    find: "  if (problems.length > 0) {",
+    replace: "  if (problems.length > 0 && false) {",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-harness-grows-a-flag-the-validator-never-heard-of",
+    decision: "D511",
+    what: "🛑 C10 — THE DRIFT ROW, AND IT IS D503/D504's RULE APPLIED TO A FLAG SET. `run.ts` starts reading a `--dry-run` it accepts, while `argv.ts` still refuses it — so the harness would reject its own new flag, and a validator holding a hard-coded copy of the flag list would be GREEN on that forever. It is killed because the expected set is DERIVED from `run.ts`'s own `argv.includes(…)` / `flagValue(argv, …)` call sites at test time; there is no second copy here to drift. ⚠️ THE DERIVATION IS KEYED ON THE TWO ARGV ACCESSORS AND NOT ON `--`-STRINGS GENERALLY, which is what keeps `\"--porcelain\"` — an argument `run.ts` passes to `git status`, not one it accepts — out of the set; the same case asserts that exclusion explicitly so the distinction cannot decay into a coincidence.",
+    file: "scripts/mutation/run.ts",
+    find: '  const full = argv.includes("--full");',
+    replace: '  const full = argv.includes("--full") || argv.includes("--dry-run");',
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
+  {
+    id: "D511-decision-filter-tightened-to-an-exact-match",
+    decision: "D511",
+    what: "🛑 C11 — THE HAZARD THIS SLICE LOOKED AT AND REFUSED TO FIX, PINNED SO THE REFUSAL IS A DECISION RATHER THAN AN OVERSIGHT. `--decision` matches with `m.decision.includes(decision)`, so `--decision D51` selects `D510` AND `D511` and `--decision D5` selects several hundred rows — a real trap, and tightening it to an exact match is a WORSE one. Measured, not argued: of the corpus's distinct `decision` strings, FIVE are not bare ids — `D192 (inheriting D161)`, `D192 (inheriting D159)`, `D204 (vs D200 predicate)`, `D204/D205`, `D209 (as flipped by D210)` — so under `===` the row `--decision D192` would stop finding two of its own rows and `--decision D205` would stop finding the `D204/D205` pair. ⚠️ THAT IS THIS SLICE'S OWN DEFECT POINTING THE OTHER WAY: a selector that silently returns FEWER rows than asked for, reported as a clean run. Prefix-matching a family is also a legitimate use. The substring match is load-bearing and stays; this row is what makes a future `===` say so out loud, naming the five strings it would orphan.",
+    file: "scripts/mutation/run.ts",
+    find: "      (decision === undefined || m.decision.includes(decision)),",
+    replace: "      (decision === undefined || m.decision === decision),",
+    expectKilledBy: ["packages/engine/src/mutationArgvGuard.test.ts"],
+  },
 ];

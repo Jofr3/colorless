@@ -101,9 +101,15 @@
  *   bun run mutants --allow-dirty   # ⚠️ mutate files with uncommitted changes
  *                                   # (only when those changes are YOURS)
  *
+ * ⚠️ THAT LIST IS THE WHOLE FLAG SURFACE AND IT IS NOW ENFORCED (D511). Anything
+ * else — `--id`, a trailing `--only`, a stray positional — is REJECTED before a
+ * byte is read or written. See `argv.ts` for why, which is that an ignored
+ * selector does not narrow the run, it runs all 2,541 rows.
+ *
  * Exit code is 0 only when every mutant matched its declaration; 2 when a dead
  * run's journal was recovered (the tree changed — go look); 3 when another run
- * is already in flight and nothing was touched (D411).
+ * is already in flight and nothing was touched (D411); 4 when the COMMAND LINE
+ * was rejected and nothing at all happened (D511).
  */
 
 import { spawn, spawnSync } from "node:child_process";
@@ -111,6 +117,7 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { argvProblems, knownFlagsUsage } from "./argv.ts";
 import { MUTANTS, type Mutant } from "./mutants.ts";
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -636,6 +643,33 @@ function flagValue(argv: string[], name: string): string | undefined {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
+
+  // 🛑 D511 — ARGUMENT VALIDATION IS FIRST, AHEAD OF BOTH THE `--list` BRANCH AND
+  // THE JOURNAL RECOVERY, AND THE ORDER IS THE POINT OF THE GUARD.
+  //
+  // D369's rule, stated immediately below: **the recovery path is a WRITE, so the
+  // only command that may precede it is one that never writes.** Validation never
+  // writes — it reads `argv` and returns strings — so it qualifies, and it must go
+  // FURTHER FORWARD than `--list` rather than beside it. A mistyped flag is a line
+  // that should cause NOTHING to happen; if it fell after the journal recovery it
+  // would still be capable of restoring a live run's target file out from under it
+  // and exiting 2, which is D369's defect reached through a typo instead of through
+  // `--list`. And if it fell after the `--list` branch, `bun run mutants --list
+  // --ohno` would print the corpus and report success on a line it never understood.
+  //
+  // ⚠️ EXIT 4, NOT 1 AND NOT 2. D411's note below is that the exit code is the only
+  // part of this output a script reads, and 1/2/3 already mean "a row failed", "a
+  // dead run's files were put back — go look at the tree" and "someone else is
+  // mid-run". "Your command line was wrong and NOTHING was read or written" is a
+  // fourth fact and collapsing it into any of those would misdirect the reader.
+  const problems = argvProblems(argv);
+  if (problems.length > 0) {
+    console.error("\n🛑 mutation harness: the command line was REJECTED. Nothing ran.\n");
+    for (const problem of problems) console.error(`   • ${problem}`);
+    console.error(`\n   valid flags: ${knownFlagsUsage()}`);
+    console.error("   rows are selected with `--only <id>[,<id>…]` or `--decision D<nnn>`.\n");
+    process.exit(4);
+  }
 
   // 🛑 D369 — `--list` IS READ-ONLY AND IT IS ANSWERED *BEFORE* THE JOURNAL
   // RECOVERY, WHICH IS NOT WHERE IT USED TO SIT. `recoverFromJournal()` ran first

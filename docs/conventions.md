@@ -7049,9 +7049,10 @@ state that **looks healthy to `check`** and silently corrupts whatever is commit
 4. `run.ts` keeps a **journal that self-heals on the next run**, which is a recovery path but not a
    safety net — it only helps if a next run happens before a commit.
 
-⚠️ **The guard is cheap and is not yet written**: reject any argument beginning `--` that is not in
-the known-flag set, and exit non-zero naming it. Until then this convention is the only thing between
-a typo and a corrupted commit.
+✅ **The guard was cheap and IS NOW WRITTEN (D511)** — `scripts/mutation/argv.ts`, called from the
+first lines of `main()`, ahead of both the `--list` branch and the journal recovery. `--id <row>` now
+exits **4** naming the flag, and nothing is read or written. See the D511 convention below for what
+it does and does not cover; this convention stays because the RULES above are still the rules.
 
 ### When a `scripts/` instrument and an engine doc block disagree about the engine, the instrument is not automatically the stale one (D510)
 
@@ -7070,6 +7071,62 @@ is **re-derived against the tree every run**, while a doc block is **prose that 
 **On a question of fact about the engine, prefer the one something checks.** Cf. D508, where a false
 price survived in `scripts/` for thirty-three decisions because nobody looked there — the lesson runs
 in *both* directions: **neither side of that boundary is automatically fresher.**
+
+
+### `run.ts`'s flag surface is closed, and the check runs before anything that writes (D511)
+
+`scripts/mutation/argv.ts` holds the whole flag surface — `--list`, `--only <v>`, `--decision <v>`,
+`--full`, `--verbose`, `--allow-dirty` — and `run.ts` rejects anything else with **exit 4** and a
+message naming the offender. Four classes are refused, all of them the same defect (an argument
+*dropped* rather than an argument *wrong*):
+
+1. **an unknown flag** — D510's `--id`, and any `--typo`;
+2. **a value flag with no value** — a trailing `--only`, whose `undefined` reads as *no filter*;
+3. **a value flag whose value is another flag** — `--only --full`, which took `"--full"` as a row id;
+4. **a bare positional** — the row id a mistyped flag leaves stranded. `run.ts` reads none, ever.
+
+A **repeated** flag is refused too: `--only` does not accumulate, so `--only a --only b` has always
+silently meant `--only a`. ⚠️ That is not a change of semantics — `--only` still takes ONE
+comma-separated list, `--decision` still takes ONE value, and `--list` still ignores `--decision`.
+The discard is now announced instead of performed in silence.
+
+🛑 **WHERE THE CHECK RUNS IS PART OF THE GUARD.** It is the first thing `main()` does — **ahead of
+the `--list` branch AND ahead of `recoverFromJournal()`**. D369's rule is *the recovery path is a
+WRITE, so the only command that may precede it is one that never writes*; validation never writes, so
+it qualifies, and it must go **further forward** than `--list` rather than beside it. Behind the
+recovery a rejected command line could still restore a live run's file out from under it and exit 2 —
+D369's defect reached through a typo. Behind `--list`, `--list --ohno` would print the corpus and
+report success on a line it never understood. **Exit 4 is a new code on purpose**: 1/2/3 already mean
+*a row failed*, *a dead run's files were put back — go look*, and *someone else is mid-run*.
+
+✅ **`--decision`'s SUBSTRING MATCH WAS EVALUATED AND DELIBERATELY LEFT ALONE.** `--decision D51`
+matching both `D510` and `D511` is a real trap, and tightening it to an exact match is a worse one —
+measured, not argued. Five of the corpus's `decision` strings are not bare ids: `D192 (inheriting
+D161)`, `D192 (inheriting D159)`, `D204 (vs D200 predicate)`, `D204/D205`, `D209 (as flipped by
+D210)`. Under `===`, `--decision D192` stops finding two of its own rows and `--decision D205` stops
+finding the `D204/D205` pair — **a selector that silently returns FEWER rows than asked for, which is
+D510's defect pointing the other way**. Prefix-matching a family is also a legitimate use. It stays,
+and a mutant row now makes any future `===` say so out loud.
+
+⚠️ **WHAT THE GUARD DOES NOT DO.** It does not interpret values: `--only nonsense` is a well-formed
+line and is still answered with *No mutants selected* and exit 2. And `packages/engine/src/
+mutationArgvGuard.test.ts` **drives the validator and reads the wiring as text — it does not spawn
+`run.ts`**, because `run.ts` has a top-level `await main()` (importing it runs the harness inside
+vitest) and `packages/engine` sets `"types": []`, so `node:child_process` does not typecheck there.
+What is proved in `check` is that the predicate is right and that the call sits ahead of both writes
+in the source. That the assembled process exits 4 was demonstrated by hand and is pinned only as text.
+
+### `bun run check` does not check formatting, so `biome format .` is a 360-file edit (D511)
+
+`check` is `typecheck-coverage && tsc -b && lint-coverage && biome lint . --error-on-warnings &&
+vitest run`. **`biome format` is not in it, in either direction** — not `--write`, not `--check`. The
+repo is therefore **not** format-clean and has not been for a long time: at D511's head a bare
+`bunx biome format . --write` rewrote **360 files**, none of them the slice's, and `check` was green
+on the result. ⚠️ **That is a whole-tree edit wearing a tidy-up's clothes**, and it is the "never
+touch the tree wholesale" rule at an instrument rather than at `git`. **Format explicit paths only**:
+`bunx biome format --write <the files you wrote>`. If a formatter pass ever does escape, `git diff
+--stat` names the blast radius and `precheck` must be re-run afterwards — a reformat can move a
+mutant row's `find`.
 
 
 ## Git / commits
